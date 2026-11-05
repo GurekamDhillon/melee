@@ -157,6 +157,14 @@ fn walk(c: &[u8], r: &[u8], name: &str, gc: u32, nat: usize, size: usize, kind: 
     }
 }
 
+/// Every named field of one native record (pointers and unions left out): the by-name dump of the
+/// Dolphin oracle (dolphin_oracle.rs). `sink(field, value)`.
+pub(crate) fn named(b: &[u8], ty: &'static str, tab: &'static [F], sink: &mut dyn FnMut(String, String)) {
+    let o = Opts { unions: false, peek: Some(String::new()) };
+    let root = Kind::Struct(ty, tab);
+    walk(b, b, "", 0, 0, b.len(), &root, ty, crate::diff_layout::bitfields(ty), &o, &mut |f, _gc, c, _r| sink(f, c));
+}
+
 /// Everything compared, copied out of a finished sim so a second sim can be built afterwards.
 struct State {
     frame: i32,

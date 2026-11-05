@@ -1,0 +1,545 @@
+# Slippi Dolphin (project-slippi/dolphin, mainline) patch for the NHV1 oracle. Applies to 0653df8194eac2392dea9fe26276b70f3c87fd89.
+# Dolphin is GPL-2.0-or-later; this diff is a derivative of it and is kept for local use only (not distributed).
+diff --git a/Source/Core/Common/Timer.cpp b/Source/Core/Common/Timer.cpp
+index 0a23080..d34879f 100644
+--- a/Source/Core/Common/Timer.cpp
++++ b/Source/Core/Common/Timer.cpp
+@@ -70,10 +70,20 @@ u64 Timer::ElapsedMs() const
+ u64 Timer::GetLocalTimeSinceJan1970()
+ {
+ #ifdef _MSC_VER
+-  std::chrono::zoned_seconds seconds(
+-      std::chrono::current_zone(),
+-      std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::system_clock::now()));
+-  return seconds.get_local_time().time_since_epoch().count();
++  // GD nhv1-oracle: current_zone() throws on this machine (tzdb unavailable); fall back to UTC
++  try
++  {
++    std::chrono::zoned_seconds seconds(
++        std::chrono::current_zone(),
++        std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::system_clock::now()));
++    return seconds.get_local_time().time_since_epoch().count();
++  }
++  catch (...)
++  {
++    return static_cast<u64>(std::chrono::duration_cast<std::chrono::seconds>(
++                                std::chrono::system_clock::now().time_since_epoch())
++                                .count());
++  }
+ #else
+   time_t sysTime, tzDiff, tzDST;
+   time(&sysTime);
+diff --git a/Source/Core/Core/CMakeLists.txt b/Source/Core/Core/CMakeLists.txt
+index 829688e..5e53a96 100644
+--- a/Source/Core/Core/CMakeLists.txt
++++ b/Source/Core/Core/CMakeLists.txt
+@@ -566,6 +566,8 @@ add_library(core
+   Slippi/SlippiNetplay.h
+   Slippi/SlippiPad.cpp
+   Slippi/SlippiPad.h
++  Slippi/NHV1Oracle.cpp
++  Slippi/NHV1Oracle.h
+   Slippi/SlippiPlayback.cpp
+   Slippi/SlippiPlayback.h
+   Slippi/SlippiReplayComm.cpp
+@@ -848,3 +850,6 @@ if(USE_RETRO_ACHIEVEMENTS)
+     target_compile_definitions(core PUBLIC -DRC_CLIENT_SUPPORTS_RAINTEGRATION)
+   endif()
+ endif()
++
++# GD nhv1-oracle: the playback code paths are behind IS_PLAYBACK, which upstream never defines (playback is WIP there)
++set_source_files_properties(Slippi/SlippiPlayback.cpp HW/EXI/EXI_DeviceSlippi.cpp PROPERTIES COMPILE_DEFINITIONS IS_PLAYBACK=1)
+diff --git a/Source/Core/Core/HLE/HLE.cpp b/Source/Core/Core/HLE/HLE.cpp
+index a0ca859..8c97fe8 100644
+--- a/Source/Core/Core/HLE/HLE.cpp
++++ b/Source/Core/Core/HLE/HLE.cpp
+@@ -5,6 +5,7 @@
+ 
+ #include <algorithm>
+ #include <array>
++#include <cstdlib>
+ #include <map>
+ 
+ #include "Common/CommonTypes.h"
+@@ -21,6 +22,7 @@
+ #include "Core/PowerPC/PPCSymbolDB.h"
+ #include "Core/PowerPC/PowerPC.h"
+ #include "Core/System.h"
++#include "Core/Slippi/NHV1Oracle.h"
+ 
+ namespace HLE
+ {
+@@ -28,7 +30,7 @@ namespace HLE
+ static std::map<u32, u32> s_hooked_addresses;
+ 
+ // clang-format off
+-constexpr std::array<Hook, 23> os_patches{{
++constexpr std::array<Hook, 24> os_patches{{
+     // Placeholder, os_patches[0] is the "non-existent function" index
+     {"FAKE_TO_SKIP_0",               HLE_Misc::UnimplementedFunction,       HookType::Replace, HookFlag::Generic},
+ 
+@@ -60,7 +62,8 @@ constexpr std::array<Hook, 23> os_patches{{
+ 
+     {"GeckoCodehandler",             HLE_Misc::GeckoCodeHandlerICacheFlush, HookType::Start,   HookFlag::Fixed},
+     {"GeckoHandlerReturnTrampoline", HLE_Misc::GeckoReturnTrampoline,       HookType::Replace, HookFlag::Fixed},
+-    {"AppLoaderReport",              HLE_OS::HLE_GeneralDebugPrint,         HookType::Start,   HookFlag::Fixed} // apploader needs OSReport-like function
++    {"AppLoaderReport",              HLE_OS::HLE_GeneralDebugPrint,         HookType::Start,   HookFlag::Fixed}, // apploader needs OSReport-like function
++    {"NHV1FrameEnd",                 NHV1Oracle::FrameEnd,                  HookType::Start,   HookFlag::Fixed}  // GD nhv1-oracle
+ }};
+ // clang-format on
+ 
+@@ -106,6 +109,10 @@ void PatchFixedFunctions(Core::System& system)
+   // This has to always be installed even if cheats are not enabled because of the possiblity of
+   // loading a savestate where PC is inside the code handler while cheats are disabled.
+   Patch(system, Gecko::HLE_TRAMPOLINE_ADDRESS, "GeckoHandlerReturnTrampoline");
++
++  // GD nhv1-oracle: after HSD_GObj_RunProcs in gm_801A4D34 (MELEE_DOLPHIN_NHV1)
++  if (NHV1Oracle::Enabled() && !std::getenv("MELEE_DOLPHIN_NHV1_NOHOOK"))
++    Patch(system, NHV1Oracle::HOOK_ADDRESS, "NHV1FrameEnd");
+ }
+ 
+ void PatchFunctions(Core::System& system)
+diff --git a/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp b/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp
+index c6fbc9d..302398d 100644
+--- a/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp
++++ b/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp
+@@ -25,6 +25,8 @@
+ #include "Core/Debugger/Debugger_SymbolMap.h"
+ #include "Core/GeckoCode.h"
+ #include "Core/HW/EXI/EXI_DeviceSlippi.h"
++
++#include <bit>
+ #include "Core/HW/Memmap.h"
+ #include "Core/HW/SI/SI.h"
+ #include "Core/HW/SI/SI_Device.h"
+@@ -46,6 +48,7 @@
+ 
+ // The Rust library that houses a "shadow" EXI Device that we can call into.
+ #include "SlippiRustExtensions.h"
++#include "Core/Slippi/NHV1Oracle.h"
+ 
+ #define FRAME_INTERVAL 900
+ #define SLEEP_TIME_MS 8
+@@ -877,19 +880,19 @@ void CEXISlippi::prepareCharacterFrameData(Slippi::FrameData* frame, u8 port, u8
+ 
+   // Add all of the inputs in order
+   appendWordToBuffer(&m_read_queue, data.randomSeed);
+-  appendWordToBuffer(&m_read_queue, static_cast<u32>(data.joystickX));
+-  appendWordToBuffer(&m_read_queue, static_cast<u32>(data.joystickY));
+-  appendWordToBuffer(&m_read_queue, static_cast<u32>(data.cstickX));
+-  appendWordToBuffer(&m_read_queue, static_cast<u32>(data.cstickY));
+-  appendWordToBuffer(&m_read_queue, static_cast<u32>(data.trigger));
++  appendWordToBuffer(&m_read_queue, std::bit_cast<u32>(data.joystickX));  // GD nhv1-oracle: was static_cast (a float->int conversion)
++  appendWordToBuffer(&m_read_queue, std::bit_cast<u32>(data.joystickY));  // GD nhv1-oracle: was static_cast (a float->int conversion)
++  appendWordToBuffer(&m_read_queue, std::bit_cast<u32>(data.cstickX));  // GD nhv1-oracle: was static_cast (a float->int conversion)
++  appendWordToBuffer(&m_read_queue, std::bit_cast<u32>(data.cstickY));  // GD nhv1-oracle: was static_cast (a float->int conversion)
++  appendWordToBuffer(&m_read_queue, std::bit_cast<u32>(data.trigger));  // GD nhv1-oracle: was static_cast (a float->int conversion)
+   appendWordToBuffer(&m_read_queue, data.buttons);
+-  appendWordToBuffer(&m_read_queue, static_cast<u32>(data.locationX));
+-  appendWordToBuffer(&m_read_queue, static_cast<u32>(data.locationY));
+-  appendWordToBuffer(&m_read_queue, static_cast<u32>(data.facingDirection));
++  appendWordToBuffer(&m_read_queue, std::bit_cast<u32>(data.locationX));  // GD nhv1-oracle: was static_cast (a float->int conversion)
++  appendWordToBuffer(&m_read_queue, std::bit_cast<u32>(data.locationY));  // GD nhv1-oracle: was static_cast (a float->int conversion)
++  appendWordToBuffer(&m_read_queue, std::bit_cast<u32>(data.facingDirection));  // GD nhv1-oracle: was static_cast (a float->int conversion)
+   appendWordToBuffer(&m_read_queue, static_cast<u32>(data.animation));
+   m_read_queue.push_back(data.joystickXRaw);
+   m_read_queue.push_back(data.joystickYRaw);
+-  appendWordToBuffer(&m_read_queue, static_cast<u32>(data.percent));
++  appendWordToBuffer(&m_read_queue, std::bit_cast<u32>(data.percent));  // GD nhv1-oracle: was static_cast (a float->int conversion)
+   m_read_queue.push_back(data.cstickXRaw);
+   m_read_queue.push_back(data.cstickYRaw);
+   // NOTE TO DEV: If you add data here, make sure to increase the size above
+@@ -1025,6 +1028,12 @@ void CEXISlippi::prepareFrameData(u8* payload)
+     // to end the game as well.
+     auto should_terminate_game = is_processing_complete;
+     request_result_code = should_terminate_game ? FRAME_RESP_TERMINATE : FRAME_RESP_WAIT;
++    {
++      static int s_waits = 0;  // GD nhv1-oracle diagnostics
++      if (s_waits++ < 5)
++        fprintf(stderr, "nhv1-oracle: frame %d not ready (found %d complete %d fetched %d)\n", frame_idx,
++                is_frame_found ? 1 : 0, is_processing_complete ? 1 : 0, is_frame_complete ? 1 : 0);
++    }
+     m_read_queue.push_back(request_result_code);
+ 
+     // Disable fast forward here too... this shouldn't be necessary but better
+@@ -1093,6 +1102,9 @@ void CEXISlippi::prepareFrameData(u8* payload)
+     g_playback_status->prepareSlippiPlayback(frame->frame);
+   }
+ 
++  // GD nhv1-oracle: the frame the game is about to simulate
++  NHV1Oracle::NoteFrame(frame->frame, g_playback_status->last_frame, is_processing_complete);
++
+   // Push RB code
+   m_read_queue.push_back(rollback_code);
+ 
+diff --git a/Source/Core/Core/Slippi/NHV1Oracle.cpp b/Source/Core/Core/Slippi/NHV1Oracle.cpp
+new file mode 100644
+index 0000000..bfbe1ae
+--- /dev/null
++++ b/Source/Core/Core/Slippi/NHV1Oracle.cpp
+@@ -0,0 +1,286 @@
++// NHV1 oracle (GD's Melee port, local tool): see NHV1Oracle.h.
++#include "Core/Slippi/NHV1Oracle.h"
++
++#include <climits>
++#include <cstdio>
++#include <cstdlib>
++#include <chrono>
++#include <thread>
++#include <vector>
++
++#include "Core/PowerPC/PowerPC.h"
++
++#include "Core/Core.h"
++#include "Core/HW/Memmap.h"
++#include "Core/PowerPC/MMU.h"
++#include "Core/System.h"
++
++namespace NHV1Oracle
++{
++namespace
++{
++// config/GALE01/symbols.txt
++constexpr u32 PLAYER_SLOTS = 0x80453080;  // StaticPlayer[6], 0xE90 each
++constexpr u32 PLAYER_SIZE = 0xE90;
++constexpr u32 HSD_RAND_SEED_PTR = 0x804D5F94;
++constexpr u32 HSD_GOBJ_PLINK_HEAD = 0x804D782C;
++constexpr u32 GM_80479D58 = 0x80479D58;
++constexpr u32 GAME_CAMERA = 0x80452C68;
++constexpr u32 GAME_CAMERA_SIZE = 0x39C;
++constexpr u32 STAGE_INFO = 0x8049E6C8;
++constexpr u32 STAGE_INFO_SIZE = 0x748;
++constexpr u32 FIGHTER_SIZE = 0x23EC;  // ASSERT_SIZE(struct Fighter, 0x23EC)
++constexpr u32 ITEM_SIZE = 0xFCC;      // ASSERT_SIZE(struct Item, 0xFCC)
++constexpr u32 PLINK_ITEM = 9;         // HSD_GOBJ_PLINK_ITEM
++constexpr u32 MAX_ITEMS = 512;
++
++int s_state = -1;  // -1 unread, 0 off, 1 on
++bool s_wide = false;
++bool s_exit = false;
++FILE* s_out = nullptr;
++s32 s_frame = INT_MIN;
++s32 s_latest = INT_MIN;
++bool s_complete = false;
++s32 s_logged = INT_MIN;
++
++void Init()
++{
++  if (s_state >= 0)
++    return;
++  s_state = 0;
++  const char* path = std::getenv("MELEE_DOLPHIN_NHV1");
++  if (!path || !*path)
++    return;
++  s_out = std::fopen(path, "wb");
++  if (!s_out)
++  {
++    std::fprintf(stderr, "nhv1-oracle: cannot open the output file\n");
++    return;
++  }
++  const char* w = std::getenv("MELEE_DOLPHIN_NHV1_WIDE");
++  s_wide = w && *w && *w != '0';
++  const char* x = std::getenv("MELEE_DOLPHIN_NHV1_EXIT");
++  s_exit = x && *x && *x != '0';
++  std::fwrite("NHRAW001", 1, 8, s_out);
++  const u32 flags = s_wide ? 1 : 0;
++  std::fwrite(&flags, 4, 1, s_out);
++  s_state = 1;
++  std::fprintf(stderr, "nhv1-oracle: on (wide=%d)\n", s_wide ? 1 : 0);
++}
++
++bool InRam(u32 a)
++{
++  return a >= 0x80000000 && a < 0x81800000;
++}
++
++void Put32(std::vector<u8>& b, u32 v)
++{
++  const u8* p = reinterpret_cast<const u8*>(&v);
++  b.insert(b.end(), p, p + 4);
++}
++
++void PutBlob(std::vector<u8>& b, Memory::MemoryManager& mem, u32 addr, u32 size)
++{
++  const size_t at = b.size();
++  b.resize(at + size);
++  mem.CopyFromEmu(b.data() + at, addr, size);
++}
++}  // namespace
++
++bool Enabled()
++{
++  Init();
++  return s_state == 1;
++}
++
++void NoteFrame(s32 frame, s32 latest, bool processing_complete)
++{
++  if (s_state == 1 && (s_frame == INT_MIN || frame < -100 || frame % 1200 == 0))
++    std::fprintf(stderr, "nhv1-oracle: playback frame %d (latest %d)\n", frame, latest);
++  if (s_frame == INT_MIN && s_state == 1 && std::getenv("MELEE_DOLPHIN_NHV1_WATCHDOG"))
++  {
++    std::thread([] {
++      auto& sys = Core::System::GetInstance();
++      for (int i = 0; i < 60; i++)
++      {
++        std::this_thread::sleep_for(std::chrono::seconds(2));
++        std::fprintf(stderr, "nhv1-oracle: watchdog pc=%08x lr=%08x unk0=%u frame=%d\n",
++                     sys.GetPPCState().pc, sys.GetPPCState().spr[8],
++                     sys.GetMemory().Read_U32(GM_80479D58), s_frame);
++        std::fflush(stderr);
++      }
++    }).detach();
++  }
++  s_frame = frame;
++  s_latest = latest;
++  s_complete = processing_complete;
++}
++
++void FrameEnd(const Core::CPUThreadGuard& guard)
++{
++  if (!Enabled())
++    return;
++  static u32 s_calls = 0;
++  if (s_calls++ % 3600 == 0)
++  {
++    std::fprintf(stderr, "nhv1-oracle: hook call %u, playback frame %d\n", s_calls, s_frame);
++    std::fflush(stderr);
++  }
++  if (s_frame == INT_MIN || s_frame == s_logged)
++    return;
++  auto& mem = guard.GetSystem().GetMemory();
++  auto r32 = [&](u32 a) { return PowerPC::MMU::HostRead_U32(guard, a); };
++  auto r8 = [&](u32 a) { return PowerPC::MMU::HostRead_U8(guard, a); };
++
++  std::vector<u8> fighters;
++  u32 n_ft = 0;
++  for (u32 i = 0; i < 6; i++)
++  {
++    const u32 pl = PLAYER_SLOTS + i * PLAYER_SIZE;
++    for (u32 j = 0; j < 2; j++)
++    {
++      // Player_GetEntityAtIndex(i, j) = player_entity[transformed[j]]
++      const u8 t = r8(pl + 0x0C + j);
++      if (t > 1)
++        continue;
++      const u32 g = r32(pl + 0xB0 + 4 * t);
++      if (!InRam(g))
++        continue;
++      const u32 fp = r32(g + 0x2C);  // HSD_GObj::user_data
++      if (!InRam(fp))
++        continue;
++      fighters.push_back(static_cast<u8>(i * 2 + j));
++      fighters.push_back(static_cast<u8>(r32(pl + 0x08)));  // pkind (Gm_PKind_Cpu = 1)
++      fighters.push_back(r8(pl + 0x8E));                     // stocks (s8)
++      fighters.push_back(t);
++      Put32(fighters, fp);
++      PutBlob(fighters, mem, fp, FIGHTER_SIZE);
++      n_ft++;
++    }
++  }
++  if (n_ft == 0)
++  {
++    return;
++  }  // the frame-0 rule: rows start at the first iteration with a fighter
++
++  std::vector<u8> items;
++  u32 n_it = 0;
++  const u32 heads = r32(HSD_GOBJ_PLINK_HEAD);
++  if (InRam(heads))
++  {
++    for (u32 g = r32(heads + 4 * PLINK_ITEM); InRam(g) && n_it < MAX_ITEMS; g = r32(g + 0x08))
++    {
++      const u32 ip = r32(g + 0x2C);
++      if (!InRam(ip))
++        continue;
++      Put32(items, ip);
++      PutBlob(items, mem, ip, ITEM_SIZE);
++      n_it++;
++    }
++  }
++
++  std::vector<u8> rec;
++  Put32(rec, 0x4D524652);  // "RFRM"
++  Put32(rec, static_cast<u32>(s_frame));
++  Put32(rec, r32(GM_80479D58));
++  const u32 seed_ptr = r32(HSD_RAND_SEED_PTR);
++  Put32(rec, InRam(seed_ptr) ? r32(seed_ptr) : 0);
++  Put32(rec, n_ft);
++  Put32(rec, n_it);
++  rec.insert(rec.end(), fighters.begin(), fighters.end());
++  rec.insert(rec.end(), items.begin(), items.end());
++  if (s_wide)
++  {
++    PutBlob(rec, mem, GAME_CAMERA, GAME_CAMERA_SIZE);
++    PutBlob(rec, mem, STAGE_INFO, STAGE_INFO_SIZE);
++  }
++  std::fwrite(rec.data(), 1, rec.size(), s_out);
++  s_logged = s_frame;
++
++  if (s_exit && s_complete && s_frame >= s_latest)
++  {
++    std::fclose(s_out);
++    s_out = nullptr;
++    std::fprintf(stderr, "nhv1-oracle: last frame %d logged, exiting\n", s_frame);
++    std::fflush(stderr);
++    std::_Exit(0);
++  }
++}
++}  // namespace NHV1Oracle
++
++#ifdef _WIN32
++// GD nhv1-oracle: diagnostics for silent fast-fails (write to %TEMP%\nhv1-oracle-crash.txt)
++#include <Windows.h>
++#include <csignal>
++#include <exception>
++namespace
++{
++void CrashNote(const char* what)
++{
++  char path[MAX_PATH];
++  DWORD n = GetTempPathA(MAX_PATH, path);
++  if (n == 0 || n > MAX_PATH - 32)
++    return;
++  strcat_s(path, "nhv1-oracle-crash.txt");
++  FILE* f = nullptr;
++  if (fopen_s(&f, path, "a") != 0 || !f)
++    return;
++  void* frames[48];
++  USHORT k = CaptureStackBackTrace(1, 48, frames, nullptr);
++  const uintptr_t base = reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
++  std::fprintf(f, "%s (exe base %p)\n", what, reinterpret_cast<void*>(base));
++  for (USHORT i = 0; i < k; i++)
++  {
++    HMODULE m = nullptr;
++    GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
++                       static_cast<LPCSTR>(frames[i]), &m);
++    char mod[MAX_PATH] = "?";
++    if (m)
++      GetModuleFileNameA(m, mod, MAX_PATH);
++    std::fprintf(f, "  %s+0x%llx\n", mod,
++                 static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(frames[i]) - reinterpret_cast<uintptr_t>(m)));
++  }
++  std::fclose(f);
++}
++void OnInvalidParam(const wchar_t* expr, const wchar_t* fn, const wchar_t* file, unsigned line, uintptr_t)
++{
++  char b[512];
++  snprintf(b, sizeof b, "invalid parameter: %ls in %ls (%ls:%u)", expr ? expr : L"?", fn ? fn : L"?",
++           file ? file : L"?", line);
++  CrashNote(b);
++}
++void OnAbort(int)
++{
++  CrashNote("SIGABRT");
++}
++void OnTerminate()
++{
++  try
++  {
++    if (auto e = std::current_exception())
++      std::rethrow_exception(e);
++    CrashNote("terminate, no exception");
++  }
++  catch (const std::exception& e)
++  {
++    char b[512];
++    snprintf(b, sizeof b, "terminate: %s", e.what());
++    CrashNote(b);
++  }
++  catch (...)
++  {
++    CrashNote("terminate: unknown exception");
++  }
++  std::abort();
++}
++struct Install
++{
++  Install()
++  {
++    _set_invalid_parameter_handler(OnInvalidParam);
++    signal(SIGABRT, OnAbort);
++    std::set_terminate(OnTerminate);
++  }
++} s_install;
++}  // namespace
++#endif
+diff --git a/Source/Core/Core/Slippi/NHV1Oracle.h b/Source/Core/Core/Slippi/NHV1Oracle.h
+new file mode 100644
+index 0000000..332e4db
+--- /dev/null
++++ b/Source/Core/Core/Slippi/NHV1Oracle.h
+@@ -0,0 +1,29 @@
++// NHV1 oracle (GD's Melee port, local tool, not upstream): dump the GameCube memory that the NHV1 per-frame
++// hash is computed from, once per logic iteration, right after HSD_GObj_RunProcs() returns in gm_801A4D34.
++//
++//   MELEE_DOLPHIN_NHV1=<file.nhraw>   enable; records are appended to that file
++//   MELEE_DOLPHIN_NHV1_WIDE=1         also dump game_camera and stage_info every frame
++//   MELEE_DOLPHIN_NHV1_EXIT=1         exit the process after the replay's last frame was logged
++//
++// Format: see docs/rust-port/notes/dolphin-oracle.md in GD's Melee workspace.
++#pragma once
++
++#include "Common/CommonTypes.h"
++
++namespace Core
++{
++class CPUThreadGuard;
++class System;
++}  // namespace Core
++
++namespace NHV1Oracle
++{
++// the instruction after `bl HSD_GObj_RunProcs` in gm_801A4D34 (NTSC 1.02)
++constexpr u32 HOOK_ADDRESS = 0x801A4FA4;
++
++bool Enabled();
++// HLE hook body (HookType::Start, HookFlag::Fixed)
++void FrameEnd(const Core::CPUThreadGuard& guard);
++// called by the Slippi EXI device when it hands a playback frame to the game
++void NoteFrame(s32 frame, s32 latest, bool processing_complete);
++}  // namespace NHV1Oracle
+diff --git a/Source/Core/DolphinNoGUI/CMakeLists.txt b/Source/Core/DolphinNoGUI/CMakeLists.txt
+index 5b72b57..e56580e 100644
+--- a/Source/Core/DolphinNoGUI/CMakeLists.txt
++++ b/Source/Core/DolphinNoGUI/CMakeLists.txt
+@@ -28,7 +28,7 @@ set_target_properties(dolphin-nogui PROPERTIES OUTPUT_NAME dolphin-emu-nogui)
+ target_link_libraries(dolphin-nogui
+ PUBLIC
+   slippi_rust_extensions
+-  z
++  ZLIB::ZLIB  # GD nhv1-oracle: was "z" (no z.lib on Windows)
+ PRIVATE
+   core
+   uicommon
+@@ -61,3 +61,4 @@ endif()
+ 
+ set(CPACK_PACKAGE_EXECUTABLES ${CPACK_PACKAGE_EXECUTABLES} dolphin-nogui)
+ install(TARGETS dolphin-nogui RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
++target_compile_definitions(dolphin-nogui PRIVATE IS_PLAYBACK=1)  # GD nhv1-oracle
+diff --git a/Source/Core/DolphinNoGUI/MainNoGUI.cpp b/Source/Core/DolphinNoGUI/MainNoGUI.cpp
+index 1986c58..b3146ef 100644
+--- a/Source/Core/DolphinNoGUI/MainNoGUI.cpp
++++ b/Source/Core/DolphinNoGUI/MainNoGUI.cpp
+@@ -347,6 +347,12 @@ int main(int argc, char* argv[])
+ 
+   DolphinAnalytics::Instance().ReportDolphinStart("nogui");
+ 
++#ifdef IS_PLAYBACK
++  // GD nhv1-oracle: the second UICommon::Init() above re-creates SConfig, dropping -i; set it again
++  if (slippi_input_path)
++    SConfig::GetSlippiConfig().slippi_input = slippi_input_path.value();
++#endif
++
+   if (!BootManager::BootCore(Core::System::GetInstance(), std::move(boot), wsi))
+   {
+     fprintf(stderr, "Could not boot the specified file\n");
+diff --git a/Source/Core/UICommon/CMakeLists.txt b/Source/Core/UICommon/CMakeLists.txt
+index 7200bd5..502cb14 100644
+--- a/Source/Core/UICommon/CMakeLists.txt
++++ b/Source/Core/UICommon/CMakeLists.txt
+@@ -66,3 +66,4 @@ if(MSVC)
+   # Add precompiled header
+   target_link_libraries(uicommon PRIVATE use_pch)
+ endif()
++target_compile_definitions(uicommon PRIVATE IS_PLAYBACK=1)  # GD nhv1-oracle

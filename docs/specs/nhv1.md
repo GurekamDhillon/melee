@@ -264,7 +264,7 @@ from a vanilla (non-UCF) run of one of the two builds.
 
 Third oracle (Dolphin): read the same fields from GameCube memory at the offsets in 5.3 and 5.4 after each frame's `HSD_GObj_RunProcs` equivalent
 (an emulator breakpoint at that point, or the Slippi frame-end hook) and run the same `nhv1_ref.py` words over them. Offsets: `player_slots` 0x80453080, then `player_entity[]`/`transformed[]` to the
-fighter GObj, `user_data` to `struct Fighter`; items from `HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]`. Not built or run.
+fighter GObj, `user_data` to `struct Fighter`; items from `HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]`. Built 2026-11-05: `tools/rust-port/dolphin/oracle.sh`, docs/rust-port/notes/dolphin-oracle.md (an HLE hook at 0x801A4FA4, the instruction after `bl HSD_GObj_RunProcs` in `gm_801A4D34`).
 
 ## 10. Comparing two runs
 
@@ -376,5 +376,5 @@ of the CSV body (lines after the header, LF-normalised).
 | 16: optional hardware-faithful seed mode in our builds (render draws on the shared stream, behind a switch) | OPEN: do we add it? It would need its own golden set (ours are recorded with isolation); benefit: `seed`/`hash` comparable with melee-unlocked and Dolphin without `--ignore-seed` |
 | Geno digest `geno0..3` (8.1) | implemented in our C build; the Rust engine has no Geno runtime; melee-unlocked has not implemented it |
 | NHV2 field list | proposed |
-| Dolphin memory oracle | not built |
+| Dolphin memory oracle | built 2026-11-05 (docs/rust-port/notes/dolphin-oracle.md, tools/rust-port/dolphin/oracle.sh): patched Slippi Dolphin, hook after `HSD_GObj_RunProcs` at 0x801A4FA4, words by `nhv1_ref.py`. No tournament replay matches all the way: the first NHV1 difference in each of the 6 slpcheck-exact files tried is `x8c_kb_vel.y` -0.0 (console) vs +0.0 (ours) |
 | UCF / non-vanilla replays | not comparable to the vanilla sim |

@@ -56,6 +56,7 @@ mod engine_view;
 mod engine_audio;
 mod engine_audio_gen;
 mod diff_layout;
+mod dolphin_oracle;
 mod netmatch;
 mod netplay;
 mod play_net;
@@ -513,6 +514,7 @@ fn main() -> ExitCode {
         Some("golden") => golden(&args),
         Some("geno-tests") => geno_suite::run(&args),
         Some("slpcheck") => slpcheck::slpcheck(&args),
+        Some("dolphin-wide") => dolphin_oracle::dolphin_wide(&args),
         Some("diff") => diff::diff(&args),
         Some("synctest") => netmatch::engine_game::synctest(&args),
         Some("lab-check") => lab_check::lab_check(&args),

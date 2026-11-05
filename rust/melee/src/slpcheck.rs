@@ -407,6 +407,19 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     let mut compared = 0i64;
     let mut last_frame = file.first_frame - 1;
     let mut panic_msg: Option<String> = None;
+    // the Dolphin oracle's comparison outputs (notes/dolphin-oracle.md): `--nhv1-out CSV` the NHV1 rows
+    // (frame = slippi frame + 123), `--wide-out TXT [--wide]` every named Fighter/Item field per frame
+    // (+ game_camera and stage_info with --wide), the same lines `melee dolphin-wide` writes
+    let mut nh_csv = get("--nhv1-out").and_then(|p| std::fs::File::create(p).ok());
+    if let Some(f) = nh_csv.as_mut() {
+        use std::io::Write;
+        let _ = f.write_all(b"frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
+    }
+    let mut wide_out = get("--wide-out").and_then(|p| std::fs::File::create(p).ok().map(std::io::BufWriter::new));
+    let wide_all = args.iter().any(|a| a == "--wide");
+    // `--wide-from F --wide-to F`: only those slippi frames (a whole match is ~2 GB of lines)
+    let wide_from: i32 = get("--wide-from").and_then(|v| v.parse().ok()).unwrap_or(i32::MIN);
+    let wide_to: i32 = get("--wide-to").and_then(|v| v.parse().ok()).unwrap_or(i32::MAX);
     let run = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         let mut ticks = 0usize;
         loop {
@@ -433,6 +446,22 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
             ticks += 1;
             last_frame = fr;
+            if let Some(f) = nh_csv.as_mut() {
+                use std::io::Write;
+                let r = e.neutral_row();
+                let mut l = format!("{},{:08X},{:08X},{},{:08X}", fr + 123, r[0], r[1], r[2], r[3]);
+                for w in &r[4..16] {
+                    l.push_str(&format!(",{w:08X}"));
+                }
+                l.push('\n');
+                let _ = f.write_all(l.as_bytes());
+            }
+            if let Some(f) = wide_out.as_mut().filter(|_| fr >= wide_from && fr <= wide_to) {
+                use std::io::Write;
+                let mut t = String::new();
+                crate::dolphin_oracle::engine_frame(&e, fr, wide_all, &mut t);
+                let _ = f.write_all(t.as_bytes());
+            }
             for &port in &ports {
                 let Some(Some(p)) = posts[port].get((fr - file.first_frame) as usize) else { continue };
                 let cap = unsafe { CAP[port] };

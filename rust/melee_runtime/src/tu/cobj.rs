@@ -1019,11 +1019,11 @@ where
     }
     let mut v0 = Vec3::default();
     if 1.0 - (eye.y.abs() as f64) < 0.0001 {
-        v0.x = sqrtf(fmadds(eye.y, eye.y, eye.z * eye.z));
+        v0.x = sqrtf(eye.y * eye.y + eye.z * eye.z); // eye is in memory: not fused on the console
         v0.y = eye.y * (-eye.x / v0.x);
         v0.z = eye.z * (-eye.x / v0.x);
     } else {
-        v0.y = sqrtf(fmadds(eye.x, eye.x, eye.z * eye.z));
+        v0.y = sqrtf(eye.x * eye.x + eye.z * eye.z);
         v0.x = eye.x * (-eye.y / v0.y);
         v0.z = eye.z * (-eye.y / v0.y);
     }

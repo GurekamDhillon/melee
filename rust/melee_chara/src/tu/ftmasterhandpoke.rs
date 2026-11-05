@@ -29,7 +29,7 @@ pub mod ext {
 #[inline]
 pub fn my_lbVector_Len(v: &Vec3) -> f32 {
     melee_core::ct!("my_lbVector_Len");
-    crate::pure::my_sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
+    crate::pure::my_sqrtf(v.x * v.x + v.y * v.y + v.z * v.z) // through a pointer: not fused on the console
 }
 
 /// The arithmetic of `ftMh_Poke1_Phys` after `ftBossLib_8015C208`: the (self_vel.x, self_vel.y)

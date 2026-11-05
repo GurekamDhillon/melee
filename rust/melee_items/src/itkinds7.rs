@@ -28,7 +28,7 @@ pub(crate) fn len3(v: &GcVec) -> f32 {
 /// direction; below that the x velocity is zeroed (y is left as is, as the C does).
 pub fn it_2f28_unk_motion0_phys(item: &mut Item) {
     let v = item.x40_vel;
-    let var_f4 = sqrtf(fmadds(v.x, v.x, v.y * v.y));
+    let var_f4 = sqrtf(v.x * v.x + v.y * v.y); // memory/computed squares: not fused on the console (notes/fp-audit.md)
     // SAFETY: plain-data union member.
     let d = unsafe { item.xDD4_itemVar.unk2.x0 };
     if var_f4 > d {

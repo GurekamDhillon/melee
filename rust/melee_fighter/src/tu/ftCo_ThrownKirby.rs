@@ -210,11 +210,12 @@ pub fn ftCo_800BDB58(g: G, thrower: G) {
 pub fn ftCo_ThrownKirbyStar_Anim(_g: G) { melee_core::ct!("ftCo_ThrownKirbyStar_Anim");}
 pub fn ftCo_ThrownKirbyStar_IASA(_g: G) { melee_core::ct!("ftCo_ThrownKirbyStar_IASA");}
 
-/// static inline `inlineA0`: star speed decay. `SQ(x) + SQ(y)` is one fmuladd -> fmadds.
+/// static inline `inlineA0`: star speed decay. `SQ(fp->self_vel.x) + SQ(fp->self_vel.y)`: squares of
+/// memory fields, not fused on the console (fmuls, fmuls, fadds; notes/fp-audit.md).
 fn inline_a0(g: G) {
     let f = fp(g);
     let (x, y) = (f.self_vel.x, f.self_vel.y);
-    let vel_mag = melee_runtime::gekko::sqrtf(fmadds(x, x, y * y));
+    let vel_mag = melee_runtime::gekko::sqrtf(x * x + y * y);
     let x4 = tk(f).x4;
     if vel_mag > x4 {
         f.self_vel.x = (f.self_vel.x * (vel_mag - x4)) / vel_mag;

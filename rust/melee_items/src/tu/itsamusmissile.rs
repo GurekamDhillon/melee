@@ -325,7 +325,8 @@ pub unsafe extern "C" fn itSamusmissile_UnkMotion0_Phys(gobj: *mut Item_GObj) {
         itSamusmissile_SetRotationX(gobj);
     } else {
         // VEC2_SQ_LEN(v) > SQ(x14): `SQ(x) + SQ(y)` is contracted, `SQ(x14)` is a plain product
-        let sq_len = fmadds((*ip).x40_vel.x, (*ip).x40_vel.x, (*ip).x40_vel.y * (*ip).x40_vel.y);
+        // VEC2_SQ_LEN(ip->x40_vel): not fused on the console (notes/fp-audit.md)
+        let sq_len = (*ip).x40_vel.x * (*ip).x40_vel.x + (*ip).x40_vel.y * (*ip).x40_vel.y;
         if sq_len > (*sa0).x14 * (*sa0).x14 {
             (*ip).x40_vel.x *= (*sa0).x10;
             (*ip).x40_vel.y *= (*sa0).x10;

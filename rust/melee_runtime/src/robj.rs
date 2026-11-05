@@ -215,10 +215,10 @@ pub trait RObjHost {
     fn byte_code_eval(&mut self, bytecode: Option<&[u8]>, args: &[f32], nb_args: u32) -> f32;
 }
 
-/// `HSD_MtxColMag` (mtx.h inline): `sqrtf(m0*m0 + m1*m1 + m2*m2)`, contracted as clang does.
+/// `HSD_MtxColMag` (mtx.h inline): `sqrtf(m0*m0 + m1*m1 + m2*m2)`. Squares of matrix entries (memory):
+/// the console does not fuse them (fmuls x3, fadds x2; notes/fp-audit.md).
 pub fn mtx_col_mag(m: &Mtx, col: usize) -> f32 {
-    let t = fmadds(m[0][col], m[0][col], m[1][col] * m[1][col]);
-    sqrtf(fmadds(m[2][col], m[2][col], t))
+    sqrtf(m[0][col] * m[0][col] + m[1][col] * m[1][col] + m[2][col] * m[2][col])
 }
 
 /// `HSD_MtxColVec`.

@@ -142,11 +142,11 @@ impl GroundColl {
                         (ax, ay, bx, by)
                     }
                 };
-                // C: SQ(dx) + SQ(dy) < 4.0. The shipping build contracts the sum into one
-                // llvm.fmuladd.f32 (fmadds(dx, dx, dy*dy); tools/rust-port/fma_sites.py), then
+                // C: SQ(v1->pos.x - v0->pos.x) + SQ(...) < 4.0. The console does not fuse a square of a
+                // computed expression (mpLineGetNext: fmuls, fmuls, fadds; notes/fp-audit.md), then
                 // compares in double (4.0 is exact in f32).
                 let (dx, dy) = (ax - bx, ay - by);
-                if (melee_core::fp::fmadds(dx, dx, sq(dy)) as f64) < 4.0 {
+                if ((sq(dx) + sq(dy)) as f64) < 4.0 {
                     return result;
                 }
             }

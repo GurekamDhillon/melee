@@ -907,7 +907,9 @@ pub unsafe extern "C" fn lbColl_800077A0(a: *const Vec3, arg1: *const Mtx, b: *c
 
         let diff_ba = Vec3 { x: (*b).x - (*a).x, y: (*b).y - (*a).y, z: (*b).z - (*a).z };
 
-        let dot_diff_cb = sq3(diff_cb.x, diff_cb.y, diff_cb.z);
+        // diff_cb's address goes to lbVector_AngleXY (not inlined), so MWCC keeps it in memory and does
+        // not fuse these squares (fmuls x3, fadds x2; notes/fp-audit.md). ba_dot below stays fused.
+        let dot_diff_cb = diff_cb.x * diff_cb.x + diff_cb.y * diff_cb.y + diff_cb.z * diff_cb.z;
 
         let scl;
         if approximatelyZero(dot_diff_cb) {
@@ -1354,7 +1356,8 @@ unsafe fn setup_cylinder_arrays() {
 fn capsule_mtxs(p0: &Vec3, p1: &Vec3, r: f32) -> (Mtx, Mtx, Mtx, f32) {
     let mut spa4 = mtx::scale(r, r, r);
     let mut sp38 = Vec3 { x: p0.x - p1.x, y: p0.y - p1.y, z: p0.z - p1.z };
-    let var_f31 = sqrtf(sq3(sp38.x, sp38.y, sp38.z));
+    // SQ(sp38.x) + ...: sp38 lives in memory (its address is taken), not fused on the console
+    let var_f31 = sqrtf(sp38.x * sp38.x + sp38.y * sp38.y + sp38.z * sp38.z);
     let mut spd4: Mtx;
     let mut sp74: Mtx = [[0.0; 4]; 3];
     if isSmall(var_f31) || (isSmall(sp38.x) && isSmall(sp38.y) && isSmall(sp38.z)) {

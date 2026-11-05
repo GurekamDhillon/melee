@@ -449,7 +449,7 @@ impl GroundColl {
         let mut calculated = false;
         let dist = |x0: f32, y0: f32, x1: f32, y1: f32| {
             let (dx, dy) = (x0 - x1, y0 - y1);
-            sqrtf(fmadds(dx, dx, dy * dy))
+            sqrtf(dx * dx + dy * dy) // memory/computed squares: not fused on the console (notes/fp-audit.md)
         };
         if self.mp_line_get_prev(line_id) != -1 {
             distance = dist(x0, y0, x1, y1);

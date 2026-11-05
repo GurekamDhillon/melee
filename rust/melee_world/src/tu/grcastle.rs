@@ -2,8 +2,8 @@
 //! Garden / Mute City / Big Blue / Onett (pipes, satellite, bumper, wind platforms).
 //!
 //! Fused sites (tools/rust-port/fma_sites.py), written out: `fmadds` for the platform speeds
-//! `wind * x20 + x24` / `wind * x2C + x30` (`801CDC44`) and the dx*dx + dy*dy distance test of `801CFBD4`
-//! (`fmadds(dx, dx, dy*dy)`: the LHS multiply is the fused one); a true f64 `mul_add` for
+//! `wind * x20 + x24` / `wind * x2C + x30` (`801CDC44`; the dx*dx + dy*dy distance test of `801CFBD4` is a
+//! square of computed expressions, which the console does not fuse: notes/fp-audit.md); a true f64 `mul_add` for
 //! `0.3 * HSD_Randf() + 0.2` (`801D0BBC`, `801D0D24`).
 //!
 //! Native adaptations (same result as the PPC build): the game keeps pointers in `u32` fields
@@ -1583,7 +1583,8 @@ pub unsafe fn grCastle_801CFBD4(gobj: *mut Ground_GObj, arg1: s32) -> s32 {
                         ext::lb_8000B1CC(jobj, null_mut(), &mut pos);
                         let dx = pos.x - target_pos.x;
                         let dy = pos.y - target_pos.y;
-                        melee_runtime::gekko::sqrtf(fmadds(dx, dx, dy * dy)) < 40.0
+                        // squares of computed expressions: not fused on the console (notes/fp-audit.md)
+                        melee_runtime::gekko::sqrtf(dx * dx + dy * dy) < 40.0
                     } {
                         close = 1;
                     } else {

@@ -1233,7 +1233,8 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                             let m = { HSD_JObjSetupMatrix(j); (*j).mtx };
                             let pp = pp!();
                             // 1602: vx*vx + vy*vy fused.
-                            let val = fmadds(pp.vel.x, pp.vel.x, pp.vel.y * pp.vel.y);
+                            // squares of pp->vel (memory): not fused on the console (notes/fp-audit.md)
+                            let val = pp.vel.x * pp.vel.x + pp.vel.y * pp.vel.y;
                             let mut vel_mag = pp.vel.z * pp.vel.z;
                             vel_mag += val;
                             let dx = m[0][3] - pp.pos.x;
@@ -1320,7 +1321,8 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         let mut speed = fmadds(range, r, base);
                         let pp = pp!();
                         // 2016: vx*vx + vy*vy + vz*vz, two fused adds.
-                        let mut mag = fmadds(pp.vel.z, pp.vel.z, fmadds(pp.vel.x, pp.vel.x, pp.vel.y * pp.vel.y));
+                        // squares of pp->vel (memory): not fused on the console (notes/fp-audit.md)
+                        let mut mag = pp.vel.x * pp.vel.x + pp.vel.y * pp.vel.y + pp.vel.z * pp.vel.z;
                         if mag > 0.0 {
                             mag = sqrtf(mag);
                         }

@@ -374,7 +374,8 @@ pub unsafe fn camera_sdata2_order() {
 /// `vec_len`
 pub unsafe fn vec_len(mut offset: *mut Vec) -> f32 {
     melee_core::ct!("vec_len");
-    return melee_runtime::gekko::sqrtf(fmadds((*offset).z, (*offset).z, fmadds((*offset).x, (*offset).x, (*offset).y * (*offset).y)));
+    // squares of `offset->x..z`: memory expressions, not fused on the console (notes/fp-audit.md)
+    return melee_runtime::gekko::sqrtf((*offset).x * (*offset).x + (*offset).y * (*offset).y + (*offset).z * (*offset).z);
 }
 
 /// `Camera_Init`
@@ -2167,7 +2168,8 @@ pub unsafe fn Camera_8002C1A8() {
 /// `eye_offset_len`
 pub unsafe fn eye_offset_len(mut offset: *mut Vec) -> f32 {
     melee_core::ct!("eye_offset_len");
-    return melee_runtime::gekko::sqrtf(fmadds((*offset).z, (*offset).z, fmadds((*offset).x, (*offset).x, (*offset).y * (*offset).y)));
+    // `z*z + (x*x + y*y)` over memory: no fusion on the console (notes/fp-audit.md)
+    return melee_runtime::gekko::sqrtf((*offset).z * (*offset).z + ((*offset).x * (*offset).x + (*offset).y * (*offset).y));
 }
 
 /// `Camera_8002C5B4`
@@ -2249,7 +2251,7 @@ pub unsafe fn Camera_8002C5B4(mut arg0: *mut Camera_x2D0) {
     eye_offset_y = core::ptr::addr_of_mut!((*cam).pause_eye_offset.y) as *mut f32;
     eye_offset_z = core::ptr::addr_of_mut!((*cam).pause_eye_offset.z) as *mut f32;
     len = eye_offset_len(eye_offset) as f64;
-    xz_dist = melee_runtime::gekko::sqrtf(fmadds((*eye_offset).x, (*eye_offset).x, (*eye_offset_z) * (*eye_offset_z)));
+    xz_dist = melee_runtime::gekko::sqrtf((*eye_offset).x * (*eye_offset).x + (*eye_offset_z) * (*eye_offset_z));
     ext::PSVECCrossProduct(eye_offset, core::ptr::addr_of_mut!((*cam).pause_up) as *mut Vec, core::ptr::addr_of_mut!(cross1) as *mut Vec);
     let _ = ext::lbVector_Normalize(core::ptr::addr_of_mut!(cross1) as *mut Vec);
     ext::PSVECCrossProduct(core::ptr::addr_of_mut!(cross1) as *mut Vec, eye_offset, core::ptr::addr_of_mut!(cross2) as *mut Vec);
@@ -3346,9 +3348,9 @@ pub unsafe fn Camera_8002F0E4(mut arg0: i32) {
             2 => {
                 {
                     let _ = lbVector_Diff(core::ptr::addr_of_mut!(game_camera.transform.position) as *mut Vec, core::ptr::addr_of_mut!(game_camera.transform.interest) as *mut Vec, core::ptr::addr_of_mut!(spC) as *mut Vec);
-                    temp_f30 = ext::atan2f(spC.y, melee_runtime::gekko::sqrtf(fmadds(spC.x, spC.x, spC.z * spC.z)));
+                    temp_f30 = ext::atan2f(spC.y, melee_runtime::gekko::sqrtf(spC.x * spC.x + spC.z * spC.z));
                     temp_f31 = ext::atan2f(spC.x, spC.z);
-                    *((core::ptr::addr_of_mut!(game_camera.x368) as *mut Vec) as *mut i16) = melee_runtime::cabi::f2i16(melee_runtime::gekko::sqrtf(fmadds(spC.z, spC.z, fmadds(spC.x, spC.x, spC.y * spC.y))) as f64);
+                    *((core::ptr::addr_of_mut!(game_camera.x368) as *mut Vec) as *mut i16) = melee_runtime::cabi::f2i16(melee_runtime::gekko::sqrtf(spC.z * spC.z + (spC.x * spC.x + spC.y * spC.y)) as f64);
                     game_camera.x368.y = temp_f30;
                     game_camera.x368.z = temp_f31;
                     break 's75;
@@ -3775,7 +3777,9 @@ pub unsafe fn Camera_8002FEEC(mut arg0: i32) {
             let _ = lbVector_Diff(core::ptr::addr_of_mut!(target) as *mut Vec, core::ptr::addr_of_mut!(eye) as *mut Vec, core::ptr::addr_of_mut!(cm_80453004.follow_eye_offset) as *mut Vec);
             temp_f1_3 = cm_80453004.follow_eye_offset.x;
             temp_f1 = temp_f1_3 * temp_f1_3;
-            new_var = fmadds(cm_80453004.follow_eye_offset.z, cm_80453004.follow_eye_offset.z, fmadds(cm_80453004.follow_eye_offset.y, cm_80453004.follow_eye_offset.y, temp_f1));
+            // squares of a global's fields: not fused on the console (Camera_8002FEEC has no fused op)
+            new_var = cm_80453004.follow_eye_offset.z * cm_80453004.follow_eye_offset.z
+                + (temp_f1 + cm_80453004.follow_eye_offset.y * cm_80453004.follow_eye_offset.y);
             temp_f1_4 = temp_f31 / melee_runtime::gekko::sqrtf(new_var);
             cm_80453004.follow_eye_offset.x = cm_80453004.follow_eye_offset.x * temp_f1_4;
             cm_80453004.follow_eye_offset.y = cm_80453004.follow_eye_offset.y * temp_f1_4;
@@ -5044,5 +5048,6 @@ pub unsafe fn HSD_GObjGetHSDObj(mut gobj: *mut HSD_GObj) -> *mut c_void {
 /// `lbVector_Len`
 pub unsafe fn lbVector_Len(mut vec: *mut Vec) -> f32 {
     melee_core::ct!("lbVector_Len");
-    return melee_runtime::gekko::sqrtf(fmadds((*vec).z, (*vec).z, fmadds((*vec).x, (*vec).x, (*vec).y * (*vec).y)));
+    // through a pointer: not fused on the console (notes/fp-audit.md)
+    return melee_runtime::gekko::sqrtf((*vec).x * (*vec).x + (*vec).y * (*vec).y + (*vec).z * (*vec).z);
 }

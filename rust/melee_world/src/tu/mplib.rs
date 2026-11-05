@@ -561,7 +561,7 @@ pub unsafe fn mpLineGetNext(mut line_id: i32) -> i32 {
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)) as *mut CollVtx;
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v1).pos.x - (*v0).pos.x, (*v1).pos.x - (*v0).pos.x, ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
+            if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return ret;
             }
         }
@@ -582,7 +582,7 @@ pub unsafe fn mpLineGetPrev(mut line_id: i32) -> i32 {
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize)) as *mut CollVtx;
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v0).pos.x - (*v1).pos.x, (*v0).pos.x - (*v1).pos.x, ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
+            if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return ret;
             }
         }
@@ -1068,7 +1068,7 @@ pub unsafe fn mpLib_8004ED5C(mut line_id: i32, mut x0_out: *mut f32, mut y0_out:
     x1_f2 = (*groundCollVtx.offset(i1 as isize)).pos.x;
     y1_f3 = (*groundCollVtx.offset(i1 as isize)).pos.y;
     if mpLineGetPrev(line_id) != (-1_i32) {
-        distance = melee_runtime::gekko::sqrtf(fmadds(x0_f0 - x1_f2, x0_f0 - x1_f2, (y0_f1 - y1_f3) * (y0_f1 - y1_f3)));
+        distance = melee_runtime::gekko::sqrtf(((x0_f0 - x1_f2) * (x0_f0 - x1_f2) + (y0_f1 - y1_f3) * (y0_f1 - y1_f3)));
         if distance > 0.001f32 {
             x0_f0 = x0_f0 + ((x0_f0 - x1_f2) / distance);
             y0_f1 = y0_f1 + ((y0_f1 - y1_f3) / distance);
@@ -1077,7 +1077,7 @@ pub unsafe fn mpLib_8004ED5C(mut line_id: i32, mut x0_out: *mut f32, mut y0_out:
     }
     if mpLineGetNext(line_id) != (-1_i32) {
         if !(calculated_distance != 0) {
-            distance = melee_runtime::gekko::sqrtf(fmadds(x0_f0 - x1_f2, x0_f0 - x1_f2, (y0_f1 - y1_f3) * (y0_f1 - y1_f3)));
+            distance = melee_runtime::gekko::sqrtf(((x0_f0 - x1_f2) * (x0_f0 - x1_f2) + (y0_f1 - y1_f3) * (y0_f1 - y1_f3)));
         }
         if distance > 0.001f32 {
             x1_f2 = x1_f2 + ((x1_f2 - x0_f0) / distance);
@@ -1153,7 +1153,7 @@ pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, m
                                 y1_sp3C = y1_sp3C + y_offset;
                                 if ((if (y0_sp44 - y1_sp3C) < (0 as f32) { -(y0_sp44 - y1_sp3C) } else { y0_sp44 - y1_sp3C }) as f64) > 0.0001f64 {
                                     if mpLineIntersection(x0_sp48, y0_sp44, x1_sp40, y1_sp3C, ax, ay, bx, by, core::ptr::addr_of_mut!(px_sp54) as *mut f32, core::ptr::addr_of_mut!(py_sp50) as *mut f32) != 0 {
-                                        dist2 = fmadds(px_sp54 - ax, px_sp54 - ax, (py_sp50 - ay) * (py_sp50 - ay));
+                                        dist2 = ((px_sp54 - ax) * (px_sp54 - ax) + (py_sp50 - ay) * (py_sp50 - ay));
                                         if min_dist2_f30 > dist2 {
                                             min_dist2_f30 = dist2;
                                             if !vec_out.is_null() {
@@ -1178,7 +1178,7 @@ pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, m
                                     }
                                 } else {
                                     if (ay >= by) && (mpLineIntersectionH(core::ptr::addr_of_mut!(px_sp54) as *mut f32, core::ptr::addr_of_mut!(py_sp50) as *mut f32, x0_sp48, y0_sp44, x1_sp40, ax, ay, bx, by) != 0) {
-                                        dist2 = fmadds(px_sp54 - ax, px_sp54 - ax, (py_sp50 - ay) * (py_sp50 - ay));
+                                        dist2 = ((px_sp54 - ax) * (px_sp54 - ax) + (py_sp50 - ay) * (py_sp50 - ay));
                                         if min_dist2_f30 > dist2 {
                                             min_dist2_f30 = dist2;
                                             if !vec_out.is_null() {
@@ -1427,7 +1427,7 @@ pub unsafe fn mpCheckCeiling(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32,
                                 mpLib_8004ED5C((line_r26.offset_from(groundCollLine) as i64) as i32, core::ptr::addr_of_mut!(x0) as *mut f32, core::ptr::addr_of_mut!(y0) as *mut f32, core::ptr::addr_of_mut!(x1) as *mut f32, core::ptr::addr_of_mut!(y1) as *mut f32);
                                 if ((if (y0 - y1) < (0 as f32) { -(y0 - y1) } else { y0 - y1 }) as f64) > 0.0001f64 {
                                     if mpLineIntersection(x0, y0, x1, y1, ax, ay, bx, by, core::ptr::addr_of_mut!(int_x) as *mut f32, core::ptr::addr_of_mut!(int_y) as *mut f32) != 0 {
-                                        dist2 = fmadds(int_x - ax, int_x - ax, (int_y - ay) * (int_y - ay));
+                                        dist2 = ((int_x - ax) * (int_x - ax) + (int_y - ay) * (int_y - ay));
                                         if min_dist2 > dist2 {
                                             min_dist2 = dist2;
                                             if !vec_out.is_null() {
@@ -1452,7 +1452,7 @@ pub unsafe fn mpCheckCeiling(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32,
                                     }
                                 } else {
                                     if (ay <= by) && (mpLineIntersectionH(core::ptr::addr_of_mut!(int_x) as *mut f32, core::ptr::addr_of_mut!(int_y) as *mut f32, x0, y0, x1, ax, ay, bx, by) != 0) {
-                                        dist2 = fmadds(int_x - ax, int_x - ax, (int_y - ay) * (int_y - ay));
+                                        dist2 = ((int_x - ax) * (int_x - ax) + (int_y - ay) * (int_y - ay));
                                         if min_dist2 > dist2 {
                                             min_dist2 = dist2;
                                             if !vec_out.is_null() {
@@ -2304,7 +2304,7 @@ pub unsafe fn mpLib_800511A4_RightWall(mut ax: f32, mut ay: f32, mut bx: f32, mu
                                     vdy = y0 - y;
                                     if fmadds(vdx, vdx, vdy * vdy) > 0.001f32 {
                                         if mpLineIntersection(cx, cy, dx, dy, x, y, x0, y0, core::ptr::addr_of_mut!(int_x) as *mut f32, core::ptr::addr_of_mut!(int_y) as *mut f32) != 0 {
-                                            dist2 = fmadds(int_x - x1, int_x - x1, (int_y - y1) * (int_y - y1));
+                                            dist2 = ((int_x - x1) * (int_x - x1) + (int_y - y1) * (int_y - y1));
                                             if fmadds(vdx, int_x - x1, vdy * (int_y - y1)) < 0.0f32 {
                                                 dist2 = -dist2;
                                             }
@@ -2329,7 +2329,7 @@ pub unsafe fn mpLib_800511A4_RightWall(mut ax: f32, mut ay: f32, mut bx: f32, mu
                                     vdy = y0 - y;
                                     if fmadds(vdx, vdx, vdy * vdy) > 0.001f32 {
                                         if mpLineIntersection(cx, cy, dx, dy, x, y, x0, y0, core::ptr::addr_of_mut!(int_x) as *mut f32, core::ptr::addr_of_mut!(int_y) as *mut f32) != 0 {
-                                            dist2 = fmadds(int_x - x1, int_x - x1, (int_y - y1) * (int_y - y1));
+                                            dist2 = ((int_x - x1) * (int_x - x1) + (int_y - y1) * (int_y - y1));
                                             if fmadds(vdx, int_x - x1, vdy * (int_y - y1)) < 0.0f32 {
                                                 dist2 = -dist2;
                                             }
@@ -2429,7 +2429,7 @@ pub unsafe fn mpLib_800515A0_LeftWall(mut a0x: f32, mut a0y: f32, mut a1x: f32, 
                                     vdy = y0 - y;
                                     if fmadds(vdx, vdx, vdy * vdy) > 0.001f32 {
                                         if mpLineIntersection(b0x, b0y, b1x, b1y, x, y, x0, y0, core::ptr::addr_of_mut!(int_x) as *mut f32, core::ptr::addr_of_mut!(int_y) as *mut f32) != 0 {
-                                            dist2 = fmadds(int_x - x1, int_x - x1, (int_y - y1) * (int_y - y1));
+                                            dist2 = ((int_x - x1) * (int_x - x1) + (int_y - y1) * (int_y - y1));
                                             if fmadds(vdx, int_x - x1, vdy * (int_y - y1)) < 0.0f32 {
                                                 dist2 = -dist2;
                                             }
@@ -2454,7 +2454,7 @@ pub unsafe fn mpLib_800515A0_LeftWall(mut a0x: f32, mut a0y: f32, mut a1x: f32, 
                                     vdy = y0 - y;
                                     if fmadds(vdx, vdx, vdy * vdy) > 0.001f32 {
                                         if mpLineIntersection(b0x, b0y, b1x, b1y, x, y, x0, y0, core::ptr::addr_of_mut!(int_x) as *mut f32, core::ptr::addr_of_mut!(int_y) as *mut f32) != 0 {
-                                            dist2 = fmadds(int_x - x1, int_x - x1, (int_y - y1) * (int_y - y1));
+                                            dist2 = ((int_x - x1) * (int_x - x1) + (int_y - y1) * (int_y - y1));
                                             if fmadds(vdx, int_x - x1, vdy * (int_y - y1)) < 0.0f32 {
                                                 dist2 = -dist2;
                                             }
@@ -2852,7 +2852,7 @@ unsafe fn mpLineGetNextCheckInline(mut line: *mut MapLine, mut result: i16) -> i
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v1).pos.x - (*v0).pos.x, (*v1).pos.x - (*v0).pos.x, ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
+            if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result as i32;
             }
         }
@@ -2867,7 +2867,7 @@ unsafe fn mpLineGetPrevCheckInline(mut line: *mut MapLine, mut result: i16) -> i
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v0).pos.x - (*v1).pos.x, (*v0).pos.x - (*v1).pos.x, ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
+            if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result as i32;
             }
         }
@@ -2882,7 +2882,7 @@ unsafe fn mpLineGetPrevCheckInlineVtx(mut line: *mut MapLine, mut result: i16, m
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v0).pos.x - (*v1).pos.x, (*v0).pos.x - (*v1).pos.x, ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
+            if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result as i32;
             }
         }
@@ -2898,7 +2898,7 @@ unsafe fn mpLineGetNextCheckInlineVtx(mut line: *mut MapLine, mut result: i16, m
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v1).pos.x - (*v0).pos.x, (*v1).pos.x - (*v0).pos.x, ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
+            if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result as i32;
             }
         }
@@ -3137,7 +3137,7 @@ unsafe fn mpLineGetNextInline(mut line_id: i32) -> i32 {
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)) as *mut CollVtx;
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v1).pos.x - (*v0).pos.x, (*v1).pos.x - (*v0).pos.x, ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
+            if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
         }
@@ -3154,7 +3154,7 @@ unsafe fn mpLineGetNextCachedInline(mut line_id: i32) -> i32 {
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v1).pos.x - (*v0).pos.x, (*v1).pos.x - (*v0).pos.x, ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
+            if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
         }
@@ -3169,7 +3169,7 @@ unsafe fn mpLineGetNextCheckResultFirst(mut result: i32, mut line: *mut MapLine)
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v1).pos.x - (*v0).pos.x, (*v1).pos.x - (*v0).pos.x, ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
+            if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
         }
@@ -3219,7 +3219,7 @@ unsafe fn mpLineGetPrevInline(mut line_id: i32) -> i32 {
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v0).pos.x - (*v1).pos.x, (*v0).pos.x - (*v1).pos.x, ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
+            if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
         }
@@ -3234,7 +3234,7 @@ unsafe fn mpLineGetPrevCheckResultFirst(mut result: i32, mut line: *mut MapLine)
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v0).pos.x - (*v1).pos.x, (*v0).pos.x - (*v1).pos.x, ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
+            if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
         }
@@ -3862,7 +3862,7 @@ unsafe fn mpLineGetNextFrom(mut line: *mut MapLine, mut flags_base: *const u32) 
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v1).pos.x - (*v0).pos.x, (*v1).pos.x - (*v0).pos.x, ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
+            if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
         }
@@ -3878,7 +3878,7 @@ unsafe fn mpLineGetPrevFrom(mut line: *mut MapLine, mut flags_base: *const u32) 
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
-            if (fmadds((*v0).pos.x - (*v1).pos.x, (*v0).pos.x - (*v1).pos.x, ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
+            if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
         }

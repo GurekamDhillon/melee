@@ -665,7 +665,8 @@ pub unsafe extern "C" fn grKinokoRoute_80207C88(gobj: *mut HSD_GObj) {
         let mut diff = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         ext::lbVector_Diff(&mut cam_offset, &mut cam_target, &mut diff);
         // SQ(x) + SQ(y) + SQ(z): two fused multiply-adds, (x*x + y*y) first.
-        let len2 = fmadds(diff.z, diff.z, fmadds(diff.x, diff.x, diff.y * diff.y));
+        // SQ(diff.x) + ...: diff's address goes to lbVector_Diff / _Normalize, so not fused on the console
+        let len2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
         if sqrtf(len2) > 10.0_f32 {
             ext::lbVector_Normalize(&mut diff);
             diff.x *= 10.0_f32;

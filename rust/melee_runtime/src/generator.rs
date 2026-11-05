@@ -718,8 +718,8 @@ impl<J: Copy + PartialEq> GeneratorSystem<J> {
             }
             8 => {
                 let v = g.vel;
-                g.aux[0] = sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)));
-                let mag = sqrtf(fmadds(v.x, v.x, v.z * v.z));
+                g.aux[0] = sqrtf(v.z * v.z + (v.x * v.x + v.y * v.y)); // squares of memory: not fused on the console (notes/fp-audit.md)
+                let mag = sqrtf(v.x * v.x + v.z * v.z);
                 g.aux[1] = if mag < FLT_MIN {
                     if v.y >= 0.0 { HALF_PI_F } else { -HALF_PI_F }
                 } else {
@@ -843,7 +843,7 @@ pub fn emit<J: Copy + PartialEq, H: GeneratorHost<J>>(gen: &mut HsdGenerator<J>,
         return gen.count;
     }
     let vel_copy = gen.vel;
-    let vel_mag_sq = sqrtf(fmadds(vel_copy.z, vel_copy.z, fmadds(vel_copy.x, vel_copy.x, vel_copy.y * vel_copy.y)));
+    let vel_mag_sq = sqrtf(vel_copy.z * vel_copy.z + (vel_copy.x * vel_copy.x + vel_copy.y * vel_copy.y)); // squares of memory: not fused on the console (notes/fp-audit.md)
     let mut rot = mtx::identity();
     let shape = gen.type_ & 0xF;
 
@@ -1091,7 +1091,7 @@ pub fn emit<J: Copy + PartialEq, H: GeneratorHost<J>>(gen: &mut HsdGenerator<J>,
                 e.x += gen.pos.x;
                 e.y += gen.pos.y;
                 e.z += gen.pos.z;
-                let mag = sqrtf(fmadds(zz, zz, fmadds(zx, zx, zy * zy)));
+                let mag = sqrtf(zx * zx + zy * zy + zz * zz); // squares of memory: not fused on the console (notes/fp-audit.md)
                 let scale = elevation / mag;
                 let vec = mtx::mult_vec(&rot, &Vec3 { x: zx * scale, y: zy * scale, z: zz * scale });
                 host.spawn_particle(&spawn_args(gen, id, gen.kind, e, vec, gen.size, gen.grav, gen.fric));

@@ -301,7 +301,8 @@ pub unsafe extern "C" fn it_8026B1D4(gobj: *mut HSD_GObj, itemHitboxUnk: *mut Hi
     if (*ip).xDC8_word.flags.x14() != 0 {
         let v = (*ip).x40_vel;
         // x*x + y*y + z*z: the two left-most products fuse in the C build (see RUST_PORT float contraction).
-        let sum = fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y));
+        // squares of ip->x40_vel fields: not fused on the console (notes/fp-audit.md)
+        let sum = v.x * v.x + v.y * v.y + v.z * v.z;
         let itemSpeed = sqrtf_native(sum);
         let cd = ext::it_804D6D28;
         ret = fmadds(itemSpeed, (*cd).x80_float[5], ret);
@@ -1266,7 +1267,8 @@ pub unsafe fn it_8026b1d4(gobj: *mut HSD_GObj, cap: &HitCapsule, common: &ItemCo
     let ip = item(gobj);
     if ip.xDC8_word.flags.x14() != 0 {
         let v = &ip.x40_vel;
-        let speed = sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)));
+        // squares of ip->x40_vel fields: not fused on the console (notes/fp-audit.md)
+        let speed = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
         ret = fmadds(speed, common.x80_float[5], ret);
         ret += common.x80_float[6];
         if ret as f64 <= 1.0 {

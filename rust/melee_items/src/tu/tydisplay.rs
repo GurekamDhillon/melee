@@ -613,7 +613,8 @@ pub unsafe fn _tyDisplay_80318CB4(arg0: i32) {
             if ext::HSD_Randi(3) != 0 {
                 let theta = atan2f((*grid).pos[iu].z, (*grid).pos[iu].x);
                 // MSL sqrtf (the inline Newton-Raphson on frsqrte)
-                let mut mag = sqrtf(fmadds((*grid).pos[iu].x, (*grid).pos[iu].x, (*grid).pos[iu].z * (*grid).pos[iu].z));
+                // squares of memory: not fused on the console (notes/fp-audit.md)
+                let mut mag = sqrtf((*grid).pos[iu].x * (*grid).pos[iu].x + (*grid).pos[iu].z * (*grid).pos[iu].z);
                 let start: i32 = if i < 0x24 {
                     0
                 } else {

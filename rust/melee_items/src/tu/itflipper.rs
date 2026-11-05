@@ -291,7 +291,7 @@ pub unsafe extern "C" fn itFlipper_SpinSpeedFromFighter(gobj: *mut Item_GObj, fi
     let attrs = attrs_of(ip);
     ext::ftLib_800866DC(fighter, pos);
     ext::ftLib_80086BEC(fighter, vel);
-    (*attrs).x18_spinMultiplier * sqrtf(fmadds((*vel).x, (*vel).x, (*vel).y * (*vel).y))
+    (*attrs).x18_spinMultiplier * sqrtf((*vel).x * (*vel).x + (*vel).y * (*vel).y)
 }
 
 pub unsafe extern "C" fn itFlipper_SpinFromFighter_inline(gobj: *mut Item_GObj, vel: *mut Vec, pos: *mut Vec, mut speed: f32) {

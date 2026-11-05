@@ -390,11 +390,12 @@ fn ftCo_SpawnEffect_x406(g: G, vec: &mut Vec3, mut f: f32) {
         vec as *mut Vec3 as *mut core::ffi::c_void, &mut f as *mut f32 as *mut core::ffi::c_void);
 }
 
-/// static inline `ftCo_Speed`: two fmuladds (x*x + y*y, then + z*z).
+/// static inline `ftCo_Speed`: squares of `fp->self_vel` fields, which the console does not fuse
+/// (fmuls x3, fadds x2; notes/fp-audit.md).
 pub fn ftCo_Speed(f: &Fighter) -> f32 {
     melee_core::ct!("ftCo_Speed");
     let v = &f.self_vel;
-    melee_runtime::gekko::sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
+    melee_runtime::gekko::sqrtf(v.x * v.x + v.y * v.y + v.z * v.z)
 }
 
 /// static `ftCo_DamageIce_Collide`: the block hits a wall/ceiling: shatter or bounce.

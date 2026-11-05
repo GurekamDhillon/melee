@@ -971,11 +971,11 @@ pub fn fn_8003F294(slot: i32, index: i32) {
 
         {
             let t2 = tbl(slot);
-            let mag: f32 = sqrtf(fmadds(
-                (*t2).x0_staleMoveTable.xCDC,
-                (*t2).x0_staleMoveTable.xCDC,
-                (*t2).x0_staleMoveTable.xCE0 * (*t2).x0_staleMoveTable.xCE0,
-            ));
+            // memory squares: not fused on the console (notes/fp-audit.md)
+            let mag: f32 = sqrtf(
+                (*t2).x0_staleMoveTable.xCDC * (*t2).x0_staleMoveTable.xCDC
+                    + (*t2).x0_staleMoveTable.xCE0 * (*t2).x0_staleMoveTable.xCE0,
+            );
             let x8c: f32 = f32::from_bits(pl.x8C);
             pl_80039238(slot, 0x44, null_mut(), pl.x88, &mut (*table).xDC0, x8c, mag);
         }
@@ -1046,11 +1046,11 @@ pub fn fn_8003F654(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
 
             let b34: i32 = ext::ft_80087B34(entity);
             if b34 == 1 {
-                let dist = sqrtf(fmadds(
-                    (*prev_pos).x - (*pos).x,
-                    (*prev_pos).x - (*pos).x,
-                    ((*prev_pos2).y - (*pos).y) * ((*prev_pos).y - (*pos).y),
-                ));
+                // squares of computed expressions: not fused on the console (fn_8003F654: fmuls, fmuls, fadds)
+                let dist = sqrtf(
+                    ((*prev_pos).x - (*pos).x) * ((*prev_pos).x - (*pos).x)
+                        + ((*prev_pos2).y - (*pos).y) * ((*prev_pos).y - (*pos).y),
+                );
                 let teammate_slot: i32 = ext::ftLib_80087300(entity);
                 (*table).xD80 += dist;
                 if dist > (*table).xD84 {

@@ -76,7 +76,7 @@ pub unsafe fn it_link_arrow_802a850c_inline_2(gobj: *mut HSD_GObj, quat: &mut Qu
 
 /// `calc_dist_2d_accurate` (itluigifireball.c, static): MSL `sqrtf_accurate(x*x + y*y)` as f64.
 pub fn calc_dist_2d_accurate(v: &GcVec) -> f64 {
-    sqrtf_accurate(fmadds(v.x, v.x, v.y * v.y)) as f64
+    sqrtf_accurate(v.x * v.x + v.y * v.y) as f64 // VEC2_SQ_LEN(*v): not fused on the console
 }
 
 pub use crate::tu::itcoll::it_80271b60;

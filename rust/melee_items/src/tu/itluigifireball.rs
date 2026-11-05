@@ -136,7 +136,8 @@ pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Phys(gobj: *mut Item_GObj) {
 /// `fmadds` (x*x fused with the y*y product).
 pub unsafe extern "C" fn calc_dist_2d_accurate(v: *mut Vec3) -> f64 {
     melee_core::ct!("calc_dist_2d_accurate");
-    sqrtf_accurate(fmadds((*v).x, (*v).x, (*v).y * (*v).y)) as f64
+    // VEC2_SQ_LEN(*v) through a pointer: not fused on the console (notes/fp-audit.md)
+    sqrtf_accurate((*v).x * (*v).x + (*v).y * (*v).y) as f64
 }
 
 pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {

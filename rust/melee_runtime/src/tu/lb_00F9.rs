@@ -590,8 +590,9 @@ pub unsafe fn lb_8001044C(desc: *mut DynamicsDesc, colliders_raw: *mut c_void, n
                 coll_dir.y = (*collider).x18.y - d.unk_2C.y;
                 coll_dir.z = (*collider).x18.z - d.unk_2C.z;
 
-                let coll_dist = crate::gekko::sqrtf(fmadds(coll_dir.z, coll_dir.z,
-                    fmadds(coll_dir.x, coll_dir.x, coll_dir.y * coll_dir.y)));
+                // coll_dir's address goes to lbVector_Angle: squares not fused on the console
+                let coll_dist = crate::gekko::sqrtf(coll_dir.z * coll_dir.z
+                    + (coll_dir.x * coll_dir.x + coll_dir.y * coll_dir.y));
                 let mut collision_point: Vec = core::mem::zeroed();
                 if coll_dist > (*collider).v2
                     && ext::lbColl_80005C44(&d.unk_2C, &next_bone_pos, &(*collider).x18,

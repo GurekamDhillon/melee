@@ -336,7 +336,8 @@ pub unsafe extern "C" fn itSamusbomb_UnkMotion2_Phys(gobj: *mut Item_GObj) {
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSamusBombAttributes;
 
     // VEC2_SQ_LEN(x7C) = SQ(x) + SQ(y), contracted
-    let sq = fmadds((*ip).x7C.x, (*ip).x7C.x, (*ip).x7C.y * (*ip).x7C.y);
+    // VEC2_SQ_LEN(ip->x7C): not fused on the console (notes/fp-audit.md)
+    let sq = (*ip).x7C.x * (*ip).x7C.x + (*ip).x7C.y * (*ip).x7C.y;
     if my_sqrtf(sq) > (*attr).xC {
         ext::lbVector_NormalizeXY(&mut (*ip).x7C);
         let mult = (*attr).xC;

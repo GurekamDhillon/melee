@@ -5,7 +5,8 @@
 //! port, or a TODO panic).
 //!
 //! Fused float sites (shipping `-ffp-contract=on`, `melee_core::fp::fmadds`): `x*x + y*y` in
-//! `calcAngle`, `ftCo_8008E5A4`, `ftCo_Damage_OnExitHitlag`, the VEC2/VEC3_SQ_LEN users,
+//! `calcAngle`, `ftCo_8008E5A4`, `ftCo_Damage_OnExitHitlag`'s kb_x/kb_y length (squares of memory
+//! vectors, `VEC2/VEC3_SQ_LEN(fp->...)`, are NOT fused: the console's MWCC leaves them as fmuls + fadds),
 //! `ftCo_Damage_CalcAngle`'s `x148 * q + 1`, `angle += scale * f30`, and `ftCo_Ucf084Sdi`.
 //!
 //! `ftCo_8008DA4C`: C returns an uninitialised `result` when `dmg.x1838_percentTemp == 0`; the
@@ -57,10 +58,16 @@ fn cv(v: &Vec3) -> melee_core::vec::Vec3 {
 fn sq_len2(x: f32, y: f32) -> f32 {
     fmadds(x, x, y * y)
 }
-/// `VEC3_SQ_LEN`: `(x*x + y*y) + z*z` (both adds fused).
+/// `VEC2_SQ_LEN` of a memory vector (`fp->input.lstick[0]`, `fp->x8c_kb_vel`): MWCC does not fuse a square
+/// of a memory expression, so the console rounds both products (fmuls, fmuls, fadds). notes/fp-audit.md.
 #[inline(always)]
-fn sq_len3(v: &Vec3) -> f32 {
-    fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y))
+fn sq_len2_mem(x: f32, y: f32) -> f32 {
+    x * x + y * y
+}
+/// `VEC3_SQ_LEN` of a memory vector: `(x*x + y*y) + z*z`, no fusion (as [`sq_len2_mem`]).
+#[inline(always)]
+fn sq_len3_mem(v: &Vec3) -> f32 {
+    v.x * v.x + v.y * v.y + v.z * v.z
 }
 
 /// Calls out of the TU. `hook::<name>` overrides; unset = the port, or a TODO panic.
@@ -578,7 +585,7 @@ pub fn ftCo_Damage_OnEveryHitlag(g: G) {
     let f = fp(g);
     let c = cd();
     if f.allow_sdi() != 0
-        && sq_len2(f.input.lstick[0].x, f.input.lstick[0].y) >= c.sdi_min_stick_mag * c.sdi_min_stick_mag
+        && sq_len2_mem(f.input.lstick[0].x, f.input.lstick[0].y) >= c.sdi_min_stick_mag * c.sdi_min_stick_mag
         && ((f.active_timer.lstick.x as i32) < c.sdi_stick_window
             || (f.active_timer.lstick.y as i32) < c.sdi_stick_window
             || ftCo_Ucf084Sdi(f))
@@ -624,7 +631,7 @@ pub fn ftCo_Damage_OnExitHitlag(g: G) {
     melee_core::ct!("ftCo_Damage_OnExitHitlag");
     let f = fp(g);
     let c = cd();
-    let in_circle = sq_len2(f.input.lstick[0].x, f.input.lstick[0].y) >= c.sdi_min_stick_mag * c.sdi_min_stick_mag;
+    let in_circle = sq_len2_mem(f.input.lstick[0].x, f.input.lstick[0].y) >= c.sdi_min_stick_mag * c.sdi_min_stick_mag;
     if in_circle || ext::ftCo_800DF608(f) {
         let (x, y);
         if ext::ftCo_800DF608(f) {
@@ -1138,7 +1145,7 @@ pub fn ftCo_Damage_Coll(g: G) {
             ext::ftCo_80097D40(g);
         } else {
             let c = cd();
-            let mag = sqrtf(sq_len2(f.x8c_kb_vel.x, f.x8c_kb_vel.y));
+            let mag = sqrtf(sq_len2_mem(f.x8c_kb_vel.x, f.x8c_kb_vel.y));
             if mag >= c.x1E0 {
                 ext::ftCo_80097D40(g);
             } else if mag >= c.x1E4 {
@@ -1159,7 +1166,7 @@ pub fn ftCo_Damage_SetMv8FromKbThreshold(f: &mut Fighter) {
     melee_core::ct!("ftCo_Damage_SetMv8FromKbThreshold");
     let c = cd();
     let kb_vel = if f.ground_or_air == GA_Air {
-        sqrtf(sq_len3(&Vec3 { x: f.x8c_kb_vel.x, y: f.x8c_kb_vel.y, z: f.x8c_kb_vel.z }))
+        sqrtf(sq_len3_mem(&Vec3 { x: f.x8c_kb_vel.x, y: f.x8c_kb_vel.y, z: f.x8c_kb_vel.z }))
     } else {
         abs_c(f.xF0_ground_kb_vel)
     };
@@ -1254,7 +1261,7 @@ pub fn ftCo_DamageFly_Phys(g: G) {
     let f = fp(g);
     if unsafe { !f.x1064_thrownHitbox.anon_134.owner.is_null() } {
         let v = Vec3 { x: f.x8c_kb_vel.x, y: f.x8c_kb_vel.y, z: f.x8c_kb_vel.z };
-        if sqrtf(sq_len3(&v)) < cd().x1C8 {
+        if sqrtf(sq_len3_mem(&v)) < cd().x1C8 {
             ext::ftColl_8007AFF8(g);
         }
     }
@@ -1323,7 +1330,7 @@ pub fn ftCo_DamageFlyRoll_Phys(g: G) {
     let f = fp(g);
     if unsafe { !f.x1064_thrownHitbox.anon_134.owner.is_null() } {
         let v = Vec3 { x: f.x8c_kb_vel.x, y: f.x8c_kb_vel.y, z: f.x8c_kb_vel.z };
-        if sqrtf(sq_len3(&v)) < cd().x1C8 {
+        if sqrtf(sq_len3_mem(&v)) < cd().x1C8 {
             ext::ftColl_8007AFF8(g);
         }
     }

@@ -394,7 +394,8 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
 
     let mut light_vec = Vec3::zeroed();
     ext::lbVector_Diff(&mut light_pos, &mut light_dir, &mut light_vec);
-    let mut dist = fmadds(light_vec.z, light_vec.z, fmadds(light_vec.x, light_vec.x, light_vec.y * light_vec.y));
+    // light_vec's address goes to lbVector_Diff: squares not fused on the console (notes/fp-audit.md)
+    let mut dist = light_vec.z * light_vec.z + (light_vec.x * light_vec.x + light_vec.y * light_vec.y);
     dist = crate::gekko::sqrtf(dist);
 
     if dist < 0.001 {
@@ -409,7 +410,7 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
         light_dir.z = 0.0;
         up_vec.z = 0.0;
     } else {
-        let xz_sq = fmadds(light_vec.x, light_vec.x, light_vec.z * light_vec.z);
+        let xz_sq = light_vec.x * light_vec.x + light_vec.z * light_vec.z;
         if xz_sq > 0.0000010000001 {
             up_vec.z = 0.0;
             up_vec.x = 0.0;

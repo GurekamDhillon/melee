@@ -13,7 +13,8 @@ const M_PI_2: f64 = std::f64::consts::FRAC_PI_2;
 
 #[inline(always)]
 fn col_len(m: &Mtx, c: usize) -> f32 {
-    sqrtf(fmadds(m[2][c], m[2][c], fmadds(m[0][c], m[0][c], m[1][c] * m[1][c])))
+    // squares of matrix entries (memory): not fused on the console (notes/fp-audit.md)
+    sqrtf(m[0][c] * m[0][c] + m[1][c] * m[1][c] + m[2][c] * m[2][c])
 }
 
 /// `MatToQuat`: rotation quaternion of `m` (columns normalised first).
@@ -54,7 +55,7 @@ pub fn mat_to_quat(m: &Mtx) -> Quaternion {
 
 /// `HSD_QuatLib_8037EB28`: Euler angles from a rotation matrix.
 pub fn mtx_to_euler(m: &Mtx) -> Vec3 {
-    let len = sqrtf(fmadds(m[0][0], m[0][0], m[1][0] * m[1][0]));
+    let len = sqrtf(m[0][0] * m[0][0] + m[1][0] * m[1][0]); // memory squares: not fused on the console
     if len as f64 > 1e-05 {
         Vec3 { x: atan2f(m[2][1], m[2][2]), y: atan2f(-m[2][0], len), z: atan2f(m[1][0], m[0][0]) }
     } else {
@@ -74,7 +75,8 @@ pub fn mul(p: &Quaternion, q: &Quaternion) -> Quaternion {
 /// `HSD_QuatLib_8037ECE0(axis, q, angle)`: axis-angle to quaternion; `None` (C: -1, `q`
 /// untouched) when |axis| is below FLT_MIN.
 pub fn from_axis_angle(axis: &Vec3, angle: f32) -> Option<Quaternion> {
-    let len = sqrtf(fmadds(axis.z, axis.z, fmadds(axis.x, axis.x, axis.y * axis.y)));
+    // axis->x * axis->x + ...: through a pointer, not fused on the console (notes/fp-audit.md)
+    let len = sqrtf(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
     if len.abs() < 1.175_494_4e-38 {
         return None;
     }

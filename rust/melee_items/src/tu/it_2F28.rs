@@ -175,7 +175,8 @@ pub unsafe extern "C" fn it_2F28_UnkMotion0_Phys(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_2F28_UnkMotion0_Phys");
     let item = GET_ITEM(item_gobj);
     // SQ(x) + SQ(y): the left product is fused
-    let var_f4 = sqrtf(fmadds((*item).x40_vel.x, (*item).x40_vel.x, (*item).x40_vel.y * (*item).x40_vel.y));
+    // SQ(item->x40_vel.x) + ...: not fused on the console (notes/fp-audit.md)
+    let var_f4 = sqrtf((*item).x40_vel.x * (*item).x40_vel.x + (*item).x40_vel.y * (*item).x40_vel.y);
     if var_f4 > (*item).xDD4_itemVar.unk2.x0 {
         (*item).x40_vel.x = ((*item).x40_vel.x * (var_f4 - (*item).xDD4_itemVar.unk2.x0)) / var_f4;
         (*item).x40_vel.y = ((*item).x40_vel.y * (var_f4 - (*item).xDD4_itemVar.unk2.x0)) / var_f4;

@@ -1465,7 +1465,8 @@ pub unsafe extern "C" fn grZebes_801D99E0(gobj: *mut HSD_GObj) {
 
                 let diff = abs_f32((*gp).u.zebes5.xD4 - (*gp).u.zebes5.xD8);
 
-                let discriminant = fmadds((*yakumono_param).x98, (*yakumono_param).x98, -((4.0f32 * diff) / (*yakumono_param).x9C));
+                // a square of a memory field: not fused on the console (fmuls, fsubs; notes/fp-audit.md)
+                let discriminant = (*yakumono_param).x98 * (*yakumono_param).x98 - (4.0f32 * diff) / (*yakumono_param).x9C;
                 if discriminant < 0.0 {
                     (*gp).u.zebes5.xCC = 999.0;
                 } else {
@@ -2484,7 +2485,8 @@ pub unsafe extern "C" fn grZebes_801DBB60(yaku: *mut Item_GObj) -> i32 {
                 j = i + 1;
                 while j < 20 {
                     if (*bubble(j)).x00_active == 1 && j != 0 && j != 6 {
-                        dist_sq = fmadds(ei_x - (*bubble(j)).x08_x, ei_x - (*bubble(j)).x08_x, (ei_y - (*bubble(j)).x0C_y) * (ei_y - (*bubble(j)).x0C_y));
+                        // squares of computed expressions: not fused on the console
+                        dist_sq = (ei_x - (*bubble(j)).x08_x) * (ei_x - (*bubble(j)).x08_x) + (ei_y - (*bubble(j)).x0C_y) * (ei_y - (*bubble(j)).x0C_y);
                         if max_dist_sq < dist_sq {
                             max_dist_sq = dist_sq;
                             x1 = (*ei).x08_x;

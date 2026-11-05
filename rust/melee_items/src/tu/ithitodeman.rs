@@ -560,7 +560,8 @@ pub unsafe extern "C" fn it_802D472C(gobj: *mut Item_GObj) {
         target_pos.z = 0.0;
         let d = lbvector::diff(&*(&target_pos as *const Vec as *const RVec), &*(&(*ip).pos as *const Vec as *const RVec));
         dir = Vec { x: d.x, y: d.y, z: d.z };
-        let dist = sqrtf(fmadds(dir.z, dir.z, fmadds(dir.x, dir.x, dir.y * dir.y)));
+        // dir's address leaves the function: squares not fused on the console (notes/fp-audit.md)
+        let dist = sqrtf(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
         if dist > (*attrs).x38 {
             lbvector::normalize(&mut *(&mut dir as *mut Vec as *mut RVec));
             let speed = dist * (*attrs).x34;

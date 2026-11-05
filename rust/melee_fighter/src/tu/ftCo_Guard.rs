@@ -269,7 +269,8 @@ pub fn ftCo_80091BC4(f: &mut Fighter) {
     }
     guard(f).x8 = 10.0 + guard_deg;
     let (x, y) = (f.input.lstick[0].x, f.input.lstick[0].y);
-    let mut stick_mag = melee_runtime::gekko::sqrtf(fmadds(x, x, y * y));
+    // squares of `fp->input.lstick[0]` fields: not fused on the console (notes/fp-audit.md)
+    let mut stick_mag = melee_runtime::gekko::sqrtf(x * x + y * y);
     if stick_mag > 1.0 {
         stick_mag = 1.0;
     }

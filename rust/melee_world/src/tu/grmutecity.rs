@@ -1077,7 +1077,8 @@ pub unsafe fn grMc_DistanceSquared(a: *const Vec3, b: *const Vec3) -> f32 {
     let dx = (*a).x - (*b).x;
     let dy = (*a).y - (*b).y;
     let dz = (*a).z - (*b).z;
-    fmadds(dz, dz, fmadds(dx, dx, dy * dy))
+    // SQ(a->x - b->x) + ...: squares of computed expressions, not fused on the console (notes/fp-audit.md)
+    dx * dx + dy * dy + dz * dz
 }
 
 pub unsafe extern "C" fn grMuteCity_801F1328() {
@@ -1313,7 +1314,8 @@ pub unsafe extern "C" fn grMuteCity_801F1A34(arg0: *mut HSD_GObj, arg1: *mut HSD
                 ext::grLib_801C96F8(0x11A, 0, &mut car_pos);
                 if sound_count < 1 {
                     if car_pos.z < 0.0 {
-                        spline_t = fmadds(car_pos.z, car_pos.z, fmadds(car_pos.x, car_pos.x, car_pos.y * car_pos.y));
+                        // car_pos's address goes to grLib_801C96F8: squares not fused on the console
+                        spline_t = car_pos.z * car_pos.z + (car_pos.x * car_pos.x + car_pos.y * car_pos.y);
                         let distance = sqrtf(spline_t);
                         spline_t = distance;
                         if spline_t < 300.0 {

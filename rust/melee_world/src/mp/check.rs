@@ -316,7 +316,7 @@ impl GroundColl {
                         d
                     }
                 } else if horizontal {
-                    fmadds(ix - ax, ix - ax, sq(iy - ay))
+                    sq(ix - ax) + sq(iy - ay) // memory/computed squares: not fused on the console (notes/fp-audit.md)
                 } else {
                     let dx2 = sq(ix - ax);
                     let dy2 = sq(iy - ay);
@@ -434,7 +434,7 @@ impl GroundColl {
                     let vdy = y0 - y;
                     if fmadds(vdx, vdx, sq(vdy)) > 0.001f32 {
                         if let Some((ix, iy)) = mp_line_intersection(cx, cy, dx, dy, x, y, x0, y0) {
-                            let mut dist2 = fmadds(ix - x1, ix - x1, sq(iy - y1));
+                            let mut dist2 = sq(ix - x1) + sq(iy - y1); // memory/computed squares: not fused on the console (notes/fp-audit.md)
                             if fmadds(vdx, ix - x1, vdy * (iy - y1)) < 0.0 {
                                 dist2 = -dist2;
                             }

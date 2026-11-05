@@ -428,7 +428,8 @@ pub unsafe extern "C" fn grPushOn_80218888(gobj: *mut HSD_GObj) {
         }
 
         // Compute magnitude and normalize direction
-        let dist_sq = sqrtf(fmadds(dir.z, dir.z, fmadds(dir.x, dir.x, dir.y * dir.y)));
+        // dir's address leaves the function (lbVector_Add/Normalize): squares not fused on the console
+        let dist_sq = sqrtf(dir.z * dir.z + (dir.x * dir.x + dir.y * dir.y));
         if dist_sq < 0.01 {
             dir.y = 100.0;
         }

@@ -75,9 +75,10 @@ pub fn lb_8000D148(point0_x: f32, point0_y: f32, point1_x: f32, point1_y: f32, p
         var_f0 = -var_f0;
     }
     if (var_f0 / dist_01) <= threshold {
-        let dist_squared_02 = fmadds(point0_x - point2_x, point0_x - point2_x, (point0_y - point2_y) * (point0_y - point2_y));
+        // squares of computed expressions: not fused on the console (notes/fp-audit.md)
+        let dist_squared_02 = (point0_x - point2_x) * (point0_x - point2_x) + (point0_y - point2_y) * (point0_y - point2_y);
         let threshold_squared = threshold * threshold;
-        let dist_squared_12 = fmadds(point1_x - point2_x, point1_x - point2_x, (point1_y - point2_y) * (point1_y - point2_y));
+        let dist_squared_12 = (point1_x - point2_x) * (point1_x - point2_x) + (point1_y - point2_y) * (point1_y - point2_y);
         if dist_squared_02 < threshold_squared {
             if dist_squared_12 > threshold_squared {
                 return 1;

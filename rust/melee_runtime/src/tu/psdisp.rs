@@ -1977,28 +1977,10 @@ pub unsafe fn psDispSubAPPSRTPoint(mut pp: *mut HSD_Particle) {
                 &raw mut (*(*pp).appsrt).mmtx as *mut [f32; 4],
                 &raw mut (*(*pp).appsrt).ssx as *mut [f32; 4],
             );
-            scale_x = fmadds(
-                (*(*pp).appsrt).x84 as f32,
-                (*(*pp).appsrt).x84 as f32,
-                fmadds(
-                    (*(*pp).appsrt).ssx,
-                    (*(*pp).appsrt).ssx,
-                    (*(*pp).appsrt).x74 as f32
-                        * (*(*pp).appsrt).x74 as f32,
-                ),
-            ) as f32;
+            scale_x = (((*(*pp).appsrt).ssx) * ((*(*pp).appsrt).ssx) + (*(*pp).appsrt).x74 as f32 * (*(*pp).appsrt).x74 as f32 + ((*(*pp).appsrt).x84 as f32) * ((*(*pp).appsrt).x84 as f32)) as f32;
             scale_x = sqrtf(scale_x as f32) as f32;
             (*(*pp).appsrt).x94 = scale_x;
-            scale_y = fmadds(
-                (*(*pp).appsrt).x88 as f32,
-                (*(*pp).appsrt).x88 as f32,
-                fmadds(
-                    (*(*pp).appsrt).ssy,
-                    (*(*pp).appsrt).ssy,
-                    (*(*pp).appsrt).x78 as f32
-                        * (*(*pp).appsrt).x78 as f32,
-                ),
-            ) as f32;
+            scale_y = (((*(*pp).appsrt).ssy) * ((*(*pp).appsrt).ssy) + (*(*pp).appsrt).x78 as f32 * (*(*pp).appsrt).x78 as f32 + ((*(*pp).appsrt).x88 as f32) * ((*(*pp).appsrt).x88 as f32)) as f32;
             scale_y = sqrtf(scale_y as f32) as f32;
             (*(*pp).appsrt).x98 = scale_y;
             if (*(*pp).appsrt).xA2 as i32 != 0 as i32 {
@@ -2272,28 +2254,10 @@ pub unsafe fn psDispSubAppSRT(mut pp: *mut HSD_Particle, mut texform: *mut u8) {
             &raw mut (*(*pp).appsrt).mmtx as *mut [f32; 4],
             &raw mut (*(*pp).appsrt).ssx as *mut [f32; 4],
         );
-        scale_x = fmadds(
-            (*(*pp).appsrt).x84 as f32,
-            (*(*pp).appsrt).x84 as f32,
-            fmadds(
-                (*(*pp).appsrt).ssx,
-                (*(*pp).appsrt).ssx,
-                (*(*pp).appsrt).x74 as f32
-                    * (*(*pp).appsrt).x74 as f32,
-            ),
-        ) as f32;
+        scale_x = (((*(*pp).appsrt).ssx) * ((*(*pp).appsrt).ssx) + (*(*pp).appsrt).x74 as f32 * (*(*pp).appsrt).x74 as f32 + ((*(*pp).appsrt).x84 as f32) * ((*(*pp).appsrt).x84 as f32)) as f32;
         scale_x = sqrtf(scale_x as f32) as f32;
         (*(*pp).appsrt).x94 = scale_x;
-        scale_y = fmadds(
-            (*(*pp).appsrt).x88 as f32,
-            (*(*pp).appsrt).x88 as f32,
-            fmadds(
-                (*(*pp).appsrt).ssy,
-                (*(*pp).appsrt).ssy,
-                (*(*pp).appsrt).x78 as f32
-                    * (*(*pp).appsrt).x78 as f32,
-            ),
-        ) as f32;
+        scale_y = (((*(*pp).appsrt).ssy) * ((*(*pp).appsrt).ssy) + (*(*pp).appsrt).x78 as f32 * (*(*pp).appsrt).x78 as f32 + ((*(*pp).appsrt).x88 as f32) * ((*(*pp).appsrt).x88 as f32)) as f32;
         scale_y = sqrtf(scale_y as f32) as f32;
         (*(*pp).appsrt).x98 = scale_y;
         if (*(*pp).appsrt).xA2 as i32 != 0 as i32 {

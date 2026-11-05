@@ -463,9 +463,11 @@ pub unsafe extern "C" fn return_sqrt_value(v: *mut Vec3) -> f32 {
     sqrtf_accurate(product_xy(v, v))
 }
 
+/// `SQ(p->x) + SQ(p->y)` over memory (item->x7C, sp10, arg1): the console does not fuse a square of a
+/// memory expression (fmuls, fmuls, fadds; notes/fp-audit.md).
 #[inline(always)]
 fn sq_sum(x: f32, y: f32) -> f32 {
-    x.mul_add(x, y * y)
+    x * x + y * y
 }
 
 pub unsafe extern "C" fn it_802759DC(item_gobj1: *mut HSD_GObj, item_gobj2: *mut HSD_GObj) {
@@ -1368,7 +1370,7 @@ pub unsafe fn it_80277544_fp(ip: &mut Item, common: &ItemCommonData) -> bool {
         // PSVECAdd(&vel, &nudge, &sp10)
         let sx = ip.x40_vel.x + ip.x70_nudge.x;
         let sy = ip.x40_vel.y + ip.x70_nudge.y;
-        fmadds(sx, sx, sy * sy) >= common.xCC || ip.xD5C == 2
+        sx * sx + sy * sy >= common.xCC || ip.xD5C == 2
     } {
         ip.xDC8_word.flags.set_x1F(1);
         ret_val = true;
@@ -1383,7 +1385,7 @@ pub fn it_802775f0(ip: &mut Item, arg1: &GcVec) {
     melee_core::ct!("it_802775f0");
     let mut t = 0.0f32;
     if ip.spin_spd != t {
-        t = sqrtf_accurate_itkinds12(fmadds(arg1.x, arg1.x, arg1.y * arg1.y));
+        t = sqrtf_accurate_itkinds12(arg1.x * arg1.x + arg1.y * arg1.y);
         ip.xD3C_spinSpeed = 0.85f32 * (t / ip.xC1C.bottom);
         let sa = if arg1.x < 0.0 { -1 } else { 1 };
         let sf = if ip.facing_dir < 0.0 { -1 } else { 1 };

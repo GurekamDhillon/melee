@@ -136,11 +136,12 @@ pub fn lb_8000D148_fp(point0_x: f32, point0_y: f32, point1_x: f32, point1_y: f32
     if var_f0 / dist_01 <= threshold {
         let dx0 = point0_x - point2_x;
         let dy0 = point0_y - point2_y;
-        let dist_squared_02 = fmadds(dx0, dx0, dy0 * dy0);
+        // squares of computed expressions in the C: not fused on the console (notes/fp-audit.md)
+        let dist_squared_02 = dx0 * dx0 + dy0 * dy0;
         let threshold_squared = threshold * threshold;
         let dx1 = point1_x - point2_x;
         let dy1 = point1_y - point2_y;
-        let dist_squared_12 = fmadds(dx1, dx1, dy1 * dy1);
+        let dist_squared_12 = dx1 * dx1 + dy1 * dy1;
         if dist_squared_02 < threshold_squared {
             if dist_squared_12 > threshold_squared {
                 return 1;

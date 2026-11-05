@@ -125,11 +125,13 @@ pub fn ft_80087b34(g: G) -> i32 {
     let f = fp(g);
     let sx = f.x98_atk_shield_kb.x;
     let sy = f.x98_atk_shield_kb.y;
-    let v1 = fmadds(f.self_vel.x, f.self_vel.x, f.self_vel.y * f.self_vel.y);
-    let v2 = fmadds(sx, sx, sy * sy);
-    let kb = |f: &Fighter| fmadds(f.x8c_kb_vel.x, f.x8c_kb_vel.x, f.x8c_kb_vel.y * f.x8c_kb_vel.y);
+    // The console fuses none of these squares (ft_80087B34 has no fused op: squares of memory fields,
+    // and `sx` is a copy of a load that MWCC folds back into the load; notes/fp-audit.md).
+    let v1 = f.self_vel.x * f.self_vel.x + f.self_vel.y * f.self_vel.y;
+    let v2 = sx * sx + sy * sy;
+    let kb = |f: &Fighter| f.x8c_kb_vel.x * f.x8c_kb_vel.x + f.x8c_kb_vel.y * f.x8c_kb_vel.y;
     if v1 > kb(f) {
-        if v1 > fmadds(sx, sx, f.x98_atk_shield_kb.y * f.x98_atk_shield_kb.y) {
+        if v1 > sx * sx + f.x98_atk_shield_kb.y * f.x98_atk_shield_kb.y {
             return 0;
         }
         return 2;

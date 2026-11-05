@@ -317,8 +317,9 @@ pub fn ftSk_SpecialS_80110490(fp: *mut Fighter) {
 
         (*fp).mv.sk.specials.x18 = v6;
 
-        // sqrtf(x*x + y*y): the sum is fma(lx, lx, ly*ly).
-        let mut v8 = sqrtf(fmadds(lx, lx, ly * ly));
+        // sqrtf(x*x + y*y) over fp->input.lstick[0]: squares of memory fields, not fused on the
+        // console (fmuls, fmuls, fadds; notes/fp-audit.md).
+        let mut v8 = sqrtf(lx * lx + ly * ly);
 
         if v8 > 1.0 {
             v8 = 1.0;

@@ -59,7 +59,7 @@ pub fn ftco_800df608(fp: &Fighter) -> bool {
     melee_core::ct!("ftco_800df608");
     let v = cs(fp, 0);
     let m = cd().sdi_min_stick_mag;
-    fmadds(v.x, v.x, v.y * v.y) >= m * m
+    v.x * v.x + v.y * v.y >= m * m // memory squares: not fused on the console (notes/fp-audit.md)
 }
 
 pub fn ftco_800df644(fp: &Fighter) -> bool {

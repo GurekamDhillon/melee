@@ -376,7 +376,7 @@ pub unsafe extern "C" fn it_802E5AC4(item_gobj: *mut Item_GObj, arg_check: bool)
             check1 = false;
             sp28 = it_803B8724;
             var_f31 = sqrtf_accurate_store(
-                fmadds((*item).x40_vel.x, (*item).x40_vel.x, (*item).x40_vel.y * (*item).x40_vel.y),
+                (*item).x40_vel.x * (*item).x40_vel.x + (*item).x40_vel.y * (*item).x40_vel.y,
                 &mut sqrt_0,
             );
             if fmadds((*item).x40_vel.x, (*coll_data).floor.normal.x, (*item).x40_vel.y * (*coll_data).floor.normal.y) < 0.0 {
@@ -390,7 +390,8 @@ pub unsafe extern "C" fn it_802E5AC4(item_gobj: *mut Item_GObj, arg_check: bool)
             }
             if check2 {
                 ext::lbVector_NormalizeXY(&mut sp28);
-                if sqrtf_store(fmadds(sp28.z, sp28.z, fmadds(sp28.x, sp28.x, sp28.y * sp28.y)), &mut sqrt_1) < 0.01 {
+                // squares of memory fields (sp28's address leaves the function): not fused on the console
+                if sqrtf_store(sp28.x * sp28.x + sp28.y * sp28.y + sp28.z * sp28.z, &mut sqrt_1) < 0.01 {
                     sp28.x = (*item).x40_vel.x;
                     sp28.y = -1.0 * (*item).x40_vel.y;
                 }

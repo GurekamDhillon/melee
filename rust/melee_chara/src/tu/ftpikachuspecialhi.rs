@@ -1,6 +1,7 @@
 //! src/melee/ft/kinds/ftPikachu/ftpikachuspecialhi.c: Pikachu / Pichu Quick Attack (up special).
 //! Fused sites (tools/rust-port/fma_sites.py), all f32 `fmuladd` -> fmadds(a, b, c):
-//! * the stick magnitude `sqrtf(x*x + y*y)` = fmadds(x, x, y*y) in `ftPk_SpecialHi_80126C0C`,
+//! * NOT the stick magnitude `sqrtf(x*x + y*y)` (squares of `fp->input.lstick` fields: the console
+//!   does not fuse them; notes/fp-audit.md) in `ftPk_SpecialHi_80126C0C`,
 //!   `ftPk_SpecialHi_80126E1C` and `ftPk_SpecialHi_80127064` (MSL `sqrtf` is `gekko::sqrtf`; its three
 //!   f64 Newton steps are fused inside that port);
 //! * the zip speed `x90 * stick_mag + x94` (once in the ground zip, twice, for cos and sin, in the
@@ -453,12 +454,13 @@ fn get_max_and_fill_stack() -> f32 {
     MAX_STICK_MAG
 }
 
-/// The stick magnitude: `sqrtf(x*x + y*y)`, the product pair fused (see the module doc).
+/// The stick magnitude: `sqrtf(x*x + y*y)` over `fp->input.lstick[0]` fields. Squares of memory
+/// expressions are not fused on the console (fmuls, fmuls, fadds; notes/fp-audit.md).
 #[inline(always)]
 unsafe fn stick_mag(fp: *mut Fighter) -> f32 {
     let x = (*fp).input.lstick[0].x;
     let y = (*fp).input.lstick[0].y;
-    sqrtf(fmadds(x, x, y * y))
+    sqrtf(x * x + y * y)
 }
 
 /// Grounded Quick Attack zip.

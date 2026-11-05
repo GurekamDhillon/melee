@@ -369,7 +369,7 @@ pub unsafe extern "C" fn hsd_8039DAD4(gen: *mut HSD_Generator) -> f32 {
         eprintln!("GEN emit id {:#x} count {} type {:#x}", (*gen).idnum, (*gen).count, (*gen).r#type);
     }
     let mut vel_copy = (*gen).vel;
-    let vel_mag_sq = sqrtf(fmadds(vel_copy.z, vel_copy.z, fmadds(vel_copy.x, vel_copy.x, vel_copy.y * vel_copy.y)));
+    let vel_mag_sq = sqrtf(vel_copy.z * vel_copy.z + (vel_copy.x * vel_copy.x + vel_copy.y * vel_copy.y)); // squares of memory: not fused on the console (notes/fp-audit.md)
     let mut rot_mtx: Mtx = [[0.0; 4]; 3];
     mx::PSMTXIdentity(rot_mtx.as_mut_ptr());
     let shape = (*gen).r#type & 0xF;
@@ -638,7 +638,7 @@ pub unsafe extern "C" fn hsd_8039DAD4(gen: *mut HSD_Generator) -> f32 {
                 emit_pos.x += (*gen).pos.x;
                 emit_pos.y += (*gen).pos.y;
                 emit_pos.z += (*gen).pos.z;
-                let mag = sqrtf(fmadds(zz, zz, fmadds(zx, zx, zy * zy)));
+                let mag = sqrtf(zx * zx + zy * zy + zz * zz); // squares of memory: not fused on the console (notes/fp-audit.md)
                 let scale = elevation / mag;
                 let mut vec = Vec { x: zx * scale, y: zy * scale, z: zz * scale };
                 mx::PSMTXMultVec(rot_mtx.as_mut_ptr(), &mut vec, &mut vec);
@@ -898,8 +898,8 @@ pub unsafe extern "C" fn hsd_8039F05C(mut link_no: i32, bank: i32, idx: i32) -> 
             }
             8 => {
                 let v = (*gen).vel;
-                (*gen).aux.sphere.speed = sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)));
-                let mag = sqrtf(fmadds(v.x, v.x, v.z * v.z));
+                (*gen).aux.sphere.speed = sqrtf(v.z * v.z + (v.x * v.x + v.y * v.y)); // squares of memory: not fused on the console (notes/fp-audit.md)
+                let mag = sqrtf(v.x * v.x + v.z * v.z);
                 if mag < FLT_MIN {
                     (*gen).aux.sphere.latMid = if v.y >= 0.0 { HALF_PI_F } else { -HALF_PI_F };
                 } else {

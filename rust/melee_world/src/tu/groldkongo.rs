@@ -636,11 +636,12 @@ pub unsafe extern "C" fn grOldKongo_80210454(ground_gobj: *mut HSD_GObj, keep: *
     ext::Ground_801C4DA0(&mut pos_gnd, &mut unk);
     ext::ftLib_80086644(keep, &mut pos_ft);
 
-    // dx*dx + dy*dy + dz*dz: (dx*dx + dy*dy) fused on the LHS multiply, then + dz*dz fused
+    // (pos_gnd.x - pos_ft.x) * (pos_gnd.x - pos_ft.x) + ...: squares of computed expressions, not
+    // fused on the console (notes/fp-audit.md)
     let dx = pos_gnd.x - pos_ft.x;
     let dy = pos_gnd.y - pos_ft.y;
     let dz = pos_gnd.z - pos_ft.z;
-    let sum = fmadds(dz, dz, fmadds(dx, dx, dy * dy));
+    let sum = dx * dx + dy * dy + dz * dz;
     if !(sum < (*yp).rframe_barrel_in * (*yp).rframe_barrel_in) {
         return 0;
     }

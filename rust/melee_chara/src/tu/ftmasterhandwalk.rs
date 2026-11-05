@@ -88,7 +88,7 @@ pub fn ftMh_WalkLoop_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_WalkLoop
 
 /// `my_lbVector_Len` (static inline): `x*x + y*y + z*z` contracts to two fmadds.
 fn my_lbVector_Len(v: &Vec3) -> f32 {
-    let s = fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y));
+    let s = v.x * v.x + v.y * v.y + v.z * v.z; // through a pointer: not fused on the console
     crate::pure::my_sqrtf(s)
 }
 

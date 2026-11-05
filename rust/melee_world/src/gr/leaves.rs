@@ -39,7 +39,7 @@ pub fn grmc_distance_squared(a: &Vec3, b: &Vec3) -> f32 {
     let dx = a.x - b.x;
     let dy = a.y - b.y;
     let dz = a.z - b.z;
-    fmadds(dz, dz, fmadds(dx, dx, dy * dy))
+    dx * dx + dy * dy + dz * dz // memory/computed squares: not fused on the console (notes/fp-audit.md)
 }
 
 /// fabsf_inline (gr/grinishie1.c, static inline). `-0.0` stays `-0.0`, NaN keeps its sign.

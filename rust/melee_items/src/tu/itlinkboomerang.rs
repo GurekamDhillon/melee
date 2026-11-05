@@ -311,10 +311,18 @@ fn mtx_deg_to_rad(a: f32) -> f32 {
     a * 0.01745329252_f32
 }
 
-/// `VEC_XY_LENGTH(v)` = `HYPOT(v->x, v->y)`: `sqrtf(fmaf(x, x, y * y))`.
+/// `HYPOT(dx, dy)` of two variables: `sqrtf(x*x + y*y)` with the sum fused (gekko fmadds, as the C build
+/// lowers it; an f32 `mul_add` rounds once and differs from it for some inputs).
 #[inline(always)]
 fn hypot(x: f32, y: f32) -> f32 {
-    sqrtf(x.mul_add(x, y * y))
+    sqrtf(fmadds(x, x, y * y))
+}
+
+/// `VEC_XY_LENGTH(&ip->x40_vel)`: squares of memory fields, which the console does not fuse
+/// (fmuls, fmuls, fadds; notes/fp-audit.md).
+#[inline(always)]
+fn hypot_mem(x: f32, y: f32) -> f32 {
+    sqrtf(x * x + y * y)
 }
 
 #[inline(always)]
@@ -684,7 +692,7 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion1_Phys(gobj: *mut Item_GObj) {
     if (*ip).xDD4_itemVar.linkboomerang.xDE8 != 1 {
         let mut var_f31 = (*attrs).xC;
         (*attrs).xC = (*attrs).xC;
-        var_f31 = hypot((*ip).x40_vel.x, (*ip).x40_vel.y) - var_f31;
+        var_f31 = hypot_mem((*ip).x40_vel.x, (*ip).x40_vel.y) - var_f31;
         if var_f31 < (*attrs).x18 {
             var_f31 = itLinkboomerang_get_x18(attrs);
             it_802A1948(gobj, 0);
@@ -729,7 +737,7 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion2_Phys(gobj: *mut Item_GObj) {
     if (*ip).xDD4_itemVar.linkboomerang.xDE8 != 1 {
         let mut var_f31 = (*attrs).xC;
         (*attrs).xC = (*attrs).xC;
-        var_f31 = hypot((*ip).x40_vel.x, (*ip).x40_vel.y) - var_f31;
+        var_f31 = hypot_mem((*ip).x40_vel.x, (*ip).x40_vel.y) - var_f31;
         if var_f31 < (*attrs).x18 {
             var_f31 = itLinkboomerang_get_x18(attrs);
             it_802A1948(gobj, 0);
@@ -953,7 +961,7 @@ pub unsafe extern "C" fn itLinkboomerang_UnkMotion3_Phys(gobj: *mut Item_GObj) {
     if (*ip).xDD4_itemVar.linkboomerang.xDE8 != 1 {
         let mut length = (*attrs).xC;
         (*attrs).xC = (*attrs).xC;
-        length = itLinkboomerang_UnkMotion3_Phys_add_clamp(hypot((*ip).x40_vel.x, (*ip).x40_vel.y), length, (*attrs).x14);
+        length = itLinkboomerang_UnkMotion3_Phys_add_clamp(hypot_mem((*ip).x40_vel.x, (*ip).x40_vel.y), length, (*attrs).x14);
         (*ip).x40_vel.x = length * cosf((*ip).xDD4_itemVar.linkboomerang.xF74);
         (*ip).x40_vel.y = length * sinf((*ip).xDD4_itemVar.linkboomerang.xF74);
         itLinkboomerang_UnkMotion3_Phys_sub(gobj, it_802A13EC(gobj));
@@ -1003,7 +1011,7 @@ pub unsafe fn it_802A20E8(gobj: *mut Item_GObj) -> i32 {
         let dx = (*ip).pos.y - sp14.y;
         (*ip).xDD4_itemVar.linkboomerang.xF74 = ext::atan2f(dx, dy);
         clamp_tau(&mut (*ip).xDD4_itemVar.linkboomerang.xF74);
-        let length = hypot((*ip).x40_vel.x, (*ip).x40_vel.y);
+        let length = hypot_mem((*ip).x40_vel.x, (*ip).x40_vel.y);
         (*ip).x40_vel.x = (*ip).xC70 * (length * cosf((*ip).xDD4_itemVar.linkboomerang.xF74));
         (*ip).x40_vel.y = (*ip).xC70 * (length * sinf((*ip).xDD4_itemVar.linkboomerang.xF74));
         if !(*ip).xDD4_itemVar.linkboomerang.xF98.is_null() {

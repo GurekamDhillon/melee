@@ -166,7 +166,8 @@ unsafe fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *mut Vec) {
 #[inline]
 unsafe fn lbVector_Len(v: *mut Vec) -> f32 {
     let (x, y, z) = ((*v).x, (*v).y, (*v).z);
-    melee_runtime::gekko::sqrtf(fmadds(z, z, fmadds(x, x, y * y)))
+    // lbVector_Len(offset) through a pointer: not fused on the console
+    melee_runtime::gekko::sqrtf(x * x + y * y + z * z)
 }
 
 pub static mut it_803F9450: [ItemStateTable; 2] = [
@@ -190,7 +191,8 @@ pub unsafe extern "C" fn it_802F23AC(gobj: *mut Item_GObj, pos: *mut Vec) -> f64
     let dx = (*ip).pos.x - (*pos).x;
     let dy = (*ip).pos.y - (*pos).y;
     let dz = (*ip).pos.z - (*pos).z;
-    let s = fmadds(dz, dz, fmadds(dx, dx, dy * dy));
+    // SQ(ip->pos.x - pos->x) + ...: squares of computed expressions, not fused on the console
+    let s = dx * dx + dy * dy + dz * dz;
     s as f64
 }
 
@@ -345,5 +347,5 @@ pub fn it_802f23ac(ip: &Item, pos: &GcVec) -> f64 {
     let dx = ip.pos.x - pos.x;
     let dy = ip.pos.y - pos.y;
     let dz = ip.pos.z - pos.z;
-    fmadds(dz, dz, fmadds(dx, dx, dy * dy)) as f64
+    (dx * dx + dy * dy + dz * dz) as f64
 }

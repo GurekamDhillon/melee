@@ -103,6 +103,15 @@ pub unsafe fn psvec_cross_default(a: *const Vec, b: *const Vec, r: *mut Vec) {
 fn sq3(x: f32, y: f32, z: f32) -> f32 {
     fmadds(z, z, fmadds(x, x, y * y))
 }
+/// Squares of memory expressions (`vec->x * vec->x`): the console does not fuse them (notes/fp-audit.md).
+#[inline]
+fn sq3_mem(x: f32, y: f32, z: f32) -> f32 {
+    x * x + y * y + z * z
+}
+#[inline]
+fn sq2_mem(x: f32, y: f32) -> f32 {
+    x * x + y * y
+}
 #[inline]
 fn dot3(a: &Vec, b: &Vec) -> f32 {
     fmadds(a.z, b.z, fmadds(a.x, b.x, a.y * b.y))
@@ -115,19 +124,24 @@ fn dot2(a: &Vec, b: &Vec) -> f32 {
 /// `lbVector_Len` (lbvector.h inline).
 pub unsafe fn lbVector_Len(v: *const Vec) -> f32 {
     melee_core::ct!("lbVector_Len");
+    sqrtf(sq3_mem((*v).x, (*v).y, (*v).z))
+}
+
+/// `lbVector_Len(&local)` inlined by MWCC with the local kept in registers (lbVector_8000E838): fused.
+unsafe fn lbVector_Len_local(v: *const Vec) -> f32 {
     sqrtf(sq3((*v).x, (*v).y, (*v).z))
 }
 
 /// `lbVector_Len_xy` (lbvector.h inline).
 pub unsafe fn lbVector_Len_xy(v: *const Vec) -> f32 {
     melee_core::ct!("lbVector_Len_xy");
-    sqrtf(dot2(&*v, &*v))
+    sqrtf(sq2_mem((*v).x, (*v).y))
 }
 
 /// `lbVector_Len_xy_accurate` (static inline).
 pub unsafe fn lbVector_Len_xy_accurate(v: *const Vec) -> f32 {
     melee_core::ct!("lbVector_Len_xy_accurate");
-    sqrtf_accurate(dot2(&*v, &*v))
+    sqrtf_accurate(sq2_mem((*v).x, (*v).y))
 }
 
 pub unsafe fn lbVector_Normalize(vec: *mut Vec) -> f32 {
@@ -145,7 +159,7 @@ pub unsafe fn lbVector_Normalize(vec: *mut Vec) -> f32 {
 
 pub unsafe fn lbVector_NormalizeXY(a: *mut Vec) -> f32 {
     melee_core::ct!("lbVector_NormalizeXY");
-    let len = sqrtf_accurate(dot2(&*a, &*a));
+    let len = sqrtf_accurate(sq2_mem((*a).x, (*a).y));
     if len == 0.0 {
         return 0.0;
     }
@@ -260,7 +274,7 @@ pub fn lbvector_cos(angle: f32) -> f32 {
 pub unsafe fn lbVector_RotateAboutUnitAxis(v: *mut Vec, axis: *mut Vec, angle: f32) {
     melee_core::ct!("lbVector_RotateAboutUnitAxis");
     let (v, axis) = (&mut *v, &*axis);
-    let len_yz = sqrtf(fmadds(axis.y, axis.y, axis.z * axis.z));
+    let len_yz = sqrtf(sq2_mem(axis.y, axis.z));
     let s = lbvector_sin(angle);
     let c = lbvector_cos(angle);
     let (mut uy, mut uz) = (0.0f32, 0.0f32);
@@ -324,7 +338,7 @@ pub unsafe fn lbVector_Mirror(a: *mut Vec, unit_mirror_axis: *mut Vec) {
 /// 8000DCA8
 pub unsafe fn lbVector_CosAngle(a: *mut Vec, b: *mut Vec) -> f32 {
     melee_core::ct!("lbVector_CosAngle");
-    dot2(&*a, &*b) / (sqrtf(dot2(&*a, &*a)) * sqrtf(dot2(&*b, &*b)))
+    dot2(&*a, &*b) / (sqrtf(sq2_mem((*a).x, (*a).y)) * sqrtf(sq2_mem((*b).x, (*b).y)))
 }
 
 /// 8000DDAC: a + f*(b-a).
@@ -516,7 +530,7 @@ pub unsafe fn lbVector_8000E838(a: *mut Vec, b: *mut Vec, c: *mut Vec, d: *mut V
     let too_small = sqrlen_b_a < 9.9999997473787516e-06f32 && sqrlen_b_a > -9.9999997473787516e-06f32;
     if too_small {
         *d = *a;
-        lbVector_Len(&c_a)
+        lbVector_Len_local(&c_a)
     } else {
         let mut v3 = Vec { x: 0.0, y: 0.0, z: 0.0 };
         let f1 = dot3(&b_a, &c_a) / sqrlen_b_a;
@@ -524,7 +538,7 @@ pub unsafe fn lbVector_8000E838(a: *mut Vec, b: *mut Vec, c: *mut Vec, d: *mut V
         (*d).y = fmadds(b_a.y, f1, (*a).y);
         (*d).z = fmadds(b_a.z, f1, (*a).z);
         lbVector_Diff(c, d, &mut v3);
-        lbVector_Len(&v3)
+        lbVector_Len_local(&v3)
     }
 }
 

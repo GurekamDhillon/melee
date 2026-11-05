@@ -835,7 +835,8 @@ pub unsafe extern "C" fn it_802BFEC4(gobj: *mut Item_GObj) {
     let m = bone_pos((*link2).jobj);
     let dx = (*link1).pos.x - m.x;
     let dy = (*link1).pos.y - m.y;
-    (*ip).xDD4_itemVar.nessyoyo.x4 = my_sqrtf(fmadds(dx, dx, dy * dy));
+    // HYPOT(link1->pos.x - m[0][3], ...): squares of computed expressions, not fused on the console
+    (*ip).xDD4_itemVar.nessyoyo.x4 = my_sqrtf(dx * dx + dy * dy);
     (*ip).xDD4_itemVar.nessyoyo.x4 *= 0.1;
     ext::Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE as u32);
 }

@@ -3542,7 +3542,8 @@ pub unsafe extern "C" fn Ground_801C4FAC(cobj: *mut HSD_CObj) {
         }
         if sp74.z < 0.0 {
             // x*x + z*z: the LHS multiply is fused
-            let xz_inv_len = 1.0f32 / sqrtf(fmadds(sp74.x, sp74.x, sp74.z * sp74.z));
+            // sp74 lives in memory (HSD_CObjGetEyeVector(&sp74)): squares not fused on the console
+            let xz_inv_len = 1.0f32 / sqrtf(sp74.x * sp74.x + sp74.z * sp74.z);
             let xz_x_weight = xz_inv_len * abs_f(sp74.x);
             let xz_z_weight = xz_inv_len * abs_f(sp74.z);
             sp50.x *= xz_x_weight;

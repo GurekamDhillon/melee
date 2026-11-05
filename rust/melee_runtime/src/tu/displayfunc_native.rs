@@ -174,7 +174,8 @@ unsafe fn set_col_vec(m: *mut [f32; 4], col: usize, v: *const Vec) {
 }
 unsafe fn col_mag(m: *const [f32; 4], col: usize) -> f32 {
     let (a, b, c) = ((*m.add(0))[col], (*m.add(1))[col], (*m.add(2))[col]);
-    crate::gekko::sqrtf(fmadds(c, c, fmadds(a, a, b * b)))
+    // HSD_MtxColMag: squares of matrix entries (memory), not fused on the console (notes/fp-audit.md)
+    crate::gekko::sqrtf(a * a + b * b + c * c)
 }
 /// jobj.h `HSD_JObjSetupMatrix` (inline): rebuild when dirty and not user-defined.
 unsafe fn jobj_setup_matrix(j: *mut HSD_JObj) {

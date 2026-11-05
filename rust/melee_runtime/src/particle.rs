@@ -1057,7 +1057,7 @@ impl PsSystem {
         let vel_copy = self.gen(g).vel;
         // generator.c 395-396.
         let vel_mag_sq =
-            sqrtf(fmadds(vel_copy.z, vel_copy.z, fmadds(vel_copy.x, vel_copy.x, vel_copy.y * vel_copy.y)));
+            sqrtf(vel_copy.z * vel_copy.z + (vel_copy.x * vel_copy.x + vel_copy.y * vel_copy.y)); // memory squares: not fused on the console (notes/fp-audit.md)
         let mut rot = mtx::identity();
         {
             let gp = self.gen(g);
@@ -1338,7 +1338,7 @@ impl PsSystem {
                     emit_pos.y += gp.pos.y;
                     emit_pos.z += gp.pos.z;
                     // 860-863.
-                    let mag = sqrtf(fmadds(a[11], a[11], fmadds(a[9], a[9], a[10] * a[10])));
+                    let mag = sqrtf(a[9] * a[9] + a[10] * a[10] + a[11] * a[11]); // memory squares: not fused on the console (notes/fp-audit.md)
                     let scale = elevation / mag;
                     vec = Vec3 { x: a[9] * scale, y: a[10] * scale, z: a[11] * scale };
                     vec = mtx::mult_vec(&rot, &vec);
@@ -1575,9 +1575,9 @@ impl PsSystem {
                 let gp = self.gen_mut(g);
                 let v = gp.vel;
                 // 1194-1195.
-                gp.aux[0] = sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)));
+                gp.aux[0] = sqrtf(v.z * v.z + (v.x * v.x + v.y * v.y)); // memory squares: not fused on the console (notes/fp-audit.md)
                 // 1197.
-                let mag = sqrtf(fmadds(v.x, v.x, v.z * v.z));
+                let mag = sqrtf(v.x * v.x + v.z * v.z);
                 gp.aux[1] = if mag < 1.175_494_4e-38 {
                     if v.y >= 0.0 { 1.570_796_4 } else { -1.570_796_4 }
                 } else {
@@ -2339,7 +2339,7 @@ impl PsSystem {
                             let m = host.jobj_setup_matrix(j);
                             let pp = pp!();
                             // 1602: vx*vx + vy*vy fused.
-                            let val = fmadds(pp.vel.x, pp.vel.x, pp.vel.y * pp.vel.y);
+                            let val = pp.vel.x * pp.vel.x + pp.vel.y * pp.vel.y; // memory squares: not fused on the console (notes/fp-audit.md)
                             let mut vel_mag = pp.vel.z * pp.vel.z;
                             vel_mag += val;
                             let dx = m[0][3] - pp.pos.x;
@@ -2426,7 +2426,7 @@ impl PsSystem {
                         let mut speed = fmadds(range, r, base);
                         let pp = pp!();
                         // 2016: vx*vx + vy*vy + vz*vz, two fused adds.
-                        let mut mag = fmadds(pp.vel.z, pp.vel.z, fmadds(pp.vel.x, pp.vel.x, pp.vel.y * pp.vel.y));
+                        let mut mag = pp.vel.x * pp.vel.x + pp.vel.y * pp.vel.y + pp.vel.z * pp.vel.z; // memory squares: not fused on the console (notes/fp-audit.md)
                         if mag > 0.0 {
                             mag = sqrtf(mag);
                         }

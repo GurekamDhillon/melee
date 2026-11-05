@@ -140,7 +140,7 @@ pub unsafe fn it_pikachutjoltair_unk_motion0_anim_inline(gobj: *mut HSD_GObj, ip
 pub unsafe fn it_samusbomb_unk_motion2_phys(ip: &mut Item) {
     let a = sa::<itSamusBombAttributes>(ip);
     let v = ip.x7C;
-    if my_sqrtf_accurate(fmadds(v.x, v.x, v.y * v.y)) > a.xC {
+    if my_sqrtf_accurate(v.x * v.x + v.y * v.y) > a.xC { // memory/computed squares: not fused on the console (notes/fp-audit.md)
         let mut r = RVec { x: v.x, y: v.y, z: v.z };
         lbvector::normalize_xy(&mut r);
         ip.x7C = GcVec { x: r.x, y: r.y, z: r.z };

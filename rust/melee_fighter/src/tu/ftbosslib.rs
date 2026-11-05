@@ -68,7 +68,7 @@ pub fn ftBossLib_ReportGObjSlotType(g: G) {
 /// `my_lbvector_Len` (static inline).
 #[inline]
 fn my_lbvector_len(v: &Vec3) -> f32 {
-    sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
+    sqrtf(v.x * v.x + v.y * v.y + v.z * v.z) // through a pointer: not fused on the console
 }
 
 /// `lbVector_Normalize` (lb/lbvector.c; melee_runtime::lbvector, verified there).

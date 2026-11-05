@@ -286,7 +286,8 @@ pub unsafe extern "C" fn itDrmariopill_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> b
         let ip = item_of(gobj);
         let attrs = attrs_of(ip);
         let v = (*ip).x40_vel;
-        let sq = fmadds(v.x, v.x, v.y * v.y);
+        // VEC2_SQ_LEN(ip->x40_vel): squares of memory fields, not fused on the console
+        let sq = v.x * v.x + v.y * v.y;
         if my_sqrtf(sq) < attrs.x10 {
             return true;
         }

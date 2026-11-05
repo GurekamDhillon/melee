@@ -21,6 +21,20 @@ pub(crate) fn sq3(x: f32, y: f32, z: f32) -> f32 {
     fmadds(z, z, fmadds(x, x, y * y))
 }
 
+/// `x*x + y*y + z*z` with every product rounded: the console's form when the operands are memory
+/// (`vec->x * vec->x`). MWCC does not fuse a square of a memory or computed expression; it does fuse
+/// squares of variables (notes/fp-audit.md).
+#[inline]
+pub(crate) fn sq3_mem(x: f32, y: f32, z: f32) -> f32 {
+    x * x + y * y + z * z
+}
+
+/// `x*x + y*y` with both products rounded (see [`sq3_mem`]).
+#[inline]
+pub(crate) fn sq2_mem(x: f32, y: f32) -> f32 {
+    x * x + y * y
+}
+
 /// `a.x*b.x + a.y*b.y + a.z*b.z`.
 #[inline]
 pub(crate) fn dot3(a: &Vec3, b: &Vec3) -> f32 {
@@ -33,18 +47,24 @@ pub(crate) fn dot2(a: &Vec3, b: &Vec3) -> f32 {
     fmadds(a.x, b.x, a.y * b.y)
 }
 
-/// `lbVector_Len` (lbvector.h).
+/// `lbVector_Len` (lbvector.h) through a pointer: `vec->x * vec->x` is not fused on the console.
 pub fn len(v: &Vec3) -> f32 {
+    sqrtf(sq3_mem(v.x, v.y, v.z))
+}
+
+/// `lbVector_Len(&local)` where MWCC inlined it and kept the local struct in registers
+/// (lbVector_8000E838): the squares fuse there.
+pub fn len_local(v: &Vec3) -> f32 {
     sqrtf(sq3(v.x, v.y, v.z))
 }
 
-/// `lbVector_Len_xy` (lbvector.h).
+/// `lbVector_Len_xy` (lbvector.h) through a pointer: not fused (see [`len`]).
 pub fn len_xy(v: &Vec3) -> f32 {
-    sqrtf(dot2(v, v))
+    sqrtf(sq2_mem(v.x, v.y))
 }
 
 pub(crate) fn len_xy_accurate(v: &Vec3) -> f32 {
-    sqrtf_accurate(dot2(v, v))
+    sqrtf_accurate(sq2_mem(v.x, v.y))
 }
 
 /// `lbVector_Normalize`: returns the length; a zero vector is left alone.
@@ -62,7 +82,7 @@ pub fn normalize(v: &mut Vec3) -> f32 {
 
 /// `lbVector_NormalizeXY`.
 pub fn normalize_xy(a: &mut Vec3) -> f32 {
-    let l = sqrtf_accurate(dot2(a, a));
+    let l = sqrtf_accurate(sq2_mem(a.x, a.y));
     if l == 0.0 {
         return 0.0;
     }
@@ -154,7 +174,7 @@ pub(crate) fn wrap(a: f32) -> f32 {
 
 /// `lbVector_RotateAboutUnitAxis` (8000D8F4).
 pub fn rotate_about_unit_axis(v: &mut Vec3, axis: &Vec3, angle: f32) {
-    let len_yz = sqrtf(fmadds(axis.y, axis.y, axis.z * axis.z));
+    let len_yz = sqrtf(sq2_mem(axis.y, axis.z));
     let s = lbvector_sin(angle);
     let c = lbvector_cos(angle);
     let (mut uy, mut uz) = (0.0f32, 0.0f32);
@@ -213,7 +233,7 @@ pub fn mirror(a: &mut Vec3, m: &Vec3) {
 
 /// `lbVector_CosAngle` (8000DCA8).
 pub fn cos_angle(a: &Vec3, b: &Vec3) -> f32 {
-    dot2(a, b) / (sqrtf(dot2(a, a)) * sqrtf(dot2(b, b)))
+    dot2(a, b) / (sqrtf(sq2_mem(a.x, a.y)) * sqrtf(sq2_mem(b.x, b.y)))
 }
 
 /// `lbVector_Lerp` (8000DDAC): a + f*(b-a).
@@ -308,7 +328,7 @@ pub fn project_8000e838(a: &Vec3, b: &Vec3, c: &Vec3) -> (f32, Vec3) {
     let sqrlen = sq3(b_a.x, b_a.y, b_a.z);
     let c_a = diff(c, a);
     if sqrlen < 9.9999997473787516e-06f32 && sqrlen > -9.9999997473787516e-06f32 {
-        return (len(&c_a), *a);
+        return (len_local(&c_a), *a);
     }
     let f1 = dot3(&b_a, &c_a) / sqrlen;
     let d = Vec3 {
@@ -316,7 +336,7 @@ pub fn project_8000e838(a: &Vec3, b: &Vec3, c: &Vec3) -> (f32, Vec3) {
         y: fmadds(b_a.y, f1, a.y),
         z: fmadds(b_a.z, f1, a.z),
     };
-    (len(&diff(c, &d)), d)
+    (len_local(&diff(c, &d)), d)
 }
 
 pub use crate::tu::lbvector::lbvector_cos_fp as lbvector_cos;

@@ -1417,8 +1417,9 @@ pub unsafe extern "C" fn fn_801D8134(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) -
         let a = pos_gnd.x - pos_ft.x;
         let b = pos_gnd.y - pos_ft.y;
         let c = pos_gnd.z - pos_ft.z;
-        // a*a + b*b + c*c: LHS multiply fused with b*b, then c*c fused onto the sum
-        let dist2 = fmadds(c, c, fmadds(a, a, b * b));
+        // (pos_gnd.x - pos_ft.x) * (pos_gnd.x - pos_ft.x) + ...: squares of computed expressions, which
+        // the console does not fuse (fmuls x3, fadds x2; notes/fp-audit.md)
+        let dist2 = a * a + b * b + c * c;
         if dist2 < (*yp).unk28 * (*yp).unk28 {
             let rand_val = ext::HSD_Randf();
             let diff = (*yp).unk24 - (*yp).unk20;

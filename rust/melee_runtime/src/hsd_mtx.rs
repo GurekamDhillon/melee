@@ -157,7 +157,8 @@ pub fn calc_val(x: f32, y: f32) -> f32 {
 
 #[inline(always)]
 pub(crate) fn col_len(m: &Mtx, c: usize) -> f32 {
-    sqrtf(fmadds(m[2][c], m[2][c], fmadds(m[0][c], m[0][c], m[1][c] * m[1][c])))
+    // squares of matrix entries (memory): not fused on the console (notes/fp-audit.md)
+    sqrtf(m[0][c] * m[0][c] + m[1][c] * m[1][c] + m[2][c] * m[2][c])
 }
 
 /// `HSD_MtxGetRotation`: Euler angles (x, y, z) of `m`.

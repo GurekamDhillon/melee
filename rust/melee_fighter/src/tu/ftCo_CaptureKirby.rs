@@ -76,7 +76,8 @@ pub fn ftCo_800BD19C(g: G, pos: &Vec3) -> f32 {
     let dx = f.cur_pos.x - pos.x;
     let dy = f.cur_pos.y - pos.y;
     let dz = f.cur_pos.z - pos.z;
-    fmadds(dz, dz, fmadds(dx, dx, dy * dy))
+    // squares of computed expressions: not fused on the console (fmuls x3, fadds x2; notes/fp-audit.md)
+    dx * dx + dy * dy + dz * dz
 }
 
 /// `ftCo_800BD1DC`: enter CaptureKirby.

@@ -281,15 +281,16 @@ pub unsafe extern "C" fn it_802F063C(gobj: *mut Item_GObj, arg1: *mut Item_GObj)
     if ext::mpCheckMultiple(x0, y0, x1, y1, &mut pos_1, null_mut(), null_mut(), null_mut(), 1, -1, -1) != 0 {
         translate.x = 0.0;
         translate.z = 0.0;
-        // `a*a + b*b + c*c` contracts to fmadds(c, c, fmadds(a, a, b*b)); `a*a + b*b` to fmadds(a, a, b*b)
+        // `(pos_0.x - pos_2.x) * (pos_0.x - pos_2.x) + ...`: squares of computed expressions, which the
+        // console does not fuse (it_802F063C: fmuls + fadds; notes/fp-audit.md)
         let dx = pos_0.x - pos_2.x;
         let dy = pos_0.y - pos_2.y;
         let dz = pos_0.z - pos_2.z;
-        let s0 = sqrtf_store(fmadds(dz, dz, fmadds(dx, dx, dy * dy)), &mut sqrt_0);
+        let s0 = sqrtf_store(dx * dx + dy * dy + dz * dz, &mut sqrt_0);
         let dx1 = pos_0.x - pos_1.x;
         let dy1 = pos_0.y - pos_1.y;
-        let s1 = sqrtf_store(fmadds(dx1, dx1, dy1 * dy1), &mut sqrt_1);
-        let s2 = sqrtf_store(fmadds(dx, dx, dy * dy), &mut sqrt_2);
+        let s1 = sqrtf_store(dx1 * dx1 + dy1 * dy1, &mut sqrt_1);
+        let s2 = sqrtf_store(dx * dx + dy * dy, &mut sqrt_2);
         translate.y = s0 * -(s1 / s2);
         HSD_JObjSetTranslate((*(*ip).xBBC_dynamicBoneTable).bones[2], &mut translate);
 

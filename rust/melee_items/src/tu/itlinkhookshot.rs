@@ -358,7 +358,7 @@ pub unsafe fn it_link_get_joint_c(arg0: *mut Item) -> *mut HSD_JObj {
 /// `t * a + (1.0F - t) * b`: the left product fuses into the add.
 pub fn it_link_lerp(a: f32, b: f32, t: f32) -> f32 {
     melee_core::ct!("it_link_lerp");
-    t.mul_add(a, (1.0_f32 - t) * b)
+    fmadds(t, a, (1.0_f32 - t) * b)
 }
 
 pub unsafe fn it_link_attr_math(attr: *mut itLinkHookshotAttributes, arg2: i32, arg8: f32) {
@@ -924,14 +924,33 @@ pub unsafe extern "C" fn itLinkhookshot_UnkMotion8_Phys(gobj: *mut Item_GObj) {
     (*item).xDD4_itemVar.linkhookshot.x10 = Some(it_802A39FC);
 }
 
-/// `sqrtf(x*x + y*y + z*z)` with the contraction `fmaf(z, z, fmaf(x, x, y*y))`.
+/// `sqrtf(x*x + y*y + z*z)` where MWCC inlined the helper and kept the vector in registers: the C
+/// build's contraction `fmadds(z, z, fmadds(x, x, y*y))` (gekko model, not an f32 `mul_add`).
 #[inline(always)]
 fn len3(x: f32, y: f32, z: f32) -> f32 {
-    sqrtf(z.mul_add(z, x.mul_add(x, y * y)))
+    sqrtf(fmadds(z, z, fmadds(x, x, y * y)))
 }
 
+/// The out-of-line `it_802A3C98` (called from itsamusgrapple, itclimbersstring, itnessyoyo): through
+/// the pointer `arg2`, so the console does not fuse the squares (fmuls x3, fadds x2; notes/fp-audit.md).
+/// This TU's own callers get MWCC's inlined copy, [`it_802A3C98_inl`], where they fuse.
 pub unsafe fn it_802A3C98(arg0: *mut Vec3, arg1: *mut Vec3, arg2: *mut Vec3) -> f32 {
     melee_core::ct!("it_802A3C98");
+    (*arg2).x = (*arg0).x - (*arg1).x;
+    (*arg2).y = (*arg0).y - (*arg1).y;
+    (*arg2).z = (*arg0).z - (*arg1).z;
+
+    let len = sqrtf((*arg2).x * (*arg2).x + (*arg2).y * (*arg2).y + (*arg2).z * (*arg2).z);
+    let inv: f32 = if len as f64 == 0.0 { 0.0 } else { (1.0_f64 / len as f64) as f32 };
+    (*arg2).x *= inv;
+    (*arg2).y *= inv;
+    (*arg2).z *= inv;
+    len
+}
+
+/// `it_802A3C98` inlined into this TU's link updaters (it_802A44CC...): the local `vec` stays in
+/// registers there and the squares fuse (DOL fused-op counts match with this).
+unsafe fn it_802A3C98_inl(arg0: *mut Vec3, arg1: *mut Vec3, arg2: *mut Vec3) -> f32 {
     (*arg2).x = (*arg0).x - (*arg1).x;
     (*arg2).y = (*arg0).y - (*arg1).y;
     (*arg2).z = (*arg0).z - (*arg1).z;
@@ -1107,9 +1126,9 @@ pub unsafe fn it_802A4454(item_link: *mut ItemLink) {
 /// `p->x = (vec.x * w) + base.x` (one fma per component).
 #[inline(always)]
 unsafe fn place(dst: *mut Vec3, vec: *const Vec3, w: f32, base: *const Vec3) {
-    (*dst).x = (*vec).x.mul_add(w, (*base).x);
-    (*dst).y = (*vec).y.mul_add(w, (*base).y);
-    (*dst).z = (*vec).z.mul_add(w, (*base).z);
+    (*dst).x = fmadds((*vec).x, w, (*base).x);
+    (*dst).y = fmadds((*vec).y, w, (*base).y);
+    (*dst).z = fmadds((*vec).z, w, (*base).z);
 }
 
 pub unsafe fn it_802A44CC(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itLinkHookshotAttributes, arg8: f32) {
@@ -1118,7 +1137,7 @@ pub unsafe fn it_802A44CC(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
 
     let mut link_1 = (*link_0).prev;
 
-    it_802A3C98(&mut (*link_0).pos, arg1, &mut vec);
+    it_802A3C98_inl(&mut (*link_0).pos, arg1, &mut vec);
 
     place(&raw mut (*link_0).pos, &vec, arg8, arg1);
 
@@ -1129,7 +1148,7 @@ pub unsafe fn it_802A44CC(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
         (*link_1).pos.z += (*link_1).vel.z;
         it_802A40D0(link_1, (*arg2).x30);
 
-        let len = it_802A3C98(&mut (*link_1).pos, &mut (*link_0).pos, &mut vec) as f64;
+        let len = it_802A3C98_inl(&mut (*link_1).pos, &mut (*link_0).pos, &mut vec) as f64;
         if len > (*arg2).x30 as f64 {
             place(&raw mut (*link_1).pos, &vec, (*arg2).x30, &raw const (*link_0).pos);
         }
@@ -1140,9 +1159,9 @@ pub unsafe fn it_802A44CC(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
 
 pub unsafe fn test_comp(vec0: *mut Vec3, vec1: *mut Vec3, vec2: *mut Vec3, arg2: *const f32) {
     melee_core::ct!("test_comp");
-    (*vec0).x = (*vec2).x.mul_add(*arg2, (*vec1).x);
-    (*vec0).y = (*vec2).y.mul_add(*arg2, (*vec1).y);
-    (*vec0).z = (*vec2).z.mul_add(*arg2, (*vec1).z);
+    (*vec0).x = fmadds((*vec2).x, *arg2, (*vec1).x);
+    (*vec0).y = fmadds((*vec2).y, *arg2, (*vec1).y);
+    (*vec0).z = fmadds((*vec2).z, *arg2, (*vec1).z);
 }
 
 pub unsafe fn it_802A4758_permuterslop(link_0: *mut ItemLink) -> *mut Vec3 {
@@ -1155,7 +1174,7 @@ pub unsafe fn it_802A4758(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
     let mut vec: Vec3 = core::mem::zeroed();
     let mut link_1 = (*link_0).prev;
 
-    let mut _len = it_802A3C98(&mut (*link_0).pos, arg1, &mut vec);
+    let mut _len = it_802A3C98_inl(&mut (*link_0).pos, arg1, &mut vec);
     test_comp(it_802A4758_permuterslop(link_0), arg1, &mut vec, &arg8);
     let _ = &mut arg8;
 
@@ -1164,7 +1183,7 @@ pub unsafe fn it_802A4758(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
         it_802A4420(link_1);
         it_802A43EC(link_1);
 
-        _len = it_802A3C98(&mut (*link_1).pos, &mut (*link_0).pos, &mut vec);
+        _len = it_802A3C98_inl(&mut (*link_1).pos, &mut (*link_0).pos, &mut vec);
 
         if _len > (*arg2).x30 {
             test_comp(&raw mut (*link_1).pos, &mut (*link_0).pos, &mut vec, &(*arg2).x30);
@@ -1181,14 +1200,14 @@ pub unsafe fn it_802A49B0(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
 
     let mut link_1 = (*link_0).prev;
 
-    it_802A3C98(&mut (*link_0).pos, arg1, &mut vec);
+    it_802A3C98_inl(&mut (*link_0).pos, arg1, &mut vec);
 
     place(&raw mut (*link_0).pos, &vec, arg8, arg1);
 
     while !link_1.is_null() {
         it_802A40D0(link_1, (*arg2).x30);
 
-        let len = it_802A3C98(&mut (*link_1).pos, &mut (*link_0).pos, &mut vec) as f64;
+        let len = it_802A3C98_inl(&mut (*link_1).pos, &mut (*link_0).pos, &mut vec) as f64;
         if len > (*arg2).x30 as f64 {
             place(&raw mut (*link_1).pos, &vec, (*arg2).x30, &raw const (*link_0).pos);
         }
@@ -1226,7 +1245,7 @@ pub unsafe fn it_802A4BFC_normalize_diff(a: *mut Vec3, b: *mut Vec3, vec: *mut V
     (*vec).y = (*a).y - (*b).y;
     (*vec).z = (*a).z - (*b).z;
     // `vec->x * vec->x + vec->y * vec->y + vec->z * vec->z`
-    let len: f64 = it_802A4BFC_sqrtf_offset((*vec).z.mul_add((*vec).z, (*vec).x.mul_add((*vec).x, (*vec).y * (*vec).y))) as f64;
+    let len: f64 = it_802A4BFC_sqrtf_offset(fmadds((*vec).z, (*vec).z, fmadds((*vec).x, (*vec).x, (*vec).y * (*vec).y))) as f64;
     let inv: f32 = if len == 0.0 { 0.0 } else { (1.0_f32 as f64 / len) as f32 };
     (*vec).x *= inv;
     (*vec).y *= inv;
@@ -1350,14 +1369,14 @@ pub unsafe fn it_802A5320(link_0: *mut ItemLink, arg1: *mut Vec3, attr: *mut itL
             } else {
                 it_802A40D0(link_1, (*attr).x30);
             }
-            let len = it_802A3C98(&mut (*link_1).pos, &mut (*cur).pos, &mut vec);
+            let len = it_802A3C98_inl(&mut (*link_1).pos, &mut (*cur).pos, &mut vec);
             if len > (*attr).x30 {
                 place(&raw mut (*link_1).pos, &vec, (*attr).x30, &raw const (*cur).pos);
             }
             (*link_1).coll_data.last_pos = (*link_1).coll_data.cur_pos;
             (*link_1).coll_data.cur_pos = (*link_1).pos;
         } else {
-            let len = it_802A3C98(arg1, &mut (*cur).pos, &mut vec);
+            let len = it_802A3C98_inl(arg1, &mut (*cur).pos, &mut vec);
             if len > (*attr).x30 {
                 place(&raw mut (*link_1).pos, &vec, (*attr).x30, &raw const (*cur).pos);
                 (*link_1).set_x2C_b0(1);
@@ -1412,7 +1431,7 @@ pub unsafe fn it_802A5770(link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itL
     (*cur).pos.z += (*cur).vel.z;
     it_802A40D0(cur, (*attr).x30);
 
-    let len = it_802A3C98(&mut (*cur).pos, anchor, &mut vec);
+    let len = it_802A3C98_inl(&mut (*cur).pos, anchor, &mut vec);
     if len > (*attr).x30 {
         place(&raw mut (*cur).pos, &vec, (*attr).x30, anchor);
     }
@@ -1426,7 +1445,7 @@ pub unsafe fn it_802A5770(link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itL
 
         it_802A5770_inline(link_1, attr, fp, var_r29);
 
-        let len = it_802A3C98(&mut (*link_1).pos, &mut (*cur).pos, &mut vec);
+        let len = it_802A3C98_inl(&mut (*link_1).pos, &mut (*cur).pos, &mut vec);
         if len > (*attr).x30 {
             place(&raw mut (*link_1).pos, &vec, (*attr).x30, &raw const (*cur).pos);
         }
@@ -1468,12 +1487,12 @@ pub unsafe fn it_802A5AE0(link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut itL
             (*link_1).pos.z += (*link_1).vel.z;
             it_802A40D0(link_1, (*arg2).x30);
 
-            let len = it_802A3C98(&mut (*link_1).pos, &mut (*cur).pos, &mut vec);
+            let len = it_802A3C98_inl(&mut (*link_1).pos, &mut (*cur).pos, &mut vec);
             if len > (*arg2).x30 {
                 place(&raw mut (*link_1).pos, &vec, (*arg2).x30, &raw const (*cur).pos);
             }
         } else {
-            let len = it_802A3C98(arg1, &mut (*cur).pos, &mut vec);
+            let len = it_802A3C98_inl(arg1, &mut (*cur).pos, &mut vec);
             if len > (*arg2).x30 {
                 place(&raw mut (*link_1).pos, &vec, (*arg2).x30, &raw const (*cur).pos);
                 (*link_1).set_x2C_b0(1);
@@ -1500,11 +1519,11 @@ pub unsafe fn it_802A5E28(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
         link_1 = (*link_0).prev;
     }
 
-    let mut len = it_802A3C98(&mut (*link_0).pos, arg1, &mut vec);
+    let mut len = it_802A3C98_inl(&mut (*link_0).pos, arg1, &mut vec);
 
     while !link_1.is_null() && arg8 > len {
         (*link_0).set_x2C_b0(0);
-        len = it_802A3C98(&mut (*link_1).pos, arg1, &mut vec);
+        len = it_802A3C98_inl(&mut (*link_1).pos, arg1, &mut vec);
         link_0 = link_1;
         link_1 = (*link_1).prev;
     }
@@ -1542,11 +1561,11 @@ pub unsafe fn it_802A5FE0(mut link_0: *mut ItemLink, link_0_2: *mut ItemLink, ar
 
     (*link_0_2).pos = vec2;
 
-    let mut len = it_802A3C98(&mut (*link_0).pos, arg2, &mut vec);
+    let mut len = it_802A3C98_inl(&mut (*link_0).pos, arg2, &mut vec);
 
     while !link_1.is_null() && arg8 > len {
         (*link_0).set_x2C_b0(0);
-        len = it_802A3C98(&mut (*link_1).pos, arg2, &mut vec);
+        len = it_802A3C98_inl(&mut (*link_1).pos, arg2, &mut vec);
         link_0 = link_1;
         link_1 = (*link_1).prev;
     }
@@ -1557,7 +1576,7 @@ pub unsafe fn it_802A5FE0(mut link_0: *mut ItemLink, link_0_2: *mut ItemLink, ar
     link_1 = (*link_2).next;
     while !link_1.is_null() && (*link_1).x2C_b0() != 0 {
         var_r31 += 1;
-        len = it_802A3C98(&mut (*link_1).pos, &mut (*link_2).pos, &mut vec);
+        len = it_802A3C98_inl(&mut (*link_1).pos, &mut (*link_2).pos, &mut vec);
         if len > (*arg3).x30 {
             place(&raw mut (*link_1).pos, &vec, (*arg3).x30, &raw const (*link_2).pos);
         }
@@ -1632,11 +1651,11 @@ pub unsafe fn it_802A678C(mut link_0: *mut ItemLink, arg1: *mut Vec3, arg2: *mut
         link_1 = (*link_0).prev;
     }
 
-    let mut len = it_802A3C98(&mut (*link_0).pos, arg1, &mut vec);
+    let mut len = it_802A3C98_inl(&mut (*link_0).pos, arg1, &mut vec);
 
     while !link_1.is_null() && arg8 > len {
         (*link_0).set_x2C_b0(0);
-        len = it_802A3C98(&mut (*link_1).pos, arg1, &mut vec);
+        len = it_802A3C98_inl(&mut (*link_1).pos, arg1, &mut vec);
         link_0 = link_1;
         link_1 = (*link_1).prev;
     }

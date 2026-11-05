@@ -125,3 +125,12 @@ then differs (render-side draws, nhv1.md 8), so `--ignore-seed` decides.
 - Some int fields decode differently by construction (`Item.xDA4_word` 1 vs 0x1000000: a field the native struct holds in another
   width); they are steady and drop out of `wide_diff`'s new-difference view.
 - Not an emulator-accuracy check of Dolphin itself: Dolphin is taken as the console.
+
+## Probe hook (port/oracle-fix)
+
+`MELEE_DOLPHIN_NHV1_PROBE_AT=<hex pc>[,<pc>...]` adds an HLE hook at each PC. Each hit appends one line to
+`MELEE_DOLPHIN_NHV1_PROBE` (a text file) with the playback frame, pc, lr, r3-r6, r29-r31, f1/f2 bits and, with
+`MELEE_DOLPHIN_NHV1_PROBE_MEM=rN+0xOFF:0xLEN`, the hex of that memory. Example: `80082AD8` with `r31+0x6F0:0x1A0` is
+the CollData just after Fighter_Spawn's ground probe (ft_80082A68). On 03b84423 that state matches Rust exactly
+(both miss, cur = y-10, last = y+10, x38 = 5). By CSV frame 2 the console has run 7 more collision calls on the
+fighter (x38 = 12, cur = last = spawn y) and Rust has not. That missing call is the frame 5/10/15/20 class, still open.

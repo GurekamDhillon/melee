@@ -50,7 +50,7 @@ index 829688e..5e53a96 100644
 +# GD nhv1-oracle: the playback code paths are behind IS_PLAYBACK, which upstream never defines (playback is WIP there)
 +set_source_files_properties(Slippi/SlippiPlayback.cpp HW/EXI/EXI_DeviceSlippi.cpp PROPERTIES COMPILE_DEFINITIONS IS_PLAYBACK=1)
 diff --git a/Source/Core/Core/HLE/HLE.cpp b/Source/Core/Core/HLE/HLE.cpp
-index a0ca859..8c97fe8 100644
+index a0ca859..c3e0a71 100644
 --- a/Source/Core/Core/HLE/HLE.cpp
 +++ b/Source/Core/Core/HLE/HLE.cpp
 @@ -5,6 +5,7 @@
@@ -74,21 +74,22 @@ index a0ca859..8c97fe8 100644
  
  // clang-format off
 -constexpr std::array<Hook, 23> os_patches{{
-+constexpr std::array<Hook, 24> os_patches{{
++constexpr std::array<Hook, 25> os_patches{{
      // Placeholder, os_patches[0] is the "non-existent function" index
      {"FAKE_TO_SKIP_0",               HLE_Misc::UnimplementedFunction,       HookType::Replace, HookFlag::Generic},
  
-@@ -60,7 +62,8 @@ constexpr std::array<Hook, 23> os_patches{{
+@@ -60,7 +62,9 @@ constexpr std::array<Hook, 23> os_patches{{
  
      {"GeckoCodehandler",             HLE_Misc::GeckoCodeHandlerICacheFlush, HookType::Start,   HookFlag::Fixed},
      {"GeckoHandlerReturnTrampoline", HLE_Misc::GeckoReturnTrampoline,       HookType::Replace, HookFlag::Fixed},
 -    {"AppLoaderReport",              HLE_OS::HLE_GeneralDebugPrint,         HookType::Start,   HookFlag::Fixed} // apploader needs OSReport-like function
 +    {"AppLoaderReport",              HLE_OS::HLE_GeneralDebugPrint,         HookType::Start,   HookFlag::Fixed}, // apploader needs OSReport-like function
-+    {"NHV1FrameEnd",                 NHV1Oracle::FrameEnd,                  HookType::Start,   HookFlag::Fixed}  // GD nhv1-oracle
++    {"NHV1FrameEnd",                 NHV1Oracle::FrameEnd,                  HookType::Start,   HookFlag::Fixed}, // GD nhv1-oracle
++    {"NHV1Probe",                    NHV1Oracle::Probe,                     HookType::Start,   HookFlag::Fixed}  // GD nhv1-oracle probes
  }};
  // clang-format on
  
-@@ -106,6 +109,10 @@ void PatchFixedFunctions(Core::System& system)
+@@ -106,6 +110,14 @@ void PatchFixedFunctions(Core::System& system)
    // This has to always be installed even if cheats are not enabled because of the possiblity of
    // loading a savestate where PC is inside the code handler while cheats are disabled.
    Patch(system, Gecko::HLE_TRAMPOLINE_ADDRESS, "GeckoHandlerReturnTrampoline");
@@ -96,6 +97,10 @@ index a0ca859..8c97fe8 100644
 +  // GD nhv1-oracle: after HSD_GObj_RunProcs in gm_801A4D34 (MELEE_DOLPHIN_NHV1)
 +  if (NHV1Oracle::Enabled() && !std::getenv("MELEE_DOLPHIN_NHV1_NOHOOK"))
 +    Patch(system, NHV1Oracle::HOOK_ADDRESS, "NHV1FrameEnd");
++  // GD nhv1-oracle: MELEE_DOLPHIN_NHV1_PROBE_AT=addr[,addr...] (hex), see NHV1Oracle.h
++  if (NHV1Oracle::Enabled())
++    for (u32 a : NHV1Oracle::ProbeAddresses())
++      Patch(system, a, "NHV1Probe");
  }
  
  void PatchFunctions(Core::System& system)
@@ -174,16 +179,17 @@ index c6fbc9d..302398d 100644
  
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.cpp b/Source/Core/Core/Slippi/NHV1Oracle.cpp
 new file mode 100644
-index 0000000..bfbe1ae
+index 0000000..fae2105
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.cpp
-@@ -0,0 +1,286 @@
+@@ -0,0 +1,350 @@
 +// NHV1 oracle (GD's Melee port, local tool): see NHV1Oracle.h.
 +#include "Core/Slippi/NHV1Oracle.h"
 +
 +#include <climits>
 +#include <cstdio>
 +#include <cstdlib>
++#include <cstring>
 +#include <chrono>
 +#include <thread>
 +#include <vector>
@@ -386,6 +392,68 @@ index 0000000..bfbe1ae
 +    std::_Exit(0);
 +  }
 +}
++std::vector<u32> ProbeAddresses()
++{
++  std::vector<u32> out;
++  const char* at = std::getenv("MELEE_DOLPHIN_NHV1_PROBE_AT");
++  if (!at)
++    return out;
++  const char* p = at;
++  while (*p)
++  {
++    char* end = nullptr;
++    const unsigned long v = std::strtoul(p, &end, 16);
++    if (end == p)
++      break;
++    out.push_back(static_cast<u32>(v));
++    p = (*end == ',') ? end + 1 : end;
++  }
++  return out;
++}
++
++void Probe(const Core::CPUThreadGuard& guard)
++{
++  static FILE* f = nullptr;
++  static bool tried = false;
++  static int mem_reg = -1;
++  static u32 mem_off = 0, mem_len = 0;
++  if (!tried)
++  {
++    tried = true;
++    const char* path = std::getenv("MELEE_DOLPHIN_NHV1_PROBE");
++    if (path && *path)
++      f = std::fopen(path, "w");
++    const char* m = std::getenv("MELEE_DOLPHIN_NHV1_PROBE_MEM");
++    unsigned r = 0, off = 0, len = 0;
++    if (m && std::sscanf(m, "r%u+0x%x:0x%x", &r, &off, &len) == 3 && r < 32 && len <= 0x4000)
++    {
++      mem_reg = static_cast<int>(r);
++      mem_off = off;
++      mem_len = len;
++    }
++  }
++  if (!f)
++    return;
++  auto& ppc = guard.GetSystem().GetPPCState();
++  auto fb = [&](int i) {
++    const float x = static_cast<float>(ppc.ps[i].PS0AsDouble());
++    u32 b;
++    std::memcpy(&b, &x, 4);
++    return b;
++  };
++  std::fprintf(f, "probe frame=%d pc=%08x lr=%08x r3=%08x r4=%08x r5=%08x r6=%08x r29=%08x r30=%08x r31=%08x f1=%08x f2=%08x",
++               s_frame, ppc.pc, ppc.spr[SPR_LR], ppc.gpr[3], ppc.gpr[4], ppc.gpr[5], ppc.gpr[6], ppc.gpr[29], ppc.gpr[30],
++               ppc.gpr[31], fb(1), fb(2));
++  if (mem_reg >= 0)
++  {
++    std::fprintf(f, " mem=");
++    const u32 base = ppc.gpr[mem_reg] + mem_off;
++    for (u32 k = 0; k < mem_len; k++)
++      std::fprintf(f, "%02x", PowerPC::MMU::HostRead_U8(guard, base + k));
++  }
++  std::fputc('\n', f);
++  std::fflush(f);
++}
 +}  // namespace NHV1Oracle
 +
 +#ifdef _WIN32
@@ -395,6 +463,7 @@ index 0000000..bfbe1ae
 +#include <exception>
 +namespace
 +{
++
 +void CrashNote(const char* what)
 +{
 +  char path[MAX_PATH];
@@ -466,19 +535,24 @@ index 0000000..bfbe1ae
 +#endif
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.h b/Source/Core/Core/Slippi/NHV1Oracle.h
 new file mode 100644
-index 0000000..332e4db
+index 0000000..72042ed
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.h
-@@ -0,0 +1,29 @@
+@@ -0,0 +1,37 @@
 +// NHV1 oracle (GD's Melee port, local tool, not upstream): dump the GameCube memory that the NHV1 per-frame
 +// hash is computed from, once per logic iteration, right after HSD_GObj_RunProcs() returns in gm_801A4D34.
 +//
 +//   MELEE_DOLPHIN_NHV1=<file.nhraw>   enable; records are appended to that file
 +//   MELEE_DOLPHIN_NHV1_WIDE=1         also dump game_camera and stage_info every frame
 +//   MELEE_DOLPHIN_NHV1_EXIT=1         exit the process after the replay's last frame was logged
++//   MELEE_DOLPHIN_NHV1_PROBE_AT=a,b   (hex PCs) also log a text line each time one of these instructions runs:
++//   MELEE_DOLPHIN_NHV1_PROBE=<file>     the playback frame, pc, r3-r6, r29-r31, f1-f2 bits and
++//   MELEE_DOLPHIN_NHV1_PROBE_MEM=rN+0xOFF:0xLEN  that many bytes at register rN plus OFF (hex)
 +//
 +// Format: see docs/rust-port/notes/dolphin-oracle.md in GD's Melee workspace.
 +#pragma once
++
++#include <vector>
 +
 +#include "Common/CommonTypes.h"
 +
@@ -496,6 +570,9 @@ index 0000000..332e4db
 +bool Enabled();
 +// HLE hook body (HookType::Start, HookFlag::Fixed)
 +void FrameEnd(const Core::CPUThreadGuard& guard);
++// HLE probe hook (HookType::Start) and the addresses MELEE_DOLPHIN_NHV1_PROBE_AT names
++void Probe(const Core::CPUThreadGuard& guard);
++std::vector<u32> ProbeAddresses();
 +// called by the Slippi EXI device when it hands a playback frame to the game
 +void NoteFrame(s32 frame, s32 latest, bool processing_complete);
 +}  // namespace NHV1Oracle

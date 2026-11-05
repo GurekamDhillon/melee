@@ -810,8 +810,9 @@ void ftCo_80092F2C(HSD_GObj* gobj, bool arg1)
 #if defined(TARGET_PC)
 /* UCF 0.84 Shield SDI (Slippi External/UCF 0.84/UCF/UCF Shield SDI.asm, @ 0x80093294 - the
  * `active_timer.lstick.x < sdi_stick_window` test in shield SDI). Where the window has closed the
- * SDI still happens if the x sticky timer is 0 or 1, last frame's |stick x| was inside the SDI
- * threshold, and the raw x moved by more than 62 units (squared distance > 3844) against two
+ * SDI still happens if the x sticky timer is 0 or 1, last frame's stick x was below the SDI
+ * threshold (a SIGNED compare in the code: `lfs f12,0x628(r4); fcmpu f12,f0; bge` - a stick held
+ * to the left always passes, verified against the code bytes of the corpus replays), and the raw x moved by more than 62 units (squared distance > 3844) against two
  * entries back in UCF's pad buffer (fighter.c). */
 static bool ftCo_Ucf084ShieldSdi(Fighter* fp)
 {
@@ -825,7 +826,7 @@ static bool ftCo_Ucf084ShieldSdi(Fighter* fp)
     if (fp->active_sticky.lstick.x > 1) {
         return false;
     }
-    if (!(ABS(prev) < p_ftCommonData->sdi_min_stick_mag)) {
+    if (!(prev < p_ftCommonData->sdi_min_stick_mag)) {
         return false;
     }
     d = ftUcf_PadRaw(port, 0, 0) - ftUcf_PadRaw(port, 0, 2);

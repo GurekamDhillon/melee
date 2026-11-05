@@ -1090,6 +1090,9 @@ fn golden(args: &[String]) -> ExitCode {
 /// Load a replay for `golden --slp`: the player, the scene converted from its Game Start block (slpcheck::convert), the seed.
 fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(melee_data::player::Player, melee_engine::scenario::Scenario, u32), String> {
     let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
+    // the replay's own widescreen camera code, armed before the match boots (CObjLoad reads it)
+    let ws = melee_data::slp::parse(&data, false).ok().and_then(|f| melee_data::slp::widescreen_code(&f.gecko));
+    melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
     let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: true, identity: gdlp, ..Default::default() });
     if gdlp.is_some() {
         pl.load_gdlp(path, &data, false);

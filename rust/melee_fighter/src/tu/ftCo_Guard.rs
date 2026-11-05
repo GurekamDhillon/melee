@@ -769,8 +769,8 @@ fn ftCo_Ucf084ShieldSdi(f: &Fighter) -> bool {
     if f.active_sticky.lstick.x > 1 {
         return false;
     }
-    let a = if prev < 0.0 { -prev } else { prev };
-    if !(a < cd().sdi_min_stick_mag) {
+    // signed, as the code's `fcmpu f12,f0; bge` (no fabs): a stick held left always passes
+    if !(prev < cd().sdi_min_stick_mag) {
         return false;
     }
     let d = ext::ftUcf_PadRaw(port, 0, 0).wrapping_sub(ext::ftUcf_PadRaw(port, 0, 2));

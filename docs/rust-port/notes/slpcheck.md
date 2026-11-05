@@ -223,28 +223,26 @@ The 12 `+1.0 percent` files: 11 now match, 1 diverges later on a 1-ULP value. No
 
 Remaining non-ULP first divergences (7): action 38/358 x2 (Dream Land), 41/40, 29/90, hitlag 5/8, percent +10, shield 49.4/42.6.
 
-## Round 5 (2026-11-05, port/slp-fma): float contraction (measured on b3c5e1ead: 53 -> 61)
+## Round 5 (2026-11-05, port/slp-fma): float contraction, 72 -> 86 of 125 frame-exact
 
-At the start of this round the rust-port tip (b3c5e1ead) already gave 53 frame-exact files (the 38 above plus other branches' fixes).
-Same corpus and harness (`run_all.sh`, fast profile, 2 jobs). Sites changed and the evidence are listed in notes/fma.md "Round 3". In short:
-`C_MTXLookAt` no longer fused (the SDK is built `-fp_contract off`), `PSMTXInverse` / `PSVECMag` / `PSVECDotProduct` / `PSVECCrossProduct` in
-the retail paired-single dataflow (fres/frsqrte estimates included), and the shield decay product in `ftCo_800925A4` rounded before the
-subtraction. Rust and C both; the C build's goldens were re-recorded.
+Sites changed and the evidence: notes/fma.md "Round 3". In short: `C_MTXLookAt` no longer fused (the SDK is built `-fp_contract off`),
+`PSMTXInverse` / `PSVECMag` / `PSVECDotProduct` / `PSVECCrossProduct` in the retail paired-single dataflow (fres/frsqrte estimates included),
+and the shield decay product in `ftCo_800925A4` rounded before the subtraction. Rust and C both; goldens re-recorded from the C build.
+Measured with `run_all.sh`, fast profile, 2 jobs, on the rust-port tip c973607f2 (before) and on that tip merged with this branch (after);
+29 files diverge later, none earlier. (Developed on b3c5e1ead, where the same changes took 53 to 61.)
 
-| | before (tip) | after |
+| | before (tip c973607f2) | after (merged) |
 |---|---|---|
-| frame-exact | 53 | 61 |
-| median first divergence (diverged files) | 4119 | 4562 |
-| first field x / y / percent / shield / action / hitlag | 40 / 6 / 15 / 6 / 4 / 1 | 34 / 7 / 17 / 1 / 4 / 1 |
-| x/y within 0.01 (1-ULP class) | 33 | 28 |
+| frame-exact | 72 | 86 |
+| median first divergence (diverged files) | 4394 | 4402 |
+| first field x / y / percent / shield / action / hitlag | 31 / 8 / 3 / 6 / 4 / 1 | 23 / 7 / 3 / 1 / 4 / 1 |
+| x/y within 0.01 (1-ULP class) | 39 | 30 |
 
-What is left in this class (first divergence, from `SLPCHECK_DUMP`):
+What is left in this class (first divergence, from `SLPCHECK_DUMP`; counts on b3c5e1ead):
 - Star KO (action 6/7, DeadUpFall / DeadUpFallHitCamera): 20 files diverged inside the state before; 13 remain (most later in the state), each a single 1-ULP step a few
   to 30 frames into the state, so the inverse view matrix input (the camera's eye/interest, `lbVector_Lerp` of the screen offset) still differs
   in the last bit somewhere. Every camera.rs fused site was tested unfused (no gain); not found.
 - Fighters next to a stage edge or wall (actions 29 Fall, 32, 35, 252, 179 Guard; x within 1 ULP, |x| 55 to 92): about 12 files on
   Fountain, Yoshi's, Final Destination, Dream Land. Not a contraction site in mpcoll/mplib/ftcoll/fighter (all tested). Next: dump the
   collision push and the ECB for one such frame.
-- `percent` exactly +1.0 (15 files, all of them 113-code Gecko lists, event 20689; the fighter is far off-screen, |x| > 160): the engine applies a
-  1% the console does not. That is the off-screen (magnifying glass) damage; a code in those lists must turn it off. Not FMA; a Gecko code to emulate.
 - action 38 vs 358, 41 vs 40, 29 vs 90 and one hitlag 5 vs 8: unchanged, not followed by a 1-ULP drift.

@@ -298,11 +298,13 @@ before. No reconnect.
   firewall prompt path, IPv6 over a real network, host names.
 
 ## Early inputs (port/earlyin, 2026-11-03)
-Credit: the design is **Arte's subframe rollback** (JulienBernard3383279: the Kristal build and the "Subframe
-rollback" draft for Slippi's Dolphin), which first showed that sending meaningful controller changes between frames
-lets the other side predict from them. **Hero's Melee Unlocked** carries it (`docs/early-inputs.md`,
-`port/runtime/host/early_input*`, mu_net SAMPLE); it was read as reference only. Everything here is our own code over
-our own wire. Thanks to both.
+Credit: the design follows the early-input approach of **melee-unlocked, by Hero**, which builds on **Arte's
+subframe rollback** (JulienBernard3383279: the Kristal build and the "Subframe rollback" draft for Slippi's Dolphin).
+Thanks to both. The first version of `melee_net/src/early.rs` (port/earlyin) followed Hero's early-input code too
+closely, including some of his comment wording, while claiming to share nothing with it; Hero pointed this out.
+On 2026-11-05 (port/hero-fix) the file was rewritten clean-room from our own tests and this note only, without
+opening his source; behaviour is unchanged (the existing tests plus a 2.5M-case randomized old-vs-new comparison of
+every function, run once and not kept).
 
 ### What it does
 Prediction used to be repeat-last only. Now a sampler thread reads the local controller about every millisecond

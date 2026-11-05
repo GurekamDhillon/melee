@@ -1,63 +1,75 @@
-//! Early inputs: a controller change that matters is sent to the other player the moment it happens, stamped with
-//! the pad frame it will first appear in, instead of waiting for the next frame's input packet. The receiver
-//! predicts with the newest early pad until the confirmed pad arrives; the confirmed pad always decides, so the
-//! simulation, replays and checksums never change, only how often a prediction is right.
+//! Early inputs (netplay prediction hints).
 //!
-//! The design is Arte's subframe rollback (JulienBernard3383279: the Kristal build and the "Subframe rollback"
-//! draft for Slippi's Dolphin), as Hero's Melee Unlocked carries it (`docs/early-inputs.md` there). This is our own
-//! implementation over the gw_net wire; nothing is shared with either. See docs/rust-port/notes/net.md.
+//! Credit: the design follows the early-input approach of melee-unlocked, by Hero, which in turn builds on Arte's
+//! subframe rollback (JulienBernard3383279). This file is a clean-room rewrite written from our own tests and notes
+//! (docs/rust-port/notes/net.md, "Early inputs"); no code or text was taken from melee-unlocked.
 //!
-//! Here: which changes matter ([`matters`]), the packet ([`encode`] / [`decode`]), the receiver's per-slot buffer
-//! ([`Buffer`]), the trust rule ([`Trust`]) and the sender's judgement ([`SenderState`], thread-agnostic: the
-//! sampler thread in the game crate owns one behind a mutex).
+//! Timeline of one local pad:
+//! - tick N schedules the pad for frame F; it goes out in the normal input packets;
+//! - between ticks a sampler thread keeps reading the controller; a read that changes what the game would do is
+//!   sent straight away as a hint for frame F+1 (or F+2 once the controller has been polled for F+1 but that pad has
+//!   not been scheduled yet);
+//! - the remote side keeps those hints per slot and, while frame G is still unconfirmed, predicts it from the
+//!   highest-target hint in (last confirmed, G]; without one it falls back to repeating the last confirmed pad.
+//!
+//! Hints only steer prediction. The confirmed pad replaces any guess, so the simulation, replays and checksums are
+//! identical with hints on or off.
+//!
+//! Contents: significance test ([`matters`], [`clamp_rest`]), datagram ([`encode`] / [`decode`]), per-slot hint
+//! store ([`Buffer`]), misbehaving-peer cut-off ([`Trust`]) and the sending decision ([`SenderState`]; plain data,
+//! the game crate wraps it in a mutex shared by the game and sampler threads).
 
 use crate::pad::NP_PAYLOAD;
 
-/// The pad as it travels: the 11 bytes of `np_encode` (buttons big-endian, main stick, C-stick, L, R, analog A,
-/// analog B, err).
+/// Wire form of one pad: the `np_encode` bytes. Index 0-1 buttons (big-endian), 2-3 main stick X/Y, 4-5 C-stick X/Y,
+/// 6-7 analog L/R, then analog A, analog B, err.
 pub type Pad = [u8; NP_PAYLOAD];
 
-/// Entries kept per remote slot (a rollback window is 7..12 frames; more unconfirmed early pads than that would mean
-/// the confirmed inputs stopped arriving).
+/// Hint capacity per remote slot. Rollback never reaches further back than about a dozen frames, so a longer backlog
+/// would only mean the confirmed stream has stalled.
 pub const MAX_ENTRIES: usize = 8;
 
-/// The packet: `MEI1` | room channel u8 | target frame i32 BE | in-game port u8 | pad[11].
+/// Datagram layout: tag `MEI1`, room channel (1 byte), target frame (i32, big-endian), in-game port (1 byte), pad.
 pub const MAGIC: &[u8; 4] = b"MEI1";
 pub const PACKET_LEN: usize = 4 + 1 + 4 + 1 + NP_PAYLOAD;
 
-/// Handshake capability bit (HELLO / ACCEPT trailing caps byte): this side sends and uses early pads.
+/// Bit in the HELLO / ACCEPT capability byte announcing hint support.
 pub const CAP_EARLY: u8 = 0x01;
 
-/// Sticks within two of neutral read as zero (for the judgement only; the bytes sent are the pad as read).
+/// Dead zone used only when deciding significance: a stick whose both axes are within +-2 is treated as centred.
+/// (What is transmitted is always the raw read.)
 pub fn clamp_rest(p: &mut Pad) {
-    let (sx, sy, cx, cy) = (p[2] as i8, p[3] as i8, p[4] as i8, p[5] as i8);
-    if (-2..=2).contains(&sx) && (-2..=2).contains(&sy) {
-        p[2] = 0;
-        p[3] = 0;
-    }
-    if (-2..=2).contains(&cx) && (-2..=2).contains(&cy) {
-        p[4] = 0;
-        p[5] = 0;
+    for base in [2usize, 4] {
+        let near = |b: u8| (b as i8).unsigned_abs() <= 2;
+        if near(p[base]) && near(p[base + 1]) {
+            p[base] = 0;
+            p[base + 1] = 0;
+        }
     }
 }
 
-// The stick lines the game acts on, in the controller's units (the game divides by 80): walk / tilt 23 (0.2875),
-// dash / smash 64 (0.8), tap jump 53 (0.6625), crouch 56 (0.7). A negative line is crossed at or below it, a
-// positive one at or above it.
-const MAIN_X: [i8; 4] = [-64, -23, 23, 64];
-const MAIN_Y: [i8; 4] = [-56, -23, 23, 53];
-const C_X: [i8; 4] = [-64, -23, 23, 64];
-const C_Y: [i8; 4] = [-53, -23, 23, 53];
-/// Shield drop: main stick Y -53 while a shield input is held.
+/// Per-axis decision lines in raw stick units (game value = raw / 80). Index order matches the pad bytes 2..6.
+/// Lines below zero are reached by going at or under them, lines above zero by going at or over them.
+const AXIS_LINES: [[i8; 4]; 4] = [
+    [-64, -23, 23, 64], // main X: walk/tilt, dash/smash
+    [-56, -23, 23, 53], // main Y: crouch, tilt, tap jump
+    [-64, -23, 23, 64], // C X
+    [-53, -23, 23, 53], // C Y
+];
+/// Main-stick Y line that drops a held shield.
 const SHIELD_DROP: i8 = -53;
-/// The analog trigger value read as a light shield.
+/// Analog trigger depth counted as engaged.
 pub const TRIGGER_LINE: u8 = 43;
-/// A B Start: act on press. X Y Z R L: held for a state. The D-pad is left out.
-const PRESS_BUTTONS: u16 = 0x1300;
-const HELD_BUTTONS: u16 = 0x0C70;
+/// Buttons that act on the edge (A, B, Start) versus buttons whose held state matters (X, Y, Z, R, L).
+/// D-pad changes are never significant.
+const EDGE_MASK: u16 = 0x1300;
+const LEVEL_MASK: u16 = 0x0C70;
+/// Digital L / R / Z bits used to tell whether the player is shielding.
+const SHIELD_BUTTONS: u16 = 0x0070;
 
-/// `all`: every line both ways, every button both ways; `presses`: outward crossings and presses only (plus the
-/// held buttons both ways). `MELEE_EARLY_RULES=presses` picks the second (measurement).
+/// Which transitions count. `All` (default): any line crossed in either direction and any edge button change.
+/// `Presses`: only crossings away from centre and button presses; level buttons still count both ways. Picked with
+/// `MELEE_EARLY_RULES=presses` for measurements.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum Rules {
     #[default]
@@ -65,110 +77,113 @@ pub enum Rules {
     Presses,
 }
 
-fn inside(v: i8, line: i8) -> bool {
+fn past(v: i8, line: i8) -> bool {
     if line < 0 {
         v <= line
     } else {
         v >= line
     }
 }
-fn crossed(now: i8, before: i8, line: i8, outward: bool) -> bool {
-    let (a, b) = (inside(now, line), inside(before, line));
-    if outward {
-        a && !b
-    } else {
-        a != b
+
+/// Did the value move across `line`? With `entering_only` only a move from the near side to the far side counts.
+fn moved_across(now: i8, before: i8, line: i8, entering_only: bool) -> bool {
+    match (past(now, line), past(before, line)) {
+        (true, false) => true,
+        (false, true) => !entering_only,
+        _ => false,
     }
-}
-fn axis(now: u8, before: u8, lines: &[i8; 4], outward: bool) -> bool {
-    lines.iter().any(|&l| crossed(now as i8, before as i8, l, outward))
 }
 
-/// True when `now` differs from `before` in a way that changes what the game does. Both rest-clamped.
+fn engaged(trigger: u8) -> bool {
+    trigger >= TRIGGER_LINE
+}
+
+/// Significance test: would the game plausibly react differently to `now` than to `before`? Callers pass both
+/// through [`clamp_rest`] first.
 pub fn matters(now: &Pad, before: &Pad, rules: Rules) -> bool {
-    let out = rules == Rules::Presses;
-    let bn = u16::from_be_bytes([now[0], now[1]]);
-    let bb = u16::from_be_bytes([before[0], before[1]]);
-    if (bn ^ bb) & HELD_BUTTONS != 0 {
+    let entering_only = rules == Rules::Presses;
+    let b_now = u16::from_be_bytes([now[0], now[1]]);
+    let b_old = u16::from_be_bytes([before[0], before[1]]);
+    let flipped = b_now ^ b_old;
+
+    if flipped & LEVEL_MASK != 0 {
         return true;
     }
-    let press = if out { bn & !bb & PRESS_BUTTONS } else { (bn ^ bb) & PRESS_BUTTONS };
-    if press != 0 {
+    let edge = if entering_only { flipped & b_now } else { flipped };
+    if edge & EDGE_MASK != 0 {
         return true;
     }
-    if axis(now[2], before[2], &MAIN_X, out)
-        || axis(now[3], before[3], &MAIN_Y, out)
-        || axis(now[4], before[4], &C_X, out)
-        || axis(now[5], before[5], &C_Y, out)
-    {
+    for (i, lines) in AXIS_LINES.iter().enumerate() {
+        let (n, o) = (now[2 + i] as i8, before[2 + i] as i8);
+        if lines.iter().any(|&l| moved_across(n, o, l, entering_only)) {
+            return true;
+        }
+    }
+    let shielding = b_now & SHIELD_BUTTONS != 0 || engaged(now[6]) || engaged(now[7]);
+    if shielding && moved_across(now[3] as i8, before[3] as i8, SHIELD_DROP, entering_only) {
         return true;
     }
-    let shielding = bn & 0x0070 != 0 || now[6] >= TRIGGER_LINE || now[7] >= TRIGGER_LINE;
-    if shielding && crossed(now[3] as i8, before[3] as i8, SHIELD_DROP, out) {
-        return true;
-    }
-    (now[6] >= TRIGGER_LINE) != (before[6] >= TRIGGER_LINE) || (now[7] >= TRIGGER_LINE) != (before[7] >= TRIGGER_LINE)
+    engaged(now[6]) != engaged(before[6]) || engaged(now[7]) != engaged(before[7])
 }
 
 pub fn encode(ch: u8, target: i32, port: u8, pad: &Pad) -> [u8; PACKET_LEN] {
-    let mut o = [0u8; PACKET_LEN];
-    o[..4].copy_from_slice(MAGIC);
-    o[4] = ch;
-    o[5..9].copy_from_slice(&target.to_be_bytes());
-    o[9] = port;
-    o[10..].copy_from_slice(pad);
-    o
+    let mut out = [0u8; PACKET_LEN];
+    let mut w = 0;
+    for chunk in [&MAGIC[..], &[ch], &target.to_be_bytes(), &[port], &pad[..]] {
+        out[w..w + chunk.len()].copy_from_slice(chunk);
+        w += chunk.len();
+    }
+    out
 }
 
-/// (channel, target, port, pad), or None for anything that is not an early packet.
+/// Parse a hint datagram into (channel, target, port, pad); anything else gives None.
 pub fn decode(b: &[u8]) -> Option<(u8, i32, u8, Pad)> {
-    if b.len() < PACKET_LEN || &b[..4] != MAGIC {
+    if b.len() < PACKET_LEN || !b.starts_with(MAGIC) {
         return None;
     }
-    let mut pad = [0u8; NP_PAYLOAD];
-    pad.copy_from_slice(&b[10..PACKET_LEN]);
-    Some((b[4], i32::from_be_bytes([b[5], b[6], b[7], b[8]]), b[9], pad))
+    let target = i32::from_be_bytes(b[5..9].try_into().ok()?);
+    let pad: Pad = b[10..PACKET_LEN].try_into().ok()?;
+    Some((b[4], target, b[9], pad))
 }
 
-/// The early pads held for one remote slot, oldest target first. Only prediction reads it.
+/// Hints received for one remote slot, kept sorted by target frame. Read by prediction only.
 #[derive(Clone, Debug, Default)]
 pub struct Buffer {
     pub entries: Vec<(i32, Pad)>,
 }
 
 impl Buffer {
-    /// Add or replace (the newest word about one target stands). Full: the oldest goes for a newer target, a target
-    /// older than everything held is ignored.
+    /// Store a hint. A repeat for a target already held overwrites it. At capacity the lowest target is evicted to
+    /// make room, unless the incoming target is lower still, in which case it is discarded.
     pub fn add(&mut self, target: i32, pad: &Pad) {
-        if let Some(e) = self.entries.iter_mut().find(|e| e.0 == target) {
-            e.1 = *pad;
-            return;
-        }
-        if self.entries.len() >= MAX_ENTRIES {
-            if target < self.entries[0].0 {
-                return;
+        match self.entries.binary_search_by_key(&target, |e| e.0) {
+            Ok(i) => self.entries[i].1 = *pad,
+            Err(i) => {
+                if self.entries.len() < MAX_ENTRIES {
+                    self.entries.insert(i, (target, *pad));
+                } else if i > 0 {
+                    self.entries.remove(0);
+                    self.entries.insert(i - 1, (target, *pad));
+                }
             }
-            self.entries.remove(0);
         }
-        let at = self.entries.iter().position(|e| e.0 > target).unwrap_or(self.entries.len());
-        self.entries.insert(at, (target, *pad));
     }
-    /// The confirmed inputs reach `latest`: every early pad for a frame at or before it is spent.
+    /// Forget hints for frames the confirmed stream now covers (target <= `latest`).
     pub fn drop_through(&mut self, latest: i32) {
-        self.entries.retain(|e| e.0 > latest);
+        let keep_from = self.entries.partition_point(|e| e.0 <= latest);
+        self.entries.drain(..keep_from);
     }
-    /// The pad to predict `frame` with when the confirmed inputs reach `latest` (< frame): the newest early pad for a
-    /// target in (latest, frame].
+    /// Hint to predict `frame` with, given confirmed inputs up to `latest`: the highest target in (latest, frame].
     pub fn best(&self, frame: i32, latest: i32) -> Option<&Pad> {
-        self.entries.iter().filter(|e| e.0 > latest && e.0 <= frame).last().map(|e| &e.1)
+        self.entries.iter().rev().find(|e| e.0 <= frame && e.0 > latest).map(|e| &e.1)
     }
     pub fn clear(&mut self) {
         self.entries.clear();
     }
 }
 
-/// Early pads are data a peer volunteers: one whose guesses are mostly wrong (over 60 % after 64) is ignored for the
-/// rest of the match.
+/// Cut-off for a peer whose hints are unreliable: once at least [`TRUST_MIN_GUESSES`] hinted predictions have been
+/// checked and more than [`TRUST_MAX_WRONG_PCT`] % were wrong, its hints are ignored until the match ends.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Trust {
     pub guesses: u32,
@@ -180,21 +195,19 @@ pub const TRUST_MIN_GUESSES: u32 = 64;
 pub const TRUST_MAX_WRONG_PCT: u32 = 60;
 
 impl Trust {
-    /// Count one judged guess; returns true when this one made the peer untrusted.
+    /// Record whether one hinted prediction turned out right. Returns true exactly once: on the call that trips the
+    /// cut-off.
     pub fn judge(&mut self, right: bool) -> bool {
         self.guesses += 1;
-        if !right {
-            self.wrong += 1;
-        }
-        if !self.distrusted && self.guesses >= TRUST_MIN_GUESSES && self.wrong * 100 > self.guesses * TRUST_MAX_WRONG_PCT {
-            self.distrusted = true;
-            return true;
-        }
-        false
+        self.wrong += u32::from(!right);
+        let over = self.guesses >= TRUST_MIN_GUESSES && self.wrong * 100 > self.guesses * TRUST_MAX_WRONG_PCT;
+        let tripped = over && !self.distrusted;
+        self.distrusted |= tripped;
+        tripped
     }
 }
 
-/// Sender statistics.
+/// Counters reported in the match summary.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct SendStats {
     pub samples: u64,
@@ -204,45 +217,46 @@ pub struct SendStats {
     pub packets: u64,
 }
 
-/// The sender's judgement (behind a mutex, shared by the game thread and the sampler thread). The game thread tells
-/// it each local pad it schedules (`note_sampled`), when it reads the controller (`note_poll`) and when a tick ran
-/// no new frame (`note_skipped`); the sampler hands it each controller read (`judge`).
+/// Sending decision. Game-thread events: [`note_sampled`](Self::note_sampled) when a local pad is scheduled,
+/// [`note_poll`](Self::note_poll) when the controller is read for the next tick, [`note_skipped`](Self::note_skipped)
+/// when a tick scheduled nothing. Sampler-thread event: [`judge`](Self::judge) per controller read.
 #[derive(Clone, Debug, Default)]
 pub struct SenderState {
-    /// the newest pad the other side has or will have (scheduled, or sent early), rest-clamped
+    /// Last pad the peer is known to have or be about to get (scheduled or hinted), dead-zoned.
     known: Pad,
-    /// the newest local frame with a scheduled pad (None: none yet)
+    /// Highest local frame whose pad has been scheduled, if any.
     pub last_frame: Option<i32>,
-    /// the controller was read for a tick whose pad is not scheduled yet: a change now belongs to the frame after it
+    /// Controller already read for the coming tick, pad not yet scheduled: new changes target one frame later.
     poll_pending: bool,
-    /// a tick ran without scheduling a pad: the next read is sent if it differs at all
+    /// Previous tick scheduled nothing: send the next read on any byte difference.
     skipped: bool,
+    /// Target of the last significant hint; enables follow-ups for that same target.
     crossed_target: Option<i32>,
     last_follow_up_us: u64,
     pub rules: Rules,
     pub stats: SendStats,
 }
 
-/// At most one follow-up every 2 ms.
+/// Minimum spacing between follow-up hints, in microseconds.
 pub const FOLLOW_UP_US: u64 = 2000;
 
 impl SenderState {
     pub fn new(rules: Rules) -> Self {
         SenderState { rules, ..Default::default() }
     }
+    /// Frame a change seen now would first land in.
     fn target(&self) -> Option<i32> {
-        self.last_frame.map(|f| f + if self.poll_pending { 2 } else { 1 })
+        let ahead = if self.poll_pending { 2 } else { 1 };
+        self.last_frame.map(|f| f + ahead)
     }
     pub fn note_poll(&mut self) {
         self.poll_pending = true;
     }
     pub fn note_skipped(&mut self) {
         self.poll_pending = false;
-        if self.last_frame.is_some() {
-            self.skipped = true;
-        }
+        self.skipped |= self.last_frame.is_some();
     }
-    /// The pad for local `frame` is scheduled (it travels in the regular input packets).
+    /// Local pad for `frame` scheduled; the regular input stream carries it.
     pub fn note_sampled(&mut self, frame: i32, pad: &Pad) {
         let mut p = *pad;
         clamp_rest(&mut p);
@@ -250,30 +264,39 @@ impl SenderState {
         self.last_frame = Some(frame);
         self.poll_pending = false;
     }
-    /// One controller read at `now_us`: Some(target) when `pad` goes out now as an early pad for `target`.
-    /// Follow-ups: once a change crossed a line for a frame, later byte changes before that frame's poll go too
-    /// (a guess is judged on every byte), at most one per [`FOLLOW_UP_US`].
+    /// Decide on one controller read taken at `now_us`. Returns the target frame when `pad` should be sent as a hint.
+    ///
+    /// Three reasons to send: (a) right after a skipped tick, any difference; (b) a significant change per
+    /// [`matters`]; (c) a follow-up: after (b) for target T, further raw differences while T is still the target,
+    /// rate-limited by [`FOLLOW_UP_US`], because the receiver compares the whole pad, not only the lines.
     pub fn judge(&mut self, pad: &Pad, now_us: u64) -> Option<i32> {
         self.stats.samples += 1;
         let next = self.target()?;
         let mut p = *pad;
         clamp_rest(&mut p);
-        let force = std::mem::take(&mut self.skipped);
+        let after_skip = std::mem::take(&mut self.skipped);
         let differs = p != self.known;
-        let judged = !force && matters(&p, &self.known, self.rules);
-        let follow_up = !force && !judged && differs && self.crossed_target == Some(next) && now_us.saturating_sub(self.last_follow_up_us) >= FOLLOW_UP_US;
-        if !((force && differs) || judged || follow_up) {
+
+        let reason_skip = after_skip && differs;
+        let reason_sig = !after_skip && matters(&p, &self.known, self.rules);
+        let reason_follow = !after_skip
+            && !reason_sig
+            && differs
+            && self.crossed_target == Some(next)
+            && now_us.saturating_sub(self.last_follow_up_us) >= FOLLOW_UP_US;
+        if !(reason_skip || reason_sig || reason_follow) {
             return None;
         }
+
         self.known = p;
         self.stats.changes += 1;
-        if force {
+        if after_skip {
             self.stats.resent_after_skip += 1;
         }
-        if judged {
+        if reason_sig {
             self.crossed_target = Some(next);
         }
-        if follow_up {
+        if reason_follow {
             self.stats.follow_ups += 1;
             self.last_follow_up_us = now_us;
         }

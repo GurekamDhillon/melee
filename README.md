@@ -199,3 +199,6 @@ Dependencies — including the vendored Aurora and its port patches — are inve
 [doldecomp/melee](https://github.com/doldecomp/melee) · [encounter/aurora](https://github.com/encounter/aurora) ·
 [google/dawn](https://dawn.googlesource.com/dawn) · [TwilitRealm/dusklight](https://github.com/TwilitRealm/dusklight) ·
 [akaneia/m-ex](https://github.com/akaneia/m-ex) · Dolphin Emulator.
+
+Netplay early inputs (`rust/melee_net/src/early.rs`) follow the early-input approach of Hero's
+melee-unlocked, which builds on Arte's subframe rollback.

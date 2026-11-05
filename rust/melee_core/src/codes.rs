@@ -242,3 +242,28 @@ mod tests {
         assert_eq!(describe(LGL | UCF, 45), "ucf, lgl(45)");
     }
 }
+
+/// A replay's widescreen camera code (melee_data::slp::widescreen_code), active only while that replay plays: set before
+/// the match boots from the replay's own Gecko list (slpcheck, `golden --slp`), cleared (all 0) otherwise. Packed as
+/// left | right << 16 in [`WS_BOUNDS`], the aspect ratio's numerator/denominator as f32 bits.
+static WS_BOUNDS: AtomicU32 = AtomicU32::new(0);
+static WS_NUM: AtomicU32 = AtomicU32::new(0);
+static WS_DEN: AtomicU32 = AtomicU32::new(0);
+
+/// Arm (Some((left, right, num, den))) or clear the replay's widescreen code.
+pub fn set_replay_widescreen(ws: Option<(u16, u16, f32, f32)>) {
+    let (b, n, d) = ws.map_or((0, 0, 0), |(l, r, n, d)| (l as u32 | (r as u32) << 16, n.to_bits(), d.to_bits()));
+    WS_BOUNDS.store(b, Ordering::Relaxed);
+    WS_NUM.store(n, Ordering::Relaxed);
+    WS_DEN.store(d, Ordering::Relaxed);
+}
+
+/// The replay's widescreen code: (left, right, num, den), or None.
+#[inline]
+pub fn replay_widescreen() -> Option<(u16, u16, f32, f32)> {
+    let b = WS_BOUNDS.load(Ordering::Relaxed);
+    if b == 0 {
+        return None;
+    }
+    Some((b as u16, (b >> 16) as u16, f32::from_bits(WS_NUM.load(Ordering::Relaxed)), f32::from_bits(WS_DEN.load(Ordering::Relaxed))))
+}

@@ -847,9 +847,14 @@ pub unsafe extern "C" fn CObjLoad(cobj: *mut HSD_CObj, desc: *mut HSD_CObjDesc) 
     match d.projection_type {
         1 => {
             let p = &(*desc).perspective;
-            HSD_CObjSetPerspective(cobj, p.fov, p.aspect);
+            let mut aspect = p.aspect;
+            // A replay's widescreen code (CObjLoad hook in place of this aspect load): (aspect * num) / den, f32 ops.
+            if let Some((_, _, num, den)) = melee_core::codes::replay_widescreen() {
+                aspect = (aspect * num) / den;
+            }
+            HSD_CObjSetPerspective(cobj, p.fov, aspect);
             // TARGET_PC Hor+ generalisation: remember the authored aspect and follow the window.
-            (*cobj).view_authored_aspect = p.aspect;
+            (*cobj).view_authored_aspect = aspect;
             (*cobj).view_auto = 1;
             HSD_CObjUpdateView(cobj);
         }

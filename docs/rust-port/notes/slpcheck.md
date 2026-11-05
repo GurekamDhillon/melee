@@ -200,6 +200,25 @@ Remaining first divergences (64 files):
 | class | files | notes |
 |---|---|---|
 | 1-ULP `x`/`y`/`shield`/`percent` | about 40 | FMA/contraction class, another agent's |
-| `percent` engine = replay + 1.0 | 12, all 20689_* (113-code lists) | the offscreen 1%/interval damage (Fighter_8006A360 via ifMagnify) fires in the engine, not in the console. Those lists carry a widescreen camera code: 04 writes at Camera_80030BBC+0xC0/+0xCC (`li r0,100` / `li r0,540`: the on-screen x test uses 100..540 instead of the scissor), ftLib_80086A8C+0x98 nop, 803BB05C = 0x3EB00000 and more. Emulating it is a camera feature (C frozen: not done here) |
+| ~~`percent` engine = replay + 1.0~~ (fixed, round 4) | 12, all 20689_* (113-code lists) | the offscreen 1%/interval damage (Fighter_8006A360 via ifMagnify) fires in the engine, not in the console. Those lists carry a widescreen camera code: 04 writes at Camera_80030BBC+0xC0/+0xCC (`li r0,100` / `li r0,540`: the on-screen x test uses 100..540 instead of the scissor), ftLib_80086A8C+0x98 nop, 803BB05C = 0x3EB00000 and more. Emulating it is a camera feature (C frozen: not done here) |
 | `action` 38 vs 358, 41/40, 29/90; hitlag 5/8; percent 10 | 5 | not looked at |
 | shield 49.38 vs 42.64 (ext8) | 1 | not looked at |
+
+Goldens: classic_step04 and allstar_step04 re-recorded from a C build of this branch (the shield SDI fix fires in 1P
+runs too, UCF being on outside replays). Reason: UCF 0.84 shield SDI previous-frame check is signed, as in the console code.
+
+## Round 4 (2026-11-05, port/slp-stages): 61 -> 72 of 125 frame-exact
+
+Slippi's widescreen camera code, Rust only, armed only when the replay's own Gecko list carries it
+(`melee_data::slp::widescreen_code`, read from the code bytes; `melee_core::codes::set_replay_widescreen`, set by slpcheck and
+`golden --slp` before the match boots). Its logic-visible parts:
+- `C2 8036A4A8` (CObjLoad, replacing the perspective `lfs f1,0x34(r31)`): aspect = (aspect * 320) / 219 (`fmuls`, `fdivs`;
+  the two floats follow the code's `blrl`). Ported in `melee_runtime::tu::cobj::CObjLoad` (the authored aspect the logic camera
+  and `Camera_LogicToScreen` use).
+- `04 80030C7C 38000064`, `04 80030C88 3800021C`: Camera_80030BBC's left/right scissor loads become 100 / 540. Ported in
+  `Camera_LogicToScreen` (the off-camera flag `x221F_b0` that ifMagnify and the offscreen 1%/interval damage read).
+- `04 80086B24 60000000` (ftLib_80086A8C+0x98, the `beq` after Camera_80030CFC): only the draw decision; the flag write is
+  before it, so no logic effect. 803BB05C (lbbgflash's camera desc) and the ifMagnify/NameTag/DevText/menu codes: render only.
+The 12 `+1.0 percent` files: 11 now match, 1 diverges later on a 1-ULP value. No C change (C frozen; replay-only path).
+
+Remaining non-ULP first divergences (7): action 38/358 x2 (Dream Land), 41/40, 29/90, hitlag 5/8, percent +10, shield 49.4/42.6.

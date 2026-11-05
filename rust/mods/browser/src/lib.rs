@@ -1,7 +1,7 @@
 //! browser: the in-game browser as a gd-ui-v1.2 presentation mod (docs/rust-port/notes/wasm-ui-lab-api.md A6), in the
 //! LAB's theme A parts (panel, key caps, rows, accent selection; rust/mods/lab).
 //!
-//! Open it on the main menu with Z (any port). Sections (L / R, or Tab): Modes, Mods, Replays, Skins, Online.
+//! Open it on the main menu with Z (any port); closed, a one-line hint in the bottom-left corner says so. Sections (L / R, or Tab): Modes, Mods, Replays, Skins, Online.
 //! D-pad / stick / arrows move (hold repeats 15 then every 4), A / Enter activates, B / Escape goes back or closes.
 //! Skins: left / right picks the skin for the slot, A applies. Online: A on Join / Spectate edits the code (up / down
 //! cycle the character, left / right move, or type it), A sends, B cancels.
@@ -96,6 +96,8 @@ const SECTIONS: [&str; 5] = ["Modes", "Mods", "Replays", "Skins", "Online"];
 const LISTS: [u32; 5] = [L_MODES, L_MODS, L_REPLAYS, L_SKINS, L_ONLINE];
 const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:-";
 const CODE: usize = 24;
+/// The closed browser's main-menu hint (draw_hint).
+const HINT: &str = "Browser: modes, LAB, replays, mods, skins, online";
 
 struct List {
     gen: i32,
@@ -361,7 +363,7 @@ impl B {
             if edge & BZ != 0 {
                 self.open_now();
             } else {
-                return;
+                return self.draw_hint();
             }
         }
         if !on_menu {
@@ -700,6 +702,24 @@ impl B {
             hx -= 12.0;
         }
         let _ = tx;
+        self.enc.submit();
+    }
+
+    /// Closed on the main menu: one line in the bottom-left corner, so a player can find the browser (and the LAB in
+    /// its Modes list). Key cap and muted text as the panel's hints.
+    fn draw_hint(&mut self) {
+        let mut b = [0f32; 6];
+        unsafe { gd_ui_band_rect(b.as_mut_ptr()) };
+        let sc = (b[5] / 720.0).min(b[4] / 1280.0).max(0.25);
+        let vh = b[5] / sc;
+        let (x, y) = (24.0f32, vh - 34.0);
+        let kw = measure("Z", ROLE_LABEL) + 12.0;
+        self.enc.clear();
+        self.enc.layer(LAYER_MODAL, 0).space(SPACE_WINDOW, sc);
+        self.enc.slice(SLICE_FILL_R4, x - 6.0, y - 5.0, kw + 16.0 + measure(HINT, ROLE_VALUE) + 12.0, 28.0, (self.tk(T_BG) & 0xFFFF_FF00) | 0xCC);
+        self.enc.slice(SLICE_LINE_R4, x, y, kw, 18.0, self.tk(T_KEY_BORDER));
+        self.enc.text_ex(x + kw * 0.5, y + 4.0, ROLE_LABEL, self.tk(T_KEY_TEXT), ALIGN_CENTER, 0.0, "Z");
+        self.enc.text(x + kw + 8.0, y + 3.0, ROLE_VALUE, self.tk(T_MUTED), HINT);
         self.enc.submit();
     }
 

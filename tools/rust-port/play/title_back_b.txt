@@ -1,0 +1,29 @@
+# melee play (retail scenes), port 1: title -> main menu -> B back to the title -> B on the title (the pt-fix crash: the PC-only
+# B / Y debug-menu shortcut opened the unported debug menu, access violation in DevText_StrLen) -> the attract movie (retail).
+60 0000 0 0
+3 1000 0 0
+# the special messages (unlock-all, no memory card): eight A presses, then the main menu
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+60 0000 0 0
+# main menu: B goes back to the title
+3 0200 0 0
+120 0000 0 0
+# the title: B (no debug menu unless MELEE_DEBUG_MENU=1)
+3 0200 0 0
+60 0000 0 0
+180 0000 0 0

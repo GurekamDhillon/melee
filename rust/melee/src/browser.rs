@@ -203,7 +203,9 @@ impl RetailPlay {
     }
 
     fn browser_offline(&self) -> bool {
-        self.net.is_none() && self.sync.is_none() && self.feed.is_none() && !self.rollback_mode
+        // not `rollback_mode`: a loaded Lab mod turns that on too (the snapshot allocator), and the LAB is launched from
+        // here; a replay / spectate run has a feed or a spectate client
+        self.net.is_none() && self.sync.is_none() && self.feed.is_none() && self.spec_client.is_none()
     }
 
     fn browser_request(&mut self, op: i32, arg: &str) {

@@ -48,3 +48,10 @@ pub unsafe fn deny(mode: i32) -> bool {
     crate::tu::mnmain::mn_804A04F0.entering_menu = 0;
     true
 }
+
+/// The title screen's B / Y shortcut into the developer debug menu (a TARGET_PC addition, not retail): only with
+/// `MELEE_DEBUG_MENU=1`. The debug menu is not ported (its menu tables crash `un_80303FD4`), and a player who backs out
+/// of the main menu to the title with B and presses B again must get the retail title, not a crash.
+pub fn debug_menu_shortcut() -> bool {
+    std::env::var("MELEE_DEBUG_MENU").is_ok_and(|v| v == "1")
+}

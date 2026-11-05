@@ -1710,7 +1710,17 @@ pub unsafe extern "C" fn grCorneria_801DFC2C(gobj: *mut Ground_GObj) {
 
     (*gp).u.corneria.xC6.value = 0;
     (*gp).u.corneria.offset_y.flags.set_b0(0);
-    ext::memzero(addr_of_mut!((*gp).u.corneria.xC8) as *mut c_void, 0x18);
+    // `memzero(&gp->u.corneria.xC8, 0x18)`: 0x18 GameCube bytes = xC8, xCC (4-byte pointers there), xD0, base_x, base_y,
+    // offset_x. Natively the two pointers are 8 bytes, so a 0x18-byte clear stopped after base_x (layout audit).
+    {
+        let c = &mut (*gp).u.corneria;
+        c.xC8 = core::ptr::null_mut();
+        c.xCC = core::ptr::null_mut();
+        c.xD0 = 0.0;
+        c.base_x = 0.0;
+        c.base_y = 0.0;
+        c.offset_x = 0.0;
+    }
     (*gp).u.corneria.xC4.value = 0;
     (*gp).x11_flags.set_b012(1);
 }

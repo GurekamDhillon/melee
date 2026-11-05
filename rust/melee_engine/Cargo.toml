@@ -27,3 +27,11 @@ melee_audio = { path = "../melee_audio", default-features = false }
 
 [features]
 guard = []
+# builds the layout walker example only (it includes a generated table, see tools/rust-port/layout)
+layout-walk = []
+
+# tools/rust-port/layout: the disc-wide field walker (needs LAYOUT_WALK_TABLE, see tools/rust-port/layout/run_walk.sh)
+[[example]]
+name = "layout_walk"
+path = "../../tools/rust-port/layout/walk.rs"
+required-features = ["layout-walk"]

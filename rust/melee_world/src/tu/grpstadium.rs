@@ -1214,7 +1214,8 @@ pub unsafe extern "C" fn grStadium_801D2BEC() -> *mut HSD_GObj {
     (*gobj).gxlink_prios = 2;
     let text = ext::HSD_MemAlloc(core::mem::size_of::<TextWrapper>() as i32) as *mut TextWrapper;
     ext::GObj_InitUserData(gobj, 3, Some(ext::cb::HSD_Free), text as *mut c_void);
-    ext::memzero(text as *mut c_void, 0x18);
+    // `memzero(text, 0x18)` clears the GameCube `HSD_ImageDesc` (0x18 bytes there; wider natively: an 8-byte image_ptr)
+    ext::memzero(&raw mut (*text).desc as *mut c_void, core::mem::size_of::<HSD_ImageDesc>() as _);
     ext::lb_800121FC(&raw mut (*text).desc, 0xFA, 0xA0, 4, 0x7D2);
     let archive = ext::grDatFiles_GetArchive();
     ext::HSD_SisLib_803A611C(1, gobj, 9, 0xD, 0, 1, 0, 1);

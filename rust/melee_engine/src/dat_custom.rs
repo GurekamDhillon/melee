@@ -67,6 +67,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
         "kirbyhat" => kirbyhat(d, b, off, sym),
         "stcicns" => stc_icns(d, off),
         "efbhv" => ef_behavior(d, off),
+        "dyntemplate" => dyn_template(d, off),
         "ptrtable_itemdata" => {
             // the stage's own items (`GroundItemData { kind, Article* }`): their state arrays can be longer than 8 as well
             let n = (b.extent(off) / 4).max(1);
@@ -1139,6 +1140,23 @@ fn note_dynamics_at(d: &mut GcDecoder<'_>, obj: usize, at_x2c: u32) {
         bones.push((i, (0..count * REC).map(|k| d.u32_at(td + 4 * k as u32)).collect::<Vec<_>>()));
     }
     unsafe { (*core::ptr::addr_of_mut!(DYNAMICS_FIX)).push((obj, bones)) };
+}
+
+/// A stage's `dynamicsdata_*` public (`DynamicsTemplate`, read by `grLib_801C9B20` -> `lb_8000FD48` / `lb_80011710`):
+/// the native `DynamicsDesc` with `data` pointing at `count` native `lb_00F9_UnkDesc1Inner` records (all `f32`, so the
+/// native records have the GameCube layout and `lb_80011710`'s `&data->desc.lb_unk1.array` cast reads them in order).
+/// The generic decode made `data` one `DynamicsData` whose union is the raw big-endian bytes (layout audit).
+fn dyn_template(d: &mut GcDecoder<'_>, off: u32) -> *mut c_void {
+    use melee_types::{lb_00F9_UnkDesc1Inner, DynamicsData, DynamicsDesc, Vec as GcVec};
+    use melee_core::gcdecode::GcDecode;
+    let count = d.u32_at(off + 4);
+    let mut v = DynamicsDesc::zeroed();
+    v.count = count;
+    v.pos = <GcVec as GcDecode>::gc_decode(d, off + 8);
+    if d.target(off).is_some() {
+        v.data = d.ptr_array::<lb_00F9_UnkDesc1Inner>(off, count.max(1) as usize) as *mut DynamicsData;
+    }
+    Box::leak(Box::new(v)) as *mut DynamicsDesc as *mut c_void
 }
 
 /// Applies [`note_dynamics`] (run by `archive.rs` right after `GcDecoder::finish`).

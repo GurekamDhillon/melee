@@ -102,7 +102,9 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name.starts_with("ftDataKirbyCopy") { return Some(RootType::Custom("kirbyhat")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
-    if name.starts_with("dynamicsdata_") { return Some(rt("DynamicsDesc")); }
+    // `DynamicsTemplate { lb_00F9_UnkDesc1Inner* params; u32 count; Vec3 pos; }` (grcastle.c, lb_80011710): the params are
+    // `count` 15-float records, not a `DynamicsData` (whose generic decode keeps the union as raw big-endian bytes)
+    if name.starts_with("dynamicsdata_") { return Some(RootType::Custom("dyntemplate")); }
     if name.starts_with("mnName") { return Some(RootType::Custom("rawptrs")); }
     if name.starts_with("ftDemo") { return Some(RootType::Raw); }
     if name.starts_with("gmKumiteSystemTable") { return Some(RootType::Custom("kumitetable")); }

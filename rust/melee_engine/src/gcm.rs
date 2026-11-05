@@ -66,6 +66,28 @@ impl Gcm {
         Err(format!("DOL: {addr:#x}+{len:#x} is not in any section"))
     }
 
+    /// Every file on the disc as a `/`-separated path (FST order). Tools only (the layout walker).
+    pub fn file_paths(&self) -> Vec<String> {
+        let mut out = Vec::new();
+        let mut stack: Vec<(usize, String)> = Vec::new();
+        let n = self.count();
+        let mut i = 1;
+        while i < n {
+            while let Some(&(end, _)) = stack.last() {
+                if i >= end { stack.pop(); } else { break; }
+            }
+            let prefix: String = stack.iter().map(|(_, p)| format!("{p}/")).collect();
+            let name = String::from_utf8_lossy(self.name(i)).into_owned();
+            if self.is_dir(i) {
+                stack.push((be32(&self.fst, i * 12 + 8) as usize, name));
+            } else {
+                out.push(prefix + &name);
+            }
+            i += 1;
+        }
+        out
+    }
+
     fn count(&self) -> usize {
         be32(&self.fst, 8) as usize
     }

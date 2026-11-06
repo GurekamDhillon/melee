@@ -15,11 +15,11 @@ s32 MatToQuat(Mtx m, Quaternion* q)
     int k;
 
     lenCol[0] =
-        sqrtf(m[0][0] * m[0][0] + m[1][0] * m[1][0] + m[2][0] * m[2][0]);
+        sqrtf(GW_NOFUSE(m[0][0] * m[0][0]) + GW_NOFUSE(m[1][0] * m[1][0]) + GW_NOFUSE(m[2][0] * m[2][0]));
     lenCol[1] =
-        sqrtf(m[0][1] * m[0][1] + m[1][1] * m[1][1] + m[2][1] * m[2][1]);
+        sqrtf(GW_NOFUSE(m[0][1] * m[0][1]) + GW_NOFUSE(m[1][1] * m[1][1]) + GW_NOFUSE(m[2][1] * m[2][1]));
     lenCol[2] =
-        sqrtf(m[0][2] * m[0][2] + m[1][2] * m[1][2] + m[2][2] * m[2][2]);
+        sqrtf(GW_NOFUSE(m[0][2] * m[0][2]) + GW_NOFUSE(m[1][2] * m[1][2]) + GW_NOFUSE(m[2][2] * m[2][2]));
 
     s = m[0][0] / lenCol[0] + m[1][1] / lenCol[1] + m[2][2] / lenCol[2];
 
@@ -60,7 +60,7 @@ s32 MatToEuler(Mtx m, Vec3* euler)
 {
     f32 len;
 
-    len = sqrtf(m[0][0] * m[0][0] + m[1][0] * m[1][0]);
+    len = sqrtf(GW_NOFUSE(m[0][0] * m[0][0]) + GW_NOFUSE(m[1][0] * m[1][0]));
     if (len > 1e-05) {
         euler->x = atan2f(m[2][1], m[2][2]);
         euler->y = atan2f(-m[2][0], len);
@@ -102,7 +102,7 @@ s32 AngleAxisToQuat(Vec3* axis, Quaternion* q, f32 angle)
     f32 inv_len;
     f32 s;
 
-    len = sqrtf(axis->x * axis->x + axis->y * axis->y + axis->z * axis->z);
+    len = sqrtf(GW_NOFUSE(axis->x * axis->x) + GW_NOFUSE(axis->y * axis->y) + GW_NOFUSE(axis->z * axis->z));
     if (fabsf(len) < 1.1754944E-38F) {
         return -1;
     }

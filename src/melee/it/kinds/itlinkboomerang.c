@@ -20,6 +20,7 @@
 
 #define HYPOT(x, y) sqrtf((x) * (x) + (y) * (y))
 #define VEC_XY_LENGTH(v) HYPOT((v)->x, (v)->y)
+#define VEC_XY_LENGTH_NOFUSE(v) sqrtf(GW_NOFUSE_SQ((v)->x) + GW_NOFUSE_SQ((v)->y))
 
 ItemStateTable it_803F6920[] = {
     { -1, itLinkboomerang_UnkMotion0_Anim, NULL, NULL },
@@ -468,7 +469,7 @@ void itLinkboomerang_UnkMotion1_Phys(Item_GObj* gobj)
     if (ip->xDD4_itemVar.linkboomerang.xDE8 != 1) {
         var_f31 = attrs->xC;
         attrs->xC = attrs->xC;
-        var_f31 = VEC_XY_LENGTH(&ip->x40_vel) - var_f31;
+        var_f31 = VEC_XY_LENGTH_NOFUSE(&ip->x40_vel) - var_f31;
         if (var_f31 < attrs->x18) {
             var_f31 = itLinkboomerang_get_x18(attrs);
             it_802A1948(gobj, 0);
@@ -526,7 +527,7 @@ void itLinkboomerang_UnkMotion2_Phys(Item_GObj* gobj)
     if (ip->xDD4_itemVar.linkboomerang.xDE8 != 1) {
         var_f31 = attrs->xC;
         attrs->xC = attrs->xC;
-        var_f31 = VEC_XY_LENGTH(&ip->x40_vel) - var_f31;
+        var_f31 = VEC_XY_LENGTH_NOFUSE(&ip->x40_vel) - var_f31;
         if (var_f31 < attrs->x18) {
             var_f31 = itLinkboomerang_get_x18(attrs);
             it_802A1948(gobj, 0);
@@ -784,7 +785,7 @@ void itLinkboomerang_UnkMotion3_Phys(Item_GObj* gobj)
         length = attrs->xC;
         attrs->xC = attrs->xC;
         length = itLinkboomerang_UnkMotion3_Phys_add_clamp(
-            VEC_XY_LENGTH(&ip->x40_vel), length, attrs->x14);
+            VEC_XY_LENGTH_NOFUSE(&ip->x40_vel), length, attrs->x14);
         ip->x40_vel.x = length * cosf(ip->xDD4_itemVar.linkboomerang.xF74);
         ip->x40_vel.y = length * sinf(ip->xDD4_itemVar.linkboomerang.xF74);
         itLinkboomerang_UnkMotion3_Phys_sub(gobj, it_802A13EC(gobj));
@@ -871,7 +872,7 @@ bool it_802A20E8(Item_GObj* gobj)
         dx = ip->pos.y - sp14.y;
         ip->xDD4_itemVar.linkboomerang.xF74 = atan2f(dx, dy);
         clamp_tau(&ip->xDD4_itemVar.linkboomerang.xF74);
-        length = VEC_XY_LENGTH(&ip->x40_vel);
+        length = VEC_XY_LENGTH_NOFUSE(&ip->x40_vel);
         ip->x40_vel.x =
             ip->xC70 * (length * cosf(ip->xDD4_itemVar.linkboomerang.xF74));
         ip->x40_vel.y =

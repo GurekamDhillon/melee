@@ -701,11 +701,11 @@ static int roll2upvec(HSD_CObj* cobj, Vec3* up, float roll)
         return res;
     }
     if (1.0 - vec_get_abs_y(&eye) < 0.0001) {
-        v0.x = sqrtf(eye.y * eye.y + eye.z * eye.z);
+        v0.x = sqrtf(GW_NOFUSE(eye.y * eye.y) + GW_NOFUSE(eye.z * eye.z));
         v0.y = eye.y * (-vec_get_x(&eye) / v0.x);
         v0.z = eye.z * (-eye.x / v0.x);
     } else {
-        v0.y = sqrtf(eye.x * eye.x + eye.z * eye.z);
+        v0.y = sqrtf(GW_NOFUSE(eye.x * eye.x) + GW_NOFUSE(eye.z * eye.z));
         v0.x = eye.x * (-eye.y / v0.y);
         v0.z = eye.z * (-eye.y / v0.y);
     }

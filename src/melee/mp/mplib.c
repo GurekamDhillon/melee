@@ -1049,7 +1049,7 @@ int mpLineGetNext(int line_id)
                 &groundCollVtx[groundCollLine[line_id].inner->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].inner->v0_idx];
 
-            if (SQ(v1->pos.x - v0->pos.x) + SQ(v1->pos.y - v0->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v1->pos.x - v0->pos.x) + GW_NOFUSE_SQ(v1->pos.y - v0->pos.y) < 4.0) {
                 return ret;
             }
         }
@@ -1078,7 +1078,7 @@ int mpLineGetPrev(int line_id)
                 &groundCollVtx[groundCollLine[line_id].inner->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].inner->v1_idx];
 
-            if (SQ(v0->pos.x - v1->pos.x) + SQ(v0->pos.y - v1->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v0->pos.x - v1->pos.x) + GW_NOFUSE_SQ(v0->pos.y - v1->pos.y) < 4.0) {
                 return ret;
             }
         }
@@ -1606,7 +1606,7 @@ void mpLib_8004ED5C(int line_id, float* x0_out, float* y0_out, float* x1_out,
     y1 = groundCollVtx[i1].pos.y;
 
     if (mpLineGetPrev(line_id) != -1) {
-        distance = sqrtf(SQ(x0 - x1) + SQ(y0 - y1));
+        distance = sqrtf(GW_NOFUSE_SQ(x0 - x1) + GW_NOFUSE_SQ(y0 - y1));
         if (distance > 0.001F) {
             x0 += (x0 - x1) / distance;
             y0 += (y0 - y1) / distance;
@@ -1616,7 +1616,7 @@ void mpLib_8004ED5C(int line_id, float* x0_out, float* y0_out, float* x1_out,
 
     if (mpLineGetNext(line_id) != -1) {
         if (!calculated_distance) {
-            distance = sqrtf(SQ(x0 - x1) + SQ(y0 - y1));
+            distance = sqrtf(GW_NOFUSE_SQ(x0 - x1) + GW_NOFUSE_SQ(y0 - y1));
         }
         if (distance > 0.001F) {
             x1 += (x1 - x0) / distance;
@@ -1707,7 +1707,7 @@ bool mpCheckFloor(float ax, float ay, float bx, float by, float y_offset,
                 if (mpLineIntersection(x0, y0, x1, y1, ax, ay, bx, by, &px,
                                        &py))
                 {
-                    dist2 = SQ(px - ax) + SQ(py - ay);
+                    dist2 = GW_NOFUSE_SQ(px - ax) + GW_NOFUSE_SQ(py - ay);
                     if (min_dist2 > dist2) {
                         min_dist2 = dist2;
                         if (vec_out != NULL) {
@@ -1734,7 +1734,7 @@ bool mpCheckFloor(float ax, float ay, float bx, float by, float y_offset,
                 if (ay >= by &&
                     mpLineIntersectionH(&px, &py, x0, y0, x1, ax, ay, bx, by))
                 {
-                    dist2 = SQ(px - ax) + SQ(py - ay);
+                    dist2 = GW_NOFUSE_SQ(px - ax) + GW_NOFUSE_SQ(py - ay);
                     if (min_dist2 > dist2) {
                         min_dist2 = dist2;
                         if (vec_out != NULL) {
@@ -2009,7 +2009,7 @@ bool mpCheckCeiling(float ax, float ay, float bx, float by, Vec3* vec_out,
                 if (mpLineIntersection(x0, y0, x1, y1, ax, ay, bx, by, &int_x,
                                        &int_y))
                 {
-                    dist2 = SQ(int_x - ax) + SQ(int_y - ay);
+                    dist2 = GW_NOFUSE_SQ(int_x - ax) + GW_NOFUSE_SQ(int_y - ay);
                     if (min_dist2 > dist2) {
                         min_dist2 = dist2;
 
@@ -2041,7 +2041,7 @@ bool mpCheckCeiling(float ax, float ay, float bx, float by, Vec3* vec_out,
                 if (ay <= by && mpLineIntersectionH(&int_x, &int_y, x0, y0, x1,
                                                     ax, ay, bx, by))
                 {
-                    dist2 = SQ(int_x - ax) + SQ(int_y - ay);
+                    dist2 = GW_NOFUSE_SQ(int_x - ax) + GW_NOFUSE_SQ(int_y - ay);
                     if (min_dist2 > dist2) {
                         min_dist2 = dist2;
 
@@ -3011,7 +3011,7 @@ bool mpLib_800511A4_RightWall(float ax, float ay, float bx, float by, float cx,
                         if (mpLineIntersection(cx, cy, dx, dy, x, y, x0, y0,
                                                &int_x, &int_y))
                         {
-                            dist2 = SQ(int_x - x1) + SQ(int_y - y1);
+                            dist2 = GW_NOFUSE_SQ(int_x - x1) + GW_NOFUSE_SQ(int_y - y1);
                             if ((vdx * (int_x - x1)) + (vdy * (int_y - y1)) <
                                 0.0F)
                             {
@@ -3043,7 +3043,7 @@ bool mpLib_800511A4_RightWall(float ax, float ay, float bx, float by, float cx,
                         if (mpLineIntersection(cx, cy, dx, dy, x, y, x0, y0,
                                                &int_x, &int_y))
                         {
-                            dist2 = SQ(int_x - x1) + SQ(int_y - y1);
+                            dist2 = GW_NOFUSE_SQ(int_x - x1) + GW_NOFUSE_SQ(int_y - y1);
                             if ((vdx * (int_x - x1)) + (vdy * (int_y - y1)) <
                                 0.0F)
                             {
@@ -3154,7 +3154,7 @@ bool mpLib_800515A0_LeftWall(float a0x, float a0y, float a1x, float a1y,
                         if (mpLineIntersection(b0x, b0y, b1x, b1y, x, y, x0,
                                                y0, &int_x, &int_y))
                         {
-                            dist2 = SQ(int_x - x1) + SQ(int_y - y1);
+                            dist2 = GW_NOFUSE_SQ(int_x - x1) + GW_NOFUSE_SQ(int_y - y1);
                             if ((vdx * (int_x - x1)) + (vdy * (int_y - y1)) <
                                 0.0F)
                             {
@@ -3187,7 +3187,7 @@ bool mpLib_800515A0_LeftWall(float a0x, float a0y, float a1x, float a1y,
                         if (mpLineIntersection(b0x, b0y, b1x, b1y, x, y, x0,
                                                y0, &int_x, &int_y))
                         {
-                            dist2 = SQ(int_x - x1) + SQ(int_y - y1);
+                            dist2 = GW_NOFUSE_SQ(int_x - x1) + GW_NOFUSE_SQ(int_y - y1);
                             if ((vdx * (int_x - x1)) + (vdy * (int_y - y1)) <
                                 0.0F)
                             {
@@ -3649,7 +3649,7 @@ static inline int mpLineGetNextCheckInline(MapLine* line, s16 result)
             CollVtx* v1 = &groundCollVtx[line->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].inner->v0_idx];
 
-            if (SQ(v1->pos.x - v0->pos.x) + SQ(v1->pos.y - v0->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v1->pos.x - v0->pos.x) + GW_NOFUSE_SQ(v1->pos.y - v0->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -3675,7 +3675,7 @@ static inline int mpLineGetPrevCheckInline(MapLine* line, s16 result)
             CollVtx* v0 = &groundCollVtx[line->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].inner->v1_idx];
 
-            if (SQ(v0->pos.x - v1->pos.x) + SQ(v0->pos.y - v1->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v0->pos.x - v1->pos.x) + GW_NOFUSE_SQ(v0->pos.y - v1->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -3702,7 +3702,7 @@ static inline int mpLineGetPrevCheckInlineVtx(MapLine* line, s16 result,
             CollVtx* v0 = &vtx[line->v0_idx];
             CollVtx* v1 = &vtx[groundCollLine[result].inner->v1_idx];
 
-            if (SQ(v0->pos.x - v1->pos.x) + SQ(v0->pos.y - v1->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v0->pos.x - v1->pos.x) + GW_NOFUSE_SQ(v0->pos.y - v1->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -3726,7 +3726,7 @@ static inline int mpLineGetNextCheckInlineVtx(MapLine* line, s16 result,
             CollVtx* v1 = &vtx[line->v1_idx];
             CollVtx* v0 = &vtx[groundCollLine[result].inner->v0_idx];
 
-            if (SQ(v1->pos.x - v0->pos.x) + SQ(v1->pos.y - v0->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v1->pos.x - v0->pos.x) + GW_NOFUSE_SQ(v1->pos.y - v0->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -3943,7 +3943,7 @@ static inline int mpLineGetNextInline(int line_id)
                 &groundCollVtx[groundCollLine[line_id].inner->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].inner->v0_idx];
 
-            if (SQ(v1->pos.x - v0->pos.x) + SQ(v1->pos.y - v0->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v1->pos.x - v0->pos.x) + GW_NOFUSE_SQ(v1->pos.y - v0->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -3968,7 +3968,7 @@ static inline int mpLineGetNextCachedInline(int line_id)
             CollVtx* v1 = &groundCollVtx[line->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].inner->v0_idx];
 
-            if (SQ(v1->pos.x - v0->pos.x) + SQ(v1->pos.y - v0->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v1->pos.x - v0->pos.x) + GW_NOFUSE_SQ(v1->pos.y - v0->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -3996,7 +3996,7 @@ static inline int mpLineGetNextChecked(MapLine* line)
             CollVtx* v1 = &groundCollVtx[line->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].inner->v0_idx];
 
-            if (SQ(v1->pos.x - v0->pos.x) + SQ(v1->pos.y - v0->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v1->pos.x - v0->pos.x) + GW_NOFUSE_SQ(v1->pos.y - v0->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -4051,7 +4051,7 @@ static inline int mpLineGetPrevInline(int line_id)
             CollVtx* v0 = &groundCollVtx[line->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].inner->v1_idx];
 
-            if (SQ(v0->pos.x - v1->pos.x) + SQ(v0->pos.y - v1->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v0->pos.x - v1->pos.x) + GW_NOFUSE_SQ(v0->pos.y - v1->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -4079,7 +4079,7 @@ static inline int mpLineGetPrevChecked(MapLine* line)
             CollVtx* v0 = &groundCollVtx[line->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].inner->v1_idx];
 
-            if (SQ(v0->pos.x - v1->pos.x) + SQ(v0->pos.y - v1->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v0->pos.x - v1->pos.x) + GW_NOFUSE_SQ(v0->pos.y - v1->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -4570,7 +4570,7 @@ static inline int mpLineGetNextFrom(MapLine* line, const u32* flags_base)
             CollVtx* v1 = &groundCollVtx[line->v1_idx];
             CollVtx* v0 = &groundCollVtx[groundCollLine[result].inner->v0_idx];
 
-            if (SQ(v1->pos.x - v0->pos.x) + SQ(v1->pos.y - v0->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v1->pos.x - v0->pos.x) + GW_NOFUSE_SQ(v1->pos.y - v0->pos.y) < 4.0) {
                 return result;
             }
         }
@@ -4598,7 +4598,7 @@ static inline int mpLineGetPrevFrom(MapLine* line, const u32* flags_base)
             CollVtx* v0 = &groundCollVtx[line->v0_idx];
             CollVtx* v1 = &groundCollVtx[groundCollLine[result].inner->v1_idx];
 
-            if (SQ(v0->pos.x - v1->pos.x) + SQ(v0->pos.y - v1->pos.y) < 4.0) {
+            if (GW_NOFUSE_SQ(v0->pos.x - v1->pos.x) + GW_NOFUSE_SQ(v0->pos.y - v1->pos.y) < 4.0) {
                 return result;
             }
         }

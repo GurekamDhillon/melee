@@ -1035,7 +1035,7 @@ void grShrineRoute_8020A21C(Ground_GObj* gobj)
         }
 
         /* Compute magnitude and normalize direction */
-        dist_sq = sqrtf(dir.z * dir.z + (dir.x * dir.x + dir.y * dir.y));
+        dist_sq = sqrtf(GW_NOFUSE(dir.z * dir.z) + (GW_NOFUSE(dir.x * dir.x) + GW_NOFUSE(dir.y * dir.y)));
         if (dist_sq < 0.01f) {
             dir.y = 100.0f;
         }

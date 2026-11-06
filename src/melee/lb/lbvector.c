@@ -12,7 +12,7 @@
 
 static inline float lbVector_Len_xy_accurate(Vec3* vec)
 {
-    return sqrtf_accurate(vec->x * vec->x + vec->y * vec->y);
+    return sqrtf_accurate(GW_NOFUSE(vec->x * vec->x) + GW_NOFUSE(vec->y * vec->y));
 }
 
 float lbVector_Normalize(Vec3* vec)
@@ -32,7 +32,7 @@ float lbVector_Normalize(Vec3* vec)
 
 float lbVector_NormalizeXY(Vec3* a)
 {
-    float len = sqrtf_accurate(a->x * a->x + a->y * a->y);
+    float len = sqrtf_accurate(GW_NOFUSE(a->x * a->x) + GW_NOFUSE(a->y * a->y));
     float inv;
 
     if (len == 0.0f) {
@@ -161,7 +161,7 @@ void lbVector_RotateAboutUnitAxis(Vec3* v, Vec3* axis, float angle)
     // by using two initial rotations, then the new v is rotated about the
     // z-axis by angle, and finally the first two rotations are reversed.
 
-    float len_axis_yz = sqrtf(axis->y * axis->y + axis->z * axis->z);
+    float len_axis_yz = sqrtf(GW_NOFUSE(axis->y * axis->y) + GW_NOFUSE(axis->z * axis->z));
     float s = lbvector_sin(angle);
     float c = lbvector_cos(angle);
     float unit_axis_yz_y;
@@ -267,8 +267,8 @@ void lbVector_Mirror(Vec3* a, Vec3* unit_mirror_axis)
 /// a and b.
 float lbVector_CosAngle(Vec3* a, Vec3* b)
 {
-    return (a->x * b->x + a->y * b->y) / (sqrtf(a->x * a->x + a->y * a->y) *
-                                          sqrtf(b->x * b->x + b->y * b->y));
+    return (a->x * b->x + a->y * b->y) / (sqrtf(GW_NOFUSE(a->x * a->x) + GW_NOFUSE(a->y * a->y)) *
+                                          sqrtf(GW_NOFUSE(b->x * b->x) + GW_NOFUSE(b->y * b->y)));
 }
 
 /// 8000DDAC - linearly interpolates between a and b as f goes from 0 to 1,
@@ -495,6 +495,14 @@ void lbVector_CreateEulerMatrix(Mtx m, Quaternion* angles)
 /// direction u with the plane that contains c and is perpendicular to u. Write
 /// the result to d. If u is numerically too small, set d=a instead. Return the
 /// length of c-d.
+#if defined(TARGET_PC)
+/* lbVector_Len inlined on a register-resident local: MWCC fuses these squares (fp-audit.md). */
+static inline float lbVector_Len_local(Vec3* vec)
+{
+    return sqrtf(vec->x * vec->x + vec->y * vec->y + vec->z * vec->z);
+}
+#define lbVector_Len lbVector_Len_local
+#endif
 float lbVector_8000E838(Vec3* a, Vec3* b, Vec3* c, Vec3* d)
 {
     Vec3 b_a;
@@ -527,3 +535,6 @@ float lbVector_8000E838(Vec3* a, Vec3* b, Vec3* c, Vec3* d)
         return lbVector_Len(&v3);
     }
 }
+#if defined(TARGET_PC)
+#undef lbVector_Len
+#endif

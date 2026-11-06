@@ -96,6 +96,18 @@ typedef bool (*Predicate)(void);
 #define F32_MAX 3.4028235e38f
 
 #define SQ(x) ((x) * (x))
+
+/* GW_NOFUSE(a * b): keep a product out of a fused multiply-add. MWCC (-fp_contract on) does not fuse
+ * the square of a memory or computed expression (p->x * p->x, SQ(a - b)); clang -ffp-contract=on does.
+ * The PC build wraps those squares so both round like the console (docs/rust-port/notes/fp-audit.md). */
+#if defined(TARGET_PC)
+static inline float gw_nofuse_f(float x) { return x; }
+static inline double gw_nofuse_d(double x) { return x; }
+#define GW_NOFUSE(x) _Generic((x), double: gw_nofuse_d, float: gw_nofuse_f)(x)
+#else
+#define GW_NOFUSE(x) (x)
+#endif
+#define GW_NOFUSE_SQ(x) GW_NOFUSE(SQ(x))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 /// Add @p b to @p a, saturating at @p max.

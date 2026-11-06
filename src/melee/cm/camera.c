@@ -238,8 +238,8 @@ static inline void camera_sdata2_order(void)
 
 static inline float vec_len(Vec3* offset)
 {
-    return sqrtf((offset->x * offset->x) + (offset->y * offset->y) +
-                 (offset->z * offset->z));
+    return sqrtf((GW_NOFUSE(offset->x * offset->x)) + (GW_NOFUSE(offset->y * offset->y)) +
+                 (GW_NOFUSE(offset->z * offset->z)));
 }
 
 #if defined(TARGET_PC)
@@ -2244,8 +2244,8 @@ void Camera_8002C1A8(void)
 
 static inline float eye_offset_len(Vec3* offset)
 {
-    return sqrtf((offset->z * offset->z) +
-                 (offset->x * offset->x + offset->y * offset->y));
+    return sqrtf((GW_NOFUSE(offset->z * offset->z)) +
+                 (GW_NOFUSE(offset->x * offset->x) + GW_NOFUSE(offset->y * offset->y)));
 }
 
 void Camera_8002C5B4(Camera_x2D0* arg0)
@@ -2341,7 +2341,7 @@ void Camera_8002C5B4(Camera_x2D0* arg0)
     len = eye_offset_len(eye_offset);
 
     xz_dist =
-        sqrtf(eye_offset->x * eye_offset->x + *eye_offset_z * *eye_offset_z);
+        sqrtf(GW_NOFUSE(eye_offset->x * eye_offset->x) + GW_NOFUSE(*eye_offset_z * *eye_offset_z));
 
     PSVECCrossProduct(eye_offset, &cam->pause_up, &cross1);
     lbVector_Normalize(&cross1);
@@ -3582,10 +3582,10 @@ void Camera_8002F0E4(s32 arg0)
     case 2: {
         lbVector_Diff(&game_camera.transform.position,
                       &game_camera.transform.interest, &spC);
-        temp_f30 = atan2f(spC.y, sqrtf__Ff(spC.x * spC.x + spC.z * spC.z));
+        temp_f30 = atan2f(spC.y, sqrtf__Ff(GW_NOFUSE(spC.x * spC.x) + GW_NOFUSE(spC.z * spC.z)));
         temp_f31 = atan2f(spC.x, spC.z);
         game_camera.x368.orbit.distance =
-            (s16) sqrtf__Ff(spC.z * spC.z + (spC.x * spC.x + spC.y * spC.y));
+            (s16) sqrtf__Ff(GW_NOFUSE(spC.z * spC.z) + (GW_NOFUSE(spC.x * spC.x) + GW_NOFUSE(spC.y * spC.y)));
         game_camera.x368.orbit.pitch = temp_f30;
         game_camera.x368.orbit.yaw = temp_f31;
         break;
@@ -4050,9 +4050,9 @@ void Camera_8002FEEC(s32 arg0)
             temp_f1_3 = cm_80453004.follow_eye_offset.x;
             temp_f1 = temp_f1_3 * temp_f1_3;
 
-            new_var = (cm_80453004.follow_eye_offset.z *
+            new_var = GW_NOFUSE(cm_80453004.follow_eye_offset.z *
                        cm_80453004.follow_eye_offset.z) +
-                      (temp_f1 + (cm_80453004.follow_eye_offset.y *
+                      (temp_f1 + GW_NOFUSE(cm_80453004.follow_eye_offset.y *
                                   cm_80453004.follow_eye_offset.y));
             temp_f1_4 = temp_f31 / sqrtf__Ff(new_var);
             cm_80453004.follow_eye_offset.x *= temp_f1_4;

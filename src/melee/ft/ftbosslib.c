@@ -51,7 +51,7 @@ void ftBossLib_ReportGObjSlotType(HSD_GObj* gobj)
 
 static inline float my_lbvector_Len(Vec3* vec)
 {
-    return sqrtf(vec->x * vec->x + vec->y * vec->y + vec->z * vec->z);
+    return sqrtf(GW_NOFUSE(vec->x * vec->x) + GW_NOFUSE(vec->y * vec->y) + GW_NOFUSE(vec->z * vec->z));
 }
 
 void ftBossLib_8015BE40(HSD_GObj* gobj, Vec3* arg1, float* arg2, float arg3,

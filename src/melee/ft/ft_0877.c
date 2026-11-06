@@ -195,16 +195,16 @@ s32 ft_80087B34(HSD_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     float atk_shield_kb_x = fp->x98_atk_shield_kb.x;
     float fVar1 =
-        (fp->self_vel.x * fp->self_vel.x) + (fp->self_vel.y * fp->self_vel.y);
+        (GW_NOFUSE(fp->self_vel.x * fp->self_vel.x)) + (GW_NOFUSE(fp->self_vel.y * fp->self_vel.y));
     float* atk_shield_kb_y = &fp->x98_atk_shield_kb.y;
-    float fVar2 = (atk_shield_kb_x * atk_shield_kb_x) +
-                  ((*atk_shield_kb_y) * (*atk_shield_kb_y));
+    float fVar2 = GW_NOFUSE(atk_shield_kb_x * atk_shield_kb_x) +
+                  GW_NOFUSE((*atk_shield_kb_y) * (*atk_shield_kb_y));
 
-    if (fVar1 > ((fp->x8c_kb_vel.x * fp->x8c_kb_vel.x) +
-                 (fp->x8c_kb_vel.y * fp->x8c_kb_vel.y)))
+    if (fVar1 > ((GW_NOFUSE(fp->x8c_kb_vel.x * fp->x8c_kb_vel.x)) +
+                 (GW_NOFUSE(fp->x8c_kb_vel.y * fp->x8c_kb_vel.y))))
     {
-        if (fVar1 > ((atk_shield_kb_x * atk_shield_kb_x) +
-                     (fp->x98_atk_shield_kb.y * fp->x98_atk_shield_kb.y)))
+        if (fVar1 > (GW_NOFUSE(atk_shield_kb_x * atk_shield_kb_x) +
+                     GW_NOFUSE(fp->x98_atk_shield_kb.y * fp->x98_atk_shield_kb.y)))
         {
             return 0;
         }
@@ -212,8 +212,8 @@ s32 ft_80087B34(HSD_GObj* gobj)
         return 2;
     }
 
-    if ((fp->x8c_kb_vel.x * fp->x8c_kb_vel.x) +
-            (fp->x8c_kb_vel.y * fp->x8c_kb_vel.y) >
+    if ((GW_NOFUSE(fp->x8c_kb_vel.x * fp->x8c_kb_vel.x)) +
+            (GW_NOFUSE(fp->x8c_kb_vel.y * fp->x8c_kb_vel.y)) >
         fVar2)
     {
         return 1;

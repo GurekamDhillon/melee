@@ -756,7 +756,7 @@ void it_8027737C(Item_GObj* item_gobj, Vec3* pos)
     PSVECAdd(&item->x88, &item->x7C, &item->x7C);
     item->x7C.x *= item->xCC_item_attr->x54;
     item->x7C.y *= item->xCC_item_attr->x54;
-    if (sqrtf_accurate_store(SQ(item->x7C.x) + SQ(item->x7C.y), &sqrt_0) >
+    if (sqrtf_accurate_store(GW_NOFUSE_SQ(item->x7C.x) + GW_NOFUSE_SQ(item->x7C.y), &sqrt_0) >
         it_804D6D28->xC8)
     {
         lbVector_NormalizeXY(&item->x7C);
@@ -764,7 +764,7 @@ void it_8027737C(Item_GObj* item_gobj, Vec3* pos)
         item->x7C.x *= temp_f1;
         item->x7C.y *= temp_f1;
     }
-    if (SQ(item->x7C.x) + SQ(item->x7C.y) < it_804D6D28->xCC) {
+    if (GW_NOFUSE_SQ(item->x7C.x) + GW_NOFUSE_SQ(item->x7C.y) < it_804D6D28->xCC) {
         item->xDC8_word.flags.x1F = 0;
         item->x7C.y = 0.0f;
         item->x7C.x = 0.0f;
@@ -787,7 +787,7 @@ bool it_80277544(Item_GObj* item_gobj)
     item = GET_ITEM(item_gobj);
     if (item->xD5C != 0U && it_80277040(item_gobj) != 0 &&
         ((PSVECAdd(&item->x40_vel, &item->x70_nudge, &sp10),
-          (SQ(sp10.x) + SQ(sp10.y)) >= it_804D6D28->xCC) ||
+          (GW_NOFUSE_SQ(sp10.x) + GW_NOFUSE_SQ(sp10.y)) >= it_804D6D28->xCC) ||
          (item->xD5C == 2U)))
     {
         item->xDC8_word.flags.x1F = 1;
@@ -820,7 +820,7 @@ void it_802775F0(Item_GObj* item_gobj, Vec3* arg1)
 
     temp_sqrt = 0.0f;
     if (item->spin_spd != temp_sqrt) {
-        temp_sqrt = sqrtf_accurate_sp18(SQ(arg1->x) + SQ(arg1->y));
+        temp_sqrt = sqrtf_accurate_sp18(GW_NOFUSE_SQ(arg1->x) + GW_NOFUSE_SQ(arg1->y));
         item->xD3C_spinSpeed = 0.85f * (temp_sqrt / item->xC1C.bottom);
         if ((arg1->x < 0.0f ? -1 : 1) != (item->facing_dir < 0.0f ? -1 : 1)) {
             item->xD3C_spinSpeed = -item->xD3C_spinSpeed;

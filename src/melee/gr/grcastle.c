@@ -1505,8 +1505,8 @@ static inline bool isNearTarget(HSD_JObj* jobj, Vec3* pos, Vec3* target)
 {
     if (grCastle_801CDF54(target) &&
         (lb_8000B1CC(jobj, NULL, pos),
-         sqrtf__Ff((pos->x - target->x) * (pos->x - target->x) +
-                   (pos->y - target->y) * (pos->y - target->y)) < 40.0f))
+         sqrtf__Ff(GW_NOFUSE((pos->x - target->x) * (pos->x - target->x)) +
+                   GW_NOFUSE((pos->y - target->y) * (pos->y - target->y))) < 40.0f))
     {
         return true;
     }

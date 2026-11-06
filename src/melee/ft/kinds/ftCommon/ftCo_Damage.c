@@ -556,8 +556,8 @@ void ftCo_Damage_OnEveryHitlag(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->allow_sdi &&
-        VEC2_SQ_LEN(fp->input.lstick[0]) >=
-            SQ(p_ftCommonData->sdi_min_stick_mag) &&
+        VEC2_SQ_LEN_NOFUSE(fp->input.lstick[0]) >=
+            GW_NOFUSE_SQ(p_ftCommonData->sdi_min_stick_mag) &&
         (fp->active_timer.lstick.x < p_ftCommonData->sdi_stick_window ||
          fp->active_timer.lstick.y < p_ftCommonData->sdi_stick_window
 #if defined(TARGET_PC)
@@ -615,8 +615,8 @@ void ftCo_Damage_OnExitHitlag(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     bool isPointInCircle;
-    if (VEC2_SQ_LEN(fp->input.lstick[0]) >=
-        SQ(p_ftCommonData->sdi_min_stick_mag))
+    if (VEC2_SQ_LEN_NOFUSE(fp->input.lstick[0]) >=
+        GW_NOFUSE_SQ(p_ftCommonData->sdi_min_stick_mag))
     {
         isPointInCircle = true;
     } else {
@@ -1048,7 +1048,7 @@ void ftCo_Damage_Coll(Fighter_GObj* gobj)
         if (fp->stamina_dead) {
             ftCo_80097D40(gobj);
         } else {
-            float mag = sqrtf(VEC2_SQ_LEN(fp->x8c_kb_vel));
+            float mag = sqrtf(VEC2_SQ_LEN_NOFUSE(fp->x8c_kb_vel));
             if (mag >= p_ftCommonData->x1E0) {
                 ftCo_80097D40(gobj);
             } else if (mag >= p_ftCommonData->x1E4) {
@@ -1068,7 +1068,7 @@ void ftCo_8008FC94(Fighter_GObj* gobj)
 void ftCo_Damage_SetMv8FromKbThreshold(Fighter* fp)
 {
     float kb_vel = fp->ground_or_air == GA_Air
-                       ? sqrtf(VEC3_SQ_LEN(fp->x8c_kb_vel))
+                       ? sqrtf(VEC3_SQ_LEN_NOFUSE(fp->x8c_kb_vel))
                        : ABS(fp->xF0_ground_kb_vel);
     int value;
 
@@ -1166,7 +1166,7 @@ void ftCo_DamageFly_Phys(Fighter_GObj* gobj)
         doFlyRoll(gobj);
     }
     if (fp->x1064_thrownHitbox.x134.owner != NULL &&
-        sqrtf(VEC3_SQ_LEN(fp->x8c_kb_vel)) < p_ftCommonData->x1C8)
+        sqrtf(VEC3_SQ_LEN_NOFUSE(fp->x8c_kb_vel)) < p_ftCommonData->x1C8)
     {
         ftColl_8007AFF8(gobj);
     }
@@ -1230,7 +1230,7 @@ void ftCo_DamageFlyRoll_Phys(Fighter_GObj* gobj)
         doFlyRoll(gobj);
     }
     if (fp->x1064_thrownHitbox.x134.owner != NULL) {
-        if (sqrtf__Ff(VEC3_SQ_LEN(fp->x8c_kb_vel)) < p_ftCommonData->x1C8) {
+        if (sqrtf__Ff(VEC3_SQ_LEN_NOFUSE(fp->x8c_kb_vel)) < p_ftCommonData->x1C8) {
             ftColl_8007AFF8(gobj);
         }
     }

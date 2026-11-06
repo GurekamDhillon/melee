@@ -133,7 +133,7 @@ int main(void)
                 GO[i].user_data = f;
                 f->gobj = &GO[i];
                 f->kind = KINDS[rnd() % 12];
-                f->x619_costume_id = (u8) (rnd() % 4);
+                f->costume_id = (u8) (rnd() % 4);
                 f->input.held_buttons[0] = rnd();
                 f->input.pressed_buttons = rnd();
                 f->x1968_jumpsUsed = (u8) (rnd() % 4);

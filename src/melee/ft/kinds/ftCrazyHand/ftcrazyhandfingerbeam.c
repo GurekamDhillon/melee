@@ -42,7 +42,7 @@ static inline float my_sqrtf(float x)
 
 static inline float my_lbVector_Len(Vec3* vec)
 {
-    return my_sqrtf(vec->x * vec->x + vec->y * vec->y + vec->z * vec->z);
+    return my_sqrtf(GW_NOFUSE(vec->x * vec->x) + GW_NOFUSE(vec->y * vec->y) + GW_NOFUSE(vec->z * vec->z));
 }
 
 void fn_80159288(HSD_GObj* gobj);

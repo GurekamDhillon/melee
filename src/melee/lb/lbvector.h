@@ -9,12 +9,12 @@
 
 static inline float lbVector_Len(Vec3* vec)
 {
-    return sqrtf(vec->x * vec->x + vec->y * vec->y + vec->z * vec->z);
+    return sqrtf(GW_NOFUSE(vec->x * vec->x) + GW_NOFUSE(vec->y * vec->y) + GW_NOFUSE(vec->z * vec->z));
 }
 
 static inline float lbVector_Len_xy(Vec3* vec)
 {
-    return sqrtf(vec->x * vec->x + vec->y * vec->y);
+    return sqrtf(GW_NOFUSE(vec->x * vec->x) + GW_NOFUSE(vec->y * vec->y));
 }
 
 float lbVector_Normalize(Vec3* vec);

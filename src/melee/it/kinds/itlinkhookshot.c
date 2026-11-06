@@ -864,7 +864,11 @@ void itLinkhookshot_UnkMotion8_Phys(Item_GObj* gobj)
     item->xDD4_itemVar.linkhookshot.x10 = it_802A39FC;
 }
 
-float it_802A3C98(Vec3* arg0, Vec3* arg1, Vec3* arg2)
+#if defined(TARGET_PC)
+/* MWCC inlines it_802A3C98 into this TU's callers, where arg2 is a register-resident local and
+ * the squares fuse; the out-of-line copy (called from other TUs) reads arg2 from memory and does not
+ * fuse them (docs/rust-port/notes/fp-audit.md). The callers below use this fused copy. */
+static inline float it_802A3C98_inl(Vec3* arg0, Vec3* arg1, Vec3* arg2)
 {
     f32 inv;
     f32 len;
@@ -883,6 +887,31 @@ float it_802A3C98(Vec3* arg0, Vec3* arg1, Vec3* arg2)
     arg2->z *= inv;
     return len;
 }
+#endif
+
+float it_802A3C98(Vec3* arg0, Vec3* arg1, Vec3* arg2)
+{
+    f32 inv;
+    f32 len;
+    arg2->x = arg0->x - arg1->x;
+    arg2->y = arg0->y - arg1->y;
+    arg2->z = arg0->z - arg1->z;
+
+    len = sqrtf(GW_NOFUSE(arg2->x * arg2->x) + GW_NOFUSE(arg2->y * arg2->y) +
+                GW_NOFUSE(arg2->z * arg2->z));
+    if (len == (f64) 0.0F) {
+        inv = (f64) 0.0F;
+    } else {
+        inv = (f64) 1.0F / len;
+    }
+    arg2->x *= inv;
+    arg2->y *= inv;
+    arg2->z *= inv;
+    return len;
+}
+#if defined(TARGET_PC)
+#define it_802A3C98 it_802A3C98_inl
+#endif
 
 s32 it_802A3D90(ItemLink* item_link)
 {
@@ -1232,8 +1261,15 @@ static inline f32 it_802A4BFC_sqrtf_offset(f32 x)
         guess = 0.5 * guess * (3.0 - guess * guess * x);
         guess = 0.5 * guess * (3.0 - guess * guess * x);
         guess = 0.5 * guess * (3.0 - guess * guess * x);
+#if defined(TARGET_PC)
+        /* *(&y + 6) is out of bounds on the PC (UB; it returned x): store to y as the console's
+         * stack slot does (fp-audit.md) */
+        y = (f32) (x * guess);
+        return y;
+#else
         *(&y + 6) = (f32) (x * guess);
         return *(&y + 6);
+#endif
     }
     return x;
 }

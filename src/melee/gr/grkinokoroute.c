@@ -480,7 +480,7 @@ void grKinokoRoute_80207C88(Ground_GObj* gobj)
     if (gp->u.kinokoroute2.cam_timer == 0) {
         Vec3 diff;
         lbVector_Diff(&cam_offset, &cam_target, &diff);
-        if (sqrtf(SQ(diff.x) + SQ(diff.y) + SQ(diff.z)) > 10.0f) {
+        if (sqrtf(GW_NOFUSE_SQ(diff.x) + GW_NOFUSE_SQ(diff.y) + GW_NOFUSE_SQ(diff.z)) > 10.0f) {
             lbVector_Normalize(&diff);
             diff.x *= 10.0f;
             diff.y *= 10.0f;

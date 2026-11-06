@@ -111,7 +111,7 @@ bool it_802E5AC4(Item_GObj* item_gobj, bool arg_check)
             check1 = false;
             sp28 = it_803B8724;
             var_f31 = sqrtf_accurate_store(
-                SQ(item->x40_vel.x) + SQ(item->x40_vel.y), &sqrt_0);
+                GW_NOFUSE_SQ(item->x40_vel.x) + GW_NOFUSE_SQ(item->x40_vel.y), &sqrt_0);
             if (((item->x40_vel.x * coll_data->floor.normal.x) +
                  (item->x40_vel.y * coll_data->floor.normal.y)) < 0.0f)
             {
@@ -125,7 +125,7 @@ bool it_802E5AC4(Item_GObj* item_gobj, bool arg_check)
             }
             if (check2) {
                 lbVector_NormalizeXY(&sp28);
-                if (sqrtf_store(SQ(sp28.x) + SQ(sp28.y) + SQ(sp28.z),
+                if (sqrtf_store(GW_NOFUSE_SQ(sp28.x) + GW_NOFUSE_SQ(sp28.y) + GW_NOFUSE_SQ(sp28.z),
                                 &sqrt_1) < 0.01f)
                 {
                     sp28.x = item->x40_vel.x;

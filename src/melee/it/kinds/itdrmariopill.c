@@ -232,7 +232,7 @@ static bool itDrmariopill_UnkMotion0_Coll(Item_GObj* gobj)
     if (it_8027781C(gobj) != 0) {
         Item* ip = GET_ITEM(gobj);
         itDrMarioPillAttributes* attrs = GET_ATTRS(ip);
-        if (my_sqrtf(VEC2_SQ_LEN(ip->x40_vel)) < attrs->x10) {
+        if (my_sqrtf(VEC2_SQ_LEN_NOFUSE(ip->x40_vel)) < attrs->x10) {
             return true;
         }
         Item_8026AE84(ip, 0x15FAE, 0x7F, 0x40);

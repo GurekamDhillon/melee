@@ -501,9 +501,9 @@ bool grOldKongo_80210454(Ground_GObj* ground_gobj, Fighter_GObj* keep)
     if (gp->u.taru.xC6 == 0) {
         Ground_801C4DA0(&pos_gnd, &unk);
         ftLib_GetPos(keep, &pos_ft);
-        if ((pos_gnd.x - pos_ft.x) * (pos_gnd.x - pos_ft.x) +
-                (pos_gnd.y - pos_ft.y) * (pos_gnd.y - pos_ft.y) +
-                (pos_gnd.z - pos_ft.z) * (pos_gnd.z - pos_ft.z) <
+        if (GW_NOFUSE((pos_gnd.x - pos_ft.x) * (pos_gnd.x - pos_ft.x)) +
+                GW_NOFUSE((pos_gnd.y - pos_ft.y) * (pos_gnd.y - pos_ft.y)) +
+                GW_NOFUSE((pos_gnd.z - pos_ft.z) * (pos_gnd.z - pos_ft.z)) <
             yakumono_param->rframe_barrel_in *
                 yakumono_param->rframe_barrel_in)
         {

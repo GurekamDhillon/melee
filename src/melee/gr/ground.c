@@ -3912,7 +3912,7 @@ void Ground_801C4FAC(HSD_CObj* cobj)
         }
         if (sp74.z < 0) {
             xz_inv_len =
-                1.0f / sqrtf_store((sp74.x * sp74.x) + (sp74.z * sp74.z),
+                1.0f / sqrtf_store((GW_NOFUSE(sp74.x * sp74.x)) + (GW_NOFUSE(sp74.z * sp74.z)),
                                    &sqrt_tmp[2]);
             xz_x_weight = xz_inv_len * ABS(sp74.x);
             xz_z_weight = xz_inv_len * ABS(sp74.z);

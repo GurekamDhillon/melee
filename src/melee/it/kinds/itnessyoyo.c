@@ -751,6 +751,7 @@ static inline float my_sqrtf(float x)
 }
 
 #define HYPOT(x, y) my_sqrtf((x) * (x) + (y) * (y))
+#define HYPOT_NOFUSE(x, y) my_sqrtf(GW_NOFUSE_SQ(x) + GW_NOFUSE_SQ(y))
 
 void it_802BFEC4(Item_GObj* gobj)
 {
@@ -767,7 +768,7 @@ void it_802BFEC4(Item_GObj* gobj)
     HSD_JObjSetupMatrix(link2->jobj);
     PSMTXConcat(link2->jobj->mtx, m, m);
     ip->xDD4_itemVar.nessyoyo.x4 =
-        HYPOT(link1->pos.x - m[0][3], link1->pos.y - m[1][3]);
+        HYPOT_NOFUSE(link1->pos.x - m[0][3], link1->pos.y - m[1][3]);
     ip->xDD4_itemVar.nessyoyo.x4 *= 0.1f;
     Item_80268E5C(gobj, 3, ITEM_ANIM_UPDATE);
 }

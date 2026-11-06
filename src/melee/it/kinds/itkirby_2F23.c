@@ -19,8 +19,8 @@ ItemStateTable it_803F9450[] = {
 f64 it_802F23AC(Item_GObj* gobj, Vec3* pos)
 {
     Item* ip = GET_ITEM(gobj);
-    return SQ(ip->pos.x - pos->x) + SQ(ip->pos.y - pos->y) +
-           SQ(ip->pos.z - pos->z);
+    return GW_NOFUSE_SQ(ip->pos.x - pos->x) + GW_NOFUSE_SQ(ip->pos.y - pos->y) +
+           GW_NOFUSE_SQ(ip->pos.z - pos->z);
 }
 
 static inline void it_802F23EC_inline(Item_GObj* gobj)

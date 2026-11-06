@@ -829,8 +829,8 @@ void _tyDisplay_80318CB4(s32 arg0)
                 theta = atan2f(grid->pos[i].z, grid->pos[i].x);
                 {
                     f32 mag = _tyDisplay_80318CB4_sqrt_store(
-                        grid->pos[i].x * grid->pos[i].x +
-                            grid->pos[i].z * grid->pos[i].z,
+                        GW_NOFUSE(grid->pos[i].x * grid->pos[i].x) +
+                            GW_NOFUSE(grid->pos[i].z * grid->pos[i].z),
                         &rounded.value);
                     s32 collided;
                     s32 tries;

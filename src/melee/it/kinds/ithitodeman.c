@@ -203,7 +203,7 @@ void it_802D472C(Item_GObj* gobj)
         target_pos.y += ip->xDD4_itemVar.hitodeman.x64;
         target_pos.z = 0.0f;
         lbVector_Diff(&target_pos, &ip->pos, &dir);
-        dist = sqrtf(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
+        dist = sqrtf(GW_NOFUSE(dir.x * dir.x) + GW_NOFUSE(dir.y * dir.y) + GW_NOFUSE(dir.z * dir.z));
         if (dist > attrs->x38) {
             lbVector_Normalize(&dir);
             speed = dist * attrs->x34;

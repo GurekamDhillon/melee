@@ -25,9 +25,23 @@ use plain f32 `x*x + r`; helpers `sq_len2_mem`/`sq_len3_mem` (ftCo_Damage), `sq2
 `lbVector_Len_local`, `it_802A3C98_inl`, `hypot_mem`. Kept fused deliberately: ftCo_Ucf084Sdi (gecko asm is
 fmadds), TARGET_PC-only mod code, CPU-AI variable squares.
 
+## C PC build
+
+Same mismatch, same fix (a shared console-semantics bug): `GW_NOFUSE(a * b)` / `GW_NOFUSE_SQ(x)` (src/Runtime/platform.h)
+is an identity call under TARGET_PC, so clang cannot contract the product into an fmuladd; `(x)` for MWCC. Applied on the
+133 DOL-unfused source lines (plus their continuation lines), `VEC2_SQ_LEN_NOFUSE`/`VEC3_SQ_LEN_NOFUSE` (mtx.h),
+`VEC_XY_LENGTH_NOFUSE` (itlinkboomerang), `HYPOT_NOFUSE` (itnessyoyo). Fused contexts stay fused: `lbVector_Len_local`
+inside lbVector_8000E838, `it_802A3C98_inl` for the hookshot TU's own callers (the out-of-line it_802A3C98 is unfused).
+Check: rerun clang_sites.py; no f32 fmuladd with a sqmem/sqlocal/sqparam class remains on a DOL-unfused line.
+
+`it_802A4BFC_sqrtf_offset`: the C's `*(&y + 6)` stack-slot trick is out of bounds on the PC (it returned x); the DOL runs
+frsqrte + 3 Newton steps + frsp. Both builds now compute the MSL sqrtf.
+
 ## Result
 
-slpcheck frame-exact over 125 replays (fast profile): 86 before -> 102 after.
+slpcheck frame-exact over 125 replays: 86 before -> 102 after, on both the fast and the release profile (per-replay
+results identical). The earlier release figure (53) came from a release exe in the shared `_build/cargo-shared` target
+dir while other worktrees were building into it (clobbered crates); rebuilt in a private target dir, release equals fast.
 
 ## Open
 
@@ -35,9 +49,7 @@ slpcheck frame-exact over 125 replays (fast profile): 86 before -> 102 after.
   mpLib_80055E9C); listed below.
 - f32 `.mul_add` uses (single rounding in f32) not yet swept to `fmadds`.
 - PSMTXQuat / PSMTXRotAxisRad retail paired-single dataflow (C and Rust) not done.
-- C PC build has the same unfused-square mismatch; not mirrored in this branch.
 - frsp / fctiw NaN / estimate sites not classified beyond inline sqrtf (already modelled).
-- `it_802A4BFC_sqrtf_offset` is UB in the C PC build (returns x, not sqrt); shared by both builds.
 
 ## Unfused-square sites
 

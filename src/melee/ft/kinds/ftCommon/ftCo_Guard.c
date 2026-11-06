@@ -184,8 +184,8 @@ void ftCo_80091BC4(Fighter* fp)
     }
     fp->mv.co.guard.x8 = 10 + guard_deg;
 
-    stick_mag = sqrtf(fp->input.lstick[0].x * fp->input.lstick[0].x +
-                      fp->input.lstick[0].y * fp->input.lstick[0].y);
+    stick_mag = sqrtf(GW_NOFUSE(fp->input.lstick[0].x * fp->input.lstick[0].x) +
+                      GW_NOFUSE(fp->input.lstick[0].y * fp->input.lstick[0].y));
     if (stick_mag > 1) {
         stick_mag = 1;
     }

@@ -108,8 +108,8 @@ bool ftCo_800DF50C(Fighter* fp)
 
 bool ftCo_800DF608(Fighter* fp)
 {
-    if (SQ(fp->input.cstick[0].x) + SQ(fp->input.cstick[0].y) >=
-        SQ(p_ftCommonData->sdi_min_stick_mag))
+    if (GW_NOFUSE_SQ(fp->input.cstick[0].x) + GW_NOFUSE_SQ(fp->input.cstick[0].y) >=
+        GW_NOFUSE_SQ(p_ftCommonData->sdi_min_stick_mag))
     {
         return true;
     }

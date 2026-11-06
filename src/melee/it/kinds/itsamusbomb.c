@@ -174,7 +174,7 @@ void itSamusbomb_UnkMotion2_Phys(Item_GObj* gobj)
         &ip->xC4_article_data->x4_specialAttributes->samus_bomb;
     f32 mult;
 
-    if (my_sqrtf(VEC2_SQ_LEN(ip->x7C)) > attr->xC) {
+    if (my_sqrtf(VEC2_SQ_LEN_NOFUSE(ip->x7C)) > attr->xC) {
         lbVector_NormalizeXY(&ip->x7C);
         mult = attr->xC;
         ip->x7C.x *= mult;

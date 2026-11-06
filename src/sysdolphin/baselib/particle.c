@@ -1575,7 +1575,7 @@ void* hsd_8039930C(HSD_Particle* pp, HSD_Particle* prev)
                         HSD_JObjSetupMatrix(jobj);
                         matrix = jobj->mtx;
 
-                        val = pp->vel.x * pp->vel.x + pp->vel.y * pp->vel.y;
+                        val = GW_NOFUSE(pp->vel.x * pp->vel.x) + GW_NOFUSE(pp->vel.y * pp->vel.y);
                         vel_mag_sq = pp->vel.z * pp->vel.z;
                         vel_mag_sq += val;
                         dx = matrix[0][3] - pp->pos.x;
@@ -1991,8 +1991,8 @@ void* hsd_8039930C(HSD_Particle* pp, HSD_Particle* prev)
                             random_range = fval;
                         }
                         base_speed += random_range * HSD_Randf();
-                        mag = pp->vel.x * pp->vel.x + pp->vel.y * pp->vel.y +
-                              pp->vel.z * pp->vel.z;
+                        mag = GW_NOFUSE(pp->vel.x * pp->vel.x) + GW_NOFUSE(pp->vel.y * pp->vel.y) +
+                              GW_NOFUSE(pp->vel.z * pp->vel.z);
                         if (mag > 0.0F) {
                             double guess = __frsqrte((double) mag);
                             guess = 0.5 * guess * (3.0 - guess * guess * mag);

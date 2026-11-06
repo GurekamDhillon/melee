@@ -66,7 +66,7 @@ void itMariofireball_UnkMotion0_Phys(Item_GObj* gobj)
 
 static double calc_dist_2d_accurate(Vec3* v)
 {
-    return sqrtf_accurate(VEC2_SQ_LEN(*v));
+    return sqrtf_accurate(VEC2_SQ_LEN_NOFUSE(*v));
 }
 
 bool itMariofireball_UnkMotion0_Coll(Item_GObj* gobj)

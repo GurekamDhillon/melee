@@ -917,7 +917,7 @@ void grZebes_801D99E0(HSD_GObj* gobj)
 
             diff = ABS(gp->u.zebes5.xD4 - gp->u.zebes5.xD8);
 
-            discriminant = (yakumono_param->x98 * yakumono_param->x98) -
+            discriminant = (GW_NOFUSE(yakumono_param->x98 * yakumono_param->x98)) -
                            (4.0f * diff) / yakumono_param->x9C;
             if (discriminant < 0.0f) {
                 gp->u.zebes5.xCC = 999.0f;
@@ -2017,10 +2017,8 @@ bool grZebes_801DBB60(Item_GObj* yaku)
                 (void) ei_size;
                 for (j = i + 1; j < 20; j++) {
                     if (grZe_8049F170[j].x00_active == 1 && j != 0 && j != 6) {
-                        dist_sq = (ei_x - grZe_8049F170[j].x08_x) *
-                                      (ei_x - grZe_8049F170[j].x08_x) +
-                                  (ei_y - grZe_8049F170[j].x0C_y) *
-                                      (ei_y - grZe_8049F170[j].x0C_y);
+                        dist_sq = GW_NOFUSE_SQ(ei_x - grZe_8049F170[j].x08_x) +
+                                  GW_NOFUSE_SQ(ei_y - grZe_8049F170[j].x0C_y);
                         if (max_dist_sq < dist_sq) {
                             max_dist_sq = dist_sq;
                             x1 = ei->x08_x;

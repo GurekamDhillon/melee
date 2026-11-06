@@ -1228,7 +1228,7 @@ void grMuteCity_801F106C(s32 i)
 
 static inline f32 grMc_DistanceSquared(const Vec3* a, const Vec3* b)
 {
-    return SQ(a->x - b->x) + SQ(a->y - b->y) + SQ(a->z - b->z);
+    return GW_NOFUSE_SQ(a->x - b->x) + GW_NOFUSE_SQ(a->y - b->y) + GW_NOFUSE_SQ(a->z - b->z);
 }
 
 void grMuteCity_801F1328(void)
@@ -1613,9 +1613,9 @@ void grMuteCity_801F1A34(HSD_GObj* arg0, Ground_GObj* arg1)
                 grLib_801C96F8(0x11A, 0, &car_pos);
                 if (sound_count < 1) {
                     if (car_pos.z < 0.0f) {
-                        spline_t = (car_pos.z * car_pos.z) +
-                                   ((car_pos.x * car_pos.x) +
-                                    (car_pos.y * car_pos.y));
+                        spline_t = (GW_NOFUSE(car_pos.z * car_pos.z)) +
+                                   ((GW_NOFUSE(car_pos.x * car_pos.x)) +
+                                    (GW_NOFUSE(car_pos.y * car_pos.y)));
                         distance = sqrtf(spline_t);
                         spline_t = distance;
                         if (spline_t < 300.0f) {

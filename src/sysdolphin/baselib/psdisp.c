@@ -1279,14 +1279,14 @@ static inline void psDispSubAPPSRTPoint(HSD_Particle* pp)
                 pp->appsrt->status = PS_APPSTATUS_STILL;
             }
             PSMTXConcat(vmtx, pp->appsrt->mmtx, (MtxPtr) &pp->appsrt->ssx);
-            scale_x = pp->appsrt->ssx * pp->appsrt->ssx +
-                      pp->appsrt->x74 * pp->appsrt->x74 +
-                      pp->appsrt->x84 * pp->appsrt->x84;
+            scale_x = GW_NOFUSE(pp->appsrt->ssx * pp->appsrt->ssx) +
+                      GW_NOFUSE(pp->appsrt->x74 * pp->appsrt->x74) +
+                      GW_NOFUSE(pp->appsrt->x84 * pp->appsrt->x84);
             scale_x = sqrtf(scale_x);
             pp->appsrt->x94 = scale_x;
-            scale_y = pp->appsrt->ssy * pp->appsrt->ssy +
-                      pp->appsrt->x78 * pp->appsrt->x78 +
-                      pp->appsrt->x88 * pp->appsrt->x88;
+            scale_y = GW_NOFUSE(pp->appsrt->ssy * pp->appsrt->ssy) +
+                      GW_NOFUSE(pp->appsrt->x78 * pp->appsrt->x78) +
+                      GW_NOFUSE(pp->appsrt->x88 * pp->appsrt->x88);
             scale_y = sqrtf(scale_y);
             pp->appsrt->x98 = scale_y;
             if (pp->appsrt->xA2 != 0) {
@@ -1450,14 +1450,14 @@ static inline void psDispSubAppSRT(HSD_Particle* pp, u8* texform)
             pp->appsrt->status = PS_APPSTATUS_STILL;
         }
         PSMTXConcat(vmtx, pp->appsrt->mmtx, (MtxPtr) &pp->appsrt->ssx);
-        scale_x = pp->appsrt->ssx * pp->appsrt->ssx +
-                  pp->appsrt->x74 * pp->appsrt->x74 +
-                  pp->appsrt->x84 * pp->appsrt->x84;
+        scale_x = GW_NOFUSE(pp->appsrt->ssx * pp->appsrt->ssx) +
+                  GW_NOFUSE(pp->appsrt->x74 * pp->appsrt->x74) +
+                  GW_NOFUSE(pp->appsrt->x84 * pp->appsrt->x84);
         scale_x = sqrtf(scale_x);
         pp->appsrt->x94 = scale_x;
-        scale_y = pp->appsrt->ssy * pp->appsrt->ssy +
-                  pp->appsrt->x78 * pp->appsrt->x78 +
-                  pp->appsrt->x88 * pp->appsrt->x88;
+        scale_y = GW_NOFUSE(pp->appsrt->ssy * pp->appsrt->ssy) +
+                  GW_NOFUSE(pp->appsrt->x78 * pp->appsrt->x78) +
+                  GW_NOFUSE(pp->appsrt->x88 * pp->appsrt->x88);
         scale_y = sqrtf(scale_y);
         pp->appsrt->x98 = scale_y;
         if (pp->appsrt->xA2 != 0) {

@@ -1236,7 +1236,9 @@ pub unsafe fn it_802A6A78_normalize_diff(a: *mut Vec3, b: *mut Vec3, vec: *mut V
 /// behaviour; reproduce it, not the intended square root.
 pub fn it_802A4BFC_sqrtf_offset(x: f32) -> f32 {
     melee_core::ct!("it_802A4BFC_sqrtf_offset");
-    x
+    // the console runs the full frsqrte + 3 Newton steps here (it_802A4BFC: frsqrte, fnmsub x3, frsp);
+    // the C PC build used to return x through its out-of-bounds `*(&y + 6)` (fp-audit.md)
+    sqrtf(x)
 }
 
 pub unsafe fn it_802A4BFC_normalize_diff(a: *mut Vec3, b: *mut Vec3, vec: *mut Vec3) -> f64 {

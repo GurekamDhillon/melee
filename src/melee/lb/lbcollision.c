@@ -1505,8 +1505,8 @@ void lbColl_800077A0(Vec3* a, MtxPtr arg1, Vec3* b, Vec3* c, Vec3* d, Vec3* e,
         diff_ba.y = b->y - a->y;
         diff_ba.z = b->z - a->z;
 
-        dot_diff_cb = diff_cb.x * diff_cb.x + diff_cb.y * diff_cb.y +
-                      diff_cb.z * diff_cb.z;
+        dot_diff_cb = GW_NOFUSE(diff_cb.x * diff_cb.x) + GW_NOFUSE(diff_cb.y * diff_cb.y) +
+                      GW_NOFUSE(diff_cb.z * diff_cb.z);
 
         if (approximatelyZero(dot_diff_cb)) {
             scl = 0.0f;
@@ -2069,7 +2069,7 @@ void lbColl_80008FC8(Vec3 arg0, Vec3 arg1, GXColor* arg2, GXColor* arg3,
     sp38.x = arg0.x - arg1.x;
     sp38.y = arg0.y - arg1.y;
     sp38.z = arg0.z - arg1.z;
-    var_f31 = sqrtf(SQ(sp38.x) + SQ(sp38.y) + SQ(sp38.z));
+    var_f31 = sqrtf(GW_NOFUSE_SQ(sp38.x) + GW_NOFUSE_SQ(sp38.y) + GW_NOFUSE_SQ(sp38.z));
     if (isSmall(var_f31) ||
         (isSmall(sp38.x) && isSmall(sp38.y) && isSmall(sp38.z)))
     {
@@ -2201,7 +2201,7 @@ void lbColl_800096B4(MtxPtr arg0, Vec3 arg1, Vec3 arg2, GXColor* arg3,
     sp3C.x = arg1.x - arg2.x;
     sp3C.y = arg1.y - arg2.y;
     sp3C.z = arg1.z - arg2.z;
-    var_f31 = sqrtf(SQ(sp3C.x) + SQ(sp3C.y) + SQ(sp3C.z));
+    var_f31 = sqrtf(GW_NOFUSE_SQ(sp3C.x) + GW_NOFUSE_SQ(sp3C.y) + GW_NOFUSE_SQ(sp3C.z));
     if (isSmall(var_f31) ||
         (isSmall(sp3C.x) && isSmall(sp3C.y) && isSmall(sp3C.z)))
     {

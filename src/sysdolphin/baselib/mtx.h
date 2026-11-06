@@ -10,6 +10,8 @@
 
 #define VEC2_SQ_LEN(v) ((SQ((v).x) + SQ((v).y)))
 #define VEC3_SQ_LEN(v) ((SQ((v).x) + SQ((v).y) + SQ((v).z)))
+#define VEC2_SQ_LEN_NOFUSE(v) ((GW_NOFUSE_SQ((v).x) + GW_NOFUSE_SQ((v).y)))
+#define VEC3_SQ_LEN_NOFUSE(v) ((GW_NOFUSE_SQ((v).x) + GW_NOFUSE_SQ((v).y) + GW_NOFUSE_SQ((v).z)))
 
 typedef Vec3 VecMtx[4];
 typedef Vec3* VecMtxPtr;
@@ -57,8 +59,8 @@ static inline void HSD_MtxSetColVec(MtxPtr mtx, int col, Vec3* vec)
 
 static inline f32 HSD_MtxColMag(MtxPtr mtx, int col)
 {
-    return sqrtf((mtx[0][col] * mtx[0][col]) + (mtx[1][col] * mtx[1][col]) +
-                 (mtx[2][col] * mtx[2][col]));
+    return sqrtf((GW_NOFUSE(mtx[0][col] * mtx[0][col])) + (GW_NOFUSE(mtx[1][col] * mtx[1][col])) +
+                 (GW_NOFUSE(mtx[2][col] * mtx[2][col])));
 }
 
 #endif

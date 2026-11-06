@@ -383,8 +383,8 @@ f32 hsd_8039DAD4(HSD_Generator* gen)
     vel_copy.z = gen->vel.z;
 
     /* Compute velocity magnitude */
-    vel_mag_sq = sqrtf(vel_copy.z * vel_copy.z +
-                       (vel_copy.x * vel_copy.x + vel_copy.y * vel_copy.y));
+    vel_mag_sq = sqrtf(GW_NOFUSE(vel_copy.z * vel_copy.z) +
+                       (GW_NOFUSE(vel_copy.x * vel_copy.x) + GW_NOFUSE(vel_copy.y * vel_copy.y)));
 
     /* Initialize rotation matrix */
     PSMTXIdentity(rot_mtx);
@@ -847,9 +847,9 @@ f32 hsd_8039DAD4(HSD_Generator* gen)
 
             /* Compute velocity from rect axes */
             {
-                f32 mag = gen->aux.rect.zx * gen->aux.rect.zx +
-                          gen->aux.rect.zy * gen->aux.rect.zy +
-                          gen->aux.rect.zz * gen->aux.rect.zz;
+                f32 mag = GW_NOFUSE(gen->aux.rect.zx * gen->aux.rect.zx) +
+                          GW_NOFUSE(gen->aux.rect.zy * gen->aux.rect.zy) +
+                          GW_NOFUSE(gen->aux.rect.zz * gen->aux.rect.zz);
                 mag = sqrtf(mag);
                 {
                     f32 scale = elevation / mag;
@@ -1178,10 +1178,10 @@ HSD_Generator* hsd_8039F05C(s32 linkNo, s32 bank, s32 idx)
             f32 mag;
 
             gen->aux.sphere.speed =
-                sqrtf(gen->vel.z * gen->vel.z +
-                      (gen->vel.x * gen->vel.x + gen->vel.y * gen->vel.y));
+                sqrtf(GW_NOFUSE(gen->vel.z * gen->vel.z) +
+                      (GW_NOFUSE(gen->vel.x * gen->vel.x) + GW_NOFUSE(gen->vel.y * gen->vel.y)));
 
-            mag = sqrtf(gen->vel.x * gen->vel.x + gen->vel.z * gen->vel.z);
+            mag = sqrtf(GW_NOFUSE(gen->vel.x * gen->vel.x) + GW_NOFUSE(gen->vel.z * gen->vel.z));
 
             if (mag < 1.1754944e-38F) {
                 if (gen->vel.y >= 0.0F) {

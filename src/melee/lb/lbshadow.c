@@ -400,12 +400,12 @@ void lbShadow_8000F38C(s32 arg0)
 
         lbVector_Diff(&lightPos, &lightDir, &lightVec);
 
-        dist = (lightVec.z * lightVec.z) +
+        dist = (GW_NOFUSE(lightVec.z * lightVec.z)) +
                (
 #ifdef MUST_MATCH
                    dist =
 #endif
-                       (lightVec.x * lightVec.x) + (lightVec.y * lightVec.y));
+                       (GW_NOFUSE(lightVec.x * lightVec.x)) + (GW_NOFUSE(lightVec.y * lightVec.y)));
         dist = my_sqrtf(dist);
 
         if (dist < 0.001f) {
@@ -419,7 +419,7 @@ void lbShadow_8000F38C(s32 arg0)
             lightDir.z = lbShadow_804D7B70;
             upVec.z = lbShadow_804D7B70;
         } else {
-            f32 xz_sq = (lightVec.x * lightVec.x) + (lightVec.z * lightVec.z);
+            f32 xz_sq = (GW_NOFUSE(lightVec.x * lightVec.x)) + (GW_NOFUSE(lightVec.z * lightVec.z));
             if (xz_sq > lbShadow_804D7B8C) {
                 upVec.z = lbShadow_804D7B70;
                 upVec.x = lbShadow_804D7B70;

@@ -1,5 +1,11 @@
 # Slippi Dolphin (project-slippi/dolphin, mainline) patch for the NHV1 oracle. Applies to 0653df8194eac2392dea9fe26276b70f3c87fd89.
 # Dolphin is GPL-2.0-or-later; this diff is a derivative of it and is kept for local use only (not distributed).
+diff --git a/Externals/SlippiRustExtensions b/Externals/SlippiRustExtensions
+--- a/Externals/SlippiRustExtensions
++++ b/Externals/SlippiRustExtensions
+@@ -1 +1 @@
+-Subproject commit 934f373d3cbcbca9ea3ceb68b53bda875c96abfb
++Subproject commit 934f373d3cbcbca9ea3ceb68b53bda875c96abfb-dirty
 diff --git a/Source/Core/Common/Timer.cpp b/Source/Core/Common/Timer.cpp
 index 0a23080..3784400 100644
 --- a/Source/Core/Common/Timer.cpp
@@ -50,7 +56,7 @@ index 829688e..5e53a96 100644
 +# GD nhv1-oracle: the playback code paths are behind IS_PLAYBACK, which upstream never defines (playback is WIP there)
 +set_source_files_properties(Slippi/SlippiPlayback.cpp HW/EXI/EXI_DeviceSlippi.cpp PROPERTIES COMPILE_DEFINITIONS IS_PLAYBACK=1)
 diff --git a/Source/Core/Core/HLE/HLE.cpp b/Source/Core/Core/HLE/HLE.cpp
-index a0ca859..f4e1a4c 100644
+index a0ca859..fad7a74 100644
 --- a/Source/Core/Core/HLE/HLE.cpp
 +++ b/Source/Core/Core/HLE/HLE.cpp
 @@ -5,6 +5,7 @@
@@ -97,7 +103,7 @@ index a0ca859..f4e1a4c 100644
    Patch(system, Gecko::HLE_TRAMPOLINE_ADDRESS, "GeckoHandlerReturnTrampoline");
 +
 +  // GD nhv1-oracle: after HSD_GObj_RunProcs in gm_801A4D34 (MELEE_DOLPHIN_NHV1)
-+  if (NHV1Oracle::Enabled() && !std::getenv("MELEE_DOLPHIN_NHV1_NOHOOK"))
++  if ((NHV1Oracle::Enabled() || NHV1Oracle::StateLogOn()) && !std::getenv("MELEE_DOLPHIN_NHV1_NOHOOK"))
 +    Patch(system, NHV1Oracle::HOOK_ADDRESS, "NHV1FrameEnd");
 +  // GD nhv1-oracle: MELEE_DOLPHIN_NHV1_PROBE_AT=addr[,addr...] (hex), see NHV1Oracle.h
 +  if (NHV1Oracle::Enabled())
@@ -186,10 +192,10 @@ index c6fbc9d..dd26f2a 100644
  
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.cpp b/Source/Core/Core/Slippi/NHV1Oracle.cpp
 new file mode 100644
-index 0000000..694bd7b
+index 0000000..046e622
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.cpp
-@@ -0,0 +1,437 @@
+@@ -0,0 +1,503 @@
 +// NHV1 oracle (GD's Melee port, local tool): see NHV1Oracle.h.
 +#include "Core/Slippi/NHV1Oracle.h"
 +
@@ -309,8 +315,50 @@ index 0000000..694bd7b
 +  s_complete = processing_complete;
 +}
 +
++// GD slippi-p1: MELEE_DOLPHIN_STATELOG=<file> writes one line per logic frame (any scene): gm_80479D58.unk_0, the
++// scene bytes at 0x80479D30 and the u32s at MELEE_DOLPHIN_STATELOG_ADDRS (hex, comma separated)
++bool StateLogOn()
++{
++  const char* p = std::getenv("MELEE_DOLPHIN_STATELOG");
++  return p && *p;
++}
++static void StateLog(const Core::CPUThreadGuard& guard)
++{
++  static FILE* f = nullptr;
++  static std::vector<u32> addrs;
++  static bool tried = false;
++  if (!tried)
++  {
++    tried = true;
++    if (StateLogOn())
++      f = std::fopen(std::getenv("MELEE_DOLPHIN_STATELOG"), "w");
++    if (const char* a = std::getenv("MELEE_DOLPHIN_STATELOG_ADDRS"))
++    {
++      std::string s(a);
++      size_t i = 0;
++      while (i < s.size())
++      {
++        size_t j = s.find(',', i);
++        if (j == std::string::npos)
++          j = s.size();
++        addrs.push_back(static_cast<u32>(std::strtoul(s.substr(i, j - i).c_str(), nullptr, 16)));
++        i = j + 1;
++      }
++    }
++  }
++  if (!f)
++    return;
++  std::fprintf(f, "%u %08x", PowerPC::MMU::HostRead_U32(guard, GM_80479D58),
++               PowerPC::MMU::HostRead_U32(guard, 0x80479D30));
++  for (u32 a : addrs)
++    std::fprintf(f, " %08x", PowerPC::MMU::HostRead_U32(guard, a));
++  std::fputc(10, f);
++  std::fflush(f);
++}
++
 +void FrameEnd(const Core::CPUThreadGuard& guard)
 +{
++  StateLog(guard);
 +  if (!Enabled())
 +    return;
 +  static u32 s_calls = 0;
@@ -472,6 +520,8 @@ index 0000000..694bd7b
 +  static bool tried = false;
 +  static int mem_reg = -1;
 +  static u32 mem_off = 0, mem_len = 0;
++  static int ch_reg = -1;
++  static u32 ch_next = 0, ch_len = 0, ch_max = 0;
 +  if (!tried)
 +  {
 +    tried = true;
@@ -485,6 +535,17 @@ index 0000000..694bd7b
 +      mem_reg = static_cast<int>(r);
 +      mem_off = off;
 +      mem_len = len;
++    }
++    // MELEE_DOLPHIN_NHV1_PROBE_CHAIN=rN:0xNEXT:0xLEN:COUNT walks a linked list from register N (each node's next
++    // pointer at +NEXT) and dumps LEN bytes of up to COUNT nodes
++    const char* c = std::getenv("MELEE_DOLPHIN_NHV1_PROBE_CHAIN");
++    unsigned cn = 0, cl = 0, cc = 0;
++    if (c && std::sscanf(c, "r%u:0x%x:0x%x:%u", &r, &cn, &cl, &cc) == 4 && r < 32 && cl <= 0x1000 && cc <= 256)
++    {
++      ch_reg = static_cast<int>(r);
++      ch_next = cn;
++      ch_len = cl;
++      ch_max = cc;
 +    }
 +  }
 +  if (!f)
@@ -505,6 +566,17 @@ index 0000000..694bd7b
 +    const u32 base = ppc.gpr[mem_reg] + mem_off;
 +    for (u32 k = 0; k < mem_len; k++)
 +      std::fprintf(f, "%02x", PowerPC::MMU::HostRead_U8(guard, base + k));
++  }
++  if (ch_reg >= 0)
++  {
++    u32 p = ppc.gpr[ch_reg];
++    for (u32 n = 0; n < ch_max && p >= 0x80000000u && p < 0x81800000u; n++)
++    {
++      std::fprintf(f, " node%u@%08x=", n, p);
++      for (u32 k = 0; k < ch_len; k++)
++        std::fprintf(f, "%02x", PowerPC::MMU::HostRead_U8(guard, p + k));
++      p = PowerPC::MMU::HostRead_U32(guard, p + ch_next);
++    }
 +  }
 +  std::fputc('\n', f);
 +  std::fflush(f);
@@ -629,10 +701,10 @@ index 0000000..694bd7b
 +#endif
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.h b/Source/Core/Core/Slippi/NHV1Oracle.h
 new file mode 100644
-index 0000000..2794f8d
+index 0000000..19f37bc
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.h
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,40 @@
 +// NHV1 oracle (GD's Melee port, local tool, not upstream): dump the GameCube memory that the NHV1 per-frame
 +// hash is computed from, once per logic iteration, right after HSD_GObj_RunProcs() returns in gm_801A4D34.
 +//
@@ -662,6 +734,7 @@ index 0000000..2794f8d
 +constexpr u32 HOOK_ADDRESS = 0x801A4FA4;
 +
 +bool Enabled();
++bool StateLogOn();
 +// HLE hook body (HookType::Start, HookFlag::Fixed)
 +void FrameEnd(const Core::CPUThreadGuard& guard);
 +// HLE probe hook (HookType::Start) and the addresses MELEE_DOLPHIN_NHV1_PROBE_AT names
@@ -672,6 +745,111 @@ index 0000000..2794f8d
 +// called by the Slippi EXI device when it hands a playback frame to the game
 +void NoteFrame(s32 frame, s32 latest, bool processing_complete);
 +}  // namespace NHV1Oracle
+diff --git a/Source/Core/Core/Slippi/SlippiMatchmaking.cpp b/Source/Core/Core/Slippi/SlippiMatchmaking.cpp
+index ae174e8..7917c22 100644
+--- a/Source/Core/Core/Slippi/SlippiMatchmaking.cpp
++++ b/Source/Core/Core/Slippi/SlippiMatchmaking.cpp
+@@ -320,6 +320,9 @@ void SlippiMatchmaking::startMatchmaking()
+     ENetAddress client_addr;
+     client_addr.host = ENET_HOST_ANY;
+     client_addr.port = m_host_port;
++    // GD slippi-p1 local test: loopback only (no firewall prompt, nothing reachable from outside)
++    if (std::getenv("SLIPPI_LOCAL_TEST"))
++      enet_address_set_host_ip(&client_addr, "127.0.0.1");
+ 
+     m_client = enet_host_create(&client_addr, 1, 3, 0, 0);
+     retry_count++;
+@@ -336,7 +339,9 @@ void SlippiMatchmaking::startMatchmaking()
+ 
+   // Resolve the STUN servers
+   std::vector<ENetAddress> stun_addrs;
+-  for (const auto& server : STUN_SERVERS)
++  // GD slippi-p1 local test: no STUN (no DNS lookup, no packet to Google/Cloudflare/Twilio)
++  const std::vector<std::pair<std::string, u16>> no_stun;
++  for (const auto& server : std::getenv("SLIPPI_LOCAL_TEST") ? no_stun : STUN_SERVERS)
+   {
+     ENetAddress addr;
+     if (enet_address_set_host(&addr, server.first.c_str()) != 0)
+@@ -380,7 +385,11 @@ void SlippiMatchmaking::startMatchmaking()
+   // }
+   // freeaddrinfo(addrs);
+ 
+-  if (Config::Get(Config::SLIPPI_FORCE_LAN_IP))
++  if (std::getenv("SLIPPI_LOCAL_TEST"))
++  {
++    sprintf(lan_addr, "127.0.0.1:%d", m_host_port);
++  }
++  else if (Config::Get(Config::SLIPPI_FORCE_LAN_IP))
+   {
+     WARN_LOG_FMT(SLIPPI_ONLINE, "[Matchmaking] Overwriting LAN IP sent with configured address");
+     sprintf(lan_addr, "%s:%d", Config::Get(Config::SLIPPI_LAN_IP).c_str(), m_host_port);
+diff --git a/Source/Core/Core/Slippi/SlippiNetplay.cpp b/Source/Core/Core/Slippi/SlippiNetplay.cpp
+index 4e56742..2244bea 100644
+--- a/Source/Core/Core/Slippi/SlippiNetplay.cpp
++++ b/Source/Core/Core/Slippi/SlippiNetplay.cpp
+@@ -3,6 +3,26 @@
+ // Refer to the license.txt file included.
+ 
+ #include <algorithm>
++#include <cstdio>
++#include <cstdlib>
++
++// GD slippi-p1: SLIPPI_CHECKSUM_LOG=<file> logs every (checksum frame, checksum) sent and received
++static void SlpTestChecksumLog(const char* dir, int player, s32 frame, s32 cf, u32 cs, u8 rng)
++{
++  static FILE* f = nullptr;
++  static bool tried = false;
++  if (!tried)
++  {
++    tried = true;
++    if (const char* p = std::getenv("SLIPPI_CHECKSUM_LOG"))
++      f = std::fopen(p, "w");
++  }
++  if (f)
++  {
++    std::fprintf(f, "%s p%d frame %d cf %d cs %08X rng %02X\n", dir, player, frame, cf, cs, rng);
++    std::fflush(f);
++  }
++}
+ #include <climits>
+ #include <fstream>
+ #include <memory>
+@@ -139,6 +159,17 @@ SlippiNetplayClient::SlippiNetplayClient(std::vector<std::string> addrs, std::ve
+     local_addr = &local_addr_def;
+   }
+ 
++  // GD slippi-p1 local test: bind loopback only
++  if (std::getenv("SLIPPI_LOCAL_TEST"))
++  {
++    if (!local_addr)
++    {
++      local_addr_def.port = 0;
++      local_addr = &local_addr_def;
++    }
++    enet_address_set_host_ip(local_addr, "127.0.0.1");
++  }
++
+   // TODO: Figure out how to use a local port when not hosting without accepting incoming
+   // connections
+   m_client = enet_host_create(local_addr, 10, 3, 0, 0);
+@@ -400,6 +431,8 @@ unsigned int SlippiNetplayClient::OnData(sf::Packet& packet, ENetPeer* peer)
+                      &packet_data[pad_data_offset + i * SLIPPI_PAD_WIRE_SIZE]);
+       }
+ 
++      SlpTestChecksumLog("RX", p_idx, static_cast<s32>(frame64), checksum_frame, checksum,
++                         packet_data[pad_data_offset + 8]);
+       // Write checksum pad to keep track of latest remote checksum
+       ChecksumEntry e;
+       e.frame = checksum_frame;
+@@ -1488,6 +1521,8 @@ void SlippiNetplayClient::SendSlippiPad(std::unique_ptr<SlippiPad> pad)
+   *spac << this->m_player_idx;
+   *spac << m_local_pad_queue.front()->checksum_frame;
+   *spac << m_local_pad_queue.front()->checksum;
++  SlpTestChecksumLog("TX", this->m_player_idx, frame, m_local_pad_queue.front()->checksum_frame,
++                     m_local_pad_queue.front()->checksum, m_local_pad_queue.front()->pad_buf[8]);
+ 
+   for (auto it = m_local_pad_queue.begin(); it != m_local_pad_queue.end(); ++it)
+     spac->append((*it)->pad_buf, SLIPPI_PAD_WIRE_SIZE);  // only transfer what goes over the network
 diff --git a/Source/Core/DolphinNoGUI/CMakeLists.txt b/Source/Core/DolphinNoGUI/CMakeLists.txt
 index 5b72b57..e56580e 100644
 --- a/Source/Core/DolphinNoGUI/CMakeLists.txt
@@ -707,6 +885,22 @@ index 1986c58..ab39f3b 100644
    if (!BootManager::BootCore(Core::System::GetInstance(), std::move(boot), wsi))
    {
      fprintf(stderr, "Could not boot the specified file\n");
+diff --git a/Source/Core/InputCommon/ControllerInterface/Pipes/Pipes.cpp b/Source/Core/InputCommon/ControllerInterface/Pipes/Pipes.cpp
+index c4879f6..ff6bd15 100644
+--- a/Source/Core/InputCommon/ControllerInterface/Pipes/Pipes.cpp
++++ b/Source/Core/InputCommon/ControllerInterface/Pipes/Pipes.cpp
+@@ -65,7 +65,10 @@ void InputBackend::PopulateDevices()
+   //  directory for pipes, we just always assume there's 4 and then make them
+   for (uint32_t i = 0; i < 4; i++)
+   {
+-    std::string pipename = "\\\\.\\pipe\\slippibot" + std::to_string(i + 1);
++    // GD slippi-p1: SLIPPI_PIPE_PREFIX makes the pipe names unique per instance (two Dolphins on one machine)
++    const char* pfx = std::getenv("SLIPPI_PIPE_PREFIX");
++    std::string pipename =
++        std::string("\\\\.\\pipe\\") + (pfx ? pfx : "") + "slippibot" + std::to_string(i + 1);
+     pipes[i] = CreateNamedPipeA(pipename.data(),               // pipe name
+                                 PIPE_ACCESS_INBOUND,           // read access, inward only
+                                 PIPE_TYPE_BYTE | PIPE_NOWAIT,  // byte mode, nonblocking
 diff --git a/Source/Core/UICommon/CMakeLists.txt b/Source/Core/UICommon/CMakeLists.txt
 index 7200bd5..e1d4e46 100644
 --- a/Source/Core/UICommon/CMakeLists.txt

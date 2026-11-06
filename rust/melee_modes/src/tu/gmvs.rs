@@ -2009,6 +2009,13 @@ pub unsafe fn fn_8016E5C0(arg0: *mut StartMeleeData) -> i32 {
     0
 }
 
+/// Slippi online FN_SyncRNG: overwrite the seed from the global frame (`gm_80479D58.unk_8`) every frame.
+unsafe extern "C" fn slippi_sync_rng(_g: *mut HSD_GObj) {
+    if let Some(st) = melee_core::slippi_online::state() {
+        *HSD_RandSeedPtr = st.seed(super::gmscene::gm_80479D58.unk_8);
+    }
+}
+
 pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
     melee_core::ct!("fn_8016E730");
     // MELEE_SLP playback: the match the console started - rules, players and RNG seed
@@ -2026,6 +2033,12 @@ pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
     // MELEE_SLP_RECORD: the same point, for the port's own replays
     ext::Replay_RecordMatch(arg0 as *mut c_void, *HSD_RandSeedPtr);
     ext::db_Setup();
+    // Slippi online mode (off by default): InitOnlinePlay's seed and SyncRNG proc, at its hook 0x8016E748 (after db_Setup)
+    if let Some(st) = melee_core::slippi_online::state() {
+        *HSD_RandSeedPtr = st.rng_offset;
+        let g = melee_runtime::tu::gobjplink::GObj_Create(4, 7, 0);
+        melee_runtime::tu::gobjproc::HSD_GObj_SetupProc(g, Some(slippi_sync_rng), 0);
+    }
     ext::gm_SetDbPauseInputHandlers(Some(gm_AnyControllerPressedStart), Some(gm_AnyControllerPressedZ));
     ext::gm_SetPreGObjProcCallback(Some(db_RunEveryFrame_ptr));
     ext::gm_801A4B50(1);

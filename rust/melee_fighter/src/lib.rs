@@ -24,6 +24,7 @@ pub mod ftcommon_c;
 pub mod ftcommon2;
 pub mod stale;
 pub mod player;
+pub mod slippi_online;
 pub mod script_caps;
 pub mod ftlib;
 pub mod plbonus;

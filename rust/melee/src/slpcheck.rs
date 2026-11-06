@@ -417,6 +417,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         use std::io::Write;
         let _ = f.write_all(b"frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
     }
+    // `--slippi-checksum-out TXT`: Slippi online's desync checksum (slippi-online-patches.md 2.2) of the state after
+    // each frame, "<slippi frame> <checksum hex>" (read-only; the online mode itself stays off)
+    let mut slc_out = get("--slippi-checksum-out").and_then(|p| std::fs::File::create(p).ok().map(std::io::BufWriter::new));
     let mut wide_out = get("--wide-out").and_then(|p| std::fs::File::create(p).ok().map(std::io::BufWriter::new));
     let wide_all = args.iter().any(|a| a == "--wide");
     // `--wide-from F --wide-to F`: only those slippi frames (a whole match is ~2 GB of lines)
@@ -457,6 +460,10 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 }
                 l.push('\n');
                 let _ = f.write_all(l.as_bytes());
+            }
+            if let Some(f) = slc_out.as_mut() {
+                use std::io::Write;
+                let _ = writeln!(f, "{} {:08X}", fr, melee_fighter::slippi_online::checksum());
             }
             if let Some(f) = wide_out.as_mut().filter(|_| fr >= wide_from && fr <= wide_to) {
                 use std::io::Write;

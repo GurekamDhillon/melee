@@ -53,6 +53,9 @@ pub fn engine_frame(e: &melee_engine::Engine, frame: i32, wide: bool, out: &mut 
                 }
                 let b = std::slice::from_raw_parts((*g).user_data as *const u8, std::mem::size_of::<melee_types::Fighter>());
                 lines(out, frame, &format!("s{}", slot * 2 + j), "Fighter", T_Fighter, b);
+                if wide && std::env::var_os("MELEE_WIDE_BONES").is_some() {
+                    bones(out, frame, slot * 2 + j, &*((*g).user_data as *const melee_types::Fighter));
+                }
             }
         }
     }
@@ -64,6 +67,25 @@ pub fn engine_frame(e: &melee_engine::Engine, frame: i32, wide: bool, out: &mut 
         unsafe {
             lines(out, frame, "cam", "Camera", T_Camera, raw(&*std::ptr::addr_of!(melee_world::tu::camera::game_camera)));
             lines(out, frame, "stage", "StageInfo", T_StageInfo, raw(&*std::ptr::addr_of!(melee_world::tu::ground::stage_info)));
+        }
+    }
+}
+
+/// `MELEE_WIDE_BONES` (with `--wide`): each part's jobj world matrix, `<frame> s<k> bone[<i>].mtx[<n>] <bits>`, the form
+/// the patched Dolphin writes with `MELEE_DOLPHIN_NHV1_BONES` (notes/dolphin-oracle.md "Bone dump").
+unsafe fn bones(out: &mut String, frame: i32, slot: i32, fp: &melee_types::Fighter) {
+    let tbl = melee_fighter::hooks::ft_parts_table();
+    let e = *tbl.add(fp.kind as usize);
+    if e.is_null() || fp.parts.is_null() {
+        return;
+    }
+    for i in 0..(*e).parts_num as usize {
+        let j = (*fp.parts.add(i)).joint;
+        if j.is_null() {
+            continue;
+        }
+        for (n, v) in (*j).mtx.iter().flatten().enumerate() {
+            let _ = writeln!(out, "{frame} s{slot} bone[{i}].mtx[{n}] {:08x}", v.to_bits());
         }
     }
 }

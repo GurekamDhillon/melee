@@ -260,6 +260,15 @@ pub unsafe fn lb_8000B1CC(arg0: *mut HSD_JObj, pos0: *mut Vec, pos1: *mut Vec) {
             (*pos1).y = (*arg0).mtx[1][3];
             (*pos1).z = (*arg0).mtx[2][3];
         } else {
+            if std::env::var_os("TMP_B1CC").is_some() {
+                let m: std::vec::Vec<String> = (*arg0).mtx.iter().flatten().map(|v| format!("{:08x}", v.to_bits())).collect();
+                let j = &*arg0;
+                let inp = [j.rotate.x, j.rotate.y, j.rotate.z, j.rotate.w, j.scale.x, j.scale.y, j.scale.z, j.translate.x, j.translate.y, j.translate.z];
+                let inp: std::vec::Vec<String> = inp.iter().map(|v| format!("{:08x}", v.to_bits())).collect();
+                let par = j.parent;
+                let pm: std::vec::Vec<String> = if par.is_null() { vec![] } else { (*par).mtx.iter().flatten().map(|v| format!("{:08x}", v.to_bits())).collect() };
+                eprintln!("RB1CC m={} off={:08x}{:08x}{:08x} flags={:08x} in={} pm={} pflags={:08x}", m.join(""), (*pos0).x.to_bits(), (*pos0).y.to_bits(), (*pos0).z.to_bits(), j.flags, inp.join(""), pm.join(""), if par.is_null() {0} else {(*par).flags});
+            }
             ext::PSMTXMultVec((*arg0).mtx.as_mut_ptr(), pos0, pos1);
         }
         return;

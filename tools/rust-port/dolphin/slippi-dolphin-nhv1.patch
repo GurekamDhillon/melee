@@ -50,7 +50,7 @@ index 829688e..5e53a96 100644
 +# GD nhv1-oracle: the playback code paths are behind IS_PLAYBACK, which upstream never defines (playback is WIP there)
 +set_source_files_properties(Slippi/SlippiPlayback.cpp HW/EXI/EXI_DeviceSlippi.cpp PROPERTIES COMPILE_DEFINITIONS IS_PLAYBACK=1)
 diff --git a/Source/Core/Core/HLE/HLE.cpp b/Source/Core/Core/HLE/HLE.cpp
-index a0ca859..c3e0a71 100644
+index a0ca859..f4e1a4c 100644
 --- a/Source/Core/Core/HLE/HLE.cpp
 +++ b/Source/Core/Core/HLE/HLE.cpp
 @@ -5,6 +5,7 @@
@@ -74,22 +74,24 @@ index a0ca859..c3e0a71 100644
  
  // clang-format off
 -constexpr std::array<Hook, 23> os_patches{{
-+constexpr std::array<Hook, 25> os_patches{{
++constexpr std::array<Hook, 27> os_patches{{
      // Placeholder, os_patches[0] is the "non-existent function" index
      {"FAKE_TO_SKIP_0",               HLE_Misc::UnimplementedFunction,       HookType::Replace, HookFlag::Generic},
  
-@@ -60,7 +62,9 @@ constexpr std::array<Hook, 23> os_patches{{
+@@ -60,7 +62,11 @@ constexpr std::array<Hook, 23> os_patches{{
  
      {"GeckoCodehandler",             HLE_Misc::GeckoCodeHandlerICacheFlush, HookType::Start,   HookFlag::Fixed},
      {"GeckoHandlerReturnTrampoline", HLE_Misc::GeckoReturnTrampoline,       HookType::Replace, HookFlag::Fixed},
 -    {"AppLoaderReport",              HLE_OS::HLE_GeneralDebugPrint,         HookType::Start,   HookFlag::Fixed} // apploader needs OSReport-like function
 +    {"AppLoaderReport",              HLE_OS::HLE_GeneralDebugPrint,         HookType::Start,   HookFlag::Fixed}, // apploader needs OSReport-like function
 +    {"NHV1FrameEnd",                 NHV1Oracle::FrameEnd,                  HookType::Start,   HookFlag::Fixed}, // GD nhv1-oracle
-+    {"NHV1Probe",                    NHV1Oracle::Probe,                     HookType::Start,   HookFlag::Fixed}  // GD nhv1-oracle probes
++    {"NHV1Probe",                    NHV1Oracle::Probe,                     HookType::Start,   HookFlag::Fixed}, // GD nhv1-oracle probes
++    {"NHV1UndoSave",                 NHV1Oracle::UndoSave,                  HookType::Start,   HookFlag::Fixed}, // GD nhv1-oracle
++    {"NHV1UndoRestore",              NHV1Oracle::UndoRestore,               HookType::Start,   HookFlag::Fixed}  // GD nhv1-oracle
  }};
  // clang-format on
  
-@@ -106,6 +110,14 @@ void PatchFixedFunctions(Core::System& system)
+@@ -106,6 +112,19 @@ void PatchFixedFunctions(Core::System& system)
    // This has to always be installed even if cheats are not enabled because of the possiblity of
    // loading a savestate where PC is inside the code handler while cheats are disabled.
    Patch(system, Gecko::HLE_TRAMPOLINE_ADDRESS, "GeckoHandlerReturnTrampoline");
@@ -101,6 +103,11 @@ index a0ca859..c3e0a71 100644
 +  if (NHV1Oracle::Enabled())
 +    for (u32 a : NHV1Oracle::ProbeAddresses())
 +      Patch(system, a, "NHV1Probe");
++  if (NHV1Oracle::Enabled())
++  {
++    Patch(system, 0x8006B0DC, "NHV1UndoSave");
++    Patch(system, 0x8006B120, "NHV1UndoRestore");
++  }
  }
  
  void PatchFunctions(Core::System& system)
@@ -179,10 +186,10 @@ index c6fbc9d..302398d 100644
  
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.cpp b/Source/Core/Core/Slippi/NHV1Oracle.cpp
 new file mode 100644
-index 0000000..fae2105
+index 0000000..63560af
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.cpp
-@@ -0,0 +1,350 @@
+@@ -0,0 +1,398 @@
 +// NHV1 oracle (GD's Melee port, local tool): see NHV1Oracle.h.
 +#include "Core/Slippi/NHV1Oracle.h"
 +
@@ -383,6 +390,15 @@ index 0000000..fae2105
 +  std::fwrite(rec.data(), 1, rec.size(), s_out);
 +  s_logged = s_frame;
 +
++  static const char* stop_env = std::getenv("MELEE_DOLPHIN_NHV1_STOP_AT");
++  if (stop_env && *stop_env && s_frame >= std::atoi(stop_env))
++  {
++    std::fclose(s_out);
++    s_out = nullptr;
++    std::fprintf(stderr, "nhv1-oracle: stop frame %d reached, exiting\n", s_frame);
++    std::fflush(stderr);
++    std::_Exit(0);
++  }
 +  if (s_exit && s_complete && s_frame >= s_latest)
 +  {
 +    std::fclose(s_out);
@@ -453,6 +469,45 @@ index 0000000..fae2105
 +  }
 +  std::fputc('\n', f);
 +  std::fflush(f);
++}
++// GD nhv1-oracle: Slippi's playback code injected at Fighter_procInput 0x8006B0DC writes, on the first playback
++// frame only, fp->coll_data.cur_pos/last_pos from fp->cur_pos and coll_data.x38 from the line counter. The recording
++// console does not (its Post-Frame y at the landing frame keeps the unrestored value), so the oracle saves those
++// fields before the injection and puts them back after it (MELEE_DOLPHIN_NHV1_KEEP_PLAYBACK_INIT=1 keeps the write).
++static u8 s_undo_buf[8][0x38];
++static u32 s_undo_fp[8];
++static int s_undo_n = 0;
++static s32 s_undo_frame = INT_MIN;
++void UndoSave(const Core::CPUThreadGuard& guard)
++{
++  if (s_state != 1 || std::getenv("MELEE_DOLPHIN_NHV1_KEEP_PLAYBACK_INIT"))
++    return;
++  if (s_undo_frame != s_frame)
++  {
++    s_undo_frame = s_frame;
++    s_undo_n = 0;
++  }
++  if (s_frame != -123 || s_undo_n >= 8)
++    return;
++  const u32 fp = guard.GetSystem().GetPPCState().gpr[31];
++  s_undo_fp[s_undo_n] = fp;
++  for (u32 k = 0; k < 0x38; k++)
++    s_undo_buf[s_undo_n][k] = PowerPC::MMU::HostRead_U8(guard, fp + 0x6F4 + k);
++  s_undo_n++;
++}
++void UndoRestore(const Core::CPUThreadGuard& guard)
++{
++  if (s_state != 1 || s_frame != -123 || s_undo_n == 0)
++    return;
++  const u32 fp = guard.GetSystem().GetPPCState().gpr[31];
++  for (int i = 0; i < s_undo_n; i++)
++  {
++    if (s_undo_fp[i] != fp)
++      continue;
++    for (u32 k = 0; k < 0x38; k++)
++      PowerPC::MMU::HostWrite_U8(guard, s_undo_buf[i][k], fp + 0x6F4 + k);
++    s_undo_fp[i] = 0;
++  }
 +}
 +}  // namespace NHV1Oracle
 +
@@ -535,10 +590,10 @@ index 0000000..fae2105
 +#endif
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.h b/Source/Core/Core/Slippi/NHV1Oracle.h
 new file mode 100644
-index 0000000..72042ed
+index 0000000..2794f8d
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.h
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,39 @@
 +// NHV1 oracle (GD's Melee port, local tool, not upstream): dump the GameCube memory that the NHV1 per-frame
 +// hash is computed from, once per logic iteration, right after HSD_GObj_RunProcs() returns in gm_801A4D34.
 +//
@@ -572,6 +627,8 @@ index 0000000..72042ed
 +void FrameEnd(const Core::CPUThreadGuard& guard);
 +// HLE probe hook (HookType::Start) and the addresses MELEE_DOLPHIN_NHV1_PROBE_AT names
 +void Probe(const Core::CPUThreadGuard& guard);
++void UndoSave(const Core::CPUThreadGuard& guard);
++void UndoRestore(const Core::CPUThreadGuard& guard);
 +std::vector<u32> ProbeAddresses();
 +// called by the Slippi EXI device when it hands a playback frame to the game
 +void NoteFrame(s32 frame, s32 latest, bool processing_complete);

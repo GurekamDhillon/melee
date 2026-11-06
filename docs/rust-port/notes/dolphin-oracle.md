@@ -126,11 +126,27 @@ then differs (render-side draws, nhv1.md 8), so `--ignore-seed` decides.
   width); they are steady and drop out of `wide_diff`'s new-difference view.
 - Not an emulator-accuracy check of Dolphin itself: Dolphin is taken as the console.
 
-## Probe hook (port/oracle-fix)
+## Probe hook and stop frame (port/oracle-fix)
 
 `MELEE_DOLPHIN_NHV1_PROBE_AT=<hex pc>[,<pc>...]` adds an HLE hook at each PC. Each hit appends one line to
 `MELEE_DOLPHIN_NHV1_PROBE` (a text file) with the playback frame, pc, lr, r3-r6, r29-r31, f1/f2 bits and, with
-`MELEE_DOLPHIN_NHV1_PROBE_MEM=rN+0xOFF:0xLEN`, the hex of that memory. Example: `80082AD8` with `r31+0x6F0:0x1A0` is
-the CollData just after Fighter_Spawn's ground probe (ft_80082A68). On 03b84423 that state matches Rust exactly
-(both miss, cur = y-10, last = y+10, x38 = 5). By CSV frame 2 the console has run 7 more collision calls on the
-fighter (x38 = 12, cur = last = spawn y) and Rust has not. That missing call is the frame 5/10/15/20 class, still open.
+`MELEE_DOLPHIN_NHV1_PROBE_MEM=rN+0xOFF:0xLEN` (LEN up to 0x4000), the hex of that memory. `r2+OFF` reaches a fixed
+address (r2 = 0x804DF9E0). The logged `pc` is the start of the JIT block, not the hooked address; `lr` is the reliable
+field. `MELEE_DOLPHIN_NHV1_STOP_AT=F` exits Dolphin after it logs frame F, so a probe run needs no kill.
+
+## Slippi playback's first-frame write (an oracle artifact, undone)
+
+On the first playback frame (-123), Slippi's playback code injected at `Fighter_procInput` 0x8006B0DC writes
+`coll_data.cur_pos`/`last_pos` from `fp->cur_pos` and `coll_data.x38` from the line counter. It does this even with
+`shouldResync=false`, and only on that frame. The recording console never ran this code. Found with the probe:
+fighter memory dumped before and after 0x8006B0DC differs at exactly +0x6F8, +0x710 and +0x728.
+
+Effect: for a fighter whose spawn ground probe misses (`ft_80082A68`), the first air step after the entry animation
+starts from a different `last_pos`. The landing frame's `cur_pos.y` then differs by 1 ULP. This was the frame 5/10/15/20
+class (entry delays 5*(slot+1)) in 23 replays. The recorded Post-Frame agrees with Rust, not with playback: 03b84423,
+-118 y = 41a85c00 in the .slp and in Rust, 41a85bff from Dolphin. Hero's replay-validation note independently lists
+the same original-vs-playback 1-ULP pre-frame Y pairs.
+
+The oracle now saves fp+0x6F4..0x72C at 0x8006B0DC and restores them at 0x8006B120 on frame -123 (`NHV1UndoSave`
+and `NHV1UndoRestore`). `MELEE_DOLPHIN_NHV1_KEEP_PLAYBACK_INIT=1` keeps Slippi's write. With the undo, 03b84423's first
+difference moves from frame 5 to frame 8015.

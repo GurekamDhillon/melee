@@ -743,7 +743,14 @@ pub(crate) fn install_replay(mut pl: melee_data::player::Player) {
         REPLAY = Some(pl);
         let r = || REPLAY.as_mut().unwrap();
         h::Replay_Active = Some(|| 1);
-        h::Replay_HasInput = Some(|p, f| unsafe { slpcheck::seed_probe(p, f); r_in().has_input(p, f != 0) as i32 });
+        h::Replay_HasInput = Some(|p, f| unsafe {
+            slpcheck::seed_probe(p, f);
+            // `slpcheck --cpu-ai`: that port's CPU AI makes its inputs (leader and follower)
+            if (0..4).contains(&p) && slpcheck::CPU_AI_PORTS.load(std::sync::atomic::Ordering::Relaxed) & (1 << p) != 0 {
+                return 0;
+            }
+            r_in().has_input(p, f != 0) as i32
+        });
         h::Replay_StickX = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.lx) });
         h::Replay_StickY = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.ly) });
         h::Replay_CStickX = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.cx) });

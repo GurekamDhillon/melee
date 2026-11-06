@@ -16,6 +16,11 @@ $ws = if ($env:GW_WORKSPACE) { $env:GW_WORKSPACE } else { 'E:\Projects\Melee Wor
 $dol = if ($env:DOLPHIN_ORACLE_DIR) { $env:DOLPHIN_ORACLE_DIR } else { Join-Path $ws '_build\dolphin-oracle' }
 $exe = Join-Path $dol 'src\Binary\x64\dolphin-emu-nogui.exe'
 $user = Join-Path $dol 'user'
+# DOLPHIN_USER_DIR: a private copy of that user directory (made on first use), for many concurrent runs (covtest)
+if ($env:DOLPHIN_USER_DIR) {
+    if (-not (Test-Path (Join-Path $env:DOLPHIN_USER_DIR 'Config'))) { Copy-Item -Recurse -Force $user $env:DOLPHIN_USER_DIR }
+    $user = $env:DOLPHIN_USER_DIR
+}
 if (-not (Test-Path $exe)) { Write-Error "dolphin oracle not built: $exe"; exit 2 }
 $m = Select-String -Path (Join-Path $ws '.env') -Pattern '^(export )?GW_ISO_VANILLA=(.*)$'
 if (-not $m) { Write-Error 'GW_ISO_VANILLA is not in .env'; exit 2 }

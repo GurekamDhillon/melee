@@ -65,3 +65,9 @@ codegen-units = 1
 # the crate is patched to compile those exact sources: the scripting host runs the same Lua as the C build.
 [patch.crates-io]
 lua-src = { path = "third_party/lua-src" }
+
+# `bash tools/rust-port/covtest/build_cov.sh`: the opt-in branch-coverage build (notes/coverage-testing.md). The same code
+# generation as `fast`; the coverage counters come only from build_cov.sh's RUSTC_WORKSPACE_WRAPPER
+# (tools/rust-port/covtest/rustc_cov.rs), which instruments the game crates. No other build uses this profile or the wrapper.
+[profile.cov]
+inherits = "fast"

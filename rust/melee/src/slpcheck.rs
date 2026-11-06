@@ -20,6 +20,7 @@ pub struct Converted {
 /// recorded pre-frame inputs of a CPU already are the AI's output, so replaying them reproduces it.
 /// UCF toggle words are only recorded (see [`ucf_summary`]); the vanilla sim stays default.
 pub fn convert(s: &Slp) -> Result<Converted, String> {
+    let cpu_mode = CPU_MODE.load(std::sync::atomic::Ordering::Relaxed);
     let info: &GameInfo = s.info.as_ref().ok_or("the replay has no Game Start block")?;
     let mut notes = Vec::new();
     let mut scn = Scenario::parse("")?;
@@ -36,7 +37,14 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
             _ => continue,
         }
         if p.ptype == 1 {
-            notes.push(format!("p{} is a CPU (level {}); run as a human on its recorded inputs", i + 1, p.cpu_level));
+            match cpu_mode {
+                0 => notes.push(format!("p{} is a CPU (level {}); run as a human on its recorded inputs", i + 1, p.cpu_level)),
+                1 => notes.push(format!("p{} is a CPU (level {}); a CPU slot fed its recorded inputs", i + 1, p.cpu_level)),
+                _ => {
+                    notes.push(format!("p{} is a CPU (level {}); run by the engine's own CPU AI", i + 1, p.cpu_level));
+                    CPU_AI_PORTS.fetch_or(1 << i, std::sync::atomic::Ordering::Relaxed);
+                }
+            }
         }
         if p.ckind > 25 {
             return Err(format!("p{}: character id {} is outside the 26-character roster", i + 1, p.ckind));
@@ -53,7 +61,9 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         max_stocks = max_stocks.max(p.stocks as i32);
         scn.players[i] = Some(PlayerSpec {
             ckind: p.ckind as i32,
-            slot_type: 0,
+            // `--cpu-slots` / `--cpu-ai` (covtest, notes/coverage-testing.md): a CPU stays a CPU slot (Gm_PKind_Cpu), as the
+            // console's playback keeps it; default: a human
+            slot_type: if cpu_mode > 0 && p.ptype == 1 { 1 } else { 0 },
             // the console keeps the Game Start's level byte for humans too (it seeds ftCo_800B9704's cpu.x34;
             // Dolphin oracle, 18e83ec4: level 1 -> 178, our default 0 -> 196)
             cpu_level: p.cpu_level as i32,
@@ -108,6 +118,12 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     }
     Ok(Converted { scn, notes })
 }
+
+/// How `convert` runs a CPU slot: 0 a human on its recorded inputs (default), 1 `--cpu-slots` a CPU slot on its recorded
+/// inputs, 2 `--cpu-ai` a CPU slot the engine's own AI drives (no recorded inputs for that port; covtest's AI check).
+pub static CPU_MODE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+/// Ports (bit per port) whose recorded inputs `Replay_HasInput` withholds under `--cpu-ai`.
+pub static CPU_AI_PORTS: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
 
 /// `dashback/shield-drop` toggle words of the ports in use: 0 off, 1 UCF, 2 Dween.
 pub fn ucf_summary(s: &Slp) -> String {
@@ -304,7 +320,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     use std::process::ExitCode;
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let Some(path) = get("--slp") else {
-        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko]");
+        eprintln!("usage: melee slpcheck --slp FILE [--frames N] [--iso DISC.iso] [--csv SUMMARY.csv] [--no-resync] [--gecko] [--cpu-slots | --cpu-ai]");
         return ExitCode::from(2);
     };
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
@@ -342,6 +358,11 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         for c in slp::gecko_codes(&file.gecko) {
             println!("GECKO {:02X} {:08X} lines={} hash={:016x}", c.kind, c.addr, c.lines, c.hash);
         }
+    }
+    if args.iter().any(|a| a == "--cpu-ai") {
+        CPU_MODE.store(2, std::sync::atomic::Ordering::Relaxed);
+    } else if args.iter().any(|a| a == "--cpu-slots") {
+        CPU_MODE.store(1, std::sync::atomic::Ordering::Relaxed);
     }
     let conv = match convert(&file) {
         Ok(c) => c,

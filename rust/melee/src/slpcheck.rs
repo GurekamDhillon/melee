@@ -378,6 +378,13 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             let pre = if matches!(sm.stage, 3 | 31 | 32) { "1" } else { "0" };
             std::env::set_var("MELEE_ENGINE_PRE_DRAWS", pre);
         }
+        // A port recorded with the UCF dashback word (1) played on a console running Slippi's UCF 0.84 codes, which include
+        // the DBOOC SquatRv fix (m-ex `ucf_dbooc_squatrv_fix`, ftCo_SquatRv_CheckInput): 325cee5d, Fox's crouch held at
+        // (0.7875, -0.6125) on the first frame of a turn stays SquatWait on the console (Dolphin oracle and Post-Frame).
+        let ucf = file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype < 2 && file.dashback[i] == 1));
+        if ucf && std::env::var_os("MELEE_MEX").is_none() {
+            std::env::set_var("MELEE_MEX", "ucf_dbooc_squatrv_fix");
+        }
     }
     // SLPCHECK_VANILLA_SPAWN=1: no Slippi Neutral Spawn (the port's own .slp exports, played without it)
     if std::env::var_os("SLPCHECK_VANILLA_SPAWN").is_none() {
@@ -434,6 +441,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             let pl = unsafe { crate::r_in() };
             pl.tick();
             let fr = pl.frame();
+            // the next tick runs frame fr + 1: calltrace frames are replay frames (MELEE_CT_LIVE_FROM)
+            melee_core::ct::begin_frame(fr as i64 + 1);
             if fr > file.last_frame {
                 break;
             }

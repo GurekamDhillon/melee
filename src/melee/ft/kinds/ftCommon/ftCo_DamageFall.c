@@ -112,20 +112,26 @@ void ftCo_DamageFall_Anim(Fighter_GObj* gobj) {}
 
 #if defined(TARGET_PC)
 /* UCF 0.84 Tumble (Slippi External/UCF 0.84/UCF/UCF Tumble.asm, @ 0x800908F4 - the
- * `active_timer.lstick.x < x214` window test in the tumble's stick-out cancel). Same idea as UCF's
- * SDI: where the normal window has closed, the input still counts if last frame's stick x was inside
+ * `cmpw r3, r0` of the `active_timer.lstick.x < x214` window test in the tumble's stick-out cancel).
+ * The code replaces the window: it compares the timer with 1, not x214, so a stick-out counts at
+ * timer 0, and at timer 1 only when last frame's stick x was inside
  * the threshold (|lstick[1].x| < x210, the stick just crossed it) and the raw x moved by more than 75
  * units (squared distance > 5625) against two entries back in UCF's pad buffer (fighter.c).
- * Found by .slp playback of 1.x/3.x tournament replays: knockdown/tumble states the console left
+ * 3417139d (Dolphin oracle, frame 4689): timer 2 is inside vanilla's window but not UCF's, so the
+ * console stays in DamageFlyTop. Found by .slp playback of 1.x/3.x tournament replays: knockdown/tumble states the console left
  * (console Down vs port DamageFall) around frames 941-3953. */
 static bool ftCo_Ucf084Tumble(Fighter* fp)
 {
     extern int Replay_UcfVersion(int port);
     extern int ftUcf_PadRaw(int port, int which_y, int back);
     int port = fp->pad_port, d;
+    int t = fp->active_timer.lstick.x;
     f32 prev = fp->input.lstick[1].x;
     if (Replay_UcfVersion(port) != 84) {
-        return false;
+        return t < p_ftCommonData->x214;
+    }
+    if (t != 1) {
+        return t < 1;
     }
     if (!(ABS(prev) < p_ftCommonData->x210)) {
         return false;
@@ -147,11 +153,11 @@ void ftCo_DamageFall_IASA(HSD_GObj* gobj)
         RETURN_IF(ftCo_800D705C(gobj));
         RETURN_IF(ftCo_800CB870(gobj));
         if (ABS(fp->input.lstick[0].x) >= p_ftCommonData->x210 &&
-            (fp->active_timer.lstick.x < p_ftCommonData->x214
 #if defined(TARGET_PC)
-             || ftCo_Ucf084Tumble(fp)
+            ftCo_Ucf084Tumble(fp))
+#else
+            fp->active_timer.lstick.x < p_ftCommonData->x214)
 #endif
-                 ))
         {
             ftCo_Fall_Enter(gobj);
             return;

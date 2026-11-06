@@ -103,13 +103,19 @@ fn abs_c(x: f32) -> f32 {
     if x < 0.0 { -x } else { x }
 }
 
-/// TARGET_PC static `ftCo_Ucf084Tumble`: UCF 0.84's tumble stick-out cancel window.
+/// TARGET_PC static `ftCo_Ucf084Tumble`: the tumble stick-out cancel window (`active_timer.lstick.x < x214`), or
+/// UCF 0.84's replacement of it (UCF Tumble.asm @ 0x800908F4 compares the timer with 1: timer 0 counts, timer 1
+/// counts on a fast stick move). 3417139d frame 4689: timer 2 is inside vanilla's window, not UCF's.
 pub fn ftCo_Ucf084Tumble(f: &Fighter) -> bool {
     melee_core::ct!("ftCo_Ucf084Tumble");
     let port = f.x618_player_id as i32;
+    let t = f.active_timer.lstick.x as i32;
     let prev = f.input.lstick[1].x;
     if ext::Replay_UcfVersion(port) != 84 {
-        return false;
+        return t < cd().x214;
+    }
+    if t != 1 {
+        return t < 1;
     }
     if !(abs_c(prev) < cd().x210) {
         return false;
@@ -144,7 +150,7 @@ pub fn ftCo_DamageFall_IASA(g: G) {
         }
         let f = fp(g);
         if abs_c(f.input.lstick[0].x) >= cd().x210
-            && ((f.active_timer.lstick.x as i32) < cd().x214 || ftCo_Ucf084Tumble(f))
+            && ftCo_Ucf084Tumble(f)
         {
             ext::ftCo_Fall_Enter(g);
             return;

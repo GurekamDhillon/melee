@@ -11,6 +11,7 @@
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::helpers::it_link_lerp;
 #[allow(unused_imports)]
@@ -281,7 +282,7 @@ pub unsafe extern "C" fn it_802C4D10(gobj: *mut Item_GObj) -> u32 {
             (*sb).x48 = 0;
             let rand = ext::HSD_Randf();
             // `x3C += (M_PI / 4) * (2.0f * (rand - 0.5f))`: a double fma
-            (*sb).x3C = (M_PI / 4.0).mul_add((2.0f32 * (rand - 0.5f32)) as f64, (*sb).x3C as f64) as f32;
+            (*sb).x3C = (M_PI / 4.0).fmadd((2.0f32 * (rand - 0.5f32)) as f64, (*sb).x3C as f64) as f32;
             (*sb).x44 = -(*sb).x40 / (0.5f32 * (*attr).x20 as f32);
             let idx = ext::HSD_Randi(3);
             ext::Item_8026AF0C(ip, it_803F7880[idx as usize], 127, 64);
@@ -412,7 +413,7 @@ pub unsafe extern "C" fn it_802C519C(parent: *mut Item_GObj, pos: *mut Vec3, kin
         }
         {
             let base = (*attr).x10;
-            (*sb).x24 = fmadds((*sb).x18 as f32, ((*attr).x14 - base) / (*sb).x1C as f32, base) as u32;
+            (*sb).x24 = melee_core::ppc::fcvt_u32(fmadds((*sb).x18 as f32, ((*attr).x14 - base) / (*sb).x1C as f32, base));
         }
         (*ip).x40_vel.x = (*sb).x4.y * cosf((*sb).x4.x);
         (*ip).x40_vel.y = (*sb).x4.y * sinf((*sb).x4.x);
@@ -459,7 +460,7 @@ pub unsafe extern "C" fn it_802C53F0(gobj: *mut Item_GObj, pos: *mut Vec3, angle
         }
         {
             let base = (*attr).x10;
-            (*sb).x24 = fmadds(charge, ((*attr).x14 - base) / max_charge, base) as u32;
+            (*sb).x24 = melee_core::ppc::fcvt_u32(fmadds(charge, ((*attr).x14 - base) / max_charge, base));
         }
         (*sb).x4.z = 0.0;
         {

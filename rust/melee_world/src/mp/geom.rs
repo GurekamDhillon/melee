@@ -8,6 +8,7 @@
 //! true fma (`f64::mul_add`), f32 sites are `fmadds` (f64 multiply-add, one f32 rounding). Clang
 //! fuses the LHS multiply of `a*b +/- c*d`, i.e. `fma(a, b, -(c*d))`.
 
+use melee_core::fp::Fmadd as _;
 use super::lines::GroundColl;
 use super::types::*;
 use crate::gekko::frsqrte;
@@ -22,7 +23,7 @@ pub fn sqrtf(x: f32) -> f32 {
         let xd = x as f64;
         let mut g = frsqrte(xd);
         for _ in 0..3 {
-            g = 0.5 * g * (-(g * g)).mul_add(xd, 3.0);
+            g = 0.5 * g * (-(g * g)).fmadd(xd, 3.0);
         }
         (xd * g) as f32
     } else {
@@ -54,16 +55,16 @@ pub fn mp_remap2d(
     let dy = (ay1 - ay0) as f64;
     let f30 = px - ax0;
     let f29 = py - ay0;
-    let dist2 = dy.mul_add(dy, dx * dx);
+    let dist2 = dy.fmadd(dy, dx * dx);
     if dist2.abs() > 0.0001 {
-        let mut t = dy.mul_add(f29 as f64, dx * f30 as f64) / dist2;
+        let mut t = dy.fmadd(f29 as f64, dx * f30 as f64) / dist2;
         if t > 1.0 {
             t = 1.0;
         } else if t < 0.0 {
             t = 0.0;
         }
-        let x = t.mul_add((bx1 - ax1) as f64, (1.0 - t).mul_add((bx0 - ax0) as f64, px as f64));
-        let y = t.mul_add((by1 - ay1) as f64, (1.0 - t).mul_add((by0 - ay0) as f64, py as f64));
+        let x = t.fmadd((bx1 - ax1) as f64, (1.0 - t).fmadd((bx0 - ax0) as f64, px as f64));
+        let y = t.fmadd((by1 - ay1) as f64, (1.0 - t).fmadd((by0 - ay0) as f64, py as f64));
         (x as f32, y as f32)
     } else {
         (px + (bx0 - ax0) + (bx1 - ax0), py + (by0 - ay0) + (by1 - ay0))
@@ -96,7 +97,7 @@ pub fn mp_line_intersection(
     let d0x = (b0x - a0x) as f64;
     let aw = (a1x - a0x) as f64;
     let d0y = (b0y - a0y) as f64;
-    let hs_b0_a = aw.mul_add(d0y, -(ah * d0x));
+    let hs_b0_a = aw.fmadd(d0y, -(ah * d0x));
     if hs_b0_a < 0.0 {
         if hs_b0_a < -0.1 {
             return None;
@@ -105,7 +106,7 @@ pub fn mp_line_intersection(
     }
     let d1x = (b1x - a1x) as f64;
     let d1y = (b1y - a1y) as f64;
-    let hs_b1_a = aw.mul_add(d1y, -(ah * d1x));
+    let hs_b1_a = aw.fmadd(d1y, -(ah * d1x));
     if hs_b1_a > 0.0 {
         if hs_b1_a > 0.1 {
             return None;
@@ -115,7 +116,7 @@ pub fn mp_line_intersection(
     if hs_b0_a == 0.0 && hs_b1_a == 0.0 {
         return None;
     }
-    let det = d0x.mul_add(d1y, -(d0y * d1x));
+    let det = d0x.fmadd(d1y, -(d0y * d1x));
     if det < hs_b0_a {
         if det < hs_b1_a {
             return None;
@@ -126,13 +127,13 @@ pub fn mp_line_intersection(
     let bw = (b1x - b0x) as f64;
     let bh = (b1y - b0y) as f64;
     if !((bw == 0.0 && bh == 0.0) || (b1_below_a && b2_above_a) || (hs_b0_a >= 0.0 && b2_above_a)) {
-        let area = bw.mul_add(ah, -(bh * aw));
+        let area = bw.fmadd(ah, -(bh * aw));
         // ABS(area) > 0.0001F: the float constant, compared in double.
         if area.abs() > 0.0001f32 as f64 {
-            let t = bw.mul_add(d0y, -(bh * d0x)) / area;
+            let t = bw.fmadd(d0y, -(bh * d0x)) / area;
             return Some(if t > 0.0 {
                 if t < 1.0 {
-                    (aw.mul_add(t, a0x as f64) as f32, ah.mul_add(t, a0y as f64) as f32)
+                    (aw.fmadd(t, a0x as f64) as f32, ah.fmadd(t, a0y as f64) as f32)
                 } else {
                     (a1x, a1y)
                 }
@@ -174,7 +175,7 @@ pub fn mp_line_intersection_h(
     if dby.abs() < 0.0001 {
         return None;
     }
-    let mut new_x = (dbx / dby).mul_add((a0y - b0y) as f64, b0x as f64);
+    let mut new_x = (dbx / dby).fmadd((a0y - b0y) as f64, b0x as f64);
     let dx = new_x - min_ax as f64;
     if dx < 0.0 {
         if dx < -0.1 {
@@ -221,7 +222,7 @@ pub fn mp_line_intersection_v(
     if dbx.abs() < 0.0001 {
         return None;
     }
-    let mut new_y = (dby / dbx).mul_add((a0x - b0x) as f64, b0y as f64);
+    let mut new_y = (dby / dbx).fmadd((a0x - b0x) as f64, b0y as f64);
     let mut dy = new_y - min_ay as f64;
     if dy < 0.0 {
         if dy < -0.1 {

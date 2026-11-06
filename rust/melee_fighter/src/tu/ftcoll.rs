@@ -1101,7 +1101,7 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
 /// saturates (Rust `as u32`).
 #[inline(always)]
 fn f2usize(f: f32) -> usize {
-    f as u32 as usize
+    melee_core::ppc::fcvt_u32(f) as usize
 }
 
 #[inline(always)]
@@ -1857,7 +1857,7 @@ pub struct DmgResult {
 }
 
 unsafe fn hit_fx(g: G, pos: *const Vec3, element: u32, severity: i32, x20: f32, kb: f32) {
-    let u_dmg = x20 as u32;
+    let u_dmg = melee_core::ppc::fcvt_u32(x20);
     let sfx_id = hit_effect_ids[element as usize];
     let fp = fpg(g);
     match sfx_id {
@@ -2706,7 +2706,7 @@ pub fn ftcoll_8007be3c(g: G) {
         }
         let fp = &mut *fpg(g);
         let x187c = fp.dmg.x187c;
-        let dmg_unsigned = fp.dmg.x1898 as u32;
+        let dmg_unsigned = melee_core::ppc::fcvt_u32(fp.dmg.x1898);
         let x1890 = fp.dmg.x1890 as u32;
         let effect = hit_effect_ids[fp.dmg.x188c as usize];
         let pos: *const Vec3 = &fp.dmg.x1880;

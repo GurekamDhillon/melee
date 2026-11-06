@@ -314,7 +314,7 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
         4 | 7 => {
             // `*q + (idk & 0xFFFFFFFF) <= 0xFFFFFFFF` holds for every unsigned int
             let q = (*e).x10 as *mut u32;
-            let idk = (*e).x1C as u32;
+            let idk = melee_core::ppc::fcvt_u32((*e).x1C);
             *q = (*q).wrapping_add(idk);
             ret = true;
             (*arg0).x1 |= 1;
@@ -385,7 +385,7 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
         4 | 7 => {
             // `*q - (idk & 0xFFFFFFFF) >= 0` holds for every unsigned int
             let q = (*e).x10 as *mut u32;
-            let idk = (*e).x1C as u32;
+            let idk = melee_core::ppc::fcvt_u32((*e).x1C);
             *q = (*q).wrapping_sub(idk);
             ret = true;
             (*arg0).x1 |= 1;

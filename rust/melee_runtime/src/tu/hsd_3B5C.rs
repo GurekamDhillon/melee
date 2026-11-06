@@ -1,5 +1,6 @@
 //! Native JPEG decoder; JPEG bytes remain serialized big-endian, pixels/state are native.
 #![allow(non_snake_case, non_upper_case_globals, dead_code)]
+use melee_core::fp::Fmadd as _;
 use melee_types::{JpegState,JpegOutput};
 use melee_core::fp::fmadds;
 use crate::cabi::shl;
@@ -78,15 +79,15 @@ pub unsafe fn fn_803B61B4(block:*mut i32) {
     melee_core::ct!("fn_803B61B4");
     for pass in 0..2 {for i in 0..8 {
         let stride=if pass==0{1}else{8};let p=block.add(if pass==0{i*8}else{i});let a=core::array::from_fn::<i32,8,_>(|j|*p.add(j*stride));
-        let odd0=0.980785f64.mul_add(a[7] as f64,-(0.19509f64*a[1] as f64)) as f32;
-        let odd1=0.83147f64.mul_add(a[5] as f64,-(0.55557f64*a[3] as f64)) as f32;
-        let odd2=0.55557f64.mul_add(a[5] as f64,0.83147f64*a[3] as f64) as f32;
-        let odd3=0.19509f64.mul_add(a[7] as f64,0.980785f64*a[1] as f64) as f32;
+        let odd0=0.980785f64.fmadd(a[7] as f64,-(0.19509f64*a[1] as f64)) as f32;
+        let odd1=0.83147f64.fmadd(a[5] as f64,-(0.55557f64*a[3] as f64)) as f32;
+        let odd2=0.55557f64.fmadd(a[5] as f64,0.83147f64*a[3] as f64) as f32;
+        let odd3=0.19509f64.fmadd(a[7] as f64,0.980785f64*a[1] as f64) as f32;
         let even_sum=(0.707107f64*a[0].wrapping_add(a[4]) as f64) as f32;
         let even_diff=(0.707107f64*a[0].wrapping_sub(a[4]) as f64) as f32;
         let odd_pair_sum=odd0+odd1;let odd_pair_diff=-odd2+odd3;let odd_sum=odd2+odd3;
-        let even_rotation_diff=(-0.92388f64).mul_add(a[6] as f64,0.382683f64*a[2] as f64) as f32;
-        let even_rotation_sum=0.382683f64.mul_add(a[6] as f64,0.92388f64*a[2] as f64) as f32;
+        let even_rotation_diff=(-0.92388f64).fmadd(a[6] as f64,0.382683f64*a[2] as f64) as f32;
+        let even_rotation_sum=0.382683f64.fmadd(a[6] as f64,0.92388f64*a[2] as f64) as f32;
         let odd_rotation_diff=(0.707107f64*(-odd_pair_sum+odd_pair_diff) as f64) as f32;
         let even0=even_sum+even_rotation_sum;let odd_diff=-odd0+odd1;
         let odd_rotation_sum=(0.707107f64*(odd_pair_sum+odd_pair_diff) as f64) as f32;
@@ -99,9 +100,9 @@ pub unsafe fn fn_803B61B4(block:*mut i32) {
 pub fn jpeg_clamp(value:f32)->i32 { melee_core::ct!("jpeg_clamp");if value<0.0{0}else if 255.0<value{255}else{(melee_core::ppc::fctiwz_f32(value) as u8) as i32}}
 pub unsafe fn jpeg_store_rgb565(out:*mut JpegOutput,offset:i32,luminance:i32,cb:i32,cr:i32) {
     melee_core::ct!("jpeg_store_rgb565");
-    let red=jpeg_clamp(1.402f64.mul_add(cr as f64,luminance as f64) as f32) as u8;
+    let red=jpeg_clamp(1.402f64.fmadd(cr as f64,luminance as f64) as f32) as u8;
     let green=jpeg_clamp(fmadds(-0.7139,cr as f32,fmadds(-0.3441,cb as f32,luminance as f32))) as u8;
-    let blue=jpeg_clamp((-0.0012f64).mul_add(cr as f64,fmadds(1.7718,cb as f32,luminance as f32) as f64) as f32) as u8;
+    let blue=jpeg_clamp((-0.0012f64).fmadd(cr as f64,fmadds(1.7718,cb as f32,luminance as f32) as f64) as f32) as u8;
     *(*out).pixels.offset(offset as isize)=((red as u16*256)&0xf800)|((green as u16*8)&0x7e0)|(blue as u16>>3);
 }
 pub unsafe fn fn_803B6820(dst:*mut u8,x:i32,y:i32,width:i32,_unused_height:i32) {

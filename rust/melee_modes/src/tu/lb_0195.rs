@@ -158,7 +158,7 @@ pub unsafe fn lb_80019628() {
     }
 
     // OSSecondsToTicks(1) is an unsigned int product; the (f32) cast rounds it
-    let mut period: i64 = (os_timer_clock() as f32) as i64;
+    let mut period: i64 = melee_core::ppc::fcvt_i64((os_timer_clock() as f32));
 
     for i in 0..2 {
         if lb_804329F0.x0[i].x0 < period {
@@ -168,8 +168,8 @@ pub unsafe fn lb_80019628() {
 
     // OSSecondsToTicks(1.0F / 60) is a float product
     let frame_ticks: f32 = (1.0f32 / 60.0f32) * (os_timer_clock() as f32);
-    if period >= frame_ticks as i64 {
-        period = frame_ticks as i64;
+    if period >= melee_core::ppc::fcvt_i64(frame_ticks) {
+        period = melee_core::ppc::fcvt_i64(frame_ticks);
     }
 
     if lb_804329F0.x40 == period {
@@ -273,7 +273,7 @@ pub unsafe fn lb_80019AAC(arg0: Event) {
     let frame_ticks: f32 = (1.0f32 / 60.0f32) * (os_timer_clock() as f32);
     for i in 0..2 {
         let cur = &raw mut lb_804329F0.x0[i];
-        (*cur).x0 = frame_ticks as i64;
+        (*cur).x0 = melee_core::ppc::fcvt_i64(frame_ticks);
         (*cur).x8 = 0;
         (*cur).x10 = 0;
     }
@@ -282,7 +282,7 @@ pub unsafe fn lb_80019AAC(arg0: Event) {
     lb_804329F0.x48 = 0;
     lb_804329F0.x0[0].x0 = 0; // huh? overwritten?
     lb_804329F0.x40 = 0;
-    lb_804329F0.x38 = frame_ticks as u64;
+    lb_804329F0.x38 = melee_core::ppc::fcvt_u64(frame_ticks);
 
     lb_80019628();
 }

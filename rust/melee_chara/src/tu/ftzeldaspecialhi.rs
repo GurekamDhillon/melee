@@ -9,6 +9,7 @@
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::chars::da;
 #[allow(unused_imports)]
@@ -377,7 +378,7 @@ pub fn ftZd_SpecialHi_80139F6C(gobj: *mut HSD_GObj) {
 /// does it: `_half * guess * (_three - guess * guess * x)` with `3.0 - (g*g)*x` contracted to one fma.
 #[inline(always)]
 fn nr_step(guess: f64, x: f64) -> f64 {
-    (0.5 * guess) * (-(guess * guess)).mul_add(x, 3.0)
+    (0.5 * guess) * (-(guess * guess)).fmadd(x, 3.0)
 }
 
 /// `sqrt(var_f4)` as the C computes it (frsqrte + three steps, through the volatile `y`).

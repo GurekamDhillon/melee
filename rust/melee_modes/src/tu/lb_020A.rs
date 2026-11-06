@@ -7,6 +7,7 @@
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use melee_types as mt;
 use core::ffi::c_void;
@@ -131,7 +132,7 @@ unsafe fn HSD_JObjGetRotationZ(jobj: *mut HSD_JObj) -> f32 {
 fn newton_rsqrt(v: f32) -> f64 {
     let mut e = frsqrte(v as f64);
     for _ in 0..3 {
-        let inner = (v as f64).mul_add(e * e, -3.0);
+        let inner = (v as f64).fmadd(e * e, -3.0);
         e = 0.5 * e * -inner;
     }
     e
@@ -331,7 +332,7 @@ pub fn sqrtf_store(x: f32, y: &mut f32) -> f32 {
     if x > 0.0f32 {
         let mut guess = frsqrte(x as f64);
         for _ in 0..3 {
-            guess = 0.5 * guess * (-(guess * guess)).mul_add(x as f64, 3.0);
+            guess = 0.5 * guess * (-(guess * guess)).fmadd(x as f64, 3.0);
         }
         *y = (x as f64 * guess) as f32;
         return *y;

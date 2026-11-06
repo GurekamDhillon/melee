@@ -1,5 +1,6 @@
 //! Native JPEG encoder. Serialized table words are converted once; working state is native.
 #![allow(non_snake_case, non_upper_case_globals, dead_code)]
+use melee_core::fp::Fmadd as _;
 use melee_types::{JpegWork,JpegEncodeTables,JpegMetadata,JpegComment,JpegHuffDc,JpegHuffAc};
 use melee_core::fp::fmadds;
 use crate::cabi::{sdiv,shl};
@@ -83,14 +84,14 @@ pub unsafe fn fn_803B376C(arg:*mut u8) {
         let d1=a[1].wrapping_sub(a[6]) as f32;let d0=a[0].wrapping_sub(a[7]) as f32;
         *p=melee_core::ppc::fctiwz(0.707107f64*(sum03+sum12) as f64);
         *p.add(4*stride)=melee_core::ppc::fctiwz(0.707107f64*(sum03-sum12) as f64);
-        *p.add(6*stride)=melee_core::ppc::fctiwz((-0.92388f64).mul_add(diff12 as f64,0.382683f64*diff03 as f64));
-        *p.add(2*stride)=melee_core::ppc::fctiwz(0.382683f64.mul_add(diff12 as f64,0.92388f64*diff03 as f64));
+        *p.add(6*stride)=melee_core::ppc::fctiwz((-0.92388f64).fmadd(diff12 as f64,0.382683f64*diff03 as f64));
+        *p.add(2*stride)=melee_core::ppc::fctiwz(0.382683f64.fmadd(diff12 as f64,0.92388f64*diff03 as f64));
         let rot_diff=(0.707107f64*(d2-d1) as f64) as f32;let rot_sum=(0.707107f64*(d2+d1) as f64) as f32;
         let a=rot_sum+d0;let b=-d3+rot_diff;let c=-rot_sum+d0;let d=d3+rot_diff;
-        *p.add(7*stride)=melee_core::ppc::fctiwz(0.980785f64.mul_add(b as f64,0.19509f64*a as f64));
-        *p.add(5*stride)=melee_core::ppc::fctiwz(0.83147f64.mul_add(d as f64,0.55557f64*c as f64));
-        *p.add(3*stride)=melee_core::ppc::fctiwz((-0.55557f64).mul_add(d as f64,0.83147f64*c as f64));
-        *p.add(stride)=melee_core::ppc::fctiwz((-0.19509f64).mul_add(b as f64,0.980785f64*a as f64));
+        *p.add(7*stride)=melee_core::ppc::fctiwz(0.980785f64.fmadd(b as f64,0.19509f64*a as f64));
+        *p.add(5*stride)=melee_core::ppc::fctiwz(0.83147f64.fmadd(d as f64,0.55557f64*c as f64));
+        *p.add(3*stride)=melee_core::ppc::fctiwz((-0.55557f64).fmadd(d as f64,0.83147f64*c as f64));
+        *p.add(stride)=melee_core::ppc::fctiwz((-0.19509f64).fmadd(b as f64,0.980785f64*a as f64));
     }}
     for i in 0..64 {*b.add(i)>>=2;}
 }

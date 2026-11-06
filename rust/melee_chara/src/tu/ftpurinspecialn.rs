@@ -10,6 +10,7 @@
 //! inlines with identical bodies (ftPurin/inlines.h, playRollSFX, wallBounceEffect) are shared from there.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::chars::da;
 #[allow(unused_imports)]
@@ -506,7 +507,7 @@ pub fn ftPr_SpecialNTurn_Anim(gobj: G) {
         // f64 fused site: x14 = fma(0.2 * x6C, -x34.x, x14)
         let a = 0.2f64 * da.x6C as f64;
         let b = (-sn!(fp).x34.x) as f64;
-        sn!(fp).x14 = a.mul_add(b, sn!(fp).x14 as f64) as f32;
+        sn!(fp).x14 = a.fmadd(b, sn!(fp).x14 as f64) as f32;
         ftPr_NormalizeAndSetRollAngle(gobj);
         sn!(fp).x0 -= 1;
         if sn!(fp).x0 <= 0 {

@@ -11,6 +11,7 @@
 //!
 //! Portions derived from Dolphin's FloatUtils.cpp (GPL-2.0-or-later), as the C file is.
 
+use melee_core::fp::Fmadd as _;
 use melee_core::fp::fmadds;
 
 pub use melee_core::fp::{fres, frsqrte};
@@ -69,7 +70,7 @@ pub(crate) fn fabs_lt(y: f32) -> bool {
 /// `fmuladd.f64(-(g*g), x, 3.0)`), which differs from the plain expression.
 #[inline(always)]
 pub(crate) fn nr_step(guess: f64, x: f64) -> f64 {
-    (0.5 * guess) * (-(guess * guess)).mul_add(x, 3.0)
+    (0.5 * guess) * (-(guess * guess)).fmadd(x, 3.0)
 }
 
 /// MSL `sqrtf` (math_ppc.h): three Newton-Raphson steps on [`frsqrte`].

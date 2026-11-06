@@ -413,7 +413,7 @@ pub unsafe fn gm_8016B248() -> f32 {
 /// `OSSecondsToTicks(sec)` = `sec * (__OSBusClock / 4)` in float, then the u64 the callee takes.
 #[inline]
 unsafe fn seconds_to_ticks(sec: f32) -> u64 {
-    (sec * (__OSBusClock / 4) as f32) as u64
+    melee_core::ppc::fcvt_u64((sec * (__OSBusClock / 4) as f32))
 }
 
 pub unsafe fn gm_SetGameSpeed(speed: f32) {

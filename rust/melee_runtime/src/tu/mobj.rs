@@ -774,6 +774,7 @@ fn kx(v: u8) -> In {
 }
 /// `HSD_TE_F32` constants are scaled to 0..255 (texp.c's `HSD_TExpSetReg`: `(u8)(255 * x)`).
 fn kf(v: f32) -> In {
+    // semantics: allow(render-only TEV constant; the clamp is the presenter's, no game state)
     kx(melee_core::ppc::fctiwz_f32(255.0 * v.clamp(0.0, 1.0)) as u8)
 }
 

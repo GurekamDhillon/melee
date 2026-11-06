@@ -14,6 +14,25 @@ pub fn fmadds(a: f32, c: f32, b: f32) -> f32 {
     (a as f64 * c as f64 + b as f64) as f32
 }
 
+/// Gekko double-precision `fmadd`: Dolphin's `NI_madd` is `std::fma(a, c, b)` (one rounding), which is
+/// `f64::mul_add`. A method (`x.fmadd(c, b)`, trait [`Fmadd`]) so the f64 fused sites read like the old `mul_add`
+/// calls; semantics_lint forbids the raw `mul_add` in game code so every fused site goes through here.
+pub trait Fmadd {
+    /// `self * c + b`, one rounding (Gekko `fmadd`).
+    fn fmadd(self, c: Self, b: Self) -> Self;
+}
+impl Fmadd for f64 {
+    #[inline(always)]
+    fn fmadd(self, c: f64, b: f64) -> f64 {
+        self.mul_add(c, b)
+    }
+}
+/// Gekko double `fmadd` as a function.
+#[inline(always)]
+pub fn fmadd(a: f64, c: f64, b: f64) -> f64 {
+    a.mul_add(c, b)
+}
+
 /// Gekko `fmsubs` under the same model: `(float)((double)a * (double)c - (double)b)`.
 #[inline(always)]
 pub fn fmsubs(a: f32, c: f32, b: f32) -> f32 {

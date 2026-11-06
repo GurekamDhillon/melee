@@ -9,6 +9,7 @@
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::itlib::it_8026b3a8;
 #[allow(unused_imports)]
@@ -487,7 +488,7 @@ pub unsafe extern "C" fn it_8027BA54(item_gobj: *mut HSD_GObj, arg1: *mut Vec3) 
     let mut sp14: Vec3 = core::mem::zeroed();
     ext::Camera_GetTransformPosition(&raw mut sp20);
     // 10.0f * (ext::HSD_Randf() - 0.5) is a double product, added to a float in double precision (one rounding).
-    sp20.x = (10.0f64).mul_add(ext::HSD_Randf() as f64 - 0.5, sp20.x as f64) as f32;
+    sp20.x = (10.0f64).fmadd(ext::HSD_Randf() as f64 - 0.5, sp20.x as f64) as f32;
     sp20.y = fmadds(30.0, ext::HSD_Randf(), sp20.y);
     ext::lbVector_Diff(&raw mut sp20, &raw mut (*item).pos, &raw mut sp14);
     ext::lbVector_Normalize(&raw mut sp14);
@@ -764,9 +765,9 @@ fn product_xyz(a: &Vec3, b: &Vec3) -> f32 {
 fn itzako_sqrtf(x: f32) -> f32 {
     if x > 0.0 {
         let mut guess = frsqrte(x as f64);
-        guess = 0.5 * guess * ((-(guess * guess)).mul_add(x as f64, 3.0));
-        guess = 0.5 * guess * ((-(guess * guess)).mul_add(x as f64, 3.0));
-        guess = 0.5 * guess * ((-(guess * guess)).mul_add(x as f64, 3.0));
+        guess = 0.5 * guess * ((-(guess * guess)).fmadd(x as f64, 3.0));
+        guess = 0.5 * guess * ((-(guess * guess)).fmadd(x as f64, 3.0));
+        guess = 0.5 * guess * ((-(guess * guess)).fmadd(x as f64, 3.0));
         let y = (x as f64 * guess) as f32;
         return y;
     }

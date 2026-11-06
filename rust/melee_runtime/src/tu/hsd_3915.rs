@@ -9,6 +9,7 @@
 //! true f64 `fma`; `f32 * f32 + f32` sites are `fmadds` (f64 multiply/add, then f32).
 #![allow(non_snake_case)]
 
+use melee_core::fp::Fmadd as _;
 use melee_core::fp::{fmadds, frsqrte};
 use melee_types::{GXColor, GlyphEntry, HSD_CObj, Mtx};
 
@@ -196,7 +197,7 @@ pub fn DrawRectangle<H: Hsd3915Host>(h: &mut H, x_min: f32, y_min: f32, w: f32, 
 /// `f32 * double-literal + f32` contracted to a double `fma`, narrowed to f32.
 #[inline(always)]
 fn fma_lit(l: f32, lit: f64, x: f32) -> f32 {
-    (l as f64).mul_add(lit, x as f64) as f32
+    (l as f64).fmadd(lit, x as f64) as f32
 }
 
 impl Hsd3915 {
@@ -359,8 +360,8 @@ pub unsafe fn hsd_80391E18<H: Hsd3915Host>(h: &mut H, mut list: *const u8, x1: f
         }
         h.GXBegin(0xA8, 0, 2);
         h.GXPosition2f32(prev_x, prev_y);
-        prev_x = t.mul_add(dx as f64, x1 as f64) as f32;
-        prev_y = t.mul_add(dy as f64, y1 as f64) as f32;
+        prev_x = t.fmadd(dx as f64, x1 as f64) as f32;
+        prev_y = t.fmadd(dy as f64, y1 as f64) as f32;
         let b = color.to_ne_bytes();
         h.GXColor4u8(b[0], b[1], b[2], b[3]);
         h.GXPosition2f32(prev_x, prev_y);
@@ -377,7 +378,7 @@ fn hsd_80391F28_len(dy: f32, dx: f32) -> f32 {
         let mut e = frsqrte(l);
         // `e = 0.5 * e * -(len * (e * e) - 3.0)`: inner `len * (e*e) - 3.0` is a double fma.
         for _ in 0..3 {
-            e = (0.5 * e) * (-l.mul_add(e * e, -3.0));
+            e = (0.5 * e) * (-l.fmadd(e * e, -3.0));
         }
         e *= l;
         len = core::hint::black_box(e as f32);

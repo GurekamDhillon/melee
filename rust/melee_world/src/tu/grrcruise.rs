@@ -16,6 +16,7 @@
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::gr::trivial::*;
 #[allow(unused_imports)]
@@ -801,9 +802,9 @@ pub unsafe extern "C" fn grRCruise_80201110(gobj: *mut HSD_GObj) {
     }
     if (*gp).u.rcruise.xC != 0 {
         // 0.3 * HSD_Randf() + 0.2 in double: one fused multiply-add
-        (*lb).unk_scale = 0.3f64.mul_add(ext::HSD_Randf() as f64, 0.2) as f32;
+        (*lb).unk_scale = 0.3f64.fmadd(ext::HSD_Randf() as f64, 0.2) as f32;
     } else {
-        (*lb).unk_scale = 0.2f64.mul_add(ext::HSD_Randf() as f64, 0.1) as f32;
+        (*lb).unk_scale = 0.2f64.fmadd(ext::HSD_Randf() as f64, 0.1) as f32;
     }
 }
 

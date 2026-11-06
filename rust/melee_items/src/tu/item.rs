@@ -6,6 +6,7 @@
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::helpers::COLLIDE_CEILING_MASK;
 #[allow(unused_imports)]
@@ -1927,9 +1928,12 @@ pub unsafe extern "C" fn Item_80269F14(gobj: *mut HSD_GObj) -> bool {
         let mut i = 0usize;
         while i < 4 {
             if (*temp_item).x5D4_hitboxes[i].hit.state != HitCapsule_Disabled {
-                let temp_f30: f32 = ext::ScriptGame_HitRuleBaseDamage(&raw mut (*temp_item).x5D4_hitboxes[i].hit)
-                    .mul_add((*temp_item).xC6C, 0.99);
-                let mut var_r27: u32 = temp_f30 as u32;
+                let temp_f30: f32 = melee_core::fp::fmadds(
+                    ext::ScriptGame_HitRuleBaseDamage(&raw mut (*temp_item).x5D4_hitboxes[i].hit),
+                    (*temp_item).xC6C,
+                    0.99,
+                );
+                let mut var_r27: u32 = melee_core::ppc::fcvt_u32(temp_f30);
                 if var_r27 > (*ext::it_804D6D28).xD8 as u32 {
                     var_r27 = (*ext::it_804D6D28).xD8 as u32;
                 }

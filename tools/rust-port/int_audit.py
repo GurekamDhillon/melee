@@ -396,7 +396,8 @@ def wrapped(s):
     return False
 
 
-ALIAS = {"s32": "i32", "s16": "i16", "s8": "i8", "c_int": "i32", "::core::ffi::c_int": "i32", "core::ffi::c_int": "i32", "libc::c_int": "i32"}
+ALIAS = {"s32": "i32", "s16": "i16", "s8": "i8", "c_int": "i32", "::core::ffi::c_int": "i32", "core::ffi::c_int": "i32", "libc::c_int": "i32", "::core::ffi::c_uint": "u32", "core::ffi::c_uint": "u32", "c_uint": "u32",
+         "::core::ffi::c_float": "f32"}
 
 
 def rewrite(span, cls, detail):
@@ -440,6 +441,8 @@ def rewrite_core(span, cls, detail):
         i = hits[-1][0]
         expr, ty = span[:i].strip(), span[i + 4:].strip()
         ty = ALIAS.get(ty, ty)
+        if ty == dst and dst in ("u32", "u64", "i64", "usize"):  # semantics_lint I3: explicit helpers, same values
+            return f"melee_core::ppc::fcvt_{dst}({expr})"
         if ty != dst or dst not in ("i32", "i16", "i8", "u16", "u8"):
             return None
         call = f"melee_core::ppc::fctiwz{'_f32' if src == 'f32' else ''}({expr})"

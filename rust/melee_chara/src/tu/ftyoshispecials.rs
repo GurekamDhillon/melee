@@ -13,6 +13,7 @@
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::chars::{da};
 #[allow(unused_imports)]
@@ -519,7 +520,7 @@ pub fn ftYs_SpecialAirSLoop_0_Anim(gobj: *mut HSD_GObj) {
         }
         {
             let inner = attributes.xD8 * abs_c((*fp).mv.ys.specials.x1C);
-            (*fp).mv.ys.specials.x14 = (M_TAU / 25.0).mul_add(inner as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
+            (*fp).mv.ys.specials.x14 = (M_TAU / 25.0).fmadd(inner as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
         }
         ftYs_SpecialS_WrapAndSetRotX(gobj);
         (*fp).mv.ys.specials.x0 = (*fp).mv.ys.specials.x0.wrapping_sub(1);
@@ -564,7 +565,7 @@ pub unsafe fn ftYs_SpecialS_UpdateLoop1Rotation2(fp: *mut Fighter, angle: *mut f
         } else {
             delta = abs_c((*fp).mv.ys.specials.x10) + abs_c((*fp).gr_vel);
         }
-        *angle = ((delta / total) as f64).mul_add(M_PI, M_PI_2) as f32;
+        *angle = ((delta / total) as f64).fmadd(M_PI, M_PI_2) as f32;
     } else {
         let delta: f32;
         if (*fp).gr_vel < 0.0 {
@@ -572,7 +573,7 @@ pub unsafe fn ftYs_SpecialS_UpdateLoop1Rotation2(fp: *mut Fighter, angle: *mut f
         } else {
             delta = abs_c((*fp).mv.ys.specials.x10) + abs_c((*fp).gr_vel);
         }
-        *angle = ((delta / total) as f64).mul_add(M_PI, 3.0 * M_PI_2) as f32;
+        *angle = ((delta / total) as f64).fmadd(M_PI, 3.0 * M_PI_2) as f32;
     }
     while *angle < 0.0 {
         *angle = (*angle as f64 + 2.0 * M_PI) as f32;
@@ -592,7 +593,7 @@ pub fn ftYs_SpecialAirSLoop_1_Anim(gobj: *mut HSD_GObj) {
         ftYs_SpecialS_8012EB48(gobj);
         ftYs_SpecialS_UpdateScale2(gobj);
         (*fp).mv.ys.specials.x14 =
-            (2.0 * M_PI / 25.0).mul_add(attributes.xA0 as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
+            (2.0 * M_PI / 25.0).fmadd(attributes.xA0 as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
         ftYs_SpecialS_WrapAndSetRotX(gobj);
         ftYs_SpecialS_UpdateLoop1Rotation(fp, attributes);
         {
@@ -667,7 +668,7 @@ pub fn ftYs_SpecialAirSLoop_2_Anim(gobj: *mut HSD_GObj) {
         ftYs_SpecialS_8012EB48(gobj);
         ftYs_SpecialS_UpdateScale(gobj, &mut scale);
         (*fp).mv.ys.specials.x14 =
-            (M_PI / 30.0).mul_add(attributes.x60 as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
+            (M_PI / 30.0).fmadd(attributes.x60 as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
         ftYs_SpecialS_WrapAndSetRotX(gobj);
         (*fp).mv.ys.specials.x0 = (*fp).mv.ys.specials.x0.wrapping_sub(1);
         if (*fp).mv.ys.specials.x0 <= 0 {
@@ -726,7 +727,7 @@ pub fn ftYs_SpecialAirSLoop_3_Anim(gobj: *mut HSD_GObj) {
                 abs_speed = -abs_speed;
             }
             let inner = attributes.xD8 * abs_speed;
-            (*fp).mv.ys.specials.x14 = (2.0 * M_PI / 25.0).mul_add(inner as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
+            (*fp).mv.ys.specials.x14 = (2.0 * M_PI / 25.0).fmadd(inner as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
         }
         ftYs_SpecialS_WrapAndSetRotX(gobj);
         (*fp).mv.ys.specials.x0 = (*fp).mv.ys.specials.x0.wrapping_sub(1);
@@ -1229,7 +1230,7 @@ pub fn ftYs_SpecialAirSLoop_3_Coll(gobj: *mut HSD_GObj) {
                 (*fp).self_vel.y = 0.0;
                 let inner = perm_mul_inline(attributes.xD8, abs_c((*fp).mv.ys.specials.x1C));
                 (*fp).mv.ys.specials.x14 =
-                    (2.0 * M_PI / 25.0).mul_add(inner as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
+                    (2.0 * M_PI / 25.0).fmadd(inner as f64, (*fp).mv.ys.specials.x14 as f64) as f32;
                 ftYs_SpecialS_WrapAndSetRotX(gobj);
                 ext::ftCommon_8007EBAC(fp, 1, 0);
             } else {

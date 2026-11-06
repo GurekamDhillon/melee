@@ -19,6 +19,7 @@
 //! Callees in unported TUs are TODO stubs in [`ext`], named like the C.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+use melee_core::fp::Fmadd as _;
 use super::hsd_3A64::ext::{HSD_SisLib_804D1124, HSD_SisLib_Alloc, HSD_SisLib_Free};
 use core::ffi::c_void;
 use core::ptr::null_mut;
@@ -753,7 +754,7 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
                         // f64 fma: (f64)x88 * ((f64)x80.x * (16.0 + (f64)x78.x)) + (f64)current_width
                         let inner = (*text).x80.x as f64 * (half_glyph + (*text).x78.x as f64);
                         (*text).current_width =
-                            ((*text).x88 as f64).mul_add(inner, (*text).current_width as f64) as f32;
+                            ((*text).x88 as f64).fmadd(inner, (*text).current_width as f64) as f32;
                         if skip_count != 0 {
                             skip_count -= 1;
                         } else {

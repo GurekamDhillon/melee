@@ -4268,18 +4268,16 @@ pub unsafe extern "C" fn ScriptGame_HitRuleCreate(
         }
     }
     if v.damage != 1 as ::core::ffi::c_int as ::core::ffi::c_float {
-        (*hit).unk_count = ((*hit).unk_count as ::core::ffi::c_float * v.damage)
-            as ::core::ffi::c_uint as ::core::ffi::c_uint;
+        (*hit).unk_count = melee_core::ppc::fcvt_u32((*hit).unk_count as ::core::ffi::c_float * v.damage) as ::core::ffi::c_uint;
     }
     if v.growth != 1 as ::core::ffi::c_int as ::core::ffi::c_float {
-        (*hit).x24 = ((*hit).x24 as ::core::ffi::c_float * v.growth)
-            as ::core::ffi::c_uint as ::core::ffi::c_uint;
+        (*hit).x24 = melee_core::ppc::fcvt_u32((*hit).x24 as ::core::ffi::c_float * v.growth) as ::core::ffi::c_uint;
         if (*hit).x24 > 1000 as ::core::ffi::c_uint {
             (*hit).x24 = 1000 as ::core::ffi::c_uint;
         }
     }
     if v.base != 1 as ::core::ffi::c_int as ::core::ffi::c_float {
-        (*hit).x2C = ((*hit).x2C as ::core::ffi::c_float * v.base) as ::core::ffi::c_uint
+        (*hit).x2C = melee_core::ppc::fcvt_u32((*hit).x2C as ::core::ffi::c_float * v.base)
             as ::core::ffi::c_uint;
         if (*hit).x2C > 1000 as ::core::ffi::c_uint {
             (*hit).x2C = 1000 as ::core::ffi::c_uint;
@@ -5710,8 +5708,8 @@ pub unsafe extern "C" fn ScriptGame_EchoCapture(mut fp: *mut Fighter) {
                         (*h_0).x45 = c2;
                     }
                     (*h_0).damage *= script_echo_float((*rule_0).damage);
-                    (*h_0).unk_count = ((*h_0).unk_count as ::core::ffi::c_float
-                        * script_echo_float((*rule_0).damage)) as ::core::ffi::c_uint
+                    (*h_0).unk_count = melee_core::ppc::fcvt_u32((*h_0).unk_count as ::core::ffi::c_float
+                        * script_echo_float((*rule_0).damage))
                         as ::core::ffi::c_uint;
                     if (*h_0).damage > 500 as ::core::ffi::c_int as ::core::ffi::c_float
                     {
@@ -5721,14 +5719,14 @@ pub unsafe extern "C" fn ScriptGame_EchoCapture(mut fp: *mut Fighter) {
                     if (*h_0).unk_count > 500 as ::core::ffi::c_uint {
                         (*h_0).unk_count = 500 as ::core::ffi::c_uint;
                     }
-                    (*h_0).x24 = ((*h_0).x24 as ::core::ffi::c_float
-                        * script_echo_float((*rule_0).knockback)) as ::core::ffi::c_uint
+                    (*h_0).x24 = melee_core::ppc::fcvt_u32((*h_0).x24 as ::core::ffi::c_float
+                        * script_echo_float((*rule_0).knockback))
                         as ::core::ffi::c_uint;
-                    (*h_0).x28 = ((*h_0).x28 as ::core::ffi::c_float
-                        * script_echo_float((*rule_0).knockback)) as ::core::ffi::c_uint
+                    (*h_0).x28 = melee_core::ppc::fcvt_u32((*h_0).x28 as ::core::ffi::c_float
+                        * script_echo_float((*rule_0).knockback))
                         as ::core::ffi::c_uint;
-                    (*h_0).x2C = ((*h_0).x2C as ::core::ffi::c_float
-                        * script_echo_float((*rule_0).knockback)) as ::core::ffi::c_uint
+                    (*h_0).x2C = melee_core::ppc::fcvt_u32((*h_0).x2C as ::core::ffi::c_float
+                        * script_echo_float((*rule_0).knockback))
                         as ::core::ffi::c_uint;
                     if (*rule_0).element >= 0 as ::core::ffi::c_int {
                         (*h_0).element = (*rule_0).element as ::core::ffi::c_uint;
@@ -28170,7 +28168,7 @@ pub unsafe extern "C" fn ScriptGame_Hit(
         return 0 as ::core::ffi::c_int;
     }
     hit.damage = applied;
-    hit.unk_count = applied as ::core::ffi::c_uint;
+    hit.unk_count = melee_core::ppc::fcvt_u32(applied);
     hit.kb_angle = angle;
     hit.x24 = kbg as ::core::ffi::c_uint;
     hit.x28 = 0 as ::core::ffi::c_uint;
@@ -28201,7 +28199,7 @@ pub unsafe extern "C" fn ScriptGame_Hit(
     } else {
         entry.x0 = EntityKind_UNKNOWN;
         entry.kind = (-10i32) as FighterKind;
-        env.damage = applied as ::core::ffi::c_uint;
+        env.damage = melee_core::ppc::fcvt_u32(applied);
         env.kb_angle = angle;
         env.unkC = kbg as ::core::ffi::c_uint;
         env.unk14 = bkb as ::core::ffi::c_uint;
@@ -28335,7 +28333,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyStrike(
         return 0 as ::core::ffi::c_int;
     }
     hit.damage = applied;
-    hit.unk_count = applied as ::core::ffi::c_uint;
+    hit.unk_count = melee_core::ppc::fcvt_u32(applied);
     hit.kb_angle = angle;
     hit.x24 = kbg as ::core::ffi::c_uint;
     hit.x2C = bkb as ::core::ffi::c_uint;
@@ -28348,7 +28346,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyStrike(
         .offset(0 as ::core::ffi::c_int as isize) as *mut FighterHurtCapsule;
     entry.pos = (*fp).cur_pos;
     entry.x20 = applied;
-    entry.size_of_xC = applied as usize;
+    entry.size_of_xC = melee_core::ppc::fcvt_usize(applied);
     let mut bits: Anon_anon_11 = unsafe { core::mem::zeroed::<Anon_anon_11>() };
     ftColl_8007A06C(
         (*fp).gobj as *mut Fighter_GObj,
@@ -28732,7 +28730,7 @@ pub unsafe extern "C" fn ScriptGame_LabKnockback(
     dmg.i = dmg_bits;
     pct.i = pct_bits;
     hit.damage = dmg.f;
-    hit.unk_count = (dmg.f + 0.5f32) as ::core::ffi::c_uint;
+    hit.unk_count = melee_core::ppc::fcvt_u32(dmg.f + 0.5f32);
     hit.x24 = kbg as ::core::ffi::c_uint;
     hit.x28 = wbk as ::core::ffi::c_uint;
     hit.x2C = bkb as ::core::ffi::c_uint;
@@ -30235,7 +30233,7 @@ pub unsafe extern "C" fn st_dat_texture(
     level = 0 as ::core::ffi::c_uint;
     while level
         <= (if mip != 0 {
-            maxlod as ::core::ffi::c_uint
+            melee_core::ppc::fcvt_u32(maxlod)
         } else {
             0 as ::core::ffi::c_uint
         })

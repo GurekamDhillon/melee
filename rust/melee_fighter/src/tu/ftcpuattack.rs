@@ -12,6 +12,7 @@
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::too_many_arguments)]
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use melee_types::{Fighter, FighterKind, Ft_Kind_Donkey, Ft_Kind_GKoops, Ft_Kind_Koopa, Ft_Kind_Nana};
 use crate::tu::ftcmdscript::{self as cs, ftco_800b463c as cmd0, ftco_800b46b8 as cmd1};
@@ -227,10 +228,10 @@ pub fn pred_self_y(m: &Mover, t: f32, air: bool) -> f32 {
         fmadds(m.vy, t, m.y)
     } else if t < v {
         let sq = sqrtf(t);
-        (m.y as f64 + (-0.5f64).mul_add((m.grav * sq) as f64, (m.vy * t) as f64)) as f32
+        (m.y as f64 + (-0.5f64).fmadd((m.grav * sq) as f64, (m.vy * t) as f64)) as f32
     } else {
         let sq = sqrtf(v);
-        (m.y as f64 + ((m.term_neg * (t - v)) as f64 + (-0.5f64).mul_add((m.grav * sq) as f64, (m.vy * t) as f64))) as f32
+        (m.y as f64 + ((m.term_neg * (t - v)) as f64 + (-0.5f64).fmadd((m.grav * sq) as f64, (m.vy * t) as f64))) as f32
     }
 }
 
@@ -245,10 +246,10 @@ pub fn pred_rel_y(m: &Mover, t: f32, air: bool, self_y: f32) -> f32 {
         fmadds(m.vy, t, m.y) - self_y
     } else if t < v {
         let sq = sqrtf(t);
-        ((-0.5f64).mul_add((m.grav * sq) as f64, fmadds(m.vy, t, m.y) as f64) - self_y as f64) as f32
+        ((-0.5f64).fmadd((m.grav * sq) as f64, fmadds(m.vy, t, m.y) as f64) - self_y as f64) as f32
     } else {
         let sq = sqrtf(v);
-        (((m.term_neg * (t - v)) as f64 + (-0.5f64).mul_add((m.grav * sq) as f64, fmadds(m.vy, t, m.y) as f64))
+        (((m.term_neg * (t - v)) as f64 + (-0.5f64).fmadd((m.grav * sq) as f64, fmadds(m.vy, t, m.y) as f64))
             - self_y as f64) as f32
     }
 }
@@ -308,7 +309,7 @@ fn reset_ranges(cpu: &mut CpuFighter) -> f32 {
     cpu.x74.x = 0.0;
     cpu.x6C.y = 0.0;
     cpu.x6C.x = 0.0;
-    (0.5f64.mul_add(cpu.x570 as f64, 0.5)) as f32
+    (0.5f64.fmadd(cpu.x570 as f64, 0.5)) as f32
 }
 
 /// `ftCo_800B4AB0` / `ftCo_800B52AC` body (`reach` = None for 4AB0).

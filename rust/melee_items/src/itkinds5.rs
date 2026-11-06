@@ -17,6 +17,7 @@
 //! Every other function here has none.
 #![allow(non_snake_case)]
 
+use melee_core::fp::Fmadd as _;
 use crate::helpers::it_80275158;
 
 use crate::item::it_802762bc;
@@ -204,7 +205,7 @@ pub fn it_tosakinto_unk_motion2_phys(ip: &mut Item) {
 /// `it_2E5A_UnkMotion1_Anim` (it_2E5A.c): `animFrameSpeed = 0.1 * ABS(vel.y) + 1.0` (in f64,
 /// one fused f64 site), then `it_802E657C`.
 pub fn it_2e5a_unk_motion1_anim(ip: &mut Item) -> bool {
-    ip.x5D0_animFrameSpeed = 0.1f64.mul_add(c_abs(ip.x40_vel.y) as f64, 1.0) as f32;
+    ip.x5D0_animFrameSpeed = 0.1f64.fmadd(c_abs(ip.x40_vel.y) as f64, 1.0) as f32;
     it_802e657c(ip)
 }
 

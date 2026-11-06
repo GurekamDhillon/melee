@@ -20,6 +20,7 @@
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::gr::trivial::*;
 #[allow(unused_imports)]
@@ -2753,8 +2754,8 @@ pub unsafe extern "C" fn grBigBlue_801EBAF8(gobj: *mut HSD_GObj) {
     if angular_vel != 0.0 {
         let s = sinf(angular_vel);
         let c = cosf(angular_vel);
-        let new_y = (vel.x as f64).mul_add(s as f64, vel.y as f64 * c as f64);
-        vel.x = (vel.x as f64).mul_add(c as f64, -(vel.y as f64 * s as f64)) as f32;
+        let new_y = (vel.x as f64).fmadd(s as f64, vel.y as f64 * c as f64);
+        vel.x = (vel.x as f64).fmadd(c as f64, -(vel.y as f64 * s as f64)) as f32;
         vel.y = new_y as f32;
     }
 

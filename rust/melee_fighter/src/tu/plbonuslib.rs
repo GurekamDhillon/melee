@@ -2136,13 +2136,13 @@ pub fn pl_80040b18(a: i32) -> i32 {
 /// `pl_80040B3C` (float -> u32, saturating).
 pub fn pl_80040b3c(a: i32) -> u32 {
     melee_core::ct!("pl_80040b3c");
-    ext(a).x0_staleMoveTable.xC6C as u32
+    melee_core::ppc::fcvt_u32(ext(a).x0_staleMoveTable.xC6C)
 }
 
 /// `pl_80040B64` (float -> u32, saturating).
 pub fn pl_80040b64(a: i32) -> u32 {
     melee_core::ct!("pl_80040b64");
-    ext(a).x0_staleMoveTable.xC60 as u32
+    melee_core::ppc::fcvt_u32(ext(a).x0_staleMoveTable.xC60)
 }
 
 /// `pl_80040B8C`.
@@ -2164,7 +2164,7 @@ pub fn pl_80040bd8(a: i32) -> i32 {
 /// `pl_80040BFC` (float -> u32, saturating).
 pub fn pl_80040bfc(a: i32) -> u32 {
     melee_core::ct!("pl_80040bfc");
-    ext(a).x0_staleMoveTable.xC64 as u32
+    melee_core::ppc::fcvt_u32(ext(a).x0_staleMoveTable.xC64)
 }
 
 /// `pl_80040C24`.

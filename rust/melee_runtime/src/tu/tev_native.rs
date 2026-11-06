@@ -364,7 +364,7 @@ pub unsafe fn ChanUpdateFunc(chan: *mut HSD_Chan, arg1: i32, arg2: *const f32) {
     melee_core::ct!("ChanUpdateFunc");
     if !chan.is_null() {
         let v = *arg2 as f64;
-        let conv = |x: f64| (crate::cabi::f2u32(x) as u8);
+        let conv = |x: f64| (crate::cabi::f2u8(x));
         match arg1 {
             5 => (*chan).mat_color.r = conv(255.0 * v),
             6 => (*chan).mat_color.g = conv(255.0 * v),

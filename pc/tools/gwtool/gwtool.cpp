@@ -404,7 +404,11 @@ void makeArithmeticSafe(Function &F) {
       Value *Amt = I->getOperand(1);
       if (isa<Constant>(Amt) || (W != 32 && W != 64))
         continue;
-      Value *Big = B.CreateICmpUGE(Amt, ConstantInt::get(T, W));
+      // slw/srw/sraw read the low 6 bits of rB: bit 0x20 shifts everything out, bits 0x1f are the amount, so 64
+      // shifts by 0 and a negative amount uses its two's-complement low bits (Dolphin Interpreter::slwx/srwx/srawx).
+      // 64-bit shifts are MWCC runtime calls, not slw: amounts >= 64 give 0 / sign fill.
+      Value *Big = W == 32 ? B.CreateICmpNE(B.CreateAnd(Amt, ConstantInt::get(T, 0x20)), ConstantInt::get(T, 0))
+                           : B.CreateICmpUGE(Amt, ConstantInt::get(T, W));
       Value *SafeAmt = B.CreateAnd(Amt, ConstantInt::get(T, W - 1));
       Value *Res =
           B.CreateBinOp(static_cast<Instruction::BinaryOps>(Op), I->getOperand(0), SafeAmt);

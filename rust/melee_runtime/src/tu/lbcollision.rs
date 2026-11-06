@@ -9,6 +9,7 @@
 //! `ext` hooks named like the C functions.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, unused_mut)]
 
+use melee_core::fp::Fmadd as _;
 use crate::gekko::sqrtf;
 use crate::hsd_mtx;
 use crate::lbvector;
@@ -137,7 +138,7 @@ fn dot3(ax: f32, ay: f32, az: f32, bx: f32, by: f32, bz: f32) -> f32 {
 /// `0.5 * a + b` with a double constant: an f64 fma, rounded to f32.
 #[inline]
 fn half_fma(a: f32, b: f32) -> f32 {
-    0.5f64.mul_add(a as f64, b as f64) as f32
+    0.5f64.fmadd(a as f64, b as f64) as f32
 }
 #[inline]
 fn clamp01(s: f32) -> f32 {
@@ -882,7 +883,7 @@ fn sqrtf_store(x: f32) -> f32 {
         let mut guess = frsqrte(xd);
         for _ in 0..3 {
             let g2 = guess * guess;
-            guess = (0.5 * guess) * (-g2).mul_add(xd, 3.0);
+            guess = (0.5 * guess) * (-g2).fmadd(xd, 3.0);
         }
         return (xd * guess) as f32;
     }

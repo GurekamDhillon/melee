@@ -516,7 +516,7 @@ pub unsafe extern "C" fn efLib_Create(mut gfx_id: i32, mut parent_gobj: *mut HSD
             let mut kind: u8 = ext::HSD_GObj_JObjKind;
             ext::HSD_GObjObject_80390A70((*effect).gobj, kind, jobj as *mut c_void);
         }
-        if melee_runtime::cabi::urem((1e+01f32 * (*desc).lifetime) as u32, 10 as u32) != (0 as u32) {
+        if melee_runtime::cabi::urem(melee_core::ppc::fcvt_u32((1e+01f32 * (*desc).lifetime)), 10 as u32) != (0 as u32) {
             ext::lb_80011C18(jobj, 134217728 as u32);
         }
         (*effect).lifetime = melee_core::ppc::fctiwz_f32((*desc).lifetime) as u16;

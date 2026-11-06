@@ -129,7 +129,7 @@ pub unsafe fn fn_8017B410(arg0: i32) -> i32 {
     let p = standings(arg0);
     let var_r3: i32 = if ext::lbLang_IsSavedLanguageUS() != 0 {
         // (u32)(f32)(x5C / 30.4788f)
-        ((*p).x5C as f32 / 30.4788f32) as u32 as i32
+        melee_core::ppc::fcvt_u32(((*p).x5C as f32 / 30.4788f32)) as i32
     } else {
         ((*p).x5C / 100) as i32
     };
@@ -141,9 +141,9 @@ pub unsafe fn fn_8017B91C(arg0: i32) -> i32 {
     let p = standings(arg0);
     let var_r3: u32 = if ext::lbLang_IsSavedLanguageUS() != 0 {
         // (u32)(f32)((f32)x94 / 30.4788): the divisor is a double literal
-        (((*p).x94 as f32 as f64 / 30.4788f64) as f32) as u32
+        melee_core::ppc::fcvt_u32((((*p).x94 as f32 as f64 / 30.4788f64) as f32))
     } else {
-        ((*p).x94 as f32 / 100.0f32) as u32
+        melee_core::ppc::fcvt_u32(((*p).x94 as f32 / 100.0f32))
     };
     gmClampResultStat(var_r3 as i32)
 }
@@ -152,9 +152,9 @@ pub unsafe fn fn_8017B9F4(arg0: i32) -> i32 {
     melee_core::ct!("fn_8017B9F4");
     let p = standings(arg0);
     let var_r3: u32 = if ext::lbLang_IsSavedLanguageUS() != 0 {
-        (((*p).x98 as f32 as f64 / 30.4788f64) as f32) as u32
+        melee_core::ppc::fcvt_u32((((*p).x98 as f32 as f64 / 30.4788f64) as f32))
     } else {
-        ((*p).x98 as f32 / 100.0f32) as u32
+        melee_core::ppc::fcvt_u32(((*p).x98 as f32 / 100.0f32))
     };
     gmClampResultStat(var_r3 as i32)
 }

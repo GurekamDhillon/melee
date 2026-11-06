@@ -11,7 +11,7 @@ pub fn f2i32(f: f64) -> i32 {
 /// `(u32)f`: `llvm.fptoui.sat.i32`: saturating, negative and NaN -> 0. Same as Rust `as`.
 #[inline(always)]
 pub fn f2u32(f: f64) -> u32 {
-    f as u32
+    melee_core::ppc::fcvt_u32(f)
 }
 /// `(s16)f`, `(u16)f`, `(s8)f`, `(u8)f`: saturate to **i32**, then truncate. NOT Rust's `as i16`
 /// (which saturates to the narrow type): `(u8)300.0f` is 44 in the C build.

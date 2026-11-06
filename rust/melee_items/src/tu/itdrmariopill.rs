@@ -8,6 +8,7 @@
 //! Fused sites (shipping contraction): `VEC2_SQ_LEN(v)` = `fmadds(x, x, y*y)`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+use melee_core::fp::Fmadd as _;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -133,10 +134,10 @@ pub fn my_sqrtf(x: f32) -> f32 {
     if x > 0.0 {
         let xd = x as f64;
         let mut guess = frsqrte(xd);
-        guess = 0.5 * guess * ((-(guess * guess)).mul_add(xd, 3.0));
-        guess = 0.5 * guess * ((-(guess * guess)).mul_add(xd, 3.0));
-        guess = 0.5 * guess * ((-(guess * guess)).mul_add(xd, 3.0));
-        guess = 0.5 * guess * ((-(guess * guess)).mul_add(xd, 3.0));
+        guess = 0.5 * guess * ((-(guess * guess)).fmadd(xd, 3.0));
+        guess = 0.5 * guess * ((-(guess * guess)).fmadd(xd, 3.0));
+        guess = 0.5 * guess * ((-(guess * guess)).fmadd(xd, 3.0));
+        guess = 0.5 * guess * ((-(guess * guess)).fmadd(xd, 3.0));
         let y = (xd * guess) as f32;
         return y;
     }

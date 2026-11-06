@@ -23,6 +23,7 @@
 //! itmaplib.c's.
 #![allow(non_snake_case)]
 
+use melee_core::fp::Fmadd as _;
 use crate::itkinds7::bisect_value;
 
 use crate::layout::{
@@ -37,7 +38,7 @@ use melee_runtime::random::HsdRand;
 /// One MSL Newton step: `0.5 * g * (3.0 - g * g * x)`, the subtraction fused (f64).
 #[inline(always)]
 pub(crate) fn nr(g: f64, x: f64) -> f64 {
-    (0.5 * g) * (-(g * g)).mul_add(x, 3.0)
+    (0.5 * g) * (-(g * g)).fmadd(x, 3.0)
 }
 
 #[inline(always)]

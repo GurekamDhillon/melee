@@ -337,7 +337,7 @@ pub unsafe extern "C" fn it_802790C0(item_gobj: *mut Item_GObj, cmd: *mut Comman
     }
     ext::ScriptGame_HitRuleForget(hit);
     let dmg = (*(*cmd).anon_8.u).it_create_hitbox_0.damage();
-    ext::it_80272460(hit, ((*item).xC3C * (dmg as f32 * (*item).xC40)) as u32, item_gobj);
+    ext::it_80272460(hit, melee_core::ppc::fcvt_u32(((*item).xC3C * (dmg as f32 * (*item).xC40))), item_gobj);
     next_cmd(cmd);
 
     (*hit).scale = 0.003906f32 * (*(*cmd).anon_8.u).create_hitbox_1.size() as f32;
@@ -399,7 +399,7 @@ pub unsafe extern "C" fn it_80279544(item_gobj: *mut Item_GObj, cmd: *mut Comman
     let item = item_of(item_gobj);
     let hit = &raw mut (*item).x5D4_hitboxes[(*(*cmd).anon_8.u).set_hitbox_damage.idx() as usize].hit;
     let val = (rd_u16((*cmd).anon_8.u, 1) & 0x1FFF) as u32;
-    ext::it_80272460(hit, ((*item).xC3C * (val as f32 * (*item).xC40)) as u32, item_gobj);
+    ext::it_80272460(hit, melee_core::ppc::fcvt_u32(((*item).xC3C * (val as f32 * (*item).xC40))), item_gobj);
     next_cmd(cmd);
 }
 

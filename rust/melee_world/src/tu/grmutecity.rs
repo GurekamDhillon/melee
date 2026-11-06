@@ -11,6 +11,7 @@
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::gr::trivial::*;
 #[allow(unused_imports)]
@@ -1296,9 +1297,9 @@ pub unsafe extern "C" fn grMuteCity_801F1A34(arg0: *mut HSD_GObj, arg1: *mut HSD
         ext::lbVector_Normalize(&mut sp_a8);
 
         let xc = (*e).xC;
-        car_pos.x = 3.0f64.mul_add(sp_90.x as f64, fmadds(sp_c0.x - sp_cc.x, xc, sp_cc.x) as f64) as f32;
-        car_pos.y = 3.0f64.mul_add(sp_90.y as f64, fmadds(sp_c0.y - sp_cc.y, xc, sp_cc.y) as f64) as f32;
-        car_pos.z = 3.0f64.mul_add(sp_90.z as f64, fmadds(sp_c0.z - sp_cc.z, xc, sp_cc.z) as f64) as f32;
+        car_pos.x = 3.0f64.fmadd(sp_90.x as f64, fmadds(sp_c0.x - sp_cc.x, xc, sp_cc.x) as f64) as f32;
+        car_pos.y = 3.0f64.fmadd(sp_90.y as f64, fmadds(sp_c0.y - sp_cc.y, xc, sp_cc.y) as f64) as f32;
+        car_pos.z = 3.0f64.fmadd(sp_90.z as f64, fmadds(sp_c0.z - sp_cc.z, xc, sp_cc.z) as f64) as f32;
         (*e).pos = car_pos;
 
         HSD_JObjSetTranslate(&mut *jobj, &car_pos, &mut Dirty);

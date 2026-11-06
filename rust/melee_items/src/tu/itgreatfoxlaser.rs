@@ -185,9 +185,9 @@ pub unsafe extern "C" fn it_802EAF34(owner: *mut HSD_GObj, offset: *mut Vec3, ty
         (*ip).xDD4_itemVar.greatfoxlaser.x28 = *offset;
         (*ip).xDD4_itemVar.greatfoxlaser.x38 = type_ as i16;
         if (*ip).xDD4_itemVar.greatfoxlaser.x38 == 0 {
-            ext::it_80272460(&raw mut (*ip).x5D4_hitboxes[0].hit, (*attr).x0 as u32, item_gobj);
+            ext::it_80272460(&raw mut (*ip).x5D4_hitboxes[0].hit, melee_core::ppc::fcvt_u32((*attr).x0), item_gobj);
         } else {
-            ext::it_80272460(&raw mut (*ip).x5D4_hitboxes[0].hit, (*attr).x8 as u32, item_gobj);
+            ext::it_80272460(&raw mut (*ip).x5D4_hitboxes[0].hit, melee_core::ppc::fcvt_u32((*attr).x8), item_gobj);
         }
         it_802EB268(item_gobj);
     }
@@ -225,10 +225,10 @@ pub unsafe extern "C" fn itGreatfoxlaser_UnkMotion1_Anim(gobj: *mut HSD_GObj) ->
     if ext::it_80272C6C(gobj) == 0 {
         if (*ip).xDD4_itemVar.greatfoxlaser.x38 == 0 {
             (*ip).x40_vel.x = (*attr).x4 * (*ip).facing_dir;
-            ext::it_80272460(&raw mut (*ip).x5D4_hitboxes[0].hit, (*attr).x0 as u32, gobj);
+            ext::it_80272460(&raw mut (*ip).x5D4_hitboxes[0].hit, melee_core::ppc::fcvt_u32((*attr).x0), gobj);
         } else {
             (*ip).x40_vel.x = (*attr).xC * (*ip).facing_dir;
-            ext::it_80272460(&raw mut (*ip).x5D4_hitboxes[0].hit, (*attr).x8 as u32, gobj);
+            ext::it_80272460(&raw mut (*ip).x5D4_hitboxes[0].hit, melee_core::ppc::fcvt_u32((*attr).x8), gobj);
         }
     } else {
         let jobj = (*(*ip).xDD4_itemVar.greatfoxlaser.x20).hsd_obj as *mut HSD_JObj;

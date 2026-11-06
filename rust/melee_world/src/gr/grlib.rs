@@ -198,14 +198,14 @@ pub(crate) fn abs_c(x: f32) -> f32 {
 /// ecb.top.y, ecb.bottom.y, ecb.right.x, ecb.left.x, cur_pos.x, cur_pos.y.
 pub fn point_inside_box(top: f32, bottom: f32, right: f32, left: f32, pos_x: f32, pos_y: f32, p: &Vec3, offset: f32) -> bool {
     let height = top - bottom;
-    let comp = 0.5f32.mul_add(height, offset);
-    let y = 0.5f32.mul_add(top + bottom, pos_y) - p.y;
+    let comp = melee_core::fp::fmadds(0.5f32, height, offset);
+    let y = melee_core::fp::fmadds(0.5f32, top + bottom, pos_y) - p.y;
     if abs_c(y) > comp {
         return false;
     }
     let width = right - left;
-    let comp = 0.5f32.mul_add(width, offset);
-    let x = 0.5f32.mul_add(left + right, pos_x) - p.x;
+    let comp = melee_core::fp::fmadds(0.5f32, width, offset);
+    let x = melee_core::fp::fmadds(0.5f32, left + right, pos_x) - p.x;
     if abs_c(x) > comp {
         return false;
     }

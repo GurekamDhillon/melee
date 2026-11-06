@@ -462,7 +462,7 @@ pub unsafe fn it_802D1830(gobj: *mut Item_GObj) {
     let x18 = (*attrs).x18;
     let prod = 8.0_f32 * x18;
     // `(prod * -disc) - (x18 * x18)`: the left product contracts into the subtraction
-    let sqrtval = my_sqrtf_accurate(-prod.mul_add(-disc, -(x18 * x18)));
+    let sqrtval = my_sqrtf_accurate(-melee_core::fp::fmadds(prod, -disc, -(x18 * x18)));
     (*ip).xDD4_itemVar.lugia.xE50.x = -((-x18 + sqrtval) / 2.0);
 }
 
@@ -675,8 +675,8 @@ pub unsafe fn it_802D208C(gobj: *mut Item_GObj) {
         target = (*ip).xDD4_itemVar.lugia.x8C;
         let angle: f32 = new_angle as f32 * 0.01745329252_f32;
         // `target.x += x3C * cosf(angle)` contracts to one fma
-        target.x = (*attrs).x3C.mul_add(cosf(angle), target.x);
-        target.y = (*attrs).x3C.mul_add(sinf(angle), target.y);
+        target.x = melee_core::fp::fmadds((*attrs).x3C, cosf(angle), target.x);
+        target.y = melee_core::fp::fmadds((*attrs).x3C, sinf(angle), target.y);
 
         let dx = (*ip).xDD4_itemVar.lugia.x64.x - target.x;
         let dy = (*ip).xDD4_itemVar.lugia.x64.y - target.y;

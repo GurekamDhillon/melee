@@ -319,7 +319,7 @@ pub unsafe fn fn_80188D3C(arg0: *mut HSD_JObj) {
 /// `sub->text->pos_x = 12.0f * (9.798828f + tx) + 50.0f` (fused in the shipping build).
 #[inline]
 fn text_x(tx: f32) -> f32 {
-    12.0f32.mul_add(9.798828f32 + tx, 50.0)
+    melee_core::fp::fmadds(12.0f32, 9.798828f32 + tx, 50.0)
 }
 
 pub unsafe extern "C" fn fn_80188EE8(_gobj: *mut HSD_GObj) {

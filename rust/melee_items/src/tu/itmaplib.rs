@@ -454,7 +454,7 @@ pub unsafe extern "C" fn sqrtf_accurate_store(x: f32, y: *mut f32) -> f32 {
 #[inline(always)]
 pub unsafe extern "C" fn product_xy(a: *mut Vec3, b: *mut Vec3) -> f32 {
     melee_core::ct!("product_xy");
-    (*a).x.mul_add((*b).x, (*a).y * (*b).y)
+    melee_core::fp::fmadds((*a).x, (*b).x, (*a).y * (*b).y)
 }
 
 #[inline(always)]
@@ -1085,7 +1085,7 @@ pub unsafe extern "C" fn it_8027770C(item_gobj: *mut HSD_GObj) -> bool {
         sp38 = (*coll).right_facing_wall.normal;
     }
     if var_r5 != 0 {
-        let dot = (*it).x40_vel.z.mul_add(sp38.z, (*it).x40_vel.x.mul_add(sp38.x, (*it).x40_vel.y * sp38.y));
+        let dot = melee_core::fp::fmadds((*it).x40_vel.z, sp38.z, melee_core::fp::fmadds((*it).x40_vel.x, sp38.x, (*it).x40_vel.y * sp38.y));
         if dot < 0.0 {
             ext::lbVector_Mirror(&raw mut (*it).x40_vel, &raw mut sp38);
         }

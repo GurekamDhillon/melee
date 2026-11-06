@@ -26,20 +26,36 @@ macro_rules! signed {
     ($($t:ty),*) => {$(
         impl Ppc for $t {
             #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
             fn pdiv(self, b: Self) -> Self {
-                if b == 0 || (self == <$t>::MIN && b == -1) { if self < 0 { -1 } else { 0 } } else { self / b }
+                let r = if b == 0 || (self == <$t>::MIN && b == -1) { if self < 0 { -1 } else { 0 } } else { self / b };
+                #[cfg(feature = "disc")]
+                crate::disc::divrem(false, self as i64, b as i64, <$t>::MIN as i64, r as i64);
+                r
             }
             #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
             fn prem(self, b: Self) -> Self {
-                if b == 0 { self } else if self == <$t>::MIN && b == -1 { <$t>::MAX } else { self % b }
+                let r = if b == 0 { self } else if self == <$t>::MIN && b == -1 { <$t>::MAX } else { self % b };
+                #[cfg(feature = "disc")]
+                crate::disc::divrem(true, self as i64, b as i64, <$t>::MIN as i64, r as i64);
+                r
             }
             #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
             fn pshl(self, n: i64) -> Self {
-                if (n as u64) >= <$t>::BITS as u64 { 0 } else { self << n }
+                let r = if (n as u64) >= <$t>::BITS as u64 { 0 } else { self << n };
+                #[cfg(feature = "disc")]
+                crate::disc::shift(true, self as i64, n, <$t>::BITS, r as i64, self.wrapping_shl(n as u32) as i64, <$t>::MIN as i64);
+                r
             }
             #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
             fn pshr(self, n: i64) -> Self {
-                if (n as u64) >= <$t>::BITS as u64 { self >> (<$t>::BITS - 1) } else { self >> n }
+                let r = if (n as u64) >= <$t>::BITS as u64 { self >> (<$t>::BITS - 1) } else { self >> n };
+                #[cfg(feature = "disc")]
+                crate::disc::shift(false, self as i64, n, <$t>::BITS, r as i64, self.wrapping_shr(n as u32) as i64, <$t>::MIN as i64);
+                r
             }
         }
     )*};
@@ -48,16 +64,36 @@ macro_rules! unsigned {
     ($($t:ty),*) => {$(
         impl Ppc for $t {
             #[inline]
-            fn pdiv(self, b: Self) -> Self { if b == 0 { 0 } else { self / b } }
-            #[inline]
-            fn prem(self, b: Self) -> Self { if b == 0 { self } else { self % b } }
-            #[inline]
-            fn pshl(self, n: i64) -> Self {
-                if (n as u64) >= <$t>::BITS as u64 { 0 } else { self << n }
+            #[cfg_attr(feature = "disc", track_caller)]
+            fn pdiv(self, b: Self) -> Self {
+                let r = if b == 0 { 0 } else { self / b };
+                #[cfg(feature = "disc")]
+                crate::disc::divrem(false, self as i64, b as i64, 0, r as i64);
+                r
             }
             #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
+            fn prem(self, b: Self) -> Self {
+                let r = if b == 0 { self } else { self % b };
+                #[cfg(feature = "disc")]
+                crate::disc::divrem(true, self as i64, b as i64, 0, r as i64);
+                r
+            }
+            #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
+            fn pshl(self, n: i64) -> Self {
+                let r = if (n as u64) >= <$t>::BITS as u64 { 0 } else { self << n };
+                #[cfg(feature = "disc")]
+                crate::disc::shift(true, self as i64, n, <$t>::BITS, r as i64, self.wrapping_shl(n as u32) as i64, 0);
+                r
+            }
+            #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
             fn pshr(self, n: i64) -> Self {
-                if (n as u64) >= <$t>::BITS as u64 { 0 } else { self >> n }
+                let r = if (n as u64) >= <$t>::BITS as u64 { 0 } else { self >> n };
+                #[cfg(feature = "disc")]
+                crate::disc::shift(false, self as i64, n, <$t>::BITS, r as i64, self.wrapping_shr(n as u32) as i64, 0);
+                r
             }
         }
     )*};
@@ -70,12 +106,16 @@ macro_rules! narrow {
     ($($t:ty),*) => {$(
         impl Ppc for $t {
             #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
             fn pdiv(self, b: Self) -> Self { (self as i32).pdiv(b as i32) as $t }
             #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
             fn prem(self, b: Self) -> Self { (self as i32).prem(b as i32) as $t }
             #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
             fn pshl(self, n: i64) -> Self { (self as i32).pshl(n) as $t }
             #[inline]
+            #[cfg_attr(feature = "disc", track_caller)]
             fn pshr(self, n: i64) -> Self { (self as i32).pshr(n) as $t }
         }
     )*};
@@ -84,11 +124,16 @@ narrow!(i8, i16, u8, u16);
 
 /// `fctiwz`: truncate toward zero, saturate, NaN -> `i32::MIN` (0x8000_0000).
 #[inline]
+#[cfg_attr(feature = "disc", track_caller)]
 pub fn fctiwz(x: f64) -> i32 {
-    if x.is_nan() { i32::MIN } else { x as i32 }
+    let r = if x.is_nan() { i32::MIN } else { x as i32 };
+    #[cfg(feature = "disc")]
+    crate::disc::cvt(x, r);
+    r
 }
 /// `(s32) f` / `(int) f` for an f32.
 #[inline]
+#[cfg_attr(feature = "disc", track_caller)]
 pub fn fctiwz_f32(x: f32) -> i32 {
     fctiwz(x as f64)
 }

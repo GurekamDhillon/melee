@@ -71,3 +71,7 @@ lua-src = { path = "third_party/lua-src" }
 # (tools/rust-port/covtest/rustc_cov.rs), which instruments the game crates. No other build uses this profile or the wrapper.
 [profile.cov]
 inherits = "fast"
+
+# `DISC=1 build_cov.sh`: cov plus the discrimination bits (feature `disc`), its own output dir.
+[profile.covdisc]
+inherits = "cov"

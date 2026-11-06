@@ -10,3 +10,5 @@ publish.workspace = true
 [features]
 # Per-call tracing (ct.rs, tools/rust-port/trace/insert_ct.py). Off in normal builds.
 calltrace = []
+# Discrimination bits at the fp/int helper call sites (disc.rs): the covtest build only (notes/coverage-testing.md).
+disc = []

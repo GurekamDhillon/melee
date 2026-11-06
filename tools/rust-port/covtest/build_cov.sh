@@ -17,5 +17,7 @@ fi
 export RUSTC_WORKSPACE_WRAPPER="$wrap"
 unset RUSTC_WRAPPER
 cd "$root/rust"
+# DISC=1: also the discrimination bits (feature disc), profile covdisc (its own exe: covdisc/melee.exe)
+if [ -n "${DISC:-}" ]; then cargo build -p melee --profile covdisc --features disc "$@"; echo "cov build: $CARGO_TARGET_DIR/covdisc/melee.exe"; exit 0; fi
 cargo build -p melee --profile cov "$@"
 echo "cov build: $CARGO_TARGET_DIR/cov/melee.exe"

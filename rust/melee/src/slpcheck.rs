@@ -452,6 +452,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             let pl = unsafe { crate::r_in() };
             pl.tick();
             let fr = pl.frame();
+            #[cfg(feature = "disc")]
+            melee_core::disc::set_frame(fr + 123); // the NHV1 CSV frame
             if fr > file.last_frame {
                 break;
             }
@@ -517,6 +519,11 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
         }
     }));
+    // covtest discrimination bits (build_cov.sh): MELEE_DISC_OUT=<file>
+    #[cfg(feature = "disc")]
+    if let Ok(p) = std::env::var("MELEE_DISC_OUT") {
+        let _ = melee_core::disc::dump(&p);
+    }
     if let Err(p) = run {
         panic_msg = Some(if let Some(s) = p.downcast_ref::<&str>() { (*s).to_string() } else if let Some(s) = p.downcast_ref::<String>() { s.clone() } else { "panic".into() });
     }

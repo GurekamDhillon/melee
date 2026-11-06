@@ -11,10 +11,13 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 EXE=${2:-$ws/_build/cargo-agents/covtest/cov/melee.exe}
 L="$(rustc --print sysroot)/lib/rustlib/x86_64-pc-windows-msvc/bin"
-mkdir -p "$C/coverage"
+
 shopt -s nullglob
-in=("$C"/prof/*.profdata "$C"/lanes/*/*.profraw)
-"$L/llvm-profdata" merge -sparse "${in[@]}" -o "$C/coverage/all.profdata"
-"$L/llvm-cov" export "$EXE" -instr-profile="$C/coverage/all.profdata" -skip-expansions > "$C/coverage/cov.json"
-python -I "$here/report.py" "$C/coverage/cov.json" "$C/coverage"
-rm -f "$C/coverage/cov.json"
+# PROF_GLOB: which lane profiles (default all: prof/*.profdata); e.g. "l*" the CPU matches, "soak_*" the move soak
+mkdir -p "$C/${COV_OUT:-coverage}"
+in=("$C"/prof/${PROF_GLOB:-*}.profdata)
+OUTD=${COV_OUT:-coverage}
+"$L/llvm-profdata" merge -sparse "${in[@]}" -o "$C/$OUTD/all.profdata"
+"$L/llvm-cov" export "$EXE" -instr-profile="$C/$OUTD/all.profdata" -skip-expansions > "$C/$OUTD/cov.json"
+python -I "$here/report.py" "$C/$OUTD/cov.json" "$C/$OUTD"
+rm -f "$C/$OUTD/cov.json"

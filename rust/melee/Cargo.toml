@@ -7,6 +7,8 @@ publish.workspace = true
 
 [features]
 calltrace = ["melee_core/calltrace"]
+# covtest discrimination bits (melee_core/src/disc.rs): only build_cov.sh enables it
+disc = ["melee_core/disc"]
 
 [dependencies]
 melee_core.workspace = true

@@ -14,11 +14,34 @@ PROFDATA = os.environ.get("LLVM_PROFDATA", os.path.join(TOOLS, "llvm-profdata.ex
 BASH = os.environ.get("BASH_EXE", "C:/Program Files/Git/usr/bin/bash.exe")  # not WSL's bash.exe
 
 
+PREFIX = ""  # --prof-prefix: the lanes' profdata names (soak runs: "soak_", kept apart from the CPU matches')
+SOAK_EXE = os.environ.get("SOAK_EXE", os.path.join(os.environ.get("GW_WORKSPACE", "E:/Projects/Melee Workspace"), "_build", "cargo-agents", "covtest", "fast", "melee.exe"))
+
+
+def record_soak(c, slp, ld):
+    """A move-soak config (gen_soak.py): `melee play --match <char>,falcon,32` headless, vanilla rules, no Gecko codes
+    or mods, port 1 on the pad script, port 2 a human with no controller; MELEE_SLP_RECORD writes the .slp."""
+    import dol
+    from gen_matches import CHARS
+    os.makedirs(os.path.dirname(slp), exist_ok=True)
+    env = dict(os.environ, MELEE_PAD_SCRIPT=c["script"], MELEE_PAD_IGNORE_ADAPTER="1", MELEE_WINDOW_UNFOCUSED="1", MELEE_VOLUME="3",
+               MELEE_WINDOW_TITLE=f"covtest:{c['id']}", MELEE_SLP_RECORD=slp)
+    env.pop("MELEE_MODS_DIR", None)
+    dummy = "falcon" if c["char"] != 0 else "fox"
+    r = subprocess.run([SOAK_EXE, "play", "--iso", dol.iso_path(), "--match", f"{CHARS[c['char']]},{dummy},32", "--stocks", "99",
+                        "--headless", "--no-audio", "--max-frames", str(c["frames"] + 300)], env=env, capture_output=True, text=True,
+                       creationflags=0x40)
+    return "RECORD ok (melee play)" if os.path.exists(slp) else f"RECORD error: melee play exit {r.returncode}"
+
+
 def arg(k, d=None):
     return sys.argv[sys.argv.index(k) + 1] if k in sys.argv else d
 
 
 def main():
+    global PREFIX
+    PREFIX = arg("--prof-prefix", "")
+    sys.path.insert(0, here)
     cfgs = [json.loads(l) for l in open(sys.argv[1])]
     corpus = os.path.abspath(sys.argv[2])
     only = arg("--only")
@@ -40,8 +63,8 @@ def main():
     count = [0]
 
     def lane(n):
-        ld = os.path.join(corpus, "lanes", f"l{n}")
-        pd = os.path.join(corpus, "prof", f"l{n}.profdata")
+        ld = os.path.join(corpus, "lanes", f"{PREFIX}l{n}")
+        pd = os.path.join(corpus, "prof", f"{PREFIX}l{n}.profdata")
         while True:
             with lock:
                 if not todo:
@@ -50,7 +73,9 @@ def main():
             slp = os.path.join(corpus, "slp", c["id"] + ".slp")
             chk = os.path.join(corpus, "checks", c["id"])
             rec = "ok"
-            if not os.path.exists(slp):
+            if not os.path.exists(slp) and "script" in c:
+                rec = record_soak(c, slp, ld)
+            elif not os.path.exists(slp):
                 r = subprocess.run([sys.executable, "-I", os.path.join(here, "record.py"), json.dumps(c), slp, ld, "--timeout", "300"],
                                    capture_output=True, text=True)
                 rec = (r.stdout.strip().splitlines() or ["RECORD error: no output"])[-1]
@@ -73,7 +98,7 @@ def main():
                             os.remove(f)
                     else:
                         res["profdata"] = m.stderr.strip()[:200]
-            covers = {"chars": [p[0] for p in c["players"]], "stage": c["stage"], "levels": sorted({p[1] for p in c["players"]}),
+            covers = {"chars": [c["char"]], "stage": 32, "soak": True} if "script" in c else {"chars": [p[0] for p in c["players"]], "stage": c["stage"], "levels": sorted({p[1] for p in c["players"]}),
                       "items": c["items"], "teams": c["teams"], "players": len(c["players"])}
             row = dict(id=c["id"], set=c["set"], config=c, covers=covers, record=rec, **res)
             with lock:

@@ -10,22 +10,34 @@
 /// This is NOT `a.mul_add(c, b)` (one rounding) and NOT `a * c + b` in f32 (two f32
 /// roundings); both give different bits for some inputs.
 #[inline(always)]
+#[cfg_attr(feature = "disc", track_caller)]
 pub fn fmadds(a: f32, c: f32, b: f32) -> f32 {
-    (a as f64 * c as f64 + b as f64) as f32
+    let r = (a as f64 * c as f64 + b as f64) as f32;
+    #[cfg(feature = "disc")]
+    crate::disc::fma(a, c, b, false, r);
+    r
 }
 
 /// Gekko `fmsubs` under the same model: `(float)((double)a * (double)c - (double)b)`.
 #[inline(always)]
+#[cfg_attr(feature = "disc", track_caller)]
 pub fn fmsubs(a: f32, c: f32, b: f32) -> f32 {
-    (a as f64 * c as f64 - b as f64) as f32
+    let r = (a as f64 * c as f64 - b as f64) as f32;
+    #[cfg(feature = "disc")]
+    crate::disc::fma(a, c, b, true, r);
+    r
 }
 
 /// `fmsubs` as clang's `fmuladd(a, c, -b)` forms it (`a*c - b` where the C build fuses to a negated
 /// addend): identical to [`fmsubs`] for every non-NaN input; a NaN `b` comes out with its sign flipped
 /// (ft_0c31's oracle). Other TUs' oracles (itkinds10) pin the unflipped [`fmsubs`].
 #[inline(always)]
+#[cfg_attr(feature = "disc", track_caller)]
 pub fn fmsubs_neg(a: f32, c: f32, b: f32) -> f32 {
-    (a as f64 * c as f64 + (-(b as f64))) as f32
+    let r = (a as f64 * c as f64 + (-(b as f64))) as f32;
+    #[cfg(feature = "disc")]
+    crate::disc::fma(a, c, b, true, r);
+    r
 }
 
 /// Gekko `fnmsubs`: `-(a*c - b)`, the form MWCC emits for `b -= a*c` / `b - a*c`.
@@ -35,15 +47,23 @@ pub fn fmsubs_neg(a: f32, c: f32, b: f32) -> f32 {
 /// negation flips it). The console keeps that -0 (Dolphin oracle, `x8c_kb_vel.y` in
 /// Fighter_procUpdate; notes/fp-audit.md "sign of zero").
 #[inline(always)]
+#[cfg_attr(feature = "disc", track_caller)]
 pub fn fnmsubs(a: f32, c: f32, b: f32) -> f32 {
-    -fmsubs(a, c, b)
+    let r = -((a as f64 * c as f64 - b as f64) as f32);
+    #[cfg(feature = "disc")]
+    crate::disc::fnm(a, c, b, true, r);
+    r
 }
 
 /// Gekko `fnmadds`: `-(a*c + b)`, MWCC's form of `-(a*c) - b` / `-b - a*c`. An exact-zero `a*c + b`
 /// gives -0, where `fmsubs(-a, c, b)` gives +0.
 #[inline(always)]
+#[cfg_attr(feature = "disc", track_caller)]
 pub fn fnmadds(a: f32, c: f32, b: f32) -> f32 {
-    -fmadds(a, c, b)
+    let r = -((a as f64 * c as f64 + b as f64) as f32);
+    #[cfg(feature = "disc")]
+    crate::disc::fnm(a, c, b, false, r);
+    r
 }
 
 // ---- Gekko estimate instructions (moved from melee_runtime::gekko; port of

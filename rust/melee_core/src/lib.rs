@@ -19,3 +19,5 @@ pub mod vec;
 
 /// Crate version, used by the `melee` binary to prove each crate links.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+#[cfg(feature = "disc")]
+pub mod disc;

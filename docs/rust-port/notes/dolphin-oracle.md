@@ -134,6 +134,20 @@ then differs (render-side draws, nhv1.md 8), so `--ignore-seed` decides.
 address (r2 = 0x804DF9E0). The logged `pc` is the start of the JIT block, not the hooked address; `lr` is the reliable
 field. `MELEE_DOLPHIN_NHV1_STOP_AT=F` exits Dolphin after it logs frame F, so a probe run needs no kill.
 
+## Bone dump (port/oracle-fix round 3)
+
+`MELEE_DOLPHIN_NHV1_BONES=<txt>` (frames `MELEE_DOLPHIN_NHV1_BONES_FROM`..`_TO`) writes, for every logged fighter, each part's
+jobj world matrix and its inputs: `<frame> s<k> bone[<i>].mtx[<n>] <bits>` (`fp->parts[i].joint->mtx`, jobj+0x44, 12 words) and
+`bone[<i>].in[<n>]` (n 0 = jobj flags, 1-4 rotate, 5-7 scale, 8-10 translate). The Rust side writes the same lines with
+`MELEE_WIDE_BONES=1 melee slpcheck ... --wide --wide-out T --wide-from F --wide-to F`. A joint whose matrix the Rust engine
+has not computed (dirty flag 0x40 set, identity matrix) is a lazy matrix nobody read that frame, not a difference. Found with it:
+the PSMTXQuat class (notes/fp-audit.md "Paired-single library routines").
+
+`MELEE_DOLPHIN_NHV1_PROBE_MEM=r1+0x0:0x400` at a callee's entry dumps the caller's stack frame (r1 is the caller's SP, its
+first word the back chain): locals passed by pointer can be read at `r3 - r1`. `MELEE_DOLPHIN_NHV1_PROBE_CHAIN=rN:0xNEXT:0xLEN:COUNT`
+walks a linked list from register N (next pointer at +NEXT) and appends `node<i>@<addr>=<LEN bytes hex>` for up to COUNT
+nodes (Samus's grapple ItemLink chain: `r4:0x4:0x30:64` at it_802BA3BC).
+
 ## Slippi playback's first-frame write (an oracle artifact, undone)
 
 On the first playback frame (-123), Slippi's playback code injected at `Fighter_procInput` 0x8006B0DC writes

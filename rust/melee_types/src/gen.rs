@@ -41075,7 +41075,7 @@ pub struct _ftSamusAttributes {
     pub xC4: i32,
     pub xC8: i32,
     pub xCC: f32,
-    pub xD0: *mut c_void,
+    pub xD0: i32,
 }
 impl _ftSamusAttributes { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
@@ -41130,7 +41130,7 @@ impl GcDecode for _ftSamusAttributes {
         v.xC4 = <i32 as GcDecode>::gc_decode(d, at + 0xC4);
         v.xC8 = <i32 as GcDecode>::gc_decode(d, at + 0xC8);
         v.xCC = <f32 as GcDecode>::gc_decode(d, at + 0xCC);
-        v.xD0 = <*mut c_void as GcDecode>::gc_decode(d, at + 0xD0);
+        v.xD0 = <i32 as GcDecode>::gc_decode(d, at + 0xD0);
         v
     }
 }
@@ -41185,7 +41185,7 @@ impl GcLayout for _ftSamusAttributes {
         GcField::new("xC4", 0xC4, 4, "int"),
         GcField::new("xC8", 0xC8, 4, "int"),
         GcField::new("xCC", 0xCC, 4, "f32"),
-        GcField::new("xD0", 0xD0, 4, "void *"),
+        GcField::new("xD0", 0xD0, 4, "int"),
     ];
 }
 const _: () = assert!(core::mem::size_of::<_ftSamusAttributes>() == 216);

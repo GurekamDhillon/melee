@@ -298,9 +298,9 @@ before. No reconnect.
   firewall prompt path, IPv6 over a real network, host names.
 
 ## Early inputs (port/earlyin, 2026-11-03)
-Credit: the design follows the early-input approach of **melee-unlocked, by Hero**, which builds on **Arte's
-subframe rollback** (JulienBernard3383279: the Kristal build and the "Subframe rollback" draft for Slippi's Dolphin).
-Thanks to both. The first version of `melee_net/src/early.rs` (port/earlyin) followed Hero's early-input code too
+Credit: our early inputs are modelled on Hero's early-input work in **melee-unlocked**. His work in turn credits
+**Arte** (JulienBernard3383279) for subframe rollback, from the Kristal build and the "Subframe rollback" draft
+for Slippi's Dolphin. Thanks to both. The first version of `melee_net/src/early.rs` (port/earlyin) followed Hero's early-input code too
 closely, including some of his comment wording, while claiming to share nothing with it; Hero pointed this out.
 On 2026-11-05 (port/hero-fix) the file was rewritten clean-room from our own tests and this note only, without
 opening his source; behaviour is unchanged (the existing tests plus a 2.5M-case randomized old-vs-new comparison of

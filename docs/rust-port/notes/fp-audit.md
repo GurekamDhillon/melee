@@ -43,11 +43,23 @@ slpcheck frame-exact over 125 replays: 86 before -> 102 after, on both the fast 
 results identical). The earlier release figure (53) came from a release exe in the shared `_build/cargo-shared` target
 dir while other worktrees were building into it (clobbered crates); rebuilt in a private target dir, release equals fast.
 
+## Goldens re-recorded (sfxparity C lane)
+
+Gate: cpu_fox_falco_dl, cpu_peach_samus_ys_items (pad ones unchanged). `melee_runtime/tests/data/oracle_vectors.txt`,
+`melee_fighter/tests/data/ft0877.txt`. Coverage: 183 recorded from this tree; 29 (the scenarios the post-sync C tree
+records differently even without this fix, fma.md "C lane note"; all 29 differ from their old goldens when recorded from the
+unfixed post-sync tree) recorded from 71ca56060 + d419eb03f + this fix, as the precedent did. Coverage 212 pass / 10 no golden.
+
+## f32 mul_add
+
+`f32::mul_add` rounds the exact a*b+c once to f32. Gekko `fmadds` (Dolphin: f64 fma, then round to single) and the C build's
+lowering both round the f64 result to f32; for f32 inputs the product is exact in f64, so `fp::fmadds` is the console value.
+The f32 `mul_add` game sites (itlugia, itmaplib, gm_1832, gm_1884, grlib) now use `fmadds`; the f64 ones are true f64 fmas.
+
 ## Open
 
 - 71 functions whose fused count still differs (cross-inline fusion, e.g. ft_800CB6EC, ftColl_8007A06C,
   mpLib_80055E9C); listed below.
-- f32 `.mul_add` uses (single rounding in f32) not yet swept to `fmadds`.
 - PSMTXQuat / PSMTXRotAxisRad retail paired-single dataflow (C and Rust) not done.
 - frsp / fctiw NaN / estimate sites not classified beyond inline sqrtf (already modelled).
 

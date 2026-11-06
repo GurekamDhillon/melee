@@ -16,7 +16,7 @@
 #      (melee dolphin-wide / slpcheck --wide-out; --wide adds game_camera and stage_info) and wide_diff.py, which names
 #      the fields that first differ.
 # Last line: `ORACLE <file> match (<n> frames)` or `ORACLE <file> diverged at frame F (slippi F-123): <columns>; first
-# field(s): ...`. Env: MELEE_EXE (default build/bin/melee.exe, then the shared fast target), KEEP=1 keeps the raw dump.
+# field(s): ...`, plus "; the Dolphin runs disagree from frame F" when the two Dolphin runs differ. Env: MELEE_EXE (default build/bin/melee.exe, then the shared fast target), KEEP=1 keeps the raw dump.
 set -u
 SLP=$1; OUT=$2; shift 2
 WIDE=0; WINDOW=3; AT=""; ZEQ=""
@@ -42,10 +42,35 @@ name=$(basename "$SLP")
 log() { echo "oracle: $*"; }
 
 wflag=""; [ $WIDE = 1 ] && wflag="-Wide"
+# Dolphin runs twice, concurrently (DOLPHIN_RUNS=1 for once): the playback is occasionally nondeterministic
+# (notes/dolphin-oracle.md, "Nondeterminism"), and a frame where the two runs disagree is no evidence against Rust.
+RUNS=${DOLPHIN_RUNS:-2}
 powershell -NoProfile -ExecutionPolicy Bypass -File "$(cygpath -w "$here/run_dolphin.ps1")" -Slp "$SLPW" -Out "$OUTW" $wflag \
-  | sed 's/^/oracle: /'
+  | sed 's/^/oracle: /' &
+if [ "$RUNS" -ge 2 ]; then
+  mkdir -p "$OUT/run2"
+  powershell -NoProfile -ExecutionPolicy Bypass -File "$(cygpath -w "$here/run_dolphin.ps1")" -Slp "$SLPW" \
+    -Out "$(cygpath -w "$OUT/run2" 2>/dev/null || echo "$OUT/run2")" > /dev/null 2>&1 &
+fi
+wait
 [ -s "$OUT/dolphin.nhraw" ] || { echo "ORACLE $name error: Dolphin wrote no records (see $OUT/dolphin.stderr.txt)"; exit 2; }
 python -I "$here/raw2csv.py" "$OUT/dolphin.nhraw" "$OUT/dolphin.csv" || { echo "ORACLE $name error: raw2csv"; exit 2; }
+NONDET=""
+if [ "$RUNS" -ge 2 ]; then
+  if python -I "$here/raw2csv.py" "$OUT/run2/dolphin.nhraw" "$OUT/run2/dolphin.csv" > /dev/null 2>&1; then
+    rm -f "$OUT/run2/dolphin.nhraw"
+    if ! python "$root/tools/rust-port/compare_golden.py" "$OUT/run2/dolphin.csv" "$OUT/dolphin.csv" --allow-short --max-report 1 \
+        > "$OUT/run2/compare_runs.txt" 2>&1; then
+      NONDET=$(grep -m1 -o 'first divergence at frame -\?[0-9]*' "$OUT/run2/compare_runs.txt" | grep -o -- '-\?[0-9]*$')
+      NONDET=${NONDET:-?}
+      log "DOLPHIN NONDETERMINISTIC: the two Dolphin runs disagree from frame $NONDET (run2/compare_runs.txt)"
+    else
+      log "the two Dolphin runs agree"
+    fi
+  else
+    log "the second Dolphin run wrote no records; one run only"
+  fi
+fi
 
 MELEE_WINDOW_UNFOCUSED=1 MELEE_VOLUME=3 "$EXE" slpcheck --slp "$SLP" --full --iso "$GW_ISO_VANILLA" \
   --nhv1-out "$OUT/rust.csv" --csv "$OUT/slpcheck.csv" > "$OUT/rust.log" 2>&1
@@ -61,7 +86,7 @@ sed 's/^/oracle: /' "$OUT/compare.txt"
 log "with seed/hash: $(tail -1 "$OUT/compare_seed.txt")"
 nrows=$(($(wc -l < "$OUT/rust.csv") - 1))
 if [ $rc = 0 ]; then
-  echo "ORACLE $name match ($nrows Rust frames equal to Dolphin, seed ignored)"
+  echo "ORACLE $name match ($nrows Rust frames equal to Dolphin, seed ignored)${NONDET:+; the Dolphin runs disagree from frame $NONDET}"
 else
   F=$(grep -m1 -o 'first divergence at frame -\?[0-9]*' "$OUT/compare.txt" | grep -o -- '-\?[0-9]*$')
   cols=$(grep -m1 '^frame .*differs in' "$OUT/compare.txt" | sed 's/.*differs in //')
@@ -83,7 +108,7 @@ else
   # fields outside NHV1 that drifted first, e.g. a 1-ULP ECB value)
   at=$(awk -v f="frame $S " 'index($0,f)==1{on=1;next} /^frame /{on=0} on && /^    [a-z]/{print $1"."$2}' "$OUT/wide_diff.txt" | head -4 | tr '\n' ' ')
   early=$(grep -m1 'new difference' "$OUT/wide_diff.txt" | awk '{print $2}')
-  echo "ORACLE $name diverged at frame $F (slippi $((F - 123))): $cols; window ending at slippi $S, new at that frame: ${at:-none (see wide_diff.txt)}; earliest new difference in the window: slippi ${early:-none}"
+  echo "ORACLE $name diverged at frame $F (slippi $((F - 123))): $cols; window ending at slippi $S, new at that frame: ${at:-none (see wide_diff.txt)}; earliest new difference in the window: slippi ${early:-none}${NONDET:+; the Dolphin runs disagree from frame $NONDET}"
 fi
 [ "${KEEP:-0}" = 1 ] || rm -f "$OUT/dolphin.nhraw"
 exit $rc

@@ -150,3 +150,14 @@ the same original-vs-playback 1-ULP pre-frame Y pairs.
 The oracle now saves fp+0x6F4..0x72C at 0x8006B0DC and restores them at 0x8006B120 on frame -123 (`NHV1UndoSave`
 and `NHV1UndoRestore`). `MELEE_DOLPHIN_NHV1_KEEP_PLAYBACK_INIT=1` keeps Slippi's write. With the undo, 03b84423's first
 difference moves from frame 5 to frame 8015.
+
+## Nondeterminism
+
+Dolphin's playback is occasionally nondeterministic. Of four runs of 03b84423 with the same exe and the same replay,
+one gave s6 `dmg.x1830_percent` 15.98 at slippi frame 7892. The recording's Post-Frame, Rust and the other three runs
+all have 16.98. That run was made while other Dolphin and game processes were loading the machine; its offscreen-damage
+counter (`dmg.x1910`) was one frame behind. A single cached `dolphin.csv` can therefore diverge from Rust for no fault
+of the engine. `oracle.sh` now runs Dolphin twice, concurrently (`DOLPHIN_RUNS=1` for one run). When the runs differ it
+logs `DOLPHIN NONDETERMINISTIC` and appends "the Dolphin runs disagree from frame F" to the ORACLE line. Before
+classifying a divergence, check that it is not past that frame, and check the field against the .slp's Post-Frame
+where one exists.

@@ -16,9 +16,9 @@ to 0 at scene start, +1 at the end of every unpaused logic iteration).
 ### 1.1 Start of game (InitOnlinePlay, hook 0x8016E748 in StartMelee, right after `db_Setup`)
 1. `rng_offset` = MSRB u32 (Dolphin: the decider's `generator() % 0xFFFF`, from MATCH_SELECTIONS). Stored in the ODB.
 2. The seed word (0x804D5F90, `*HSD_RandSeedPtr`) is set to `rng_offset`.
-3. A GObj is created: classifier 4, p_link 7 ("on-pause: don't run"), priority 0 -- the call is `GObj_Create(4, 7, 0)`;
-   then a proc `SyncRNG` is added on it with s_link priority 0. It runs inside `HSD_GObj_RunProcs` every unpaused frame,
-   in s_link 0 before the gobjs created later in that p_link order (fighters are created after it).
+3. A GObj is created with `GObj_Create(4, 7, 0)` (classifier 4, p_link 7, priority 0), then `SyncRNG` is added as its
+   proc at s_link 0. It runs inside `HSD_GObj_RunProcs` every frame the match is not paused, in s_link 0 and ahead of
+   the fighters (p_link 8), so every fighter, item and stage draw of the frame sees the new seed.
 
 ### 1.2 SyncRNG (every frame, inside RunProcs)
 ```
@@ -126,6 +126,16 @@ PreventWobbling non-recursive). "online-only" = the code checks scene `SCENE_ONL
 
 Not in the netplay set: Preload Stadium Transformations (the only extra `HSD_Randi` caller), PortPriority.
 
-## 4. Rust implementation (this branch)
-`melee_core::slippi_online` (pure functions + per-game state, off by default) and the engine hooks behind it; see the
-module docs and `docs/rust-port/notes/slippi-online.md` section 9 for what was verified.
+## 4. Rust implementation (port/slippi-p1)
+| piece | where |
+|---|---|
+| fmix32, seed rule, section 1.3 seed bits, checksum accumulator, comparison, per-game state, `enable`/`disable` (off by default) | `rust/melee_core/src/slippi_online.rs` (unit tests) |
+| checksum over the live fighters (raw `player_entity[0..2]`, stocks per slot) | `rust/melee_fighter/src/slippi_online.rs` |
+| InitOnlinePlay seed + SyncRNG GObj/proc, only when the mode is on | `fn_8016E730` after `db_Setup` (`rust/melee_modes/src/tu/gmvs.rs`) |
+| `melee slpcheck --slippi-checksum-out FILE` | per frame, the checksum after the frame (= the checksum Slippi stores for the next frame) |
+| `tools/rust-port/slippi/checksum_nhraw.py` | the same checksum from the Dolphin oracle's memory records |
+
+Verified: the Rust checksum equals the one computed from Slippi Dolphin's own memory (the oracle, `20476_01c6d260`,
+Battlefield Falco vs Sheik) on **all 11293 frames** (-123..11169), both halves. The seed functions are unit-tested
+against the spec (murmur3 fmix32 reference value, bit layout); they are **not yet checked against a live Slippi peer**:
+the loopback Dolphin-vs-Dolphin capture (slippi-online.md section 9) did not run.

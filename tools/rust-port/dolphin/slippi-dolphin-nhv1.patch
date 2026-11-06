@@ -1,7 +1,7 @@
 # Slippi Dolphin (project-slippi/dolphin, mainline) patch for the NHV1 oracle. Applies to 0653df8194eac2392dea9fe26276b70f3c87fd89.
 # Dolphin is GPL-2.0-or-later; this diff is a derivative of it and is kept for local use only (not distributed).
 diff --git a/Source/Core/Common/Timer.cpp b/Source/Core/Common/Timer.cpp
-index 0a23080..d34879f 100644
+index 0a23080..3784400 100644
 --- a/Source/Core/Common/Timer.cpp
 +++ b/Source/Core/Common/Timer.cpp
 @@ -70,10 +70,20 @@ u64 Timer::ElapsedMs() const
@@ -112,7 +112,7 @@ index a0ca859..f4e1a4c 100644
  
  void PatchFunctions(Core::System& system)
 diff --git a/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp b/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp
-index c6fbc9d..302398d 100644
+index c6fbc9d..dd26f2a 100644
 --- a/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp
 +++ b/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp
 @@ -25,6 +25,8 @@
@@ -186,10 +186,10 @@ index c6fbc9d..302398d 100644
  
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.cpp b/Source/Core/Core/Slippi/NHV1Oracle.cpp
 new file mode 100644
-index 0000000..63560af
+index 0000000..694bd7b
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.cpp
-@@ -0,0 +1,398 @@
+@@ -0,0 +1,437 @@
 +// NHV1 oracle (GD's Melee port, local tool): see NHV1Oracle.h.
 +#include "Core/Slippi/NHV1Oracle.h"
 +
@@ -349,6 +349,45 @@ index 0000000..63560af
 +      Put32(fighters, fp);
 +      PutBlob(fighters, mem, fp, FIGHTER_SIZE);
 +      n_ft++;
++      // GD nhv1-oracle: MELEE_DOLPHIN_NHV1_BONES=<txt> (frames _BONES_FROM.._BONES_TO): each part's jobj world
++      // matrix, fp->parts[i].joint->mtx (jobj+0x44), parts_num = ftPartsTable[fp->kind]->parts_num
++      static FILE* bf = nullptr;
++      static bool btried = false;
++      static int bfrom = INT_MIN, bto = INT_MAX;
++      if (!btried)
++      {
++        btried = true;
++        const char* bp = std::getenv("MELEE_DOLPHIN_NHV1_BONES");
++        if (bp && *bp)
++          bf = std::fopen(bp, "w");
++        if (const char* a = std::getenv("MELEE_DOLPHIN_NHV1_BONES_FROM"))
++          bfrom = std::atoi(a);
++        if (const char* b = std::getenv("MELEE_DOLPHIN_NHV1_BONES_TO"))
++          bto = std::atoi(b);
++      }
++      if (bf && s_frame >= bfrom && s_frame <= bto)
++      {
++        const u32 tbl = r32(0x804D6544);
++        const u32 kind = r32(fp + 0x4);
++        const u32 ent = InRam(tbl) ? r32(tbl + 4 * kind) : 0;
++        const u32 parts = r32(fp + 0x5E8);
++        if (InRam(ent) && InRam(parts))
++        {
++          const u32 np = r32(ent + 8);
++          for (u32 k = 0; k < np && k < 256; k++)
++          {
++            const u32 jo = r32(parts + 0x10 * k);
++            if (!InRam(jo))
++              continue;
++            for (u32 n = 0; n < 12; n++)
++              std::fprintf(bf, "%d s%u bone[%u].mtx[%u] %08x\n", s_frame, i * 2 + j, k, n, r32(jo + 0x44 + 4 * n));
++            std::fprintf(bf, "%d s%u bone[%u].in[0] %08x\n", s_frame, i * 2 + j, k, r32(jo + 0x14));
++            for (u32 n = 0; n < 10; n++)
++              std::fprintf(bf, "%d s%u bone[%u].in[%u] %08x\n", s_frame, i * 2 + j, k, n + 1, r32(jo + 0x1C + 4 * n));
++          }
++          std::fflush(bf);
++        }
++      }
 +    }
 +  }
 +  if (n_ft == 0)
@@ -457,9 +496,9 @@ index 0000000..63560af
 +    std::memcpy(&b, &x, 4);
 +    return b;
 +  };
-+  std::fprintf(f, "probe frame=%d pc=%08x lr=%08x r3=%08x r4=%08x r5=%08x r6=%08x r29=%08x r30=%08x r31=%08x f1=%08x f2=%08x",
++  std::fprintf(f, "probe frame=%d pc=%08x lr=%08x r3=%08x r4=%08x r5=%08x r6=%08x r29=%08x r30=%08x r31=%08x f1=%08x f2=%08x f3=%08x f4=%08x f5=%08x f6=%08x",
 +               s_frame, ppc.pc, ppc.spr[SPR_LR], ppc.gpr[3], ppc.gpr[4], ppc.gpr[5], ppc.gpr[6], ppc.gpr[29], ppc.gpr[30],
-+               ppc.gpr[31], fb(1), fb(2));
++               ppc.gpr[31], fb(1), fb(2), fb(3), fb(4), fb(5), fb(6));
 +  if (mem_reg >= 0)
 +  {
 +    std::fprintf(f, " mem=");
@@ -652,7 +691,7 @@ index 5b72b57..e56580e 100644
  install(TARGETS dolphin-nogui RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 +target_compile_definitions(dolphin-nogui PRIVATE IS_PLAYBACK=1)  # GD nhv1-oracle
 diff --git a/Source/Core/DolphinNoGUI/MainNoGUI.cpp b/Source/Core/DolphinNoGUI/MainNoGUI.cpp
-index 1986c58..b3146ef 100644
+index 1986c58..ab39f3b 100644
 --- a/Source/Core/DolphinNoGUI/MainNoGUI.cpp
 +++ b/Source/Core/DolphinNoGUI/MainNoGUI.cpp
 @@ -347,6 +347,12 @@ int main(int argc, char* argv[])
@@ -669,7 +708,7 @@ index 1986c58..b3146ef 100644
    {
      fprintf(stderr, "Could not boot the specified file\n");
 diff --git a/Source/Core/UICommon/CMakeLists.txt b/Source/Core/UICommon/CMakeLists.txt
-index 7200bd5..502cb14 100644
+index 7200bd5..e1d4e46 100644
 --- a/Source/Core/UICommon/CMakeLists.txt
 +++ b/Source/Core/UICommon/CMakeLists.txt
 @@ -66,3 +66,4 @@ if(MSVC)

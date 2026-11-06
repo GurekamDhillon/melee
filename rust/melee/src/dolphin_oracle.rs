@@ -87,6 +87,13 @@ unsafe fn bones(out: &mut String, frame: i32, slot: i32, fp: &melee_types::Fight
         for (n, v) in (*j).mtx.iter().flatten().enumerate() {
             let _ = writeln!(out, "{frame} s{slot} bone[{i}].mtx[{n}] {:08x}", v.to_bits());
         }
+        let jj = &*j;
+        let ins = [jj.flags, jj.rotate.x.to_bits(), jj.rotate.y.to_bits(), jj.rotate.z.to_bits(), jj.rotate.w.to_bits(),
+            jj.scale.x.to_bits(), jj.scale.y.to_bits(), jj.scale.z.to_bits(),
+            jj.translate.x.to_bits(), jj.translate.y.to_bits(), jj.translate.z.to_bits()];
+        for (n, v) in ins.iter().enumerate() {
+            let _ = writeln!(out, "{frame} s{slot} bone[{i}].in[{n}] {v:08x}");
+        }
     }
 }
 

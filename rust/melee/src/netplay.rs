@@ -31,12 +31,12 @@ fn arg(args: &[String], k: &str) -> Option<String> {
 }
 
 /// Inbound lag / loss on a real socket.
-struct Degraded {
-    inner: Box<dyn Transport>,
-    lag: Duration,
-    loss_pct: u32,
-    rng: u32,
-    q: VecDeque<(Instant, Addr, Vec<u8>)>,
+pub(crate) struct Degraded {
+    pub(crate) inner: Box<dyn Transport>,
+    pub(crate) lag: Duration,
+    pub(crate) loss_pct: u32,
+    pub(crate) rng: u32,
+    pub(crate) q: VecDeque<(Instant, Addr, Vec<u8>)>,
 }
 
 impl Transport for Degraded {

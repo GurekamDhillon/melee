@@ -745,6 +745,7 @@ pub fn ftNess_atan2(gobj: *mut HSD_GObj) {
 }
 
 /// Aerial PK Thunder 2 physics.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftNs_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftNs_SpecialAirHi_Phys");
     unsafe {

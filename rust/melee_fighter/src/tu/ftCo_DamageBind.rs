@@ -76,6 +76,7 @@ pub fn commonCall(f: &mut Fighter) {
     ext::ftCommon_InitGrab(f, 0, timer);
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftCo_800C4550(g: G) {
     melee_core::ct!("ftCo_800C4550");
     // inlines.h `ftCo_ReleaseItemAndVictim`

@@ -179,7 +179,7 @@ pub unsafe extern "C" fn fn_80300DE0(arg0: soundtest_callback_arg0) -> i32 {
         }
         6 => {
             sfx_forward();
-            *ptr = (100.0f32 * un_804D6DD0) as u32 as i32;
+            *ptr = melee_core::ppc::fcvt_u32((100.0f32 * un_804D6DD0)) as i32;
             ext::gm_ChangeGameModeAfterCurrentScene(GM_MENU as i32);
             ext::gm_801A4B60();
         }

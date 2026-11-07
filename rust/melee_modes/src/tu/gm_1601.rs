@@ -2343,10 +2343,10 @@ pub unsafe fn gm_80166378(arg0_raw: *mut MatchEnd) {
             (*arg0).player_standings[iu].x44 = ext::pl_80040B64(i);
             (*arg0).player_standings[iu].x48 = ext::pl_80040BD8(i) as u32;
             (*arg0).player_standings[iu].x4C = ext::pl_80040BFC(i);
-            (*arg0).player_standings[iu].x50 = (ext::pl_80040C24(i) as u32).wrapping_mul(0xA);
-            (*arg0).player_standings[iu].x54 = (ext::pl_80040C48(i) as u32).wrapping_mul(0xA);
-            (*arg0).player_standings[iu].x58 = (ext::pl_80040C6C(i) as u32).wrapping_mul(0xA);
-            (*arg0).player_standings[iu].x5C = (ext::pl_80040C90(i) as u32).wrapping_mul(0xA);
+            (*arg0).player_standings[iu].x50 = (melee_core::ppc::fcvt_u32(ext::pl_80040C24(i))).wrapping_mul(0xA);
+            (*arg0).player_standings[iu].x54 = (melee_core::ppc::fcvt_u32(ext::pl_80040C48(i))).wrapping_mul(0xA);
+            (*arg0).player_standings[iu].x58 = (melee_core::ppc::fcvt_u32(ext::pl_80040C6C(i))).wrapping_mul(0xA);
+            (*arg0).player_standings[iu].x5C = (melee_core::ppc::fcvt_u32(ext::pl_80040C90(i))).wrapping_mul(0xA);
             (*arg0).player_standings[iu].x60 = ext::Player_GetTotalCoins(i) as u32;
             (*arg0).player_standings[iu].x64 = ext::Player_GetUnk98(i) as u32;
             (*arg0).player_standings[iu].x68 = ext::Player_GetUnk9C(i) as u32;
@@ -2362,8 +2362,8 @@ pub unsafe fn gm_80166378(arg0_raw: *mut MatchEnd) {
             (*arg0).player_standings[iu].x90 = ext::pl_8003E39C(i) as u32;
             let c = 60.0f32;
             let d = 10.0f32;
-            (*arg0).player_standings[iu].x94 = (c * (d * ext::pl_80040D44(i))) as u32;
-            (*arg0).player_standings[iu].x98 = (c * (d * ext::pl_80040D68(i))) as u32;
+            (*arg0).player_standings[iu].x94 = melee_core::ppc::fcvt_u32((c * (d * ext::pl_80040D44(i))));
+            (*arg0).player_standings[iu].x98 = melee_core::ppc::fcvt_u32((c * (d * ext::pl_80040D68(i))));
             (*arg0).player_standings[iu].x9C = (ext::pl_80040CFC(i) / 60) as i32;
             (*arg0).player_standings[iu].xA0 = (ext::pl_80040D20(i) as u32 / 60) as i32;
             (*arg0).player_standings[iu].xA4 = ext::pl_80040DB8(i) as u32;

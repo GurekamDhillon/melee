@@ -336,7 +336,7 @@ pub unsafe extern "C" fn it_80275640(item_gobj: *mut HSD_GObj, arg1: f32) {
         if (*hitcapsule).state != HitCapsule_Disabled {
             // ScriptGame_HitRuleBaseDamage(hit) * arg1, converted to u32 (the C (u32) cast of a float: saturating)
             let d = ext::ScriptGame_HitRuleBaseDamage(hitcapsule) * arg1;
-            ext::it_80272460(hitcapsule, d as u32, item_gobj);
+            ext::it_80272460(hitcapsule, melee_core::ppc::fcvt_u32(d), item_gobj);
         }
         i += 1;
     }

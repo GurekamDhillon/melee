@@ -95,6 +95,7 @@ pub(crate) fn caps_max_jumps(f: &Fighter) -> i32 {
 }
 
 /// Yoshi's flip: count down, rotate the root joint by -180/arg1 degrees, turn round at half.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ft_800CB6EC(f: &mut Fighter, arg1: i32) {
     melee_core::ct!("ft_800CB6EC");
     unsafe {
@@ -251,6 +252,7 @@ pub fn ftNs_JumpAerial_Enter(g: G) {
     }
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftYs_JumpAerial_Enter(g: G) {
     melee_core::ct!("ftYs_JumpAerial_Enter");
     let ys = fp(g).dat_attrs as *const ftYoshiAttributes;
@@ -301,6 +303,7 @@ pub fn ftCo_JumpAerial_Anim(g: G) {
     }
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftYs_JumpAerial_Anim_Cb(g: G) {
     melee_core::ct!("ftYs_JumpAerial_Anim_Cb");
     let ys = fp(g).dat_attrs as *const ftYoshiAttributes;

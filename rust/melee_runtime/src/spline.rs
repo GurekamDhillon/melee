@@ -35,7 +35,11 @@ pub fn get_helmite(fterm: f32, time: f32, p0: f32, p1: f32, d0: f32, d1: f32) ->
     let three_t2_t2 = 3.0 * one_t2 * t2;
     let inner = fmadds(p0, 1.0 + (two_t3_t3 - three_t2_t2), p1 * (-two_t3_t3 + three_t2_t2));
     let mid = fmadds(d0, time + ((t3_t2 - t2_t) - t2_t), inner);
-    fmadds(d1, t3_t2 - t2_t, mid)
+    let r = fmadds(d1, t3_t2 - t2_t, mid);
+    if std::env::var_os("TMP_HERM").is_some() {
+        eprintln!("RHERM {:08x} {:08x} {:08x} {:08x} {:08x} {:08x} -> {:08x}", fterm.to_bits(), time.to_bits(), p0.to_bits(), p1.to_bits(), d0.to_bits(), d1.to_bits(), r.to_bits());
+    }
+    r
 }
 
 #[inline(always)]

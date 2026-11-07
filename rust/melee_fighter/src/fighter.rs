@@ -4,6 +4,7 @@
 //! game state, like the C). Checked against the C (cut verbatim) by tests/ftleaf_ref.rs.
 #![allow(static_mut_refs)]
 
+use melee_core::fp::Fmadd as _;
 use crate::types::*;
 
 pub type G = *mut HSD_GObj;
@@ -86,7 +87,7 @@ pub fn ftucf_flick_counter(port: i32) -> i32 {
 /// contracts to an f64 fma (shipping build); written as that fma here.
 pub fn ftucf_rim_units(v: f32) -> i32 {
     let a = if v < 0.0 { -v } else { v };
-    let t = (a as f64).mul_add(80.0, -(9.99999974738e-05f32 as f64)) as f32;
+    let t = (a as f64).fmadd(80.0, -(9.99999974738e-05f32 as f64)) as f32;
     (melee_core::ppc::fctiwz_f32(t)).wrapping_add(2)
 }
 

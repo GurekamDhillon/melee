@@ -41,6 +41,7 @@ pub mod ext {
 }
 
 /// `ftCo_CalcYScaledKnockback`.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftCo_CalcYScaledKnockback(arg0: f32, scale: f32, arg2: f32) -> f32 {
     melee_core::ct!("ftCo_CalcYScaledKnockback");
     assert!(scale != 0.0, "ftchangeparam.c:30 scale != 0.0F");
@@ -57,6 +58,7 @@ pub fn ftCo_CalcYScaledKnockback(arg0: f32, scale: f32, arg2: f32) -> f32 {
 }
 
 /// `ftCo_800CF6E8`: size-scale every scalable attribute.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftco_800cf6e8(a: &mut ftCo_DatAttrs, scale: f32) {
     melee_core::ct!("ftco_800cf6e8");
     if scale == 1.0 {
@@ -110,6 +112,7 @@ fn fp<'a>(g: *mut HSD_GObj) -> &'a mut Fighter {
 }
 
 /// `ftCo_800D0CBC`: scale the x2D0 table's x14 entries.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftco_800d0cbc(g: *mut HSD_GObj) {
     melee_core::ct!("ftco_800d0cbc");
     let f = fp(g);
@@ -137,6 +140,7 @@ pub fn ftco_800d0cbc(g: *mut HSD_GObj) {
 }
 
 /// `ftCo_800D0EC8`: negated size-scaled common x310.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftco_800d0ec8(f: &Fighter) -> f32 {
     melee_core::ct!("ftco_800d0ec8");
     -ftCo_CalcYScaledKnockback(crate::hooks::common_data().x310, f.x34_scale.y, ext::d6524().x30)

@@ -2450,6 +2450,7 @@ pub unsafe fn cycleTeam(cursor: *mut CSSCursorData, dp: *mut CSSDoor, di: i32) {
 /// The cursor token / hand of one port: reads the port's pad, moves the cursor, and performs the
 /// click actions (pick / drop a token, costume change, door toggles, sliders, team box, name tag
 /// list, stock and CPU level buttons, start / back).
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
     melee_core::ct!("mnCharSel_CursorThink");
     let mut sp98: *mut HSD_JObj = null_mut();
@@ -4468,6 +4469,7 @@ fn clears_kos(mt: u8) -> bool {
 /// Builds the character select screen (cameras, light, fog, backgrounds, menus, icons, cursors,
 /// tokens, name tags, the mode's high-score texts and the start banner) and returns the result of
 /// `lbAudioAx_80023F28(gmMainLib_8015ECB0())`.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn mnCharSel_802640A0() -> i32 {
     melee_core::ct!("mnCharSel_802640A0");
     let mut sp108: *mut HSD_JObj = null_mut();

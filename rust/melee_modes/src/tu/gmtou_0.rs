@@ -1119,6 +1119,7 @@ pub unsafe extern "C" fn fn_80192938() {
     (*tm).x33 = 0xFF;
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn fn_80192BB0() {
     melee_core::ct!("fn_80192BB0");
     fn_8019035C(1, *(*lbl_804D664C).models.add(2), 0, 0x1A, 2, 1, Some(fn_8019175C), 0.0);

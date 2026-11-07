@@ -9,11 +9,13 @@
 pub mod codes;
 pub mod ct;
 pub mod fp;
+pub mod fptrace;
 pub mod gc;
 pub mod gcdecode;
 pub mod hash;
 pub mod modhook;
 pub mod pose;
+pub mod slippi_online;
 pub mod ppc;
 pub mod vec;
 

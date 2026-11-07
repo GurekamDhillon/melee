@@ -18,6 +18,7 @@
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::gr::trivial::*;
 #[allow(unused_imports)]
@@ -591,6 +592,7 @@ pub unsafe extern "C" fn grKongo_801D55D8(arg0: *mut HSD_GObj) {
     ext::Ground_801C4D70(arg0, &mut sp14, (*gp).u.kongo.xD8);
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grKongo_801D577C(arg0: *mut HSD_GObj) {
     melee_core::ct!("grKongo_801D577C");
     let gp = (*arg0).user_data as *mut Ground;
@@ -805,7 +807,7 @@ pub unsafe extern "C" fn grKongo_801D6074(arg0: *mut HSD_GObj) {
     (*gp).u.kongo2.xD0 = -99999.0;
     (*gp).u.kongo2.xD4 = 3.4028235e38;
     if (*gp).map_id == Gr_Kind_Test {
-        (*gp).u.kongo.xCC = 45.0f64.mul_add(ext::HSD_Randf() as f64, -15.0) as f32;
+        (*gp).u.kongo.xCC = 45.0f64.fmadd(ext::HSD_Randf() as f64, -15.0) as f32;
     } else {
         (*gp).u.kongo.xCC = (9.0f64 * ext::HSD_Randf() as f64) as f32;
     }
@@ -869,9 +871,9 @@ pub unsafe extern "C" fn grKongo_801D637C(arg0: *mut HSD_GObj) {
     ext::grAnime_801C8138(arg0, (*gp).map_id as enum_t, 0);
     ext::grAnime_801C78FC(arg0, 0, 7);
     if (*gp).map_id == Gr_Kind_Shrine {
-        (*gp).u.kongo.xCC = 45.0f64.mul_add(ext::HSD_Randf() as f64, -15.0) as f32;
+        (*gp).u.kongo.xCC = 45.0f64.fmadd(ext::HSD_Randf() as f64, -15.0) as f32;
     } else if (*gp).map_id == Gr_Kind_Zebes {
-        (*gp).u.kongo.xCC = 20.0f64.mul_add(ext::HSD_Randf() as f64, -10.0) as f32;
+        (*gp).u.kongo.xCC = 20.0f64.fmadd(ext::HSD_Randf() as f64, -10.0) as f32;
     } else {
         (*gp).u.kongo.xCC = (9.0f64 * ext::HSD_Randf() as f64) as f32;
     }
@@ -931,9 +933,9 @@ pub unsafe extern "C" fn grKongo_801D6668(arg0: *mut HSD_GObj) {
             let d = dist as f64;
             let mut guess = frsqrte(d);
             // 0.5 * guess * (3.0 - (guess * guess * dist)): the subtract fuses the product (one f64 fma)
-            guess = (0.5 * guess) * (-(guess * guess)).mul_add(d, 3.0);
-            guess = (0.5 * guess) * (-(guess * guess)).mul_add(d, 3.0);
-            guess = (0.5 * guess) * (-(guess * guess)).mul_add(d, 3.0);
+            guess = (0.5 * guess) * (-(guess * guess)).fmadd(d, 3.0);
+            guess = (0.5 * guess) * (-(guess * guess)).fmadd(d, 3.0);
+            guess = (0.5 * guess) * (-(guess * guess)).fmadd(d, 3.0);
             let length = (d * guess) as f32;
             dist = length;
         }

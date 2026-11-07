@@ -4,6 +4,7 @@
 //! yet; see docs/rust-port/group-4 fighter characters.md. Expected values for the tests come
 //! from the C compiled natively (gen/ref_pure.c, gen/run_ref.sh -> src/pure_ref.rs).
 
+use melee_core::fp::Fmadd as _;
 /// Gekko `frsqrte` (now in melee_core::fp; this crate's tests still check it on 220 inputs).
 pub use melee_core::fp::frsqrte;
 
@@ -18,9 +19,9 @@ pub fn my_sqrtf(x: f32) -> f32 {
     if x > 0.0 {
         let xd = x as f64;
         let mut guess = frsqrte(xd);
-        guess = 0.5 * guess * (-(guess * guess)).mul_add(xd, 3.0);
-        guess = 0.5 * guess * (-(guess * guess)).mul_add(xd, 3.0);
-        guess = 0.5 * guess * (-(guess * guess)).mul_add(xd, 3.0);
+        guess = 0.5 * guess * (-(guess * guess)).fmadd(xd, 3.0);
+        guess = 0.5 * guess * (-(guess * guess)).fmadd(xd, 3.0);
+        guess = 0.5 * guess * (-(guess * guess)).fmadd(xd, 3.0);
         return (xd * guess) as f32;
     }
     x

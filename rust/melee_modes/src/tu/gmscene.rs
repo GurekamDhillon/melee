@@ -422,7 +422,7 @@ pub unsafe extern "C" fn fn_801A4BD0(_gobj: *mut HSD_GObj) { melee_core::ct!("fn
 unsafe fn one_frame_ticks() -> u64 {
     let sec: f32 = 1.0f32 / 60.0f32;
     let clock = ext::__OSBusClock / 4;
-    (sec * (clock as f32)) as u64
+    melee_core::ppc::fcvt_u64((sec * (clock as f32)))
 }
 
 /// Per-scene setup (before the scene's `on_enter` runs).

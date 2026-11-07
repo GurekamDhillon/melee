@@ -357,8 +357,9 @@ pub unsafe extern "C" fn grZebesRoute_8020B1F4() {
         val = 0;
     }
     if val == 0 {
-        let a = ext::Ground_801C5840();
+        // MWCC evaluates these arguments right to left (DOL: the Ground_801C5940 call comes first); both draw HSD_Rand*: notes/semantics.md "evaluation order".
         let b = ext::Ground_801C5940();
+        let a = ext::Ground_801C5840();
         ext::grZakoGenerator_801CAEB0(a, b);
     }
 }

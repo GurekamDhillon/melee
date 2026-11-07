@@ -4,6 +4,7 @@
 //! TODO stubs in `mod ext`, named like the C functions.
 #![allow(non_snake_case, non_upper_case_globals, dead_code, static_mut_refs, unused_unsafe)]
 
+use melee_core::fp::Fmadd as _;
 use core::ffi::{c_char, c_void};
 use melee_types::*;
 
@@ -327,7 +328,7 @@ fn fma_rand_float() -> f32 {
 
 /// `(float)((double)a * (double)c + (double)b)` contracted to one fma.
 fn fma_ref_madd(a: f32, c: f32, b: f32) -> f32 {
-    (a as f64).mul_add(c as f64, b as f64) as f32
+    (a as f64).fmadd(c as f64, b as f64) as f32
 }
 
 /// The split form: a double multiply (exact for float operands), then a double add.

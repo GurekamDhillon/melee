@@ -210,7 +210,7 @@ pub unsafe extern "C" fn it_802B56E4(gobj: *mut Item_GObj, vec: *mut Vec3, farg0
         ext::it_8026B3A8(gobj);
         // (farg1 * ((xC - x8) / farg2)) + x8: contracted
         sv.xDDC = fmadds(farg1, ((*attr).xC - (*attr).x8) / farg2, (*attr).x8);
-        sv.xDF8 = fmadds(farg1, ((*attr).x14 - (*attr).x10) / farg2, (*attr).x10) as u32 as i32;
+        sv.xDF8 = melee_core::ppc::fcvt_u32(fmadds(farg1, ((*attr).x14 - (*attr).x10) / farg2, (*attr).x10)) as i32;
         sv.xDE0 = 0.0;
         sv.xDE4 = fmadds(sv.xDEC as f32, ((*attr).x1C - (*attr).x18) / (sv.xDF0 as f32), (*attr).x18);
         sv.xDF4 = 0;

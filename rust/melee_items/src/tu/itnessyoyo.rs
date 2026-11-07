@@ -4,6 +4,7 @@
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::layout::HSD_GObj;
 #[allow(unused_imports)]
@@ -817,9 +818,9 @@ pub unsafe fn my_sqrtf(x: f32) -> f32 {
     let three: f64 = 3.0;
     if x > 0.0 {
         let mut guess = frsqrte(x as f64);
-        guess = half * guess * (-(guess * guess)).mul_add(x as f64, three);
-        guess = half * guess * (-(guess * guess)).mul_add(x as f64, three);
-        guess = half * guess * (-(guess * guess)).mul_add(x as f64, three);
+        guess = half * guess * (-(guess * guess)).fmadd(x as f64, three);
+        guess = half * guess * (-(guess * guess)).fmadd(x as f64, three);
+        guess = half * guess * (-(guess * guess)).fmadd(x as f64, three);
         let y = (x as f64 * guess) as f32;
         return y;
     }

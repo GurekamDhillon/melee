@@ -4,6 +4,7 @@
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::helpers::it_80275158;
 #[allow(unused_imports)]
@@ -323,7 +324,7 @@ fn my_sqrtf(x: f32) -> f32 {
         let xd = x as f64;
         let mut guess = melee_core::fp::frsqrte(xd);
         for _ in 0..4 {
-            guess = 0.5 * guess * ((-(guess * guess)).mul_add(xd, 3.0));
+            guess = 0.5 * guess * ((-(guess * guess)).fmadd(xd, 3.0));
         }
         return (xd * guess) as f32;
     }

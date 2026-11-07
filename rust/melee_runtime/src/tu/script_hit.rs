@@ -88,5 +88,5 @@ pub unsafe extern "C" fn ScriptGame_HitRuleDamage(hit: *mut HitCapsule) {
             (*hit).damage = 500.0;
         }
     }
-    (*hit).unk_count = ((*hit).unk_count as f32 * (*m).damage_scale) as u32;
+    (*hit).unk_count = melee_core::ppc::fcvt_u32(((*hit).unk_count as f32 * (*m).damage_scale));
 }

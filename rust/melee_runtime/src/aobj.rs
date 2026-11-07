@@ -99,7 +99,7 @@ pub fn fmodf(a: f32, b: f32) -> f32 {
     if b.abs() > a.abs() {
         return a;
     }
-    let q = (a / b) as i64;
+    let q = melee_core::ppc::fcvt_i64((a / b));
     fnmsubs(b, q as f32, a)
 }
 

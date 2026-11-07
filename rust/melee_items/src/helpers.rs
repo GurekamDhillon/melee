@@ -8,6 +8,7 @@
 //! Where the C takes an `Item_GObj*` and only uses `GET_ITEM(gobj)`, the port takes `&mut Item`
 //! (the GObj layer is group 1's; callers pass the user data).
 
+use melee_core::fp::Fmadd as _;
 use crate::layout::{
     ftCommonData, itECB, itSeakChain_Attrs, Collide_CeilingHug, Collide_CeilingPush, GroundOrAir,
     Item, ItemCommonData, ItemLink, Vec as GcVec, GA_Air,
@@ -56,7 +57,7 @@ pub fn it_8027b798_calc_angle(ground_or_air: GroundOrAir, angle: i32, cd: &ftCom
 /// site (`fma(fd, M_PI_2, (double)(fd*m))`, the `fd*m` product in f32), stored as f32.
 pub fn it_dosei_facing_angle(ip: &Item, m: f32) -> f32 {
     let fd = ip.facing_dir;
-    (fd as f64).mul_add(M_PI_2, (fd * m) as f64) as f32
+    (fd as f64).fmadd(M_PI_2, (fd * m) as f64) as f32
 }
 
 // ---- scalar helpers --------------------------------------------------------------------

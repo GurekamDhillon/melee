@@ -525,8 +525,9 @@ pub unsafe extern "C" fn grIceMt_801F7080() {
     if ext::Stage_80225194() == 76 {
         ext::grZakoGenerator_801CAE04(&raw mut (*yakumono_param).xBC);
         if rand_zero((*yakumono_param).xB8 as i32) {
-            let a = ext::Ground_801C5840();
+            // MWCC evaluates these arguments right to left (DOL: the Ground_801C5940 call comes first); both draw HSD_Rand*: notes/semantics.md "evaluation order".
             let b = ext::Ground_801C5940();
+            let a = ext::Ground_801C5840();
             ext::grZakoGenerator_801CAEB0(a, b);
         }
 
@@ -852,6 +853,7 @@ pub unsafe extern "C" fn stageGObj1_OnInit(gobj: *mut Ground_GObj) {
 }
 
 /// 1F7EE8
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn stageGObj1_GObjProc(arg0: *mut Ground_GObj) {
     melee_core::ct!("stageGObj1_GObjProc");
     grIceMt_801F98A8(arg0);
@@ -906,6 +908,7 @@ pub unsafe extern "C" fn stageGObj2_OnInit(arg0: *mut Ground_GObj) {
 }
 
 /// 1F815C
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn stageGObj2_GObjProc(param1: *mut Ground_GObj) {
     melee_core::ct!("stageGObj2_GObjProc");
     let gp = GET_GROUND(param1);

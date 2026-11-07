@@ -5,6 +5,7 @@
 //! `|v| * 80 - 9.95e-6` -> `fmsubs`; ftCo_Ucf073BlocksSpotdodge `y*y + x*x` -> `fmadds(y, y, x*x)`;
 //! ftCo_Ucf084RimUnits double `|v| * 80.0 - c` -> f64 fma.
 //! Checked against the C (whole TU, shipping contraction) by tests/tu_ftCo_Escape.rs.
+use melee_core::fp::Fmadd as _;
 use crate::types::*;
 use melee_core::fp::{fmadds, fmsubs};
 
@@ -260,7 +261,7 @@ pub fn ftCo_Ucf073BlocksSpotdodge(f: &Fighter) -> bool {
 pub fn ftCo_Ucf084RimUnits(v: f32) -> i32 {
     melee_core::ct!("ftCo_Ucf084RimUnits");
     let a = if v < 0.0 { -v } else { v };
-    let t = (a as f64).mul_add(80.0, -(9.99999974738e-05f32 as f64)) as f32;
+    let t = (a as f64).fmadd(80.0, -(9.99999974738e-05f32 as f64)) as f32;
     (melee_core::ppc::fctiwz_f32(t)).wrapping_add(2)
 }
 

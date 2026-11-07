@@ -6,6 +6,7 @@
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::helpers::it_80275158;
 #[allow(unused_imports)]
@@ -141,7 +142,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 /// double fma.
 #[inline(always)]
 fn nr_step(guess: f64, x: f64) -> f64 {
-    (0.5 * guess) * (-(guess * guess)).mul_add(x, 3.0)
+    (0.5 * guess) * (-(guess * guess)).fmadd(x, 3.0)
 }
 
 /// `sqrtf_store` (static inline): `__frsqrte` plus three Newton steps in double; the result goes through the

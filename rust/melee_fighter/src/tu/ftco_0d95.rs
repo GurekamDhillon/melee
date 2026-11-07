@@ -9,6 +9,7 @@
 //! tests/tu_ftco_0d95.rs.
 #![allow(non_snake_case)]
 
+use melee_core::fp::Fmadd as _;
 use super::ftco_0d8e::hsd_jobj_setup_matrix;
 use crate::hooks as h;
 use crate::types::*;
@@ -55,7 +56,7 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 /// `4.0 * d + c` in double (one fma), rounded to f32.
 #[inline(always)]
 fn jitter(d: f32, c: f32) -> f32 {
-    4.0f64.mul_add(d as f64, c as f64) as f32
+    4.0f64.fmadd(d as f64, c as f64) as f32
 }
 
 /// Shared body of fn_800D9558 / fn_800D9930. `a` = (spawn, fire, retract, destroy) frames,
@@ -109,7 +110,7 @@ fn grapple(g: G, a: [i32; 4], sparks: i32, probe: bool) -> bool {
                 hsd_jobj_setup_matrix(joint);
                 let m = unsafe { &(*joint).mtx };
                 let my = m[1][3];
-                let x1 = (2.0 * f.facing_dir as f64).mul_add(f.x34_scale.y as f64, m[0][3] as f64) as f32;
+                let x1 = (2.0 * f.facing_dir as f64).fmadd(f.x34_scale.y as f64, m[0][3] as f64) as f32;
                 if ext::mpCheckAllRemap(-1, -1, f.coll_data.cur_pos.x, my, x1, my) {
                     ext::it_802B7B84(unsafe { f.u.ss.x223C });
                     h::ft_8008a2bc(g);

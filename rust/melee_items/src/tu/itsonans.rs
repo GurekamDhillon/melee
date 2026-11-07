@@ -294,7 +294,7 @@ pub unsafe extern "C" fn it_802CD4FC(gobj: *mut Item_GObj) {
         }
         HSD_JObjSetRotationZ((*(*ip).xBBC_dynamicBoneTable).bones[4], 0.017453292_f32 * (*ip).xDD4_itemVar.sonans.x64);
     }
-    ext::it_80272460(&mut (*ip).x5D4_hitboxes[0].hit, (*ip).xDD4_itemVar.sonans.x68 as u32, gobj);
+    ext::it_80272460(&mut (*ip).x5D4_hitboxes[0].hit, melee_core::ppc::fcvt_u32((*ip).xDD4_itemVar.sonans.x68), gobj);
     (*ip).xDD4_itemVar.sonans.x68 -= (*attrs).x20;
 }
 

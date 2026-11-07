@@ -231,7 +231,7 @@ pub fn ftPk_SpecialS_ChangeMotion_Unk05(gobj: G) {
 unsafe fn s0_hit_damage(gobj: G, fp: *mut Fighter, sa: *mut ftPikachuAttributes) {
     if (*fp).x914[0].state == HitCapsule_Enabled {
         let damage_amount = fmadds((*fp).mv.pk.unk3.x0 as f32, (*sa).x2C, (*sa).x28);
-        ext::ftColl_8007ABD0(&mut (*fp).x914[0], damage_amount as u32, gobj);
+        ext::ftColl_8007ABD0(&mut (*fp).x914[0], melee_core::ppc::fcvt_u32(damage_amount), gobj);
     }
 }
 

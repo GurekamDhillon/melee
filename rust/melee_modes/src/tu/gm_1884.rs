@@ -609,7 +609,7 @@ pub unsafe fn fn_801891F4() {
             {
                 let selected_speed = speeds.values[sub.menu_values[0] as usize];
                 let tick = (OS_BUS_CLOCK / 4) as f32;
-                ext::lb_80019880((1.0f32 / 60.0f32 / selected_speed * tick) as u64);
+                ext::lb_80019880(melee_core::ppc::fcvt_u64((1.0f32 / 60.0f32 / selected_speed * tick)));
             }
 
             fn_80188550(sub.menu_values[2] + 1);

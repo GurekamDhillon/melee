@@ -20,6 +20,7 @@
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::layout::Article;
 #[allow(unused_imports)]
@@ -532,7 +533,7 @@ pub unsafe extern "C" fn itLinkhookshot_UnkMotion8_Anim(arg0: *mut Item_GObj) ->
     let temp_f1 = var_r5 as f32 / (*attr).x2C as f32;
     (*(*(*jobj).child).child).rotate.z = 6.2831855_f32 * temp_f1;
     // `(f32) ((0.65 * (1.0 - (f64) t)) + 0.35)`: one double fma
-    let temp_f0 = 0.6499999761581421_f64.mul_add(1.0 - temp_f1 as f64, 0.3499999940395355) as f32;
+    let temp_f0 = 0.6499999761581421_f64.fmadd(1.0 - temp_f1 as f64, 0.3499999940395355) as f32;
     (*(*(*jobj).child).child).scale.x = temp_f0;
     (*(*(*jobj).child).child).scale.y = temp_f0;
     0

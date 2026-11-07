@@ -1731,6 +1731,7 @@ pub unsafe extern "C" fn grCorneria_801DFC90(_arg: *mut Ground_GObj) -> i32 {
 }
 
 /// `grCorneria_801DFC98`: background 8 scroll.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grCorneria_801DFC98(gobj: *mut Ground_GObj) {
     melee_core::ct!("grCorneria_801DFC98");
     let gp = GET_GROUND(gobj);
@@ -1777,6 +1778,7 @@ pub unsafe extern "C" fn grCorneria_801DFF18(_arg: *mut Ground_GObj) -> i32 {
 }
 
 /// `grCorneria_801DFF20`: background 9 scroll.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grCorneria_801DFF20(gobj: *mut Ground_GObj) {
     melee_core::ct!("grCorneria_801DFF20");
     let gp = GET_GROUND(gobj);
@@ -1823,6 +1825,7 @@ pub unsafe extern "C" fn grCorneria_801E01A0(_arg: *mut Ground_GObj) -> i32 {
 }
 
 /// `grCorneria_801E01A8`: background 4 scroll.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grCorneria_801E01A8(gobj: *mut Ground_GObj) {
     melee_core::ct!("grCorneria_801E01A8");
     let gp = GET_GROUND(gobj);
@@ -1853,6 +1856,7 @@ pub unsafe extern "C" fn grCorneria_801E01A8(gobj: *mut Ground_GObj) {
 pub unsafe extern "C" fn grCorneria_801E03C4(_arg: *mut Ground_GObj) { melee_core::ct!("grCorneria_801E03C4");}
 
 /// `grCorneria_801E03C8` (the C declares a fake `UNK_T` return and returns nothing): spawn the next background.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grCorneria_801E03C8(gobj: *mut Ground_GObj, id: i32) {
     melee_core::ct!("grCorneria_801E03C8");
     let jobj = GET_JOBJ(gobj);
@@ -1879,6 +1883,7 @@ pub unsafe extern "C" fn grCorneria_801E03C8(gobj: *mut Ground_GObj, id: i32) {
 }
 
 /// `grCorneria_801E0678`: park the three backgrounds for the demo.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grCorneria_801E0678() {
     melee_core::ct!("grCorneria_801E0678");
     let mut gobj = ext::Ground_GetMapGObj(0xB);
@@ -1908,6 +1913,7 @@ pub unsafe extern "C" fn grCorneria_801E0678() {
 }
 
 /// `grCorneria_801E08CC`: which background the camera is over (asserts when none).
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grCorneria_801E08CC() -> i32 {
     melee_core::ct!("grCorneria_801E08CC");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1939,6 +1945,7 @@ pub unsafe extern "C" fn grCorneria_801E08CC() -> i32 {
 }
 
 /// `grCorneria_801E0A74`: the same lookup for an x coordinate.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grCorneria_801E0A74(arg0: *const f32) -> i32 {
     melee_core::ct!("grCorneria_801E0A74");
     let mut gobj = ext::Ground_GetMapGObj(8);
@@ -2161,6 +2168,7 @@ unsafe fn Fake_HSD_JObjSetTranslateX(jobj: *mut HSD_JObj, x: f32) {
 }
 
 /// `grCorneria_801E1060`: background scroll from the camera.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grCorneria_801E1060(_gobj: *mut Ground_GObj) {
     melee_core::ct!("grCorneria_801E1060");
     let mut pos = ext::gm_801883C0();

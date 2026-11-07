@@ -13,6 +13,7 @@
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::itkinds7::bisect_value;
 #[allow(unused_imports)]
@@ -1474,8 +1475,8 @@ pub unsafe extern "C" fn it_802BA194(link: *mut ItemLink, pos: *mut Vec3, attrs:
         let dz = (*iter).coll_data.cur_pos.z - (*iter).coll_data.last_pos.z;
         remaining = dz - (*iter).vel.z;
         // `iter->vel.x += 0.12 * (dx - iter->vel.x)`: double product + add, contracted to an fma
-        (*iter).vel.x = (0.12f64.mul_add((dx - (*iter).vel.x) as f64, (*iter).vel.x as f64)) as f32;
-        (*iter).vel.z = (0.12f64.mul_add(remaining as f64, (*iter).vel.z as f64)) as f32;
+        (*iter).vel.x = (0.12f64.fmadd((dx - (*iter).vel.x) as f64, (*iter).vel.x as f64)) as f32;
+        (*iter).vel.z = (0.12f64.fmadd(remaining as f64, (*iter).vel.z as f64)) as f32;
         iter = (*iter).prev;
     }
     result
@@ -1776,7 +1777,7 @@ pub unsafe extern "C" fn it_802BABB8(gobj: *mut Item_GObj) {
     let da = (*(*fp).ft_data).ext_attr as *mut ftSs_DatAttrs;
     ext::Item_80268E5C(gobj, 8, ITEM_ANIM_UPDATE);
     ext::it_802A2428(gobj);
-    (*fp).mv.ss.grapple.x4 = (((*da).xD0 as usize as u32) as i32) as f32;
+    (*fp).mv.ss.grapple.x4 = (*da).xD0 as f32;
 }
 
 pub unsafe extern "C" fn it_802BAC3C(gobj: *mut Fighter_GObj) {

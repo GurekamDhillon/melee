@@ -572,8 +572,17 @@ void* efAsync_Dispatch(s32 gfx_id, HSD_GObj* gobj, va_list vlist)
             scale.x = scale.y = scale.z = f32_2;
             HSD_JObjSetScale(setter_jobj, &scale);
             jobj_2 = HSD_JObjGetChild(jobj_1);
+#if defined(TARGET_PC)
+            /* MWCC evaluates the two va_args right to left (DOL 0x800659A0); clang goes left to right */
+            {
+                u32 tev0 = va_arg(vlist, u32);
+                u32 konst = va_arg(vlist, u32);
+                efLib_SetTevKonstColor(jobj_2, 0, konst, tev0);
+            }
+#else
             efLib_SetTevKonstColor(jobj_2, 0, va_arg(vlist, u32),
                                    va_arg(vlist, u32));
+#endif
         }
         break;
     }

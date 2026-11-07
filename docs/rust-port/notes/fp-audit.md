@@ -60,8 +60,46 @@ The f32 `mul_add` game sites (itlugia, itmaplib, gm_1832, gm_1884, grlib) now us
 
 - 71 functions whose fused count still differs (cross-inline fusion, e.g. ft_800CB6EC, ftColl_8007A06C,
   mpLib_80055E9C); listed below.
-- PSMTXQuat / PSMTXRotAxisRad retail paired-single dataflow (C and Rust) not done.
+- (done, see "Paired-single library routines") PSMTXQuat / PSMTXRotAxisRad retail paired-single dataflow.
 - frsp / fctiw NaN / estimate sites not classified beyond inline sqrtf (already modelled).
+
+## Paired-single library routines (oracle-fix round 3)
+
+The SDK's matrix/vector library in the DOL is hand-written paired-single code, not the C_MTX* reference C. Where the
+port ran the reference, results differ by a few ULP. Found with the Dolphin oracle's per-joint matrix dump
+(notes/dolphin-oracle.md "Bone dump"): Fox's tail joints (lbDynamics `lb_8001044C`, which rebuilds each joint's rotation as
+AngleAxisToQuat, EulerToQuat, QuatMul, PSMTXQuat, MatToEuler) were 1-2 ULP off the console from frame -123. A probe of those
+five calls (the caller's stack frame dumped at each `bl`, r1 = back chain - 0x420) gave equal inputs everywhere and the first
+different value in PSMTXQuat's matrix. The error grows down the joint chain (the next frame's rotation starts from it) and
+reaches the hurt capsules and `cpu.x55C/x560`: this was most of the x-position slpcheck class (19fd3cbb, 03b84423 and others).
+
+| routine | reference (was) | retail (now), C `pc/gameworld/mtx_pc.c` and Rust `melee_runtime/src/mtx.rs` |
+|---|---|---|
+| PSMTXQuat (80342690) | `s = 2/(w*w + (z*z + (x*x + y*y)))` correctly rounded, `xs = x*s` ... | `n = (z*z + x*x) + (w*w + y*y)`; `r = fres(n)`; `s = (r * -(n*r - 2)) * 2`; each element one ps_madd/ps_msub/ps_nmsub, e.g. `m00 = -((z*z + y*y)*s - 1)`, `m20 = -(y*w*2 - (x*z + y*w)) * s` |
+| PSMTXRotAxisRad (80342530) | `c + t*(x*x)` etc. fused | `xt = x*t`, every product rounded alone, ps_sum adds; only m01/m10 fuse `z*s` with `xt*y` (fnmsubs, fmadds) |
+
+PSMTXQuat is also every quaternion joint's matrix (HSD_MtxSRTQuat via `JOBJ_USE_QUATERNION`, the animation blend
+`lb_8000C490`/`lb_8000C868`), so nearly every scenario's hash changed: all changed goldens were re-recorded from the C lanes.
+PSMTXRotAxisRad changed no replay (camera roll is 0) and is kept for the dataflow.
+
+Scanner: `python tools/rust-port/fp_audit/ps_lib_audit.py` lists every DOL PSMTX*/PSVEC* routine with paired-single
+arithmetic or an estimate and whether mtx_pc.c's comment or body names the paired-single steps it models; exit 1 for a
+routine still in reference form (it flags the pre-fix PSMTXQuat and PSMTXRotAxisRad). The Rust mtx.rs bodies are checked
+against the C by `melee_runtime/tests/oracle.rs` (oracle_vectors.txt) and `oracle_jobj.rs`.
+
+Side note: an Euler joint's `rotate.w` differs (console 0x38100000 on Fox's tail, Rust 0): lb_8001044C's MatToEuler
+writes x, y, z of an uninitialised stack Quaternion and the C copies all four. Never read for an Euler joint; not state.
+
+## Generated-type drift (oracle-fix round 3)
+
+Not a rounding class, found on the same sweep. `rust/melee_types/src/gen.rs` still typed `_ftSamusAttributes.xD0` as `void *`
+(an older header); the header says `int`. GcDecoder reads an unrelocated non-zero word in a pointer slot as null, so the Rust
+engine had 0 where the console reads 180 (Dolphin probe at it_802BABB8: r30 = ext_attr, +0xD0 = 0xB4). That is Samus's
+grapple hang time (`fp->mv.ss.grapple.x4`): AirCatchHit (358) ended the first frame, DamageFall (38) instead. The C build reads
+the int from guest memory and was right, so no C mirror and no golden changed. Fixed in gen.rs (field, decoder, layout row).
+Replays: 0a7cb485, 0ecf0448, 3ec676f1 (the slpcheck action 38-vs-358 class) are frame-exact now.
+Scanner: `python tools/rust-port/fp_audit/gen_type_drift.py` lists gen.rs pointer slots whose header field is a scalar
+(exit 1 on a hit; three checked false positives and Jigglypuff's unread xE8/xEC are allow-listed).
 
 ## Unfused-square sites
 

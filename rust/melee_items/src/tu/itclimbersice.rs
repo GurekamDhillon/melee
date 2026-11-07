@@ -362,7 +362,7 @@ pub unsafe fn itClimbersice_Phys_inline(gobj: *mut HSD_GObj) {
     melee_core::ct!("itClimbersice_Phys_inline");
     let ip = item_of(gobj);
     let sa = sa::<itClimbersIceAttributes>(ip);
-    let dmg = (c_abs((*ip).x40_vel.x * (sa.x30 as f32)) as u32).wrapping_add(sa.x2C as u32);
+    let dmg = (melee_core::ppc::fcvt_u32(c_abs((*ip).x40_vel.x * (sa.x30 as f32)))).wrapping_add(sa.x2C as u32);
     ext::it_80272460(&mut (*ip).x5D4_hitboxes[0].hit, dmg, gobj);
 }
 

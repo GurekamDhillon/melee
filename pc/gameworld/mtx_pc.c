@@ -262,18 +262,30 @@ void PSMTXRotAxisRad(Mtx m, Vec* axis, f32 rad)
     y = vN.y;
     z = vN.z;
 
-    m[0][0] = (c + (t * (x * x)));
-    m[0][1] = (y * (t * x)) - (s * z);
-    m[0][2] = (z * (t * x)) + (s * y);
-    m[0][3] = 0.0f;
-    m[1][0] = ((y * (t * x)) + (s * z));
-    m[1][1] = (c + (t * (y * y)));
-    m[1][2] = ((z * (t * y)) - (s * x));
-    m[1][3] = 0.0f;
-    m[2][0] = ((z * (t * x)) - (s * y));
-    m[2][1] = ((z * (t * y)) + (s * x));
-    m[2][2] = (c + (t * (z * z)));
-    m[2][3] = 0.0f;
+    /* The retail paired-single code (80342530), not C_MTXRotAxisRad: xt, yt, zt = x*t, y*t, z*t
+     * (ps_muls0), every product rounded on its own and summed by ps_sum0/ps_sum1; only m01 and
+     * m10 fuse z*s with xt*y (fnmsubs, fmadds). One statement per rounding. */
+    {
+        f32 xt = x * t, yt = y * t, zt = z * t;
+        f32 xs = x * s, ys = y * s;
+        f32 xty = xt * y, xtz = xt * z, ytz = yt * z, p;
+        p = xt * x;
+        m[0][0] = p + c;
+        p = mtx_msub(z, s, xty);
+        m[0][1] = -p;
+        m[0][2] = xtz + ys;
+        m[0][3] = 0.0f;
+        m[1][0] = mtx_madd(z, s, xty);
+        p = yt * y;
+        m[1][1] = c + p;
+        m[1][2] = ytz - xs;
+        m[1][3] = 0.0f;
+        m[2][0] = xtz - ys;
+        m[2][1] = xs + ytz;
+        p = zt * z;
+        m[2][2] = p + c;
+        m[2][3] = 0.0f;
+    }
 }
 
 /* Body of MTXRotTrig.  Kept static: PSMTXRotTrig is not part of the shim
@@ -343,41 +355,56 @@ void MTXRotRad(Mtx m, char axis, f32 rad)
     mtx_rot_trig(m, axis, sinA, cosA);
 }
 
+/* PSMTXQuat follows the retail paired-single code (80342690), not C_MTXQuat: n = (z*z + x*x) +
+ * (w*w + y*y) (ps_mul, ps_madd, ps_sum0); s = 2 * (r * (2 - n*r)) with r the fres estimate (ps_nmsub,
+ * ps_mul, fmuls); each element one ps_madd / ps_msub / ps_nmsub per lane. The reference's exact 2/n
+ * is a few ULP off: Fox's tail (lbDynamics lb_8001044C) rotated 1-2 ULP off the console from frame
+ * -123, which reached the hurt capsules (Dolphin oracle, notes/fp-audit.md "PSMTXQuat"). One
+ * statement per rounding, so clang contracts nothing. */
 void PSMTXQuat(Mtx m, QuaternionPtr q)
 {
-    f32 s;
-    f32 xs, ys, zs;
-    f32 wx, wy, wz;
-    f32 xx, xy, xz;
-    f32 yy, yz;
-    f32 zz;
+    f32 x = q->x, y = q->y, z = q->z, w = q->w;
+    f32 xx, yy, zz, zz_xx, ww_yy, n, r, s, t;
+    f32 xx_yy, zz_yy, yw, xw, zw, xz_p, yz_p;
 
-    s = 2.0f /
-        ((q->w * q->w) + ((q->z * q->z) + ((q->x * q->x) + (q->y * q->y))));
-    xs = q->x * s;
-    ys = q->y * s;
-    zs = q->z * s;
-    wx = q->w * xs;
-    wy = q->w * ys;
-    wz = q->w * zs;
-    xx = q->x * xs;
-    xy = q->x * ys;
-    xz = q->x * zs;
-    yy = q->y * ys;
-    yz = q->y * zs;
-    zz = q->z * zs;
-
-    m[0][0] = (1.0f - (yy + zz));
-    m[0][1] = (xy - wz);
-    m[0][2] = (xz + wy);
+    xx = x * x;
+    yy = y * y;
+    zz_xx = mtx_madd(z, z, xx);
+    ww_yy = mtx_madd(w, w, yy);
+    zz = z * z;
+    n = zz_xx + ww_yy;
+    r = (f32) __fres((double) n);
+    t = mtx_msub(n, r, 2.0f);
+    t = -t;
+    s = r * t;
+    s = s * 2.0f;
+    xx_yy = xx + yy;
+    zz_yy = zz + yy;
+    yw = y * w;
+    xw = x * w;
+    zw = z * w;
+    t = mtx_madd(x, y, zw);
+    m[1][0] = t * s;
+    t = mtx_msub(x, y, zw);
+    m[0][1] = t * s;
+    t = mtx_msub(xx_yy, s, 1.0f);
+    m[2][2] = -t;
+    t = mtx_msub(zz_xx, s, 1.0f);
+    m[1][1] = -t;
+    t = mtx_msub(zz_yy, s, 1.0f);
+    m[0][0] = -t;
+    xz_p = mtx_madd(x, z, yw);
+    yz_p = mtx_madd(y, z, xw);
+    m[0][2] = xz_p * s;
+    m[2][1] = yz_p * s;
+    t = mtx_msub(yw, 2.0f, xz_p);
+    t = -t;
+    m[2][0] = t * s;
+    t = mtx_msub(xw, 2.0f, yz_p);
+    t = -t;
+    m[1][2] = t * s;
     m[0][3] = 0.0f;
-    m[1][0] = (xy + wz);
-    m[1][1] = (1.0f - (xx + zz));
-    m[1][2] = (yz - wx);
     m[1][3] = 0.0f;
-    m[2][0] = (xz - wy);
-    m[2][1] = (yz + wx);
-    m[2][2] = (1.0f - (xx + yy));
     m[2][3] = 0.0f;
 }
 

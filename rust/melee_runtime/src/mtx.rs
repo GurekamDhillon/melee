@@ -132,10 +132,15 @@ pub fn rot_axis_rad(axis: &Vec3, rad: f32) -> Mtx {
     let t = 1.0f32 - c;
     let v = vec_normalize(axis);
     let (x, y, z) = (v.x, v.y, v.z);
+    // The retail paired-single code (80342530), not C_MTXRotAxisRad: xt, yt, zt = x*t, y*t, z*t (ps_muls0), every
+    // product rounded on its own and summed by ps_sum0/ps_sum1; only m01 and m10 fuse (fnmsubs/fmadds z*s with xt*y).
+    let (xt, yt, zt) = (x * t, y * t, z * t);
+    let (xs, ys) = (x * s, y * s);
+    let xty = xt * y;
     [
-        [fmadds(t, x * x, c), fmadds(y, t * x, -(s * z)), fmadds(z, t * x, s * y), 0.0],
-        [fmadds(y, t * x, s * z), fmadds(t, y * y, c), fmadds(z, t * y, -(s * x)), 0.0],
-        [fmadds(z, t * x, -(s * y)), fmadds(z, t * y, s * x), fmadds(t, z * z, c), 0.0],
+        [xt * x + c, -(z as f64 * s as f64 - xty as f64) as f32, xt * z + ys, 0.0],
+        [fmadds(z, s, xty), c + yt * y, yt * z + -xs, 0.0],
+        [xt * z + -ys, xs + yt * z, zt * z + c, 0.0],
     ]
 }
 
@@ -162,26 +167,39 @@ pub fn rot_rad(m: &mut Mtx, axis: u8, rad: f32) {
     rot_trig(m, axis, s, c);
 }
 
-/// `PSMTXQuat`.
+/// `PSMTXQuat`, the retail paired-single code (libs/dolphin/src/dolphin/mtx/mtx.c, 80342690), not the C_MTX
+/// reference: n = (z*z + x*x) + (w*w + y*y) (ps_mul, ps_madd, ps_sum0); s = 2 * fres(n) * (2 - n*fres(n)) (one Newton
+/// step, ps_nmsub, then fmuls by 2); each element as one ps_madd/ps_msub/ps_nmsub per lane (one rounding each).
+/// The C reference (2/n correctly rounded) is a few ULP off this: notes/fp-audit.md "PSMTXQuat".
+/// pc/gameworld/mtx_pc.c does the same, one statement per rounding.
 pub fn quat(q: &Quaternion) -> Mtx {
-    // 2.0f / ((w*w) + ((z*z) + ((x*x) + (y*y))))
-    let s = 2.0f32 / fmadds(q.w, q.w, fmadds(q.z, q.z, fmadds(q.x, q.x, q.y * q.y)));
-    let xs = q.x * s;
-    let ys = q.y * s;
-    let zs = q.z * s;
-    let wx = q.w * xs;
-    let wy = q.w * ys;
-    let wz = q.w * zs;
-    let xx = q.x * xs;
-    let xy = q.x * ys;
-    let xz = q.x * zs;
-    let yy = q.y * ys;
-    let yz = q.y * zs;
-    let zz = q.z * zs;
+    let (x, y, z, w) = (q.x, q.y, q.z, q.w);
+    let madd = |a: f32, c: f32, b: f32| (a as f64 * c as f64 + b as f64) as f32;
+    let msub = |a: f32, c: f32, b: f32| (a as f64 * c as f64 - b as f64) as f32;
+    let nmsub = |a: f32, c: f32, b: f32| -msub(a, c, b);
+    let (xx, yy) = (x * x, y * y);
+    let (zz_xx, ww_yy) = (madd(z, z, xx), madd(w, w, yy));
+    let zz = z * z;
+    let n = zz_xx + ww_yy;
+    let r = melee_core::fp::fres(n as f64) as f32;
+    let s = (r * nmsub(n, r, 2.0)) * 2.0;
+    let xx_yy = xx + yy;
+    let zz_yy = zz + yy;
+    let (yw, xw) = (y * w, x * w);
+    let zw = z * w;
+    let xy_p = madd(x, y, zw) * s;
+    let xy_m = msub(x, y, zw) * s;
+    let m22 = nmsub(xx_yy, s, 1.0);
+    let m11 = nmsub(zz_xx, s, 1.0);
+    let m00 = nmsub(zz_yy, s, 1.0);
+    let xz_p = madd(x, z, yw);
+    let yz_p = madd(y, z, xw);
+    let xz_m = nmsub(yw, 2.0, xz_p) * s;
+    let yz_m = nmsub(xw, 2.0, yz_p) * s;
     [
-        [1.0 - (yy + zz), xy - wz, xz + wy, 0.0],
-        [xy + wz, 1.0 - (xx + zz), yz - wx, 0.0],
-        [xz - wy, yz + wx, 1.0 - (xx + yy), 0.0],
+        [m00, xy_m, xz_p * s, 0.0],
+        [xy_p, m11, yz_m, 0.0],
+        [xz_m, yz_p * s, m22, 0.0],
     ]
 }
 

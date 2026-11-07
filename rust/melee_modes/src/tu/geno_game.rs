@@ -2226,6 +2226,7 @@ pub static mut geno_bhvs: [GenoBhvDef; 17] = unsafe {
                         i32,
                     ) -> (),
             ),
+            // semantics: allow(literal operands; MIR does not fold the cast chain)
             next: (3 as u32 & 15 as u32) << 28 as i32
                 | GENO_BHV_DRILL as i32 as u32 & 0xffff as u32,
             land: GENO_AUTO,
@@ -10935,7 +10936,7 @@ pub unsafe extern "C" fn geno_art_hitbox_on(
     }
     (*hit).jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ScriptGame_HitRuleForget(hit);
-    it_80272460(hit, ((*ip).xC3C * ((dmg + 0.5f32) * (*ip).xC40)) as u32, gobj);
+    it_80272460(hit, melee_core::ppc::fcvt_u32(((*ip).xC3C * ((dmg + 0.5f32) * (*ip).xC40))), gobj);
     (*hit).scale = geno_art_hf(p, a, h, GENO_AH_SIZE as i32)
         as f32;
     (*ip).x3C = (*hit).scale as f32;

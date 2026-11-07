@@ -138,7 +138,7 @@ fn my_fmodf(a: f32, b: f32) -> f32 {
     if fb > fa {
         return a;
     }
-    let quotient = (a / b) as i64;
+    let quotient = melee_core::ppc::fcvt_i64((a / b));
     fmadds(-b, quotient as f32, a)
 }
 

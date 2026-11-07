@@ -215,11 +215,25 @@ struct PipelineKey {
     bias: (u32, u32, u32),
 }
 
-/// Decoded-texture cache key: the texture's content identity (guest bytes, shape, format and, for
-/// palette formats, the TLUT bytes and layout). NOT the GXTexObj id: the HSD layer re-inits a fresh
-/// TexObj on every `load_texture`, so an id-keyed cache created a new GPU texture per draw per frame.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+/// Decoded-texture cache key: the texture's content identity (a 128-bit hash of the guest bytes and, for palette
+/// formats, the TLUT bytes, plus shape, format and TLUT layout). NOT the GXTexObj id (the HSD layer re-inits a fresh
+/// TexObj on every `load_texture`) and not the data's address: the same image handed over in a new buffer each frame
+/// must hit the same decoded texture instead of being decoded and uploaded again.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 struct TexKey {
+    hash: [u64; 2],
+    len: usize,
+    w: u32,
+    h: u32,
+    fmt: u32,
+    mips: u32,
+    tlut: (usize, u32, u16),
+}
+
+/// Where a texture's bytes live (data / TLUT `Arc` address and length) plus the shape fields of [`TexKey`]: the
+/// per-frame fast path to the content key, so bytes that stay put are hashed once, not every frame.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+struct TexAddr {
     ptr: usize,
     len: usize,
     w: u32,
@@ -229,19 +243,59 @@ struct TexKey {
     tlut: (usize, usize, u32, u16),
 }
 
-/// A cached texture; `_data` / `_tlut` keep the source `Arc`s alive so their addresses (the key) cannot be reused.
+/// An address -> content key alias; `_data` / `_tlut` keep the source `Arc`s alive so their addresses cannot be
+/// reused by other bytes while the alias exists (an `Arc<[u8]>` is immutable, so the address pins the content).
+struct TexAlias {
+    key: TexKey,
+    _data: GxData,
+    _tlut: Option<GxData>,
+    used: u64,
+}
+
+/// A cached decoded texture.
 struct TexEntry {
     _tex: wgpu::Texture,
     view: wgpu::TextureView,
-    _data: GxData,
-    _tlut: Option<GxData>,
-    /// The last [`Renderer::prepare`] count it was used at (see `TEX_KEEP`).
+    /// GPU bytes (all mips, RGBA8).
+    bytes: u64,
+    /// The last [`Renderer::prepare`] count it was used at.
     used: std::cell::Cell<u64>,
 }
 
-/// A decoded texture not used for this many prepared frames is dropped (with every cached bind group): the cache
-/// is keyed by guest address, so each match's files added entries that were never used again.
-const TEX_KEEP: u64 = 600;
+/// An address alias not used for this many prepared frames is dropped (releasing the guest buffer it holds): a
+/// buffer handed over anew every frame then pins at most a few frames' worth of bytes.
+const ALIAS_KEEP: u64 = 4;
+/// A decoded texture not used for this many prepared frames is dropped (with the bind groups that use it).
+const TEX_KEEP: u64 = 120;
+/// Over this many bytes of decoded textures, those not used in the last two frames are dropped oldest first.
+const TEX_BUDGET: u64 = 256 << 20;
+
+/// 128-bit content hash of `a` into `h` (two multiply-fold lanes over 16-byte blocks, length mixed in).
+fn content_hash(a: &[u8], h: &mut [u64; 2]) {
+    #[inline(always)]
+    fn fold(a: u64, b: u64) -> u64 {
+        let m = (a as u128).wrapping_mul(b as u128);
+        (m as u64) ^ ((m >> 64) as u64)
+    }
+    const K: [u64; 4] = [0xa076_1d64_78bd_642f, 0xe703_7ed1_a0b4_28db, 0x8ebc_6af0_9c88_c6e3, 0x5899_65cc_7537_4cc3];
+    let (mut x, mut y) = (h[0] ^ a.len() as u64, h[1].wrapping_add(a.len() as u64).rotate_left(17));
+    let mut c = a.chunks_exact(16);
+    for w in &mut c {
+        let p = u64::from_le_bytes(w[..8].try_into().unwrap());
+        let q = u64::from_le_bytes(w[8..].try_into().unwrap());
+        x = fold(x ^ p ^ K[0], q ^ K[1]);
+        y = fold(y ^ q ^ K[2], p.rotate_left(29) ^ K[3]);
+    }
+    let r = c.remainder();
+    let mut t = [0u8; 16];
+    t[..r.len()].copy_from_slice(r);
+    let p = u64::from_le_bytes(t[..8].try_into().unwrap()) ^ r.len() as u64;
+    let q = u64::from_le_bytes(t[8..].try_into().unwrap());
+    x = fold(x ^ p ^ K[1], q ^ K[0]);
+    y = fold(y ^ q ^ K[3], p ^ K[2]);
+    h[0] = fold(x, K[2] ^ y);
+    h[1] = fold(y, K[1] ^ x.rotate_left(31));
+}
 
 /// Offscreen GX renderer.
 pub struct Renderer {
@@ -280,6 +334,10 @@ pub struct Renderer {
     gpu: std::sync::Arc<GpuHealth>,
     samplers: FxMap<SamplerKey, wgpu::Sampler>,
     textures: FxMap<TexKey, TexEntry>,
+    /// Address aliases of `textures` keys ([`TexAlias`]).
+    tex_alias: FxMap<TexAddr, TexAlias>,
+    /// Sum of `textures`' `bytes`.
+    tex_bytes: u64,
     /// `tex_override::generation()` the decoded textures were made under.
     ovr_gen: u64,
     /// [`Renderer::prepare`] calls so far (texture eviction clock).
@@ -829,7 +887,10 @@ struct FrameCache {
     vbuf: Vec<u8>,
     abuf: Vec<u8>,
     ibuf: Vec<u8>,
-    ubuf: Vec<u8>,
+    /// Bytes of uniform blocks of the prepared frame (the `gu` upload size).
+    ubytes: u64,
+    /// One block's scratch for a `fill` callback (it reads / writes plain memory, not the upload staging).
+    uscratch: Vec<u8>,
     arr_max: FxMap<usize, usize>,
     arr_off: FxMap<usize, u32>,
     gv: Option<GpuBuf>,
@@ -839,10 +900,30 @@ struct FrameCache {
     storage_bg: Option<wgpu::BindGroup>,
     uniform_bg: Option<(wgpu::BindGroup, u64)>,
     max_uniform: u64,
-    /// 0: `ubuf` must be refilled from the draws; 1: it holds their uniforms; 2: `fill` rewrote parts of it.
-    ubuf_state: u8,
     /// The previous draw's pipeline config and its pipeline (consecutive draws mostly share one).
-    last_pipe: Option<(std::sync::Arc<crate::shader::PipelineConfig>, Option<wgpu::RenderPipeline>)>,
+    last_pipe: Vec<(std::sync::Arc<crate::shader::PipelineConfig>, Option<wgpu::RenderPipeline>)>,
+}
+
+/// Pipeline configs [`Renderer::prepare`] remembers across draws (and frames) before asking the pipeline cache.
+const RECENT_PIPES: usize = 8;
+
+/// `a == b`, comparing the fixed-function fields before the large shader config.
+fn same_config(a: &crate::shader::PipelineConfig, b: &crate::shader::PipelineConfig) -> bool {
+    a.depth_func == b.depth_func
+        && a.cull_mode == b.cull_mode
+        && a.blend_mode == b.blend_mode
+        && a.blend_fac_src == b.blend_fac_src
+        && a.blend_fac_dst == b.blend_fac_dst
+        && a.blend_op == b.blend_op
+        && a.dst_alpha == b.dst_alpha
+        && a.polygon_offset == b.polygon_offset
+        && a.polygon_offset_scale == b.polygon_offset_scale
+        && a.polygon_offset_clamp == b.polygon_offset_clamp
+        && a.depth_compare == b.depth_compare
+        && a.depth_update == b.depth_update
+        && a.alpha_update == b.alpha_update
+        && a.color_update == b.color_update
+        && a.shader == b.shader
 }
 
 /// Make `slot` hold at least `size` bytes; true when the buffer was (re)created.
@@ -1088,6 +1169,8 @@ impl Renderer {
             tex_bgs: FxMap::default(),
             samplers: FxMap::default(),
             textures: FxMap::default(),
+            tex_alias: FxMap::default(),
+            tex_bytes: 0,
             ovr_gen: crate::tex_override::generation(),
             prepared: 0,
             packed: None,
@@ -1127,18 +1210,48 @@ impl Renderer {
         self.pipes.clone()
     }
 
-    /// The cache key `texture_view` would use for `map`, if the texture is already decoded.
-    fn cached_tex_key(&self, d: &DrawCmd, map: usize) -> Option<TexKey> {
+    /// The content key of `d`'s texture `map` (through the address alias; the bytes are hashed on a miss), or None
+    /// without data.
+    fn tex_key(&mut self, d: &DrawCmd, map: usize) -> Option<TexKey> {
         let o = &d.textures[map];
         let data = o.data.as_ref()?;
         let fmt = o.format();
         let pal = matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2);
         let tl = if pal { d.tluts.get(o.tlut as usize) } else { None };
-        let tlut_key = match (tl, tl.and_then(|t| t.data.as_ref())) {
-            (Some(t), Some(td)) => (td.as_ptr() as usize, td.len(), t.format, t.num_entries),
-            _ => (0, 0, 0, 0),
+        let tld = tl.and_then(|t| t.data.as_ref());
+        let (tfmt, tn) = match (tl, tld) {
+            (Some(t), Some(_)) => (t.format, t.num_entries),
+            _ => (0, 0),
         };
-        let key = TexKey { ptr: data.as_ptr() as usize, len: data.len(), w: o.width(), h: o.height(), fmt, mips: o.mip_count(), tlut: tlut_key };
+        let (w, h, mips) = (o.width(), o.height(), o.mip_count());
+        let addr = TexAddr {
+            ptr: data.as_ptr() as usize,
+            len: data.len(),
+            w,
+            h,
+            fmt,
+            mips,
+            tlut: tld.map_or((0, 0, 0, 0), |td| (td.as_ptr() as usize, td.len(), tfmt, tn)),
+        };
+        let now = self.prepared;
+        if let Some(a) = self.tex_alias.get_mut(&addr) {
+            a.used = now;
+            return Some(a.key);
+        }
+        let mut hash = [0x243f_6a88_85a3_08d3, 0x1319_8a2e_0370_7344];
+        content_hash(data, &mut hash);
+        if let Some(td) = tld {
+            hash[0] ^= 0x9e37_79b9_7f4a_7c15;
+            content_hash(td, &mut hash);
+        }
+        let key = TexKey { hash, len: data.len(), w, h, fmt, mips, tlut: (tld.map_or(0, |t| t.len()), tfmt, tn) };
+        self.tex_alias.insert(addr, TexAlias { key, _data: data.clone(), _tlut: tld.cloned(), used: now });
+        Some(key)
+    }
+
+    /// The cache key `texture_view` would use for `map`, if the texture is already decoded.
+    fn cached_tex_key(&mut self, d: &DrawCmd, map: usize) -> Option<TexKey> {
+        let key = self.tex_key(d, map)?;
         let e = self.textures.get(&key)?;
         e.used.set(self.prepared);
         Some(key)
@@ -1276,11 +1389,7 @@ impl Renderer {
         let pal = matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2);
         let tl = if pal { d.tluts.get(o.tlut as usize) } else { None };
         let tlut_data = tl.and_then(|t| t.data.clone());
-        let tlut_key = match (tl, &tlut_data) {
-            (Some(t), Some(td)) => (td.as_ptr() as usize, td.len(), t.format, t.num_entries),
-            _ => (0, 0, 0, 0),
-        };
-        let key = TexKey { ptr: data.as_ptr() as usize, len: data.len(), w, h, fmt, mips, tlut: tlut_key };
+        let key = self.tex_key(d, map)?;
         if let Some(e) = self.textures.get(&key) {
             e.used.set(self.prepared);
             return Some(e.view.clone());
@@ -1325,6 +1434,7 @@ impl Renderer {
             eprintln!("gx: out of video memory creating a {w}x{h} texture ({} cached): evicting the texture cache", self.textures.len());
             self.tex_bgs.clear();
             self.textures.clear();
+            self.tex_bytes = 0;
             (tex, errs) = guarded(|| self.device.create_texture(&desc));
             if errs.iter().all(|e| matches!(e, wgpu::Error::OutOfMemory { .. })) && !errs.is_empty() {
                 eprintln!("gx: out of video memory again: drawing it untextured");
@@ -1350,7 +1460,15 @@ impl Renderer {
             mh = (mh >> 1).max(1);
         }
         let view = tex.create_view(&Default::default());
-        self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), _data: data.clone(), _tlut: tlut_data, used: std::cell::Cell::new(self.prepared) });
+        let mut bytes = 0u64;
+        let (mut mw, mut mh) = (w as u64, h as u64);
+        for _ in 0..mips {
+            bytes += mw * mh * 4;
+            mw = (mw >> 1).max(1);
+            mh = (mh >> 1).max(1);
+        }
+        self.tex_bytes += bytes;
+        self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), bytes, used: std::cell::Cell::new(self.prepared) });
         Some(view)
     }
 
@@ -1414,18 +1532,13 @@ impl Renderer {
             self.ovr_gen = g;
             self.tex_bgs.clear();
             self.textures.clear();
+            self.tex_alias.clear();
+            self.tex_bytes = 0;
         }
-        if self.prepared % TEX_KEEP == 0 {
-            let now = self.prepared;
-            let before = self.textures.len();
-            self.textures.retain(|_, e| now - e.used.get() < TEX_KEEP);
-            if self.textures.len() != before {
-                self.tex_bgs.clear();
-            }
-        }
-        if self.prepared % TEX_KEEP == 0 && std::env::var_os("MELEE_GX_CACHE_LOG").is_some() {
+        self.evict_textures();
+        if self.prepared % 600 == 0 && std::env::var_os("MELEE_GX_CACHE_LOG").is_some() {
             let f = &self.frame;
-            eprintln!("gx cache: prepared {} textures {} tex_bgs {} samplers {} pipelines {} efb_copies {} wgsl {} frame vecs {} {} {} {} draws {}", self.prepared, self.textures.len(), self.tex_bgs.len(), self.samplers.len(), self.pipes.len(), self.efb_copies.len(), self.pipes.wgsl_hashes.lock().unwrap().len(), f.vbuf.capacity(), f.abuf.capacity(), f.ibuf.capacity(), f.ubuf.capacity(), f.draws.capacity());
+            eprintln!("gx cache: prepared {} textures {} tex_bgs {} samplers {} pipelines {} efb_copies {} wgsl {} frame vecs {} {} {} {} draws {}", self.prepared, self.textures.len(), self.tex_bgs.len(), self.samplers.len(), self.pipes.len(), self.efb_copies.len(), self.pipes.wgsl_hashes.lock().unwrap().len(), f.vbuf.capacity(), f.abuf.capacity(), f.ibuf.capacity(), f.ubytes, f.draws.capacity());
         }
         let mut fc = std::mem::take(&mut self.frame);
         // the CPU packing, done on the GX decode thread when it handed one over for exactly these draws
@@ -1443,8 +1556,7 @@ impl Renderer {
         let max_uniform = pk.max_uniform;
         fc.max_uniform = (max_uniform as u64).next_multiple_of(16);
         let ubytes = uoff as u64 + fc.max_uniform;
-        fc.ubuf.resize(ubytes as usize, 0);
-        fc.ubuf_state = 0;
+        fc.ubytes = ubytes;
         let t1 = std::time::Instant::now();
         let st = wgpu::BufferUsages::STORAGE;
         let mut regroup = ensure_buf(&self.device, &mut fc.gv, fc.vbuf.len() as u64 + 4, st, "GX vbuf");
@@ -1506,7 +1618,7 @@ impl Renderer {
         for c in draws.iter().filter_map(|d| d.copy.as_deref()) {
             self.ensure_copy_target(c);
         }
-        let mut last_pipe = fc.last_pipe.take();
+        let mut last_pipe = std::mem::take(&mut fc.last_pipe);
         let (mut miss_pipe, mut miss_tex, mut n_pipe, mut n_tex) = (std::time::Duration::ZERO, std::time::Duration::ZERO, 0usize, 0usize);
         for (i, d) in draws.iter().enumerate() {
             if d.copy.is_some() || fc.draws[i].merged {
@@ -1517,16 +1629,24 @@ impl Renderer {
             let p = if d.config.cull_mode == GX_CULL_ALL {
                 None
             } else {
-                match last_pipe.as_ref() {
-                    Some((cfg, p)) if std::sync::Arc::ptr_eq(cfg, &d.config) || **cfg == *d.config => p.clone(),
-                    _ => {
+                // the few configs a frame alternates between, newest first: same Arc, else equal (cheap fields first)
+                let hit = last_pipe.iter().position(|(cfg, _)| std::sync::Arc::ptr_eq(cfg, &d.config)).or_else(|| last_pipe.iter().position(|(cfg, _)| same_config(cfg, &d.config)));
+                match hit {
+                    Some(k) => {
+                        let e = last_pipe.remove(k);
+                        let p = e.1.clone();
+                        last_pipe.insert(0, e);
+                        p
+                    }
+                    None => {
                         let (n0, tp) = (self.pipes.len(), std::time::Instant::now());
                         let p = self.pipeline(d);
                         if self.pipes.len() != n0 {
                             miss_pipe += tp.elapsed();
                             n_pipe += 1;
                         }
-                        last_pipe = Some((d.config.clone(), p.clone()));
+                        last_pipe.truncate(RECENT_PIPES - 1);
+                        last_pipe.insert(0, (d.config.clone(), p.clone()));
                         p
                     }
                 }
@@ -1551,12 +1671,50 @@ impl Renderer {
                 t2.elapsed(),
                 self.frame.vbuf.len(),
                 self.frame.abuf.len(),
-                self.frame.ubuf.len(),
+                self.frame.ubytes,
                 n_pipe,
                 miss_pipe,
                 n_tex,
                 miss_tex
             );
+        }
+    }
+
+    /// Drop stale address aliases and decoded textures (see `ALIAS_KEEP`, `TEX_KEEP`, `TEX_BUDGET`), and the cached
+    /// bind groups that use a dropped texture.
+    fn evict_textures(&mut self) {
+        let now = self.prepared;
+        if self.tex_alias.len() > 64 || now % ALIAS_KEEP == 0 {
+            self.tex_alias.retain(|_, a| now - a.used < ALIAS_KEEP);
+        }
+        let before = self.textures.len();
+        if self.tex_bytes > TEX_BUDGET {
+            // the last two frames' textures are in use: the budget is only enforced among older ones
+            let mut ages: Vec<(u64, TexKey)> = self.textures.iter().filter(|(_, e)| now - e.used.get() > 1).map(|(k, e)| (e.used.get(), *k)).collect();
+            ages.sort_unstable_by_key(|a| a.0);
+            for (_, k) in ages {
+                if self.tex_bytes <= TEX_BUDGET * 3 / 4 {
+                    break;
+                }
+                if let Some(e) = self.textures.remove(&k) {
+                    self.tex_bytes -= e.bytes;
+                }
+            }
+        }
+        if now % 16 == 0 {
+            let mut freed = 0;
+            self.textures.retain(|_, e| {
+                let keep = now - e.used.get() < TEX_KEEP;
+                if !keep {
+                    freed += e.bytes;
+                }
+                keep
+            });
+            self.tex_bytes -= freed;
+        }
+        if self.textures.len() != before {
+            let t = &self.textures;
+            self.tex_bgs.retain(|k, _| k.iter().flatten().all(|(tk, _)| t.contains_key(tk)));
         }
     }
 
@@ -1622,30 +1780,38 @@ impl Renderer {
         let t0 = std::time::Instant::now();
         let fc = &mut self.frame;
         assert_eq!(fc.draws.len(), draws.len(), "draw_prepared: not the prepared frame");
-        // The uniform blocks are copied once per prepared frame; `fill` only rewrites what it changes
-        // (it must write every byte it ever changes, from its own inputs, each time it is called).
-        if fc.ubuf_state == 0 || (fill.is_none() && fc.ubuf_state == 2) {
-            for (i, d) in draws.iter().enumerate() {
-                if fc.draws[i].owner {
-                    let o = fc.draws[i].uoff as usize;
-                    fc.ubuf[o..o + d.uniform.len()].copy_from_slice(&d.uniform);
-                }
-            }
-            fc.ubuf_state = 1;
-        }
-        if let Some(f) = fill.as_mut() {
+        // Every presentation writes the uniform blocks straight into the upload staging: each owner's block from its
+        // draw, then `fill(i, block)` may rewrite it (it must write every byte it ever changes, from its own inputs,
+        // each time it is called). Alignment gaps are zeroed so the upload never carries stale staging bytes.
+        if let Some(g) = fc.gu.as_ref().filter(|_| fc.ubytes > 0) {
             let tf = std::time::Instant::now();
+            let mut view = self.queue.write_buffer_with(&g.buf, 0, std::num::NonZeroU64::new(fc.ubytes).unwrap()).expect("uniform upload");
+            let buf: &mut [u8] = &mut view; // write only: reading the staging through `view` panics
+            let mut at = 0usize;
             for (i, d) in draws.iter().enumerate() {
-                if fc.draws[i].owner {
-                    let o = fc.draws[i].uoff as usize;
-                    f(i, &mut fc.ubuf[o..o + d.uniform.len()]);
+                let pd = &fc.draws[i];
+                if !pd.owner {
+                    continue;
                 }
+                let o = pd.uoff as usize;
+                let n = d.uniform.len();
+                buf[at..o].fill(0);
+                match fill.as_mut() {
+                    Some(f) => {
+                        fc.uscratch.clear();
+                        fc.uscratch.extend_from_slice(&d.uniform);
+                        f(i, &mut fc.uscratch);
+                        buf[o..o + n].copy_from_slice(&fc.uscratch);
+                    }
+                    None => buf[o..o + n].copy_from_slice(&d.uniform),
+                }
+                at = o + n;
             }
-            fc.ubuf_state = 2;
-            self.last_fill_us = tf.elapsed().as_micros() as u32;
-        }
-        if let Some(g) = fc.gu.as_ref() {
-            self.queue.write_buffer(&g.buf, 0, &fc.ubuf);
+            buf[at..].fill(0);
+            drop(view);
+            if fill.is_some() {
+                self.last_fill_us = tf.elapsed().as_micros() as u32;
+            }
         }
         let t1 = std::time::Instant::now();
         if draws.iter().any(|d| d.copy.is_some()) {
@@ -2265,6 +2431,7 @@ fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawC
     let mut cur_tex: Option<&wgpu::BindGroup> = None;
     let mut cur_blend = f64::NAN;
     let mut cur_uoff = u32::MAX;
+    let mut cur_imm: Option<&[u8; 64]> = None;
     for i in range {
         let d = &draws[i];
         let pd = &fc.draws[i];
@@ -2292,6 +2459,7 @@ fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawC
         if cur_pipe.is_none_or(|c| c != p) {
             pass.set_pipeline(p);
             cur_pipe = Some(p);
+            cur_imm = None;
         }
         if pd.uoff != cur_uoff {
             pass.set_bind_group(1, ubg, &[pd.uoff]);
@@ -2301,7 +2469,11 @@ fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawC
             pass.set_bind_group(2, tex_bg, &[]);
             cur_tex = Some(tex_bg);
         }
-        pass.set_push_constants(wgpu::ShaderStages::VERTEX_FRAGMENT, 0, &pd.imm);
+        // push constants persist across draws; re-sent when they differ or a pipeline was bound
+        if cur_imm != Some(&pd.imm) {
+            pass.set_push_constants(wgpu::ShaderStages::VERTEX_FRAGMENT, 0, &pd.imm);
+            cur_imm = Some(&pd.imm);
+        }
         if d.config.dst_alpha != u32::MAX {
             let a = d.config.dst_alpha as f64 / 255.0;
             if a.to_bits() != cur_blend.to_bits() {

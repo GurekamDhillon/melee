@@ -337,6 +337,7 @@ pub unsafe extern "C" fn fn_8021F424() -> i32 {
 }
 
 /// 21F474
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn stageGObj1_GObjProc(ground: *mut Ground_GObj) {
     melee_core::ct!("stageGObj1_GObjProc");
     let gp = (*ground).user_data as *mut Ground;
@@ -376,6 +377,7 @@ pub unsafe extern "C" fn grHeal_8021F4E8(arg0: i32, parent_jobj: *mut HSD_JObj) 
 pub unsafe extern "C" fn stageGObj2_OnInit(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj2_OnInit");}
 
 /// 21F5D4
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn stageGObj2_GObjProc(_gobj: *mut Ground_GObj) { melee_core::ct!("stageGObj2_GObjProc");}
 
 /// 21F5D8

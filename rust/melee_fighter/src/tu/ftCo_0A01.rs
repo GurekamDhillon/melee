@@ -1002,6 +1002,7 @@ pub unsafe fn ftCo_800A21FC(mut fp: *mut Fighter) -> i32 {
 }
 
 /// `ftCo_800A229C`
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn ftCo_800A229C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
     melee_core::ct!("ftCo_800A229C");
     let mut sp2C: Vec3 = unsafe { core::mem::zeroed() };
@@ -4900,6 +4901,7 @@ unsafe fn ftCo_800ABBA8_blk155144r(mut fp: *mut Fighter, mut target: *mut *mut F
 }
 
 /// `ftCo_800ABBA8`
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn ftCo_800ABBA8(mut fp: *mut Fighter) {
     melee_core::ct!("ftCo_800ABBA8");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
@@ -6324,6 +6326,7 @@ unsafe fn ftCo_CpuApproachFoodItemTarget(mut fp: *mut Fighter, mut data: *mut Cp
 }
 
 /// `ftCo_800AF290`
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn ftCo_800AF290(mut fp: *mut Fighter) {
     melee_core::ct!("ftCo_800AF290");
     let mut sp54: Vec3 = unsafe { core::mem::zeroed() };
@@ -6385,6 +6388,7 @@ pub unsafe fn ftCo_800AF290(mut fp: *mut Fighter) {
 }
 
 /// `ftCo_800AF78C`
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn ftCo_800AF78C(mut fp: *mut Fighter) {
     melee_core::ct!("ftCo_800AF78C");
     let mut sp4C: Vec3 = unsafe { core::mem::zeroed() };

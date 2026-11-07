@@ -230,6 +230,7 @@ pub fn ftCo_800C0CB8(g: G) -> bool {
     false
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftCo_800C0D0C(g: G) {
     melee_core::ct!("ftCo_800C0D0C");
     let mut joint_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

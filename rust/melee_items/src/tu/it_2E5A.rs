@@ -15,6 +15,7 @@
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::itkinds7::bisect_value;
 #[allow(unused_imports)]
@@ -703,7 +704,7 @@ pub unsafe extern "C" fn it_2E5A_UnkMotion1_Anim(item_gobj: *mut HSD_GObj) -> bo
     melee_core::ct!("it_2E5A_UnkMotion1_Anim");
     let item = GET_ITEM(item_gobj);
     // `(0.1 * ABS(vy)) + 1.0` in double: one fused multiply-add
-    (*item).x5D0_animFrameSpeed = (0.1f64).mul_add(ABS((*item).x40_vel.y) as f64, 1.0) as f32;
+    (*item).x5D0_animFrameSpeed = (0.1f64).fmadd(ABS((*item).x40_vel.y) as f64, 1.0) as f32;
     it_802E657C(item_gobj)
 }
 

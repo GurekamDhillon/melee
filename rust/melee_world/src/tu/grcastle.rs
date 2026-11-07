@@ -17,6 +17,7 @@
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::gr::trivial::*;
 #[allow(unused_imports)]
@@ -1910,7 +1911,7 @@ pub unsafe fn grCastle_801D0BBC() {
         }
     }
     if grCs_804D45E4 != 0 {
-        (*grCs_804D6974).unk_scale = 0.3f64.mul_add(ext::HSD_Randf() as f64, 0.2) as f32;
+        (*grCs_804D6974).unk_scale = 0.3f64.fmadd(ext::HSD_Randf() as f64, 0.2) as f32;
         return;
     }
     (*grCs_804D6974).unk_scale = (0.05f64 * ext::HSD_Randf() as f64) as f32;
@@ -1919,7 +1920,7 @@ pub unsafe fn grCastle_801D0BBC() {
 pub unsafe fn grCastle_801D0D24() {
     melee_core::ct!("grCastle_801D0D24");
     if grCs_804D45E4 != 0 {
-        (*grCs_804D6974).unk_scale = 0.3f64.mul_add(ext::HSD_Randf() as f64, 0.2) as f32;
+        (*grCs_804D6974).unk_scale = 0.3f64.fmadd(ext::HSD_Randf() as f64, 0.2) as f32;
     } else {
         (*grCs_804D6974).unk_scale = (0.05f64 * ext::HSD_Randf() as f64) as f32;
     }

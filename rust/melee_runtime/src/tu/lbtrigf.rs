@@ -5,6 +5,7 @@
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::gekko::frsqrte as frsqrte_lbtrigf;
 #[allow(unused_imports)]
@@ -39,13 +40,13 @@ const INF_BITS: u32 = 0x7F80_0000; // MSL_TrigF_80400774[0]
 /// double expression into one fma.
 pub fn lbTrigf_Fmadds(a: f32, c: f32, b: f32) -> f32 {
     melee_core::ct!("lbTrigf_Fmadds");
-    (a as f64).mul_add(c as f64, b as f64) as f32
+    (a as f64).fmadd(c as f64, b as f64) as f32
 }
 
 /// `lbTrigf_Fnmsubs`: `(float) -((double) a * (double) c - (double) b)` (one fma with the sign folded in).
 pub fn lbTrigf_Fnmsubs(a: f32, c: f32, b: f32) -> f32 {
     melee_core::ct!("lbTrigf_Fnmsubs");
-    (-(a as f64).mul_add(c as f64, -(b as f64))) as f32
+    (-(a as f64).fmadd(c as f64, -(b as f64))) as f32
 }
 
 /// The float Newton step: `0.5f * g * (3.0f - g * g * v)`, the `3 - (g*g)*v` fused.

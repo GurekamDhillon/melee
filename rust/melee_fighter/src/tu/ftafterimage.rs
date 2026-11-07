@@ -151,7 +151,8 @@ pub fn afterimage_strip(f: &Fighter, params: &itSword_UnkBytes) -> std::vec::Vec
                 z: fmadds(e.xC.z, x20fc, e.x0.z) - prev.z,
             };
             if i != n - 1 {
-                let d2 = sqrtf(fmadds(delta.z, delta.z, fmadds(delta.x, delta.x, delta.y * delta.y)));
+                // unfused in the DOL (800C28A8: fmuls, fadds, fadds; the float trace, notes/semantics.md section 3)
+                let d2 = sqrtf(delta.z * delta.z + (delta.x * delta.x + delta.y * delta.y));
                 total += d2;
                 cum_dist[dp] = total;
                 dp += 1;
@@ -259,6 +260,7 @@ pub fn afterimage_strip(f: &Fighter, params: &itSword_UnkBytes) -> std::vec::Vec
 }
 
 /// `ftCo_800C2600`: the trail draw callback (render pass 2 only).
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftCo_800C2600(g: G, arg1: u32) {
     melee_core::ct!("ftCo_800C2600");
     use ext::*;

@@ -12,3 +12,6 @@ publish.workspace = true
 calltrace = []
 # Discrimination bits at the fp/int helper call sites (disc.rs): the covtest build only (notes/coverage-testing.md).
 disc = []
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }

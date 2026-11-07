@@ -316,7 +316,7 @@ pub fn ftLg_SpecialAirSHold_Enter(gobj: *mut HSD_GObj) {
 #[inline(always)]
 pub fn charge_damage(charge_frames: i32, slope: f32, tilt: f32) -> u32 {
     melee_core::ct!("charge_damage");
-    fmadds(charge_frames as f32, slope, tilt) as u32
+    melee_core::ppc::fcvt_u32(fmadds(charge_frames as f32, slope, tilt))
 }
 
 /// Shared hit-damage update of the Launch / Misfire Anim callbacks.

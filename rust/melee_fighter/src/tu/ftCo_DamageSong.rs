@@ -70,6 +70,7 @@ pub fn inlineA0(f: &Fighter, arg1: bool) -> f32 {
     result
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftCo_800C318C(g: G, arg1: bool) {
     melee_core::ct!("ftCo_800C318C");
     ftCo_ReleaseItemAndVictim(g);

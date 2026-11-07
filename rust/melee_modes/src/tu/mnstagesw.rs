@@ -927,6 +927,7 @@ unsafe extern "C" fn mnStageSw_CreateCursor(
     }
     return cursor_jobj;
 }
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 unsafe extern "C" fn mnStageSw_80236CBC(mut arg0: i8) -> *mut HSD_GObj {
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut jobj: *mut HSD_JObj = null_mut();

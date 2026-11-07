@@ -506,6 +506,7 @@ pub unsafe extern "C" fn mnInfoBonus_80252ADC_inline(mut text: *mut HSD_Text) {
     (*text).x34.x = 0.034f32 as f32_0;
     (*text).x34.y = 0.034f32 as f32_0;
 }
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn mnInfoBonus_80252ADC() {
     melee_core::ct!("mnInfoBonus_80252ADC");
     let mut o: *mut mnInfoBonus_804A09B0_t = &raw mut mnInfoBonus_804A09B0;

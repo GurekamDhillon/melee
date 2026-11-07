@@ -393,7 +393,10 @@ pub unsafe extern "C" fn grKinokoRoute_802074D8() {
         val = 0;
     }
     if val == 0 {
-        ext::grZakoGenerator_801CAEB0(ext::Ground_801C5840(), ext::Ground_801C5940());
+        // MWCC evaluates these arguments right to left (DOL: the Ground_801C5940 call comes first); both draw HSD_Rand*: notes/semantics.md "evaluation order".
+        let b = ext::Ground_801C5940();
+        let a = ext::Ground_801C5840();
+        ext::grZakoGenerator_801CAEB0(a, b);
     }
     ext::grZakoGenerator_801CADE0();
 }

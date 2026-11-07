@@ -431,7 +431,7 @@ pub unsafe extern "C" fn itLinkArrow_802A850C(gobj: *mut Item_GObj, arg1: *mut V
         ext::it_8026B3A8(gobj);
         // `(arg4 * ((x8 - x4) / arg5)) + x4`: one fused multiply-add each
         (*lv).xA8 = fmadds(arg4, ((*attr).x8 - (*attr).x4) / arg5, (*attr).x4);
-        (*lv).xA4 = fmadds(arg4, ((*attr).x10 - (*attr).xC) / arg5, (*attr).xC) as u32;
+        (*lv).xA4 = melee_core::ppc::fcvt_u32(fmadds(arg4, ((*attr).x10 - (*attr).xC) / arg5, (*attr).xC));
         (*ip).facing_dir = ext::ftLib_800865C0((*lv).xE0);
         HSD_JObjSetRotationY(jobj, (M_PI_2 * (*ip).facing_dir as f64) as f32);
         (*ip).pos = *arg1;

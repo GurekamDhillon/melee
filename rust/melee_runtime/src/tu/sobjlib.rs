@@ -285,6 +285,7 @@ pub unsafe extern "C" fn discard_color(mut color: GXColor) -> GXColor {
     melee_core::ct!("discard_color");
     return color;
 }
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
     melee_core::ct!("HSD_SObjLib_803A4A68");
     let mut x_cos: f32 = 0.;

@@ -23,6 +23,7 @@
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::gr::trivial::*;
 #[allow(unused_imports)]
@@ -963,7 +964,7 @@ unsafe fn grZebes_UpdateCollisionColumns(column_width: f32, column_x: *mut f32, 
             let x_offset = (*bubble).x08_x - left_x;
             let left_vertex = ((x_offset as f64 - 0.9) as f32) / column_width;
             let right_offset = (0.9 + x_offset as f64) as f32;
-            let top_y = (1.8f64).mul_add((*bubble).x18_size as f64, (*bubble).x0C_y as f64) as f32;
+            let top_y = (1.8f64).fmadd((*bubble).x18_size as f64, (*bubble).x0C_y as f64) as f32;
             {
                 *vertex_idx = melee_core::ppc::fctiwz(0.5 + left_vertex as f64);
                 if 5 < *vertex_idx {
@@ -1102,7 +1103,7 @@ pub unsafe extern "C" fn grZebes_801D881C(gobj: *mut HSD_GObj) {
                         let mut px = 0.0f32;
                         let mut py = 0.0f32;
                         grZe_8049F140_GetSpawnPos(mirror + 2, &mut px, &mut py);
-                        grZebes_801DAE70(mirror, 4, px, py, (0.5f64).mul_add(rand2 as f64, 1.0) as f32);
+                        grZebes_801DAE70(mirror, 4, px, py, (0.5f64).fmadd(rand2 as f64, 1.0) as f32);
                     }
                 }
                 if ext::grAnime_801C83D0(gobj, 0xE, 1) != 0 {
@@ -1499,7 +1500,7 @@ pub unsafe extern "C" fn grZebes_801D99E0(gobj: *mut HSD_GObj) {
             let accel = (*yakumono_param).x9C;
             let t = vel / accel;
             // (f32)((f64)(vel * t) - (0.5 * (f64)accel * (f64)(t * t))): one fused f64 multiply-subtract
-            let threshold = ((-(0.5f64 * accel as f64)).mul_add((t * t) as f64, (vel * t) as f64)) as f32;
+            let threshold = ((-(0.5f64 * accel as f64)).fmadd((t * t) as f64, (vel * t) as f64)) as f32;
             let target_level = (*gp).u.zebes5.xD4;
             let delta = target_level - (*gp).u.zebes5.xD8;
 
@@ -2554,7 +2555,7 @@ pub unsafe extern "C" fn grZebes_801DBB60(yaku: *mut Item_GObj) -> i32 {
                     bx = sqrtf(bx);
 
                     {
-                        if ((2.0f64).mul_add((*bubbles_p).x18_size as f64, bx as f64) as f32) > width {
+                        if ((2.0f64).fmadd((*bubbles_p).x18_size as f64, bx as f64) as f32) > width {
                             let new_width: f32;
                             if t < 0.5 {
                                 let mut dpx2 = (*bubbles_p).x08_x - x1;
@@ -2562,7 +2563,7 @@ pub unsafe extern "C" fn grZebes_801DBB60(yaku: *mut Item_GObj) -> i32 {
                                 dpx2 *= dpx2;
                                 dpy2 *= dpy2;
                                 t = sqrtf(dpx2 + dpy2);
-                                new_width = (0.5f64 * (2.0f64).mul_add((*bubbles_p).x18_size as f64, (t + width) as f64)) as f32;
+                                new_width = (0.5f64 * (2.0f64).fmadd((*bubbles_p).x18_size as f64, (t + width) as f64)) as f32;
                                 if t > 0.001f32 {
                                     dpx2 = (new_width - width) / t;
                                     x1 = fmadds(dpx2, (*bubbles_p).x08_x - x1, x1);
@@ -2581,7 +2582,7 @@ pub unsafe extern "C" fn grZebes_801DBB60(yaku: *mut Item_GObj) -> i32 {
                                 dpy2 *= dpy2;
                                 t = sqrtf(dpx2 + dpy2);
                                 {
-                                    let calculated_width = (0.5f64 * (2.0f64).mul_add((*bubbles_p).x18_size as f64, (t + width) as f64)) as f32;
+                                    let calculated_width = (0.5f64 * (2.0f64).fmadd((*bubbles_p).x18_size as f64, (t + width) as f64)) as f32;
                                     new_width = calculated_width;
                                 }
                                 if t > 0.001f32 {
@@ -2676,7 +2677,7 @@ pub unsafe extern "C" fn grZebes_801DC408(gobj: *mut Ground_GObj) {
                 let ry = ext::HSD_Randf();
 
                 let r3 = ext::HSD_Randf();
-                grZebes_801DAE70(first_free, 1, fmadds(x_range, r3, x_base), fmadds(y_range, ry, y_min), (0.5f64).mul_add(rscale as f64, 1.0) as f32);
+                grZebes_801DAE70(first_free, 1, fmadds(x_range, r3, x_base), fmadds(y_range, ry, y_min), (0.5f64).fmadd(rscale as f64, 1.0) as f32);
                 (*bubble(first_free)).x18_size = 0.001f64 as f32;
                 ext::Ground_801C53EC(0x61A83);
             }
@@ -2718,6 +2719,7 @@ unsafe fn grZebes_SpawnBubbleLine(scales: *mut grZe_BubbleScales, ip: *mut i32, 
     }
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grZebes_801DC744(arg0: i32, arg1: u8) {
     melee_core::ct!("grZebes_801DC744");
     let mut scales = grZe_803B8044.x0_scales;
@@ -2743,23 +2745,23 @@ pub unsafe extern "C" fn grZebes_801DC744(arg0: i32, arg1: u8) {
         x_range = fnmsubs(2.0, bubble_r, (*base.add(1)).x - p_x);
         y_range = (*base.add(1)).y - y_start;
 
-        grZebes_801DAE70(7, arg1, (0.5f64).mul_add(x_range as f64, x_base as f64) as f32, (0.5f64).mul_add(y_range as f64, y_start as f64) as f32, 1.0);
+        grZebes_801DAE70(7, arg1, (0.5f64).fmadd(x_range as f64, x_base as f64) as f32, (0.5f64).fmadd(y_range as f64, y_start as f64) as f32, 1.0);
 
-        grZebes_801DAE70(8, arg1, (0.2f64).mul_add(x_range as f64, x_base as f64) as f32, (0.8f64).mul_add(y_range as f64, y_start as f64) as f32, 1.2);
+        grZebes_801DAE70(8, arg1, (0.2f64).fmadd(x_range as f64, x_base as f64) as f32, (0.8f64).fmadd(y_range as f64, y_start as f64) as f32, 1.2);
 
-        grZebes_801DAE70(9, arg1, (0.8f64).mul_add(x_range as f64, x_base as f64) as f32, (0.2f64).mul_add(y_range as f64, y_start as f64) as f32, 1.1);
+        grZebes_801DAE70(9, arg1, (0.8f64).fmadd(x_range as f64, x_base as f64) as f32, (0.2f64).fmadd(y_range as f64, y_start as f64) as f32, 1.1);
 
-        grZebes_801DAE70(10, arg1, (0.8f64).mul_add(x_range as f64, x_base as f64) as f32, (0.8f64).mul_add(y_range as f64, y_start as f64) as f32, 1.1);
+        grZebes_801DAE70(10, arg1, (0.8f64).fmadd(x_range as f64, x_base as f64) as f32, (0.8f64).fmadd(y_range as f64, y_start as f64) as f32, 1.1);
 
-        grZebes_801DAE70(11, arg1, (0.5f64).mul_add(x_range as f64, x_base as f64) as f32, (0.2f64).mul_add(y_range as f64, y_start as f64) as f32, 1.2);
+        grZebes_801DAE70(11, arg1, (0.5f64).fmadd(x_range as f64, x_base as f64) as f32, (0.2f64).fmadd(y_range as f64, y_start as f64) as f32, 1.2);
 
-        grZebes_801DAE70(12, arg1, (0.5f64).mul_add(x_range as f64, x_base as f64) as f32, (0.9f64).mul_add(y_range as f64, y_start as f64) as f32, 1.3);
+        grZebes_801DAE70(12, arg1, (0.5f64).fmadd(x_range as f64, x_base as f64) as f32, (0.9f64).fmadd(y_range as f64, y_start as f64) as f32, 1.3);
 
-        grZebes_801DAE70(13, arg1, (0.5f64).mul_add(x_range as f64, x_base as f64) as f32, (0.9f64).mul_add(y_range as f64, y_start as f64) as f32, 1.3);
+        grZebes_801DAE70(13, arg1, (0.5f64).fmadd(x_range as f64, x_base as f64) as f32, (0.9f64).fmadd(y_range as f64, y_start as f64) as f32, 1.3);
 
-        grZebes_801DAE70(14, arg1, (0.6f64).mul_add(x_range as f64, x_base as f64) as f32, (y_start as f64 + y_range as f64) as f32, 1.1);
+        grZebes_801DAE70(14, arg1, (0.6f64).fmadd(x_range as f64, x_base as f64) as f32, (y_start as f64 + y_range as f64) as f32, 1.1);
 
-        grZebes_801DAE70(15, arg1, (0.2f64).mul_add(x_range as f64, x_base as f64) as f32, (y_start as f64 + y_range as f64) as f32, 1.0);
+        grZebes_801DAE70(15, arg1, (0.2f64).fmadd(x_range as f64, x_base as f64) as f32, (y_start as f64 + y_range as f64) as f32, 1.0);
     }
 }
 

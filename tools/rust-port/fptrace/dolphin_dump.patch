@@ -1,0 +1,113 @@
+diff --git a/Source/Core/Core/Slippi/NHV1Oracle.cpp b/Source/Core/Core/Slippi/NHV1Oracle.cpp
+index 046e622..aa18b26 100644
+--- a/Source/Core/Core/Slippi/NHV1Oracle.cpp
++++ b/Source/Core/Core/Slippi/NHV1Oracle.cpp
+@@ -9,6 +9,8 @@
+ #include <thread>
+ #include <vector>
+ 
++#include "Core/HW/DSP.h"
++
+ #include "Core/PowerPC/PowerPC.h"
+ 
+ #include "Core/Core.h"
+@@ -350,6 +352,99 @@ void Probe(const Core::CPUThreadGuard& guard)
+       ch_max = cc;
+     }
+   }
++  // GD port/semantics (private copy only): MELEE_DOLPHIN_NHV1_DUMP=<prefix> writes the whole machine state at the
++  // first MELEE_DOLPHIN_NHV1_DUMP_COUNT (default 1) probe hits on or after playback frame MELEE_DOLPHIN_NHV1_DUMP_FRAME,
++  // for the Gekko trace interpreter (tools/rust-port/fptrace). Exits after the last dump.
++  {
++    static const char* dump = std::getenv("MELEE_DOLPHIN_NHV1_DUMP");
++    static int dump_left = std::getenv("MELEE_DOLPHIN_NHV1_DUMP_COUNT") ? std::atoi(std::getenv("MELEE_DOLPHIN_NHV1_DUMP_COUNT")) : 1;
++    static const int dump_frame = std::getenv("MELEE_DOLPHIN_NHV1_DUMP_FRAME") ? std::atoi(std::getenv("MELEE_DOLPHIN_NHV1_DUMP_FRAME")) : INT_MIN;
++    static int dump_n = 0;
++    // MELEE_DOLPHIN_NHV1_DUMP_AT=pc:frame:call,... dumps exactly those calls (call = index of the hit of that pc
++    // within that frame) as <prefix>.<pc>.f<frame>.c<call>.bin, and exits after the last one.
++    struct Want { u32 pc; int frame; int call; bool done; };
++    static std::vector<Want> wants = [] {
++      std::vector<Want> w;
++      if (const char* a = std::getenv("MELEE_DOLPHIN_NHV1_DUMP_AT"))
++      {
++        unsigned pc; int fr, c, n;
++        while (std::sscanf(a, "%x:%d:%d%n", &pc, &fr, &c, &n) == 3)
++        {
++          w.push_back({pc, fr, c, false});
++          a += n;
++          if (*a == ',') a++; else break;
++        }
++      }
++      return w;
++    }();
++    static std::vector<std::pair<u32, std::pair<int, int>>> seen; // pc -> (frame, hits in frame)
++    bool want_now = false;
++    std::string want_name;
++    if (!wants.empty())
++    {
++      static const std::vector<u32> probe_at = ProbeAddresses(); // the JIT leaves pc stale at an HLE hook: probe one address
++      const u32 pc = probe_at.size() == 1 ? probe_at[0] : guard.GetSystem().GetPPCState().pc;
++      int idx = -1;
++      for (auto& e : seen)
++        if (e.first == pc)
++        {
++          if (e.second.first != s_frame) e.second = {s_frame, 0};
++          idx = e.second.second++;
++        }
++      if (idx < 0) { seen.push_back({pc, {s_frame, 1}}); idx = 0; }
++      for (auto& w : wants)
++        if (!w.done && w.pc == pc && w.frame == s_frame && w.call == idx)
++        {
++          w.done = true;
++          want_now = true;
++          char nm[64];
++          std::snprintf(nm, sizeof nm, ".%08X.f%d.c%d.bin", pc, s_frame, idx);
++          want_name = nm;
++        }
++    }
++    if (dump && *dump && (want_now || (wants.empty() && dump_left > 0 && s_frame >= dump_frame)))
++    {
++      auto& st = guard.GetSystem().GetPPCState();
++      auto& mem = guard.GetSystem().GetMemory();
++      char name[1024];
++      if (want_now)
++        std::snprintf(name, sizeof name, "%s%s", dump, want_name.c_str());
++      else
++        std::snprintf(name, sizeof name, "%s.%d.bin", dump, dump_n++);
++      if (FILE* o = std::fopen(name, "wb"))
++      {
++        const std::vector<u32> at = ProbeAddresses();
++        u32 hdr[8] = {0x504D4447u /* 'GDMP' */, 2, at.empty() ? st.pc : at[0], static_cast<u32>(s_frame), 0, 0, 0, 0};
++        std::fwrite(hdr, 4, 8, o);
++        std::fwrite(st.gpr, 4, 32, o);
++        for (int i = 0; i < 32; i++)
++        {
++          u64 a = st.ps[i].PS0AsU64(), b = st.ps[i].PS1AsU64();
++          std::fwrite(&a, 8, 1, o);
++          std::fwrite(&b, 8, 1, o);
++        }
++        u32 sr[8 + 8] = {st.cr.Get(), st.spr[SPR_LR], st.spr[SPR_CTR], st.GetXER().Hex, st.fpscr.Hex, st.msr.Hex, 0, 0};
++        for (int i = 0; i < 8; i++)
++          sr[8 + i] = st.spr[SPR_GQR0 + i];
++        std::fwrite(sr, 4, 16, o);
++        const u32 n = mem.GetRamSizeReal();
++        std::fwrite(&n, 4, 1, o);
++        std::fwrite(mem.GetRAM(), 1, n, o);
++        const u32 an = DSP::ARAM_SIZE; // version 2: ARAM follows MEM1
++        std::fwrite(&an, 4, 1, o);
++        std::fwrite(guard.GetSystem().GetDSP().GetARAMPtr(), 1, an, o);
++        std::fclose(o);
++        std::fprintf(stderr, "nhv1-oracle: dumped %s (frame %d)\n", name, s_frame);
++      }
++      bool all = !wants.empty();
++      for (auto& w : wants) all = all && w.done;
++      if (all || (wants.empty() && --dump_left == 0))
++      {
++        std::fflush(stderr);
++        std::_Exit(0);
++      }
++    }
++  }
+   if (!f)
+     return;
+   auto& ppc = guard.GetSystem().GetPPCState();

@@ -10,6 +10,7 @@
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::itkinds7::bisect_value;
 #[allow(unused_imports)]
@@ -695,7 +696,7 @@ pub unsafe extern "C" fn itBox_UnkMotion8_Phys(gobj: *mut Item_GObj) {
 
     let r = ext::HSD_Randf();
     (*ip).xDD4_itemVar.r#box.rot_vel_x =
-        DEG_TO_RAD.mul_add((r - 0.2f32) as f64, (*ip).xDD4_itemVar.r#box.rot_vel_x as f64) as f32;
+        DEG_TO_RAD.fmadd((r - 0.2f32) as f64, (*ip).xDD4_itemVar.r#box.rot_vel_x as f64) as f32;
     let mut vel = (*ip).xDD4_itemVar.r#box.rot_vel_x;
     if vel as f64 > MAX_ROT_VEL {
         (*ip).xDD4_itemVar.r#box.rot_vel_x = MAX_ROT_VEL as f32;
@@ -705,7 +706,7 @@ pub unsafe extern "C" fn itBox_UnkMotion8_Phys(gobj: *mut Item_GObj) {
 
     let r = ext::HSD_Randf();
     (*ip).xDD4_itemVar.r#box.rot_vel_y =
-        DEG_TO_RAD.mul_add((r - 0.2f32) as f64, (*ip).xDD4_itemVar.r#box.rot_vel_y as f64) as f32;
+        DEG_TO_RAD.fmadd((r - 0.2f32) as f64, (*ip).xDD4_itemVar.r#box.rot_vel_y as f64) as f32;
     vel = (*ip).xDD4_itemVar.r#box.rot_vel_y;
     if vel as f64 > MAX_ROT_VEL {
         (*ip).xDD4_itemVar.r#box.rot_vel_y = MAX_ROT_VEL as f32;

@@ -10,6 +10,7 @@
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use melee_types::HSD_GObj as HSD_GObj_gm_r10;
 #[allow(unused_imports)]
@@ -824,12 +825,12 @@ pub unsafe fn fn_80185408(_x: i32, arg8: f32, arg9: f32, arg_a: f32, arg_b: f32)
 pub unsafe fn fn_801855BC(arg8: f64) -> f64 {
     melee_core::ct!("fn_801855BC");
     if arg8 > 0.0 {
-        let step = |t: f64| 0.5 * t * -(arg8.mul_add(t * t, -3.0));
+        let step = |t: f64| 0.5 * t * -(arg8.fmadd(t * t, -3.0));
         let temp_f2_2 = melee_core::fp::frsqrte(arg8);
         let temp_f2_3 = step(temp_f2_2);
         let temp_f2_4 = step(temp_f2_3);
         let temp_f2 = step(temp_f2_4);
-        return arg8 * (0.5 * temp_f2 * -(arg8.mul_add(temp_f2 * temp_f2, -3.0)));
+        return arg8 * (0.5 * temp_f2 * -(arg8.fmadd(temp_f2 * temp_f2, -3.0)));
     }
     if 0.0 == arg8 {
         return 0.0;
@@ -877,6 +878,7 @@ pub unsafe extern "C" fn fn_8018575C(gobj: *mut HSD_GObj, _arg1: i32) {
 
 /// Creates splash screen sprite objects from pre-rendered character images. Distributes 10
 /// image tiles across a grid with random offsets.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn fn_801857C4(arg0: *mut HSD_GObj) {
     melee_core::ct!("fn_801857C4");
     let st = &mut lbl_804735E8;

@@ -167,8 +167,9 @@ void ftCo_800C2600(Fighter_GObj* gobj, u32 arg1)
                 delta.z = entry->xC.z * x20FC + entry->x0.z - prevPos.z;
 
                 if (i != fp->x2100 - 1) {
-                    d2 = delta.z * delta.z +
-                         (delta.x * delta.x + delta.y * delta.y);
+                    /* unfused in the DOL (800C28A8): GW_NOFUSE_SQ keeps clang from contracting */
+                    d2 = GW_NOFUSE_SQ(delta.z) +
+                         (GW_NOFUSE_SQ(delta.x) + GW_NOFUSE_SQ(delta.y));
                     d2 = sqrtf(d2);
                     totalDist += d2;
                     *dp = totalDist;

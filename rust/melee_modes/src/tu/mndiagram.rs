@@ -336,7 +336,7 @@ pub unsafe extern "C" fn mnDiagram_ConvertDistanceForDisplay(
         if distance >= 0x274a6 as i32 as u32 {
             return distance.wrapping_div(160934 as i32 as u32);
         }
-        return (distance as f64 / 30.4788f64) as u32;
+        return melee_core::ppc::fcvt_u32((distance as f64 / 30.4788f64));
     }
     if distance >= 0x186a0 as i32 as u32 {
         return distance.wrapping_div(100000 as i32 as u32);
@@ -3545,6 +3545,7 @@ pub unsafe extern "C" fn mnDiagram_DrawFighterHeaders(
     }
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn mnDiagram_CursorProc(mut gobj: *mut HSD_GObj) {
     melee_core::ct!("mnDiagram_CursorProc");
     let mut sp_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();

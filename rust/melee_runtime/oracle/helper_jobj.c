@@ -62,7 +62,7 @@ void orc_set_srt(HSD_JObj* j, const f32* v)
 void orc_set_aobj(HSD_JObj* j, HSD_JObj* target)
 {
     HSD_AObj* a = orc_alloc(sizeof(HSD_AObj));
-    a->hsd_obj = (HSD_Obj*) target;
+    a->jobj = target; /* upstream renamed HSD_AObj.hsd_obj to jobj */
     j->aobj = a;
 }
 HSD_RObj* orc_robj_new(u32 flags, f32 bone_length)

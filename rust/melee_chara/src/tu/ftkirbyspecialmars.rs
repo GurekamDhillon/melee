@@ -451,7 +451,7 @@ unsafe fn end_anim_hits(gobj: G) {
                     .base_damage
                     .wrapping_add(per.wrapping_mul((*ms_da).additional_damage_per_iteration));
                 // `(u32)(f32)(s32)raw`
-                let dmg = (raw as i32 as f32) as u32;
+                let dmg = melee_core::ppc::fcvt_u32((raw as i32 as f32));
                 ext::ftColl_8007ABD0(hit, dmg, gobj);
             }
             i += 1;

@@ -59,6 +59,7 @@ mod diff_layout;
 mod dolphin_oracle;
 mod netmatch;
 mod netplay;
+mod slippi_np;
 mod play_net;
 mod slp_export;
 mod spectate;
@@ -519,6 +520,7 @@ fn main() -> ExitCode {
         Some("synctest") => netmatch::engine_game::synctest(&args),
         Some("lab-check") => lab_check::lab_check(&args),
         Some("netplay") => netplay::netplay(&args),
+        Some("slippi-netplay") => slippi_np::slippi_netplay(&args),
         Some("view-golden") => engine_view::view_golden(&args),
         Some("play") => play::play(&args),
         Some("replays") => replays::replays(&args),

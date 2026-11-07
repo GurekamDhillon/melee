@@ -250,7 +250,7 @@ pub fn ftNs_AttackHi4_YoyoApplyDamage(unk_float: f32, gobj: *mut HSD_GObj) {
             let final_damage = fmadds(damage_mul, charge_duration2, 1.0);
             let final_damage = (*fp).x914[0].damage * final_damage;
             // u32 parameter: C float->unsigned conversion (saturating in the shipping build).
-            ext::ftColl_8007ABD0(&mut (*fp).x914[0], final_damage as u32, gobj);
+            ext::ftColl_8007ABD0(&mut (*fp).x914[0], melee_core::ppc::fcvt_u32(final_damage), gobj);
         }
     }
 }
@@ -448,7 +448,7 @@ pub fn ftNs_AttackHi4_YoyoSetChargeDamage(gobj: *mut HSD_GObj) {
         let a = attrs(fp);
         if 0.0 != smash_charge_frames && (*fp).x914[0].state == HitCapsule_Enabled {
             let scale = charge_damage_scale((*a).xB0_YOYO_DAMAGE_MUL, smash_charge_frames, (*a).xAC_YOYO_CHARGE_DURATION);
-            ext::ftColl_8007ABD0(&mut (*fp).x914[0], ((*fp).x914[0].damage * scale) as u32, gobj);
+            ext::ftColl_8007ABD0(&mut (*fp).x914[0], melee_core::ppc::fcvt_u32(((*fp).x914[0].damage * scale)), gobj);
         }
     }
 }

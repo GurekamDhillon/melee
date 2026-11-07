@@ -8,6 +8,7 @@
 //! override slots. Smoke-tested by tests/tu_ftco_aircatch.rs.
 #![allow(non_snake_case)]
 
+use melee_core::fp::Fmadd as _;
 use super::ftco_0d8e::hsd_jobj_setup_matrix;
 use super::ftco_0d95::ext as ss;
 use crate::ftcommon as co;
@@ -207,7 +208,7 @@ pub fn ftco_aircatch_anim(g: G) {
                 let jobj = unsafe { (*f.parts.offset(b as isize)).joint };
                 hsd_jobj_setup_matrix(jobj);
                 let m = unsafe { &(*jobj).mtx };
-                let x1 = (8.0 * f.facing_dir as f64).mul_add(f.x34_scale.y as f64, m[0][3] as f64) as f32;
+                let x1 = (8.0 * f.facing_dir as f64).fmadd(f.x34_scale.y as f64, m[0][3] as f64) as f32;
                 if ss::mpCheckAllRemap(-1, -1, f.coll_data.cur_pos.x, m[1][3], x1, m[1][3]) {
                     ext::it_802A2B10(unsafe { f.u.lk.xC });
                     ext::ftCo_800968C8(g);
@@ -248,7 +249,7 @@ pub fn ftco_aircatch_anim(g: G) {
                 let jobj = unsafe { (*f.parts.add(FtPart_ThrowN as usize)).joint };
                 hsd_jobj_setup_matrix(jobj);
                 let m = unsafe { &(*jobj).mtx };
-                let x1 = (2.0 * f.facing_dir as f64).mul_add(f.x34_scale.y as f64, m[0][3] as f64) as f32;
+                let x1 = (2.0 * f.facing_dir as f64).fmadd(f.x34_scale.y as f64, m[0][3] as f64) as f32;
                 if ss::mpCheckAllRemap(-1, -1, f.coll_data.cur_pos.x, m[1][3], x1, m[1][3]) {
                     ss::it_802B7B84(unsafe { f.u.ss.x223C });
                     ext::ftCo_800968C8(g);

@@ -343,6 +343,7 @@ pub unsafe extern "C" fn stageGObj1_Callback1(_arg0: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn stageGObj1_GObjProc(arg0: *mut HSD_GObj) {
     melee_core::ct!("stageGObj1_GObjProc");
     let gp = (*arg0).user_data as *mut Ground;
@@ -501,6 +502,7 @@ pub unsafe extern "C" fn stageGObj2_Callback1(_arg0: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn stageGObj2_GObjProc(arg0: *mut HSD_GObj) {
     melee_core::ct!("stageGObj2_GObjProc");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

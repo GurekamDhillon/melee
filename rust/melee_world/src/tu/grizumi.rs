@@ -233,6 +233,7 @@ pub mod ext {
     }
     pub static mut MPLIB_80055E9C: Option<fn(i32)> = None;
     #[allow(non_snake_case)]
+    #[cfg_attr(fptrace, melee_fptrace::trace)]
     pub fn mpLib_80055E9C(joint_id: i32) {
         match unsafe { MPLIB_80055E9C } { Some(f) => f(joint_id), None => { unsafe { crate::tu::mplib::mpLib_80055E9C(joint_id as _); } return; } }
     }

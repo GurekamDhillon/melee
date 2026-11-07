@@ -4131,6 +4131,7 @@ pub unsafe fn mpLib_80055E24(mut joint_id: i32) {
 }
 
 /// `mpLib_80055E9C`
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn mpLib_80055E9C(mut joint_id: i32) {
     melee_core::ct!("mpLib_80055E9C");
     if ext::ScriptGame_StageSlotJointUpdate(joint_id) != 0 {

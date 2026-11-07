@@ -133,7 +133,7 @@ pub unsafe fn HSD_FogSet(fog: *mut HSD_Fog) {
                 }
                 _ => {}
             }
-            ext::GXInitFogAdjTable(&mut tbl, (crate::cabi::f2u32(v[2] as f64) as u16), mtx.as_mut_ptr().cast());
+            ext::GXInitFogAdjTable(&mut tbl, (crate::cabi::f2u16(v[2] as f64)), mtx.as_mut_ptr().cast());
         }
         ext::GXSetFogRangeAdj(1, range as u16, &mut tbl);
         return;
@@ -212,7 +212,7 @@ pub unsafe fn HSD_FogAdjInit(adj: *mut HSD_FogAdj, desc: *mut HSD_FogAdjDesc) {
         } else {
             let mut v = [0.0f32; 6];
             ext::GXGetViewportv(v.as_mut_ptr());
-            (*adj).width = (crate::cabi::f2u32(v[2] as f64) as u16);
+            (*adj).width = (crate::cabi::f2u16(v[2] as f64));
             (*adj).center = ((*adj).width as i32 / 2) as i16;
             ext::PSMTXIdentity((*adj).mtx.as_mut_ptr().cast());
             (*adj).mtx[3][0] = 0.0;
@@ -265,10 +265,10 @@ pub unsafe extern "C" fn FogUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD_
         match ty {
             1 => (*fog).start = (*val).fv,
             2 => (*fog).end = (*val).fv,
-            5 => (*fog).color.r = (crate::cabi::f2u32((255.0f32 * (*val).fv) as f64) as u8),
-            6 => (*fog).color.g = (crate::cabi::f2u32((255.0f32 * (*val).fv) as f64) as u8),
-            7 => (*fog).color.b = (crate::cabi::f2u32((255.0f32 * (*val).fv) as f64) as u8),
-            8 => (*fog).color.a = (crate::cabi::f2u32((255.0f32 * (*val).fv) as f64) as u8),
+            5 => (*fog).color.r = (crate::cabi::f2u8((255.0f32 * (*val).fv) as f64)),
+            6 => (*fog).color.g = (crate::cabi::f2u8((255.0f32 * (*val).fv) as f64)),
+            7 => (*fog).color.b = (crate::cabi::f2u8((255.0f32 * (*val).fv) as f64)),
+            8 => (*fog).color.a = (crate::cabi::f2u8((255.0f32 * (*val).fv) as f64)),
             20 => {
                 if !(*fog).fog_adj.is_null() {
                     (*(*fog).fog_adj).center = crate::cabi::f2i16((*val).fv as f64);

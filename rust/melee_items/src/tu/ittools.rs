@@ -316,7 +316,7 @@ pub unsafe extern "C" fn it_802EF548(gobj: *mut Item_GObj) {
     if new_damage > ((*attrs).xC as u32) as f32 {
         new_damage = ((*attrs).xC as u32) as f32;
     }
-    ext::it_80272460(&mut (*ip).x5D4_hitboxes[0].hit, new_damage as u32, gobj);
+    ext::it_80272460(&mut (*ip).x5D4_hitboxes[0].hit, melee_core::ppc::fcvt_u32(new_damage), gobj);
 
     (*ip).x40_vel.x = dir * ((1.0 + ((*ip).x5D4_hitboxes[0].hit.damage - 10.0)) * (*motion(attrs, (*ip).xDD4_itemVar.tools.x0)).x18);
     (*ip).x40_vel.y = (*motion(attrs, (*ip).xDD4_itemVar.tools.x0)).x10;

@@ -21,9 +21,9 @@ have to match whatever version the server accepts on the day. Item 1 of the buil
 3. **The problem is game state.** A Slippi client runs Melee **plus about 190 online ASM patches**. It runs them
    through rollback with Dolphin's memory savestates, and it checks a game-computed checksum. Our engine must
    simulate that patched game bit for bit, or every match desyncs.
-4. **The checksum and the RNG mixing are defined in ASM we do not have** (`slippi-ssbm-asm`). They are hard
-   blockers until we have that source (GPL; a `git clone` from GitHub, which needs the user's OK) or reverse the
-   compiled INI.
+4. **The checksum and the RNG mixing are now specified** from `slippi-ssbm-asm` `d0ce23a` in
+   `slippi-online-patches.md` (2026-11-06) and implemented in Rust behind an off-by-default mode; the checksum matches
+   Slippi Dolphin's memory on every frame of a full replay (section 9).
 5. **Terms.** Using Slippi's matchmaking and accounts from a client that is not Slippi Dolphin is not covered by
    anything in the source. It needs Slippi's own permission or ToS check before any real-server test (section 3.3).
 
@@ -70,10 +70,14 @@ have to match whatever version the server accepts on the day. Item 1 of the buil
 - **Pad formats** (`SlippiPad.h`): `SLIPPI_PAD_INPUT_SIZE` 8 (buttons, sticks, triggers: the game's own pad bytes
   as the ASM gives them); `SLIPPI_PAD_WIRE_SIZE` 9 = the 8 bytes plus **1 random byte**; `SLIPPI_PAD_FULL_SIZE` 12
   (what EXI hands back to the game). `prepareOpponentInputs` ends by appending `Common::Random::GenerateValue<u8>()`:
-  *"Random bits for the ASM to send with the next pad, it mixes them into the RNG seed."* **Each frame's RNG seed
-  therefore depends on bytes from both peers, mixed in by ASM** (`TriggerSendInput.asm` / `StartEngineLoop.asm` is
-  most likely, but unconfirmed). Our `--live-rng` rule (`seed + ((frame+123) << 16)`) is a different, GD-specific
-  scheme.
+  *"Random bits for the ASM to send with the next pad, it mixes them into the RNG seed."* **Correction (from the ASM,
+  slippi-online-patches.md 1.2-1.3):** the seed is overwritten every frame with `fmix32(rotl(frame,16) + rng_offset)`;
+  the pad bytes are XORed into its top byte **only on a frame where a Peach / Game & Watch / Luigi player freshly presses
+  B with the stick on the random special** (then the other players' bytes, so nobody can pick a good seed). On every
+  other frame the seed depends on the frame and `rng_offset` only. The mixing is in `TriggerSendInput.asm` section 11
+  and `InitOnlinePlay.asm` (`FN_SyncRNG`). Our `--live-rng` rule (`seed + ((frame+123) << 16)`) is a different,
+  GD-specific scheme. Note the pad's byte 8 is the bits its **owner** drew; Dolphin draws the local byte for the
+  *next* pad (it comes back to the game in the RXB).
 - **Frames** start at 1 (`handleOnlineInputs`: `frame == 1` resets everything). The game sends over EXI
   (`CMD_ONLINE_INPUTS` 0xB0): s32 frame, s32 finalized_frame, u32 finalized_frame_checksum, u8 delay, 12 pad
   bytes, u8 input_source_port, u8 is_leaving.
@@ -151,8 +155,10 @@ have to match whatever version the server accepts on the day. Item 1 of the buil
 - **Inputs only.** The only check is the 32-bit **checksum** for `finalized_frame`, which the game ASM computes and
   passes to EXI in `CMD_ONLINE_INPUTS`. Each pad packet carries it. The game receives the peers' (frame, checksum)
   pairs back, and the **ASM compares them**. Neither C++ nor Rust in Dolphin compares checksums.
-- **What the checksum covers is defined in the online ASM, which we do not have.** The candidates are the same
-  ASM that sends `CMD_ONLINE_INPUTS` (`TriggerSendInput.asm`, 313 lines) and the Static helpers. A mismatch shows up
+- **What the checksum covers** (slippi-online-patches.md 2.2, `StartEngineLoop.asm` `FN_COMPUTE_CHECKSUM`): an XOR of
+  each fighter entity's action state, position x/y bits, percent bits and spawn number plus each slot's stocks, folded
+  to 16 bits, joined with the low 16 bits of the truncated f32 sum of positions and percents. A **hard** desync is a
+  float-sum difference of more than 1 (the game ends); a different high half only shows "Desync Risk". A mismatch shows up
   as a desync. In ranked, `SYNCED_STATE` then restarts the game at merged stocks, percent and timer
   (`GetDesyncRecoveryState`: timer within 1 s, stocks equal, percent within 25, take the lower).
 - Our NHV1 word (`docs/rust-port/notes/nhv1.md`) is **our own** curated hash. It is not Slippi's checksum.
@@ -251,8 +257,8 @@ The bar is that, given the same confirmed inputs and the same per-frame seed, ou
 | vanilla sim bit-exact vs the console | the Dolphin NHV1 oracle (`tools/rust-port/dolphin/oracle.sh`): **74 replays Dolphin-exact**; slpcheck **104/125 frame-exact** on the 3.17 corpus. Slippi's online codes were on in those replays, so this corpus *is* the online sim (UCF, neutral spawn, Nana, wobble rules) for those characters and stages. Every divergence left is a potential online desync |
 | online codes | UCF / neutral-spawn / freeze-fix / no-wobble / frozen-PS exist as `--codes`; Nana determinism, PS camera monitor, star-KO fall, offscreen damage, Whispy fix and InitOnlinePlay are not ported |
 | start state | build Dolphin's `online_match_block` exactly, then the InitOnlinePlay ASM's effects, then the seed |
-| RNG | per-frame mixing of the 9th pad byte from both peers (ASM). Not known yet: **blocker** |
-| checksum | ASM formula. Not known yet: **blocker**. Once known, the `--live-rng` / NHV1 plumbing in `play_net` can carry it |
+| RNG | known (slippi-online-patches.md 1); `melee_core::slippi_online` + the SyncRNG proc, off by default. Unit-tested, not yet against a live peer |
+| checksum | known (slippi-online-patches.md 2); Rust equals Slippi Dolphin's memory on all 11293 frames of 01c6d260 (section 9) |
 | rollback-safe statics | done for our own netplay (net.md rule on statics, `rollback_pinned`) |
 | FMA/float | done (fma.md); a vanilla console has no FMA contraction. The oracle work handled this |
 | oracle to verify | 1) the existing `.slp` oracle covers sim parity. 2) for the checksum: run the patched online game in our local Dolphin build with the NHV1 hook and log the ASM checksum for a known input stream (section 6.4) |
@@ -333,8 +339,8 @@ ISO MD5 or a desynced result. That needs the user's decision and, I'd say, Slipp
 | 7 | launcher entry for Hero (melee-unlocked) | 2 days | yes: anything sent to Hero |
 
 ## 8. Hardest blockers
-1. **The checksum and the RNG mixing live in the online ASM** (not in the workspace). Without them a desync is
-   certain from frame 1. Phase 0 or 1 solves this.
+1. ~~The checksum and the RNG mixing~~: specified and implemented (section 9). What is left is checking the seed
+   against a live Slippi peer, which needs the loopback Dolphin test of section 9 to run.
 2. **Sim parity at the patched-console level** for every character and stage played online: 21 of 125 files still
    diverge, and the online-only codes are unported.
 3. **Server terms and credentials.** Direct play still needs Slippi's matchmaking and a real playKey, and game
@@ -343,3 +349,87 @@ ISO MD5 or a desynced result. That needs the user's decision and, I'd say, Slipp
    has to follow each release's asm, or the server stops pairing it (or pairs it with peers running different
    code).
 5. ENet interop, an unfamiliar but bounded dependency.
+
+## 9. Phase 0/1 results (2026-11-06, port/slippi-p1)
+
+**Source.** `project-slippi/slippi-ssbm-asm` `d0ce23a` cloned read-only to `_build/slippi-src/ssbm-asm` (not in our
+repo). The Dolphin clone's online INI carries the compiled new seed scheme (murmur constants), so it is `e03af7f` or later.
+Spec: `slippi-online-patches.md` (checksum, seed, every gameplay-affecting online patch with addresses).
+
+**Rust.** `melee_core::slippi_online` (arithmetic + state, `enable(rng_offset)` turns it on, default off),
+`melee_fighter::slippi_online::checksum()`, the InitOnlinePlay seed and SyncRNG proc in `fn_8016E730` (only when on),
+`melee slpcheck --slippi-checksum-out`. Default gameplay is untouched: slpcheck 104/125 frame-exact before and after.
+
+**Checksum vs Dolphin.** The Dolphin oracle's per-frame memory records (`run_dolphin.ps1`) of `20476_01c6d260`
+through `tools/rust-port/slippi/checksum_nhraw.py`, against `slpcheck --slippi-checksum-out` on the same replay:
+11293 of 11293 frames equal (high and low halves). The NHV1 differences of that replay (the -0.0 knockback velocity
+from frame 1388) are not in the checksum's fields.
+
+**Loopback Dolphin vs Dolphin: built, not run.** Prepared:
+- `_build/dolphin-netplay/`: a second link of the oracle build (the oracle exe was in use by another run) with the Slippi
+  `Data/Sys` (online codeset), and a local patch (`SLIPPI_LOCAL_TEST=1`): the Rust web client refuses every request
+  before DNS (user API, rank, game reports), the matchmaking socket may only reach loopback, no STUN servers (no DNS,
+  no packets), LAN address `127.0.0.1`, both ENet hosts bound to `127.0.0.1`, no login/update browser pages,
+  `SLIPPI_PIPE_PREFIX` for per-instance pad pipes, `SLIPPI_CHECKSUM_LOG` (every checksum sent and received),
+  `MELEE_DOLPHIN_STATELOG` (scene/memory per frame for closed-loop menu driving). Spectator server off in the config.
+- user dirs with generated test profiles (`user.json` with fake uid/playKey; no real account read or used).
+- `tools/rust-port/slippi/mock_mm.py`: WebSocket mock (join -> joined/status, pairs two joins into `match`) and a
+  loopback UDP relay that records every ENet datagram (the probe); `run_np_dolphin.ps1` starts one instance.
+- Blocker: the netplay instance exits with an unhandled C++ exception (0xE06D7363) a frame after boot, before Dolphin's
+  log file opens. Reading its console log to find the throw was refused by the permission system, so the run stopped
+  there. Nothing reached the network (every socket path is loopback-only or refused).
+
+**Protocol claims of sections 1-3 not confirmed on the wire yet** (no capture). Corrected from the ASM: the RNG rule
+(1.3), what the checksum covers and how it is compared (1.7).
+
+**Phase 2 blockers (ENet + our engine as a peer).**
+1. The loopback capture above (the exception, then menu driving over the pipes: online menu, direct, a code, CSS lock,
+   stage), to get real pad/ack/checksum packets and confirm the frame numbering (pad frame F vs `gm_80479D58.unk_8`,
+   checksum "frame F = state entering F").
+2. ENet 1.3 interop (rusty_enet or C ENet) and the sf::Packet codec; the 9th pad byte drawn per sent frame.
+3. The start state: Dolphin's `online_match_block` + InitOnlinePlay (match block copy, pad clear at 0x804C20BC, seed),
+   and the online-only gameplay codes still missing (Nana determinism, PS monitor, star-KO fall, offscreen damage,
+   Whispy, FD background seed save, init stage/player data).
+4. Wiring `slippi_online` into our rollback session: the seed-bit history and B mask are game state (snapshot them),
+   and section 1.3 must run on resimulated frames with the confirmed pads.
+5. Sim parity: 21 of 125 slpcheck files still diverge.
+
+## 10. Phase 2: the Slippi transport in Rust (2026-11-07, port/slippi2)
+
+**Code.** `melee_net::enet`: our own ENet 1.3 host (connect / verify-connect with session ids, simultaneous connects
+both ways, reliable in-order channels with acks and retransmission, unsequenced packets with the 1024-group window,
+ping, throttle-configure / bandwidth-limit accepted, disconnect with a reason word; no compression, checksum or
+fragments, none of which Slippi uses). `melee_net::slippi`: the `sf::Packet` codec, MATCH_SELECTIONS / PAD / PAD_ACK /
+CHAT, and `Client` (Slippi's 1v1 netplay client: pads unsequenced on channel 1, acks on channel 2 and only for pads
+that added frames, the local queue resent until acked and capped at 128 frames, ping from acks, `CalcTimeOffsetUs`,
+duplicate-link pruning by the lower port). `melee slippi-netplay --host|--join --port P --peer IP:PORT`: one peer on
+the native engine with Slippi online mode on (`slippi_online::enable(decider's rng_offset)`), our rollback session
+(window 7), Slippi frame numbering (online frame 1 = session `FIRST`), the checksum of the state entering each frame
+sent with every pad for the newest finalized frame and compared with the peer's (`slippi_online::compare`), Slippi's
+skip rule on multiples of 30. `--padgen SEED` uses the session's pad generator instead of the 1800-frame script.
+`tools/rust-port/slippi/np_pair.sh BASEPORT OUTDIR [args]` runs two peers on loopback and compares their CSVs.
+Direct and local only: no matchmaking, STUN or Slippi service.
+
+**Engine vs engine (loopback, inbound lag/loss on both peers, Falcon vs Fox FD).** Every run: 0 soft, 0 hard
+desyncs; both peers' finalized checksum CSVs equal on every common frame.
+
+| pads | frames | delay | lag ms | loss % | compared | rollbacks (host) |
+|---|---|---|---|---|---|---|
+| script | 2489 | 2 | 40 | 5 | 2207 | 79 |
+| script | 10889 | 2 | 60 | 10 | 8770 | 79 |
+| script | 7288 | 0 | 25 | 20 | 4771 | 79 |
+| script | 7288 | 4 | 100 | 3 | 5540 | 79 |
+| padgen 777 | 3688 | 2 | 40 | 10 | 2964 | 3274 |
+| padgen 4242 | 28888 (8 min) | 2 | 60 | 10 | 23022 | 25163 (max depth 7, 845 stall ticks) |
+
+The script's pads stop at 1800 frames (the state is constant from online frame 1832), so the padgen runs are the
+real long-match evidence (25075 distinct checksums in the 8-minute run). `cargo test -p melee_net --test slippi`: the ENet client pair
+over real loopback UDP, clean and with 10% loss + 30 ms.
+
+**Not done.** Rust vs Slippi Dolphin. The patched netplay Dolphin (`_build/dolphin-netplay`) did start and stay up this
+time (no 0xE06D7363 within 20 s, empty stdout/stderr), but stopping that process was refused by the permission
+system, so no further Dolphin run was made (it needs the mock matchmaking plus menu driving over the pad pipes:
+online menu, direct, a code, CSS, stage). So: no wire capture against real ENet, and the frame-numbering and
+"checksum of the state entering F" assumptions are still unconfirmed against Dolphin. Also open: the seed-bit mixing
+(TriggerSendInput section 11) is not wired (seed bits stay 0, right except on a fresh Peach/G&W/Luigi random special),
+the online-only gameplay codes and `online_match_block` (section 9, blockers 3 and 5), time sync beyond the skip rule.

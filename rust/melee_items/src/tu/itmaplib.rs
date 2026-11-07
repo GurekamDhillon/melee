@@ -10,6 +10,7 @@
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 #![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+use melee_core::fp::Fmadd as _;
 #[allow(unused_imports)]
 use crate::itlib::it_8026b724;
 #[allow(unused_imports)]
@@ -422,7 +423,7 @@ fn sqrtf_accurate(x: f32) -> f32 {
         let xd = x as f64;
         let mut guess = melee_core::fp::frsqrte(xd);
         for _ in 0..4 {
-            guess = 0.5 * guess * ((-(guess * guess)).mul_add(xd, 3.0));
+            guess = 0.5 * guess * ((-(guess * guess)).fmadd(xd, 3.0));
         }
         (xd * guess) as f32
     } else {
@@ -1098,6 +1099,7 @@ pub unsafe extern "C" fn it_8027770C(item_gobj: *mut HSD_GObj) -> bool {
     ret_val
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn it_8027781C(item_gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("it_8027781C");
     let mut sp48: Vec3 = core::mem::zeroed();

@@ -154,9 +154,9 @@ struct LongJmp;
 const ARG_TYPE_DOBJ: u32 = 3;
 const ARG_TYPE_MOBJ: u32 = 8;
 const ARG_TYPE_POBJ: u32 = 9;
-const CALL_ON_DOBJ: i32 = 1 << (ARG_TYPE_DOBJ - 1);
-const CALL_ON_MOBJ: i32 = 1 << (ARG_TYPE_MOBJ - 1);
-const CALL_ON_POBJ: i32 = 1 << (ARG_TYPE_POBJ - 1);
+const CALL_ON_DOBJ: i32 = 1 << (ARG_TYPE_DOBJ - 1); // semantics: allow(const item: compile-time amount 0..2)
+const CALL_ON_MOBJ: i32 = 1 << (ARG_TYPE_MOBJ - 1); // semantics: allow(const item: compile-time amount 0..2)
+const CALL_ON_POBJ: i32 = 1 << (ARG_TYPE_POBJ - 1); // semantics: allow(const item: compile-time amount 0..2)
 
 #[inline(always)]
 unsafe fn pobj_type(o: *mut HSD_PObj) -> u32 {

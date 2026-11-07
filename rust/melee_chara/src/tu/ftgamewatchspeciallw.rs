@@ -115,7 +115,7 @@ const anim_update_frame: i32 = 38;
 #[inline(always)]
 pub fn fptoui_ppc(x: f32) -> u32 {
     melee_core::ct!("fptoui_ppc");
-    x as u32
+    melee_core::ppc::fcvt_u32(x)
 }
 
 /// The release damage of the Oil Panic: `cmd_vars[1] = (u32)(damage * mul); cmd_vars[1] =

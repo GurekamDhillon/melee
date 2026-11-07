@@ -18,12 +18,14 @@
 
 pub mod app;
 pub mod early;
+pub mod enet;
 pub mod hash;
 pub mod net;
 pub mod pad;
 pub mod rollback;
 pub mod session;
 pub mod sim;
+pub mod slippi;
 pub mod transport;
 pub mod wire;
 

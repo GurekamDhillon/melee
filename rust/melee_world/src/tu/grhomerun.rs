@@ -486,6 +486,7 @@ unsafe fn set_text_pos(text: *mut HSD_Text, pos: &Vec3) {
 }
 
 /// 21D680
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grHomeRun_8021D680(gobj: *mut Ground_GObj) {
     melee_core::ct!("grHomeRun_8021D680");
     let mut pos1 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -675,6 +676,7 @@ unsafe fn text_stage_free(gobj: *mut Ground_GObj) {
 /// 21DEF0
 pub unsafe extern "C" fn grHomeRun_8021DEF0(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021DEF0"); text_stage_init(gobj) }
 /// 21DF50
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grHomeRun_8021DF50(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021DF50"); text_stage_proc(gobj) }
 /// 21E008
 pub unsafe extern "C" fn grHomeRun_8021E008(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E008"); text_stage_free(gobj) }
@@ -695,6 +697,7 @@ pub unsafe extern "C" fn grHomeRun_8021E070(_arg: *mut Ground_GObj) { melee_core
 /// 21E074
 pub unsafe extern "C" fn grHomeRun_8021E074(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E074"); text_stage_init(gobj) }
 /// 21E0D4
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grHomeRun_8021E0D4(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E0D4"); text_stage_proc(gobj) }
 /// 21E18C
 pub unsafe extern "C" fn grHomeRun_8021E18C(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E18C"); text_stage_free(gobj) }
@@ -715,6 +718,7 @@ pub unsafe extern "C" fn grHomeRun_8021E1F4(_arg: *mut Ground_GObj) { melee_core
 /// 21E1F8
 pub unsafe extern "C" fn grHomeRun_8021E1F8(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E1F8"); text_stage_init(gobj) }
 /// 21E258
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grHomeRun_8021E258(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E258"); text_stage_proc(gobj) }
 /// 21E310
 pub unsafe extern "C" fn grHomeRun_8021E310(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E310"); text_stage_free(gobj) }
@@ -735,6 +739,7 @@ pub unsafe extern "C" fn grHomeRun_8021E378(_arg: *mut Ground_GObj) { melee_core
 /// 21E37C
 pub unsafe extern "C" fn grHomeRun_8021E37C(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E37C"); text_stage_init(gobj) }
 /// 21E3DC
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grHomeRun_8021E3DC(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E3DC"); text_stage_proc(gobj) }
 /// 21E494
 pub unsafe extern "C" fn grHomeRun_8021E494(gobj: *mut Ground_GObj) { melee_core::ct!("grHomeRun_8021E494"); text_stage_free(gobj) }

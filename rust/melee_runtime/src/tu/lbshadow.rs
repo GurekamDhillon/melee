@@ -149,6 +149,7 @@ pub fn splGetBezierTangent(p: &mut Vec3, cp: &[Vec3], u: f32) {
 
 /// lbshadow.c `lbShadow_8000E9F0`: the tangent of `spline` at `u` in [0, 1] (no-op outside),
 /// by type: 0 linear, 1 Bezier, 2 B-spline, 3 cardinal; any other type leaves `p` alone.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn lbShadow_8000E9F0(p: &mut Vec3, spline: &HSD_Spline, mut u: f32) {
     melee_core::ct!("lbShadow_8000E9F0");
     if u < 0.0 || u > 1.0 {

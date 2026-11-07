@@ -481,7 +481,7 @@ pub unsafe extern "C" fn fn_801A9FCC() -> *mut c_void {
 
     // OSMillisecondsToTicks(1) = 1 * (OS_TIMER_CLOCK / 1000), OS_TIMER_CLOCK = __OSBusClock / 4
     let ticks: u32 = 1u32.wrapping_mul(ext::__OSBusClock / 4 / 1000);
-    ms = (ext::lbMthp_8001F5D4() as f32 / ticks as f32) as u32;
+    ms = melee_core::ppc::fcvt_u32((ext::lbMthp_8001F5D4() as f32 / ticks as f32));
     sprint((*lines.add(2)).text.as_mut_ptr(), &format!("\\cffff00{:>3}", ms as i32));
 
     (*lines.add(2)).next = lines.add(3);
@@ -608,7 +608,7 @@ pub unsafe extern "C" fn gm_Scene_Opening_OnFrame() {
     if gm_804D67D0 == 0 && gm_804D67EC >= 0x140A {
         ext::gmTitle_801A165C();
         gm_804D67D0 = 1;
-        gm_804D67E4 = (600.0f32 + (400.0f32 + gm_804D67EC as f32)) as u32;
+        gm_804D67E4 = melee_core::ppc::fcvt_u32((600.0f32 + (400.0f32 + gm_804D67EC as f32)));
     }
     if ext::lbMthp_8001F604() != 0 && gm_804D67DC == 0 && gm_804D67D0 != 0 {
         ext::gm_PreloadTitleDemo();

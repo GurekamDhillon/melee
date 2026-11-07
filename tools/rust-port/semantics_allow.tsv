@@ -1,0 +1,15 @@
+# semantics_lint.py allow-list: intentional exceptions (rule or *, path glob, reason). Host code of the game crates:
+# no console counterpart, native in the C build as well. A single line can instead carry `// semantics: allow(<reason>)`.
+*	rust/melee_core/src/gcdecode.rs	host: GameCube byte-layout decoder (oracle tooling)
+*	rust/melee_core/src/hash.rs	host: NHV1 / state hashing
+*	rust/melee_core/src/slippi_online.rs	net: Slippi online checksum and seed (netplay spec, not game C)
+*	rust/melee_core/src/pose.rs	render: frame-interpolation pose records (render-only)
+*	rust/melee_core/src/gc.rs	host: GameCube memory helpers
+*	rust/melee_core/src/modhook.rs	host: mod hook plumbing
+*	rust/melee_types/src/gen.rs	host: generated layout accessors (u128 bitfield packing; no C operator behind them)
+*	rust/melee_types/src/neutral_hash.rs	host: NHV1 neutral hash
+*	rust/melee_modes/src/oracle.rs	tooling: oracle / slpcheck harness
+*	rust/melee_modes/src/tu/support.rs	host: u128 packed-bitfield helpers (int-audit.md)
+*	rust/melee_runtime/src/pose_capture.rs	render: frame-interpolation capture (render-only)
+M1	rust/melee_runtime/src/tu/axdriver.rs	audio: MSL powf shim for voice pitch; the C build calls the host powf too (console MSL pow not ported, audio only)
+M1	rust/melee_runtime/src/bytecode.rs	robj bytecode op 0x13 logf: MSL logf not ported; the C build calls the host logf too (open, notes/semantics.md)

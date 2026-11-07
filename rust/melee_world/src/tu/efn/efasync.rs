@@ -751,7 +751,11 @@ pub unsafe extern "C" fn efAsync_Dispatch(mut gfx_id: i32, mut gobj: *mut HSD_GO
                         } else {
                             jobj_2 = (*jobj_1).child;
                         }
-                        super::eflib::efLib_SetTevKonstColor(jobj_2, 0, *((*vlist).arg(4_u32) as *mut u32), *((*vlist).arg(4_u32) as *mut u32));
+                        // MWCC evaluates these two va_args right to left (DOL 0x800659A0: the first __va_arg feeds the
+                        // 4th parameter): notes/semantics.md "evaluation order".
+                        let tev0 = *((*vlist).arg(4_u32) as *mut u32);
+                        let konst = *((*vlist).arg(4_u32) as *mut u32);
+                        super::eflib::efLib_SetTevKonstColor(jobj_2, 0, konst, tev0);
                     }
                     break 's16;
                 }

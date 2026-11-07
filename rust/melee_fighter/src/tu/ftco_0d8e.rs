@@ -11,6 +11,7 @@
 //! Checked against the C by tests/tu_ftco_0d8e.rs.
 #![allow(non_snake_case)]
 
+use melee_core::fp::Fmadd as _;
 use crate::hooks as h;
 use crate::types::*;
 
@@ -125,7 +126,7 @@ pub fn fn_800d8ec8(g: G) -> bool {
             hsd_jobj_setup_matrix(jobj);
             let m = unsafe { &(*jobj).mtx };
             // fmuladd(8.0 * facing, scale.y, mtx[0][3]) in f64 (both kind branches are the same)
-            let var_f3 = (8.0 * f.facing_dir as f64).mul_add(f.x34_scale.y as f64, m[0][3] as f64) as f32;
+            let var_f3 = (8.0 * f.facing_dir as f64).fmadd(f.x34_scale.y as f64, m[0][3] as f64) as f32;
             let my = m[1][3];
             if ext::mpCheckAllRemap(-1, -1, f.coll_data.cur_pos.x, my, var_f3, my) {
                 ext::it_802A2B10(unsafe { f.u.lk.xC });

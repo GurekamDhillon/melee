@@ -9,7 +9,8 @@
 #   2. baseline files tools/rust-port/diff/baseline/*.txt have not grown (baseline_max.tsv), and
 #      `melee diff --frames` shows no difference outside the baseline in the subsystems of docs/rust-port/migrated.txt
 #      at the sampled frames of tools/rust-port/diff/frames.tsv (capped at the engine's count);
-#   3. tools/rust-port/lint_logic.py introduces no new violations (when the script exists).
+#   3. tools/rust-port/lint_logic.py introduces no new violations (when the script exists), and
+#      tools/rust-port/semantics_lint.py finds no console-arithmetic violation in the game crates.
 # --update-progress appends the measured counts (only when none went down) and lowers baseline_max.tsv.
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -114,6 +115,12 @@ fi
 fi
 if [ -f tools/rust-port/lint_logic.py ]; then
   python tools/rust-port/lint_logic.py || { echo "FAIL lint"; fail=1; }
+fi
+# console arithmetic (notes/semantics.md): no host libm / mul_add / raw int div, rem, variable shift or float->int cast in
+# the game crates (clippy disallowed_methods + MIR scan, nightly toolchain, skipped when the sources are unchanged).
+# SEMLINT=0 skips it.
+if [ "${SEMLINT:-1}" = 1 ] && [ -z "$only" ]; then
+  python tools/rust-port/semantics_lint.py || { echo "FAIL semantics lint"; fail=1; }
 fi
 # 4. rollback snapshot perf (tools/rust-port/perf/snapguard.sh, notes/perf.md "Snapshot perf guard"): depth-7 synctest
 #    save / load / total, min of 3 runs, within 25% of the committed baseline. Release only (the baseline's profile);

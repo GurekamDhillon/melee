@@ -1103,12 +1103,26 @@ fn golden(args: &[String]) -> ExitCode {
 }
 
 /// Load a replay for `golden --slp`: the player, the scene converted from its Game Start block (slpcheck::convert), the seed.
+/// A replay's Gecko list can set `DbLevel` (`melee_data::slp::db_level_code`); both copies of it (staling and the debug
+/// gates) follow, and a replay without the code gets the retail `DbLKind_NoDebugRom`.
+pub(crate) fn set_replay_db_level(v: Option<i32>) {
+    unsafe {
+        melee_fighter::stale::DB_LEVEL = v.unwrap_or(0);
+        melee_fighter::platform::DB_LEVEL = v.unwrap_or(melee_fighter::platform::DBLKIND_NO_DEBUG_ROM);
+    }
+}
+
 fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(melee_data::player::Player, melee_engine::scenario::Scenario, u32), String> {
     let data = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
     // the replay's own widescreen camera code, armed before the match boots (CObjLoad reads it)
-    let ws = melee_data::slp::parse(&data, false).ok().and_then(|f| melee_data::slp::widescreen_code(&f.gecko));
+    let parsed = melee_data::slp::parse(&data, false).ok();
+    let ws = parsed.as_ref().and_then(|f| melee_data::slp::widescreen_code(&f.gecko));
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
     let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: true, identity: gdlp, ..Default::default() });
+    if pl.env.slippi_codes.is_none() && parsed.as_ref().is_some_and(|f| melee_data::slp::online_codeset(&f.gecko)) {
+        pl.env.slippi_codes = Some("online".into());
+    }
+    crate::set_replay_db_level(melee_data::slp::db_level_code(parsed.as_ref().map_or(&[][..], |f| &f.gecko[..])));
     if gdlp.is_some() {
         pl.load_gdlp(path, &data, false);
     } else {

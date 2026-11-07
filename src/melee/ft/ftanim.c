@@ -362,6 +362,13 @@ void ftAnim_8006E9B4(Fighter_GObj* gobj)
     }
 
     jobj = GET_JOBJ(gobj);
+#if defined(TARGET_PC)
+    {
+        /* 8006E9E4 `lfs f1, 0.0`: what a part-less ftAnim_8006F3DC returns unless an AObj sets it */
+        extern float gw_AObjStaleF1;
+        gw_AObjStaleF1 = 0.0F;
+    }
+#endif
     if (fp->x8A4_animBlendFrames == 0.0F) {
         HSD_JObjClearFlagsAll(jobj, JOBJ_USE_QUATERNION);
         if (fp->x594.x0.x594_b0) {
@@ -404,6 +411,12 @@ void ftAnim_8006E9B4(Fighter_GObj* gobj)
 
     if (fp->x594.x0.x594_b2) {
         if (ftAnim_8006F3DC(gobj) < fp->cur_anim_frame) {
+#if defined(TARGET_PC)
+            {
+                extern float gw_AObjStaleF1;
+                gw_AObjStaleF1 = fp->x898_unk; /* 8006EB6C */
+            }
+#endif
             fp->x898_unk += fp->cur_anim_frame + fp->frame_speed_mul;
         }
     }
@@ -605,6 +618,13 @@ float ftAnim_8006F3DC(Fighter_GObj* fighter_gobj)
     } else {
         return lbGetJObjCurrFrame(fp->x8AC_animSkeleton);
     }
+#if defined(TARGET_PC)
+    {
+        /* no return on the console: the caller's f1 (gw_AObjStaleF1, aobj.c) */
+        extern float gw_AObjStaleF1;
+        return gw_AObjStaleF1;
+    }
+#endif
 }
 
 float ftAnim_8006F484(Fighter_GObj* fighter_gobj)

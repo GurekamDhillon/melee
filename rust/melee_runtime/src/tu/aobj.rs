@@ -167,6 +167,13 @@ pub unsafe extern "C" fn HSD_AObjStopAnim(aobj: *mut HSD_AObj, obj: *mut c_void,
     (*aobj).flags |= AOBJ_NO_ANIM;
 }
 
+/// The f1 register as `HSD_AObjInterpretAnim` (80364190) leaves it, for the one caller that reads it back: `ftAnim_8006F3DC`
+/// falls off its end without a `return` when no animated part has an AObj, so the console returns the caller's f1. A
+/// non-looping AObj that has not reached its end leaves its `end_frame` there (`lfs f1, 0xc(r31)` at 803642C0); the other
+/// paths end in FObj calls and keep the previous value here. Yoshi's GuardDamage (joints without AObjs, material/texture
+/// AObjs ending at 100): the console records state frame 100 where a plain 0 return gave 0.
+pub static mut AOBJ_STALE_F1: f32 = 0.0;
+
 pub unsafe extern "C" fn HSD_AObjInterpretAnim(aobj: *mut HSD_AObj, obj: *mut c_void, update_func: HSD_ObjUpdateFunc) {
     melee_core::ct!("HSD_AObjInterpretAnim");
     let mut rate: f32;
@@ -208,6 +215,8 @@ pub unsafe extern "C" fn HSD_AObjInterpretAnim(aobj: *mut HSD_AObj, obj: *mut c_
     if (*aobj).flags & AOBJ_LOOP == 0 && (*aobj).end_frame <= (*aobj).curr_frame {
         ext::HSD_FObjStopAnimAll((*aobj).fobj, obj, update_func, (*aobj).framerate);
         (*aobj).flags |= AOBJ_NO_ANIM;
+    } else if (*aobj).flags & AOBJ_LOOP == 0 {
+        AOBJ_STALE_F1 = (*aobj).end_frame;
     }
 
     if (*aobj).flags & AOBJ_NO_ANIM != 0 {

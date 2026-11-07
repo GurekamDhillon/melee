@@ -26,6 +26,7 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     let mut scn = Scenario::parse("")?;
     scn.stage = info.stage() as i32;
     let mut max_stocks = 0;
+    let akaneia = slp::akaneia_codeset(&s.gecko);
     for i in 0..4 {
         let p = info.player(i);
         match p.ptype {
@@ -46,11 +47,16 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
                 }
             }
         }
-        // 32 is Popo alone (Sopo): the console's CSS code sets it and the game spawns Popo without Nana
-        // (ftMapping external 32 -> internal Popo, no sub-fighter). 26-31 are the hidden characters.
-        if p.ckind > 25 && p.ckind != 32 {
-            return Err(format!("p{}: character id {} is outside the 26-character roster", i + 1, p.ckind));
-        }
+        // on an Akaneia replay (its codes.gct in the Gecko list) the ids past 25 are the disc's m-ex fighters: resolved
+        // through MxDt.dat once the disc mounts (needs the Akaneia disc); anywhere else they are refused
+        let ckind = if p.ckind > 25 {
+            if !akaneia || p.ckind > 32 {
+                return Err(format!("p{}: character id {} is outside the 26-character roster", i + 1, p.ckind));
+            }
+            melee_engine::scenario::pending_fighter_token(&format!("mexext:{}", p.ckind))
+        } else {
+            p.ckind as i32
+        };
         if p.offense != 1.0 || p.defense != 1.0 || p.scale != 1.0 {
             notes.push(format!("p{} offense/defense/scale {}/{}/{} not applied", i + 1, p.offense, p.defense, p.scale));
         }
@@ -62,7 +68,7 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         }
         max_stocks = max_stocks.max(p.stocks as i32);
         scn.players[i] = Some(PlayerSpec {
-            ckind: p.ckind as i32,
+            ckind,
             // `--cpu-slots` / `--cpu-ai` (covtest, notes/coverage-testing.md): a CPU stays a CPU slot (Gm_PKind_Cpu), as the
             // console's playback keeps it; default: a human
             slot_type: if cpu_mode > 0 && p.ptype == 1 { 1 } else { 0 },
@@ -215,26 +221,7 @@ static mut SEEDLOG_LAST: u32 = 0;
 /// Online replays: the console's forced frame seed minus the Frame Start event's (a multiple of 0x10000).
 static mut FS_OFFSET: u32 = 0;
 
-/// The seed the console forced at the start of an online frame, from the first recorded Pre-Frame seed `rec`, the Frame Start
-/// event's `sd` and the offset seen so far (updated when the recording shows a new one). None: not identifiable this frame.
-fn online_forced_seed(rec: u32, sd: u32, off: &mut u32) -> Option<u32> {
-    const INV: u32 = { let a: u32 = 214013; let mut x: u32 = a; let mut i = 0; while i < 5 { x = x.wrapping_mul(2u32.wrapping_sub(a.wrapping_mul(x))); i += 1; } x };
-    let want = sd.wrapping_add(*off);
-    let mut x = rec;
-    let mut cand = None;
-    for _ in 0..=64 {
-        if x == want {
-            return Some(want);
-        }
-        if cand.is_none() && x & 0xFFFF == sd & 0xFFFF && (x.wrapping_sub(sd) as i32 >> 16).unsigned_abs() < 4096 {
-            cand = Some(x);
-        }
-        x = x.wrapping_sub(2531011).wrapping_mul(INV);
-    }
-    let c = cand?;
-    *off = c.wrapping_sub(sd);
-    Some(c)
-}
+use melee_data::player::online_forced_seed;
 
 pub(crate) fn seed_probe(port: i32, fol: i32) {
     unsafe {
@@ -368,6 +355,12 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             return finish(args, &name, &Summary { status: format!("parse-error: {e}"), ..Default::default() });
         }
     };
+    // an Akaneia replay with one of the disc's m-ex fighters runs on the Akaneia disc (GW_ISO_AKANEIA) unless --iso names
+    // one; its vanilla-roster games stay on the vanilla disc (the console ran the same retail code for them)
+    let iso = match (get("--iso"), std::env::var("GW_ISO_AKANEIA")) {
+        (None, Ok(ak)) if slp::akaneia_codeset(&file.gecko) && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype <= 1 && g.player(i).ckind > 25)) => ak,
+        _ => iso,
+    };
     let mut sm = Summary {
         version: file.version_str(),
         stage: file.info.as_ref().map_or(0, |g| g.stage() as i32),
@@ -384,6 +377,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         for c in slp::gecko_codes(&file.gecko) {
             println!("GECKO {:02X} {:08X} lines={} hash={:016x}", c.kind, c.addr, c.lines, c.hash);
         }
+        if let Some(out) = std::env::var_os("SLPCHECK_GECKO_RAW") {
+            let _ = std::fs::write(out, &file.gecko);
+        }
     }
     if args.iter().any(|a| a == "--cpu-ai") {
         CPU_MODE.store(2, std::sync::atomic::Ordering::Relaxed);
@@ -399,6 +395,10 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     };
     sm.notes = conv.notes.join("; ");
     let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: !args.iter().any(|a| a == "--no-resync"), identity: None, ..Default::default() });
+    if pl.env.slippi_codes.is_none() && slp::online_codeset(&file.gecko) {
+        pl.env.slippi_codes = Some("online".into());
+    }
+    crate::set_replay_db_level(melee_data::slp::db_level_code(&file.gecko));
     pl.load_slp(&path, &data, false);
     for l in pl.log.drain(..) {
         eprintln!("melee: {l}");

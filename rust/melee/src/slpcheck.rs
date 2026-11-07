@@ -38,7 +38,9 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         if p.ptype == 1 {
             notes.push(format!("p{} is a CPU (level {}); run as a human on its recorded inputs", i + 1, p.cpu_level));
         }
-        if p.ckind > 25 {
+        // 32 is Popo alone (Sopo): the console's CSS code sets it and the game spawns Popo without Nana
+        // (ftMapping external 32 -> internal Popo, no sub-fighter). 26-31 are the hidden characters.
+        if p.ckind > 25 && p.ckind != 32 {
             return Err(format!("p{}: character id {} is outside the 26-character roster", i + 1, p.ckind));
         }
         if p.offense != 1.0 || p.defense != 1.0 || p.scale != 1.0 {

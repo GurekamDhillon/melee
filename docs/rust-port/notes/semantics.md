@@ -65,7 +65,7 @@ axdriver `powf` (MSL pow not ported; audio pitch only) and bytecode op 0x13 `log
 Both sides log every float operation of one call by value (f64 bit patterns; an f32 widened exactly) and
 `match.py` compares them.
 
-- Console side: a private Dolphin copy with a dump patch in `NHV1Oracle.cpp` `Probe()` (not in the shared oracle).
+- Console side: a private Dolphin copy with `tools/rust-port/fptrace/dolphin_dump.patch` applied on top of the oracle patch (`NHV1Oracle.cpp` `Probe()`; not in the shared oracle).
   `MELEE_DOLPHIN_NHV1_DUMP=<prefix>` plus either `_DUMP_FRAME`/`_DUMP_COUNT` or `_DUMP_AT=pc:frame:call,...`, where
   call is the hit index of that pc within that frame. Probe one address per run: the JIT leaves `pc` stale at an HLE
   hook. A dump (`GDMP` v2) holds the registers, GQRs, MEM1 and ARAM. `gekko.py` (a Gekko interpreter from

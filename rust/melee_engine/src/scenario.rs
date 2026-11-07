@@ -66,6 +66,8 @@ pub struct PlayerSpec {
     pub handicap: i32,
     /// `pN=.../idle`: a CPU that stands still (gw_sl_cfg.p[slot].cpu_idle)
     pub cpu_idle: bool,
+    /// costume shade, `PlayerInitData.sub_color` (-1 = unset; token `shadeN`)
+    pub sub_color: i32,
 }
 
 #[derive(Clone, Debug)]
@@ -159,7 +161,7 @@ impl Scenario {
                     // gw_runtime.c's slot tokens after the fighter: human/hu, cpu, cpuN, idle (a CPU that stands still),
                     // teamN, stocksN, hmpN, cN (color)
                     let (mut slot_type, mut cpu_level, mut cpu_idle) = (0, -1, false);
-                    let (mut team, mut stocks, mut handicap, mut color) = (-1, -1, -1, -1);
+                    let (mut team, mut stocks, mut handicap, mut color, mut sub_color) = (-1, -1, -1, -1, -1);
                     let digits = |t: &str, pre: &str| t.strip_prefix(pre).filter(|r| !r.is_empty() && r.bytes().all(|b| b.is_ascii_digit())).map(|r| r.parse::<i32>().unwrap());
                     for t in it {
                         if t == "human" || t == "hu" { slot_type = 0; }
@@ -168,11 +170,12 @@ impl Scenario {
                         else if let Some(n) = digits(t, "team") { team = n; }
                         else if let Some(n) = digits(t, "stocks") { stocks = n; }
                         else if let Some(n) = digits(t, "hmp") { handicap = n; }
+                        else if let Some(n) = digits(t, "shade") { sub_color = n; }
                         else if let Some(n) = digits(t, "c") { color = n; }
                         else if let Some(n) = digits(t, "cpu") { slot_type = 1; cpu_level = n; }
                         else { return Err(format!("slot token {t} in {v} not wired")); }
                     }
-                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color, team, stocks, handicap, cpu_idle });
+                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color, team, stocks, handicap, cpu_idle, sub_color });
                 }
                 _ => {}
             }
@@ -338,6 +341,7 @@ pub fn install(mut s: Scenario) {
         h::SceneLaunch_PlayerColor = Some(|n| p(n).map_or(-1, |x| x.color));
         h::SceneLaunch_PlayerTeam = Some(|n| p(n).map_or(-1, |x| x.team));
         h::SceneLaunch_PlayerHandicap = Some(|n| p(n).map_or(-1, |x| x.handicap));
+        h::SceneLaunch_PlayerSubColor = Some(|n| p(n).map_or(-1, |x| x.sub_color));
         h::SceneLaunch_Teams = Some(|| SCN.as_ref().map_or(-1, |s| s.teams));
         h::SceneLaunch_TimeLimit = Some(|| SCN.as_ref().map_or(-1, |s| s.time_limit));
         h::SceneLaunch_RuleStocks = Some(|| SCN.as_ref().map_or(-1, |s| s.rule_stocks));

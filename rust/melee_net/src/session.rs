@@ -656,6 +656,15 @@ impl<G: RbGame> RbSession<G> {
         }
     }
 
+    /// Resimulate from `frame` on the next tick even though no pad changed (Slippi online: a confirmed pad whose
+    /// random-bits byte differs from the one a frame ran with, on a frame where the seed-bit mix read it).
+    pub fn force_resim_from(&mut self, slot: usize, frame: i32) {
+        if self.on && frame <= self.frame && frame < self.first_wrong {
+            self.first_wrong = frame;
+            self.first_wrong_slot = slot;
+        }
+    }
+
     /// gw_rb_submit_local_input.
     pub fn submit_local_input(&mut self, slot: usize, frame: i32, input: &RbInput) {
         if !self.on || slot >= SLOTS {

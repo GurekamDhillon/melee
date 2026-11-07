@@ -2,16 +2,17 @@
 //! `client.rs`; `SlippiMatchmaking.cpp`'s `match` handler), enough to be paired through a matchmaking server with
 //! a Slippi Dolphin. Plain WebSocket (RFC 6455 client: masked frames, text only, ping answered) over TCP.
 //!
-//! **Loopback only.** [`join`] refuses any address that is not 127.0.0.1: it exists for the local mock server
-//! (`tools/rust-port/slippi/mock_mm.py`), never a Slippi service. No STUN, no account: the user record it sends is
-//! made up by the caller.
+//! **Loopback by default.** [`join`] refuses any address that is not 127.0.0.1 (the local mock server,
+//! `tools/rust-port/slippi/mock_mm.py`). Only [`join_to`] with [`Target::Real`], which the `melee slippi-netplay
+//! --mm-real` flag alone selects, reaches another host: `ws://` or `wss://` (TLS: the `real-net` feature), with the
+//! account's play key in the user record. No STUN: the only candidate is the host address.
 //!
 //! Flow: `join{user, search{mode, connectCode}, appVersion, port, ipAddressLan, candidates, natType}` ->
 //! `joined{ticketId, token}`, `status`... -> `match{matchId, isHost, players[{port, isLocalPlayer, ipAddress,
 //! ipAddressLan, ...}], stages, items}` or `error{error}`.
 
 use std::io::{Read, Write};
-use std::net::{Ipv4Addr, SocketAddrV4, TcpStream};
+use std::net::{Ipv4Addr, SocketAddrV4, TcpStream, ToSocketAddrs};
 use std::time::{Duration, Instant};
 
 /// A tiny JSON value (what the server sends: objects, arrays, strings, numbers, bools, null).
@@ -182,6 +183,10 @@ pub fn quote(s: &str) -> String {
 #[derive(Clone, Debug)]
 pub struct JoinRequest {
     pub uid: String,
+    /// the account's play key (empty for the mock); never logged
+    pub play_key: String,
+    /// our LAN address as the server is told it (`ipAddressLan`, the host candidate); empty: 127.0.0.1
+    pub lan_ip: String,
     pub display_name: String,
     pub connect_code: String,
     /// 2 = direct (0 ranked, 1 unranked, 3 teams, 4 party)
@@ -266,10 +271,11 @@ impl MatchResult {
 /// `join` as `protocol.rs` serializes it (the search code goes as its Shift-JIS bytes; ASCII codes are those bytes).
 pub fn join_message(r: &JoinRequest) -> String {
     let code_bytes: Vec<String> = r.search_code.bytes().map(|b| b.to_string()).collect();
-    let lan = format!("127.0.0.1:{}", r.port);
+    let lan = format!("{}:{}", if r.lan_ip.is_empty() { "127.0.0.1" } else { &r.lan_ip }, r.port);
     format!(
-        "{{\"type\":\"join\",\"user\":{{\"uid\":{},\"playKey\":\"\",\"connectCode\":{},\"displayName\":{}}},\"search\":{{\"mode\":{},\"connectCode\":[{}]}},\"appVersion\":{},\"port\":{},\"ipAddressLan\":{},\"candidates\":[{{\"kind\":\"host\",\"address\":{}}}],\"natType\":\"unknown\"}}",
+        "{{\"type\":\"join\",\"user\":{{\"uid\":{},\"playKey\":{},\"connectCode\":{},\"displayName\":{}}},\"search\":{{\"mode\":{},\"connectCode\":[{}]}},\"appVersion\":{},\"port\":{},\"ipAddressLan\":{},\"candidates\":[{{\"kind\":\"host\",\"address\":{}}}],\"natType\":\"unknown\"}}",
         quote(&r.uid),
+        quote(&r.play_key),
         quote(&r.connect_code),
         quote(&r.display_name),
         r.mode,
@@ -281,9 +287,51 @@ pub fn join_message(r: &JoinRequest) -> String {
     )
 }
 
+/// Which servers a connection may reach.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Target {
+    /// `ws://127.0.0.1:PORT/...` only (the default: the local mock).
+    Loopback,
+    /// Any host, `ws://` or `wss://` (Slippi's real matchmaking; `--mm-real` only).
+    Real,
+}
+
+enum Stream {
+    Plain(TcpStream),
+    #[cfg(feature = "real-net")]
+    Tls(Box<rustls::StreamOwned<rustls::ClientConnection, TcpStream>>),
+}
+
+impl Read for Stream {
+    fn read(&mut self, b: &mut [u8]) -> std::io::Result<usize> {
+        match self {
+            Stream::Plain(s) => s.read(b),
+            #[cfg(feature = "real-net")]
+            Stream::Tls(s) => s.read(b),
+        }
+    }
+}
+
+impl Write for Stream {
+    fn write(&mut self, b: &[u8]) -> std::io::Result<usize> {
+        match self {
+            Stream::Plain(s) => s.write(b),
+            #[cfg(feature = "real-net")]
+            Stream::Tls(s) => s.write(b),
+        }
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        match self {
+            Stream::Plain(s) => s.flush(),
+            #[cfg(feature = "real-net")]
+            Stream::Tls(s) => s.flush(),
+        }
+    }
+}
+
 /// A WebSocket client connection (text frames).
 pub struct Ws {
-    s: TcpStream,
+    s: Stream,
     buf: Vec<u8>,
     mask: u32,
 }
@@ -291,21 +339,43 @@ pub struct Ws {
 impl Ws {
     /// `ws://127.0.0.1:PORT/PATH` only.
     pub fn connect(url: &str, timeout: Duration) -> Result<Ws, String> {
-        let rest = url.strip_prefix("ws://").ok_or("only ws:// URLs")?;
+        Self::connect_to(url, timeout, Target::Loopback)
+    }
+
+    /// With [`Target::Real`]: `ws://` or `wss://` to any host (a name is resolved; `wss://` defaults to port 443).
+    pub fn connect_to(url: &str, timeout: Duration, target: Target) -> Result<Ws, String> {
+        let (tls, rest) = match (url.strip_prefix("ws://"), url.strip_prefix("wss://")) {
+            (Some(r), _) => (false, r),
+            (_, Some(r)) => (true, r),
+            _ => return Err("only ws:// or wss:// URLs".into()),
+        };
         let (hostport, path) = rest.split_once('/').map(|(a, b)| (a, format!("/{b}"))).unwrap_or((rest, "/".into()));
-        let (host, port) = hostport.split_once(':').ok_or("URL needs host:port")?;
-        let ip: Ipv4Addr = host.parse().map_err(|_| "the matchmaking host must be a literal IPv4 address".to_string())?;
-        if !ip.is_loopback() {
-            return Err(format!("{ip} is not loopback: only a local mock matchmaking server is allowed"));
-        }
-        let port: u16 = port.parse().map_err(|_| "bad port")?;
-        let s = TcpStream::connect_timeout(&SocketAddrV4::new(ip, port).into(), timeout).map_err(|e| e.to_string())?;
+        let (host, port) = match hostport.split_once(':') {
+            Some((h, p)) => (h, p.parse::<u16>().map_err(|_| "bad port")?),
+            None if tls => (hostport, 443),
+            None => (hostport, 80),
+        };
+        let addr = match target {
+            Target::Loopback => {
+                if tls {
+                    return Err("wss:// is a real server: it needs --mm-real".into());
+                }
+                let ip: Ipv4Addr = host.parse().map_err(|_| "the matchmaking host must be a literal IPv4 address".to_string())?;
+                if !ip.is_loopback() {
+                    return Err(format!("{ip} is not loopback: only a local mock matchmaking server is allowed (a real server needs --mm-real)"));
+                }
+                SocketAddrV4::new(ip, port).into()
+            }
+            Target::Real => (host, port).to_socket_addrs().map_err(|e| format!("resolve {host}: {e}"))?.next().ok_or("no address")?,
+        };
+        let s = TcpStream::connect_timeout(&addr, timeout).map_err(|e| e.to_string())?;
         s.set_nodelay(true).ok();
+        s.set_read_timeout(Some(timeout)).ok();
+        let s = if tls { Self::tls(host, s)? } else { Stream::Plain(s) };
         let key = "R0QtbWVsZWUtc2xpcHBpMw=="; // any 16 bytes, base64
-        let req = format!("GET {path} HTTP/1.1\r\nHost: {hostport}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n");
+        let req = format!("GET {path} HTTP/1.1\r\nHost: {host}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n");
         let mut ws = Ws { s, buf: Vec::new(), mask: 0x5EED_1234 };
         ws.s.write_all(req.as_bytes()).map_err(|e| e.to_string())?;
-        ws.s.set_read_timeout(Some(timeout)).ok();
         loop {
             if let Some(p) = ws.buf.windows(4).position(|w| w == b"\r\n\r\n") {
                 let head = String::from_utf8_lossy(&ws.buf[..p]).to_string();
@@ -317,6 +387,29 @@ impl Ws {
             }
             ws.fill()?;
         }
+    }
+
+    #[cfg(feature = "real-net")]
+    fn tls(host: &str, s: TcpStream) -> Result<Stream, String> {
+        use std::sync::Arc;
+        let roots = rustls::RootCertStore { roots: webpki_roots::TLS_SERVER_ROOTS.to_vec() };
+        let cfg = rustls::ClientConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
+            .with_safe_default_protocol_versions()
+            .map_err(|e| e.to_string())?
+            .with_root_certificates(roots)
+            .with_no_client_auth();
+        let name = rustls::pki_types::ServerName::try_from(host.to_string()).map_err(|e| e.to_string())?;
+        let c = rustls::ClientConnection::new(Arc::new(cfg), name).map_err(|e| e.to_string())?;
+        Ok(Stream::Tls(Box::new(rustls::StreamOwned::new(c, s))))
+    }
+    #[cfg(not(feature = "real-net"))]
+    fn tls(_host: &str, _s: TcpStream) -> Result<Stream, String> {
+        Err("wss:// needs a build with the melee_net `real-net` feature".into())
+    }
+
+    /// Close the connection (a close frame; errors ignored).
+    pub fn close(&mut self) {
+        let _ = self.send_frame(8, &[0x03, 0xE8]);
     }
 
     fn fill(&mut self) -> Result<(), String> {
@@ -393,9 +486,15 @@ impl Ws {
 }
 
 /// Join the queue and wait for `match` (or `error`), up to `timeout`.
-pub fn join(url: &str, req: &JoinRequest, timeout: Duration, mut on_msg: impl FnMut(&str)) -> Result<MatchResult, String> {
+pub fn join(url: &str, req: &JoinRequest, timeout: Duration, on_msg: impl FnMut(&str)) -> Result<MatchResult, String> {
+    join_to(url, req, timeout, Target::Loopback, on_msg, |_| false)
+}
+
+/// [`join`] to `target`. `leave(msg)` is asked after every server message; true closes the connection at once
+/// (the real-server check leaves the queue as soon as it has been accepted) and returns `Err("left")`.
+pub fn join_to(url: &str, req: &JoinRequest, timeout: Duration, target: Target, mut on_msg: impl FnMut(&str), mut leave: impl FnMut(&str) -> bool) -> Result<MatchResult, String> {
     let t0 = Instant::now();
-    let mut ws = Ws::connect(url, Duration::from_secs(5))?;
+    let mut ws = Ws::connect_to(url, Duration::from_secs(5), target)?;
     ws.send_text(&join_message(req))?;
     loop {
         if t0.elapsed() > timeout {
@@ -407,6 +506,10 @@ pub fn join(url: &str, req: &JoinRequest, timeout: Duration, mut on_msg: impl Fn
             Err(e) => return Err(e),
         };
         on_msg(&t);
+        if leave(&t) {
+            ws.close();
+            return Err("left".into());
+        }
         let Some(j) = Json::parse(&t) else { continue };
         match j.get("type").and_then(|v| v.str()) {
             Some("match") => return MatchResult::from_json(&j).ok_or_else(|| "malformed match".to_string()),
@@ -430,7 +533,7 @@ mod tests {
         assert_eq!(m.stages, vec![2, 32]);
         assert_eq!(m.remote_addresses(), vec![(0, "127.0.0.1:5000".to_string())]);
         assert_eq!(m.players[0].display_name, "Aé");
-        let j = join_message(&JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "4.0.0".into(), port: 7 });
+        let j = join_message(&JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "4.0.0".into(), port: 7, play_key: String::new(), lan_ip: String::new() });
         let p = Json::parse(&j).unwrap();
         assert_eq!(p.get("search").unwrap().get("connectCode").unwrap().arr().len(), 4);
         assert_eq!(p.get("port").unwrap().num(), Some(7.0));
@@ -440,5 +543,6 @@ mod tests {
     fn refuses_non_loopback() {
         assert!(Ws::connect("ws://10.0.0.1:1/v1/queue", Duration::from_millis(10)).is_err());
         assert!(Ws::connect("ws://matchmaking.example:1/v1/queue", Duration::from_millis(10)).is_err());
+        assert!(Ws::connect("wss://matchmaking.example/v1/queue", Duration::from_millis(10)).is_err());
     }
 }

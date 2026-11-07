@@ -102,6 +102,12 @@ pub mod engine_game {
         /// a frame not here, or a predicted pad, counts 0) and each port's external character, for the seed-bit mix.
         pub slippi_bits: std::collections::BTreeMap<i32, [u8; 4]>,
         pub slippi_chars: [u32; 4],
+        /// Slippi online: the frames whose seed-bit mix read pad bytes (a port rolled), with the bytes it read; a
+        /// confirmed pad whose byte differs must resimulate that frame even when its buttons and sticks were predicted.
+        pub slippi_mixed: std::collections::BTreeMap<i32, [u8; 4]>,
+        /// Slippi online (`slippi-netplay --trace`): the pads and seed bits each online frame last ran with (a resimulated
+        /// frame overwrites its entry, so a finalized frame holds its confirmed pads).
+        pub slippi_trace: Option<std::collections::BTreeMap<i32, String>>,
     }
 
     #[derive(Clone)]
@@ -113,7 +119,7 @@ pub mod engine_game {
 
     impl EngineGame {
         pub fn new(e: Engine) -> Self {
-            EngineGame { e, base: RefCell::new(None), live: false, live_seed: None, rows: Default::default(), slippi_ck: Default::default(), slippi_bits: Default::default(), slippi_chars: [u32::MAX; 4] }
+            EngineGame { e, base: RefCell::new(None), live: false, live_seed: None, rows: Default::default(), slippi_ck: Default::default(), slippi_bits: Default::default(), slippi_chars: [u32::MAX; 4], slippi_trace: None, slippi_mixed: Default::default() }
         }
         fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
             if self.base.borrow().is_none() {
@@ -235,6 +241,10 @@ pub mod engine_game {
                 // gw_Replay_ChecksumSeed in live mode: every frame starts from `seed + ((frame + 123) << 16)`
                 melee_runtime::tu::random::global::state().set_logic_seed(super::live_frame_seed(sd, self.frame() + 1));
             }
+            let trace_pads = self.slippi_trace.is_some().then(|| {
+                let bits = self.slippi_bits.get(&(self.frame() + 1)).copied().unwrap_or([0; 4]);
+                (0..2).map(|i| format!("{:04X} {} {} {} {} {} {} {:02X}", p[i].button, p[i].stickX, p[i].stickY, p[i].substickX, p[i].substickY, p[i].triggerLeft, p[i].triggerRight, bits[i])).collect::<Vec<_>>().join(" | ")
+            });
             timed(4, || self.e.tick());
             let r = self.e.neutral_row();
             let mut t = format!("{:08X},{:08X},{},{:08X}", r[0], r[1], r[2], r[3]);
@@ -243,7 +253,20 @@ pub mod engine_game {
             }
             self.rows.insert(self.e.frames as i32 - 1, t);
             if melee_core::slippi_online::state().is_some() {
-                self.slippi_ck.insert(self.frame() + 1 - FIRST + 1, melee_fighter::slippi_online::checksum());
+                let sf = self.frame();
+                if let Some(st) = melee_core::slippi_online::state() {
+                    if st.last_rolling != 0 {
+                        self.slippi_mixed.insert(sf, self.slippi_bits.get(&sf).copied().unwrap_or([0; 4]));
+                    } else {
+                        self.slippi_mixed.remove(&sf);
+                    }
+                }
+                let ck = melee_fighter::slippi_online::checksum();
+                let of = self.frame() + 1 - FIRST + 1;
+                self.slippi_ck.insert(of, ck);
+                if let (Some(tr), Some(tp)) = (self.slippi_trace.as_mut(), trace_pads) {
+                    tr.insert(of - 1, format!("{tp} | ck {ck:08X} | {}", melee_fighter::slippi_online::trace_line()));
+                }
             }
         }
     }

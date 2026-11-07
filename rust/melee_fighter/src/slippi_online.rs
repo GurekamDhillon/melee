@@ -6,6 +6,22 @@ use melee_types::Fighter;
 
 /// The checksum of the current state: player slots 0..3, raw entities `player_entity[0]` then `[1]` (not through
 /// `transformed`), then each slot's stocks byte.
+/// The checksum's inputs as one text line (`slippi-netplay --trace`): per present entity, slot motion x y percent spawn.
+pub fn trace_line() -> String {
+    let mut t = String::new();
+    for slot in 0..4 {
+        let p = unsafe { &*core::ptr::addr_of!(crate::stale::PLAYER_SLOTS[slot]) };
+        for g in p.player_entity {
+            if g.is_null() {
+                continue;
+            }
+            let fp = unsafe { &*((*g).user_data as *const Fighter) };
+            t += &format!("{slot}:{:x} {} {} {} {} ", fp.motion_id, fp.cur_pos.x, fp.cur_pos.y, fp.dmg.x1830_percent, fp.x8_spawnNum);
+        }
+    }
+    t
+}
+
 pub fn checksum() -> u32 {
     let mut c = Checksum::new();
     for slot in 0..4 {

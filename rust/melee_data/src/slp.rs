@@ -371,6 +371,14 @@ pub fn online_codeset(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x8006_A880)
 }
 
+/// True when the replay was recorded on Akaneia (an m-ex disc): its Gecko list carries Akaneia's own `codes.gct`
+/// inserts, of which the one at 0x803D7060 is the marker (byte-identical in every file of Hero's Akaneia corpus, absent
+/// from the vanilla Slippi sets). On such a replay the external character ids past 25 are the disc's m-ex fighters
+/// (MxDt.dat), not the vanilla hidden characters or Sopo.
+pub fn akaneia_codeset(g: &[u8]) -> bool {
+    gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x803D_7060)
+}
+
 /// A `04 804D4A08 NNNNNNNN` write in a replay's Gecko list: the code sets `DbLevel` (db.c) to N for the whole run. At
 /// `DbLKind_DebugRom` (3) and above `ft_80089118` stops staling moves (Hero's 2026-10-23 set has DbLevel 4: every hit
 /// lands its whole-number damage). The last such write wins. None: the list does not touch DbLevel.

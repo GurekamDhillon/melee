@@ -26,6 +26,7 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     let mut scn = Scenario::parse("")?;
     scn.stage = info.stage() as i32;
     let mut max_stocks = 0;
+    let akaneia = slp::akaneia_codeset(&s.gecko);
     for i in 0..4 {
         let p = info.player(i);
         match p.ptype {
@@ -46,11 +47,16 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
                 }
             }
         }
-        // 32 is Popo alone (Sopo): the console's CSS code sets it and the game spawns Popo without Nana
-        // (ftMapping external 32 -> internal Popo, no sub-fighter). 26-31 are the hidden characters.
-        if p.ckind > 25 && p.ckind != 32 {
-            return Err(format!("p{}: character id {} is outside the 26-character roster", i + 1, p.ckind));
-        }
+        // on an Akaneia replay (its codes.gct in the Gecko list) the ids past 25 are the disc's m-ex fighters: resolved
+        // through MxDt.dat once the disc mounts (needs the Akaneia disc); anywhere else they are refused
+        let ckind = if p.ckind > 25 {
+            if !akaneia || p.ckind > 32 {
+                return Err(format!("p{}: character id {} is outside the 26-character roster", i + 1, p.ckind));
+            }
+            melee_engine::scenario::pending_fighter_token(&format!("mexext:{}", p.ckind))
+        } else {
+            p.ckind as i32
+        };
         if p.offense != 1.0 || p.defense != 1.0 || p.scale != 1.0 {
             notes.push(format!("p{} offense/defense/scale {}/{}/{} not applied", i + 1, p.offense, p.defense, p.scale));
         }
@@ -62,7 +68,7 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         }
         max_stocks = max_stocks.max(p.stocks as i32);
         scn.players[i] = Some(PlayerSpec {
-            ckind: p.ckind as i32,
+            ckind,
             // `--cpu-slots` / `--cpu-ai` (covtest, notes/coverage-testing.md): a CPU stays a CPU slot (Gm_PKind_Cpu), as the
             // console's playback keeps it; default: a human
             slot_type: if cpu_mode > 0 && p.ptype == 1 { 1 } else { 0 },
@@ -347,6 +353,12 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         Err(e) => {
             return finish(args, &name, &Summary { status: format!("parse-error: {e}"), ..Default::default() });
         }
+    };
+    // an Akaneia replay with one of the disc's m-ex fighters runs on the Akaneia disc (GW_ISO_AKANEIA) unless --iso names
+    // one; its vanilla-roster games stay on the vanilla disc (the console ran the same retail code for them)
+    let iso = match (get("--iso"), std::env::var("GW_ISO_AKANEIA")) {
+        (None, Ok(ak)) if slp::akaneia_codeset(&file.gecko) && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype <= 1 && g.player(i).ckind > 25)) => ak,
+        _ => iso,
     };
     let mut sm = Summary {
         version: file.version_str(),

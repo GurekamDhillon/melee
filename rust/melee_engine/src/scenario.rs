@@ -199,6 +199,12 @@ static mut SCN: Option<Scenario> = None;
 static mut PENDING_NAMES: Vec<String> = Vec::new();
 const PENDING: i32 = -1000;
 
+/// A fighter token resolved once the disc mounts (`mexext:N`, `mexint:N`, a disc name): the `ckind` to put in a
+/// `PlayerSpec` built outside `Scenario::parse` (slpcheck's m-ex replays).
+pub fn pending_fighter_token(name: &str) -> i32 {
+    pending_fighter(name)
+}
+
 fn pending_fighter(name: &str) -> i32 {
     unsafe {
         PENDING_NAMES.push(name.to_string());

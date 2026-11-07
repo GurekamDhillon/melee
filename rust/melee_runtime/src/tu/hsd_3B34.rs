@@ -46,6 +46,7 @@ pub unsafe fn jpegLumaAddress(dest:*mut *mut i32,work:*mut u8,offset:u32) {
     melee_core::ct!("jpegLumaAddress");
     *dest=core::ptr::addr_of_mut!((*(work.cast::<JpegWork>())).x118).cast::<i32>().add((offset/4) as usize);
 }
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn hsd_803B3408(image:*mut u8,x:i32,y:i32,width:i32,_height:i32) {
     melee_core::ct!("hsd_803B3408");
     let stride=((width+15)/16)*64;

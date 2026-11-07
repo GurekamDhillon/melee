@@ -852,6 +852,7 @@ pub unsafe fn _tyDisplay_80319994(arg0: i32) {
 }
 
 /// Fit the camera (position, fov, pan limits) and the table backdrop to the laid-out grid.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn _tyDisplay_80319EF0() {
     melee_core::ct!("_tyDisplay_80319EF0");
     let mut interest = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

@@ -159,8 +159,16 @@ static inline void itSeakNeedleThrown_SetupBounce(Item_GObj* gobj)
 static inline void itSeakNeedleThrown_SetupDrop(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
+#if defined(TARGET_PC)
+    /* MWCC draws the sign (right operand) first (DOL 0x802B0180); clang goes left to right */
+    {
+        f32 sign = (HSD_Randi(2) == 0) ? 1.0f : -1.0f;
+        ip->xDD4_itemVar.seakneedlethrown.xDD4 = it_803F6FE0[HSD_Randi(8)] * sign;
+    }
+#else
     ip->xDD4_itemVar.seakneedlethrown.xDD4 =
         it_803F6FE0[HSD_Randi(8)] * ((HSD_Randi(2) == 0) ? 1.0f : -1.0f);
+#endif
     ip->xDD4_itemVar.seakneedlethrown.xDD8 = 0.0f;
     ip->xDD4_itemVar.seakneedlethrown.xDDC = it_803F6FA0[HSD_Randi(8)];
     ip->xDD4_itemVar.seakneedlethrown.xDE0 = it_803F6FC0[HSD_Randi(8)];

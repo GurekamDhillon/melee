@@ -446,6 +446,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 melee_runtime::tu::random::global::state().set_logic_seed(sd);
             }
             unsafe { CAP = [None; 4] };
+            melee_core::fptrace::set_frame(fr); // the fptrace build's frame filter (notes/semantics.md)
             if !e.tick() {
                 break;
             }

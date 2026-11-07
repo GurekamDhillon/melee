@@ -1877,6 +1877,7 @@ unsafe fn hit_fx(g: G, pos: *const Vec3, element: u32, severity: i32, x20: f32, 
 }
 
 /// `ftColl_8007A06C`: pick the strongest entry of a damage log and write the result.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx: usize, arg4: i32) {
     melee_core::ct!("ftcoll_8007a06c");
     if idx == 0 {

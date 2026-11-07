@@ -592,6 +592,7 @@ pub unsafe extern "C" fn grKongo_801D55D8(arg0: *mut HSD_GObj) {
     ext::Ground_801C4D70(arg0, &mut sp14, (*gp).u.kongo.xD8);
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grKongo_801D577C(arg0: *mut HSD_GObj) {
     melee_core::ct!("grKongo_801D577C");
     let gp = (*arg0).user_data as *mut Ground;

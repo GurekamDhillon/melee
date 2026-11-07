@@ -10,3 +10,6 @@ publish.workspace = true
 [features]
 # Per-call tracing (ct.rs, tools/rust-port/trace/insert_ct.py). Off in normal builds.
 calltrace = []
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }

@@ -11,7 +11,7 @@
 # Raw c2rust output lives in <crate>/src/raw/ and is NOT compiled (tools/rust-port/transpile.sh).
 [workspace]
 resolver = "2"
-members = ["melee_core", "melee_types", "melee_runtime", "melee_world", "melee_fighter",
+members = ["melee_core", "melee_fptrace", "melee_types", "melee_runtime", "melee_world", "melee_fighter",
            "melee_chara", "melee_items", "melee_modes", "melee_platform", "melee_gx", "melee_audio", "melee_net", "melee_data", "melee_script", "melee_link", "melee_engine", "melee_modhost", "melee", "melee_relay",
            "../tools/mex-import"]
 
@@ -23,6 +23,7 @@ publish = false
 
 [workspace.dependencies]
 melee_core = { path = "melee_core" }
+melee_fptrace = { path = "melee_fptrace" }
 melee_types = { path = "melee_types" }
 melee_gx = { path = "melee_gx" }
 melee_runtime = { path = "melee_runtime" }

@@ -2719,6 +2719,7 @@ unsafe fn grZebes_SpawnBubbleLine(scales: *mut grZe_BubbleScales, ip: *mut i32, 
     }
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grZebes_801DC744(arg0: i32, arg1: u8) {
     melee_core::ct!("grZebes_801DC744");
     let mut scales = grZe_803B8044.x0_scales;

@@ -3518,6 +3518,7 @@ fn abs_f(x: f32) -> f32 {
     if x < 0.0 { -x } else { x }
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn Ground_801C4FAC(cobj: *mut HSD_CObj) {
     melee_core::ct!("Ground_801C4FAC");
     let mut sp74 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

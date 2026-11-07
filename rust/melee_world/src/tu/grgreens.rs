@@ -789,6 +789,7 @@ pub unsafe extern "C" fn grGreens_80214804(gobj: *mut Ground_GObj) {
 }
 
 /// 21483C
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grGreens_8021483C(gobj: *mut Ground_GObj) {
     melee_core::ct!("grGreens_8021483C");
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

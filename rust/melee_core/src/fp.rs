@@ -11,7 +11,10 @@
 /// roundings); both give different bits for some inputs.
 #[inline(always)]
 pub fn fmadds(a: f32, c: f32, b: f32) -> f32 {
-    (a as f64 * c as f64 + b as f64) as f32
+    let r = (a as f64 * c as f64 + b as f64) as f32;
+    #[cfg(fptrace)]
+    crate::fptrace::log_helper("fmadds", &[a as f64, c as f64, b as f64], r as f64, false);
+    r
 }
 
 /// Gekko double-precision `fmadd`: Dolphin's `NI_madd` is `std::fma(a, c, b)` (one rounding), which is
@@ -24,19 +27,25 @@ pub trait Fmadd {
 impl Fmadd for f64 {
     #[inline(always)]
     fn fmadd(self, c: f64, b: f64) -> f64 {
-        self.mul_add(c, b)
+        let r = self.mul_add(c, b);
+        #[cfg(fptrace)]
+        crate::fptrace::log_helper("fmadd", &[self, c, b], r, true);
+        r
     }
 }
 /// Gekko double `fmadd` as a function.
 #[inline(always)]
 pub fn fmadd(a: f64, c: f64, b: f64) -> f64 {
-    a.mul_add(c, b)
+    a.fmadd(c, b)
 }
 
 /// Gekko `fmsubs` under the same model: `(float)((double)a * (double)c - (double)b)`.
 #[inline(always)]
 pub fn fmsubs(a: f32, c: f32, b: f32) -> f32 {
-    (a as f64 * c as f64 - b as f64) as f32
+    let r = (a as f64 * c as f64 - b as f64) as f32;
+    #[cfg(fptrace)]
+    crate::fptrace::log_helper("fmsubs", &[a as f64, c as f64, b as f64], r as f64, false);
+    r
 }
 
 /// `fmsubs` as clang's `fmuladd(a, c, -b)` forms it (`a*c - b` where the C build fuses to a negated
@@ -44,7 +53,10 @@ pub fn fmsubs(a: f32, c: f32, b: f32) -> f32 {
 /// (ft_0c31's oracle). Other TUs' oracles (itkinds10) pin the unflipped [`fmsubs`].
 #[inline(always)]
 pub fn fmsubs_neg(a: f32, c: f32, b: f32) -> f32 {
-    (a as f64 * c as f64 + (-(b as f64))) as f32
+    let r = (a as f64 * c as f64 + (-(b as f64))) as f32;
+    #[cfg(fptrace)]
+    crate::fptrace::log_helper("fmsubs", &[a as f64, c as f64, b as f64], r as f64, false);
+    r
 }
 
 /// Gekko `fnmsubs`: `-(a*c - b)`, the form MWCC emits for `b -= a*c` / `b - a*c`.
@@ -55,14 +67,20 @@ pub fn fmsubs_neg(a: f32, c: f32, b: f32) -> f32 {
 /// Fighter_procUpdate; notes/fp-audit.md "sign of zero").
 #[inline(always)]
 pub fn fnmsubs(a: f32, c: f32, b: f32) -> f32 {
-    -fmsubs(a, c, b)
+    let r = -fmsubs(a, c, b);
+    #[cfg(fptrace)]
+    crate::fptrace::log_helper("fnmsubs", &[a as f64, c as f64, b as f64], r as f64, false);
+    r
 }
 
 /// Gekko `fnmadds`: `-(a*c + b)`, MWCC's form of `-(a*c) - b` / `-b - a*c`. An exact-zero `a*c + b`
 /// gives -0, where `fmsubs(-a, c, b)` gives +0.
 #[inline(always)]
 pub fn fnmadds(a: f32, c: f32, b: f32) -> f32 {
-    -fmadds(a, c, b)
+    let r = -fmadds(a, c, b);
+    #[cfg(fptrace)]
+    crate::fptrace::log_helper("fnmadds", &[a as f64, c as f64, b as f64], r as f64, false);
+    r
 }
 
 // ---- Gekko estimate instructions (moved from melee_runtime::gekko; port of

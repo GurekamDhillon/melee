@@ -2480,6 +2480,7 @@ pub mod ext {
                 }
             }
     pub static mut H_mnCharSel_802640A0: Option<unsafe extern "C" fn() > = None;
+            #[cfg_attr(fptrace, melee_fptrace::trace)]
             pub unsafe extern "C" fn mnCharSel_802640A0()  {
                 match H_mnCharSel_802640A0 {
                     Some(f) => f(),

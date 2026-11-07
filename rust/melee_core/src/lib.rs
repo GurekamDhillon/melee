@@ -9,6 +9,7 @@
 pub mod codes;
 pub mod ct;
 pub mod fp;
+pub mod fptrace;
 pub mod gc;
 pub mod gcdecode;
 pub mod hash;

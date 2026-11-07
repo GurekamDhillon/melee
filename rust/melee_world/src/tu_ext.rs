@@ -823,6 +823,7 @@ pub fn mpJointSetCb1(a0: i32, a1: *mut core::ffi::c_void, a2: mpLib_JointCollisi
 pub static mut HOOK_mpLib_80055E9C: Option<fn(i32)> = None;
 
 /// C `mpLib_80055E9C` (melee/mp/mplib.h).
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub fn mpLib_80055E9C(a0: i32) {
     match unsafe { HOOK_mpLib_80055E9C } { Some(f) => f(a0), None => { unsafe { let _ = crate::tu::mplib::mpLib_80055E9C(a0 as _); } return; } }
 }

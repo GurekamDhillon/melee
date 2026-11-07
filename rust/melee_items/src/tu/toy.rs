@@ -3180,6 +3180,7 @@ unsafe fn cycle_next(display: *mut TyDisplayData, sym_out: &mut *mut c_void) {
 }
 
 /// Trophy / lighting debug viewer (per-frame proc of the camera gobj when the debug chord is held).
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn _Toy_8030B530(arg0: *mut HSD_GObj) {
     melee_core::ct!("_Toy_8030B530");
     let gobj = arg0;

@@ -447,6 +447,7 @@ pub unsafe extern "C" fn itUnknown_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool
     ext::it_8027A118(gobj, Some(it_802CE7CC)) != 0
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn it_802CED54(gobj: *mut Item_GObj) {
     melee_core::ct!("it_802CED54");
     let ip = GET_ITEM(gobj);

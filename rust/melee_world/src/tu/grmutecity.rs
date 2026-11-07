@@ -1219,6 +1219,7 @@ pub unsafe fn grMc_RandomWreckOffset() -> f32 {
     fmadds(1.0471976f32, ext::HSD_Randf(), -0.5235988f32)
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grMuteCity_801F1A34(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
     melee_core::ct!("grMuteCity_801F1A34");
     let mut car_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

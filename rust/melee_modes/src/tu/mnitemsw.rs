@@ -1218,6 +1218,7 @@ pub unsafe extern "C" fn initUserData(
         + 1 as ::core::ffi::c_int) as u8_0;
     (*user_data).x23 = arg0 as u8_0;
 }
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn mnItemSw_802351A0(mut arg0: s32) -> *mut HSD_GObj {
     melee_core::ct!("mnItemSw_802351A0");
     let mut jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();

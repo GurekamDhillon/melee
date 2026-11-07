@@ -1182,6 +1182,7 @@ version = "0.1.0"
 dependencies = [
  "melee_core",
  "melee_fighter",
+ "melee_fptrace",
  "melee_items",
  "melee_runtime",
  "melee_types",
@@ -1226,10 +1227,20 @@ version = "0.1.0"
 dependencies = [
  "c2rust-bitfields",
  "melee_core",
+ "melee_fptrace",
  "melee_items",
  "melee_runtime",
  "melee_types",
  "melee_world",
+]
+
+[[package]]
+name = "melee_fptrace"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.106",
 ]
 
 [[package]]
@@ -1250,6 +1261,7 @@ name = "melee_items"
 version = "0.1.0"
 dependencies = [
  "melee_core",
+ "melee_fptrace",
  "melee_runtime",
  "melee_types",
  "melee_world",
@@ -1276,6 +1288,7 @@ dependencies = [
  "melee_chara",
  "melee_core",
  "melee_fighter",
+ "melee_fptrace",
  "melee_items",
  "melee_runtime",
  "melee_types",
@@ -1332,6 +1345,7 @@ name = "melee_runtime"
 version = "0.1.0"
 dependencies = [
  "melee_core",
+ "melee_fptrace",
  "melee_types",
 ]
 
@@ -1354,6 +1368,7 @@ name = "melee_world"
 version = "0.1.0"
 dependencies = [
  "melee_core",
+ "melee_fptrace",
  "melee_runtime",
  "melee_types",
 ]

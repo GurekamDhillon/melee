@@ -3545,6 +3545,7 @@ pub unsafe extern "C" fn mnDiagram_DrawFighterHeaders(
     }
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn mnDiagram_CursorProc(mut gobj: *mut HSD_GObj) {
     melee_core::ct!("mnDiagram_CursorProc");
     let mut sp_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();

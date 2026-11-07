@@ -262,6 +262,7 @@ fn HSD_PadClampCheck1(val: &mut u8, shift: u8, min: u8, max: u8) {
 }
 
 /// `HSD_PadClampCheck3`.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 fn HSD_PadClampCheck3(x: &mut i8, y: &mut i8, shift: u8, min: i8, max: i8) {
     let (fx, fy) = (*x as f32, *y as f32);
     let mut r = sqrtf(fmadds(fx, fx, fy * fy));

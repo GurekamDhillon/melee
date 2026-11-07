@@ -192,6 +192,7 @@ pub mod ext {
     }
     pub static mut LBSHADOW_8000E9F0: Option<fn(*mut Vec, *mut HSD_Spline, f32)> = None;
     #[allow(non_snake_case)]
+    #[cfg_attr(fptrace, melee_fptrace::trace)]
     pub fn lbShadow_8000E9F0(a0: *mut Vec, a1: *mut HSD_Spline, a2: f32) {
         match unsafe { LBSHADOW_8000E9F0 } {
             Some(f) => f(a0, a1, a2),
@@ -390,7 +391,10 @@ pub unsafe extern "C" fn grBigBlueRoute_8020B95C() {
         val = 0;
     }
     if val == 0 {
-        ext::grZakoGenerator_801CAEB0(ext::Ground_801C5840(), ext::Ground_801C5940());
+        // MWCC evaluates these arguments right to left (DOL: the Ground_801C5940 call comes first); both draw HSD_Rand*: notes/semantics.md "evaluation order".
+        let b = ext::Ground_801C5940();
+        let a = ext::Ground_801C5840();
+        ext::grZakoGenerator_801CAEB0(a, b);
     }
 }
 

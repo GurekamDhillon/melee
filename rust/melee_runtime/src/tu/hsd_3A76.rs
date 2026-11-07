@@ -424,6 +424,7 @@ unsafe fn sisFitLineToBox(text: *mut HSD_Text, measured_width: f32) {
 
 /// `HSD_SisLib_803A84BC` (0x803A84BC): GObj render callback (`pass == 2` draws) or, with a NULL
 /// `gobj`, a direct draw of the text whose guest address is `pass`.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn HSD_SisLib_803A84BC(gobj: *mut HSD_GObj, pass: i32) {
     melee_core::ct!("HSD_SisLib_803A84BC");
     let text: *mut HSD_Text;

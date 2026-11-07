@@ -488,6 +488,7 @@ pub unsafe fn lb_800122C8(image_desc: *mut HSD_ImageDesc, origx: u16, origy: u16
 #[inline]
 fn f2u8(x: f32) -> u8 { (melee_core::ppc::fctiwz_f32(x)) as i8 as u8 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn lb_800122F0(img: *mut HSD_ImageDesc, tex: *mut _GXTexObj, factor: f32) {
     melee_core::ct!("lb_800122F0");
     let color0 = _GXColor {

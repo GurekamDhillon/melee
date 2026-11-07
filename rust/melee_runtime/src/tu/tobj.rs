@@ -499,6 +499,7 @@ pub unsafe extern "C" fn MakeTextureMtx(tobj: *mut HSD_TObj) {
     ext::PSMTXScale(mp, sx, sy, sz);
     ext::PSMTXConcat(mp, mtxp, mtxp);
 }
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn TObjSetupMtx(p: *mut HSD_TObj) {
     melee_core::ct!("TObjSetupMtx");
     let kind = (*p).flags & 15;

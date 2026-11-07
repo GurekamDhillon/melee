@@ -1099,6 +1099,7 @@ pub unsafe extern "C" fn it_8027770C(item_gobj: *mut HSD_GObj) -> bool {
     ret_val
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn it_8027781C(item_gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("it_8027781C");
     let mut sp48: Vec3 = core::mem::zeroed();

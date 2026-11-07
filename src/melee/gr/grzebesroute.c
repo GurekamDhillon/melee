@@ -105,7 +105,16 @@ void grZebesRoute_8020B1F4(void)
         val = 0;
     }
     if (val == 0) {
+#if defined(TARGET_PC)
+        /* MWCC evaluates the arguments right to left (DOL); both draw HSD_Rand */
+        {
+            int b = Ground_801C5940();
+            int a = Ground_801C5840();
+            grZakoGenerator_801CAEB0(a, b);
+        }
+#else
         grZakoGenerator_801CAEB0(Ground_801C5840(), Ground_801C5940());
+#endif
     }
 }
 

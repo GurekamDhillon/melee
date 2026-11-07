@@ -202,6 +202,7 @@ fn fma_lit(l: f32, lit: f64, x: f32) -> f32 {
 
 impl Hsd3915 {
     /// `DrawASCII`: draws one character at (x, y); returns the advance.
+    #[cfg_attr(fptrace, melee_fptrace::trace)]
     pub fn DrawASCII<H: Hsd3915Host>(&mut self, h: &mut H, chr: i32, x: f32, y: f32, color: &GXColor) -> f32 {
         let index: i32;
         if chr >= '0' as i32 && chr <= '9' as i32 {

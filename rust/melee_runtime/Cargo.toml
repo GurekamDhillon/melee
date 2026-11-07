@@ -6,6 +6,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+melee_fptrace.workspace = true
 melee_core.workspace = true
 melee_types.workspace = true
 
@@ -145,3 +146,6 @@ harness = false
 [[test]]
 name = "tu_particle"
 harness = false
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }

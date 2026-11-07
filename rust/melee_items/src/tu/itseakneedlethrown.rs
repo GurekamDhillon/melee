@@ -225,8 +225,10 @@ unsafe fn itSeakNeedleThrown_SetupBounce(gobj: *mut Item_GObj) {
 #[inline]
 unsafe fn itSeakNeedleThrown_SetupDrop(gobj: *mut Item_GObj) {
     let ip = GET_ITEM(gobj);
-    let a = it_803F6FE0[ext::HSD_Randi(8) as usize];
+    // MWCC draws the sign (HSD_Randi(2), the right operand) before the table index (DOL it_802B00F4 0x802B0180 /
+    // 0x802B019C): notes/semantics.md "evaluation order".
     let b: f32 = if ext::HSD_Randi(2) == 0 { 1.0 } else { -1.0 };
+    let a = it_803F6FE0[ext::HSD_Randi(8) as usize];
     (*ip).xDD4_itemVar.seakneedlethrown.xDD4 = a * b;
     (*ip).xDD4_itemVar.seakneedlethrown.xDD8 = 0.0;
     (*ip).xDD4_itemVar.seakneedlethrown.xDDC = it_803F6FA0[ext::HSD_Randi(8) as usize];

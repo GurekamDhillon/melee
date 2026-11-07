@@ -92,6 +92,7 @@ def crfield(op):
 def scan_dol(args):
     import capstone
     md = capstone.Cs(capstone.CS_ARCH_PPC, capstone.CS_MODE_32 | capstone.CS_MODE_BIG_ENDIAN)
+    md.skipdata = True  # jump tables inside .text must not stop the walk (evalorder_audit found it)
     dolp = args.dol or os.environ.get("INT_AUDIT_DOL") or str(WS / "melee/orig/GALE01/sys/main.dol")
     if not Path(dolp).exists():
         sys.exit("int_audit: DOL not found (pass --dol or INT_AUDIT_DOL)")

@@ -781,6 +781,7 @@ fn return_sqrt_value3(v: &Vec3) -> f32 {
 }
 
 /// `it_8027C8D0`: rotates `arg0` (in the XY plane) by the signed angle `arg8`, keeping its length.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn it_8027C8D0(arg0: *mut Vec3, arg1: *mut Vec3, arg8: f32) {
     melee_core::ct!("it_8027C8D0");
     let dir: f32;

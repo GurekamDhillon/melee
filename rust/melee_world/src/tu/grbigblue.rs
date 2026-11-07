@@ -1884,6 +1884,7 @@ pub unsafe extern "C" fn grBigBlue_801E9F3C(gobj: *mut HSD_GObj) {
 }
 
 /// `grBigBlue_801EA05C` (gobj 36, per frame): the second moving platform; `x0` is its state, `x1` its direction.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grBigBlue_801EA05C(gobj: *mut HSD_GObj) {
     melee_core::ct!("grBigBlue_801EA05C");
     let gp = GET_GROUND(gobj);
@@ -2181,6 +2182,7 @@ pub unsafe extern "C" fn grBigBlue_801EAB50(pos: *mut Vec3, flag: s32, range_x: 
 }
 
 /// `grBigBlue_801EACE8`: collision of a platform / the route platform with `point` ±(`half_range_x`, `half_range_y`).
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grBigBlue_801EACE8(
     exclude: *mut HSD_JObj,
     point: *mut Vec3,
@@ -3195,6 +3197,7 @@ unsafe fn bb_spawn_timer() -> s32 {
 
 /// `grBigBlue_801ED694` (one car, per frame): lane ranking, speed, bounce, heading and grounding of lane `lane`.
 /// Fused sites: see the per-statement comments (15 in all).
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn grBigBlue_801ED694(gobj: *mut HSD_GObj, lane: s32) {
     melee_core::ct!("grBigBlue_801ED694");
     let gp = (*gobj).user_data as *mut Ground;

@@ -59,3 +59,55 @@ Host: gcdecode, hash, gc, modhook, slippi_online (net), pose / pose_capture (ren
 neutral_hash, melee_modes oracle.rs, tu/support.rs (u128 bitfields). Known console differences kept, both builds alike:
 axdriver `powf` (MSL pow not ported; audio pitch only) and bytecode op 0x13 `logf` (MSL log not ported). Inline: mobj.rs
 `kf` clamp (render-only TEV constant), granime const items, one geno_game literal shift.
+
+## 3. Float trace matching (tools/rust-port/fptrace)
+
+Both sides log every float operation of one call by value (f64 bit patterns; an f32 widened exactly) and
+`match.py` compares them.
+
+- Console side: a private Dolphin copy with a dump patch in `NHV1Oracle.cpp` `Probe()` (not in the shared oracle).
+  `MELEE_DOLPHIN_NHV1_DUMP=<prefix>` plus either `_DUMP_FRAME`/`_DUMP_COUNT` or `_DUMP_AT=pc:frame:call,...`, where
+  call is the hit index of that pc within that frame. Probe one address per run: the JIT leaves `pc` stale at an HLE
+  hook. A dump (`GDMP` v2) holds the registers, GQRs, MEM1 and ARAM. `gekko.py` (a Gekko interpreter from
+  Dolphin's semantics: ForceSingle, Force25Bit, `std::fma` madd, estimate tables, quantized loads and stores)
+  runs the call to its return and logs each float op with its pc and function. Hardware registers and the
+  locked cache are scratch bytes. `ARQPostRequest` is done at once from the dumped ARAM, then the callback runs.
+- Rust side: `#[cfg_attr(fptrace, melee_fptrace::trace)]` on a function. In a `RUSTFLAGS=--cfg fptrace` build, the
+  proc macro logs its binary ops, compound assigns and float casts, and `fp` helpers log while a trace is on.
+  Env vars: `MELEE_FPTRACE_FN=a,b`, `_FRAME`, `_NTH`, `_MINOPS`, and `_OUT` or `_DIR`+`_PER`
+  (`<name>.f<frame>.c<call>.tsv`). The 71 fp-audit functions carry the attribute (in the normal build it does nothing).
+- `match.py rust.tsv ppc.tsv`: classes are ok, neg, fusion+ (Rust fused, console did mul then add), fusion-, frsp,
+  force25, prec and miss. `sweep.sh <slp> <dir>` does both sides for every annotated function the replay reaches.
+- Dumps hold console RAM: they stay under `_build/agents/<lane>` and are deleted.
+
+Result over 7 replays (every legal stage; Fox, Falco, Marth, Sheik, Peach, Jigglypuff, Falcon, Ganon, Mario, Luigi,
+Samus; first 2-3 calls with at least 4 float ops):
+
+| function | calls | result |
+|---|---|---|
+| ftColl_8007A06C, ftCo_SquatRv_CheckInput (+ its callees, ~3k-7k PPC ops), TObjSetupMtx, mpLib_80055E9C, ftCo_800D0CBC, it_8027781C, HSD_PadClampCheck3 | 50 | all equal |
+| HSD_SisLib_803A84BC | 2 | equal up to sign (`neg`: fnmsubs vs fmsubs + negate) |
+| ftCo_800C2600 | 2 | **fixed**: `d2 = z*z + (x*x + y*y)` is fmuls/fadds in the DOL (800C28A8); Rust fused it, C now uses `GW_NOFUSE_SQ` |
+| psDispParticles | 12 | the input matrices already differ (render-time camera state), not an arithmetic difference; render only |
+
+The other fp-audit functions are not reached by these replays: non-legal stages, menus, Ness/Yoshi specials, and
+Bury/Song/Bind. The static "DOL fused vs predicted" counts in fp-audit.md were wrong for ftColl_8007A06C and
+SquatRv: the traced values are equal.
+
+## 4. Evaluation order (tools/rust-port/evalorder_audit.py)
+
+`scan` reads the clang AST JSON of the game C (`-UTARGET_PC`) and lists expressions where two calls (or a call
+and a read of what it writes) are unsequenced. A purity fixed point marks the sites that only call pure
+functions (`-pure`). `dol` reads the `bl` order of each site from the DOL. MWCC often evaluates arguments right
+to left, while clang and Rust go left to right.
+
+Retail order differed and is fixed in Rust and in C (`TARGET_PC`):
+
+- efasync case 0x42B: the two `va_arg` are drawn right to left (DOL 0x800659A0).
+- itSeakNeedleThrown_SetupDrop: `HSD_Randi(2)` (the sign) is drawn before `HSD_Randi(8)` (0x802B0180/0x802B019C).
+- `grZakoGenerator_801CAEB0(Ground_801C5840(), Ground_801C5940())`: both arguments draw RNG and 5940 runs first.
+  Affected stages: gricemt, grpushon, grshrineroute, grzebesroute, grbigblueroute, grkinokoroute.
+
+There are 43 impure call-call sites; 99 call-read-shared and 196 call-read sites were reviewed by callee
+(getters, out-param helpers) and are benign. `int_audit.py`'s DOL scan now uses capstone skipdata (jump tables
+in .text stopped it before).

@@ -392,6 +392,7 @@ pub unsafe fn grOldKongo_8020F888_inline(gp: *mut Ground) {
     }
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
     melee_core::ct!("stageGObj1_GObjProc");
     let mut sp3C = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -574,6 +575,7 @@ pub unsafe extern "C" fn stageGObj2_Callback1(_gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn stageGObj2_GObjProc(arg0: *mut HSD_GObj) {
     melee_core::ct!("stageGObj2_GObjProc");
     let mut left: f32 = 0.0;

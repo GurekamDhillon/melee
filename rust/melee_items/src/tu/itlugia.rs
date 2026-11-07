@@ -656,6 +656,7 @@ pub unsafe fn it_802D1F64(gobj: *mut Item_GObj, param: f32) -> Vec3 {
     diff
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn it_802D208C(gobj: *mut Item_GObj) {
     melee_core::ct!("it_802D208C");
     let ip = GET_ITEM(gobj);

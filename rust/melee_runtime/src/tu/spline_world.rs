@@ -37,6 +37,7 @@ unsafe fn put(p: *mut Vec, v: Option<crate::mtx::Vec3>) {
 }
 
 /// `splGetSplinePoint(p, spline, u)`.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn splGetSplinePoint(p: *mut Vec, s: *mut HSD_Spline, u: f32) {
     melee_core::ct!("splGetSplinePoint");
     put(p, spline::get_spline_point(&view(s), u));

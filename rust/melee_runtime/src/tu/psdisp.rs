@@ -3039,6 +3039,7 @@ pub unsafe fn psUpdateBillboardAxes(mut inv_view: *const [f32; 4]) {
     HSD_PSDisp_804D7928 = right_z - up_z;
 }
 
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe fn psDispParticles(mut target_link: u32, mut sw: u32) {
     melee_core::ct!("psDispParticles");
     let mut sp7B4: s32 = 0;

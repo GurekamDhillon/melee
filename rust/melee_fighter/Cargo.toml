@@ -6,6 +6,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+melee_fptrace.workspace = true
 melee_core.workspace = true
 melee_types.workspace = true
 # group 1's MSL atan2f (lbtrigf) for the ftcommon.c stick angles (port round 9)
@@ -20,3 +21,6 @@ c2rust-bitfields = { version = "=0.22.1", optional = true }
 # src/c2r is generated and gitignored: run tools/rust-port/transpile.sh on the group, then
 # `python rust/melee_fighter/gen/fix_raw.py` (docs/rust-port/group-fighter.md).
 c2r = ["dep:c2rust-bitfields"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }

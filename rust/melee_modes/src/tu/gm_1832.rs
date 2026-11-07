@@ -878,6 +878,7 @@ pub unsafe extern "C" fn fn_8018575C(gobj: *mut HSD_GObj, _arg1: i32) {
 
 /// Creates splash screen sprite objects from pre-rendered character images. Distributes 10
 /// image tiles across a grid with random offsets.
+#[cfg_attr(fptrace, melee_fptrace::trace)]
 pub unsafe extern "C" fn fn_801857C4(arg0: *mut HSD_GObj) {
     melee_core::ct!("fn_801857C4");
     let st = &mut lbl_804735E8;

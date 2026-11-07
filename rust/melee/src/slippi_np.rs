@@ -42,7 +42,14 @@ fn online(s: i32) -> i32 {
 /// which follows the live camera and so differed by a few frames from Slippi Dolphin: port/slippi4's 60 ms / 10 %
 /// divergence), and the online code paths of ftLib and the FD background. A replay of an online game gets the same
 /// value from its Game Start block (`install_replay`).
-pub fn online_codes() {
+/// The online codeset's gameplay codes we have as `melee_core::codes` bits: NeutralSpawn, FreezeGlitchFix,
+/// PreventWobbling, the ledge-grab limit (45), UCF 0.84 (setting the word turns off the default UCF otherwise) and, unless the match's `alt_stage_mode` asks for the moving stage,
+/// frozen Pokemon Stadium (slippi-online-patches.md section 3).
+pub fn online_codes(alt_stage_mode: u8) {
+    use melee_core::codes as c;
+    let frozen = if alt_stage_mode == 0 { c::FROZEN_PS } else { 0 };
+    let w = std::env::var("MELEE_SLIPPI_ONLINE_BITS").ok().and_then(|v| u32::from_str_radix(&v, 16).ok());
+    c::set(w.unwrap_or(c::UCF | c::NEUTRAL_SPAWN | c::FREEZE_FIX | c::NO_WOBBLE | c::LGL | frozen), 45);
     unsafe {
         melee_fighter::platform::hook::Slippi_Codes = Some(|| 2);
         melee_fighter::hooks::SLIPPI_CODES = Some(|| 2);
@@ -60,8 +67,12 @@ pub fn online_scene(sel: &[Selections; 2]) -> Result<(String, u16), String> {
         return Err(format!("stage {stage:#x} is not wired on the engine"));
     }
     let mut t = String::new();
+    // a mirror match in the same costume: the second port gets shade 1 (PlayerInitData.sub_color), as Slippi Dolphin's
+    // match block has it (read back from the Game Start block of its replay)
+    let mirror = sel[0].character_id == sel[1].character_id && sel[0].character_color == sel[1].character_color;
     for (i, s) in sel.iter().enumerate() {
-        t += &format!("p{}=ck:{}/human/c{};", i + 1, s.character_id, s.character_color);
+        let shade = if mirror && i == 1 { "/shade1" } else { "" };
+        t += &format!("p{}=ck:{}/human/c{}{shade};", i + 1, s.character_id, s.character_color);
     }
     t += &format!("p3=none;p4=none;stage=ext:{stage};match=stock;stocks=4;minutes=8;items=off");
     Ok((t, stage))
@@ -82,6 +93,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let (decider, local_port, remote_port, peer) = if let Some(url) = arg(args, "--mm") {
         let mut code = arg(args, "--code").unwrap_or_else(|| "RUST#001".into());
         let (mut uid, mut play_key, mut display) = (format!("local-test-{}", code.replace('#', "-")), String::new(), arg(args, "--name").unwrap_or_else(|| "Rust".into()));
+        let mut app_version = arg(args, "--app-version").unwrap_or_else(|| "4.0.0-mainline-beta.20".into());
         if real {
             let Some(path) = arg(args, "--user-json") else {
                 eprintln!("melee: --mm-real needs --user-json (a copy of the account's Slippi user.json)");
@@ -93,6 +105,10 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
                 (Some(u), Some(k), Some(c)) => {
                     (uid, play_key, code) = (u, k, c);
                     display = field("displayName").unwrap_or(display);
+                    // the server refuses an outdated client: the account's own latestVersion unless --app-version
+                    if arg(args, "--app-version").is_none() {
+                        app_version = field("latestVersion").unwrap_or(app_version);
+                    }
                 }
                 _ => {
                     eprintln!("melee: --user-json: not a Slippi user.json (uid, playKey, connectCode)");
@@ -116,7 +132,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             connect_code: code,
             mode,
             search_code: arg(args, "--search").unwrap_or_default(),
-            app_version: arg(args, "--app-version").unwrap_or_else(|| "4.0.0-mainline-beta.20".into()),
+            app_version,
             port: num("--port", 0) as u16,
         };
         if req.port == 0 {
@@ -238,7 +254,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     eprintln!("melee: {tag}: selections exchanged, rng_offset {rng_offset:#06x}, stage {stage:#x}, scene {scene}");
     melee_core::slippi_online::enable(rng_offset);
     if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
-        online_codes();
+        online_codes(by_port.iter().map(|s| s.alt_stage_mode).max().unwrap_or(0));
     }
     let mut game = match EngineGame::open_scene(args, &scene, rng_offset) {
         Ok(g) => g,
@@ -465,7 +481,7 @@ pub fn slippi_replay(args: &[String]) -> ExitCode {
     eprintln!("melee: slippi-replay: {} frames, rng_offset {rng_offset:#06x}, scene {scene}", pads.len());
     melee_core::slippi_online::enable(rng_offset);
     if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
-        online_codes();
+        online_codes(log.split("alt_stage_mode: ").nth(1).and_then(|t| t.split(|ch: char| !ch.is_ascii_digit()).next()?.parse().ok()).unwrap_or(0));
     }
     let mut game = match EngineGame::open_scene(args, &scene, rng_offset) {
         Ok(g) => g,
@@ -476,6 +492,9 @@ pub fn slippi_replay(args: &[String]) -> ExitCode {
     };
     for (i, c) in chars.iter().enumerate() {
         game.slippi_chars[i] = *c;
+    }
+    if arg(args, "--trace-out").is_some() {
+        game.slippi_trace = Some(Default::default());
     }
     let lag = arg(args, "--lag").and_then(|v| v.parse::<i32>().ok());
     let local = if decider { 0usize } else { 1 };
@@ -545,6 +564,10 @@ pub fn slippi_replay(args: &[String]) -> ExitCode {
             }
             eprintln!("melee: slippi-replay: lag {lag} drop {dpct}%: rollbacks {} (max depth {}), resim {}", s.stats.rollbacks, s.stats.depth_max, s.stats.resim);
         }
+    }
+    if let (Some(p), Some(tr)) = (arg(args, "--trace-out"), game.slippi_trace.as_ref()) {
+        let t: String = tr.iter().map(|(f, l)| format!("{f} | {l}\n")).collect();
+        let _ = std::fs::write(p, t);
     }
     if let Some(p) = arg(args, "--out") {
         let mut t = String::from("frame,checksum\n");

@@ -482,3 +482,62 @@ Engine vs engine through the mock: 0 desyncs (1285 compared).
 run-B divergence. Only FD and Battlefield boot on the engine (`online_scene` refuses others; the mock is run with
 `--stages 0x20`). The CSS hand position of each character is not mapped (`--css 0,15` is Kirby). The color "shade" for
 mirror matches is not applied. Real-network tests: none (the engine's client only connects to loopback).
+
+## 12. Phase 4: the 60/10 divergence, seed bits, stages, the real server (2026-11-07, port/slippi4)
+
+**The 60 ms / 10 % divergence was a sim gap, not rollback.** Reproduced (run b60-4: 4 soft frames, the same
+signature: float sum off by 1, high half different) and then replayed offline from the engine's own trace with
+`melee slippi-replay` (no network, no rollback): the same 4 frames differed, while `slpcheck` on Dolphin's replay of
+the game matched. The differing field was an offscreen fighter's percent: the 1% offscreen tick
+(`dmg.x1910` vs `x7AC`, `Fighter_8006A360`) came 4 frames late. `ftSlippi_IsOffscreen` took the HUD-magnifier path
+(`ifMagnify_802FC998`, follows the live camera) because `slippi-netplay` never turned the online codeset on;
+Slippi's `BrawlOffscreenDamage` uses the stage camera bounds. Fix: `slippi_np::online_codes` sets `Slippi_Codes() = 2`
+(platform hook, `melee_fighter::hooks`, grlast) and the online gameplay bits (UCF, NeutralSpawn, FreezeGlitchFix,
+PreventWobbling, LGL 45, frozen PS unless `alt_stage_mode`). UCF must be in the word: setting the codes otherwise
+turns the default UCF off (57-736 soft frames in replays). Neutral spawn is what Battlefield needed (spawns were
+(0,8)/(0,62.4) instead of (+-38.8, 35.2): hard desync from frame 1 in phase 3's terms).
+
+**Deterministic repro.** `slippi-netplay --trace F`: per finalized frame both pads + the seed byte, the checksum and
+its inputs. `melee slippi-replay --trace F --log engine.log [--lag N --drop-pct P --drop-seed S] [--out CSV]
+[--trace-out T]`: the run offline, straight or through the rollback session with deterministic late/dropped remote
+pads (lag 4-6, 20-40 % "drops": 760-910 rollbacks, depth 7). `np_compare.py OUT NAME` compares every frame with
+Dolphin's `SLIPPI_CHECKSUM_LOG`.
+
+**Seed bits under rollback.** A frame whose mix read a pad byte (a port rolled) records the bytes it used; a confirmed
+remote pad with a different byte forces a resim (`RbSession::force_resim_from`). Slippi Dolphin sends 0 in byte 8 on
+every frame we logged, so against Dolphin it never fired (forced resims 0).
+
+**Live results vs Slippi Dolphin (mock, loopback; after the fix).** All: 0 soft, 0 hard live and offline.
+
+| run | relay lag/loss | Dolphin vs engine | stage | compared live / offline | rollbacks | rolled frames |
+|---|---|---|---|---|---|---|
+| fx-1..3 | 60 / 10 | Kirby vs Fox | FD | 2273-2409 / 2488-2666 | 372-409 | - |
+| fx-4 | 80 / 15 | Peach vs Fox | FD | 2166 / 2473 | 393 | - |
+| fx-5 | 100 / 20 | Kirby vs Fox | FD | 1786 / 2092 | 386 | - |
+| fx-6 | 30 / 5 | Peach vs Luigi | FD | 2717 / 2844 | 394 | 11 |
+| fx-7 | 60 / 10 | Marth vs Peach | FD | 2382 / 2643 | 380 | 0 |
+| fx-8 | 60 / 10 | Luigi vs G&W | FD | 2448 / 2695 | 361 | 23 |
+| st-7 | 60 / 10 | G&W vs Luigi | FD | 2266 / 2494 | 401 | 30 |
+| st-1 | 30 / 5 | Kirby vs Fox | Battlefield | 2593 / 2730 | 141 | - |
+| st-3 | 30 / 5 | Ness vs Pichu | Fountain of Dreams | 2525 / 2635 | 371 | - |
+| st-4 | 30 / 5 | Falcon vs Marth | Pokemon Stadium | 2436 / 2564 | 153 | - |
+| st-5 | 30 / 5 | Marth vs Falcon | Yoshi's Story | 2692 / 2838 | 397 | - |
+| st-6 | 30 / 5 | Jigglypuff vs Jigglypuff (shade 1) | Dream Land | 2732 / 2873 | 398 | - |
+
+Pre-fix b60-1..7 (60/10, 80/15, 100/20): six clean, b60-4 the divergence; all eight pre-fix traces replay clean
+with the fix. Mirror shade: Dolphin's replay of a Peach mirror has port 2 `sub_color` 1; `online_scene` adds `shade1`.
+
+**Gaps.** `slpcheck` of several online replays reports `state_frame` / `last_attack` differences late in the game
+(fields outside the online checksum; seeds are forced there; not investigated). The CSS table
+(`dolphin_drive.py --play NAME`, icon centres from mncharsel.c) misses now and then (Fox -> Ness, Kirby -> Peach,
+Peach -> no character once): the hand is not settled when A is pressed. Battlefield's Peach mirror has no clean live
+run (the one attempt failed at the CSS).
+
+**The real network.** `--mm-real` alone allows a non-loopback server: `wss://` (rustls behind `melee_net`'s `real-net`
+feature, `--features real-net`), the account from `--user-json` (a copy; no field is printed; real-server messages are
+logged by type only), the netplay socket on 0.0.0.0, `--mm-mode unranked` only with `--mm-leave-after-joined`, never
+ranked. One real test was run: an unranked join to `wss://matchmaking.slippi.gg/v1/queue` from a copied profile, which
+the server refused ("limited to dev accounts"). The installed production Slippi Dolphin talks to `mm.slippi.gg` /
+`mm2.slippi.gg` instead (the older ENet matchmaking); that client is not written. Only one Slippi profile exists in
+AppData (`Slippi Launcher/netplay/User/Slippi/user.json`), so a direct engine-vs-Dolphin or engine-vs-engine game
+through the real servers (two accounts) was not possible.

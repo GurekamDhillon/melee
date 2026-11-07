@@ -156,7 +156,7 @@ _ROWS = {"top": (20.0, 13.0), "mid": (13.0, 6.0), "btm": (6.0, -1.0)}
 _LAYOUT = {
     "top": ["drmario", "mario", "luigi", "bowser", "peach", "yoshi", "dk", "falcon", "ganon"],
     "mid": ["falco", "fox", "ness", "ics", "kirby", "samus", "zelda", "link", "ylink"],
-    "btm": [None, None, "pichu", "pikachu", "jigglypuff", "mewtwo", "gnw", "marth", "roy"],
+    "btm": [None, "pichu", "pikachu", "jigglypuff", "mewtwo", "gnw", "marth", "roy", None],
 }
 # bottom-row edges that differ from the column grid: Pichu starts at -23.4, Roy ends at 23.6
 _EDGE = {"pichu": (-23.4, -17.4), "roy": (17.6, 23.6)}

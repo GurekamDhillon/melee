@@ -111,6 +111,8 @@ pub struct Player {
     pub resimulating: bool,
     ucf_off_mode: i32,
     ucf_hist: [[[i8; 4]; 8]; 4],
+    /// Online replays: the console's forced frame seed minus the Frame Start event's (a multiple of 0x10000).
+    pub fs_offset: core::cell::Cell<u32>,
     ucf_head: [u32; 4],
     codes_cache: Option<i32>,
     det_cache: Option<bool>,
@@ -158,6 +160,7 @@ impl Player {
             resimulating: false,
             ucf_off_mode: -1,
             ucf_hist: [[[0; 4]; 8]; 4],
+            fs_offset: core::cell::Cell::new(0),
             ucf_head: [0; 4],
             codes_cache: None,
             det_cache: None,
@@ -459,6 +462,15 @@ impl Player {
         }
         if self.r.online || self.resync {
             if let Some(s) = self.frame_seed() {
+                if self.r.online && s != 0 {
+                    // The console forces a seed of the Frame Start form (game seed + n * 0x10000); the event's n can lag by whole
+                    // frames late in a match, so the forced value is recovered from the first recorded Pre-Frame seed.
+                    let pre = (0..4).find_map(|p| self.rp_cur(p, false).map(|i| i.seed).filter(|&x| x != 0));
+                    let mut off = self.fs_offset.get();
+                    let forced = pre.and_then(|rec| online_forced_seed(rec, s, &mut off)).unwrap_or(s.wrapping_add(off));
+                    self.fs_offset.set(off);
+                    return forced;
+                }
                 return s;
             }
         }
@@ -1341,4 +1353,35 @@ impl Player {
             self.rec.flush_next = UNARMED;
         }
     }
+}
+
+/// The seed the console forced at the start of an online frame, from the first recorded Pre-Frame seed `rec`, the Frame Start
+/// event's `sd` and the offset seen so far (updated when the recording shows a new one). None: not identifiable this frame.
+/// The console draws k times (k <= 64) between the forced seed and the first fighter's Pre-Frame point.
+pub fn online_forced_seed(rec: u32, sd: u32, off: &mut u32) -> Option<u32> {
+    const INV: u32 = {
+        let a: u32 = 214013;
+        let mut x: u32 = a;
+        let mut i = 0;
+        while i < 5 {
+            x = x.wrapping_mul(2u32.wrapping_sub(a.wrapping_mul(x)));
+            i += 1;
+        }
+        x
+    };
+    let want = sd.wrapping_add(*off);
+    let mut x = rec;
+    let mut cand = None;
+    for _ in 0..=64 {
+        if x == want {
+            return Some(want);
+        }
+        if cand.is_none() && x & 0xFFFF == sd & 0xFFFF && (x.wrapping_sub(sd) as i32 >> 16).unsigned_abs() < 4096 {
+            cand = Some(x);
+        }
+        x = x.wrapping_sub(2531011).wrapping_mul(INV);
+    }
+    let c = cand?;
+    *off = c.wrapping_sub(sd);
+    Some(c)
 }

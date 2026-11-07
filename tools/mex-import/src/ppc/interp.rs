@@ -143,13 +143,37 @@ fn rotl(v: u32, sh: u32) -> u32 {
     v.rotate_left(sh & 31)
 }
 
+/// Gekko's own float-to-int: toward zero (fctiwz) or to nearest even (fctiw; FPSCR RN = 0, as the
+/// game leaves it), saturating to 0x7FFFFFFF / 0x80000000, NaN giving 0x80000000. The high word is
+/// 0xFFF80000 as on hardware (the game only stores the low word, stfd + lwz).
+fn ctiw_gekko(b: f64, nearest: bool) -> u64 {
+    let r = if nearest { b.round_ties_even() } else { b.trunc() };
+    let iv = if b.is_nan() {
+        i32::MIN
+    } else if r >= 2147483647.0 {
+        i32::MAX
+    } else if r <= -2147483648.0 {
+        i32::MIN
+    } else {
+        r as i32
+    };
+    0xFFF8_0000_0000_0000 | (iv as u32 as u64)
+}
+
 pub struct Machine {
     pub cpu: Cpu,
+    /// PowerPC-exact floats (the engine's guest runs): fused multiply-add (one rounding, then to
+    /// single for the `s` forms) and Gekko's saturating fctiw / fctiwz. Off, the machine is
+    /// gw_ppc.c op for op (what tests/ppc_oracle.rs checks).
+    pub gekko: bool,
 }
 
 impl Machine {
     pub fn new(cpu: Cpu) -> Machine {
-        Machine { cpu }
+        Machine { cpu, gekko: false }
+    }
+    pub fn new_gekko(cpu: Cpu) -> Machine {
+        Machine { cpu, gekko: true }
     }
 
     fn ea(&self, a: u8, ea: Ea, update: bool) -> u32 {
@@ -213,6 +237,7 @@ impl Machine {
     }
 
     pub fn exec<M: Mem, B: Bridge<M>>(&mut self, mem: &mut M, br: &mut B, op: Op, ip: u32, w: u32) -> Result<Step, Fault> {
+        let gekko = self.gekko;
         let c = &mut self.cpu;
         match op {
             Op::AddI { d, a, imm } => c.gpr[d as usize] = c.r0(a).wrapping_add(imm),
@@ -534,6 +559,10 @@ impl Machine {
                     FOp::Res => 1.0 / y,
                     FOp::Mul => x * z,
                     FOp::Rsqrte => 1.0 / y.sqrt(),
+                    FOp::Msub if gekko => x.mul_add(z, -y),
+                    FOp::Madd if gekko => x.mul_add(z, y),
+                    FOp::Nmsub if gekko => -x.mul_add(z, -y),
+                    FOp::Nmadd if gekko => -x.mul_add(z, y),
                     FOp::Msub => (x * z) - y,
                     FOp::Madd => (x * z) + y,
                     FOp::Nmsub => -((x * z) - y),
@@ -554,6 +583,8 @@ impl Machine {
                     FUn::Abs => c.set_f(d, if y < 0.0 { -y } else { y }),
                     FUn::Nabs => c.set_f(d, if y < 0.0 { y } else { -y }),
                     FUn::Rsp => c.set_f(d, y as f32 as f64),
+                    FUn::Ctiwz if gekko => c.fpr[d as usize] = ctiw_gekko(y, false),
+                    FUn::Ctiw if gekko => c.fpr[d as usize] = ctiw_gekko(y, true),
                     FUn::Ctiwz => c.fpr[d as usize] = ctiw(y),
                     FUn::Ctiw => c.fpr[d as usize] = ctiw(if y >= 0.0 { y + 0.5 } else { y - 0.5 }),
                 }

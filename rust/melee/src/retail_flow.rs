@@ -78,7 +78,7 @@ pub struct RetailPlay {
     scene_no: u32,
     matches: u32,
     quit_after: Option<u32>,
-    max_frames: Option<u64>,
+    pub(crate) max_frames: Option<u64>,
     shot_dir: Option<PathBuf>,
     shot_ages: Vec<u32>,
     shot_pending: Option<String>,
@@ -1333,6 +1333,12 @@ impl Drop for SysHeap {
 
 pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
     use std::process::ExitCode;
+    #[cfg(feature = "corev1")]
+    if crate::corev1::active() {
+        // the host presents and paces (corev1.rs)
+        crate::corev1::drive(&mut rp);
+        return if rp.failed.is_some() { ExitCode::FAILURE } else { ExitCode::SUCCESS };
+    }
     if headless {
         let mut pads = PadSystem::headless();
         let limit = rp.max_frames.unwrap_or(60 * 600);

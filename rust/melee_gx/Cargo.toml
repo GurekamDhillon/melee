@@ -14,5 +14,9 @@ bytemuck = "1"
 rustc-hash = "2.1"
 ab_glyph = { version = "0.2.32", default-features = false, features = ["std"] }
 
+[features]
+# Core v1 (mu_core_v1.h): FIFO transcoder for a console-GX host (src/corev1.rs); only melee_corev1 enables it
+corev1 = []
+
 [dev-dependencies]
 png = "0.18"

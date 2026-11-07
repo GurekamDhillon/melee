@@ -478,6 +478,8 @@ impl GxShim {
             return;
         }
         self.gx.draw_done();
+        #[cfg(feature = "corev1")]
+        crate::corev1::frame_end(_clear);
         let draws = self.gx.state.take_draws();
         if std::env::var_os("MELEE_GX_WARN").is_some() { for w in &self.gx.state.warnings { eprintln!("gx warn: {w}"); } }
         self.gx.state.warnings.clear();

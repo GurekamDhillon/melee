@@ -310,6 +310,14 @@ impl PadSystem {
             src[0] = Source::Idle;
         }
 
+        #[cfg(feature = "corev1")]
+        if let Some(h) = HOST_PADS.get() {
+            // core v1: the host's controllers (pad_read) are ports 1-4; a pad script still drives on top
+            h(st);
+            for i in 0..PAD_CHANMAX {
+                src[i] = if st[i].err == 0 { Source::Gamepad } else { Source::None };
+            }
+        }
         if let Some(s) = self.script.as_mut() {
             let driven = s.apply(st);
             for i in 0..PAD_CHANMAX {
@@ -360,3 +368,7 @@ pub fn pad_recalibrate(_mask: u32) -> bool {
 pub fn pad_reset(_mask: u32) -> bool {
     true
 }
+
+/// Core v1 (feature `corev1`): the host's `pad_read`, replacing every device layer when set.
+#[cfg(feature = "corev1")]
+pub static HOST_PADS: std::sync::OnceLock<fn(&mut [PADStatus; PAD_CHANMAX])> = std::sync::OnceLock::new();

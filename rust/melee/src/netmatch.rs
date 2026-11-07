@@ -96,6 +96,8 @@ pub mod engine_game {
         pub live: bool,
         pub live_seed: Option<u32>,
         pub rows: std::collections::BTreeMap<i32, String>,
+        /// Slippi online mode: the desync checksum of the state entering each online frame (frame 1 = session `FIRST`).
+        pub slippi_ck: std::collections::BTreeMap<i32, u32>,
     }
 
     #[derive(Clone)]
@@ -107,7 +109,7 @@ pub mod engine_game {
 
     impl EngineGame {
         pub fn new(e: Engine) -> Self {
-            EngineGame { e, base: RefCell::new(None), live: false, live_seed: None, rows: Default::default() }
+            EngineGame { e, base: RefCell::new(None), live: false, live_seed: None, rows: Default::default(), slippi_ck: Default::default() }
         }
         fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
             if self.base.borrow().is_none() {
@@ -222,6 +224,9 @@ pub mod engine_game {
                 t += &format!(",{w:08X}");
             }
             self.rows.insert(self.e.frames as i32 - 1, t);
+            if melee_core::slippi_online::state().is_some() {
+                self.slippi_ck.insert(self.frame() + 1 - FIRST + 1, melee_fighter::slippi_online::checksum());
+            }
         }
     }
 

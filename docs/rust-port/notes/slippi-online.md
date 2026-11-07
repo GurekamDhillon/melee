@@ -393,3 +393,43 @@ from frame 1388) are not in the checksum's fields.
 4. Wiring `slippi_online` into our rollback session: the seed-bit history and B mask are game state (snapshot them),
    and section 1.3 must run on resimulated frames with the confirmed pads.
 5. Sim parity: 21 of 125 slpcheck files still diverge.
+
+## 10. Phase 2: the Slippi transport in Rust (2026-11-07, port/slippi2)
+
+**Code.** `melee_net::enet`: our own ENet 1.3 host (connect / verify-connect with session ids, simultaneous connects
+both ways, reliable in-order channels with acks and retransmission, unsequenced packets with the 1024-group window,
+ping, throttle-configure / bandwidth-limit accepted, disconnect with a reason word; no compression, checksum or
+fragments, none of which Slippi uses). `melee_net::slippi`: the `sf::Packet` codec, MATCH_SELECTIONS / PAD / PAD_ACK /
+CHAT, and `Client` (Slippi's 1v1 netplay client: pads unsequenced on channel 1, acks on channel 2 and only for pads
+that added frames, the local queue resent until acked and capped at 128 frames, ping from acks, `CalcTimeOffsetUs`,
+duplicate-link pruning by the lower port). `melee slippi-netplay --host|--join --port P --peer IP:PORT`: one peer on
+the native engine with Slippi online mode on (`slippi_online::enable(decider's rng_offset)`), our rollback session
+(window 7), Slippi frame numbering (online frame 1 = session `FIRST`), the checksum of the state entering each frame
+sent with every pad for the newest finalized frame and compared with the peer's (`slippi_online::compare`), Slippi's
+skip rule on multiples of 30. `--padgen SEED` uses the session's pad generator instead of the 1800-frame script.
+`tools/rust-port/slippi/np_pair.sh BASEPORT OUTDIR [args]` runs two peers on loopback and compares their CSVs.
+Direct and local only: no matchmaking, STUN or Slippi service.
+
+**Engine vs engine (loopback, inbound lag/loss on both peers, Falcon vs Fox FD).** Every run: 0 soft, 0 hard
+desyncs; both peers' finalized checksum CSVs equal on every common frame.
+
+| pads | frames | delay | lag ms | loss % | compared | rollbacks (host) |
+|---|---|---|---|---|---|---|
+| script | 2489 | 2 | 40 | 5 | 2207 | 79 |
+| script | 10889 | 2 | 60 | 10 | 8770 | 79 |
+| script | 7288 | 0 | 25 | 20 | 4771 | 79 |
+| script | 7288 | 4 | 100 | 3 | 5540 | 79 |
+| padgen 777 | 3688 | 2 | 40 | 10 | 2964 | 3274 |
+| padgen 4242 | 28888 (8 min) | 2 | 60 | 10 | 23022 | 25163 (max depth 7, 845 stall ticks) |
+
+The script's pads stop at 1800 frames (the state is constant from online frame 1832), so the padgen runs are the
+real long-match evidence (25075 distinct checksums in the 8-minute run). `cargo test -p melee_net --test slippi`: the ENet client pair
+over real loopback UDP, clean and with 10% loss + 30 ms.
+
+**Not done.** Rust vs Slippi Dolphin. The patched netplay Dolphin (`_build/dolphin-netplay`) did start and stay up this
+time (no 0xE06D7363 within 20 s, empty stdout/stderr), but stopping that process was refused by the permission
+system, so no further Dolphin run was made (it needs the mock matchmaking plus menu driving over the pad pipes:
+online menu, direct, a code, CSS, stage). So: no wire capture against real ENet, and the frame-numbering and
+"checksum of the state entering F" assumptions are still unconfirmed against Dolphin. Also open: the seed-bit mixing
+(TriggerSendInput section 11) is not wired (seed bits stay 0, right except on a fresh Peach/G&W/Luigi random special),
+the online-only gameplay codes and `online_match_block` (section 9, blockers 3 and 5), time sync beyond the skip rule.

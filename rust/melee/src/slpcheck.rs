@@ -214,26 +214,7 @@ static mut SEEDLOG_LAST: u32 = 0;
 /// Online replays: the console's forced frame seed minus the Frame Start event's (a multiple of 0x10000).
 static mut FS_OFFSET: u32 = 0;
 
-/// The seed the console forced at the start of an online frame, from the first recorded Pre-Frame seed `rec`, the Frame Start
-/// event's `sd` and the offset seen so far (updated when the recording shows a new one). None: not identifiable this frame.
-fn online_forced_seed(rec: u32, sd: u32, off: &mut u32) -> Option<u32> {
-    const INV: u32 = { let a: u32 = 214013; let mut x: u32 = a; let mut i = 0; while i < 5 { x = x.wrapping_mul(2u32.wrapping_sub(a.wrapping_mul(x))); i += 1; } x };
-    let want = sd.wrapping_add(*off);
-    let mut x = rec;
-    let mut cand = None;
-    for _ in 0..=64 {
-        if x == want {
-            return Some(want);
-        }
-        if cand.is_none() && x & 0xFFFF == sd & 0xFFFF && (x.wrapping_sub(sd) as i32 >> 16).unsigned_abs() < 4096 {
-            cand = Some(x);
-        }
-        x = x.wrapping_sub(2531011).wrapping_mul(INV);
-    }
-    let c = cand?;
-    *off = c.wrapping_sub(sd);
-    Some(c)
-}
+use melee_data::player::online_forced_seed;
 
 pub(crate) fn seed_probe(port: i32, fol: i32) {
     unsafe {
@@ -382,6 +363,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     if args.iter().any(|a| a == "--gecko") {
         for c in slp::gecko_codes(&file.gecko) {
             println!("GECKO {:02X} {:08X} lines={} hash={:016x}", c.kind, c.addr, c.lines, c.hash);
+        }
+        if let Some(out) = std::env::var_os("SLPCHECK_GECKO_RAW") {
+            let _ = std::fs::write(out, &file.gecko);
         }
     }
     if args.iter().any(|a| a == "--cpu-ai") {

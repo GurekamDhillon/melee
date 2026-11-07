@@ -343,6 +343,8 @@ pub unsafe fn ftAnim_8006E9B4(gobj: G) {
         return;
     }
     let jobj = (*gobj).hsd_obj as J;
+    // 8006E9E4 `lfs f1, 0.0` for the blend test: the f1 a part-less ftAnim_8006F3DC returns unless an AObj sets it.
+    melee_runtime::tu::aobj::AOBJ_STALE_F1 = 0.0;
     if fp.x8A4_animBlendFrames == 0.0 {
         ext::HSD_JObjClearFlagsAll(jobj, JOBJ_USE_QUATERNION as u32);
         if x594(fp).x594_b0() != 0 {
@@ -381,6 +383,8 @@ pub unsafe fn ftAnim_8006E9B4(gobj: G) {
         }
     }
     if x594(fp).x594_b2() != 0 && ftAnim_8006F3DC(gobj) < fp.cur_anim_frame {
+        // 8006EB6C loads the old x898 into f1 for the add
+        melee_runtime::tu::aobj::AOBJ_STALE_F1 = fp.x898_unk;
         fp.x898_unk += fp.cur_anim_frame + fp.frame_speed_mul;
     }
     fp.cur_anim_frame = ftAnim_8006F3DC(gobj);
@@ -532,7 +536,8 @@ pub unsafe fn ftAnim_8006F3DC(gobj: G) -> f32 {
                 }
             }
         }
-        0.0
+        // The C has no return here: the console returns the caller's f1 (melee_runtime::tu::aobj::AOBJ_STALE_F1).
+        melee_runtime::tu::aobj::AOBJ_STALE_F1
     } else {
         ext::lbGetJObjCurrFrame(fp.x8AC_animSkeleton)
     }

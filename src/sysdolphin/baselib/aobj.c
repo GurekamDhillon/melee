@@ -129,6 +129,13 @@ static inline f32 getLoopedFrame(HSD_AObj* aobj)
     return fmodf(x, y) + aobj->rewind_frame;
 }
 
+#if defined(TARGET_PC)
+/* The f1 register as HSD_AObjInterpretAnim leaves it (a non-looping AObj short of its end: its end_frame, the
+ * `lfs f1, 0xc(r31)` at 803642C0), for ftAnim_8006F3DC, which falls off its end without a return when no
+ * animated part has an AObj (Yoshi's GuardDamage: the console's state frame is then 100). */
+float gw_AObjStaleF1;
+#endif
+
 void HSD_AObjInterpretAnim(HSD_AObj* aobj, void* obj,
                            HSD_ObjUpdateFunc update_func)
 {
@@ -169,6 +176,11 @@ void HSD_AObjInterpretAnim(HSD_AObj* aobj, void* obj,
     if (!(aobj->flags & AOBJ_LOOP) && aobj->end_frame <= aobj->curr_frame) {
         HSD_AObjStopAnim(aobj, obj, update_func);
     }
+#if defined(TARGET_PC)
+    else if (!(aobj->flags & AOBJ_LOOP)) {
+        gw_AObjStaleF1 = aobj->end_frame;
+    }
+#endif
 
     if (aobj->flags & AOBJ_NO_ANIM) {
         HSD_AObj_804D762C += 1;

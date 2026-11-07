@@ -18,6 +18,8 @@
 
 pub mod api;
 pub mod consts;
+#[cfg(feature = "corev1")]
+pub mod corev1;
 pub mod draw;
 pub mod interp;
 pub mod render;

@@ -27,6 +27,12 @@ fn main() {
         println!("cargo:rerun-if-changed={dir}/logs/HEAD");
     }
     println!("cargo:rerun-if-changed=build.rs");
+    // melee_corev1 (these sources as a core v1 game library): the host maps the image at 0x82800000, beside MEM1,
+    // and refuses it anywhere else, so no ASLR
+    if std::env::var_os("CARGO_FEATURE_COREV1").is_some() && std::env::var("TARGET").unwrap_or_default().contains("windows-msvc") {
+        println!("cargo:rustc-cdylib-link-arg=/BASE:0x82800000");
+        println!("cargo:rustc-cdylib-link-arg=/DYNAMICBASE:NO");
+    }
     version_resource(&hash);
 }
 
@@ -66,7 +72,7 @@ fn version_resource(hash: &str) {
     res.extend(entry(&info, 16, 1, 0x0409));
     let out = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap()).join("melee_version.res");
     std::fs::write(&out, res).unwrap();
-    println!("cargo:rustc-link-arg-bins={}", out.display());
+    println!("cargo:rustc-link-arg-{}={}", if std::env::var_os("CARGO_FEATURE_COREV1").is_some() { "cdylib" } else { "bins" }, out.display());
 }
 
 fn utf16z(s: &str) -> Vec<u8> {

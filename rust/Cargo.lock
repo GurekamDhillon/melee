@@ -1194,6 +1194,33 @@ name = "melee_core"
 version = "0.1.0"
 
 [[package]]
+name = "melee_corev1"
+version = "0.1.0"
+dependencies = [
+ "font8x8",
+ "melee_audio",
+ "melee_chara",
+ "melee_core",
+ "melee_data",
+ "melee_engine",
+ "melee_fighter",
+ "melee_gx",
+ "melee_items",
+ "melee_link",
+ "melee_modes",
+ "melee_modhost",
+ "melee_net",
+ "melee_platform",
+ "melee_runtime",
+ "melee_types",
+ "melee_world",
+ "mex_import",
+ "miniz_oxide 0.8.9",
+ "png",
+ "winit",
+]
+
+[[package]]
 name = "melee_data"
 version = "0.1.0"
 dependencies = [

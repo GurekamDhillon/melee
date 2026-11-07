@@ -436,6 +436,12 @@ impl Gx {
 
     /// Decode everything written so far (Aurora `fifo::drain`).
     pub fn drain(&mut self) {
+        #[cfg(feature = "corev1")]
+        if crate::corev1::drain(&self.fifo, &self.res) {
+            self.res.clear();
+            self.fifo.clear();
+            return;
+        }
         if let Some(w) = &self.worker {
             let next = w.pool.try_recv().unwrap_or_else(|_| Vec::with_capacity(1 << 16));
             let buf = std::mem::replace(&mut self.fifo, next);

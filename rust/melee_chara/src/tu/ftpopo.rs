@@ -121,6 +121,12 @@ pub fn ftPp_Init_OnLoad(gobj: G) {
 
         let da = (*fp).dat_attrs as *const ftIceClimberAttributes;
         (*fp).x40 = (*da).x0;
+        // Popo alone (Sopo, player character 32, set by Slippi's CSS code): no room is made for Nana; the console spawns and
+        // respawns him on the bare spawn point (all 13 Sopo replays of hero-2026-11-06 at frame -123: x = the stage's spawn x,
+        // not 5 units in). Not reachable in vanilla play.
+        if melee_fighter::tu::player::Player_GetPlayerCharacter((*fp).player_id as _) as i32 == 32 {
+            (*fp).x40 = 0.0;
+        }
         ext::it_8026B3F8(*item_list.add(0), It_Kind_IceClimber_Ice as i32);
         ext::it_8026B3F8(*item_list.add(1), It_Kind_IceClimber_Blizzard as i32);
         ext::it_8026B3F8(*item_list.add(2), It_Kind_IceClimber_GumStrings as i32);

@@ -6,6 +6,10 @@ license.workspace = true
 publish.workspace = true
 description = "Platform layer: window + 60 Hz main loop (winit), PAD input (gilrs, GameCube adapter, keyboard), headless mode"
 
+[features]
+# core v1 (melee_corev1): pads from the host (pad_read.rs HOST_PADS)
+corev1 = []
+
 [dependencies]
 melee_types.workspace = true
 melee_core.workspace = true

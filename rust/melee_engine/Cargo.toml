@@ -26,6 +26,8 @@ melee_script = { path = "../melee_script" }
 melee_audio = { path = "../melee_audio", default-features = false }
 
 [features]
+# core v1 (melee_corev1): the disc read through the host (gcm.rs HOST_READ) and the GX transcoder
+corev1 = ["melee_gx/corev1"]
 guard = []
 # builds the layout walker example only (it includes a generated table, see tools/rust-port/layout)
 layout-walk = []

@@ -23,6 +23,13 @@ fn be32(b: &[u8], at: usize) -> u32 {
 
 impl Gcm {
     pub fn open(path: &str) -> Result<Self, String> {
+        #[cfg(feature = "corev1")]
+        if HOST_READ.get().is_some() {
+            // core v1: the host owns the disc; every read goes through its disc_read (the path is not opened)
+            let h = read_at(None, 0x424, 8)?;
+            let fst = read_at(None, be32(&h, 0) as u64, be32(&h, 4) as usize)?;
+            return Ok(Self { f: None, fst, overlay: None, replaced: Default::default(), added: Default::default() });
+        }
         let mut f = std::fs::File::open(path).map_err(|e| format!("{path}: {e}"))?;
         let h = read_at(Some(&mut f), 0x424, 8)?;
         let fst = read_at(Some(&mut f), be32(&h, 0) as u64, be32(&h, 4) as usize)?;
@@ -210,6 +217,14 @@ impl Gcm {
 }
 
 fn read_at(f: Option<&mut std::fs::File>, off: u64, n: usize) -> Result<Vec<u8>, String> {
+    #[cfg(feature = "corev1")]
+    if f.is_none() {
+        if let Some(r) = HOST_READ.get() {
+            let mut v = vec![0u8; n];
+            r(off, &mut v)?;
+            return Ok(v);
+        }
+    }
     let f = f.ok_or_else(|| "no disc".to_string())?;
     // Not zeroed first: the read fills it (the zeroing was ~5% of the boot tick, first-touch page faults included).
     let mut v = Vec::with_capacity(n);
@@ -226,3 +241,8 @@ fn read_at(f: Option<&mut std::fs::File>, off: u64, n: usize) -> Result<Vec<u8>,
     }
     Ok(v)
 }
+
+/// Core v1 (feature `corev1`): the host's raw disc reader (`disc_read`), set once before the engine boots. With it
+/// set, [`Gcm::open`] reads the disc through the host whatever path it is given.
+#[cfg(feature = "corev1")]
+pub static HOST_READ: std::sync::OnceLock<fn(u64, &mut [u8]) -> Result<(), String>> = std::sync::OnceLock::new();

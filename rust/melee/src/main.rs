@@ -45,6 +45,8 @@ mod gx_backend;
 mod ui;
 mod retail;
 mod play;
+#[cfg(feature = "corev1")]
+mod corev1;
 mod retail_flow;
 mod audio;
 mod stage_anim;

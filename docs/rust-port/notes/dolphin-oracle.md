@@ -175,3 +175,20 @@ of the engine. `oracle.sh` now runs Dolphin twice, concurrently (`DOLPHIN_RUNS=1
 logs `DOLPHIN NONDETERMINISTIC` and appends "the Dolphin runs disagree from frame F" to the ORACLE line. Before
 classifying a divergence, check that it is not past that frame, and check the field against the .slp's Post-Frame
 where one exists.
+
+## UCF code semantics (round 4)
+
+Two replay divergers were UCF 0.84 ports that read the Gecko code wrong, not engine bugs.
+
+- **Replace, not add.** A C2 code can replace the instruction it hooks. UCF Tumble.asm at
+  0x800908F4 swaps `cmpw r3, r0` (timer against x214) for `cmpwi r3, 1`, so its stick-out window
+  is "timer 0, or timer 1 after a fast stick move". The port had OR-ed it onto vanilla's window
+  (3417139d, frame 4689: DamageFlyTop to Fall). Check: `slpcheck --gecko` lists a replay's
+  injection sites, and the hooked instruction is in `ppcdis.py ADDR LEN` on main.dol. Read the
+  code body for the `nop` where the original instruction would go.
+- **Slippi's UCF bundle carries more than the dashback and shield-drop fixes.** It also carries
+  the DBOOC SquatRv fix (m-ex `ucf_dbooc_squatrv_fix`). slpcheck now sets
+  `MELEE_MEX=ucf_dbooc_squatrv_fix` for a replay that has a UCF dashback port (325cee5d).
+- **Finding the function.** slpcheck now opens calltrace frames per replay frame, so a
+  `--features calltrace` build with `MELEE_CT_LIVE=1 MELEE_CT_LIVE_FROM=F` prints the entries
+  from frame F onward.

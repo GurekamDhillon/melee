@@ -151,9 +151,16 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         // --mm-leave-after-joined: close as soon as the server has accepted the join (the unranked check: never stays
         // queued long enough to be matched on purpose)
         let leave_early = args.iter().any(|a| a == "--mm-leave-after-joined");
-        let leave = |t: &str| leave_early && melee_net::slippi_mm::Json::parse(t).is_some_and(|j| j.get("type").and_then(|v| v.str()) == Some("joined"));
+        let leave = |t: &str| leave_early && melee_net::slippi_mm::Json::parse(t).is_some_and(|j| j.get("type").and_then(|v| v.str()) .is_some_and(|t| t == "joined" || t == "create-ticket-resp"));
         let target = if real { melee_net::slippi_mm::Target::Real } else { melee_net::slippi_mm::Target::Loopback };
-        let m = match melee_net::slippi_mm::join_to(&url, &req, Duration::from_secs(max_s), target, shown, leave) {
+        // enet://HOST[:PORT]: the ENet matchmaking service production Slippi Dolphin 3.x speaks (mm.slippi.gg:43113);
+        // ws:// / wss://: the WebSocket service of the mainline client
+        let res = if let Some(server) = url.strip_prefix("enet://") {
+            melee_net::slippi_mm::join_enet(server.trim_end_matches('/'), bind_ip, &req, Duration::from_secs(max_s), target, shown, leave)
+        } else {
+            melee_net::slippi_mm::join_to(&url, &req, Duration::from_secs(max_s), target, shown, leave)
+        };
+        let m = match res {
             Err(e) if e == "left" => {
                 eprintln!("melee: matchmaking: accepted (joined), left the queue at once");
                 return ExitCode::SUCCESS;

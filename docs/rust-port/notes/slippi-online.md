@@ -541,3 +541,41 @@ the server refused ("limited to dev accounts"). The installed production Slippi 
 `mm2.slippi.gg` instead (the older ENet matchmaking); that client is not written. Only one Slippi profile exists in
 AppData (`Slippi Launcher/netplay/User/Slippi/user.json`), so a direct engine-vs-Dolphin or engine-vs-engine game
 through the real servers (two accounts) was not possible.
+
+## 13. Phase 5: production matchmaking, real-network engine vs engine (2026-11-07, port/slippi5)
+
+**Correction to section 12.** `mm2.slippi.gg` is the *dev* host; production Slippi Dolphin 3.x (the installed 3.6.4)
+uses `mm.slippi.gg:43113` (`SlippiMatchmaking.h` `MM_HOST_PROD`, `MM_PORT`, Ishiiruka tag v3.6.4, read as a protocol
+reference only). It is ENet, not WebSocket: the client binds its netplay port, ENet-connects (3 channels, data 0) and
+sends JSON text as reliable packets on channel 0: `create-ticket{user{uid,playKey,connectCode,displayName},
+search{mode, connectCode: bytes}, appVersion, ipAddressLan}` -> `create-ticket-resp{error?}`, then
+`get-ticket-resp{error?, latestVersion?, matchId, isHost, players[...], stages, items}` (the same player fields as the
+WebSocket `match`). No STUN: the server's view of the source port is the hole punch, so the netplay socket must be the
+same port once the mm connection closes. The mainline client (`_build/dolphin-oracle`) moved this to the WebSocket
+service, which refuses non-dev accounts.
+
+**Code.** `melee_net::slippi_mm::join_enet` (+ `create_ticket_message`, `local_ip_towards`), over our own
+`melee_net::enet::Host`; loopback only unless `Target::Real`. `melee slippi-netplay --mm enet://mm.slippi.gg:43113
+--mm-real --user-json COPY --search CODE --port P`. The default stays loopback. Test `tests/slippi_mm_enet.rs` (an
+in-test ENet server). `tools/rust-port/slippi/np_real_pair.sh OUT U1 U2 [-- args]` (account copies; codes passed
+on the command line, never printed).
+
+**Engine vs engine through the real server (direct mode, two real accounts).** Both peers on this machine: the server
+gave both the same external IP, so (as Slippi does) the LAN addresses were used and the game traffic itself stayed on
+the machine; matchmaking was real. The lag/loss columns are the engine's own inbound degradation on both peers.
+CSVs of both peers equal on every common frame in every run.
+
+| run | pads | stage | lag ms / loss % | frames | compared (dec / guest) | desyncs | rollbacks (dec / guest) | max depth |
+|---|---|---|---|---|---|---|---|---|
+| r1 | script | FD | 0 / 0 | - (matched, connected; no ISO env in the script) | - | - | - | - |
+| r2 | script | FD | 0 / 0 | 2489 | 2481 / 2485 | 0 | 0 / 1 | 6 |
+| r3 | padgen 777 | FD | 40 / 5 | 1785 (game ended) | 1583 / 1579 | 0 | 1646 / 1647 | 5 |
+| r4 | padgen 4242 | Battlefield | 60 / 10 | 1512 (game ended) | 1219 / 1223 | 0 | 1324 / 1326 | 7 |
+
+**Not done: Slippi Dolphin on the real network (Dolphin vs Dolphin, engine vs Dolphin).** The only build that speaks
+the production service is the installed Slippi Dolphin 3.6.4. It has no nogui build and no state log for the closed
+loop menu driver, and on Windows its pad pipes are fixed global names `\.\pipe\slippibot1..4` (one instance each),
+which a second copy, or the user's own running Slippi Dolphin, would collide with. Driving it would need OS input
+(not allowed). The oracle build only speaks the WebSocket service (refused). Options: patch the oracle's Rust
+matchmaking to the ENet protocol for a local test build, or a 3.x build with per-instance pipe names.
+No stranger (unranked) check was run.

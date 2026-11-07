@@ -165,6 +165,9 @@ pub struct State {
     pub rng_offset: u32,
     pub b_held_hist: [u8; RNG_HISTORY],
     pub seed_bits_hist: [u8; RNG_HISTORY],
+    /// The pads of the frame about to run, as the driver hands them to the game; SyncRNG mixes them
+    /// (`note_pads`) at its own frame number, so the bits and the seed always use the same index.
+    pub pending: [PadBits; 4],
 }
 
 impl State {
@@ -175,6 +178,12 @@ impl State {
         self.b_held_hist[frame as usize & (RNG_HISTORY - 1)] = held;
         self.seed_bits_hist[frame as usize & (RNG_HISTORY - 1)] = bits;
         bits
+    }
+    /// FN_SyncRNG with TriggerSendInput section 11 folded in: mix `pending` for `frame`, then the seed.
+    pub fn sync(&mut self, frame: u32) -> u32 {
+        let p = self.pending;
+        self.note_pads(frame, &p);
+        self.seed(frame)
     }
     /// FN_SyncRNG for frame `frame`.
     pub fn seed(&self, frame: u32) -> u32 {

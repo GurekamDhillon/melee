@@ -93,13 +93,18 @@ class Conn:
 
 
 class Server:
-    def __init__(self, port, capture, delay_ms):
+    def __init__(self, port, capture, delay_ms, stages=None, lag_ms=0, loss_pct=0):
         self.port = port
         self.capture = open(capture, "w") if capture else None
         self.queue = []
         self.lock = threading.Lock()
         self.t0 = time.time()
         self.delay_ms = delay_ms
+        self.stages = stages or [0x2, 0x3, 0x8, 0x1C, 0x1F, 0x20]
+        # relay impairment, both directions: each datagram is dropped with loss_pct %, else held lag_ms
+        self.lag = lag_ms / 1000.0
+        self.loss = loss_pct
+        self.rng = 0x1234567
 
     def serve(self):
         ls = socket.socket()
@@ -136,17 +141,30 @@ class Server:
                     c.send({"type": "joined", "ticketId": f"t{id(c)}", "token": "local"})
                     threading.Thread(target=self.status_loop, args=(c,), daemon=True).start()
                     with self.lock:
-                        self.queue.append((c, msg))
-                        if len(self.queue) >= 2:
-                            a, b = self.queue[0], self.queue[1]
-                            self.queue = self.queue[2:]
-                            self.pair(a, b)
+                        mate = next((q for q in self.queue if self.compatible(q[1], msg)), None)
+                        if mate:
+                            self.queue.remove(mate)
+                            self.pair(mate, (c, msg))
+                        else:
+                            self.queue.append((c, msg))
                 elif kind == "ping":
                     c.send({"type": "pong"})
                 else:
                     log(f"message {kind}")
         except (EOFError, OSError, ValueError) as e:
             log(f"client closed ({type(e).__name__})")
+
+    @staticmethod
+    def compatible(a, b):
+        """Direct (mode 2): one side searches for the other's code (Shift-JIS bytes = ASCII here). Others: any."""
+        sa, sb = a.get("search", {}), b.get("search", {})
+        if sa.get("mode") != sb.get("mode"):
+            return False
+        if sa.get("mode") != 2:
+            return True
+        code = lambda s: bytes(s.get("connectCode") or []).decode("latin1")
+        ua, ub = a.get("user", {}).get("connectCode", ""), b.get("user", {}).get("connectCode", "")
+        return code(sa) == ub or code(sb) == ua
 
     def status_loop(self, c):
         t = time.time()
@@ -176,23 +194,39 @@ class Server:
                     "ipAddress": ip_port, "ipAddressLan": ip_port, "isBot": False}
 
         mid = f"mode.direct-local-{int(time.time())}"
-        stages = [0x2, 0x3, 0x8, 0x1C, 0x1F, 0x20]
+        stages = self.stages
         ca.send({"type": "match", "matchId": mid, "isHost": True, "stages": stages,
                  "players": [player(ma, 1, True, f"{LOOP}:{pa}"), player(mb, 2, False, f"{LOOP}:{x}")]})
         cb.send({"type": "match", "matchId": mid, "isHost": False, "stages": stages,
                  "players": [player(ma, 1, False, f"{LOOP}:{y}"), player(mb, 2, True, f"{LOOP}:{pb}")]})
 
+    def drop(self):
+        self.rng = (self.rng * 1103515245 + 12345) & 0x7FFFFFFF
+        return (self.rng >> 8) % 100 < self.loss
+
     def relay(self, rx, ry, pa, pb):
+        held = []  # (due, socket, data, dest)
         while True:
-            r, _, _ = select.select([rx, ry], [], [], 1.0)
+            now = time.time()
+            while held and held[0][0] <= now:
+                _, so, data, dest = held.pop(0)
+                so.sendto(data, dest)
+            r, _, _ = select.select([rx, ry], [], [], 0.002 if held else 0.5)
             for s in r:
-                data, src = s.recvfrom(65536)
+                try:
+                    data, src = s.recvfrom(65536)
+                except ConnectionResetError:  # Windows: an ICMP port-unreachable from a peer that has gone
+                    continue
                 if s is rx:  # from A, for B
-                    ry.sendto(data, (LOOP, pb))
-                    d = "A>B"
+                    out, dest, d = ry, (LOOP, pb), "A>B"
                 else:
-                    rx.sendto(data, (LOOP, pa))
-                    d = "B>A"
+                    out, dest, d = rx, (LOOP, pa), "B>A"
+                if self.loss and self.drop():
+                    d += "x"
+                elif self.lag:
+                    held.append((time.time() + self.lag, out, data, dest))
+                else:
+                    out.sendto(data, dest)
                 if self.capture:
                     self.capture.write(f"{int((time.time() - self.t0) * 1000)} {d} {data.hex()}\n")
                     self.capture.flush()
@@ -203,8 +237,12 @@ def main():
     ap.add_argument("--port", type=int, default=43110)
     ap.add_argument("--capture", default="")
     ap.add_argument("--delay-ms", type=int, default=0)
+    ap.add_argument("--stages", default="", help="comma-separated external stage ids for the match (default the 1v1 list)")
+    ap.add_argument("--lag-ms", type=int, default=0, help="relay: one-way delay per datagram")
+    ap.add_argument("--loss-pct", type=int, default=0, help="relay: drop this % of datagrams")
     a = ap.parse_args()
-    Server(a.port, a.capture, a.delay_ms).serve()
+    stages = [int(x, 0) for x in a.stages.split(",") if x]
+    Server(a.port, a.capture, a.delay_ms, stages, a.lag_ms, a.loss_pct).serve()
 
 
 if __name__ == "__main__":

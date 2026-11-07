@@ -26,6 +26,7 @@ pub mod rollback;
 pub mod session;
 pub mod sim;
 pub mod slippi;
+pub mod slippi_mm;
 pub mod transport;
 pub mod wire;
 

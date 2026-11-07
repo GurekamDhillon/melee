@@ -433,3 +433,52 @@ online menu, direct, a code, CSS, stage). So: no wire capture against real ENet,
 "checksum of the state entering F" assumptions are still unconfirmed against Dolphin. Also open: the seed-bit mixing
 (TriggerSendInput section 11) is not wired (seed bits stay 0, right except on a fresh Peach/G&W/Luigi random special),
 the online-only gameplay codes and `online_match_block` (section 9, blockers 3 and 5), time sync beyond the skip rule.
+
+## 11. Phase 3: engine vs Slippi Dolphin, mock matchmaking (2026-11-07, port/slippi3)
+
+**Setup (loopback only, no Slippi service).** `_build/dolphin-netplay` (the oracle's local-test link) with a throwaway
+test profile `userP3A` made for this test (fake uid, no key; code `TSTA#001`, `Slippi/direct-codes.json` seeded with
+`TSTB#001`). `tools/rust-port/slippi/`:
+- `mock_mm.py`: the mock matchmaking server. Direct mode pairs a join with the queued join whose own code it searches
+  for; `--stages` sets the match's stage list; the relay that both ENet peers talk through takes `--lag-ms`/`--loss-pct`.
+- `dolphin_drive.py`: drives Dolphin's menus through its pad pipe, closed loop on the state log (main menu -> Online ->
+  Direct -> CSS hand to X,Y + A -> START -> Z (take the autocomplete) -> START/A -> search), then plays scripted random
+  pads in game. No OS input.
+- `np_dolphin_pair.sh OUTDIR [--lag-ms --loss-pct --frames --pads --css X,Y] [-- engine args]`: mock + Dolphin + driver
+  + `melee slippi-netplay --mm ...`; Dolphin joins first (player 1, decider), the engine is player 2.
+- `run_np_dolphin.ps1` fixes: the arguments go as one quoted string (an array made `-u` split at the space, Dolphin then
+  used `E:\Projects\Melee` as its user dir: no profile, no config, which is why the old runs "stayed up" but took no
+  pad input); `[Input] BackgroundInput = True` in the profile (no window focus headless); pipe commands must be LF only.
+
+**Engine.** `melee_net::slippi_mm` (WebSocket client, join/joined/status/match, refuses any non-loopback address).
+`melee slippi-netplay --mm ws://127.0.0.1:P/v1/queue --port P --code C --search C [--char EXT --color N --stage EXT]`.
+The match is built from both MATCH_SELECTIONS the way `prepareOnlineMatchState` does (`slippi_np::online_scene`:
+characters/colors by port, the first selected stage in port order else Battlefield, the decider's rng_offset, stock
+4, 8:00, items off), plus the block's remaining fields in `fn_8016E730` (friendly fire, rules +0x9, the item mask, slot
+0 / spawn point = index / CPU level 1). Seed bits: TriggerSendInput section 11 now runs inside SyncRNG at its own frame
+(`State::sync`) on the pads the driver hands the game, with byte 8 of each port's pad (ours and the peer's) per frame.
+
+**The frame alignment (measured).** Slippi Dolphin's first in-game tick takes no pad: online frame F's pads run in tick
+F + 1, and the checksum it sends for frame F is the state after F ticks. Found by logging both fighters' action state
+and position per tick from Dolphin (state log at the heap addresses, deterministic per boot) against ours: equal per tick,
+while our pads acted one tick earlier. `EngineGame::slippi_pre_tick` runs that first pad-less tick before the session.
+Before it, frames ~6-89 (entry) mismatched (hard by the ASM rule) and pads were applied a tick early.
+
+**Results** (Kirby (Dolphin, picked on the CSS) vs Fox (engine), FD; Dolphin's checksums from `SLIPPI_CHECKSUM_LOG`, ours
+from `--out`; "compared" is the engine's live compare, "offline" every frame both logged):
+
+| relay lag/loss | engine-side lag/loss | frames | compared live | offline equal | desyncs | rollbacks |
+|---|---|---|---|---|---|---|
+| 0 / 0 | - | 1290 | 1287 | - | 0 | 0 |
+| 30 ms / 5 % | - | 2594 (game ended) | 2262 | 2375 / 2375 | 0 | 220 (depth 7) |
+| 20 ms / 3 % | 40 ms / 10 % | 1903 (game ended) | 1406 | 1563 / 1563 | 0 | 191 (depth 7) |
+| 60 ms / 10 % | - | 2636 | 1819 | 1993 / 1997 | 4 soft, 0 hard (live) | 334 |
+
+The 60 ms / 10 % run diverged at frame 2544 (float sum off by 1, action-state half different on 4 frames) and Dolphin
+then left the game: an open sim or rollback question (not reproduced at lower loss; engine vs engine never showed it).
+Engine vs engine through the mock: 0 desyncs (1285 compared).
+
+**Not done / gaps.** The seed-bit mix is wired but not exercised (no Peach/G&W/Luigi fresh roll in these runs). The
+run-B divergence. Only FD and Battlefield boot on the engine (`online_scene` refuses others; the mock is run with
+`--stages 0x20`). The CSS hand position of each character is not mapped (`--css 0,15` is Kirby). The color "shade" for
+mirror matches is not applied. Real-network tests: none (the engine's client only connects to loopback).

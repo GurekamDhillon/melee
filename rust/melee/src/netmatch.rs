@@ -98,6 +98,10 @@ pub mod engine_game {
         pub rows: std::collections::BTreeMap<i32, String>,
         /// Slippi online mode: the desync checksum of the state entering each online frame (frame 1 = session `FIRST`).
         pub slippi_ck: std::collections::BTreeMap<i32, u32>,
+        /// Slippi online mode: byte 8 of each port's pad per session frame (the random bits its owner sent with it;
+        /// a frame not here, or a predicted pad, counts 0) and each port's external character, for the seed-bit mix.
+        pub slippi_bits: std::collections::BTreeMap<i32, [u8; 4]>,
+        pub slippi_chars: [u32; 4],
     }
 
     #[derive(Clone)]
@@ -109,7 +113,7 @@ pub mod engine_game {
 
     impl EngineGame {
         pub fn new(e: Engine) -> Self {
-            EngineGame { e, base: RefCell::new(None), live: false, live_seed: None, rows: Default::default(), slippi_ck: Default::default() }
+            EngineGame { e, base: RefCell::new(None), live: false, live_seed: None, rows: Default::default(), slippi_ck: Default::default(), slippi_bits: Default::default(), slippi_chars: [u32::MAX; 4] }
         }
         fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
             if self.base.borrow().is_none() {
@@ -213,6 +217,20 @@ pub mod engine_game {
                 *slot = pad_of(&inputs[port * 2]);
             }
             self.e.set_pads(Some(p));
+            // Slippi online: the pads TriggerSendInput section 11 mixes for this frame (SyncRNG takes them at its
+            // frame, so a resimulated frame mixes its confirmed pads again)
+            if let Some(st) = melee_core::slippi_online::state() {
+                let bits = self.slippi_bits.get(&(self.frame() + 1)).copied().unwrap_or([0; 4]);
+                for port in 0..4 {
+                    st.pending[port] = melee_core::slippi_online::PadBits {
+                        buttons: p[port].button,
+                        stick_x: p[port].stickX,
+                        stick_y: p[port].stickY,
+                        rng_bits: bits[port],
+                        ext_char: self.slippi_chars[port],
+                    };
+                }
+            }
             if let Some(sd) = self.live_seed {
                 // gw_Replay_ChecksumSeed in live mode: every frame starts from `seed + ((frame + 123) << 16)`
                 melee_runtime::tu::random::global::state().set_logic_seed(super::live_frame_seed(sd, self.frame() + 1));
@@ -315,6 +333,41 @@ pub mod engine_game {
         if st.mismatches.is_empty() && bad == 0 && st.checked > 0 { std::process::ExitCode::SUCCESS } else { std::process::ExitCode::FAILURE }
     }
 
+
+    impl EngineGame {
+        /// Boot a VS match from a full scenario string (`p1=ck:2/human/c0;...;stage=ext:32;...`): the Slippi online
+        /// match block's rules are given this way (`slippi_np::online_scene`).
+        /// Slippi online: the scene's first engine frame runs before online frame 1 and takes no pad (Dolphin's
+        /// first in-game tick has no input; online frame F's pads are consumed by tick F + 1, and the checksum Slippi
+        /// sends for frame F is the state after F ticks). Measured against Slippi Dolphin's own fighter state per
+        /// tick (port/slippi3). Run once before the session starts; it is not a session frame.
+        pub fn slippi_pre_tick(&mut self) {
+            if let Some(st) = melee_core::slippi_online::state() {
+                st.pending = Default::default();
+                for port in 0..4 {
+                    st.pending[port].ext_char = self.slippi_chars[port];
+                }
+            }
+            self.e.set_pads(Some([PADStatus::zeroed(); 4]));
+            self.e.tick();
+            self.e.frames -= 1;
+        }
+        pub fn open_scene(args: &[String], scene: &str, seed: u32) -> Result<Self, String> {
+            // SAFETY: single-threaded start-up, before the engine reads them.
+            unsafe {
+                std::env::set_var("MELEE_TEST_SEED", seed.to_string());
+                if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
+                    std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");
+                }
+            }
+            let iso = std::env::var("GW_ISO_VANILLA").map_err(|_| "no GW_ISO_VANILLA".to_string())?;
+            let iso = super::arg(args, "--iso").unwrap_or(iso);
+            let disc = melee_engine::gcm::Gcm::open(&iso).map_err(|e| e.to_string())?;
+            let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}"))?;
+            let e = melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn)?;
+            Ok(EngineGame::new(e))
+        }
+    }
 
     impl super::NetGame for EngineGame {
         fn open(_args: &[String], stage_file: &str, names: &[&str], seed: u32, _stocks: i32) -> Result<Self, String> {

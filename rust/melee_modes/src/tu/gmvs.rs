@@ -2012,7 +2012,8 @@ pub unsafe fn fn_8016E5C0(arg0: *mut StartMeleeData) -> i32 {
 /// Slippi online FN_SyncRNG: overwrite the seed from the global frame (`gm_80479D58.unk_8`) every frame.
 unsafe extern "C" fn slippi_sync_rng(_g: *mut HSD_GObj) {
     if let Some(st) = melee_core::slippi_online::state() {
-        *HSD_RandSeedPtr = st.seed(super::gmscene::gm_80479D58.unk_8);
+        let f = super::gmscene::gm_80479D58.unk_8;
+        *HSD_RandSeedPtr = st.sync(f);
     }
 }
 
@@ -2035,6 +2036,24 @@ pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
     ext::db_Setup();
     // Slippi online mode (off by default): InitOnlinePlay's seed and SyncRNG proc, at its hook 0x8016E748 (after db_Setup)
     if let Some(st) = melee_core::slippi_online::state() {
+        // MELEE_SLIPPI_BLOCK_DUMP=1: the match block as the game reads it, to compare with Dolphin's online_match_block
+        if std::env::var_os("MELEE_SLIPPI_BLOCK_DUMP").is_some() {
+            let b = core::slice::from_raw_parts(arg0 as *const u8, 0x138);
+            let hex: String = b.iter().map(|x| format!("{x:02x}")).collect();
+            eprintln!("slippi: match block {hex}");
+        }
+        // the rest of Dolphin's online_match_block (CEXISlippi::prepareOnlineMatchState) that a VS scenario does not
+        // set: friendly fire on, rules +0x9 = 1, the item mask word (0xF80000000F000000 written at +0x23), and per
+        // player slot 0 (pad port = player index), spawn point = player index, CPU level 1
+        let r = &mut (*arg0).rules;
+        r.set_friendly_fire(1);
+        r.x9 = 1;
+        r.x20 = 0xFFFF_FFF8_0000_000F;
+        for (i, p) in (*arg0).players.iter_mut().enumerate().take(2) {
+            p.slot = 0;
+            p.spawn_pos = i as i8;
+            p.cpu_level = 1;
+        }
         *HSD_RandSeedPtr = st.rng_offset;
         let g = melee_runtime::tu::gobjplink::GObj_Create(4, 7, 0);
         melee_runtime::tu::gobjproc::HSD_GObj_SetupProc(g, Some(slippi_sync_rng), 0);

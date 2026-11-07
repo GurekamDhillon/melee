@@ -15,6 +15,9 @@ pub fn checksum() -> u32 {
                 continue;
             }
             let fp = unsafe { &*((*g).user_data as *const Fighter) };
+            if std::env::var_os("MELEE_SLIPPI_CK_TRACE").is_some() {
+                eprintln!("slippi-ck: slot {slot} motion {:#x} pos {:08x} {:08x} pct {:08x} spawn {}", fp.motion_id, fp.cur_pos.x.to_bits(), fp.cur_pos.y.to_bits(), fp.dmg.x1830_percent.to_bits(), fp.x8_spawnNum);
+            }
             c.fighter(&FighterSample {
                 motion_id: fp.motion_id as u32,
                 pos_x: fp.cur_pos.x,

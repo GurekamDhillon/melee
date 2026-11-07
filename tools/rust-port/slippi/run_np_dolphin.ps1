@@ -10,7 +10,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Name,
     [Parameter(Mandatory = $true)][string]$Out,
     [int]$MmPort = 43110,
-    [string]$Addrs = ''
+    [string]$Addrs = '804a04f0,804d6640,804d6cf4,80479d60,804c1fac,804a0bc0,81155a8c,81155a90'
 )
 $ErrorActionPreference = 'Stop'
 $ws = if ($env:GW_WORKSPACE) { $env:GW_WORKSPACE } else { 'E:\Projects\Melee Workspace' }
@@ -28,7 +28,9 @@ $env:SLIPPI_PIPE_PREFIX = $Name
 $env:SLIPPI_CHECKSUM_LOG = Join-Path $Out "checksums_$Name.txt"
 if (-not $env:NP_NO_STATELOG) { $env:MELEE_DOLPHIN_STATELOG = Join-Path $Out "state_$Name.txt" }
 $env:MELEE_DOLPHIN_STATELOG_ADDRS = $Addrs
-$dargs = @('-u', "`"$user`"", '-p', 'headless', '-v', 'Null', '-e', "`"$iso`"")
+# one argument string with the paths quoted (Start-Process joins an array without quoting, and a user dir with spaces
+# then silently becomes "E:\Projects\Melee")
+$dargs = "-u `"$user`" -p headless -v Null -e `"$iso`""
 $p = Start-Process -FilePath $exe -ArgumentList $dargs -PassThru -WindowStyle Hidden `
     -RedirectStandardError (Join-Path $Out "stderr_$Name.txt") -RedirectStandardOutput (Join-Path $Out "stdout_$Name.txt")
 try { $p.PriorityClass = 'Idle' } catch {}

@@ -211,6 +211,29 @@ static mut SEED_PROBE: bool = false;
 static mut RESEED_PRE: bool = false;
 static mut SLP_SEED: u32 = 0;
 static mut SEEDLOG_LAST: u32 = 0;
+/// Online replays: the console's forced frame seed minus the Frame Start event's (a multiple of 0x10000).
+static mut FS_OFFSET: u32 = 0;
+
+/// The seed the console forced at the start of an online frame, from the first recorded Pre-Frame seed `rec`, the Frame Start
+/// event's `sd` and the offset seen so far (updated when the recording shows a new one). None: not identifiable this frame.
+fn online_forced_seed(rec: u32, sd: u32, off: &mut u32) -> Option<u32> {
+    const INV: u32 = { let a: u32 = 214013; let mut x: u32 = a; let mut i = 0; while i < 5 { x = x.wrapping_mul(2u32.wrapping_sub(a.wrapping_mul(x))); i += 1; } x };
+    let want = sd.wrapping_add(*off);
+    let mut x = rec;
+    let mut cand = None;
+    for _ in 0..=64 {
+        if x == want {
+            return Some(want);
+        }
+        if cand.is_none() && x & 0xFFFF == sd & 0xFFFF && (x.wrapping_sub(sd) as i32 >> 16).unsigned_abs() < 4096 {
+            cand = Some(x);
+        }
+        x = x.wrapping_sub(2531011).wrapping_mul(INV);
+    }
+    let c = cand?;
+    *off = c.wrapping_sub(sd);
+    Some(c)
+}
 
 pub(crate) fn seed_probe(port: i32, fol: i32) {
     unsafe {
@@ -429,7 +452,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     };
     crate::install_replay(pl);
     install_capture(file.version[0] < 3);
-    unsafe { RESEED_PRE = !args.iter().any(|a| a == "--no-pre-reseed"); SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None };
+    unsafe { RESEED_PRE = !args.iter().any(|a| a == "--no-pre-reseed"); SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None; FS_OFFSET = 0 };
     let ports: Vec<usize> = (0..4).filter(|&i| conv.scn.players[i].is_some()).collect();
     let posts: Vec<Vec<Option<slp::Post>>> = (0..4).map(|p| if ports.contains(&p) { file.post_by_port(p) } else { Vec::new() }).collect();
     let max_ticks: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(usize::MAX);
@@ -476,7 +499,19 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 if fr == -123 { let rec0 = pl.input(ports[0] as i32, false).map(|i| i.seed).unwrap_or(0); let mut x = seed; let mut k = -1i32; for i in 0..100000 { if x == rec0 { k = i; break; } x = x.wrapping_mul(214013).wrapping_add(2531011); } unsafe { SEEDLOG_LAST = seed; } eprintln!("SEEDLOG-START game_seed={seed:08x} first_pre_rec={rec0:08x} steps={k}"); }
             unsafe { eprintln!("SEEDLOG-FS f{fr} sd={sd:08x} cur={:08x} last={SEEDLOG_LAST:08x}", *melee_runtime::tu::random::HSD_RandCurrentSeed(melee_runtime::tu::random::global::state())); }
             }
-            if sd != 0 && std::env::var_os("SLPCHECK_FS_RESYNC").is_some() {
+            // Slippi online (Game Start scene 8) forces the Frame Start seed at the start of every frame on the console
+            // (the recorded Pre-Frame seeds equal it); a console/tournament recording does not (SLPCHECK_FS_RESYNC=1 forces it)
+            // Online: the console forces a seed of the Frame Start form (game seed + n * 0x10000) at the start of the frame, then
+            // draws k times before the first fighter's Pre-Frame point. The Frame Start event's n can be off by whole frames late in a
+            // match (Game_20251031T213206: +288 from f~7600), and stage procs that draw before the fighters (Yoshi's Story) then pick
+            // wrong values. The forced value is recovered from the recorded Pre-Frame seed by stepping the LCG back (up to 64 draws)
+            // to the nearest value with the Frame Start low half, the frame offset kept from frame to frame.
+            let pre = ports.iter().find_map(|&p| pl.input(p as i32, false).map(|i| i.seed).filter(|&s| s != 0));
+            if pl.r.online && sd != 0 {
+                let forced = pre.and_then(|rec| online_forced_seed(rec, sd, unsafe { &mut FS_OFFSET })).unwrap_or(sd.wrapping_add(unsafe { FS_OFFSET }));
+                if std::env::var_os("SLPCHECK_PREDBG").is_some() && forced != sd { eprintln!("PREDBG f{fr} sd={sd:08x} forced={forced:08x}"); }
+                melee_runtime::tu::random::global::state().set_logic_seed(forced);
+            } else if sd != 0 && (pl.r.online || std::env::var_os("SLPCHECK_FS_RESYNC").is_some()) {
                 melee_runtime::tu::random::global::state().set_logic_seed(sd);
             }
             unsafe { CAP = [None; 4] };

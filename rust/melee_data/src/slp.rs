@@ -371,6 +371,32 @@ pub fn online_codeset(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x8006_A880)
 }
 
+/// A `04 804D4A08 NNNNNNNN` write in a replay's Gecko list: the code sets `DbLevel` (db.c) to N for the whole run. At
+/// `DbLKind_DebugRom` (3) and above `ft_80089118` stops staling moves (Hero's 2026-10-23 set has DbLevel 4: every hit
+/// lands its whole-number damage). The last such write wins. None: the list does not touch DbLevel.
+pub fn db_level_code(g: &[u8]) -> Option<i32> {
+    let mut out = None;
+    let mut o = 0;
+    while o + 8 <= g.len() {
+        let (w0, w1) = (be32(g, o)?, be32(g, o + 4)?);
+        let kind = (w0 >> 24) as u8;
+        if kind == 0xF0 || (w0 == 0 && w1 == 0) {
+            break;
+        }
+        if kind & 0xFE == 0x04 && 0x8000_0000 | (w0 & 0x01FF_FFFF) == 0x804D_4A08 {
+            out = Some(w1 as i32);
+        }
+        let extra = match kind & 0xFE {
+            0xC0 | 0xC2 | 0xF2 | 0xF4 => w1 as usize,
+            0x06 => (w1 as usize).div_ceil(8),
+            0x08 => 1,
+            _ => 0,
+        };
+        o += 8 * (1 + extra);
+    }
+    out
+}
+
 /// The gameplay-visible part of a widescreen code found in a replay's Gecko list (see [`widescreen_code`]).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Widescreen {

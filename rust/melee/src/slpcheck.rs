@@ -385,6 +385,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     if pl.env.slippi_codes.is_none() && slp::online_codeset(&file.gecko) {
         pl.env.slippi_codes = Some("online".into());
     }
+    crate::set_replay_db_level(melee_data::slp::db_level_code(&file.gecko));
     pl.load_slp(&path, &data, false);
     for l in pl.log.drain(..) {
         eprintln!("melee: {l}");

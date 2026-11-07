@@ -382,6 +382,9 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     };
     sm.notes = conv.notes.join("; ");
     let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: !args.iter().any(|a| a == "--no-resync"), identity: None, ..Default::default() });
+    if pl.env.slippi_codes.is_none() && slp::online_codeset(&file.gecko) {
+        pl.env.slippi_codes = Some("online".into());
+    }
     pl.load_slp(&path, &data, false);
     for l in pl.log.drain(..) {
         eprintln!("melee: {l}");

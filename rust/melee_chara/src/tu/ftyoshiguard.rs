@@ -186,6 +186,10 @@ pub fn ftYs_GuardOn_0_Anim(gobj: *mut HSD_GObj) {
 /// `ftYs_GuardOn_0_IASA`: the first interrupts that leave the guard.
 pub fn ftYs_GuardOn_0_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftYs_GuardOn_0_IASA");
+    // the powershield check comes first (C: RETURN_IF(ftCo_80093694(gobj))); it was missing, so Yoshi never powershielded
+    if melee_fighter::tu::ftCo_Guard::ftCo_80093694(gobj) {
+        return;
+    }
     if melee_fighter::tu::ftCo_ItemThrow::ftCo_8009515C(gobj) {
         return;
     }

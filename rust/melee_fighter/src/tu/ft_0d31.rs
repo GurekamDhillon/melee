@@ -647,6 +647,14 @@ pub fn ftCo_DeadUpFall_Anim(g: G) {
                     f.self_vel.z = fc.x55C;
                     f.mv.co.unk_deadup.x40 = fc.x530;
                     f.mv.co.unk_deadup.x44 = 3;
+                    if h::slippi_codes() == 2 {
+                        // Slippi online FreezeDeadUpFallPhysics @800D4C1C: the fall velocity lives in mv (x48 = vy,
+                        // x4C = vz) and self_vel is zeroed, so cur_pos stays where the KO happened
+                        let m = &mut f.mv.co.unk_deadup as *mut _ as *mut u8;
+                        *(m.add(8) as *mut f32) = fc.x550;
+                        *(m.add(0xC) as *mut f32) = fc.x55C;
+                        f.self_vel = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+                    }
                 }
                 3 => {
                     ext::ftCommon_8007E2FC(crate::mtu_ptr::ptr(&((f).gobj)));
@@ -690,8 +698,24 @@ pub fn ftCo_DeadUpFall_Phys(g: G) {
                 ext::lbVector_Lerp(crate::mtu_ptr::at(&ca.x538), crate::mtu_ptr::at(&ca.x544), crate::mtu_ptr::at(&f.mv.co.unk_deadup.x50), f.mv.co.unk_deadup.x4C);
             }
             3 => {
+                if h::slippi_codes() == 2 {
+                    // Slippi online FreezeDeadUpFallPhysics @800D4D68: fall on mv's x48 (vy) instead of self_vel
+                    // (fsub; max with -terminal), then x5C.y += x48, x5C.z += x4C
+                    let m = &mut f.mv.co.unk_deadup as *mut _ as *mut u8;
+                    let vy = m.add(8) as *mut f32;
+                    let vz = m.add(0xC) as *mut f32;
+                    let mut v = ((*vy as f64) - (ca.x554 as f64)) as f32;
+                    let lim = -ca.x558;
+                    if !(v > lim) {
+                        v = lim;
+                    }
+                    *vy = v;
+                    f.mv.co.unk_deadup.x5C.y = f.mv.co.unk_deadup.x5C.y + *vy;
+                    f.mv.co.unk_deadup.x5C.z = *vz + f.mv.co.unk_deadup.x5C.z;
+                } else {
                 ext::ftCommon_Fall(crate::mtu_ptr::ptr(&(f)), ca.x554, ca.x558);
                 ext::lbVector_Add(crate::mtu_ptr::at(&f.mv.co.unk_deadup.x5C), crate::mtu_ptr::at(&f.self_vel));
+                }
                 if f.x2222_b6() != 0 && !ext::ftAnim_80070FD0(f) {
                     return;
                 }

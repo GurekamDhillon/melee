@@ -53,24 +53,29 @@ mod sys {
     use super::*;
     extern "C" {
         fn mmap(addr: *mut c_void, len: usize, prot: i32, flags: i32, fd: i32, off: i64) -> *mut c_void;
+        fn munmap(addr: *mut c_void, len: usize) -> i32;
     }
     pub fn alloc_low(len: usize) -> Option<*mut u8> {
+        // Same probe as Windows: 16 MiB-stepped hints from 2 GiB + 16 MiB up to 4 GiB (guest main-RAM addresses
+        // have the 0x80000000 bit; MAP_32BIT would place the block below 2 GiB). Linux: MAP_FIXED_NOREPLACE takes the
+        // hint exactly or fails; elsewhere the hint is advisory, so a block that landed elsewhere is unmapped.
         const PROT_RW: i32 = 3;
         #[cfg(target_os = "linux")]
-        const FLAGS: i32 = 0x02 | 0x20 | 0x40; // MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT
+        const FLAGS: i32 = 0x02 | 0x20 | 0x10_0000; // MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE
         #[cfg(not(target_os = "linux"))]
-        const FLAGS: i32 = 0x0002 | 0x1000; // MAP_PRIVATE | MAP_ANON (macOS/BSD: hint-probed below)
+        const FLAGS: i32 = 0x0002 | 0x1000; // MAP_PRIVATE | MAP_ANON
         let mut hint: usize = 0x8100_0000;
-        loop {
+        while hint + len <= 0x1_0000_0000 {
             let p = unsafe { mmap(hint as *mut c_void, len, PROT_RW, FLAGS, -1, 0) };
-            if p as isize != -1 && (p as usize) + len <= 0x1_0000_0000 {
-                return Some(p as *mut u8);
+            if p as isize != -1 {
+                if p as usize == hint {
+                    return Some(p as *mut u8);
+                }
+                unsafe { munmap(p, len) };
             }
             hint += 0x0100_0000;
-            if hint + len > 0x1_0000_0000 {
-                return None;
-            }
         }
+        None
     }
 }
 

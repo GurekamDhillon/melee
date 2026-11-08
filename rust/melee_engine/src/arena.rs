@@ -46,6 +46,31 @@ mod sys {
     pub const MEM_COMMIT: u32 = 0x1000;
     pub const MEM_RESERVE: u32 = 0x2000;
     pub const PAGE_READWRITE: u32 = 0x04;
+    /// Reserve the arena's address space (`MEM_WRITE_WATCH`: a rollback asks which pages were written).
+    pub unsafe fn reserve(cap: usize) -> *mut core::ffi::c_void {
+        VirtualAlloc(core::ptr::null_mut(), cap, MEM_RESERVE | 0x200000, PAGE_READWRITE)
+    }
+    pub unsafe fn commit(at: usize, len: usize) -> bool {
+        !VirtualAlloc(at as *mut _, len, MEM_COMMIT, PAGE_READWRITE).is_null()
+    }
+}
+
+/// Unix: the reserve is a PROT_NONE, MAP_NORESERVE mapping; committing makes pages read-write (the kernel backs them
+/// with zero pages on first touch, as Windows' MEM_COMMIT does). There is no write watch: the snapshot falls back to
+/// treating every page in the range as written.
+#[cfg(unix)]
+mod sys {
+    pub unsafe fn reserve(cap: usize) -> *mut core::ffi::c_void {
+        let p = libc::mmap(core::ptr::null_mut(), cap, libc::PROT_NONE, libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE, -1, 0);
+        if p == libc::MAP_FAILED { core::ptr::null_mut() } else { p }
+    }
+    pub unsafe fn commit(at: usize, len: usize) -> bool {
+        libc::mprotect(at as *mut _, len, libc::PROT_READ | libc::PROT_WRITE) == 0
+    }
+    /// Drop the pages' contents (they read back as zero), like MEM_DECOMMIT followed by a recommit.
+    pub unsafe fn decommit(at: usize, len: usize) {
+        libc::madvise(at as *mut _, len, libc::MADV_DONTNEED);
+    }
 }
 
 /// Trim mode ([`set_trim`]): big free blocks give their pages back, and a big request with no block of its class
@@ -70,6 +95,18 @@ unsafe fn decommit(a: usize, b: usize) {
     if b > a {
         sys::VirtualFree(a as *mut _, b - a, sys::MEM_DECOMMIT);
     }
+}
+#[cfg(unix)]
+unsafe fn decommit(a: usize, b: usize) {
+    let (a, b) = ((a + 0xFFF) & !0xFFF, b & !0xFFF);
+    if b > a {
+        sys::decommit(a, b - a);
+    }
+}
+/// Unix: a decommitted page stays mapped read-write (it reads back zero), so there is nothing to do.
+#[cfg(unix)]
+unsafe fn recommit(_a: usize, _b: usize) -> bool {
+    true
 }
 /// Commit the pages under `[a, b)` again (decommitted ones come back zeroed, committed ones are unchanged).
 #[cfg(windows)]
@@ -172,7 +209,7 @@ fn class_of(size: usize) -> Option<(usize, usize)> {
 }
 
 /// Serve `l` from the arena; null when the arena does not take it (alignment above 16, huge, no address space).
-#[cfg(windows)]
+#[cfg(any(windows, unix))]
 pub unsafe fn alloc(l: Layout) -> *mut u8 {
     alloc_fresh(l).0
 }
@@ -188,7 +225,7 @@ pub fn note_snapshot() {
 /// [`alloc`] for a zeroed block: zeroes it unless it is fresh bump memory and the arena was never snapshotted (pages
 /// past the bump pointer were never handed out: still the OS's zero pages). A multi-MB zeroed table then costs only
 /// the pages that are touched (the archive decoder's shared tables, `gcdecode::shared_array`).
-#[cfg(windows)]
+#[cfg(any(windows, unix))]
 pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
     let (p, fresh) = alloc_fresh(l);
     if !p.is_null() && !(fresh && !SNAPSHOTTED.load(Relaxed)) {
@@ -198,23 +235,23 @@ pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
 }
 
 /// (block, whether it came from the bump pointer).
-#[cfg(windows)]
+#[cfg(any(windows, unix))]
 unsafe fn alloc_fresh(l: Layout) -> (*mut u8, bool) {
     let r = alloc_inner(l);
     (r, FRESH)
 }
 
-#[cfg(windows)]
+#[cfg(any(windows, unix))]
 static mut FRESH: bool = false;
 
-#[cfg(windows)]
+#[cfg(any(windows, unix))]
 unsafe fn alloc_inner(l: Layout) -> *mut u8 {
     FRESH = false;
     let Some(ab) = bucket(l.align()) else { return core::ptr::null_mut() };
     let Some((c, size)) = class_of(l.size()) else { return core::ptr::null_mut() };
     let _g = Lock::take();
     if BASE == 0 {
-        let p = sys::VirtualAlloc(core::ptr::null_mut(), CAP, sys::MEM_RESERVE | 0x200000, sys::PAGE_READWRITE);
+        let p = sys::reserve(CAP);
         if p.is_null() {
             return core::ptr::null_mut();
         }
@@ -258,8 +295,7 @@ unsafe fn alloc_inner(l: Layout) -> *mut u8 {
         return core::ptr::null_mut();
     }
     while end > COMMITTED {
-        let q = sys::VirtualAlloc(COMMITTED as *mut _, COMMIT_STEP, sys::MEM_COMMIT, sys::PAGE_READWRITE);
-        if q.is_null() {
+        if !sys::commit(COMMITTED, COMMIT_STEP) {
             return core::ptr::null_mut();
         }
         COMMITTED += COMMIT_STEP;
@@ -269,11 +305,11 @@ unsafe fn alloc_inner(l: Layout) -> *mut u8 {
     p as *mut u8
 }
 
-#[cfg(not(windows))]
+#[cfg(not(any(windows, unix)))]
 pub unsafe fn alloc(_l: Layout) -> *mut u8 {
     core::ptr::null_mut()
 }
-#[cfg(not(windows))]
+#[cfg(not(any(windows, unix)))]
 pub unsafe fn alloc_zeroed(_l: Layout) -> *mut u8 {
     core::ptr::null_mut()
 }
@@ -314,7 +350,7 @@ pub unsafe fn free(p: *mut u8, l: Layout) {
     *((p as usize + 8) as *mut u64) = FREE_MARK;
     *(p as *mut usize) = FREE[ab][c];
     FREE[ab][c] = p as usize;
-    #[cfg(windows)]
+    #[cfg(any(windows, unix))]
     if TRIM {
         let size = class_size(c);
         if size >= TRIM_MIN {
@@ -378,7 +414,37 @@ pub fn static_sections() -> Vec<(usize, usize)> {
     }
 }
 
-#[cfg(not(windows))]
+/// Linux: the main program's writable PT_LOAD segments (`.data`, `.bss`, ...), less its PT_GNU_RELRO part (made
+/// read-only after relocation) and the TLS template (each thread's live TLS is elsewhere, as on Windows).
+#[cfg(target_os = "linux")]
+pub fn static_sections() -> Vec<(usize, usize)> {
+    unsafe extern "C" fn cb(info: *mut libc::dl_phdr_info, _size: usize, out: *mut core::ffi::c_void) -> i32 {
+        let out = &mut *(out as *mut Vec<(usize, usize)>);
+        let info = &*info;
+        let base = info.dlpi_addr as usize;
+        let ph = core::slice::from_raw_parts(info.dlpi_phdr, info.dlpi_phnum as usize);
+        let relro = ph.iter().find(|p| p.p_type == libc::PT_GNU_RELRO).map(|p| (base + p.p_vaddr as usize, base + (p.p_vaddr + p.p_memsz) as usize));
+        for p in ph.iter().filter(|p| p.p_type == libc::PT_LOAD && p.p_flags & libc::PF_W != 0 && p.p_memsz != 0) {
+            let mut a = (base + p.p_vaddr as usize) & !0xFFF;
+            let e = (base + (p.p_vaddr + p.p_memsz) as usize + 0xFFF) & !0xFFF;
+            if let Some((ra, re)) = relro {
+                // RELRO covers the segment's start (the loader page-rounds its end down)
+                if ra <= a && re > a {
+                    a = re & !0xFFF;
+                }
+            }
+            if e > a {
+                out.push((a, e - a));
+            }
+        }
+        1 // the first object is the main program
+    }
+    let mut out: Vec<(usize, usize)> = Vec::new();
+    unsafe { libc::dl_iterate_phdr(Some(cb), &mut out as *mut _ as *mut core::ffi::c_void) };
+    out
+}
+
+#[cfg(not(any(windows, target_os = "linux")))]
 pub fn static_sections() -> Vec<(usize, usize)> {
     Vec::new()
 }

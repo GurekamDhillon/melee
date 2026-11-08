@@ -142,24 +142,129 @@ mod imp {
 #[cfg(windows)]
 pub use imp::*;
 
-/// Off Windows there is no copy-on-write capture yet (the vectored handler is Win32): `protect` reports that, so a
-/// rollback base falls back to whatever path its caller takes on an error, and everything else is inert.
-#[cfg(not(windows))]
-mod imp_none {
-    pub unsafe fn protect(_start: usize, _len: usize) -> Result<(), String> {
-        Err("copy-on-write capture is Windows-only".into())
+/// Linux/Unix: the same scheme with `mprotect` and a SIGSEGV handler. The range stays readable, so any fault
+/// inside it is a write. The store is a lazily-committed anonymous mapping (no allocation in the handler). A fault
+/// outside the range puts the previous handler back and returns, so the faulting instruction re-runs under it
+/// (Rust's stack-overflow guard, a debugger, the default action).
+#[cfg(unix)]
+mod imp_unix {
+    use core::ffi::c_void;
+    const PAGE: usize = 4096;
+
+    static mut START: usize = 0;
+    static mut LEN: usize = 0;
+    static mut STORE: usize = 0;
+    static mut BITS: *mut u64 = core::ptr::null_mut();
+    static mut FAULTS: u64 = 0;
+    static mut OLD: core::mem::MaybeUninit<libc::sigaction> = core::mem::MaybeUninit::uninit();
+    static mut INSTALLED: bool = false;
+
+    unsafe extern "C" fn handler(_sig: i32, info: *mut libc::siginfo_t, _ctx: *mut c_void) {
+        let addr = (*info).si_addr() as usize;
+        if START == 0 || addr < START || addr >= START + LEN {
+            // not ours: hand the signal back to whoever had it
+            libc::sigaction(libc::SIGSEGV, OLD.as_ptr(), core::ptr::null_mut());
+            INSTALLED = false;
+            return;
+        }
+        let page = addr & !(PAGE - 1);
+        let idx = (page - START) / PAGE;
+        let bit = 1u64 << (idx % 64);
+        if *BITS.add(idx / 64) & bit == 0 {
+            core::ptr::copy_nonoverlapping(page as *const u8, (STORE + (page - START)) as *mut u8, PAGE);
+            *BITS.add(idx / 64) |= bit;
+            FAULTS += 1;
+        }
+        libc::mprotect(page as *mut c_void, PAGE, libc::PROT_READ | libc::PROT_WRITE);
     }
-    pub unsafe fn release() {}
-    pub unsafe fn saved(_page_addr: usize) -> Option<&'static [u8]> {
-        None
+
+    /// Make `[start, start+len)` copy-on-first-write. `len` is a multiple of the page size. At most one range at a time.
+    pub unsafe fn protect(start: usize, len: usize) -> Result<(), String> {
+        if START != 0 {
+            return Err("a copy-on-write range is already active".into());
+        }
+        let pages = len / PAGE;
+        let bits = vec![0u64; pages.div_ceil(64)].leak();
+        let store = libc::mmap(
+            core::ptr::null_mut(),
+            len,
+            libc::PROT_READ | libc::PROT_WRITE,
+            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE,
+            -1,
+            0,
+        );
+        if store == libc::MAP_FAILED {
+            return Err("cannot reserve the copy-on-write store".into());
+        }
+        STORE = store as usize;
+        BITS = bits.as_mut_ptr();
+        START = start;
+        LEN = len;
+        if !INSTALLED {
+            let mut sa: libc::sigaction = core::mem::zeroed();
+            sa.sa_sigaction = handler as usize;
+            sa.sa_flags = libc::SA_SIGINFO | libc::SA_ONSTACK;
+            libc::sigemptyset(&mut sa.sa_mask);
+            if libc::sigaction(libc::SIGSEGV, &sa, OLD.as_mut_ptr()) != 0 {
+                return Err("sigaction failed".into());
+            }
+            INSTALLED = true;
+        }
+        if libc::mprotect(start as *mut c_void, len, libc::PROT_READ) != 0 {
+            return Err("mprotect failed".into());
+        }
+        Ok(())
     }
-    pub fn or_written(_out: &mut Vec<u64>) {}
+
+    /// Undo `protect` (the range becomes writable; the store stays mapped).
+    pub unsafe fn release() {
+        if START == 0 {
+            return;
+        }
+        libc::mprotect(START as *mut c_void, LEN, libc::PROT_READ | libc::PROT_WRITE);
+        if INSTALLED {
+            libc::sigaction(libc::SIGSEGV, OLD.as_ptr(), core::ptr::null_mut());
+            INSTALLED = false;
+        }
+        START = 0;
+    }
+
+    /// The saved base page at `page_addr`, when it was written since `protect`.
+    pub unsafe fn saved(page_addr: usize) -> Option<&'static [u8]> {
+        if START == 0 || page_addr < START || page_addr >= START + LEN {
+            return None;
+        }
+        let idx = (page_addr - START) / PAGE;
+        if *BITS.add(idx / 64) & (1u64 << (idx % 64)) != 0 {
+            Some(core::slice::from_raw_parts((STORE + (page_addr - START)) as *const u8, PAGE))
+        } else {
+            None
+        }
+    }
+
+    /// OR the written-page bitmap (bit i = page i of the range, ever written since `protect`) into `out`.
+    pub fn or_written(out: &mut Vec<u64>) {
+        unsafe {
+            if START == 0 {
+                return;
+            }
+            let words = (LEN / PAGE).div_ceil(64);
+            if out.len() < words {
+                out.resize(words, 0);
+            }
+            for (i, w) in out[..words].iter_mut().enumerate() {
+                *w |= *BITS.add(i);
+            }
+        }
+    }
+
     pub fn active() -> bool {
-        false
+        unsafe { START != 0 }
     }
     pub fn faults() -> u64 {
-        0
+        unsafe { FAULTS }
     }
 }
-#[cfg(not(windows))]
-pub use imp_none::*;
+
+#[cfg(unix)]
+pub use imp_unix::*;

@@ -1242,6 +1242,7 @@ dependencies = [
 name = "melee_engine"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "melee_audio",
  "melee_chara",
  "melee_core",

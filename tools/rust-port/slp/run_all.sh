@@ -6,6 +6,7 @@
 set -u
 DIR=$1; OUT=$2; shift 2
 EXE=${MELEE_EXE:-build/cargo/release/melee.exe}
+[ -e "$EXE" ] || [ ! -e "${EXE%.exe}" ] || EXE="${EXE%.exe}"
 JOBS=${JOBS:-4}; TIMEOUT=${TIMEOUT:-900}
 mkdir -p "$OUT"
 export MELEE_WINDOW_UNFOCUSED=1

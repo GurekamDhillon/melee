@@ -9,6 +9,9 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../..
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ] && { set -a; . "$ws/.env"; set +a; }
 runs=3; update=0; exe="build/cargo/${PROFILE:-release}/melee.exe"
+[ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"
+# Linux (notes/linux.md): no `python` on PATH means python3; the exe has no .exe suffix
+command -v python >/dev/null 2>&1 || python() { python3 "$@"; }
 while [ $# -gt 0 ]; do case "$1" in --runs) runs="$2"; shift ;; --update) update=1 ;; --exe) exe="$2"; shift ;; *) echo "snapguard: unknown option $1" >&2; exit 2 ;; esac; shift; done
 base="$here/snap_baseline.tsv"
 export MELEE_WINDOW_UNFOCUSED=1 MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_TITLE="snapguard: cpu_fox_falco_dl"

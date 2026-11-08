@@ -89,7 +89,10 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     // --mm-real: the only way to reach a matchmaking server that is not on loopback (Slippi's own, wss://). The account
     // comes from --user-json (a COPY of a Slippi user.json in a throwaway dir); none of its fields is ever printed.
     let real = args.iter().any(|a| a == "--mm-real");
-    let bind_ip: u32 = if real { 0 } else { 0x7F000001 };
+    // --mm-lan: the matchmaking mock (and so the peer) is on another machine of a private network (a WSL guest and its
+    // Windows host, two LAN boxes): ws:// to a private literal IPv4, sockets bound to every interface
+    let lan = !real && args.iter().any(|a| a == "--mm-lan");
+    let bind_ip: u32 = if real || lan { 0 } else { 0x7F000001 };
     let (decider, local_port, remote_port, peer) = if let Some(url) = arg(args, "--mm") {
         let mut code = arg(args, "--code").unwrap_or_else(|| "RUST#001".into());
         let (mut uid, mut play_key, mut display) = (format!("local-test-{}", code.replace('#', "-")), String::new(), arg(args, "--name").unwrap_or_else(|| "Rust".into()));
@@ -152,7 +155,13 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         // queued long enough to be matched on purpose)
         let leave_early = args.iter().any(|a| a == "--mm-leave-after-joined");
         let leave = |t: &str| leave_early && melee_net::slippi_mm::Json::parse(t).is_some_and(|j| j.get("type").and_then(|v| v.str()) .is_some_and(|t| t == "joined" || t == "create-ticket-resp"));
-        let target = if real { melee_net::slippi_mm::Target::Real } else { melee_net::slippi_mm::Target::Loopback };
+        let target = if real {
+            melee_net::slippi_mm::Target::Real
+        } else if lan {
+            melee_net::slippi_mm::Target::Lan
+        } else {
+            melee_net::slippi_mm::Target::Loopback
+        };
         // enet://HOST[:PORT]: the ENet matchmaking service production Slippi Dolphin 3.x speaks (mm.slippi.gg:43113);
         // ws:// / wss://: the WebSocket service of the mainline client
         let res = if let Some(server) = url.strip_prefix("enet://") {

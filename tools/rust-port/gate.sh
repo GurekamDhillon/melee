@@ -16,6 +16,8 @@ set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"
 cd "$repo"
+# Linux (notes/linux.md): no `python` on PATH means python3; the exe has no .exe suffix
+command -v python >/dev/null 2>&1 || python() { python3 "$@"; }
 engine=tu; update=0; build=1; only=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -34,6 +36,7 @@ case "$engine" in tu) ;; legacy) echo "gate: the legacy model was removed (conso
 profile="${PROFILE:-release}"
 case "$profile" in release|fast|perf) ;; *) echo "gate: unknown PROFILE '$profile' (release|fast|perf)" >&2; exit 2 ;; esac
 exe="$repo/build/cargo/$profile/melee.exe"
+[ -e "$exe" ] || [ ! -e "${exe%.exe}" ] || exe="${exe%.exe}"
 tmp="${TEMP:-/tmp}/gate.$$"; mkdir -p "$tmp"
 fail=0
 if [ $build = 1 ]; then

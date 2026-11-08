@@ -1056,6 +1056,7 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
             let g = mem.native(a).unwrap_or(0);
             let mut words = [0usize; 6];
             let mut tmp: Vec<(u32, Box<[u32; 16]>)> = Vec::new();
+            let mut bad_joint = false;
             for (k, w) in words.iter_mut().enumerate() {
                 let h = cpu.gpr[5 + k];
                 *w = if h == 0 {
@@ -1072,11 +1073,23 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
                     p
                 } else if h < 0x1_0000 {
                     h as usize
+                } else if k == 0 {
+                    // the first tail word (the joint an attached effect hangs on) is neither an object the guest knows
+                    // nor a small value: Tails' guest passes 1.0f there, which the native effect dereferenced (and a
+                    // NULL joint asserts in HSD_RObjSetConstraintObj). The effect is not made; r3 = NULL, as when the
+                    // effect cannot be made
+                    bad_joint = true;
+                    0
                 } else {
-                    // neither an object the guest knows nor a small value: a pointer the guest read wrong (Tails
-                    // passed 1.0f as a joint); the native call would fault on it
-                    return Err(Fault::Mem(h));
+                    // a register past the effect's own arguments (the tail is variadic; Wolf's Laser_Spawn leaves a
+                    // float's bits in r7)
+                    0
                 };
+            }
+            if bad_joint {
+                *st().unresolved.entry(0xE000_0000 | d).or_default() += 1;
+                cpu.gpr[3] = 0;
+                return Ok(());
             }
             let e = unsafe { melee_chara::adapt::efSync_Spawn_usize(d as i32, g as G, &words) };
             for (h, b) in tmp {
@@ -1280,7 +1293,7 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
                 } else if h < 0x1_0000 {
                     h as usize as *const c_void
                 } else {
-                    return Err(Fault::Mem(h));
+                    core::ptr::null()
                 });
             }
             unsafe { melee_world::tu::efasync::efAsync_Spawn(g, q, r(2), r(3), jobj, &tail) };
@@ -1293,6 +1306,14 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
         // GX state of a guest render callback (onModelRender / an article's draw): nothing the simulation reads, and
         // the port's renderer sets its own state per draw, so these are no-ops here
         n if n.starts_with("GX") => {}
+        // the out-of-line MSL fmodf (0x80364340, math.h's inline body): `a - b * (s64)(a / b)` as a product and a
+        // subtraction. The bridge took aobj::fmodf, the contracted fnmsubs form, which gives -0 on an exact multiple:
+        // Tails' guest passed fmodf(15, 15) = -0 to ChangeMotionState where the console has +0 (state_frame -0.0)
+        "fmodf" => {
+            let (a, b) = (f64::from_bits(cpu.fpr[1]) as f32, f64::from_bits(cpu.fpr[2]) as f32);
+            let r = if b.abs() > a.abs() { a } else { a - b * (melee_core::ppc::fcvt_i64(a / b) as f32) };
+            cpu.fpr[1] = (r as f64).to_bits();
+        }
         // sqrtf(f32): the library routine (frsqrte + Newton steps) as the port has it
         "sqrtf__Ff" => cpu.fpr[1] = (melee_runtime::gekko::sqrtf(f64::from_bits(cpu.fpr[1]) as f32) as f64).to_bits(),
         "ftCommon_UnlockECB" => {

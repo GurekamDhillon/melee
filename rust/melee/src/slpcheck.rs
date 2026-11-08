@@ -432,14 +432,16 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         // A port recorded with the UCF dashback word (1) played on a console running Slippi's UCF 0.84 codes, which include
         // the DBOOC SquatRv fix (m-ex `ucf_dbooc_squatrv_fix`, ftCo_SquatRv_CheckInput): 325cee5d, Fox's crouch held at
         // (0.7875, -0.6125) on the first frame of a turn stays SquatWait on the console (Dolphin oracle and Post-Frame).
-        let ucf = file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype < 2 && file.dashback[i] == 1));
+        // Not Slippi 1.x (2019): that era's UCF was 0.7x, before the 0.8 DBOOC fix; its replays (Gang-Steals 1.7.1) go
+        // Squat -> SquatRv where the fix holds SquatWait (action 41 on the console, 40 with the fix).
+        let ucf = file.version[0] >= 2 && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype < 2 && file.dashback[i] == 1));
         if ucf && std::env::var_os("MELEE_MEX").is_none() {
             std::env::set_var("MELEE_MEX", "ucf_dbooc_squatrv_fix");
         }
     }
     // SLPCHECK_VANILLA_SPAWN=1: no Slippi Neutral Spawn (the port's own .slp exports, played without it)
     if std::env::var_os("SLPCHECK_VANILLA_SPAWN").is_none() {
-        crate::replay_modes_active();
+        crate::replay_modes_active(file.version[0] as i32 * 10000 + file.version[1] as i32 * 100 + file.version[2] as i32);
     }
     // the replay's own widescreen camera code (if its Gecko list has one) changes the logic's off-screen test
     let ws = slp::widescreen_code(&file.gecko);

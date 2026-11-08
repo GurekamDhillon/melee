@@ -84,7 +84,14 @@ the GC bytes with the generated `GcDecode` (pointers null) and walks the same ta
 the same way; pointers and unions are left out. `melee dolphin-wide --raw R --out T [--from F --to F]`;
 `melee slpcheck ... --wide-out T [--wide] [--wide-from F --wide-to F]` (a whole match is ~2 GB, hence the window).
 `wide_diff.py` prints, per frame, only the fields that newly differ (many never agree: heap addresses in int fields, a
-human's CPU scratch, the `x2188` stick counter), `--persistent` all of them, `--zero-eq` treats f32 +0/-0 as equal.
+human's CPU scratch, and the render-written fields below), `--persistent` all of them, `--zero-eq` treats f32 +0/-0 as equal.
+
+**Render-written fields are one frame apart in the two wide dumps.** Dolphin's record is taken before the frame's
+render; the engine's wide dump is taken after its logic-side stand-ins for the draw callback (`ftLib_UpdateLogicOffCamera`,
+the Screen-KO `place_in_view`) have run. So `x2188` (the screen position `ftLib_UpdateScreenVisibility` stores; not a
+stick counter) and `cur_pos` during DeadUpFallHitCamera read in Dolphin's frame F what the engine's frame F-1 shows.
+The NHV1 row (`neutral_row`, taken at Script_FramePost) is not affected. A "new" `x2188` difference means only that
+the two happened to be equal the frame before.
 
 ## Results (rust-port 9f07d196a + this branch, fast profile)
 
@@ -259,7 +266,47 @@ case's entry, so a frozen stadium decides once; the later IngameCheckIfFrozen (C
 them fixed it was not isolated.
 
 Left (1): **602a5cd8** at csv 5452 (slippi 5329): s6 `x2188.x` (screen position, 300 in Rust, 295 in playback) on
-one frame, then s0. Not investigated further.
+one frame, then s0. Resolved in round 3 below (a playback artifact: the second polling-drift variant).
+
+## Round 3 (port/f602): 602a5cd8, the second polling-drift variant: 124 -> 125 of 125
+
+**What differed.** The cached `dolphin.csv` (re-run: identical, so deterministic here) differs from the engine in `s0`
+only, csv 5452-5476 (slippi 5329-5353). The wide window shows at 5329 the camera (`transform.interest/position`, a few
+hundredths), s0's `prev_pos`, `pos_delta` (0 in Dolphin), hurt capsules and `x1064_thrownHitbox`; s0 is Marth in
+`DeadUpFallHitCamera` (motion 7, the Screen KO, `cur_pos.z` 231). The s6 `x2188.x` line that round 2 reported was the
+one-frame offset described under "The by-name dump": 5327 and 5328 happened to be equal (295, 295).
+
+**Why.** A probe on the engine loop start (0x801A4DE4) and the render start (0x801A5024) finds playback frames with two
+logic iterations and no render between them at 1323, 2319, 3324, 4326, **5328**, 6328, 7330: the ~1002-frame polling
+drift of "Round 2", still present. In a Screen KO the draw callback writes the fighter's position
+(`ftDrawCommon_80080E18` inline2: camera-space `mv.co.walk.fast_anim_frame` through the inverse viewing matrix into
+`cur_pos`), so the skipped render left s0's `cur_pos` at its 5328 value for logic frame 5329, the camera followed the
+stale position, and camera and position stayed a few hundredths off until the respawn 25 frames later. The .slp
+decides: its Post-Frame for p1 at 5329 is x -6.023935 (c0c0c414), y 34.842739 (420b5ef7), the engine's values;
+playback has 5328's -7.455233 (c0ee9145), 29.374111 (41eafe2e) again. The recording console rendered that frame.
+
+**Why the drift codes of round 2 did not apply.** This replay's Gecko list has no code at 0x801A4DA0/0x801A4DB4/
+0x80019860. It carries Slippi's newer **"Polling Drift + Half Visual Buffer Fixes"**
+(`Sys/Slippi/InjectionLists/list_console_lag_pdhalfvb.json`: C2 0x801A4BEC, 0x801A4D98, 0x801A5050 in
+gm_801A4BD4/gm_801A4D34, 04 0x80158268, C2 0x8034EB60, 04 0x80397878, and 480pDeflickerOff at 0x801A4570), which
+`replay_codes.py` did not know. Of the 125 local replays, 90 carry both variants (round 2's copy covered them) and the
+35 `20689_*` widescreen files carry only this one, so they played back with no pacing fix; 34 of them matched anyway
+because a skipped render only matters when it hits a Screen KO or an offscreen tick. `replay_codes.py` now copies this
+variant too, verbatim (`DRIFT_HALFVB`). With it the probe finds one render per logic frame on all 7778 in-game frames,
+and Dolphin's NHV1 rows equal the engine's on all 7779 (`compare_golden.py --ignore-seed`: identical). The engine was
+not changed: it matched the recording's Post-Frame on every frame throughout (slpcheck `match`, 15558 fighter-frames).
+
+**Results (strict2 exe, rust-port b05adf319, engine unchanged).**
+
+| run | result |
+|---|---|
+| 602a5cd8, no pacing code (cached dump, and a re-run) | the two Dolphin runs identical; 25 rows differ from the engine (csv 5452-5476, s0) |
+| 602a5cd8 + the replay's half-VB codes, twice | the two runs identical; **7779 / 7779 rows equal to the engine** |
+| 03804bd3, ccd2e52b, adc68cd8 + their half-VB codes | each identical to its round-2 (no pacing fix) dump: a skipped render did not reach any NHV1 word in them |
+
+Strict sweep: **125 / 125**. The 31 other half-VB dumps in the round-2 cache were made without a pacing fix and matched
+the engine; a re-dump would be the way to make them the recording console's run too, but their rows can only move on a
+frame where a skipped render reached gameplay, and none did.
 
 ## Nondeterminism
 

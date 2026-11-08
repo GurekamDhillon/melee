@@ -389,7 +389,12 @@ pub fn static_sections() -> Vec<(usize, usize)> {
     unsafe {
         let mut base: *const u8 = core::ptr::null();
         if GetModuleHandleExW(FROM_ADDRESS, (&ANCHOR as *const u8).cast(), &mut base) == 0 || base.is_null() {
-            return Vec::new();
+            // An image the loader never saw (a host mapping it itself, as Hero's Source Port does inside an
+            // AppContainer): the start of the allocation holding it is the image's base.
+            base = allocation_base((&ANCHOR as *const u8).cast());
+            if base.is_null() || core::ptr::read_unaligned(base as *const u16) != 0x5A4D {
+                return Vec::new();
+            }
         }
         let rd32 = |o: usize| core::ptr::read_unaligned(base.add(o) as *const u32);
         let rd16 = |o: usize| core::ptr::read_unaligned(base.add(o) as *const u16);
@@ -412,6 +417,20 @@ pub fn static_sections() -> Vec<(usize, usize)> {
         }
         out
     }
+}
+
+#[cfg(windows)]
+unsafe fn allocation_base(p: *const u8) -> *const u8 {
+    #[repr(C)]
+    struct MemoryBasicInformation { base: usize, allocation_base: usize, allocation_protect: u32, partition: u16, size: usize, state: u32, protect: u32, kind: u32 }
+    extern "system" {
+        fn VirtualQuery(address: *const u8, info: *mut MemoryBasicInformation, length: usize) -> usize;
+    }
+    let mut info: MemoryBasicInformation = core::mem::zeroed();
+    if VirtualQuery(p, &mut info, core::mem::size_of::<MemoryBasicInformation>()) == 0 {
+        return core::ptr::null();
+    }
+    info.allocation_base as *const u8
 }
 
 /// Linux: the main program's writable PT_LOAD segments (`.data`, `.bss`, ...), less its PT_GNU_RELRO part (made

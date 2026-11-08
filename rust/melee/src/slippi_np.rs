@@ -452,10 +452,11 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
 /// the run's final inputs); with `--lag N` the other port's pads play the remote side through the rollback session:
 /// each arrives N ticks late (plus a deterministic extra delay on `--drop-pct` of them), predicted until then, so the
 /// session rolls back the way a lagged peer makes it. Writes the online checksums like the live run's `--out`.
+/// `--slp FILE` (straight run only): the match as a Slippi replay (`slp_export`), the engine's own .slp of the game.
 pub fn slippi_replay(args: &[String]) -> ExitCode {
     let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
     let (Some(tp), Some(lp)) = (arg(args, "--trace"), arg(args, "--log")) else {
-        eprintln!("usage: melee slippi-replay --trace T --log L [--lag N] [--drop-seed S --drop-pct P] [--out CSV]");
+        eprintln!("usage: melee slippi-replay --trace T --log L [--lag N] [--drop-seed S --drop-pct P] [--out CSV] [--slp FILE]");
         return ExitCode::from(2);
     };
     let log = std::fs::read_to_string(&lp).unwrap_or_default();
@@ -489,6 +490,11 @@ pub fn slippi_replay(args: &[String]) -> ExitCode {
     melee_core::slippi_online::enable(rng_offset);
     if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
         online_codes(log.split("alt_stage_mode: ").nth(1).and_then(|t| t.split(|ch: char| !ch.is_ascii_digit()).next()?.parse().ok()).unwrap_or(0));
+    }
+    // `--slp FILE`: the straight run (no `--lag`) written as a Slippi replay, for slpcheck against Dolphin's
+    let slp = arg(args, "--slp").filter(|_| arg(args, "--lag").is_none());
+    if let Some(p) = &slp {
+        crate::slp_export::install(p, "network", ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
     }
     let mut game = match EngineGame::open_scene(args, &scene, rng_offset) {
         Ok(g) => g,
@@ -571,6 +577,9 @@ pub fn slippi_replay(args: &[String]) -> ExitCode {
             }
             eprintln!("melee: slippi-replay: lag {lag} drop {dpct}%: rollbacks {} (max depth {}), resim {}", s.stats.rollbacks, s.stats.depth_max, s.stats.resim);
         }
+    }
+    if slp.is_some() {
+        crate::slp_export::finish();
     }
     if let (Some(p), Some(tr)) = (arg(args, "--trace-out"), game.slippi_trace.as_ref()) {
         let t: String = tr.iter().map(|(f, l)| format!("{f} | {l}\n")).collect();

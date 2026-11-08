@@ -6103,6 +6103,12 @@ static inline struct CpuFighter* ftCo_800ADE48_inline1(Fighter* fp)
     return &fp->cpu;
 }
 
+#if defined(TARGET_PC)
+/* The level-roll branch of the 0x12 command test assigns nothing to switch_cmd; on the GameCube it is r31, which
+ * ftCo_800ADE48 saves but does not clear, so it holds the caller's r31: a nonzero pointer at every call site except
+ * ftCo_800B21C8's last call (0x800B2494, after `li r31, 0`). Dolphin probe at 0x800AE270 (notes/dolphin-oracle.md). */
+static bool ftCo_800ADE48_caller_r31_zero;
+#endif
 static bool ftCo_800ADE48(Fighter* fp)
 {
     s32 switch_cmd;
@@ -6241,6 +6247,9 @@ static bool ftCo_800ADE48(Fighter* fp)
             } else {
                 data2->xFA_b1 = false;
             }
+#if defined(TARGET_PC)
+            switch_cmd = !ftCo_800ADE48_caller_r31_zero;
+#endif
         }
         if (switch_cmd != 0) {
             ftCo_800B4A78(fp);
@@ -6570,7 +6579,13 @@ void ftCo_800AE7AC(Fighter* fp, Vec3* arg1, int arg2)
             }
         }
     }
+#if defined(TARGET_PC)
+    ftCo_800ADE48_caller_r31_zero = true;
     ftCo_800ADE48(fp);
+    ftCo_800ADE48_caller_r31_zero = false;
+#else
+    ftCo_800ADE48(fp);
+#endif
 }
 
 void ftCo_800AEA8C(Fighter* fp)

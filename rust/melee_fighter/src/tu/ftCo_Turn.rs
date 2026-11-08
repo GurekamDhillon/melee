@@ -58,7 +58,7 @@ pub mod ext {
         Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
         Replay_RawStickBack(port: i32, which: i32, back: i32) -> i32 = |port: i32, which: i32, back: i32| -> i32 { unsafe { crate::platform::Replay_RawStickBack(port, which, back) } };
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |port: i32, which_y: i32, back: i32| -> i32 { unsafe { crate::fighter::ftucf_pad_raw(port as _, which_y as _, back as _) } };
-        Player_GetEntityAtIndex(slot: i32, index: i32) -> G = |slot: i32, index: i32| -> G { crate::player::get_entity_at_index(slot, index) };
+        Player_GetEntityAtIndex(slot: i32, index: i32) -> G = crate::player::get_entity_at_index;
     }
 }
 

@@ -27,6 +27,9 @@ mex_import = { path = "../../tools/mex-import" }
 # a define's own sound clips play through the native clip slots (geno_host slice 6); the device feature comes from `melee`
 melee_audio = { path = "../melee_audio", default-features = false }
 
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
 [features]
 # core v1 (melee_corev1): the disc read through the host (gcm.rs HOST_READ) and the GX transcoder
 corev1 = ["melee_gx/corev1"]

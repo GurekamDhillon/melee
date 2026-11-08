@@ -482,3 +482,131 @@ Engine vs engine through the mock: 0 desyncs (1285 compared).
 run-B divergence. Only FD and Battlefield boot on the engine (`online_scene` refuses others; the mock is run with
 `--stages 0x20`). The CSS hand position of each character is not mapped (`--css 0,15` is Kirby). The color "shade" for
 mirror matches is not applied. Real-network tests: none (the engine's client only connects to loopback).
+
+## 12. Phase 4: the 60/10 divergence, seed bits, stages, the real server (2026-11-07, port/slippi4)
+
+**The 60 ms / 10 % divergence was a sim gap, not rollback.** Reproduced (run b60-4: 4 soft frames, the same
+signature: float sum off by 1, high half different) and then replayed offline from the engine's own trace with
+`melee slippi-replay` (no network, no rollback): the same 4 frames differed, while `slpcheck` on Dolphin's replay of
+the game matched. The differing field was an offscreen fighter's percent: the 1% offscreen tick
+(`dmg.x1910` vs `x7AC`, `Fighter_8006A360`) came 4 frames late. `ftSlippi_IsOffscreen` took the HUD-magnifier path
+(`ifMagnify_802FC998`, follows the live camera) because `slippi-netplay` never turned the online codeset on;
+Slippi's `BrawlOffscreenDamage` uses the stage camera bounds. Fix: `slippi_np::online_codes` sets `Slippi_Codes() = 2`
+(platform hook, `melee_fighter::hooks`, grlast) and the online gameplay bits (UCF, NeutralSpawn, FreezeGlitchFix,
+PreventWobbling, LGL 45, frozen PS unless `alt_stage_mode`). UCF must be in the word: setting the codes otherwise
+turns the default UCF off (57-736 soft frames in replays). Neutral spawn is what Battlefield needed (spawns were
+(0,8)/(0,62.4) instead of (+-38.8, 35.2): hard desync from frame 1 in phase 3's terms).
+
+**Deterministic repro.** `slippi-netplay --trace F`: per finalized frame both pads + the seed byte, the checksum and
+its inputs. `melee slippi-replay --trace F --log engine.log [--lag N --drop-pct P --drop-seed S] [--out CSV]
+[--trace-out T]`: the run offline, straight or through the rollback session with deterministic late/dropped remote
+pads (lag 4-6, 20-40 % "drops": 760-910 rollbacks, depth 7). `np_compare.py OUT NAME` compares every frame with
+Dolphin's `SLIPPI_CHECKSUM_LOG`.
+
+**Seed bits under rollback.** A frame whose mix read a pad byte (a port rolled) records the bytes it used; a confirmed
+remote pad with a different byte forces a resim (`RbSession::force_resim_from`). Slippi Dolphin sends 0 in byte 8 on
+every frame we logged, so against Dolphin it never fired (forced resims 0).
+
+**Live results vs Slippi Dolphin (mock, loopback; after the fix).** All: 0 soft, 0 hard live and offline.
+
+| run | relay lag/loss | Dolphin vs engine | stage | compared live / offline | rollbacks | rolled frames |
+|---|---|---|---|---|---|---|
+| fx-1..3 | 60 / 10 | Kirby vs Fox | FD | 2273-2409 / 2488-2666 | 372-409 | - |
+| fx-4 | 80 / 15 | Peach vs Fox | FD | 2166 / 2473 | 393 | - |
+| fx-5 | 100 / 20 | Kirby vs Fox | FD | 1786 / 2092 | 386 | - |
+| fx-6 | 30 / 5 | Peach vs Luigi | FD | 2717 / 2844 | 394 | 11 |
+| fx-7 | 60 / 10 | Marth vs Peach | FD | 2382 / 2643 | 380 | 0 |
+| fx-8 | 60 / 10 | Luigi vs G&W | FD | 2448 / 2695 | 361 | 23 |
+| st-7 | 60 / 10 | G&W vs Luigi | FD | 2266 / 2494 | 401 | 30 |
+| st-1 | 30 / 5 | Kirby vs Fox | Battlefield | 2593 / 2730 | 141 | - |
+| st-3 | 30 / 5 | Ness vs Pichu | Fountain of Dreams | 2525 / 2635 | 371 | - |
+| st-4 | 30 / 5 | Falcon vs Marth | Pokemon Stadium | 2436 / 2564 | 153 | - |
+| st-5 | 30 / 5 | Marth vs Falcon | Yoshi's Story | 2692 / 2838 | 397 | - |
+| st-6 | 30 / 5 | Jigglypuff vs Jigglypuff (shade 1) | Dream Land | 2732 / 2873 | 398 | - |
+
+Pre-fix b60-1..7 (60/10, 80/15, 100/20): six clean, b60-4 the divergence; all eight pre-fix traces replay clean
+with the fix. Mirror shade: Dolphin's replay of a Peach mirror has port 2 `sub_color` 1; `online_scene` adds `shade1`.
+
+**Gaps.** `slpcheck` of several online replays reports `state_frame` / `last_attack` differences late in the game
+(fields outside the online checksum; seeds are forced there; not investigated). The CSS table
+(`dolphin_drive.py --play NAME`, icon centres from mncharsel.c) misses now and then (Fox -> Ness, Kirby -> Peach,
+Peach -> no character once): the hand is not settled when A is pressed. Battlefield's Peach mirror has no clean live
+run (the one attempt failed at the CSS).
+
+**The real network.** `--mm-real` alone allows a non-loopback server: `wss://` (rustls behind `melee_net`'s `real-net`
+feature, `--features real-net`), the account from `--user-json` (a copy; no field is printed; real-server messages are
+logged by type only), the netplay socket on 0.0.0.0, `--mm-mode unranked` only with `--mm-leave-after-joined`, never
+ranked. One real test was run: an unranked join to `wss://matchmaking.slippi.gg/v1/queue` from a copied profile, which
+the server refused ("limited to dev accounts"). The installed production Slippi Dolphin talks to `mm.slippi.gg` /
+`mm2.slippi.gg` instead (the older ENet matchmaking); that client is not written. Only one Slippi profile exists in
+AppData (`Slippi Launcher/netplay/User/Slippi/user.json`), so a direct engine-vs-Dolphin or engine-vs-engine game
+through the real servers (two accounts) was not possible.
+
+## 13. Phase 5: production matchmaking, real-network engine vs engine (2026-11-07, port/slippi5)
+
+**Correction to section 12.** `mm2.slippi.gg` is the *dev* host; production Slippi Dolphin 3.x (the installed 3.6.4)
+uses `mm.slippi.gg:43113` (`SlippiMatchmaking.h` `MM_HOST_PROD`, `MM_PORT`, Ishiiruka tag v3.6.4, read as a protocol
+reference only). It is ENet, not WebSocket: the client binds its netplay port, ENet-connects (3 channels, data 0) and
+sends JSON text as reliable packets on channel 0: `create-ticket{user{uid,playKey,connectCode,displayName},
+search{mode, connectCode: bytes}, appVersion, ipAddressLan}` -> `create-ticket-resp{error?}`, then
+`get-ticket-resp{error?, latestVersion?, matchId, isHost, players[...], stages, items}` (the same player fields as the
+WebSocket `match`). No STUN: the server's view of the source port is the hole punch, so the netplay socket must be the
+same port once the mm connection closes. The mainline client (`_build/dolphin-oracle`) moved this to the WebSocket
+service, which refuses non-dev accounts.
+
+**Code.** `melee_net::slippi_mm::join_enet` (+ `create_ticket_message`, `local_ip_towards`), over our own
+`melee_net::enet::Host`; loopback only unless `Target::Real`. `melee slippi-netplay --mm enet://mm.slippi.gg:43113
+--mm-real --user-json COPY --search CODE --port P`. The default stays loopback. Test `tests/slippi_mm_enet.rs` (an
+in-test ENet server). `tools/rust-port/slippi/np_real_pair.sh OUT U1 U2 [-- args]` (account copies; codes passed
+on the command line, never printed).
+
+**Engine vs engine through the real server (direct mode, two real accounts).** Both peers on this machine: the server
+gave both the same external IP, so (as Slippi does) the LAN addresses were used and the game traffic itself stayed on
+the machine; matchmaking was real. The lag/loss columns are the engine's own inbound degradation on both peers.
+CSVs of both peers equal on every common frame in every run.
+
+| run | pads | stage | lag ms / loss % | frames | compared (dec / guest) | desyncs | rollbacks (dec / guest) | max depth |
+|---|---|---|---|---|---|---|---|---|
+| r1 | script | FD | 0 / 0 | - (matched, connected; no ISO env in the script) | - | - | - | - |
+| r2 | script | FD | 0 / 0 | 2489 | 2481 / 2485 | 0 | 0 / 1 | 6 |
+| r3 | padgen 777 | FD | 40 / 5 | 1785 (game ended) | 1583 / 1579 | 0 | 1646 / 1647 | 5 |
+| r4 | padgen 4242 | Battlefield | 60 / 10 | 1512 (game ended) | 1219 / 1223 | 0 | 1324 / 1326 | 7 |
+
+**Not done: Slippi Dolphin on the real network (Dolphin vs Dolphin, engine vs Dolphin).** The only build that speaks
+the production service is the installed Slippi Dolphin 3.6.4. It has no nogui build and no state log for the closed
+loop menu driver, and on Windows its pad pipes are fixed global names `\.\pipe\slippibot1..4` (one instance each),
+which a second copy, or the user's own running Slippi Dolphin, would collide with. Driving it would need OS input
+(not allowed). The oracle build only speaks the WebSocket service (refused). Options: patch the oracle's Rust
+matchmaking to the ENet protocol for a local test build, or a 3.x build with per-instance pipe names.
+No stranger (unranked) check was run.
+
+## 14. Phase 6: Slippi Dolphin on the real network (2026-11-07, port/slippi6)
+
+**The build.** `tools/rust-port/slippi/dolphin_enet_mm.patch` (on top of `_build/dolphin-netplay/localtest-cpp.patch`,
+mainline `0653df8`): `SLIPPI_MM_ENET=HOST:PORT` makes `SlippiMatchmaking` speak the 3.x ENet protocol itself (the
+netplay-port ENet host connects, `create-ticket` as reliable JSON on channel 0, waits for `create-ticket-resp` /
+`get-ticket-resp`, then the existing result parsing), no STUN, LAN address from `getLocalAddress` towards the server.
+`SLIPPI_REAL_NET=1` lifts the `SLIPPI_LOCAL_TEST` loopback binding (matchmaking and netplay hosts); the web API, game
+reports, STUN and browser pages stay off. `SLIPPI_MM_APP_VERSION` sets `appVersion` (the scripts send the engine's
+default). Ranked is refused; only message types are logged. Pipe names were already per instance
+(`SLIPPI_PIPE_PREFIX`). Built in `_build/dolphin-oracle/build`, the exe/dll copied to `_build/dolphin-slippi6` (not
+committed), the oracle's sources and binaries restored afterwards.
+
+**Scripts.** `run_np_dolphin.ps1 -Dir -MmEnet -RealNet -AppVersion`; `np_real_dolphin_pair.sh OUT dd|de|ed|eh [-- engine
+args]` (throwaway user dirs `userR1/R2` from copies of the two accounts, `direct-codes.json` holding the other code);
+`dd_compare.py OUT` (Dolphin vs Dolphin: each side's TX checksums, and RX against the peer's TX).
+
+**Results (all on the real network: mm.slippi.gg:43113, direct mode, our two accounts; same external IP, so the game
+traffic used the LAN addresses).** Dolphin rollbacks are not logged by this build.
+
+| run | pairing (decider first) | pads | engine lag / loss | frames | compared | desyncs | rollbacks (engine) |
+|---|---|---|---|---|---|---|---|
+| dd1 | Dolphin acct1 (Kirby) vs Dolphin acct2 (Fox) | drive 11 / 22 | - | 2717 / 2720 | 2431 TX common, RX 2561 + 2548 | 0 | - |
+| dd2 | Dolphin acct1 vs Dolphin acct2 | drive 11 / 22 | - | 2709 / 2712 | 2696 TX common, RX 2706 + 2700 | 0 | - |
+| de1 | Dolphin acct1 (Kirby) vs engine acct2 (Fox) | drive 11 / script | 0 / 0 | 2489 | 2486 live, 2486 offline | 0 | 2 (depth 1) |
+| ed1 | Dolphin acct2 vs engine acct1 | drive 22 / script | 0 / 0 | 2489 | 2486 live, 2486 offline | 0 | 0 |
+| eh1 | Dolphin acct2 vs engine acct1 (engine queued first) | drive 22 / script | 40 / 5 | 2490 | 2264 live, 2389 offline | 0 | 321 (depth 2) |
+
+**Gaps.** The engine was the guest in every engine-vs-Dolphin run, queued first or not, either account: the server
+chose Dolphin as decider each time (an engine decider vs Dolphin is untested here). Dolphin-side rollback counts are
+not recorded. No unranked/stranger check was run.

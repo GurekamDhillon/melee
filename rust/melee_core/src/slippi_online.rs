@@ -47,6 +47,12 @@ pub struct PadBits {
 
 /// Section 11 for one frame: returns `(seed_bits, b_held_mask)`. `prev_b_held` is the mask stored for the previous frame.
 pub fn seed_bits(pads: &[PadBits; 4], prev_b_held: u8) -> (u8, u8) {
+    let (bits, held, _) = seed_bits_rolling(pads, prev_b_held);
+    (bits, held)
+}
+
+/// [`seed_bits`] plus the mask of the ports that rolled a random special this frame (0: no pad's bits were read).
+pub fn seed_bits_rolling(pads: &[PadBits; 4], prev_b_held: u8) -> (u8, u8, u8) {
     let mut b_held = 0u8;
     let mut rolling = 0u32;
     let mut all_bits = 0u32;
@@ -69,7 +75,7 @@ pub fn seed_bits(pads: &[PadBits; 4], prev_b_held: u8) -> (u8, u8) {
         }
     }
     if rolling == 0 {
-        return (0, b_held);
+        return (0, b_held, 0);
     }
     // everyone's bits except the one rolling port, or everyone's when several roll
     let used = if rolling & (rolling - 1) != 0 { 0xF } else { 0xF & !rolling };
@@ -79,7 +85,7 @@ pub fn seed_bits(pads: &[PadBits; 4], prev_b_held: u8) -> (u8, u8) {
             bits ^= all_bits >> (8 * p);
         }
     }
-    ((bits & 0xFF) as u8, b_held)
+    ((bits & 0xFF) as u8, b_held, rolling as u8)
 }
 
 /// One fighter (main or sub entity of a player slot) as the checksum reads it.
@@ -168,13 +174,16 @@ pub struct State {
     /// The pads of the frame about to run, as the driver hands them to the game; SyncRNG mixes them
     /// (`note_pads`) at its own frame number, so the bits and the seed always use the same index.
     pub pending: [PadBits; 4],
+    /// The ports that rolled in the last mixed frame (their seed bits came from the other ports' pad bytes).
+    pub last_rolling: u8,
 }
 
 impl State {
     /// Section 11 for frame `frame`: record its seed bits and B mask.
     pub fn note_pads(&mut self, frame: u32, pads: &[PadBits; 4]) -> u8 {
         let prev = self.b_held_hist[(frame.wrapping_sub(1) as usize) & (RNG_HISTORY - 1)];
-        let (bits, held) = seed_bits(pads, prev);
+        let (bits, held, rolling) = seed_bits_rolling(pads, prev);
+        self.last_rolling = rolling;
         self.b_held_hist[frame as usize & (RNG_HISTORY - 1)] = held;
         self.seed_bits_hist[frame as usize & (RNG_HISTORY - 1)] = bits;
         bits

@@ -13,3 +13,18 @@ description = "Platform layer: rollback netplay transport (port of pc/platform/g
 melee_types.workspace = true
 melee_fighter.workspace = true
 melee_runtime.workspace = true
+
+[features]
+# `slippi_mm` against Slippi's real matchmaking server (wss://, `--mm-real`): TLS. Off by default; the default build
+# only talks to a local mock on loopback.
+real-net = ["dep:rustls", "dep:webpki-roots"]
+
+[dependencies.rustls]
+version = "0.23"
+optional = true
+default-features = false
+features = ["ring", "std", "tls12", "logging"]
+
+[dependencies.webpki-roots]
+version = "1"
+optional = true

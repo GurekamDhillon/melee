@@ -10,7 +10,7 @@
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"; set -a; . "$ws/.env"; set +a
 O=$1; shift; mkdir -p "$O"; O="$(cd "$O" && pwd)"
-mmp=43131; lag=0; loss=0; frames=3600; pads=1; css="-31,9"; eng=()
+dn=${NP_NAME:-P3A}; mmp=43131; lag=0; loss=0; frames=3600; pads=1; css="-31,9"; eng=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --mm-port) mmp=$2; shift ;; --lag-ms) lag=$2; shift ;; --loss-pct) loss=$2; shift ;;
@@ -21,19 +21,19 @@ while [ $# -gt 0 ]; do
 done
 B="${EXE:-$repo/build/cargo/release/melee.exe}"
 export MELEE_VOLUME=3 MELEE_WINDOW_UNFOCUSED=1 MELEE_PAD_IGNORE_ADAPTER=1
-python -I "$here/mock_mm.py" --port $mmp --stages 0x20 --lag-ms $lag --loss-pct $loss --capture "$O/cap.txt" > "$O/mm.log" 2>&1 &
+python -I "$here/mock_mm.py" --port $mmp --stages ${NP_STAGES:-0x20} --lag-ms $lag --loss-pct $loss --capture "$O/cap.txt" > "$O/mm.log" 2>&1 &
 mpid=$!
 sleep 1
 W=$(cygpath -w "$O")
-MELEE_WINDOW_TITLE="slippi3:dolphin:P3A" powershell -NoProfile -File "$here/run_np_dolphin.ps1" -Name P3A -Out "$W" -MmPort $mmp ${NP_ADDRS:+-Addrs $NP_ADDRS} > "$O/dolphin.pid" 2>&1 &
+MELEE_WINDOW_TITLE="slippi4:dolphin:$dn" powershell -NoProfile -File "$here/run_np_dolphin.ps1" -Name $dn -Out "$W" -MmPort $mmp ${NP_ADDRS:+-Addrs $NP_ADDRS} > "$O/dolphin.pid" 2>&1 &
 for i in $(seq 100); do [ -s "$O/dolphin.pid" ] && break; sleep 0.2; done
 dpid=$(tr -d '\r\n' < "$O/dolphin.pid")
 echo "dolphin pid $dpid"
-python -I "$here/dolphin_drive.py" --name P3A --state "$W\\state_P3A.txt" --play "$css" --pads $pads --frames $((frames + 300)) --timeout 300 > "$O/drive.log" 2>&1 &
+python -I "$here/dolphin_drive.py" --name $dn --state "$W\\state_$dn.txt" --play "$css" --pads $pads --frames $((frames + 300)) --timeout 300 > "$O/drive.log" 2>&1 &
 drv=$!
 # the engine joins once Dolphin is searching (it must be second in the queue to be player 2)
 for i in $(seq 600); do grep -q "join from TSTA" "$O/mm.log" && break; sleep 0.5; done
-MELEE_WINDOW_TITLE="slippi3:engine:vs-dolphin" "$B" slippi-netplay --mm ws://127.0.0.1:$mmp/v1/queue --port $((mmp + 100)) \
+MELEE_WINDOW_TITLE="slippi4:engine:vs-dolphin" "$B" slippi-netplay --mm ws://127.0.0.1:$mmp/v1/queue --port $((mmp + 100)) \
   --code TSTB#001 --search TSTA#001 --frames $frames --max-seconds ${MAXS:-400} --out "$O/engine.csv" "${eng[@]}" > "$O/engine.log" 2>&1
 erc=$?
 wait $drv

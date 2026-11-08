@@ -9,6 +9,8 @@ publish.workspace = true
 calltrace = ["melee_core/calltrace"]
 # covtest discrimination bits (melee_core/src/disc.rs): only build_cov.sh enables it
 disc = ["melee_core/disc"]
+# slippi-netplay --mm-real (wss:// to Slippi's real matchmaking): TLS in melee_net
+real-net = ["melee_net/real-net"]
 # Never enabled here: the melee_corev1 package builds these sources as a core v1 cdylib with it (src/corev1.rs)
 corev1 = ["melee_engine/corev1", "melee_gx/corev1", "melee_platform/corev1"]
 

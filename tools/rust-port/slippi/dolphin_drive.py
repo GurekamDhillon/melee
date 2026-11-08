@@ -116,7 +116,7 @@ def main():
     ap.add_argument("--name", required=True)
     ap.add_argument("--state", required=True)
     ap.add_argument("--explore", default="", help="space-separated taps (A, B, START, D_DOWN...) then report")
-    ap.add_argument("--play", default="", help="X,Y: the full flow, picking the character under the CSS hand at X,Y")
+    ap.add_argument("--play", default="", help="X,Y or a character name (CSS table): the full flow, picking that character")
     ap.add_argument("--pads", type=int, default=1, help="seed of the scripted in-game pads")
     ap.add_argument("--frames", type=int, default=3600, help="in-game frames to play (the game may end first)")
     ap.add_argument("--timeout", type=int, default=600)
@@ -149,6 +149,26 @@ def main():
         log(f"after {t}: {d.fmt()}")
 
 
+# CSS hand position (CSSCursorData x, y) over each icon: the icon's hit box centre (mncharsel.c, mnCharSel_803F0A48's
+# icons[], ICONBNDS_COL*/ICONROWHT_*) with the hand's hotspot offset measured on Kirby (centre 0.1,9.5 -> hand 0,15)
+_COLS = [-30.0, -24.4, -17.4, -10.4, -3.4, 3.6, 10.6, 17.6, 24.4, 30.2]
+_ROWS = {"top": (20.0, 13.0), "mid": (13.0, 6.0), "btm": (6.0, -1.0)}
+_LAYOUT = {
+    "top": ["drmario", "mario", "luigi", "bowser", "peach", "yoshi", "dk", "falcon", "ganon"],
+    "mid": ["falco", "fox", "ness", "ics", "kirby", "samus", "zelda", "link", "ylink"],
+    "btm": [None, "pichu", "pikachu", "jigglypuff", "mewtwo", "gnw", "marth", "roy", None],
+}
+# bottom-row edges that differ from the column grid: Pichu starts at -23.4, Roy ends at 23.6
+_EDGE = {"pichu": (-23.4, -17.4), "roy": (17.6, 23.6)}
+CSS = {}
+for _row, _names in _LAYOUT.items():
+    for _i, _n in enumerate(_names):
+        if _n:
+            _l, _r = _EDGE.get(_n, (_COLS[_i], _COLS[_i + 1]))
+            _t, _b = _ROWS[_row]
+            CSS[_n] = (round((_l + _r) / 2, 1), round((_t + _b) / 2 + 5.5, 1))
+
+
 def f32(w):
     return struct.unpack(">f", struct.pack(">I", w))[0]
 
@@ -174,7 +194,7 @@ def in_game(s):
 
 def play(d, a):
     to_direct(d)
-    x, y = map(float, a.play.split(","))
+    x, y = CSS[a.play] if a.play in CSS else map(float, a.play.split(","))
     n = len(d.poll())
     css_goto(d, x, y, n - 2, n - 1)
     d.tap("A", after=20)

@@ -35,6 +35,7 @@ pub mod ext {
         SceneLaunch_PlayerCpuKind(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerCpuLevel(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerHandicap(a0: i32) -> i32 = |_| -1;
+        SceneLaunch_PlayerSubColor(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerNametag(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerSlotType(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerStocks(a0: i32) -> i32 = |_| -1;
@@ -154,6 +155,12 @@ pub unsafe fn SceneLaunch_SeedPlayers(vs: *mut VsModeData, dummy_fallback: i32) 
         v = ext::SceneLaunch_PlayerHandicap(i as i32);
         if v >= 0 {
             players[i].handicap = v as i8;
+        }
+        // the costume shade (PlayerInitData.sub_color): the CSS gives a second fighter in the same costume shade 1;
+        // Slippi's online match block sets it for a mirror match
+        v = ext::SceneLaunch_PlayerSubColor(i as i32);
+        if v >= 0 {
+            players[i].sub_color = v as u8;
         }
         v = ext::SceneLaunch_PlayerTeam(i as i32);
         if v >= 0 {

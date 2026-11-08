@@ -523,6 +523,7 @@ fn main() -> ExitCode {
         Some("lab-check") => lab_check::lab_check(&args),
         Some("netplay") => netplay::netplay(&args),
         Some("slippi-netplay") => slippi_np::slippi_netplay(&args),
+        Some("slippi-replay") => slippi_np::slippi_replay(&args),
         Some("view-golden") => engine_view::view_golden(&args),
         Some("play") => play::play(&args),
         Some("replays") => replays::replays(&args),

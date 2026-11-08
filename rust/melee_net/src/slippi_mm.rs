@@ -2,16 +2,17 @@
 //! `client.rs`; `SlippiMatchmaking.cpp`'s `match` handler), enough to be paired through a matchmaking server with
 //! a Slippi Dolphin. Plain WebSocket (RFC 6455 client: masked frames, text only, ping answered) over TCP.
 //!
-//! **Loopback only.** [`join`] refuses any address that is not 127.0.0.1: it exists for the local mock server
-//! (`tools/rust-port/slippi/mock_mm.py`), never a Slippi service. No STUN, no account: the user record it sends is
-//! made up by the caller.
+//! **Loopback by default.** [`join`] refuses any address that is not 127.0.0.1 (the local mock server,
+//! `tools/rust-port/slippi/mock_mm.py`). Only [`join_to`] with [`Target::Real`], which the `melee slippi-netplay
+//! --mm-real` flag alone selects, reaches another host: `ws://` or `wss://` (TLS: the `real-net` feature), with the
+//! account's play key in the user record. No STUN: the only candidate is the host address.
 //!
 //! Flow: `join{user, search{mode, connectCode}, appVersion, port, ipAddressLan, candidates, natType}` ->
 //! `joined{ticketId, token}`, `status`... -> `match{matchId, isHost, players[{port, isLocalPlayer, ipAddress,
 //! ipAddressLan, ...}], stages, items}` or `error{error}`.
 
 use std::io::{Read, Write};
-use std::net::{Ipv4Addr, SocketAddrV4, TcpStream};
+use std::net::{Ipv4Addr, SocketAddrV4, TcpStream, ToSocketAddrs};
 use std::time::{Duration, Instant};
 
 /// A tiny JSON value (what the server sends: objects, arrays, strings, numbers, bools, null).
@@ -182,6 +183,10 @@ pub fn quote(s: &str) -> String {
 #[derive(Clone, Debug)]
 pub struct JoinRequest {
     pub uid: String,
+    /// the account's play key (empty for the mock); never logged
+    pub play_key: String,
+    /// our LAN address as the server is told it (`ipAddressLan`, the host candidate); empty: 127.0.0.1
+    pub lan_ip: String,
     pub display_name: String,
     pub connect_code: String,
     /// 2 = direct (0 ranked, 1 unranked, 3 teams, 4 party)
@@ -236,7 +241,8 @@ impl MatchResult {
     }
 
     pub fn from_json(j: &Json) -> Option<MatchResult> {
-        if j.get("type")?.str()? != "match" {
+        // `match` (the WebSocket service) or `get-ticket-resp` (the ENet service of Slippi Dolphin 3.x)
+        if !matches!(j.get("type")?.str()?, "match" | "get-ticket-resp") {
             return None;
         }
         let s = |o: &Json, k: &str| o.get(k).and_then(|v| v.str()).unwrap_or("").to_string();
@@ -266,10 +272,11 @@ impl MatchResult {
 /// `join` as `protocol.rs` serializes it (the search code goes as its Shift-JIS bytes; ASCII codes are those bytes).
 pub fn join_message(r: &JoinRequest) -> String {
     let code_bytes: Vec<String> = r.search_code.bytes().map(|b| b.to_string()).collect();
-    let lan = format!("127.0.0.1:{}", r.port);
+    let lan = format!("{}:{}", if r.lan_ip.is_empty() { "127.0.0.1" } else { &r.lan_ip }, r.port);
     format!(
-        "{{\"type\":\"join\",\"user\":{{\"uid\":{},\"playKey\":\"\",\"connectCode\":{},\"displayName\":{}}},\"search\":{{\"mode\":{},\"connectCode\":[{}]}},\"appVersion\":{},\"port\":{},\"ipAddressLan\":{},\"candidates\":[{{\"kind\":\"host\",\"address\":{}}}],\"natType\":\"unknown\"}}",
+        "{{\"type\":\"join\",\"user\":{{\"uid\":{},\"playKey\":{},\"connectCode\":{},\"displayName\":{}}},\"search\":{{\"mode\":{},\"connectCode\":[{}]}},\"appVersion\":{},\"port\":{},\"ipAddressLan\":{},\"candidates\":[{{\"kind\":\"host\",\"address\":{}}}],\"natType\":\"unknown\"}}",
         quote(&r.uid),
+        quote(&r.play_key),
         quote(&r.connect_code),
         quote(&r.display_name),
         r.mode,
@@ -281,9 +288,51 @@ pub fn join_message(r: &JoinRequest) -> String {
     )
 }
 
+/// Which servers a connection may reach.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Target {
+    /// `ws://127.0.0.1:PORT/...` only (the default: the local mock).
+    Loopback,
+    /// Any host, `ws://` or `wss://` (Slippi's real matchmaking; `--mm-real` only).
+    Real,
+}
+
+enum Stream {
+    Plain(TcpStream),
+    #[cfg(feature = "real-net")]
+    Tls(Box<rustls::StreamOwned<rustls::ClientConnection, TcpStream>>),
+}
+
+impl Read for Stream {
+    fn read(&mut self, b: &mut [u8]) -> std::io::Result<usize> {
+        match self {
+            Stream::Plain(s) => s.read(b),
+            #[cfg(feature = "real-net")]
+            Stream::Tls(s) => s.read(b),
+        }
+    }
+}
+
+impl Write for Stream {
+    fn write(&mut self, b: &[u8]) -> std::io::Result<usize> {
+        match self {
+            Stream::Plain(s) => s.write(b),
+            #[cfg(feature = "real-net")]
+            Stream::Tls(s) => s.write(b),
+        }
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        match self {
+            Stream::Plain(s) => s.flush(),
+            #[cfg(feature = "real-net")]
+            Stream::Tls(s) => s.flush(),
+        }
+    }
+}
+
 /// A WebSocket client connection (text frames).
 pub struct Ws {
-    s: TcpStream,
+    s: Stream,
     buf: Vec<u8>,
     mask: u32,
 }
@@ -291,21 +340,43 @@ pub struct Ws {
 impl Ws {
     /// `ws://127.0.0.1:PORT/PATH` only.
     pub fn connect(url: &str, timeout: Duration) -> Result<Ws, String> {
-        let rest = url.strip_prefix("ws://").ok_or("only ws:// URLs")?;
+        Self::connect_to(url, timeout, Target::Loopback)
+    }
+
+    /// With [`Target::Real`]: `ws://` or `wss://` to any host (a name is resolved; `wss://` defaults to port 443).
+    pub fn connect_to(url: &str, timeout: Duration, target: Target) -> Result<Ws, String> {
+        let (tls, rest) = match (url.strip_prefix("ws://"), url.strip_prefix("wss://")) {
+            (Some(r), _) => (false, r),
+            (_, Some(r)) => (true, r),
+            _ => return Err("only ws:// or wss:// URLs".into()),
+        };
         let (hostport, path) = rest.split_once('/').map(|(a, b)| (a, format!("/{b}"))).unwrap_or((rest, "/".into()));
-        let (host, port) = hostport.split_once(':').ok_or("URL needs host:port")?;
-        let ip: Ipv4Addr = host.parse().map_err(|_| "the matchmaking host must be a literal IPv4 address".to_string())?;
-        if !ip.is_loopback() {
-            return Err(format!("{ip} is not loopback: only a local mock matchmaking server is allowed"));
-        }
-        let port: u16 = port.parse().map_err(|_| "bad port")?;
-        let s = TcpStream::connect_timeout(&SocketAddrV4::new(ip, port).into(), timeout).map_err(|e| e.to_string())?;
+        let (host, port) = match hostport.split_once(':') {
+            Some((h, p)) => (h, p.parse::<u16>().map_err(|_| "bad port")?),
+            None if tls => (hostport, 443),
+            None => (hostport, 80),
+        };
+        let addr = match target {
+            Target::Loopback => {
+                if tls {
+                    return Err("wss:// is a real server: it needs --mm-real".into());
+                }
+                let ip: Ipv4Addr = host.parse().map_err(|_| "the matchmaking host must be a literal IPv4 address".to_string())?;
+                if !ip.is_loopback() {
+                    return Err(format!("{ip} is not loopback: only a local mock matchmaking server is allowed (a real server needs --mm-real)"));
+                }
+                SocketAddrV4::new(ip, port).into()
+            }
+            Target::Real => (host, port).to_socket_addrs().map_err(|e| format!("resolve {host}: {e}"))?.next().ok_or("no address")?,
+        };
+        let s = TcpStream::connect_timeout(&addr, timeout).map_err(|e| e.to_string())?;
         s.set_nodelay(true).ok();
+        s.set_read_timeout(Some(timeout)).ok();
+        let s = if tls { Self::tls(host, s)? } else { Stream::Plain(s) };
         let key = "R0QtbWVsZWUtc2xpcHBpMw=="; // any 16 bytes, base64
-        let req = format!("GET {path} HTTP/1.1\r\nHost: {hostport}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n");
+        let req = format!("GET {path} HTTP/1.1\r\nHost: {host}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n");
         let mut ws = Ws { s, buf: Vec::new(), mask: 0x5EED_1234 };
         ws.s.write_all(req.as_bytes()).map_err(|e| e.to_string())?;
-        ws.s.set_read_timeout(Some(timeout)).ok();
         loop {
             if let Some(p) = ws.buf.windows(4).position(|w| w == b"\r\n\r\n") {
                 let head = String::from_utf8_lossy(&ws.buf[..p]).to_string();
@@ -317,6 +388,29 @@ impl Ws {
             }
             ws.fill()?;
         }
+    }
+
+    #[cfg(feature = "real-net")]
+    fn tls(host: &str, s: TcpStream) -> Result<Stream, String> {
+        use std::sync::Arc;
+        let roots = rustls::RootCertStore { roots: webpki_roots::TLS_SERVER_ROOTS.to_vec() };
+        let cfg = rustls::ClientConfig::builder_with_provider(Arc::new(rustls::crypto::ring::default_provider()))
+            .with_safe_default_protocol_versions()
+            .map_err(|e| e.to_string())?
+            .with_root_certificates(roots)
+            .with_no_client_auth();
+        let name = rustls::pki_types::ServerName::try_from(host.to_string()).map_err(|e| e.to_string())?;
+        let c = rustls::ClientConnection::new(Arc::new(cfg), name).map_err(|e| e.to_string())?;
+        Ok(Stream::Tls(Box::new(rustls::StreamOwned::new(c, s))))
+    }
+    #[cfg(not(feature = "real-net"))]
+    fn tls(_host: &str, _s: TcpStream) -> Result<Stream, String> {
+        Err("wss:// needs a build with the melee_net `real-net` feature".into())
+    }
+
+    /// Close the connection (a close frame; errors ignored).
+    pub fn close(&mut self) {
+        let _ = self.send_frame(8, &[0x03, 0xE8]);
     }
 
     fn fill(&mut self) -> Result<(), String> {
@@ -393,9 +487,15 @@ impl Ws {
 }
 
 /// Join the queue and wait for `match` (or `error`), up to `timeout`.
-pub fn join(url: &str, req: &JoinRequest, timeout: Duration, mut on_msg: impl FnMut(&str)) -> Result<MatchResult, String> {
+pub fn join(url: &str, req: &JoinRequest, timeout: Duration, on_msg: impl FnMut(&str)) -> Result<MatchResult, String> {
+    join_to(url, req, timeout, Target::Loopback, on_msg, |_| false)
+}
+
+/// [`join`] to `target`. `leave(msg)` is asked after every server message; true closes the connection at once
+/// (the real-server check leaves the queue as soon as it has been accepted) and returns `Err("left")`.
+pub fn join_to(url: &str, req: &JoinRequest, timeout: Duration, target: Target, mut on_msg: impl FnMut(&str), mut leave: impl FnMut(&str) -> bool) -> Result<MatchResult, String> {
     let t0 = Instant::now();
-    let mut ws = Ws::connect(url, Duration::from_secs(5))?;
+    let mut ws = Ws::connect_to(url, Duration::from_secs(5), target)?;
     ws.send_text(&join_message(req))?;
     loop {
         if t0.elapsed() > timeout {
@@ -407,11 +507,147 @@ pub fn join(url: &str, req: &JoinRequest, timeout: Duration, mut on_msg: impl Fn
             Err(e) => return Err(e),
         };
         on_msg(&t);
+        if leave(&t) {
+            ws.close();
+            return Err("left".into());
+        }
         let Some(j) = Json::parse(&t) else { continue };
         match j.get("type").and_then(|v| v.str()) {
             Some("match") => return MatchResult::from_json(&j).ok_or_else(|| "malformed match".to_string()),
             Some("error") => return Err(format!("server error: {}", j.get("error").and_then(|v| v.str()).unwrap_or("?"))),
             _ => {}
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// The ENet matchmaking service of production Slippi Dolphin (Ishiiruka 3.x, `SlippiMatchmaking.cpp` v3.6.4, read as a
+// protocol reference only): `mm.slippi.gg:43113` (`mm2.slippi.gg` is the dev host, for builds whose version says
+// "dev"). The client binds its netplay port (41000 + rand % 10000), ENet-connects to the server with 3 channels and
+// connect data 0, and sends JSON text as reliable packets on channel 0:
+//   `{"type":"create-ticket","user":{uid,playKey,connectCode,displayName},"search":{"mode":M,"connectCode":[bytes]},
+//     "appVersion":V,"ipAddressLan":"ip:port"}`
+// -> `create-ticket-resp{error?}` within 5 s, then (any time later) `get-ticket-resp{error?, latestVersion?, matchId,
+// isHost, players[{uid, displayName, connectCode, port, isLocalPlayer, ipAddress, ipAddressLan, chatMessages, rank}],
+// stages, items}`. The server's view of the source port is the hole punch: the netplay client binds the same port
+// once the mm connection is closed.
+
+/// The production ENet matchmaking host (`MM_HOST_PROD`).
+pub const ENET_MM_HOST: &str = "mm.slippi.gg";
+pub const ENET_MM_PORT: u16 = 43113;
+
+/// `create-ticket` as SlippiMatchmaking 3.x builds it (no `port`/`candidates`/`natType`: the server observes those).
+pub fn create_ticket_message(r: &JoinRequest) -> String {
+    let code_bytes: Vec<String> = r.search_code.bytes().map(|b| b.to_string()).collect();
+    let lan = format!("{}:{}", if r.lan_ip.is_empty() { "127.0.0.1" } else { &r.lan_ip }, r.port);
+    format!(
+        "{{\"type\":\"create-ticket\",\"user\":{{\"uid\":{},\"playKey\":{},\"connectCode\":{},\"displayName\":{}}},\"search\":{{\"mode\":{},\"connectCode\":[{}]}},\"appVersion\":{},\"ipAddressLan\":{}}}",
+        quote(&r.uid),
+        quote(&r.play_key),
+        quote(&r.connect_code),
+        quote(&r.display_name),
+        r.mode,
+        code_bytes.join(","),
+        quote(&r.app_version),
+        quote(&lan)
+    )
+}
+
+/// The local address the OS would use to reach `to` (`getLocalAddress`: a connected UDP socket, nothing sent).
+pub fn local_ip_towards(to: std::net::SocketAddr) -> Option<Ipv4Addr> {
+    let s = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+    s.connect(to).ok()?;
+    match s.local_addr().ok()?.ip() {
+        std::net::IpAddr::V4(ip) if !ip.is_unspecified() => Some(ip),
+        _ => None,
+    }
+}
+
+/// Join through an ENet matchmaking server (`server` = "host:port"). With [`Target::Loopback`] only a literal
+/// 127.0.0.1 server is allowed; [`Target::Real`] (`--mm-real`) resolves any name. The UDP socket is bound to
+/// `bind_ip:req.port` and closed (dropped) before this returns, so the netplay client can bind that port.
+/// `req.lan_ip` empty: the address the OS routes to the server from. `leave(msg)` as in [`join_to`], asked after
+/// the ticket is accepted.
+pub fn join_enet(server: &str, bind_ip: u32, req: &JoinRequest, timeout: Duration, target: Target, mut on_msg: impl FnMut(&str), mut leave: impl FnMut(&str) -> bool) -> Result<MatchResult, String> {
+    use crate::enet::{Event, Host};
+    use crate::transport::{Addr, UdpTransport};
+    let (host, port) = server.rsplit_once(':').map(|(h, p)| (h, p.parse::<u16>().unwrap_or(ENET_MM_PORT))).unwrap_or((server, ENET_MM_PORT));
+    let sa: std::net::SocketAddr = match target {
+        Target::Loopback => {
+            let ip: Ipv4Addr = host.parse().map_err(|_| "the matchmaking host must be a literal IPv4 address".to_string())?;
+            if !ip.is_loopback() {
+                return Err(format!("{ip} is not loopback: a real server needs --mm-real"));
+            }
+            SocketAddrV4::new(ip, port).into()
+        }
+        Target::Real => (host, port).to_socket_addrs().map_err(|e| format!("resolve {host}: {e}"))?.find(|a| a.is_ipv4()).ok_or("no IPv4 address")?,
+    };
+    let mut req = req.clone();
+    if req.lan_ip.is_empty() {
+        req.lan_ip = if target == Target::Loopback { "127.0.0.1".into() } else { local_ip_towards(sa).map(|i| i.to_string()).unwrap_or_default() };
+    }
+    let udp = UdpTransport::open(bind_ip, req.port).map_err(|e| format!("bind {}: {e}", req.port))?;
+    let mut h = Host::new(Box::new(udp), 1, 3);
+    let peer = h.connect(Addr::from_socket(sa), 3, 0).ok_or("no peer slot")?;
+    let t0 = Instant::now();
+    let (mut connected, mut sent, mut ticket_ok) = (false, false, false);
+    let finish = |h: &mut Host| {
+        h.disconnect(peer, 0);
+        let t = Instant::now();
+        while t.elapsed() < Duration::from_millis(500) {
+            h.flush();
+            if let Some(Event::Disconnect { .. }) = h.service() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+    };
+    loop {
+        if t0.elapsed() > timeout {
+            finish(&mut h);
+            return Err("matchmaking timed out".into());
+        }
+        if !connected && t0.elapsed() > Duration::from_secs(10) {
+            return Err("could not connect to the mm server".into());
+        }
+        if connected && !sent {
+            sent = h.send(peer, 0, create_ticket_message(&req).as_bytes(), true);
+        }
+        h.flush();
+        let Some(ev) = h.service() else {
+            std::thread::sleep(Duration::from_millis(5));
+            continue;
+        };
+        match ev {
+            Event::Connect { .. } => connected = true,
+            Event::Disconnect { .. } => return Err("lost connection to the mm server".into()),
+            Event::Receive { data, .. } => {
+                let t = String::from_utf8_lossy(&data).to_string();
+                on_msg(&t);
+                let Some(j) = Json::parse(&t) else { continue };
+                let err = j.get("error").and_then(|v| v.str()).unwrap_or("").to_string();
+                match j.get("type").and_then(|v| v.str()) {
+                    Some("create-ticket-resp") => {
+                        if !err.is_empty() {
+                            finish(&mut h);
+                            return Err(format!("server error: {err}"));
+                        }
+                        ticket_ok = true;
+                        if leave(&t) {
+                            finish(&mut h);
+                            return Err("left".into());
+                        }
+                    }
+                    Some("get-ticket-resp") if ticket_ok => {
+                        finish(&mut h);
+                        if !err.is_empty() {
+                            return Err(format!("server error: {err}"));
+                        }
+                        return MatchResult::from_json(&j).ok_or_else(|| "malformed get-ticket-resp".to_string());
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 }
@@ -430,15 +666,29 @@ mod tests {
         assert_eq!(m.stages, vec![2, 32]);
         assert_eq!(m.remote_addresses(), vec![(0, "127.0.0.1:5000".to_string())]);
         assert_eq!(m.players[0].display_name, "Aé");
-        let j = join_message(&JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "4.0.0".into(), port: 7 });
+        let j = join_message(&JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "4.0.0".into(), port: 7, play_key: String::new(), lan_ip: String::new() });
         let p = Json::parse(&j).unwrap();
         assert_eq!(p.get("search").unwrap().get("connectCode").unwrap().arr().len(), 4);
         assert_eq!(p.get("port").unwrap().num(), Some(7.0));
     }
 
     #[test]
+    fn create_ticket_shape() {
+        let r = JoinRequest { uid: "u".into(), display_name: "D".into(), connect_code: "AB#1".into(), mode: 2, search_code: "CD#2".into(), app_version: "3.6.4".into(), port: 41234, play_key: "k".into(), lan_ip: "10.0.0.5".into() };
+        let p = Json::parse(&create_ticket_message(&r)).unwrap();
+        assert_eq!(p.get("type").unwrap().str(), Some("create-ticket"));
+        assert_eq!(p.get("ipAddressLan").unwrap().str(), Some("10.0.0.5:41234"));
+        assert_eq!(p.get("search").unwrap().get("mode").unwrap().num(), Some(2.0));
+        assert!(join_enet("10.0.0.1:43113", 0x7F000001, &r, Duration::from_millis(10), Target::Loopback, |_| {}, |_| false).is_err());
+        let g = r#"{"type":"get-ticket-resp","matchId":"x","isHost":true,"players":[{"port":1,"isLocalPlayer":true,"ipAddress":"1.2.3.4:5"},{"port":2,"isLocalPlayer":false,"ipAddress":"1.2.3.4:6","ipAddressLan":"10.0.0.2:6"}]}"#;
+        let m = MatchResult::from_json(&Json::parse(g).unwrap()).unwrap();
+        assert_eq!(m.remote_addresses(), vec![(1, "10.0.0.2:6".to_string())]);
+    }
+
+    #[test]
     fn refuses_non_loopback() {
         assert!(Ws::connect("ws://10.0.0.1:1/v1/queue", Duration::from_millis(10)).is_err());
         assert!(Ws::connect("ws://matchmaking.example:1/v1/queue", Duration::from_millis(10)).is_err());
+        assert!(Ws::connect("wss://matchmaking.example/v1/queue", Duration::from_millis(10)).is_err());
     }
 }

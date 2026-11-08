@@ -828,6 +828,7 @@ impl Play {
                 stocks: -1,
                 handicap: -1,
                 cpu_idle: false,
+                sub_color: -1,
             });
         }
         Scenario {

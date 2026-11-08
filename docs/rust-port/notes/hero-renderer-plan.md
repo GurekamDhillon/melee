@@ -196,6 +196,8 @@ the shot gate (section 5) compares like with like on one driver stack.
 | **EFB-exact capture** | n/a | our need (section 5): copy `efb_color_` at the XFB copy of sim frame N to a PPM, as GL's `capture_efb` does | S |
 | **GPU texture / copy byte budget** | n/a | `trim()` is age-only; add the 256 MB-style budget we use (inventory item 6 in section 3) | S |
 | **Our two fixes** (section 3 items 8 and 10) | n/a | EFB copies not re-run on in-between presents: the VK `submit_frame` loop at 435-461 runs `copy()` with overrides set, same defect as D3D12. Present split: lands in the backend-neutral `present_loop` and is verified on VK | S + M |
+| **First-use textures created inside submit** (from the Melee Unlocked dev-chat handoff of 2026-11-08, `YOUGAME_FIXES_HANDOFF_1108.md` part 2 section 6: D3D12 `get_texture()` decodes, `CreateCommittedResource`s and uploads a never-seen texture on the render thread inside submit; a Squad Strike fighter swapped in mid-match misses the cache for its whole costume: 34-84 ms freezes measured) | n/a | **VK has the same path**: `gx_vulkan.cpp:1143-1191` on a `textures_` miss decodes (`decode_texture`), `make_image`s and records the upload on the frame's command buffer, inside `draw()`. Proposed in the handoff and endorsed here: (1) a host entry `prewarm_textures(const TextureRef*, count)` that runs the miss path and draws nothing, called before match frame 1 (and at a swap) for every TObj image and TLUT of each loaded costume; (2) a per-frame cap on new texture creation with the rest finished next frame or on a worker. For VK the natural form is a transfer queue / worker thread with its own command pool and a timeline semaphore, which D3D12 lacks a direct analogue for. Both backends share the `TextureRef` key, so one host call serves all | S (cap) + M (prewarm entry + VK worker upload) |
+| **Independent flip and VRR when embedded** (same handoff, part 1: his VRR detector reads the swap chain's `GetFrameStatistics`; inside a desktop-composed child window those read as fixed refresh and the cap never engages; measured input latency 27.0 vs 22.7 ms, "8% of presents never shown") | n/a | not a Vulkan gap as such, but a constraint on any Vulkan pacing design: present-wait timings are only meaningful on an independent-flip top-level window too. For our engine in his host: nothing on our side; the window is his, and the handoff's remedy (own top-level `WS_OVERLAPPEDWINDOW`, no owner, optionally exclusive fullscreen) applies to the host process. On Vulkan, independent flip on Windows needs a plain top-level window plus `VK_PRESENT_MODE_IMMEDIATE_KHR` / `MAILBOX_KHR` for tearing or `FIFO_KHR` for sync (he picks these at 651-660) and, for the exclusive case, `VK_EXT_full_screen_exclusive` (unverified against his minimum drivers). PresentMon ("Hardware: Independent Flip") is the check, as the handoff uses | S (document and test) |
 
 What Vulkan gives his project back, besides parity: one backend for Windows and Linux (his stated goal in the file header),
 one SPIR-V path for every feature including ray tracing (DXC compiles his HLSL ray tracing shaders to SPIR-V with
@@ -232,6 +234,7 @@ contribution.
 | 20 | sampling profiler, `MELEE_FRAME_TIMES`, `MELEE_PRESENT_SPIKE`, `MELEE_GX_PROF` | diagnostics | yes (`--frame-times`, spike log, latency trace); VK has no `profile_line` | a `profile_line` for VK | S |
 | 21 | `corev1::Transcoder` (d9a8b2095, 1923f3677) | the seam | n/a | stays ours (section 4) | - |
 | 22 | perf.md sim-side work | not renderer | n/a | n/a | - |
+| 23 | first-use textures: ours are decoded, created and uploaded in `Renderer::prepare` on the presenting thread (`render.rs:1432-1452`, `gxprof newtex`); perf3's `PipeFactory::warm` prewarms **pipelines** on the decode thread, not textures | we have **the same defect** as his `get_texture()` (section 2, last rows), unmeasured on our side because nothing swaps a fighter mid-match in our tests yet | his D3D12 and VK both; the handoff's `prewarm_textures` + per-frame cap | on our side: move texture creation to the decode thread beside `warm` (S-M); on his: section 2 |
 
 Perf context (notes/bench-live.md, 2026-11-02, same machine, both windows hidden/unfocused, his D3D12): CPU per rendered frame
 ours 0.99 ms vs his 0.95 ms (FD 2P), 2.8 vs 3.0 ms (Temple 4P); his 1% low was better (152 vs 54 fps on Temple) before our
@@ -350,6 +353,19 @@ core v1; propose a v1.2 append and fill it from `pose_capture.rs` (M).
 **Rollback re-pose.** The host must `gx::mark_discontinuity` around our `state_load` (one line on his side); our re-simulated
 frames already send no draws and no copies.
 
+**Texture prewarm (seam requirement).** Under his host every texture we draw for the first time is decoded, allocated and
+uploaded on his render thread inside submit (section 2, last rows); his match intro hides it for a normal match, a mid-match
+load (Squad Strike swap, our m-ex and cosmetic swaps, a Lab reload) does not. The core v1.2 append should carry the handoff's
+`prewarm_textures(const TextureRef*, count)` (or, simpler for a transcoded engine, "prewarm every texture referenced by this
+FIFO buffer" since our transcoder already knows each texture's console address, format, size and TLUT), and our engine calls it
+when it loads a costume or stage. Until the host has it, the transcoder can emit a draw-nothing prewarm itself: bind each new
+texture in a zero-area scissor draw at scene load, which runs his miss path early at the cost of a few dummy draws.
+
+**Independent flip / VRR.** Pacing quality is the host window's: his VRR verdict and tear-free logic need an independent-flip
+top-level window (handoff part 1: composed, the statistics read fixed refresh, +4.3 ms input latency). Our engine has no say in
+the window; the requirement lands on the launcher integration (phase 8): launch as its own top-level process, never as an
+embedded child, and on Vulkan check with PresentMon that the whole run is "Hardware: Independent Flip".
+
 **Screenshots for our tests.** His captures are PPMs of the presented back buffer on every backend; only Linux GL has
 `capture_efb`. Our shot tooling reads the 640x480 EFB at an exact tick. `compare_shots.py` registers his capture to ours and
 reports mean abs 2.1-11.6/255, PSNR 18-32 dB today, dominated by his 73:60 presentation and rescaling. The gate needs
@@ -428,7 +444,7 @@ Decisions for the user (none taken here):
 |---|---|---|---|
 | 0 | this note; licence decisions D1-D5; decide how the Rust engine selects `backend vulkan` under his launcher | S | - |
 | 1 | **Measure on Vulkan.** bench-live scenarios on his VK vs his D3D12 vs our wgpu-Vulkan `melee.exe`; core v1.1 in his host with `backend vulkan`; first `gate_shots.sh` table with his existing back-buffer capture (view-golden stages + `play --shot-ages` scenes, registered and scored by `compare_shots.py`) | M | - |
-| 2 | **Vulkan parity + our fixes in `gx_vulkan.cpp`** (local `gd/*` branch; PR when the user says): (a) EFB copies not re-run on re-posed presents (item 10, S); (b) present split in `present_loop`, verified on VK (item 8, M); (c) `Backend` hooks for VK: `vblank_next` via his DXGI vblank thread, `set_display_refresh` present-mode switch, VRR verdict from present-wait timings (design first), `display_timing_line`, `profile_line` (M); (d) EFB-exact capture (S); (e) texture/copy byte budget (S); (f) border art, video backdrops, `.slangp` via librashader-VK (S+M+M); (g) fix the stale "no CRT on Vulkan" comment and label, verify CAS/SSAO/CRT on VK (S); (h) VK pipeline cache file / fallback pipeline if first-use compiles are synchronous (item 5, M) | M-L total | review |
+| 2 | **Vulkan parity + our fixes in `gx_vulkan.cpp`** (local `gd/*` branch; PR when the user says): (a) EFB copies not re-run on re-posed presents (item 10, S); (b) present split in `present_loop`, verified on VK (item 8, M); (c) `Backend` hooks for VK: `vblank_next` via his DXGI vblank thread, `set_display_refresh` present-mode switch, VRR verdict from present-wait timings (design first), `display_timing_line`, `profile_line` (M); (d) EFB-exact capture (S); (e) texture/copy byte budget (S); (f) border art, video backdrops, `.slangp` via librashader-VK (S+M+M); (g) fix the stale "no CRT on Vulkan" comment and label, verify CAS/SSAO/CRT on VK (S); (h) VK pipeline cache file / fallback pipeline if first-use compiles are synchronous (item 5, M); (i) **first-use textures off the present**: per-frame cap on new texture creation in the VK `draw()` miss path (S), a worker/transfer-queue upload with a timeline semaphore (M), and the `prewarm_textures` host entry shared with D3D12 (S on the ABI, M across backends); this is the handoff's Squad Strike freeze and the earliest item a player feels | M-L total | review |
 | 3 | **Upscalers on Vulkan**: per-draw motion vectors + jitter + unjittered previous projection in the VK backend (M); Streamline-VK plumbing (interposer or `slSetVulkanInfo`, `sl::Resource` tagging) (M); DLSS SR/DLAA, then Reflex/PCL (S-M), XeSS-VK (M), then Frame Generation (L). DLSS 5: watch the SDK, nothing planned | L | his section 7 exception already covers the SDKs |
 | 4 | **Vulkan path tracer** (section 4): world-space BLAS cache by draw identity, per-present TLAS, skinned draws rebuilt, material fields in `DxrScene`, ray-query compute pass, half-res + accumulation, DLSS-RR on VK; the BLAS caching ported back to his D3D12 path so both are on par and his can be re-enabled | L | whether his DXC emits SPIR-V ray tracing |
 | 5 | **Close transcoder gaps** against the gate: depth-format EFB copies, sized/indexed draws, items/1P/results shots, UI/overlays/LAB/wasm mods as GX 2D draws, cosmetics before the FIFO | M-L | - |
@@ -459,5 +475,9 @@ backend beside his D3D12. That table is what phases 2-4 move, and the VK run its
 7. Path tracer order: Vulkan-only first (section 4) or the BLAS-cache rework in his shared scene code first so his D3D12 path
    can be re-enabled at the same time.
 8. Linux in or out of the melee_gx deletion criteria.
-9. Core v1.2 asks (pose snapshot, EFB readback, memory window / handle subcommand, discontinuity mark, preferred backend) as
-   one append or several.
+9. Core v1.2 asks (pose snapshot, EFB readback, memory window / handle subcommand, discontinuity mark, preferred backend,
+   `prewarm_textures`) as one append or several.
+10. Texture prewarm on our side before his ABI has it: transcoder-emitted draw-nothing prewarm draws at scene load (works
+    today, costs dummy draws) or wait for the host entry.
+11. Launcher integration must launch the Rust engine as its own top-level process (independent flip), never embedded; whether
+    that constraint is written into the launcher patch now or left to his handoff's standalone work.

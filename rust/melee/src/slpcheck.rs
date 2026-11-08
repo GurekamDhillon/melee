@@ -16,8 +16,8 @@ pub struct Converted {
 }
 
 /// Game Start -> `Scenario`: stage, ports and player types, characters, costumes, stocks, timer, teams, items setting.
-/// Ports keep the file's player index (the engine's hash/fighter slot is the port). A CPU slot is run as a human: the
-/// recorded pre-frame inputs of a CPU already are the AI's output, so replaying them reproduces it.
+/// Ports keep the file's player index (the engine's hash/fighter slot is the port). A CPU slot stays a CPU slot fed
+/// its recorded pre-frame inputs (`CPU_MODE`): the inputs are the AI's output, and the CPU think still draws the RNG.
 /// UCF toggle words are only recorded (see [`ucf_summary`]); the vanilla sim stays default.
 pub fn convert(s: &Slp) -> Result<Converted, String> {
     let cpu_mode = CPU_MODE.load(std::sync::atomic::Ordering::Relaxed);
@@ -128,9 +128,11 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     Ok(Converted { scn, notes })
 }
 
-/// How `convert` runs a CPU slot: 0 a human on its recorded inputs (default), 1 `--cpu-slots` a CPU slot on its recorded
-/// inputs, 2 `--cpu-ai` a CPU slot the engine's own AI drives (no recorded inputs for that port; covtest's AI check).
-pub static CPU_MODE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+/// How `convert` runs a CPU slot: 0 `--cpu-human` a human on its recorded inputs, 1 (default, `--cpu-slots`) a CPU slot on
+/// its recorded inputs, 2 `--cpu-ai` a CPU slot the engine's own AI drives (no recorded inputs for that port; covtest's AI
+/// check). A CPU slot is the default: the console's CPU think draws the RNG between the Pre-Frame seed and the stage procs
+/// (Dream Land's Whispy timer, grOldPupupu_802113E0; Hero's Oct-23 vs-CPU files ran wind 230 frames late as a human).
+pub static CPU_MODE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(1);
 /// Ports (bit per port) whose recorded inputs `Replay_HasInput` withholds under `--cpu-ai`.
 pub static CPU_AI_PORTS: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
 
@@ -384,7 +386,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     if args.iter().any(|a| a == "--cpu-ai") {
         CPU_MODE.store(2, std::sync::atomic::Ordering::Relaxed);
     } else if args.iter().any(|a| a == "--cpu-slots") {
-        CPU_MODE.store(1, std::sync::atomic::Ordering::Relaxed);
+        CPU_MODE.store(1, std::sync::atomic::Ordering::Relaxed);    } else if args.iter().any(|a| a == "--cpu-human") {
+        CPU_MODE.store(0, std::sync::atomic::Ordering::Relaxed);
     }
     let conv = match convert(&file) {
         Ok(c) => c,

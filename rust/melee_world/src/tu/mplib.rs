@@ -4494,7 +4494,7 @@ pub unsafe fn mpLib_80056B34(mut arg0: i32, mut arg1: *mut i32) -> i32 {
 }
 
 /// `sqrtf_store`
-#[allow(dead_code)] // the C body; its only callers pass an out-of-local pointer (sqrtf_store_pc)
+
 unsafe fn sqrtf_store(mut x: f32, mut y: *mut f32) -> f32 {
     if x > 0.0f32 {
         let mut guess: f64 = melee_core::fp::frsqrte(x as f64);
@@ -4507,11 +4507,13 @@ unsafe fn sqrtf_store(mut x: f32, mut y: *mut f32) -> f32 {
     return x;
 }
 
-/// The C call `sqrtf_store(x, sqrt_tmp - 4)` (and `- 5`) stores outside the local: undefined behaviour that the x86 PC build
-/// (what the goldens record) folds to `return x`, as `it_802A4BFC_sqrtf_offset`. So `mpLib_80056C54` walks the floor with
-/// SQUARED segment lengths (human_dk_onett: DK's Hand Slap hitbox positions, ftDk_Init_8010DB3C).
-unsafe fn sqrtf_store_pc(x: f32, _y: *mut f32) -> f32 {
-    x
+/// The C call `sqrtf_store(x, sqrt_tmp - 4)` (and `- 5`) stores outside the local (a stack slot the console overwrites
+/// harmlessly) and returns the Newton square root: on the console `mpLib_80056C54` walks the floor with real segment
+/// lengths. The x86 C build folded the UB to `return x` (squared lengths) until gw TARGET_PC fixed it; Hero's
+/// Game_20251114T235249 / Game_20251031T215549 (Dolphin oracle: DK Hand Slap hitboxes at cur_pos + 12*i - 24.2, ours
+/// within 1 unit of DK) showed the console's value.
+unsafe fn sqrtf_store_pc(x: f32, y: *mut f32) -> f32 {
+    sqrtf_store(x, y)
 }
 
 /// `mpJointFromLine`

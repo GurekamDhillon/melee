@@ -304,6 +304,13 @@ fn place_in_view(g: G) {
     let src = unsafe { *(core::ptr::addr_of!(f.mv.co.walk.fast_anim_frame) as *const Vec3) };
     let rows = unsafe { core::slice::from_raw_parts(mp as *const [f32; 4], 3) };
     let r = m::mult_vec(rows, &melee_core::vec::Vec3 { x: src.x, y: src.y, z: src.z });
+    if crate::hooks::slippi_codes() == 2 {
+        // Slippi online FreezeDeadUpFallPhysics @80080E80: the camera-space point goes to the jobj translate only
+        // (no matrix-dirty call); cur_pos is left where the KO happened
+        assert!(!j.is_null(), "jobj.h:481");
+        unsafe { (*j).translate = Vec3 { x: r.x, y: r.y, z: r.z } };
+        return;
+    }
     f.cur_pos = Vec3 { x: r.x, y: r.y, z: r.z };
     assert!(!j.is_null(), "jobj.h:481");
     unsafe {

@@ -139,7 +139,10 @@ pub unsafe fn SceneLaunch_SeedPlayers(vs: *mut VsModeData, dummy_fallback: i32) 
             if costumes <= 0 {
                 costumes = 1;
             }
-            players[i].color = (<i32 as melee_core::ppc::Ppc>::prem(if v >= 0 { v } else { i as i32 }, costumes)) as u8;
+            // an explicit costume the character does not have becomes 0 (the console's Slippi playback: a Game Start
+            // costume 7 for Falcon runs as costume 0, Dolphin oracle on Hero's Game_20260821T235926); the default
+            // (slot index) still wraps
+            players[i].color = (if v >= 0 { if v >= costumes { 0 } else { v } } else { <i32 as melee_core::ppc::Ppc>::prem(i as i32, costumes) }) as u8;
         }
         v = ext::SceneLaunch_PlayerCpuKind(i as i32);
         if v >= 0 {

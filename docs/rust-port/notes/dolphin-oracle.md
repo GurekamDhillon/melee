@@ -186,6 +186,45 @@ Rust's from frame -123. It was not the cause of the Ice Climbers drift (that was
   `_build/dolphin-oracle-of10` (`DOLPHIN_ORACLE_DIR`). The shared `_build/dolphin-oracle` source has the camera
   change; its exe is rebuilt by the next `build_dolphin.bat`.
 
+## Widescreen codes and the strict sweep (port/strict1)
+
+**The recording console's widescreen code.** Slippi's playback code set does not re-apply the replay's own Gecko
+codes. 35 of the 125 local replays (all `20689_*`) were recorded with a widescreen code whose camera bounds
+(0x80030C7C/0x80030C88) and bubble constants (0x804DDB28..0x804DDB84) change the off-screen test
+(`ifMagnify_802FC998`), so playback's 1% offscreen tick (`dmg.x1910` vs `x7AC`) fired a frame off. The .slp decides:
+20689_ccd2e52b slot 4 has 115.83 at slippi 11504 in its Post-Frame and in Rust, 116.83 in playback. `run_dolphin.ps1`
+now runs `replay_codes.py`, which copies the replay's codes at the addresses of Slippi's "Widescreen 16:9" verbatim
+into the run's `<user>/GameSettings/GALE01.ini` (`DOLPHIN_NO_REPLAY_CODES=1` plays without them). Not a mask: the
+oracle console runs what the recording console ran. Fixed 16 strict divergers.
+
+**Strict sweep.** Dolphin's NHV1 rows depend only on the replay and the oracle exe, so the sweep caches one
+`dolphin.csv` per replay and re-runs only the engine (`slpcheck --full --nhv1-out` + `compare_golden.py --ignore-seed`).
+Dolphin at most 2 at a time, one run per replay (no nondeterminism check: re-run a single file with `oracle.sh` before
+blaming the engine). Results, all 125 local replays:
+
+| | strict (all NHV1 words equal) |
+|---|---|
+| rust-port c8ae14749, shared oracle exe (no camera undo), no replay codes | 93 of 121 (4 dumps truncated) |
+| + widescreen codes, + it_8027781C fix | 113 / 125 |
+| rebased on ef0c6dad2 (round 10 Nana fixes), `_build/dolphin-oracle-of10` exe (camera undo) | **117 / 125** |
+
+Engine fix found by the sweep: `it_8027781C` squares the velocity unfused (fmuls, fmuls, fadds at 0x80277894 and
+0x80277B24; only the dot products with the surface normals are fmadds). Dr. Mario's pill bounce was 1 ULP off
+(3135285b, 3417139d).
+
+Left (8):
+- **Offscreen tick a frame off, no widescreen code** (03b84423 at 7892, 21cd149c at 3378; 10909063 matched with the
+  of10 exe): the render pass sets the magnifier flag on the console; the recorded percent agrees with Rust
+  (10909063: 93.1 at 1890 in the .slp and Rust, 92.1 in playback). The replay's `C2 802FCCD8` magnifier code was tried
+  in playback and changed nothing (it tests an online flag at 0x8046B6A0+0x24D0). Playback-side, not proven.
+- **Camera after the frame -123 undo** (0854ab08 at 1450, 602a5cd8, adc68cd8, 4e71d712; f41d427a's quake epicenter
+  likely the same): a fighter's `x20A4.bf_0` (LbShadow) differs one frame before the camera parts. 0854ab08 matched
+  with the shared exe (no camera undo) and fails with the of10 exe. `RestoreGameFrame.asm` on frame -123 also writes
+  each fighter's CameraBox (`fp->x890`: x2C/x30 from x40/x44) and calls 0x8007592C, 0x80032828 and 0x800761C8;
+  the undo restores only fp+0x6F4..0x72C and `game_camera`. Next step: save/restore the CameraBox too (oracle exe
+  rebuild, round 10's area).
+- **Nana CPU block at frame 85** (4cb4510f, `cpu.x30` 8 vs 19): CPU/Nana, the round-9/10 agent's area.
+
 ## Nondeterminism
 
 Dolphin's playback is occasionally nondeterministic. Of four runs of 03b84423 with the same exe and the same replay,

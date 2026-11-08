@@ -135,12 +135,12 @@ pub mod ext {
         HSD_AObjSetFlags(aobj, arg)
     }
     /// The C `grAnime_801C6F50` calls `HSD_AObjSetRate` through the four-argument `Callback1 (aobj, obj, flags, float)`
-    /// type. On the GameCube the float travels in f1 and `SetRate(aobj, rate)` finds it; the x86-32 PC build pushes all
-    /// four on the stack, so `SetRate` reads its `rate` from the second slot: the `obj` pointer's bits (a tiny negative
-    /// denormal-range float for 0x80xxxxxx addresses). The C goldens carry that behaviour (Fountain's four effect
-    /// jobjs never advance their animation), so the engine reproduces it instead of the intended rate `arg`.
-    pub unsafe extern "C" fn HSD_AObjSetRate_cb(aobj: *mut HSD_AObj, obj: *mut c_void, _flags: u32, _arg: u32) {
-        HSD_AObjSetRate(aobj, f32::from_bits(obj as usize as u32))
+    /// type. On the GameCube the float travels in f1, which is where `SetRate(aobj, rate)` reads its rate: the rate is
+    /// `arg` (the float's bits here). The x86-32 C build reads the `obj` pointer's bits instead (its cdecl stack slot 2),
+    /// so there the animations never advance; the console's do (Dolphin oracle: Final Destination's backdrop leaves
+    /// state 2 about 1000 frames later, Game_20260502T231251; Fountain's effect jobjs).
+    pub unsafe extern "C" fn HSD_AObjSetRate_cb(aobj: *mut HSD_AObj, _obj: *mut c_void, _flags: u32, arg: u32) {
+        HSD_AObjSetRate(aobj, f32::from_bits(arg))
     }
 }
 

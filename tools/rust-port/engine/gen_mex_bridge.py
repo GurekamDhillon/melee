@@ -170,6 +170,11 @@ def main():
                 rec = f'Some("{p}")' if p in recs else 'None'
                 pre.append(f'let p{ni} = c.ptr({ni}, {rec}); if p{ni}.is_null() {{ c.bad = true; return true; }}')
                 args.append(f'(&{mut}*(p{ni} as *{"mut" if mut else "const"} _))'); ni += 1
+            elif base == 'HSD_GObjInteraction':
+                # a two-gobj callback (fp->grabbed_cb): a guest address as its two-argument trampoline, a vanilla one as
+                # the port's (Dedede's inhale passes its own to ftCommon_8007E2D0; read as a word it was None)
+                if ni > 7: ok = False; break
+                args.append(f'core::mem::transmute(c.func2({ni}))'); ni += 1
             elif base in ('HSD_GObjEvent', 'HSD_GObjFunc', 'GObj_RenderFunc', 'LineCb') or re.fullmatch(r'Option<\s*unsafe\s+extern\s+(?:"C"\s*)?fn\s*\(\s*(\*mut\s+(\w+::)*HSD_GObj|G)\s*\)\s*>', ty):
                 # a gobj callback: a guest code address as its trampoline, a vanilla one as the port (a render or line callback
                 # too: the trampoline passes the gobj, the guest sees 0 in r4)
@@ -203,6 +208,17 @@ def main():
             skipped.append((name, 'ret ' + rty)); continue
         arms.append(f'        "{name}" => {{ {" ".join(pre)} let r = {path}({", ".join(args)}); {ret} }}')
     # every void (HSD_GObj*) function of the ports, for MoveLogic rows / callbacks that keep a retail function
+    gobj2 = []
+    for name, cands in sorted(defs.items()):
+        cands = [c for c in cands if c[2] == 2 and not c[3]]
+        if not cands: continue
+        pick = pick_of(name)
+        if not pick or pick[2] != 2 or pick[3]: continue
+        crate, mp, _, _, rel = pick
+        plist = gl.PLIST.get((crate, mp, name), '')
+        ps = [strip_ty(q.split(':', 1)[1]) for q in gl.split_top(plist, ',') if ':' in q]
+        if len(ps) != 2 or not all(re.fullmatch(r'(\*mut\s+(\w+::)*HSD_GObj|G)', t) for t in ps): continue
+        gobj2.append(f'        "{name}" => {{ unsafe extern "C" fn f(g: G, h: G) {{ {crate}::{mp}::{name}(g as _, h as _) }} f }}')
     seen = set()
     for name, cands in sorted(defs.items()):
         cands = [c for c in cands if c[2] == 1 and not c[3]]
@@ -231,6 +247,10 @@ def main():
         fh.write('/// The native port of a one-argument gobj callback, by name.\n')
         fh.write('pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {\n    Some(match name {\n')
         fh.write('\n'.join(gobj) + '\n')
+        fh.write('        _ => return None,\n    })\n}\n\n')
+        fh.write('/// The native port of a two-gobj callback (`HSD_GObjInteraction`), by name.\n')
+        fh.write('pub fn gobj2_fn(name: &str) -> Option<unsafe extern "C" fn(G, G)> {\n    Some(match name {\n')
+        fh.write('\n'.join(gobj2) + '\n')
         fh.write('        _ => return None,\n    })\n}\n\n')
         # the same names as a list, for the reverse lookup (a native callback the guest reads back out of a field)
         fh.write('/// Every name `gobj_fn` answers.\n')

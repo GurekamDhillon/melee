@@ -844,11 +844,53 @@ pub fn install() {
 }
 
 /// `gw_Mex_FtFunctionInstall(kind, archive data, size)`: the C relocates the fighter file's `ftFunction` PPC code and
-/// wires its overrides into the interpreter. The port runs no guest code: log what the file carries.
+/// wires its overrides into the interpreter. Here mex_guest reads the fighter's file (the raw archive, big-endian, as
+/// the guest sees it) and registers the overrides with the dispatch tables.
 fn ft_function_install(kind: i32, data: *mut u8, size: u32) {
     let _ = (data, size);
     let k = InternalForPortKind(kind);
-    eprintln!("mexdata: kind {kind} (m-ex internal {k}): ftFunction guest code is not run natively - the clone base's handlers run");
+    let (file, sym) = (str_of(FtPlFile(k)), str_of(FtPlSymbol(k)));
+    if file.is_empty() || sym.is_empty() {
+        eprintln!("mexdata: kind {kind} (m-ex internal {k}): no PlXx.dat / ftData name - the clone base's handlers run");
+        return;
+    }
+    crate::mex_guest::install(kind, &file, &sym);
+    unsafe {
+        melee_fighter::platform::hook::Mex_MoveLogicTable = Some(move_logic_table);
+    }
+}
+
+/// `gw_Mex_MoveLogicTable(kind, vanilla)`: an m-ex fighter's own MoveLogic table, else the vanilla one.
+fn move_logic_table(kind: i32) -> *mut melee_types::MotionState {
+    match crate::mex_guest::move_logic_table(kind) {
+        Some(t) => t,
+        None if (0..melee_fighter::platform::MEX_KIND_MAX as i32).contains(&kind) => unsafe { melee_fighter::tu::ftdata::ftData_CharacterStateTables[kind as usize] },
+        None => core::ptr::null_mut(),
+    }
+}
+
+/// The relocated MxDt.dat image (big-endian, at its own low address): (base, size, mexData root).
+pub fn mexdata_image() -> Option<(u32, u32, u32)> {
+    m().map(|m| (m.base, m.size, m.root))
+}
+
+/// `gw_mex_ft_item_global(port kind, n)`: the global item kind of fighter article `n` (MxDt.dat fighter item_lookup,
+/// +0x4C: per internal id {count, u16 ids*}).
+pub fn ft_item_global(kind: i32, n: u32) -> Option<u32> {
+    let m = m()?;
+    let k = InternalForPortKind(kind);
+    if k < 0 {
+        return None;
+    }
+    let entry = m.ftfield(0x4C).wrapping_add(k as u32 * 8);
+    if !m.inr(entry, 8) {
+        return None;
+    }
+    let (count, ids) = (m.r32(entry) as i32, m.r32(entry + 4));
+    if (n as i32) < 0 || n as i32 >= count || !m.inr(ids + n * 2, 2) {
+        return None;
+    }
+    Some(m.r16(ids + n * 2))
 }
 
 /// The answers `ext_real` gives by name (callers the link table reaches only through `seams`).

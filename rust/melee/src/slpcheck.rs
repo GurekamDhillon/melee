@@ -447,7 +447,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     let ws = slp::widescreen_code(&file.gecko);
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
     melee_core::codes::set_ps_camera_independent_monitor(slp::ps_camera_independent_monitor_code(&file.gecko));
-    melee_core::codes::set_ps_preload_transformations(slp::ps_preload_transformations_code(&file.gecko));
+    melee_core::codes::set_ps_preload_transformations(slp::ps_preload_transformations(&file));
     melee_core::codes::set_ps_freeze_at_entry(slp::ps_freeze_at_entry_code(&file.gecko));
     if let Some(w) = ws {
         sm.notes = format!("{}{}widescreen code {}..{} x{}/{}", sm.notes, if sm.notes.is_empty() { "" } else { "; " }, w.left, w.right, w.num, w.den);

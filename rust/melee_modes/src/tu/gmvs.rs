@@ -1866,9 +1866,9 @@ unsafe fn neutral_spawn_set(slot: i32, spawn_id: i32, is_teams: bool) {
     }
 }
 
-/// Slippi 1.x's Neutral Spawn (2019 replays, before Slippi Online's codeset and its hardcoded table above): only
-/// 1v1 (two fighters, not teams) and 2v2 teams are moved, onto the stage's own spawn joints (`Stage_80224E64`), with a
-/// few ground heights written over. Read off the Gang-Steals 1.7.1 set's frame -123 post-frames (3,480 files): Pokemon
+/// Slippi 1.x's Neutral Spawn (2019 replays, before Slippi Online's codeset and its hardcoded table above): on these
+/// six stages, singles and 2v2 teams go onto the stage's own spawn joints (`Stage_80224E64`), with a few ground heights
+/// written over; other stages take the not-found path of `neutral_spawn_set` as before. Read off the Gang-Steals 1.7.1 set's frame -123 post-frames (3,480 files): Pokemon
 /// Stadium's left spawn is joint 0's (-39.999996, 31.999992), not -40.0; Dream Land's two are joints 1 and 3 at y 37.0
 /// (the joints are 37.2215 / 37.3215); the low teams spawns on Battlefield, Yoshi's Story and Dream Land are at y 0.0.
 /// Entry: a joint id and an optional y. `singles` is [left, right]; `teams` is [left high, left low, right high, right low].
@@ -1891,38 +1891,44 @@ static legacy_spawn_table: [LegacySpawnEntry; 6] = [
     LegacySpawnEntry { stage_id: 0x20, singles: [(0, None), (1, None)], teams: [(0, None), (2, None), (1, None), (3, None)] },
 ];
 
-/// Whether the replay playing is a Slippi 1.x one (its Neutral Spawn is `legacy_neutral_spawn`).
+/// Whether the replay playing is a Slippi 1.x one on a stage of `legacy_spawn_table` (its Neutral Spawn is
+/// `legacy_neutral_spawn`).
 unsafe fn legacy_neutral_spawn_replay() -> bool {
-    ext::Replay_Active() != 0 && melee_runtime::tu::mex_data::Slippi_Version() < 20000
+    let stage_id = gm_GetStKind() as i32;
+    ext::Replay_Active() != 0
+        && melee_runtime::tu::mex_data::Slippi_Version() < 20000
+        && legacy_spawn_table.iter().any(|e| e.stage_id == stage_id)
 }
 
-/// Slippi 1.x's Neutral Spawn for fighter slot `slot`: 1v1 by port order, 2v2 with the team of the first port on the
-/// left and each team's lower port high. Anything else (FFA, 3 fighters, uneven teams) keeps the vanilla spawn.
+/// Slippi 1.x's Neutral Spawn for fighter slot `slot`: 1v1 by port order; 2v2 with the team of the first port on the
+/// left and each team's lower port high; anything else by the port itself onto left high, right high, right low, left
+/// low.
 unsafe fn legacy_neutral_spawn(slot: i32) {
     let stage_id = gm_GetStKind() as i32;
     let Some(e) = legacy_spawn_table.iter().find(|e| e.stage_id == stage_id) else { return };
     let active: std::vec::Vec<i32> = (0..4).filter(|&p| ext::Player_GetPlayerSlotType(p) != Gm_PKind_NA).collect();
-    let (entry, left) = if controller.start.is_teams == 1 {
-        if active.len() != 4 {
-            return;
-        }
+    let teams = controller.start.is_teams == 1;
+    // 2v2: the first port's team, then the other, each in port order
+    let mut order: std::vec::Vec<i32> = std::vec::Vec::new();
+    if teams && active.len() == 4 {
         let first_team = ext::Player_GetTeam(active[0]);
-        let mut order: std::vec::Vec<i32> = active.iter().copied().filter(|&p| ext::Player_GetTeam(p) == first_team).collect();
-        if order.len() != 2 {
-            return;
-        }
+        order.extend(active.iter().copied().filter(|&p| ext::Player_GetTeam(p) == first_team));
         order.extend(active.iter().copied().filter(|&p| ext::Player_GetTeam(p) != first_team));
-        if ext::Player_GetTeam(order[2]) != ext::Player_GetTeam(order[3]) {
-            return;
+        if order.len() != 4 || ext::Player_GetTeam(order[1]) != first_team || ext::Player_GetTeam(order[2]) != ext::Player_GetTeam(order[3]) {
+            order.clear();
         }
+    }
+    // (entry, Some(faces right)): None faces by the side, as neutral_spawn_set
+    let (entry, left) = if !order.is_empty() {
         let Some(idx) = order.iter().position(|&p| p == slot) else { return };
-        (e.teams[idx], idx < 2)
-    } else {
-        if active.len() != 2 {
-            return;
-        }
+        (e.teams[idx], Some(idx < 2))
+    } else if !teams && active.len() == 2 {
         let Some(idx) = active.iter().position(|&p| p == slot) else { return };
-        (e.singles[idx], idx == 0)
+        (e.singles[idx], Some(idx == 0))
+    } else {
+        // anything else (FFA, uneven or two-fighter teams) by port: P1 left high, P2 right high, P3 right low, P4 left low
+        const BY_PORT: [usize; 4] = [0, 2, 3, 1];
+        (e.teams[BY_PORT[slot as usize]], None)
     };
     let mut pos: Vec3 = core::mem::zeroed();
     ext::Stage_80224E64(entry.0, &mut pos);
@@ -1932,7 +1938,8 @@ unsafe fn legacy_neutral_spawn(slot: i32) {
     ext::Player_80032768(slot, &mut pos);
     ext::Player_LoadPlayerCoords(slot, &mut pos);
     // the left side faces right, also from a centre joint (Fountain of Dreams' x 0 teams spawns)
-    ext::Player_SetFacingDirection(slot, if left { 1.0 } else { -1.0 });
+    let right = left.unwrap_or(pos.x <= 0.0);
+    ext::Player_SetFacingDirection(slot, if right { 1.0 } else { -1.0 });
 }
 
 pub unsafe fn fn_8016E2BC() {

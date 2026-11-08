@@ -3,7 +3,7 @@
  "csrc": "rust/melee_fighter/gen/cref/tu/ftdraw_unity.c",
  "rmod": "melee_fighter::tu::ftdrawcommon",
  "cases": 600,
- "stubs": "--ret \"HSD_CObjGetCurrent=&COB[0]|&raw mut (*crate::COB)[0]\" --ret \"Camera_800310B8=&COB[1]|&raw mut (*crate::COB)[1]\" --ret \"Camera_PCMainCObj=((fv() & 1) ? &COB[0] : &COB[1])|if fv() & 1 != 0 { &raw mut (*crate::COB)[0] } else { &raw mut (*crate::COB)[1] }\" --ret \"HSD_CObjGetInvViewingMtxPtr=(float (*)[4]) FT[0].x44_mtx|(*crate::FT)[0].x44_mtx.as_mut_ptr()\" --ret \"ftCommon_8007F804=(float (*)[4]) FT[1].x44_mtx|(*crate::FT)[1].x44_mtx.as_mut_ptr()\" --outvec ftLib_80087074:1 --skip tanf --notrace Mex_OnModelRenderDispatch:2 --notrace Mex_OnModelRenderDispatch:3 --notrace Mex_OnModelRenderDispatch:4 --notrace MotionFighterBegin:2 --notrace MotionFighterBegin:3 --notrace MotionFighterBegin:4",
+ "stubs": "--ret \"HSD_CObjGetCurrent=&COB[0]|&raw mut (*crate::COB)[0]\" --ret \"Camera_800310B8=&COB[1]|&raw mut (*crate::COB)[1]\" --ret \"Camera_PCMainCObj=((fv() & 1) ? &COB[0] : &COB[1])|if fv() & 1 != 0 { &raw mut (*crate::COB)[0] } else { &raw mut (*crate::COB)[1] }\" --ret \"HSD_CObjGetInvViewingMtxPtr=(float (*)[4]) FT[0].x44_mtx|(*crate::FT)[0].x44_mtx.as_mut_ptr()\" --ret \"ftCommon_8007F804=(float (*)[4]) FT[1].x44_mtx|(*crate::FT)[1].x44_mtx.as_mut_ptr()\" --outvec ftLib_GetShakeOffset:1 --skip tanf --notrace Mex_OnModelRenderDispatch:2 --notrace Mex_OnModelRenderDispatch:3 --notrace Mex_OnModelRenderDispatch:4 --notrace MotionFighterBegin:2 --notrace MotionFighterBegin:3 --notrace MotionFighterBegin:4",
  "ops": [
   [
    "{ int a_ = (int) fv(); int b_ = (int) (fv() & 1); ftDrawCommon_800805C8(g, a_, b_); }",

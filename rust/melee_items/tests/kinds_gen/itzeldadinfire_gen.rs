@@ -16,7 +16,7 @@ pub fn install() {
         db_80225DD8 = Some(|a0, a1| { t(1003); t(pi(a0)); t(pi(a1)); });
         efLib_DestroyAll = Some(|a0| { t(1004); t(pi(a0)); });
         efSync_Spawn = Some(|a0, a1, a2| { t(1005); t(a0 as u32); t(pi(a1)); t(pi(a2)); core::ptr::null_mut() });
-        ftLib_800865D8 = Some(|a0, a1, a2| { t(1006); t(pi(a0)); t(pi(a1)); t(pi(a2)); if !a1.is_null() { *a1 = rw(); } if !a2.is_null() { *a2 = rw(); } });
+        ftLib_GetLStick = Some(|a0, a1, a2| { t(1006); t(pi(a0)); t(pi(a1)); t(pi(a2)); if !a1.is_null() { *a1 = rw(); } if !a2.is_null() { *a2 = rw(); } });
         ftZd_SpecialLw_8013B540 = Some(|a0| { t(1007); t(pi(a0)); (fv() & 1) as i32 });
         ftZd_SpecialLw_8013B574 = Some(|a0| { t(1008); t(pi(a0)); (fv() & 1) as i32 });
         ftZd_SpecialLw_8013B5C4 = Some(|a0| { t(1009); t(pi(a0)); });

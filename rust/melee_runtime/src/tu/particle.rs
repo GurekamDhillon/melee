@@ -316,7 +316,7 @@ pub unsafe extern "C" fn psGenerateParticle0(
     if !gp.is_null() {
         (*pp).idnum = (*gp).idnum;
     } else {
-        (*pp).idnum = hsd_8039D1EC();
+        (*pp).idnum = psGetNewIDNum();
     }
     (*pp).appsrt = ::core::ptr::null_mut::<HSD_psAppSRT>();
     if !gp.is_null() && !(*gp).appsrt.is_null() {
@@ -452,13 +452,13 @@ pub unsafe extern "C" fn hsd_80398F0C(
     );
 }
 
-pub unsafe extern "C" fn hsd_803991D8(
+pub unsafe extern "C" fn applyForceJObj(
     mut gen: *mut HSD_Generator,
     mut jobj: *mut HSD_JObj,
     mut force: f32,
     mut range: f32,
 ) -> i32 {
-    melee_core::ct!("hsd_803991D8");
+    melee_core::ct!("applyForceJObj");
     let mut dx: f32 = 0.;
     let mut dy: f32 = 0.;
     let mut dz: f32 = 0.;
@@ -594,8 +594,8 @@ pub unsafe extern "C" fn hsd_8039CEAC(mut mask: u32) {
     }
 }
 
-pub unsafe extern "C" fn hsd_8039CF4C(mut index: i32, mut jobj: *mut HSD_JObj) {
-    melee_core::ct!("hsd_8039CF4C");
+pub unsafe extern "C" fn psSetPointJObj(mut index: i32, mut jobj: *mut HSD_JObj) {
+    melee_core::ct!("psSetPointJObj");
     if index < 0 as ::core::ffi::c_int || index > 8 as ::core::ffi::c_int {
         return;
     }
@@ -625,8 +625,8 @@ pub unsafe extern "C" fn hsd_8039CF4C(mut index: i32, mut jobj: *mut HSD_JObj) {
     };
 }
 
-pub unsafe extern "C" fn hsd_8039D048(mut particle: *mut ::core::ffi::c_void) {
-    melee_core::ct!("hsd_8039D048");
+pub unsafe extern "C" fn psClearPointJObj(mut particle: *mut ::core::ffi::c_void) {
+    melee_core::ct!("psClearPointJObj");
     let mut flags: u32 = (*(particle as *mut HSD_Particle)).kind;
     if flags & 0x8000 as u32 != 0 {
         let mut p: *mut *mut HSD_JObj = (&raw mut hsd_804D08E8 as *mut *mut HSD_JObj)
@@ -658,7 +658,7 @@ pub unsafe extern "C" fn HSD_StageSlotParticleLinkClear() {
         if !(*p).appsrt.is_null() {
             psRemoveParticleAppSRT(p);
         }
-        hsd_8039D048(p as *mut ::core::ffi::c_void);
+        psClearPointJObj(p as *mut ::core::ffi::c_void);
         HSD_ObjFree(&raw mut hsd_804D0F60.alloc_data, p as *mut ::core::ffi::c_void);
         hsd_804D78E2 = hsd_804D78E2.wrapping_sub(1);
         p = next;
@@ -912,7 +912,7 @@ pub unsafe fn interpret(p: *mut HSD_Particle, prev: *mut HSD_Particle) -> *mut H
             let slot = (((&*p).kind & 0x7000) >> 12) as usize;
             if hsd_804D08E8[slot].is_null() {
                 if let Some(j) = ptr_option(ext::HSD_JObjAlloc()) {
-                    hsd_8039CF4C(slot as i32 + 1, j);
+                    psSetPointJObj(slot as i32 + 1, j);
                     ext::HSD_JObjUnref(j);
                 }
             }
@@ -1261,7 +1261,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         let force = rdf!();
                         let range = rdf!();
                         let j = hsd_804D08E8[(idx & 7) as usize];
-                        if hsd_803991D8(p.cast(), j, force, range) != 0 {
+                        if applyForceJObj(p.cast(), j, force, range) != 0 {
                             pp!().life = 1;
                             break 'outer;
                         }
@@ -1676,7 +1676,7 @@ unsafe fn delete_particle(p:*mut HSD_Particle, prev:*mut HSD_Particle)->*mut HSD
     if !(*p).appsrt.is_null() && ext::psRemoveParticleAppSRT(p)==0 && prev.is_null() {
         next=hsd_804D0908[(*p).linkNo as usize];
     }
-    hsd_8039D048(p.cast());
+    psClearPointJObj(p.cast());
     ext::HSD_ObjFree(&raw mut hsd_804D0F60.alloc_data,p.cast());
     hsd_804D78E2=hsd_804D78E2.wrapping_sub(1);
     next
@@ -1722,7 +1722,7 @@ pub mod ext {
     fn ScriptGame_StageSlotParticleBegin(a0: i32) -> i32;
     fn ScriptGame_StageSlotProcEnd();
     fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
-    fn hsd_8039D1EC() -> u16 = unsafe { crate::tu::generator::hsd_8039D1EC() };
+    fn psGetNewIDNum() -> u16 = unsafe { crate::tu::generator::psGetNewIDNum() };
     fn hsd_8039F05C(a0: i32, a1: i32, a2: i32) -> *mut HSD_Generator = unsafe { crate::tu::generator::hsd_8039F05C(a0, a1, a2) };
     fn psAttachGeneratorAppSRT(a0: *mut HSD_Generator, a1: *mut HSD_psAppSRT) -> i32 = unsafe { crate::tu::psappsrt::psAttachGeneratorAppSRT(a0, a1) };
     fn psAttachParticleAppSRT(a0: *mut HSD_Particle, a1: *mut HSD_psAppSRT) -> i32 = unsafe { crate::tu::psappsrt::psAttachParticleAppSRT(a0, a1) };

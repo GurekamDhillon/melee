@@ -64,7 +64,7 @@ pub mod ext {
     fn grLib_801C99C0(a0: i32, a1: i32, a2: *mut HSD_JObj, a3: i32) = |a0: i32, a1: i32, a2: *mut HSD_JObj, a3: i32| { unsafe { crate::tu::grlib::grLib_801C99C0(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn hsd_80398A08(a0: u32) = |a0: u32| { unsafe { melee_runtime::tu::particle::hsd_80398A08(a0 as _); } };
     fn hsd_8039CEAC(a0: u32) = |a0: u32| { unsafe { melee_runtime::tu::particle::hsd_8039CEAC(a0 as _); } };
-    fn hsd_8039D1E4(a0: *mut HSD_Generator, a1: *mut c_void);
+    fn psSetUserFunc(a0: *mut HSD_Generator, a1: *mut c_void);
     fn hsd_8039D354(a0: u32);
     fn hsd_8039D4DC(a0: *mut HSD_Generator);
     fn hsd_8039D688(a0: *mut HSD_JObj, a1: *mut *mut f32, a2: i32);
@@ -1017,16 +1017,16 @@ pub unsafe extern "C" fn efLib_Cb_ParticleRender(mut particle: *mut HSD_Particle
 pub unsafe extern "C" fn efLib_Cb_PtclAppSRTHook(mut r#gen: *mut HSD_Generator) {
     melee_core::ct!("efLib_Cb_PtclAppSRTHook");
     if (*r#gen).cmdList == ((*(*ext::ptclref_804D0E5C[0 as usize].offset(150 as isize))).cmdList.as_mut_ptr()) {
-        ext::hsd_8039D1E4(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
+        ext::psSetUserFunc(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
     }
     if (*r#gen).cmdList == ((*(*ext::ptclref_804D0E5C[0 as usize].offset(151 as isize))).cmdList.as_mut_ptr()) {
-        ext::hsd_8039D1E4(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
+        ext::psSetUserFunc(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
     }
     if (*r#gen).cmdList == ((*(*ext::ptclref_804D0E5C[0 as usize].offset(152 as isize))).cmdList.as_mut_ptr()) {
-        ext::hsd_8039D1E4(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
+        ext::psSetUserFunc(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
     }
     if (*r#gen).cmdList == ((*(*ext::ptclref_804D0E5C[0 as usize].offset(539 as isize))).cmdList.as_mut_ptr()) {
-        ext::hsd_8039D1E4(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
+        ext::psSetUserFunc(r#gen, (lbl_803BF810.as_mut_ptr()) as *mut c_void);
     }
 }
 

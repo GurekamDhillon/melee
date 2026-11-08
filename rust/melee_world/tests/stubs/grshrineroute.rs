@@ -49,12 +49,12 @@ mod gen_stubs {
     fn t_Player_GetEntityAtIndex(a0: i32, a1: i32) -> *mut HSD_GObj { unsafe { out("Player_GetEntityAtIndex"); tri(a0 as i64); tri(a1 as i64); out("\n"); (if rnd() % 2 != 0 { core::ptr::null_mut() } else { mkfgobj() }) as *mut HSD_GObj } }
     fn t_Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3) { unsafe { out("Stage_UnkSetVec3TCam_Offset"); trp(a0 as *const u8); out("\n"); if !a0.is_null() { (*a0).x = rf(); (*a0).y = rf(); (*a0).z = rf(); }  } }
     fn t_ftCo_800C07F8(a0: *mut Ground_GObj, a1: u32, a2: *mut core::ffi::c_void) { unsafe { out("ftCo_800C07F8"); trp(a0 as *const u8); tru(a1 as u64); trp(a2 as *const u8); out("\n");  } }
-    fn t_ftLib_80086644(a0: *mut Fighter_GObj, a1: *mut Vec3) { unsafe { out("ftLib_80086644"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); if !a1.is_null() { if FPOS { (*a1).x = -250.0 + ((rnd() % 100) as f32); (*a1).y = -300.0 + ((rnd() % 100) as f32); (*a1).z = rf(); } else { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } }  } }
-    fn t_ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 { unsafe { out("ftLib_80086BE0"); trp(a0 as *const u8); out("\n"); (rnd() % 4) as u8 } }
-    fn t_ftLib_80086C18(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("ftLib_80086C18"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
-    fn t_ftLib_80086EC0(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_80086EC0"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
-    fn t_ftLib_8008731C(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_8008731C"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
-    fn t_ftLib_8008732C(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_8008732C"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
+    fn t_ftLib_GetPos(a0: *mut Fighter_GObj, a1: *mut Vec3) { unsafe { out("ftLib_GetPos"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); if !a1.is_null() { if FPOS { (*a1).x = -250.0 + ((rnd() % 100) as f32); (*a1).y = -300.0 + ((rnd() % 100) as f32); (*a1).z = rf(); } else { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } }  } }
+    fn t_ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 { unsafe { out("ftLib_GetPlayerIndex"); trp(a0 as *const u8); out("\n"); (rnd() % 4) as u8 } }
+    fn t_ftLib_StartRumble(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("ftLib_StartRumble"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
+    fn t_ftLib_IsInHitstun(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_IsInHitstun"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
+    fn t_ftLib_IsSleeping_8008731C(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_IsSleeping_8008731C"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
+    fn t_ftLib_IsDead(a0: *mut HSD_GObj) -> i32 { unsafe { out("ftLib_IsDead"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
     fn t_gm_801674C4(a0: i8, a1: u8, a2: i8, a3: i8, a4: GmRouteCallback) { unsafe { out("gm_801674C4"); tri(a0 as i64); tri(a1 as i64); tri(a2 as i64); tri(a3 as i64); trp(match a4 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); out("\n");  } }
     fn t_grAnime_801C7A04(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32) { unsafe { out("grAnime_801C7A04"); trp(a0 as *const u8); tri(a1 as i64); tru(a2 as u64); trf(a3); out("\n");  } }
     fn t_grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("grAnime_801C8138"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
@@ -126,12 +126,12 @@ mod gen_stubs {
         ext::HOOK_Player_GetEntityAtIndex = Some(t_Player_GetEntityAtIndex);
         ext::HOOK_Stage_UnkSetVec3TCam_Offset = Some(t_Stage_UnkSetVec3TCam_Offset);
         ext::HOOK_ftCo_800C07F8 = Some(t_ftCo_800C07F8);
-        ext::HOOK_ftLib_80086644 = Some(t_ftLib_80086644);
-        ext::HOOK_ftLib_80086BE0 = Some(t_ftLib_80086BE0);
-        ext::HOOK_ftLib_80086C18 = Some(t_ftLib_80086C18);
-        ext::HOOK_ftLib_80086EC0 = Some(t_ftLib_80086EC0);
-        ext::HOOK_ftLib_8008731C = Some(t_ftLib_8008731C);
-        ext::HOOK_ftLib_8008732C = Some(t_ftLib_8008732C);
+        ext::HOOK_ftLib_GetPos = Some(t_ftLib_GetPos);
+        ext::HOOK_ftLib_GetPlayerIndex = Some(t_ftLib_GetPlayerIndex);
+        ext::HOOK_ftLib_StartRumble = Some(t_ftLib_StartRumble);
+        ext::HOOK_ftLib_IsInHitstun = Some(t_ftLib_IsInHitstun);
+        ext::HOOK_ftLib_IsSleeping_8008731C = Some(t_ftLib_IsSleeping_8008731C);
+        ext::HOOK_ftLib_IsDead = Some(t_ftLib_IsDead);
         ext::HOOK_gm_801674C4 = Some(t_gm_801674C4);
         ext::HOOK_grAnime_801C7A04 = Some(t_grAnime_801C7A04);
         ext::HOOK_grAnime_801C8138 = Some(t_grAnime_801C8138);

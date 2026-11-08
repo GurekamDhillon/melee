@@ -79,7 +79,7 @@ pub mod ext {
         IT_8026B960 it_8026B960(g: *mut HSD_GObj) -> f32;
         IT_8026B924 it_8026B924(g: *mut HSD_GObj) -> i32;
         IT_8026C1B4 it_8026C1B4(g: *mut HSD_GObj) -> i32;
-        FTLIB_80086960 ftLib_80086960(g: *mut HSD_GObj) -> i32;
+        FTLIB_ISFIGHTER ftLib_IsFighter(g: *mut HSD_GObj) -> i32;
         LBCOLL_8000ACFC lbColl_8000ACFC(fp: *mut Fighter, h: *mut HitCapsule) -> i32;
         LBCOLL_80006094 lbColl_80006094(a: *mut Vec3, b: *mut Vec3, c: *mut Vec3, d: *mut Vec3, e: *mut Vec3, f: *mut Vec3, s0: f32, s1: f32) -> i32;
     }
@@ -1723,7 +1723,7 @@ pub fn ftCo_800BB220(fp: *mut Fighter, ip: *mut Item, arg2: *mut Vec3, arg3: f32
     if it.owner == f.gobj {
         return 0;
     }
-    if ext::ftLib_80086960(it.owner) != 0 && ext::ftCo_IsAlly(fp, unsafe { (*it.owner).user_data } as *mut Fighter) != 0 {
+    if ext::ftLib_IsFighter(it.owner) != 0 && ext::ftCo_IsAlly(fp, unsafe { (*it.owner).user_data } as *mut Fighter) != 0 {
         return 0;
     }
     let harmless = match it.kind {

@@ -176,7 +176,7 @@ pub unsafe extern "C" fn grPushOn_80218330() {
     grPushOn_802183E4(2);
     let gobj = ext::Ground_GetP1Fighter();
     if !gobj.is_null() {
-        ext::ftLib_80086644(gobj, &mut vec);
+        ext::ftLib_GetPos(gobj, &mut vec);
         ext::Ground_801C38BC(vec.x, vec.y);
         ext::Camera_8002F3AC();
     }
@@ -273,7 +273,7 @@ pub unsafe extern "C" fn grPushOn_802186C8(gobj: *mut HSD_GObj) {
     {
         let gobj2 = ext::Ground_GetP1Fighter();
         if !gobj2.is_null() {
-            ext::ftLib_80086644(gobj2, &mut vec);
+            ext::ftLib_GetPos(gobj2, &mut vec);
             ext::Ground_801C0498();
             if vec.y < 0.0 {
                 ext::Ground_801C0498();
@@ -335,7 +335,7 @@ pub unsafe extern "C" fn grPushOn_80218888(gobj: *mut HSD_GObj) {
     let gp = GET_GROUND(gobj);
     let player = ext::Ground_GetP1Fighter();
     if !player.is_null() {
-        ext::ftLib_80086644(player, &mut player_pos);
+        ext::ftLib_GetPos(player, &mut player_pos);
     } else {
         player_pos.z = 0.0;
         player_pos.y = 0.0;
@@ -619,7 +619,7 @@ pub unsafe extern "C" fn fn_802192A4(_arg0: *mut c_void, gobj: *mut HSD_GObj, re
     melee_core::ct!("fn_802192A4");
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let scale = ext::Ground_801C0498();
-    ext::ftLib_80086644(gobj, &mut sp14);
+    ext::ftLib_GetPos(gobj, &mut sp14);
     let mut i = 0usize;
     while i < 4 {
         let t = &grPushOn_803E7CCC;

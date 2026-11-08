@@ -52,7 +52,7 @@ pub fn install() {
         m::efn::eflib::ext::hook::grLib_801C99C0 = Some(|a0, a1, a2, a3| { t(1035); t(a0 as u32); t(a1 as u32); t(pi(a2)); t(a3 as u32); });
         m::efn::eflib::ext::hook::hsd_80398A08 = Some(|a0| { t(1036); t(a0 as u32); });
         m::efn::eflib::ext::hook::hsd_8039CEAC = Some(|a0| { t(1037); t(a0 as u32); });
-        m::efn::eflib::ext::hook::hsd_8039D1E4 = Some(|a0, a1| { t(1038); t(pi(a0)); t(pi(a1)); });
+        m::efn::eflib::ext::hook::psSetUserFunc = Some(|a0, a1| { t(1038); t(pi(a0)); t(pi(a1)); });
         m::efn::eflib::ext::hook::hsd_8039D354 = Some(|a0| { t(1039); t(a0 as u32); });
         m::efn::eflib::ext::hook::hsd_8039D4DC = Some(|a0| { t(1040); t(pi(a0)); });
         m::efn::eflib::ext::hook::hsd_8039D688 = Some(|a0, a1, a2| { t(1041); t(pi(a0)); t(pi(a1)); t(a2 as u32); });

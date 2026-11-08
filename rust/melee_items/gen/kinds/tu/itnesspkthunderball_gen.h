@@ -16,7 +16,7 @@ __typeof__(unsigned int) (Item_8026AE60)(void) { T(1003); return (__typeof__(uns
 __typeof__(enum StKind) (Stage_80225194)(void) { T(1004); return (__typeof__(enum StKind)) (((fv() % 3) == 0 ? 0x54 : (int) (fv() % 20))); }
 __typeof__(float) (atan2f)(__typeof__(float) a0, __typeof__(float) a1) { T(1005); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rg()); }
 void (db_80225DD8)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1006); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-void (ftLib_800865D8)(__typeof__(struct HSD_GObj *) a0, __typeof__(float *) a1, __typeof__(float *) a2) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a1) { *a1 = rg(); } if (a2) { *a2 = rg(); } }
+void (ftLib_GetLStick)(__typeof__(struct HSD_GObj *) a0, __typeof__(float *) a1, __typeof__(float *) a2) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a1) { *a1 = rg(); } if (a2) { *a2 = rg(); } }
 __typeof__(int) (ftNs_SpecialHi_CheckSpecialHiHold)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (ftNs_SpecialHi_ItemPKThunderCheckOwn)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 void (ftNs_SpecialHi_ItemPKThunderRemove)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); }
@@ -1639,7 +1639,7 @@ static void freg_all(void)
 // stub Stage_80225194 = 1004
 // stub atan2f = 1005
 // stub db_80225DD8 = 1006
-// stub ftLib_800865D8 = 1007
+// stub ftLib_GetLStick = 1007
 // stub ftNs_SpecialHi_CheckSpecialHiHold = 1008
 // stub ftNs_SpecialHi_ItemPKThunderCheckOwn = 1009
 // stub ftNs_SpecialHi_ItemPKThunderRemove = 1010

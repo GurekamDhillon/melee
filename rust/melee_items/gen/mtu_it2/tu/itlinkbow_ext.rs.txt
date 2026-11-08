@@ -28,7 +28,7 @@ pub mod ext {
     fn ftKb_SpecialNLk800FB394(a0: *mut HSD_GObj) -> u32;
     fn ftKb_SpecialNLk800FB444(a0: *mut HSD_GObj);
     fn ftKb_SpecialNLk800FB470(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_GetModelScale(a0: *mut HSD_GObj) -> f32;
     fn ftLk_SpecialN_GetIndex(a0: *mut HSD_GObj) -> u32;
     fn ftLk_SpecialN_IsActiveAnd2071b6(a0: *mut HSD_GObj) -> i32;
     fn ftLk_SpecialN_UnsetFv14(a0: *mut HSD_GObj);

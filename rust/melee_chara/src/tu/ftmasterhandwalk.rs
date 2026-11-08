@@ -55,12 +55,12 @@ pub mod ext {
             None => { unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015C244(gobj as _, &*(pos as *const _)) as _ } },
         }
     }
-    pub static mut FTLIB_800866DC: Option<fn(*mut HSD_GObj, *mut Vec3)> = None;
+    pub static mut FTLIB_GETCAMERABONEPOS: Option<fn(*mut HSD_GObj, *mut Vec3)> = None;
     #[allow(non_snake_case)]
-    pub fn ftLib_800866DC(gobj: *mut HSD_GObj, out: *mut Vec3) {
-        match unsafe { FTLIB_800866DC } {
+    pub fn ftLib_GetCameraBonePos(gobj: *mut HSD_GObj, out: *mut Vec3) {
+        match unsafe { FTLIB_GETCAMERABONEPOS } {
             Some(f) => f(gobj, out),
-            None => { unsafe { let _ = melee_fighter::ftlib::ftlib_800866dc(gobj as _, &mut *(out as *mut _)); } },
+            None => { unsafe { let _ = melee_fighter::ftlib::ftlib_getcamerabonepos(gobj as _, &mut *(out as *mut _)); } },
         }
     }
     pub static mut MPFLOORGETLEFT: Option<fn(i32, *mut Vec3)> = None;
@@ -100,7 +100,7 @@ pub fn ftMh_WalkLoop_Anim(gobj: *mut HSD_GObj) {
         let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
         let target = ext::ftBossLib_8015C244(gobj, &(*fp).cur_pos);
-        ext::ftLib_800866DC(target, &mut pos);
+        ext::ftLib_GetCameraBonePos(target, &mut pos);
         let vel = Vec3 {
             x: pos.x - (*fp).cur_pos.x,
             y: pos.y - (*fp).cur_pos.y,

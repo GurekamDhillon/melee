@@ -353,7 +353,7 @@ use melee_world::tu::grinl::{ptr_u32, u32_ptr};""",
     hooks_rs="""    melee_world::tu::grinl::ext::STAGE_INFO = Some(|| addr_of_mut!(G_stage_info) as *mut StageInfo);
     melee_world::tu::grcastle::ext::GRDISPLAY_801C5DB0 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("grDisplay_801C5DB0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
     melee_world::tu::grcastle::ext::HSD_GOBJPLINKHEAD = Some(|_l: i32| addr_of_mut!(OGO[0]));""",
-    outs={"lb_8000B1CC": [2], "ftLib_80086644": [1], "ftLib_80086684": [1], "ftLib_80086BEC": [1], "lb_800103B8": [1], "PSVECCrossProduct": [2]},
+    outs={"lb_8000B1CC": [2], "ftLib_GetPos": [1], "ftLib_GetPrevPos": [1], "ftLib_GetPosDelta": [1], "lb_800103B8": [1], "PSVECCrossProduct": [2]},
     rets={
         "HSD_Randi": ("(int) (a0 > 0 ? rnd() % (u32) a0 : 0)", "(if a0 > 0 { rnd() % (a0 as u32) } else { 0 })"),
         "Ground_801C3FA4": ("((NN || rnd() % 5) ? (void*) &OJO[rnd() % NJO] : (void*) 0)",

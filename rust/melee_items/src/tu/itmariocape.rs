@@ -82,7 +82,7 @@ pub mod ext {
     fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::item::Item_8026AB54(a0, a1, a2) };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);
-    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_800865CC(a0) };
+    fn ftLib_GetGroundAir(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetGroundAir(a0) };
     fn ftMr_SpecialS_CheckItemCapeRemove(a0: *mut HSD_GObj) -> i32;
     fn ftMr_SpecialS_Reset(a0: *mut HSD_GObj);
     fn it_8026B724(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b724(&mut *((*a0).user_data as *mut Item)) };
@@ -195,7 +195,7 @@ pub unsafe extern "C" fn it_2725_Logic41_PickedUp(gobj: *mut Item_GObj) {
     (*ip).xDB0_itcmd_var1 = 0;
     (*ip).xDAC_itcmd_var0 = 0;
     if !(*ip).owner.is_null() {
-        if ext::ftLib_800865CC(gobj) != 1 {
+        if ext::ftLib_GetGroundAir(gobj) != 1 {
             ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
         } else {
             ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);

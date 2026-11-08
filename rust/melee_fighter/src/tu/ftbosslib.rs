@@ -167,13 +167,13 @@ pub fn ftBossLib_8015C208(arg0: G, arg1: &mut Vec3) {
     melee_core::ct!("ftBossLib_8015C208");
     let pos = fp(arg0).cur_pos;
     let g = ftBossLib_8015C244(arg0, &pos);
-    crate::ftlib::ftlib_80086644(g, arg1);
+    crate::ftlib::ftlib_getpos(g, arg1);
 }
 
 /// `ftBossLib_8015C244`.
 pub fn ftBossLib_8015C244(arg0: G, arg1: &Vec3) -> G {
     melee_core::ct!("ftBossLib_8015C244");
-    crate::ftlib::ftlib_8008627c(arg1, arg0)
+    crate::ftlib::ftlib_findnearestopponent(arg1, arg0)
 }
 
 pub fn ftBossLib_IsMasterHandEntry() -> bool {

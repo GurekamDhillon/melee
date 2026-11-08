@@ -52,7 +52,7 @@ pub fn ftcoll_8007646c(item: G, victim: G) {
     melee_core::ct!("ftcoll_8007646c");
     let owner = ext::itGetOwner(item);
     let msid = ext::itGetAttackId(item);
-    if ext::ftLib_80086960(owner) {
+    if ext::ftLib_IsFighter(owner) {
         ftcoll_800763c0(owner, victim, msid);
     }
 }

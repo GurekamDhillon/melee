@@ -31,7 +31,7 @@ pub mod ext {
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn ftKb_SpecialNYs_80109238(a0: *mut HSD_GObj) -> u32;
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_GetPartJObj(a0, a1) };
     fn it_8026BD54(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026bd54(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026C220(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026C220(a0, a1) };
     fn it_80273408(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80273408(a0) };
@@ -100,7 +100,7 @@ pub unsafe extern "C" fn it_802F2E7C(gobj: *mut Item_GObj, has_destroy_type: i32
     melee_core::ct!("it_802F2E7C");
     let item = get_item(gobj);
     ext::it_80275070(gobj, (*(*(*item).xC4_article_data).x10_modelDesc).x8_bone_attach_id);
-    let jobj = ext::ftLib_80086630((*item).grab_victim, ext::ftKb_SpecialNYs_80109238((*item).grab_victim));
+    let jobj = ext::ftLib_GetPartJObj((*item).grab_victim, ext::ftKb_SpecialNYs_80109238((*item).grab_victim));
     ext::lb_8000B1CC(jobj, null_mut(), &mut (*item).pos);
     ext::it_8027B4A4((*item).grab_victim, gobj);
     ext::it_8027B378((*item).grab_victim, gobj, 0.0);

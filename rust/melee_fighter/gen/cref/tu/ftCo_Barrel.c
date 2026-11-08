@@ -24,9 +24,9 @@ void ftCommon_8007E2FC(Fighter_GObj* g) { T(12); T(g == &GO); }
 void ftCommon_8007E2F4(Fighter* f, s16 v) { T(13); T(f == &F); T(v); }
 void ftCommon_8007EFC0(Fighter* f, u32 v) { T(14); T(f == &F); T(v); }
 void ftColl_800787B4(Item_GObj* i, Fighter_GObj* g, int v) { T(15); T(itid(i)); T(g == &GO); T(v); }
-bool ftLib_80086960(HSD_GObj* g) { T(16); T(g == &GO2); return SR(16); }
+bool ftLib_IsFighter(HSD_GObj* g) { T(16); T(g == &GO2); return SR(16); }
 void ftColl_8007B8CC(Fighter* f, Fighter_GObj* o) { T(17); T(f == &F); T(o == &GO2); }
-void ftLib_800866DC(HSD_GObj* g, Vec3* v) { T(18); T(g == &GO); v->x = rg(); v->y = rw(); v->z = rg(); }
+void ftLib_GetCameraBonePos(HSD_GObj* g, Vec3* v) { T(18); T(g == &GO); v->x = rg(); v->y = rw(); v->z = rg(); }
 void mpColl_80043680(CollData* c, Vec3* v) { T(19); T(c == &F.coll_data); T(v == NULL); }
 void lbColl_80008D30(HitCapsule* h, lbColl_80008D30_arg1* a)
 { T(20); T(a == (void*) ARG3); h->unk_count = rnd() % 50; h->element = rnd() % 12; }

@@ -17,7 +17,7 @@ void (Item_8026B074)(__typeof__(struct Item *) a0) { T(1004); T(PI((const void*)
 void (db_80225DD8)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 __typeof__(int) (ftKb_SpecialNNs_800FEC78)(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (ftKb_SpecialNNs_800FECBC)(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); }
-void (ftLib_800865D8)(__typeof__(struct HSD_GObj *) a0, __typeof__(float *) a1, __typeof__(float *) a2) { T(1008); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a1) { *a1 = rg(); } if (a2) { *a2 = rg(); } }
+void (ftLib_GetLStick)(__typeof__(struct HSD_GObj *) a0, __typeof__(float *) a1, __typeof__(float *) a2) { T(1008); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a1) { *a1 = rg(); } if (a2) { *a2 = rg(); } }
 __typeof__(int) (ftNs_SpecialN_CheckSpecialNHold)(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (ftNs_SpecialN_SetNULL)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); }
 void (it_8026B3A8)(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); }
@@ -1639,7 +1639,7 @@ static void freg_all(void)
 // stub db_80225DD8 = 1005
 // stub ftKb_SpecialNNs_800FEC78 = 1006
 // stub ftKb_SpecialNNs_800FECBC = 1007
-// stub ftLib_800865D8 = 1008
+// stub ftLib_GetLStick = 1008
 // stub ftNs_SpecialN_CheckSpecialNHold = 1009
 // stub ftNs_SpecialN_SetNULL = 1010
 // stub it_8026B3A8 = 1011

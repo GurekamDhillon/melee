@@ -259,9 +259,9 @@ pub mod ext {
     fn ftCo_CalcYScaledKnockback(a0: f32, a1: f32, a2: f32) -> f32;
     fn ftColl_80076808(a0: *mut Fighter, a1: *mut HitCapsule, a2: i32, a3: *mut c_void, a4: i32);
     fn ftCommon_8007F804(a0: *mut Fighter) -> *mut c_void;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
-    fn ftLib_80086EB4(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086EB4(a0) };
-    fn ftLib_80086FD4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsFighter(a0) as _ };
+    fn ftLib_GetTeam(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetTeam(a0) };
+    fn ftLib_IsSamePlayer(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn ft_80089228(a0: *mut Fighter, a1: i32, a2: i32, a3: f32) -> f32;
     fn gm_8016B0D4() -> i32;
     fn gm_8016B168() -> i32;
@@ -548,7 +548,7 @@ pub unsafe extern "C" fn it_802701BC(gobj: *mut HSD_GObj) {
     let mut fighter_gobj = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     while !fighter_gobj.is_null() {
         let fp = (*fighter_gobj).user_data as *mut Fighter;
-        if (ext::ftLib_80086FD4(fighter_gobj, (*ip).owner) == 0 || (*ip).xDCD_flag.anon_0.b5() != 0)
+        if (ext::ftLib_IsSamePlayer(fighter_gobj, (*ip).owner) == 0 || (*ip).xDCD_flag.anon_0.b5() != 0)
             && (ext::gm_8016B168() == 0 || ext::gm_8016B0D4() != 0 || (*ip).xDCD_flag.anon_0.b6() != 0 || (*ip).x20_team_id != (*fp).team)
             && (*fp).x2219_b1() == 0
             && (*fp).x222A_b0() == 0
@@ -623,7 +623,7 @@ pub unsafe extern "C" fn it_802703E8(arg_item_gobj: *mut HSD_GObj) {
                 break 'next;
             }
             let ft_team: u32 = if !(*fighter).x1064_thrownHitbox.anon_134.owner.is_null() {
-                (ext::ftLib_80086EB4((*fighter).x1064_thrownHitbox.anon_134.owner) as u32) & 0xFF
+                (ext::ftLib_GetTeam((*fighter).x1064_thrownHitbox.anon_134.owner) as u32) & 0xFF
             } else {
                 (*fighter).team as u32
             };
@@ -728,9 +728,9 @@ pub unsafe extern "C" fn it_802706D0(arg_item_gobj: *mut HSD_GObj) {
                 chk = true;
                 break 'next;
             } else if (((*arg_item).owner.is_null() && (*it).owner.is_null() && (*it).xDCD_flag.anon_0.b7() == 0 && (*arg_item).xDCE_flag.anon_0.b2() == 0)
-                || (ext::ftLib_80086960((*it).owner) != 0
-                    && ext::ftLib_80086960((*arg_item).owner) != 0
-                    && ext::ftLib_80086FD4((*arg_item).owner, (*it).owner) != 0
+                || (ext::ftLib_IsFighter((*it).owner) != 0
+                    && ext::ftLib_IsFighter((*arg_item).owner) != 0
+                    && ext::ftLib_IsSamePlayer((*arg_item).owner, (*it).owner) != 0
                     && (*it).xDCD_flag.anon_0.b7() == 0
                     && (*arg_item).xDCE_flag.anon_0.b2() == 0)
                 || (ext::gm_8016B168() != 0
@@ -926,7 +926,7 @@ pub unsafe extern "C" fn it_80270E30(arg_item_gobj: *mut HSD_GObj) {
         2 => {
             let it = (*temp_r29).x4 as *mut Item;
             let item_owner_gobj = (*it).owner;
-            if !item_owner_gobj.is_null() && ext::ftLib_80086960(item_owner_gobj) != 0 {
+            if !item_owner_gobj.is_null() && ext::ftLib_IsFighter(item_owner_gobj) != 0 {
                 (*arg_item).xCB0_source_ply = (*((*item_owner_gobj).user_data as *mut Fighter)).player_id as i32;
                 (*arg_item).xCEC_fighterGObj = null_mut();
                 (*arg_item).xCF0_itemGObj = item_owner_gobj;
@@ -1354,12 +1354,12 @@ pub unsafe extern "C" fn it_8027236C(arg_item_gobj: *mut HSD_GObj) -> *mut HSD_G
     let fighter_gobj = (*arg_item).xCEC_fighterGObj;
     if !fighter_gobj.is_null() {
         (*arg_item).owner = fighter_gobj;
-        (*arg_item).x20_team_id = ext::ftLib_80086EB4((*arg_item).xCEC_fighterGObj) as u8;
+        (*arg_item).x20_team_id = ext::ftLib_GetTeam((*arg_item).xCEC_fighterGObj) as u8;
     } else {
         let unk_owner_gobj = (*arg_item).xCF0_itemGObj;
         if !unk_owner_gobj.is_null() {
             (*arg_item).owner = unk_owner_gobj;
-            (*arg_item).x20_team_id = ext::ftLib_80086EB4((*arg_item).xCF0_itemGObj) as u8;
+            (*arg_item).x20_team_id = ext::ftLib_GetTeam((*arg_item).xCF0_itemGObj) as u8;
         } else {
             (*arg_item).owner = null_mut();
             (*arg_item).x20_team_id = u8::MAX;
@@ -1372,9 +1372,9 @@ pub unsafe extern "C" fn it_8027236C(arg_item_gobj: *mut HSD_GObj) -> *mut HSD_G
 pub unsafe extern "C" fn it_802723FC(arg_item_gobj: *mut HSD_GObj) -> *mut HSD_GObj {
     melee_core::ct!("it_802723FC");
     let arg_item = (*arg_item_gobj).user_data as *mut Item;
-    if ext::ftLib_80086960((*arg_item).xCFC) != 0 {
+    if ext::ftLib_IsFighter((*arg_item).xCFC) != 0 {
         (*arg_item).owner = (*arg_item).xCFC;
-        (*arg_item).x20_team_id = ext::ftLib_80086EB4((*arg_item).owner) as u8;
+        (*arg_item).x20_team_id = ext::ftLib_GetTeam((*arg_item).owner) as u8;
     } else {
         (*arg_item).owner = null_mut();
         (*arg_item).x20_team_id = u8::MAX;
@@ -1387,7 +1387,7 @@ pub unsafe extern "C" fn it_80272460(hitbox: *mut HitCapsule, damage: u32, arg_i
     let mut dmg = damage;
     let arg_item = item(arg_item_gobj);
     let owner_gobj = (*arg_item).owner;
-    if ext::ftLib_80086960(owner_gobj) != 0 {
+    if ext::ftLib_IsFighter(owner_gobj) != 0 {
         let owner = (*owner_gobj).user_data as *mut Fighter;
         if (*owner).x34_scale.y != 1.0 {
             let k = ext::ftCo_CalcYScaledKnockback(dmg as f32, (*owner).x34_scale.y, (*ext::Fighter_804D6524).x4);

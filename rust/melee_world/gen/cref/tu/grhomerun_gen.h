@@ -80,8 +80,8 @@ int HSD_SisLib_803A6B98(HSD_Text* a0, float a1, float a2, const char* a3, ...) {
 __typeof__(float) Stage_GetBlastZoneRightOffset(void) { T(1049); return (__typeof__(float)) (rw()); }
 __typeof__(float) Stage_GetCamBoundsRightOffset(void) { T(1050); return (__typeof__(float)) (rw()); }
 void Stage_UnkSetVec3TCam_Offset(__typeof__(Vec *) a0) { T(1051); T(PI((const void*) a0)); a0->x = rw(); a0->y = rw(); a0->z = rw(); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1052); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
-__typeof__(struct CmSubject *) ftLib_80086B74(__typeof__(struct HSD_GObj *) a0) { T(1053); T(PI((const void*) a0)); return (__typeof__(struct CmSubject *)) ((((fv() & 3) == 0) ? 0 : &CS[fv() & 1])); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1052); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+__typeof__(struct CmSubject *) ftLib_GetCameraSubject(__typeof__(struct HSD_GObj *) a0) { T(1053); T(PI((const void*) a0)); return (__typeof__(struct CmSubject *)) ((((fv() & 3) == 0) ? 0 : &CS[fv() & 1])); }
 __typeof__(struct HSD_GObj *) gm_80180AF4(void) { T(1054); return (__typeof__(struct HSD_GObj *)) ((((fv() & 3) == 0) ? 0 : &SG)); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1055); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 __typeof__(struct UnkArchiveStruct *) grDatFiles_GetArchive(void) { T(1056); return (__typeof__(struct UnkArchiveStruct *)) (&ARCH); }
@@ -1770,8 +1770,8 @@ static void freg_all(void)
 // stub Stage_GetBlastZoneRightOffset = 1049
 // stub Stage_GetCamBoundsRightOffset = 1050
 // stub Stage_UnkSetVec3TCam_Offset = 1051
-// stub ftLib_80086644 = 1052
-// stub ftLib_80086B74 = 1053
+// stub ftLib_GetPos = 1052
+// stub ftLib_GetCameraSubject = 1053
 // stub gm_80180AF4 = 1054
 // stub grAnime_801C8138 = 1055
 // stub grDatFiles_GetArchive = 1056

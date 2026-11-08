@@ -43,9 +43,9 @@ void ftCo_80098634(__typeof__(struct Item_FtTrack *) a0) { T(1005); T(PI((const 
 __typeof__(float) ftCo_CalcYScaledKnockback(__typeof__(float) a0, __typeof__(float) a1, __typeof__(float) a2) { T(1006); T(B(a0)); T(B(a1)); T(B(a2)); return (__typeof__(float)) (rg()); }
 void ftColl_80076808(__typeof__(struct Fighter *) a0, __typeof__(struct HitCapsule *) a1, __typeof__(int) a2, __typeof__(void *) a3, __typeof__(int) a4) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); T(PI((const void*) a3)); T((u32) a4); }
 __typeof__(float (*)[4]) ftCommon_8007F804(__typeof__(struct Fighter *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(float (*)[4])) (0); }
-__typeof__(int) ftLib_80086960(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) (((fv() & 1) && a0 >= &GO[4] && a0 <= &GO[6])); }
-__typeof__(int) ftLib_80086EB4(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(int) ftLib_80086FD4(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) (((fv() & 1) && a0 >= &GO[4] && a0 <= &GO[6])); }
+__typeof__(int) ftLib_GetTeam(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) ftLib_IsSamePlayer(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 __typeof__(float) ft_80089228(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(float) a3) { T(1012); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T(B(a3)); return (__typeof__(float)) (rg()); }
 __typeof__(int) gm_8016B0D4(void) { T(1013); return (__typeof__(int)) (fv()); }
 __typeof__(int) gm_8016B168(void) { T(1014); return (__typeof__(int)) (fv()); }
@@ -5471,9 +5471,9 @@ static void freg_all(void)
 // stub ftCo_CalcYScaledKnockback = 1006
 // stub ftColl_80076808 = 1007
 // stub ftCommon_8007F804 = 1008
-// stub ftLib_80086960 = 1009
-// stub ftLib_80086EB4 = 1010
-// stub ftLib_80086FD4 = 1011
+// stub ftLib_IsFighter = 1009
+// stub ftLib_GetTeam = 1010
+// stub ftLib_IsSamePlayer = 1011
 // stub ft_80089228 = 1012
 // stub gm_8016B0D4 = 1013
 // stub gm_8016B168 = 1014

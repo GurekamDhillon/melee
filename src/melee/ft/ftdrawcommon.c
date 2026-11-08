@@ -405,6 +405,19 @@ static inline void ftDrawCommon_80080E18_inline2(HSD_GObj* gobj, Fighter* old)
     Vec3* pos;
 
     MtxPtr matrix = HSD_CObjGetInvViewingMtxPtr(Camera_800310B8());
+#if defined(TARGET_PC)
+    {
+        /* Slippi online FreezeDeadUpFallPhysics @ 0x80080E80: the camera-space point goes
+           to the jobj translate only (no matrix-dirty call); cur_pos stays put. */
+        extern int Slippi_Codes(void);
+        if (Slippi_Codes() == 2) {
+            Vec3 tmp;
+            PSMTXMultVec(matrix, (Vec3*) &old->mv.co.walk.fast_anim_frame, &tmp);
+            jobj->translate = tmp;
+            return;
+        }
+    }
+#endif
     /// @todo this seems to be using the wrong common attributes
     PSMTXMultVec(matrix, (Vec3*) &old->mv.co.walk.fast_anim_frame,
                  &fp->cur_pos);

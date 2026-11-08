@@ -18,9 +18,9 @@ pub fn install() {
         atan2f = Some(|a0, a1| { t(1004); t(a0.to_bits()); t(a1.to_bits()); rg() });
         efLib_PauseAll = Some(|a0| { t(1005); t(pi(a0)); });
         efLib_ResumeAll = Some(|a0| { t(1006); t(pi(a0)); });
-        ftLib_8008627C = Some(|a0, a1| { t(1007); t(pi(a0)); t(pi(a1)); (if fv() & 1 != 0 { null_mut() } else { &raw mut super::FG[(rnd() % 3) as usize] }) as _ });
-        ftLib_800866DC = Some(|a0, a1| { t(1008); t(pi(a0)); t(pi(a1)); { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } });
-        ftLib_80086FD4 = Some(|a0, a1| { t(1009); t(pi(a0)); t(pi(a1)); ((fv() & 1) as i32) as _ });
+        ftLib_FindNearestOpponent = Some(|a0, a1| { t(1007); t(pi(a0)); t(pi(a1)); (if fv() & 1 != 0 { null_mut() } else { &raw mut super::FG[(rnd() % 3) as usize] }) as _ });
+        ftLib_GetCameraBonePos = Some(|a0, a1| { t(1008); t(pi(a0)); t(pi(a1)); { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } });
+        ftLib_IsSamePlayer = Some(|a0, a1| { t(1009); t(pi(a0)); t(pi(a1)); ((fv() & 1) as i32) as _ });
         gm_8016B168 = Some(|| { t(1010); ((fv() & 1) as i32) as _ });
         it_8026B894 = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); fv() as _ });
         it_8026D62C = Some(|a0, a1| { t(1012); t(pi(a0)); t(fi(a1)); });

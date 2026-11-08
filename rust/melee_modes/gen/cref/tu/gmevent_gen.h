@@ -62,8 +62,8 @@ __typeof__(int) ftBossLib_8015C7EC(void) { T(1026); return (__typeof__(int)) (((
 __typeof__(int) ftBossLib_8015C92C(void) { T(1027); return (__typeof__(int)) (((int) (fv() % 40))); }
 void ftBossLib_8015CB9C(__typeof__(int) a0) { T(1028); T((u32) a0); }
 void ftBossLib_8015CC14(void) { T(1029); }
-__typeof__(int) ftLib_8008731C(__typeof__(struct HSD_GObj *) a0) { T(1030); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-void ftLib_80087508(__typeof__(signed char) a0, __typeof__(unsigned char) a1) { T(1031); T((u32) a0); T((u32) a1); }
+__typeof__(int) ftLib_IsSleeping_8008731C(__typeof__(struct HSD_GObj *) a0) { T(1030); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+void ftLib_LoadFighterCostume(__typeof__(signed char) a0, __typeof__(unsigned char) a1) { T(1031); T((u32) a0); T((u32) a1); }
 __typeof__(enum FighterKind) ftLib_GetKind(__typeof__(struct HSD_GObj *) a0) { T(1032); T(PI((const void*) a0)); return (__typeof__(enum FighterKind)) ((fv() % 9)); }
 void gmFrontend_AtlasSelect(__typeof__(struct GameModeState *) a0, __typeof__(int) a1, __typeof__(const char *) a2) { T(1033); T(PI((const void*) a0)); T((u32) a1); T(SH((const char*) a2)); }
 void gmMainLib_8015CEB4(__typeof__(int) a0) { T(1034); T((u32) a0); }
@@ -2123,8 +2123,8 @@ static void freg_all(void)
 // stub ftBossLib_8015C92C = 1027
 // stub ftBossLib_8015CB9C = 1028
 // stub ftBossLib_8015CC14 = 1029
-// stub ftLib_8008731C = 1030
-// stub ftLib_80087508 = 1031
+// stub ftLib_IsSleeping_8008731C = 1030
+// stub ftLib_LoadFighterCostume = 1031
 // stub ftLib_GetKind = 1032
 // stub gmFrontend_AtlasSelect = 1033
 // stub gmMainLib_8015CEB4 = 1034

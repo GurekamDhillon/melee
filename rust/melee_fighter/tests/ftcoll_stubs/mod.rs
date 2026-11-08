@@ -49,8 +49,8 @@ pub fn install() {
         m::ext::FTCO_CALC_Y_SCALED_KNOCKBACK = Some(|a0, a1, a2| { t(1040); t(a0.to_bits()); t(a1.to_bits()); t(a2.to_bits()); rg() });
         m::ext::FTCOMMON_8007EBAC = Some(|a0, a1, a2| { t(1041); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         m::ext::FTCOMMON_8007F804 = Some(|a0| { t(1042); t(pi(a0)); core::ptr::null_mut() });
-        m::ext::FTLIB_80086960 = Some(|a0| { t(1043); t(pi(a0)); fv() != 0 });
-        h::FTLIB_80086FD4 = Some(|a0, a1| { t(1044); t(pi(a0)); t(pi(a1)); fv() != 0 });
+        m::ext::FTLIB_ISFIGHTER = Some(|a0| { t(1043); t(pi(a0)); fv() != 0 });
+        h::FTLIB_ISSAMEPLAYER = Some(|a0, a1| { t(1044); t(pi(a0)); t(pi(a1)); fv() != 0 });
         m::ext::FT_80084CE4 = Some(|a0, a1| { t(1045); t(pi(a0)); t(pi(a1)); fv() != 0 });
         m::ext::FT_80088080 = Some(|a0| { t(1046); t(pi(a0)); });
         m::ext::FT_80089228 = Some(|a0, a1, a2, a3| { t(1047); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3.to_bits()); rg() });

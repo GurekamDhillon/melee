@@ -610,3 +610,46 @@ traffic used the LAN addresses).** Dolphin rollbacks are not logged by this buil
 **Gaps.** The engine was the guest in every engine-vs-Dolphin run, queued first or not, either account: the server
 chose Dolphin as decider each time (an engine decider vs Dolphin is untested here). Dolphin-side rollback counts are
 not recorded. No unranked/stranger check was run.
+
+## 15. Phase 7: the engine as decider vs Slippi Dolphin, replays, clean-ups (2026-11-07, port/slippi7)
+
+**How the server picks the host.** The decider is the server's `isHost` (`SlippiMatchmaking.cpp`:
+`m_is_host = get_resp.value("isHost", false)`, passed to `SlippiNetplayClient` as `is_decider`). Both clients send
+the same `create-ticket` (same fields; nlohmann only reorders the keys), so the server cannot be choosing by client.
+In phase 6 the engine's ticket always arrived first: the engine joins at once, and Dolphin needs 20+ s of boot and
+menus, so even "Dolphin first" runs had the engine queued first. Measured: **the player whose ticket completes the
+pair (the second ticket) is the host.** `np_real_dolphin_pair.sh hd|hd2` waits for Dolphin's driver to start the
+search (`drive: searching`, +5 s), then starts the engine. The engine was the decider in every such run. This build
+writes no Dolphin log file, so the create-ticket-resp itself is not visible.
+
+**Dolphin-side rollbacks without rebuilding Dolphin.** Slippi Dolphin writes a frame's events again each time it
+resimulates it. `slp_rollbacks.py` counts the repeats in its `.slp` (`SaveReplays` on, `ReplayDir` per run in the
+throwaway user dir). The patched build was not changed or rebuilt, and the oracle was not touched.
+
+**Replays.** `melee slippi-replay --trace T --log L --slp FILE` records the straight (confirmed-input) run through
+`slp_export`, hooked around `EngineGame::run_frame` and the pad-less pre-tick. `slp_compare.py A B` compares the
+post-frame state per frame and port (action, x, y, facing, percent, shield, stocks), taking the last copy of a
+rolled-back frame.
+
+**Results (real network: mm.slippi.gg:43113, direct, our two accounts; game traffic on the LAN addresses).**
+
+| run | decider (engine) vs Dolphin | engine lag / loss | frames | compared live / offline | desyncs | rollbacks engine | Dolphin .slp rollbacks (rolled frames, depth) | slpcheck Dolphin .slp | slpcheck engine .slp | .slp vs .slp |
+|---|---|---|---|---|---|---|---|---|---|---|
+| hd1 | engine acct1 vs Dolphin acct2 (Kirby vs Fox) | 0 / 0 | 2489 | 2353 / 2353 | 0 | 19 (depth 7) | - (replay not written: run stopped early) | - | match, 4982 fighter-frames | - |
+| hd2 | engine acct2 vs Dolphin acct1 | 0 / 0 | 2417 | 2197 / 2197 | 0 | 1 | 7 (13, 4) | match, 4832 | match, 4838 | 4832 equal |
+| hdL | engine acct1 vs Dolphin acct2 | 40 ms / 5 % | 2490 | 2178 / 2272 | 0 | 191 (depth 7) | 45 (91, 4) | match, 4990 | match, 4984 | 4984 equal |
+
+**Clean-ups.**
+- `dolphin_drive.py css_goto`: after the stick is centred, the hand has to settle (inside 0.6 for 8 still frames)
+  before A is pressed, otherwise it is steered again. Near the target the stick is held just past the dead zone.
+  Every phase 7 pick landed (Kirby x3, Peach).
+- **Peach mirror on Battlefield** (mock, loopback, 30 ms / 5 %; Dolphin Peach vs engine Peach shade 1, stage 0x1F):
+  2689 frames, 2140 compared live, 2245/2245 offline, 0 desyncs, 224 rollbacks.
+
+**Real NAT test.** The test is written but was not run. `tools/rust-port/slippi/REAL_NAT_TEST.md` covers machine A
+(Windows) and machine B (a Linux laptop on a phone hotspot). `real_nat_side.sh` runs one side and, with `--compare`,
+checks the two CSVs against each other. The doc lists the likely Linux build trouble spots. A Windows-side
+`cargo check --target x86_64-unknown-linux-gnu` stopped at the C build scripts. One real gap was fixed:
+`melee_engine::cow` had no non-Windows build.
+
+**Not done.** No stranger (unranked) check.

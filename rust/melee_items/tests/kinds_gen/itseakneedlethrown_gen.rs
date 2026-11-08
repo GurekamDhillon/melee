@@ -17,7 +17,7 @@ pub fn install() {
         Item_8026AE84 = Some(|a0, a1, a2, a3| { t(1004); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
         atan2f = Some(|a0, a1| { t(1005); t(a0.to_bits()); t(a1.to_bits()); rg() });
         db_80225DD8 = Some(|a0, a1| { t(1006); t(pi(a0)); t(pi(a1)); });
-        ftLib_800865CC = Some(|a0| { t(1007); t(pi(a0)); fv() as _ });
+        ftLib_GetGroundAir = Some(|a0| { t(1007); t(pi(a0)); fv() as _ });
         it_8026B3A8 = Some(|a0| { t(1008); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1009); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });
         it_8026BB68 = Some(|a0, a1| { t(1010); t(pi(a0)); t(pi(a1)); tvec(a1); });

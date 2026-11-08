@@ -2,7 +2,7 @@
  * Guest BSS is part of LAB/rollback memory; never retain native pointers here. */
 #include "script_fighter_caps.h"
 #include <melee/ft/ftcoll.h>
-#include <melee/ft/ftcolanim.h>
+#include <melee/ft/ftcolanimlist.h>
 #include <melee/ft/ftlib.h>
 #include <melee/ft/ftmetal.h>
 #include <melee/ft/ftchangeparam.h>

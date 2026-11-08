@@ -164,8 +164,8 @@ pub mod ext {
     fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
-    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
+    fn ftLib_FindNearestOpponent(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
     fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026D5CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026D5CC(a0) };
@@ -488,11 +488,11 @@ pub unsafe extern "C" fn it_802E52E0(gobj: *mut Item_GObj) -> i32 {
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOctarockAttributes;
     let mut result = 0;
-    let fighter = ext::ftLib_8008627C(&mut (*ip).pos, null_mut());
+    let fighter = ext::ftLib_FindNearestOpponent(&mut (*ip).pos, null_mut());
 
     if !fighter.is_null() {
         let mut v: Vec3 = core::mem::zeroed();
-        ext::ftLib_80086644(fighter, &mut v);
+        ext::ftLib_GetPos(fighter, &mut v);
         let dx = v.x - (*ip).pos.x;
         if (if dx < 0.0 { -dx } else { dx }) <= (*attr).x8 {
             let dy = v.y - (*ip).pos.y;

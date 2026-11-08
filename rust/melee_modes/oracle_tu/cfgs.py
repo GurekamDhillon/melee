@@ -292,7 +292,7 @@ def _gm_1798():
         # nor traced by content
         noout={"HSD_CObjLoadDesc": True}, no_arg_content=["HSD_CObjLoadDesc"],
         mock={"Mex_Enabled": "0|1", "fn_801795D4": "0..3", "fn_801796F0": "0..3", "HSD_CObjSetCurrent": "0|1",
-              "ftLib_800876B4": "0|1", "gm_MexVanillaKind": "0..40", "HSD_Randi": "0..2"},
+              "ftLib_IsFramesRemaining": "0|1", "gm_MexVanillaKind": "0..40", "HSD_Randi": "0..2"},
         fieldrange={"MatchPlayerData.pkind": "0..3", "MatchPlayerData.is_big_loser": "0..3",
                     "MatchPlayerData.team": "0..4", "MatchTeamData.is_big_loser": "0..3", "MatchEnd.is_teams": "0..1",
                     "MatchPlayerData.ftkind": "5..8", "MatchEnd.outcome": "5..8"})

@@ -83,7 +83,7 @@ pub mod ext {
     fn GObj_Create(class: u16, plink: u8, prio: u8) -> *mut HSD_GObj;
     fn GObj_InitUserData(gobj: *mut HSD_GObj, kind: u8, free: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void);
     fn HSD_GObj_SetupProc(gobj: *mut HSD_GObj, cb: Option<unsafe extern "C" fn(*mut HSD_GObj)>, prio: u8) -> *mut HSD_GObjProc;
-    fn ftLib_80086644(gobj: *mut HSD_GObj, pos: *mut Vec3);
+    fn ftLib_GetPos(gobj: *mut HSD_GObj, pos: *mut Vec3);
     fn it_8026B294(gobj: *mut HSD_GObj, pos: *mut Vec3);
     fn Camera_800307D0(left: *mut f32, center: *mut f32, right: *mut f32);
     fn Stage_80225194() -> u32;
@@ -2495,7 +2495,7 @@ unsafe fn soundGetPosition(gobj: *mut HSD_GObj, pos: *mut Vec3) -> i32 {
     if !gobj.is_null() && !(*gobj).user_data.is_null() && !(*ud_of(gobj)).owner.is_null() {
         match (*(*ud_of(gobj)).owner).classifier as i32 {
             HSD_GOBJ_CLASS_FIGHTER => {
-                ext::ftLib_80086644((*ud_of(gobj)).owner, pos);
+                ext::ftLib_GetPos((*ud_of(gobj)).owner, pos);
                 return 0;
             }
             HSD_GOBJ_CLASS_ITEM => {

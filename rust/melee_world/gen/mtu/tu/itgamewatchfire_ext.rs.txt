@@ -26,7 +26,7 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftGw_AttackS4_ItemCheckTorchRemove(a0: *mut HSD_GObj) -> i32;
     fn ftGw_AttackS4_ItemTorchSetFlag(a0: *mut HSD_GObj);
-    fn ftLib_800876D4(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsChargingSmash(a0: *mut HSD_GObj) -> i32;
     fn it_8026B724(a0: *mut HSD_GObj);
     fn it_8026B73C(a0: *mut HSD_GObj);
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;

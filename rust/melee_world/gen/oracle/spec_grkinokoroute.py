@@ -76,7 +76,7 @@ SPEC = dict(
     hooks_rs=("    melee_world::tu::grinl::ext::STAGE_INFO = Some(|| addr_of_mut!(G_stage_info) as *mut StageInfo);\n"
               "    melee_world::tu::grkinokoroute::ext::EFSYNC_SPAWN = Some(|a0, a1, a2| { lg_s(\"efSync_Spawn(\"); lg_int(a0 as u32); lg_ptr(a1 as usize); lg_v3(a2 as *const Vec3); lg_s(\")\"); let r = gen_p(); lg_retp(r as usize); lg_c(';'); r });"),
     outs={"lbVector_Sub": [0], "lbVector_Add": [0], "lbVector_Diff": [2], "lbVector_Normalize": [0],
-          "Ground_801C2D24": [1], "ftLib_80086644": [1], "ftLib_80086684": [1],
+          "Ground_801C2D24": [1], "ftLib_GetPos": [1], "ftLib_GetPrevPos": [1],
           "Stage_UnkSetVec3TCam_Offset": [0], "lb_8000B1CC": [2]},
     rets={
         "HSD_Randi": ("(int) (a0 > 0 ? rnd() % (u32) a0 : 0)", "(if a0 > 0 { rnd() % (a0 as u32) } else { 0 })"),

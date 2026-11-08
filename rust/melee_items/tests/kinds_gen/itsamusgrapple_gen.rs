@@ -44,7 +44,7 @@ pub fn install() {
         ftColl_8007AC9C = Some(|a0, a1, a2| { t(1031); t(pi(a0)); t(a1 as u32); t(pi(a2)); });
         ftColl_8007AFF8 = Some(|a0| { t(1032); t(pi(a0)); });
         ftCommon_8007E2F4 = Some(|a0, a1| { t(1033); t(pi(a0)); t(a1 as u32); });
-        ftLib_80086630 = Some(|a0, a1| { t(1034); t(pi(a0)); t(a1 as u32); &raw mut crate::JO[3 + (fv() % 3) as usize] });
+        ftLib_GetPartJObj = Some(|a0, a1| { t(1034); t(pi(a0)); t(a1 as u32); &raw mut crate::JO[3 + (fv() % 3) as usize] });
         ftParts_GetBoneIndex = Some(|a0, a1| { t(1035); t(pi(a0)); t(a1 as u32); (fv() % 200) as _ });
         ft_80082E3C = Some(|a0| { t(1036); t(pi(a0)); if fv() & 1 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() } });
         it_8026B894 = Some(|a0, a1| { t(1037); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });

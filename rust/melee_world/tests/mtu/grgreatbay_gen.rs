@@ -33,8 +33,8 @@ pub fn install() {
         Item_80268B18 = Some(|a0| { t(1019); t(pi(a0)); t(pi((*a0).x0_parent_gobj)); t(pi((*a0).x4_parent_gobj2)); t((*a0).kind as u32); t((*a0).hold_kind as u32); t((*a0).x10 as u32); t((*a0).pos.x.to_bits()); t((*a0).pos.y.to_bits()); t((*a0).pos.z.to_bits()); t((*a0).prev_pos.x.to_bits()); t((*a0).prev_pos.y.to_bits()); t((*a0).prev_pos.z.to_bits()); t((*a0).vel.x.to_bits()); t((*a0).vel.y.to_bits()); t((*a0).vel.z.to_bits()); t((*a0).facing_dir.to_bits()); t((*a0).x3C_damage as i32 as u32); t((*a0).x3E as i32 as u32); t((*a0).x40 as u32); t((*a0).x44_flag.byte as u32); t((*a0).x45_flag.byte as u32); t((*a0).x46_flag.byte as u32); t((*a0).x47_flag.byte as u32); t((*a0).x48_ground_or_air as u32); core::ptr::null_mut() });
         Stage_GetBlastZoneBottomOffset = Some(|| { t(1020); rw() });
         ftCo_800C07F8 = Some(|a0, a1, a2| { t(1021); t(pi(a0)); t(a1 as u32); t(pi(a2)); });
-        ftLib_80086644 = Some(|a0, a1| { t(1022); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
-        ftLib_80086684 = Some(|a0, a1| { t(1023); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
+        ftLib_GetPos = Some(|a0, a1| { t(1022); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
+        ftLib_GetPrevPos = Some(|a0, a1| { t(1023); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
         ftLib_80086B80 = Some(|a0| { t(1024); t(pi(a0)); rw() });
         ft_80087838 = Some(|a0| { t(1025); t(pi(a0)); fv() as _ });
         grAnime_801C77FC = Some(|a0, a1, a2| { t(1026); t(pi(a0)); t(a1 as u32); t(a2 as u32); });

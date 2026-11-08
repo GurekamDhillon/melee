@@ -465,7 +465,7 @@ NO_PORT: 534 sites / 356 names, SIGNATURE: 466 sites / 344 names, CYCLE: 177 sit
 - `hsd_80394068` [ext_fns!] x1: tu/debugconsole_main.rs:61 -> port `melee_runtime::tu/hsd_393C.rs:252`
 - `hsd_80397DA4` [fn-body] x1: tu/dberror.rs:61 -> port `melee_runtime::tu/debugconsole_main.rs:592`
 - `hsd_80397DFC` [fn-body] x1: tu/dberror.rs:59 -> port `melee_runtime::tu/debugconsole_main.rs:602`
-- `hsd_8039D1EC` [ext_fns!] x1: tu/particle.rs:1695 -> port `melee_runtime::tu/generator.rs:14`
+- `psGetNewIDNum` [ext_fns!] x1: tu/particle.rs:1695 -> port `melee_runtime::tu/generator.rs:14`
 - `hsd_8039F05C` [ext_fns!] x1: tu/particle.rs:1696 -> port `melee_runtime::tu/generator.rs:62`
 - `hsd_803AAA48` [ext_fns!] x1: tu/lbcardnew.rs:47 -> port `melee_runtime::tu/card.rs:1578`
 - `hsd_803AC3E0` [ext_fns!] x1: tu/lbcardnew.rs:48 -> port `melee_runtime::tu/card.rs:2714`
@@ -788,10 +788,10 @@ NO_PORT: 534 sites / 356 names, SIGNATURE: 466 sites / 344 names, CYCLE: 177 sit
 - `Fighter_SuperMushroomEnd` [fn-body] x1: tu/dbanim.rs:75 -> port `melee_fighter::tu/ftCo_KinokoGiantEnd.rs:53`
 - `ftDrawCommon_80081168` [lb_hook!] x1: tu/lbshadow.rs:62 -> port `melee_fighter::tu/ftdrawcommon.rs:385`
 - `ftDrawCommon_80081200` [lb_hook!] x1: tu/lbshadow.rs:63 -> port `melee_fighter::tu/ftdrawcommon.rs:387`
-- `ftLib_80086644` [ext_fns!] x1: tu/lbaudio_ax.rs:85 -> port `melee_fighter::ftlib.rs:182`
-- `ftLib_80086960` [fn-body/lb_hook!] x3: tu/dbanim.rs:62, tu/dbitem.rs:75, tu/lbshadow.rs:59 -> port `melee_fighter::ftlib.rs:246`
-- `ftLib_800872B0` [lb_hook!] x1: tu/lbshadow.rs:60 -> port `melee_fighter::ftlib.rs:409`
-- `ftLib_800872BC` [lb_hook!] x1: tu/lbshadow.rs:61 -> port `melee_fighter::ftlib.rs:410`
+- `ftLib_GetPos` [ext_fns!] x1: tu/lbaudio_ax.rs:85 -> port `melee_fighter::ftlib.rs:182`
+- `ftLib_IsFighter` [fn-body/lb_hook!] x3: tu/dbanim.rs:62, tu/dbitem.rs:75, tu/lbshadow.rs:59 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_GetShadow` [lb_hook!] x1: tu/lbshadow.rs:60 -> port `melee_fighter::ftlib.rs:409`
+- `ftLib_CastsShadow` [lb_hook!] x1: tu/lbshadow.rs:61 -> port `melee_fighter::ftlib.rs:410`
 - `gm_801603B0` [ext_fns!] x1: tu/lbaudio_ax.rs:90 -> port `melee_modes::tu/gm_1601.rs:550`
 - `gm_80164ABC` [ext_fns!] x1: tu/lbcardgame.rs:48 -> port `melee_modes::tu/gm_1601.rs:1862`
 - `gm_8016895C` [ext_fns!] x1: tu/lbcardgame.rs:49 -> port `melee_modes::tu/gm_1601.rs:2880`
@@ -890,7 +890,7 @@ NO_PORT: 318 sites / 171 names, SIGNATURE: 1242 sites / 460 names, CYCLE: 282 si
 - `GXSetVtxAttrFmt` [ext_fns!] x1: tu/mplib.rs:64
 - `GXSetVtxDesc` [ext_fns!] x1: tu/mplib.rs:65
 - `GXSetZMode` [ext_fns!] x1: tu/mplib.rs:66
-- `hsd_8039D1E4` [fn-body] x1: tu/eflib.rs:97
+- `psSetUserFunc` [fn-body] x1: tu/eflib.rs:97
 - `HSD_CObjGetAuthoredAspect` [hook!] x1: tu/grizumi.rs:104
 - `HSD_CObjGetEyePosition` [ext_fns!/hook!] x3: tu/grhomerun.rs:70, tu/grizumi.rs:105, tu/ground.rs:53
 - `HSD_CObjGetEyeVector` [ext_fns!] x2: tu/grfourside.rs:57, tu/ground.rs:54
@@ -989,8 +989,8 @@ NO_PORT: 318 sites / 171 names, SIGNATURE: 1242 sites / 460 names, CYCLE: 282 si
 - `todo_Camera_RequestQuake` [fn-body] x1: tu/grticeclimber.rs:57
 - `todo_efSync_Spawn` [fn-body] x1: tu/grticeclimber.rs:58
 - `todo_ftCo_800C07F8` [fn-body] x1: tu/grtmario.rs:46
-- `todo_ftLib_80086644` [fn-body] x1: tu/grtmario.rs:49
-- `todo_ftLib_80086684` [fn-body] x1: tu/grtmario.rs:50
+- `todo_ftLib_GetPos` [fn-body] x1: tu/grtmario.rs:49
+- `todo_ftLib_GetPrevPos` [fn-body] x1: tu/grtmario.rs:50
 - `todo_ftLib_80086B80` [fn-body] x1: tu/grtmario.rs:51
 - `todo_GObj_SetupGXLink` [fn-body] x1: gr/inlines.rs:49
 - `todo_grMaterial_801C8CFC` [fn-body] x1: tu/grticeclimber.rs:52
@@ -1492,26 +1492,26 @@ NO_PORT: 318 sites / 171 names, SIGNATURE: 1242 sites / 460 names, CYCLE: 282 si
 - `ftDrawCommon_80081118` [hook!] x1: tu/grizumi.rs:168 -> port `melee_fighter::tu/ftdrawcommon.rs:359`
 - `ftDrawCommon_80081140` [hook!] x1: tu/grizumi.rs:169 -> port `melee_fighter::tu/ftdrawcommon.rs:364`
 - `ftKb_MexKirbyLike` [fn-body] x1: tu/efasync.rs:165 -> port `melee_chara::tu/ftkirby.rs:2478`
-- `ftLib_800864A8` [ext_fns!] x2: tu/grgreens.rs:72, tu/groldpupupu.rs:53 -> port `melee_fighter::ftlib.rs:140`
-- `ftLib_80086644` [ext_fns!/fn+panic/hook!] x18: tu/grbigblueroute.rs:151, tu/grcastle.rs:126, tu/grcorneria.rs:34, tu/grdisplay.rs:57, tu/grgarden.rs:55, tu/grgreatbay.rs:66, tu/grgreens.rs:73, tu/grhomerun.rs:100, tu/gricemt.rs:85, tu/grkinokoroute.rs:210, tu/grkongo.rs:139, tu/groldkongo.rs:57, tu/groldpupupu.rs:54, tu/gronett.rs:58, tu/ground.rs:140, tu/grzebes.rs:333, tu/grzebesroute.rs:112, tu_ext.rs:404 -> port `melee_fighter::ftlib.rs:182`
-- `ftLib_80086684` [ext_fns!/hook!] x5: tu/grcastle.rs:127, tu/grgarden.rs:56, tu/grgreatbay.rs:67, tu/grkinokoroute.rs:211, tu/grzebes.rs:334 -> port `melee_fighter::ftlib.rs:184`
-- `ftLib_80086960` [ext_fns!/hook!] x3: tu/grcastle.rs:128, tu/gryorster.rs:174, tu/mpcoll.rs:72 -> port `melee_fighter::ftlib.rs:246`
-- `ftLib_80086984` [ext_fns!] x2: tu/grfigureget.rs:50, tu/mplib.rs:101 -> port `melee_fighter::ftlib.rs:249`
+- `ftLib_GetOpponentsDir` [ext_fns!] x2: tu/grgreens.rs:72, tu/groldpupupu.rs:53 -> port `melee_fighter::ftlib.rs:140`
+- `ftLib_GetPos` [ext_fns!/fn+panic/hook!] x18: tu/grbigblueroute.rs:151, tu/grcastle.rs:126, tu/grcorneria.rs:34, tu/grdisplay.rs:57, tu/grgarden.rs:55, tu/grgreatbay.rs:66, tu/grgreens.rs:73, tu/grhomerun.rs:100, tu/gricemt.rs:85, tu/grkinokoroute.rs:210, tu/grkongo.rs:139, tu/groldkongo.rs:57, tu/groldpupupu.rs:54, tu/gronett.rs:58, tu/ground.rs:140, tu/grzebes.rs:333, tu/grzebesroute.rs:112, tu_ext.rs:404 -> port `melee_fighter::ftlib.rs:182`
+- `ftLib_GetPrevPos` [ext_fns!/hook!] x5: tu/grcastle.rs:127, tu/grgarden.rs:56, tu/grgreatbay.rs:67, tu/grkinokoroute.rs:211, tu/grzebes.rs:334 -> port `melee_fighter::ftlib.rs:184`
+- `ftLib_IsFighter` [ext_fns!/hook!] x3: tu/grcastle.rs:128, tu/gryorster.rs:174, tu/mpcoll.rs:72 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_GetCollData` [ext_fns!] x2: tu/grfigureget.rs:50, tu/mplib.rs:101 -> port `melee_fighter::ftlib.rs:249`
 - `ftLib_80086A4C` [hook!] x2: tu/grcastle.rs:129, tu/gryorster.rs:175 -> port `melee_fighter::ftlib.rs:263`
-- `ftLib_80086B74` [ext_fns!] x1: tu/grhomerun.rs:101 -> port `melee_fighter::ftlib.rs:287`
+- `ftLib_GetCameraSubject` [ext_fns!] x1: tu/grhomerun.rs:101 -> port `melee_fighter::ftlib.rs:287`
 - `ftLib_80086B80` [ext_fns!/hook!] x4: tu/grcastle.rs:130, tu/grgarden.rs:57, tu/grgreatbay.rs:68, tu/grkinokoroute.rs:212 -> port `melee_fighter::ftlib.rs:288`
-- `ftLib_80086B90` [ext_fns!] x1: tu/grpstadium.rs:98 -> port `melee_fighter::ftlib.rs:289`
-- `ftLib_80086BE0` [ext_fns!/fn+panic] x2: tu/mpcoll.rs:73, tu_ext.rs:409 -> port `melee_fighter::ftlib.rs:294`
-- `ftLib_80086BEC` [hook!] x2: tu/grcastle.rs:131, tu/gryorster.rs:251 -> port `melee_fighter::ftlib.rs:295`
-- `ftLib_80086C18` [ext_fns!/fn+panic/hook!] x3: tu/grkongo.rs:140, tu/groldkongo.rs:58, tu_ext.rs:414 -> port `melee_fighter::ftlib.rs:308`
-- `ftLib_80086C9C` [hook!] x2: tu/grkraid.rs:89, tu/grzebes.rs:376 -> port `melee_fighter::ftlib.rs:309`
-- `ftLib_80086EC0` [ext_fns!/fn+panic/hook!] x4: tu/grbigblueroute.rs:152, tu/gricemt.rs:86, tu/grkinokoroute.rs:213, tu_ext.rs:419 -> port `melee_fighter::ftlib.rs:329`
-- `ftLib_8008701C` [ext_fns!] x1: tu/ground.rs:141 -> port `melee_fighter::ftlib.rs:366`
-- `ftLib_800872B0` [ext_fns!] x1: tu/grdisplay.rs:58 -> port `melee_fighter::ftlib.rs:409`
-- `ftLib_8008731C` [fn+panic] x1: tu_ext.rs:424 -> port `melee_fighter::ftlib.rs:416`
-- `ftLib_8008732C` [fn+panic/hook!] x2: tu/grkinokoroute.rs:214, tu_ext.rs:429 -> port `melee_fighter::ftlib.rs:422`
-- `ftLib_800873F4` [hook!] x1: tu/gryorster.rs:250 -> port `melee_fighter::ftlib.rs:427`
-- `ftLib_800874BC` [ext_fns!] x1: tu/mpcoll.rs:74 -> port `melee_fighter::ftlib.rs:448`
+- `ftLib_GetCameraSubjectBonePos` [ext_fns!] x1: tu/grpstadium.rs:98 -> port `melee_fighter::ftlib.rs:289`
+- `ftLib_GetPlayerIndex` [ext_fns!/fn+panic] x2: tu/mpcoll.rs:73, tu_ext.rs:409 -> port `melee_fighter::ftlib.rs:294`
+- `ftLib_GetPosDelta` [hook!] x2: tu/grcastle.rs:131, tu/gryorster.rs:251 -> port `melee_fighter::ftlib.rs:295`
+- `ftLib_StartRumble` [ext_fns!/fn+panic/hook!] x3: tu/grkongo.rs:140, tu/groldkongo.rs:58, tu_ext.rs:414 -> port `melee_fighter::ftlib.rs:308`
+- `ftLib_StartRumbleAll` [hook!] x2: tu/grkraid.rs:89, tu/grzebes.rs:376 -> port `melee_fighter::ftlib.rs:309`
+- `ftLib_IsInHitstun` [ext_fns!/fn+panic/hook!] x4: tu/grbigblueroute.rs:152, tu/gricemt.rs:86, tu/grkinokoroute.rs:213, tu_ext.rs:419 -> port `melee_fighter::ftlib.rs:329`
+- `ftLib_IsSleeping` [ext_fns!] x1: tu/ground.rs:141 -> port `melee_fighter::ftlib.rs:366`
+- `ftLib_GetShadow` [ext_fns!] x1: tu/grdisplay.rs:58 -> port `melee_fighter::ftlib.rs:409`
+- `ftLib_IsSleeping_8008731C` [fn+panic] x1: tu_ext.rs:424 -> port `melee_fighter::ftlib.rs:416`
+- `ftLib_IsDead` [fn+panic/hook!] x2: tu/grkinokoroute.rs:214, tu_ext.rs:429 -> port `melee_fighter::ftlib.rs:422`
+- `ftLib_IsEntry` [hook!] x1: tu/gryorster.rs:250 -> port `melee_fighter::ftlib.rs:427`
+- `ftLib_IsSubFighter` [ext_fns!] x1: tu/mpcoll.rs:74 -> port `melee_fighter::ftlib.rs:448`
 - `GetMatchTimer` [ext_fns!/hook!] x2: tu/grinishie1.rs:46, tu/grinishie2.rs:34 -> port `melee_modes::tu/gmvs.rs:325`
 - `gm_80160854` [ext_fns!] x1: tu/grpstadium.rs:99 -> port `melee_modes::gm.rs:197`
 - `gm_80160968` [ext_fns!] x1: tu/grpstadium.rs:100 -> port `melee_modes::gm.rs:489`
@@ -2764,48 +2764,48 @@ NO_PORT: 311 sites / 106 names, SIGNATURE: 4321 sites / 882 names, CYCLE: 471 si
 - `ftKb_SpecialNYs_80109238` [ext_fns!] x1: tu/itkirbyyoshispecialn.rs:32 -> port `melee_chara::tu/ftkirbyspecialiceclimber.rs:241`
 - `ftKp_SpecialLw_80134DE0` [ext_fns!] x1: tu/itkoopaflame.rs:53 -> port `melee_chara::tu/ftkoopaspecialn.rs:190`
 - `ftKp_SpecialLw_80134E1C` [ext_fns!] x1: tu/itkoopaflame.rs:54 -> port `melee_chara::tu/ftkoopaspecialn.rs:202`
-- `ftLib_800860C4` [ext_fns!] x1: tu/it_279C.rs:53 -> port `melee_fighter::ftlib.rs:44`
-- `ftLib_80086198` [ext_fns!] x1: tu/ithitodeman.rs:47 -> port `melee_fighter::ftlib.rs:67`
-- `ftLib_8008627C` [ext_fns!] x6: tu/it_26B1.rs:41, tu/it_279C.rs:54, tu/itleadead.rs:42, tu/itlikelike.rs:42, tu/itoctarock.rs:36, tu/itoctarockstone.rs:36 -> port `melee_fighter::ftlib.rs:91`
-- `ftLib_80086368` [ext_fns!] x1: tu/it_26B1.rs:42 -> port `melee_fighter::ftlib.rs:114`
-- `ftLib_800864A8` [ext_fns!] x1: tu/it_26B1.rs:43 -> port `melee_fighter::ftlib.rs:140`
-- `ftLib_800865C0` [ext_fns!] x9: tu/itarwinglaser.rs:47, tu/itfoxblaster.rs:64, tu/itgamewatchjudge.rs:36, tu/itlinkarrow.rs:56, tu/itmewtwoshadowball.rs:63, tu/itnessbat.rs:40, tu/itsamuschargeshot.rs:47, tu/ittarucann.rs:45, tu/itzako.rs:43 -> port `melee_fighter::ftlib.rs:166`
-- `ftLib_800865CC` [ext_fns!] x4: tu/itfoxillusion.rs:48, tu/itgamewatchpanic.rs:36, tu/itmariocape.rs:39, tu/itseakneedlethrown.rs:44 -> port `melee_fighter::ftlib.rs:167`
-- `ftLib_800865D8` [ext_fns!] x3: tu/itnesspkflash.rs:41, tu/itnesspkthunderball.rs:40, tu/itzeldadinfire.rs:42 -> port `melee_fighter::ftlib.rs:168`
-- `ftLib_80086630` [ext_fns!] x9: tu/it_2725.rs:65, tu/itkirbyyoshispecialn.rs:33, tu/itleadead.rs:43, tu/itlinkarrow.rs:57, tu/itlinkboomerang.rs:52, tu/itmewtwoshadowball.rs:64, tu/itsamuschargeshot.rs:48, tu/itsamusgrapple.rs:74, tu/ityoshitongue.rs:33 -> port `melee_fighter::ftlib.rs:179`
-- `ftLib_80086644` [ext_fns!] x9: tu/it_26B1.rs:44, tu/it_279C.rs:55, tu/itdrmariopill.rs:57, tu/itfoxblaster.rs:65, tu/ithitodeman.rs:48, tu/itleadead.rs:44, tu/itlikelike.rs:43, tu/itnessbat.rs:41, tu/itoctarock.rs:37 -> port `melee_fighter::ftlib.rs:182`
-- `ftLib_800866DC` [ext_fns!] x5: tu/it_26B1.rs:45, tu/itflipper.rs:44, tu/itlinkboomerang.rs:53, tu/itoctarockstone.rs:37, tu/ittools.rs:34 -> port `melee_fighter::ftlib.rs:193`
-- `ftLib_80086724` [ext_fns!] x1: tu/item.rs:76 -> port `melee_fighter::ftlib.rs:201`
-- `ftLib_80086764` [ext_fns!] x1: tu/item.rs:77 -> port `melee_fighter::ftlib.rs:207`
-- `ftLib_800867A0` [ext_fns!] x1: tu/item.rs:78 -> port `melee_fighter::ftlib.rs:213`
-- `ftLib_800867CC` [ext_fns!] x1: tu/item.rs:79 -> port `melee_fighter::ftlib.rs:214`
-- `ftLib_800868D4` [ext_fns!] x1: tu/itdraw.rs:40 -> port `melee_fighter::ftlib.rs:234`
-- `ftLib_80086960` [ext_fns!] x10: tu/it_26B1.rs:46, tu/it_2725.rs:66, tu/it_279C.rs:56, tu/itcoll.rs:42, tu/itdraw.rs:41, tu/itdrop.rs:32, tu/item.rs:80, tu/itflipper.rs:45, tu/itkusudama.rs:50, tu/ittools.rs:35 -> port `melee_fighter::ftlib.rs:246`
-- `ftLib_80086984` [ext_fns!] x1: tu/it_26B1.rs:47 -> port `melee_fighter::ftlib.rs:249`
-- `ftLib_80086990` [ext_fns!] x1: tu/it_26B1.rs:48 -> port `melee_fighter::ftlib.rs:250`
-- `ftLib_800869D4` [ext_fns!] x7: tu/itclinkmilk.rs:46, tu/itdrmariopill.rs:58, tu/itlinkarrow.rs:58, tu/itlinkbow.rs:40, tu/itmewtwoshadowball.rs:65, tu/itsamuschargeshot.rs:49, tu/itseakneedleheld.rs:39 -> port `melee_fighter::ftlib.rs:257`
-- `ftLib_80086A0C` [ext_fns!] x3: tu/it_2725.rs:67, tu/itmewtwodisable.rs:35, tu/itnessyoyo.rs:53 -> port `melee_fighter::ftlib.rs:259`
-- `ftLib_80086A18` [ext_fns!] x1: tu/itlinkarrow.rs:59 -> port `melee_fighter::ftlib.rs:260`
+- `ftLib_CountFighters` [ext_fns!] x1: tu/it_279C.rs:53 -> port `melee_fighter::ftlib.rs:44`
+- `ftLib_FindLowestPercentOpponent` [ext_fns!] x1: tu/ithitodeman.rs:47 -> port `melee_fighter::ftlib.rs:67`
+- `ftLib_FindNearestOpponent` [ext_fns!] x6: tu/it_26B1.rs:41, tu/it_279C.rs:54, tu/itleadead.rs:42, tu/itlikelike.rs:42, tu/itoctarock.rs:36, tu/itoctarockstone.rs:36 -> port `melee_fighter::ftlib.rs:91`
+- `ftLib_FindNearestOpponentInDir` [ext_fns!] x1: tu/it_26B1.rs:42 -> port `melee_fighter::ftlib.rs:114`
+- `ftLib_GetOpponentsDir` [ext_fns!] x1: tu/it_26B1.rs:43 -> port `melee_fighter::ftlib.rs:140`
+- `ftLib_GetFacingDir` [ext_fns!] x9: tu/itarwinglaser.rs:47, tu/itfoxblaster.rs:64, tu/itgamewatchjudge.rs:36, tu/itlinkarrow.rs:56, tu/itmewtwoshadowball.rs:63, tu/itnessbat.rs:40, tu/itsamuschargeshot.rs:47, tu/ittarucann.rs:45, tu/itzako.rs:43 -> port `melee_fighter::ftlib.rs:166`
+- `ftLib_GetGroundAir` [ext_fns!] x4: tu/itfoxillusion.rs:48, tu/itgamewatchpanic.rs:36, tu/itmariocape.rs:39, tu/itseakneedlethrown.rs:44 -> port `melee_fighter::ftlib.rs:167`
+- `ftLib_GetLStick` [ext_fns!] x3: tu/itnesspkflash.rs:41, tu/itnesspkthunderball.rs:40, tu/itzeldadinfire.rs:42 -> port `melee_fighter::ftlib.rs:168`
+- `ftLib_GetPartJObj` [ext_fns!] x9: tu/it_2725.rs:65, tu/itkirbyyoshispecialn.rs:33, tu/itleadead.rs:43, tu/itlinkarrow.rs:57, tu/itlinkboomerang.rs:52, tu/itmewtwoshadowball.rs:64, tu/itsamuschargeshot.rs:48, tu/itsamusgrapple.rs:74, tu/ityoshitongue.rs:33 -> port `melee_fighter::ftlib.rs:179`
+- `ftLib_GetPos` [ext_fns!] x9: tu/it_26B1.rs:44, tu/it_279C.rs:55, tu/itdrmariopill.rs:57, tu/itfoxblaster.rs:65, tu/ithitodeman.rs:48, tu/itleadead.rs:44, tu/itlikelike.rs:43, tu/itnessbat.rs:41, tu/itoctarock.rs:37 -> port `melee_fighter::ftlib.rs:182`
+- `ftLib_GetCameraBonePos` [ext_fns!] x5: tu/it_26B1.rs:45, tu/itflipper.rs:44, tu/itlinkboomerang.rs:53, tu/itoctarockstone.rs:37, tu/ittools.rs:34 -> port `melee_fighter::ftlib.rs:193`
+- `ftLib_ReleaseItem` [ext_fns!] x1: tu/item.rs:76 -> port `melee_fighter::ftlib.rs:201`
+- `ftLib_ClearHeldSpecialItem` [ext_fns!] x1: tu/item.rs:77 -> port `melee_fighter::ftlib.rs:207`
+- `ftLib_IsHoldingItem` [ext_fns!] x1: tu/item.rs:78 -> port `melee_fighter::ftlib.rs:213`
+- `ftLib_GetHeldSpecialItem` [ext_fns!] x1: tu/item.rs:79 -> port `melee_fighter::ftlib.rs:214`
+- `ftLib_IsItemVisible` [ext_fns!] x1: tu/itdraw.rs:40 -> port `melee_fighter::ftlib.rs:234`
+- `ftLib_IsFighter` [ext_fns!] x10: tu/it_26B1.rs:46, tu/it_2725.rs:66, tu/it_279C.rs:56, tu/itcoll.rs:42, tu/itdraw.rs:41, tu/itdrop.rs:32, tu/item.rs:80, tu/itflipper.rs:45, tu/itkusudama.rs:50, tu/ittools.rs:35 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_GetCollData` [ext_fns!] x1: tu/it_26B1.rs:47 -> port `melee_fighter::ftlib.rs:249`
+- `ftLib_GetECBCenter` [ext_fns!] x1: tu/it_26B1.rs:48 -> port `melee_fighter::ftlib.rs:250`
+- `ftLib_GetModelScale` [ext_fns!] x7: tu/itclinkmilk.rs:46, tu/itdrmariopill.rs:58, tu/itlinkarrow.rs:58, tu/itlinkbow.rs:40, tu/itmewtwoshadowball.rs:65, tu/itsamuschargeshot.rs:49, tu/itseakneedleheld.rs:39 -> port `melee_fighter::ftlib.rs:257`
+- `ftLib_GetScale` [ext_fns!] x3: tu/it_2725.rs:67, tu/itmewtwodisable.rs:35, tu/itnessyoyo.rs:53 -> port `melee_fighter::ftlib.rs:259`
+- `ftLib_IsShielding` [ext_fns!] x1: tu/itlinkarrow.rs:59 -> port `melee_fighter::ftlib.rs:260`
 - `ftLib_80086A4C` [ext_fns!] x1: tu/it_26B1.rs:49 -> port `melee_fighter::ftlib.rs:263`
-- `ftLib_80086BE0` [ext_fns!] x4: tu/it_26B1.rs:50, tu/it_2725.rs:68, tu/it_279C.rs:57, tu/itmetalb.rs:32 -> port `melee_fighter::ftlib.rs:294`
-- `ftLib_80086BEC` [ext_fns!] x1: tu/itflipper.rs:46 -> port `melee_fighter::ftlib.rs:295`
-- `ftLib_80086D40` [ext_fns!] x4: tu/it_2725.rs:69, tu/itnokonoko.rs:39, tu/itoldkuri.rs:35, tu/itpatapata.rs:41 -> port `melee_fighter::ftlib.rs:315`
-- `ftLib_80086DC4` [ext_fns!] x1: tu/it_2725.rs:70 -> port `melee_fighter::ftlib.rs:316`
-- `ftLib_80086E68` [ext_fns!] x1: tu/it_2725.rs:71 -> port `melee_fighter::ftlib.rs:322`
-- `ftLib_80086EB4` [ext_fns!] x3: tu/it_2725.rs:72, tu/itcoll.rs:43, tu/item.rs:81 -> port `melee_fighter::ftlib.rs:328`
-- `ftLib_80086FA8` [ext_fns!] x1: tu/itsword.rs:39 -> port `melee_fighter::ftlib.rs:350`
-- `ftLib_80086FD4` [ext_fns!] x1: tu/itcoll.rs:44 -> port `melee_fighter::ftlib.rs:355`
-- `ftLib_8008702C` [ext_fns!] x1: tu/item.rs:82 -> port `melee_fighter::ftlib.rs:367`
-- `ftLib_80087050` [ext_fns!] x1: tu/item.rs:83 -> port `melee_fighter::ftlib.rs:368`
-- `ftLib_80087074` [ext_fns!] x1: tu/itdraw.rs:42 -> port `melee_fighter::ftlib.rs:369`
-- `ftLib_800870BC` [ext_fns!] x1: tu/itzako.rs:44 -> port `melee_fighter::ftlib.rs:380`
-- `ftLib_800871A8` [ext_fns!] x1: tu/itmetalb.rs:33 -> port `melee_fighter::tu/ftlib.rs:49`
+- `ftLib_GetPlayerIndex` [ext_fns!] x4: tu/it_26B1.rs:50, tu/it_2725.rs:68, tu/it_279C.rs:57, tu/itmetalb.rs:32 -> port `melee_fighter::ftlib.rs:294`
+- `ftLib_GetPosDelta` [ext_fns!] x1: tu/itflipper.rs:46 -> port `melee_fighter::ftlib.rs:295`
+- `ftLib_StartItemRumble` [ext_fns!] x4: tu/it_2725.rs:69, tu/itnokonoko.rs:39, tu/itoldkuri.rs:35, tu/itpatapata.rs:41 -> port `melee_fighter::ftlib.rs:315`
+- `ftLib_StartItemRumbleAll` [ext_fns!] x1: tu/it_2725.rs:70 -> port `melee_fighter::ftlib.rs:316`
+- `ftLib_StopItemRumble` [ext_fns!] x1: tu/it_2725.rs:71 -> port `melee_fighter::ftlib.rs:322`
+- `ftLib_GetTeam` [ext_fns!] x3: tu/it_2725.rs:72, tu/itcoll.rs:43, tu/item.rs:81 -> port `melee_fighter::ftlib.rs:328`
+- `ftLib_IsSwordSwing` [ext_fns!] x1: tu/itsword.rs:39 -> port `melee_fighter::ftlib.rs:350`
+- `ftLib_IsSamePlayer` [ext_fns!] x1: tu/itcoll.rs:44 -> port `melee_fighter::ftlib.rs:355`
+- `ftLib_IncFighterRefCount` [ext_fns!] x1: tu/item.rs:82 -> port `melee_fighter::ftlib.rs:367`
+- `ftLib_DecFighterRefCount` [ext_fns!] x1: tu/item.rs:83 -> port `melee_fighter::ftlib.rs:368`
+- `ftLib_GetShakeOffset` [ext_fns!] x1: tu/itdraw.rs:42 -> port `melee_fighter::ftlib.rs:369`
+- `ftLib_GetSubColor` [ext_fns!] x1: tu/itzako.rs:44 -> port `melee_fighter::ftlib.rs:380`
+- `ftLib_ApplyMetalBox` [ext_fns!] x1: tu/itmetalb.rs:33 -> port `melee_fighter::tu/ftlib.rs:49`
 - `ftLib_80087284` [ext_fns!] x1: tu/itflipper.rs:47 -> port `melee_fighter::ftlib.rs:400`
-- `ftLib_800874BC` [ext_fns!] x2: tu/it_279C.rs:58, tu/itmetalb.rs:34 -> port `melee_fighter::ftlib.rs:448`
+- `ftLib_IsSubFighter` [ext_fns!] x2: tu/it_279C.rs:58, tu/itmetalb.rs:34 -> port `melee_fighter::ftlib.rs:448`
 - `ftLib_800874CC` [ext_fns!] x2: tu/itdrop.rs:33, tu/itkusudama.rs:51 -> port `melee_fighter::ftlib.rs:449`
-- `ftLib_800876D4` [ext_fns!] x1: tu/itgamewatchfire.rs:36 -> port `melee_fighter::ftlib.rs:454`
-- `ftLib_8008770C` [ext_fns!] x1: tu/itzako.rs:45 -> port `melee_fighter::ftlib.rs:457`
-- `ftLib_80087744` [ext_fns!] x1: tu/itzako.rs:46 -> port `melee_fighter::ftlib.rs:460`
+- `ftLib_IsChargingSmash` [ext_fns!] x1: tu/itgamewatchfire.rs:36 -> port `melee_fighter::ftlib.rs:454`
+- `ftLib_GetGameWatchColor` [ext_fns!] x1: tu/itzako.rs:45 -> port `melee_fighter::ftlib.rs:457`
+- `ftLib_GetGameWatchOutlineColor` [ext_fns!] x1: tu/itzako.rs:46 -> port `melee_fighter::ftlib.rs:460`
 - `ftLk_AttackAir_SetupParts` [ext_fns!] x1: tu/itlinkbomb.rs:43 -> port `melee_chara::chars/r5/ftLink.rs:51`
 - `ftLk_SepcialS_Get2219b5` [ext_fns!] x1: tu/itlinkboomerang.rs:55 -> port `melee_chara::chars/ftLink.rs:48`
 - `ftLk_SpecialHi_GetFv4` [ext_fns!] x1: tu/itlinkboomerang.rs:56 -> port `melee_chara::tu/ftlinkspecialhi.rs:154`
@@ -3364,39 +3364,39 @@ NO_PORT: 395 sites / 276 names, SIGNATURE: 376 sites / 302 names, CYCLE: 244 sit
 - `ftData_8008578C` [ext_fns!] x1: tu/player.rs:52 -> port `melee_fighter::tu/ftdata.rs:774`
 - `ftData_80085E50` [fn-body] x1: tu/ftanim.rs:70 -> port `melee_fighter::tu/ftdata.rs:1284`
 - `ftData_80085FD4` [fn-body] x1: tu/ftanim.rs:71 -> port `melee_fighter::tu/ftdata.rs:1300`
-- `ftLib_800865C0` [ext_fns!] x1: tu/plbonuslib.rs:60 -> port `melee_fighter::ftlib.rs:166`
-- `ftLib_800865CC` [ext_fns!] x1: tu/plbonuslib.rs:61 -> port `melee_fighter::ftlib.rs:167`
-- `ftLib_800865F0` [ext_fns!] x1: tu/player.rs:57 -> port `melee_fighter::ftlib.rs:174`
-- `ftLib_80086644` [ext_fns!] x1: tu/plbonuslib.rs:59 -> port `melee_fighter::ftlib.rs:182`
-- `ftLib_80086664` [ext_fns!] x1: tu/player.rs:58 -> port `melee_fighter::ftlib.rs:183`
-- `ftLib_800867D8` [ext_fns!] x1: tu/plbonuslib.rs:62 -> port `melee_fighter::ftlib.rs:215`
-- `ftLib_800867E8` [ext_fns!] x1: tu/player.rs:59 -> port `melee_fighter::ftlib.rs:216`
-- `ftLib_8008688C` [ext_fns!] x1: tu/player.rs:60 -> port `melee_fighter::ftlib.rs:226`
-- `ftLib_80086960` [ext_fns!] x1: tu/plbonuslib.rs:64 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_GetFacingDir` [ext_fns!] x1: tu/plbonuslib.rs:60 -> port `melee_fighter::ftlib.rs:166`
+- `ftLib_GetGroundAir` [ext_fns!] x1: tu/plbonuslib.rs:61 -> port `melee_fighter::ftlib.rs:167`
+- `ftLib_GetHipJObj` [ext_fns!] x1: tu/player.rs:57 -> port `melee_fighter::ftlib.rs:174`
+- `ftLib_GetPos` [ext_fns!] x1: tu/plbonuslib.rs:59 -> port `melee_fighter::ftlib.rs:182`
+- `ftLib_SetPos` [ext_fns!] x1: tu/player.rs:58 -> port `melee_fighter::ftlib.rs:183`
+- `ftLib_IsInputDisabled` [ext_fns!] x1: tu/plbonuslib.rs:62 -> port `melee_fighter::ftlib.rs:215`
+- `ftLib_DisableInput` [ext_fns!] x1: tu/player.rs:59 -> port `melee_fighter::ftlib.rs:216`
+- `ftLib_EnableInput` [ext_fns!] x1: tu/player.rs:60 -> port `melee_fighter::ftlib.rs:226`
+- `ftLib_IsFighter` [ext_fns!] x1: tu/plbonuslib.rs:64 -> port `melee_fighter::ftlib.rs:246`
 - `ftLib_800869F8` [ext_fns!] x1: tu/player.rs:61 -> port `melee_fighter::ftlib.rs:258`
 - `ftLib_80086A4C` [ext_fns!] x1: tu/player.rs:62 -> port `melee_fighter::ftlib.rs:263`
-- `ftLib_80086B90` [ext_fns!] x1: tu/player.rs:63 -> port `melee_fighter::ftlib.rs:289`
-- `ftLib_80086BB4` [ext_fns!] x1: tu/player.rs:64 -> port `melee_fighter::ftlib.rs:290`
-- `ftLib_80086BE0` [ext_fns!] x1: tu/plbonuslib.rs:65 -> port `melee_fighter::ftlib.rs:294`
+- `ftLib_GetCameraSubjectBonePos` [ext_fns!] x1: tu/player.rs:63 -> port `melee_fighter::ftlib.rs:289`
+- `ftLib_IsCameraSubjectInBounds` [ext_fns!] x1: tu/player.rs:64 -> port `melee_fighter::ftlib.rs:290`
+- `ftLib_GetPlayerIndex` [ext_fns!] x1: tu/plbonuslib.rs:65 -> port `melee_fighter::ftlib.rs:294`
 - `ftLib_80086F4C` [ext_fns!] x1: tu/player.rs:65 -> port `melee_fighter::ftlib.rs:339`
-- `ftLib_80086F80` [ext_fns!] x1: tu/player.rs:66 -> port `melee_fighter::ftlib.rs:343`
-- `ftLib_8008701C` [ext_fns!] x1: tu/player.rs:67 -> port `melee_fighter::ftlib.rs:366`
-- `ftLib_800870F0` [ext_fns!] x1: tu/player.rs:68 -> port `melee_fighter::ftlib.rs:389`
-- `ftLib_80087120` [ext_fns!] x1: tu/plbonuslib.rs:66 -> port `melee_fighter::ftlib.rs:391`
+- `ftLib_GetNameTagHeight` [ext_fns!] x1: tu/player.rs:66 -> port `melee_fighter::ftlib.rs:343`
+- `ftLib_IsSleeping` [ext_fns!] x1: tu/player.rs:67 -> port `melee_fighter::ftlib.rs:366`
+- `ftLib_SetPercent` [ext_fns!] x1: tu/player.rs:68 -> port `melee_fighter::ftlib.rs:389`
+- `ftLib_GetPercent` [ext_fns!] x1: tu/plbonuslib.rs:66 -> port `melee_fighter::ftlib.rs:391`
 - `ftLib_80087140` [ext_fns!] x1: tu/player.rs:69 -> port `melee_fighter::ftlib.rs:392`
-- `ftLib_80087300` [ext_fns!] x2: tu/player.rs:70, tu/plbonuslib.rs:68 -> port `melee_fighter::ftlib.rs:414`
-- `ftLib_8008730C` [ext_fns!] x1: tu/plbonuslib.rs:67 -> port `melee_fighter::ftlib.rs:415`
-- `ftLib_8008732C` [ext_fns!] x2: tu/plbonus.rs:38, tu/plbonuslib.rs:69 -> port `melee_fighter::ftlib.rs:422`
-- `ftLib_80087354` [ext_fns!] x1: tu/plbonuslib.rs:70 -> port `melee_fighter::ftlib.rs:423`
-- `ftLib_8008737C` [ext_fns!] x1: tu/plbonuslib.rs:71 -> port `melee_fighter::ftlib.rs:424`
-- `ftLib_800873A4` [ext_fns!] x1: tu/plbonuslib.rs:72 -> port `melee_fighter::ftlib.rs:425`
-- `ftLib_800873CC` [ext_fns!] x1: tu/player.rs:71 -> port `melee_fighter::ftlib.rs:426`
-- `ftLib_800874BC` [ext_fns!] x1: tu/plbonuslib.rs:73 -> port `melee_fighter::ftlib.rs:448`
-- `ftLib_80087610` [ext_fns!] x1: tu/player.rs:72 -> port `melee_fighter::tu/ftlib.rs:85`
-- `ftLib_800876F4` [ext_fns!] x1: tu/plbonuslib.rs:74 -> port `melee_fighter::ftlib.rs:455`
-- `ftLib_80087700` [ext_fns!] x1: tu/plbonuslib.rs:75 -> port `melee_fighter::ftlib.rs:456`
-- `ftLib_8008777C` [ext_fns!] x1: tu/plbonuslib.rs:76 -> port `melee_fighter::tu/ftlib.rs:95`
-- `ftLib_800877D4` [ext_fns!] x1: tu/plbonuslib.rs:77 -> port `melee_fighter::ftlib.rs:463`
+- `ftLib_GetLastAttackerSlot` [ext_fns!] x2: tu/player.rs:70, tu/plbonuslib.rs:68 -> port `melee_fighter::ftlib.rs:414`
+- `ftLib_IsLastAttackerSubFighter` [ext_fns!] x1: tu/plbonuslib.rs:67 -> port `melee_fighter::ftlib.rs:415`
+- `ftLib_IsDead` [ext_fns!] x2: tu/plbonus.rs:38, tu/plbonuslib.rs:69 -> port `melee_fighter::ftlib.rs:422`
+- `ftLib_IsDeadUp` [ext_fns!] x1: tu/plbonuslib.rs:70 -> port `melee_fighter::ftlib.rs:423`
+- `ftLib_IsDeadUpStar` [ext_fns!] x1: tu/plbonuslib.rs:71 -> port `melee_fighter::ftlib.rs:424`
+- `ftLib_IsDeadUpFall` [ext_fns!] x1: tu/plbonuslib.rs:72 -> port `melee_fighter::ftlib.rs:425`
+- `ftLib_IsRebirth` [ext_fns!] x1: tu/player.rs:71 -> port `melee_fighter::ftlib.rs:426`
+- `ftLib_IsSubFighter` [ext_fns!] x1: tu/plbonuslib.rs:73 -> port `melee_fighter::ftlib.rs:448`
+- `ftLib_LoadKirbyHats` [ext_fns!] x1: tu/player.rs:72 -> port `melee_fighter::tu/ftlib.rs:85`
+- `ftLib_GetLastHitSourceType` [ext_fns!] x1: tu/plbonuslib.rs:74 -> port `melee_fighter::ftlib.rs:455`
+- `ftLib_GetLastHitSourceKind` [ext_fns!] x1: tu/plbonuslib.rs:75 -> port `melee_fighter::ftlib.rs:456`
+- `ftLib_GetGroundSlopeAngle` [ext_fns!] x1: tu/plbonuslib.rs:76 -> port `melee_fighter::tu/ftlib.rs:95`
+- `ftLib_IsBeingNudged` [ext_fns!] x1: tu/plbonuslib.rs:77 -> port `melee_fighter::ftlib.rs:463`
 - `ftParts_80074B0C` [fn-body] x1: tu/ftaction.rs:65 -> port `melee_fighter::tu/ftparts.rs:108`
 - `gm_8016B3A0` [ext_fns!] x1: tu/plbonus.rs:46 -> port `melee_world::gr/stage.rs:549`
 - `GObj_Create` [ext_fns!/fn-body] x2: tu/crowdsfx.rs:35, tu/fighter.rs:160 -> port `melee_runtime::gobj.rs:528`
@@ -3802,7 +3802,7 @@ NO_PORT: 912 sites / 608 names, SIGNATURE: 2428 sites / 1249 names, CYCLE: 0 sit
 - `fe_rules_resume` [oext_fns!] x1: tu/gmfrontend.rs:384
 - `fe_settings_apply_online` [oext_fns!] x1: tu/gmfrontend.rs:385
 - `ff_load` [oext_fns!] x1: tu/gmfrontend.rs:386
-- `Fighter_ProcessHit_8006D1EC` [oext_fns!] x1: tu/script_game.rs:76
+- `Fighter_procCollResolve` [oext_fns!] x1: tu/script_game.rs:76
 - `FighterControls_MatchBegin` [ext_fns!] x1: tu/gmvs.rs:182
 - `FighterControls_MatchClear` [hook!] x1: tu/gm_1A3F.rs:313
 - `fk_build` [oext_fns!] x1: tu/gmfrontend.rs:387
@@ -4391,7 +4391,7 @@ NO_PORT: 912 sites / 608 names, SIGNATURE: 2428 sites / 1249 names, CYCLE: 0 sit
 - `efLib_Init` [ext_fns!/oext_fns!] x2: tu/gm_1798.rs:255, tu/gmregtyfall.rs:70 -> port `melee_world::tu/eflib.rs:178`
 - `Fighter_ChangeMotionState` [hooks!/oext_fns!] x2: tu/geno_game.rs:59, tu/script_game.rs:75 -> port `melee_fighter::tu/fighter.rs:1110`
 - `Fighter_ResetInputData_80068854` [oext_fns!] x1: tu/script_game.rs:74 -> port `melee_fighter::tu/fighter.rs:902`
-- `Fighter_UnkProcessDeath_80068354` [oext_fns!] x1: tu/script_game.rs:73 -> port `melee_fighter::tu/fighter.rs:791`
+- `Fighter_Spawn` [oext_fns!] x1: tu/script_game.rs:73 -> port `melee_fighter::tu/fighter.rs:791`
 - `fn_800208B0` [ext_fns!] x1: tu/lb_0219.rs:36 -> port `melee_runtime::tu/lbbgflash.rs:328`
 - `fn_80160400` [oext_fns!] x1: tu/gmresult.rs:67 -> port `melee_modes::tu/gm_1601.rs:557`
 - `fn_80160710` [ext_fns!] x1: tu/gm_16f1.rs:130 -> port `melee_modes::gm.rs:449`
@@ -4583,14 +4583,14 @@ NO_PORT: 912 sites / 608 names, SIGNATURE: 2428 sites / 1249 names, CYCLE: 0 sit
 - `ftCommon_8007E2FC` [oext_fns!] x1: tu/script_game.rs:89 -> port `melee_fighter::ftcommon2.rs:184`
 - `ftCommon_8007F804` [oext_fns!] x1: tu/script_game.rs:90 -> port `melee_fighter::ftcommon2.rs:260`
 - `ftKb_MexKirbyLike` [oext_fns!] x1: tu/script_game.rs:38 -> port `melee_chara::tu/ftkirby.rs:2478`
-- `ftLib_80086824` [ext_fns!] x1: tu/gm_17c0.rs:151 -> port `melee_fighter::ftlib.rs:220`
-- `ftLib_800868A4` [ext_fns!] x1: tu/gm_17c0.rs:152 -> port `melee_fighter::ftlib.rs:227`
-- `ftLib_80086960` [oext_fns!] x1: tu/script_game.rs:94 -> port `melee_fighter::ftlib.rs:246`
-- `ftLib_8008731C` [ext_fns!] x1: tu/gmevent.rs:64 -> port `melee_fighter::ftlib.rs:416`
-- `ftLib_80087508` [ext_fns!] x2: tu/gm_17c0.rs:153, tu/gmevent.rs:65 -> port `melee_fighter::tu/ftlib.rs:61`
-- `ftLib_80087574` [ext_fns!] x1: tu/gm_17c0.rs:154 -> port `melee_fighter::tu/ftlib.rs:71`
-- `ftLib_80087610` [ext_fns!] x1: tu/gm_17c0.rs:155 -> port `melee_fighter::tu/ftlib.rs:85`
-- `ftLib_800876B4` [ext_fns!] x1: tu/gm_1798.rs:260 -> port `melee_fighter::ftlib.rs:453`
+- `ftLib_DisableAllInput` [ext_fns!] x1: tu/gm_17c0.rs:151 -> port `melee_fighter::ftlib.rs:220`
+- `ftLib_EnableAllInput` [ext_fns!] x1: tu/gm_17c0.rs:152 -> port `melee_fighter::ftlib.rs:227`
+- `ftLib_IsFighter` [oext_fns!] x1: tu/script_game.rs:94 -> port `melee_fighter::ftlib.rs:246`
+- `ftLib_IsSleeping_8008731C` [ext_fns!] x1: tu/gmevent.rs:64 -> port `melee_fighter::ftlib.rs:416`
+- `ftLib_LoadFighterCostume` [ext_fns!] x2: tu/gm_17c0.rs:153, tu/gmevent.rs:65 -> port `melee_fighter::tu/ftlib.rs:61`
+- `ftLib_LoadFighterAllCostumes` [ext_fns!] x1: tu/gm_17c0.rs:154 -> port `melee_fighter::tu/ftlib.rs:71`
+- `ftLib_LoadKirbyHats` [ext_fns!] x1: tu/gm_17c0.rs:155 -> port `melee_fighter::tu/ftlib.rs:85`
+- `ftLib_IsFramesRemaining` [ext_fns!] x1: tu/gm_1798.rs:260 -> port `melee_fighter::ftlib.rs:453`
 - `ftPartSetRotX` [hooks!] x1: tu/geno_game.rs:69 -> port `melee_fighter::tu/ftparts.rs:159`
 - `ftPartSetRotY` [hooks!] x1: tu/geno_game.rs:70 -> port `melee_fighter::tu/ftparts.rs:160`
 - `ftPe_8011BA54` [todo_ext!] x1: tu/mex_tests.rs:30 -> port `melee_chara::tu/ftpeachfloat.rs:98`
@@ -5058,7 +5058,7 @@ NO_PORT: 912 sites / 608 names, SIGNATURE: 2428 sites / 1249 names, CYCLE: 0 sit
 - `grZakoGenerator_StageSlotRelease` [oext_fns!] x1: tu/script_game.rs:332 -> port `melee_world::tu/grzakogenerator.rs:230`
 - `hsd_80391A04` [oext_fns!] x1: tu/gmfrontend.rs:424 -> port `melee_runtime::tu/hsd_3915.rs:238`
 - `hsd_80392528` [ext_fns!/hook!] x2: tu/gm_1601.rs:114, tu/gmopening.rs:121 -> port `melee_runtime::tu/hsd_3924.rs:132`
-- `hsd_8039D048` [oext_fns!] x1: tu/script_game.rs:325 -> port `melee_runtime::tu/particle.rs:617`
+- `psClearPointJObj` [oext_fns!] x1: tu/script_game.rs:325 -> port `melee_runtime::tu/particle.rs:617`
 - `hsd_8039D3AC` [oext_fns!] x1: tu/script_game.rs:326 -> port `melee_runtime::tu/generator.rs:26`
 - `hsd_8039D5DC` [hooks!] x1: tu/geno_game.rs:163 -> port `melee_runtime::tu/generator.rs:38`
 - `HSD_AObjInitAllocData` [hooks!] x1: tu/geno_tests.rs:70 -> port `melee_runtime::tu/aobj.rs:68`
@@ -5645,10 +5645,10 @@ Remaining by reason:
 `HSD_DObjClearFlags` x2, `HSD_DObjReqAnimAll`, `HSD_DObjSetFlags` x2, `HSD_ForeachAnim` x6, `HSD_JObjAddAnimAll` x7, `HSD_JObjAnimAll` x17, `HSD_JObjDisp`, `HSD_JObjRemoveAll`, `HSD_JObjRemoveAnim`, `HSD_JObjRemoveAnimAll` x6, `HSD_JObjReqAnimAll` x15, `HSD_JObjReqAnimAllByFlags` x2, `HSD_JObjReqAnimByFlags`, `HSD_JObjResetRST`, `HSD_JObjSetDPtclCallback`, `HSD_JObjSetSPtclCallback`, `HSD_JObjSetupMatrixSub` x4, `HSD_JObjWalkTree_8039D688`, `foreach_anim_set_loop`, `grAnime_801C752C`, `jobj_add_anim_all`, `jobj_anim_all`, `jobj_req_anim_all`
 
 ### particle / generator system (only a model with ids and a host exists) (22)
-`generator_list_head`, `hsd_8039D1E4`, `hsd_8039D354`, `hsd_8039D4DC` x2, `hsd_8039D580`, `hsd_8039D5DC`, `hsd_8039EE24`, `hsd_8039EFAC` x3, `hsd_8039F05C` x2, `hsd_8039F6CC` x2, `hsd_8039d4dc`, `hsd_8039d5dc`, `hsd_8039efac`, `hsd_8039f05c`, `hsd_8039f6cc`, `psAddGeneratorAppSRT_begin` x3, `psAddParticleAppSRT_begin`, `psInitAppSRT`, `psRemoveParticleAppSRT`, `ps_add_generator_app_srt_begin`, `ptclref_cmdList`, `set_hsd_804D7900`
+`generator_list_head`, `psSetUserFunc`, `hsd_8039D354`, `hsd_8039D4DC` x2, `hsd_8039D580`, `hsd_8039D5DC`, `hsd_8039EE24`, `hsd_8039EFAC` x3, `hsd_8039F05C` x2, `hsd_8039F6CC` x2, `hsd_8039d4dc`, `hsd_8039d5dc`, `hsd_8039efac`, `hsd_8039f05c`, `hsd_8039f6cc`, `psAddGeneratorAppSRT_begin` x3, `psAddParticleAppSRT_begin`, `psInitAppSRT`, `psRemoveParticleAppSRT`, `ps_add_generator_app_srt_begin`, `ptclref_cmdList`, `set_hsd_804D7900`
 
 ### melee_fighter / melee_chara callees (ft/pl): CYCLE (21)
-`Player_80031790`, `Player_80031900`, `Player_8003219C`, `Player_80036058`, `Player_800360D8`, `Player_80036428`, `Player_80036978`, `ftCo_8009EC70` x2, `ftCo_8009F4A4`, `ftCo_800C0FCC`, `ftData_UnkBytePerCharacter`, `ftDrawCommon_80080C28`, `ftDrawCommon_80081118`, `ftDrawCommon_80081140`, `ftKb_MexKirbyLike`, `ftLib_800864A8` x2, `ftLib_80086C18` x3, `ftLib_80086C9C` x2, `ftLib_80086ED0`, `ftLib_UpdateLogicOffCamera`, `ft_80087838`
+`Player_80031790`, `Player_80031900`, `Player_8003219C`, `Player_80036058`, `Player_800360D8`, `Player_80036428`, `Player_80036978`, `ftCo_8009EC70` x2, `ftCo_8009F4A4`, `ftCo_800C0FCC`, `ftData_UnkBytePerCharacter`, `ftDrawCommon_80080C28`, `ftDrawCommon_80081118`, `ftDrawCommon_80081140`, `ftKb_MexKirbyLike`, `ftLib_GetOpponentsDir` x2, `ftLib_StartRumble` x3, `ftLib_StartRumbleAll` x2, `ftLib_CanBeMagnified`, `ftLib_UpdateLogicOffCamera`, `ft_80087838`
 
 ### effect host API (efSync / efAsync / efLib spawn with C varargs and a Host trait) (12)
 `efAlt_Spawn`, `efAsync_DatEntries_clear`, `efAsync_DatEntries_data`, `efAsync_Dispatch`, `efAsync_MexResolve`, `efAsync_QueueInit`, `efLib_AnimQueue`, `efLib_CreateGenerator_AppSRT_SetFacingDir`, `efLib_CreateGenerator_AppSRT_SetFacingDirScale`, `efLib_CreateGenerator_AppSRT_SetScale`, `efLib_CreateGenerator_Attach_Scale`, `efSync_Spawn` x7

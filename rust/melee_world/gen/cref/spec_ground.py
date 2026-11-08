@@ -196,7 +196,7 @@ SPEC = dict(
         "HSD_LObjSetPosition": ("TV(a1);", "super::tv(a1);"),
         "HSD_WObjSetPosition": ("TV(a1);", "super::tv(a1);"),
         "Player_LoadPlayerCoords": ("WV(a1);", "super::wv(a1);"),
-        "ftLib_80086644": ("WV(a1);", "super::wv(a1);"),
+        "ftLib_GetPos": ("WV(a1);", "super::wv(a1);"),
         "Stage_UnkSetVec3TCam_Offset": ("WV(a0);", "super::wv(a0);"),
         "lb_8000B1CC": ("WV(a2);", "super::wv(a2);"),
         "splGetSplinePoint": ("WV(a0);", "super::wv(a0);"),

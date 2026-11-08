@@ -63,9 +63,9 @@ pub mod ext {
     }
     ext_fns! {
     fn ScriptGame_StageSlotSameJoint(a0: i32, a1: i32) -> i32;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086960(a0 as _) as _ };
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086BE0(a0 as _) as _ };
-    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_800874BC(a0 as _) as _ };
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsFighter(a0 as _) as _ };
+    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_GetPlayerIndex(a0 as _) as _ };
+    fn ftLib_IsSubFighter(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsSubFighter(a0 as _) as _ };
     fn grDynamicAttr_801CA284(a0: *mut Vec, a1: i32) -> i32 = |a0: *mut Vec, a1: i32| unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA284(a0 as _, a1 as _) as _ };
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind = |a0: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(a0 as _) as _ };
     fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };
@@ -116,8 +116,8 @@ pub unsafe fn mpCollPrev(mut cd: *mut CollData) {
     mpColl_804D64A4 = null_mut();
     if ext::DbLevel >= ((DbLKind_DebugRom as i32) as u32) {
         if (((!((*cd).cur_pos.x < 4.5e+04f32)) || (!((*cd).cur_pos.x > (-4.5e+04f32)))) || (!((*cd).cur_pos.y < 4.5e+04f32))) || (!((*cd).cur_pos.y > (-4.5e+04f32))) {
-            if ext::ftLib_80086960((*cd).x0_gobj) != 0 {
-                ext::OSReport(&format!("{}:{}: Error: mpCollPrev() pos({:.6},{:.6}) player={} ms={}\n", core::ffi::CStr::from_ptr((c"mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 203, (*cd).cur_pos.x as f64, (*cd).cur_pos.y as f64, ext::ftLib_80086BE0((*cd).x0_gobj) as i32, ext::ftLib_800874BC((*cd).x0_gobj)));
+            if ext::ftLib_IsFighter((*cd).x0_gobj) != 0 {
+                ext::OSReport(&format!("{}:{}: Error: mpCollPrev() pos({:.6},{:.6}) player={} ms={}\n", core::ffi::CStr::from_ptr((c"mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 203, (*cd).cur_pos.x as f64, (*cd).cur_pos.y as f64, ext::ftLib_GetPlayerIndex((*cd).x0_gobj) as i32, ext::ftLib_IsSubFighter((*cd).x0_gobj)));
             } else {
                 ext::OSReport(&format!("{}:{}: Error: mpCollPrev() pos({:.6},{:.6}) gobj_id={}\n", core::ffi::CStr::from_ptr((c"mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 212, (*(*cd).x0_gobj).classifier as i32, (*cd).cur_pos.x as f64, (*cd).cur_pos.y as f64));
                 if ((*(*cd).x0_gobj).p_link as i32) == 9 {
@@ -773,8 +773,8 @@ pub unsafe fn mpCollEnd(mut coll: *mut CollData, mut arg1: i32, mut arg2: i32) {
     }
     if ext::DbLevel >= ((DbLKind_DebugRom as i32) as u32) {
         if !(((((*coll).cur_pos.x < 4.5e+04f32) && ((*coll).cur_pos.x > (-4.5e+04f32))) && ((*coll).cur_pos.y < 4.5e+04f32)) && ((*coll).cur_pos.y > (-4.5e+04f32))) {
-            if ext::ftLib_80086960((*coll).x0_gobj) != 0 {
-                ext::OSReport(&format!("{}:{}: Error: mpCollEnd() last({:.6},{:.6}) pos({:.6},{:.6}) ply={} ms={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 1350, (*coll).last_pos.x as f64, (*coll).last_pos.y as f64, (*coll).cur_pos.x as f64, (*coll).cur_pos.y as f64, ext::ftLib_80086BE0((*coll).x0_gobj) as i32, ext::ftLib_800874BC((*coll).x0_gobj)));
+            if ext::ftLib_IsFighter((*coll).x0_gobj) != 0 {
+                ext::OSReport(&format!("{}:{}: Error: mpCollEnd() last({:.6},{:.6}) pos({:.6},{:.6}) ply={} ms={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 1350, (*coll).last_pos.x as f64, (*coll).last_pos.y as f64, (*coll).cur_pos.x as f64, (*coll).cur_pos.y as f64, ext::ftLib_GetPlayerIndex((*coll).x0_gobj) as i32, ext::ftLib_IsSubFighter((*coll).x0_gobj)));
             } else {
                 let mut gobjid: i32 = (*(*coll).x0_gobj).classifier as i32;
                 ext::OSReport(&format!("{}:{}: Error: mpCollEnd() last({:.6},{:.6}) pos({:.6},{:.6}) gobjid={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mpcoll.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 1358, (*coll).last_pos.x as f64, (*coll).last_pos.y as f64, (*coll).cur_pos.x as f64, (*coll).cur_pos.y as f64, gobjid));

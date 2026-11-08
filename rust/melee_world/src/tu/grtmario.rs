@@ -40,8 +40,8 @@ pub mod ext {
         pub ftCo_800C07F8: unsafe fn(g: *mut HSD_GObj, k: u32, f: *const c_void),
         pub Ground_801C10B8: unsafe fn(g: *mut HSD_GObj, f: HSD_GObjEvent),
         pub Ground_801C0498: unsafe fn() -> f32,
-        pub ftLib_80086644: unsafe fn(g: *mut HSD_GObj, out: *mut Vec3),
-        pub ftLib_80086684: unsafe fn(g: *mut HSD_GObj, out: *mut Vec3),
+        pub ftLib_GetPos: unsafe fn(g: *mut HSD_GObj, out: *mut Vec3),
+        pub ftLib_GetPrevPos: unsafe fn(g: *mut HSD_GObj, out: *mut Vec3),
         pub ftLib_80086B80: unsafe fn(g: *mut HSD_GObj) -> f32,
         pub grLib_801C96F8: unsafe fn(a: i32, b: i32, p: *mut Vec3) -> *mut HSD_Generator,
     }
@@ -52,8 +52,8 @@ pub mod ext {
     unsafe fn todo_ftCo_800C07F8(_g: *mut HSD_GObj, _k: u32, _f: *const c_void) { crate::ftdevice::ftCo_800C07F8(_g as _, _k, core::mem::transmute::<*const c_void, melee_types::ftDevice_Callback0>(_f)) }
     unsafe fn todo_Ground_801C10B8(_g: *mut HSD_GObj, _f: HSD_GObjEvent) { { unsafe { crate::tu::ground::Ground_801C10B8(_g as _, _f as _); } return; } }
     unsafe fn todo_Ground_801C0498() -> f32 { { return unsafe { crate::tu::ground::Ground_801C0498() as _ }; } }
-    unsafe fn todo_ftLib_80086644(_g: *mut HSD_GObj, _out: *mut Vec3) { unsafe { let _ = crate::ftlib::ftLib_80086644(_g as _, _out as _); } }
-    unsafe fn todo_ftLib_80086684(_g: *mut HSD_GObj, _out: *mut Vec3) { unsafe { let _ = crate::ftlib::ftLib_80086684(_g as _, _out as _); } }
+    unsafe fn todo_ftLib_GetPos(_g: *mut HSD_GObj, _out: *mut Vec3) { unsafe { let _ = crate::ftlib::ftLib_GetPos(_g as _, _out as _); } }
+    unsafe fn todo_ftLib_GetPrevPos(_g: *mut HSD_GObj, _out: *mut Vec3) { unsafe { let _ = crate::ftlib::ftLib_GetPrevPos(_g as _, _out as _); } }
     unsafe fn todo_ftLib_80086B80(_g: *mut HSD_GObj) -> f32 { unsafe { crate::ftlib::ftLib_80086B80(_g as _) as _ } }
     unsafe fn todo_grLib_801C96F8(_a: i32, _b: i32, _p: *mut Vec3) -> *mut HSD_Generator { { return unsafe { crate::tu::grlib::grLib_801C96F8(_a as _, _b as _, _p as _) as _ }; } }
     impl Hooks {
@@ -66,8 +66,8 @@ pub mod ext {
                 ftCo_800C07F8: todo_ftCo_800C07F8,
                 Ground_801C10B8: todo_Ground_801C10B8,
                 Ground_801C0498: todo_Ground_801C0498,
-                ftLib_80086644: todo_ftLib_80086644,
-                ftLib_80086684: todo_ftLib_80086684,
+                ftLib_GetPos: todo_ftLib_GetPos,
+                ftLib_GetPrevPos: todo_ftLib_GetPrevPos,
                 ftLib_80086B80: todo_ftLib_80086B80,
                 grLib_801C96F8: todo_grLib_801C96F8,
             }
@@ -103,12 +103,12 @@ pub mod ext {
         let hook = HOOKS.read().unwrap_or_else(|e| e.into_inner()).Ground_801C0498;
         hook()
     }
-    pub unsafe fn ftLib_80086644(g: *mut HSD_GObj, out: *mut Vec3) {
-        let hook = HOOKS.read().unwrap_or_else(|e| e.into_inner()).ftLib_80086644;
+    pub unsafe fn ftLib_GetPos(g: *mut HSD_GObj, out: *mut Vec3) {
+        let hook = HOOKS.read().unwrap_or_else(|e| e.into_inner()).ftLib_GetPos;
         hook(g, out)
     }
-    pub unsafe fn ftLib_80086684(g: *mut HSD_GObj, out: *mut Vec3) {
-        let hook = HOOKS.read().unwrap_or_else(|e| e.into_inner()).ftLib_80086684;
+    pub unsafe fn ftLib_GetPrevPos(g: *mut HSD_GObj, out: *mut Vec3) {
+        let hook = HOOKS.read().unwrap_or_else(|e| e.into_inner()).ftLib_GetPrevPos;
         hook(g, out)
     }
     pub unsafe fn ftLib_80086B80(g: *mut HSD_GObj) -> f32 {
@@ -276,8 +276,8 @@ pub unsafe extern "C" fn lbl_8021FB50(unk: i32, gobj: *mut HSD_GObj) -> i32 {
     let mut previous: Vec3 = core::mem::zeroed();
     let unused: f32 = -120.0f32;
     let temp_f31: f32 = unused * ext::Ground_801C0498();
-    ext::ftLib_80086644(gobj, &mut current);
-    ext::ftLib_80086684(gobj, &mut previous);
+    ext::ftLib_GetPos(gobj, &mut current);
+    ext::ftLib_GetPrevPos(gobj, &mut previous);
     if current.y < temp_f31 && previous.y > temp_f31 {
         let temp_f1: f32 = ext::ftLib_80086B80(gobj) / 10.0f32;
         current.y = temp_f31;

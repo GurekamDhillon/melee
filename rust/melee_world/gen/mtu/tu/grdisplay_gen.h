@@ -36,8 +36,8 @@ __typeof__(int) ScriptGame_StageSlotOwned(__typeof__(struct HSD_GObj *) a0) { T(
 void SurfaceBegin(__typeof__(int) a0) { T(1023); T((u32) a0); }
 void SurfaceEnd(void) { T(1024); }
 __typeof__(int) Wb_RenderOption(__typeof__(int) a0, __typeof__(int) a1) { T(1025); T((u32) a0); T((u32) a1); return (__typeof__(int)) (fv()); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1026); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-__typeof__(struct LbShadow *) ftLib_800872B0(__typeof__(struct HSD_GObj *) a0) { T(1027); T(PI((const void*) a0)); return (__typeof__(struct LbShadow *)) (&SHAD[fv() % 3]); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1026); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+__typeof__(struct LbShadow *) ftLib_GetShadow(__typeof__(struct HSD_GObj *) a0) { T(1027); T(PI((const void*) a0)); return (__typeof__(struct LbShadow *)) (&SHAD[fv() % 3]); }
 void lbShadow_8000EEE0(__typeof__(struct HSD_GObj *) a0) { T(1028); T(PI((const void*) a0)); }
 void lbShadow_8000EFEC(void) { T(1029); }
 static void fill_Ground(Ground* p)
@@ -338,7 +338,7 @@ static void freg_all(void)
 // stub SurfaceBegin = 1023
 // stub SurfaceEnd = 1024
 // stub Wb_RenderOption = 1025
-// stub ftLib_80086644 = 1026
-// stub ftLib_800872B0 = 1027
+// stub ftLib_GetPos = 1026
+// stub ftLib_GetShadow = 1027
 // stub lbShadow_8000EEE0 = 1028
 // stub lbShadow_8000EFEC = 1029

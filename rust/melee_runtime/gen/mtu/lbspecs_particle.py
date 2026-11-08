@@ -39,6 +39,6 @@ add("particle", "src/sysdolphin/baselib/particle.c", dict(
     pregs=("freg((const void*) cb_hook); freg((const void*) cb_part);", "freg(cb_hook as usize); freg(cb_part as usize); melee_runtime::tu::lbext::H_OSReport = Some(|_f, _a| ());")),
     pub_only=True, types=[p[0] for p in POOLS], pools=[p[0] for p in POOLS], own_fill=FILL, own_hash=OWN, own_only=ONLY,
     skip_stubs=["memcpy", "memset", "sqrtf", "__frsqrte", "sinf", "cosf", "tanf"],
-    ret={"atan2f": ("rw()", "rw()"), "HSD_ObjAlloc": ("(fv() % 5) ? (void*) pick_HSD_Particle() : 0", "if fv() % 5 != 0 { pick_HSD_Particle() as *mut c_void } else { null_mut() }"), "hsd_8039D1EC": ("(u16) (fv() % 3)", "(fv() % 3) as u16"),
+    ret={"atan2f": ("rw()", "rw()"), "HSD_ObjAlloc": ("(fv() % 5) ? (void*) pick_HSD_Particle() : 0", "if fv() % 5 != 0 { pick_HSD_Particle() as *mut c_void } else { null_mut() }"), "psGetNewIDNum": ("(u16) (fv() % 3)", "(fv() % 3) as u16"),
          "psAttachParticleAppSRT": ("(int) (fv() & 1)", "(fv() & 1) as i32"), "psRemoveParticleAppSRT": ("(int) (fv() & 1)", "(fv() & 1) as i32"), "HSD_Randf": ("rw()", "rw()"),
          "HSD_JObjAlloc": ("pick_HSD_JObj()", "pick_HSD_JObj()")})

@@ -131,8 +131,8 @@ pub mod ext {
     fn ftKb_SpecialNFx_800FDD4C(a0: *mut HSD_GObj) -> u32;
     fn ftKb_SpecialNFx_800FDDF4(a0: *mut HSD_GObj) -> i32;
     fn ftKb_SpecialNFx_800FDEB4(a0: *mut HSD_GObj);
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetFacingDir(a0) };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
@@ -325,7 +325,7 @@ pub unsafe extern "C" fn it_802ADF10(item_gobj: *mut HSD_GObj) {
 
     if (*item).owner == (*item).xDD4_itemVar.foxblaster.owner && (*item).xDD4_itemVar.foxblaster.gfx_spawn_var != 0 {
         (*item).xDD4_itemVar.foxblaster.gfx_spawn_var = 0;
-        ext::ftLib_80086644((*item).xDD4_itemVar.foxblaster.owner, &mut ft_cur_pos);
+        ext::ftLib_GetPos((*item).xDD4_itemVar.foxblaster.owner, &mut ft_cur_pos);
 
         match (*item).kind {
             It_Kind_Fox_Blaster | It_Kind_Falco_Blaster => {
@@ -553,9 +553,9 @@ pub unsafe extern "C" fn it_802AE994(owner_gobj: *mut Fighter_GObj, ft_part: Fig
     let item_gobj: *mut Item_GObj;
     if !owner_gobj.is_null() {
         spawn.kind = it_kind;
-        ext::ftLib_80086644(owner_gobj, &mut sp18);
+        ext::ftLib_GetPos(owner_gobj, &mut sp18);
         Item_InitSpawnPosition(&mut spawn, &sp18, true);
-        let dir = ext::ftLib_800865C0(owner_gobj);
+        let dir = ext::ftLib_GetFacingDir(owner_gobj);
         Item_InitSpawnCommonFields(&mut spawn, owner_gobj, dir, false);
         item_gobj = ext::Item_80268B18(&mut spawn);
         if !item_gobj.is_null() {

@@ -6,7 +6,7 @@
 //! this one) owns the rest of player.c; `melee_fighter::{stale, player, tu::player}` re-export these
 //! items, so there is a single copy of the table and of each accessor.
 //!
-//! The functions that go through a fighter (`Player_8003219C` -> `ftLib_8008701C`, ...) stay in
+//! The functions that go through a fighter (`Player_8003219C` -> `ftLib_IsSleeping`, ...) stay in
 //! `melee_fighter::tu::player`. No float arithmetic here. Checked by the fighter's
 //! `tests/player_ref.rs` / `tests/stale_ref.rs` (gen/cref/player_ref.c), which run on these items.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]

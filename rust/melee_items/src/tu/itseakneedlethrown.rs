@@ -42,7 +42,7 @@ pub mod ext {
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
-    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_800865CC(a0) };
+    fn ftLib_GetGroundAir(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetGroundAir(a0) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB68(a0, a1 as _) };
@@ -184,7 +184,7 @@ pub unsafe extern "C" fn it_802AFF08(gobj: *mut Item_GObj, owner: *mut Fighter_G
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     ext::it_8026BD6C(gobj);
     ext::it_80275158(gobj, (*attr).x0);
-    if ext::ftLib_800865CC(owner) != 0 {
+    if ext::ftLib_GetGroundAir(owner) != 0 {
         angle_factor = 2.3561945;
     } else {
         angle_factor = 1.5707964;

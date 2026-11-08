@@ -39,8 +39,8 @@ pub fn install() {
         Stage_GetBlastZoneTopOffset = Some(|| { t(1025); rw() });
         efSync_Spawn = Some(|a0, a1, a2, a3| { t(1026); t(a0 as u32); t(pi(a1)); t(pi(a2)); unsafe { t((*a2).x.to_bits()); t((*a2).y.to_bits()); t((*a2).z.to_bits()); if a0 == 1032 { t((*a3).to_bits()); } } core::ptr::null_mut() });
         ftCo_800C06E8 = Some(|a0, a1, a2| { t(1027); t(pi(a0)); t(a1 as u32); t(pi(a2)); });
-        ftLib_800864A8 = Some(|a0, a1| { t(1028); t(pi(a0)); t(pi(a1)); rg() });
-        ftLib_80086644 = Some(|a0, a1| { t(1029); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
+        ftLib_GetOpponentsDir = Some(|a0, a1| { t(1028); t(pi(a0)); t(pi(a1)); rg() });
+        ftLib_GetPos = Some(|a0, a1| { t(1029); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1030); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grAnime_801C83D0 = Some(|a0, a1, a2| { t(1031); t(pi(a0)); t(a1 as u32); t(a2 as u32); fv() as _ });
         grAnime_801C84A4 = Some(|a0, a1, a2| { t(1032); t(pi(a0)); t(a1 as u32); t(a2 as u32); fv() as _ });
@@ -75,7 +75,7 @@ pub fn freg_all() {
     freg(m::ext::cb::grDisplay_801C5DB0 as *const () as usize);
     freg(m::BOMB as *const () as usize);
     freg(m::find_block as *const () as usize);
-    freg(m::fn_80213B1C as *const () as usize);
+    freg(m::grGreens_80213B1C as *const () as usize);
     freg(m::fn_80214658 as *const () as usize);
     freg(m::fn_802159B4 as *const () as usize);
     freg(m::fn_80215B84 as *const () as usize);

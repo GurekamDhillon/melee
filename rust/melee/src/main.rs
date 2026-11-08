@@ -743,6 +743,11 @@ pub(crate) fn install_replay(mut pl: melee_data::player::Player) {
         CODES = codes;
         FROZEN = frozen as i32;
         h::Slippi_Codes = Some(|| unsafe { CODES });
+        // the fighter TUs' own Slippi_Codes hook (ftLib_800864A8's WhispyBlowDirFix, the DeadUpFall freeze, Nana) and
+        // Final Destination's (grlast) are separate tables; manual.rs leaves them at 0, so an online replay never
+        // turned those codes on
+        melee_fighter::hooks::SLIPPI_CODES = Some(|| unsafe { CODES });
+        melee_world::tu::grlast::ext::SLIPPI_CODES = Some(|| unsafe { CODES });
         melee_world::tu::grpstadium::ext::hook::Slippi_FrozenStadium = Some(|| unsafe { FROZEN });
         melee_runtime::tu::mex_data::SLIPPI_REPLAY_VERSION = Some(ver);
         REPLAY = Some(pl);

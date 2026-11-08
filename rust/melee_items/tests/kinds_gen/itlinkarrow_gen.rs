@@ -30,10 +30,10 @@ pub fn install() {
         ftCo_80094098 = Some(|a0, a1| { t(1017); t(pi(a0)); t(pi(a1)); if !a1.is_null() { *a1 = rw(); } rg() });
         ftKb_SpecialNLk800FB418 = Some(|a0| { t(1018); t(pi(a0)); });
         ftKb_SpecialNLk800FB470 = Some(|a0| { t(1019); t(pi(a0)); fv() as _ });
-        ftLib_800865C0 = Some(|a0| { t(1020); t(pi(a0)); rg() });
-        ftLib_80086630 = Some(|a0, a1| { t(1021); t(pi(a0)); t(a1 as u32); &raw mut crate::JO[3 + (fv() % 3) as usize] });
-        ftLib_800869D4 = Some(|a0| { t(1022); t(pi(a0)); rg() });
-        ftLib_80086A18 = Some(|a0| { t(1023); t(pi(a0)); fv() as _ });
+        ftLib_GetFacingDir = Some(|a0| { t(1020); t(pi(a0)); rg() });
+        ftLib_GetPartJObj = Some(|a0, a1| { t(1021); t(pi(a0)); t(a1 as u32); &raw mut crate::JO[3 + (fv() % 3) as usize] });
+        ftLib_GetModelScale = Some(|a0| { t(1022); t(pi(a0)); rg() });
+        ftLib_IsShielding = Some(|a0| { t(1023); t(pi(a0)); fv() as _ });
         ftLk_SpecialN_IsActiveAnd2071b6 = Some(|a0| { t(1024); t(pi(a0)); fv() as _ });
         ftLk_SpecialN_UnsetArrow = Some(|a0| { t(1025); t(pi(a0)); });
         it_8026B3A8 = Some(|a0| { t(1026); t(pi(a0)); });

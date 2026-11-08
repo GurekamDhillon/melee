@@ -42,7 +42,7 @@ SPEC = dict(
     },
     effects={
         "lb_8000B1CC": ("WV(a2);", "super::wv(a2);"),
-        "ftLib_80086644": ("WV(a1);", "super::wv(a1);"),
+        "ftLib_GetPos": ("WV(a1);", "super::wv(a1);"),
         "Camera_LogicBounds": ("*a0 = rg() * 300.0f; *a1 = rg() * 300.0f; *a2 = rg() * 300.0f;",
                                "*a0 = rg() * 300.0; *a1 = rg() * 300.0; *a2 = rg() * 300.0;"),
     },

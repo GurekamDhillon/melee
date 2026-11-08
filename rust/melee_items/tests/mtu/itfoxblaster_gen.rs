@@ -35,8 +35,8 @@ pub fn install() {
         ftKb_SpecialNFx_800FDD4C = Some(|a0| { t(1022); t(pi(a0)); fv() % 11 });
         ftKb_SpecialNFx_800FDDF4 = Some(|a0| { t(1023); t(pi(a0)); (fv() % 3) as i32 });
         ftKb_SpecialNFx_800FDEB4 = Some(|a0| { t(1024); t(pi(a0)); });
-        ftLib_800865C0 = Some(|a0| { t(1025); t(pi(a0)); rg() });
-        ftLib_80086644 = Some(|a0, a1| { t(1026); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
+        ftLib_GetFacingDir = Some(|a0| { t(1025); t(pi(a0)); rg() });
+        ftLib_GetPos = Some(|a0, a1| { t(1026); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
         it_8026B894 = Some(|a0, a1| { t(1027); t(pi(a0)); t(pi(a1)); fv() as _ });
     }
 }

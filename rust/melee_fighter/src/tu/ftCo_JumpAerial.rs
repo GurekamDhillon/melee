@@ -158,16 +158,23 @@ pub fn ftCo_JumpAerial_CheckInput(g: G, arg1: bool) -> bool {
             ext::ft_800D2E7C(g, &mut v);
             return true;
         }
-        match fp(g).kind {
-            Ft_Kind_Ness => ftNs_JumpAerial_Enter(g),
-            Ft_Kind_Yoshi => ftYs_JumpAerial_Enter(g),
-            Ft_Kind_Peach => ftPe_JumpAerial_Enter(g),
-            Ft_Kind_Mewtwo => ftMt_JumpAerial_Enter(g),
-            _ => ftCo_JumpAerial_Enter_Basic(g),
-        }
+        // m-ex `Fighter OnDoubleJump/DJ.asm` @ 0x800CBA30: the per-kind onDoubleJump replaces this kind switch (the
+        // hook is the whole air-jump enter: it calls ftCo_800CBAC4 / the Basic enter itself), else the switch runs
+        ext::Mex_OnDoubleJumpDispatch(fp(g).kind as i32, g, jump_aerial_enter_vanilla as *mut core::ffi::c_void);
         return true;
     }
     false
+}
+
+/// The retail kind switch of ftCo_JumpAerial_CheckInput (the vanilla of the m-ex onDoubleJump hook).
+unsafe extern "C" fn jump_aerial_enter_vanilla(g: G) {
+    match fp(g).kind {
+        Ft_Kind_Ness => ftNs_JumpAerial_Enter(g),
+        Ft_Kind_Yoshi => ftYs_JumpAerial_Enter(g),
+        Ft_Kind_Peach => ftPe_JumpAerial_Enter(g),
+        Ft_Kind_Mewtwo => ftMt_JumpAerial_Enter(g),
+        _ => ftCo_JumpAerial_Enter_Basic(g),
+    }
 }
 
 /// static inline `ft_SetVec`.
@@ -201,7 +208,6 @@ pub fn ft_JumpAerial_MarkAir(f: &mut Fighter) {
 
 pub fn ftCo_800CBAC4(g: G, msid: i32, vel: &Vec3, arg3: bool) {
     melee_core::ct!("ftCo_800CBAC4");
-    ext::Mex_OnDoubleJumpDispatch(fp(g).kind as i32, g, core::ptr::null_mut());
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_SkipNametagVis, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.set_x2221_b7(1);

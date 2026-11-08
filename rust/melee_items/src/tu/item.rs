@@ -186,14 +186,14 @@ pub mod ext {
     fn efAsync_QueueClear(a0: *mut c_void);
     fn efAsync_QueueFlush(a0: *mut HSD_GObj, a1: *mut c_void);
     fn efLib_DestroyAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(a0) };
-    fn ftLib_80086724(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
-    fn ftLib_80086764(a0: *mut HSD_GObj);
-    fn ftLib_800867A0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_800867A0(a0, a1) as _ };
-    fn ftLib_800867CC(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { crate::tu::ftlib::ftLib_800867CC(a0) };
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
-    fn ftLib_80086EB4(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086EB4(a0) };
-    fn ftLib_8008702C(a0: i32);
-    fn ftLib_80087050(a0: i32);
+    fn ftLib_ReleaseItem(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn ftLib_ClearHeldSpecialItem(a0: *mut HSD_GObj);
+    fn ftLib_IsHoldingItem(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsHoldingItem(a0, a1) as _ };
+    fn ftLib_GetHeldSpecialItem(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { crate::tu::ftlib::ftLib_GetHeldSpecialItem(a0) };
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsFighter(a0) as _ };
+    fn ftLib_GetTeam(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetTeam(a0) };
+    fn ftLib_IncFighterRefCount(a0: i32);
+    fn ftLib_DecFighterRefCount(a0: i32);
     fn ftLib_GetKind(a0: *mut HSD_GObj) -> u32;
     fn gm_8016AE80() -> i32;
     fn gm_8017E068() -> i32;
@@ -959,7 +959,7 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
     ext::it_80275504(gobj);
     ext::it_80274EF8(gobj);
 
-    if ext::ftLib_80086960((*spawnItem).x0_parent_gobj) != 0 {
+    if ext::ftLib_IsFighter((*spawnItem).x0_parent_gobj) != 0 {
         (*item_data).xDC8_word.flags.set_x1(0);
     } else {
         (*item_data).xDC8_word.flags.set_x1(1);
@@ -986,8 +986,8 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
 
     if (*spawnItem).x0_parent_gobj.is_null() {
         (*item_data).x20_team_id = (-1i32) as _;
-    } else if ext::ftLib_80086960((*spawnItem).x0_parent_gobj) != 0 {
-        (*item_data).x20_team_id = ext::ftLib_80086EB4((*spawnItem).x0_parent_gobj) as _;
+    } else if ext::ftLib_IsFighter((*spawnItem).x0_parent_gobj) != 0 {
+        (*item_data).x20_team_id = ext::ftLib_GetTeam((*spawnItem).x0_parent_gobj) as _;
     } else if ext::it_80272D1C((*spawnItem).x0_parent_gobj) != 0 {
         (*item_data).x20_team_id = ext::itGetTeamId((*spawnItem).x0_parent_gobj) as _;
     } else {
@@ -1151,10 +1151,10 @@ pub unsafe extern "C" fn foobar2(gobj: *mut HSD_GObj) {
     melee_core::ct!("foobar2");
     let it = get_item(gobj);
     // Check if item is a character item with an owner
-    if (*it).kind >= It_Kind_Mario_Fire && (*it).kind < It_Kind_Unk4 && ext::ftLib_80086960((*it).owner) != 0 {
+    if (*it).kind >= It_Kind_Mario_Fire && (*it).kind < It_Kind_Unk4 && ext::ftLib_IsFighter((*it).owner) != 0 {
         (*it).xDC8_word.flags.set_xE(1);
         (*it).ecb_lock = ext::ftLib_GetKind((*it).owner) as _;
-        ext::ftLib_8008702C((*it).ecb_lock);
+        ext::ftLib_IncFighterRefCount((*it).ecb_lock);
     }
 }
 
@@ -1902,11 +1902,11 @@ pub unsafe extern "C" fn Item_80269F14(gobj: *mut HSD_GObj) -> bool {
         if (*temp_item).kind == It_Kind_M_Ball {
             if (*temp_item).xDCC_flag.b2() == 0 {
                 (*temp_item).owner = (*temp_item).xC64_reflectGObj;
-                (*temp_item).x20_team_id = ext::ftLib_80086EB4((*temp_item).owner) as _;
+                (*temp_item).x20_team_id = ext::ftLib_GetTeam((*temp_item).owner) as _;
             }
         } else {
             (*temp_item).owner = (*temp_item).xC64_reflectGObj;
-            (*temp_item).x20_team_id = ext::ftLib_80086EB4((*temp_item).owner) as _;
+            (*temp_item).x20_team_id = ext::ftLib_GetTeam((*temp_item).owner) as _;
         }
     }
 
@@ -2179,11 +2179,11 @@ pub unsafe extern "C" fn Item_8026A848(gobj: *mut HSD_GObj, fighter_gobj: *mut H
         && (*temp_item).kind != It_Kind_Peach_Turnip
         && (*temp_item).kind != It_Kind_Peach_Parasol
     {
-        if ext::ftLib_800867CC(fighter_gobj) == gobj {
-            ext::ftLib_80086764(fighter_gobj);
+        if ext::ftLib_GetHeldSpecialItem(fighter_gobj) == gobj {
+            ext::ftLib_ClearHeldSpecialItem(fighter_gobj);
         }
-    } else if ext::ftLib_800867A0(fighter_gobj, gobj) != 0 {
-        ext::ftLib_80086724(fighter_gobj, gobj);
+    } else if ext::ftLib_IsHoldingItem(fighter_gobj, gobj) != 0 {
+        ext::ftLib_ReleaseItem(fighter_gobj, gobj);
     }
 }
 
@@ -2198,11 +2198,11 @@ pub unsafe extern "C" fn DestroyItemInline(gobj: *mut HSD_GObj, other_ip: *mut I
         && (*ip).kind != It_Kind_Peach_Turnip
         && (*ip).kind != It_Kind_Peach_Parasol
     {
-        if ext::ftLib_800867CC(other) == gobj {
-            ext::ftLib_80086764(other);
+        if ext::ftLib_GetHeldSpecialItem(other) == gobj {
+            ext::ftLib_ClearHeldSpecialItem(other);
         }
-    } else if ext::ftLib_800867A0(other, gobj) != 0 {
-        ext::ftLib_80086724(other, gobj);
+    } else if ext::ftLib_IsHoldingItem(other, gobj) != 0 {
+        ext::ftLib_ReleaseItem(other, gobj);
     }
 }
 
@@ -2228,7 +2228,7 @@ pub unsafe extern "C" fn func_8026A8EC_inline1(gobj: *mut HSD_GObj) {
     melee_core::ct!("func_8026A8EC_inline1");
     let ip = get_item(gobj);
     if (*ip).xDC8_word.flags.xE() != 0 {
-        ext::ftLib_80087050((*ip).ecb_lock);
+        ext::ftLib_DecFighterRefCount((*ip).ecb_lock);
         (*ip).xDC8_word.flags.set_xE(0);
         (*ip).ecb_lock = -1;
     }
@@ -2270,7 +2270,7 @@ pub unsafe extern "C" fn Item_8026A8EC(gobj: *mut HSD_GObj) {
 
     func_8026A8EC_inline2(gobj);
 
-    if (*ip).xDC8_word.flags.x13() != 0 && !(*ip).owner.is_null() && ext::ftLib_80086960((*ip).owner) != 0 {
+    if (*ip).xDC8_word.flags.x13() != 0 && !(*ip).owner.is_null() && ext::ftLib_IsFighter((*ip).owner) != 0 {
         DestroyItemInline(gobj, ip);
     }
 
@@ -2379,7 +2379,7 @@ pub unsafe extern "C" fn Item_8026AE60() -> u32 {
 pub unsafe extern "C" fn Item_MexSfx(item_data: *mut Item, sfx: enum_t) -> enum_t {
     melee_core::ct!("Item_MexSfx");
     let owner = (*item_data).mex_original_owner;
-    if sfx >= 5000 && sfx < 10000 && !owner.is_null() && ext::ftLib_80086960(owner) != 0 {
+    if sfx >= 5000 && sfx < 10000 && !owner.is_null() && ext::ftLib_IsFighter(owner) != 0 {
         let ssm = ext::Mex_SsmForPortKind(ext::ftLib_GetKind(owner) as i32);
         if ssm >= 0 {
             return sfx.wrapping_sub(5000).wrapping_add(ssm.wrapping_mul(10000));

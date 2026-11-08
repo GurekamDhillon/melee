@@ -140,7 +140,7 @@ float ftCo_Damage_CalcAngle(Fighter* fp, float kb)
     T(0x370u + E(fp->gobj)); T(B(kb));
     return (g_tr % 8u) == 0 ? (float) M_PI : (float) (g_tr % 700u) / 100.0f;
 }
-void ftLib_800866DC(HSD_GObj* g, Vec3* v) { T(0x380u + E(g)); v->x = 1.5f; v->y = -(float) (g_tr & 15); v->z = 2.0f; }
+void ftLib_GetCameraBonePos(HSD_GObj* g, Vec3* v) { T(0x380u + E(g)); v->x = 1.5f; v->y = -(float) (g_tr & 15); v->z = 2.0f; }
 s32 it_802E5F8C(Item_GObj* g, Vec3* v, s32 a, s32 b, f32 ang, f32 kb)
 {
     T(0x390u + E(g)); T(B(v->x)); T(B(v->y)); T(B(v->z)); T((u32) a); T((u32) b); T(B(ang)); T(B(kb));
@@ -151,7 +151,7 @@ void Player_SetUnk98(s32 slot, s32 v) { T(0x3B0u + (u32) slot); T((u32) v); }
 HSD_GObj* Player_GetEntity(s32 slot) { T(0x3C0u + (u32) slot); return &GO[(g_tr >> 1) % NF]; }
 int mpLineGetNext(int l) { T(0x3D0u); T((u32) l); return l + (int) (g_tr & 1); }
 int mpLineGetPrev(int l) { T(0x3D8u); T((u32) l); return l - (int) ((g_tr >> 1) & 1); }
-bool ftLib_80086FD4(HSD_GObj* a, HSD_GObj* b)
+bool ftLib_IsSamePlayer(HSD_GObj* a, HSD_GObj* b)
 {
     T(0x3E0u + E(a)); T(E(b));
     return a == b || ((Fighter*) a->user_data)->player_id == ((Fighter*) b->user_data)->player_id;

@@ -207,7 +207,7 @@ of every mutable field of all six fighters, and the stub trace word. All 87 ops 
   inputs never flip it). Right by the IR (fma_sites.py) only.
 - `dmg.x1830_percent` is a float: 800870F0 converts int->float, 80087120 and 80086198 float->int
   (saturating, same as fctiwz except NaN, see Traps 3; inputs contain no NaN).
-- `ftLib_800870BC` reads `p_ftCommonData->x6D8[controller_index]`, a 1-element array read past
+- `ftLib_GetSubColor` reads `p_ftCommonData->x6D8[controller_index]`, a 1-element array read past
   its end (into `x6DC_colorsByPlayer`), kept as raw pointer arithmetic.
 - The 16 `ftLib_*` hooks player.c calls (`FTLIB_*`) now default to these ports (setting one still
   overrides it); `PLAYER_GET_MORE_FLAGS_BIT4` defaults to `player::get_more_flags_bit4`.
@@ -368,7 +368,7 @@ one line early, at the `#if defined(TARGET_PC)` opening the floor-guard block).
   ftData_* per-kind tables, TODO(pc mex + group3 ftdata)), the parasol table-3 bounds check.
 - `it_8026B54C` returns float (it_26B1.h): 8007FA58 truncates it into x2014 / 8007F948's arg.
 - Hooks: `FTCOMMON_8007E6DC` / `8007E82C` / `8007D92C` and `FT_GET_PARASOL_STATUS` now default to
-  these ports. New ported overrides: FTLIB_80086FD4, FTLIB_800866DC, PLAYER_GET_ENTITY,
+  these ports. New ported overrides: FTLIB_ISSAMEPLAYER, FTLIB_GETCAMERABONEPOS, PLAYER_GET_ENTITY,
   PLAYER_GET_UNK98 / SET_UNK98. New panicking hooks: mpLib_8004D164 / mpLineGetNext / Prev
   (TODO(group2 mp)), ft_80084A18 / ft_80081C88 (TODO(group3 ft_081B)), ftCo_Fall_Enter,
   ftCo_800C5240 / 800C5500 / 800D105C / ftCo_Damage_CalcAngle (TODO(group3 ftCo)), ft_8008A2BC,
@@ -445,9 +445,9 @@ pl_8003EC30, pl_8003EC9C, pl_8003ED0C.
 - Test: tests/plbonus_ref.rs, now 104 ops x 50 steps x 300 cases = 15,000 lines (was 81 ops);
   the slot hash gained every field these write (x674/x710/x7AC, xC60..xCA8, xCD8, xD08, xD10,
   xD44, xD54, xD6C, Struct2074.x207C.y). New tracing hooks: IT_8026B7E8 / B774 / B7BC / B960 /
-  B7CC / IT_GET_OWNER (default to melee_items::itlib), FTLIB_80086960 / 80086BE0 / 800874BC,
+  B7CC / IT_GET_OWNER (default to melee_items::itlib), FTLIB_ISFIGHTER / 80086BE0 / 800874BC,
   FT_800898A8 (default to group 3's ports), IT_8026C1D4 (TODO(group5 it), panics unset).
-  The ftLib_80087300 stub now returns 0..6 (a slot or 6), since pl_8003DF44 indexes with it; the
+  The ftLib_GetLastAttackerSlot stub now returns 0..6 (a slot or 6), since pl_8003DF44 indexes with it; the
   C's `__assert` stub now prints and exits instead of spinning.
 - Fused site: pl_8003ED0C `xCA0 * (n - 1) + arg2` (fmadds). **Discriminated** (un-fusing fails
   case 44 step 47 op 103).

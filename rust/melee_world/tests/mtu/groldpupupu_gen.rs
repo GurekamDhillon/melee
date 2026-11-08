@@ -30,8 +30,8 @@ pub fn install() {
         HSD_Randf = Some(|| { t(1016); rg() });
         HSD_Randi = Some(|a0| { t(1017); t(a0 as u32); if a0 > 0 { (rnd() % a0 as u32) as i32 } else { 0 } });
         ftCo_800C06E8 = Some(|a0, a1, a2| { t(1018); t(pi(a0)); t(a1 as u32); t(pi(a2)); });
-        ftLib_800864A8 = Some(|a0, a1| { t(1019); t(pi(a0)); t(pi(a1)); rg() });
-        ftLib_80086644 = Some(|a0, a1| { t(1020); t(pi(a0)); t(pi(a1)); super::wv(a1); });
+        ftLib_GetOpponentsDir = Some(|a0, a1| { t(1019); t(pi(a0)); t(pi(a1)); rg() });
+        ftLib_GetPos = Some(|a0, a1| { t(1020); t(pi(a0)); t(pi(a1)); super::wv(a1); });
         grAnime_801C7FF8 = Some(|a0, a1, a2, a3, a4, a5| { t(1021); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); t(a4.to_bits()); t(a5.to_bits()); });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1022); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grAnime_801C83D0 = Some(|a0, a1, a2| { t(1023); t(pi(a0)); t(a1 as u32); t(a2 as u32); fv() as _ });

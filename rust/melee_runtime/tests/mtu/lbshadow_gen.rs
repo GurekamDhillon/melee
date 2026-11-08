@@ -56,9 +56,9 @@ pub fn install() {
         PSVECAdd = Some(|a0, a1, a2| { t(1042); t(pi(a0)); t(pi(a1)); t(pi(a2)); });
         ftDrawCommon_80081168 = Some(|| { t(1043); });
         ftDrawCommon_80081200 = Some(|| { t(1044); });
-        ftLib_80086960 = Some(|a0| { t(1045); t(pi(a0)); fv() as _ });
-        ftLib_800872B0 = Some(|a0| { t(1046); t(pi(a0)); if fv() & 7 != 0 { pick_LbShadow() } else { null_mut() } });
-        ftLib_800872BC = Some(|a0| { t(1047); t(pi(a0)); fv() as _ });
+        ftLib_IsFighter = Some(|a0| { t(1045); t(pi(a0)); fv() as _ });
+        ftLib_GetShadow = Some(|a0| { t(1046); t(pi(a0)); if fv() & 7 != 0 { pick_LbShadow() } else { null_mut() } });
+        ftLib_CastsShadow = Some(|a0| { t(1047); t(pi(a0)); fv() as _ });
         lbVector_CrossprodNormalized = Some(|a0, a1, a2| { t(1048); t(pi(a0)); t(pi(a1)); t(pi(a2)); core::ptr::null_mut() });
         lbVector_Diff = Some(|a0, a1, a2| { t(1049); t(pi(a0)); t(pi(a1)); t(pi(a2)); core::ptr::null_mut() });
         lbVector_Normalize = Some(|a0| { t(1050); t(pi(a0)); rg() });

@@ -70,10 +70,10 @@ pub mod ext {
     fn Wb_RenderActive() -> i32;
     fn atan2f(a0: f32, a1: f32) -> f32;
     fn ftDrawCommon_80080C28(a0: *mut HSD_GObj, a1: i32);
-    fn ftLib_80086B64(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsOffscreen(a0: *mut HSD_GObj) -> i32;
     fn ftLib_80086B80(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086ED0(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetCameraSubjectBonePos(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_CanBeMagnified(a0: *mut HSD_GObj) -> i32;
     fn ftLib_UpdateLogicOffCamera(a0: *mut HSD_GObj);
     fn gmVs_GetSceneController() -> *mut VsSceneController;
     fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32;

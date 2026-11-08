@@ -345,10 +345,10 @@ pub mod ext {
                     None => { unsafe { crate::tu::ground::Ground_801C5440(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
-    pub static mut H_ftLib_80086644: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
-    pub unsafe extern "C" fn ftLib_80086644(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_80086644 { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } } }
-    pub static mut H_ftLib_80086684: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
-    pub unsafe extern "C" fn ftLib_80086684(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_80086684 { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086684(a0 as _, a1 as _); } } }
+    pub static mut H_ftLib_GetPos: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
+    pub unsafe extern "C" fn ftLib_GetPos(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_GetPos { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } } }
+    pub static mut H_ftLib_GetPrevPos: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
+    pub unsafe extern "C" fn ftLib_GetPrevPos(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_GetPrevPos { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_GetPrevPos(a0 as _, a1 as _); } } }
     pub static mut H_Ground_801C43A4: Option<unsafe extern "C" fn(*mut core::ffi::c_void) > = None;
             pub unsafe extern "C" fn Ground_801C43A4(a0: *mut core::ffi::c_void)  {
                 match H_Ground_801C43A4 {
@@ -394,7 +394,7 @@ pub mod ext {
             }
     pub static mut H_HSD_LObjSetColor: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, melee_types::GXColor)> = None;
     pub unsafe extern "C" fn HSD_LObjSetColor(a0: *mut melee_types::HSD_LObj, a1: melee_types::GXColor) { match H_HSD_LObjSetColor { Some(f) => f(a0, a1), None => unsafe { melee_runtime::tu::lobj::HSD_LObjSetColor(a0 as _, a1 as _); } } }
-    hook!(H_ftLib_80086C9C, ftLib_80086C9C, (a0: i32, a1: i32));
+    hook!(H_ftLib_StartRumbleAll, ftLib_StartRumbleAll, (a0: i32, a1: i32));
     pub static mut H_grAnime_801C7B24: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32, u32, f32) > = None;
             pub unsafe extern "C" fn grAnime_801C7B24(a0: *mut melee_types::HSD_GObj, a1: i32, a2: u32, a3: f32)  {
                 match H_grAnime_801C7B24 {
@@ -1828,7 +1828,7 @@ pub unsafe extern "C" fn grZebes_801DA528(arg0: *mut HSD_GObj, arg1: *mut c_void
                     frame = 30.0;
                     (*st).x01_next = 1;
                     ext::Ground_801C53EC(0x61A86);
-                    ext::ftLib_80086C9C(1, 0x5A);
+                    ext::ftLib_StartRumbleAll(1, 0x5A);
                 } else {
                     frame = ((dmg * thr) as f64 / 30.0) as f32;
                 }
@@ -2820,8 +2820,8 @@ pub unsafe extern "C" fn grZebes_801DCBFC(_gobj: *mut Ground_GObj, fobj: *mut HS
     let mut intercept = 0.0f32;
 
     ext::Ground_801C4368(&mut slope, &mut intercept);
-    ext::ftLib_80086644(fobj, &mut pos);
-    ext::ftLib_80086684(fobj, &mut prev);
+    ext::ftLib_GetPos(fobj, &mut pos);
+    ext::ftLib_GetPrevPos(fobj, &mut prev);
     prev.y += intercept;
     if pos.y < slope {
         *(arg as *mut *mut c_void) = (*yakumono_param).x2C_dyn as *mut c_void;

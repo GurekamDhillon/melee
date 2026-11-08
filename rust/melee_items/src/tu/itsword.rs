@@ -182,7 +182,7 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
     fn Item_80268B5C(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B5C(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn ftLib_80086FA8(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsSwordSwing(a0: *mut HSD_GObj) -> i32;
     fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::itColl_BounceOffShield(a0) as _ };
     fn itColl_BounceOffVictim(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::itColl_BounceOffVictim(a0) };
     fn it_8026B390(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b390(&mut *((*a0).user_data as *mut Item)) };
@@ -630,7 +630,7 @@ pub unsafe extern "C" fn itSword_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
     melee_core::ct!("itSword_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSword_UnkArticle1;
-    if !(*ip).owner.is_null() && ext::ftLib_80086FA8((*ip).owner) != 1 {
+    if !(*ip).owner.is_null() && ext::ftLib_IsSwordSwing((*ip).owner) != 1 {
         inlineA1(gobj);
     }
     if (*ip).xDD4_itemVar.sword.x3C == 0 {

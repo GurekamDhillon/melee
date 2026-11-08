@@ -28,9 +28,9 @@ pub fn install() {
         ftKb_SpecialNMt_80106F9C = Some(|a0| { t(1015); t(pi(a0)); ((fv() % 5) == 0) as i32 });
         ftKb_SpecialNMt_80106FEC = Some(|a0| { t(1016); t(pi(a0)); ((fv() % 5) == 0) as i32 });
         ftKb_SpecialNMt_80107040 = Some(|a0| { t(1017); t(pi(a0)); });
-        ftLib_800865C0 = Some(|a0| { t(1018); t(pi(a0)); rg() });
-        ftLib_80086630 = Some(|a0, a1| { t(1019); t(pi(a0)); t(a1 as u32); &raw mut crate::JO[5] });
-        ftLib_800869D4 = Some(|a0| { t(1020); t(pi(a0)); rg() });
+        ftLib_GetFacingDir = Some(|a0| { t(1018); t(pi(a0)); rg() });
+        ftLib_GetPartJObj = Some(|a0, a1| { t(1019); t(pi(a0)); t(a1 as u32); &raw mut crate::JO[5] });
+        ftLib_GetModelScale = Some(|a0| { t(1020); t(pi(a0)); rg() });
         ftMt_SpecialN_CheckShadowBallCancel = Some(|a0| { t(1021); t(pi(a0)); ((fv() % 5) == 0) as i32 });
         ftMt_SpecialN_CheckShadowBallRemove = Some(|a0| { t(1022); t(pi(a0)); ((fv() % 5) == 0) as i32 });
         ftMt_SpecialN_GetChargeLevel = Some(|a0, a1, a2| { t(1023); t(pi(a0)); t(pi(a1)); t(pi(a2)); if !a1.is_null() { *a1 = (fv() % 6) as i32; } if !a2.is_null() { *a2 = (fv() % 5) as i32 + 1; } (fv() % 4) as i32 - 1 });

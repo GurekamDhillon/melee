@@ -33,7 +33,7 @@ pub mod ext {
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
-    fn ftLib_80086A0C(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_80086A0C(a0) };
+    fn ftLib_GetScale(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetScale(a0) };
     fn ftMt_SpecialLw_ClearDisableGObj(a0: *mut HSD_GObj);
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
@@ -130,7 +130,7 @@ pub unsafe extern "C" fn it_802C4B38(item_gobj: *mut Item_GObj) {
     let fighter_gobj = (*item).xDD4_itemVar.mdisable.owner;
 
     // the last parameter gets the y scaling of mewtwo
-    (*item).x40_vel.x = (*attrs).x_vel * (*item).facing_dir * ext::ftLib_80086A0C(fighter_gobj);
+    (*item).x40_vel.x = (*attrs).x_vel * (*item).facing_dir * ext::ftLib_GetScale(fighter_gobj);
     (*item).x40_vel.z = 0.0;
     (*item).x40_vel.y = 0.0;
     // set mdisable lifetime timers
@@ -143,7 +143,7 @@ pub unsafe extern "C" fn it_802C4BB8(item_gobj: *mut Item_GObj) {
     let item = GET_ITEM(item_gobj);
 
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
-    let y_scale = ext::ftLib_80086A0C((*item).xDD4_itemVar.mdisable.owner);
+    let y_scale = ext::ftLib_GetScale((*item).xDD4_itemVar.mdisable.owner);
     ext::it_802755C0(item_gobj, y_scale);
 }
 

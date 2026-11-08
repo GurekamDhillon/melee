@@ -108,7 +108,7 @@ pub mod ext {
     fn Player_GetTeam(a0: i32) -> i32 = |a0: i32| unsafe { crate::pl::Player_GetTeam(a0 as _) as _ };
     fn Slippi_FrozenStadium() -> i32;
     fn Stage_80225194() -> u32 = || unsafe { crate::tu::stage::Stage_80225194() as _ };
-    fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086B90(a0 as _, a1 as _); } };
+    fn ftLib_GetCameraSubjectBonePos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetCameraSubjectBonePos(a0 as _, a1 as _); } };
     fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32;
     fn gm_80160968(a0: u32) -> _GXColor;
     fn gm_80160A60(a0: i32) -> *const i8;
@@ -1376,7 +1376,7 @@ pub unsafe extern "C" fn grStadium_801D32D0(gobj: *mut HSD_GObj) -> i32 {
         if !player_gobj.is_null() && ext::Player_8003219C((*gp).u.display.xEE as i32) == 0 {
             let wrapper = (*(*gp).u.display.xDC).user_data as *mut ImageDescWrapper;
             if !wrapper.is_null() {
-                ext::ftLib_80086B90(player_gobj, &mut sp28);
+                ext::ftLib_GetCameraSubjectBonePos(player_gobj, &mut sp28);
                 ext::lbVector_WorldToScreen(cobj, &sp28, &mut sp1c, 0);
                 sp1c.x -= 62.0f32;
                 if sp1c.x < (*cobj).viewport.xmin {

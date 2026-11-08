@@ -20,7 +20,7 @@ void (Item_8026AE84)(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof_
 void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; __builtin_va_start(ap, a1); a2 = __builtin_va_arg(ap, void*); __builtin_va_end(ap); T(1007); T((u32) a0); T(PI(a1)); T(PI(a2)); TVEC((Vec3*) a2); return 0; }
 void (ftCo_800C92E4)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2, __typeof__(struct lbColl_80008D30_arg1 *) a3, __typeof__(float) a4) { T(1008); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); T(PI((const void*) a2)); TVEC((const Vec3*) a2); T(PI((const void*) a3)); T(B(a4)); if (a3) { T((u32) a3->state); T(a3->damage); T((u32) a3->kb_angle); T(a3->unkC); T(a3->unk10); T(a3->unk14); T(a3->element); T((u32) a3->sfx_severity); T((u32) a3->sfx_kind); } }
 void (ftCo_Barrel_Enter)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-__typeof__(float) (ftLib_800865C0)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(float) (ftLib_GetFacingDir)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 void (it_8026B390)(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); }
 void (it_8026B3A8)(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void*) a0)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
@@ -1676,7 +1676,7 @@ static void freg_all(void)
 // stub efSync_Spawn = 1007
 // stub ftCo_800C92E4 = 1008
 // stub ftCo_Barrel_Enter = 1009
-// stub ftLib_800865C0 = 1010
+// stub ftLib_GetFacingDir = 1010
 // stub it_8026B390 = 1011
 // stub it_8026B3A8 = 1012
 // stub it_8026B894 = 1013

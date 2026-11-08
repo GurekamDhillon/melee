@@ -29,7 +29,7 @@ pub trait DbAnimHost: DevTextHost {
     fn ft_anim_view(&mut self, g: FighterGObj) -> FtAnimView;
     fn db_motionstate_names(&mut self, i: i32) -> String;
     fn db_submotion_names(&mut self, i: i32) -> String;
-    fn ftLib_80086960(&mut self, g: FighterGObj) -> i32;
+    fn ftLib_IsFighter(&mut self, g: FighterGObj) -> i32;
     fn fn_EnableShowEnemyStompRange(&mut self);
     fn fn_DisableShowEnemyStompRange(&mut self);
     fn fn_EnableShowItemPickupRange(&mut self);
@@ -59,7 +59,7 @@ pub mod ext {
         fn ft_anim_view(&mut self, _: FighterGObj) -> FtAnimView { todo!("Fighter fields") }
         fn db_motionstate_names(&mut self, _: i32) -> String { todo!("db_motionstate_names") }
         fn db_submotion_names(&mut self, _: i32) -> String { todo!("db_submotion_names") }
-        fn ftLib_80086960(&mut self, _: FighterGObj) -> i32 { todo!("ftLib_80086960") }
+        fn ftLib_IsFighter(&mut self, _: FighterGObj) -> i32 { todo!("ftLib_IsFighter") }
         fn fn_EnableShowEnemyStompRange(&mut self) { todo!("fn_EnableShowEnemyStompRange") }
         fn fn_DisableShowEnemyStompRange(&mut self) { todo!("fn_DisableShowEnemyStompRange") }
         fn fn_EnableShowItemPickupRange(&mut self) { todo!("fn_EnableShowItemPickupRange") }
@@ -238,10 +238,10 @@ impl DbAnim {
     }
 }
 
-/// `fn_8022697C`: the owner's x21FC flag byte, or 0 when ftLib_80086960 rejects it.
+/// `fn_8022697C`: the owner's x21FC flag byte, or 0 when ftLib_IsFighter rejects it.
 pub fn fn_8022697c<H: DbAnimHost + ?Sized>(h: &mut H, owner: FighterGObj) -> u8 {
     melee_core::ct!("fn_8022697c");
-    if h.ftLib_80086960(owner) != 0 {
+    if h.ftLib_IsFighter(owner) != 0 {
         h.ft_x21FC(owner)
     } else {
         0

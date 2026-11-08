@@ -103,7 +103,7 @@ pub mod ext {
     fn Stage_GetCamBoundsLeftOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsLeftOffset() as _ };
     fn Stage_GetCamBoundsRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ };
     fn Stage_GetCamBoundsTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsTopOffset() as _ };
-    fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086984(a0 as _) as _ };
+    fn ftLib_GetCollData(a0: *mut HSD_GObj) -> *mut CollData = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_GetCollData(a0 as _) as _ };
     fn grDynamicAttr_801CA0B4() = || { unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA0B4(); } };
     fn grDynamicAttr_801CA224() = || { unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA224(); } };
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind = |a0: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(a0 as _) as _ };
@@ -4494,7 +4494,7 @@ pub unsafe fn mpLib_80056B34(mut arg0: i32, mut arg1: *mut i32) -> i32 {
 }
 
 /// `sqrtf_store`
-#[allow(dead_code)] // the C body; its only callers pass an out-of-local pointer (sqrtf_store_pc)
+
 unsafe fn sqrtf_store(mut x: f32, mut y: *mut f32) -> f32 {
     if x > 0.0f32 {
         let mut guess: f64 = melee_core::fp::frsqrte(x as f64);
@@ -4507,11 +4507,13 @@ unsafe fn sqrtf_store(mut x: f32, mut y: *mut f32) -> f32 {
     return x;
 }
 
-/// The C call `sqrtf_store(x, sqrt_tmp - 4)` (and `- 5`) stores outside the local: undefined behaviour that the x86 PC build
-/// (what the goldens record) folds to `return x`, as `it_802A4BFC_sqrtf_offset`. So `mpLib_80056C54` walks the floor with
-/// SQUARED segment lengths (human_dk_onett: DK's Hand Slap hitbox positions, ftDk_Init_8010DB3C).
-unsafe fn sqrtf_store_pc(x: f32, _y: *mut f32) -> f32 {
-    x
+/// The C call `sqrtf_store(x, sqrt_tmp - 4)` (and `- 5`) stores outside the local (a stack slot the console overwrites
+/// harmlessly) and returns the Newton square root: on the console `mpLib_80056C54` walks the floor with real segment
+/// lengths. The x86 C build folded the UB to `return x` (squared lengths) until gw TARGET_PC fixed it; Hero's
+/// Game_20251114T235249 / Game_20251031T215549 (Dolphin oracle: DK Hand Slap hitboxes at cur_pos + 12*i - 24.2, ours
+/// within 1 unit of DK) showed the console's value.
+unsafe fn sqrtf_store_pc(x: f32, y: *mut f32) -> f32 {
+    sqrtf_store(x, y)
 }
 
 /// `mpJointFromLine`
@@ -5541,7 +5543,7 @@ pub unsafe fn mpLib_DrawSnapping() {
         var_r31 = 1;
         'l319: while !ft_r27.is_null() {
             'c319: {
-                let mut cd: *mut CollData = ext::ftLib_80086984(ft_r27);
+                let mut cd: *mut CollData = ext::ftLib_GetCollData(ft_r27);
                 if (!((*cd).x35_flags.b0() != 0)) || ((*cd).x38 != super::mpcoll::mpColl_804D64AC) {
                     break 'c319;
                 }

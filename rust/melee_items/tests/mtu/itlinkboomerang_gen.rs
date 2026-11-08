@@ -26,8 +26,8 @@ pub fn install() {
         Item_8026AB54 = Some(|a0, a1, a2| { t(1013); t(pi(a0)); t(pi(a1)); t(a2 as u32); });
         Item_8026AF0C = Some(|a0, a1, a2, a3| { t(1014); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
         atan2f = Some(|a0, a1| { t(1015); t(a0.to_bits()); t(a1.to_bits()); rg() });
-        ftLib_80086630 = Some(|a0, a1| { t(1016); t(pi(a0)); t(a1 as u32); &raw mut super::JO[(fv() % 4) as usize] });
-        ftLib_800866DC = Some(|a0, a1| { t(1017); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
+        ftLib_GetPartJObj = Some(|a0, a1| { t(1016); t(pi(a0)); t(a1 as u32); &raw mut super::JO[(fv() % 4) as usize] });
+        ftLib_GetCameraBonePos = Some(|a0, a1| { t(1017); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
         ftLib_GetKind = Some(|a0| { t(1018); t(pi(a0)); (if fv() & 1 != 0 { 6 } else { 1 }) });
         ftLk_SepcialS_Get2219b5 = Some(|a0| { t(1019); t(pi(a0)); fv() as _ });
         ftLk_SpecialHi_GetFv4 = Some(|a0| { t(1020); t(pi(a0)); fv() as _ });

@@ -143,7 +143,9 @@ def main():
             skipped.append((name, 'no unique port')); continue
         params = [p for p in gl.split_top(plist, ',') if p.strip()]
         types = [strip_ty(p.split(':', 1)[1]) for p in params]
-        types = ['*mut HSD_GObj' if t == 'G' else t for t in types]
+        # the TUs' local aliases: G (a gobj), F (a fighter: `type F = *mut Fighter`; read as a scalar alias it
+        # passed the guest handle itself as the pointer)
+        types = ['*mut HSD_GObj' if t in ('G', 'I') else '*mut Fighter' if t == 'F' else t for t in types]
         ni = nf = 0
         args, ok, pre = [], True, []
         for ty in types:
@@ -168,8 +170,9 @@ def main():
                 rec = f'Some("{p}")' if p in recs else 'None'
                 pre.append(f'let p{ni} = c.ptr({ni}, {rec}); if p{ni}.is_null() {{ c.bad = true; return true; }}')
                 args.append(f'(&{mut}*(p{ni} as *{"mut" if mut else "const"} _))'); ni += 1
-            elif base in ('HSD_GObjEvent', 'HSD_GObjFunc') or re.fullmatch(r'Option<\s*unsafe\s+extern\s+(?:"C"\s*)?fn\s*\(\s*(\*mut\s+(\w+::)*HSD_GObj|G)\s*\)\s*>', ty):
-                # a gobj callback: a guest code address as its trampoline, a vanilla one as the port
+            elif base in ('HSD_GObjEvent', 'HSD_GObjFunc', 'GObj_RenderFunc', 'LineCb') or re.fullmatch(r'Option<\s*unsafe\s+extern\s+(?:"C"\s*)?fn\s*\(\s*(\*mut\s+(\w+::)*HSD_GObj|G)\s*\)\s*>', ty):
+                # a gobj callback: a guest code address as its trampoline, a vanilla one as the port (a render or line callback
+                # too: the trampoline passes the gobj, the guest sees 0 in r4)
                 if ni > 7: ok = False; break
                 args.append(f'core::mem::transmute(c.func({ni}))'); ni += 1
             elif re.fullmatch(r'[A-Z]\w*', base) and not SKIP_TYPES.search(ty):

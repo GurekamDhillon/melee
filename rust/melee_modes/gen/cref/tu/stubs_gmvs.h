@@ -20,7 +20,7 @@ void Ground_801C1154(void) { T(1013);  }
 void grStadium_801D4084(void) { T(1014);  }
 void grStadium_801D410C(void) { T(1015);  }
 void un_802FD404(void) { T(1016);  }
-void ftLib_800868A4(void) { T(1017);  }
+void ftLib_EnableAllInput(void) { T(1017);  }
 void Stage_802252E4(StKind a0, HSD_GObj* a1) { T(1018); T((u32)a0); T(a1 != 0);  }
 void grStadium_801D4040(void) { T(1019);  }
 void un_802FD428(void) { T(1021);  }
@@ -45,7 +45,7 @@ int fn_8016FAD4(MatchEnd* a0, int a1, int a2, u8 a3) { T(1045); T(a0 ? hs_MatchE
 s32 fn_8016F1F0(int a0) { T(1046); T((u32)(s32)a0); return (s32)rnd(); }
 u32 gm_801A4BA8(void) { T(1047); return (u32)(rnd() % 3); }
 void gm_80166378(MatchEnd* a0) { T(1048); T(a0 ? hs_MatchEnd(a0, 0) + 1 : 0);  }
-u8 ftLib_80086BE0(HSD_GObj* a0) { T(1049); T(a0 != 0); return (u8)(rnd() % 6); }
+u8 ftLib_GetPlayerIndex(HSD_GObj* a0) { T(1049); T(a0 != 0); return (u8)(rnd() % 6); }
 void fn_80171DC4(void) { T(1050);  }
 void HSD_PadRumbleRemoveAll(void) { T(1051);  }
 void HSD_PadRumbleOn(u8 a0) { T(1052); T((u32)a0);  }

@@ -63,8 +63,8 @@ pub mod ext {
     fn ftBossLib_8015C92C() -> i32 = melee_fighter::tu::ftbosslib::ftBossLib_8015C92C;
     fn ftBossLib_8015CB9C(a0: i32) = crate::tu::adapt::ftBossLib_8015CB9C__c24da3;
     fn ftBossLib_8015CC14() = crate::tu::adapt::ftBossLib_8015CC14__f4f13c;
-    fn ftLib_8008731C(a0: *mut HSD_GObj) -> i32 = crate::tu::adapt::ftLib_8008731C__becdfc;
-    fn ftLib_80087508(a0: i8, a1: u8) = crate::tu::adapt::ftLib_80087508__b45233;
+    fn ftLib_IsSleeping_8008731C(a0: *mut HSD_GObj) -> i32 = crate::tu::adapt::ftLib_IsSleeping_8008731C__becdfc;
+    fn ftLib_LoadFighterCostume(a0: i8, a1: u8) = crate::tu::adapt::ftLib_LoadFighterCostume__b45233;
     fn ftLib_GetKind(a0: *mut HSD_GObj) -> u32;
     fn gmFrontend_AtlasSelect(a0: *mut GameModeState, a1: i32, a2: *const i8) = crate::tu::adapt::gmFrontend_AtlasSelect__26b7fc;
     fn gmMainLib_8015CEB4(a0: i32) = crate::tu::adapt::gmMainLib_8015CEB4__86b231;
@@ -1311,18 +1311,18 @@ pub fn gm_801BC00C() {
             35 => {
                 if (*ev).x20 == 0 {
                     event_entry = (*(*(*event_levels.add(idx as usize))).evstage_table).entries[2];
-                    ext::ftLib_80087508(
+                    ext::ftLib_LoadFighterCostume(
                         ext::Player_800325C8((*event_entry).c_kind as i32 as u32, 0),
                         (*event_entry).color,
                     );
                     event_entry = (*(*(*event_levels.add(idx as usize))).evstage_table).entries[3];
-                    ext::ftLib_80087508(
+                    ext::ftLib_LoadFighterCostume(
                         ext::Player_800325C8((*event_entry).c_kind as i32 as u32, 0),
                         (*event_entry).color,
                     );
                 } else {
                     event_entry = (*(*(*event_levels.add(idx as usize))).evstage_table).entries[4];
-                    ext::ftLib_80087508(
+                    ext::ftLib_LoadFighterCostume(
                         ext::Player_800325C8(gm_801BC00C_GetCharacterKind(event_entry), 0),
                         (*event_entry).color,
                     );
@@ -1330,7 +1330,7 @@ pub fn gm_801BC00C() {
             }
             43 => {
                 let chr = gm_801BC00C_GetCharacter((*(*(*event_levels.add(idx as usize))).x4).x4 as *mut gm_801BAB40_src);
-                ext::ftLib_80087508(chr, (*ev).x50[2]);
+                ext::ftLib_LoadFighterCostume(chr, (*ev).x50[2]);
                 if (*ev).x0 as i8 == 4 {
                     ext::Player_80031DA8(chr as i32, (*ev).x1 as i32);
                 }
@@ -1783,7 +1783,7 @@ pub unsafe extern "C" fn gm_801BD46C(gobj: *mut HSD_GObj) {
     while i < 3 {
         let p = ext::Player_GetEntityAtIndex(i, 1);
         if !p.is_null() {
-            var_r30 = ext::ftLib_8008731C(p);
+            var_r30 = ext::ftLib_IsSleeping_8008731C(p);
         }
         if var_r30 != 0 {
             count += 1;

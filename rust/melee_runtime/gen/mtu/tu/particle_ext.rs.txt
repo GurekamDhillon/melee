@@ -31,7 +31,7 @@ pub mod ext {
     fn ScriptGame_StageSlotParticleBegin(a0: i32) -> i32;
     fn ScriptGame_StageSlotProcEnd();
     fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
-    fn hsd_8039D1EC() -> u16;
+    fn psGetNewIDNum() -> u16;
     fn hsd_8039F05C(a0: i32, a1: i32, a2: i32) -> *mut HSD_Generator;
     fn psAttachGeneratorAppSRT(a0: *mut HSD_Generator, a1: *mut HSD_psAppSRT) -> i32;
     fn psAttachParticleAppSRT(a0: *mut HSD_Particle, a1: *mut HSD_psAppSRT) -> i32;

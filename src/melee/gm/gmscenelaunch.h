@@ -142,7 +142,10 @@ static int SceneLaunch_SeedPlayers(VsModeData* vs, bool dummy_fallback)
         {
             int costumes = ckind == ChKind_None ? 1 : gm_GetNumCostumesForCKind(ckind);
             if (costumes <= 0) costumes = 1;
-            vs->start.players[i].color = (u8) ((v >= 0 ? v : i) % costumes);
+            /* an explicit costume the character does not have becomes 0 (as the console's
+               Slippi playback); the default (slot index) still wraps */
+            vs->start.players[i].color =
+                (u8) (v >= 0 ? (v >= costumes ? 0 : v) : i % costumes);
         }
         v = SceneLaunch_PlayerCpuKind(i);
         if (v >= 0) {

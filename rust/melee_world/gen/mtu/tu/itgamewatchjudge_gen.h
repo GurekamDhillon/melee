@@ -7,7 +7,7 @@ void Item_8026AB54(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj 
 void db_80225DD8(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 __typeof__(int) ftGw_SpecialS_ItemCheckJudgementRemove(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void ftGw_SpecialS_ItemJudgementSetFlag(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); }
-__typeof__(float) ftLib_800865C0(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(float)) (((fv() & 1) ? 1.0f : rg())); }
+__typeof__(float) ftLib_GetFacingDir(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(float)) (((fv() & 1) ? 1.0f : rg())); }
 void it_8026B724(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); }
 void it_8026B73C(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); }
 __typeof__(int) it_8026B894(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
@@ -34,7 +34,7 @@ static void freg_all(void)
 // stub db_80225DD8 = 1005
 // stub ftGw_SpecialS_ItemCheckJudgementRemove = 1006
 // stub ftGw_SpecialS_ItemJudgementSetFlag = 1007
-// stub ftLib_800865C0 = 1008
+// stub ftLib_GetFacingDir = 1008
 // stub it_8026B724 = 1009
 // stub it_8026B73C = 1010
 // stub it_8026B894 = 1011

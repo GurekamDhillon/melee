@@ -62,8 +62,8 @@ pub fn install() {
         Stage_GetBlastZoneRightOffset = Some(|| { t(1049); rw() });
         Stage_GetCamBoundsRightOffset = Some(|| { t(1050); rw() });
         Stage_UnkSetVec3TCam_Offset = Some(|a0| { t(1051); t(pi(a0)); (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); });
-        ftLib_80086644 = Some(|a0, a1| { t(1052); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
-        ftLib_80086B74 = Some(|a0| { t(1053); t(pi(a0)); if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::CS[(fv() & 1) as usize] } });
+        ftLib_GetPos = Some(|a0, a1| { t(1052); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
+        ftLib_GetCameraSubject = Some(|a0| { t(1053); t(pi(a0)); if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::CS[(fv() & 1) as usize] } });
         gm_80180AF4 = Some(|| { t(1054); if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::SG } });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1055); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grDatFiles_GetArchive = Some(|| { t(1056); &raw mut super::ARCH });

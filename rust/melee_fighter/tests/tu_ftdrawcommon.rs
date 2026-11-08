@@ -10,7 +10,7 @@ static mut CAM: *mut HSD_CObj = core::ptr::null_mut();
 fn flags_matrix_callbacks() {
     unsafe {
         d::ext::WB_RENDER_ACTIVE = Some(|| 0);
-        d::ext::FTLIB_80087074 = Some(|_, v| { (*v).x = 1.5; (*v).y = -0.0; (*v).z = 3.0; 1 });
+        d::ext::FTLIB_GETSHAKEOFFSET = Some(|_, v| { (*v).x = 1.5; (*v).y = -0.0; (*v).z = 3.0; 1 });
         d::ext::HSD_COBJ_GET_CURRENT = Some(|| CAM);
         d::ext::PLINK_FIGHTER_HEAD = Some(|| HEAD);
         d::ext::MEX_ENABLED_DISABLE_FOD = Some(|| 0);
@@ -34,7 +34,7 @@ fn flags_matrix_callbacks() {
     assert_eq!(out[0][3], 11.5);
     assert_eq!(out[1][3].to_bits(), 0.0f32.to_bits()); // -0 + 0 = +0, times 2
     assert_eq!(out[2][3], 2.0);
-    unsafe { d::ext::FTLIB_80087074 = Some(|_, _| 0) };
+    unsafe { d::ext::FTLIB_GETSHAKEOFFSET = Some(|_, _| 0) };
     assert!(d::ftDrawCommon_8008051C(1 as *mut HSD_GObj, &mut out).is_none());
 
     let mut g1: Box<HSD_GObj> = Box::new(HSD_GObj::zeroed());
@@ -46,7 +46,7 @@ fn flags_matrix_callbacks() {
     let a = g0.render_cb.map(|f| f as usize);
     d::ftDrawCommon_80081140();
     assert!(g1.render_cb.is_some() && g0.render_cb.map(|f| f as usize) != a);
-    unsafe { d::ext::MEX_ENABLED_DISABLE_FOD = Some(|| 1); d::ext::FTLIB_800860C4 = Some(|| 4) };
+    unsafe { d::ext::MEX_ENABLED_DISABLE_FOD = Some(|| 1); d::ext::FTLIB_COUNTFIGHTERS = Some(|| 4) };
     d::ftDrawCommon_80081140();
     assert!(g0.render_cb.is_none() && g1.render_cb.is_none());
 }

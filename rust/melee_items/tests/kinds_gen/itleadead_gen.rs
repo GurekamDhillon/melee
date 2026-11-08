@@ -19,9 +19,9 @@ pub fn install() {
         Item_8026AE84 = Some(|a0, a1, a2, a3| { t(1006); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
         atan2f = Some(|a0, a1| { t(1007); t(a0.to_bits()); t(a1.to_bits()); rg() });
         ftCo_800C7800 = Some(|a0| { t(1008); t(pi(a0)); });
-        ftLib_8008627C = Some(|a0, a1| { t(1009); t(pi(a0)); tvec(a0); t(pi(a1)); if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() } });
-        ftLib_80086630 = Some(|a0, a1| { t(1010); t(pi(a0)); t(a1 as u32); core::ptr::null_mut() });
-        ftLib_80086644 = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
+        ftLib_FindNearestOpponent = Some(|a0, a1| { t(1009); t(pi(a0)); tvec(a0); t(pi(a1)); if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() } });
+        ftLib_GetPartJObj = Some(|a0, a1| { t(1010); t(pi(a0)); t(a1 as u32); core::ptr::null_mut() });
+        ftLib_GetPos = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
         it_2725_Logic9_Destroyed = Some(|a0| { t(1012); t(pi(a0)); });
         it_8026B684 = Some(|a0| { t(1013); t(pi(a0)); tvec(a0); rg() });
         it_8026BD3C = Some(|a0| { t(1014); t(pi(a0)); });

@@ -43,8 +43,8 @@ pub mod ext {
     fn ftKb_SpecialNFx_800FDD4C(a0: *mut HSD_GObj) -> u32;
     fn ftKb_SpecialNFx_800FDDF4(a0: *mut HSD_GObj) -> i32;
     fn ftKb_SpecialNFx_800FDEB4(a0: *mut HSD_GObj);
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec);
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

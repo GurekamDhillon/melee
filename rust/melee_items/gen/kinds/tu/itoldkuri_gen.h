@@ -14,7 +14,7 @@ void (Camera_RequestQuake)(__typeof__(enum CmQuakeKind) a0, __typeof__(Vec *) a1
 __typeof__(float) (HSD_Randf)(void) { T(1001); return (__typeof__(float)) ((float) (rnd() % 1000) / 1000.0f); }
 void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1002); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 void (Item_8026AE84)(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1003); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
-void (ftLib_80086D40)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1004); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
+void (ftLib_StartItemRumble)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1004); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 __typeof__(float) (it_8026B684)(__typeof__(Vec *) a0) { T(1005); T(PI((const void*) a0)); TVEC((const Vec3*) a0); return (__typeof__(float)) (rg()); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1006); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (it_8026D62C)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1) { T(1007); T(PI((const void*) a0)); T(FI((const void*) a1)); }
@@ -1687,7 +1687,7 @@ static void freg_all(void)
 // stub HSD_Randf = 1001
 // stub Item_80268E5C = 1002
 // stub Item_8026AE84 = 1003
-// stub ftLib_80086D40 = 1004
+// stub ftLib_StartItemRumble = 1004
 // stub it_8026B684 = 1005
 // stub it_8026B894 = 1006
 // stub it_8026D62C = 1007

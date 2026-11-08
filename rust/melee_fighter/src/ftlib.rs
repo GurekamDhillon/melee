@@ -8,13 +8,13 @@
 //!
 //! The fighter list (`HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]`) comes from
 //! `hooks::plink_head`. Calls out of the ported set go through `crate::hooks`.
-//! Fused sites (`tools/rust-port/fma_sites.py src/melee/ft/ftlib.c`): ftLib_8008627C and
-//! ftLib_80086368, one f32 fmuladd each (`dx*dx + dy*dy` -> `fmadds(dx, dx, dy*dy)`).
+//! Fused sites (`tools/rust-port/fma_sites.py src/melee/ft/ftlib.c`): ftLib_FindNearestOpponent and
+//! ftLib_FindNearestOpponentInDir, one f32 fmuladd each (`dx*dx + dy*dy` -> `fmadds(dx, dx, dy*dy)`).
 //! TARGET_PC paths are the ones ported (80086A8C returns true; Slippi Whispy fix in 800864A8;
 //! Geno template kinds in GetKind; m-ex crowd sfx in 8008746C; UpdateLogicOffCamera).
 //!
-//! Not ported from ftlib.c: ftLib_800871A8 (metal box: ftCo/it/camera), ftLib_80087508 /
-//! 80087574 / 80087610 (archive preloading), ftLib_8008777C (atan2f; depends on group 1's MSL).
+//! Not ported from ftlib.c: ftLib_ApplyMetalBox (metal box: ftCo/it/camera), ftLib_LoadFighterCostume /
+//! 80087574 / 80087610 (archive preloading), ftLib_GetGroundSlopeAngle (atan2f; depends on group 1's MSL).
 //! Checked against the C (cut verbatim, shipping contraction) by tests/ftlib_ref.rs.
 
 use crate::ftcommon2 as c2;
@@ -108,89 +108,89 @@ pub(crate) fn msid_in(g: G, lo: i32, hi: i32) -> bool {
     m >= lo && m <= hi
 }
 
-pub use crate::tu::ftlib::ftlib_800860c4;
-pub use crate::tu::ftlib::ftlib_80086198;
-pub use crate::tu::ftlib::ftlib_8008627c;
-pub use crate::tu::ftlib::ftlib_80086368;
-pub use crate::tu::ftlib::ftlib_800864a8;
-pub use crate::tu::ftlib::ftlib_800865c0;
-pub use crate::tu::ftlib::ftlib_800865cc;
-pub use crate::tu::ftlib::ftlib_800865d8;
-pub use crate::tu::ftlib::ftlib_800865f0;
-pub use crate::tu::ftlib::ftlib_80086630;
-pub use crate::tu::ftlib::ftlib_80086644;
-pub use crate::tu::ftlib::ftlib_80086664;
-pub use crate::tu::ftlib::ftlib_80086684;
-pub use crate::tu::ftlib::ftlib_800866dc;
-pub use crate::tu::ftlib::ftlib_80086724;
-pub use crate::tu::ftlib::ftlib_80086764;
-pub use crate::tu::ftlib::ftlib_800867a0;
-pub use crate::tu::ftlib::ftlib_800867cc;
-pub use crate::tu::ftlib::ftlib_800867d8;
-pub use crate::tu::ftlib::ftlib_800867e8;
-pub use crate::tu::ftlib::ftlib_80086824;
-pub use crate::tu::ftlib::ftlib_8008688c;
-pub use crate::tu::ftlib::ftlib_800868a4;
-pub use crate::tu::ftlib::ftlib_800868d4;
-pub use crate::tu::ftlib::ftlib_80086960;
-pub use crate::tu::ftlib::ftlib_80086984;
-pub use crate::tu::ftlib::ftlib_80086990;
-pub use crate::tu::ftlib::ftlib_800869d4;
+pub use crate::tu::ftlib::ftlib_countfighters;
+pub use crate::tu::ftlib::ftlib_findlowestpercentopponent;
+pub use crate::tu::ftlib::ftlib_findnearestopponent;
+pub use crate::tu::ftlib::ftlib_findnearestopponentindir;
+pub use crate::tu::ftlib::ftlib_getopponentsdir;
+pub use crate::tu::ftlib::ftlib_getfacingdir;
+pub use crate::tu::ftlib::ftlib_getgroundair;
+pub use crate::tu::ftlib::ftlib_getlstick;
+pub use crate::tu::ftlib::ftlib_gethipjobj;
+pub use crate::tu::ftlib::ftlib_getpartjobj;
+pub use crate::tu::ftlib::ftlib_getpos;
+pub use crate::tu::ftlib::ftlib_setpos;
+pub use crate::tu::ftlib::ftlib_getprevpos;
+pub use crate::tu::ftlib::ftlib_getcamerabonepos;
+pub use crate::tu::ftlib::ftlib_releaseitem;
+pub use crate::tu::ftlib::ftlib_clearheldspecialitem;
+pub use crate::tu::ftlib::ftlib_isholdingitem;
+pub use crate::tu::ftlib::ftlib_getheldspecialitem;
+pub use crate::tu::ftlib::ftlib_isinputdisabled;
+pub use crate::tu::ftlib::ftlib_disableinput;
+pub use crate::tu::ftlib::ftlib_disableallinput;
+pub use crate::tu::ftlib::ftlib_enableinput;
+pub use crate::tu::ftlib::ftlib_enableallinput;
+pub use crate::tu::ftlib::ftlib_isitemvisible;
+pub use crate::tu::ftlib::ftlib_isfighter;
+pub use crate::tu::ftlib::ftlib_getcolldata;
+pub use crate::tu::ftlib::ftlib_getecbcenter;
+pub use crate::tu::ftlib::ftlib_getmodelscale;
 pub use crate::tu::ftlib::ftlib_800869f8;
-pub use crate::tu::ftlib::ftlib_80086a0c;
-pub use crate::tu::ftlib::ftlib_80086a18;
+pub use crate::tu::ftlib::ftlib_getscale;
+pub use crate::tu::ftlib::ftlib_isshielding;
 pub use crate::tu::ftlib::ftlib_80086a4c;
-pub use crate::tu::ftlib::ftlib_80086a58;
-pub use crate::tu::ftlib::ftlib_80086a8c;
-pub use crate::tu::ftlib::ftlib_80086b64;
-pub use crate::tu::ftlib::ftlib_80086b74;
+pub use crate::tu::ftlib::ftlib_getscreenpos;
+pub use crate::tu::ftlib::ftlib_updatescreenvisibility;
+pub use crate::tu::ftlib::ftlib_isoffscreen;
+pub use crate::tu::ftlib::ftlib_getcamerasubject;
 pub use crate::tu::ftlib::ftlib_80086b80;
-pub use crate::tu::ftlib::ftlib_80086b90;
-pub use crate::tu::ftlib::ftlib_80086bb4;
-pub use crate::tu::ftlib::ftlib_80086be0;
-pub use crate::tu::ftlib::ftlib_80086bec;
-pub use crate::tu::ftlib::ftlib_80086c18;
-pub use crate::tu::ftlib::ftlib_80086c9c;
-pub use crate::tu::ftlib::ftlib_80086d40;
-pub use crate::tu::ftlib::ftlib_80086dc4;
-pub use crate::tu::ftlib::ftlib_80086e68;
-pub use crate::tu::ftlib::ftlib_80086eb4;
-pub use crate::tu::ftlib::ftlib_80086ec0;
-pub use crate::tu::ftlib::ftlib_80086ed0;
+pub use crate::tu::ftlib::ftlib_getcamerasubjectbonepos;
+pub use crate::tu::ftlib::ftlib_iscamerasubjectinbounds;
+pub use crate::tu::ftlib::ftlib_getplayerindex;
+pub use crate::tu::ftlib::ftlib_getposdelta;
+pub use crate::tu::ftlib::ftlib_startrumble;
+pub use crate::tu::ftlib::ftlib_startrumbleall;
+pub use crate::tu::ftlib::ftlib_startitemrumble;
+pub use crate::tu::ftlib::ftlib_startitemrumbleall;
+pub use crate::tu::ftlib::ftlib_stopitemrumble;
+pub use crate::tu::ftlib::ftlib_getteam;
+pub use crate::tu::ftlib::ftlib_isinhitstun;
+pub use crate::tu::ftlib::ftlib_canbemagnified;
 pub use crate::tu::ftlib::ftlib_80086f4c;
-pub use crate::tu::ftlib::ftlib_80086f80;
-pub use crate::tu::ftlib::ftlib_80086fa8;
-pub use crate::tu::ftlib::ftlib_80086fd4;
-pub use crate::tu::ftlib::ftlib_8008701c;
-pub use crate::tu::ftlib::ftlib_8008702c;
-pub use crate::tu::ftlib::ftlib_80087050;
-pub use crate::tu::ftlib::ftlib_80087074;
-pub use crate::tu::ftlib::ftlib_800870bc;
-pub use crate::tu::ftlib::ftlib_800870f0;
-pub use crate::tu::ftlib::ftlib_80087120;
+pub use crate::tu::ftlib::ftlib_getnametagheight;
+pub use crate::tu::ftlib::ftlib_isswordswing;
+pub use crate::tu::ftlib::ftlib_issameplayer;
+pub use crate::tu::ftlib::ftlib_issleeping;
+pub use crate::tu::ftlib::ftlib_incfighterrefcount;
+pub use crate::tu::ftlib::ftlib_decfighterrefcount;
+pub use crate::tu::ftlib::ftlib_getshakeoffset;
+pub use crate::tu::ftlib::ftlib_getsubcolor;
+pub use crate::tu::ftlib::ftlib_setpercent;
+pub use crate::tu::ftlib::ftlib_getpercent;
 pub use crate::tu::ftlib::ftlib_80087140;
 pub use crate::tu::ftlib::ftlib_80087284;
-pub use crate::tu::ftlib::ftlib_800872b0;
-pub use crate::tu::ftlib::ftlib_800872bc;
-pub use crate::tu::ftlib::ftlib_80087300;
-pub use crate::tu::ftlib::ftlib_8008730c;
-pub use crate::tu::ftlib::ftlib_8008731c;
-pub use crate::tu::ftlib::ftlib_8008732c;
-pub use crate::tu::ftlib::ftlib_80087354;
-pub use crate::tu::ftlib::ftlib_8008737c;
-pub use crate::tu::ftlib::ftlib_800873a4;
-pub use crate::tu::ftlib::ftlib_800873cc;
-pub use crate::tu::ftlib::ftlib_800873f4;
-pub use crate::tu::ftlib::ftlib_8008741c;
-pub use crate::tu::ftlib::ftlib_80087454;
-pub use crate::tu::ftlib::ftlib_80087460;
+pub use crate::tu::ftlib::ftlib_getshadow;
+pub use crate::tu::ftlib::ftlib_castsshadow;
+pub use crate::tu::ftlib::ftlib_getlastattackerslot;
+pub use crate::tu::ftlib::ftlib_islastattackersubfighter;
+pub use crate::tu::ftlib::ftlib_issleeping_8008731c;
+pub use crate::tu::ftlib::ftlib_isdead;
+pub use crate::tu::ftlib::ftlib_isdeadup;
+pub use crate::tu::ftlib::ftlib_isdeadupstar;
+pub use crate::tu::ftlib::ftlib_isdeadupfall;
+pub use crate::tu::ftlib::ftlib_isrebirth;
+pub use crate::tu::ftlib::ftlib_isentry;
+pub use crate::tu::ftlib::ftlib_findbyspawnnum;
+pub use crate::tu::ftlib::ftlib_getcrowdknockback;
+pub use crate::tu::ftlib::ftlib_getspawnnum;
 pub use crate::tu::ftlib::ftlib_8008746c;
-pub use crate::tu::ftlib::ftlib_800874bc;
+pub use crate::tu::ftlib::ftlib_issubfighter;
 pub use crate::tu::ftlib::ftlib_800874cc;
-pub use crate::tu::ftlib::ftlib_800876b4;
-pub use crate::tu::ftlib::ftlib_800876d4;
-pub use crate::tu::ftlib::ftlib_800876f4;
-pub use crate::tu::ftlib::ftlib_80087700;
-pub use crate::tu::ftlib::ftlib_8008770c;
-pub use crate::tu::ftlib::ftlib_80087744;
-pub use crate::tu::ftlib::ftlib_800877d4;
+pub use crate::tu::ftlib::ftlib_isframesremaining;
+pub use crate::tu::ftlib::ftlib_ischargingsmash;
+pub use crate::tu::ftlib::ftlib_getlasthitsourcetype;
+pub use crate::tu::ftlib::ftlib_getlasthitsourcekind;
+pub use crate::tu::ftlib::ftlib_getgamewatchcolor;
+pub use crate::tu::ftlib::ftlib_getgamewatchoutlinecolor;
+pub use crate::tu::ftlib::ftlib_isbeingnudged;

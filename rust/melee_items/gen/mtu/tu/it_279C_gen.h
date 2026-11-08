@@ -79,12 +79,12 @@ __typeof__(struct HSD_GObj *) Item_80268B18(__typeof__(struct SpawnItem *) a0) {
 void db_80225DD8(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1003); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 __typeof__(int) db_GetCurrentlySelectedPokemon(void) { T(1004); return (__typeof__(int)) ((int) (fv() % 32)); }
 void* oracle_efsync_n(int n, int a0, HSD_GObj* a1, ...) { __builtin_va_list ap; int i; __builtin_va_start(ap, a1); T(1005); T((u32) a0); T(PI(a1)); T((u32) n); for (i = 0; i < n; i++) { int kind = __builtin_va_arg(ap, int); unsigned long long v = __builtin_va_arg(ap, unsigned long long); switch (kind) { case 0: T((u32) v); break; case 1: T(PI((void*) v)); break; case 2: T(B(*(float*) v)); break; default: T(B(((float*) v)[0])); T(B(((float*) v)[1])); T(B(((float*) v)[2])); break; } } __builtin_va_end(ap); return 0; }
-__typeof__(int) ftLib_800860C4(void) { T(1006); return (__typeof__(int)) (fv()); }
-__typeof__(struct HSD_GObj *) ftLib_8008627C(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (pick_fgo()); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1008); T(PI((const void*) a0)); T(PI((const void*) a1));  if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
-__typeof__(int) ftLib_80086960(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) ((a0 >= &GO[4] && a0 <= &GO[6])); }
-__typeof__(unsigned char) ftLib_80086BE0(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
-__typeof__(int) ftLib_800874BC(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) ftLib_CountFighters(void) { T(1006); return (__typeof__(int)) (fv()); }
+__typeof__(struct HSD_GObj *) ftLib_FindNearestOpponent(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (pick_fgo()); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1008); T(PI((const void*) a0)); T(PI((const void*) a1));  if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) ((a0 >= &GO[4] && a0 <= &GO[6])); }
+__typeof__(unsigned char) ftLib_GetPlayerIndex(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
+__typeof__(int) ftLib_IsSubFighter(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void ft_80089768(__typeof__(Vec2 *) a0) { T(1012); T(PI((const void*) a0)); a0->x = rw(); a0->y = rw(); }
 __typeof__(union Struct2070 *) ft_80089884(__typeof__(struct HSD_GObj *) a0) { T(1013); T(PI((const void*) a0)); return (__typeof__(union Struct2070 *)) (&S70[rnd() & 1]); }
 __typeof__(struct Struct2074 *) ft_800898A8(__typeof__(struct HSD_GObj *) a0) { T(1014); T(PI((const void*) a0)); return (__typeof__(struct Struct2074 *)) (&S74[rnd() & 1]); }
@@ -5741,12 +5741,12 @@ static void freg_all(void)
 // stub db_80225DD8 = 1003
 // stub db_GetCurrentlySelectedPokemon = 1004
 // stub efSync_Spawn = 1005
-// stub ftLib_800860C4 = 1006
-// stub ftLib_8008627C = 1007
-// stub ftLib_80086644 = 1008
-// stub ftLib_80086960 = 1009
-// stub ftLib_80086BE0 = 1010
-// stub ftLib_800874BC = 1011
+// stub ftLib_CountFighters = 1006
+// stub ftLib_FindNearestOpponent = 1007
+// stub ftLib_GetPos = 1008
+// stub ftLib_IsFighter = 1009
+// stub ftLib_GetPlayerIndex = 1010
+// stub ftLib_IsSubFighter = 1011
 // stub ft_80089768 = 1012
 // stub ft_80089884 = 1013
 // stub ft_800898A8 = 1014

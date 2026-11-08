@@ -19,8 +19,8 @@ pub fn install() {
         ftCo_800C78B0 = Some(|a0, a1| { t(1006); t(pi(a0)); t(pi(a1)); });
         ftCo_800C7B0C = Some(|a0, a1, a2, a3, a4| { t(1007); t(pi(a0)); t(pi(a1)); tvec(a1); t(pi(a2)); tvec(a2); t(pi(a3)); t(a4.to_bits()); });
         ftCo_800C7C60 = Some(|a0, a1| { t(1008); t(pi(a0)); t(a1 as u32); });
-        ftLib_8008627C = Some(|a0, a1| { t(1009); t(pi(a0)); tvec(a0); t(pi(a1)); if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() } });
-        ftLib_80086644 = Some(|a0, a1| { t(1010); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
+        ftLib_FindNearestOpponent = Some(|a0, a1| { t(1009); t(pi(a0)); tvec(a0); t(pi(a1)); if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() } });
+        ftLib_GetPos = Some(|a0, a1| { t(1010); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
         it_2725_Logic9_Destroyed = Some(|a0| { t(1011); t(pi(a0)); });
         it_8026B684 = Some(|a0| { t(1012); t(pi(a0)); tvec(a0); rg() });
         it_8026D564 = Some(|a0| { t(1013); t(pi(a0)); fv() as _ });

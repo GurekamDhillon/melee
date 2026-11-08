@@ -34,7 +34,7 @@ ItemCommonData * it_804D6D28;
 __typeof__(float) HSD_Randf(void) { T(1000); return (__typeof__(float)) (rg()); }
 __typeof__(int) HSD_Randi(__typeof__(int) a0) { T(1001); T((u32) a0); return (__typeof__(int)) ((a0 > 0 ? (int) (rnd() % (u32) a0) : 0)); }
 __typeof__(struct HSD_GObj *) Item_80268B18(__typeof__(struct SpawnItem *) a0) { T(1002); T(PI((const void*) a0)); T((u32) a0->kind); T((u32) a0->x3C_damage); T((u32) a0->x40); T(B(a0->vel.x)); T(B(a0->vel.y)); T(B(a0->vel.z)); T(B(a0->prev_pos.x)); T(B(a0->prev_pos.y)); T(B(a0->prev_pos.z)); T(B(a0->pos.x)); T(B(a0->pos.y)); T(B(a0->pos.z)); T(B(a0->facing_dir)); T(PI(a0->x0_parent_gobj)); T(PI(a0->x4_parent_gobj2)); T((u32) a0->x44_flag.b0); return (__typeof__(struct HSD_GObj *)) (pick_igo()); }
-__typeof__(int) ftLib_80086960(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void ftLib_800874CC(__typeof__(struct HSD_GObj *) a0, __typeof__(void *) a1, __typeof__(int) a2) { T(1004); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); { int ii; for (ii = 0; ii < a2 && ii < 8; ii++) T(((int*) a1)[ii]); } }
 __typeof__(int) gm_8016B0B4(void) { T(1005); return (__typeof__(int)) (fv()); }
 __typeof__(int) gm_8016B238(void) { T(1006); return (__typeof__(int)) (fv()); }
@@ -5404,7 +5404,7 @@ static void freg_all(void)
 // stub HSD_Randf = 1000
 // stub HSD_Randi = 1001
 // stub Item_80268B18 = 1002
-// stub ftLib_80086960 = 1003
+// stub ftLib_IsFighter = 1003
 // stub ftLib_800874CC = 1004
 // stub gm_8016B0B4 = 1005
 // stub gm_8016B238 = 1006

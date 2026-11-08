@@ -193,10 +193,10 @@ pub mod ext {
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
     fn ScriptGame_EnemyDefeated(a0: *mut HSD_GObj) -> i32;
     fn ScriptGame_EnemyDestroyed(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
-    fn ftLib_800870BC(a0: *mut HSD_GObj, a1: *mut i32) -> i32;
-    fn ftLib_8008770C(a0: *mut HSD_GObj, a1: *mut c_void);
-    fn ftLib_80087744(a0: *mut HSD_GObj, a1: *mut c_void);
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetFacingDir(a0) };
+    fn ftLib_GetSubColor(a0: *mut HSD_GObj, a1: *mut i32) -> i32;
+    fn ftLib_GetGameWatchColor(a0: *mut HSD_GObj, a1: *mut c_void);
+    fn ftLib_GetGameWatchOutlineColor(a0: *mut HSD_GObj, a1: *mut c_void);
     fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetMotionId(a0) };
     fn gm_IsCurrently1PMode() -> i32;
     fn grLib_801C9E40() -> i32 => unsafe { melee_world::tu::grlib::grLib_801C9E40() };
@@ -848,7 +848,7 @@ pub unsafe extern "C" fn it_8027CB3C(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8027CB3C");
     let item = item_of(item_gobj);
     ext::it_8026C220(item_gobj, (*item).owner);
-    (*item).facing_dir = ext::ftLib_800865C0((*item).owner);
+    (*item).facing_dir = ext::ftLib_GetFacingDir((*item).owner);
     ext::it_80275414(item_gobj);
     ext::it_80275474(item_gobj);
     ext::it_802762BC(item);
@@ -859,7 +859,7 @@ pub unsafe extern "C" fn it_8027CB3C(item_gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_8027CBA4(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8027CBA4");
     let item = item_of(item_gobj);
-    (*item).facing_dir = ext::ftLib_800865C0((*item).owner);
+    (*item).facing_dir = ext::ftLib_GetFacingDir((*item).owner);
     ext::it_802762BC(item);
     ext::it_802754D4(item_gobj);
     ext::it_8026B3A8(item_gobj);
@@ -952,10 +952,10 @@ pub unsafe extern "C" fn it_8027CE64(item_gobj: *mut HSD_GObj, fighter_gobj: *mu
     let item = item_of(item_gobj);
     let mut sp18: GXColor = core::mem::zeroed();
     (*item).xDCF_flag.anon_0.set_b3(1);
-    ext::ftLib_8008770C(fighter_gobj, &raw mut sp18 as *mut c_void);
+    ext::ftLib_GetGameWatchColor(fighter_gobj, &raw mut sp18 as *mut c_void);
     ext::it_80278574(item_gobj, &raw mut sp18);
-    ext::ftLib_80087744(fighter_gobj, &raw mut (*item).xBC8 as *mut c_void);
-    (*item).x5C8 = ext::ftLib_800870BC((*item).owner, &raw mut (*item).xBC4 as *mut i32) as u8;
+    ext::ftLib_GetGameWatchOutlineColor(fighter_gobj, &raw mut (*item).xBC8 as *mut c_void);
+    (*item).x5C8 = ext::ftLib_GetSubColor((*item).owner, &raw mut (*item).xBC4 as *mut i32) as u8;
     ext::it_80274594(item_gobj);
     (*item).xDD4_itemVar.gamewatch.attr = arg_attr_address;
 }

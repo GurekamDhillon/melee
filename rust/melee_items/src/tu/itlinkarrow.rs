@@ -109,10 +109,10 @@ pub mod ext {
     fn ftCo_80094098(a0: *mut HSD_GObj, a1: *mut f32) -> f32;
     fn ftKb_SpecialNLk800FB418(a0: *mut HSD_GObj);
     fn ftKb_SpecialNLk800FB470(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
-    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800869D4(a0) };
-    fn ftLib_80086A18(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetFacingDir(a0) };
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_GetPartJObj(a0, a1) };
+    fn ftLib_GetModelScale(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetModelScale(a0) };
+    fn ftLib_IsShielding(a0: *mut HSD_GObj) -> i32;
     fn ftLk_SpecialN_IsActiveAnd2071b6(a0: *mut HSD_GObj) -> i32;
     fn ftLk_SpecialN_UnsetArrow(a0: *mut HSD_GObj);
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
@@ -365,7 +365,7 @@ pub unsafe extern "C" fn it_802A83E0(facing_dir: f32, arg1: *mut Item_GObj, arg2
         (*item).xDD4_itemVar.linkarrow.xB4[1] = null_mut();
         (*item).xDD4_itemVar.linkarrow.xB4[0] = null_mut();
         (*item).xDD4_itemVar.linkarrow.xE0 = arg1;
-        (*item).xDD4_itemVar.linkarrow.xC0 = ext::ftLib_800869D4((*item).xDD4_itemVar.linkarrow.xE0);
+        (*item).xDD4_itemVar.linkarrow.xC0 = ext::ftLib_GetModelScale((*item).xDD4_itemVar.linkarrow.xE0);
         (*item).xDD4_itemVar.linkarrow.xE4 = -1;
         (*item).xDD4_itemVar.linkarrow.xEC = 0.0;
         (*item).xDD4_itemVar.linkarrow.xE8 = 0.0;
@@ -421,7 +421,7 @@ pub unsafe extern "C" fn itLinkArrow_802A850C(gobj: *mut Item_GObj, arg1: *mut V
 
     if !(*lv).xE0.is_null() && (*ip).owner == (*lv).xE0 {
         it_802A8C7C(gobj);
-        let bone = ext::ftLib_80086630((*lv).xE0, (*ip).xDC4 as u32);
+        let bone = ext::ftLib_GetPartJObj((*lv).xE0, (*ip).xDC4 as u32);
         ext::HSD_MtxGetRotation(&raw mut (*bone).mtx as *mut c_void, &mut rot);
         pos.z = 0.0;
         pos.y = 0.0;
@@ -432,7 +432,7 @@ pub unsafe extern "C" fn itLinkArrow_802A850C(gobj: *mut Item_GObj, arg1: *mut V
         // `(arg4 * ((x8 - x4) / arg5)) + x4`: one fused multiply-add each
         (*lv).xA8 = fmadds(arg4, ((*attr).x8 - (*attr).x4) / arg5, (*attr).x4);
         (*lv).xA4 = melee_core::ppc::fcvt_u32(fmadds(arg4, ((*attr).x10 - (*attr).xC) / arg5, (*attr).xC));
-        (*ip).facing_dir = ext::ftLib_800865C0((*lv).xE0);
+        (*ip).facing_dir = ext::ftLib_GetFacingDir((*lv).xE0);
         HSD_JObjSetRotationY(jobj, (M_PI_2 * (*ip).facing_dir as f64) as f32);
         (*ip).pos = *arg1;
         (*lv).x18 = *arg2;
@@ -672,7 +672,7 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion1_Coll(gobj: *mut Item_GObj) -> bo
 pub unsafe extern "C" fn itLinkarrow_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
     melee_core::ct!("itLinkarrow_UnkMotion2_Anim");
     let item = GET_ITEM(gobj);
-    if ext::ftLib_80086A18((*item).xDD4_itemVar.linkarrow.xC4) != 1 {
+    if ext::ftLib_IsShielding((*item).xDD4_itemVar.linkarrow.xC4) != 1 {
         return true;
     }
     it_802A8330_inline(gobj)
@@ -683,7 +683,7 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion2_Phys(gobj: *mut HSD_GObj) {
     let item = GET_ITEM(gobj);
     let lv = &raw mut (*item).xDD4_itemVar.linkarrow;
     let a = ext::ftCo_80094098((*lv).xC4, &mut (*lv).xC8);
-    (*lv).xD4 = a * ext::ftLib_800869D4((*lv).xC4);
+    (*lv).xD4 = a * ext::ftLib_GetModelScale((*lv).xC4);
     (*item).pos.x = fmadds((*lv).xD4, cosf((*lv).xD8), (*lv).xC8);
     (*item).pos.y = fmadds((*lv).xD4, sinf((*lv).xD8), (*lv).xCC);
     (*item).pos.z = 0.0;
@@ -874,7 +874,7 @@ pub unsafe extern "C" fn itLinkArrow_Logic98_HitShield(gobj: *mut Item_GObj) -> 
         if ext::it_80272D40((*ip).xCF4_fighterGObjUnk) == 0 {
             itLinkArrow_Logic98_HitShield_inline(gobj, &mut scale);
             (*lv).xC4 = (*ip).xCF4_fighterGObjUnk;
-            let temp_f31 = ext::ftLib_800869D4((*lv).xC4);
+            let temp_f31 = ext::ftLib_GetModelScale((*lv).xC4);
             (*lv).xD4 = temp_f31 * ext::ftCo_80094098((*lv).xC4, &mut (*lv).xC8);
             {
                 let half_x = 0.5f32 * ((*ip).pos.x + (*lv).x18.x);

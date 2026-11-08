@@ -426,7 +426,7 @@ two Alloc functions).
 Since round 11 (8cc2cf4d8) the sim agent's efa84f09f committed the particle work into this crate
 (`generator.rs`, `particle.rs`, `psappsrt.rs`, `oracle_generator`). Counted now:
 - **checked vs C (23)**, through `oracle_generator` (32.4k rows; direct op or reached from one):
-  generator.c HSD_StageSlotParticlesClear, hsd_8039D1E4, D1EC, D214, D354, D3AC, D4DC, D580,
+  generator.c HSD_StageSlotParticlesClear, psSetUserFunc, D1EC, D214, D354, D3AC, D4DC, D580,
   D5DC, D688, D71C, D9C8, DAD4, EE24, EFAC, F05C, F6CC (17); psappsrt.c psInitAppSRT,
   psAddParticleAppSRT_begin, psAttachGeneratorAppSRT, psAttachParticleAppSRT,
   psRemoveGeneratorSRT, psRemoveParticleAppSRT (6).

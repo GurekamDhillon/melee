@@ -30,9 +30,9 @@ pub mod ext {
     }
     ext_fns! {
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_80086BE0(a0) };
-    fn ftLib_800871A8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
-    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_GetPlayerIndex(a0) };
+    fn ftLib_ApplyMetalBox(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
+    fn ftLib_IsSubFighter(a0: *mut HSD_GObj) -> i32;
     fn it_8026B390(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b390(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026D62C(a0, a1) };
@@ -151,8 +151,8 @@ pub unsafe extern "C" fn itMetalB_Logic32_DmgReceived(gobj: *mut Item_GObj) -> b
 
     if !go.is_null() {
         if (*go).classifier as i32 == HSD_GOBJ_CLASS_FIGHTER && (*it).xDCF_flag.anon_0.b6() != 0 {
-            ext::ftLib_800871A8(go, gobj);
-            ext::pl_8003E17C((ext::ftLib_80086BE0(go) & 0xFF) as i32, ext::ftLib_800874BC(go), gobj);
+            ext::ftLib_ApplyMetalBox(go, gobj);
+            ext::pl_8003E17C((ext::ftLib_GetPlayerIndex(go) & 0xFF) as i32, ext::ftLib_IsSubFighter(go), gobj);
             return true;
         } else {
             (*it).xCEC_fighterGObj = null_mut();

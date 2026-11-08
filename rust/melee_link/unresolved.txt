@@ -1579,7 +1579,7 @@ other fn_80174274 melee_modes/tu/gm_1798.rs 0
 other fn_801795D4 melee_modes/tu/gm_1798.rs 0
 other fn_801796F0 melee_modes/tu/gm_1798.rs 0
 other ftDemo_ObjAllocInit melee_modes/tu/gm_1798.rs 1
-other ftLib_800876B4 melee_modes/tu/gm_1798.rs 1
+other ftLib_IsFramesRemaining melee_modes/tu/gm_1798.rs 1
 other gm_80160438 melee_modes/tu/gm_1798.rs 0
 other gm_80160854 melee_modes/tu/gm_1798.rs 0
 other gm_80160968 melee_modes/tu/gm_1798.rs 0
@@ -1652,11 +1652,11 @@ other ftBossLib_8015CB9C melee_modes/tu/gm_17c0.rs 0
 other ftBossLib_8015CC14 melee_modes/tu/gm_17c0.rs 0
 other ftBossLib_IsMasterHandEntry melee_modes/tu/gm_17c0.rs 0
 other ftCo_800C8C84 melee_modes/tu/gm_17c0.rs 0
-other ftLib_80086824 melee_modes/tu/gm_17c0.rs 0
-other ftLib_800868A4 melee_modes/tu/gm_17c0.rs 0
-other ftLib_80087508 melee_modes/tu/gm_17c0.rs 0
-other ftLib_80087574 melee_modes/tu/gm_17c0.rs 0
-other ftLib_80087610 melee_modes/tu/gm_17c0.rs 0
+other ftLib_DisableAllInput melee_modes/tu/gm_17c0.rs 0
+other ftLib_EnableAllInput melee_modes/tu/gm_17c0.rs 0
+other ftLib_LoadFighterCostume melee_modes/tu/gm_17c0.rs 0
+other ftLib_LoadFighterAllCostumes melee_modes/tu/gm_17c0.rs 0
+other ftLib_LoadKirbyHats melee_modes/tu/gm_17c0.rs 0
 other ft_80087C58 melee_modes/tu/gm_17c0.rs 0
 other ft_80087C64 melee_modes/tu/gm_17c0.rs 0
 other gmMainLib_8015D134 melee_modes/tu/gm_17c0.rs 0
@@ -2080,9 +2080,9 @@ other Camera_PCMainCObj melee_modes/tu/script_game.rs 0
 other Camera_StageSlotClipGet melee_modes/tu/script_game.rs 1
 other DVDConvertPathToEntrynum melee_modes/tu/script_game.rs 1
 other Fighter_ChangeMotionState melee_modes/tu/script_game.rs 0
-other Fighter_ProcessHit_8006D1EC melee_modes/tu/script_game.rs 0
+other Fighter_procCollResolve melee_modes/tu/script_game.rs 0
 other Fighter_ResetInputData_80068854 melee_modes/tu/script_game.rs 0
-other Fighter_UnkProcessDeath_80068354 melee_modes/tu/script_game.rs 0
+other Fighter_Spawn melee_modes/tu/script_game.rs 0
 other GObj_Create melee_modes/tu/script_game.rs 1
 other GObj_InitUserData melee_modes/tu/script_game.rs 1
 other GObj_SetupGXLink melee_modes/tu/script_game.rs 1
@@ -2345,7 +2345,7 @@ other ftCommon_CalcHitlag melee_modes/tu/script_game.rs 1
 other ftCommon_CalcSelfAccel_DeaccelQuickAir melee_modes/tu/script_game.rs 1
 other ftCommon_UnlockECB melee_modes/tu/script_game.rs 1
 other ftKb_MexKirbyLike melee_modes/tu/script_game.rs 0
-other ftLib_80086960 melee_modes/tu/script_game.rs 0
+other ftLib_IsFighter melee_modes/tu/script_game.rs 0
 other ftLib_SetScale melee_modes/tu/script_game.rs 1
 other ftParts_GetBoneIndex melee_modes/tu/script_game.rs 1
 other ft_80081C88 melee_modes/tu/script_game.rs 0
@@ -2371,7 +2371,7 @@ other grStory_801E3030 melee_modes/tu/script_game.rs 0
 other grStory_801E36D8 melee_modes/tu/script_game.rs 0
 other grStory_StageSlotParamSwap melee_modes/tu/script_game.rs 0
 other grZakoGenerator_StageSlotRelease melee_modes/tu/script_game.rs 0
-other hsd_8039D048 melee_modes/tu/script_game.rs 0
+other psClearPointJObj melee_modes/tu/script_game.rs 0
 other hsd_8039D3AC melee_modes/tu/script_game.rs 1
 other it_8026B40C melee_modes/tu/script_game.rs 0
 other it_8026D324 melee_modes/tu/script_game.rs 0

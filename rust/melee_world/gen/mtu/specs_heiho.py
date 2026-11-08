@@ -62,7 +62,7 @@ SPECS["itgreatfoxlaser"] = dict(
     skip_data=["result"],
     ret={"Item_80268B18": ("pick_HSD_GObj(1)", "pick_HSD_GObj(1)")},
     effects={**SPAWN_HASH, "lb_8000B1CC": LB_B1CC,
-             "ftLib_80086644": ("{ a1->x = rg(); a1->y = rg(); a1->z = rg(); }", "{ (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); }")},
+             "ftLib_GetPos": ("{ a1->x = rg(); a1->y = rg(); a1->z = rg(); }", "{ (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); }")},
     setup_c=JOBJ_SETUP_C + "\n" + BONES_C, setup_rs=JOBJ_SETUP_RS + "\n" + BONES_RS,
     ops=[dict(name="it_802EAF28", uv={"Item_xDD4_itemVar": "likelike"}),
          dict(name="it_802EAF34", args=["p:HSD_GObj", "p:Vec3", "r:0:1"]),
@@ -207,9 +207,9 @@ SPECS["ithassam"] = dict(
     rs_decl="pub static mut FG: [HSD_GObj; 3] = unsafe { core::mem::zeroed() };\n"
             "pub static mut FT: [Fighter; 3] = unsafe { core::mem::zeroed() };\n"
             "pub static mut PLH: [*mut HSD_GObj; 32] = [null_mut(); 32];\n",
-    ret={"ftLib_80086FD4": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+    ret={"ftLib_IsSamePlayer": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
          "gm_8016B168": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
-         "ftLib_8008627C": ("((fv() & 1) ? (HSD_GObj*) 0 : &FG[rnd() % 3u])",
+         "ftLib_FindNearestOpponent": ("((fv() & 1) ? (HSD_GObj*) 0 : &FG[rnd() % 3u])",
                             "if fv() & 1 != 0 { null_mut() } else { &raw mut super::FG[(rnd() % 3) as usize] }")},
     effects={"lbVector_Diff": ("{ T(B(a0->x)); T(B(a0->y)); T(B(a0->z)); T(B(a1->x)); T(B(a1->y)); T(B(a1->z)); "
                                "a2->x = rg(); a2->y = rg(); a2->z = rg(); }",
@@ -218,7 +218,7 @@ SPECS["ithassam"] = dict(
              "lbVector_Rotate": ("{ T(B(a0->x)); T(B(a0->y)); T(B(a0->z)); a0->x = rg(); a0->y = rg(); a0->z = rg(); }",
                                  "{ t((*a0).x.to_bits()); t((*a0).y.to_bits()); t((*a0).z.to_bits()); (*a0).x = rg(); (*a0).y = rg(); (*a0).z = rg(); }"),
              "lbVector_Normalize": VEC_INOUT,
-             "ftLib_800866DC": ("{ a1->x = rg(); a1->y = rg(); a1->z = rg(); }",
+             "ftLib_GetCameraBonePos": ("{ a1->x = rg(); a1->y = rg(); a1->z = rg(); }",
                                 "{ (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); }"),
              "Camera_GetTransformPosition": ("{ a0->x = rg(); a0->y = rg(); a0->z = rg(); }",
                                              "{ (*a0).x = rg(); (*a0).y = rg(); (*a0).z = rg(); }")},

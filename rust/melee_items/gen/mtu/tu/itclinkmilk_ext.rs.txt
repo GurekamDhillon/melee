@@ -29,7 +29,7 @@ pub mod ext {
     fn ftCl_Init_8014920C(a0: *mut HSD_GObj) -> i32;
     fn ftCl_Init_801492C4(a0: *mut HSD_GObj);
     fn ftCl_Init_801492F4(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32;
+    fn ftLib_GetModelScale(a0: *mut HSD_GObj) -> f32;
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.

@@ -13,7 +13,7 @@ pub fn install() {
         Item_80268E5C = Some(|a0, a1, a2| { t(1000); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         Item_8026A8EC = Some(|a0| { t(1001); t(pi(a0)); });
         ftKb_SpecialNYs_80109238 = Some(|a0| { t(1002); t(pi(a0)); fv() as _ });
-        ftLib_80086630 = Some(|a0, a1| { t(1003); t(pi(a0)); t(a1 as u32); core::ptr::null_mut() });
+        ftLib_GetPartJObj = Some(|a0, a1| { t(1003); t(pi(a0)); t(a1 as u32); core::ptr::null_mut() });
         it_8026BD54 = Some(|a0| { t(1004); t(pi(a0)); });
         it_8026C220 = Some(|a0, a1| { t(1005); t(pi(a0)); t(pi(a1)); });
         it_80273408 = Some(|a0| { t(1006); t(pi(a0)); });

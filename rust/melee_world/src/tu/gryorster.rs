@@ -177,8 +177,8 @@ pub mod ext {
                     None => { unsafe { crate::tu::grmaterial::grMaterial_801C8E08(a0 as _); } return; },
                 }
             }
-    pub static mut H_ftLib_80086960: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj) -> i32> = None;
-    pub unsafe extern "C" fn ftLib_80086960(a0: *mut melee_types::HSD_GObj) -> i32 { match H_ftLib_80086960 { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_80086960(a0 as _) as _ } } }
+    pub static mut H_ftLib_IsFighter: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj) -> i32> = None;
+    pub unsafe extern "C" fn ftLib_IsFighter(a0: *mut melee_types::HSD_GObj) -> i32 { match H_ftLib_IsFighter { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_IsFighter(a0 as _) as _ } } }
     pub static mut H_ftLib_80086A4C: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, f32)> = None;
     pub unsafe extern "C" fn ftLib_80086A4C(a0: *mut melee_types::HSD_GObj, a1: f32) { match H_ftLib_80086A4C { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086A4C(a0 as _, a1 as _); } } }
     pub static mut H_grMaterial_801C8E28: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj) > = None;
@@ -257,10 +257,10 @@ pub mod ext {
                     None => { unsafe { melee_runtime::tu::lb_00F9::lb_800115F4(); } return; },
                 }
             }
-    pub static mut H_ftLib_800873F4: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj) -> i32> = None;
-    pub unsafe extern "C" fn ftLib_800873F4(a0: *mut melee_types::HSD_GObj) -> i32 { match H_ftLib_800873F4 { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_800873F4(a0 as _) as _ } } }
-    pub static mut H_ftLib_80086BEC: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
-    pub unsafe extern "C" fn ftLib_80086BEC(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_80086BEC { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086BEC(a0 as _, a1 as _); } } }
+    pub static mut H_ftLib_IsEntry: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj) -> i32> = None;
+    pub unsafe extern "C" fn ftLib_IsEntry(a0: *mut melee_types::HSD_GObj) -> i32 { match H_ftLib_IsEntry { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_IsEntry(a0 as _) as _ } } }
+    pub static mut H_ftLib_GetPosDelta: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
+    pub unsafe extern "C" fn ftLib_GetPosDelta(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_GetPosDelta { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_GetPosDelta(a0 as _, a1 as _); } } }
     pub static mut H_it_8026B718: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, f32)> = None;
     pub unsafe extern "C" fn it_8026B718(a0: *mut melee_types::HSD_GObj, a1: f32) { match H_it_8026B718 { Some(f) => f(a0, a1), None => unsafe { let _ = crate::itacc::it_8026B718(a0 as _, a1 as _); } } }
     pub static mut H___assert: Option<unsafe extern "C" fn(*const i8, u32, *const i8) > = None;
@@ -507,7 +507,7 @@ pub unsafe extern "C" fn grYorster_80202428(item_gobj: *mut HSD_GObj, gp: *mut G
     melee_core::ct!("grYorster_80202428");
     let gp2 = gp;
 
-    if ext::ftLib_80086960(fighter_gobj) != 0 {
+    if ext::ftLib_IsFighter(fighter_gobj) != 0 {
         ext::ftLib_80086A4C(fighter_gobj, (*grYt_804D6A20.x0).x14 as f32);
     }
 
@@ -539,7 +539,7 @@ pub unsafe extern "C" fn grYorster_802024F0(
         return;
     }
 
-    if env == 1 && ext::ftLib_800873F4((*coll).x0_gobj) != 0 {
+    if env == 1 && ext::ftLib_IsEntry((*coll).x0_gobj) != 0 {
         return;
     }
 
@@ -547,7 +547,7 @@ pub unsafe extern "C" fn grYorster_802024F0(
         1 => {
             let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
-            ext::ftLib_80086BEC(gobj, &mut pos);
+            ext::ftLib_GetPosDelta(gobj, &mut pos);
             delta_y = pos.y;
             if delta_y >= (*grYt_804D6A20.x0).x00 {
                 ext::ftLib_80086A4C(gobj, (*grYt_804D6A20.x0).x10 as f32);

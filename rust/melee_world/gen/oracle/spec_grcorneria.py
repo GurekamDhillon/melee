@@ -334,7 +334,7 @@ use core::ptr::null_mut;""",
     melee_world::tu::grcorneria::ext::HSD_GOBJPLINKHEAD = Some(|_l: i32| addr_of_mut!(OGO[0]));
     melee_world::tu::grcorneria::ext::HSD_PADMASTERSTATUS = Some(|| addr_of_mut!(OPAD) as *mut HSD_PadStatus);
     melee_world::tu::grcorneria::ext::HSD_SISLIB_804D1124 = Some(|| addr_of_mut!(OSIS) as *mut *mut SIS);""",
-    outs={"lb_8000B1CC": [2], "ftLib_80086644": [1], "Camera_GetTransformInterest": [0], "Player_LoadPlayerCoords": [1]},
+    outs={"lb_8000B1CC": [2], "ftLib_GetPos": [1], "Camera_GetTransformInterest": [0], "Player_LoadPlayerCoords": [1]},
     rets={
         "HSD_Randi": ("(int) (a0 > 0 ? rnd() % (u32) a0 : 0)", "(if a0 > 0 { rnd() % (a0 as u32) } else { 0 })"),
         "HSD_Randf": ("rf()", "rf()"),

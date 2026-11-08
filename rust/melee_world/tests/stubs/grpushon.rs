@@ -45,7 +45,7 @@ mod gen_stubs {
     fn t_Stage_GetCamBoundsTopOffset() -> f32 { unsafe { out("Stage_GetCamBoundsTopOffset"); out("\n"); rf() as f32 } }
     fn t_Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3) { unsafe { out("Stage_UnkSetVec3TCam_Offset"); trp(a0 as *const u8); out("\n"); if !a0.is_null() { (*a0).x = rf(); (*a0).y = rf(); (*a0).z = rf(); }  } }
     fn t_ftCo_800C07F8(a0: *mut Ground_GObj, a1: u32, a2: *mut core::ffi::c_void) { unsafe { out("ftCo_800C07F8"); trp(a0 as *const u8); tru(a1 as u64); trp(a2 as *const u8); out("\n");  } }
-    fn t_ftLib_80086644(a0: *mut Fighter_GObj, a1: *mut Vec3) { unsafe { out("ftLib_80086644"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); if !a1.is_null() { if FMODE == 1 { (*a1).x = 1500.0 + 10.0 * ((rnd() % 5) as f32); (*a1).y = 330.0 + 4.0 * ((rnd() % 5) as f32); (*a1).z = rf(); } else { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } }  } }
+    fn t_ftLib_GetPos(a0: *mut Fighter_GObj, a1: *mut Vec3) { unsafe { out("ftLib_GetPos"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); if !a1.is_null() { if FMODE == 1 { (*a1).x = 1500.0 + 10.0 * ((rnd() % 5) as f32); (*a1).y = 330.0 + 4.0 * ((rnd() % 5) as f32); (*a1).z = rf(); } else { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } }  } }
     fn t_gm_MexVanillaKind(a0: i32, a1: i32) -> i32 { unsafe { out("gm_MexVanillaKind"); tri(a0 as i64); tri(a1 as i64); out("\n"); (if rnd() % 3 == 0 { (rnd() % 8) as i32 } else { a0 }) as i32 } }
     fn t_grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("grAnime_801C8138"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
     fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
@@ -103,7 +103,7 @@ mod gen_stubs {
         ext::HOOK_Stage_GetCamBoundsTopOffset = Some(t_Stage_GetCamBoundsTopOffset);
         ext::HOOK_Stage_UnkSetVec3TCam_Offset = Some(t_Stage_UnkSetVec3TCam_Offset);
         ext::HOOK_ftCo_800C07F8 = Some(t_ftCo_800C07F8);
-        ext::HOOK_ftLib_80086644 = Some(t_ftLib_80086644);
+        ext::HOOK_ftLib_GetPos = Some(t_ftLib_GetPos);
         ext::HOOK_gm_MexVanillaKind = Some(t_gm_MexVanillaKind);
         ext::HOOK_grAnime_801C8138 = Some(t_grAnime_801C8138);
         ext::HOOK_grDisplay_801C5DB0 = Some(t_grDisplay_801C5DB0);

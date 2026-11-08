@@ -49,7 +49,7 @@ void Item_8026A8EC(Item_GObj* i) { T(14); T(iid(i)); }
 void ftCo_800C4724(Fighter_GObj* g) { T(15); T(iid(g)); }
 void ftCo_800C52F4(Fighter_GObj* g) { T(16); T(iid(g)); }
 void ftCommon_8007FA58(Fighter_GObj* g, Item_GObj* i) { T(17); T(iid(g)); T(iid(i)); }
-void ftLib_800871A8(Fighter_GObj* g, Item_GObj* i) { T(18); T(iid(g)); T(iid(i)); }
+void ftLib_ApplyMetalBox(Fighter_GObj* g, Item_GObj* i) { T(18); T(iid(g)); T(iid(i)); }
 void ftCo_800C88D4(Fighter_GObj* g, int v, bool b) { T(19); T(iid(g)); T(v); T(b); }
 float ftCo_CalcYScaledKnockback(float a, float b, float c) { T(20); T(B(a)); T(B(b)); T(B(c)); return rw(); }
 void Fighter_ChangeMotionState(Fighter_GObj* g, FtMotionId m, MotionFlags fl, float a, float b, float c, Fighter_GObj* o)

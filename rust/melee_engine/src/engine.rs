@@ -775,7 +775,7 @@ impl Engine {
                 melee_runtime::tu::lbcardnew::ext::hook::wait_idle = Some(|| {});
             }
             // ft/ftdemo.c (results-screen fighters): its callees, and the demo motion-state table melee_link fills.
-            // ft/ftlib.c ftLib_80087508 / 80087574 (the 1P modes preload the next stage's fighters): the table reads gen_link
+            // ft/ftlib.c ftLib_LoadFighterCostume / 80087574 (the 1P modes preload the next stage's fighters): the table reads gen_link
             // leaves unlinked
             {
                 use melee_fighter::tu::{fighter, ftdata, ftlib::ext as l};

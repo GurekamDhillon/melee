@@ -21,9 +21,9 @@ pub fn install() {
         HSD_StateInvalidate = Some(|a0| { t(1008); t(a0 as u32); });
         PSMTXConcat = Some(|a0, a1, a2| { t(1009); t(pi(a0)); t(pi(a1)); t(pi(a2)); for q in 0..12usize { t((*(a0 as *const f32).add(q)).to_bits()); t((*(a1 as *const f32).add(q)).to_bits()); *(a2 as *mut f32).add(q) = rw(); } });
         PSMTXIdentity = Some(|a0| { t(1010); t(pi(a0)); for q in 0..12usize { *(a0 as *mut f32).add(q) = if q % 5 == 0 { 1.0 } else { 0.0 }; } });
-        ftLib_800868D4 = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); fv() as _ });
-        ftLib_80086960 = Some(|a0| { t(1012); t(pi(a0)); fv() as _ });
-        ftLib_80087074 = Some(|a0, a1| { t(1013); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } fv() as _ });
+        ftLib_IsItemVisible = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); fv() as _ });
+        ftLib_IsFighter = Some(|a0| { t(1012); t(pi(a0)); fv() as _ });
+        ftLib_GetShakeOffset = Some(|a0, a1| { t(1013); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } fv() as _ });
         it_80272A18 = Some(|a0| { t(1014); t(pi(a0)); });
         it_80272A3C = Some(|a0| { t(1015); t(pi(a0)); });
         lbColl_80009F54 = Some(|a0, a1, a2| { t(1016); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); fv() as _ });

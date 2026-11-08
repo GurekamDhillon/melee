@@ -16,7 +16,7 @@ void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typ
 void (Item_8026A8EC)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); }
 void (Item_8026AE84)(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1005); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
 __typeof__(int) (ScriptGame_EnemyDefeated)(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-void (ftLib_80086D40)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1007); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
+void (ftLib_StartItemRumble)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1007); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1008); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
 __typeof__(int) (it_8026D5CC)(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (it_8026D62C)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1) { T(1010); T(PI((const void*) a0)); T(FI((const void*) a1)); }
@@ -1691,7 +1691,7 @@ static void freg_all(void)
 // stub Item_8026A8EC = 1004
 // stub Item_8026AE84 = 1005
 // stub ScriptGame_EnemyDefeated = 1006
-// stub ftLib_80086D40 = 1007
+// stub ftLib_StartItemRumble = 1007
 // stub it_8026B894 = 1008
 // stub it_8026D5CC = 1009
 // stub it_8026D62C = 1010

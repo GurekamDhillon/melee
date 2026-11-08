@@ -3,8 +3,8 @@ UNK_T Fighter_804D6534;
 ftCommonData * p_ftCommonData;
 void (Fighter_ChangeMotionState)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(unsigned int) a2, __typeof__(float) a3, __typeof__(float) a4, __typeof__(float) a5, __typeof__(struct HSD_GObj *) a6) { T(1000); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T(B(a3)); T(B(a4)); T(B(a5)); T(PI((const void*) a6)); }
 // stub Fighter_ChangeMotionState = 1000
-void (Fighter_UnkProcessDeath_80068354)(__typeof__(struct HSD_GObj *) a0) { T(1001); T(PI((const void*) a0)); }
-// stub Fighter_UnkProcessDeath_80068354 = 1001
+void (Fighter_Spawn)(__typeof__(struct HSD_GObj *) a0) { T(1001); T(PI((const void*) a0)); }
+// stub Fighter_Spawn = 1001
 void (HSD_JObjSetMtxDirtySub)(__typeof__(struct HSD_JObj *) a0) { T(1002); T(PI((const void*) a0)); }
 // stub HSD_JObjSetMtxDirtySub = 1002
 __typeof__(int) (Player_80032F30)(__typeof__(int) a0) { T(1003); T((u32) a0); return (__typeof__(int)) (fv()); }
@@ -79,10 +79,10 @@ __typeof__(float) (ftCommon_800804EC)(__typeof__(struct Fighter *) a0) { T(1037)
 // stub ftCommon_800804EC = 1037
 void (ftCommon_SetAccessory)(__typeof__(struct Fighter *) a0, __typeof__(struct HSD_Joint *) a1) { T(1038); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 // stub ftCommon_SetAccessory = 1038
-void (ftLib_800866DC)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1039); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-// stub ftLib_800866DC = 1039
-__typeof__(int) (ftLib_800873CC)(__typeof__(struct HSD_GObj *) a0) { T(1040); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub ftLib_800873CC = 1040
+void (ftLib_GetCameraBonePos)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1039); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+// stub ftLib_GetCameraBonePos = 1039
+__typeof__(int) (ftLib_IsRebirth)(__typeof__(struct HSD_GObj *) a0) { T(1040); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+// stub ftLib_IsRebirth = 1040
 __typeof__(int) (ftWalkCommon_800DFC70)(__typeof__(struct HSD_GObj *) a0) { T(1041); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 // stub ftWalkCommon_800DFC70 = 1041
 void (ft_80083844)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1) { T(1042); T(PI((const void*) a0)); T(a1 != 0); }

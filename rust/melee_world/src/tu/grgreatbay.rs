@@ -67,8 +67,8 @@ pub mod ext {
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
     fn Stage_GetBlastZoneBottomOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneBottomOffset() as _ };
     fn ftCo_800C07F8(a0: *mut HSD_GObj, a1: u32, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C07F8(a0 as _, a1 as _, core::mem::transmute(a2)); } };
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
-    fn ftLib_80086684(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086684(a0 as _, a1 as _); } };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } };
+    fn ftLib_GetPrevPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPrevPos(a0 as _, a1 as _); } };
     fn ftLib_80086B80(a0: *mut HSD_GObj) -> f32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ };
     fn ft_80087838(a0: *mut HSD_GObj) -> i32;
     fn grAnime_801C77FC(a0: *mut HSD_GObj, a1: i32, a2: u32) = |a0: *mut HSD_GObj, a1: i32, a2: u32| { unsafe { crate::tu::granime::grAnime_801C77FC(a0 as _, a1 as _, a2 as _); } };
@@ -1107,8 +1107,8 @@ pub unsafe extern "C" fn grGreatBay_801F6708(_unk: u32, gobj: *mut HSD_GObj) -> 
     let mut current = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut previous = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
-    ext::ftLib_80086644(gobj, &mut current);
-    ext::ftLib_80086684(gobj, &mut previous);
+    ext::ftLib_GetPos(gobj, &mut current);
+    ext::ftLib_GetPrevPos(gobj, &mut previous);
     if ext::ft_80087838(gobj) == 0 {
         if current.y < -5.0 {
             if previous.y > -5.0 {

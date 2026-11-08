@@ -1,5 +1,5 @@
 /* TU: src/melee/ft/ftcamera.c */
-/* C oracle for src/tu/ftcamera.rs: TU included verbatim, stage getters and ftLib_800866DC are
+/* C oracle for src/tu/ftcamera.rs: TU included verbatim, stage getters and ftLib_GetCameraBonePos are
  * stubs returning values drawn from SRV (mirrored by tests/tu_ftcamera.rs). */
 #include TU_SRC
 #include "tu_common.h"
@@ -9,7 +9,7 @@ float Stage_GetCamFixedZoom(void) { T(1); return ZOOM; }
 float Stage_GetBlastZoneTopOffset(void) { T(2); return BT; }
 float Stage_GetCamBoundsTopOffset(void) { T(3); return CT; }
 void Stage_UnkSetVec3TCam_Offset(Vec3* v) { T(4); v->x = 0; v->y = TC; v->z = 0; }
-void ftLib_800866DC(HSD_GObj* g, Vec3* v) { T(5); T(g == &GO); v->x = TC; v->y = ZOOM; v->z = BT; }
+void ftLib_GetCameraBonePos(HSD_GObj* g, Vec3* v) { T(5); T(g == &GO); v->x = TC; v->y = ZOOM; v->z = BT; }
 
 static CmSubject CB;
 static UnkFloat6_Camera IN, OUT;

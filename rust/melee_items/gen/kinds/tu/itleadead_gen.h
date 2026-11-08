@@ -19,9 +19,9 @@ void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typ
 void (Item_8026AE84)(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1006); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
 __typeof__(float) (atan2f)(__typeof__(float) a0, __typeof__(float) a1) { T(1007); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rg()); }
 void (ftCo_800C7800)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); }
-__typeof__(struct HSD_GObj *) (ftLib_8008627C)(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); TVEC((const Vec3*) a0); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (((fv() & 3) ? &GO[1] : 0)); }
-__typeof__(struct HSD_JObj *) (ftLib_80086630)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1010); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (0); }
-void (ftLib_80086644)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+__typeof__(struct HSD_GObj *) (ftLib_FindNearestOpponent)(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); TVEC((const Vec3*) a0); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (((fv() & 3) ? &GO[1] : 0)); }
+__typeof__(struct HSD_JObj *) (ftLib_GetPartJObj)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1010); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (0); }
+void (ftLib_GetPos)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
 void (it_2725_Logic9_Destroyed)(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void*) a0)); }
 __typeof__(float) (it_8026B684)(__typeof__(Vec *) a0) { T(1013); T(PI((const void*) a0)); TVEC((const Vec3*) a0); return (__typeof__(float)) (rg()); }
 void (it_8026BD3C)(__typeof__(struct HSD_GObj *) a0) { T(1014); T(PI((const void*) a0)); }
@@ -1740,9 +1740,9 @@ static void freg_all(void)
 // stub Item_8026AE84 = 1006
 // stub atan2f = 1007
 // stub ftCo_800C7800 = 1008
-// stub ftLib_8008627C = 1009
-// stub ftLib_80086630 = 1010
-// stub ftLib_80086644 = 1011
+// stub ftLib_FindNearestOpponent = 1009
+// stub ftLib_GetPartJObj = 1010
+// stub ftLib_GetPos = 1011
 // stub it_2725_Logic9_Destroyed = 1012
 // stub it_8026B684 = 1013
 // stub it_8026BD3C = 1014

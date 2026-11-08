@@ -14,7 +14,7 @@ pub fn install() {
         HSD_JObjSetMtxDirtySub = Some(|a0| { t(1001); t(pi(a0)); });
         Item_80268B5C = Some(|a0| { t(1002); t(pi(a0)); tspawn(a0); if fv() & 1 != 0 { &raw mut crate::GO[2] } else { core::ptr::null_mut() } });
         Item_80268E5C = Some(|a0, a1, a2| { t(1003); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
-        ftLib_80086FA8 = Some(|a0| { t(1004); t(pi(a0)); (fv() & 1) as i32 });
+        ftLib_IsSwordSwing = Some(|a0| { t(1004); t(pi(a0)); (fv() & 1) as i32 });
         itColl_BounceOffShield = Some(|a0| { t(1005); t(pi(a0)); (fv() & 1) as i32 });
         itColl_BounceOffVictim = Some(|a0| { t(1006); t(pi(a0)); });
         it_8026B390 = Some(|a0| { t(1007); t(pi(a0)); });

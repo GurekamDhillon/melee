@@ -109,8 +109,8 @@ pub fn install() {
         asinf = Some(|a0| { t(1096); t(a0.to_bits()); rg() });
         ftCo_8009F4A4 = Some(|| { t(1097); });
         ftCo_800C06C0 = Some(|| { t(1098); });
-        ftLib_80086644 = Some(|a0, a1| { t(1099); t(pi(a0)); t(pi(a1)); super::wv(a1); });
-        ftLib_8008701C = Some(|a0| { t(1100); t(pi(a0)); fv() as _ });
+        ftLib_GetPos = Some(|a0, a1| { t(1099); t(pi(a0)); t(pi(a1)); super::wv(a1); });
+        ftLib_IsSleeping = Some(|a0| { t(1100); t(pi(a0)); fv() as _ });
         gm_80164600 = Some(|| { t(1101); fv() as _ });
         gm_80164ABC = Some(|| { t(1102); fv() as _ });
         gm_8016B238 = Some(|| { t(1103); fv() as _ });

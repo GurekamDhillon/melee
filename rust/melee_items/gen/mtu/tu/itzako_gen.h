@@ -45,10 +45,10 @@ __typeof__(struct HSD_GObj *) Item_80268B5C(__typeof__(struct SpawnItem *) a0) {
 void Item_8026AE84(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1007); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
 __typeof__(int) ScriptGame_EnemyDefeated(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(int) ScriptGame_EnemyDestroyed(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(float) ftLib_800865C0(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-__typeof__(int) ftLib_800870BC(__typeof__(struct HSD_GObj *) a0, __typeof__(int *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (({ *(u32*) a1 = fv(); (int) (fv() & 1); })); }
-void ftLib_8008770C(__typeof__(struct HSD_GObj *) a0, __typeof__(void *) a1) { T(1012); T(PI((const void*) a0)); T(PI((const void*) a1)); *(u32*) a1 = fv(); }
-void ftLib_80087744(__typeof__(struct HSD_GObj *) a0, __typeof__(void *) a1) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); *(u32*) a1 = fv(); }
+__typeof__(float) ftLib_GetFacingDir(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(int) ftLib_GetSubColor(__typeof__(struct HSD_GObj *) a0, __typeof__(int *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (({ *(u32*) a1 = fv(); (int) (fv() & 1); })); }
+void ftLib_GetGameWatchColor(__typeof__(struct HSD_GObj *) a0, __typeof__(void *) a1) { T(1012); T(PI((const void*) a0)); T(PI((const void*) a1)); *(u32*) a1 = fv(); }
+void ftLib_GetGameWatchOutlineColor(__typeof__(struct HSD_GObj *) a0, __typeof__(void *) a1) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); *(u32*) a1 = fv(); }
 __typeof__(int) ftLib_GetMotionId(__typeof__(struct HSD_GObj *) a0) { T(1014); T(PI((const void*) a0)); return (__typeof__(int)) ((int) ((rnd() % 5 == 0) ? 0x14E : (rnd() % 5 == 0) ? 0x14D : (int) fv())); }
 __typeof__(int) gm_IsCurrently1PMode(void) { T(1015); return (__typeof__(int)) (fv()); }
 __typeof__(int) grLib_801C9E40(void) { T(1016); return (__typeof__(int)) (fv()); }
@@ -6494,10 +6494,10 @@ static void freg_all(void)
 // stub Item_8026AE84 = 1007
 // stub ScriptGame_EnemyDefeated = 1008
 // stub ScriptGame_EnemyDestroyed = 1009
-// stub ftLib_800865C0 = 1010
-// stub ftLib_800870BC = 1011
-// stub ftLib_8008770C = 1012
-// stub ftLib_80087744 = 1013
+// stub ftLib_GetFacingDir = 1010
+// stub ftLib_GetSubColor = 1011
+// stub ftLib_GetGameWatchColor = 1012
+// stub ftLib_GetGameWatchOutlineColor = 1013
 // stub ftLib_GetMotionId = 1014
 // stub gm_IsCurrently1PMode = 1015
 // stub grLib_801C9E40 = 1016

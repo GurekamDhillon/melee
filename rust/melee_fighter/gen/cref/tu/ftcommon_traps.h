@@ -19,7 +19,7 @@ void HSD_JObjSetMtxDirtySub(HSD_JObj* a0) { abort(); }
 HSD_GObj* Player_GetEntity(s32 slot) { abort(); { static HSD_GObj* z; return z; } }
 void efLib_DestroyAll(HSD_GObj* gobj) { abort(); }
 void ftCo_Fall_Enter(Fighter_GObj* gobj) { abort(); }
-bool ftLib_80086FD4(HSD_GObj* a0, HSD_GObj* a1) { abort(); { static bool z; return z; } }
+bool ftLib_IsSamePlayer(HSD_GObj* a0, HSD_GObj* a1) { abort(); { static bool z; return z; } }
 Fighter_Part ftParts_GetBoneIndex(Fighter* a0, Fighter_Part a1) { abort(); { static Fighter_Part z; return z; } }
 bool ft_80084A18(Fighter_GObj* a0) { abort(); { static bool z; return z; } }
 void ft_80088770(Fighter* fp) { abort(); }
@@ -42,7 +42,7 @@ void Player_SetUnk98(s32 slot, s32 unk98) { abort(); }
 bool ftCo_800C5240(Fighter_GObj* gobj) { abort(); { static bool z; return z; } }
 void ftCo_800C5500(Fighter_GObj* gobj) { abort(); }
 float ftCo_Damage_CalcAngle(Fighter* fp, float kb_applied) { abort(); { static float z; return z; } }
-void ftLib_800866DC(HSD_GObj* a0, Vec3* a1) { abort(); }
+void ftLib_GetCameraBonePos(HSD_GObj* a0, Vec3* a1) { abort(); }
 bool gm_8016B0B4(void) { abort(); { static bool z; return z; } }
 ItemKind itGetKind(Item_GObj* gobj) { abort(); { static ItemKind z; return z; } }
 s32 itGetMotionId(Item_GObj* gobj) { abort(); { static s32 z; return z; } }

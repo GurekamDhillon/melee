@@ -708,7 +708,7 @@ fn install_melee_runtime() {
     // tu/lbaudio_ax.rs
     unsafe { melee_runtime::tu::lbaudio_ax::ext::hook::Stage_8022519C = Some(|a0| unsafe { cast::<_, _, 35100>(melee_world::tu::stage::Stage_8022519C(cast::<_, _, 35101>(a0))) }); }
     // tu/lbaudio_ax.rs
-    unsafe { melee_runtime::tu::lbaudio_ax::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 35201>(a0), cast::<_, _, 35202>(a1)) }); }
+    unsafe { melee_runtime::tu::lbaudio_ax::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 35201>(a0), cast::<_, _, 35202>(a1)) }); }
     // tu/lbaudio_ax.rs
     unsafe { melee_runtime::tu::lbaudio_ax::ext::hook::gm_801603B0 = Some(|| unsafe { melee_modes::tu::gm_1601::gm_801603B0() }); }
     // tu/lbaudio_ax.rs
@@ -1066,11 +1066,11 @@ fn install_melee_runtime() {
     // tu/lbshadow.rs
     unsafe { melee_runtime::tu::lbshadow::ext::hook::ftDrawCommon_80081200 = Some(|| unsafe { melee_fighter::tu::ftdrawcommon::ftDrawCommon_80081200() }); }
     // tu/lbshadow.rs
-    unsafe { melee_runtime::tu::lbshadow::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 52900>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 52901>(a0))) }); }
+    unsafe { melee_runtime::tu::lbshadow::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 52900>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 52901>(a0))) }); }
     // tu/lbshadow.rs
-    unsafe { melee_runtime::tu::lbshadow::ext::hook::ftLib_800872B0 = Some(|a0| unsafe { cast::<_, _, 53000>(melee_world::ftlib::ftLib_800872B0(cast::<_, _, 53001>(a0))) }); }
+    unsafe { melee_runtime::tu::lbshadow::ext::hook::ftLib_GetShadow = Some(|a0| unsafe { cast::<_, _, 53000>(melee_world::ftlib::ftLib_GetShadow(cast::<_, _, 53001>(a0))) }); }
     // tu/lbshadow.rs
-    unsafe { melee_runtime::tu::lbshadow::ext::hook::ftLib_800872BC = Some(|a0| unsafe { cast::<_, _, 53100>(melee_fighter::ftlib::ftlib_800872bc(cast::<_, _, 53101>(a0))) }); }
+    unsafe { melee_runtime::tu::lbshadow::ext::hook::ftLib_CastsShadow = Some(|a0| unsafe { cast::<_, _, 53100>(melee_fighter::ftlib::ftlib_castsshadow(cast::<_, _, 53101>(a0))) }); }
     // tu/lbshadow.rs
     unsafe { melee_runtime::tu::lbshadow::ext::hook::lbVector_CrossprodNormalized = Some(|a0, a1, a2| unsafe { cast::<_, _, 53200>(melee_runtime::tu::lbvector::lbVector_CrossprodNormalized(cast::<_, _, 53201>(a0), cast::<_, _, 53202>(a1), cast::<_, _, 53203>(a2))) }); }
     // tu/lbshadow.rs
@@ -1362,7 +1362,7 @@ fn install_melee_runtime() {
     // tu/particle.rs
     unsafe { melee_runtime::tu::particle::ext::hook::atan2f = Some(|a0, a1| unsafe { cast::<_, _, 67500>(melee_runtime::tu::lbtrigf::atan2f(cast::<_, _, 67501>(a0), cast::<_, _, 67502>(a1))) }); }
     // tu/particle.rs
-    unsafe { melee_runtime::tu::particle::ext::hook::hsd_8039D1EC = Some(|| unsafe { cast::<_, _, 67600>(melee_runtime::tu::generator::hsd_8039D1EC()) }); }
+    unsafe { melee_runtime::tu::particle::ext::hook::psGetNewIDNum = Some(|| unsafe { cast::<_, _, 67600>(melee_runtime::tu::generator::psGetNewIDNum()) }); }
     // tu/particle.rs
     unsafe { melee_runtime::tu::particle::ext::hook::hsd_8039F05C = Some(|a0, a1, a2| unsafe { cast::<_, _, 67700>(melee_runtime::tu::generator::hsd_8039F05C(cast::<_, _, 67701>(a0), cast::<_, _, 67702>(a1), cast::<_, _, 67703>(a2))) }); }
     // tu/particle.rs
@@ -1991,13 +1991,13 @@ fn install_melee_world() {
     // tu/camera.rs
     unsafe { melee_world::tu::camera::ext::hook::atanf = Some(|a0| unsafe { cast::<_, _, 98800>(melee_runtime::tu::lbtrigf::atanf(cast::<_, _, 98801>(a0))) }); }
     // tu/camera.rs
-    unsafe { melee_world::tu::camera::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 98901>(a0), cast::<_, _, 98902>(a1)) }); }
+    unsafe { melee_world::tu::camera::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 98901>(a0), cast::<_, _, 98902>(a1)) }); }
     // tu/camera.rs
-    unsafe { melee_world::tu::camera::ext::hook::ftLib_80086B74 = Some(|a0| unsafe { cast::<_, _, 99000>(melee_world::ftlib::ftLib_80086B74(cast::<_, _, 99001>(a0))) }); }
+    unsafe { melee_world::tu::camera::ext::hook::ftLib_GetCameraSubject = Some(|a0| unsafe { cast::<_, _, 99000>(melee_world::ftlib::ftLib_GetCameraSubject(cast::<_, _, 99001>(a0))) }); }
     // tu/camera.rs
-    unsafe { melee_world::tu::camera::ext::hook::ftLib_8008701C = Some(|a0| unsafe { cast::<_, _, 99100>(melee_world::ftlib::ftLib_8008701C(cast::<_, _, 99101>(a0))) }); }
+    unsafe { melee_world::tu::camera::ext::hook::ftLib_IsSleeping = Some(|a0| unsafe { cast::<_, _, 99100>(melee_world::ftlib::ftLib_IsSleeping(cast::<_, _, 99101>(a0))) }); }
     // tu/camera.rs
-    unsafe { melee_world::tu::camera::ext::hook::ftLib_8008732C = Some(|a0| unsafe { cast::<_, _, 99200>(melee_world::ftlib::ftLib_8008732C(cast::<_, _, 99201>(a0))) }); }
+    unsafe { melee_world::tu::camera::ext::hook::ftLib_IsDead = Some(|a0| unsafe { cast::<_, _, 99200>(melee_world::ftlib::ftLib_IsDead(cast::<_, _, 99201>(a0))) }); }
     // tu/camera.rs
     unsafe { melee_world::tu::camera::ext::hook::gm_GetButtonsPressed = Some(|a0| unsafe { cast::<_, _, 99300>(melee_modes::tu::gm_1A36::gm_GetButtonsPressed(cast::<_, _, 99301>(a0))) }); }
     // tu/camera.rs
@@ -2155,7 +2155,7 @@ fn install_melee_world() {
     // tu/efn/eflib.rs
     unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039CEAC = Some(|a0| unsafe { melee_runtime::tu::particle::hsd_8039CEAC(cast::<_, _, 106901>(a0)) }); }
     // tu/efn/eflib.rs
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039D1E4 = Some(|a0, a1| unsafe { melee_runtime::tu::generator::hsd_8039D1E4(cast::<_, _, 107001>(a0), cast::<_, _, 107002>(a1)) }); }
+    unsafe { melee_world::tu::efn::eflib::ext::hook::psSetUserFunc = Some(|a0, a1| unsafe { melee_runtime::tu::generator::psSetUserFunc(cast::<_, _, 107001>(a0), cast::<_, _, 107002>(a1)) }); }
     // tu/efn/eflib.rs
     unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039D354 = Some(|a0| unsafe { melee_runtime::tu::generator::hsd_8039D354(cast::<_, _, 107101>(a0)) }); }
     // tu/efn/eflib.rs
@@ -2789,9 +2789,9 @@ fn install_melee_world() {
     // tu/grdisplay.rs
     unsafe { melee_world::tu::grdisplay::ext::hook::ScriptGame_StageSlotOwned = Some(|a0| unsafe { cast::<_, _, 138600>(melee_modes::tu::script_game::ScriptGame_StageSlotOwned(cast::<_, _, 138601>(a0))) }); }
     // tu/grdisplay.rs
-    unsafe { melee_world::tu::grdisplay::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 138701>(a0), cast::<_, _, 138702>(a1)) }); }
+    unsafe { melee_world::tu::grdisplay::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 138701>(a0), cast::<_, _, 138702>(a1)) }); }
     // tu/grdisplay.rs
-    unsafe { melee_world::tu::grdisplay::ext::hook::ftLib_800872B0 = Some(|a0| unsafe { cast::<_, _, 138800>(melee_world::ftlib::ftLib_800872B0(cast::<_, _, 138801>(a0))) }); }
+    unsafe { melee_world::tu::grdisplay::ext::hook::ftLib_GetShadow = Some(|a0| unsafe { cast::<_, _, 138800>(melee_world::ftlib::ftLib_GetShadow(cast::<_, _, 138801>(a0))) }); }
     // tu/grdisplay.rs
     unsafe { melee_world::tu::grdisplay::ext::hook::lbShadow_8000EEE0 = Some(|a0| unsafe { melee_runtime::tu::lbshadow::lbShadow_8000EEE0(cast::<_, _, 138901>(a0)) }); }
     // tu/grdisplay.rs
@@ -2893,7 +2893,7 @@ fn install_melee_world() {
     // tu/grfigureget.rs
     unsafe { melee_world::tu::grfigureget::ext::hook::Toy_80305058 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 143800>(melee_items::tu::toy::Toy_80305058(cast::<_, _, 143801>(a0), cast::<_, _, 143802>(a1), cast::<_, _, 143803>(a2), cast::<_, _, 143804>(a3))) }); }
     // tu/grfigureget.rs
-    unsafe { melee_world::tu::grfigureget::ext::hook::ftLib_80086984 = Some(|a0| unsafe { cast::<_, _, 143900>(melee_world::ftlib::ftLib_80086984(cast::<_, _, 143901>(a0))) }); }
+    unsafe { melee_world::tu::grfigureget::ext::hook::ftLib_GetCollData = Some(|a0| unsafe { cast::<_, _, 143900>(melee_world::ftlib::ftLib_GetCollData(cast::<_, _, 143901>(a0))) }); }
     // tu/grfigureget.rs
     unsafe { melee_world::tu::grfigureget::ext::hook::gm_8017E280 = Some(|a0, a1| unsafe { cast::<_, _, 144000>(melee_modes::tu::gm_17c0::gm_8017E280(cast::<_, _, 144001>(a0), cast::<_, _, 144002>(a1))) }); }
     // tu/grfigureget.rs
@@ -3117,9 +3117,9 @@ fn install_melee_world() {
     // tu/grgarden.rs
     unsafe { melee_world::tu::grgarden::ext::hook::ftCo_800C06E8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftdevice::ftco_800c06e8(cast::<_, _, 155001>(a0), cast::<_, _, 155002>(a1), cast::<_, _, 155003>(a2)) }); }
     // tu/grgarden.rs
-    unsafe { melee_world::tu::grgarden::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 155101>(a0), cast::<_, _, 155102>(a1)) }); }
+    unsafe { melee_world::tu::grgarden::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 155101>(a0), cast::<_, _, 155102>(a1)) }); }
     // tu/grgarden.rs
-    unsafe { melee_world::tu::grgarden::ext::hook::ftLib_80086684 = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086684(cast::<_, _, 155201>(a0), cast::<_, _, 155202>(a1)) }); }
+    unsafe { melee_world::tu::grgarden::ext::hook::ftLib_GetPrevPos = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_GetPrevPos(cast::<_, _, 155201>(a0), cast::<_, _, 155202>(a1)) }); }
     // tu/grgarden.rs
     unsafe { melee_world::tu::grgarden::ext::hook::ftLib_80086B80 = Some(|a0| unsafe { cast::<_, _, 155300>(melee_world::ftlib::ftLib_80086B80(cast::<_, _, 155301>(a0))) }); }
     // tu/grgarden.rs
@@ -3187,9 +3187,9 @@ fn install_melee_world() {
     // tu/grgreatbay.rs
     unsafe { melee_world::tu::grgreatbay::ext::hook::ftCo_800C07F8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftdevice::ftco_800c07f8(cast::<_, _, 158501>(a0), cast::<_, _, 158502>(a1), cast::<_, _, 158503>(a2)) }); }
     // tu/grgreatbay.rs
-    unsafe { melee_world::tu::grgreatbay::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 158601>(a0), cast::<_, _, 158602>(a1)) }); }
+    unsafe { melee_world::tu::grgreatbay::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 158601>(a0), cast::<_, _, 158602>(a1)) }); }
     // tu/grgreatbay.rs
-    unsafe { melee_world::tu::grgreatbay::ext::hook::ftLib_80086684 = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086684(cast::<_, _, 158701>(a0), cast::<_, _, 158702>(a1)) }); }
+    unsafe { melee_world::tu::grgreatbay::ext::hook::ftLib_GetPrevPos = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_GetPrevPos(cast::<_, _, 158701>(a0), cast::<_, _, 158702>(a1)) }); }
     // tu/grgreatbay.rs
     unsafe { melee_world::tu::grgreatbay::ext::hook::ftLib_80086B80 = Some(|a0| unsafe { cast::<_, _, 158800>(melee_world::ftlib::ftLib_80086B80(cast::<_, _, 158801>(a0))) }); }
     // tu/grgreatbay.rs
@@ -3309,9 +3309,9 @@ fn install_melee_world() {
     // tu/grgreens.rs
     unsafe { melee_world::tu::grgreens::ext::hook::ftCo_800C06E8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftdevice::ftco_800c06e8(cast::<_, _, 164701>(a0), cast::<_, _, 164702>(a1), cast::<_, _, 164703>(a2)) }); }
     // tu/grgreens.rs
-    unsafe { melee_world::tu::grgreens::ext::hook::ftLib_800864A8 = Some(|a0, a1| unsafe { cast::<_, _, 164800>(melee_fighter::ftlib::ftlib_800864a8(cast::<_, _, 164801>(a0), cast::<_, _, 164802>(a1))) }); }
+    unsafe { melee_world::tu::grgreens::ext::hook::ftLib_GetOpponentsDir = Some(|a0, a1| unsafe { cast::<_, _, 164800>(melee_fighter::ftlib::ftlib_getopponentsdir(cast::<_, _, 164801>(a0), cast::<_, _, 164802>(a1))) }); }
     // tu/grgreens.rs
-    unsafe { melee_world::tu::grgreens::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 164901>(a0), cast::<_, _, 164902>(a1)) }); }
+    unsafe { melee_world::tu::grgreens::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 164901>(a0), cast::<_, _, 164902>(a1)) }); }
     // tu/grgreens.rs
     unsafe { melee_world::tu::grgreens::ext::hook::grAnime_801C8138 = Some(|a0, a1, a2| unsafe { melee_world::tu::granime::grAnime_801C8138(cast::<_, _, 165001>(a0), cast::<_, _, 165002>(a1), cast::<_, _, 165003>(a2)) }); }
     // tu/grgreens.rs
@@ -3519,9 +3519,9 @@ fn install_melee_world() {
     // tu/grhomerun.rs
     unsafe { melee_world::tu::grhomerun::ext::hook::Stage_UnkSetVec3TCam_Offset = Some(|a0| unsafe { melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(cast::<_, _, 175201>(a0)) }); }
     // tu/grhomerun.rs
-    unsafe { melee_world::tu::grhomerun::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 175301>(a0), cast::<_, _, 175302>(a1)) }); }
+    unsafe { melee_world::tu::grhomerun::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 175301>(a0), cast::<_, _, 175302>(a1)) }); }
     // tu/grhomerun.rs
-    unsafe { melee_world::tu::grhomerun::ext::hook::ftLib_80086B74 = Some(|a0| unsafe { cast::<_, _, 175400>(melee_world::ftlib::ftLib_80086B74(cast::<_, _, 175401>(a0))) }); }
+    unsafe { melee_world::tu::grhomerun::ext::hook::ftLib_GetCameraSubject = Some(|a0| unsafe { cast::<_, _, 175400>(melee_world::ftlib::ftLib_GetCameraSubject(cast::<_, _, 175401>(a0))) }); }
     // tu/grhomerun.rs
     unsafe { melee_world::tu::grhomerun::ext::hook::gm_80180AF4 = Some(|| unsafe { cast::<_, _, 175500>(melee_modes::tu::gm_180A::gm_80180AF4()) }); }
     // tu/grhomerun.rs
@@ -3619,9 +3619,9 @@ fn install_melee_world() {
     // tu/gricemt.rs: link_alias.tsv
     unsafe { melee_world::tu::gricemt::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { cast::<_, _, 180300>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 180201>(a0), cast::<_, _, 180202>(a1), &[crate::va_word(a2)])) }); }
     // tu/gricemt.rs
-    unsafe { melee_world::tu::gricemt::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 180401>(a0), cast::<_, _, 180402>(a1)) }); }
+    unsafe { melee_world::tu::gricemt::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 180401>(a0), cast::<_, _, 180402>(a1)) }); }
     // tu/gricemt.rs
-    unsafe { melee_world::tu::gricemt::ext::hook::ftLib_80086EC0 = Some(|a0| unsafe { cast::<_, _, 180500>(melee_world::ftlib::ftLib_80086EC0(cast::<_, _, 180501>(a0))) }); }
+    unsafe { melee_world::tu::gricemt::ext::hook::ftLib_IsInHitstun = Some(|a0| unsafe { cast::<_, _, 180500>(melee_world::ftlib::ftLib_IsInHitstun(cast::<_, _, 180501>(a0))) }); }
     // tu/gricemt.rs
     unsafe { melee_world::tu::gricemt::ext::hook::gm_801674C4 = Some(|a0, a1, a2, a3, a4| unsafe { melee_modes::tu::gm_1601::gm_801674C4(cast::<_, _, 180601>(a0), cast::<_, _, 180602>(a1), cast::<_, _, 180603>(a2), cast::<_, _, 180604>(a3), cast::<_, _, 180605>(a4)) }); }
     // tu/gricemt.rs
@@ -4003,7 +4003,7 @@ fn install_melee_world() {
     // tu/grkongo.rs
     unsafe { melee_world::tu::grkongo::ext::FTCO_8009EC70 = Some(|a0, a1, a2, a3| unsafe { melee_fighter::tu::ftCo_BarrelWait::ftCo_8009EC70(cast::<_, _, 199801>(a0), cast::<_, _, 199802>(a1), cast::<_, _, 199803>(a2), cast::<_, _, 199804>(a3)) }); }
     // tu/grkongo.rs
-    unsafe { melee_world::tu::grkongo::ext::FTLIB_80086C18 = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_80086c18(cast::<_, _, 199901>(a0), cast::<_, _, 199902>(a1), cast::<_, _, 199903>(a2)) }); }
+    unsafe { melee_world::tu::grkongo::ext::FTLIB_STARTRUMBLE = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startrumble(cast::<_, _, 199901>(a0), cast::<_, _, 199902>(a1), cast::<_, _, 199903>(a2)) }); }
     // tu/grkongo.rs
     unsafe { melee_world::tu::grkongo::ext::GRANIME_801C78FC = Some(|a0, a1, a2| unsafe { melee_world::tu::granime::grAnime_801C78FC(cast::<_, _, 200001>(a0), cast::<_, _, 200002>(a1), cast::<_, _, 200003>(a2)) }); }
     // tu/grkongo.rs
@@ -4083,7 +4083,7 @@ fn install_melee_world() {
     // tu/grkongo.rs
     unsafe { melee_world::tu::grkongo::ext::STAGE_80225194 = Some(|| unsafe { cast::<_, _, 203800>(melee_world::tu::stage::Stage_80225194()) }); }
     // tu/grkraid.rs
-    unsafe { melee_world::tu::grkraid::ext::FTLIB_80086C9C = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_80086c9c(cast::<_, _, 203901>(a0), cast::<_, _, 203902>(a1)) }); }
+    unsafe { melee_world::tu::grkraid::ext::FTLIB_STARTRUMBLEALL = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_startrumbleall(cast::<_, _, 203901>(a0), cast::<_, _, 203902>(a1)) }); }
     // tu/grkraid.rs
     unsafe { melee_world::tu::grkraid::ext::GRANIME_801C7FF8 = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_world::tu::granime::grAnime_801C7FF8(cast::<_, _, 204001>(a0), cast::<_, _, 204002>(a1), cast::<_, _, 204003>(a2), cast::<_, _, 204004>(a3), cast::<_, _, 204005>(a4), cast::<_, _, 204006>(a5)) }); }
     // tu/grkraid.rs
@@ -4521,9 +4521,9 @@ fn install_melee_world() {
     // tu/groldkongo.rs
     unsafe { melee_world::tu::groldkongo::ext::hook::ftCo_800C0764 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftdevice::ftco_800c0764(cast::<_, _, 225801>(a0), cast::<_, _, 225802>(a1), cast::<_, _, 225803>(a2)) }); }
     // tu/groldkongo.rs
-    unsafe { melee_world::tu::groldkongo::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 225901>(a0), cast::<_, _, 225902>(a1)) }); }
+    unsafe { melee_world::tu::groldkongo::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 225901>(a0), cast::<_, _, 225902>(a1)) }); }
     // tu/groldkongo.rs
-    unsafe { melee_world::tu::groldkongo::ext::hook::ftLib_80086C18 = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_80086c18(cast::<_, _, 226001>(a0), cast::<_, _, 226002>(a1), cast::<_, _, 226003>(a2)) }); }
+    unsafe { melee_world::tu::groldkongo::ext::hook::ftLib_StartRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startrumble(cast::<_, _, 226001>(a0), cast::<_, _, 226002>(a1), cast::<_, _, 226003>(a2)) }); }
     // tu/groldkongo.rs
     unsafe { melee_world::tu::groldkongo::ext::hook::grAnime_801C7A04 = Some(|a0, a1, a2, a3| unsafe { melee_world::tu::granime::grAnime_801C7A04(cast::<_, _, 226101>(a0), cast::<_, _, 226102>(a1), cast::<_, _, 226103>(a2), cast::<_, _, 226104>(a3)) }); }
     // tu/groldkongo.rs
@@ -4585,9 +4585,9 @@ fn install_melee_world() {
     // tu/groldpupupu.rs
     unsafe { melee_world::tu::groldpupupu::ext::hook::ftCo_800C06E8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftdevice::ftco_800c06e8(cast::<_, _, 229001>(a0), cast::<_, _, 229002>(a1), cast::<_, _, 229003>(a2)) }); }
     // tu/groldpupupu.rs
-    unsafe { melee_world::tu::groldpupupu::ext::hook::ftLib_800864A8 = Some(|a0, a1| unsafe { cast::<_, _, 229100>(melee_fighter::ftlib::ftlib_800864a8(cast::<_, _, 229101>(a0), cast::<_, _, 229102>(a1))) }); }
+    unsafe { melee_world::tu::groldpupupu::ext::hook::ftLib_GetOpponentsDir = Some(|a0, a1| unsafe { cast::<_, _, 229100>(melee_fighter::ftlib::ftlib_getopponentsdir(cast::<_, _, 229101>(a0), cast::<_, _, 229102>(a1))) }); }
     // tu/groldpupupu.rs
-    unsafe { melee_world::tu::groldpupupu::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 229201>(a0), cast::<_, _, 229202>(a1)) }); }
+    unsafe { melee_world::tu::groldpupupu::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 229201>(a0), cast::<_, _, 229202>(a1)) }); }
     // tu/groldpupupu.rs
     unsafe { melee_world::tu::groldpupupu::ext::hook::grAnime_801C7FF8 = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_world::tu::granime::grAnime_801C7FF8(cast::<_, _, 229301>(a0), cast::<_, _, 229302>(a1), cast::<_, _, 229303>(a2), cast::<_, _, 229304>(a3), cast::<_, _, 229305>(a4), cast::<_, _, 229306>(a5)) }); }
     // tu/groldpupupu.rs
@@ -4711,7 +4711,7 @@ fn install_melee_world() {
     // tu/gronett.rs
     unsafe { melee_world::tu::gronett::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 235301>(a0), cast::<_, _, 235302>(a1), cast::<_, _, 235303>(a2)) }); }
     // tu/gronett.rs
-    unsafe { melee_world::tu::gronett::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 235401>(a0), cast::<_, _, 235402>(a1)) }); }
+    unsafe { melee_world::tu::gronett::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 235401>(a0), cast::<_, _, 235402>(a1)) }); }
     // tu/gronett.rs
     unsafe { melee_world::tu::gronett::ext::hook::gm_8016C6C0 = Some(|a0| unsafe { cast::<_, _, 235500>(melee_modes::tu::gmvs::gm_8016C6C0(cast::<_, _, 235501>(a0))) }); }
     // tu/gronett.rs
@@ -4895,9 +4895,9 @@ fn install_melee_world() {
     // tu/ground.rs
     unsafe { melee_world::tu::ground::ext::hook::ftCo_800C06C0 = Some(|| unsafe { melee_fighter::tu::ftdevice::ftco_800c06c0() }); }
     // tu/ground.rs
-    unsafe { melee_world::tu::ground::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 244601>(a0), cast::<_, _, 244602>(a1)) }); }
+    unsafe { melee_world::tu::ground::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 244601>(a0), cast::<_, _, 244602>(a1)) }); }
     // tu/ground.rs
-    unsafe { melee_world::tu::ground::ext::hook::ftLib_8008701C = Some(|a0| unsafe { cast::<_, _, 244700>(melee_world::ftlib::ftLib_8008701C(cast::<_, _, 244701>(a0))) }); }
+    unsafe { melee_world::tu::ground::ext::hook::ftLib_IsSleeping = Some(|a0| unsafe { cast::<_, _, 244700>(melee_world::ftlib::ftLib_IsSleeping(cast::<_, _, 244701>(a0))) }); }
     // tu/ground.rs
     unsafe { melee_world::tu::ground::ext::hook::gm_80164600 = Some(|| unsafe { cast::<_, _, 244800>(melee_modes::tu::gm_1601::gm_80164600()) }); }
     // tu/ground.rs
@@ -5127,7 +5127,7 @@ fn install_melee_world() {
     // tu/grpstadium.rs
     unsafe { melee_world::tu::grpstadium::ext::hook::Stage_80225194 = Some(|| unsafe { cast::<_, _, 256100>(melee_world::tu::stage::Stage_80225194()) }); }
     // tu/grpstadium.rs
-    unsafe { melee_world::tu::grpstadium::ext::hook::ftLib_80086B90 = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086B90(cast::<_, _, 256201>(a0), cast::<_, _, 256202>(a1)) }); }
+    unsafe { melee_world::tu::grpstadium::ext::hook::ftLib_GetCameraSubjectBonePos = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_GetCameraSubjectBonePos(cast::<_, _, 256201>(a0), cast::<_, _, 256202>(a1)) }); }
     // tu/grpstadium.rs
     unsafe { melee_world::tu::grpstadium::ext::hook::gm_80160854 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 256300>(melee_modes::tu::gm_1601::gm_80160854(cast::<_, _, 256301>(a0), cast::<_, _, 256302>(a1), cast::<_, _, 256303>(a2), cast::<_, _, 256304>(a3))) }); }
     // tu/grpstadium.rs
@@ -5463,13 +5463,13 @@ fn install_melee_world() {
     // tu/gryorster.rs
     unsafe { melee_world::tu::gryorster::ext::H___assert = Some(crate::cabi::c3(|a0, a1, a2| unsafe { melee_runtime::tu::debug::__assert(cast::<_, _, 272901>(a0), cast::<_, _, 272902>(a1), cast::<_, _, 272903>(a2)) })); }
     // tu/gryorster.rs
-    unsafe { melee_world::tu::gryorster::ext::H_ftLib_80086960 = Some(crate::cabi::c1(|a0| unsafe { cast::<_, _, 273000>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 273001>(a0))) })); }
+    unsafe { melee_world::tu::gryorster::ext::H_ftLib_IsFighter = Some(crate::cabi::c1(|a0| unsafe { cast::<_, _, 273000>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 273001>(a0))) })); }
     // tu/gryorster.rs
     unsafe { melee_world::tu::gryorster::ext::H_ftLib_80086A4C = Some(crate::cabi::c2(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086A4C(cast::<_, _, 273101>(a0), cast::<_, _, 273102>(a1)) })); }
     // tu/gryorster.rs
-    unsafe { melee_world::tu::gryorster::ext::H_ftLib_80086BEC = Some(crate::cabi::c2(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086BEC(cast::<_, _, 273201>(a0), cast::<_, _, 273202>(a1)) })); }
+    unsafe { melee_world::tu::gryorster::ext::H_ftLib_GetPosDelta = Some(crate::cabi::c2(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPosDelta(cast::<_, _, 273201>(a0), cast::<_, _, 273202>(a1)) })); }
     // tu/gryorster.rs
-    unsafe { melee_world::tu::gryorster::ext::H_ftLib_800873F4 = Some(crate::cabi::c1(|a0| unsafe { cast::<_, _, 273300>(melee_world::ftlib::ftLib_800873F4(cast::<_, _, 273301>(a0))) })); }
+    unsafe { melee_world::tu::gryorster::ext::H_ftLib_IsEntry = Some(crate::cabi::c1(|a0| unsafe { cast::<_, _, 273300>(melee_world::ftlib::ftLib_IsEntry(cast::<_, _, 273301>(a0))) })); }
     // tu/gryorster.rs
     unsafe { melee_world::tu::gryorster::ext::H_grAnime_801C7FF8 = Some(crate::cabi::c6(|a0, a1, a2, a3, a4, a5| unsafe { melee_world::tu::granime::grAnime_801C7FF8(cast::<_, _, 273401>(a0), cast::<_, _, 273402>(a1), cast::<_, _, 273403>(a2), cast::<_, _, 273404>(a3), cast::<_, _, 273405>(a4), cast::<_, _, 273406>(a5)) })); }
     // tu/gryorster.rs
@@ -5633,11 +5633,11 @@ fn install_melee_world() {
     // tu/grzebes.rs
     unsafe { melee_world::tu::grzebes::ext::H_ftCo_800C07F8 = Some(crate::cabi::c3(|a0, a1, a2| unsafe { melee_fighter::tu::ftdevice::ftco_800c07f8(cast::<_, _, 281401>(a0), cast::<_, _, 281402>(a1), cast::<_, _, 281403>(a2)) })); }
     // tu/grzebes.rs
-    unsafe { melee_world::tu::grzebes::ext::H_ftLib_80086644 = Some(crate::cabi::c2(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 281501>(a0), cast::<_, _, 281502>(a1)) })); }
+    unsafe { melee_world::tu::grzebes::ext::H_ftLib_GetPos = Some(crate::cabi::c2(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 281501>(a0), cast::<_, _, 281502>(a1)) })); }
     // tu/grzebes.rs
-    unsafe { melee_world::tu::grzebes::ext::H_ftLib_80086684 = Some(crate::cabi::c2(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086684(cast::<_, _, 281601>(a0), cast::<_, _, 281602>(a1)) })); }
+    unsafe { melee_world::tu::grzebes::ext::H_ftLib_GetPrevPos = Some(crate::cabi::c2(|a0, a1| unsafe { melee_world::ftlib::ftLib_GetPrevPos(cast::<_, _, 281601>(a0), cast::<_, _, 281602>(a1)) })); }
     // tu/grzebes.rs
-    unsafe { melee_world::tu::grzebes::ext::H_ftLib_80086C9C = Some(crate::cabi::c2(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_80086c9c(cast::<_, _, 281701>(a0), cast::<_, _, 281702>(a1)) })); }
+    unsafe { melee_world::tu::grzebes::ext::H_ftLib_StartRumbleAll = Some(crate::cabi::c2(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_startrumbleall(cast::<_, _, 281701>(a0), cast::<_, _, 281702>(a1)) })); }
     // tu/grzebes.rs
     unsafe { melee_world::tu::grzebes::ext::H_grAnime_801C78FC = Some(crate::cabi::c3(|a0, a1, a2| unsafe { melee_world::tu::granime::grAnime_801C78FC(cast::<_, _, 281801>(a0), cast::<_, _, 281802>(a1), cast::<_, _, 281803>(a2)) })); }
     // tu/grzebes.rs
@@ -5735,7 +5735,7 @@ fn install_melee_world() {
     // tu/grzebesroute.rs
     unsafe { melee_world::tu::grzebesroute::ext::H___assert = Some(crate::cabi::c3(|a0, a1, a2| unsafe { melee_runtime::tu::debug::__assert(cast::<_, _, 286501>(a0), cast::<_, _, 286502>(a1), cast::<_, _, 286503>(a2)) })); }
     // tu/grzebesroute.rs
-    unsafe { melee_world::tu::grzebesroute::ext::H_ftLib_80086644 = Some(crate::cabi::c2(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 286601>(a0), cast::<_, _, 286602>(a1)) })); }
+    unsafe { melee_world::tu::grzebesroute::ext::H_ftLib_GetPos = Some(crate::cabi::c2(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 286601>(a0), cast::<_, _, 286602>(a1)) })); }
     // tu/grzebesroute.rs
     unsafe { melee_world::tu::grzebesroute::ext::H_grAnime_801C8138 = Some(crate::cabi::c3(|a0, a1, a2| unsafe { melee_world::tu::granime::grAnime_801C8138(cast::<_, _, 286701>(a0), cast::<_, _, 286702>(a1), cast::<_, _, 286703>(a2)) })); }
     // tu/grzebesroute.rs
@@ -6143,13 +6143,13 @@ fn install_melee_world() {
     // tu/ifmagnify.rs
     unsafe { melee_world::tu::ifmagnify::ext::hook::ftDrawCommon_80080C28 = Some(|a0, a1| unsafe { melee_fighter::tu::ftdrawcommon::ftDrawCommon_80080C28(cast::<_, _, 306801>(a0), cast::<_, _, 306802>(a1)) }); }
     // tu/ifmagnify.rs
-    unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_80086B64 = Some(|a0| unsafe { cast::<_, _, 306900>(melee_world::ftlib::ftLib_80086B64(cast::<_, _, 306901>(a0))) }); }
+    unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_IsOffscreen = Some(|a0| unsafe { cast::<_, _, 306900>(melee_world::ftlib::ftLib_IsOffscreen(cast::<_, _, 306901>(a0))) }); }
     // tu/ifmagnify.rs
     unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_80086B80 = Some(|a0| unsafe { cast::<_, _, 307000>(melee_world::ftlib::ftLib_80086B80(cast::<_, _, 307001>(a0))) }); }
     // tu/ifmagnify.rs
-    unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_80086B90 = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086B90(cast::<_, _, 307101>(a0), cast::<_, _, 307102>(a1)) }); }
+    unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_GetCameraSubjectBonePos = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_GetCameraSubjectBonePos(cast::<_, _, 307101>(a0), cast::<_, _, 307102>(a1)) }); }
     // tu/ifmagnify.rs
-    unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_80086ED0 = Some(|a0| unsafe { cast::<_, _, 307200>(melee_fighter::ftlib::ftlib_80086ed0(cast::<_, _, 307201>(a0))) }); }
+    unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_CanBeMagnified = Some(|a0| unsafe { cast::<_, _, 307200>(melee_fighter::ftlib::ftlib_canbemagnified(cast::<_, _, 307201>(a0))) }); }
     // tu/ifmagnify.rs
     unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_UpdateLogicOffCamera = Some(|a0| unsafe { melee_fighter::tu::ftlib::ftLib_UpdateLogicOffCamera(cast::<_, _, 307301>(a0)) }); }
     // tu/ifmagnify.rs
@@ -6615,11 +6615,11 @@ fn install_melee_world() {
     // tu/mpcoll.rs
     unsafe { melee_world::tu::mpcoll::ext::hook::ScriptGame_StageSlotSameJoint = Some(|a0, a1| unsafe { cast::<_, _, 330400>(melee_modes::tu::script_game::ScriptGame_StageSlotSameJoint(cast::<_, _, 330401>(a0), cast::<_, _, 330402>(a1))) }); }
     // tu/mpcoll.rs
-    unsafe { melee_world::tu::mpcoll::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 330500>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 330501>(a0))) }); }
+    unsafe { melee_world::tu::mpcoll::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 330500>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 330501>(a0))) }); }
     // tu/mpcoll.rs
-    unsafe { melee_world::tu::mpcoll::ext::hook::ftLib_80086BE0 = Some(|a0| unsafe { cast::<_, _, 330600>(melee_items::tu::ftlib::ftLib_80086BE0(cast::<_, _, 330601>(a0))) }); }
+    unsafe { melee_world::tu::mpcoll::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 330600>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 330601>(a0))) }); }
     // tu/mpcoll.rs
-    unsafe { melee_world::tu::mpcoll::ext::hook::ftLib_800874BC = Some(|a0| unsafe { cast::<_, _, 330700>(melee_world::ftlib::ftLib_800874BC(cast::<_, _, 330701>(a0))) }); }
+    unsafe { melee_world::tu::mpcoll::ext::hook::ftLib_IsSubFighter = Some(|a0| unsafe { cast::<_, _, 330700>(melee_world::ftlib::ftLib_IsSubFighter(cast::<_, _, 330701>(a0))) }); }
     // tu/mpcoll.rs
     unsafe { melee_world::tu::mpcoll::ext::hook::grDynamicAttr_801CA284 = Some(|a0, a1| unsafe { cast::<_, _, 330800>(melee_world::tu::grdynamicattr::grDynamicAttr_801CA284(cast::<_, _, 330801>(a0), cast::<_, _, 330802>(a1))) }); }
     // tu/mpcoll.rs
@@ -6709,7 +6709,7 @@ fn install_melee_world() {
     // tu/mplib.rs
     unsafe { melee_world::tu::mplib::ext::hook::Stage_GetCamBoundsTopOffset = Some(|| unsafe { cast::<_, _, 335100>(melee_world::tu::stage::Stage_GetCamBoundsTopOffset()) }); }
     // tu/mplib.rs
-    unsafe { melee_world::tu::mplib::ext::hook::ftLib_80086984 = Some(|a0| unsafe { cast::<_, _, 335200>(melee_world::ftlib::ftLib_80086984(cast::<_, _, 335201>(a0))) }); }
+    unsafe { melee_world::tu::mplib::ext::hook::ftLib_GetCollData = Some(|a0| unsafe { cast::<_, _, 335200>(melee_world::ftlib::ftLib_GetCollData(cast::<_, _, 335201>(a0))) }); }
     // tu/mplib.rs
     unsafe { melee_world::tu::mplib::ext::hook::grDynamicAttr_801CA0B4 = Some(|| unsafe { melee_world::tu::grdynamicattr::grDynamicAttr_801CA0B4() }); }
     // tu/mplib.rs
@@ -7006,7 +7006,7 @@ fn install_melee_fighter() {
     // hooks.rs
     unsafe { melee_fighter::hooks::FIGHTER_RESET_INPUT_DATA = Some(|a0| unsafe { melee_fighter::tu::fighter::Fighter_ResetInputData_80068854(cast::<_, _, 349701>(a0)) }); }
     // hooks.rs
-    unsafe { melee_fighter::hooks::FIGHTER_UNK_PROCESS_DEATH = Some(|a0| unsafe { melee_fighter::tu::fighter::Fighter_UnkProcessDeath_80068354(cast::<_, _, 349801>(a0)) }); }
+    unsafe { melee_fighter::hooks::FIGHTER_UNK_PROCESS_DEATH = Some(|a0| unsafe { melee_fighter::tu::fighter::Fighter_Spawn(cast::<_, _, 349801>(a0)) }); }
     // hooks.rs
     unsafe { melee_fighter::hooks::FIGHTER_UPDATE_MODEL_SCALE = Some(|a0| unsafe { melee_fighter::tu::fighter::Fighter_UpdateModelScale(cast::<_, _, 349901>(a0)) }); }
     // hooks.rs
@@ -7188,25 +7188,25 @@ fn install_melee_fighter() {
     // tu/crowdsfx.rs
     unsafe { melee_fighter::tu::crowdsfx::ext::hook::Player_8003248C = Some(|a0, a1| unsafe { cast::<_, _, 358600>(melee_fighter::tu::player::Player_8003248C(cast::<_, _, 358601>(a0), cast::<_, _, 358602>(a1))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 358701>(a0), cast::<_, _, 358702>(a1)) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 358701>(a0), cast::<_, _, 358702>(a1)) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_80086BE0 = Some(|a0| unsafe { cast::<_, _, 358800>(melee_items::tu::ftlib::ftLib_80086BE0(cast::<_, _, 358801>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 358800>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 358801>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_80087120 = Some(|a0| unsafe { cast::<_, _, 358900>(melee_fighter::ftlib::ftlib_80087120(cast::<_, _, 358901>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetPercent = Some(|a0| unsafe { cast::<_, _, 358900>(melee_fighter::ftlib::ftlib_getpercent(cast::<_, _, 358901>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_8008731C = Some(|a0| unsafe { cast::<_, _, 359000>(melee_world::ftlib::ftLib_8008731C(cast::<_, _, 359001>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_IsSleeping_8008731C = Some(|a0| unsafe { cast::<_, _, 359000>(melee_world::ftlib::ftLib_IsSleeping_8008731C(cast::<_, _, 359001>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_8008732C = Some(|a0| unsafe { cast::<_, _, 359100>(melee_world::ftlib::ftLib_8008732C(cast::<_, _, 359101>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_IsDead = Some(|a0| unsafe { cast::<_, _, 359100>(melee_world::ftlib::ftLib_IsDead(cast::<_, _, 359101>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_8008741C = Some(|a0| unsafe { cast::<_, _, 359200>(melee_fighter::ftlib::ftlib_8008741c(cast::<_, _, 359201>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_FindBySpawnNum = Some(|a0| unsafe { cast::<_, _, 359200>(melee_fighter::ftlib::ftlib_findbyspawnnum(cast::<_, _, 359201>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_80087454 = Some(|a0| unsafe { cast::<_, _, 359300>(melee_fighter::ftlib::ftlib_80087454(cast::<_, _, 359301>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetCrowdKnockback = Some(|a0| unsafe { cast::<_, _, 359300>(melee_fighter::ftlib::ftlib_getcrowdknockback(cast::<_, _, 359301>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_80087460 = Some(|a0| unsafe { cast::<_, _, 359400>(melee_fighter::ftlib::ftlib_80087460(cast::<_, _, 359401>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetSpawnNum = Some(|a0| unsafe { cast::<_, _, 359400>(melee_fighter::ftlib::ftlib_getspawnnum(cast::<_, _, 359401>(a0))) }); }
     // tu/crowdsfx.rs
     unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_8008746C = Some(|a0| unsafe { cast::<_, _, 359500>(melee_fighter::ftlib::ftlib_8008746c(cast::<_, _, 359501>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_800874BC = Some(|a0| unsafe { cast::<_, _, 359600>(melee_world::ftlib::ftLib_800874BC(cast::<_, _, 359601>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_IsSubFighter = Some(|a0| unsafe { cast::<_, _, 359600>(melee_world::ftlib::ftLib_IsSubFighter(cast::<_, _, 359601>(a0))) }); }
     // tu/crowdsfx.rs
     unsafe { melee_fighter::tu::crowdsfx::ext::hook::lbAudioAx_800236B8 = Some(|a0| unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(cast::<_, _, 359701>(a0)); }); }
     // tu/crowdsfx.rs
@@ -7736,7 +7736,7 @@ fn install_melee_fighter() {
     // tu/fighter.rs
     unsafe { melee_fighter::tu::fighter::ext::hook::ftKb_SpecialN_800F5C34 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5C34(cast::<_, _, 385801>(a0)) }); }
     // tu/fighter.rs
-    unsafe { melee_fighter::tu::fighter::ext::hook::ftLib_800867E8 = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_800867e8(cast::<_, _, 385901>(a0)) }); }
+    unsafe { melee_fighter::tu::fighter::ext::hook::ftLib_DisableInput = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_disableinput(cast::<_, _, 385901>(a0)) }); }
     // tu/fighter.rs
     unsafe { melee_fighter::tu::fighter::ext::hook::ftMh_MS_341_8014FE10 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandwait10::ftMh_MS_341_8014FE10(cast::<_, _, 386001>(a0)) }); }
     // tu/fighter.rs
@@ -7962,7 +7962,7 @@ fn install_melee_fighter() {
     // tu/ftCo_0A01.rs
     unsafe { melee_fighter::tu::ftCo_0A01::ext::hook::ftKb_MexKirbyLike = Some(|a0| unsafe { cast::<_, _, 397000>(melee_chara::tu::ftkirby::ftKb_MexKirbyLike(cast::<_, _, 397001>(a0))) }); }
     // tu/ftCo_0A01.rs
-    unsafe { melee_fighter::tu::ftCo_0A01::ext::hook::ftLib_8008732C = Some(|a0| unsafe { cast::<_, _, 397100>(melee_world::ftlib::ftLib_8008732C(cast::<_, _, 397101>(a0))) }); }
+    unsafe { melee_fighter::tu::ftCo_0A01::ext::hook::ftLib_IsDead = Some(|a0| unsafe { cast::<_, _, 397100>(melee_world::ftlib::ftLib_IsDead(cast::<_, _, 397101>(a0))) }); }
     // tu/ftCo_0A01.rs
     unsafe { melee_fighter::tu::ftCo_0A01::ext::hook::ftPp_SpecialLw_Enter = Some(|a0| unsafe { melee_chara::tu::ftpopospeciallw::ftPp_SpecialLw_Enter(cast::<_, _, 397201>(a0)) }); }
     // tu/ftCo_0A01.rs
@@ -8496,9 +8496,9 @@ fn install_melee_fighter() {
     // tu/ftCo_Barrel.rs
     unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::ftCommon_8007EFC0 = Some(|a0, a1| unsafe { melee_fighter::ftcommon2::ftcommon_8007efc0(cast::<_, _, 423601>(a0), cast::<_, _, 423602>(a1)) }); }
     // tu/ftCo_Barrel.rs
-    unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_800866DC = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_800866dc(cast::<_, _, 423701>(a0), cast::<_, _, 423702>(a1)) }); }
+    unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 423701>(a0), cast::<_, _, 423702>(a1)) }); }
     // tu/ftCo_Barrel.rs
-    unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 423800>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 423801>(a0))) }); }
+    unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 423800>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 423801>(a0))) }); }
     // tu/ftCo_Barrel.rs
     unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::itGetOwner = Some(|a0| unsafe { cast::<_, _, 423900>(melee_items::tu::it_26B1::itGetOwner(cast::<_, _, 423901>(a0))) }); }
     // tu/ftCo_Barrel.rs
@@ -13366,7 +13366,7 @@ fn install_melee_fighter() {
     // tu/ftcoll.rs
     unsafe { melee_fighter::tu::ftcoll::ext::FTCO_CALC_Y_SCALED_KNOCKBACK = Some(|a0, a1, a2| unsafe { cast::<_, _, 666600>(melee_fighter::tu::ftchangeparam::ftCo_CalcYScaledKnockback(cast::<_, _, 666601>(a0), cast::<_, _, 666602>(a1), cast::<_, _, 666603>(a2))) }); }
     // tu/ftcoll.rs
-    unsafe { melee_fighter::tu::ftcoll::ext::FTLIB_80086960 = Some(|a0| unsafe { cast::<_, _, 666700>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 666701>(a0))) }); }
+    unsafe { melee_fighter::tu::ftcoll::ext::FTLIB_ISFIGHTER = Some(|a0| unsafe { cast::<_, _, 666700>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 666701>(a0))) }); }
     // tu/ftcoll.rs
     unsafe { melee_fighter::tu::ftcoll::ext::FT_80084CE4 = Some(|a0, a1| unsafe { cast::<_, _, 666800>(melee_fighter::tu::ft_081b::ft_80084ce4(cast::<_, _, 666801>(a0), cast::<_, _, 666802>(a1))) }); }
     // tu/ftcoll.rs
@@ -13598,7 +13598,7 @@ fn install_melee_fighter() {
     // tu/ftcpuattack.rs
     unsafe { melee_fighter::tu::ftcpuattack::ext::FTKB_MEX_KIRBY_LIKE = Some(|a0| unsafe { cast::<_, _, 678100>(melee_chara::tu::ftkirby::ftKb_MexKirbyLike(cast::<_, _, 678101>(a0))) }); }
     // tu/ftcpuattack.rs
-    unsafe { melee_fighter::tu::ftcpuattack::ext::FTLIB_80086960 = Some(|a0| unsafe { cast::<_, _, 678200>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 678201>(a0))) }); }
+    unsafe { melee_fighter::tu::ftcpuattack::ext::FTLIB_ISFIGHTER = Some(|a0| unsafe { cast::<_, _, 678200>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 678201>(a0))) }); }
     // tu/ftcpuattack.rs
     unsafe { melee_fighter::tu::ftcpuattack::ext::HSD_RANDF = Some(|| unsafe { cast::<_, _, 678300>(melee_runtime::tu::random::global::HSD_Randf()) }); }
     // tu/ftcpuattack.rs
@@ -13682,7 +13682,7 @@ fn install_melee_fighter() {
     // tu/ftdemo.rs
     unsafe { melee_fighter::tu::ftdemo::ext::FIGHTER_UNK_INIT_LOAD = Some(|a0, a1| unsafe { melee_fighter::tu::fighter::Fighter_UnkInitLoad_80068914(cast::<_, _, 682001>(a0), cast::<_, _, 682002>(a1)) }); }
     // tu/ftdemo.rs
-    unsafe { melee_fighter::tu::ftdemo::ext::FIGHTER_UNK_PROCESS_DEATH = Some(|a0| unsafe { melee_fighter::tu::fighter::Fighter_UnkProcessDeath_80068354(cast::<_, _, 682101>(a0)) }); }
+    unsafe { melee_fighter::tu::ftdemo::ext::FIGHTER_UNK_PROCESS_DEATH = Some(|a0| unsafe { melee_fighter::tu::fighter::Fighter_Spawn(cast::<_, _, 682101>(a0)) }); }
     // tu/ftdemo.rs
     unsafe { melee_fighter::tu::ftdemo::ext::FIGHTER_UNK_UPDATE_COSTUME_JOINT = Some(|a0| unsafe { melee_fighter::tu::fighter::Fighter_UnkUpdateCostumeJoint_800686E4(cast::<_, _, 682201>(a0)) }); }
     // tu/ftdemo.rs
@@ -13720,11 +13720,11 @@ fn install_melee_fighter() {
     // tu/ftdrawcommon.rs
     unsafe { melee_fighter::tu::ftdrawcommon::ext::FTCO_800C8AF0 = Some(|a0| unsafe { melee_fighter::tu::ft_0c88::ftco_800c8af0(cast::<_, _, 683901>(a0)) }); }
     // tu/ftdrawcommon.rs
-    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_800860C4 = Some(|| unsafe { cast::<_, _, 684000>(melee_fighter::ftlib::ftlib_800860c4()) }); }
+    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_COUNTFIGHTERS = Some(|| unsafe { cast::<_, _, 684000>(melee_fighter::ftlib::ftlib_countfighters()) }); }
     // tu/ftdrawcommon.rs
-    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_80086A8C = Some(|a0| unsafe { cast::<_, _, 684100>(melee_fighter::ftlib::ftlib_80086a8c(cast::<_, _, 684101>(a0))) }); }
+    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_UPDATESCREENVISIBILITY = Some(|a0| unsafe { cast::<_, _, 684100>(melee_fighter::ftlib::ftlib_updatescreenvisibility(cast::<_, _, 684101>(a0))) }); }
     // tu/ftdrawcommon.rs
-    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_80087074 = Some(|a0, a1| unsafe { cast::<_, _, 684200>(melee_fighter::ftlib::ftlib_80087074(cast::<_, _, 684201>(a0), cast::<_, _, 684202>(a1))) }); }
+    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_GETSHAKEOFFSET = Some(|a0, a1| unsafe { cast::<_, _, 684200>(melee_fighter::ftlib::ftlib_getshakeoffset(cast::<_, _, 684201>(a0), cast::<_, _, 684202>(a1))) }); }
     // tu/ftdrawcommon.rs
     unsafe { melee_fighter::tu::ftdrawcommon::ext::FTPARTS_800750C8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftParts_800750C8(cast::<_, _, 684301>(a0), cast::<_, _, 684302>(a1), cast::<_, _, 684303>(a2)) }); }
     // tu/ftdrawcommon.rs
@@ -13956,7 +13956,7 @@ fn install_melee_fighter() {
     // tu/ftpickupitem.rs
     unsafe { melee_fighter::tu::ftpickupitem::ext::hook::ftDk_MS_341_800DF980 = Some(|a0| unsafe { melee_chara::tu::ftdonkeyheavywait0::ftDk_MS_341_800DF980(cast::<_, _, 695301>(a0)) }); }
     // tu/ftpickupitem.rs
-    unsafe { melee_fighter::tu::ftpickupitem::ext::hook::ftLib_800871A8 = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_800871a8(cast::<_, _, 695401>(a0), cast::<_, _, 695402>(a1)) }); }
+    unsafe { melee_fighter::tu::ftpickupitem::ext::hook::ftLib_ApplyMetalBox = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_applymetalbox(cast::<_, _, 695401>(a0), cast::<_, _, 695402>(a1)) }); }
     // tu/ftpickupitem.rs
     unsafe { melee_fighter::tu::ftpickupitem::ext::hook::ft_800841B8 = Some(|a0, a1| unsafe { melee_fighter::tu::ft_081b::ft_800841b8(cast::<_, _, 695501>(a0), cast::<_, _, 695502>(a1)) }); }
     // tu/ftpickupitem.rs
@@ -14016,37 +14016,37 @@ fn install_melee_fighter() {
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftKb_SpecialN_800EED50 = Some(|a0, a1| unsafe { melee_chara::tu::ftkirby::ftKb_SpecialN_800EED50(cast::<_, _, 698301>(a0), cast::<_, _, 698302>(a1)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_800865F0 = Some(|a0| unsafe { cast::<_, _, 698400>(melee_fighter::ftlib::ftlib_800865f0(cast::<_, _, 698401>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetHipJObj = Some(|a0| unsafe { cast::<_, _, 698400>(melee_fighter::ftlib::ftlib_gethipjobj(cast::<_, _, 698401>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_80086664 = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_80086664(cast::<_, _, 698501>(a0), cast::<_, _, 698502>(a1)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_SetPos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_setpos(cast::<_, _, 698501>(a0), cast::<_, _, 698502>(a1)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_800867E8 = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_800867e8(cast::<_, _, 698601>(a0)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_DisableInput = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_disableinput(cast::<_, _, 698601>(a0)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_8008688C = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_8008688c(cast::<_, _, 698701>(a0)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_EnableInput = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_enableinput(cast::<_, _, 698701>(a0)) }); }
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_800869F8 = Some(|a0| unsafe { cast::<_, _, 698800>(melee_fighter::ftlib::ftlib_800869f8(cast::<_, _, 698801>(a0))) }); }
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_80086A4C = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086A4C(cast::<_, _, 698901>(a0), cast::<_, _, 698902>(a1)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_80086B90 = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086B90(cast::<_, _, 699001>(a0), cast::<_, _, 699002>(a1)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetCameraSubjectBonePos = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_GetCameraSubjectBonePos(cast::<_, _, 699001>(a0), cast::<_, _, 699002>(a1)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_80086BB4 = Some(|a0| unsafe { cast::<_, _, 699100>(melee_fighter::ftlib::ftlib_80086bb4(cast::<_, _, 699101>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_IsCameraSubjectInBounds = Some(|a0| unsafe { cast::<_, _, 699100>(melee_fighter::ftlib::ftlib_iscamerasubjectinbounds(cast::<_, _, 699101>(a0))) }); }
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_80086F4C = Some(|a0| unsafe { cast::<_, _, 699200>(melee_fighter::ftlib::ftlib_80086f4c(cast::<_, _, 699201>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_80086F80 = Some(|a0| unsafe { cast::<_, _, 699300>(melee_fighter::ftlib::ftlib_80086f80(cast::<_, _, 699301>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetNameTagHeight = Some(|a0| unsafe { cast::<_, _, 699300>(melee_fighter::ftlib::ftlib_getnametagheight(cast::<_, _, 699301>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_8008701C = Some(|a0| unsafe { cast::<_, _, 699400>(melee_world::ftlib::ftLib_8008701C(cast::<_, _, 699401>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_IsSleeping = Some(|a0| unsafe { cast::<_, _, 699400>(melee_world::ftlib::ftLib_IsSleeping(cast::<_, _, 699401>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_800870F0 = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_800870f0(cast::<_, _, 699501>(a0), cast::<_, _, 699502>(a1)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_SetPercent = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_setpercent(cast::<_, _, 699501>(a0), cast::<_, _, 699502>(a1)) }); }
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_80087140 = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_80087140(cast::<_, _, 699601>(a0)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_80087300 = Some(|a0| unsafe { cast::<_, _, 699700>(melee_fighter::ftlib::ftlib_80087300(cast::<_, _, 699701>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetLastAttackerSlot = Some(|a0| unsafe { cast::<_, _, 699700>(melee_fighter::ftlib::ftlib_getlastattackerslot(cast::<_, _, 699701>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_800873CC = Some(|a0| unsafe { cast::<_, _, 699800>(melee_fighter::ftlib::ftlib_800873cc(cast::<_, _, 699801>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_IsRebirth = Some(|a0| unsafe { cast::<_, _, 699800>(melee_fighter::ftlib::ftlib_isrebirth(cast::<_, _, 699801>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_80087610 = Some(|a0| unsafe { melee_fighter::tu::ftlib::ftlib_80087610(cast::<_, _, 699901>(a0)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_LoadKirbyHats = Some(|a0| unsafe { melee_fighter::tu::ftlib::ftlib_loadkirbyhats(cast::<_, _, 699901>(a0)) }); }
     // tu/player.rs: link_alias.tsv
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetKind = Some(|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }); }
     // tu/player.rs: link_alias.tsv
@@ -14090,7 +14090,7 @@ fn install_melee_fighter() {
     // tu/plbonus.rs
     unsafe { melee_fighter::tu::plbonus::ext::hook::Camera_80030E10 = Some(|| unsafe { cast::<_, _, 701700>(melee_world::tu::camera::Camera_80030E10()) }); }
     // tu/plbonus.rs
-    unsafe { melee_fighter::tu::plbonus::ext::hook::ftLib_8008732C = Some(|a0| unsafe { cast::<_, _, 701800>(melee_world::ftlib::ftLib_8008732C(cast::<_, _, 701801>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonus::ext::hook::ftLib_IsDead = Some(|a0| unsafe { cast::<_, _, 701800>(melee_world::ftlib::ftLib_IsDead(cast::<_, _, 701801>(a0))) }); }
     // tu/plbonus.rs
     unsafe { melee_fighter::tu::plbonus::ext::hook::ftLib_GetMotionId = Some(|a0| unsafe { cast::<_, _, 701900>(melee_items::tu::ftlib::ftLib_GetMotionId(cast::<_, _, 701901>(a0))) }); }
     // tu/plbonus.rs
@@ -14152,41 +14152,41 @@ fn install_melee_fighter() {
     // tu/plbonuslib.rs
     unsafe { melee_fighter::tu::plbonuslib::ext::hook::Stage_UnkSetVec3TCam_Offset = Some(|a0| unsafe { melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(cast::<_, _, 704801>(a0)) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 704900>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 704901>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 704900>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 704901>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_800865CC = Some(|a0| unsafe { cast::<_, _, 705000>(melee_items::tu::ftlib::ftLib_800865CC(cast::<_, _, 705001>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetGroundAir = Some(|a0| unsafe { cast::<_, _, 705000>(melee_items::tu::ftlib::ftLib_GetGroundAir(cast::<_, _, 705001>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 705101>(a0), cast::<_, _, 705102>(a1)) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 705101>(a0), cast::<_, _, 705102>(a1)) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_800867D8 = Some(|a0| unsafe { cast::<_, _, 705200>(melee_fighter::ftlib::ftlib_800867d8(cast::<_, _, 705201>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsInputDisabled = Some(|a0| unsafe { cast::<_, _, 705200>(melee_fighter::ftlib::ftlib_isinputdisabled(cast::<_, _, 705201>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 705300>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 705301>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 705300>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 705301>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_80086BE0 = Some(|a0| unsafe { cast::<_, _, 705400>(melee_items::tu::ftlib::ftLib_80086BE0(cast::<_, _, 705401>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 705400>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 705401>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_80087120 = Some(|a0| unsafe { cast::<_, _, 705500>(melee_fighter::ftlib::ftlib_80087120(cast::<_, _, 705501>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPercent = Some(|a0| unsafe { cast::<_, _, 705500>(melee_fighter::ftlib::ftlib_getpercent(cast::<_, _, 705501>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_80087300 = Some(|a0| unsafe { cast::<_, _, 705600>(melee_fighter::ftlib::ftlib_80087300(cast::<_, _, 705601>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastAttackerSlot = Some(|a0| unsafe { cast::<_, _, 705600>(melee_fighter::ftlib::ftlib_getlastattackerslot(cast::<_, _, 705601>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_8008730C = Some(|a0| unsafe { cast::<_, _, 705700>(melee_fighter::ftlib::ftlib_8008730c(cast::<_, _, 705701>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsLastAttackerSubFighter = Some(|a0| unsafe { cast::<_, _, 705700>(melee_fighter::ftlib::ftlib_islastattackersubfighter(cast::<_, _, 705701>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_8008732C = Some(|a0| unsafe { cast::<_, _, 705800>(melee_world::ftlib::ftLib_8008732C(cast::<_, _, 705801>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDead = Some(|a0| unsafe { cast::<_, _, 705800>(melee_world::ftlib::ftLib_IsDead(cast::<_, _, 705801>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_80087354 = Some(|a0| unsafe { cast::<_, _, 705900>(melee_fighter::ftlib::ftlib_80087354(cast::<_, _, 705901>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUp = Some(|a0| unsafe { cast::<_, _, 705900>(melee_fighter::ftlib::ftlib_isdeadup(cast::<_, _, 705901>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_8008737C = Some(|a0| unsafe { cast::<_, _, 706000>(melee_fighter::ftlib::ftlib_8008737c(cast::<_, _, 706001>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUpStar = Some(|a0| unsafe { cast::<_, _, 706000>(melee_fighter::ftlib::ftlib_isdeadupstar(cast::<_, _, 706001>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_800873A4 = Some(|a0| unsafe { cast::<_, _, 706100>(melee_fighter::ftlib::ftlib_800873a4(cast::<_, _, 706101>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUpFall = Some(|a0| unsafe { cast::<_, _, 706100>(melee_fighter::ftlib::ftlib_isdeadupfall(cast::<_, _, 706101>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_800874BC = Some(|a0| unsafe { cast::<_, _, 706200>(melee_world::ftlib::ftLib_800874BC(cast::<_, _, 706201>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsSubFighter = Some(|a0| unsafe { cast::<_, _, 706200>(melee_world::ftlib::ftLib_IsSubFighter(cast::<_, _, 706201>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_800876F4 = Some(|a0| unsafe { cast::<_, _, 706300>(melee_fighter::ftlib::ftlib_800876f4(cast::<_, _, 706301>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastHitSourceType = Some(|a0| unsafe { cast::<_, _, 706300>(melee_fighter::ftlib::ftlib_getlasthitsourcetype(cast::<_, _, 706301>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_80087700 = Some(|a0| unsafe { cast::<_, _, 706400>(melee_fighter::ftlib::ftlib_80087700(cast::<_, _, 706401>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastHitSourceKind = Some(|a0| unsafe { cast::<_, _, 706400>(melee_fighter::ftlib::ftlib_getlasthitsourcekind(cast::<_, _, 706401>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_8008777C = Some(|a0| unsafe { cast::<_, _, 706500>(melee_fighter::tu::ftlib::ftlib_8008777c(cast::<_, _, 706501>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetGroundSlopeAngle = Some(|a0| unsafe { cast::<_, _, 706500>(melee_fighter::tu::ftlib::ftlib_getgroundslopeangle(cast::<_, _, 706501>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_800877D4 = Some(|a0| unsafe { cast::<_, _, 706600>(melee_fighter::ftlib::ftlib_800877d4(cast::<_, _, 706601>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsBeingNudged = Some(|a0| unsafe { cast::<_, _, 706600>(melee_fighter::ftlib::ftlib_isbeingnudged(cast::<_, _, 706601>(a0))) }); }
     // tu/plbonuslib.rs: link_alias.tsv
     unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetItem = Some(|a0| unsafe { melee_fighter::ftlib::get_item(a0 as _) as _ }); }
     // tu/plbonuslib.rs
@@ -15067,7 +15067,7 @@ fn install_melee_chara() {
     // tu/ftmasterhandwalk.rs
     unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTBOSSLIB_8015C244 = Some(|a0, a1| unsafe { cast::<_, _, 750800>(melee_fighter::tu::ftbosslib::ftBossLib_8015C244(cast::<_, _, 750801>(a0), cast::<_, _, 750802>(a1))) }); }
     // tu/ftmasterhandwalk.rs
-    unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTLIB_800866DC = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_800866dc(cast::<_, _, 750901>(a0), cast::<_, _, 750902>(a1)) }); }
+    unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTLIB_GETCAMERABONEPOS = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 750901>(a0), cast::<_, _, 750902>(a1)) }); }
     // tu/ftmasterhandwalk.rs
     unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTMH_MS_349_80151CA8 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandslap::ftMh_MS_349_80151CA8(cast::<_, _, 751001>(a0)) }); }
     // tu/ftmasterhandwalk.rs
@@ -15814,25 +15814,25 @@ fn install_melee_items() {
     // tu/it_26B1.rs
     unsafe { melee_items::tu::it_26B1::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 788701>(a0)) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_8008627C = Some(|a0, a1| unsafe { cast::<_, _, 788800>(melee_fighter::ftlib::ftlib_8008627c(cast::<_, _, 788801>(a0), cast::<_, _, 788802>(a1))) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 788800>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 788801>(a0), cast::<_, _, 788802>(a1))) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_80086368 = Some(|a0, a1, a2| unsafe { cast::<_, _, 788900>(melee_fighter::ftlib::ftlib_80086368(cast::<_, _, 788901>(a0), cast::<_, _, 788902>(a1), cast::<_, _, 788903>(a2))) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_FindNearestOpponentInDir = Some(|a0, a1, a2| unsafe { cast::<_, _, 788900>(melee_fighter::ftlib::ftlib_findnearestopponentindir(cast::<_, _, 788901>(a0), cast::<_, _, 788902>(a1), cast::<_, _, 788903>(a2))) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_800864A8 = Some(|a0, a1| unsafe { cast::<_, _, 789000>(melee_fighter::ftlib::ftlib_800864a8(cast::<_, _, 789001>(a0), cast::<_, _, 789002>(a1))) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetOpponentsDir = Some(|a0, a1| unsafe { cast::<_, _, 789000>(melee_fighter::ftlib::ftlib_getopponentsdir(cast::<_, _, 789001>(a0), cast::<_, _, 789002>(a1))) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 789101>(a0), cast::<_, _, 789102>(a1)) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 789101>(a0), cast::<_, _, 789102>(a1)) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_800866DC = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_800866dc(cast::<_, _, 789201>(a0), cast::<_, _, 789202>(a1)) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 789201>(a0), cast::<_, _, 789202>(a1)) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 789300>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 789301>(a0))) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 789300>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 789301>(a0))) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_80086984 = Some(|a0| unsafe { cast::<_, _, 789400>(melee_world::ftlib::ftLib_80086984(cast::<_, _, 789401>(a0))) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetCollData = Some(|a0| unsafe { cast::<_, _, 789400>(melee_world::ftlib::ftLib_GetCollData(cast::<_, _, 789401>(a0))) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_80086990 = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_80086990(cast::<_, _, 789501>(a0), cast::<_, _, 789502>(a1)) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetECBCenter = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getecbcenter(cast::<_, _, 789501>(a0), cast::<_, _, 789502>(a1)) }); }
     // tu/it_26B1.rs
     unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_80086A4C = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086A4C(cast::<_, _, 789601>(a0), cast::<_, _, 789602>(a1)) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_80086BE0 = Some(|a0| unsafe { cast::<_, _, 789700>(melee_items::tu::ftlib::ftLib_80086BE0(cast::<_, _, 789701>(a0))) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 789700>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 789701>(a0))) }); }
     // tu/it_26B1.rs
     unsafe { melee_items::tu::it_26B1::ext::hook::gm_8016B238 = Some(|| unsafe { cast::<_, _, 789800>(melee_modes::tu::gmvs::gm_8016B238()) }); }
     // tu/it_26B1.rs
@@ -15942,21 +15942,21 @@ fn install_melee_items() {
     // tu/it_2725.rs: link_alias.tsv
     unsafe { melee_items::tu::it_2725::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { cast::<_, _, 795200>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 795101>(a0), cast::<_, _, 795102>(a1), &crate::va_words(a2))) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_80086630 = Some(|a0, a1| unsafe { cast::<_, _, 795300>(melee_items::tu::ftlib::ftLib_80086630(cast::<_, _, 795301>(a0), cast::<_, _, 795302>(a1))) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 795300>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 795301>(a0), cast::<_, _, 795302>(a1))) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 795400>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 795401>(a0))) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 795400>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 795401>(a0))) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_80086A0C = Some(|a0| unsafe { cast::<_, _, 795500>(melee_items::tu::ftlib::ftLib_80086A0C(cast::<_, _, 795501>(a0))) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_GetScale = Some(|a0| unsafe { cast::<_, _, 795500>(melee_items::tu::ftlib::ftLib_GetScale(cast::<_, _, 795501>(a0))) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_80086BE0 = Some(|a0| unsafe { cast::<_, _, 795600>(melee_items::tu::ftlib::ftLib_80086BE0(cast::<_, _, 795601>(a0))) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 795600>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 795601>(a0))) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_80086D40 = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_80086d40(cast::<_, _, 795701>(a0), cast::<_, _, 795702>(a1), cast::<_, _, 795703>(a2)) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startitemrumble(cast::<_, _, 795701>(a0), cast::<_, _, 795702>(a1), cast::<_, _, 795703>(a2)) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_80086DC4 = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_80086dc4(cast::<_, _, 795801>(a0), cast::<_, _, 795802>(a1)) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_StartItemRumbleAll = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_startitemrumbleall(cast::<_, _, 795801>(a0), cast::<_, _, 795802>(a1)) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_80086E68 = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_80086e68(cast::<_, _, 795901>(a0)) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_StopItemRumble = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_stopitemrumble(cast::<_, _, 795901>(a0)) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_80086EB4 = Some(|a0| unsafe { cast::<_, _, 796000>(melee_items::tu::ftlib::ftLib_80086EB4(cast::<_, _, 796001>(a0))) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_GetTeam = Some(|a0| unsafe { cast::<_, _, 796000>(melee_items::tu::ftlib::ftLib_GetTeam(cast::<_, _, 796001>(a0))) }); }
     // tu/it_2725.rs
     unsafe { melee_items::tu::it_2725::ext::hook::itIsHeavy = Some(|a0| unsafe { cast::<_, _, 796100>(melee_items::tu::it_26B1::itIsHeavy(cast::<_, _, 796101>(a0))) }); }
     // tu/it_2725.rs
@@ -16036,17 +16036,17 @@ fn install_melee_items() {
     // tu/it_279C.rs: link_alias.tsv
     unsafe { melee_items::tu::it_279C::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { cast::<_, _, 800000>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 799901>(a0), cast::<_, _, 799902>(a1), &crate::va_words(a2))) }); }
     // tu/it_279C.rs
-    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_800860C4 = Some(|| unsafe { cast::<_, _, 800100>(melee_fighter::ftlib::ftlib_800860c4()) }); }
+    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_CountFighters = Some(|| unsafe { cast::<_, _, 800100>(melee_fighter::ftlib::ftlib_countfighters()) }); }
     // tu/it_279C.rs
-    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_8008627C = Some(|a0, a1| unsafe { cast::<_, _, 800200>(melee_fighter::ftlib::ftlib_8008627c(cast::<_, _, 800201>(a0), cast::<_, _, 800202>(a1))) }); }
+    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 800200>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 800201>(a0), cast::<_, _, 800202>(a1))) }); }
     // tu/it_279C.rs
-    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 800301>(a0), cast::<_, _, 800302>(a1)) }); }
+    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 800301>(a0), cast::<_, _, 800302>(a1)) }); }
     // tu/it_279C.rs
-    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 800400>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 800401>(a0))) }); }
+    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 800400>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 800401>(a0))) }); }
     // tu/it_279C.rs
-    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_80086BE0 = Some(|a0| unsafe { cast::<_, _, 800500>(melee_items::tu::ftlib::ftLib_80086BE0(cast::<_, _, 800501>(a0))) }); }
+    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 800500>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 800501>(a0))) }); }
     // tu/it_279C.rs
-    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_800874BC = Some(|a0| unsafe { cast::<_, _, 800600>(melee_world::ftlib::ftLib_800874BC(cast::<_, _, 800601>(a0))) }); }
+    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_IsSubFighter = Some(|a0| unsafe { cast::<_, _, 800600>(melee_world::ftlib::ftLib_IsSubFighter(cast::<_, _, 800601>(a0))) }); }
     // tu/it_279C.rs
     unsafe { melee_items::tu::it_279C::ext::hook::ft_80089768 = Some(|a0| unsafe { melee_fighter::ft0892::ft_80089768(cast::<_, _, 800701>(a0)) }); }
     // tu/it_279C.rs
@@ -16502,7 +16502,7 @@ fn install_melee_items() {
     // tu/itarwinglaser.rs: link_alias.tsv
     unsafe { melee_items::tu::itarwinglaser::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { cast::<_, _, 823400>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 823301>(a0), cast::<_, _, 823302>(a1), &[crate::va_word(a2)])) }); }
     // tu/itarwinglaser.rs
-    unsafe { melee_items::tu::itarwinglaser::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 823500>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 823501>(a0))) }); }
+    unsafe { melee_items::tu::itarwinglaser::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 823500>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 823501>(a0))) }); }
     // tu/itarwinglaser.rs
     unsafe { melee_items::tu::itarwinglaser::ext::hook::grCorneria_801DDCF0 = Some(|a0| unsafe { melee_world::tu::grcorneria::grCorneria_801DDCF0(cast::<_, _, 823601>(a0)) }); }
     // tu/itarwinglaser.rs
@@ -16990,7 +16990,7 @@ fn install_melee_items() {
     // tu/itclinkmilk.rs
     unsafe { melee_items::tu::itclinkmilk::ext::hook::ftCl_Init_801492F4 = Some(|a0| unsafe { cast::<_, _, 848000>(melee_chara::tu::ftclink::ftCl_Init_801492F4(cast::<_, _, 848001>(a0))) }); }
     // tu/itclinkmilk.rs
-    unsafe { melee_items::tu::itclinkmilk::ext::hook::ftLib_800869D4 = Some(|a0| unsafe { cast::<_, _, 848100>(melee_items::tu::ftlib::ftLib_800869D4(cast::<_, _, 848101>(a0))) }); }
+    unsafe { melee_items::tu::itclinkmilk::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 848100>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 848101>(a0))) }); }
     // tu/itclinkmilk.rs
     unsafe { melee_items::tu::itclinkmilk::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 848200>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 848201>(a0), cast::<_, _, 848202>(a1))) }); }
     // tu/itcoin.rs
@@ -17084,11 +17084,11 @@ fn install_melee_items() {
     // tu/itcoll.rs
     unsafe { melee_items::tu::itcoll::ext::hook::ftCommon_8007F804 = Some(|a0| unsafe { cast::<_, _, 852800>(melee_fighter::ftcommon2::ftcommon_8007f804(cast::<_, _, 852801>(a0))) }); }
     // tu/itcoll.rs
-    unsafe { melee_items::tu::itcoll::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 852900>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 852901>(a0))) }); }
+    unsafe { melee_items::tu::itcoll::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 852900>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 852901>(a0))) }); }
     // tu/itcoll.rs
-    unsafe { melee_items::tu::itcoll::ext::hook::ftLib_80086EB4 = Some(|a0| unsafe { cast::<_, _, 853000>(melee_items::tu::ftlib::ftLib_80086EB4(cast::<_, _, 853001>(a0))) }); }
+    unsafe { melee_items::tu::itcoll::ext::hook::ftLib_GetTeam = Some(|a0| unsafe { cast::<_, _, 853000>(melee_items::tu::ftlib::ftLib_GetTeam(cast::<_, _, 853001>(a0))) }); }
     // tu/itcoll.rs
-    unsafe { melee_items::tu::itcoll::ext::hook::ftLib_80086FD4 = Some(|a0, a1| unsafe { cast::<_, _, 853100>(melee_fighter::ftlib::ftlib_80086fd4(cast::<_, _, 853101>(a0), cast::<_, _, 853102>(a1))) }); }
+    unsafe { melee_items::tu::itcoll::ext::hook::ftLib_IsSamePlayer = Some(|a0, a1| unsafe { cast::<_, _, 853100>(melee_fighter::ftlib::ftlib_issameplayer(cast::<_, _, 853101>(a0), cast::<_, _, 853102>(a1))) }); }
     // tu/itcoll.rs
     unsafe { melee_items::tu::itcoll::ext::hook::ft_80089228 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 853200>(melee_fighter::tu::ft_0881::ft_80089228(cast::<_, _, 853201>(a0), cast::<_, _, 853202>(a1), cast::<_, _, 853203>(a2), cast::<_, _, 853204>(a3))) }); }
     // tu/itcoll.rs
@@ -17264,11 +17264,11 @@ fn install_melee_items() {
     // tu/itdraw.rs
     unsafe { melee_items::tu::itdraw::ext::hook::PSMTXIdentity = Some(|a0| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXIdentity(cast::<_, _, 861801>(a0)) }); }
     // tu/itdraw.rs
-    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_800868D4 = Some(|a0, a1| unsafe { cast::<_, _, 861900>(melee_fighter::ftlib::ftlib_800868d4(cast::<_, _, 861901>(a0), cast::<_, _, 861902>(a1))) }); }
+    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_IsItemVisible = Some(|a0, a1| unsafe { cast::<_, _, 861900>(melee_fighter::ftlib::ftlib_isitemvisible(cast::<_, _, 861901>(a0), cast::<_, _, 861902>(a1))) }); }
     // tu/itdraw.rs
-    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 862000>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 862001>(a0))) }); }
+    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 862000>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 862001>(a0))) }); }
     // tu/itdraw.rs
-    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_80087074 = Some(|a0, a1| unsafe { cast::<_, _, 862100>(melee_fighter::ftlib::ftlib_80087074(cast::<_, _, 862101>(a0), cast::<_, _, 862102>(a1))) }); }
+    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_GetShakeOffset = Some(|a0, a1| unsafe { cast::<_, _, 862100>(melee_fighter::ftlib::ftlib_getshakeoffset(cast::<_, _, 862101>(a0), cast::<_, _, 862102>(a1))) }); }
     // tu/itdraw.rs
     unsafe { melee_items::tu::itdraw::ext::hook::it_80272A18 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272A18(cast::<_, _, 862201>(a0)) }); }
     // tu/itdraw.rs
@@ -17312,9 +17312,9 @@ fn install_melee_items() {
     // tu/itdrmariopill.rs
     unsafe { melee_items::tu::itdrmariopill::ext::hook::ftDr_Init_801498EC = Some(|a0| unsafe { cast::<_, _, 864200>(melee_chara::tu::ftdrmario::ftDr_Init_801498EC(cast::<_, _, 864201>(a0))) }); }
     // tu/itdrmariopill.rs
-    unsafe { melee_items::tu::itdrmariopill::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 864301>(a0), cast::<_, _, 864302>(a1)) }); }
+    unsafe { melee_items::tu::itdrmariopill::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 864301>(a0), cast::<_, _, 864302>(a1)) }); }
     // tu/itdrmariopill.rs
-    unsafe { melee_items::tu::itdrmariopill::ext::hook::ftLib_800869D4 = Some(|a0| unsafe { cast::<_, _, 864400>(melee_items::tu::ftlib::ftLib_800869D4(cast::<_, _, 864401>(a0))) }); }
+    unsafe { melee_items::tu::itdrmariopill::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 864400>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 864401>(a0))) }); }
     // tu/itdrmariopill.rs
     unsafe { melee_items::tu::itdrmariopill::ext::hook::it_8026B3A8 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B3A8(cast::<_, _, 864501>(a0)) }); }
     // tu/itdrmariopill.rs
@@ -17348,7 +17348,7 @@ fn install_melee_items() {
     // tu/itdrop.rs
     unsafe { melee_items::tu::itdrop::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 866000>(melee_items::tu::item::Item_80268B18(cast::<_, _, 866001>(a0))) }); }
     // tu/itdrop.rs
-    unsafe { melee_items::tu::itdrop::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 866100>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 866101>(a0))) }); }
+    unsafe { melee_items::tu::itdrop::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 866100>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 866101>(a0))) }); }
     // tu/itdrop.rs
     unsafe { melee_items::tu::itdrop::ext::hook::ftLib_800874CC = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_800874cc(cast::<_, _, 866201>(a0), cast::<_, _, 866202>(a1), cast::<_, _, 866203>(a2)) }); }
     // tu/itdrop.rs
@@ -17522,21 +17522,21 @@ fn install_melee_items() {
     // tu/item.rs
     unsafe { melee_items::tu::item::ext::hook::efLib_DestroyAll = Some(|a0| unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(cast::<_, _, 874701>(a0)) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_80086724 = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_80086724(cast::<_, _, 874801>(a0), cast::<_, _, 874802>(a1)) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_ReleaseItem = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_releaseitem(cast::<_, _, 874801>(a0), cast::<_, _, 874802>(a1)) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_80086764 = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_80086764(cast::<_, _, 874901>(a0)) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_ClearHeldSpecialItem = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_clearheldspecialitem(cast::<_, _, 874901>(a0)) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_800867A0 = Some(|a0, a1| unsafe { cast::<_, _, 875000>(melee_items::tu::ftlib::ftLib_800867A0(cast::<_, _, 875001>(a0), cast::<_, _, 875002>(a1))) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_IsHoldingItem = Some(|a0, a1| unsafe { cast::<_, _, 875000>(melee_items::tu::ftlib::ftLib_IsHoldingItem(cast::<_, _, 875001>(a0), cast::<_, _, 875002>(a1))) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_800867CC = Some(|a0| unsafe { cast::<_, _, 875100>(melee_items::tu::ftlib::ftLib_800867CC(cast::<_, _, 875101>(a0))) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_GetHeldSpecialItem = Some(|a0| unsafe { cast::<_, _, 875100>(melee_items::tu::ftlib::ftLib_GetHeldSpecialItem(cast::<_, _, 875101>(a0))) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 875200>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 875201>(a0))) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 875200>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 875201>(a0))) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_80086EB4 = Some(|a0| unsafe { cast::<_, _, 875300>(melee_items::tu::ftlib::ftLib_80086EB4(cast::<_, _, 875301>(a0))) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_GetTeam = Some(|a0| unsafe { cast::<_, _, 875300>(melee_items::tu::ftlib::ftLib_GetTeam(cast::<_, _, 875301>(a0))) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_8008702C = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_8008702c(cast::<_, _, 875401>(a0)) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_IncFighterRefCount = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_incfighterrefcount(cast::<_, _, 875401>(a0)) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_80087050 = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_80087050(cast::<_, _, 875501>(a0)) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_DecFighterRefCount = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_decfighterrefcount(cast::<_, _, 875501>(a0)) }); }
     // tu/item.rs: link_alias.tsv
     unsafe { melee_items::tu::item::ext::hook::ftLib_GetKind = Some(|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }); }
     // tu/item.rs
@@ -17886,11 +17886,11 @@ fn install_melee_items() {
     // tu/itflipper.rs
     unsafe { melee_items::tu::itflipper::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 892801>(a0), cast::<_, _, 892802>(a1), cast::<_, _, 892803>(a2)) }); }
     // tu/itflipper.rs
-    unsafe { melee_items::tu::itflipper::ext::hook::ftLib_800866DC = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_800866dc(cast::<_, _, 892901>(a0), cast::<_, _, 892902>(a1)) }); }
+    unsafe { melee_items::tu::itflipper::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 892901>(a0), cast::<_, _, 892902>(a1)) }); }
     // tu/itflipper.rs
-    unsafe { melee_items::tu::itflipper::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 893000>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 893001>(a0))) }); }
+    unsafe { melee_items::tu::itflipper::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 893000>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 893001>(a0))) }); }
     // tu/itflipper.rs
-    unsafe { melee_items::tu::itflipper::ext::hook::ftLib_80086BEC = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086BEC(cast::<_, _, 893101>(a0), cast::<_, _, 893102>(a1)) }); }
+    unsafe { melee_items::tu::itflipper::ext::hook::ftLib_GetPosDelta = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPosDelta(cast::<_, _, 893101>(a0), cast::<_, _, 893102>(a1)) }); }
     // tu/itflipper.rs
     unsafe { melee_items::tu::itflipper::ext::hook::ftLib_80087284 = Some(|a0| unsafe { cast::<_, _, 893200>(melee_fighter::ftlib::ftlib_80087284(cast::<_, _, 893201>(a0))) }); }
     // tu/itflipper.rs
@@ -18020,9 +18020,9 @@ fn install_melee_items() {
     // tu/itfoxblaster.rs
     unsafe { melee_items::tu::itfoxblaster::ext::hook::ftKb_SpecialNFx_800FDEB4 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialfox::ftKb_SpecialNFx_800FDEB4(cast::<_, _, 899601>(a0)) }); }
     // tu/itfoxblaster.rs
-    unsafe { melee_items::tu::itfoxblaster::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 899700>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 899701>(a0))) }); }
+    unsafe { melee_items::tu::itfoxblaster::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 899700>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 899701>(a0))) }); }
     // tu/itfoxblaster.rs
-    unsafe { melee_items::tu::itfoxblaster::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 899801>(a0), cast::<_, _, 899802>(a1)) }); }
+    unsafe { melee_items::tu::itfoxblaster::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 899801>(a0), cast::<_, _, 899802>(a1)) }); }
     // tu/itfoxblaster.rs
     unsafe { melee_items::tu::itfoxblaster::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 899900>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 899901>(a0), cast::<_, _, 899902>(a1))) }); }
     // tu/itfoxillusion.rs
@@ -18050,7 +18050,7 @@ fn install_melee_items() {
     // tu/itfoxillusion.rs
     unsafe { melee_items::tu::itfoxillusion::ext::hook::ftFx_SpecialS_ReturnFloatVarIndexed = Some(|a0, a1| unsafe { cast::<_, _, 901100>(melee_chara::tu::ftfoxspecials::ftFx_SpecialS_ReturnFloatVarIndexed(cast::<_, _, 901101>(a0), cast::<_, _, 901102>(a1))) }); }
     // tu/itfoxillusion.rs
-    unsafe { melee_items::tu::itfoxillusion::ext::hook::ftLib_800865CC = Some(|a0| unsafe { cast::<_, _, 901200>(melee_items::tu::ftlib::ftLib_800865CC(cast::<_, _, 901201>(a0))) }); }
+    unsafe { melee_items::tu::itfoxillusion::ext::hook::ftLib_GetGroundAir = Some(|a0| unsafe { cast::<_, _, 901200>(melee_items::tu::ftlib::ftLib_GetGroundAir(cast::<_, _, 901201>(a0))) }); }
     // tu/itfoxillusion.rs
     unsafe { melee_items::tu::itfoxillusion::ext::hook::it_8026B3A8 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B3A8(cast::<_, _, 901301>(a0)) }); }
     // tu/itfoxillusion.rs
@@ -18266,7 +18266,7 @@ fn install_melee_items() {
     // tu/itgamewatchfire.rs
     unsafe { melee_items::tu::itgamewatchfire::ext::hook::ftGw_AttackS4_ItemTorchSetFlag = Some(|a0| unsafe { melee_chara::tu::ftgamewatchattacks4::ftGw_AttackS4_ItemTorchSetFlag(cast::<_, _, 911901>(a0)) }); }
     // tu/itgamewatchfire.rs
-    unsafe { melee_items::tu::itgamewatchfire::ext::hook::ftLib_800876D4 = Some(|a0| unsafe { cast::<_, _, 912000>(melee_fighter::ftlib::ftlib_800876d4(cast::<_, _, 912001>(a0))) }); }
+    unsafe { melee_items::tu::itgamewatchfire::ext::hook::ftLib_IsChargingSmash = Some(|a0| unsafe { cast::<_, _, 912000>(melee_fighter::ftlib::ftlib_ischargingsmash(cast::<_, _, 912001>(a0))) }); }
     // tu/itgamewatchfire.rs
     unsafe { melee_items::tu::itgamewatchfire::ext::hook::it_8026B724 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B724(cast::<_, _, 912101>(a0)) }); }
     // tu/itgamewatchfire.rs
@@ -18326,7 +18326,7 @@ fn install_melee_items() {
     // tu/itgamewatchjudge.rs
     unsafe { melee_items::tu::itgamewatchjudge::ext::hook::ftGw_SpecialS_ItemJudgementSetFlag = Some(|a0| unsafe { melee_chara::tu::ftgamewatchspecials::ftGw_SpecialS_ItemJudgementSetFlag(cast::<_, _, 914901>(a0)) }); }
     // tu/itgamewatchjudge.rs
-    unsafe { melee_items::tu::itgamewatchjudge::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 915000>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 915001>(a0))) }); }
+    unsafe { melee_items::tu::itgamewatchjudge::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 915000>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 915001>(a0))) }); }
     // tu/itgamewatchjudge.rs
     unsafe { melee_items::tu::itgamewatchjudge::ext::hook::it_8026B724 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B724(cast::<_, _, 915101>(a0)) }); }
     // tu/itgamewatchjudge.rs
@@ -18386,7 +18386,7 @@ fn install_melee_items() {
     // tu/itgamewatchpanic.rs
     unsafe { melee_items::tu::itgamewatchpanic::ext::hook::ftGw_SpecialLw_ItemPanicSetFlag = Some(|a0| unsafe { melee_chara::tu::ftgamewatchspeciallw::ftGw_SpecialLw_ItemPanicSetFlag(cast::<_, _, 917901>(a0)) }); }
     // tu/itgamewatchpanic.rs
-    unsafe { melee_items::tu::itgamewatchpanic::ext::hook::ftLib_800865CC = Some(|a0| unsafe { cast::<_, _, 918000>(melee_items::tu::ftlib::ftLib_800865CC(cast::<_, _, 918001>(a0))) }); }
+    unsafe { melee_items::tu::itgamewatchpanic::ext::hook::ftLib_GetGroundAir = Some(|a0| unsafe { cast::<_, _, 918000>(melee_items::tu::ftlib::ftLib_GetGroundAir(cast::<_, _, 918001>(a0))) }); }
     // tu/itgamewatchpanic.rs
     unsafe { melee_items::tu::itgamewatchpanic::ext::hook::it_8026B724 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B724(cast::<_, _, 918101>(a0)) }); }
     // tu/itgamewatchpanic.rs
@@ -18474,7 +18474,7 @@ fn install_melee_items() {
     // tu/itgreatfoxlaser.rs
     unsafe { melee_items::tu::itgreatfoxlaser::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 922301>(a0), cast::<_, _, 922302>(a1), cast::<_, _, 922303>(a2)) }); }
     // tu/itgreatfoxlaser.rs
-    unsafe { melee_items::tu::itgreatfoxlaser::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 922401>(a0), cast::<_, _, 922402>(a1)) }); }
+    unsafe { melee_items::tu::itgreatfoxlaser::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 922401>(a0), cast::<_, _, 922402>(a1)) }); }
     // tu/itgreatfoxlaser.rs
     unsafe { melee_items::tu::itgreatfoxlaser::ext::hook::it_8026B3A8 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B3A8(cast::<_, _, 922501>(a0)) }); }
     // tu/itgreatfoxlaser.rs
@@ -18730,11 +18730,11 @@ fn install_melee_items() {
     // tu/ithassam.rs
     unsafe { melee_items::tu::ithassam::ext::hook::efLib_ResumeAll = Some(|a0| unsafe { melee_world::tu::efn::eflib::efLib_ResumeAll(cast::<_, _, 935101>(a0)) }); }
     // tu/ithassam.rs
-    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_8008627C = Some(|a0, a1| unsafe { cast::<_, _, 935200>(melee_fighter::ftlib::ftlib_8008627c(cast::<_, _, 935201>(a0), cast::<_, _, 935202>(a1))) }); }
+    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 935200>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 935201>(a0), cast::<_, _, 935202>(a1))) }); }
     // tu/ithassam.rs
-    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_800866DC = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_800866dc(cast::<_, _, 935301>(a0), cast::<_, _, 935302>(a1)) }); }
+    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 935301>(a0), cast::<_, _, 935302>(a1)) }); }
     // tu/ithassam.rs
-    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_80086FD4 = Some(|a0, a1| unsafe { cast::<_, _, 935400>(melee_fighter::ftlib::ftlib_80086fd4(cast::<_, _, 935401>(a0), cast::<_, _, 935402>(a1))) }); }
+    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_IsSamePlayer = Some(|a0, a1| unsafe { cast::<_, _, 935400>(melee_fighter::ftlib::ftlib_issameplayer(cast::<_, _, 935401>(a0), cast::<_, _, 935402>(a1))) }); }
     // tu/ithassam.rs
     unsafe { melee_items::tu::ithassam::ext::hook::gm_8016B168 = Some(|| unsafe { cast::<_, _, 935500>(melee_modes::tu::gmvs::gm_8016B168()) }); }
     // tu/ithassam.rs
@@ -18958,9 +18958,9 @@ fn install_melee_items() {
     // tu/ithitodeman.rs: link_alias.tsv
     unsafe { melee_items::tu::ithitodeman::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { cast::<_, _, 946700>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 946601>(a0), cast::<_, _, 946602>(a1), &crate::va_words(a2))) }); }
     // tu/ithitodeman.rs
-    unsafe { melee_items::tu::ithitodeman::ext::hook::ftLib_80086198 = Some(|a0| unsafe { cast::<_, _, 946800>(melee_fighter::ftlib::ftlib_80086198(cast::<_, _, 946801>(a0))) }); }
+    unsafe { melee_items::tu::ithitodeman::ext::hook::ftLib_FindLowestPercentOpponent = Some(|a0| unsafe { cast::<_, _, 946800>(melee_fighter::ftlib::ftlib_findlowestpercentopponent(cast::<_, _, 946801>(a0))) }); }
     // tu/ithitodeman.rs
-    unsafe { melee_items::tu::ithitodeman::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 946901>(a0), cast::<_, _, 946902>(a1)) }); }
+    unsafe { melee_items::tu::ithitodeman::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 946901>(a0), cast::<_, _, 946902>(a1)) }); }
     // tu/ithitodeman.rs
     unsafe { melee_items::tu::ithitodeman::ext::hook::it_8026B3A8 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B3A8(cast::<_, _, 947001>(a0)) }); }
     // tu/ithitodeman.rs
@@ -19268,7 +19268,7 @@ fn install_melee_items() {
     // tu/itkirbyyoshispecialn.rs
     unsafe { melee_items::tu::itkirbyyoshispecialn::ext::hook::ftKb_SpecialNYs_80109238 = Some(|a0| unsafe { cast::<_, _, 962300>(melee_chara::tu::ftkirbyspecialiceclimber::ftKb_SpecialNYs_80109238(cast::<_, _, 962301>(a0))) }); }
     // tu/itkirbyyoshispecialn.rs
-    unsafe { melee_items::tu::itkirbyyoshispecialn::ext::hook::ftLib_80086630 = Some(|a0, a1| unsafe { cast::<_, _, 962400>(melee_items::tu::ftlib::ftLib_80086630(cast::<_, _, 962401>(a0), cast::<_, _, 962402>(a1))) }); }
+    unsafe { melee_items::tu::itkirbyyoshispecialn::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 962400>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 962401>(a0), cast::<_, _, 962402>(a1))) }); }
     // tu/itkirbyyoshispecialn.rs
     unsafe { melee_items::tu::itkirbyyoshispecialn::ext::hook::it_8026BD54 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026BD54(cast::<_, _, 962501>(a0)) }); }
     // tu/itkirbyyoshispecialn.rs
@@ -19428,7 +19428,7 @@ fn install_melee_items() {
     // tu/itkusudama.rs
     unsafe { melee_items::tu::itkusudama::ext::hook::Item_8026AE84 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AE84(cast::<_, _, 970301>(a0), cast::<_, _, 970302>(a1), cast::<_, _, 970303>(a2), cast::<_, _, 970304>(a3)) }); }
     // tu/itkusudama.rs
-    unsafe { melee_items::tu::itkusudama::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 970400>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 970401>(a0))) }); }
+    unsafe { melee_items::tu::itkusudama::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 970400>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 970401>(a0))) }); }
     // tu/itkusudama.rs
     unsafe { melee_items::tu::itkusudama::ext::hook::ftLib_800874CC = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_800874cc(cast::<_, _, 970501>(a0), cast::<_, _, 970502>(a1), cast::<_, _, 970503>(a2)) }); }
     // tu/itkusudama.rs
@@ -19598,11 +19598,11 @@ fn install_melee_items() {
     // tu/itleadead.rs
     unsafe { melee_items::tu::itleadead::ext::hook::ftCo_800C7800 = Some(|a0| unsafe { melee_fighter::tu::ftco_800c7590::ftco_800c7800(cast::<_, _, 978901>(a0)) }); }
     // tu/itleadead.rs
-    unsafe { melee_items::tu::itleadead::ext::hook::ftLib_8008627C = Some(|a0, a1| unsafe { cast::<_, _, 979000>(melee_fighter::ftlib::ftlib_8008627c(cast::<_, _, 979001>(a0), cast::<_, _, 979002>(a1))) }); }
+    unsafe { melee_items::tu::itleadead::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 979000>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 979001>(a0), cast::<_, _, 979002>(a1))) }); }
     // tu/itleadead.rs
-    unsafe { melee_items::tu::itleadead::ext::hook::ftLib_80086630 = Some(|a0, a1| unsafe { cast::<_, _, 979100>(melee_items::tu::ftlib::ftLib_80086630(cast::<_, _, 979101>(a0), cast::<_, _, 979102>(a1))) }); }
+    unsafe { melee_items::tu::itleadead::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 979100>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 979101>(a0), cast::<_, _, 979102>(a1))) }); }
     // tu/itleadead.rs
-    unsafe { melee_items::tu::itleadead::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 979201>(a0), cast::<_, _, 979202>(a1)) }); }
+    unsafe { melee_items::tu::itleadead::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 979201>(a0), cast::<_, _, 979202>(a1)) }); }
     // tu/itleadead.rs
     unsafe { melee_items::tu::itleadead::ext::hook::it_2725_Logic9_Destroyed = Some(|a0| unsafe { melee_items::tu::itzako::it_2725_Logic9_Destroyed(cast::<_, _, 979301>(a0)) }); }
     // tu/itleadead.rs
@@ -19812,9 +19812,9 @@ fn install_melee_items() {
     // tu/itlikelike.rs
     unsafe { melee_items::tu::itlikelike::ext::hook::ftCo_800C7C60 = Some(|a0, a1| unsafe { melee_fighter::tu::ftco_800c78b0::ftco_800c7c60(cast::<_, _, 989701>(a0), cast::<_, _, 989702>(a1)) }); }
     // tu/itlikelike.rs
-    unsafe { melee_items::tu::itlikelike::ext::hook::ftLib_8008627C = Some(|a0, a1| unsafe { cast::<_, _, 989800>(melee_fighter::ftlib::ftlib_8008627c(cast::<_, _, 989801>(a0), cast::<_, _, 989802>(a1))) }); }
+    unsafe { melee_items::tu::itlikelike::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 989800>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 989801>(a0), cast::<_, _, 989802>(a1))) }); }
     // tu/itlikelike.rs
-    unsafe { melee_items::tu::itlikelike::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 989901>(a0), cast::<_, _, 989902>(a1)) }); }
+    unsafe { melee_items::tu::itlikelike::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 989901>(a0), cast::<_, _, 989902>(a1)) }); }
     // tu/itlikelike.rs
     unsafe { melee_items::tu::itlikelike::ext::hook::it_2725_Logic9_Destroyed = Some(|a0| unsafe { melee_items::tu::itzako::it_2725_Logic9_Destroyed(cast::<_, _, 990001>(a0)) }); }
     // tu/itlikelike.rs
@@ -19952,13 +19952,13 @@ fn install_melee_items() {
     // tu/itlinkarrow.rs
     unsafe { melee_items::tu::itlinkarrow::ext::hook::ftKb_SpecialNLk800FB470 = Some(|a0| unsafe { cast::<_, _, 996800>(melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB470(cast::<_, _, 996801>(a0))) }); }
     // tu/itlinkarrow.rs
-    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 996900>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 996901>(a0))) }); }
+    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 996900>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 996901>(a0))) }); }
     // tu/itlinkarrow.rs
-    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_80086630 = Some(|a0, a1| unsafe { cast::<_, _, 997000>(melee_items::tu::ftlib::ftLib_80086630(cast::<_, _, 997001>(a0), cast::<_, _, 997002>(a1))) }); }
+    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 997000>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 997001>(a0), cast::<_, _, 997002>(a1))) }); }
     // tu/itlinkarrow.rs
-    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_800869D4 = Some(|a0| unsafe { cast::<_, _, 997100>(melee_items::tu::ftlib::ftLib_800869D4(cast::<_, _, 997101>(a0))) }); }
+    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 997100>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 997101>(a0))) }); }
     // tu/itlinkarrow.rs
-    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_80086A18 = Some(|a0| unsafe { cast::<_, _, 997200>(melee_fighter::ftlib::ftlib_80086a18(cast::<_, _, 997201>(a0))) }); }
+    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_IsShielding = Some(|a0| unsafe { cast::<_, _, 997200>(melee_fighter::ftlib::ftlib_isshielding(cast::<_, _, 997201>(a0))) }); }
     // tu/itlinkarrow.rs
     unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLk_SpecialN_IsActiveAnd2071b6 = Some(|a0| unsafe { cast::<_, _, 997300>(melee_chara::tu::ftlinkspecialn::ftLk_SpecialN_IsActiveAnd2071b6(cast::<_, _, 997301>(a0))) }); }
     // tu/itlinkarrow.rs
@@ -20112,9 +20112,9 @@ fn install_melee_items() {
     // tu/itlinkboomerang.rs
     unsafe { melee_items::tu::itlinkboomerang::ext::hook::atan2f = Some(|a0, a1| unsafe { cast::<_, _, 1004800>(melee_runtime::tu::lbtrigf::atan2f(cast::<_, _, 1004801>(a0), cast::<_, _, 1004802>(a1))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_80086630 = Some(|a0, a1| unsafe { cast::<_, _, 1004900>(melee_items::tu::ftlib::ftLib_80086630(cast::<_, _, 1004901>(a0), cast::<_, _, 1004902>(a1))) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 1004900>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 1004901>(a0), cast::<_, _, 1004902>(a1))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_800866DC = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_800866dc(cast::<_, _, 1005001>(a0), cast::<_, _, 1005002>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 1005001>(a0), cast::<_, _, 1005002>(a1)) }); }
     // tu/itlinkboomerang.rs: link_alias.tsv
     unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetKind = Some(|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }); }
     // tu/itlinkboomerang.rs
@@ -20180,7 +20180,7 @@ fn install_melee_items() {
     // tu/itlinkbow.rs
     unsafe { melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB470 = Some(|a0| unsafe { cast::<_, _, 1008100>(melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB470(cast::<_, _, 1008101>(a0))) }); }
     // tu/itlinkbow.rs
-    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLib_800869D4 = Some(|a0| unsafe { cast::<_, _, 1008200>(melee_items::tu::ftlib::ftLib_800869D4(cast::<_, _, 1008201>(a0))) }); }
+    unsafe { melee_items::tu::itlinkbow::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 1008200>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 1008201>(a0))) }); }
     // tu/itlinkbow.rs
     unsafe { melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_GetIndex = Some(|a0| unsafe { cast::<_, _, 1008300>(melee_chara::tu::ftlinkspecialn::ftLk_SpecialN_GetIndex(cast::<_, _, 1008301>(a0))) }); }
     // tu/itlinkbow.rs
@@ -20688,7 +20688,7 @@ fn install_melee_items() {
     // tu/itmariocape.rs: link_alias.tsv
     unsafe { melee_items::tu::itmariocape::ext::hook::efAsync_Spawn = Some(|a0, a1, a2, a3, a4| unsafe { { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(cast::<_, _, 1033501>(a0), cast::<_, _, 1033502>(a1), cast::<_, _, 1033503>(a2), cast::<_, _, 1033504>(a3), cast::<_, _, 1033505>(a4), &[]); } }); }
     // tu/itmariocape.rs
-    unsafe { melee_items::tu::itmariocape::ext::hook::ftLib_800865CC = Some(|a0| unsafe { cast::<_, _, 1033600>(melee_items::tu::ftlib::ftLib_800865CC(cast::<_, _, 1033601>(a0))) }); }
+    unsafe { melee_items::tu::itmariocape::ext::hook::ftLib_GetGroundAir = Some(|a0| unsafe { cast::<_, _, 1033600>(melee_items::tu::ftlib::ftLib_GetGroundAir(cast::<_, _, 1033601>(a0))) }); }
     // tu/itmariocape.rs
     unsafe { melee_items::tu::itmariocape::ext::hook::ftMr_SpecialS_CheckItemCapeRemove = Some(|a0| unsafe { cast::<_, _, 1033700>(melee_chara::tu::ftmariospecials::ftMr_SpecialS_CheckItemCapeRemove(cast::<_, _, 1033701>(a0))) }); }
     // tu/itmariocape.rs
@@ -20976,11 +20976,11 @@ fn install_melee_items() {
     // tu/itmetalb.rs
     unsafe { melee_items::tu::itmetalb::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1048301>(a0), cast::<_, _, 1048302>(a1), cast::<_, _, 1048303>(a2)) }); }
     // tu/itmetalb.rs
-    unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_80086BE0 = Some(|a0| unsafe { cast::<_, _, 1048400>(melee_items::tu::ftlib::ftLib_80086BE0(cast::<_, _, 1048401>(a0))) }); }
+    unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 1048400>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 1048401>(a0))) }); }
     // tu/itmetalb.rs
-    unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_800871A8 = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_800871a8(cast::<_, _, 1048501>(a0), cast::<_, _, 1048502>(a1)) }); }
+    unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_ApplyMetalBox = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_applymetalbox(cast::<_, _, 1048501>(a0), cast::<_, _, 1048502>(a1)) }); }
     // tu/itmetalb.rs
-    unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_800874BC = Some(|a0| unsafe { cast::<_, _, 1048600>(melee_world::ftlib::ftLib_800874BC(cast::<_, _, 1048601>(a0))) }); }
+    unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_IsSubFighter = Some(|a0| unsafe { cast::<_, _, 1048600>(melee_world::ftlib::ftLib_IsSubFighter(cast::<_, _, 1048601>(a0))) }); }
     // tu/itmetalb.rs
     unsafe { melee_items::tu::itmetalb::ext::hook::it_8026B390 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B390(cast::<_, _, 1048701>(a0)) }); }
     // tu/itmetalb.rs
@@ -21064,7 +21064,7 @@ fn install_melee_items() {
     // tu/itmewtwodisable.rs
     unsafe { melee_items::tu::itmewtwodisable::ext::hook::db_80225DD8 = Some(|a0, a1| unsafe { melee_items::tu::dbitem::db_80225DD8(cast::<_, _, 1052701>(a0), cast::<_, _, 1052702>(a1)) }); }
     // tu/itmewtwodisable.rs
-    unsafe { melee_items::tu::itmewtwodisable::ext::hook::ftLib_80086A0C = Some(|a0| unsafe { cast::<_, _, 1052800>(melee_items::tu::ftlib::ftLib_80086A0C(cast::<_, _, 1052801>(a0))) }); }
+    unsafe { melee_items::tu::itmewtwodisable::ext::hook::ftLib_GetScale = Some(|a0| unsafe { cast::<_, _, 1052800>(melee_items::tu::ftlib::ftLib_GetScale(cast::<_, _, 1052801>(a0))) }); }
     // tu/itmewtwodisable.rs
     unsafe { melee_items::tu::itmewtwodisable::ext::hook::ftMt_SpecialLw_ClearDisableGObj = Some(|a0| unsafe { melee_chara::tu::ftmewtwospeciallw::ftMt_SpecialLw_ClearDisableGObj(cast::<_, _, 1052901>(a0)) }); }
     // tu/itmewtwodisable.rs
@@ -21122,11 +21122,11 @@ fn install_melee_items() {
     // tu/itmewtwoshadowball.rs
     unsafe { melee_items::tu::itmewtwoshadowball::ext::hook::ftKb_SpecialNMt_80107040 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107040(cast::<_, _, 1055701>(a0)) }); }
     // tu/itmewtwoshadowball.rs
-    unsafe { melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 1055800>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 1055801>(a0))) }); }
+    unsafe { melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 1055800>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 1055801>(a0))) }); }
     // tu/itmewtwoshadowball.rs
-    unsafe { melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_80086630 = Some(|a0, a1| unsafe { cast::<_, _, 1055900>(melee_items::tu::ftlib::ftLib_80086630(cast::<_, _, 1055901>(a0), cast::<_, _, 1055902>(a1))) }); }
+    unsafe { melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 1055900>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 1055901>(a0), cast::<_, _, 1055902>(a1))) }); }
     // tu/itmewtwoshadowball.rs
-    unsafe { melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_800869D4 = Some(|a0| unsafe { cast::<_, _, 1056000>(melee_items::tu::ftlib::ftLib_800869D4(cast::<_, _, 1056001>(a0))) }); }
+    unsafe { melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 1056000>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 1056001>(a0))) }); }
     // tu/itmewtwoshadowball.rs
     unsafe { melee_items::tu::itmewtwoshadowball::ext::hook::ftMt_SpecialN_CheckShadowBallCancel = Some(|a0| unsafe { cast::<_, _, 1056100>(melee_chara::tu::ftmewtwospecialn::ftMt_SpecialN_CheckShadowBallCancel(cast::<_, _, 1056101>(a0))) }); }
     // tu/itmewtwoshadowball.rs
@@ -21254,9 +21254,9 @@ fn install_melee_items() {
     // tu/itnessbat.rs
     unsafe { melee_items::tu::itnessbat::ext::hook::ftCo_800BF228 = Some(|a0| unsafe { cast::<_, _, 1062300>(melee_fighter::tu::ft_0bf0::ftCo_800BF228(cast::<_, _, 1062301>(a0))) }); }
     // tu/itnessbat.rs
-    unsafe { melee_items::tu::itnessbat::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 1062400>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 1062401>(a0))) }); }
+    unsafe { melee_items::tu::itnessbat::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 1062400>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 1062401>(a0))) }); }
     // tu/itnessbat.rs
-    unsafe { melee_items::tu::itnessbat::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 1062501>(a0), cast::<_, _, 1062502>(a1)) }); }
+    unsafe { melee_items::tu::itnessbat::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 1062501>(a0), cast::<_, _, 1062502>(a1)) }); }
     // tu/itnessbat.rs
     unsafe { melee_items::tu::itnessbat::ext::hook::ftNs_AttackS4_CheckNessBatRemove = Some(|a0| unsafe { cast::<_, _, 1062600>(melee_chara::tu::ftnessattacks4::ftNs_AttackS4_CheckNessBatRemove(cast::<_, _, 1062601>(a0))) }); }
     // tu/itnessbat.rs
@@ -21324,7 +21324,7 @@ fn install_melee_items() {
     // tu/itnesspkflash.rs
     unsafe { melee_items::tu::itnesspkflash::ext::hook::ftKb_SpecialNNs_800FECBC = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialfox::ftKb_SpecialNNs_800FECBC(cast::<_, _, 1065801>(a0)) }); }
     // tu/itnesspkflash.rs
-    unsafe { melee_items::tu::itnesspkflash::ext::hook::ftLib_800865D8 = Some(|a0, a1, a2| unsafe { melee_items::tu::ftlib::ftLib_800865D8(cast::<_, _, 1065901>(a0), cast::<_, _, 1065902>(a1), cast::<_, _, 1065903>(a2)) }); }
+    unsafe { melee_items::tu::itnesspkflash::ext::hook::ftLib_GetLStick = Some(|a0, a1, a2| unsafe { melee_items::tu::ftlib::ftLib_GetLStick(cast::<_, _, 1065901>(a0), cast::<_, _, 1065902>(a1), cast::<_, _, 1065903>(a2)) }); }
     // tu/itnesspkflash.rs
     unsafe { melee_items::tu::itnesspkflash::ext::hook::ftNs_SpecialN_CheckSpecialNHold = Some(|a0| unsafe { cast::<_, _, 1066000>(melee_chara::tu::ftnessspecialn::ftNs_SpecialN_CheckSpecialNHold(cast::<_, _, 1066001>(a0))) }); }
     // tu/itnesspkflash.rs
@@ -21392,7 +21392,7 @@ fn install_melee_items() {
     // tu/itnesspkthunderball.rs
     unsafe { melee_items::tu::itnesspkthunderball::ext::hook::db_80225DD8 = Some(|a0, a1| unsafe { melee_items::tu::dbitem::db_80225DD8(cast::<_, _, 1069201>(a0), cast::<_, _, 1069202>(a1)) }); }
     // tu/itnesspkthunderball.rs
-    unsafe { melee_items::tu::itnesspkthunderball::ext::hook::ftLib_800865D8 = Some(|a0, a1, a2| unsafe { melee_items::tu::ftlib::ftLib_800865D8(cast::<_, _, 1069301>(a0), cast::<_, _, 1069302>(a1), cast::<_, _, 1069303>(a2)) }); }
+    unsafe { melee_items::tu::itnesspkthunderball::ext::hook::ftLib_GetLStick = Some(|a0, a1, a2| unsafe { melee_items::tu::ftlib::ftLib_GetLStick(cast::<_, _, 1069301>(a0), cast::<_, _, 1069302>(a1), cast::<_, _, 1069303>(a2)) }); }
     // tu/itnesspkthunderball.rs
     unsafe { melee_items::tu::itnesspkthunderball::ext::hook::ftNs_SpecialHi_CheckSpecialHiHold = Some(|a0| unsafe { cast::<_, _, 1069400>(melee_chara::tu::ftnessspecialhi::ftNs_SpecialHi_CheckSpecialHiHold(cast::<_, _, 1069401>(a0))) }); }
     // tu/itnesspkthunderball.rs
@@ -21494,7 +21494,7 @@ fn install_melee_items() {
     // tu/itnessyoyo.rs
     unsafe { melee_items::tu::itnessyoyo::ext::hook::PSMTXIdentity = Some(|a0| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXIdentity(cast::<_, _, 1074301>(a0)) }); }
     // tu/itnessyoyo.rs
-    unsafe { melee_items::tu::itnessyoyo::ext::hook::ftLib_80086A0C = Some(|a0| unsafe { cast::<_, _, 1074400>(melee_items::tu::ftlib::ftLib_80086A0C(cast::<_, _, 1074401>(a0))) }); }
+    unsafe { melee_items::tu::itnessyoyo::ext::hook::ftLib_GetScale = Some(|a0| unsafe { cast::<_, _, 1074400>(melee_items::tu::ftlib::ftLib_GetScale(cast::<_, _, 1074401>(a0))) }); }
     // tu/itnessyoyo.rs
     unsafe { melee_items::tu::itnessyoyo::ext::hook::ftLib_GetMotionId = Some(|a0| unsafe { cast::<_, _, 1074500>(melee_items::tu::ftlib::ftLib_GetMotionId(cast::<_, _, 1074501>(a0))) }); }
     // tu/itnessyoyo.rs
@@ -21548,7 +21548,7 @@ fn install_melee_items() {
     // tu/itnokonoko.rs
     unsafe { melee_items::tu::itnokonoko::ext::hook::ScriptGame_EnemyDefeated = Some(|a0| unsafe { cast::<_, _, 1077000>(melee_modes::tu::script_game::ScriptGame_EnemyDefeated(cast::<_, _, 1077001>(a0))) }); }
     // tu/itnokonoko.rs
-    unsafe { melee_items::tu::itnokonoko::ext::hook::ftLib_80086D40 = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_80086d40(cast::<_, _, 1077101>(a0), cast::<_, _, 1077102>(a1), cast::<_, _, 1077103>(a2)) }); }
+    unsafe { melee_items::tu::itnokonoko::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startitemrumble(cast::<_, _, 1077101>(a0), cast::<_, _, 1077102>(a1), cast::<_, _, 1077103>(a2)) }); }
     // tu/itnokonoko.rs
     unsafe { melee_items::tu::itnokonoko::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1077200>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1077201>(a0), cast::<_, _, 1077202>(a1))) }); }
     // tu/itnokonoko.rs
@@ -21640,9 +21640,9 @@ fn install_melee_items() {
     // tu/itoctarock.rs
     unsafe { melee_items::tu::itoctarock::ext::hook::Item_8026AE84 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AE84(cast::<_, _, 1081601>(a0), cast::<_, _, 1081602>(a1), cast::<_, _, 1081603>(a2), cast::<_, _, 1081604>(a3)) }); }
     // tu/itoctarock.rs
-    unsafe { melee_items::tu::itoctarock::ext::hook::ftLib_8008627C = Some(|a0, a1| unsafe { cast::<_, _, 1081700>(melee_fighter::ftlib::ftlib_8008627c(cast::<_, _, 1081701>(a0), cast::<_, _, 1081702>(a1))) }); }
+    unsafe { melee_items::tu::itoctarock::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 1081700>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 1081701>(a0), cast::<_, _, 1081702>(a1))) }); }
     // tu/itoctarock.rs
-    unsafe { melee_items::tu::itoctarock::ext::hook::ftLib_80086644 = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_80086644(cast::<_, _, 1081801>(a0), cast::<_, _, 1081802>(a1)) }); }
+    unsafe { melee_items::tu::itoctarock::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 1081801>(a0), cast::<_, _, 1081802>(a1)) }); }
     // tu/itoctarock.rs
     unsafe { melee_items::tu::itoctarock::ext::hook::it_8026B684 = Some(|a0| unsafe { cast::<_, _, 1081900>(melee_items::tu::it_26B1::it_8026B684(cast::<_, _, 1081901>(a0))) }); }
     // tu/itoctarock.rs
@@ -21722,9 +21722,9 @@ fn install_melee_items() {
     // tu/itoctarockstone.rs
     unsafe { melee_items::tu::itoctarockstone::ext::hook::Item_8026AE84 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AE84(cast::<_, _, 1085701>(a0), cast::<_, _, 1085702>(a1), cast::<_, _, 1085703>(a2), cast::<_, _, 1085704>(a3)) }); }
     // tu/itoctarockstone.rs
-    unsafe { melee_items::tu::itoctarockstone::ext::hook::ftLib_8008627C = Some(|a0, a1| unsafe { cast::<_, _, 1085800>(melee_fighter::ftlib::ftlib_8008627c(cast::<_, _, 1085801>(a0), cast::<_, _, 1085802>(a1))) }); }
+    unsafe { melee_items::tu::itoctarockstone::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 1085800>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 1085801>(a0), cast::<_, _, 1085802>(a1))) }); }
     // tu/itoctarockstone.rs
-    unsafe { melee_items::tu::itoctarockstone::ext::hook::ftLib_800866DC = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_800866dc(cast::<_, _, 1085901>(a0), cast::<_, _, 1085902>(a1)) }); }
+    unsafe { melee_items::tu::itoctarockstone::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 1085901>(a0), cast::<_, _, 1085902>(a1)) }); }
     // tu/itoctarockstone.rs
     unsafe { melee_items::tu::itoctarockstone::ext::hook::itColl_BounceOffShield = Some(|a0| unsafe { cast::<_, _, 1086000>(melee_items::tu::it_2725::itColl_BounceOffShield(cast::<_, _, 1086001>(a0))) }); }
     // tu/itoctarockstone.rs
@@ -21756,7 +21756,7 @@ fn install_melee_items() {
     // tu/itoldkuri.rs
     unsafe { melee_items::tu::itoldkuri::ext::hook::Item_8026AE84 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AE84(cast::<_, _, 1087401>(a0), cast::<_, _, 1087402>(a1), cast::<_, _, 1087403>(a2), cast::<_, _, 1087404>(a3)) }); }
     // tu/itoldkuri.rs
-    unsafe { melee_items::tu::itoldkuri::ext::hook::ftLib_80086D40 = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_80086d40(cast::<_, _, 1087501>(a0), cast::<_, _, 1087502>(a1), cast::<_, _, 1087503>(a2)) }); }
+    unsafe { melee_items::tu::itoldkuri::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startitemrumble(cast::<_, _, 1087501>(a0), cast::<_, _, 1087502>(a1), cast::<_, _, 1087503>(a2)) }); }
     // tu/itoldkuri.rs
     unsafe { melee_items::tu::itoldkuri::ext::hook::it_8026B684 = Some(|a0| unsafe { cast::<_, _, 1087600>(melee_items::tu::it_26B1::it_8026B684(cast::<_, _, 1087601>(a0))) }); }
     // tu/itoldkuri.rs
@@ -21980,7 +21980,7 @@ fn install_melee_items() {
     // tu/itpatapata.rs
     unsafe { melee_items::tu::itpatapata::ext::hook::Item_8026AE84 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AE84(cast::<_, _, 1098601>(a0), cast::<_, _, 1098602>(a1), cast::<_, _, 1098603>(a2), cast::<_, _, 1098604>(a3)) }); }
     // tu/itpatapata.rs
-    unsafe { melee_items::tu::itpatapata::ext::hook::ftLib_80086D40 = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_80086d40(cast::<_, _, 1098701>(a0), cast::<_, _, 1098702>(a1), cast::<_, _, 1098703>(a2)) }); }
+    unsafe { melee_items::tu::itpatapata::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startitemrumble(cast::<_, _, 1098701>(a0), cast::<_, _, 1098702>(a1), cast::<_, _, 1098703>(a2)) }); }
     // tu/itpatapata.rs
     unsafe { melee_items::tu::itpatapata::ext::hook::it_8026B684 = Some(|a0| unsafe { cast::<_, _, 1098800>(melee_items::tu::it_26B1::it_8026B684(cast::<_, _, 1098801>(a0))) }); }
     // tu/itpatapata.rs
@@ -22568,11 +22568,11 @@ fn install_melee_items() {
     // tu/itsamuschargeshot.rs
     unsafe { melee_items::tu::itsamuschargeshot::ext::hook::ftKb_SpecialNSs_800FCD04 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCD04(cast::<_, _, 1128401>(a0)) }); }
     // tu/itsamuschargeshot.rs
-    unsafe { melee_items::tu::itsamuschargeshot::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 1128500>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 1128501>(a0))) }); }
+    unsafe { melee_items::tu::itsamuschargeshot::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 1128500>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 1128501>(a0))) }); }
     // tu/itsamuschargeshot.rs
-    unsafe { melee_items::tu::itsamuschargeshot::ext::hook::ftLib_80086630 = Some(|a0, a1| unsafe { cast::<_, _, 1128600>(melee_items::tu::ftlib::ftLib_80086630(cast::<_, _, 1128601>(a0), cast::<_, _, 1128602>(a1))) }); }
+    unsafe { melee_items::tu::itsamuschargeshot::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 1128600>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 1128601>(a0), cast::<_, _, 1128602>(a1))) }); }
     // tu/itsamuschargeshot.rs
-    unsafe { melee_items::tu::itsamuschargeshot::ext::hook::ftLib_800869D4 = Some(|a0| unsafe { cast::<_, _, 1128700>(melee_items::tu::ftlib::ftLib_800869D4(cast::<_, _, 1128701>(a0))) }); }
+    unsafe { melee_items::tu::itsamuschargeshot::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 1128700>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 1128701>(a0))) }); }
     // tu/itsamuschargeshot.rs
     unsafe { melee_items::tu::itsamuschargeshot::ext::hook::ftSs_SpecialLw_80129100 = Some(|a0, a1, a2| unsafe { cast::<_, _, 1128800>(melee_chara::tu::ftsamusspeciallw0::ftSs_SpecialLw_80129100(cast::<_, _, 1128801>(a0), cast::<_, _, 1128802>(a1), cast::<_, _, 1128803>(a2))) }); }
     // tu/itsamuschargeshot.rs
@@ -22666,7 +22666,7 @@ fn install_melee_items() {
     // tu/itsamusgrapple.rs
     unsafe { melee_items::tu::itsamusgrapple::ext::hook::ftCommon_8007E2F4 = Some(|a0, a1| unsafe { melee_chara::stubs::ftCommon_8007E2F4(cast::<_, _, 1133401>(a0), cast::<_, _, 1133402>(a1)) }); }
     // tu/itsamusgrapple.rs
-    unsafe { melee_items::tu::itsamusgrapple::ext::hook::ftLib_80086630 = Some(|a0, a1| unsafe { cast::<_, _, 1133500>(melee_items::tu::ftlib::ftLib_80086630(cast::<_, _, 1133501>(a0), cast::<_, _, 1133502>(a1))) }); }
+    unsafe { melee_items::tu::itsamusgrapple::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 1133500>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 1133501>(a0), cast::<_, _, 1133502>(a1))) }); }
     // tu/itsamusgrapple.rs
     unsafe { melee_items::tu::itsamusgrapple::ext::hook::ftParts_GetBoneIndex = Some(|a0, a1| unsafe { cast::<_, _, 1133600>(melee_chara::adapt::ftParts_GetBoneIndex(cast::<_, _, 1133601>(a0), cast::<_, _, 1133602>(a1))) }); }
     // tu/itsamusgrapple.rs
@@ -22876,7 +22876,7 @@ fn install_melee_items() {
     // tu/itseakneedleheld.rs
     unsafe { melee_items::tu::itseakneedleheld::ext::hook::ftKb_SpecialNSk_80106020 = Some(|a0| unsafe { cast::<_, _, 1144000>(melee_chara::tu::ftkirbyspecialseak::ftKb_SpecialNSk_80106020(cast::<_, _, 1144001>(a0))) }); }
     // tu/itseakneedleheld.rs
-    unsafe { melee_items::tu::itseakneedleheld::ext::hook::ftLib_800869D4 = Some(|a0| unsafe { cast::<_, _, 1144100>(melee_items::tu::ftlib::ftLib_800869D4(cast::<_, _, 1144101>(a0))) }); }
+    unsafe { melee_items::tu::itseakneedleheld::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 1144100>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 1144101>(a0))) }); }
     // tu/itseakneedleheld.rs
     unsafe { melee_items::tu::itseakneedleheld::ext::hook::ftSk_SpecialS_80111F70 = Some(|a0| unsafe { cast::<_, _, 1144200>(melee_chara::tu::ftseakspecials::ftSk_SpecialS_80111F70(cast::<_, _, 1144201>(a0))) }); }
     // tu/itseakneedleheld.rs
@@ -22898,7 +22898,7 @@ fn install_melee_items() {
     // tu/itseakneedlethrown.rs
     unsafe { melee_items::tu::itseakneedlethrown::ext::hook::db_80225DD8 = Some(|a0, a1| unsafe { melee_items::tu::dbitem::db_80225DD8(cast::<_, _, 1145101>(a0), cast::<_, _, 1145102>(a1)) }); }
     // tu/itseakneedlethrown.rs
-    unsafe { melee_items::tu::itseakneedlethrown::ext::hook::ftLib_800865CC = Some(|a0| unsafe { cast::<_, _, 1145200>(melee_items::tu::ftlib::ftLib_800865CC(cast::<_, _, 1145201>(a0))) }); }
+    unsafe { melee_items::tu::itseakneedlethrown::ext::hook::ftLib_GetGroundAir = Some(|a0| unsafe { cast::<_, _, 1145200>(melee_items::tu::ftlib::ftLib_GetGroundAir(cast::<_, _, 1145201>(a0))) }); }
     // tu/itseakneedlethrown.rs
     unsafe { melee_items::tu::itseakneedlethrown::ext::hook::it_8026B3A8 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B3A8(cast::<_, _, 1145301>(a0)) }); }
     // tu/itseakneedlethrown.rs
@@ -23228,7 +23228,7 @@ fn install_melee_items() {
     // tu/itsword.rs
     unsafe { melee_items::tu::itsword::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1161801>(a0), cast::<_, _, 1161802>(a1), cast::<_, _, 1161803>(a2)) }); }
     // tu/itsword.rs
-    unsafe { melee_items::tu::itsword::ext::hook::ftLib_80086FA8 = Some(|a0| unsafe { cast::<_, _, 1161900>(melee_fighter::ftlib::ftlib_80086fa8(cast::<_, _, 1161901>(a0))) }); }
+    unsafe { melee_items::tu::itsword::ext::hook::ftLib_IsSwordSwing = Some(|a0| unsafe { cast::<_, _, 1161900>(melee_fighter::ftlib::ftlib_isswordswing(cast::<_, _, 1161901>(a0))) }); }
     // tu/itsword.rs
     unsafe { melee_items::tu::itsword::ext::hook::itColl_BounceOffShield = Some(|a0| unsafe { cast::<_, _, 1162000>(melee_items::tu::it_2725::itColl_BounceOffShield(cast::<_, _, 1162001>(a0))) }); }
     // tu/itsword.rs
@@ -23348,7 +23348,7 @@ fn install_melee_items() {
     // tu/ittarucann.rs
     unsafe { melee_items::tu::ittarucann::ext::hook::ftCo_Barrel_Enter = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_Barrel::ftCo_Barrel_Enter(cast::<_, _, 1168001>(a0), cast::<_, _, 1168002>(a1)) }); }
     // tu/ittarucann.rs
-    unsafe { melee_items::tu::ittarucann::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 1168100>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 1168101>(a0))) }); }
+    unsafe { melee_items::tu::ittarucann::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 1168100>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 1168101>(a0))) }); }
     // tu/ittarucann.rs
     unsafe { melee_items::tu::ittarucann::ext::hook::it_8026B390 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B390(cast::<_, _, 1168201>(a0)) }); }
     // tu/ittarucann.rs
@@ -23526,9 +23526,9 @@ fn install_melee_items() {
     // tu/ittools.rs
     unsafe { melee_items::tu::ittools::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1177001>(a0), cast::<_, _, 1177002>(a1), cast::<_, _, 1177003>(a2)) }); }
     // tu/ittools.rs
-    unsafe { melee_items::tu::ittools::ext::hook::ftLib_800866DC = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_800866dc(cast::<_, _, 1177101>(a0), cast::<_, _, 1177102>(a1)) }); }
+    unsafe { melee_items::tu::ittools::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 1177101>(a0), cast::<_, _, 1177102>(a1)) }); }
     // tu/ittools.rs
-    unsafe { melee_items::tu::ittools::ext::hook::ftLib_80086960 = Some(|a0| unsafe { cast::<_, _, 1177200>(melee_items::tu::ftlib::ftLib_80086960(cast::<_, _, 1177201>(a0))) }); }
+    unsafe { melee_items::tu::ittools::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 1177200>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 1177201>(a0))) }); }
     // tu/ittools.rs
     unsafe { melee_items::tu::ittools::ext::hook::itColl_BounceOffShield = Some(|a0| unsafe { cast::<_, _, 1177300>(melee_items::tu::it_2725::itColl_BounceOffShield(cast::<_, _, 1177301>(a0))) }); }
     // tu/ittools.rs
@@ -23994,7 +23994,7 @@ fn install_melee_items() {
     // tu/ityoshitongue.rs
     unsafe { melee_items::tu::ityoshitongue::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 1200401>(a0)) }); }
     // tu/ityoshitongue.rs
-    unsafe { melee_items::tu::ityoshitongue::ext::hook::ftLib_80086630 = Some(|a0, a1| unsafe { cast::<_, _, 1200500>(melee_items::tu::ftlib::ftLib_80086630(cast::<_, _, 1200501>(a0), cast::<_, _, 1200502>(a1))) }); }
+    unsafe { melee_items::tu::ityoshitongue::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 1200500>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 1200501>(a0), cast::<_, _, 1200502>(a1))) }); }
     // tu/ityoshitongue.rs
     unsafe { melee_items::tu::ityoshitongue::ext::hook::ftYs_SpecialN_GetBoneIndex = Some(|a0| unsafe { cast::<_, _, 1200600>(melee_chara::tu::ftyoshispecialn::ftYs_SpecialN_GetBoneIndex(cast::<_, _, 1200601>(a0))) }); }
     // tu/ityoshitongue.rs
@@ -24044,13 +24044,13 @@ fn install_melee_items() {
     // tu/itzako.rs
     unsafe { melee_items::tu::itzako::ext::hook::ScriptGame_EnemyDestroyed = Some(|a0| unsafe { cast::<_, _, 1202900>(melee_modes::tu::script_game::ScriptGame_EnemyDestroyed(cast::<_, _, 1202901>(a0))) }); }
     // tu/itzako.rs
-    unsafe { melee_items::tu::itzako::ext::hook::ftLib_800865C0 = Some(|a0| unsafe { cast::<_, _, 1203000>(melee_items::tu::ftlib::ftLib_800865C0(cast::<_, _, 1203001>(a0))) }); }
+    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 1203000>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 1203001>(a0))) }); }
     // tu/itzako.rs
-    unsafe { melee_items::tu::itzako::ext::hook::ftLib_800870BC = Some(|a0, a1| unsafe { cast::<_, _, 1203100>(melee_fighter::ftlib::ftlib_800870bc(cast::<_, _, 1203101>(a0), cast::<_, _, 1203102>(a1))) }); }
+    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetSubColor = Some(|a0, a1| unsafe { cast::<_, _, 1203100>(melee_fighter::ftlib::ftlib_getsubcolor(cast::<_, _, 1203101>(a0), cast::<_, _, 1203102>(a1))) }); }
     // tu/itzako.rs
-    unsafe { melee_items::tu::itzako::ext::hook::ftLib_8008770C = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_8008770c(cast::<_, _, 1203201>(a0), cast::<_, _, 1203202>(a1)) }); }
+    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetGameWatchColor = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getgamewatchcolor(cast::<_, _, 1203201>(a0), cast::<_, _, 1203202>(a1)) }); }
     // tu/itzako.rs
-    unsafe { melee_items::tu::itzako::ext::hook::ftLib_80087744 = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_80087744(cast::<_, _, 1203301>(a0), cast::<_, _, 1203302>(a1)) }); }
+    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetGameWatchOutlineColor = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getgamewatchoutlinecolor(cast::<_, _, 1203301>(a0), cast::<_, _, 1203302>(a1)) }); }
     // tu/itzako.rs
     unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetMotionId = Some(|a0| unsafe { cast::<_, _, 1203400>(melee_items::tu::ftlib::ftLib_GetMotionId(cast::<_, _, 1203401>(a0))) }); }
     // tu/itzako.rs
@@ -24134,7 +24134,7 @@ fn install_melee_items() {
     // tu/itzeldadinfire.rs: link_alias.tsv
     unsafe { melee_items::tu::itzeldadinfire::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { cast::<_, _, 1207500>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 1207401>(a0), cast::<_, _, 1207402>(a1), &[crate::va_word(a2)])) }); }
     // tu/itzeldadinfire.rs
-    unsafe { melee_items::tu::itzeldadinfire::ext::hook::ftLib_800865D8 = Some(|a0, a1, a2| unsafe { melee_items::tu::ftlib::ftLib_800865D8(cast::<_, _, 1207601>(a0), cast::<_, _, 1207602>(a1), cast::<_, _, 1207603>(a2)) }); }
+    unsafe { melee_items::tu::itzeldadinfire::ext::hook::ftLib_GetLStick = Some(|a0, a1, a2| unsafe { melee_items::tu::ftlib::ftLib_GetLStick(cast::<_, _, 1207601>(a0), cast::<_, _, 1207602>(a1), cast::<_, _, 1207603>(a2)) }); }
     // tu/itzeldadinfire.rs
     unsafe { melee_items::tu::itzeldadinfire::ext::hook::ftZd_SpecialLw_8013B540 = Some(|a0| unsafe { cast::<_, _, 1207700>(melee_chara::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013B540(cast::<_, _, 1207701>(a0))) }); }
     // tu/itzeldadinfire.rs
@@ -27328,9 +27328,9 @@ fn install_melee_modes() {
     // tu/gmevent.rs
     unsafe { melee_modes::tu::gmevent::ext::hook::ftBossLib_8015CC14 = Some(|| unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015CC14() }); }
     // tu/gmevent.rs
-    unsafe { melee_modes::tu::gmevent::ext::hook::ftLib_8008731C = Some(|a0| unsafe { cast::<_, _, 1364700>(melee_world::ftlib::ftLib_8008731C(cast::<_, _, 1364701>(a0))) }); }
+    unsafe { melee_modes::tu::gmevent::ext::hook::ftLib_IsSleeping_8008731C = Some(|a0| unsafe { cast::<_, _, 1364700>(melee_world::ftlib::ftLib_IsSleeping_8008731C(cast::<_, _, 1364701>(a0))) }); }
     // tu/gmevent.rs
-    unsafe { melee_modes::tu::gmevent::ext::hook::ftLib_80087508 = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_80087508(cast::<_, _, 1364801>(a0), cast::<_, _, 1364802>(a1)) }); }
+    unsafe { melee_modes::tu::gmevent::ext::hook::ftLib_LoadFighterCostume = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_loadfightercostume(cast::<_, _, 1364801>(a0), cast::<_, _, 1364802>(a1)) }); }
     // tu/gmevent.rs: link_alias.tsv
     unsafe { melee_modes::tu::gmevent::ext::hook::ftLib_GetKind = Some(|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }); }
     // tu/gmevent.rs
@@ -28774,9 +28774,9 @@ fn install_melee_modes() {
     // tu/gmvs.rs
     unsafe { melee_modes::tu::gmvs::ext::hook::ftCo_800C06C0 = Some(|| unsafe { melee_fighter::tu::ftdevice::ftco_800c06c0() }); }
     // tu/gmvs.rs
-    unsafe { melee_modes::tu::gmvs::ext::hook::ftLib_800868A4 = Some(|| unsafe { melee_fighter::ftlib::ftlib_800868a4() }); }
+    unsafe { melee_modes::tu::gmvs::ext::hook::ftLib_EnableAllInput = Some(|| unsafe { melee_fighter::ftlib::ftlib_enableallinput() }); }
     // tu/gmvs.rs
-    unsafe { melee_modes::tu::gmvs::ext::hook::ftLib_80086BE0 = Some(|a0| unsafe { cast::<_, _, 1436000>(melee_items::tu::ftlib::ftLib_80086BE0(cast::<_, _, 1436001>(a0))) }); }
+    unsafe { melee_modes::tu::gmvs::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 1436000>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 1436001>(a0))) }); }
     // tu/gmvs.rs
     unsafe { melee_modes::tu::gmvs::ext::hook::gmMainLib_8015D00C = Some(|a0| unsafe { melee_modes::tu::gmmain_lib::gmMainLib_8015D00C(cast::<_, _, 1436101>(a0)) }); }
     // tu/gmvs.rs
@@ -30291,7 +30291,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("mpFloorGetRight", "melee_chara::tu::ftmasterhandwait10::ext::MPFLOORGETRIGHT", true, true),
     ("Stage_80225194", "melee_chara::tu::ftmasterhandwait10::ext::STAGE_80225194", true, true),
     ("ftBossLib_8015C244", "melee_chara::tu::ftmasterhandwalk::ext::FTBOSSLIB_8015C244", true, true),
-    ("ftLib_800866DC", "melee_chara::tu::ftmasterhandwalk::ext::FTLIB_800866DC", true, true),
+    ("ftLib_GetCameraBonePos", "melee_chara::tu::ftmasterhandwalk::ext::FTLIB_GETCAMERABONEPOS", true, true),
     ("ftMh_MS_349_80151CA8", "melee_chara::tu::ftmasterhandwalk::ext::FTMH_MS_349_80151CA8", true, true),
     ("ftMh_MS_389_80151018", "melee_chara::tu::ftmasterhandwalk::ext::FTMH_MS_389_80151018", true, true),
     ("mpFloorGetLeft", "melee_chara::tu::ftmasterhandwalk::ext::MPFLOORGETLEFT", true, true),
@@ -30660,7 +30660,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Camera_80031154", "melee_fighter::hooks::CAMERA_80031154", true, true),
     ("efLib_DestroyAll", "melee_fighter::hooks::EFLIB_DESTROY_ALL", true, true),
     ("Fighter_ResetInputData_80068854", "melee_fighter::hooks::FIGHTER_RESET_INPUT_DATA", true, true),
-    ("Fighter_UnkProcessDeath_80068354", "melee_fighter::hooks::FIGHTER_UNK_PROCESS_DEATH", true, true),
+    ("Fighter_Spawn", "melee_fighter::hooks::FIGHTER_UNK_PROCESS_DEATH", true, true),
     ("Fighter_UpdateModelScale", "melee_fighter::hooks::FIGHTER_UPDATE_MODEL_SCALE", true, true),
     ("ftAnim_IsFramesRemaining", "melee_fighter::hooks::FTANIM_IS_FRAMES_REMAINING", true, true),
     ("ftAnim_SetAnimRate", "melee_fighter::hooks::FTANIM_SET_ANIM_RATE", true, true),
@@ -30751,16 +30751,16 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_GObjPLinkHead", "melee_fighter::tu::crowdsfx::ext::hook::HSD_GObjPLinkHead", true, false),
     ("HSD_GObj_SetupProc", "melee_fighter::tu::crowdsfx::ext::hook::HSD_GObj_SetupProc", true, true),
     ("Player_8003248C", "melee_fighter::tu::crowdsfx::ext::hook::Player_8003248C", true, false),
-    ("ftLib_80086644", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_80086BE0", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_80086BE0", true, false),
-    ("ftLib_80087120", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_80087120", true, false),
-    ("ftLib_8008731C", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_8008731C", true, false),
-    ("ftLib_8008732C", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_8008732C", true, false),
-    ("ftLib_8008741C", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_8008741C", true, false),
-    ("ftLib_80087454", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_80087454", true, false),
-    ("ftLib_80087460", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_80087460", true, false),
+    ("ftLib_GetPos", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_GetPlayerIndex", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetPlayerIndex", true, false),
+    ("ftLib_GetPercent", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetPercent", true, false),
+    ("ftLib_IsSleeping_8008731C", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_IsSleeping_8008731C", true, false),
+    ("ftLib_IsDead", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_IsDead", true, false),
+    ("ftLib_FindBySpawnNum", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_FindBySpawnNum", true, false),
+    ("ftLib_GetCrowdKnockback", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetCrowdKnockback", true, false),
+    ("ftLib_GetSpawnNum", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetSpawnNum", true, false),
     ("ftLib_8008746C", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_8008746C", true, false),
-    ("ftLib_800874BC", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_800874BC", true, false),
+    ("ftLib_IsSubFighter", "melee_fighter::tu::crowdsfx::ext::hook::ftLib_IsSubFighter", true, false),
     ("lbAudioAx_800236B8", "melee_fighter::tu::crowdsfx::ext::hook::lbAudioAx_800236B8", true, false),
     ("lbAudioAx_80023710", "melee_fighter::tu::crowdsfx::ext::hook::lbAudioAx_80023710", true, false),
     ("lbAudioAx_800240B4", "melee_fighter::tu::crowdsfx::ext::hook::lbAudioAx_800240B4", true, false),
@@ -31025,7 +31025,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftKb_SpecialN_800F1D24", "melee_fighter::tu::fighter::ext::hook::ftKb_SpecialN_800F1D24", true, true),
     ("ftKb_SpecialN_800F5BA4", "melee_fighter::tu::fighter::ext::hook::ftKb_SpecialN_800F5BA4", true, true),
     ("ftKb_SpecialN_800F5C34", "melee_fighter::tu::fighter::ext::hook::ftKb_SpecialN_800F5C34", true, true),
-    ("ftLib_800867E8", "melee_fighter::tu::fighter::ext::hook::ftLib_800867E8", true, false),
+    ("ftLib_DisableInput", "melee_fighter::tu::fighter::ext::hook::ftLib_DisableInput", true, false),
     ("ftMh_MS_341_8014FE10", "melee_fighter::tu::fighter::ext::hook::ftMh_MS_341_8014FE10", true, true),
     ("ftMh_MS_341_8014FE58", "melee_fighter::tu::fighter::ext::hook::ftMh_MS_341_8014FE58", true, true),
     ("ftPartSetRotX", "melee_fighter::tu::fighter::ext::hook::ftPartSetRotX", true, false),
@@ -31138,7 +31138,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_GetBlastZoneRightOffset", "melee_fighter::tu::ftCo_0A01::ext::hook::Stage_GetBlastZoneRightOffset", true, true),
     ("Stage_GetBlastZoneTopOffset", "melee_fighter::tu::ftCo_0A01::ext::hook::Stage_GetBlastZoneTopOffset", true, true),
     ("ftKb_MexKirbyLike", "melee_fighter::tu::ftCo_0A01::ext::hook::ftKb_MexKirbyLike", true, true),
-    ("ftLib_8008732C", "melee_fighter::tu::ftCo_0A01::ext::hook::ftLib_8008732C", true, true),
+    ("ftLib_IsDead", "melee_fighter::tu::ftCo_0A01::ext::hook::ftLib_IsDead", true, true),
     ("ftPp_SpecialLw_Enter", "melee_fighter::tu::ftCo_0A01::ext::hook::ftPp_SpecialLw_Enter", true, true),
     ("ft_80087A18", "melee_fighter::tu::ftCo_0A01::ext::hook::ft_80087A18", true, true),
     ("ft_80087A80", "melee_fighter::tu::ftCo_0A01::ext::hook::ft_80087A80", true, true),
@@ -31405,8 +31405,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCommon_8007E2F4", "melee_fighter::tu::ftCo_Barrel::ext::hook::ftCommon_8007E2F4", true, false),
     ("ftCommon_8007E2FC", "melee_fighter::tu::ftCo_Barrel::ext::hook::ftCommon_8007E2FC", true, false),
     ("ftCommon_8007EFC0", "melee_fighter::tu::ftCo_Barrel::ext::hook::ftCommon_8007EFC0", true, false),
-    ("ftLib_800866DC", "melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_800866DC", true, false),
-    ("ftLib_80086960", "melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_80086960", true, false),
+    ("ftLib_GetCameraBonePos", "melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_GetCameraBonePos", true, false),
+    ("ftLib_IsFighter", "melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_IsFighter", true, false),
     ("itGetOwner", "melee_fighter::tu::ftCo_Barrel::ext::hook::itGetOwner", true, false),
     ("it_8026C334", "melee_fighter::tu::ftCo_Barrel::ext::hook::it_8026C334", true, false),
     ("it_80295F38", "melee_fighter::tu::ftCo_Barrel::ext::hook::it_80295F38", true, false),
@@ -33840,7 +33840,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_800C0B20", "melee_fighter::tu::ftcoll::ext::FTCO_800C0B20", true, true),
     ("ftCo_800DEEB8", "melee_fighter::tu::ftcoll::ext::FTCO_800DEEB8", true, false),
     ("ftCo_CalcYScaledKnockback", "melee_fighter::tu::ftcoll::ext::FTCO_CALC_Y_SCALED_KNOCKBACK", true, false),
-    ("ftLib_80086960", "melee_fighter::tu::ftcoll::ext::FTLIB_80086960", true, false),
+    ("ftLib_IsFighter", "melee_fighter::tu::ftcoll::ext::FTLIB_ISFIGHTER", true, false),
     ("ft_80084CE4", "melee_fighter::tu::ftcoll::ext::FT_80084CE4", true, true),
     ("ft_80088080", "melee_fighter::tu::ftcoll::ext::FT_80088080", true, true),
     ("ft_80089228", "melee_fighter::tu::ftcoll::ext::FT_80089228", true, false),
@@ -33956,7 +33956,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_IsAlly", "melee_fighter::tu::ftcpuattack::ext::FTCO_IS_ALLY", true, true),
     ("ftCo_IsGrabbing", "melee_fighter::tu::ftcpuattack::ext::FTCO_IS_GRABBING", true, true),
     ("ftKb_MexKirbyLike", "melee_fighter::tu::ftcpuattack::ext::FTKB_MEX_KIRBY_LIKE", true, true),
-    ("ftLib_80086960", "melee_fighter::tu::ftcpuattack::ext::FTLIB_80086960", true, true),
+    ("ftLib_IsFighter", "melee_fighter::tu::ftcpuattack::ext::FTLIB_ISFIGHTER", true, true),
     ("HSD_Randf", "melee_fighter::tu::ftcpuattack::ext::HSD_RANDF", true, true),
     ("it_8026B924", "melee_fighter::tu::ftcpuattack::ext::IT_8026B924", true, true),
     ("it_8026B960", "melee_fighter::tu::ftcpuattack::ext::IT_8026B960", true, true),
@@ -33998,7 +33998,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("efAsync_LoadSync", "melee_fighter::tu::ftdemo::ext::EFASYNC_LOAD_SYNC", true, true),
     ("Fighter_800679B0", "melee_fighter::tu::ftdemo::ext::FIGHTER_800679B0", true, true),
     ("Fighter_UnkInitLoad_80068914", "melee_fighter::tu::ftdemo::ext::FIGHTER_UNK_INIT_LOAD", true, true),
-    ("Fighter_UnkProcessDeath_80068354", "melee_fighter::tu::ftdemo::ext::FIGHTER_UNK_PROCESS_DEATH", true, true),
+    ("Fighter_Spawn", "melee_fighter::tu::ftdemo::ext::FIGHTER_UNK_PROCESS_DEATH", true, true),
     ("Fighter_UnkUpdateCostumeJoint_800686E4", "melee_fighter::tu::ftdemo::ext::FIGHTER_UNK_UPDATE_COSTUME_JOINT", true, true),
     ("ftData_8008572C", "melee_fighter::tu::ftdemo::ext::FTDATA_8008572C", true, true),
     ("ftData_80085820", "melee_fighter::tu::ftdemo::ext::FTDATA_80085820", true, true),
@@ -34017,9 +34017,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_800B395C", "melee_fighter::tu::ftdrawcommon::ext::FTCO_800B395C", true, true),
     ("ftCo_800C2600", "melee_fighter::tu::ftdrawcommon::ext::FTCO_800C2600", true, true),
     ("ftCo_800C8AF0", "melee_fighter::tu::ftdrawcommon::ext::FTCO_800C8AF0", true, true),
-    ("ftLib_800860C4", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_800860C4", true, true),
-    ("ftLib_80086A8C", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_80086A8C", true, true),
-    ("ftLib_80087074", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_80087074", true, true),
+    ("ftLib_CountFighters", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_COUNTFIGHTERS", true, true),
+    ("ftLib_UpdateScreenVisibility", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_UPDATESCREENVISIBILITY", true, true),
+    ("ftLib_GetShakeOffset", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_GETSHAKEOFFSET", true, true),
     ("ftParts_800750C8", "melee_fighter::tu::ftdrawcommon::ext::FTPARTS_800750C8", true, false),
     ("HSD_CObjGetCurrent", "melee_fighter::tu::ftdrawcommon::ext::HSD_COBJ_GET_CURRENT", true, true),
     ("HSD_CObjGetInvViewingMtxPtr", "melee_fighter::tu::ftdrawcommon::ext::HSD_COBJ_GET_INV_VIEWING_MTX_PTR", true, true),
@@ -34135,7 +34135,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_IsCpuControlled", "melee_fighter::tu::ftpickupitem::ext::hook::ftCo_IsCpuControlled", true, false),
     ("ftCommon_8007FA58", "melee_fighter::tu::ftpickupitem::ext::hook::ftCommon_8007FA58", true, false),
     ("ftDk_MS_341_800DF980", "melee_fighter::tu::ftpickupitem::ext::hook::ftDk_MS_341_800DF980", true, true),
-    ("ftLib_800871A8", "melee_fighter::tu::ftpickupitem::ext::hook::ftLib_800871A8", true, false),
+    ("ftLib_ApplyMetalBox", "melee_fighter::tu::ftpickupitem::ext::hook::ftLib_ApplyMetalBox", true, false),
     ("ft_800841B8", "melee_fighter::tu::ftpickupitem::ext::hook::ft_800841B8", true, false),
     ("ft_80084F3C", "melee_fighter::tu::ftpickupitem::ext::hook::ft_80084F3C", true, false),
     ("ft_800881D8", "melee_fighter::tu::ftpickupitem::ext::hook::ft_800881D8", true, false),
@@ -34165,22 +34165,22 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftData_800855C8", "melee_fighter::tu::player::ext::hook::ftData_800855C8", true, false),
     ("ftData_8008578C", "melee_fighter::tu::player::ext::hook::ftData_8008578C", true, false),
     ("ftKb_SpecialN_800EED50", "melee_fighter::tu::player::ext::hook::ftKb_SpecialN_800EED50", true, true),
-    ("ftLib_800865F0", "melee_fighter::tu::player::ext::hook::ftLib_800865F0", true, false),
-    ("ftLib_80086664", "melee_fighter::tu::player::ext::hook::ftLib_80086664", true, false),
-    ("ftLib_800867E8", "melee_fighter::tu::player::ext::hook::ftLib_800867E8", true, false),
-    ("ftLib_8008688C", "melee_fighter::tu::player::ext::hook::ftLib_8008688C", true, false),
+    ("ftLib_GetHipJObj", "melee_fighter::tu::player::ext::hook::ftLib_GetHipJObj", true, false),
+    ("ftLib_SetPos", "melee_fighter::tu::player::ext::hook::ftLib_SetPos", true, false),
+    ("ftLib_DisableInput", "melee_fighter::tu::player::ext::hook::ftLib_DisableInput", true, false),
+    ("ftLib_EnableInput", "melee_fighter::tu::player::ext::hook::ftLib_EnableInput", true, false),
     ("ftLib_800869F8", "melee_fighter::tu::player::ext::hook::ftLib_800869F8", true, false),
     ("ftLib_80086A4C", "melee_fighter::tu::player::ext::hook::ftLib_80086A4C", true, false),
-    ("ftLib_80086B90", "melee_fighter::tu::player::ext::hook::ftLib_80086B90", true, false),
-    ("ftLib_80086BB4", "melee_fighter::tu::player::ext::hook::ftLib_80086BB4", true, false),
+    ("ftLib_GetCameraSubjectBonePos", "melee_fighter::tu::player::ext::hook::ftLib_GetCameraSubjectBonePos", true, false),
+    ("ftLib_IsCameraSubjectInBounds", "melee_fighter::tu::player::ext::hook::ftLib_IsCameraSubjectInBounds", true, false),
     ("ftLib_80086F4C", "melee_fighter::tu::player::ext::hook::ftLib_80086F4C", true, false),
-    ("ftLib_80086F80", "melee_fighter::tu::player::ext::hook::ftLib_80086F80", true, false),
-    ("ftLib_8008701C", "melee_fighter::tu::player::ext::hook::ftLib_8008701C", true, false),
-    ("ftLib_800870F0", "melee_fighter::tu::player::ext::hook::ftLib_800870F0", true, false),
+    ("ftLib_GetNameTagHeight", "melee_fighter::tu::player::ext::hook::ftLib_GetNameTagHeight", true, false),
+    ("ftLib_IsSleeping", "melee_fighter::tu::player::ext::hook::ftLib_IsSleeping", true, false),
+    ("ftLib_SetPercent", "melee_fighter::tu::player::ext::hook::ftLib_SetPercent", true, false),
     ("ftLib_80087140", "melee_fighter::tu::player::ext::hook::ftLib_80087140", true, false),
-    ("ftLib_80087300", "melee_fighter::tu::player::ext::hook::ftLib_80087300", true, false),
-    ("ftLib_800873CC", "melee_fighter::tu::player::ext::hook::ftLib_800873CC", true, false),
-    ("ftLib_80087610", "melee_fighter::tu::player::ext::hook::ftLib_80087610", true, false),
+    ("ftLib_GetLastAttackerSlot", "melee_fighter::tu::player::ext::hook::ftLib_GetLastAttackerSlot", true, false),
+    ("ftLib_IsRebirth", "melee_fighter::tu::player::ext::hook::ftLib_IsRebirth", true, false),
+    ("ftLib_LoadKirbyHats", "melee_fighter::tu::player::ext::hook::ftLib_LoadKirbyHats", true, false),
     ("ftLib_GetKind", "melee_fighter::tu::player::ext::hook::ftLib_GetKind", true, false),
     ("ftLib_SetScale", "melee_fighter::tu::player::ext::hook::ftLib_SetScale", true, false),
     ("ft_80087AC0", "melee_fighter::tu::player::ext::hook::ft_80087AC0", true, false),
@@ -34202,7 +34202,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("pl_8003891C", "melee_fighter::tu::player::ext::hook::pl_8003891C", true, false),
     ("pl_80038F10", "melee_fighter::tu::player::ext::hook::pl_80038F10", true, false),
     ("Camera_80030E10", "melee_fighter::tu::plbonus::ext::hook::Camera_80030E10", true, true),
-    ("ftLib_8008732C", "melee_fighter::tu::plbonus::ext::hook::ftLib_8008732C", true, false),
+    ("ftLib_IsDead", "melee_fighter::tu::plbonus::ext::hook::ftLib_IsDead", true, false),
     ("ftLib_GetMotionId", "melee_fighter::tu::plbonus::ext::hook::ftLib_GetMotionId", true, false),
     ("ft_80087988", "melee_fighter::tu::plbonus::ext::hook::ft_80087988", true, false),
     ("ft_800879D8", "melee_fighter::tu::plbonus::ext::hook::ft_800879D8", true, false),
@@ -34233,24 +34233,24 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("pl_800418F4", "melee_fighter::tu::plbonus::ext::hook::pl_800418F4", true, false),
     ("pl_80041BFC", "melee_fighter::tu::plbonus::ext::hook::pl_80041BFC", true, false),
     ("Stage_UnkSetVec3TCam_Offset", "melee_fighter::tu::plbonuslib::ext::hook::Stage_UnkSetVec3TCam_Offset", true, false),
-    ("ftLib_800865C0", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_800865C0", true, false),
-    ("ftLib_800865CC", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_800865CC", true, false),
-    ("ftLib_80086644", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_800867D8", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_800867D8", true, false),
-    ("ftLib_80086960", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_80086960", true, false),
-    ("ftLib_80086BE0", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_80086BE0", true, false),
-    ("ftLib_80087120", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_80087120", true, false),
-    ("ftLib_80087300", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_80087300", true, false),
-    ("ftLib_8008730C", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_8008730C", true, false),
-    ("ftLib_8008732C", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_8008732C", true, false),
-    ("ftLib_80087354", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_80087354", true, false),
-    ("ftLib_8008737C", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_8008737C", true, false),
-    ("ftLib_800873A4", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_800873A4", true, false),
-    ("ftLib_800874BC", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_800874BC", true, false),
-    ("ftLib_800876F4", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_800876F4", true, false),
-    ("ftLib_80087700", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_80087700", true, false),
-    ("ftLib_8008777C", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_8008777C", true, false),
-    ("ftLib_800877D4", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_800877D4", true, false),
+    ("ftLib_GetFacingDir", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetFacingDir", true, false),
+    ("ftLib_GetGroundAir", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetGroundAir", true, false),
+    ("ftLib_GetPos", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_IsInputDisabled", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsInputDisabled", true, false),
+    ("ftLib_IsFighter", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsFighter", true, false),
+    ("ftLib_GetPlayerIndex", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPlayerIndex", true, false),
+    ("ftLib_GetPercent", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPercent", true, false),
+    ("ftLib_GetLastAttackerSlot", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastAttackerSlot", true, false),
+    ("ftLib_IsLastAttackerSubFighter", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsLastAttackerSubFighter", true, false),
+    ("ftLib_IsDead", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDead", true, false),
+    ("ftLib_IsDeadUp", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUp", true, false),
+    ("ftLib_IsDeadUpStar", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUpStar", true, false),
+    ("ftLib_IsDeadUpFall", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUpFall", true, false),
+    ("ftLib_IsSubFighter", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsSubFighter", true, false),
+    ("ftLib_GetLastHitSourceType", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastHitSourceType", true, false),
+    ("ftLib_GetLastHitSourceKind", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastHitSourceKind", true, false),
+    ("ftLib_GetGroundSlopeAngle", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetGroundSlopeAngle", true, false),
+    ("ftLib_IsBeingNudged", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsBeingNudged", true, false),
     ("ftLib_GetItem", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetItem", true, false),
     ("ftLib_GetMotionId", "melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetMotionId", true, false),
     ("ft_800877F8", "melee_fighter::tu::plbonuslib::ext::hook::ft_800877F8", true, false),
@@ -34313,16 +34313,16 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_80267978", "melee_items::tu::it_26B1::ext::hook::Item_80267978", true, false),
     ("Item_80268E40", "melee_items::tu::it_26B1::ext::hook::Item_80268E40", true, false),
     ("Item_8026A8EC", "melee_items::tu::it_26B1::ext::hook::Item_8026A8EC", true, false),
-    ("ftLib_8008627C", "melee_items::tu::it_26B1::ext::hook::ftLib_8008627C", true, true),
-    ("ftLib_80086368", "melee_items::tu::it_26B1::ext::hook::ftLib_80086368", true, true),
-    ("ftLib_800864A8", "melee_items::tu::it_26B1::ext::hook::ftLib_800864A8", true, true),
-    ("ftLib_80086644", "melee_items::tu::it_26B1::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_800866DC", "melee_items::tu::it_26B1::ext::hook::ftLib_800866DC", true, true),
-    ("ftLib_80086960", "melee_items::tu::it_26B1::ext::hook::ftLib_80086960", true, false),
-    ("ftLib_80086984", "melee_items::tu::it_26B1::ext::hook::ftLib_80086984", true, true),
-    ("ftLib_80086990", "melee_items::tu::it_26B1::ext::hook::ftLib_80086990", true, true),
+    ("ftLib_FindNearestOpponent", "melee_items::tu::it_26B1::ext::hook::ftLib_FindNearestOpponent", true, true),
+    ("ftLib_FindNearestOpponentInDir", "melee_items::tu::it_26B1::ext::hook::ftLib_FindNearestOpponentInDir", true, true),
+    ("ftLib_GetOpponentsDir", "melee_items::tu::it_26B1::ext::hook::ftLib_GetOpponentsDir", true, true),
+    ("ftLib_GetPos", "melee_items::tu::it_26B1::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_GetCameraBonePos", "melee_items::tu::it_26B1::ext::hook::ftLib_GetCameraBonePos", true, true),
+    ("ftLib_IsFighter", "melee_items::tu::it_26B1::ext::hook::ftLib_IsFighter", true, false),
+    ("ftLib_GetCollData", "melee_items::tu::it_26B1::ext::hook::ftLib_GetCollData", true, true),
+    ("ftLib_GetECBCenter", "melee_items::tu::it_26B1::ext::hook::ftLib_GetECBCenter", true, true),
     ("ftLib_80086A4C", "melee_items::tu::it_26B1::ext::hook::ftLib_80086A4C", true, true),
-    ("ftLib_80086BE0", "melee_items::tu::it_26B1::ext::hook::ftLib_80086BE0", true, false),
+    ("ftLib_GetPlayerIndex", "melee_items::tu::it_26B1::ext::hook::ftLib_GetPlayerIndex", true, false),
     ("gm_8016B238", "melee_items::tu::it_26B1::ext::hook::gm_8016B238", true, true),
     ("itFlipper_Spawn", "melee_items::tu::it_26B1::ext::hook::itFlipper_Spawn", true, false),
     ("itSword_Spawn", "melee_items::tu::it_26B1::ext::hook::itSword_Spawn", true, false),
@@ -34377,14 +34377,14 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("db_80225DD8", "melee_items::tu::it_2725::ext::hook::db_80225DD8", true, false),
     ("db_ShowEnemyStompRange", "melee_items::tu::it_2725::ext::hook::db_ShowEnemyStompRange", true, false),
     ("efSync_Spawn", "melee_items::tu::it_2725::ext::hook::efSync_Spawn", true, true),
-    ("ftLib_80086630", "melee_items::tu::it_2725::ext::hook::ftLib_80086630", true, false),
-    ("ftLib_80086960", "melee_items::tu::it_2725::ext::hook::ftLib_80086960", true, false),
-    ("ftLib_80086A0C", "melee_items::tu::it_2725::ext::hook::ftLib_80086A0C", true, false),
-    ("ftLib_80086BE0", "melee_items::tu::it_2725::ext::hook::ftLib_80086BE0", true, false),
-    ("ftLib_80086D40", "melee_items::tu::it_2725::ext::hook::ftLib_80086D40", true, true),
-    ("ftLib_80086DC4", "melee_items::tu::it_2725::ext::hook::ftLib_80086DC4", true, true),
-    ("ftLib_80086E68", "melee_items::tu::it_2725::ext::hook::ftLib_80086E68", true, true),
-    ("ftLib_80086EB4", "melee_items::tu::it_2725::ext::hook::ftLib_80086EB4", true, false),
+    ("ftLib_GetPartJObj", "melee_items::tu::it_2725::ext::hook::ftLib_GetPartJObj", true, false),
+    ("ftLib_IsFighter", "melee_items::tu::it_2725::ext::hook::ftLib_IsFighter", true, false),
+    ("ftLib_GetScale", "melee_items::tu::it_2725::ext::hook::ftLib_GetScale", true, false),
+    ("ftLib_GetPlayerIndex", "melee_items::tu::it_2725::ext::hook::ftLib_GetPlayerIndex", true, false),
+    ("ftLib_StartItemRumble", "melee_items::tu::it_2725::ext::hook::ftLib_StartItemRumble", true, true),
+    ("ftLib_StartItemRumbleAll", "melee_items::tu::it_2725::ext::hook::ftLib_StartItemRumbleAll", true, true),
+    ("ftLib_StopItemRumble", "melee_items::tu::it_2725::ext::hook::ftLib_StopItemRumble", true, true),
+    ("ftLib_GetTeam", "melee_items::tu::it_2725::ext::hook::ftLib_GetTeam", true, false),
     ("itIsHeavy", "melee_items::tu::it_2725::ext::hook::itIsHeavy", true, false),
     ("it_8026B390", "melee_items::tu::it_2725::ext::hook::it_8026B390", true, false),
     ("it_8026B3A8", "melee_items::tu::it_2725::ext::hook::it_8026B3A8", true, false),
@@ -34424,12 +34424,12 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("db_80225DD8", "melee_items::tu::it_279C::ext::hook::db_80225DD8", true, false),
     ("db_GetCurrentlySelectedPokemon", "melee_items::tu::it_279C::ext::hook::db_GetCurrentlySelectedPokemon", true, false),
     ("efSync_Spawn", "melee_items::tu::it_279C::ext::hook::efSync_Spawn", true, true),
-    ("ftLib_800860C4", "melee_items::tu::it_279C::ext::hook::ftLib_800860C4", true, true),
-    ("ftLib_8008627C", "melee_items::tu::it_279C::ext::hook::ftLib_8008627C", true, true),
-    ("ftLib_80086644", "melee_items::tu::it_279C::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_80086960", "melee_items::tu::it_279C::ext::hook::ftLib_80086960", true, false),
-    ("ftLib_80086BE0", "melee_items::tu::it_279C::ext::hook::ftLib_80086BE0", true, false),
-    ("ftLib_800874BC", "melee_items::tu::it_279C::ext::hook::ftLib_800874BC", true, true),
+    ("ftLib_CountFighters", "melee_items::tu::it_279C::ext::hook::ftLib_CountFighters", true, true),
+    ("ftLib_FindNearestOpponent", "melee_items::tu::it_279C::ext::hook::ftLib_FindNearestOpponent", true, true),
+    ("ftLib_GetPos", "melee_items::tu::it_279C::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_IsFighter", "melee_items::tu::it_279C::ext::hook::ftLib_IsFighter", true, false),
+    ("ftLib_GetPlayerIndex", "melee_items::tu::it_279C::ext::hook::ftLib_GetPlayerIndex", true, false),
+    ("ftLib_IsSubFighter", "melee_items::tu::it_279C::ext::hook::ftLib_IsSubFighter", true, true),
     ("ft_80089768", "melee_items::tu::it_279C::ext::hook::ft_80089768", true, true),
     ("ft_80089884", "melee_items::tu::it_279C::ext::hook::ft_80089884", true, true),
     ("ft_800898A8", "melee_items::tu::it_279C::ext::hook::ft_800898A8", true, true),
@@ -34657,7 +34657,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_8022519C", "melee_items::tu::itarwinglaser::ext::hook::Stage_8022519C", true, false),
     ("atan2f", "melee_items::tu::itarwinglaser::ext::hook::atan2f", true, false),
     ("efSync_Spawn", "melee_items::tu::itarwinglaser::ext::hook::efSync_Spawn", true, true),
-    ("ftLib_800865C0", "melee_items::tu::itarwinglaser::ext::hook::ftLib_800865C0", true, false),
+    ("ftLib_GetFacingDir", "melee_items::tu::itarwinglaser::ext::hook::ftLib_GetFacingDir", true, false),
     ("grCorneria_801DDCF0", "melee_items::tu::itarwinglaser::ext::hook::grCorneria_801DDCF0", true, false),
     ("it_8026B3A8", "melee_items::tu::itarwinglaser::ext::hook::it_8026B3A8", true, false),
     ("it_8026EA20", "melee_items::tu::itarwinglaser::ext::hook::it_8026EA20", true, false),
@@ -34901,7 +34901,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCl_Init_8014920C", "melee_items::tu::itclinkmilk::ext::hook::ftCl_Init_8014920C", true, true),
     ("ftCl_Init_801492C4", "melee_items::tu::itclinkmilk::ext::hook::ftCl_Init_801492C4", true, true),
     ("ftCl_Init_801492F4", "melee_items::tu::itclinkmilk::ext::hook::ftCl_Init_801492F4", true, true),
-    ("ftLib_800869D4", "melee_items::tu::itclinkmilk::ext::hook::ftLib_800869D4", true, false),
+    ("ftLib_GetModelScale", "melee_items::tu::itclinkmilk::ext::hook::ftLib_GetModelScale", true, false),
     ("it_8026B894", "melee_items::tu::itclinkmilk::ext::hook::it_8026B894", true, false),
     ("Camera_80031144", "melee_items::tu::itcoin::ext::hook::Camera_80031144", true, true),
     ("Ground_801C0498", "melee_items::tu::itcoin::ext::hook::Ground_801C0498", true, false),
@@ -34948,9 +34948,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_CalcYScaledKnockback", "melee_items::tu::itcoll::ext::hook::ftCo_CalcYScaledKnockback", true, true),
     ("ftColl_80076808", "melee_items::tu::itcoll::ext::hook::ftColl_80076808", true, true),
     ("ftCommon_8007F804", "melee_items::tu::itcoll::ext::hook::ftCommon_8007F804", true, true),
-    ("ftLib_80086960", "melee_items::tu::itcoll::ext::hook::ftLib_80086960", true, false),
-    ("ftLib_80086EB4", "melee_items::tu::itcoll::ext::hook::ftLib_80086EB4", true, false),
-    ("ftLib_80086FD4", "melee_items::tu::itcoll::ext::hook::ftLib_80086FD4", true, true),
+    ("ftLib_IsFighter", "melee_items::tu::itcoll::ext::hook::ftLib_IsFighter", true, false),
+    ("ftLib_GetTeam", "melee_items::tu::itcoll::ext::hook::ftLib_GetTeam", true, false),
+    ("ftLib_IsSamePlayer", "melee_items::tu::itcoll::ext::hook::ftLib_IsSamePlayer", true, true),
     ("ft_80089228", "melee_items::tu::itcoll::ext::hook::ft_80089228", true, true),
     ("gm_8016B0D4", "melee_items::tu::itcoll::ext::hook::gm_8016B0D4", true, true),
     ("gm_8016B168", "melee_items::tu::itcoll::ext::hook::gm_8016B168", true, true),
@@ -35038,9 +35038,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_StateInvalidate", "melee_items::tu::itdraw::ext::hook::HSD_StateInvalidate", true, true),
     ("PSMTXConcat", "melee_items::tu::itdraw::ext::hook::PSMTXConcat", true, false),
     ("PSMTXIdentity", "melee_items::tu::itdraw::ext::hook::PSMTXIdentity", true, false),
-    ("ftLib_800868D4", "melee_items::tu::itdraw::ext::hook::ftLib_800868D4", true, true),
-    ("ftLib_80086960", "melee_items::tu::itdraw::ext::hook::ftLib_80086960", true, false),
-    ("ftLib_80087074", "melee_items::tu::itdraw::ext::hook::ftLib_80087074", true, true),
+    ("ftLib_IsItemVisible", "melee_items::tu::itdraw::ext::hook::ftLib_IsItemVisible", true, true),
+    ("ftLib_IsFighter", "melee_items::tu::itdraw::ext::hook::ftLib_IsFighter", true, false),
+    ("ftLib_GetShakeOffset", "melee_items::tu::itdraw::ext::hook::ftLib_GetShakeOffset", true, true),
     ("it_80272A18", "melee_items::tu::itdraw::ext::hook::it_80272A18", true, false),
     ("it_80272A3C", "melee_items::tu::itdraw::ext::hook::it_80272A3C", true, false),
     ("lbColl_80009F54", "melee_items::tu::itdraw::ext::hook::lbColl_80009F54", true, false),
@@ -35062,8 +35062,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftDr_Init_80149844", "melee_items::tu::itdrmariopill::ext::hook::ftDr_Init_80149844", true, true),
     ("ftDr_Init_801498A0", "melee_items::tu::itdrmariopill::ext::hook::ftDr_Init_801498A0", true, true),
     ("ftDr_Init_801498EC", "melee_items::tu::itdrmariopill::ext::hook::ftDr_Init_801498EC", true, true),
-    ("ftLib_80086644", "melee_items::tu::itdrmariopill::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_800869D4", "melee_items::tu::itdrmariopill::ext::hook::ftLib_800869D4", true, false),
+    ("ftLib_GetPos", "melee_items::tu::itdrmariopill::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_GetModelScale", "melee_items::tu::itdrmariopill::ext::hook::ftLib_GetModelScale", true, false),
     ("it_8026B3A8", "melee_items::tu::itdrmariopill::ext::hook::it_8026B3A8", true, false),
     ("it_8026B894", "melee_items::tu::itdrmariopill::ext::hook::it_8026B894", true, false),
     ("it_8026BB68", "melee_items::tu::itdrmariopill::ext::hook::it_8026BB68", true, false),
@@ -35080,7 +35080,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_Randf", "melee_items::tu::itdrop::ext::hook::HSD_Randf", true, false),
     ("HSD_Randi", "melee_items::tu::itdrop::ext::hook::HSD_Randi", true, false),
     ("Item_80268B18", "melee_items::tu::itdrop::ext::hook::Item_80268B18", true, false),
-    ("ftLib_80086960", "melee_items::tu::itdrop::ext::hook::ftLib_80086960", true, false),
+    ("ftLib_IsFighter", "melee_items::tu::itdrop::ext::hook::ftLib_IsFighter", true, false),
     ("ftLib_800874CC", "melee_items::tu::itdrop::ext::hook::ftLib_800874CC", true, true),
     ("gm_8016B0B4", "melee_items::tu::itdrop::ext::hook::gm_8016B0B4", true, true),
     ("gm_8016B238", "melee_items::tu::itdrop::ext::hook::gm_8016B238", true, true),
@@ -35167,14 +35167,14 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("efAsync_QueueClear", "melee_items::tu::item::ext::hook::efAsync_QueueClear", true, true),
     ("efAsync_QueueFlush", "melee_items::tu::item::ext::hook::efAsync_QueueFlush", true, true),
     ("efLib_DestroyAll", "melee_items::tu::item::ext::hook::efLib_DestroyAll", true, false),
-    ("ftLib_80086724", "melee_items::tu::item::ext::hook::ftLib_80086724", true, true),
-    ("ftLib_80086764", "melee_items::tu::item::ext::hook::ftLib_80086764", true, true),
-    ("ftLib_800867A0", "melee_items::tu::item::ext::hook::ftLib_800867A0", true, false),
-    ("ftLib_800867CC", "melee_items::tu::item::ext::hook::ftLib_800867CC", true, false),
-    ("ftLib_80086960", "melee_items::tu::item::ext::hook::ftLib_80086960", true, false),
-    ("ftLib_80086EB4", "melee_items::tu::item::ext::hook::ftLib_80086EB4", true, false),
-    ("ftLib_8008702C", "melee_items::tu::item::ext::hook::ftLib_8008702C", true, true),
-    ("ftLib_80087050", "melee_items::tu::item::ext::hook::ftLib_80087050", true, true),
+    ("ftLib_ReleaseItem", "melee_items::tu::item::ext::hook::ftLib_ReleaseItem", true, true),
+    ("ftLib_ClearHeldSpecialItem", "melee_items::tu::item::ext::hook::ftLib_ClearHeldSpecialItem", true, true),
+    ("ftLib_IsHoldingItem", "melee_items::tu::item::ext::hook::ftLib_IsHoldingItem", true, false),
+    ("ftLib_GetHeldSpecialItem", "melee_items::tu::item::ext::hook::ftLib_GetHeldSpecialItem", true, false),
+    ("ftLib_IsFighter", "melee_items::tu::item::ext::hook::ftLib_IsFighter", true, false),
+    ("ftLib_GetTeam", "melee_items::tu::item::ext::hook::ftLib_GetTeam", true, false),
+    ("ftLib_IncFighterRefCount", "melee_items::tu::item::ext::hook::ftLib_IncFighterRefCount", true, true),
+    ("ftLib_DecFighterRefCount", "melee_items::tu::item::ext::hook::ftLib_DecFighterRefCount", true, true),
     ("ftLib_GetKind", "melee_items::tu::item::ext::hook::ftLib_GetKind", true, true),
     ("gm_8016AE80", "melee_items::tu::item::ext::hook::gm_8016AE80", true, true),
     ("gm_8017E068", "melee_items::tu::item::ext::hook::gm_8017E068", true, true),
@@ -35349,9 +35349,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_JObjSetMtxDirtySub", "melee_items::tu::itflipper::ext::hook::HSD_JObjSetMtxDirtySub", true, false),
     ("Item_80268B18", "melee_items::tu::itflipper::ext::hook::Item_80268B18", true, false),
     ("Item_80268E5C", "melee_items::tu::itflipper::ext::hook::Item_80268E5C", true, false),
-    ("ftLib_800866DC", "melee_items::tu::itflipper::ext::hook::ftLib_800866DC", true, true),
-    ("ftLib_80086960", "melee_items::tu::itflipper::ext::hook::ftLib_80086960", true, false),
-    ("ftLib_80086BEC", "melee_items::tu::itflipper::ext::hook::ftLib_80086BEC", true, false),
+    ("ftLib_GetCameraBonePos", "melee_items::tu::itflipper::ext::hook::ftLib_GetCameraBonePos", true, true),
+    ("ftLib_IsFighter", "melee_items::tu::itflipper::ext::hook::ftLib_IsFighter", true, false),
+    ("ftLib_GetPosDelta", "melee_items::tu::itflipper::ext::hook::ftLib_GetPosDelta", true, false),
     ("ftLib_80087284", "melee_items::tu::itflipper::ext::hook::ftLib_80087284", true, true),
     ("itColl_BounceOffShield", "melee_items::tu::itflipper::ext::hook::itColl_BounceOffShield", true, false),
     ("itColl_BounceOffVictim", "melee_items::tu::itflipper::ext::hook::itColl_BounceOffVictim", true, false),
@@ -35416,8 +35416,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftKb_SpecialNFx_800FDD4C", "melee_items::tu::itfoxblaster::ext::hook::ftKb_SpecialNFx_800FDD4C", true, true),
     ("ftKb_SpecialNFx_800FDDF4", "melee_items::tu::itfoxblaster::ext::hook::ftKb_SpecialNFx_800FDDF4", true, true),
     ("ftKb_SpecialNFx_800FDEB4", "melee_items::tu::itfoxblaster::ext::hook::ftKb_SpecialNFx_800FDEB4", true, true),
-    ("ftLib_800865C0", "melee_items::tu::itfoxblaster::ext::hook::ftLib_800865C0", true, false),
-    ("ftLib_80086644", "melee_items::tu::itfoxblaster::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_GetFacingDir", "melee_items::tu::itfoxblaster::ext::hook::ftLib_GetFacingDir", true, false),
+    ("ftLib_GetPos", "melee_items::tu::itfoxblaster::ext::hook::ftLib_GetPos", true, false),
     ("it_8026B894", "melee_items::tu::itfoxblaster::ext::hook::it_8026B894", true, false),
     ("HSD_GObj_80390EB8", "melee_items::tu::itfoxillusion::ext::hook::HSD_GObj_80390EB8", true, false),
     ("HSD_JObjDispAll", "melee_items::tu::itfoxillusion::ext::hook::HSD_JObjDispAll", true, true),
@@ -35431,7 +35431,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftFx_SpecialS_CopyGhostPosIndexed", "melee_items::tu::itfoxillusion::ext::hook::ftFx_SpecialS_CopyGhostPosIndexed", true, true),
     ("ftFx_SpecialS_GetCmdVar2", "melee_items::tu::itfoxillusion::ext::hook::ftFx_SpecialS_GetCmdVar2", true, true),
     ("ftFx_SpecialS_ReturnFloatVarIndexed", "melee_items::tu::itfoxillusion::ext::hook::ftFx_SpecialS_ReturnFloatVarIndexed", true, true),
-    ("ftLib_800865CC", "melee_items::tu::itfoxillusion::ext::hook::ftLib_800865CC", true, false),
+    ("ftLib_GetGroundAir", "melee_items::tu::itfoxillusion::ext::hook::ftLib_GetGroundAir", true, false),
     ("it_8026B3A8", "melee_items::tu::itfoxillusion::ext::hook::it_8026B3A8", true, false),
     ("it_8026B894", "melee_items::tu::itfoxillusion::ext::hook::it_8026B894", true, false),
     ("it_8026EECC", "melee_items::tu::itfoxillusion::ext::hook::it_8026EECC", true, false),
@@ -35539,7 +35539,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("db_80225DD8", "melee_items::tu::itgamewatchfire::ext::hook::db_80225DD8", true, false),
     ("ftGw_AttackS4_ItemCheckTorchRemove", "melee_items::tu::itgamewatchfire::ext::hook::ftGw_AttackS4_ItemCheckTorchRemove", true, true),
     ("ftGw_AttackS4_ItemTorchSetFlag", "melee_items::tu::itgamewatchfire::ext::hook::ftGw_AttackS4_ItemTorchSetFlag", true, true),
-    ("ftLib_800876D4", "melee_items::tu::itgamewatchfire::ext::hook::ftLib_800876D4", true, true),
+    ("ftLib_IsChargingSmash", "melee_items::tu::itgamewatchfire::ext::hook::ftLib_IsChargingSmash", true, true),
     ("it_8026B724", "melee_items::tu::itgamewatchfire::ext::hook::it_8026B724", true, false),
     ("it_8026B73C", "melee_items::tu::itgamewatchfire::ext::hook::it_8026B73C", true, false),
     ("it_8026B894", "melee_items::tu::itgamewatchfire::ext::hook::it_8026B894", true, false),
@@ -35569,7 +35569,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("db_80225DD8", "melee_items::tu::itgamewatchjudge::ext::hook::db_80225DD8", true, false),
     ("ftGw_SpecialS_ItemCheckJudgementRemove", "melee_items::tu::itgamewatchjudge::ext::hook::ftGw_SpecialS_ItemCheckJudgementRemove", true, true),
     ("ftGw_SpecialS_ItemJudgementSetFlag", "melee_items::tu::itgamewatchjudge::ext::hook::ftGw_SpecialS_ItemJudgementSetFlag", true, true),
-    ("ftLib_800865C0", "melee_items::tu::itgamewatchjudge::ext::hook::ftLib_800865C0", true, false),
+    ("ftLib_GetFacingDir", "melee_items::tu::itgamewatchjudge::ext::hook::ftLib_GetFacingDir", true, false),
     ("it_8026B724", "melee_items::tu::itgamewatchjudge::ext::hook::it_8026B724", true, false),
     ("it_8026B73C", "melee_items::tu::itgamewatchjudge::ext::hook::it_8026B73C", true, false),
     ("it_8026B894", "melee_items::tu::itgamewatchjudge::ext::hook::it_8026B894", true, false),
@@ -35599,7 +35599,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("db_80225DD8", "melee_items::tu::itgamewatchpanic::ext::hook::db_80225DD8", true, false),
     ("ftGw_SpecialLw_ItemCheckPanicRemove", "melee_items::tu::itgamewatchpanic::ext::hook::ftGw_SpecialLw_ItemCheckPanicRemove", true, true),
     ("ftGw_SpecialLw_ItemPanicSetFlag", "melee_items::tu::itgamewatchpanic::ext::hook::ftGw_SpecialLw_ItemPanicSetFlag", true, true),
-    ("ftLib_800865CC", "melee_items::tu::itgamewatchpanic::ext::hook::ftLib_800865CC", true, false),
+    ("ftLib_GetGroundAir", "melee_items::tu::itgamewatchpanic::ext::hook::ftLib_GetGroundAir", true, false),
     ("it_8026B724", "melee_items::tu::itgamewatchpanic::ext::hook::it_8026B724", true, false),
     ("it_8026B73C", "melee_items::tu::itgamewatchpanic::ext::hook::it_8026B73C", true, false),
     ("it_8026B894", "melee_items::tu::itgamewatchpanic::ext::hook::it_8026B894", true, false),
@@ -35643,7 +35643,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_JObjSetMtxDirtySub", "melee_items::tu::itgreatfoxlaser::ext::hook::HSD_JObjSetMtxDirtySub", true, false),
     ("Item_80268B18", "melee_items::tu::itgreatfoxlaser::ext::hook::Item_80268B18", true, false),
     ("Item_80268E5C", "melee_items::tu::itgreatfoxlaser::ext::hook::Item_80268E5C", true, false),
-    ("ftLib_80086644", "melee_items::tu::itgreatfoxlaser::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_GetPos", "melee_items::tu::itgreatfoxlaser::ext::hook::ftLib_GetPos", true, false),
     ("it_8026B3A8", "melee_items::tu::itgreatfoxlaser::ext::hook::it_8026B3A8", true, false),
     ("it_8026B894", "melee_items::tu::itgreatfoxlaser::ext::hook::it_8026B894", true, false),
     ("it_80272460", "melee_items::tu::itgreatfoxlaser::ext::hook::it_80272460", true, false),
@@ -35771,9 +35771,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("atan2f", "melee_items::tu::ithassam::ext::hook::atan2f", true, false),
     ("efLib_PauseAll", "melee_items::tu::ithassam::ext::hook::efLib_PauseAll", true, false),
     ("efLib_ResumeAll", "melee_items::tu::ithassam::ext::hook::efLib_ResumeAll", true, false),
-    ("ftLib_8008627C", "melee_items::tu::ithassam::ext::hook::ftLib_8008627C", true, true),
-    ("ftLib_800866DC", "melee_items::tu::ithassam::ext::hook::ftLib_800866DC", true, true),
-    ("ftLib_80086FD4", "melee_items::tu::ithassam::ext::hook::ftLib_80086FD4", true, true),
+    ("ftLib_FindNearestOpponent", "melee_items::tu::ithassam::ext::hook::ftLib_FindNearestOpponent", true, true),
+    ("ftLib_GetCameraBonePos", "melee_items::tu::ithassam::ext::hook::ftLib_GetCameraBonePos", true, true),
+    ("ftLib_IsSamePlayer", "melee_items::tu::ithassam::ext::hook::ftLib_IsSamePlayer", true, true),
     ("gm_8016B168", "melee_items::tu::ithassam::ext::hook::gm_8016B168", true, true),
     ("it_8026B894", "melee_items::tu::ithassam::ext::hook::it_8026B894", true, false),
     ("it_8026D62C", "melee_items::tu::ithassam::ext::hook::it_8026D62C", true, false),
@@ -35885,8 +35885,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("efLib_PauseAll", "melee_items::tu::ithitodeman::ext::hook::efLib_PauseAll", true, false),
     ("efLib_ResumeAll", "melee_items::tu::ithitodeman::ext::hook::efLib_ResumeAll", true, false),
     ("efSync_Spawn", "melee_items::tu::ithitodeman::ext::hook::efSync_Spawn", true, true),
-    ("ftLib_80086198", "melee_items::tu::ithitodeman::ext::hook::ftLib_80086198", true, true),
-    ("ftLib_80086644", "melee_items::tu::ithitodeman::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_FindLowestPercentOpponent", "melee_items::tu::ithitodeman::ext::hook::ftLib_FindLowestPercentOpponent", true, true),
+    ("ftLib_GetPos", "melee_items::tu::ithitodeman::ext::hook::ftLib_GetPos", true, false),
     ("it_8026B3A8", "melee_items::tu::ithitodeman::ext::hook::it_8026B3A8", true, false),
     ("it_8026B894", "melee_items::tu::ithitodeman::ext::hook::it_8026B894", true, false),
     ("it_8026BB88", "melee_items::tu::ithitodeman::ext::hook::it_8026BB88", true, false),
@@ -36040,7 +36040,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_80268E5C", "melee_items::tu::itkirbyyoshispecialn::ext::hook::Item_80268E5C", true, false),
     ("Item_8026A8EC", "melee_items::tu::itkirbyyoshispecialn::ext::hook::Item_8026A8EC", true, false),
     ("ftKb_SpecialNYs_80109238", "melee_items::tu::itkirbyyoshispecialn::ext::hook::ftKb_SpecialNYs_80109238", true, true),
-    ("ftLib_80086630", "melee_items::tu::itkirbyyoshispecialn::ext::hook::ftLib_80086630", true, false),
+    ("ftLib_GetPartJObj", "melee_items::tu::itkirbyyoshispecialn::ext::hook::ftLib_GetPartJObj", true, false),
     ("it_8026BD54", "melee_items::tu::itkirbyyoshispecialn::ext::hook::it_8026BD54", true, false),
     ("it_8026C220", "melee_items::tu::itkirbyyoshispecialn::ext::hook::it_8026C220", true, false),
     ("it_80273408", "melee_items::tu::itkirbyyoshispecialn::ext::hook::it_80273408", true, false),
@@ -36120,7 +36120,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_80268B5C", "melee_items::tu::itkusudama::ext::hook::Item_80268B5C", true, false),
     ("Item_80268E5C", "melee_items::tu::itkusudama::ext::hook::Item_80268E5C", true, false),
     ("Item_8026AE84", "melee_items::tu::itkusudama::ext::hook::Item_8026AE84", true, false),
-    ("ftLib_80086960", "melee_items::tu::itkusudama::ext::hook::ftLib_80086960", true, false),
+    ("ftLib_IsFighter", "melee_items::tu::itkusudama::ext::hook::ftLib_IsFighter", true, false),
     ("ftLib_800874CC", "melee_items::tu::itkusudama::ext::hook::ftLib_800874CC", true, true),
     ("it_8026B390", "melee_items::tu::itkusudama::ext::hook::it_8026B390", true, false),
     ("it_8026B3A8", "melee_items::tu::itkusudama::ext::hook::it_8026B3A8", true, false),
@@ -36205,9 +36205,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_8026AE84", "melee_items::tu::itleadead::ext::hook::Item_8026AE84", true, false),
     ("atan2f", "melee_items::tu::itleadead::ext::hook::atan2f", true, false),
     ("ftCo_800C7800", "melee_items::tu::itleadead::ext::hook::ftCo_800C7800", true, true),
-    ("ftLib_8008627C", "melee_items::tu::itleadead::ext::hook::ftLib_8008627C", true, true),
-    ("ftLib_80086630", "melee_items::tu::itleadead::ext::hook::ftLib_80086630", true, false),
-    ("ftLib_80086644", "melee_items::tu::itleadead::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_FindNearestOpponent", "melee_items::tu::itleadead::ext::hook::ftLib_FindNearestOpponent", true, true),
+    ("ftLib_GetPartJObj", "melee_items::tu::itleadead::ext::hook::ftLib_GetPartJObj", true, false),
+    ("ftLib_GetPos", "melee_items::tu::itleadead::ext::hook::ftLib_GetPos", true, false),
     ("it_2725_Logic9_Destroyed", "melee_items::tu::itleadead::ext::hook::it_2725_Logic9_Destroyed", true, false),
     ("it_8026B684", "melee_items::tu::itleadead::ext::hook::it_8026B684", true, false),
     ("it_8026BD3C", "melee_items::tu::itleadead::ext::hook::it_8026BD3C", true, false),
@@ -36312,8 +36312,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_800C78B0", "melee_items::tu::itlikelike::ext::hook::ftCo_800C78B0", true, true),
     ("ftCo_800C7B0C", "melee_items::tu::itlikelike::ext::hook::ftCo_800C7B0C", true, true),
     ("ftCo_800C7C60", "melee_items::tu::itlikelike::ext::hook::ftCo_800C7C60", true, true),
-    ("ftLib_8008627C", "melee_items::tu::itlikelike::ext::hook::ftLib_8008627C", true, true),
-    ("ftLib_80086644", "melee_items::tu::itlikelike::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_FindNearestOpponent", "melee_items::tu::itlikelike::ext::hook::ftLib_FindNearestOpponent", true, true),
+    ("ftLib_GetPos", "melee_items::tu::itlikelike::ext::hook::ftLib_GetPos", true, false),
     ("it_2725_Logic9_Destroyed", "melee_items::tu::itlikelike::ext::hook::it_2725_Logic9_Destroyed", true, false),
     ("it_8026B684", "melee_items::tu::itlikelike::ext::hook::it_8026B684", true, false),
     ("it_8026D564", "melee_items::tu::itlikelike::ext::hook::it_8026D564", true, false),
@@ -36382,10 +36382,10 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_80094098", "melee_items::tu::itlinkarrow::ext::hook::ftCo_80094098", true, true),
     ("ftKb_SpecialNLk800FB418", "melee_items::tu::itlinkarrow::ext::hook::ftKb_SpecialNLk800FB418", true, true),
     ("ftKb_SpecialNLk800FB470", "melee_items::tu::itlinkarrow::ext::hook::ftKb_SpecialNLk800FB470", true, true),
-    ("ftLib_800865C0", "melee_items::tu::itlinkarrow::ext::hook::ftLib_800865C0", true, false),
-    ("ftLib_80086630", "melee_items::tu::itlinkarrow::ext::hook::ftLib_80086630", true, false),
-    ("ftLib_800869D4", "melee_items::tu::itlinkarrow::ext::hook::ftLib_800869D4", true, false),
-    ("ftLib_80086A18", "melee_items::tu::itlinkarrow::ext::hook::ftLib_80086A18", true, true),
+    ("ftLib_GetFacingDir", "melee_items::tu::itlinkarrow::ext::hook::ftLib_GetFacingDir", true, false),
+    ("ftLib_GetPartJObj", "melee_items::tu::itlinkarrow::ext::hook::ftLib_GetPartJObj", true, false),
+    ("ftLib_GetModelScale", "melee_items::tu::itlinkarrow::ext::hook::ftLib_GetModelScale", true, false),
+    ("ftLib_IsShielding", "melee_items::tu::itlinkarrow::ext::hook::ftLib_IsShielding", true, true),
     ("ftLk_SpecialN_IsActiveAnd2071b6", "melee_items::tu::itlinkarrow::ext::hook::ftLk_SpecialN_IsActiveAnd2071b6", true, true),
     ("ftLk_SpecialN_UnsetArrow", "melee_items::tu::itlinkarrow::ext::hook::ftLk_SpecialN_UnsetArrow", true, true),
     ("it_8026B3A8", "melee_items::tu::itlinkarrow::ext::hook::it_8026B3A8", true, false),
@@ -36462,8 +36462,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_8026AB54", "melee_items::tu::itlinkboomerang::ext::hook::Item_8026AB54", true, false),
     ("Item_8026AF0C", "melee_items::tu::itlinkboomerang::ext::hook::Item_8026AF0C", true, false),
     ("atan2f", "melee_items::tu::itlinkboomerang::ext::hook::atan2f", true, false),
-    ("ftLib_80086630", "melee_items::tu::itlinkboomerang::ext::hook::ftLib_80086630", true, false),
-    ("ftLib_800866DC", "melee_items::tu::itlinkboomerang::ext::hook::ftLib_800866DC", true, true),
+    ("ftLib_GetPartJObj", "melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetPartJObj", true, false),
+    ("ftLib_GetCameraBonePos", "melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetCameraBonePos", true, true),
     ("ftLib_GetKind", "melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetKind", true, true),
     ("ftLk_SepcialS_Get2219b5", "melee_items::tu::itlinkboomerang::ext::hook::ftLk_SepcialS_Get2219b5", true, true),
     ("ftLk_SpecialHi_GetFv4", "melee_items::tu::itlinkboomerang::ext::hook::ftLk_SpecialHi_GetFv4", true, true),
@@ -36496,7 +36496,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftKb_SpecialNLk800FB394", "melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB394", true, true),
     ("ftKb_SpecialNLk800FB444", "melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB444", true, true),
     ("ftKb_SpecialNLk800FB470", "melee_items::tu::itlinkbow::ext::hook::ftKb_SpecialNLk800FB470", true, true),
-    ("ftLib_800869D4", "melee_items::tu::itlinkbow::ext::hook::ftLib_800869D4", true, false),
+    ("ftLib_GetModelScale", "melee_items::tu::itlinkbow::ext::hook::ftLib_GetModelScale", true, false),
     ("ftLk_SpecialN_GetIndex", "melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_GetIndex", true, true),
     ("ftLk_SpecialN_IsActiveAnd2071b6", "melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_IsActiveAnd2071b6", true, true),
     ("ftLk_SpecialN_UnsetFv14", "melee_items::tu::itlinkbow::ext::hook::ftLk_SpecialN_UnsetFv14", true, true),
@@ -36750,7 +36750,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_8026AB54", "melee_items::tu::itmariocape::ext::hook::Item_8026AB54", true, false),
     ("db_80225DD8", "melee_items::tu::itmariocape::ext::hook::db_80225DD8", true, false),
     ("efAsync_Spawn", "melee_items::tu::itmariocape::ext::hook::efAsync_Spawn", true, true),
-    ("ftLib_800865CC", "melee_items::tu::itmariocape::ext::hook::ftLib_800865CC", true, false),
+    ("ftLib_GetGroundAir", "melee_items::tu::itmariocape::ext::hook::ftLib_GetGroundAir", true, false),
     ("ftMr_SpecialS_CheckItemCapeRemove", "melee_items::tu::itmariocape::ext::hook::ftMr_SpecialS_CheckItemCapeRemove", true, true),
     ("ftMr_SpecialS_Reset", "melee_items::tu::itmariocape::ext::hook::ftMr_SpecialS_Reset", true, true),
     ("it_8026B724", "melee_items::tu::itmariocape::ext::hook::it_8026B724", true, false),
@@ -36894,9 +36894,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("it_8027AB64", "melee_items::tu::itmball::ext::hook::it_8027AB64", true, false),
     ("mpCollSetFacingDir", "melee_items::tu::itmball::ext::hook::mpCollSetFacingDir", true, false),
     ("Item_80268E5C", "melee_items::tu::itmetalb::ext::hook::Item_80268E5C", true, false),
-    ("ftLib_80086BE0", "melee_items::tu::itmetalb::ext::hook::ftLib_80086BE0", true, false),
-    ("ftLib_800871A8", "melee_items::tu::itmetalb::ext::hook::ftLib_800871A8", true, true),
-    ("ftLib_800874BC", "melee_items::tu::itmetalb::ext::hook::ftLib_800874BC", true, true),
+    ("ftLib_GetPlayerIndex", "melee_items::tu::itmetalb::ext::hook::ftLib_GetPlayerIndex", true, false),
+    ("ftLib_ApplyMetalBox", "melee_items::tu::itmetalb::ext::hook::ftLib_ApplyMetalBox", true, true),
+    ("ftLib_IsSubFighter", "melee_items::tu::itmetalb::ext::hook::ftLib_IsSubFighter", true, true),
     ("it_8026B390", "melee_items::tu::itmetalb::ext::hook::it_8026B390", true, false),
     ("it_8026B894", "melee_items::tu::itmetalb::ext::hook::it_8026B894", true, false),
     ("it_8026D62C", "melee_items::tu::itmetalb::ext::hook::it_8026D62C", true, false),
@@ -36938,7 +36938,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_80268E5C", "melee_items::tu::itmewtwodisable::ext::hook::Item_80268E5C", true, false),
     ("Item_8026A8EC", "melee_items::tu::itmewtwodisable::ext::hook::Item_8026A8EC", true, false),
     ("db_80225DD8", "melee_items::tu::itmewtwodisable::ext::hook::db_80225DD8", true, false),
-    ("ftLib_80086A0C", "melee_items::tu::itmewtwodisable::ext::hook::ftLib_80086A0C", true, false),
+    ("ftLib_GetScale", "melee_items::tu::itmewtwodisable::ext::hook::ftLib_GetScale", true, false),
     ("ftMt_SpecialLw_ClearDisableGObj", "melee_items::tu::itmewtwodisable::ext::hook::ftMt_SpecialLw_ClearDisableGObj", true, true),
     ("it_8026B3A8", "melee_items::tu::itmewtwodisable::ext::hook::it_8026B3A8", true, false),
     ("it_8026B894", "melee_items::tu::itmewtwodisable::ext::hook::it_8026B894", true, false),
@@ -36967,9 +36967,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftKb_SpecialNMt_80106F9C", "melee_items::tu::itmewtwoshadowball::ext::hook::ftKb_SpecialNMt_80106F9C", true, true),
     ("ftKb_SpecialNMt_80106FEC", "melee_items::tu::itmewtwoshadowball::ext::hook::ftKb_SpecialNMt_80106FEC", true, true),
     ("ftKb_SpecialNMt_80107040", "melee_items::tu::itmewtwoshadowball::ext::hook::ftKb_SpecialNMt_80107040", true, true),
-    ("ftLib_800865C0", "melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_800865C0", true, false),
-    ("ftLib_80086630", "melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_80086630", true, false),
-    ("ftLib_800869D4", "melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_800869D4", true, false),
+    ("ftLib_GetFacingDir", "melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_GetFacingDir", true, false),
+    ("ftLib_GetPartJObj", "melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_GetPartJObj", true, false),
+    ("ftLib_GetModelScale", "melee_items::tu::itmewtwoshadowball::ext::hook::ftLib_GetModelScale", true, false),
     ("ftMt_SpecialN_CheckShadowBallCancel", "melee_items::tu::itmewtwoshadowball::ext::hook::ftMt_SpecialN_CheckShadowBallCancel", true, true),
     ("ftMt_SpecialN_CheckShadowBallRemove", "melee_items::tu::itmewtwoshadowball::ext::hook::ftMt_SpecialN_CheckShadowBallRemove", true, true),
     ("ftMt_SpecialN_GetChargeLevel", "melee_items::tu::itmewtwoshadowball::ext::hook::ftMt_SpecialN_GetChargeLevel", true, true),
@@ -37033,8 +37033,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_8026A8EC", "melee_items::tu::itnessbat::ext::hook::Item_8026A8EC", true, false),
     ("Item_8026AB54", "melee_items::tu::itnessbat::ext::hook::Item_8026AB54", true, false),
     ("ftCo_800BF228", "melee_items::tu::itnessbat::ext::hook::ftCo_800BF228", true, true),
-    ("ftLib_800865C0", "melee_items::tu::itnessbat::ext::hook::ftLib_800865C0", true, false),
-    ("ftLib_80086644", "melee_items::tu::itnessbat::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_GetFacingDir", "melee_items::tu::itnessbat::ext::hook::ftLib_GetFacingDir", true, false),
+    ("ftLib_GetPos", "melee_items::tu::itnessbat::ext::hook::ftLib_GetPos", true, false),
     ("ftNs_AttackS4_CheckNessBatRemove", "melee_items::tu::itnessbat::ext::hook::ftNs_AttackS4_CheckNessBatRemove", true, true),
     ("ftNs_AttackS4_ItemNessBatSetNULL", "melee_items::tu::itnessbat::ext::hook::ftNs_AttackS4_ItemNessBatSetNULL", true, true),
     ("it_8026B894", "melee_items::tu::itnessbat::ext::hook::it_8026B894", true, false),
@@ -37068,7 +37068,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("db_80225DD8", "melee_items::tu::itnesspkflash::ext::hook::db_80225DD8", true, false),
     ("ftKb_SpecialNNs_800FEC78", "melee_items::tu::itnesspkflash::ext::hook::ftKb_SpecialNNs_800FEC78", true, true),
     ("ftKb_SpecialNNs_800FECBC", "melee_items::tu::itnesspkflash::ext::hook::ftKb_SpecialNNs_800FECBC", true, true),
-    ("ftLib_800865D8", "melee_items::tu::itnesspkflash::ext::hook::ftLib_800865D8", true, false),
+    ("ftLib_GetLStick", "melee_items::tu::itnesspkflash::ext::hook::ftLib_GetLStick", true, false),
     ("ftNs_SpecialN_CheckSpecialNHold", "melee_items::tu::itnesspkflash::ext::hook::ftNs_SpecialN_CheckSpecialNHold", true, true),
     ("ftNs_SpecialN_SetNULL", "melee_items::tu::itnesspkflash::ext::hook::ftNs_SpecialN_SetNULL", true, true),
     ("it_8026B3A8", "melee_items::tu::itnesspkflash::ext::hook::it_8026B3A8", true, false),
@@ -37102,7 +37102,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_80225194", "melee_items::tu::itnesspkthunderball::ext::hook::Stage_80225194", true, false),
     ("atan2f", "melee_items::tu::itnesspkthunderball::ext::hook::atan2f", true, false),
     ("db_80225DD8", "melee_items::tu::itnesspkthunderball::ext::hook::db_80225DD8", true, false),
-    ("ftLib_800865D8", "melee_items::tu::itnesspkthunderball::ext::hook::ftLib_800865D8", true, false),
+    ("ftLib_GetLStick", "melee_items::tu::itnesspkthunderball::ext::hook::ftLib_GetLStick", true, false),
     ("ftNs_SpecialHi_CheckSpecialHiHold", "melee_items::tu::itnesspkthunderball::ext::hook::ftNs_SpecialHi_CheckSpecialHiHold", true, true),
     ("ftNs_SpecialHi_ItemPKThunderCheckOwn", "melee_items::tu::itnesspkthunderball::ext::hook::ftNs_SpecialHi_ItemPKThunderCheckOwn", true, true),
     ("ftNs_SpecialHi_ItemPKThunderRemove", "melee_items::tu::itnesspkthunderball::ext::hook::ftNs_SpecialHi_ItemPKThunderRemove", true, true),
@@ -37153,7 +37153,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("PSMTXConcat", "melee_items::tu::itnessyoyo::ext::hook::PSMTXConcat", true, false),
     ("PSMTXCopy", "melee_items::tu::itnessyoyo::ext::hook::PSMTXCopy", true, false),
     ("PSMTXIdentity", "melee_items::tu::itnessyoyo::ext::hook::PSMTXIdentity", true, false),
-    ("ftLib_80086A0C", "melee_items::tu::itnessyoyo::ext::hook::ftLib_80086A0C", true, false),
+    ("ftLib_GetScale", "melee_items::tu::itnessyoyo::ext::hook::ftLib_GetScale", true, false),
     ("ftLib_GetMotionId", "melee_items::tu::itnessyoyo::ext::hook::ftLib_GetMotionId", true, false),
     ("ftNs_AttackHi4_YoyoItemSetFlag", "melee_items::tu::itnessyoyo::ext::hook::ftNs_AttackHi4_YoyoItemSetFlag", true, true),
     ("it_8026B724", "melee_items::tu::itnessyoyo::ext::hook::it_8026B724", true, false),
@@ -37180,7 +37180,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_8026A8EC", "melee_items::tu::itnokonoko::ext::hook::Item_8026A8EC", true, false),
     ("Item_8026AE84", "melee_items::tu::itnokonoko::ext::hook::Item_8026AE84", true, false),
     ("ScriptGame_EnemyDefeated", "melee_items::tu::itnokonoko::ext::hook::ScriptGame_EnemyDefeated", true, true),
-    ("ftLib_80086D40", "melee_items::tu::itnokonoko::ext::hook::ftLib_80086D40", true, true),
+    ("ftLib_StartItemRumble", "melee_items::tu::itnokonoko::ext::hook::ftLib_StartItemRumble", true, true),
     ("it_8026B894", "melee_items::tu::itnokonoko::ext::hook::it_8026B894", true, false),
     ("it_8026D5CC", "melee_items::tu::itnokonoko::ext::hook::it_8026D5CC", true, false),
     ("it_8026D62C", "melee_items::tu::itnokonoko::ext::hook::it_8026D62C", true, false),
@@ -37226,8 +37226,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_Randf", "melee_items::tu::itoctarock::ext::hook::HSD_Randf", true, false),
     ("Item_80268E5C", "melee_items::tu::itoctarock::ext::hook::Item_80268E5C", true, false),
     ("Item_8026AE84", "melee_items::tu::itoctarock::ext::hook::Item_8026AE84", true, false),
-    ("ftLib_8008627C", "melee_items::tu::itoctarock::ext::hook::ftLib_8008627C", true, true),
-    ("ftLib_80086644", "melee_items::tu::itoctarock::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_FindNearestOpponent", "melee_items::tu::itoctarock::ext::hook::ftLib_FindNearestOpponent", true, true),
+    ("ftLib_GetPos", "melee_items::tu::itoctarock::ext::hook::ftLib_GetPos", true, false),
     ("it_8026B684", "melee_items::tu::itoctarock::ext::hook::it_8026B684", true, false),
     ("it_8026B894", "melee_items::tu::itoctarock::ext::hook::it_8026B894", true, false),
     ("it_8026D5CC", "melee_items::tu::itoctarock::ext::hook::it_8026D5CC", true, false),
@@ -37267,8 +37267,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_80268B18", "melee_items::tu::itoctarockstone::ext::hook::Item_80268B18", true, false),
     ("Item_80268E5C", "melee_items::tu::itoctarockstone::ext::hook::Item_80268E5C", true, false),
     ("Item_8026AE84", "melee_items::tu::itoctarockstone::ext::hook::Item_8026AE84", true, false),
-    ("ftLib_8008627C", "melee_items::tu::itoctarockstone::ext::hook::ftLib_8008627C", true, true),
-    ("ftLib_800866DC", "melee_items::tu::itoctarockstone::ext::hook::ftLib_800866DC", true, true),
+    ("ftLib_FindNearestOpponent", "melee_items::tu::itoctarockstone::ext::hook::ftLib_FindNearestOpponent", true, true),
+    ("ftLib_GetCameraBonePos", "melee_items::tu::itoctarockstone::ext::hook::ftLib_GetCameraBonePos", true, true),
     ("itColl_BounceOffShield", "melee_items::tu::itoctarockstone::ext::hook::itColl_BounceOffShield", true, false),
     ("it_8026B894", "melee_items::tu::itoctarockstone::ext::hook::it_8026B894", true, false),
     ("it_8026BB88", "melee_items::tu::itoctarockstone::ext::hook::it_8026BB88", true, false),
@@ -37284,7 +37284,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_Randf", "melee_items::tu::itoldkuri::ext::hook::HSD_Randf", true, false),
     ("Item_80268E5C", "melee_items::tu::itoldkuri::ext::hook::Item_80268E5C", true, false),
     ("Item_8026AE84", "melee_items::tu::itoldkuri::ext::hook::Item_8026AE84", true, false),
-    ("ftLib_80086D40", "melee_items::tu::itoldkuri::ext::hook::ftLib_80086D40", true, true),
+    ("ftLib_StartItemRumble", "melee_items::tu::itoldkuri::ext::hook::ftLib_StartItemRumble", true, true),
     ("it_8026B684", "melee_items::tu::itoldkuri::ext::hook::it_8026B684", true, false),
     ("it_8026B894", "melee_items::tu::itoldkuri::ext::hook::it_8026B894", true, false),
     ("it_8026D62C", "melee_items::tu::itoldkuri::ext::hook::it_8026D62C", true, false),
@@ -37396,7 +37396,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_80268E5C", "melee_items::tu::itpatapata::ext::hook::Item_80268E5C", true, false),
     ("Item_8026A8EC", "melee_items::tu::itpatapata::ext::hook::Item_8026A8EC", true, false),
     ("Item_8026AE84", "melee_items::tu::itpatapata::ext::hook::Item_8026AE84", true, false),
-    ("ftLib_80086D40", "melee_items::tu::itpatapata::ext::hook::ftLib_80086D40", true, true),
+    ("ftLib_StartItemRumble", "melee_items::tu::itpatapata::ext::hook::ftLib_StartItemRumble", true, true),
     ("it_8026B684", "melee_items::tu::itpatapata::ext::hook::it_8026B684", true, false),
     ("it_8026B894", "melee_items::tu::itpatapata::ext::hook::it_8026B894", true, false),
     ("it_8026D564", "melee_items::tu::itpatapata::ext::hook::it_8026D564", true, false),
@@ -37690,9 +37690,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftKb_SpecialNSs_800FCC6C", "melee_items::tu::itsamuschargeshot::ext::hook::ftKb_SpecialNSs_800FCC6C", true, true),
     ("ftKb_SpecialNSs_800FCCBC", "melee_items::tu::itsamuschargeshot::ext::hook::ftKb_SpecialNSs_800FCCBC", true, true),
     ("ftKb_SpecialNSs_800FCD04", "melee_items::tu::itsamuschargeshot::ext::hook::ftKb_SpecialNSs_800FCD04", true, true),
-    ("ftLib_800865C0", "melee_items::tu::itsamuschargeshot::ext::hook::ftLib_800865C0", true, false),
-    ("ftLib_80086630", "melee_items::tu::itsamuschargeshot::ext::hook::ftLib_80086630", true, false),
-    ("ftLib_800869D4", "melee_items::tu::itsamuschargeshot::ext::hook::ftLib_800869D4", true, false),
+    ("ftLib_GetFacingDir", "melee_items::tu::itsamuschargeshot::ext::hook::ftLib_GetFacingDir", true, false),
+    ("ftLib_GetPartJObj", "melee_items::tu::itsamuschargeshot::ext::hook::ftLib_GetPartJObj", true, false),
+    ("ftLib_GetModelScale", "melee_items::tu::itsamuschargeshot::ext::hook::ftLib_GetModelScale", true, false),
     ("ftSs_SpecialLw_80129100", "melee_items::tu::itsamuschargeshot::ext::hook::ftSs_SpecialLw_80129100", true, true),
     ("ftSs_SpecialLw_80129158", "melee_items::tu::itsamuschargeshot::ext::hook::ftSs_SpecialLw_80129158", true, true),
     ("ftSs_SpecialN_801291A8", "melee_items::tu::itsamuschargeshot::ext::hook::ftSs_SpecialN_801291A8", true, true),
@@ -37739,7 +37739,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftColl_8007AC9C", "melee_items::tu::itsamusgrapple::ext::hook::ftColl_8007AC9C", true, true),
     ("ftColl_8007AFF8", "melee_items::tu::itsamusgrapple::ext::hook::ftColl_8007AFF8", true, true),
     ("ftCommon_8007E2F4", "melee_items::tu::itsamusgrapple::ext::hook::ftCommon_8007E2F4", true, true),
-    ("ftLib_80086630", "melee_items::tu::itsamusgrapple::ext::hook::ftLib_80086630", true, false),
+    ("ftLib_GetPartJObj", "melee_items::tu::itsamusgrapple::ext::hook::ftLib_GetPartJObj", true, false),
     ("ftParts_GetBoneIndex", "melee_items::tu::itsamusgrapple::ext::hook::ftParts_GetBoneIndex", true, true),
     ("ft_80082E3C", "melee_items::tu::itsamusgrapple::ext::hook::ft_80082E3C", true, true),
     ("it_8026B894", "melee_items::tu::itsamusgrapple::ext::hook::it_8026B894", true, false),
@@ -37844,7 +37844,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_8026AB54", "melee_items::tu::itseakneedleheld::ext::hook::Item_8026AB54", true, false),
     ("ftKb_SpecialNSk_80105FF0", "melee_items::tu::itseakneedleheld::ext::hook::ftKb_SpecialNSk_80105FF0", true, true),
     ("ftKb_SpecialNSk_80106020", "melee_items::tu::itseakneedleheld::ext::hook::ftKb_SpecialNSk_80106020", true, true),
-    ("ftLib_800869D4", "melee_items::tu::itseakneedleheld::ext::hook::ftLib_800869D4", true, false),
+    ("ftLib_GetModelScale", "melee_items::tu::itseakneedleheld::ext::hook::ftLib_GetModelScale", true, false),
     ("ftSk_SpecialS_80111F70", "melee_items::tu::itseakneedleheld::ext::hook::ftSk_SpecialS_80111F70", true, true),
     ("ftSk_SpecialS_80111FA0", "melee_items::tu::itseakneedleheld::ext::hook::ftSk_SpecialS_80111FA0", true, true),
     ("it_8026B894", "melee_items::tu::itseakneedleheld::ext::hook::it_8026B894", true, false),
@@ -37855,7 +37855,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_8026AE84", "melee_items::tu::itseakneedlethrown::ext::hook::Item_8026AE84", true, false),
     ("atan2f", "melee_items::tu::itseakneedlethrown::ext::hook::atan2f", true, false),
     ("db_80225DD8", "melee_items::tu::itseakneedlethrown::ext::hook::db_80225DD8", true, false),
-    ("ftLib_800865CC", "melee_items::tu::itseakneedlethrown::ext::hook::ftLib_800865CC", true, false),
+    ("ftLib_GetGroundAir", "melee_items::tu::itseakneedlethrown::ext::hook::ftLib_GetGroundAir", true, false),
     ("it_8026B3A8", "melee_items::tu::itseakneedlethrown::ext::hook::it_8026B3A8", true, false),
     ("it_8026B894", "melee_items::tu::itseakneedlethrown::ext::hook::it_8026B894", true, false),
     ("it_8026BB68", "melee_items::tu::itseakneedlethrown::ext::hook::it_8026BB68", true, false),
@@ -38020,7 +38020,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_JObjSetMtxDirtySub", "melee_items::tu::itsword::ext::hook::HSD_JObjSetMtxDirtySub", true, false),
     ("Item_80268B5C", "melee_items::tu::itsword::ext::hook::Item_80268B5C", true, false),
     ("Item_80268E5C", "melee_items::tu::itsword::ext::hook::Item_80268E5C", true, false),
-    ("ftLib_80086FA8", "melee_items::tu::itsword::ext::hook::ftLib_80086FA8", true, true),
+    ("ftLib_IsSwordSwing", "melee_items::tu::itsword::ext::hook::ftLib_IsSwordSwing", true, true),
     ("itColl_BounceOffShield", "melee_items::tu::itsword::ext::hook::itColl_BounceOffShield", true, false),
     ("itColl_BounceOffVictim", "melee_items::tu::itsword::ext::hook::itColl_BounceOffVictim", true, false),
     ("it_8026B390", "melee_items::tu::itsword::ext::hook::it_8026B390", true, false),
@@ -38080,7 +38080,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("efSync_Spawn", "melee_items::tu::ittarucann::ext::hook::efSync_Spawn", true, true),
     ("ftCo_800C92E4", "melee_items::tu::ittarucann::ext::hook::ftCo_800C92E4", true, true),
     ("ftCo_Barrel_Enter", "melee_items::tu::ittarucann::ext::hook::ftCo_Barrel_Enter", true, true),
-    ("ftLib_800865C0", "melee_items::tu::ittarucann::ext::hook::ftLib_800865C0", true, false),
+    ("ftLib_GetFacingDir", "melee_items::tu::ittarucann::ext::hook::ftLib_GetFacingDir", true, false),
     ("it_8026B390", "melee_items::tu::ittarucann::ext::hook::it_8026B390", true, false),
     ("it_8026B3A8", "melee_items::tu::ittarucann::ext::hook::it_8026B3A8", true, false),
     ("it_8026B894", "melee_items::tu::ittarucann::ext::hook::it_8026B894", true, false),
@@ -38169,8 +38169,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_JObjSetMtxDirtySub", "melee_items::tu::ittools::ext::hook::HSD_JObjSetMtxDirtySub", true, false),
     ("Item_80268B18", "melee_items::tu::ittools::ext::hook::Item_80268B18", true, false),
     ("Item_80268E5C", "melee_items::tu::ittools::ext::hook::Item_80268E5C", true, false),
-    ("ftLib_800866DC", "melee_items::tu::ittools::ext::hook::ftLib_800866DC", true, true),
-    ("ftLib_80086960", "melee_items::tu::ittools::ext::hook::ftLib_80086960", true, false),
+    ("ftLib_GetCameraBonePos", "melee_items::tu::ittools::ext::hook::ftLib_GetCameraBonePos", true, true),
+    ("ftLib_IsFighter", "melee_items::tu::ittools::ext::hook::ftLib_IsFighter", true, false),
     ("itColl_BounceOffShield", "melee_items::tu::ittools::ext::hook::itColl_BounceOffShield", true, false),
     ("it_8026B3A8", "melee_items::tu::ittools::ext::hook::it_8026B3A8", true, false),
     ("it_8026B894", "melee_items::tu::ittools::ext::hook::it_8026B894", true, false),
@@ -38403,7 +38403,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("it_80273030", "melee_items::tu::ityoshistar::ext::hook::it_80273030", true, false),
     ("Item_80268E5C", "melee_items::tu::ityoshitongue::ext::hook::Item_80268E5C", true, false),
     ("Item_8026A8EC", "melee_items::tu::ityoshitongue::ext::hook::Item_8026A8EC", true, false),
-    ("ftLib_80086630", "melee_items::tu::ityoshitongue::ext::hook::ftLib_80086630", true, false),
+    ("ftLib_GetPartJObj", "melee_items::tu::ityoshitongue::ext::hook::ftLib_GetPartJObj", true, false),
     ("ftYs_SpecialN_GetBoneIndex", "melee_items::tu::ityoshitongue::ext::hook::ftYs_SpecialN_GetBoneIndex", true, true),
     ("it_8026BD54", "melee_items::tu::ityoshitongue::ext::hook::it_8026BD54", true, false),
     ("it_8026C220", "melee_items::tu::ityoshitongue::ext::hook::it_8026C220", true, false),
@@ -38428,10 +38428,10 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_8026AE84", "melee_items::tu::itzako::ext::hook::Item_8026AE84", true, false),
     ("ScriptGame_EnemyDefeated", "melee_items::tu::itzako::ext::hook::ScriptGame_EnemyDefeated", true, true),
     ("ScriptGame_EnemyDestroyed", "melee_items::tu::itzako::ext::hook::ScriptGame_EnemyDestroyed", true, true),
-    ("ftLib_800865C0", "melee_items::tu::itzako::ext::hook::ftLib_800865C0", true, false),
-    ("ftLib_800870BC", "melee_items::tu::itzako::ext::hook::ftLib_800870BC", true, true),
-    ("ftLib_8008770C", "melee_items::tu::itzako::ext::hook::ftLib_8008770C", true, true),
-    ("ftLib_80087744", "melee_items::tu::itzako::ext::hook::ftLib_80087744", true, true),
+    ("ftLib_GetFacingDir", "melee_items::tu::itzako::ext::hook::ftLib_GetFacingDir", true, false),
+    ("ftLib_GetSubColor", "melee_items::tu::itzako::ext::hook::ftLib_GetSubColor", true, true),
+    ("ftLib_GetGameWatchColor", "melee_items::tu::itzako::ext::hook::ftLib_GetGameWatchColor", true, true),
+    ("ftLib_GetGameWatchOutlineColor", "melee_items::tu::itzako::ext::hook::ftLib_GetGameWatchOutlineColor", true, true),
     ("ftLib_GetMotionId", "melee_items::tu::itzako::ext::hook::ftLib_GetMotionId", true, false),
     ("gm_IsCurrently1PMode", "melee_items::tu::itzako::ext::hook::gm_IsCurrently1PMode", true, true),
     ("grLib_801C9E40", "melee_items::tu::itzako::ext::hook::grLib_801C9E40", true, false),
@@ -38473,7 +38473,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("db_80225DD8", "melee_items::tu::itzeldadinfire::ext::hook::db_80225DD8", true, false),
     ("efLib_DestroyAll", "melee_items::tu::itzeldadinfire::ext::hook::efLib_DestroyAll", true, false),
     ("efSync_Spawn", "melee_items::tu::itzeldadinfire::ext::hook::efSync_Spawn", true, true),
-    ("ftLib_800865D8", "melee_items::tu::itzeldadinfire::ext::hook::ftLib_800865D8", true, false),
+    ("ftLib_GetLStick", "melee_items::tu::itzeldadinfire::ext::hook::ftLib_GetLStick", true, false),
     ("ftZd_SpecialLw_8013B540", "melee_items::tu::itzeldadinfire::ext::hook::ftZd_SpecialLw_8013B540", true, true),
     ("ftZd_SpecialLw_8013B574", "melee_items::tu::itzeldadinfire::ext::hook::ftZd_SpecialLw_8013B574", true, true),
     ("ftZd_SpecialLw_8013B5C4", "melee_items::tu::itzeldadinfire::ext::hook::ftZd_SpecialLw_8013B5C4", true, true),
@@ -40214,8 +40214,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Player_SetStocks", "melee_modes::tu::gmevent::ext::hook::Player_SetStocks", true, false),
     ("ftBossLib_8015CB9C", "melee_modes::tu::gmevent::ext::hook::ftBossLib_8015CB9C", true, false),
     ("ftBossLib_8015CC14", "melee_modes::tu::gmevent::ext::hook::ftBossLib_8015CC14", true, false),
-    ("ftLib_8008731C", "melee_modes::tu::gmevent::ext::hook::ftLib_8008731C", true, false),
-    ("ftLib_80087508", "melee_modes::tu::gmevent::ext::hook::ftLib_80087508", true, false),
+    ("ftLib_IsSleeping_8008731C", "melee_modes::tu::gmevent::ext::hook::ftLib_IsSleeping_8008731C", true, false),
+    ("ftLib_LoadFighterCostume", "melee_modes::tu::gmevent::ext::hook::ftLib_LoadFighterCostume", true, false),
     ("ftLib_GetKind", "melee_modes::tu::gmevent::ext::hook::ftLib_GetKind", true, true),
     ("gmFrontend_AtlasSelect", "melee_modes::tu::gmevent::ext::hook::gmFrontend_AtlasSelect", true, false),
     ("gmMainLib_8015CEB4", "melee_modes::tu::gmevent::ext::hook::gmMainLib_8015CEB4", true, false),
@@ -40937,8 +40937,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("fn_8018A364", "melee_modes::tu::gmvs::ext::hook::fn_8018A364", true, false),
     ("fn_801A1134", "melee_modes::tu::gmvs::ext::hook::fn_801A1134", true, false),
     ("ftCo_800C06C0", "melee_modes::tu::gmvs::ext::hook::ftCo_800C06C0", true, false),
-    ("ftLib_800868A4", "melee_modes::tu::gmvs::ext::hook::ftLib_800868A4", true, false),
-    ("ftLib_80086BE0", "melee_modes::tu::gmvs::ext::hook::ftLib_80086BE0", true, false),
+    ("ftLib_EnableAllInput", "melee_modes::tu::gmvs::ext::hook::ftLib_EnableAllInput", true, false),
+    ("ftLib_GetPlayerIndex", "melee_modes::tu::gmvs::ext::hook::ftLib_GetPlayerIndex", true, false),
     ("gmMainLib_8015D00C", "melee_modes::tu::gmvs::ext::hook::gmMainLib_8015D00C", true, false),
     ("gmMainLib_8015D438", "melee_modes::tu::gmvs::ext::hook::gmMainLib_8015D438", true, false),
     ("gmMainLib_8015D450", "melee_modes::tu::gmvs::ext::hook::gmMainLib_8015D450", true, false),
@@ -41850,7 +41850,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Player_GetPlayerSlotType", "melee_runtime::tu::lbaudio_ax::ext::hook::Player_GetPlayerSlotType", true, true),
     ("Stage_80225194", "melee_runtime::tu::lbaudio_ax::ext::hook::Stage_80225194", true, true),
     ("Stage_8022519C", "melee_runtime::tu::lbaudio_ax::ext::hook::Stage_8022519C", true, true),
-    ("ftLib_80086644", "melee_runtime::tu::lbaudio_ax::ext::hook::ftLib_80086644", true, true),
+    ("ftLib_GetPos", "melee_runtime::tu::lbaudio_ax::ext::hook::ftLib_GetPos", true, true),
     ("gm_801603B0", "melee_runtime::tu::lbaudio_ax::ext::hook::gm_801603B0", true, true),
     ("gm_80169370", "melee_runtime::tu::lbaudio_ax::ext::hook::gm_80169370", true, true),
     ("gm_8016B184", "melee_runtime::tu::lbaudio_ax::ext::hook::gm_8016B184", true, true),
@@ -42029,9 +42029,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("PSVECAdd", "melee_runtime::tu::lbshadow::ext::hook::PSVECAdd", true, false),
     ("ftDrawCommon_80081168", "melee_runtime::tu::lbshadow::ext::hook::ftDrawCommon_80081168", true, true),
     ("ftDrawCommon_80081200", "melee_runtime::tu::lbshadow::ext::hook::ftDrawCommon_80081200", true, true),
-    ("ftLib_80086960", "melee_runtime::tu::lbshadow::ext::hook::ftLib_80086960", true, true),
-    ("ftLib_800872B0", "melee_runtime::tu::lbshadow::ext::hook::ftLib_800872B0", true, true),
-    ("ftLib_800872BC", "melee_runtime::tu::lbshadow::ext::hook::ftLib_800872BC", true, true),
+    ("ftLib_IsFighter", "melee_runtime::tu::lbshadow::ext::hook::ftLib_IsFighter", true, true),
+    ("ftLib_GetShadow", "melee_runtime::tu::lbshadow::ext::hook::ftLib_GetShadow", true, true),
+    ("ftLib_CastsShadow", "melee_runtime::tu::lbshadow::ext::hook::ftLib_CastsShadow", true, true),
     ("lbVector_CrossprodNormalized", "melee_runtime::tu::lbshadow::ext::hook::lbVector_CrossprodNormalized", true, false),
     ("lbVector_Diff", "melee_runtime::tu::lbshadow::ext::hook::lbVector_Diff", true, false),
     ("lbVector_Normalize", "melee_runtime::tu::lbshadow::ext::hook::lbVector_Normalize", true, false),
@@ -42177,7 +42177,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ScriptGame_StageSlotParticleBegin", "melee_runtime::tu::particle::ext::hook::ScriptGame_StageSlotParticleBegin", true, true),
     ("ScriptGame_StageSlotProcEnd", "melee_runtime::tu::particle::ext::hook::ScriptGame_StageSlotProcEnd", true, true),
     ("atan2f", "melee_runtime::tu::particle::ext::hook::atan2f", true, false),
-    ("hsd_8039D1EC", "melee_runtime::tu::particle::ext::hook::hsd_8039D1EC", true, false),
+    ("psGetNewIDNum", "melee_runtime::tu::particle::ext::hook::psGetNewIDNum", true, false),
     ("hsd_8039F05C", "melee_runtime::tu::particle::ext::hook::hsd_8039F05C", true, false),
     ("psAttachGeneratorAppSRT", "melee_runtime::tu::particle::ext::hook::psAttachGeneratorAppSRT", true, false),
     ("psAttachParticleAppSRT", "melee_runtime::tu::particle::ext::hook::psAttachParticleAppSRT", true, false),
@@ -42490,10 +42490,10 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_UnkSetVec3TCam_Offset", "melee_world::tu::camera::ext::hook::Stage_UnkSetVec3TCam_Offset", true, false),
     ("atan2f", "melee_world::tu::camera::ext::hook::atan2f", true, false),
     ("atanf", "melee_world::tu::camera::ext::hook::atanf", true, false),
-    ("ftLib_80086644", "melee_world::tu::camera::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_80086B74", "melee_world::tu::camera::ext::hook::ftLib_80086B74", true, false),
-    ("ftLib_8008701C", "melee_world::tu::camera::ext::hook::ftLib_8008701C", true, false),
-    ("ftLib_8008732C", "melee_world::tu::camera::ext::hook::ftLib_8008732C", true, false),
+    ("ftLib_GetPos", "melee_world::tu::camera::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_GetCameraSubject", "melee_world::tu::camera::ext::hook::ftLib_GetCameraSubject", true, false),
+    ("ftLib_IsSleeping", "melee_world::tu::camera::ext::hook::ftLib_IsSleeping", true, false),
+    ("ftLib_IsDead", "melee_world::tu::camera::ext::hook::ftLib_IsDead", true, false),
     ("gm_GetButtonsPressed", "melee_world::tu::camera::ext::hook::gm_GetButtonsPressed", true, true),
     ("gm_GetButtonsTriggered", "melee_world::tu::camera::ext::hook::gm_GetButtonsTriggered", true, true),
     ("gm_IsCurrently1PMode_inline", "melee_world::tu::camera::ext::hook::gm_IsCurrently1PMode_inline", true, true),
@@ -42572,7 +42572,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("grLib_801C99C0", "melee_world::tu::efn::eflib::ext::hook::grLib_801C99C0", true, false),
     ("hsd_80398A08", "melee_world::tu::efn::eflib::ext::hook::hsd_80398A08", true, false),
     ("hsd_8039CEAC", "melee_world::tu::efn::eflib::ext::hook::hsd_8039CEAC", true, false),
-    ("hsd_8039D1E4", "melee_world::tu::efn::eflib::ext::hook::hsd_8039D1E4", true, true),
+    ("psSetUserFunc", "melee_world::tu::efn::eflib::ext::hook::psSetUserFunc", true, true),
     ("hsd_8039D354", "melee_world::tu::efn::eflib::ext::hook::hsd_8039D354", true, true),
     ("hsd_8039D4DC", "melee_world::tu::efn::eflib::ext::hook::hsd_8039D4DC", true, true),
     ("hsd_8039D688", "melee_world::tu::efn::eflib::ext::hook::hsd_8039D688", true, true),
@@ -42889,8 +42889,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("PSMTXConcat", "melee_world::tu::grdisplay::ext::hook::PSMTXConcat", true, false),
     ("ScriptGame_StageOriginalVisible", "melee_world::tu::grdisplay::ext::hook::ScriptGame_StageOriginalVisible", true, true),
     ("ScriptGame_StageSlotOwned", "melee_world::tu::grdisplay::ext::hook::ScriptGame_StageSlotOwned", true, true),
-    ("ftLib_80086644", "melee_world::tu::grdisplay::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_800872B0", "melee_world::tu::grdisplay::ext::hook::ftLib_800872B0", true, false),
+    ("ftLib_GetPos", "melee_world::tu::grdisplay::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_GetShadow", "melee_world::tu::grdisplay::ext::hook::ftLib_GetShadow", true, false),
     ("lbShadow_8000EEE0", "melee_world::tu::grdisplay::ext::hook::lbShadow_8000EEE0", true, false),
     ("lbShadow_8000EFEC", "melee_world::tu::grdisplay::ext::hook::lbShadow_8000EFEC", true, false),
     ("mpLinesConnected", "melee_world::tu::grdynamicattr::ext::hook::mpLinesConnected", true, false),
@@ -42941,7 +42941,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_Randi", "melee_world::tu::grfigureget::ext::hook::HSD_Randi", true, false),
     ("Stage_GetCamBoundsTopOffset", "melee_world::tu::grfigureget::ext::hook::Stage_GetCamBoundsTopOffset", true, false),
     ("Toy_80305058", "melee_world::tu::grfigureget::ext::hook::Toy_80305058", true, true),
-    ("ftLib_80086984", "melee_world::tu::grfigureget::ext::hook::ftLib_80086984", true, false),
+    ("ftLib_GetCollData", "melee_world::tu::grfigureget::ext::hook::ftLib_GetCollData", true, false),
     ("gm_8017E280", "melee_world::tu::grfigureget::ext::hook::gm_8017E280", true, true),
     ("grAnime_801C8138", "melee_world::tu::grfigureget::ext::hook::grAnime_801C8138", true, false),
     ("grDisplay_801C5DB0", "melee_world::tu::grfigureget::ext::hook::grDisplay_801C5DB0", true, false),
@@ -43053,8 +43053,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_80268E5C", "melee_world::tu::grgarden::ext::hook::Item_80268E5C", true, true),
     ("Stage_80225194", "melee_world::tu::grgarden::ext::hook::Stage_80225194", true, false),
     ("ftCo_800C06E8", "melee_world::tu::grgarden::ext::hook::ftCo_800C06E8", true, false),
-    ("ftLib_80086644", "melee_world::tu::grgarden::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_80086684", "melee_world::tu::grgarden::ext::hook::ftLib_80086684", true, false),
+    ("ftLib_GetPos", "melee_world::tu::grgarden::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_GetPrevPos", "melee_world::tu::grgarden::ext::hook::ftLib_GetPrevPos", true, false),
     ("ftLib_80086B80", "melee_world::tu::grgarden::ext::hook::ftLib_80086B80", true, false),
     ("gm_8016B238", "melee_world::tu::grgarden::ext::hook::gm_8016B238", true, false),
     ("grAnime_801C8138", "melee_world::tu::grgarden::ext::hook::grAnime_801C8138", true, false),
@@ -43088,8 +43088,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Item_80268B18", "melee_world::tu::grgreatbay::ext::hook::Item_80268B18", true, true),
     ("Stage_GetBlastZoneBottomOffset", "melee_world::tu::grgreatbay::ext::hook::Stage_GetBlastZoneBottomOffset", true, false),
     ("ftCo_800C07F8", "melee_world::tu::grgreatbay::ext::hook::ftCo_800C07F8", true, false),
-    ("ftLib_80086644", "melee_world::tu::grgreatbay::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_80086684", "melee_world::tu::grgreatbay::ext::hook::ftLib_80086684", true, false),
+    ("ftLib_GetPos", "melee_world::tu::grgreatbay::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_GetPrevPos", "melee_world::tu::grgreatbay::ext::hook::ftLib_GetPrevPos", true, false),
     ("ftLib_80086B80", "melee_world::tu::grgreatbay::ext::hook::ftLib_80086B80", true, false),
     ("ft_80087838", "melee_world::tu::grgreatbay::ext::hook::ft_80087838", true, true),
     ("grAnime_801C77FC", "melee_world::tu::grgreatbay::ext::hook::grAnime_801C77FC", true, false),
@@ -43149,8 +43149,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_GetBlastZoneTopOffset", "melee_world::tu::grgreens::ext::hook::Stage_GetBlastZoneTopOffset", true, false),
     ("efSync_Spawn", "melee_world::tu::grgreens::ext::hook::efSync_Spawn", true, true),
     ("ftCo_800C06E8", "melee_world::tu::grgreens::ext::hook::ftCo_800C06E8", true, false),
-    ("ftLib_800864A8", "melee_world::tu::grgreens::ext::hook::ftLib_800864A8", true, true),
-    ("ftLib_80086644", "melee_world::tu::grgreens::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_GetOpponentsDir", "melee_world::tu::grgreens::ext::hook::ftLib_GetOpponentsDir", true, true),
+    ("ftLib_GetPos", "melee_world::tu::grgreens::ext::hook::ftLib_GetPos", true, false),
     ("grAnime_801C8138", "melee_world::tu::grgreens::ext::hook::grAnime_801C8138", true, false),
     ("grAnime_801C83D0", "melee_world::tu::grgreens::ext::hook::grAnime_801C83D0", true, false),
     ("grAnime_801C84A4", "melee_world::tu::grgreens::ext::hook::grAnime_801C84A4", true, false),
@@ -43254,8 +43254,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_GetBlastZoneRightOffset", "melee_world::tu::grhomerun::ext::hook::Stage_GetBlastZoneRightOffset", true, false),
     ("Stage_GetCamBoundsRightOffset", "melee_world::tu::grhomerun::ext::hook::Stage_GetCamBoundsRightOffset", true, false),
     ("Stage_UnkSetVec3TCam_Offset", "melee_world::tu::grhomerun::ext::hook::Stage_UnkSetVec3TCam_Offset", true, false),
-    ("ftLib_80086644", "melee_world::tu::grhomerun::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_80086B74", "melee_world::tu::grhomerun::ext::hook::ftLib_80086B74", true, false),
+    ("ftLib_GetPos", "melee_world::tu::grhomerun::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_GetCameraSubject", "melee_world::tu::grhomerun::ext::hook::ftLib_GetCameraSubject", true, false),
     ("gm_80180AF4", "melee_world::tu::grhomerun::ext::hook::gm_80180AF4", true, true),
     ("grAnime_801C8138", "melee_world::tu::grhomerun::ext::hook::grAnime_801C8138", true, false),
     ("grDatFiles_GetArchive", "melee_world::tu::grhomerun::ext::hook::grDatFiles_GetArchive", true, false),
@@ -43304,8 +43304,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_Randi", "melee_world::tu::gricemt::ext::hook::HSD_Randi", true, false),
     ("Stage_80225194", "melee_world::tu::gricemt::ext::hook::Stage_80225194", true, false),
     ("efSync_Spawn", "melee_world::tu::gricemt::ext::hook::efSync_Spawn", true, true),
-    ("ftLib_80086644", "melee_world::tu::gricemt::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_80086EC0", "melee_world::tu::gricemt::ext::hook::ftLib_80086EC0", true, false),
+    ("ftLib_GetPos", "melee_world::tu::gricemt::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_IsInHitstun", "melee_world::tu::gricemt::ext::hook::ftLib_IsInHitstun", true, false),
     ("gm_801674C4", "melee_world::tu::gricemt::ext::hook::gm_801674C4", true, true),
     ("grAnime_801C77FC", "melee_world::tu::gricemt::ext::hook::grAnime_801C77FC", true, false),
     ("grAnime_801C78FC", "melee_world::tu::gricemt::ext::hook::grAnime_801C78FC", true, false),
@@ -43496,7 +43496,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_UnkSetVec3TCam_Offset", "melee_world::tu::grkinokoroute::ext::STAGE_UNKSETVEC3TCAM_OFFSET", true, true),
     ("efSync_Spawn", "melee_world::tu::grkongo::ext::EFSYNC_SPAWN", true, true),
     ("ftCo_8009EC70", "melee_world::tu::grkongo::ext::FTCO_8009EC70", true, true),
-    ("ftLib_80086C18", "melee_world::tu::grkongo::ext::FTLIB_80086C18", true, true),
+    ("ftLib_StartRumble", "melee_world::tu::grkongo::ext::FTLIB_STARTRUMBLE", true, true),
     ("grAnime_801C78FC", "melee_world::tu::grkongo::ext::GRANIME_801C78FC", true, true),
     ("grAnime_801C7A04", "melee_world::tu::grkongo::ext::GRANIME_801C7A04", true, true),
     ("grAnime_801C83D0", "melee_world::tu::grkongo::ext::GRANIME_801C83D0", true, true),
@@ -43536,7 +43536,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("mpLib_80057BC0", "melee_world::tu::grkongo::ext::MPLIB_80057BC0", true, true),
     ("mpVtxGetPos", "melee_world::tu::grkongo::ext::MPVTXGETPOS", true, true),
     ("Stage_80225194", "melee_world::tu::grkongo::ext::STAGE_80225194", true, true),
-    ("ftLib_80086C9C", "melee_world::tu::grkraid::ext::FTLIB_80086C9C", true, true),
+    ("ftLib_StartRumbleAll", "melee_world::tu::grkraid::ext::FTLIB_STARTRUMBLEALL", true, true),
     ("grAnime_801C7FF8", "melee_world::tu::grkraid::ext::GRANIME_801C7FF8", true, true),
     ("grAnime_801C83D0", "melee_world::tu::grkraid::ext::GRANIME_801C83D0", true, true),
     ("Ground_801C0498", "melee_world::tu::grkraid::ext::GROUND_801C0498", true, true),
@@ -43755,8 +43755,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("efSync_Spawn", "melee_world::tu::groldkongo::ext::hook::efSync_Spawn", true, true),
     ("ftCo_8009EC70", "melee_world::tu::groldkongo::ext::hook::ftCo_8009EC70", true, true),
     ("ftCo_800C0764", "melee_world::tu::groldkongo::ext::hook::ftCo_800C0764", true, false),
-    ("ftLib_80086644", "melee_world::tu::groldkongo::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_80086C18", "melee_world::tu::groldkongo::ext::hook::ftLib_80086C18", true, true),
+    ("ftLib_GetPos", "melee_world::tu::groldkongo::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_StartRumble", "melee_world::tu::groldkongo::ext::hook::ftLib_StartRumble", true, true),
     ("grAnime_801C7A04", "melee_world::tu::groldkongo::ext::hook::grAnime_801C7A04", true, false),
     ("grAnime_801C7FF8", "melee_world::tu::groldkongo::ext::hook::grAnime_801C7FF8", true, false),
     ("grAnime_801C8138", "melee_world::tu::groldkongo::ext::hook::grAnime_801C8138", true, false),
@@ -43787,8 +43787,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_Randf", "melee_world::tu::groldpupupu::ext::hook::HSD_Randf", true, false),
     ("HSD_Randi", "melee_world::tu::groldpupupu::ext::hook::HSD_Randi", true, false),
     ("ftCo_800C06E8", "melee_world::tu::groldpupupu::ext::hook::ftCo_800C06E8", true, false),
-    ("ftLib_800864A8", "melee_world::tu::groldpupupu::ext::hook::ftLib_800864A8", true, true),
-    ("ftLib_80086644", "melee_world::tu::groldpupupu::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_GetOpponentsDir", "melee_world::tu::groldpupupu::ext::hook::ftLib_GetOpponentsDir", true, true),
+    ("ftLib_GetPos", "melee_world::tu::groldpupupu::ext::hook::ftLib_GetPos", true, false),
     ("grAnime_801C7FF8", "melee_world::tu::groldpupupu::ext::hook::grAnime_801C7FF8", true, false),
     ("grAnime_801C8138", "melee_world::tu::groldpupupu::ext::hook::grAnime_801C8138", true, false),
     ("grAnime_801C83D0", "melee_world::tu::groldpupupu::ext::hook::grAnime_801C83D0", true, false),
@@ -43850,7 +43850,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_Randf", "melee_world::tu::gronett::ext::hook::HSD_Randf", true, false),
     ("HSD_Randi", "melee_world::tu::gronett::ext::hook::HSD_Randi", true, false),
     ("Item_80268E5C", "melee_world::tu::gronett::ext::hook::Item_80268E5C", true, true),
-    ("ftLib_80086644", "melee_world::tu::gronett::ext::hook::ftLib_80086644", true, false),
+    ("ftLib_GetPos", "melee_world::tu::gronett::ext::hook::ftLib_GetPos", true, false),
     ("gm_8016C6C0", "melee_world::tu::gronett::ext::hook::gm_8016C6C0", true, true),
     ("grAnime_801C7FF8", "melee_world::tu::gronett::ext::hook::grAnime_801C7FF8", true, false),
     ("grAnime_801C8138", "melee_world::tu::gronett::ext::hook::grAnime_801C8138", true, false),
@@ -43942,8 +43942,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("asinf", "melee_world::tu::ground::ext::hook::asinf", true, false),
     ("ftCo_8009F4A4", "melee_world::tu::ground::ext::hook::ftCo_8009F4A4", true, true),
     ("ftCo_800C06C0", "melee_world::tu::ground::ext::hook::ftCo_800C06C0", true, false),
-    ("ftLib_80086644", "melee_world::tu::ground::ext::hook::ftLib_80086644", true, false),
-    ("ftLib_8008701C", "melee_world::tu::ground::ext::hook::ftLib_8008701C", true, false),
+    ("ftLib_GetPos", "melee_world::tu::ground::ext::hook::ftLib_GetPos", true, false),
+    ("ftLib_IsSleeping", "melee_world::tu::ground::ext::hook::ftLib_IsSleeping", true, false),
     ("gm_80164600", "melee_world::tu::ground::ext::hook::gm_80164600", true, true),
     ("gm_80164ABC", "melee_world::tu::ground::ext::hook::gm_80164ABC", true, true),
     ("gm_8016B238", "melee_world::tu::ground::ext::hook::gm_8016B238", true, false),
@@ -44058,7 +44058,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Player_GetPlayerSlotType", "melee_world::tu::grpstadium::ext::hook::Player_GetPlayerSlotType", true, false),
     ("Player_GetTeam", "melee_world::tu::grpstadium::ext::hook::Player_GetTeam", true, false),
     ("Stage_80225194", "melee_world::tu::grpstadium::ext::hook::Stage_80225194", true, false),
-    ("ftLib_80086B90", "melee_world::tu::grpstadium::ext::hook::ftLib_80086B90", true, false),
+    ("ftLib_GetCameraSubjectBonePos", "melee_world::tu::grpstadium::ext::hook::ftLib_GetCameraSubjectBonePos", true, false),
     ("gm_80160854", "melee_world::tu::grpstadium::ext::hook::gm_80160854", true, true),
     ("gm_80160968", "melee_world::tu::grpstadium::ext::hook::gm_80160968", true, true),
     ("gm_80160A60", "melee_world::tu::grpstadium::ext::hook::gm_80160A60", true, true),
@@ -44226,10 +44226,10 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_GObj_SetupProc", "melee_world::tu::gryorster::ext::H_HSD_GObj_SetupProc", true, true),
     ("OSReport", "melee_world::tu::gryorster::ext::H_OSReport", true, true),
     ("__assert", "melee_world::tu::gryorster::ext::H___assert", true, true),
-    ("ftLib_80086960", "melee_world::tu::gryorster::ext::H_ftLib_80086960", true, true),
+    ("ftLib_IsFighter", "melee_world::tu::gryorster::ext::H_ftLib_IsFighter", true, true),
     ("ftLib_80086A4C", "melee_world::tu::gryorster::ext::H_ftLib_80086A4C", true, true),
-    ("ftLib_80086BEC", "melee_world::tu::gryorster::ext::H_ftLib_80086BEC", true, true),
-    ("ftLib_800873F4", "melee_world::tu::gryorster::ext::H_ftLib_800873F4", true, true),
+    ("ftLib_GetPosDelta", "melee_world::tu::gryorster::ext::H_ftLib_GetPosDelta", true, true),
+    ("ftLib_IsEntry", "melee_world::tu::gryorster::ext::H_ftLib_IsEntry", true, true),
     ("grAnime_801C7FF8", "melee_world::tu::gryorster::ext::H_grAnime_801C7FF8", true, true),
     ("grAnime_801C8138", "melee_world::tu::gryorster::ext::H_grAnime_801C8138", true, true),
     ("grAnime_801C84A4", "melee_world::tu::gryorster::ext::H_grAnime_801C84A4", true, true),
@@ -44311,9 +44311,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("OSReport", "melee_world::tu::grzebes::ext::H_OSReport", true, true),
     ("__assert", "melee_world::tu::grzebes::ext::H___assert", true, true),
     ("ftCo_800C07F8", "melee_world::tu::grzebes::ext::H_ftCo_800C07F8", true, true),
-    ("ftLib_80086644", "melee_world::tu::grzebes::ext::H_ftLib_80086644", true, true),
-    ("ftLib_80086684", "melee_world::tu::grzebes::ext::H_ftLib_80086684", true, true),
-    ("ftLib_80086C9C", "melee_world::tu::grzebes::ext::H_ftLib_80086C9C", true, true),
+    ("ftLib_GetPos", "melee_world::tu::grzebes::ext::H_ftLib_GetPos", true, true),
+    ("ftLib_GetPrevPos", "melee_world::tu::grzebes::ext::H_ftLib_GetPrevPos", true, true),
+    ("ftLib_StartRumbleAll", "melee_world::tu::grzebes::ext::H_ftLib_StartRumbleAll", true, true),
     ("grAnime_801C78FC", "melee_world::tu::grzebes::ext::H_grAnime_801C78FC", true, true),
     ("grAnime_801C7980", "melee_world::tu::grzebes::ext::H_grAnime_801C7980", true, true),
     ("grAnime_801C7B24", "melee_world::tu::grzebes::ext::H_grAnime_801C7B24", true, true),
@@ -44362,7 +44362,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_Randi", "melee_world::tu::grzebesroute::ext::H_HSD_Randi", true, true),
     ("OSReport", "melee_world::tu::grzebesroute::ext::H_OSReport", true, true),
     ("__assert", "melee_world::tu::grzebesroute::ext::H___assert", true, true),
-    ("ftLib_80086644", "melee_world::tu::grzebesroute::ext::H_ftLib_80086644", true, true),
+    ("ftLib_GetPos", "melee_world::tu::grzebesroute::ext::H_ftLib_GetPos", true, true),
     ("grAnime_801C8138", "melee_world::tu::grzebesroute::ext::H_grAnime_801C8138", true, true),
     ("grDisplay_801C5DB0", "melee_world::tu::grzebesroute::ext::H_grDisplay_801C5DB0", true, true),
     ("grZakoGenerator_801CAE04", "melee_world::tu::grzebesroute::ext::H_grZakoGenerator_801CAE04", true, true),
@@ -44566,10 +44566,10 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_GetCamBoundsTopOffset", "melee_world::tu::ifmagnify::ext::hook::Stage_GetCamBoundsTopOffset", true, false),
     ("atan2f", "melee_world::tu::ifmagnify::ext::hook::atan2f", true, false),
     ("ftDrawCommon_80080C28", "melee_world::tu::ifmagnify::ext::hook::ftDrawCommon_80080C28", true, true),
-    ("ftLib_80086B64", "melee_world::tu::ifmagnify::ext::hook::ftLib_80086B64", true, false),
+    ("ftLib_IsOffscreen", "melee_world::tu::ifmagnify::ext::hook::ftLib_IsOffscreen", true, false),
     ("ftLib_80086B80", "melee_world::tu::ifmagnify::ext::hook::ftLib_80086B80", true, false),
-    ("ftLib_80086B90", "melee_world::tu::ifmagnify::ext::hook::ftLib_80086B90", true, false),
-    ("ftLib_80086ED0", "melee_world::tu::ifmagnify::ext::hook::ftLib_80086ED0", true, true),
+    ("ftLib_GetCameraSubjectBonePos", "melee_world::tu::ifmagnify::ext::hook::ftLib_GetCameraSubjectBonePos", true, false),
+    ("ftLib_CanBeMagnified", "melee_world::tu::ifmagnify::ext::hook::ftLib_CanBeMagnified", true, true),
     ("ftLib_UpdateLogicOffCamera", "melee_world::tu::ifmagnify::ext::hook::ftLib_UpdateLogicOffCamera", true, true),
     ("gmVs_GetSceneController", "melee_world::tu::ifmagnify::ext::hook::gmVs_GetSceneController", true, false),
     ("gm_80160854", "melee_world::tu::ifmagnify::ext::hook::gm_80160854", true, true),
@@ -44802,9 +44802,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("memzero", "melee_world::tu::iftime::ext::hook::memzero", true, false),
     ("OSReport", "melee_world::tu::mpcoll::ext::hook::OSReport", true, false),
     ("ScriptGame_StageSlotSameJoint", "melee_world::tu::mpcoll::ext::hook::ScriptGame_StageSlotSameJoint", true, true),
-    ("ftLib_80086960", "melee_world::tu::mpcoll::ext::hook::ftLib_80086960", true, false),
-    ("ftLib_80086BE0", "melee_world::tu::mpcoll::ext::hook::ftLib_80086BE0", true, false),
-    ("ftLib_800874BC", "melee_world::tu::mpcoll::ext::hook::ftLib_800874BC", true, false),
+    ("ftLib_IsFighter", "melee_world::tu::mpcoll::ext::hook::ftLib_IsFighter", true, false),
+    ("ftLib_GetPlayerIndex", "melee_world::tu::mpcoll::ext::hook::ftLib_GetPlayerIndex", true, false),
+    ("ftLib_IsSubFighter", "melee_world::tu::mpcoll::ext::hook::ftLib_IsSubFighter", true, false),
     ("grDynamicAttr_801CA284", "melee_world::tu::mpcoll::ext::hook::grDynamicAttr_801CA284", true, false),
     ("itGetKind", "melee_world::tu::mpcoll::ext::hook::itGetKind", true, false),
     ("lb_8000B1CC", "melee_world::tu::mpcoll::ext::hook::lb_8000B1CC", true, false),
@@ -44849,7 +44849,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_GetCamBoundsLeftOffset", "melee_world::tu::mplib::ext::hook::Stage_GetCamBoundsLeftOffset", true, false),
     ("Stage_GetCamBoundsRightOffset", "melee_world::tu::mplib::ext::hook::Stage_GetCamBoundsRightOffset", true, false),
     ("Stage_GetCamBoundsTopOffset", "melee_world::tu::mplib::ext::hook::Stage_GetCamBoundsTopOffset", true, false),
-    ("ftLib_80086984", "melee_world::tu::mplib::ext::hook::ftLib_80086984", true, false),
+    ("ftLib_GetCollData", "melee_world::tu::mplib::ext::hook::ftLib_GetCollData", true, false),
     ("grDynamicAttr_801CA0B4", "melee_world::tu::mplib::ext::hook::grDynamicAttr_801CA0B4", true, false),
     ("grDynamicAttr_801CA224", "melee_world::tu::mplib::ext::hook::grDynamicAttr_801CA224", true, false),
     ("itGetKind", "melee_world::tu::mplib::ext::hook::itGetKind", true, false),
@@ -45575,7 +45575,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("fn_801795D4", "melee_modes::tu/gm_1798.rs", false, false),
     ("fn_801796F0", "melee_modes::tu/gm_1798.rs", false, false),
     ("ftDemo_ObjAllocInit", "melee_modes::tu/gm_1798.rs", false, true),
-    ("ftLib_800876B4", "melee_modes::tu/gm_1798.rs", false, true),
+    ("ftLib_IsFramesRemaining", "melee_modes::tu/gm_1798.rs", false, true),
     ("gm_80160438", "melee_modes::tu/gm_1798.rs", false, false),
     ("gm_80160854", "melee_modes::tu/gm_1798.rs", false, false),
     ("gm_80160968", "melee_modes::tu/gm_1798.rs", false, false),
@@ -45648,11 +45648,11 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftBossLib_8015CC14", "melee_modes::tu/gm_17c0.rs", false, false),
     ("ftBossLib_IsMasterHandEntry", "melee_modes::tu/gm_17c0.rs", false, false),
     ("ftCo_800C8C84", "melee_modes::tu/gm_17c0.rs", false, false),
-    ("ftLib_80086824", "melee_modes::tu/gm_17c0.rs", false, false),
-    ("ftLib_800868A4", "melee_modes::tu/gm_17c0.rs", false, false),
-    ("ftLib_80087508", "melee_modes::tu/gm_17c0.rs", false, false),
-    ("ftLib_80087574", "melee_modes::tu/gm_17c0.rs", false, false),
-    ("ftLib_80087610", "melee_modes::tu/gm_17c0.rs", false, false),
+    ("ftLib_DisableAllInput", "melee_modes::tu/gm_17c0.rs", false, false),
+    ("ftLib_EnableAllInput", "melee_modes::tu/gm_17c0.rs", false, false),
+    ("ftLib_LoadFighterCostume", "melee_modes::tu/gm_17c0.rs", false, false),
+    ("ftLib_LoadFighterAllCostumes", "melee_modes::tu/gm_17c0.rs", false, false),
+    ("ftLib_LoadKirbyHats", "melee_modes::tu/gm_17c0.rs", false, false),
     ("ft_80087C58", "melee_modes::tu/gm_17c0.rs", false, false),
     ("ft_80087C64", "melee_modes::tu/gm_17c0.rs", false, false),
     ("gmMainLib_8015D134", "melee_modes::tu/gm_17c0.rs", false, false),
@@ -46295,9 +46295,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Camera_StageSlotClipGet", "melee_modes::tu/script_game.rs", false, true),
     ("DVDConvertPathToEntrynum", "melee_modes::tu/script_game.rs", false, true),
     ("Fighter_ChangeMotionState", "melee_modes::tu/script_game.rs", false, false),
-    ("Fighter_ProcessHit_8006D1EC", "melee_modes::tu/script_game.rs", false, false),
+    ("Fighter_procCollResolve", "melee_modes::tu/script_game.rs", false, false),
     ("Fighter_ResetInputData_80068854", "melee_modes::tu/script_game.rs", false, false),
-    ("Fighter_UnkProcessDeath_80068354", "melee_modes::tu/script_game.rs", false, false),
+    ("Fighter_Spawn", "melee_modes::tu/script_game.rs", false, false),
     ("GObj_Create", "melee_modes::tu/script_game.rs", false, true),
     ("GObj_InitUserData", "melee_modes::tu/script_game.rs", false, true),
     ("GObj_SetupGXLink", "melee_modes::tu/script_game.rs", false, true),
@@ -46560,7 +46560,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCommon_CalcSelfAccel_DeaccelQuickAir", "melee_modes::tu/script_game.rs", false, true),
     ("ftCommon_UnlockECB", "melee_modes::tu/script_game.rs", false, true),
     ("ftKb_MexKirbyLike", "melee_modes::tu/script_game.rs", false, false),
-    ("ftLib_80086960", "melee_modes::tu/script_game.rs", false, false),
+    ("ftLib_IsFighter", "melee_modes::tu/script_game.rs", false, false),
     ("ftLib_SetScale", "melee_modes::tu/script_game.rs", false, true),
     ("ftParts_GetBoneIndex", "melee_modes::tu/script_game.rs", false, true),
     ("ft_80081C88", "melee_modes::tu/script_game.rs", false, false),
@@ -46586,7 +46586,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("grStory_801E36D8", "melee_modes::tu/script_game.rs", false, false),
     ("grStory_StageSlotParamSwap", "melee_modes::tu/script_game.rs", false, false),
     ("grZakoGenerator_StageSlotRelease", "melee_modes::tu/script_game.rs", false, false),
-    ("hsd_8039D048", "melee_modes::tu/script_game.rs", false, false),
+    ("psClearPointJObj", "melee_modes::tu/script_game.rs", false, false),
     ("hsd_8039D3AC", "melee_modes::tu/script_game.rs", false, true),
     ("it_8026B40C", "melee_modes::tu/script_game.rs", false, false),
     ("it_8026D324", "melee_modes::tu/script_game.rs", false, false),

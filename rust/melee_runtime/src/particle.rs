@@ -832,12 +832,12 @@ impl PsSystem {
 
     // ---- generator.c -------------------------------------------------------------------------
 
-    /// `hsd_8039D1E4`: set the user func.
+    /// `psSetUserFunc`: set the user func.
     pub fn set_userfunc(&mut self, g: GenId, userfunc: Option<u32>) {
         self.gen_mut(g).userfunc = userfunc;
     }
 
-    /// `hsd_8039D1EC`: next id.
+    /// `psGetNewIDNum`: next id.
     pub fn next_idnum(&mut self) -> u16 {
         self.idnum_counter = self.idnum_counter.wrapping_add(1);
         if self.idnum_counter < 256 {
@@ -1767,7 +1767,7 @@ impl PsSystem {
         pp.vel.z = fmadds(cos_e, cos_angle * cos_a, fmadds(sin_e, -cos_rand * cos_a, -(sin_rand * sin_a)));
     }
 
-    /// `hsd_803991D8((HSD_Generator*) pp, jobj, force, range)` as opcode 0xB8 calls it: the
+    /// `applyForceJObj((HSD_Generator*) pp, jobj, force, range)` as opcode 0xB8 calls it: the
     /// generator fields it names alias the particle's (`fric`/`size`/`radius` = `pos.x/y/z`,
     /// `pos.z`/`vel.x`/`vel.y` = `vel.x/y/z`). Returns true when within `range`.
     fn attract_to_jobj(&mut self, host: &mut dyn PsHost, p: PId, jobj: Option<JObjRef>, force: f32, range: f32) -> bool {
@@ -2790,7 +2790,7 @@ impl PsSystem {
         }
     }
 
-    /// `hsd_8039CF4C(index, jobj)`: set particle JObj slot `index - 1`, or with 0 clear every
+    /// `psSetPointJObj(index, jobj)`: set particle JObj slot `index - 1`, or with 0 clear every
     /// slot holding `jobj`.
     pub fn set_point_jobj(&mut self, host: &mut dyn PsHost, index: i32, jobj: JObjRef) {
         if !(0..=8).contains(&index) {
@@ -2817,7 +2817,7 @@ impl PsSystem {
         }
     }
 
-    /// `hsd_8039D048(pp)`: drop the particle's JObj slot.
+    /// `psClearPointJObj(pp)`: drop the particle's JObj slot.
     fn release_point_jobj(&mut self, host: &mut dyn PsHost, p: PId) {
         let flags = self.part(p).kind;
         if flags & 0x8000 != 0 {

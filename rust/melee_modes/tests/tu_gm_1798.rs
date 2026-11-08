@@ -1069,7 +1069,7 @@ unsafe fn h_ftDemo_ObjAllocInit(a: &[u64]) -> u64 {
     rt::t_begin(44);
     0
 }
-unsafe fn h_ftLib_800876B4(a: &[u64]) -> u64 {
+unsafe fn h_ftLib_IsFramesRemaining(a: &[u64]) -> u64 {
     rt::t_begin(45);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -1287,7 +1287,7 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "fn_801795D4" => h_fn_801795D4(a),
         "fn_801796F0" => h_fn_801796F0(a),
         "ftDemo_ObjAllocInit" => h_ftDemo_ObjAllocInit(a),
-        "ftLib_IsFramesRemaining" => h_ftLib_800876B4(a),
+        "ftLib_IsFramesRemaining" => h_ftLib_IsFramesRemaining(a),
         "gm_80160438" => h_gm_80160438(a),
         "gm_80160854" => h_gm_80160854(a),
         "gm_80160968" => h_gm_80160968(a),

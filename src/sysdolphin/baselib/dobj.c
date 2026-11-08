@@ -215,9 +215,7 @@ HSD_DObj* HSD_DObjLoadDesc(HSD_DObjDesc* desc)
         dobj = HSD_DObjAlloc();
     } else {
         dobj = HSD_DOBJ(hsdNew(info));
-        if (dobj == NULL) {
-            __assert(__FILE__, 378, "dobj");
-        }
+        HSD_ASSERT(378, dobj);
     }
     HSD_DOBJ_METHOD(dobj)->load(dobj, desc);
 
@@ -242,11 +240,9 @@ void HSD_DObjRemoveAll(HSD_DObj* dobj)
 void HSD_DObjSetDefaultClass(HSD_ClassInfo* info)
 {
     if (info) {
-        if (!hsdIsDescendantOf(info, &hsdDObj)) {
-            // The line number here is totally made up, this function is
-            // removed in practice but the string isn't
-            __assert(__FILE__, __LINE__, "hsdIsDescendantOf(info, &hsdDObj)");
-        }
+        // The line number here is totally made up, this function is
+        // removed in practice but the string isn't
+        HSD_ASSERT(__LINE__, hsdIsDescendantOf(info, &hsdDObj));
     }
     default_class = info;
 }
@@ -254,9 +250,7 @@ void HSD_DObjSetDefaultClass(HSD_ClassInfo* info)
 HSD_DObj* HSD_DObjAlloc(void)
 {
     HSD_DObj* dobj = hsdNew(default_class ? default_class : &hsdDObj.parent);
-    if (dobj == NULL) {
-        __assert(__FILE__, 525, "dobj");
-    }
+    HSD_ASSERT(525, dobj);
     return dobj;
 }
 
@@ -282,15 +276,11 @@ void forceStringAllocation(
         mobj) // This function exists for the sole purpose of causing strings
               // to end up in data by the compiler despite not being used
 {
-    if (dobj->pobj == NULL) {
-        __assert(__FILE__, 700, "can not find specified pobj in link.\n");
-    }
-    if (dobj->pobj == NULL) {
-        __assert(__FILE__, 702, "can not find specified pobj in link.");
-    }
-    if (dobj->mobj != mobj) {
-        __assert(__FILE__, 704, "dobj->mobj == mobj");
-    }
+    HSD_ASSERTMSG(700, dobj->pobj == NULL,
+                  "can not find specified pobj in link.\n");
+    HSD_ASSERTMSG(702, dobj->pobj == NULL,
+                  "can not find specified pobj in link.");
+    HSD_ASSERT(704, dobj->mobj == mobj);
 }
 
 #if defined(TARGET_PC)

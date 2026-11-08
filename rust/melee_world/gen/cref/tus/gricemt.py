@@ -53,7 +53,7 @@ SPEC = dict(
     effects={
         "mpJointGetCb1": ("*a1 = (fv() & 1) ? onJointCollision : 0; *a2 = 0;",
                           "*a1 = if fv() & 1 != 0 { Some(super::m::onJointCollision) } else { None }; *a2 = core::ptr::null_mut();"),
-        "ftLib_80086644": (V3[0].format(a="a1"), V3[1].format(a="a1")),
+        "ftLib_GetPos": (V3[0].format(a="a1"), V3[1].format(a="a1")),
         "it_8026B294": (V3[0].format(a="a1"), V3[1].format(a="a1")),
         "Camera_RequestQuake": (V3T[0].format(a="a1"), V3T[1].format(a="a1")),
         "grLib_801C96F8": (V3T[0].format(a="a2"), V3T[1].format(a="a2")),

@@ -56,7 +56,7 @@ pub mod ext {
         ftCo_800C4724(g: G) = |g: G| { unsafe { crate::tu::ftCo_WarpStar::ftCo_800C4724(g as _); } };
         ftCo_800C52F4(g: G) = crate::tu::ftCo_HammerWait::ftCo_800C52F4;
         ftCommon_8007FA58(g: G, i: I) = crate::ftcommon3::ftcommon_8007fa58;
-        ftLib_800871A8(g: G, i: I) = crate::tu::ftlib::ftlib_800871a8;
+        ftLib_ApplyMetalBox(g: G, i: I) = crate::tu::ftlib::ftlib_applymetalbox;
         ftCo_800C88D4(g: G, v: i32, b: i32) = |g: G, v: i32, b: i32| { unsafe { crate::tu::ft_0c88::ftco_800c88d4(g as _, v as _, (b != 0 as _)); } };
         ftCo_CalcYScaledKnockback(a: f32, b: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftCo_CalcYScaledKnockback;
         // `Fighter_804D6524->x8` (PlCo size-scaling exponent).
@@ -247,7 +247,7 @@ fn use_item(g: G, item_gobj: I, star: fn(G, I), hammer: fn(G)) -> bool {
     } else if k == It_Kind_RabbitC as i32 {
         ext::ftCommon_8007FA58(g, item_gobj);
     } else if k == It_Kind_MetalB as i32 {
-        ext::ftLib_800871A8(g, item_gobj);
+        ext::ftLib_ApplyMetalBox(g, item_gobj);
         ext::Item_8026A8EC(item_gobj);
     } else if k == It_Kind_Spycloak as i32 {
         let v = crate::hooks::common_data().x7CC;

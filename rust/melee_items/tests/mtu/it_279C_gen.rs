@@ -16,12 +16,12 @@ pub fn install() {
         db_80225DD8 = Some(|a0, a1| { t(1003); t(pi(a0)); t(pi(a1)); });
         db_GetCurrentlySelectedPokemon = Some(|| { t(1004); (fv() % 32) as i32 });
         efSync_Spawn = Some(|a0, a1, a2| { t(1005); t(a0 as u32); t(pi(a1)); t(a2.len() as u32); for a in a2.iter() { match *a { EfArg::Int(v) => t(v as u32), EfArg::Ptr(p) => t(pi(p)), EfArg::F32P(p) => t((*p).to_bits()), EfArg::Vec3P(p) => { t((*p).x.to_bits()); t((*p).y.to_bits()); t((*p).z.to_bits()); } } } core::ptr::null_mut() });
-        ftLib_800860C4 = Some(|| { t(1006); fv() as _ });
-        ftLib_8008627C = Some(|a0, a1| { t(1007); t(pi(a0)); t(pi(a1)); pick_fgo() });
-        ftLib_80086644 = Some(|a0, a1| { t(1008); t(pi(a0)); t(pi(a1));  if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
-        ftLib_80086960 = Some(|a0| { t(1009); t(pi(a0)); (a0 >= &raw mut GO[4] && a0 <= &raw mut GO[6]) as i32 });
-        ftLib_80086BE0 = Some(|a0| { t(1010); t(pi(a0)); fv() as _ });
-        ftLib_800874BC = Some(|a0| { t(1011); t(pi(a0)); fv() as _ });
+        ftLib_CountFighters = Some(|| { t(1006); fv() as _ });
+        ftLib_FindNearestOpponent = Some(|a0, a1| { t(1007); t(pi(a0)); t(pi(a1)); pick_fgo() });
+        ftLib_GetPos = Some(|a0, a1| { t(1008); t(pi(a0)); t(pi(a1));  if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
+        ftLib_IsFighter = Some(|a0| { t(1009); t(pi(a0)); (a0 >= &raw mut GO[4] && a0 <= &raw mut GO[6]) as i32 });
+        ftLib_GetPlayerIndex = Some(|a0| { t(1010); t(pi(a0)); fv() as _ });
+        ftLib_IsSubFighter = Some(|a0| { t(1011); t(pi(a0)); fv() as _ });
         ft_80089768 = Some(|a0| { t(1012); t(pi(a0)); (*a0).x = rw(); (*a0).y = rw(); });
         ft_80089884 = Some(|a0| { t(1013); t(pi(a0)); &raw mut S70[(rnd() & 1) as usize] });
         ft_800898A8 = Some(|a0| { t(1014); t(pi(a0)); &raw mut S74[(rnd() & 1) as usize] });

@@ -113,8 +113,8 @@ pub mod ext {
                     None => { return unsafe { crate::tu::ground::Ground_GetP1Fighter() as _ }; },
                 }
             }
-    pub static mut H_ftLib_80086644: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
-    pub unsafe extern "C" fn ftLib_80086644(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_80086644 { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } } }
+    pub static mut H_ftLib_GetPos: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, *mut melee_types::Vec)> = None;
+    pub unsafe extern "C" fn ftLib_GetPos(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { match H_ftLib_GetPos { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } } }
     pub static mut H_Ground_801C38BC: Option<unsafe extern "C" fn(f32, f32) > = None;
             pub unsafe extern "C" fn Ground_801C38BC(a0: f32, a1: f32)  {
                 match H_Ground_801C38BC {
@@ -433,7 +433,7 @@ pub unsafe extern "C" fn grZebesRoute_8020B42C(gobj: *mut Ground_GObj) {
 
     let fighter = ext::Ground_GetP1Fighter();
     if !fighter.is_null() {
-        ext::ftLib_80086644(fighter, &mut pos);
+        ext::ftLib_GetPos(fighter, &mut pos);
         if pos.y < -50.0f32 {
             pos.y = -50.0f32;
         }

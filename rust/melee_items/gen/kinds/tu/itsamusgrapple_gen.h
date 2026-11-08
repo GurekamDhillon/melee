@@ -57,7 +57,7 @@ void (ftColl_8007ABD0)(__typeof__(struct HitCapsule *) a0, __typeof__(unsigned i
 void (ftColl_8007AC9C)(__typeof__(struct HitCapsule *) a0, __typeof__(int) a1, __typeof__(struct HSD_GObj *) a2) { T(1031); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
 void (ftColl_8007AFF8)(__typeof__(struct HSD_GObj *) a0) { T(1032); T(PI((const void*) a0)); }
 void (ftCommon_8007E2F4)(__typeof__(struct Fighter *) a0, __typeof__(short) a1) { T(1033); T(PI((const void*) a0)); T((u32) a1); }
-__typeof__(struct HSD_JObj *) (ftLib_80086630)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1034); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) ((&JO[3 + (fv() % 3)])); }
+__typeof__(struct HSD_JObj *) (ftLib_GetPartJObj)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1034); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) ((&JO[3 + (fv() % 3)])); }
 __typeof__(enum Fighter_Part) (ftParts_GetBoneIndex)(__typeof__(struct Fighter *) a0, __typeof__(enum Fighter_Part) a1) { T(1035); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(enum Fighter_Part)) ((int) (fv() % 200)); }
 __typeof__(struct HSD_GObj *) (ft_80082E3C)(__typeof__(struct HSD_GObj *) a0) { T(1036); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &GO[1] : 0)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1037); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
@@ -5121,7 +5121,7 @@ static void freg_all(void)
 // stub ftColl_8007AC9C = 1031
 // stub ftColl_8007AFF8 = 1032
 // stub ftCommon_8007E2F4 = 1033
-// stub ftLib_80086630 = 1034
+// stub ftLib_GetPartJObj = 1034
 // stub ftParts_GetBoneIndex = 1035
 // stub ft_80082E3C = 1036
 // stub it_8026B894 = 1037

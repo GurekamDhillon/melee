@@ -20,7 +20,7 @@ pub fn install() {
         Stage_8022519C = Some(|a0| { t(1007); t(a0 as u32); if fv() % 3 == 0 { 14 } else { (fv() % 20) as _ } });
         atan2f = Some(|a0, a1| { t(1008); t(a0.to_bits()); t(a1.to_bits()); rg() });
         efSync_Spawn = Some(|a0, a1, a2| { t(1009); t(a0 as u32); t(pi(a1)); t(pi(a2)); tvec(a2); core::ptr::null_mut() });
-        ftLib_800865C0 = Some(|a0| { t(1010); t(pi(a0)); rg() });
+        ftLib_GetFacingDir = Some(|a0| { t(1010); t(pi(a0)); rg() });
         grCorneria_801DDCF0 = Some(|a0| { t(1011); t(pi(a0)); tvec(a0); if !a0.is_null() { (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); } });
         it_8026B3A8 = Some(|a0| { t(1012); t(pi(a0)); });
         it_8026EA20 = Some(|a0, a1, a2, a3, a4, a5| { t(1013); t(pi(a0)); t(pi(a1)); tvec(a1); t(pi(a2)); tvec(a2); t(pi(a3)); tvec(a3); t(pi(a4)); t(pi(a5)); if !a3.is_null() { (*a3).x = rw(); (*a3).y = rw(); (*a3).z = rw(); } if !a4.is_null() { *a4 = (fv() % 8) as i32; } if !a5.is_null() { *a5 = fv(); } (fv() & 1) as i32 });

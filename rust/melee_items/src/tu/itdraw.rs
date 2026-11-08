@@ -38,9 +38,9 @@ pub mod ext {
     fn HSD_StateInvalidate(a0: i32);
     fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) => unsafe { *(a2 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXConcat(&*(a0 as *const _), &*(a1 as *const _)) };
     fn PSMTXIdentity(a0: *mut c_void) => unsafe { *(a0 as *mut melee_types::Mtx) = melee_runtime::tu::mtx_pc::PSMTXIdentity() };
-    fn ftLib_800868D4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
-    fn ftLib_80087074(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;
+    fn ftLib_IsItemVisible(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsFighter(a0) as _ };
+    fn ftLib_GetShakeOffset(a0: *mut HSD_GObj, a1: *mut Vec) -> i32;
     fn it_80272A18(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A18(a0) };
     fn it_80272A3C(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A3C(a0) };
     fn lbColl_80009F54(a0: *mut HitCapsule, a1: u32, a2: f32) -> i32 => unsafe { melee_runtime::tu::lbcollision::lbColl_80009F54(a0, a1, a2) as _ };
@@ -225,8 +225,8 @@ pub unsafe extern "C" fn it_8026EECC_inline_0(gobj: *mut HSD_GObj, pos: *mut Vec
     melee_core::ct!("it_8026EECC_inline_0");
     let ip = item(gobj);
     (*ip).xDCF_flag.anon_0.set_b7(0);
-    if !(*ip).owner.is_null() && ext::ftLib_80086960((*ip).owner) != 0 {
-        if ext::ftLib_80087074((*ip).owner, pos) != 0 {
+    if !(*ip).owner.is_null() && ext::ftLib_IsFighter((*ip).owner) != 0 {
+        if ext::ftLib_GetShakeOffset((*ip).owner, pos) != 0 {
             (*ip).xDCF_flag.anon_0.set_b7(1);
         }
     } else {
@@ -266,7 +266,7 @@ pub unsafe extern "C" fn it_8026EECC(gobj: *mut HSD_GObj, arg1: i32) {
         pos.y = 0.0;
         pos.x = 0.0;
         if (*ip).xDC8_word.flags.x13() != 0 {
-            if (*ip).owner.is_null() || ext::ftLib_80086960((*ip).owner) == 0 || ext::ftLib_800868D4((*ip).owner, gobj) != 0 {
+            if (*ip).owner.is_null() || ext::ftLib_IsFighter((*ip).owner) == 0 || ext::ftLib_IsItemVisible((*ip).owner, gobj) != 0 {
                 it_8026EECC_inline_0(gobj, &raw mut pos);
                 it_8026EECC_inline_sw(gobj, arg1, &raw mut pos);
             }

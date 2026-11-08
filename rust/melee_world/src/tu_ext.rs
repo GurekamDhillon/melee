@@ -523,41 +523,41 @@ pub static mut HOOK_ftCo_800C07F8: Option<fn(*mut Ground_GObj, u32, *mut core::f
 pub fn ftCo_800C07F8(a0: *mut Ground_GObj, a1: u32, a2: *mut core::ffi::c_void) { match unsafe { HOOK_ftCo_800C07F8 } { Some(f) => f(a0, a1, a2), None => unsafe { crate::ftdevice::ftCo_800C07F8(a0 as _, a1 as _, core::mem::transmute(a2)); } }
 }
 
-pub static mut HOOK_ftLib_80086644: Option<fn(*mut Fighter_GObj, *mut Vec3)> = None;
+pub static mut HOOK_ftLib_GetPos: Option<fn(*mut Fighter_GObj, *mut Vec3)> = None;
 
-/// C `ftLib_80086644` (melee/ft/ftlib.h).
-pub fn ftLib_80086644(a0: *mut Fighter_GObj, a1: *mut Vec3) { match unsafe { HOOK_ftLib_80086644 } { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } }
+/// C `ftLib_GetPos` (melee/ft/ftlib.h).
+pub fn ftLib_GetPos(a0: *mut Fighter_GObj, a1: *mut Vec3) { match unsafe { HOOK_ftLib_GetPos } { Some(f) => f(a0, a1), None => unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } }
 }
 
-pub static mut HOOK_ftLib_80086BE0: Option<fn(*mut HSD_GObj) -> u8> = None;
+pub static mut HOOK_ftLib_GetPlayerIndex: Option<fn(*mut HSD_GObj) -> u8> = None;
 
-/// C `ftLib_80086BE0` (melee/ft/ftlib.h).
-pub fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 { match unsafe { HOOK_ftLib_80086BE0 } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_80086BE0(a0 as _) as _ } }
+/// C `ftLib_GetPlayerIndex` (melee/ft/ftlib.h).
+pub fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 { match unsafe { HOOK_ftLib_GetPlayerIndex } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_GetPlayerIndex(a0 as _) as _ } }
 }
 
-pub static mut HOOK_ftLib_80086C18: Option<fn(*mut HSD_GObj, i32, i32)> = None;
+pub static mut HOOK_ftLib_StartRumble: Option<fn(*mut HSD_GObj, i32, i32)> = None;
 
-/// C `ftLib_80086C18` (melee/ft/ftlib.h).
-pub fn ftLib_80086C18(a0: *mut HSD_GObj, a1: i32, a2: i32) {
-    match unsafe { HOOK_ftLib_80086C18 } { Some(f) => f(a0, a1, a2), None => melee_core::unported!("TODO: ftLib_80086C18 is not ported") }
+/// C `ftLib_StartRumble` (melee/ft/ftlib.h).
+pub fn ftLib_StartRumble(a0: *mut HSD_GObj, a1: i32, a2: i32) {
+    match unsafe { HOOK_ftLib_StartRumble } { Some(f) => f(a0, a1, a2), None => melee_core::unported!("TODO: ftLib_StartRumble is not ported") }
 }
 
-pub static mut HOOK_ftLib_80086EC0: Option<fn(*mut HSD_GObj) -> i32> = None;
+pub static mut HOOK_ftLib_IsInHitstun: Option<fn(*mut HSD_GObj) -> i32> = None;
 
-/// C `ftLib_80086EC0` (melee/ft/ftlib.h).
-pub fn ftLib_80086EC0(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_80086EC0 } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_80086EC0(a0 as _) as _ } }
+/// C `ftLib_IsInHitstun` (melee/ft/ftlib.h).
+pub fn ftLib_IsInHitstun(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_IsInHitstun } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_IsInHitstun(a0 as _) as _ } }
 }
 
-pub static mut HOOK_ftLib_8008731C: Option<fn(*mut HSD_GObj) -> i32> = None;
+pub static mut HOOK_ftLib_IsSleeping_8008731C: Option<fn(*mut HSD_GObj) -> i32> = None;
 
-/// C `ftLib_8008731C` (melee/ft/ftlib.h).
-pub fn ftLib_8008731C(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_8008731C } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_8008731C(a0 as _) as _ } }
+/// C `ftLib_IsSleeping_8008731C` (melee/ft/ftlib.h).
+pub fn ftLib_IsSleeping_8008731C(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_IsSleeping_8008731C } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_IsSleeping_8008731C(a0 as _) as _ } }
 }
 
-pub static mut HOOK_ftLib_8008732C: Option<fn(*mut HSD_GObj) -> i32> = None;
+pub static mut HOOK_ftLib_IsDead: Option<fn(*mut HSD_GObj) -> i32> = None;
 
-/// C `ftLib_8008732C` (melee/ft/ftlib.h).
-pub fn ftLib_8008732C(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_8008732C } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_8008732C(a0 as _) as _ } }
+/// C `ftLib_IsDead` (melee/ft/ftlib.h).
+pub fn ftLib_IsDead(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_IsDead } { Some(f) => f(a0), None => unsafe { crate::ftlib::ftLib_IsDead(a0 as _) as _ } }
 }
 
 pub static mut HOOK_gm_801674C4: Option<fn(i8, u8, i8, i8, GmRouteCallback)> = None;

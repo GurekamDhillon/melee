@@ -25,7 +25,7 @@ __typeof__(int) ftFx_SpecialS_CheckGhostRemove(__typeof__(struct HSD_GObj *) a0)
 void ftFx_SpecialS_CopyGhostPosIndexed(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(Vec *) a2) { T(1009); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); a2->x = rw(); a2->y = rw(); a2->z = rw(); }
 __typeof__(int) ftFx_SpecialS_GetCmdVar2(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 4)); }
 __typeof__(float) ftFx_SpecialS_ReturnFloatVarIndexed(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1011); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(float)) (rg()); }
-__typeof__(int) ftLib_800865CC(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 3)); }
+__typeof__(int) ftLib_GetGroundAir(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 3)); }
 void it_8026B3A8(__typeof__(struct HSD_GObj *) a0) { T(1013); T(PI((const void*) a0)); }
 __typeof__(int) it_8026B894(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1014); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 void it_8026EECC(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1015); T(PI((const void*) a0)); T((u32) a1); }
@@ -1682,7 +1682,7 @@ static void freg_all(void)
 // stub ftFx_SpecialS_CopyGhostPosIndexed = 1009
 // stub ftFx_SpecialS_GetCmdVar2 = 1010
 // stub ftFx_SpecialS_ReturnFloatVarIndexed = 1011
-// stub ftLib_800865CC = 1012
+// stub ftLib_GetGroundAir = 1012
 // stub it_8026B3A8 = 1013
 // stub it_8026B894 = 1014
 // stub it_8026EECC = 1015

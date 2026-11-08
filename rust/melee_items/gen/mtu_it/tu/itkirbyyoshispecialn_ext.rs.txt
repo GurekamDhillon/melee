@@ -21,7 +21,7 @@ pub mod ext {
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
     fn Item_8026A8EC(a0: *mut HSD_GObj);
     fn ftKb_SpecialNYs_80109238(a0: *mut HSD_GObj) -> u32;
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj;
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj;
     fn it_8026BD54(a0: *mut HSD_GObj);
     fn it_8026C220(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn it_80273408(a0: *mut HSD_GObj);

@@ -44,8 +44,8 @@ SPECS["grgarden"] = dict(
         "gm_8016B238": ("((fv() & 1) ? 0 : fv())", "if fv() & 1 != 0 { 0 } else { fv() as i32 }"),
     },
     effects={
-        "ftLib_80086644": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
-        "ftLib_80086684": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
+        "ftLib_GetPos": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
+        "ftLib_GetPrevPos": ("a1->x = rw(); a1->y = rw(); a1->z = rw();", "(*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw();"),
         "lb_8000B1CC": ("a2->x = rw(); a2->y = rw(); a2->z = rw();", "(*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw();"),
     })
 import importlib, pkgutil, sys, os

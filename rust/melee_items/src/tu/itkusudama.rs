@@ -77,7 +77,7 @@ pub mod ext {
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
     fn efSync_Spawn_N(a0: i32, a1: *mut HSD_GObj, a2: &[*mut c_void]) -> *mut c_void;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsFighter(a0) as _ };
     fn ftLib_800874CC(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32);
     fn it_8026B390(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b390(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
@@ -503,7 +503,7 @@ pub unsafe extern "C" fn it_80289BE8(gobj: *mut Item_GObj, arg1: i32, mut food_w
             }
         }
     }
-    if ext::ftLib_80086960((*ip).owner) != 0 {
+    if ext::ftLib_IsFighter((*ip).owner) != 0 {
         ext::ftLib_800874CC((*ip).owner, spawned.as_mut_ptr() as *mut c_void, i);
     }
 }

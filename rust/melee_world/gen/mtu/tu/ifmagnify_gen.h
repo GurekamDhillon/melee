@@ -114,10 +114,10 @@ __typeof__(int) View_AspectBits(void) { T(1044); return (__typeof__(int)) (view_
 __typeof__(int) Wb_RenderActive(void) { T(1045); return (__typeof__(int)) ((fv() & 1)); }
 __typeof__(float) atan2f(__typeof__(float) a0, __typeof__(float) a1) { T(1046); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rg()); }
 void ftDrawCommon_80080C28(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1047); T(PI((const void*) a0)); T((u32) a1); }
-__typeof__(int) ftLib_80086B64(__typeof__(struct HSD_GObj *) a0) { T(1048); T(PI((const void*) a0)); return (__typeof__(int)) ((fv() & 1)); }
+__typeof__(int) ftLib_IsOffscreen(__typeof__(struct HSD_GObj *) a0) { T(1048); T(PI((const void*) a0)); return (__typeof__(int)) ((fv() & 1)); }
 __typeof__(float) ftLib_80086B80(__typeof__(struct HSD_GObj *) a0) { T(1049); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-void ftLib_80086B90(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1050); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
-__typeof__(int) ftLib_80086ED0(__typeof__(struct HSD_GObj *) a0) { T(1051); T(PI((const void*) a0)); return (__typeof__(int)) ((fv() & 1)); }
+void ftLib_GetCameraSubjectBonePos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1050); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+__typeof__(int) ftLib_CanBeMagnified(__typeof__(struct HSD_GObj *) a0) { T(1051); T(PI((const void*) a0)); return (__typeof__(int)) ((fv() & 1)); }
 void ftLib_UpdateLogicOffCamera(__typeof__(struct HSD_GObj *) a0) { T(1052); T(PI((const void*) a0)); }
 __typeof__(struct VsSceneController *) gmVs_GetSceneController(void) { T(1053); return (__typeof__(struct VsSceneController *)) (&P_VsSceneController[0]); }
 __typeof__(unsigned int) gm_80160854(__typeof__(unsigned char) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1054); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); return (__typeof__(unsigned int)) (fv()); }
@@ -1261,10 +1261,10 @@ static void freg_all(void)
 // stub Wb_RenderActive = 1045
 // stub atan2f = 1046
 // stub ftDrawCommon_80080C28 = 1047
-// stub ftLib_80086B64 = 1048
+// stub ftLib_IsOffscreen = 1048
 // stub ftLib_80086B80 = 1049
-// stub ftLib_80086B90 = 1050
-// stub ftLib_80086ED0 = 1051
+// stub ftLib_GetCameraSubjectBonePos = 1050
+// stub ftLib_CanBeMagnified = 1051
 // stub ftLib_UpdateLogicOffCamera = 1052
 // stub gmVs_GetSceneController = 1053
 // stub gm_80160854 = 1054

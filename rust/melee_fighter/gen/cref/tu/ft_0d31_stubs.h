@@ -87,10 +87,10 @@ void (ftCommon_8007FF74)(__typeof__(struct HSD_GObj *) a0) { T(1040); T(PI((cons
 // stub ftCommon_8007FF74 = 1040
 void (ftCommon_Fall)(__typeof__(struct Fighter *) a0, __typeof__(float) a1, __typeof__(float) a2) { T(1041); T(PI((const void*) a0)); T(B(a1)); T(B(a2)); }
 // stub ftCommon_Fall = 1041
-__typeof__(unsigned char) (ftLib_80086BE0)(__typeof__(struct HSD_GObj *) a0) { T(1042); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
-// stub ftLib_80086BE0 = 1042
-__typeof__(int) (ftLib_800874BC)(__typeof__(struct HSD_GObj *) a0) { T(1043); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub ftLib_800874BC = 1043
+__typeof__(unsigned char) (ftLib_GetPlayerIndex)(__typeof__(struct HSD_GObj *) a0) { T(1042); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
+// stub ftLib_GetPlayerIndex = 1042
+__typeof__(int) (ftLib_IsSubFighter)(__typeof__(struct HSD_GObj *) a0) { T(1043); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+// stub ftLib_IsSubFighter = 1043
 __typeof__(enum Fighter_Part) (ftParts_GetBoneIndex)(__typeof__(struct Fighter *) a0, __typeof__(enum Fighter_Part) a1) { T(1044); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(enum Fighter_Part)) (fv()); }
 // stub ftParts_GetBoneIndex = 1044
 void (ft_8008805C)(__typeof__(struct Fighter *) a0, __typeof__(int) a1) { T(1045); T(PI((const void*) a0)); T((u32) a1); }

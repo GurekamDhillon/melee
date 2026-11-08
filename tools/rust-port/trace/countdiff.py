@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Per-chunk call-COUNT diff between the C build and the Rust engine (robust to inlining and phase differences).
-  python countdiff.py --c c.seq --map melee-pc.map --rust r.ct --anchor Fighter_8006A1BC --clean A-B --bad C-D [--filter RX] [--top N]
+  python countdiff.py --c c.seq --map melee-pc.map --rust r.ct --anchor Fighter_procHitlag --clean A-B --bad C-D [--filter RX] [--top N]
 Chunks are cut at every call of --anchor on each side (chunk k of C is compared with chunk k of Rust). Names whose per-chunk
 count differs anywhere in the --clean chunk range (frames both sides agree on) are treated as inlining noise; then the
 first --bad chunk with a count difference outside the noise set is printed with the names and counts."""
@@ -13,7 +13,7 @@ ns = {'__file__': str(Path(__file__).resolve().parent / 'seqdiff.py')}
 exec(compile(src, 'seqdiff', 'exec'), ns)
 ap = argparse.ArgumentParser()
 ap.add_argument('--c', required=True); ap.add_argument('--map', required=True); ap.add_argument('--rust', required=True)
-ap.add_argument('--anchor', default='Fighter_8006A1BC'); ap.add_argument('--clean', required=True); ap.add_argument('--bad', required=True)
+ap.add_argument('--anchor', default='Fighter_procHitlag'); ap.add_argument('--clean', required=True); ap.add_argument('--bad', required=True)
 ap.add_argument('--filter', default=None); ap.add_argument('--top', type=int, default=40)
 ap.add_argument("--all", action="store_true")
 a = ap.parse_args()

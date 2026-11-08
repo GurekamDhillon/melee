@@ -608,26 +608,26 @@ unsafe fn h_ftCo_800C8C84(a: &[u64]) -> u64 {
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     rt::draw_int(&mut rt::MST) as u64
 }
-unsafe fn h_ftLib_80086824(a: &[u64]) -> u64 {
+unsafe fn h_ftLib_DisableAllInput(a: &[u64]) -> u64 {
     rt::t_begin(54);
     0
 }
-unsafe fn h_ftLib_800868A4(a: &[u64]) -> u64 {
+unsafe fn h_ftLib_EnableAllInput(a: &[u64]) -> u64 {
     rt::t_begin(55);
     0
 }
-unsafe fn h_ftLib_80087508(a: &[u64]) -> u64 {
+unsafe fn h_ftLib_LoadFighterCostume(a: &[u64]) -> u64 {
     rt::t_begin(56);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     0
 }
-unsafe fn h_ftLib_80087574(a: &[u64]) -> u64 {
+unsafe fn h_ftLib_LoadFighterAllCostumes(a: &[u64]) -> u64 {
     rt::t_begin(57);
     rt::t_i(a[0] as i64);
     0
 }
-unsafe fn h_ftLib_80087610(a: &[u64]) -> u64 {
+unsafe fn h_ftLib_LoadKirbyHats(a: &[u64]) -> u64 {
     rt::t_begin(58);
     rt::t_i(a[0] as i64);
     0
@@ -1524,11 +1524,11 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "ftBossLib_8015CC14" => h_ftBossLib_8015CC14(a),
         "ftBossLib_IsMasterHandEntry" => h_ftBossLib_IsMasterHandEntry(a),
         "ftCo_800C8C84" => h_ftCo_800C8C84(a),
-        "ftLib_80086824" => h_ftLib_80086824(a),
-        "ftLib_800868A4" => h_ftLib_800868A4(a),
-        "ftLib_80087508" => h_ftLib_80087508(a),
-        "ftLib_80087574" => h_ftLib_80087574(a),
-        "ftLib_80087610" => h_ftLib_80087610(a),
+        "ftLib_DisableAllInput" => h_ftLib_DisableAllInput(a),
+        "ftLib_EnableAllInput" => h_ftLib_EnableAllInput(a),
+        "ftLib_LoadFighterCostume" => h_ftLib_LoadFighterCostume(a),
+        "ftLib_LoadFighterAllCostumes" => h_ftLib_LoadFighterAllCostumes(a),
+        "ftLib_LoadKirbyHats" => h_ftLib_LoadKirbyHats(a),
         "ft_80087C58" => h_ft_80087C58(a),
         "ft_80087C64" => h_ft_80087C64(a),
         "gmMainLib_8015D134" => h_gmMainLib_8015D134(a),
@@ -6646,11 +6646,11 @@ unsafe fn init() {
     rt::fn_add(m::ext::ftBossLib_8015CC14 as usize);
     rt::fn_add(m::ext::ftBossLib_IsMasterHandEntry as usize);
     rt::fn_add(m::ext::ftCo_800C8C84 as usize);
-    rt::fn_add(m::ext::ftLib_80086824 as usize);
-    rt::fn_add(m::ext::ftLib_800868A4 as usize);
-    rt::fn_add(m::ext::ftLib_80087508 as usize);
-    rt::fn_add(m::ext::ftLib_80087574 as usize);
-    rt::fn_add(m::ext::ftLib_80087610 as usize);
+    rt::fn_add(m::ext::ftLib_DisableAllInput as usize);
+    rt::fn_add(m::ext::ftLib_EnableAllInput as usize);
+    rt::fn_add(m::ext::ftLib_LoadFighterCostume as usize);
+    rt::fn_add(m::ext::ftLib_LoadFighterAllCostumes as usize);
+    rt::fn_add(m::ext::ftLib_LoadKirbyHats as usize);
     rt::fn_add(m::ext::ft_80087C58 as usize);
     rt::fn_add(m::ext::ft_80087C64 as usize);
     rt::fn_add(m::ext::gmMainLib_8015D134 as usize);

@@ -153,12 +153,12 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn db_GetCurrentlySelectedPokemon() -> i32 => unsafe { crate::tu::dbitem::db_GetCurrentlySelectedPokemon() };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
-    fn ftLib_800860C4() -> i32;
-    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_80086BE0(a0) };
-    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_CountFighters() -> i32;
+    fn ftLib_FindNearestOpponent(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsFighter(a0) as _ };
+    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_GetPlayerIndex(a0) };
+    fn ftLib_IsSubFighter(a0: *mut HSD_GObj) -> i32;
     fn ft_80089768(a0: *mut Vec2);
     fn ft_80089884(a0: *mut HSD_GObj) -> *mut Struct2070;
     fn ft_800898A8(a0: *mut HSD_GObj) -> *mut Struct2074;
@@ -562,9 +562,9 @@ pub unsafe extern "C" fn it_80279C48(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80279C48");
     let mut v: Vec3 = core::mem::zeroed();
     let item = item_of(item_gobj);
-    let gobj = ext::ftLib_8008627C(&raw mut (*item).pos, (*item).owner);
+    let gobj = ext::ftLib_FindNearestOpponent(&raw mut (*item).pos, (*item).owner);
     if !gobj.is_null() {
-        ext::ftLib_80086644(gobj, &raw mut v);
+        ext::ftLib_GetPos(gobj, &raw mut v);
         if (*item).pos.x - v.x > 0.0 {
             (*item).facing_dir = -1.0;
             return;
@@ -935,7 +935,7 @@ pub unsafe extern "C" fn it_8027AB64(item_gobj: *mut HSD_GObj) -> bool {
         } else {
             spawn.kind -= 1;
         }
-        if spawn.kind == Pokemon_ID_Metamon && (ext::it_8026B3C0(It_PKind_Metamon) != 0 || ext::ftLib_800860C4() == 4) {
+        if spawn.kind == Pokemon_ID_Metamon && (ext::it_8026B3C0(It_PKind_Metamon) != 0 || ext::ftLib_CountFighters() == 4) {
             spawn.kind = Pokemon_ID_Tosakinto;
         }
     }
@@ -1030,8 +1030,8 @@ pub unsafe extern "C" fn it_8027B070(item_gobj: *mut HSD_GObj, owner_gobj: *mut 
 /// `it_8027B0C4`: the spawned item's attack data, from its parent or its secondary parent.
 pub unsafe extern "C" fn it_8027B0C4(item_gobj: *mut HSD_GObj, spawn: *mut SpawnItem) {
     melee_core::ct!("it_8027B0C4");
-    if ext::ftLib_80086960((*spawn).x0_parent_gobj) != 0 {
-        if ext::ftLib_80086960((*spawn).x4_parent_gobj2) != 0 {
+    if ext::ftLib_IsFighter((*spawn).x0_parent_gobj) != 0 {
+        if ext::ftLib_IsFighter((*spawn).x4_parent_gobj2) != 0 {
             it_8027B070(item_gobj, (*spawn).x4_parent_gobj2);
         } else {
             let owner_item = item_of((*spawn).x4_parent_gobj2);
@@ -1066,7 +1066,7 @@ pub unsafe extern "C" fn it_8027B1F4(item_gobj: *mut HSD_GObj) {
     (*item).xD8C_attack_instance = 0;
     (*item).xD90 = sp10;
     (*item).xDA8_short = 0;
-    if ext::ftLib_80086960((*item).owner) != 0 {
+    if ext::ftLib_IsFighter((*item).owner) != 0 {
         let temp_r3 = ext::ft_800898A8((*item).owner);
         (*item).xD94 = (*temp_r3).x2074_vec;
         (*item).xD9C = (*temp_r3).x207C;
@@ -1086,7 +1086,7 @@ pub unsafe extern "C" fn it_8027B288(item_gobj: *mut HSD_GObj, arg1: u32) {
         (*item).xDA8_short = ext::plAttack_80037B08() as _;
     }
     (*item).xD90 = sp14;
-    if ext::ftLib_80086960((*item).owner) != 0 {
+    if ext::ftLib_IsFighter((*item).owner) != 0 {
         let temp_r3 = ext::ft_800898A8((*item).owner);
         (*item).xD94 = (*temp_r3).x2074_vec;
         (*item).xD9C = (*temp_r3).x207C;
@@ -1111,8 +1111,8 @@ pub unsafe extern "C" fn it_8027B378(fighter_gobj: *mut HSD_GObj, item_gobj: *mu
     melee_core::ct!("it_8027B378");
     if ext::it_8026B6C8(item_gobj) != 0 {
         let temp_r30 = (*ext::ft_80089884(fighter_gobj)).anon_0.x2073;
-        let temp_r31 = ext::ftLib_800874BC(fighter_gobj);
-        let temp_r3 = ext::ftLib_80086BE0(fighter_gobj) as u16;
+        let temp_r31 = ext::ftLib_IsSubFighter(fighter_gobj);
+        let temp_r3 = ext::ftLib_GetPlayerIndex(fighter_gobj) as u16;
         ext::pl_8003EB30(arg2, temp_r3 as i32, temp_r31, 6, 0, temp_r30 as i32);
     }
 }
@@ -1122,10 +1122,10 @@ pub unsafe extern "C" fn it_8027B408(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
     melee_core::ct!("it_8027B408");
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let item1 = item_of(item_gobj1);
-        if ext::ftLib_80086960((*item1).owner) != 0 {
+        if ext::ftLib_IsFighter((*item1).owner) != 0 {
             let owner = (*item1).owner;
-            let temp_r31 = ext::ftLib_800874BC(owner);
-            let temp_r3 = ext::ftLib_80086BE0(owner) as u16;
+            let temp_r31 = ext::ftLib_IsSubFighter(owner);
+            let temp_r3 = ext::ftLib_GetPlayerIndex(owner) as u16;
             ext::pl_8003EB30(arg8, temp_r3 as i32, temp_r31, 6, 0, (*item1).xD90.anon_0.x2073 as i32);
         }
     }
@@ -1145,7 +1145,7 @@ pub unsafe extern "C" fn it_8027B508(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
     melee_core::ct!("it_8027B508");
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let item1 = item_of(item_gobj1);
-        if ext::ftLib_80086960((*item1).owner) != 0 {
+        if ext::ftLib_IsFighter((*item1).owner) != 0 {
             ext::pl_800384DC((*item1).owner, (*item1).xD90.anon_0.x2073 as i32, &raw mut (*item1).xD94 as *mut c_void);
         }
     }
@@ -1155,7 +1155,7 @@ pub unsafe extern "C" fn it_8027B508(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
 pub unsafe extern "C" fn it_8027B564(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8027B564");
     let item = item_of(item_gobj);
-    if ext::ftLib_80086960((*item).owner) != 0 {
+    if ext::ftLib_IsFighter((*item).owner) != 0 {
         let mut sp10 = (*item).xD90;
         ext::pl_80037DF4((*item).owner, &raw mut sp10);
     }

@@ -19,7 +19,7 @@ pub fn install() {
         Item_80268E5C = Some(|a0, a1, a2| { t(1006); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         Item_8026A8EC = Some(|a0| { t(1007); t(pi(a0)); });
         Item_8026AE84 = Some(|a0, a1, a2, a3| { t(1008); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
-        ftLib_80086D40 = Some(|a0, a1, a2| { t(1009); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
+        ftLib_StartItemRumble = Some(|a0, a1, a2| { t(1009); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         it_8026B684 = Some(|a0| { t(1010); t(pi(a0)); tvec(a0); rg() });
         it_8026B894 = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });
         it_8026D564 = Some(|a0| { t(1012); t(pi(a0)); fv() as _ });

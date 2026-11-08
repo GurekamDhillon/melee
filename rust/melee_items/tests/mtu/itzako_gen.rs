@@ -20,10 +20,10 @@ pub fn install() {
         Item_8026AE84 = Some(|a0, a1, a2, a3| { t(1007); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
         ScriptGame_EnemyDefeated = Some(|a0| { t(1008); t(pi(a0)); fv() as _ });
         ScriptGame_EnemyDestroyed = Some(|a0| { t(1009); t(pi(a0)); fv() as _ });
-        ftLib_800865C0 = Some(|a0| { t(1010); t(pi(a0)); rg() });
-        ftLib_800870BC = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); { *(a1 as *mut u32) = fv(); (fv() & 1) as i32 } });
-        ftLib_8008770C = Some(|a0, a1| { t(1012); t(pi(a0)); t(pi(a1)); *(a1 as *mut u32) = fv(); });
-        ftLib_80087744 = Some(|a0, a1| { t(1013); t(pi(a0)); t(pi(a1)); *(a1 as *mut u32) = fv(); });
+        ftLib_GetFacingDir = Some(|a0| { t(1010); t(pi(a0)); rg() });
+        ftLib_GetSubColor = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); { *(a1 as *mut u32) = fv(); (fv() & 1) as i32 } });
+        ftLib_GetGameWatchColor = Some(|a0, a1| { t(1012); t(pi(a0)); t(pi(a1)); *(a1 as *mut u32) = fv(); });
+        ftLib_GetGameWatchOutlineColor = Some(|a0, a1| { t(1013); t(pi(a0)); t(pi(a1)); *(a1 as *mut u32) = fv(); });
         ftLib_GetMotionId = Some(|a0| { t(1014); t(pi(a0)); if rnd() % 5 == 0 { 0x14E } else if rnd() % 5 == 0 { 0x14D } else { fv() as i32 } });
         gm_IsCurrently1PMode = Some(|| { t(1015); fv() as _ });
         grLib_801C9E40 = Some(|| { t(1016); fv() as _ });

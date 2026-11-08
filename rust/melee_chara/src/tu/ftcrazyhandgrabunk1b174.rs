@@ -70,9 +70,9 @@ pub unsafe extern "C" fn fn_8015B2C0(gobj: *mut HSD_GObj) {
         let fp = (*gobj).user_data as *mut Fighter;
         match (*fp).mv.ch.unk4.x0 {
             0 => {
-                let enemy = melee_fighter::ftlib::ftlib_8008627c(&(*fp).cur_pos, gobj);
+                let enemy = melee_fighter::ftlib::ftlib_findnearestopponent(&(*fp).cur_pos, gobj);
                 if !enemy.is_null() {
-                    ext::Camera_8002E6FC(melee_fighter::ftlib::ftlib_80086be0(enemy) as i32);
+                    ext::Camera_8002E6FC(melee_fighter::ftlib::ftlib_getplayerindex(enemy) as i32);
                 } else {
                     ext::Camera_8002E6FC(0);
                 }

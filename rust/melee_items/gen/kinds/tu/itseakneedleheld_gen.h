@@ -17,7 +17,7 @@ void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typ
 void (Item_8026AB54)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(enum Fighter_Part) a2) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); }
 __typeof__(int) (ftKb_SpecialNSk_80105FF0)(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 3)); }
 __typeof__(int) (ftKb_SpecialNSk_80106020)(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 9)); }
-__typeof__(float) (ftLib_800869D4)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(float) (ftLib_GetModelScale)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 __typeof__(int) (ftSk_SpecialS_80111F70)(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 3)); }
 __typeof__(int) (ftSk_SpecialS_80111FA0)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 9)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
@@ -1617,7 +1617,7 @@ static void freg_all(void)
 // stub Item_8026AB54 = 1005
 // stub ftKb_SpecialNSk_80105FF0 = 1006
 // stub ftKb_SpecialNSk_80106020 = 1007
-// stub ftLib_800869D4 = 1008
+// stub ftLib_GetModelScale = 1008
 // stub ftSk_SpecialS_80111F70 = 1009
 // stub ftSk_SpecialS_80111FA0 = 1010
 // stub it_8026B894 = 1011

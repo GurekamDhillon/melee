@@ -58,7 +58,7 @@ SPEC = dict(
         "lb_8000B1CC": ("WV(a2);", "super::wv(a2);"),
         "Ground_801C4D70": ("TV(a1);", "super::tv(a1);"),
         "Ground_801C4DA0": ("WV(a0); *a1 = rg();", "super::wv(a0); *a1 = rg();"),
-        "ftLib_80086644": ("WV(a1);", "super::wv(a1);"),
+        "ftLib_GetPos": ("WV(a1);", "super::wv(a1);"),
         "ftCo_8009EC70": ("TV(a1); T(RH(a2, 36));", "super::tv(a1); t(rh(&*(a2 as *const [u8; 36])));"),
         "Camera_LogicBounds": ("*a0 = rg() * 300.0f; *a1 = rg() * 300.0f; *a2 = rg() * 300.0f;",
                                "*a0 = rg() * 300.0; *a1 = rg() * 300.0; *a2 = rg() * 300.0;"),

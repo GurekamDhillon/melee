@@ -79,7 +79,7 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn ftGw_SpecialLw_ItemCheckPanicRemove(a0: *mut HSD_GObj) -> i32;
     fn ftGw_SpecialLw_ItemPanicSetFlag(a0: *mut HSD_GObj);
-    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_800865CC(a0) };
+    fn ftLib_GetGroundAir(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetGroundAir(a0) };
     fn it_8026B724(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b724(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B73C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b73c(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
@@ -199,7 +199,7 @@ pub unsafe extern "C" fn itGameWatchPanic_Logic78_PickedUp(gobj: *mut HSD_GObj) 
     (*ip).xDB0_itcmd_var1 = 0;
     (*ip).xDAC_itcmd_var0 = 0;
     if !(*ip).owner.is_null() {
-        (*ip).ground_or_air = ext::ftLib_800865CC((*ip).owner) as GroundOrAir;
+        (*ip).ground_or_air = ext::ftLib_GetGroundAir((*ip).owner) as GroundOrAir;
         if (*ip).ground_or_air == GA_Ground {
             ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
         } else {

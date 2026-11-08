@@ -23,7 +23,7 @@ impl DbItemHost for H {
     fn Item_804A0C64(&mut self) -> *mut HSD_ObjAllocUnk { &mut self.alloc }
     fn it_804D6D28(&mut self) -> *mut ItemCommonData { &mut self.common }
     fn it_804A0F60(&mut self, _: usize) -> *mut Article { core::ptr::null_mut() }
-    fn ftLib_80086960(&mut self, _: *mut HSD_GObj) -> i32 { 0 }
+    fn ftLib_IsFighter(&mut self, _: *mut HSD_GObj) -> i32 { 0 }
     fn fn_8022697C(&mut self, _: *mut HSD_GObj) -> u8 { 0 }
     fn DevText_GetGObj(&mut self) -> *mut HSD_GObj { core::ptr::null_mut() }
     fn DevText_Create(&mut self, _: i32, _: i32, _: i32, _: i32, _: i32, _: *mut i8) -> *mut DevText { &mut self.text }

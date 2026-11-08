@@ -16,7 +16,7 @@ fn zoom() -> f32 { t(1); unsafe { ZOOM } }
 fn bt() -> f32 { t(2); unsafe { BT } }
 fn ct() -> f32 { t(3); unsafe { CT } }
 fn tcam(v: &mut Vec3) { t(4); v.x = 0.0; v.y = unsafe { TC }; v.z = 0.0; }
-// ftLib_800866DC itself is ported; the C stubs it, so stub its only callee to emit the same.
+// ftLib_GetCameraBonePos itself is ported; the C stubs it, so stub its only callee to emit the same.
 fn lb(_j: *mut HSD_JObj, _o: &Vec3, v: &mut Vec3) {
     t(5);
     t(1);

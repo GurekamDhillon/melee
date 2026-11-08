@@ -157,7 +157,7 @@ pub mod ext {
     fn ftColl_8007AC9C(a0: *mut HitCapsule, a1: i32, a2: *mut HSD_GObj);
     fn ftColl_8007AFF8(a0: *mut HSD_GObj);
     fn ftCommon_8007E2F4(a0: *mut Fighter, a1: i16);
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_GetPartJObj(a0, a1) };
     fn ftParts_GetBoneIndex(a0: *mut Fighter, a1: u32) -> u32;
     fn ft_80082E3C(a0: *mut HSD_GObj) -> *mut HSD_GObj;
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
@@ -644,7 +644,7 @@ pub unsafe extern "C" fn it_802B7C18(owner: *mut Fighter_GObj, pos: *mut Vec3, f
         }
 
         let type_: i32 = if (*fp).motion_id == 0x165 { 1 } else { 0 };
-        if it_802B75FC(ip, ext::ftLib_80086630(owner, FtPart_ThrowN), type_, (*fp).x34_scale.y).is_null() {
+        if it_802B75FC(ip, ext::ftLib_GetPartJObj(owner, FtPart_ThrowN), type_, (*fp).x34_scale.y).is_null() {
             ext::Item_8026A8EC(item_gobj);
             return null_mut();
         }

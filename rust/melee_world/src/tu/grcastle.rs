@@ -130,12 +130,12 @@ pub mod ext {
     hook_or!(PSVECCROSSPRODUCT, PSVECCrossProduct, (vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec), |vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec| { unsafe { melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(vec1 as _, vec2 as _, dst as _); } });
     hook_or!(ATAN2F, atan2f, (y: f32, x: f32) -> f32, melee_runtime::lbtrigf::atan2f);
     hook_or!(FTCO_800C06E8, ftCo_800C06E8, (a0: *mut HSD_GObj, a1: i32, a2: *mut c_void), |a0: *mut HSD_GObj, a1: i32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C06E8(a0 as _, a1 as _, core::mem::transmute(a2)); } });
-    hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
-    hook_or!(FTLIB_80086684, ftLib_80086684, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086684(a0 as _, a1 as _); } });
-    hook_or!(FTLIB_80086960, ftLib_80086960, (gobj: *mut HSD_GObj) -> i32, |gobj: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086960(gobj as _) as _ });
+    hook_or!(FTLIB_GETPOS, ftLib_GetPos, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_GETPREVPOS, ftLib_GetPrevPos, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPrevPos(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_ISFIGHTER, ftLib_IsFighter, (gobj: *mut HSD_GObj) -> i32, |gobj: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsFighter(gobj as _) as _ });
     hook_or!(FTLIB_80086A4C, ftLib_80086A4C, (a0: *mut HSD_GObj, a1: f32), |a0: *mut HSD_GObj, a1: f32| { unsafe { let _ = crate::ftlib::ftLib_80086A4C(a0 as _, a1 as _); } });
     hook_or!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ });
-    hook_or!(FTLIB_80086BEC, ftLib_80086BEC, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086BEC(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_GETPOSDELTA, ftLib_GetPosDelta, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPosDelta(a0 as _, a1 as _); } });
     hook_or!(GM_8016AE80, gm_8016AE80, () -> i32, || unsafe { crate::gm::gm_8016AE80() as _ });
     hook_or!(GM_8016B238, gm_8016B238, () -> i32, || unsafe { crate::gm::gm_8016B238() as _ });
     pub static mut GRANIME_801C8138: Option<fn(*mut HSD_GObj, enum_t, i32)> = None;
@@ -1550,7 +1550,7 @@ pub unsafe extern "C" fn grCastle_801CF868(gobj: *mut Ground_GObj) {
 pub unsafe extern "C" fn fn_801CFAFC(_item: *mut Item_GObj, gp: *mut Ground, _pos: *mut Vec3, gobj: *mut HSD_GObj) {
     melee_core::ct!("fn_801CFAFC");
     *(addr_of_mut!((*gp).u.castle2.xC4) as *mut i16) = 4;
-    if ext::ftLib_80086960(gobj) != 0 {
+    if ext::ftLib_IsFighter(gobj) != 0 {
         ext::ftLib_80086A4C(gobj, yp().x4 as f32);
     }
 }
@@ -1558,7 +1558,7 @@ pub unsafe extern "C" fn fn_801CFAFC(_item: *mut Item_GObj, gp: *mut Ground, _po
 pub unsafe extern "C" fn fn_801CFB68(_item_gobj: *mut Item_GObj, gp: *mut Ground, gobj: *mut HSD_GObj) {
     melee_core::ct!("fn_801CFB68");
     (*gp).u.pura.xC4 = 4;
-    if ext::ftLib_80086960(gobj) != 0 {
+    if ext::ftLib_IsFighter(gobj) != 0 {
         ext::ftLib_80086A4C(gobj, yp().x4 as f32);
     }
 }
@@ -1777,7 +1777,7 @@ pub unsafe extern "C" fn grCastle_801D0680(_arg0: *mut c_void, arg1: *mut Ground
 }
 
 unsafe fn grCastle_801D06CC_sub(gp: *mut Ground, gobj: *mut Ground_GObj, i: usize) {
-    if ext::ftLib_80086960(gobj) != 0 || ext::itGetKind(gobj) != It_PKind_Random {
+    if ext::ftLib_IsFighter(gobj) != 0 || ext::itGetKind(gobj) != It_PKind_Random {
         (*gp).u.castle10.state[i] = 1;
         ext::grMaterial_801C8CDC(u32_ptr((*gp).u.castle10.x10C[i]));
         (*gp).u.castle10.x10C[i] = 0;
@@ -1831,15 +1831,15 @@ pub unsafe extern "C" fn grCastle_801D09B8(_unused: *mut c_void, gobj: *mut HSD_
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
     let temp_f31 = 14.0f32 * ext::Ground_801C0498();
-    ext::ftLib_80086644(gobj, &mut sp2c);
-    ext::ftLib_80086684(gobj, &mut sp20);
+    ext::ftLib_GetPos(gobj, &mut sp2c);
+    ext::ftLib_GetPrevPos(gobj, &mut sp20);
     if sp2c.y < temp_f31 {
         if sp20.y > temp_f31 {
             let temp_f1 = ext::ftLib_80086B80(gobj) / 10.0;
             sp2c.y = temp_f31;
             grCastle_801D0A9C(&mut sp2c, temp_f1);
         }
-        ext::ftLib_80086BEC(gobj, &mut sp14);
+        ext::ftLib_GetPosDelta(gobj, &mut sp14);
         if sp14.y < -0.5 {
             (*arg2).x = 0.0;
             (*arg2).y = 0.1;

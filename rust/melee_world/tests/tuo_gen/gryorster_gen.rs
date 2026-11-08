@@ -665,7 +665,7 @@ unsafe extern "C" fn s_mpJointSetCb2(a0: i32, a1: *mut core::ffi::c_void, a2: Op
 unsafe extern "C" fn s_Ground_801C32D4(a0: i32, a1: i32) -> i32 { let v = vv(); v.call_begin("Ground_801C32D4"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.call_end();    v.ret_int("Ground_801C32D4", 32, 1) as _ }
 unsafe extern "C" fn s_grMaterial_801C8DE0(a0: *mut melee_types::HSD_GObj, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32, a7: f32) { let v = vv(); v.call_begin("grMaterial_801C8DE0"); v.arg_p(a0 as usize); v.arg_f32(a1.to_bits()); v.arg_f32(a2.to_bits()); v.arg_f32(a3.to_bits()); v.arg_f32(a4.to_bits()); v.arg_f32(a5.to_bits()); v.arg_f32(a6.to_bits()); v.arg_f32(a7.to_bits()); v.call_end();     }
 unsafe extern "C" fn s_grMaterial_801C8E08(a0: *mut melee_types::HSD_GObj) { let v = vv(); v.call_begin("grMaterial_801C8E08"); v.arg_p(a0 as usize); v.call_end();     }
-unsafe extern "C" fn s_ftLib_80086960(a0: *mut melee_types::HSD_GObj) -> i32 { let v = vv(); v.call_begin("ftLib_80086960"); v.arg_p(a0 as usize); v.call_end();    v.ret_int("ftLib_80086960", 32, 1) as _ }
+unsafe extern "C" fn s_ftLib_IsFighter(a0: *mut melee_types::HSD_GObj) -> i32 { let v = vv(); v.call_begin("ftLib_IsFighter"); v.arg_p(a0 as usize); v.call_end();    v.ret_int("ftLib_IsFighter", 32, 1) as _ }
 unsafe extern "C" fn s_ftLib_80086A4C(a0: *mut melee_types::HSD_GObj, a1: f32) { let v = vv(); v.call_begin("ftLib_80086A4C"); v.arg_p(a0 as usize); v.arg_f32(a1.to_bits()); v.call_end();     }
 unsafe extern "C" fn s_grMaterial_801C8E28(a0: *mut melee_types::HSD_GObj) { let v = vv(); v.call_begin("grMaterial_801C8E28"); v.arg_p(a0 as usize); v.call_end();     }
 unsafe extern "C" fn s_lbGetJObjEndFrame(a0: *mut melee_types::HSD_JObj) -> f32 { let v = vv(); v.call_begin("lbGetJObjEndFrame"); v.arg_p(a0 as usize); v.call_end();    f32::from_bits(v.ret_f32("lbGetJObjEndFrame")) }
@@ -680,8 +680,8 @@ unsafe extern "C" fn s_grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: i3
 unsafe extern "C" fn s_Mex_GrBind(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void { let v = vv(); v.call_begin("Mex_GrBind"); v.arg_p(a0 as usize); v.call_end(); a0 }
 unsafe extern "C" fn s_HSD_GObj_SetupProc(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc { let v = vv(); v.call_begin("HSD_GObj_SetupProc"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.call_end();    v.ret_ptr("HSD_GObj_SetupProc") as _ }
 unsafe extern "C" fn s_lb_800115F4() { let v = vv(); v.call_begin("lb_800115F4");  v.call_end();     }
-unsafe extern "C" fn s_ftLib_800873F4(a0: *mut melee_types::HSD_GObj) -> i32 { let v = vv(); v.call_begin("ftLib_800873F4"); v.arg_p(a0 as usize); v.call_end();    v.ret_int("ftLib_800873F4", 32, 1) as _ }
-unsafe extern "C" fn s_ftLib_80086BEC(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { let v = vv(); v.call_begin("ftLib_80086BEC"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();   if !a1.is_null() { for k in 0..3usize { *(a1 as *mut u32).add(k) = v.leaf_f32(&format!("out:ftLib_80086BEC#1[{}]", k)); } }  }
+unsafe extern "C" fn s_ftLib_IsEntry(a0: *mut melee_types::HSD_GObj) -> i32 { let v = vv(); v.call_begin("ftLib_IsEntry"); v.arg_p(a0 as usize); v.call_end();    v.ret_int("ftLib_IsEntry", 32, 1) as _ }
+unsafe extern "C" fn s_ftLib_GetPosDelta(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { let v = vv(); v.call_begin("ftLib_GetPosDelta"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();   if !a1.is_null() { for k in 0..3usize { *(a1 as *mut u32).add(k) = v.leaf_f32(&format!("out:ftLib_GetPosDelta#1[{}]", k)); } }  }
 unsafe extern "C" fn s_it_8026B718(a0: *mut melee_types::HSD_GObj, a1: f32) { let v = vv(); v.call_begin("it_8026B718"); v.arg_p(a0 as usize); v.arg_f32(a1.to_bits()); v.call_end();     }
 unsafe extern "C" fn s___assert(a0: *const i8, a1: u32, a2: *const i8) { let v = vv(); v.call_begin("__assert"); v.arg_s(a0 as *const u8); v.arg_u(a1 as u64); v.arg_s(a2 as *const u8); v.call_end();     }
 pub fn glue() -> Glue {
@@ -751,7 +751,7 @@ pub fn glue() -> Glue {
             ("Ground_801C32D4", tu::ext::Ground_801C32D4 as *const () as usize),
             ("grMaterial_801C8DE0", tu::ext::grMaterial_801C8DE0 as *const () as usize),
             ("grMaterial_801C8E08", tu::ext::grMaterial_801C8E08 as *const () as usize),
-            ("ftLib_80086960", tu::ext::ftLib_80086960 as *const () as usize),
+            ("ftLib_IsFighter", tu::ext::ftLib_IsFighter as *const () as usize),
             ("ftLib_80086A4C", tu::ext::ftLib_80086A4C as *const () as usize),
             ("grMaterial_801C8E28", tu::ext::grMaterial_801C8E28 as *const () as usize),
             ("lbGetJObjEndFrame", tu::ext::lbGetJObjEndFrame as *const () as usize),
@@ -766,8 +766,8 @@ pub fn glue() -> Glue {
             ("Mex_GrBind", tu::ext::Mex_GrBind as *const () as usize),
             ("HSD_GObj_SetupProc", tu::ext::HSD_GObj_SetupProc as *const () as usize),
             ("lb_800115F4", tu::ext::lb_800115F4 as *const () as usize),
-            ("ftLib_800873F4", tu::ext::ftLib_800873F4 as *const () as usize),
-            ("ftLib_80086BEC", tu::ext::ftLib_80086BEC as *const () as usize),
+            ("ftLib_IsEntry", tu::ext::ftLib_IsEntry as *const () as usize),
+            ("ftLib_GetPosDelta", tu::ext::ftLib_GetPosDelta as *const () as usize),
             ("it_8026B718", tu::ext::it_8026B718 as *const () as usize),
             ("__assert", tu::ext::__assert as *const () as usize),
         ],
@@ -792,7 +792,7 @@ pub fn glue() -> Glue {
         tu::ext::H_Ground_801C32D4 = Some(s_Ground_801C32D4);
         tu::ext::H_grMaterial_801C8DE0 = Some(s_grMaterial_801C8DE0);
         tu::ext::H_grMaterial_801C8E08 = Some(s_grMaterial_801C8E08);
-        tu::ext::H_ftLib_80086960 = Some(s_ftLib_80086960);
+        tu::ext::H_ftLib_IsFighter = Some(s_ftLib_IsFighter);
         tu::ext::H_ftLib_80086A4C = Some(s_ftLib_80086A4C);
         tu::ext::H_grMaterial_801C8E28 = Some(s_grMaterial_801C8E28);
         tu::ext::H_lbGetJObjEndFrame = Some(s_lbGetJObjEndFrame);
@@ -807,8 +807,8 @@ pub fn glue() -> Glue {
         tu::ext::H_Mex_GrBind = Some(s_Mex_GrBind);
         tu::ext::H_HSD_GObj_SetupProc = Some(s_HSD_GObj_SetupProc);
         tu::ext::H_lb_800115F4 = Some(s_lb_800115F4);
-        tu::ext::H_ftLib_800873F4 = Some(s_ftLib_800873F4);
-        tu::ext::H_ftLib_80086BEC = Some(s_ftLib_80086BEC);
+        tu::ext::H_ftLib_IsEntry = Some(s_ftLib_IsEntry);
+        tu::ext::H_ftLib_GetPosDelta = Some(s_ftLib_GetPosDelta);
         tu::ext::H_it_8026B718 = Some(s_it_8026B718);
         tu::ext::H___assert = Some(s___assert);
         },

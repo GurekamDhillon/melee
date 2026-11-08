@@ -810,7 +810,7 @@ unsafe extern "C" fn s_Ground_801C5940() -> i32 { let v = vv(); v.call_begin("Gr
 unsafe extern "C" fn s_grAnime_801C8138(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) { let v = vv(); v.call_begin("grAnime_801C8138"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.arg_i(a2 as i64); v.call_end();     }
 unsafe extern "C" fn s_mpJointSetCb1(a0: i32, a1: *mut core::ffi::c_void, a2: Option<unsafe extern "C" fn(*mut core::ffi::c_void, i32, *mut melee_types::CollData, i32, u32, f32)>) { let v = vv(); v.call_begin("mpJointSetCb1"); v.arg_i(a0 as i64); v.arg_p(a1 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a2) }); v.call_end();     }
 unsafe extern "C" fn s_Ground_GetP1Fighter() -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("Ground_GetP1Fighter");  v.call_end();    v.ret_ptr("Ground_GetP1Fighter") as _ }
-unsafe extern "C" fn s_ftLib_80086644(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { let v = vv(); v.call_begin("ftLib_80086644"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();   if !a1.is_null() { for k in 0..3usize { *(a1 as *mut u32).add(k) = v.leaf_f32(&format!("out:ftLib_80086644#1[{}]", k)); } }  }
+unsafe extern "C" fn s_ftLib_GetPos(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { let v = vv(); v.call_begin("ftLib_GetPos"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();   if !a1.is_null() { for k in 0..3usize { *(a1 as *mut u32).add(k) = v.leaf_f32(&format!("out:ftLib_GetPos#1[{}]", k)); } }  }
 unsafe extern "C" fn s_Ground_801C38BC(a0: f32, a1: f32) { let v = vv(); v.call_begin("Ground_801C38BC"); v.arg_f32(a0.to_bits()); v.arg_f32(a1.to_bits()); v.call_end();     }
 unsafe extern "C" fn s_Camera_RequestQuake(a0: u32, a1: *mut melee_types::Vec) { let v = vv(); v.call_begin("Camera_RequestQuake"); v.arg_u(a0 as u64); v.arg_p(a1 as usize); v.call_end();     }
 unsafe extern "C" fn s_lb_800115F4() { let v = vv(); v.call_begin("lb_800115F4");  v.call_end();     }
@@ -892,7 +892,7 @@ pub fn glue() -> Glue {
             ("grAnime_801C8138", tu::ext::grAnime_801C8138 as *const () as usize),
             ("mpJointSetCb1", tu::ext::mpJointSetCb1 as *const () as usize),
             ("Ground_GetP1Fighter", tu::ext::Ground_GetP1Fighter as *const () as usize),
-            ("ftLib_80086644", tu::ext::ftLib_80086644 as *const () as usize),
+            ("ftLib_GetPos", tu::ext::ftLib_GetPos as *const () as usize),
             ("Ground_801C38BC", tu::ext::Ground_801C38BC as *const () as usize),
             ("Camera_RequestQuake", tu::ext::Camera_RequestQuake as *const () as usize),
             ("lb_800115F4", tu::ext::lb_800115F4 as *const () as usize),
@@ -924,7 +924,7 @@ pub fn glue() -> Glue {
         tu::ext::H_grAnime_801C8138 = Some(s_grAnime_801C8138);
         tu::ext::H_mpJointSetCb1 = Some(s_mpJointSetCb1);
         tu::ext::H_Ground_GetP1Fighter = Some(s_Ground_GetP1Fighter);
-        tu::ext::H_ftLib_80086644 = Some(s_ftLib_80086644);
+        tu::ext::H_ftLib_GetPos = Some(s_ftLib_GetPos);
         tu::ext::H_Ground_801C38BC = Some(s_Ground_801C38BC);
         tu::ext::H_Camera_RequestQuake = Some(s_Camera_RequestQuake);
         tu::ext::H_lb_800115F4 = Some(s_lb_800115F4);

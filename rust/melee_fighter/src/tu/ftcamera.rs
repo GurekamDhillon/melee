@@ -90,14 +90,14 @@ pub fn ftcamera_update_camera_box(gobj: *mut HSD_GObj) {
     cb.pos.y = f.cur_pos.y + s.x0.x;
     cb.pos.z = f.cur_pos.z;
     cb.set_on_ledge(0);
-    crate::ftlib::ftlib_800866dc(gobj, &mut cb.bone_pos);
+    crate::ftlib::ftlib_getcamerabonepos(gobj, &mut cb.bone_pos);
 }
 
 /// `ftCamera_800762F4`: refresh only the bone position.
 pub fn ftcamera_800762f4(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftcamera_800762f4");
     let f = fp(gobj);
-    crate::ftlib::ftlib_800866dc(gobj, unsafe { &mut (*f.x890_cameraBox).bone_pos });
+    crate::ftlib::ftlib_getcamerabonepos(gobj, unsafe { &mut (*f.x890_cameraBox).bone_pos });
 }
 
 /// `ftCamera_80076320`: camera box pinned to the blast-zone top (Star KO / Screen KO).

@@ -79,7 +79,7 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn ftGw_SpecialS_ItemCheckJudgementRemove(a0: *mut HSD_GObj) -> i32;
     fn ftGw_SpecialS_ItemJudgementSetFlag(a0: *mut HSD_GObj);
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetFacingDir(a0) };
     fn it_8026B724(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b724(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B73C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b73c(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
@@ -204,7 +204,7 @@ pub unsafe extern "C" fn it_802C78B8(item_gobj: *mut HSD_GObj) {
     let ip = GET_ITEM(item_gobj);
     let jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     if !(*ip).owner.is_null() {
-        let facing = ext::ftLib_800865C0((*ip).owner);
+        let facing = ext::ftLib_GetFacingDir((*ip).owner);
         let child = HSD_JObjGetChild(HSD_JObjGetChild(jobj));
         if facing == 1.0f32 {
             HSD_JObjSetRotationY(child, core::f64::consts::PI as f32);

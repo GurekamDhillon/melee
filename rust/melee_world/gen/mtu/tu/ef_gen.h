@@ -73,7 +73,7 @@ __typeof__(int) ftKb_MexKirbyLike(__typeof__(int) a0) { T(1034); T((u32) a0); re
 void grLib_801C99C0(__typeof__(int) a0, __typeof__(int) a1, __typeof__(struct HSD_JObj *) a2, __typeof__(int) a3) { T(1035); T((u32) a0); T((u32) a1); T(PI((const void*) a2)); T((u32) a3); }
 void hsd_80398A08(__typeof__(unsigned int) a0) { T(1036); T((u32) a0); }
 void hsd_8039CEAC(__typeof__(unsigned int) a0) { T(1037); T((u32) a0); }
-void hsd_8039D1E4(__typeof__(struct HSD_Generator *) a0, __typeof__(void *) a1) { T(1038); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+void psSetUserFunc(__typeof__(struct HSD_Generator *) a0, __typeof__(void *) a1) { T(1038); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 void hsd_8039D354(__typeof__(unsigned int) a0) { T(1039); T((u32) a0); }
 void hsd_8039D4DC(__typeof__(struct HSD_Generator *) a0) { T(1040); T(PI((const void*) a0)); }
 void hsd_8039D688(__typeof__(struct HSD_JObj *) a0, __typeof__(float **) a1, __typeof__(int) a2) { T(1041); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); }
@@ -923,7 +923,7 @@ static void freg_all(void)
 // stub grLib_801C99C0 = 1035
 // stub hsd_80398A08 = 1036
 // stub hsd_8039CEAC = 1037
-// stub hsd_8039D1E4 = 1038
+// stub psSetUserFunc = 1038
 // stub hsd_8039D354 = 1039
 // stub hsd_8039D4DC = 1040
 // stub hsd_8039D688 = 1041

@@ -18,7 +18,7 @@ pub fn install() {
         Item_8026AB54 = Some(|a0, a1, a2| { t(1005); t(pi(a0)); t(pi(a1)); t(a2 as u32); });
         ftKb_SpecialNSk_80105FF0 = Some(|a0| { t(1006); t(pi(a0)); (fv() % 3) as i32 });
         ftKb_SpecialNSk_80106020 = Some(|a0| { t(1007); t(pi(a0)); (fv() % 9) as i32 });
-        ftLib_800869D4 = Some(|a0| { t(1008); t(pi(a0)); rg() });
+        ftLib_GetModelScale = Some(|a0| { t(1008); t(pi(a0)); rg() });
         ftSk_SpecialS_80111F70 = Some(|a0| { t(1009); t(pi(a0)); (fv() % 3) as i32 });
         ftSk_SpecialS_80111FA0 = Some(|a0| { t(1010); t(pi(a0)); (fv() % 9) as i32 });
         it_8026B894 = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });

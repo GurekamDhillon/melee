@@ -54,7 +54,7 @@ pub mod ext {
     fn Mex_GrBind(a0: *mut c_void) -> *mut c_void;
     fn Stage_GetCamBoundsTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsTopOffset() as _ };
     fn Toy_80305058(a0: i32, a1: i32, a2: i32, a3: f32) -> i32;
-    fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086984(a0 as _) as _ };
+    fn ftLib_GetCollData(a0: *mut HSD_GObj) -> *mut CollData = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_GetCollData(a0 as _) as _ };
     fn gm_8017E280(a0: u16, a1: u32) -> i8;
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
@@ -271,7 +271,7 @@ pub unsafe extern "C" fn grFigureGet_80219898(gobj: *mut HSD_GObj) {
 
     let mut var_r28 = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     while !var_r28.is_null() {
-        (*ext::ftLib_80086984(var_r28)).joint_id_skip = 0;
+        (*ext::ftLib_GetCollData(var_r28)).joint_id_skip = 0;
         var_r28 = (*var_r28).next;
     }
     if (*gp).u.figureget.x4 < (*yakumono_param).x8 {

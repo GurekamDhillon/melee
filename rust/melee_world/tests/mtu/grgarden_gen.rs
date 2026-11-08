@@ -28,8 +28,8 @@ pub fn install() {
         Mex_GrBind = Some(|a0| { t(1014); t(pi(a0)); a0 });
         Stage_80225194 = Some(|| { t(1015); if fv() & 1 != 0 { 62 } else { fv() } });
         ftCo_800C06E8 = Some(|a0, a1, a2| { t(1016); t(pi(a0)); t(a1 as u32); t(pi(a2)); });
-        ftLib_80086644 = Some(|a0, a1| { t(1017); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
-        ftLib_80086684 = Some(|a0, a1| { t(1018); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
+        ftLib_GetPos = Some(|a0, a1| { t(1017); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
+        ftLib_GetPrevPos = Some(|a0, a1| { t(1018); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
         ftLib_80086B80 = Some(|a0| { t(1019); t(pi(a0)); rw() });
         gm_8016B238 = Some(|| { t(1020); if fv() & 1 != 0 { 0 } else { fv() as i32 } });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1021); t(pi(a0)); t(a1 as u32); t(a2 as u32); });

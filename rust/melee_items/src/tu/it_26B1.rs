@@ -229,16 +229,16 @@ pub mod ext {
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Mex_IndexStageItem(a0: *mut c_void, a1: i32);
     fn Mex_ItRecord(a0: *mut Article, a1: i32) -> i32;
-    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086368(a0: *mut Vec, a1: *mut HSD_GObj, a2: f32) -> *mut HSD_GObj;
-    fn ftLib_800864A8(a0: *mut Vec, a1: *mut HSD_GObj) -> f32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
-    fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
-    fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData;
-    fn ftLib_80086990(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_FindNearestOpponent(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_FindNearestOpponentInDir(a0: *mut Vec, a1: *mut HSD_GObj, a2: f32) -> *mut HSD_GObj;
+    fn ftLib_GetOpponentsDir(a0: *mut Vec, a1: *mut HSD_GObj) -> f32;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
+    fn ftLib_GetCameraBonePos(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsFighter(a0) as _ };
+    fn ftLib_GetCollData(a0: *mut HSD_GObj) -> *mut CollData;
+    fn ftLib_GetECBCenter(a0: *mut HSD_GObj, a1: *mut Vec);
     fn ftLib_80086A4C(a0: *mut HSD_GObj, a1: f32);
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_80086BE0(a0) };
+    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_GetPlayerIndex(a0) };
     fn gm_8016B238() -> i32;
     fn itFlipper_Spawn(a0: *mut HSD_JObj) -> *mut HSD_GObj => unsafe { crate::tu::itflipper::itFlipper_Spawn(a0) };
     fn itSword_Spawn(a0: *mut Vec) -> *mut HSD_GObj => unsafe { crate::tu::itsword::itSword_Spawn(a0 as _) as _ };
@@ -515,9 +515,9 @@ pub unsafe extern "C" fn it_8026B574(gobj: *mut HSD_GObj) -> f32 {
 /// `it_8026B5E4`: finds the fighter nearest `vector` and moves `vector2` to its point.
 pub unsafe extern "C" fn it_8026B5E4(vector: *mut Vec3, vector2: *mut Vec3, gobj: *mut HSD_GObj) -> *mut HSD_GObj {
     melee_core::ct!("it_8026B5E4");
-    let unk_gobj = ext::ftLib_8008627C(vector, gobj);
+    let unk_gobj = ext::ftLib_FindNearestOpponent(vector, gobj);
     if !unk_gobj.is_null() {
-        ext::ftLib_800866DC(unk_gobj, vector2);
+        ext::ftLib_GetCameraBonePos(unk_gobj, vector2);
     }
     unk_gobj
 }
@@ -525,9 +525,9 @@ pub unsafe extern "C" fn it_8026B5E4(vector: *mut Vec3, vector2: *mut Vec3, gobj
 /// `it_8026B634`: the fighter gobj for `arg0` within `farg0`, and its point to `arg1`.
 pub unsafe extern "C" fn it_8026B634(arg0: *mut Vec3, arg1: *mut Vec3, arg2: *mut HSD_GObj, farg0: f32) -> *mut HSD_GObj {
     melee_core::ct!("it_8026B634");
-    let gobj = ext::ftLib_80086368(arg0, arg2, farg0);
+    let gobj = ext::ftLib_FindNearestOpponentInDir(arg0, arg2, farg0);
     if !gobj.is_null() {
-        ext::ftLib_800866DC(gobj, arg1);
+        ext::ftLib_GetCameraBonePos(gobj, arg1);
     }
     gobj
 }
@@ -535,13 +535,13 @@ pub unsafe extern "C" fn it_8026B634(arg0: *mut Vec3, arg1: *mut Vec3, arg2: *mu
 /// `it_8026B684`: the facing direction at `pos` (no fighter).
 pub unsafe extern "C" fn it_8026B684(pos: *mut Vec3) -> f32 {
     melee_core::ct!("it_8026B684");
-    ext::ftLib_800864A8(pos, null_mut())
+    ext::ftLib_GetOpponentsDir(pos, null_mut())
 }
 
 /// `it_8026B6A8`: facing direction for `pos` with the fighter `arg1`.
 pub unsafe extern "C" fn it_8026B6A8(pos: *mut Vec3, arg1: *mut HSD_GObj) -> f32 {
     melee_core::ct!("it_8026B6A8");
-    ext::ftLib_800864A8(pos, arg1)
+    ext::ftLib_GetOpponentsDir(pos, arg1)
 }
 
 /// `it_8026B6C8`: true for the stage-item kinds.
@@ -774,7 +774,7 @@ pub unsafe extern "C" fn it_8026BB44(gobj: *mut HSD_GObj) {
 /// `it_8026BB68`: adjusts the position to the fighter's bone.
 pub unsafe extern "C" fn it_8026BB68(fighter_gobj: *mut HSD_GObj, pos: *mut Vec3) {
     melee_core::ct!("it_8026BB68");
-    ext::ftLib_80086990(fighter_gobj, pos);
+    ext::ftLib_GetECBCenter(fighter_gobj, pos);
 }
 
 /// `it_8026BB88`: the item's position plus half the ECB's vertical extent.
@@ -806,7 +806,7 @@ pub unsafe extern "C" fn it_8026BBCC(gobj: *mut HSD_GObj, pos: *mut Vec3) {
 pub unsafe extern "C" fn it_8026BC14(gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8026BC14");
     let ip = item_of(gobj);
-    if !(*ip).owner.is_null() && ext::ftLib_80086960((*ip).owner) != 0 {
+    if !(*ip).owner.is_null() && ext::ftLib_IsFighter((*ip).owner) != 0 {
         ext::ftLib_80086A4C((*ip).owner, (*ip).xCBC_hitlagFrames - 1.0);
     }
 }
@@ -829,8 +829,8 @@ pub unsafe extern "C" fn it_8026BC90(gobj: *mut HSD_GObj, pos: *mut Vec3) {
     (*pos).z = 0.0;
     (*pos).y = 0.0;
     (*pos).x = 0.0;
-    if !gobj.is_null() && ext::ftLib_80086960(gobj) != 0 {
-        ext::ftLib_80086644(gobj, pos);
+    if !gobj.is_null() && ext::ftLib_IsFighter(gobj) != 0 {
+        ext::ftLib_GetPos(gobj, pos);
     }
 }
 
@@ -1014,7 +1014,7 @@ pub unsafe extern "C" fn it_8026C100(gobj: *mut HSD_GObj) -> *mut CollData {
     let mut collDataPtr: *mut CollData = null_mut();
     match ext::it_80272D40(gobj) {
         0 => {
-            collDataPtr = ext::ftLib_80086984(gobj);
+            collDataPtr = ext::ftLib_GetCollData(gobj);
         }
         1 => {
             let ip = item_of(gobj);
@@ -1065,7 +1065,7 @@ pub unsafe extern "C" fn it_8026C1E8(gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn it_8026C220(gobj: *mut HSD_GObj, fighter_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8026C220");
     let ip = item_of(gobj);
-    (*ip).xCB0_source_ply = ext::ftLib_80086BE0(fighter_gobj) as _;
+    (*ip).xCB0_source_ply = ext::ftLib_GetPlayerIndex(fighter_gobj) as _;
 }
 
 /// `it_8026C258`: the nearest item to `pos` that a Samus homing missile can lock onto.

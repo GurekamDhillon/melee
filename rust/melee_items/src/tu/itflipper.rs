@@ -42,9 +42,9 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
-    fn ftLib_80086BEC(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086BEC(a0, a1) };
+    fn ftLib_GetCameraBonePos(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsFighter(a0) as _ };
+    fn ftLib_GetPosDelta(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPosDelta(a0, a1) };
     fn ftLib_80087284(a0: *mut HSD_GObj) -> i32;
     fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::itColl_BounceOffShield(a0) as _ };
     fn itColl_BounceOffVictim(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::itColl_BounceOffVictim(a0) };
@@ -289,8 +289,8 @@ pub unsafe extern "C" fn itFlipper_SpinSpeedFromFighter(gobj: *mut Item_GObj, fi
     melee_core::ct!("itFlipper_SpinSpeedFromFighter");
     let ip = get_item(gobj);
     let attrs = attrs_of(ip);
-    ext::ftLib_800866DC(fighter, pos);
-    ext::ftLib_80086BEC(fighter, vel);
+    ext::ftLib_GetCameraBonePos(fighter, pos);
+    ext::ftLib_GetPosDelta(fighter, vel);
     (*attrs).x18_spinMultiplier * sqrtf((*vel).x * (*vel).x + (*vel).y * (*vel).y)
 }
 
@@ -301,7 +301,7 @@ pub unsafe extern "C" fn itFlipper_SpinFromFighter_inline(gobj: *mut Item_GObj, 
 
     if !(*ip).xCF4_fighterGObjUnk.is_null() {
         let fighter = (*ip).xCF4_fighterGObjUnk;
-        if ext::ftLib_80086960(fighter) != 0 {
+        if ext::ftLib_IsFighter(fighter) != 0 {
             speed = itFlipper_SpinSpeedFromFighter(gobj, fighter, pos, vel);
         }
         (*ip).xCF4_fighterGObjUnk = null_mut();
@@ -319,7 +319,7 @@ pub unsafe extern "C" fn itFlipper_SpinFromFighter(gobj: *mut Item_GObj) {
 
     if !(*ip).xCF4_fighterGObjUnk.is_null() {
         let fighter = (*ip).xCF4_fighterGObjUnk;
-        if ext::ftLib_80086960(fighter) != 0 {
+        if ext::ftLib_IsFighter(fighter) != 0 {
             speed = itFlipper_SpinSpeedFromFighter(gobj, fighter, &mut pos, &mut vel);
         }
         (*ip).xCF4_fighterGObjUnk = null_mut();
@@ -673,7 +673,7 @@ pub unsafe extern "C" fn itFlipper_SpinFromFighterRecv(gobj: *mut Item_GObj, vel
 
     if !(*ip).xCEC_fighterGObj.is_null() {
         let fighter = (*ip).xCEC_fighterGObj;
-        if ext::ftLib_80086960(fighter) != 0 {
+        if ext::ftLib_IsFighter(fighter) != 0 {
             speed = itFlipper_SpinSpeedFromFighter(gobj, fighter, pos, vel);
         }
         (*ip).xCEC_fighterGObj = null_mut();

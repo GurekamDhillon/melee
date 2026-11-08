@@ -11,66 +11,66 @@ unsafe fn GET_FIGHTER(gobj: *mut HSD_GObj) -> *mut Fighter {
     (*gobj).user_data as *mut Fighter
 }
 
-pub unsafe fn ftLib_80086960(arg: *mut HSD_GObj) -> bool {
-    melee_core::ct!("ftLib_80086960");
+pub unsafe fn ftLib_IsFighter(arg: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftLib_IsFighter");
     !arg.is_null() && (*arg).classifier as i32 == HSD_GOBJ_CLASS_FIGHTER as i32
 }
 
-pub unsafe fn ftLib_80086644(gobj: *mut HSD_GObj, pos: *mut Vec) {
-    melee_core::ct!("ftLib_80086644");
+pub unsafe fn ftLib_GetPos(gobj: *mut HSD_GObj, pos: *mut Vec) {
+    melee_core::ct!("ftLib_GetPos");
     *pos = (*GET_FIGHTER(gobj)).cur_pos;
 }
 
-pub unsafe fn ftLib_800865C0(gobj: *mut HSD_GObj) -> f32 {
-    melee_core::ct!("ftLib_800865C0");
+pub unsafe fn ftLib_GetFacingDir(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("ftLib_GetFacingDir");
     (*GET_FIGHTER(gobj)).facing_dir
 }
 
-pub unsafe fn ftLib_80086630(gobj: *mut HSD_GObj, part: u32) -> *mut HSD_JObj {
-    melee_core::ct!("ftLib_80086630");
+pub unsafe fn ftLib_GetPartJObj(gobj: *mut HSD_GObj, part: u32) -> *mut HSD_JObj {
+    melee_core::ct!("ftLib_GetPartJObj");
     (*(*GET_FIGHTER(gobj)).parts.offset(part as isize)).joint
 }
 
-pub unsafe fn ftLib_800865CC(gobj: *mut HSD_GObj) -> i32 {
-    melee_core::ct!("ftLib_800865CC");
+pub unsafe fn ftLib_GetGroundAir(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftLib_GetGroundAir");
     (*GET_FIGHTER(gobj)).ground_or_air as i32
 }
 
-pub unsafe fn ftLib_80086BE0(gobj: *mut HSD_GObj) -> u8 {
-    melee_core::ct!("ftLib_80086BE0");
+pub unsafe fn ftLib_GetPlayerIndex(gobj: *mut HSD_GObj) -> u8 {
+    melee_core::ct!("ftLib_GetPlayerIndex");
     (*GET_FIGHTER(gobj)).player_id as u8
 }
 
-pub unsafe fn ftLib_80086EB4(gobj: *mut HSD_GObj) -> i32 {
-    melee_core::ct!("ftLib_80086EB4");
+pub unsafe fn ftLib_GetTeam(gobj: *mut HSD_GObj) -> i32 {
+    melee_core::ct!("ftLib_GetTeam");
     (*GET_FIGHTER(gobj)).team as i32
 }
 
-pub unsafe fn ftLib_80086A0C(gobj: *mut HSD_GObj) -> f32 {
-    melee_core::ct!("ftLib_80086A0C");
+pub unsafe fn ftLib_GetScale(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("ftLib_GetScale");
     (*GET_FIGHTER(gobj)).x34_scale.y
 }
 
-pub unsafe fn ftLib_800865D8(gobj: *mut HSD_GObj, x: *mut f32, y: *mut f32) {
-    melee_core::ct!("ftLib_800865D8");
+pub unsafe fn ftLib_GetLStick(gobj: *mut HSD_GObj, x: *mut f32, y: *mut f32) {
+    melee_core::ct!("ftLib_GetLStick");
     let fp = GET_FIGHTER(gobj);
     *x = (*fp).input.lstick[0].x;
     *y = (*fp).input.lstick[0].y;
 }
 
-pub unsafe fn ftLib_800867A0(gobj: *mut HSD_GObj, arg1: *mut HSD_GObj) -> bool {
-    melee_core::ct!("ftLib_800867A0");
+pub unsafe fn ftLib_IsHoldingItem(gobj: *mut HSD_GObj, arg1: *mut HSD_GObj) -> bool {
+    melee_core::ct!("ftLib_IsHoldingItem");
     let fp = GET_FIGHTER(gobj);
     (*fp).item_gobj == arg1 || (*fp).x1978 == arg1
 }
 
-pub unsafe fn ftLib_800867CC(gobj: *mut HSD_GObj) -> *mut HSD_GObj {
-    melee_core::ct!("ftLib_800867CC");
+pub unsafe fn ftLib_GetHeldSpecialItem(gobj: *mut HSD_GObj) -> *mut HSD_GObj {
+    melee_core::ct!("ftLib_GetHeldSpecialItem");
     (*GET_FIGHTER(gobj)).x1984_heldItemSpec
 }
 
-pub unsafe fn ftLib_80086BEC(gobj: *mut HSD_GObj, v: *mut Vec) {
-    melee_core::ct!("ftLib_80086BEC");
+pub unsafe fn ftLib_GetPosDelta(gobj: *mut HSD_GObj, v: *mut Vec) {
+    melee_core::ct!("ftLib_GetPosDelta");
     *v = (*GET_FIGHTER(gobj)).pos_delta;
 }
 
@@ -85,7 +85,7 @@ pub unsafe fn ftCommon_GetModelScale(fp: *mut Fighter) -> f32 {
     (*fp).x34_scale.y * (*fp).co_attrs.model_scaling
 }
 
-pub unsafe fn ftLib_800869D4(gobj: *mut HSD_GObj) -> f32 {
-    melee_core::ct!("ftLib_800869D4");
+pub unsafe fn ftLib_GetModelScale(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("ftLib_GetModelScale");
     ftCommon_GetModelScale(GET_FIGHTER(gobj))
 }

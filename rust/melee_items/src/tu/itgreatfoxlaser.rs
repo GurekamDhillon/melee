@@ -119,7 +119,7 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026B3A8(a0) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_26B1::it_8026B894(a0, a1) as _ };
     fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut HSD_GObj) => unsafe { crate::tu::itcoll::it_80272460(a0, a1, a2) };
@@ -277,7 +277,7 @@ pub unsafe extern "C" fn it_2725_Logic27_Reflected(gobj: *mut HSD_GObj) -> i32 {
     let mut reflect_pos: Vec3 = core::mem::zeroed();
     let mut laser_pos: Vec3 = core::mem::zeroed();
     if (*ip).msid == 0 {
-        ext::ftLib_80086644((*ip).xC64_reflectGObj, &raw mut reflect_pos);
+        ext::ftLib_GetPos((*ip).xC64_reflectGObj, &raw mut reflect_pos);
         let jobj = (*(*ip).xDD4_itemVar.greatfoxlaser.x20).hsd_obj as *mut HSD_JObj;
         ext::lb_8000B1CC(jobj, &raw mut (*ip).xDD4_itemVar.greatfoxlaser.x28, &raw mut laser_pos);
         (*ip).xDD4_itemVar.greatfoxlaser.x28.x -= abs_c(laser_pos.x - reflect_pos.x);

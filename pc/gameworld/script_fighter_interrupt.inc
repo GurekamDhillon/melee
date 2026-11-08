@@ -63,7 +63,7 @@
 #include <melee/ft/kinds/ftCommon/ftCo_Squat.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Turn.h>
 #include <melee/ft/kinds/ftCommon/ftCo_Walk.h>
-#include <melee/ft/ftcolanim.h>
+#include <melee/ft/ftcolanimlist.h>
 #include <melee/ft/ft_0DF1.h>
 #include <melee/ft/ftcommon.h>
 #include "../platform/gw_matchrules.h"

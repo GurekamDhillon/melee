@@ -70,10 +70,10 @@ crate::ext_fns! {extern "C" fn HSD_ArchiveGetPublicAddress(a0 : * mut HSD_Archiv
 crate::ext_fns! {extern "C" fn HSD_ArchiveGetExtern(a0 : * mut HSD_Archive, a1 : :: core :: ffi :: c_int) -> * mut :: core :: ffi :: c_char = crate::tu::adapt::HSD_ArchiveGetExtern__36350c;}
 crate::ext_fns! {extern "C" fn HSD_ArchiveLocateExtern(a0 : * mut HSD_Archive, a1 : * const :: core :: ffi :: c_char, a2 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::HSD_ArchiveLocateExtern__a293e4;}
 crate::ext_fns! {extern "C" fn Geno_DefineBaseKind(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
-crate::ext_fns! {extern "C" fn Fighter_UnkProcessDeath_80068354(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_UnkProcessDeath_80068354__0d8c62;}
+crate::ext_fns! {extern "C" fn Fighter_Spawn(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_Spawn__0d8c62;}
 crate::ext_fns! {extern "C" fn Fighter_ResetInputData_80068854(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ResetInputData_80068854__e11eca;}
 crate::ext_fns! {extern "C" fn Fighter_ChangeMotionState(a0 : * mut Fighter_GObj, a1 : FtMotionId, a2 : MotionFlags, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ChangeMotionState__8da657;}
-crate::ext_fns! {extern "C" fn Fighter_ProcessHit_8006D1EC(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_ProcessHit_8006D1EC__4dab97;}
+crate::ext_fns! {extern "C" fn Fighter_procCollResolve(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::Fighter_procCollResolve__4dab97;}
 crate::ext_fns! {extern "C" fn ftCo_800B3E04(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B3E04__214e01;}
 crate::ext_fns! {extern "C" fn ftCo_800B49F4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B49F4__82f580;}
 crate::ext_fns! {extern "C" fn ftCo_800B4A78(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B4A78__b296ba;}
@@ -91,7 +91,7 @@ crate::ext_fns! {extern "C" fn ftCommon_8007F804(a0 : * mut Fighter) -> MtxPtr =
 crate::ext_fns! {extern "C" fn ftCamera_80076064(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCamera_80076064__ed1a88;}
 crate::ext_fns! {extern "C" fn ftCo_800D105C(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800D105C__a3a0b4;}
 crate::ext_fns! {extern "C" fn ftLib_SetScale(a0 : * mut HSD_GObj, a1 : :: core :: ffi :: c_float) -> ();}
-crate::ext_fns! {extern "C" fn ftLib_80086960(a0 : * mut HSD_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftLib_80086960__b56944;}
+crate::ext_fns! {extern "C" fn ftLib_IsFighter(a0 : * mut HSD_GObj) -> :: core :: ffi :: c_int = crate::tu::adapt::ftLib_IsFighter__b56944;}
 crate::ext_fns! {extern "C" fn ft_80081C88(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_float) -> () = crate::tu::adapt::ft_80081C88__3d5b9d;}
 crate::ext_fns! {extern "C" fn HSD_SListRemove(a0 : * mut HSD_SList) -> * mut HSD_SList = crate::tu::adapt::HSD_SListRemove__e27f25;}
 crate::ext_fns! {extern "C" fn HSD_JObjGetFlags(a0 : * mut HSD_JObj) -> :: core :: ffi :: c_uint;}
@@ -322,7 +322,7 @@ crate::ext_fns! {extern "C" fn Ground_StageSlotPrepare(a0 : * mut HSD_GObj, a1 :
 crate::ext_fns! {extern "C" fn HSD_StageSlotParticlesClear() -> ();}
 crate::ext_fns! {extern "C" fn grStory_StageSlotParamSwap(a0 : * mut :: core :: ffi :: c_void) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::grStory_StageSlotParamSwap__30a7ba;}
 crate::ext_fns! {extern "C" fn grIzumi_StageSlotParamSwap(a0 : * mut :: core :: ffi :: c_void) -> * mut :: core :: ffi :: c_void = crate::tu::adapt::grIzumi_StageSlotParamSwap__e00bb2;}
-crate::ext_fns! {extern "C" fn hsd_8039D048(a0 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::hsd_8039D048__57a88e;}
+crate::ext_fns! {extern "C" fn psClearPointJObj(a0 : * mut :: core :: ffi :: c_void) -> () = crate::tu::adapt::psClearPointJObj__57a88e;}
 crate::ext_fns! {extern "C" fn hsd_8039D3AC(a0 : * mut HSD_Generator, a1 : * mut HSD_Generator) -> * mut HSD_Generator;}
 crate::ext_fns! {extern "C" fn psRemoveParticleAppSRT(a0 : * mut HSD_Particle) -> :: core :: ffi :: c_int;}
 crate::ext_fns! {extern "C" fn Stage_StageSlotSelect(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::Stage_StageSlotSelect__c64d66;}
@@ -4299,7 +4299,7 @@ pub unsafe extern "C" fn ScriptGame_HitRuleItemCreate(
 ) {
     melee_core::ct!("ScriptGame_HitRuleItemCreate");
     ScriptGame_HitRuleCreate(
-        if !(*item).owner.is_null() && ftLib_80086960((*item).owner) != 0 {
+        if !(*item).owner.is_null() && ftLib_IsFighter((*item).owner) != 0 {
             HSD_GObjGetUserData((*item).owner) as *mut Fighter
         } else {
             ::core::ptr::null_mut::<Fighter>()
@@ -21069,7 +21069,7 @@ pub unsafe extern "C" fn ScriptGame_FighterRecycle(
     {
         return 6 as ::core::ffi::c_int;
     }
-    Fighter_UnkProcessDeath_80068354((*fp).gobj as *mut Fighter_GObj);
+    Fighter_Spawn((*fp).gobj as *mut Fighter_GObj);
     (*fp).set_x221F_b3(0 as ::core::ffi::c_uchar as ::core::ffi::c_uchar);
     (*fp).set_x221F_b1(0 as ::core::ffi::c_uchar as ::core::ffi::c_uchar);
     (*fp).set_x2219_b1(0 as ::core::ffi::c_uchar as ::core::ffi::c_uchar);
@@ -28217,7 +28217,7 @@ pub unsafe extern "C" fn ScriptGame_Hit(
         0 as ::core::ffi::c_int,
     );
     ScriptGame_HitRuleWon(&raw mut hit, fp);
-    Fighter_ProcessHit_8006D1EC((*fp).gobj as *mut Fighter_GObj);
+    Fighter_procCollResolve((*fp).gobj as *mut Fighter_GObj);
     ScriptGame_HitRuleForget(&raw mut hit);
     OSReport(
         b"script: hit victim=%d from=%d damage=%d angle=%d kbg=%d bkb=%d percent=%d\n\0"
@@ -28355,7 +28355,7 @@ pub unsafe extern "C" fn ScriptGame_EnemyStrike(
         1 as usize,
         0 as ::core::ffi::c_int,
     );
-    Fighter_ProcessHit_8006D1EC((*fp).gobj as *mut Fighter_GObj);
+    Fighter_procCollResolve((*fp).gobj as *mut Fighter_GObj);
     bits.f = applied;
     Script_EnemyGameEvent(
         handle,
@@ -34005,7 +34005,7 @@ pub unsafe extern "C" fn script_retail_particles() {
                 if !(*p).appsrt.is_null() {
                     psRemoveParticleAppSRT(p);
                 }
-                hsd_8039D048(p as *mut ::core::ffi::c_void);
+                psClearPointJObj(p as *mut ::core::ffi::c_void);
                 HSD_ObjFree(
                     &raw mut hsd_804D0F60.alloc_data,
                     p as *mut ::core::ffi::c_void,

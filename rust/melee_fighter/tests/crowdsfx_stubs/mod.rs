@@ -8,16 +8,16 @@ use melee_types::*;
 pub fn install() {
     unsafe {
         m::ext::hook::Player_8003248C = Some(|a0, a1| { t(1000); t(a0 as u32); t(a1 as u32); fv() as _ });
-        m::ext::hook::ftLib_80086644 = Some(|a0, a1| { t(1001); t(pi(a0)); t(pi(a1 as *const _ as *const u8)); });
-        m::ext::hook::ftLib_80086BE0 = Some(|a0| { t(1002); t(pi(a0)); fv() as _ });
-        m::ext::hook::ftLib_80087120 = Some(|a0| { t(1003); t(pi(a0)); fv() as _ });
-        m::ext::hook::ftLib_8008731C = Some(|a0| { t(1004); t(pi(a0)); fv() as _ });
-        m::ext::hook::ftLib_8008732C = Some(|a0| { t(1005); t(pi(a0)); fv() as _ });
-        m::ext::hook::ftLib_8008741C = Some(|a0| { t(1006); t(a0 as u32); core::ptr::null_mut() });
-        m::ext::hook::ftLib_80087454 = Some(|a0| { t(1007); t(pi(a0)); rg() });
-        m::ext::hook::ftLib_80087460 = Some(|a0| { t(1008); t(pi(a0)); fv() as _ });
+        m::ext::hook::ftLib_GetPos = Some(|a0, a1| { t(1001); t(pi(a0)); t(pi(a1 as *const _ as *const u8)); });
+        m::ext::hook::ftLib_GetPlayerIndex = Some(|a0| { t(1002); t(pi(a0)); fv() as _ });
+        m::ext::hook::ftLib_GetPercent = Some(|a0| { t(1003); t(pi(a0)); fv() as _ });
+        m::ext::hook::ftLib_IsSleeping_8008731C = Some(|a0| { t(1004); t(pi(a0)); fv() as _ });
+        m::ext::hook::ftLib_IsDead = Some(|a0| { t(1005); t(pi(a0)); fv() as _ });
+        m::ext::hook::ftLib_FindBySpawnNum = Some(|a0| { t(1006); t(a0 as u32); core::ptr::null_mut() });
+        m::ext::hook::ftLib_GetCrowdKnockback = Some(|a0| { t(1007); t(pi(a0)); rg() });
+        m::ext::hook::ftLib_GetSpawnNum = Some(|a0| { t(1008); t(pi(a0)); fv() as _ });
         m::ext::hook::ftLib_8008746C = Some(|a0| { t(1009); t(pi(a0)); fv() as _ });
-        m::ext::hook::ftLib_800874BC = Some(|a0| { t(1010); t(pi(a0)); fv() as _ });
+        m::ext::hook::ftLib_IsSubFighter = Some(|a0| { t(1010); t(pi(a0)); fv() as _ });
         m::ext::hook::lbAudioAx_800236B8 = Some(|a0| { t(1011); t(a0 as u32); let _ = fv(); });
         m::ext::hook::lbAudioAx_80023710 = Some(|a0| { t(1012); t(a0 as u32); fv() as _ });
         m::ext::hook::lbAudioAx_800240B4 = Some(|a0| { t(1013); t(a0 as u32); fv() as _ });

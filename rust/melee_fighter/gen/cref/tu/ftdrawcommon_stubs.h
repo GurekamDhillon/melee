@@ -51,12 +51,12 @@ void (ftCo_800C8AF0)(__typeof__(struct Fighter *) a0) { T(1023); T(PI((const voi
 // stub ftCo_800C8AF0 = 1023
 __typeof__(float (*)[4]) (ftCommon_8007F804)(__typeof__(struct Fighter *) a0) { T(1024); T(PI((const void*) a0)); return (__typeof__(float (*)[4])) ((float (*)[4]) FT[1].x44_mtx); }
 // stub ftCommon_8007F804 = 1024
-__typeof__(int) (ftLib_800860C4)(void) { T(1025); return (__typeof__(int)) (fv()); }
-// stub ftLib_800860C4 = 1025
-__typeof__(int) (ftLib_80086A8C)(__typeof__(struct HSD_GObj *) a0) { T(1026); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub ftLib_80086A8C = 1026
-__typeof__(int) (ftLib_80087074)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1027); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { ((Vec3*) a1)->x = rg(); ((Vec3*) a1)->y = rg(); ((Vec3*) a1)->z = rg(); } return (__typeof__(int)) (fv()); }
-// stub ftLib_80087074 = 1027
+__typeof__(int) (ftLib_CountFighters)(void) { T(1025); return (__typeof__(int)) (fv()); }
+// stub ftLib_CountFighters = 1025
+__typeof__(int) (ftLib_UpdateScreenVisibility)(__typeof__(struct HSD_GObj *) a0) { T(1026); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+// stub ftLib_UpdateScreenVisibility = 1026
+__typeof__(int) (ftLib_GetShakeOffset)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1027); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { ((Vec3*) a1)->x = rg(); ((Vec3*) a1)->y = rg(); ((Vec3*) a1)->z = rg(); } return (__typeof__(int)) (fv()); }
+// stub ftLib_GetShakeOffset = 1027
 void (ftParts_800750C8)(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1028); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 // stub ftParts_800750C8 = 1028
 __typeof__(int) (lbColl_80009F54)(__typeof__(struct HitCapsule *) a0, __typeof__(unsigned int) a1, __typeof__(float) a2) { T(1029); T(PI((const void*) a0)); T((u32) a1); T(B(a2)); return (__typeof__(int)) (fv()); }

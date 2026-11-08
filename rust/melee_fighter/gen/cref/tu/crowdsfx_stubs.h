@@ -4,26 +4,26 @@ CrowdConfig * gCrowdConfig;
 mpCollisionBox mpLib_80458868 [ 2 ];
 __typeof__(Gm_PKind) (Player_8003248C)(__typeof__(int) a0, __typeof__(int) a1) { T(1000); T((u32) a0); T((u32) a1); return (__typeof__(Gm_PKind)) (fv()); }
 // stub Player_8003248C = 1000
-void (ftLib_80086644)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1001); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-// stub ftLib_80086644 = 1001
-__typeof__(unsigned char) (ftLib_80086BE0)(__typeof__(struct HSD_GObj *) a0) { T(1002); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
-// stub ftLib_80086BE0 = 1002
-__typeof__(int) (ftLib_80087120)(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub ftLib_80087120 = 1003
-__typeof__(int) (ftLib_8008731C)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub ftLib_8008731C = 1004
-__typeof__(int) (ftLib_8008732C)(__typeof__(struct HSD_GObj *) a0) { T(1005); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub ftLib_8008732C = 1005
-__typeof__(struct HSD_GObj *) (ftLib_8008741C)(__typeof__(unsigned int) a0) { T(1006); T((u32) a0); return (__typeof__(struct HSD_GObj *)) (0); }
-// stub ftLib_8008741C = 1006
-__typeof__(float) (ftLib_80087454)(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-// stub ftLib_80087454 = 1007
-__typeof__(unsigned int) (ftLib_80087460)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(unsigned int)) (fv()); }
-// stub ftLib_80087460 = 1008
+void (ftLib_GetPos)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1001); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+// stub ftLib_GetPos = 1001
+__typeof__(unsigned char) (ftLib_GetPlayerIndex)(__typeof__(struct HSD_GObj *) a0) { T(1002); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
+// stub ftLib_GetPlayerIndex = 1002
+__typeof__(int) (ftLib_GetPercent)(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+// stub ftLib_GetPercent = 1003
+__typeof__(int) (ftLib_IsSleeping_8008731C)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+// stub ftLib_IsSleeping_8008731C = 1004
+__typeof__(int) (ftLib_IsDead)(__typeof__(struct HSD_GObj *) a0) { T(1005); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+// stub ftLib_IsDead = 1005
+__typeof__(struct HSD_GObj *) (ftLib_FindBySpawnNum)(__typeof__(unsigned int) a0) { T(1006); T((u32) a0); return (__typeof__(struct HSD_GObj *)) (0); }
+// stub ftLib_FindBySpawnNum = 1006
+__typeof__(float) (ftLib_GetCrowdKnockback)(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+// stub ftLib_GetCrowdKnockback = 1007
+__typeof__(unsigned int) (ftLib_GetSpawnNum)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(unsigned int)) (fv()); }
+// stub ftLib_GetSpawnNum = 1008
 __typeof__(int) (ftLib_8008746C)(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 // stub ftLib_8008746C = 1009
-__typeof__(int) (ftLib_800874BC)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub ftLib_800874BC = 1010
+__typeof__(int) (ftLib_IsSubFighter)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+// stub ftLib_IsSubFighter = 1010
 __typeof__(int) (lbAudioAx_800236B8)(__typeof__(int) a0) { T(1011); T((u32) a0); return (__typeof__(int)) (fv()); }
 // stub lbAudioAx_800236B8 = 1011
 __typeof__(int) (lbAudioAx_80023710)(__typeof__(int) a0) { T(1012); T((u32) a0); return (__typeof__(int)) (fv()); }

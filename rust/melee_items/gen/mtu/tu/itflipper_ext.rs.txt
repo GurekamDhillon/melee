@@ -21,9 +21,9 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj;
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
-    fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80086BEC(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_GetCameraBonePos(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetPosDelta(a0: *mut HSD_GObj, a1: *mut Vec);
     fn ftLib_80087284(a0: *mut HSD_GObj) -> i32;
     fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32;
     fn itColl_BounceOffVictim(a0: *mut HSD_GObj);

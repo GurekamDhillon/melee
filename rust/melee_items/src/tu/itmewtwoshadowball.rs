@@ -166,9 +166,9 @@ pub mod ext {
     fn ftKb_SpecialNMt_80106F9C(a0: *mut HSD_GObj) -> i32;
     fn ftKb_SpecialNMt_80106FEC(a0: *mut HSD_GObj) -> i32;
     fn ftKb_SpecialNMt_80107040(a0: *mut HSD_GObj);
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
-    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800869D4(a0) };
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetFacingDir(a0) };
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_GetPartJObj(a0, a1) };
+    fn ftLib_GetModelScale(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetModelScale(a0) };
     fn ftMt_SpecialN_CheckShadowBallCancel(a0: *mut HSD_GObj) -> i32;
     fn ftMt_SpecialN_CheckShadowBallRemove(a0: *mut HSD_GObj) -> i32;
     fn ftMt_SpecialN_GetChargeLevel(a0: *mut HSD_GObj, a1: *mut i32, a2: *mut i32) -> i32;
@@ -351,7 +351,7 @@ pub unsafe extern "C" fn it_802C5000(parent: *mut Item_GObj, pos: *mut Vec3, bon
         (*sb).x44 = -(*sb).x40 / (0.5f32 * (*sb).x48 as f32);
         (*sb).x4C = 0;
         (*sb).x50 = 0.0;
-        (*sb).x54 = ext::ftLib_800869D4(parent);
+        (*sb).x54 = ext::ftLib_GetModelScale(parent);
         (*sb).x58.z = 0.0;
         (*sb).x58.y = 0.0;
         (*sb).x58.x = 0.0;
@@ -397,7 +397,7 @@ pub unsafe extern "C" fn it_802C519C(parent: *mut Item_GObj, pos: *mut Vec3, kin
         (*sb).x44 = 0.0;
         (*sb).x4C = 0;
         (*sb).x50 = 1.0;
-        (*sb).x54 = ext::ftLib_800869D4(parent);
+        (*sb).x54 = ext::ftLib_GetModelScale(parent);
         (*sb).x58.z = 0.0;
         (*sb).x58.y = 0.0;
         (*sb).x58.x = 0.0;
@@ -446,7 +446,7 @@ pub unsafe extern "C" fn it_802C53F0(gobj: *mut Item_GObj, pos: *mut Vec3, angle
 
     if !(*sb).x2C.is_null() && (*ip).owner == (*sb).x2C {
         it_802C5B18(gobj, (*sb).x2C);
-        let bone = ext::ftLib_80086630((*sb).x2C, (*ip).xDC4);
+        let bone = ext::ftLib_GetPartJObj((*sb).x2C, (*ip).xDC4);
         ext::HSD_MtxGetRotation((*bone).mtx.as_mut_ptr() as *mut c_void, &mut rot);
         tr.z = 0.0;
         tr.y = 0.0;
@@ -468,7 +468,7 @@ pub unsafe extern "C" fn it_802C53F0(gobj: *mut Item_GObj, pos: *mut Vec3, angle
             (*sb).x10 = fmadds((*sb).x18 as f32, ((*attr).x1C - base) / (*sb).x1C as f32, base);
         }
         (*sb).x20 = 0;
-        (*ip).facing_dir = ext::ftLib_800865C0((*sb).x2C);
+        (*ip).facing_dir = ext::ftLib_GetFacingDir((*sb).x2C);
         (*ip).pos = *pos;
         (*sb).x28 = 0;
         (*ip).x40_vel.x = (*sb).x4.y * (*sb).x50 * cosf((*sb).x4.x);

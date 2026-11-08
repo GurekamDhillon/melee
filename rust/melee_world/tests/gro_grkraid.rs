@@ -359,7 +359,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grinl::ext::HSD_JOBJSETMTXDIRTYSUB = Some(|a0: *mut HSD_JObj| { lg_s("HSD_JObjSetMtxDirtySub("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grinl2::ext::HSD_RANDI = Some(|a0: s32| -> s32 { lg_s("HSD_Randi("); lg_int(a0 as u32); lg_s(")"); { let r = ((if a0 > 0 { rnd() % (a0 as u32) } else { 0 })) as s32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grkraid::ext::OSREPORT = Some(|a0: *mut i8| { lg_s("OSReport("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grkraid::ext::FTLIB_80086C9C = Some(|a0: s32, a1: s32| { lg_s("ftLib_80086C9C("); lg_int(a0 as u32); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grkraid::ext::FTLIB_STARTRUMBLEALL = Some(|a0: s32, a1: s32| { lg_s("ftLib_StartRumbleAll("); lg_int(a0 as u32); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grkraid::ext::GRANIME_801C7FF8 = Some(|a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32| { lg_s("grAnime_801C7FF8("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_int(a3 as u32); lg_f(a4); lg_f(a5); lg_s(")"); lg_c(';'); });
         melee_world::tu::grinl2::ext::GRANIME_801C8138 = Some(|a0: *mut HSD_GObj, a1: enum_t, a2: i32| { lg_s("grAnime_801C8138("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grkraid::ext::GRANIME_801C83D0 = Some(|a0: *mut HSD_GObj, a1: i32, a2: enum_t| -> i32 { lg_s("grAnime_801C83D0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });

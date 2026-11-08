@@ -27,9 +27,9 @@ __typeof__(int) (ftKb_SpecialNMt_80106F44)(__typeof__(struct HSD_GObj *) a0, __t
 __typeof__(int) (ftKb_SpecialNMt_80106F9C)(__typeof__(struct HSD_GObj *) a0) { T(1015); T(PI((const void*) a0)); return (__typeof__(int)) ((int) ((fv() % 5) == 0)); }
 __typeof__(int) (ftKb_SpecialNMt_80106FEC)(__typeof__(struct HSD_GObj *) a0) { T(1016); T(PI((const void*) a0)); return (__typeof__(int)) ((int) ((fv() % 5) == 0)); }
 void (ftKb_SpecialNMt_80107040)(__typeof__(struct HSD_GObj *) a0) { T(1017); T(PI((const void*) a0)); }
-__typeof__(float) (ftLib_800865C0)(__typeof__(struct HSD_GObj *) a0) { T(1018); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-__typeof__(struct HSD_JObj *) (ftLib_80086630)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1019); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (&JO[5]); }
-__typeof__(float) (ftLib_800869D4)(__typeof__(struct HSD_GObj *) a0) { T(1020); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(float) (ftLib_GetFacingDir)(__typeof__(struct HSD_GObj *) a0) { T(1018); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(struct HSD_JObj *) (ftLib_GetPartJObj)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1019); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (&JO[5]); }
+__typeof__(float) (ftLib_GetModelScale)(__typeof__(struct HSD_GObj *) a0) { T(1020); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 __typeof__(int) (ftMt_SpecialN_CheckShadowBallCancel)(__typeof__(struct HSD_GObj *) a0) { T(1021); T(PI((const void*) a0)); return (__typeof__(int)) ((int) ((fv() % 5) == 0)); }
 __typeof__(int) (ftMt_SpecialN_CheckShadowBallRemove)(__typeof__(struct HSD_GObj *) a0) { T(1022); T(PI((const void*) a0)); return (__typeof__(int)) ((int) ((fv() % 5) == 0)); }
 __typeof__(int) (ftMt_SpecialN_GetChargeLevel)(__typeof__(struct HSD_GObj *) a0, __typeof__(int *) a1, __typeof__(int *) a2) { T(1023); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a1) { *a1 = (int) (fv() % 6); } if (a2) { *a2 = (int) (fv() % 5) + 1; } return (__typeof__(int)) ((int) (fv() % 4) - 1); }
@@ -1672,9 +1672,9 @@ static void freg_all(void)
 // stub ftKb_SpecialNMt_80106F9C = 1015
 // stub ftKb_SpecialNMt_80106FEC = 1016
 // stub ftKb_SpecialNMt_80107040 = 1017
-// stub ftLib_800865C0 = 1018
-// stub ftLib_80086630 = 1019
-// stub ftLib_800869D4 = 1020
+// stub ftLib_GetFacingDir = 1018
+// stub ftLib_GetPartJObj = 1019
+// stub ftLib_GetModelScale = 1020
 // stub ftMt_SpecialN_CheckShadowBallCancel = 1021
 // stub ftMt_SpecialN_CheckShadowBallRemove = 1022
 // stub ftMt_SpecialN_GetChargeLevel = 1023

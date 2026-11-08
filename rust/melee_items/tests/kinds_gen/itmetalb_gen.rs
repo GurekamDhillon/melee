@@ -11,9 +11,9 @@ pub fn install() {
     use m::ext::hook::*;
     unsafe {
         Item_80268E5C = Some(|a0, a1, a2| { t(1000); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
-        ftLib_80086BE0 = Some(|a0| { t(1001); t(pi(a0)); fv() as _ });
-        ftLib_800871A8 = Some(|a0, a1| { t(1002); t(pi(a0)); t(pi(a1)); });
-        ftLib_800874BC = Some(|a0| { t(1003); t(pi(a0)); fv() as _ });
+        ftLib_GetPlayerIndex = Some(|a0| { t(1001); t(pi(a0)); fv() as _ });
+        ftLib_ApplyMetalBox = Some(|a0, a1| { t(1002); t(pi(a0)); t(pi(a1)); });
+        ftLib_IsSubFighter = Some(|a0| { t(1003); t(pi(a0)); fv() as _ });
         it_8026B390 = Some(|a0| { t(1004); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1005); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });
         it_8026D62C = Some(|a0, a1| { t(1006); t(pi(a0)); t(fi(a1)); });

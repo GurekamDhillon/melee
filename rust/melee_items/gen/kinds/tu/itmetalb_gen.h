@@ -10,9 +10,9 @@ static void hash_ItemAttr(const ItemAttr* p);
 static void fill_ItemCommonData(ItemCommonData* p);
 static void hash_ItemCommonData(const ItemCommonData* p);
 void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1000); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
-__typeof__(unsigned char) (ftLib_80086BE0)(__typeof__(struct HSD_GObj *) a0) { T(1001); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
-void (ftLib_800871A8)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1002); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-__typeof__(int) (ftLib_800874BC)(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(unsigned char) (ftLib_GetPlayerIndex)(__typeof__(struct HSD_GObj *) a0) { T(1001); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
+void (ftLib_ApplyMetalBox)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1002); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+__typeof__(int) (ftLib_IsSubFighter)(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void (it_8026B390)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (it_8026D62C)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1) { T(1006); T(PI((const void*) a0)); T(FI((const void*) a1)); }
@@ -1624,9 +1624,9 @@ static void freg_all(void)
     freg((const void*) it_80295498);
 }
 // stub Item_80268E5C = 1000
-// stub ftLib_80086BE0 = 1001
-// stub ftLib_800871A8 = 1002
-// stub ftLib_800874BC = 1003
+// stub ftLib_GetPlayerIndex = 1001
+// stub ftLib_ApplyMetalBox = 1002
+// stub ftLib_IsSubFighter = 1003
 // stub it_8026B390 = 1004
 // stub it_8026B894 = 1005
 // stub it_8026D62C = 1006

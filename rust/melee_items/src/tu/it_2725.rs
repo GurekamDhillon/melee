@@ -306,14 +306,14 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn db_ShowEnemyStompRange() -> u32 => unsafe { crate::tu::dbitem::db_ShowEnemyStompRange() };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
-    fn ftLib_80086A0C(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_80086A0C(a0) };
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_80086BE0(a0) };
-    fn ftLib_80086D40(a0: *mut HSD_GObj, a1: i32, a2: i32);
-    fn ftLib_80086DC4(a0: i32, a1: i32);
-    fn ftLib_80086E68(a0: *mut HSD_GObj);
-    fn ftLib_80086EB4(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086EB4(a0) };
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_GetPartJObj(a0, a1) };
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsFighter(a0) as _ };
+    fn ftLib_GetScale(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetScale(a0) };
+    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 => unsafe { crate::tu::ftlib::ftLib_GetPlayerIndex(a0) };
+    fn ftLib_StartItemRumble(a0: *mut HSD_GObj, a1: i32, a2: i32);
+    fn ftLib_StartItemRumbleAll(a0: i32, a1: i32);
+    fn ftLib_StopItemRumble(a0: *mut HSD_GObj);
+    fn ftLib_GetTeam(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetTeam(a0) };
     fn itIsHeavy(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_26B1::itIsHeavy(a0) as _ };
     fn it_8026B390(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b390(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
@@ -623,7 +623,7 @@ pub unsafe extern "C" fn it_80272D1C(item_gobj: *mut HSD_GObj) -> bool {
 /// `it_80272D40`: 0 for a fighter-owned item, 1 for an item with its own collision, 2 otherwise.
 pub unsafe extern "C" fn it_80272D40(item_gobj: *mut HSD_GObj) -> i32 {
     melee_core::ct!("it_80272D40");
-    if ext::ftLib_80086960(item_gobj) != 0 {
+    if ext::ftLib_IsFighter(item_gobj) != 0 {
         return 0;
     }
     let chk = !item_gobj.is_null() && (*item_gobj).classifier == HSD_GOBJ_CLASS_ITEM as u16;
@@ -813,28 +813,28 @@ pub unsafe extern "C" fn it_802734B4(item_gobj: *mut HSD_GObj) {
     (*item).xAC_unk.y = 1.0;
 }
 
-/// `it_80273598`: the owner's `ftLib_80086D40` with the two arguments, when the owner is a fighter.
+/// `it_80273598`: the owner's `ftLib_StartItemRumble` with the two arguments, when the owner is a fighter.
 pub unsafe extern "C" fn it_80273598(item_gobj: *mut HSD_GObj, arg1: i32, arg2: i32) {
     melee_core::ct!("it_80273598");
     let item = item_of(item_gobj);
-    if !(*item).owner.is_null() && ext::ftLib_80086960((*item).owner) != 0 {
-        ext::ftLib_80086D40((*item).owner, arg1, arg2);
+    if !(*item).owner.is_null() && ext::ftLib_IsFighter((*item).owner) != 0 {
+        ext::ftLib_StartItemRumble((*item).owner, arg1, arg2);
     }
 }
 
-/// `it_80273600`: `ftLib_80086E68` on the owner, when it is a fighter.
+/// `it_80273600`: `ftLib_StopItemRumble` on the owner, when it is a fighter.
 pub unsafe extern "C" fn it_80273600(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80273600");
     let item = item_of(item_gobj);
-    if !(*item).owner.is_null() && ext::ftLib_80086960((*item).owner) != 0 {
-        ext::ftLib_80086E68((*item).owner);
+    if !(*item).owner.is_null() && ext::ftLib_IsFighter((*item).owner) != 0 {
+        ext::ftLib_StopItemRumble((*item).owner);
     }
 }
 
-/// `it_80273648`: `ftLib_80086DC4` with the two arguments.
+/// `it_80273648`: `ftLib_StartItemRumbleAll` with the two arguments.
 pub unsafe extern "C" fn it_80273648(_item_gobj: *mut HSD_GObj, arg1: i32, arg2: i32) {
     melee_core::ct!("it_80273648");
-    ext::ftLib_80086DC4(arg1, arg2);
+    ext::ftLib_StartItemRumbleAll(arg1, arg2);
 }
 
 /// `it_80273670`: sets the item's state (`arg1` indexes the article's state table), starts its animation at
@@ -910,8 +910,8 @@ pub unsafe extern "C" fn it_80273748(item_gobj: *mut HSD_GObj, pos: *mut Vec3, v
         sp3c.x = -sp3c.x;
         sp3c.y = -sp3c.y;
         sp3c.z = -sp3c.z;
-        ext::lb_8000B1CC(ext::ftLib_80086630(owner, (*item).xDC4), &raw mut sp3c, &raw mut sp54);
-        ext::lb_8000B1CC(ext::ftLib_80086630(owner, (*item).xDC4), null_mut(), &raw mut sp48);
+        ext::lb_8000B1CC(ext::ftLib_GetPartJObj(owner, (*item).xDC4), &raw mut sp3c, &raw mut sp54);
+        ext::lb_8000B1CC(ext::ftLib_GetPartJObj(owner, (*item).xDC4), null_mut(), &raw mut sp48);
         sp3c.x = sp54.x - sp48.x;
         sp3c.y = sp54.y - sp48.y;
         sp3c.z = 0.0;
@@ -929,9 +929,9 @@ pub unsafe extern "C" fn it_80273748(item_gobj: *mut HSD_GObj, pos: *mut Vec3, v
 /// `getOwnerJointPosition` (static inline): the owner's part position, through `offset` when given.
 unsafe fn getOwnerJointPosition(item: *mut Item, owner_gobj: *mut HSD_GObj, offset: *mut Vec3, world_pos: *mut Vec3) {
     if !offset.is_null() {
-        ext::lb_8000B1CC(ext::ftLib_80086630(owner_gobj, (*item).xDC4), offset, world_pos);
+        ext::lb_8000B1CC(ext::ftLib_GetPartJObj(owner_gobj, (*item).xDC4), offset, world_pos);
     } else {
-        ext::lb_8000B1CC(ext::ftLib_80086630(owner_gobj, (*item).xDC4), null_mut(), world_pos);
+        ext::lb_8000B1CC(ext::ftLib_GetPartJObj(owner_gobj, (*item).xDC4), null_mut(), world_pos);
     }
 }
 
@@ -1021,7 +1021,7 @@ pub unsafe extern "C" fn it_80273F34(item_gobj: *mut HSD_GObj, arg_gobj2: *mut H
         HSD_JObjSetRotationY(item_jobj, rotate);
     }
 
-    if ext::ftLib_80086960(arg_gobj2) != 0 {
+    if ext::ftLib_IsFighter(arg_gobj2) != 0 {
         ext::Item_8026A848(item_gobj, arg_gobj2);
         ext::it_8027B070(item_gobj, arg_gobj2);
     }
@@ -1105,8 +1105,8 @@ pub unsafe extern "C" fn it_802742F4(item_gobj: *mut HSD_GObj, gobj: *mut HSD_GO
     let item = item_of(item_gobj);
     ext::lb_8000B804(jobj_of(item_gobj), (*item).xC8_joint);
     ext::Item_8026849C(item_gobj);
-    if ext::ftLib_80086960(gobj) != 0 {
-        let bit_idx = ext::ftLib_80086BE0(gobj) as u32;
+    if ext::ftLib_IsFighter(gobj) != 0 {
+        let bit_idx = ext::ftLib_GetPlayerIndex(gobj) as u32;
         let cur = (*item).xDC8_word.flags.xF();
         (*item).xDC8_word.flags.set_xF((cur as u32 | melee_runtime::cabi::shl(1, bit_idx)) as _);
         if (*item).xDC8_word.flags.x0() == 0 {
@@ -1115,7 +1115,7 @@ pub unsafe extern "C" fn it_802742F4(item_gobj: *mut HSD_GObj, gobj: *mut HSD_GO
             (*item).x51C = gobj;
         }
         (*item).xDC4 = ftpart;
-        (*item).x20_team_id = ext::ftLib_80086EB4(gobj) as u8;
+        (*item).x20_team_id = ext::ftLib_GetTeam(gobj) as u8;
         (*item).xD50_landNum = 0;
         (*item).xDC8_word.flags.set_x13(1);
         ext::HSD_JObjClearFlagsAll((*jobj_of(item_gobj)).child, JOBJ_HIDDEN as u32);
@@ -1167,7 +1167,7 @@ pub unsafe extern "C" fn it_80274594(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80274594");
     let item = item_of(item_gobj);
     let item_jobj = jobj_of(item_gobj);
-    (*item).scl *= ext::ftLib_80086A0C((*item).owner);
+    (*item).scl *= ext::ftLib_GetScale((*item).owner);
     let mut sp18 = Vec3 { x: (*item).scl, y: (*item).scl, z: (*item).scl };
     HSD_JObjSetScale_2(item_jobj, &raw mut sp18);
     ext::it_80275534(item_gobj, (*item).x3C);
@@ -1387,14 +1387,14 @@ unsafe fn get_bone_by_id(item_gobj: *mut HSD_GObj, bone_id: i32) -> *mut HSD_JOb
 pub unsafe extern "C" fn it_80274F48(item_gobj: *mut HSD_GObj, bone_id: i32, arg2_gobj: *mut HSD_GObj, part_idx: Fighter_Part) {
     melee_core::ct!("it_80274F48");
     let jobj = get_bone_by_id(item_gobj, bone_id);
-    ext::lb_8000C2F8(jobj, ext::ftLib_80086630(arg2_gobj, part_idx));
+    ext::lb_8000C2F8(jobj, ext::ftLib_GetPartJObj(arg2_gobj, part_idx));
 }
 
 /// `it_80274FDC`: as `it_80274F48` with the other constraint (`lb_8000C1C0`).
 pub unsafe extern "C" fn it_80274FDC(item_gobj: *mut HSD_GObj, bone_id: i32, arg2_gobj: *mut HSD_GObj, part_idx: Fighter_Part) {
     melee_core::ct!("it_80274FDC");
     let jobj = get_bone_by_id(item_gobj, bone_id);
-    ext::lb_8000C1C0(jobj, ext::ftLib_80086630(arg2_gobj, part_idx));
+    ext::lb_8000C1C0(jobj, ext::ftLib_GetPartJObj(arg2_gobj, part_idx));
 }
 
 /// `it_80275070`: releases bone `bone_id`'s constraint.

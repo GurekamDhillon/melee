@@ -18,7 +18,7 @@ pub fn install() {
         db_80225DD8 = Some(|a0, a1| { t(1005); t(pi(a0)); t(pi(a1)); });
         ftGw_SpecialS_ItemCheckJudgementRemove = Some(|a0| { t(1006); t(pi(a0)); fv() as _ });
         ftGw_SpecialS_ItemJudgementSetFlag = Some(|a0| { t(1007); t(pi(a0)); });
-        ftLib_800865C0 = Some(|a0| { t(1008); t(pi(a0)); if fv() & 1 != 0 { 1.0 } else { rg() } });
+        ftLib_GetFacingDir = Some(|a0| { t(1008); t(pi(a0)); if fv() & 1 != 0 { 1.0 } else { rg() } });
         it_8026B724 = Some(|a0| { t(1009); t(pi(a0)); });
         it_8026B73C = Some(|a0| { t(1010); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); fv() as _ });

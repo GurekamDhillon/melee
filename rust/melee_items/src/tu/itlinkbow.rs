@@ -38,7 +38,7 @@ pub mod ext {
     fn ftKb_SpecialNLk800FB394(a0: *mut HSD_GObj) -> u32;
     fn ftKb_SpecialNLk800FB444(a0: *mut HSD_GObj);
     fn ftKb_SpecialNLk800FB470(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800869D4(a0) };
+    fn ftLib_GetModelScale(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetModelScale(a0) };
     fn ftLk_SpecialN_GetIndex(a0: *mut HSD_GObj) -> u32;
     fn ftLk_SpecialN_IsActiveAnd2071b6(a0: *mut HSD_GObj) -> i32;
     fn ftLk_SpecialN_UnsetFv14(a0: *mut HSD_GObj);
@@ -81,7 +81,7 @@ pub unsafe fn it_802AF1A4(facing_dir: f32, owner_gobj: *mut Fighter_GObj, vec: *
         let item = GET_ITEM(gobj);
         Item_ClearCmdVars(item);
         (*item).xDCC_flag.set_b3(0);
-        (*item).xDD4_itemVar.linkbow.x0 = ext::ftLib_800869D4((*item).owner);
+        (*item).xDD4_itemVar.linkbow.x0 = ext::ftLib_GetModelScale((*item).owner);
         (*item).xDD4_itemVar.linkbow.x4 = owner_gobj;
         ext::Item_8026AB54(gobj, owner_gobj, arg3);
     }

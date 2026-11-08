@@ -38,8 +38,8 @@ pub mod ext {
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
     fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::item::Item_8026AB54(a0, a1, a2) };
     fn ftCo_800BF228(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetFacingDir(a0) };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
     fn ftNs_AttackS4_CheckNessBatRemove(a0: *mut HSD_GObj) -> i32;
     fn ftNs_AttackS4_ItemNessBatSetNULL(a0: *mut HSD_GObj);
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
@@ -131,9 +131,9 @@ pub unsafe extern "C" fn it_802AD590(gobj: *mut Fighter_GObj, part: Fighter_Part
 
     if !gobj.is_null() {
         spawn.kind = It_Kind_Ness_Bat;
-        ext::ftLib_80086644(gobj, &mut pos);
+        ext::ftLib_GetPos(gobj, &mut pos);
         Item_InitSpawnPosition(&mut spawn, &mut pos, true);
-        Item_InitSpawnCommonFields(&mut spawn, gobj, ext::ftLib_800865C0(gobj), false);
+        Item_InitSpawnCommonFields(&mut spawn, gobj, ext::ftLib_GetFacingDir(gobj), false);
 
         bat = ext::Item_80268B18(&mut spawn);
         if !bat.is_null() {

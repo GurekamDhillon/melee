@@ -37,7 +37,7 @@ RET = {
     "HSD_CObjGetCurrent": ("&CO[fv() % 3]", "&raw mut super::CO[(fv() % 3) as usize]"),
     "HSD_CObjGetViewingMtxPtr": ("(float(*)[4]) MTXA", "&raw mut super::MTXA as *mut [f32; 4]"),
     "Player_GetEntity": ("((fv() & 3) ? &GO[1 + fv() % 2] : 0)", "if fv() & 3 != 0 { &raw mut super::GO[1 + (fv() % 2) as usize] } else { core::ptr::null_mut() }"),
-    "ftLib_80086B74": ("((fv() & 3) ? &SUBJ[fv() % 8] : 0)", "if fv() & 3 != 0 { &raw mut super::SUBJ[(fv() % 8) as usize] } else { core::ptr::null_mut() }"),
+    "ftLib_GetCameraSubject": ("((fv() & 3) ? &SUBJ[fv() % 8] : 0)", "if fv() & 3 != 0 { &raw mut super::SUBJ[(fv() % 8) as usize] } else { core::ptr::null_mut() }"),
     "grLib_801C9CEC": ("((fv() & 1) ? &GO[2] : 0)", "if fv() & 1 != 0 { &raw mut super::GO[2] } else { core::ptr::null_mut() }"),
     "lb_80013B14": ("&CO[fv() % 3]", "&raw mut super::CO[(fv() % 3) as usize]"),
     "lbVector_WorldToScreen": ("((fv() & 3) ? a2 : 0)", "if fv() & 3 != 0 { a2 } else { core::ptr::null_mut() }"),
@@ -83,7 +83,7 @@ EFFECTS = {
     "Stage_80224CAC": vec_out("a0"),
     "Stage_SetVecToFixedCamPos": vec_out("a0"),
     "Stage_UnkSetVec3TCam_Offset": vec_out("a0"),
-    "ftLib_80086644": vec_out("a1"),
+    "ftLib_GetPos": vec_out("a1"),
     "lbVector_WorldToScreen": (VEC_C % ("a2", "a2", "a2", "a2"), VEC_R % ("a2", "a2", "a2", "a2")),
 }
 

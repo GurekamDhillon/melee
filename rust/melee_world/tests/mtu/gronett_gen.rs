@@ -36,7 +36,7 @@ pub fn install() {
         HSD_Randi = Some(|a0| { t(1022); t(a0 as u32); if a0 > 0 { (rnd() % a0 as u32) as i32 } else { 0 } });
         Item_80268E5C = Some(|a0, a1, a2| { t(1023); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         Mex_GrBind = Some(|a0| { t(1024); t(pi(a0)); a0 });
-        ftLib_80086644 = Some(|a0, a1| { t(1025); t(pi(a0)); t(pi(a1)); super::wv(a1); });
+        ftLib_GetPos = Some(|a0, a1| { t(1025); t(pi(a0)); t(pi(a1)); super::wv(a1); });
         gm_8016C6C0 = Some(|a0| { t(1026); t(pi(a0)); (fv() % 4) as i32 });
         grAnime_801C7FF8 = Some(|a0, a1, a2, a3, a4, a5| { t(1027); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); t(a4.to_bits()); t(a5.to_bits()); });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1028); t(pi(a0)); t(a1 as u32); t(a2 as u32); });

@@ -42,8 +42,8 @@ __typeof__(int) ftCo_800BF228(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI(
 __typeof__(int) ftDr_Init_80149844(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void ftDr_Init_801498A0(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); }
 __typeof__(unsigned int) ftDr_Init_801498EC(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void*) a0)); return (__typeof__(unsigned int)) (fv()); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1));  if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
-__typeof__(float) ftLib_800869D4(__typeof__(struct HSD_GObj *) a0) { T(1014); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1));  if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+__typeof__(float) ftLib_GetModelScale(__typeof__(struct HSD_GObj *) a0) { T(1014); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 void it_8026B3A8(__typeof__(struct HSD_GObj *) a0) { T(1015); T(PI((const void*) a0)); }
 __typeof__(int) it_8026B894(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 void it_8026BB68(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1017); T(PI((const void*) a0)); T(PI((const void*) a1));  if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
@@ -5383,8 +5383,8 @@ static void freg_all(void)
 // stub ftDr_Init_80149844 = 1010
 // stub ftDr_Init_801498A0 = 1011
 // stub ftDr_Init_801498EC = 1012
-// stub ftLib_80086644 = 1013
-// stub ftLib_800869D4 = 1014
+// stub ftLib_GetPos = 1013
+// stub ftLib_GetModelScale = 1014
 // stub it_8026B3A8 = 1015
 // stub it_8026B894 = 1016
 // stub it_8026BB68 = 1017

@@ -46,8 +46,8 @@ __typeof__(int) HSD_Randi(__typeof__(int) a0) { T(1024); T((u32) a0); return (__
 __typeof__(float) Stage_GetBlastZoneTopOffset(void) { T(1025); return (__typeof__(float)) (rw()); }
 void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; Vec* v; float* f = 0; __builtin_va_start(ap, a1); v = __builtin_va_arg(ap, Vec*); if (a0 == 1032) f = __builtin_va_arg(ap, float*); __builtin_va_end(ap); T(1026); T((u32) a0); T(PI(a1)); T(PI(v)); T(B(v->x)); T(B(v->y)); T(B(v->z)); if (f) T(B(*f)); return 0; }
 void ftCo_800C06E8(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(void *) a2) { T(1027); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
-__typeof__(float) ftLib_800864A8(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1028); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(float)) (rg()); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1029); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+__typeof__(float) ftLib_GetOpponentsDir(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1028); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(float)) (rg()); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1029); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1030); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 __typeof__(int) grAnime_801C83D0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1031); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
 __typeof__(int) grAnime_801C84A4(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1032); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
@@ -1043,7 +1043,7 @@ static void freg_all(void)
     freg((const void*) grDisplay_801C5DB0);
     freg((const void*) BOMB);
     freg((const void*) find_block);
-    freg((const void*) fn_80213B1C);
+    freg((const void*) grGreens_80213B1C);
     freg((const void*) fn_80214658);
     freg((const void*) fn_802159B4);
     freg((const void*) fn_80215B84);
@@ -1129,8 +1129,8 @@ static void freg_all(void)
 // stub Stage_GetBlastZoneTopOffset = 1025
 // stub efSync_Spawn = 1026
 // stub ftCo_800C06E8 = 1027
-// stub ftLib_800864A8 = 1028
-// stub ftLib_80086644 = 1029
+// stub ftLib_GetOpponentsDir = 1028
+// stub ftLib_GetPos = 1029
 // stub grAnime_801C8138 = 1030
 // stub grAnime_801C83D0 = 1031
 // stub grAnime_801C84A4 = 1032

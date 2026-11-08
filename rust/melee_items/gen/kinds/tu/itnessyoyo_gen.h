@@ -34,7 +34,7 @@ void (Item_8026AB54)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GOb
 void (PSMTXConcat)(__typeof__(float (*)[4]) a0, __typeof__(float (*)[4]) a1, __typeof__(float (*)[4]) a2) { T(1018); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a2) { int q; for (q = 0; q < 12; q++) ((float*) a2)[q] = rw(); } }
 void (PSMTXCopy)(__typeof__(float (*)[4]) a0, __typeof__(float (*)[4]) a1) { T(1019); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a0 && a1) { int q; for (q = 0; q < 12; q++) ((float*) a1)[q] = ((float*) a0)[q]; } }
 void (PSMTXIdentity)(__typeof__(float (*)[4]) a0) { T(1020); T(PI((const void*) a0)); if (a0) { int q; for (q = 0; q < 12; q++) ((float*) a0)[q] = (q % 5 == 0) ? 1.0f : 0.0f; } }
-__typeof__(float) (ftLib_80086A0C)(__typeof__(struct HSD_GObj *) a0) { T(1021); T(PI((const void*) a0)); return (__typeof__(float)) ((float) (rnd() % 5) / 2.0f); }
+__typeof__(float) (ftLib_GetScale)(__typeof__(struct HSD_GObj *) a0) { T(1021); T(PI((const void*) a0)); return (__typeof__(float)) ((float) (rnd() % 5) / 2.0f); }
 __typeof__(int) (ftLib_GetMotionId)(__typeof__(struct HSD_GObj *) a0) { T(1022); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (0x150 + rnd() % 16)); }
 void (ftNs_AttackHi4_YoyoItemSetFlag)(__typeof__(struct HSD_GObj *) a0) { T(1023); T(PI((const void*) a0)); }
 void (it_8026B724)(__typeof__(struct HSD_GObj *) a0) { T(1024); T(PI((const void*) a0)); }
@@ -1946,7 +1946,7 @@ static void freg_all(void)
 // stub PSMTXConcat = 1018
 // stub PSMTXCopy = 1019
 // stub PSMTXIdentity = 1020
-// stub ftLib_80086A0C = 1021
+// stub ftLib_GetScale = 1021
 // stub ftLib_GetMotionId = 1022
 // stub ftNs_AttackHi4_YoyoItemSetFlag = 1023
 // stub it_8026B724 = 1024

@@ -20,7 +20,7 @@ pub fn install() {
         efSync_Spawn = Some(|a0, a1, a2| { t(1007); t(a0 as u32); t(pi(a1)); t(pi(a2)); tvec(a2); core::ptr::null_mut() });
         ftCo_800C92E4 = Some(|a0, a1, a2, a3, a4| { t(1008); t(pi(a0)); t(pi(a1)); tvec(a1); t(pi(a2)); tvec(a2); t(pi(a3)); t(a4.to_bits()); if !a3.is_null() { t((*a3).state as u32); t((*a3).damage); t((*a3).kb_angle as u32); t((*a3).unkC); t((*a3).unk10); t((*a3).unk14); t((*a3).element); t((*a3).sfx_severity as u32); t((*a3).sfx_kind as u32); } });
         ftCo_Barrel_Enter = Some(|a0, a1| { t(1009); t(pi(a0)); t(pi(a1)); });
-        ftLib_800865C0 = Some(|a0| { t(1010); t(pi(a0)); rg() });
+        ftLib_GetFacingDir = Some(|a0| { t(1010); t(pi(a0)); rg() });
         it_8026B390 = Some(|a0| { t(1011); t(pi(a0)); });
         it_8026B3A8 = Some(|a0| { t(1012); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1013); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });

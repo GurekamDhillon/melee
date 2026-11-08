@@ -35,8 +35,8 @@ void Item_80268E5C(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeo
 __typeof__(void *) Mex_GrBind(__typeof__(void *) a0) { T(1014); T(PI((const void*) a0)); return (__typeof__(void *)) (a0); }
 __typeof__(enum StKind) Stage_80225194(void) { T(1015); return (__typeof__(enum StKind)) (((fv() & 1) ? 62 : fv())); }
 void ftCo_800C06E8(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(void *) a2) { T(1016); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1017); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
-void ftLib_80086684(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1018); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1017); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+void ftLib_GetPrevPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1018); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
 __typeof__(float) ftLib_80086B80(__typeof__(struct HSD_GObj *) a0) { T(1019); T(PI((const void*) a0)); return (__typeof__(float)) (rw()); }
 __typeof__(int) gm_8016B238(void) { T(1020); return (__typeof__(int)) (((fv() & 1) ? 0 : fv())); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1021); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
@@ -795,8 +795,8 @@ static void freg_all(void)
 // stub Mex_GrBind = 1014
 // stub Stage_80225194 = 1015
 // stub ftCo_800C06E8 = 1016
-// stub ftLib_80086644 = 1017
-// stub ftLib_80086684 = 1018
+// stub ftLib_GetPos = 1017
+// stub ftLib_GetPrevPos = 1018
 // stub ftLib_80086B80 = 1019
 // stub gm_8016B238 = 1020
 // stub grAnime_801C8138 = 1021

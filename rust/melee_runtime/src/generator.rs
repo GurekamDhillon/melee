@@ -251,7 +251,7 @@ impl<J> Default for GeneratorSystem<J> {
     }
 }
 
-/// `hsd_8039D1E4`: `gen->userfunc = userfunc`.
+/// `psSetUserFunc`: `gen->userfunc = userfunc`.
 pub fn set_userfunc<J>(gen: &mut HsdGenerator<J>, userfunc: Option<u32>) {
     gen.userfunc = userfunc;
 }
@@ -271,7 +271,7 @@ impl<J: Copy + PartialEq> GeneratorSystem<J> {
         self.gen(id).next
     }
 
-    /// `hsd_8039D1EC`: the next idnum (>= 0x100).
+    /// `psGetNewIDNum`: the next idnum (>= 0x100).
     pub fn next_idnum(&mut self) -> u16 {
         self.id_counter = self.id_counter.wrapping_add(1);
         if self.id_counter < 256 {

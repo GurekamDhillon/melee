@@ -22,7 +22,7 @@ __typeof__(float) HSD_Randf(void) { T(1009); return (__typeof__(float)) (rw()); 
 __typeof__(int) ScriptGame_StageSlotParticleBegin(__typeof__(int) a0) { T(1010); T((u32) a0); return (__typeof__(int)) (fv()); }
 void ScriptGame_StageSlotProcEnd(void) { T(1011); }
 __typeof__(float) atan2f(__typeof__(float) a0, __typeof__(float) a1) { T(1012); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rw()); }
-__typeof__(unsigned short) hsd_8039D1EC(void) { T(1013); return (__typeof__(unsigned short)) ((u16) (fv() % 3)); }
+__typeof__(unsigned short) psGetNewIDNum(void) { T(1013); return (__typeof__(unsigned short)) ((u16) (fv() % 3)); }
 __typeof__(struct HSD_Generator *) hsd_8039F05C(__typeof__(int) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1014); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_Generator *)) (0); }
 __typeof__(int) psAttachGeneratorAppSRT(__typeof__(struct HSD_Generator *) a0, __typeof__(struct HSD_psAppSRT *) a1) { T(1015); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 __typeof__(int) psAttachParticleAppSRT(__typeof__(struct HSD_Particle *) a0, __typeof__(struct HSD_psAppSRT *) a1) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
@@ -485,7 +485,7 @@ static void freg_all(void)
 // stub ScriptGame_StageSlotParticleBegin = 1010
 // stub ScriptGame_StageSlotProcEnd = 1011
 // stub atan2f = 1012
-// stub hsd_8039D1EC = 1013
+// stub psGetNewIDNum = 1013
 // stub hsd_8039F05C = 1014
 // stub psAttachGeneratorAppSRT = 1015
 // stub psAttachParticleAppSRT = 1016

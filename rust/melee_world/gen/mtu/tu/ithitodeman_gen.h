@@ -20,8 +20,8 @@ void Item_8026AE84(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof__(
 void efLib_PauseAll(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); }
 void efLib_ResumeAll(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); }
 void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; T(1008); T((u32) a0); T(PI(a1)); __builtin_va_start(ap, a1); switch (a0) { case 0x473: { void* j = __builtin_va_arg(ap, void*); T(PI(j)); break; } case 0x44E: case 0x44F: case 0x450: case 0x451: { void* j = __builtin_va_arg(ap, void*); float* f = __builtin_va_arg(ap, float*); float* s = __builtin_va_arg(ap, float*); T(PI(j)); T(PI(f)); T(B(*f)); T(PI(s)); T(B(*s)); break; } case 0x46C: { void* j = __builtin_va_arg(ap, void*); float* f = __builtin_va_arg(ap, float*); T(PI(j)); T(PI(f)); T(B(*f)); break; } case 0x405: { Vec3* p = __builtin_va_arg(ap, Vec3*); T(B(p->x)); T(B(p->y)); T(B(p->z)); break; } default: T(0xDEAD); } __builtin_va_end(ap); return 0; }
-__typeof__(struct HSD_GObj *) ftLib_80086198(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &REFG : 0)); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1010); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = rg(); a1->y = rg(); a1->z = rg(); } }
+__typeof__(struct HSD_GObj *) ftLib_FindLowestPercentOpponent(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &REFG : 0)); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1010); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = rg(); a1->y = rg(); a1->z = rg(); } }
 void it_8026B3A8(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); }
 __typeof__(int) it_8026B894(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1012); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 void it_8026BB88(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = rg(); a1->y = rg(); a1->z = rg(); } }
@@ -1526,8 +1526,8 @@ static void freg_all(void)
 // stub efLib_PauseAll = 1006
 // stub efLib_ResumeAll = 1007
 // stub efSync_Spawn = 1008
-// stub ftLib_80086198 = 1009
-// stub ftLib_80086644 = 1010
+// stub ftLib_FindLowestPercentOpponent = 1009
+// stub ftLib_GetPos = 1010
 // stub it_8026B3A8 = 1011
 // stub it_8026B894 = 1012
 // stub it_8026BB88 = 1013

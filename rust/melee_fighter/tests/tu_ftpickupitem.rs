@@ -61,7 +61,7 @@ fn ftpickupitem_matches_c() {
         hk::ftCo_800C4724 = Some(|g| { t(15); t(iid(g)) });
         hk::ftCo_800C52F4 = Some(|g| { t(16); t(iid(g)) });
         hk::ftCommon_8007FA58 = Some(|g, i| { t(17); t(iid(g)); t(iid(i)) });
-        hk::ftLib_800871A8 = Some(|g, i| { t(18); t(iid(g)); t(iid(i)) });
+        hk::ftLib_ApplyMetalBox = Some(|g, i| { t(18); t(iid(g)); t(iid(i)) });
         hk::ftCo_800C88D4 = Some(|g, v, bb| { t(19); t(iid(g)); t(v as u32); t(bb as u32) });
         hk::ftCo_CalcYScaledKnockback = Some(|a, bb, c| { t(20); t(b(a)); t(b(bb)); t(b(c)); rw() });
         hk::Fighter_804D6524_x8 = Some(|| D6524_X8);

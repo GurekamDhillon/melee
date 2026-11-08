@@ -20,7 +20,7 @@ pub fn install() {
         ftKb_SpecialNLk800FB394 = Some(|a0| { t(1007); t(pi(a0)); (fv() % 7) as u32 });
         ftKb_SpecialNLk800FB444 = Some(|a0| { t(1008); t(pi(a0)); });
         ftKb_SpecialNLk800FB470 = Some(|a0| { t(1009); t(pi(a0)); fv() as _ });
-        ftLib_800869D4 = Some(|a0| { t(1010); t(pi(a0)); rg() });
+        ftLib_GetModelScale = Some(|a0| { t(1010); t(pi(a0)); rg() });
         ftLk_SpecialN_GetIndex = Some(|a0| { t(1011); t(pi(a0)); (fv() % 7) as u32 });
         ftLk_SpecialN_IsActiveAnd2071b6 = Some(|a0| { t(1012); t(pi(a0)); fv() as _ });
         ftLk_SpecialN_UnsetFv14 = Some(|a0| { t(1013); t(pi(a0)); });

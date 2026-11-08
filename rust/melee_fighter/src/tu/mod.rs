@@ -72,7 +72,9 @@ pub mod ft_0df1;
 pub mod ft_07c6;
 pub mod ftCo_Barrel;
 pub mod ftcmdscript;
-pub mod ftcolanim;
+pub mod ftcolanimlist;
+/// upstream renamed ftcolanim.c to ftcolanimlist.c (doldecomp 2f8eab8eb); the old path stays for callers.
+pub use ftcolanimlist as ftcolanim;
 pub mod ftCo_CliffClimb;
 pub mod ftCo_CliffAttack;
 pub mod ftCo_CliffEscape;

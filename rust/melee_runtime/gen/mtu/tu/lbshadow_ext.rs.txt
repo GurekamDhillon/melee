@@ -63,9 +63,9 @@ pub mod ext {
     fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
     fn ftDrawCommon_80081168();
     fn ftDrawCommon_80081200();
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800872B0(a0: *mut HSD_GObj) -> *mut LbShadow;
-    fn ftLib_800872BC(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetShadow(a0: *mut HSD_GObj) -> *mut LbShadow;
+    fn ftLib_CastsShadow(a0: *mut HSD_GObj) -> i32;
     fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
     fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
     fn lbVector_Normalize(a0: *mut Vec) -> f32;

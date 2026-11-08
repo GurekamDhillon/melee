@@ -18,8 +18,8 @@ void (Item_802694CC)(__typeof__(struct HSD_GObj *) a0) { T(1005); T(PI((const vo
 void (Item_8026A8EC)(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); }
 void (Item_8026AB54)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(enum Fighter_Part) a2) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); }
 __typeof__(int) (ftCo_800BF228)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
-__typeof__(float) (ftLib_800865C0)(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-void (ftLib_80086644)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1010); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+__typeof__(float) (ftLib_GetFacingDir)(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+void (ftLib_GetPos)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1010); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
 __typeof__(int) (ftNs_AttackS4_CheckNessBatRemove)(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (ftNs_AttackS4_ItemNessBatSetNULL)(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void*) a0)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
@@ -1625,8 +1625,8 @@ static void freg_all(void)
 // stub Item_8026A8EC = 1006
 // stub Item_8026AB54 = 1007
 // stub ftCo_800BF228 = 1008
-// stub ftLib_800865C0 = 1009
-// stub ftLib_80086644 = 1010
+// stub ftLib_GetFacingDir = 1009
+// stub ftLib_GetPos = 1010
 // stub ftNs_AttackS4_CheckNessBatRemove = 1011
 // stub ftNs_AttackS4_ItemNessBatSetNULL = 1012
 // stub it_8026B894 = 1013

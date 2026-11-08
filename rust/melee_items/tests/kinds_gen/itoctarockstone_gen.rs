@@ -14,8 +14,8 @@ pub fn install() {
         Item_80268B18 = Some(|a0| { t(1001); t(pi(a0)); tspawn(a0); if fv() & 1 != 0 { &raw mut crate::GO[2] } else { core::ptr::null_mut() } });
         Item_80268E5C = Some(|a0, a1, a2| { t(1002); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         Item_8026AE84 = Some(|a0, a1, a2, a3| { t(1003); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
-        ftLib_8008627C = Some(|a0, a1| { t(1004); t(pi(a0)); tvec(a0); t(pi(a1)); if fv() & 1 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() } });
-        ftLib_800866DC = Some(|a0, a1| { t(1005); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
+        ftLib_FindNearestOpponent = Some(|a0, a1| { t(1004); t(pi(a0)); tvec(a0); t(pi(a1)); if fv() & 1 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() } });
+        ftLib_GetCameraBonePos = Some(|a0, a1| { t(1005); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
         itColl_BounceOffShield = Some(|a0| { t(1006); t(pi(a0)); (fv() & 1) as i32 });
         it_8026B894 = Some(|a0, a1| { t(1007); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });
         it_8026BB88 = Some(|a0, a1| { t(1008); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });

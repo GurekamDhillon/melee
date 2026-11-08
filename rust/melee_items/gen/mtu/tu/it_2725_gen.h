@@ -73,14 +73,14 @@ void Item_8026B074(__typeof__(struct Item *) a0) { T(1017); T(PI((const void*) a
 void db_80225DD8(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1018); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 __typeof__(unsigned int) db_ShowEnemyStompRange(void) { T(1019); return (__typeof__(unsigned int)) (fv()); }
 void* oracle_efsync_n(int n, int a0, HSD_GObj* a1, ...) { __builtin_va_list ap; int i; __builtin_va_start(ap, a1); T(1020); T((u32) a0); T(PI(a1)); T((u32) n); for (i = 0; i < n; i++) { int kind = __builtin_va_arg(ap, int); unsigned long long v = __builtin_va_arg(ap, unsigned long long); switch (kind) { case 0: T((u32) v); break; case 1: T(PI((void*) v)); break; case 2: T(B(*(float*) v)); break; default: T(B(((float*) v)[0])); T(B(((float*) v)[1])); T(B(((float*) v)[2])); break; } } __builtin_va_end(ap); return 0; }
-__typeof__(struct HSD_JObj *) ftLib_80086630(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1021); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (pick_HSD_JObj()); }
-__typeof__(int) ftLib_80086960(__typeof__(struct HSD_GObj *) a0) { T(1022); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(float) ftLib_80086A0C(__typeof__(struct HSD_GObj *) a0) { T(1023); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-__typeof__(unsigned char) ftLib_80086BE0(__typeof__(struct HSD_GObj *) a0) { T(1024); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
-void ftLib_80086D40(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1025); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
-void ftLib_80086DC4(__typeof__(int) a0, __typeof__(int) a1) { T(1026); T((u32) a0); T((u32) a1); }
-void ftLib_80086E68(__typeof__(struct HSD_GObj *) a0) { T(1027); T(PI((const void*) a0)); }
-__typeof__(int) ftLib_80086EB4(__typeof__(struct HSD_GObj *) a0) { T(1028); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(struct HSD_JObj *) ftLib_GetPartJObj(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1021); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (pick_HSD_JObj()); }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1022); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(float) ftLib_GetScale(__typeof__(struct HSD_GObj *) a0) { T(1023); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(unsigned char) ftLib_GetPlayerIndex(__typeof__(struct HSD_GObj *) a0) { T(1024); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
+void ftLib_StartItemRumble(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1025); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
+void ftLib_StartItemRumbleAll(__typeof__(int) a0, __typeof__(int) a1) { T(1026); T((u32) a0); T((u32) a1); }
+void ftLib_StopItemRumble(__typeof__(struct HSD_GObj *) a0) { T(1027); T(PI((const void*) a0)); }
+__typeof__(int) ftLib_GetTeam(__typeof__(struct HSD_GObj *) a0) { T(1028); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(int) itIsHeavy(__typeof__(struct HSD_GObj *) a0) { T(1029); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void it_8026B390(__typeof__(struct HSD_GObj *) a0) { T(1030); T(PI((const void*) a0)); }
 void it_8026B3A8(__typeof__(struct HSD_GObj *) a0) { T(1031); T(PI((const void*) a0)); }
@@ -5920,14 +5920,14 @@ static void freg_all(void)
 // stub db_80225DD8 = 1018
 // stub db_ShowEnemyStompRange = 1019
 // stub efSync_Spawn = 1020
-// stub ftLib_80086630 = 1021
-// stub ftLib_80086960 = 1022
-// stub ftLib_80086A0C = 1023
-// stub ftLib_80086BE0 = 1024
-// stub ftLib_80086D40 = 1025
-// stub ftLib_80086DC4 = 1026
-// stub ftLib_80086E68 = 1027
-// stub ftLib_80086EB4 = 1028
+// stub ftLib_GetPartJObj = 1021
+// stub ftLib_IsFighter = 1022
+// stub ftLib_GetScale = 1023
+// stub ftLib_GetPlayerIndex = 1024
+// stub ftLib_StartItemRumble = 1025
+// stub ftLib_StartItemRumbleAll = 1026
+// stub ftLib_StopItemRumble = 1027
+// stub ftLib_GetTeam = 1028
 // stub itIsHeavy = 1029
 // stub it_8026B390 = 1030
 // stub it_8026B3A8 = 1031

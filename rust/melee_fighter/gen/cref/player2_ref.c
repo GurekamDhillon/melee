@@ -35,24 +35,24 @@ void GenoDefine_InitKinds(void) { T(0x240u); }
 void ftData_800855C8(FighterKind k, u8 c) { T(0x250u + (u32) k); T((u32) c); }
 float ScriptGame_ModValue(int slot, int field, float base) { T(0x220u + (u32) slot * 2u + (u32) field); T(B(base)); return base; }
 
-void ftLib_800867E8(HSD_GObj* g) { T(0x10u + E(g)); }
-void ftLib_8008688C(HSD_GObj* g) { T(0x20u + E(g)); }
+void ftLib_DisableInput(HSD_GObj* g) { T(0x10u + E(g)); }
+void ftLib_EnableInput(HSD_GObj* g) { T(0x20u + E(g)); }
 void ftKb_SpecialN_800EED50(s32 a, s32 b) { T(0x30u); T((u32) a); T((u32) b); }
-bool ftLib_8008701C(HSD_GObj* g) { T(0x40u + E(g)); return (g_tr >> 3) & 1; }
+bool ftLib_IsSleeping(HSD_GObj* g) { T(0x40u + E(g)); return (g_tr >> 3) & 1; }
 void ftCo_800D4F24(Fighter_GObj* g, int i) { T(0x50u + E(g)); T((u32) i); }
 void HSD_GObjFree(HSD_GObj* g) { T(0x60u + E(g)); }
 void ftCo_800D4FF4(Fighter_GObj* g) { T(0x70u + E(g)); }
 void ifStatus_802F6E1C(int s) { T(0x80u + (u32) s); }
-bool ftLib_800873CC(HSD_GObj* g) { T(0x90u + E(g)); return (g_tr >> 5) & 1; }
+bool ftLib_IsRebirth(HSD_GObj* g) { T(0x90u + E(g)); return (g_tr >> 5) & 1; }
 void ftLib_80087140(HSD_GObj* g) { T(0xA0u + E(g)); }
-void ftLib_80086664(HSD_GObj* g, Vec3* v) { T(0xB0u + E(g)); T(B(v->x)); T(B(v->y)); T(B(v->z)); }
+void ftLib_SetPos(HSD_GObj* g, Vec3* v) { T(0xB0u + E(g)); T(B(v->x)); T(B(v->y)); T(B(v->z)); }
 void ftDemo_SetFacingDirection(Fighter_GObj* g, float f) { T(0xC0u + E(g)); T(B(f)); }
 float ftLib_800869F8(HSD_GObj* g) { T(0xD0u + E(g)); return (float) (int) (g_tr % 1000u) / 7.0f; }
 void ftLib_SetScale(HSD_GObj* g, float f) { T(0xE0u + E(g)); T(B(f)); }
 void ft_80087BEC(Fighter_GObj* g, int v) { T(0xF0u + E(g)); T((u32) v); }
 void ft_80087BC0(Fighter_GObj* g, int v) { T(0x100u + E(g)); T((u32) v); }
 int gm_8016C5C0(int s) { T(0x110u + (u32) s); return (int) (g_tr % 97u); }
-void ftLib_800870F0(HSD_GObj* g, s32 v) { T(0x120u + E(g)); T((u32) v); }
+void ftLib_SetPercent(HSD_GObj* g, s32 v) { T(0x120u + E(g)); T((u32) v); }
 void ifStatus_802F6D10(s32 s) { T(0x130u + (u32) s); }
 bool gm_8016B168(void) { T(0x140u); return (g_tr >> 4) & 1; }
 void ifStatus_802F69C0(s32 a, s32 b) { T(0x150u); T((u32) a); T((u32) b); }
@@ -60,14 +60,14 @@ void ifStatus_802F6AF8(s32 s) { T(0x160u + (u32) s); }
 u32 gm_GetFrameCount(void) { T(0x170u); return g_tr; }
 void ifStatus_802F6C04(s32 s) { T(0x180u + (u32) s); }
 bool ftLib_80086F4C(HSD_GObj* g) { T(0x190u + E(g)); return (g_tr >> 2) & 1; }
-float ftLib_80086F80(HSD_GObj* g) { T(0x1A0u + E(g)); return (float) (int) (g_tr % 777u) / 3.0f; }
+float ftLib_GetNameTagHeight(HSD_GObj* g) { T(0x1A0u + E(g)); return (float) (int) (g_tr % 777u) / 3.0f; }
 FighterKind ftLib_GetKind(HSD_GObj* g) { T(0x1B0u + E(g)); return (FighterKind) (g_tr % 40u); }
-s32 ftLib_80087300(HSD_GObj* g) { T(0x1C0u + E(g)); return (s32) (g_tr % 11u); }
+s32 ftLib_GetLastAttackerSlot(HSD_GObj* g) { T(0x1C0u + E(g)); return (s32) (g_tr % 11u); }
 void ft_80087AC0(Fighter_GObj* g, s32 v) { T(0x1D0u + E(g)); T((u32) v); }
 void ftLib_80086A4C(HSD_GObj* g, float f) { T(0x1E0u + E(g)); T(B(f)); }
 void ft_80087BAC(Fighter_GObj* g, s32 v) { T(0x1F0u + E(g)); T((u32) v); }
-bool ftLib_80086BB4(HSD_GObj* g) { T(0x200u + E(g)); return (g_tr >> 6) & 1; }
-void ftLib_80086B90(HSD_GObj* g, Vec3* v) { T(0x210u + E(g)); v->x = (float) (int) (g_tr % 100u); v->y = -1.0f; }
+bool ftLib_IsCameraSubjectInBounds(HSD_GObj* g) { T(0x200u + E(g)); return (g_tr >> 6) & 1; }
+void ftLib_GetCameraSubjectBonePos(HSD_GObj* g, Vec3* v) { T(0x210u + E(g)); v->x = (float) (int) (g_tr % 100u); v->y = -1.0f; }
 
 #include "player2_extract.inc"
 

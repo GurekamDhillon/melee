@@ -45,9 +45,9 @@ fn ftCo_Barrel_matches_c() {
         hk::ftCommon_8007E2F4 = Some(|fr, v| { t(13); t((fr as *mut Fighter == f() as *mut Fighter) as u32); t(v as i32 as u32) });
         hk::ftCommon_8007EFC0 = Some(|fr, v| { t(14); t((fr as *mut Fighter == f() as *mut Fighter) as u32); t(v) });
         hk::ftColl_800787B4 = Some(|i, g, v| { t(15); t(itid(i)); t(is_go(g)); t(v as u32) });
-        hk::ftLib_80086960 = Some(|g| { t(16); t((g == go2()) as u32); sr(16) });
+        hk::ftLib_IsFighter = Some(|g| { t(16); t((g == go2()) as u32); sr(16) });
         hk::ftColl_8007B8CC = Some(|fr, o| { t(17); t((fr == f() as *mut Fighter) as u32); t((o == go2()) as u32) });
-        hk::ftLib_800866DC = Some(|g, v| { t(18); t(is_go(g)); v.x = rg(); v.y = rw(); v.z = rg(); });
+        hk::ftLib_GetCameraBonePos = Some(|g, v| { t(18); t(is_go(g)); v.x = rg(); v.y = rw(); v.z = rg(); });
         hk::mpColl_80043680 = Some(|c, v| { t(19); t((c == &mut f().coll_data as *mut CollData) as u32); t(v.is_null() as u32) });
         hk::lbColl_80008D30 = Some(|h, a| {
             t(20); t((a as *mut u8 == ARG3.as_mut_ptr()) as u32);

@@ -96,10 +96,10 @@ void (ftCommon_8007EBAC)(__typeof__(struct Fighter *) a0, __typeof__(unsigned in
 // stub ftCommon_8007EBAC = 1041
 __typeof__(float (*)[4]) (ftCommon_8007F804)(__typeof__(struct Fighter *) a0) { T(1042); T(PI((const void*) a0)); return (__typeof__(float (*)[4])) (0); }
 // stub ftCommon_8007F804 = 1042
-__typeof__(int) (ftLib_80086960)(__typeof__(struct HSD_GObj *) a0) { T(1043); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub ftLib_80086960 = 1043
-__typeof__(int) (ftLib_80086FD4)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1044); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
-// stub ftLib_80086FD4 = 1044
+__typeof__(int) (ftLib_IsFighter)(__typeof__(struct HSD_GObj *) a0) { T(1043); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+// stub ftLib_IsFighter = 1043
+__typeof__(int) (ftLib_IsSamePlayer)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1044); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
+// stub ftLib_IsSamePlayer = 1044
 __typeof__(int) (ft_80084CE4)(__typeof__(struct Fighter *) a0, __typeof__(struct Fighter *) a1) { T(1045); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 // stub ft_80084CE4 = 1045
 void (ft_80088080)(__typeof__(struct Fighter *) a0) { T(1046); T(PI((const void*) a0)); }

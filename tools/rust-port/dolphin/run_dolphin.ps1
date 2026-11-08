@@ -43,6 +43,17 @@ $env:MELEE_DOLPHIN_NHV1_WIDE = if ($Wide) { '1' } else { '0' }
 # playback set; DOLPHIN_NO_REPLAY_CODES=1 plays without it (notes/dolphin-oracle.md, "Widescreen codes")
 if ($env:DOLPHIN_NO_REPLAY_CODES -eq '1') { Remove-Item -ErrorAction SilentlyContinue (Join-Path $user 'GameSettings\GALE01.ini') }
 else { python -I (Join-Path $PSScriptRoot 'replay_codes.py') $Slp $user }
+# a Slippi 1.x replay has no Gecko list: play it with the 1.7.1 console's codes instead of playback's built-in legacy
+# list (legacy171_codes.py; needs an oracle exe with MELEE_DOLPHIN_LEGACY_CODES, _build/dolphin-oracle-slp171).
+# DOLPHIN_LEGACY171=0 keeps the built-in list; DOLPHIN_LEGACY171_ARGS passes --no-spawns / --qol.
+$legacy = Join-Path $Out 'legacy171.bin'
+Remove-Item -ErrorAction SilentlyContinue $legacy
+Remove-Item -ErrorAction SilentlyContinue Env:MELEE_DOLPHIN_LEGACY_CODES
+if ($env:DOLPHIN_LEGACY171 -ne '0') {
+    $la = @(); if ($env:DOLPHIN_LEGACY171_ARGS) { $la = $env:DOLPHIN_LEGACY171_ARGS -split ' ' }
+    python -I (Join-Path $PSScriptRoot 'legacy171_codes.py') $Slp $legacy @la
+    if (Test-Path $legacy) { $env:MELEE_DOLPHIN_LEGACY_CODES = $legacy }
+}
 $dargs = @('-u', "`"$user`"", '-p', 'headless', '-v', 'Null', '-i', "`"$comm`"", '-e', "`"$iso`"")
 $p = Start-Process -FilePath $exe -ArgumentList $dargs -PassThru -WindowStyle Hidden `
     -RedirectStandardError (Join-Path $Out 'dolphin.stderr.txt') -RedirectStandardOutput (Join-Path $Out 'dolphin.stdout.txt')

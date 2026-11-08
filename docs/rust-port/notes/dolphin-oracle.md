@@ -373,3 +373,88 @@ Two replay divergers were UCF 0.84 ports that read the Gecko code wrong, not eng
 - **Finding the function.** slpcheck now opens calltrace frames per replay frame, so a
   `--features calltrace` build with `MELEE_CT_LIVE=1 MELEE_CT_LIVE_FROM=F` prints the entries
   from frame F onward.
+
+## Slippi 1.7.1 replays (port/oracle171)
+
+A Slippi 1.x replay has no Gecko list (Message Splitter 0x10 / command 0x3D came with 2.x/3.x). Modern playback
+(`CEXISlippi::prepareGeckoList`) then sends its built-in `legacy_code_list` (SlippiPlayback.cpp): UCF **0.74**
+toggle-checked dashback and shield drop, `ToggledStaticOverwrites`, the PS preload handlers and the PAL handlers. That
+is modern Slippi's guess, not the 2019 console's set. Oracle exe `_build/dolphin-oracle-slp171` (strict2 + the change
+below): `MELEE_DOLPHIN_LEGACY_CODES=<file>` makes `getLegacyCodelist` return that file instead (abort if unreadable;
+stderr says `nhv1: legacy code list from ...`). `run_dolphin.ps1` builds the file per replay with
+`legacy171_codes.py` (only for a version < 2 replay with no Gecko list; `DOLPHIN_LEGACY171=0` plays with the built-in
+list, `DOLPHIN_LEGACY171_ARGS="--no-spawns"` / `"--qol"`).
+
+**Where the codes come from.** project-slippi/slippi-ssbm-asm at **496f0ae** (2019-02-25, "increment version for PS
+toggle", the 1.7.1 bump; `_build/slippi-src/ssbm-asm`), the console binaries the Slippi Nintendont build loaded,
+`Output/Console/g_*.bin`, read with `git show` at run time (nothing of them is committed here). Gecko codes copied
+verbatim, in file order:
+
+| bin | used | why |
+|---|---|---|
+| g_core.bin | always, minus the 10 below | boot/rules/unlock writes, Disable Screenshots (nops at 0x801A4F84/0x801A5070, in the game loop), the three PS preload C2s + `04 804DEC18 01000000` (PSPreloadToggle on), ToggledStaticOverwrites C2 0x8016E750 |
+| g_ucf.bin | yes | UCF 0.73 (C2 0x800C9A44 dashback, 0x800998A4 shield drop, 0x802662D0) + `04 804DEC08 01010101` (ControllerFixOptions all on). All 3,479 Gang-Steals files record UCF toggle words 1,1,1,1 (8 words), PAL 0, version 1.7.1.0: the "UCF" setting, not the per-player g_toggles.bin (the script refuses any other toggle pattern) |
+| g_spawns.bin | yes (`--no-spawns` off) | 20XX Neutral Spawns, C2 0x80263058 and 0x801C0A48; the engine assumes it for every 1.x replay (gmvs.rs `legacy_neutral_spawn`) |
+| g_pal.bin | only with the PAL byte | |
+| g_qol.bin | only with `--qol` | Salty Runback, Disable FoD During Doubles, cosmetics; the replay does not say |
+
+Left out of g_core: the Slippi Recording transport (the five `bl` hooks at 0x8016E74C, 0x8006B0DC, 0x8006C5D4,
+0x801A5B14, 0x802FED3C and the 06 block at 0x8032ED94; they only send EXI data, and 0x8006B0DC / 0x8016E74C are the
+sites of playback's own hooks), and four sites the playback set (Sys/GameSettings/GALE01r2.ini) already patches with
+Slippi's own copy: Init Player Data C2 0x80068EEC and Init Stage Data C2 0x801C154C (same zeroing), Disable Special /
+Trophy Messages 0x8015D94C / 0x8015D984 (identical words). Checked: g_ucf's two UCF bodies are the toggled
+g_toggles bodies minus the toggle test (the shield drop's toggled copy reloads r5 = `lwz r5,-0x514C(r13)`), so with
+every port on the two sets behave the same.
+
+Known differences that remain between this oracle and the 2019 console (not codes, so not reproducible from the file):
+- Polling drift: 1.7.1 had no Polling Drift Fix, so the console ran a second logic frame without a render about every
+  1001 frames, at a phase set by how long the console had been running ("Polling drift" above). Playback in Dolphin
+  drifts too, at its own phase. Both move the 1% offscreen tick (`x221F_b0` is set by the render pass).
+- Modern playback's Init Stage Data also resets Dream Land's wind and Japes' logs (later determinism codes); a 2019
+  console carried them over from the previous game.
+
+**20XX Neutral Spawns needs the console's SSS stage id.** The code's stage half (C2 0x801C0A48, in
+Ground_801C0800) patches the spawn joints of Battlefield, Dream Land, Stadium and Yoshi's by the stage id in
+`gmVsMelee_SssData` (u16 0x80480686), which the stage select screen writes. Playback never runs the SSS (it restores
+`gmVsMelee_StartData` only), so the first runs spawned everyone at (0, -2) and hung at an early game end (pc in the
+playback wait loop, frame 1697 of 13/Game_20190309T101721). The CSS half's result (spawn bytes in the player blocks)
+is in the recorded StartData already. `legacy171_codes.py` adds one 2-byte `06 80480686` write of the replay's own
+stage id: console state the code reads, not a code.
+
+**Validation (rust-port b05adf319 + this branch, fast profile).** 20 Gang-Steals files that match at .slp level
+(Battlefield, FD, Dream Land, Yoshi's, Fountain, Stadium; Fox, Falco, Marth, Sheik, Peach, Puff, Falcon, ICs, Mario,
+Doc): **20 / 20 NHV1-identical on every frame** (seed ignored), 2,243 to 14,536 frames each. One Dolphin run per
+file; `DOLPHIN_PRIORITY=BelowNormal` (Idle starved while builds ran).
+
+**Bucket files** (first differing word, slippi frame):
+
+| file | stage, fighters | slpcheck (vs .slp) | oracle (vs console in Dolphin) | class |
+|---|---|---|---|---|
+| 12/Game_20190309T162629 | FD, Marth v Marth | 1922 P4 percent 143.3 vs 142.3 (offscreen tick) | **match**, 15,481 frames | recording console only: Dolphin = engine. Polling-drift class (no drift fix in 1.7.1) |
+| 13/Game_20190309T123307 | Yoshi's, Falco v Fox | 3960 P1 x | **match** | recording console only |
+| 23/Game_20190309T125751 | BF, Fox v Falco | 5562 P1 x | **match** | recording console only |
+| 21/Game_20190309T173910 | stage 5, Puff v Marth | -123 P4 x 1e-3 | **match** | recording console only |
+| 14/Game_20190309T111022 | Yoshi's, ICs v Fox | match | **match**, 11,430 | - |
+| 12/Game_20190309T094028 | Stadium, Marth v Falcon | match | **match**, 7,374 | - |
+| 14/Game_20190309T134017 | BF teams, Peach/Sheik/Peach/Marth | 207 P2 percent 0 vs 14 | 206 s2 (P2 Sheik): hit by s0 (Peach, motion 64) lands on the console, not in Rust (motion 42 vs 80); s0 `x2144` 0 vs 13019 at 204 | engine: doubles hit |
+| 20/Game_20190309T131733 | BF teams, Fox/Fox/Falco/Sheik | 1030 P2 percent | 1029 s2 (P2 Fox) damaged on the console (motion 14 vs 87); s4 (P3 Falco, motion 60) hitbox `x914[0..1].hurt_coll_pos` differs at 1028 | engine: doubles hit |
+| 16/Game_20190309T123832 | DL teams, Marth/ICs/Marth/Fox | 368 P1 x | 367 s0 (P1 Marth) damaged on the console (motion 60 vs 83), 13.95 % vs 10 % | engine: doubles hit |
+| stream/Game_20190309T162146 | BF teams, Falco/Marth/Peach/Fox | 517 P2 x | 516 s4 (P3 Peach, motion 341) damaged on the console (vs 90); s2 (P2 Marth, motion 56) hitbox collides elsewhere at 515, `x195c_hitlag` 0 vs 7 | engine: doubles hit |
+| 19/Game_20190309T152343 | stage 15, 4 players | -123 P1 x 38.42 vs -77.07 | -123 s0 cur_pos: Dolphin -77.07 = the .slp | engine: 4-player spawn off the neutral-spawn table |
+| 11/Game_20190308T115404 | Stadium, ICs v Peach | match | 2773 s3 (Nana) `cpu.x30` 15 vs 24 only | Nana CPU scratch (Randf draw count), Stadium |
+| 13/Game_20190309T122423 | Stadium, ICs v Marth | match | 5327 s1 (Nana) `cpu.x30` 14 vs 7 only | same |
+
+"Recording console only": Dolphin playing the replay with the 1.7.1 codes agrees with the engine on every NHV1 word, and
+both differ from the recorded Post-Frame. The 2019 console's state differs in something neither replays (render
+skips from polling drift, state carried over from the previous game). Not engine bugs by this oracle.
+All four doubles divergers are teams games (`is_teams` 1) where a hit lands on the console and not in Rust (the
+attacker's hitbox/hurtbox collision point and `x2144` differ one or two frames earlier). Plain engine bug candidate
+(no 2019 code touches hit detection); a modern doubles replay should show it too.
+
+**Engine sweep at b05adf319** (`slpcheck`, stop at the first divergence): 3,162 / 3,479 match. Split by player count:
+singles **116 / 3,276** diverge, 4-player (all teams) **201 / 203** diverge. The doubles class above is the bulk of what
+is left. Diverging files per character (files containing the character), singles | 4-player: Fox 60/1245 | 146/146,
+Falco 32/1067 | 101/102, Marth 25/1135 | 99/100, Sheik 20/552 | 87/87, Peach 14/305 | 64/64, Falcon 12/645 | 47/47,
+ICs 12/308 | 39/41, Puff 18/358 | 25/25, Luigi 7/122 | -, Ganon 6/106 | 14/14, Samus 5/50 | 17/17, Doc 3/30 | 12/12,
+Pikachu 3/30 | 8/8, G&W 1/40 | 8/9, YLink 0/27 | 20/20, Ness 0/5 | 14/14, Mario 0/40 | 4/4, Zelda 0/28 | 2/2,
+Bowser 0/6 | 1/1; DK, Link, Mewtwo, Roy, Yoshi 0. Singles first fields: x 56, percent 41, facing ~15, action ~10.

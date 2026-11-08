@@ -461,7 +461,9 @@ pub unsafe extern "C" fn product_xy(a: *mut Vec3, b: *mut Vec3) -> f32 {
 #[inline(always)]
 pub unsafe extern "C" fn return_sqrt_value(v: *mut Vec3) -> f32 {
     melee_core::ct!("return_sqrt_value");
-    sqrtf_accurate(product_xy(v, v))
+    // not product_xy: the square of a memory vector is fmuls, fmuls, fadds (it_8027781C at 0x80277894 and
+    // 0x80277B24), not the fmadds of a dot product with another vector (Dr. Mario's pill bounce, 1 ULP in x40_vel)
+    sqrtf_accurate(sq_sum((*v).x, (*v).y))
 }
 
 /// `SQ(p->x) + SQ(p->y)` over memory (item->x7C, sp10, arg1): the console does not fuse a square of a

@@ -33,6 +33,13 @@
 #include <sysdolphin/baselib/debug.h>
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/random.h>
+/* fp+0x2238 is Kirby's hat.kind on GC; read as u.gw.x2238_panicCharge in the original. On 64-bit TARGET_PC the
+ * union's pointers move hat.kind, so read the field itself (shared with the Rust port). */
+#if defined(TARGET_PC)
+#define FTKB_HAT_KIND_2238(fp) ((s32) (fp)->u.kb.hat.kind)
+#else
+#define FTKB_HAT_KIND_2238(fp) ((fp)->u.gw.x2238_panicCharge)
+#endif
 
 typedef struct ftCo_CollData {
     /* +00 */ u8 pad0[4];
@@ -1634,7 +1641,7 @@ void ftCo_800B77E8(Fighter* fp)
                 tmp->xEC++;
             }
         }
-        charge = fp->u.gw.x2238_panicCharge;
+        charge = FTKB_HAT_KIND_2238(fp);
         if (charge == 3 || charge == 0xD || charge == 0x10) {
             {
                 struct CpuFighter* tmp = &fp->cpu;

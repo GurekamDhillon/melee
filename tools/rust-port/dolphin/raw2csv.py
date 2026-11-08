@@ -88,7 +88,7 @@ def records(data):
     assert data[:8] == b"NHRAW001", "not an NHRAW001 file"
     wide = struct.unpack_from("<I", data, 8)[0] & 1
     p = 12
-    while p < len(data):
+    while p + 24 <= len(data):
         magic, frame, unk0, seed, nf, ni = struct.unpack_from("<IiIIII", data, p)
         assert magic == 0x4D524652, f"bad record at {p}"
         p += 24
@@ -105,6 +105,11 @@ def records(data):
             p += ITEM
         if wide:
             p += CAMERA + STAGE
+        if p > len(data):
+            # the last record is incomplete: playback was killed mid-write (a replay without Game End, whose
+            # playback waits for the frame after the last one, ends on run_dolphin's timeout)
+            print(f"raw2csv: dropped an incomplete last record (frame {frame})", file=sys.stderr)
+            return
         yield frame, unk0, seed, fts, its
 
 

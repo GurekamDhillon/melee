@@ -38,7 +38,7 @@ DRIFT = {0x801A4DA0, 0x801A4DB4, 0x80019860}
 def raw_events(d):
     i = d.index(b"raw[$U#l") + 12
     n = struct.unpack(">i", d[i - 4:i])[0]
-    raw = d[i:i + n]
+    raw = d[i:i + n] if n > 0 else d[i:]  # 0: the recorder never closed the raw array (Slippi streams it)
     assert raw[0] == 0x35
     size = {}
     for k in range(2, raw[1] + 1, 3):
@@ -93,6 +93,13 @@ def main():
         if (words[0][0] >> 24) & 0xFE == 0xC2 and len(words) > 1 and words[-1][1] >> 26 == 18:
             words[-1] = (words[-1][0], 0)
         groups[name] += [f"{a:08X} {b:08X}" for a, b in words]
+    # the standalone fix (3.x: C2 0x801A4DA0, 04 0x801A4DB4, 04 0x80019860) only. Slippi 3.19's online core carries a
+    # C2 at 0x801A4DB4 instead, part of the online engine loop: it spins on flags in the core's own block
+    # (r13-0x49E4 +0xDF/+0x90D) that the rest of the online core sets, so alone it hangs playback before the match
+    # (notes/dolphin-oracle.md, "Round 3").
+    if groups["polling drift fix"] and not any(a == 0x801A4DA0 for a, _ in codes(g)):
+        print("replay_codes: the replay's 0x801A4DB4/0x80019860 codes are the online core's, not the standalone drift fix; not copied")
+        groups["polling drift fix"] = []
     path = os.path.join(user, "GameSettings", "GALE01.ini")
     used = [(n, l) for n, l in groups.items() if l]
     if not used:

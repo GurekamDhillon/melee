@@ -22,6 +22,13 @@
 #include <melee/ft/types.h>
 #include <melee/lb/lb_00B0.h>
 #include <sysdolphin/baselib/gobj.h>
+/* fp+0x2238 is Kirby's hat.kind on GC; read as u.gw.x2238_panicCharge in the original. On 64-bit TARGET_PC the
+ * union's pointers move hat.kind, so read the field itself (shared with the Rust port). */
+#if defined(TARGET_PC)
+#define FTKB_HAT_KIND_2238(fp) ((s32) (fp)->u.kb.hat.kind)
+#else
+#define FTKB_HAT_KIND_2238(fp) ((fp)->u.gw.x2238_panicCharge)
+#endif
 
 /* 10B2E8 */ static void fn_8010B2E8(Fighter_GObj* gobj);
 
@@ -402,7 +409,7 @@ void ftKb_SpecialNMs_8010BC40(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     s32 i;
 
-    if (fp->u.gw.x2238_panicCharge == 0x12) {
+    if (FTKB_HAT_KIND_2238(fp) == 0x12) {
         i = ftKb_MS_MsSpecialNLoop;
     } else {
         i = ftKb_MS_FeSpecialNLoop;
@@ -416,7 +423,7 @@ void ftKb_SpecialNMs_8010BC90(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     s32 i;
 
-    if (fp->u.gw.x2238_panicCharge == 0x12) {
+    if (FTKB_HAT_KIND_2238(fp) == 0x12) {
         i = ftKb_MS_MsSpecialAirNLoop;
     } else {
         i = ftKb_MS_FeSpecialAirNLoop;

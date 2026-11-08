@@ -17,7 +17,9 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 mode=$1; out=$2; ticks=$3; shift 3
 tgt="${CARGO_TARGET_DIR:-$ws/_build/cargo-shared/fast}/${PROFILE:-fast}"
 rm -rf "$out"; mkdir -p "$out/cap" "$out/shots"
-export MELEE_PAD_SCRIPT="${MELEE_PAD_SCRIPT:-$repo/tools/rust-port/play/retail_full.txt}"
+export MELEE_PAD_SCRIPT="${MELEE_PAD_SCRIPT-$repo/tools/rust-port/play/retail_full.txt}"
+# MELEE_PAD_SCRIPT= (empty): no script of ours; the game reads the host's controllers (pass him --script <file>)
+[ -z "$MELEE_PAD_SCRIPT" ] && unset MELEE_PAD_SCRIPT
 export MELEE_VOLUME=3 MELEE_CARD="${MELEE_CARD:-0}" MELEE_NO_GC_ADAPTER=1 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1
 export MELEE_HASH_LOG="$out/hash.txt"
 args="--skip-intro --time-secs 30 --quit-after-matches 1 --max-frames $ticks${MATCH:+ --match $MATCH}"

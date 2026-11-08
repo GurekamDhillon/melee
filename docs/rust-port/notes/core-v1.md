@@ -112,15 +112,53 @@ Notes on running:
   - Small HUD glyph placement differs.
   - Brightness and colour match on the menus.
 
+## Core v1.1 (branch `port/corev11`, his `gd/core-v1` f7d55cf; local, not pushed, not sent)
+
+Both tables only grow (ABI 1, same entry point). A side tells the other's revision from `struct_size`: host 240 / 248,
+game 40 / 88 bytes (`MU_CORE_V1_*_SIZE` in the header).
+
+- `MuHostCoreV1.audio_out(lr, frames, 32000)`: our mix, captured per tick (`audio::HOST_MIX`), goes to his
+  `audio_push_native`. Our sound reads the disc through the host (`engine_audio::HostFs`). A v1 host gets `--no-audio`.
+- `MuGameCoreV1.state_*`: a VS match runs under `retail_flow::Hosted` (a `ModesGame` with keyed snapshots and the pads
+  each frame last ran with). The host calls the state functions between ticks, inside `vi_wait_retrace`.
+  `MELEE_PLAY_HOSTED=1` runs the same session in our own exe.
+- His card behind our CARD hooks (`melee_engine::card_host`) when `MELEE_CARD` is not 0.
+  `MELEE_COREV1_CARD_TEST=1` exercises his 14 calls directly.
+- `stop` ends the run; `ticks` measures the host clock.
+- Geno's matrix palette is converted to console matrices: triangle batches of at most 10 slots, loaded into XF
+  matrices 0, 3 .. 27, then the game's own matrices are put back (`melee_gx` unit test
+  `palette_strip_becomes_console_matrices`). Not yet seen in a run: no Geno fighter is on the default disc.
+- Rollback safety in the transcoder. It lives on the system heap, outside the statics a load rewinds. Frames being
+  re-simulated (`set_suppress_draws`) send no draws and no copies. In runs that load states it holds no game buffer
+  (`ROLLBACK`): its cache is keyed by address, length and a sampled fingerprint. Before this, his window under a
+  synctest showed black and flickering frames at 39 fps, with 12 GB staged, and then crashed.
+- `static_sections` uses the module that contains our code, not the process's main module (the host's statics).
+
+Results, fast profile, one host at a time, on one machine:
+
+| run | result |
+|---|---|
+| Battlefield retail_full, v1.1 host + v1.1 game | 59.9 fps; hashes 2174/2174 same as our own engine; his WAV dump byte-identical to our mix (1,813,280 frames) |
+| his state test K=7 (`MELEE_COREV1_STATE_TEST=7`) | 50 round trips and 50 rollbacks with no difference; first-pass hashes same as the reference |
+| synctest depth 7 inside his host | 56.2 fps (expected cost of re-simulating); 3831 passes, 26,817 checks, 0 neutral mismatches; pacing p99 8 to 9 ms |
+| FD, Yoshi's Story, Pokemon Stadium, Fountain, Dream Land N64 (CPU v CPU, `MATCH=`) | hashes 2600/2600 and mix byte-identical on each; 59.7 to 59.9 fps |
+| v1.1 host + v1 game (`MELEE_COREV1_FORCE_V1=1`) | savestates off, no audio_out; hashes same |
+| v1 host + v1.1 game (`MELEE_COREV1_HOST_V1=1`) | savestates on, sound off; hashes same |
+| card test, scratch `--card-dir` | his 14 calls all as expected; the game created and loaded its save through his card |
+| his controllers (`--script`, from `to_host_script.py retail_full.txt`), no `MELEE_PAD_SCRIPT` | same scenes at the same ticks; hashes 2174/2174 same |
+
+His sandboxed loader (`map_game_image`, inside an AppContainer) would refuse our image: 39.8 MB against his 24 MB
+range (`pe_check.py`). It also sets up no implicit TLS, and our image has 360 bytes of it.
+
 ## Gaps
 
-- No audio: core v1 has none.
-- No savestates, rollback, netplay or LAB rewind: no state hooks.
+- Pokemon Stadium with savestates on: engine tick 12.6 ms (2.9 ms with v1 or headless). It still runs at 59.8 fps, but
+  with little margin. The cost is in the rollback-mode engine path, not in the transcoder. A detach copy that cost
+  more is already removed.
+- His rollback calls none of `state_*`: his Slippi rollback drives the game's own EXI savestate commands. Only his
+  test mode uses them.
 - No settings overlay, UI or wasm presentation mods: they draw with our renderer.
-- Geno fighters' matrix palette is dropped (a console has none), so Geno skinning is wrong under core v1.
-- `MuHostCoreV1.card_*` is unused (`MELEE_CARD=0`). `stop`, `ticks` and `native_alloc` are unused.
-- Depth (Z) and other non-colour EFB copies are encoded but unverified.
-- Sized and indexed draws are transcoded but did not occur in this run.
-- Live host controllers (no script) are untested; every run used `MELEE_PAD_SCRIPT`.
-- Only VS on Battlefield with four CPUs was checked. Other stages, items, 1P modes and the results screen were not
-  compared shot for shot.
+- Geno palette conversion is checked by a unit test only.
+- Depth (Z) and other non-colour EFB copies are encoded but unverified. Sized and indexed draws did not occur.
+- Items, 1P modes and the results screen were not compared shot for shot.
+- The sandbox limits above.

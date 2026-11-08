@@ -440,7 +440,15 @@ impl RetailPlay {
             let next = h.g.frame() + 1;
             let pads = *h.inputs.entry(next).or_insert(four);
             h.g.step(pads);
-            if let Some(f) = h.g.take_frame() {
+            // under a core v1 host the frame went to the host through the transcoder: no detached copy (it hashes
+            // every texture of the frame, ~12 ms a tick on Pokemon Stadium)
+            #[cfg(feature = "corev1")]
+            let shown = melee_gx::corev1::active();
+            #[cfg(not(feature = "corev1"))]
+            let shown = false;
+            if shown {
+                h.g.drop_frame();
+            } else if let Some(f) = h.g.take_frame() {
                 self.frame = Some(f);
                 self.frame_aspect = melee_engine::view::aspect();
             }
@@ -1503,7 +1511,7 @@ impl Hosted {
         let keep_from = self.g.frame() - 3600;
         self.inputs = self.inputs.split_off(&keep_from);
     }
-    pub fn hash(&self) -> u32 {
+    pub fn state_hash(&self) -> u32 {
         self.g.e.neutral_row()[0] | 1
     }
     pub fn set_input(&mut self, frame: i32, pads: [melee_types::PADStatus; 4]) {

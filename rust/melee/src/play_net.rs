@@ -260,6 +260,14 @@ impl ModesGame {
         self.with_base(|base| base.diff(&a.mem, &b.mem, max))
     }
 
+    /// Lets go of the tick's newest frame without copying it (its blocks are the arena's, freed in the game scope).
+    pub fn drop_frame(&mut self) {
+        if let Some(f) = self.raw.take() {
+            let _s = melee_engine::arena::GameScope::enter();
+            drop(f);
+        }
+    }
+
     /// The tick's newest frame as a detached copy (after the session's frames of this tick).
     pub fn take_frame(&mut self) -> Option<Vec<melee_gx::draw::DrawCmd>> {
         self.raw.take().map(|f| self.detach.detach(f))

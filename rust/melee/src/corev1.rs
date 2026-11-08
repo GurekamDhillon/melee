@@ -260,6 +260,7 @@ extern "C" fn run() -> i32 {
     // the transcoder's allocations stay off the game arena (snapshot loads rewrite it)
     let snapshots = (gv11 && std::env::var_os("MELEE_COREV1_FORCE_V1").is_none()) || std::env::var_os("MELEE_PLAY_SYNCTEST").is_some();
     // a run that loads snapshots: the transcoder holds none of the game's buffers (melee_gx corev1 ROLLBACK)
+    let snapshots = snapshots && std::env::var("MELEE_COREV1_NOHOLD").map_or(true, |v| v != "0");
     melee_gx::corev1::ROLLBACK.store(snapshots, std::sync::atomic::Ordering::Relaxed);
     let _ = melee_gx::corev1::HOST_HEAP.set(|on| {
         let prev = melee_engine::arena::active();
@@ -393,7 +394,7 @@ extern "C" fn state_drop(key: i32) {
     }
 }
 extern "C" fn state_hash() -> u32 {
-    hosted().map_or(0, |h| h.hash())
+    hosted().map_or(0, |h| h.state_hash())
 }
 extern "C" fn state_frame() -> i32 {
     hosted().map_or(-1, |h| h.next_frame())

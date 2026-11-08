@@ -22,6 +22,8 @@ NAMES = os.path.join(os.path.dirname(__file__), 'mex_bridge_names.txt')
 INTS = {'i8': 'i8', 'i16': 'i16', 'i32': 'i32', 'i64': 'i64', 'u8': 'u8', 'u16': 'u16', 'u32': 'u32', 'u64': 'u64',
         'isize': 'isize', 'usize': 'usize', 'c_int': 'i32', 'c_uint': 'u32', 'c_char': 'i8', 's32': 'i32', 's16': 'i16',
         's8': 'i8', 'BOOL': 'i32', 'bool': 'bool', 'enum_t': 'u32', 'c_long': 'i32', 'c_ulong': 'u32', 'c_uchar': 'u8'}
+# void* results whose record the C knows (hsd_8039930C returns the next particle of the list: Tails' particle hooks)
+RET_POINTEE = {'hsd_8039930C': 'HSD_Particle'}
 SKIP_TYPES = re.compile(r'^&|^\[|^Option<|^fn\(|^impl|dyn ')
 
 
@@ -199,7 +201,7 @@ def main():
         elif rbase in ('f32', 'f64'):
             ret = 'c.ret_flt(r as f64);'
         elif strip_ty(rty).startswith('*'):
-            p = pointee(strip_ty(rty))
+            p = RET_POINTEE.get(name) or pointee(strip_ty(rty))
             ret = f'c.ret_ptr(r as *mut core::ffi::c_void, {chr(34) + p + chr(34) if p in recs else None});'.replace('Some(None)', 'None') \
                 if False else (f'c.ret_ptr(r as *mut core::ffi::c_void, Some("{p}"));' if p in recs else 'c.ret_ptr(r as *mut core::ffi::c_void, None);')
         elif re.fullmatch(r'[A-Z]\w*', rbase):

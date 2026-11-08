@@ -277,3 +277,5 @@ ftCo_AttackAir_CheckItemThrowInput
 it_8027781C
 ft_800892A0
 ftAnim_8006EDD0
+hsd_8039930C
+ftAnim_8006FE9C

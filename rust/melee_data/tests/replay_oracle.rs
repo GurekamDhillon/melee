@@ -38,7 +38,14 @@ fn real_replays_match_the_c() {
         eprintln!("skipped: {} not found", root.display());
         return;
     }
-    let n = check(include_str!("data/replay_real_oracle.txt"), |n| Some(root.join(n)));
+    // Read at run time: the oracle is gitignored (it names local replays), and include_str! of a missing file
+    // fails the whole test build on a fresh clone instead of skipping this test.
+    let list = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/replay_real_oracle.txt");
+    let Ok(oracle) = std::fs::read_to_string(&list) else {
+        eprintln!("skipped: {} not found", list.display());
+        return;
+    };
+    let n = check(&oracle, |n| Some(root.join(n)));
     assert!(n >= 200);
 }
 

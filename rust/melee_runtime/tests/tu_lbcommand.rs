@@ -36,7 +36,15 @@ impl core::ops::IndexMut<usize> for LowCu {
 }
 impl LowCu {
     fn base(&self) -> *mut CmdUnion {
+        #[cfg(windows)]
         extern "system" { fn VirtualAlloc(addr: *mut c_void, size: usize, ty: u32, prot: u32) -> *mut c_void; }
+        // Unix: an anonymous mapping at exactly the hint (MAP_FIXED_NOREPLACE), null when taken, like VirtualAlloc.
+        #[cfg(not(windows))]
+        unsafe fn VirtualAlloc(addr: *mut c_void, size: usize, _ty: u32, _prot: u32) -> *mut c_void {
+            extern "C" { fn mmap(addr: *mut c_void, len: usize, prot: i32, flags: i32, fd: i32, off: i64) -> *mut c_void; }
+            let p = mmap(addr, size, 3, 0x02 | 0x20 | 0x10_0000, -1, 0);
+            if p as isize == -1 || p != addr { core::ptr::null_mut() } else { p }
+        }
         if self.0.is_null() {
             let mut hint = 0x8100_0000usize;
             let p = loop {

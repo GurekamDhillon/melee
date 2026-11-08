@@ -1772,6 +1772,7 @@ pub const NULL: i32 = 0i32;
 /// The TARGET_PC body has no Gekko quantisation registers to initialise.
 pub unsafe extern "C" fn OSInitFastCast() { melee_core::ct!("OSInitFastCast");}
 
-#[cfg(test)]
+// The oracle is a Windows DLL (oracle/build_thp.py, LoadLibraryW).
+#[cfg(all(test, windows))]
 #[path = "../../tests/thp_state/mod.rs"]
 mod tests;

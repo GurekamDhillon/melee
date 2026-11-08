@@ -88,7 +88,9 @@ fn settings_match_the_c() {
                 got.push(format!("RELOAD rows={}", st.len()));
             }
             "BADPATH" => {
-                st.set_path("Z:\\no\\such\\dir\\settings.cfg");
+                // unwritable on every OS: its parent is a regular file (off Windows "Z:\\no\\such\\dir\\settings.cfg" is a
+                // valid file name, so the saves succeeded and left that file in the crate directory)
+                st.set_path(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml/settings.cfg"));
                 got.push("BADPATH".into());
             }
             "GOODPATH" => {

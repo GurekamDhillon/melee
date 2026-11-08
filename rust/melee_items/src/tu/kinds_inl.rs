@@ -336,11 +336,6 @@ macro_rules! pred_b {
 }
 pub(crate) use pred_b;
 
-/// A state-table predicate slot from a `void` function (the C casts `(HSD_GObjPredicate) (Event)`).
-pub const fn pred_v(f: unsafe extern "C" fn(*mut HSD_GObj)) -> HSD_GObjPredicate {
-    unsafe { core::mem::transmute::<unsafe extern "C" fn(*mut HSD_GObj), HSD_GObjPredicate>(f) }
-}
-
 /// A state-table row.
 pub const fn st_row(anim_id: i32, animated: HSD_GObjPredicate, phys: HSD_GObjEvent, coll: HSD_GObjPredicate) -> ItemStateTable {
     ItemStateTable { anim_id, animated, physics_updated: phys, collided: coll }

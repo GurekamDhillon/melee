@@ -106,10 +106,10 @@ pub static it_803F8E48: [Vec2; 4] = [
 
 /// `ItemStateTable it_803F8DE8[]`
 pub static mut it_803F8DE8: [ItemStateTable; 6] = [
-    st_row(0, pred_v(itArwinglaser_UnkMotion2_Anim), Some(itArwinglaser_UnkMotion2_Phys), pred_b!(itArwinglaser_UnkMotion2_Coll)),
-    st_row(1, pred_v(itArwinglaser_UnkMotion3_Anim), Some(itArwinglaser_UnkMotion3_Phys), pred_b!(itArwinglaser_UnkMotion3_Coll)),
-    st_row(2, pred_v(itArwinglaser_UnkMotion2_Anim), Some(itArwinglaser_UnkMotion2_Phys), pred_b!(itArwinglaser_UnkMotion2_Coll)),
-    st_row(3, pred_v(itArwinglaser_UnkMotion3_Anim), Some(itArwinglaser_UnkMotion3_Phys), pred_b!(itArwinglaser_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itArwinglaser_UnkMotion2_Anim), Some(itArwinglaser_UnkMotion2_Phys), pred_b!(itArwinglaser_UnkMotion2_Coll)),
+    st_row(1, pred_b!(itArwinglaser_UnkMotion3_Anim), Some(itArwinglaser_UnkMotion3_Phys), pred_b!(itArwinglaser_UnkMotion3_Coll)),
+    st_row(2, pred_b!(itArwinglaser_UnkMotion2_Anim), Some(itArwinglaser_UnkMotion2_Phys), pred_b!(itArwinglaser_UnkMotion2_Coll)),
+    st_row(3, pred_b!(itArwinglaser_UnkMotion3_Anim), Some(itArwinglaser_UnkMotion3_Phys), pred_b!(itArwinglaser_UnkMotion3_Coll)),
     st_row(4, None, None, pred_b!(itArwinglaser_UnkMotion5_Coll)),
     st_row(5, None, None, pred_b!(itArwinglaser_UnkMotion5_Coll)),
 ];
@@ -356,22 +356,27 @@ pub unsafe extern "C" fn it_802E7A4C(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, (*item).xDD4_itemVar.arwinglaser.xE38, 2);
 }
 
-pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Anim(gobj: *mut Item_GObj) {
+/// The C declares the UnkMotion2/3 Anim callbacks `void` and casts them into the state table's `animated` predicate
+/// slot (`(HSD_GObjPredicate) (Event)`). On the GameCube the trailing `it_80273130` call leaves its result in r3, so
+/// the predicate is "the life timer ran out". Calling a void function through a bool-returning pointer read whatever
+/// the return register held: Windows happened to see it_80273130's result, Linux (another codegen) a stale value, and
+/// destroyed a live Corneria Arwing laser a frame early (Game_20260613T224702 frame 797). The result is returned here.
+pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
     melee_core::ct!("itArwinglaser_UnkMotion2_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.arwinglaser.xE24 = (*ip).xDD4_itemVar.arwinglaser.xE18;
     if ext::it_80272C6C(gobj) == 0 {
         (*ip).xDD4_itemVar.arwinglaser.xE30 = 1;
     }
-    ext::it_80273130(gobj);
+    ext::it_80273130(gobj) != 0
 }
 
-pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Anim(gobj: *mut Item_GObj) {
+pub unsafe extern "C" fn itArwinglaser_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool {
     melee_core::ct!("itArwinglaser_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     (*ip).xDD4_itemVar.arwinglaser.xE24 = (*ip).xDD4_itemVar.arwinglaser.xE18;
     (*ip).xDD4_itemVar.arwinglaser.xE30 = 1;
-    ext::it_80273130(gobj);
+    ext::it_80273130(gobj) != 0
 }
 
 pub unsafe extern "C" fn itArwinglaser_UnkMotion2_Phys(gobj: *mut Item_GObj) {

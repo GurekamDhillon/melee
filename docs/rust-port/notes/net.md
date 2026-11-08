@@ -481,3 +481,25 @@ a wgpu `GX texture is invalid` panic; early inputs were off and no sampler was r
   and the work per tick.
 - MELEE_SNAP_CHECK=1 fails in slippi-netplay with rollbacks on both Windows (range 2) and Linux (range 3), with
   or without soft-dirty. That failure was already there and is not covered here.
+
+## slippi-netplay pads flushed at once (port/npsend, 2026-11-08)
+- `play --netplay` already sends right after `run_tick` (above). slippi-netplay queued the frame's pad (`send_pad`, before
+  `run_tick`) but ENet only put it on the wire at the next tick's `Client::poll` (`host.service`), ~16 ms later. Now
+  `Client::flush` (`enet_host_flush`) runs right after the pads are queued, as Slippi Dolphin's ENet thread sends them
+  without waiting a frame. Same packets, same frames, same delay; acks/pings still go out at poll.
+  `MELEE_NP_LATE_SEND=1` keeps the old timing for A/B.
+- np_pair.sh `--lag-ms 50 --padgen 7`, loopback, two runs each, host / guest:
+
+| | before (`MELEE_NP_LATE_SEND=1`) | after |
+|---|---|---|
+| rollbacks | 1418/1417, 1396/1390 | 1393/1430, 1455/1439 |
+| max depth | 7/7, 7/6 | 5/5, 4/4 |
+| resim | 4096/4198, 4104/4096 | 2944/2875, 2819/3066 |
+| stalls | 0/3, 3/0 | 1/0, 1/0 |
+| waits | 35/35, 37/36 | 12/11, 10/8 |
+| net ping (ms) | 101.2/101.0, 101.1/101.2 | 101.1/100.9, 101.0/101.0 |
+| pad-ack ping (ms) | 133.8/133.4, 133.3/133.2 | 116.7/133.5, 116.8/116.9 |
+
+  All CSV-EQUAL, 0 desyncs. The network round trip is unchanged (it excludes poll waits by design); the pad-ack ping drops
+  ~16.6 ms (one frame), resimulated frames ~30%, depth 7 -> 4-5, waits ~3x fewer. Rollback count is unchanged: at 50 ms
+  one-way the peer's pads are still ~3 frames late with delay 0.

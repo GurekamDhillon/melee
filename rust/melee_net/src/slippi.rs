@@ -388,6 +388,12 @@ impl Client {
         self.remote.ack_timers.push_back(Timing { frame: m.frame, time_us: now });
     }
 
+    /// Put the queued datagrams on the wire now (`enet_host_flush`) instead of at the next `poll`: called right
+    /// after the frame's pads are queued so they do not wait out a tick.
+    pub fn flush(&mut self) {
+        self.host.flush();
+    }
+
     /// `CalcTimeOffsetUs`: the mean of the middle third of the sorted samples (positive: we are ahead).
     pub fn time_offset_us(&self) -> i32 {
         let mut b = self.remote.offsets.clone();

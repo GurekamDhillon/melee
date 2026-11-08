@@ -335,6 +335,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
 
     let mut rnd: u32 = rng_offset.wrapping_mul(2654435761) ^ (local_port as u32 + 1);
     let mut last_sent = FIRST - 1;
+    let late_send = std::env::var_os("MELEE_NP_LATE_SEND").is_some_and(|v| v == "1");
     let mut finals: BTreeMap<i32, u32> = BTreeMap::new();
     let (mut compared, mut soft, mut hard) = (0u32, 0u32, 0u32);
     let mut compared_upto = 0;
@@ -457,6 +458,10 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             game.slippi_bits.entry(ff).or_default()[local_port as usize & 3] = p[8];
             cl.send_pad(online(ff), p, ckf, ck);
             last_sent = ff;
+        }
+        // on the wire now, not at the next tick's poll (~16 ms later); MELEE_NP_LATE_SEND=1 keeps the old timing (A/B)
+        if !late_send {
+            cl.flush();
         }
         // Slippi's skip rule: well ahead of the peer, wait (only on frames that are multiples of 30)
         let of = online(s.current_frame());

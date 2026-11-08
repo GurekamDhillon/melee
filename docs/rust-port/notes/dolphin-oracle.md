@@ -288,3 +288,42 @@ Two replay divergers were UCF 0.84 ports that read the Gecko code wrong, not eng
 - **Finding the function.** slpcheck now opens calltrace frames per replay frame, so a
   `--features calltrace` build with `MELEE_CT_LIVE=1 MELEE_CT_LIVE_FROM=F` prints the entries
   from frame F onward.
+
+## Slippi 1.7.1 replays (port/oracle171)
+
+A Slippi 1.x replay has no Gecko list (Message Splitter 0x10 / command 0x3D came with 2.x/3.x). Modern playback
+(`CEXISlippi::prepareGeckoList`) then sends its built-in `legacy_code_list` (SlippiPlayback.cpp): UCF **0.74**
+toggle-checked dashback and shield drop, `ToggledStaticOverwrites`, the PS preload handlers and the PAL handlers. That
+is modern Slippi's guess, not the 2019 console's set. Oracle exe `_build/dolphin-oracle-slp171` (strict2 + the change
+below): `MELEE_DOLPHIN_LEGACY_CODES=<file>` makes `getLegacyCodelist` return that file instead (abort if unreadable;
+stderr says `nhv1: legacy code list from ...`). `run_dolphin.ps1` builds the file per replay with
+`legacy171_codes.py` (only for a version < 2 replay with no Gecko list; `DOLPHIN_LEGACY171=0` plays with the built-in
+list, `DOLPHIN_LEGACY171_ARGS="--no-spawns"` / `"--qol"`).
+
+**Where the codes come from.** project-slippi/slippi-ssbm-asm at **496f0ae** (2019-02-25, "increment version for PS
+toggle", the 1.7.1 bump; `_build/slippi-src/ssbm-asm`), the console binaries the Slippi Nintendont build loaded,
+`Output/Console/g_*.bin`, read with `git show` at run time (nothing of them is committed here). Gecko codes copied
+verbatim, in file order:
+
+| bin | used | why |
+|---|---|---|
+| g_core.bin | always, minus the 10 below | boot/rules/unlock writes, Disable Screenshots (nops at 0x801A4F84/0x801A5070, in the game loop), the three PS preload C2s + `04 804DEC18 01000000` (PSPreloadToggle on), ToggledStaticOverwrites C2 0x8016E750 |
+| g_ucf.bin | yes | UCF 0.73 (C2 0x800C9A44 dashback, 0x800998A4 shield drop, 0x802662D0) + `04 804DEC08 01010101` (ControllerFixOptions all on). All 3,479 Gang-Steals files record UCF toggle words 1,1,1,1 (8 words), PAL 0, version 1.7.1.0: the "UCF" setting, not the per-player g_toggles.bin (the script refuses any other toggle pattern) |
+| g_spawns.bin | yes (`--no-spawns` off) | 20XX Neutral Spawns, C2 0x80263058 and 0x801C0A48; the engine assumes it for every 1.x replay (gmvs.rs `legacy_neutral_spawn`) |
+| g_pal.bin | only with the PAL byte | |
+| g_qol.bin | only with `--qol` | Salty Runback, Disable FoD During Doubles, cosmetics; the replay does not say |
+
+Left out of g_core: the Slippi Recording transport (the five `bl` hooks at 0x8016E74C, 0x8006B0DC, 0x8006C5D4,
+0x801A5B14, 0x802FED3C and the 06 block at 0x8032ED94; they only send EXI data, and 0x8006B0DC / 0x8016E74C are the
+sites of playback's own hooks), and four sites the playback set (Sys/GameSettings/GALE01r2.ini) already patches with
+Slippi's own copy: Init Player Data C2 0x80068EEC and Init Stage Data C2 0x801C154C (same zeroing), Disable Special /
+Trophy Messages 0x8015D94C / 0x8015D984 (identical words). Checked: g_ucf's two UCF bodies are the toggled
+g_toggles bodies minus the toggle test (the shield drop's toggled copy reloads r5 = `lwz r5,-0x514C(r13)`), so with
+every port on the two sets behave the same.
+
+Known differences that remain between this oracle and the 2019 console (not codes, so not reproducible from the file):
+- Polling drift: 1.7.1 had no Polling Drift Fix, so the console ran a second logic frame without a render about every
+  1001 frames, at a phase set by how long the console had been running ("Polling drift" above). Playback in Dolphin
+  drifts too, at its own phase. Both move the 1% offscreen tick (`x221F_b0` is set by the render pass).
+- Modern playback's Init Stage Data also resets Dream Land's wind and Japes' logs (later determinism codes); a 2019
+  console carried them over from the previous game.

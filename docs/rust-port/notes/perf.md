@@ -179,3 +179,82 @@ method), visible unfocused window; load times headless. Before = rust-port 66d48
 - Stadium variance: re-posed in-between presents re-ran the frame's EFB copies at a wall-clock phase; the screen samples the
   previous frame's copy, so a shot depended on timing. A screenshot present now first redraws the previous sim frame
   exactly (`Presenter::shot`). Live in-between presents still copy at their phase (by design phase-dependent).
+
+# Frame-time tail and Stadium shot variance (2026-11-08, branch port/perfspike)
+Task: the ~4 ms frame-interval p99 of uncapped play (bench-live.md: 3.78 ms Temple, 1.80 FD on a quiet machine) whose
+cause was unknown since the perf rounds, and Pokemon Stadium rendering that differed run to run. Measured first
+(`MELEE_FRAME_TIMES`, `MELEE_PRESENT_SPIKE=2.5`, `MELEE_GX_PROF`, scripts scratch only), on a machine at 80-90 % CPU
+from other agents' games, so every absolute number below is inflated and only A/B pairs run back to back compare.
+
+## Cause of the p99
+It is not a stall: it is the **fresh-frame present**. With interpolation on, about one present in 20 (Temple at ~500 fps)
+to one in 15 (FD) adopts a new sim frame and does prepare + draw + swap in one present interval; the other presents
+re-pose the current frame in 0.3-0.5 ms. Temple, 3600 ticks: 3109 of 3581 fresh presents took over 2.5 ms, mean 3.2 ms =
+prepare 1.22 + draw 1.54 + swap 0.21 + adopt 0.22; the re-posed presents did not. At 3-5 % of all presents the fresh
+present IS the p95-p99. Inside it (`MELEE_GX_PROF`, Temple, per prepared frame):
+- `pack` p50 0.10 ms but p90 **1.86 ms**: the decode thread's packing (`Packed`) was handed to the renderer as a side
+  slot (`set_packed`) and consumed by whichever `prepare` came next. Whenever a skipped frame's EFB copies were rendered
+  (`render_copies`, two ticks between presents, common under load) or the pending frame was not the one prepared, the
+  key did not match and the main thread packed the frame itself; the slot then held nothing for the right frame and the
+  next prepare packed again.
+- `lookup` p50 0.94 ms: 1250 unmerged draws x (pipeline from the 8-entry recency list, texture bind group through 8
+  maps of address-alias / content-key / bind-group hashing). 72 % of consecutive unmerged draws sample the same textures
+  (one material, different uniforms, which the batcher cannot merge).
+- `draw`: uniforms 0.28 ms + pass 1.0 ms (recording ~1250 draw calls + submit), unchanged here.
+
+## Cause of the Stadium variance
+The shot was of a different sim frame run to run (the HUD timer in the three shots differed by one frame, the whole
+image with it), not of a different rendering. `--shot-ages` sets the shot at the end of tick N and `present_now()` breaks
+the tick loop, but the redraw handler calls `run_due_ticks` again before presenting ("a tick that came due since the
+present was scheduled runs first"), so under load tick N+1 ran first and the shot showed its frame. Stadium showed it
+because its shots were the ones compared (perf.md 2026-11-04); any stage does it. This is a platform-loop effect, not a
+sim one (the ticks still run, after the present), and not the EFB-copy phase issue fixed on 2026-11-04.
+
+## Changes (render / loop only; the sim and its order of ticks are untouched)
+| change | where |
+|---|---|
+| `Packed` travels with its `interp::Frame` (pending, current, skipped) and is consumed by that frame's own prepare; `render_copies` gets the skipped frame's | `melee_gx/src/interp.rs`, `melee_platform/src/gfx.rs`, `melee/src/{retail_flow,play}.rs` |
+| the renderer keeps two prepared-frame slots (`frames`, `frame_key`, `pin`): a prepare never clobbers the presenter's current frame, a frame already in a slot is not prepared again, `draw_prepared` prepares on the spot (counted) instead of asserting | `melee_gx/src/render.rs` |
+| consecutive unmerged draws with the same textures/TLUTs (`same_textures`) share the texture bind group (72 % of draws on Temple) | `render.rs` prepare |
+| split fresh present: when the mean present interval is under 2.5 ms (`SPLIT_BELOW_MS`, uncapped only; vsync 144 / 60 Hz never), the adopting present prepares the new frame and re-presents the EFB (which shows the previous frame at its newest pose, drawn by the deferral present), the next present draws it. `MELEE_PRESENT_SPLIT=0` turns it off | `gfx.rs` |
+| `run_due_ticks` runs no tick while `present_now()` (a screenshot pending): the shot is of the tick that asked for it | `melee_platform/src/main_loop.rs` |
+| exit perf line: fresh frames, deferred (prepared at one present, drawn at the next), packed on the main thread, drawn unprepared; `MELEE_GX_PROF` adds texreuse / tpipe / ttex / factory | `gfx.rs`, `render.rs` |
+
+## Numbers
+Same loaded machine, A = rust-port 443726c70, B = this branch, runs interleaved A B A B, medians; `play --match`, 4 CPUs
+level 9 on Temple / Fox vs Marth CPUs on FD, 3600 match ticks, vsync off, interp on, scale 2, window unfocused.
+
+| | A FD | B FD | A Temple | B Temple |
+|---|---|---|---|---|
+| frame interval p50 / p95 / p99 (ms) | 0.93 / 2.49 / 3.89 | 0.90 / 2.24 / **3.50** | 2.01 / 5.63 / 13.6 | 2.00 / 5.86 / 12.4 |
+| intervals over 3 ms / over 4 ms (of ~50k FD, ~20k Temple) | 1181 / 469 | 961 / 360 | 6415 / 3512 | 5906 / 3599 |
+| 1 % low fps | 91 | **119** | 33 | 28 |
+| present call p50 / p99 | 0.82 / 2.82 | 0.81 / 2.13 | 1.73 / 8.12 | 1.74 / 7.27 |
+| present prepare p50 / p99, draw p50 / p99 | 0.53 / 1.7, 0.66 / 1.7 | 0.56 / 1.5, 0.65 / 1.55 | 1.24 / 5.2, 1.46 / 4.2 | 1.30 / 3.8, 1.49 / 4.3 |
+| fresh frames prepared at one present, drawn at the next | - | 3375 of 3532 (96 %) | - | 864-1489 of 3180 (27-47 %) |
+| frames packed on the main thread (prepare `pack` p90) | p90 1.86 ms | 0 (p90 0.17 ms) | | |
+| Stadium shots at ages 300 / 600 / 900 / 1100, 3 runs | 3 of 4 differ | **4 of 4 identical** | | |
+
+A later matched pair at a lighter load (Temple, 1800 match ticks, A then B, interval 1.5-1.6 ms so the split was active
+for 97 % of fresh frames): frame interval p95 / p99 4.48 / **7.20** -> 3.74 / **4.72** ms, 1 % low 87 -> 183 fps, present
+call p99 5.32 -> 2.54 ms, intervals over 4 ms 1151 -> 651; 94 % of B's intervals over 3 ms contain a tick (tick p50 2.2 ms
+under this load), i.e. the tail left is the tick interval, as expected.
+
+Reading: on FD the present interval (0.9 ms) is under the split gate, so 96 % of fresh frames are split and p99 goes
+3.89 -> 3.50, 1 % low 91 -> 119 fps, the present call p99 2.82 -> 2.13. On Temple under this load the mean interval sat
+around the 2.5 ms gate, so the split was active for only a third of the fresh frames and the p99 (12-14 ms) is the
+machine: 80 % of the intervals over 3 ms contain a tick, whose own p99 was 15-23 ms (p50 2.6) from CPU contention, and
+the worst presents were 60-100 ms waits inside `queue.submit` / present with other games on the GPU. The structural
+change is visible in the stage numbers (no main-thread packs; prepare p99 5.2 -> 3.8 ms) and should show in full on a
+quiet machine, where the quiet-machine p99 (3.78 Temple / 1.80 FD) was the fresh present itself and the interval is far
+below the gate: the expected ceiling becomes the tick interval (tick 1.3 + re-posed present 0.5 ms). Not measured quiet.
+
+What is left of the fresh present: prepare `lookup` ~1.0 ms (pipeline resolution 0.42 ms over the recency list, texture
+resolution 0.5 ms even with the 72 % reuse: per-draw `Arc` clones of pipeline and bind group; per-frame index tables
+instead of per-draw handles would be the next step), `draw` pass ~1.0 ms (wgpu per-draw recording), and in the tick
+interval the pose capture (0.5 ms of a 1.3 ms quiet tick, `melee_runtime/src/pose_capture.rs`).
+
+Checks: `tools/rust-port/gate.sh --skip-build` on the new exe (goldens, synctest, audio, lints, snapguard) and snapguard
+on the old exe under the same load: see the commit message. Draw order, uniforms and EFB copies are unchanged by
+construction (the split only moves when a prepared frame is drawn); the Stadium shots of the new exe are identical
+across 3 runs and equal to the baseline's run-2/run-3 shots (the ones where no extra tick slipped in).

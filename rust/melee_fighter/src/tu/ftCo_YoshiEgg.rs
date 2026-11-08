@@ -58,7 +58,9 @@ pub mod ext {
         ftYs_SpecialN_8012CD40() -> f32 = || todo!("ftYs_SpecialN_8012CD40: installed by melee_link");
         ftYs_SpecialN_GetExtAttr34() -> f32 = || todo!("ftYs_SpecialN_GetExtAttr34: installed by melee_link");
         ftYs_SpecialN_8012CDB4() -> f32 = || todo!("ftYs_SpecialN_8012CDB4: installed by melee_link");
-        ftYs_SpecialN_GetExtAttr38() -> bool = || todo!("ftYs_SpecialN_GetExtAttr38: installed by melee_link");
+        // decomp `bool` (= BOOL, int): the getter is `lwz r3,0x38` and returns the attribute (the egg-break intangibility
+        // frames), not 0/1 (Dolphin oracle: Game_20260518T183650 x1990 = 14 a frame after the break)
+        ftYs_SpecialN_GetExtAttr38() -> i32 = || todo!("ftYs_SpecialN_GetExtAttr38: installed by melee_link");
         ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
         ft_PlaySFX(f: &mut Fighter, id: i32, vol: u8, pan: u8) = crate::ft0877::play_sfx;
         efAsync_Spawn(g: G, q: *mut c_void, kind: u32, gfx: u32, j: *mut HSD_JObj, arg: *const c_void) = |a0, a1, a2, a3, a4, a5| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[a5 as *const core::ffi::c_void]); };

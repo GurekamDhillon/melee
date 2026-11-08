@@ -5559,13 +5559,22 @@ unsafe fn ftCo_800ADE48_inline1(mut fp: *mut Fighter) -> *mut CpuFighter {
 
 /// `ftCo_800ADE48`
 unsafe fn ftCo_800ADE48(fp: *mut Fighter) -> i32 {
+    ftCo_800ADE48_r31(fp, true)
+}
+
+/// `ftCo_800ADE48` with the caller's r31 made explicit. On the GameCube the "level roll" branch of the 0x12 command
+/// switch (fp->x221A_b3 set) leaves `switch_cmd` unassigned: it lives in r31, which the prologue saved but did not
+/// clear, so the test reads the CALLER's r31. Every caller holds a pointer there (fp, the CPU block) except
+/// ftCo_800B21C8's last call (0x800B2494), where r31 was set to 0 for its bit clears. Seen in Dolphin: a probe at
+/// 0x800AE270 shows that branch with r31 = the CPU block pointer, and the console switching to command 0x12.
+unsafe fn ftCo_800ADE48_r31(fp: *mut Fighter, caller_r31_nonzero: bool) -> i32 {
     let b = (*fp).cpu.x38.to_bits();
-    let r = ftCo_800ADE48_impl(fp);
+    let r = ftCo_800ADE48_impl(fp, caller_r31_nonzero);
     if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("    ADE48 ret {} x38 {:08X} -> {:08X} x54 {:?} x60 {}", r, b, (*fp).cpu.x38.to_bits(), ((*fp).cpu.x54.x, (*fp).cpu.x54.y), (*fp).cpu.x60); }
     r
 }
 
-unsafe fn ftCo_800ADE48_impl(mut fp: *mut Fighter) -> i32 {
+unsafe fn ftCo_800ADE48_impl(mut fp: *mut Fighter, caller_r31_nonzero: bool) -> i32 {
     let mut switch_cmd: i32 = 0;
     let mut data: *mut CpuFighter = null_mut();
     let mut ip: *mut Item = null_mut();
@@ -5692,6 +5701,7 @@ unsafe fn ftCo_800ADE48_impl(mut fp: *mut Fighter) -> i32 {
             } else {
                 (*data2).set_xFA_b1((0 as u8) as u8);
             }
+            switch_cmd = caller_r31_nonzero as i32;
         }
         if switch_cmd != 0 {
             super::ftcmdscript::ftCo_800B4A78(fp);
@@ -7281,7 +7291,8 @@ pub unsafe fn ftCo_800B21C8(mut fp: *mut Fighter) {
         }
         ftCo_800A75DC(fp, attack_target);
     }
-    let _ = ftCo_800ADE48(fp);
+    // r31 is 0 here (`li r31, 0` at 0x800B22F8, used for the bit clears above)
+    let _ = ftCo_800ADE48_r31(fp, false);
 }
 
 /// `ftCo_800B24B8`

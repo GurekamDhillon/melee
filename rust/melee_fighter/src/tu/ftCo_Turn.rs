@@ -58,6 +58,7 @@ pub mod ext {
         Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
         Replay_RawStickBack(port: i32, which: i32, back: i32) -> i32 = |port: i32, which: i32, back: i32| -> i32 { unsafe { crate::platform::Replay_RawStickBack(port, which, back) } };
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |port: i32, which_y: i32, back: i32| -> i32 { unsafe { crate::fighter::ftucf_pad_raw(port as _, which_y as _, back as _) } };
+        Player_GetEntityAtIndex(slot: i32, index: i32) -> G = |slot: i32, index: i32| -> G { crate::player::get_entity_at_index(slot, index) };
     }
 }
 
@@ -150,6 +151,30 @@ pub fn ftCo_Turn_Ucf073Dashback(f: &mut Fighter) {
         let t = unsafe { &mut f.mv.co.turn };
         t.just_turned = 1;
         t.has_turned = 1;
+        // UCF 0.8 `UCF DB.asm` CHANGE_TO_SMASH_TURN: Popo only (kind 0xA). The code runs after the turn's store of the
+        // new facing; this port runs before the negation below it, so the new facing is -facing_dir.
+        if f.kind as i32 == 0xA {
+            ucf_dashback_nana_entry(f, -f.facing_dir);
+        }
+    }
+}
+
+/// UCF dashback (0.8 and 0.84): after granting the smash turn, overwrite the entry of the sub fighter's (Nana's)
+/// input queue that her CPU last stored from this fighter (`cpu.x444`, fp+0x1ECC) with the new facing and a full
+/// stick toward it (0x7F right, 0x80 left), so Nana dashes back too.
+fn ucf_dashback_nana_entry(f: &Fighter, facing: f32) {
+    let g = ext::Player_GetEntityAtIndex(f.player_id as i32, 1);
+    if g.is_null() {
+        return;
+    }
+    let sub = fp(g);
+    let e = sub.cpu.x444;
+    if e.is_null() {
+        return;
+    }
+    unsafe {
+        (*e).facing_dir = facing;
+        (*e).lstick.x = if facing.to_bits() >> 31 != 0 { 0x80u8 as i8 } else { 0x7F };
     }
 }
 
@@ -174,6 +199,8 @@ pub fn ftCo_Turn_Ucf084Dashback(f: &mut Fighter) {
         let t = unsafe { &mut f.mv.co.turn };
         t.has_turned = 1;
         t.just_turned = 1;
+        // UCF 0.84 `UCF Dashback.asm` (C2 800C9A44): any fighter with a sub fighter, facing already negated
+        ucf_dashback_nana_entry(f, f.facing_dir);
     }
 }
 

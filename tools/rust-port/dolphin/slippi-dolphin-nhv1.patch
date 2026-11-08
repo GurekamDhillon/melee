@@ -192,10 +192,10 @@ index c6fbc9d..dd26f2a 100644
  
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.cpp b/Source/Core/Core/Slippi/NHV1Oracle.cpp
 new file mode 100644
-index 0000000..046e622
+index 0000000..17a3fc2
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.cpp
-@@ -0,0 +1,503 @@
+@@ -0,0 +1,517 @@
 +// NHV1 oracle (GD's Melee port, local tool): see NHV1Oracle.h.
 +#include "Core/Slippi/NHV1Oracle.h"
 +
@@ -589,6 +589,10 @@ index 0000000..046e622
 +static u32 s_undo_fp[8];
 +static int s_undo_n = 0;
 +static s32 s_undo_frame = INT_MIN;
++// The same injection also calls Camera_8002F3AC (snap the camera to its target) once per fighter on that frame; the
++// recording console never did, so game_camera (0x80452C68, 0x39C bytes) is saved at the first fighter and restored.
++static u8 s_undo_cam[0x39C];
++static bool s_undo_cam_saved = false;
 +void UndoSave(const Core::CPUThreadGuard& guard)
 +{
 +  if (s_state != 1 || std::getenv("MELEE_DOLPHIN_NHV1_KEEP_PLAYBACK_INIT"))
@@ -597,9 +601,16 @@ index 0000000..046e622
 +  {
 +    s_undo_frame = s_frame;
 +    s_undo_n = 0;
++    s_undo_cam_saved = false;
 +  }
 +  if (s_frame != -123 || s_undo_n >= 8)
 +    return;
++  if (!s_undo_cam_saved && !std::getenv("MELEE_DOLPHIN_NHV1_KEEP_PLAYBACK_CAMERA"))
++  {
++    for (u32 k = 0; k < 0x39C; k++)
++      s_undo_cam[k] = PowerPC::MMU::HostRead_U8(guard, 0x80452C68 + k);
++    s_undo_cam_saved = true;
++  }
 +  const u32 fp = guard.GetSystem().GetPPCState().gpr[31];
 +  s_undo_fp[s_undo_n] = fp;
 +  for (u32 k = 0; k < 0x38; k++)
@@ -619,6 +630,9 @@ index 0000000..046e622
 +      PowerPC::MMU::HostWrite_U8(guard, s_undo_buf[i][k], fp + 0x6F4 + k);
 +    s_undo_fp[i] = 0;
 +  }
++  if (s_undo_cam_saved)
++    for (u32 k = 0; k < 0x39C; k++)
++      PowerPC::MMU::HostWrite_U8(guard, s_undo_cam[k], 0x80452C68 + k);
 +}
 +}  // namespace NHV1Oracle
 +

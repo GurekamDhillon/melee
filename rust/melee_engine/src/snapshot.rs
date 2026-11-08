@@ -857,6 +857,23 @@ impl Base {
         let mut st = self.stats.borrow_mut();
         st.checks += 1;
         st.checked_pages += n;
+        drop(st);
+        for &(ri, pi) in &bad[..nbad.min(bad.len())] {
+            let r = &s.ranges[ri];
+            let live = unsafe { bytes(r.addr + pi as usize * PAGE, PAGE) };
+            let want = r.page(pi).unwrap_or_else(|| self.base_page(ri, pi as usize));
+            let offs: Vec<usize> = (0..PAGE).filter(|&i| live[i] != want[i]).collect();
+            if let (Some(&a), Some(&b)) = (offs.first(), offs.last()) {
+                let at = r.addr + pi as usize * PAGE;
+                #[cfg(windows)]
+                let img = { extern "system" { fn GetModuleHandleW(n: *const u16) -> usize; } unsafe { GetModuleHandleW(core::ptr::null()) } };
+                #[cfg(not(windows))]
+                let img = 0usize;
+                eprintln!("MELEE_SNAP_CHECK: first differing byte at rva {:#x} (image base {img:#x})", at + a - img);
+                eprintln!("MELEE_SNAP_CHECK: range {ri} page {pi}: {} bytes differ in {:#x}..={:#x} (range offset {:#x}); live {:02x?} want {:02x?}",
+                    offs.len(), at + a, at + b, pi as usize * PAGE + a, &live[a..=b.min(a + 31)], &want[a..=b.min(a + 31)]);
+            }
+        }
         assert!(nbad == 0, "MELEE_SNAP_CHECK: after {what} of snapshot {} the live state differs from it in {nbad} pages, first (range, page) {:?}", s.id, &bad[..nbad.min(8)]);
     }
 

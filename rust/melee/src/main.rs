@@ -183,10 +183,37 @@ fn selftest() {
 /// * `MELEE_LEAK_ALLOC=1`: `dealloc` is a no-op, to tell a use-after-free from other memory bugs.
 struct DebugAlloc;
 /// Live bytes the process allocator serves from the system heap (outside the game arena); diagnostics for `play`'s mem lines.
-pub static SYS_LIVE: std::sync::atomic::AtomicIsize = std::sync::atomic::AtomicIsize::new(0);
+/// The counter lives on the system heap, not in a static: the statics are snapshot state (melee_engine::snapshot), and a
+/// rollback load would rewind a static counter while every thread's system-heap blocks stay as they are (and a thread
+/// allocating during a load, e.g. slippi-netplay's socket readers, left it differing from the snapshot: MELEE_SNAP_CHECK
+/// failed on it). The static only holds the cell's address, set once in `main` before any snapshot base exists.
+static SYS_LIVE_CELL: std::sync::atomic::AtomicPtr<std::sync::atomic::AtomicIsize> = std::sync::atomic::AtomicPtr::new(core::ptr::null_mut());
+fn sys_live() -> &'static std::sync::atomic::AtomicIsize {
+    use std::sync::atomic::{AtomicIsize, Ordering};
+    let p = SYS_LIVE_CELL.load(Ordering::Acquire);
+    if !p.is_null() {
+        return unsafe { &*p };
+    }
+    // System directly: this runs inside the allocator
+    let l = std::alloc::Layout::new::<AtomicIsize>();
+    let n = unsafe { std::alloc::GlobalAlloc::alloc(&std::alloc::System, l) } as *mut AtomicIsize;
+    assert!(!n.is_null(), "system heap counter");
+    unsafe { n.write(AtomicIsize::new(0)) };
+    match SYS_LIVE_CELL.compare_exchange(core::ptr::null_mut(), n, Ordering::AcqRel, Ordering::Acquire) {
+        Ok(_) => unsafe { &*n },
+        Err(won) => {
+            unsafe { std::alloc::GlobalAlloc::dealloc(&std::alloc::System, n.cast(), l) };
+            unsafe { &*won }
+        }
+    }
+}
+/// The system heap's live bytes (see `sys_live`).
+pub fn sys_live_bytes() -> isize {
+    sys_live().load(std::sync::atomic::Ordering::Relaxed)
+}
 #[inline]
 fn sys_add(n: isize) {
-    SYS_LIVE.fetch_add(n, std::sync::atomic::Ordering::Relaxed);
+    sys_live().fetch_add(n, std::sync::atomic::Ordering::Relaxed);
 }
 static LEAK_ALLOC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 static GUARD_ALLOC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
@@ -416,6 +443,7 @@ fn arena_misuse(what: &str, p: usize, n: usize) {
     }
 }
 fn main() -> ExitCode {
+    sys_live(); // the counter's cell exists before any snapshot base is captured
     #[cfg(windows)]
     melee_engine::arena::set_misuse_hook(arena_misuse);
     if std::env::var_os("MELEE_LEAK_ALLOC").is_some() {

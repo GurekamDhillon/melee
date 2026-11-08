@@ -1,0 +1,22 @@
+--- a/Source/Core/Core/Slippi/SlippiPlayback.cpp
++++ b/Source/Core/Core/Slippi/SlippiPlayback.cpp
+@@ -353,6 +353,19 @@
+ 
+ std::vector<u8> SlippiPlaybackStatus::getLegacyCodelist()
+ {
++  // NHV1 oracle: MELEE_DOLPHIN_LEGACY_CODES=<file> replaces the built-in list for replays without a
++  // Gecko list with the recording console's own codes (tools/rust-port/dolphin/legacy171_codes.py).
++  if (const char* path = std::getenv("MELEE_DOLPHIN_LEGACY_CODES"); path && *path)
++  {
++    std::string contents;
++    if (File::ReadFileToString(path, contents) && contents.size() >= 8)
++    {
++      fprintf(stderr, "nhv1: legacy code list from %s (%zu bytes)\n", path, contents.size());
++      return std::vector<u8>(contents.begin(), contents.end());
++    }
++    fprintf(stderr, "nhv1: MELEE_DOLPHIN_LEGACY_CODES unreadable: %s\n", path);
++    std::abort();
++  }
+   return legacy_code_list;
+ }
+ 

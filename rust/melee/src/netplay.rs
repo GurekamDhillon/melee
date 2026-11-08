@@ -36,7 +36,8 @@ pub(crate) struct Degraded {
     pub(crate) lag: Duration,
     pub(crate) loss_pct: u32,
     pub(crate) rng: u32,
-    pub(crate) q: VecDeque<(Instant, Addr, Vec<u8>)>,
+    /// (release time, from, datagram, simulated arrival: the real arrival plus the lag, for the displayed round trip)
+    pub(crate) q: VecDeque<(Instant, Addr, Vec<u8>, Instant)>,
 }
 
 impl Transport for Degraded {
@@ -55,11 +56,13 @@ impl Transport for Degraded {
             if self.loss_pct > 0 && (self.rng >> 16) % 100 < self.loss_pct {
                 continue;
             }
-            self.q.push_back((Instant::now() + self.lag, a, tmp[..n as usize].to_vec()));
+            let arrived = melee_net::transport::rx_stamp().unwrap_or_else(Instant::now);
+            self.q.push_back((Instant::now() + self.lag, a, tmp[..n as usize].to_vec(), arrived + self.lag));
         }
         if let Some(f) = self.q.front() {
             if f.0 <= Instant::now() {
-                let (_, a, d) = self.q.pop_front().unwrap();
+                let (_, a, d, at) = self.q.pop_front().unwrap();
+                melee_net::transport::set_rx_stamp(Some(at));
                 *from = a;
                 let n = d.len().min(buf.len());
                 buf[..n].copy_from_slice(&d[..n]);
@@ -117,7 +120,10 @@ fn netplay_with<G: NetGame + 'static>(args: &[String]) -> std::process::ExitCode
     let server = arg(args, "--server");
     let bind_port = if host || random { num("--port", if random { 0 } else { 51500 }) as u16 } else { 0 };
     let udp = match UdpTransport::open(0x7F000001, bind_port) {
-        Ok(u) => u,
+        Ok(mut u) => {
+            let _ = u.stamp_arrivals(); // the logged net rtt only
+            u
+        }
         Err(e) => {
             eprintln!("melee: bind: {e}");
             return ExitCode::FAILURE;
@@ -282,8 +288,8 @@ fn netplay_with<G: NetGame + 'static>(args: &[String]) -> std::process::ExitCode
             eprintln!("melee: {tag}: tick {ticks} sim {} at session frame {} (game frame {}, conf {}, remote_conf {})", if stop_logged { "STOPPED" } else { "resumed" }, s.current_frame(), game.frame() - FIRST, s.confirmed_frame(), net.remote_confirmed_frame());
         }
         if trace && ticks % 120 == 0 {
-            eprintln!("melee: {tag}: tick {ticks} frame {} ran {n_run} confirmed {} adv {} remote_conf {} unacked {} rtt {} silent {} state {:?}",
-                s.current_frame(), s.confirmed_frame(), s.frame_advantage(), net.remote_confirmed_frame(), net.unacked(), net.rtt_ms(), net.silent_ms(), net.state());
+            eprintln!("melee: {tag}: tick {ticks} frame {} ran {n_run} confirmed {} adv {} remote_conf {} unacked {} rtt {} (net {}) silent {} state {:?}",
+                s.current_frame(), s.confirmed_frame(), s.frame_advantage(), net.remote_confirmed_frame(), net.unacked(), net.rtt_ms(), net.net_rtt_ms(), net.silent_ms(), net.state());
             eprintln!("melee: {tag}:   {} halted {:?} game frame {}", s.dbg_line(), game.halted(), game.frame() - FIRST);
         }
         let next = finals.last().map_or(FIRST, |x| x.0 + 1);

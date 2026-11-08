@@ -119,7 +119,11 @@ pub struct Peer {
     out_once: Vec<Vec<u8>>,
     /// Reliable commands not yet sent the first time.
     out_reliable: VecDeque<SentReliable>,
-    acks: Vec<(u8, u16, u16, u8)>,
+    /// (channel, seq, the peer's send time, command, when its datagram landed here)
+    acks: Vec<(u8, u16, u16, u8, u32)>,
+    /// The network round trip (ms, smoothed; 0 until measured), for display: from the landing time of each ack, so
+    /// without our own wait for the service call. Retransmission keeps using `rtt`.
+    pub net_rtt: f32,
     /// Smoothed round-trip time and variance (ms), from acks.
     pub rtt: u32,
     pub rtt_var: u32,
@@ -154,6 +158,7 @@ impl Peer {
             out_once: Vec::new(),
             out_reliable: VecDeque::new(),
             acks: Vec::new(),
+            net_rtt: 0.0,
             rtt: 500,
             rtt_var: 0,
             last_ack_time: 0,
@@ -195,6 +200,8 @@ pub struct Host {
     channel_limit: usize,
     clock: Option<Box<dyn Fn() -> u32>>,
     t0: std::time::Instant,
+    /// When the datagram being handled landed (host ms; 0 = unknown).
+    cur_rx: u32,
     rng: u64,
     events: VecDeque<Event>,
     /// Count of datagrams this host could not parse or had to drop (bad peer id, session, address).
@@ -211,6 +218,7 @@ impl Host {
             channel_limit: channel_limit.clamp(1, 255),
             clock: None,
             t0: std::time::Instant::now(),
+            cur_rx: 0,
             rng: seed | 1,
             events: VecDeque::new(),
             dropped: 0,
@@ -361,11 +369,18 @@ impl Host {
         let mut buf = vec![0u8; 4096];
         for _ in 0..256 {
             let mut from = Addr::default();
+            crate::transport::set_rx_stamp(None);
             let n = self.tp.recv(&mut from, &mut buf);
             if n <= 0 {
                 break;
             }
             let d = buf[..n as usize].to_vec();
+            let now = self.now();
+            // when the datagram landed (0: unknown, no transport stamp or a test clock: acks then echo unchanged)
+            self.cur_rx = match crate::transport::rx_stamp() {
+                Some(_) if self.clock.is_none() => now.wrapping_sub(crate::transport::rx_wait_ms()).max(1),
+                _ => 0,
+            };
             self.handle_datagram(from, &d);
         }
         let now = self.now();
@@ -374,6 +389,17 @@ impl Host {
             self.flush_peer(i, now);
         }
         self.events.pop_front()
+    }
+
+    /// Queue an ENet PING (reliable, acked by any ENet peer, no event) when nothing reliable is in flight: during a
+    /// match nothing else is acked, so this is what keeps the displayed round trip ([`Peer::net_rtt`]) fresh. Goes
+    /// out with the next flush.
+    pub fn ping(&mut self, peer: usize) {
+        if let Some(p) = self.peers.get_mut(peer) {
+            if p.state == PeerState::Connected && p.sent.is_empty() && p.out_reliable.is_empty() {
+                Self::queue_reliable(p, 0xFF, vec![CMD_PING | FLAG_ACK, 0xFF, 0, 0]);
+            }
+        }
     }
 
     /// `enet_host_flush`: send what is queued without reading.
@@ -431,11 +457,16 @@ impl Host {
         }
         let mtu = p.mtu as usize;
         let mut cmds: Vec<Vec<u8>> = Vec::new();
-        for (ch, seq, sent_time, _cmd) in p.acks.drain(..) {
+        for (ch, seq, sent_time, _cmd, rx) in p.acks.drain(..) {
             let mut c = vec![CMD_ACK, ch, 0, 0];
             c[2..4].copy_from_slice(&seq.to_be_bytes());
             c.extend_from_slice(&seq.to_be_bytes());
-            c.extend_from_slice(&sent_time.to_be_bytes());
+            // the echo moved forward by how long we held the command (landing to this flush), NTP style, so the
+            // peer's round trip is the network's and not our frame poll's; never past now, so ENet's sanity check
+            // (an echo from the future is dropped) holds
+            let hold = now.wrapping_sub(rx);
+            let hold = if rx != 0 && (hold as i32) > 0 && hold < 0x8000 { hold as u16 } else { 0 };
+            c.extend_from_slice(&sent_time.wrapping_add(hold).to_be_bytes());
             cmds.push(c);
         }
         // resends that are due
@@ -484,6 +515,7 @@ impl Host {
     }
 
     fn handle_datagram(&mut self, from: Addr, d: &[u8]) {
+        let rx = self.cur_rx;
         if d.len() < 2 {
             self.dropped += 1;
             return;
@@ -567,7 +599,7 @@ impl Host {
                 let p = &mut self.peers[i];
                 match p.state {
                     PeerState::Disconnecting | PeerState::AcknowledgingConnect | PeerState::Disconnected | PeerState::Zombie => {}
-                    _ => p.acks.push((channel, seq, st, num)),
+                    _ => p.acks.push((channel, seq, st, num, rx)),
                 }
             }
         }
@@ -635,6 +667,7 @@ impl Host {
     /// One command for a known peer; false stops the datagram (ENet's commandError).
     #[allow(clippy::too_many_arguments)]
     fn handle_command(&mut self, i: usize, num: u8, channel: u8, seq: u16, c: &[u8], payload: &[u8], now: u32) -> bool {
+        let rx = self.cur_rx;
         let p = &mut self.peers[i];
         let live = matches!(p.state, PeerState::Connected);
         match num {
@@ -667,6 +700,11 @@ impl Host {
                         }
                     }
                     p.last_ack_time = now;
+                }
+                if rx != 0 {
+                    if let Some(r) = ack_rtt_ms(rx, rtime) {
+                        p.net_rtt = if p.net_rtt == 0.0 { r as f32 } else { p.net_rtt * 0.875 + r as f32 * 0.125 };
+                    }
                 }
                 p.last_receive = now;
                 let mut acked = None;
@@ -814,5 +852,32 @@ impl Host {
     }
     pub fn has_outgoing(&self, peer: usize) -> bool {
         self.peers.get(peer).map_or(false, |p| p.has_outgoing())
+    }
+}
+
+/// The round trip of one ack: its landing time `rx` (host ms) minus the 16-bit echo of our send time (which a peer
+/// that holds the command moves forward by its hold), widened against `rx`. None for an echo from the future.
+pub fn ack_rtt_ms(rx: u32, echo16: u32) -> Option<u32> {
+    let mut t = (rx & 0xFFFF_0000) | (echo16 & 0xFFFF);
+    if (t & 0x8000) > (rx & 0x8000) {
+        t = t.wrapping_sub(0x10000);
+    }
+    let r = rx.wrapping_sub(t) as i32;
+    (0..=10000).contains(&r).then_some((r as u32).max(1))
+}
+
+#[cfg(test)]
+mod ack_rtt_tests {
+    use super::ack_rtt_ms;
+    #[test]
+    fn widen_and_hold() {
+        // sent at 70000 (echo 70000 & 0xFFFF), the peer held it 15 ms and moved the echo to 70015; landed at 70019
+        assert_eq!(ack_rtt_ms(70019, (70000 + 15) & 0xFFFF), Some(4));
+        // across a 16-bit wrap
+        assert_eq!(ack_rtt_ms(0x1_0003, 0xFFFE), Some(5));
+        // under a millisecond reads 1 (as ENet clamps), so a measured link never shows as unmeasured
+        assert_eq!(ack_rtt_ms(500, 500), Some(1));
+        // an echo past the landing time
+        assert_eq!(ack_rtt_ms(1000, 1005), None);
     }
 }

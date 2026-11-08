@@ -437,3 +437,47 @@ a wgpu `GX texture is invalid` panic; early inputs were off and no sampler was r
   CSV-EQUAL, the usual game end at 1179).
 - Not reproduced here: the exact LAN freeze (that would need the LAN). If it comes back, run with MELEE_NP_DEBUG=1 and the
   new messages ("no pads from the peer for N s", link state) show which side stops hearing the other.
+
+## Displayed ping, the stray second link, Linux falling behind (port/npping)
+- Ping read ~2 frames high (LAN 33 ms, hotspot 100-114 ms for a 70-80 ms network). Cause: every round trip was timed
+  at the frame poll. A datagram waits in the socket until the next 16.7 ms poll on each side, and the pad ack is
+  only sent at the peer's next flush. Slippi's pad-ack ping and gw_net's `rtt_ms` both include those waits.
+  They also feed game timing (Slippi's time offset, gw_net's frame advantage, start time and `--np-delay auto`),
+  so they are unchanged. The display now uses a separate network round trip:
+  - `UdpTransport::stamp_arrivals` (used by slippi-netplay, `play --netplay` and `melee netplay`) adds reader
+    threads that take each datagram off the socket as it lands and record the time (`transport::rx_stamp`).
+    `recv` is still non-blocking and returns the same datagrams in the same order, so each poll sees what it saw
+    before. Lag simulators (`Degraded` in netplay.rs and play_net.rs) and the mux keep a simulated arrival time
+    for each datagram they hold.
+  - ENet (Slippi wire, format unchanged): an ENet ack's 16-bit echo of the sender's time is moved forward by how
+    long we held the command (landing to flush, NTP style). `Client` queues a standard ENet PING every 250 ms,
+    because nothing reliable is acked during a match. `Peer::net_rtt` is the ack's landing time minus the echo.
+    Slippi Dolphin acks from its own ENet thread, so its hold is already small. `Peer::rtt` (retransmit timer) is
+    computed as before, but from the moved echo.
+  - gw_net: flags bits 1-7 carry how long the echoed packet sat before our poll read it (ms, saturating at 127).
+    Older builds and the C only test bit 0 and send 0. `net_rtt_ms` = landing - t_echo - echo_delay - peer wait.
+    The math is in `net::net_rtt_ms_sample` and `enet::ack_rtt_ms`, which have unit tests.
+  - Shown: slippi-netplay logs `ping N us (pad acks M us)`, where M is the old figure. The `play --netplay` title
+    line, the overlay and the final line show `net_rtt_ms`. The overlay's "auto, next" hint still uses `rtt_ms`.
+  - Loopback np_pair: ping 0-1.3 ms (pad acks 33-34 ms). With --lag-ms 40: 81.4 ms (pad acks 133 ms). With
+    --lag-ms 50: 101 ms.
+- Stray `Connect`/`Disconnect` a few seconds into a match: both sides connect to each other. When a side's first
+  CONNECT reached a port that was not open yet, ENet kept resending it with backoff (0.5, 1.5, 3.5, 7.5 s...)
+  while the other link came up. The late resend opened a second link, which the duplicate-link rule then dropped.
+  On loopback the host logged `Connect peer 0` at 523 ms, after its incoming link at 10 ms. Fix: when the first
+  link connects, `Client` silently resets its other links that are still Connecting to the same address. Both
+  sides now log a single Connect.
+- PC rolled back far more than the Linux laptop: the Linux build could not run 60 fps. On Linux the snapshot had
+  no write watch, so every save and load treated the whole arena and host block as written and compared the 9 MB
+  of statics in full. slippi-netplay's tick took 26.9 ms on WSL (1.6 ms on Windows, same machine), so the Linux
+  side fell behind its schedule by seconds. Its offset sat near -85 ms, while the Windows side waited and stalled
+  and took the rollbacks. Before, Windows host vs WSL guest, --lag-ms 50 --padgen 7: Windows 1618 rollbacks /
+  541 stalls / 297 waits, WSL 36 / 0 / 0, WSL tick lateness mean 7.5 s. Fix: Linux snapshots use the kernel's
+  soft-dirty bits (/proc/self/pagemap bit 55, cleared once per refresh through /proc/self/clear_refs, after a
+  self-test; a read between clears sees a superset). The statics use them too. `MELEE_SNAP_NO_SOFTDIRTY=1` turns
+  this off. After: WSL tick 6.8 ms (9.5 ms with rollbacks at lag 50). Same run: Windows 1428 / 10 / 32,
+  WSL 1822 / 0 / 33, offsets within ±17 ms, CSV-EQUAL. Windows sleep was not a cause: tick wake lateness averages
+  0.4 ms on Windows (std's sleep uses a high-resolution timer). slippi-netplay now prints the tick wake lateness
+  and the work per tick.
+- MELEE_SNAP_CHECK=1 fails in slippi-netplay with rollbacks on both Windows (range 2) and Linux (range 3), with
+  or without soft-dirty. That failure was already there and is not covered here.

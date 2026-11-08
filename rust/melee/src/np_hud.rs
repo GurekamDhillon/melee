@@ -34,8 +34,10 @@ pub fn parse_delay(v: Option<&str>) -> (i32, bool) {
 #[derive(Clone, Debug, Default)]
 pub struct NetHud {
     pub host: bool,
-    /// smoothed round trip (0: not measured yet)
+    /// the network round trip (smoothed; 0: not measured yet)
     pub ping_ms: u32,
+    /// the round trip `--np-delay auto` picks the next match's delay from (the game-timing one, see `Net::rtt_ms`)
+    pub auto_rtt_ms: u32,
     /// ms since the last packet from the peer (0: unknown)
     pub silent_ms: u32,
     pub delay: i32,
@@ -97,8 +99,8 @@ pub fn lines(h: &NetHud, r: &HudRates) -> Vec<Line> {
     let ping = if h.ping_ms == 0 { "--".to_string() } else { format!("{} ms", h.ping_ms) };
     let mut v = vec![(format!("netplay {} {} [{hl}]", if h.host { "host" } else { "guest" }, h.phase), hc)];
     let auto = if h.auto {
-        let next = auto_delay(h.ping_ms);
-        if next != h.delay && h.ping_ms > 0 { format!(" (auto, next {next})") } else { " (auto)".into() }
+        let next = auto_delay(h.auto_rtt_ms);
+        if next != h.delay && h.auto_rtt_ms > 0 { format!(" (auto, next {next})") } else { " (auto)".into() }
     } else {
         String::new()
     };

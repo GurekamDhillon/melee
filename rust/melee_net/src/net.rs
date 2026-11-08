@@ -186,6 +186,11 @@ pub struct Net {
     have_echo: bool,
     last_send_ms: u32,
     rtt_ms: u32,
+    /// Display only: how long the packet being handled waited between landing (transport stamp) and this poll, the
+    /// same for the last packet we echo (sent to the peer in flags bits 1-7), and the smoothed network round trip.
+    rx_wait: u32,
+    last_rx_wait: u32,
+    net_rtt: f32,
     interrupted: bool,
 
     t_begin: u32,
@@ -283,6 +288,9 @@ impl Net {
             have_echo: false,
             last_send_ms: 0,
             rtt_ms: 0,
+            rx_wait: 0,
+            last_rx_wait: 0,
+            net_rtt: 0.0,
             interrupted: false,
             t_begin: 0,
             next_hello: 0,
@@ -400,7 +408,9 @@ impl Net {
         let t = self.now();
         w.u16(MAGIC);
         w.u8(ty);
-        w.u8(self.have_echo as u8);
+        // bit0: t_echo valid; bits 1-7 (display only, ignored by older builds and the C): how long the echoed packet
+        // sat before our poll read it, ms, saturating at 127
+        w.u8(if self.have_echo { 1 | (self.last_rx_wait.min(127) as u8) << 1 } else { 0 });
         w.u32(self.session);
         w.u32(t);
         w.u32(if self.have_echo { self.last_rx_tsend } else { 0 });
@@ -627,6 +637,14 @@ impl Net {
         } else {
             (self.rtt_ms.wrapping_mul(7).wrapping_add(s as u32).wrapping_add(4)) / 8
         };
+    }
+
+    /// The displayed round trip: like `rtt_sample` (which game timing keeps using unchanged) but measured from when
+    /// the packet landed, minus the peer's whole hold (its echo delay plus its own wait before reading ours).
+    fn net_rtt_sample(&mut self, t_echo: u32, echo_delay: u32, peer_wait: u8) {
+        if let Some(s) = net_rtt_ms_sample(self.now(), self.rx_wait, t_echo, echo_delay, peer_wait as u32) {
+            self.net_rtt = if self.net_rtt == 0.0 { s as f32 } else { self.net_rtt * 0.875 + s as f32 * 0.125 };
+        }
     }
 
     fn check_checksum_pair(&mut self, idx: u32) {
@@ -894,6 +912,7 @@ impl Net {
             self.last_rx_ms = self.now();
             self.last_rx_tsend = t_send;
             self.last_rx_at = self.now();
+            self.last_rx_wait = self.rx_wait;
             self.have_echo = true;
             self.send_accept();
             return;
@@ -974,9 +993,11 @@ impl Net {
                 self.last_rx_ms = self.now();
                 self.last_rx_tsend = t_send;
                 self.last_rx_at = self.now();
+                self.last_rx_wait = self.rx_wait;
                 self.have_echo = true;
                 if flags & 1 != 0 {
                     self.rtt_sample(t_echo, echo_delay);
+                    self.net_rtt_sample(t_echo, echo_delay, flags >> 1);
                 }
                 self.next_ready = self.now();
                 self.fire(Event::Accepted, None);
@@ -991,10 +1012,12 @@ impl Net {
         self.last_rx_ms = self.now();
         self.last_rx_tsend = t_send;
         self.last_rx_at = self.now();
+        self.last_rx_wait = self.rx_wait;
         self.have_echo = true;
         self.st.packets_received += 1;
         if flags & 1 != 0 {
             self.rtt_sample(t_echo, echo_delay);
+            self.net_rtt_sample(t_echo, echo_delay, flags >> 1);
         }
         if self.interrupted {
             self.interrupted = false;
@@ -1124,7 +1147,9 @@ impl Net {
         let mut buf = [0u8; MAX_PACKET + 64];
         for _ in 0..64 {
             let mut from = Addr::default();
+            crate::transport::set_rx_stamp(None);
             let r = self.tp.recv(&mut from, &mut buf);
+            self.rx_wait = if self.cb.now_ms().is_none() { crate::transport::rx_wait_ms() } else { 0 };
             if r < 0 {
                 self.go_dead("network error");
                 return;
@@ -1318,8 +1343,15 @@ impl Net {
     pub fn peer_addr(&self) -> Addr {
         self.peer
     }
+    /// The round trip game timing uses (frame advantage, start time, `--np-delay auto`): it includes each side's
+    /// wait until its frame poll reads a packet.
     pub fn rtt_ms(&self) -> u32 {
         self.rtt_ms
+    }
+    /// The network round trip, for display and logs (0 until measured; falls back to `rtt_ms` against a peer
+    /// that sends no wait bits only in that its wait reads 0).
+    pub fn net_rtt_ms(&self) -> u32 {
+        self.net_rtt.round() as u32
     }
     pub fn silent_ms(&self) -> u32 {
         self.now().wrapping_sub(self.last_rx_ms)
@@ -1380,5 +1412,30 @@ impl Drop for Net {
                 self.send_simple(T_QUIT);
             }
         }
+    }
+}
+
+/// One displayed-round-trip sample (ms), NTP style: our arrival time (`now - rx_wait`) minus our send time
+/// (`t_echo`) minus the peer's hold (`echo_delay`, its processing to send, plus `peer_wait`, its landing to
+/// processing). None when out of range (clock wrap, a stale echo).
+pub fn net_rtt_ms_sample(now: u32, rx_wait: u32, t_echo: u32, echo_delay: u32, peer_wait: u32) -> Option<u32> {
+    let s = now.wrapping_sub(rx_wait).wrapping_sub(t_echo).wrapping_sub(echo_delay).wrapping_sub(peer_wait) as i32;
+    (0..=10000).contains(&s).then_some((s as u32).max(1))
+}
+
+#[cfg(test)]
+mod net_rtt_tests {
+    use super::net_rtt_ms_sample;
+    #[test]
+    fn subtracts_both_sides_waits() {
+        // sent at 1000; the peer's poll read it 9 ms after it landed and replied 7 ms later; the 2 ms + 2 ms network
+        // trip puts the reply here at 1020, read by our poll at 1031 (wait 11)
+        assert_eq!(net_rtt_ms_sample(1031, 11, 1000, 7, 9), Some(4));
+        // without stamps (waits 0) it is the old frame-quantized figure
+        assert_eq!(net_rtt_ms_sample(1031, 0, 1000, 7, 0), Some(24));
+        // wraps across the u32 clock
+        assert_eq!(net_rtt_ms_sample(5, 1, u32::MAX - 10, 2, 1), Some(12));
+        // a hold longer than the trip (bad stamp): rejected
+        assert_eq!(net_rtt_ms_sample(1000, 0, 999, 5, 0), None);
     }
 }

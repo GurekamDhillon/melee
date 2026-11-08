@@ -770,7 +770,8 @@ pub struct Degraded {
     pub dup_pct: u32,
     pub reorder_pct: u32,
     pub rng: u32,
-    pub q: Vec<(Instant, melee_net::transport::Addr, Vec<u8>)>,
+    /// (release time, from, datagram, simulated arrival: the real arrival plus the hold, for the displayed round trip)
+    pub q: Vec<(Instant, melee_net::transport::Addr, Vec<u8>, Instant)>,
     pub stats: [u64; 4],
 }
 
@@ -829,6 +830,8 @@ impl Transport for Degraded {
                 self.stats[0] += 1;
                 continue;
             }
+            let arrived = melee_net::transport::rx_stamp().unwrap_or_else(Instant::now);
+            let pushed = Instant::now();
             let mut at = Instant::now() + self.delay();
             if self.reorder_pct > 0 && self.roll() % 100 < self.reorder_pct {
                 at += self.lag / 2 + Duration::from_millis(10);
@@ -836,15 +839,16 @@ impl Transport for Degraded {
             }
             if self.dup_pct > 0 && self.roll() % 100 < self.dup_pct {
                 let at2 = Instant::now() + self.delay();
-                self.q.push((at2, a, d.clone()));
+                self.q.push((at2, a, d.clone(), arrived + at2.saturating_duration_since(pushed)));
                 self.stats[2] += 1;
             }
-            self.q.push((at, a, d));
+            self.q.push((at, a, d, arrived + at.saturating_duration_since(pushed)));
         }
         // the earliest due datagram (jitter and the reorder hold make the queue unordered)
         let now = Instant::now();
         let Some(i) = (0..self.q.len()).filter(|&i| self.q[i].0 <= now).min_by_key(|&i| self.q[i].0) else { return 0 };
-        let (_, a, d) = self.q.remove(i);
+        let (_, a, d, vat) = self.q.remove(i);
+        melee_net::transport::set_rx_stamp(Some(vat));
         *from = a;
         let n = d.len().min(buf.len());
         buf[..n].copy_from_slice(&d[..n]);
@@ -1080,6 +1084,11 @@ impl NetDriver {
             }
             None => UdpTransport::open(0, bind_port).map_err(|e| format!("bind UDP port {bind_port}: {e} (is another copy running?)"))?,
         };
+        let mut udp = udp;
+        // arrival stamps for the displayed round trip (what the frame polls see is unchanged)
+        if let Err(e) = udp.stamp_arrivals() {
+            eprintln!("melee: netplay: no arrival stamps ({e}): the ping shown includes frame-poll waits");
+        }
         let port = udp.local_port();
         let v6 = udp.has_v6();
         let deg: Box<dyn Transport> = Box::new(Degraded::new(Box::new(udp), &netem, 0x1234_5678 ^ local_port as u32));
@@ -1477,7 +1486,8 @@ impl NetDriver {
         };
         crate::np_hud::NetHud {
             host: self.host,
-            ping_ms: net.map_or(0, |n| n.rtt_ms()),
+            ping_ms: net.map_or(0, |n| n.net_rtt_ms()),
+            auto_rtt_ms: net.map_or(0, |n| n.rtt_ms()),
             silent_ms: net.map_or(0, |n| n.silent_ms()),
             delay: s.cfg.delay,
             auto: crate::np_hud::AUTO_DELAY.load(std::sync::atomic::Ordering::Relaxed),
@@ -1496,7 +1506,7 @@ impl NetDriver {
     pub fn status(&mut self) -> String {
         let s = self.sess.borrow();
         let st = s.stats;
-        let ping = self.net.as_ref().map_or(0, |n| n.rtt_ms());
+        let ping = self.net.as_ref().map_or(0, |n| n.net_rtt_ms());
         let d = st.rollbacks - self.last_rb.0;
         self.last_rb = (st.rollbacks, d, st.depth_max);
         let state = if let Some(e) = &self.error {
@@ -1527,7 +1537,7 @@ impl NetDriver {
             st.waits,
             st.desyncs,
             lg.desyncs.len(),
-            self.net.as_ref().map_or(0, |n| n.rtt_ms()),
+            self.net.as_ref().map_or(0, |n| n.net_rtt_ms()),
             if st.arrive_n > 0 { st.arrive_sum as f64 / st.arrive_n as f64 } else { 0.0 },
             self.net.as_ref().map(|n| n.stats())
         ) + &self.early_summary(&s)

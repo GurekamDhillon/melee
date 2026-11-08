@@ -1,8 +1,9 @@
 # Linux build (2026-11-07, branch port/linux)
 
-Status: the native engine builds and runs headless on Linux (WSL2, Debian 13, rustc 1.99). The cross-OS netplay
-test has not been run. One cross-OS sim difference is still open (see "Determinism").
-See also tools/rust-port/slippi/REAL_NAT_TEST.md (being written on port/slippi7) for real-network NAT tests.
+Status (2026-11-07, after merging rust-port 4bc899145): the native engine builds and runs headless on Linux (WSL2,
+Debian 13). Hero's 428-replay corpus gives the same slpcheck CSV on Linux and Windows (0 rows differ: 365 match, 63
+diverged on both). WSL<->Windows engine netplay through the mock matchmaker: 1168 checksums compared, 0 desyncs.
+See also tools/rust-port/slippi/REAL_NAT_TEST.md for real-network NAT tests.
 
 ## Packages
 `bash tools/rust-port/linux/deps.sh` (sudo) installs: build-essential pkg-config libasound2-dev libudev-dev libvulkan1
@@ -49,21 +50,29 @@ In WSL, building from /mnt/e works but is slow. Put CARGO_TARGET_DIR on the Linu
 - Windows gate on this branch: all checks passed except snapguard, which ran while the machine was at 88% CPU.
   Re-run it on a quiet machine.
 
-## Determinism: the open case
-In Game_20260613T224702, an Arwing laser (item kind 234) is destroyed one frame early on Linux. The destroy comes
-from an item GObj proc called directly from HSD_GObj_RunProcs.
-- At frame 795 the item records are byte-identical on both OSes apart from pointers.
-- A `--features calltrace` build on Linux matches Windows exactly: the call traces and CSVs are equal.
-- So the difference depends on how the code is optimised, not on float maths in the inputs. Suspects: UB
-  (pointer-to-u32 truncation, out-of-bounds read) or a blast-zone or item-proc comparison that LLVM compiles
-  differently.
-- Next step: print destroy_type and the blast-zone values at the destroy (Item_802696CC / Item_80269528 / Item_80269978)
-  in a normal release build. A temporary print for this was written but not run.
-- Until this is fixed, cross-OS netplay can desync on Corneria.
+## Determinism: the Corneria Arwing laser (fixed, 6f9ffb56b)
+Game_20260613T224702 matched on Windows but diverged on Linux at frame 797: a live Arwing laser (item 234, life
+timer 399) was destroyed at frame 796 with destroy_type 0, meaning its `animated` callback had returned true.
+The C declares itArwinglaser_UnkMotion2/3_Anim as `void` and casts them into the bool `animated` slot. On the
+GameCube, the trailing it_80273130 call (has the life timer run out?) leaves its result in r3. The Rust port called
+the void function through the bool pointer (`pred_v`, a transmute), which is undefined behaviour: the predicate
+read whatever was in the return register. Windows' code happened to leave the right value there and Linux's did
+not; a calltrace build changed the code again, which is why it matched. The callbacks now return
+`it_80273130(gobj) != 0` and `pred_v` has been removed. The other void-to-function-pointer transmutes in the tree
+cast void to void and are safe.
+
+## Netplay, WSL <-> Windows (done)
+On Windows, run `python -I tools/rust-port/slippi/mock_mm.py --bind <WSL switch address, e.g. 172.21.48.1>
+--port 43110`. Start the Windows engine first (`slippi-netplay --mm ws://172.21.48.1:43110/v1/queue --mm-lan
+--port 43211 --code TSTA#001 --search TSTB#001 --frames 3600`), then the WSL engine with the same --mm and
+--mm-lan, its own --port, and the codes swapped. The relay runs on Windows. UDP works in both directions over the
+vSwitch with Windows' default firewall. Result: 1168 checksums compared with the peer, 0 soft and 0 hard desyncs,
+51 rollbacks (max depth 7), ping 33-55 ms, and both checksum CSVs are equal (1170 rows). The match ended before
+3600 frames.
 
 ## Known gaps
 - No GC adapter or Linux pad support yet.
-- The windowed run (WSLg is present) and the cross-OS netplay run were not done.
+- The windowed run (WSLg is present) was not done.
 - snapguard baselines are specific to the Windows machine.
 - When a WSL session reads a Windows checkout, the files have CRLF line endings. Strip `\r` from the
   pre_draws.tsv fields, or the pad goldens fail at frame 0. A native Linux clone is not affected.

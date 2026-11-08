@@ -288,3 +288,26 @@ Two replay divergers were UCF 0.84 ports that read the Gecko code wrong, not eng
 - **Finding the function.** slpcheck now opens calltrace frames per replay frame, so a
   `--features calltrace` build with `MELEE_CT_LIVE=1 MELEE_CT_LIVE_FROM=F` prints the entries
   from frame F onward.
+
+## Akaneia (m-ex) replays (port/akoracle)
+
+Hero's 2026-11-06 corpus has 50 replays recorded on Akaneia with one of its m-ex fighters (external id > 25: 26-32,
+Charizard, Wolf, Sonic, Tails, Diddy, Dedede...). The oracle plays them on the Akaneia disc, the same one slpcheck uses.
+
+**Which disc.** slpcheck (melee/src/slpcheck.rs) switches to `GW_ISO_AKANEIA` (workspace `.env`) when no `--iso` is given,
+the Gecko list has Akaneia's codes.gct marker (C2 0x803D7060, `melee_data::slp::akaneia_codeset`) and a human/CPU player
+has an external id > 25; an Akaneia replay with only vanilla fighters stays on the vanilla disc. `replay_codes.py --disc
+REPLAY` applies the same rule and prints `akaneia` or `vanilla`; `run_dolphin.ps1` and `oracle.sh` use it for both sides
+(`DOLPHIN_DISC=vanilla|akaneia` overrides). oracle.sh passes the chosen disc to slpcheck explicitly.
+
+**Is it the recording build?** Checked from the disc and the replays (nothing written): the Akaneia disc is GALE01 with
+the retail section layout; its main.dol differs from vanilla in 2994 text words, none at the oracle's hook addresses
+(0x801A4FA4, 0x8006B0DC, 0x8006B120) or the replay-code sites. The disc ships its own codes.gct (1163 codes) that m-ex
+loads at boot, so playback runs Akaneia's codes from the disc without help; the replay's Gecko list (287 codes in the
+April files, 291 from May on) holds 86 of them byte-identical, the 0x803D7060 marker among them. Codes at 25 addresses
+exist in both with different bodies (Slippi's own versions of the same hooks, e.g. 0x8016E510, 0x80394A74); the
+engine's 16 exact files on this disc are the evidence it is the recording build.
+
+**Build.** `_build/dolphin-oracle-akaneia`: a copy of the strict2 source (same patch as
+`slippi-dolphin-nhv1.patch`, no new change), built fresh by its `build.bat` (`-j 4`), `DOLPHIN_ORACLE_DIR` selects it.
+The NHV1 word set is unchanged: the m-ex fighters use the retail `struct Fighter` layout at the same offsets.

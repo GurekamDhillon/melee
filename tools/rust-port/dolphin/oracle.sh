@@ -40,6 +40,11 @@ mkdir -p "$OUT"
 OUTW=$(cygpath -w "$OUT" 2>/dev/null || echo "$OUT")
 SLPW=$(cygpath -w "$SLP" 2>/dev/null || echo "$SLP")
 name=$(basename "$SLP")
+# the disc both sides play: an Akaneia replay with one of the disc's m-ex fighters runs on GW_ISO_AKANEIA (slpcheck's own
+# rule, replay_codes.py --disc; DOLPHIN_DISC overrides), every other replay on GW_ISO_VANILLA
+DISC=${DOLPHIN_DISC:-$(python -I "$here/replay_codes.py" --disc "$SLP")}
+export DOLPHIN_DISC=$DISC
+ISO=$GW_ISO_VANILLA; [ "$DISC" = akaneia ] && ISO=$GW_ISO_AKANEIA
 log() { echo "oracle: $*"; }
 
 wflag=""; [ $WIDE = 1 ] && wflag="-Wide"
@@ -73,7 +78,7 @@ if [ "$RUNS" -ge 2 ]; then
   fi
 fi
 
-MELEE_WINDOW_UNFOCUSED=1 MELEE_VOLUME=3 "$EXE" slpcheck --slp "$SLP" --full --iso "$GW_ISO_VANILLA" \
+MELEE_WINDOW_UNFOCUSED=1 MELEE_VOLUME=3 "$EXE" slpcheck --slp "$SLP" --full --iso "$ISO" \
   --nhv1-out "$OUT/rust.csv" --csv "$OUT/slpcheck.csv" > "$OUT/rust.log" 2>&1
 grep -a '^SLPCHECK' "$OUT/rust.log" | sed 's/^/oracle: /'
 [ -s "$OUT/rust.csv" ] || { echo "ORACLE $name error: the Rust run wrote no rows (see $OUT/rust.log)"; exit 2; }
@@ -101,7 +106,7 @@ else
   [ $A = $S ] && ZEQ="$ZEQ --persistent"
   ww=""; [ $WIDE = 1 ] && ww="--wide"
   "$EXE" dolphin-wide --raw "$OUT/dolphin.nhraw" --out "$OUT/dolphin_wide.txt" --from $A --to $S 2>/dev/null
-  MELEE_WINDOW_UNFOCUSED=1 MELEE_VOLUME=3 "$EXE" slpcheck --slp "$SLP" --full --iso "$GW_ISO_VANILLA" $ww \
+  MELEE_WINDOW_UNFOCUSED=1 MELEE_VOLUME=3 "$EXE" slpcheck --slp "$SLP" --full --iso "$ISO" $ww \
     --wide-out "$OUT/rust_wide.txt" --wide-from $A --wide-to $S > /dev/null 2>&1
   python "$here/wide_diff.py" "$OUT/rust_wide.txt" "$OUT/dolphin_wide.txt" --all-frames --max 12 $ZEQ > "$OUT/wide_diff.txt"
   sed 's/^/oracle: /' "$OUT/wide_diff.txt"

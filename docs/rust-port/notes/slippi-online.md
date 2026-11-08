@@ -579,3 +579,34 @@ which a second copy, or the user's own running Slippi Dolphin, would collide wit
 (not allowed). The oracle build only speaks the WebSocket service (refused). Options: patch the oracle's Rust
 matchmaking to the ENet protocol for a local test build, or a 3.x build with per-instance pipe names.
 No stranger (unranked) check was run.
+
+## 14. Phase 6: Slippi Dolphin on the real network (2026-11-07, port/slippi6)
+
+**The build.** `tools/rust-port/slippi/dolphin_enet_mm.patch` (on top of `_build/dolphin-netplay/localtest-cpp.patch`,
+mainline `0653df8`): `SLIPPI_MM_ENET=HOST:PORT` makes `SlippiMatchmaking` speak the 3.x ENet protocol itself (the
+netplay-port ENet host connects, `create-ticket` as reliable JSON on channel 0, waits for `create-ticket-resp` /
+`get-ticket-resp`, then the existing result parsing), no STUN, LAN address from `getLocalAddress` towards the server.
+`SLIPPI_REAL_NET=1` lifts the `SLIPPI_LOCAL_TEST` loopback binding (matchmaking and netplay hosts); the web API, game
+reports, STUN and browser pages stay off. `SLIPPI_MM_APP_VERSION` sets `appVersion` (the scripts send the engine's
+default). Ranked is refused; only message types are logged. Pipe names were already per instance
+(`SLIPPI_PIPE_PREFIX`). Built in `_build/dolphin-oracle/build`, the exe/dll copied to `_build/dolphin-slippi6` (not
+committed), the oracle's sources and binaries restored afterwards.
+
+**Scripts.** `run_np_dolphin.ps1 -Dir -MmEnet -RealNet -AppVersion`; `np_real_dolphin_pair.sh OUT dd|de|ed|eh [-- engine
+args]` (throwaway user dirs `userR1/R2` from copies of the two accounts, `direct-codes.json` holding the other code);
+`dd_compare.py OUT` (Dolphin vs Dolphin: each side's TX checksums, and RX against the peer's TX).
+
+**Results (all on the real network: mm.slippi.gg:43113, direct mode, our two accounts; same external IP, so the game
+traffic used the LAN addresses).** Dolphin rollbacks are not logged by this build.
+
+| run | pairing (decider first) | pads | engine lag / loss | frames | compared | desyncs | rollbacks (engine) |
+|---|---|---|---|---|---|---|---|
+| dd1 | Dolphin acct1 (Kirby) vs Dolphin acct2 (Fox) | drive 11 / 22 | - | 2717 / 2720 | 2431 TX common, RX 2561 + 2548 | 0 | - |
+| dd2 | Dolphin acct1 vs Dolphin acct2 | drive 11 / 22 | - | 2709 / 2712 | 2696 TX common, RX 2706 + 2700 | 0 | - |
+| de1 | Dolphin acct1 (Kirby) vs engine acct2 (Fox) | drive 11 / script | 0 / 0 | 2489 | 2486 live, 2486 offline | 0 | 2 (depth 1) |
+| ed1 | Dolphin acct2 vs engine acct1 | drive 22 / script | 0 / 0 | 2489 | 2486 live, 2486 offline | 0 | 0 |
+| eh1 | Dolphin acct2 vs engine acct1 (engine queued first) | drive 22 / script | 40 / 5 | 2490 | 2264 live, 2389 offline | 0 | 321 (depth 2) |
+
+**Gaps.** The engine was the guest in every engine-vs-Dolphin run, queued first or not, either account: the server
+chose Dolphin as decider each time (an engine decider vs Dolphin is untested here). Dolphin-side rollback counts are
+not recorded. No unranked/stranger check was run.

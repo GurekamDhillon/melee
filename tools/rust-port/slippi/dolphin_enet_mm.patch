@@ -1,0 +1,247 @@
+GD slippi phase 6: production ENet matchmaking (mm.slippi.gg:43113, the Slippi Dolphin 3.x protocol) for the local
+test Slippi Dolphin (_build/dolphin-oracle/src, mainline 0653df8). Applies on top of _build/dolphin-netplay/localtest-cpp.patch
+(SLIPPI_LOCAL_TEST, SLIPPI_PIPE_PREFIX, SLIPPI_CHECKSUM_LOG). Env: SLIPPI_MM_ENET=HOST:PORT, SLIPPI_REAL_NET=1 (lifts the
+loopback binding), SLIPPI_MM_APP_VERSION. Ranked refused. Apply: git apply --ignore-whitespace dolphin_enet_mm.patch
+
+--- a/Source/Core/Core/Slippi/SlippiMatchmaking.cpp
++++ b/Source/Core/Core/Slippi/SlippiMatchmaking.cpp
+@@ -18,6 +18,21 @@
+ #elif defined _WIN32
+ #endif
+ 
++// GD slippi6: the production ENet matchmaking protocol of Slippi Dolphin 3.x (mm.slippi.gg:43113), for a local test
++// build. SLIPPI_MM_ENET=host:port turns it on (instead of the Rust WebSocket client). SLIPPI_REAL_NET=1 lifts the
++// SLIPPI_LOCAL_TEST loopback binding (the web API, reports and browser stay off). Ranked is refused.
++static const char* EnetMmServer()
++{
++  return std::getenv("SLIPPI_MM_ENET");
++}
++static bool LoopbackOnly()
++{
++  return std::getenv("SLIPPI_LOCAL_TEST") && !std::getenv("SLIPPI_REAL_NET");
++}
++static ENetPeer* s_mm_peer = nullptr;
++static ENetAddress s_mm_addr{};
++static bool s_ticket_ok = false;
++
+ // Rust-side session states, see slprs_mm_state
+ enum RustMmState
+ {
+@@ -126,6 +141,20 @@
+     m_session_id = 0;
+   }
+ 
++  if (m_client && s_mm_peer)
++  {
++    enet_peer_disconnect(s_mm_peer, 0);
++    ENetEvent ev;
++    u64 t0 = Common::Timer::NowMs();
++    while (Common::Timer::NowMs() - t0 < 500 && enet_host_service(m_client, &ev, 50) >= 0)
++    {
++      if (ev.type == ENET_EVENT_TYPE_RECEIVE)
++        enet_packet_destroy(ev.packet);
++      else if (ev.type == ENET_EVENT_TYPE_DISCONNECT)
++        break;
++    }
++  }
++  s_mm_peer = nullptr;
+   if (m_client)
+   {
+     enet_host_destroy(m_client);
+@@ -321,7 +350,7 @@
+     client_addr.host = ENET_HOST_ANY;
+     client_addr.port = m_host_port;
+     // GD slippi-p1 local test: loopback only (no firewall prompt, nothing reachable from outside)
+-    if (std::getenv("SLIPPI_LOCAL_TEST"))
++    if (LoopbackOnly())
+       enet_address_set_host_ip(&client_addr, "127.0.0.1");
+ 
+     m_client = enet_host_create(&client_addr, 1, 3, 0, 0);
+@@ -341,7 +370,8 @@
+   std::vector<ENetAddress> stun_addrs;
+   // GD slippi-p1 local test: no STUN (no DNS lookup, no packet to Google/Cloudflare/Twilio)
+   const std::vector<std::pair<std::string, u16>> no_stun;
+-  for (const auto& server : std::getenv("SLIPPI_LOCAL_TEST") ? no_stun : STUN_SERVERS)
++  // GD slippi6: no STUN in the ENet protocol either (the server's view of the source port is the hole punch)
++  for (const auto& server : (std::getenv("SLIPPI_LOCAL_TEST") || EnetMmServer()) ? no_stun : STUN_SERVERS)
+   {
+     ENetAddress addr;
+     if (enet_address_set_host(&addr, server.first.c_str()) != 0)
+@@ -385,7 +415,47 @@
+   // }
+   // freeaddrinfo(addrs);
+ 
+-  if (std::getenv("SLIPPI_LOCAL_TEST"))
++  if (EnetMmServer())
++  {
++    if (m_search_settings.mode == SlippiMatchmaking::OnlinePlayMode::RANKED)
++    {
++      m_state = ProcessState::ERROR_ENCOUNTERED;
++      m_error_msg = "GD test build: ranked is refused";
++      return;
++    }
++    std::string srv = EnetMmServer();
++    u16 mm_port = 43113;
++    auto colon = srv.rfind(':');
++    if (colon != std::string::npos)
++    {
++      mm_port = static_cast<u16>(std::stoi(srv.substr(colon + 1)));
++      srv = srv.substr(0, colon);
++    }
++    if (LoopbackOnly() && srv != "127.0.0.1")
++    {
++      m_state = ProcessState::ERROR_ENCOUNTERED;
++      m_error_msg = "SLIPPI_LOCAL_TEST without SLIPPI_REAL_NET: the ENet server must be 127.0.0.1";
++      return;
++    }
++    if (enet_address_set_host(&s_mm_addr, srv.c_str()) != 0)
++    {
++      m_state = ProcessState::ERROR_ENCOUNTERED;
++      m_error_msg = "Could not resolve the matchmaking server";
++      return;
++    }
++    s_mm_addr.port = mm_port;
++    if (LoopbackOnly())
++    {
++      sprintf(lan_addr, "127.0.0.1:%d", m_host_port);
++    }
++    else
++    {
++      enet_uint32 local_address = getLocalAddress(&s_mm_addr);
++      if (local_address != 0)
++        sprintf(lan_addr, "%s:%d", inet_ntoa(*(struct in_addr*)&local_address), m_host_port);
++    }
++  }
++  else if (std::getenv("SLIPPI_LOCAL_TEST"))
+   {
+     sprintf(lan_addr, "127.0.0.1:%d", m_host_port);
+   }
+@@ -411,7 +481,55 @@
+     }
+   }
+ 
+-  WARN_LOG_FMT(SLIPPI_ONLINE, "[Matchmaking] Sending LAN address: {}", lan_addr);
++  if (!EnetMmServer())
++    WARN_LOG_FMT(SLIPPI_ONLINE, "[Matchmaking] Sending LAN address: {}", lan_addr);
++
++  if (EnetMmServer())
++  {
++    // GD slippi6: connect (3 channels), then create-ticket as a reliable JSON packet on channel 0
++    s_ticket_ok = false;
++    s_mm_peer = enet_host_connect(m_client, &s_mm_addr, 3, 0);
++    if (!s_mm_peer)
++    {
++      m_state = ProcessState::ERROR_ENCOUNTERED;
++      m_error_msg = "Failed to start connection to mm server";
++      return;
++    }
++    bool connected = false;
++    ENetEvent ev;
++    u64 t0 = Common::Timer::NowMs();
++    while (!connected && Common::Timer::NowMs() - t0 < 5000 && !is_mm_terminated)
++    {
++      if (enet_host_service(m_client, &ev, 100) > 0 && ev.type == ENET_EVENT_TYPE_CONNECT)
++        connected = true;
++    }
++    if (!connected)
++    {
++      m_state = ProcessState::ERROR_ENCOUNTERED;
++      m_error_msg = "Failed to connect to mm server";
++      return;
++    }
++    auto user_info = m_user->GetUserInfo();
++    const char* app_version = std::getenv("SLIPPI_MM_APP_VERSION");
++    json req;
++    req["type"] = "create-ticket";
++    req["user"] = {{"uid", user_info.uid},
++                   {"playKey", user_info.play_key},
++                   {"connectCode", user_info.connect_code},
++                   {"displayName", user_info.display_name}};
++    req["search"] = {{"mode", static_cast<int>(m_search_settings.mode)},
++                     {"connectCode", std::vector<u8>(m_search_settings.connect_code.begin(),
++                                                     m_search_settings.connect_code.end())}};
++    req["appVersion"] = app_version ? std::string(app_version) : std::string("3.6.4");
++    req["ipAddressLan"] = std::string(lan_addr);
++    std::string text = req.dump();
++    ENetPacket* pkt = enet_packet_create(text.data(), text.length(), ENET_PACKET_FLAG_RELIABLE);
++    enet_peer_send(s_mm_peer, 0, pkt);
++    enet_host_flush(m_client);
++    m_state = ProcessState::MATCHMAKING;
++    ERROR_LOG_FMT(SLIPPI_ONLINE, "[Matchmaking] ENet ticket sent");
++    return;
++  }
+ 
+   // Ask two servers what public address they see, walking the list in order so a network that
+   // blocks the first entries still gets an answer. The Rust side compares the two answers to
+@@ -472,6 +590,46 @@
+   if (m_state != ProcessState::MATCHMAKING)
+     return;
+ 
++  std::string result_str;
++  if (EnetMmServer())
++  {
++    ENetEvent ev;
++    int r = enet_host_service(m_client, &ev, 250);
++    if (r < 0 || (r > 0 && ev.type == ENET_EVENT_TYPE_DISCONNECT))
++    {
++      s_mm_peer = nullptr;
++      m_state = ProcessState::ERROR_ENCOUNTERED;
++      m_error_msg = "Lost connection to the mm server";
++      return;
++    }
++    if (r == 0 || ev.type != ENET_EVENT_TYPE_RECEIVE)
++      return;
++    std::string text(reinterpret_cast<const char*>(ev.packet->data), ev.packet->dataLength);
++    enet_packet_destroy(ev.packet);
++    json msg = json::parse(text, nullptr, false);
++    if (msg.is_discarded() || !msg.is_object())
++      return;
++    std::string type = msg.value("type", "");
++    std::string err = msg.find("error") != msg.end() && msg["error"].is_string() ? msg["error"].get<std::string>() : "";
++    // only the message type is logged, never the content
++    ERROR_LOG_FMT(SLIPPI_ONLINE, "[Matchmaking] ENet mm message: {}", type);
++    if ((type == "create-ticket-resp" || type == "get-ticket-resp") && !err.empty())
++    {
++      m_state = ProcessState::ERROR_ENCOUNTERED;
++      m_error_msg = err;
++      return;
++    }
++    if (type == "create-ticket-resp")
++    {
++      s_ticket_ok = true;
++      return;
++    }
++    if (type != "get-ticket-resp" || !s_ticket_ok)
++      return;
++    result_str = text;
++  }
++  else
++  {
+   int rust_state = slprs_mm_state(slprs_exi_device_ptr);
+   switch (rust_state)
+   {
+@@ -518,8 +676,10 @@
+     return;
+   }
+ 
+-  json get_resp = json::parse(std::string(result_json), nullptr, false);
++  result_str = result_json;
+   slprs_mm_free_string(result_json);
++  }
++  json get_resp = json::parse(result_str, nullptr, false);
+ 
+   if (get_resp.is_discarded() || !get_resp.is_object())
+   {
+--- a/Source/Core/Core/Slippi/SlippiNetplay.cpp
++++ b/Source/Core/Core/Slippi/SlippiNetplay.cpp
+@@ -159,8 +159,8 @@
+     local_addr = &local_addr_def;
+   }
+ 
+-  // GD slippi-p1 local test: bind loopback only
+-  if (std::getenv("SLIPPI_LOCAL_TEST"))
++  // GD slippi-p1 local test: bind loopback only (GD slippi6: unless SLIPPI_REAL_NET)
++  if (std::getenv("SLIPPI_LOCAL_TEST") && !std::getenv("SLIPPI_REAL_NET"))
+   {
+     if (!local_addr)
+     {

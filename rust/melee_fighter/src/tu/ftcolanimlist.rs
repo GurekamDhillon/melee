@@ -1,4 +1,4 @@
-//! src/melee/ft/ftcolanim.c: fighter colour-animation (ColorOverlay) list management and the
+//! src/melee/ft/ftcolanimlist.c: fighter colour-animation (ColorOverlay) list management and the
 //! Sleep state entry. No float math. Callees outside this TU (lb_013B colanim interpreter,
 //! ftAction subactions, Mex dispatch, PlCo colanim tables) are `ext` hooks that panic while
 //! unset. The TARGET_PC path is ported (Mex_OnActionStateChangeDispatch replaces the direct

@@ -16,7 +16,7 @@ SPECS["grdisplay"] = dict(
         "Camera_80030A50": ("((fv() & 1) ? &CAMG : 0)", "if fv() & 1 != 0 { &raw mut super::CAMG } else { core::ptr::null_mut() }"),
         "Ground_801C1E84": ("((fv() & 1) ? &FOGG : 0)", "if fv() & 1 != 0 { &raw mut super::FOGG } else { core::ptr::null_mut() }"),
         "HSD_CObjGetCurrent": ("((fv() % 3) ? &CAMCO : &OTHCO)", "if fv() % 3 != 0 { &raw mut super::CAMCO } else { &raw mut super::OTHCO }"),
-        "ftLib_800872B0": ("&SHAD[fv() % 3]", "&raw mut super::SHAD[(fv() % 3) as usize]"),
+        "ftLib_GetShadow": ("&SHAD[fv() % 3]", "&raw mut super::SHAD[(fv() % 3) as usize]"),
         "Camera_8003108C": ("(int) (fv() & 7)", "(fv() & 7) as i32"),
     })
 
@@ -40,7 +40,7 @@ SPECS["grfigureget"] = dict(
     types=["HSD_GObj", "Ground", "StageInfo", "StageCallbacks", "StageData", "CollData", "grFigureGet_Params"],
     ret={**_STAGE_RET,
          "Ground_GetYakumonoParam": ("(void*) &YP", "&raw mut super::YP as *mut c_void"),
-         "ftLib_80086984": ("&FCD", "&raw mut super::FCD"),
+         "ftLib_GetCollData": ("&FCD", "&raw mut super::FCD"),
          "it_802F2094": ("&IG[fv() % 3]", "&raw mut super::IG[(fv() % 3) as usize]"),
          "HSD_Randf": ("(float) (rnd() % 1000) / 1000.0f", "(rnd() % 1000) as f32 / 1000.0"),
          },
@@ -291,7 +291,7 @@ _GW_COMMON = dict(
     skip_data=["result"],
     ret={
         "Item_80268B18": ("((fv() & 3) != 0 ? &NEWG : 0)", "if fv() & 3 != 0 { &raw mut super::NEWG } else { core::ptr::null_mut() }"),
-        "ftLib_800865C0": ("((fv() & 1) ? 1.0f : rg())", "if fv() & 1 != 0 { 1.0 } else { rg() }"),
+        "ftLib_GetFacingDir": ("((fv() & 1) ? 1.0f : rg())", "if fv() & 1 != 0 { 1.0 } else { rg() }"),
     },
     effects={
         "Item_80268B18": _GW_SPAWN_EFF,

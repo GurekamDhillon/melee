@@ -19,8 +19,8 @@ pub fn install() {
         efLib_PauseAll = Some(|a0| { t(1006); t(pi(a0)); });
         efLib_ResumeAll = Some(|a0| { t(1007); t(pi(a0)); });
         efSync_Spawn = Some(|a0, a1, a2| { t(1008); t(a0 as u32); t(pi(a1)); match a0 { 0x473 => { t(pi(a2[0])); } 0x44E..=0x451 => { t(pi(a2[0])); t(pi(a2[1])); t((*(a2[1] as *const f32)).to_bits()); t(pi(a2[2])); t((*(a2[2] as *const f32)).to_bits()); } 0x46C => { t(pi(a2[0])); t(pi(a2[1])); t((*(a2[1] as *const f32)).to_bits()); } 0x405 => { let p = a2[0] as *const Vec; t((*p).x.to_bits()); t((*p).y.to_bits()); t((*p).z.to_bits()); } _ => { t(0xDEAD); } } core::ptr::null_mut() });
-        ftLib_80086198 = Some(|a0| { t(1009); t(pi(a0)); if fv() & 1 != 0 { &raw mut super::REFG } else { core::ptr::null_mut() } });
-        ftLib_80086644 = Some(|a0, a1| { t(1010); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } });
+        ftLib_FindLowestPercentOpponent = Some(|a0| { t(1009); t(pi(a0)); if fv() & 1 != 0 { &raw mut super::REFG } else { core::ptr::null_mut() } });
+        ftLib_GetPos = Some(|a0, a1| { t(1010); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } });
         it_8026B3A8 = Some(|a0| { t(1011); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1012); t(pi(a0)); t(pi(a1)); fv() as _ });
         it_8026BB88 = Some(|a0, a1| { t(1013); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } });

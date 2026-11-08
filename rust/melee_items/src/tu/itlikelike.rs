@@ -146,8 +146,8 @@ pub mod ext {
     fn ftCo_800C78B0(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftCo_800C7B0C(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: *mut lbColl_80008D30_arg1, a4: f32);
     fn ftCo_800C7C60(a0: *mut HSD_GObj, a1: i32);
-    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
+    fn ftLib_FindNearestOpponent(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
     fn it_2725_Logic9_Destroyed(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_2725_Logic9_Destroyed(a0) };
     fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
     fn it_8026D564(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026D564(a0) };
@@ -296,12 +296,12 @@ pub unsafe extern "C" fn it_802D9A2C(gobj: *mut Item_GObj) -> i32 {
 
     (*ip).xDD4_itemVar.likelike.x3C = 0;
     let var_r28: i32 = if (*ip).msid == 7 { melee_core::ppc::fctiwz_f32((*attr).x20) } else { melee_core::ppc::fctiwz_f32((*attr).x1C) };
-    let temp_r3 = ext::ftLib_8008627C(&mut (*ip).pos, null_mut());
+    let temp_r3 = ext::ftLib_FindNearestOpponent(&mut (*ip).pos, null_mut());
     if !temp_r3.is_null() {
         if ext::it_8027CA7C(temp_r3) != 0 {
             return (*ip).xDD4_itemVar.likelike.x3C;
         }
-        ext::ftLib_80086644(temp_r3, &mut sp10);
+        ext::ftLib_GetPos(temp_r3, &mut sp10);
         let var_f2 = abs_c(sp10.x - (*ip).pos.x);
         if var_f2 < var_r28 as f32 {
             let mut var_f1 = sp10.y - (*ip).pos.y;
@@ -608,9 +608,9 @@ pub unsafe extern "C" fn itLikelike_UnkMotion2_Phys(gobj: *mut Item_GObj) {
     let attr = GET_ATTRS(ip);
     if (*ip).xDD4_itemVar.likelike.x4C == 0 {
         let mut var_r31 = false;
-        let temp_r3_2 = ext::ftLib_8008627C(&mut (*ip).pos, null_mut());
+        let temp_r3_2 = ext::ftLib_FindNearestOpponent(&mut (*ip).pos, null_mut());
         if !temp_r3_2.is_null() {
-            ext::ftLib_80086644(temp_r3_2, &mut sp14);
+            ext::ftLib_GetPos(temp_r3_2, &mut sp14);
             let mut var_f1 = abs_c(sp14.x - (*ip).pos.x);
             if var_f1 < (*attr).x28 {
                 var_f1 = abs_c(sp14.y - (*ip).pos.y);
@@ -929,7 +929,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion8_Phys(gobj: *mut Item_GObj) {
     (*ip).xDD4_itemVar.likelike.x4C = temp_r3.wrapping_sub(1);
     let temp_r3_2 = (*ip).xDD4_itemVar.likelike.x50;
     if !temp_r3_2.is_null() {
-        ext::ftLib_80086644(temp_r3_2, &mut sp30);
+        ext::ftLib_GetPos(temp_r3_2, &mut sp30);
         let var_f1 = abs_c((*ip).pos.x - sp30.x);
         if var_f1 < 15.0 {
             ext::it_80275258(gobj);

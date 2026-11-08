@@ -68,7 +68,7 @@ SPECS_IT["itfoxblaster"] = mk(
          "ftKb_SpecialNFx_800FDDF4": ("(int) (fv() % 3)", "(fv() % 3) as i32"),
          "ftCo_800BF228": ("(int) (fv() % 3)", "(fv() % 3) as i32"),
          "atan2f": ("rw()", "rw()")},
-    effects={"ftLib_80086644": vec_out(1), "ftFx_SpecialN_FtGetHoldJoint": vec_out(1),
+    effects={"ftLib_GetPos": vec_out(1), "ftFx_SpecialN_FtGetHoldJoint": vec_out(1),
              "ftFx_SpecialN_ItGetHoldJoint": vec_out(1), "ftKb_SpecialNFx_800FDC00": vec_out(1),
              "ftKb_SpecialNFx_800FDC70": vec_out(1)},
     custom_stubs={"efSync_Spawn": dict(
@@ -84,7 +84,7 @@ SPECS_IT["itfoxillusion"] = mk(
     ret={"HSD_JObjLoadJoint": ("&LJO", "&raw mut super::LJO"),
          "ftFx_SpecialS_GetCmdVar2": ("(int) (fv() % 4)", "(fv() % 4) as i32"),
          "ftFx_SpecialS_CheckGhostRemove": ("(int) ((fv() & 3) == 0)", "((fv() & 3) == 0) as i32"),
-         "ftLib_800865CC": ("(int) (fv() % 3)", "(fv() % 3) as i32")},
+         "ftLib_GetGroundAir": ("(int) (fv() % 3)", "(fv() % 3) as i32")},
     effects={"ftFx_SpecialS_CopyGhostPosIndexed": vec_out(2)})
 SPECS_IT["itfoxlaser"] = mk(
     "itfoxlaser", var=("foxlaser", "itFoxLaser_ItemVars"), attr="FoxLaserAttr", skip_stubs=["cosf", "sinf"],

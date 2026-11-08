@@ -96,10 +96,10 @@ pub fn install() {
         m::camera::ext::hook::diag_camera_subject = Some(|a0, a1, a2, a3, a4| { t(1084); t(a0.to_bits()); t(a1.to_bits()); t(a2.to_bits()); t(a3.to_bits()); t(a4.to_bits()); });
         m::camera::ext::hook::diag_camera_track = Some(|a0, a1| { t(1085); t(pi(a0)); t(pi(a1)); });
         m::camera::ext::hook::diag_game_camera = Some(|a0, a1, a2| { t(1086); t(pi(a0)); t(pi(a1)); t(pi(a2)); });
-        m::camera::ext::hook::ftLib_80086644 = Some(|a0, a1| { t(1087); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = super::rnn(); (*a1).y = super::rnn(); (*a1).z = super::rnn(); } });
-        m::camera::ext::hook::ftLib_80086B74 = Some(|a0| { t(1088); t(pi(a0)); if fv() & 3 != 0 { &raw mut super::SUBJ[(fv() % 8) as usize] } else { core::ptr::null_mut() } });
-        m::camera::ext::hook::ftLib_8008701C = Some(|a0| { t(1089); t(pi(a0)); fv() as _ });
-        m::camera::ext::hook::ftLib_8008732C = Some(|a0| { t(1090); t(pi(a0)); fv() as _ });
+        m::camera::ext::hook::ftLib_GetPos = Some(|a0, a1| { t(1087); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = super::rnn(); (*a1).y = super::rnn(); (*a1).z = super::rnn(); } });
+        m::camera::ext::hook::ftLib_GetCameraSubject = Some(|a0| { t(1088); t(pi(a0)); if fv() & 3 != 0 { &raw mut super::SUBJ[(fv() % 8) as usize] } else { core::ptr::null_mut() } });
+        m::camera::ext::hook::ftLib_IsSleeping = Some(|a0| { t(1089); t(pi(a0)); fv() as _ });
+        m::camera::ext::hook::ftLib_IsDead = Some(|a0| { t(1090); t(pi(a0)); fv() as _ });
         m::camera::ext::hook::gm_GetButtonsPressed = Some(|a0| { t(1091); t(a0 as u32); fv64() as _ });
         m::camera::ext::hook::gm_GetButtonsTriggered = Some(|a0| { t(1092); t(a0 as u32); fv64() as _ });
         m::camera::ext::hook::gm_IsCurrently1PMode_inline = Some(|| { t(1093); fv() as _ });

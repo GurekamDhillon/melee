@@ -68,7 +68,7 @@ pub fn install() {
         Player_GetTeam = Some(|a0| { t(1054); t(a0 as u32); fv() as _ });
         Slippi_FrozenStadium = Some(|| { t(1055); fv() as _ });
         Stage_80225194 = Some(|| { t(1056); if fv() % 5 == 0 { 0xF0 } else { fv() } });
-        ftLib_80086B90 = Some(|a0, a1| { t(1057); t(pi(a0)); t(pi(a1)); super::wv(a1); });
+        ftLib_GetCameraSubjectBonePos = Some(|a0, a1| { t(1057); t(pi(a0)); t(pi(a1)); super::wv(a1); });
         gm_80160854 = Some(|a0, a1, a2, a3| { t(1058); t(a0 as u32); t(a1 as u32); t(a2 as u32); t(a3 as u32); fv() as _ });
         gm_80160968 = Some(|a0| { t(1059); t(a0 as u32); { let mut c = _GXColor { r: 0, g: 0, b: 0, a: 0 }; c.r = fv() as u8; c.g = fv() as u8; c.b = fv() as u8; c.a = fv() as u8; c } });
         gm_80160A60 = Some(|a0| { t(1060); t(a0 as u32); super::STRS[(fv() & 3) as usize] });

@@ -69,8 +69,8 @@ pub mod ext {
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;
     fn ftCo_8009EC70(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut c_void, a3: f32);
     fn ftCo_800C0764(a0: *mut HSD_GObj, a1: u32, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C0764(a0 as _, a1 as _, core::mem::transmute(a2)); } };
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
-    fn ftLib_80086C18(a0: *mut HSD_GObj, a1: i32, a2: i32);
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } };
+    fn ftLib_StartRumble(a0: *mut HSD_GObj, a1: i32, a2: i32);
     fn grAnime_801C7A04(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32) = |a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32| { unsafe { crate::tu::granime::grAnime_801C7A04(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn grAnime_801C7FF8(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32) = |a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32| { unsafe { crate::tu::granime::grAnime_801C7FF8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } };
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
@@ -636,7 +636,7 @@ pub unsafe extern "C" fn grOldKongo_80210454(ground_gobj: *mut HSD_GObj, keep: *
     }
 
     ext::Ground_801C4DA0(&mut pos_gnd, &mut unk);
-    ext::ftLib_80086644(keep, &mut pos_ft);
+    ext::ftLib_GetPos(keep, &mut pos_ft);
 
     // (pos_gnd.x - pos_ft.x) * (pos_gnd.x - pos_ft.x) + ...: squares of computed expressions, not
     // fused on the console (notes/fp-audit.md)
@@ -657,7 +657,7 @@ pub unsafe extern "C" fn grOldKongo_80210454(ground_gobj: *mut HSD_GObj, keep: *
     ext::grAnime_801C7FF8(ground_gobj, 2, 7, 1, 0.0, 1.0);
     ext::grMaterial_801C9604(ground_gobj, (*yp).x6C, 0);
     ext::efSync_Spawn(0x405, ground_gobj, &mut pos_ft);
-    ext::ftLib_80086C18(keep, 0xD, 0x1E);
+    ext::ftLib_StartRumble(keep, 0xD, 0x1E);
     1
 }
 

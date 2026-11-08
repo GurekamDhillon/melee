@@ -41,16 +41,16 @@ pub mod ext {
         lbAudioAx_800240B4(sfx: i32) -> i32 = |sfx: i32| -> i32 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800240B4(sfx as _) as _ } };
         lbAudioAx_8002411C(sfx: i32) -> i32 = |sfx: i32| -> i32 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002411C(sfx as _) as _ } };
         mpLib_80458868() -> *mut mpCollisionBox = || todo!("TODO(port) mpLib_80458868 (mp/mplib.c data)");
-        ftLib_8008732C(g: G) -> i32 = |_| todo!("ftLib_8008732C: installed by melee_link");
-        ftLib_8008731C(g: G) -> i32 = crate::ftlib::ftlib_8008731c;
-        ftLib_80086644(g: G, pos: &mut Vec3) = crate::ftlib::ftlib_80086644;
-        ftLib_80087460(g: G) -> u32 = crate::ftlib::ftlib_80087460;
-        ftLib_8008741C(i: u32) -> G = crate::ftlib::ftlib_8008741c;
-        ftLib_800874BC(g: G) -> i32 = crate::ftlib::ftlib_800874bc;
-        ftLib_80086BE0(g: G) -> u8 = crate::ftlib::ftlib_80086be0;
-        ftLib_80087120(g: G) -> i32 = crate::ftlib::ftlib_80087120;
+        ftLib_IsDead(g: G) -> i32 = |_| todo!("ftLib_IsDead: installed by melee_link");
+        ftLib_IsSleeping_8008731C(g: G) -> i32 = crate::ftlib::ftlib_issleeping_8008731c;
+        ftLib_GetPos(g: G, pos: &mut Vec3) = crate::ftlib::ftlib_getpos;
+        ftLib_GetSpawnNum(g: G) -> u32 = crate::ftlib::ftlib_getspawnnum;
+        ftLib_FindBySpawnNum(i: u32) -> G = crate::ftlib::ftlib_findbyspawnnum;
+        ftLib_IsSubFighter(g: G) -> i32 = crate::ftlib::ftlib_issubfighter;
+        ftLib_GetPlayerIndex(g: G) -> u8 = crate::ftlib::ftlib_getplayerindex;
+        ftLib_GetPercent(g: G) -> i32 = crate::ftlib::ftlib_getpercent;
         ftLib_8008746C(g: G) -> i32 = crate::ftlib::ftlib_8008746c;
-        ftLib_80087454(g: G) -> f32 = crate::ftlib::ftlib_80087454;
+        ftLib_GetCrowdKnockback(g: G) -> f32 = crate::ftlib::ftlib_getcrowdknockback;
         Player_8003248C(slot: u8, sub: i32) -> i32 = |a0, a1| crate::tu::player::Player_8003248C(a0 as i32, a1) as i32;
         pl_8003FDA0(slot: u8, sub: i32) = |a0, a1| crate::tu::plbonuslib::pl_8003FDA0(a0 as i32, a1);
         pl_8003FDC8(slot: u8, sub: i32) = |a0, a1| crate::tu::plbonuslib::pl_8003FDC8(a0 as i32, a1);
@@ -133,12 +133,12 @@ pub unsafe fn un_80321AF4(_gobj: G) {
     let mut cur = ext::HSD_GObjPLinkHead(HSD_GOBJ_PLINK_FIGHTER);
 
     while !cur.is_null() {
-        if ext::ftLib_8008732C(cur) == 0 && ext::ftLib_8008731C(cur) == 0 {
-            ext::ftLib_80086644(cur, &mut pos);
+        if ext::ftLib_IsDead(cur) == 0 && ext::ftLib_IsSleeping_8008731C(cur) == 0 {
+            ext::ftLib_GetPos(cur, &mut pos);
 
             if pos.y < cfg().blastzone_y_offset + (*bx.add(1)).bottom {
                 d.x24 += 1;
-            } else if d.xC == ext::ftLib_80087460(cur) {
+            } else if d.xC == ext::ftLib_GetSpawnNum(cur) {
                 flag = 1;
             }
         }
@@ -235,17 +235,17 @@ pub unsafe fn un_80321D30(arg0: u32, arg1: f32) {
 pub unsafe fn un_80321EBC(arg0: u32, arg1: f32) -> bool {
     melee_core::ct!("un_80321EBC");
     let d = data();
-    let gobj = ext::ftLib_8008741C(arg0);
+    let gobj = ext::ftLib_FindBySpawnNum(arg0);
     if gobj.is_null() {
         return false;
     }
 
-    let port = ext::ftLib_800874BC(gobj);
-    if ext::Player_8003248C(ext::ftLib_80086BE0(gobj), port) == 1 {
+    let port = ext::ftLib_IsSubFighter(gobj);
+    if ext::Player_8003248C(ext::ftLib_GetPlayerIndex(gobj), port) == 1 {
         return false;
     }
 
-    if ext::ftLib_80087120(gobj) < cfg().x1C {
+    if ext::ftLib_GetPercent(gobj) < cfg().x1C {
         return false;
     }
     if d.x10 < cfg().cheer_limit {
@@ -274,8 +274,8 @@ pub unsafe fn un_80321EBC(arg0: u32, arg1: f32) -> bool {
     d.xC = arg0;
     d.x18 = 0;
 
-    let port = ext::ftLib_800874BC(gobj);
-    ext::pl_8003FDA0(ext::ftLib_80086BE0(gobj), port);
+    let port = ext::ftLib_IsSubFighter(gobj);
+    ext::pl_8003FDA0(ext::ftLib_GetPlayerIndex(gobj), port);
 
     true
 }
@@ -307,8 +307,8 @@ pub unsafe fn un_8032201C(arg0: u32, cat: i32) -> bool {
             un_80321C70_inline();
         }
 
-        let gobj = ext::ftLib_8008741C(arg0);
-        ext::pl_8003FDC8(ext::ftLib_80086BE0(gobj), ext::ftLib_800874BC(gobj));
+        let gobj = ext::ftLib_FindBySpawnNum(arg0);
+        ext::pl_8003FDC8(ext::ftLib_GetPlayerIndex(gobj), ext::ftLib_IsSubFighter(gobj));
     }
     true
 }

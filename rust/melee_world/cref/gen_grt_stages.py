@@ -280,8 +280,8 @@ CUSTOM[("grtmario", "lbl_8021FB50")] = """\
     let mut previous: Vec3 = core::mem::zeroed();
     let unused: f32 = -120.0f32;
     let temp_f31: f32 = unused * ext::Ground_801C0498();
-    ext::ftLib_80086644(gobj, &mut current);
-    ext::ftLib_80086684(gobj, &mut previous);
+    ext::ftLib_GetPos(gobj, &mut current);
+    ext::ftLib_GetPrevPos(gobj, &mut previous);
     if current.y < temp_f31 && previous.y > temp_f31 {
         let temp_f1: f32 = ext::ftLib_80086B80(gobj) / 10.0f32;
         current.y = temp_f31;

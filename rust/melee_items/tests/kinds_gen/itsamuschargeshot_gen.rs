@@ -23,9 +23,9 @@ pub fn install() {
         ftKb_SpecialNSs_800FCC6C = Some(|a0| { t(1010); t(pi(a0)); (fv() & 1) as i32 });
         ftKb_SpecialNSs_800FCCBC = Some(|a0| { t(1011); t(pi(a0)); (fv() & 1) as i32 });
         ftKb_SpecialNSs_800FCD04 = Some(|a0| { t(1012); t(pi(a0)); });
-        ftLib_800865C0 = Some(|a0| { t(1013); t(pi(a0)); rg() });
-        ftLib_80086630 = Some(|a0, a1| { t(1014); t(pi(a0)); t(a1 as u32); &raw mut crate::JO[3 + (fv() % 3) as usize] });
-        ftLib_800869D4 = Some(|a0| { t(1015); t(pi(a0)); rg() });
+        ftLib_GetFacingDir = Some(|a0| { t(1013); t(pi(a0)); rg() });
+        ftLib_GetPartJObj = Some(|a0, a1| { t(1014); t(pi(a0)); t(a1 as u32); &raw mut crate::JO[3 + (fv() % 3) as usize] });
+        ftLib_GetModelScale = Some(|a0| { t(1015); t(pi(a0)); rg() });
         ftSs_SpecialLw_80129100 = Some(|a0, a1, a2| { t(1016); t(pi(a0)); t(pi(a1)); t(pi(a2)); if !a1.is_null() { *a1 = (fv() % 9) as i32; } if !a2.is_null() { *a2 = (fv() % 9) as i32; } if fv() % 3 == 0 { -1 } else { (fv() % 3) as i32 } });
         ftSs_SpecialLw_80129158 = Some(|a0| { t(1017); t(pi(a0)); (fv() & 1) as i32 });
         ftSs_SpecialN_801291A8 = Some(|a0| { t(1018); t(pi(a0)); (fv() & 1) as i32 });

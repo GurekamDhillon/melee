@@ -59,10 +59,10 @@ pub fn install() {
         Wb_RenderActive = Some(|| { t(1045); (fv() & 1) as _ });
         atan2f = Some(|a0, a1| { t(1046); t(a0.to_bits()); t(a1.to_bits()); rg() });
         ftDrawCommon_80080C28 = Some(|a0, a1| { t(1047); t(pi(a0)); t(a1 as u32); });
-        ftLib_80086B64 = Some(|a0| { t(1048); t(pi(a0)); (fv() & 1) as _ });
+        ftLib_IsOffscreen = Some(|a0| { t(1048); t(pi(a0)); (fv() & 1) as _ });
         ftLib_80086B80 = Some(|a0| { t(1049); t(pi(a0)); rg() });
-        ftLib_80086B90 = Some(|a0, a1| { t(1050); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
-        ftLib_80086ED0 = Some(|a0| { t(1051); t(pi(a0)); (fv() & 1) as _ });
+        ftLib_GetCameraSubjectBonePos = Some(|a0, a1| { t(1050); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
+        ftLib_CanBeMagnified = Some(|a0| { t(1051); t(pi(a0)); (fv() & 1) as _ });
         ftLib_UpdateLogicOffCamera = Some(|a0| { t(1052); t(pi(a0)); });
         gmVs_GetSceneController = Some(|| { t(1053); (&raw mut P_VsSceneController[0]) as _ });
         gm_80160854 = Some(|a0, a1, a2, a3| { t(1054); t(a0 as u32); t(a1 as u32); t(a2 as u32); t(a3 as u32); (fv()) as _ });

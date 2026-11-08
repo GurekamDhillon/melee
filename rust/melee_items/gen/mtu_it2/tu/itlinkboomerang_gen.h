@@ -28,8 +28,8 @@ void Item_8026A8EC(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void
 void Item_8026AB54(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(enum Fighter_Part) a2) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); }
 void Item_8026AF0C(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1014); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
 __typeof__(float) atan2f(__typeof__(float) a0, __typeof__(float) a1) { T(1015); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rg()); }
-__typeof__(struct HSD_JObj *) ftLib_80086630(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1016); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (&JO[fv() % 4]); }
-void ftLib_800866DC(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1017); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+__typeof__(struct HSD_JObj *) ftLib_GetPartJObj(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1016); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (&JO[fv() % 4]); }
+void ftLib_GetCameraBonePos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1017); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
 __typeof__(enum FighterKind) ftLib_GetKind(__typeof__(struct HSD_GObj *) a0) { T(1018); T(PI((const void*) a0)); return (__typeof__(enum FighterKind)) (((fv() & 1) ? 6 : 1)); }
 __typeof__(int) ftLk_SepcialS_Get2219b5(__typeof__(struct HSD_GObj *) a0) { T(1019); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(int) ftLk_SpecialHi_GetFv4(__typeof__(struct HSD_GObj *) a0) { T(1020); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
@@ -1601,8 +1601,8 @@ static void freg_all(void)
 // stub Item_8026AB54 = 1013
 // stub Item_8026AF0C = 1014
 // stub atan2f = 1015
-// stub ftLib_80086630 = 1016
-// stub ftLib_800866DC = 1017
+// stub ftLib_GetPartJObj = 1016
+// stub ftLib_GetCameraBonePos = 1017
 // stub ftLib_GetKind = 1018
 // stub ftLk_SepcialS_Get2219b5 = 1019
 // stub ftLk_SpecialHi_GetFv4 = 1020

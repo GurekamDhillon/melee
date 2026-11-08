@@ -24,12 +24,12 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn db_GetCurrentlySelectedPokemon() -> i32;
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[EfArg]) -> *mut c_void;
-    fn ftLib_800860C4() -> i32;
-    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
-    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_CountFighters() -> i32;
+    fn ftLib_FindNearestOpponent(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8;
+    fn ftLib_IsSubFighter(a0: *mut HSD_GObj) -> i32;
     fn ft_80089768(a0: *mut Vec2);
     fn ft_80089884(a0: *mut HSD_GObj) -> *mut Struct2070;
     fn ft_800898A8(a0: *mut HSD_GObj) -> *mut Struct2074;

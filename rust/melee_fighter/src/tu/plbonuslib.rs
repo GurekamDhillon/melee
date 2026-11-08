@@ -72,25 +72,25 @@ pub mod ext {
     fn ft_8008989C(a0: *mut HSD_GObj) -> u16 => unsafe { crate::ft0892::ft_8008989c(a0 as _) };
     fn ft_800898A8(a0: *mut HSD_GObj) -> *mut Struct2074 => unsafe { crate::ft0892::ft_800898a8(a0 as _) as _ };
     fn ft_800898B4(a0: *mut HSD_GObj) -> *mut ft_800898B4_t => unsafe { crate::ft0892::ft_800898b4(a0 as _) as _ };
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_80086644(a0 as _, &mut *(a1 as *mut _)); };
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_800865c0(a0 as _) };
-    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800865cc(a0 as _) };
-    fn ftLib_800867D8(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800867d8(a0 as _) };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_getpos(a0 as _, &mut *(a1 as *mut _)); };
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_getfacingdir(a0 as _) };
+    fn ftLib_GetGroundAir(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getgroundair(a0 as _) };
+    fn ftLib_IsInputDisabled(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isinputdisabled(a0 as _) };
     fn ftLib_GetItem(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { crate::ftlib::get_item(a0 as _) as _ };
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_80086960(a0 as _) };
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 => unsafe { crate::ftlib::ftlib_80086be0(a0 as _) };
-    fn ftLib_80087120(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087120(a0 as _) };
-    fn ftLib_8008730C(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_8008730c(a0 as _) };
-    fn ftLib_80087300(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087300(a0 as _) };
-    fn ftLib_8008732C(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_8008732c(a0 as _) };
-    fn ftLib_80087354(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_80087354(a0 as _) };
-    fn ftLib_8008737C(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_8008737c(a0 as _) };
-    fn ftLib_800873A4(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800873a4(a0 as _) };
-    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800874bc(a0 as _) };
-    fn ftLib_800876F4(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800876f4(a0 as _) };
-    fn ftLib_80087700(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087700(a0 as _) };
-    fn ftLib_8008777C(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftlib_8008777c(a0 as _) };
-    fn ftLib_800877D4(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800877d4(a0 as _) };
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isfighter(a0 as _) };
+    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 => unsafe { crate::ftlib::ftlib_getplayerindex(a0 as _) };
+    fn ftLib_GetPercent(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getpercent(a0 as _) };
+    fn ftLib_IsLastAttackerSubFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_islastattackersubfighter(a0 as _) };
+    fn ftLib_GetLastAttackerSlot(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getlastattackerslot(a0 as _) };
+    fn ftLib_IsDead(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isdead(a0 as _) };
+    fn ftLib_IsDeadUp(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isdeadup(a0 as _) };
+    fn ftLib_IsDeadUpStar(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isdeadupstar(a0 as _) };
+    fn ftLib_IsDeadUpFall(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isdeadupfall(a0 as _) };
+    fn ftLib_IsSubFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_issubfighter(a0 as _) };
+    fn ftLib_GetLastHitSourceType(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getlasthitsourcetype(a0 as _) };
+    fn ftLib_GetLastHitSourceKind(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getlasthitsourcekind(a0 as _) };
+    fn ftLib_GetGroundSlopeAngle(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftlib_getgroundslopeangle(a0 as _) };
+    fn ftLib_IsBeingNudged(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isbeingnudged(a0 as _) };
     fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::get_motion_id(a0 as _) };
     fn gm_8016AEEC() -> u32;
     fn gm_8016B110() -> bool;
@@ -184,10 +184,10 @@ fn plBonusLib_8003D514(arg0: i32) {
     let mut sp_c: Vec3 = unsafe { core::mem::zeroed() };
     let temp_r31 = Player_GetEntity(arg0);
 
-    if ext::ftLib_80087354(temp_r31) {
+    if ext::ftLib_IsDeadUp(temp_r31) {
         return;
     }
-    ext::ftLib_80086644(temp_r31, &mut sp18);
+    ext::ftLib_GetPos(temp_r31, &mut sp18);
 
     for var_r29 in 0..6 {
         if var_r29 == arg0 {
@@ -195,13 +195,13 @@ fn plBonusLib_8003D514(arg0: i32) {
         }
 
         let temp_r30 = Player_GetEntity(var_r29);
-        if !Player_8003221C(var_r29) || ext::ftLib_8008732C(temp_r30) {
+        if !Player_8003221C(var_r29) || ext::ftLib_IsDead(temp_r30) {
             continue;
         }
 
         let temp_r31_2 = tbl(var_r29);
-        ext::ftLib_80086644(temp_r30, &mut sp_c);
-        let temp_f1 = ext::ftLib_800865C0(temp_r30);
+        ext::ftLib_GetPos(temp_r30, &mut sp_c);
+        let temp_f1 = ext::ftLib_GetFacingDir(temp_r30);
         unsafe {
             (*temp_r31_2).xDD1.anon_0.set_bit6(1);
 
@@ -223,13 +223,13 @@ pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
         let temp_r26 = tbl(arg0);
         let temp_r3 = Player_GetEntityAtIndex(arg0, arg1);
         let temp_r27: i32 = ext::ftLib_GetMotionId(temp_r3);
-        let temp_r28: i32 = ext::ftLib_800876F4(temp_r3);
-        let temp_r29: i32 = ext::ftLib_80087700(temp_r3);
+        let temp_r28: i32 = ext::ftLib_GetLastHitSourceType(temp_r3);
+        let temp_r29: i32 = ext::ftLib_GetLastHitSourceKind(temp_r3);
         let temp_r30: *mut UnkPlBonusBits = ext::ft_80089890(temp_r3);
         let temp_r24: u16 = ext::ft_8008989C(temp_r3);
         let temp_r31: *mut ft_800898B4_t = ext::ft_800898B4(temp_r3);
-        let temp_r23: i32 = ext::ftLib_80087300(temp_r3);
-        let temp_r22: i32 = ext::ftLib_8008730C(temp_r3);
+        let temp_r23: i32 = ext::ftLib_GetLastAttackerSlot(temp_r3);
+        let temp_r22: i32 = ext::ftLib_IsLastAttackerSubFighter(temp_r3);
         let pl = c();
 
         if arg1 != 1 {
@@ -238,13 +238,13 @@ pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
             (*temp_r26).x0_staleMoveTable.xCC0 = *temp_r31;
             (*temp_r26).x0_staleMoveTable.xCD4 = temp_r24;
             pl_8003FED0(arg0, arg1);
-            if ext::ftLib_800873A4(temp_r3) {
+            if ext::ftLib_IsDeadUpFall(temp_r3) {
                 pl_80038824(arg0, 0x81);
             }
-            if ext::ftLib_8008737C(temp_r3) {
+            if ext::ftLib_IsDeadUpStar(temp_r3) {
                 (*temp_r26).x0_staleMoveTable.xC94 = (*temp_r26).x0_staleMoveTable.xC94.wrapping_add(1);
             }
-            if ext::ftLib_80087354(temp_r3) {
+            if ext::ftLib_IsDeadUp(temp_r3) {
                 (*temp_r26).xDD1.anon_0.set_bit2(1);
             }
             if temp_r27 == 0 {
@@ -318,7 +318,7 @@ pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
             }
 
             if !unk_cond(arg0, temp_r23) {
-                if ext::ftLib_8008737C(temp_r3) {
+                if ext::ftLib_IsDeadUpStar(temp_r3) {
                     pl_80038824(temp_r23, 0x6D);
                 }
                 if temp_r27 == 3 {
@@ -434,7 +434,7 @@ pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
 
 pub fn pl_8003DF44(arg0: i32, arg1: i32) {
     melee_core::ct!("pl_8003DF44");
-    let temp_r3: i32 = ext::ftLib_80087300(Player_GetEntityAtIndex(arg0, arg1));
+    let temp_r3: i32 = ext::ftLib_GetLastAttackerSlot(Player_GetEntityAtIndex(arg0, arg1));
 
     let var_r0_2 = temp_r3 == 6 || temp_r3 == arg0 || pl_CheckIfSameTeam(arg0, temp_r3);
     if var_r0_2 {
@@ -628,11 +628,11 @@ pub fn pl_8003E70C(igobj: *mut HSD_GObj) {
         634,
         "It_PKind_Start <= itGetKind(igobj) && itGetKind(igobj) < It_PKind_Terminate",
     );
-    if !ext::ftLib_80086960(temp_r30) {
+    if !ext::ftLib_IsFighter(temp_r30) {
         return;
     }
 
-    let slot = ext::ftLib_80086BE0(temp_r30) as i32;
+    let slot = ext::ftLib_GetPlayerIndex(temp_r30) as i32;
     let temp_r3 = ext::itGetKind(igobj);
     unsafe {
         let p = x598_ptr(slot, temp_r3);
@@ -658,8 +658,8 @@ pub fn pl_8003E854(arg0: i32, arg1: i32, arg2: *mut HSD_GObj) {
             pl_80038788(arg0, 0xB6, 1);
         }
 
-        if arg1 == 0 && ext::ftLib_80086960(temp_r3) && ext::ftLib_800874BC(temp_r3) == 0 {
-            let temp_r31_2: u8 = ext::ftLib_80086BE0(temp_r3);
+        if arg1 == 0 && ext::ftLib_IsFighter(temp_r3) && ext::ftLib_IsSubFighter(temp_r3) == 0 {
+            let temp_r31_2: u8 = ext::ftLib_GetPlayerIndex(temp_r3);
             unsafe { (*tbl(arg0)).xD6C = temp_r31_2 as i32 };
         }
     }
@@ -829,7 +829,7 @@ pub fn fn_8003EE2C(arg0: i32, arg1: i32) {
         if (*temp_r31).xD10 as u32 > (*temp_r31).xD0C {
             (*temp_r31).xD0C = (*temp_r31).xD10 as u32;
         }
-        if ext::ftLib_800865CC(temp_r30) == GA_Air as i32 {
+        if ext::ftLib_GetGroundAir(temp_r30) == GA_Air as i32 {
             (*temp_r31).xD20 = (*temp_r31).xD20.wrapping_add(1);
         } else {
             (*temp_r31).xD24 = (*temp_r31).xD24.wrapping_add(1);
@@ -846,17 +846,17 @@ pub fn fn_8003EE2C(arg0: i32, arg1: i32) {
         if temp_r28 == 0x68 {
             (*temp_r31).xD1C = (*temp_r31).xD1C.wrapping_add(1);
         }
-        if ext::ftLib_800865CC(temp_r30) == GA_Ground as i32 {
-            let var_f1: f32 = if ext::ftLib_8008777C(temp_r30) < 0.0 {
-                -ext::ftLib_8008777C(temp_r30)
+        if ext::ftLib_GetGroundAir(temp_r30) == GA_Ground as i32 {
+            let var_f1: f32 = if ext::ftLib_GetGroundSlopeAngle(temp_r30) < 0.0 {
+                -ext::ftLib_GetGroundSlopeAngle(temp_r30)
             } else {
-                ext::ftLib_8008777C(temp_r30)
+                ext::ftLib_GetGroundSlopeAngle(temp_r30)
             };
             if var_f1 >= pl.x58 {
                 (*temp_r31).xD28 = (*temp_r31).xD28.wrapping_add(1);
             }
         }
-        if ext::ftLib_800877D4(temp_r30) {
+        if ext::ftLib_IsBeingNudged(temp_r30) {
             (*temp_r31).xD2C = (*temp_r31).xD2C.wrapping_add(1);
         }
         let temp_r3_3: i32 = ext::ifMagnify_802FB6E8(arg0);
@@ -1010,7 +1010,7 @@ pub fn fn_8003F53C(arg0: i32, arg1: i32) {
         let temp_r31 = tbl(arg0);
         let temp_r30 = Player_GetEntityAtIndex(arg0, arg1);
 
-        if arg1 != 1 && !ext::ftLib_800867D8(temp_r30) {
+        if arg1 != 1 && !ext::ftLib_IsInputDisabled(temp_r30) {
             if !ext::ft_800877F8(temp_r30, 0x100) && !ext::ft_800877F8(temp_r30, 0x200) {
                 (*temp_r31).xDD0.anon_0.set_bit1(1);
             }
@@ -1040,7 +1040,7 @@ pub fn fn_8003F654(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
 
         if pl_Verify_gm_8016AEDC() && index != 1 {
             let prev_pos2 = prev_pos;
-            if ext::ftLib_8008732C(entity) {
+            if ext::ftLib_IsDead(entity) {
                 return;
             }
 
@@ -1051,7 +1051,7 @@ pub fn fn_8003F654(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
                     ((*prev_pos).x - (*pos).x) * ((*prev_pos).x - (*pos).x)
                         + ((*prev_pos2).y - (*pos).y) * ((*prev_pos).y - (*pos).y),
                 );
-                let teammate_slot: i32 = ext::ftLib_80087300(entity);
+                let teammate_slot: i32 = ext::ftLib_GetLastAttackerSlot(entity);
                 (*table).xD80 += dist;
                 if dist > (*table).xD84 {
                     (*table).xD84 = dist;
@@ -1063,7 +1063,7 @@ pub fn fn_8003F654(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
                     }
                 }
             } else if b34 == 0 {
-                if ext::ftLib_800865CC(entity) == 0 {
+                if ext::ftLib_GetGroundAir(entity) == 0 {
                     let mut abs = (*pos).x - (*prev_pos).x;
                     if abs < 0.0 {
                         abs = -abs;
@@ -1091,7 +1091,7 @@ pub fn fn_8003F654(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
             for i in 0..6 {
                 if ((i != slot) && !pl_CheckIfSameTeam(slot, i))
                     && Player_8003221C(i)
-                    && !ext::ftLib_8008732C(Player_GetEntity(i))
+                    && !ext::ftLib_IsDead(Player_GetEntity(i))
                 {
                     Player_LoadPlayerCoords(i, &mut other_pos);
                     let pos_x2 = (*pos).x;
@@ -1134,7 +1134,7 @@ pub fn pl_8003FAA8(slot: i32, index: i32, pos: *mut Vec3, prev_pos: *mut Vec3) {
         fn_8003F654(slot, index, pos, prev_pos);
 
         if pl_Verify_gm_8016AEDC() && index == 0 {
-            let temp_r31: i32 = ext::ftLib_80087120(Player_GetEntityAtIndex(slot, index));
+            let temp_r31: i32 = ext::ftLib_GetPercent(Player_GetEntityAtIndex(slot, index));
             let temp_f30: f32 = fmadds(
                 (*temp_r30).x0_staleMoveTable.xC9C,
                 ext::gm_GetFrameCount().wrapping_sub(1) as f32,
@@ -1293,7 +1293,7 @@ pub fn pl_80040048(arg0: i32, arg1: i32) {
     melee_core::ct!("pl_80040048");
     unsafe {
         let temp_r3 = Player_GetEntityAtIndex(arg0, arg1);
-        let temp_r3_2: i32 = ext::ftLib_80087300(temp_r3);
+        let temp_r3_2: i32 = ext::ftLib_GetLastAttackerSlot(temp_r3);
         if arg1 != 0 {
             return;
         }
@@ -1835,7 +1835,7 @@ pub fn pl_8003ffdc(arg0: i32, _arg1: i32, arg2: i32, arg3: i32, arg4: i32) {
 pub fn pl_80040048_fp(arg0: i32, arg1: i32) {
     melee_core::ct!("pl_80040048_fp");
     let g = get_entity_at_index(arg0, arg1);
-    let r3 = h::ftlib_80087300(g);
+    let r3 = h::ftlib_getlastattackerslot(g);
     if arg1 != 0 || r3 == 6 {
         return;
     }
@@ -2244,7 +2244,7 @@ pub fn pl_80040db8(slot: i32) -> i32 {
 /// `pl_8003DF44`.
 pub fn pl_8003df44(arg0: i32, arg1: i32) {
     melee_core::ct!("pl_8003df44");
-    let r3 = h::ftlib_80087300(get_entity_at_index(arg0, arg1));
+    let r3 = h::ftlib_getlastattackerslot(get_entity_at_index(arg0, arg1));
     if r3 == 6 || r3 == arg0 || check_if_same_team(arg0, r3) {
         return;
     }
@@ -2410,8 +2410,8 @@ pub fn pl_8003e854_fp(arg0: i32, arg1: i32, arg2: I) {
         if h::it_get_kind(arg2) == It_Kind_Dosei as i32 {
             h::pl_80038788(arg0, 0xB6, 1);
         }
-        if arg1 == 0 && h::ftlib_80086960(r3) && h::ftlib_800874bc(r3) == 0 {
-            let id = h::ftlib_80086be0(r3);
+        if arg1 == 0 && h::ftlib_isfighter(r3) && h::ftlib_issubfighter(r3) == 0 {
+            let id = h::ftlib_getplayerindex(r3);
             ext_plbonus2(arg0).xD6C = id as i32;
         }
     }

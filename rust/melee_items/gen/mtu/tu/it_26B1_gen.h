@@ -55,16 +55,16 @@ void Item_80268E40(__typeof__(struct Item *) a0, __typeof__(struct ItemStateDesc
 void Item_8026A8EC(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); }
 void Mex_IndexStageItem(__typeof__(void *) a0, __typeof__(int) a1) { T(1007); T(PI((const void*) a0)); T((u32) a1); }
 __typeof__(int) Mex_ItRecord(__typeof__(struct Article *) a0, __typeof__(int) a1) { T(1008); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(int)) (fv()); }
-__typeof__(struct HSD_GObj *) ftLib_8008627C(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (pick_fgo()); }
-__typeof__(struct HSD_GObj *) ftLib_80086368(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(float) a2) { T(1010); T(PI((const void*) a0)); T(PI((const void*) a1)); T(B(a2)); return (__typeof__(struct HSD_GObj *)) (pick_fgo()); }
-__typeof__(float) ftLib_800864A8(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(float)) (rg()); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1012); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-void ftLib_800866DC(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-__typeof__(int) ftLib_80086960(__typeof__(struct HSD_GObj *) a0) { T(1014); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(struct CollData *) ftLib_80086984(__typeof__(struct HSD_GObj *) a0) { T(1015); T(PI((const void*) a0)); return (__typeof__(struct CollData *)) (pick_CollData()); }
-void ftLib_80086990(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+__typeof__(struct HSD_GObj *) ftLib_FindNearestOpponent(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (pick_fgo()); }
+__typeof__(struct HSD_GObj *) ftLib_FindNearestOpponentInDir(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(float) a2) { T(1010); T(PI((const void*) a0)); T(PI((const void*) a1)); T(B(a2)); return (__typeof__(struct HSD_GObj *)) (pick_fgo()); }
+__typeof__(float) ftLib_GetOpponentsDir(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(float)) (rg()); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1012); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+void ftLib_GetCameraBonePos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1014); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(struct CollData *) ftLib_GetCollData(__typeof__(struct HSD_GObj *) a0) { T(1015); T(PI((const void*) a0)); return (__typeof__(struct CollData *)) (pick_CollData()); }
+void ftLib_GetECBCenter(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 void ftLib_80086A4C(__typeof__(struct HSD_GObj *) a0, __typeof__(float) a1) { T(1017); T(PI((const void*) a0)); T(B(a1)); }
-__typeof__(unsigned char) ftLib_80086BE0(__typeof__(struct HSD_GObj *) a0) { T(1018); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
+__typeof__(unsigned char) ftLib_GetPlayerIndex(__typeof__(struct HSD_GObj *) a0) { T(1018); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
 __typeof__(int) gm_8016B238(void) { T(1019); return (__typeof__(int)) (fv()); }
 __typeof__(struct HSD_GObj *) itFlipper_Spawn(__typeof__(struct HSD_JObj *) a0) { T(1020); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (pick_igo()); }
 __typeof__(struct HSD_GObj *) itSword_Spawn(__typeof__(Vec *) a0) { T(1021); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (pick_igo()); }
@@ -5605,16 +5605,16 @@ static void freg_all(void)
 // stub Item_8026A8EC = 1006
 // stub Mex_IndexStageItem = 1007
 // stub Mex_ItRecord = 1008
-// stub ftLib_8008627C = 1009
-// stub ftLib_80086368 = 1010
-// stub ftLib_800864A8 = 1011
-// stub ftLib_80086644 = 1012
-// stub ftLib_800866DC = 1013
-// stub ftLib_80086960 = 1014
-// stub ftLib_80086984 = 1015
-// stub ftLib_80086990 = 1016
+// stub ftLib_FindNearestOpponent = 1009
+// stub ftLib_FindNearestOpponentInDir = 1010
+// stub ftLib_GetOpponentsDir = 1011
+// stub ftLib_GetPos = 1012
+// stub ftLib_GetCameraBonePos = 1013
+// stub ftLib_IsFighter = 1014
+// stub ftLib_GetCollData = 1015
+// stub ftLib_GetECBCenter = 1016
 // stub ftLib_80086A4C = 1017
-// stub ftLib_80086BE0 = 1018
+// stub ftLib_GetPlayerIndex = 1018
 // stub gm_8016B238 = 1019
 // stub itFlipper_Spawn = 1020
 // stub itSword_Spawn = 1021

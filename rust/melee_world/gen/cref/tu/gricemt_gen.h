@@ -58,8 +58,8 @@ void HSD_JObjSetMtxDirtySub(__typeof__(struct HSD_JObj *) a0) { T(1030); T(PI((c
 __typeof__(int) HSD_Randi(__typeof__(int) a0) { T(1031); T((u32) a0); return (__typeof__(int)) ((a0 > 0 ? (int) (rnd() % (u32) a0) : 0)); }
 __typeof__(enum StKind) Stage_80225194(void) { T(1032); return (__typeof__(enum StKind)) (((fv() & 1) ? 76u : (((fv() & 1) ? 212u : (fv() % 5))))); }
 void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; Vec* v; __builtin_va_start(ap, a1); v = __builtin_va_arg(ap, Vec*); __builtin_va_end(ap); T(1033); T((u32) a0); T(PI(a1)); T(PI(v)); T(B(v->x)); T(B(v->y)); T(B(v->z)); return 0; }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1034); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
-__typeof__(int) ftLib_80086EC0(__typeof__(struct HSD_GObj *) a0) { T(1035); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1034); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+__typeof__(int) ftLib_IsInHitstun(__typeof__(struct HSD_GObj *) a0) { T(1035); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void gm_801674C4(__typeof__(signed char) a0, __typeof__(unsigned char) a1, __typeof__(signed char) a2, __typeof__(signed char) a3, __typeof__(int (*)(int)) a4) { T(1036); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); T(FI((const void*) a4)); }
 void grAnime_801C77FC(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(unsigned int) a2) { T(1037); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 void grAnime_801C78FC(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(unsigned int) a2) { T(1038); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
@@ -1795,8 +1795,8 @@ static void freg_all(void)
 // stub HSD_Randi = 1031
 // stub Stage_80225194 = 1032
 // stub efSync_Spawn = 1033
-// stub ftLib_80086644 = 1034
-// stub ftLib_80086EC0 = 1035
+// stub ftLib_GetPos = 1034
+// stub ftLib_IsInHitstun = 1035
 // stub gm_801674C4 = 1036
 // stub grAnime_801C77FC = 1037
 // stub grAnime_801C78FC = 1038

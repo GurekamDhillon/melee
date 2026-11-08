@@ -10,7 +10,7 @@ StaticPlayer player_slots[6];
 float* Fighter_804D6548;
 DbLKind DbLevel;
 static int g_owner_is_fighter;
-bool ftLib_80086960(HSD_GObj* gobj) { (void) gobj; return g_owner_is_fighter; }
+bool ftLib_IsFighter(HSD_GObj* gobj) { (void) gobj; return g_owner_is_fighter; }
 /* Player_CheckSlot's report (never reached: slots are 0..5) */
 void __assert(const char* file, u32 line, const char* cond) { (void) file; (void) line; (void) cond; for (;;) {} }
 void OSReport(char* fmt, ...) { (void) fmt; }

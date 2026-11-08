@@ -13,8 +13,8 @@ __typeof__(float) (HSD_Randf)(void) { T(1000); return (__typeof__(float)) ((floa
 __typeof__(struct HSD_GObj *) (Item_80268B18)(__typeof__(struct SpawnItem *) a0) { T(1001); T(PI((const void*) a0)); TSPAWN((const SpawnItem*) a0); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &GO[2] : 0)); }
 void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1002); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 void (Item_8026AE84)(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1003); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
-__typeof__(struct HSD_GObj *) (ftLib_8008627C)(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1004); T(PI((const void*) a0)); TVEC((const Vec3*) a0); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &GO[1] : 0)); }
-void (ftLib_800866DC)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+__typeof__(struct HSD_GObj *) (ftLib_FindNearestOpponent)(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1004); T(PI((const void*) a0)); TVEC((const Vec3*) a0); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &GO[1] : 0)); }
+void (ftLib_GetCameraBonePos)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
 __typeof__(int) (itColl_BounceOffShield)(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (it_8026BB88)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1008); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
@@ -1628,8 +1628,8 @@ static void freg_all(void)
 // stub Item_80268B18 = 1001
 // stub Item_80268E5C = 1002
 // stub Item_8026AE84 = 1003
-// stub ftLib_8008627C = 1004
-// stub ftLib_800866DC = 1005
+// stub ftLib_FindNearestOpponent = 1004
+// stub ftLib_GetCameraBonePos = 1005
 // stub itColl_BounceOffShield = 1006
 // stub it_8026B894 = 1007
 // stub it_8026BB88 = 1008

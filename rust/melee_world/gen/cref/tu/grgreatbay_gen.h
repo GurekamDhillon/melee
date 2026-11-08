@@ -48,8 +48,8 @@ __typeof__(int) HSD_Randi(__typeof__(int) a0) { T(1018); T((u32) a0); return (__
 __typeof__(struct HSD_GObj *) Item_80268B18(__typeof__(struct SpawnItem *) a0) { T(1019); T(PI((const void*) a0)); T(PI(a0->x0_parent_gobj)); T(PI(a0->x4_parent_gobj2)); T((u32) a0->kind); T((u32) a0->hold_kind); T((u32) a0->x10); T(B(a0->pos.x)); T(B(a0->pos.y)); T(B(a0->pos.z)); T(B(a0->prev_pos.x)); T(B(a0->prev_pos.y)); T(B(a0->prev_pos.z)); T(B(a0->vel.x)); T(B(a0->vel.y)); T(B(a0->vel.z)); T(B(a0->facing_dir)); T((u32) a0->x3C_damage); T((u32) a0->x3E); T((u32) a0->x40); T((u32) a0->x44_flag.byte); T((u32) a0->x45_flag.byte); T((u32) a0->x46_flag.byte); T((u32) a0->x47_flag.byte); T((u32) a0->x48_ground_or_air); return (__typeof__(struct HSD_GObj *)) (0); }
 __typeof__(float) Stage_GetBlastZoneBottomOffset(void) { T(1020); return (__typeof__(float)) (rw()); }
 void ftCo_800C07F8(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned int) a1, __typeof__(void *) a2) { T(1021); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1022); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
-void ftLib_80086684(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1023); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1022); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+void ftLib_GetPrevPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1023); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
 __typeof__(float) ftLib_80086B80(__typeof__(struct HSD_GObj *) a0) { T(1024); T(PI((const void*) a0)); return (__typeof__(float)) (rw()); }
 __typeof__(int) ft_80087838(__typeof__(struct HSD_GObj *) a0) { T(1025); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void grAnime_801C77FC(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(unsigned int) a2) { T(1026); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
@@ -1834,8 +1834,8 @@ static void freg_all(void)
 // stub Item_80268B18 = 1019
 // stub Stage_GetBlastZoneBottomOffset = 1020
 // stub ftCo_800C07F8 = 1021
-// stub ftLib_80086644 = 1022
-// stub ftLib_80086684 = 1023
+// stub ftLib_GetPos = 1022
+// stub ftLib_GetPrevPos = 1023
 // stub ftLib_80086B80 = 1024
 // stub ft_80087838 = 1025
 // stub grAnime_801C77FC = 1026

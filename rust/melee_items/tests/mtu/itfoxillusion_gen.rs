@@ -22,7 +22,7 @@ pub fn install() {
         ftFx_SpecialS_CopyGhostPosIndexed = Some(|a0, a1, a2| { t(1009); t(pi(a0)); t(a1 as u32); t(pi(a2)); (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); });
         ftFx_SpecialS_GetCmdVar2 = Some(|a0| { t(1010); t(pi(a0)); (fv() % 4) as i32 });
         ftFx_SpecialS_ReturnFloatVarIndexed = Some(|a0, a1| { t(1011); t(pi(a0)); t(a1 as u32); rg() });
-        ftLib_800865CC = Some(|a0| { t(1012); t(pi(a0)); (fv() % 3) as i32 });
+        ftLib_GetGroundAir = Some(|a0| { t(1012); t(pi(a0)); (fv() % 3) as i32 });
         it_8026B3A8 = Some(|a0| { t(1013); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1014); t(pi(a0)); t(pi(a1)); fv() as _ });
         it_8026EECC = Some(|a0, a1| { t(1015); t(pi(a0)); t(a1 as u32); });

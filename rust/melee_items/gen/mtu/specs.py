@@ -51,13 +51,13 @@ add("itdraw", "src/melee/it/itdraw.c",
                         "for q in 0..12usize { t((*(a0 as *const f32).add(q)).to_bits()); t((*(a1 as *const f32).add(q)).to_bits()); *(a2 as *mut f32).add(q) = rw(); }"),
         "HSD_JObjDispAll": ("if (a1) { int q; for (q = 0; q < 12; q++) T(B(((float*) a1)[q])); }",
                             "if !a1.is_null() { for q in 0..12usize { t((*(a1 as *const f32).add(q)).to_bits()); } }"),
-        "ftLib_80087074": ("if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); }",
+        "ftLib_GetShakeOffset": ("if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); }",
                            "if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); }"),
     })
 
 add("itcoll", "src/melee/it/itcoll.c", custom_stubs=EF_CUSTOM, manual_data=["Fighter_804D6524"], null_ret_ok=["ftCommon_8007F804"],
     ret={"it_802746F8": ("&JO[rnd() % 8]", "&raw mut JO[(rnd() % 8) as usize]"),
-         "ftLib_80086960": ("((fv() & 1) && a0 >= &GO[4] && a0 <= &GO[6])", "{ let v = fv() & 1; (v != 0 && a0 >= &raw mut GO[4] && a0 <= &raw mut GO[6]) as i32 }")},
+         "ftLib_IsFighter": ("((fv() & 1) && a0 >= &GO[4] && a0 <= &GO[6])", "{ let v = fv() & 1; (v != 0 && a0 >= &raw mut GO[4] && a0 <= &raw mut GO[6]) as i32 }")},
     effects={"lbVector_RotateAboutUnitAxis": ("if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); }",
                                               "if !a0.is_null() { (*a0).x = rw(); (*a0).y = rw(); (*a0).z = rw(); }")})
 
@@ -129,7 +129,7 @@ add("itzako", "src/melee/it/itzako.c", custom_stubs={}, skip_freg=["it_8027B798_
          "Ground_801C5840": ("((rnd() % 4 == 0) ? -1 : (int) (fv() % 8))", "if rnd() % 4 == 0 { -1 } else { (fv() % 8) as i32 }"),
          "tyDisplay_8031C354": ("({ int n_ = (int) (fv() % 4); int ii_; for (ii_ = 0; ii_ < n_; ii_++) a1[ii_] = (int) fv(); n_; })",
                                 "{ let n_ = (fv() % 4) as i32; for ii_ in 0..n_ { *a1.add(ii_ as usize) = fv() as i32; } n_ }"),
-         "ftLib_800870BC": ("({ *(u32*) a1 = fv(); (int) (fv() & 1); })", "{ *(a1 as *mut u32) = fv(); (fv() & 1) as i32 }")},
+         "ftLib_GetSubColor": ("({ *(u32*) a1 = fv(); (int) (fv() & 1); })", "{ *(a1 as *mut u32) = fv(); (fv() & 1) as i32 }")},
     effects={"Item_80268B18": (_SPAWN_C, _SPAWN_R), "Item_80268B5C": (_SPAWN_C, _SPAWN_R),
              "Camera_GetTransformPosition": VEFF(outputs=["a0"]),
              "it_8026B684": VEFF(inputs=["a0"]),
@@ -143,8 +143,8 @@ add("itzako", "src/melee/it/itzako.c", custom_stubs={}, skip_freg=["it_8027B798_
              "lbVector_EulerAnglesFromONB": VEFF(inputs=["a1", "a2", "a3"], outputs=["a0"]),
              "it_80278574": ("T(((u8*) a1)[0]); T(((u8*) a1)[1]); T(((u8*) a1)[2]); T(((u8*) a1)[3]);",
                              "t(*(a1 as *const u8) as u32); t(*(a1 as *const u8).add(1) as u32); t(*(a1 as *const u8).add(2) as u32); t(*(a1 as *const u8).add(3) as u32);"),
-             "ftLib_8008770C": ("*(u32*) a1 = fv();", "*(a1 as *mut u32) = fv();"),
-             "ftLib_80087744": ("*(u32*) a1 = fv();", "*(a1 as *mut u32) = fv();")})
+             "ftLib_GetGameWatchColor": ("*(u32*) a1 = fv();", "*(a1 as *mut u32) = fv();"),
+             "ftLib_GetGameWatchOutlineColor": ("*(u32*) a1 = fv();", "*(a1 as *mut u32) = fv();")})
 add("it_26B1", "src/melee/it/it_26B1.c")
 add("it_2725", "src/melee/it/it_2725.c")
 add("it_279C", "src/melee/it/it_279C.c")
@@ -167,7 +167,7 @@ add("itdrmariopill", "src/melee/it/kinds/itdrmariopill.c", skip_freg=["my_sqrtf"
     manual_data=["it_804D6D28"],
     ret={"Item_80268B18": ("pick_igo()", "pick_igo()")},
     effects={"Item_80268B18": (_SPAWN_C, _SPAWN_R),
-             "ftLib_80086644": VEFF(outputs=["a1"]),
+             "ftLib_GetPos": VEFF(outputs=["a1"]),
              "it_8026BB68": VEFF(outputs=["a1"])})
 
 add("itclimbersice", "src/melee/it/kinds/itclimbersice.c", custom_stubs=EF_CUSTOM_,

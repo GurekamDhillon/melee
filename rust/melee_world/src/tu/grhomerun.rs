@@ -103,8 +103,8 @@ pub mod ext {
     fn Stage_GetBlastZoneRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneRightOffset() as _ };
     fn Stage_GetCamBoundsRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ };
     fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec) = |a0: *mut Vec| { unsafe { crate::tu::stage::Stage_UnkSetVec3TCam_Offset(a0 as _); } };
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
-    fn ftLib_80086B74(a0: *mut HSD_GObj) -> *mut CmSubject = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B74(a0 as _) as _ };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } };
+    fn ftLib_GetCameraSubject(a0: *mut HSD_GObj) -> *mut CmSubject = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_GetCameraSubject(a0 as _) as _ };
     fn gm_80180AF4() -> *mut HSD_GObj;
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct = || unsafe { crate::tu::grdatfiles::grDatFiles_GetArchive() as _ };
@@ -497,15 +497,15 @@ pub unsafe extern "C" fn grHomeRun_8021D680(gobj: *mut Ground_GObj) {
     let gp = (*gobj).user_data as *mut Ground;
     let mut fighter = ext::Ground_GetP1Fighter();
     if !fighter.is_null() {
-        ext::ftLib_80086644(fighter, &mut pos0);
-        let mut subject = ext::ftLib_80086B74(fighter);
+        ext::ftLib_GetPos(fighter, &mut pos0);
+        let mut subject = ext::ftLib_GetCameraSubject(fighter);
         if !subject.is_null() {
             (*subject).state = CmSubjectState_Inactive;
             (*subject).set_force_inactive(1);
         }
         fighter = ext::Ground_GetP1Fighter2();
         if !fighter.is_null() {
-            subject = ext::ftLib_80086B74(fighter);
+            subject = ext::ftLib_GetCameraSubject(fighter);
             if !subject.is_null() {
                 (*subject).state = CmSubjectState_Inactive;
                 (*subject).set_force_inactive(1);
@@ -517,7 +517,7 @@ pub unsafe extern "C" fn grHomeRun_8021D680(gobj: *mut Ground_GObj) {
     {
         let sandbag_gobj = ext::gm_80180AF4();
         if !sandbag_gobj.is_null() {
-            ext::ftLib_80086644(sandbag_gobj, &mut pos1);
+            ext::ftLib_GetPos(sandbag_gobj, &mut pos1);
             grHomeRun_8021EA30(&pos1.x);
             if pos1.y < 4.0 && (*gp).u.homerun.xE8_flags.b0() != 0 {
                 grHomeRun_8021EAF8();

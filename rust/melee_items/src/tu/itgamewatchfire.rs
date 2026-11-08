@@ -34,7 +34,7 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn ftGw_AttackS4_ItemCheckTorchRemove(a0: *mut HSD_GObj) -> i32;
     fn ftGw_AttackS4_ItemTorchSetFlag(a0: *mut HSD_GObj);
-    fn ftLib_800876D4(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsChargingSmash(a0: *mut HSD_GObj) -> i32;
     fn it_8026B724(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b724(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B73C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b73c(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
@@ -185,7 +185,7 @@ pub unsafe extern "C" fn itGamewatchFire_Motion0_Anim(item_gobj: *mut HSD_GObj) 
         return 1;
     }
     if !(*item).owner.is_null() {
-        if ext::ftLib_800876D4((*item).owner) != 0 {
+        if ext::ftLib_IsChargingSmash((*item).owner) != 0 {
             if (*item).x5D0_animFrameSpeed != 0.0f32 {
                 (*item).x5D0_animFrameSpeed = 0.0;
                 ext::lb_8000BA0C(jobj, (*item).x5D0_animFrameSpeed);

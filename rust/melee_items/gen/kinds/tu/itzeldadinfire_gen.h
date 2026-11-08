@@ -15,7 +15,7 @@ void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typ
 void (db_80225DD8)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1003); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 void (efLib_DestroyAll)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); }
 void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; __builtin_va_start(ap, a1); a2 = __builtin_va_arg(ap, void*); __builtin_va_end(ap); T(1005); T((u32) a0); T(PI(a1)); T(PI(a2)); return 0; }
-void (ftLib_800865D8)(__typeof__(struct HSD_GObj *) a0, __typeof__(float *) a1, __typeof__(float *) a2) { T(1006); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a1) { *a1 = rw(); } if (a2) { *a2 = rw(); } }
+void (ftLib_GetLStick)(__typeof__(struct HSD_GObj *) a0, __typeof__(float *) a1, __typeof__(float *) a2) { T(1006); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a1) { *a1 = rw(); } if (a2) { *a2 = rw(); } }
 __typeof__(int) (ftZd_SpecialLw_8013B540)(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 __typeof__(int) (ftZd_SpecialLw_8013B574)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (ftZd_SpecialLw_8013B5C4)(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); }
@@ -1631,7 +1631,7 @@ static void freg_all(void)
 // stub db_80225DD8 = 1003
 // stub efLib_DestroyAll = 1004
 // stub efSync_Spawn = 1005
-// stub ftLib_800865D8 = 1006
+// stub ftLib_GetLStick = 1006
 // stub ftZd_SpecialLw_8013B540 = 1007
 // stub ftZd_SpecialLw_8013B574 = 1008
 // stub ftZd_SpecialLw_8013B5C4 = 1009

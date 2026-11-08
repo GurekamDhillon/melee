@@ -105,10 +105,10 @@ pub mod ext {
     fn diag_camera_subject(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32);
     fn diag_camera_track(a0: *const f32, a1: *const f32);
     fn diag_game_camera(a0: *const f32, a1: *const f32, a2: *const f32);
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086B74(a0: *mut HSD_GObj) -> *mut CmSubject;
-    fn ftLib_8008701C(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_8008732C(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_GetCameraSubject(a0: *mut HSD_GObj) -> *mut CmSubject;
+    fn ftLib_IsSleeping(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsDead(a0: *mut HSD_GObj) -> i32;
     fn gm_GetButtonsPressed(a0: u8) -> u64;
     fn gm_GetButtonsTriggered(a0: u8) -> u64;
     fn gm_IsCurrently1PMode_inline() -> i32;

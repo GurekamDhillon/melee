@@ -1,7 +1,7 @@
 //! Controller input of the scripted scenarios: the golden pad script (`pad_fixed`) and the HSD pad layer
 //! (sysdolphin controller.c) and the fighter's input step (fighter.c
-//! `Fighter_Spaghetti_8006AD10`, up to its `input_cb` call), plus the HUD "Ready" timer that
-//! unlocks input at GO (if_2F72.c `if_802F73C4` -> gmvs.c `fn_8016B7F8` -> `ftLib_800868A4`).
+//! `Fighter_procInput`, up to its `input_cb` call), plus the HUD "Ready" timer that
+//! unlocks input at GO (if_2F72.c `if_802F73C4` -> gmvs.c `fn_8016B7F8` -> `ftLib_EnableAllInput`).
 //!
 //! Pad source: `tools/rust-port/golden/pad_fixed.lua`'s cycles (the Lua harness, not game code).
 //! Its `on_frame_pre` runs after the frame's PADRead with `gd.input(port, sample, 2)`, so golden

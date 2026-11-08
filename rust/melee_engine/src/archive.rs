@@ -351,3 +351,15 @@ pub unsafe fn host_locate_extern(archive: *mut HSD_Archive, symbols: *const c_ch
     }
     true
 }
+
+/// A public of a parsed archive the type table has no type for, as raw big-endian bytes: (the data block's address,
+/// its length, the symbol's data offset). mex_guest answers an m-ex fighter's lookup of such a symbol (the mod's own
+/// costume data, PlyTailsColor) with these bytes, which only the guest reads.
+pub fn untyped_public(archive: *mut HSD_Archive, name: &str) -> Option<(usize, u32, u32)> {
+    let image = Host::get().archives.get(&(archive as usize))?;
+    let off = image.dat.publics.iter().find(|s| s.name == name)?.offset;
+    if image.native_root(name).is_some() {
+        return None;
+    }
+    Some((image.raw + HEADER_BYTES, image.dat.data.len() as u32, off))
+}

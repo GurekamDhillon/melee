@@ -15,9 +15,9 @@ bool result;
 void HSD_JObjSetMtxDirtySub(__typeof__(struct HSD_JObj *) a0) { T(1000); T(PI((const void*) a0)); }
 __typeof__(struct HSD_GObj *) Item_80268B18(__typeof__(struct SpawnItem *) a0) { T(1001); T(PI((const void*) a0)); { T((u32) a0->kind); T((u32) a0->hold_kind); T((u32) a0->x10); T((u32) a0->x3C_damage); T((u32) a0->x3E); T((u32) a0->x40); T((u32) a0->x48_ground_or_air); T(B(a0->pos.x)); T(B(a0->pos.y)); T(B(a0->pos.z)); T(B(a0->prev_pos.x)); T(B(a0->prev_pos.y)); T(B(a0->prev_pos.z)); T(B(a0->vel.x)); T(B(a0->vel.y)); T(B(a0->vel.z)); T(B(a0->facing_dir)); T(PI(a0->x0_parent_gobj)); T(PI(a0->x4_parent_gobj2)); T(((u32) a0->x44_flag.b0 << 0) | ((u32) a0->x44_flag.b1 << 1) | ((u32) a0->x44_flag.b2 << 2) | ((u32) a0->x44_flag.b3 << 3) | ((u32) a0->x44_flag.b4 << 4) | ((u32) a0->x44_flag.b5 << 5) | ((u32) a0->x44_flag.b6 << 6) | ((u32) a0->x44_flag.b7 << 7)); T(((u32) a0->x45_flag.b0 << 0) | ((u32) a0->x45_flag.b1 << 1) | ((u32) a0->x45_flag.b2 << 2) | ((u32) a0->x45_flag.b3 << 3) | ((u32) a0->x45_flag.b4 << 4) | ((u32) a0->x45_flag.b5 << 5) | ((u32) a0->x45_flag.b6 << 6) | ((u32) a0->x45_flag.b7 << 7)); T(((u32) a0->x46_flag.b0 << 0) | ((u32) a0->x46_flag.b1 << 1) | ((u32) a0->x46_flag.b2 << 2) | ((u32) a0->x46_flag.b3 << 3) | ((u32) a0->x46_flag.b4 << 4) | ((u32) a0->x46_flag.b5 << 5) | ((u32) a0->x46_flag.b6 << 6) | ((u32) a0->x46_flag.b7 << 7)); T(((u32) a0->x47_flag.b0 << 0) | ((u32) a0->x47_flag.b1 << 1) | ((u32) a0->x47_flag.b2 << 2) | ((u32) a0->x47_flag.b3 << 3) | ((u32) a0->x47_flag.b4 << 4) | ((u32) a0->x47_flag.b5 << 5) | ((u32) a0->x47_flag.b6 << 6) | ((u32) a0->x47_flag.b7 << 7)); } return (__typeof__(struct HSD_GObj *)) (((fv() & 3) == 0 ? 0 : &G2)); }
 void Item_80268E5C(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1002); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
-void ftLib_800866DC(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1003); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
-__typeof__(int) ftLib_80086960(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-void ftLib_80086BEC(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+void ftLib_GetCameraBonePos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1003); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+void ftLib_GetPosDelta(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
 __typeof__(int) ftLib_80087284(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(int) itColl_BounceOffShield(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void itColl_BounceOffVictim(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); }
@@ -1548,9 +1548,9 @@ static void freg_all(void)
 // stub HSD_JObjSetMtxDirtySub = 1000
 // stub Item_80268B18 = 1001
 // stub Item_80268E5C = 1002
-// stub ftLib_800866DC = 1003
-// stub ftLib_80086960 = 1004
-// stub ftLib_80086BEC = 1005
+// stub ftLib_GetCameraBonePos = 1003
+// stub ftLib_IsFighter = 1004
+// stub ftLib_GetPosDelta = 1005
 // stub ftLib_80087284 = 1006
 // stub itColl_BounceOffShield = 1007
 // stub itColl_BounceOffVictim = 1008

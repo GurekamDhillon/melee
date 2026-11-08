@@ -27,8 +27,8 @@ pub mod ext {
     fn efLib_PauseAll(a0: *mut HSD_GObj);
     fn efLib_ResumeAll(a0: *mut HSD_GObj);
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[*const c_void]) -> *mut c_void;
-    fn ftLib_80086198(a0: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_FindLowestPercentOpponent(a0: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec);
     fn it_8026B3A8(a0: *mut HSD_GObj);
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec);

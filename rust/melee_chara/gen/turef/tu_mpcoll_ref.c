@@ -23,10 +23,10 @@ void grDynamicAttr_801CA0B4(void) {}
 void grDynamicAttr_801CA224(void) {}
 int grDynamicAttr_801CA284(Vec3* v, int i) { (void) v; return (i % 3 == 1) ? 0x35 + i : 0; }
 int Mex_GrLineTypeRow(int k) { return k; }
-int ftLib_80086960(HSD_GObj* g) { (void) g; printf("UNEXPECTED ftLib\n"); return 0; }
-u8 ftLib_80086BE0(HSD_GObj* g) { (void) g; return 0; }
-int ftLib_800874BC(HSD_GObj* g) { (void) g; return 0; }
-CollData* ftLib_80086984(HSD_GObj* g) { (void) g; return NULL; }
+int ftLib_IsFighter(HSD_GObj* g) { (void) g; printf("UNEXPECTED ftLib\n"); return 0; }
+u8 ftLib_GetPlayerIndex(HSD_GObj* g) { (void) g; return 0; }
+int ftLib_IsSubFighter(HSD_GObj* g) { (void) g; return 0; }
+CollData* ftLib_GetCollData(HSD_GObj* g) { (void) g; return NULL; }
 int itGetKind(HSD_GObj* g) { (void) g; return 0; }
 void OSReport(char* fmt, ...) { (void) fmt; printf("OSREPORT\n"); }
 DbLKind DbLevel;

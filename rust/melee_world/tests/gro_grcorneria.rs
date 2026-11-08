@@ -938,7 +938,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grcorneria::ext::STAGE_GETBLASTZONELEFTOFFSET = Some(|| -> f32 { lg_s("Stage_GetBlastZoneLeftOffset("); lg_s(")"); { let r = rf(); lg_retf(r); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::STAGE_GETBLASTZONERIGHTOFFSET = Some(|| -> f32 { lg_s("Stage_GetBlastZoneRightOffset("); lg_s(")"); { let r = rf(); lg_retf(r); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::STAGE_GETBLASTZONETOPOFFSET = Some(|| -> f32 { lg_s("Stage_GetBlastZoneTopOffset("); lg_s(")"); { let r = rf(); lg_retf(r); lg_c(';'); r } });
-        melee_world::tu::grcorneria::ext::FTLIB_80086644 = Some(|a0: *mut HSD_GObj, a1: *mut Vec| { lg_s("ftLib_80086644("); lg_ptr(a0 as *const u8 as usize); lg_v3(a1 as *const _ as *const Vec3); lg_s(")"); lg_ov3(a1 as *mut _); lg_c(';'); });
+        melee_world::tu::grcorneria::ext::FTLIB_GETPOS = Some(|a0: *mut HSD_GObj, a1: *mut Vec| { lg_s("ftLib_GetPos("); lg_ptr(a0 as *const u8 as usize); lg_v3(a1 as *const _ as *const Vec3); lg_s(")"); lg_ov3(a1 as *mut _); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GM_8017E7E0 = Some(|| -> i32 { lg_s("gm_8017E7E0("); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GM_801883C0 = Some(|| -> f32 { lg_s("gm_801883C0("); lg_s(")"); { let r = rf(); lg_retf(r); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GM_GETDBPAUSEFLAG = Some(|a0: i32| -> i32 { lg_s("gm_GetDbPauseFlag("); lg_int(a0 as u32); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });

@@ -27,8 +27,8 @@ SPEC = dict(
     },
     effects={
         "lb_8000B1CC": (V3[0].format(a="a2"), V3[1].format(a="a2")),
-        "ftLib_80086644": (V3[0].format(a="a1"), V3[1].format(a="a1")),
-        "ftLib_80086684": (V3[0].format(a="a1"), V3[1].format(a="a1")),
+        "ftLib_GetPos": (V3[0].format(a="a1"), V3[1].format(a="a1")),
+        "ftLib_GetPrevPos": (V3[0].format(a="a1"), V3[1].format(a="a1")),
         "grLib_801C96F8": (V3T[0].format(a="a2"), V3T[1].format(a="a2")),
         "it_802ECCA4": ("*a1 = (int) (fv() % 14); a2->x = rw(); a2->y = rw(); a2->z = rw();",
                         "*a1 = (fv() % 14) as i32; (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw();"),

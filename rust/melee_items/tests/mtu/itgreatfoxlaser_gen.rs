@@ -15,7 +15,7 @@ pub fn install() {
         HSD_JObjSetMtxDirtySub = Some(|a0| { t(1001); t(pi(a0)); });
         Item_80268B18 = Some(|a0| { t(1002); t(pi(a0)); hash_SpawnItem(&*a0); (pick_HSD_GObj(1)) as _ });
         Item_80268E5C = Some(|a0, a1, a2| { t(1003); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
-        ftLib_80086644 = Some(|a0, a1| { t(1004); t(pi(a0)); t(pi(a1)); { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } });
+        ftLib_GetPos = Some(|a0, a1| { t(1004); t(pi(a0)); t(pi(a1)); { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } });
         it_8026B3A8 = Some(|a0| { t(1005); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1006); t(pi(a0)); t(pi(a1)); fv() as _ });
         it_80272460 = Some(|a0, a1, a2| { t(1007); t(pi(a0)); t(a1 as u32); t(pi(a2)); });

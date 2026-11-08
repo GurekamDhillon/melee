@@ -94,5 +94,5 @@ spec("itfoods", [], effects={"Item_80268B18": spawn_effect(), "it_8026BB68": BB6
 _WR3 = lambda a: ("if (%s) { %s->x = rw(); %s->y = rw(); %s->z = rw(); }" % (a, a, a, a),
                   "if !%s.is_null() { (*%s).x = rw(); (*%s).y = rw(); (*%s).z = rw(); }" % (a, a, a, a))
 spec("itflipper", ["itFlipper_DatAttrs"], skip_stubs=["__frsqrte"], skip_data=IT_SKIP + ["guess", "y"],
-     effects={"Item_80268B18": spawn_effect(), "lb_8000B1CC": _WR3("a2"), "ftLib_800866DC": _WR3("a1"),
-              "ftLib_80086BEC": _WR3("a1"), "lbVector_NormalizeXY": _WR3("a0")})
+     effects={"Item_80268B18": spawn_effect(), "lb_8000B1CC": _WR3("a2"), "ftLib_GetCameraBonePos": _WR3("a1"),
+              "ftLib_GetPosDelta": _WR3("a1"), "lbVector_NormalizeXY": _WR3("a0")})

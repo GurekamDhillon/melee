@@ -20,7 +20,7 @@ pub const CLASS_ITEM: i32 = 6;
 pub struct PosEnv {
     /// `gobj->classifier`.
     pub class_of: Option<fn(usize) -> i32>,
-    /// `ftLib_80086644(gobj, &pos)`: the fighter's position (x, y, z).
+    /// `ftLib_GetPos(gobj, &pos)`: the fighter's position (x, y, z).
     pub fighter_pos: Option<fn(usize) -> [f32; 3]>,
     /// `it_8026B294(gobj, &pos)`.
     pub item_pos: Option<fn(usize) -> [f32; 3]>,

@@ -3,7 +3,7 @@
   "csrc": "src/melee/ft/ft_0D4D.c",
   "rmod": "melee_fighter::tu::ft_0d4d",
   "cases": 500,
-  "stubs": "--skip efSync_Spawn --ret \"Player_GetEntityAtIndex=&GO[fv() % NG]|&raw mut (*crate::GO)[(fv() as usize) % crate::NG] as *mut core::ffi::c_void\" --libhook Fighter_UnkProcessDeath_80068354=FIGHTER_UNK_PROCESS_DEATH",
+  "stubs": "--skip efSync_Spawn --ret \"Player_GetEntityAtIndex=&GO[fv() % NG]|&raw mut (*crate::GO)[(fv() as usize) % crate::NG] as *mut core::ffi::c_void\" --libhook Fighter_Spawn=FIGHTER_UNK_PROCESS_DEATH",
   "c_head": "void* efSync_Spawn(s32 id, HSD_GObj* g, ...) { (void) g; T(2050); T((u32) id); return 0; }\nstatic void* D6534[4];\nstatic CmSubject CAMB[NG];",
   "ops": [
     [

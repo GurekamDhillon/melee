@@ -173,7 +173,7 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn ftKb_SpecialNNs_800FEC78(a0: *mut HSD_GObj) -> i32;
     fn ftKb_SpecialNNs_800FECBC(a0: *mut HSD_GObj);
-    fn ftLib_800865D8(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_800865D8(a0, a1, a2) };
+    fn ftLib_GetLStick(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_GetLStick(a0, a1, a2) };
     fn ftNs_SpecialN_CheckSpecialNHold(a0: *mut HSD_GObj) -> i32;
     fn ftNs_SpecialN_SetNULL(a0: *mut HSD_GObj);
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
@@ -444,7 +444,7 @@ pub unsafe extern "C" fn itNesspkflash_UnkMotion0_Phys(gobj: *mut Item_GObj) {
             if holding == 1 {
                 let mut stick_y: f32 = 0.0;
                 let mut stick_x: f32 = 0.0;
-                ext::ftLib_800865D8((*ip).xDD4_itemVar.pkflush.xDE0_PKFlash_Owner, &mut stick_x, &mut stick_y);
+                ext::ftLib_GetLStick((*ip).xDD4_itemVar.pkflush.xDE0_PKFlash_Owner, &mut stick_x, &mut stick_y);
                 if ABS(stick_x) > 0.2 {
                     (*ip).x40_vel.x = fmadds(stick_x, (*attr).x18_FLASH_CONTROL, (*ip).x40_vel.x);
                     if ABS((*ip).x40_vel.x) > (*attr).x20_FLASH_UNK2 {

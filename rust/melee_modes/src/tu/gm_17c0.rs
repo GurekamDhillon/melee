@@ -161,11 +161,11 @@ pub mod ext {
         fn ftBossLib_8015CC14() = crate::tu::adapt::ftBossLib_8015CC14__f4f13c;
         fn ftBossLib_IsMasterHandEntry() -> i32 = crate::tu::adapt::ftBossLib_IsMasterHandEntry__b6143e;
         fn ftCo_800C8C84(a0: *mut HSD_GObj) -> i32 = crate::tu::adapt::ftCo_800C8C84__d9cbd1;
-        fn ftLib_80086824() = crate::tu::adapt::ftLib_80086824__82b58f;
-        fn ftLib_800868A4() = crate::tu::adapt::ftLib_800868A4__7fb267;
-        fn ftLib_80087508(a0: i8, a1: u8) = crate::tu::adapt::ftLib_80087508__b45233;
-        fn ftLib_80087574(a0: i8) = crate::tu::adapt::ftLib_80087574__3ccbbb;
-        fn ftLib_80087610(a0: u8) = crate::tu::adapt::ftLib_80087610__f2cb3c;
+        fn ftLib_DisableAllInput() = crate::tu::adapt::ftLib_DisableAllInput__82b58f;
+        fn ftLib_EnableAllInput() = crate::tu::adapt::ftLib_EnableAllInput__7fb267;
+        fn ftLib_LoadFighterCostume(a0: i8, a1: u8) = crate::tu::adapt::ftLib_LoadFighterCostume__b45233;
+        fn ftLib_LoadFighterAllCostumes(a0: i8) = crate::tu::adapt::ftLib_LoadFighterAllCostumes__3ccbbb;
+        fn ftLib_LoadKirbyHats(a0: u8) = crate::tu::adapt::ftLib_LoadKirbyHats__f2cb3c;
         fn ft_80087C58(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ft_80087C58__344dc5;
         fn ft_80087C64(a0: *mut Fighter_GObj, a1: i32) = crate::tu::adapt::ft_80087C64__aaf698;
         fn gmMainLib_8015D134(a0: u8) = crate::tu::adapt::gmMainLib_8015D134__50170c;
@@ -405,7 +405,7 @@ pub unsafe extern "C" fn fn_8017C1A4(_unused: *mut HSD_GObj) {
                 (*c).start.set_disable_pausing(0);
                 (*c).state.hud_enabled = 0;
                 ext::lbAudioAx_800237A8(0x81650, 0x7F, 0x40);
-                ext::ftLib_80086824();
+                ext::ftLib_DisableAllInput();
                 (*tmp).x8 = 1;
             } else if ext::ftBossLib_IsMasterHandEntry() == 0 {
                 (*tmp).x0 = 2;
@@ -443,7 +443,7 @@ pub unsafe extern "C" fn fn_8017C1A4(_unused: *mut HSD_GObj) {
             let c = ext::gmVs_GetSceneController();
             (*c).state.hud_enabled = 1;
             ext::Stage_80225074(0);
-            ext::ftLib_800868A4();
+            ext::ftLib_EnableAllInput();
             ext::ftBossLib_8015CC14();
             (*tmp).x0 = 3;
         }
@@ -630,7 +630,7 @@ pub unsafe extern "C" fn fn_8017C71C() {
     boss_hook.driven_mask = 0;
     (*tmp).xC = ext::ftBossLib_8015C530(gm_8017E068());
     ext::Player_SetOtherStamina(2, (*tmp).xC);
-    ext::ftLib_80087508(Ft_Kind_CrezyH as i8, 0);
+    ext::ftLib_LoadFighterCostume(Ft_Kind_CrezyH as i8, 0);
 }
 
 pub unsafe extern "C" fn fn_8017C7A0() {
@@ -662,7 +662,7 @@ pub unsafe fn gm_8017C838() {
         0x44 => {
             sp10[0] = Ft_Kind_Kirby as i8;
             let var_r3: u8 = if (*temp_r30).x0.x0.ckind as i32 == CKind_Kirby as i32 && (*temp_r30).x0.x0.color == 0 { 1 } else { 0 };
-            ext::ftLib_80087610(var_r3);
+            ext::ftLib_LoadKirbyHats(var_r3);
         }
         0x48 => {
             // m-ex: the internal Pikachu id literal 0xC is Ft_Kind_Pikachu
@@ -687,7 +687,7 @@ pub unsafe fn gm_8017C838() {
 
     for i in 0..3 {
         if sp10[i] as i32 != Ft_Kind_Max as i32 {
-            ext::ftLib_80087574(sp10[i]);
+            ext::ftLib_LoadFighterAllCostumes(sp10[i]);
         }
     }
     ext::Camera_SetQuakeScale(0.2);

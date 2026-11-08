@@ -30,7 +30,7 @@ pub mod ext {
     fn ftFx_SpecialS_CopyGhostPosIndexed(a0: *mut HSD_GObj, a1: i32, a2: *mut Vec);
     fn ftFx_SpecialS_GetCmdVar2(a0: *mut HSD_GObj) -> i32;
     fn ftFx_SpecialS_ReturnFloatVarIndexed(a0: *mut HSD_GObj, a1: i32) -> f32;
-    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetGroundAir(a0: *mut HSD_GObj) -> i32;
     fn it_8026B3A8(a0: *mut HSD_GObj);
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn it_8026EECC(a0: *mut HSD_GObj, a1: i32);

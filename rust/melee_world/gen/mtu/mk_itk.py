@@ -74,7 +74,7 @@ EFFECTS = {
     "Item_80268B18": (SPAWN_EFFECT_C, SPAWN_EFFECT_R),
     "it_8026BB88": vec_out(1),
     "it_8026BB68": vec_out(1),
-    "ftLib_80086644": vec_out(1),
+    "ftLib_GetPos": vec_out(1),
     "lb_8000B1CC": both(vec_out(1), vec_out(2)),
     "mpGetSpeed": vec_out(2),
     "mpCheckAllRemap": (
@@ -90,7 +90,7 @@ TUS["ithinoarashi"] = dict(
 )
 TUS["ithitodeman"] = dict(
     attr="itHitodemanAttributes", var=("hitodeman", "itHitodeman_ItemVars"), spawn="rand",
-    ret={"ftLib_80086198": ("((fv() & 1) ? &REFG : 0)", "if fv() & 1 != 0 { &raw mut super::REFG } else { core::ptr::null_mut() }")},
+    ret={"ftLib_FindLowestPercentOpponent": ("((fv() & 1) ? &REFG : 0)", "if fv() & 1 != 0 { &raw mut super::REFG } else { core::ptr::null_mut() }")},
     setup_c="    ITEM.xDD4_itemVar.hitodeman.x90 = (rnd() & 1) ? &OWNG : 0;",
     setup_r="    ITEM.xDD4_itemVar.hitodeman.x90 = if rnd() & 1 != 0 { &raw mut OWNG } else { null_mut() };",
 )
@@ -244,7 +244,7 @@ def build_spec(stem, cfg):
     ret.update(cfg.get("ret", {}))
     return dict(crate="melee_items", src=src, types=types, skip_data=["ip"],
                 skip_stubs=MATH_SKIP, ret=ret, effects=dict(EFFECTS), custom_stubs={"efSync_Spawn": EFSYNC},
-                null_ret_ok=["Item_80268B18", "ftLib_80086198"])
+                null_ret_ok=["Item_80268B18", "ftLib_FindLowestPercentOpponent"])
 
 
 def gen_tu_common_ret():

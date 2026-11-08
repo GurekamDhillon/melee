@@ -17,7 +17,7 @@ void Item_8026AB54(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj 
 __typeof__(enum ftLk_SpecialNIndex) ftKb_SpecialNLk800FB394(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(enum ftLk_SpecialNIndex)) ((u32) (fv() % 7)); }
 void ftKb_SpecialNLk800FB444(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); }
 __typeof__(int) ftKb_SpecialNLk800FB470(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(float) ftLib_800869D4(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(float) ftLib_GetModelScale(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 __typeof__(enum ftLk_SpecialNIndex) ftLk_SpecialN_GetIndex(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(enum ftLk_SpecialNIndex)) ((u32) (fv() % 7)); }
 __typeof__(int) ftLk_SpecialN_IsActiveAnd2071b6(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void ftLk_SpecialN_UnsetFv14(__typeof__(struct HSD_GObj *) a0) { T(1013); T(PI((const void*) a0)); }
@@ -1471,7 +1471,7 @@ static void freg_all(void)
 // stub ftKb_SpecialNLk800FB394 = 1007
 // stub ftKb_SpecialNLk800FB444 = 1008
 // stub ftKb_SpecialNLk800FB470 = 1009
-// stub ftLib_800869D4 = 1010
+// stub ftLib_GetModelScale = 1010
 // stub ftLk_SpecialN_GetIndex = 1011
 // stub ftLk_SpecialN_IsActiveAnd2071b6 = 1012
 // stub ftLk_SpecialN_UnsetFv14 = 1013

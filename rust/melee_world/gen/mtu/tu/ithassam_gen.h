@@ -55,9 +55,9 @@ void (Item_8026AE84)(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof_
 __typeof__(float) (atan2f)(__typeof__(float) a0, __typeof__(float) a1) { T(1004); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rg()); }
 void (efLib_PauseAll)(__typeof__(struct HSD_GObj *) a0) { T(1005); T(PI((const void*) a0)); }
 void (efLib_ResumeAll)(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); }
-__typeof__(struct HSD_GObj *) (ftLib_8008627C)(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? (HSD_GObj*) 0 : &FG[rnd() % 3u])); }
-void (ftLib_800866DC)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1008); T(PI((const void*) a0)); T(PI((const void*) a1)); { a1->x = rg(); a1->y = rg(); a1->z = rg(); } }
-__typeof__(int) (ftLib_80086FD4)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
+__typeof__(struct HSD_GObj *) (ftLib_FindNearestOpponent)(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? (HSD_GObj*) 0 : &FG[rnd() % 3u])); }
+void (ftLib_GetCameraBonePos)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1008); T(PI((const void*) a0)); T(PI((const void*) a1)); { a1->x = rg(); a1->y = rg(); a1->z = rg(); } }
+__typeof__(int) (ftLib_IsSamePlayer)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
 __typeof__(int) (gm_8016B168)(void) { T(1010); return (__typeof__(int)) ((int) (fv() & 1)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1011); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 void (it_8026D62C)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1) { T(1012); T(PI((const void*) a0)); T(FI((const void*) a1)); }
@@ -1842,9 +1842,9 @@ static void freg_all(void)
 // stub atan2f = 1004
 // stub efLib_PauseAll = 1005
 // stub efLib_ResumeAll = 1006
-// stub ftLib_8008627C = 1007
-// stub ftLib_800866DC = 1008
-// stub ftLib_80086FD4 = 1009
+// stub ftLib_FindNearestOpponent = 1007
+// stub ftLib_GetCameraBonePos = 1008
+// stub ftLib_IsSamePlayer = 1009
 // stub gm_8016B168 = 1010
 // stub it_8026B894 = 1011
 // stub it_8026D62C = 1012

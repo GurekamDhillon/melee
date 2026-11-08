@@ -209,7 +209,7 @@ pub fn boot_sound(iso: &str, trace: bool) -> Result<(), String> {
         class_of: Some(|g| unsafe { (*(g as *const HSD_GObj)).classifier as i32 }),
         fighter_pos: Some(|g| unsafe {
             let mut p = melee_types::Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-            melee_items::tu::ftlib::ftLib_80086644(g as *mut _, &mut p);
+            melee_items::tu::ftlib::ftLib_GetPos(g as *mut _, &mut p);
             [p.x, p.y, p.z]
         }),
         item_pos: Some(|g| unsafe {

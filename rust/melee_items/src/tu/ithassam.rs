@@ -41,9 +41,9 @@ pub mod ext {
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
     fn efLib_PauseAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::efn::eflib::efLib_PauseAll(a0) };
     fn efLib_ResumeAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::efn::eflib::efLib_ResumeAll(a0) };
-    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086FD4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn ftLib_FindNearestOpponent(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetCameraBonePos(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_IsSamePlayer(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn gm_8016B168() -> i32;
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_26B1::it_8026B894(a0, a1) as _ };
     fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026D62C(a0, a1) };
@@ -178,10 +178,10 @@ pub unsafe extern "C" fn itHassam_802CDE1C(vec: *mut Vec3, gobj: *mut HSD_GObj) 
     let mut closest_fgobj: *mut HSD_GObj = null_mut();
     let mut cur_fgobj: *mut HSD_GObj = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     while !cur_fgobj.is_null() {
-        if ext::ftLib_80086FD4(gobj, cur_fgobj) == 0 {
+        if ext::ftLib_IsSamePlayer(gobj, cur_fgobj) == 0 {
             let cur_fp = (*cur_fgobj).user_data as *mut Fighter;
             if (*cur_fp).x221F_b3() == 0 && (ext::gm_8016B168() == 0 || fp.is_null() || (*cur_fp).team != (*fp).team) {
-                ext::ftLib_800866DC(cur_fgobj, &raw mut sp20);
+                ext::ftLib_GetCameraBonePos(cur_fgobj, &raw mut sp20);
                 let y_dist = (*vec).y - sp20.y;
                 let x_dist = (*vec).x - sp20.x;
                 let temp_f0 = fmadds(x_dist, x_dist, y_dist * y_dist);
@@ -194,7 +194,7 @@ pub unsafe extern "C" fn itHassam_802CDE1C(vec: *mut Vec3, gobj: *mut HSD_GObj) 
         cur_fgobj = (*cur_fgobj).next;
     }
     if closest_fgobj.is_null() {
-        closest_fgobj = ext::ftLib_8008627C(vec, gobj);
+        closest_fgobj = ext::ftLib_FindNearestOpponent(vec, gobj);
     }
     closest_fgobj
 }
@@ -209,7 +209,7 @@ pub unsafe extern "C" fn itHassam_802CDF28(gobj: *mut HSD_GObj) {
     if var_r3.is_null() {
         var_r3 = (*ip).owner;
     }
-    ext::ftLib_800866DC(var_r3, &raw mut sp1c);
+    ext::ftLib_GetCameraBonePos(var_r3, &raw mut sp1c);
     sp1c.y += (*attr).x8;
     ext::lbVector_Diff(&raw mut sp1c, &raw mut (*ip).pos, &raw mut sp10);
     (*ip).xDD4_itemVar.hassam.x5C.x = (*attr).x4;

@@ -690,7 +690,7 @@ def main():
             if not cands:
                 cands = legacy.get(h['name'], [])  # pre-consolidation home outside tu/ (until steps 21 / 23)
             if not cands:
-                cands = [c for k, v in legacy.items() if k.lower() == h['name'].lower() for c in v]  # ftLib_8008702C vs ftlib_8008702c
+                cands = [c for k, v in legacy.items() if k.lower() == h['name'].lower() for c in v]  # ftLib_IncFighterRefCount vs ftlib_incfighterrefcount
             sc = statics.get(h['name'], [])
             if not cands and sc and h['npar'] == 0 and h['hasret'] and key not in skip:
                 # a function-shaped hook for a C global (`HSD_GObj_JObjKind()`): read the canonical static

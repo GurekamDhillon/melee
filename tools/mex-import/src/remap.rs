@@ -216,6 +216,9 @@ pub struct GuestSpace {
     /// guest store of a code address into a pointer field stores what this gives, and a load of
     /// such a native pointer gives the guest address back (`fn_guest`).
     pub fn_native: Option<fn(u32) -> Option<usize>>,
+    /// The record an untyped (`void*`) pointer field holds, when the host can tell (`HSD_GObj.user_data` by the
+    /// gobj's class, `HSD_GObj.hsd_obj` a joint): (owner record, GC offset, owner object, the pointer).
+    pub void_pointee: Option<fn(&'static str, u32, *mut u8, usize) -> Option<&'static str>>,
     pub fn_guest: Option<fn(usize) -> Option<u32>>,
     /// Native objects the space made itself (`materialize`).
     owned: Vec<Box<[u64]>>,
@@ -223,7 +226,7 @@ pub struct GuestSpace {
 
 impl GuestSpace {
     pub fn new() -> GuestSpace {
-        GuestSpace { layouts: Layouts::new(), regions: vec![], next: AUTO_BASE, trace: None, ptr_override: HashMap::new(), fn_native: None, fn_guest: None, owned: Vec::new() }
+        GuestSpace { layouts: Layouts::new(), regions: vec![], next: AUTO_BASE, trace: None, ptr_override: HashMap::new(), fn_native: None, fn_guest: None, void_pointee: None, owned: Vec::new() }
     }
 
     /// Plain guest memory at `base` (code, stack, mod data).
@@ -398,6 +401,7 @@ impl GuestSpace {
                     }
                     // SAFETY: add_native's contract; nat is inside the native object.
                     let p = unsafe { (ptr.add(nat) as *const usize).read_unaligned() };
+                    let pointee = pointee.or_else(|| self.void_pointee.and_then(|f| f(rec, o, ptr, p)));
                     return self.handle_for(p, pointee).map(|h| h as u64).map_err(|_| Fault::Mem(ea));
                 }
                 let mut v = 0u64;

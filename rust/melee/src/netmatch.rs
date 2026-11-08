@@ -245,7 +245,15 @@ pub mod engine_game {
                 let bits = self.slippi_bits.get(&(self.frame() + 1)).copied().unwrap_or([0; 4]);
                 (0..2).map(|i| format!("{:04X} {} {} {} {} {} {} {:02X}", p[i].button, p[i].stickX, p[i].stickY, p[i].substickX, p[i].substickY, p[i].triggerLeft, p[i].triggerRight, bits[i])).collect::<Vec<_>>().join(" | ")
             });
+            // `slippi-replay --slp`: the straight (no rollback) run is recorded as a Slippi replay
+            let slp = crate::slp_export::active();
+            if slp {
+                crate::slp_export::begin_tick(&p);
+            }
             timed(4, || self.e.tick());
+            if slp {
+                crate::slp_export::end_tick(!self.e.ended);
+            }
             let r = self.e.neutral_row();
             let mut t = format!("{:08X},{:08X},{},{:08X}", r[0], r[1], r[2], r[3]);
             for w in &r[4..16] {
@@ -372,7 +380,14 @@ pub mod engine_game {
                 }
             }
             self.e.set_pads(Some([PADStatus::zeroed(); 4]));
+            let slp = crate::slp_export::active();
+            if slp {
+                crate::slp_export::begin_tick(&[PADStatus::zeroed(); 4]);
+            }
             self.e.tick();
+            if slp {
+                crate::slp_export::end_tick(true);
+            }
             self.e.frames -= 1;
         }
         pub fn open_scene(args: &[String], scene: &str, seed: u32) -> Result<Self, String> {

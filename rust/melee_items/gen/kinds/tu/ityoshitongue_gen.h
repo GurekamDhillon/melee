@@ -11,7 +11,7 @@ static void fill_ItemCommonData(ItemCommonData* p);
 static void hash_ItemCommonData(const ItemCommonData* p);
 void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1000); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 void (Item_8026A8EC)(__typeof__(struct HSD_GObj *) a0) { T(1001); T(PI((const void*) a0)); }
-__typeof__(struct HSD_JObj *) (ftLib_80086630)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1002); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (((fv() & 1) ? &JO[3] : 0)); }
+__typeof__(struct HSD_JObj *) (ftLib_GetPartJObj)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1002); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (((fv() & 1) ? &JO[3] : 0)); }
 __typeof__(enum Fighter_Part) (ftYs_SpecialN_GetBoneIndex)(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const void*) a0)); return (__typeof__(enum Fighter_Part)) (fv()); }
 void (it_8026BD54)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); }
 void (it_8026C220)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); }
@@ -1613,7 +1613,7 @@ static void freg_all(void)
 }
 // stub Item_80268E5C = 1000
 // stub Item_8026A8EC = 1001
-// stub ftLib_80086630 = 1002
+// stub ftLib_GetPartJObj = 1002
 // stub ftYs_SpecialN_GetBoneIndex = 1003
 // stub it_8026BD54 = 1004
 // stub it_8026C220 = 1005

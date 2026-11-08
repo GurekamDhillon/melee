@@ -1315,8 +1315,8 @@ unsafe extern "C" fn s_HSD_JObjClearFlagsAll(a0: *mut melee_types::HSD_JObj, a1:
 unsafe extern "C" fn s_grMaterial_801C8CDC(a0: *mut melee_types::HSD_GObj) { let v = vv(); v.call_begin("grMaterial_801C8CDC"); v.arg_p(a0 as usize); v.call_end();     }
 unsafe extern "C" fn s_grLib_801C96F8(a0: i32, a1: i32, a2: *mut melee_types::Vec) -> *mut melee_types::HSD_Generator { let v = vv(); v.call_begin("grLib_801C96F8"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.arg_p(a2 as usize); v.call_end();    v.ret_ptr("grLib_801C96F8") as _ }
 unsafe extern "C" fn s_Ground_801C5440(a0: *mut melee_types::Ground, a1: i32, a2: u32) { let v = vv(); v.call_begin("Ground_801C5440"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.arg_u(a2 as u64); v.call_end();     }
-unsafe extern "C" fn s_ftLib_80086644(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { let v = vv(); v.call_begin("ftLib_80086644"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();   if !a1.is_null() { for k in 0..3usize { *(a1 as *mut u32).add(k) = v.leaf_f32(&format!("out:ftLib_80086644#1[{}]", k)); } }  }
-unsafe extern "C" fn s_ftLib_80086684(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { let v = vv(); v.call_begin("ftLib_80086684"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();   if !a1.is_null() { for k in 0..3usize { *(a1 as *mut u32).add(k) = v.leaf_f32(&format!("out:ftLib_80086684#1[{}]", k)); } }  }
+unsafe extern "C" fn s_ftLib_GetPos(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { let v = vv(); v.call_begin("ftLib_GetPos"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();   if !a1.is_null() { for k in 0..3usize { *(a1 as *mut u32).add(k) = v.leaf_f32(&format!("out:ftLib_GetPos#1[{}]", k)); } }  }
+unsafe extern "C" fn s_ftLib_GetPrevPos(a0: *mut melee_types::HSD_GObj, a1: *mut melee_types::Vec) { let v = vv(); v.call_begin("ftLib_GetPrevPos"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();   if !a1.is_null() { for k in 0..3usize { *(a1 as *mut u32).add(k) = v.leaf_f32(&format!("out:ftLib_GetPrevPos#1[{}]", k)); } }  }
 unsafe extern "C" fn s_Ground_801C43A4(a0: *mut core::ffi::c_void) { let v = vv(); v.call_begin("Ground_801C43A4"); v.arg_p(a0 as usize); v.call_end();     }
 unsafe extern "C" fn s_Ground_GetStageGObj(a0: i32) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("Ground_GetStageGObj"); v.arg_i(a0 as i64); v.call_end();    v.ret_ptr("Ground_GetStageGObj") as _ }
 unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();     }
@@ -1327,7 +1327,7 @@ unsafe extern "C" fn s_HSD_JObjSetMtxDirtySub(a0: *mut melee_types::HSD_JObj) { 
 unsafe extern "C" fn s_Ground_801C2090(a0: *mut melee_types::_GXColor) -> i32 { let v = vv(); v.call_begin("Ground_801C2090"); v.arg_p(a0 as usize); v.call_end();  if !a0.is_null() { let x: u64 = v.leaf_int("out:Ground_801C2090#0", 32, 0); core::ptr::copy_nonoverlapping(&x as *const u64 as *const u8, a0 as *mut u8, 4); }  v.ret_int("Ground_801C2090", 32, 1) as _ }
 unsafe extern "C" fn s_Ground_801C205C(a0: *mut melee_types::_GXColor) { let v = vv(); v.call_begin("Ground_801C205C"); v.arg_bytes(a0 as *const u8, 4); v.call_end();     }
 unsafe extern "C" fn s_HSD_LObjSetColor(a0: *mut melee_types::HSD_LObj, a1: melee_types::GXColor) { let v = vv(); v.call_begin("HSD_LObjSetColor"); v.arg_p(a0 as usize); v.arg_u(unsafe { core::mem::transmute_copy::<_, u32>(&a1) } as u64); v.call_end();     }
-unsafe extern "C" fn s_ftLib_80086C9C(a0: i32, a1: i32) { let v = vv(); v.call_begin("ftLib_80086C9C"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.call_end();     }
+unsafe extern "C" fn s_ftLib_StartRumbleAll(a0: i32, a1: i32) { let v = vv(); v.call_begin("ftLib_StartRumbleAll"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.call_end();     }
 unsafe extern "C" fn s_grAnime_801C7B24(a0: *mut melee_types::HSD_GObj, a1: i32, a2: u32, a3: f32) { let v = vv(); v.call_begin("grAnime_801C7B24"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.arg_u(a2 as u64); v.arg_f32(a3.to_bits()); v.call_end();     }
 unsafe extern "C" fn s_Ground_801C13D0(a0: i32, a1: i32) -> *mut melee_types::HSD_JObj { let v = vv(); v.call_begin("Ground_801C13D0"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.call_end();    v.ret_ptr("Ground_801C13D0") as _ }
 unsafe extern "C" fn s_HSD_JObjSetFlagsAll(a0: *mut melee_types::HSD_JObj, a1: u32) { let v = vv(); v.call_begin("HSD_JObjSetFlagsAll"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.call_end();     }
@@ -1488,8 +1488,8 @@ pub fn glue() -> Glue {
             ("grMaterial_801C8CDC", tu::ext::grMaterial_801C8CDC as *const () as usize),
             ("grLib_801C96F8", tu::ext::grLib_801C96F8 as *const () as usize),
             ("Ground_801C5440", tu::ext::Ground_801C5440 as *const () as usize),
-            ("ftLib_80086644", tu::ext::ftLib_80086644 as *const () as usize),
-            ("ftLib_80086684", tu::ext::ftLib_80086684 as *const () as usize),
+            ("ftLib_GetPos", tu::ext::ftLib_GetPos as *const () as usize),
+            ("ftLib_GetPrevPos", tu::ext::ftLib_GetPrevPos as *const () as usize),
             ("Ground_801C43A4", tu::ext::Ground_801C43A4 as *const () as usize),
             ("Ground_GetStageGObj", tu::ext::Ground_GetStageGObj as *const () as usize),
             ("GObj_SetupGXLink", tu::ext::GObj_SetupGXLink as *const () as usize),
@@ -1500,7 +1500,7 @@ pub fn glue() -> Glue {
             ("Ground_801C2090", tu::ext::Ground_801C2090 as *const () as usize),
             ("Ground_801C205C", tu::ext::Ground_801C205C as *const () as usize),
             ("HSD_LObjSetColor", tu::ext::HSD_LObjSetColor as *const () as usize),
-            ("ftLib_80086C9C", tu::ext::ftLib_80086C9C as *const () as usize),
+            ("ftLib_StartRumbleAll", tu::ext::ftLib_StartRumbleAll as *const () as usize),
             ("grAnime_801C7B24", tu::ext::grAnime_801C7B24 as *const () as usize),
             ("Ground_801C13D0", tu::ext::Ground_801C13D0 as *const () as usize),
             ("HSD_JObjSetFlagsAll", tu::ext::HSD_JObjSetFlagsAll as *const () as usize),
@@ -1556,8 +1556,8 @@ pub fn glue() -> Glue {
         tu::ext::H_grMaterial_801C8CDC = Some(s_grMaterial_801C8CDC);
         tu::ext::H_grLib_801C96F8 = Some(s_grLib_801C96F8);
         tu::ext::H_Ground_801C5440 = Some(s_Ground_801C5440);
-        tu::ext::H_ftLib_80086644 = Some(s_ftLib_80086644);
-        tu::ext::H_ftLib_80086684 = Some(s_ftLib_80086684);
+        tu::ext::H_ftLib_GetPos = Some(s_ftLib_GetPos);
+        tu::ext::H_ftLib_GetPrevPos = Some(s_ftLib_GetPrevPos);
         tu::ext::H_Ground_801C43A4 = Some(s_Ground_801C43A4);
         tu::ext::H_Ground_GetStageGObj = Some(s_Ground_GetStageGObj);
         tu::ext::H_GObj_SetupGXLink = Some(s_GObj_SetupGXLink);
@@ -1568,7 +1568,7 @@ pub fn glue() -> Glue {
         tu::ext::H_Ground_801C2090 = Some(s_Ground_801C2090);
         tu::ext::H_Ground_801C205C = Some(s_Ground_801C205C);
         tu::ext::H_HSD_LObjSetColor = Some(s_HSD_LObjSetColor);
-        tu::ext::H_ftLib_80086C9C = Some(s_ftLib_80086C9C);
+        tu::ext::H_ftLib_StartRumbleAll = Some(s_ftLib_StartRumbleAll);
         tu::ext::H_grAnime_801C7B24 = Some(s_grAnime_801C7B24);
         tu::ext::H_Ground_801C13D0 = Some(s_Ground_801C13D0);
         tu::ext::H_HSD_JObjSetFlagsAll = Some(s_HSD_JObjSetFlagsAll);

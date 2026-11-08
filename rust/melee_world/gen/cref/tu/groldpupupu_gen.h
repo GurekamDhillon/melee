@@ -35,8 +35,8 @@ void HSD_JObjSetMtxDirtySub(__typeof__(struct HSD_JObj *) a0) { T(1015); T(PI((c
 __typeof__(float) HSD_Randf(void) { T(1016); return (__typeof__(float)) (rg()); }
 __typeof__(int) HSD_Randi(__typeof__(int) a0) { T(1017); T((u32) a0); return (__typeof__(int)) ((a0 > 0 ? (int) (rnd() % (u32) a0) : 0)); }
 void ftCo_800C06E8(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(void *) a2) { T(1018); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
-__typeof__(float) ftLib_800864A8(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1019); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(float)) (rg()); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1020); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
+__typeof__(float) ftLib_GetOpponentsDir(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1019); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(float)) (rg()); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1020); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
 void grAnime_801C7FF8(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(int) a3, __typeof__(float) a4, __typeof__(float) a5) { T(1021); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); T(B(a4)); T(B(a5)); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1022); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 __typeof__(int) grAnime_801C83D0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1023); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
@@ -1257,8 +1257,8 @@ static void freg_all(void)
 // stub HSD_Randf = 1016
 // stub HSD_Randi = 1017
 // stub ftCo_800C06E8 = 1018
-// stub ftLib_800864A8 = 1019
-// stub ftLib_80086644 = 1020
+// stub ftLib_GetOpponentsDir = 1019
+// stub ftLib_GetPos = 1020
 // stub grAnime_801C7FF8 = 1021
 // stub grAnime_801C8138 = 1022
 // stub grAnime_801C83D0 = 1023

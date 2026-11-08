@@ -60,14 +60,14 @@ fn install() {
             t(b(base));
             base
         });
-        m::ext::hook::ftLib_800867E8 = Some(|g| t(0x10 + e(g)));
-        m::ext::hook::ftLib_8008688C = Some(|g| t(0x20 + e(g)));
+        m::ext::hook::ftLib_DisableInput = Some(|g| t(0x10 + e(g)));
+        m::ext::hook::ftLib_EnableInput = Some(|g| t(0x20 + e(g)));
         m::ext::hook::ftKb_SpecialN_800EED50 = Some(|a, c| {
             t(0x30);
             t(a as u32);
             t(c as u32)
         });
-        m::ext::hook::ftLib_8008701C = Some(|g| {
+        m::ext::hook::ftLib_IsSleeping = Some(|g| {
             t(0x40 + e(g));
             (tr() >> 3) & 1 != 0
         });
@@ -83,12 +83,12 @@ fn install() {
             t(c as u32)
         });
         m::ext::hook::ifStatus_802F6E1C = Some(|s| t(0x80 + s as u32));
-        m::ext::hook::ftLib_800873CC = Some(|g| {
+        m::ext::hook::ftLib_IsRebirth = Some(|g| {
             t(0x90 + e(g));
             (tr() >> 5) & 1 != 0
         });
         m::ext::hook::ftLib_80087140 = Some(|g| t(0xA0 + e(g)));
-        m::ext::hook::ftLib_80086664 = Some(|g, v| {
+        m::ext::hook::ftLib_SetPos = Some(|g, v| {
             t(0xB0 + e(g));
             t(b((*v).x));
             t(b((*v).y));
@@ -118,7 +118,7 @@ fn install() {
             t(0x110 + s as u32);
             (tr() % 97) as i32
         });
-        m::ext::hook::ftLib_800870F0 = Some(|g, v| {
+        m::ext::hook::ftLib_SetPercent = Some(|g, v| {
             t(0x120 + e(g));
             t(v as u32)
         });
@@ -142,7 +142,7 @@ fn install() {
             t(0x190 + e(g));
             (tr() >> 2) & 1 != 0
         });
-        m::ext::hook::ftLib_80086F80 = Some(|g| {
+        m::ext::hook::ftLib_GetNameTagHeight = Some(|g| {
             t(0x1A0 + e(g));
             (tr() % 777) as i32 as f32 / 3.0
         });
@@ -150,7 +150,7 @@ fn install() {
             t(0x1B0 + e(g));
             tr() % 40
         });
-        m::ext::hook::ftLib_80087300 = Some(|g| {
+        m::ext::hook::ftLib_GetLastAttackerSlot = Some(|g| {
             t(0x1C0 + e(g));
             (tr() % 11) as i32
         });
@@ -166,11 +166,11 @@ fn install() {
             t(0x1F0 + e(g));
             t(v as u32)
         });
-        m::ext::hook::ftLib_80086BB4 = Some(|g| {
+        m::ext::hook::ftLib_IsCameraSubjectInBounds = Some(|g| {
             t(0x200 + e(g));
             (tr() >> 6) & 1 != 0
         });
-        m::ext::hook::ftLib_80086B90 = Some(|g, v| {
+        m::ext::hook::ftLib_GetCameraSubjectBonePos = Some(|g, v| {
             t(0x210 + e(g));
             (*v).x = (tr() % 100) as i32 as f32;
             (*v).y = -1.0;

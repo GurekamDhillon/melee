@@ -91,7 +91,7 @@ pub mod ext {
     fn ftFx_SpecialS_CopyGhostPosIndexed(a0: *mut HSD_GObj, a1: i32, a2: *mut Vec);
     fn ftFx_SpecialS_GetCmdVar2(a0: *mut HSD_GObj) -> i32;
     fn ftFx_SpecialS_ReturnFloatVarIndexed(a0: *mut HSD_GObj, a1: i32) -> f32;
-    fn ftLib_800865CC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_800865CC(a0) };
+    fn ftLib_GetGroundAir(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetGroundAir(a0) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
@@ -247,7 +247,7 @@ pub unsafe extern "C" fn it_8029CFF0(item_gobj: *mut Item_GObj) {
     (*item).xD5C = 0;
     (*item).xDD4_itemVar.foxillusion.xDD4 = (*(*(*item).xC4_article_data).x10_modelDesc).x0_joint;
     ext::it_8026B3A8(item_gobj);
-    if ext::ftLib_800865CC((*item).owner) == 1 {
+    if ext::ftLib_GetGroundAir((*item).owner) == 1 {
         ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
     } else {
         ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);

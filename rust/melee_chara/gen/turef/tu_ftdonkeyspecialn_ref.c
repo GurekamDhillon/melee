@@ -7,7 +7,7 @@
 #include "ft/inlines.h"
 #include "ft/ftanim.h"
 #include "ft/ftcoll.h"
-#include "ft/ftcolanim.h"
+#include "ft/ftcolanimlist.h"
 #include "ft/ftcommon.h"
 #include "ft/ft_0892.h"
 #include "ft/kinds/ftCommon/ftCo_Escape.h"

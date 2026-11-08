@@ -79,10 +79,10 @@ pub mod ext {
     fn Wb_RenderActive() -> i32;
     fn atan2f(a0: f32, a1: f32) -> f32 = |a0: f32, a1: f32| unsafe { melee_runtime::lbtrigf::atan2f(a0 as _, a1 as _) as _ };
     fn ftDrawCommon_80080C28(a0: *mut HSD_GObj, a1: i32);
-    fn ftLib_80086B64(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B64(a0 as _) as _ };
+    fn ftLib_IsOffscreen(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsOffscreen(a0 as _) as _ };
     fn ftLib_80086B80(a0: *mut HSD_GObj) -> f32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ };
-    fn ftLib_80086B90(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086B90(a0 as _, a1 as _); } };
-    fn ftLib_80086ED0(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetCameraSubjectBonePos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetCameraSubjectBonePos(a0 as _, a1 as _); } };
+    fn ftLib_CanBeMagnified(a0: *mut HSD_GObj) -> i32;
     fn ftLib_UpdateLogicOffCamera(a0: *mut HSD_GObj);
     fn gmVs_GetSceneController() -> *mut VsSceneController = || unsafe { crate::gm::gmVs_GetSceneController() as _ };
     fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32;
@@ -198,7 +198,7 @@ pub unsafe extern "C" fn ifMagnify_ViewAspect() -> f32 {
 pub unsafe extern "C" fn ifMagnify_VisualOffscreen(fighter: *mut HSD_GObj) -> bool {
     melee_core::ct!("ifMagnify_VisualOffscreen");
     let mut world = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    ext::ftLib_80086B90(fighter, &mut world);
+    ext::ftLib_GetCameraSubjectBonePos(fighter, &mut world);
     ext::Camera_80030BBC(&mut world, null_mut()) == 0
 }
 
@@ -326,7 +326,7 @@ pub unsafe extern "C" fn ifMagnify_802FB8C0(gobj: *mut HSD_GObj, code: i32) {
         if !fighter_gobj.is_null() {
             {
                 let mut world = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-                ext::ftLib_80086B90(fighter_gobj, &mut world);
+                ext::ftLib_GetCameraSubjectBonePos(fighter_gobj, &mut world);
                 ext::Camera_80030BBC(&mut world, &mut screen_pos);
             }
             dir.x = screen_pos.x as f32 - 320.0;
@@ -425,14 +425,14 @@ pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
             if (*player).state.ignore_offscreen() != 0
                 || fighter_gobj.is_null()
                 || !ifMagnify_VisualOffscreen(fighter_gobj)
-                || ext::ftLib_80086ED0(fighter_gobj) == 0
+                || ext::ftLib_CanBeMagnified(fighter_gobj) == 0
             {
                 continue;
             }
 
             let scale = ext::ftLib_80086B80(fighter_gobj) / 8.0f32;
             ext::HSD_CObjSetOrtho(cobj, top * scale, bottom * scale, left * scale, right * scale);
-            ext::ftLib_80086B90(fighter_gobj, &mut interest_pos);
+            ext::ftLib_GetCameraSubjectBonePos(fighter_gobj, &mut interest_pos);
             ext::HSD_CObjSetInterest(cobj, &mut interest_pos);
             interest_pos.z = 300.0;
             ext::HSD_CObjSetEyePosition(cobj, &mut interest_pos);
@@ -732,8 +732,8 @@ pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() {
         ifMagnify_LogicOffscreen[i] = (show
             && (*magnify).player[i].state.ignore_offscreen() == 0
             && !fighter_gobj.is_null()
-            && ext::ftLib_80086B64(fighter_gobj) != 0
-            && ext::ftLib_80086ED0(fighter_gobj) != 0) as u8;
+            && ext::ftLib_IsOffscreen(fighter_gobj) != 0
+            && ext::ftLib_CanBeMagnified(fighter_gobj) != 0) as u8;
     }
     if !ext::Camera_80030A50().is_null() {
         ext::Camera_8002A4AC(ext::Camera_80030A50());

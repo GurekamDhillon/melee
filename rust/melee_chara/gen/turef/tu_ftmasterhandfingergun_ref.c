@@ -17,7 +17,7 @@ void ftAnim_8006EBA4(HSD_GObj* g) { (void) g; }
 void ftAnim_SetAnimRate(HSD_GObj* g, float r) { (void) g; RATE = r; RATE_SET++; }
 int HSD_Randi(int n) { (void) n; return RANDI_RET; }
 int ftAnim_IsFramesRemaining(HSD_GObj* g) { (void) g; return FRAMES_LEFT; }
-s32 ftLib_80087120(HSD_GObj* g) { (void) g; return PERCENT; }
+s32 ftLib_GetPercent(HSD_GObj* g) { (void) g; return PERCENT; }
 void lb_8000B1CC(HSD_JObj* j, Vec3* p0, Vec3* p1) { (void) j; (void) p0; p1->x = 1.5f; p1->y = -2.25f; p1->z = 0.5f; }
 static float BUL[8];
 void it_802F0AE0(Item_GObj* g, Vec3* prev, Vec3* pos, ItemKind kind, s32 msid, f32 facing, f32 vx, f32 vy)

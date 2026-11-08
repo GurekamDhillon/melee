@@ -348,7 +348,7 @@ pub fn set_hud_damage(slot: i32, v: i32) {
         stam(p)[t] = v as i16;
         let e = ent(p, i);
         if !e.is_null() {
-            h::ftlib_800870f0(e, v);
+            h::ftlib_setpercent(e, v);
         }
     }
 }
@@ -601,7 +601,7 @@ pub use crate::tu::player::Player_80036844 as player_80036844;
 
 /// `Player_80036978`.
 pub fn player_80036978(slot: i32, pos: &mut Vec3) {
-    h::ftlib_80086b90(ent(player(slot), 0), pos);
+    h::ftlib_getcamerasubjectbonepos(ent(player(slot), 0), pos);
 }
 
 /// `Player_MexSetMapping(ckind, fkind)` (TARGET_PC).

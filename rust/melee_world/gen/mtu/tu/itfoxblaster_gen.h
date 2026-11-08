@@ -38,8 +38,8 @@ __typeof__(int) ftKb_SpecialNFx_800FDD14(__typeof__(struct HSD_GObj *) a0) { T(1
 __typeof__(enum ftFx_SpecialNIndex) ftKb_SpecialNFx_800FDD4C(__typeof__(struct HSD_GObj *) a0) { T(1022); T(PI((const void*) a0)); return (__typeof__(enum ftFx_SpecialNIndex)) ((fv() % 11)); }
 __typeof__(int) ftKb_SpecialNFx_800FDDF4(__typeof__(struct HSD_GObj *) a0) { T(1023); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 3)); }
 void ftKb_SpecialNFx_800FDEB4(__typeof__(struct HSD_GObj *) a0) { T(1024); T(PI((const void*) a0)); }
-__typeof__(float) ftLib_800865C0(__typeof__(struct HSD_GObj *) a0) { T(1025); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1026); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+__typeof__(float) ftLib_GetFacingDir(__typeof__(struct HSD_GObj *) a0) { T(1025); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1026); T(PI((const void*) a0)); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
 __typeof__(int) it_8026B894(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1027); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 static void fill_HSD_GObj(HSD_GObj* p)
 {
@@ -1752,6 +1752,6 @@ static void freg_all(void)
 // stub ftKb_SpecialNFx_800FDD4C = 1022
 // stub ftKb_SpecialNFx_800FDDF4 = 1023
 // stub ftKb_SpecialNFx_800FDEB4 = 1024
-// stub ftLib_800865C0 = 1025
-// stub ftLib_80086644 = 1026
+// stub ftLib_GetFacingDir = 1025
+// stub ftLib_GetPos = 1026
 // stub it_8026B894 = 1027

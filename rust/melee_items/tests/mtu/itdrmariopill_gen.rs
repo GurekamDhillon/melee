@@ -23,8 +23,8 @@ pub fn install() {
         ftDr_Init_80149844 = Some(|a0| { t(1010); t(pi(a0)); fv() as _ });
         ftDr_Init_801498A0 = Some(|a0| { t(1011); t(pi(a0)); });
         ftDr_Init_801498EC = Some(|a0| { t(1012); t(pi(a0)); fv() as _ });
-        ftLib_80086644 = Some(|a0, a1| { t(1013); t(pi(a0)); t(pi(a1));  if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
-        ftLib_800869D4 = Some(|a0| { t(1014); t(pi(a0)); rg() });
+        ftLib_GetPos = Some(|a0, a1| { t(1013); t(pi(a0)); t(pi(a1));  if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
+        ftLib_GetModelScale = Some(|a0| { t(1014); t(pi(a0)); rg() });
         it_8026B3A8 = Some(|a0| { t(1015); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1016); t(pi(a0)); t(pi(a1)); fv() as _ });
         it_8026BB68 = Some(|a0, a1| { t(1017); t(pi(a0)); t(pi(a1));  if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });

@@ -5325,7 +5325,13 @@ bool mpLib_80056C54(int line_id, Vec3* pos, int* line_id_out, Vec3* vec_out,
             mpLineGetV1Pos(line_id, &vtx_pos);
             dx2 = SQ(cur_pos.x - vtx_pos.x);
             dy2 = SQ(cur_pos.y - vtx_pos.y);
+            #ifdef TARGET_PC
+            /* the console stores below sqrt_tmp harmlessly and returns the square root; the x86 build
+               folded that UB to `return x` (squared lengths, DK Hand Slap hitboxes) */
+            dist = sqrtf_store(dx2 + dy2, sqrt_tmp);
+#else
             dist = sqrtf_store(dx2 + dy2, sqrt_tmp - 4);
+#endif
             flags = mpLineGetKind(line_id);
             if (flags & 0xC) {
                 total_dist += dist;
@@ -5360,7 +5366,13 @@ bool mpLib_80056C54(int line_id, Vec3* pos, int* line_id_out, Vec3* vec_out,
             mpLineGetV0Pos(line_id, &vtx_pos);
             dx2 = SQ(cur_pos.x - vtx_pos.x);
             dy2 = SQ(cur_pos.y - vtx_pos.y);
+            #ifdef TARGET_PC
+            /* the console stores below sqrt_tmp harmlessly and returns the square root; the x86 build
+               folded that UB to `return x` (squared lengths, DK Hand Slap hitboxes) */
+            dist = sqrtf_store(dx2 + dy2, sqrt_tmp);
+#else
             dist = sqrtf_store(dx2 + dy2, sqrt_tmp - 5);
+#endif
             flags = mpLineGetKind(line_id);
             if (flags & 0xC) {
                 total_dist += dist;

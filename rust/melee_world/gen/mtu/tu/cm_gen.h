@@ -104,10 +104,10 @@ void diag_camera_desc(__typeof__(const float *) a0, __typeof__(const float *) a1
 void diag_camera_subject(__typeof__(float) a0, __typeof__(float) a1, __typeof__(float) a2, __typeof__(float) a3, __typeof__(float) a4) { T(1084); T(B(a0)); T(B(a1)); T(B(a2)); T(B(a3)); T(B(a4)); }
 void diag_camera_track(__typeof__(const float *) a0, __typeof__(const float *) a1) { T(1085); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 void diag_game_camera(__typeof__(const float *) a0, __typeof__(const float *) a1, __typeof__(const float *) a2) { T(1086); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1087); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = RNN(); a1->y = RNN(); a1->z = RNN(); } }
-__typeof__(struct CmSubject *) ftLib_80086B74(__typeof__(struct HSD_GObj *) a0) { T(1088); T(PI((const void*) a0)); return (__typeof__(struct CmSubject *)) (((fv() & 3) ? &SUBJ[fv() % 8] : 0)); }
-__typeof__(int) ftLib_8008701C(__typeof__(struct HSD_GObj *) a0) { T(1089); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(int) ftLib_8008732C(__typeof__(struct HSD_GObj *) a0) { T(1090); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1087); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { a1->x = RNN(); a1->y = RNN(); a1->z = RNN(); } }
+__typeof__(struct CmSubject *) ftLib_GetCameraSubject(__typeof__(struct HSD_GObj *) a0) { T(1088); T(PI((const void*) a0)); return (__typeof__(struct CmSubject *)) (((fv() & 3) ? &SUBJ[fv() % 8] : 0)); }
+__typeof__(int) ftLib_IsSleeping(__typeof__(struct HSD_GObj *) a0) { T(1089); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) ftLib_IsDead(__typeof__(struct HSD_GObj *) a0) { T(1090); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(unsigned long long) gm_GetButtonsPressed(__typeof__(unsigned char) a0) { T(1091); T((u32) a0); return (__typeof__(unsigned long long)) (fv64()); }
 __typeof__(unsigned long long) gm_GetButtonsTriggered(__typeof__(unsigned char) a0) { T(1092); T((u32) a0); return (__typeof__(unsigned long long)) (fv64()); }
 __typeof__(int) gm_IsCurrently1PMode_inline(void) { T(1093); return (__typeof__(int)) (fv()); }
@@ -1014,10 +1014,10 @@ static void freg_all(void)
 // stub diag_camera_subject = 1084
 // stub diag_camera_track = 1085
 // stub diag_game_camera = 1086
-// stub ftLib_80086644 = 1087
-// stub ftLib_80086B74 = 1088
-// stub ftLib_8008701C = 1089
-// stub ftLib_8008732C = 1090
+// stub ftLib_GetPos = 1087
+// stub ftLib_GetCameraSubject = 1088
+// stub ftLib_IsSleeping = 1089
+// stub ftLib_IsDead = 1090
 // stub gm_GetButtonsPressed = 1091
 // stub gm_GetButtonsTriggered = 1092
 // stub gm_IsCurrently1PMode_inline = 1093

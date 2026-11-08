@@ -6,7 +6,7 @@
 #include "ft_0C88.h"
 #include "ft_0D4D.h"
 #include "ftcamera.h"
-#include "ftcolanim.h"
+#include "ftcolanimlist.h"
 #include "ftcommon.h"
 #include "ftlib.h"
 #include "ftmetal.h"
@@ -666,6 +666,19 @@ void ftCo_DeadUpFall_Anim(Fighter_GObj* gobj)
             fp->self_vel.z = data->x55C;
             fp->mv.co.unk_deadup.x40 = data->x530;
             fp->mv.co.unk_deadup.x44 = 3;
+#if defined(TARGET_PC)
+            {
+                /* Slippi online FreezeDeadUpFallPhysics @ 0x800D4C1C: the fall velocity is
+                   kept in mv (x48 = vy, x4C = vz) and self_vel is zeroed, so cur_pos stays
+                   where the KO happened. */
+                extern int Slippi_Codes(void);
+                if (Slippi_Codes() == 2) {
+                    *(f32*) &fp->mv.co.unk_deadup.pad_x48 = data->x550;
+                    fp->mv.co.unk_deadup.x4C = data->x55C;
+                    fp->self_vel.x = fp->self_vel.y = fp->self_vel.z = 0.0F;
+                }
+            }
+#endif
             return;
         case 3:
             ftCommon_8007E2FC(gobj);
@@ -706,8 +719,31 @@ void ftCo_DeadUpFall_Phys(Fighter_GObj* gobj)
                       fp->mv.co.unk_deadup.x4C);
         break;
     case 3:
+#if defined(TARGET_PC)
+    {
+        /* Slippi online FreezeDeadUpFallPhysics @ 0x800D4D68: fall on mv's x48 (fsub,
+           max with -terminal), then x5C.y += x48, x5C.z += x4C */
+        extern int Slippi_Codes(void);
+        if (Slippi_Codes() == 2) {
+            f32* vy = (f32*) &fp->mv.co.unk_deadup.pad_x48;
+            f32 v = (f32) ((f64) *vy - (f64) ca->x554);
+            f32 lim = -ca->x558;
+            if (!(v > lim)) {
+                v = lim;
+            }
+            *vy = v;
+            fp->mv.co.unk_deadup.x5C.y = fp->mv.co.unk_deadup.x5C.y + *vy;
+            fp->mv.co.unk_deadup.x5C.z = fp->mv.co.unk_deadup.x4C +
+                                         fp->mv.co.unk_deadup.x5C.z;
+        } else {
+            ftCommon_Fall(fp, ca->x554, ca->x558);
+            lbVector_Add(&fp->mv.co.unk_deadup.x5C, &fp->self_vel);
+        }
+    }
+#else
         ftCommon_Fall(fp, ca->x554, ca->x558);
         lbVector_Add(&fp->mv.co.unk_deadup.x5C, &fp->self_vel);
+#endif
         if (fp->x2222_b6) {
             if (!ftAnim_80070FD0(fp)) {
                 break;

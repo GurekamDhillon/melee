@@ -14,7 +14,7 @@ pub fn install() {
         Item_80268E5C = Some(|a0, a1, a2| { t(1001); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         Item_8026A8EC = Some(|a0| { t(1002); t(pi(a0)); });
         db_80225DD8 = Some(|a0, a1| { t(1003); t(pi(a0)); t(pi(a1)); });
-        ftLib_80086A0C = Some(|a0| { t(1004); t(pi(a0)); rg() });
+        ftLib_GetScale = Some(|a0| { t(1004); t(pi(a0)); rg() });
         ftMt_SpecialLw_ClearDisableGObj = Some(|a0| { t(1005); t(pi(a0)); });
         it_8026B3A8 = Some(|a0| { t(1006); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1007); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });

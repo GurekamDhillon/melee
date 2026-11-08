@@ -58,14 +58,14 @@ fn install() {
             t(b(base));
             base
         });
-        h::FTLIB_800867E8 = Some(|g| t(0x10 + e(g)));
-        h::FTLIB_8008688C = Some(|g| t(0x20 + e(g)));
+        h::FTLIB_DISABLEINPUT = Some(|g| t(0x10 + e(g)));
+        h::FTLIB_ENABLEINPUT = Some(|g| t(0x20 + e(g)));
         h::FTKB_SPECIALN_800EED50 = Some(|a, c| {
             t(0x30);
             t(a as u32);
             t(c as u32)
         });
-        h::FTLIB_8008701C = Some(|g| {
+        h::FTLIB_ISSLEEPING = Some(|g| {
             t(0x40 + e(g));
             (tr() >> 3) & 1 != 0
         });
@@ -76,12 +76,12 @@ fn install() {
         h::HSD_GOBJ_FREE = Some(|g| t(0x60 + e(g)));
         h::FTCO_800D4FF4 = Some(|g| t(0x70 + e(g)));
         h::IFSTATUS_802F6E1C = Some(|s| t(0x80 + s as u32));
-        h::FTLIB_800873CC = Some(|g| {
+        h::FTLIB_ISREBIRTH = Some(|g| {
             t(0x90 + e(g));
             (tr() >> 5) & 1 != 0
         });
         h::FTLIB_80087140 = Some(|g| t(0xA0 + e(g)));
-        h::FTLIB_80086664 = Some(|g, v| {
+        h::FTLIB_SETPOS = Some(|g, v| {
             t(0xB0 + e(g));
             t(b(v.x));
             t(b(v.y));
@@ -111,7 +111,7 @@ fn install() {
             t(0x110 + s as u32);
             (tr() % 97) as i32
         });
-        h::FTLIB_800870F0 = Some(|g, v| {
+        h::FTLIB_SETPERCENT = Some(|g, v| {
             t(0x120 + e(g));
             t(v as u32)
         });
@@ -135,7 +135,7 @@ fn install() {
             t(0x190 + e(g));
             (tr() >> 2) & 1 != 0
         });
-        h::FTLIB_80086F80 = Some(|g| {
+        h::FTLIB_GETNAMETAGHEIGHT = Some(|g| {
             t(0x1A0 + e(g));
             (tr() % 777) as i32 as f32 / 3.0
         });
@@ -143,7 +143,7 @@ fn install() {
             t(0x1B0 + e(g));
             tr() % 40
         });
-        h::FTLIB_80087300 = Some(|g| {
+        h::FTLIB_GETLASTATTACKERSLOT = Some(|g| {
             t(0x1C0 + e(g));
             (tr() % 11) as i32
         });
@@ -159,11 +159,11 @@ fn install() {
             t(0x1F0 + e(g));
             t(v as u32)
         });
-        h::FTLIB_80086BB4 = Some(|g| {
+        h::FTLIB_ISCAMERASUBJECTINBOUNDS = Some(|g| {
             t(0x200 + e(g));
             (tr() >> 6) & 1 != 0
         });
-        h::FTLIB_80086B90 = Some(|g, v| {
+        h::FTLIB_GETCAMERASUBJECTBONEPOS = Some(|g, v| {
             t(0x210 + e(g));
             v.x = (tr() % 100) as i32 as f32;
             v.y = -1.0;

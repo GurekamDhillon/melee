@@ -22,9 +22,9 @@ __typeof__(int) (ftKb_SpecialNSs_800FCC14)(__typeof__(struct HSD_GObj *) a0, __t
 __typeof__(int) (ftKb_SpecialNSs_800FCC6C)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 __typeof__(int) (ftKb_SpecialNSs_800FCCBC)(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (ftKb_SpecialNSs_800FCD04)(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void*) a0)); }
-__typeof__(float) (ftLib_800865C0)(__typeof__(struct HSD_GObj *) a0) { T(1013); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-__typeof__(struct HSD_JObj *) (ftLib_80086630)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1014); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) ((&JO[3 + (fv() % 3)])); }
-__typeof__(float) (ftLib_800869D4)(__typeof__(struct HSD_GObj *) a0) { T(1015); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(float) (ftLib_GetFacingDir)(__typeof__(struct HSD_GObj *) a0) { T(1013); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(struct HSD_JObj *) (ftLib_GetPartJObj)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1014); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) ((&JO[3 + (fv() % 3)])); }
+__typeof__(float) (ftLib_GetModelScale)(__typeof__(struct HSD_GObj *) a0) { T(1015); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 __typeof__(int) (ftSs_SpecialLw_80129100)(__typeof__(struct HSD_GObj *) a0, __typeof__(int *) a1, __typeof__(int *) a2) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); if (a1) { *a1 = (int) (fv() % 9); } if (a2) { *a2 = (int) (fv() % 9); } return (__typeof__(int)) (((fv() % 3) == 0 ? -1 : (int) (fv() % 3))); }
 __typeof__(int) (ftSs_SpecialLw_80129158)(__typeof__(struct HSD_GObj *) a0) { T(1017); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 __typeof__(int) (ftSs_SpecialN_801291A8)(__typeof__(struct HSD_GObj *) a0) { T(1018); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
@@ -1652,9 +1652,9 @@ static void freg_all(void)
 // stub ftKb_SpecialNSs_800FCC6C = 1010
 // stub ftKb_SpecialNSs_800FCCBC = 1011
 // stub ftKb_SpecialNSs_800FCD04 = 1012
-// stub ftLib_800865C0 = 1013
-// stub ftLib_80086630 = 1014
-// stub ftLib_800869D4 = 1015
+// stub ftLib_GetFacingDir = 1013
+// stub ftLib_GetPartJObj = 1014
+// stub ftLib_GetModelScale = 1015
 // stub ftSs_SpecialLw_80129100 = 1016
 // stub ftSs_SpecialLw_80129158 = 1017
 // stub ftSs_SpecialN_801291A8 = 1018

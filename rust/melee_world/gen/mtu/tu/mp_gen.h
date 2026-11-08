@@ -73,10 +73,10 @@ __typeof__(float) Stage_GetCamBoundsBottomOffset(void) { T(1046); return (__type
 __typeof__(float) Stage_GetCamBoundsLeftOffset(void) { T(1047); return (__typeof__(float)) (rg()); }
 __typeof__(float) Stage_GetCamBoundsRightOffset(void) { T(1048); return (__typeof__(float)) (rg()); }
 __typeof__(float) Stage_GetCamBoundsTopOffset(void) { T(1049); return (__typeof__(float)) (rg()); }
-__typeof__(int) ftLib_80086960(__typeof__(struct HSD_GObj *) a0) { T(1050); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
-__typeof__(struct CollData *) ftLib_80086984(__typeof__(struct HSD_GObj *) a0) { T(1051); T(PI((const void*) a0)); return (__typeof__(struct CollData *)) (&CD); }
-__typeof__(unsigned char) ftLib_80086BE0(__typeof__(struct HSD_GObj *) a0) { T(1052); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
-__typeof__(int) ftLib_800874BC(__typeof__(struct HSD_GObj *) a0) { T(1053); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1050); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
+__typeof__(struct CollData *) ftLib_GetCollData(__typeof__(struct HSD_GObj *) a0) { T(1051); T(PI((const void*) a0)); return (__typeof__(struct CollData *)) (&CD); }
+__typeof__(unsigned char) ftLib_GetPlayerIndex(__typeof__(struct HSD_GObj *) a0) { T(1052); T(PI((const void*) a0)); return (__typeof__(unsigned char)) (fv()); }
+__typeof__(int) ftLib_IsSubFighter(__typeof__(struct HSD_GObj *) a0) { T(1053); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void grDynamicAttr_801CA0B4(void) { T(1054); }
 void grDynamicAttr_801CA224(void) { T(1055); }
 __typeof__(int) grDynamicAttr_801CA284(__typeof__(Vec *) a0, __typeof__(int) a1) { T(1056); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(int)) (fv()); }
@@ -912,10 +912,10 @@ static void freg_all(void)
 // stub Stage_GetCamBoundsLeftOffset = 1047
 // stub Stage_GetCamBoundsRightOffset = 1048
 // stub Stage_GetCamBoundsTopOffset = 1049
-// stub ftLib_80086960 = 1050
-// stub ftLib_80086984 = 1051
-// stub ftLib_80086BE0 = 1052
-// stub ftLib_800874BC = 1053
+// stub ftLib_IsFighter = 1050
+// stub ftLib_GetCollData = 1051
+// stub ftLib_GetPlayerIndex = 1052
+// stub ftLib_IsSubFighter = 1053
 // stub grDynamicAttr_801CA0B4 = 1054
 // stub grDynamicAttr_801CA224 = 1055
 // stub grDynamicAttr_801CA284 = 1056

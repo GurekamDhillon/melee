@@ -54,13 +54,13 @@ fn randf() -> f32 {
     crate::tu::random::global::HSD_Randf()
 }
 
-pub unsafe extern "C" fn hsd_8039D1E4(gen: *mut HSD_Generator, userfunc: *mut core::ffi::c_void) {
-    melee_core::ct!("hsd_8039D1E4");
+pub unsafe extern "C" fn psSetUserFunc(gen: *mut HSD_Generator, userfunc: *mut core::ffi::c_void) {
+    melee_core::ct!("psSetUserFunc");
     (*gen).userfunc = userfunc as *mut _PSUserFunc;
 }
 
-pub unsafe extern "C" fn hsd_8039D1EC() -> u16 {
-    melee_core::ct!("hsd_8039D1EC");
+pub unsafe extern "C" fn psGetNewIDNum() -> u16 {
+    melee_core::ct!("psGetNewIDNum");
     lbl_804D6368 = lbl_804D6368.wrapping_add(1);
     if lbl_804D6368 < 256 {
         lbl_804D6368 = 256;

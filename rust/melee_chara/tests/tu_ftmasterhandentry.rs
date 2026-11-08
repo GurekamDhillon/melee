@@ -39,8 +39,8 @@ unsafe fn smoke_inner() {
         melee_chara::tu::ftmasterhanddamage0::ext::FT_800881D8 = Some(|_, id, v, p| log(format!("voice {id} {v} {p}")));
         t::ext::FTBOSSLIB_8015C09C = Some(|_, x| log(format!("face {x}")));
         melee_chara::tu::ftmasterhanddamage0::ext::FTMH_MS_389_80151018 = Some(|_| log("wait".into()));
-        t::ext::FTLIB_8008627C = Some(|_, _| unsafe { ENEMY });
-        t::ext::FTLIB_80086BE0 = Some(|_| 3);
+        t::ext::FTLIB_FINDNEARESTOPPONENT = Some(|_, _| unsafe { ENEMY });
+        t::ext::FTLIB_GETPLAYERINDEX = Some(|_| 3);
         t::ext::CAMERA_8002E6FC = Some(|a| log(format!("target {a}")));
         t::ext::CAMERA_8002ED9C = Some(|a| log(format!("dist {a}")));
         t::ext::CAMERA_8002EEC8 = Some(|a| log(format!("fov {a}")));

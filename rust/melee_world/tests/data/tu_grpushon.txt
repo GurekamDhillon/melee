@@ -241,7 +241,7 @@ HSD_LObjSetFlags a6784 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a7024 x
 Ground_GetP1Fighter
-ftLib_80086644 a7264 x
+ftLib_GetPos a7264 x
 HSD_LObjGetPosition a2864 x
 HSD_LObjGetPosition a3104 x
 HSD_LObjGetPosition a3344 x
@@ -421,7 +421,7 @@ HSD_LObjSetFlags a5488 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5728 x
 Ground_GetP1Fighter
-ftLib_80086644 a5968 x
+ftLib_GetPos a5968 x
 HSD_LObjGetPosition a2624 x
 HSD_LObjGetPosition a2864 x
 HSD_LObjGetPosition a3104 x
@@ -554,7 +554,7 @@ HSD_LObjSetFlags a5824 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6064 x
 Ground_GetP1Fighter
-ftLib_80086644 a6304 x
+ftLib_GetPos a6304 x
 HSD_LObjGetPosition a4160 x
 HSD_LObjGetPosition a4400 x
 HSD_LObjGetPosition a4640 x
@@ -662,7 +662,7 @@ HSD_LObjSetFlags a6064 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6304 x
 Ground_GetP1Fighter
-ftLib_80086644 a6544 x
+ftLib_GetPos a6544 x
 HSD_LObjGetPosition a4160 x
 HSD_LObjGetPosition a4400 x
 HSD_LObjGetPosition a4640 x
@@ -845,7 +845,7 @@ HSD_LObjSetFlags a3712 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3952 x
 Ground_GetP1Fighter
-ftLib_80086644 a4192 x
+ftLib_GetPos a4192 x
 HSD_LObjGetPosition a848 x
 HSD_LObjGetPosition a1088 x
 HSD_LObjGetPosition a1328 x
@@ -1162,7 +1162,7 @@ HSD_LObjSetFlags a6064 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6304 x
 Ground_GetP1Fighter
-ftLib_80086644 a6544 x
+ftLib_GetPos a6544 x
 HSD_LObjGetPosition a3200 x
 HSD_LObjGetPosition a3440 x
 HSD_LObjGetPosition a3680 x
@@ -1295,7 +1295,7 @@ HSD_LObjSetFlags a3568 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3808 x
 Ground_GetP1Fighter
-ftLib_80086644 a4048 x
+ftLib_GetPos a4048 x
 HSD_LObjGetPosition a848 x
 HSD_LObjGetPosition a1088 x
 HSD_LObjGetPosition a1328 x
@@ -1396,7 +1396,7 @@ HSD_LObjSetFlags a6304 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6544 x
 Ground_GetP1Fighter
-ftLib_80086644 a6784 x
+ftLib_GetPos a6784 x
 HSD_LObjGetPosition a4160 x
 HSD_LObjGetPosition a4400 x
 HSD_LObjGetPosition a4640 x
@@ -1744,7 +1744,7 @@ HSD_LObjSetFlags a3472 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3712 x
 Ground_GetP1Fighter
-ftLib_80086644 a3952 x
+ftLib_GetPos a3952 x
 HSD_LObjGetPosition a848 x
 HSD_LObjGetPosition a1088 x
 HSD_LObjGetPosition a1328 x
@@ -1974,7 +1974,7 @@ HSD_LObjSetFlags a5520 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5760 x
 Ground_GetP1Fighter
-ftLib_80086644 a6000 x
+ftLib_GetPos a6000 x
 HSD_LObjGetPosition a208 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
@@ -2018,7 +2018,7 @@ HSD_LObjSetInterest a5760 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a4576 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 Ground_801C38BC c4e10eb4 c51c859f
 Camera_8002F3AC
 rs 89685298
@@ -2109,7 +2109,7 @@ HSD_LObjSetFlags a7152 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a7392 x
 Ground_GetP1Fighter
-ftLib_80086644 a7632 x
+ftLib_GetPos a7632 x
 HSD_LObjGetPosition a208 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
@@ -2240,7 +2240,7 @@ HSD_LObjSetFlags a4704 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4944 x
 Ground_GetP1Fighter
-ftLib_80086644 a5184 x
+ftLib_GetPos a5184 x
 HSD_LObjGetPosition a208 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
@@ -2299,7 +2299,7 @@ HSD_LObjSetInterest a4944 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a3760 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a5328 x
+ftLib_GetPos a5328 x
 Ground_801C38BC c3d98000 c3c0e0dd
 Camera_8002F3AC
 rs 138542689
@@ -2625,7 +2625,7 @@ HSD_LObjSetInterest a8208 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a7024 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a8496 x
+ftLib_GetPos a8496 x
 Ground_801C38BC 44736b3e c48daeb4
 Camera_8002F3AC
 rs 3882139621
@@ -2790,7 +2790,7 @@ HSD_LObjSetInterest a9008 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a7824 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a9296 x
+ftLib_GetPos a9296 x
 Ground_801C38BC 00000000 4471914c
 Camera_8002F3AC
 rs 233327647
@@ -2875,7 +2875,7 @@ HSD_LObjSetFlags a4960 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5200 x
 Ground_GetP1Fighter
-ftLib_80086644 a5440 x
+ftLib_GetPos a5440 x
 HSD_LObjGetPosition a1024 x
 HSD_LObjGetPosition a1264 x
 HSD_LObjGetPosition a1504 x
@@ -2904,7 +2904,7 @@ HSD_LObjSetInterest a5200 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a4016 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a5584 x
+ftLib_GetPos a5584 x
 Ground_801C38BC c40d9bad c4be359f
 Camera_8002F3AC
 rs 3044749004
@@ -2978,7 +2978,7 @@ state 1ea95c300fdc7e60
 Ground_GetStageGObj 2
 OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grpushon.c" 222 2
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 Ground_801C38BC 4502f530 440bf59f
 Camera_8002F3AC
 rs 2146273920
@@ -3055,7 +3055,7 @@ state b3903403368b20f6
 Ground_GetStageGObj 2
 OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grpushon.c" 222 2
 Ground_GetP1Fighter
-ftLib_80086644 a7744 x
+ftLib_GetPos a7744 x
 Ground_801C38BC 44cdfd68 80000000
 Camera_8002F3AC
 rs 2939978901
@@ -3131,7 +3131,7 @@ state 173c8257706073ba
 Ground_GetStageGObj 2
 OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grpushon.c" 222 2
 Ground_GetP1Fighter
-ftLib_80086644 a5328 x
+ftLib_GetPos a5328 x
 Ground_801C38BC c4ae86eb c4ec6376
 Camera_8002F3AC
 rs 2457519962
@@ -3196,7 +3196,7 @@ state e2d2082c6ba90c73
 Ground_GetStageGObj 2
 OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grpushon.c" 222 2
 Ground_GetP1Fighter
-ftLib_80086644 a3920 x
+ftLib_GetPos a3920 x
 Ground_801C38BC c3d6a983 4516759f
 Camera_8002F3AC
 rs 3234387403
@@ -3296,7 +3296,7 @@ HSD_LObjSetFlags a6032 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6272 x
 Ground_GetP1Fighter
-ftLib_80086644 a6512 x
+ftLib_GetPos a6512 x
 HSD_LObjGetPosition a1264 x
 HSD_LObjGetPosition a1504 x
 HSD_LObjGetPosition a1744 x
@@ -3339,7 +3339,7 @@ HSD_LObjSetInterest a6272 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a5088 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a6656 x
+ftLib_GetPos a6656 x
 Ground_801C38BC c4c1f06f c4e6b75a
 Camera_8002F3AC
 rs 4225124320
@@ -3427,7 +3427,7 @@ HSD_LObjSetFlags a5920 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6160 x
 Ground_GetP1Fighter
-ftLib_80086644 a6400 x
+ftLib_GetPos a6400 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
 HSD_LObjGetPosition a928 x
@@ -3540,7 +3540,7 @@ HSD_LObjSetFlags a6240 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6480 x
 Ground_GetP1Fighter
-ftLib_80086644 a6720 x
+ftLib_GetPos a6720 x
 HSD_LObjGetPosition a2224 x
 HSD_LObjGetPosition a2464 x
 HSD_LObjGetPosition a2704 x
@@ -3589,7 +3589,7 @@ HSD_LObjSetInterest a6480 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a5296 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a6864 x
+ftLib_GetPos a6864 x
 Ground_801C38BC 44edcf91 c46e88a6
 Camera_8002F3AC
 rs 2505878989
@@ -3691,7 +3691,7 @@ HSD_LObjSetFlags a5856 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6096 x
 Ground_GetP1Fighter
-ftLib_80086644 a6336 x
+ftLib_GetPos a6336 x
 HSD_LObjGetPosition a208 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
@@ -3732,7 +3732,7 @@ HSD_LObjSetInterest a6096 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a4912 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a6480 x
+ftLib_GetPos a6480 x
 Ground_801C38BC 42c114c2 c51687c9
 Camera_8002F3AC
 rs 2865622551
@@ -3866,7 +3866,7 @@ HSD_LObjSetInterest a6512 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a5328 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a6800 x
+ftLib_GetPos a6800 x
 Ground_801C38BC c1da60dd 80000000
 Camera_8002F3AC
 rs 680498101
@@ -3986,7 +3986,7 @@ HSD_LObjSetInterest a5376 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a4192 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 Ground_801C38BC 44e6ea61 c4a3306f
 Camera_8002F3AC
 rs 368139328
@@ -4087,7 +4087,7 @@ HSD_LObjSetFlags a7328 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a7568 x
 Ground_GetP1Fighter
-ftLib_80086644 a7808 x
+ftLib_GetPos a7808 x
 HSD_LObjGetPosition a2800 x
 HSD_LObjGetPosition a3040 x
 HSD_LObjGetPosition a3280 x
@@ -4122,7 +4122,7 @@ HSD_LObjSetInterest a7568 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a6384 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a7952 x
+ftLib_GetPos a7952 x
 Ground_801C38BC 44cd122a 00000000
 Camera_8002F3AC
 rs 3341139593
@@ -4196,7 +4196,7 @@ HSD_LObjSetFlags a6496 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6736 x
 Ground_GetP1Fighter
-ftLib_80086644 a6976 x
+ftLib_GetPos a6976 x
 HSD_LObjGetPosition a208 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
@@ -4225,7 +4225,7 @@ HSD_LObjSetInterest a6736 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a5552 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a7120 x
+ftLib_GetPos a7120 x
 Ground_801C38BC 00000000 c4fadbad
 Camera_8002F3AC
 rs 2475062756
@@ -4327,7 +4327,7 @@ HSD_LObjSetFlags a6272 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6512 x
 Ground_GetP1Fighter
-ftLib_80086644 a6752 x
+ftLib_GetPos a6752 x
 HSD_LObjGetPosition a208 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
@@ -4374,7 +4374,7 @@ HSD_LObjSetInterest a6512 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a5328 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a6896 x
+ftLib_GetPos a6896 x
 Ground_801C38BC c42fc6eb 447b4a61
 Camera_8002F3AC
 rs 2647449235
@@ -4471,7 +4471,7 @@ HSD_LObjSetFlags a5136 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5376 x
 Ground_GetP1Fighter
-ftLib_80086644 a5616 x
+ftLib_GetPos a5616 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
 HSD_LObjClearFlags a208 32
@@ -4499,7 +4499,7 @@ HSD_LObjSetInterest a5376 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a4192 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a5760 x
+ftLib_GetPos a5760 x
 Ground_801C38BC c40ef06f c5107c8a
 Camera_8002F3AC
 rs 2525917261
@@ -4639,7 +4639,7 @@ HSD_LObjSetInterest a7232 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a6048 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a7520 x
+ftLib_GetPos a7520 x
 Ground_801C38BC 425fc8a6 80000000
 Camera_8002F3AC
 rs 1485653421
@@ -4736,7 +4736,7 @@ HSD_LObjSetFlags a6912 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a7152 x
 Ground_GetP1Fighter
-ftLib_80086644 a7392 x
+ftLib_GetPos a7392 x
 HSD_LObjGetPosition a1984 x
 HSD_LObjGetPosition a2224 x
 HSD_LObjGetPosition a2464 x
@@ -4762,7 +4762,7 @@ HSD_LObjSetInterest a7152 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a5968 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a7536 x
+ftLib_GetPos a7536 x
 Ground_801C38BC 440a7e45 c5146c1c
 Camera_8002F3AC
 rs 4277562944
@@ -4866,7 +4866,7 @@ HSD_LObjSetFlags a8288 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a8528 x
 Ground_GetP1Fighter
-ftLib_80086644 a8768 x
+ftLib_GetPos a8768 x
 HSD_LObjGetPosition a3520 x
 HSD_LObjGetPosition a3760 x
 HSD_LObjGetPosition a4000 x
@@ -4907,7 +4907,7 @@ HSD_LObjSetInterest a8528 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a7344 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a8912 x
+ftLib_GetPos a8912 x
 Ground_801C38BC 80000000 44d9e6eb
 Camera_8002F3AC
 rs 218708499
@@ -4974,7 +4974,7 @@ state a8714681aa0cbd1f
 Ground_GetStageGObj 2
 OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grpushon.c" 222 2
 Ground_GetP1Fighter
-ftLib_80086644 a5216 x
+ftLib_GetPos a5216 x
 Ground_801C38BC c3a367c9 c50b459f
 Camera_8002F3AC
 rs 3210000602
@@ -5078,7 +5078,7 @@ HSD_LObjSetFlags a5456 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5696 x
 Ground_GetP1Fighter
-ftLib_80086644 a5936 x
+ftLib_GetPos a5936 x
 HSD_LObjGetPosition a208 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
@@ -5128,7 +5128,7 @@ HSD_LObjSetInterest a5696 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a4512 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a6080 x
+ftLib_GetPos a6080 x
 Ground_801C38BC 42020dd6 00000000
 Camera_8002F3AC
 rs 1677426431
@@ -5236,7 +5236,7 @@ HSD_LObjSetFlags a5856 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6096 x
 Ground_GetP1Fighter
-ftLib_80086644 a6336 x
+ftLib_GetPos a6336 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
 HSD_LObjGetPosition a928 x
@@ -5282,7 +5282,7 @@ HSD_LObjSetInterest a6096 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a4912 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a6480 x
+ftLib_GetPos a6480 x
 Ground_801C38BC 45279bad 80000000
 Camera_8002F3AC
 rs 3813570109
@@ -5394,7 +5394,7 @@ HSD_LObjSetFlags a5456 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5696 x
 Ground_GetP1Fighter
-ftLib_80086644 a5936 x
+ftLib_GetPos a5936 x
 HSD_LObjGetPosition a208 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
@@ -5447,7 +5447,7 @@ HSD_LObjSetInterest a5696 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a4512 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a6080 x
+ftLib_GetPos a6080 x
 Ground_801C38BC c44f1f23 c3df375a
 Camera_8002F3AC
 rs 1676472945
@@ -5564,7 +5564,7 @@ HSD_LObjSetFlags a10368 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a10608 x
 Ground_GetP1Fighter
-ftLib_80086644 a10848 x
+ftLib_GetPos a10848 x
 HSD_LObjGetPosition a2464 x
 HSD_LObjGetPosition a2704 x
 HSD_LObjGetPosition a2944 x
@@ -5726,7 +5726,7 @@ HSD_LObjSetInterest a3232 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a2048 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a3520 x
+ftLib_GetPos a3520 x
 Ground_801C38BC 00000000 44d94b3e
 Camera_8002F3AC
 rs 2638753511
@@ -5794,7 +5794,7 @@ state 6d171a9aa403c728
 Ground_GetStageGObj 2
 OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grpushon.c" 222 2
 Ground_GetP1Fighter
-ftLib_80086644 a5392 x
+ftLib_GetPos a5392 x
 Ground_801C38BC c3bd914c 80000000
 Camera_8002F3AC
 rs 2506148346
@@ -5896,7 +5896,7 @@ HSD_LObjSetFlags a8288 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a8528 x
 Ground_GetP1Fighter
-ftLib_80086644 a8768 x
+ftLib_GetPos a8768 x
 HSD_LObjGetPosition a3520 x
 HSD_LObjGetPosition a3760 x
 HSD_LObjGetPosition a4000 x
@@ -5934,7 +5934,7 @@ HSD_LObjSetInterest a8528 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a7344 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a8912 x
+ftLib_GetPos a8912 x
 Ground_801C38BC 4508475a c4b8eb3e
 Camera_8002F3AC
 rs 427657430
@@ -6035,7 +6035,7 @@ HSD_LObjSetFlags a6880 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a7120 x
 Ground_GetP1Fighter
-ftLib_80086644 a7360 x
+ftLib_GetPos a7360 x
 HSD_LObjGetPosition a1984 x
 HSD_LObjGetPosition a2224 x
 HSD_LObjGetPosition a2464 x
@@ -6167,7 +6167,7 @@ HSD_LObjSetFlags a3744 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3984 x
 Ground_GetP1Fighter
-ftLib_80086644 a4224 x
+ftLib_GetPos a4224 x
 HSD_LObjGetPosition a208 x
 HSD_LObjGetPosition a448 x
 HSD_LObjGetPosition a688 x
@@ -6202,7 +6202,7 @@ HSD_LObjSetInterest a3984 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a2800 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a4368 x
+ftLib_GetPos a4368 x
 Ground_801C38BC 437e14c2 450c34c2
 Camera_8002F3AC
 rs 1336974078
@@ -6276,7 +6276,7 @@ state f49a3a92b29482ad
 Ground_GetStageGObj 2
 OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grpushon.c" 222 2
 Ground_GetP1Fighter
-ftLib_80086644 a5008 x
+ftLib_GetPos a5008 x
 Ground_801C38BC c4dcf3e4 c4ecaa61
 Camera_8002F3AC
 rs 1051027444
@@ -6402,7 +6402,7 @@ HSD_LObjSetInterest a8528 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a7344 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a8816 x
+ftLib_GetPos a8816 x
 Ground_801C38BC c4514f91 c403e0dd
 Camera_8002F3AC
 rs 591332491
@@ -6484,7 +6484,7 @@ HSD_LObjSetFlags a6400 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6640 x
 Ground_GetP1Fighter
-ftLib_80086644 a6880 x
+ftLib_GetPos a6880 x
 HSD_LObjGetPosition a1984 x
 HSD_LObjGetPosition a2224 x
 HSD_LObjGetPosition a2464 x
@@ -6522,7 +6522,7 @@ HSD_LObjSetInterest a6640 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a5456 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a7024 x
+ftLib_GetPos a7024 x
 Ground_801C38BC 44fd2453 c4fbe6eb
 Camera_8002F3AC
 rs 38326411
@@ -6583,7 +6583,7 @@ state b511d35940edce16
 Ground_GetStageGObj 2
 OSReport "%s:%d: couldn t get gobj(id=%d)\x0a" "grpushon.c" 222 2
 Ground_GetP1Fighter
-ftLib_80086644 a6352 x
+ftLib_GetPos a6352 x
 Ground_801C38BC 4510aeb4 00000000
 Camera_8002F3AC
 rs 761708423
@@ -6698,7 +6698,7 @@ HSD_LObjSetInterest a5376 x
 Mex_GrBind f:grPushOn_80218888
 HSD_GObj_SetupProc a4192 f:grPushOn_80218888 4
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 Ground_801C38BC 450118a6 44b3367d
 Camera_8002F3AC
 rs 2260719490
@@ -8415,7 +8415,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c4bfd59f 43df6b3e
@@ -8434,7 +8434,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c4368000 43bed9f2
@@ -8451,7 +8451,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 4441acf9 00000000
@@ -8468,7 +8468,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c50eb60e 45269453
@@ -8487,7 +8487,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 443fdf23 80000000
@@ -8506,7 +8506,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 80000000 80000000
@@ -8525,7 +8525,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 00000000 445e3915
@@ -8574,7 +8574,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 44eeb3e4 44de506f
@@ -8591,7 +8591,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C0498
@@ -8611,7 +8611,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 44cb0f91 00000000
@@ -8645,7 +8645,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 4405967d 450bb915
@@ -8664,7 +8664,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 44ebdf23 00000000
@@ -8683,7 +8683,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 45047bad 4521e000
@@ -8702,7 +8702,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 44dbd06f 80000000
@@ -8719,7 +8719,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 45208915 00000000
@@ -8753,7 +8753,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c4095bad 399d4951
@@ -8772,7 +8772,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 3a1d4951 00000000
@@ -8806,7 +8806,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 00000000 42ec375a
@@ -8825,7 +8825,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 80000000 452564c2
@@ -8844,7 +8844,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c5020f91 44ef88a6
@@ -8863,7 +8863,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c48bedd6 00000000
@@ -8882,7 +8882,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c3c9306f 00000000
@@ -8899,7 +8899,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c23306eb 442aecf9
@@ -8916,7 +8916,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 44a8967d 44a2d22a
@@ -8935,7 +8935,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c52601bb 00000000
@@ -8980,7 +8980,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 44b43ad0 445c2298
@@ -9014,7 +9014,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 80000000 43fbf59f
@@ -9031,7 +9031,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 3a03126e 80000000
@@ -9078,7 +9078,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c47573e4 436b9f23
@@ -9095,7 +9095,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 42add67d 44a633e4
@@ -9114,7 +9114,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c4a441bb 00000000
@@ -9133,7 +9133,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c523a59f 44d4ccf9
@@ -9152,7 +9152,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 44e3ceb4 4463f75a
@@ -9171,7 +9171,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c4d08c1c 3a03126e
@@ -9190,7 +9190,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 4472967d 45052530
@@ -9209,7 +9209,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 3a1d4951 00000000
@@ -9228,7 +9228,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c3da06eb 00000000
@@ -9245,7 +9245,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c44f9307 00000000
@@ -9262,7 +9262,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC c4dd0530 00000000
@@ -9281,7 +9281,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 44cd4000 00000000
@@ -9300,7 +9300,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 450b6f23 80000000
@@ -9319,7 +9319,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1008 x
+ftLib_GetPos a1008 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 45077a61 42c12298
@@ -9336,7 +9336,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 448c514c 44f59837
@@ -9355,7 +9355,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C0498
@@ -9390,7 +9390,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 446586eb 38d1b717
@@ -9409,7 +9409,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C0498
@@ -9429,7 +9429,7 @@ Ground_GetMapGObj 1
 r 0
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C38BC 44beadd6 00000000
@@ -9448,7 +9448,7 @@ Ground_GetMapGObj 1
 r 1
 Ground_801C3D44 f:fn_80218678 41c80000 41a00000
 Ground_GetP1Fighter
-ftLib_80086644 a1952 x
+ftLib_GetPos a1952 x
 Ground_801C0498
 Ground_801C0498
 Ground_801C0498
@@ -11633,7 +11633,7 @@ HSD_LObjSetFlags a4128 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4368 x
 Ground_GetP1Fighter
-ftLib_80086644 a4608 x
+ftLib_GetPos a4608 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -11726,7 +11726,7 @@ HSD_LObjSetFlags a2832 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3072 x
 Ground_GetP1Fighter
-ftLib_80086644 a3312 x
+ftLib_GetPos a3312 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -11814,7 +11814,7 @@ HSD_LObjSetFlags a5184 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5424 x
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a3264 x
 HSD_LObjGetPosition a3504 x
 HSD_LObjGetPosition a3744 x
@@ -11899,7 +11899,7 @@ HSD_LObjSetFlags a3408 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3648 x
 Ground_GetP1Fighter
-ftLib_80086644 a3888 x
+ftLib_GetPos a3888 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -11959,7 +11959,7 @@ HSD_LObjSetFlags a2112 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2352 x
 Ground_GetP1Fighter
-ftLib_80086644 a2592 x
+ftLib_GetPos a2592 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -12074,7 +12074,7 @@ HSD_LObjSetFlags a3648 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3888 x
 Ground_GetP1Fighter
-ftLib_80086644 a4128 x
+ftLib_GetPos a4128 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -12206,7 +12206,7 @@ HSD_LObjSetFlags a3888 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4128 x
 Ground_GetP1Fighter
-ftLib_80086644 a4368 x
+ftLib_GetPos a4368 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -12274,7 +12274,7 @@ HSD_LObjSetFlags a3408 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3648 x
 Ground_GetP1Fighter
-ftLib_80086644 a3888 x
+ftLib_GetPos a3888 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
 HSD_LObjGetPosition a3168 x
@@ -12333,7 +12333,7 @@ HSD_LObjSetFlags a4944 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5184 x
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a3504 x
 HSD_LObjGetPosition a3744 x
 HSD_LObjGetPosition a3984 x
@@ -12411,7 +12411,7 @@ HSD_LObjSetFlags a2832 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3072 x
 Ground_GetP1Fighter
-ftLib_80086644 a3312 x
+ftLib_GetPos a3312 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -12487,7 +12487,7 @@ HSD_LObjSetFlags a3888 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4128 x
 Ground_GetP1Fighter
-ftLib_80086644 a4368 x
+ftLib_GetPos a4368 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
 HSD_LObjGetPosition a3168 x
@@ -12565,7 +12565,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -12651,7 +12651,7 @@ HSD_LObjSetFlags a5424 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5664 x
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a3408 x
 HSD_LObjGetPosition a3648 x
 HSD_LObjGetPosition a3888 x
@@ -12716,7 +12716,7 @@ HSD_LObjSetFlags a5184 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5424 x
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a2208 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
@@ -12782,7 +12782,7 @@ HSD_LObjSetFlags a4848 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5088 x
 Ground_GetP1Fighter
-ftLib_80086644 a5328 x
+ftLib_GetPos a5328 x
 HSD_LObjGetPosition a3408 x
 HSD_LObjGetPosition a3648 x
 HSD_LObjGetPosition a3888 x
@@ -12948,7 +12948,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -13025,7 +13025,7 @@ HSD_LObjSetFlags a2688 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2928 x
 Ground_GetP1Fighter
-ftLib_80086644 a3168 x
+ftLib_GetPos a3168 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjClearFlags a1152 32
@@ -13075,7 +13075,7 @@ HSD_LObjSetFlags a4944 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5184 x
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a4224 x
 HSD_LObjGetPosition a4464 x
 HSD_LObjGetPosition a4704 x
@@ -13128,7 +13128,7 @@ HSD_LObjSetFlags a4704 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4944 x
 Ground_GetP1Fighter
-ftLib_80086644 a5184 x
+ftLib_GetPos a5184 x
 HSD_LObjGetPosition a3744 x
 HSD_LObjGetPosition a3984 x
 HSD_LObjGetPosition a4224 x
@@ -13201,7 +13201,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -13279,7 +13279,7 @@ HSD_LObjSetFlags a2112 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2352 x
 Ground_GetP1Fighter
-ftLib_80086644 a2592 x
+ftLib_GetPos a2592 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -13424,7 +13424,7 @@ HSD_LObjSetFlags a5424 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5664 x
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a4464 x
 HSD_LObjGetPosition a4704 x
 HSD_LObjGetPosition a4944 x
@@ -13486,7 +13486,7 @@ HSD_LObjSetFlags a2592 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2832 x
 Ground_GetP1Fighter
-ftLib_80086644 a3072 x
+ftLib_GetPos a3072 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -13566,7 +13566,7 @@ HSD_LObjSetFlags a2832 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3072 x
 Ground_GetP1Fighter
-ftLib_80086644 a3312 x
+ftLib_GetPos a3312 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -13637,7 +13637,7 @@ HSD_LObjSetFlags a1872 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2112 x
 Ground_GetP1Fighter
-ftLib_80086644 a2352 x
+ftLib_GetPos a2352 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjClearFlags a1152 32
@@ -13748,7 +13748,7 @@ HSD_LObjSetFlags a2592 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2832 x
 Ground_GetP1Fighter
-ftLib_80086644 a3072 x
+ftLib_GetPos a3072 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -13825,7 +13825,7 @@ HSD_LObjSetFlags a2592 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2832 x
 Ground_GetP1Fighter
-ftLib_80086644 a3072 x
+ftLib_GetPos a3072 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -13902,7 +13902,7 @@ HSD_LObjSetFlags a4224 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4464 x
 Ground_GetP1Fighter
-ftLib_80086644 a4704 x
+ftLib_GetPos a4704 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -13968,7 +13968,7 @@ HSD_LObjSetFlags a4464 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4704 x
 Ground_GetP1Fighter
-ftLib_80086644 a4944 x
+ftLib_GetPos a4944 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
@@ -14015,7 +14015,7 @@ HSD_LObjSetFlags a1872 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2112 x
 Ground_GetP1Fighter
-ftLib_80086644 a2352 x
+ftLib_GetPos a2352 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -14079,7 +14079,7 @@ HSD_LObjSetFlags a5904 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6144 x
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a4224 x
 HSD_LObjGetPosition a4464 x
 HSD_LObjGetPosition a4704 x
@@ -14238,7 +14238,7 @@ HSD_LObjSetFlags a3648 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3888 x
 Ground_GetP1Fighter
-ftLib_80086644 a4128 x
+ftLib_GetPos a4128 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -14298,7 +14298,7 @@ HSD_LObjSetFlags a2832 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3072 x
 Ground_GetP1Fighter
-ftLib_80086644 a3312 x
+ftLib_GetPos a3312 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -14374,7 +14374,7 @@ HSD_LObjSetFlags a2352 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2592 x
 Ground_GetP1Fighter
-ftLib_80086644 a2832 x
+ftLib_GetPos a2832 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -14430,7 +14430,7 @@ HSD_LObjSetFlags a5184 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5424 x
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a4464 x
 HSD_LObjGetPosition a4704 x
 HSD_LObjGetPosition a4944 x
@@ -14497,7 +14497,7 @@ HSD_LObjSetFlags a4848 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5088 x
 Ground_GetP1Fighter
-ftLib_80086644 a5328 x
+ftLib_GetPos a5328 x
 HSD_LObjGetPosition a3168 x
 HSD_LObjGetPosition a3408 x
 HSD_LObjGetPosition a3648 x
@@ -14974,7 +14974,7 @@ HSD_LObjSetFlags a5424 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5664 x
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -15104,7 +15104,7 @@ HSD_LObjSetFlags a3648 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3888 x
 Ground_GetP1Fighter
-ftLib_80086644 a4128 x
+ftLib_GetPos a4128 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -15164,7 +15164,7 @@ HSD_LObjSetFlags a3408 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3648 x
 Ground_GetP1Fighter
-ftLib_80086644 a3888 x
+ftLib_GetPos a3888 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -15218,7 +15218,7 @@ HSD_LObjSetFlags a5184 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5424 x
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -15455,7 +15455,7 @@ HSD_LObjSetFlags a3648 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3888 x
 Ground_GetP1Fighter
-ftLib_80086644 a4128 x
+ftLib_GetPos a4128 x
 HSD_LObjGetPosition a2208 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
@@ -15540,7 +15540,7 @@ HSD_LObjSetFlags a5664 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5904 x
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -15622,7 +15622,7 @@ HSD_LObjSetFlags a2352 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2592 x
 Ground_GetP1Fighter
-ftLib_80086644 a2832 x
+ftLib_GetPos a2832 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -15675,7 +15675,7 @@ HSD_LObjSetFlags a5664 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5904 x
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 HSD_LObjGetPosition a4944 x
 HSD_LObjGetPosition a5184 x
 HSD_LObjGetPosition a5424 x
@@ -15791,7 +15791,7 @@ HSD_LObjSetFlags a1872 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2112 x
 Ground_GetP1Fighter
-ftLib_80086644 a2352 x
+ftLib_GetPos a2352 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -16127,7 +16127,7 @@ HSD_LObjSetFlags a2592 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2832 x
 Ground_GetP1Fighter
-ftLib_80086644 a3072 x
+ftLib_GetPos a3072 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -16207,7 +16207,7 @@ HSD_LObjSetFlags a2832 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3072 x
 Ground_GetP1Fighter
-ftLib_80086644 a3312 x
+ftLib_GetPos a3312 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -16279,7 +16279,7 @@ HSD_LObjSetFlags a5184 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5424 x
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
@@ -16344,7 +16344,7 @@ HSD_LObjSetFlags a2592 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2832 x
 Ground_GetP1Fighter
-ftLib_80086644 a3072 x
+ftLib_GetPos a3072 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -16413,7 +16413,7 @@ HSD_LObjSetFlags a3408 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3648 x
 Ground_GetP1Fighter
-ftLib_80086644 a3888 x
+ftLib_GetPos a3888 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
@@ -16474,7 +16474,7 @@ HSD_LObjSetFlags a4368 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4608 x
 Ground_GetP1Fighter
-ftLib_80086644 a4848 x
+ftLib_GetPos a4848 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -16531,7 +16531,7 @@ HSD_LObjSetFlags a4944 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5184 x
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a4224 x
 HSD_LObjGetPosition a4464 x
 HSD_LObjGetPosition a4704 x
@@ -16599,7 +16599,7 @@ HSD_LObjSetFlags a4848 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5088 x
 Ground_GetP1Fighter
-ftLib_80086644 a5328 x
+ftLib_GetPos a5328 x
 HSD_LObjGetPosition a3168 x
 HSD_LObjGetPosition a3408 x
 HSD_LObjGetPosition a3648 x
@@ -16671,7 +16671,7 @@ HSD_LObjSetFlags a4128 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4368 x
 Ground_GetP1Fighter
-ftLib_80086644 a4608 x
+ftLib_GetPos a4608 x
 HSD_LObjGetPosition a3168 x
 HSD_LObjGetPosition a3408 x
 HSD_LObjGetPosition a3648 x
@@ -16740,7 +16740,7 @@ HSD_LObjSetFlags a5664 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5904 x
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 HSD_LObjGetPosition a3984 x
 HSD_LObjGetPosition a4224 x
 HSD_LObjGetPosition a4464 x
@@ -16831,7 +16831,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -16909,7 +16909,7 @@ HSD_LObjSetFlags a2112 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2352 x
 Ground_GetP1Fighter
-ftLib_80086644 a2592 x
+ftLib_GetPos a2592 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -16961,7 +16961,7 @@ HSD_LObjSetFlags a3888 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4128 x
 Ground_GetP1Fighter
-ftLib_80086644 a4368 x
+ftLib_GetPos a4368 x
 HSD_LObjGetPosition a3168 x
 HSD_LObjGetPosition a3408 x
 HSD_LObjGetPosition a3648 x
@@ -17159,7 +17159,7 @@ HSD_LObjSetFlags a4128 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4368 x
 Ground_GetP1Fighter
-ftLib_80086644 a4608 x
+ftLib_GetPos a4608 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -17230,7 +17230,7 @@ HSD_LObjSetFlags a3888 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4128 x
 Ground_GetP1Fighter
-ftLib_80086644 a4368 x
+ftLib_GetPos a4368 x
 HSD_LObjGetPosition a3408 x
 HSD_LObjGetPosition a3648 x
 HSD_LObjClearFlags a3168 32
@@ -17369,7 +17369,7 @@ HSD_LObjSetFlags a3648 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3888 x
 Ground_GetP1Fighter
-ftLib_80086644 a4128 x
+ftLib_GetPos a4128 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -17433,7 +17433,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -17510,7 +17510,7 @@ HSD_LObjSetFlags a3168 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3408 x
 Ground_GetP1Fighter
-ftLib_80086644 a3648 x
+ftLib_GetPos a3648 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
@@ -17577,7 +17577,7 @@ HSD_LObjSetFlags a5904 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6144 x
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a4224 x
 HSD_LObjGetPosition a4464 x
 HSD_LObjGetPosition a4704 x
@@ -17737,7 +17737,7 @@ HSD_LObjSetFlags a2112 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2352 x
 Ground_GetP1Fighter
-ftLib_80086644 a2592 x
+ftLib_GetPos a2592 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -17924,7 +17924,7 @@ HSD_LObjSetFlags a5424 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5664 x
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
 HSD_LObjGetPosition a3168 x
@@ -18010,7 +18010,7 @@ HSD_LObjSetFlags a6144 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6384 x
 Ground_GetP1Fighter
-ftLib_80086644 a6624 x
+ftLib_GetPos a6624 x
 HSD_LObjGetPosition a4944 x
 HSD_LObjGetPosition a5184 x
 HSD_LObjGetPosition a5424 x
@@ -18132,7 +18132,7 @@ HSD_LObjSetFlags a6144 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6384 x
 Ground_GetP1Fighter
-ftLib_80086644 a6624 x
+ftLib_GetPos a6624 x
 HSD_LObjGetPosition a5184 x
 HSD_LObjGetPosition a5424 x
 HSD_LObjGetPosition a5664 x
@@ -18210,7 +18210,7 @@ HSD_LObjSetFlags a4368 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4608 x
 Ground_GetP1Fighter
-ftLib_80086644 a4848 x
+ftLib_GetPos a4848 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
@@ -18299,7 +18299,7 @@ HSD_LObjSetFlags a4944 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5184 x
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a3744 x
 HSD_LObjGetPosition a3984 x
 HSD_LObjGetPosition a4224 x
@@ -18368,7 +18368,7 @@ HSD_LObjSetFlags a2352 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2592 x
 Ground_GetP1Fighter
-ftLib_80086644 a2832 x
+ftLib_GetPos a2832 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -18438,7 +18438,7 @@ HSD_LObjSetFlags a4944 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5184 x
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -18503,7 +18503,7 @@ HSD_LObjSetFlags a3648 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3888 x
 Ground_GetP1Fighter
-ftLib_80086644 a4128 x
+ftLib_GetPos a4128 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
 HSD_LObjGetPosition a3168 x
@@ -18565,7 +18565,7 @@ HSD_LObjSetFlags a2592 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2832 x
 Ground_GetP1Fighter
-ftLib_80086644 a3072 x
+ftLib_GetPos a3072 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -18636,7 +18636,7 @@ HSD_LObjSetFlags a3408 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3648 x
 Ground_GetP1Fighter
-ftLib_80086644 a3888 x
+ftLib_GetPos a3888 x
 HSD_LObjGetPosition a2208 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
@@ -18714,7 +18714,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -18788,7 +18788,7 @@ HSD_LObjSetFlags a3408 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3648 x
 Ground_GetP1Fighter
-ftLib_80086644 a3888 x
+ftLib_GetPos a3888 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -18849,7 +18849,7 @@ HSD_LObjSetFlags a3648 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3888 x
 Ground_GetP1Fighter
-ftLib_80086644 a4128 x
+ftLib_GetPos a4128 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
@@ -18925,7 +18925,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -19014,7 +19014,7 @@ HSD_LObjSetFlags a4128 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4368 x
 Ground_GetP1Fighter
-ftLib_80086644 a4608 x
+ftLib_GetPos a4608 x
 HSD_LObjGetPosition a2448 x
 HSD_LObjGetPosition a2688 x
 HSD_LObjGetPosition a2928 x
@@ -19102,7 +19102,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -19176,7 +19176,7 @@ HSD_LObjSetFlags a1872 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a2112 x
 Ground_GetP1Fighter
-ftLib_80086644 a2352 x
+ftLib_GetPos a2352 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -19243,7 +19243,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -19340,7 +19340,7 @@ HSD_LObjSetFlags a6144 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a6384 x
 Ground_GetP1Fighter
-ftLib_80086644 a6624 x
+ftLib_GetPos a6624 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjGetPosition a1872 x
@@ -19429,7 +19429,7 @@ HSD_LObjSetFlags a5184 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a5424 x
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -19512,7 +19512,7 @@ HSD_LObjSetFlags a3408 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3648 x
 Ground_GetP1Fighter
-ftLib_80086644 a3888 x
+ftLib_GetPos a3888 x
 HSD_LObjGetPosition a1968 x
 HSD_LObjGetPosition a2208 x
 HSD_LObjGetPosition a2448 x
@@ -19577,7 +19577,7 @@ HSD_LObjSetFlags a2928 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3168 x
 Ground_GetP1Fighter
-ftLib_80086644 a3408 x
+ftLib_GetPos a3408 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
 HSD_LObjClearFlags a1152 32
@@ -19635,7 +19635,7 @@ HSD_LObjSetFlags a4128 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4368 x
 Ground_GetP1Fighter
-ftLib_80086644 a4608 x
+ftLib_GetPos a4608 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -19716,7 +19716,7 @@ HSD_LObjSetFlags a2832 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3072 x
 Ground_GetP1Fighter
-ftLib_80086644 a3312 x
+ftLib_GetPos a3312 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -19807,7 +19807,7 @@ HSD_LObjSetFlags a3072 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a3312 x
 Ground_GetP1Fighter
-ftLib_80086644 a3552 x
+ftLib_GetPos a3552 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -19889,7 +19889,7 @@ HSD_LObjSetFlags a4368 32
 HSD_LObjLoadDesc ld2+0
 HSD_LObjSetPosition a4608 x
 Ground_GetP1Fighter
-ftLib_80086644 a4848 x
+ftLib_GetPos a4848 x
 HSD_LObjGetPosition a1152 x
 HSD_LObjGetPosition a1392 x
 HSD_LObjGetPosition a1632 x
@@ -19933,7 +19933,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state ce613eca7ae045ff
 case 8000
 Ground_GetP1Fighter
-ftLib_80086644 a4128 x
+ftLib_GetPos a4128 x
 rs 3773038907
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
@@ -20089,7 +20089,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state db101c941628da7f
 case 8004
 Ground_GetP1Fighter
-ftLib_80086644 a2784 x
+ftLib_GetPos a2784 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -20132,7 +20132,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 28312b619e035c56
 case 8005
 Ground_GetP1Fighter
-ftLib_80086644 a4944 x
+ftLib_GetPos a4944 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -20227,7 +20227,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state d9353af63a41c879
 case 8006
 Ground_GetP1Fighter
-ftLib_80086644 a2304 x
+ftLib_GetPos a2304 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjClearFlags a1344 32
@@ -20255,7 +20255,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 86c29746d710a2b9
 case 8007
 Ground_GetP1Fighter
-ftLib_80086644 a4224 x
+ftLib_GetPos a4224 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -20326,7 +20326,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state e490f42912c175a5
 case 8008
 Ground_GetP1Fighter
-ftLib_80086644 a2064 x
+ftLib_GetPos a2064 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjClearFlags a1344 32
@@ -20352,14 +20352,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state f11e73a4055a428c
 case 8009
 Ground_GetP1Fighter
-ftLib_80086644 a4608 x
+ftLib_GetPos a4608 x
 rs 4197919809
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state e561067879504c5c
 case 8010
 Ground_GetP1Fighter
-ftLib_80086644 a2304 x
+ftLib_GetPos a2304 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -20388,7 +20388,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state c522eb5676caff1a
 case 8011
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -20440,7 +20440,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state b11d4dc86679a07e
 case 8012
 Ground_GetP1Fighter
-ftLib_80086644 a3024 x
+ftLib_GetPos a3024 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -20490,7 +20490,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 0afebb18a79199ab
 case 8013
 Ground_GetP1Fighter
-ftLib_80086644 a2544 x
+ftLib_GetPos a2544 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -20527,7 +20527,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state a087b8eb08ab3b5d
 case 8014
 Ground_GetP1Fighter
-ftLib_80086644 a4944 x
+ftLib_GetPos a4944 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -20618,7 +20618,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 5498aa5adc7a6f6c
 case 8015
 Ground_GetP1Fighter
-ftLib_80086644 a2064 x
+ftLib_GetPos a2064 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjClearFlags a1344 32
 HSD_LObjClearFlags a1104 32
@@ -20662,7 +20662,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 54d91a219748f9c9
 case 8017
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -20844,7 +20844,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 9d67cde1439285ea
 case 8020
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -20969,7 +20969,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 140eb40acc0b444b
 case 8021
 Ground_GetP1Fighter
-ftLib_80086644 a2544 x
+ftLib_GetPos a2544 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -21039,7 +21039,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 7db512ab2f3cfa7d
 case 8023
 Ground_GetP1Fighter
-ftLib_80086644 a4944 x
+ftLib_GetPos a4944 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -21234,7 +21234,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state aa3ce03e1c27e637
 case 8025
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -21335,7 +21335,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 41bdf96a3e9a0587
 case 8026
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -21461,14 +21461,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 89a27b33a6026154
 case 8027
 Ground_GetP1Fighter
-ftLib_80086644 a6048 x
+ftLib_GetPos a6048 x
 rs 3291150014
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state 732807f859c1d728
 case 8028
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -21571,7 +21571,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 58731760bc4d3f46
 case 8029
 Ground_GetP1Fighter
-ftLib_80086644 a2304 x
+ftLib_GetPos a2304 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjClearFlags a1104 32
 HSD_LObjClearFlags a1344 32
@@ -21601,7 +21601,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state c8fa444755045987
 case 8030
 Ground_GetP1Fighter
-ftLib_80086644 a3744 x
+ftLib_GetPos a3744 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -21668,7 +21668,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 89d8b5f944ed775e
 case 8031
 Ground_GetP1Fighter
-ftLib_80086644 a4704 x
+ftLib_GetPos a4704 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -21753,7 +21753,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 99a1559d5763d093
 case 8032
 Ground_GetP1Fighter
-ftLib_80086644 a5184 x
+ftLib_GetPos a5184 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -21854,7 +21854,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 55cccd5a46fc3f5d
 case 8033
 Ground_GetP1Fighter
-ftLib_80086644 a3984 x
+ftLib_GetPos a3984 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2304 x
@@ -22113,14 +22113,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state d579aa195eb04af1
 case 8036
 Ground_GetP1Fighter
-ftLib_80086644 a6288 x
+ftLib_GetPos a6288 x
 rs 3054919468
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state c716e160058d9f49
 case 8037
 Ground_GetP1Fighter
-ftLib_80086644 a3024 x
+ftLib_GetPos a3024 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -22256,7 +22256,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 1088c8bc6d4098f8
 case 8039
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -22365,7 +22365,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 4b234036b32cfb46
 case 8040
 Ground_GetP1Fighter
-ftLib_80086644 a3984 x
+ftLib_GetPos a3984 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -22525,7 +22525,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state edfa397fb332f02a
 case 8042
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a2304 x
@@ -22643,7 +22643,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 08ef24bdd2803780
 case 8043
 Ground_GetP1Fighter
-ftLib_80086644 a2784 x
+ftLib_GetPos a2784 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -22683,7 +22683,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state a396c4495348dd7e
 case 8044
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -22785,14 +22785,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 7613b81427686130
 case 8045
 Ground_GetP1Fighter
-ftLib_80086644 a3648 x
+ftLib_GetPos a3648 x
 rs 2452164922
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state a62e8a5dd832a31d
 case 8046
 Ground_GetP1Fighter
-ftLib_80086644 a4464 x
+ftLib_GetPos a4464 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -22875,7 +22875,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 3659b5225c4ac053
 case 8047
 Ground_GetP1Fighter
-ftLib_80086644 a4944 x
+ftLib_GetPos a4944 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -22970,7 +22970,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 7d39f2f467b2d5b6
 case 8048
 Ground_GetP1Fighter
-ftLib_80086644 a4224 x
+ftLib_GetPos a4224 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2544 x
@@ -23044,7 +23044,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 72195bc841c39037
 case 8049
 Ground_GetP1Fighter
-ftLib_80086644 a2544 x
+ftLib_GetPos a2544 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -23082,7 +23082,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state fc656ea5c08526ed
 case 8050
 Ground_GetP1Fighter
-ftLib_80086644 a3744 x
+ftLib_GetPos a3744 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -23142,7 +23142,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 07869196364ae19b
 case 8051
 Ground_GetP1Fighter
-ftLib_80086644 a4224 x
+ftLib_GetPos a4224 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -23218,7 +23218,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state e83a8c964023ef8c
 case 8052
 Ground_GetP1Fighter
-ftLib_80086644 a3984 x
+ftLib_GetPos a3984 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a2064 x
@@ -23288,7 +23288,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 7c34034f10d1ceaf
 case 8053
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -23392,14 +23392,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state e90a15d07c5000af
 case 8054
 Ground_GetP1Fighter
-ftLib_80086644 a2688 x
+ftLib_GetPos a2688 x
 rs 2679940873
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state b0fcd93d116ab5fa
 case 8055
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -23506,7 +23506,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state b649d05050e71d30
 case 8056
 Ground_GetP1Fighter
-ftLib_80086644 a5184 x
+ftLib_GetPos a5184 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -23627,7 +23627,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 40fc966d7044179c
 case 8058
 Ground_GetP1Fighter
-ftLib_80086644 a3744 x
+ftLib_GetPos a3744 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -23723,7 +23723,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 36bdb1d1ef7ccd08
 case 8060
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -23770,7 +23770,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 6fc422288c710f4d
 case 8061
 Ground_GetP1Fighter
-ftLib_80086644 a4704 x
+ftLib_GetPos a4704 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2064 x
@@ -23856,7 +23856,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 646298b3e0d6b14e
 case 8062
 Ground_GetP1Fighter
-ftLib_80086644 a4464 x
+ftLib_GetPos a4464 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -23937,14 +23937,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 9a22ce6c7aa851f7
 case 8063
 Ground_GetP1Fighter
-ftLib_80086644 a3168 x
+ftLib_GetPos a3168 x
 rs 3560079920
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state 97e45b21b4efd51f
 case 8064
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -24035,7 +24035,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state b1ca59148fd878bd
 case 8066
 Ground_GetP1Fighter
-ftLib_80086644 a2784 x
+ftLib_GetPos a2784 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a2064 x
@@ -24074,7 +24074,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 4c00d81b767b63e8
 case 8067
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -24411,7 +24411,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 1bf18ee35f9ef714
 case 8071
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2064 x
@@ -24530,14 +24530,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state c4685be5908f6fc7
 case 8072
 Ground_GetP1Fighter
-ftLib_80086644 a5568 x
+ftLib_GetPos a5568 x
 rs 2837255812
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state daca051ecafe39f6
 case 8073
 Ground_GetP1Fighter
-ftLib_80086644 a4704 x
+ftLib_GetPos a4704 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -24623,7 +24623,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 12993530ed8d6cc1
 case 8074
 Ground_GetP1Fighter
-ftLib_80086644 a2064 x
+ftLib_GetPos a2064 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjClearFlags a1344 32
@@ -24649,7 +24649,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state be31e12ec0818330
 case 8075
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -24960,7 +24960,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state ed1756ae54f974b5
 case 8078
 Ground_GetP1Fighter
-ftLib_80086644 a4944 x
+ftLib_GetPos a4944 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -25084,7 +25084,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 97c7383eb279e6d3
 case 8080
 Ground_GetP1Fighter
-ftLib_80086644 a3744 x
+ftLib_GetPos a3744 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -25150,14 +25150,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state fb076f43e50fe314
 case 8081
 Ground_GetP1Fighter
-ftLib_80086644 a5088 x
+ftLib_GetPos a5088 x
 rs 607530379
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state ba5adacc858eb4e2
 case 8082
 Ground_GetP1Fighter
-ftLib_80086644 a4464 x
+ftLib_GetPos a4464 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -25237,7 +25237,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state a353f041b20da8c9
 case 8083
 Ground_GetP1Fighter
-ftLib_80086644 a4464 x
+ftLib_GetPos a4464 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2064 x
@@ -25317,7 +25317,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state f651d2f50c2762ac
 case 8084
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -25437,7 +25437,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 22c6f40e5e690f96
 case 8085
 Ground_GetP1Fighter
-ftLib_80086644 a2544 x
+ftLib_GetPos a2544 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -25475,7 +25475,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 57f5c83204863b64
 case 8086
 Ground_GetP1Fighter
-ftLib_80086644 a3744 x
+ftLib_GetPos a3744 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2064 x
@@ -25629,7 +25629,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state cd8c4b6df6e1f016
 case 8088
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -25738,7 +25738,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 4dd82f3abeac2933
 case 8089
 Ground_GetP1Fighter
-ftLib_80086644 a2544 x
+ftLib_GetPos a2544 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -25778,7 +25778,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 0aee3b61a9b1ca74
 case 8091
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -25874,7 +25874,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 7a03f495e66b52b7
 case 8092
 Ground_GetP1Fighter
-ftLib_80086644 a3984 x
+ftLib_GetPos a3984 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -25935,7 +25935,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 47fbda5aff606054
 case 8093
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -26044,7 +26044,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 0e7295c235cd734d
 case 8094
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2064 x
@@ -26145,7 +26145,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 18fc7f920836a0b6
 case 8095
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -26195,7 +26195,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 4ceb7cdaed07f840
 case 8096
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -26316,7 +26316,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 1a6c670874e5bc2a
 case 8097
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a2064 x
@@ -26370,7 +26370,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 807646ca5be7a5c1
 case 8098
 Ground_GetP1Fighter
-ftLib_80086644 a4704 x
+ftLib_GetPos a4704 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -26456,14 +26456,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 479381e74464b1f8
 case 8099
 Ground_GetP1Fighter
-ftLib_80086644 a5808 x
+ftLib_GetPos a5808 x
 rs 1610392643
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state bdb1b95dd9aa44a4
 case 8100
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a2064 x
 HSD_LObjGetPosition a2304 x
@@ -26677,7 +26677,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state ec00f3b82a244106
 case 8102
 Ground_GetP1Fighter
-ftLib_80086644 a3504 x
+ftLib_GetPos a3504 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -26735,7 +26735,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state a4c98d2c05c8ad42
 case 8103
 Ground_GetP1Fighter
-ftLib_80086644 a2064 x
+ftLib_GetPos a2064 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjClearFlags a1344 32
 HSD_LObjClearFlags a1104 32
@@ -26760,7 +26760,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state b1d1781d8985a895
 case 8104
 Ground_GetP1Fighter
-ftLib_80086644 a2304 x
+ftLib_GetPos a2304 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjClearFlags a1584 32
@@ -26791,7 +26791,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 77bee2e90e5d6a7c
 case 8105
 Ground_GetP1Fighter
-ftLib_80086644 a3744 x
+ftLib_GetPos a3744 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -26962,7 +26962,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 58772cddf19c9b8b
 case 8107
 Ground_GetP1Fighter
-ftLib_80086644 a2784 x
+ftLib_GetPos a2784 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -27002,14 +27002,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 892d21e28e4a13ec
 case 8108
 Ground_GetP1Fighter
-ftLib_80086644 a5328 x
+ftLib_GetPos a5328 x
 rs 472067632
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state f315ad7766cbf9ce
 case 8109
 Ground_GetP1Fighter
-ftLib_80086644 a1824 x
+ftLib_GetPos a1824 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjClearFlags a1104 32
 lbVector_Normalize x
@@ -27029,7 +27029,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 1413abc1dfd89341
 case 8110
 Ground_GetP1Fighter
-ftLib_80086644 a4224 x
+ftLib_GetPos a4224 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -27146,7 +27146,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 7da8079ce8a54f4f
 case 8112
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -27257,7 +27257,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 25b47bf9d35fcee4
 case 8113
 Ground_GetP1Fighter
-ftLib_80086644 a3024 x
+ftLib_GetPos a3024 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -27464,7 +27464,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state eaed6161c6499748
 case 8116
 Ground_GetP1Fighter
-ftLib_80086644 a5184 x
+ftLib_GetPos a5184 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -27554,14 +27554,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 75253a9cf0d4a0c8
 case 8117
 Ground_GetP1Fighter
-ftLib_80086644 a4368 x
+ftLib_GetPos a4368 x
 rs 1007940617
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state d856243754bfcd7a
 case 8118
 Ground_GetP1Fighter
-ftLib_80086644 a1824 x
+ftLib_GetPos a1824 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjClearFlags a1104 32
 lbVector_Normalize x
@@ -27581,7 +27581,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state c10743680e30265f
 case 8119
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -27628,7 +27628,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state a02bd454d56cbe7d
 case 8120
 Ground_GetP1Fighter
-ftLib_80086644 a3984 x
+ftLib_GetPos a3984 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2064 x
@@ -27696,7 +27696,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 37e12e38a07c621c
 case 8121
 Ground_GetP1Fighter
-ftLib_80086644 a2064 x
+ftLib_GetPos a2064 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjClearFlags a1104 32
 HSD_LObjClearFlags a1344 32
@@ -27721,7 +27721,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state d860821db699ce6f
 case 8122
 Ground_GetP1Fighter
-ftLib_80086644 a2544 x
+ftLib_GetPos a2544 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -27756,7 +27756,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state b6f933a53c7c36dd
 case 8123
 Ground_GetP1Fighter
-ftLib_80086644 a2304 x
+ftLib_GetPos a2304 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjClearFlags a1584 32
@@ -27998,14 +27998,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 12e13c88b583c100
 case 8126
 Ground_GetP1Fighter
-ftLib_80086644 a3888 x
+ftLib_GetPos a3888 x
 rs 234348880
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state 6f2ecd7d1095cd65
 case 8127
 Ground_GetP1Fighter
-ftLib_80086644 a1824 x
+ftLib_GetPos a1824 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjClearFlags a1104 32
 lbVector_Normalize x
@@ -28025,7 +28025,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state e639a5fd5855c7eb
 case 8128
 Ground_GetP1Fighter
-ftLib_80086644 a4944 x
+ftLib_GetPos a4944 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -28114,7 +28114,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state fc8ae2ccdefdcc35
 case 8129
 Ground_GetP1Fighter
-ftLib_80086644 a2064 x
+ftLib_GetPos a2064 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjClearFlags a1344 32
@@ -28140,7 +28140,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 7a10915fa192d72e
 case 8130
 Ground_GetP1Fighter
-ftLib_80086644 a4944 x
+ftLib_GetPos a4944 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -28379,7 +28379,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 37b46d0579a5d592
 case 8133
 Ground_GetP1Fighter
-ftLib_80086644 a1824 x
+ftLib_GetPos a1824 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjClearFlags a1104 32
 lbVector_Normalize x
@@ -28399,7 +28399,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state f12c6d808c4b56e4
 case 8134
 Ground_GetP1Fighter
-ftLib_80086644 a6384 x
+ftLib_GetPos a6384 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -28522,14 +28522,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 9148b96a05bb95f1
 case 8135
 Ground_GetP1Fighter
-ftLib_80086644 a3888 x
+ftLib_GetPos a3888 x
 rs 1673893336
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state 1a1e6fc144af146c
 case 8136
 Ground_GetP1Fighter
-ftLib_80086644 a1824 x
+ftLib_GetPos a1824 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjClearFlags a1104 32
 lbVector_Normalize x
@@ -28549,7 +28549,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 23e68a98dd0a1bbf
 case 8137
 Ground_GetP1Fighter
-ftLib_80086644 a2304 x
+ftLib_GetPos a2304 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjClearFlags a1584 32
@@ -28577,7 +28577,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state c5921ea6b932daf7
 case 8138
 Ground_GetP1Fighter
-ftLib_80086644 a2784 x
+ftLib_GetPos a2784 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -28712,7 +28712,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 3f374cc829d86dd1
 case 8140
 Ground_GetP1Fighter
-ftLib_80086644 a2784 x
+ftLib_GetPos a2784 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a2064 x
@@ -28878,7 +28878,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 5ab4b3f54179a3bf
 case 8143
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -28930,14 +28930,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state e254eeae24bae37b
 case 8144
 Ground_GetP1Fighter
-ftLib_80086644 a5088 x
+ftLib_GetPos a5088 x
 rs 2851274096
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state 772a4eb4bbda4d61
 case 8145
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -29049,7 +29049,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state e6d66c67932842e4
 case 8146
 Ground_GetP1Fighter
-ftLib_80086644 a4704 x
+ftLib_GetPos a4704 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a2304 x
@@ -29131,7 +29131,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 8c7f1be53affc187
 case 8147
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2064 x
 HSD_LObjGetPosition a2304 x
@@ -29287,7 +29287,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 447831d31086ac80
 case 8149
 Ground_GetP1Fighter
-ftLib_80086644 a3024 x
+ftLib_GetPos a3024 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjClearFlags a1104 32
@@ -29330,7 +29330,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 07b2d70dba00954b
 case 8150
 Ground_GetP1Fighter
-ftLib_80086644 a2304 x
+ftLib_GetPos a2304 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjClearFlags a1584 32
@@ -29358,7 +29358,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state e73d45d4a460e2b4
 case 8151
 Ground_GetP1Fighter
-ftLib_80086644 a4704 x
+ftLib_GetPos a4704 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -29445,7 +29445,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 06a4579338612898
 case 8152
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -29546,14 +29546,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state fb23a3bc1960fd7b
 case 8153
 Ground_GetP1Fighter
-ftLib_80086644 a2448 x
+ftLib_GetPos a2448 x
 rs 530837931
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state e5aa08d51ea6b08f
 case 8154
 Ground_GetP1Fighter
-ftLib_80086644 a2064 x
+ftLib_GetPos a2064 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjClearFlags a1104 32
 HSD_LObjClearFlags a1344 32
@@ -29578,7 +29578,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state eb7cbce2c25c63c3
 case 8155
 Ground_GetP1Fighter
-ftLib_80086644 a2784 x
+ftLib_GetPos a2784 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -29639,7 +29639,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 4e6237bd897339db
 case 8157
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a2064 x
@@ -29918,7 +29918,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state f07894533f12fb00
 case 8161
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
 HSD_LObjGetPosition a2304 x
@@ -30023,7 +30023,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state f6507c9352f96db4
 case 8163
 Ground_GetP1Fighter
-ftLib_80086644 a3024 x
+ftLib_GetPos a3024 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -30065,7 +30065,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 9f7e2e488c8c27dc
 case 8164
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -30176,7 +30176,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 6395e6f4967d601e
 case 8165
 Ground_GetP1Fighter
-ftLib_80086644 a2064 x
+ftLib_GetPos a2064 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjClearFlags a1344 32
 HSD_LObjClearFlags a1104 32
@@ -30201,7 +30201,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 22e77be3b8ed406a
 case 8166
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -30321,7 +30321,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state bd43a21c51fec3e9
 case 8167
 Ground_GetP1Fighter
-ftLib_80086644 a3984 x
+ftLib_GetPos a3984 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -30388,7 +30388,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 08eb900aff207228
 case 8168
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -30626,7 +30626,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 3b20fddb9e6b8512
 case 8171
 Ground_GetP1Fighter
-ftLib_80086644 a4608 x
+ftLib_GetPos a4608 x
 rs 2684281142
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
@@ -30837,7 +30837,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 3a18ab78411108fb
 case 8175
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -31062,7 +31062,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state ead9b42d1ff73ef3
 case 8177
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -31172,7 +31172,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 030e850074a9e8e7
 case 8178
 Ground_GetP1Fighter
-ftLib_80086644 a3264 x
+ftLib_GetPos a3264 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -31227,7 +31227,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state c38e0508243bd031
 case 8179
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -31349,14 +31349,14 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state a4ccddbca211fa13
 case 8180
 Ground_GetP1Fighter
-ftLib_80086644 a2448 x
+ftLib_GetPos a2448 x
 rs 1843303935
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
 state 00a4bbd5a15816ea
 case 8181
 Ground_GetP1Fighter
-ftLib_80086644 a4224 x
+ftLib_GetPos a4224 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -31423,7 +31423,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 110dda1943fd1761
 case 8182
 Ground_GetP1Fighter
-ftLib_80086644 a4704 x
+ftLib_GetPos a4704 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -31508,7 +31508,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state be00be7eabaf6237
 case 8183
 Ground_GetP1Fighter
-ftLib_80086644 a6144 x
+ftLib_GetPos a6144 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1824 x
@@ -31625,7 +31625,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state e8ab0b94238a1902
 case 8184
 Ground_GetP1Fighter
-ftLib_80086644 a4944 x
+ftLib_GetPos a4944 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -31710,7 +31710,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 37706df1e9b0ed6a
 case 8185
 Ground_GetP1Fighter
-ftLib_80086644 a1824 x
+ftLib_GetPos a1824 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjClearFlags a1104 32
 lbVector_Normalize x
@@ -31805,7 +31805,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state e4fe53a73b29a80d
 case 8187
 Ground_GetP1Fighter
-ftLib_80086644 a5904 x
+ftLib_GetPos a5904 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -31925,7 +31925,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 445920c9316809ae
 case 8188
 Ground_GetP1Fighter
-ftLib_80086644 a3984 x
+ftLib_GetPos a3984 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1584 x
 HSD_LObjGetPosition a1824 x
@@ -31995,7 +31995,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state a4b063633dacc461
 case 8189
 Ground_GetP1Fighter
-ftLib_80086644 a6288 x
+ftLib_GetPos a6288 x
 rs 3093200242
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
@@ -32056,7 +32056,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 11ee1ec032f1d503
 case 8191
 Ground_GetP1Fighter
-ftLib_80086644 a5184 x
+ftLib_GetPos a5184 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -32157,7 +32157,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 49ee7a55704cf520
 case 8192
 Ground_GetP1Fighter
-ftLib_80086644 a5664 x
+ftLib_GetPos a5664 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -32266,7 +32266,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 60806141254b041a
 case 8193
 Ground_GetP1Fighter
-ftLib_80086644 a4464 x
+ftLib_GetPos a4464 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -32342,7 +32342,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state 594b93e94b1b09b4
 case 8194
 Ground_GetP1Fighter
-ftLib_80086644 a2304 x
+ftLib_GetPos a2304 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -32374,7 +32374,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state a95de92909feddaf
 case 8195
 Ground_GetP1Fighter
-ftLib_80086644 a5424 x
+ftLib_GetPos a5424 x
 HSD_LObjGetPosition a1104 x
 HSD_LObjGetPosition a1344 x
 HSD_LObjGetPosition a1584 x
@@ -32635,7 +32635,7 @@ g0 x10 00000000 x11 0 0 0 0 0 0
 state ea1496bd6a2f6f87
 case 8198
 Ground_GetP1Fighter
-ftLib_80086644 a1728 x
+ftLib_GetPos a1728 x
 rs 2214547077
 si 0 1
 g0 x10 00000000 x11 0 0 0 0 0 0
@@ -33185,7 +33185,7 @@ si 0 1
 state a2f57f010e431993
 case 11000
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3007600305
@@ -33193,7 +33193,7 @@ si 0 1
 state 91a9e889bc2854e9
 case 11001
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1660699679
@@ -33201,7 +33201,7 @@ si 0 1
 state 0e1ee65cb400262f
 case 11002
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2749767141
@@ -33209,7 +33209,7 @@ si 0 1
 state 4878f3fb89751dc4
 case 11003
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3559277710
@@ -33217,7 +33217,7 @@ si 0 1
 state 38a5545c982dfafe
 case 11004
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3688862942
@@ -33225,7 +33225,7 @@ si 0 1
 state 3e7f30cee14b5363
 case 11005
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 47
 rs 1808111866
@@ -33233,7 +33233,7 @@ si 0 1
 state 6b92df05434995d6
 case 11006
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2739951833
@@ -33241,7 +33241,7 @@ si 0 1
 state 31080b0855a3a2a4
 case 11007
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2989463513
@@ -33249,7 +33249,7 @@ si 0 1
 state ff80ffadfced7b5c
 case 11008
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 621136505
@@ -33257,7 +33257,7 @@ si 0 1
 state 575cead965db1ffa
 case 11009
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3893249189
@@ -33265,7 +33265,7 @@ si 0 1
 state 5e21c8cb67f0701a
 case 11010
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1858151755
@@ -33273,7 +33273,7 @@ si 0 1
 state 2df10c8948bf3190
 case 11011
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1114101830
@@ -33281,7 +33281,7 @@ si 0 1
 state 03c0f30746d7ea37
 case 11012
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3307118202
@@ -33289,7 +33289,7 @@ si 0 1
 state 893f1d565aa1b179
 case 11013
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3778517056
@@ -33297,7 +33297,7 @@ si 0 1
 state 5678ded21984b625
 case 11014
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1853317239
@@ -33305,7 +33305,7 @@ si 0 1
 state 4049a3a53aeb2a4e
 case 11015
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 611191569
@@ -33313,7 +33313,7 @@ si 0 1
 state e7195f9d15ebaf78
 case 11016
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1387281879
@@ -33321,7 +33321,7 @@ si 0 1
 state dad5dd34586061a6
 case 11017
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3357481786
@@ -33329,7 +33329,7 @@ si 0 1
 state 2d0a205adcf20ab5
 case 11018
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 732343532
@@ -33337,7 +33337,7 @@ si 0 1
 state a907b5c4a8e405dd
 case 11019
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 902967272
@@ -33345,7 +33345,7 @@ si 0 1
 state 1add11549fdbe219
 case 11020
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 884600448
@@ -33353,7 +33353,7 @@ si 0 1
 state f51ab345c7cfd322
 case 11021
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 10
 rs 3340160832
@@ -33361,7 +33361,7 @@ si 0 1
 state 4ec62bb15e389792
 case 11022
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3507262065
@@ -33369,7 +33369,7 @@ si 0 1
 state 28055539b332785c
 case 11023
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1406926015
@@ -33377,7 +33377,7 @@ si 0 1
 state 16736ff50dbf9bae
 case 11024
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3935639478
@@ -33385,7 +33385,7 @@ si 0 1
 state 7944715cd5fd4e2a
 case 11025
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1518216432
@@ -33393,7 +33393,7 @@ si 0 1
 state 89a7ea1e4a04220e
 case 11026
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3042054321
@@ -33401,7 +33401,7 @@ si 0 1
 state 7ef2336eaa4ef751
 case 11027
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2744365856
@@ -33409,7 +33409,7 @@ si 0 1
 state 14842d0b97486264
 case 11028
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2734191176
@@ -33417,7 +33417,7 @@ si 0 1
 state e90dac5311340096
 case 11029
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1272235877
@@ -33425,7 +33425,7 @@ si 0 1
 state 9c757bf374b93d2b
 case 11030
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3862417790
@@ -33433,7 +33433,7 @@ si 0 1
 state 83abf0fc0589cb9f
 case 11031
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3315228791
@@ -33441,7 +33441,7 @@ si 0 1
 state 24ce04fe9d86a5d5
 case 11032
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3435425027
@@ -33449,7 +33449,7 @@ si 0 1
 state 4023f423017af97f
 case 11033
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2748686636
@@ -33457,7 +33457,7 @@ si 0 1
 state b88cd58cc3fb4b79
 case 11034
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 966546374
@@ -33465,7 +33465,7 @@ si 0 1
 state 21c85d45ecca1a22
 case 11035
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 204371920
@@ -33473,7 +33473,7 @@ si 0 1
 state d1b6ddb9ea7c2d91
 case 11036
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 248727849
@@ -33481,7 +33481,7 @@ si 0 1
 state 582dc2475eb2ccee
 case 11037
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 77
 rs 2867625417
@@ -33489,7 +33489,7 @@ si 0 1
 state 69f4f32c90361525
 case 11038
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3919372896
@@ -33497,7 +33497,7 @@ si 0 1
 state e2c99b80cfca548f
 case 11039
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 4267643565
@@ -33505,7 +33505,7 @@ si 0 1
 state cd7c8d16ef93586e
 case 11040
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3523569575
@@ -33513,7 +33513,7 @@ si 0 1
 state 38e3ef73a5f2f4f5
 case 11041
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 57
 rs 690463126
@@ -33521,7 +33521,7 @@ si 0 1
 state 0b98cdb09bba2d32
 case 11042
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 39498778
@@ -33529,7 +33529,7 @@ si 0 1
 state f3e001fc82f21ba8
 case 11043
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 236412210
@@ -33537,7 +33537,7 @@ si 0 1
 state dd42bf21bca742c6
 case 11044
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 33936897
@@ -33545,7 +33545,7 @@ si 0 1
 state b5392125e1515734
 case 11045
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 41
 rs 538869107
@@ -33553,7 +33553,7 @@ si 0 1
 state 044fcfc7dad22015
 case 11046
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 49082662
@@ -33561,7 +33561,7 @@ si 0 1
 state 765a77ae944b5feb
 case 11047
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1746832997
@@ -33569,7 +33569,7 @@ si 0 1
 state 3d47a214002d0f0f
 case 11048
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 860837225
@@ -33577,7 +33577,7 @@ si 0 1
 state 8edba63717298bad
 case 11049
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 64
 rs 154598921
@@ -33585,7 +33585,7 @@ si 0 1
 state a042d20820bd650c
 case 11050
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1195195837
@@ -33593,7 +33593,7 @@ si 0 1
 state f1372c71e09cbcb6
 case 11051
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2040703644
@@ -33601,7 +33601,7 @@ si 0 1
 state f8ce7d12201cd943
 case 11052
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3813663951
@@ -33609,7 +33609,7 @@ si 0 1
 state ddcb4f2fb83fa843
 case 11053
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 48
 rs 991980
@@ -33617,7 +33617,7 @@ si 0 1
 state 24da51419266361a
 case 11054
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 370661898
@@ -33625,7 +33625,7 @@ si 0 1
 state 9faea195d15c9cf7
 case 11055
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2952066064
@@ -33633,7 +33633,7 @@ si 0 1
 state fc5cafdfaa809496
 case 11056
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2290164843
@@ -33641,7 +33641,7 @@ si 0 1
 state 803ee52358bca583
 case 11057
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2210725555
@@ -33649,7 +33649,7 @@ si 0 1
 state aa7b6456b7c666f5
 case 11058
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2316961043
@@ -33657,7 +33657,7 @@ si 0 1
 state 58f7805f444ef534
 case 11059
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 4024645204
@@ -33665,7 +33665,7 @@ si 0 1
 state d36fc270da7e30e3
 case 11060
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 4254002795
@@ -33673,7 +33673,7 @@ si 0 1
 state 7597c7261f6e515c
 case 11061
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 12
 rs 2331845206
@@ -33681,7 +33681,7 @@ si 0 1
 state 17566b4993d3c5bd
 case 11062
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2326544431
@@ -33689,7 +33689,7 @@ si 0 1
 state fcebafbf3c57f96a
 case 11063
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2313872643
@@ -33697,7 +33697,7 @@ si 0 1
 state 3796021b52b90909
 case 11064
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1733135989
@@ -33705,7 +33705,7 @@ si 0 1
 state b3027ccfc062005f
 case 11065
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3853949840
@@ -33713,7 +33713,7 @@ si 0 1
 state 73bb860341d77de1
 case 11066
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2450895024
@@ -33721,7 +33721,7 @@ si 0 1
 state 47e6f911797de285
 case 11067
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3162333117
@@ -33729,7 +33729,7 @@ si 0 1
 state f84eada55a042382
 case 11068
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3172376277
@@ -33737,7 +33737,7 @@ si 0 1
 state d28911cf7c64ab68
 case 11069
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3882697303
@@ -33745,7 +33745,7 @@ si 0 1
 state b419ca8c2e522fa9
 case 11070
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2764157357
@@ -33753,7 +33753,7 @@ si 0 1
 state 0ed6f0f8cbccab12
 case 11071
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3665071338
@@ -33761,7 +33761,7 @@ si 0 1
 state 1258663db41289b2
 case 11072
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1298059594
@@ -33769,7 +33769,7 @@ si 0 1
 state fe8dcd35e9b10aa6
 case 11073
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1688641032
@@ -33777,7 +33777,7 @@ si 0 1
 state 6bce8d18ce134003
 case 11074
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1766902847
@@ -33785,7 +33785,7 @@ si 0 1
 state fe56d723513b8b19
 case 11075
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 708625269
@@ -33793,7 +33793,7 @@ si 0 1
 state bc932184fba7817b
 case 11076
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2844538231
@@ -33801,7 +33801,7 @@ si 0 1
 state a2d0ba35e790e731
 case 11077
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 71
 rs 2027843616
@@ -33809,7 +33809,7 @@ si 0 1
 state e2f0d52c54ea52e5
 case 11078
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1557400498
@@ -33817,7 +33817,7 @@ si 0 1
 state fb792d27589b7dc4
 case 11079
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3261371409
@@ -33825,7 +33825,7 @@ si 0 1
 state 756fa389296e630c
 case 11080
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2563159583
@@ -33833,7 +33833,7 @@ si 0 1
 state 0159cdb3af986421
 case 11081
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 30
 rs 1152893335
@@ -33841,7 +33841,7 @@ si 0 1
 state d52d93f336d370d6
 case 11082
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 741819800
@@ -33849,7 +33849,7 @@ si 0 1
 state 5f4976cd8ef17f51
 case 11083
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1569273051
@@ -33857,7 +33857,7 @@ si 0 1
 state d9326c696a917f8a
 case 11084
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1220937657
@@ -33865,7 +33865,7 @@ si 0 1
 state 18f8c37dd059fef8
 case 11085
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 14
 rs 1301159282
@@ -33873,7 +33873,7 @@ si 0 1
 state 016eb6b99867cd38
 case 11086
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 746651812
@@ -33881,7 +33881,7 @@ si 0 1
 state 790bd4bf8a97a323
 case 11087
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 998303628
@@ -33889,7 +33889,7 @@ si 0 1
 state fc70cb511898984d
 case 11088
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2248654011
@@ -33897,7 +33897,7 @@ si 0 1
 state a8eca720ba5b5af1
 case 11089
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 94
 rs 3460677933
@@ -33905,7 +33905,7 @@ si 0 1
 state 1e5a2991aedc2d03
 case 11090
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1935639166
@@ -33913,7 +33913,7 @@ si 0 1
 state 478ef6bdb57c0329
 case 11091
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1639847889
@@ -33921,7 +33921,7 @@ si 0 1
 state ab2936fd789a326d
 case 11092
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1443302685
@@ -33929,7 +33929,7 @@ si 0 1
 state 3a82c55e01d7a3b5
 case 11093
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 78
 rs 3346800072
@@ -33937,7 +33937,7 @@ si 0 1
 state 24ac2c9ca5b47470
 case 11094
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3785766922
@@ -33945,7 +33945,7 @@ si 0 1
 state c2b4f1c9c64aa127
 case 11095
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2915138372
@@ -33953,7 +33953,7 @@ si 0 1
 state ad0dc028b5fbb091
 case 11096
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2815931210
@@ -33961,7 +33961,7 @@ si 0 1
 state f72c04e3d02e1d12
 case 11097
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 25
 rs 1206853384
@@ -33969,7 +33969,7 @@ si 0 1
 state 5443dce607e33732
 case 11098
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3304701456
@@ -33977,7 +33977,7 @@ si 0 1
 state 92ae07cc94a3a818
 case 11099
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1415863617
@@ -33985,7 +33985,7 @@ si 0 1
 state e7e107d8a0dc8520
 case 11100
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1427086377
@@ -33993,7 +33993,7 @@ si 0 1
 state 317a413b6bd435df
 case 11101
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 57
 rs 1322697709
@@ -34001,7 +34001,7 @@ si 0 1
 state 7f64a991e119b335
 case 11102
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2190425129
@@ -34009,7 +34009,7 @@ si 0 1
 state 6f9c003096c60191
 case 11103
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3777828113
@@ -34017,7 +34017,7 @@ si 0 1
 state 8755f360fee7c09e
 case 11104
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3105274350
@@ -34025,7 +34025,7 @@ si 0 1
 state 84f9f3091f5b022f
 case 11105
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 89
 rs 3441237938
@@ -34033,7 +34033,7 @@ si 0 1
 state 018c335a3165924f
 case 11106
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 165578430
@@ -34041,7 +34041,7 @@ si 0 1
 state b3b68c9976aeacd9
 case 11107
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3257254281
@@ -34049,7 +34049,7 @@ si 0 1
 state e236748887093eb7
 case 11108
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3276669153
@@ -34057,7 +34057,7 @@ si 0 1
 state e55668a32978c1fb
 case 11109
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3290743639
@@ -34065,7 +34065,7 @@ si 0 1
 state 13018c451d7c13b8
 case 11110
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 157860738
@@ -34073,7 +34073,7 @@ si 0 1
 state 91dc3333c2894ac9
 case 11111
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2754351838
@@ -34081,7 +34081,7 @@ si 0 1
 state 045b0bca94d3bfae
 case 11112
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3539084312
@@ -34089,7 +34089,7 @@ si 0 1
 state c065a6a9360a00bd
 case 11113
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 96
 rs 3977003053
@@ -34097,7 +34097,7 @@ si 0 1
 state 8dfccf4b22a6a54d
 case 11114
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2902767077
@@ -34105,7 +34105,7 @@ si 0 1
 state 7d86c730fce2ac56
 case 11115
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1123522257
@@ -34113,7 +34113,7 @@ si 0 1
 state 805f8de0da403255
 case 11116
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2287745670
@@ -34121,7 +34121,7 @@ si 0 1
 state c4a724c343079f03
 case 11117
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 28
 rs 13186752
@@ -34129,7 +34129,7 @@ si 0 1
 state 9a0957cdbfc43767
 case 11118
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1276070437
@@ -34137,7 +34137,7 @@ si 0 1
 state be170d7b288f849e
 case 11119
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3550078320
@@ -34145,7 +34145,7 @@ si 0 1
 state 5b78c9cbb65f8b4d
 case 11120
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1152628944
@@ -34153,7 +34153,7 @@ si 0 1
 state db62712ab79988cc
 case 11121
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 60
 rs 2644630896
@@ -34161,7 +34161,7 @@ si 0 1
 state 85057a7e1be7e38b
 case 11122
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3016081217
@@ -34169,7 +34169,7 @@ si 0 1
 state 2ce8728b25e5e445
 case 11123
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 600943343
@@ -34177,7 +34177,7 @@ si 0 1
 state 3d581d11fb208819
 case 11124
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 582642567
@@ -34185,7 +34185,7 @@ si 0 1
 state c2bf4b58b65edb70
 case 11125
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 92
 rs 1858575474
@@ -34193,7 +34193,7 @@ si 0 1
 state a72a8dc42d6d65f6
 case 11126
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2166911627
@@ -34201,7 +34201,7 @@ si 0 1
 state 43f8ea6e2182786d
 case 11127
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1171814840
@@ -34209,7 +34209,7 @@ si 0 1
 state bf3de055e94f3db1
 case 11128
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 207507516
@@ -34217,7 +34217,7 @@ si 0 1
 state 311e401be0030849
 case 11129
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 83
 rs 174989462
@@ -34225,7 +34225,7 @@ si 0 1
 state 4ef638dda7f52909
 case 11130
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2951988789
@@ -34233,7 +34233,7 @@ si 0 1
 state f09cb4dcfa7ac7a0
 case 11131
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1884275462
@@ -34241,7 +34241,7 @@ si 0 1
 state ef63465a33e4ed99
 case 11132
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3697205658
@@ -34249,7 +34249,7 @@ si 0 1
 state ea265da495edd2de
 case 11133
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 56097907
@@ -34257,7 +34257,7 @@ si 0 1
 state 19529ddabf191d35
 case 11134
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2940568329
@@ -34265,7 +34265,7 @@ si 0 1
 state 8a328d72f1285340
 case 11135
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 373690449
@@ -34273,7 +34273,7 @@ si 0 1
 state f6d17c023179e4ca
 case 11136
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2171358705
@@ -34281,7 +34281,7 @@ si 0 1
 state 798f8870c9fa04d6
 case 11137
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2157715500
@@ -34289,7 +34289,7 @@ si 0 1
 state 7f2b3ce8b3cd8929
 case 11138
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3888604253
@@ -34297,7 +34297,7 @@ si 0 1
 state dcfc08ae43ba1780
 case 11139
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 795342544
@@ -34305,7 +34305,7 @@ si 0 1
 state d342283a91c3d2ad
 case 11140
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3265260350
@@ -34313,7 +34313,7 @@ si 0 1
 state 695cb0bc5c47c495
 case 11141
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2309356745
@@ -34321,7 +34321,7 @@ si 0 1
 state 9fc28776a7de7e00
 case 11142
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1650637735
@@ -34329,7 +34329,7 @@ si 0 1
 state 2dc9583d979643f4
 case 11143
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2147978393
@@ -34337,7 +34337,7 @@ si 0 1
 state 5bc65ea13da0536e
 case 11144
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 4090849366
@@ -34345,7 +34345,7 @@ si 0 1
 state 3efc011d3715434a
 case 11145
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2693627827
@@ -34353,7 +34353,7 @@ si 0 1
 state fe0fb9d6a0896db8
 case 11146
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 666072892
@@ -34361,7 +34361,7 @@ si 0 1
 state 058196f801e01fde
 case 11147
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2444994656
@@ -34369,7 +34369,7 @@ si 0 1
 state 09943734a20d5911
 case 11148
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 601217520
@@ -34377,7 +34377,7 @@ si 0 1
 state 8f16f996a78216ef
 case 11149
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 22
 rs 2847187798
@@ -34385,7 +34385,7 @@ si 0 1
 state 440693f8c7b43129
 case 11150
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 654651904
@@ -34393,7 +34393,7 @@ si 0 1
 state 3b9f9243c9572d8d
 case 11151
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 4155669303
@@ -34401,7 +34401,7 @@ si 0 1
 state 3c4567341951ed46
 case 11152
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3977536242
@@ -34409,7 +34409,7 @@ si 0 1
 state 512d7bdfb3ab0bdb
 case 11153
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 54
 rs 712998665
@@ -34417,7 +34417,7 @@ si 0 1
 state fb4bf923d22d9536
 case 11154
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3935588242
@@ -34425,7 +34425,7 @@ si 0 1
 state f3e4621da1ec2de5
 case 11155
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 133837992
@@ -34433,7 +34433,7 @@ si 0 1
 state 48075178bce36057
 case 11156
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 110228928
@@ -34441,7 +34441,7 @@ si 0 1
 state 9c826037ad78aaf5
 case 11157
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 86
 rs 591832044
@@ -34449,7 +34449,7 @@ si 0 1
 state 980865a51ca3afb4
 case 11158
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3360484753
@@ -34457,7 +34457,7 @@ si 0 1
 state 5cd541ccc807e63f
 case 11159
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2361226512
@@ -34465,7 +34465,7 @@ si 0 1
 state 8ab0707f7398e909
 case 11160
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3408062160
@@ -34473,7 +34473,7 @@ si 0 1
 state 9a486b9105a99e98
 case 11161
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3229664630
@@ -34481,7 +34481,7 @@ si 0 1
 state 8cb63b636107291b
 case 11162
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2645898857
@@ -34489,7 +34489,7 @@ si 0 1
 state c3324041c06c0235
 case 11163
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2889938159
@@ -34497,7 +34497,7 @@ si 0 1
 state c479fb5ba6ca1c89
 case 11164
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3102587146
@@ -34505,7 +34505,7 @@ si 0 1
 state 8e5969c8d95e289e
 case 11165
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2674635633
@@ -34513,7 +34513,7 @@ si 0 1
 state 1af73b6b0bfcff8a
 case 11166
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1422865481
@@ -34521,7 +34521,7 @@ si 0 1
 state 71aaafa71ac611ec
 case 11167
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3393791928
@@ -34529,7 +34529,7 @@ si 0 1
 state 1e833a80c930330a
 case 11168
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1982595592
@@ -34537,7 +34537,7 @@ si 0 1
 state 9f29a93676c2846e
 case 11169
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 33773761
@@ -34545,7 +34545,7 @@ si 0 1
 state 9ea2ec33ac49d2ff
 case 11170
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2205433037
@@ -34553,7 +34553,7 @@ si 0 1
 state 4cfbc7e0dd56c370
 case 11171
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3850965808
@@ -34561,7 +34561,7 @@ si 0 1
 state 06c6154d9dc71a63
 case 11172
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 996845903
@@ -34569,7 +34569,7 @@ si 0 1
 state 17e23725e670d426
 case 11173
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 77
 rs 1128995113
@@ -34577,7 +34577,7 @@ si 0 1
 state 4f17ff115a171261
 case 11174
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1254693089
@@ -34585,7 +34585,7 @@ si 0 1
 state 4efda0ba34142145
 case 11175
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1544076144
@@ -34593,7 +34593,7 @@ si 0 1
 state 3ebdb7d59bda0159
 case 11176
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2540056774
@@ -34601,7 +34601,7 @@ si 0 1
 state 52d3a7d1d87de30e
 case 11177
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 0
 rs 1784912467
@@ -34609,7 +34609,7 @@ si 0 1
 state ca547cab500b25b1
 case 11178
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3694772348
@@ -34617,7 +34617,7 @@ si 0 1
 state 48eeadf275b2a48d
 case 11179
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1303682953
@@ -34625,7 +34625,7 @@ si 0 1
 state 52b031a2148a78a2
 case 11180
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1289707233
@@ -34633,7 +34633,7 @@ si 0 1
 state 3bef66fb86940af2
 case 11181
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1666860726
@@ -34641,7 +34641,7 @@ si 0 1
 state 770fb41f14472bd5
 case 11182
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3700393280
@@ -34649,7 +34649,7 @@ si 0 1
 state cd6b8990ba9606a4
 case 11183
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 733826270
@@ -34657,7 +34657,7 @@ si 0 1
 state fad0c273dadbc716
 case 11184
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2309438050
@@ -34665,7 +34665,7 @@ si 0 1
 state 71e65367d08cdb2d
 case 11185
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 60
 rs 3767638761
@@ -34673,7 +34673,7 @@ si 0 1
 state 0ec71af113d2dfb8
 case 11186
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 287242450
@@ -34681,7 +34681,7 @@ si 0 1
 state da0edb393ed1104f
 case 11187
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3690267457
@@ -34689,7 +34689,7 @@ si 0 1
 state 4673e15d731c8f53
 case 11188
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1504152516
@@ -34697,7 +34697,7 @@ si 0 1
 state e22ea7d1ae095c98
 case 11189
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3920119308
@@ -34705,7 +34705,7 @@ si 0 1
 state 9cadab1f0ae336a8
 case 11190
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2902439169
@@ -34713,7 +34713,7 @@ si 0 1
 state fd6e2ed8edf16648
 case 11191
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1179881712
@@ -34721,7 +34721,7 @@ si 0 1
 state 173e8707a0636b13
 case 11192
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3278171098
@@ -34729,7 +34729,7 @@ si 0 1
 state dd7df5c156f89f60
 case 11193
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 1
 res 59
 rs 2365717224
@@ -34737,7 +34737,7 @@ si 0 1
 state 14d8d995fe270373
 case 11194
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 1064503632
@@ -34745,7 +34745,7 @@ si 0 1
 state 3bc766aa5ae8c927
 case 11195
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2288741032
@@ -34753,7 +34753,7 @@ si 0 1
 state 9ed0cd0360da2232
 case 11196
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2298522560
@@ -34761,7 +34761,7 @@ si 0 1
 state 593eadda910af58c
 case 11197
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 2218272269
@@ -34769,7 +34769,7 @@ si 0 1
 state 65795b61a71d56fa
 case 11198
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 3862717625
@@ -34777,7 +34777,7 @@ si 0 1
 state b68f20167a800fe9
 case 11199
 Ground_801C0498
-ftLib_80086644 a704 x
+ftLib_GetPos a704 x
 r 0
 res 0
 rs 734261489

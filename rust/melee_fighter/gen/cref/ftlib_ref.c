@@ -1,10 +1,10 @@
 /* C reference for src/ftlib.rs (port round 3): src/melee/ft/ftlib.c cut verbatim into
- * ftlib_extract.inc by run.py (everything but ftLib_800871A8, 80087508/80087574/80087610 and
+ * ftlib_extract.inc by run.py (everything but ftLib_ApplyMetalBox, 80087508/80087574/80087610 and
  * 8008777C), plus the ftcommon.c functions it calls that group 3 has ported
  * (8007ED2C, GetModelScale, 80080144, 80080174). Six fighters, a random fighter p-link list,
  * random fields, one random op per case. Callees outside the ported set are stubs that fold
  * their arguments into the trace word g_tr; tests/ftlib_ref.rs installs the same stubs as hooks.
- * Built with the shipping contraction (run.py): ftLib_8008627C / 80086368 fuse dx*dx + dy*dy. */
+ * Built with the shipping contraction (run.py): ftLib_FindNearestOpponent / 80086368 fuse dx*dx + dy*dy. */
 #include "ft/types.h"
 #include "ft/forward.h"
 #include "ft/ftlib.h"
@@ -85,7 +85,7 @@ void lb_800145C0(u8 slot) { T(0x800u + slot); }
 bool Player_GetMoreFlagsBit4(s32 slot) { T(0x200u + (u32) slot); return (g_tr >> 5) & 1; }
 void ftData_80085560(int a, int b) { T(0x210u); T((u32) a); T((u32) b); }
 void ftCo_800D4F24(Fighter_GObj* g, int i) { T(0x220u + E(g)); T((u32) i); }
-void Fighter_UnkProcessDeath_80068354(Fighter_GObj* g) { T(0x230u + E(g)); }
+void Fighter_Spawn(Fighter_GObj* g) { T(0x230u + E(g)); }
 void ftCommon_8007D92C(Fighter_GObj* g) { T(0x240u + E(g)); }
 int Geno_DefineTemplateSkeleton(int k) { T(0x250u + (u32) k); return (g_tr >> 1) & 1; }
 int Geno_DefineBaseKind(int k) { T(0x260u + (u32) k); return k % 27; }
@@ -243,95 +243,95 @@ int main(void)
             gn = (q1 & 3) ? g : NULL;
             gi = (q2 & 1) ? &IT[q3 % 3] : g2;
             switch (op) {
-            case 0: r = (u32) ftLib_800860C4(); break;
+            case 0: r = (u32) ftLib_CountFighters(); break;
             case 1: r = ftLib_IsMasterHandPresent(); break;
             case 2: r = ftLib_IsCrazyHandPresent(); break;
-            case 3: r = E(ftLib_80086198(gn)); break;
-            case 4: r = E(ftLib_8008627C(&w, gn)); break;
-            case 5: r = E(ftLib_80086368(&w, gn, (q2 & 1) ? -1.0f : (q2 & 2) ? 1.0f : a)); break;
-            case 6: r = B(ftLib_800864A8(&w, gn)); break;
-            case 7: r = B(ftLib_800865C0(g)); break;
-            case 8: r = (u32) ftLib_800865CC(g); break;
-            case 9: { float x, y; ftLib_800865D8(g, &x, &y); o1 = B(x); o2 = B(y); } break;
-            case 10: r = E(ftLib_800865F0(g)); break;
-            case 11: r = E(ftLib_80086630(g, (Fighter_Part) (q1 % 8))); break;
-            case 12: ftLib_80086644(g, &v); break;
-            case 13: ftLib_80086664(g, &w); break;
-            case 14: ftLib_80086684(g, &v); break;
+            case 3: r = E(ftLib_FindLowestPercentOpponent(gn)); break;
+            case 4: r = E(ftLib_FindNearestOpponent(&w, gn)); break;
+            case 5: r = E(ftLib_FindNearestOpponentInDir(&w, gn, (q2 & 1) ? -1.0f : (q2 & 2) ? 1.0f : a)); break;
+            case 6: r = B(ftLib_GetOpponentsDir(&w, gn)); break;
+            case 7: r = B(ftLib_GetFacingDir(g)); break;
+            case 8: r = (u32) ftLib_GetGroundAir(g); break;
+            case 9: { float x, y; ftLib_GetLStick(g, &x, &y); o1 = B(x); o2 = B(y); } break;
+            case 10: r = E(ftLib_GetHipJObj(g)); break;
+            case 11: r = E(ftLib_GetPartJObj(g, (Fighter_Part) (q1 % 8))); break;
+            case 12: ftLib_GetPos(g, &v); break;
+            case 13: ftLib_SetPos(g, &w); break;
+            case 14: ftLib_GetPrevPos(g, &v); break;
             case 15: ftLib_SetScale(g, a); break;
-            case 16: ftLib_800866DC(g, &v); break;
-            case 17: ftLib_80086724(g, g2); break;
-            case 18: ftLib_80086764(g); break;
+            case 16: ftLib_GetCameraBonePos(g, &v); break;
+            case 17: ftLib_ReleaseItem(g, g2); break;
+            case 18: ftLib_ClearHeldSpecialItem(g); break;
             case 19: r = E(ftLib_GetItem(g)); break;
-            case 20: r = ftLib_800867A0(g, gi); break;
-            case 21: r = E(ftLib_800867CC(g)); break;
-            case 22: r = ftLib_800867D8(g); break;
-            case 23: ftLib_800867E8(g); break;
-            case 24: ftLib_80086824(); break;
-            case 25: ftLib_8008688C(g); break;
-            case 26: ftLib_800868A4(); break;
-            case 27: r = ftLib_800868D4(g, gi); break;
-            case 28: r = ftLib_80086960(g2); break;
-            case 29: r = E(ftLib_80086984(g)); break;
-            case 30: ftLib_80086990(g, &v); break;
-            case 31: r = B(ftLib_800869D4(g)); break;
+            case 20: r = ftLib_IsHoldingItem(g, gi); break;
+            case 21: r = E(ftLib_GetHeldSpecialItem(g)); break;
+            case 22: r = ftLib_IsInputDisabled(g); break;
+            case 23: ftLib_DisableInput(g); break;
+            case 24: ftLib_DisableAllInput(); break;
+            case 25: ftLib_EnableInput(g); break;
+            case 26: ftLib_EnableAllInput(); break;
+            case 27: r = ftLib_IsItemVisible(g, gi); break;
+            case 28: r = ftLib_IsFighter(g2); break;
+            case 29: r = E(ftLib_GetCollData(g)); break;
+            case 30: ftLib_GetECBCenter(g, &v); break;
+            case 31: r = B(ftLib_GetModelScale(g)); break;
             case 32: r = B(ftLib_800869F8(g)); break;
-            case 33: r = B(ftLib_80086A0C(g)); break;
-            case 34: r = ftLib_80086A18(g); break;
+            case 33: r = B(ftLib_GetScale(g)); break;
+            case 34: r = ftLib_IsShielding(g); break;
             case 35: ftLib_80086A4C(g, a); break;
-            case 36: r = ftLib_80086A58(g, &sv); break;
-            case 37: r = ftLib_80086A8C(g); break;
+            case 36: r = ftLib_GetScreenPos(g, &sv); break;
+            case 37: r = ftLib_UpdateScreenVisibility(g); break;
             case 38: ftLib_UpdateLogicOffCamera(g); break;
-            case 39: r = ftLib_80086B64(g); break;
-            case 40: r = E(ftLib_80086B74(g)); break;
+            case 39: r = ftLib_IsOffscreen(g); break;
+            case 40: r = E(ftLib_GetCameraSubject(g)); break;
             case 41: r = B(ftLib_80086B80(g)); break;
-            case 42: ftLib_80086B90(g, &v); break;
-            case 43: r = ftLib_80086BB4(g); break;
-            case 44: r = ftLib_80086BE0(g); break;
-            case 45: ftLib_80086BEC(g, &v); break;
+            case 42: ftLib_GetCameraSubjectBonePos(g, &v); break;
+            case 43: r = ftLib_IsCameraSubjectInBounds(g); break;
+            case 44: r = ftLib_GetPlayerIndex(g); break;
+            case 45: ftLib_GetPosDelta(g, &v); break;
             case 46: r = (u32) ftLib_GetMotionId(g); break;
-            case 47: ftLib_80086C18(g, ia, ib); break;
-            case 48: ftLib_80086C9C(ia, ib); break;
-            case 49: ftLib_80086D40(g, ia, ib); break;
-            case 50: ftLib_80086DC4(ia, ib); break;
-            case 51: ftLib_80086E68(g); break;
-            case 52: r = (u32) ftLib_80086EB4(g); break;
-            case 53: r = ftLib_80086EC0(g); break;
-            case 54: r = ftLib_80086ED0(g); break;
+            case 47: ftLib_StartRumble(g, ia, ib); break;
+            case 48: ftLib_StartRumbleAll(ia, ib); break;
+            case 49: ftLib_StartItemRumble(g, ia, ib); break;
+            case 50: ftLib_StartItemRumbleAll(ia, ib); break;
+            case 51: ftLib_StopItemRumble(g); break;
+            case 52: r = (u32) ftLib_GetTeam(g); break;
+            case 53: r = ftLib_IsInHitstun(g); break;
+            case 54: r = ftLib_CanBeMagnified(g); break;
             case 55: r = ftLib_80086F4C(g); break;
-            case 56: r = B(ftLib_80086F80(g)); break;
-            case 57: r = ftLib_80086FA8(g); break;
-            case 58: r = ftLib_80086FD4(gn, (q2 & 3) ? &GO[q3 % NF] : NULL); break;
-            case 59: r = ftLib_8008701C(g); break;
-            case 60: ftLib_8008702C(ia); break;
-            case 61: ftLib_80087050(ia); break;
-            case 62: r = ftLib_80087074(g, &v); break;
-            case 63: { int val = 0x55; r = ftLib_800870BC(g, &val); o1 = (u32) val; } break;
-            case 64: ftLib_800870F0(g, ia * 37); break;
-            case 65: r = (u32) ftLib_80087120(g); break;
+            case 56: r = B(ftLib_GetNameTagHeight(g)); break;
+            case 57: r = ftLib_IsSwordSwing(g); break;
+            case 58: r = ftLib_IsSamePlayer(gn, (q2 & 3) ? &GO[q3 % NF] : NULL); break;
+            case 59: r = ftLib_IsSleeping(g); break;
+            case 60: ftLib_IncFighterRefCount(ia); break;
+            case 61: ftLib_DecFighterRefCount(ia); break;
+            case 62: r = ftLib_GetShakeOffset(g, &v); break;
+            case 63: { int val = 0x55; r = ftLib_GetSubColor(g, &val); o1 = (u32) val; } break;
+            case 64: ftLib_SetPercent(g, ia * 37); break;
+            case 65: r = (u32) ftLib_GetPercent(g); break;
             case 66: ftLib_80087140(g); break;
             case 67: r = ftLib_80087284(g); break;
             case 68: r = (u32) ftLib_GetKind(g); break;
-            case 69: r = E(ftLib_800872B0(g)); break;
-            case 70: r = ftLib_800872BC(g); break;
-            case 71: r = (u32) ftLib_80087300(g); break;
-            case 72: r = (u32) ftLib_8008730C(g); break;
-            case 73: r = (u32) ftLib_8008731C(g); break;
-            case 74: r = ftLib_8008732C(g) | ftLib_80087354(g) << 1 | ftLib_8008737C(g) << 2 |
-                         ftLib_800873A4(g) << 3 | ftLib_800873CC(g) << 4 | ftLib_800873F4(g) << 5; break;
-            case 75: F[q1 % NF].motion_id = (int) (q2 % 14); r = ftLib_8008732C(g) | ftLib_80087354(g) << 1 |
-                         ftLib_8008737C(g) << 2 | ftLib_800873A4(g) << 3 | ftLib_800873CC(g) << 4; break;
-            case 76: r = E(ftLib_8008741C(q1 % 9)); break;
-            case 77: r = B(ftLib_80087454(g)); break;
-            case 78: r = ftLib_80087460(g); break;
+            case 69: r = E(ftLib_GetShadow(g)); break;
+            case 70: r = ftLib_CastsShadow(g); break;
+            case 71: r = (u32) ftLib_GetLastAttackerSlot(g); break;
+            case 72: r = (u32) ftLib_IsLastAttackerSubFighter(g); break;
+            case 73: r = (u32) ftLib_IsSleeping_8008731C(g); break;
+            case 74: r = ftLib_IsDead(g) | ftLib_IsDeadUp(g) << 1 | ftLib_IsDeadUpStar(g) << 2 |
+                         ftLib_IsDeadUpFall(g) << 3 | ftLib_IsRebirth(g) << 4 | ftLib_IsEntry(g) << 5; break;
+            case 75: F[q1 % NF].motion_id = (int) (q2 % 14); r = ftLib_IsDead(g) | ftLib_IsDeadUp(g) << 1 |
+                         ftLib_IsDeadUpStar(g) << 2 | ftLib_IsDeadUpFall(g) << 3 | ftLib_IsRebirth(g) << 4; break;
+            case 76: r = E(ftLib_FindBySpawnNum(q1 % 9)); break;
+            case 77: r = B(ftLib_GetCrowdKnockback(g)); break;
+            case 78: r = ftLib_GetSpawnNum(g); break;
             case 79: r = (u32) ftLib_8008746C(g); break;
-            case 80: r = (u32) ftLib_800874BC(g); break;
+            case 80: r = (u32) ftLib_IsSubFighter(g); break;
             case 81: ftLib_800874CC(g, NULL, ib); break;
-            case 82: ftLib_800876B4(g); break;
-            case 83: r = ftLib_800876D4(g); break;
-            case 84: r = (u32) ftLib_800876F4(g) ^ (u32) ftLib_80087700(g); break;
-            case 85: ftLib_8008770C(g, NULL); ftLib_80087744(g, NULL); break;
-            case 86: r = ftLib_800877D4(g); break;
+            case 82: ftLib_IsFramesRemaining(g); break;
+            case 83: r = ftLib_IsChargingSmash(g); break;
+            case 84: r = (u32) ftLib_GetLastHitSourceType(g) ^ (u32) ftLib_GetLastHitSourceKind(g); break;
+            case 85: ftLib_GetGameWatchColor(g, NULL); ftLib_GetGameWatchOutlineColor(g, NULL); break;
+            case 86: r = ftLib_IsBeingNudged(g); break;
             }
             for (i = 0; i < NF; i++) {
                 Fighter* f = &F[i];

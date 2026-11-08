@@ -95,7 +95,7 @@ pub mod ext {
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
     fn efLib_DestroyAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(a0) };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut HSD_JObj) -> *mut c_void;
-    fn ftLib_800865D8(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_800865D8(a0, a1, a2) };
+    fn ftLib_GetLStick(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_GetLStick(a0, a1, a2) };
     fn ftZd_SpecialLw_8013B540(a0: *mut HSD_GObj) -> i32;
     fn ftZd_SpecialLw_8013B574(a0: *mut HSD_GObj) -> i32;
     fn ftZd_SpecialLw_8013B5C4(a0: *mut HSD_GObj);
@@ -360,7 +360,7 @@ pub unsafe extern "C" fn itZeldadinfire_UnkMotion0_Phys(gobj: *mut Item_GObj) {
             && (*ip).owner == (*ip).xDD4_itemVar.zeldadinfire.xDE0
             && ext::ftZd_SpecialLw_8013B540((*ip).xDD4_itemVar.zeldadinfire.xDE0) == 1
         {
-            ext::ftLib_800865D8((*ip).xDD4_itemVar.zeldadinfire.xDE0, &mut f2, &mut f1);
+            ext::ftLib_GetLStick((*ip).xDD4_itemVar.zeldadinfire.xDE0, &mut f2, &mut f1);
             if abs_f(f1) > (*attrs).x20 {
                 (*ip).xDD4_itemVar.zeldadinfire.xDE8 =
                     fmadds((*ip).facing_dir, (*attrs).x24 * f1, (*ip).xDD4_itemVar.zeldadinfire.xDE8);

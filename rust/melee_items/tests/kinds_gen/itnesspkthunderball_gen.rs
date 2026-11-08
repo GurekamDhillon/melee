@@ -17,7 +17,7 @@ pub fn install() {
         Stage_80225194 = Some(|| { t(1004); if fv() % 3 == 0 { 0x54 } else { (fv() % 20) as _ } });
         atan2f = Some(|a0, a1| { t(1005); t(a0.to_bits()); t(a1.to_bits()); rg() });
         db_80225DD8 = Some(|a0, a1| { t(1006); t(pi(a0)); t(pi(a1)); });
-        ftLib_800865D8 = Some(|a0, a1, a2| { t(1007); t(pi(a0)); t(pi(a1)); t(pi(a2)); if !a1.is_null() { *a1 = rg(); } if !a2.is_null() { *a2 = rg(); } });
+        ftLib_GetLStick = Some(|a0, a1, a2| { t(1007); t(pi(a0)); t(pi(a1)); t(pi(a2)); if !a1.is_null() { *a1 = rg(); } if !a2.is_null() { *a2 = rg(); } });
         ftNs_SpecialHi_CheckSpecialHiHold = Some(|a0| { t(1008); t(pi(a0)); (fv() & 1) as i32 });
         ftNs_SpecialHi_ItemPKThunderCheckOwn = Some(|a0, a1| { t(1009); t(pi(a0)); t(pi(a1)); });
         ftNs_SpecialHi_ItemPKThunderRemove = Some(|a0| { t(1010); t(pi(a0)); });

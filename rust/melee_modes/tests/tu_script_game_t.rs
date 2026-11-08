@@ -235,7 +235,7 @@ unsafe fn h_Fighter_ChangeMotionState(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_Fighter_ProcessHit_8006D1EC(a: &[u64]) -> u64 {
+unsafe fn h_Fighter_procCollResolve(a: &[u64]) -> u64 {
     rt::t_begin(20);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -327,7 +327,7 @@ unsafe fn h_Fighter_ResetInputData_80068854(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_Fighter_UnkProcessDeath_80068354(a: &[u64]) -> u64 {
+unsafe fn h_Fighter_Spawn(a: &[u64]) -> u64 {
     rt::t_begin(22);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -79981,7 +79981,7 @@ unsafe fn h_ftKb_MexKirbyLike(a: &[u64]) -> u64 {
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
-unsafe fn h_ftLib_80086960(a: &[u64]) -> u64 {
+unsafe fn h_ftLib_IsFighter(a: &[u64]) -> u64 {
     rt::t_begin(287);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -83605,7 +83605,7 @@ unsafe fn h_grZakoGenerator_StageSlotRelease(a: &[u64]) -> u64 {
     rt::t_begin(312);
     0
 }
-unsafe fn h_hsd_8039D048(a: &[u64]) -> u64 {
+unsafe fn h_psClearPointJObj(a: &[u64]) -> u64 {
     rt::t_begin(313);
     rt::t_p(a[0] as usize as *const u8);
     0
@@ -88378,9 +88378,9 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "Camera_StageSlotClipGet" => h_Camera_StageSlotClipGet(a),
         "DVDConvertPathToEntrynum" => h_DVDConvertPathToEntrynum(a),
         "Fighter_ChangeMotionState" => h_Fighter_ChangeMotionState(a),
-        "Fighter_ProcessHit_8006D1EC" => h_Fighter_ProcessHit_8006D1EC(a),
+        "Fighter_procCollResolve" => h_Fighter_procCollResolve(a),
         "Fighter_ResetInputData_80068854" => h_Fighter_ResetInputData_80068854(a),
-        "Fighter_UnkProcessDeath_80068354" => h_Fighter_UnkProcessDeath_80068354(a),
+        "Fighter_Spawn" => h_Fighter_Spawn(a),
         "GObj_Create" => h_GObj_Create(a),
         "GObj_InitUserData" => h_GObj_InitUserData(a),
         "GObj_SetupGXLink" => h_GObj_SetupGXLink(a),
@@ -88645,7 +88645,7 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "ftCommon_CalcSelfAccel_DeaccelQuickAir" => h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a),
         "ftCommon_UnlockECB" => h_ftCommon_UnlockECB(a),
         "ftKb_MexKirbyLike" => h_ftKb_MexKirbyLike(a),
-        "ftLib_80086960" => h_ftLib_80086960(a),
+        "ftLib_IsFighter" => h_ftLib_IsFighter(a),
         "ftLib_SetScale" => h_ftLib_SetScale(a),
         "ftParts_GetBoneIndex" => h_ftParts_GetBoneIndex(a),
         "ft_80081C88" => h_ft_80081C88(a),
@@ -88671,7 +88671,7 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "grStory_801E36D8" => h_grStory_801E36D8(a),
         "grStory_StageSlotParamSwap" => h_grStory_StageSlotParamSwap(a),
         "grZakoGenerator_StageSlotRelease" => h_grZakoGenerator_StageSlotRelease(a),
-        "hsd_8039D048" => h_hsd_8039D048(a),
+        "psClearPointJObj" => h_psClearPointJObj(a),
         "hsd_8039D3AC" => h_hsd_8039D3AC(a),
         "it_8026B40C" => h_it_8026B40C(a),
         "it_8026D324" => h_it_8026D324(a),
@@ -95614,9 +95614,9 @@ unsafe fn init() {
     rt::fn_add(m::ext::Camera_StageSlotClipGet as usize);
     rt::fn_add(m::ext::DVDConvertPathToEntrynum as usize);
     rt::fn_add(m::ext::Fighter_ChangeMotionState as usize);
-    rt::fn_add(m::ext::Fighter_ProcessHit_8006D1EC as usize);
+    rt::fn_add(m::ext::Fighter_procCollResolve as usize);
     rt::fn_add(m::ext::Fighter_ResetInputData_80068854 as usize);
-    rt::fn_add(m::ext::Fighter_UnkProcessDeath_80068354 as usize);
+    rt::fn_add(m::ext::Fighter_Spawn as usize);
     rt::fn_add(m::ext::GObj_Create as usize);
     rt::fn_add(m::ext::GObj_InitUserData as usize);
     rt::fn_add(m::ext::GObj_SetupGXLink as usize);
@@ -95881,7 +95881,7 @@ unsafe fn init() {
     rt::fn_add(m::ext::ftCommon_CalcSelfAccel_DeaccelQuickAir as usize);
     rt::fn_add(m::ext::ftCommon_UnlockECB as usize);
     rt::fn_add(m::ext::ftKb_MexKirbyLike as usize);
-    rt::fn_add(m::ext::ftLib_80086960 as usize);
+    rt::fn_add(m::ext::ftLib_IsFighter as usize);
     rt::fn_add(m::ext::ftLib_SetScale as usize);
     rt::fn_add(m::ext::ftParts_GetBoneIndex as usize);
     rt::fn_add(m::ext::ft_80081C88 as usize);
@@ -95907,7 +95907,7 @@ unsafe fn init() {
     rt::fn_add(m::ext::grStory_801E36D8 as usize);
     rt::fn_add(m::ext::grStory_StageSlotParamSwap as usize);
     rt::fn_add(m::ext::grZakoGenerator_StageSlotRelease as usize);
-    rt::fn_add(m::ext::hsd_8039D048 as usize);
+    rt::fn_add(m::ext::psClearPointJObj as usize);
     rt::fn_add(m::ext::hsd_8039D3AC as usize);
     rt::fn_add(m::ext::it_8026B40C as usize);
     rt::fn_add(m::ext::it_8026D324 as usize);

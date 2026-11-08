@@ -67,7 +67,7 @@ pub mod ext {
         grStadium_801D4084() = || { unsafe { melee_world::tu::grpstadium::grStadium_801D4084(); } };
         grStadium_801D410C() = || { unsafe { melee_world::tu::grpstadium::grStadium_801D410C(); } };
         un_802FD404() = || { unsafe { melee_world::tu::ifnametag::un_802FD404(); } };
-        ftLib_800868A4() = || todo!("ftLib_800868A4: installed by melee_link");
+        ftLib_EnableAllInput() = || todo!("ftLib_EnableAllInput: installed by melee_link");
         Stage_802252E4(a0: StKind, a1: *mut HSD_GObj) = |a0: StKind, a1: *mut HSD_GObj| { unsafe { melee_world::tu::stage::Stage_802252E4(a0 as _, a1 as _); } };
         grStadium_801D4040() = || { unsafe { melee_world::tu::grpstadium::grStadium_801D4040(); } };
         ifStatus_802F6EA4(a0: i32, a1: i32, a2: i32, a3: i32, a4: Event, a5: Event) = |a0: i32, a1: i32, a2: i32, a3: i32, a4: Event, a5: Event| { unsafe { melee_world::tu::if_2F6E::ifStatus_802F6EA4(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } };
@@ -99,7 +99,7 @@ pub mod ext {
         fn_8016F1F0(a0: i32) -> i32 = |a0: i32| -> i32 { unsafe { crate::tu::gm_16f1::fn_8016F1F0(a0 as _) as _ } };
         gm_801A4BA8() -> u32 = || -> u32 { unsafe { crate::tu::gmscene::gm_801A4BA8() as _ } };
         gm_80166378(a0: *mut MatchEnd) = |a0: *mut MatchEnd| { unsafe { crate::tu::gm_1601::gm_80166378(a0 as _); } };
-        ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 = |_| todo!("ftLib_80086BE0: installed by melee_link");
+        ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 = |_| todo!("ftLib_GetPlayerIndex: installed by melee_link");
         fn_80171DC4() = || { unsafe { crate::tu::gm_16f1::fn_80171DC4(); } };
         HSD_PadRumbleRemoveAll() = || { unsafe { melee_runtime::tu::rumble::HSD_PadRumbleRemoveAll(); } };
         HSD_PadRumbleOn(a0: u8) = |a0: u8| { unsafe { melee_runtime::tu::rumble::HSD_PadRumbleOn(a0 as _); } };
@@ -589,7 +589,7 @@ pub unsafe extern "C" fn fn_8016B7B4(arg0: i32) {
 pub unsafe extern "C" fn fn_8016B7F8() {
     melee_core::ct!("fn_8016B7F8");
     let tmp = gmVs_GetSceneController();
-    ext::ftLib_800868A4();
+    ext::ftLib_EnableAllInput();
     ext::Stage_802252E4((*tmp).start.stkind as StKind, null_mut());
     ext::grStadium_801D4040();
     if (*tmp).start.x1_3() == 0 {
@@ -973,14 +973,14 @@ pub unsafe fn gm_GetMatchEndPlayerScore(pl_slot: i32) -> i32 {
 
 pub unsafe fn gm_8016C6C0(arg0: *mut HSD_GObj) -> i32 {
     melee_core::ct!("gm_8016C6C0");
-    gm_8016C5C0(ext::ftLib_80086BE0(arg0) as i32)
+    gm_8016C5C0(ext::ftLib_GetPlayerIndex(arg0) as i32)
 }
 
 pub unsafe fn gm_8016C75C(player: *mut HSD_GObj) -> i32 {
     melee_core::ct!("gm_8016C75C");
     let match_end = gm_8016B774();
     refresh_match_end(match_end);
-    (*match_end).player_standings[ext::ftLib_80086BE0(player) as usize].x20 as i32
+    (*match_end).player_standings[ext::ftLib_GetPlayerIndex(player) as usize].x20 as i32
 }
 
 pub unsafe extern "C" fn fn_8016C7D0(_gobj: *mut HSD_GObj) {
@@ -2214,7 +2214,7 @@ pub unsafe fn gm_Scene_Training_OnEnter(user_data: *mut c_void) {
     ext::grStadium_801D410C();
     ext::un_802FD404();
     let tmp2 = addr_of_mut!(controller);
-    ext::ftLib_800868A4();
+    ext::ftLib_EnableAllInput();
     ext::Stage_802252E4((*tmp2).start.stkind as StKind, null_mut());
     ext::grStadium_801D4040();
     if controller.start.x1_3() == 0 {

@@ -32,7 +32,7 @@ CASES = {
 }
 VARIADIC = {}
 FMT_VARIADIC = ["OSReport"]
-OUT_F32S = {"ftLib_80086644": {1: 3}}
+OUT_F32S = {"ftLib_GetPos": {1: 3}}
 EXTERN_ARRAY_LEN = {"HSD_GObjGXLinkHead": 64}
 DOM = {
     "ret:Ground_801C0498": [f"f:{b:08x}" for b in (0x3f800000, 0x40000000, 0x3f000000, 0x40400000, 0x3dcccccd)],
@@ -43,8 +43,8 @@ DOM = {
     ".flags": [0, 1, 2, 3, 4, 5, 6, 7, 0x10, 0x13],
     ".zako_spawn_chance": [0, 0, 1, 2, 5, 100],
     ".camera_timer": [0, 1, 5, 100, 1000, 40000, -1],
-    "out:ftLib_80086644#1[1]": [f"f:{b:08x}" for b in (0xc2480000, 0xc2000000, 0x42c80000, 0x0, 0xc2a00000, 0x41200000)],
-    "out:ftLib_80086644#1[0]": ["f:3f800000", "f:0"],
+    "out:ftLib_GetPos#1[1]": [f"f:{b:08x}" for b in (0xc2480000, 0xc2000000, 0x42c80000, 0x0, 0xc2a00000, 0x41200000)],
+    "out:ftLib_GetPos#1[0]": ["f:3f800000", "f:0"],
     ".x34_flags.b1234": [0, 1, 1, 1, 2, 3, 15],
     "arg:fn_8020B4D8#4": [0, 1, 1, 2, 3],
     "arg:grZebesRoute_8020B260#0": [0, 1, 2, 3],
@@ -55,7 +55,7 @@ LINKS = {
     ".user_data": "new:Ground",
     "ret:Ground_GetStageGObj": "maybe:HSD_GObj",
     "ret:Ground_GetP1Fighter": "maybe:HSD_GObj",
-    "ret:ftLib_80086644": "null",
+    "ret:ftLib_GetPos": "null",
     ".x0_gobj": "maybe:HSD_GObj",
     "g:HSD_GObjGXLinkHead": "ptrs:HSD_GObj:8",
     ".hsd_obj": "new:HSD_LObj",

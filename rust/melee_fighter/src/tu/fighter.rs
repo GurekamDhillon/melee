@@ -231,7 +231,7 @@ pub mod ext {
         fn ftCo_800BFD04(g: G) = { unsafe { crate::tu::ftcolanim::ftco_800bfd04(g); } };
         fn ftCo_800C61B0(g: G) = { unsafe { crate::tu::ft_0c31::ftCo_800C61B0(g); } };
         fn ftCommon_8007D92C(g: G) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007d92c(g); } };
-        fn ftLib_800867E8(g: G) = { unsafe { let _ = crate::ftlib::ftlib_800867e8(g); } };
+        fn ftLib_DisableInput(g: G) = { unsafe { let _ = crate::ftlib::ftlib_disableinput(g); } };
         fn ScriptGame_OnePSpawn(fp: F) = { todo!("ScriptGame_OnePSpawn (pc/gameworld)") };
         fn PcTraceMotionEnabled() -> i32 = { unsafe { crate::platform::PcTraceMotionEnabled() } };
         fn OSReport(s: &str) = { };
@@ -865,9 +865,9 @@ pub unsafe fn Fighter_UnkInitReset_80067C98(fp: &mut Fighter) {
     ext::Geno_FighterReset(fp);
 }
 
-/// `Fighter_UnkProcessDeath_80068354`: (re)spawn setup.
-pub unsafe fn Fighter_UnkProcessDeath_80068354(g: G) {
-    melee_core::ct!("Fighter_UnkProcessDeath_80068354");
+/// `Fighter_Spawn`: (re)spawn setup.
+pub unsafe fn Fighter_Spawn(g: G) {
+    melee_core::ct!("Fighter_Spawn");
     let fp = fpm(g);
     Fighter_UnkInitReset_80067C98(fp);
     set_translate(jobj_of(g), &fp.cur_pos);
@@ -1095,21 +1095,21 @@ pub unsafe fn Fighter_Create_Inline2(g: G) {
     }
 }
 
-fn proc_8006A1BC(g: G) { unsafe { Fighter_8006A1BC(g) } }
-fn proc_8006A360(g: G) { unsafe { Fighter_8006A360(g) } }
-fn proc_8006ABA0(g: G) { unsafe { Fighter_8006ABA0(g) } }
-fn proc_spaghetti(g: G) { unsafe { Fighter_Spaghetti_8006AD10(g) } }
+fn proc_8006A1BC(g: G) { unsafe { Fighter_procHitlag(g) } }
+fn proc_8006A360(g: G) { unsafe { Fighter_procAnim(g) } }
+fn proc_8006ABA0(g: G) { unsafe { Fighter_procCpu(g) } }
+fn proc_spaghetti(g: G) { unsafe { Fighter_procInput(g) } }
 fn proc_update(g: G) { unsafe { Fighter_procUpdate(g) } }
 fn proc_map(g: G) { unsafe { Fighter_procMap(g) } }
-fn proc_8006C5F4(g: G) { unsafe { Fighter_8006C5F4(g) } }
-fn proc_accessory(g: G) { unsafe { Fighter_CallAcessoryCallbacks_8006C624(g) } }
-fn proc_8006C80C(g: G) { unsafe { Fighter_8006C80C(g) } }
-fn proc_grab(g: G) { unsafe { Fighter_UnkProcessGrab_8006CA5C(g) } }
-fn proc_8006CB94(g: G) { unsafe { Fighter_8006CB94(g) } }
-fn proc_hit(g: G) { unsafe { Fighter_ProcessHit_8006D1EC(g) } }
-fn proc_8006D9AC(g: G) { unsafe { Fighter_8006D9AC(g) } }
-fn proc_camera(g: G) { unsafe { Fighter_UnkCallCameraCallback_8006D9EC(g) } }
-fn proc_8006DA4C(g: G) { unsafe { Fighter_8006DA4C(g) } }
+fn proc_8006C5F4(g: G) { unsafe { Fighter_procIK(g) } }
+fn proc_accessory(g: G) { unsafe { Fighter_procAccessory(g) } }
+fn proc_8006C80C(g: G) { unsafe { Fighter_procCollPos(g) } }
+fn proc_grab(g: G) { unsafe { Fighter_procGrabColl(g) } }
+fn proc_8006CB94(g: G) { unsafe { Fighter_procAttackColl(g) } }
+fn proc_hit(g: G) { unsafe { Fighter_procCollResolve(g) } }
+fn proc_8006D9AC(g: G) { unsafe { Fighter_procDynamics(g) } }
+fn proc_camera(g: G) { unsafe { Fighter_procCamera(g) } }
+fn proc_8006DA4C(g: G) { unsafe { Fighter_procPlayer(g) } }
 
 /// `Fighter_Create`: allocate, load and register a fighter GObj with its 15 procs.
 pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
@@ -1152,7 +1152,7 @@ pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     for (f, p) in procs {
         ext::HSD_GObj_SetupProc(g, f, p);
     }
-    Fighter_UnkProcessDeath_80068354(g);
+    Fighter_Spawn(g);
     if fp.kind == Ft_Kind_MasterH {
         ext::ftMh_MS_341_8014FE10(g);
     } else if fp.kind == Ft_Kind_CrezyH {
@@ -1166,7 +1166,7 @@ pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     } else {
         panic!("fighter.c:1065: ellegal flag fp->no_normal_motion");
     }
-    ext::ftLib_800867E8(g);
+    ext::ftLib_DisableInput(g);
     ext::ScriptGame_OnePSpawn(fp);
     g
 }
@@ -1555,15 +1555,15 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
     fp.death2_cb = None;
 }
 
-/// `Fighter_8006A1BC` (proc 0): hitlag / SDI timers and mushroom queues.
-pub unsafe fn Fighter_8006A1BC(g: G) {
-    melee_core::ct!("Fighter_8006A1BC");
+/// `Fighter_procHitlag` (proc 0): hitlag / SDI timers and mushroom queues.
+pub unsafe fn Fighter_procHitlag(g: G) {
+    melee_core::ct!("Fighter_procHitlag");
     // mod host site (hooks-v1 0x8006A1BC, melee_core::modhook): one None check when no mod hooks it
-    melee_core::mod_hook!(0x8006A1BC, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_8006A1BC__orig(g));
-    #[allow(unused_unsafe)] unsafe { Fighter_8006A1BC__orig(g) }
+    melee_core::mod_hook!(0x8006A1BC, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_procHitlag__orig(g));
+    #[allow(unused_unsafe)] unsafe { Fighter_procHitlag__orig(g) }
 }
 
-unsafe fn Fighter_8006A1BC__orig(g: G) {
+unsafe fn Fighter_procHitlag__orig(g: G) {
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -1626,15 +1626,15 @@ pub unsafe fn ftSlippi_IsOffscreen(fp: &Fighter) -> bool {
         || fp.cur_pos.y < e::Stage_GetCamBoundsBottomOffset()
 }
 
-/// `Fighter_8006A360` (proc 1): per-frame timers, animation advance, anim callback.
-pub unsafe fn Fighter_8006A360(g: G) {
-    melee_core::ct!("Fighter_8006A360");
+/// `Fighter_procAnim` (proc 1): per-frame timers, animation advance, anim callback.
+pub unsafe fn Fighter_procAnim(g: G) {
+    melee_core::ct!("Fighter_procAnim");
     // mod host site (hooks-v1 0x8006A360, melee_core::modhook): one None check when no mod hooks it
-    melee_core::mod_hook!(0x8006A360, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_8006A360__orig(g));
-    #[allow(unused_unsafe)] unsafe { Fighter_8006A360__orig(g) }
+    melee_core::mod_hook!(0x8006A360, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_procAnim__orig(g));
+    #[allow(unused_unsafe)] unsafe { Fighter_procAnim__orig(g) }
 }
 
-unsafe fn Fighter_8006A360__orig(g: G) {
+unsafe fn Fighter_procAnim__orig(g: G) {
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -1838,9 +1838,9 @@ unsafe fn Fighter_8006A360__orig(g: G) {
     e::ftCo_800C0408(g);
 }
 
-/// `Fighter_8006ABA0` (proc 2): CPU think (TARGET_PC: LAB virtual pad first).
-pub unsafe fn Fighter_8006ABA0(g: G) {
-    melee_core::ct!("Fighter_8006ABA0");
+/// `Fighter_procCpu` (proc 2): CPU think (TARGET_PC: LAB virtual pad first).
+pub unsafe fn Fighter_procCpu(g: G) {
+    melee_core::ct!("Fighter_procCpu");
     use ext as e;
     let fp = fpm(g);
     e::ScriptGame_FighterBenchTick(fp);
@@ -1887,9 +1887,9 @@ pub unsafe fn Fighter_UnkIncrementCounters_8006ABEC(g: G) {
     }
 }
 
-/// `Fighter_Spaghetti_8006AD10_Inner1` (static): pressed / released edges.
-pub fn Fighter_Spaghetti_8006AD10_Inner1(fp: &mut Fighter) {
-    melee_core::ct!("Fighter_Spaghetti_8006AD10_Inner1");
+/// `Fighter_procInput_Inner1` (static): pressed / released edges.
+pub fn Fighter_procInput_Inner1(fp: &mut Fighter) {
+    melee_core::ct!("Fighter_procInput_Inner1");
     let h0 = fp.input.held_buttons[0];
     let h1 = fp.input.held_buttons[1];
     let pressed = h0 & (h1 ^ h0);
@@ -1969,9 +1969,9 @@ fn stick_axis(cur: f32, prev: f32, dz: f32, dur: &mut u8, timer: &mut u8, sticky
 static mut CSTICK_1P_DEFAULT_READ: bool = false;
 static mut CSTICK_COMBO_WAS_HELD: bool = false;
 
-/// `Fighter_Spaghetti_8006AD10` (proc 3): read this frame's input into the fighter.
-pub unsafe fn Fighter_Spaghetti_8006AD10(g: G) {
-    melee_core::ct!("Fighter_Spaghetti_8006AD10");
+/// `Fighter_procInput` (proc 3): read this frame's input into the fighter.
+pub unsafe fn Fighter_procInput(g: G) {
+    melee_core::ct!("Fighter_procInput");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -2088,7 +2088,7 @@ pub unsafe fn Fighter_Spaghetti_8006AD10(g: G) {
         e::Replay_RecordInput(port, fol, fp.input.lstick[0].x, fp.input.lstick[0].y, fp.input.cstick[0].x, fp.input.cstick[0].y,
             fp.input.triggers[0], fp.input.held_buttons[0], fp.motion_id as i32, fp.cur_pos.x, fp.cur_pos.y, fp.facing_dir,
             fp.dmg.x1830_percent);
-        Fighter_Spaghetti_8006AD10_Inner1(fp);
+        Fighter_procInput_Inner1(fp);
         if fp.x618_player_id == 0 && e::gm_IsCurrently1PMode_inline() != 0 {
             let mask = (HSD_PAD_L | HSD_PAD_R | HSD_PAD_START) as u32;
             let combo = fp.input.held_buttons[0] & mask == mask;
@@ -2491,17 +2491,17 @@ pub unsafe fn curated_words(fp: &Fighter) -> std::vec::Vec<u32> {
     w
 }
 
-/// `Fighter_8006C5F4` (proc 7).
-pub unsafe fn Fighter_8006C5F4(g: G) {
-    melee_core::ct!("Fighter_8006C5F4");
+/// `Fighter_procIK` (proc 7).
+pub unsafe fn Fighter_procIK(g: G) {
+    melee_core::ct!("Fighter_procIK");
     if fpm(g).x221F_b3() == 0 {
         ext::ft_80089B08(g);
     }
 }
 
-/// `Fighter_CallAcessoryCallbacks_8006C624` (proc 8).
-pub unsafe fn Fighter_CallAcessoryCallbacks_8006C624(g: G) {
-    melee_core::ct!("Fighter_CallAcessoryCallbacks_8006C624");
+/// `Fighter_procAccessory` (proc 8).
+pub unsafe fn Fighter_procAccessory(g: G) {
+    melee_core::ct!("Fighter_procAccessory");
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
         return;
@@ -2522,9 +2522,9 @@ pub unsafe fn Fighter_CallAcessoryCallbacks_8006C624(g: G) {
     }
 }
 
-/// `Fighter_8006C80C` (proc 9): hitbox / hurtbox world update.
-pub unsafe fn Fighter_8006C80C(g: G) {
-    melee_core::ct!("Fighter_8006C80C");
+/// `Fighter_procCollPos` (proc 9): hitbox / hurtbox world update.
+pub unsafe fn Fighter_procCollPos(g: G) {
+    melee_core::ct!("Fighter_procCollPos");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -2550,9 +2550,9 @@ pub unsafe fn Fighter_8006C80C(g: G) {
     }
 }
 
-/// `Fighter_UnkProcessGrab_8006CA5C` (proc 0xC).
-pub unsafe fn Fighter_UnkProcessGrab_8006CA5C(g: G) {
-    melee_core::ct!("Fighter_UnkProcessGrab_8006CA5C");
+/// `Fighter_procGrabColl` (proc 0xC).
+pub unsafe fn Fighter_procGrabColl(g: G) {
+    melee_core::ct!("Fighter_procGrabColl");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 || e::gm_8016B1C4() {
@@ -2585,9 +2585,9 @@ pub unsafe fn Fighter_UnkProcessGrab_8006CA5C(g: G) {
     }
 }
 
-/// `Fighter_8006CB94` (proc 0xD): hit detection.
-pub unsafe fn Fighter_8006CB94(g: G) {
-    melee_core::ct!("Fighter_8006CB94");
+/// `Fighter_procAttackColl` (proc 0xD): hit detection.
+pub unsafe fn Fighter_procAttackColl(g: G) {
+    melee_core::ct!("Fighter_procAttackColl");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() == 0 && fp.x2219_b1() == 0 {
@@ -2756,16 +2756,16 @@ pub unsafe fn Fighter_8006D10C(g: G) {
     }
 }
 
-/// The shield-hold drain of `Fighter_ProcessHit_8006D1EC` (two fused sites).
+/// The shield-hold drain of `Fighter_procCollResolve` (two fused sites).
 pub fn shield_drain(x284: f32, x288: f32, x2DC: f32, x2E0: f32, dmg_taken: i32, lightshield: f32) -> f32 {
     melee_core::ct!("shield_drain");
     let inner = fmadds(lightshield, x2E0 - x2DC, x2DC); // fused
     fmadds(x284, dmg_taken as f32 * (1.0f32 - inner), x288) // fused
 }
 
-/// `Fighter_ProcessHit_8006D1EC` (proc 0xE): apply this frame's hit results.
-pub unsafe fn Fighter_ProcessHit_8006D1EC(g: G) {
-    melee_core::ct!("Fighter_ProcessHit_8006D1EC");
+/// `Fighter_procCollResolve` (proc 0xE): apply this frame's hit results.
+pub unsafe fn Fighter_procCollResolve(g: G) {
+    melee_core::ct!("Fighter_procCollResolve");
     use ext as e;
     let fp = fpm(g);
     let msid = fp.motion_id as i32;
@@ -2969,9 +2969,9 @@ pub unsafe fn Fighter_ProcessHit_8006D1EC(g: G) {
     e::ftCo_800A0DA4(fp);
 }
 
-/// `Fighter_8006D9AC` (proc 0x10).
-pub unsafe fn Fighter_8006D9AC(g: G) {
-    melee_core::ct!("Fighter_8006D9AC");
+/// `Fighter_procDynamics` (proc 0x10).
+pub unsafe fn Fighter_procDynamics(g: G) {
+    melee_core::ct!("Fighter_procDynamics");
     let fp = fpm(g);
     if fp.x221F_b3() != 0 || fp.x2219_b5() != 0 {
         return;
@@ -2979,9 +2979,9 @@ pub unsafe fn Fighter_8006D9AC(g: G) {
     ext::ftCo_8009E0A8(g);
 }
 
-/// `Fighter_UnkCallCameraCallback_8006D9EC` (proc 0x12).
-pub unsafe fn Fighter_UnkCallCameraCallback_8006D9EC(g: G) {
-    melee_core::ct!("Fighter_UnkCallCameraCallback_8006D9EC");
+/// `Fighter_procCamera` (proc 0x12).
+pub unsafe fn Fighter_procCamera(g: G) {
+    melee_core::ct!("Fighter_procCamera");
     let fp = fpm(g);
     if fp.x221F_b3() == 0 {
         ext::ftCommon_8008021C(g);
@@ -2994,9 +2994,9 @@ pub unsafe fn Fighter_UnkCallCameraCallback_8006D9EC(g: G) {
     }
 }
 
-/// `Fighter_8006DA4C` (proc 0x16): publish position / facing to the player block.
-pub unsafe fn Fighter_8006DA4C(g: G) {
-    melee_core::ct!("Fighter_8006DA4C");
+/// `Fighter_procPlayer` (proc 0x16): publish position / facing to the player block.
+pub unsafe fn Fighter_procPlayer(g: G) {
+    melee_core::ct!("Fighter_procPlayer");
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() == 0 {

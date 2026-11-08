@@ -44,8 +44,8 @@ SPECS["mp"] = dict(
         "ScriptGame_StageJoint": ("(int) ((fv() & 7) == 0)", "((fv() & 7) == 0) as i32"),
         "ScriptGame_StageSlotSameJoint": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
         "Ground_801C0498": ("((rnd() & 1) ? 1.0f : 0.5f)", "if rnd() & 1 != 0 { 1.0 } else { 0.5 }"),
-        "ftLib_80086984": ("&CD", "&raw mut super::CD"),
-        "ftLib_80086960": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
+        "ftLib_GetCollData": ("&CD", "&raw mut super::CD"),
+        "ftLib_IsFighter": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
         "Mex_GrLineTypeRow": ("(int) (fv() % 5) - 1", "(fv() % 5) as i32 - 1"),
     },
     effects={

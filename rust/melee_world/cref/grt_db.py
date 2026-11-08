@@ -137,11 +137,11 @@ callee("Ground_801C10B8", "tu", "g: *mut HSD_GObj, f: HSD_GObjEvent", "", "group
 callee("Ground_801C0498", "tu", "", "-> f32", "group2: gr/ground.c",
        'float Ground_801C0498(void) { static const float t[] = { 1.0f, 0.5f, 2.0f, 0.75f }; last498 = t[rnd() % 4]; emit(" g0498=%08x", fb(last498)); return last498; }',
        'const T: [f32; 4] = [1.0, 0.5, 2.0, 0.75]; let v = T[(rnd() % 4) as usize]; LAST498 = v; rec(&format!(" g0498={:08x}", v.to_bits())); v')
-callee("ftLib_80086644", "tu", "g: *mut HSD_GObj, out: *mut Vec3", "", "group3: ft/ftlib.c",
-       'void ftLib_80086644(HSD_GObj* g, Vec3* out) { out->x = rf(); out->y = ypick(0); out->z = rf(); emit(" lib6644(%s,%08x,%08x,%08x)", sym(g), fb(out->x), fb(out->y), fb(out->z)); }',
+callee("ftLib_GetPos", "tu", "g: *mut HSD_GObj, out: *mut Vec3", "", "group3: ft/ftlib.c",
+       'void ftLib_GetPos(HSD_GObj* g, Vec3* out) { out->x = rf(); out->y = ypick(0); out->z = rf(); emit(" lib6644(%s,%08x,%08x,%08x)", sym(g), fb(out->x), fb(out->y), fb(out->z)); }',
        '(*out).x = rf(); (*out).y = ypick(false); (*out).z = rf(); rec(&format!(" lib6644({},{:08x},{:08x},{:08x})", sym(g as usize), (*out).x.to_bits(), (*out).y.to_bits(), (*out).z.to_bits()));')
-callee("ftLib_80086684", "tu", "g: *mut HSD_GObj, out: *mut Vec3", "", "group3: ft/ftlib.c",
-       'void ftLib_80086684(HSD_GObj* g, Vec3* out) { out->x = rf(); out->y = ypick(1); out->z = rf(); emit(" lib6684(%s,%08x,%08x,%08x)", sym(g), fb(out->x), fb(out->y), fb(out->z)); }',
+callee("ftLib_GetPrevPos", "tu", "g: *mut HSD_GObj, out: *mut Vec3", "", "group3: ft/ftlib.c",
+       'void ftLib_GetPrevPos(HSD_GObj* g, Vec3* out) { out->x = rf(); out->y = ypick(1); out->z = rf(); emit(" lib6684(%s,%08x,%08x,%08x)", sym(g), fb(out->x), fb(out->y), fb(out->z)); }',
        '(*out).x = rf(); (*out).y = ypick(true); (*out).z = rf(); rec(&format!(" lib6684({},{:08x},{:08x},{:08x})", sym(g as usize), (*out).x.to_bits(), (*out).y.to_bits(), (*out).z.to_bits()));')
 callee("ftLib_80086B80", "tu", "g: *mut HSD_GObj", "-> f32", "group3: ft/ftlib.c",
        'float ftLib_80086B80(HSD_GObj* g) { float v = rf(); emit(" lib6B80(%s)=%08x", sym(g), fb(v)); return v; }',

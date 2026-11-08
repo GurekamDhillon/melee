@@ -19,7 +19,7 @@ __typeof__(enum StKind) (Stage_80225194)(void) { T(1006); return (__typeof__(enu
 __typeof__(enum GrKind) (Stage_8022519C)(__typeof__(enum StKind) a0) { T(1007); T((u32) a0); return (__typeof__(enum GrKind)) (((fv() % 3) == 0 ? 14 : (int) (fv() % 20))); }
 __typeof__(float) (atan2f)(__typeof__(float) a0, __typeof__(float) a1) { T(1008); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rg()); }
 void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; __builtin_va_start(ap, a1); a2 = __builtin_va_arg(ap, void*); __builtin_va_end(ap); T(1009); T((u32) a0); T(PI(a1)); T(PI(a2)); TVEC((Vec3*) a2); return 0; }
-__typeof__(float) (ftLib_800865C0)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(float) (ftLib_GetFacingDir)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 void (grCorneria_801DDCF0)(__typeof__(Vec *) a0) { T(1011); T(PI((const void*) a0)); TVEC((const Vec3*) a0); if (a0) { a0->x = rw(); a0->y = rw(); a0->z = rw(); } }
 void (it_8026B3A8)(__typeof__(struct HSD_GObj *) a0) { T(1012); T(PI((const void*) a0)); }
 __typeof__(int) (it_8026EA20)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2, __typeof__(Vec *) a3, __typeof__(int *) a4, __typeof__(unsigned int *) a5) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); T(PI((const void*) a2)); TVEC((const Vec3*) a2); T(PI((const void*) a3)); TVEC((const Vec3*) a3); T(PI((const void*) a4)); T(PI((const void*) a5)); if (a3) { a3->x = rw(); a3->y = rw(); a3->z = rw(); } if (a4) { *a4 = (int) (fv() % 8); } if (a5) { *a5 = fv(); } return (__typeof__(int)) ((int) (fv() & 1)); }
@@ -1641,7 +1641,7 @@ static void freg_all(void)
 // stub Stage_8022519C = 1007
 // stub atan2f = 1008
 // stub efSync_Spawn = 1009
-// stub ftLib_800865C0 = 1010
+// stub ftLib_GetFacingDir = 1010
 // stub grCorneria_801DDCF0 = 1011
 // stub it_8026B3A8 = 1012
 // stub it_8026EA20 = 1013

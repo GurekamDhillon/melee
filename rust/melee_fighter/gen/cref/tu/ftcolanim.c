@@ -1,4 +1,4 @@
-/* TU: src/melee/ft/ftcolanim.c */
+/* TU: src/melee/ft/ftcolanimlist.c */
 /* C oracle for src/tu/ftcolanim.rs (mirrored by tests/tu_ftcolanim.rs): every function over
  * random flags with recording stubs for the colanim interpreter (lb_013B), ftAction, Mex and
  * the PlCo tables. Each line: op case hash trace. */

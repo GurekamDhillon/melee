@@ -99,7 +99,7 @@ pub fn ft_8007c77c(g: G) {
         let ip = unsafe { &mut *((*cur).user_data as *mut Item) };
         if ip.kind as i32 == It_Kind_Unk4 as i32 {
             let v = unsafe { &mut ip.xDD4_itemVar.unk4 };
-            let take = if crate::ftlib::ftlib_80086fd4(g, ip.owner) {
+            let take = if crate::ftlib::ftlib_issameplayer(g, ip.owner) {
                 v.xDEC_b1() != 0
             } else {
                 v.xDEC_b0() != 0

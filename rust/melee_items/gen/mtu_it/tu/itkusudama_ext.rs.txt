@@ -25,7 +25,7 @@ pub mod ext {
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8);
     fn efSync_Spawn_N(a0: i32, a1: *mut HSD_GObj, a2: &[*mut c_void]) -> *mut c_void;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32;
     fn ftLib_800874CC(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32);
     fn it_8026B390(a0: *mut HSD_GObj);
     fn it_8026B3A8(a0: *mut HSD_GObj);

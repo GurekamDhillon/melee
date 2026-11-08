@@ -37,7 +37,7 @@ CASES = {
     "grYorster_80202B64": dict(n=4, args=["p:Vec3", None, "p:HSD_JObj"]),
 }
 FMT_VARIADIC = ["OSReport"]
-OUT_F32S = {"ftLib_80086BEC": {1: 3}}
+OUT_F32S = {"ftLib_GetPosDelta": {1: 3}}
 PTR_BYTES = {"grLib_801C9EE8": {0: 12}}
 _els = range(9)
 DOM = {}
@@ -68,9 +68,9 @@ DOM.update({
     "ret:Ground_801C0498": [F(v) for v in (0.5, 1.0, 2.0)],
     "ret:grAnime_801C84A4": [0, 1],
     "ret:grLib_801C9EE8": [0, 1],
-    "ret:ftLib_80086960": [0, 1],
-    "ret:ftLib_800873F4": [0, 1],
-    "out:ftLib_80086BEC#1[1]": [F(v) for v in (-3.0, 0.0, 0.5, 1.0, 4.0, 9.0)],
+    "ret:ftLib_IsFighter": [0, 1],
+    "ret:ftLib_IsEntry": [0, 1],
+    "out:ftLib_GetPosDelta#1[1]": [F(v) for v in (-3.0, 0.0, 0.5, 1.0, 4.0, 9.0)],
     "arg:grYorster_8020203C#0": [0, 1],
 })
 LINKS = {

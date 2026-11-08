@@ -47,7 +47,7 @@ pub mod ext {
     fn Stage_GetBlastZoneRightOffset() -> f32;
     fn Stage_GetBlastZoneTopOffset() -> f32;
     fn ftKb_MexKirbyLike(a0: i32) -> i32;
-    fn ftLib_8008732C(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsDead(a0: *mut HSD_GObj) -> i32;
     fn ftPp_SpecialLw_Enter(a0: *mut HSD_GObj);
     fn ft_80087A18(a0: *mut HSD_GObj) -> i32;
     fn ft_80087A80(a0: *mut HSD_GObj) -> i32;
@@ -2130,7 +2130,7 @@ unsafe fn inlineD0_it(mut fp: *mut Fighter, mut it: *mut Item) -> i32 {
 /// `inlineD1`
 unsafe fn inlineD1(mut fp: *mut Fighter) -> i32 {
     let mut gobj: *mut HSD_GObj = (*fp).gobj;
-    if (((((*fp).x221F_b3() as i32) != 0) || (((*fp).x2224_b2() as i32) != 0)) || (ftCo_800A0F00(gobj) != 0)) || (ext::ftLib_8008732C(gobj) != 0) {
+    if (((((*fp).x221F_b3() as i32) != 0) || (((*fp).x2224_b2() as i32) != 0)) || (ftCo_800A0F00(gobj) != 0)) || (ext::ftLib_IsDead(gobj) != 0) {
         return 1;
     } else {
         return 0;

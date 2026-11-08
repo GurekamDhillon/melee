@@ -88,7 +88,7 @@ void lbColl_80008D30(HitCapsule* h, lbColl_80008D30_arg1* a)
 void pl_80038144(HSD_GObj* a, HSD_GObj* v, s32 i, ft_800898B4_t* p, u16 inst, s32 gr, s32 prev) { T(83); T(i); T(gr); }
 HSD_GObj* itGetOwner(Item_GObj* g) { T(84); return NULL; }
 s32 itGetAttackId(Item_GObj* g) { return 0; }
-bool ftLib_80086960(HSD_GObj* g) { return 0; }
+bool ftLib_IsFighter(HSD_GObj* g) { return 0; }
 
 static HitCapsule* hit_rand(HitCapsule* h)
 {

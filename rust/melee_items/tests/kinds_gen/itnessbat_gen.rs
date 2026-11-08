@@ -19,8 +19,8 @@ pub fn install() {
         Item_8026A8EC = Some(|a0| { t(1006); t(pi(a0)); });
         Item_8026AB54 = Some(|a0, a1, a2| { t(1007); t(pi(a0)); t(pi(a1)); t(a2 as u32); });
         ftCo_800BF228 = Some(|a0| { t(1008); t(pi(a0)); (fv() & 1) as i32 });
-        ftLib_800865C0 = Some(|a0| { t(1009); t(pi(a0)); rg() });
-        ftLib_80086644 = Some(|a0, a1| { t(1010); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
+        ftLib_GetFacingDir = Some(|a0| { t(1009); t(pi(a0)); rg() });
+        ftLib_GetPos = Some(|a0, a1| { t(1010); t(pi(a0)); t(pi(a1)); tvec(a1); if !a1.is_null() { (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); } });
         ftNs_AttackS4_CheckNessBatRemove = Some(|a0| { t(1011); t(pi(a0)); (fv() & 1) as i32 });
         ftNs_AttackS4_ItemNessBatSetNULL = Some(|a0| { t(1012); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1013); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });

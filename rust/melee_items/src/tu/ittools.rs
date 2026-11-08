@@ -77,8 +77,8 @@ pub mod ext {
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
-    fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_80086960(a0) as _ };
+    fn ftLib_GetCameraBonePos(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_IsFighter(a0) as _ };
     fn itColl_BounceOffShield(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::itColl_BounceOffShield(a0) as _ };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
@@ -299,8 +299,8 @@ pub unsafe extern "C" fn it_802EF548(gobj: *mut Item_GObj) {
     // `-1.0f * x` is a real multiply (a NaN keeps its sign); black_box keeps LLVM from folding it into a negation
     dir = core::hint::black_box(-1.0f32) * (*ip).xCCC_incDamageDirection;
     if !fighter.is_null() {
-        if ext::ftLib_80086960(fighter) != 0 {
-            ext::ftLib_800866DC(fighter, &mut fighter_pos);
+        if ext::ftLib_IsFighter(fighter) != 0 {
+            ext::ftLib_GetCameraBonePos(fighter, &mut fighter_pos);
         } else {
             return;
         }

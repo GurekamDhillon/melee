@@ -146,9 +146,18 @@ struct State {
     small_data: bool,
     depth: u32,
     heap_next: u32,
+    /// Native retail callback -> its vanilla address (fn_guest).
+    retail: BTreeMap<usize, u32>,
 }
 
 static mut ST: Option<State> = None;
+
+/// The debug switches, read once (they are looked up on every call out of the blob).
+static REPORT: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+static CALLTRACE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+fn flag(c: &std::sync::OnceLock<bool>, name: &str) -> bool {
+    *c.get_or_init(|| std::env::var_os(name).is_some())
+}
 
 fn st() -> &'static mut State {
     unsafe {
@@ -173,6 +182,7 @@ fn st() -> &'static mut State {
                 small_data: false,
                 depth: 0,
                 heap_next: HEAP_GUEST,
+                retail: BTreeMap::new(),
             }
         })
     }
@@ -195,7 +205,10 @@ fn kind_of_code(a: u32) -> Option<i32> {
 
 /// A guest code address as a native callback: its pool trampoline (made on first use).
 fn fn_native(a: u32) -> Option<usize> {
-    let kind = kind_of_code(a)?;
+    let Some(kind) = kind_of_code(a) else {
+        // a retail callback the guest installs (fp->cb = ftCo_..., the vanilla address in its code): the port's
+        return vanilla_gobj_fn(a).map(|f| f as usize);
+    };
     let s = st();
     let i = match s.pool.iter().position(|&(k, x)| k == kind && x == a) {
         Some(i) => i,
@@ -212,8 +225,19 @@ fn fn_native(a: u32) -> Option<usize> {
 }
 
 fn fn_guest(p: usize) -> Option<u32> {
-    let s = unsafe { ST.as_ref()? };
-    s.pool.iter().enumerate().find(|(i, _)| POOL[*i] as usize == p).map(|(_, &(_, a))| a)
+    let s = unsafe { ST.as_mut()? };
+    if let Some(a) = s.pool.iter().enumerate().find(|(i, _)| POOL[*i] as usize == p).map(|(_, &(_, a))| a) {
+        return Some(a);
+    }
+    // a native retail callback in a field the guest reads (to compare or to call): its vanilla address
+    if s.retail.is_empty() {
+        for n in crate::mex_bridge::GOBJ_FN_NAMES {
+            if let (Some(f), Some(a)) = (crate::mex_bridge::gobj_fn(n), mex_import::layout::vanilla_addr(n)) {
+                s.retail.insert(f as usize, a);
+            }
+        }
+    }
+    s.retail.get(&p).copied()
 }
 
 /// The native function a vanilla guest address names, for a one-argument gobj callback (MoveLogic rows that keep a
@@ -344,16 +368,8 @@ fn build_move_table(f: &mut Fighter_, table: u32) {
         let mut m = MotionState::zeroed();
         m.anim_id = rd(r) as _;
         m.x4_flags = rd(r + 4) as _;
-        // the anon_8 word (move_id and the flag bits) as GC bytes through the record's own layout
-        unsafe {
-            let h = s.space.add_native(Some(SCRATCH_BASE), "MotionState", &mut m as *mut MotionState as *mut u8).ok();
-            if h.is_some() {
-                for k in 0..4 {
-                    let _ = s.space.st8(SCRATCH_BASE + 8 + k, f.blob.code[(r + 8 + k) as usize]);
-                }
-            }
-            s.space.forget_native(&mut m as *mut MotionState as *mut u8);
-        }
+        // the anon_8 word (move_id << 24 and the flag bits) as the retail tables spell it (retail_ms.rs: `_x0 = (id << 24 | ...).to_be()`, GC byte order)
+        m.anon_8._x0 = rd(r + 8).to_be();
         let mut g = [0u32; 4];
         let mut cbs: [melee_types::HSD_GObjEvent; 5] = [None; 5];
         for (w, cb) in cbs.iter_mut().enumerate() {
@@ -374,6 +390,9 @@ fn build_move_table(f: &mut Fighter_, table: u32) {
         m.phys_cb = cbs[2];
         m.coll_cb = cbs[3];
         m.cam_cb = cbs[4];
+        if std::env::var_os("MELEE_MEX_CALLS").is_some() {
+            eprintln!("mexmove: row {i} anim {:#x} flags {:#x} word8 {:#010x} cbs {:08X?}", rd(r), rd(r + 4), rd(r + 8), (0..5).map(|w| rd(r + 0xC + 4 * w)).collect::<Vec<_>>());
+        }
         f.move_table.push(m);
         f.move_guest.push(g);
     }
@@ -528,8 +547,6 @@ unsafe fn run_cpu(kind: i32, slot: u32, cpu: Cpu) -> (Cpu, bool) {
                 eprintln!("mextrace: slot {slot} store {}+{:#x} ({} bytes)", r.rec, r.gc_off, r.size);
             }
         }
-    } else if std::env::var_os("MELEE_MEX_TRACE").is_some() {
-        s.space.trace = Some(Vec::new());
     }
     let fk = fault.map(|f| match f {
         Fault::Unresolved(t) => format!("unresolved {t:08X} {}", mex_import::layout::vanilla_name(t).unwrap_or("?")),
@@ -537,7 +554,7 @@ unsafe fn run_cpu(kind: i32, slot: u32, cpu: Cpu) -> (Cpu, bool) {
         other => format!("{other:?} at {}", where_(kind, m.cpu.pc.wrapping_sub(4))),
     });
     let mut dump = String::new();
-    if fk.is_some() && std::env::var_os("MELEE_MEX_REPORT").is_some() {
+    if fk.is_some() && flag(&REPORT, "MELEE_MEX_REPORT") {
         let pc = m.cpu.pc.wrapping_sub(4);
         let c = &m.cpu;
         dump += &format!("mexguest:   r3..r12 {:08X?} r28..r31 {:08X?} lr {:08X}\n", &c.gpr[3..13], &c.gpr[28..32], c.lr);
@@ -555,7 +572,7 @@ unsafe fn run_cpu(kind: i32, slot: u32, cpu: Cpu) -> (Cpu, bool) {
         match fk {
             None => stt.returned += 1,
             Some(k) => {
-                if *stt.faults.entry(k.clone()).or_default() == 0 && std::env::var_os("MELEE_MEX_REPORT").is_some() {
+                if *stt.faults.entry(k.clone()).or_default() == 0 && flag(&REPORT, "MELEE_MEX_REPORT") {
                     eprintln!("mexguest: kind {kind} slot {slot}: {k}");
                     eprint!("{dump}");
                 }
@@ -587,7 +604,7 @@ impl Bridge<GuestSpace> for Br {
 }
 
 fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Fault> {
-    if std::env::var_os("MELEE_MEX_CALLTRACE").is_some() {
+    if flag(&CALLTRACE, "MELEE_MEX_CALLTRACE") {
         let f = |i: usize| f64::from_bits(cpu.fpr[i]);
         eprintln!(
             "mexcall: {target:08X} {} r3..r6 {:08X?} f1..f3 {:?} {:?} {:?}",

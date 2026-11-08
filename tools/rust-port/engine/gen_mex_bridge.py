@@ -228,7 +228,11 @@ def main():
         fh.write('/// The native port of a one-argument gobj callback, by name.\n')
         fh.write('pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {\n    Some(match name {\n')
         fh.write('\n'.join(gobj) + '\n')
-        fh.write('        _ => return None,\n    })\n}\n')
+        fh.write('        _ => return None,\n    })\n}\n\n')
+        # the same names as a list, for the reverse lookup (a native callback the guest reads back out of a field)
+        fh.write('/// Every name `gobj_fn` answers.\n')
+        fh.write('pub static GOBJ_FN_NAMES: &[&str] = &[\n')
+        fh.write('\n'.join('    "' + g.split('"')[1] + '",' for g in gobj) + '\n];\n')
     if '-v' in sys.argv:
         for n, why in skipped: print(f'  left out {n}: {why}')
     print(f'{len(arms)} bridged, {len(gobj)} gobj callbacks, {len(skipped)} left out -> {OUT}')

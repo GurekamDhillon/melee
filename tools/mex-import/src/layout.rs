@@ -21,6 +21,11 @@ pub fn vanilla_name(addr: u32) -> Option<&'static str> {
     returns::NAMES.binary_search_by_key(&addr, |e| e.0).ok().map(|i| returns::NAMES[i].1)
 }
 
+/// The address of vanilla function `name` (the inverse of [`vanilla_name`]).
+pub fn vanilla_addr(name: &str) -> Option<u32> {
+    returns::NAMES.iter().find(|e| e.1 == name).map(|e| e.0)
+}
+
 pub struct Registry {
     pub records: Vec<(&'static str, u32, &'static [GcField])>,
     by_name: HashMap<&'static str, usize>,

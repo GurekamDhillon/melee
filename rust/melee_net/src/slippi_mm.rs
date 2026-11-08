@@ -295,6 +295,14 @@ pub enum Target {
     Loopback,
     /// Any host, `ws://` or `wss://` (Slippi's real matchmaking; `--mm-real` only).
     Real,
+    /// `ws://` to a literal private IPv4 address (loopback, 10/8, 172.16/12, 192.168/16, link-local): a mock server on
+    /// another machine of the same LAN, or across a WSL/VM virtual switch (`--mm-lan`, the cross-OS tests).
+    Lan,
+}
+
+/// The address a [`Target::Lan`] connection may reach.
+fn lan_ok(ip: Ipv4Addr) -> bool {
+    ip.is_loopback() || ip.is_private() || ip.is_link_local()
 }
 
 enum Stream {
@@ -368,6 +376,16 @@ impl Ws {
                 SocketAddrV4::new(ip, port).into()
             }
             Target::Real => (host, port).to_socket_addrs().map_err(|e| format!("resolve {host}: {e}"))?.next().ok_or("no address")?,
+            Target::Lan => {
+                if tls {
+                    return Err("wss:// is a real server: it needs --mm-real".into());
+                }
+                let ip: Ipv4Addr = host.parse().map_err(|_| "the matchmaking host must be a literal IPv4 address".to_string())?;
+                if !lan_ok(ip) {
+                    return Err(format!("{ip} is not a private address: --mm-lan reaches a mock server on the LAN only"));
+                }
+                SocketAddrV4::new(ip, port).into()
+            }
         };
         let s = TcpStream::connect_timeout(&addr, timeout).map_err(|e| e.to_string())?;
         s.set_nodelay(true).ok();
@@ -581,6 +599,13 @@ pub fn join_enet(server: &str, bind_ip: u32, req: &JoinRequest, timeout: Duratio
             SocketAddrV4::new(ip, port).into()
         }
         Target::Real => (host, port).to_socket_addrs().map_err(|e| format!("resolve {host}: {e}"))?.find(|a| a.is_ipv4()).ok_or("no IPv4 address")?,
+        Target::Lan => {
+            let ip: Ipv4Addr = host.parse().map_err(|_| "the matchmaking host must be a literal IPv4 address".to_string())?;
+            if !lan_ok(ip) {
+                return Err(format!("{ip} is not a private address: --mm-lan reaches a mock server on the LAN only"));
+            }
+            SocketAddrV4::new(ip, port).into()
+        }
     };
     let mut req = req.clone();
     if req.lan_ip.is_empty() {

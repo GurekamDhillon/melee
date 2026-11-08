@@ -2,7 +2,10 @@
 # SPDX-License-Identifier: MIT
 """Mock Slippi matchmaking server plus a loopback UDP relay that records the netplay traffic.
 
-Loopback only: every socket here binds 127.0.0.1. Nothing talks to a Slippi service.
+Loopback only by default: every socket here binds 127.0.0.1. Nothing talks to a Slippi service.
+`--bind ADDR` (a private address, e.g. the Windows host's WSL switch address) serves peers on other machines of that
+network instead: the server and relay sockets bind ADDR, each player is reached at the address its WebSocket came from,
+and the engines run with `--mm-lan` (docs/rust-port/notes/linux.md, cross-OS netplay).
 
     python -I tools/rust-port/slippi/mock_mm.py --port 43110 --capture OUT.cap [--log OUT.log]
 
@@ -18,6 +21,7 @@ two real netplay ports, so both ENet peers talk through it unchanged. Every data
 import argparse
 import base64
 import hashlib
+import ipaddress
 import json
 import select
 import socket
@@ -95,6 +99,7 @@ class Conn:
 class Server:
     def __init__(self, port, capture, delay_ms, stages=None, lag_ms=0, loss_pct=0):
         self.port = port
+        self.bind = LOOP
         self.capture = open(capture, "w") if capture else None
         self.queue = []
         self.lock = threading.Lock()
@@ -109,9 +114,9 @@ class Server:
     def serve(self):
         ls = socket.socket()
         ls.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        ls.bind((LOOP, self.port))
+        ls.bind((self.bind, self.port))
         ls.listen(4)
-        log(f"listening on ws://{LOOP}:{self.port}/v1/queue")
+        log(f"listening on ws://{self.bind}:{self.port}/v1/queue")
         while True:
             s, addr = ls.accept()
             threading.Thread(target=self.client, args=(s,), daemon=True).start()
@@ -131,6 +136,7 @@ class Server:
                 if op != 1:
                     continue
                 msg = json.loads(data)
+                msg["_peer_ip"] = s.getpeername()[0]  # where this player's netplay port is reached
                 kind = msg.get("type")
                 if kind == "join":
                     n += 1
@@ -177,14 +183,14 @@ class Server:
 
     def pair(self, a, b):
         (ca, ma), (cb, mb) = a, b
-        pa, pb = int(ma["port"]), int(mb["port"])
+        pa, pb = (ma["_peer_ip"], int(ma["port"])), (mb["_peer_ip"], int(mb["port"]))
         # relay sockets: rx is what A believes is B, ry what B believes is A
         rx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        rx.bind((LOOP, 0))
+        rx.bind((self.bind, 0))
         ry = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        ry.bind((LOOP, 0))
+        ry.bind((self.bind, 0))
         x, y = rx.getsockname()[1], ry.getsockname()[1]
-        log(f"pairing: A netplay {pa} -> relay {x} | B netplay {pb} -> relay {y}")
+        log(f"pairing: A netplay {pa[1]} -> relay {x} | B netplay {pb[1]} -> relay {y}")
         threading.Thread(target=self.relay, args=(rx, ry, pa, pb), daemon=True).start()
 
         def player(m, gport, local, ip_port):
@@ -196,9 +202,9 @@ class Server:
         mid = f"mode.direct-local-{int(time.time())}"
         stages = self.stages
         ca.send({"type": "match", "matchId": mid, "isHost": True, "stages": stages,
-                 "players": [player(ma, 1, True, f"{LOOP}:{pa}"), player(mb, 2, False, f"{LOOP}:{x}")]})
+                 "players": [player(ma, 1, True, f"{pa[0]}:{pa[1]}"), player(mb, 2, False, f"{self.bind}:{x}")]})
         cb.send({"type": "match", "matchId": mid, "isHost": False, "stages": stages,
-                 "players": [player(ma, 1, False, f"{LOOP}:{y}"), player(mb, 2, True, f"{LOOP}:{pb}")]})
+                 "players": [player(ma, 1, False, f"{self.bind}:{y}"), player(mb, 2, True, f"{pb[0]}:{pb[1]}")]})
 
     def drop(self):
         self.rng = (self.rng * 1103515245 + 12345) & 0x7FFFFFFF
@@ -218,9 +224,9 @@ class Server:
                 except ConnectionResetError:  # Windows: an ICMP port-unreachable from a peer that has gone
                     continue
                 if s is rx:  # from A, for B
-                    out, dest, d = ry, (LOOP, pb), "A>B"
+                    out, dest, d = ry, pb, "A>B"
                 else:
-                    out, dest, d = rx, (LOOP, pa), "B>A"
+                    out, dest, d = rx, pa, "B>A"
                 if self.loss and self.drop():
                     d += "x"
                 elif self.lag:
@@ -240,9 +246,15 @@ def main():
     ap.add_argument("--stages", default="", help="comma-separated external stage ids for the match (default the 1v1 list)")
     ap.add_argument("--lag-ms", type=int, default=0, help="relay: one-way delay per datagram")
     ap.add_argument("--loss-pct", type=int, default=0, help="relay: drop this % of datagrams")
+    ap.add_argument("--bind", default=LOOP, help="listen/relay address (default loopback; a private address for --mm-lan peers)")
     a = ap.parse_args()
+    ip = ipaddress.ip_address(a.bind)
+    if not (ip.is_loopback or ip.is_private):
+        ap.error("--bind must be a loopback or private address")
     stages = [int(x, 0) for x in a.stages.split(",") if x]
-    Server(a.port, a.capture, a.delay_ms, stages, a.lag_ms, a.loss_pct).serve()
+    srv = Server(a.port, a.capture, a.delay_ms, stages, a.lag_ms, a.loss_pct)
+    srv.bind = a.bind
+    srv.serve()
 
 
 if __name__ == "__main__":

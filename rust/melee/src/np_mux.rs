@@ -23,7 +23,7 @@ pub const EARLY_CH: u32 = 1000;
 
 pub struct MuxCore {
     base: Box<dyn Transport>,
-    q: HashMap<u32, VecDeque<(Addr, Vec<u8>)>>,
+    q: HashMap<u32, VecDeque<(Addr, Vec<u8>, Option<std::time::Instant>)>>,
 }
 
 pub type MuxRef = Rc<RefCell<MuxCore>>;
@@ -57,7 +57,7 @@ impl MuxCore {
             if q.len() >= QUEUE_MAX {
                 q.pop_front();
             }
-            q.push_back((from, body.to_vec()));
+            q.push_back((from, body.to_vec(), melee_net::transport::rx_stamp().or_else(|| Some(std::time::Instant::now()))));
         }
     }
 }
@@ -96,7 +96,8 @@ impl Transport for Chan {
     fn recv(&mut self, from: &mut Addr, buf: &mut [u8]) -> i32 {
         let mut c = self.core.borrow_mut();
         c.pump();
-        let Some((a, d)) = c.q.get_mut(&self.ch).and_then(|q| q.pop_front()) else { return 0 };
+        let Some((a, d, at)) = c.q.get_mut(&self.ch).and_then(|q| q.pop_front()) else { return 0 };
+        melee_net::transport::set_rx_stamp(at);
         *from = a;
         let n = d.len().min(buf.len());
         buf[..n].copy_from_slice(&d[..n]);

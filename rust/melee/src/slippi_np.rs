@@ -207,7 +207,13 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     };
     let tag = if decider { "decider" } else { "guest" };
     let udp = match UdpTransport::open(bind_ip, num("--port", 0) as u16) {
-        Ok(u) => u,
+        Ok(mut u) => {
+            // arrival stamps for the displayed round trip (what each frame's poll sees is unchanged)
+            if let Err(e) = u.stamp_arrivals() {
+                eprintln!("melee: no arrival stamps ({e}): the ping shown includes frame-poll waits");
+            }
+            u
+        }
         Err(e) => {
             eprintln!("melee: bind: {e}");
             return ExitCode::FAILURE;
@@ -349,14 +355,26 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let mut last_rx: Option<Instant> = None;
     let loop_t = Instant::now();
     let mut failed = false;
-    eprintln!("melee: {tag}: frame loop: frame {} link {:?} ping {} us; waiting for the peer's pads", online(s.current_frame()), cl.status, cl.ping_us());
+    let (mut late_sum, mut late_max) = (0u64, 0u64);
+    let (mut work_t, mut work_sum, mut work_max) = (None::<Instant>, 0u64, 0u64);
+    eprintln!("melee: {tag}: frame loop: frame {} link {:?} ping {} us (pad acks {} us); waiting for the peer's pads", online(s.current_frame()), cl.status, cl.net_ping_us(), cl.ping_us());
     loop {
+        if let Some(w) = work_t {
+            let us = w.elapsed().as_micros() as u64;
+            work_sum += us;
+            work_max = work_max.max(us);
+        }
         let now = Instant::now();
         if next_tick > now {
             std::thread::sleep(next_tick - now);
         }
+        // how late this tick woke (sleep overshoot or a slow previous tick)
+        let late = Instant::now().saturating_duration_since(next_tick).as_micros() as u64;
+        late_sum += late;
+        late_max = late_max.max(late);
         next_tick += tick;
         ticks += 1;
+        work_t = Some(Instant::now());
         if t0.elapsed().as_secs() > max_s {
             eprintln!("melee: {tag}: timeout at session frame {}", s.current_frame());
             break;
@@ -402,10 +420,11 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             };
             if since > Duration::from_secs(lim) && finals.keys().next_back().map_or(true, |&k| k < frames) {
                 eprintln!(
-                    "melee: {tag}: no pads from the peer for {} s ({}; link {:?}, ping {} us, pads received {}) at online frame {}: giving up",
+                    "melee: {tag}: no pads from the peer for {} s ({}; link {:?}, ping {} us (pad acks {} us), pads received {}) at online frame {}: giving up",
                     since.as_secs(),
                     if last_rx.is_none() { "none ever" } else { "since the last" },
                     cl.status,
+                    cl.net_ping_us(),
                     cl.ping_us(),
                     cl.stats.pads_received,
                     online(s.current_frame())
@@ -488,7 +507,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             }
         }
         if ticks % 600 == 0 {
-            eprintln!("melee: {tag}: frame {} confirmed {} compared {compared} ping {} us offset {} us rollbacks {}", online(s.current_frame()), online(conf), cl.ping_us(), cl.time_offset_us(), s.stats.rollbacks);
+            eprintln!("melee: {tag}: frame {} confirmed {} compared {compared} ping {} us (pad acks {} us) offset {} us rollbacks {}", online(s.current_frame()), online(conf), cl.net_ping_us(), cl.ping_us(), cl.time_offset_us(), s.stats.rollbacks);
         }
         if finals.keys().next_back().map_or(false, |&k| k >= frames) || ended {
             let t = done_at.get_or_insert_with(Instant::now);
@@ -522,10 +541,12 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         eprintln!("melee: {tag}: seed-bit rolls on {forced} finalized frames (first {:?}), forced resims {}", rolled.first().map(|(f, _)| online(**f)), forced_resims);
     }
     cl.disconnect(0);
+    eprintln!("melee: {tag}: tick wake lateness mean {} us, max {} us over {ticks} ticks", late_sum / ticks.max(1) as u64, late_max);
+    eprintln!("melee: {tag}: tick work (poll + sim + send) mean {} us, max {} us", work_sum / ticks.max(1), work_max);
     let last = finals.keys().next_back().copied().unwrap_or(0);
     eprintln!(
-        "melee: {tag}: {} final checksums (online frames 1..{last}), {compared} compared with the peer: {soft} soft, {hard} HARD desyncs; rollbacks {} (max depth {}), resim {}, stalls {}, waits {}; ping {} us; pads sent {} received {}; enet resent {}",
-        finals.len(), st.rollbacks, st.depth_max, st.resim, st.stall_ticks, st.waits, cl.ping_us(), cl.stats.pads_sent, cl.stats.pads_received,
+        "melee: {tag}: {} final checksums (online frames 1..{last}), {compared} compared with the peer: {soft} soft, {hard} HARD desyncs; rollbacks {} (max depth {}), resim {}, stalls {}, waits {}; ping {} us (pad acks {} us); pads sent {} received {}; enet resent {}",
+        finals.len(), st.rollbacks, st.depth_max, st.resim, st.stall_ticks, st.waits, cl.net_ping_us(), cl.ping_us(), cl.stats.pads_sent, cl.stats.pads_received,
         cl.host.peers.iter().map(|p| p.stats_resent).sum::<u64>()
     );
     if !failed && hard == 0 && soft == 0 && compared > 0 && (last >= frames || ended) {

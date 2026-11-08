@@ -1126,7 +1126,7 @@ fn slp_open(path: &str, gdlp: Option<melee_data::gdlp::Identity>) -> Result<(mel
     let ws = parsed.as_ref().and_then(|f| melee_data::slp::widescreen_code(&f.gecko));
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
     melee_core::codes::set_ps_camera_independent_monitor(parsed.as_ref().is_some_and(|f| melee_data::slp::ps_camera_independent_monitor_code(&f.gecko)));
-    melee_core::codes::set_ps_preload_transformations(parsed.as_ref().is_some_and(|f| melee_data::slp::ps_preload_transformations_code(&f.gecko)));
+    melee_core::codes::set_ps_preload_transformations(parsed.as_ref().is_some_and(melee_data::slp::ps_preload_transformations));
     melee_core::codes::set_ps_freeze_at_entry(parsed.as_ref().is_some_and(|f| melee_data::slp::ps_freeze_at_entry_code(&f.gecko)));
     let mut pl = melee_data::player::Player::new(melee_data::player::Env { resync: true, identity: gdlp, ..Default::default() });
     if pl.env.slippi_codes.is_none() && parsed.as_ref().is_some_and(|f| melee_data::slp::online_codeset(&f.gecko)) {

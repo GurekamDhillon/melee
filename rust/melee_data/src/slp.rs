@@ -376,6 +376,17 @@ pub fn ps_preload_transformations_code(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x801D_45EC)
 }
 
+/// Whether the replay played with Slippi's Preload Stadium Transformations: its Gecko list has the code (C2 0x801D45EC),
+/// or it has no Gecko list (before Slippi 2.0 a replay did not record one) and is Slippi 1.7.0 to 1.7.x, which recorded
+/// with the code on (slippi-ssbm-asm 2019-02, `PSPreloadToggle`; Gang-Steals 1.7.1: 404 Stadium files).
+pub fn ps_preload_transformations(f: &Slp) -> bool {
+    if f.gecko.is_empty() {
+        let v = f.version[0] as u32 * 10000 + f.version[1] as u32 * 100 + f.version[2] as u32;
+        return (10700..20000).contains(&v);
+    }
+    ps_preload_transformations_code(&f.gecko)
+}
+
 /// True when the list freezes Pokemon Stadium at grStadium_801D4548's entry (IngameCheckIfFrozen, C2 0x801D457C).
 pub fn ps_freeze_at_entry_code(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x801D_457C)

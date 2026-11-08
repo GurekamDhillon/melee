@@ -1,5 +1,3 @@
-# Slippi Dolphin (project-slippi/dolphin, mainline) patch for the NHV1 oracle. Applies to 0653df8194eac2392dea9fe26276b70f3c87fd89.
-# Dolphin is GPL-2.0-or-later; this diff is a derivative of it and is kept for local use only (not distributed).
 diff --git a/Externals/SlippiRustExtensions b/Externals/SlippiRustExtensions
 --- a/Externals/SlippiRustExtensions
 +++ b/Externals/SlippiRustExtensions
@@ -7,7 +5,7 @@ diff --git a/Externals/SlippiRustExtensions b/Externals/SlippiRustExtensions
 -Subproject commit 934f373d3cbcbca9ea3ceb68b53bda875c96abfb
 +Subproject commit 934f373d3cbcbca9ea3ceb68b53bda875c96abfb-dirty
 diff --git a/Source/Core/Common/Timer.cpp b/Source/Core/Common/Timer.cpp
-index 0a23080..3784400 100644
+index 0a23080..d34879f 100644
 --- a/Source/Core/Common/Timer.cpp
 +++ b/Source/Core/Common/Timer.cpp
 @@ -70,10 +70,20 @@ u64 Timer::ElapsedMs() const
@@ -118,7 +116,7 @@ index a0ca859..fad7a74 100644
  
  void PatchFunctions(Core::System& system)
 diff --git a/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp b/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp
-index c6fbc9d..dd26f2a 100644
+index c6fbc9d..302398d 100644
 --- a/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp
 +++ b/Source/Core/Core/HW/EXI/EXI_DeviceSlippi.cpp
 @@ -25,6 +25,8 @@
@@ -192,10 +190,10 @@ index c6fbc9d..dd26f2a 100644
  
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.cpp b/Source/Core/Core/Slippi/NHV1Oracle.cpp
 new file mode 100644
-index 0000000..5277132
+index 0000000..312971b
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.cpp
-@@ -0,0 +1,595 @@
+@@ -0,0 +1,612 @@
 +// NHV1 oracle (GD's Melee port, local tool): see NHV1Oracle.h.
 +#include "Core/Slippi/NHV1Oracle.h"
 +
@@ -265,6 +263,23 @@ index 0000000..5277132
 +  std::fwrite(&flags, 4, 1, s_out);
 +  s_state = 1;
 +  std::fprintf(stderr, "nhv1-oracle: on (wide=%d)\n", s_wide ? 1 : 0);
++  // MELEE_DOLPHIN_NHV1_WATCHDOG=boot: the PC watchdog from process start, for a boot that never reaches playback
++  // (the scene words at 0x80479D30 show where the game is)
++  const char* wd = std::getenv("MELEE_DOLPHIN_NHV1_WATCHDOG");
++  if (wd && std::string(wd) == "boot")
++  {
++    std::thread([] {
++      auto& sys = Core::System::GetInstance();
++      for (int i = 0; i < 60; i++)
++      {
++        std::this_thread::sleep_for(std::chrono::seconds(2));
++        std::fprintf(stderr, "nhv1-oracle: boot watchdog pc=%08x lr=%08x scene=%08x %08x\n", sys.GetPPCState().pc,
++                     sys.GetPPCState().spr[8], sys.GetMemory().Read_U32(0x80479D30),
++                     sys.GetMemory().Read_U32(0x80479D34));
++        std::fflush(stderr);
++      }
++    }).detach();
++  }
 +}
 +
 +bool InRam(u32 a)
@@ -838,7 +853,7 @@ index 0000000..19f37bc
 +void NoteFrame(s32 frame, s32 latest, bool processing_complete);
 +}  // namespace NHV1Oracle
 diff --git a/Source/Core/Core/Slippi/SlippiMatchmaking.cpp b/Source/Core/Core/Slippi/SlippiMatchmaking.cpp
-index ae174e8..7917c22 100644
+index ae174e8..f0bf3d6 100644
 --- a/Source/Core/Core/Slippi/SlippiMatchmaking.cpp
 +++ b/Source/Core/Core/Slippi/SlippiMatchmaking.cpp
 @@ -320,6 +320,9 @@ void SlippiMatchmaking::startMatchmaking()
@@ -876,7 +891,7 @@ index ae174e8..7917c22 100644
      WARN_LOG_FMT(SLIPPI_ONLINE, "[Matchmaking] Overwriting LAN IP sent with configured address");
      sprintf(lan_addr, "%s:%d", Config::Get(Config::SLIPPI_LAN_IP).c_str(), m_host_port);
 diff --git a/Source/Core/Core/Slippi/SlippiNetplay.cpp b/Source/Core/Core/Slippi/SlippiNetplay.cpp
-index 4e56742..2244bea 100644
+index 4e56742..412c3cb 100644
 --- a/Source/Core/Core/Slippi/SlippiNetplay.cpp
 +++ b/Source/Core/Core/Slippi/SlippiNetplay.cpp
 @@ -3,6 +3,26 @@
@@ -961,7 +976,7 @@ index 5b72b57..e56580e 100644
  install(TARGETS dolphin-nogui RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 +target_compile_definitions(dolphin-nogui PRIVATE IS_PLAYBACK=1)  # GD nhv1-oracle
 diff --git a/Source/Core/DolphinNoGUI/MainNoGUI.cpp b/Source/Core/DolphinNoGUI/MainNoGUI.cpp
-index 1986c58..ab39f3b 100644
+index 1986c58..b3146ef 100644
 --- a/Source/Core/DolphinNoGUI/MainNoGUI.cpp
 +++ b/Source/Core/DolphinNoGUI/MainNoGUI.cpp
 @@ -347,6 +347,12 @@ int main(int argc, char* argv[])
@@ -978,7 +993,7 @@ index 1986c58..ab39f3b 100644
    {
      fprintf(stderr, "Could not boot the specified file\n");
 diff --git a/Source/Core/InputCommon/ControllerInterface/Pipes/Pipes.cpp b/Source/Core/InputCommon/ControllerInterface/Pipes/Pipes.cpp
-index c4879f6..ff6bd15 100644
+index c4879f6..885f704 100644
 --- a/Source/Core/InputCommon/ControllerInterface/Pipes/Pipes.cpp
 +++ b/Source/Core/InputCommon/ControllerInterface/Pipes/Pipes.cpp
 @@ -65,7 +65,10 @@ void InputBackend::PopulateDevices()
@@ -994,7 +1009,7 @@ index c4879f6..ff6bd15 100644
                                  PIPE_ACCESS_INBOUND,           // read access, inward only
                                  PIPE_TYPE_BYTE | PIPE_NOWAIT,  // byte mode, nonblocking
 diff --git a/Source/Core/UICommon/CMakeLists.txt b/Source/Core/UICommon/CMakeLists.txt
-index 7200bd5..e1d4e46 100644
+index 7200bd5..502cb14 100644
 --- a/Source/Core/UICommon/CMakeLists.txt
 +++ b/Source/Core/UICommon/CMakeLists.txt
 @@ -66,3 +66,4 @@ if(MSVC)

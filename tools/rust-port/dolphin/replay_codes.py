@@ -80,12 +80,33 @@ def codes(g):
         o += total
 
 
+def akaneia_disc(d):
+    """True when the replay runs on the Akaneia disc: the same rule as slpcheck (melee/src/slpcheck.rs): Akaneia's
+    codes.gct marker (C2 0x803D7060, melee_data::slp::akaneia_codeset) and a human or CPU player (type <= 1) with an
+    external character id past 25 (one of the disc's m-ex fighters, MxDt.dat)."""
+    if not any(a == 0x803D7060 and (w[0][0] >> 24) & 0xFE == 0xC2 for a, w in codes(gecko_list(d))):
+        return False
+    for c, ev in raw_events(d):
+        if c == 0x36:
+            return any(ev[0x66 + 0x24 * i] <= 1 and ev[0x65 + 0x24 * i] > 25 for i in range(4))
+    return False
+
+
 def main():
+    if sys.argv[1] == "--disc":
+        # `replay_codes.py --disc REPLAY.slp` prints `akaneia` or `vanilla`: which disc (GW_ISO_AKANEIA/GW_ISO_VANILLA)
+        # both the Dolphin oracle and slpcheck play this replay on
+        print("akaneia" if akaneia_disc(open(sys.argv[2], "rb").read()) else "vanilla")
+        return
     slp, user = sys.argv[1], sys.argv[2]
     g = gecko_list(open(slp, "rb").read())
     groups = {"widescreen": [], "polling drift fix": []}
+    # the Polling Drift Fix is the set with its C2 at 0x801A4DA0. Hero's 2026 replays carry another code at 0x801A4DB4
+    # (a 26-line C2) and 0x80019860 instead, which is not the drift fix: copied into playback it keeps the game from
+    # ever reaching the replay (no frame requested). Without the C2 at 0x801A4DA0 no drift-site code is copied.
+    drift = any(a == 0x801A4DA0 and (w[0][0] >> 24) & 0xFE == 0xC2 for a, w in codes(g))
     for addr, words in codes(g):
-        name = "widescreen" if addr in WIDE else "polling drift fix" if addr in DRIFT else None
+        name = "widescreen" if addr in WIDE else "polling drift fix" if addr in DRIFT and drift else None
         if name is None:
             continue
         # a C2 code's last word is the branch back; the recording console's code handler had already patched it

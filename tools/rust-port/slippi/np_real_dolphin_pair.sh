@@ -35,11 +35,12 @@ mkuser() {  # NAME ACCTNUM OTHERNUM: a throwaway user dir (never prints an accou
   cp "$ACCT/slippi-acct-$2/user.json" "$u/Slippi/user.json"
   python -I -c 'import json,sys; c=json.load(open(sys.argv[1],encoding="utf-8"))["connectCode"]; json.dump([{"connectCode":c,"lastPlayed":1}],open(sys.argv[2],"w"))' "$ACCT/slippi-acct-$3/user.json" "$u/Slippi/direct-codes.json"
 }
-cleanup() { rm -rf "$DOL/userR1" "$DOL/userR2"; }
+cleanup() { for _ in 1 2 3 4 5 6 7 8 9 10; do rm -rf "$DOL/userR1" "$DOL/userR2" 2>/dev/null && [ ! -e "$DOL/userR1" ] && [ ! -e "$DOL/userR2" ] && return; sleep 1; done; echo "could not delete the user dirs (account copies) in $DOL" >&2; }
 trap cleanup EXIT
 mkuser R1 1 2; mkuser R2 2 1
-waitticket() {  # NAME: Dolphin's create-ticket-resp in its log (the message type only is logged)
-  for _ in $(seq 1 ${MAXS:-420}); do grep -q "ENet mm message: create-ticket-resp" "$DOL/user$1/Logs/dolphin.log" 2>/dev/null && return 0; sleep 1; done
+waitticket() {  # NAME: Dolphin is searching (its driver confirmed the code; this build writes no log file, so the
+  # create-ticket-resp itself is not visible): then HDWAIT more seconds for its ticket to reach the server
+  for _ in $(seq 1 ${MAXS:-420}); do grep -q "^drive: searching" "$O/drive_$1.log" 2>/dev/null && return 0; sleep 1; done
   return 1
 }
 code() { python -I -c 'import json,sys; print(json.load(open(sys.argv[1],encoding="utf-8"))["connectCode"])' "$DOL/user$1/Slippi/user.json"; }
@@ -61,8 +62,8 @@ case "$M" in
   de) dolphin R1 0,15 11; sleep 8; engine R2 R1 2 ;;
   ed) dolphin R2 0,15 22; sleep 8; engine R1 R2 2 ;;
   eh) engine R1 R2 2 & e=$!; sleep 8; dolphin R2 0,15 22; wait $e ;;  # engine first (it turned out the guest)
-  hd) dolphin R2 ${CSS:-0,15} 22; waitticket R2 && sleep ${HDWAIT:-2}; engine R1 R2 ${ECHAR:-2} ;;
-  hd2) dolphin R1 ${CSS:-0,15} 11; waitticket R1 && sleep ${HDWAIT:-2}; engine R2 R1 ${ECHAR:-2} ;;
+  hd) dolphin R2 ${CSS:-0,15} 22; waitticket R2 && sleep ${HDWAIT:-5}; engine R1 R2 ${ECHAR:-2} ;;
+  hd2) dolphin R1 ${CSS:-0,15} 11; waitticket R1 && sleep ${HDWAIT:-5}; engine R2 R1 ${ECHAR:-2} ;;
   *) echo "mode dd|de|ed|eh|hd|hd2" >&2; exit 2 ;;
 esac
 for d in "${drvs[@]}"; do wait $d; done

@@ -272,6 +272,15 @@ impl GuestSpace {
         self.ptr_override.retain(|k, _| !gone.contains(&k.0));
     }
 
+    /// For diagnostics: the record and GC offset of guest address `h` inside a registered native object.
+    pub fn describe(&self, h: u32) -> Option<(&'static str, u32)> {
+        let r = self.regions.iter().rev().find(|r| h >= r.base && h < r.base + r.size.max(1) * ARRAY_REACH)?;
+        match &r.backing {
+            Backing::Native { rec, .. } => Some((rec, h - r.base)),
+            _ => None,
+        }
+    }
+
     /// The guest address of a registered native object (None: not registered).
     pub fn handle_of(&self, ptr: *mut u8) -> Option<u32> {
         self.regions.iter().find(|r| matches!(r.backing, Backing::Native { ptr: q, .. } if q == ptr)).map(|r| r.base)
@@ -339,6 +348,18 @@ impl GuestSpace {
         if let Some(g) = self.fn_guest.and_then(|f| f(p)) {
             return Ok(g);
         }
+        // a native object registered as the record the caller names: the same address can stand for another record
+        // (a freed object's memory reused for another type, a record at offset 0 of another), whose layout would
+        // translate the guest's field offsets wrongly
+        if let Some(want) = pointee.filter(|r| self.layouts.has(r)) {
+            if let Some(r) = self.regions.iter().find(|r| matches!(&r.backing, Backing::Native { ptr, rec, .. } if *ptr as usize == p && *rec == want)) {
+                return Ok(r.base);
+            }
+            if self.regions.iter().any(|r| matches!(&r.backing, Backing::Native { ptr, .. } if *ptr as usize == p)) {
+                // SAFETY: GuestSpace::add_native's contract: pointers reachable from a registered object are valid.
+                return unsafe { self.add_native(None, want, p as *mut u8) }.map_err(|_| Fault::Mem(0));
+            }
+        }
         for r in &self.regions {
             match &r.backing {
                 Backing::Native { ptr, .. } if *ptr as usize == p => return Ok(r.base),
@@ -401,7 +422,8 @@ impl GuestSpace {
                     }
                     // SAFETY: add_native's contract; nat is inside the native object.
                     let p = unsafe { (ptr.add(nat) as *const usize).read_unaligned() };
-                    let pointee = pointee.or_else(|| self.void_pointee.and_then(|f| f(rec, o, ptr, p)));
+                    // the host's answer first: a void* field's pointee, or a union's member by its owner's tag
+                    let pointee = self.void_pointee.and_then(|f| f(rec, o, ptr, p)).or(pointee);
                     return self.handle_for(p, pointee).map(|h| h as u64).map_err(|_| Fault::Mem(ea));
                 }
                 let mut v = 0u64;

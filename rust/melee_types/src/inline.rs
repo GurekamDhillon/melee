@@ -170,6 +170,10 @@ jset!(HSD_JObjAddRotationY, |j, y: f32| { j.rotate.y += y; });
 /// one `fnmsubs` (`rotate.y - a*c`, single rounding). ft_800CB6EC (Yoshi's turning double jump; Dolphin oracle,
 /// root bone rotate.y 3fa78d37 for a = 15, c = 0.01745329252).
 jset!(HSD_JObjAddRotationYFnmsubs, |j, ac: (f32, f32)| { j.rotate.y = melee_core::fp::fnmsubs(ac.0, ac.1, j.rotate.y); });
+/// `HSD_JObjAddRotationY(j, a * c)` with the product fused into the add (`fmadds`, single rounding): _Toy_8030B530's
+/// trophy turn (`0.017453292f * adj_x`, 0x8030BFE4 in main.dol). The other callers (it_2725, the shells, gronett)
+/// compute the argument into a register first and `fadds` it: they keep the plain HSD_JObjAddRotationY.
+jset!(HSD_JObjAddRotationYFmadds, |j, ac: (f32, f32)| { j.rotate.y = melee_core::fp::fmadds(ac.0, ac.1, j.rotate.y); });
 jset!(HSD_JObjAddRotationZ, |j, z: f32| { j.rotate.z += z; });
 jset!(HSD_JObjAddScaleX, |j, x: f32| { j.scale.x += x; });
 jset!(HSD_JObjAddScaleY, |j, y: f32| { j.scale.y += y; });

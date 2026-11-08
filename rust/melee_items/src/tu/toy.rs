@@ -3284,7 +3284,8 @@ pub unsafe extern "C" fn _Toy_8030B530(arg0: *mut HSD_GObj) {
             adj_x = -0.01;
             (*state).x60 = 8;
         }
-        HSD_JObjAddRotationY(&mut *jobj_next, 0.017453292f32 * adj_x, &mut Dirty);
+        // one fmadds on the console (0x8030BFE4)
+        HSD_JObjAddRotationYFmadds(&mut *jobj_next, (0.017453292f32, adj_x), &mut Dirty);
         _Toy_803062EC((*anim).xC as i32, 5, 57.29578f32 * HSD_JObjGetRotationY(&*jobj_next));
         {
             let abs_y = if adj_y < 0.0 { -adj_y } else { adj_y };

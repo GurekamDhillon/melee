@@ -388,7 +388,12 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
             }
         }
         if game.halted() {
-            eprintln!("melee: {tag}: the match ended at online frame {}", online(game.frame()));
+            eprintln!(
+                "melee: {tag}: the match ended at online frame {} (stocks left: p1 {}, p2 {})",
+                online(game.frame()),
+                melee_fighter::stale::stocks(0),
+                melee_fighter::stale::stocks(1)
+            );
             ended = true;
         }
         // the ASM's compare: every frame both sides finalized

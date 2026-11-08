@@ -69,6 +69,11 @@ On Windows, run `python -I tools/rust-port/slippi/mock_mm.py --bind <WSL switch 
 vSwitch with Windows' default firewall. Result: 1168 checksums compared with the peer, 0 soft and 0 hard desyncs,
 51 rollbacks (max depth 7), ping 33-55 ms, and both checksum CSVs are equal (1170 rows). The match ended before
 3600 frames.
+Why (round 10): it is a normal game end, not a fault. Without `--padgen` both engines play `pads::pad_fixed`, whose
+port-1 cycle (284 frames) sends Falcon off the stage once per cycle; four stocks are gone at online frame 1179 (Windows
+loopback reproduces it: "the match ended at online frame 1179 (stocks left: p1 0, p2 4)", now printed by
+slippi-netplay). `--padgen 7` lasts longer (1995) for the same reason. For a 3600-frame run use inputs that keep the
+fighters alive, or more stocks.
 
 ## Known gaps
 - No GC adapter or Linux pad support yet.

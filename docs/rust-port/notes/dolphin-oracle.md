@@ -165,6 +165,27 @@ The oracle now saves fp+0x6F4..0x72C at 0x8006B0DC and restores them at 0x8006B1
 and `NHV1UndoRestore`). `MELEE_DOLPHIN_NHV1_KEEP_PLAYBACK_INIT=1` keeps Slippi's write. With the undo, 03b84423's first
 difference moves from frame 5 to frame 8015.
 
+The same injection also calls `Camera_8002F3AC` (snap the camera to its target) once per fighter on frame -123 (probe:
+`lr` 0x8065D3C8, called from the Fighter_procInput hook). The camera then started 2 updates ahead (`x2B8` 4 vs 2) and
+from another position, and its interest/eye stayed a few ULP off for the whole match (every replay, matching ones too).
+The oracle now also saves `game_camera` (0x80452C68, 0x39C bytes) at the first fighter's save and restores it at each
+restore (round 10; `MELEE_DOLPHIN_NHV1_KEEP_PLAYBACK_CAMERA=1` keeps the snap). With it, 01c6d260's camera equals
+Rust's from frame -123. It was not the cause of the Ice Climbers drift (that was the two fixes in "Nana" below).
+
+## Nana (round 10)
+
+- `ftCo_800ADE48`, the 0x12 command test: the branch taken when `fp->x221A_b3` is set (the level roll) assigns
+  nothing to `switch_cmd`, which MWCC keeps in r31. The prologue saves r31 without clearing it, so the test reads the
+  caller's r31: a pointer (fp or the CPU block) at every call site except ftCo_800B21C8's last call (0x800B2494,
+  after `li r31, 0`). Probe at 0x800AE270: 46 hits with r31 = the CPU block in 18e83ec4, the first at frame 41.
+- UCF dashback (0.8 `UCF DB.asm` for Popo, 0.84 `UCF Dashback.asm` for any fighter with a sub fighter) also
+  rewrites the sub fighter's last queued input entry (`cpu.x444`, fp+0x1ECC): facing = the new facing, stick x =
+  0x7F right / 0x80 left. Found from `cpu.xFC[23]` holding -128 on the console after ftCo_800B0918 had stored -41.
+- Result: 18e83ec4 matches Dolphin on all 8718 frames and slpcheck to the end; Hero Game_20260321T214020 matches.
+- Oracle builds while another agent's Dolphin runs: the shared exe is locked, so round 10 linked a private copy under
+  `_build/dolphin-oracle-of10` (`DOLPHIN_ORACLE_DIR`). The shared `_build/dolphin-oracle` source has the camera
+  change; its exe is rebuilt by the next `build_dolphin.bat`.
+
 ## Nondeterminism
 
 Dolphin's playback is occasionally nondeterministic. Of four runs of 03b84423 with the same exe and the same replay,

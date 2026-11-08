@@ -166,6 +166,10 @@ jset!(HSD_JObjSetTranslateY, HSD_JObjSetTranslateYWithMtxDirty, |j, y: f32| { j.
 jset!(HSD_JObjSetTranslateZ, HSD_JObjSetTranslateZWithMtxDirty, |j, z: f32| { j.translate.z = z; });
 jset!(HSD_JObjAddRotationX, HSD_JObjAddRotationXWithMtxDirty, |j, x: f32| { j.rotate.x += x; });
 jset!(HSD_JObjAddRotationY, |j, y: f32| { j.rotate.y += y; });
+/// `HSD_JObjAddRotationY(j, -(a * c))` as MWCC compiles it once the inline is expanded: the product and the add are
+/// one `fnmsubs` (`rotate.y - a*c`, single rounding). ft_800CB6EC (Yoshi's turning double jump; Dolphin oracle,
+/// root bone rotate.y 3fa78d37 for a = 15, c = 0.01745329252).
+jset!(HSD_JObjAddRotationYFnmsubs, |j, ac: (f32, f32)| { j.rotate.y = melee_core::fp::fnmsubs(ac.0, ac.1, j.rotate.y); });
 jset!(HSD_JObjAddRotationZ, |j, z: f32| { j.rotate.z += z; });
 jset!(HSD_JObjAddScaleX, |j, x: f32| { j.scale.x += x; });
 jset!(HSD_JObjAddScaleY, |j, y: f32| { j.scale.y += y; });

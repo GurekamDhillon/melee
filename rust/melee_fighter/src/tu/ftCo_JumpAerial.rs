@@ -102,7 +102,8 @@ pub fn ft_800CB6EC(f: &mut Fighter, arg1: i32) {
         if f.mv.co.jumpaerial.x0 != 0 {
             f.mv.co.jumpaerial.x0 -= 1;
             let j = (*f.parts).joint;
-            ji::HSD_JObjAddRotationY(&mut *j, -((180.0f32 / arg1 as f32) * 0.01745329252f32), &mut Dirty);
+            // -MTXDegToRad(180 / arg1) added through the inline: one fnmsubs on the console.
+            ji::HSD_JObjAddRotationYFnmsubs(&mut *j, (180.0f32 / arg1 as f32, 0.01745329252f32), &mut Dirty);
             if f.mv.co.jumpaerial.x0 == melee_runtime::cabi::sdiv(arg1, 2) {
                 f.facing_dir = -f.facing_dir;
             }

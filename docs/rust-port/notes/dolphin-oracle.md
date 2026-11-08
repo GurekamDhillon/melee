@@ -354,3 +354,39 @@ On each file the frame before shows only `x2188` (screen position, render side).
 and `prev_ecb` differ by far more than the final x does. The console's `prev_pos` is the step's start point, the
 engine's a mid-move point. This fits the lead that the engine splits the move into two mpColl_80043754 steps where the
 console takes one (an ECB, i.e. bone-matrix, computed from another pose).
+
+### Round 7 (port/fak7): what the step-split class was
+
+The three "step split" files had three different causes, none of them in mpColl; the oracle's bone dump
+(`MELEE_DOLPHIN_NHV1_BONES` / `MELEE_WIDE_BONES`) and a `MELEE_DOLPHIN_NHV1_PROBE_AT=8000B1CC` probe (every `lb_8000B1CC`
+read: r3 = the JObj, `PROBE_MEM=r3+0x0:0x80` its flags, SRT and matrix) told them apart:
+
+- **Dedede 232950 (slippi -8).** Local SRT and frame-end matrices equal on both sides; only the sixth ECB joint differs:
+  the console reads `parts[5]` (translate 0, 2.96, -0.02), the engine `parts[46]` (the hammer tip, 0, 17.35, 0), which is
+  what PlDe.dat's ftData x44 table says (32 39 16 63 57 **46**). Dedede's guest `OnActionStateChange` stores
+  `fp->coll_data.ecb_source.joint[5] = motion_id == 69 ? parts[46] : parts[5]` on every state change (the two JObj
+  handles its onLoad keeps at fp+0x223C/0x2240). The engine never dispatched m-ex slot 24 (onActionStateChange) nor 25
+  (onReapplyAttr): `SLOT_EVENTS` had no row and the seam ran the clone base's `ftData_UnkMotionStates4` entry only. Both
+  now go through `Mex_GObjDispatch` (platform events 11/12, the C port's numbering). The same file then diverged at 809:
+  Dedede's MoveLogic rows 0-3 (the multi-jump states 341-344) keep retail `ftCo_JumpAerialF1_{Anim,IASA,Phys,Coll}`, and
+  `gen_mex_bridge.py`'s `gobj_fn` only accepted a literal `*mut HSD_GObj` parameter, not the TUs' `G` alias, so the rows
+  got `None` callbacks (no gravity or drift on the jump frame: self_vel 2.2/0.5 vs 2.11/0.53). The generator takes `G`
+  now (7249 gobj callbacks, was 5204), and the install log names every row callback the bridge cannot wire and every
+  override the engine does not dispatch (`not dispatched: ...`). Next divergence of the file: 1207.
+- **Tails 230702 (slippi 476).** A thrown-victim pose: while Falcon throws Tails (Falcon motion 221, Tails 241) the
+  console animates Tails' bones (bone[5] rotate -0.61, 0.61, 0.27 ...) and the engine leaves them at bind pose (0, 0, ...).
+  The ECB is locked during the throw, so nothing shows until the release frame reads the pose for the first ECB of the
+  step (xE4_ecb -2.30/8.22/12.70 vs -2.0/7.35/10.63). Open: which animation m-ex plays on a thrown custom fighter.
+- **Wolf game 225454 (slippi 7719, s2).** The diverging fighter is the retail Falcon (p2), not Wolf. Open.
+
+Items (`hold_kind` 5 vs 8 on the four Charizard files): the disc's codes.gct has a C2 at `Item_802674AC`'s entry
+(`lwz r0,8(r3); cmpwi r0,0xED; blt; li r0,8; stw r0,0xC(r3); blr`): every item kind >= 237 is hold kind 8, the retail
+ladder skipped. `Item_802674AC` has the rung now; on 224457 the item's `hold_kind` is 8 on both sides at its first frame
+(slippi 4239) and the file's first strict difference is now the item's own collision step on that frame
+(`x378_itemColl.cur_pos` -17.93/73.28 vs -20.62/70.24, the console's `last_pos` equal to the engine's `cur_pos`: the
+console's item has run one collision step more on its spawn frame; `xB54.unk_x` -1.34 vs -2.68). Open: the proc order
+of a gobj the guest spawns mid-frame.
+
+Numbers (port/fak7 on rust-port b05adf319 + port/akoracle): Akaneia files 16 -> 17 of 51 at .slp level (231850 Dedede
+matches), no crash; the other five Dedede files move far later (223810 65 -> 138, 230601 169 -> 1098, 233221 437 -> 2122,
+233518 81 -> 1882, 232950 -8 -> 1207). Hero 391 -> 392 of 428, local 125/125, own 917/917 (no row changed).

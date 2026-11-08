@@ -46,7 +46,7 @@ pub const SLOT_NAMES: [&str; 46] = [
 const SLOT_MOVE_LOGIC: u32 = 3;
 
 /// (m-ex ftFunction slot, the engine's one-argument dispatch event): gw_mex_ftfunction_runtime.c's gw_mex_hook rows.
-const SLOT_EVENTS: [(u32, usize); 20] = {
+const SLOT_EVENTS: [(u32, usize); 22] = {
     use melee_fighter::platform as p;
     [
         (0, p::MEX_EVENT_ON_LOAD),
@@ -54,6 +54,8 @@ const SLOT_EVENTS: [(u32, usize); 20] = {
         (2, p::MEX_EVENT_ON_DESTROY),
         (23, p::MEX_EVENT_ON_FRAME),
         (12, p::MEX_EVENT_ON_ABSORB),
+        (24, p::MEX_EVENT_ON_ACTION_STATE_CHANGE),
+        (25, p::MEX_EVENT_ON_REAPPLY_ATTR),
         (4, p::MEX_EVENT_SPECIAL_N),
         (5, p::MEX_EVENT_SPECIAL_N_AIR),
         (6, p::MEX_EVENT_SPECIAL_S),
@@ -578,11 +580,16 @@ pub fn install(kind: i32, file: &str, symbol: &str) {
             wired.push("MoveLogic");
         }
     }
+    // an override of a slot the engine does not dispatch runs the clone base's handler instead, silently (the C
+    // runtime's gw_mex_slot_name diagnostic): name them
+    let unwired: Vec<&str> = f.blob.overrides.iter().filter(|o| o.0 != SLOT_MOVE_LOGIC && !SLOT_EVENTS.iter().any(|e| e.0 == o.0))
+        .map(|o| SLOT_NAMES.get(o.0 as usize).copied().unwrap_or("?")).collect();
     eprintln!(
-        "mexguest: kind {kind}: {file} ftFunction {} bytes at {code_base:08X}, {} overrides; running {}",
+        "mexguest: kind {kind}: {file} ftFunction {} bytes at {code_base:08X}, {} overrides; running {}{}",
         f.blob.code.len(),
         f.blob.overrides.len(),
-        wired.join(" ")
+        wired.join(" "),
+        if unwired.is_empty() { String::new() } else { format!("; not dispatched: {}", unwired.join(" ")) }
     );
     s.kinds.insert(kind, f);
 }
@@ -835,7 +842,14 @@ fn build_move_table(f: &mut Fighter_, table: u32) {
             } else if a >= f.code_base && a < f.code_base + f.blob.code.len() as u32 && w < 4 {
                 Some(MOVE_TRAMPS[w])
             } else {
-                vanilla_gobj_fn(a)
+                let v = vanilla_gobj_fn(a);
+                if v.is_none() {
+                    // a retail callback the bridge does not know would leave the row's slot empty (Dedede's multi-jump
+                    // rows keep ftCo_JumpAerialF1_*: without their Phys the jump had no gravity or drift): name it
+                    eprintln!("mexguest: {}: MoveLogic row {i} slot {w} keeps retail {:08X} {}, not in mex_bridge (add it to mex_bridge_names.txt)",
+                        f.file, a, mex_import::layout::vanilla_name(a).unwrap_or("?"));
+                }
+                v
             };
         }
         m.anim_cb = cbs[0];

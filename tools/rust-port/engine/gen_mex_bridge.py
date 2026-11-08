@@ -230,7 +230,9 @@ def main():
         crate, mp, _, _, rel = pick
         plist = gl.PLIST.get((crate, mp, name), '')
         ty = strip_ty(plist.split(':', 1)[1]) if ':' in plist else ''
-        if not re.fullmatch(r'\*mut\s+(\w+::)*HSD_GObj', ty): continue
+        # the TUs' `G` alias is a gobj too (as the two-gobj case reads it): Dedede's multi-jump rows keep
+        # ftCo_JumpAerialF1_* (`g: G`), which a literal-only match left out of gobj_fn
+        if not re.fullmatch(r'(\*mut\s+(\w+::)*HSD_GObj|G)', ty): continue
         if name in seen: continue
         seen.add(name)
         gobj.append(f'        "{name}" => {{ unsafe extern "C" fn f(g: G) {{ {crate}::{mp}::{name}(g as _) }} f }}')

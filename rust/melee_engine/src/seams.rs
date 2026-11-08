@@ -234,7 +234,16 @@ pub fn install() {
             if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ITEM_DROP_EXT")) { melee_fighter::hooks::MEX_ON_ITEM_DROP_EXT = Some(|kind, g, a| { if let Some(f) = d::ftData_OnItemDropExt[kind as usize] { f(g as _, a) } }); }
             if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ITEM_DROP")) { melee_fighter::hooks::MEX_ON_ITEM_DROP = Some(|kind, g, a| { if let Some(f) = d::ftData_OnItemDrop[kind as usize] { f(g as _, a) } }); }
             if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ITEM_PICKUP2")) { melee_fighter::hooks::MEX_ON_ITEM_PICKUP2 = Some(|kind, g, a| { if let Some(f) = d::ftData_OnItemPickup[kind as usize] { f(g as _, a) } }); }
-            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ACTION_STATE_CHANGE_DISPATCH")) { melee_fighter::tu::ftcolanim::ext::MEX_ON_ACTION_STATE_CHANGE_DISPATCH = Some(|kind, g, _vanilla| { if let Some(f) = d::ftData_UnkMotionStates4[kind as usize] { f(g as _) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ACTION_STATE_CHANGE_DISPATCH")) { melee_fighter::tu::ftcolanim::ext::MEX_ON_ACTION_STATE_CHANGE_DISPATCH = Some(|kind, g, _vanilla| {
+                // gw_Mex_OnActionStateChangeDispatch: an m-ex fighter's onActionStateChange (slot 24) replaces the kind's
+                // ftData_UnkMotionStates4 entry, as m-ex installs it (Dedede's sets the sixth ECB joint on every state change)
+                unsafe { melee_fighter::platform::Mex_GObjDispatch(melee_fighter::platform::MEX_EVENT_ON_ACTION_STATE_CHANGE, kind, g as _, d::ftData_UnkMotionStates4[kind as usize]) }
+            }); }
+            // gw_Mex_OnReapplyAttrDispatch: the m-ex onReapplyAttr (slot 25) at ftCo_800D105C's ftKindCalcIndiviParamTable call;
+            // without an override the engine's seam stays as it was (seams_gen's no-op: the retail per-kind call is not made here)
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_REAPPLY_ATTR_DISPATCH")) { melee_fighter::tu::ftchangeparam::ext::Mex_OnReapplyAttrDispatch = Some(|kind, g| {
+                unsafe { melee_fighter::platform::Mex_GObjDispatch(melee_fighter::platform::MEX_EVENT_ON_REAPPLY_ATTR, kind, g as _, None) }
+            }); }
             if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_MODEL_RENDER")) { melee_fighter::tu::ftdrawcommon::ext::MEX_ON_MODEL_RENDER = Some(|kind, g, a, m| { if let Some(f) = d::ftData_UnkMtxFunc0[kind as usize] { f(g as _, a, m as _) } }); }
             let _ = k;
         }

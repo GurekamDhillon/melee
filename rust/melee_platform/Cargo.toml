@@ -20,6 +20,10 @@ font8x8 = "0.3.1"
 winit = "0.30"
 gilrs = "0.11"
 
+[target.'cfg(target_os = "linux")'.dependencies]
+# usbfs ioctls for the GameCube adapter (adapter/linux_usb.rs)
+libc = "0.2"
+
 [target.'cfg(windows)'.dependencies]
 # DXGI frame statistics of wgpu's own D3D12 swapchain (VRR detection, gfx.rs); the version wgpu-hal 27 uses
 windows = { version = "0.58", default-features = false, features = ["Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Foundation", "Win32_System_Performance"] }

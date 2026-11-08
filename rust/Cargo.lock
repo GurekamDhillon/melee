@@ -1368,6 +1368,7 @@ version = "0.1.0"
 dependencies = [
  "font8x8",
  "gilrs",
+ "libc",
  "melee_core",
  "melee_gx",
  "melee_types",

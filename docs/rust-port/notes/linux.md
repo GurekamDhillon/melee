@@ -80,8 +80,24 @@ loopback reproduces it: "the match ended at online frame 1179 (stocks left: p1 0
 slippi-netplay). `--padgen 7` lasts longer (1995) for the same reason. For a 3600-frame run use inputs that keep the
 fighters alive, or more stocks.
 
+## Controllers (port/linuxpad)
+- Gamepads go through gilrs, as on Windows. gilrs reads evdev (`/dev/input/event*`) and finds devices with libudev, so
+  `gamepads.rs` and the mapping in `aurora.rs`/`profiles.rs` are shared code. Port assignment, deadzones and the
+  SDL-style button table are the same on both OSes.
+- The GameCube adapter (WUP-028, 057E:0337) goes through `melee_platform/src/adapter/linux_usb.rs`, a port of
+  `pc/platform/gc_adapter_linux.inc` that calls usbfs ioctls directly instead of libusb. It opens
+  `/dev/bus/usb/BBB/DDD`, detaches usbhid, claims the interface, sends 0x13, and reads 37-byte reports with a 20 ms
+  bound. On close it turns rumble off, releases the interface and reattaches usbhid. Decoding, calibration and
+  suspend/resume are the shared `adapter/mod.rs` and `decode.rs`. `MELEE_PAD_IGNORE_ADAPTER=1` still forbids every open.
+- Permissions: install `tools/rust-port/linux/51-gcadapter.rules`, which grants the logged-in user (uaccess) the
+  adapter's usbfs node. Without it, the open fails with EACCES, and the log says to install the rule.
+  ```
+  sudo cp tools/rust-port/linux/51-gcadapter.rules /etc/udev/rules.d/
+  sudo udevadm control --reload-rules && sudo udevadm trigger
+  ```
+  Then replug the adapter. Ordinary gamepads need no rule: systemd already tags joysticks with uaccess.
+
 ## Known gaps
-- No GC adapter or Linux pad support yet.
 - The windowed run (WSLg is present) was not done.
 - snapguard baselines are specific to the Windows machine.
 - When a WSL session reads a Windows checkout, the files have CRLF line endings. Strip `\r` from the

@@ -1,0 +1,4 @@
+# GameCube controller adapter (Nintendo WUP-028, 057e:0337) for the Rust port's usbfs transport
+# (rust/melee_platform/src/adapter/linux_usb.rs). Grants the logged-in user read/write on the adapter's
+# /dev/bus/usb node. Install: docs/rust-port/notes/linux.md, "Controllers".
+SUBSYSTEM=="usb", ATTRS{idVendor}=="057e", ATTRS{idProduct}=="0337", TAG+="uaccess"

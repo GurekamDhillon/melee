@@ -8,10 +8,12 @@
 //! or `MELEE_UNATTENDED=1` forbid every open (`gc_adapter_policy.h`).
 //!
 //! Transports, tried in the C's order: WinUSB ([`win_usb`], Zadig-bound adapters), then the
-//! Windows HID class driver ([`win_hid`], the stock no-Zadig path). Non-Windows: none yet
-//! (the C's `gc_adapter_linux.inc` is not ported). Tests inject a fake [`Device`] through
+//! Windows HID class driver ([`win_hid`], the stock no-Zadig path). Linux: usbfs ([`linux_usb`],
+//! the C's `gc_adapter_linux.inc` without libusb). Other platforms: none. Tests inject a fake [`Device`] through
 //! [`Adapter::with_opener`] (the C's `gw_gc_test_open`).
 pub mod decode;
+#[cfg(target_os = "linux")]
+pub mod linux_usb;
 #[cfg(windows)]
 pub mod win_hid;
 #[cfg(windows)]
@@ -172,7 +174,8 @@ pub struct Adapter {
 }
 
 impl Adapter {
-    /// The real device ([`win_hid::open`] on Windows; nothing elsewhere). Respects the env policy.
+    /// The real device ([`win_usb::open`]/[`win_hid::open`] on Windows, [`linux_usb::open`] on Linux;
+    /// nothing elsewhere). Respects the env policy.
     pub fn new_system() -> Self {
         #[cfg(windows)]
         let opener: Opener = Box::new(|| {
@@ -182,7 +185,9 @@ impl Adapter {
             }
             win_hid::open().map(|d| d as Arc<dyn Device>)
         });
-        #[cfg(not(windows))]
+        #[cfg(target_os = "linux")]
+        let opener: Opener = Box::new(|| linux_usb::open().map(|d| d as Arc<dyn Device>));
+        #[cfg(not(any(windows, target_os = "linux")))]
         let opener: Opener = Box::new(|| None);
         Self::with_opener(opener, forbidden())
     }

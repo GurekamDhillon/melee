@@ -1187,14 +1187,14 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
     let r = |i: usize| cpu.gpr[3 + i];
     match name {
         // ftLib_800866DC (ftLib_GetECBCenter): the fighter's ECB centre into a Vec3
-        "ftLib_GetECBCenter" | "ftLib_800866DC" => {
+        "ftLib_GetECBCenter" | "ftLib_GetCameraBonePos" | "ftLib_800866DC" => {
             let g = gobj(mem, r(0));
             if g.is_null() {
                 return Err(Fault::Mem(0));
             }
             let mut v = rd_vec(mem, r(1))?;
             unsafe {
-                let _ = melee_fighter::ftlib::ftlib_800866dc(g as _, &mut *(&mut v as *mut Vec3 as *mut _));
+                let _ = melee_fighter::ftlib::ftlib_getcamerabonepos(g as _, &mut *(&mut v as *mut Vec3 as *mut _));
             }
             wr_vec(mem, r(1), &v)?;
         }

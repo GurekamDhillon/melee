@@ -246,6 +246,8 @@ pub struct Client {
     /// Every remote (frame, checksum) seen, for the owner's frame-by-frame compare.
     pub remote_checksums: BTreeMap<i32, u32>,
     pub stats: ClientStats,
+    /// When the last ENet ping for the displayed round trip went out (see [`Client::net_ping_us`]).
+    last_probe_us: i64,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -290,6 +292,7 @@ impl Client {
             connect_timeout_ms: 8000,
             remote_checksums: BTreeMap::new(),
             stats: ClientStats::default(),
+            last_probe_us: 0,
         };
         c.started_at_us = c.now_us();
         c
@@ -304,8 +307,15 @@ impl Client {
             None => self.t0.elapsed().as_micros() as i64,
         }
     }
+    /// Slippi's ping (pad to pad-ack): what the time offset uses, so it keeps each side's wait for its frame poll.
     pub fn ping_us(&self) -> i64 {
         self.remote.ping_us
+    }
+    /// The network round trip for display and logs (0 until measured): ENet pings, timed from when each ack
+    /// landed, with the echo moved forward by the peer's hold when the peer is this engine (Slippi Dolphin
+    /// services ENet on its own thread, so its hold is already small). Never used for game timing.
+    pub fn net_ping_us(&self) -> i64 {
+        self.remote.active.and_then(|l| self.host.peers.get(l)).map_or(0, |p| (p.net_rtt * 1000.0) as i64)
     }
     pub fn remote_selections(&self) -> Option<Selections> {
         self.remote.selections
@@ -407,6 +417,16 @@ impl Client {
                 Event::Receive { peer, data, .. } => self.on_data(peer, &data),
             }
         }
+        // an ENet ping every 250 ms (queued, it goes out with the next flush): the round trip on display
+        if self.clock_us.is_none() && self.status == Status::Connected {
+            let now = self.now_us();
+            if now - self.last_probe_us >= 250_000 {
+                if let Some(l) = self.remote.active {
+                    self.host.ping(l);
+                    self.last_probe_us = now;
+                }
+            }
+        }
         if self.status == Status::Initiated && (self.now_us() - self.started_at_us) / 1000 >= self.connect_timeout_ms {
             self.status = Status::Failed;
         }
@@ -424,6 +444,15 @@ impl Client {
             self.remote.links.push(peer);
         }
         if self.remote.active.is_none() {
+            // the link is up: our own CONNECT still being retried to the same address (it went out before the peer
+            // was listening, so ENet resends it with backoff at ~0.5, 1.5, 3.5, 7.5 s...) is dropped silently,
+            // else a late resend opens a second link mid-match that the duplicate-link rule then disconnects
+            for l in 0..self.host.peers.len() {
+                if l != peer && self.host.peers[l].state == PeerState::Connecting && self.host.peers[l].addr == self.remote.addr {
+                    self.host.reset_peer(l);
+                    self.remote.links.retain(|&x| x != l);
+                }
+            }
             self.remote.active = Some(peer);
             if self.status == Status::Initiated {
                 self.status = Status::Connected;

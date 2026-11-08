@@ -54,10 +54,104 @@ fn written_pages(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) {
         }
     }
 }
+/// Linux: the kernel's soft-dirty bits (/proc/self/pagemap bit 55, cleared by writing 4 to /proc/self/clear_refs)
+/// stand in for the write watch. The clear is process-wide, so it happens once at the end of `refresh`, after every
+/// range was read; a read between clears (`page_hash`'s host refresh) sees a superset, which is always safe. Without
+/// soft-dirty support (or under arena trim, whose page drops leave no dirty bit) every page counts as written.
 #[cfg(not(windows))]
 fn written_pages(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) {
+    #[cfg(target_os = "linux")]
+    if softdirty::read(addr, len, base, out) {
+        return;
+    }
     for p in (addr - base) / PAGE..(addr - base + len) / PAGE {
         set_bit(out, p);
+    }
+}
+
+#[cfg(target_os = "linux")]
+mod softdirty {
+    use super::{set_bit, PAGE};
+    use std::fs::File;
+    use std::io::Write;
+    use std::os::unix::fs::FileExt;
+    use std::sync::OnceLock;
+
+    const SOFT_DIRTY: u64 = 1 << 55;
+    static PAGEMAP: OnceLock<Option<File>> = OnceLock::new();
+    /// Set by the first clear at the end of a `refresh`: only from then on do the bits cover everything written since
+    /// the previous refresh (the self-test's own clear dropped the bits of earlier writes).
+    static mut ARMED: bool = false;
+
+    fn clear_refs() -> bool {
+        std::fs::OpenOptions::new().write(true).open("/proc/self/clear_refs").and_then(|mut f| f.write_all(b"4")).is_ok()
+    }
+
+    fn entries(f: &File, addr: usize, n: usize) -> Option<Vec<u64>> {
+        let mut b = vec![0u8; n * 8];
+        f.read_exact_at(&mut b, (addr / PAGE * 8) as u64).ok()?;
+        Some(b.chunks_exact(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect())
+    }
+
+    /// Soft-dirty works here: after a clear, a written page reads dirty and an untouched one clean.
+    fn self_test(f: &File) -> bool {
+        unsafe {
+            let p = libc::mmap(core::ptr::null_mut(), 2 * PAGE, libc::PROT_READ | libc::PROT_WRITE, libc::MAP_PRIVATE | libc::MAP_ANONYMOUS, -1, 0);
+            if p == libc::MAP_FAILED {
+                return false;
+            }
+            let a = p as usize;
+            core::ptr::write_volatile(a as *mut u8, 1);
+            core::ptr::write_volatile((a + PAGE) as *mut u8, 1);
+            let ok = clear_refs() && {
+                core::ptr::write_volatile(a as *mut u8, 2);
+                matches!(entries(f, a, 2), Some(e) if e[0] & SOFT_DIRTY != 0 && e[1] & SOFT_DIRTY == 0)
+            };
+            libc::munmap(p, 2 * PAGE);
+            ok
+        }
+    }
+
+    fn pagemap() -> Option<&'static File> {
+        PAGEMAP
+            .get_or_init(|| {
+                if std::env::var_os("MELEE_SNAP_NO_SOFTDIRTY").is_some() {
+                    return None;
+                }
+                let f = File::open("/proc/self/pagemap").ok()?;
+                self_test(&f).then_some(f)
+            })
+            .as_ref()
+    }
+
+    /// Set the bits of the pages of `[addr, addr+len)` the kernel saw written since the last [`clear`]; false when
+    /// soft-dirty cannot be used (the caller then counts every page).
+    pub fn read(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) -> bool {
+        let Some(f) = pagemap() else { return false };
+        if unsafe { !ARMED } || crate::arena::trim() {
+            return false;
+        }
+        let n = len / PAGE;
+        let first = (addr - base) / PAGE;
+        let mut i = 0;
+        while i < n {
+            let k = (n - i).min(1 << 16);
+            let Some(e) = entries(f, addr + i * PAGE, k) else { return false };
+            for (j, &x) in e.iter().enumerate() {
+                if x & SOFT_DIRTY != 0 {
+                    set_bit(out, first + i + j);
+                }
+            }
+            i += k;
+        }
+        true
+    }
+
+    /// End of a refresh: every range was read, start the next interval.
+    pub fn clear() {
+        if pagemap().is_some() {
+            unsafe { ARMED = clear_refs() };
+        }
     }
 }
 
@@ -431,6 +525,11 @@ impl Base {
                 }
                 or_into(&mut since[ri], hb);
             } else {
+                // Linux: no fault-based static watch, but the kernel's soft-dirty bits cover the statics too
+                #[cfg(target_os = "linux")]
+                if std::env::var_os("MELEE_SNAP_STATIC_SCAN").is_none() && softdirty::read(cur[ri].0, cur[ri].1, cur[ri].0, &mut since[ri]) {
+                    continue;
+                }
                 for pi in 0..np {
                     set_bit(&mut since[ri], pi);
                 }
@@ -440,6 +539,8 @@ impl Base {
             let (s, dd) = (&since[ri], &mut d[ri]);
             or_into(dd, s);
         }
+        #[cfg(target_os = "linux")]
+        softdirty::clear();
     }
 
     /// The ranges now: the arena's used part moves, the others are fixed at capture.

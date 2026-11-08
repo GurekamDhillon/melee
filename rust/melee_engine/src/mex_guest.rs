@@ -191,6 +191,7 @@ fn st() -> &'static mut State {
             space.fn_native = Some(fn_native);
             space.fn_guest = Some(fn_guest);
             space.void_pointee = Some(void_pointee);
+            space.ptr_native = Some(ps_userfunc);
             if std::env::var_os("MELEE_MEX_TRACE").is_some() {
                 space.trace = Some(Vec::new());
             }
@@ -300,6 +301,77 @@ const fn pool2() -> [unsafe extern "C" fn(G, G); 16] {
 }
 static POOL2: [unsafe extern "C" fn(G, G); 16] = pool2();
 
+/// Native `_PSUserFunc`s standing in for guest hook tables (guest address of the three words, the native record).
+static mut PSUF: Vec<(u32, *mut melee_types::_PSUserFunc)> = Vec::new();
+
+/// `ptr_native`: Tails' SpecialLw_SpawnParticle stores `&fp->fv + 0x64` (three guest code words: hookCreate,
+/// hookDelete, setUserData) as `gen->userfunc`; the native particle code calls the hooks through a native
+/// `_PSUserFunc`, whose entries are trampolines into the guest words (kept in step with them by `ps_refresh`).
+fn ps_userfunc(sp: &GuestSpace, v: u32, rec: &'static str) -> Option<usize> {
+    if rec != "_PSUserFunc" || sp.describe(v)?.0 != "Fighter" {
+        return None;
+    }
+    let t = unsafe { &mut *core::ptr::addr_of_mut!(PSUF) };
+    if let Some(&(_, p)) = t.iter().find(|e| e.0 == v) {
+        return Some(p as usize);
+    }
+    if t.len() >= PS_CREATE.len() {
+        eprintln!("mexguest: _PSUserFunc pool full: guest {v:08X} left unwired");
+        return None;
+    }
+    let p = Box::leak(Box::new(melee_types::_PSUserFunc::zeroed())) as *mut _;
+    t.push((v, p));
+    if flag(&REPORT, "MELEE_MEX_REPORT") {
+        eprintln!("mexguest: _PSUserFunc for guest {v:08X} ({:?})", sp.describe(v));
+    }
+    Some(p as usize)
+}
+
+/// Every native `_PSUserFunc` entry as its guest word says: the trampoline when the word is set, None when it is 0
+/// (the native code tests the entry before calling it, as the console tests the word).
+unsafe fn ps_refresh() {
+    let t = &*core::ptr::addr_of!(PSUF);
+    for (i, &(v, p)) in t.iter().enumerate() {
+        let w = |k: u32| st().space.ld32(v + 4 * k).unwrap_or(0) != 0;
+        (*p).hookCreate = if w(0) { Some(PS_CREATE[i]) } else { None };
+        (*p).hookDelete = if w(1) { Some(PS_DELETE[i]) } else { None };
+        (*p).setUserData = if w(2) { Some(PS_SETUD[i]) } else { None };
+    }
+}
+
+unsafe fn ps_call(i: usize, k: u32, p: *mut melee_types::HSD_Particle, r4: u32, f1: f32) -> i32 {
+    let Some(&(v, _)) = (&*core::ptr::addr_of!(PSUF)).get(i) else { return 0 };
+    let s = st();
+    let a = s.space.ld32(v + 4 * k).unwrap_or(0);
+    let Some(kind) = (a != 0).then(|| kind_of_code(a)).flatten() else { return 0 };
+    sync_globals(s);
+    let Ok(ph) = s.space.handle(p as usize, Some("HSD_Particle")) else { return 0 };
+    let mut cpu = Cpu::default();
+    cpu.gpr[1] = STACK_BASE + STACK_SIZE - 0x100 - s.depth * 0x2000;
+    cpu.gpr[2] = R2;
+    cpu.gpr[13] = R13;
+    cpu.gpr[3] = ph;
+    cpu.gpr[4] = r4;
+    cpu.fpr[1] = (f1 as f64).to_bits();
+    cpu.lr = 0;
+    cpu.pc = a;
+    run_cpu(kind, 2002, cpu).0.gpr[3] as i32
+}
+unsafe extern "C" fn ps_create<const I: usize>(p: *mut melee_types::HSD_Particle) -> i32 {
+    ps_call(I, 0, p, 0, 0.0)
+}
+unsafe extern "C" fn ps_delete<const I: usize>(p: *mut melee_types::HSD_Particle) -> i32 {
+    ps_call(I, 1, p, 0, 0.0)
+}
+unsafe extern "C" fn ps_setud<const I: usize>(p: *mut melee_types::HSD_Particle, idx: u8, f: f32) -> i32 {
+    ps_call(I, 2, p, idx as u32, f)
+}
+type PsFn = unsafe extern "C" fn(*mut melee_types::HSD_Particle) -> i32;
+type PsUd = unsafe extern "C" fn(*mut melee_types::HSD_Particle, u8, f32) -> i32;
+static PS_CREATE: [PsFn; 8] = [ps_create::<0>, ps_create::<1>, ps_create::<2>, ps_create::<3>, ps_create::<4>, ps_create::<5>, ps_create::<6>, ps_create::<7>];
+static PS_DELETE: [PsFn; 8] = [ps_delete::<0>, ps_delete::<1>, ps_delete::<2>, ps_delete::<3>, ps_delete::<4>, ps_delete::<5>, ps_delete::<6>, ps_delete::<7>];
+static PS_SETUD: [PsUd; 8] = [ps_setud::<0>, ps_setud::<1>, ps_setud::<2>, ps_setud::<3>, ps_setud::<4>, ps_setud::<5>, ps_setud::<6>, ps_setud::<7>];
+
 /// A guest code address as a two-gobj native callback (Dedede's inhale grabbed_cb).
 fn fn_native2(a: u32) -> Option<unsafe extern "C" fn(G, G)> {
     let kind = kind_of_code(a)?;
@@ -366,6 +438,9 @@ fn ef_update_fn(a: u32) -> Option<usize> {
 
 fn fn_guest(p: usize) -> Option<u32> {
     let s = unsafe { ST.as_mut()? };
+    if let Some(&(v, _)) = unsafe { &*core::ptr::addr_of!(PSUF) }.iter().find(|e| e.1 as usize == p) {
+        return Some(v);
+    }
     if let Some(a) = s.pool.iter().enumerate().find(|(i, _)| POOL[*i] as usize == p).map(|(_, &(_, a))| a) {
         return Some(a);
     }
@@ -452,6 +527,15 @@ pub fn install(kind: i32, file: &str, symbol: &str) {
     }
     s.code_next = (code_base + blob.code.len() as u32 + 0xFFF) & !0xFFF;
     s.space.add_bytes(code_base, blob.code.clone());
+    if std::env::var_os("MELEE_MEX_DIS").is_some() {
+        for (k, w) in blob.code.chunks(4).enumerate() {
+            let a = code_base + 4 * k as u32;
+            let w = u32::from_be_bytes([w[0], w[1], w.get(2).copied().unwrap_or(0), w.get(3).copied().unwrap_or(0)]);
+            let off = 4 * k as u32;
+            let sym = blob.symbols.iter().rev().find(|s| s.0 <= off).map(|s| format!("{}+{:#x}", s.2, off - s.0)).unwrap_or_default();
+            eprintln!("mexdis: {kind} {a:08X} {w:08X} {sym} {:?}", mex_import::ppc::ir::decode(w, a));
+        }
+    }
     let dat_base = s.dat_next;
     let mut data = ar.data.clone();
     for &o in &ar.relocs {
@@ -956,6 +1040,9 @@ unsafe fn run_cpu(kind: i32, slot: u32, cpu: Cpu) -> (Cpu, bool) {
         return (cpu, true);
     }
     s.depth += 1;
+    if flag(&CALLTRACE, "MELEE_MEX_CALLTRACE") {
+        eprintln!("mexrun: kind {kind} slot {slot} pc {:08X} r3 {:08X}", cpu.pc, cpu.gpr[3]);
+    }
     let mut m = Machine::new_gekko(cpu);
     let mut n = 0u64;
     let mut fault = None;
@@ -977,10 +1064,13 @@ unsafe fn run_cpu(kind: i32, slot: u32, cpu: Cpu) -> (Cpu, bool) {
     }
     let s = st();
     s.depth -= 1;
-    if let Some(t) = s.space.trace.as_mut() {
-        for r in t.drain(..) {
+    ps_refresh();
+    if let Some(t) = s.space.trace.as_mut().map(core::mem::take) {
+        for r in t {
             if r.store {
                 eprintln!("mextrace: slot {slot} store {}+{:#x} ({} bytes)", r.rec, r.gc_off, r.size);
+            } else if std::env::var("MELEE_MEX_TRACE").is_ok_and(|v| v == "2") {
+                eprintln!("mextrace: slot {slot} load {}+{:#x} ({} bytes) @{:08X} {:X?}", r.rec, r.gc_off, r.size, r.ea, s.space.regions_at(r.ea));
             }
         }
     }

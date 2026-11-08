@@ -193,12 +193,20 @@ pub struct Rewrite {
     pub gc_off: u32,
     pub size: u32,
     pub store: bool,
+    pub ea: u32,
 }
 
 /// Where auto-registered native objects get their guest addresses.
 const AUTO_BASE: u32 = 0x9000_0000;
 /// Elements of an auto-registered object's array the guest may reach.
 const ARRAY_REACH: u32 = 64;
+
+/// The guest address span an auto-registered object of GC size `size` reserves for its array: ARRAY_REACH elements,
+/// and at least 0x2000 bytes (Dedede's fp->parts has more than 64 FighterBones: bone 65 read the next object's
+/// region, a JObj's class_info, and lb_8000B1CC faulted on it).
+fn reach(size: u32) -> u32 {
+    (size.max(0x10) * ARRAY_REACH).max(0x2000)
+}
 
 pub struct GuestSpace {
     pub layouts: Layouts,
@@ -220,13 +228,17 @@ pub struct GuestSpace {
     /// gobj's class, `HSD_GObj.hsd_obj` a joint): (owner record, GC offset, owner object, the pointer).
     pub void_pointee: Option<fn(&'static str, u32, *mut u8, usize) -> Option<&'static str>>,
     pub fn_guest: Option<fn(usize) -> Option<u32>>,
+    /// A guest address stored into a typed pointer field that names no native object of that record (inside another
+    /// object: Tails' `gen->userfunc = &fp->fv + 0x64`, guest hook words a `_PSUserFunc` is made of): the native object
+    /// the host stands in for it, as (space, guest address, pointee record).
+    pub ptr_native: Option<fn(&GuestSpace, u32, &'static str) -> Option<usize>>,
     /// Native objects the space made itself (`materialize`).
     owned: Vec<Box<[u64]>>,
 }
 
 impl GuestSpace {
     pub fn new() -> GuestSpace {
-        GuestSpace { layouts: Layouts::new(), regions: vec![], next: AUTO_BASE, trace: None, ptr_override: HashMap::new(), fn_native: None, fn_guest: None, void_pointee: None, owned: Vec::new() }
+        GuestSpace { layouts: Layouts::new(), regions: vec![], next: AUTO_BASE, trace: None, ptr_override: HashMap::new(), fn_native: None, fn_guest: None, void_pointee: None, ptr_native: None, owned: Vec::new() }
     }
 
     /// Plain guest memory at `base` (code, stack, mod data).
@@ -250,7 +262,7 @@ impl GuestSpace {
             let b = self.next;
             // room for ARRAY_REACH elements: a pointer the guest indexes (fp->x5E8 parts, hurtboxes) reaches the
             // next ones through `extend`
-            self.next = self.next.wrapping_add((size.max(0x10) * ARRAY_REACH + 0x1F) & !0xF);
+            self.next = self.next.wrapping_add((reach(size) + 0x1F) & !0xF);
             b
         });
         self.regions.push(Region { base, size, backing: Backing::Native { rec, ptr, shadow: vec![0; size as usize] } });
@@ -274,11 +286,22 @@ impl GuestSpace {
 
     /// For diagnostics: the record and GC offset of guest address `h` inside a registered native object.
     pub fn describe(&self, h: u32) -> Option<(&'static str, u32)> {
-        let r = self.regions.iter().rev().find(|r| h >= r.base && h < r.base + r.size.max(1) * ARRAY_REACH)?;
+        let r = self.regions.iter().rev().filter(|r| h >= r.base && h < r.base + reach(r.size)).max_by_key(|r| r.base)?;
         match &r.backing {
             Backing::Native { rec, .. } => Some((rec, h - r.base)),
             _ => None,
         }
+    }
+
+    /// For diagnostics: every registered native object whose reserved span holds `h` (base, GC size, record).
+    pub fn regions_at(&self, h: u32) -> Vec<(u32, u32, &'static str)> {
+        self.regions
+            .iter()
+            .filter_map(|r| match &r.backing {
+                Backing::Native { rec, .. } if h >= r.base && h < r.base + reach(r.size) => Some((r.base, r.size, *rec)),
+                _ => None,
+            })
+            .collect()
     }
 
     /// The guest address of a registered native object (None: not registered).
@@ -321,10 +344,16 @@ impl GuestSpace {
         if let Ok(i) = self.find(ea, n) {
             return Ok(i);
         }
-        let hit = self.regions.iter().find_map(|r| match &r.backing {
-            Backing::Native { rec, ptr, .. } if r.base >= AUTO_BASE && ea >= r.base && ea < r.base + r.size.max(0x10) * ARRAY_REACH => Some((r.base, r.size, *rec, *ptr)),
-            _ => None,
-        });
+        // the object whose span holds `ea` nearest below it: an element region the guest reached earlier reserves a
+        // span too, which can run over the next object (Tails' costume list element 39 over the costume array)
+        let hit = self
+            .regions
+            .iter()
+            .filter_map(|r| match &r.backing {
+                Backing::Native { rec, ptr, .. } if r.base >= AUTO_BASE && ea >= r.base && ea < r.base + reach(r.size) => Some((r.base, r.size, *rec, *ptr)),
+                _ => None,
+            })
+            .max_by_key(|h| h.0);
         let Some((base, gs, rec, ptr)) = hit else { return Err(Fault::Mem(ea)) };
         let k = (ea - base) / gs.max(1);
         let ns = self.layouts.native_size(rec).ok_or(Fault::Mem(ea))?;
@@ -411,7 +440,7 @@ impl GuestSpace {
             Backing::Native { rec, ptr, shadow } => {
                 let (rec, ptr) = (*rec, *ptr);
                 if let Some(t) = &mut self.trace {
-                    t.push(Rewrite { rec, gc_off: o, size: n, store: false });
+                    t.push(Rewrite { rec, gc_off: o, size: n, store: false, ea });
                 }
                 if let Loc::Ptr(nat, 0, pointee) = self.layouts.locate(rec, o) {
                     if n != 4 {
@@ -505,7 +534,7 @@ impl GuestSpace {
             Backing::Native { rec, ptr, .. } => (*rec, *ptr),
         };
         if let Some(t) = &mut self.trace {
-            t.push(Rewrite { rec, gc_off: o, size: n, store: true });
+            t.push(Rewrite { rec, gc_off: o, size: n, store: true, ea });
         }
         if let Loc::Ptr(nat, 0, pointee) = self.layouts.locate(rec, o) {
             if n != 4 {
@@ -515,7 +544,11 @@ impl GuestSpace {
                 Some(p) => p,
                 None => match pointee {
                     Some(r) if self.materialize_ok(v as u32, r) => self.materialize(v as u32, r).ok_or(Fault::Mem(ea))?,
-                    _ => self.native_of(v as u32).ok_or(Fault::Mem(ea))?,
+                    Some(r) => match self.native_of(v as u32) {
+                        Some(p) => p,
+                        None => self.ptr_native.and_then(|f| f(self, v as u32, r)).ok_or(Fault::Mem(ea))?,
+                    },
+                    None => self.native_of(v as u32).ok_or(Fault::Mem(ea))?,
                 },
             };
             let base = self.regions[i].base;

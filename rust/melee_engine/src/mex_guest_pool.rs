@@ -1,6 +1,6 @@
 // @generated: mex_guest's native trampolines for guest code addresses (one per pool slot).
 #[rustfmt::skip]
-pub(crate) static POOL: [unsafe extern "C" fn(*mut melee_types::HSD_GObj); 768] = [
+pub(crate) static POOL: [unsafe extern "C" fn(*mut melee_types::HSD_GObj) -> i32; 768] = [
     pool_tramp::<0>,
     pool_tramp::<1>,
     pool_tramp::<2>,

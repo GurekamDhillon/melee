@@ -550,12 +550,20 @@ impl Machine {
             }
             Op::BadSpr { .. } => return Err(Fault::Panic(ip)),
             Op::FArith { op, d, a, b, c: fc, single } => {
-                let (x, y, z) = (c.f(a), c.f(b), c.f(fc));
+                let (x, y, mut z) = (c.f(a), c.f(b), c.f(fc));
+                // Gekko (Dolphin's Force25Bit): a single-precision multiply (fmuls, fmadds...) takes frC with 25
+                // mantissa bits; a value that is already single is unchanged
+                if gekko && single && matches!(op, FOp::Mul | FOp::Msub | FOp::Madd | FOp::Nmsub | FOp::Nmadd) {
+                    z = melee_core::fp::force25(z);
+                }
                 let r = match op {
                     FOp::Div => x / y,
                     FOp::Sub => x - y,
                     FOp::Add => x + y,
                     FOp::Sqrt => y.sqrt(),
+                    // the hardware estimates (table based, not correctly rounded), as the native port has them
+                    FOp::Res if gekko => melee_core::fp::fres(y),
+                    FOp::Rsqrte if gekko => melee_core::fp::frsqrte(y),
                     FOp::Res => 1.0 / y,
                     FOp::Mul => x * z,
                     FOp::Rsqrte => 1.0 / y.sqrt(),

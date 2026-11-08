@@ -53,6 +53,9 @@ for rel, names in sorted(want.items()):
         if n.lower() not in names or (rel + ':' + n) in skip: continue
         b = L.body_of(t, m.start())
         if b is None or L.trivial(t[b[0] + 1:b[1]], n): continue
+        # a body that routes through an override (a hook static, crate::hooks, the TU-oracle ext_call recorder) is a seam
+        # the tests drive: a plain forwarder would drop it (af3ef0657 did, for 13 tu ext fns)
+        if re.search(r'match unsafe \{ [\w:]+ \}|\bhooks::|\bext_call(_va|_vk)?\(|\bHOOKS\.read\(\)', t[b[0] + 1:b[1]]): continue
         cname, crel = canon[n.lower()]
         if crel == rel: continue
         cc = crel.split('/')[1]

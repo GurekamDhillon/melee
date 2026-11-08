@@ -155,6 +155,7 @@ struct State {
     /// Each fighter's PlXx.dat as the native decoder reads it, and its guest base (the ItemDescs
     /// MEX_IndexFighterItem names).
     natdat: BTreeMap<i32, (Box<melee_runtime::dat::DatArchive>, u32)>,
+    plinks: bool,
 }
 
 struct Art {
@@ -210,6 +211,7 @@ fn st() -> &'static mut State {
                 arts: Vec::new(),
                 items: BTreeMap::new(),
                 natdat: BTreeMap::new(),
+                plinks: false,
             }
         })
     }
@@ -220,6 +222,18 @@ include!("mex_guest_pool.rs");
 /// What an `HSD_GObj`'s untyped fields point to: user_data by the gobj's class (a fighter, an item), hsd_obj its
 /// root joint (fighters, items and the effects the guest reaches through EF_Effect.x4).
 fn void_pointee(rec: &'static str, off: u32, obj: *mut u8, _p: usize) -> Option<&'static str> {
+    if rec == "HSD_JObj" && off == 0x18 {
+        // jobj->u: the member HSD_JObj's flags select (jobj.h: JOBJ_PTCL -> ptcl, JOBJ_SPLINE -> spline, else dobj);
+        // the layout's first member is ptcl, so Sonic's Color_Shoes walking jobj->u.dobj->next read SList.data
+        let f = unsafe { (*(obj as *mut melee_types::HSD_JObj)).flags };
+        return Some(if f & (1 << 5) != 0 {
+            "_HSD_SList"
+        } else if f & (1 << 14) != 0 {
+            "HSD_Spline"
+        } else {
+            "HSD_DObj"
+        });
+    }
     if rec != "HSD_GObj" {
         return None;
     }
@@ -360,6 +374,11 @@ fn fn_guest(p: usize) -> Option<u32> {
         for n in crate::mex_bridge::GOBJ_FN_NAMES {
             if let (Some(f), Some(a)) = (crate::mex_bridge::gobj_fn(n), mex_import::layout::vanilla_addr(n)) {
                 s.retail.insert(f as usize, a);
+            }
+        }
+        for (f, n) in melee_fighter::tu::fighter::fighter_proc_fns() {
+            if let Some(a) = mex_import::layout::vanilla_addr(n) {
+                s.retail.insert(f, a);
             }
         }
     }
@@ -853,12 +872,19 @@ unsafe fn bind_item(s: &mut State, g: G) -> Option<u32> {
     if !j.is_null() && s.space.handle_of(j).is_none() {
         let _ = s.space.add_native(None, "HSD_JObj", j);
     }
-    if s.space.handle_of(ip as *mut u8).is_none() {
-        let ih = s.space.add_native(None, "Item", ip as *mut u8).ok()?;
-        if let Some(it) = s.items.get(&((*ip).kind as u32)) {
-            if it.desc_guest != 0 {
-                s.space.ptr_override.insert((ih, ITEM_ARTICLE_DATA), it.desc_guest);
-            }
+    // the Item's handle may predate this item: HSD_ObjAlloc hands a freed Item's memory to the next spawn, whose
+    // handle (and its article override) was registered for the old item, possibly another kind or a vanilla one
+    // (Charizard's SpawnItem_Rock read the previous item's ItemDesc through ip->xC4)
+    let ih = match s.space.handle_of(ip as *mut u8) {
+        Some(h) => h,
+        None => s.space.add_native(None, "Item", ip as *mut u8).ok()?,
+    };
+    match s.items.get(&((*ip).kind as u32)).map(|it| it.desc_guest).filter(|&d| d != 0) {
+        Some(d) => {
+            s.space.ptr_override.insert((ih, ITEM_ARTICLE_DATA), d);
+        }
+        None => {
+            s.space.ptr_override.remove(&(ih, ITEM_ARTICLE_DATA));
         }
     }
     Some(gh)
@@ -869,13 +895,38 @@ const ITEM_ARTICLE_DATA: u32 = 0xC4;
 /// Vanilla pointer globals of the small-data areas the guest reads (`lwz r9, p_ftCommonData`): their guest handles
 /// written into the r13 / r2 bytes before a run (the DOL's image holds 0 there, the bss).
 unsafe fn sync_globals(s: &mut State) {
-    let rows: [(u32, usize, &'static str); 1] = [(0x804D_6554, melee_runtime::shared::p_ftCommonData as usize, "ftCommonData")];
+    // it_804D6D28: the ItemCommonData (Diddy's Nut_Phys reads its gravity, +0x68)
+    let rows: [(u32, usize, &'static str); 2] = [
+        (0x804D_6554, melee_runtime::shared::p_ftCommonData as usize, "ftCommonData"),
+        (0x804D_6D28, melee_items::tu::it_3F14::it_804D6D28 as usize, "ItemCommonData"),
+    ];
     for (a, p, rec) in rows {
         if let Ok(h) = s.space.handle(p, Some(rec)) {
             let _ = s.space.st32(a, h);
         }
     }
+    // HSD_GObjPLinkHead (0x804D782C), the gobj list heads by p_link: a guest table of their handles, rewritten before
+    // every run (Sonic's SpecialN_SearchTarget walks the item list, plink 9)
+    {
+        use melee_runtime::tu::gobj_native as gn;
+        if !s.plinks {
+            s.space.add_bytes(PLINK_GUEST, vec![0; PLINK_MAX as usize * 4]);
+            s.plinks = true;
+        }
+        let n = (gn::HSD_GObjLibInitData.p_link_max as u32 + 1).min(PLINK_MAX);
+        if !gn::HSD_GObjPLinkHead.is_null() {
+            for i in 0..n {
+                let g = *gn::HSD_GObjPLinkHead.add(i as usize);
+                let h = s.space.handle(g as usize, Some("HSD_GObj")).unwrap_or(0);
+                let _ = s.space.st32(PLINK_GUEST + 4 * i, h);
+            }
+            let _ = s.space.st32(0x804D_782C, PLINK_GUEST);
+        }
+    }
 }
+/// The guest copy of HSD_GObjPLinkHead's table (sync_globals).
+const PLINK_GUEST: u32 = 0x8580_0000;
+const PLINK_MAX: u32 = 64;
 
 /// Run guest code at `a` with r3 = the gobj (gw_ppc_call). Re-entrant: a nested call (a bridged function that calls
 /// back into guest code) runs on the stack below the outer one.
@@ -943,6 +994,11 @@ unsafe fn run_cpu(kind: i32, slot: u32, cpu: Cpu) -> (Cpu, bool) {
         let pc = m.cpu.pc.wrapping_sub(4);
         let c = &m.cpu;
         dump += &format!("mexguest:   r3..r12 {:08X?} r28..r31 {:08X?} lr {:08X}\n", &c.gpr[3..13], &c.gpr[28..32], c.lr);
+        if let Some(Fault::Mem(a)) = fault {
+            if let Some((rec, off)) = s.space.describe(a) {
+                dump += &format!("mexguest:   fault address is {rec}+{off:#x}\n");
+            }
+        }
         for a in (pc.wrapping_sub(0x30)..=pc).step_by(4) {
             if let Ok(w) = s.space.ld32(a) {
                 dump += &format!("mexguest:   {a:08X} {w:08X} {:?}\n", mex_import::ppc::ir::decode(w, a));
@@ -1150,7 +1206,17 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
             }
             // the effect it made (the guest sets its callback, `e->x10 = fn`): by handle; it returned the id in r3
             // before, and the guest's store through it faulted (Wolf's SpecialHi_GFX)
-            cpu.gpr[3] = if e.is_null() { 0 } else { mem.handle(e as usize, Some("EF_Effect")).unwrap_or(0) };
+            // a particle effect returns its HSD_Generator, not an EF_Effect (efSync_Spawn's hsd_8039F05C /
+            // efLib_CreateGenerator paths; Tails' SpecialLw_SpawnParticle stores the generator's fields): by the live
+            // generator list
+            let is_gen = unsafe {
+                let mut g = melee_runtime::tu::generator::hsd_804D78FC;
+                while !g.is_null() && g as *mut c_void != e {
+                    g = (*g).next;
+                }
+                !g.is_null()
+            };
+            cpu.gpr[3] = if e.is_null() { 0 } else { mem.handle(e as usize, Some(if is_gen { "HSD_Generator" } else { "EF_Effect" })).unwrap_or(0) };
             true
         }
         _ if hand_bridge(cpu, mem, target)? => true,

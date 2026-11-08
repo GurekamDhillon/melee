@@ -1111,6 +1111,21 @@ fn proc_8006D9AC(g: G) { unsafe { Fighter_procDynamics(g) } }
 fn proc_camera(g: G) { unsafe { Fighter_procCamera(g) } }
 fn proc_8006DA4C(g: G) { unsafe { Fighter_procPlayer(g) } }
 
+/// The 15 fighter procs Fighter_Create installs, by their retail names: an m-ex guest reads a proc's on_invoke back
+/// and compares it with the retail address (Tails' / Diddy's MexCPU_InitProc looks for Fighter_procCpu).
+pub fn fighter_proc_fns() -> [(usize, &'static str); 15] {
+    [
+        (proc_8006A1BC as usize, "Fighter_procHitlag"), (proc_8006A360 as usize, "Fighter_procAnim"),
+        (proc_8006ABA0 as usize, "Fighter_procCpu"), (proc_spaghetti as usize, "Fighter_procInput"),
+        (proc_update as usize, "Fighter_procUpdate"), (proc_map as usize, "Fighter_procMap"),
+        (proc_8006C5F4 as usize, "Fighter_procIK"), (proc_accessory as usize, "Fighter_procAccessory"),
+        (proc_8006C80C as usize, "Fighter_procCollPos"), (proc_grab as usize, "Fighter_procGrabColl"),
+        (proc_8006CB94 as usize, "Fighter_procAttackColl"), (proc_hit as usize, "Fighter_procCollResolve"),
+        (proc_8006D9AC as usize, "Fighter_procDynamics"), (proc_camera as usize, "Fighter_procCamera"),
+        (proc_8006DA4C as usize, "Fighter_procPlayer"),
+    ]
+}
+
 /// `Fighter_Create`: allocate, load and register a fighter GObj with its 15 procs.
 pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     melee_core::ct!("Fighter_Create");

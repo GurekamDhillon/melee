@@ -86,22 +86,22 @@ pub mod ext {
     fn ftDemo_SetArchiveData(a0: i32, a1: *mut HSD_Archive, a2: i32) => unsafe { crate::tu::ftdemo::ftdemo_set_archive_data(a0 as _, a1 as _, a2 as _); };
     fn ftDemo_SetFacingDirection(a0: *mut HSD_GObj, a1: f32) => unsafe { crate::tu::ftdemo::ftdemo_set_facing_direction(a0 as _, a1 as _); };
     fn ftKb_SpecialN_800EED50(a0: i32, a1: i32);
-    fn ftLib_GetHipJObj(a0: *mut HSD_GObj) -> *mut HSD_JObj => unsafe { crate::ftlib::ftlib_get_hip_j_obj(a0 as _) as _ };
-    fn ftLib_SetPos(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_set_pos(a0 as _, &*(a1 as *const _)); };
-    fn ftLib_DisableInput(a0: *mut HSD_GObj) => unsafe { let _ = crate::ftlib::ftlib_disable_input(a0 as _); };
-    fn ftLib_EnableInput(a0: *mut HSD_GObj) => unsafe { let _ = crate::ftlib::ftlib_enable_input(a0 as _); };
+    fn ftLib_GetHipJObj(a0: *mut HSD_GObj) -> *mut HSD_JObj => unsafe { crate::ftlib::ftlib_gethipjobj(a0 as _) as _ };
+    fn ftLib_SetPos(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_setpos(a0 as _, &*(a1 as *const _)); };
+    fn ftLib_DisableInput(a0: *mut HSD_GObj) => unsafe { let _ = crate::ftlib::ftlib_disableinput(a0 as _); };
+    fn ftLib_EnableInput(a0: *mut HSD_GObj) => unsafe { let _ = crate::ftlib::ftlib_enableinput(a0 as _); };
     fn ftLib_800869F8(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_800869f8(a0 as _) };
     fn ftLib_80086A4C(a0: *mut HSD_GObj, a1: f32) => unsafe { let _ = crate::ftlib::ftlib_80086a4c(a0 as _, a1 as _); };
-    fn ftLib_GetCameraSubjectBonePos(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_get_camera_subject_bone_pos(a0 as _, &mut *(a1 as *mut _)); };
-    fn ftLib_IsCameraSubjectInBounds(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_camera_subject_in_bounds(a0 as _) };
+    fn ftLib_GetCameraSubjectBonePos(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_getcamerasubjectbonepos(a0 as _, &mut *(a1 as *mut _)); };
+    fn ftLib_IsCameraSubjectInBounds(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_iscamerasubjectinbounds(a0 as _) };
     fn ftLib_80086F4C(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_80086f4c(a0 as _) };
-    fn ftLib_GetNameTagHeight(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_get_name_tag_height(a0 as _) };
-    fn ftLib_IsSleeping(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_sleeping(a0 as _) };
-    fn ftLib_SetPercent(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::ftlib::ftlib_set_percent(a0 as _, a1 as _); };
+    fn ftLib_GetNameTagHeight(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_getnametagheight(a0 as _) };
+    fn ftLib_IsSleeping(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_issleeping(a0 as _) };
+    fn ftLib_SetPercent(a0: *mut HSD_GObj, a1: i32) => unsafe { let _ = crate::ftlib::ftlib_setpercent(a0 as _, a1 as _); };
     fn ftLib_80087140(a0: *mut HSD_GObj) => unsafe { let _ = crate::ftlib::ftlib_80087140(a0 as _); };
-    fn ftLib_GetLastAttackerSlot(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_get_last_attacker_slot(a0 as _) };
-    fn ftLib_IsRebirth(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_rebirth(a0 as _) };
-    fn ftLib_LoadKirbyHats(a0: u8) => unsafe { crate::tu::ftlib::ftlib_load_kirby_hats(a0 as _); };
+    fn ftLib_GetLastAttackerSlot(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getlastattackerslot(a0 as _) };
+    fn ftLib_IsRebirth(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isrebirth(a0 as _) };
+    fn ftLib_LoadKirbyHats(a0: u8) => unsafe { crate::tu::ftlib::ftlib_loadkirbyhats(a0 as _); };
     fn ftLib_GetKind(a0: *mut HSD_GObj) -> FighterKind => unsafe { crate::ftlib::get_kind(a0 as _) };
     fn ftLib_SetScale(a0: *mut HSD_GObj, a1: f32) => unsafe { let _ = crate::ftlib::set_scale(a0 as _, a1 as _); };
     fn gm_8016B168() -> bool;
@@ -1482,7 +1482,7 @@ pub fn player_80031790(slot: i32) {
         for i in 0..2 {
             let e = ent_player(p, i);
             if !e.is_null() {
-                h::ftlib_disable_input(e);
+                h::ftlib_disableinput(e);
             }
         }
     }
@@ -1495,7 +1495,7 @@ pub fn func_8008688c_wrapper(p: &StaticPlayer) {
         for i in 0..2 {
             let e = ent_player(p, i);
             if !e.is_null() {
-                h::ftlib_enable_input(e);
+                h::ftlib_enableinput(e);
             }
         }
     }
@@ -1553,7 +1553,7 @@ pub fn player_80031ebc(slot: i32) {
         let p = player(slot);
         let e = ent_player(p, i);
         if !e.is_null() {
-            if !h::ftlib_is_sleeping(e) {
+            if !h::ftlib_issleeping(e) {
                 h::ftco_800d4f24(ent_player(p, i), 1);
             }
             h::hsd_gobj_free(ent_player(p, i));
@@ -1578,13 +1578,13 @@ pub fn player_80032070(slot: i32, bool_arg: i32) {
     let p = player(slot);
     if bool_arg == 0 {
         h::ftco_800d4ff4(ent_player(p, 0));
-        if p.flags.b2() != 0 && mapping(p.ckind).has_transformation == 0 && h::ftlib_is_sleeping(ent_player(p, 1)) {
+        if p.flags.b2() != 0 && mapping(p.ckind).has_transformation == 0 && h::ftlib_issleeping(ent_player(p, 1)) {
             h::ftco_800d4ff4(ent_player(p, 1));
         }
         h::ifstatus_802f6e1c(slot);
         return;
     }
-    if h::ftlib_is_rebirth(ent_player(p, 0)) {
+    if h::ftlib_isrebirth(ent_player(p, 0)) {
         h::ftco_800d4ff4(ent_player(p, 1));
     }
 }
@@ -1592,13 +1592,13 @@ pub fn player_80032070(slot: i32, bool_arg: i32) {
 /// `Player_8003219C`.
 pub fn player_8003219c(slot: i32) -> bool {
     melee_core::ct!("player_8003219c");
-    h::ftlib_is_sleeping(ent_player(player(slot), 0))
+    h::ftlib_issleeping(ent_player(player(slot), 0))
 }
 
 /// `Player_8003221C`.
 pub fn player_8003221c(slot: i32) -> bool {
     melee_core::ct!("player_8003221c");
-    get_player_state(slot) == 2 && !h::ftlib_is_sleeping(ent_player(player(slot), 0))
+    get_player_state(slot) == 2 && !h::ftlib_issleeping(ent_player(player(slot), 0))
 }
 
 /// `Player_8003248C` over the real mapping table (the night-1 form is `stale::slot_type_for`).
@@ -1665,7 +1665,7 @@ pub fn player_80032a04(slot: i32, v: &Vec3) {
         poses(p)[t] = *v;
         let e = ent_player(p, i);
         if !e.is_null() {
-            h::ftlib_set_pos(e, v);
+            h::ftlib_setpos(e, v);
         }
     }
 }

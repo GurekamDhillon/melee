@@ -55,7 +55,7 @@ fn matches_c_and_smoke() {
         fh::HSD_RANDI = Some(|_| RANDI);
         melee_chara::tu::ftmasterhandpoke::ext::FTBOSSLIB_8015C208 = Some(|_, out| unsafe { *out = TGT });
         melee_chara::tu::ftmasterhanddamage0::ext::FTMH_MS_389_80151018 = Some(|_| {});
-        t::ext::FTLIB_GET_PERCENT = Some(|_| PERCENT);
+        t::ext::FTLIB_GETPERCENT = Some(|_| PERCENT);
         melee_chara::tu::ftmasterhanddamage0::ext::LB_8000B1CC = Some(|_, p0, p1| unsafe {
             assert!(p0.is_null());
             *p1 = Vec3 { x: 1.5, y: -2.25, z: 0.5 };

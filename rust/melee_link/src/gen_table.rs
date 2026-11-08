@@ -1070,7 +1070,7 @@ fn install_melee_runtime() {
     // tu/lbshadow.rs
     unsafe { melee_runtime::tu::lbshadow::ext::hook::ftLib_GetShadow = Some(|a0| unsafe { cast::<_, _, 53000>(melee_world::ftlib::ftLib_GetShadow(cast::<_, _, 53001>(a0))) }); }
     // tu/lbshadow.rs
-    unsafe { melee_runtime::tu::lbshadow::ext::hook::ftLib_CastsShadow = Some(|a0| unsafe { cast::<_, _, 53100>(melee_fighter::ftlib::ftlib_casts_shadow(cast::<_, _, 53101>(a0))) }); }
+    unsafe { melee_runtime::tu::lbshadow::ext::hook::ftLib_CastsShadow = Some(|a0| unsafe { cast::<_, _, 53100>(melee_fighter::ftlib::ftlib_castsshadow(cast::<_, _, 53101>(a0))) }); }
     // tu/lbshadow.rs
     unsafe { melee_runtime::tu::lbshadow::ext::hook::lbVector_CrossprodNormalized = Some(|a0, a1, a2| unsafe { cast::<_, _, 53200>(melee_runtime::tu::lbvector::lbVector_CrossprodNormalized(cast::<_, _, 53201>(a0), cast::<_, _, 53202>(a1), cast::<_, _, 53203>(a2))) }); }
     // tu/lbshadow.rs
@@ -3309,7 +3309,7 @@ fn install_melee_world() {
     // tu/grgreens.rs
     unsafe { melee_world::tu::grgreens::ext::hook::ftCo_800C06E8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftdevice::ftco_800c06e8(cast::<_, _, 164701>(a0), cast::<_, _, 164702>(a1), cast::<_, _, 164703>(a2)) }); }
     // tu/grgreens.rs
-    unsafe { melee_world::tu::grgreens::ext::hook::ftLib_GetOpponentsDir = Some(|a0, a1| unsafe { cast::<_, _, 164800>(melee_fighter::ftlib::ftlib_get_opponents_dir(cast::<_, _, 164801>(a0), cast::<_, _, 164802>(a1))) }); }
+    unsafe { melee_world::tu::grgreens::ext::hook::ftLib_GetOpponentsDir = Some(|a0, a1| unsafe { cast::<_, _, 164800>(melee_fighter::ftlib::ftlib_getopponentsdir(cast::<_, _, 164801>(a0), cast::<_, _, 164802>(a1))) }); }
     // tu/grgreens.rs
     unsafe { melee_world::tu::grgreens::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 164901>(a0), cast::<_, _, 164902>(a1)) }); }
     // tu/grgreens.rs
@@ -4003,7 +4003,7 @@ fn install_melee_world() {
     // tu/grkongo.rs
     unsafe { melee_world::tu::grkongo::ext::FTCO_8009EC70 = Some(|a0, a1, a2, a3| unsafe { melee_fighter::tu::ftCo_BarrelWait::ftCo_8009EC70(cast::<_, _, 199801>(a0), cast::<_, _, 199802>(a1), cast::<_, _, 199803>(a2), cast::<_, _, 199804>(a3)) }); }
     // tu/grkongo.rs
-    unsafe { melee_world::tu::grkongo::ext::FTLIB_START_RUMBLE = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_start_rumble(cast::<_, _, 199901>(a0), cast::<_, _, 199902>(a1), cast::<_, _, 199903>(a2)) }); }
+    unsafe { melee_world::tu::grkongo::ext::FTLIB_STARTRUMBLE = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startrumble(cast::<_, _, 199901>(a0), cast::<_, _, 199902>(a1), cast::<_, _, 199903>(a2)) }); }
     // tu/grkongo.rs
     unsafe { melee_world::tu::grkongo::ext::GRANIME_801C78FC = Some(|a0, a1, a2| unsafe { melee_world::tu::granime::grAnime_801C78FC(cast::<_, _, 200001>(a0), cast::<_, _, 200002>(a1), cast::<_, _, 200003>(a2)) }); }
     // tu/grkongo.rs
@@ -4083,7 +4083,7 @@ fn install_melee_world() {
     // tu/grkongo.rs
     unsafe { melee_world::tu::grkongo::ext::STAGE_80225194 = Some(|| unsafe { cast::<_, _, 203800>(melee_world::tu::stage::Stage_80225194()) }); }
     // tu/grkraid.rs
-    unsafe { melee_world::tu::grkraid::ext::FTLIB_START_RUMBLE_ALL = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_start_rumble_all(cast::<_, _, 203901>(a0), cast::<_, _, 203902>(a1)) }); }
+    unsafe { melee_world::tu::grkraid::ext::FTLIB_STARTRUMBLEALL = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_startrumbleall(cast::<_, _, 203901>(a0), cast::<_, _, 203902>(a1)) }); }
     // tu/grkraid.rs
     unsafe { melee_world::tu::grkraid::ext::GRANIME_801C7FF8 = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_world::tu::granime::grAnime_801C7FF8(cast::<_, _, 204001>(a0), cast::<_, _, 204002>(a1), cast::<_, _, 204003>(a2), cast::<_, _, 204004>(a3), cast::<_, _, 204005>(a4), cast::<_, _, 204006>(a5)) }); }
     // tu/grkraid.rs
@@ -4523,7 +4523,7 @@ fn install_melee_world() {
     // tu/groldkongo.rs
     unsafe { melee_world::tu::groldkongo::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 225901>(a0), cast::<_, _, 225902>(a1)) }); }
     // tu/groldkongo.rs
-    unsafe { melee_world::tu::groldkongo::ext::hook::ftLib_StartRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_start_rumble(cast::<_, _, 226001>(a0), cast::<_, _, 226002>(a1), cast::<_, _, 226003>(a2)) }); }
+    unsafe { melee_world::tu::groldkongo::ext::hook::ftLib_StartRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startrumble(cast::<_, _, 226001>(a0), cast::<_, _, 226002>(a1), cast::<_, _, 226003>(a2)) }); }
     // tu/groldkongo.rs
     unsafe { melee_world::tu::groldkongo::ext::hook::grAnime_801C7A04 = Some(|a0, a1, a2, a3| unsafe { melee_world::tu::granime::grAnime_801C7A04(cast::<_, _, 226101>(a0), cast::<_, _, 226102>(a1), cast::<_, _, 226103>(a2), cast::<_, _, 226104>(a3)) }); }
     // tu/groldkongo.rs
@@ -4585,7 +4585,7 @@ fn install_melee_world() {
     // tu/groldpupupu.rs
     unsafe { melee_world::tu::groldpupupu::ext::hook::ftCo_800C06E8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftdevice::ftco_800c06e8(cast::<_, _, 229001>(a0), cast::<_, _, 229002>(a1), cast::<_, _, 229003>(a2)) }); }
     // tu/groldpupupu.rs
-    unsafe { melee_world::tu::groldpupupu::ext::hook::ftLib_GetOpponentsDir = Some(|a0, a1| unsafe { cast::<_, _, 229100>(melee_fighter::ftlib::ftlib_get_opponents_dir(cast::<_, _, 229101>(a0), cast::<_, _, 229102>(a1))) }); }
+    unsafe { melee_world::tu::groldpupupu::ext::hook::ftLib_GetOpponentsDir = Some(|a0, a1| unsafe { cast::<_, _, 229100>(melee_fighter::ftlib::ftlib_getopponentsdir(cast::<_, _, 229101>(a0), cast::<_, _, 229102>(a1))) }); }
     // tu/groldpupupu.rs
     unsafe { melee_world::tu::groldpupupu::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 229201>(a0), cast::<_, _, 229202>(a1)) }); }
     // tu/groldpupupu.rs
@@ -5637,7 +5637,7 @@ fn install_melee_world() {
     // tu/grzebes.rs
     unsafe { melee_world::tu::grzebes::ext::H_ftLib_GetPrevPos = Some(crate::cabi::c2(|a0, a1| unsafe { melee_world::ftlib::ftLib_GetPrevPos(cast::<_, _, 281601>(a0), cast::<_, _, 281602>(a1)) })); }
     // tu/grzebes.rs
-    unsafe { melee_world::tu::grzebes::ext::H_ftLib_StartRumbleAll = Some(crate::cabi::c2(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_start_rumble_all(cast::<_, _, 281701>(a0), cast::<_, _, 281702>(a1)) })); }
+    unsafe { melee_world::tu::grzebes::ext::H_ftLib_StartRumbleAll = Some(crate::cabi::c2(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_startrumbleall(cast::<_, _, 281701>(a0), cast::<_, _, 281702>(a1)) })); }
     // tu/grzebes.rs
     unsafe { melee_world::tu::grzebes::ext::H_grAnime_801C78FC = Some(crate::cabi::c3(|a0, a1, a2| unsafe { melee_world::tu::granime::grAnime_801C78FC(cast::<_, _, 281801>(a0), cast::<_, _, 281802>(a1), cast::<_, _, 281803>(a2)) })); }
     // tu/grzebes.rs
@@ -6149,7 +6149,7 @@ fn install_melee_world() {
     // tu/ifmagnify.rs
     unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_GetCameraSubjectBonePos = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_GetCameraSubjectBonePos(cast::<_, _, 307101>(a0), cast::<_, _, 307102>(a1)) }); }
     // tu/ifmagnify.rs
-    unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_CanBeMagnified = Some(|a0| unsafe { cast::<_, _, 307200>(melee_fighter::ftlib::ftlib_can_be_magnified(cast::<_, _, 307201>(a0))) }); }
+    unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_CanBeMagnified = Some(|a0| unsafe { cast::<_, _, 307200>(melee_fighter::ftlib::ftlib_canbemagnified(cast::<_, _, 307201>(a0))) }); }
     // tu/ifmagnify.rs
     unsafe { melee_world::tu::ifmagnify::ext::hook::ftLib_UpdateLogicOffCamera = Some(|a0| unsafe { melee_fighter::tu::ftlib::ftLib_UpdateLogicOffCamera(cast::<_, _, 307301>(a0)) }); }
     // tu/ifmagnify.rs
@@ -7192,17 +7192,17 @@ fn install_melee_fighter() {
     // tu/crowdsfx.rs
     unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 358800>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 358801>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetPercent = Some(|a0| unsafe { cast::<_, _, 358900>(melee_fighter::ftlib::ftlib_get_percent(cast::<_, _, 358901>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetPercent = Some(|a0| unsafe { cast::<_, _, 358900>(melee_fighter::ftlib::ftlib_getpercent(cast::<_, _, 358901>(a0))) }); }
     // tu/crowdsfx.rs
     unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_IsSleeping_8008731C = Some(|a0| unsafe { cast::<_, _, 359000>(melee_world::ftlib::ftLib_IsSleeping_8008731C(cast::<_, _, 359001>(a0))) }); }
     // tu/crowdsfx.rs
     unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_IsDead = Some(|a0| unsafe { cast::<_, _, 359100>(melee_world::ftlib::ftLib_IsDead(cast::<_, _, 359101>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_FindBySpawnNum = Some(|a0| unsafe { cast::<_, _, 359200>(melee_fighter::ftlib::ftlib_find_by_spawn_num(cast::<_, _, 359201>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_FindBySpawnNum = Some(|a0| unsafe { cast::<_, _, 359200>(melee_fighter::ftlib::ftlib_findbyspawnnum(cast::<_, _, 359201>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetCrowdKnockback = Some(|a0| unsafe { cast::<_, _, 359300>(melee_fighter::ftlib::ftlib_get_crowd_knockback(cast::<_, _, 359301>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetCrowdKnockback = Some(|a0| unsafe { cast::<_, _, 359300>(melee_fighter::ftlib::ftlib_getcrowdknockback(cast::<_, _, 359301>(a0))) }); }
     // tu/crowdsfx.rs
-    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetSpawnNum = Some(|a0| unsafe { cast::<_, _, 359400>(melee_fighter::ftlib::ftlib_get_spawn_num(cast::<_, _, 359401>(a0))) }); }
+    unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_GetSpawnNum = Some(|a0| unsafe { cast::<_, _, 359400>(melee_fighter::ftlib::ftlib_getspawnnum(cast::<_, _, 359401>(a0))) }); }
     // tu/crowdsfx.rs
     unsafe { melee_fighter::tu::crowdsfx::ext::hook::ftLib_8008746C = Some(|a0| unsafe { cast::<_, _, 359500>(melee_fighter::ftlib::ftlib_8008746c(cast::<_, _, 359501>(a0))) }); }
     // tu/crowdsfx.rs
@@ -7736,7 +7736,7 @@ fn install_melee_fighter() {
     // tu/fighter.rs
     unsafe { melee_fighter::tu::fighter::ext::hook::ftKb_SpecialN_800F5C34 = Some(|a0| unsafe { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5C34(cast::<_, _, 385801>(a0)) }); }
     // tu/fighter.rs
-    unsafe { melee_fighter::tu::fighter::ext::hook::ftLib_DisableInput = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_disable_input(cast::<_, _, 385901>(a0)) }); }
+    unsafe { melee_fighter::tu::fighter::ext::hook::ftLib_DisableInput = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_disableinput(cast::<_, _, 385901>(a0)) }); }
     // tu/fighter.rs
     unsafe { melee_fighter::tu::fighter::ext::hook::ftMh_MS_341_8014FE10 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandwait10::ftMh_MS_341_8014FE10(cast::<_, _, 386001>(a0)) }); }
     // tu/fighter.rs
@@ -8496,7 +8496,7 @@ fn install_melee_fighter() {
     // tu/ftCo_Barrel.rs
     unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::ftCommon_8007EFC0 = Some(|a0, a1| unsafe { melee_fighter::ftcommon2::ftcommon_8007efc0(cast::<_, _, 423601>(a0), cast::<_, _, 423602>(a1)) }); }
     // tu/ftCo_Barrel.rs
-    unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_camera_bone_pos(cast::<_, _, 423701>(a0), cast::<_, _, 423702>(a1)) }); }
+    unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 423701>(a0), cast::<_, _, 423702>(a1)) }); }
     // tu/ftCo_Barrel.rs
     unsafe { melee_fighter::tu::ftCo_Barrel::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 423800>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 423801>(a0))) }); }
     // tu/ftCo_Barrel.rs
@@ -13366,7 +13366,7 @@ fn install_melee_fighter() {
     // tu/ftcoll.rs
     unsafe { melee_fighter::tu::ftcoll::ext::FTCO_CALC_Y_SCALED_KNOCKBACK = Some(|a0, a1, a2| unsafe { cast::<_, _, 666600>(melee_fighter::tu::ftchangeparam::ftCo_CalcYScaledKnockback(cast::<_, _, 666601>(a0), cast::<_, _, 666602>(a1), cast::<_, _, 666603>(a2))) }); }
     // tu/ftcoll.rs
-    unsafe { melee_fighter::tu::ftcoll::ext::FTLIB_IS_FIGHTER = Some(|a0| unsafe { cast::<_, _, 666700>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 666701>(a0))) }); }
+    unsafe { melee_fighter::tu::ftcoll::ext::FTLIB_ISFIGHTER = Some(|a0| unsafe { cast::<_, _, 666700>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 666701>(a0))) }); }
     // tu/ftcoll.rs
     unsafe { melee_fighter::tu::ftcoll::ext::FT_80084CE4 = Some(|a0, a1| unsafe { cast::<_, _, 666800>(melee_fighter::tu::ft_081b::ft_80084ce4(cast::<_, _, 666801>(a0), cast::<_, _, 666802>(a1))) }); }
     // tu/ftcoll.rs
@@ -13598,7 +13598,7 @@ fn install_melee_fighter() {
     // tu/ftcpuattack.rs
     unsafe { melee_fighter::tu::ftcpuattack::ext::FTKB_MEX_KIRBY_LIKE = Some(|a0| unsafe { cast::<_, _, 678100>(melee_chara::tu::ftkirby::ftKb_MexKirbyLike(cast::<_, _, 678101>(a0))) }); }
     // tu/ftcpuattack.rs
-    unsafe { melee_fighter::tu::ftcpuattack::ext::FTLIB_IS_FIGHTER = Some(|a0| unsafe { cast::<_, _, 678200>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 678201>(a0))) }); }
+    unsafe { melee_fighter::tu::ftcpuattack::ext::FTLIB_ISFIGHTER = Some(|a0| unsafe { cast::<_, _, 678200>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 678201>(a0))) }); }
     // tu/ftcpuattack.rs
     unsafe { melee_fighter::tu::ftcpuattack::ext::HSD_RANDF = Some(|| unsafe { cast::<_, _, 678300>(melee_runtime::tu::random::global::HSD_Randf()) }); }
     // tu/ftcpuattack.rs
@@ -13720,11 +13720,11 @@ fn install_melee_fighter() {
     // tu/ftdrawcommon.rs
     unsafe { melee_fighter::tu::ftdrawcommon::ext::FTCO_800C8AF0 = Some(|a0| unsafe { melee_fighter::tu::ft_0c88::ftco_800c8af0(cast::<_, _, 683901>(a0)) }); }
     // tu/ftdrawcommon.rs
-    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_COUNT_FIGHTERS = Some(|| unsafe { cast::<_, _, 684000>(melee_fighter::ftlib::ftlib_count_fighters()) }); }
+    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_COUNTFIGHTERS = Some(|| unsafe { cast::<_, _, 684000>(melee_fighter::ftlib::ftlib_countfighters()) }); }
     // tu/ftdrawcommon.rs
-    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_UPDATE_SCREEN_VISIBILITY = Some(|a0| unsafe { cast::<_, _, 684100>(melee_fighter::ftlib::ftlib_update_screen_visibility(cast::<_, _, 684101>(a0))) }); }
+    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_UPDATESCREENVISIBILITY = Some(|a0| unsafe { cast::<_, _, 684100>(melee_fighter::ftlib::ftlib_updatescreenvisibility(cast::<_, _, 684101>(a0))) }); }
     // tu/ftdrawcommon.rs
-    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_GET_SHAKE_OFFSET = Some(|a0, a1| unsafe { cast::<_, _, 684200>(melee_fighter::ftlib::ftlib_get_shake_offset(cast::<_, _, 684201>(a0), cast::<_, _, 684202>(a1))) }); }
+    unsafe { melee_fighter::tu::ftdrawcommon::ext::FTLIB_GETSHAKEOFFSET = Some(|a0, a1| unsafe { cast::<_, _, 684200>(melee_fighter::ftlib::ftlib_getshakeoffset(cast::<_, _, 684201>(a0), cast::<_, _, 684202>(a1))) }); }
     // tu/ftdrawcommon.rs
     unsafe { melee_fighter::tu::ftdrawcommon::ext::FTPARTS_800750C8 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftParts_800750C8(cast::<_, _, 684301>(a0), cast::<_, _, 684302>(a1), cast::<_, _, 684303>(a2)) }); }
     // tu/ftdrawcommon.rs
@@ -13956,7 +13956,7 @@ fn install_melee_fighter() {
     // tu/ftpickupitem.rs
     unsafe { melee_fighter::tu::ftpickupitem::ext::hook::ftDk_MS_341_800DF980 = Some(|a0| unsafe { melee_chara::tu::ftdonkeyheavywait0::ftDk_MS_341_800DF980(cast::<_, _, 695301>(a0)) }); }
     // tu/ftpickupitem.rs
-    unsafe { melee_fighter::tu::ftpickupitem::ext::hook::ftLib_ApplyMetalBox = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_apply_metal_box(cast::<_, _, 695401>(a0), cast::<_, _, 695402>(a1)) }); }
+    unsafe { melee_fighter::tu::ftpickupitem::ext::hook::ftLib_ApplyMetalBox = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_applymetalbox(cast::<_, _, 695401>(a0), cast::<_, _, 695402>(a1)) }); }
     // tu/ftpickupitem.rs
     unsafe { melee_fighter::tu::ftpickupitem::ext::hook::ft_800841B8 = Some(|a0, a1| unsafe { melee_fighter::tu::ft_081b::ft_800841b8(cast::<_, _, 695501>(a0), cast::<_, _, 695502>(a1)) }); }
     // tu/ftpickupitem.rs
@@ -14016,13 +14016,13 @@ fn install_melee_fighter() {
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftKb_SpecialN_800EED50 = Some(|a0, a1| unsafe { melee_chara::tu::ftkirby::ftKb_SpecialN_800EED50(cast::<_, _, 698301>(a0), cast::<_, _, 698302>(a1)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetHipJObj = Some(|a0| unsafe { cast::<_, _, 698400>(melee_fighter::ftlib::ftlib_get_hip_j_obj(cast::<_, _, 698401>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetHipJObj = Some(|a0| unsafe { cast::<_, _, 698400>(melee_fighter::ftlib::ftlib_gethipjobj(cast::<_, _, 698401>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_SetPos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_set_pos(cast::<_, _, 698501>(a0), cast::<_, _, 698502>(a1)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_SetPos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_setpos(cast::<_, _, 698501>(a0), cast::<_, _, 698502>(a1)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_DisableInput = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_disable_input(cast::<_, _, 698601>(a0)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_DisableInput = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_disableinput(cast::<_, _, 698601>(a0)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_EnableInput = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_enable_input(cast::<_, _, 698701>(a0)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_EnableInput = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_enableinput(cast::<_, _, 698701>(a0)) }); }
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_800869F8 = Some(|a0| unsafe { cast::<_, _, 698800>(melee_fighter::ftlib::ftlib_800869f8(cast::<_, _, 698801>(a0))) }); }
     // tu/player.rs
@@ -14030,23 +14030,23 @@ fn install_melee_fighter() {
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetCameraSubjectBonePos = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_GetCameraSubjectBonePos(cast::<_, _, 699001>(a0), cast::<_, _, 699002>(a1)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_IsCameraSubjectInBounds = Some(|a0| unsafe { cast::<_, _, 699100>(melee_fighter::ftlib::ftlib_is_camera_subject_in_bounds(cast::<_, _, 699101>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_IsCameraSubjectInBounds = Some(|a0| unsafe { cast::<_, _, 699100>(melee_fighter::ftlib::ftlib_iscamerasubjectinbounds(cast::<_, _, 699101>(a0))) }); }
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_80086F4C = Some(|a0| unsafe { cast::<_, _, 699200>(melee_fighter::ftlib::ftlib_80086f4c(cast::<_, _, 699201>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetNameTagHeight = Some(|a0| unsafe { cast::<_, _, 699300>(melee_fighter::ftlib::ftlib_get_name_tag_height(cast::<_, _, 699301>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetNameTagHeight = Some(|a0| unsafe { cast::<_, _, 699300>(melee_fighter::ftlib::ftlib_getnametagheight(cast::<_, _, 699301>(a0))) }); }
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_IsSleeping = Some(|a0| unsafe { cast::<_, _, 699400>(melee_world::ftlib::ftLib_IsSleeping(cast::<_, _, 699401>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_SetPercent = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_set_percent(cast::<_, _, 699501>(a0), cast::<_, _, 699502>(a1)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_SetPercent = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_setpercent(cast::<_, _, 699501>(a0), cast::<_, _, 699502>(a1)) }); }
     // tu/player.rs
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_80087140 = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_80087140(cast::<_, _, 699601>(a0)) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetLastAttackerSlot = Some(|a0| unsafe { cast::<_, _, 699700>(melee_fighter::ftlib::ftlib_get_last_attacker_slot(cast::<_, _, 699701>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetLastAttackerSlot = Some(|a0| unsafe { cast::<_, _, 699700>(melee_fighter::ftlib::ftlib_getlastattackerslot(cast::<_, _, 699701>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_IsRebirth = Some(|a0| unsafe { cast::<_, _, 699800>(melee_fighter::ftlib::ftlib_is_rebirth(cast::<_, _, 699801>(a0))) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_IsRebirth = Some(|a0| unsafe { cast::<_, _, 699800>(melee_fighter::ftlib::ftlib_isrebirth(cast::<_, _, 699801>(a0))) }); }
     // tu/player.rs
-    unsafe { melee_fighter::tu::player::ext::hook::ftLib_LoadKirbyHats = Some(|a0| unsafe { melee_fighter::tu::ftlib::ftlib_load_kirby_hats(cast::<_, _, 699901>(a0)) }); }
+    unsafe { melee_fighter::tu::player::ext::hook::ftLib_LoadKirbyHats = Some(|a0| unsafe { melee_fighter::tu::ftlib::ftlib_loadkirbyhats(cast::<_, _, 699901>(a0)) }); }
     // tu/player.rs: link_alias.tsv
     unsafe { melee_fighter::tu::player::ext::hook::ftLib_GetKind = Some(|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }); }
     // tu/player.rs: link_alias.tsv
@@ -14158,35 +14158,35 @@ fn install_melee_fighter() {
     // tu/plbonuslib.rs
     unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 705101>(a0), cast::<_, _, 705102>(a1)) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsInputDisabled = Some(|a0| unsafe { cast::<_, _, 705200>(melee_fighter::ftlib::ftlib_is_input_disabled(cast::<_, _, 705201>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsInputDisabled = Some(|a0| unsafe { cast::<_, _, 705200>(melee_fighter::ftlib::ftlib_isinputdisabled(cast::<_, _, 705201>(a0))) }); }
     // tu/plbonuslib.rs
     unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 705300>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 705301>(a0))) }); }
     // tu/plbonuslib.rs
     unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 705400>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 705401>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPercent = Some(|a0| unsafe { cast::<_, _, 705500>(melee_fighter::ftlib::ftlib_get_percent(cast::<_, _, 705501>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetPercent = Some(|a0| unsafe { cast::<_, _, 705500>(melee_fighter::ftlib::ftlib_getpercent(cast::<_, _, 705501>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastAttackerSlot = Some(|a0| unsafe { cast::<_, _, 705600>(melee_fighter::ftlib::ftlib_get_last_attacker_slot(cast::<_, _, 705601>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastAttackerSlot = Some(|a0| unsafe { cast::<_, _, 705600>(melee_fighter::ftlib::ftlib_getlastattackerslot(cast::<_, _, 705601>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsLastAttackerSubFighter = Some(|a0| unsafe { cast::<_, _, 705700>(melee_fighter::ftlib::ftlib_is_last_attacker_sub_fighter(cast::<_, _, 705701>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsLastAttackerSubFighter = Some(|a0| unsafe { cast::<_, _, 705700>(melee_fighter::ftlib::ftlib_islastattackersubfighter(cast::<_, _, 705701>(a0))) }); }
     // tu/plbonuslib.rs
     unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDead = Some(|a0| unsafe { cast::<_, _, 705800>(melee_world::ftlib::ftLib_IsDead(cast::<_, _, 705801>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUp = Some(|a0| unsafe { cast::<_, _, 705900>(melee_fighter::ftlib::ftlib_is_dead_up(cast::<_, _, 705901>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUp = Some(|a0| unsafe { cast::<_, _, 705900>(melee_fighter::ftlib::ftlib_isdeadup(cast::<_, _, 705901>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUpStar = Some(|a0| unsafe { cast::<_, _, 706000>(melee_fighter::ftlib::ftlib_is_dead_up_star(cast::<_, _, 706001>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUpStar = Some(|a0| unsafe { cast::<_, _, 706000>(melee_fighter::ftlib::ftlib_isdeadupstar(cast::<_, _, 706001>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUpFall = Some(|a0| unsafe { cast::<_, _, 706100>(melee_fighter::ftlib::ftlib_is_dead_up_fall(cast::<_, _, 706101>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsDeadUpFall = Some(|a0| unsafe { cast::<_, _, 706100>(melee_fighter::ftlib::ftlib_isdeadupfall(cast::<_, _, 706101>(a0))) }); }
     // tu/plbonuslib.rs
     unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsSubFighter = Some(|a0| unsafe { cast::<_, _, 706200>(melee_world::ftlib::ftLib_IsSubFighter(cast::<_, _, 706201>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastHitSourceType = Some(|a0| unsafe { cast::<_, _, 706300>(melee_fighter::ftlib::ftlib_get_last_hit_source_type(cast::<_, _, 706301>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastHitSourceType = Some(|a0| unsafe { cast::<_, _, 706300>(melee_fighter::ftlib::ftlib_getlasthitsourcetype(cast::<_, _, 706301>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastHitSourceKind = Some(|a0| unsafe { cast::<_, _, 706400>(melee_fighter::ftlib::ftlib_get_last_hit_source_kind(cast::<_, _, 706401>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetLastHitSourceKind = Some(|a0| unsafe { cast::<_, _, 706400>(melee_fighter::ftlib::ftlib_getlasthitsourcekind(cast::<_, _, 706401>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetGroundSlopeAngle = Some(|a0| unsafe { cast::<_, _, 706500>(melee_fighter::tu::ftlib::ftlib_get_ground_slope_angle(cast::<_, _, 706501>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetGroundSlopeAngle = Some(|a0| unsafe { cast::<_, _, 706500>(melee_fighter::tu::ftlib::ftlib_getgroundslopeangle(cast::<_, _, 706501>(a0))) }); }
     // tu/plbonuslib.rs
-    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsBeingNudged = Some(|a0| unsafe { cast::<_, _, 706600>(melee_fighter::ftlib::ftlib_is_being_nudged(cast::<_, _, 706601>(a0))) }); }
+    unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_IsBeingNudged = Some(|a0| unsafe { cast::<_, _, 706600>(melee_fighter::ftlib::ftlib_isbeingnudged(cast::<_, _, 706601>(a0))) }); }
     // tu/plbonuslib.rs: link_alias.tsv
     unsafe { melee_fighter::tu::plbonuslib::ext::hook::ftLib_GetItem = Some(|a0| unsafe { melee_fighter::ftlib::get_item(a0 as _) as _ }); }
     // tu/plbonuslib.rs
@@ -15067,7 +15067,7 @@ fn install_melee_chara() {
     // tu/ftmasterhandwalk.rs
     unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTBOSSLIB_8015C244 = Some(|a0, a1| unsafe { cast::<_, _, 750800>(melee_fighter::tu::ftbosslib::ftBossLib_8015C244(cast::<_, _, 750801>(a0), cast::<_, _, 750802>(a1))) }); }
     // tu/ftmasterhandwalk.rs
-    unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTLIB_GET_CAMERA_BONE_POS = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_camera_bone_pos(cast::<_, _, 750901>(a0), cast::<_, _, 750902>(a1)) }); }
+    unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTLIB_GETCAMERABONEPOS = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 750901>(a0), cast::<_, _, 750902>(a1)) }); }
     // tu/ftmasterhandwalk.rs
     unsafe { melee_chara::tu::ftmasterhandwalk::ext::FTMH_MS_349_80151CA8 = Some(|a0| unsafe { melee_chara::tu::ftmasterhandslap::ftMh_MS_349_80151CA8(cast::<_, _, 751001>(a0)) }); }
     // tu/ftmasterhandwalk.rs
@@ -15814,21 +15814,21 @@ fn install_melee_items() {
     // tu/it_26B1.rs
     unsafe { melee_items::tu::it_26B1::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 788701>(a0)) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 788800>(melee_fighter::ftlib::ftlib_find_nearest_opponent(cast::<_, _, 788801>(a0), cast::<_, _, 788802>(a1))) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 788800>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 788801>(a0), cast::<_, _, 788802>(a1))) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_FindNearestOpponentInDir = Some(|a0, a1, a2| unsafe { cast::<_, _, 788900>(melee_fighter::ftlib::ftlib_find_nearest_opponent_in_dir(cast::<_, _, 788901>(a0), cast::<_, _, 788902>(a1), cast::<_, _, 788903>(a2))) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_FindNearestOpponentInDir = Some(|a0, a1, a2| unsafe { cast::<_, _, 788900>(melee_fighter::ftlib::ftlib_findnearestopponentindir(cast::<_, _, 788901>(a0), cast::<_, _, 788902>(a1), cast::<_, _, 788903>(a2))) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetOpponentsDir = Some(|a0, a1| unsafe { cast::<_, _, 789000>(melee_fighter::ftlib::ftlib_get_opponents_dir(cast::<_, _, 789001>(a0), cast::<_, _, 789002>(a1))) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetOpponentsDir = Some(|a0, a1| unsafe { cast::<_, _, 789000>(melee_fighter::ftlib::ftlib_getopponentsdir(cast::<_, _, 789001>(a0), cast::<_, _, 789002>(a1))) }); }
     // tu/it_26B1.rs
     unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 789101>(a0), cast::<_, _, 789102>(a1)) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_camera_bone_pos(cast::<_, _, 789201>(a0), cast::<_, _, 789202>(a1)) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 789201>(a0), cast::<_, _, 789202>(a1)) }); }
     // tu/it_26B1.rs
     unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 789300>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 789301>(a0))) }); }
     // tu/it_26B1.rs
     unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetCollData = Some(|a0| unsafe { cast::<_, _, 789400>(melee_world::ftlib::ftLib_GetCollData(cast::<_, _, 789401>(a0))) }); }
     // tu/it_26B1.rs
-    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetECBCenter = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_ecb_center(cast::<_, _, 789501>(a0), cast::<_, _, 789502>(a1)) }); }
+    unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_GetECBCenter = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getecbcenter(cast::<_, _, 789501>(a0), cast::<_, _, 789502>(a1)) }); }
     // tu/it_26B1.rs
     unsafe { melee_items::tu::it_26B1::ext::hook::ftLib_80086A4C = Some(|a0, a1| unsafe { melee_world::ftlib::ftLib_80086A4C(cast::<_, _, 789601>(a0), cast::<_, _, 789602>(a1)) }); }
     // tu/it_26B1.rs
@@ -15950,11 +15950,11 @@ fn install_melee_items() {
     // tu/it_2725.rs
     unsafe { melee_items::tu::it_2725::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 795600>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 795601>(a0))) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_start_item_rumble(cast::<_, _, 795701>(a0), cast::<_, _, 795702>(a1), cast::<_, _, 795703>(a2)) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startitemrumble(cast::<_, _, 795701>(a0), cast::<_, _, 795702>(a1), cast::<_, _, 795703>(a2)) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_StartItemRumbleAll = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_start_item_rumble_all(cast::<_, _, 795801>(a0), cast::<_, _, 795802>(a1)) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_StartItemRumbleAll = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_startitemrumbleall(cast::<_, _, 795801>(a0), cast::<_, _, 795802>(a1)) }); }
     // tu/it_2725.rs
-    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_StopItemRumble = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_stop_item_rumble(cast::<_, _, 795901>(a0)) }); }
+    unsafe { melee_items::tu::it_2725::ext::hook::ftLib_StopItemRumble = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_stopitemrumble(cast::<_, _, 795901>(a0)) }); }
     // tu/it_2725.rs
     unsafe { melee_items::tu::it_2725::ext::hook::ftLib_GetTeam = Some(|a0| unsafe { cast::<_, _, 796000>(melee_items::tu::ftlib::ftLib_GetTeam(cast::<_, _, 796001>(a0))) }); }
     // tu/it_2725.rs
@@ -16036,9 +16036,9 @@ fn install_melee_items() {
     // tu/it_279C.rs: link_alias.tsv
     unsafe { melee_items::tu::it_279C::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { cast::<_, _, 800000>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 799901>(a0), cast::<_, _, 799902>(a1), &crate::va_words(a2))) }); }
     // tu/it_279C.rs
-    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_CountFighters = Some(|| unsafe { cast::<_, _, 800100>(melee_fighter::ftlib::ftlib_count_fighters()) }); }
+    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_CountFighters = Some(|| unsafe { cast::<_, _, 800100>(melee_fighter::ftlib::ftlib_countfighters()) }); }
     // tu/it_279C.rs
-    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 800200>(melee_fighter::ftlib::ftlib_find_nearest_opponent(cast::<_, _, 800201>(a0), cast::<_, _, 800202>(a1))) }); }
+    unsafe { melee_items::tu::it_279C::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 800200>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 800201>(a0), cast::<_, _, 800202>(a1))) }); }
     // tu/it_279C.rs
     unsafe { melee_items::tu::it_279C::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 800301>(a0), cast::<_, _, 800302>(a1)) }); }
     // tu/it_279C.rs
@@ -17088,7 +17088,7 @@ fn install_melee_items() {
     // tu/itcoll.rs
     unsafe { melee_items::tu::itcoll::ext::hook::ftLib_GetTeam = Some(|a0| unsafe { cast::<_, _, 853000>(melee_items::tu::ftlib::ftLib_GetTeam(cast::<_, _, 853001>(a0))) }); }
     // tu/itcoll.rs
-    unsafe { melee_items::tu::itcoll::ext::hook::ftLib_IsSamePlayer = Some(|a0, a1| unsafe { cast::<_, _, 853100>(melee_fighter::ftlib::ftlib_is_same_player(cast::<_, _, 853101>(a0), cast::<_, _, 853102>(a1))) }); }
+    unsafe { melee_items::tu::itcoll::ext::hook::ftLib_IsSamePlayer = Some(|a0, a1| unsafe { cast::<_, _, 853100>(melee_fighter::ftlib::ftlib_issameplayer(cast::<_, _, 853101>(a0), cast::<_, _, 853102>(a1))) }); }
     // tu/itcoll.rs
     unsafe { melee_items::tu::itcoll::ext::hook::ft_80089228 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 853200>(melee_fighter::tu::ft_0881::ft_80089228(cast::<_, _, 853201>(a0), cast::<_, _, 853202>(a1), cast::<_, _, 853203>(a2), cast::<_, _, 853204>(a3))) }); }
     // tu/itcoll.rs
@@ -17264,11 +17264,11 @@ fn install_melee_items() {
     // tu/itdraw.rs
     unsafe { melee_items::tu::itdraw::ext::hook::PSMTXIdentity = Some(|a0| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXIdentity(cast::<_, _, 861801>(a0)) }); }
     // tu/itdraw.rs
-    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_IsItemVisible = Some(|a0, a1| unsafe { cast::<_, _, 861900>(melee_fighter::ftlib::ftlib_is_item_visible(cast::<_, _, 861901>(a0), cast::<_, _, 861902>(a1))) }); }
+    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_IsItemVisible = Some(|a0, a1| unsafe { cast::<_, _, 861900>(melee_fighter::ftlib::ftlib_isitemvisible(cast::<_, _, 861901>(a0), cast::<_, _, 861902>(a1))) }); }
     // tu/itdraw.rs
     unsafe { melee_items::tu::itdraw::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 862000>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 862001>(a0))) }); }
     // tu/itdraw.rs
-    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_GetShakeOffset = Some(|a0, a1| unsafe { cast::<_, _, 862100>(melee_fighter::ftlib::ftlib_get_shake_offset(cast::<_, _, 862101>(a0), cast::<_, _, 862102>(a1))) }); }
+    unsafe { melee_items::tu::itdraw::ext::hook::ftLib_GetShakeOffset = Some(|a0, a1| unsafe { cast::<_, _, 862100>(melee_fighter::ftlib::ftlib_getshakeoffset(cast::<_, _, 862101>(a0), cast::<_, _, 862102>(a1))) }); }
     // tu/itdraw.rs
     unsafe { melee_items::tu::itdraw::ext::hook::it_80272A18 = Some(|a0| unsafe { melee_items::tu::it_2725::it_80272A18(cast::<_, _, 862201>(a0)) }); }
     // tu/itdraw.rs
@@ -17522,9 +17522,9 @@ fn install_melee_items() {
     // tu/item.rs
     unsafe { melee_items::tu::item::ext::hook::efLib_DestroyAll = Some(|a0| unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(cast::<_, _, 874701>(a0)) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_ReleaseItem = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_release_item(cast::<_, _, 874801>(a0), cast::<_, _, 874802>(a1)) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_ReleaseItem = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_releaseitem(cast::<_, _, 874801>(a0), cast::<_, _, 874802>(a1)) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_ClearHeldSpecialItem = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_clear_held_special_item(cast::<_, _, 874901>(a0)) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_ClearHeldSpecialItem = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_clearheldspecialitem(cast::<_, _, 874901>(a0)) }); }
     // tu/item.rs
     unsafe { melee_items::tu::item::ext::hook::ftLib_IsHoldingItem = Some(|a0, a1| unsafe { cast::<_, _, 875000>(melee_items::tu::ftlib::ftLib_IsHoldingItem(cast::<_, _, 875001>(a0), cast::<_, _, 875002>(a1))) }); }
     // tu/item.rs
@@ -17534,9 +17534,9 @@ fn install_melee_items() {
     // tu/item.rs
     unsafe { melee_items::tu::item::ext::hook::ftLib_GetTeam = Some(|a0| unsafe { cast::<_, _, 875300>(melee_items::tu::ftlib::ftLib_GetTeam(cast::<_, _, 875301>(a0))) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_IncFighterRefCount = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_inc_fighter_ref_count(cast::<_, _, 875401>(a0)) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_IncFighterRefCount = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_incfighterrefcount(cast::<_, _, 875401>(a0)) }); }
     // tu/item.rs
-    unsafe { melee_items::tu::item::ext::hook::ftLib_DecFighterRefCount = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_dec_fighter_ref_count(cast::<_, _, 875501>(a0)) }); }
+    unsafe { melee_items::tu::item::ext::hook::ftLib_DecFighterRefCount = Some(|a0| unsafe { melee_fighter::ftlib::ftlib_decfighterrefcount(cast::<_, _, 875501>(a0)) }); }
     // tu/item.rs: link_alias.tsv
     unsafe { melee_items::tu::item::ext::hook::ftLib_GetKind = Some(|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }); }
     // tu/item.rs
@@ -17886,7 +17886,7 @@ fn install_melee_items() {
     // tu/itflipper.rs
     unsafe { melee_items::tu::itflipper::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 892801>(a0), cast::<_, _, 892802>(a1), cast::<_, _, 892803>(a2)) }); }
     // tu/itflipper.rs
-    unsafe { melee_items::tu::itflipper::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_camera_bone_pos(cast::<_, _, 892901>(a0), cast::<_, _, 892902>(a1)) }); }
+    unsafe { melee_items::tu::itflipper::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 892901>(a0), cast::<_, _, 892902>(a1)) }); }
     // tu/itflipper.rs
     unsafe { melee_items::tu::itflipper::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 893000>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 893001>(a0))) }); }
     // tu/itflipper.rs
@@ -18266,7 +18266,7 @@ fn install_melee_items() {
     // tu/itgamewatchfire.rs
     unsafe { melee_items::tu::itgamewatchfire::ext::hook::ftGw_AttackS4_ItemTorchSetFlag = Some(|a0| unsafe { melee_chara::tu::ftgamewatchattacks4::ftGw_AttackS4_ItemTorchSetFlag(cast::<_, _, 911901>(a0)) }); }
     // tu/itgamewatchfire.rs
-    unsafe { melee_items::tu::itgamewatchfire::ext::hook::ftLib_IsChargingSmash = Some(|a0| unsafe { cast::<_, _, 912000>(melee_fighter::ftlib::ftlib_is_charging_smash(cast::<_, _, 912001>(a0))) }); }
+    unsafe { melee_items::tu::itgamewatchfire::ext::hook::ftLib_IsChargingSmash = Some(|a0| unsafe { cast::<_, _, 912000>(melee_fighter::ftlib::ftlib_ischargingsmash(cast::<_, _, 912001>(a0))) }); }
     // tu/itgamewatchfire.rs
     unsafe { melee_items::tu::itgamewatchfire::ext::hook::it_8026B724 = Some(|a0| unsafe { melee_items::tu::it_26B1::it_8026B724(cast::<_, _, 912101>(a0)) }); }
     // tu/itgamewatchfire.rs
@@ -18730,11 +18730,11 @@ fn install_melee_items() {
     // tu/ithassam.rs
     unsafe { melee_items::tu::ithassam::ext::hook::efLib_ResumeAll = Some(|a0| unsafe { melee_world::tu::efn::eflib::efLib_ResumeAll(cast::<_, _, 935101>(a0)) }); }
     // tu/ithassam.rs
-    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 935200>(melee_fighter::ftlib::ftlib_find_nearest_opponent(cast::<_, _, 935201>(a0), cast::<_, _, 935202>(a1))) }); }
+    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 935200>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 935201>(a0), cast::<_, _, 935202>(a1))) }); }
     // tu/ithassam.rs
-    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_camera_bone_pos(cast::<_, _, 935301>(a0), cast::<_, _, 935302>(a1)) }); }
+    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 935301>(a0), cast::<_, _, 935302>(a1)) }); }
     // tu/ithassam.rs
-    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_IsSamePlayer = Some(|a0, a1| unsafe { cast::<_, _, 935400>(melee_fighter::ftlib::ftlib_is_same_player(cast::<_, _, 935401>(a0), cast::<_, _, 935402>(a1))) }); }
+    unsafe { melee_items::tu::ithassam::ext::hook::ftLib_IsSamePlayer = Some(|a0, a1| unsafe { cast::<_, _, 935400>(melee_fighter::ftlib::ftlib_issameplayer(cast::<_, _, 935401>(a0), cast::<_, _, 935402>(a1))) }); }
     // tu/ithassam.rs
     unsafe { melee_items::tu::ithassam::ext::hook::gm_8016B168 = Some(|| unsafe { cast::<_, _, 935500>(melee_modes::tu::gmvs::gm_8016B168()) }); }
     // tu/ithassam.rs
@@ -18958,7 +18958,7 @@ fn install_melee_items() {
     // tu/ithitodeman.rs: link_alias.tsv
     unsafe { melee_items::tu::ithitodeman::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { cast::<_, _, 946700>(melee_world::tu::efn::efsync::efSync_Spawn(cast::<_, _, 946601>(a0), cast::<_, _, 946602>(a1), &crate::va_words(a2))) }); }
     // tu/ithitodeman.rs
-    unsafe { melee_items::tu::ithitodeman::ext::hook::ftLib_FindLowestPercentOpponent = Some(|a0| unsafe { cast::<_, _, 946800>(melee_fighter::ftlib::ftlib_find_lowest_percent_opponent(cast::<_, _, 946801>(a0))) }); }
+    unsafe { melee_items::tu::ithitodeman::ext::hook::ftLib_FindLowestPercentOpponent = Some(|a0| unsafe { cast::<_, _, 946800>(melee_fighter::ftlib::ftlib_findlowestpercentopponent(cast::<_, _, 946801>(a0))) }); }
     // tu/ithitodeman.rs
     unsafe { melee_items::tu::ithitodeman::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 946901>(a0), cast::<_, _, 946902>(a1)) }); }
     // tu/ithitodeman.rs
@@ -19598,7 +19598,7 @@ fn install_melee_items() {
     // tu/itleadead.rs
     unsafe { melee_items::tu::itleadead::ext::hook::ftCo_800C7800 = Some(|a0| unsafe { melee_fighter::tu::ftco_800c7590::ftco_800c7800(cast::<_, _, 978901>(a0)) }); }
     // tu/itleadead.rs
-    unsafe { melee_items::tu::itleadead::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 979000>(melee_fighter::ftlib::ftlib_find_nearest_opponent(cast::<_, _, 979001>(a0), cast::<_, _, 979002>(a1))) }); }
+    unsafe { melee_items::tu::itleadead::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 979000>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 979001>(a0), cast::<_, _, 979002>(a1))) }); }
     // tu/itleadead.rs
     unsafe { melee_items::tu::itleadead::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 979100>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 979101>(a0), cast::<_, _, 979102>(a1))) }); }
     // tu/itleadead.rs
@@ -19812,7 +19812,7 @@ fn install_melee_items() {
     // tu/itlikelike.rs
     unsafe { melee_items::tu::itlikelike::ext::hook::ftCo_800C7C60 = Some(|a0, a1| unsafe { melee_fighter::tu::ftco_800c78b0::ftco_800c7c60(cast::<_, _, 989701>(a0), cast::<_, _, 989702>(a1)) }); }
     // tu/itlikelike.rs
-    unsafe { melee_items::tu::itlikelike::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 989800>(melee_fighter::ftlib::ftlib_find_nearest_opponent(cast::<_, _, 989801>(a0), cast::<_, _, 989802>(a1))) }); }
+    unsafe { melee_items::tu::itlikelike::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 989800>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 989801>(a0), cast::<_, _, 989802>(a1))) }); }
     // tu/itlikelike.rs
     unsafe { melee_items::tu::itlikelike::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 989901>(a0), cast::<_, _, 989902>(a1)) }); }
     // tu/itlikelike.rs
@@ -19958,7 +19958,7 @@ fn install_melee_items() {
     // tu/itlinkarrow.rs
     unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_GetModelScale = Some(|a0| unsafe { cast::<_, _, 997100>(melee_items::tu::ftlib::ftLib_GetModelScale(cast::<_, _, 997101>(a0))) }); }
     // tu/itlinkarrow.rs
-    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_IsShielding = Some(|a0| unsafe { cast::<_, _, 997200>(melee_fighter::ftlib::ftlib_is_shielding(cast::<_, _, 997201>(a0))) }); }
+    unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLib_IsShielding = Some(|a0| unsafe { cast::<_, _, 997200>(melee_fighter::ftlib::ftlib_isshielding(cast::<_, _, 997201>(a0))) }); }
     // tu/itlinkarrow.rs
     unsafe { melee_items::tu::itlinkarrow::ext::hook::ftLk_SpecialN_IsActiveAnd2071b6 = Some(|a0| unsafe { cast::<_, _, 997300>(melee_chara::tu::ftlinkspecialn::ftLk_SpecialN_IsActiveAnd2071b6(cast::<_, _, 997301>(a0))) }); }
     // tu/itlinkarrow.rs
@@ -20114,7 +20114,7 @@ fn install_melee_items() {
     // tu/itlinkboomerang.rs
     unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetPartJObj = Some(|a0, a1| unsafe { cast::<_, _, 1004900>(melee_items::tu::ftlib::ftLib_GetPartJObj(cast::<_, _, 1004901>(a0), cast::<_, _, 1004902>(a1))) }); }
     // tu/itlinkboomerang.rs
-    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_camera_bone_pos(cast::<_, _, 1005001>(a0), cast::<_, _, 1005002>(a1)) }); }
+    unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 1005001>(a0), cast::<_, _, 1005002>(a1)) }); }
     // tu/itlinkboomerang.rs: link_alias.tsv
     unsafe { melee_items::tu::itlinkboomerang::ext::hook::ftLib_GetKind = Some(|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }); }
     // tu/itlinkboomerang.rs
@@ -20978,7 +20978,7 @@ fn install_melee_items() {
     // tu/itmetalb.rs
     unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 1048400>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 1048401>(a0))) }); }
     // tu/itmetalb.rs
-    unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_ApplyMetalBox = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_apply_metal_box(cast::<_, _, 1048501>(a0), cast::<_, _, 1048502>(a1)) }); }
+    unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_ApplyMetalBox = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_applymetalbox(cast::<_, _, 1048501>(a0), cast::<_, _, 1048502>(a1)) }); }
     // tu/itmetalb.rs
     unsafe { melee_items::tu::itmetalb::ext::hook::ftLib_IsSubFighter = Some(|a0| unsafe { cast::<_, _, 1048600>(melee_world::ftlib::ftLib_IsSubFighter(cast::<_, _, 1048601>(a0))) }); }
     // tu/itmetalb.rs
@@ -21548,7 +21548,7 @@ fn install_melee_items() {
     // tu/itnokonoko.rs
     unsafe { melee_items::tu::itnokonoko::ext::hook::ScriptGame_EnemyDefeated = Some(|a0| unsafe { cast::<_, _, 1077000>(melee_modes::tu::script_game::ScriptGame_EnemyDefeated(cast::<_, _, 1077001>(a0))) }); }
     // tu/itnokonoko.rs
-    unsafe { melee_items::tu::itnokonoko::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_start_item_rumble(cast::<_, _, 1077101>(a0), cast::<_, _, 1077102>(a1), cast::<_, _, 1077103>(a2)) }); }
+    unsafe { melee_items::tu::itnokonoko::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startitemrumble(cast::<_, _, 1077101>(a0), cast::<_, _, 1077102>(a1), cast::<_, _, 1077103>(a2)) }); }
     // tu/itnokonoko.rs
     unsafe { melee_items::tu::itnokonoko::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1077200>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1077201>(a0), cast::<_, _, 1077202>(a1))) }); }
     // tu/itnokonoko.rs
@@ -21640,7 +21640,7 @@ fn install_melee_items() {
     // tu/itoctarock.rs
     unsafe { melee_items::tu::itoctarock::ext::hook::Item_8026AE84 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AE84(cast::<_, _, 1081601>(a0), cast::<_, _, 1081602>(a1), cast::<_, _, 1081603>(a2), cast::<_, _, 1081604>(a3)) }); }
     // tu/itoctarock.rs
-    unsafe { melee_items::tu::itoctarock::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 1081700>(melee_fighter::ftlib::ftlib_find_nearest_opponent(cast::<_, _, 1081701>(a0), cast::<_, _, 1081702>(a1))) }); }
+    unsafe { melee_items::tu::itoctarock::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 1081700>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 1081701>(a0), cast::<_, _, 1081702>(a1))) }); }
     // tu/itoctarock.rs
     unsafe { melee_items::tu::itoctarock::ext::hook::ftLib_GetPos = Some(|a0, a1| unsafe { melee_items::tu::ftlib::ftLib_GetPos(cast::<_, _, 1081801>(a0), cast::<_, _, 1081802>(a1)) }); }
     // tu/itoctarock.rs
@@ -21722,9 +21722,9 @@ fn install_melee_items() {
     // tu/itoctarockstone.rs
     unsafe { melee_items::tu::itoctarockstone::ext::hook::Item_8026AE84 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AE84(cast::<_, _, 1085701>(a0), cast::<_, _, 1085702>(a1), cast::<_, _, 1085703>(a2), cast::<_, _, 1085704>(a3)) }); }
     // tu/itoctarockstone.rs
-    unsafe { melee_items::tu::itoctarockstone::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 1085800>(melee_fighter::ftlib::ftlib_find_nearest_opponent(cast::<_, _, 1085801>(a0), cast::<_, _, 1085802>(a1))) }); }
+    unsafe { melee_items::tu::itoctarockstone::ext::hook::ftLib_FindNearestOpponent = Some(|a0, a1| unsafe { cast::<_, _, 1085800>(melee_fighter::ftlib::ftlib_findnearestopponent(cast::<_, _, 1085801>(a0), cast::<_, _, 1085802>(a1))) }); }
     // tu/itoctarockstone.rs
-    unsafe { melee_items::tu::itoctarockstone::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_camera_bone_pos(cast::<_, _, 1085901>(a0), cast::<_, _, 1085902>(a1)) }); }
+    unsafe { melee_items::tu::itoctarockstone::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 1085901>(a0), cast::<_, _, 1085902>(a1)) }); }
     // tu/itoctarockstone.rs
     unsafe { melee_items::tu::itoctarockstone::ext::hook::itColl_BounceOffShield = Some(|a0| unsafe { cast::<_, _, 1086000>(melee_items::tu::it_2725::itColl_BounceOffShield(cast::<_, _, 1086001>(a0))) }); }
     // tu/itoctarockstone.rs
@@ -21756,7 +21756,7 @@ fn install_melee_items() {
     // tu/itoldkuri.rs
     unsafe { melee_items::tu::itoldkuri::ext::hook::Item_8026AE84 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AE84(cast::<_, _, 1087401>(a0), cast::<_, _, 1087402>(a1), cast::<_, _, 1087403>(a2), cast::<_, _, 1087404>(a3)) }); }
     // tu/itoldkuri.rs
-    unsafe { melee_items::tu::itoldkuri::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_start_item_rumble(cast::<_, _, 1087501>(a0), cast::<_, _, 1087502>(a1), cast::<_, _, 1087503>(a2)) }); }
+    unsafe { melee_items::tu::itoldkuri::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startitemrumble(cast::<_, _, 1087501>(a0), cast::<_, _, 1087502>(a1), cast::<_, _, 1087503>(a2)) }); }
     // tu/itoldkuri.rs
     unsafe { melee_items::tu::itoldkuri::ext::hook::it_8026B684 = Some(|a0| unsafe { cast::<_, _, 1087600>(melee_items::tu::it_26B1::it_8026B684(cast::<_, _, 1087601>(a0))) }); }
     // tu/itoldkuri.rs
@@ -21980,7 +21980,7 @@ fn install_melee_items() {
     // tu/itpatapata.rs
     unsafe { melee_items::tu::itpatapata::ext::hook::Item_8026AE84 = Some(|a0, a1, a2, a3| unsafe { melee_items::tu::item::Item_8026AE84(cast::<_, _, 1098601>(a0), cast::<_, _, 1098602>(a1), cast::<_, _, 1098603>(a2), cast::<_, _, 1098604>(a3)) }); }
     // tu/itpatapata.rs
-    unsafe { melee_items::tu::itpatapata::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_start_item_rumble(cast::<_, _, 1098701>(a0), cast::<_, _, 1098702>(a1), cast::<_, _, 1098703>(a2)) }); }
+    unsafe { melee_items::tu::itpatapata::ext::hook::ftLib_StartItemRumble = Some(|a0, a1, a2| unsafe { melee_fighter::ftlib::ftlib_startitemrumble(cast::<_, _, 1098701>(a0), cast::<_, _, 1098702>(a1), cast::<_, _, 1098703>(a2)) }); }
     // tu/itpatapata.rs
     unsafe { melee_items::tu::itpatapata::ext::hook::it_8026B684 = Some(|a0| unsafe { cast::<_, _, 1098800>(melee_items::tu::it_26B1::it_8026B684(cast::<_, _, 1098801>(a0))) }); }
     // tu/itpatapata.rs
@@ -23228,7 +23228,7 @@ fn install_melee_items() {
     // tu/itsword.rs
     unsafe { melee_items::tu::itsword::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1161801>(a0), cast::<_, _, 1161802>(a1), cast::<_, _, 1161803>(a2)) }); }
     // tu/itsword.rs
-    unsafe { melee_items::tu::itsword::ext::hook::ftLib_IsSwordSwing = Some(|a0| unsafe { cast::<_, _, 1161900>(melee_fighter::ftlib::ftlib_is_sword_swing(cast::<_, _, 1161901>(a0))) }); }
+    unsafe { melee_items::tu::itsword::ext::hook::ftLib_IsSwordSwing = Some(|a0| unsafe { cast::<_, _, 1161900>(melee_fighter::ftlib::ftlib_isswordswing(cast::<_, _, 1161901>(a0))) }); }
     // tu/itsword.rs
     unsafe { melee_items::tu::itsword::ext::hook::itColl_BounceOffShield = Some(|a0| unsafe { cast::<_, _, 1162000>(melee_items::tu::it_2725::itColl_BounceOffShield(cast::<_, _, 1162001>(a0))) }); }
     // tu/itsword.rs
@@ -23526,7 +23526,7 @@ fn install_melee_items() {
     // tu/ittools.rs
     unsafe { melee_items::tu::ittools::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1177001>(a0), cast::<_, _, 1177002>(a1), cast::<_, _, 1177003>(a2)) }); }
     // tu/ittools.rs
-    unsafe { melee_items::tu::ittools::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_camera_bone_pos(cast::<_, _, 1177101>(a0), cast::<_, _, 1177102>(a1)) }); }
+    unsafe { melee_items::tu::ittools::ext::hook::ftLib_GetCameraBonePos = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getcamerabonepos(cast::<_, _, 1177101>(a0), cast::<_, _, 1177102>(a1)) }); }
     // tu/ittools.rs
     unsafe { melee_items::tu::ittools::ext::hook::ftLib_IsFighter = Some(|a0| unsafe { cast::<_, _, 1177200>(melee_items::tu::ftlib::ftLib_IsFighter(cast::<_, _, 1177201>(a0))) }); }
     // tu/ittools.rs
@@ -24046,11 +24046,11 @@ fn install_melee_items() {
     // tu/itzako.rs
     unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetFacingDir = Some(|a0| unsafe { cast::<_, _, 1203000>(melee_items::tu::ftlib::ftLib_GetFacingDir(cast::<_, _, 1203001>(a0))) }); }
     // tu/itzako.rs
-    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetSubColor = Some(|a0, a1| unsafe { cast::<_, _, 1203100>(melee_fighter::ftlib::ftlib_get_sub_color(cast::<_, _, 1203101>(a0), cast::<_, _, 1203102>(a1))) }); }
+    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetSubColor = Some(|a0, a1| unsafe { cast::<_, _, 1203100>(melee_fighter::ftlib::ftlib_getsubcolor(cast::<_, _, 1203101>(a0), cast::<_, _, 1203102>(a1))) }); }
     // tu/itzako.rs
-    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetGameWatchColor = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_game_watch_color(cast::<_, _, 1203201>(a0), cast::<_, _, 1203202>(a1)) }); }
+    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetGameWatchColor = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getgamewatchcolor(cast::<_, _, 1203201>(a0), cast::<_, _, 1203202>(a1)) }); }
     // tu/itzako.rs
-    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetGameWatchOutlineColor = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_get_game_watch_outline_color(cast::<_, _, 1203301>(a0), cast::<_, _, 1203302>(a1)) }); }
+    unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetGameWatchOutlineColor = Some(|a0, a1| unsafe { melee_fighter::ftlib::ftlib_getgamewatchoutlinecolor(cast::<_, _, 1203301>(a0), cast::<_, _, 1203302>(a1)) }); }
     // tu/itzako.rs
     unsafe { melee_items::tu::itzako::ext::hook::ftLib_GetMotionId = Some(|a0| unsafe { cast::<_, _, 1203400>(melee_items::tu::ftlib::ftLib_GetMotionId(cast::<_, _, 1203401>(a0))) }); }
     // tu/itzako.rs
@@ -27330,7 +27330,7 @@ fn install_melee_modes() {
     // tu/gmevent.rs
     unsafe { melee_modes::tu::gmevent::ext::hook::ftLib_IsSleeping_8008731C = Some(|a0| unsafe { cast::<_, _, 1364700>(melee_world::ftlib::ftLib_IsSleeping_8008731C(cast::<_, _, 1364701>(a0))) }); }
     // tu/gmevent.rs
-    unsafe { melee_modes::tu::gmevent::ext::hook::ftLib_LoadFighterCostume = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_load_fighter_costume(cast::<_, _, 1364801>(a0), cast::<_, _, 1364802>(a1)) }); }
+    unsafe { melee_modes::tu::gmevent::ext::hook::ftLib_LoadFighterCostume = Some(|a0, a1| unsafe { melee_fighter::tu::ftlib::ftlib_loadfightercostume(cast::<_, _, 1364801>(a0), cast::<_, _, 1364802>(a1)) }); }
     // tu/gmevent.rs: link_alias.tsv
     unsafe { melee_modes::tu::gmevent::ext::hook::ftLib_GetKind = Some(|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }); }
     // tu/gmevent.rs
@@ -28774,7 +28774,7 @@ fn install_melee_modes() {
     // tu/gmvs.rs
     unsafe { melee_modes::tu::gmvs::ext::hook::ftCo_800C06C0 = Some(|| unsafe { melee_fighter::tu::ftdevice::ftco_800c06c0() }); }
     // tu/gmvs.rs
-    unsafe { melee_modes::tu::gmvs::ext::hook::ftLib_EnableAllInput = Some(|| unsafe { melee_fighter::ftlib::ftlib_enable_all_input() }); }
+    unsafe { melee_modes::tu::gmvs::ext::hook::ftLib_EnableAllInput = Some(|| unsafe { melee_fighter::ftlib::ftlib_enableallinput() }); }
     // tu/gmvs.rs
     unsafe { melee_modes::tu::gmvs::ext::hook::ftLib_GetPlayerIndex = Some(|a0| unsafe { cast::<_, _, 1436000>(melee_items::tu::ftlib::ftLib_GetPlayerIndex(cast::<_, _, 1436001>(a0))) }); }
     // tu/gmvs.rs
@@ -30291,7 +30291,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("mpFloorGetRight", "melee_chara::tu::ftmasterhandwait10::ext::MPFLOORGETRIGHT", true, true),
     ("Stage_80225194", "melee_chara::tu::ftmasterhandwait10::ext::STAGE_80225194", true, true),
     ("ftBossLib_8015C244", "melee_chara::tu::ftmasterhandwalk::ext::FTBOSSLIB_8015C244", true, true),
-    ("ftLib_GetCameraBonePos", "melee_chara::tu::ftmasterhandwalk::ext::FTLIB_GET_CAMERA_BONE_POS", true, true),
+    ("ftLib_GetCameraBonePos", "melee_chara::tu::ftmasterhandwalk::ext::FTLIB_GETCAMERABONEPOS", true, true),
     ("ftMh_MS_349_80151CA8", "melee_chara::tu::ftmasterhandwalk::ext::FTMH_MS_349_80151CA8", true, true),
     ("ftMh_MS_389_80151018", "melee_chara::tu::ftmasterhandwalk::ext::FTMH_MS_389_80151018", true, true),
     ("mpFloorGetLeft", "melee_chara::tu::ftmasterhandwalk::ext::MPFLOORGETLEFT", true, true),
@@ -33840,7 +33840,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_800C0B20", "melee_fighter::tu::ftcoll::ext::FTCO_800C0B20", true, true),
     ("ftCo_800DEEB8", "melee_fighter::tu::ftcoll::ext::FTCO_800DEEB8", true, false),
     ("ftCo_CalcYScaledKnockback", "melee_fighter::tu::ftcoll::ext::FTCO_CALC_Y_SCALED_KNOCKBACK", true, false),
-    ("ftLib_IsFighter", "melee_fighter::tu::ftcoll::ext::FTLIB_IS_FIGHTER", true, false),
+    ("ftLib_IsFighter", "melee_fighter::tu::ftcoll::ext::FTLIB_ISFIGHTER", true, false),
     ("ft_80084CE4", "melee_fighter::tu::ftcoll::ext::FT_80084CE4", true, true),
     ("ft_80088080", "melee_fighter::tu::ftcoll::ext::FT_80088080", true, true),
     ("ft_80089228", "melee_fighter::tu::ftcoll::ext::FT_80089228", true, false),
@@ -33956,7 +33956,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_IsAlly", "melee_fighter::tu::ftcpuattack::ext::FTCO_IS_ALLY", true, true),
     ("ftCo_IsGrabbing", "melee_fighter::tu::ftcpuattack::ext::FTCO_IS_GRABBING", true, true),
     ("ftKb_MexKirbyLike", "melee_fighter::tu::ftcpuattack::ext::FTKB_MEX_KIRBY_LIKE", true, true),
-    ("ftLib_IsFighter", "melee_fighter::tu::ftcpuattack::ext::FTLIB_IS_FIGHTER", true, true),
+    ("ftLib_IsFighter", "melee_fighter::tu::ftcpuattack::ext::FTLIB_ISFIGHTER", true, true),
     ("HSD_Randf", "melee_fighter::tu::ftcpuattack::ext::HSD_RANDF", true, true),
     ("it_8026B924", "melee_fighter::tu::ftcpuattack::ext::IT_8026B924", true, true),
     ("it_8026B960", "melee_fighter::tu::ftcpuattack::ext::IT_8026B960", true, true),
@@ -34017,9 +34017,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_800B395C", "melee_fighter::tu::ftdrawcommon::ext::FTCO_800B395C", true, true),
     ("ftCo_800C2600", "melee_fighter::tu::ftdrawcommon::ext::FTCO_800C2600", true, true),
     ("ftCo_800C8AF0", "melee_fighter::tu::ftdrawcommon::ext::FTCO_800C8AF0", true, true),
-    ("ftLib_CountFighters", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_COUNT_FIGHTERS", true, true),
-    ("ftLib_UpdateScreenVisibility", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_UPDATE_SCREEN_VISIBILITY", true, true),
-    ("ftLib_GetShakeOffset", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_GET_SHAKE_OFFSET", true, true),
+    ("ftLib_CountFighters", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_COUNTFIGHTERS", true, true),
+    ("ftLib_UpdateScreenVisibility", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_UPDATESCREENVISIBILITY", true, true),
+    ("ftLib_GetShakeOffset", "melee_fighter::tu::ftdrawcommon::ext::FTLIB_GETSHAKEOFFSET", true, true),
     ("ftParts_800750C8", "melee_fighter::tu::ftdrawcommon::ext::FTPARTS_800750C8", true, false),
     ("HSD_CObjGetCurrent", "melee_fighter::tu::ftdrawcommon::ext::HSD_COBJ_GET_CURRENT", true, true),
     ("HSD_CObjGetInvViewingMtxPtr", "melee_fighter::tu::ftdrawcommon::ext::HSD_COBJ_GET_INV_VIEWING_MTX_PTR", true, true),
@@ -43496,7 +43496,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Stage_UnkSetVec3TCam_Offset", "melee_world::tu::grkinokoroute::ext::STAGE_UNKSETVEC3TCAM_OFFSET", true, true),
     ("efSync_Spawn", "melee_world::tu::grkongo::ext::EFSYNC_SPAWN", true, true),
     ("ftCo_8009EC70", "melee_world::tu::grkongo::ext::FTCO_8009EC70", true, true),
-    ("ftLib_StartRumble", "melee_world::tu::grkongo::ext::FTLIB_START_RUMBLE", true, true),
+    ("ftLib_StartRumble", "melee_world::tu::grkongo::ext::FTLIB_STARTRUMBLE", true, true),
     ("grAnime_801C78FC", "melee_world::tu::grkongo::ext::GRANIME_801C78FC", true, true),
     ("grAnime_801C7A04", "melee_world::tu::grkongo::ext::GRANIME_801C7A04", true, true),
     ("grAnime_801C83D0", "melee_world::tu::grkongo::ext::GRANIME_801C83D0", true, true),
@@ -43536,7 +43536,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("mpLib_80057BC0", "melee_world::tu::grkongo::ext::MPLIB_80057BC0", true, true),
     ("mpVtxGetPos", "melee_world::tu::grkongo::ext::MPVTXGETPOS", true, true),
     ("Stage_80225194", "melee_world::tu::grkongo::ext::STAGE_80225194", true, true),
-    ("ftLib_StartRumbleAll", "melee_world::tu::grkraid::ext::FTLIB_START_RUMBLE_ALL", true, true),
+    ("ftLib_StartRumbleAll", "melee_world::tu::grkraid::ext::FTLIB_STARTRUMBLEALL", true, true),
     ("grAnime_801C7FF8", "melee_world::tu::grkraid::ext::GRANIME_801C7FF8", true, true),
     ("grAnime_801C83D0", "melee_world::tu::grkraid::ext::GRANIME_801C83D0", true, true),
     ("Ground_801C0498", "melee_world::tu::grkraid::ext::GROUND_801C0498", true, true),

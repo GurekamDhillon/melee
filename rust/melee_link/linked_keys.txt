@@ -5573,7 +5573,7 @@ tu::ftcoll::ext::FTCO_800C0A28
 tu::ftcoll::ext::FTCO_800C0874
 tu::ftcoll::ext::FTCO_800C08A0
 tu::ftcoll::ext::FTCO_800C0B20
-tu::ftcoll::ext::FTLIB_IS_FIGHTER
+tu::ftcoll::ext::FTLIB_ISFIGHTER
 tu::ftcoll::ext::FTCOMMON_8007F804
 tu::ftcoll::ext::FTCOMMON_8007EBAC
 tu::ftcoll::ext::FTCO_CALC_Y_SCALED_KNOCKBACK
@@ -5634,7 +5634,7 @@ tu::ftcpuattack::ext::MP_CHECK_ALL
 tu::ftcpuattack::ext::IT_8026B960
 tu::ftcpuattack::ext::IT_8026B924
 tu::ftcpuattack::ext::IT_8026C1B4
-tu::ftcpuattack::ext::FTLIB_IS_FIGHTER
+tu::ftcpuattack::ext::FTLIB_ISFIGHTER
 tu::ftcpuattack::ext::LBCOLL_8000ACFC
 tu::ftcpuattack::ext::LBCOLL_80006094
 tu::ftdata::ext::OS_REPORT
@@ -5675,9 +5675,9 @@ tu::ftdemo::ext::FIGHTER_UNK_PROCESS_DEATH
 tu::ftdemo::ext::FIGHTER_800679B0
 tu::ftdemo::ext::HSD_ARCHIVE_GET_PUBLIC_ADDRESS
 tu::ftdemo::ext::FTPART_SET_ROT_Y
-tu::ftdrawcommon::ext::FTLIB_GET_SHAKE_OFFSET
-tu::ftdrawcommon::ext::FTLIB_UPDATE_SCREEN_VISIBILITY
-tu::ftdrawcommon::ext::FTLIB_COUNT_FIGHTERS
+tu::ftdrawcommon::ext::FTLIB_GETSHAKEOFFSET
+tu::ftdrawcommon::ext::FTLIB_UPDATESCREENVISIBILITY
+tu::ftdrawcommon::ext::FTLIB_COUNTFIGHTERS
 tu::ftdrawcommon::ext::HSD_COBJ_GET_CURRENT
 tu::ftdrawcommon::ext::HSD_COBJ_GET_INV_VIEWING_MTX_PTR
 tu::ftdrawcommon::ext::CAMERA_800310B8
@@ -12296,13 +12296,13 @@ tu::grizumi::ext::FTDRAWCOMMON_80081118
 tu::grizumi::ext::FTDRAWCOMMON_80081140
 tu::grkinokoroute::ext::GM_801674C4
 tu::grkongo::ext::FTCO_8009EC70
-tu::grkongo::ext::FTLIB_START_RUMBLE
+tu::grkongo::ext::FTLIB_STARTRUMBLE
 tu::grkongo::ext::IT_8026D324
 tu::grkongo::ext::IT_80286088
 tu::grkongo::ext::IT_802E18B4
 tu::grkongo::ext::IT_802E20D8
 tu::grkongo::ext::IT_802E2330
-tu::grkraid::ext::FTLIB_START_RUMBLE_ALL
+tu::grkraid::ext::FTLIB_STARTRUMBLEALL
 tu::grlast::ext::GM_8016ECE8
 tu::grlib::ext::HSD_JOBJADDANIMALL
 tu::grlib::ext::HSD_JOBJANIMALL
@@ -14334,7 +14334,7 @@ tu::ftmasterhandwait10::ext::FTMH_MS_383_80155484
 tu::ftmasterhandwalk::ext::FTMH_MS_389_80151018
 tu::ftmasterhandwalk::ext::FTMH_MS_349_80151CA8
 tu::ftmasterhandwalk::ext::FTBOSSLIB_8015C244
-tu::ftmasterhandwalk::ext::FTLIB_GET_CAMERA_BONE_POS
+tu::ftmasterhandwalk::ext::FTLIB_GETCAMERABONEPOS
 tu::ftmasterhandwalk::ext::MPFLOORGETLEFT
 tu::ftmewtwo::ext::IT_8026B3F8
 tu::ftmewtwospecialhi::ext::LB_8000B1CC

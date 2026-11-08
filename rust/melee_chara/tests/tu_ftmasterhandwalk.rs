@@ -33,7 +33,7 @@ fn smoke() {
         t::ext::FTMH_MS_389_80151018 = Some(|_| log("389".into()));
         t::ext::FTMH_MS_349_80151CA8 = Some(|_| log("349".into()));
         t::ext::FTBOSSLIB_8015C244 = Some(|_, _| core::ptr::null_mut());
-        t::ext::FTLIB_GET_CAMERA_BONE_POS = Some(|_, out| *out = TARGET_POS);
+        t::ext::FTLIB_GETCAMERABONEPOS = Some(|_, out| *out = TARGET_POS);
         t::ext::MPFLOORGETLEFT = Some(|_, out| (*out).x = -1000.0);
     }
 

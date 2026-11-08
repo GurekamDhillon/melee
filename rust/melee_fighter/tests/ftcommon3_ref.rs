@@ -249,7 +249,7 @@ fn install_hooks() {
             t(b(kb));
             if tr() % 8 == 0 { core::f64::consts::PI as f32 } else { (tr() % 700) as f32 / 100.0 }
         });
-        h::FTLIB_GET_CAMERA_BONE_POS = Some(|g, v| {
+        h::FTLIB_GETCAMERABONEPOS = Some(|g, v| {
             t(0x380 + e(g));
             v.x = 1.5;
             v.y = -((tr() & 15) as f32);
@@ -288,7 +288,7 @@ fn install_hooks() {
             t(l as u32);
             l - ((tr() >> 1) & 1) as i32
         });
-        h::FTLIB_IS_SAME_PLAYER = Some(|a, bb| {
+        h::FTLIB_ISSAMEPLAYER = Some(|a, bb| {
             t(0x3E0 + e(a));
             t(e(bb));
             a == bb || (*((*a).user_data as *const Fighter)).player_id == (*((*bb).user_data as *const Fighter)).player_id

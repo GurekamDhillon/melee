@@ -145,7 +145,7 @@ pub mod ext {
         FTCO_800C0874 ftCo_800C0874(g: G, ground: *mut c_void, kind: u32);
         FTCO_800C08A0 ftCo_800C08A0(g: G, ground: G, desc: *mut DynamicsDesc, kind: u32);
         FTCO_800C0B20 ftCo_800C0B20(g: G);
-        FTLIB_IS_FIGHTER ftLib_IsFighter(g: G) -> bool = crate::ftlib::ftlib_is_fighter(g);
+        FTLIB_ISFIGHTER ftLib_IsFighter(g: G) -> bool = crate::ftlib::ftlib_isfighter(g);
         FTCOMMON_8007F804 ftCommon_8007F804(fp: F) -> MtxPtr = unsafe { crate::ftcommon2::ftcommon_8007f804(&mut *fp) };
         FTCOMMON_8007EBAC ftCommon_8007EBAC(fp: F, a: u32, b: u32) = unsafe { crate::ftcommon2::ftcommon_8007ebac(&mut *fp, a, b) };
         FTCO_CALC_Y_SCALED_KNOCKBACK ftCo_CalcYScaledKnockback(a: f32, scale: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftCo_CalcYScaledKnockback(a, scale, c);
@@ -1304,7 +1304,7 @@ pub fn ftcoll_80078a2c(this_gobj: G) {
         'next: while !vg.is_null() {
             let cur = vg;
             vg = (*vg).next;
-            if crate::hooks::ftlib_is_same_player(this_gobj, cur) {
+            if crate::hooks::ftlib_issameplayer(this_gobj, cur) {
                 continue;
             }
             let v = fpg(cur);
@@ -1552,7 +1552,7 @@ pub fn ftcoll_8007925c(gobj: G) {
             if it.kind as i32 == It_Kind_Unk4 as i32 {
                 continue;
             }
-            if crate::hooks::ftlib_is_same_player(gobj, it.owner) && it.xDCD_flag.anon_0.b5() == 0 {
+            if crate::hooks::ftlib_issameplayer(gobj, it.owner) && it.xDCD_flag.anon_0.b5() == 0 {
                 continue;
             }
             if crate::hooks::gm_8016b168() && !ext::gm_8016B0D4() && it.xDCD_flag.anon_0.b6() == 0 && it.x20_team_id as i32 == (*fp).team as i32 {
@@ -1563,7 +1563,7 @@ pub fn ftcoll_8007925c(gobj: G) {
                 let f = &*fp;
                 let thrown = f.x1064_thrownHitbox.anon_134.owner;
                 if thrown.is_null()
-                    || ((!crate::hooks::ftlib_is_same_player(thrown, it.owner) || it.xDCD_flag.anon_0.b5() != 0)
+                    || ((!crate::hooks::ftlib_issameplayer(thrown, it.owner) || it.xDCD_flag.anon_0.b5() != 0)
                         && (!crate::hooks::gm_8016b168()
                             || ext::gm_8016B0D4()
                             || it.xDCD_flag.anon_0.b6() != 0

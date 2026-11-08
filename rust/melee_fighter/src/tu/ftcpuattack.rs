@@ -79,7 +79,7 @@ pub mod ext {
         IT_8026B960 it_8026B960(g: *mut HSD_GObj) -> f32;
         IT_8026B924 it_8026B924(g: *mut HSD_GObj) -> i32;
         IT_8026C1B4 it_8026C1B4(g: *mut HSD_GObj) -> i32;
-        FTLIB_IS_FIGHTER ftLib_IsFighter(g: *mut HSD_GObj) -> i32;
+        FTLIB_ISFIGHTER ftLib_IsFighter(g: *mut HSD_GObj) -> i32;
         LBCOLL_8000ACFC lbColl_8000ACFC(fp: *mut Fighter, h: *mut HitCapsule) -> i32;
         LBCOLL_80006094 lbColl_80006094(a: *mut Vec3, b: *mut Vec3, c: *mut Vec3, d: *mut Vec3, e: *mut Vec3, f: *mut Vec3, s0: f32, s1: f32) -> i32;
     }

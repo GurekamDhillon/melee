@@ -231,7 +231,7 @@ pub mod ext {
         fn ftCo_800BFD04(g: G) = { unsafe { crate::tu::ftcolanim::ftco_800bfd04(g); } };
         fn ftCo_800C61B0(g: G) = { unsafe { crate::tu::ft_0c31::ftCo_800C61B0(g); } };
         fn ftCommon_8007D92C(g: G) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007d92c(g); } };
-        fn ftLib_DisableInput(g: G) = { unsafe { let _ = crate::ftlib::ftlib_disable_input(g); } };
+        fn ftLib_DisableInput(g: G) = { unsafe { let _ = crate::ftlib::ftlib_disableinput(g); } };
         fn ScriptGame_OnePSpawn(fp: F) = { todo!("ScriptGame_OnePSpawn (pc/gameworld)") };
         fn PcTraceMotionEnabled() -> i32 = { unsafe { crate::platform::PcTraceMotionEnabled() } };
         fn OSReport(s: &str) = { };

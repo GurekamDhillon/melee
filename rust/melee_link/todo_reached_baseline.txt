@@ -228,7 +228,7 @@ ftCommon_8007F5CC melee_chara::tu::ftkoopaspecialn::ext::FTCOMMON_8007F5CC
 ftCommon_8007F804 melee_fighter::tu::ftdrawcommon::ext::FTCOMMON_8007F804
 ftCommon_8007F804 melee_items::tu::itcoll::ext::hook::ftCommon_8007F804
 ftCommon_UnlockECB melee_modes::tu/script_game.rs
-ftLib_GetCameraBonePos melee_chara::tu::ftmasterhandwalk::ext::FTLIB_GET_CAMERA_BONE_POS
+ftLib_GetCameraBonePos melee_chara::tu::ftmasterhandwalk::ext::FTLIB_GETCAMERABONEPOS
 ftLib_GetCameraBonePos melee_items::tu::it_26B1::ext::hook::ftLib_GetCameraBonePos
 ftLib_GetCameraBonePos melee_items::tu::itflipper::ext::hook::ftLib_GetCameraBonePos
 ftLib_GetCameraBonePos melee_items::tu::ithassam::ext::hook::ftLib_GetCameraBonePos
@@ -237,13 +237,13 @@ ftLib_GetCameraBonePos melee_items::tu::itoctarockstone::ext::hook::ftLib_GetCam
 ftLib_GetCameraBonePos melee_items::tu::ittools::ext::hook::ftLib_GetCameraBonePos
 ftLib_IsItemVisible melee_items::tu::itdraw::ext::hook::ftLib_IsItemVisible
 ftLib_GetECBCenter melee_items::tu::it_26B1::ext::hook::ftLib_GetECBCenter
-ftLib_UpdateScreenVisibility melee_fighter::tu::ftdrawcommon::ext::FTLIB_UPDATE_SCREEN_VISIBILITY
+ftLib_UpdateScreenVisibility melee_fighter::tu::ftdrawcommon::ext::FTLIB_UPDATESCREENVISIBILITY
 ftLib_CanBeMagnified melee_world::tu::ifmagnify::ext::hook::ftLib_CanBeMagnified
 ftLib_IsSamePlayer melee_items::tu::itcoll::ext::hook::ftLib_IsSamePlayer
 ftLib_IsSamePlayer melee_items::tu::ithassam::ext::hook::ftLib_IsSamePlayer
 ftLib_IncFighterRefCount melee_items::tu::item::ext::hook::ftLib_IncFighterRefCount
 ftLib_DecFighterRefCount melee_items::tu::item::ext::hook::ftLib_DecFighterRefCount
-ftLib_GetShakeOffset melee_fighter::tu::ftdrawcommon::ext::FTLIB_GET_SHAKE_OFFSET
+ftLib_GetShakeOffset melee_fighter::tu::ftdrawcommon::ext::FTLIB_GETSHAKEOFFSET
 ftLib_GetShakeOffset melee_items::tu::itdraw::ext::hook::ftLib_GetShakeOffset
 ftLib_CastsShadow melee_runtime::tu::lbshadow::ext::hook::ftLib_CastsShadow
 ftLib_GetKind melee_items::tu::item::ext::hook::ftLib_GetKind

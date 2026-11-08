@@ -43,7 +43,7 @@ pub mod ext {
     fn ft_800879D8(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_800879d8(a0 as _) };
     fn ft_800879F8(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_800879f8(a0 as _) };
     fn ft_800898C0(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0892::ft_800898c0(a0 as _) };
-    fn ftLib_IsDead(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_dead(a0 as _) };
+    fn ftLib_IsDead(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isdead(a0 as _) };
     fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::get_motion_id(a0 as _) };
     fn gmDecisionGetType(a0: i32) -> u32;
     fn gm_8016AEEC() -> u32;

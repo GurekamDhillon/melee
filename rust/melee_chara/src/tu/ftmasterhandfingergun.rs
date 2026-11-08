@@ -32,10 +32,10 @@ pub mod ext {
         }
     }
     fn ftLib_GetPercent_port(gobj: *mut HSD_GObj) -> i32 {
-        melee_fighter::ftlib::ftlib_get_percent(gobj)
+        melee_fighter::ftlib::ftlib_getpercent(gobj)
     }
     // Falls back to melee_fighter's port.
-    crate::mh_hook_or!(FTLIB_GET_PERCENT, ftLib_GetPercent, ftLib_GetPercent_port, (gobj: *mut HSD_GObj) -> i32);
+    crate::mh_hook_or!(FTLIB_GETPERCENT, ftLib_GetPercent, ftLib_GetPercent_port, (gobj: *mut HSD_GObj) -> i32);
 }
 
 /// `my_lbVector_Len` (static inline).

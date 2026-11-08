@@ -31,15 +31,15 @@ pub mod ext {
     crate::port_hook!(CAMERA_8002E948, Camera_8002E948, crate::adapt::Camera_8002E948, (cb: unsafe extern "C" fn(*mut Vec3) -> bool));
     crate::port_hook!(CAMERA_SETMODETOSTANDARD, Camera_SetModeToStandard, crate::adapt::Camera_SetModeToStandard, ());
     fn ftLib_FindNearestOpponent_port(pos: *mut Vec3, gobj: *mut HSD_GObj) -> *mut HSD_GObj {
-        melee_fighter::ftlib::ftlib_find_nearest_opponent(unsafe { &*pos }, gobj)
+        melee_fighter::ftlib::ftlib_findnearestopponent(unsafe { &*pos }, gobj)
     }
     fn ftLib_GetPlayerIndex_port(gobj: *mut HSD_GObj) -> u8 {
-        melee_fighter::ftlib::ftlib_get_player_index(gobj)
+        melee_fighter::ftlib::ftlib_getplayerindex(gobj)
     }
     // Falls back to melee_fighter's port.
-    crate::mh_hook_or!(FTLIB_FIND_NEAREST_OPPONENT, ftLib_FindNearestOpponent, ftLib_FindNearestOpponent_port, (pos: *mut Vec3, gobj: *mut HSD_GObj) -> *mut HSD_GObj);
+    crate::mh_hook_or!(FTLIB_FINDNEARESTOPPONENT, ftLib_FindNearestOpponent, ftLib_FindNearestOpponent_port, (pos: *mut Vec3, gobj: *mut HSD_GObj) -> *mut HSD_GObj);
     // Falls back to melee_fighter's port.
-    crate::mh_hook_or!(FTLIB_GET_PLAYER_INDEX, ftLib_GetPlayerIndex, ftLib_GetPlayerIndex_port, (gobj: *mut HSD_GObj) -> u8);
+    crate::mh_hook_or!(FTLIB_GETPLAYERINDEX, ftLib_GetPlayerIndex, ftLib_GetPlayerIndex_port, (gobj: *mut HSD_GObj) -> u8);
     // Falls back to melee_fighter's port.
     crate::mh_hook_or!(FTBOSSLIB_8015C09C, ftBossLib_8015C09C, melee_fighter::tu::ftbosslib::ftBossLib_8015C09C, (gobj: *mut HSD_GObj, facing_dir: f32));
 }

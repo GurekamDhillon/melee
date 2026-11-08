@@ -422,119 +422,119 @@ fn ftlib_matches_c() {
             let gi: G = if q2 & 1 != 0 { &mut w.it[(q3 % 3) as usize] } else { g2 };
             let bu = |x: bool| x as u32;
             match op {
-                0 => r = l::ftlib_count_fighters() as u32,
+                0 => r = l::ftlib_countfighters() as u32,
                 1 => r = bu(l::is_master_hand_present()),
                 2 => r = bu(l::is_crazy_hand_present()),
-                3 => r = e(l::ftlib_find_lowest_percent_opponent(gn)),
-                4 => r = e(l::ftlib_find_nearest_opponent(&wv, gn)),
-                5 => r = e(l::ftlib_find_nearest_opponent_in_dir(&wv, gn, if q2 & 1 != 0 { -1.0 } else if q2 & 2 != 0 { 1.0 } else { a })),
-                6 => r = b(l::ftlib_get_opponents_dir(&wv, gn)),
-                7 => r = b(l::ftlib_get_facing_dir(g)),
-                8 => r = l::ftlib_get_ground_air(g) as u32,
+                3 => r = e(l::ftlib_findlowestpercentopponent(gn)),
+                4 => r = e(l::ftlib_findnearestopponent(&wv, gn)),
+                5 => r = e(l::ftlib_findnearestopponentindir(&wv, gn, if q2 & 1 != 0 { -1.0 } else if q2 & 2 != 0 { 1.0 } else { a })),
+                6 => r = b(l::ftlib_getopponentsdir(&wv, gn)),
+                7 => r = b(l::ftlib_getfacingdir(g)),
+                8 => r = l::ftlib_getgroundair(g) as u32,
                 9 => {
                     let (mut x, mut y) = (0.0, 0.0);
-                    l::ftlib_get_l_stick(g, &mut x, &mut y);
+                    l::ftlib_getlstick(g, &mut x, &mut y);
                     o1 = b(x);
                     o2 = b(y);
                 }
-                10 => r = e(l::ftlib_get_hip_j_obj(g)),
-                11 => r = e(l::ftlib_get_part_j_obj(g, (q1 % 8) as i32)),
-                12 => l::ftlib_get_pos(g, &mut v),
-                13 => l::ftlib_set_pos(g, &wv),
-                14 => l::ftlib_get_prev_pos(g, &mut v),
+                10 => r = e(l::ftlib_gethipjobj(g)),
+                11 => r = e(l::ftlib_getpartjobj(g, (q1 % 8) as i32)),
+                12 => l::ftlib_getpos(g, &mut v),
+                13 => l::ftlib_setpos(g, &wv),
+                14 => l::ftlib_getprevpos(g, &mut v),
                 15 => l::set_scale(g, a),
-                16 => l::ftlib_get_camera_bone_pos(g, &mut v),
-                17 => l::ftlib_release_item(g, g2),
-                18 => l::ftlib_clear_held_special_item(g),
+                16 => l::ftlib_getcamerabonepos(g, &mut v),
+                17 => l::ftlib_releaseitem(g, g2),
+                18 => l::ftlib_clearheldspecialitem(g),
                 19 => r = e(l::get_item(g)),
-                20 => r = bu(l::ftlib_is_holding_item(g, gi)),
-                21 => r = e(l::ftlib_get_held_special_item(g)),
-                22 => r = bu(l::ftlib_is_input_disabled(g)),
-                23 => l::ftlib_disable_input(g),
-                24 => l::ftlib_disable_all_input(),
-                25 => l::ftlib_enable_input(g),
-                26 => l::ftlib_enable_all_input(),
-                27 => r = bu(l::ftlib_is_item_visible(g, gi)),
-                28 => r = bu(l::ftlib_is_fighter(g2)),
-                29 => r = e(l::ftlib_get_coll_data(g)),
-                30 => l::ftlib_get_ecb_center(g, &mut v),
-                31 => r = b(l::ftlib_get_model_scale(g)),
+                20 => r = bu(l::ftlib_isholdingitem(g, gi)),
+                21 => r = e(l::ftlib_getheldspecialitem(g)),
+                22 => r = bu(l::ftlib_isinputdisabled(g)),
+                23 => l::ftlib_disableinput(g),
+                24 => l::ftlib_disableallinput(),
+                25 => l::ftlib_enableinput(g),
+                26 => l::ftlib_enableallinput(),
+                27 => r = bu(l::ftlib_isitemvisible(g, gi)),
+                28 => r = bu(l::ftlib_isfighter(g2)),
+                29 => r = e(l::ftlib_getcolldata(g)),
+                30 => l::ftlib_getecbcenter(g, &mut v),
+                31 => r = b(l::ftlib_getmodelscale(g)),
                 32 => r = b(l::ftlib_800869f8(g)),
-                33 => r = b(l::ftlib_get_scale(g)),
-                34 => r = bu(l::ftlib_is_shielding(g)),
+                33 => r = b(l::ftlib_getscale(g)),
+                34 => r = bu(l::ftlib_isshielding(g)),
                 35 => l::ftlib_80086a4c(g, a),
-                36 => r = bu(l::ftlib_get_screen_pos(g, &mut sv)),
-                37 => r = bu(l::ftlib_update_screen_visibility(g)),
+                36 => r = bu(l::ftlib_getscreenpos(g, &mut sv)),
+                37 => r = bu(l::ftlib_updatescreenvisibility(g)),
                 38 => l::update_logic_off_camera(g),
-                39 => r = bu(l::ftlib_is_offscreen(g)),
-                40 => r = e(l::ftlib_get_camera_subject(g)),
+                39 => r = bu(l::ftlib_isoffscreen(g)),
+                40 => r = e(l::ftlib_getcamerasubject(g)),
                 41 => r = b(l::ftlib_80086b80(g)),
-                42 => l::ftlib_get_camera_subject_bone_pos(g, &mut v),
-                43 => r = bu(l::ftlib_is_camera_subject_in_bounds(g)),
-                44 => r = l::ftlib_get_player_index(g) as u32,
-                45 => l::ftlib_get_pos_delta(g, &mut v),
+                42 => l::ftlib_getcamerasubjectbonepos(g, &mut v),
+                43 => r = bu(l::ftlib_iscamerasubjectinbounds(g)),
+                44 => r = l::ftlib_getplayerindex(g) as u32,
+                45 => l::ftlib_getposdelta(g, &mut v),
                 46 => r = l::get_motion_id(g) as u32,
-                47 => l::ftlib_start_rumble(g, ia, ib),
-                48 => l::ftlib_start_rumble_all(ia, ib),
-                49 => l::ftlib_start_item_rumble(g, ia, ib),
-                50 => l::ftlib_start_item_rumble_all(ia, ib),
-                51 => l::ftlib_stop_item_rumble(g),
-                52 => r = l::ftlib_get_team(g) as u32,
-                53 => r = bu(l::ftlib_is_in_hitstun(g)),
-                54 => r = bu(l::ftlib_can_be_magnified(g)),
+                47 => l::ftlib_startrumble(g, ia, ib),
+                48 => l::ftlib_startrumbleall(ia, ib),
+                49 => l::ftlib_startitemrumble(g, ia, ib),
+                50 => l::ftlib_startitemrumbleall(ia, ib),
+                51 => l::ftlib_stopitemrumble(g),
+                52 => r = l::ftlib_getteam(g) as u32,
+                53 => r = bu(l::ftlib_isinhitstun(g)),
+                54 => r = bu(l::ftlib_canbemagnified(g)),
                 55 => r = bu(l::ftlib_80086f4c(g)),
-                56 => r = b(l::ftlib_get_name_tag_height(g)),
-                57 => r = bu(l::ftlib_is_sword_swing(g)),
+                56 => r = b(l::ftlib_getnametagheight(g)),
+                57 => r = bu(l::ftlib_isswordswing(g)),
                 58 => {
                     let o: G = if q2 & 3 != 0 { &mut w.go[(q3 % NF as u32) as usize] } else { core::ptr::null_mut() };
-                    r = bu(l::ftlib_is_same_player(gn, o))
+                    r = bu(l::ftlib_issameplayer(gn, o))
                 }
-                59 => r = bu(l::ftlib_is_sleeping(g)),
-                60 => l::ftlib_inc_fighter_ref_count(ia),
-                61 => l::ftlib_dec_fighter_ref_count(ia),
-                62 => r = bu(l::ftlib_get_shake_offset(g, &mut v)),
+                59 => r = bu(l::ftlib_issleeping(g)),
+                60 => l::ftlib_incfighterrefcount(ia),
+                61 => l::ftlib_decfighterrefcount(ia),
+                62 => r = bu(l::ftlib_getshakeoffset(g, &mut v)),
                 63 => {
                     let mut val = 0x55;
-                    r = bu(l::ftlib_get_sub_color(g, &mut val));
+                    r = bu(l::ftlib_getsubcolor(g, &mut val));
                     o1 = val as u32;
                 }
-                64 => l::ftlib_set_percent(g, ia * 37),
-                65 => r = l::ftlib_get_percent(g) as u32,
+                64 => l::ftlib_setpercent(g, ia * 37),
+                65 => r = l::ftlib_getpercent(g) as u32,
                 66 => l::ftlib_80087140(g),
                 67 => r = bu(l::ftlib_80087284(g)),
                 68 => r = l::get_kind(g),
-                69 => r = e(l::ftlib_get_shadow(g)),
-                70 => r = bu(l::ftlib_casts_shadow(g)),
-                71 => r = l::ftlib_get_last_attacker_slot(g) as u32,
-                72 => r = l::ftlib_is_last_attacker_sub_fighter(g) as u32,
-                73 => r = l::ftlib_is_sleeping_8008731_c(g) as u32,
+                69 => r = e(l::ftlib_getshadow(g)),
+                70 => r = bu(l::ftlib_castsshadow(g)),
+                71 => r = l::ftlib_getlastattackerslot(g) as u32,
+                72 => r = l::ftlib_islastattackersubfighter(g) as u32,
+                73 => r = l::ftlib_issleeping_8008731c(g) as u32,
                 74 | 75 => {
                     if op == 75 {
                         w.f[(q1 % NF as u32) as usize].motion_id = (q2 % 14) as i32;
                     }
-                    r = bu(l::ftlib_is_dead(g))
-                        | bu(l::ftlib_is_dead_up(g)) << 1
-                        | bu(l::ftlib_is_dead_up_star(g)) << 2
-                        | bu(l::ftlib_is_dead_up_fall(g)) << 3
-                        | bu(l::ftlib_is_rebirth(g)) << 4;
+                    r = bu(l::ftlib_isdead(g))
+                        | bu(l::ftlib_isdeadup(g)) << 1
+                        | bu(l::ftlib_isdeadupstar(g)) << 2
+                        | bu(l::ftlib_isdeadupfall(g)) << 3
+                        | bu(l::ftlib_isrebirth(g)) << 4;
                     if op == 74 {
-                        r |= bu(l::ftlib_is_entry(g)) << 5;
+                        r |= bu(l::ftlib_isentry(g)) << 5;
                     }
                 }
-                76 => r = e(l::ftlib_find_by_spawn_num(q1 % 9)),
-                77 => r = b(l::ftlib_get_crowd_knockback(g)),
-                78 => r = l::ftlib_get_spawn_num(g),
+                76 => r = e(l::ftlib_findbyspawnnum(q1 % 9)),
+                77 => r = b(l::ftlib_getcrowdknockback(g)),
+                78 => r = l::ftlib_getspawnnum(g),
                 79 => r = l::ftlib_8008746c(g) as u32,
-                80 => r = l::ftlib_is_sub_fighter(g) as u32,
+                80 => r = l::ftlib_issubfighter(g) as u32,
                 81 => l::ftlib_800874cc(g, core::ptr::null_mut(), ib),
-                82 => l::ftlib_is_frames_remaining(g),
-                83 => r = bu(l::ftlib_is_charging_smash(g)),
-                84 => r = (l::ftlib_get_last_hit_source_type(g) as u32) ^ (l::ftlib_get_last_hit_source_kind(g) as u32),
+                82 => l::ftlib_isframesremaining(g),
+                83 => r = bu(l::ftlib_ischargingsmash(g)),
+                84 => r = (l::ftlib_getlasthitsourcetype(g) as u32) ^ (l::ftlib_getlasthitsourcekind(g) as u32),
                 85 => {
-                    l::ftlib_get_game_watch_color(g, core::ptr::null_mut());
-                    l::ftlib_get_game_watch_outline_color(g, core::ptr::null_mut());
+                    l::ftlib_getgamewatchcolor(g, core::ptr::null_mut());
+                    l::ftlib_getgamewatchoutlinecolor(g, core::ptr::null_mut());
                 }
-                86 => r = bu(l::ftlib_is_being_nudged(g)),
+                86 => r = bu(l::ftlib_isbeingnudged(g)),
                 _ => unreachable!(),
             }
             for i in 0..NF {

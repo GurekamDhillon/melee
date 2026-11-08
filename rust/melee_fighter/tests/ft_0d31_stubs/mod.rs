@@ -49,8 +49,8 @@ pub fn install() {
         m::ext::hook::ftCommon_8007F9B4 = Some(|a0| { t(1039); t(pi(a0)); });
         m::ext::hook::ftCommon_8007FF74 = Some(|a0| { t(1040); t(pi(a0)); });
         m::ext::hook::ftCommon_Fall = Some(|a0, a1, a2| { t(1041); t(pi(a0)); t(a1.to_bits()); t(a2.to_bits()); });
-        h::FTLIB_GET_PLAYER_INDEX = Some(|a0| { t(1042); t(pi(a0)); fv() as _ });
-        h::FTLIB_IS_SUB_FIGHTER = Some(|a0| { t(1043); t(pi(a0)); fv() as _ });
+        h::FTLIB_GETPLAYERINDEX = Some(|a0| { t(1042); t(pi(a0)); fv() as _ });
+        h::FTLIB_ISSUBFIGHTER = Some(|a0| { t(1043); t(pi(a0)); fv() as _ });
         m::ext::hook::ftParts_GetBoneIndex = Some(|a0, a1| { t(1044); t(pi(a0)); t(a1 as u32); fv() as _ });
         m::ext::hook::ft_8008805C = Some(|a0, a1| { t(1045); t(pi(a0)); t(a1 as u32); });
         m::ext::hook::ft_800880D8 = Some(|a0| { t(1046); t(pi(a0)); });

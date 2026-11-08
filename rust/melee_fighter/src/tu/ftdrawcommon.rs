@@ -36,9 +36,9 @@ pub mod ext {
     stubs! {
         WB_RENDER_ACTIVE Wb_RenderActive() -> i32;
         WB_RENDER_OPTION Wb_RenderOption(opt: i32, fallback: i32) -> i32;
-        FTLIB_GET_SHAKE_OFFSET ftLib_GetShakeOffset(g: G, out: *mut Vec3) -> i32;
-        FTLIB_UPDATE_SCREEN_VISIBILITY ftLib_UpdateScreenVisibility(g: G) -> i32;
-        FTLIB_COUNT_FIGHTERS ftLib_CountFighters() -> i32;
+        FTLIB_GETSHAKEOFFSET ftLib_GetShakeOffset(g: G, out: *mut Vec3) -> i32;
+        FTLIB_UPDATESCREENVISIBILITY ftLib_UpdateScreenVisibility(g: G) -> i32;
+        FTLIB_COUNTFIGHTERS ftLib_CountFighters() -> i32;
         HSD_COBJ_GET_CURRENT HSD_CObjGetCurrent() -> *mut HSD_CObj;
         HSD_COBJ_GET_INV_VIEWING_MTX_PTR HSD_CObjGetInvViewingMtxPtr(c: *mut HSD_CObj) -> *mut [f32; 4];
         CAMERA_800310B8 Camera_800310B8() -> *mut HSD_CObj;

@@ -139,7 +139,7 @@ pub fn ftdemo_create_fighter(a: &plAllocInfo2) -> G {
     if a.unk8 as i32 != 3 {
         ext::on_create_fighter(a.unk8 as i32, g);
     }
-    crate::ftlib::ftlib_disable_input(g);
+    crate::ftlib::ftlib_disableinput(g);
     g
 }
 

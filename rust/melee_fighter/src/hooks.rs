@@ -230,22 +230,22 @@ ported_hooks! {
     FTPARTS_GET_BONE_INDEX ftparts_get_bone_index(fp: &Fighter, i: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
     FT_800889F4 ft_800889f4(fp: &mut Fighter, sfx: *const FtSFXArr) = crate::ft0881::ft_800889f4;
     FT_80084DB0 ft_80084db0(g: G) = crate::ft084e::ft_80084db0;
-    FTLIB_DISABLE_INPUT ftlib_disable_input(g: G) = crate::ftlib::ftlib_disable_input;
-    FTLIB_ENABLE_INPUT ftlib_enable_input(g: G) = crate::ftlib::ftlib_enable_input;
-    FTLIB_IS_SLEEPING ftlib_is_sleeping(g: G) -> bool = crate::ftlib::ftlib_is_sleeping;
-    FTLIB_IS_REBIRTH ftlib_is_rebirth(g: G) -> bool = crate::ftlib::ftlib_is_rebirth;
+    FTLIB_DISABLEINPUT ftlib_disableinput(g: G) = crate::ftlib::ftlib_disableinput;
+    FTLIB_ENABLEINPUT ftlib_enableinput(g: G) = crate::ftlib::ftlib_enableinput;
+    FTLIB_ISSLEEPING ftlib_issleeping(g: G) -> bool = crate::ftlib::ftlib_issleeping;
+    FTLIB_ISREBIRTH ftlib_isrebirth(g: G) -> bool = crate::ftlib::ftlib_isrebirth;
     FTLIB_80087140 ftlib_80087140(g: G) = crate::ftlib::ftlib_80087140;
-    FTLIB_SET_POS ftlib_set_pos(g: G, v: &Vec3) = crate::ftlib::ftlib_set_pos;
+    FTLIB_SETPOS ftlib_setpos(g: G, v: &Vec3) = crate::ftlib::ftlib_setpos;
     FTLIB_800869F8 ftlib_800869f8(g: G) -> f32 = crate::ftlib::ftlib_800869f8;
     FTLIB_SET_SCALE ftlib_set_scale(g: G, s: f32) = crate::ftlib::set_scale;
-    FTLIB_SET_PERCENT ftlib_set_percent(g: G, v: i32) = crate::ftlib::ftlib_set_percent;
+    FTLIB_SETPERCENT ftlib_setpercent(g: G, v: i32) = crate::ftlib::ftlib_setpercent;
     FTLIB_80086F4C ftlib_80086f4c(g: G) -> bool = crate::ftlib::ftlib_80086f4c;
-    FTLIB_GET_NAME_TAG_HEIGHT ftlib_get_name_tag_height(g: G) -> f32 = crate::ftlib::ftlib_get_name_tag_height;
+    FTLIB_GETNAMETAGHEIGHT ftlib_getnametagheight(g: G) -> f32 = crate::ftlib::ftlib_getnametagheight;
     FTLIB_GET_KIND ftlib_get_kind(g: G) -> FighterKind = crate::ftlib::get_kind;
-    FTLIB_GET_LAST_ATTACKER_SLOT ftlib_get_last_attacker_slot(g: G) -> i32 = crate::ftlib::ftlib_get_last_attacker_slot;
+    FTLIB_GETLASTATTACKERSLOT ftlib_getlastattackerslot(g: G) -> i32 = crate::ftlib::ftlib_getlastattackerslot;
     FTLIB_80086A4C ftlib_80086a4c(g: G, v: f32) = crate::ftlib::ftlib_80086a4c;
-    FTLIB_IS_CAMERA_SUBJECT_IN_BOUNDS ftlib_is_camera_subject_in_bounds(g: G) -> bool = crate::ftlib::ftlib_is_camera_subject_in_bounds;
-    FTLIB_GET_CAMERA_SUBJECT_BONE_POS ftlib_get_camera_subject_bone_pos(g: G, v: &mut Vec3) = crate::ftlib::ftlib_get_camera_subject_bone_pos;
+    FTLIB_ISCAMERASUBJECTINBOUNDS ftlib_iscamerasubjectinbounds(g: G) -> bool = crate::ftlib::ftlib_iscamerasubjectinbounds;
+    FTLIB_GETCAMERASUBJECTBONEPOS ftlib_getcamerasubjectbonepos(g: G, v: &mut Vec3) = crate::ftlib::ftlib_getcamerasubjectbonepos;
     PLAYER_GET_MORE_FLAGS_BIT4 player_get_more_flags_bit4(slot: i32) -> u8 = crate::player::get_more_flags_bit4;
     CAMERA_LOGIC_TO_SCREEN camera_logic_to_screen(s: *mut CmSubject, out: &mut S32Vec2) -> bool = crate::bridge::camera_logic_to_screen;
 }
@@ -375,8 +375,8 @@ ported_hooks! {
     FTCOMMON_8007E82C ftcommon_8007e82c(g: G) = crate::ftcommon3::ftcommon_8007e82c;
     FTCOMMON_8007D92C ftcommon_8007d92c(g: G) = crate::ftcommon3::ftcommon_8007d92c;
     FT_GET_PARASOL_STATUS ft_get_parasol_status(g: G) -> i32 = crate::ftcommon3::ft_get_parasol_status;
-    FTLIB_IS_SAME_PLAYER ftlib_is_same_player(a: G, b: G) -> bool = crate::ftlib::ftlib_is_same_player;
-    FTLIB_GET_CAMERA_BONE_POS ftlib_get_camera_bone_pos(g: G, v: &mut Vec3) = crate::ftlib::ftlib_get_camera_bone_pos;
+    FTLIB_ISSAMEPLAYER ftlib_issameplayer(a: G, b: G) -> bool = crate::ftlib::ftlib_issameplayer;
+    FTLIB_GETCAMERABONEPOS ftlib_getcamerabonepos(g: G, v: &mut Vec3) = crate::ftlib::ftlib_getcamerabonepos;
     PLAYER_GET_ENTITY player_get_entity(slot: i32) -> G = crate::player::get_entity;
     PLAYER_GET_UNK98 player_get_unk98(slot: i32) -> i32 = crate::player::get_unk98;
     PLAYER_SET_UNK98 player_set_unk98(slot: i32, v: i32) = crate::player::set_unk98;
@@ -512,9 +512,9 @@ ported_hooks! {
     IT_8026B960 it_8026b960(i: I) -> f32 = it10::it_8026b960;
     IT_8026B7CC it_8026b7cc(i: I) -> i32 = it10::it_8026b7cc;
     IT_GET_OWNER it_get_owner(i: I) -> G = it10::it_get_owner;
-    FTLIB_IS_FIGHTER ftlib_is_fighter(g: G) -> bool = crate::ftlib::ftlib_is_fighter;
-    FTLIB_GET_PLAYER_INDEX ftlib_get_player_index(g: G) -> u8 = crate::ftlib::ftlib_get_player_index;
-    FTLIB_IS_SUB_FIGHTER ftlib_is_sub_fighter(g: G) -> i32 = crate::ftlib::ftlib_is_sub_fighter;
+    FTLIB_ISFIGHTER ftlib_isfighter(g: G) -> bool = crate::ftlib::ftlib_isfighter;
+    FTLIB_GETPLAYERINDEX ftlib_getplayerindex(g: G) -> u8 = crate::ftlib::ftlib_getplayerindex;
+    FTLIB_ISSUBFIGHTER ftlib_issubfighter(g: G) -> i32 = crate::ftlib::ftlib_issubfighter;
     FT_800898A8 ft_800898a8(g: G) -> *mut crate::types::Struct2074 = crate::ft0892::ft_800898a8;
 }
 needed_hooks! {

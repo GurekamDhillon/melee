@@ -45,9 +45,9 @@ pub mod ext {
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
         ftColl_800787B4(i: I, g: G, v: i32) = |i: I, g: G, v: i32| { unsafe { crate::tu::ftcoll::ftcoll_800787b4(i as _, g as _, v as _); } };
-        ftLib_IsFighter(g: G) -> bool = crate::ftlib::ftlib_is_fighter;
+        ftLib_IsFighter(g: G) -> bool = crate::ftlib::ftlib_isfighter;
         ftColl_8007B8CC(fp: *mut Fighter, owner: G) = |a0, a1| crate::tu::ftcoll::ftcoll_8007b8cc(unsafe { &mut *(a0 as *mut Fighter) }, a1);
-        ftLib_GetCameraBonePos(g: G, v: &mut Vec3) = crate::ftlib::ftlib_get_camera_bone_pos;
+        ftLib_GetCameraBonePos(g: G, v: &mut Vec3) = crate::ftlib::ftlib_getcamerabonepos;
         // rp3 mpColl_80043680
         mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |c: *mut CollData, v: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, v as _); };
         // rp3-end

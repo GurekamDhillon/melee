@@ -55,12 +55,12 @@ pub mod ext {
             None => { unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015C244(gobj as _, &*(pos as *const _)) as _ } },
         }
     }
-    pub static mut FTLIB_GET_CAMERA_BONE_POS: Option<fn(*mut HSD_GObj, *mut Vec3)> = None;
+    pub static mut FTLIB_GETCAMERABONEPOS: Option<fn(*mut HSD_GObj, *mut Vec3)> = None;
     #[allow(non_snake_case)]
     pub fn ftLib_GetCameraBonePos(gobj: *mut HSD_GObj, out: *mut Vec3) {
-        match unsafe { FTLIB_GET_CAMERA_BONE_POS } {
+        match unsafe { FTLIB_GETCAMERABONEPOS } {
             Some(f) => f(gobj, out),
-            None => { unsafe { let _ = melee_fighter::ftlib::ftlib_get_camera_bone_pos(gobj as _, &mut *(out as *mut _)); } },
+            None => { unsafe { let _ = melee_fighter::ftlib::ftlib_getcamerabonepos(gobj as _, &mut *(out as *mut _)); } },
         }
     }
     pub static mut MPFLOORGETLEFT: Option<fn(i32, *mut Vec3)> = None;

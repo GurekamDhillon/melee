@@ -299,7 +299,7 @@ fn subject_bone_pos(slot: i32) -> Option<Vec3> {
         if g.is_null() {
             return None;
         }
-        let s = melee_fighter::ftlib::ftlib_get_camera_subject(g);
+        let s = melee_fighter::ftlib::ftlib_getcamerasubject(g);
         if s.is_null() {
             None
         } else {

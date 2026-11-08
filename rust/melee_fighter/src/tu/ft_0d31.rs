@@ -224,7 +224,7 @@ pub fn ftCo_800D331C(g: G) {
                 v.x2180 = f.player_id as i32;
             }
         } else if f.is_sub_fighter() == 0 {
-            { let __a1 = (h::ftlib_is_sub_fighter(f.victim_gobj)) as i32; let __a2 = (h::ftlib_get_player_index(f.victim_gobj) as i32) as i32; ext::pl_8004065C(__a2, __a1) };
+            { let __a1 = (h::ftlib_issubfighter(f.victim_gobj)) as i32; let __a2 = (h::ftlib_getplayerindex(f.victim_gobj) as i32) as i32; ext::pl_8004065C(__a2, __a1) };
         }
     }
     let f = fp(g);

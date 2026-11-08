@@ -32,9 +32,9 @@ pub fn install() {
         m::ext::FTCO_800C2600 = Some(|a0, a1| { t(1022); t(pi(a0)); t(a1 as u32); });
         m::ext::FTCO_800C8AF0 = Some(|a0| { t(1023); t(pi(a0)); });
         m::ext::FTCOMMON_8007F804 = Some(|a0| { t(1024); t(pi(a0)); (*crate::FT)[1].x44_mtx.as_mut_ptr() });
-        m::ext::FTLIB_COUNT_FIGHTERS = Some(|| { t(1025); fv() as _ });
-        m::ext::FTLIB_UPDATE_SCREEN_VISIBILITY = Some(|a0| { t(1026); t(pi(a0)); fv() as _ });
-        m::ext::FTLIB_GET_SHAKE_OFFSET = Some(|a0, a1| { t(1027); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } fv() as _ });
+        m::ext::FTLIB_COUNTFIGHTERS = Some(|| { t(1025); fv() as _ });
+        m::ext::FTLIB_UPDATESCREENVISIBILITY = Some(|a0| { t(1026); t(pi(a0)); fv() as _ });
+        m::ext::FTLIB_GETSHAKEOFFSET = Some(|a0, a1| { t(1027); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } fv() as _ });
         m::ext::FTPARTS_800750C8 = Some(|a0, a1, a2| { t(1028); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         m::ext::LBCOLL_80009F54 = Some(|a0, a1, a2| { t(1029); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); fv() as _ });
         m::ext::LBCOLL_8000A044 = Some(|a0, a1, a2| { t(1030); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); fv() as _ });

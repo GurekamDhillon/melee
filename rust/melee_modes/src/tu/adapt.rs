@@ -235,7 +235,7 @@ pub fn Player_SetPlayerAndEntityCpuType__534529(a0: i32, a1: i32) { melee_core::
 pub fn Player_SetStocks__1270f2(a0: i32, a1: i32) { melee_core::ct!("Player_SetStocks__1270f2"); unsafe { melee_fighter::tu::player::Player_SetStocks(a0, a1) } }
 pub fn ftBossLib_8015CB9C__c24da3(a0: i32) { melee_core::ct!("ftBossLib_8015CB9C__c24da3"); unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015CB9C(a0) } }
 pub fn ftBossLib_8015CC14__f4f13c() { melee_core::ct!("ftBossLib_8015CC14__f4f13c"); unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015CC14() } }
-pub fn ftLib_LoadFighterCostume__b45233(a0: i8, a1: u8) { melee_core::ct!("ftLib_LoadFighterCostume__b45233"); unsafe { melee_fighter::tu::ftlib::ftlib_load_fighter_costume(a0, a1) } }
+pub fn ftLib_LoadFighterCostume__b45233(a0: i8, a1: u8) { melee_core::ct!("ftLib_LoadFighterCostume__b45233"); unsafe { melee_fighter::tu::ftlib::ftlib_loadfightercostume(a0, a1) } }
 pub fn gmMainLib_8015CEB4__86b231(a0: i32) { melee_core::ct!("gmMainLib_8015CEB4__86b231"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015CEB4(a0) } }
 pub fn gmMainLib_8015CF5C__8fd145(a0: i32) -> i32 { melee_core::ct!("gmMainLib_8015CF5C__8fd145"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015CF5C(a0) } }
 pub fn gmMainLib_8015CF70__0b6cc3(a0: i32, a1: i32) { melee_core::ct!("gmMainLib_8015CF70__0b6cc3"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015CF70(a0, a1) } }
@@ -612,10 +612,10 @@ pub fn ftBossLib_8015C530__eca1c0(a0: i32) -> i32 { melee_core::ct!("ftBossLib_8
 pub fn ftBossLib_8015CA6C__e73ae5(a0: i32) { melee_core::ct!("ftBossLib_8015CA6C__e73ae5"); unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015CA6C(a0) } }
 pub fn ftBossLib_8015CB7C__08c5b8() { melee_core::ct!("ftBossLib_8015CB7C__08c5b8"); unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015CB7C() } }
 pub fn ftBossLib_IsMasterHandEntry__b6143e() -> i32 { melee_core::ct!("ftBossLib_IsMasterHandEntry__b6143e"); unsafe { (melee_fighter::tu::ftbosslib::ftBossLib_IsMasterHandEntry()) as _ } }
-pub fn ftLib_DisableAllInput__82b58f() { melee_core::ct!("ftLib_DisableAllInput__82b58f"); unsafe { melee_fighter::ftlib::ftlib_disable_all_input() } }
-pub fn ftLib_EnableAllInput__7fb267() { melee_core::ct!("ftLib_EnableAllInput__7fb267"); unsafe { melee_fighter::ftlib::ftlib_enable_all_input() } }
-pub fn ftLib_LoadFighterAllCostumes__3ccbbb(a0: i8) { melee_core::ct!("ftLib_LoadFighterAllCostumes__3ccbbb"); unsafe { melee_fighter::tu::ftlib::ftlib_load_fighter_all_costumes(a0) } }
-pub fn ftLib_LoadKirbyHats__f2cb3c(a0: u8) { melee_core::ct!("ftLib_LoadKirbyHats__f2cb3c"); unsafe { melee_fighter::tu::ftlib::ftlib_load_kirby_hats(a0) } }
+pub fn ftLib_DisableAllInput__82b58f() { melee_core::ct!("ftLib_DisableAllInput__82b58f"); unsafe { melee_fighter::ftlib::ftlib_disableallinput() } }
+pub fn ftLib_EnableAllInput__7fb267() { melee_core::ct!("ftLib_EnableAllInput__7fb267"); unsafe { melee_fighter::ftlib::ftlib_enableallinput() } }
+pub fn ftLib_LoadFighterAllCostumes__3ccbbb(a0: i8) { melee_core::ct!("ftLib_LoadFighterAllCostumes__3ccbbb"); unsafe { melee_fighter::tu::ftlib::ftlib_loadfighterallcostumes(a0) } }
+pub fn ftLib_LoadKirbyHats__f2cb3c(a0: u8) { melee_core::ct!("ftLib_LoadKirbyHats__f2cb3c"); unsafe { melee_fighter::tu::ftlib::ftlib_loadkirbyhats(a0) } }
 pub fn gmMainLib_8015D134__50170c(a0: u8) { melee_core::ct!("gmMainLib_8015D134__50170c"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015D134(a0) } }
 pub fn gmMainLib_8015D1C8__160fa4(a0: u8, a1: i32) { melee_core::ct!("gmMainLib_8015D1C8__160fa4"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015D1C8(a0, a1) } }
 pub fn gmMainLib_8015D25C__8fef81(a0: u8) { melee_core::ct!("gmMainLib_8015D25C__8fef81"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015D25C(a0) } }
@@ -1100,7 +1100,7 @@ pub fn ftAction_80073354__0de40c(a0: *mut Fighter_GObj) { melee_core::ct!("ftAct
 pub fn ftAction_8007349C__18c7dc(a0: *mut Fighter_GObj) { melee_core::ct!("ftAction_8007349C__18c7dc"); unsafe { melee_fighter::tu::ftaction::ftAction_8007349C(a0 as _) } }
 pub fn ftCo_800D3158__f65bbf(a0: *mut Fighter_GObj) -> i32 { melee_core::ct!("ftCo_800D3158__f65bbf"); unsafe { (melee_fighter::tu::ft_0d31::ftCo_800D3158(a0 as _)) as _ } }
 pub fn ftCo_80091E78__aefdda(a0: *mut Fighter_GObj, a1: f32) { melee_core::ct!("ftCo_80091E78__aefdda"); unsafe { melee_fighter::tu::ftCo_Guard::ftCo_80091E78(a0 as _, a1) } }
-pub fn ftLib_IsSleeping_8008731C__becdfc(a0: *mut HSD_GObj) -> i32 { melee_core::ct!("ftLib_IsSleeping_8008731C__becdfc"); unsafe { melee_fighter::ftlib::ftlib_is_sleeping_8008731_c(a0) } }
+pub fn ftLib_IsSleeping_8008731C__becdfc(a0: *mut HSD_GObj) -> i32 { melee_core::ct!("ftLib_IsSleeping_8008731C__becdfc"); unsafe { melee_fighter::ftlib::ftlib_issleeping_8008731c(a0) } }
 pub fn gmVsMelee_EnterSuddenDeath__883e46(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>) { melee_core::ct!("gmVsMelee_EnterSuddenDeath__883e46"); unsafe { crate::tu::gmvsmelee::gmVsMelee_EnterSuddenDeath(a0, a1, a2, a3) } }
 pub fn gmVsMelee_EnterVs__41232b(a0: *mut GameModeState, a1: *mut VsModeData, a2: Option<unsafe extern "C" fn(*mut StartMeleeData, *mut StartMeleeData)>, a3: Option<unsafe extern "C" fn(*mut PlayerInitData, *mut PlayerInitData)>) { melee_core::ct!("gmVsMelee_EnterVs__41232b"); unsafe { crate::tu::gmvsmelee::gmVsMelee_EnterVs(a0, a1, a2, a3) } }
 pub fn gm_80160968__e03b47(a0: u32) -> _GXColor { melee_core::ct!("gm_80160968__e03b47"); unsafe { core::mem::transmute(crate::gm::gm_80160968(a0)) } }
@@ -1121,7 +1121,7 @@ pub fn Fighter_ResetInputData_80068854__e11eca(a0: * mut Fighter_GObj) { melee_c
 pub fn Fighter_ChangeMotionState__8da657(a0: * mut Fighter_GObj, a1: FtMotionId, a2: MotionFlags, a3: :: core :: ffi :: c_float, a4: :: core :: ffi :: c_float, a5: :: core :: ffi :: c_float, a6: * mut Fighter_GObj) { melee_core::ct!("Fighter_ChangeMotionState__8da657"); unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(a0 as _, a1 as _, a2 as _, a3, a4, a5, a6 as _) } }
 pub fn Fighter_procCollResolve__4dab97(a0: * mut Fighter_GObj) { melee_core::ct!("Fighter_procCollResolve__4dab97"); unsafe { melee_fighter::tu::fighter::Fighter_procCollResolve(a0 as _) } }
 pub fn ftCommon_8007D92C__e78cfc(a0: * mut Fighter_GObj) { melee_core::ct!("ftCommon_8007D92C__e78cfc"); unsafe { melee_fighter::ftcommon3::ftcommon_8007d92c(a0 as _) } }
-pub fn ftLib_IsFighter__b56944(a0: * mut HSD_GObj) -> :: core :: ffi :: c_int { melee_core::ct!("ftLib_IsFighter__b56944"); unsafe { (melee_fighter::ftlib::ftlib_is_fighter(a0)) as _ } }
+pub fn ftLib_IsFighter__b56944(a0: * mut HSD_GObj) -> :: core :: ffi :: c_int { melee_core::ct!("ftLib_IsFighter__b56944"); unsafe { (melee_fighter::ftlib::ftlib_isfighter(a0)) as _ } }
 pub fn ft_80081C88__3d5b9d(a0: * mut Fighter_GObj, a1: :: core :: ffi :: c_float) { melee_core::ct!("ft_80081C88__3d5b9d"); unsafe { melee_fighter::tu::ft_081b::ft_80081c88(a0 as _, a1) } }
 pub fn lbColl_8000A584__73c219(a0: * mut HurtCapsule, a1: :: core :: ffi :: c_uint, a2: :: core :: ffi :: c_uint, a3: MtxPtr, a4: :: core :: ffi :: c_float) -> :: core :: ffi :: c_int { melee_core::ct!("lbColl_8000A584__73c219"); unsafe { (melee_runtime::tu::lbcollision::lbColl_8000A584(a0, a1, a2, core::mem::transmute(a3), a4)) as _ } }
 pub fn ft_8008A2BC__b456f9(a0: * mut Fighter_GObj) { melee_core::ct!("ft_8008A2BC__b456f9"); unsafe { melee_fighter::tu::ft_08a1::ft_8008A2BC(a0 as _) } }

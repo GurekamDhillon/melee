@@ -72,25 +72,25 @@ pub mod ext {
     fn ft_8008989C(a0: *mut HSD_GObj) -> u16 => unsafe { crate::ft0892::ft_8008989c(a0 as _) };
     fn ft_800898A8(a0: *mut HSD_GObj) -> *mut Struct2074 => unsafe { crate::ft0892::ft_800898a8(a0 as _) as _ };
     fn ft_800898B4(a0: *mut HSD_GObj) -> *mut ft_800898B4_t => unsafe { crate::ft0892::ft_800898b4(a0 as _) as _ };
-    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_get_pos(a0 as _, &mut *(a1 as *mut _)); };
-    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_get_facing_dir(a0 as _) };
-    fn ftLib_GetGroundAir(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_get_ground_air(a0 as _) };
-    fn ftLib_IsInputDisabled(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_input_disabled(a0 as _) };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec3) => unsafe { let _ = crate::ftlib::ftlib_getpos(a0 as _, &mut *(a1 as *mut _)); };
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::ftlib::ftlib_getfacingdir(a0 as _) };
+    fn ftLib_GetGroundAir(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getgroundair(a0 as _) };
+    fn ftLib_IsInputDisabled(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isinputdisabled(a0 as _) };
     fn ftLib_GetItem(a0: *mut HSD_GObj) -> *mut HSD_GObj => unsafe { crate::ftlib::get_item(a0 as _) as _ };
-    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_fighter(a0 as _) };
-    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 => unsafe { crate::ftlib::ftlib_get_player_index(a0 as _) };
-    fn ftLib_GetPercent(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_get_percent(a0 as _) };
-    fn ftLib_IsLastAttackerSubFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_is_last_attacker_sub_fighter(a0 as _) };
-    fn ftLib_GetLastAttackerSlot(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_get_last_attacker_slot(a0 as _) };
-    fn ftLib_IsDead(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_dead(a0 as _) };
-    fn ftLib_IsDeadUp(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_dead_up(a0 as _) };
-    fn ftLib_IsDeadUpStar(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_dead_up_star(a0 as _) };
-    fn ftLib_IsDeadUpFall(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_dead_up_fall(a0 as _) };
-    fn ftLib_IsSubFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_is_sub_fighter(a0 as _) };
-    fn ftLib_GetLastHitSourceType(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_get_last_hit_source_type(a0 as _) };
-    fn ftLib_GetLastHitSourceKind(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_get_last_hit_source_kind(a0 as _) };
-    fn ftLib_GetGroundSlopeAngle(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftlib_get_ground_slope_angle(a0 as _) };
-    fn ftLib_IsBeingNudged(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_is_being_nudged(a0 as _) };
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isfighter(a0 as _) };
+    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8 => unsafe { crate::ftlib::ftlib_getplayerindex(a0 as _) };
+    fn ftLib_GetPercent(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getpercent(a0 as _) };
+    fn ftLib_IsLastAttackerSubFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_islastattackersubfighter(a0 as _) };
+    fn ftLib_GetLastAttackerSlot(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getlastattackerslot(a0 as _) };
+    fn ftLib_IsDead(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isdead(a0 as _) };
+    fn ftLib_IsDeadUp(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isdeadup(a0 as _) };
+    fn ftLib_IsDeadUpStar(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isdeadupstar(a0 as _) };
+    fn ftLib_IsDeadUpFall(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isdeadupfall(a0 as _) };
+    fn ftLib_IsSubFighter(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_issubfighter(a0 as _) };
+    fn ftLib_GetLastHitSourceType(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getlasthitsourcetype(a0 as _) };
+    fn ftLib_GetLastHitSourceKind(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_getlasthitsourcekind(a0 as _) };
+    fn ftLib_GetGroundSlopeAngle(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftlib_getgroundslopeangle(a0 as _) };
+    fn ftLib_IsBeingNudged(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_isbeingnudged(a0 as _) };
     fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::get_motion_id(a0 as _) };
     fn gm_8016AEEC() -> u32;
     fn gm_8016B110() -> bool;
@@ -1835,7 +1835,7 @@ pub fn pl_8003ffdc(arg0: i32, _arg1: i32, arg2: i32, arg3: i32, arg4: i32) {
 pub fn pl_80040048_fp(arg0: i32, arg1: i32) {
     melee_core::ct!("pl_80040048_fp");
     let g = get_entity_at_index(arg0, arg1);
-    let r3 = h::ftlib_get_last_attacker_slot(g);
+    let r3 = h::ftlib_getlastattackerslot(g);
     if arg1 != 0 || r3 == 6 {
         return;
     }
@@ -2244,7 +2244,7 @@ pub fn pl_80040db8(slot: i32) -> i32 {
 /// `pl_8003DF44`.
 pub fn pl_8003df44(arg0: i32, arg1: i32) {
     melee_core::ct!("pl_8003df44");
-    let r3 = h::ftlib_get_last_attacker_slot(get_entity_at_index(arg0, arg1));
+    let r3 = h::ftlib_getlastattackerslot(get_entity_at_index(arg0, arg1));
     if r3 == 6 || r3 == arg0 || check_if_same_team(arg0, r3) {
         return;
     }
@@ -2410,8 +2410,8 @@ pub fn pl_8003e854_fp(arg0: i32, arg1: i32, arg2: I) {
         if h::it_get_kind(arg2) == It_Kind_Dosei as i32 {
             h::pl_80038788(arg0, 0xB6, 1);
         }
-        if arg1 == 0 && h::ftlib_is_fighter(r3) && h::ftlib_is_sub_fighter(r3) == 0 {
-            let id = h::ftlib_get_player_index(r3);
+        if arg1 == 0 && h::ftlib_isfighter(r3) && h::ftlib_issubfighter(r3) == 0 {
+            let id = h::ftlib_getplayerindex(r3);
             ext_plbonus2(arg0).xD6C = id as i32;
         }
     }

@@ -130,12 +130,12 @@ pub mod ext {
     hook_or!(PSVECCROSSPRODUCT, PSVECCrossProduct, (vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec), |vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec| { unsafe { melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(vec1 as _, vec2 as _, dst as _); } });
     hook_or!(ATAN2F, atan2f, (y: f32, x: f32) -> f32, melee_runtime::lbtrigf::atan2f);
     hook_or!(FTCO_800C06E8, ftCo_800C06E8, (a0: *mut HSD_GObj, a1: i32, a2: *mut c_void), |a0: *mut HSD_GObj, a1: i32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C06E8(a0 as _, a1 as _, core::mem::transmute(a2)); } });
-    hook_or!(FTLIB_GET_POS, ftLib_GetPos, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } });
-    hook_or!(FTLIB_GET_PREV_POS, ftLib_GetPrevPos, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPrevPos(a0 as _, a1 as _); } });
-    hook_or!(FTLIB_IS_FIGHTER, ftLib_IsFighter, (gobj: *mut HSD_GObj) -> i32, |gobj: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsFighter(gobj as _) as _ });
+    hook_or!(FTLIB_GETPOS, ftLib_GetPos, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_GETPREVPOS, ftLib_GetPrevPos, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPrevPos(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_ISFIGHTER, ftLib_IsFighter, (gobj: *mut HSD_GObj) -> i32, |gobj: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsFighter(gobj as _) as _ });
     hook_or!(FTLIB_80086A4C, ftLib_80086A4C, (a0: *mut HSD_GObj, a1: f32), |a0: *mut HSD_GObj, a1: f32| { unsafe { let _ = crate::ftlib::ftLib_80086A4C(a0 as _, a1 as _); } });
     hook_or!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ });
-    hook_or!(FTLIB_GET_POS_DELTA, ftLib_GetPosDelta, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPosDelta(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_GETPOSDELTA, ftLib_GetPosDelta, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPosDelta(a0 as _, a1 as _); } });
     hook_or!(GM_8016AE80, gm_8016AE80, () -> i32, || unsafe { crate::gm::gm_8016AE80() as _ });
     hook_or!(GM_8016B238, gm_8016B238, () -> i32, || unsafe { crate::gm::gm_8016B238() as _ });
     pub static mut GRANIME_801C8138: Option<fn(*mut HSD_GObj, enum_t, i32)> = None;

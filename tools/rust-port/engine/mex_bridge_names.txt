@@ -271,3 +271,9 @@ it_80273030
 it_8027321C
 it_80274658
 it_802762B0
+ft_80089824
+lbAnim_8001E8F8
+ftCo_AttackAir_CheckItemThrowInput
+it_8027781C
+ft_800892A0
+ftAnim_8006EDD0

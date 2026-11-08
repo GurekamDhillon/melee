@@ -1519,6 +1519,19 @@ pub unsafe extern "C" fn efAsync_MexNoteArchive(mut bank: i32, mut archive: *mut
         ext::OSReport(&format!("mexeffect: bank {} ({}): {} model(s), {} particle generator(s) with a behaviour\n", bank, if (efAsync_DatEntries[bank as usize].ef_DAT_file as *const core::ffi::c_char).is_null() { std::borrow::Cow::Borrowed("(null)") } else { core::ffi::CStr::from_ptr(efAsync_DatEntries[bank as usize].ef_DAT_file as *const core::ffi::c_char).to_string_lossy() }, (*bhv).mdl_num, (*bhv).ptcl_num));
     }
     efAsync_MexBhv[bank as usize] = bhv;
+    // An m-ex effect file keeps the particle id base of the build it came from (Diddy's EfDdData.dat says 49000, Tails'
+    // 22000, Charizard's 12000) while the resolver asks for bank * 1000 + n (efAsync_MexResolve, as m-ex numbers a
+    // fighter's effects by the bank it loads into): the base is the bank's, so hsd_8039F05C reads the bank's own
+    // n-th generator instead of one past the table (Diddy's gun item spawned from a garbage PSCmdList and crashed).
+    if !bhv.is_null() && !efAsync_DatEntries[bank as usize].effDataTable_name.is_null() {
+        let e = ext::HSD_ArchiveGetPublicAddress(archive, efAsync_DatEntries[bank as usize].effDataTable_name as *const i8) as *mut EF_DAT_Entry;
+        if !e.is_null() && !(*e).ef_DAT_file.is_null() {
+            let cmd = (*e).ef_DAT_file as *mut isize;
+            if matches!(*cmd.cast::<u16>(), 0x40..=0x43) {
+                *cmd.add(1) = bank as isize * 1000;
+            }
+        }
+    }
 }
 
 /// `efAsync_MexMiss`

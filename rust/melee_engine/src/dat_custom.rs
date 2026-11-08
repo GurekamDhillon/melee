@@ -559,6 +559,74 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
     tbl
 }
 
+/// An article's `x14_dynamics` rebuilt as the C reads it (`ItCollDynamics`) from the big-endian image at `base`: the
+/// block at data offset `off`.
+/// # Safety
+/// `a` is a decoded Article; `base + off` and the descs it names are inside the image.
+pub unsafe fn fix_article_dynamics(a: *mut melee_types::Article, base: usize, off: u32) {
+    let be = |at: usize| u32::from_be_bytes(*((base + at) as *const [u8; 4]));
+    let off = off as usize;
+    let count = be(off + 8) as usize;
+    let descs_off = be(off + 0xC) as usize;
+    let mut v: Vec<melee_items::tu::itcoll::ItCollDynamicsDesc> = Vec::new();
+    if count <= 8 && descs_off != 0 {
+        for k in 0..count {
+            let d0 = descs_off + 20 * k;
+            v.push(melee_items::tu::itcoll::ItCollDynamicsDesc {
+                bone_id: be(d0) as i32,
+                offset: melee_types::Vec3 { x: f32::from_bits(be(d0 + 4)), y: f32::from_bits(be(d0 + 8)), z: f32::from_bits(be(d0 + 12)) },
+                size: f32::from_bits(be(d0 + 16)),
+            });
+        }
+    }
+    let dd = Box::leak(v.into_boxed_slice());
+    let nd = Box::leak(Box::new(melee_items::tu::itcoll::ItCollDynamics { _pad: [0; 8], count: count.min(8) as i32, descs: dd.as_mut_ptr() }));
+    (*a).x14_dynamics = nd as *mut _ as *mut melee_types::ItemDynamics;
+}
+
+/// An article's `x8_hurtbones` list with all `count` descs, from the image at `base` (the list at data offset `off`).
+/// # Safety
+/// As [`fix_article_dynamics`].
+pub unsafe fn fix_article_hurtbones(a: *mut melee_types::Article, base: usize, off: u32) {
+    let be = |at: usize| u32::from_be_bytes(*((base + at) as *const [u8; 4]));
+    let off = off as usize;
+    let count = be(off) as usize;
+    let descs_off = be(off + 4) as usize;
+    let mut v: Vec<melee_types::ItHurtBoneDesc> = Vec::new();
+    if count <= 8 && descs_off != 0 {
+        let f = |at: usize| f32::from_bits(be(at));
+        for k in 0..count {
+            let d0 = descs_off + 0x20 * k;
+            let mut e = melee_types::ItHurtBoneDesc::zeroed();
+            e.bone_id = be(d0) as _;
+            e.a_offset = melee_types::Vec3 { x: f(d0 + 4), y: f(d0 + 8), z: f(d0 + 12) };
+            e.b_offset = melee_types::Vec3 { x: f(d0 + 16), y: f(d0 + 20), z: f(d0 + 24) };
+            e.scale = f(d0 + 28);
+            v.push(e);
+        }
+    }
+    let dd = Box::leak(v.into_boxed_slice());
+    let nl = Box::leak(Box::new(melee_types::ItHurtBoneList { count: count.min(8) as i32, descs: dd.as_mut_ptr() }));
+    (*a).x8_hurtbones = nl as *mut _;
+}
+
+/// An m-ex custom article decoded on its own (mex_guest's MEX_IndexFighterItem): the dynamics and hurt bones
+/// rebuilt as [`fix_articles`] does for an archive's (Diddy's article 259 read a raw `ItemDynamics` as the C layout
+/// and asserted). `base` is the raw data block, `ta` the article's data offset.
+/// # Safety
+/// As [`fix_article_dynamics`].
+pub unsafe fn fix_custom_article(a: *mut melee_types::Article, base: usize, ta: u32) {
+    let be = |at: u32| u32::from_be_bytes(*((base + at as usize) as *const [u8; 4]));
+    let hb = be(ta + 0x8);
+    if hb != 0 {
+        fix_article_hurtbones(a, base, hb);
+    }
+    let dy = be(ta + 0x14);
+    if dy != 0 {
+        fix_article_dynamics(a, base, dy);
+    }
+}
+
 /// The C reads an article's special attributes as `s32` / `f32` fields of the kind's attribute struct, but the pointer
 /// is a `void*` into the big-endian image. Each block (up to the next boundary) is copied with its 32-bit words
 /// swapped; articles sharing a block share the copy.
@@ -570,51 +638,11 @@ pub fn fix_articles() {
     }
     let dyns = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_DYNAMICS)) };
     for (a, base, off) in dyns {
-        unsafe {
-            let be = |at: usize| u32::from_be_bytes(*((base + at) as *const [u8; 4]));
-            let off = off as usize;
-            let count = be(off + 8) as usize;
-            let descs_off = be(off + 0xC) as usize;
-            let mut v: Vec<melee_items::tu::itcoll::ItCollDynamicsDesc> = Vec::new();
-            if count <= 8 && descs_off != 0 {
-                for k in 0..count {
-                    let d0 = descs_off + 20 * k;
-                    v.push(melee_items::tu::itcoll::ItCollDynamicsDesc {
-                        bone_id: be(d0) as i32,
-                        offset: melee_types::Vec3 { x: f32::from_bits(be(d0 + 4)), y: f32::from_bits(be(d0 + 8)), z: f32::from_bits(be(d0 + 12)) },
-                        size: f32::from_bits(be(d0 + 16)),
-                    });
-                }
-            }
-            let dd = Box::leak(v.into_boxed_slice());
-            let nd = Box::leak(Box::new(melee_items::tu::itcoll::ItCollDynamics { _pad: [0; 8], count: count.min(8) as i32, descs: dd.as_mut_ptr() }));
-            (*a).x14_dynamics = nd as *mut _ as *mut melee_types::ItemDynamics;
-        }
+        unsafe { fix_article_dynamics(a, base, off) };
     }
     let hurts = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_HURTBONES)) };
     for (a, base, off) in hurts {
-        unsafe {
-            let be = |at: usize| u32::from_be_bytes(*((base + at) as *const [u8; 4]));
-            let off = off as usize;
-            let count = be(off) as usize;
-            let descs_off = be(off + 4) as usize;
-            let mut v: Vec<melee_types::ItHurtBoneDesc> = Vec::new();
-            if count <= 8 && descs_off != 0 {
-                let f = |at: usize| f32::from_bits(be(at));
-                for k in 0..count {
-                    let d0 = descs_off + 0x20 * k;
-                    let mut e = melee_types::ItHurtBoneDesc::zeroed();
-                    e.bone_id = be(d0) as _;
-                    e.a_offset = melee_types::Vec3 { x: f(d0 + 4), y: f(d0 + 8), z: f(d0 + 12) };
-                    e.b_offset = melee_types::Vec3 { x: f(d0 + 16), y: f(d0 + 20), z: f(d0 + 24) };
-                    e.scale = f(d0 + 28);
-                    v.push(e);
-                }
-            }
-            let dd = Box::leak(v.into_boxed_slice());
-            let nl = Box::leak(Box::new(melee_types::ItHurtBoneList { count: count.min(8) as i32, descs: dd.as_mut_ptr() }));
-            (*a).x8_hurtbones = nl as *mut _;
-        }
+        unsafe { fix_article_hurtbones(a, base, off) };
     }
     let states = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_STATES)) };
     for (a, arr, cnt) in states {

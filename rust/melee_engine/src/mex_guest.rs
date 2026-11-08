@@ -258,6 +258,52 @@ fn kind_of_code(a: u32) -> Option<i32> {
         .or_else(|| s.arts.iter().find(|r| a >= r.base && a < r.base + r.blob.code.len() as u32).map(|r| r.kind))
 }
 
+/// Guest code behind the two-gobj trampolines (`POOL2`), by slot.
+static mut POOL2_SLOTS: Vec<(i32, u32)> = Vec::new();
+
+unsafe extern "C" fn pool2_tramp<const I: usize>(g: G, h: G) {
+    let Some(&(kind, addr)) = (&*core::ptr::addr_of!(POOL2_SLOTS)).get(I) else { return };
+    let s = st();
+    let Some(gh) = bind_fighter(s, g) else { return };
+    let hh = if h.is_null() { 0 } else { bind_fighter(s, h).unwrap_or(0) };
+    sync_globals(s);
+    let mut cpu = Cpu::default();
+    cpu.gpr[1] = STACK_BASE + STACK_SIZE - 0x100 - s.depth * 0x2000;
+    cpu.gpr[2] = R2;
+    cpu.gpr[13] = R13;
+    cpu.gpr[3] = gh;
+    cpu.gpr[4] = hh;
+    cpu.lr = 0;
+    cpu.pc = addr;
+    let _ = run_cpu(kind, 2001, cpu);
+}
+
+const fn pool2() -> [unsafe extern "C" fn(G, G); 16] {
+    let mut t: [unsafe extern "C" fn(G, G); 16] = [pool2_tramp::<0>; 16];
+    macro_rules! set { ($($e:literal)*) => { $( t[$e] = pool2_tramp::<$e>; )* } }
+    set!(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15);
+    t
+}
+static POOL2: [unsafe extern "C" fn(G, G); 16] = pool2();
+
+/// A guest code address as a two-gobj native callback (Dedede's inhale grabbed_cb).
+fn fn_native2(a: u32) -> Option<unsafe extern "C" fn(G, G)> {
+    let kind = kind_of_code(a)?;
+    let slots = unsafe { &mut *core::ptr::addr_of_mut!(POOL2_SLOTS) };
+    let i = match slots.iter().position(|&(k, x)| k == kind && x == a) {
+        Some(i) => i,
+        None if slots.len() < POOL2.len() => {
+            slots.push((kind, a));
+            slots.len() - 1
+        }
+        None => {
+            eprintln!("mexguest: two-gobj trampoline pool full: guest {a:08X} left unwired");
+            return None;
+        }
+    };
+    Some(POOL2[i])
+}
+
 /// A guest code address as a native callback: its pool trampoline (made on first use).
 fn fn_native(a: u32) -> Option<usize> {
     let Some(kind) = kind_of_code(a) else {
@@ -547,6 +593,9 @@ fn load_items(kind: i32, file: &str, ar: &mut mex_import::hsd::Archive) {
                 if !(anim < 0x1000 || anim == u32::MAX) || !cb_ok(rd(r + 4)) || !cb_ok(rd(r + 8)) || !cb_ok(rd(r + 12)) {
                     break;
                 }
+                if std::env::var_os("MELEE_MEX_CALLS").is_some() {
+                    eprintln!("mexitem: kind {kind} itFunction[{n}] state {i}: anim {anim:#x} cbs {:08X} {:08X} {:08X}", rd(r + 4), rd(r + 8), rd(r + 12));
+                }
                 let mut t = ItemStateTable::zeroed();
                 t.anim_id = rd(r) as i32;
                 unsafe {
@@ -600,6 +649,7 @@ fn index_item(kind: u32, desc: u32, n: u32) {
         d.set_roots(ar.publics.iter().map(|q| q.offset).collect());
         let root = d.object::<melee_types::Article>(desc - *b);
         Box::leak(Box::new(d.finish()));
+        unsafe { crate::dat_custom::fix_custom_article(root, raw.as_ptr() as usize, desc - *b) };
         root
     });
     let it = s.items.entry(global).or_insert_with(CustomItem::new);
@@ -949,12 +999,13 @@ fn call_out(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<(), Faul
     if flag(&CALLTRACE, "MELEE_MEX_CALLTRACE") {
         let f = |i: usize| f64::from_bits(cpu.fpr[i]);
         eprintln!(
-            "mexcall: {target:08X} {} r3..r6 {:08X?} f1..f3 {:?} {:?} {:?}",
+            "mexcall: {target:08X} {} r3..r6 {:08X?} f1..f3 {:?} {:?} {:?} lr {:08X}",
             mex_import::layout::vanilla_name(target).unwrap_or("?"),
             &cpu.gpr[3..7],
             f(1),
             f(2),
-            f(3)
+            f(3),
+            cpu.lr
         );
     }
     let (d, a, n) = (cpu.gpr[3], cpu.gpr[4], cpu.gpr[5]);
@@ -1186,6 +1237,38 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
     let gobj = |mem: &GuestSpace, h: u32| -> G { if h == 0 { core::ptr::null_mut() } else { mem.native(h).unwrap_or(0) as G } };
     let r = |i: usize| cpu.gpr[3 + i];
     match name {
+        // lbAnim_8001E8F8(FigaTree*): the animation's frame count (0 for NULL); the tree is the native one the guest
+        // read out of the fighter (by handle) or a tree in guest bytes (frames at +8)
+        "lbAnim_8001E8F8" => {
+            let h = r(0);
+            let v = if h == 0 {
+                0.0
+            } else if let Some(p) = mem.native(h).filter(|&p| p != 0) {
+                unsafe { melee_runtime::tu::lbanim::lbAnim_8001E8F8((p as *const melee_types::FigaTree).as_ref()) }
+            } else {
+                f32::from_bits(mem.ld32(h + 8)?)
+            };
+            cpu.fpr[1] = (v as f64).to_bits();
+        }
+        // HSD_ForeachAnim(obj, type, mask, func, arg_type, ...): the variadic argument by arg_type (*F: a double in f1,
+        // *U / *V: r8) and the AObj callback as the port's (Sonic's guest restarts its joints with HSD_AObjReqAnim)
+        "HSD_ForeachAnim" => {
+            use melee_runtime::tu::aobj::{self as ao, CallbackArg};
+            let obj = mem.native(r(0)).filter(|&p| p != 0).ok_or(Fault::Mem(r(0)))? as *mut c_void;
+            let func: usize = match mex_import::layout::vanilla_name(r(3)) {
+                Some("HSD_AObjReqAnim") => ao::HSD_AObjReqAnim as usize,
+                Some("HSD_AObjSetRate") => ao::HSD_AObjSetRate as usize,
+                Some("HSD_AObjSetCurrentFrame") => ao::HSD_AObjSetCurrentFrame as usize,
+                Some("HSD_AObjSetEndFrame") => ao::HSD_AObjSetEndFrame as usize,
+                Some("HSD_AObjSetRewindFrame") => ao::HSD_AObjSetRewindFrame as usize,
+                _ => return Err(Fault::Unresolved(r(3))),
+            };
+            // every callback above is (aobj, f32): on the console it reads f1 whatever the form, so with a *F form the
+            // variadic double (f1) and with another (Sonic passes AOBJ_ARG_AOV to HSD_AObjSetRate) the guest's f1 as the
+            // call left it - HSD_ForeachAnim's walk does no float work. Both are the AF form with f1
+            let arg = CallbackArg { f: f64::from_bits(cpu.fpr[1]) as f32 };
+            unsafe { ao::HSD_ForeachAnim(obj, r(1) as _, r(2) as _, func as *mut c_void, melee_types::AOBJ_ARG_AF as _, arg) };
+        }
         // ftLib_800866DC (ftLib_GetECBCenter): the fighter's ECB centre into a Vec3
         "ftLib_GetECBCenter" | "ftLib_GetCameraBonePos" | "ftLib_800866DC" => {
             let g = gobj(mem, r(0));
@@ -1422,11 +1505,7 @@ impl Call<'_> {
                 let p = buf.as_mut_ptr() as *mut u8;
                 unsafe {
                     if self.mem.add_native(Some(base), rec, p).is_ok() {
-                        for k in 0..gs {
-                            if let Ok(b) = self.mem.ld8(h + k) {
-                                let _ = self.mem.st8(base + k, b);
-                            }
-                        }
+                        copy_record(self.mem, h, base, gs);
                         self.fix.push((h, buf, rec, base));
                         return p as *mut c_void;
                     }
@@ -1435,6 +1514,19 @@ impl Call<'_> {
         }
         self.bad = true;
         core::ptr::null_mut()
+    }
+    /// A two-gobj callback argument (`HSD_GObjInteraction`, fp->grabbed_cb): guest code as a two-argument trampoline,
+    /// a vanilla address as the port's function.
+    pub fn func2(&mut self, i: usize) -> Option<unsafe extern "C" fn(G, G)> {
+        let a = self.cpu.gpr[3 + i];
+        if a == 0 {
+            return None;
+        }
+        let f = fn_native2(a).or_else(|| mex_import::layout::vanilla_name(a).and_then(crate::mex_bridge::gobj2_fn));
+        if f.is_none() {
+            self.bad = true;
+        }
+        f
     }
     /// A gobj callback argument: guest code as its pool trampoline, a vanilla address as the port's function.
     pub fn func(&mut self, i: usize) -> Option<unsafe extern "C" fn(G)> {
@@ -1469,13 +1561,33 @@ impl Call<'_> {
     fn finish(&mut self) {
         for (h, mut buf, rec, base) in std::mem::take(&mut self.fix) {
             let gs = self.mem.layouts.gc_size(rec).unwrap_or(0);
-            for k in 0..gs {
-                if let Ok(b) = self.mem.ld8(base + k) {
-                    let _ = self.mem.st8(h + k, b);
-                }
-            }
+            copy_record(self.mem, base, h, gs);
             self.mem.forget_native(buf.as_mut_ptr() as *mut u8);
         }
+    }
+}
+
+/// Copy a record's `gs` guest bytes from `src` to `dst`, a word at a time where a word moves (a pointer field only
+/// moves whole: a byte store to one faults, and the byte loop this replaces left every pointer of a marshalled record
+/// NULL - Wolf's Laser SpawnItem reached Item_8026862C with no parent, so the laser had no owner and its hits never
+/// credited Wolf's last attack), a byte at a time otherwise.
+fn copy_record(mem: &mut GuestSpace, src: u32, dst: u32, gs: u32) {
+    let mut k = 0;
+    while k < gs {
+        if k % 4 == 0 && k + 4 <= gs {
+            if let Ok(w) = mem.ld32(src + k) {
+                if mem.st32(dst + k, w).is_ok() {
+                    k += 4;
+                    continue;
+                }
+            }
+        }
+        for j in k..(k + 4 - k % 4).min(gs) {
+            if let Ok(b) = mem.ld8(src + j) {
+                let _ = mem.st8(dst + j, b);
+            }
+        }
+        k += 4 - k % 4;
     }
 }
 

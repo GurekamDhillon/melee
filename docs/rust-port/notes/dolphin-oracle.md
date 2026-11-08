@@ -311,3 +311,13 @@ engine's 16 exact files on this disc are the evidence it is the recording build.
 **Build.** `_build/dolphin-oracle-akaneia`: a copy of the strict2 source (same patch as
 `slippi-dolphin-nhv1.patch`, no new change), built fresh by its `build.bat` (`-j 4`), `DOLPHIN_ORACLE_DIR` selects it.
 The NHV1 word set is unchanged: the m-ex fighters use the retail `struct Fighter` layout at the same offsets.
+
+**Akaneia or ACE?** ACE (Akaneia Community Edition, `GW_ISO_ACE`) has the same main.dol (same hash) and the same
+fighter order in MxDt.dat for the first 34 fighter files, so ids 26-32 are the same fighters. The two discs still run
+different code: codes.gct shares 1144 codes, 6 are Akaneia-only and 12 ACE-only (ACE adds C2 hooks at 0x800857E0 and
+0x800A1CF8 in fighter code, plus menu/CSS hooks). PlCo.dat, MxDt.dat, MxPt/MxSr and several Ef*Data.dat files also
+differ. None of the 18 codes that tell the discs apart is in any of the 50 replays' Gecko lists: the replays carry
+Slippi's list, not the disc's codes.gct. slpcheck gives line-identical results on both discs for all 50 (15 match, 35
+diverge at the same frames). So the replays do not say which disc recorded them. Playing them all on ACE is **not**
+shown valid (the code differs). Akaneia stays the default (it is slpcheck's), and `DOLPHIN_DISC=ace` plays one file on
+ACE as a tie-break: whichever disc's console matches the recorded Post-Frame is the recording disc.

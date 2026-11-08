@@ -23,9 +23,9 @@ if ($env:DOLPHIN_USER_DIR) {
 }
 if (-not (Test-Path $exe)) { Write-Error "dolphin oracle not built: $exe"; exit 2 }
 # an Akaneia replay with one of the disc's m-ex fighters plays on the Akaneia disc (GW_ISO_AKANEIA), the rule slpcheck
-# uses (replay_codes.py --disc); DOLPHIN_DISC=vanilla|akaneia overrides. notes/dolphin-oracle.md, "Akaneia (m-ex) replays"
+# uses (replay_codes.py --disc); DOLPHIN_DISC=vanilla|akaneia|ace overrides (ace: GW_ISO_ACE, a tie-break, not the default). notes/dolphin-oracle.md, "Akaneia (m-ex) replays"
 $disc = if ($env:DOLPHIN_DISC) { $env:DOLPHIN_DISC } else { (python -I (Join-Path $PSScriptRoot 'replay_codes.py') --disc $Slp).Trim() }
-$key = if ($disc -eq 'akaneia') { 'GW_ISO_AKANEIA' } else { 'GW_ISO_VANILLA' }
+$key = switch ($disc) { 'akaneia' { 'GW_ISO_AKANEIA' } 'ace' { 'GW_ISO_ACE' } default { 'GW_ISO_VANILLA' } }
 $m = Select-String -Path (Join-Path $ws '.env') -Pattern "^(export )?$key=(.*)$"
 if (-not $m) { Write-Error "$key is not in .env"; exit 2 }
 Write-Output "dolphin: disc $disc"

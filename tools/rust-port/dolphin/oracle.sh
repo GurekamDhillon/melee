@@ -41,10 +41,10 @@ OUTW=$(cygpath -w "$OUT" 2>/dev/null || echo "$OUT")
 SLPW=$(cygpath -w "$SLP" 2>/dev/null || echo "$SLP")
 name=$(basename "$SLP")
 # the disc both sides play: an Akaneia replay with one of the disc's m-ex fighters runs on GW_ISO_AKANEIA (slpcheck's own
-# rule, replay_codes.py --disc; DOLPHIN_DISC overrides), every other replay on GW_ISO_VANILLA
+# rule, replay_codes.py --disc; DOLPHIN_DISC=vanilla|akaneia|ace overrides), every other replay on GW_ISO_VANILLA
 DISC=${DOLPHIN_DISC:-$(python -I "$here/replay_codes.py" --disc "$SLP")}
 export DOLPHIN_DISC=$DISC
-ISO=$GW_ISO_VANILLA; [ "$DISC" = akaneia ] && ISO=$GW_ISO_AKANEIA
+ISO=$GW_ISO_VANILLA; [ "$DISC" = akaneia ] && ISO=$GW_ISO_AKANEIA; [ "$DISC" = ace ] && ISO=$GW_ISO_ACE
 log() { echo "oracle: $*"; }
 
 wflag=""; [ $WIDE = 1 ] && wflag="-Wide"

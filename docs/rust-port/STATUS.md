@@ -13,8 +13,9 @@
 - **Headline numbers** (source in brackets):
   - main goldens: pad_falcon_fox_fd 1801/1801, pad_marth_sheik_bf 1801/1801, cpu_fox_falco_dl 3601/3601,
     cpu_peach_samus_ys_items 3601/3601, seed column included (`docs/rust-port/engine_progress.tsv`, step 23).
-  - coverage goldens: 212 pass, 0 fail, 10 no golden (C run failed or blocked) (notes/coverage.md "port/correct
-    round 5", 2026-11-04; `docs/rust-port/golden/coverage/results.tsv`).
+  - coverage goldens: 182 pass, 30 fail, 10 no golden (C run failed or blocked) (notes/coverage.md "port/onepseed",
+    2026-11-08: the goldens with CPU fighters were re-recorded after the ftCo_800ADE48 C mirror of ef0c6dad2; the 30 are
+    real engine-vs-C divergences listed there; `docs/rust-port/golden/coverage/results.tsv`).
   - external Slippi replays: 38 of 125 frame-exact against the console's post-frame data (notes/slpcheck.md round 2,
     2026-11-02; not re-measured since).
   - speed: about 9x cheaper per sim frame than melee-unlocked's Static Recomp headless playback on one replay

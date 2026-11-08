@@ -1400,7 +1400,14 @@ static inline s32 getFireKind(Ground_GObj* gobj, const s32* base)
 {
     s32 fire_kind = -1;
 
+#if defined(TARGET_PC)
+    /* base[xC8 + 14] is 14 words (0x38 bytes) past grVe_803E5348, i.e. grVe_803E5380[xC8] (the slot's mode): a separate
+     * static natively, so the GameCube word offset read whatever the linker placed there (fire kind -1: a different fire
+     * animation and re-fire timing than the console's). */
+    switch (grVe_803E5380[GET_GROUND(gobj)->u.venom.xC8]) {
+#else
     switch (base[GET_GROUND(gobj)->u.venom.xC8 + 14]) {
+#endif
     case 0:
         break;
     case 1:

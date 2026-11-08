@@ -5,6 +5,8 @@ pub mod arena;
 pub mod geno_host;
 pub mod uigen;
 pub mod mex_host;
+pub mod mex_guest;
+pub mod mex_bridge;
 pub mod archive;
 pub mod card;
 pub mod cdata;

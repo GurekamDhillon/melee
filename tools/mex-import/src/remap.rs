@@ -54,6 +54,9 @@ mod gen {
     include!(concat!(env!("OUT_DIR"), "/native.rs"));
 }
 
+/// Unions of per-owner variables kept as native 32-bit words (see [`Layouts::locate`]).
+const WORD_UNIONS: [&str; 3] = ["Fighter_MotionVars", "Fighter_FighterVars", "Item_ItemVars"];
+
 /// Native layout tables by GC record name.
 pub struct Layouts {
     by_name: HashMap<&'static str, (usize, &'static [NField])>,
@@ -102,9 +105,44 @@ impl Layouts {
         self.by_name.get(rec).map(|r| r.0)
     }
 
+    /// Native byte offset of the field (or nested field, or array element) that STARTS at GC offset `off` of `rec`:
+    /// where a guest pointer to the interior of a native record points natively (`&fp->coll_data`).
+    pub fn field_start(&self, rec: &str, off: u32) -> Option<usize> {
+        if off == 0 {
+            return Some(0);
+        }
+        if WORD_UNIONS.contains(&rec) {
+            return (off % 4 == 0).then_some(off as usize);
+        }
+        let &(_, fields) = self.by_name.get(rec)?;
+        let f = fields.iter().find(|f| off >= f.gc && off < f.gc + f.ty.gc.max(1))?;
+        self.ty_start(f.ty, off - f.gc).map(|n| f.nat + n)
+    }
+
+    fn ty_start(&self, ty: &'static Ty, rel: u32) -> Option<usize> {
+        if rel == 0 {
+            return Some(0);
+        }
+        match ty.kind {
+            Kind::Rec(r) => self.field_start(r, rel),
+            Kind::Arr(e, _) => {
+                let g = e.gc.max(1);
+                self.ty_start(e, rel % g).map(|n| (rel / g) as usize * e.nat + n)
+            }
+            _ => None,
+        }
+    }
+
     /// Native location of GC byte `off` of record `rec`.
     pub fn locate(&self, rec: &str, off: u32) -> Loc {
-        let Some(&(_, fields)) = self.by_name.get(rec) else { return Loc::Mismatch };
+        let Some(&(nsz, fields)) = self.by_name.get(rec) else { return Loc::Mismatch };
+        // The per-character variable unions: their meaning is the owner's (an m-ex fighter's own layout), so they
+        // are kept as native little-endian 32-bit words. A guest float or int there reads back as stored, and a native
+        // function the guest hands a pointer into one (a Vec3 velocity in fp->mv) sees native floats.
+        if WORD_UNIONS.contains(&rec) {
+            let w = (off & !3) as usize + 3 - (off & 3) as usize;
+            return if w < nsz { Loc::Byte(w) } else { Loc::Pad };
+        }
         match fields.iter().find(|f| off >= f.gc && off < f.gc + f.ty.gc.max(1)) {
             Some(f) => self.ty_locate(f.ty, off - f.gc, f.nat),
             None => Loc::Pad,
@@ -137,6 +175,9 @@ pub enum Backing {
     Bytes(Vec<u8>),
     /// A native struct of GC record `rec`; `shadow` holds the GC bytes of its padding.
     Native { rec: &'static str, ptr: *mut u8, shadow: Vec<u8> },
+    /// Plain guest bytes (big-endian values) the host owns at `ptr` (a buffer of the game heap the
+    /// guest keeps its own data in, e.g. Fighter.dat_attrs_backup, so a rollback restores it).
+    Raw { ptr: *mut u8 },
 }
 
 pub struct Region {
@@ -154,6 +195,11 @@ pub struct Rewrite {
     pub store: bool,
 }
 
+/// Where auto-registered native objects get their guest addresses.
+const AUTO_BASE: u32 = 0x9000_0000;
+/// Elements of an auto-registered object's array the guest may reach.
+const ARRAY_REACH: u32 = 64;
+
 pub struct GuestSpace {
     pub layouts: Layouts,
     pub regions: Vec<Region>,
@@ -166,11 +212,18 @@ pub struct GuestSpace {
     /// null and reads the fighter's ftData from its DAT bytes, so the guest gets those bytes'
     /// guest address). A guest store to the field drops the override.
     pub ptr_override: HashMap<(u32, u32), u32>,
+    /// Guest code addresses as native function pointers (an executing host's trampolines): a
+    /// guest store of a code address into a pointer field stores what this gives, and a load of
+    /// such a native pointer gives the guest address back (`fn_guest`).
+    pub fn_native: Option<fn(u32) -> Option<usize>>,
+    pub fn_guest: Option<fn(usize) -> Option<u32>>,
+    /// Native objects the space made itself (`materialize`).
+    owned: Vec<Box<[u64]>>,
 }
 
 impl GuestSpace {
     pub fn new() -> GuestSpace {
-        GuestSpace { layouts: Layouts::new(), regions: vec![], next: 0x9000_0000, trace: None, ptr_override: HashMap::new() }
+        GuestSpace { layouts: Layouts::new(), regions: vec![], next: AUTO_BASE, trace: None, ptr_override: HashMap::new(), fn_native: None, fn_guest: None, owned: Vec::new() }
     }
 
     /// Plain guest memory at `base` (code, stack, mod data).
@@ -192,11 +245,55 @@ impl GuestSpace {
         }
         let base = base.unwrap_or_else(|| {
             let b = self.next;
-            self.next = self.next.wrapping_add((size + 0x1F) & !0xF);
+            // room for ARRAY_REACH elements: a pointer the guest indexes (fp->x5E8 parts, hurtboxes) reaches the
+            // next ones through `extend`
+            self.next = self.next.wrapping_add((size.max(0x10) * ARRAY_REACH + 0x1F) & !0xF);
             b
         });
         self.regions.push(Region { base, size, backing: Backing::Native { rec, ptr, shadow: vec![0; size as usize] } });
         Ok(base)
+    }
+
+    /// Plain guest bytes the host owns: `len` bytes at native `ptr`, at guest address `base`.
+    ///
+    /// # Safety
+    /// `ptr..ptr+len` must stay valid and writable for as long as the space is used.
+    pub unsafe fn add_raw(&mut self, base: u32, ptr: *mut u8, len: u32) {
+        self.regions.push(Region { base, size: len, backing: Backing::Raw { ptr } });
+    }
+
+    /// Drop every region registered for the native object at `ptr` (it is about to be freed).
+    pub fn forget_native(&mut self, ptr: *mut u8) {
+        let gone: Vec<u32> = self.regions.iter().filter(|r| matches!(r.backing, Backing::Native { ptr: q, .. } if q == ptr)).map(|r| r.base).collect();
+        self.regions.retain(|r| !matches!(r.backing, Backing::Native { ptr: q, .. } if q == ptr));
+        self.ptr_override.retain(|k, _| !gone.contains(&k.0));
+    }
+
+    /// The guest address of a registered native object (None: not registered).
+    pub fn handle_of(&self, ptr: *mut u8) -> Option<u32> {
+        self.regions.iter().find(|r| matches!(r.backing, Backing::Native { ptr: q, .. } if q == ptr)).map(|r| r.base)
+    }
+
+    /// The guest handle for native pointer `p` (registering a region for a pointer to a known
+    /// record `pointee` on the way); see [`Self::native`] for the inverse.
+    pub fn handle(&mut self, p: usize, pointee: Option<&'static str>) -> Result<u32, Fault> {
+        self.handle_for(p, pointee)
+    }
+
+    /// The native address guest address `h` stands for: a registered object's pointer, or the
+    /// host byte inside a bytes region.
+    pub fn native(&self, h: u32) -> Option<usize> {
+        self.native_of(h)
+    }
+
+    /// The native address of guest address `h` inside a registered native object (a field or element that starts
+    /// there), None when `h` is not inside one or not at a field start.
+    pub fn interior(&self, h: u32) -> Option<usize> {
+        let r = self.regions.iter().find(|r| h >= r.base && h < r.base + r.size)?;
+        match &r.backing {
+            Backing::Native { rec, ptr, .. } => self.layouts.field_start(rec, h - r.base).map(|n| *ptr as usize + n),
+            _ => None,
+        }
     }
 
     pub fn bytes(&self, base: u32) -> Option<&[u8]> {
@@ -204,6 +301,24 @@ impl GuestSpace {
             Backing::Bytes(b) => Some(&b[..]),
             _ => None,
         })
+    }
+
+    /// `find`, registering the element of an auto-registered native object's array that `ea` falls in (the guest
+    /// indexes past the first element of what a pointer field points to).
+    fn find_mut(&mut self, ea: u32, n: u32) -> Result<usize, Fault> {
+        if let Ok(i) = self.find(ea, n) {
+            return Ok(i);
+        }
+        let hit = self.regions.iter().find_map(|r| match &r.backing {
+            Backing::Native { rec, ptr, .. } if r.base >= AUTO_BASE && ea >= r.base && ea < r.base + r.size.max(0x10) * ARRAY_REACH => Some((r.base, r.size, *rec, *ptr)),
+            _ => None,
+        });
+        let Some((base, gs, rec, ptr)) = hit else { return Err(Fault::Mem(ea)) };
+        let k = (ea - base) / gs.max(1);
+        let ns = self.layouts.native_size(rec).ok_or(Fault::Mem(ea))?;
+        // SAFETY: add_native's contract, extended to the array the guest walks (as the C would read it).
+        unsafe { self.add_native(Some(base + k * gs), rec, ptr.add(k as usize * ns)) }.map_err(|_| Fault::Mem(ea))?;
+        self.find(ea, n)
     }
 
     fn find(&self, ea: u32, n: u32) -> Result<usize, Fault> {
@@ -218,6 +333,9 @@ impl GuestSpace {
         if p == 0 {
             return Ok(0);
         }
+        if let Some(g) = self.fn_guest.and_then(|f| f(p)) {
+            return Ok(g);
+        }
         for r in &self.regions {
             match &r.backing {
                 Backing::Native { ptr, .. } if *ptr as usize == p => return Ok(r.base),
@@ -225,6 +343,9 @@ impl GuestSpace {
                 // e.g. Fighter.dat_attrs_backup) is that region's guest address.
                 Backing::Bytes(b) if p >= b.as_ptr() as usize && p < b.as_ptr() as usize + b.len() => {
                     return Ok(r.base + (p - b.as_ptr() as usize) as u32);
+                }
+                Backing::Raw { ptr } if p >= *ptr as usize && p < *ptr as usize + r.size as usize => {
+                    return Ok(r.base + (p - *ptr as usize) as u32);
                 }
                 _ => {}
             }
@@ -250,16 +371,19 @@ impl GuestSpace {
         // heap buffer; regions never resize).
         self.regions.iter().find(|r| h >= r.base && h < r.base + r.size).and_then(|r| match &r.backing {
             Backing::Bytes(b) => Some(b.as_ptr() as usize + (h - r.base) as usize),
+            Backing::Raw { ptr } => Some(*ptr as usize + (h - r.base) as usize),
             _ => None,
         })
     }
 
     fn load(&mut self, ea: u32, n: u32) -> Result<u64, Fault> {
-        let i = self.find(ea, n)?;
+        let i = self.find_mut(ea, n)?;
         let r = &self.regions[i];
         let o = ea - r.base;
         match &r.backing {
             Backing::Bytes(b) => Ok(b[o as usize..(o + n) as usize].iter().fold(0u64, |v, &x| v << 8 | x as u64)),
+            // SAFETY: add_raw's contract.
+            Backing::Raw { ptr } => Ok((0..n).fold(0u64, |v, k| v << 8 | unsafe { *ptr.add((o + k) as usize) } as u64)),
             Backing::Native { rec, ptr, shadow } => {
                 let (rec, ptr) = (*rec, *ptr);
                 if let Some(t) = &mut self.trace {
@@ -292,8 +416,51 @@ impl GuestSpace {
         }
     }
 
+    /// Is guest address `h` plain guest bytes (no object registered there) that a typed pointer field can only hold
+    /// as a native `rec`?
+    fn materialize_ok(&self, h: u32, rec: &str) -> bool {
+        if h == 0 || !self.layouts.has(rec) || self.layouts.gc_size(rec).is_none() {
+            return false;
+        }
+        match self.find(h, 1) {
+            Ok(i) => matches!(self.regions[i].backing, Backing::Bytes(_) | Backing::Raw { .. }),
+            Err(_) => false,
+        }
+    }
+
+    /// A native `rec` made from the guest bytes at `h` (a record of the mod's own data, e.g. its ftData's attribute
+    /// block, stored into a typed pointer field the native code follows): decoded through the layout tables, pointer
+    /// words translated, and registered at `h` in front of the bytes, so the guest's later accesses there reach the
+    /// same native object. The object lives as long as the space (`owned`).
+    fn materialize(&mut self, h: u32, rec: &'static str) -> Option<usize> {
+        let gs = self.layouts.gc_size(rec)?;
+        let ns = self.layouts.native_size(rec)?;
+        let bytes: Vec<Option<u8>> = (0..gs).map(|k| self.load(h + k, 1).ok().map(|v| v as u8)).collect();
+        let mut buf = vec![0u64; ns.div_ceil(8).max(1)].into_boxed_slice();
+        let ptr = buf.as_mut_ptr() as *mut u8;
+        self.owned.push(buf);
+        self.regions.insert(0, Region { base: h, size: gs, backing: Backing::Native { rec, ptr, shadow: vec![0; gs as usize] } });
+        let mut k = 0;
+        while k < gs {
+            match self.layouts.locate(rec, k) {
+                Loc::Ptr(_, 0, _) if k + 4 <= gs => {
+                    let w = (0..4).fold(0u32, |a, j| a << 8 | bytes[(k + j) as usize].unwrap_or(0) as u32);
+                    let _ = self.store(h + k, 4, w as u64);
+                    k += 4;
+                }
+                _ => {
+                    if let Some(b) = bytes[k as usize] {
+                        let _ = self.store(h + k, 1, b as u64);
+                    }
+                    k += 1;
+                }
+            }
+        }
+        Some(ptr as usize)
+    }
+
     fn store(&mut self, ea: u32, n: u32, v: u64) -> Result<(), Fault> {
-        let i = self.find(ea, n)?;
+        let i = self.find_mut(ea, n)?;
         let o = ea - self.regions[i].base;
         let (rec, ptr) = match &mut self.regions[i].backing {
             Backing::Bytes(b) => {
@@ -302,16 +469,29 @@ impl GuestSpace {
                 }
                 return Ok(());
             }
+            Backing::Raw { ptr } => {
+                for k in 0..n {
+                    // SAFETY: add_raw's contract.
+                    unsafe { *ptr.add((o + k) as usize) = (v >> (8 * (n - 1 - k))) as u8 };
+                }
+                return Ok(());
+            }
             Backing::Native { rec, ptr, .. } => (*rec, *ptr),
         };
         if let Some(t) = &mut self.trace {
             t.push(Rewrite { rec, gc_off: o, size: n, store: true });
         }
-        if let Loc::Ptr(nat, 0, _) = self.layouts.locate(rec, o) {
+        if let Loc::Ptr(nat, 0, pointee) = self.layouts.locate(rec, o) {
             if n != 4 {
                 return Err(Fault::Mem(ea));
             }
-            let p = self.native_of(v as u32).ok_or(Fault::Mem(ea))?;
+            let p = match self.fn_native.and_then(|f| f(v as u32)) {
+                Some(p) => p,
+                None => match pointee {
+                    Some(r) if self.materialize_ok(v as u32, r) => self.materialize(v as u32, r).ok_or(Fault::Mem(ea))?,
+                    _ => self.native_of(v as u32).ok_or(Fault::Mem(ea))?,
+                },
+            };
             let base = self.regions[i].base;
             self.ptr_override.remove(&(base, o));
             // SAFETY: add_native's contract.

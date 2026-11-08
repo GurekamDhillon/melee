@@ -173,18 +173,42 @@ def f32(w):
     return struct.unpack(">f", struct.pack(">I", w))[0]
 
 
-def css_goto(d, x, y, xi, yi):
-    """Steer the CSS hand (CSSCursorData x at +0xC, y at +0x10; their words are columns xi, yi) to (x, y)."""
-    for _ in range(400):
-        s = d.frames(1)
-        cx, cy = f32(s[xi]), f32(s[yi])
-        ex, ey = x - cx, y - cy
-        if abs(ex) < 0.6 and abs(ey) < 0.6:
-            break
-        k = lambda e: 0.5 + max(-0.5, min(0.5, e / 8.0))
-        d.cmd(f"SET MAIN {k(ex):.3f} {k(ey):.3f}")
-    d.cmd("SET MAIN 0.5 0.5")
-    d.frames(4)
+def css_goto(d, x, y, xi, yi, tol=0.6):
+    """Steer the CSS hand (CSSCursorData x at +0xC, y at +0x10; their words are columns xi, yi) to (x, y), then
+    wait until it has settled there before the caller presses A (phase 4 picked the wrong character now and then:
+    pipe commands take effect a frame or two late, so the hand was still moving). Near the target the stick is
+    held just past the dead zone (a smaller deflection does not move the hand), and once centred the hand must stay
+    inside the tolerance and still over 8 frames, else it is steered again."""
+    def k(e, g):
+        v = max(-0.5, min(0.5, e / g))
+        if abs(e) >= tol * 0.5 and abs(v) < 0.16:
+            v = 0.16 if v > 0 else -0.16
+        return 0.5 + (v if abs(e) >= tol * 0.5 else 0.0)
+    cx = cy = 0.0
+    for _attempt in range(8):
+        for _ in range(400):
+            s = d.frames(1)
+            cx, cy = f32(s[xi]), f32(s[yi])
+            ex, ey = x - cx, y - cy
+            if abs(ex) < tol * 0.5 and abs(ey) < tol * 0.5:
+                break
+            g = 16.0 if max(abs(ex), abs(ey)) < 4.0 else 8.0
+            d.cmd(f"SET MAIN {k(ex, g):.3f} {k(ey, g):.3f}")
+        d.cmd("SET MAIN 0.5 0.5")
+        d.frames(4)
+        prev = None
+        ok = True
+        for _ in range(8):
+            s = d.frames(1)
+            cx, cy = f32(s[xi]), f32(s[yi])
+            if abs(x - cx) >= tol or abs(y - cy) >= tol or (prev and max(abs(cx - prev[0]), abs(cy - prev[1])) > 0.05):
+                ok = False
+                break
+            prev = (cx, cy)
+        if ok:
+            log(f"hand settled at {cx:.2f},{cy:.2f} (target {x},{y})")
+            return
+    raise SystemExit(f"drive: the CSS hand did not settle at {x},{y} (last {cx:.2f},{cy:.2f})")
 
 
 def in_game(s):

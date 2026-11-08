@@ -32,6 +32,7 @@ done
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "$here/../../.." && pwd)"
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
+if [ -n "${MELEE_EXE:-}" ] && [ ! -x "$MELEE_EXE" ]; then echo "ORACLE error: MELEE_EXE is set but not an executable: $MELEE_EXE" >&2; exit 2; fi
 EXE=${MELEE_EXE:-$root/build/bin/melee.exe}
 [ -x "$EXE" ] || EXE="$ws/_build/cargo-shared/fast/fast/melee.exe"
 set -a; [ -f "$ws/.env" ] && . "$ws/.env" >/dev/null 2>&1; set +a

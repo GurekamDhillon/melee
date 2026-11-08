@@ -141,3 +141,25 @@ mod imp {
 
 #[cfg(windows)]
 pub use imp::*;
+
+/// Off Windows there is no copy-on-write capture yet (the vectored handler is Win32): `protect` reports that, so a
+/// rollback base falls back to whatever path its caller takes on an error, and everything else is inert.
+#[cfg(not(windows))]
+mod imp_none {
+    pub unsafe fn protect(_start: usize, _len: usize) -> Result<(), String> {
+        Err("copy-on-write capture is Windows-only".into())
+    }
+    pub unsafe fn release() {}
+    pub unsafe fn saved(_page_addr: usize) -> Option<&'static [u8]> {
+        None
+    }
+    pub fn or_written(_out: &mut Vec<u64>) {}
+    pub fn active() -> bool {
+        false
+    }
+    pub fn faults() -> u64 {
+        0
+    }
+}
+#[cfg(not(windows))]
+pub use imp_none::*;

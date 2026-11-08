@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Dolphin oracle: give the playback the recording console's own widescreen Gecko codes.
+"""Dolphin oracle: give the playback the recording console's own widescreen and polling-drift Gecko codes.
 
     python -I replay_codes.py REPLAY.slp USER_DIR
 
@@ -14,6 +14,15 @@ Reads the replay's Gecko list (Message Splitter 0x10 carrying command 0x3D), cop
 addresses of Slippi's own "Widescreen 16:9" code verbatim (the replay's values, not Slippi's), and writes
 USER_DIR/GameSettings/GALE01.ini with them as one enabled code. With no such code the file is removed. Prints one line.
 No disc data is read or written.
+
+The same goes for Slippi Online's "Polling Drift Fix" (0x801A4DA0, 0x801A4DB4, 0x80019860; in Slippi's
+list_netplay.json as part of "Required: Slippi Online"). Without it the engine loop is paced by an OS timer at 60 Hz
+(lb_80019880(OSSecondsToTicks(1/60)) in gm_801A4BD4) against the 59.94 Hz retrace, so every ~1001 frames the loop runs
+two logic frames before one render. The render pass is what sets the fighters' off-camera flag (x221F_b0,
+ftLib_UpdateScreenVisibility), so a skipped render moves the 1% offscreen tick by a frame (03b84423 slippi 7892,
+21cd149c 3378: render skipped at 7831 and 3317, x7AC frames earlier), and the phase of the 1001-frame cycle depends on
+how long playback waited before the match, which made playback nondeterministic (383fcf15). The recording console ran
+the fix; the recorded Post-Frame agrees with the engine (notes/dolphin-oracle.md, "Polling drift").
 """
 import os
 import struct
@@ -22,6 +31,8 @@ import sys
 # the addresses of Slippi's "$Optional: Widescreen 16:9" (Sys/GameSettings/GALE01r2.ini)
 WIDE = {0x803BB05C, 0x8036A4A8, 0x804DDB58, 0x80086B24, 0x80030C7C, 0x80030C88, 0x804DDB30, 0x804DDB34,
         0x804DDB2C, 0x804DDB28, 0x804DDB4C, 0x802FCFC4, 0x804DDB84}
+# Slippi Online's "Polling Drift Fix" (Sys/Slippi/InjectionLists/list_console_lag_pd.json)
+DRIFT = {0x801A4DA0, 0x801A4DB4, 0x80019860}
 
 
 def raw_events(d):
@@ -72,25 +83,32 @@ def codes(g):
 def main():
     slp, user = sys.argv[1], sys.argv[2]
     g = gecko_list(open(slp, "rb").read())
-    lines = []
+    groups = {"widescreen": [], "polling drift fix": []}
     for addr, words in codes(g):
-        if addr in WIDE:
-            # a C2 code's last word is the branch back; the recording console's code handler had already patched it
-            # (a 0x48xxxxxx `b`), Dolphin's handler writes its own into the 00000000 the code is written with
-            if (words[0][0] >> 24) & 0xFE == 0xC2 and len(words) > 1 and words[-1][1] >> 26 == 18:
-                words[-1] = (words[-1][0], 0)
-            lines +=[f"{a:08X} {b:08X}" for a, b in words]
+        name = "widescreen" if addr in WIDE else "polling drift fix" if addr in DRIFT else None
+        if name is None:
+            continue
+        # a C2 code's last word is the branch back; the recording console's code handler had already patched it
+        # (a 0x48xxxxxx `b`), Dolphin's handler writes its own into the 00000000 the code is written with
+        if (words[0][0] >> 24) & 0xFE == 0xC2 and len(words) > 1 and words[-1][1] >> 26 == 18:
+            words[-1] = (words[-1][0], 0)
+        groups[name] += [f"{a:08X} {b:08X}" for a, b in words]
     path = os.path.join(user, "GameSettings", "GALE01.ini")
-    if not lines:
+    used = [(n, l) for n, l in groups.items() if l]
+    if not used:
         if os.path.exists(path):
             os.remove(path)
-        print("replay_codes: no widescreen code in the replay")
+        print("replay_codes: no widescreen or polling drift code in the replay")
         return
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", newline="\n") as f:
-        f.write("[Gecko]\n$Replay: recording console widescreen\n" + "\n".join(lines) + "\n")
-        f.write("[Gecko_Enabled]\n$Replay: recording console widescreen\n")
-    print(f"replay_codes: {len(lines)} widescreen code line(s) from the replay")
+        f.write("[Gecko]\n")
+        for n, l in used:
+            f.write(f"$Replay: recording console {n}\n" + "\n".join(l) + "\n")
+        f.write("[Gecko_Enabled]\n")
+        for n, _ in used:
+            f.write(f"$Replay: recording console {n}\n")
+    print("replay_codes: " + ", ".join(f"{len(l)} {n} line(s)" for n, l in used) + " from the replay")
 
 
 if __name__ == "__main__":

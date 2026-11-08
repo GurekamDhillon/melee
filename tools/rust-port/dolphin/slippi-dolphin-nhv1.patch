@@ -192,10 +192,10 @@ index c6fbc9d..dd26f2a 100644
  
 diff --git a/Source/Core/Core/Slippi/NHV1Oracle.cpp b/Source/Core/Core/Slippi/NHV1Oracle.cpp
 new file mode 100644
-index 0000000..17a3fc2
+index 0000000..5277132
 --- /dev/null
 +++ b/Source/Core/Core/Slippi/NHV1Oracle.cpp
-@@ -0,0 +1,517 @@
+@@ -0,0 +1,595 @@
 +// NHV1 oracle (GD's Melee port, local tool): see NHV1Oracle.h.
 +#include "Core/Slippi/NHV1Oracle.h"
 +
@@ -592,6 +592,73 @@ index 0000000..17a3fc2
 +// The same injection also calls Camera_8002F3AC (snap the camera to its target) once per fighter on that frame; the
 +// recording console never did, so game_camera (0x80452C68, 0x39C bytes) is saved at the first fighter and restored.
 +static u8 s_undo_cam[0x39C];
++static std::vector<u8> s_undo_ram;
++static u32 s_undo_ram_fp = 0;
++// The spawn correction (RestoreGameFrame.asm, frame -123) writes only into the fighter's own objects: the fighter
++// (fp, 0x23EC bytes; its input words fp+0x620..0x660 are the replay's and are kept), its CmSubject (fp->x890: the
++// camera box), its jobj tree (ftPartSetRotX and the camera bone matrices of ftCamera_UpdateCameraBox) and its static
++// player block (Player_80032828). Only those regions are restored; anything else that changed is Slippi's own state.
++static std::vector<std::pair<u32, u32>> s_undo_regions;
++static void UndoJObjs(const Core::CPUThreadGuard& guard, u32 j, int depth)
++{
++  for (; j >= 0x80000000u && j < 0x81800000u && depth < 64; j = PowerPC::MMU::HostRead_U32(guard, j + 0x8))
++  {
++    s_undo_regions.push_back({j, j + 0x88});
++    UndoJObjs(guard, PowerPC::MMU::HostRead_U32(guard, j + 0x10), depth + 1);
++  }
++}
++static void UndoCollect(const Core::CPUThreadGuard& guard, u32 fp)
++{
++  s_undo_regions.clear();
++  s_undo_regions.push_back({fp, fp + 0x23EC});
++  const u32 cb = PowerPC::MMU::HostRead_U32(guard, fp + 0x890);
++  if (cb >= 0x80000000u && cb < 0x81800000u)
++    s_undo_regions.push_back({cb, cb + 0x6C});
++  s_undo_regions.push_back({0x80453080, 0x80453080 + 0x5760});
++  const u32 gobj = PowerPC::MMU::HostRead_U32(guard, fp + 0x0);
++  if (gobj >= 0x80000000u && gobj < 0x81800000u)
++  {
++    const u32 root = PowerPC::MMU::HostRead_U32(guard, gobj + 0x28);
++    if (root >= 0x80000000u && root < 0x81800000u)
++    {
++      s_undo_regions.push_back({root, root + 0x88});
++      UndoJObjs(guard, PowerPC::MMU::HostRead_U32(guard, root + 0x10), 0);
++    }
++  }
++}
++static bool UndoKeep(u32 addr, u32 fp)
++{
++  if (addr >= fp + 0x620 && addr < fp + 0x660)
++    return true;
++  for (const auto& r : s_undo_regions)
++    if (addr >= r.first && addr < r.second)
++      return false;
++  return true;
++}
++static void UndoRam(const Core::CPUThreadGuard& guard, u32 fp)
++{
++  if (s_undo_ram.empty() || s_undo_ram_fp != fp)
++    return;
++  auto& mem = guard.GetSystem().GetMemory();
++  std::vector<u8> now(s_undo_ram.size());
++  mem.CopyFromEmu(now.data(), 0x80000000, now.size());
++  const u32 sp = guard.GetSystem().GetPPCState().gpr[1];
++  const bool log = std::getenv("MELEE_DOLPHIN_NHV1_UNDO_LOG") != nullptr;
++  for (u32 k = 0; k < now.size(); k++)
++  {
++    if (now[k] == s_undo_ram[k])
++      continue;
++    const u32 a = 0x80000000u + k;
++    const bool keep = UndoKeep(a, fp);
++    const bool stack = a < sp && a + 0x1000 >= sp;
++    if (log && !stack)
++      std::fprintf(stderr, "NHV1 undo fp=%08x %08x %02x->%02x %s\n", fp, a, s_undo_ram[k], now[k],
++                   keep ? "kept" : "restored");
++    if (!keep)
++      mem.Write_U8(s_undo_ram[k], a);
++  }
++  s_undo_ram.clear();
++}
 +static bool s_undo_cam_saved = false;
 +void UndoSave(const Core::CPUThreadGuard& guard)
 +{
@@ -612,6 +679,16 @@ index 0000000..17a3fc2
 +    s_undo_cam_saved = true;
 +  }
 +  const u32 fp = guard.GetSystem().GetPPCState().gpr[31];
++  // strict2: snapshot all of MEM1 before the injection; UndoRestore puts back every byte the injection changed in the
++  // fighter's own objects (UndoCollect; MELEE_DOLPHIN_NHV1_UNDO_PARTIAL=1: only the round-10 fields)
++  if (!std::getenv("MELEE_DOLPHIN_NHV1_UNDO_PARTIAL"))
++  {
++    auto& mem = guard.GetSystem().GetMemory();
++    s_undo_ram.resize(mem.GetRamSizeReal());
++    mem.CopyFromEmu(s_undo_ram.data(), 0x80000000, s_undo_ram.size());
++    s_undo_ram_fp = fp;
++    UndoCollect(guard, fp);
++  }
 +  s_undo_fp[s_undo_n] = fp;
 +  for (u32 k = 0; k < 0x38; k++)
 +    s_undo_buf[s_undo_n][k] = PowerPC::MMU::HostRead_U8(guard, fp + 0x6F4 + k);
@@ -630,6 +707,7 @@ index 0000000..17a3fc2
 +      PowerPC::MMU::HostWrite_U8(guard, s_undo_buf[i][k], fp + 0x6F4 + k);
 +    s_undo_fp[i] = 0;
 +  }
++  UndoRam(guard, fp);
 +  if (s_undo_cam_saved)
 +    for (u32 k = 0; k < 0x39C; k++)
 +      PowerPC::MMU::HostWrite_U8(guard, s_undo_cam[k], 0x80452C68 + k);

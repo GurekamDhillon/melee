@@ -256,6 +256,36 @@ pub fn ps_camera_independent_monitor() -> bool {
     PS_MONITOR.load(Ordering::Relaxed) != 0
 }
 
+/// Slippi's "Preload Stadium Transformations" (C2 0x801D45EC and five more inserts, slippi-ssbm-asm `Common/Preload
+/// Stadium Transformations`, in the Slippi Recording core set): Pokemon Stadium decides its next transformation (one
+/// HSD_Randi draw loop) when the normal-stage countdown starts instead of when it ends (grpstadium.rs). Armed from a
+/// replay's own Gecko list (slpcheck, `golden --slp`).
+static PS_PRELOAD: AtomicU32 = AtomicU32::new(0);
+pub fn set_ps_preload_transformations(on: bool) {
+    if on {
+        PS_PRELOAD.fetch_or(1, Ordering::Relaxed);
+    } else {
+        PS_PRELOAD.fetch_and(!1, Ordering::Relaxed);
+    }
+}
+#[inline]
+pub fn ps_preload_transformations() -> bool {
+    PS_PRELOAD.load(Ordering::Relaxed) & 1 != 0
+}
+/// The replay freezes Pokemon Stadium with IngameCheckIfFrozen (C2 0x801D457C), which returns from grStadium_801D4548
+/// before its state machine; the older Frozen PS (04 0x801D45FC) only stops the countdown.
+#[inline]
+pub fn ps_freeze_at_entry() -> bool {
+    PS_PRELOAD.load(Ordering::Relaxed) & 2 != 0
+}
+pub fn set_ps_freeze_at_entry(on: bool) {
+    if on {
+        PS_PRELOAD.fetch_or(2, Ordering::Relaxed);
+    } else {
+        PS_PRELOAD.fetch_and(!2, Ordering::Relaxed);
+    }
+}
+
 /// A replay's widescreen camera code (melee_data::slp::widescreen_code), active only while that replay plays: set before
 /// the match boots from the replay's own Gecko list (slpcheck, `golden --slp`), cleared (all 0) otherwise. Packed as
 /// left | right << 16 in [`WS_BOUNDS`], the aspect ratio's numerator/denominator as f32 bits.

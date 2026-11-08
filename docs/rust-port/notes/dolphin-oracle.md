@@ -212,18 +212,54 @@ Engine fix found by the sweep: `it_8027781C` squares the velocity unfused (fmuls
 0x80277B24; only the dot products with the surface normals are fmadds). Dr. Mario's pill bounce was 1 ULP off
 (3135285b, 3417139d).
 
-Left (8):
-- **Offscreen tick a frame off, no widescreen code** (03b84423 at 7892, 21cd149c at 3378; 10909063 matched with the
-  of10 exe): the render pass sets the magnifier flag on the console; the recorded percent agrees with Rust
-  (10909063: 93.1 at 1890 in the .slp and Rust, 92.1 in playback). The replay's `C2 802FCCD8` magnifier code was tried
-  in playback and changed nothing (it tests an online flag at 0x8046B6A0+0x24D0). Playback-side, not proven.
-- **Camera after the frame -123 undo** (0854ab08 at 1450, 602a5cd8, adc68cd8, 4e71d712; f41d427a's quake epicenter
-  likely the same): a fighter's `x20A4.bf_0` (LbShadow) differs one frame before the camera parts. 0854ab08 matched
-  with the shared exe (no camera undo) and fails with the of10 exe. `RestoreGameFrame.asm` on frame -123 also writes
-  each fighter's CameraBox (`fp->x890`: x2C/x30 from x40/x44) and calls 0x8007592C, 0x80032828 and 0x800761C8;
-  the undo restores only fp+0x6F4..0x72C and `game_camera`. Next step: save/restore the CameraBox too (oracle exe
-  rebuild, round 10's area).
-- **Nana CPU block at frame 85** (4cb4510f, `cpu.x30` 8 vs 19): CPU/Nana, the round-9/10 agent's area.
+Left after port/strict1 (8), all resolved or narrowed by port/strict2 below.
+
+## Round 2 of the strict sweep (port/strict2): 117 -> 124 of 125
+
+Oracle exe: `_build/dolphin-oracle-strict2` (private copy of the shared source + the change below; `build.bat` there
+is `build_dolphin.bat` with `D` changed). Cache: one `dolphin.csv` per replay as in round 1.
+
+| | strict |
+|---|---|
+| port/strict1 end (of10 exe) | 117 / 125 |
+| + whole first-frame undo (strict2 exe) | 119 / 125 (383fcf15 lost to nondeterminism, see "Polling drift") |
+| + the recording console's Polling Drift Fix (replay_codes.py), + Slippi's Preload Stadium Transformations in the engine | **124 / 125** |
+
+**The whole first-frame write is undone.** `RestoreGameFrame.asm`'s spawn correction (frame -123) also turns the
+root joint (`ftPartSetRotX`), writes the static player block (`Player_80032828`), the CameraBox
+(`ftCamera_UpdateCameraBox` computes the camera bone's matrices, then x2C/x30 from x40/x44) and `fp+0x2344`. The
+undo now snapshots MEM1 at 0x8006B0DC and, at 0x8006B120, puts back every changed byte inside the fighter's own
+objects: the fighter (0x23EC bytes, except its input words fp+0x620..0x660, which are the replay's), its CmSubject
+(fp->x890, 0x6C), its jobj tree (from gobj->hsd_obj) and `player_slots`. Restoring all of MEM1 hung playback at
+frame -118 (it also undid Slippi's own state). `MELEE_DOLPHIN_NHV1_UNDO_LOG=1` lists every changed byte (`kept` /
+`restored`), `MELEE_DOLPHIN_NHV1_UNDO_PARTIAL=1` restores only round 10's fields. Fixed 0854ab08, 4e71d712, f41d427a.
+
+**Polling drift.** Online replays carry Slippi's "Polling Drift Fix" (C2 0x801A4DA0, 04 0x801A4DB4, 04 0x80019860;
+part of "Required: Slippi Online"), which playback's code set lacks. Without it the engine loop is paced by an OS
+timer at 60 Hz (`lb_80019880(OSSecondsToTicks(1/60))` in gm_801A4BD4) against the 59.94 Hz retrace, so every ~1001
+frames the loop runs two logic frames before one render. A probe on the loop start (0x801A4DE4) and render start
+(0x801A5024) found such frames at 1825, 2826, ... 7831 in 03b84423 and 1316, 2312, 3317 ... in 21cd149c. The render
+pass is what sets the off-camera flag (`x221F_b0`, ftLib_UpdateScreenVisibility), so the skipped render moved the
+1% offscreen tick, `x7AC` frames later: 03b84423 at 7892 (skip at 7831), 21cd149c at 3378 (skip at 3317). The phase
+of the cycle depends on how long playback waited before the match, which is what made Dolphin nondeterministic:
+two runs of 383fcf15 with the same exe differed from slippi frame 4830, one equal to Rust. `replay_codes.py` now
+copies the replay's drift codes too (verbatim, like the widescreen code); with them the probe finds no skipped render
+in game and both files match. The recording console ran them; its Post-Frame percent agrees with the engine.
+
+**Preload Stadium Transformations (engine).** The Slippi Recording core set carries `Common/Preload Stadium
+Transformations` (C2 0x801D14C8, 0x801D45EC, 0x801D4F14; 04 0x801D460C, 0x801D4610, 0x801D4724; tagged
+affects-gameplay; playback runs the replay's copy). Pokemon Stadium decides its next transformation (the HSD_Randi(4)
+loop) at the first frame of the normal countdown instead of when it ends, loads it then, and at the end takes the
+preloaded id without a draw. 4cb4510f: an extra HSD_Randi at slippi -39 (Dolphin probe lr 0x80BE0C08, inside the
+code; the recording's Pre-Frame seed at -38 is one draw past the engine's), so `cpu.x30` (120 * 0.25 * Randf, Nana's
+CPU) differed at -38. grpstadium.rs now follows the six inserts when the replay's Gecko list has 0x801D45EC
+(`melee_core::codes::ps_preload_transformations`). The 3.x Frozen PS (04 0x801D45FC, `bge` -> `b`) still runs the
+case's entry, so a frozen stadium decides once; the later IngameCheckIfFrozen (C2 0x801D457C) returns first
+(`ps_freeze_at_entry`). Fixed 4cb4510f. adc68cd8 (camera, slippi 5323) also matches after these two changes; which of
+them fixed it was not isolated.
+
+Left (1): **602a5cd8** at csv 5452 (slippi 5329): s6 `x2188.x` (screen position, 300 in Rust, 295 in playback) on
+one frame, then s0. Not investigated further.
 
 ## Nondeterminism
 

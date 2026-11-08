@@ -371,6 +371,16 @@ pub fn ps_camera_independent_monitor_code(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x801D_24FC)
 }
 
+/// True when the list carries Slippi's "Preload Stadium Transformations" (its `Load Transformation.asm` insert).
+pub fn ps_preload_transformations_code(g: &[u8]) -> bool {
+    gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x801D_45EC)
+}
+
+/// True when the list freezes Pokemon Stadium at grStadium_801D4548's entry (IngameCheckIfFrozen, C2 0x801D457C).
+pub fn ps_freeze_at_entry_code(g: &[u8]) -> bool {
+    gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x801D_457C)
+}
+
 /// True when the list carries the online codeset (its offscreen-damage insert at 0x8006A880).
 pub fn online_codeset(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x8006_A880)

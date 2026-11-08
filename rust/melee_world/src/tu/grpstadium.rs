@@ -244,6 +244,12 @@ melee_core::gc_layout!(GrPStadiumYakumonoParam, "grPStadium_YakumonoParam", size
 /// `static ... * yakumono_param`
 pub static mut yakumono_param: *mut GrPStadiumYakumonoParam = null_mut();
 
+/// Slippi's "Preload Stadium Transformations" (slippi-ssbm-asm `Common/Preload Stadium Transformations`, part of the
+/// Slippi Recording core set; armed from the replay's own Gecko list, [`melee_core::codes::ps_preload_transformations`]).
+/// The asm keeps these in the stadium Ground's spare bytes (PSData+0xEC `TransformationID`, +0xF0 `isLoaded`).
+pub static mut PS_PRELOAD_ID: i32 = 0;
+pub static mut PS_PRELOAD_LOADED: u8 = 0;
+
 /// `GrJoint grPs_803E1248[]`
 pub static mut grPs_803E1248: [GrJoint; 6] = [
     GrJoint { x: 1, y: 3, z: 0 },
@@ -436,6 +442,10 @@ pub unsafe extern "C" fn grStadium_801D13E0(gobj: *mut HSD_GObj) {
         var_r27 = var_r27.wrapping_add(randi(temp_r28.wrapping_sub(var_r27)));
     }
     (*gr).u.stadium.xD8 = var_r27;
+    // Slippi preload, `Init isLoaded Bool.asm` (0x801D14C8): isLoaded = 0
+    if melee_core::codes::ps_preload_transformations() {
+        PS_PRELOAD_LOADED = 0;
+    }
     (*gr).x11_flags.set_b012(1);
     ext::mpLib_800575B0(0x55);
     ext::mpLib_800575B0(0x6F);
@@ -1963,6 +1973,31 @@ pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
 
     match (*temp_r31).u.stadium.xDC {
         0 => {
+            let preload = melee_core::codes::ps_preload_transformations();
+            // Slippi preload, `Load Transformation.asm` (0x801D45EC, the case's first instruction): until a
+            // transformation is loaded, decide the next one now (the vanilla decision loop: HSD_Randi(4) over
+            // {3, 4, 6, 9} at 0x803B7F9C until it differs from xE2) and start loading its file into this ground's own
+            // buffer. Frozen PS of the 3.x code sets (04 0x801D45FC: the timer test's `bge` becomes `b`) still runs this
+            // case's entry, so the decision is made once; the later IngameCheckIfFrozen (C2 0x801D457C, the gm_8018841C
+            // test) returns before the case dispatch, so a frozen stadium never gets here
+            // ([`melee_core::codes::ps_freeze_at_entry`]).
+            if preload && !(melee_core::codes::ps_freeze_at_entry() && ext::Slippi_FrozenStadium() != 0) && PS_PRELOAD_LOADED == 0 {
+                let sp60: [i32; 4] = [3, 4, 6, 9];
+                let mut v;
+                loop {
+                    let idx = ext::HSD_Randi(4);
+                    v = sp60[idx as usize];
+                    if (*temp_r31).u.stadium.xE2 as i32 != v {
+                        break;
+                    }
+                }
+                PS_PRELOAD_ID = v;
+                let file = if v == 3 { Some(0) } else if v == 4 { Some(1) } else if v == 9 { Some(2) } else if v == 6 { Some(3) } else { None };
+                if let Some(i) = file {
+                    ext::lbFile_80016580(datfiles[i], (*temp_r31).u.stadium.xCC as *mut c_void, &raw mut (*temp_r31).u.stadium.xC8 as *mut u32, Some(fn_801D4220), 0);
+                    PS_PRELOAD_LOADED = 1;
+                }
+            }
             let temp_r3_4 = (*temp_r31).u.stadium.xD8;
             (*temp_r31).u.stadium.xD8 = temp_r3_4.wrapping_sub(1);
             // TARGET_PC: Slippi's Frozen PS skips the whole transformation decision
@@ -1971,7 +2006,11 @@ pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
             }
             if temp_r3_4 < 0 {
                 let var_r4: i32;
-                if (*temp_r31).u.stadium.xDE == 5 {
+                if (*temp_r31).u.stadium.xDE == 5 && preload {
+                    // Slippi preload, `GetPreloadedTransition.asm` (0x801D460C) + `SkipNormalDecision1.asm`
+                    // (0x801D4610, b +0x4C): the preloaded transformation, no draw
+                    var_r4 = PS_PRELOAD_ID;
+                } else if (*temp_r31).u.stadium.xDE == 5 {
                     let sp60: [i32; 4] = [3, 4, 6, 9];
                     let mut v;
                     loop {
@@ -2013,6 +2052,15 @@ pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
                 let gp = (*map_gobj).user_data as *mut Ground;
                 if gp.is_null() {
                     panic!("HSD_ASSERT(0x99B, gp) grpstadium.c");
+                }
+                if preload {
+                    // Slippi preload, `SkipNormalDecision2.asm` (0x801D4724, b +0x3C to 0x801D4760, case 1's code):
+                    // the file is already loading; no xC4_b1, no load, xDC not set to 1
+                    let _ = var_r29;
+                    if grStadium_801D42B8() != 0 {
+                        (*temp_r31).u.stadium.xDC = 2;
+                    }
+                    return;
                 }
                 (*gp).u.stadium.set_xC4_b1(1);
                 ext::lbFile_80016580(datfiles[var_r29], (*gp).u.stadium.xCC as *mut c_void, &raw mut (*gp).u.stadium.xC8 as *mut u32, Some(fn_801D4220), 0);
@@ -2137,6 +2185,10 @@ pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
             (*temp_r3_9).u.stadium.set_xC4_b0(1);
             ext::mpLib_80058560();
             if (*temp_r31).u.stadium.xDE == 5 {
+                // Slippi preload, `Reset isLoaded.asm` (0x801D4F14): back to normal, decide again
+                if melee_core::codes::ps_preload_transformations() {
+                    PS_PRELOAD_LOADED = 0;
+                }
                 (*temp_r31).u.stadium.xD8 = randi_between_2((*yp).x0, (*yp).x4);
                 ext::grAnime_801C65B0((*temp_r31).u.stadium.xD0);
                 (*temp_r31).u.stadium.xD0 = null_mut();

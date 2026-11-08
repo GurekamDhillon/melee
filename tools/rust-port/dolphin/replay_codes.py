@@ -101,8 +101,12 @@ def main():
     slp, user = sys.argv[1], sys.argv[2]
     g = gecko_list(open(slp, "rb").read())
     groups = {"widescreen": [], "polling drift fix": []}
+    # the Polling Drift Fix is the set with its C2 at 0x801A4DA0. Hero's 2026 replays carry another code at 0x801A4DB4
+    # (a 26-line C2) and 0x80019860 instead, which is not the drift fix: copied into playback it keeps the game from
+    # ever reaching the replay (no frame requested). Without the C2 at 0x801A4DA0 no drift-site code is copied.
+    drift = any(a == 0x801A4DA0 and (w[0][0] >> 24) & 0xFE == 0xC2 for a, w in codes(g))
     for addr, words in codes(g):
-        name = "widescreen" if addr in WIDE else "polling drift fix" if addr in DRIFT else None
+        name = "widescreen" if addr in WIDE else "polling drift fix" if addr in DRIFT and drift else None
         if name is None:
             continue
         # a C2 code's last word is the branch back; the recording console's code handler had already patched it

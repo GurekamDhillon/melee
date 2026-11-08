@@ -48,6 +48,10 @@ const MAX_STEP: f32 = 30.0;
 pub struct Frame {
     pub draws: Vec<DrawCmd>,
     pub pose: Option<Arc<PoseFrame>>,
+    /// The decode thread's packing of `draws`, until the frame is prepared (it travels with the frame, so a frame
+    /// prepared later than it arrived, or one whose EFB copies are rendered after it was skipped, never has to be
+    /// packed again on the presenting thread).
+    pub packed: Option<crate::render::Packed>,
 }
 
 #[derive(Clone, Copy, Debug, Default)]

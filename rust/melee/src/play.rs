@@ -1277,13 +1277,10 @@ impl Play {
             let frame = self.em.as_mut().and_then(|m| m.frame.take());
             let packed = self.em.as_mut().and_then(|m| m.packed.take());
             let p = self.presenter.as_mut().unwrap();
-            if let Some(pk) = packed {
-                p.renderer.set_packed(pk);
-            }
             p.set_content_aspect(melee_engine::view::aspect());
             let pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
             p.set_match_scene(true);
-            p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, alpha);
+            p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, packed, alpha);
             return;
         }
         if !std::mem::take(&mut self.dirty) {

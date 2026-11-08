@@ -1238,9 +1238,8 @@ impl RetailPlay {
             log(&format!("video: {k} = {v} (live)"));
         }
         p.set_match_scene(melee_engine::view::scene_wide(melee_engine::view::scene()));
-        if let Some(pk) = self.packed.take() {
-            p.renderer.set_packed(pk);
-        }
+        // the decode thread's packing travels with its frame (the presenter may prepare it at a later present)
+        let packed = if frame.is_some() { self.packed.take() } else { None };
         p.set_content_aspect(self.frame_aspect);
         if let Some(u) = self.ui.as_mut() {
             let (w, h) = p.size();
@@ -1254,7 +1253,7 @@ impl RetailPlay {
                 p.renderer.set_ui(Some(f), a);
             }
         }
-        p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, a);
+        p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, packed, a);
         // MELEE_PRESENT_DUMP="TICK,N": the window as shown for N consecutive presents from tick TICK, in-between
         // (interpolated) presents included: present_<tick>_<k>_<alpha>.png in the shot dir (interpolation evidence)
         if let (Some(dir), Ok(v)) = (self.shot_dir.clone(), std::env::var("MELEE_PRESENT_DUMP")) {

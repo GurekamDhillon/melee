@@ -441,6 +441,13 @@ impl<G: Game> App<G> {
     }
 
     fn run_due_ticks(&mut self) {
+        if self.game.present_now() {
+            // A present is owed first (a screenshot of the tick that asked for it): the redraw that follows a tick
+            // loop calls here again, and a tick that had come due meanwhile would make the shot the NEXT frame's,
+            // run to run as the load fell (Pokemon Stadium shots at one scene age differed by a tick). The time
+            // stays in the clock; the ticks run right after the present.
+            return;
+        }
         let now = Instant::now();
         let dt = self.last.map(|l| now - l).unwrap_or_default();
         self.last = Some(now);

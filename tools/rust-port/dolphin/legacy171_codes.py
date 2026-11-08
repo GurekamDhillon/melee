@@ -116,6 +116,14 @@ def main():
                 sys.exit(f"legacy171: code type {k:02X} at {addr:08X} in {p}: playback applies only 04/06/C2")
             out += body
             n += 1
+    if not a.no_spawns:
+        # 20XX Neutral Spawns' stage half (C2 0x801C0A48, in Ground_801C0800) picks the stage by
+        # gmVsMelee_SssData.vs.data.rules stage id (u16 at 0x80480686), which the stage select screen wrote on the
+        # console. Playback never runs the SSS (it restores only gmVsMelee_StartData), so the code saw stage 0 and
+        # patched no spawn joint: fighters spawned at (0, -2) and the match ran off (Dolphin hung at the early
+        # game end). Not a code: the console's SSS state, the stage id of the replay's own game info block (whose
+        # copy at gmVsMelee_StartData+0xE playback restores), as one 2-byte 06 write.
+        out += struct.pack(">II", 0x06480686, 2) + gs[0x13:0x15] + bytes(6)
     out += bytes([0xFF] + [0] * 7)
     with open(a.out, "wb") as f:
         f.write(out)

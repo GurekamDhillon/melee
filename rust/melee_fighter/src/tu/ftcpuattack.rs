@@ -980,7 +980,9 @@ pub fn ftCo_800B77E8(fp: *mut Fighter) {
             if f.ground_or_air == GA_Air && f.cpu.xFA_b5() == 0 {
                 push_cc(f, 0x26);
             }
-            let charge = unsafe { f.u.gw.x2238_panicCharge };
+            // retail reads fp+0x2238 (u.gw.x2238_panicCharge in the source), on GC Kirby's hat.kind; the 64-bit
+            // union puts hat.kind at a different offset than gw.x2238, so read the field itself
+            let charge = unsafe { f.u.kb.hat.kind } as i32;
             if charge == 3 || charge == 0xD || charge == 0x10 {
                 push_cc(f, 0x11);
             } else {

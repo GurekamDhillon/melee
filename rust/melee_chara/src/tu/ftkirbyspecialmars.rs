@@ -415,7 +415,7 @@ pub fn ftKb_SpecialNMs_8010BC40(gobj: G) {
     melee_core::ct!("ftKb_SpecialNMs_8010BC40");
     unsafe {
         let fp = fpp(gobj);
-        let i = if (*fp).u.gw.x2238_panicCharge == 0x12 {
+        let i = if (*fp).u.kb.hat.kind as u32 == Ft_Kind_Mars as u32 { // retail: the word at fp+0x2238 (u.gw.x2238_panicCharge in the source) = Kirby's hat.kind on GC
             ftKb_MS_MsSpecialNLoop as i32
         } else {
             ftKb_MS_FeSpecialNLoop as i32
@@ -428,7 +428,7 @@ pub fn ftKb_SpecialNMs_8010BC90(gobj: G) {
     melee_core::ct!("ftKb_SpecialNMs_8010BC90");
     unsafe {
         let fp = fpp(gobj);
-        let i = if (*fp).u.gw.x2238_panicCharge == 0x12 {
+        let i = if (*fp).u.kb.hat.kind as u32 == Ft_Kind_Mars as u32 { // retail: the word at fp+0x2238 (u.gw.x2238_panicCharge in the source) = Kirby's hat.kind on GC
             ftKb_MS_MsSpecialAirNLoop as i32
         } else {
             ftKb_MS_FeSpecialAirNLoop as i32

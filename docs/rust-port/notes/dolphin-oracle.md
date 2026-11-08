@@ -308,6 +308,44 @@ Strict sweep: **125 / 125**. The 31 other half-VB dumps in the round-2 cache wer
 the engine; a re-dump would be the way to make them the recording console's run too, but their rows can only move on a
 frame where a skipped render reached gameplay, and none did.
 
+## Round 3 of the strict sweep (port/strict3): Hero's vanilla replays, 376 -> 377 of 377
+
+Hero's `_build/replays/hero-2026-11-06`, the 377 vanilla files (the 51 Akaneia files with external char ids > 25
+skipped), all Slippi 3.19.x online games. Same exe (`_build/dolphin-oracle-strict2`), one cached `dolphin.csv` per
+replay, engine re-run only.
+
+| | strict |
+|---|---|
+| rust-port 470d07b9b | 376 / 377 |
+| + Kirby's hat.kind read (below) | **377 / 377** |
+
+**3.19's online core is not the drift fix.** 3.19 replays carry no standalone Polling Drift Fix (C2 0x801A4DA0). The
+online core has a C2 at 0x801A4DB4 and an 04 at 0x80019860 instead. It is part of the online engine loop and spins on
+flags in the core's own block (r13-0x49E4 +0xDF/+0x90D) that the rest of the core sets. `replay_codes.py` had copied
+it on the address alone, and playback then hung before the match (every file timed out with no records). The script
+now copies the drift group only when the standalone C2 0x801A4DA0 is present, so all 377 Hero files play with
+Slippi's own playback set. No skipped render was seen (`x2188`, written by the render pass, keeps a constant 1-frame
+offset against the engine's logic-side value: Rust frame N equals playback frame N+1, a sampling offset, not a
+divergence). `replay_codes.py` also reads a raw array whose length is 0 (the recorder never closed it) to the end of
+the file.
+
+**Replays without Game End.** Game_20260718T225826, Game_20261023T125724 and Game_20261023T130503 have no Game End
+event (the recording stopped). Playback waits for the frame after the last one ("frame N not ready") until
+run_dolphin's timeout. `raw2csv.py` now drops the incomplete last record, so the dump covers every frame but the
+last. All three match strictly over those frames (2007 / 3658 / 3737).
+
+**Engine fix: Kirby's copied ability at fp+0x2238.** `ftCo_800B77E8` (CPU attack exclusions, Kirby case) and
+`ftKb_SpecialNMs_8010BC40/8010BC90` (Kirby's Marth/Roy neutral-B loop) read `fp->u.gw.x2238_panicCharge`, which on GC
+is the word at fp+0x2238, Kirby's `hat.kind`. On 64-bit, `ftKb_Hat.x0` is an 8-byte pointer, so `hat.kind` moves to
+u+0x10 while `gw.x2238` stays at u+0xC, and the port read Kirby's padding. Game_20260926T161418 (CPU Kirby): from
+slippi 826 `cpu.xCC_array[0]` was 0x12 in Rust and 0x11 in playback (hat.kind 3/0xD/0x10, a chargeable neutral-B),
+then s2's `cpu.command_duration` at 925 (csv 1048). Rust and C (TARGET_PC, `FTKB_HAT_KIND_2238`) now read
+`u.kb.hat.kind`. slpcheck matched this file before the fix, because the recorded inputs drive the CPU; only the
+strict sweep sees it.
+
+**602a5cd8** (local, csv 5452, s6 `x2188.x` 300 vs 295) stays open: a 5-pixel gap is not the 1-frame sampling
+offset above. Not re-run this round.
+
 ## Nondeterminism
 
 Dolphin's playback is occasionally nondeterministic. Of four runs of 03b84423 with the same exe and the same replay,

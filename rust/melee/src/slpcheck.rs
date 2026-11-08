@@ -439,7 +439,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     }
     // SLPCHECK_VANILLA_SPAWN=1: no Slippi Neutral Spawn (the port's own .slp exports, played without it)
     if std::env::var_os("SLPCHECK_VANILLA_SPAWN").is_none() {
-        crate::replay_modes_active();
+        crate::replay_modes_active(file.version[0] as i32 * 10000 + file.version[1] as i32 * 100 + file.version[2] as i32);
     }
     // the replay's own widescreen camera code (if its Gecko list has one) changes the logic's off-screen test
     let ws = slp::widescreen_code(&file.gecko);

@@ -726,8 +726,10 @@ fn engine_gdmods_overlay(args: &[String]) -> Result<Option<melee_engine::gcm::Ov
 /// Route the fighter code's `Replay_*` platform hooks (gw_replay.c) to `pl`: the recorded inputs of the frame being simulated.
 /// The VS mode's and the LAB's own `Replay_Active` (their hook tables are separate from the fighter's): Slippi's Neutral Spawn
 /// (gmvs.c `fn_8016DEEC` caller) runs only while a replay plays. Set before the match boots.
-pub(crate) fn replay_modes_active() {
+pub(crate) fn replay_modes_active(slippi_version: i32) {
     unsafe {
+        // known before the match starts: the spawn (gmvs neutral_spawn_set) reads it during boot, before install_replay
+        melee_runtime::tu::mex_data::SLIPPI_REPLAY_VERSION = Some(slippi_version);
         melee_modes::tu::gmvs::ext::hook::Replay_Active = Some(|| 1);
         melee_modes::tu::geno_lab_mode::ext::hook::Replay_Active = Some(|| 1);
     }
@@ -870,7 +872,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
                     std::env::set_var("MELEE_TEST_SEED", seed.to_string());
                     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1"); }
                 }
-                replay_modes_active();
+                replay_modes_active(pl.slippi_version());
                 let booted = engine_disc(&iso).and_then(|disc| {
                     melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn)
                 });

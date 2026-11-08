@@ -930,7 +930,7 @@ pub unsafe extern "C" fn grStadium_801D2344(g: *mut HSD_GObj) {
             if (*gp).u.display.xDC.is_null()
                 || ext::Player_GetEntity((*gp).u.display.xEE as i32).is_null()
                 || ext::Player_8003219C((*gp).u.display.xEE as i32) != 0
-                || grStadium_801D32D0(gobj) == 0
+                || ps_monitor_check(gobj) == 0
             {
                 grStadium_801D2A60(gobj);
             }
@@ -1360,6 +1360,24 @@ pub unsafe extern "C" fn grStadium_801D3138(gobj: *mut HSD_GObj, desc: *mut HSD_
         }
     }
     null_mut()
+}
+
+/// The `grStadium_801D32D0(gobj)` call at 0x801D24FC, or Slippi's PSCameraIndependentMonitor replacement
+/// ([`melee_core::codes::ps_camera_independent_monitor`]): it still calls 801D32D0 (the monitor's screen placement) and
+/// returns whether the shown player's `cur_pos` is within x [-120, 120] and y [-20, 80] (`fcmpo`: NaN fails no test).
+unsafe fn ps_monitor_check(gobj: *mut HSD_GObj) -> i32 {
+    if !melee_core::codes::ps_camera_independent_monitor() {
+        return grStadium_801D32D0(gobj);
+    }
+    let gp = (*gobj).user_data as *mut Ground;
+    let pg = ext::Player_GetEntity((*gp).u.display.xEE as i32);
+    let _ = grStadium_801D32D0(gobj);
+    let pos = (*((*pg).user_data as *const melee_types::gen::Fighter)).cur_pos;
+    if pos.x < -120.0 || pos.x > 120.0 || pos.y > 80.0 || pos.y < -20.0 {
+        0
+    } else {
+        1
+    }
 }
 
 pub unsafe extern "C" fn grStadium_801D32D0(gobj: *mut HSD_GObj) -> i32 {

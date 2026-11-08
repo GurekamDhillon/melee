@@ -243,6 +243,19 @@ mod tests {
     }
 }
 
+/// Slippi's PSCameraIndependentMonitor (C2 0x801D24FC, slippi-ssbm-asm `Online/Core/Hacks/Stadium`): the Pokemon Stadium
+/// monitor's "player still shown" test (the `grStadium_801D32D0` call in grStadium_801D2344's case 8) becomes "the
+/// player's position is in x [-120, 120], y [-20, 80]" instead of "on screen". Armed from a replay's own Gecko list
+/// (slpcheck, `golden --slp`) and for Slippi online play.
+static PS_MONITOR: AtomicU32 = AtomicU32::new(0);
+pub fn set_ps_camera_independent_monitor(on: bool) {
+    PS_MONITOR.store(on as u32, Ordering::Relaxed);
+}
+#[inline]
+pub fn ps_camera_independent_monitor() -> bool {
+    PS_MONITOR.load(Ordering::Relaxed) != 0
+}
+
 /// A replay's widescreen camera code (melee_data::slp::widescreen_code), active only while that replay plays: set before
 /// the match boots from the replay's own Gecko list (slpcheck, `golden --slp`), cleared (all 0) otherwise. Packed as
 /// left | right << 16 in [`WS_BOUNDS`], the aspect ratio's numerator/denominator as f32 bits.

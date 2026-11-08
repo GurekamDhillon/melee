@@ -367,6 +367,11 @@ pub fn gecko_codes(g: &[u8]) -> Vec<GeckoCode> {
 /// True when the replay's Gecko list carries Slippi's online codeset (its `Online/Core/BrawlOffscreenDamage` insert at
 /// 0x8006A880). Offline games played on a netplay build (vs CPU, local multi) record that codeset too, and its
 /// always-on codes (offscreen damage, Whispy, the FD RNG save) apply there; the Game Start scene alone says "console".
+pub fn ps_camera_independent_monitor_code(g: &[u8]) -> bool {
+    gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x801D_24FC)
+}
+
+/// True when the list carries the online codeset (its offscreen-damage insert at 0x8006A880).
 pub fn online_codeset(g: &[u8]) -> bool {
     gecko_codes(g).iter().any(|c| c.kind == 0xC2 && c.addr == 0x8006_A880)
 }

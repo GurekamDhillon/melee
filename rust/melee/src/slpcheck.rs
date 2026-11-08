@@ -386,7 +386,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     if args.iter().any(|a| a == "--cpu-ai") {
         CPU_MODE.store(2, std::sync::atomic::Ordering::Relaxed);
     } else if args.iter().any(|a| a == "--cpu-slots") {
-        CPU_MODE.store(1, std::sync::atomic::Ordering::Relaxed);    } else if args.iter().any(|a| a == "--cpu-human") {
+        CPU_MODE.store(1, std::sync::atomic::Ordering::Relaxed);
+    } else if args.iter().any(|a| a == "--cpu-human") {
         CPU_MODE.store(0, std::sync::atomic::Ordering::Relaxed);
     }
     let conv = match convert(&file) {
@@ -443,6 +444,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     // the replay's own widescreen camera code (if its Gecko list has one) changes the logic's off-screen test
     let ws = slp::widescreen_code(&file.gecko);
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
+    melee_core::codes::set_ps_camera_independent_monitor(slp::ps_camera_independent_monitor_code(&file.gecko));
     if let Some(w) = ws {
         sm.notes = format!("{}{}widescreen code {}..{} x{}/{}", sm.notes, if sm.notes.is_empty() { "" } else { "; " }, w.left, w.right, w.num, w.den);
     }

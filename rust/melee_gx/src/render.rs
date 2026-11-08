@@ -1005,8 +1005,8 @@ fn fnv(d: &[u8]) -> u64 {
 }
 
 impl Renderer {
-    /// A headless renderer with a `width` x `height` target. `backends` defaults to the platform's
-    /// primary backends; WGPU_BACKEND (e.g. `dx12`, `vulkan`) overrides as in wgpu.
+    /// A headless renderer with a `width` x `height` target. Vulkan only; WGPU_BACKEND
+    /// (e.g. `dx12`) overrides as in wgpu (tests and comparisons only).
     pub fn new(width: u32, height: u32) -> Result<Self, String> {
         Self::with_instance(&Self::instance(), None, width, height)
     }
@@ -1080,9 +1080,9 @@ impl Renderer {
         true
     }
 
-    /// The wgpu instance [`Renderer::new`] uses (primary backends, WGPU_BACKEND overrides).
+    /// The wgpu instance [`Renderer::new`] uses (Vulkan; WGPU_BACKEND overrides).
     pub fn instance() -> wgpu::Instance {
-        let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::PRIMARY);
+        let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::VULKAN);
         wgpu::Instance::new(&wgpu::InstanceDescriptor { backends, ..Default::default() })
     }
 

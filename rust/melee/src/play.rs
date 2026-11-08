@@ -1713,7 +1713,10 @@ pub fn play(args: &[String]) -> ExitCode {
         }
         // lab matches are untimed (lab-ui-spec.md 5.2) where the Lab runs them: offline or --np-lab, unless --time-secs asks
         melee_core::codes::set_lab_untimed(lab_mod && (net.is_none() || has("--np-lab")) && sync_k.is_none() && feed.is_none() && get("--time-secs").is_none());
-        let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0) || lab_mod;
+        // a core v1.1 host that keeps savestates (corev1.rs): a plain match, snapshotted like a synctest's
+        // MELEE_PLAY_HOSTED=1: the same session in our own build (its tests)
+        let hosted = (crate::retail_flow::HOSTED_STATES.load(std::sync::atomic::Ordering::Relaxed) || std::env::var("MELEE_PLAY_HOSTED").is_ok_and(|v| v == "1")) && net.is_none() && sync_k.is_none() && feed.is_none() && !lab_mod;
+        let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0) || lab_mod || hosted;
         if rollback_mode {
             crate::play_net::prepare_rollback_run();
             // the GX shim (a static the snapshots restore) with all its buffers and Arcs in the arena from the start
@@ -1757,6 +1760,7 @@ pub fn play(args: &[String]) -> ExitCode {
         rp.skip_intro = game.skip_intro;
         rp.audio_on = !has("--no-audio") && crate::cfg::flag("audio", true);
         rp.rollback_mode = rollback_mode;
+        rp.hosted = hosted;
         rp.lab_seed = seed;
         rp.practice = Some(crate::practice::Practice::new(crate::practice::Opts::from_args(args)));
         rp.delay_line = crate::input_delay::DelayLine::from_args(&args);

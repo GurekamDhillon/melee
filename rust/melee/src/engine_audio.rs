@@ -200,7 +200,16 @@ pub fn install(iso: &str, trace: bool) -> Result<(), String> {
 /// Boot the sound stack from the disc and what the positional objects read from the game (no engine hooks yet: the menus use this alone).
 pub fn boot_sound(iso: &str, trace: bool) -> Result<(), String> {
     let mut snd = melee_audio::Sound::new();
-    snd.boot(Box::new(melee_audio::sound::DiscFs::open(iso)?), lb::boot_bank_sizes())?;
+    // under a core v1 host the disc is the host's (gcm HOST_READ): the sound reads it through the engine's disc too
+    #[cfg(feature = "corev1")]
+    let fs: Box<dyn melee_audio::sound::AudioFs> = if melee_engine::gcm::HOST_READ.get().is_some() {
+        Box::new(HostFs(melee_engine::gcm::Gcm::open(iso)?))
+    } else {
+        Box::new(melee_audio::sound::DiscFs::open(iso)?)
+    };
+    #[cfg(not(feature = "corev1"))]
+    let fs = Box::new(melee_audio::sound::DiscFs::open(iso)?);
+    snd.boot(fs, lb::boot_bank_sizes())?;
     if trace {
         snd.trace = Some(Vec::new());
     }
@@ -370,4 +379,44 @@ pub fn route_by_name(name: &str, a: &[u64]) -> Option<u64> {
         "lbAudioAx_80028B90" => { ax_80028B90(); 0 }
         _ => return None,
     })
+}
+
+/// Core v1: the sound's files from the engine's disc, which reads through the host's `disc_read`. Only the game thread
+/// uses it (the mix is captured per tick for the host's `audio_out`), so the disc's single-thread cells are not shared.
+#[cfg(feature = "corev1")]
+struct HostFs(melee_engine::gcm::Gcm);
+#[cfg(feature = "corev1")]
+unsafe impl Send for HostFs {}
+#[cfg(feature = "corev1")]
+impl melee_audio::sound::AudioFs for HostFs {
+    fn read(&mut self, path: &str) -> Option<(i32, Vec<u8>)> {
+        let e = self.0.entry_for_path(path);
+        if e < 0 {
+            return None;
+        }
+        Some((e, self.0.read(path).ok()?))
+    }
+    fn open_stream(&mut self, path: &str) -> Option<(i32, Box<dyn melee_audio::disc::StreamSource>)> {
+        let e = self.0.entry_for_path(path);
+        if e < 0 {
+            return None;
+        }
+        Some((e, Box::new(HostFs(melee_engine::gcm::Gcm::open("").ok()?)).stream(e)))
+    }
+}
+#[cfg(feature = "corev1")]
+struct HostStream(HostFs, i32);
+#[cfg(feature = "corev1")]
+impl HostFs {
+    fn stream(self: Box<Self>, e: i32) -> Box<dyn melee_audio::disc::StreamSource> {
+        Box::new(HostStream(*self, e))
+    }
+}
+#[cfg(feature = "corev1")]
+impl melee_audio::disc::StreamSource for HostStream {
+    fn read(&mut self, off: u32, len: usize) -> Vec<u8> {
+        // a read past the end is cut short, as the console's
+        let n = self.0 .0.entry_len(self.1).map_or(0, |l| (l.saturating_sub(off) as usize).min(len));
+        self.0 .0.read_entry(self.1, off, n).unwrap_or_default()
+    }
 }

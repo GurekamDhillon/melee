@@ -636,6 +636,9 @@ impl Base {
 
     /// Put a saved state back. The caller restores the arena mode flag afterwards (it is a static too).
     pub fn load(&self, s: &Snapshot) {
+        // core v1: the transcoder lets go of the game buffers it holds first (the load rewinds their refcounts)
+        #[cfg(feature = "corev1")]
+        melee_gx::corev1::snapshot_loaded();
         self.refresh();
         let was = arena::active();
         let (abase, alen_now) = arena::used_range();

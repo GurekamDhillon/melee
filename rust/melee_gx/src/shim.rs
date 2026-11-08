@@ -554,6 +554,14 @@ impl GxShim {
     }
     /// `gw_Gx_SuppressDraws`.
     pub fn set_suppress_draws(&mut self, on: bool) {
+        // core v1: a re-simulated frame must not reach the host's screen (no draws, no copies); what was written before
+        // the switch is the shown frame's and goes out as it is
+        #[cfg(feature = "corev1")]
+        // (this shim is game state a load restores, so its flag is no guide: the transcoder keeps its own)
+        if crate::corev1::active() {
+            self.gx.drain();
+            crate::corev1::set_quiet(on);
+        }
         self.suppress_draws = on;
     }
     fwd!(clear_vtx_desc => clear_vtx_desc());

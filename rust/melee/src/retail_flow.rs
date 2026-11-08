@@ -97,6 +97,9 @@ pub struct RetailPlay {
     pub net: Option<crate::play_net::NetDriver>,
     /// `MELEE_PLAY_SYNCTEST=K`: SyncTest on every match frame.
     pub sync: Option<crate::play_net::PlaySync>,
+    /// Savestates offered to a host (core v1.1 `state_*`): the match runs under a [`Hosted`] session.
+    pub hosted: bool,
+    pub hosted_g: Option<Hosted>,
     /// The run snapshots the engine (netplay, synctest, or a replay of such a run): frames are copied off the arena.
     pub rollback_mode: bool,
     /// Detached frame copies kept by content (see `play_net::Detacher`).
@@ -151,7 +154,7 @@ impl RetailPlay {
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
-            rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
+            rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
             ui: match melee_modhost::ui::PresHost::from_env() {
@@ -268,6 +271,11 @@ impl RetailPlay {
         Ok(e)
     }
 
+    /// The mix captured since the last call (a capture-mode audio: headless, or a core v1.1 host's).
+    pub fn take_audio(&mut self) -> Vec<i16> {
+        self.audio.as_mut().and_then(|a| a.capture.as_mut()).map(std::mem::take).unwrap_or_default()
+    }
+
     /// The engine wherever it is (the retail flow's, or under the netplay / synctest session).
     fn engine(&self) -> Option<&melee_engine::Engine> {
         use crate::play_net::NetPhase;
@@ -279,6 +287,9 @@ impl RetailPlay {
         }
         if let Some(l) = self.lab.as_ref() {
             return Some(&l.g.e);
+        }
+        if let Some(h) = self.hosted_g.as_ref() {
+            return Some(&h.g.e);
         }
         self.sync.as_ref().and_then(|s| s.g.as_ref()).map(|g| &g.e)
     }
@@ -400,6 +411,11 @@ impl RetailPlay {
                 if let Some(r) = self.rec.as_mut() {
                     r.1.ticks.push((four, g.e.neutral_row()[0] | 1));
                 }
+                if self.tick_no % 600 == 0 {
+                    let st = &ps.st;
+                    let bad = st.mismatches.iter().filter(|m| m.3 != m.4).count();
+                    log(&format!("synctest depth {} so far (match frame {}): {} passes, {} hash checks, {bad} neutral mismatches", st.k, g.e.frames, st.passes, st.checked));
+                }
                 if g.e.ended {
                     let st = &ps.st;
                     // the whole-state hash differs on a windowed run (a resimulated frame's display lists are not decoded, so
@@ -417,6 +433,29 @@ impl RetailPlay {
                 }
                 return false;
             }
+        }
+        if let Some(h) = self.hosted_g.as_mut() {
+            use melee_net::session::RbGame;
+            // a frame run again after a load takes the pads it last ran with, unless the host gave others
+            let next = h.g.frame() + 1;
+            let pads = *h.inputs.entry(next).or_insert(four);
+            h.g.step(pads);
+            if let Some(f) = h.g.take_frame() {
+                self.frame = Some(f);
+                self.frame_aspect = melee_engine::view::aspect();
+            }
+            // each match tick once, as the plain path logs it (a re-run frame is not logged again)
+            if h.g.e.frames > h.logged {
+                h.logged = h.g.e.frames;
+                hash_log(h.g.e.frames as u64, h.g.e.neutral_row()[0] | 1);
+            }
+            if h.g.e.ended {
+                let h = self.hosted_g.take().unwrap();
+                log(&format!("hosted savestates: match over, {} states kept", h.keep.len()));
+                let (e, _) = h.g.into_engine();
+                self.e = Some(e);
+            }
+            return false;
         }
         let e = self.e.as_mut().unwrap();
         // the first frame of a match scene: the session takes the engine from here on
@@ -449,6 +488,10 @@ impl RetailPlay {
                 }
             } else if let Some(ps) = self.sync.as_mut() {
                 ps.g = Some(Box::new(ModesGame::new(self.e.take().unwrap())));
+                return self.step(four);
+            } else if self.hosted && self.feed.is_none() {
+                self.hosted_g = Some(Hosted { g: Box::new(ModesGame::new(self.e.take().unwrap())), keep: Default::default(), inputs: Default::default(), logged: 0 });
+                log("hosted savestates: the match runs under the host's state calls");
                 return self.step(four);
             } else if self.feed.is_none() && self.rollback_mode && self.lab_launch {
                 if let Some(sh) = self.ui.as_ref().and_then(|u| u.lab.clone()) {
@@ -1420,5 +1463,50 @@ fn hash_log(frame: u64, hash: u32) {
     let f = F.get_or_init(|| std::env::var_os("MELEE_HASH_LOG").and_then(|p| std::fs::File::create(p).ok()).map(std::sync::Mutex::new));
     if let Some(f) = f {
         let _ = writeln!(f.lock().unwrap(), "{frame} {hash:08X}");
+    }
+}
+
+/// Set before `melee play` by a core v1.1 entry whose host may call the state calls.
+pub static HOSTED_STATES: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// A match whose states the host keeps by key (core v1.1 `state_save` / `state_load`, corev1.rs): the match engine
+/// under the snapshot base, the kept states, and the pads each frame last ran with.
+pub struct Hosted {
+    pub g: Box<crate::play_net::ModesGame>,
+    pub keep: std::collections::HashMap<i32, crate::play_net::ModesSnap>,
+    pub inputs: std::collections::BTreeMap<i32, [melee_types::PADStatus; 4]>,
+    logged: u32,
+}
+
+impl Hosted {
+    /// The session frame the next game frame will have, counted from 0 at the hand-over.
+    pub fn next_frame(&self) -> i32 {
+        use melee_net::session::RbGame;
+        self.g.frame() + 1 - melee_net::session::FIRST
+    }
+    pub fn save(&mut self, key: i32) -> bool {
+        use melee_net::session::RbGame;
+        let s = self.g.save();
+        self.keep.insert(key, s);
+        true
+    }
+    pub fn load(&mut self, key: i32) -> bool {
+        use melee_net::session::RbGame;
+        let Some(s) = self.keep.get(&key).cloned() else { return false };
+        self.g.load(&s);
+        true
+    }
+    pub fn drop_key(&mut self, key: i32) {
+        self.keep.remove(&key);
+        // the pads of the last minute are what a load can re-run (a rollback reaches back a few frames)
+        use melee_net::session::RbGame;
+        let keep_from = self.g.frame() - 3600;
+        self.inputs = self.inputs.split_off(&keep_from);
+    }
+    pub fn hash(&self) -> u32 {
+        self.g.e.neutral_row()[0] | 1
+    }
+    pub fn set_input(&mut self, frame: i32, pads: [melee_types::PADStatus; 4]) {
+        self.inputs.insert(frame + melee_net::session::FIRST, pads);
     }
 }

@@ -16,7 +16,7 @@ use melee_types::{CARDFileInfo, CARDStat};
 use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 
-type Cb = unsafe extern "C" fn(i32, i32);
+pub(crate) type Cb = unsafe extern "C" fn(i32, i32);
 
 static mut CARD: Option<CardSystem> = None;
 static mut QUEUE: VecDeque<(Cb, i32, i32)> = VecDeque::new();
@@ -31,7 +31,7 @@ pub fn enabled() -> bool {
     unsafe { CARD.is_some() }
 }
 
-fn defer(cb: Option<Cb>, chan: i32, result: i32) {
+pub(crate) fn defer(cb: Option<Cb>, chan: i32, result: i32) {
     if let Some(cb) = cb {
         unsafe { QUEUE.push_back((cb, chan, result)) };
     }
@@ -45,7 +45,7 @@ pub fn pump() {
     }
 }
 
-fn diag() -> bool {
+pub(crate) fn diag() -> bool {
     static D: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *D.get_or_init(|| std::env::var("MELEE_CARD_DIAG").map(|v| v.starts_with('1')).unwrap_or(false))
 }
@@ -88,7 +88,7 @@ unsafe fn cstr<'a>(p: *const i8) -> &'a [u8] {
     core::ffi::CStr::from_ptr(p).to_bytes()
 }
 
-fn info_from(p: *const CARDFileInfo) -> FileInfo {
+pub(crate) fn info_from(p: *const CARDFileInfo) -> FileInfo {
     if p.is_null() {
         return FileInfo::default();
     }
@@ -96,7 +96,7 @@ fn info_from(p: *const CARDFileInfo) -> FileInfo {
     FileInfo { chan: g.chan, file_no: g.fileNo, offset: g.offset, length: g.length, i_block: g.iBlock }
 }
 
-fn info_to(p: *mut CARDFileInfo, i: &FileInfo) {
+pub(crate) fn info_to(p: *mut CARDFileInfo, i: &FileInfo) {
     if p.is_null() {
         return;
     }
@@ -289,6 +289,11 @@ pub fn install() -> bool {
         eprintln!("gw: card: disabled (MELEE_CARD=0); reporting no card");
         return false;
     };
+    #[cfg(feature = "corev1")]
+    if let Some(h) = crate::card_host::HOST.get() {
+        crate::card_host::install(h);
+        return true;
+    }
     install_at(&base);
     true
 }
@@ -380,4 +385,9 @@ pub fn install_scene_hooks() {
         }
         melee_modes::tu::gmscmemcard::ext::SCENEREPORT_CURSOR = Some(|w, a, b| eprintln!("scene: cursor {w} {a} {b}"));
     }
+}
+
+/// The deferred completions dropped (a fresh card install).
+pub(crate) fn clear_queue() {
+    unsafe { QUEUE.clear() };
 }

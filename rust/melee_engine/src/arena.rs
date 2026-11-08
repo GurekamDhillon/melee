@@ -339,15 +339,20 @@ pub fn same_class(a: usize, b: usize) -> bool {
     class_of(a).map(|x| x.0) == class_of(b).map(|x| x.0)
 }
 
-/// The writable sections of the running executable (`.data`, `.bss`, ...): every Rust / C static of the game.
+/// The writable sections of the image this code is in (`.data`, `.bss`, ...): every Rust / C static of the game. That
+/// is the executable for `melee.exe`, and the library when the engine is a game library a host loaded (core v1): the
+/// process's main module is then the host, whose statics are not the game's.
 #[cfg(windows)]
 pub fn static_sections() -> Vec<(usize, usize)> {
     extern "system" {
-        fn GetModuleHandleW(name: *const u16) -> *const u8;
+        fn GetModuleHandleExW(flags: u32, name: *const u16, module: *mut *const u8) -> i32;
     }
+    // GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT
+    const FROM_ADDRESS: u32 = 0x4 | 0x2;
+    static ANCHOR: u8 = 0;
     unsafe {
-        let base = GetModuleHandleW(core::ptr::null());
-        if base.is_null() {
+        let mut base: *const u8 = core::ptr::null();
+        if GetModuleHandleExW(FROM_ADDRESS, (&ANCHOR as *const u8).cast(), &mut base) == 0 || base.is_null() {
             return Vec::new();
         }
         let rd32 = |o: usize| core::ptr::read_unaligned(base.add(o) as *const u32);

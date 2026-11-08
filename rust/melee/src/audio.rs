@@ -115,6 +115,9 @@ fn request_banks(flags: u32, mask: u64) {
     });
 }
 
+/// The mix goes to the host (core v1.1 `audio_out`) instead of an output device of our own.
+pub static HOST_MIX: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 impl Audio {
     /// Boot the sound from the disc and open the output. `Err` leaves the game silent.
     pub fn boot(iso: &str, headless: bool) -> Result<Audio, String> {
@@ -125,7 +128,8 @@ impl Audio {
             melee_engine::arena::set_active(on);
             prev
         });
-        if headless {
+        // a core v1.1 host plays the mix: it is captured per tick and handed over (corev1.rs), no device of our own
+        if headless || HOST_MIX.load(std::sync::atomic::Ordering::Relaxed) {
             return Ok(Audio { out: None, dev_open: false, capture: Some(Vec::new()), resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 });
         }
         let out = sim::Output::new(melee_audio::output::DriverConfig::from_env(false));

@@ -9,6 +9,8 @@ pub mod mex_guest;
 pub mod mex_bridge;
 pub mod archive;
 pub mod card;
+#[cfg(feature = "corev1")]
+pub mod card_host;
 pub mod cdata;
 pub mod cow;
 pub mod pagewatch;

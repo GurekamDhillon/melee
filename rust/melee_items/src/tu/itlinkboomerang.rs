@@ -259,8 +259,8 @@ pub mod ext {
     fn Item_8026AB54(a0: *mut HSD_GObj, a1: *mut HSD_GObj, a2: u32) => unsafe { crate::tu::item::Item_8026AB54(a0, a1, a2) };
     fn Item_8026AF0C(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AF0C(a0, a1, a2, a3) };
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
-    fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_GetPartJObj(a0, a1) };
+    fn ftLib_GetCameraBonePos(a0: *mut HSD_GObj, a1: *mut Vec);
     fn ftLib_GetKind(a0: *mut HSD_GObj) -> u32;
     fn ftLk_SepcialS_Get2219b5(a0: *mut HSD_GObj) -> i32;
     fn ftLk_SpecialHi_GetFv4(a0: *mut HSD_GObj) -> i32;
@@ -513,7 +513,7 @@ pub unsafe fn it_802A0534(gobj: *mut Item_GObj, arg1: *mut Vec3, angle: f32) {
     (*ip).xDD4_itemVar.linkboomerang.xF74 = angle;
     norm_xF74_from_angle(ip, angle);
     ((*(*ip).xB8_itemLogicTable).thrown.unwrap())(gobj);
-    let mtx = &raw mut (*ext::ftLib_80086630((*ip).xDD4_itemVar.linkboomerang.xF98, (*ip).xDC4 as _)).mtx;
+    let mtx = &raw mut (*ext::ftLib_GetPartJObj((*ip).xDD4_itemVar.linkboomerang.xF98, (*ip).xDC4 as _)).mtx;
     ext::HSD_MtxGetRotation(mtx as *mut c_void, &mut quad as *mut Quaternion as *mut Vec3);
     ext::it_8027429C(gobj, arg1);
     ext::it_8026B3A8(gobj);
@@ -1006,7 +1006,7 @@ pub unsafe fn it_802A20E8(gobj: *mut Item_GObj) -> i32 {
         let gobj2 = if (*ip).xDCC_flag.b1() == 0 { (*ip).owner } else { (*ip).xC64_reflectGObj };
         (*ip).xDD4_itemVar.linkboomerang.xDE8 = 1;
         (*ip).xD44_lifeTimer = (*ip).xD48_halfLifeTimer;
-        ext::ftLib_800866DC(gobj2, &mut sp14);
+        ext::ftLib_GetCameraBonePos(gobj2, &mut sp14);
         let dy = it_802A20E8_inline(ip) - sp14.x;
         let dx = (*ip).pos.y - sp14.y;
         (*ip).xDD4_itemVar.linkboomerang.xF74 = ext::atan2f(dx, dy);

@@ -320,7 +320,7 @@ pub fn install() {
         m::ext::hook::ftKb_SpecialN_800F1D24 = Some(|a0| { t(1313); t(pi(a0)); });
         m::ext::hook::ftKb_SpecialN_800F5BA4 = Some(|a0| { t(1314); t(pi(a0)); });
         m::ext::hook::ftKb_SpecialN_800F5C34 = Some(|a0| { t(1315); t(pi(a0)); });
-        m::ext::hook::ftLib_800867E8 = Some(|a0| { t(1316); t(pi(a0)); });
+        m::ext::hook::ftLib_DisableInput = Some(|a0| { t(1316); t(pi(a0)); });
         m::ext::hook::ftMh_MS_341_8014FE10 = Some(|a0| { t(1317); t(pi(a0)); });
         m::ext::hook::ftMh_MS_341_8014FE58 = Some(|a0| { t(1318); t(pi(a0)); });
         m::ext::hook::ftPartSetRotX = Some(|a0, a1, a2| { t(1319); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); });

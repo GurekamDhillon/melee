@@ -55,8 +55,8 @@ pub unsafe fn un_8032233C(arg0: u32, arg1: u32) {
     melee_core::ct!("un_8032233C");
     let d = data();
 
-    let gobj = ext::ftLib_8008741C(arg0);
-    let kb_mag = ext::ftLib_80087454(ext::ftLib_8008741C(arg1));
+    let gobj = ext::ftLib_FindBySpawnNum(arg0);
+    let kb_mag = ext::ftLib_GetCrowdKnockback(ext::ftLib_FindBySpawnNum(arg1));
 
     let cat = if kb_mag >= cfg().kb_threshold_high {
         3
@@ -72,7 +72,7 @@ pub unsafe fn un_8032233C(arg0: u32, arg1: u32) {
         return;
     }
 
-    if !gobj.is_null() && ext::ftLib_80087454(gobj) >= 3.0 {
+    if !gobj.is_null() && ext::ftLib_GetCrowdKnockback(gobj) >= 3.0 {
         un_80321D30(arg0, kb_mag);
     } else if d.x0 as u32 == arg0 && (d.x4 as f32) < cfg().x18 {
         un_80321D30(arg0, if kb_mag > d.x8 { kb_mag } else { d.x8 });

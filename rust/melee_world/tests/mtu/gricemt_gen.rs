@@ -45,8 +45,8 @@ pub fn install() {
         HSD_Randi = Some(|a0| { t(1031); t(a0 as u32); if a0 > 0 { (rnd() % a0 as u32) as i32 } else { 0 } });
         Stage_80225194 = Some(|| { t(1032); if fv() & 1 != 0 { 76 } else if fv() & 1 != 0 { 212 } else { fv() % 5 } });
         efSync_Spawn = Some(|a0, a1, a2| { t(1033); t(a0 as u32); t(pi(a1)); t(pi(a2)); unsafe { t((*a2).x.to_bits()); t((*a2).y.to_bits()); t((*a2).z.to_bits()); } core::ptr::null_mut() });
-        ftLib_80086644 = Some(|a0, a1| { t(1034); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
-        ftLib_80086EC0 = Some(|a0| { t(1035); t(pi(a0)); fv() as _ });
+        ftLib_GetPos = Some(|a0, a1| { t(1034); t(pi(a0)); t(pi(a1)); (*a1).x = rw(); (*a1).y = rw(); (*a1).z = rw(); });
+        ftLib_IsInHitstun = Some(|a0| { t(1035); t(pi(a0)); fv() as _ });
         gm_801674C4 = Some(|a0, a1, a2, a3, a4| { t(1036); t(a0 as u32); t(a1 as u32); t(a2 as u32); t(a3 as u32); t(fi(a4)); });
         grAnime_801C77FC = Some(|a0, a1, a2| { t(1037); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grAnime_801C78FC = Some(|a0, a1, a2| { t(1038); t(pi(a0)); t(a1 as u32); t(a2 as u32); });

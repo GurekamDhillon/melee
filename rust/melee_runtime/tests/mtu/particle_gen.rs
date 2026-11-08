@@ -24,7 +24,7 @@ pub fn install() {
         ScriptGame_StageSlotParticleBegin = Some(|a0| { t(1010); t(a0 as u32); fv() as _ });
         ScriptGame_StageSlotProcEnd = Some(|| { t(1011); });
         atan2f = Some(|a0, a1| { t(1012); t(a0.to_bits()); t(a1.to_bits()); rw() });
-        hsd_8039D1EC = Some(|| { t(1013); (fv() % 3) as u16 });
+        psGetNewIDNum = Some(|| { t(1013); (fv() % 3) as u16 });
         hsd_8039F05C = Some(|a0, a1, a2| { t(1014); t(a0 as u32); t(a1 as u32); t(a2 as u32); core::ptr::null_mut() });
         psAttachGeneratorAppSRT = Some(|a0, a1| { t(1015); t(pi(a0)); t(pi(a1)); fv() as _ });
         psAttachParticleAppSRT = Some(|a0, a1| { t(1016); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });

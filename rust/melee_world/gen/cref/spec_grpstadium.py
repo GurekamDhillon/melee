@@ -328,7 +328,7 @@ SPEC = dict(
         "lbVector_Diff": ("TV(a0); TV(a1); WV(a2);", "super::tv(a0); super::tv(a1); super::wv(a2);"),
         "lbVector_Add": ("TV(a0); TV(a1); WV(a0);", "super::tv(a0); super::tv(a1); super::wv(a0);"),
         "lbVector_WorldToScreen": ("TV(a1); WV(a2);", "super::tv(a1); super::wv(a2);"),
-        "ftLib_80086B90": ("WV(a1);", "super::wv(a1);"),
+        "ftLib_GetCameraSubjectBonePos": ("WV(a1);", "super::wv(a1);"),
         "lb_8000B1CC": ("TV(a1); WV(a2);", "super::tv(a1); super::wv(a2);"),
         "grLib_801C96F8": ("TV(a2);", "super::tv(a2);"),
         "memzero": ("if (a0) zero(a0, (unsigned) a1);", "if !a0.is_null() { core::ptr::write_bytes(a0 as *mut u8, 0, a1 as usize); }"),

@@ -60,10 +60,10 @@ pub fn install() {
         m::mplib::ext::hook::Stage_GetCamBoundsLeftOffset = Some(|| { t(1047); rg() });
         m::mplib::ext::hook::Stage_GetCamBoundsRightOffset = Some(|| { t(1048); rg() });
         m::mplib::ext::hook::Stage_GetCamBoundsTopOffset = Some(|| { t(1049); rg() });
-        m::mpcoll::ext::hook::ftLib_80086960 = Some(|a0| { t(1050); t(pi(a0)); (fv() & 1) as i32 });
-        m::mplib::ext::hook::ftLib_80086984 = Some(|a0| { t(1051); t(pi(a0)); &raw mut super::CD });
-        m::mpcoll::ext::hook::ftLib_80086BE0 = Some(|a0| { t(1052); t(pi(a0)); fv() as _ });
-        m::mpcoll::ext::hook::ftLib_800874BC = Some(|a0| { t(1053); t(pi(a0)); fv() as _ });
+        m::mpcoll::ext::hook::ftLib_IsFighter = Some(|a0| { t(1050); t(pi(a0)); (fv() & 1) as i32 });
+        m::mplib::ext::hook::ftLib_GetCollData = Some(|a0| { t(1051); t(pi(a0)); &raw mut super::CD });
+        m::mpcoll::ext::hook::ftLib_GetPlayerIndex = Some(|a0| { t(1052); t(pi(a0)); fv() as _ });
+        m::mpcoll::ext::hook::ftLib_IsSubFighter = Some(|a0| { t(1053); t(pi(a0)); fv() as _ });
         m::mplib::ext::hook::grDynamicAttr_801CA0B4 = Some(|| { t(1054); });
         m::mplib::ext::hook::grDynamicAttr_801CA224 = Some(|| { t(1055); });
         m::mpcoll::ext::hook::grDynamicAttr_801CA284 = Some(|a0, a1| { t(1056); t(pi(a0)); t(a1 as u32); fv() as _ });

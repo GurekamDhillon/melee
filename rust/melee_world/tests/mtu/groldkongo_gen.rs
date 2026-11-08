@@ -34,8 +34,8 @@ pub fn install() {
         efSync_Spawn = Some(|a0, a1, a2| { t(1020); t(a0 as u32); t(pi(a1)); super::tv(a2); core::ptr::null_mut() });
         ftCo_8009EC70 = Some(|a0, a1, a2, a3| { t(1021); t(pi(a0)); t(pi(a1)); t(pi(a2)); t(a3.to_bits()); super::tv(a1); t(rh(&*(a2 as *const [u8; 36]))); });
         ftCo_800C0764 = Some(|a0, a1, a2| { t(1022); t(pi(a0)); t(a1 as u32); t(pi(a2)); });
-        ftLib_80086644 = Some(|a0, a1| { t(1023); t(pi(a0)); t(pi(a1)); super::wv(a1); });
-        ftLib_80086C18 = Some(|a0, a1, a2| { t(1024); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
+        ftLib_GetPos = Some(|a0, a1| { t(1023); t(pi(a0)); t(pi(a1)); super::wv(a1); });
+        ftLib_StartRumble = Some(|a0, a1, a2| { t(1024); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grAnime_801C7A04 = Some(|a0, a1, a2, a3| { t(1025); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3.to_bits()); });
         grAnime_801C7FF8 = Some(|a0, a1, a2, a3, a4, a5| { t(1026); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); t(a4.to_bits()); t(a5.to_bits()); });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1027); t(pi(a0)); t(a1 as u32); t(a2 as u32); });

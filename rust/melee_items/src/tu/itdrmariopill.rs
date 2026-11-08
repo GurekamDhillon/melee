@@ -56,8 +56,8 @@ pub mod ext {
     fn ftDr_Init_80149844(a0: *mut HSD_GObj) -> i32;
     fn ftDr_Init_801498A0(a0: *mut HSD_GObj);
     fn ftDr_Init_801498EC(a0: *mut HSD_GObj) -> u32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
-    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800869D4(a0) };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
+    fn ftLib_GetModelScale(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetModelScale(a0) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB68(a0, a1 as _) };
@@ -169,7 +169,7 @@ pub unsafe extern "C" fn itDrMarioPill_802C061C(gobj: *mut HSD_GObj) {
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if !(*ip).xDD4_itemVar.drmariopill.x4.is_null() {
         let mut v: Vec3 = core::mem::zeroed();
-        ext::ftLib_80086644((*ip).xDD4_itemVar.drmariopill.x4, &mut v);
+        ext::ftLib_GetPos((*ip).xDD4_itemVar.drmariopill.x4, &mut v);
         (*ip).pos = v;
         HSD_JObjSetTranslate(jobj, &mut v);
         HSD_JObjSetRotationY(jobj, (M_PI_2 * (*ip).xDD4_itemVar.drmariopill.x0 as f64) as f32);
@@ -374,7 +374,7 @@ pub unsafe extern "C" fn itDrMarioPill_Motion2_Anim(gobj: *mut HSD_GObj) -> bool
         } else {
             (*ip).xDAC_itcmd_var0 = ext::ftDr_Init_801498EC(held);
             if (*ip).owner == held {
-                let mag = ext::ftLib_800869D4(held);
+                let mag = ext::ftLib_GetModelScale(held);
                 let mut scale = Vec3 { x: mag, y: mag, z: mag };
                 HSD_JObjSetScale(hobj, &mut scale);
             } else if itDrMarioPill_Motion2_Anim_sub(gobj) {

@@ -45,9 +45,9 @@ pub mod ext {
     fn ftKb_SpecialNSs_800FCC6C(a0: *mut HSD_GObj) -> i32;
     fn ftKb_SpecialNSs_800FCCBC(a0: *mut HSD_GObj) -> i32;
     fn ftKb_SpecialNSs_800FCD04(a0: *mut HSD_GObj);
-    fn ftLib_800865C0(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800865C0(a0) };
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
-    fn ftLib_800869D4(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_800869D4(a0) };
+    fn ftLib_GetFacingDir(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetFacingDir(a0) };
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_GetPartJObj(a0, a1) };
+    fn ftLib_GetModelScale(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_GetModelScale(a0) };
     fn ftSs_SpecialLw_80129100(a0: *mut HSD_GObj, a1: *mut i32, a2: *mut i32) -> i32;
     fn ftSs_SpecialLw_80129158(a0: *mut HSD_GObj) -> i32;
     fn ftSs_SpecialN_801291A8(a0: *mut HSD_GObj) -> i32;
@@ -168,7 +168,7 @@ pub unsafe extern "C" fn it_802B55C8(gobj: *mut Fighter_GObj, pos: *mut Vec3, ar
         (*ip).xDD4_itemVar.samuschargeshot.xDE0 = 0.0;
         (*ip).xDD4_itemVar.samuschargeshot.xDFC = 0;
         (*ip).xDD4_itemVar.samuschargeshot.xE00 = gobj;
-        (*ip).xDD4_itemVar.samuschargeshot.xE04 = ext::ftLib_800869D4(gobj) as _;
+        (*ip).xDD4_itemVar.samuschargeshot.xE04 = ext::ftLib_GetModelScale(gobj) as _;
         (*ip).xDD4_itemVar.samuschargeshot.xE2C = 0.0;
         (*ip).xDD4_itemVar.samuschargeshot.xE30 = 0.0;
         (*ip).xDD4_itemVar.samuschargeshot.xE34 = 0.0;
@@ -199,7 +199,7 @@ pub unsafe extern "C" fn it_802B56E4(gobj: *mut Item_GObj, vec: *mut Vec3, farg0
             let mut sp2C: Vec3 = core::mem::zeroed();
             let mut sp20: Vec3 = core::mem::zeroed();
 
-            let j = ext::ftLib_80086630(sv.xE00, (*ip).xDC4);
+            let j = ext::ftLib_GetPartJObj(sv.xE00, (*ip).xDC4);
             ext::HSD_MtxGetRotation((*j).mtx.as_mut_ptr() as *mut c_void, &mut sp2C);
             sp20.z = 0.0;
             sp20.y = 0.0;
@@ -214,7 +214,7 @@ pub unsafe extern "C" fn it_802B56E4(gobj: *mut Item_GObj, vec: *mut Vec3, farg0
         sv.xDE0 = 0.0;
         sv.xDE4 = fmadds(sv.xDEC as f32, ((*attr).x1C - (*attr).x18) / (sv.xDF0 as f32), (*attr).x18);
         sv.xDF4 = 0;
-        (*ip).facing_dir = ext::ftLib_800865C0(sv.xE00);
+        (*ip).facing_dir = ext::ftLib_GetFacingDir(sv.xE00);
         (*ip).pos = *vec;
         sv.xDFC = 0;
         (*ip).x40_vel.x = sv.xDDC * cosf(sv.xDD8);

@@ -12,8 +12,8 @@ static void hash_ItemCommonData(const ItemCommonData* p);
 void (HSD_JObjSetMtxDirtySub)(__typeof__(struct HSD_JObj *) a0) { T(1000); T(PI((const void*) a0)); }
 __typeof__(struct HSD_GObj *) (Item_80268B18)(__typeof__(struct SpawnItem *) a0) { T(1001); T(PI((const void*) a0)); TSPAWN((const SpawnItem*) a0); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &GO[2] : 0)); }
 void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1002); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
-void (ftLib_800866DC)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1003); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
-__typeof__(int) (ftLib_80086960)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
+void (ftLib_GetCameraBonePos)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1003); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+__typeof__(int) (ftLib_IsFighter)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 __typeof__(int) (itColl_BounceOffShield)(__typeof__(struct HSD_GObj *) a0) { T(1005); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (it_8026B3A8)(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
@@ -1628,8 +1628,8 @@ static void freg_all(void)
 // stub HSD_JObjSetMtxDirtySub = 1000
 // stub Item_80268B18 = 1001
 // stub Item_80268E5C = 1002
-// stub ftLib_800866DC = 1003
-// stub ftLib_80086960 = 1004
+// stub ftLib_GetCameraBonePos = 1003
+// stub ftLib_IsFighter = 1004
 // stub itColl_BounceOffShield = 1005
 // stub it_8026B3A8 = 1006
 // stub it_8026B894 = 1007

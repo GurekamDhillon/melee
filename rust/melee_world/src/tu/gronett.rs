@@ -66,7 +66,7 @@ pub mod ext {
     fn HSD_Randi(a0: i32) -> i32 = |a0: i32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0);
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32);
     fn Mex_GrBind(a0: *mut c_void) -> *mut c_void;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } };
     fn gm_8016C6C0(a0: *mut HSD_GObj) -> i32;
     fn grAnime_801C7FF8(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32) = |a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32| { unsafe { crate::tu::granime::grAnime_801C7FF8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } };
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
@@ -671,7 +671,7 @@ pub unsafe extern "C" fn grOnett_801E43E0(gobj: *mut HSD_GObj) {
                     (*gp).u.onettcar.x108 = (*gp).u.onettcar.x108.wrapping_sub(1);
                     iter = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
                     while !iter.is_null() {
-                        ext::ftLib_80086644(iter, &mut pos);
+                        ext::ftLib_GetPos(iter, &mut pos);
                         if pos.y <= 1.0 {
                             let rank = ext::gm_8016C6C0(iter);
                             if fighter_count == 1 || rank == 0 {
@@ -735,7 +735,7 @@ pub unsafe extern "C" fn grOnett_801E43E0(gobj: *mut HSD_GObj) {
                         if HSD_JObjGetTranslationX(&*car_jobj) <= cam_z + (*yp).x64 {
                             let mut iter = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
                             while !iter.is_null() {
-                                ext::ftLib_80086644(iter, &mut pos);
+                                ext::ftLib_GetPos(iter, &mut pos);
                                 if pos.y <= 1.0 {
                                     let car = saved_car;
                                     ext::HSD_Randi(3);

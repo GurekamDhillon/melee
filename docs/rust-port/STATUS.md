@@ -240,6 +240,6 @@ was unlinked, and several GC-layout reads went through native structs; details i
   (lbBgFlash_80021C48, gm_80167470, ftMh / ftCh), `ft_0cdd` done, `ft_0cdf` done. They panic when reached (outside the render pass).
 - F. Peach's dress dynamics (`Dynamics P1 bone set 0`) run on the engine but are inactive in the C (bone id 0x100): not hashed, still a diff in `melee diff`.
 - Method (works, keep using it): `melee diff --engine tu --frame N` (captures at Script_FramePost like the C snapshot; `MELEE_DIFF_MTX=1` adds world matrices;
-  JObj2 lines = the blend-source tree), `tools/rust-port/trace/countdiff.py` / `seqdiff.py --anchor Fighter_8006A1BC --auto-ignore N`, the C trace build with a
+  JObj2 lines = the blend-source tree), `tools/rust-port/trace/countdiff.py` / `seqdiff.py --anchor Fighter_procHitlag --auto-ignore N`, the C trace build with a
   throw-away `dbg_jobj_out` logger, and `MELEE_CT_LIVE_FROM` to find the function a segfault is in. Do not hunt single fields first.
 - c2rs trap: a declaration whose initialiser comes from a macro (`PUSH_ATTRS`, `COPY_ATTRS`) is emitted with a null initialiser. Check generated fighter inits.

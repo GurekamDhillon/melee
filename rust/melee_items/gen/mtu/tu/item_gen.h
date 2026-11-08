@@ -99,14 +99,14 @@ __typeof__(unsigned int) db_ShowItemPickupRange(void) { T(1043); return (__typeo
 void efAsync_QueueClear(__typeof__(void *) a0) { T(1044); T(PI((const void*) a0)); }
 void efAsync_QueueFlush(__typeof__(struct HSD_GObj *) a0, __typeof__(void *) a1) { T(1045); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 void efLib_DestroyAll(__typeof__(struct HSD_GObj *) a0) { T(1046); T(PI((const void*) a0)); }
-void ftLib_80086724(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1047); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-void ftLib_80086764(__typeof__(struct HSD_GObj *) a0) { T(1048); T(PI((const void*) a0)); }
-__typeof__(int) ftLib_800867A0(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1049); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
-__typeof__(struct HSD_GObj *) ftLib_800867CC(__typeof__(struct HSD_GObj *) a0) { T(1050); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (0); }
-__typeof__(int) ftLib_80086960(__typeof__(struct HSD_GObj *) a0) { T(1051); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(int) ftLib_80086EB4(__typeof__(struct HSD_GObj *) a0) { T(1052); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-void ftLib_8008702C(__typeof__(int) a0) { T(1053); T((u32) a0); }
-void ftLib_80087050(__typeof__(int) a0) { T(1054); T((u32) a0); }
+void ftLib_ReleaseItem(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1047); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+void ftLib_ClearHeldSpecialItem(__typeof__(struct HSD_GObj *) a0) { T(1048); T(PI((const void*) a0)); }
+__typeof__(int) ftLib_IsHoldingItem(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1049); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
+__typeof__(struct HSD_GObj *) ftLib_GetHeldSpecialItem(__typeof__(struct HSD_GObj *) a0) { T(1050); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (0); }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1051); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) ftLib_GetTeam(__typeof__(struct HSD_GObj *) a0) { T(1052); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+void ftLib_IncFighterRefCount(__typeof__(int) a0) { T(1053); T((u32) a0); }
+void ftLib_DecFighterRefCount(__typeof__(int) a0) { T(1054); T((u32) a0); }
 __typeof__(enum FighterKind) ftLib_GetKind(__typeof__(struct HSD_GObj *) a0) { T(1055); T(PI((const void*) a0)); return (__typeof__(enum FighterKind)) (fv()); }
 __typeof__(int) gm_8016AE80(void) { T(1056); return (__typeof__(int)) (fv()); }
 __typeof__(int) gm_8017E068(void) { T(1057); return (__typeof__(int)) ((int) (rnd() % 14) - 1); }
@@ -5821,14 +5821,14 @@ static void freg_all(void)
 // stub efAsync_QueueClear = 1044
 // stub efAsync_QueueFlush = 1045
 // stub efLib_DestroyAll = 1046
-// stub ftLib_80086724 = 1047
-// stub ftLib_80086764 = 1048
-// stub ftLib_800867A0 = 1049
-// stub ftLib_800867CC = 1050
-// stub ftLib_80086960 = 1051
-// stub ftLib_80086EB4 = 1052
-// stub ftLib_8008702C = 1053
-// stub ftLib_80087050 = 1054
+// stub ftLib_ReleaseItem = 1047
+// stub ftLib_ClearHeldSpecialItem = 1048
+// stub ftLib_IsHoldingItem = 1049
+// stub ftLib_GetHeldSpecialItem = 1050
+// stub ftLib_IsFighter = 1051
+// stub ftLib_GetTeam = 1052
+// stub ftLib_IncFighterRefCount = 1053
+// stub ftLib_DecFighterRefCount = 1054
 // stub ftLib_GetKind = 1055
 // stub gm_8016AE80 = 1056
 // stub gm_8017E068 = 1057

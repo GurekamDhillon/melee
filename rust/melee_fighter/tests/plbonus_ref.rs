@@ -74,11 +74,11 @@ fn z() -> u32 {
 fn install() {
     unsafe {
         h::PL_804D6470 = &raw const TAB;
-        h::FTLIB_8008701C = Some(|g| {
+        h::FTLIB_IS_SLEEPING = Some(|g| {
             t(0x40 + e(g));
             (tr() >> 3) & 1 != 0
         });
-        h::FTLIB_80087300 = Some(|g| {
+        h::FTLIB_GET_LAST_ATTACKER_SLOT = Some(|g| {
             t(0x1C0 + e(g));
             (tr() % 7) as i32
         });
@@ -163,15 +163,15 @@ fn install() {
             t(0x430 + e(g));
             ent3(tr() % 3)
         });
-        h::FTLIB_80086960 = Some(|g| {
+        h::FTLIB_IS_FIGHTER = Some(|g| {
             t(0x440 + e(g));
             (tr() >> 1) & 1 != 0
         });
-        h::FTLIB_80086BE0 = Some(|g| {
+        h::FTLIB_GET_PLAYER_INDEX = Some(|g| {
             t(0x450 + e(g));
             (tr() % 6) as u8
         });
-        h::FTLIB_800874BC = Some(|g| {
+        h::FTLIB_IS_SUB_FIGHTER = Some(|g| {
             t(0x460 + e(g));
             ((tr() >> 4) & 1) as i32
         });

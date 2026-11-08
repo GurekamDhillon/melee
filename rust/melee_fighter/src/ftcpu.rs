@@ -1,6 +1,6 @@
 
 //! CPU controller init: `ftCo_800A101C` (kinds/ftCommon/ftCo_0A01.c) and `ftCo_800B9704`
-//! (ftcpuattack.c). `Fighter_UnkProcessDeath_80068354` runs them for every fighter, human or
+//! (ftcpuattack.c). `Fighter_Spawn` runs them for every fighter, human or
 //! CPU, so their two `HSD_Randf` draws are part of every match start (and every respawn).
 //!
 //! Not ported here: `ftCo_800A0FB0`'s floor probe (`mpCheckFloor` under the fighter, which needs

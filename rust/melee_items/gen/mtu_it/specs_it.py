@@ -94,8 +94,8 @@ spec("itfoods", [], effects={"Item_80268B18": spawn_effect(), "it_8026BB68": BB6
 _WR3 = lambda a: ("if (%s) { %s->x = rw(); %s->y = rw(); %s->z = rw(); }" % (a, a, a, a),
                   "if !%s.is_null() { (*%s).x = rw(); (*%s).y = rw(); (*%s).z = rw(); }" % (a, a, a, a))
 spec("itflipper", ["itFlipper_DatAttrs"], skip_stubs=["__frsqrte"], skip_data=IT_SKIP + ["guess", "y"],
-     effects={"Item_80268B18": spawn_effect(), "lb_8000B1CC": _WR3("a2"), "ftLib_800866DC": _WR3("a1"),
-              "ftLib_80086BEC": _WR3("a1"), "lbVector_NormalizeXY": _WR3("a0")})
+     effects={"Item_80268B18": spawn_effect(), "lb_8000B1CC": _WR3("a2"), "ftLib_GetCameraBonePos": _WR3("a1"),
+              "ftLib_GetPosDelta": _WR3("a1"), "lbVector_NormalizeXY": _WR3("a0")})
 
 # ---- shard 713-720 (it/kinds: itkirby*, itkireihana, itklap, itkoopaflame, itkusudama, itkyasarin)
 # efAsync_Spawn is variadic in C (extra args after the jobj); the TUs here call it with exactly five.
@@ -106,7 +106,7 @@ EFASYNC5 = {"efAsync_Spawn": dict(
 
 spec("itkirbyhammer", [], custom_stubs=EFASYNC5, effects={"Item_80268B18": spawn_effect(), "it_8026BB68": BB68})
 
-spec("itkirbyyoshispecialn", [], null_ret_ok=["ftLib_80086630"], effects={"lb_8000B1CC": _WR3("a2")})
+spec("itkirbyyoshispecialn", [], null_ret_ok=["ftLib_GetPartJObj"], effects={"lb_8000B1CC": _WR3("a2")})
 
 _WR2 = lambda a: ("if (%s) { %s->x = rw(); %s->y = rw(); }" % (a, a, a),
                   "if !%s.is_null() { (*%s).x = rw(); (*%s).y = rw(); }" % (a, a, a))

@@ -306,8 +306,8 @@ pub mod ext {
     fn efLib_PauseAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::efn::eflib::efLib_PauseAll(a0) };
     fn efLib_ResumeAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::efn::eflib::efLib_ResumeAll(a0) };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: &[*const c_void]) -> *mut c_void;
-    fn ftLib_80086198(a0: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
+    fn ftLib_FindLowestPercentOpponent(a0: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB88(a0, a1 as _) };
@@ -455,7 +455,7 @@ pub unsafe extern "C" fn it_802D43EC(gobj: *mut Item_GObj) {
     let ip = ip_of(gobj);
     let attrs = attrs_of(ip);
 
-    let owner_gobj = ext::ftLib_80086198((*ip).owner);
+    let owner_gobj = ext::ftLib_FindLowestPercentOpponent((*ip).owner);
     if !owner_gobj.is_null() {
         (*ip).xDD4_itemVar.hitodeman.x90 = owner_gobj;
     } else {
@@ -526,7 +526,7 @@ pub unsafe extern "C" fn it_802D4564(gobj: *mut Item_GObj) -> i32 {
         if !(*ip).xDD4_itemVar.hitodeman.x90.is_null() {
             let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
             let mut target_pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
-            ext::ftLib_80086644((*ip).xDD4_itemVar.hitodeman.x90, &mut target_pos);
+            ext::ftLib_GetPos((*ip).xDD4_itemVar.hitodeman.x90, &mut target_pos);
             if target_pos.x < (*ip).pos.x {
                 (*ip).facing_dir = -1.0;
             } else {
@@ -554,7 +554,7 @@ pub unsafe extern "C" fn it_802D472C(gobj: *mut Item_GObj) {
     let mut dir = Vec { x: 0.0, y: 0.0, z: 0.0 };
 
     if !(*ip).xDD4_itemVar.hitodeman.x90.is_null() {
-        ext::ftLib_80086644((*ip).xDD4_itemVar.hitodeman.x90, &mut target_pos);
+        ext::ftLib_GetPos((*ip).xDD4_itemVar.hitodeman.x90, &mut target_pos);
         target_pos.x += (*ip).xDD4_itemVar.hitodeman.x60;
         target_pos.y += (*ip).xDD4_itemVar.hitodeman.x64;
         target_pos.z = 0.0;

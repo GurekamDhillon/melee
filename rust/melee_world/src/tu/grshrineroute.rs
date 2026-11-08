@@ -355,7 +355,7 @@ pub unsafe extern "C" fn grShrineRoute_80208F70(gobj: *mut HSD_GObj) {
 
     let player = ext::Ground_GetP1Fighter();
     if !player.is_null() {
-        ext::ftLib_80086644(player, &mut sp7C);
+        ext::ftLib_GetPos(player, &mut sp7C);
     } else {
         sp7C.z = 0.0;
         sp7C.y = 0.0;
@@ -378,7 +378,7 @@ pub unsafe extern "C" fn grShrineRoute_80208F70(gobj: *mut HSD_GObj) {
                     }
                     let mid = (*((*(*gp).u.map.symbol[ix as u32 as usize]).user_data as *mut Ground)).map_id as i32;
                     if !player.is_null() {
-                        ext::Player_80031790(ext::ftLib_80086BE0(player) as i32);
+                        ext::Player_80031790(ext::ftLib_GetPlayerIndex(player) as i32);
                     }
                     if mid == 3 {
                         (*gp).u.shrineroute.xC4 = 6;
@@ -536,10 +536,10 @@ pub unsafe extern "C" fn grShrineRoute_80208F70(gobj: *mut HSD_GObj) {
 
     if track_plat == 0 {
         if !player.is_null() {
-            if ext::ftLib_80086EC0(player) != 0 {
+            if ext::ftLib_IsInHitstun(player) != 0 {
                 ext::Stage_UnkSetVec3TCam_Offset(&mut sp5C);
                 (*gp).u.shrineroute.xCE = 0x3C;
-            } else if ext::ftLib_8008732C(player) != 0 {
+            } else if ext::ftLib_IsDead(player) != 0 {
                 ext::Stage_UnkSetVec3TCam_Offset(&mut sp5C);
                 (*gp).u.shrineroute.xCE = 0;
             } else {
@@ -741,7 +741,7 @@ pub unsafe extern "C" fn grShrineRoute_8020A21C(gobj: *mut HSD_GObj) {
     let gp = GET_GROUND(gobj);
     let player = ext::Ground_GetP1Fighter();
     if !player.is_null() {
-        ext::ftLib_80086644(player, &mut player_pos);
+        ext::ftLib_GetPos(player, &mut player_pos);
     } else {
         player_pos.z = 0.0;
         player_pos.y = 0.0;
@@ -1085,11 +1085,11 @@ pub unsafe extern "C" fn onJointCollision(
     let gp = user_data as *mut Ground;
 
     if (*coll).x34_flags.b1234() as i32 == 1 && ground_kind == 2 {
-        let slot = ext::ftLib_80086BE0((*coll).x0_gobj) as i32;
+        let slot = ext::ftLib_GetPlayerIndex((*coll).x0_gobj) as i32;
         if (*coll).x0_gobj == ext::Player_GetEntity(slot) {
             (*gp).u.shrineroute.xCA = 1;
             let pgobj = ext::Player_GetEntityAtIndex(slot, 1);
-            if !pgobj.is_null() && ext::ftLib_8008731C(pgobj) == 0 {
+            if !pgobj.is_null() && ext::ftLib_IsSleeping_8008731C(pgobj) == 0 {
                 return;
             }
             (*gp).u.shrineroute.xCC = 1;
@@ -1118,7 +1118,7 @@ pub unsafe extern "C" fn grShrineRoute_8020AE08(gobj: *mut HSD_GObj, player_gobj
     hi.y *= scale;
     hi.z *= scale;
 
-    ext::ftLib_80086644(player_gobj, &mut pos);
+    ext::ftLib_GetPos(player_gobj, &mut pos);
 
     if pos.y < lo.y && lo.x < pos.x && pos.x < hi.x {
         *out = (*yakumono_param).x10;
@@ -1148,7 +1148,7 @@ pub unsafe extern "C" fn grShrineRoute_8020AF38(gobj: *mut HSD_GObj, arg1: i32) 
         ext::Ground_801C4A08((*gp).u.map.symbol[ix]);
         *symbolp = core::ptr::null_mut();
         if !pgobj.is_null() {
-            ext::ftLib_80086C18(pgobj, 0xB, 0x1E);
+            ext::ftLib_StartRumble(pgobj, 0xB, 0x1E);
         }
     }
 }

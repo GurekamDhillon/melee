@@ -59,8 +59,8 @@ pub mod ext {
     fn SurfaceBegin(a0: i32);
     fn SurfaceEnd();
     fn Wb_RenderOption(a0: i32, a1: i32) -> i32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
-    fn ftLib_800872B0(a0: *mut HSD_GObj) -> *mut LbShadow = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_800872B0(a0 as _) as _ };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } };
+    fn ftLib_GetShadow(a0: *mut HSD_GObj) -> *mut LbShadow = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_GetShadow(a0 as _) as _ };
     fn lbShadow_8000EEE0(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::lbshadow::lbShadow_8000EEE0(a0 as _); } };
     fn lbShadow_8000EFEC() = || { unsafe { melee_runtime::tu::lbshadow::lbShadow_8000EFEC(); } };
     }
@@ -134,8 +134,8 @@ pub unsafe extern "C" fn grDisplay_801C5B90(mut jobj: *mut HSD_JObj, vmtx: MtxPt
             if (*jobj).flags & (flags << 18) != 0 {
                 let mut cur = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
                 while !cur.is_null() {
-                    let shadow = ext::ftLib_800872B0(cur);
-                    ext::ftLib_80086644(cur, &mut fighter_pos);
+                    let shadow = ext::ftLib_GetShadow(cur);
+                    ext::ftLib_GetPos(cur, &mut fighter_pos);
                     if ext::Camera_80030B24() != 0
                         || (ext::stage_info.on_check_shadow_render.expect("stage_info.on_check_shadow_render"))(&mut fighter_pos, -1, jobj) != 0
                     {
@@ -207,7 +207,7 @@ pub unsafe extern "C" fn grDisplay_801C5DB0_surface_impl(gobj: *mut HSD_GObj, co
             } else {
                 let mut fighter = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
                 while !fighter.is_null() {
-                    let shadow = ext::ftLib_800872B0(fighter);
+                    let shadow = ext::ftLib_GetShadow(fighter);
                     (*shadow).set_x0_b4(0);
                     ext::lbShadow_8000EEE0(fighter);
                     fighter = (*fighter).next;

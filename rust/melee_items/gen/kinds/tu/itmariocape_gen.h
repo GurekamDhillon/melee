@@ -16,7 +16,7 @@ void (Item_8026A8EC)(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const vo
 void (Item_8026AB54)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(enum Fighter_Part) a2) { T(1004); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); }
 void (db_80225DD8)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { T(1006); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); }
-__typeof__(int) (ftLib_800865CC)(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) (ftLib_GetGroundAir)(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(int) (ftMr_SpecialS_CheckItemCapeRemove)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (ftMr_SpecialS_Reset)(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); }
 void (it_8026B724)(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); }
@@ -1618,7 +1618,7 @@ static void freg_all(void)
 // stub Item_8026AB54 = 1004
 // stub db_80225DD8 = 1005
 // stub efAsync_Spawn = 1006
-// stub ftLib_800865CC = 1007
+// stub ftLib_GetGroundAir = 1007
 // stub ftMr_SpecialS_CheckItemCapeRemove = 1008
 // stub ftMr_SpecialS_Reset = 1009
 // stub it_8026B724 = 1010

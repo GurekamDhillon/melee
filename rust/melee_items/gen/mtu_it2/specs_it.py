@@ -101,9 +101,9 @@ spec("itlugia", ["itLugiaAttributes"], skip_stubs=["sinf", "cosf", "__frsqrte"],
 spec("itlinkboomerang", ["itLinkBoomerangAttributes"], skip_stubs=["sinf", "cosf", "__frsqrte", "sqrtf"],
      skip_data=IT_SKIP + ["attr", "stack", "quat", "rot", "pos", "sp14", "spawn", "child", "hobj", "mtx", "coll", "owner", "idx", "joint", "anim_bundle", "item_state_desc", "gobj2"],
      effects={"Item_80268B18": spawn_effect(), "it_8026BB68": BB68, "ftLk_SpecialHi_GetPosWithAdjustedY": BB68,
-              "ftLib_800866DC": BB68, "HSD_MtxGetRotation": BB68},
+              "ftLib_GetCameraBonePos": BB68, "HSD_MtxGetRotation": BB68},
      ret={"HSD_JObjLoadJoint": ("&JO[fv() % 4]", "&raw mut super::JO[(fv() % 4) as usize]"),
-          "ftLib_80086630": ("&JO[fv() % 4]", "&raw mut super::JO[(fv() % 4) as usize]"),
+          "ftLib_GetPartJObj": ("&JO[fv() % 4]", "&raw mut super::JO[(fv() % 4) as usize]"),
           "lbVector_CosAngle": ("((float) ((int) (rnd() % 2001) - 1000) / 1000.0f)", "((rnd() % 2001) as i32 - 1000) as f32 / 1000.0"),
           "ftLib_GetKind": ("((fv() & 1) ? 6 : 1)", "(if fv() & 1 != 0 { 6 } else { 1 })")})
 

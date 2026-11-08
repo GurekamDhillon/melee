@@ -79,9 +79,9 @@ pub mod ext {
     fn lbVector_Sub(a0: *mut Vec, a1: *mut Vec) -> *mut Vec = unsafe { crate::tu::lbvector::lbVector_Sub(a0, a1) };
     fn ftDrawCommon_80081168();
     fn ftDrawCommon_80081200();
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_800872B0(a0: *mut HSD_GObj) -> *mut LbShadow;
-    fn ftLib_800872BC(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetShadow(a0: *mut HSD_GObj) -> *mut LbShadow;
+    fn ftLib_CastsShadow(a0: *mut HSD_GObj) -> i32;
     }
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::gobj_native::HSD_GObjGXLinkHead;
@@ -229,16 +229,16 @@ unsafe fn any_flag(lbs: *mut LbShadow) -> bool {
 }
 
 /// lbshadow.c `lbShadow_8000EEE0`: activates the fighter shadow when no suppression bit is set
-/// and `ftLib_800872BC` allows it, deactivates it otherwise.
+/// and `ftLib_CastsShadow` allows it, deactivates it otherwise.
 ///
 /// # Safety
 /// `gobj` must be a valid fighter GObj.
 pub unsafe fn lbShadow_8000EEE0(gobj: *mut HSD_GObj) {
     melee_core::ct!("lbShadow_8000EEE0");
-    if (ext::ftLib_80086960(gobj) != 0) {
-        let lbs = ext::ftLib_800872B0(gobj);
+    if (ext::ftLib_IsFighter(gobj) != 0) {
+        let lbs = ext::ftLib_GetShadow(gobj);
         if !lbs.is_null() {
-            if !any_flag(lbs) && (ext::ftLib_800872BC(gobj) != 0) {
+            if !any_flag(lbs) && (ext::ftLib_CastsShadow(gobj) != 0) {
                 ext::HSD_ShadowSetActive((*lbs).shadow, 1);
             } else {
                 ext::HSD_ShadowSetActive((*lbs).shadow, 0);
@@ -258,7 +258,7 @@ pub unsafe fn lbShadow_8000EFEC() {
     let head = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     let mut g = head;
     while !g.is_null() {
-        let lbs = ext::ftLib_800872B0(g);
+        let lbs = ext::ftLib_GetShadow(g);
         if !lbs.is_null() {
             (*lbs).set_x0_b2(0);
         }
@@ -266,7 +266,7 @@ pub unsafe fn lbShadow_8000EFEC() {
     }
     let mut cur = head;
     while !cur.is_null() {
-        let lbs = ext::ftLib_800872B0(cur);
+        let lbs = ext::ftLib_GetShadow(cur);
         if !lbs.is_null() {
             if !any_flag(lbs) {
                 count += 1;
@@ -351,7 +351,7 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
 
     let mut g = plink;
     while !g.is_null() {
-        let lbs = ext::ftLib_800872B0(g);
+        let lbs = ext::ftLib_GetShadow(g);
         if !lbs.is_null() {
             (*lbs).set_x0_b2(0);
         }
@@ -461,10 +461,10 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
             (*fp).x20A4.set_x0_b3(if added { 0 } else { 1 });
         }
 
-        if (ext::ftLib_80086960(gobj) != 0) {
-            let lbs = ext::ftLib_800872B0(gobj);
+        if (ext::ftLib_IsFighter(gobj) != 0) {
+            let lbs = ext::ftLib_GetShadow(gobj);
             if !lbs.is_null() {
-                if !any_flag(lbs) && (ext::ftLib_800872BC(gobj) != 0) {
+                if !any_flag(lbs) && (ext::ftLib_CastsShadow(gobj) != 0) {
                     ext::HSD_ShadowSetActive((*lbs).shadow, 1);
                 } else {
                     ext::HSD_ShadowSetActive((*lbs).shadow, 0);

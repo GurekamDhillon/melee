@@ -140,10 +140,10 @@ pub mod ext {
     fn diag_camera_subject(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32);
     fn diag_camera_track(a0: *const f32, a1: *const f32);
     fn diag_game_camera(a0: *const f32, a1: *const f32, a2: *const f32);
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
-    fn ftLib_80086B74(a0: *mut HSD_GObj) -> *mut CmSubject = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B74(a0 as _) as _ };
-    fn ftLib_8008701C(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_8008701C(a0 as _) as _ };
-    fn ftLib_8008732C(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_8008732C(a0 as _) as _ };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } };
+    fn ftLib_GetCameraSubject(a0: *mut HSD_GObj) -> *mut CmSubject = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_GetCameraSubject(a0 as _) as _ };
+    fn ftLib_IsSleeping(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsSleeping(a0 as _) as _ };
+    fn ftLib_IsDead(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsDead(a0 as _) as _ };
     fn gm_GetButtonsPressed(a0: u8) -> u64;
     fn gm_GetButtonsTriggered(a0: u8) -> u64;
     fn gm_IsCurrently1PMode_inline() -> i32;
@@ -1627,7 +1627,7 @@ pub unsafe fn Camera_8002B1F8(mut transform: *mut CameraTransformState) {
     if 1.0f32 == (*temp_r31) {
         return;
     }
-    if ((((({ { temp_r3 = ext::Player_GetEntity(0); temp_r3 }; !temp_r3.is_null() }) && ({ { subject = ext::ftLib_80086B74(temp_r3); subject }; !subject.is_null() })) && (Camera_8002928C(subject) != 0)) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) && (!(ext::ftLib_8008732C(temp_r3) != 0))) || (((((ext::Player_GetPlayerCharacter(1) == ((ChKind_Sandbag as i32) as u32)) && ({ { temp_r3_2 = ext::Player_GetEntity(1); temp_r3_2 }; ((temp_r3_2.is_null()) as i32) == 0 })) && ({ { subject = ext::ftLib_80086B74(temp_r3_2); subject }; ((subject.is_null()) as i32) == 0 })) && (Camera_8002928C(subject) != 0)) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) {
+    if ((((({ { temp_r3 = ext::Player_GetEntity(0); temp_r3 }; !temp_r3.is_null() }) && ({ { subject = ext::ftLib_GetCameraSubject(temp_r3); subject }; !subject.is_null() })) && (Camera_8002928C(subject) != 0)) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) && (!(ext::ftLib_IsDead(temp_r3) != 0))) || (((((ext::Player_GetPlayerCharacter(1) == ((ChKind_Sandbag as i32) as u32)) && ({ { temp_r3_2 = ext::Player_GetEntity(1); temp_r3_2 }; ((temp_r3_2.is_null()) as i32) == 0 })) && ({ { subject = ext::ftLib_GetCameraSubject(temp_r3_2); subject }; ((subject.is_null()) as i32) == 0 })) && (Camera_8002928C(subject) != 0)) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) {
         let _ = lbVector_Diff(core::ptr::addr_of_mut!((*transform).target_interest) as *mut Vec, core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, core::ptr::addr_of_mut!(vec) as *mut Vec);
         temp_f1 = *temp_r31;
         temp_f1_2 = temp_f1 * temp_f1;
@@ -1654,7 +1654,7 @@ pub unsafe fn fighter_z_out_of_range(mut fighter_pos: *mut Vec) -> i32 {
     if Camera_80030AF8() != 0 {
         gobj = ext::Ground_GetP1Fighter();
         if !gobj.is_null() {
-            ext::ftLib_80086644(gobj, fighter_pos);
+            ext::ftLib_GetPos(gobj, fighter_pos);
             if (if (*fighter_pos).z < (0 as f32) { -(*fighter_pos).z } else { (*fighter_pos).z }) > 3e+01f32 {
                 return 1;
             }
@@ -2287,7 +2287,7 @@ pub unsafe fn get_subject_pos(mut pos: *mut Vec, mut slot_ptr: *const i8) -> i32
         ext::Stage_UnkSetVec3TCam_Offset(pos);
     } else {
         gobj = ext::Player_GetEntity(slot);
-        if (!gobj.is_null()) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null()) {
+        if (!gobj.is_null()) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null()) {
             *pos = (*subject).bone_pos;
         } else {
             valid = 0;
@@ -2310,7 +2310,7 @@ pub unsafe fn get_subject_pos_out(mut pos: *mut Vec, mut slot_ptr: *const i8, mu
         ext::Stage_UnkSetVec3TCam_Offset(pos);
     } else {
         gobj = ext::Player_GetEntity(slot);
-        if (!gobj.is_null()) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null()) {
+        if (!gobj.is_null()) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null()) {
             *pos = (*subject).bone_pos;
         } else {
             *valid_out = 0;
@@ -2328,7 +2328,7 @@ pub unsafe fn camera_cddc_select(mut slot_ptr: *mut i8) {
         return;
     }
     pos_ptr = core::ptr::addr_of_mut!(game_camera.x308) as *mut Vec;
-    'l54: while (((((*slot_ptr) as i32) == 10) || ({ get_subject_pos_out(pos_ptr, slot_ptr as *const i8, core::ptr::addr_of_mut!(valid) as *mut i32); !(valid != 0) })) || ({ gobj = ext::Player_GetEntity((*slot_ptr) as i32); gobj }.is_null())) || (ext::ftLib_8008701C(gobj) != 0) {
+    'l54: while (((((*slot_ptr) as i32) == 10) || ({ get_subject_pos_out(pos_ptr, slot_ptr as *const i8, core::ptr::addr_of_mut!(valid) as *mut i32); !(valid != 0) })) || ({ gobj = ext::Player_GetEntity((*slot_ptr) as i32); gobj }.is_null())) || (ext::ftLib_IsSleeping(gobj) != 0) {
         *slot_ptr = Camera_8002BA00((*slot_ptr) as i32, 1) as i8;
     }
 }
@@ -2481,7 +2481,7 @@ pub unsafe fn Camera_8002CB0C(mut bounds: *mut CameraBounds) {
         slot = core::ptr::addr_of_mut!((*camera).x2C4) as *mut i8;
         *slot = Camera_8002BA00((*slot) as i32, dir) as i8;
         x308_ptr = core::ptr::addr_of_mut!((*camera).x308) as *mut Vec;
-        'l56: while (((((*slot) as i32) == 10) || (!(get_subject_pos(x308_ptr, slot as *const i8) != 0))) || ({ entity = ext::Player_GetEntity((*slot) as i32); entity }.is_null())) || (ext::ftLib_8008701C(entity) != 0) {
+        'l56: while (((((*slot) as i32) == 10) || (!(get_subject_pos(x308_ptr, slot as *const i8) != 0))) || ({ entity = ext::Player_GetEntity((*slot) as i32); entity }.is_null())) || (ext::ftLib_IsSleeping(entity) != 0) {
             *slot = Camera_8002BA00((*slot) as i32, dir) as i8;
         }
         selected_slot = (*slot) as i32;
@@ -2528,7 +2528,7 @@ pub unsafe extern "C" fn Camera_8002CDDC(mut unused: *mut c_void) {
     late_transform = core::ptr::addr_of_mut!(game_camera.transform) as *mut CameraTransformState;
     camera_cddc_select(slot_ptr);
     Camera_8002CB0C(core::ptr::addr_of_mut!(bounds) as *mut CameraBounds);
-    if (((((((((*slot_ptr) as i32) != 10) && (((*slot_ptr) as i32) != 11)) && (!{ gobj = ext::Player_GetEntity((*slot_ptr) as i32); gobj }.is_null())) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null())) && (Camera_8002928C(subject) != 0)) && ((*subject).state == ((CmSubjectState_Active as i32) as u32))) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) && ((if (*subject).bone_pos.z < (0 as f32) { -(*subject).bone_pos.z } else { (*subject).bone_pos.z }) < 3e+01f32) {
+    if (((((((((*slot_ptr) as i32) != 10) && (((*slot_ptr) as i32) != 11)) && (!{ gobj = ext::Player_GetEntity((*slot_ptr) as i32); gobj }.is_null())) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null())) && (Camera_8002928C(subject) != 0)) && ((*subject).state == ((CmSubjectState_Active as i32) as u32))) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) && ((if (*subject).bone_pos.z < (0 as f32) { -(*subject).bone_pos.z } else { (*subject).bone_pos.z }) < 3e+01f32) {
         track_subject(late_transform, core::ptr::addr_of_mut!(interest_diff) as *mut Vec, core::ptr::addr_of_mut!(eye_diff) as *mut Vec);
         game_camera.transform.target_fov = cm_803BCCA0.x6C;
         delta = game_camera.transform.target_fov - game_camera.transform.fov;
@@ -2551,7 +2551,7 @@ pub unsafe fn compute_orbit_distance(mut slot: i32) -> f32 {
     let mut distance: f32 = 0.0;
     let mut gobj: *mut HSD_GObj = null_mut();
     let mut subject: *mut CmSubject = null_mut();
-    if (((((slot != 10) && (slot != 11)) && (slot >= 0)) && (slot < 6)) && (!{ gobj = ext::Player_GetEntity(slot); gobj }.is_null())) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null()) {
+    if (((((slot != 10) && (slot != 11)) && (slot >= 0)) && (slot < 6)) && (!{ gobj = ext::Player_GetEntity(slot); gobj }.is_null())) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null()) {
         distance = (2.0f32 * (*subject).ext.v.z) / ext::tanf(game_camera.transform.target_fov * 0.017453292f32);
     } else {
         distance = 1e+03f32;
@@ -2587,9 +2587,9 @@ pub unsafe extern "C" fn Camera_8002D318(mut unused: *mut c_void) {
     let mut bounds_copy: CameraBounds = unsafe { core::mem::zeroed() };
     let mut bounds: CameraBounds = unsafe { core::mem::zeroed() };
     gobj = ext::Player_GetEntity(game_camera.x2C4 as i32);
-    if (((((!gobj.is_null()) && (ext::ftLib_8008701C(gobj) == 0)) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null())) && (Camera_8002928C(subject) != 0)) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) && ((if (*subject).bone_pos.z < (0 as f32) { -(*subject).bone_pos.z } else { (*subject).bone_pos.z }) < 1e+01f32) {
+    if (((((!gobj.is_null()) && (ext::ftLib_IsSleeping(gobj) == 0)) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null())) && (Camera_8002928C(subject) != 0)) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) && ((if (*subject).bone_pos.z < (0 as f32) { -(*subject).bone_pos.z } else { (*subject).bone_pos.z }) < 1e+01f32) {
         Camera_80030DF8();
-        if (!{ gobj = ext::Player_GetEntity(game_camera.x2C4 as i32); gobj }.is_null()) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null()) {
+        if (!{ gobj = ext::Player_GetEntity(game_camera.x2C4 as i32); gobj }.is_null()) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null()) {
             pos = get_subject_x1C(subject);
             half_z = 0.5f32 * (*subject).ext.v.z;
             ext::diag_camera_subject((*pos).x, (*pos).y, (*pos).z, (*subject).ext.v.z, game_camera.yaw_offset);
@@ -2609,7 +2609,7 @@ pub unsafe extern "C" fn Camera_8002D318(mut unused: *mut c_void) {
         game_camera.transform.fov = fmadds(delta, cm_803BCCA0.x70, game_camera.transform.fov);
         {
             let mut slot: i32 = game_camera.x2C4 as i32;
-            if (((((slot != 10) && (slot != 11)) && (slot >= 0)) && (slot < 6)) && (!{ gobj = ext::Player_GetEntity(slot); gobj }.is_null())) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null()) {
+            if (((((slot != 10) && (slot != 11)) && (slot >= 0)) && (slot < 6)) && (!{ gobj = ext::Player_GetEntity(slot); gobj }.is_null())) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null()) {
                 distance = (2.0f32 * (*subject).ext.v.z) / ext::tanf(game_camera.transform.target_fov * 0.017453292f32);
             } else {
                 distance = 1e+03f32;
@@ -2659,10 +2659,10 @@ pub unsafe extern "C" fn Camera_8002D85C(mut unused: *mut c_void) {
     let mut bounds2: CameraBounds = unsafe { core::mem::zeroed() };
     let mut bounds: CameraBounds = unsafe { core::mem::zeroed() };
     gobj = ext::Player_GetEntity(game_camera.x2C4 as i32);
-    if (((!gobj.is_null()) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null())) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) && ((if (*subject).bone_pos.z < (0 as f32) { -(*subject).bone_pos.z } else { (*subject).bone_pos.z }) < 3e+01f32) {
+    if (((!gobj.is_null()) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null())) && (Camera_80029124(core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, 0) == (0 as u32))) && ((if (*subject).bone_pos.z < (0 as f32) { -(*subject).bone_pos.z } else { (*subject).bone_pos.z }) < 3e+01f32) {
         Camera_80030DF8();
         gobj = ext::Player_GetEntity(game_camera.x2C4 as i32);
-        if (!gobj.is_null()) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null()) {
+        if (!gobj.is_null()) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null()) {
             subj_pos = get_subject_x1C(subject);
             game_camera.transform.target_interest.x = (*subj_pos).x;
             game_camera.transform.target_interest.y = (*subj_pos).y;
@@ -2680,7 +2680,7 @@ pub unsafe extern "C" fn Camera_8002D85C(mut unused: *mut c_void) {
         game_camera.transform.fov = fmadds(delta, cm_803BCCA0.x70, game_camera.transform.fov);
         {
             let mut slot: i32 = game_camera.x2C4 as i32;
-            if (((((slot != 10) && (slot != 11)) && (slot >= 0)) && (slot < 6)) && (!{ gobj = ext::Player_GetEntity(slot); gobj }.is_null())) && (!{ subject = ext::ftLib_80086B74(gobj); subject }.is_null()) {
+            if (((((slot != 10) && (slot != 11)) && (slot >= 0)) && (slot < 6)) && (!{ gobj = ext::Player_GetEntity(slot); gobj }.is_null())) && (!{ subject = ext::ftLib_GetCameraSubject(gobj); subject }.is_null()) {
                 distance = (2.0f32 * (*subject).ext.v.z) / ext::tanf(game_camera.transform.target_fov * 0.017453292f32);
             } else {
                 distance = 1e+03f32;
@@ -2961,7 +2961,7 @@ pub unsafe extern "C" fn Camera_8002E490(mut unused: *mut c_void) {
                 {
                     let mut gobj: *mut HSD_GObj = ext::Player_GetEntity(game_camera.x344.slot);
                     if !gobj.is_null() {
-                        let mut subject: *mut CmSubject = ext::ftLib_80086B74(gobj);
+                        let mut subject: *mut CmSubject = ext::ftLib_GetCameraSubject(gobj);
                         if !subject.is_null() {
                             game_camera.transform.target_interest = (*subject).bone_pos;
                         }
@@ -3042,7 +3042,7 @@ pub unsafe fn Camera_8002E6FC(mut arg0: i32) {
                 {
                     let mut gobj: *mut HSD_GObj = ext::Player_GetEntity(game_camera.x344.slot);
                     if !gobj.is_null() {
-                        let mut subject: *mut CmSubject = ext::ftLib_80086B74(gobj);
+                        let mut subject: *mut CmSubject = ext::ftLib_GetCameraSubject(gobj);
                         if !subject.is_null() {
                             game_camera.transform.target_interest = (*subject).bone_pos;
                         }
@@ -3082,7 +3082,7 @@ pub unsafe fn Camera_8002E818(mut pos: *mut Vec) {
                 {
                     let mut gobj: *mut HSD_GObj = ext::Player_GetEntity(game_camera.x344.slot);
                     if !gobj.is_null() {
-                        let mut subject: *mut CmSubject = ext::ftLib_80086B74(gobj);
+                        let mut subject: *mut CmSubject = ext::ftLib_GetCameraSubject(gobj);
                         if !subject.is_null() {
                             game_camera.transform.target_interest = (*subject).bone_pos;
                         }
@@ -3122,7 +3122,7 @@ pub unsafe fn Camera_8002E948(mut cb: Option<unsafe extern "C" fn(*mut Vec) -> i
                 {
                     let mut gobj: *mut HSD_GObj = ext::Player_GetEntity(game_camera.x344.slot);
                     if !gobj.is_null() {
-                        let mut subject: *mut CmSubject = ext::ftLib_80086B74(gobj);
+                        let mut subject: *mut CmSubject = ext::ftLib_GetCameraSubject(gobj);
                         if !subject.is_null() {
                             game_camera.transform.target_interest = (*subject).bone_pos;
                         }
@@ -3274,7 +3274,7 @@ pub unsafe fn Camera_8002EF14() {
                 {
                     let mut gobj: *mut HSD_GObj = ext::Player_GetEntity(game_camera.x344.slot);
                     if !gobj.is_null() {
-                        let mut subject: *mut CmSubject = ext::ftLib_80086B74(gobj);
+                        let mut subject: *mut CmSubject = ext::ftLib_GetCameraSubject(gobj);
                         if !subject.is_null() {
                             game_camera.transform.target_interest = (*subject).bone_pos;
                         }
@@ -3547,7 +3547,7 @@ pub unsafe fn Camera_8002F7AC(mut slot: i8) {
     game_camera.x2C4 = slot;
     fighter_gobj = ext::Player_GetEntity(game_camera.x2C4 as i32);
     if !fighter_gobj.is_null() {
-        cam_box = ext::ftLib_80086B74(fighter_gobj);
+        cam_box = ext::ftLib_GetCameraSubject(fighter_gobj);
         if !cam_box.is_null() {
             direction = (*cam_box).facing_dir;
             if direction > 0.0f32 {
@@ -3757,7 +3757,7 @@ pub unsafe fn Camera_8002FEEC(mut arg0: i32) {
     let mut temp_f31: f32 = 0.0;
     let mut temp_f1_4: f32 = 0.0;
     if !ext::Player_GetEntity(arg0).is_null() {
-        r#box = ext::ftLib_80086B74(ext::Player_GetEntity(arg0));
+        r#box = ext::ftLib_GetCameraSubject(ext::Player_GetEntity(arg0));
         if (!r#box.is_null()) && (game_camera.mode != ((CAMERA_DEBUG_FOLLOW as i32) as u32)) {
             if game_camera.mode <= ((CAMERA_PAUSE as i32) as u32) {
                 cm_80453004.last_mode = game_camera.mode;
@@ -3851,7 +3851,7 @@ pub unsafe fn Camera_80030178() -> i32 {
 /// `Camera_8003019C`
 pub unsafe fn Camera_8003019C() -> *mut Vec {
     melee_core::ct!("Camera_8003019C");
-    return core::ptr::addr_of_mut!((*ext::ftLib_80086B74(ext::Player_GetEntity(cm_80453004.ply_slot))).bone_pos) as *mut Vec;
+    return core::ptr::addr_of_mut!((*ext::ftLib_GetCameraSubject(ext::Player_GetEntity(cm_80453004.ply_slot))).bone_pos) as *mut Vec;
 }
 
 /// `gxlink_prio8`

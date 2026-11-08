@@ -55,9 +55,9 @@ pub mod ext {
         FTDEMO_INIT_CHAIN ftDemo_init_chain(g: G);
         CAMERA_80029020 Camera_80029020() -> *mut CmSubject;
         LBSHADOW_8000ED54 lbShadow_8000ED54(sh: *mut LbShadow, obj: *mut c_void);
-        // The five HSD_GObj_SetupProc calls (Fighter_8006A360/procUpdate/procMap/8006C80C/8006D9AC).
+        // The five HSD_GObj_SetupProc calls (Fighter_procAnim/procUpdate/procMap/8006C80C/8006D9AC).
         FTDEMO_SETUP_PROCS ftDemo_setup_procs(g: G);
-        FIGHTER_UNK_PROCESS_DEATH Fighter_UnkProcessDeath_80068354(g: G);
+        FIGHTER_UNK_PROCESS_DEATH Fighter_Spawn(g: G);
         // `on_create_fighter[i]` (ftCo_800BECB0 ...); C entry 3 is NULL.
         ON_CREATE_FIGHTER on_create_fighter(i: i32, g: G);
         FIGHTER_800679B0 Fighter_800679B0();
@@ -135,11 +135,11 @@ pub fn ftdemo_create_fighter(a: &plAllocInfo2) -> G {
     fp(g).x890_cameraBox = ext::Camera_80029020();
     ext::lbShadow_8000ED54(&mut fp(g).x20A4, unsafe { (*g).hsd_obj } as *mut _);
     ext::ftDemo_setup_procs(g);
-    ext::Fighter_UnkProcessDeath_80068354(g);
+    ext::Fighter_Spawn(g);
     if a.unk8 as i32 != 3 {
         ext::on_create_fighter(a.unk8 as i32, g);
     }
-    crate::ftlib::ftlib_800867e8(g);
+    crate::ftlib::ftlib_disable_input(g);
     g
 }
 
@@ -228,13 +228,13 @@ pub unsafe fn install_defaults(ms_803c52a0: *mut MotionState) {
     CAMERA_80029020 = Some(|| f::ext::Camera_80029020() as *mut CmSubject);
     LBSHADOW_8000ED54 = Some(|s, o| f::ext::lbShadow_8000ED54(s as *mut c_void, o as _));
     FTDEMO_SETUP_PROCS = Some(|g| {
-        f::ext::HSD_GObj_SetupProc(g, |g| unsafe { f::Fighter_8006A360(g) }, 1);
+        f::ext::HSD_GObj_SetupProc(g, |g| unsafe { f::Fighter_procAnim(g) }, 1);
         f::ext::HSD_GObj_SetupProc(g, |g| unsafe { f::Fighter_procUpdate(g) }, 4);
         f::ext::HSD_GObj_SetupProc(g, |g| unsafe { f::Fighter_procMap(g) }, 5);
-        f::ext::HSD_GObj_SetupProc(g, |g| unsafe { f::Fighter_8006C80C(g) }, 9);
-        f::ext::HSD_GObj_SetupProc(g, |g| unsafe { f::Fighter_8006D9AC(g) }, 16);
+        f::ext::HSD_GObj_SetupProc(g, |g| unsafe { f::Fighter_procCollPos(g) }, 9);
+        f::ext::HSD_GObj_SetupProc(g, |g| unsafe { f::Fighter_procDynamics(g) }, 16);
     });
-    FIGHTER_UNK_PROCESS_DEATH = Some(|g| unsafe { f::Fighter_UnkProcessDeath_80068354(g) });
+    FIGHTER_UNK_PROCESS_DEATH = Some(|g| unsafe { f::Fighter_Spawn(g) });
     ON_CREATE_FIGHTER = Some(|i, g| {
         // ftdemo.c on_create_fighter[16]
         let t: [Option<fn(G)>; 16] = [

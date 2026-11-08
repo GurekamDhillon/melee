@@ -57,7 +57,7 @@ __typeof__(float) (Ground_801C0498)(void) { T(1000); return (__typeof__(float)) 
 void (HSD_JObjSetMtxDirtySub)(__typeof__(struct HSD_JObj *) a0) { T(1001); T(PI((const void*) a0)); }
 __typeof__(struct HSD_GObj *) (Item_80268B18)(__typeof__(struct SpawnItem *) a0) { T(1002); T(PI((const void*) a0)); hash_SpawnItem(a0); return (__typeof__(struct HSD_GObj *)) (pick_HSD_GObj(1)); }
 void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1003); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
-void (ftLib_80086644)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1004); T(PI((const void*) a0)); T(PI((const void*) a1)); { a1->x = rg(); a1->y = rg(); a1->z = rg(); } }
+void (ftLib_GetPos)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1004); T(PI((const void*) a0)); T(PI((const void*) a1)); { a1->x = rg(); a1->y = rg(); a1->z = rg(); } }
 void (it_8026B3A8)(__typeof__(struct HSD_GObj *) a0) { T(1005); T(PI((const void*) a0)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1006); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 void (it_80272460)(__typeof__(struct HitCapsule *) a0, __typeof__(unsigned int) a1, __typeof__(struct HSD_GObj *) a2) { T(1007); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
@@ -1978,7 +1978,7 @@ static void freg_all(void)
 // stub HSD_JObjSetMtxDirtySub = 1001
 // stub Item_80268B18 = 1002
 // stub Item_80268E5C = 1003
-// stub ftLib_80086644 = 1004
+// stub ftLib_GetPos = 1004
 // stub it_8026B3A8 = 1005
 // stub it_8026B894 = 1006
 // stub it_80272460 = 1007

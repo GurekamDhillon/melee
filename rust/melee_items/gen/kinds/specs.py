@@ -32,18 +32,18 @@ COMMON_RET["it_802AC43C"] = _GO2
 COMMON_RET["lbVector_CrossprodNormalized"] = ("a2", "a2")
 COMMON_RET["lbVector_Angle"] = ("(float) (rnd() % 400) / 100.0f", "(rnd() % 400) as f32 / 100.0")
 COMMON_RET["Stage_80225194"] = ("((fv() % 3) == 0 ? 0x54 : (int) (fv() % 20))", "if fv() % 3 == 0 { 0x54 } else { (fv() % 20) as _ }")
-COMMON_RET["ftLib_80086A0C"] = ("(float) (rnd() % 5) / 2.0f", "(rnd() % 5) as f32 / 2.0")
+COMMON_RET["ftLib_GetScale"] = ("(float) (rnd() % 5) / 2.0f", "(rnd() % 5) as f32 / 2.0")
 COMMON_RET["ftLib_GetMotionId"] = ("(int) (0x150 + rnd() % 16)", "(0x150 + rnd() % 16) as i32")
 COMMON_RET["it_802A3C98"] = ("(float) (rnd() % 60) / 10.0f", "(rnd() % 60) as f32 / 10.0")
 COMMON_EFF = {
     "lb_8000B1CC": _V("a2"),
-    "ftLib_80086644": _V("a1"),
+    "ftLib_GetPos": _V("a1"),
     "it_8026BB68": _V("a1"),
     "it_802AB3F0": _V("a1"),
     "lbVector_CrossprodNormalized": _V("a2"),
     "it_802A3C98": _V("a2"),
     "it_802AB468": ("if (a1) { *a1 = rw(); }", "if !a1.is_null() { *a1 = rw(); }"),
-    "ftLib_800865D8": ("if (a1) { *a1 = rg(); } if (a2) { *a2 = rg(); }",
+    "ftLib_GetLStick": ("if (a1) { *a1 = rg(); } if (a2) { *a2 = rg(); }",
                        "if !a1.is_null() { *a1 = rg(); } if !a2.is_null() { *a2 = rg(); }"),
     "lbVector_Diff": _V("a2"),
     "lbVector_Normalize": _V("a0"),
@@ -169,14 +169,14 @@ SPECS["itlgunbeam"]["custom_stubs"] = {"efSync_Spawn": _EFS5}
 
 _L = SPECS["itleadead"]
 _L["ret"].update({
-    "ftLib_8008627C": ("((fv() & 3) ? &GO[1] : 0)", "if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() }"),
+    "ftLib_FindNearestOpponent": ("((fv() & 3) ? &GO[1] : 0)", "if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() }"),
     "it_80272CC0": ("&JO[3 + fv() % 3]", "&raw mut crate::JO[3 + (fv() % 3) as usize]"),
     "it_8027B5B0": _GO2,
     "it_8027CBFC": ("(float) (rnd() % 20)", "(rnd() % 20) as f32"),
 })
-_L["null_ret_ok"] += ["ftLib_8008627C", "it_8027B5B0", "ftLib_80086630"]
+_L["null_ret_ok"] += ["ftLib_FindNearestOpponent", "it_8027B5B0", "ftLib_GetPartJObj"]
 _L["effects"].update({
-    "ftLib_80086644": _V("a1"),
+    "ftLib_GetPos": _V("a1"),
     "mpLib_80056C54": (
         "if (a2) { *a2 = (int) (fv() % 4); } if (a3) { a3->x = rw(); a3->y = rw(); a3->z = rw(); } if (a4) { *a4 = fv(); } "
         "if (a5) { a5->x = rw(); a5->y = rw(); a5->z = rw(); }",
@@ -188,14 +188,14 @@ _L["deep_ecb"] = True
 
 _K = SPECS["itlikelike"]
 _K["ret"].update({
-    "ftLib_8008627C": ("((fv() & 3) ? &GO[1] : 0)", "if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() }"),
+    "ftLib_FindNearestOpponent": ("((fv() & 3) ? &GO[1] : 0)", "if fv() & 3 != 0 { &raw mut crate::GO[1] } else { core::ptr::null_mut() }"),
     "it_80272CC0": ("&JO[3 + fv() % 3]", "&raw mut crate::JO[3 + (fv() % 3) as usize]"),
     "it_8027B5B0": _GO2,
     "it_8027CBFC": ("(float) (rnd() % 20)", "(rnd() % 20) as f32"),
     "mpColl_8004C750": ("(int) (fv() & 1)", "(fv() & 1) as i32"),
 })
-_K["null_ret_ok"] += ["ftLib_8008627C", "it_8027B5B0"]
-_K["effects"].update({"ftLib_80086644": _V("a1")})
+_K["null_ret_ok"] += ["ftLib_FindNearestOpponent", "it_8027B5B0"]
+_K["effects"].update({"ftLib_GetPos": _V("a1")})
 _K["deep_ecb"] = True
 
 _EFS_JV = dict(
@@ -207,7 +207,7 @@ _EFS_JV = dict(
 _A = SPECS["itlinkarrow"]
 _A["custom_stubs"] = {"efSync_Spawn": _EFS_JV}
 _A["ret"].update({
-    "ftLib_80086630": ("&JO[3 + fv() % 3]", "&raw mut crate::JO[3 + (fv() % 3) as usize]"),
+    "ftLib_GetPartJObj": ("&JO[3 + fv() % 3]", "&raw mut crate::JO[3 + (fv() % 3) as usize]"),
     "HSD_JObjLoadJoint": ("&JO[6 + fv() % 14]", "&raw mut crate::JO[6 + (fv() % 14) as usize]"),
 })
 _A["effects"].update({
@@ -292,7 +292,7 @@ MY_RET.update({
     "it_80276308": ("(int) ((fv() % 3) * 4)", "((fv() % 3) * 4) as i32"),
     "it_8026DAA8": ("(int) (fv() & 15)", "(fv() & 15) as i32"),
     "it_8026DB40": ("(int) (fv() & 15)", "(fv() & 15) as i32"),
-    "ftLib_8008627C": _GO1,
+    "ftLib_FindNearestOpponent": _GO1,
     "gm_8016AE80": ("((fv() % 3) == 0 ? -1 : (int) (fv() & 1))", "if fv() % 3 == 0 { -1 } else { (fv() & 1) as i32 }"),
     "it_8028EB88": _GO2,
     "it_8027B5B0": _GO2,
@@ -300,12 +300,12 @@ MY_RET.update({
     "it_802E0488": _GO2,
     "it_802DD7F0": _GO2A,
 })
-MY_EFF = {n: _V("a1") for n in ("ftLib_800866DC", "ftLib_80086644", "it_8026BB88", "it_8027B798", "it_8027BA54")}
+MY_EFF = {n: _V("a1") for n in ("ftLib_GetCameraBonePos", "ftLib_GetPos", "it_8026BB88", "it_8027B798", "it_8027BA54")}
 MY_EFF["it_8027C8D0"] = _V("a0")
 for _n in ("itnokonoko", "itoctarock", "itoctarockstone", "itoldkuri", "itoldottosea", "itparasol", "itpatapata", "itpeachexplode"):
     SPECS[_n] = dict(src=f"{K}{_n}.c", types=_T, ret={**COMMON_RET, **MY_RET}, effects={**COMMON_EFF, **MY_EFF},
                      null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi", "it_8028EB88", "it_8027B5B0",
-                                  "it_802E0100", "it_802E0488", "ftLib_8008627C"])
+                                  "it_802E0100", "it_802E0488", "ftLib_FindNearestOpponent"])
 SPECS["itmetalb"]["ret"]["it_8027236C"] = ("((fv() & 3) ? &GO[2] : 0)", "if fv() & 3 != 0 { &raw mut crate::GO[2] } else { core::ptr::null_mut() }")
 SPECS["itmetalb"]["null_ret_ok"].append("it_8027236C")
 
@@ -323,8 +323,8 @@ SPECS["itmato"]["ret"]["ScriptGame_TargetDestroyed"] = _P
 _SB = SPECS["itmewtwoshadowball"]
 _SB["skip_stubs"] = ["sinf", "cosf"]
 _SB["custom_stubs"] = {"efSync_Spawn": _EFS3}
-_SB["ret"]["ftLib_80086630"] = ("&JO[5]", "&raw mut crate::JO[5]")
-_SB["null_ret_ok"].append("ftLib_80086630")
+_SB["ret"]["ftLib_GetPartJObj"] = ("&JO[5]", "&raw mut crate::JO[5]")
+_SB["null_ret_ok"].append("ftLib_GetPartJObj")
 _RARE = ("(int) ((fv() % 5) == 0)", "((fv() % 5) == 0) as i32")
 for _n in ("ftMt_SpecialN_CheckShadowBallRemove", "ftMt_SpecialN_CheckShadowBallCancel", "ftKb_SpecialNMt_80106F9C", "ftKb_SpecialNMt_80106FEC"):
     _SB["ret"][_n] = _RARE
@@ -356,7 +356,7 @@ _B["skip_stubs"] = ["__frsqrte"]
 _C = SPECS["itsamuschargeshot"]
 _C["custom_stubs"] = {"efSync_Spawn": _EFS3J}
 _C["skip_stubs"] = ["sinf", "cosf"]
-_C["ret"]["ftLib_80086630"] = ("(&JO[3 + (fv() % 3)])", "&raw mut crate::JO[3 + (fv() % 3) as usize]")
+_C["ret"]["ftLib_GetPartJObj"] = ("(&JO[3 + (fv() % 3)])", "&raw mut crate::JO[3 + (fv() % 3) as usize]")
 _NEG = ("((fv() % 3) == 0 ? -1 : (int) (fv() % 3))", "if fv() % 3 == 0 { -1 } else { (fv() % 3) as i32 }")
 _C["ret"]["ftSs_SpecialLw_80129100"] = _NEG
 _C["ret"]["ftKb_SpecialNSs_800FCC14"] = _NEG
@@ -386,7 +386,7 @@ SPECS["itsamusgrapple"] = dict(
     types=_T + ["Fighter", "ItemLink", "FighterBone", "ftSs_DatAttrs", "itSamusGrappleAttributes", "itSamusGrapple_HitboxData"],
     ret=dict(COMMON_RET), effects=dict(COMMON_EFF),
     null_ret_ok=["Item_80268B18", "Item_80268B5C", "it_8026F6BC", "HSD_Randi", "ft_80082E3C", "ftCo_800A4A40", "GObj_Create",
-                 "HSD_ObjAlloc", "HSD_JObjLoadJoint", "ftLib_80086630"],
+                 "HSD_ObjAlloc", "HSD_JObjLoadJoint", "ftLib_GetPartJObj"],
     # the game reads two packed bitfields of the hitbox command by byte offset (PPC, MSB-first): the native copy reads
     # the same two fields by name (see the header of src/tu/itsamusgrapple.rs)
     patch=[("    damage_arg = *damage;\n    damage_arg &= 0x3FF;",
@@ -406,7 +406,7 @@ _G["ret"]["GObj_Create"] = ("((fv() % 8) == 0 ? 0 : &LGO[LGN++ % 24])",
 _G["ret"]["HSD_ObjAlloc"] = ("&LK[LKN++ % 24]",
                              "{ let i = unsafe { crate::LKN }; unsafe { crate::LKN += 1; } &raw mut crate::LK[i % 24] as *mut _ }")
 _G["ret"]["HSD_JObjLoadJoint"] = ("&JO[16 + (fv() % 8)]", "&raw mut crate::JO[16 + (fv() % 8) as usize]")
-_G["ret"]["ftLib_80086630"] = ("(&JO[3 + (fv() % 3)])", "&raw mut crate::JO[3 + (fv() % 3) as usize]")
+_G["ret"]["ftLib_GetPartJObj"] = ("(&JO[3 + (fv() % 3)])", "&raw mut crate::JO[3 + (fv() % 3) as usize]")
 _G["ret"]["ftCo_800A4A40"] = ("((fv() & 1) ? &FT[1] : 0)", "if fv() & 1 != 0 { &raw mut crate::FT[1] } else { core::ptr::null_mut() }")
 _G["ret"]["ft_80082E3C"] = _GOR
 _G["ret"]["ftCo_800C3A14"] = _P
@@ -455,7 +455,7 @@ SPECS["itsscopebeam"]["ret"]["it_8026DAA8"] = ("(int) (fv() & 3)", "(fv() & 3) a
 SPECS["itsscopebeam"]["ret"]["atan2f"] = ("((float) ((int) (rnd() % 82) - 41) * 0.01f)", "((rnd() % 82) as i32 - 41) as f32 * 0.01")
 
 SPECS["itsuikun"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
-SPECS["itsword"]["ret"]["ftLib_80086FA8"] = ("(int) (fv() & 1)", "(fv() & 1) as i32")
+SPECS["itsword"]["ret"]["ftLib_IsSwordSwing"] = ("(int) (fv() & 1)", "(fv() & 1) as i32")
 SPECS["itsword"]["ret"]["it_80272CC0"] = ("(&JO[3 + (fv() % 3)])", "&raw mut crate::JO[3 + (fv() % 3) as usize]")
 
 SPECS["ittaru"]["custom_stubs"] = {"efSync_Spawn": _EFS3}
@@ -466,8 +466,8 @@ SPECS["ittarucann"]["effects"]["ftCo_800C92E4"] = (
     "if (a3) { T((u32) a3->state); T(a3->damage); T((u32) a3->kb_angle); T(a3->unkC); T(a3->unk10); T(a3->unk14); T(a3->element); T((u32) a3->sfx_severity); T((u32) a3->sfx_kind); }",
     "if !a3.is_null() { t((*a3).state as u32); t((*a3).damage); t((*a3).kb_angle as u32); t((*a3).unkC); t((*a3).unk10); t((*a3).unk14); t((*a3).element); t((*a3).sfx_severity as u32); t((*a3).sfx_kind as u32); }")
 SPECS["itthunder"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
-SPECS["ittools"]["effects"]["ftLib_800866DC"] = _V("a1")
-SPECS["ittools"]["ret"]["ftLib_80086960"] = _P
+SPECS["ittools"]["effects"]["ftLib_GetCameraBonePos"] = _V("a1")
+SPECS["ittools"]["ret"]["ftLib_IsFighter"] = _P
 SPECS["itunknown"]["effects"]["Camera_GetTransformInterest"] = _V("a0")
 SPECS["itunknown"]["effects"]["it_8026BB88"] = _V("a1")
 SPECS["itunknown"]["effects"]["lbVector_Rotate"] = _V("a0")
@@ -503,11 +503,11 @@ SPECS["itzeldadinfire"]["ret"].update({
     "ftZd_SpecialLw_8013B540": _P, "ftZd_SpecialLw_8013B574": _P,
 })
 SPECS["itzeldadinfire"]["effects"].update({
-    "ftLib_800865D8": ("if (a1) { *a1 = rw(); } if (a2) { *a2 = rw(); }",
+    "ftLib_GetLStick": ("if (a1) { *a1 = rw(); } if (a2) { *a2 = rw(); }",
                        "if !a1.is_null() { *a1 = rw(); } if !a2.is_null() { *a2 = rw(); }"),
 })
 SPECS["itzeldadinfire"]["null_ret_ok"] += ["it_802C4580"]
-SPECS["ityoshitongue"]["null_ret_ok"] += ["ftLib_80086630"]
-SPECS["ityoshitongue"]["ret"]["ftLib_80086630"] = ("((fv() & 1) ? &JO[3] : 0)", "if fv() & 1 != 0 { &raw mut crate::JO[3] } else { core::ptr::null_mut() }")
+SPECS["ityoshitongue"]["null_ret_ok"] += ["ftLib_GetPartJObj"]
+SPECS["ityoshitongue"]["ret"]["ftLib_GetPartJObj"] = ("((fv() & 1) ? &JO[3] : 0)", "if fv() & 1 != 0 { &raw mut crate::JO[3] } else { core::ptr::null_mut() }")
 for _n in ("ityoshistar", "ityoshieggthrow", "ityoshiegglay", "itwstar", "ityaku", "itzeldadinfire"):
     SPECS[_n]["ret"]["it_80272C6C"] = _P

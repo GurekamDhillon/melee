@@ -68,10 +68,10 @@ pub mod ext {
     fn Stage_GetCamBoundsLeftOffset() -> f32;
     fn Stage_GetCamBoundsRightOffset() -> f32;
     fn Stage_GetCamBoundsTopOffset() -> f32;
-    fn ftLib_80086960(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData;
-    fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8;
-    fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetCollData(a0: *mut HSD_GObj) -> *mut CollData;
+    fn ftLib_GetPlayerIndex(a0: *mut HSD_GObj) -> u8;
+    fn ftLib_IsSubFighter(a0: *mut HSD_GObj) -> i32;
     fn grDynamicAttr_801CA0B4();
     fn grDynamicAttr_801CA224();
     fn grDynamicAttr_801CA284(a0: *mut Vec, a1: i32) -> i32;

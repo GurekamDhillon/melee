@@ -28,7 +28,7 @@ pub fn install() {
         h::grStadium_801D4084 = Some(|| { t(1014);});
         h::grStadium_801D410C = Some(|| { t(1015);});
         h::un_802FD404 = Some(|| { t(1016);});
-        h::ftLib_800868A4 = Some(|| { t(1017);});
+        h::ftLib_EnableAllInput = Some(|| { t(1017);});
         h::Stage_802252E4 = Some(|a0, a1| { t(1018); t(a0 as u32); t(!(a1 as *const u8).is_null() as u32);});
         h::grStadium_801D4040 = Some(|| { t(1019);});
         h::un_802FD428 = Some(|| { t(1021);});
@@ -53,7 +53,7 @@ pub fn install() {
         h::fn_8016F1F0 = Some(|a0| { t(1046); t(a0 as i32 as u32); rnd() as i32 });
         h::gm_801A4BA8 = Some(|| { t(1047); (rnd() % 3) as u32 });
         h::gm_80166378 = Some(|a0| { t(1048); t(if a0.is_null() { 0 } else { hs_MatchEnd(&*a0, 0).wrapping_add(1) });});
-        h::ftLib_80086BE0 = Some(|a0| { t(1049); t(!(a0 as *const u8).is_null() as u32); (rnd() % 6) as u8 });
+        h::ftLib_GetPlayerIndex = Some(|a0| { t(1049); t(!(a0 as *const u8).is_null() as u32); (rnd() % 6) as u8 });
         h::fn_80171DC4 = Some(|| { t(1050);});
         h::HSD_PadRumbleRemoveAll = Some(|| { t(1051);});
         h::HSD_PadRumbleOn = Some(|a0| { t(1052); t(a0 as u32);});

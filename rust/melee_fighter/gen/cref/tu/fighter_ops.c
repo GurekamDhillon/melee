@@ -167,24 +167,24 @@ int main(void)
             ASRT_ARMED = 1;
             if (_setjmp(ASRT_JB, 0) != 0) { printf("%d %d ASSERT%c", op, k, 10); fflush(0); continue; }
             switch (op) {
-            case 0: Fighter_8006C5F4(&GO[rnd() % NG]); break;
-            case 1: Fighter_CallAcessoryCallbacks_8006C624(&GO[rnd() % NG]); break;
-            case 2: Fighter_8006C80C(&GO[rnd() % NG]); break;
-            case 3: Fighter_UnkProcessGrab_8006CA5C(&GO[rnd() % NG]); break;
-            case 4: Fighter_8006CB94(&GO[rnd() % NG]); break;
-            case 5: Fighter_8006D9AC(&GO[rnd() % NG]); break;
-            case 6: Fighter_UnkCallCameraCallback_8006D9EC(&GO[rnd() % NG]); break;
-            case 7: Fighter_8006DA4C(&GO[rnd() % NG]); break;
-            case 8: Fighter_8006A1BC(&GO[rnd() % NG]); break;
-            case 9: Fighter_8006A360(&GO[rnd() % NG]); break;
-            case 10: Fighter_8006ABA0(&GO[rnd() % NG]); break;
+            case 0: Fighter_procIK(&GO[rnd() % NG]); break;
+            case 1: Fighter_procAccessory(&GO[rnd() % NG]); break;
+            case 2: Fighter_procCollPos(&GO[rnd() % NG]); break;
+            case 3: Fighter_procGrabColl(&GO[rnd() % NG]); break;
+            case 4: Fighter_procAttackColl(&GO[rnd() % NG]); break;
+            case 5: Fighter_procDynamics(&GO[rnd() % NG]); break;
+            case 6: Fighter_procCamera(&GO[rnd() % NG]); break;
+            case 7: Fighter_procPlayer(&GO[rnd() % NG]); break;
+            case 8: Fighter_procHitlag(&GO[rnd() % NG]); break;
+            case 9: Fighter_procAnim(&GO[rnd() % NG]); break;
+            case 10: Fighter_procCpu(&GO[rnd() % NG]); break;
             case 11: Fighter_UnkIncrementCounters_8006ABEC(&GO[rnd() % NG]); break;
-            case 12: Fighter_Spaghetti_8006AD10(&GO[rnd() % NG]); break;
+            case 12: Fighter_procInput(&GO[rnd() % NG]); break;
             case 13: Fighter_procUpdate(&GO[rnd() % NG]); break;
             case 14: Fighter_UnkApplyTransformation_8006C0F0(&GO[rnd() % NG]); break;
             case 15: Fighter_procMap(&GO[rnd() % NG]); break;
-            case 16: Fighter_ProcessHit_8006D1EC(&GO[rnd() % NG]); break;
-            case 17: Fighter_UnkProcessDeath_80068354(&GO[rnd() % NG]); break;
+            case 16: Fighter_procCollResolve(&GO[rnd() % NG]); break;
+            case 17: Fighter_Spawn(&GO[rnd() % NG]); break;
             case 18: Fighter_UnkUpdateCostumeJoint_800686E4(&GO[rnd() % NG]); break;
             case 19: Fighter_ResetInputData_80068854(&GO[rnd() % NG]); break;
             case 20: Fighter_UnkInitReset_80067C98(&FT[rnd() % NG]); break;

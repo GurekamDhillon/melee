@@ -145,7 +145,7 @@ pub mod ext {
         FTCO_800C0874 ftCo_800C0874(g: G, ground: *mut c_void, kind: u32);
         FTCO_800C08A0 ftCo_800C08A0(g: G, ground: G, desc: *mut DynamicsDesc, kind: u32);
         FTCO_800C0B20 ftCo_800C0B20(g: G);
-        FTLIB_80086960 ftLib_80086960(g: G) -> bool = crate::ftlib::ftlib_80086960(g);
+        FTLIB_IS_FIGHTER ftLib_IsFighter(g: G) -> bool = crate::ftlib::ftlib_is_fighter(g);
         FTCOMMON_8007F804 ftCommon_8007F804(fp: F) -> MtxPtr = unsafe { crate::ftcommon2::ftcommon_8007f804(&mut *fp) };
         FTCOMMON_8007EBAC ftCommon_8007EBAC(fp: F, a: u32, b: u32) = unsafe { crate::ftcommon2::ftcommon_8007ebac(&mut *fp, a, b) };
         FTCO_CALC_Y_SCALED_KNOCKBACK ftCo_CalcYScaledKnockback(a: f32, scale: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftCo_CalcYScaledKnockback(a, scale, c);
@@ -827,7 +827,7 @@ pub fn ftcoll_80077688(item: It, hurt: HC, fp: F, pos: *mut Vec3, mut val: f32) 
         }
         let total = dmg.wrapping_add((*hurt).x34);
         f.x19A0_shieldDamageTaken = f.x19A0_shieldDamageTaken.wrapping_add(if total < 0 { 0 } else { total } as _);
-        if ext::ftLib_80086960(it.owner) {
+        if ext::ftLib_IsFighter(it.owner) {
             let o = &*fpg(it.owner);
             f.x19BC_shieldDamageTaken3 = o.player_id as _;
             f.set_x221F_b6(o.is_sub_fighter() as _);
@@ -1056,7 +1056,7 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                 // TARGET_PC: Lua on_hit for item hitbox -> fighter.
                 {
                     let mut owner = -1;
-                    if !it.owner.is_null() && ext::ftLib_80086960(it.owner) {
+                    if !it.owner.is_null() && ext::ftLib_IsFighter(it.owner) {
                         owner = (*fpg(it.owner)).player_id as i32;
                     }
                     ext::ScriptGame_HitRuleWon(hit, fp);
@@ -1240,7 +1240,7 @@ unsafe fn item_damage_record(ip: It, victim: G, arg: *mut c_void) {
     let owner = (*ip).owner;
     let p = &mut (*ip).xD94 as *mut Vec2 as *mut c_void;
     let (kind, x2070, short) = ((*ip).kind as i32, (*ip).xD90.x2070_int, (*ip).xDA8_short);
-    if ext::ftLib_80086960(owner) {
+    if ext::ftLib_IsFighter(owner) {
         ftcoll_8007861c(owner, victim, 2, kind, x2070, p, short, arg, 0);
     } else if ext::pl_8003D60C(kind) {
         ftcoll_8007861c(core::ptr::null_mut(), victim, 2, kind, x2070, p, short, arg, 1);
@@ -1286,7 +1286,7 @@ pub fn ftcoll_80078998(arg0: G, arg1: G, arg2: f32) {
     ftcoll_8007646c(arg0, arg1);
     unsafe {
         let ip = &*(fpg(arg0) as It);
-        if ext::ftLib_80086960(ip.owner) {
+        if ext::ftLib_IsFighter(ip.owner) {
             let (o, v) = (&*fpg(ip.owner), &*fpg(arg1));
             ext::pl_8003EB30(arg2, o.player_id as i32, o.is_sub_fighter() as i32, v.player_id as i32, v.is_sub_fighter() as i32, ip.xD90.anon_0.x2073 as i32);
         }
@@ -1304,7 +1304,7 @@ pub fn ftcoll_80078a2c(this_gobj: G) {
         'next: while !vg.is_null() {
             let cur = vg;
             vg = (*vg).next;
-            if crate::hooks::ftlib_80086fd4(this_gobj, cur) {
+            if crate::hooks::ftlib_is_same_player(this_gobj, cur) {
                 continue;
             }
             let v = fpg(cur);
@@ -1552,7 +1552,7 @@ pub fn ftcoll_8007925c(gobj: G) {
             if it.kind as i32 == It_Kind_Unk4 as i32 {
                 continue;
             }
-            if crate::hooks::ftlib_80086fd4(gobj, it.owner) && it.xDCD_flag.anon_0.b5() == 0 {
+            if crate::hooks::ftlib_is_same_player(gobj, it.owner) && it.xDCD_flag.anon_0.b5() == 0 {
                 continue;
             }
             if crate::hooks::gm_8016b168() && !ext::gm_8016B0D4() && it.xDCD_flag.anon_0.b6() == 0 && it.x20_team_id as i32 == (*fp).team as i32 {
@@ -1563,7 +1563,7 @@ pub fn ftcoll_8007925c(gobj: G) {
                 let f = &*fp;
                 let thrown = f.x1064_thrownHitbox.anon_134.owner;
                 if thrown.is_null()
-                    || ((!crate::hooks::ftlib_80086fd4(thrown, it.owner) || it.xDCD_flag.anon_0.b5() != 0)
+                    || ((!crate::hooks::ftlib_is_same_player(thrown, it.owner) || it.xDCD_flag.anon_0.b5() != 0)
                         && (!crate::hooks::gm_8016b168()
                             || ext::gm_8016B0D4()
                             || it.xDCD_flag.anon_0.b6() != 0
@@ -1910,7 +1910,7 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
                 2 => {
                     let item = &*(fpg(entry.gobj) as It);
                     let owner = item.owner;
-                    let attack = if ext::ftLib_80086960(owner) { ext::Player_GetAttackRatio((*fpg(owner)).player_id as i32) } else { 1.0 };
+                    let attack = if ext::ftLib_IsFighter(owner) { ext::Player_GetAttackRatio((*fpg(owner)).player_id as i32) } else { 1.0 };
                     let weight = (*fp).co_attrs.weight;
                     let defense = ext::Player_GetDefenseRatio((*fp).player_id as i32);
                     let stage = ext::gm_8016B248();
@@ -2698,7 +2698,7 @@ pub fn ftcoll_8007be3c(g: G) {
                 ext::plStale_UpdateStaleMovesFromItem(source, victim);
                 ftcoll_8007646c(source, victim);
                 let ip = &*(fpg(source) as It);
-                if ext::ftLib_80086960(ip.owner) {
+                if ext::ftLib_IsFighter(ip.owner) {
                     let (o, v) = (&*fpg(ip.owner), &*fpg(victim));
                     ext::pl_8003EB30(amount, o.player_id as i32, o.is_sub_fighter() as i32, v.player_id as i32, v.is_sub_fighter() as i32, ip.xD90.anon_0.x2073 as i32);
                 }

@@ -155,7 +155,7 @@ SPEC = dict(
         lg_int((*h).state as u32); lg_int((*h).damage); lg_int((*h).kb_angle as u32); lg_int((*h).unkC); lg_int((*h).unk10); lg_int((*h).unk14);
         lg_int((*h).element); lg_int((*h).sfx_severity as u32); lg_int((*h).sfx_kind as u32); lg_f(kb); lg_s(")"); lg_c(';'); });"""),
     no_hook=["grDisplay_801C5DB0"],
-    outs={"lb_8000B1CC": [2], "Ground_801C4DA0": [0, 1], "ftLib_80086644": [1], "it_8026B294": [1],
+    outs={"lb_8000B1CC": [2], "Ground_801C4DA0": [0, 1], "ftLib_GetPos": [1], "it_8026B294": [1],
           "Ground_801C4B50": [1, 2], "splArcLengthPoint": [0], "mpVtxGetPos": [1, 2]},
     rets={
         "HSD_Randi": ("(int) (a0 > 0 ? rnd() % (u32) a0 : 0)", "(if a0 > 0 { rnd() % (a0 as u32) } else { 0 })"),

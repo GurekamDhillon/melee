@@ -16,7 +16,7 @@ void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typ
 void (Item_8026AE84)(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1004); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
 __typeof__(float) (atan2f)(__typeof__(float) a0, __typeof__(float) a1) { T(1005); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rg()); }
 void (db_80225DD8)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1006); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-__typeof__(int) (ftLib_800865CC)(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) (ftLib_GetGroundAir)(__typeof__(struct HSD_GObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void (it_8026B3A8)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (it_8026BB68)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1010); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); }
@@ -1648,7 +1648,7 @@ static void freg_all(void)
 // stub Item_8026AE84 = 1004
 // stub atan2f = 1005
 // stub db_80225DD8 = 1006
-// stub ftLib_800865CC = 1007
+// stub ftLib_GetGroundAir = 1007
 // stub it_8026B3A8 = 1008
 // stub it_8026B894 = 1009
 // stub it_8026BB68 = 1010

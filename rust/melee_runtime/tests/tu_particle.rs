@@ -1,7 +1,7 @@
 //! Written by gen/mtu/mk_lb.py from the same description as gen/mtu/tu/particle.c.
 //! src/tu/particle.rs vs the C (the whole TU, shipping contraction; regenerate the expected file
 //! with `python rust/melee_runtime/gen/mtu/run_tu.py particle`).
-//! C functions of the TU this test covers (the private ones through their public callers): HSD_StageSlotParticleLinkClear, hsd_803983A4, hsd_80398A08, hsd_80398F0C, hsd_80398F8C, hsd_803991D8, hsd_8039930C, hsd_8039CEAC, hsd_8039CF4C, hsd_8039D048, hsd_8039D0A0, psEnableTexture, psGenerateParticle0, psInitDataBank, psInitDataBankLoad, psInitDataBankLocate, psReadFloat, psSpawnChild.
+//! C functions of the TU this test covers (the private ones through their public callers): HSD_StageSlotParticleLinkClear, hsd_803983A4, hsd_80398A08, hsd_80398F0C, hsd_80398F8C, applyForceJObj, hsd_8039930C, hsd_8039CEAC, psSetPointJObj, psClearPointJObj, hsd_8039D0A0, psEnableTexture, psGenerateParticle0, psInitDataBank, psInitDataBankLoad, psInitDataBankLocate, psReadFloat, psSpawnChild.
 #![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe, dead_code)]
 const OP_psGenerateParticle0: u32 = 0;
 const OP_hsd_80398F0C: u32 = 1;

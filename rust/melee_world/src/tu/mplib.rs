@@ -103,7 +103,7 @@ pub mod ext {
     fn Stage_GetCamBoundsLeftOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsLeftOffset() as _ };
     fn Stage_GetCamBoundsRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ };
     fn Stage_GetCamBoundsTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsTopOffset() as _ };
-    fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086984(a0 as _) as _ };
+    fn ftLib_GetCollData(a0: *mut HSD_GObj) -> *mut CollData = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_GetCollData(a0 as _) as _ };
     fn grDynamicAttr_801CA0B4() = || { unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA0B4(); } };
     fn grDynamicAttr_801CA224() = || { unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA224(); } };
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind = |a0: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(a0 as _) as _ };
@@ -5541,7 +5541,7 @@ pub unsafe fn mpLib_DrawSnapping() {
         var_r31 = 1;
         'l319: while !ft_r27.is_null() {
             'c319: {
-                let mut cd: *mut CollData = ext::ftLib_80086984(ft_r27);
+                let mut cd: *mut CollData = ext::ftLib_GetCollData(ft_r27);
                 if (!((*cd).x35_flags.b0() != 0)) || ((*cd).x38 != super::mpcoll::mpColl_804D64AC) {
                     break 'c319;
                 }

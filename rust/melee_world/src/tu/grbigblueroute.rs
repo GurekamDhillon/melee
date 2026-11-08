@@ -147,8 +147,8 @@ pub mod ext {
     hook_or!(OSREPORT, OSReport, (a0: *const i8, va: &[usize]), |a0: *const i8, va: &[usize]| unsafe { melee_runtime::tu::os_error::OSReport(a0, va) });
     hook_or!(PSVECCROSSPRODUCT, PSVECCrossProduct, (vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec), |vec1: *mut Vec, vec2: *mut Vec, dst: *mut Vec| { unsafe { melee_runtime::tu::mtx_pc::raw::PSVECCrossProduct(vec1 as _, vec2 as _, dst as _); } });
     hook_or!(ATAN2F, atan2f, (y: f32, x: f32) -> f32, melee_runtime::lbtrigf::atan2f);
-    hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
-    hook_or!(FTLIB_80086EC0, ftLib_80086EC0, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086EC0(a0 as _) as _ });
+    hook_or!(FTLIB_GET_POS, ftLib_GetPos, (a0: *mut HSD_GObj, a1: *mut Vec), |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_IS_IN_HITSTUN, ftLib_IsInHitstun, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsInHitstun(a0 as _) as _ });
     hook!(GM_8016B3D8, gm_8016B3D8, () -> i32);
     pub static mut GRANIME_801C77FC: Option<fn(*mut HSD_GObj, i32, u32)> = None;
     #[allow(non_snake_case)]
@@ -371,7 +371,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020B920() {
     let mut fighter_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let fighter = ext::Ground_GetP1Fighter();
     if !fighter.is_null() {
-        ext::ftLib_80086644(fighter, &mut fighter_pos);
+        ext::ftLib_GetPos(fighter, &mut fighter_pos);
         grBigBlueRoute_8020DED4(&mut fighter_pos);
         ext::Camera_8002F3AC();
     }
@@ -514,9 +514,9 @@ pub unsafe extern "C" fn grBigBlueRoute_8020BF38(gobj: *mut Ground_GObj) {
     ext::Ground_801C3D44(null_mut(), 30.0, 4000.0);
 
     if !fighter.is_null() {
-        ext::ftLib_80086644(fighter, &mut fighter_pos);
+        ext::ftLib_GetPos(fighter, &mut fighter_pos);
 
-        if ext::ftLib_80086EC0(fighter) == 0 {
+        if ext::ftLib_IsInHitstun(fighter) == 0 {
             grBigBlueRoute_8020DED4(&mut fighter_pos);
 
             for i in 0..3usize {
@@ -817,7 +817,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020CD20(gobj: *mut Ground_GObj) {
 
     let fighter = ext::Ground_GetP1Fighter();
     if !fighter.is_null() {
-        ext::ftLib_80086644(fighter, &mut fighter_pos);
+        ext::ftLib_GetPos(fighter, &mut fighter_pos);
     } else {
         return;
     }

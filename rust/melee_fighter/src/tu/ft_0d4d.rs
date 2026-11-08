@@ -374,11 +374,11 @@ pub fn ftCo_RebirthWait_IASA(g: G) {
     let (slot, sub) = (f.player_id as i32, f.is_sub_fighter() as i32);
     if sub == 0 {
         let c = (ext::Player_GetEntityAtIndex((slot) as i32, (1) as i32) as *mut HSD_GObj);
-        if !c.is_null() && fp(c).x221F_b3() == 0 && !h::ftlib_800873cc(c) {
+        if !c.is_null() && fp(c).x221F_b3() == 0 && !h::ftlib_is_rebirth(c) {
             var_r30 = true;
         }
     } else {
-        if h::ftlib_800873cc((ext::Player_GetEntityAtIndex((slot) as i32, (0) as i32) as *mut HSD_GObj)) {
+        if h::ftlib_is_rebirth((ext::Player_GetEntityAtIndex((slot) as i32, (0) as i32) as *mut HSD_GObj)) {
             return;
         }
         var_r30 = true;
@@ -429,7 +429,7 @@ pub fn ftCo_Rebirth_Cam(g: G) {
         b.pos.y = f.mv.co.common.x4.y + spc.x0.x;
     }
     b.pos.z = 0.0;
-    h::ftlib_800866dc(g, &mut b.bone_pos);
+    h::ftlib_get_camera_bone_pos(g, &mut b.bone_pos);
 }
 
 #[allow(dead_code)]

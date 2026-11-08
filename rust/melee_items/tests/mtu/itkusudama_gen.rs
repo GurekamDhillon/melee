@@ -17,7 +17,7 @@ pub fn install() {
         Item_80268E5C = Some(|a0, a1, a2| { t(1004); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         Item_8026AE84 = Some(|a0, a1, a2, a3| { t(1005); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
         efSync_Spawn_N = Some(|a0, a1, a2| { t(1006); t(a2.len() as u32); t(a0 as u32); t(pi(a1)); for v in a2 { t(pi(*v as *const c_void)); } core::ptr::null_mut() });
-        ftLib_80086960 = Some(|a0| { t(1007); t(pi(a0)); fv() as _ });
+        ftLib_IsFighter = Some(|a0| { t(1007); t(pi(a0)); fv() as _ });
         ftLib_800874CC = Some(|a0, a1, a2| { t(1008); t(pi(a0)); t(pi(a1)); t(a2 as u32); });
         it_8026B390 = Some(|a0| { t(1009); t(pi(a0)); });
         it_8026B3A8 = Some(|a0| { t(1010); t(pi(a0)); });

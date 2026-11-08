@@ -36,8 +36,8 @@ pub fn install() {
         SurfaceBegin = Some(|a0| { t(1023); t(a0 as u32); });
         SurfaceEnd = Some(|| { t(1024); });
         Wb_RenderOption = Some(|a0, a1| { t(1025); t(a0 as u32); t(a1 as u32); fv() as _ });
-        ftLib_80086644 = Some(|a0, a1| { t(1026); t(pi(a0)); t(pi(a1)); });
-        ftLib_800872B0 = Some(|a0| { t(1027); t(pi(a0)); &raw mut super::SHAD[(fv() % 3) as usize] });
+        ftLib_GetPos = Some(|a0, a1| { t(1026); t(pi(a0)); t(pi(a1)); });
+        ftLib_GetShadow = Some(|a0| { t(1027); t(pi(a0)); &raw mut super::SHAD[(fv() % 3) as usize] });
         lbShadow_8000EEE0 = Some(|a0| { t(1028); t(pi(a0)); });
         lbShadow_8000EFEC = Some(|| { t(1029); });
     }

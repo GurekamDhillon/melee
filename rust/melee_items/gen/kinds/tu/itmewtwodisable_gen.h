@@ -13,7 +13,7 @@ __typeof__(struct HSD_GObj *) (Item_80268B18)(__typeof__(struct SpawnItem *) a0)
 void (Item_80268E5C)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1001); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 void (Item_8026A8EC)(__typeof__(struct HSD_GObj *) a0) { T(1002); T(PI((const void*) a0)); }
 void (db_80225DD8)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1003); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-__typeof__(float) (ftLib_80086A0C)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(float) (ftLib_GetScale)(__typeof__(struct HSD_GObj *) a0) { T(1004); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 void (ftMt_SpecialLw_ClearDisableGObj)(__typeof__(struct HSD_GObj *) a0) { T(1005); T(PI((const void*) a0)); }
 void (it_8026B3A8)(__typeof__(struct HSD_GObj *) a0) { T(1006); T(PI((const void*) a0)); }
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
@@ -1623,7 +1623,7 @@ static void freg_all(void)
 // stub Item_80268E5C = 1001
 // stub Item_8026A8EC = 1002
 // stub db_80225DD8 = 1003
-// stub ftLib_80086A0C = 1004
+// stub ftLib_GetScale = 1004
 // stub ftMt_SpecialLw_ClearDisableGObj = 1005
 // stub it_8026B3A8 = 1006
 // stub it_8026B894 = 1007

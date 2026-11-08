@@ -90,8 +90,8 @@ pub mod ext {
     fn HSD_Randi(a0: i32) -> i32 = |a0: i32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0);
     fn Stage_80225194() -> u32 = || unsafe { crate::tu::stage::Stage_80225194() as _ };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec) -> *mut c_void;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
-    fn ftLib_80086EC0(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086EC0(a0 as _) as _ };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } };
+    fn ftLib_IsInHitstun(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsInHitstun(a0 as _) as _ };
     fn gm_801674C4(a0: i8, a1: u8, a2: i8, a3: i8, a4: Option<unsafe extern "C" fn(i32) -> i32>);
     fn grAnime_801C77FC(a0: *mut HSD_GObj, a1: i32, a2: u32) = |a0: *mut HSD_GObj, a1: i32, a2: u32| { unsafe { crate::tu::granime::grAnime_801C77FC(a0 as _, a1 as _, a2 as _); } };
     fn grAnime_801C78FC(a0: *mut HSD_GObj, a1: i32, a2: u32) = |a0: *mut HSD_GObj, a1: i32, a2: u32| { unsafe { crate::tu::granime::grAnime_801C78FC(a0 as _, a1 as _, a2 as _); } };
@@ -754,9 +754,9 @@ pub unsafe extern "C" fn stageGObj10_GObjProc(arg0: *mut Ground_GObj) {
         if (*gp).u.icemt10.x14_b4() != 0 {
             let fighter_gobj = ext::Ground_GetP1Fighter();
             if !fighter_gobj.is_null() {
-                ext::ftLib_80086644(fighter_gobj, &mut sp24);
+                ext::ftLib_GetPos(fighter_gobj, &mut sp24);
                 if (*gp).u.icemt10.x14_b1() == 0
-                    && ext::ftLib_80086EC0(fighter_gobj) == 0
+                    && ext::ftLib_IsInHitstun(fighter_gobj) == 0
                     && sp24.y > (*yakumono_param).ft_max_y as f32
                 {
                     (*gp).u.icemt10.set_x14_b1(1);

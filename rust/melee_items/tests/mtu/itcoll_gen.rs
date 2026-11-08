@@ -19,9 +19,9 @@ pub fn install() {
         ftCo_CalcYScaledKnockback = Some(|a0, a1, a2| { t(1006); t(a0.to_bits()); t(a1.to_bits()); t(a2.to_bits()); rg() });
         ftColl_80076808 = Some(|a0, a1, a2, a3, a4| { t(1007); t(pi(a0)); t(pi(a1)); t(a2 as u32); t(pi(a3)); t(a4 as u32); });
         ftCommon_8007F804 = Some(|a0| { t(1008); t(pi(a0)); core::ptr::null_mut() });
-        ftLib_80086960 = Some(|a0| { t(1009); t(pi(a0)); { let v = fv() & 1; (v != 0 && a0 >= &raw mut GO[4] && a0 <= &raw mut GO[6]) as i32 } });
-        ftLib_80086EB4 = Some(|a0| { t(1010); t(pi(a0)); fv() as _ });
-        ftLib_80086FD4 = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); fv() as _ });
+        ftLib_IsFighter = Some(|a0| { t(1009); t(pi(a0)); { let v = fv() & 1; (v != 0 && a0 >= &raw mut GO[4] && a0 <= &raw mut GO[6]) as i32 } });
+        ftLib_GetTeam = Some(|a0| { t(1010); t(pi(a0)); fv() as _ });
+        ftLib_IsSamePlayer = Some(|a0, a1| { t(1011); t(pi(a0)); t(pi(a1)); fv() as _ });
         ft_80089228 = Some(|a0, a1, a2, a3| { t(1012); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3.to_bits()); rg() });
         gm_8016B0D4 = Some(|| { t(1013); fv() as _ });
         gm_8016B168 = Some(|| { t(1014); fv() as _ });

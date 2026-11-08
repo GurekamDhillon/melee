@@ -108,8 +108,8 @@ pub mod ext {
     fn Stage_GetBlastZoneTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneTopOffset() as _ };
     fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec, a3: *mut f32) -> *mut c_void;
     fn ftCo_800C06E8(a0: *mut HSD_GObj, a1: i32, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: i32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C06E8(a0 as _, a1 as _, core::mem::transmute(a2)); } };
-    fn ftLib_800864A8(a0: *mut Vec, a1: *mut HSD_GObj) -> f32;
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
+    fn ftLib_GetOpponentsDir(a0: *mut Vec, a1: *mut HSD_GObj) -> f32;
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } };
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grAnime_801C83D0(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32 = |a0: *mut HSD_GObj, a1: i32, a2: i32| unsafe { crate::tu::granime::grAnime_801C83D0(a0 as _, a1 as _, a2 as _) as _ };
     fn grAnime_801C84A4(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32 = |a0: *mut HSD_GObj, a1: i32, a2: i32| unsafe { crate::tu::granime::grAnime_801C84A4(a0 as _, a1 as _, a2 as _) as _ };
@@ -466,7 +466,7 @@ pub unsafe extern "C" fn grGreens_802139C0(_arg: *mut Ground_GObj) { melee_core:
 pub unsafe extern "C" fn grGreens_802139C4(gobj: *mut Ground_GObj) {
     melee_core::ct!("grGreens_802139C4");
     let gp = (*gobj).user_data as *mut Ground;
-    ext::ftCo_800C06E8(gobj, 9, fn_80213B1C as *mut c_void);
+    ext::ftCo_800C06E8(gobj, 9, grGreens_80213B1C as *mut c_void);
     // This gobj's variables are `greens2` (80213C10 reads them so): the C writes the same GameCube bytes through
     // `greens` (x4 / x8 are NULL pointers there), but natively the pointer fields move the others, so the init writes
     // the layout the readers use.
@@ -506,11 +506,11 @@ pub unsafe extern "C" fn grGreens_80213AB4(vec: *mut Vec, max_x: f32, mut min_x:
     0
 }
 
-/// 213B1C (`fn_80213B1C`)
-pub unsafe extern "C" fn fn_80213B1C(ground_gobj: *mut Ground_GObj, fighter_gobj: *mut Fighter_GObj, vec: *mut Vec) -> i32 {
-    melee_core::ct!("fn_80213B1C");
+/// 213B1C (`grGreens_80213B1C`)
+pub unsafe extern "C" fn grGreens_80213B1C(ground_gobj: *mut Ground_GObj, fighter_gobj: *mut Fighter_GObj, vec: *mut Vec) -> i32 {
+    melee_core::ct!("grGreens_80213B1C");
     let mut vec2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    ext::ftLib_80086644(fighter_gobj, &mut vec2);
+    ext::ftLib_GetPos(fighter_gobj, &mut vec2);
     (*vec).y = 0.0;
     (*vec).z = 0.0;
     match (*GET_GROUND(ground_gobj)).u.greens2.x18 {
@@ -541,7 +541,7 @@ pub unsafe fn get_whispy_dir(gobj: *mut Ground_GObj, pos: *mut Vec3) -> i32 {
     melee_core::ct!("get_whispy_dir");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     HSD_JObjGetTranslation(&*jobj, &mut *pos);
-    if ext::ftLib_800864A8(pos, null_mut()) == 1.0 { 1 } else { 0 }
+    if ext::ftLib_GetOpponentsDir(pos, null_mut()) == 1.0 { 1 } else { 0 }
 }
 
 /// `lb_80011A50(&grGr_803E780C[wind_dir], ...)` of the wind particles (both call sites)
@@ -618,7 +618,7 @@ pub unsafe extern "C" fn grGreens_80213C10(gobj: *mut Ground_GObj) {
                 (*gp).u.greens2.x8 = 0;
                 let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
                 HSD_JObjGetTranslation(&*jobj, &mut pos);
-                let dir = if ext::ftLib_800864A8(&mut pos, null_mut()) == 1.0 { 1 } else { 0 };
+                let dir = if ext::ftLib_GetOpponentsDir(&mut pos, null_mut()) == 1.0 { 1 } else { 0 };
                 (*gp).u.greens2.x14 = dir;
                 (*gp).u.greens2.xC = 0;
                 whispy_anim(gobj, gp, bg_gobj, bg_gp);

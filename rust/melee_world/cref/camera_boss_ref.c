@@ -2,7 +2,7 @@
  * src/melee/cm/camera.c: Camera_8002E6FC .. Camera_8002F274 with Camera_8002DFE4 / Camera_8002E234).
  * The functions are cut verbatim from camera.c into camera_boss_extract.inc by gen_camera_boss_ref.py
  * (lb/lbvector.c is included whole, lb/lbtrigf.c's atan2f cut as in the fighter references); built with
- * the shipping contraction. Player_GetEntity / ftLib_80086B74 are stand-ins over random subjects.
+ * the shipping contraction. Player_GetEntity / ftLib_GetCameraSubject are stand-ins over random subjects.
  * One camera with random fields, one op per case; each line is op, case, return, hash of the state. */
 #include "ft/types.h"
 #include "ft/forward.h"
@@ -29,7 +29,7 @@ static HSD_GObj* pg[6];
 static CmSubject SUBJ[6];
 static CmSubject* ps[6];
 HSD_GObj* Player_GetEntity(s32 slot) { return slot >= 0 && slot < 6 ? pg[slot] : NULL; }
-CmSubject* ftLib_80086B74(HSD_GObj* g) { return ps[g - GOBJS]; }
+CmSubject* ftLib_GetCameraSubject(HSD_GObj* g) { return ps[g - GOBJS]; }
 
 static Vec3 cbv[2];
 static int cbret[2];

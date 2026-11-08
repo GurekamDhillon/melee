@@ -10,7 +10,7 @@ For every FAIL row of run_rust.sh (its output TSV, or run it with --run-all; NAM
      build_trace_reuse.sh) for the window [frame-LOOKBACK, frame+1] and the C state snapshot of the divergent frame,
      CACHED per scenario under <root>/ctcache/<C build commit>/<scenario>/ (a re-run skips the C side);
   3. runs the Rust engine with the call trace (build/cargo-ct, --features melee_core/calltrace) for the same window and
-     runs seqdiff.py (--anchor Fighter_8006A1BC): first frame and first function whose call sequence differs (the trace
+     runs seqdiff.py (--anchor Fighter_procHitlag): first frame and first function whose call sequence differs (the trace
      holds function entries only, not arguments; value differences come from step 4);
   4. runs `melee diff --frame N --snap <C snapshot>` and takes the first field the golden hash reads ('*'), else the first field;
   5. resolves the function to its Rust TU file and C source file.
@@ -32,7 +32,7 @@ COV = REPO / "docs/rust-port/golden/coverage"
 HERE = Path(__file__).resolve().parent
 EXE = os.environ.get("MELEE_EXE", str(REPO / "build/cargo/release/melee.exe"))
 CTEXE = os.environ.get("MELEE_CT_EXE", str(REPO / "build/cargo-ct/release/melee.exe"))
-ANCHOR = "Fighter_8006A1BC"
+ANCHOR = "Fighter_procHitlag"
 # names the C build inlines in some places (ScriptGame_EchoSameGroup's IsCapsule calls via script_echo_body_kind): never a divergence
 EXTRA_NOISE = {x for x in os.environ.get("TRIAGE_EXTRA_NOISE", "scriptgame_echoiscapsule").split(",") if x}
 LOOKBACKS = (60, 400)

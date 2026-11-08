@@ -19,8 +19,8 @@ void (Item_8026AE84)(__typeof__(struct Item *) a0, __typeof__(int) a1, __typeof_
 void (ftCo_800C78B0)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1006); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 void (ftCo_800C7B0C)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2, __typeof__(struct lbColl_80008D30_arg1 *) a3, __typeof__(float) a4) { T(1007); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); T(PI((const void*) a2)); TVEC((const Vec3*) a2); T(PI((const void*) a3)); T(B(a4)); }
 void (ftCo_800C7C60)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1008); T(PI((const void*) a0)); T((u32) a1); }
-__typeof__(struct HSD_GObj *) (ftLib_8008627C)(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); TVEC((const Vec3*) a0); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (((fv() & 3) ? &GO[1] : 0)); }
-void (ftLib_80086644)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1010); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
+__typeof__(struct HSD_GObj *) (ftLib_FindNearestOpponent)(__typeof__(Vec *) a0, __typeof__(struct HSD_GObj *) a1) { T(1009); T(PI((const void*) a0)); TVEC((const Vec3*) a0); T(PI((const void*) a1)); return (__typeof__(struct HSD_GObj *)) (((fv() & 3) ? &GO[1] : 0)); }
+void (ftLib_GetPos)(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1010); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const Vec3*) a1); if (a1) { a1->x = rw(); a1->y = rw(); a1->z = rw(); } }
 void (it_2725_Logic9_Destroyed)(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); }
 __typeof__(float) (it_8026B684)(__typeof__(Vec *) a0) { T(1012); T(PI((const void*) a0)); TVEC((const Vec3*) a0); return (__typeof__(float)) (rg()); }
 __typeof__(int) (it_8026D564)(__typeof__(struct HSD_GObj *) a0) { T(1013); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
@@ -1750,8 +1750,8 @@ static void freg_all(void)
 // stub ftCo_800C78B0 = 1006
 // stub ftCo_800C7B0C = 1007
 // stub ftCo_800C7C60 = 1008
-// stub ftLib_8008627C = 1009
-// stub ftLib_80086644 = 1010
+// stub ftLib_FindNearestOpponent = 1009
+// stub ftLib_GetPos = 1010
 // stub it_2725_Logic9_Destroyed = 1011
 // stub it_8026B684 = 1012
 // stub it_8026D564 = 1013

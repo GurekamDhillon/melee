@@ -77,7 +77,7 @@ __typeof__(Gm_PKind) Player_GetPlayerSlotType(__typeof__(int) a0) { T(1053); T((
 __typeof__(int) Player_GetTeam(__typeof__(int) a0) { T(1054); T((u32) a0); return (__typeof__(int)) (fv()); }
 __typeof__(int) Slippi_FrozenStadium(void) { T(1055); return (__typeof__(int)) (fv()); }
 __typeof__(enum StKind) Stage_80225194(void) { T(1056); return (__typeof__(enum StKind)) ((fv() % 5 == 0) ? 0xF0 : fv()); }
-void ftLib_80086B90(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1057); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
+void ftLib_GetCameraSubjectBonePos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1057); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
 __typeof__(unsigned int) gm_80160854(__typeof__(unsigned char) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1058); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); return (__typeof__(unsigned int)) (fv()); }
 __typeof__(struct _GXColor) gm_80160968(__typeof__(unsigned int) a0) { T(1059); T((u32) a0); return (__typeof__(struct _GXColor)) (({ GXColor c_; c_.r = (u8) fv(); c_.g = (u8) fv(); c_.b = (u8) fv(); c_.a = (u8) fv(); c_; })); }
 __typeof__(const char *) gm_80160A60(__typeof__(int) a0) { T(1060); T((u32) a0); return (__typeof__(const char *)) (STRS[fv() & 3]); }
@@ -1597,7 +1597,7 @@ static void freg_all(void)
 // stub Player_GetTeam = 1054
 // stub Slippi_FrozenStadium = 1055
 // stub Stage_80225194 = 1056
-// stub ftLib_80086B90 = 1057
+// stub ftLib_GetCameraSubjectBonePos = 1057
 // stub gm_80160854 = 1058
 // stub gm_80160968 = 1059
 // stub gm_80160A60 = 1060

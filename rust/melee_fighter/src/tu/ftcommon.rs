@@ -653,7 +653,7 @@ pub fn ftcommon_8007dd7c(g: G_ftcommon3, v: &Vec3) {
     let mut phi_r28 = false;
     let mut cur = h::plink_head(HSD_GOBJ_PLINK_FIGHTER);
     while !cur.is_null() {
-        if cur != g && !h::ftlib_80086fd4(cur, g) {
+        if cur != g && !h::ftlib_is_same_player(cur, g) {
             let c = unsafe { &*((*cur).user_data as *const Fighter) };
             if !(c.x221F_b3() != 0 || c.ground_or_air != GA_Ground || !c.victim_gobj.is_null() || c.is_sub_fighter() != 0) {
                 let (a2c4, a_dir, arg_gnd) = unsafe { ((*arg).x2C4, (*arg).facing_dir, (*arg).coll_data.floor.index) };
@@ -859,7 +859,7 @@ pub fn ftcommon_8007ea90(f: &mut Fighter, arg1: i32) {
         phi_f31 = (core::f64::consts::PI / 2.0) as f32;
         phi_f30 = h::common_data().x5C0;
         let mut v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-        h::ftlib_800866dc(f.gobj, &mut v);
+        h::ftlib_get_camera_bone_pos(f.gobj, &mut v);
         sp10 = v;
     }
     let r = h::it_802e5f8c(f.gobj, &sp10, arg1, 1, phi_f31, phi_f30);

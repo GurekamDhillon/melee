@@ -41,8 +41,8 @@ __typeof__(void *) Mex_GrBind(__typeof__(void *) a0) { T(1019); T(PI((const void
 void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; Vec* v; __builtin_va_start(ap, a1); v = __builtin_va_arg(ap, Vec*); __builtin_va_end(ap); T(1020); T((u32) a0); T(PI(a1)); TV(v); return 0; }
 void ftCo_8009EC70(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1, __typeof__(void *) a2, __typeof__(float) a3) { T(1021); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(B(a3)); TV(a1); T(RH(a2, 36)); }
 void ftCo_800C0764(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned int) a1, __typeof__(void *) a2) { T(1022); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1023); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
-void ftLib_80086C18(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1024); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1023); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
+void ftLib_StartRumble(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1024); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 void grAnime_801C7A04(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(unsigned int) a2, __typeof__(float) a3) { T(1025); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T(B(a3)); }
 void grAnime_801C7FF8(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(int) a3, __typeof__(float) a4, __typeof__(float) a5) { T(1026); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); T(B(a4)); T(B(a5)); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1027); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
@@ -1320,8 +1320,8 @@ static void freg_all(void)
 // stub efSync_Spawn = 1020
 // stub ftCo_8009EC70 = 1021
 // stub ftCo_800C0764 = 1022
-// stub ftLib_80086644 = 1023
-// stub ftLib_80086C18 = 1024
+// stub ftLib_GetPos = 1023
+// stub ftLib_StartRumble = 1024
 // stub grAnime_801C7A04 = 1025
 // stub grAnime_801C7FF8 = 1026
 // stub grAnime_801C8138 = 1027

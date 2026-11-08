@@ -22,7 +22,7 @@ pub fn install() {
         Mex_GrBind = Some(|a0| { t(1008); t(pi(a0)); a0 });
         Stage_GetCamBoundsTopOffset = Some(|| { t(1009); rg() });
         Toy_80305058 = Some(|a0, a1, a2, a3| { t(1010); t(a0 as u32); t(a1 as u32); t(a2 as u32); t(a3.to_bits()); fv() as _ });
-        ftLib_80086984 = Some(|a0| { t(1011); t(pi(a0)); &raw mut super::FCD });
+        ftLib_GetCollData = Some(|a0| { t(1011); t(pi(a0)); &raw mut super::FCD });
         gm_8017E280 = Some(|a0, a1| { t(1012); t(a0 as u32); t(a1 as u32); fv() as _ });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1013); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grDisplay_801C5DB0 = Some(|a0, a1| { t(1014); t(pi(a0)); t(a1 as u32); });

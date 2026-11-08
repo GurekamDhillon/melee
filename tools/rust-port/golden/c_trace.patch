@@ -65,10 +65,10 @@ index 5250877ed..bf28271b0 100644
      int lab_pose_row = -1; /* LAB preview: the row whose script/flags stay in use, -1 = none */
      Fighter* thrown_tbl = NULL; /* a stand-in thrower whose table the thrown row is read from, NULL = arg3's own */
      if (arg3 != NULL) {
-@@ -2591,6 +2593,15 @@ void Fighter_Spaghetti_8006AD10(Fighter_GObj* gobj)
+@@ -2591,6 +2593,15 @@ void Fighter_procInput(Fighter_GObj* gobj)
              }
  #endif
-             Fighter_Spaghetti_8006AD10_Inner1(fp);
+             Fighter_procInput_Inner1(fp);
 +            { extern int rp_ecb_on(void); extern void rp_ecb_log(const char* fmt, ...); extern int gw_det_logic_frame; /* RUSTPORT_TMP_ECB */
 +              if (rp_ecb_on()) {
 +                  HSD_PadStatus* ps = &HSD_PadGameStatus[fp->x618_player_id];

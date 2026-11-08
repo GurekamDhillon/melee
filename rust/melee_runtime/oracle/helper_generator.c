@@ -384,8 +384,8 @@ static void op(void)
     case 5: hsd_8039D580(JOB(args[1])); break;
     case 6: hsd_8039D5DC(JOB(args[1])); break;
     case 7: hsd_8039D688(JOB(args[1]), NULL, 0); break;
-    case 8: if (GEN(args[1])) hsd_8039D1E4(GEN(args[1]), args[2] ? (void*) (uintptr_t) args[2] : NULL); break;
-    case 9: ret = hsd_8039D1EC(); break;
+    case 8: if (GEN(args[1])) psSetUserFunc(GEN(args[1]), args[2] ? (void*) (uintptr_t) args[2] : NULL); break;
+    case 9: ret = psGetNewIDNum(); break;
     case 10: ret = gidx(hsd_8039D9C8()); break;
     case 11:
         if ((g = GEN(args[1])) != NULL) {

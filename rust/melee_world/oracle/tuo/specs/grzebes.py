@@ -84,7 +84,7 @@ CASES = {
     "grZebes_801DCCC8": dict(n=20),
 }
 FMT_VARIADIC = ["OSReport"]
-OUT_F32S = {"Ground_801C4368": {0: 1, 1: 1}, "lb_8000B1CC": {2: 3}, "ftLib_80086644": {1: 3}, "ftLib_80086684": {1: 3}}
+OUT_F32S = {"Ground_801C4368": {0: 1, 1: 1}, "lb_8000B1CC": {2: 3}, "ftLib_GetPos": {1: 3}, "ftLib_GetPrevPos": {1: 3}}
 OUT_INTS = {"Ground_801C2090": {0: 32}}
 PTR_BYTES = {"Ground_801C205C": {0: 4}}
 EXTERN_ARRAY_LEN = {"HSD_GObjGXLinkHead": 8}
@@ -135,9 +135,9 @@ DOM = {
     "out:lb_8000B1CC#2[0]": _f(-60.3, -5.1, 0.0, 5.7, 60.9),
     "out:lb_8000B1CC#2[1]": _f(-60.3, -5.1, 0.0, 5.7, 60.9),
     "out:lb_8000B1CC#2[2]": _f(-5.0, 0.0, 5.0),
-    "out:ftLib_80086644#1[0]": _f(-30.0, 0.0, 30.0),
-    "out:ftLib_80086644#1[1]": _f(-30.0, -3.0, 0.0, 8.0, 30.0),
-    "out:ftLib_80086684#1[1]": _f(-3.0, 0.0, 8.0),
+    "out:ftLib_GetPos#1[0]": _f(-30.0, 0.0, 30.0),
+    "out:ftLib_GetPos#1[1]": _f(-30.0, -3.0, 0.0, 8.0, 30.0),
+    "out:ftLib_GetPrevPos#1[1]": _f(-3.0, 0.0, 8.0),
     # grZe_YakumonoParam
     ".x00": _f(1.5, 3.3, 10.0), ".x04": _f(4.4, 12.1, 30.0), ".x08": _f(2.0, 5.5, 40.0), ".x0C": _f(8.0, 21.7, 60.0),
     ".x10": [1, 2, 3, 5, 10],

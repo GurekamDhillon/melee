@@ -70,9 +70,9 @@ void HSD_ViewingRectInit(__typeof__(struct HSD_ViewingRect *) a0, __typeof__(Vec
 void PSVECAdd(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1042); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); }
 void ftDrawCommon_80081168(void) { T(1043); }
 void ftDrawCommon_80081200(void) { T(1044); }
-__typeof__(int) ftLib_80086960(__typeof__(struct HSD_GObj *) a0) { T(1045); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(struct LbShadow *) ftLib_800872B0(__typeof__(struct HSD_GObj *) a0) { T(1046); T(PI((const void*) a0)); return (__typeof__(struct LbShadow *)) (((fv() & 7) ? pick_LbShadow() : 0)); }
-__typeof__(int) ftLib_800872BC(__typeof__(struct HSD_GObj *) a0) { T(1047); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1045); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(struct LbShadow *) ftLib_GetShadow(__typeof__(struct HSD_GObj *) a0) { T(1046); T(PI((const void*) a0)); return (__typeof__(struct LbShadow *)) (((fv() & 7) ? pick_LbShadow() : 0)); }
+__typeof__(int) ftLib_CastsShadow(__typeof__(struct HSD_GObj *) a0) { T(1047); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(Vec *) lbVector_CrossprodNormalized(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1048); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); return (__typeof__(Vec *)) (0); }
 __typeof__(Vec *) lbVector_Diff(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1049); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); return (__typeof__(Vec *)) (0); }
 __typeof__(float) lbVector_Normalize(__typeof__(Vec *) a0) { T(1050); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
@@ -3694,9 +3694,9 @@ static void freg_all(void)
 // stub PSVECAdd = 1042
 // stub ftDrawCommon_80081168 = 1043
 // stub ftDrawCommon_80081200 = 1044
-// stub ftLib_80086960 = 1045
-// stub ftLib_800872B0 = 1046
-// stub ftLib_800872BC = 1047
+// stub ftLib_IsFighter = 1045
+// stub ftLib_GetShadow = 1046
+// stub ftLib_CastsShadow = 1047
 // stub lbVector_CrossprodNormalized = 1048
 // stub lbVector_Diff = 1049
 // stub lbVector_Normalize = 1050

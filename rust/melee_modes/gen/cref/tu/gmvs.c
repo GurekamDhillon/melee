@@ -2,12 +2,12 @@
 /* HS: VsSceneController MatchEnd PlayerInitData StartMeleeData lbl_8046B488_t Vec */
 /* STUBS: gm_1601_GetUnkData:manual gm_8016A1F8 Player_GetPlayerState:ret=small:3 lb_80019880 gm_GetCurrentGameMode:manual Mex_Enabled:ret=bit gm_Is1PMode:ret=bit */
 /* STUBS: Ground_801C1DE4:manual Ground_801C1D98 Player_GetPlayerSlotType:manual lbTime_8000AF24 lbTime_8000AF74 grStadium_801D4150 Ground_801C1154 */
-/* STUBS: grStadium_801D4084 grStadium_801D410C un_802FD404 ftLib_800868A4 Stage_802252E4 grStadium_801D4040 ifStatus_802F6EA4:manual un_802FD428 */
+/* STUBS: grStadium_801D4084 grStadium_801D410C un_802FD404 ftLib_EnableAllInput Stage_802252E4 grStadium_801D4040 ifStatus_802F6EA4:manual un_802FD428 */
 /* STUBS: Ground_801C1158 grStadium_801D40C8 grStadium_801D3B4C Player_GetEntity:ret=ptrbit Player_8003219C Player_GetStocks:manual */
 /* STUBS: Player_GetPlayerId:manual ifStock_802F7EFC:ret=small:2 Player_LoseStock Player_SetStocks fn_8016719C gm_GetCurrentSceneIndex:ret=small:130 */
 /* STUBS: Player_GetP1Stock:ret=small:3 fn_8016A1E4:ret=small:2 fn_801693A8:ret=small:2 Player_GetFlagsBit1:ret=small:2 Player_GetTeam:manual */
 /* STUBS: Ground_801C1D84:ret=small:2 fn_8017EE40:manual fn_8017E8A4:manual fn_8018A364:manual pl_80039450 fn_80170110:ret=small:3 fn_8016FAD4 fn_8016F1F0 */
-/* STUBS: gm_801A4BA8:ret=small:3 gm_80166378 ftLib_80086BE0:ret=small:6 fn_80171DC4 HSD_PadRumbleRemoveAll HSD_PadRumbleOn lbAudioAx_800236DC */
+/* STUBS: gm_801A4BA8:ret=small:3 gm_80166378 ftLib_GetPlayerIndex:ret=small:6 fn_80171DC4 HSD_PadRumbleRemoveAll HSD_PadRumbleOn lbAudioAx_800236DC */
 /* STUBS: lbAudioAx_80023694 lbAudioAx_80024C84 ifTime_FreeCountdown gm_80167858 Player_GetNametagSlotID Camera_RequestQuake gm_801B6320:manual */
 /* STUBS: gm_GetAllStarData:manual gm_CKindToSelKind:ret=small:26 gmMainLib_8015D438:ret=pool:8:32 gmMainLib_8015D450 gmMainLib_8015D48C:ret=bit fn_80182B5C */
 /* STUBS: lbAudioAx_80024E84:boolint lbAudioAx_80024030 ifAll_802F3394 ifTime_ShowTimers gm_801A0FEC gm_SetDbPauseFlag gm_EnablePlayerPauseCamera */

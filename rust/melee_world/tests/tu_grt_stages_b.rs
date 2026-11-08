@@ -345,10 +345,10 @@ mod hooks {
     pub unsafe fn h_Ground_801C0498() -> f32 {
         const T: [f32; 4] = [1.0, 0.5, 2.0, 0.75]; let v = T[(rnd() % 4) as usize]; LAST498 = v; rec(&format!(" g0498={:08x}", v.to_bits())); v
     }
-    pub unsafe fn h_ftLib_80086644(g: *mut HSD_GObj, out: *mut Vec3) {
+    pub unsafe fn h_ftLib_GetPos(g: *mut HSD_GObj, out: *mut Vec3) {
         (*out).x = rf(); (*out).y = ypick(false); (*out).z = rf(); rec(&format!(" lib6644({},{:08x},{:08x},{:08x})", sym(g as usize), (*out).x.to_bits(), (*out).y.to_bits(), (*out).z.to_bits()));
     }
-    pub unsafe fn h_ftLib_80086684(g: *mut HSD_GObj, out: *mut Vec3) {
+    pub unsafe fn h_ftLib_GetPrevPos(g: *mut HSD_GObj, out: *mut Vec3) {
         (*out).x = rf(); (*out).y = ypick(true); (*out).z = rf(); rec(&format!(" lib6684({},{:08x},{:08x},{:08x})", sym(g as usize), (*out).x.to_bits(), (*out).y.to_bits(), (*out).z.to_bits()));
     }
     pub unsafe fn h_ftLib_80086B80(g: *mut HSD_GObj) -> f32 {
@@ -430,8 +430,8 @@ fn install_grtmario() {
         ftCo_800C07F8: hooks::h_ftCo_800C07F8,
         Ground_801C10B8: hooks::h_Ground_801C10B8,
         Ground_801C0498: hooks::h_Ground_801C0498,
-        ftLib_80086644: hooks::h_ftLib_80086644,
-        ftLib_80086684: hooks::h_ftLib_80086684,
+        ftLib_GetPos: hooks::h_ftLib_GetPos,
+        ftLib_GetPrevPos: hooks::h_ftLib_GetPrevPos,
         ftLib_80086B80: hooks::h_ftLib_80086B80,
         grLib_801C96F8: hooks::h_grLib_801C96F8,
     };

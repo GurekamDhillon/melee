@@ -44,7 +44,7 @@ __typeof__(float) HSD_Randf(void) { T(1021); return (__typeof__(float)) (rg()); 
 __typeof__(int) HSD_Randi(__typeof__(int) a0) { T(1022); T((u32) a0); return (__typeof__(int)) ((a0 > 0 ? (int) (rnd() % (u32) a0) : 0)); }
 void Item_80268E5C(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Item_StateChangeFlags) a2) { T(1023); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 __typeof__(void *) Mex_GrBind(__typeof__(void *) a0) { T(1024); T(PI((const void*) a0)); return (__typeof__(void *)) (a0); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1025); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1025); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
 __typeof__(int) gm_8016C6C0(__typeof__(struct HSD_GObj *) a0) { T(1026); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 4)); }
 void grAnime_801C7FF8(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(int) a3, __typeof__(float) a4, __typeof__(float) a5) { T(1027); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); T(B(a4)); T(B(a5)); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1028); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
@@ -1499,7 +1499,7 @@ static void freg_all(void)
 // stub HSD_Randi = 1022
 // stub Item_80268E5C = 1023
 // stub Mex_GrBind = 1024
-// stub ftLib_80086644 = 1025
+// stub ftLib_GetPos = 1025
 // stub gm_8016C6C0 = 1026
 // stub grAnime_801C7FF8 = 1027
 // stub grAnime_801C8138 = 1028

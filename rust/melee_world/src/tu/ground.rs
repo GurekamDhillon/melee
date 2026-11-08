@@ -152,8 +152,8 @@ pub mod ext {
     fn asinf(a0: f32) -> f32 = |a0: f32| unsafe { melee_runtime::lbtrigf::asinf(a0 as _) as _ };
     fn ftCo_8009F4A4();
     fn ftCo_800C06C0() = || { unsafe { let _ = crate::ftdevice::ftCo_800C06C0(); } };
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
-    fn ftLib_8008701C(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_8008701C(a0 as _) as _ };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } };
+    fn ftLib_IsSleeping(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsSleeping(a0 as _) as _ };
     fn gm_80164600() -> i32;
     fn gm_80164ABC() -> i32;
     fn gm_8016B238() -> i32 = || unsafe { crate::gm::gm_8016B238() as _ };
@@ -1068,8 +1068,8 @@ unsafe extern "C" fn Ground_801C0C2C__orig(arg0: *mut HSD_GObj) {
 
     if stage_info.unk8C.b6() != 0 || stage_info.unk8C.b7() != 0 {
         let gobj = Ground_GetP1Fighter();
-        if !gobj.is_null() && ext::ftLib_8008701C(gobj) == 0 {
-            ext::ftLib_80086644(gobj, &mut sp50);
+        if !gobj.is_null() && ext::ftLib_IsSleeping(gobj) == 0 {
+            ext::ftLib_GetPos(gobj, &mut sp50);
             if stage_info.unk8C.b6() != 0 {
                 let mut result = false;
                 let x_max = stage_info.x70C;

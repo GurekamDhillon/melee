@@ -95,7 +95,7 @@ mod imp {
 
 pub use imp::*;
 
-/// Entry marker for a ported C function: `melee_core::ct!("Fighter_8006A1BC");`. Nothing without the feature
+/// Entry marker for a ported C function: `melee_core::ct!("Fighter_procHitlag");`. Nothing without the feature
 /// (the cfg is on the definition, so callers need no feature of their own).
 #[cfg(feature = "calltrace")]
 #[macro_export]

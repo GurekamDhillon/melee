@@ -197,8 +197,8 @@ void Toy_803124BC(void) { T(1095); }
 __typeof__(float) asinf(__typeof__(float) a0) { T(1096); T(B(a0)); return (__typeof__(float)) (rg()); }
 void ftCo_8009F4A4(void) { T(1097); }
 void ftCo_800C06C0(void) { T(1098); }
-void ftLib_80086644(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1099); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
-__typeof__(int) ftLib_8008701C(__typeof__(struct HSD_GObj *) a0) { T(1100); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+void ftLib_GetPos(__typeof__(struct HSD_GObj *) a0, __typeof__(Vec *) a1) { T(1099); T(PI((const void*) a0)); T(PI((const void*) a1)); WV(a1); }
+__typeof__(int) ftLib_IsSleeping(__typeof__(struct HSD_GObj *) a0) { T(1100); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(int) gm_80164600(void) { T(1101); return (__typeof__(int)) (fv()); }
 __typeof__(int) gm_80164ABC(void) { T(1102); return (__typeof__(int)) (fv()); }
 __typeof__(int) gm_8016B238(void) { T(1103); return (__typeof__(int)) (fv()); }
@@ -2018,8 +2018,8 @@ static void freg_all(void)
 // stub asinf = 1096
 // stub ftCo_8009F4A4 = 1097
 // stub ftCo_800C06C0 = 1098
-// stub ftLib_80086644 = 1099
-// stub ftLib_8008701C = 1100
+// stub ftLib_GetPos = 1099
+// stub ftLib_IsSleeping = 1100
 // stub gm_80164600 = 1101
 // stub gm_80164ABC = 1102
 // stub gm_8016B238 = 1103

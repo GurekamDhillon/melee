@@ -37,7 +37,7 @@ pub mod ext {
     hook_or!(CAMERA_80030178, Camera_80030178, () -> i32, || unsafe { crate::tu::camera::Camera_80030178() } as i32);
     hook_or!(CAMERA_GETTRANSFORMINTEREST, Camera_GetTransformInterest, (a0: *mut Vec), |a0: *mut Vec| { unsafe { crate::tu::camera::Camera_GetTransformInterest(a0); } });
     hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec), |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::tu::camera::Camera_RequestQuake(a0 as _, a1 as _) });
-    hook_or!(FTLIB_80086644, ftLib_80086644, (gobj: *mut HSD_GObj, pos: *mut Vec), |gobj: *mut HSD_GObj, pos: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(gobj as _, pos as _); } });
+    hook_or!(FTLIB_GET_POS, ftLib_GetPos, (gobj: *mut HSD_GObj, pos: *mut Vec), |gobj: *mut HSD_GObj, pos: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_GetPos(gobj as _, pos as _); } });
     hook!(GM_8017E7E0, gm_8017E7E0, () -> i32);
     hook!(GM_801883C0, gm_801883C0, () -> f32);
     hook!(GM_GETDBPAUSEFLAG, gm_GetDbPauseFlag, (bit: i32) -> i32);
@@ -2278,7 +2278,7 @@ pub unsafe extern "C" fn grCorneria_801E1348(gobj: *mut Ground_GObj) {
             {
                 let mut fighter = ext::HSD_GObjPLinkHead(HSD_GOBJ_PLINK_FIGHTER);
                 while !fighter.is_null() {
-                    ext::ftLib_80086644(fighter, &mut fighter_pos);
+                    ext::ftLib_GetPos(fighter, &mut fighter_pos);
                     if ABS(cannon_pos.y - fighter_pos.y) <= 10.0 {
                         found = 1;
                         break;

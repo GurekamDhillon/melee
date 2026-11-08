@@ -31,11 +31,11 @@ pub mod ext {
             None => { unsafe { melee_items::tu::itmasterhandbullet::it_802F0AE0(gobj as _, prev_pos as _, pos as _, kind, msid as _, facing_dir as _, vel_x as _, vel_y as _); } },
         }
     }
-    fn ftLib_80087120_port(gobj: *mut HSD_GObj) -> i32 {
-        melee_fighter::ftlib::ftlib_80087120(gobj)
+    fn ftLib_GetPercent_port(gobj: *mut HSD_GObj) -> i32 {
+        melee_fighter::ftlib::ftlib_get_percent(gobj)
     }
     // Falls back to melee_fighter's port.
-    crate::mh_hook_or!(FTLIB_80087120, ftLib_80087120, ftLib_80087120_port, (gobj: *mut HSD_GObj) -> i32);
+    crate::mh_hook_or!(FTLIB_GET_PERCENT, ftLib_GetPercent, ftLib_GetPercent_port, (gobj: *mut HSD_GObj) -> i32);
 }
 
 /// `my_lbVector_Len` (static inline).
@@ -105,7 +105,7 @@ pub fn ftMh_FingerGun1_Anim(gobj: *mut HSD_GObj) {
             if f < 0.0 {
                 let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
                 ftMh_MS_364_801533CC(gobj);
-                if ext::ftLib_80087120(gobj) > (*da).xEC {
+                if ext::ftLib_GetPercent(gobj) > (*da).xEC {
                     (*fp).mv.mh.unk0.x54 = (*da).xF0;
                 } else {
                     (*fp).mv.mh.unk0.x54 = 1;
@@ -143,7 +143,7 @@ pub fn ftMh_MS_364_801533CC(gobj: *mut HSD_GObj) {
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
         st::Fighter_ChangeMotionState(gobj, ftMh_MS_FingerGun2 as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
-        if ext::ftLib_80087120(gobj) > (*da).xEC {
+        if ext::ftLib_GetPercent(gobj) > (*da).xEC {
             st::ftAnim_SetAnimRate(gobj, (*da).xF4);
         }
         (*fp).self_vel.x = 0.0;
@@ -199,7 +199,7 @@ pub fn ftMh_MS_365_8015364C(gobj: *mut HSD_GObj, joint: *mut HSD_JObj, arg2: f32
         let mut vec1 = vec0;
         vec0.x += arg2;
         vec0.y += arg3;
-        if ext::ftLib_80087120(gobj) > (*da).xEC {
+        if ext::ftLib_GetPercent(gobj) > (*da).xEC {
             b = true;
         }
         ext::it_802F0AE0(gobj, &mut vec0, &mut vec1, It_Kind_MasterHand_Bullet, b as i32, (*fp).facing_dir, (*da).xD4, (*da).xD8);

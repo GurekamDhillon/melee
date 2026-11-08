@@ -34,7 +34,7 @@ pub unsafe fn plStale_UpdateStaleMovesFromItem(gobj: G, gobj_2: G) {
     melee_core::ct!("plStale_UpdateStaleMovesFromItem");
     let it = (*gobj).user_data as *mut Item;
     let owner = (*it).owner;
-    if crate::ftlib::ftlib_80086960(owner) && owner != gobj_2 {
+    if crate::ftlib::ftlib_is_fighter(owner) && owner != gobj_2 {
         let owner_fp = (*owner).user_data as *const Fighter;
         crate::stale::update_stale_moves_from_item(Some(&*owner_fp), (*it).xD88_attackID, (*it).xD8C_attack_instance);
     }

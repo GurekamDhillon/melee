@@ -41,8 +41,8 @@ pub fn install() {
         ftBossLib_8015C92C = Some(|| { t(1027); (fv() % 40) as i32 });
         ftBossLib_8015CB9C = Some(|a0| { t(1028); t(a0 as u32); });
         ftBossLib_8015CC14 = Some(|| { t(1029); });
-        ftLib_8008731C = Some(|a0| { t(1030); t(pi(a0)); fv() as _ });
-        ftLib_80087508 = Some(|a0, a1| { t(1031); t(a0 as u32); t(a1 as u32); });
+        ftLib_IsSleeping_8008731C = Some(|a0| { t(1030); t(pi(a0)); fv() as _ });
+        ftLib_LoadFighterCostume = Some(|a0, a1| { t(1031); t(a0 as u32); t(a1 as u32); });
         ftLib_GetKind = Some(|a0| { t(1032); t(pi(a0)); fv() % 9 });
         gmFrontend_AtlasSelect = Some(|a0, a1, a2| { t(1033); t(pi(a0)); t(a1 as u32); t(sh(a2 as *const u8)); });
         gmMainLib_8015CEB4 = Some(|a0| { t(1034); t(a0 as u32); });

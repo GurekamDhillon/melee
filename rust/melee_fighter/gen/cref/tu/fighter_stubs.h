@@ -649,8 +649,8 @@ void (ftKb_SpecialN_800F5BA4)(__typeof__(struct Fighter *) a0) { T(1314); T(PI((
 // stub ftKb_SpecialN_800F5BA4 = 1314
 void (ftKb_SpecialN_800F5C34)(__typeof__(struct Fighter *) a0) { T(1315); T(PI((const void*) a0)); }
 // stub ftKb_SpecialN_800F5C34 = 1315
-void (ftLib_800867E8)(__typeof__(struct HSD_GObj *) a0) { T(1316); T(PI((const void*) a0)); }
-// stub ftLib_800867E8 = 1316
+void (ftLib_DisableInput)(__typeof__(struct HSD_GObj *) a0) { T(1316); T(PI((const void*) a0)); }
+// stub ftLib_DisableInput = 1316
 void (ftMh_MS_341_8014FE10)(__typeof__(struct HSD_GObj *) a0) { T(1317); T(PI((const void*) a0)); }
 // stub ftMh_MS_341_8014FE10 = 1317
 void (ftMh_MS_341_8014FE58)(__typeof__(struct HSD_GObj *) a0) { T(1318); T(PI((const void*) a0)); }

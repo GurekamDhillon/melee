@@ -211,7 +211,7 @@ fn install_capture(at_proc_map: bool) {
 }
 
 /// EXPERIMENTAL (env SLPCHECK_SEEDS=1; unexplained, see notes/slpcheck.md): first fighter whose RNG state at its pre-frame point differs from the Random Seed its Pre-Frame Update (0x37) recorded:
-/// (frame, port, engine seed, recorded seed). The pre-frame point is `Fighter_Spaghetti_8006AD10` (Slippi hooks 0x8006B0E0, the
+/// (frame, port, engine seed, recorded seed). The pre-frame point is `Fighter_procInput` (Slippi hooks 0x8006B0E0, the
 /// `Replay_HasInput` call), so a mismatch means the engine drew a different number of random values earlier in that frame.
 static mut SEED_FIRST: Option<(i32, i32, u32, u32)> = None;
 static mut SEED_PROBE: bool = false;

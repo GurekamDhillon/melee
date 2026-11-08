@@ -206,11 +206,11 @@ pub mod ext {
         }
     }
     hook_or!(FTCO_800C07F8, ftCo_800C07F8, (a0: *mut HSD_GObj, a1: u32, a2: *mut c_void), |a0: *mut HSD_GObj, a1: u32, a2: *mut c_void| { unsafe { crate::ftdevice::ftCo_800C07F8(a0 as _, a1 as _, core::mem::transmute(a2)); } });
-    hook_or!(FTLIB_80086644, ftLib_80086644, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } });
-    hook_or!(FTLIB_80086684, ftLib_80086684, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_80086684(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_GET_POS, ftLib_GetPos, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_GetPos(a0 as _, a1 as _); } });
+    hook_or!(FTLIB_GET_PREV_POS, ftLib_GetPrevPos, (a0: *mut HSD_GObj, a1: *mut Vec3), |a0: *mut HSD_GObj, a1: *mut Vec3| { unsafe { let _ = crate::ftlib::ftLib_GetPrevPos(a0 as _, a1 as _); } });
     hook_or!(FTLIB_80086B80, ftLib_80086B80, (a0: *mut HSD_GObj) -> f32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086B80(a0 as _) as _ });
-    hook_or!(FTLIB_80086EC0, ftLib_80086EC0, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086EC0(a0 as _) as _ });
-    hook_or!(FTLIB_8008732C, ftLib_8008732C, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_8008732C(a0 as _) as _ });
+    hook_or!(FTLIB_IS_IN_HITSTUN, ftLib_IsInHitstun, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsInHitstun(a0 as _) as _ });
+    hook_or!(FTLIB_IS_DEAD, ftLib_IsDead, (a0: *mut HSD_GObj) -> i32, |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_IsDead(a0 as _) as _ });
     hook!(GM_801674C4, gm_801674C4, (a0: s8, a1: u8, a2: s8, a3: s8, a4: GmRouteCallback));
     hook_or!(GRLIB_801C96F8, grLib_801C96F8, (a0: s32, a1: s32, a2: *mut Vec3) -> *mut HSD_Generator, |a0: s32, a1: s32, a2: *mut Vec3| unsafe { crate::tu::grlib::grLib_801C96F8(a0, a1, a2) });
     hook_or!(GRMATERIAL_801C8CDC, grMaterial_801C8CDC, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| unsafe { crate::tu::grmaterial::grMaterial_801C8CDC(a0) });
@@ -377,7 +377,7 @@ pub unsafe extern "C" fn grKinokoRoute_80207490() {
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let gobj = ext::Ground_GetP1Fighter();
     if !gobj.is_null() {
-        ext::ftLib_80086644(gobj, &mut pos);
+        ext::ftLib_GetPos(gobj, &mut pos);
         ext::Ground_801C38BC(pos.x, 20.0_f32 + pos.y);
         ext::Camera_8002F3AC();
     }
@@ -469,7 +469,7 @@ pub unsafe extern "C" fn grKinokoRoute_802078F0(gobj: *mut HSD_GObj) {
 
     let fighter = ext::Ground_GetP1Fighter();
     if !fighter.is_null() {
-        ext::ftLib_80086644(fighter, &mut pos);
+        ext::ftLib_GetPos(fighter, &mut pos);
     } else {
         return;
     }
@@ -553,15 +553,15 @@ pub unsafe extern "C" fn grKinokoRoute_80207C88(gobj: *mut HSD_GObj) {
     let scale = ext::Ground_801C0498();
     let fighter = ext::Ground_GetP1Fighter();
     if !fighter.is_null() {
-        ext::ftLib_80086644(fighter, &mut fighter_pos);
+        ext::ftLib_GetPos(fighter, &mut fighter_pos);
     } else {
         return;
     }
     if (*gp).u.kinokoroute2.phase != 2 {
-        if ext::ftLib_80086EC0(fighter) != 0 {
+        if ext::ftLib_IsInHitstun(fighter) != 0 {
             ext::Stage_UnkSetVec3TCam_Offset(&mut cam_target);
             (*gp).u.kinokoroute2.cam_timer = 0x3C;
-        } else if ext::ftLib_8008732C(fighter) != 0 {
+        } else if ext::ftLib_IsDead(fighter) != 0 {
             ext::Stage_UnkSetVec3TCam_Offset(&mut cam_target);
             (*gp).u.kinokoroute2.cam_timer = 0;
         } else {
@@ -802,8 +802,8 @@ pub unsafe extern "C" fn grKinokoRoute_80208660(_unused: i32, gobj: *mut HSD_GOb
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut vel = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
-    ext::ftLib_80086644(gobj, &mut pos);
-    ext::ftLib_80086684(gobj, &mut vel);
+    ext::ftLib_GetPos(gobj, &mut pos);
+    ext::ftLib_GetPrevPos(gobj, &mut vel);
 
     if pos.y < 5.5_f32 && vel.y > 5.5_f32 {
         let scale = ext::ftLib_80086B80(gobj) / 10.0_f32;

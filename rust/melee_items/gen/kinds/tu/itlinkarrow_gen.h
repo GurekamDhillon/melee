@@ -29,10 +29,10 @@ void* efSync_Spawn(s32 a0, HSD_GObj* a1, ...) { __builtin_va_list ap; void* a2; 
 __typeof__(float) (ftCo_80094098)(__typeof__(struct HSD_GObj *) a0, __typeof__(float *) a1) { T(1017); T(PI((const void*) a0)); T(PI((const void*) a1)); if (a1) { *a1 = rw(); } return (__typeof__(float)) (rg()); }
 void (ftKb_SpecialNLk800FB418)(__typeof__(struct HSD_GObj *) a0) { T(1018); T(PI((const void*) a0)); }
 __typeof__(int) (ftKb_SpecialNLk800FB470)(__typeof__(struct HSD_GObj *) a0) { T(1019); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(float) (ftLib_800865C0)(__typeof__(struct HSD_GObj *) a0) { T(1020); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-__typeof__(struct HSD_JObj *) (ftLib_80086630)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1021); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (&JO[3 + fv() % 3]); }
-__typeof__(float) (ftLib_800869D4)(__typeof__(struct HSD_GObj *) a0) { T(1022); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
-__typeof__(int) (ftLib_80086A18)(__typeof__(struct HSD_GObj *) a0) { T(1023); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(float) (ftLib_GetFacingDir)(__typeof__(struct HSD_GObj *) a0) { T(1020); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(struct HSD_JObj *) (ftLib_GetPartJObj)(__typeof__(struct HSD_GObj *) a0, __typeof__(enum Fighter_Part) a1) { T(1021); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (&JO[3 + fv() % 3]); }
+__typeof__(float) (ftLib_GetModelScale)(__typeof__(struct HSD_GObj *) a0) { T(1022); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(int) (ftLib_IsShielding)(__typeof__(struct HSD_GObj *) a0) { T(1023); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(int) (ftLk_SpecialN_IsActiveAnd2071b6)(__typeof__(struct HSD_GObj *) a0) { T(1024); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 void (ftLk_SpecialN_UnsetArrow)(__typeof__(struct HSD_GObj *) a0) { T(1025); T(PI((const void*) a0)); }
 void (it_8026B3A8)(__typeof__(struct HSD_GObj *) a0) { T(1026); T(PI((const void*) a0)); }
@@ -1686,10 +1686,10 @@ static void freg_all(void)
 // stub ftCo_80094098 = 1017
 // stub ftKb_SpecialNLk800FB418 = 1018
 // stub ftKb_SpecialNLk800FB470 = 1019
-// stub ftLib_800865C0 = 1020
-// stub ftLib_80086630 = 1021
-// stub ftLib_800869D4 = 1022
-// stub ftLib_80086A18 = 1023
+// stub ftLib_GetFacingDir = 1020
+// stub ftLib_GetPartJObj = 1021
+// stub ftLib_GetModelScale = 1022
+// stub ftLib_IsShielding = 1023
 // stub ftLk_SpecialN_IsActiveAnd2071b6 = 1024
 // stub ftLk_SpecialN_UnsetArrow = 1025
 // stub it_8026B3A8 = 1026

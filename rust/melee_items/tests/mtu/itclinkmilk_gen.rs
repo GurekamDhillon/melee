@@ -21,7 +21,7 @@ pub fn install() {
         ftCl_Init_8014920C = Some(|a0| { t(1008); t(pi(a0)); (fv() % 3) as i32 });
         ftCl_Init_801492C4 = Some(|a0| { t(1009); t(pi(a0)); });
         ftCl_Init_801492F4 = Some(|a0| { t(1010); t(pi(a0)); fv() as _ });
-        ftLib_800869D4 = Some(|a0| { t(1011); t(pi(a0)); rg() });
+        ftLib_GetModelScale = Some(|a0| { t(1011); t(pi(a0)); rg() });
         it_8026B894 = Some(|a0, a1| { t(1012); t(pi(a0)); t(pi(a1)); fv() as _ });
     }
 }

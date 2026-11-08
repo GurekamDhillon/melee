@@ -31,7 +31,7 @@ pub trait DbItemHost {
     fn Item_804A0C64(&mut self) -> *mut HSD_ObjAllocUnk;
     fn it_804D6D28(&mut self) -> *mut ItemCommonData;
     fn it_804A0F60(&mut self, i: usize) -> *mut Article;
-    fn ftLib_80086960(&mut self, owner: *mut HSD_GObj) -> i32;
+    fn ftLib_IsFighter(&mut self, owner: *mut HSD_GObj) -> i32;
     fn fn_8022697C(&mut self, owner: *mut HSD_GObj) -> u8;
     fn DevText_GetGObj(&mut self) -> *mut HSD_GObj;
     fn DevText_Create(&mut self, id: i32, x: i32, y: i32, w: i32, h: i32, buf: *mut i8) -> *mut DevText;
@@ -72,7 +72,7 @@ pub mod ext {
         fn Item_804A0C64(&mut self) -> *mut HSD_ObjAllocUnk { todo!("Item_804A0C64 (it/item.c)") }
         fn it_804D6D28(&mut self) -> *mut ItemCommonData { todo!("it_804D6D28 (it/it_3F14.c)") }
         fn it_804A0F60(&mut self, _: usize) -> *mut Article { todo!("it_804A0F60 (it/it_3F14.c)") }
-        fn ftLib_80086960(&mut self, _: *mut HSD_GObj) -> i32 { todo!("ftLib_80086960 (ft/ftlib.c)") }
+        fn ftLib_IsFighter(&mut self, _: *mut HSD_GObj) -> i32 { todo!("ftLib_IsFighter (ft/ftlib.c)") }
         fn fn_8022697C(&mut self, _: *mut HSD_GObj) -> u8 { todo!("fn_8022697C (db)") }
         fn DevText_GetGObj(&mut self) -> *mut HSD_GObj { todo!("DevText_GetGObj (if/textdraw.c)") }
         fn DevText_Create(&mut self, _: i32, _: i32, _: i32, _: i32, _: i32, _: *mut i8) -> *mut DevText { todo!("DevText_Create (if/textdraw.c)") }
@@ -335,7 +335,7 @@ impl DbItem {
     /// `item` is a live item GObj.
     pub unsafe fn db_80225DD8<H: DbItemHost + ?Sized>(&self, h: &mut H, item: *mut HSD_GObj, owner: *mut HSD_GObj) {
         let it = (*item).user_data as *mut Item;
-        if h.ftLib_80086960(owner) == 0 {
+        if h.ftLib_IsFighter(owner) == 0 {
             (*it).anon_daa.xDAA_byte |= self.show_item_collision_bubbles as u8;
         } else {
             (*it).anon_daa.xDAA_byte &= 0xFC;

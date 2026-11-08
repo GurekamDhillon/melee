@@ -26,7 +26,7 @@ __typeof__(int) HSD_Randi(__typeof__(int) a0) { T(1007); T((u32) a0); return (__
 __typeof__(void *) Mex_GrBind(__typeof__(void *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(void *)) (a0); }
 __typeof__(float) Stage_GetCamBoundsTopOffset(void) { T(1009); return (__typeof__(float)) (rg()); }
 __typeof__(int) Toy_80305058(__typeof__(int) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(float) a3) { T(1010); T((u32) a0); T((u32) a1); T((u32) a2); T(B(a3)); return (__typeof__(int)) (fv()); }
-__typeof__(struct CollData *) ftLib_80086984(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(struct CollData *)) (&FCD); }
+__typeof__(struct CollData *) ftLib_GetCollData(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(struct CollData *)) (&FCD); }
 __typeof__(signed char) gm_8017E280(__typeof__(unsigned short) a0, __typeof__(unsigned int) a1) { T(1012); T((u32) a0); T((u32) a1); return (__typeof__(signed char)) (fv()); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1013); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1014); T(PI((const void*) a0)); T((u32) a1); }
@@ -780,7 +780,7 @@ static void freg_all(void)
 // stub Mex_GrBind = 1008
 // stub Stage_GetCamBoundsTopOffset = 1009
 // stub Toy_80305058 = 1010
-// stub ftLib_80086984 = 1011
+// stub ftLib_GetCollData = 1011
 // stub gm_8017E280 = 1012
 // stub grAnime_801C8138 = 1013
 // stub grDisplay_801C5DB0 = 1014

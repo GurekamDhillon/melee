@@ -138,7 +138,7 @@ pub fn update_stale_moves_from_fighter(ft: &Fighter, same_gobj: bool) {
 }
 
 /// `plStale_UpdateStaleMovesFromItem(gobj, gobj_2)`: the item's `xD88_attackID` /
-/// `xD8C_attack_instance`; `owner` is the item's owner when `ftLib_80086960(owner)` (it is a
+/// `xD8C_attack_instance`; `owner` is the item's owner when `ftLib_IsFighter(owner)` (it is a
 /// fighter) and `owner != gobj_2`, else None.
 pub fn update_stale_moves_from_item(owner: Option<&Fighter>, attack_id: i32, instance: u16) {
     if let Some(o) = owner {

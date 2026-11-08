@@ -154,7 +154,7 @@ pub fn install() {
         melee_world::tu_ext::HOOK_HSD_DObjClearFlags = Some(|d, f| unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjClearFlags(d, f) });
         melee_world::tu_ext::HOOK_Player_80031790 = Some(|s| melee_fighter::tu::player::Player_80031790(s));
         melee_world::tu_ext::HOOK_Player_80031900 = Some(|| melee_fighter::tu::player::Player_80031900());
-        melee_world::tu_ext::HOOK_ftLib_80086C18 = Some(|g, a, b| melee_fighter::tu::ftlib::ftlib_80086c18(g, a, b));
+        melee_world::tu_ext::HOOK_ftLib_StartRumble = Some(|g, a, b| melee_fighter::tu::ftlib::ftlib_start_rumble(g, a, b));
         melee_world::tu_ext::HOOK_gm_GetDbPauseFlag = Some(|b| unsafe { melee_modes::tu::gmscene::gm_GetDbPauseFlag(b) });
         melee_world::tu_ext::HOOK_gm_MexVanillaKind = Some(|k, c| unsafe { melee_modes::tu::gm_1601::gm_MexVanillaKind(k, c) });
         melee_world::tu_ext::HOOK_gm_801674C4 = Some(|a, b, c, d, e| unsafe { melee_modes::tu::gm_1601::gm_801674C4(a, b, c, d, e) });

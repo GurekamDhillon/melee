@@ -29,9 +29,9 @@ pub mod ext {
     fn atan2f(a0: f32, a1: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
     fn efLib_PauseAll(a0: *mut HSD_GObj);
     fn efLib_ResumeAll(a0: *mut HSD_GObj);
-    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_800866DC(a0: *mut HSD_GObj, a1: *mut Vec);
-    fn ftLib_80086FD4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
+    fn ftLib_FindNearestOpponent(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetCameraBonePos(a0: *mut HSD_GObj, a1: *mut Vec);
+    fn ftLib_IsSamePlayer(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn gm_8016B168() -> i32;
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32;
     fn it_8026D62C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>);

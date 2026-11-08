@@ -183,7 +183,7 @@ pub mod ext {
     fn Stage_80225194() -> u32 => unsafe { melee_world::tu::stage::Stage_80225194() };
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
     fn db_80225DD8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::dbitem::db_80225DD8(a0, a1) };
-    fn ftLib_800865D8(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_800865D8(a0, a1, a2) };
+    fn ftLib_GetLStick(a0: *mut HSD_GObj, a1: *mut f32, a2: *mut f32) => unsafe { crate::tu::ftlib::ftLib_GetLStick(a0, a1, a2) };
     fn ftNs_SpecialHi_CheckSpecialHiHold(a0: *mut HSD_GObj) -> i32;
     fn ftNs_SpecialHi_ItemPKThunderCheckOwn(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftNs_SpecialHi_ItemPKThunderRemove(a0: *mut HSD_GObj);
@@ -510,7 +510,7 @@ pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Phys(gobj: *mut Item_GOb
     {
         itNesspkthunderball_ShiftAngles(ip);
 
-        ext::ftLib_800865D8((*ip).xDD4_itemVar.pkthunder.xF04, &mut stick.x, &mut stick.y);
+        ext::ftLib_GetLStick((*ip).xDD4_itemVar.pkthunder.xF04, &mut stick.x, &mut stick.y);
         stick.z = 0.0;
 
         if ABS(stick.x) > (*attr).xC_PKTHUNDER_STICK_THRESHOLD || ABS(stick.y) > (*attr).xC_PKTHUNDER_STICK_THRESHOLD {

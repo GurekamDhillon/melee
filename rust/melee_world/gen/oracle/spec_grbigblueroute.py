@@ -40,7 +40,7 @@ SPEC = dict(
     links_c="    NN = 0; yakumono_param = (void*) OP_grBigBlueRoute_YakumonoParam[0];",
     links_rs="    NN = 0; t::yakumono_param = addr_of_mut!(OP_grBigBlueRoute_YakumonoParam[0]) as *mut _;",
     hooks_rs="    melee_world::tu::grinl::ext::STAGE_INFO = Some(|| addr_of_mut!(G_stage_info) as *mut StageInfo);",
-    outs={"ftLib_80086644": [1], "Ground_801C2D24": [1], "lbVector_Diff": [2], "splGetSplinePoint": [0],
+    outs={"ftLib_GetPos": [1], "Ground_801C2D24": [1], "lbVector_Diff": [2], "splGetSplinePoint": [0],
           "lbShadow_8000E9F0": [0], "PSVECCrossProduct": [2], "Ground_801C5AEC": [0], "lb_8000B1CC": [2]},
     rets={
         "HSD_Randi": ("(int) (a0 > 0 ? rnd() % (u32) a0 : 0)", "(if a0 > 0 { rnd() % (a0 as u32) } else { 0 })"),

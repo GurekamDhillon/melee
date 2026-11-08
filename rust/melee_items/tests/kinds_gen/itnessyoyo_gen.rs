@@ -31,7 +31,7 @@ pub fn install() {
         PSMTXConcat = Some(|a0, a1, a2| { t(1018); t(pi(a0)); t(pi(a1)); t(pi(a2)); if !a2.is_null() { let mm = a2 as *mut f32; for q in 0..12usize { *mm.add(q) = rw(); } } });
         PSMTXCopy = Some(|a0, a1| { t(1019); t(pi(a0)); t(pi(a1)); if !a0.is_null() && !a1.is_null() { let s = a0 as *const f32; let d = a1 as *mut f32; for q in 0..12usize { *d.add(q) = *s.add(q); } } });
         PSMTXIdentity = Some(|a0| { t(1020); t(pi(a0)); if !a0.is_null() { let mm = a0 as *mut f32; for q in 0..12usize { *mm.add(q) = if q % 5 == 0 { 1.0 } else { 0.0 }; } } });
-        ftLib_80086A0C = Some(|a0| { t(1021); t(pi(a0)); (rnd() % 5) as f32 / 2.0 });
+        ftLib_GetScale = Some(|a0| { t(1021); t(pi(a0)); (rnd() % 5) as f32 / 2.0 });
         ftLib_GetMotionId = Some(|a0| { t(1022); t(pi(a0)); (0x150 + rnd() % 16) as i32 });
         ftNs_AttackHi4_YoyoItemSetFlag = Some(|a0| { t(1023); t(pi(a0)); });
         it_8026B724 = Some(|a0| { t(1024); t(pi(a0)); });

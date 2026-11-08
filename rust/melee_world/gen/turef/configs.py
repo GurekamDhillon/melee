@@ -71,7 +71,7 @@ CONFIGS["grpushon"]["ret"].update({
                           "if rnd() % 3 == 0 { (rnd() % 8) as i32 } else { a0 }"),
 })
 CONFIGS["grpushon"]["effect"] = {
-    "Stage_UnkSetVec3TCam_Offset": _VEC_RAND_A0, "ftLib_80086644": _FTLIB_POS,
+    "Stage_UnkSetVec3TCam_Offset": _VEC_RAND_A0, "ftLib_GetPos": _FTLIB_POS,
     "HSD_LObjGetPosition": _VEC_RAND_A1, "HSD_LObjGetInterest": _VEC_RAND_A1, "HSD_LObjGetColor": _COLOR_RAND,
     "lbVector_Sub": _VEC_SUB, "lbVector_Add": _VEC_ADD, "lbVector_Normalize": _VEC_NORM,
 }
@@ -151,7 +151,7 @@ CONFIGS["grshrineroute"]["ret"].update({
                          "if LDNULL && rnd() % 3 == 0 { core::ptr::null_mut() } else { mklobj() }"),
     "Player_GetEntity": ("expr", "(rnd() % 3 == 0) ? mkfgobj() : PGOBJ", "if rnd() % 3 == 0 { mkfgobj() } else { PGOBJ }"),
     "Player_GetEntityAtIndex": ("expr", "(rnd() % 2) ? 0 : mkfgobj()", "if rnd() % 2 != 0 { core::ptr::null_mut() } else { mkfgobj() }"),
-    "ftLib_80086BE0": ("ri", 4), "ftLib_8008731C": ("ri", 2), "ftLib_80086EC0": ("ri", 2), "ftLib_8008732C": ("ri", 2),
+    "ftLib_GetPlayerIndex": ("ri", 4), "ftLib_IsSleeping_8008731C": ("ri", 2), "ftLib_IsInHitstun": ("ri", 2), "ftLib_IsDead": ("ri", 2),
     "lb_8000B134": ("ri", 2), "grLib_801C96E8": ("ri", 2),
     "lbVector_Sub": ("expr", "a0", "a0"), "lbVector_Add": ("expr", "a0", "a0"),
     "Mex_GrBind": ("expr", "a0", "a0"),
@@ -159,7 +159,7 @@ CONFIGS["grshrineroute"]["ret"].update({
 _FT_POS = ("if (a1) { if (FPOS) { a1->x = -250.0f + (float) (rnd() % 100); a1->y = -300.0f + (float) (rnd() % 100); a1->z = rf(); } else { a1->x = rf(); a1->y = rf(); a1->z = rf(); } }",
            "if !a1.is_null() { if FPOS { (*a1).x = -250.0 + ((rnd() % 100) as f32); (*a1).y = -300.0 + ((rnd() % 100) as f32); (*a1).z = rf(); } else { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } }")
 CONFIGS["grshrineroute"]["effect"] = {
-    "Ground_801C2D24": _VEC_RAND_A1, "ftLib_80086644": _FT_POS, "lb_8000B1CC": _OUT_A1A2,
+    "Ground_801C2D24": _VEC_RAND_A1, "ftLib_GetPos": _FT_POS, "lb_8000B1CC": _OUT_A1A2,
     "Stage_UnkSetVec3TCam_Offset": _VEC_RAND_A0,
     "HSD_LObjGetPosition": _VEC_RAND_A1, "HSD_LObjGetInterest": _VEC_RAND_A1, "HSD_LObjGetColor": _COLOR_RAND,
     "lbVector_Sub": _VEC_SUB, "lbVector_Add": _VEC_ADD, "lbVector_Normalize": _VEC_NORM,

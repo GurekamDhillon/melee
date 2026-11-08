@@ -31,7 +31,7 @@ pub mod ext {
     ext_fns! {
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_GetPartJObj(a0, a1) };
     fn ftYs_SpecialN_GetBoneIndex(a0: *mut HSD_GObj) -> u32;
     fn it_8026BD54(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026bd54(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026C220(a0: *mut HSD_GObj, a1: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026C220(a0, a1) };
@@ -103,7 +103,7 @@ pub unsafe extern "C" fn it_802F2CE0(gobj: *mut Item_GObj, clear_destroy_type: b
     let item = GET_ITEM(gobj);
     ext::it_80275070(gobj, (*(*(*item).xC4_article_data).x10_modelDesc).x8_bone_attach_id);
     ext::lb_8000B1CC(
-        ext::ftLib_80086630((*item).grab_victim, ext::ftYs_SpecialN_GetBoneIndex((*item).grab_victim)),
+        ext::ftLib_GetPartJObj((*item).grab_victim, ext::ftYs_SpecialN_GetBoneIndex((*item).grab_victim)),
         null_mut(),
         &mut (*item).pos,
     );

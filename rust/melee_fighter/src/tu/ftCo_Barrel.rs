@@ -45,9 +45,9 @@ pub mod ext {
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
         ftColl_800787B4(i: I, g: G, v: i32) = |i: I, g: G, v: i32| { unsafe { crate::tu::ftcoll::ftcoll_800787b4(i as _, g as _, v as _); } };
-        ftLib_80086960(g: G) -> bool = crate::ftlib::ftlib_80086960;
+        ftLib_IsFighter(g: G) -> bool = crate::ftlib::ftlib_is_fighter;
         ftColl_8007B8CC(fp: *mut Fighter, owner: G) = |a0, a1| crate::tu::ftcoll::ftcoll_8007b8cc(unsafe { &mut *(a0 as *mut Fighter) }, a1);
-        ftLib_800866DC(g: G, v: &mut Vec3) = crate::ftlib::ftlib_800866dc;
+        ftLib_GetCameraBonePos(g: G, v: &mut Vec3) = crate::ftlib::ftlib_get_camera_bone_pos;
         // rp3 mpColl_80043680
         mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |c: *mut CollData, v: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, v as _); };
         // rp3-end
@@ -162,7 +162,7 @@ pub unsafe extern "C" fn ftCo_Barrel_Accessory1_Cb(g: G) {
 pub unsafe extern "C" fn fn_800C9290(g: G) {
     melee_core::ct!("fn_800C9290");
     let owner = ext::itGetOwner(fp(g).mv.co.barrel.x8);
-    if ext::ftLib_80086960(owner) {
+    if ext::ftLib_IsFighter(owner) {
         ext::ftColl_8007B8CC(fp(g), owner);
     }
 }
@@ -174,7 +174,7 @@ pub fn ftCo_800C92E4(g: G, arg1: &Vec3, arg2: *mut Vec3, arg3: *mut lbColl_80008
         let jobj = unsafe { (*g).hsd_obj as *mut HSD_JObj };
         let v1 = unsafe { (*jobj).translate };
         let mut v2 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-        ext::ftLib_800866DC(g, &mut v2);
+        ext::ftLib_GetCameraBonePos(g, &mut v2);
         let f = fp(g);
         f.cur_pos.x = (arg1.x + v1.x) - v2.x;
         f.cur_pos.y = (arg1.y + v1.y) - v2.y;

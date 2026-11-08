@@ -46,8 +46,8 @@ pub fn install() {
         m::ext::hook::ftCommon_8007F8B4 = Some(|a0, a1| { t(1036); t(pi(a0)); t(pi(a1)); });
         m::ext::hook::ftCommon_800804EC = Some(|a0| { t(1037); t(pi(a0)); rg() });
         m::ext::hook::ftCommon_SetAccessory = Some(|a0, a1| { t(1038); t(pi(a0)); t(pi(a1)); });
-        h::FTLIB_800866DC = Some(|a0, a1| { t(1039); t(pi(a0)); t(pi(a1 as *const _ as *const u8)); });
-        h::FTLIB_800873CC = Some(|a0| { t(1040); t(pi(a0)); fv() != 0 });
+        h::FTLIB_GET_CAMERA_BONE_POS = Some(|a0, a1| { t(1039); t(pi(a0)); t(pi(a1 as *const _ as *const u8)); });
+        h::FTLIB_IS_REBIRTH = Some(|a0| { t(1040); t(pi(a0)); fv() != 0 });
         m::ext::H_ftWalkCommon_800DFC70 = Some(|a0| { t(1041); t(pi(a0)); fv() != 0 });
         m::ext::H_ft_80083844 = Some(|a0, a1| { t(1042); t(pi(a0)); t(fnn(&a1)); });
         m::ext::H_ft_80083DCC = Some(|a0| { t(1043); t(pi(a0)); });

@@ -22,7 +22,7 @@ impl DbAnimHost for H {
     }
     fn db_motionstate_names(&mut self, i: i32) -> String { format!("MS{i}") }
     fn db_submotion_names(&mut self, i: i32) -> String { format!("SM{i}") }
-    fn ftLib_80086960(&mut self, g: FighterGObj) -> i32 { (g == 0) as i32 }
+    fn ftLib_IsFighter(&mut self, g: FighterGObj) -> i32 { (g == 0) as i32 }
     fn fn_EnableShowEnemyStompRange(&mut self) { self.log.push("stomp+".into()) }
     fn fn_DisableShowEnemyStompRange(&mut self) { self.log.push("stomp-".into()) }
     fn fn_EnableShowItemPickupRange(&mut self) { self.log.push("item+".into()) }

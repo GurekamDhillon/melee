@@ -51,7 +51,7 @@ void Camera_800311DC(__typeof__(float) a0) { T(1014); T(B(a0)); }
 void Camera_LargeMapRestore(void) { T(1015); }
 __typeof__(int) DVDConvertPathToEntrynum(__typeof__(const char *) a0) { T(1016); T(SH((const char*) a0)); return (__typeof__(int)) (fv()); }
 void Fighter_ChangeMotionState(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(unsigned int) a2, __typeof__(float) a3, __typeof__(float) a4, __typeof__(float) a5, __typeof__(struct HSD_GObj *) a6) { T(1017); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T(B(a3)); T(B(a4)); T(B(a5)); T(PI((const void*) a6)); }
-void Fighter_ProcessHit_8006D1EC(__typeof__(struct HSD_GObj *) a0) { T(1018); T(PI((const void*) a0)); }
+void Fighter_procCollResolve(__typeof__(struct HSD_GObj *) a0) { T(1018); T(PI((const void*) a0)); }
 __typeof__(struct HSD_GObj *) GObj_Create(__typeof__(unsigned short) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2) { T(1019); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_GObj *)) (0); }
 void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1020); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
 void GXBegin(__typeof__(enum _GXPrimitive) a0, __typeof__(enum _GXVtxFmt) a1, __typeof__(unsigned short) a2) { T(1021); T((u32) a0); T((u32) a1); T((u32) a2); }
@@ -209,7 +209,7 @@ __typeof__(unsigned char) gm_GetCurrentGameMode(void) { T(1172); return (__typeo
 __typeof__(void *) grIzumi_StageSlotParamSwap(__typeof__(void *) a0) { T(1173); T(PI((const void*) a0)); return (__typeof__(void *)) (0); }
 __typeof__(void *) grStory_StageSlotParamSwap(__typeof__(void *) a0) { T(1174); T(PI((const void*) a0)); return (__typeof__(void *)) (0); }
 void grZakoGenerator_StageSlotRelease(void) { T(1175); }
-void hsd_8039D048(__typeof__(void *) a0) { T(1176); T(PI((const void*) a0)); }
+void psClearPointJObj(__typeof__(void *) a0) { T(1176); T(PI((const void*) a0)); }
 __typeof__(struct HSD_Generator *) hsd_8039D3AC(__typeof__(struct HSD_Generator *) a0, __typeof__(struct HSD_Generator *) a1) { T(1177); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(struct HSD_Generator *)) (0); }
 void it_8026B40C(__typeof__(struct Article *) a0, __typeof__(int) a1) { T(1178); T(PI((const void*) a0)); T((u32) a1); }
 void it_8026F9AC(__typeof__(int) a0, __typeof__(void *) a1, __typeof__(struct HitCapsule *) a2, __typeof__(struct Item *) a3, __typeof__(struct HurtCapsule *) a4) { T(1179); T((u32) a0); T(PI((const void*) a1)); T(PI((const void*) a2)); T(PI((const void*) a3)); T(PI((const void*) a4)); }
@@ -433,7 +433,7 @@ static void freg_all(void)
 // stub Camera_LargeMapRestore = 1015
 // stub DVDConvertPathToEntrynum = 1016
 // stub Fighter_ChangeMotionState = 1017
-// stub Fighter_ProcessHit_8006D1EC = 1018
+// stub Fighter_procCollResolve = 1018
 // stub GObj_Create = 1019
 // stub GObj_SetupGXLink = 1020
 // stub GXBegin = 1021
@@ -591,7 +591,7 @@ static void freg_all(void)
 // stub grIzumi_StageSlotParamSwap = 1173
 // stub grStory_StageSlotParamSwap = 1174
 // stub grZakoGenerator_StageSlotRelease = 1175
-// stub hsd_8039D048 = 1176
+// stub psClearPointJObj = 1176
 // stub hsd_8039D3AC = 1177
 // stub it_8026B40C = 1178
 // stub it_8026F9AC = 1179

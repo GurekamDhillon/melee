@@ -17,7 +17,7 @@ pub fn install() {
         Item_8026A8EC = Some(|a0| { t(1004); t(pi(a0)); });
         Item_8026AE84 = Some(|a0, a1, a2, a3| { t(1005); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
         ScriptGame_EnemyDefeated = Some(|a0| { t(1006); t(pi(a0)); fv() as _ });
-        ftLib_80086D40 = Some(|a0, a1, a2| { t(1007); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
+        ftLib_StartItemRumble = Some(|a0, a1, a2| { t(1007); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         it_8026B894 = Some(|a0, a1| { t(1008); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });
         it_8026D5CC = Some(|a0| { t(1009); t(pi(a0)); (fv() & 1) as i32 });
         it_8026D62C = Some(|a0, a1| { t(1010); t(pi(a0)); t(fi(a1)); });

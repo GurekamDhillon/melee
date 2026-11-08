@@ -3,7 +3,7 @@
 //! Checked by tests/native_dbitem.rs.
 #![allow(non_snake_case, non_upper_case_globals, clippy::missing_safety_doc)]
 
-use super::ftlib::ftLib_80086960;
+use super::ftlib::ftLib_IsFighter;
 use melee_types::*;
 
 /// `static int db_ShowItemCollisionBubbles` (dbitem.static.h).
@@ -12,7 +12,7 @@ pub static mut db_ShowItemCollisionBubbles: i32 = 0;
 /// `fn_8022697C` (dbanim.c): the owner's x21FC flag byte, or 0 for a non-fighter.
 pub unsafe fn fn_8022697C(owner: *mut HSD_GObj) -> u8 {
     melee_core::ct!("fn_8022697C");
-    if ftLib_80086960(owner) {
+    if ftLib_IsFighter(owner) {
         let ft = (*owner).user_data as *mut Fighter;
         (*ft).x21FC_flag.byte
     } else {
@@ -23,7 +23,7 @@ pub unsafe fn fn_8022697C(owner: *mut HSD_GObj) -> u8 {
 pub unsafe fn db_80225DD8(item: *mut HSD_GObj, owner: *mut HSD_GObj) {
     melee_core::ct!("db_80225DD8");
     let it = (*item).user_data as *mut Item;
-    if !ftLib_80086960(owner) {
+    if !ftLib_IsFighter(owner) {
         (*it).anon_daa.xDAA_byte |= db_ShowItemCollisionBubbles as u8;
     } else {
         (*it).anon_daa.xDAA_byte &= 0xFC;

@@ -39,7 +39,7 @@ void Item_8026AB54(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj 
 __typeof__(int) ftCl_Init_8014920C(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() % 3)); }
 void ftCl_Init_801492C4(__typeof__(struct HSD_GObj *) a0) { T(1009); T(PI((const void*) a0)); }
 __typeof__(int) ftCl_Init_801492F4(__typeof__(struct HSD_GObj *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(float) ftLib_800869D4(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
+__typeof__(float) ftLib_GetModelScale(__typeof__(struct HSD_GObj *) a0) { T(1011); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 __typeof__(int) it_8026B894(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1012); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
 static void fill_HSD_GObj(HSD_GObj* p)
 {
@@ -5347,5 +5347,5 @@ static void freg_all(void)
 // stub ftCl_Init_8014920C = 1008
 // stub ftCl_Init_801492C4 = 1009
 // stub ftCl_Init_801492F4 = 1010
-// stub ftLib_800869D4 = 1011
+// stub ftLib_GetModelScale = 1011
 // stub it_8026B894 = 1012

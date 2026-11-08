@@ -36,9 +36,9 @@ pub mod ext {
     stubs! {
         WB_RENDER_ACTIVE Wb_RenderActive() -> i32;
         WB_RENDER_OPTION Wb_RenderOption(opt: i32, fallback: i32) -> i32;
-        FTLIB_80087074 ftLib_80087074(g: G, out: *mut Vec3) -> i32;
-        FTLIB_80086A8C ftLib_80086A8C(g: G) -> i32;
-        FTLIB_800860C4 ftLib_800860C4() -> i32;
+        FTLIB_GET_SHAKE_OFFSET ftLib_GetShakeOffset(g: G, out: *mut Vec3) -> i32;
+        FTLIB_UPDATE_SCREEN_VISIBILITY ftLib_UpdateScreenVisibility(g: G) -> i32;
+        FTLIB_COUNT_FIGHTERS ftLib_CountFighters() -> i32;
         HSD_COBJ_GET_CURRENT HSD_CObjGetCurrent() -> *mut HSD_CObj;
         HSD_COBJ_GET_INV_VIEWING_MTX_PTR HSD_CObjGetInvViewingMtxPtr(c: *mut HSD_CObj) -> *mut [f32; 4];
         CAMERA_800310B8 Camera_800310B8() -> *mut HSD_CObj;
@@ -105,7 +105,7 @@ static ftDrawCommon_804D3A90: U8Vec4 = U8Vec4 { x: 0x80, y: 0x80, z: 0x80, w: 0x
 pub fn ftDrawCommon_8008051C(g: G, out: &mut Mtx) -> Option<*mut [f32; 4]> {
     let v = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp54 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    if ext::ftLib_80087074(g, &mut sp54) != 0 {
+    if ext::ftLib_GetShakeOffset(g, &mut sp54) != 0 {
         let cur = ext::HSD_CObjGetCurrent();
         let mut t = m::identity();
         t[0][3] = sp54.x + v.x;
@@ -316,7 +316,7 @@ fn place_in_view(g: G) {
 
 fn surface_impl(g: G, arg1: i32) {
     let f = fp(g);
-    if f.x221F_b3() == 0 && (ext::Wb_RenderActive() != 0 || ext::ftLib_80086A8C(g) != 0) {
+    if f.x221F_b3() == 0 && (ext::Wb_RenderActive() != 0 || ext::ftLib_UpdateScreenVisibility(g) != 0) {
         match ext::Camera_80031060() {
             1 => {
                 if fp(g).x2220_b7() != 0 {
@@ -400,7 +400,7 @@ pub fn ftDrawCommon_80081118() {
 /// `ftDrawCommon_80081140`: FoD reflection callback (m-ex opt-in: none with 4+ players).
 pub fn ftDrawCommon_80081140() {
     melee_core::ct!("ftDrawCommon_80081140");
-    if ext::Mex_Enabled_disable_fod_reflection() != 0 && ext::ftLib_800860C4() >= 4 {
+    if ext::Mex_Enabled_disable_fod_reflection() != 0 && ext::ftLib_CountFighters() >= 4 {
         for_each_fighter(|g| unsafe { (*g).render_cb = None });
         return;
     }

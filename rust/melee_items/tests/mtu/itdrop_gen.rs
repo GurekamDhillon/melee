@@ -13,7 +13,7 @@ pub fn install() {
         HSD_Randf = Some(|| { t(1000); rg() });
         HSD_Randi = Some(|a0| { t(1001); t(a0 as u32); if a0 > 0 { (rnd() % a0 as u32) as i32 } else { 0 } });
         Item_80268B18 = Some(|a0| { t(1002); t(pi(a0)); t((*a0).kind as u32); t((*a0).x3C_damage as u32); t((*a0).x40 as u32); t((*a0).vel.x.to_bits()); t((*a0).vel.y.to_bits()); t((*a0).vel.z.to_bits()); t((*a0).prev_pos.x.to_bits()); t((*a0).prev_pos.y.to_bits()); t((*a0).prev_pos.z.to_bits()); t((*a0).pos.x.to_bits()); t((*a0).pos.y.to_bits()); t((*a0).pos.z.to_bits()); t((*a0).facing_dir.to_bits()); t(pi((*a0).x0_parent_gobj)); t(pi((*a0).x4_parent_gobj2)); t((*a0).x44_flag.anon_0.b0() as u32); pick_igo() });
-        ftLib_80086960 = Some(|a0| { t(1003); t(pi(a0)); fv() as _ });
+        ftLib_IsFighter = Some(|a0| { t(1003); t(pi(a0)); fv() as _ });
         ftLib_800874CC = Some(|a0, a1, a2| { t(1004); t(pi(a0)); t(pi(a1)); t(a2 as u32); for ii in 0..(a2.min(8).max(0)) { t(*(a1 as *const i32).add(ii as usize) as u32); } });
         gm_8016B0B4 = Some(|| { t(1005); fv() as _ });
         gm_8016B238 = Some(|| { t(1006); fv() as _ });

@@ -127,9 +127,9 @@ pub mod ext {
     fn Item_8026AE84(a0: *mut Item, a1: i32, a2: u8, a3: u8) => unsafe { crate::tu::item::Item_8026AE84(a0, a1, a2, a3) };
     fn atan2f(a0: f32, a1: f32) -> f32 => unsafe { melee_runtime::lbtrigf::atan2f(a0, a1) };
     fn ftCo_800C7800(a0: *mut HSD_GObj);
-    fn ftLib_8008627C(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
-    fn ftLib_80086630(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_80086630(a0, a1) };
-    fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_80086644(a0, a1) };
+    fn ftLib_FindNearestOpponent(a0: *mut Vec, a1: *mut HSD_GObj) -> *mut HSD_GObj;
+    fn ftLib_GetPartJObj(a0: *mut HSD_GObj, a1: u32) -> *mut HSD_JObj => unsafe { crate::tu::ftlib::ftLib_GetPartJObj(a0, a1) };
+    fn ftLib_GetPos(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::ftlib::ftLib_GetPos(a0, a1) };
     fn it_2725_Logic9_Destroyed(a0: *mut HSD_GObj) => unsafe { crate::tu::itzako::it_2725_Logic9_Destroyed(a0) };
     fn it_8026B684(a0: *mut Vec) -> f32 => unsafe { crate::tu::it_26B1::it_8026B684(a0 as _) };
     fn it_8026BD3C(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026bd3c(&mut *((*a0).user_data as *mut Item)) };
@@ -1026,10 +1026,10 @@ pub unsafe extern "C" fn it_802EA674(gobj: *mut Item_GObj) -> i32 {
     melee_core::ct!("it_802EA674");
     let ip = GET_ITEM(gobj);
     let mut result = 0;
-    let fighter = ext::ftLib_8008627C(&mut (*ip).pos, null_mut());
+    let fighter = ext::ftLib_FindNearestOpponent(&mut (*ip).pos, null_mut());
     if !fighter.is_null() {
         let mut v: Vec3 = core::mem::zeroed();
-        ext::ftLib_80086644(fighter, &mut v);
+        ext::ftLib_GetPos(fighter, &mut v);
         let facing: f32 = if (*ip).pos.x < v.x { 1.0 } else { -1.0 };
         if facing != (*ip).facing_dir {
             result = 1;
@@ -1047,12 +1047,12 @@ pub unsafe extern "C" fn it_802EA6F4(gobj: *mut Item_GObj) -> i32 {
     let attr = GET_ATTRS(ip);
     if (*ip).xDD4_itemVar.leadead.x4C == 0 {
         if ext::HSD_Randi((*attr).x1E as i32) == 0 {
-            let fighter = ext::ftLib_8008627C(&mut (*ip).pos, null_mut());
+            let fighter = ext::ftLib_FindNearestOpponent(&mut (*ip).pos, null_mut());
             if !fighter.is_null() {
                 if ext::it_8027CA7C(fighter) != 0 {
                     return 0;
                 }
-                ext::ftLib_80086644(fighter, &mut sp18);
+                ext::ftLib_GetPos(fighter, &mut sp18);
                 let mut dx = sp18.x - (*ip).pos.x;
                 if dx < 0.0 {
                     dx = -dx;
@@ -1172,7 +1172,7 @@ pub unsafe extern "C" fn it_802EAAEC(gobj: *mut Item_GObj, fobj: *mut HSD_GObj, 
     HSD_JObjSetTranslateZ(jobj, it_802EAAEC_inline(ip2));
     ext::it_80274ECC(gobj, 1);
     ext::Item_8026AE84(ip, 0x135, 0x7F, 0x40);
-    ext::ftLib_80086644(fobj, &mut sp24);
+    ext::ftLib_GetPos(fobj, &mut sp24);
     if (*ip).pos.x < sp24.x {
         (*ip).facing_dir = 1.0;
     } else {
@@ -1200,7 +1200,7 @@ pub unsafe extern "C" fn it_802EAC8C(gobj: *mut Item_GObj) {
     offset.y = 0.0;
     offset.x = 0.0;
     ext::lb_8000B1CC(
-        ext::ftLib_80086630((*ip).xDD4_itemVar.leadead.x38, (*ip).xDD4_itemVar.leadead.xE14 as u32),
+        ext::ftLib_GetPartJObj((*ip).xDD4_itemVar.leadead.x38, (*ip).xDD4_itemVar.leadead.xE14 as u32),
         &mut offset,
         &mut sp1C,
     );

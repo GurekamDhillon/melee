@@ -327,3 +327,49 @@ Known differences that remain between this oracle and the 2019 console (not code
   drifts too, at its own phase. Both move the 1% offscreen tick (`x221F_b0` is set by the render pass).
 - Modern playback's Init Stage Data also resets Dream Land's wind and Japes' logs (later determinism codes); a 2019
   console carried them over from the previous game.
+
+**20XX Neutral Spawns needs the console's SSS stage id.** The code's stage half (C2 0x801C0A48, in
+Ground_801C0800) patches the spawn joints of Battlefield, Dream Land, Stadium and Yoshi's by the stage id in
+`gmVsMelee_SssData` (u16 0x80480686), which the stage select screen writes. Playback never runs the SSS (it restores
+`gmVsMelee_StartData` only), so the first runs spawned everyone at (0, -2) and hung at an early game end (pc in the
+playback wait loop, frame 1697 of 13/Game_20190309T101721). The CSS half's result (spawn bytes in the player blocks)
+is in the recorded StartData already. `legacy171_codes.py` adds one 2-byte `06 80480686` write of the replay's own
+stage id: console state the code reads, not a code.
+
+**Validation (rust-port b05adf319 + this branch, fast profile).** 20 Gang-Steals files that match at .slp level
+(Battlefield, FD, Dream Land, Yoshi's, Fountain, Stadium; Fox, Falco, Marth, Sheik, Peach, Puff, Falcon, ICs, Mario,
+Doc): **20 / 20 NHV1-identical on every frame** (seed ignored), 2,243 to 14,536 frames each. One Dolphin run per
+file; `DOLPHIN_PRIORITY=BelowNormal` (Idle starved while builds ran).
+
+**Bucket files** (first differing word, slippi frame):
+
+| file | stage, fighters | slpcheck (vs .slp) | oracle (vs console in Dolphin) | class |
+|---|---|---|---|---|
+| 12/Game_20190309T162629 | FD, Marth v Marth | 1922 P4 percent 143.3 vs 142.3 (offscreen tick) | **match**, 15,481 frames | recording console only: Dolphin = engine. Polling-drift class (no drift fix in 1.7.1) |
+| 13/Game_20190309T123307 | Yoshi's, Falco v Fox | 3960 P1 x | **match** | recording console only |
+| 23/Game_20190309T125751 | BF, Fox v Falco | 5562 P1 x | **match** | recording console only |
+| 21/Game_20190309T173910 | stage 5, Puff v Marth | -123 P4 x 1e-3 | **match** | recording console only |
+| 14/Game_20190309T111022 | Yoshi's, ICs v Fox | match | **match**, 11,430 | - |
+| 12/Game_20190309T094028 | Stadium, Marth v Falcon | match | **match**, 7,374 | - |
+| 14/Game_20190309T134017 | BF teams, Peach/Sheik/Peach/Marth | 207 P2 percent 0 vs 14 | 206 s2 (P2 Sheik): hit by s0 (Peach, motion 64) lands on the console, not in Rust (motion 42 vs 80); s0 `x2144` 0 vs 13019 at 204 | engine: doubles hit |
+| 20/Game_20190309T131733 | BF teams, Fox/Fox/Falco/Sheik | 1030 P2 percent | 1029 s2 (P2 Fox) damaged on the console (motion 14 vs 87); s4 (P3 Falco, motion 60) hitbox `x914[0..1].hurt_coll_pos` differs at 1028 | engine: doubles hit |
+| 16/Game_20190309T123832 | DL teams, Marth/ICs/Marth/Fox | 368 P1 x | 367 s0 (P1 Marth) damaged on the console (motion 60 vs 83), 13.95 % vs 10 % | engine: doubles hit |
+| stream/Game_20190309T162146 | BF teams, Falco/Marth/Peach/Fox | 517 P2 x | 516 s4 (P3 Peach, motion 341) damaged on the console (vs 90); s2 (P2 Marth, motion 56) hitbox collides elsewhere at 515, `x195c_hitlag` 0 vs 7 | engine: doubles hit |
+| 19/Game_20190309T152343 | stage 15, 4 players | -123 P1 x 38.42 vs -77.07 | -123 s0 cur_pos: Dolphin -77.07 = the .slp | engine: 4-player spawn off the neutral-spawn table |
+| 11/Game_20190308T115404 | Stadium, ICs v Peach | match | 2773 s3 (Nana) `cpu.x30` 15 vs 24 only | Nana CPU scratch (Randf draw count), Stadium |
+| 13/Game_20190309T122423 | Stadium, ICs v Marth | match | 5327 s1 (Nana) `cpu.x30` 14 vs 7 only | same |
+
+"Recording console only": Dolphin playing the replay with the 1.7.1 codes agrees with the engine on every NHV1 word, and
+both differ from the recorded Post-Frame. The 2019 console's state differs in something neither replays (render
+skips from polling drift, state carried over from the previous game). Not engine bugs by this oracle.
+All four doubles divergers are teams games (`is_teams` 1) where a hit lands on the console and not in Rust (the
+attacker's hitbox/hurtbox collision point and `x2144` differ one or two frames earlier). Plain engine bug candidate
+(no 2019 code touches hit detection); a modern doubles replay should show it too.
+
+**Engine sweep at b05adf319** (`slpcheck`, stop at the first divergence): 3,162 / 3,479 match. Split by player count:
+singles **116 / 3,276** diverge, 4-player (all teams) **201 / 203** diverge. The doubles class above is the bulk of what
+is left. Diverging files per character (files containing the character), singles | 4-player: Fox 60/1245 | 146/146,
+Falco 32/1067 | 101/102, Marth 25/1135 | 99/100, Sheik 20/552 | 87/87, Peach 14/305 | 64/64, Falcon 12/645 | 47/47,
+ICs 12/308 | 39/41, Puff 18/358 | 25/25, Luigi 7/122 | -, Ganon 6/106 | 14/14, Samus 5/50 | 17/17, Doc 3/30 | 12/12,
+Pikachu 3/30 | 8/8, G&W 1/40 | 8/9, YLink 0/27 | 20/20, Ness 0/5 | 14/14, Mario 0/40 | 4/4, Zelda 0/28 | 2/2,
+Bowser 0/6 | 1/1; DK, Link, Mewtwo, Roy, Yoshi 0. Singles first fields: x 56, percent 41, facing ~15, action ~10.

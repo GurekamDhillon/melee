@@ -39,6 +39,10 @@ Remove-Item -ErrorAction SilentlyContinue $raw
 $env:MELEE_DOLPHIN_NHV1 = $raw
 $env:MELEE_DOLPHIN_NHV1_EXIT = '1'
 $env:MELEE_DOLPHIN_NHV1_WIDE = if ($Wide) { '1' } else { '0' }
+# the recording console's widescreen code (camera bounds, bubble region: the logic's off-screen test), not in Slippi's
+# playback set; DOLPHIN_NO_REPLAY_CODES=1 plays without it (notes/dolphin-oracle.md, "Widescreen codes")
+if ($env:DOLPHIN_NO_REPLAY_CODES -eq '1') { Remove-Item -ErrorAction SilentlyContinue (Join-Path $user 'GameSettings\GALE01.ini') }
+else { python -I (Join-Path $PSScriptRoot 'replay_codes.py') $Slp $user }
 $dargs = @('-u', "`"$user`"", '-p', 'headless', '-v', 'Null', '-i', "`"$comm`"", '-e', "`"$iso`"")
 $p = Start-Process -FilePath $exe -ArgumentList $dargs -PassThru -WindowStyle Hidden `
     -RedirectStandardError (Join-Path $Out 'dolphin.stderr.txt') -RedirectStandardOutput (Join-Path $Out 'dolphin.stdout.txt')

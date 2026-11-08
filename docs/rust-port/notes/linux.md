@@ -35,6 +35,11 @@ In WSL, building from /mnt/e works but is slow. Put CARGO_TARGET_DIR on the Linu
 - Netplay across machines: `melee slippi-netplay --mm ws://<private IP>:P/v1/queue --mm-lan` (Target::Lan accepts
   ws:// to private literal IPv4 addresses only, with sockets bound to every interface), plus `mock_mm.py --bind ADDR`
   (players are reached at the address their WebSocket came from). Not tested yet.
+- Direct LAN mode (`slippi-netplay --host|--join --peer <LAN IP>:P`) also needs `--mm-lan`: without it the socket is
+  bound to 127.0.0.1 and the other machine is never heard. A LAN test (PC host, laptop guest) froze after the boot at
+  "frame 10 confirmed 2" with no pads either way; port/npboot fixed the loopback-reproducible causes (a restarted peer on
+  the same port reusing a stale ENet link, no ENet servicing during the boot) and made the frame loop report and exit
+  instead of stalling. See notes/net.md.
 
 ## Results (WSL, Linux build compared with a Windows build of the same commit)
 - Goldens: all 4 scenarios match at their recorded counts (1801/1801/3601/3601). Synctest depth 4: 0 mismatches.

@@ -412,3 +412,28 @@ a wgpu `GX texture is invalid` panic; early inputs were off and no sampler was r
   150 ms rollback count is noisy and two runs do not settle it. Windowed runs of the same set lost the GPU device on both
   peers (driver reset, the environment issue described under #42); those runs were dropped.
 - Verified: GATE OK, `rematch.sh css` OK, `cargo test -p melee_net` OK.
+
+## slippi-netplay: stale links, slow boots, silent stalls (port/npboot)
+- Symptom (LAN test PC <-> Linux laptop, direct mode, peers restarted repeatedly on fixed ports 43211/43212): both sides
+  exchanged selections, booted, then sat at "frame 10 confirmed 2 compared 0 ping 0" forever, no pads either way.
+- Root cause reproduced on loopback (host up, guest killed 3 s into the match and restarted on the same port): the new
+  guest connects to the old host as a second ENet link from the same address. `Client` kept the dead link as its active
+  one, sent its pads into it, ignored the new process' MATCH_SELECTIONS (they only reset `head_frame`), and when the dead
+  link timed out (30 s) quietly failed over to the new link, which belongs to a different match. Nothing told the frame
+  loop, so it stalled until --max-seconds. Debug log (MELEE_NP_DEBUG=1): host `Connect peer 0` at 3.1 s with
+  active=Some(1), then `Disconnect peer 1` at 33 s, still Connected; the new guest gave up at 48 s waiting for selections.
+- A second cause, for a boot longer than ENet's 30 s timeout: nothing serviced the ENet host during `open_scene`. With
+  MELEE_NP_BOOT_DELAY_S=40 on the guest the host stalled at frame 10 with 0 pads received and then timed the link out.
+- Fix: `Client` has an in-game state from `start_game`. In a match, MATCH_SELECTIONS from the peer means a restarted
+  peer: every link is dropped and `Note::Disconnected { reason: REASON_PEER_RESTARTED }` is reported. The active link
+  going down in a match ends the session (as Slippi's in-game DISCONNECT event does) instead of failing over. A pump
+  thread polls the client every 2 ms while the scene loads. The frame loop logs the boot time and its first status line
+  at once, exits on Failed/Disconnected, and gives up with a report when no pad has arrived for --first-pad-seconds (120)
+  before the first pad or --silence-seconds (10) after it.
+- Late peer: pads sent before the peer is up are not lost: every unacked pad (up to 128) is resent in each pad
+  message, so the first message the peer reads covers them.
+- Verified on loopback: guest boot delayed 60 s (MELEE_NP_BOOT_DELAY_S=60, --padgen 7) completes, CSV-EQUAL 1993 rows,
+  0 desyncs. Restart repro: both sides exit within 4 s with a reason. np_pair.sh --frames 3600 unchanged (1178 rows,
+  CSV-EQUAL, the usual game end at 1179).
+- Not reproduced here: the exact LAN freeze (that would need the LAN). If it comes back, run with MELEE_NP_DEBUG=1 and the
+  new messages ("no pads from the peer for N s", link state) show which side stops hearing the other.

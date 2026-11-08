@@ -181,6 +181,9 @@ pub fn encode_ack(frame: i32, port: u8) -> Vec<u8> {
     PacketW::default().u8(MSG_PAD_ACK).i32(frame).u8(port).0
 }
 
+/// `Note::Disconnected` reason when the peer address started a new match during ours (its process restarted).
+pub const REASON_PEER_RESTARTED: u32 = 0xFFFF_FFF0;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Status {
     Initiated,
@@ -233,6 +236,8 @@ pub struct Client {
     remote: Remote,
     local_queue: VecDeque<(i32, [u8; PAD_WIRE], i32, u32)>,
     has_game_started: bool,
+    /// Between `start_game` and the end of the match: the link set is fixed (see `on_disconnect`, `on_data`).
+    in_game: bool,
     notes: VecDeque<Note>,
     t0: Instant,
     clock_us: Option<Box<dyn Fn() -> i64>>,
@@ -277,6 +282,7 @@ impl Client {
             },
             local_queue: VecDeque::new(),
             has_game_started: false,
+            in_game: false,
             notes: VecDeque::new(),
             t0: Instant::now(),
             clock_us: None,
@@ -336,6 +342,7 @@ impl Client {
     /// `StartSlippiGame`: a new game's pad state.
     pub fn start_game(&mut self) {
         self.has_game_started = false;
+        self.in_game = true;
         self.local_queue.clear();
         let now = self.now_us();
         self.remote.last_timing = Timing { frame: 0, time_us: now };
@@ -391,6 +398,9 @@ impl Client {
     /// Run the network: every waiting ENet event, then the connect timeout. Call once per frame or more often.
     pub fn poll(&mut self) {
         while let Some(ev) = self.host.service() {
+            if std::env::var_os("MELEE_NP_DEBUG").is_some() && !matches!(ev, Event::Receive { .. }) {
+                eprintln!("np-debug t={}ms {:?} active={:?} links={:?} status={:?}", self.now_us() / 1000, ev, self.remote.active, self.remote.links, self.status);
+            }
             match ev {
                 Event::Connect { peer, .. } => self.on_connect(peer),
                 Event::Disconnect { peer, data } => self.on_disconnect(peer, data),
@@ -428,7 +438,11 @@ impl Client {
 
     fn on_disconnect(&mut self, peer: usize, data: u32) {
         self.remote.links.retain(|&l| l != peer);
-        if self.remote.active == Some(peer) {
+        // in a match the link the pads use going down ends the session, as in Slippi (its in-game DISCONNECT event): a
+        // second link to the same address is then a different remote process (a restarted peer), not a fallback
+        if self.remote.active == Some(peer) && self.in_game {
+            self.remote.active = None;
+        } else if self.remote.active == Some(peer) {
             self.remote.active = self.remote.links.iter().copied().find(|&l| self.host.peers[l].state == PeerState::Connected);
         }
         if self.remote.active.is_none() && self.status == Status::Connected {
@@ -510,6 +524,19 @@ impl Client {
             MSG_MATCH_SELECTIONS => {
                 let Some(s) = Selections::decode(&mut r) else { return };
                 if s.player_idx != self.remote.port {
+                    return;
+                }
+                if self.in_game {
+                    // selections in a match: the remote is a new process starting its own match (a restart on the same
+                    // address); this match's peer is gone
+                    for l in self.remote.links.clone() {
+                        self.host.disconnect(l, 0);
+                    }
+                    self.remote.active = None;
+                    if self.status == Status::Connected {
+                        self.status = Status::Disconnected;
+                        self.notes.push_back(Note::Disconnected { reason: REASON_PEER_RESTARTED });
+                    }
                     return;
                 }
                 self.remote.selections = Some(s);

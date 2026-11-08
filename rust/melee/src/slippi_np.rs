@@ -273,13 +273,46 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     if std::env::var_os("MELEE_SLIPPI_NO_ONLINE_CODES").is_none() {
         online_codes(by_port.iter().map(|s| s.alt_stage_mode).max().unwrap_or(0));
     }
-    let mut game = match EngineGame::open_scene(args, &scene, rng_offset) {
+    // the scene load blocks this thread: keep servicing the ENet host meanwhile (Slippi's netplay thread does), or a
+    // boot longer than the peer's ENet timeout (30 s) loses the link, and the peer's early pads and pings go unacked
+    let boot_t = Instant::now();
+    let booted = {
+        struct Pump(*mut Client);
+        // SAFETY: the main thread does not touch `cl` until the pump thread is joined (end of the scope)
+        unsafe impl Send for Pump {}
+        let pump = Pump(&mut cl as *mut Client);
+        let stop = std::sync::atomic::AtomicBool::new(false);
+        std::thread::scope(|sc| {
+            let stop = &stop;
+            sc.spawn(move || {
+                let pump = pump;
+                while !stop.load(std::sync::atomic::Ordering::Acquire) {
+                    unsafe { (*pump.0).poll() };
+                    std::thread::sleep(Duration::from_millis(2));
+                }
+            });
+            // test hook: MELEE_NP_BOOT_DELAY_S=N makes this side's boot N seconds slower (a slow machine's scene load)
+            if let Some(d) = std::env::var("MELEE_NP_BOOT_DELAY_S").ok().and_then(|v| v.parse::<u64>().ok()) {
+                eprintln!("melee: {tag}: test hook: boot delayed {d} s");
+                std::thread::sleep(Duration::from_secs(d));
+            }
+            let g = EngineGame::open_scene(args, &scene, rng_offset);
+            stop.store(true, std::sync::atomic::Ordering::Release);
+            g
+        })
+    };
+    let mut game = match booted {
         Ok(g) => g,
         Err(e) => {
             eprintln!("melee: {e}");
             return ExitCode::FAILURE;
         }
     };
+    eprintln!("melee: {tag}: booted in {:.2}s (link {:?})", boot_t.elapsed().as_secs_f32(), cl.status);
+    if matches!(cl.status, Status::Failed | Status::Disconnected) {
+        eprintln!("melee: {tag}: the peer link went down during the boot ({:?})", cl.status);
+        return ExitCode::FAILURE;
+    }
     for (i, s) in by_port.iter().enumerate() {
         game.slippi_chars[i] = s.character_id as u32;
     }
@@ -309,6 +342,14 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
     let shift = num("--script-shift", 0) as i32;
     // --padgen SEED: the session's deterministic pad generator instead of the (1800-frame) scenario script, for long matches
     let padgen = arg(args, "--padgen").and_then(|v| v.parse::<u32>().ok());
+    // no remote pad for this long ends the run with a report instead of a silent stall: generous until the first pad
+    // (the peer may still be loading), short after it
+    let first_pad_s = num("--first-pad-seconds", 120) as u64;
+    let silence_s = num("--silence-seconds", 10) as u64;
+    let mut last_rx: Option<Instant> = None;
+    let loop_t = Instant::now();
+    let mut failed = false;
+    eprintln!("melee: {tag}: frame loop: frame {} link {:?} ping {} us; waiting for the peer's pads", online(s.current_frame()), cl.status, cl.ping_us());
     loop {
         let now = Instant::now();
         if next_tick > now {
@@ -324,6 +365,10 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         while let Some(n) = cl.next_note() {
             match n {
                 Note::Pad { frame, pad, .. } => {
+                    if last_rx.is_none() {
+                        eprintln!("melee: {tag}: first remote pad (online frame {frame}) after {:.2}s in the frame loop", loop_t.elapsed().as_secs_f32());
+                    }
+                    last_rx = Some(Instant::now());
                     let sf = sess(frame);
                     game.slippi_bits.entry(sf).or_default()[remote_port as usize & 3] = pad[8];
                     s.submit_remote_input(remote_port as usize * 2, sf, &pad_input(&pad));
@@ -334,10 +379,39 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
                     }
                 }
                 Note::Disconnected { reason } => {
-                    eprintln!("melee: {tag}: peer disconnected (reason {reason})");
+                    if reason == melee_net::slippi::REASON_PEER_RESTARTED {
+                        eprintln!("melee: {tag}: the peer address started a new match (its process restarted): this match is over");
+                        failed = true;
+                    } else {
+                        eprintln!("melee: {tag}: peer disconnected (reason {reason})");
+                    }
                     ended = true;
                 }
                 _ => {}
+            }
+        }
+        if !ended && matches!(cl.status, Status::Failed | Status::Disconnected) {
+            eprintln!("melee: {tag}: link {:?} at online frame {}", cl.status, online(s.current_frame()));
+            ended = true;
+            failed = true;
+        }
+        if !ended {
+            let (since, lim) = match last_rx {
+                Some(t) => (t.elapsed(), silence_s),
+                None => (loop_t.elapsed(), first_pad_s),
+            };
+            if since > Duration::from_secs(lim) && finals.keys().next_back().map_or(true, |&k| k < frames) {
+                eprintln!(
+                    "melee: {tag}: no pads from the peer for {} s ({}; link {:?}, ping {} us, pads received {}) at online frame {}: giving up",
+                    since.as_secs(),
+                    if last_rx.is_none() { "none ever" } else { "since the last" },
+                    cl.status,
+                    cl.ping_us(),
+                    cl.stats.pads_received,
+                    online(s.current_frame())
+                );
+                ended = true;
+                failed = true;
             }
         }
         if ended {
@@ -454,7 +528,7 @@ pub fn slippi_netplay(args: &[String]) -> ExitCode {
         finals.len(), st.rollbacks, st.depth_max, st.resim, st.stall_ticks, st.waits, cl.ping_us(), cl.stats.pads_sent, cl.stats.pads_received,
         cl.host.peers.iter().map(|p| p.stats_resent).sum::<u64>()
     );
-    if hard == 0 && soft == 0 && compared > 0 && (last >= frames || ended) {
+    if !failed && hard == 0 && soft == 0 && compared > 0 && (last >= frames || ended) {
         ExitCode::SUCCESS
     } else {
         ExitCode::FAILURE

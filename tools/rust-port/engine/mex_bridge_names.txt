@@ -279,3 +279,7 @@ ft_800892A0
 ftAnim_8006EDD0
 hsd_8039930C
 ftAnim_8006FE9C
+ftCo_JumpAerialF1_Anim
+ftCo_JumpAerialF1_Coll
+ftCo_JumpAerialF1_IASA
+ftCo_JumpAerialF1_Phys

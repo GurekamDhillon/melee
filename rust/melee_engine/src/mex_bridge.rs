@@ -113,6 +113,10 @@ pub unsafe fn call(name: &str, c: &mut Call) -> bool {
         "ftCo_Fall_Enter" => {  let r = melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
         "ftCo_Fall_IASA_Inner" => {  let r = melee_fighter::tu::ftCo_Fall::ftCo_Fall_IASA_Inner((c.ptr(0, Some("HSD_GObj")) as _)); c.ret_int(r as i64 as u32); }
         "ftCo_IsCpuControlled" => {  let r = melee_fighter::tu::ftCo_0A01::ftCo_IsCpuControlled((c.ptr(0, Some("Fighter")) as _)); c.ret_int(r as i64 as u32); }
+        "ftCo_JumpAerialF1_Anim" => {  let r = melee_fighter::tu::ftCo_JumpAerialF1::ftCo_JumpAerialF1_Anim((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
+        "ftCo_JumpAerialF1_Coll" => {  let r = melee_fighter::tu::ftCo_JumpAerialF1::ftCo_JumpAerialF1_Coll((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
+        "ftCo_JumpAerialF1_IASA" => {  let r = melee_fighter::tu::ftCo_JumpAerialF1::ftCo_JumpAerialF1_IASA((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
+        "ftCo_JumpAerialF1_Phys" => {  let r = melee_fighter::tu::ftCo_JumpAerialF1::ftCo_JumpAerialF1_Phys((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
         "ftCo_JumpAerial_Enter_Basic" => {  let r = melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Enter_Basic((c.ptr(0, Some("HSD_GObj")) as _)); let _ = r; }
         "ftCo_Jump_CheckInput" => {  let r = melee_fighter::tu::ftCo_Jump::ftCo_Jump_CheckInput((c.ptr(0, Some("HSD_GObj")) as _)); c.ret_int(r as i64 as u32); }
         "ftCo_LandingFallSpecial_Enter" => {  let r = melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter((c.ptr(0, Some("HSD_GObj")) as _), (c.int(1) != 0), (c.flt(0) as f32)); let _ = r; }
@@ -264,7 +268,7 @@ pub unsafe fn call(name: &str, c: &mut Call) -> bool {
 
 /// Is `name` bridged?
 pub unsafe fn bridged(name: &str) -> bool {
-    matches!(name, "Camera_RequestQuake" | "Fighter_ChangeMotionState" | "Fighter_TakeDamage_8006CC7C" | "Fighter_UpdateModelScale" | "GObj_Create" | "GObj_SetupGXLink" | "GXLoadPosMtxImm" | "Ground_801C53EC" | "HSD_ArchiveGetPublicAddress" | "HSD_CObjGetCurrent" | "HSD_ClearVtxDesc" | "HSD_GObjFree" | "HSD_GObjGXLink_8039084C" | "HSD_GObjProc_RemoveProc" | "HSD_GObj_SetupProc" | "HSD_JObjAddAnimAll" | "HSD_JObjAnim" | "HSD_JObjAnimAll" | "HSD_JObjClearFlags" | "HSD_JObjGetDObj" | "HSD_JObjReqAnimAll" | "HSD_JObjSetFlags" | "HSD_JObjSetFlagsAll" | "HSD_JObjSetMtxDirtySub" | "HSD_MtxSRT" | "HSD_Randf" | "HSD_Randi" | "HSD_StateInitDirect" | "HSD_StateInitTev" | "HSD_StateInvalidate" | "Item_8026862C" | "Item_80268B18" | "Item_80268E5C" | "Item_802694CC" | "Item_8026A8EC" | "Item_8026AB54" | "Item_8026AC74" | "Item_8026AE60" | "PSMTXConcat" | "PSVECAdd" | "PSVECSubtract" | "Player_80033BB8" | "Player_GetAttackRatio" | "Player_GetDefenseRatio" | "Player_GetHandicap" | "__assert" | "atan2f" | "cosf" | "db_80225DD8" | "efLib_DestroyAll" | "fmodf" | "fn_8003E998" | "ftAnim_8006E9B4" | "ftAnim_8006EBA4" | "ftAnim_8006EBE8" | "ftAnim_8006EDD0" | "ftAnim_8006FE9C" | "ftAnim_800704F0" | "ftAnim_80070C48" | "ftAnim_80070CC4" | "ftAnim_80070FB4" | "ftAnim_ApplyPartAnim" | "ftAnim_IsFramesRemaining" | "ftAnim_SetAnimRate" | "ftCliffCommon_80081298" | "ftCliffCommon_80081370" | "ftCo_8008E908" | "ftCo_80090780" | "ftCo_80096900" | "ftCo_8009750C" | "ftCo_8009794C" | "ftCo_80099F1C" | "ftCo_8009A134" | "ftCo_8009A184" | "ftCo_800B2790" | "ftCo_800B2AFC" | "ftCo_800B33B0" | "ftCo_800B3E04" | "ftCo_800B462C" | "ftCo_800B463C" | "ftCo_800B46B8" | "ftCo_800B49F4" | "ftCo_800B4AB0" | "ftCo_800BD19C" | "ftCo_800BD620" | "ftCo_800BDA74" | "ftCo_800BFFD0" | "ftCo_800C97A8" | "ftCo_800CB870" | "ftCo_800DA698" | "ftCo_800DC920" | "ftCo_800DCFD4" | "ftCo_800DD168" | "ftCo_800DE2CC" | "ftCo_800DE7C0" | "ftCo_AttackAir_CheckItemThrowInput" | "ftCo_CaptureCut_Enter" | "ftCo_Damage_CalcKnockback" | "ftCo_FallAerial_Enter" | "ftCo_Fall_Enter" | "ftCo_Fall_IASA_Inner" | "ftCo_IsCpuControlled" | "ftCo_JumpAerial_Enter_Basic" | "ftCo_Jump_CheckInput" | "ftCo_LandingFallSpecial_Enter" | "ftCo_Wait_IASA" | "ftColl_80076640" | "ftColl_80078710" | "ftColl_8007891C" | "ftColl_80079AB0" | "ftColl_8007ABD0" | "ftColl_8007AEF8" | "ftColl_8007AFF8" | "ftColl_8007B62C" | "ftColl_8007B868" | "ftColl_8007B8CC" | "ftColl_CreateReflectHit" | "ftCommon_8007D5D4" | "ftCommon_8007D60C" | "ftCommon_8007D6A4" | "ftCommon_8007D7FC" | "ftCommon_8007DB24" | "ftCommon_8007DB58" | "ftCommon_8007E2D0" | "ftCommon_8007E2F4" | "ftCommon_8007E2FC" | "ftCommon_8007EBAC" | "ftCommon_8007EE0C" | "ftCommon_8007F824" | "ftCommon_CalcGroundAccel_DashRun" | "ftCommon_CalcGroundAccel_Deaccel" | "ftCommon_CalcSelfAccel_AccelToVelClampedFrom" | "ftCommon_CalcSelfAccel_Deaccel" | "ftCommon_CalcSelfAccel_DeaccelQuickAir" | "ftCommon_CalcSelfAccel_Drift" | "ftCommon_CalcSelfAccel_DriftSimple" | "ftCommon_CalcSelfAccel_DriftSimple_NoFriction" | "ftCommon_CheckFallFast" | "ftCommon_Fall" | "ftCommon_GrabMash" | "ftCommon_InitGrab" | "ftCommon_SetAccessory" | "ftCommon_SetSelfMovementFromGroundedMovement" | "ftCommon_UpdateFacing" | "ftData_80085CD8" | "ftData_80085E50" | "ftData_80085FD4" | "ftDrawCommon_80080E18" | "ftKb_SpecialN_800EEEC4" | "ftKb_SpecialN_800F190C" | "ftLib_GetECBCenter" | "ftPartGetRotX" | "ftPartGetRotZ" | "ftPartSetRotX" | "ftPartSetRotY" | "ftPartSetRotZ" | "ftParts_80074A4C" | "ftParts_GetBoneIndex" | "ftWalkCommon_800DFC70" | "ftWallJump_8008169C" | "ft_80081A00" | "ft_80081D0C" | "ft_800824A0" | "ft_80082708" | "ft_800827A0" | "ft_80082888" | "ft_80082B1C" | "ft_80082C74" | "ft_800831CC" | "ft_80083A48" | "ft_8008403C" | "ft_80084104" | "ft_800843FC" | "ft_80084DB0" | "ft_80084EEC" | "ft_80084F3C" | "ft_80084FA8" | "ft_80085134" | "ft_80085154" | "ft_800851C0" | "ft_800881D8" | "ft_80088478" | "ft_800892A0" | "ft_80089824" | "ft_8008A1FC" | "ft_8008A2BC" | "ft_800CB6EC" | "ft_CheckGroundAndLedge" | "ftpickupitem_800948A8" | "gm_8016B0D4" | "gm_8016B168" | "gm_8016B248" | "grLast_8021B2D8" | "hsd_8039930C" | "itColl_BounceOffShield" | "itColl_BounceOffVictim" | "itGetHoldKind" | "itIsHeavy" | "it_8026B3A8" | "it_8026B894" | "it_8026BB68" | "it_8026D62C" | "it_8026D8A4" | "it_8026D9A0" | "it_8026DAA8" | "it_8026DD5C" | "it_8026E15C" | "it_8026E414" | "it_8026EECC" | "it_8027236C" | "it_80272460" | "it_802725D4" | "it_80272860" | "it_80272940" | "it_80272C90" | "it_80272CC0" | "it_80273030" | "it_80273130" | "it_802731E0" | "it_8027321C" | "it_80273408" | "it_8027429C" | "it_80274658" | "it_80275158" | "it_802758D4" | "it_802762B0" | "it_802762BC" | "it_8027781C" | "it_802F23AC" | "it_802F2810" | "it_802F28C8" | "lbVector_AngleXY" | "lbVector_Mirror" | "lbVector_Normalize" | "lb_8000B1CC" | "lb_8000C1C0" | "lb_8000C2F8" | "lb_8000C390" | "lb_800119DC" | "lb_800144C8" | "mpCheckAllRemap" | "mpCollSetFacingDir" | "mpColl_800471F8" | "mpColl_800473CC" | "mpColl_8004B108" | "sinf")
+    matches!(name, "Camera_RequestQuake" | "Fighter_ChangeMotionState" | "Fighter_TakeDamage_8006CC7C" | "Fighter_UpdateModelScale" | "GObj_Create" | "GObj_SetupGXLink" | "GXLoadPosMtxImm" | "Ground_801C53EC" | "HSD_ArchiveGetPublicAddress" | "HSD_CObjGetCurrent" | "HSD_ClearVtxDesc" | "HSD_GObjFree" | "HSD_GObjGXLink_8039084C" | "HSD_GObjProc_RemoveProc" | "HSD_GObj_SetupProc" | "HSD_JObjAddAnimAll" | "HSD_JObjAnim" | "HSD_JObjAnimAll" | "HSD_JObjClearFlags" | "HSD_JObjGetDObj" | "HSD_JObjReqAnimAll" | "HSD_JObjSetFlags" | "HSD_JObjSetFlagsAll" | "HSD_JObjSetMtxDirtySub" | "HSD_MtxSRT" | "HSD_Randf" | "HSD_Randi" | "HSD_StateInitDirect" | "HSD_StateInitTev" | "HSD_StateInvalidate" | "Item_8026862C" | "Item_80268B18" | "Item_80268E5C" | "Item_802694CC" | "Item_8026A8EC" | "Item_8026AB54" | "Item_8026AC74" | "Item_8026AE60" | "PSMTXConcat" | "PSVECAdd" | "PSVECSubtract" | "Player_80033BB8" | "Player_GetAttackRatio" | "Player_GetDefenseRatio" | "Player_GetHandicap" | "__assert" | "atan2f" | "cosf" | "db_80225DD8" | "efLib_DestroyAll" | "fmodf" | "fn_8003E998" | "ftAnim_8006E9B4" | "ftAnim_8006EBA4" | "ftAnim_8006EBE8" | "ftAnim_8006EDD0" | "ftAnim_8006FE9C" | "ftAnim_800704F0" | "ftAnim_80070C48" | "ftAnim_80070CC4" | "ftAnim_80070FB4" | "ftAnim_ApplyPartAnim" | "ftAnim_IsFramesRemaining" | "ftAnim_SetAnimRate" | "ftCliffCommon_80081298" | "ftCliffCommon_80081370" | "ftCo_8008E908" | "ftCo_80090780" | "ftCo_80096900" | "ftCo_8009750C" | "ftCo_8009794C" | "ftCo_80099F1C" | "ftCo_8009A134" | "ftCo_8009A184" | "ftCo_800B2790" | "ftCo_800B2AFC" | "ftCo_800B33B0" | "ftCo_800B3E04" | "ftCo_800B462C" | "ftCo_800B463C" | "ftCo_800B46B8" | "ftCo_800B49F4" | "ftCo_800B4AB0" | "ftCo_800BD19C" | "ftCo_800BD620" | "ftCo_800BDA74" | "ftCo_800BFFD0" | "ftCo_800C97A8" | "ftCo_800CB870" | "ftCo_800DA698" | "ftCo_800DC920" | "ftCo_800DCFD4" | "ftCo_800DD168" | "ftCo_800DE2CC" | "ftCo_800DE7C0" | "ftCo_AttackAir_CheckItemThrowInput" | "ftCo_CaptureCut_Enter" | "ftCo_Damage_CalcKnockback" | "ftCo_FallAerial_Enter" | "ftCo_Fall_Enter" | "ftCo_Fall_IASA_Inner" | "ftCo_IsCpuControlled" | "ftCo_JumpAerialF1_Anim" | "ftCo_JumpAerialF1_Coll" | "ftCo_JumpAerialF1_IASA" | "ftCo_JumpAerialF1_Phys" | "ftCo_JumpAerial_Enter_Basic" | "ftCo_Jump_CheckInput" | "ftCo_LandingFallSpecial_Enter" | "ftCo_Wait_IASA" | "ftColl_80076640" | "ftColl_80078710" | "ftColl_8007891C" | "ftColl_80079AB0" | "ftColl_8007ABD0" | "ftColl_8007AEF8" | "ftColl_8007AFF8" | "ftColl_8007B62C" | "ftColl_8007B868" | "ftColl_8007B8CC" | "ftColl_CreateReflectHit" | "ftCommon_8007D5D4" | "ftCommon_8007D60C" | "ftCommon_8007D6A4" | "ftCommon_8007D7FC" | "ftCommon_8007DB24" | "ftCommon_8007DB58" | "ftCommon_8007E2D0" | "ftCommon_8007E2F4" | "ftCommon_8007E2FC" | "ftCommon_8007EBAC" | "ftCommon_8007EE0C" | "ftCommon_8007F824" | "ftCommon_CalcGroundAccel_DashRun" | "ftCommon_CalcGroundAccel_Deaccel" | "ftCommon_CalcSelfAccel_AccelToVelClampedFrom" | "ftCommon_CalcSelfAccel_Deaccel" | "ftCommon_CalcSelfAccel_DeaccelQuickAir" | "ftCommon_CalcSelfAccel_Drift" | "ftCommon_CalcSelfAccel_DriftSimple" | "ftCommon_CalcSelfAccel_DriftSimple_NoFriction" | "ftCommon_CheckFallFast" | "ftCommon_Fall" | "ftCommon_GrabMash" | "ftCommon_InitGrab" | "ftCommon_SetAccessory" | "ftCommon_SetSelfMovementFromGroundedMovement" | "ftCommon_UpdateFacing" | "ftData_80085CD8" | "ftData_80085E50" | "ftData_80085FD4" | "ftDrawCommon_80080E18" | "ftKb_SpecialN_800EEEC4" | "ftKb_SpecialN_800F190C" | "ftLib_GetECBCenter" | "ftPartGetRotX" | "ftPartGetRotZ" | "ftPartSetRotX" | "ftPartSetRotY" | "ftPartSetRotZ" | "ftParts_80074A4C" | "ftParts_GetBoneIndex" | "ftWalkCommon_800DFC70" | "ftWallJump_8008169C" | "ft_80081A00" | "ft_80081D0C" | "ft_800824A0" | "ft_80082708" | "ft_800827A0" | "ft_80082888" | "ft_80082B1C" | "ft_80082C74" | "ft_800831CC" | "ft_80083A48" | "ft_8008403C" | "ft_80084104" | "ft_800843FC" | "ft_80084DB0" | "ft_80084EEC" | "ft_80084F3C" | "ft_80084FA8" | "ft_80085134" | "ft_80085154" | "ft_800851C0" | "ft_800881D8" | "ft_80088478" | "ft_800892A0" | "ft_80089824" | "ft_8008A1FC" | "ft_8008A2BC" | "ft_800CB6EC" | "ft_CheckGroundAndLedge" | "ftpickupitem_800948A8" | "gm_8016B0D4" | "gm_8016B168" | "gm_8016B248" | "grLast_8021B2D8" | "hsd_8039930C" | "itColl_BounceOffShield" | "itColl_BounceOffVictim" | "itGetHoldKind" | "itIsHeavy" | "it_8026B3A8" | "it_8026B894" | "it_8026BB68" | "it_8026D62C" | "it_8026D8A4" | "it_8026D9A0" | "it_8026DAA8" | "it_8026DD5C" | "it_8026E15C" | "it_8026E414" | "it_8026EECC" | "it_8027236C" | "it_80272460" | "it_802725D4" | "it_80272860" | "it_80272940" | "it_80272C90" | "it_80272CC0" | "it_80273030" | "it_80273130" | "it_802731E0" | "it_8027321C" | "it_80273408" | "it_8027429C" | "it_80274658" | "it_80275158" | "it_802758D4" | "it_802762B0" | "it_802762BC" | "it_8027781C" | "it_802F23AC" | "it_802F2810" | "it_802F28C8" | "lbVector_AngleXY" | "lbVector_Mirror" | "lbVector_Normalize" | "lb_8000B1CC" | "lb_8000C1C0" | "lb_8000C2F8" | "lb_8000C390" | "lb_800119DC" | "lb_800144C8" | "mpCheckAllRemap" | "mpCollSetFacingDir" | "mpColl_800471F8" | "mpColl_800473CC" | "mpColl_8004B108" | "sinf")
 }
 
 /// The native port of a one-argument gobj callback, by name.
@@ -272,7 +276,35 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
     Some(match name {
         "Camera_8002A4AC" => { unsafe extern "C" fn f(g: G) { melee_world::tu::camera::Camera_8002A4AC(g as _) } f }
         "Camera_800304E0" => { unsafe extern "C" fn f(g: G) { melee_world::tu::camera::Camera_800304E0(g as _) } f }
+        "Fighter_80068E64" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_80068E64(g as _) } f }
+        "Fighter_8006CFE0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_8006CFE0(g as _) } f }
+        "Fighter_8006D10C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_8006D10C(g as _) } f }
+        "Fighter_8006D10C_Inline1" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_8006D10C_Inline1(g as _) } f }
+        "Fighter_Create_Inline2" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_Create_Inline2(g as _) } f }
+        "Fighter_ResetInputData_80068854" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_ResetInputData_80068854(g as _) } f }
         "Fighter_SetDamageCallback_ftLk_800EAF58" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftlink::Fighter_SetDamageCallback_ftLk_800EAF58(g as _) } f }
+        "Fighter_Spawn" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_Spawn(g as _) } f }
+        "Fighter_UnkApplyTransformation_8006C0F0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_UnkApplyTransformation_8006C0F0(g as _) } f }
+        "Fighter_UnkIncrementCounters_8006ABEC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_UnkIncrementCounters_8006ABEC(g as _) } f }
+        "Fighter_UnkInitLoad_80068914_Inner1" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_UnkInitLoad_80068914_Inner1(g as _) } f }
+        "Fighter_UnkRecursiveFunc_8006D044" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_UnkRecursiveFunc_8006D044(g as _) } f }
+        "Fighter_UnkUpdateCostumeJoint_800686E4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_UnkUpdateCostumeJoint_800686E4(g as _) } f }
+        "Fighter_UpdateModelScale" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_UpdateModelScale(g as _) } f }
+        "Fighter_procAccessory" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procAccessory(g as _) } f }
+        "Fighter_procAnim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procAnim(g as _) } f }
+        "Fighter_procAttackColl" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procAttackColl(g as _) } f }
+        "Fighter_procCamera" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procCamera(g as _) } f }
+        "Fighter_procCollPos" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procCollPos(g as _) } f }
+        "Fighter_procCollResolve" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procCollResolve(g as _) } f }
+        "Fighter_procCpu" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procCpu(g as _) } f }
+        "Fighter_procDynamics" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procDynamics(g as _) } f }
+        "Fighter_procGrabColl" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procGrabColl(g as _) } f }
+        "Fighter_procHitlag" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procHitlag(g as _) } f }
+        "Fighter_procIK" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procIK(g as _) } f }
+        "Fighter_procInput" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procInput(g as _) } f }
+        "Fighter_procMap" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procMap(g as _) } f }
+        "Fighter_procPlayer" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procPlayer(g as _) } f }
+        "Fighter_procUpdate" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::fighter::Fighter_procUpdate(g as _) } f }
         "GObj_RemoveUserData" => { unsafe extern "C" fn f(g: G) { melee_runtime::tu::gobjuserdata::GObj_RemoveUserData(g as _) } f }
         "GravityDelay" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnessspecialn::GravityDelay(g as _) } f }
         "Ground_801C0C2C" => { unsafe extern "C" fn f(g: G) { melee_world::tu::ground::Ground_801C0C2C(g as _) } f }
@@ -348,11 +380,27 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "_tyList_8031438C" => { unsafe extern "C" fn f(g: G) { melee_items::tu::tylist::_tyList_8031438C(g as _) } f }
         "callUnk" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw3::callUnk(g as _) } f }
         "callback" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyspeciallw::callback(g as _) } f }
+        "cb_doAirEnd0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::cb_doAirEnd0(g as _) } f }
+        "cb_fn_800F21E8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::cb_fn_800F21E8(g as _) } f }
         "cb_fn_800F53AC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::cb_fn_800F53AC(g as _) } f }
+        "cb_fn_800F6178" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::cb_fn_800F6178(g as _) } f }
+        "cb_fn_800F6210" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::cb_fn_800F6210(g as _) } f }
+        "cb_fn_800F6280" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::cb_fn_800F6280(g as _) } f }
+        "cb_fn_800F6318" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::cb_fn_800F6318(g as _) } f }
+        "cb_fn_800F6588" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::cb_fn_800F6588(g as _) } f }
+        "cb_fn_800F6638" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::cb_fn_800F6638(g as _) } f }
+        "cb_fn_800F66E8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::cb_fn_800F66E8(g as _) } f }
+        "cb_fn_800F6798" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::cb_fn_800F6798(g as _) } f }
+        "cb_fn_800F9260" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::cb_fn_800F9260(g as _) } f }
+        "cb_fn_800F98F4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::cb_fn_800F98F4(g as _) } f }
+        "cb_fn_80100E0C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::cb_fn_80100E0C(g as _) } f }
+        "cb_fn_80100F60" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::cb_fn_80100F60(g as _) } f }
+        "cb_fn_80105978" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::cb_fn_80105978(g as _) } f }
         "cb_fn_80105A34" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialzelda::cb_fn_80105A34(g as _) } f }
         "cb_fn_80105AB0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialzelda::cb_fn_80105AB0(g as _) } f }
         "cb_fn_80105FEC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::cb_fn_80105FEC(g as _) } f }
         "cb_fn_80106DB0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::cb_fn_80106DB0(g as _) } f }
+        "cb_fn_801090D4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::cb_fn_801090D4(g as _) } f }
         "cb_fn_801095DC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::cb_fn_801095DC(g as _) } f }
         "cb_fn_80109680" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::cb_fn_80109680(g as _) } f }
         "cb_fn_80109714" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::cb_fn_80109714(g as _) } f }
@@ -369,6 +417,12 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "cb_fn_8010B148" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::cb_fn_8010B148(g as _) } f }
         "cb_fn_8010B16C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::cb_fn_8010B16C(g as _) } f }
         "cb_fn_8010B1D4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::cb_fn_8010B1D4(g as _) } f }
+        "cb_fn_8010B1F4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::cb_fn_8010B1F4(g as _) } f }
+        "cb_fn_8010B2E8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::cb_fn_8010B2E8(g as _) } f }
+        "cb_fn_8010C288" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::cb_fn_8010C288(g as _) } f }
+        "cb_fn_8010C344" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::cb_fn_8010C344(g as _) } f }
+        "cb_fn_8010C44C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::cb_fn_8010C44C(g as _) } f }
+        "cb_fn_8010CD88" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::cb_fn_8010CD88(g as _) } f }
         "cb_fn_8010CE5C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::cb_fn_8010CE5C(g as _) } f }
         "cb_fn_8010CFB0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::cb_fn_8010CFB0(g as _) } f }
         "cb_fn_8010D100" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::cb_fn_8010D100(g as _) } f }
@@ -400,6 +454,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "cb_ftCa_SpecialS_OnDetect" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptainspecials::cb_ftCa_SpecialS_OnDetect(g as _) } f }
         "cb_ftCl_Init_80149114" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftclink::cb_ftCl_Init_80149114(g as _) } f }
         "cb_ftCo_800DB464" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbycaptureyoshi::cb_ftCo_800DB464(g as _) } f }
+        "cb_ftCommon_8007F7B4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::cb_ftCommon_8007F7B4(g as _) } f }
         "cb_ftDk_MS_345_800E0294" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyheavyturn::cb_ftDk_MS_345_800E0294(g as _) } f }
         "cb_ftDk_MS_346_800E05E4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyheavywait1::cb_ftDk_MS_346_800E05E4(g as _) } f }
         "cb_ftDk_SpecialLw_8010E0CC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyspeciallw::cb_ftDk_SpecialLw_8010E0CC(g as _) } f }
@@ -439,6 +494,10 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "cb_ftKb_SpecialNFx_CreateBlasterShot" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialfox::cb_ftKb_SpecialNFx_CreateBlasterShot(g as _) } f }
         "cb_ftKb_SpecialNFx_OnChangeAction" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialfox::cb_ftKb_SpecialNFx_OnChangeAction(g as _) } f }
         "cb_ftKb_SpecialNGw_8010D130" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::cb_ftKb_SpecialNGw_8010D130(g as _) } f }
+        "cb_ftKb_SpecialNIc_80108D04" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::cb_ftKb_SpecialNIc_80108D04(g as _) } f }
+        "cb_ftKb_SpecialNLk800FB800" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::cb_ftKb_SpecialNLk800FB800(g as _) } f }
+        "cb_ftKb_SpecialNLk800FB840" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::cb_ftKb_SpecialNLk800FB840(g as _) } f }
+        "cb_ftKb_SpecialNPe_8010C47C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::cb_ftKb_SpecialNPe_8010C47C(g as _) } f }
         "cb_ftKp_Init_80132B38" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkoopaspecialhi::cb_ftKp_Init_80132B38(g as _) } f }
         "cb_ftKp_SpecialS_8013302C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkoopaspecials::cb_ftKp_SpecialS_8013302C(g as _) } f }
         "cb_ftKp_SpecialS_801330E4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkoopaspecials::cb_ftKp_SpecialS_801330E4(g as _) } f }
@@ -484,6 +543,16 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "cb_ftPe_SpecialHi_8011D650" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialhi::cb_ftPe_SpecialHi_8011D650(g as _) } f }
         "cb_ftPe_SpecialHi_8011DD8C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialhi::cb_ftPe_SpecialHi_8011DD8C(g as _) } f }
         "cb_ftPe_SpecialHi_8011E064" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialhi::cb_ftPe_SpecialHi_8011E064(g as _) } f }
+        "cb_ftPk_SpecialHi_UpdateVel" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::cb_ftPk_SpecialHi_UpdateVel(g as _) } f }
+        "cb_ftPk_SpecialLw_SpawnEffect" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::cb_ftPk_SpecialLw_SpawnEffect(g as _) } f }
+        "cb_ftPk_SpecialN_80124DC8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::cb_ftPk_SpecialN_80124DC8(g as _) } f }
+        "cb_ftPk_SpecialN_SpawnEffect0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::cb_ftPk_SpecialN_SpawnEffect0(g as _) } f }
+        "cb_ftPk_SpecialN_SpawnEffect1" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::cb_ftPk_SpecialN_SpawnEffect1(g as _) } f }
+        "cb_ftPk_SpecialS_ZeroVelocity" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::cb_ftPk_SpecialS_ZeroVelocity(g as _) } f }
+        "cb_ftPr_SpecialN_8014222C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::cb_ftPr_SpecialN_8014222C(g as _) } f }
+        "cb_ftPr_SpecialS_8013D658" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::cb_ftPr_SpecialS_8013D658(g as _) } f }
+        "cb_ftPr_SpecialS_8013D764" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::cb_ftPr_SpecialS_8013D764(g as _) } f }
+        "cb_ftPr_SpecialS_8013D8B0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::cb_ftPr_SpecialS_8013D8B0(g as _) } f }
         "cb_ftSk_Init_80110198" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseak::cb_ftSk_Init_80110198(g as _) } f }
         "cb_ftSk_SpecialHi_80113F68" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspecialhi::cb_ftSk_SpecialHi_80113F68(g as _) } f }
         "cb_ftSk_SpecialS_8011097C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspecials::cb_ftSk_SpecialS_8011097C(g as _) } f }
@@ -496,18 +565,28 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "cb_lwOnAnim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftlinkattackair::cb_lwOnAnim(g as _) } f }
         "cb_lwOnHit" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftlinkattackair::cb_lwOnHit(g as _) } f }
         "cb_on21EC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftlinkspecials::cb_on21EC(g as _) } f }
+        "cb_onEnterHitlag" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::cb_onEnterHitlag(g as _) } f }
+        "cb_onExitHitlag" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::cb_onExitHitlag(g as _) } f }
+        "cb_onHitAccessory4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::cb_onHitAccessory4(g as _) } f }
+        "cb_onUnkHit" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::cb_onUnkHit(g as _) } f }
+        "cb_reset" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::cb_reset(g as _) } f }
         "cb_shootNeedles" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspecialn::cb_shootNeedles(g as _) } f }
         "cb_spawnBomb" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftlinkspeciallw::cb_spawnBomb(g as _) } f }
         "cb_spawnVeg" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspeciallw::cb_spawnVeg(g as _) } f }
         "cb_updateRot" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmariospeciallw::cb_updateRot(g as _) } f }
+        "checkAttack11" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::checkAttack11(g as _) } f }
         "checkFighter2244" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftclink::checkFighter2244(g as _) } f }
         "checkStateVar1" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspeciallw1::checkStateVar1(g as _) } f }
         "clearCallbacks" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyspecialn::clearCallbacks(g as _) } f }
         "clear_blaster" => { unsafe extern "C" fn f(g: G) { melee_items::tu::itfoxblaster::clear_blaster(g as _) } f }
         "clear_blaster_references" => { unsafe extern "C" fn f(g: G) { melee_items::tu::itfoxblaster::clear_blaster_references(g as _) } f }
         "collUpdateVars" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmariospecials::collUpdateVars(g as _) } f }
+        "decideAngle" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackS3::decideAngle(g as _) } f }
+        "decideAttack11" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::decideAttack11(g as _) } f }
+        "decideFighter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::decideFighter(g as _) } f }
         "doAirColl" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptainspecialhi::doAirColl(g as _) } f }
         "doAirCollIfUnk" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmariospeciallw::doAirCollIfUnk(g as _) } f }
+        "doAirEnd0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::doAirEnd0(g as _) } f }
         "doAirHitColl" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::doAirHitColl(g as _) } f }
         "doAirIASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptainspecialhi::doAirIASA(g as _) } f }
         "doAirTransition" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyspecials::doAirTransition(g as _) } f }
@@ -516,10 +595,18 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "doAnim0_fp" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandwait10::doAnim0_fp(g as _) } f }
         "doAnim1" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmasterhandwait10::doAnim1(g as _) } f }
         "doAnim1_fp" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandwait10::doAnim1_fp(g as _) } f }
+        "doAttack12" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::doAttack12(g as _) } f }
+        "doAttack12Normal" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::doAttack12Normal(g as _) } f }
+        "doAttack12Rapid" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::doAttack12Rapid(g as _) } f }
+        "doAttack13" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::doAttack13(g as _) } f }
         "doCatchAnim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptainspecialhi::doCatchAnim(g as _) } f }
+        "doEnter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackDash::doEnter(g as _) } f }
         "doGroundTransition" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyspecials::doGroundTransition(g as _) } f }
+        "doHitAccessory4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::doHitAccessory4(g as _) } f }
         "doHitColl" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::doHitColl(g as _) } f }
         "doPhys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptainspecialn::doPhys(g as _) } f }
+        "doPostEnd" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::doPostEnd(g as _) } f }
+        "doPostEnd_SmallerStack" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::doPostEnd_SmallerStack(g as _) } f }
         "doSomething" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyheavylanding::doSomething(g as _) } f }
         "doStartMotion" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmariospeciallw::doStartMotion(g as _) } f }
         "doTransition" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyspeciallw::doTransition(g as _) } f }
@@ -531,8 +618,11 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "efLib_particles_proc_aux" => { unsafe extern "C" fn f(g: G) { melee_world::tu::efn::eflib::efLib_particles_proc_aux(g as _) } f }
         "efLib_particles_proc_main" => { unsafe extern "C" fn f(g: G) { melee_world::tu::efn::eflib::efLib_particles_proc_main(g as _) } f }
         "enterAirEnd" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::enterAirEnd(g as _) } f }
+        "enterAirEndSmash" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::enterAirEndSmash(g as _) } f }
+        "enterAirJump" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::enterAirJump(g as _) } f }
         "enterAirStart" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::enterAirStart(g as _) } f }
         "enterEnd" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::enterEnd(g as _) } f }
+        "enterEndSmash" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::enterEndSmash(g as _) } f }
         "enterStart" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::enterStart(g as _) } f }
         "failEvent" => { unsafe extern "C" fn f(g: G) { melee_modes::tu::gmevent::failEvent(g as _) } f }
         "fly_anim" => { unsafe extern "C" fn f(g: G) { melee_modes::tu::geno_lab_mode::fly_anim(g as _) } f }
@@ -544,26 +634,112 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "fn_80013614" => { unsafe extern "C" fn f(g: G) { melee_runtime::tu::lbspdisplay::fn_80013614(g as _) } f }
         "fn_80021C80" => { unsafe extern "C" fn f(g: G) { melee_modes::tu::lb_0219::fn_80021C80(g as _) } f }
         "fn_8002F360" => { unsafe extern "C" fn f(g: G) { melee_world::tu::camera::fn_8002F360(g as _) } f }
+        "fn_800C63BC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::fn_800C63BC(g as _) } f }
+        "fn_800C63E0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::fn_800C63E0(g as _) } f }
+        "fn_800C69F4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::fn_800C69F4(g as _) } f }
         "fn_800C69F4_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::fn_800C69F4_cb(g as _) } f }
+        "fn_800C6F34" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::fn_800C6F34(g as _) } f }
         "fn_800C6F34_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::fn_800C6F34_cb(g as _) } f }
+        "fn_800C9290" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Barrel::fn_800C9290(g as _) } f }
+        "fn_800D17FC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::fn_800D17FC(g as _) } f }
+        "fn_800D19BC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::fn_800D19BC(g as _) } f }
+        "fn_800D1C40" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantEnd::fn_800D1C40(g as _) } f }
+        "fn_800D1DB0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantEnd::fn_800D1DB0(g as _) } f }
+        "fn_800D20EC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::fn_800D20EC(g as _) } f }
+        "fn_800D22AC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::fn_800D22AC(g as _) } f }
+        "fn_800D2530" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallEnd::fn_800D2530(g as _) } f }
+        "fn_800D26A0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallEnd::fn_800D26A0(g as _) } f }
+        "fn_800D4DD4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::fn_800D4DD4(g as _) } f }
+        "fn_800D54A4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::fn_800D54A4(g as _) } f }
+        "fn_800D55B4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::fn_800D55B4(g as _) } f }
+        "fn_800D5A30" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::fn_800D5A30(g as _) } f }
+        "fn_800D62C4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatWait::fn_800D62C4(g as _) } f }
+        "fn_800D6AC4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::fn_800D6AC4(g as _) } f }
+        "fn_800D6B8C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::fn_800D6B8C(g as _) } f }
+        "fn_800D7830" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::fn_800D7830(g as _) } f }
+        "fn_800D78B0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::fn_800D78B0(g as _) } f }
+        "fn_800D7938" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::fn_800D7938(g as _) } f }
+        "fn_800D7938_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::fn_800D7938_c(g as _) } f }
+        "fn_800D7BDC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::fn_800D7BDC(g as _) } f }
+        "fn_800D7C60" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::fn_800D7C60(g as _) } f }
+        "fn_800D7CEC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::fn_800D7CEC(g as _) } f }
+        "fn_800D7D70" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::fn_800D7D70(g as _) } f }
+        "fn_800D80F4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::fn_800D80F4(g as _) } f }
+        "fn_800D80F4_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::fn_800D80F4_c(g as _) } f }
+        "fn_800D8268" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::fn_800D8268(g as _) } f }
+        "fn_800D82EC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::fn_800D82EC(g as _) } f }
+        "fn_800D8378" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::fn_800D8378(g as _) } f }
+        "fn_800D86B8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::fn_800D86B8(g as _) } f }
+        "fn_800D86B8_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::fn_800D86B8_c(g as _) } f }
+        "fn_800D86E0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::fn_800D86E0(g as _) } f }
+        "fn_800D874C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::fn_800D874C(g as _) } f }
+        "fn_800D87C0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::fn_800D87C0(g as _) } f }
+        "fn_800D8838" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::fn_800D8838(g as _) } f }
+        "fn_800D8BFC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::fn_800D8BFC(g as _) } f }
         "fn_800D8BFC_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::fn_800D8BFC_cb(g as _) } f }
+        "fn_800D8E30" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::fn_800D8E30(g as _) } f }
         "fn_800D8E30_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::fn_800D8E30_cb(g as _) } f }
+        "fn_800D9CE8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::fn_800D9CE8(g as _) } f }
         "fn_800D9CE8_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::fn_800D9CE8_cb(g as _) } f }
+        "fn_800DA004" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::fn_800DA004(g as _) } f }
         "fn_800DA004_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::fn_800DA004_cb(g as _) } f }
+        "fn_800DA054" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::fn_800DA054(g as _) } f }
+        "fn_800DA190" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::fn_800DA190(g as _) } f }
         "fn_800DA190_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::fn_800DA190_cb(g as _) } f }
+        "fn_800DA1D8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::fn_800DA1D8(g as _) } f }
+        "fn_800DA2B0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::fn_800DA2B0(g as _) } f }
+        "fn_800DA440" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::fn_800DA440(g as _) } f }
         "fn_800DA440_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::fn_800DA440_cb(g as _) } f }
+        "fn_800DA490" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::fn_800DA490(g as _) } f }
         "fn_800DA490_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::fn_800DA490_cb(g as _) } f }
+        "fn_800DA4A0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::fn_800DA4A0(g as _) } f }
         "fn_800DA4A0_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::fn_800DA4A0_cb(g as _) } f }
+        "fn_800DA4FC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::fn_800DA4FC(g as _) } f }
+        "fn_800DA618" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::fn_800DA618(g as _) } f }
         "fn_800DA618_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::fn_800DA618_cb(g as _) } f }
+        "fn_800DA668" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::fn_800DA668(g as _) } f }
         "fn_800DA668_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::fn_800DA668_cb(g as _) } f }
+        "fn_800DA678" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::fn_800DA678(g as _) } f }
         "fn_800DA678_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::fn_800DA678_cb(g as _) } f }
+        "fn_800DAECC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::fn_800DAECC(g as _) } f }
+        "fn_800DAEEC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::fn_800DAEEC(g as _) } f }
+        "fn_800DB230" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::fn_800DB230(g as _) } f }
+        "fn_800DB5D8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::fn_800DB5D8(g as _) } f }
+        "fn_800DB6C8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::fn_800DB6C8(g as _) } f }
+        "fn_800DB790" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::fn_800DB790(g as _) } f }
+        "fn_800DB8A4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::fn_800DB8A4(g as _) } f }
+        "fn_800DBAC4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::fn_800DBAC4(g as _) } f }
+        "fn_800DBAE4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::fn_800DBAE4(g as _) } f }
+        "fn_800DBBF8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::fn_800DBBF8(g as _) } f }
+        "fn_800DBED4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::fn_800DBED4(g as _) } f }
+        "fn_800DC014" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::fn_800DC014(g as _) } f }
+        "fn_800DC070" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureJump::fn_800DC070(g as _) } f }
+        "fn_800DC8D8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCut::fn_800DC8D8(g as _) } f }
+        "fn_800DC8FC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCut::fn_800DC8FC(g as _) } f }
+        "fn_800DD568" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::fn_800DD568(g as _) } f }
+        "fn_800DD568_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::fn_800DD568_cb(g as _) } f }
+        "fn_800DD5EC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::fn_800DD5EC(g as _) } f }
+        "fn_800DD5EC_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::fn_800DD5EC_cb(g as _) } f }
+        "fn_800DD684" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::fn_800DD684(g as _) } f }
+        "fn_800DD684_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::fn_800DD684_cb(g as _) } f }
+        "fn_800DE798" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::fn_800DE798(g as _) } f }
+        "fn_800DE798_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::fn_800DE798_cb(g as _) } f }
         "fn_800F1FDC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyattackdash::fn_800F1FDC(g as _) } f }
         "fn_800F20C4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyattackdash::fn_800F20C4(g as _) } f }
+        "fn_800F21E8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::fn_800F21E8(g as _) } f }
         "fn_800F53AC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::fn_800F53AC(g as _) } f }
         "fn_800F53AC_CleanupItem" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::fn_800F53AC_CleanupItem(g as _) } f }
         "fn_800F53AC_SpawnEffect" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::fn_800F53AC_SpawnEffect(g as _) } f }
+        "fn_800F6178" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6178(g as _) } f }
+        "fn_800F6210" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6210(g as _) } f }
+        "fn_800F6280" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6280(g as _) } f }
+        "fn_800F6318" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6318(g as _) } f }
         "fn_800F6450" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6450(g as _) } f }
         "fn_800F6528" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6528(g as _) } f }
+        "fn_800F6588" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6588(g as _) } f }
+        "fn_800F6638" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6638(g as _) } f }
+        "fn_800F66E8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F66E8(g as _) } f }
+        "fn_800F6798" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6798(g as _) } f }
         "fn_800F6848" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6848(g as _) } f }
         "fn_800F68A8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F68A8(g as _) } f }
         "fn_800F6908" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6908(g as _) } f }
@@ -582,12 +758,31 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "fn_800F6F50" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6F50(g as _) } f }
         "fn_800F6FC4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F6FC4(g as _) } f }
         "fn_800F702C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::fn_800F702C(g as _) } f }
+        "fn_800F9260" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::fn_800F9260(g as _) } f }
+        "fn_800F98F4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::fn_800F98F4(g as _) } f }
+        "fn_800c74cc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7434::fn_800c74cc(g as _) } f }
+        "fn_800c7568" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7434::fn_800c7568(g as _) } f }
+        "fn_800c77e0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7590::fn_800c77e0(g as _) } f }
+        "fn_800c7890" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7590::fn_800c7890(g as _) } f }
+        "fn_800c7ae0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c78b0::fn_800c7ae0(g as _) } f }
+        "fn_800c8b1c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c88::fn_800c8b1c(g as _) } f }
+        "fn_800c8e74" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c8c::fn_800c8e74(g as _) } f }
+        "fn_800d290c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d27::fn_800d290c(g as _) } f }
+        "fn_800d2b30" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d27::fn_800d2b30(g as _) } f }
+        "fn_800d2bf8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d27::fn_800d2bf8(g as _) } f }
+        "fn_800d949c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0d8e::fn_800d949c(g as _) } f }
+        "fn_800d9c64" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0d95::fn_800d9c64(g as _) } f }
         "fn_800dc384" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::fn_800dc384(g as _) } f }
+        "fn_800dc404" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::fn_800dc404(g as _) } f }
         "fn_800dc624" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::fn_800dc624(g as _) } f }
+        "fn_80100E0C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::fn_80100E0C(g as _) } f }
+        "fn_80100F60" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::fn_80100F60(g as _) } f }
+        "fn_80105978" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::fn_80105978(g as _) } f }
         "fn_80105A34" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialzelda::fn_80105A34(g as _) } f }
         "fn_80105AB0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialzelda::fn_80105AB0(g as _) } f }
         "fn_80105FEC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::fn_80105FEC(g as _) } f }
         "fn_80106DB0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::fn_80106DB0(g as _) } f }
+        "fn_801090D4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::fn_801090D4(g as _) } f }
         "fn_801095DC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::fn_801095DC(g as _) } f }
         "fn_80109680" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::fn_80109680(g as _) } f }
         "fn_80109714" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::fn_80109714(g as _) } f }
@@ -607,6 +802,12 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "fn_8010B148" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::fn_8010B148(g as _) } f }
         "fn_8010B16C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::fn_8010B16C(g as _) } f }
         "fn_8010B1D4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::fn_8010B1D4(g as _) } f }
+        "fn_8010B1F4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::fn_8010B1F4(g as _) } f }
+        "fn_8010B2E8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::fn_8010B2E8(g as _) } f }
+        "fn_8010C288" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::fn_8010C288(g as _) } f }
+        "fn_8010C344" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::fn_8010C344(g as _) } f }
+        "fn_8010C44C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::fn_8010C44C(g as _) } f }
+        "fn_8010CD88" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::fn_8010CD88(g as _) } f }
         "fn_8010CE5C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::fn_8010CE5C(g as _) } f }
         "fn_8010CFB0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::fn_8010CFB0(g as _) } f }
         "fn_8010D100" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::fn_8010D100(g as _) } f }
@@ -615,6 +816,8 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "fn_80114034" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspeciallw::fn_80114034(g as _) } f }
         "fn_801140B0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspeciallw::fn_801140B0(g as _) } f }
         "fn_8011412C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspeciallw::fn_8011412C(g as _) } f }
+        "fn_80122B54" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::fn_80122B54(g as _) } f }
+        "fn_80122D2C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::fn_80122D2C(g as _) } f }
         "fn_80123218" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnanaspecialhi::fn_80123218(g as _) } f }
         "fn_8012CEE0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftyoshispecialn::fn_8012CEE0(g as _) } f }
         "fn_8012CF7C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftyoshispecialn::fn_8012CF7C(g as _) } f }
@@ -867,14 +1070,30 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "fn_8031FC30" => { unsafe extern "C" fn f(g: G) { melee_items::tu::vi1201v1::fn_8031FC30(g as _) } f }
         "fn_8031FCBC" => { unsafe extern "C" fn f(g: G) { melee_items::tu::vi1201v1::fn_8031FCBC(g as _) } f }
         "fn_80320A1C" => { unsafe extern "C" fn f(g: G) { melee_items::tu::vi1201v2::fn_80320A1C(g as _) } f }
+        "fn_803219AC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::crowdsfx::fn_803219AC(g as _) } f }
         "foobar" => { unsafe extern "C" fn f(g: G) { melee_items::tu::item::foobar(g as _) } f }
         "foobar2" => { unsafe extern "C" fn f(g: G) { melee_items::tu::item::foobar2(g as _) } f }
         "foobar3" => { unsafe extern "C" fn f(g: G) { melee_items::tu::item::foobar3(g as _) } f }
+        "ftAction_80073240" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftaction::ftAction_80073240(g as _) } f }
+        "ftAction_80073354" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftaction::ftAction_80073354(g as _) } f }
+        "ftAction_8007349C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftaction::ftAction_8007349C(g as _) } f }
+        "ftAnim_8006E9B4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftanim::ftAnim_8006E9B4(g as _) } f }
+        "ftAnim_8006EBA4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftanim::ftAnim_8006EBA4(g as _) } f }
+        "ftAnim_8006FE48" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftanim::ftAnim_8006FE48(g as _) } f }
+        "ftAnim_80070308" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftanim::ftAnim_80070308(g as _) } f }
+        "ftAnim_80070654" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftanim::ftAnim_80070654(g as _) } f }
+        "ftAnim_800707B0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftanim::ftAnim_800707B0(g as _) } f }
+        "ftAnim_80070E74" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftanim::ftAnim_80070E74(g as _) } f }
+        "ftAnim_80070F28" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftanim::ftAnim_80070F28(g as _) } f }
         "ftBo_Init_LoadSpecialAttrs" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftboy::ftBo_Init_LoadSpecialAttrs(g as _) } f }
         "ftBo_Init_OnDeath" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftboy::ftBo_Init_OnDeath(g as _) } f }
         "ftBo_Init_OnItemInvisible" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftboy::ftBo_Init_OnItemInvisible(g as _) } f }
         "ftBo_Init_OnItemVisible" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftboy::ftBo_Init_OnItemVisible(g as _) } f }
         "ftBo_Init_OnLoad" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftboy::ftBo_Init_OnLoad(g as _) } f }
+        "ftBossLib_8015BD20" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftbosslib::ftBossLib_8015BD20(g as _) } f }
+        "ftBossLib_8015C190" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftbosslib::ftBossLib_8015C190(g as _) } f }
+        "ftBossLib_8015C5F8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftbosslib::ftBossLib_8015C5F8(g as _) } f }
+        "ftBossLib_ReportGObjSlotType" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftbosslib::ftBossLib_ReportGObjSlotType(g as _) } f }
         "ftCa_Init_800E28C8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptain::ftCa_Init_800E28C8(g as _) } f }
         "ftCa_Init_LoadSpecialAttrs" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptain::ftCa_Init_LoadSpecialAttrs(g as _) } f }
         "ftCa_Init_OnDeath" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptain::ftCa_Init_OnDeath(g as _) } f }
@@ -1197,47 +1416,1037 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftCl_Init_OnKnockbackEnter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftclink::ftCl_Init_OnKnockbackEnter(g as _) } f }
         "ftCl_Init_OnKnockbackExit" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftclink::ftCl_Init_OnKnockbackExit(g as _) } f }
         "ftCl_Init_OnLoad" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftclink::ftCl_Init_OnLoad(g as _) } f }
+        "ftCo_8008E9D0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_8008E9D0(g as _) } f }
+        "ftCo_8008EB58" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_8008EB58(g as _) } f }
+        "ftCo_8008EC90" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_8008EC90(g as _) } f }
+        "ftCo_8008F744" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_8008F744(g as _) } f }
+        "ftCo_8008FC94" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_8008FC94(g as _) } f }
+        "ftCo_80090184" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_80090184(g as _) } f }
+        "ftCo_80090780" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageFall::ftCo_80090780(g as _) } f }
+        "ftCo_80090984" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_80090984(g as _) } f }
+        "ftCo_80091854" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_80091854(g as _) } f }
+        "ftCo_80091B9C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80091B9C(g as _) } f }
+        "ftCo_800921DC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_800921DC(g as _) } f }
+        "ftCo_800923B4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_800923B4(g as _) } f }
+        "ftCo_80092450" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80092450(g as _) } f }
+        "ftCo_800924C0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_800924C0(g as _) } f }
+        "ftCo_800928CC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_800928CC(g as _) } f }
+        "ftCo_80092908" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80092908(g as _) } f }
+        "ftCo_80092BCC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80092BCC(g as _) } f }
+        "ftCo_80092BE8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80092BE8(g as _) } f }
+        "ftCo_80092C54" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80092C54(g as _) } f }
+        "ftCo_80092E50" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80092E50(g as _) } f }
+        "ftCo_80093240" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80093240(g as _) } f }
+        "ftCo_800932DC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_800932DC(g as _) } f }
+        "ftCo_80093790" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80093790(g as _) } f }
+        "ftCo_80093850" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80093850(g as _) } f }
+        "ftCo_8009388C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_8009388C(g as _) } f }
+        "ftCo_800939B4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_800939B4(g as _) } f }
+        "ftCo_80093A50" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80093A50(g as _) } f }
+        "ftCo_80093BC0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_80093BC0(g as _) } f }
+        "ftCo_80095A30" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_80095A30(g as _) } f }
+        "ftCo_80095EFC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_80095EFC(g as _) } f }
+        "ftCo_80095EFC_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_80095EFC_c(g as _) } f }
+        "ftCo_800961D0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_800961D0(g as _) } f }
+        "ftCo_800961D0_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_800961D0_c(g as _) } f }
+        "ftCo_80096250" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_80096250(g as _) } f }
+        "ftCo_80096374" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_80096374(g as _) } f }
+        "ftCo_80096498" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_80096498(g as _) } f }
+        "ftCo_80096498_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_80096498_c(g as _) } f }
+        "ftCo_800968C8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallSpecial::ftCo_800968C8(g as _) } f }
+        "ftCo_80096D28" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096D28(g as _) } f }
+        "ftCo_80096D9C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_80096D9C(g as _) } f }
+        "ftCo_80096E68" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_80096E68(g as _) } f }
+        "ftCo_80096F48" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_80096F48(g as _) } f }
+        "ftCo_80097130" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_80097130(g as _) } f }
+        "ftCo_800974C4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_800974C4(g as _) } f }
+        "ftCo_800974C4_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_800974C4_c(g as _) } f }
+        "ftCo_8009750C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_8009750C(g as _) } f }
+        "ftCo_800976A4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_800976A4(g as _) } f }
+        "ftCo_800978D4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_800978D4(g as _) } f }
+        "ftCo_8009794C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_8009794C(g as _) } f }
+        "ftCo_80097AF4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_80097AF4(g as _) } f }
+        "ftCo_80097D40" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_80097D40(g as _) } f }
+        "ftCo_80097D88" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_80097D88(g as _) } f }
+        "ftCo_80097E8C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_80097E8C(g as _) } f }
+        "ftCo_80097F38" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_80097F38(g as _) } f }
+        "ftCo_800987D0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Passive::ftCo_800987D0(g as _) } f }
+        "ftCo_80098B20" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFly::ftCo_80098B20(g as _) } f }
+        "ftCo_80098C9C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFly::ftCo_80098C9C(g as _) } f }
+        "ftCo_80098D90" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFall::ftCo_80098D90(g as _) } f }
+        "ftCo_80098E3C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakDown::ftCo_80098E3C(g as _) } f }
+        "ftCo_80098F3C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakStand::ftCo_80098F3C(g as _) } f }
+        "ftCo_80099010" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Furafura::ftCo_80099010(g as _) } f }
+        "ftCo_80099564" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_80099564(g as _) } f }
+        "ftCo_80099644" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_80099644(g as _) } f }
+        "ftCo_80099754" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_80099754(g as _) } f }
+        "ftCo_80099894" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_80099894(g as _) } f }
+        "ftCo_800998EC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_800998EC(g as _) } f }
+        "ftCo_80099954" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_80099954(g as _) } f }
+        "ftCo_80099D70" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_EscapeAir::ftCo_80099D70(g as _) } f }
+        "ftCo_80099D9C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Rebound::ftCo_80099D9C(g as _) } f }
+        "ftCo_80099E44" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Rebound::ftCo_80099E44(g as _) } f }
+        "ftCo_8009A228" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Pass::ftCo_8009A228(g as _) } f }
+        "ftCo_8009A410" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_8009A410(g as _) } f }
+        "ftCo_8009A6B8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_8009A6B8(g as _) } f }
+        "ftCo_8009A804" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffWait::ftCo_8009A804(g as _) } f }
+        "ftCo_8009AB9C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffClimb::ftCo_8009AB9C(g as _) } f }
+        "ftCo_8009AE14" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffAttack::ftCo_8009AE14(g as _) } f }
+        "ftCo_8009AEA4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffAttack::ftCo_8009AEA4(g as _) } f }
+        "ftCo_8009B040" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffEscape::ftCo_8009B040(g as _) } f }
+        "ftCo_8009B1B8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_8009B1B8(g as _) } f }
+        "ftCo_8009B2F8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_8009B2F8(g as _) } f }
+        "ftCo_8009B518" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWait::ftCo_8009B518(g as _) } f }
+        "ftCo_8009B56C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWait::ftCo_8009B56C(g as _) } f }
+        "ftCo_8009B860" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoTurn::ftCo_8009B860(g as _) } f }
+        "ftCo_8009BB64" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoJump::ftCo_8009BB64(g as _) } f }
+        "ftCo_8009BC58" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoFall::ftCo_8009BC58(g as _) } f }
         "ftCo_8009BC58_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWait::ftCo_8009BC58_cb(g as _) } f }
+        "ftCo_8009BD4C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoLanding::ftCo_8009BD4C(g as _) } f }
+        "ftCo_8009BD4C_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoLanding::ftCo_8009BD4C_cb(g as _) } f }
+        "ftCo_8009C170" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_8009C170(g as _) } f }
+        "ftCo_8009C170_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_8009C170_cb(g as _) } f }
+        "ftCo_8009C45C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_8009C45C(g as _) } f }
+        "ftCo_8009C45C_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_8009C45C_cb(g as _) } f }
+        "ftCo_8009C540" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_09c4::ftCo_8009C540(g as _) } f }
+        "ftCo_8009C744" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Shouldered::ftCo_8009C744(g as _) } f }
+        "ftCo_8009E0A8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftdynamics::ftCo_8009E0A8(g as _) } f }
+        "ftCo_8009EAF8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftdynamics::ftCo_8009EAF8(g as _) } f }
+        "ftCo_8009EB18" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_BarrelWait::ftCo_8009EB18(g as _) } f }
+        "ftCo_8009EC44" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_BarrelWait::ftCo_8009EC44(g as _) } f }
+        "ftCo_8009EE30" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopWall::ftCo_8009EE30(g as _) } f }
+        "ftCo_8009EFA4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopCeil::ftCo_8009EFA4(g as _) } f }
+        "ftCo_8009F184" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownDamage::ftCo_8009F184(g as _) } f }
+        "ftCo_8009F39C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_MissFoot::ftCo_8009F39C(g as _) } f }
         "ftCo_8009F480" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_09f4::ftCo_8009F480(g as _) } f }
         "ftCo_800B3900" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_0A01::ftCo_800B3900(g as _) } f }
+        "ftCo_800BBC88" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BBC88(g as _) } f }
+        "ftCo_800BBCC0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BBCC0(g as _) } f }
+        "ftCo_800BBCC0_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BBCC0_cb(g as _) } f }
+        "ftCo_800BC388" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BC388(g as _) } f }
+        "ftCo_800BC3AC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BC3AC(g as _) } f }
+        "ftCo_800BC3D0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BC3D0(g as _) } f }
+        "ftCo_800BC3D0_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BC3D0_cb(g as _) } f }
+        "ftCo_800BC438" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_800BC438(g as _) } f }
+        "ftCo_800BC438_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BC438_cb(g as _) } f }
+        "ftCo_800BC458" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_800BC458(g as _) } f }
+        "ftCo_800BC4A8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_800BC4A8(g as _) } f }
+        "ftCo_800BC9C8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_800BC9C8(g as _) } f }
+        "ftCo_800BCAF4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_800BCAF4(g as _) } f }
+        "ftCo_800BCC20" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_800BCC20(g as _) } f }
+        "ftCo_800BCD00" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_800BCD00(g as _) } f }
+        "ftCo_800BD39C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKirby::ftCo_800BD39C(g as _) } f }
+        "ftCo_800BD39C_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKirby::ftCo_800BD39C_cb(g as _) } f }
+        "ftCo_800BD620" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKirby::ftCo_800BD620(g as _) } f }
+        "ftCo_800BD6EC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKirby::ftCo_800BD6EC(g as _) } f }
+        "ftCo_800BD6EC_noinline" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKirby::ftCo_800BD6EC_noinline(g as _) } f }
+        "ftCo_800BDA50" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_800BDA50(g as _) } f }
+        "ftCo_800BE494" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_800BE494(g as _) } f }
+        "ftCo_800BE6AC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_800BE6AC(g as _) } f }
+        "ftCo_800BE6AC_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_800BE6AC_cb(g as _) } f }
+        "ftCo_800BE7C0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_800BE7C0(g as _) } f }
+        "ftCo_800BE7C0_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_800BE7C0_cb(g as _) } f }
+        "ftCo_800BECB0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0bec::ftCo_800BECB0(g as _) } f }
+        "ftCo_800BED84" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0bec::ftCo_800BED84(g as _) } f }
+        "ftCo_800BED88" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0bec::ftCo_800BED88(g as _) } f }
+        "ftCo_800BEF00" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0bec::ftCo_800BEF00(g as _) } f }
+        "ftCo_800BEF04" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0bec::ftCo_800BEF04(g as _) } f }
+        "ftCo_800BEFD0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0bec::ftCo_800BEFD0(g as _) } f }
+        "ftCo_800BEFD4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0bef::ftCo_800BEFD4(g as _) } f }
+        "ftCo_800BF034" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0bf0::ftCo_800BF034(g as _) } f }
+        "ftCo_800BF108" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0bf0::ftCo_800BF108(g as _) } f }
+        "ftCo_800C09B4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_800C09B4(g as _) } f }
+        "ftCo_800C0A98" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_800C0A98(g as _) } f }
+        "ftCo_800C0B20" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_800C0B20(g as _) } f }
+        "ftCo_800C0D0C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_800C0D0C(g as _) } f }
+        "ftCo_800C124C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_800C124C(g as _) } f }
+        "ftCo_800C13BC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_800C13BC(g as _) } f }
+        "ftCo_800C23FC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveCeil::ftCo_800C23FC(g as _) } f }
+        "ftCo_800C2FD8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftafterimage::ftCo_800C2FD8(g as _) } f }
+        "ftCo_800C3390" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_800C3390(g as _) } f }
+        "ftCo_800C3480" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_800C3480(g as _) } f }
+        "ftCo_800C4550" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageBind::ftCo_800C4550(g as _) } f }
+        "ftCo_800C4724" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_800C4724(g as _) } f }
+        "ftCo_800C4858" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_800C4858(g as _) } f }
+        "ftCo_800C4858_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_800C4858_cb(g as _) } f }
+        "ftCo_800C48AC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_800C48AC(g as _) } f }
+        "ftCo_800C48AC_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_800C48AC_cb(g as _) } f }
+        "ftCo_800C4A38" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_800C4A38(g as _) } f }
+        "ftCo_800C4C60" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_800C4C60(g as _) } f }
+        "ftCo_800C4C60_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_800C4C60_cb(g as _) } f }
+        "ftCo_800C4ED8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_800C4ED8(g as _) } f }
+        "ftCo_800C4F64" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_800C4F64(g as _) } f }
+        "ftCo_800C511C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_800C511C(g as _) } f }
+        "ftCo_800C5284" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_800C5284(g as _) } f }
+        "ftCo_800C52F4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_800C52F4(g as _) } f }
+        "ftCo_800C5500" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_800C5500(g as _) } f }
+        "ftCo_800C555C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_800C555C(g as _) } f }
+        "ftCo_800C5614" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWalk::ftCo_800C5614(g as _) } f }
+        "ftCo_800C57B4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerTurn::ftCo_800C57B4(g as _) } f }
+        "ftCo_800C5A98" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerJump::ftCo_800C5A98(g as _) } f }
+        "ftCo_800C5D34" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerFall::ftCo_800C5D34(g as _) } f }
+        "ftCo_800C6150" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DemoCallback0::ftCo_800C6150(g as _) } f }
+        "ftCo_800C61B0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_800C61B0(g as _) } f }
+        "ftCo_800C6408" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_800C6408(g as _) } f }
+        "ftCo_800C6B6C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_800C6B6C(g as _) } f }
         "ftCo_800C8438" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftmetal::ftCo_800C8438(g as _) } f }
         "ftCo_800C8540" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftmetal::ftCo_800C8540(g as _) } f }
+        "ftCo_800CED30" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftattacks4combo::ftCo_800CED30(g as _) } f }
+        "ftCo_800CF280" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFall::ftCo_800CF280(g as _) } f }
+        "ftCo_800CF3C8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFallSpecial::ftCo_800CF3C8(g as _) } f }
+        "ftCo_800CF4DC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolDamageFall::ftCo_800CF4DC(g as _) } f }
+        "ftCo_800D15D0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::ftCo_800D15D0(g as _) } f }
         "ftCo_800D15D0_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::ftCo_800D15D0_cb(g as _) } f }
+        "ftCo_800D170C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::ftCo_800D170C(g as _) } f }
+        "ftCo_800D18CC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::ftCo_800D18CC(g as _) } f }
+        "ftCo_800D1B04" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantEnd::ftCo_800D1B04(g as _) } f }
+        "ftCo_800D1B04_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantEnd::ftCo_800D1B04_c(g as _) } f }
+        "ftCo_800D1F6C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::ftCo_800D1F6C(g as _) } f }
         "ftCo_800D1F6C_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::ftCo_800D1F6C_cb(g as _) } f }
+        "ftCo_800D1FFC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::ftCo_800D1FFC(g as _) } f }
+        "ftCo_800D21BC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::ftCo_800D21BC(g as _) } f }
+        "ftCo_800D23F4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallEnd::ftCo_800D23F4(g as _) } f }
         "ftCo_800D23F4_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallEnd::ftCo_800D23F4_cb(g as _) } f }
+        "ftCo_800D3004" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageScrew::ftCo_800D3004(g as _) } f }
+        "ftCo_800D331C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D331C(g as _) } f }
+        "ftCo_800D34E0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D34E0(g as _) } f }
+        "ftCo_800D3680" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D3680(g as _) } f }
+        "ftCo_800D3950" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D3950(g as _) } f }
+        "ftCo_800D3BC8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D3BC8(g as _) } f }
+        "ftCo_800D3E40" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D3E40(g as _) } f }
+        "ftCo_800D40B8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D40B8(g as _) } f }
+        "ftCo_800D41C4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D41C4(g as _) } f }
+        "ftCo_800D4780" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D4780(g as _) } f }
+        "ftCo_800D47B8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_800D47B8(g as _) } f }
+        "ftCo_800D4FF4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_800D4FF4(g as _) } f }
+        "ftCo_800D5600" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_800D5600(g as _) } f }
+        "ftCo_800D638C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatWait::ftCo_800D638C(g as _) } f }
+        "ftCo_800D71D8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_800D71D8(g as _) } f }
+        "ftCo_800D74A4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerialF1::ftCo_800D74A4(g as _) } f }
+        "ftCo_800DB464" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB464(g as _) } f }
+        "ftCo_800DB500" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB500(g as _) } f }
+        "ftCo_800DCFD4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCut::ftCo_800DCFD4(g as _) } f }
+        "ftCo_800DD100" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_800DD100(g as _) } f }
+        "ftCo_800DD168" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_800DD168(g as _) } f }
+        "ftCo_800DD724" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_800DD724(g as _) } f }
+        "ftCo_800DE2F0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_800DE2F0(g as _) } f }
+        "ftCo_800DE508" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_800DE508(g as _) } f }
+        "ftCo_800DE5A4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_800DE5A4(g as _) } f }
+        "ftCo_800DE854" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_800DE854(g as _) } f }
+        "ftCo_800DE974" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_800DE974(g as _) } f }
+        "ftCo_800DEA28" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AppealS::ftCo_800DEA28(g as _) } f }
+        "ftCo_800DEBD0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AppealS::ftCo_800DEBD0(g as _) } f }
+        "ftCo_AppealS_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_Anim(g as _) } f }
+        "ftCo_AppealS_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_Coll(g as _) } f }
+        "ftCo_AppealS_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_IASA(g as _) } f }
+        "ftCo_AppealS_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_Phys(g as _) } f }
+        "ftCo_Attack100End_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100End_Anim(g as _) } f }
+        "ftCo_Attack100End_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100End_Coll(g as _) } f }
+        "ftCo_Attack100End_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100End_Phys(g as _) } f }
+        "ftCo_Attack100Loop_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100Loop_Anim(g as _) } f }
+        "ftCo_Attack100Loop_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100Loop_Coll(g as _) } f }
+        "ftCo_Attack100Loop_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100Loop_IASA(g as _) } f }
+        "ftCo_Attack100Loop_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100Loop_Phys(g as _) } f }
+        "ftCo_Attack100Start_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100Start_Anim(g as _) } f }
+        "ftCo_Attack100Start_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100Start_Coll(g as _) } f }
+        "ftCo_Attack100Start_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack100::ftCo_Attack100Start_Phys(g as _) } f }
+        "ftCo_Attack11_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::ftCo_Attack11_Anim(g as _) } f }
+        "ftCo_Attack11_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::ftCo_Attack11_Coll(g as _) } f }
+        "ftCo_Attack11_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::ftCo_Attack11_IASA(g as _) } f }
+        "ftCo_Attack11_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::ftCo_Attack11_Phys(g as _) } f }
+        "ftCo_Attack12_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::ftCo_Attack12_Anim(g as _) } f }
+        "ftCo_Attack12_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::ftCo_Attack12_IASA(g as _) } f }
+        "ftCo_Attack13_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::ftCo_Attack13_Anim(g as _) } f }
+        "ftCo_Attack13_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::ftCo_Attack13_IASA(g as _) } f }
+        "ftCo_AttackAirB_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAirB_IASA(g as _) } f }
+        "ftCo_AttackAirF_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAirF_IASA(g as _) } f }
+        "ftCo_AttackAirHi_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAirHi_IASA(g as _) } f }
+        "ftCo_AttackAirLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAirLw_IASA(g as _) } f }
+        "ftCo_AttackAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAirN_IASA(g as _) } f }
+        "ftCo_AttackAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_Anim(g as _) } f }
+        "ftCo_AttackAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_Coll(g as _) } f }
+        "ftCo_AttackAir_EnterFromCStick" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_EnterFromCStick(g as _) } f }
+        "ftCo_AttackAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_Phys(g as _) } f }
+        "ftCo_AttackDash_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackDash::ftCo_AttackDash_Anim(g as _) } f }
+        "ftCo_AttackDash_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackDash::ftCo_AttackDash_Coll(g as _) } f }
+        "ftCo_AttackDash_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackDash::ftCo_AttackDash_IASA(g as _) } f }
+        "ftCo_AttackDash_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackDash::ftCo_AttackDash_Phys(g as _) } f }
+        "ftCo_AttackDash_SetMv0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackDash::ftCo_AttackDash_SetMv0(g as _) } f }
+        "ftCo_AttackHi3_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackHi3::ftCo_AttackHi3_Anim(g as _) } f }
+        "ftCo_AttackHi3_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackHi3::ftCo_AttackHi3_Coll(g as _) } f }
+        "ftCo_AttackHi3_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackHi3::ftCo_AttackHi3_IASA(g as _) } f }
+        "ftCo_AttackHi3_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackHi3::ftCo_AttackHi3_Phys(g as _) } f }
+        "ftCo_AttackHi4_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackHi4::ftCo_AttackHi4_Anim(g as _) } f }
+        "ftCo_AttackHi4_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackHi4::ftCo_AttackHi4_Coll(g as _) } f }
+        "ftCo_AttackHi4_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackHi4::ftCo_AttackHi4_IASA(g as _) } f }
+        "ftCo_AttackHi4_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackHi4::ftCo_AttackHi4_Phys(g as _) } f }
+        "ftCo_AttackLw3_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw3::ftCo_AttackLw3_Anim(g as _) } f }
+        "ftCo_AttackLw3_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw3::ftCo_AttackLw3_Coll(g as _) } f }
+        "ftCo_AttackLw3_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw3::ftCo_AttackLw3_IASA(g as _) } f }
+        "ftCo_AttackLw3_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw3::ftCo_AttackLw3_Phys(g as _) } f }
+        "ftCo_AttackLw4_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw4::ftCo_AttackLw4_Anim(g as _) } f }
+        "ftCo_AttackLw4_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw4::ftCo_AttackLw4_Coll(g as _) } f }
+        "ftCo_AttackLw4_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw4::ftCo_AttackLw4_IASA(g as _) } f }
+        "ftCo_AttackLw4_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw4::ftCo_AttackLw4_Phys(g as _) } f }
+        "ftCo_AttackS3_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackS3::ftCo_AttackS3_Anim(g as _) } f }
+        "ftCo_AttackS3_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackS3::ftCo_AttackS3_Coll(g as _) } f }
+        "ftCo_AttackS3_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackS3::ftCo_AttackS3_IASA(g as _) } f }
+        "ftCo_AttackS3_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackS3::ftCo_AttackS3_Phys(g as _) } f }
+        "ftCo_AttackS42_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftattacks4combo::ftCo_AttackS42_Anim(g as _) } f }
+        "ftCo_AttackS42_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftattacks4combo::ftCo_AttackS42_Coll(g as _) } f }
+        "ftCo_AttackS42_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftattacks4combo::ftCo_AttackS42_IASA(g as _) } f }
+        "ftCo_AttackS42_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftattacks4combo::ftCo_AttackS42_Phys(g as _) } f }
+        "ftCo_AttackS4_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackS4::ftCo_AttackS4_Anim(g as _) } f }
+        "ftCo_AttackS4_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackS4::ftCo_AttackS4_Coll(g as _) } f }
+        "ftCo_AttackS4_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackS4::ftCo_AttackS4_IASA(g as _) } f }
+        "ftCo_AttackS4_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackS4::ftCo_AttackS4_Phys(g as _) } f }
+        "ftCo_BarrelWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_BarrelWait::ftCo_BarrelWait_Anim(g as _) } f }
+        "ftCo_BarrelWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_BarrelWait::ftCo_BarrelWait_Coll(g as _) } f }
+        "ftCo_BarrelWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_BarrelWait::ftCo_BarrelWait_IASA(g as _) } f }
+        "ftCo_BarrelWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_BarrelWait::ftCo_BarrelWait_Phys(g as _) } f }
+        "ftCo_Barrel_Accessory1_Cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Barrel::ftCo_Barrel_Accessory1_Cb(g as _) } f }
+        "ftCo_Barrel_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Barrel::ftCo_Barrel_Anim(g as _) } f }
+        "ftCo_Barrel_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Barrel::ftCo_Barrel_Coll(g as _) } f }
+        "ftCo_Barrel_Death2_Cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Barrel::ftCo_Barrel_Death2_Cb(g as _) } f }
+        "ftCo_Barrel_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Barrel::ftCo_Barrel_IASA(g as _) } f }
+        "ftCo_Barrel_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Barrel::ftCo_Barrel_Phys(g as _) } f }
+        "ftCo_Barrel_Take_Dmg_Cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Barrel::ftCo_Barrel_Take_Dmg_Cb(g as _) } f }
+        "ftCo_BuryJump_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_BuryJump_Anim(g as _) } f }
+        "ftCo_BuryJump_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_BuryJump_Coll(g as _) } f }
+        "ftCo_BuryJump_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_BuryJump_IASA(g as _) } f }
+        "ftCo_BuryJump_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_BuryJump_Phys(g as _) } f }
+        "ftCo_BuryWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_BuryWait_Anim(g as _) } f }
+        "ftCo_BuryWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_BuryWait_Coll(g as _) } f }
+        "ftCo_BuryWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_BuryWait_IASA(g as _) } f }
+        "ftCo_BuryWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_BuryWait_Phys(g as _) } f }
+        "ftCo_Bury_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_Bury_Anim(g as _) } f }
+        "ftCo_Bury_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_Bury_Coll(g as _) } f }
+        "ftCo_Bury_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_Bury_IASA(g as _) } f }
+        "ftCo_Bury_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Bury::ftCo_Bury_Phys(g as _) } f }
+        "ftCo_CaptureCaptain_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCaptain::ftCo_CaptureCaptain_Anim(g as _) } f }
+        "ftCo_CaptureCaptain_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCaptain::ftCo_CaptureCaptain_Coll(g as _) } f }
+        "ftCo_CaptureCaptain_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCaptain::ftCo_CaptureCaptain_IASA(g as _) } f }
+        "ftCo_CaptureCaptain_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCaptain::ftCo_CaptureCaptain_Phys(g as _) } f }
         "ftCo_CaptureCrazyHand_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturecrazyhand::ftCo_CaptureCrazyHand_Anim(g as _) } f }
         "ftCo_CaptureCrazyHand_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturecrazyhand::ftCo_CaptureCrazyHand_Coll(g as _) } f }
         "ftCo_CaptureCrazyHand_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturecrazyhand::ftCo_CaptureCrazyHand_IASA(g as _) } f }
         "ftCo_CaptureCrazyHand_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturecrazyhand::ftCo_CaptureCrazyHand_Phys(g as _) } f }
+        "ftCo_CaptureCut_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCut::ftCo_CaptureCut_Anim(g as _) } f }
+        "ftCo_CaptureCut_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCut::ftCo_CaptureCut_Coll(g as _) } f }
+        "ftCo_CaptureCut_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter(g as _) } f }
+        "ftCo_CaptureCut_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCut::ftCo_CaptureCut_IASA(g as _) } f }
+        "ftCo_CaptureCut_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureCut::ftCo_CaptureCut_Phys(g as _) } f }
         "ftCo_CaptureDamageCrazyHand_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturedamagecrazyhand::ftCo_CaptureDamageCrazyHand_Anim(g as _) } f }
         "ftCo_CaptureDamageCrazyHand_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturedamagecrazyhand::ftCo_CaptureDamageCrazyHand_Coll(g as _) } f }
         "ftCo_CaptureDamageCrazyHand_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturedamagecrazyhand::ftCo_CaptureDamageCrazyHand_IASA(g as _) } f }
         "ftCo_CaptureDamageCrazyHand_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturedamagecrazyhand::ftCo_CaptureDamageCrazyHand_Phys(g as _) } f }
+        "ftCo_CaptureDamageKoopaAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_CaptureDamageKoopaAir_Anim(g as _) } f }
+        "ftCo_CaptureDamageKoopaAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_CaptureDamageKoopaAir_Coll(g as _) } f }
+        "ftCo_CaptureDamageKoopaAir_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_CaptureDamageKoopaAir_IASA(g as _) } f }
+        "ftCo_CaptureDamageKoopaAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_CaptureDamageKoopaAir_Phys(g as _) } f }
+        "ftCo_CaptureDamageKoopa_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_CaptureDamageKoopa_Anim(g as _) } f }
+        "ftCo_CaptureDamageKoopa_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_CaptureDamageKoopa_Coll(g as _) } f }
+        "ftCo_CaptureDamageKoopa_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_CaptureDamageKoopa_IASA(g as _) } f }
+        "ftCo_CaptureDamageKoopa_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureDamageKoopa::ftCo_CaptureDamageKoopa_Phys(g as _) } f }
+        "ftCo_CaptureJump_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureJump::ftCo_CaptureJump_Anim(g as _) } f }
+        "ftCo_CaptureJump_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureJump::ftCo_CaptureJump_Coll(g as _) } f }
+        "ftCo_CaptureJump_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureJump::ftCo_CaptureJump_IASA(g as _) } f }
+        "ftCo_CaptureJump_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureJump::ftCo_CaptureJump_Phys(g as _) } f }
         "ftCo_CaptureKirbyYoshi_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbycaptureyoshi::ftCo_CaptureKirbyYoshi_Anim(g as _) } f }
         "ftCo_CaptureKirbyYoshi_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbycaptureyoshi::ftCo_CaptureKirbyYoshi_Coll(g as _) } f }
         "ftCo_CaptureKirbyYoshi_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbycaptureyoshi::ftCo_CaptureKirbyYoshi_IASA(g as _) } f }
         "ftCo_CaptureKirbyYoshi_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbycaptureyoshi::ftCo_CaptureKirbyYoshi_Phys(g as _) } f }
+        "ftCo_CaptureKirby_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKirby::ftCo_CaptureKirby_Anim(g as _) } f }
+        "ftCo_CaptureKirby_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKirby::ftCo_CaptureKirby_Coll(g as _) } f }
+        "ftCo_CaptureKirby_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKirby::ftCo_CaptureKirby_IASA(g as _) } f }
+        "ftCo_CaptureKirby_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKirby::ftCo_CaptureKirby_Phys(g as _) } f }
+        "ftCo_CaptureKoopaAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_CaptureKoopaAir_Anim(g as _) } f }
+        "ftCo_CaptureKoopaAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_CaptureKoopaAir_Coll(g as _) } f }
+        "ftCo_CaptureKoopaAir_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_CaptureKoopaAir_IASA(g as _) } f }
+        "ftCo_CaptureKoopaAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_CaptureKoopaAir_Phys(g as _) } f }
+        "ftCo_CaptureKoopa_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_CaptureKoopa_Anim(g as _) } f }
+        "ftCo_CaptureKoopa_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_CaptureKoopa_Coll(g as _) } f }
+        "ftCo_CaptureKoopa_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_CaptureKoopa_IASA(g as _) } f }
+        "ftCo_CaptureKoopa_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureKoopa::ftCo_CaptureKoopa_Phys(g as _) } f }
+        "ftCo_CapturePulledHi_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_CapturePulledHi_Anim(g as _) } f }
+        "ftCo_CapturePulledHi_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_CapturePulledHi_Coll(g as _) } f }
+        "ftCo_CapturePulledHi_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_CapturePulledHi_IASA(g as _) } f }
+        "ftCo_CapturePulledHi_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_CapturePulledHi_Phys(g as _) } f }
+        "ftCo_CapturePulledLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_CapturePulledLw_Anim(g as _) } f }
+        "ftCo_CapturePulledLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_CapturePulledLw_Coll(g as _) } f }
+        "ftCo_CapturePulledLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_CapturePulledLw_IASA(g as _) } f }
+        "ftCo_CapturePulledLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CapturePulled::ftCo_CapturePulledLw_Phys(g as _) } f }
         "ftCo_CaptureWaitCrazyHand_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturewaitcrazyhand::ftCo_CaptureWaitCrazyHand_Anim(g as _) } f }
         "ftCo_CaptureWaitCrazyHand_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturewaitcrazyhand::ftCo_CaptureWaitCrazyHand_Coll(g as _) } f }
         "ftCo_CaptureWaitCrazyHand_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturewaitcrazyhand::ftCo_CaptureWaitCrazyHand_IASA(g as _) } f }
         "ftCo_CaptureWaitCrazyHand_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandcapturewaitcrazyhand::ftCo_CaptureWaitCrazyHand_Phys(g as _) } f }
+        "ftCo_CaptureWaitHi_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::ftCo_CaptureWaitHi_Anim(g as _) } f }
+        "ftCo_CaptureWaitHi_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::ftCo_CaptureWaitHi_Coll(g as _) } f }
+        "ftCo_CaptureWaitHi_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::ftCo_CaptureWaitHi_IASA(g as _) } f }
+        "ftCo_CaptureWaitHi_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::ftCo_CaptureWaitHi_Phys(g as _) } f }
+        "ftCo_CaptureWaitKirby_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKirby::ftCo_CaptureWaitKirby_Anim(g as _) } f }
+        "ftCo_CaptureWaitKirby_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKirby::ftCo_CaptureWaitKirby_Coll(g as _) } f }
+        "ftCo_CaptureWaitKirby_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKirby::ftCo_CaptureWaitKirby_IASA(g as _) } f }
+        "ftCo_CaptureWaitKirby_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKirby::ftCo_CaptureWaitKirby_Phys(g as _) } f }
+        "ftCo_CaptureWaitKoopaAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_CaptureWaitKoopaAir_Anim(g as _) } f }
+        "ftCo_CaptureWaitKoopaAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_CaptureWaitKoopaAir_Coll(g as _) } f }
+        "ftCo_CaptureWaitKoopaAir_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_CaptureWaitKoopaAir_IASA(g as _) } f }
+        "ftCo_CaptureWaitKoopaAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_CaptureWaitKoopaAir_Phys(g as _) } f }
+        "ftCo_CaptureWaitKoopa_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_CaptureWaitKoopa_Anim(g as _) } f }
+        "ftCo_CaptureWaitKoopa_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_CaptureWaitKoopa_Coll(g as _) } f }
+        "ftCo_CaptureWaitKoopa_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_CaptureWaitKoopa_IASA(g as _) } f }
+        "ftCo_CaptureWaitKoopa_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWaitKoopa::ftCo_CaptureWaitKoopa_Phys(g as _) } f }
+        "ftCo_CaptureWaitLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::ftCo_CaptureWaitLw_Anim(g as _) } f }
+        "ftCo_CaptureWaitLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::ftCo_CaptureWaitLw_Coll(g as _) } f }
+        "ftCo_CaptureWaitLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::ftCo_CaptureWaitLw_IASA(g as _) } f }
+        "ftCo_CaptureWaitLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureWait::ftCo_CaptureWaitLw_Phys(g as _) } f }
+        "ftCo_CaptureYoshi_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureYoshi::ftCo_CaptureYoshi_Anim(g as _) } f }
+        "ftCo_CaptureYoshi_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureYoshi::ftCo_CaptureYoshi_Coll(g as _) } f }
+        "ftCo_CaptureYoshi_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureYoshi::ftCo_CaptureYoshi_IASA(g as _) } f }
+        "ftCo_CaptureYoshi_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CaptureYoshi::ftCo_CaptureYoshi_Phys(g as _) } f }
+        "ftCo_CargoFall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoFall::ftCo_CargoFall_Anim(g as _) } f }
+        "ftCo_CargoFall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoFall::ftCo_CargoFall_Coll(g as _) } f }
+        "ftCo_CargoFall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoFall::ftCo_CargoFall_IASA(g as _) } f }
+        "ftCo_CargoFall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoFall::ftCo_CargoFall_Phys(g as _) } f }
+        "ftCo_CargoJump_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoJump::ftCo_CargoJump_Anim(g as _) } f }
+        "ftCo_CargoJump_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoJump::ftCo_CargoJump_Coll(g as _) } f }
+        "ftCo_CargoJump_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoJump::ftCo_CargoJump_IASA(g as _) } f }
+        "ftCo_CargoJump_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoJump::ftCo_CargoJump_Phys(g as _) } f }
+        "ftCo_CargoKneebend_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoKneebend::ftCo_CargoKneebend_Anim(g as _) } f }
+        "ftCo_CargoKneebend_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoKneebend::ftCo_CargoKneebend_Coll(g as _) } f }
+        "ftCo_CargoKneebend_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoKneebend::ftCo_CargoKneebend_IASA(g as _) } f }
+        "ftCo_CargoKneebend_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoKneebend::ftCo_CargoKneebend_Phys(g as _) } f }
+        "ftCo_CargoLanding_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoLanding::ftCo_CargoLanding_Anim(g as _) } f }
+        "ftCo_CargoLanding_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoLanding::ftCo_CargoLanding_Coll(g as _) } f }
+        "ftCo_CargoLanding_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoLanding::ftCo_CargoLanding_Phys(g as _) } f }
+        "ftCo_CargoThrowAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowAir_Anim(g as _) } f }
+        "ftCo_CargoThrowAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowAir_Coll(g as _) } f }
+        "ftCo_CargoThrowAir_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowAir_IASA(g as _) } f }
+        "ftCo_CargoThrowAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowAir_Phys(g as _) } f }
+        "ftCo_CargoThrowB_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowB_Anim(g as _) } f }
+        "ftCo_CargoThrowB_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowB_Coll(g as _) } f }
+        "ftCo_CargoThrowB_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowB_IASA(g as _) } f }
+        "ftCo_CargoThrowB_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowB_Phys(g as _) } f }
+        "ftCo_CargoThrowF_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowF_Anim(g as _) } f }
+        "ftCo_CargoThrowF_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowF_Coll(g as _) } f }
+        "ftCo_CargoThrowF_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowF_IASA(g as _) } f }
+        "ftCo_CargoThrowF_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowF_Phys(g as _) } f }
+        "ftCo_CargoThrowHi_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowHi_Anim(g as _) } f }
+        "ftCo_CargoThrowHi_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowHi_Coll(g as _) } f }
+        "ftCo_CargoThrowHi_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowHi_IASA(g as _) } f }
+        "ftCo_CargoThrowHi_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowHi_Phys(g as _) } f }
+        "ftCo_CargoThrowLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowLw_Anim(g as _) } f }
+        "ftCo_CargoThrowLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowLw_Coll(g as _) } f }
+        "ftCo_CargoThrowLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowLw_IASA(g as _) } f }
+        "ftCo_CargoThrowLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoThrowLw_Phys(g as _) } f }
+        "ftCo_CargoTurn_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoTurn::ftCo_CargoTurn_Anim(g as _) } f }
+        "ftCo_CargoTurn_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoTurn::ftCo_CargoTurn_Coll(g as _) } f }
+        "ftCo_CargoTurn_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoTurn::ftCo_CargoTurn_IASA(g as _) } f }
+        "ftCo_CargoTurn_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoTurn::ftCo_CargoTurn_Phys(g as _) } f }
+        "ftCo_CargoWait2_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoWait2_Anim(g as _) } f }
+        "ftCo_CargoWait2_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoWait2_Coll(g as _) } f }
+        "ftCo_CargoWait2_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoThrow::ftCo_CargoWait2_Phys(g as _) } f }
+        "ftCo_CargoWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWait::ftCo_CargoWait_Anim(g as _) } f }
+        "ftCo_CargoWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWait::ftCo_CargoWait_Coll(g as _) } f }
+        "ftCo_CargoWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWait::ftCo_CargoWait_IASA(g as _) } f }
+        "ftCo_CargoWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWait::ftCo_CargoWait_Phys(g as _) } f }
+        "ftCo_CargoWalk_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWalk::ftCo_CargoWalk_Anim(g as _) } f }
+        "ftCo_CargoWalk_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWalk::ftCo_CargoWalk_Coll(g as _) } f }
+        "ftCo_CargoWalk_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWalk::ftCo_CargoWalk_IASA(g as _) } f }
+        "ftCo_CargoWalk_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CargoWalk::ftCo_CargoWalk_Phys(g as _) } f }
+        "ftCo_CatchAttack_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::ftCo_CatchAttack_Anim(g as _) } f }
+        "ftCo_CatchAttack_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::ftCo_CatchAttack_Coll(g as _) } f }
+        "ftCo_CatchAttack_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::ftCo_CatchAttack_IASA(g as _) } f }
+        "ftCo_CatchAttack_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchAttack::ftCo_CatchAttack_Phys(g as _) } f }
+        "ftCo_CatchCut_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchCut::ftCo_CatchCut_Anim(g as _) } f }
+        "ftCo_CatchCut_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchCut::ftCo_CatchCut_Coll(g as _) } f }
+        "ftCo_CatchCut_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchCut::ftCo_CatchCut_IASA(g as _) } f }
+        "ftCo_CatchCut_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchCut::ftCo_CatchCut_Phys(g as _) } f }
+        "ftCo_CatchDash_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::ftCo_CatchDash_Anim(g as _) } f }
+        "ftCo_CatchDash_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::ftCo_CatchDash_Coll(g as _) } f }
+        "ftCo_CatchDash_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::ftCo_CatchDash_IASA(g as _) } f }
+        "ftCo_CatchDash_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::ftCo_CatchDash_Phys(g as _) } f }
+        "ftCo_CatchPull_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::ftCo_CatchPull_Anim(g as _) } f }
+        "ftCo_CatchPull_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::ftCo_CatchPull_Coll(g as _) } f }
+        "ftCo_CatchPull_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::ftCo_CatchPull_IASA(g as _) } f }
+        "ftCo_CatchPull_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchPull::ftCo_CatchPull_Phys(g as _) } f }
+        "ftCo_CatchWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::ftCo_CatchWait_Anim(g as _) } f }
+        "ftCo_CatchWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::ftCo_CatchWait_Coll(g as _) } f }
+        "ftCo_CatchWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::ftCo_CatchWait_IASA(g as _) } f }
+        "ftCo_CatchWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CatchWait::ftCo_CatchWait_Phys(g as _) } f }
+        "ftCo_Catch_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::ftCo_Catch_Anim(g as _) } f }
+        "ftCo_Catch_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::ftCo_Catch_Coll(g as _) } f }
+        "ftCo_Catch_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::ftCo_Catch_IASA(g as _) } f }
+        "ftCo_Catch_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Catch::ftCo_Catch_Phys(g as _) } f }
+        "ftCo_CliffAttack_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffAttack::ftCo_CliffAttack_Anim(g as _) } f }
+        "ftCo_CliffAttack_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffAttack::ftCo_CliffAttack_Coll(g as _) } f }
+        "ftCo_CliffAttack_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffAttack::ftCo_CliffAttack_IASA(g as _) } f }
+        "ftCo_CliffAttack_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffAttack::ftCo_CliffAttack_Phys(g as _) } f }
+        "ftCo_CliffClimb_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffClimb::ftCo_CliffClimb_Anim(g as _) } f }
+        "ftCo_CliffClimb_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffClimb::ftCo_CliffClimb_Coll(g as _) } f }
+        "ftCo_CliffClimb_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffClimb::ftCo_CliffClimb_IASA(g as _) } f }
+        "ftCo_CliffClimb_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffClimb::ftCo_CliffClimb_Phys(g as _) } f }
+        "ftCo_CliffEscape_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffEscape::ftCo_CliffEscape_Anim(g as _) } f }
+        "ftCo_CliffEscape_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffEscape::ftCo_CliffEscape_Coll(g as _) } f }
+        "ftCo_CliffEscape_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffEscape::ftCo_CliffEscape_IASA(g as _) } f }
+        "ftCo_CliffEscape_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffEscape::ftCo_CliffEscape_Phys(g as _) } f }
+        "ftCo_CliffJump1_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_CliffJump1_Anim(g as _) } f }
+        "ftCo_CliffJump1_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_CliffJump1_Coll(g as _) } f }
+        "ftCo_CliffJump1_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_CliffJump1_IASA(g as _) } f }
+        "ftCo_CliffJump1_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_CliffJump1_Phys(g as _) } f }
+        "ftCo_CliffJump2_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_CliffJump2_Anim(g as _) } f }
+        "ftCo_CliffJump2_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_CliffJump2_Coll(g as _) } f }
+        "ftCo_CliffJump2_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_CliffJump2_IASA(g as _) } f }
+        "ftCo_CliffJump2_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffJump::ftCo_CliffJump2_Phys(g as _) } f }
+        "ftCo_CliffWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffWait::ftCo_CliffWait_Anim(g as _) } f }
+        "ftCo_CliffWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffWait::ftCo_CliffWait_Coll(g as _) } f }
+        "ftCo_CliffWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffWait::ftCo_CliffWait_IASA(g as _) } f }
+        "ftCo_CliffWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_CliffWait::ftCo_CliffWait_Phys(g as _) } f }
+        "ftCo_DamageBind_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageBind::ftCo_DamageBind_Anim(g as _) } f }
+        "ftCo_DamageBind_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageBind::ftCo_DamageBind_Coll(g as _) } f }
+        "ftCo_DamageBind_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageBind::ftCo_DamageBind_IASA(g as _) } f }
+        "ftCo_DamageBind_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageBind::ftCo_DamageBind_Phys(g as _) } f }
+        "ftCo_DamageFall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageFall::ftCo_DamageFall_Anim(g as _) } f }
+        "ftCo_DamageFall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageFall::ftCo_DamageFall_Coll(g as _) } f }
+        "ftCo_DamageFall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageFall::ftCo_DamageFall_IASA(g as _) } f }
+        "ftCo_DamageFall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageFall::ftCo_DamageFall_Phys(g as _) } f }
+        "ftCo_DamageFlyRoll_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_DamageFlyRoll_Anim(g as _) } f }
+        "ftCo_DamageFlyRoll_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_DamageFlyRoll_Coll(g as _) } f }
+        "ftCo_DamageFlyRoll_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_DamageFlyRoll_IASA(g as _) } f }
+        "ftCo_DamageFlyRoll_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_DamageFlyRoll_Phys(g as _) } f }
+        "ftCo_DamageFly_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_DamageFly_Anim(g as _) } f }
+        "ftCo_DamageFly_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_DamageFly_Coll(g as _) } f }
+        "ftCo_DamageFly_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_DamageFly_IASA(g as _) } f }
+        "ftCo_DamageFly_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_DamageFly_Phys(g as _) } f }
+        "ftCo_DamageIceJump_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIceJump_Anim(g as _) } f }
+        "ftCo_DamageIceJump_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIceJump_Coll(g as _) } f }
+        "ftCo_DamageIceJump_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIceJump_IASA(g as _) } f }
+        "ftCo_DamageIceJump_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIceJump_Phys(g as _) } f }
+        "ftCo_DamageIce_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIce_Anim(g as _) } f }
+        "ftCo_DamageIce_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIce_Coll(g as _) } f }
+        "ftCo_DamageIce_HitWhileFrozen" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIce_HitWhileFrozen(g as _) } f }
+        "ftCo_DamageIce_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIce_IASA(g as _) } f }
+        "ftCo_DamageIce_InAirUpdate" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIce_InAirUpdate(g as _) } f }
+        "ftCo_DamageIce_Init" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIce_Init(g as _) } f }
+        "ftCo_DamageIce_OnHit" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIce_OnHit(g as _) } f }
+        "ftCo_DamageIce_OnHit2" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIce_OnHit2(g as _) } f }
+        "ftCo_DamageIce_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageIce::ftCo_DamageIce_Phys(g as _) } f }
+        "ftCo_DamageScrew_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageScrew::ftCo_DamageScrew_Anim(g as _) } f }
+        "ftCo_DamageScrew_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageScrew::ftCo_DamageScrew_Coll(g as _) } f }
+        "ftCo_DamageScrew_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageScrew::ftCo_DamageScrew_IASA(g as _) } f }
+        "ftCo_DamageScrew_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageScrew::ftCo_DamageScrew_Phys(g as _) } f }
+        "ftCo_DamageSongRv_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSongRv_Anim(g as _) } f }
+        "ftCo_DamageSongRv_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSongRv_Coll(g as _) } f }
+        "ftCo_DamageSongRv_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSongRv_IASA(g as _) } f }
+        "ftCo_DamageSongRv_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSongRv_Phys(g as _) } f }
+        "ftCo_DamageSongWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSongWait_Anim(g as _) } f }
+        "ftCo_DamageSongWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSongWait_Coll(g as _) } f }
+        "ftCo_DamageSongWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSongWait_IASA(g as _) } f }
+        "ftCo_DamageSongWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSongWait_Phys(g as _) } f }
+        "ftCo_DamageSong_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSong_Anim(g as _) } f }
+        "ftCo_DamageSong_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSong_Coll(g as _) } f }
+        "ftCo_DamageSong_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSong_IASA(g as _) } f }
+        "ftCo_DamageSong_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DamageSong::ftCo_DamageSong_Phys(g as _) } f }
+        "ftCo_Damage_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_Damage_Anim(g as _) } f }
+        "ftCo_Damage_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_Damage_Coll(g as _) } f }
+        "ftCo_Damage_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_Damage_IASA(g as _) } f }
+        "ftCo_Damage_OnEveryHitlag" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_Damage_OnEveryHitlag(g as _) } f }
+        "ftCo_Damage_OnEveryHitlag_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_Damage_OnEveryHitlag_cb(g as _) } f }
+        "ftCo_Damage_OnExitHitlag" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_Damage_OnExitHitlag(g as _) } f }
+        "ftCo_Damage_OnExitHitlag_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_Damage_OnExitHitlag_cb(g as _) } f }
+        "ftCo_Damage_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::ftCo_Damage_Phys(g as _) } f }
+        "ftCo_Dash_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Dash::ftCo_Dash_Anim(g as _) } f }
+        "ftCo_Dash_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Dash::ftCo_Dash_Coll(g as _) } f }
+        "ftCo_Dash_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Dash::ftCo_Dash_IASA(g as _) } f }
+        "ftCo_Dash_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Dash::ftCo_Dash_Phys(g as _) } f }
+        "ftCo_DeadDown_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadDown_Anim(g as _) } f }
+        "ftCo_DeadDown_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadDown_Cam(g as _) } f }
+        "ftCo_DeadLeft_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadLeft_Anim(g as _) } f }
+        "ftCo_DeadLeft_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadLeft_Cam(g as _) } f }
+        "ftCo_DeadRight_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadRight_Anim(g as _) } f }
+        "ftCo_DeadRight_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadRight_Cam(g as _) } f }
+        "ftCo_DeadUpFall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadUpFall_Anim(g as _) } f }
+        "ftCo_DeadUpFall_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_DeadUpFall_Cam(g as _) } f }
+        "ftCo_DeadUpFall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadUpFall_Phys(g as _) } f }
+        "ftCo_DeadUpStar_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadUpStar_Anim(g as _) } f }
+        "ftCo_DeadUpStar_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadUpStar_Cam(g as _) } f }
+        "ftCo_DeadUp_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadUp_Anim(g as _) } f }
+        "ftCo_DeadUp_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d31::ftCo_DeadUp_Cam(g as _) } f }
+        "ftCo_DownAttack_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownAttack::ftCo_DownAttack_Anim(g as _) } f }
+        "ftCo_DownAttack_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownAttack::ftCo_DownAttack_Coll(g as _) } f }
+        "ftCo_DownAttack_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownAttack::ftCo_DownAttack_IASA(g as _) } f }
+        "ftCo_DownAttack_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownAttack::ftCo_DownAttack_Phys(g as _) } f }
+        "ftCo_DownBound_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_DownBound_Anim(g as _) } f }
+        "ftCo_DownBound_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_DownBound_Coll(g as _) } f }
+        "ftCo_DownBound_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_DownBound_IASA(g as _) } f }
+        "ftCo_DownBound_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_DownBound_Phys(g as _) } f }
+        "ftCo_DownDamage_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownDamage::ftCo_DownDamage_Anim(g as _) } f }
+        "ftCo_DownDamage_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownDamage::ftCo_DownDamage_Coll(g as _) } f }
+        "ftCo_DownDamage_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownDamage::ftCo_DownDamage_IASA(g as _) } f }
+        "ftCo_DownDamage_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownDamage::ftCo_DownDamage_Phys(g as _) } f }
+        "ftCo_DownSpot_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownSpot::ftCo_DownSpot_Anim(g as _) } f }
+        "ftCo_DownSpot_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownSpot::ftCo_DownSpot_Coll(g as _) } f }
+        "ftCo_DownSpot_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownSpot::ftCo_DownSpot_Enter(g as _) } f }
+        "ftCo_DownSpot_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownSpot::ftCo_DownSpot_IASA(g as _) } f }
+        "ftCo_DownSpot_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownSpot::ftCo_DownSpot_Phys(g as _) } f }
+        "ftCo_DownStand_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownStand::ftCo_DownStand_Anim(g as _) } f }
+        "ftCo_DownStand_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownStand::ftCo_DownStand_Coll(g as _) } f }
+        "ftCo_DownStand_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownStand::ftCo_DownStand_IASA(g as _) } f }
+        "ftCo_DownStand_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownStand::ftCo_DownStand_Phys(g as _) } f }
+        "ftCo_DownWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_DownWait_Anim(g as _) } f }
+        "ftCo_DownWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_DownWait_Coll(g as _) } f }
+        "ftCo_DownWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_DownWait_IASA(g as _) } f }
+        "ftCo_DownWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_DownBound::ftCo_DownWait_Phys(g as _) } f }
+        "ftCo_Down_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Down::ftCo_Down_Anim(g as _) } f }
+        "ftCo_Down_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Down::ftCo_Down_Coll(g as _) } f }
+        "ftCo_Down_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Down::ftCo_Down_IASA(g as _) } f }
+        "ftCo_Down_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Down::ftCo_Down_Phys(g as _) } f }
+        "ftCo_EntryEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_EntryEnd_Anim(g as _) } f }
+        "ftCo_EntryEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_EntryEnd_Coll(g as _) } f }
+        "ftCo_EntryEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_EntryEnd_IASA(g as _) } f }
+        "ftCo_EntryEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_EntryEnd_Phys(g as _) } f }
+        "ftCo_EntryStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_EntryStart_Anim(g as _) } f }
+        "ftCo_EntryStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_EntryStart_Coll(g as _) } f }
+        "ftCo_EntryStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_EntryStart_IASA(g as _) } f }
+        "ftCo_EntryStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_EntryStart_Phys(g as _) } f }
+        "ftCo_Entry_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_Entry_Anim(g as _) } f }
+        "ftCo_Entry_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_Entry_Coll(g as _) } f }
+        "ftCo_Entry_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_Entry_IASA(g as _) } f }
+        "ftCo_Entry_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c31::ftCo_Entry_Phys(g as _) } f }
+        "ftCo_EscapeAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_EscapeAir::ftCo_EscapeAir_Anim(g as _) } f }
+        "ftCo_EscapeAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_EscapeAir::ftCo_EscapeAir_Coll(g as _) } f }
+        "ftCo_EscapeAir_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_EscapeAir::ftCo_EscapeAir_IASA(g as _) } f }
+        "ftCo_EscapeAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_EscapeAir::ftCo_EscapeAir_Phys(g as _) } f }
+        "ftCo_EscapeN_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_EscapeN_Anim(g as _) } f }
+        "ftCo_EscapeN_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_EscapeN_Coll(g as _) } f }
+        "ftCo_EscapeN_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_EscapeN_IASA(g as _) } f }
+        "ftCo_EscapeN_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_EscapeN_Phys(g as _) } f }
+        "ftCo_Escape_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_Escape_Anim(g as _) } f }
+        "ftCo_Escape_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_Escape_Coll(g as _) } f }
+        "ftCo_Escape_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_Escape_IASA(g as _) } f }
+        "ftCo_Escape_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Escape::ftCo_Escape_Phys(g as _) } f }
+        "ftCo_FallAerial_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallAerial::ftCo_FallAerial_Anim(g as _) } f }
         "ftCo_FallAerial_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftswing::ftCo_FallAerial_Coll(g as _) } f }
+        "ftCo_FallAerial_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(g as _) } f }
+        "ftCo_FallAerial_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallAerial::ftCo_FallAerial_IASA(g as _) } f }
+        "ftCo_FallAerial_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallAerial::ftCo_FallAerial_Phys(g as _) } f }
+        "ftCo_FallSpecial_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallSpecial::ftCo_FallSpecial_Anim(g as _) } f }
+        "ftCo_FallSpecial_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallSpecial::ftCo_FallSpecial_Coll(g as _) } f }
+        "ftCo_FallSpecial_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallSpecial::ftCo_FallSpecial_IASA(g as _) } f }
+        "ftCo_FallSpecial_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FallSpecial::ftCo_FallSpecial_Phys(g as _) } f }
+        "ftCo_Fall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Anim(g as _) } f }
+        "ftCo_Fall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Coll(g as _) } f }
+        "ftCo_Fall_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(g as _) } f }
+        "ftCo_Fall_Enter_YoshiEgg" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter_YoshiEgg(g as _) } f }
+        "ftCo_Fall_Enter_YoshiEgg_Kirby" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter_YoshiEgg_Kirby(g as _) } f }
+        "ftCo_Fall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Fall::ftCo_Fall_IASA(g as _) } f }
+        "ftCo_Fall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Phys(g as _) } f }
+        "ftCo_FlyReflect_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FlyReflect::ftCo_FlyReflect_Anim(g as _) } f }
+        "ftCo_FlyReflect_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FlyReflect::ftCo_FlyReflect_Coll(g as _) } f }
+        "ftCo_FlyReflect_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FlyReflect::ftCo_FlyReflect_IASA(g as _) } f }
+        "ftCo_FlyReflect_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_FlyReflect::ftCo_FlyReflect_Phys(g as _) } f }
+        "ftCo_Furafura_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Furafura::ftCo_Furafura_Anim(g as _) } f }
+        "ftCo_Furafura_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Furafura::ftCo_Furafura_Coll(g as _) } f }
+        "ftCo_Furafura_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Furafura::ftCo_Furafura_IASA(g as _) } f }
+        "ftCo_Furafura_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Furafura::ftCo_Furafura_Phys(g as _) } f }
+        "ftCo_GuardOff_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardOff_Anim(g as _) } f }
+        "ftCo_GuardOff_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardOff_Coll(g as _) } f }
+        "ftCo_GuardOff_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardOff_IASA(g as _) } f }
+        "ftCo_GuardOff_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardOff_Phys(g as _) } f }
+        "ftCo_GuardOn_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardOn_Anim(g as _) } f }
+        "ftCo_GuardOn_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardOn_Coll(g as _) } f }
+        "ftCo_GuardOn_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardOn_IASA(g as _) } f }
+        "ftCo_GuardOn_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardOn_Phys(g as _) } f }
+        "ftCo_GuardReflect_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardReflect_Anim(g as _) } f }
+        "ftCo_GuardReflect_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardReflect_Coll(g as _) } f }
+        "ftCo_GuardReflect_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardReflect_IASA(g as _) } f }
+        "ftCo_GuardReflect_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardReflect_Phys(g as _) } f }
+        "ftCo_GuardSetOff_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardSetOff_Anim(g as _) } f }
+        "ftCo_GuardSetOff_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardSetOff_Coll(g as _) } f }
+        "ftCo_GuardSetOff_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardSetOff_IASA(g as _) } f }
+        "ftCo_GuardSetOff_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_GuardSetOff_Phys(g as _) } f }
+        "ftCo_Guard_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_Guard_Anim(g as _) } f }
+        "ftCo_Guard_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_Guard_Coll(g as _) } f }
+        "ftCo_Guard_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_Guard_IASA(g as _) } f }
+        "ftCo_Guard_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Guard::ftCo_Guard_Phys(g as _) } f }
+        "ftCo_HammerFall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerFall::ftCo_HammerFall_Anim(g as _) } f }
+        "ftCo_HammerFall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerFall::ftCo_HammerFall_Coll(g as _) } f }
+        "ftCo_HammerFall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerFall::ftCo_HammerFall_IASA(g as _) } f }
+        "ftCo_HammerFall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerFall::ftCo_HammerFall_Phys(g as _) } f }
+        "ftCo_HammerJump_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerJump::ftCo_HammerJump_Anim(g as _) } f }
+        "ftCo_HammerJump_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerJump::ftCo_HammerJump_Coll(g as _) } f }
+        "ftCo_HammerJump_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerJump::ftCo_HammerJump_IASA(g as _) } f }
+        "ftCo_HammerJump_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerJump::ftCo_HammerJump_Phys(g as _) } f }
+        "ftCo_HammerKneeBend_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerKneeBend::ftCo_HammerKneeBend_Anim(g as _) } f }
+        "ftCo_HammerKneeBend_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerKneeBend::ftCo_HammerKneeBend_Coll(g as _) } f }
+        "ftCo_HammerKneeBend_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerKneeBend::ftCo_HammerKneeBend_IASA(g as _) } f }
+        "ftCo_HammerKneeBend_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerKneeBend::ftCo_HammerKneeBend_Phys(g as _) } f }
+        "ftCo_HammerLanding_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerLanding::ftCo_HammerLanding_Anim(g as _) } f }
+        "ftCo_HammerLanding_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerLanding::ftCo_HammerLanding_Coll(g as _) } f }
+        "ftCo_HammerLanding_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerLanding::ftCo_HammerLanding_Enter(g as _) } f }
+        "ftCo_HammerLanding_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerLanding::ftCo_HammerLanding_IASA(g as _) } f }
+        "ftCo_HammerLanding_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerLanding::ftCo_HammerLanding_Phys(g as _) } f }
+        "ftCo_HammerTurn_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerTurn::ftCo_HammerTurn_Anim(g as _) } f }
+        "ftCo_HammerTurn_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerTurn::ftCo_HammerTurn_Coll(g as _) } f }
+        "ftCo_HammerTurn_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerTurn::ftCo_HammerTurn_IASA(g as _) } f }
+        "ftCo_HammerTurn_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerTurn::ftCo_HammerTurn_Phys(g as _) } f }
+        "ftCo_HammerWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_HammerWait_Anim(g as _) } f }
+        "ftCo_HammerWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_HammerWait_Coll(g as _) } f }
+        "ftCo_HammerWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_HammerWait_IASA(g as _) } f }
+        "ftCo_HammerWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWait::ftCo_HammerWait_Phys(g as _) } f }
+        "ftCo_HammerWalk_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWalk::ftCo_HammerWalk_Anim(g as _) } f }
+        "ftCo_HammerWalk_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWalk::ftCo_HammerWalk_Coll(g as _) } f }
+        "ftCo_HammerWalk_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWalk::ftCo_HammerWalk_IASA(g as _) } f }
+        "ftCo_HammerWalk_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_HammerWalk::ftCo_HammerWalk_Phys(g as _) } f }
+        "ftCo_HeavyThrow_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_HeavyThrow_Coll(g as _) } f }
+        "ftCo_ItemParasolDamageFall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolDamageFall::ftCo_ItemParasolDamageFall_Anim(g as _) } f }
+        "ftCo_ItemParasolDamageFall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolDamageFall::ftCo_ItemParasolDamageFall_Coll(g as _) } f }
+        "ftCo_ItemParasolDamageFall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolDamageFall::ftCo_ItemParasolDamageFall_IASA(g as _) } f }
+        "ftCo_ItemParasolDamageFall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolDamageFall::ftCo_ItemParasolDamageFall_Phys(g as _) } f }
+        "ftCo_ItemParasolFallSpecial_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFallSpecial::ftCo_ItemParasolFallSpecial_Anim(g as _) } f }
+        "ftCo_ItemParasolFallSpecial_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFallSpecial::ftCo_ItemParasolFallSpecial_Coll(g as _) } f }
+        "ftCo_ItemParasolFallSpecial_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFallSpecial::ftCo_ItemParasolFallSpecial_IASA(g as _) } f }
+        "ftCo_ItemParasolFallSpecial_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFallSpecial::ftCo_ItemParasolFallSpecial_Phys(g as _) } f }
+        "ftCo_ItemParasolFall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFall::ftCo_ItemParasolFall_Anim(g as _) } f }
+        "ftCo_ItemParasolFall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFall::ftCo_ItemParasolFall_Coll(g as _) } f }
+        "ftCo_ItemParasolFall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFall::ftCo_ItemParasolFall_IASA(g as _) } f }
+        "ftCo_ItemParasolFall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolFall::ftCo_ItemParasolFall_Phys(g as _) } f }
+        "ftCo_ItemParasolOpen_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolOpen::ftCo_ItemParasolOpen_Anim(g as _) } f }
+        "ftCo_ItemParasolOpen_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolOpen::ftCo_ItemParasolOpen_Coll(g as _) } f }
+        "ftCo_ItemParasolOpen_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolOpen::ftCo_ItemParasolOpen_IASA(g as _) } f }
+        "ftCo_ItemParasolOpen_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolOpen::ftCo_ItemParasolOpen_Phys(g as _) } f }
+        "ftCo_ItemParasol_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolOpen::ftCo_ItemParasol_Phys(g as _) } f }
+        "ftCo_ItemScopeAirEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::ftCo_ItemScopeAirEnd_Anim(g as _) } f }
+        "ftCo_ItemScopeAirEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::ftCo_ItemScopeAirEnd_Coll(g as _) } f }
+        "ftCo_ItemScopeAirEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::ftCo_ItemScopeAirEnd_IASA(g as _) } f }
+        "ftCo_ItemScopeAirEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::ftCo_ItemScopeAirEnd_Phys(g as _) } f }
+        "ftCo_ItemScopeAirFire_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::ftCo_ItemScopeAirFire_Anim(g as _) } f }
+        "ftCo_ItemScopeAirFire_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::ftCo_ItemScopeAirFire_Coll(g as _) } f }
+        "ftCo_ItemScopeAirFire_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::ftCo_ItemScopeAirFire_IASA(g as _) } f }
+        "ftCo_ItemScopeAirFire_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::ftCo_ItemScopeAirFire_Phys(g as _) } f }
+        "ftCo_ItemScopeAirRapid_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::ftCo_ItemScopeAirRapid_Anim(g as _) } f }
+        "ftCo_ItemScopeAirRapid_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::ftCo_ItemScopeAirRapid_Coll(g as _) } f }
+        "ftCo_ItemScopeAirRapid_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::ftCo_ItemScopeAirRapid_IASA(g as _) } f }
+        "ftCo_ItemScopeAirRapid_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::ftCo_ItemScopeAirRapid_Phys(g as _) } f }
+        "ftCo_ItemScopeAirStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ftCo_ItemScopeAirStart_Anim(g as _) } f }
+        "ftCo_ItemScopeAirStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ftCo_ItemScopeAirStart_Coll(g as _) } f }
+        "ftCo_ItemScopeAirStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ftCo_ItemScopeAirStart_IASA(g as _) } f }
+        "ftCo_ItemScopeAirStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ftCo_ItemScopeAirStart_Phys(g as _) } f }
+        "ftCo_ItemScopeEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::ftCo_ItemScopeEnd_Anim(g as _) } f }
+        "ftCo_ItemScopeEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::ftCo_ItemScopeEnd_Coll(g as _) } f }
+        "ftCo_ItemScopeEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::ftCo_ItemScopeEnd_IASA(g as _) } f }
+        "ftCo_ItemScopeEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScope::ftCo_ItemScopeEnd_Phys(g as _) } f }
+        "ftCo_ItemScopeFire_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::ftCo_ItemScopeFire_Anim(g as _) } f }
+        "ftCo_ItemScopeFire_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::ftCo_ItemScopeFire_Coll(g as _) } f }
+        "ftCo_ItemScopeFire_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::ftCo_ItemScopeFire_IASA(g as _) } f }
+        "ftCo_ItemScopeFire_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeFire::ftCo_ItemScopeFire_Phys(g as _) } f }
+        "ftCo_ItemScopeRapid_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::ftCo_ItemScopeRapid_Anim(g as _) } f }
+        "ftCo_ItemScopeRapid_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::ftCo_ItemScopeRapid_Coll(g as _) } f }
+        "ftCo_ItemScopeRapid_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::ftCo_ItemScopeRapid_IASA(g as _) } f }
+        "ftCo_ItemScopeRapid_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeRapid::ftCo_ItemScopeRapid_Phys(g as _) } f }
+        "ftCo_ItemScopeStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ftCo_ItemScopeStart_Anim(g as _) } f }
+        "ftCo_ItemScopeStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ftCo_ItemScopeStart_Coll(g as _) } f }
+        "ftCo_ItemScopeStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ftCo_ItemScopeStart_IASA(g as _) } f }
+        "ftCo_ItemScopeStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ftCo_ItemScopeStart_Phys(g as _) } f }
+        "ftCo_ItemScrewAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScrew::ftCo_ItemScrewAir_Anim(g as _) } f }
+        "ftCo_ItemScrewAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScrew::ftCo_ItemScrewAir_Coll(g as _) } f }
+        "ftCo_ItemScrewAir_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScrew::ftCo_ItemScrewAir_IASA(g as _) } f }
+        "ftCo_ItemScrewAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScrew::ftCo_ItemScrewAir_Phys(g as _) } f }
+        "ftCo_ItemScrew_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScrew::ftCo_ItemScrew_Anim(g as _) } f }
+        "ftCo_ItemScrew_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScrew::ftCo_ItemScrew_Coll(g as _) } f }
+        "ftCo_ItemScrew_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScrew::ftCo_ItemScrew_Enter(g as _) } f }
+        "ftCo_ItemScrew_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScrew::ftCo_ItemScrew_IASA(g as _) } f }
+        "ftCo_ItemScrew_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScrew::ftCo_ItemScrew_Phys(g as _) } f }
+        "ftCo_ItemThrow_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_ItemThrow_Anim(g as _) } f }
+        "ftCo_ItemThrow_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_ItemThrow_IASA(g as _) } f }
+        "ftCo_ItemThrow_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_ItemThrow_Phys(g as _) } f }
+        "ftCo_JumpAerialF1_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerialF1::ftCo_JumpAerialF1_Anim(g as _) } f }
+        "ftCo_JumpAerialF1_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerialF1::ftCo_JumpAerialF1_Coll(g as _) } f }
+        "ftCo_JumpAerialF1_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerialF1::ftCo_JumpAerialF1_IASA(g as _) } f }
+        "ftCo_JumpAerialF1_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerialF1::ftCo_JumpAerialF1_Phys(g as _) } f }
+        "ftCo_JumpAerial_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Anim(g as _) } f }
+        "ftCo_JumpAerial_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Coll(g as _) } f }
+        "ftCo_JumpAerial_Enter_Basic" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Enter_Basic(g as _) } f }
+        "ftCo_JumpAerial_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_IASA(g as _) } f }
+        "ftCo_JumpAerial_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Phys(g as _) } f }
+        "ftCo_JumpAerial_Phys_Cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Phys_Cb(g as _) } f }
+        "ftCo_JumpAerial_Phys_Cb_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Phys_Cb_c(g as _) } f }
+        "ftCo_Jump_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Jump::ftCo_Jump_Anim(g as _) } f }
+        "ftCo_Jump_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Jump::ftCo_Jump_Coll(g as _) } f }
+        "ftCo_Jump_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Jump::ftCo_Jump_Enter(g as _) } f }
+        "ftCo_Jump_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Jump::ftCo_Jump_IASA(g as _) } f }
+        "ftCo_Jump_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Jump::ftCo_Jump_Phys(g as _) } f }
+        "ftCo_Jump_Phys_Inner" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Jump::ftCo_Jump_Phys_Inner(g as _) } f }
+        "ftCo_KinokoGiantEndAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantEnd::ftCo_KinokoGiantEndAir_Anim(g as _) } f }
+        "ftCo_KinokoGiantEndAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantEnd::ftCo_KinokoGiantEndAir_Coll(g as _) } f }
+        "ftCo_KinokoGiantEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantEnd::ftCo_KinokoGiantEnd_Anim(g as _) } f }
+        "ftCo_KinokoGiantEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantEnd::ftCo_KinokoGiantEnd_Coll(g as _) } f }
+        "ftCo_KinokoGiantStartAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::ftCo_KinokoGiantStartAir_Anim(g as _) } f }
+        "ftCo_KinokoGiantStartAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::ftCo_KinokoGiantStartAir_Coll(g as _) } f }
+        "ftCo_KinokoGiantStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::ftCo_KinokoGiantStart_Anim(g as _) } f }
+        "ftCo_KinokoGiantStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoGiantStart::ftCo_KinokoGiantStart_Coll(g as _) } f }
+        "ftCo_KinokoSmallEndAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallEnd::ftCo_KinokoSmallEndAir_Anim(g as _) } f }
+        "ftCo_KinokoSmallEndAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallEnd::ftCo_KinokoSmallEndAir_Coll(g as _) } f }
+        "ftCo_KinokoSmallEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallEnd::ftCo_KinokoSmallEnd_Anim(g as _) } f }
+        "ftCo_KinokoSmallEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallEnd::ftCo_KinokoSmallEnd_Coll(g as _) } f }
+        "ftCo_KinokoSmallStartAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::ftCo_KinokoSmallStartAir_Anim(g as _) } f }
+        "ftCo_KinokoSmallStartAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::ftCo_KinokoSmallStartAir_Coll(g as _) } f }
+        "ftCo_KinokoSmallStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::ftCo_KinokoSmallStart_Anim(g as _) } f }
+        "ftCo_KinokoSmallStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KinokoSmallStart::ftCo_KinokoSmallStart_Coll(g as _) } f }
         "ftCo_KirbyYoshiEgg_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::ftCo_KirbyYoshiEgg_Anim(g as _) } f }
         "ftCo_KirbyYoshiEgg_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::ftCo_KirbyYoshiEgg_Coll(g as _) } f }
         "ftCo_KirbyYoshiEgg_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::ftCo_KirbyYoshiEgg_IASA(g as _) } f }
         "ftCo_KirbyYoshiEgg_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyyoshiegg::ftCo_KirbyYoshiEgg_Phys(g as _) } f }
+        "ftCo_KneeBend_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KneeBend::ftCo_KneeBend_Anim(g as _) } f }
+        "ftCo_KneeBend_Check_ShortHop" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KneeBend::ftCo_KneeBend_Check_ShortHop(g as _) } f }
+        "ftCo_KneeBend_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KneeBend::ftCo_KneeBend_Coll(g as _) } f }
+        "ftCo_KneeBend_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KneeBend::ftCo_KneeBend_IASA(g as _) } f }
+        "ftCo_KneeBend_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_KneeBend::ftCo_KneeBend_Phys(g as _) } f }
+        "ftCo_LandingAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_LandingAir::ftCo_LandingAir_Anim(g as _) } f }
+        "ftCo_LandingAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_LandingAir::ftCo_LandingAir_Coll(g as _) } f }
+        "ftCo_LandingAir_EnterWithLag" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_LandingAir::ftCo_LandingAir_EnterWithLag(g as _) } f }
+        "ftCo_LandingAir_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_LandingAir::ftCo_LandingAir_IASA(g as _) } f }
+        "ftCo_LandingAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_LandingAir::ftCo_LandingAir_Phys(g as _) } f }
+        "ftCo_LandingFallSpecial_Enter_Basic" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter_Basic(g as _) } f }
+        "ftCo_Landing_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Anim(g as _) } f }
+        "ftCo_Landing_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Coll(g as _) } f }
+        "ftCo_Landing_Enter_Basic" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Enter_Basic(g as _) } f }
+        "ftCo_Landing_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Landing::ftCo_Landing_IASA(g as _) } f }
+        "ftCo_Landing_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Phys(g as _) } f }
+        "ftCo_LiftTurn_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftTurn_Anim(g as _) } f }
+        "ftCo_LiftTurn_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftTurn_Coll(g as _) } f }
+        "ftCo_LiftTurn_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftTurn_IASA(g as _) } f }
+        "ftCo_LiftTurn_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftTurn_Phys(g as _) } f }
+        "ftCo_LiftWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftWait_Anim(g as _) } f }
+        "ftCo_LiftWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftWait_Coll(g as _) } f }
+        "ftCo_LiftWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftWait_IASA(g as _) } f }
+        "ftCo_LiftWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftWait_Phys(g as _) } f }
+        "ftCo_LiftWalk_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftWalk_Anim(g as _) } f }
+        "ftCo_LiftWalk_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftWalk_Coll(g as _) } f }
+        "ftCo_LiftWalk_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftWalk_IASA(g as _) } f }
+        "ftCo_LiftWalk_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Lift::ftCo_LiftWalk_Phys(g as _) } f }
+        "ftCo_LightThrowAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_LightThrowAir_Coll(g as _) } f }
+        "ftCo_LightThrowAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_LightThrowAir_Phys(g as _) } f }
+        "ftCo_LightThrowDashDrop_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_LightThrowDashDrop_Coll(g as _) } f }
+        "ftCo_LightThrowDash_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_LightThrowDash_Phys(g as _) } f }
+        "ftCo_LightThrow_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemThrow::ftCo_LightThrow_Coll(g as _) } f }
         "ftCo_LipstickSwing_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlipstickswing::ftCo_LipstickSwing_Anim(g as _) } f }
         "ftCo_LipstickSwing_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlipstickswing::ftCo_LipstickSwing_Coll(g as _) } f }
         "ftCo_LipstickSwing_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlipstickswing::ftCo_LipstickSwing_IASA(g as _) } f }
         "ftCo_LipstickSwing_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlipstickswing::ftCo_LipstickSwing_Phys(g as _) } f }
+        "ftCo_MissFoot_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_MissFoot::ftCo_MissFoot_Anim(g as _) } f }
+        "ftCo_MissFoot_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_MissFoot::ftCo_MissFoot_Coll(g as _) } f }
+        "ftCo_MissFoot_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_MissFoot::ftCo_MissFoot_IASA(g as _) } f }
+        "ftCo_MissFoot_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_MissFoot::ftCo_MissFoot_Phys(g as _) } f }
+        "ftCo_OttottoWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_OttottoWait_Anim(g as _) } f }
+        "ftCo_OttottoWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_OttottoWait_Coll(g as _) } f }
+        "ftCo_OttottoWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_OttottoWait_IASA(g as _) } f }
+        "ftCo_OttottoWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_OttottoWait_Phys(g as _) } f }
+        "ftCo_Ottotto_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_Ottotto_Anim(g as _) } f }
+        "ftCo_Ottotto_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_Ottotto_Coll(g as _) } f }
+        "ftCo_Ottotto_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_Ottotto_IASA(g as _) } f }
+        "ftCo_Ottotto_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Ottotto::ftCo_Ottotto_Phys(g as _) } f }
+        "ftCo_Pass_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Pass::ftCo_Pass_Anim(g as _) } f }
+        "ftCo_Pass_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Pass::ftCo_Pass_Coll(g as _) } f }
+        "ftCo_Pass_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Pass::ftCo_Pass_IASA(g as _) } f }
+        "ftCo_Pass_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Pass::ftCo_Pass_Phys(g as _) } f }
+        "ftCo_PassiveCeil_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveCeil::ftCo_PassiveCeil_Anim(g as _) } f }
+        "ftCo_PassiveCeil_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveCeil::ftCo_PassiveCeil_Coll(g as _) } f }
+        "ftCo_PassiveCeil_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveCeil::ftCo_PassiveCeil_IASA(g as _) } f }
+        "ftCo_PassiveCeil_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveCeil::ftCo_PassiveCeil_Phys(g as _) } f }
+        "ftCo_PassiveStand_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveStand::ftCo_PassiveStand_Anim(g as _) } f }
+        "ftCo_PassiveStand_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveStand::ftCo_PassiveStand_Coll(g as _) } f }
+        "ftCo_PassiveStand_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveStand::ftCo_PassiveStand_IASA(g as _) } f }
+        "ftCo_PassiveStand_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveStand::ftCo_PassiveStand_Phys(g as _) } f }
+        "ftCo_PassiveWall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveWall::ftCo_PassiveWall_Anim(g as _) } f }
+        "ftCo_PassiveWall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveWall::ftCo_PassiveWall_Coll(g as _) } f }
+        "ftCo_PassiveWall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveWall::ftCo_PassiveWall_IASA(g as _) } f }
+        "ftCo_PassiveWall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_PassiveWall::ftCo_PassiveWall_Phys(g as _) } f }
+        "ftCo_Passive_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Passive::ftCo_Passive_Anim(g as _) } f }
+        "ftCo_Passive_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Passive::ftCo_Passive_Coll(g as _) } f }
+        "ftCo_Passive_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Passive::ftCo_Passive_IASA(g as _) } f }
+        "ftCo_Passive_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Passive::ftCo_Passive_Phys(g as _) } f }
+        "ftCo_RebirthWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_RebirthWait_Anim(g as _) } f }
+        "ftCo_RebirthWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_RebirthWait_Coll(g as _) } f }
+        "ftCo_RebirthWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_RebirthWait_IASA(g as _) } f }
+        "ftCo_RebirthWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_RebirthWait_Phys(g as _) } f }
+        "ftCo_Rebirth_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_Rebirth_Anim(g as _) } f }
+        "ftCo_Rebirth_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_Rebirth_Cam(g as _) } f }
+        "ftCo_Rebirth_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_Rebirth_Coll(g as _) } f }
+        "ftCo_Rebirth_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_Rebirth_IASA(g as _) } f }
+        "ftCo_Rebirth_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0d4d::ftCo_Rebirth_Phys(g as _) } f }
+        "ftCo_ReboundStop_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Rebound::ftCo_ReboundStop_Anim(g as _) } f }
+        "ftCo_Rebound_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Rebound::ftCo_Rebound_Anim(g as _) } f }
+        "ftCo_Rebound_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Rebound::ftCo_Rebound_Coll(g as _) } f }
+        "ftCo_Rebound_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Rebound::ftCo_Rebound_IASA(g as _) } f }
+        "ftCo_Rebound_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Rebound::ftCo_Rebound_Phys(g as _) } f }
+        "ftCo_RunBrake_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_RunBrake::ftCo_RunBrake_Anim(g as _) } f }
+        "ftCo_RunBrake_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_RunBrake::ftCo_RunBrake_Coll(g as _) } f }
+        "ftCo_RunBrake_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_RunBrake::ftCo_RunBrake_Enter(g as _) } f }
+        "ftCo_RunBrake_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_RunBrake::ftCo_RunBrake_IASA(g as _) } f }
+        "ftCo_RunBrake_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_RunBrake::ftCo_RunBrake_Phys(g as _) } f }
+        "ftCo_RunDirect_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_RunDirect::ftCo_RunDirect_Anim(g as _) } f }
+        "ftCo_RunDirect_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_RunDirect::ftCo_RunDirect_Coll(g as _) } f }
+        "ftCo_RunDirect_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_RunDirect::ftCo_RunDirect_IASA(g as _) } f }
+        "ftCo_RunDirect_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_RunDirect::ftCo_RunDirect_Phys(g as _) } f }
+        "ftCo_Run_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Run::ftCo_Run_Anim(g as _) } f }
+        "ftCo_Run_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Run::ftCo_Run_Coll(g as _) } f }
+        "ftCo_Run_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Run::ftCo_Run_IASA(g as _) } f }
+        "ftCo_Run_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Run::ftCo_Run_Phys(g as _) } f }
+        "ftCo_ShieldBreakDown_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakDown::ftCo_ShieldBreakDown_Anim(g as _) } f }
+        "ftCo_ShieldBreakDown_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakDown::ftCo_ShieldBreakDown_Coll(g as _) } f }
+        "ftCo_ShieldBreakDown_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakDown::ftCo_ShieldBreakDown_IASA(g as _) } f }
+        "ftCo_ShieldBreakDown_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakDown::ftCo_ShieldBreakDown_Phys(g as _) } f }
+        "ftCo_ShieldBreakFall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFall::ftCo_ShieldBreakFall_Anim(g as _) } f }
+        "ftCo_ShieldBreakFall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFall::ftCo_ShieldBreakFall_Coll(g as _) } f }
+        "ftCo_ShieldBreakFall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFall::ftCo_ShieldBreakFall_IASA(g as _) } f }
+        "ftCo_ShieldBreakFall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFall::ftCo_ShieldBreakFall_Phys(g as _) } f }
+        "ftCo_ShieldBreakFly_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFly::ftCo_ShieldBreakFly_Anim(g as _) } f }
+        "ftCo_ShieldBreakFly_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFly::ftCo_ShieldBreakFly_Coll(g as _) } f }
+        "ftCo_ShieldBreakFly_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFly::ftCo_ShieldBreakFly_IASA(g as _) } f }
+        "ftCo_ShieldBreakFly_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakFly::ftCo_ShieldBreakFly_Phys(g as _) } f }
+        "ftCo_ShieldBreakStand_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakStand::ftCo_ShieldBreakStand_Anim(g as _) } f }
+        "ftCo_ShieldBreakStand_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakStand::ftCo_ShieldBreakStand_Coll(g as _) } f }
+        "ftCo_ShieldBreakStand_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakStand::ftCo_ShieldBreakStand_IASA(g as _) } f }
+        "ftCo_ShieldBreakStand_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ShieldBreakStand::ftCo_ShieldBreakStand_Phys(g as _) } f }
+        "ftCo_Shouldered_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Shouldered::ftCo_Shouldered_Anim(g as _) } f }
+        "ftCo_Shouldered_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Shouldered::ftCo_Shouldered_Coll(g as _) } f }
+        "ftCo_Shouldered_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Shouldered::ftCo_Shouldered_IASA(g as _) } f }
+        "ftCo_Shouldered_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Shouldered::ftCo_Shouldered_Phys(g as _) } f }
+        "ftCo_SquatRv_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatRv::ftCo_SquatRv_Anim(g as _) } f }
+        "ftCo_SquatRv_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatRv::ftCo_SquatRv_Coll(g as _) } f }
+        "ftCo_SquatRv_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatRv::ftCo_SquatRv_Enter(g as _) } f }
+        "ftCo_SquatRv_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatRv::ftCo_SquatRv_IASA(g as _) } f }
+        "ftCo_SquatRv_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatRv::ftCo_SquatRv_Phys(g as _) } f }
+        "ftCo_SquatWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatWait::ftCo_SquatWait_Anim(g as _) } f }
+        "ftCo_SquatWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatWait::ftCo_SquatWait_Coll(g as _) } f }
+        "ftCo_SquatWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatWait::ftCo_SquatWait_IASA(g as _) } f }
+        "ftCo_SquatWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_SquatWait::ftCo_SquatWait_Phys(g as _) } f }
+        "ftCo_Squat_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Squat::ftCo_Squat_Anim(g as _) } f }
+        "ftCo_Squat_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Squat::ftCo_Squat_Coll(g as _) } f }
+        "ftCo_Squat_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Squat::ftCo_Squat_Enter(g as _) } f }
+        "ftCo_Squat_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Squat::ftCo_Squat_IASA(g as _) } f }
+        "ftCo_Squat_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Squat::ftCo_Squat_Phys(g as _) } f }
         "ftCo_StarRodSwing_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftstarrodswing::ftCo_StarRodSwing_Anim(g as _) } f }
         "ftCo_StarRodSwing_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftstarrodswing::ftCo_StarRodSwing_Coll(g as _) } f }
         "ftCo_StarRodSwing_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftstarrodswing::ftCo_StarRodSwing_IASA(g as _) } f }
         "ftCo_StarRodSwing_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftstarrodswing::ftCo_StarRodSwing_Phys(g as _) } f }
+        "ftCo_StopCeil_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopCeil::ftCo_StopCeil_Anim(g as _) } f }
+        "ftCo_StopCeil_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopCeil::ftCo_StopCeil_Coll(g as _) } f }
+        "ftCo_StopCeil_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopCeil::ftCo_StopCeil_IASA(g as _) } f }
+        "ftCo_StopCeil_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopCeil::ftCo_StopCeil_Phys(g as _) } f }
+        "ftCo_StopWall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopWall::ftCo_StopWall_Anim(g as _) } f }
+        "ftCo_StopWall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopWall::ftCo_StopWall_Coll(g as _) } f }
+        "ftCo_StopWall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopWall::ftCo_StopWall_IASA(g as _) } f }
+        "ftCo_StopWall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_StopWall::ftCo_StopWall_Phys(g as _) } f }
+        "ftCo_ThrowB_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowB_Anim(g as _) } f }
+        "ftCo_ThrowB_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowB_Coll(g as _) } f }
+        "ftCo_ThrowB_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowB_IASA(g as _) } f }
+        "ftCo_ThrowB_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowB_Phys(g as _) } f }
+        "ftCo_ThrowF_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowF_Anim(g as _) } f }
+        "ftCo_ThrowF_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowF_Coll(g as _) } f }
+        "ftCo_ThrowF_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowF_IASA(g as _) } f }
+        "ftCo_ThrowF_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowF_Phys(g as _) } f }
+        "ftCo_ThrowHi_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowHi_Anim(g as _) } f }
+        "ftCo_ThrowHi_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowHi_Cam(g as _) } f }
+        "ftCo_ThrowHi_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowHi_Coll(g as _) } f }
+        "ftCo_ThrowHi_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowHi_IASA(g as _) } f }
+        "ftCo_ThrowHi_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowHi_Phys(g as _) } f }
+        "ftCo_ThrowLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowLw_Anim(g as _) } f }
+        "ftCo_ThrowLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowLw_Coll(g as _) } f }
+        "ftCo_ThrowLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowLw_IASA(g as _) } f }
+        "ftCo_ThrowLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Throw::ftCo_ThrowLw_Phys(g as _) } f }
+        "ftCo_ThrownB_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownB_Anim(g as _) } f }
+        "ftCo_ThrownB_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownB_Coll(g as _) } f }
+        "ftCo_ThrownB_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownB_IASA(g as _) } f }
+        "ftCo_ThrownB_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownB_Phys(g as _) } f }
+        "ftCo_ThrownCopyStar_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownCopyStar_Anim(g as _) } f }
+        "ftCo_ThrownCopyStar_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownCopyStar_Coll(g as _) } f }
+        "ftCo_ThrownCopyStar_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownCopyStar_IASA(g as _) } f }
+        "ftCo_ThrownCopyStar_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownCopyStar_Phys(g as _) } f }
         "ftCo_ThrownCrazyHand_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandthrowncrazyhand::ftCo_ThrownCrazyHand_Anim(g as _) } f }
         "ftCo_ThrownCrazyHand_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandthrowncrazyhand::ftCo_ThrownCrazyHand_Coll(g as _) } f }
         "ftCo_ThrownCrazyHand_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandthrowncrazyhand::ftCo_ThrownCrazyHand_IASA(g as _) } f }
         "ftCo_ThrownCrazyHand_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcrazyhandthrowncrazyhand::ftCo_ThrownCrazyHand_Phys(g as _) } f }
+        "ftCo_ThrownF_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownF_Anim(g as _) } f }
+        "ftCo_ThrownF_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownF_Coll(g as _) } f }
+        "ftCo_ThrownF_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownF_IASA(g as _) } f }
+        "ftCo_ThrownF_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownF_Phys(g as _) } f }
+        "ftCo_ThrownHi_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownHi_Anim(g as _) } f }
+        "ftCo_ThrownHi_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownHi_Cam(g as _) } f }
+        "ftCo_ThrownHi_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownHi_Coll(g as _) } f }
+        "ftCo_ThrownHi_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownHi_IASA(g as _) } f }
+        "ftCo_ThrownHi_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownHi_Phys(g as _) } f }
+        "ftCo_ThrownKirbyStar_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownKirbyStar_Anim(g as _) } f }
+        "ftCo_ThrownKirbyStar_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownKirbyStar_Coll(g as _) } f }
+        "ftCo_ThrownKirbyStar_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownKirbyStar_IASA(g as _) } f }
+        "ftCo_ThrownKirbyStar_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownKirbyStar_Phys(g as _) } f }
+        "ftCo_ThrownKirby_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownKirby_Anim(g as _) } f }
+        "ftCo_ThrownKirby_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownKirby_Coll(g as _) } f }
+        "ftCo_ThrownKirby_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownKirby_IASA(g as _) } f }
+        "ftCo_ThrownKirby_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKirby::ftCo_ThrownKirby_Phys(g as _) } f }
+        "ftCo_ThrownKoopaAirB_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaAirB_Anim(g as _) } f }
+        "ftCo_ThrownKoopaAirB_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaAirB_Coll(g as _) } f }
+        "ftCo_ThrownKoopaAirB_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaAirB_IASA(g as _) } f }
+        "ftCo_ThrownKoopaAirB_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaAirB_Phys(g as _) } f }
+        "ftCo_ThrownKoopaAirF_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaAirF_Anim(g as _) } f }
+        "ftCo_ThrownKoopaAirF_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaAirF_Coll(g as _) } f }
+        "ftCo_ThrownKoopaAirF_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaAirF_IASA(g as _) } f }
+        "ftCo_ThrownKoopaAirF_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaAirF_Phys(g as _) } f }
+        "ftCo_ThrownKoopaB_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaB_Anim(g as _) } f }
+        "ftCo_ThrownKoopaB_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaB_Coll(g as _) } f }
+        "ftCo_ThrownKoopaB_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaB_IASA(g as _) } f }
+        "ftCo_ThrownKoopaB_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaB_Phys(g as _) } f }
+        "ftCo_ThrownKoopaF_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaF_Anim(g as _) } f }
+        "ftCo_ThrownKoopaF_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaF_Coll(g as _) } f }
+        "ftCo_ThrownKoopaF_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaF_IASA(g as _) } f }
+        "ftCo_ThrownKoopaF_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownKoopa::ftCo_ThrownKoopaF_Phys(g as _) } f }
+        "ftCo_ThrownLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownLw_Anim(g as _) } f }
+        "ftCo_ThrownLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownLw_Coll(g as _) } f }
+        "ftCo_ThrownLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownLw_IASA(g as _) } f }
+        "ftCo_ThrownLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Thrown::ftCo_ThrownLw_Phys(g as _) } f }
+        "ftCo_ThrownMewtwoAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownMewtwo::ftCo_ThrownMewtwoAir_Anim(g as _) } f }
+        "ftCo_ThrownMewtwoAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownMewtwo::ftCo_ThrownMewtwoAir_Coll(g as _) } f }
+        "ftCo_ThrownMewtwoAir_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownMewtwo::ftCo_ThrownMewtwoAir_IASA(g as _) } f }
+        "ftCo_ThrownMewtwoAir_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownMewtwo::ftCo_ThrownMewtwoAir_Phys(g as _) } f }
+        "ftCo_ThrownMewtwo_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownMewtwo::ftCo_ThrownMewtwo_Anim(g as _) } f }
+        "ftCo_ThrownMewtwo_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownMewtwo::ftCo_ThrownMewtwo_Coll(g as _) } f }
+        "ftCo_ThrownMewtwo_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownMewtwo::ftCo_ThrownMewtwo_IASA(g as _) } f }
+        "ftCo_ThrownMewtwo_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ThrownMewtwo::ftCo_ThrownMewtwo_Phys(g as _) } f }
+        "ftCo_TurnRun_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_TurnRun::ftCo_TurnRun_Anim(g as _) } f }
+        "ftCo_TurnRun_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_TurnRun::ftCo_TurnRun_Coll(g as _) } f }
+        "ftCo_TurnRun_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_TurnRun::ftCo_TurnRun_IASA(g as _) } f }
+        "ftCo_TurnRun_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_TurnRun::ftCo_TurnRun_Phys(g as _) } f }
+        "ftCo_Turn_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Anim(g as _) } f }
+        "ftCo_Turn_Anim_Inner" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Anim_Inner(g as _) } f }
+        "ftCo_Turn_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Coll(g as _) } f }
+        "ftCo_Turn_Enter_Basic" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Enter_Basic(g as _) } f }
+        "ftCo_Turn_Enter_Smash" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Enter_Smash(g as _) } f }
+        "ftCo_Turn_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Turn::ftCo_Turn_IASA(g as _) } f }
+        "ftCo_Turn_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Turn::ftCo_Turn_Phys(g as _) } f }
+        "ftCo_Wait_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Wait::ftCo_Wait_Anim(g as _) } f }
+        "ftCo_Wait_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Wait::ftCo_Wait_Coll(g as _) } f }
+        "ftCo_Wait_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Wait::ftCo_Wait_IASA(g as _) } f }
+        "ftCo_Wait_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Wait::ftCo_Wait_Phys(g as _) } f }
+        "ftCo_Walk_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Walk::ftCo_Walk_Anim(g as _) } f }
+        "ftCo_Walk_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Walk::ftCo_Walk_Coll(g as _) } f }
+        "ftCo_Walk_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Walk::ftCo_Walk_IASA(g as _) } f }
+        "ftCo_Walk_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Walk::ftCo_Walk_Phys(g as _) } f }
+        "ftCo_WarpStarFall_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarFall_Anim(g as _) } f }
+        "ftCo_WarpStarFall_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarFall_Cam(g as _) } f }
+        "ftCo_WarpStarFall_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarFall_Coll(g as _) } f }
+        "ftCo_WarpStarFall_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarFall_IASA(g as _) } f }
+        "ftCo_WarpStarFall_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarFall_Phys(g as _) } f }
+        "ftCo_WarpStarJump_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarJump_Anim(g as _) } f }
+        "ftCo_WarpStarJump_Cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarJump_Cam(g as _) } f }
+        "ftCo_WarpStarJump_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarJump_Coll(g as _) } f }
+        "ftCo_WarpStarJump_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarJump_IASA(g as _) } f }
+        "ftCo_WarpStarJump_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_WarpStar::ftCo_WarpStarJump_Phys(g as _) } f }
+        "ftCo_YoshiEgg_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_YoshiEgg_Anim(g as _) } f }
+        "ftCo_YoshiEgg_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_YoshiEgg_Coll(g as _) } f }
+        "ftCo_YoshiEgg_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_YoshiEgg_IASA(g as _) } f }
+        "ftCo_YoshiEgg_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_YoshiEgg::ftCo_YoshiEgg_Phys(g as _) } f }
+        "ftColl_8007AFF8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftColl_8007AFF8(g as _) } f }
         "ftDk_HeavyFall_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyheavyfall::ftDk_HeavyFall_Coll(g as _) } f }
         "ftDk_HeavyFall_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyheavyfall::ftDk_HeavyFall_IASA(g as _) } f }
         "ftDk_HeavyFall_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyheavyfall::ftDk_HeavyFall_Phys(g as _) } f }
@@ -1808,6 +3017,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftGw_SpecialS_ItemJudgementSetFlag" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftgamewatchspecials::ftGw_SpecialS_ItemJudgementSetFlag(g as _) } f }
         "ftGw_SpecialS_ItemJudgementSetup" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftgamewatchspecials::ftGw_SpecialS_ItemJudgementSetup(g as _) } f }
         "ftGw_SpecialS_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftgamewatchspecials::ftGw_SpecialS_Phys(g as _) } f }
+        "ftKb_AttackDashAir_800F22D4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_AttackDashAir_800F22D4(g as _) } f }
         "ftKb_AttackDashAir_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyattackdash::ftKb_AttackDashAir_Anim(g as _) } f }
         "ftKb_AttackDashAir_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyattackdash::ftKb_AttackDashAir_Coll(g as _) } f }
         "ftKb_AttackDashAir_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyattackdash::ftKb_AttackDashAir_IASA(g as _) } f }
@@ -1824,6 +3034,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftKb_CaSpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialcaptain::ftKb_CaSpecialN_Coll(g as _) } f }
         "ftKb_CaSpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialcaptain::ftKb_CaSpecialN_IASA(g as _) } f }
         "ftKb_CaSpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialcaptain::ftKb_CaSpecialN_Phys(g as _) } f }
+        "ftKb_ChargeShot_inline" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_ChargeShot_inline(g as _) } f }
         "ftKb_DkSpecialAirNCancel_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialdonkey::ftKb_DkSpecialAirNCancel_Anim(g as _) } f }
         "ftKb_DkSpecialAirNCancel_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialdonkey::ftKb_DkSpecialAirNCancel_Coll(g as _) } f }
         "ftKb_DkSpecialAirNCancel_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialdonkey::ftKb_DkSpecialAirNCancel_IASA(g as _) } f }
@@ -1865,17 +3076,27 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftKb_DkSpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialdonkey::ftKb_DkSpecialN_Coll(g as _) } f }
         "ftKb_DkSpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialdonkey::ftKb_DkSpecialN_IASA(g as _) } f }
         "ftKb_DkSpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialdonkey::ftKb_DkSpecialN_Phys(g as _) } f }
+        "ftKb_EatJump1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatJump1_Anim(g as _) } f }
         "ftKb_EatJump1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatJump1_Coll(g as _) } f }
+        "ftKb_EatJump1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatJump1_IASA(g as _) } f }
         "ftKb_EatJump1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatJump1_Phys(g as _) } f }
+        "ftKb_EatJump2_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatJump2_Anim(g as _) } f }
         "ftKb_EatJump2_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatJump2_Coll(g as _) } f }
+        "ftKb_EatJump2_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatJump2_Phys(g as _) } f }
         "ftKb_EatLanding_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatLanding_Anim(g as _) } f }
         "ftKb_EatLanding_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatLanding_Coll(g as _) } f }
         "ftKb_EatLanding_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatLanding_Phys(g as _) } f }
+        "ftKb_EatTurn_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatTurn_Anim(g as _) } f }
         "ftKb_EatTurn_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatTurn_Coll(g as _) } f }
         "ftKb_EatTurn_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatTurn_Phys(g as _) } f }
+        "ftKb_EatWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatWait_Anim(g as _) } f }
         "ftKb_EatWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatWait_Coll(g as _) } f }
+        "ftKb_EatWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatWait_IASA(g as _) } f }
         "ftKb_EatWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatWait_Phys(g as _) } f }
+        "ftKb_EatWalk_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatWalk_Anim(g as _) } f }
         "ftKb_EatWalk_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatWalk_Coll(g as _) } f }
+        "ftKb_EatWalk_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatWalk_IASA(g as _) } f }
+        "ftKb_EatWalk_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_EatWalk_Phys(g as _) } f }
         "ftKb_Eat_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_Eat_Anim(g as _) } f }
         "ftKb_Eat_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_Eat_Coll(g as _) } f }
         "ftKb_Eat_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_Eat_Phys(g as _) } f }
@@ -1924,74 +3145,245 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftKb_Init_UnkMotionStates3" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirby::ftKb_Init_UnkMotionStates3(g as _) } f }
         "ftKb_Init_UnkMotionStates4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirby::ftKb_Init_UnkMotionStates4(g as _) } f }
         "ftKb_KpSpecialAirNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirNEnd_Anim(g as _) } f }
+        "ftKb_KpSpecialAirNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirNEnd_Coll(g as _) } f }
+        "ftKb_KpSpecialAirNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirNEnd_IASA(g as _) } f }
         "ftKb_KpSpecialAirNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirNEnd_Phys(g as _) } f }
+        "ftKb_KpSpecialAirNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirNStart_Anim(g as _) } f }
+        "ftKb_KpSpecialAirNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirNStart_Coll(g as _) } f }
+        "ftKb_KpSpecialAirNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirNStart_IASA(g as _) } f }
         "ftKb_KpSpecialAirNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirNStart_Phys(g as _) } f }
+        "ftKb_KpSpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirN_Anim(g as _) } f }
+        "ftKb_KpSpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirN_Coll(g as _) } f }
+        "ftKb_KpSpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirN_IASA(g as _) } f }
         "ftKb_KpSpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialAirN_Phys(g as _) } f }
         "ftKb_KpSpecialNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialNEnd_Anim(g as _) } f }
+        "ftKb_KpSpecialNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialNEnd_Coll(g as _) } f }
+        "ftKb_KpSpecialNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialNEnd_IASA(g as _) } f }
         "ftKb_KpSpecialNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialNEnd_Phys(g as _) } f }
+        "ftKb_KpSpecialNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialNStart_Anim(g as _) } f }
+        "ftKb_KpSpecialNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialNStart_Coll(g as _) } f }
+        "ftKb_KpSpecialNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialNStart_IASA(g as _) } f }
         "ftKb_KpSpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialNStart_Phys(g as _) } f }
+        "ftKb_KpSpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialN_Anim(g as _) } f }
+        "ftKb_KpSpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialN_Coll(g as _) } f }
+        "ftKb_KpSpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialN_IASA(g as _) } f }
         "ftKb_KpSpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_KpSpecialN_Phys(g as _) } f }
         "ftKb_LgSpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_LgSpecialAirN_Anim(g as _) } f }
         "ftKb_LgSpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_LgSpecialAirN_Coll(g as _) } f }
+        "ftKb_LgSpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_LgSpecialAirN_IASA(g as _) } f }
         "ftKb_LgSpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_LgSpecialAirN_Phys(g as _) } f }
         "ftKb_LgSpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_LgSpecialN_Anim(g as _) } f }
         "ftKb_LgSpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_LgSpecialN_Coll(g as _) } f }
         "ftKb_LgSpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_LgSpecialN_IASA(g as _) } f }
         "ftKb_LgSpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_LgSpecialN_Phys(g as _) } f }
+        "ftKb_LkSpecialAirNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNEnd_Anim(g as _) } f }
+        "ftKb_LkSpecialAirNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNEnd_Coll(g as _) } f }
+        "ftKb_LkSpecialAirNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNEnd_IASA(g as _) } f }
         "ftKb_LkSpecialAirNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNEnd_Phys(g as _) } f }
+        "ftKb_LkSpecialAirNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNLoop_Anim(g as _) } f }
+        "ftKb_LkSpecialAirNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNLoop_Coll(g as _) } f }
+        "ftKb_LkSpecialAirNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNLoop_IASA(g as _) } f }
         "ftKb_LkSpecialAirNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNLoop_Phys(g as _) } f }
+        "ftKb_LkSpecialAirNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNStart_Anim(g as _) } f }
+        "ftKb_LkSpecialAirNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNStart_Coll(g as _) } f }
+        "ftKb_LkSpecialAirNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNStart_IASA(g as _) } f }
         "ftKb_LkSpecialAirNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialAirNStart_Phys(g as _) } f }
+        "ftKb_LkSpecialNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNEnd_Anim(g as _) } f }
+        "ftKb_LkSpecialNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNEnd_Coll(g as _) } f }
+        "ftKb_LkSpecialNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNEnd_IASA(g as _) } f }
         "ftKb_LkSpecialNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNEnd_Phys(g as _) } f }
+        "ftKb_LkSpecialNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNLoop_Anim(g as _) } f }
+        "ftKb_LkSpecialNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNLoop_Coll(g as _) } f }
+        "ftKb_LkSpecialNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNLoop_IASA(g as _) } f }
         "ftKb_LkSpecialNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNLoop_Phys(g as _) } f }
+        "ftKb_LkSpecialNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNStart_Anim(g as _) } f }
+        "ftKb_LkSpecialNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNStart_Coll(g as _) } f }
+        "ftKb_LkSpecialNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNStart_IASA(g as _) } f }
         "ftKb_LkSpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_LkSpecialNStart_Phys(g as _) } f }
         "ftKb_MrSpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_MrSpecialAirN_Anim(g as _) } f }
+        "ftKb_MrSpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_MrSpecialAirN_Coll(g as _) } f }
+        "ftKb_MrSpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_MrSpecialAirN_IASA(g as _) } f }
         "ftKb_MrSpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_MrSpecialAirN_Phys(g as _) } f }
         "ftKb_MrSpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_MrSpecialN_Anim(g as _) } f }
+        "ftKb_MrSpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_MrSpecialN_Coll(g as _) } f }
         "ftKb_MrSpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_MrSpecialN_IASA(g as _) } f }
         "ftKb_MrSpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_MrSpecialN_Phys(g as _) } f }
+        "ftKb_MsSpecialAirNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNEnd_Anim(g as _) } f }
+        "ftKb_MsSpecialAirNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNEnd_Coll(g as _) } f }
+        "ftKb_MsSpecialAirNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNEnd_IASA(g as _) } f }
         "ftKb_MsSpecialAirNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNEnd_Phys(g as _) } f }
+        "ftKb_MsSpecialAirNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNLoop_Anim(g as _) } f }
+        "ftKb_MsSpecialAirNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNLoop_Coll(g as _) } f }
+        "ftKb_MsSpecialAirNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNLoop_IASA(g as _) } f }
         "ftKb_MsSpecialAirNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNLoop_Phys(g as _) } f }
+        "ftKb_MsSpecialAirNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNStart_Anim(g as _) } f }
+        "ftKb_MsSpecialAirNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNStart_Coll(g as _) } f }
+        "ftKb_MsSpecialAirNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNStart_IASA(g as _) } f }
+        "ftKb_MsSpecialAirNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialAirNStart_Phys(g as _) } f }
+        "ftKb_MsSpecialNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNEnd_Anim(g as _) } f }
+        "ftKb_MsSpecialNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNEnd_Coll(g as _) } f }
+        "ftKb_MsSpecialNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNEnd_IASA(g as _) } f }
         "ftKb_MsSpecialNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNEnd_Phys(g as _) } f }
+        "ftKb_MsSpecialNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNLoop_Anim(g as _) } f }
+        "ftKb_MsSpecialNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNLoop_Coll(g as _) } f }
+        "ftKb_MsSpecialNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNLoop_IASA(g as _) } f }
         "ftKb_MsSpecialNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNLoop_Phys(g as _) } f }
+        "ftKb_MsSpecialNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNStart_Anim(g as _) } f }
+        "ftKb_MsSpecialNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNStart_Coll(g as _) } f }
+        "ftKb_MsSpecialNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNStart_IASA(g as _) } f }
+        "ftKb_MsSpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_MsSpecialNStart_Phys(g as _) } f }
+        "ftKb_MtSpecialAirNCancel_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNCancel_Anim(g as _) } f }
         "ftKb_MtSpecialAirNCancel_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNCancel_Coll(g as _) } f }
+        "ftKb_MtSpecialAirNCancel_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNCancel_IASA(g as _) } f }
         "ftKb_MtSpecialAirNCancel_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNCancel_Phys(g as _) } f }
+        "ftKb_MtSpecialAirNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNEnd_Anim(g as _) } f }
         "ftKb_MtSpecialAirNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNEnd_Coll(g as _) } f }
+        "ftKb_MtSpecialAirNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNEnd_IASA(g as _) } f }
         "ftKb_MtSpecialAirNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNEnd_Phys(g as _) } f }
+        "ftKb_MtSpecialAirNLoopFull_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNLoopFull_Anim(g as _) } f }
         "ftKb_MtSpecialAirNLoopFull_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNLoopFull_Coll(g as _) } f }
+        "ftKb_MtSpecialAirNLoopFull_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNLoopFull_IASA(g as _) } f }
         "ftKb_MtSpecialAirNLoopFull_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNLoopFull_Phys(g as _) } f }
+        "ftKb_MtSpecialAirNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNLoop_Anim(g as _) } f }
         "ftKb_MtSpecialAirNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNLoop_Coll(g as _) } f }
+        "ftKb_MtSpecialAirNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNLoop_IASA(g as _) } f }
         "ftKb_MtSpecialAirNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNLoop_Phys(g as _) } f }
+        "ftKb_MtSpecialAirNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNStart_Anim(g as _) } f }
         "ftKb_MtSpecialAirNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNStart_Coll(g as _) } f }
+        "ftKb_MtSpecialAirNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNStart_IASA(g as _) } f }
         "ftKb_MtSpecialAirNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialAirNStart_Phys(g as _) } f }
+        "ftKb_MtSpecialNCancel_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNCancel_Anim(g as _) } f }
         "ftKb_MtSpecialNCancel_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNCancel_Coll(g as _) } f }
+        "ftKb_MtSpecialNCancel_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNCancel_IASA(g as _) } f }
         "ftKb_MtSpecialNCancel_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNCancel_Phys(g as _) } f }
+        "ftKb_MtSpecialNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNEnd_Anim(g as _) } f }
         "ftKb_MtSpecialNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNEnd_Coll(g as _) } f }
+        "ftKb_MtSpecialNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNEnd_IASA(g as _) } f }
         "ftKb_MtSpecialNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNEnd_Phys(g as _) } f }
+        "ftKb_MtSpecialNLoopFull_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNLoopFull_Anim(g as _) } f }
         "ftKb_MtSpecialNLoopFull_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNLoopFull_Coll(g as _) } f }
+        "ftKb_MtSpecialNLoopFull_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNLoopFull_IASA(g as _) } f }
         "ftKb_MtSpecialNLoopFull_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNLoopFull_Phys(g as _) } f }
+        "ftKb_MtSpecialNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNLoop_Anim(g as _) } f }
         "ftKb_MtSpecialNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNLoop_Coll(g as _) } f }
+        "ftKb_MtSpecialNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNLoop_IASA(g as _) } f }
         "ftKb_MtSpecialNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNLoop_Phys(g as _) } f }
+        "ftKb_MtSpecialNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNStart_Anim(g as _) } f }
         "ftKb_MtSpecialNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNStart_Coll(g as _) } f }
+        "ftKb_MtSpecialNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNStart_IASA(g as _) } f }
         "ftKb_MtSpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_MtSpecialNStart_Phys(g as _) } f }
+        "ftKb_NsSpecialAirNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNEnd_Anim(g as _) } f }
         "ftKb_NsSpecialAirNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNEnd_Coll(g as _) } f }
+        "ftKb_NsSpecialAirNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNEnd_IASA(g as _) } f }
+        "ftKb_NsSpecialAirNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNEnd_Phys(g as _) } f }
+        "ftKb_NsSpecialAirNHold_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNHold_Anim(g as _) } f }
         "ftKb_NsSpecialAirNHold_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNHold_Coll(g as _) } f }
+        "ftKb_NsSpecialAirNHold_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNHold_IASA(g as _) } f }
+        "ftKb_NsSpecialAirNHold_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNHold_Phys(g as _) } f }
+        "ftKb_NsSpecialAirNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNStart_Anim(g as _) } f }
         "ftKb_NsSpecialAirNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNStart_Coll(g as _) } f }
+        "ftKb_NsSpecialAirNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNStart_IASA(g as _) } f }
+        "ftKb_NsSpecialAirNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialAirNStart_Phys(g as _) } f }
+        "ftKb_NsSpecialNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNEnd_Anim(g as _) } f }
         "ftKb_NsSpecialNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNEnd_Coll(g as _) } f }
+        "ftKb_NsSpecialNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNEnd_IASA(g as _) } f }
         "ftKb_NsSpecialNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNEnd_Phys(g as _) } f }
+        "ftKb_NsSpecialNHold_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNHold_Anim(g as _) } f }
         "ftKb_NsSpecialNHold_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNHold_Coll(g as _) } f }
+        "ftKb_NsSpecialNHold_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNHold_IASA(g as _) } f }
         "ftKb_NsSpecialNHold_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNHold_Phys(g as _) } f }
+        "ftKb_NsSpecialNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNStart_Anim(g as _) } f }
         "ftKb_NsSpecialNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNStart_Coll(g as _) } f }
+        "ftKb_NsSpecialNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNStart_IASA(g as _) } f }
         "ftKb_NsSpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_NsSpecialNStart_Phys(g as _) } f }
+        "ftKb_PeSpecialAirLwHit_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialAirLwHit_Anim(g as _) } f }
         "ftKb_PeSpecialAirLwHit_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialAirLwHit_Coll(g as _) } f }
+        "ftKb_PeSpecialAirLwHit_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialAirLwHit_IASA(g as _) } f }
+        "ftKb_PeSpecialAirLwHit_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialAirLwHit_Phys(g as _) } f }
+        "ftKb_PeSpecialAirLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialAirLw_Anim(g as _) } f }
+        "ftKb_PeSpecialAirLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialAirLw_Coll(g as _) } f }
+        "ftKb_PeSpecialAirLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialAirLw_IASA(g as _) } f }
+        "ftKb_PeSpecialAirLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialAirLw_Phys(g as _) } f }
+        "ftKb_PeSpecialLwHit_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialLwHit_Anim(g as _) } f }
         "ftKb_PeSpecialLwHit_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialLwHit_Coll(g as _) } f }
+        "ftKb_PeSpecialLwHit_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialLwHit_IASA(g as _) } f }
         "ftKb_PeSpecialLwHit_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialLwHit_Phys(g as _) } f }
+        "ftKb_PeSpecialLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialLw_Anim(g as _) } f }
+        "ftKb_PeSpecialLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialLw_Coll(g as _) } f }
+        "ftKb_PeSpecialLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialLw_IASA(g as _) } f }
         "ftKb_PeSpecialLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_PeSpecialLw_Phys(g as _) } f }
+        "ftKb_PkSpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_PkSpecialAirN_Anim(g as _) } f }
+        "ftKb_PkSpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_PkSpecialAirN_Coll(g as _) } f }
+        "ftKb_PkSpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_PkSpecialAirN_IASA(g as _) } f }
         "ftKb_PkSpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_PkSpecialAirN_Phys(g as _) } f }
+        "ftKb_PkSpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_PkSpecialN_Anim(g as _) } f }
+        "ftKb_PkSpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_PkSpecialN_Coll(g as _) } f }
+        "ftKb_PkSpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_PkSpecialN_IASA(g as _) } f }
         "ftKb_PkSpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_PkSpecialN_Phys(g as _) } f }
         "ftKb_PpSpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_PpSpecialAirN_Anim(g as _) } f }
+        "ftKb_PpSpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_PpSpecialAirN_Coll(g as _) } f }
+        "ftKb_PpSpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_PpSpecialAirN_IASA(g as _) } f }
         "ftKb_PpSpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_PpSpecialAirN_Phys(g as _) } f }
         "ftKb_PpSpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_PpSpecialN_Anim(g as _) } f }
+        "ftKb_PpSpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_PpSpecialN_Coll(g as _) } f }
+        "ftKb_PpSpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_PpSpecialN_IASA(g as _) } f }
         "ftKb_PpSpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_PpSpecialN_Phys(g as _) } f }
+        "ftKb_PrHitCapsuleToggle" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrHitCapsuleToggle(g as _) } f }
+        "ftKb_PrPlayRollSFX" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrPlayRollSFX(g as _) } f }
+        "ftKb_PrRestoreScale" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrRestoreScale(g as _) } f }
+        "ftKb_PrSetCallbacks" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSetCallbacks(g as _) } f }
+        "ftKb_PrSpecialAirNEndR_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNEndR_Anim(g as _) } f }
+        "ftKb_PrSpecialAirNEndR_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNEndR_Coll(g as _) } f }
+        "ftKb_PrSpecialAirNEndR_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNEndR_IASA(g as _) } f }
+        "ftKb_PrSpecialAirNEndR_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNEndR_Phys(g as _) } f }
+        "ftKb_PrSpecialAirNFull_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNFull_Anim(g as _) } f }
+        "ftKb_PrSpecialAirNFull_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNFull_Coll(g as _) } f }
+        "ftKb_PrSpecialAirNFull_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNFull_IASA(g as _) } f }
+        "ftKb_PrSpecialAirNFull_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNFull_Phys(g as _) } f }
+        "ftKb_PrSpecialAirNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNLoop_Anim(g as _) } f }
+        "ftKb_PrSpecialAirNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNLoop_Coll(g as _) } f }
+        "ftKb_PrSpecialAirNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNLoop_IASA(g as _) } f }
+        "ftKb_PrSpecialAirNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNLoop_Phys(g as _) } f }
+        "ftKb_PrSpecialAirNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNStart_Anim(g as _) } f }
+        "ftKb_PrSpecialAirNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNStart_Coll(g as _) } f }
+        "ftKb_PrSpecialAirNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNStart_IASA(g as _) } f }
+        "ftKb_PrSpecialAirNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirNStart_Phys(g as _) } f }
+        "ftKb_PrSpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirN_Anim(g as _) } f }
+        "ftKb_PrSpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirN_Coll(g as _) } f }
+        "ftKb_PrSpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirN_IASA(g as _) } f }
+        "ftKb_PrSpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialAirN_Phys(g as _) } f }
+        "ftKb_PrSpecialN1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialN1_Anim(g as _) } f }
+        "ftKb_PrSpecialN1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialN1_Coll(g as _) } f }
+        "ftKb_PrSpecialN1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialN1_IASA(g as _) } f }
+        "ftKb_PrSpecialN1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialN1_Phys(g as _) } f }
+        "ftKb_PrSpecialNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNEnd_Anim(g as _) } f }
+        "ftKb_PrSpecialNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNEnd_Coll(g as _) } f }
+        "ftKb_PrSpecialNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNEnd_IASA(g as _) } f }
+        "ftKb_PrSpecialNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNEnd_Phys(g as _) } f }
+        "ftKb_PrSpecialNFull_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNFull_Anim(g as _) } f }
+        "ftKb_PrSpecialNFull_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNFull_Coll(g as _) } f }
+        "ftKb_PrSpecialNFull_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNFull_IASA(g as _) } f }
+        "ftKb_PrSpecialNFull_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNFull_Phys(g as _) } f }
+        "ftKb_PrSpecialNHit_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNHit_Anim(g as _) } f }
+        "ftKb_PrSpecialNHit_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNHit_Coll(g as _) } f }
+        "ftKb_PrSpecialNHit_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNHit_IASA(g as _) } f }
+        "ftKb_PrSpecialNHit_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNHit_Phys(g as _) } f }
+        "ftKb_PrSpecialNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNLoop_Anim(g as _) } f }
+        "ftKb_PrSpecialNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNLoop_Coll(g as _) } f }
+        "ftKb_PrSpecialNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNLoop_IASA(g as _) } f }
+        "ftKb_PrSpecialNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNLoop_Phys(g as _) } f }
+        "ftKb_PrSpecialNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNStart_Anim(g as _) } f }
+        "ftKb_PrSpecialNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNStart_Coll(g as _) } f }
+        "ftKb_PrSpecialNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNStart_IASA(g as _) } f }
+        "ftKb_PrSpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNStart_Phys(g as _) } f }
+        "ftKb_PrSpecialNTurn_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNTurn_Anim(g as _) } f }
+        "ftKb_PrSpecialNTurn_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNTurn_Coll(g as _) } f }
+        "ftKb_PrSpecialNTurn_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNTurn_IASA(g as _) } f }
+        "ftKb_PrSpecialNTurn_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialNTurn_Phys(g as _) } f }
+        "ftKb_PrSpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialN_Anim(g as _) } f }
+        "ftKb_PrSpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialN_Coll(g as _) } f }
+        "ftKb_PrSpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialN_IASA(g as _) } f }
+        "ftKb_PrSpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_PrSpecialN_Phys(g as _) } f }
         "ftKb_SetNsFlashAttr" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_SetNsFlashAttr(g as _) } f }
         "ftKb_SkSpecialAirNCancel_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::ftKb_SkSpecialAirNCancel_Anim(g as _) } f }
         "ftKb_SkSpecialAirNCancel_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::ftKb_SkSpecialAirNCancel_Coll(g as _) } f }
@@ -2027,29 +3419,64 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftKb_SkSpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::ftKb_SkSpecialNStart_Phys(g as _) } f }
         "ftKb_SpecialAirHi1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi1_Anim(g as _) } f }
         "ftKb_SpecialAirHi1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi1_Coll(g as _) } f }
+        "ftKb_SpecialAirHi1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi1_IASA(g as _) } f }
+        "ftKb_SpecialAirHi1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi1_Phys(g as _) } f }
         "ftKb_SpecialAirHi2_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi2_Anim(g as _) } f }
+        "ftKb_SpecialAirHi2_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi2_Coll(g as _) } f }
+        "ftKb_SpecialAirHi2_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi2_IASA(g as _) } f }
+        "ftKb_SpecialAirHi2_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi2_Phys(g as _) } f }
+        "ftKb_SpecialAirHi3_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi3_Anim(g as _) } f }
+        "ftKb_SpecialAirHi3_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi3_Coll(g as _) } f }
+        "ftKb_SpecialAirHi3_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi3_IASA(g as _) } f }
+        "ftKb_SpecialAirHi3_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi3_Phys(g as _) } f }
+        "ftKb_SpecialAirHiEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHiEnd_Anim(g as _) } f }
+        "ftKb_SpecialAirHiEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHiEnd_Coll(g as _) } f }
+        "ftKb_SpecialAirHiEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHiEnd_IASA(g as _) } f }
         "ftKb_SpecialAirHiEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHiEnd_Phys(g as _) } f }
+        "ftKb_SpecialAirHi_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialAirHi_Enter(g as _) } f }
+        "ftKb_SpecialAirLwEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLwEnd_Anim(g as _) } f }
+        "ftKb_SpecialAirLwEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLwEnd_Coll(g as _) } f }
+        "ftKb_SpecialAirLwEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLwEnd_IASA(g as _) } f }
         "ftKb_SpecialAirLwEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLwEnd_Phys(g as _) } f }
+        "ftKb_SpecialAirLwStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLwStart_Anim(g as _) } f }
+        "ftKb_SpecialAirLwStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLwStart_Coll(g as _) } f }
+        "ftKb_SpecialAirLwStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLwStart_IASA(g as _) } f }
         "ftKb_SpecialAirLwStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLwStart_Phys(g as _) } f }
+        "ftKb_SpecialAirLw_800F5318" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_800F5318(g as _) } f }
         "ftKb_SpecialAirLw_800F539C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::ftKb_SpecialAirLw_800F539C(g as _) } f }
         "ftKb_SpecialAirLw_800F5524" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::ftKb_SpecialAirLw_800F5524(g as _) } f }
+        "ftKb_SpecialAirLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_Anim(g as _) } f }
+        "ftKb_SpecialAirLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_Coll(g as _) } f }
+        "ftKb_SpecialAirLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_Enter(g as _) } f }
+        "ftKb_SpecialAirLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_IASA(g as _) } f }
+        "ftKb_SpecialAirLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_Phys(g as _) } f }
+        "ftKb_SpecialAirNCaptureTurn_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptureTurn_Anim(g as _) } f }
         "ftKb_SpecialAirNCaptureTurn_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptureTurn_Coll(g as _) } f }
         "ftKb_SpecialAirNCaptureTurn_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptureTurn_Phys(g as _) } f }
+        "ftKb_SpecialAirNCaptureWait_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptureWait_Anim(g as _) } f }
         "ftKb_SpecialAirNCaptureWait_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptureWait_Coll(g as _) } f }
+        "ftKb_SpecialAirNCaptureWait_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptureWait_IASA(g as _) } f }
         "ftKb_SpecialAirNCaptureWait_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptureWait_Phys(g as _) } f }
+        "ftKb_SpecialAirNCapture_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCapture_Anim(g as _) } f }
         "ftKb_SpecialAirNCapture_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCapture_Coll(g as _) } f }
         "ftKb_SpecialAirNCapture_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCapture_Phys(g as _) } f }
+        "ftKb_SpecialAirNCaptured_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptured_Anim(g as _) } f }
         "ftKb_SpecialAirNCaptured_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptured_Coll(g as _) } f }
         "ftKb_SpecialAirNCaptured_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNCaptured_Phys(g as _) } f }
+        "ftKb_SpecialAirNDrink_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNDrink_Anim(g as _) } f }
         "ftKb_SpecialAirNDrink_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNDrink_Coll(g as _) } f }
         "ftKb_SpecialAirNDrink_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNDrink_Phys(g as _) } f }
         "ftKb_SpecialAirNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNEnd_Anim(g as _) } f }
         "ftKb_SpecialAirNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNEnd_Coll(g as _) } f }
         "ftKb_SpecialAirNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNEnd_Phys(g as _) } f }
+        "ftKb_SpecialAirNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNLoop_Anim(g as _) } f }
         "ftKb_SpecialAirNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNLoop_Coll(g as _) } f }
+        "ftKb_SpecialAirNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNLoop_IASA(g as _) } f }
         "ftKb_SpecialAirNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNLoop_Phys(g as _) } f }
+        "ftKb_SpecialAirNSpit_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNSpit_Anim(g as _) } f }
         "ftKb_SpecialAirNSpit_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNSpit_Coll(g as _) } f }
         "ftKb_SpecialAirNSpit_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirNSpit_Phys(g as _) } f }
+        "ftKb_SpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirN_Anim(g as _) } f }
         "ftKb_SpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirN_Coll(g as _) } f }
         "ftKb_SpecialAirN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirby::ftKb_SpecialAirN_Enter(g as _) } f }
         "ftKb_SpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialAirN_Phys(g as _) } f }
@@ -2058,24 +3485,61 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftKb_SpecialAirS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::ftKb_SpecialAirS_Enter(g as _) } f }
         "ftKb_SpecialAirS_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::ftKb_SpecialAirS_Phys(g as _) } f }
         "ftKb_SpecialHi1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi1_Anim(g as _) } f }
+        "ftKb_SpecialHi1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi1_Coll(g as _) } f }
+        "ftKb_SpecialHi1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi1_IASA(g as _) } f }
+        "ftKb_SpecialHi1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi1_Phys(g as _) } f }
         "ftKb_SpecialHi2_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi2_Anim(g as _) } f }
+        "ftKb_SpecialHi2_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi2_Coll(g as _) } f }
+        "ftKb_SpecialHi2_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi2_IASA(g as _) } f }
+        "ftKb_SpecialHi2_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi2_Phys(g as _) } f }
+        "ftKb_SpecialHi3_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi3_Anim(g as _) } f }
+        "ftKb_SpecialHi3_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi3_Coll(g as _) } f }
+        "ftKb_SpecialHi3_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi3_IASA(g as _) } f }
+        "ftKb_SpecialHi3_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi3_Phys(g as _) } f }
+        "ftKb_SpecialHi4_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi4_Anim(g as _) } f }
+        "ftKb_SpecialHi4_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi4_Coll(g as _) } f }
+        "ftKb_SpecialHi4_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi4_IASA(g as _) } f }
         "ftKb_SpecialHi4_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi4_Phys(g as _) } f }
+        "ftKb_SpecialHi_800F331C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialHi_800F331C(g as _) } f }
+        "ftKb_SpecialHi_800F346C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialHi_800F346C(g as _) } f }
+        "ftKb_SpecialHi_800F3570" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialHi_800F3570(g as _) } f }
+        "ftKb_SpecialHi_800F36DC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialHi_800F36DC(g as _) } f }
+        "ftKb_SpecialHi_800F37EC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialHi_800F37EC(g as _) } f }
+        "ftKb_SpecialHi_800F3B28" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialHi_800F3B28(g as _) } f }
+        "ftKb_SpecialHi_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialhi::ftKb_SpecialHi_Enter(g as _) } f }
+        "ftKb_SpecialLw1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLw1_Anim(g as _) } f }
+        "ftKb_SpecialLw1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLw1_Coll(g as _) } f }
+        "ftKb_SpecialLw1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLw1_IASA(g as _) } f }
         "ftKb_SpecialLw1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLw1_Phys(g as _) } f }
+        "ftKb_SpecialLwEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLwEnd_Anim(g as _) } f }
+        "ftKb_SpecialLwEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLwEnd_Coll(g as _) } f }
+        "ftKb_SpecialLwEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLwEnd_IASA(g as _) } f }
         "ftKb_SpecialLwEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLwEnd_Phys(g as _) } f }
+        "ftKb_SpecialLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLw_Anim(g as _) } f }
+        "ftKb_SpecialLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLw_Coll(g as _) } f }
+        "ftKb_SpecialLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLw_Enter(g as _) } f }
+        "ftKb_SpecialLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLw_IASA(g as _) } f }
+        "ftKb_SpecialLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallw::ftKb_SpecialLw_Phys(g as _) } f }
         "ftKb_SpecialNCa_800F99BC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialcaptain::ftKb_SpecialNCa_800F99BC(g as _) } f }
         "ftKb_SpecialNCa_800F9A54" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialcaptain::ftKb_SpecialNCa_800F9A54(g as _) } f }
+        "ftKb_SpecialNCapture0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNCapture0_Anim(g as _) } f }
         "ftKb_SpecialNCapture0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNCapture0_Coll(g as _) } f }
         "ftKb_SpecialNCapture0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNCapture0_Phys(g as _) } f }
+        "ftKb_SpecialNCapture1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNCapture1_Anim(g as _) } f }
         "ftKb_SpecialNCapture1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNCapture1_Coll(g as _) } f }
         "ftKb_SpecialNCapture1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNCapture1_Phys(g as _) } f }
+        "ftKb_SpecialNCapture_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNCapture_Anim(g as _) } f }
         "ftKb_SpecialNCapture_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNCapture_Coll(g as _) } f }
         "ftKb_SpecialNCapture_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNCapture_Phys(g as _) } f }
         "ftKb_SpecialNDk_800FF8EC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialdonkey::ftKb_SpecialNDk_800FF8EC(g as _) } f }
         "ftKb_SpecialNDk_800FFA10" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialdonkey::ftKb_SpecialNDk_800FFA10(g as _) } f }
+        "ftKb_SpecialNDrink0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNDrink0_Anim(g as _) } f }
         "ftKb_SpecialNDrink0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNDrink0_Coll(g as _) } f }
         "ftKb_SpecialNDrink0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNDrink0_Phys(g as _) } f }
+        "ftKb_SpecialNDrink1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNDrink1_Anim(g as _) } f }
         "ftKb_SpecialNDrink1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNDrink1_Coll(g as _) } f }
         "ftKb_SpecialNDrink1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNDrink1_Phys(g as _) } f }
+        "ftKb_SpecialNDrink_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNDrink_Anim(g as _) } f }
         "ftKb_SpecialNDrink_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNDrink_Coll(g as _) } f }
         "ftKb_SpecialNDrink_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNDrink_Phys(g as _) } f }
         "ftKb_SpecialNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNEnd_Anim(g as _) } f }
@@ -2098,27 +3562,90 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftKb_SpecialNGw_8010D204" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::ftKb_SpecialNGw_8010D204(g as _) } f }
         "ftKb_SpecialNGw_8010D580" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::ftKb_SpecialNGw_8010D580(g as _) } f }
         "ftKb_SpecialNGw_8010D5F0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::ftKb_SpecialNGw_8010D5F0(g as _) } f }
+        "ftKb_SpecialNIc_80108D04" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_SpecialNIc_80108D04(g as _) } f }
+        "ftKb_SpecialNIc_80108D64" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_SpecialNIc_80108D64(g as _) } f }
+        "ftKb_SpecialNIc_80108E14" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialiceclimber::ftKb_SpecialNIc_80108E14(g as _) } f }
+        "ftKb_SpecialNKp_800FA588" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA588(g as _) } f }
+        "ftKb_SpecialNKp_800FA7D4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA7D4(g as _) } f }
+        "ftKb_SpecialNKp_800FA8B4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA8B4(g as _) } f }
+        "ftKb_SpecialNKp_800FA958" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA958(g as _) } f }
+        "ftKb_SpecialNLg_800F951C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_SpecialNLg_800F951C(g as _) } f }
+        "ftKb_SpecialNLg_800F9598" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_SpecialNLg_800F9598(g as _) } f }
         "ftKb_SpecialNLg_800F9614" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_SpecialNLg_800F9614(g as _) } f }
         "ftKb_SpecialNLg_800F9684" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialluigi::ftKb_SpecialNLg_800F9684(g as _) } f }
+        "ftKb_SpecialNLk800FB418" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB418(g as _) } f }
+        "ftKb_SpecialNLk800FB444" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB444(g as _) } f }
+        "ftKb_SpecialNLk800FB6DC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB6DC(g as _) } f }
+        "ftKb_SpecialNLk800FB800" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB800(g as _) } f }
+        "ftKb_SpecialNLk800FB840" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB840(g as _) } f }
+        "ftKb_SpecialNLk800FB880" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB880(g as _) } f }
+        "ftKb_SpecialNLk800FBA00" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FBA00(g as _) } f }
+        "ftKb_SpecialNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNLoop_Anim(g as _) } f }
         "ftKb_SpecialNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNLoop_Coll(g as _) } f }
+        "ftKb_SpecialNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNLoop_IASA(g as _) } f }
         "ftKb_SpecialNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNLoop_Phys(g as _) } f }
+        "ftKb_SpecialNMr_800F93CC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_SpecialNMr_800F93CC(g as _) } f }
+        "ftKb_SpecialNMs_8010B2FC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010B2FC(g as _) } f }
+        "ftKb_SpecialNMs_8010B4A0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010B4A0(g as _) } f }
+        "ftKb_SpecialNMs_8010B868" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010B868(g as _) } f }
+        "ftKb_SpecialNMs_8010B8E0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010B8E0(g as _) } f }
+        "ftKb_SpecialNMs_8010BB50" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010BB50(g as _) } f }
+        "ftKb_SpecialNMs_8010BBC8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010BBC8(g as _) } f }
+        "ftKb_SpecialNMs_8010BC40" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010BC40(g as _) } f }
+        "ftKb_SpecialNMs_8010BC90" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNMs_8010BC90(g as _) } f }
+        "ftKb_SpecialNMt_80107040" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107040(g as _) } f }
+        "ftKb_SpecialNMt_8010709C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_8010709C(g as _) } f }
+        "ftKb_SpecialNMt_80107130" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107130(g as _) } f }
+        "ftKb_SpecialNMt_801071FC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_801071FC(g as _) } f }
+        "ftKb_SpecialNMt_80107410" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107410(g as _) } f }
+        "ftKb_SpecialNMt_80107568" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107568(g as _) } f }
+        "ftKb_SpecialNMt_80107638" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107638(g as _) } f }
+        "ftKb_SpecialNMt_SetRecoil" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_SetRecoil(g as _) } f }
         "ftKb_SpecialNNs_800FECBC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialfox::ftKb_SpecialNNs_800FECBC(g as _) } f }
         "ftKb_SpecialNNs_800FECE8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialfox::ftKb_SpecialNNs_800FECE8(g as _) } f }
+        "ftKb_SpecialNNs_800FED38" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_SpecialNNs_800FED38(g as _) } f }
+        "ftKb_SpecialNNs_800FEDD0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialness::ftKb_SpecialNNs_800FEDD0(g as _) } f }
+        "ftKb_SpecialNPe_8010BF90" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNPe_8010BF90(g as _) } f }
+        "ftKb_SpecialNPe_8010C06C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNPe_8010C06C(g as _) } f }
+        "ftKb_SpecialNPe_8010C148" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNPe_8010C148(g as _) } f }
+        "ftKb_SpecialNPe_8010C1E8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmars::ftKb_SpecialNPe_8010C1E8(g as _) } f }
+        "ftKb_SpecialNPe_8010C3C0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C3C0(g as _) } f }
+        "ftKb_SpecialNPe_8010C3F4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C3F4(g as _) } f }
+        "ftKb_SpecialNPe_8010C47C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C47C(g as _) } f }
+        "ftKb_SpecialNPe_8010C4D4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C4D4(g as _) } f }
+        "ftKb_SpecialNPe_8010C560" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C560(g as _) } f }
+        "ftKb_SpecialNPe_8010C8D8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C8D8(g as _) } f }
+        "ftKb_SpecialNPe_8010C9CC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C9CC(g as _) } f }
+        "ftKb_SpecialNPk_800F9FD4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_SpecialNPk_800F9FD4(g as _) } f }
+        "ftKb_SpecialNPk_800FA064" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpikachu::ftKb_SpecialNPk_800FA064(g as _) } f }
         "ftKb_SpecialNPr_80100DE0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialdonkey::ftKb_SpecialNPr_80100DE0(g as _) } f }
+        "ftKb_SpecialNPr_80100F94" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_SpecialNPr_80100F94(g as _) } f }
+        "ftKb_SpecialNPr_8010131C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_SpecialNPr_8010131C(g as _) } f }
+        "ftKb_SpecialNPr_80101560" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_SpecialNPr_80101560(g as _) } f }
+        "ftKb_SpecialNPr_80101618" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialpurin::ftKb_SpecialNPr_80101618(g as _) } f }
         "ftKb_SpecialNSk_80105E8C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialzelda::ftKb_SpecialNSk_80105E8C(g as _) } f }
         "ftKb_SpecialNSk_80105F3C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialzelda::ftKb_SpecialNSk_80105F3C(g as _) } f }
         "ftKb_SpecialNSk_8010603C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::ftKb_SpecialNSk_8010603C(g as _) } f }
         "ftKb_SpecialNSk_8010612C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::ftKb_SpecialNSk_8010612C(g as _) } f }
         "ftKb_SpecialNSk_801061E4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialseak::ftKb_SpecialNSk_801061E4(g as _) } f }
+        "ftKb_SpecialNSpit0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNSpit0_Anim(g as _) } f }
         "ftKb_SpecialNSpit0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNSpit0_Coll(g as _) } f }
         "ftKb_SpecialNSpit0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNSpit0_Phys(g as _) } f }
+        "ftKb_SpecialNSpit1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNSpit1_Anim(g as _) } f }
         "ftKb_SpecialNSpit1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNSpit1_Coll(g as _) } f }
         "ftKb_SpecialNSpit1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNSpit1_Phys(g as _) } f }
+        "ftKb_SpecialNSpit_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNSpit_Anim(g as _) } f }
         "ftKb_SpecialNSpit_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNSpit_Coll(g as _) } f }
         "ftKb_SpecialNSpit_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialNSpit_Phys(g as _) } f }
+        "ftKb_SpecialNSs_800FCD04" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCD04(g as _) } f }
+        "ftKb_SpecialNSs_800FCD60" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCD60(g as _) } f }
+        "ftKb_SpecialNSs_800FCDE0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCDE0(g as _) } f }
+        "ftKb_SpecialNSs_800FCDE0_inline" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCDE0_inline(g as _) } f }
         "ftKb_SpecialNSs_800FCF74" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCF74(g as _) } f }
         "ftKb_SpecialNSs_800FD020" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FD020(g as _) } f }
+        "ftKb_SpecialNSs_DestroyChargeShot" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_DestroyChargeShot(g as _) } f }
         "ftKb_SpecialNSs_UnsetChargeShot" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_UnsetChargeShot(g as _) } f }
+        "ftKb_SpecialNSs_it_802B5974" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_it_802B5974(g as _) } f }
         "ftKb_SpecialNYs_801093B4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_801093B4(g as _) } f }
         "ftKb_SpecialNYs_8010941C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_8010941C(g as _) } f }
         "ftKb_SpecialNYs_801094FC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_801094FC(g as _) } f }
@@ -2144,9 +3671,17 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftKb_SpecialN_800F1D24" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirby::ftKb_SpecialN_800F1D24(g as _) } f }
         "ftKb_SpecialN_800F1DAC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirby::ftKb_SpecialN_800F1DAC(g as _) } f }
         "ftKb_SpecialN_800F1F68" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyattackdash::ftKb_SpecialN_800F1F68(g as _) } f }
+        "ftKb_SpecialN_800F5954" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5954(g as _) } f }
+        "ftKb_SpecialN_800F5DE8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5DE8(g as _) } f }
+        "ftKb_SpecialN_800F5EA8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5EA8(g as _) } f }
+        "ftKb_SpecialN_800F5F68" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F5F68(g as _) } f }
+        "ftKb_SpecialN_800F6070" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F6070(g as _) } f }
         "ftKb_SpecialN_800F6388" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F6388(g as _) } f }
         "ftKb_SpecialN_800F63EC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F63EC(g as _) } f }
         "ftKb_SpecialN_800F9070" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F9070(g as _) } f }
+        "ftKb_SpecialN_800F9090" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_800F9090(g as _) } f }
+        "ftKb_SpecialN_800F9110" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialmario::ftKb_SpecialN_800F9110(g as _) } f }
+        "ftKb_SpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_Anim(g as _) } f }
         "ftKb_SpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_Coll(g as _) } f }
         "ftKb_SpecialN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirby::ftKb_SpecialN_Enter(g as _) } f }
         "ftKb_SpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialn::ftKb_SpecialN_Phys(g as _) } f }
@@ -2155,16 +3690,29 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftKb_SpecialS_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::ftKb_SpecialS_Coll(g as _) } f }
         "ftKb_SpecialS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::ftKb_SpecialS_Enter(g as _) } f }
         "ftKb_SpecialS_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecials::ftKb_SpecialS_Phys(g as _) } f }
+        "ftKb_SsSpecialAirNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialAirNStart_Anim(g as _) } f }
         "ftKb_SsSpecialAirNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialAirNStart_Coll(g as _) } f }
+        "ftKb_SsSpecialAirNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialAirNStart_IASA(g as _) } f }
         "ftKb_SsSpecialAirNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialAirNStart_Phys(g as _) } f }
+        "ftKb_SsSpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialAirN_Anim(g as _) } f }
         "ftKb_SsSpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialAirN_Coll(g as _) } f }
+        "ftKb_SsSpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialAirN_IASA(g as _) } f }
         "ftKb_SsSpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialAirN_Phys(g as _) } f }
+        "ftKb_SsSpecialNCancel_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNCancel_Anim(g as _) } f }
         "ftKb_SsSpecialNCancel_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNCancel_Coll(g as _) } f }
+        "ftKb_SsSpecialNCancel_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNCancel_IASA(g as _) } f }
         "ftKb_SsSpecialNCancel_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNCancel_Phys(g as _) } f }
+        "ftKb_SsSpecialNHold_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNHold_Anim(g as _) } f }
+        "ftKb_SsSpecialNHold_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNHold_Coll(g as _) } f }
+        "ftKb_SsSpecialNHold_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNHold_IASA(g as _) } f }
         "ftKb_SsSpecialNHold_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNHold_Phys(g as _) } f }
+        "ftKb_SsSpecialNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNStart_Anim(g as _) } f }
         "ftKb_SsSpecialNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNStart_Coll(g as _) } f }
+        "ftKb_SsSpecialNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNStart_IASA(g as _) } f }
         "ftKb_SsSpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialNStart_Phys(g as _) } f }
+        "ftKb_SsSpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialN_Anim(g as _) } f }
         "ftKb_SsSpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialN_Coll(g as _) } f }
+        "ftKb_SsSpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialN_IASA(g as _) } f }
         "ftKb_SsSpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialsamus::ftKb_SsSpecialN_Phys(g as _) } f }
         "ftKb_YsSpecialAirCapture1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::ftKb_YsSpecialAirCapture1_Anim(g as _) } f }
         "ftKb_YsSpecialAirCapture1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialyoshi::ftKb_YsSpecialAirCapture1_Coll(g as _) } f }
@@ -2430,6 +3978,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftLg_SpecialS_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftluigispecials::ftLg_SpecialS_Phys(g as _) } f }
         "ftLg_SpecialS_SetGFX" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftluigispecials::ftLg_SpecialS_SetGFX(g as _) } f }
         "ftLg_SpecialS_SetVars" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftluigispecials::ftLg_SpecialS_SetVars(g as _) } f }
+        "ftLib_UpdateLogicOffCamera" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlib::ftLib_UpdateLogicOffCamera(g as _) } f }
         "ftLk_800EAF38" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftlink::ftLk_800EAF38(g as _) } f }
         "ftLk_800EAF58" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftlink::ftLk_800EAF58(g as _) } f }
         "ftLk_800EB334" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftlink::ftLk_800EB334(g as _) } f }
@@ -2976,6 +4525,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftMt_Init_OnLoad" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmewtwo::ftMt_Init_OnLoad(g as _) } f }
         "ftMt_Init_OnTakeDamage" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmewtwo::ftMt_Init_OnTakeDamage(g as _) } f }
         "ftMt_Init_UnkMotionStates4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmewtwo::ftMt_Init_UnkMotionStates4(g as _) } f }
+        "ftMt_JumpAerial_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftMt_JumpAerial_Enter(g as _) } f }
         "ftMt_SpecialAirHiLost_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmewtwospecialhi::ftMt_SpecialAirHiLost_Anim(g as _) } f }
         "ftMt_SpecialAirHiLost_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmewtwospecialhi::ftMt_SpecialAirHiLost_Coll(g as _) } f }
         "ftMt_SpecialAirHiLost_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmewtwospecialhi::ftMt_SpecialAirHiLost_Enter(g as _) } f }
@@ -3166,6 +4716,9 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftNs_Init_OnKnockbackEnter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftness::ftNs_Init_OnKnockbackEnter(g as _) } f }
         "ftNs_Init_OnKnockbackExit" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftness::ftNs_Init_OnKnockbackExit(g as _) } f }
         "ftNs_Init_OnLoad" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftness::ftNs_Init_OnLoad(g as _) } f }
+        "ftNs_JumpAerial_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftNs_JumpAerial_Enter(g as _) } f }
+        "ftNs_JumpAerial_Phys_Cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftNs_JumpAerial_Phys_Cb(g as _) } f }
+        "ftNs_JumpAerial_Phys_Cb_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftNs_JumpAerial_Phys_Cb_c(g as _) } f }
         "ftNs_PKFlash_Init" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnessspecialn::ftNs_PKFlash_Init(g as _) } f }
         "ftNs_SpecialAirHiEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnessspecialhi::ftNs_SpecialAirHiEnd_Anim(g as _) } f }
         "ftNs_SpecialAirHiEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnessspecialhi::ftNs_SpecialAirHiEnd_Coll(g as _) } f }
@@ -3340,6 +4893,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftPe_Init_OnKnockbackEnter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeach::ftPe_Init_OnKnockbackEnter(g as _) } f }
         "ftPe_Init_OnKnockbackExit" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeach::ftPe_Init_OnKnockbackExit(g as _) } f }
         "ftPe_Init_OnLoad" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeach::ftPe_Init_OnLoad(g as _) } f }
+        "ftPe_JumpAerial_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftPe_JumpAerial_Enter(g as _) } f }
         "ftPe_SpecialAirHiEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialhi::ftPe_SpecialAirHiEnd_Anim(g as _) } f }
         "ftPe_SpecialAirHiEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialhi::ftPe_SpecialAirHiEnd_Coll(g as _) } f }
         "ftPe_SpecialAirHiEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialhi::ftPe_SpecialAirHiEnd_IASA(g as _) } f }
@@ -3353,13 +4907,28 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftPe_SpecialAirLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspeciallw::ftPe_SpecialAirLw_Coll(g as _) } f }
         "ftPe_SpecialAirLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspeciallw::ftPe_SpecialAirLw_Enter(g as _) } f }
         "ftPe_SpecialAirLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspeciallw::ftPe_SpecialAirLw_Phys(g as _) } f }
+        "ftPe_SpecialAirNHit_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialAirNHit_Anim(g as _) } f }
         "ftPe_SpecialAirNHit_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialAirNHit_Coll(g as _) } f }
+        "ftPe_SpecialAirNHit_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialAirNHit_IASA(g as _) } f }
         "ftPe_SpecialAirNHit_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialAirNHit_Phys(g as _) } f }
+        "ftPe_SpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialAirN_Anim(g as _) } f }
+        "ftPe_SpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialAirN_Coll(g as _) } f }
+        "ftPe_SpecialAirN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialAirN_Enter(g as _) } f }
+        "ftPe_SpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialAirN_IASA(g as _) } f }
+        "ftPe_SpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialAirN_Phys(g as _) } f }
         "ftPe_SpecialAirSEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSEnd_Anim(g as _) } f }
         "ftPe_SpecialAirSEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSEnd_Coll(g as _) } f }
+        "ftPe_SpecialAirSEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSEnd_IASA(g as _) } f }
         "ftPe_SpecialAirSEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSEnd_Phys(g as _) } f }
+        "ftPe_SpecialAirSJump_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSJump_Anim(g as _) } f }
+        "ftPe_SpecialAirSJump_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSJump_Coll(g as _) } f }
+        "ftPe_SpecialAirSJump_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSJump_IASA(g as _) } f }
         "ftPe_SpecialAirSJump_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSJump_Phys(g as _) } f }
+        "ftPe_SpecialAirSStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSStart_Anim(g as _) } f }
+        "ftPe_SpecialAirSStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSStart_Coll(g as _) } f }
+        "ftPe_SpecialAirSStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSStart_IASA(g as _) } f }
         "ftPe_SpecialAirSStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirSStart_Phys(g as _) } f }
+        "ftPe_SpecialAirS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialAirS_Enter(g as _) } f }
         "ftPe_SpecialHiEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialhi::ftPe_SpecialHiEnd_Anim(g as _) } f }
         "ftPe_SpecialHiEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialhi::ftPe_SpecialHiEnd_Coll(g as _) } f }
         "ftPe_SpecialHiEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialhi::ftPe_SpecialHiEnd_IASA(g as _) } f }
@@ -3380,13 +4949,26 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftPe_SpecialLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspeciallw::ftPe_SpecialLw_Enter(g as _) } f }
         "ftPe_SpecialLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspeciallw::ftPe_SpecialLw_Phys(g as _) } f }
         "ftPe_SpecialLw_UnsetVeg" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspeciallw::ftPe_SpecialLw_UnsetVeg(g as _) } f }
+        "ftPe_SpecialNHit_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialNHit_Anim(g as _) } f }
         "ftPe_SpecialNHit_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialNHit_Coll(g as _) } f }
+        "ftPe_SpecialNHit_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialNHit_IASA(g as _) } f }
         "ftPe_SpecialNHit_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialNHit_Phys(g as _) } f }
+        "ftPe_SpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialN_Anim(g as _) } f }
+        "ftPe_SpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialN_Coll(g as _) } f }
+        "ftPe_SpecialN_DoDeath2" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialN_DoDeath2(g as _) } f }
+        "ftPe_SpecialN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialN_Enter(g as _) } f }
+        "ftPe_SpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialN_IASA(g as _) } f }
+        "ftPe_SpecialN_OnDeath2" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialN_OnDeath2(g as _) } f }
         "ftPe_SpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::ftPe_SpecialN_Phys(g as _) } f }
         "ftPe_SpecialSEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialSEnd_Anim(g as _) } f }
         "ftPe_SpecialSEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialSEnd_Coll(g as _) } f }
+        "ftPe_SpecialSEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialSEnd_IASA(g as _) } f }
         "ftPe_SpecialSEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialSEnd_Phys(g as _) } f }
+        "ftPe_SpecialSStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialSStart_Anim(g as _) } f }
+        "ftPe_SpecialSStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialSStart_Coll(g as _) } f }
+        "ftPe_SpecialSStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialSStart_IASA(g as _) } f }
         "ftPe_SpecialSStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialSStart_Phys(g as _) } f }
+        "ftPe_SpecialS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecials::ftPe_SpecialS_Enter(g as _) } f }
         "ftPe_UpdateFloatDir" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachfloatfall::ftPe_UpdateFloatDir(g as _) } f }
         "ftPk_Init_LoadSpecialAttrs" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachu::ftPk_Init_LoadSpecialAttrs(g as _) } f }
         "ftPk_Init_OnDeath" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachu::ftPk_Init_OnDeath(g as _) } f }
@@ -3397,41 +4979,95 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftPk_Init_OnLoad" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachu::ftPk_Init_OnLoad(g as _) } f }
         "ftPk_Init_UnkMotionStates1" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachu::ftPk_Init_UnkMotionStates1(g as _) } f }
         "ftPk_Init_UnkMotionStates2" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachu::ftPk_Init_UnkMotionStates2(g as _) } f }
+        "ftPk_SpecialAirHiEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiEnd_Anim(g as _) } f }
+        "ftPk_SpecialAirHiEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiEnd_Coll(g as _) } f }
+        "ftPk_SpecialAirHiEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiEnd_IASA(g as _) } f }
+        "ftPk_SpecialAirHiEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiEnd_Phys(g as _) } f }
+        "ftPk_SpecialAirHiStart0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiStart0_Anim(g as _) } f }
         "ftPk_SpecialAirHiStart0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiStart0_Coll(g as _) } f }
+        "ftPk_SpecialAirHiStart0_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiStart0_IASA(g as _) } f }
+        "ftPk_SpecialAirHiStart0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiStart0_Phys(g as _) } f }
+        "ftPk_SpecialAirHiStart1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiStart1_Anim(g as _) } f }
+        "ftPk_SpecialAirHiStart1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiStart1_Coll(g as _) } f }
+        "ftPk_SpecialAirHiStart1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiStart1_IASA(g as _) } f }
+        "ftPk_SpecialAirHiStart1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHiStart1_Phys(g as _) } f }
+        "ftPk_SpecialAirHi_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialAirHi_Enter(g as _) } f }
         "ftPk_SpecialAirLwEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwEnd_Anim(g as _) } f }
         "ftPk_SpecialAirLwEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwEnd_Coll(g as _) } f }
         "ftPk_SpecialAirLwEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwEnd_Phys(g as _) } f }
+        "ftPk_SpecialAirLwLoop0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwLoop0_Anim(g as _) } f }
         "ftPk_SpecialAirLwLoop0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwLoop0_Coll(g as _) } f }
         "ftPk_SpecialAirLwLoop0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwLoop0_Phys(g as _) } f }
         "ftPk_SpecialAirLwLoop1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwLoop1_Anim(g as _) } f }
         "ftPk_SpecialAirLwLoop1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwLoop1_Coll(g as _) } f }
+        "ftPk_SpecialAirLwLoop1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwLoop1_Phys(g as _) } f }
+        "ftPk_SpecialAirLwStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwStart_Anim(g as _) } f }
         "ftPk_SpecialAirLwStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwStart_Coll(g as _) } f }
         "ftPk_SpecialAirLwStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLwStart_Phys(g as _) } f }
         "ftPk_SpecialAirLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialAirLw_Enter(g as _) } f }
+        "ftPk_SpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialAirN_Anim(g as _) } f }
         "ftPk_SpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialAirN_Coll(g as _) } f }
+        "ftPk_SpecialAirN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialAirN_Enter(g as _) } f }
+        "ftPk_SpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialAirN_IASA(g as _) } f }
         "ftPk_SpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialAirN_Phys(g as _) } f }
+        "ftPk_SpecialAirS0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirS0_Anim(g as _) } f }
         "ftPk_SpecialAirS0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirS0_Coll(g as _) } f }
+        "ftPk_SpecialAirS0_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirS0_IASA(g as _) } f }
         "ftPk_SpecialAirS0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirS0_Phys(g as _) } f }
+        "ftPk_SpecialAirS1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirS1_Anim(g as _) } f }
+        "ftPk_SpecialAirS1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirS1_Coll(g as _) } f }
+        "ftPk_SpecialAirS1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirS1_IASA(g as _) } f }
+        "ftPk_SpecialAirS1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirS1_Phys(g as _) } f }
         "ftPk_SpecialAirSEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSEnd_Anim(g as _) } f }
+        "ftPk_SpecialAirSEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSEnd_Coll(g as _) } f }
+        "ftPk_SpecialAirSEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSEnd_IASA(g as _) } f }
+        "ftPk_SpecialAirSEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSEnd_Phys(g as _) } f }
+        "ftPk_SpecialAirSHold_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSHold_Anim(g as _) } f }
         "ftPk_SpecialAirSHold_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSHold_Coll(g as _) } f }
+        "ftPk_SpecialAirSHold_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSHold_IASA(g as _) } f }
         "ftPk_SpecialAirSHold_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSHold_Phys(g as _) } f }
+        "ftPk_SpecialAirSStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSStart_Anim(g as _) } f }
         "ftPk_SpecialAirSStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSStart_Coll(g as _) } f }
+        "ftPk_SpecialAirSStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSStart_IASA(g as _) } f }
+        "ftPk_SpecialAirSStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirSStart_Phys(g as _) } f }
+        "ftPk_SpecialAirS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialAirS_Enter(g as _) } f }
+        "ftPk_SpecialHiEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiEnd_Anim(g as _) } f }
+        "ftPk_SpecialHiEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiEnd_Coll(g as _) } f }
+        "ftPk_SpecialHiEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiEnd_IASA(g as _) } f }
         "ftPk_SpecialHiEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiEnd_Phys(g as _) } f }
+        "ftPk_SpecialHiStart0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiStart0_Anim(g as _) } f }
         "ftPk_SpecialHiStart0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiStart0_Coll(g as _) } f }
+        "ftPk_SpecialHiStart0_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiStart0_IASA(g as _) } f }
         "ftPk_SpecialHiStart0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiStart0_Phys(g as _) } f }
+        "ftPk_SpecialHiStart1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiStart1_Anim(g as _) } f }
+        "ftPk_SpecialHiStart1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiStart1_Coll(g as _) } f }
+        "ftPk_SpecialHiStart1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiStart1_IASA(g as _) } f }
+        "ftPk_SpecialHiStart1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHiStart1_Phys(g as _) } f }
+        "ftPk_SpecialHi_8012642C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_8012642C(g as _) } f }
+        "ftPk_SpecialHi_80126C0C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_80126C0C(g as _) } f }
+        "ftPk_SpecialHi_80126E1C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_80126E1C(g as _) } f }
         "ftPk_SpecialHi_ChangeMotion_Unk00" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_ChangeMotion_Unk00(g as _) } f }
         "ftPk_SpecialHi_ChangeMotion_Unk01" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_ChangeMotion_Unk01(g as _) } f }
+        "ftPk_SpecialHi_ChangeMotion_Unk02" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_ChangeMotion_Unk02(g as _) } f }
+        "ftPk_SpecialHi_ChangeMotion_Unk03" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_ChangeMotion_Unk03(g as _) } f }
         "ftPk_SpecialHi_ChangeMotion_Unk04" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_ChangeMotion_Unk04(g as _) } f }
+        "ftPk_SpecialHi_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_Enter(g as _) } f }
+        "ftPk_SpecialHi_MotionChangeUpdateVel_Unk0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_MotionChangeUpdateVel_Unk0(g as _) } f }
+        "ftPk_SpecialHi_MotionChangeUpdateVel_Unk1" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_MotionChangeUpdateVel_Unk1(g as _) } f }
+        "ftPk_SpecialHi_UpdateVel" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialhi::ftPk_SpecialHi_UpdateVel(g as _) } f }
         "ftPk_SpecialLwEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwEnd_Anim(g as _) } f }
         "ftPk_SpecialLwEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwEnd_Coll(g as _) } f }
         "ftPk_SpecialLwEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwEnd_Phys(g as _) } f }
+        "ftPk_SpecialLwLoop0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwLoop0_Anim(g as _) } f }
         "ftPk_SpecialLwLoop0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwLoop0_Coll(g as _) } f }
         "ftPk_SpecialLwLoop0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwLoop0_Phys(g as _) } f }
         "ftPk_SpecialLwLoop1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwLoop1_Anim(g as _) } f }
         "ftPk_SpecialLwLoop1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwLoop1_Coll(g as _) } f }
         "ftPk_SpecialLwLoop1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwLoop1_Phys(g as _) } f }
+        "ftPk_SpecialLwStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwStart_Anim(g as _) } f }
         "ftPk_SpecialLwStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwStart_Coll(g as _) } f }
         "ftPk_SpecialLwStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLwStart_Phys(g as _) } f }
+        "ftPk_SpecialLw_80127608" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_80127608(g as _) } f }
         "ftPk_SpecialLw_ChangeMotion_Unk00" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk00(g as _) } f }
         "ftPk_SpecialLw_ChangeMotion_Unk01" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk01(g as _) } f }
         "ftPk_SpecialLw_ChangeMotion_Unk02" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk02(g as _) } f }
@@ -3441,42 +5077,119 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftPk_SpecialLw_ChangeMotion_Unk06" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk06(g as _) } f }
         "ftPk_SpecialLw_ChangeMotion_Unk07" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_ChangeMotion_Unk07(g as _) } f }
         "ftPk_SpecialLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_Enter(g as _) } f }
+        "ftPk_SpecialLw_SetState_Unk0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_SetState_Unk0(g as _) } f }
+        "ftPk_SpecialLw_SetState_Unk1" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_SetState_Unk1(g as _) } f }
+        "ftPk_SpecialLw_SpawnEffect" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspeciallw::ftPk_SpecialLw_SpawnEffect(g as _) } f }
+        "ftPk_SpecialN_80124DC8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialN_80124DC8(g as _) } f }
+        "ftPk_SpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialN_Anim(g as _) } f }
         "ftPk_SpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialN_Coll(g as _) } f }
+        "ftPk_SpecialN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialN_Enter(g as _) } f }
+        "ftPk_SpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialN_IASA(g as _) } f }
         "ftPk_SpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialN_Phys(g as _) } f }
+        "ftPk_SpecialN_SpawnEffect0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialN_SpawnEffect0(g as _) } f }
+        "ftPk_SpecialN_SpawnEffect1" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecialn::ftPk_SpecialN_SpawnEffect1(g as _) } f }
+        "ftPk_SpecialS0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS0_Anim(g as _) } f }
         "ftPk_SpecialS0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS0_Coll(g as _) } f }
+        "ftPk_SpecialS0_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS0_IASA(g as _) } f }
         "ftPk_SpecialS0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS0_Phys(g as _) } f }
+        "ftPk_SpecialS1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS1_Anim(g as _) } f }
+        "ftPk_SpecialS1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS1_Coll(g as _) } f }
+        "ftPk_SpecialS1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS1_IASA(g as _) } f }
+        "ftPk_SpecialS1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS1_Phys(g as _) } f }
         "ftPk_SpecialSEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSEnd_Anim(g as _) } f }
         "ftPk_SpecialSEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSEnd_Coll(g as _) } f }
+        "ftPk_SpecialSEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSEnd_IASA(g as _) } f }
+        "ftPk_SpecialSEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSEnd_Phys(g as _) } f }
+        "ftPk_SpecialSHold_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSHold_Anim(g as _) } f }
         "ftPk_SpecialSHold_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSHold_Coll(g as _) } f }
+        "ftPk_SpecialSHold_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSHold_IASA(g as _) } f }
         "ftPk_SpecialSHold_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSHold_Phys(g as _) } f }
+        "ftPk_SpecialSStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSStart_Anim(g as _) } f }
         "ftPk_SpecialSStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSStart_Coll(g as _) } f }
+        "ftPk_SpecialSStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSStart_IASA(g as _) } f }
+        "ftPk_SpecialSStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialSStart_Phys(g as _) } f }
         "ftPk_SpecialS_ChangeMotion_Unk00" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk00(g as _) } f }
         "ftPk_SpecialS_ChangeMotion_Unk01" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk01(g as _) } f }
         "ftPk_SpecialS_ChangeMotion_Unk02" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk02(g as _) } f }
         "ftPk_SpecialS_ChangeMotion_Unk03" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk03(g as _) } f }
+        "ftPk_SpecialS_ChangeMotion_Unk04" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk04(g as _) } f }
+        "ftPk_SpecialS_ChangeMotion_Unk05" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk05(g as _) } f }
         "ftPk_SpecialS_ChangeMotion_Unk06" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk06(g as _) } f }
         "ftPk_SpecialS_ChangeMotion_Unk07" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk07(g as _) } f }
+        "ftPk_SpecialS_ChangeMotion_Unk08" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk08(g as _) } f }
+        "ftPk_SpecialS_ChangeMotion_Unk09" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk09(g as _) } f }
+        "ftPk_SpecialS_ChangeMotion_Unk10" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk10(g as _) } f }
+        "ftPk_SpecialS_ChangeMotion_Unk11" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk11(g as _) } f }
+        "ftPk_SpecialS_ChangeMotion_Unk12" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk12(g as _) } f }
+        "ftPk_SpecialS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_Enter(g as _) } f }
+        "ftPk_SpecialS_ZeroVelocity" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpikachuspecials::ftPk_SpecialS_ZeroVelocity(g as _) } f }
+        "ftPp_Init_8011F060" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopo::ftPp_Init_8011F060(g as _) } f }
+        "ftPp_Init_LoadSpecialAttrs" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopo::ftPp_Init_LoadSpecialAttrs(g as _) } f }
+        "ftPp_Init_OnDeath" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopo::ftPp_Init_OnDeath(g as _) } f }
         "ftPp_Init_OnItemInvisible" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopo::ftPp_Init_OnItemInvisible(g as _) } f }
         "ftPp_Init_OnItemVisible" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopo::ftPp_Init_OnItemVisible(g as _) } f }
         "ftPp_Init_OnKnockbackEnter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopo::ftPp_Init_OnKnockbackEnter(g as _) } f }
         "ftPp_Init_OnKnockbackExit" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopo::ftPp_Init_OnKnockbackExit(g as _) } f }
+        "ftPp_Init_OnLoad" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopo::ftPp_Init_OnLoad(g as _) } f }
+        "ftPp_SpecialAirHiStart_0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiStart_0_Anim(g as _) } f }
         "ftPp_SpecialAirHiStart_0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiStart_0_Coll(g as _) } f }
+        "ftPp_SpecialAirHiStart_0_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiStart_0_IASA(g as _) } f }
+        "ftPp_SpecialAirHiStart_0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiStart_0_Phys(g as _) } f }
         "ftPp_SpecialAirHiStart_1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiStart_1_Anim(g as _) } f }
         "ftPp_SpecialAirHiStart_1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiStart_1_Coll(g as _) } f }
+        "ftPp_SpecialAirHiStart_1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiStart_1_IASA(g as _) } f }
+        "ftPp_SpecialAirHiStart_1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiStart_1_Phys(g as _) } f }
+        "ftPp_SpecialAirHiThrow2_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow2_Anim(g as _) } f }
+        "ftPp_SpecialAirHiThrow2_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow2_Coll(g as _) } f }
+        "ftPp_SpecialAirHiThrow2_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow2_IASA(g as _) } f }
+        "ftPp_SpecialAirHiThrow2_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow2_Phys(g as _) } f }
+        "ftPp_SpecialAirHiThrow_0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow_0_Anim(g as _) } f }
         "ftPp_SpecialAirHiThrow_0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow_0_Coll(g as _) } f }
+        "ftPp_SpecialAirHiThrow_0_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow_0_IASA(g as _) } f }
+        "ftPp_SpecialAirHiThrow_0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow_0_Phys(g as _) } f }
         "ftPp_SpecialAirHiThrow_1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow_1_Anim(g as _) } f }
         "ftPp_SpecialAirHiThrow_1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow_1_Coll(g as _) } f }
+        "ftPp_SpecialAirHiThrow_1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow_1_IASA(g as _) } f }
+        "ftPp_SpecialAirHiThrow_1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHiThrow_1_Phys(g as _) } f }
+        "ftPp_SpecialAirHi_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialAirHi_Enter(g as _) } f }
+        "ftPp_SpecialAirLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialAirLw_Anim(g as _) } f }
         "ftPp_SpecialAirLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialAirLw_Coll(g as _) } f }
+        "ftPp_SpecialAirLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialAirLw_Enter(g as _) } f }
+        "ftPp_SpecialAirLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialAirLw_IASA(g as _) } f }
         "ftPp_SpecialAirLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialAirLw_Phys(g as _) } f }
         "ftPp_SpecialAirN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialAirN_Anim(g as _) } f }
+        "ftPp_SpecialAirN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialAirN_Coll(g as _) } f }
+        "ftPp_SpecialAirN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialAirN_Enter(g as _) } f }
+        "ftPp_SpecialAirN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialAirN_IASA(g as _) } f }
         "ftPp_SpecialAirN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialAirN_Phys(g as _) } f }
+        "ftPp_SpecialAirS1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialAirS1_Anim(g as _) } f }
+        "ftPp_SpecialAirS1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialAirS1_Coll(g as _) } f }
+        "ftPp_SpecialAirS1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialAirS1_IASA(g as _) } f }
+        "ftPp_SpecialAirS1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialAirS1_Phys(g as _) } f }
+        "ftPp_SpecialAirS2_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialAirS2_Anim(g as _) } f }
+        "ftPp_SpecialAirS2_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialAirS2_Coll(g as _) } f }
+        "ftPp_SpecialAirS2_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialAirS2_IASA(g as _) } f }
+        "ftPp_SpecialAirS2_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialAirS2_Phys(g as _) } f }
+        "ftPp_SpecialAirS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialAirS_Enter(g as _) } f }
+        "ftPp_SpecialHiStart_0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiStart_0_Anim(g as _) } f }
         "ftPp_SpecialHiStart_0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiStart_0_Coll(g as _) } f }
+        "ftPp_SpecialHiStart_0_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiStart_0_IASA(g as _) } f }
+        "ftPp_SpecialHiStart_0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiStart_0_Phys(g as _) } f }
+        "ftPp_SpecialHiStart_1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiStart_1_Anim(g as _) } f }
         "ftPp_SpecialHiStart_1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiStart_1_Coll(g as _) } f }
+        "ftPp_SpecialHiStart_1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiStart_1_IASA(g as _) } f }
         "ftPp_SpecialHiStart_1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiStart_1_Phys(g as _) } f }
+        "ftPp_SpecialHiThrow2_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow2_Anim(g as _) } f }
         "ftPp_SpecialHiThrow2_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow2_Coll(g as _) } f }
+        "ftPp_SpecialHiThrow2_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow2_IASA(g as _) } f }
+        "ftPp_SpecialHiThrow2_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow2_Phys(g as _) } f }
+        "ftPp_SpecialHiThrow_0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow_0_Anim(g as _) } f }
         "ftPp_SpecialHiThrow_0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow_0_Coll(g as _) } f }
+        "ftPp_SpecialHiThrow_0_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow_0_IASA(g as _) } f }
+        "ftPp_SpecialHiThrow_0_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow_0_Phys(g as _) } f }
         "ftPp_SpecialHiThrow_1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow_1_Anim(g as _) } f }
         "ftPp_SpecialHiThrow_1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow_1_Coll(g as _) } f }
+        "ftPp_SpecialHiThrow_1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow_1_IASA(g as _) } f }
         "ftPp_SpecialHiThrow_1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHiThrow_1_Phys(g as _) } f }
         "ftPp_SpecialHi_0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnanaspecialhi::ftPp_SpecialHi_0_Anim(g as _) } f }
         "ftPp_SpecialHi_0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnanaspecialhi::ftPp_SpecialHi_0_Coll(g as _) } f }
@@ -3518,14 +5231,33 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftPp_SpecialHi_80122098" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHi_80122098(g as _) } f }
         "ftPp_SpecialHi_801220D4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHi_801220D4(g as _) } f }
         "ftPp_SpecialHi_801222E8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHi_801222E8(g as _) } f }
+        "ftPp_SpecialHi_80122348" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHi_80122348(g as _) } f }
         "ftPp_SpecialHi_80122380" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHi_80122380(g as _) } f }
         "ftPp_SpecialHi_801227AC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHi_801227AC(g as _) } f }
+        "ftPp_SpecialHi_8012280C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHi_8012280C(g as _) } f }
+        "ftPp_SpecialHi_80122898" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialHi_80122898(g as _) } f }
+        "ftPp_SpecialHi_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialHi_Enter(g as _) } f }
+        "ftPp_SpecialLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialLw_Anim(g as _) } f }
+        "ftPp_SpecialLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialLw_Coll(g as _) } f }
         "ftPp_SpecialLw_Coll_Land_fp" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialLw_Coll_Land_fp(g as _) } f }
+        "ftPp_SpecialLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialLw_Enter(g as _) } f }
+        "ftPp_SpecialLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialLw_IASA(g as _) } f }
         "ftPp_SpecialLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_SpecialLw_Phys(g as _) } f }
+        "ftPp_SpecialN_8011F500" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialN_8011F500(g as _) } f }
         "ftPp_SpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialN_Anim(g as _) } f }
+        "ftPp_SpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialN_Coll(g as _) } f }
         "ftPp_SpecialN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialN_Enter(g as _) } f }
+        "ftPp_SpecialN_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialN_IASA(g as _) } f }
         "ftPp_SpecialN_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialn::ftPp_SpecialN_Phys(g as _) } f }
+        "ftPp_SpecialS1_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS1_Anim(g as _) } f }
         "ftPp_SpecialS1_Anim_fp" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS1_Anim_fp(g as _) } f }
+        "ftPp_SpecialS1_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS1_Coll(g as _) } f }
+        "ftPp_SpecialS1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS1_IASA(g as _) } f }
+        "ftPp_SpecialS1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS1_Phys(g as _) } f }
+        "ftPp_SpecialS2_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS2_Anim(g as _) } f }
+        "ftPp_SpecialS2_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS2_Coll(g as _) } f }
+        "ftPp_SpecialS2_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS2_IASA(g as _) } f }
+        "ftPp_SpecialS2_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS2_Phys(g as _) } f }
         "ftPp_SpecialS_0_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnanaspecials::ftPp_SpecialS_0_Anim(g as _) } f }
         "ftPp_SpecialS_0_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnanaspecials::ftPp_SpecialS_0_Coll(g as _) } f }
         "ftPp_SpecialS_0_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnanaspecials::ftPp_SpecialS_0_IASA(g as _) } f }
@@ -3536,22 +5268,117 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftPp_SpecialS_1_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnanaspecials::ftPp_SpecialS_1_IASA(g as _) } f }
         "ftPp_SpecialS_1_IASA_fp" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnanaspecials::ftPp_SpecialS_1_IASA_fp(g as _) } f }
         "ftPp_SpecialS_1_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftnanaspecials::ftPp_SpecialS_1_Phys(g as _) } f }
+        "ftPp_SpecialS_8011F68C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS_8011F68C(g as _) } f }
+        "ftPp_SpecialS_8011F720" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS_8011F720(g as _) } f }
+        "ftPp_SpecialS_80120E68" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialS_80120E68(g as _) } f }
+        "ftPp_SpecialS_801210C8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialS_801210C8(g as _) } f }
         "ftPp_SpecialS_8012114C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialS_8012114C(g as _) } f }
+        "ftPp_SpecialS_80121164" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecialhi::ftPp_SpecialS_80121164(g as _) } f }
+        "ftPp_SpecialS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::ftPp_SpecialS_Enter(g as _) } f }
         "ftPp_set_cbs_fp" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospeciallw::ftPp_set_cbs_fp(g as _) } f }
+        "ftPr_Init_8013C360" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_8013C360(g as _) } f }
+        "ftPr_Init_8013C494" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_8013C494(g as _) } f }
+        "ftPr_Init_8013C94C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_8013C94C(g as _) } f }
+        "ftPr_Init_LoadSpecialAttrs" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_LoadSpecialAttrs(g as _) } f }
         "ftPr_Init_OnDeath" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_OnDeath(g as _) } f }
+        "ftPr_Init_OnItemInvisible" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_OnItemInvisible(g as _) } f }
+        "ftPr_Init_OnItemVisible" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_OnItemVisible(g as _) } f }
         "ftPr_Init_OnKnockbackEnter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_OnKnockbackEnter(g as _) } f }
         "ftPr_Init_OnKnockbackExit" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_OnKnockbackExit(g as _) } f }
+        "ftPr_Init_OnLoad" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_OnLoad(g as _) } f }
+        "ftPr_Init_OnUserDataRemove" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurin::ftPr_Init_OnUserDataRemove(g as _) } f }
+        "ftPr_SpecialAirHi_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialAirHi_Anim(g as _) } f }
+        "ftPr_SpecialAirHi_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialAirHi_Coll(g as _) } f }
+        "ftPr_SpecialAirHi_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialAirHi_Enter(g as _) } f }
+        "ftPr_SpecialAirHi_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialAirHi_IASA(g as _) } f }
         "ftPr_SpecialAirHi_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialAirHi_Phys(g as _) } f }
+        "ftPr_SpecialAirLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialAirLw_Anim(g as _) } f }
+        "ftPr_SpecialAirLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialAirLw_Coll(g as _) } f }
+        "ftPr_SpecialAirLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialAirLw_Enter(g as _) } f }
+        "ftPr_SpecialAirLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialAirLw_IASA(g as _) } f }
         "ftPr_SpecialAirLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialAirLw_Phys(g as _) } f }
+        "ftPr_SpecialAirNChargeFull_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeFull_Anim(g as _) } f }
+        "ftPr_SpecialAirNChargeFull_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeFull_Coll(g as _) } f }
+        "ftPr_SpecialAirNChargeFull_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeFull_IASA(g as _) } f }
+        "ftPr_SpecialAirNChargeFull_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeFull_Phys(g as _) } f }
+        "ftPr_SpecialAirNChargeLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeLoop_Anim(g as _) } f }
+        "ftPr_SpecialAirNChargeLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeLoop_Coll(g as _) } f }
+        "ftPr_SpecialAirNChargeLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeLoop_IASA(g as _) } f }
+        "ftPr_SpecialAirNChargeLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeLoop_Phys(g as _) } f }
+        "ftPr_SpecialAirNChargeRelease_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeRelease_Anim(g as _) } f }
+        "ftPr_SpecialAirNChargeRelease_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeRelease_Coll(g as _) } f }
+        "ftPr_SpecialAirNChargeRelease_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeRelease_IASA(g as _) } f }
+        "ftPr_SpecialAirNChargeRelease_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNChargeRelease_Phys(g as _) } f }
+        "ftPr_SpecialAirNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNEnd_Anim(g as _) } f }
+        "ftPr_SpecialAirNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNEnd_Coll(g as _) } f }
+        "ftPr_SpecialAirNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNEnd_IASA(g as _) } f }
+        "ftPr_SpecialAirNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNEnd_Phys(g as _) } f }
+        "ftPr_SpecialAirNStartTurn_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNStartTurn_Anim(g as _) } f }
+        "ftPr_SpecialAirNStartTurn_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNStartTurn_Coll(g as _) } f }
+        "ftPr_SpecialAirNStartTurn_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNStartTurn_IASA(g as _) } f }
+        "ftPr_SpecialAirNStartTurn_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNStartTurn_Phys(g as _) } f }
+        "ftPr_SpecialAirNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNStart_Anim(g as _) } f }
+        "ftPr_SpecialAirNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNStart_Coll(g as _) } f }
+        "ftPr_SpecialAirNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNStart_IASA(g as _) } f }
+        "ftPr_SpecialAirNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirNStart_Phys(g as _) } f }
+        "ftPr_SpecialAirN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirN_Enter(g as _) } f }
         "ftPr_SpecialAirS_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialAirS_Anim(g as _) } f }
         "ftPr_SpecialAirS_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialAirS_Coll(g as _) } f }
         "ftPr_SpecialAirS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialAirS_Enter(g as _) } f }
         "ftPr_SpecialAirS_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialAirS_IASA(g as _) } f }
         "ftPr_SpecialAirS_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialAirS_Phys(g as _) } f }
+        "ftPr_SpecialHi_8013CD34" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialHi_8013CD34(g as _) } f }
+        "ftPr_SpecialHi_8013CDD8" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialHi_8013CDD8(g as _) } f }
+        "ftPr_SpecialHi_8013CE7C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialHi_8013CE7C(g as _) } f }
+        "ftPr_SpecialHi_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialHi_Anim(g as _) } f }
+        "ftPr_SpecialHi_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialHi_Coll(g as _) } f }
+        "ftPr_SpecialHi_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialHi_Enter(g as _) } f }
+        "ftPr_SpecialHi_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialHi_IASA(g as _) } f }
         "ftPr_SpecialHi_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialhi::ftPr_SpecialHi_Phys(g as _) } f }
+        "ftPr_SpecialLw_8013D104" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialLw_8013D104(g as _) } f }
+        "ftPr_SpecialLw_8013D19C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialLw_8013D19C(g as _) } f }
+        "ftPr_SpecialLw_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialLw_Anim(g as _) } f }
+        "ftPr_SpecialLw_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialLw_Coll(g as _) } f }
+        "ftPr_SpecialLw_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialLw_Enter(g as _) } f }
+        "ftPr_SpecialLw_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialLw_IASA(g as _) } f }
         "ftPr_SpecialLw_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspeciallw::ftPr_SpecialLw_Phys(g as _) } f }
+        "ftPr_SpecialNEnd_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNEnd_Anim(g as _) } f }
+        "ftPr_SpecialNEnd_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNEnd_Coll(g as _) } f }
+        "ftPr_SpecialNEnd_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNEnd_IASA(g as _) } f }
+        "ftPr_SpecialNEnd_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNEnd_Phys(g as _) } f }
+        "ftPr_SpecialNFull_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNFull_Anim(g as _) } f }
+        "ftPr_SpecialNFull_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNFull_Coll(g as _) } f }
+        "ftPr_SpecialNFull_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNFull_IASA(g as _) } f }
+        "ftPr_SpecialNFull_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNFull_Phys(g as _) } f }
+        "ftPr_SpecialNHit_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNHit_Anim(g as _) } f }
+        "ftPr_SpecialNHit_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNHit_Coll(g as _) } f }
+        "ftPr_SpecialNHit_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNHit_IASA(g as _) } f }
+        "ftPr_SpecialNHit_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNHit_Phys(g as _) } f }
+        "ftPr_SpecialNLoop_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNLoop_Anim(g as _) } f }
+        "ftPr_SpecialNLoop_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNLoop_Coll(g as _) } f }
+        "ftPr_SpecialNLoop_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNLoop_IASA(g as _) } f }
+        "ftPr_SpecialNLoop_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNLoop_Phys(g as _) } f }
+        "ftPr_SpecialNRelease_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNRelease_Anim(g as _) } f }
+        "ftPr_SpecialNRelease_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNRelease_Coll(g as _) } f }
+        "ftPr_SpecialNRelease_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNRelease_IASA(g as _) } f }
+        "ftPr_SpecialNRelease_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNRelease_Phys(g as _) } f }
+        "ftPr_SpecialNStart_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNStart_Anim(g as _) } f }
+        "ftPr_SpecialNStart_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNStart_Coll(g as _) } f }
+        "ftPr_SpecialNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNStart_IASA(g as _) } f }
+        "ftPr_SpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNStart_Phys(g as _) } f }
+        "ftPr_SpecialNTurn_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNTurn_Anim(g as _) } f }
+        "ftPr_SpecialNTurn_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNTurn_Coll(g as _) } f }
+        "ftPr_SpecialNTurn_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNTurn_IASA(g as _) } f }
+        "ftPr_SpecialNTurn_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialNTurn_Phys(g as _) } f }
+        "ftPr_SpecialN_8014222C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialN_8014222C(g as _) } f }
+        "ftPr_SpecialN_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialN_Enter(g as _) } f }
         "ftPr_SpecialS_8013D590" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialS_8013D590(g as _) } f }
         "ftPr_SpecialS_8013D5F0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialS_8013D5F0(g as _) } f }
+        "ftPr_SpecialS_8013D658" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialS_8013D658(g as _) } f }
+        "ftPr_SpecialS_8013D764" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialS_8013D764(g as _) } f }
+        "ftPr_SpecialS_8013D8B0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialS_8013D8B0(g as _) } f }
+        "ftPr_SpecialS_8013D8E4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialS_8013D8E4(g as _) } f }
+        "ftPr_SpecialS_8013DC64" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecialn::ftPr_SpecialS_8013DC64(g as _) } f }
         "ftPr_SpecialS_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialS_Anim(g as _) } f }
         "ftPr_SpecialS_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialS_Coll(g as _) } f }
         "ftPr_SpecialS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpurinspecials::ftPr_SpecialS_Enter(g as _) } f }
@@ -3723,6 +5550,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftSk_SpecialS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspecials::ftSk_SpecialS_Enter(g as _) } f }
         "ftSk_SpecialS_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspecials::ftSk_SpecialS_IASA(g as _) } f }
         "ftSk_SpecialS_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspecials::ftSk_SpecialS_Phys(g as _) } f }
+        "ftSs_Init_80128428" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamus::ftSs_Init_80128428(g as _) } f }
         "ftSs_Init_LoadSpecialAttrs" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamus::ftSs_Init_LoadSpecialAttrs(g as _) } f }
         "ftSs_Init_OnDeath" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamus::ftSs_Init_OnDeath(g as _) } f }
         "ftSs_Init_OnItemInvisible" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamus::ftSs_Init_OnItemInvisible(g as _) } f }
@@ -3772,6 +5600,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftSs_SpecialLwBomb_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspeciallw1::ftSs_SpecialLwBomb_Phys(g as _) } f }
         "ftSs_SpecialLw_80129048" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspeciallw0::ftSs_SpecialLw_80129048(g as _) } f }
         "ftSs_SpecialLw_801290A4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspeciallw0::ftSs_SpecialLw_801290A4(g as _) } f }
+        "ftSs_SpecialLw_8012ADF0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspeciallw1::ftSs_SpecialLw_8012ADF0(g as _) } f }
         "ftSs_SpecialLw_8012AEBC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspeciallw1::ftSs_SpecialLw_8012AEBC(g as _) } f }
         "ftSs_SpecialLw_8012AF38" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspeciallw1::ftSs_SpecialLw_8012AF38(g as _) } f }
         "ftSs_SpecialLw_8012B570" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspeciallw1::ftSs_SpecialLw_8012B570(g as _) } f }
@@ -3795,6 +5624,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftSs_SpecialNStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecialn::ftSs_SpecialNStart_IASA(g as _) } f }
         "ftSs_SpecialNStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecialn::ftSs_SpecialNStart_Phys(g as _) } f }
         "ftSs_SpecialN_801291F0" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecialn::ftSs_SpecialN_801291F0(g as _) } f }
+        "ftSs_SpecialN_80129258" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecialn::ftSs_SpecialN_80129258(g as _) } f }
         "ftSs_SpecialN_801293BC" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecialn::ftSs_SpecialN_801293BC(g as _) } f }
         "ftSs_SpecialN_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecialn::ftSs_SpecialN_Anim(g as _) } f }
         "ftSs_SpecialN_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecialn::ftSs_SpecialN_Coll(g as _) } f }
@@ -3805,6 +5635,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftSs_SpecialSSmash_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecials::ftSs_SpecialSSmash_Coll(g as _) } f }
         "ftSs_SpecialSSmash_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecials::ftSs_SpecialSSmash_IASA(g as _) } f }
         "ftSs_SpecialSSmash_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecials::ftSs_SpecialSSmash_Phys(g as _) } f }
+        "ftSs_SpecialS_8012A074" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecialn::ftSs_SpecialS_8012A074(g as _) } f }
         "ftSs_SpecialS_8012A640" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecials::ftSs_SpecialS_8012A640(g as _) } f }
         "ftSs_SpecialS_Anim" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecials::ftSs_SpecialS_Anim(g as _) } f }
         "ftSs_SpecialS_Coll" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftsamusspecials::ftSs_SpecialS_Coll(g as _) } f }
@@ -3852,6 +5683,9 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftYs_Init_OnKnockbackExit" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftyoshi::ftYs_Init_OnKnockbackExit(g as _) } f }
         "ftYs_Init_OnKnockbackExit_fp" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftyoshi::ftYs_Init_OnKnockbackExit_fp(g as _) } f }
         "ftYs_Init_OnLoad" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftyoshi::ftYs_Init_OnLoad(g as _) } f }
+        "ftYs_JumpAerial_Anim_Cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftYs_JumpAerial_Anim_Cb(g as _) } f }
+        "ftYs_JumpAerial_Anim_Cb_c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftYs_JumpAerial_Anim_Cb_c(g as _) } f }
+        "ftYs_JumpAerial_Enter" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_JumpAerial::ftYs_JumpAerial_Enter(g as _) } f }
         "ftYs_Shield_8012C1D4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftyoshiguard::ftYs_Shield_8012C1D4(g as _) } f }
         "ftYs_Shield_8012C49C" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftyoshiguard::ftYs_Shield_8012C49C(g as _) } f }
         "ftYs_Shield_8012C850" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftyoshiguard::ftYs_Shield_8012C850(g as _) } f }
@@ -4068,17 +5902,221 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "ftZd_SpecialSStart_IASA" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftzeldaspecials::ftZd_SpecialSStart_IASA(g as _) } f }
         "ftZd_SpecialSStart_Phys" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftzeldaspecials::ftZd_SpecialSStart_Phys(g as _) } f }
         "ftZd_SpecialS_Enter" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftzeldaspecials::ftZd_SpecialS_Enter(g as _) } f }
+        "ft_8007c114" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_07c1::ft_8007c114(g as _) } f }
+        "ft_8007c17c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_07c1::ft_8007c17c(g as _) } f }
+        "ft_8007c224" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_07c1::ft_8007c224(g as _) } f }
+        "ft_8007c4bc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_07c1::ft_8007c4bc(g as _) } f }
+        "ft_8007c630" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_07c6::ft_8007c630(g as _) } f }
+        "ft_8007c6dc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_07c6::ft_8007c6dc(g as _) } f }
+        "ft_8007c77c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_07c6::ft_8007c77c(g as _) } f }
+        "ft_80081938" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0819::ft_80081938(g as _) } f }
+        "ft_800819a8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0819::ft_800819a8(g as _) } f }
+        "ft_80081b38" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_80081b38(g as _) } f }
+        "ft_80082b1c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_80082b1c(g as _) } f }
+        "ft_80082f28" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_80082f28(g as _) } f }
+        "ft_80083b68" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_80083b68(g as _) } f }
+        "ft_80083dcc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_80083dcc(g as _) } f }
+        "ft_80083f88" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_80083f88(g as _) } f }
+        "ft_80084104" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_80084104(g as _) } f }
+        "ft_80084280" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_80084280(g as _) } f }
+        "ft_800843fc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_800843fc(g as _) } f }
+        "ft_800844ec" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_800844ec(g as _) } f }
+        "ft_800845b4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ft_800845b4(g as _) } f }
+        "ft_80084eec" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_80084eec(g as _) } f }
+        "ft_80084f3c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_80084f3c(g as _) } f }
+        "ft_80084fa8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_80084fa8(g as _) } f }
+        "ft_80085004" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_80085004(g as _) } f }
+        "ft_80085088" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_80085088(g as _) } f }
+        "ft_800850b4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_800850b4(g as _) } f }
+        "ft_80085134" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_80085134(g as _) } f }
+        "ft_80085154" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_80085154(g as _) } f }
+        "ft_800851c0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_800851c0(g as _) } f }
+        "ft_800851d0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_800851d0(g as _) } f }
+        "ft_80085204" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_084e::ft_80085204(g as _) } f }
+        "ft_8008521C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftdata::ft_8008521C(g as _) } f }
+        "ft_80088c5c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0881::ft_80088c5c(g as _) } f }
         "ft_800892A0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0881::ft_800892A0(g as _) } f }
+        "ft_80089824_fp" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0892::ft_80089824_fp(g as _) } f }
+        "ft_80089B08" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0899::ft_80089B08(g as _) } f }
+        "ft_8008A2BC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_08a1::ft_8008A2BC(g as _) } f }
+        "ft_8008A324" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_08a1::ft_8008A324(g as _) } f }
         "ft_800C85B8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftmetal::ft_800C85B8(g as _) } f }
         "ft_800CD914" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftstarrodswing::ft_800CD914(g as _) } f }
         "ft_800CDB9C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlipstickswing::ft_800CDB9C(g as _) } f }
+        "ft_800CEF08" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemParasolOpen::ft_800CEF08(g as _) } f }
+        "ft_800D76B8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ft_800D76B8(g as _) } f }
+        "ft_800D7770" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_ItemScopeStart::ft_800D7770(g as _) } f }
+        "ft_800cd31c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd1::ft_800cd31c(g as _) } f }
+        "ft_800cd604" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ft_800cd604(g as _) } f }
+        "ft_800cd65c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ft_800cd65c(g as _) } f }
+        "ft_800ce528" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ft_800ce528(g as _) } f }
+        "ft_800ce5a0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ft_800ce5a0(g as _) } f }
         "ftcamera_800762f4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcamera::ftcamera_800762f4(g as _) } f }
         "ftcamera_80076320" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcamera::ftcamera_80076320(g as _) } f }
         "ftcamera_update_camera_box" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcamera::ftcamera_update_camera_box(g as _) } f }
+        "ftcliffcommon_80081370" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(g as _) } f }
+        "ftco_800bfd04" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcolanimlist::ftco_800bfd04(g as _) } f }
+        "ftco_800bfd9c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcolanimlist::ftco_800bfd9c(g as _) } f }
+        "ftco_800c0408" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcolanimlist::ftco_800c0408(g as _) } f }
+        "ftco_800c3598" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0c35::ftco_800c3598(g as _) } f }
+        "ftco_800c36dc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0c35::ftco_800c36dc(g as _) } f }
+        "ftco_800c37a0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0c35::ftco_800c37a0(g as _) } f }
+        "ftco_800c3be8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_aircatch::ftco_800c3be8(g as _) } f }
+        "ftco_800c3cc0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_aircatch::ftco_800c3cc0(g as _) } f }
+        "ftco_800c6110" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0c60::ftco_800c6110(g as _) } f }
         "ftco_800c703c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c703c::ftco_800c703c(g as _) } f }
+        "ftco_800c7070" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7070::ftco_800c7070(g as _) } f }
+        "ftco_800c70d0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c70d0::ftco_800c70d0(g as _) } f }
+        "ftco_800c7158" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c70d0::ftco_800c7158(g as _) } f }
+        "ftco_800c7178" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7178::ftco_800c7178(g as _) } f }
+        "ftco_800c7200" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7178::ftco_800c7200(g as _) } f }
+        "ftco_800c7220" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7220::ftco_800c7220(g as _) } f }
+        "ftco_800c7294" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7220::ftco_800c7294(g as _) } f }
+        "ftco_800c7308" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7220::ftco_800c7308(g as _) } f }
+        "ftco_800c737c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7220::ftco_800c737c(g as _) } f }
+        "ftco_800c739c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c739c::ftco_800c739c(g as _) } f }
+        "ftco_800c7414" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c739c::ftco_800c7414(g as _) } f }
+        "ftco_800c7434" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7434::ftco_800c7434(g as _) } f }
+        "ftco_800c74ac" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7434::ftco_800c74ac(g as _) } f }
+        "ftco_800c7590" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7590::ftco_800c7590(g as _) } f }
+        "ftco_800c7800" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7590::ftco_800c7800(g as _) } f }
+        "ftco_800c7a30" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c78b0::ftco_800c7a30(g as _) } f }
+        "ftco_800c884c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c88::ftco_800c884c(g as _) } f }
+        "ftco_800c89a0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c88::ftco_800c89a0(g as _) } f }
+        "ftco_800c8a64" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c88::ftco_800c8a64(g as _) } f }
+        "ftco_800c8d00" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c8c::ftco_800c8d00(g as _) } f }
+        "ftco_800c8fc4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c8c::ftco_800c8fc4(g as _) } f }
+        "ftco_800c9034" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0c8c::ftco_800c9034(g as _) } f }
+        "ftco_800cd1bc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd1::ftco_800cd1bc(g as _) } f }
+        "ftco_800cd204" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd1::ftco_800cd204(g as _) } f }
+        "ftco_800cd278" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd1::ftco_800cd278(g as _) } f }
+        "ftco_800cdda0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdd::ftco_800cdda0(g as _) } f }
+        "ftco_800cde18" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdd::ftco_800cde18(g as _) } f }
+        "ftco_800cde54" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdd::ftco_800cde54(g as _) } f }
+        "ftco_800cde74" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdd::ftco_800cde74(g as _) } f }
+        "ftco_800cdf5c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_800cdf5c(g as _) } f }
+        "ftco_800ce010" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_800ce010(g as _) } f }
+        "ftco_800ce0cc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_800ce0cc(g as _) } f }
+        "ftco_800ce14c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_800ce14c(g as _) } f }
+        "ftco_800ce1d4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_800ce1d4(g as _) } f }
+        "ftco_800ce3e0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_800ce3e0(g as _) } f }
+        "ftco_800ce480" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_800ce480(g as _) } f }
+        "ftco_800ce620" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_800ce620(g as _) } f }
+        "ftco_800ce650" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_800ce650(g as _) } f }
         "ftco_800d0cbc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftchangeparam::ftco_800d0cbc(g as _) } f }
         "ftco_800d0fa0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftchangeparam::ftco_800d0fa0(g as _) } f }
         "ftco_800d105c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftchangeparam::ftco_800d105c(g as _) } f }
+        "ftco_800d94d8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0d8e::ftco_800d94d8(g as _) } f }
+        "ftco_800d9c98" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0d95::ftco_800d9c98(g as _) } f }
+        "ftco_800dc284" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_800dc284(g as _) } f }
+        "ftco_800dc3a4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_800dc3a4(g as _) } f }
+        "ftco_800deea8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0df0::ftco_800deea8(g as _) } f }
+        "ftco_800def38" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0df0::ftco_800def38(g as _) } f }
+        "ftco_800df0d0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0df0::ftco_800df0d0(g as _) } f }
+        "ftco_air_catch_hit_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_081b::ftco_air_catch_hit_coll(g as _) } f }
+        "ftco_aircatch_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_aircatch::ftco_aircatch_anim(g as _) } f }
+        "ftco_aircatch_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_aircatch::ftco_aircatch_coll(g as _) } f }
+        "ftco_aircatch_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_aircatch::ftco_aircatch_iasa(g as _) } f }
+        "ftco_aircatch_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_aircatch::ftco_aircatch_phys(g as _) } f }
+        "ftco_aircatchhit_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_aircatch::ftco_aircatchhit_anim(g as _) } f }
+        "ftco_aircatchhit_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_aircatch::ftco_aircatchhit_iasa(g as _) } f }
+        "ftco_aircatchhit_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_aircatch::ftco_aircatchhit_phys(g as _) } f }
+        "ftco_attack_800cdd14" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdd::ftco_attack_800cdd14(g as _) } f }
+        "ftco_batswing_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_batswing_anim(g as _) } f }
+        "ftco_batswing_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_batswing_coll(g as _) } f }
+        "ftco_batswing_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_batswing_iasa(g as _) } f }
+        "ftco_batswing_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_batswing_phys(g as _) } f }
+        "ftco_capture_leadead_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7590::ftco_capture_leadead_anim(g as _) } f }
+        "ftco_capture_leadead_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7590::ftco_capture_leadead_coll(g as _) } f }
+        "ftco_capture_leadead_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7590::ftco_capture_leadead_iasa(g as _) } f }
+        "ftco_capture_leadead_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7590::ftco_capture_leadead_phys(g as _) } f }
+        "ftco_capture_likelike_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c78b0::ftco_capture_likelike_anim(g as _) } f }
+        "ftco_capture_likelike_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c78b0::ftco_capture_likelike_coll(g as _) } f }
+        "ftco_capture_likelike_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c78b0::ftco_capture_likelike_iasa(g as _) } f }
+        "ftco_capture_likelike_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c78b0::ftco_capture_likelike_phys(g as _) } f }
+        "ftco_capturedamagehi_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_capturedamagehi_anim(g as _) } f }
+        "ftco_capturedamagehi_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_capturedamagehi_coll(g as _) } f }
+        "ftco_capturedamagehi_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_capturedamagehi_iasa(g as _) } f }
+        "ftco_capturedamagehi_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_capturedamagehi_phys(g as _) } f }
+        "ftco_capturedamagelw_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_capturedamagelw_anim(g as _) } f }
+        "ftco_capturedamagelw_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_capturedamagelw_coll(g as _) } f }
+        "ftco_capturedamagelw_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_capturedamagelw_iasa(g as _) } f }
+        "ftco_capturedamagelw_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_0dc2::ftco_capturedamagelw_phys(g as _) } f }
+        "ftco_cliff_cam" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcliffcommon::ftco_cliff_cam(g as _) } f }
+        "ftco_cliff_catch_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcliffcommon::ftco_cliff_catch_anim(g as _) } f }
+        "ftco_cliff_catch_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcliffcommon::ftco_cliff_catch_coll(g as _) } f }
+        "ftco_cliff_catch_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcliffcommon::ftco_cliff_catch_iasa(g as _) } f }
+        "ftco_cliff_catch_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcliffcommon::ftco_cliff_catch_phys(g as _) } f }
+        "ftco_downreflect_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7ca0::ftco_downreflect_anim(g as _) } f }
+        "ftco_downreflect_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7ca0::ftco_downreflect_coll(g as _) } f }
+        "ftco_downreflect_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7ca0::ftco_downreflect_iasa(g as _) } f }
+        "ftco_downreflect_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7ca0::ftco_downreflect_phys(g as _) } f }
+        "ftco_fireflowershoot_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_fireflowershoot_anim(g as _) } f }
+        "ftco_fireflowershoot_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_fireflowershoot_coll(g as _) } f }
+        "ftco_fireflowershoot_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_fireflowershoot_iasa(g as _) } f }
+        "ftco_fireflowershoot_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_fireflowershoot_phys(g as _) } f }
+        "ftco_fireflowershootair_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_fireflowershootair_anim(g as _) } f }
+        "ftco_fireflowershootair_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_fireflowershootair_coll(g as _) } f }
+        "ftco_fireflowershootair_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_fireflowershootair_iasa(g as _) } f }
+        "ftco_fireflowershootair_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0ce3::ftco_fireflowershootair_phys(g as _) } f }
+        "ftco_harisenswing_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_harisenswing_anim(g as _) } f }
+        "ftco_harisenswing_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_harisenswing_coll(g as _) } f }
+        "ftco_harisenswing_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_harisenswing_iasa(g as _) } f }
+        "ftco_harisenswing_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_harisenswing_phys(g as _) } f }
+        "ftco_lgunshoot_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_lgunshoot_anim(g as _) } f }
+        "ftco_lgunshoot_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_lgunshoot_coll(g as _) } f }
+        "ftco_lgunshoot_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_lgunshoot_iasa(g as _) } f }
+        "ftco_lgunshoot_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_lgunshoot_phys(g as _) } f }
+        "ftco_lgunshootair_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_lgunshootair_anim(g as _) } f }
+        "ftco_lgunshootair_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_lgunshootair_coll(g as _) } f }
+        "ftco_lgunshootair_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_lgunshootair_iasa(g as _) } f }
+        "ftco_lgunshootair_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cdf::ftco_lgunshootair_phys(g as _) } f }
+        "ftco_parasolswing_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_parasolswing_anim(g as _) } f }
+        "ftco_parasolswing_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_parasolswing_coll(g as _) } f }
+        "ftco_parasolswing_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_parasolswing_iasa(g as _) } f }
+        "ftco_parasolswing_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_parasolswing_phys(g as _) } f }
+        "ftco_release_item_and_victim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftco_800c7590::ftco_release_item_and_victim(g as _) } f }
+        "ftco_sleep_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcolanimlist::ftco_sleep_anim(g as _) } f }
+        "ftco_sleep_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcolanimlist::ftco_sleep_iasa(g as _) } f }
+        "ftco_swordswing_anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_swordswing_anim(g as _) } f }
+        "ftco_swordswing_coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_swordswing_coll(g as _) } f }
+        "ftco_swordswing_iasa" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_swordswing_iasa(g as _) } f }
+        "ftco_swordswing_phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ft_0cd3::ftco_swordswing_phys(g as _) } f }
+        "ftcoll_800788d4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_800788d4(g as _) } f }
+        "ftcoll_80078a2c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_80078a2c(g as _) } f }
+        "ftcoll_80078c70" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_80078c70(g as _) } f }
+        "ftcoll_8007925c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007925c(g as _) } f }
+        "ftcoll_8007ab48" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007ab48(g as _) } f }
+        "ftcoll_8007ab80" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007ab80(g as _) } f }
+        "ftcoll_8007ae80" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007ae80(g as _) } f }
+        "ftcoll_8007af60" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007af60(g as _) } f }
+        "ftcoll_8007aff8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007aff8(g as _) } f }
+        "ftcoll_8007b320" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007b320(g as _) } f }
+        "ftcoll_8007b4e0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007b4e0(g as _) } f }
+        "ftcoll_8007b6a0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007b6a0(g as _) } f }
+        "ftcoll_8007b6ec" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007b6ec(g as _) } f }
+        "ftcoll_8007b8e8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007b8e8(g as _) } f }
+        "ftcoll_8007ba0c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007ba0c(g as _) } f }
+        "ftcoll_8007bac0" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007bac0(g as _) } f }
+        "ftcoll_8007bc90" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007bc90(g as _) } f }
+        "ftcoll_8007be3c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftcoll::ftcoll_8007be3c(g as _) } f }
+        "ftlib_80087140" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlib::ftlib_80087140(g as _) } f }
+        "ftlib_clearheldspecialitem" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlib::ftlib_clearheldspecialitem(g as _) } f }
+        "ftlib_disableinput" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlib::ftlib_disableinput(g as _) } f }
+        "ftlib_enableinput" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlib::ftlib_enableinput(g as _) } f }
+        "ftlib_isframesremaining" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlib::ftlib_isframesremaining(g as _) } f }
+        "ftlib_stopitemrumble" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftlib::ftlib_stopitemrumble(g as _) } f }
+        "ftparts_80074a8c" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftparts::ftparts_80074a8c(g as _) } f }
+        "ftparts_80074acc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftparts::ftparts_80074acc(g as _) } f }
+        "ftpickupitem_80094D90" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftpickupitem::ftpickupitem_80094D90(g as _) } f }
+        "ftpickupitem_80094DF8" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftpickupitem::ftpickupitem_80094DF8(g as _) } f }
+        "ftpickupitem_80094DF8_cb" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftpickupitem::ftpickupitem_80094DF8_cb(g as _) } f }
+        "ftpickupitem_Anim" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftpickupitem::ftpickupitem_Anim(g as _) } f }
+        "ftpickupitem_Coll" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftpickupitem::ftpickupitem_Coll(g as _) } f }
+        "ftpickupitem_IASA" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftpickupitem::ftpickupitem_IASA(g as _) } f }
+        "ftpickupitem_Phys" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftpickupitem::ftpickupitem_Phys(g as _) } f }
+        "ftwalkcommon_800dfddc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800dfddc(g as _) } f }
+        "ftwalkcommon_800e0060" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftwalkcommon::ftwalkcommon_800e0060(g as _) } f }
         "func_8026A158_helper" => { unsafe extern "C" fn f(g: G) { melee_items::tu::item::func_8026A158_helper(g as _) } f }
         "func_8026A1E8_inline" => { unsafe extern "C" fn f(g: G) { melee_items::tu::item::func_8026A1E8_inline(g as _) } f }
         "func_8026A8EC_inline1" => { unsafe extern "C" fn f(g: G) { melee_items::tu::item::func_8026A8EC_inline1(g as _) } f }
@@ -5262,10 +7300,16 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "onAccessory4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftlinkspecialhi::onAccessory4(g as _) } f }
         "onDetectAir" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptainspecials::onDetectAir(g as _) } f }
         "onDetectGround" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptainspecials::onDetectGround(g as _) } f }
+        "onEnterHitlag" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::onEnterHitlag(g as _) } f }
+        "onExitHitlag" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::onExitHitlag(g as _) } f }
+        "onHitAccessory4" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::onHitAccessory4(g as _) } f }
         "onPkPc21EC" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Attack1::onPkPc21EC(g as _) } f }
+        "onUnkHit" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::onUnkHit(g as _) } f }
+        "pl_80037ecc" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::pltrick::pl_80037ecc(g as _) } f }
         "pl_8003E70C" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::plbonuslib::pl_8003E70C(g as _) } f }
         "reflect" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmariospecials::reflect(g as _) } f }
         "removeStageGObj" => { unsafe extern "C" fn f(g: G) { melee_world::tu::ground::removeStageGObj(g as _) } f }
+        "reset" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::reset(g as _) } f }
         "resetAnim_fp" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpopospecials::resetAnim_fp(g as _) } f }
         "resetCmdVarsGround" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptainspecials::resetCmdVarsGround(g as _) } f }
         "script_bench_test_wait" => { unsafe extern "C" fn f(g: G) { melee_modes::tu::script_game::script_bench_test_wait(g as _) } f }
@@ -5278,6 +7322,7 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "setGfx" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmariospeciallw::setGfx(g as _) } f }
         "setGwVars" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftkirbyspecialgamewatch::setGwVars(g as _) } f }
         "setupAirStart" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftcaptainspecials::setupAirStart(g as _) } f }
+        "setupColl" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::setupColl(g as _) } f }
         "setupHitColl" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftpeachspecialn::setupHitColl(g as _) } f }
         "shellHit" => { unsafe extern "C" fn f(g: G) { melee_items::tu::itgshell::shellHit(g as _) } f }
         "shootNeedles" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftseakspecialn::shootNeedles(g as _) } f }
@@ -5461,6 +7506,8 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "un_8032110C" => { unsafe extern "C" fn f(g: G) { melee_items::tu::vi1202::un_8032110C(g as _) } f }
         "un_80321130" => { unsafe extern "C" fn f(g: G) { melee_items::tu::vi1202::un_80321130(g as _) } f }
         "un_80321154" => { unsafe extern "C" fn f(g: G) { melee_items::tu::vi1202::un_80321154(g as _) } f }
+        "un_80321A00" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::crowdsfx::un_80321A00(g as _) } f }
+        "un_80321AF4" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::crowdsfx::un_80321AF4(g as _) } f }
         "unsetCallbacks" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmariospeciallw::unsetCallbacks(g as _) } f }
         "updateRot" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftmariospeciallw::updateRot(g as _) } f }
         "updateVelocity" => { unsafe extern "C" fn f(g: G) { melee_chara::tu::ftdonkeyspecialn::updateVelocity(g as _) } f }
@@ -5474,6 +7521,8 @@ pub fn gobj_fn(name: &str) -> Option<unsafe extern "C" fn(G)> {
         "vi_8031CA04" => { unsafe extern "C" fn f(g: G) { melee_items::tu::vi::vi_8031CA04(g as _) } f }
         "vi_8031D80C" => { unsafe extern "C" fn f(g: G) { melee_items::tu::vi0402::vi_8031D80C(g as _) } f }
         "vi_8031E6EC" => { unsafe extern "C" fn f(g: G) { melee_items::tu::vi0601::vi_8031E6EC(g as _) } f }
+        "wobble_reset" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_Damage::wobble_reset(g as _) } f }
+        "wrapper" => { unsafe extern "C" fn f(g: G) { melee_fighter::tu::ftCo_AttackLw3::wrapper(g as _) } f }
         _ => return None,
     })
 }
@@ -5565,7 +7614,35 @@ pub fn gobj2_fn(name: &str) -> Option<unsafe extern "C" fn(G, G)> {
 pub static GOBJ_FN_NAMES: &[&str] = &[
     "Camera_8002A4AC",
     "Camera_800304E0",
+    "Fighter_80068E64",
+    "Fighter_8006CFE0",
+    "Fighter_8006D10C",
+    "Fighter_8006D10C_Inline1",
+    "Fighter_Create_Inline2",
+    "Fighter_ResetInputData_80068854",
     "Fighter_SetDamageCallback_ftLk_800EAF58",
+    "Fighter_Spawn",
+    "Fighter_UnkApplyTransformation_8006C0F0",
+    "Fighter_UnkIncrementCounters_8006ABEC",
+    "Fighter_UnkInitLoad_80068914_Inner1",
+    "Fighter_UnkRecursiveFunc_8006D044",
+    "Fighter_UnkUpdateCostumeJoint_800686E4",
+    "Fighter_UpdateModelScale",
+    "Fighter_procAccessory",
+    "Fighter_procAnim",
+    "Fighter_procAttackColl",
+    "Fighter_procCamera",
+    "Fighter_procCollPos",
+    "Fighter_procCollResolve",
+    "Fighter_procCpu",
+    "Fighter_procDynamics",
+    "Fighter_procGrabColl",
+    "Fighter_procHitlag",
+    "Fighter_procIK",
+    "Fighter_procInput",
+    "Fighter_procMap",
+    "Fighter_procPlayer",
+    "Fighter_procUpdate",
     "GObj_RemoveUserData",
     "GravityDelay",
     "Ground_801C0C2C",
@@ -5641,11 +7718,27 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "_tyList_8031438C",
     "callUnk",
     "callback",
+    "cb_doAirEnd0",
+    "cb_fn_800F21E8",
     "cb_fn_800F53AC",
+    "cb_fn_800F6178",
+    "cb_fn_800F6210",
+    "cb_fn_800F6280",
+    "cb_fn_800F6318",
+    "cb_fn_800F6588",
+    "cb_fn_800F6638",
+    "cb_fn_800F66E8",
+    "cb_fn_800F6798",
+    "cb_fn_800F9260",
+    "cb_fn_800F98F4",
+    "cb_fn_80100E0C",
+    "cb_fn_80100F60",
+    "cb_fn_80105978",
     "cb_fn_80105A34",
     "cb_fn_80105AB0",
     "cb_fn_80105FEC",
     "cb_fn_80106DB0",
+    "cb_fn_801090D4",
     "cb_fn_801095DC",
     "cb_fn_80109680",
     "cb_fn_80109714",
@@ -5662,6 +7755,12 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "cb_fn_8010B148",
     "cb_fn_8010B16C",
     "cb_fn_8010B1D4",
+    "cb_fn_8010B1F4",
+    "cb_fn_8010B2E8",
+    "cb_fn_8010C288",
+    "cb_fn_8010C344",
+    "cb_fn_8010C44C",
+    "cb_fn_8010CD88",
     "cb_fn_8010CE5C",
     "cb_fn_8010CFB0",
     "cb_fn_8010D100",
@@ -5693,6 +7792,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "cb_ftCa_SpecialS_OnDetect",
     "cb_ftCl_Init_80149114",
     "cb_ftCo_800DB464",
+    "cb_ftCommon_8007F7B4",
     "cb_ftDk_MS_345_800E0294",
     "cb_ftDk_MS_346_800E05E4",
     "cb_ftDk_SpecialLw_8010E0CC",
@@ -5732,6 +7832,10 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "cb_ftKb_SpecialNFx_CreateBlasterShot",
     "cb_ftKb_SpecialNFx_OnChangeAction",
     "cb_ftKb_SpecialNGw_8010D130",
+    "cb_ftKb_SpecialNIc_80108D04",
+    "cb_ftKb_SpecialNLk800FB800",
+    "cb_ftKb_SpecialNLk800FB840",
+    "cb_ftKb_SpecialNPe_8010C47C",
     "cb_ftKp_Init_80132B38",
     "cb_ftKp_SpecialS_8013302C",
     "cb_ftKp_SpecialS_801330E4",
@@ -5777,6 +7881,16 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "cb_ftPe_SpecialHi_8011D650",
     "cb_ftPe_SpecialHi_8011DD8C",
     "cb_ftPe_SpecialHi_8011E064",
+    "cb_ftPk_SpecialHi_UpdateVel",
+    "cb_ftPk_SpecialLw_SpawnEffect",
+    "cb_ftPk_SpecialN_80124DC8",
+    "cb_ftPk_SpecialN_SpawnEffect0",
+    "cb_ftPk_SpecialN_SpawnEffect1",
+    "cb_ftPk_SpecialS_ZeroVelocity",
+    "cb_ftPr_SpecialN_8014222C",
+    "cb_ftPr_SpecialS_8013D658",
+    "cb_ftPr_SpecialS_8013D764",
+    "cb_ftPr_SpecialS_8013D8B0",
     "cb_ftSk_Init_80110198",
     "cb_ftSk_SpecialHi_80113F68",
     "cb_ftSk_SpecialS_8011097C",
@@ -5789,18 +7903,28 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "cb_lwOnAnim",
     "cb_lwOnHit",
     "cb_on21EC",
+    "cb_onEnterHitlag",
+    "cb_onExitHitlag",
+    "cb_onHitAccessory4",
+    "cb_onUnkHit",
+    "cb_reset",
     "cb_shootNeedles",
     "cb_spawnBomb",
     "cb_spawnVeg",
     "cb_updateRot",
+    "checkAttack11",
     "checkFighter2244",
     "checkStateVar1",
     "clearCallbacks",
     "clear_blaster",
     "clear_blaster_references",
     "collUpdateVars",
+    "decideAngle",
+    "decideAttack11",
+    "decideFighter",
     "doAirColl",
     "doAirCollIfUnk",
+    "doAirEnd0",
     "doAirHitColl",
     "doAirIASA",
     "doAirTransition",
@@ -5809,10 +7933,18 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "doAnim0_fp",
     "doAnim1",
     "doAnim1_fp",
+    "doAttack12",
+    "doAttack12Normal",
+    "doAttack12Rapid",
+    "doAttack13",
     "doCatchAnim",
+    "doEnter",
     "doGroundTransition",
+    "doHitAccessory4",
     "doHitColl",
     "doPhys",
+    "doPostEnd",
+    "doPostEnd_SmallerStack",
     "doSomething",
     "doStartMotion",
     "doTransition",
@@ -5824,8 +7956,11 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "efLib_particles_proc_aux",
     "efLib_particles_proc_main",
     "enterAirEnd",
+    "enterAirEndSmash",
+    "enterAirJump",
     "enterAirStart",
     "enterEnd",
+    "enterEndSmash",
     "enterStart",
     "failEvent",
     "fly_anim",
@@ -5837,26 +7972,112 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "fn_80013614",
     "fn_80021C80",
     "fn_8002F360",
+    "fn_800C63BC",
+    "fn_800C63E0",
+    "fn_800C69F4",
     "fn_800C69F4_cb",
+    "fn_800C6F34",
     "fn_800C6F34_cb",
+    "fn_800C9290",
+    "fn_800D17FC",
+    "fn_800D19BC",
+    "fn_800D1C40",
+    "fn_800D1DB0",
+    "fn_800D20EC",
+    "fn_800D22AC",
+    "fn_800D2530",
+    "fn_800D26A0",
+    "fn_800D4DD4",
+    "fn_800D54A4",
+    "fn_800D55B4",
+    "fn_800D5A30",
+    "fn_800D62C4",
+    "fn_800D6AC4",
+    "fn_800D6B8C",
+    "fn_800D7830",
+    "fn_800D78B0",
+    "fn_800D7938",
+    "fn_800D7938_c",
+    "fn_800D7BDC",
+    "fn_800D7C60",
+    "fn_800D7CEC",
+    "fn_800D7D70",
+    "fn_800D80F4",
+    "fn_800D80F4_c",
+    "fn_800D8268",
+    "fn_800D82EC",
+    "fn_800D8378",
+    "fn_800D86B8",
+    "fn_800D86B8_c",
+    "fn_800D86E0",
+    "fn_800D874C",
+    "fn_800D87C0",
+    "fn_800D8838",
+    "fn_800D8BFC",
     "fn_800D8BFC_cb",
+    "fn_800D8E30",
     "fn_800D8E30_cb",
+    "fn_800D9CE8",
     "fn_800D9CE8_cb",
+    "fn_800DA004",
     "fn_800DA004_cb",
+    "fn_800DA054",
+    "fn_800DA190",
     "fn_800DA190_cb",
+    "fn_800DA1D8",
+    "fn_800DA2B0",
+    "fn_800DA440",
     "fn_800DA440_cb",
+    "fn_800DA490",
     "fn_800DA490_cb",
+    "fn_800DA4A0",
     "fn_800DA4A0_cb",
+    "fn_800DA4FC",
+    "fn_800DA618",
     "fn_800DA618_cb",
+    "fn_800DA668",
     "fn_800DA668_cb",
+    "fn_800DA678",
     "fn_800DA678_cb",
+    "fn_800DAECC",
+    "fn_800DAEEC",
+    "fn_800DB230",
+    "fn_800DB5D8",
+    "fn_800DB6C8",
+    "fn_800DB790",
+    "fn_800DB8A4",
+    "fn_800DBAC4",
+    "fn_800DBAE4",
+    "fn_800DBBF8",
+    "fn_800DBED4",
+    "fn_800DC014",
+    "fn_800DC070",
+    "fn_800DC8D8",
+    "fn_800DC8FC",
+    "fn_800DD568",
+    "fn_800DD568_cb",
+    "fn_800DD5EC",
+    "fn_800DD5EC_cb",
+    "fn_800DD684",
+    "fn_800DD684_cb",
+    "fn_800DE798",
+    "fn_800DE798_cb",
     "fn_800F1FDC",
     "fn_800F20C4",
+    "fn_800F21E8",
     "fn_800F53AC",
     "fn_800F53AC_CleanupItem",
     "fn_800F53AC_SpawnEffect",
+    "fn_800F6178",
+    "fn_800F6210",
+    "fn_800F6280",
+    "fn_800F6318",
     "fn_800F6450",
     "fn_800F6528",
+    "fn_800F6588",
+    "fn_800F6638",
+    "fn_800F66E8",
+    "fn_800F6798",
     "fn_800F6848",
     "fn_800F68A8",
     "fn_800F6908",
@@ -5875,12 +8096,31 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "fn_800F6F50",
     "fn_800F6FC4",
     "fn_800F702C",
+    "fn_800F9260",
+    "fn_800F98F4",
+    "fn_800c74cc",
+    "fn_800c7568",
+    "fn_800c77e0",
+    "fn_800c7890",
+    "fn_800c7ae0",
+    "fn_800c8b1c",
+    "fn_800c8e74",
+    "fn_800d290c",
+    "fn_800d2b30",
+    "fn_800d2bf8",
+    "fn_800d949c",
+    "fn_800d9c64",
     "fn_800dc384",
+    "fn_800dc404",
     "fn_800dc624",
+    "fn_80100E0C",
+    "fn_80100F60",
+    "fn_80105978",
     "fn_80105A34",
     "fn_80105AB0",
     "fn_80105FEC",
     "fn_80106DB0",
+    "fn_801090D4",
     "fn_801095DC",
     "fn_80109680",
     "fn_80109714",
@@ -5900,6 +8140,12 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "fn_8010B148",
     "fn_8010B16C",
     "fn_8010B1D4",
+    "fn_8010B1F4",
+    "fn_8010B2E8",
+    "fn_8010C288",
+    "fn_8010C344",
+    "fn_8010C44C",
+    "fn_8010CD88",
     "fn_8010CE5C",
     "fn_8010CFB0",
     "fn_8010D100",
@@ -5908,6 +8154,8 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "fn_80114034",
     "fn_801140B0",
     "fn_8011412C",
+    "fn_80122B54",
+    "fn_80122D2C",
     "fn_80123218",
     "fn_8012CEE0",
     "fn_8012CF7C",
@@ -6160,14 +8408,30 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "fn_8031FC30",
     "fn_8031FCBC",
     "fn_80320A1C",
+    "fn_803219AC",
     "foobar",
     "foobar2",
     "foobar3",
+    "ftAction_80073240",
+    "ftAction_80073354",
+    "ftAction_8007349C",
+    "ftAnim_8006E9B4",
+    "ftAnim_8006EBA4",
+    "ftAnim_8006FE48",
+    "ftAnim_80070308",
+    "ftAnim_80070654",
+    "ftAnim_800707B0",
+    "ftAnim_80070E74",
+    "ftAnim_80070F28",
     "ftBo_Init_LoadSpecialAttrs",
     "ftBo_Init_OnDeath",
     "ftBo_Init_OnItemInvisible",
     "ftBo_Init_OnItemVisible",
     "ftBo_Init_OnLoad",
+    "ftBossLib_8015BD20",
+    "ftBossLib_8015C190",
+    "ftBossLib_8015C5F8",
+    "ftBossLib_ReportGObjSlotType",
     "ftCa_Init_800E28C8",
     "ftCa_Init_LoadSpecialAttrs",
     "ftCa_Init_OnDeath",
@@ -6490,47 +8754,1037 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftCl_Init_OnKnockbackEnter",
     "ftCl_Init_OnKnockbackExit",
     "ftCl_Init_OnLoad",
+    "ftCo_8008E9D0",
+    "ftCo_8008EB58",
+    "ftCo_8008EC90",
+    "ftCo_8008F744",
+    "ftCo_8008FC94",
+    "ftCo_80090184",
+    "ftCo_80090780",
+    "ftCo_80090984",
+    "ftCo_80091854",
+    "ftCo_80091B9C",
+    "ftCo_800921DC",
+    "ftCo_800923B4",
+    "ftCo_80092450",
+    "ftCo_800924C0",
+    "ftCo_800928CC",
+    "ftCo_80092908",
+    "ftCo_80092BCC",
+    "ftCo_80092BE8",
+    "ftCo_80092C54",
+    "ftCo_80092E50",
+    "ftCo_80093240",
+    "ftCo_800932DC",
+    "ftCo_80093790",
+    "ftCo_80093850",
+    "ftCo_8009388C",
+    "ftCo_800939B4",
+    "ftCo_80093A50",
+    "ftCo_80093BC0",
+    "ftCo_80095A30",
+    "ftCo_80095EFC",
+    "ftCo_80095EFC_c",
+    "ftCo_800961D0",
+    "ftCo_800961D0_c",
+    "ftCo_80096250",
+    "ftCo_80096374",
+    "ftCo_80096498",
+    "ftCo_80096498_c",
+    "ftCo_800968C8",
+    "ftCo_80096D28",
+    "ftCo_80096D9C",
+    "ftCo_80096E68",
+    "ftCo_80096F48",
+    "ftCo_80097130",
+    "ftCo_800974C4",
+    "ftCo_800974C4_c",
+    "ftCo_8009750C",
+    "ftCo_800976A4",
+    "ftCo_800978D4",
+    "ftCo_8009794C",
+    "ftCo_80097AF4",
+    "ftCo_80097D40",
+    "ftCo_80097D88",
+    "ftCo_80097E8C",
+    "ftCo_80097F38",
+    "ftCo_800987D0",
+    "ftCo_80098B20",
+    "ftCo_80098C9C",
+    "ftCo_80098D90",
+    "ftCo_80098E3C",
+    "ftCo_80098F3C",
+    "ftCo_80099010",
+    "ftCo_80099564",
+    "ftCo_80099644",
+    "ftCo_80099754",
+    "ftCo_80099894",
+    "ftCo_800998EC",
+    "ftCo_80099954",
+    "ftCo_80099D70",
+    "ftCo_80099D9C",
+    "ftCo_80099E44",
+    "ftCo_8009A228",
+    "ftCo_8009A410",
+    "ftCo_8009A6B8",
+    "ftCo_8009A804",
+    "ftCo_8009AB9C",
+    "ftCo_8009AE14",
+    "ftCo_8009AEA4",
+    "ftCo_8009B040",
+    "ftCo_8009B1B8",
+    "ftCo_8009B2F8",
+    "ftCo_8009B518",
+    "ftCo_8009B56C",
+    "ftCo_8009B860",
+    "ftCo_8009BB64",
+    "ftCo_8009BC58",
     "ftCo_8009BC58_cb",
+    "ftCo_8009BD4C",
+    "ftCo_8009BD4C_cb",
+    "ftCo_8009C170",
+    "ftCo_8009C170_cb",
+    "ftCo_8009C45C",
+    "ftCo_8009C45C_cb",
+    "ftCo_8009C540",
+    "ftCo_8009C744",
+    "ftCo_8009E0A8",
+    "ftCo_8009EAF8",
+    "ftCo_8009EB18",
+    "ftCo_8009EC44",
+    "ftCo_8009EE30",
+    "ftCo_8009EFA4",
+    "ftCo_8009F184",
+    "ftCo_8009F39C",
     "ftCo_8009F480",
     "ftCo_800B3900",
+    "ftCo_800BBC88",
+    "ftCo_800BBCC0",
+    "ftCo_800BBCC0_cb",
+    "ftCo_800BC388",
+    "ftCo_800BC3AC",
+    "ftCo_800BC3D0",
+    "ftCo_800BC3D0_cb",
+    "ftCo_800BC438",
+    "ftCo_800BC438_cb",
+    "ftCo_800BC458",
+    "ftCo_800BC4A8",
+    "ftCo_800BC9C8",
+    "ftCo_800BCAF4",
+    "ftCo_800BCC20",
+    "ftCo_800BCD00",
+    "ftCo_800BD39C",
+    "ftCo_800BD39C_cb",
+    "ftCo_800BD620",
+    "ftCo_800BD6EC",
+    "ftCo_800BD6EC_noinline",
+    "ftCo_800BDA50",
+    "ftCo_800BE494",
+    "ftCo_800BE6AC",
+    "ftCo_800BE6AC_cb",
+    "ftCo_800BE7C0",
+    "ftCo_800BE7C0_cb",
+    "ftCo_800BECB0",
+    "ftCo_800BED84",
+    "ftCo_800BED88",
+    "ftCo_800BEF00",
+    "ftCo_800BEF04",
+    "ftCo_800BEFD0",
+    "ftCo_800BEFD4",
+    "ftCo_800BF034",
+    "ftCo_800BF108",
+    "ftCo_800C09B4",
+    "ftCo_800C0A98",
+    "ftCo_800C0B20",
+    "ftCo_800C0D0C",
+    "ftCo_800C124C",
+    "ftCo_800C13BC",
+    "ftCo_800C23FC",
+    "ftCo_800C2FD8",
+    "ftCo_800C3390",
+    "ftCo_800C3480",
+    "ftCo_800C4550",
+    "ftCo_800C4724",
+    "ftCo_800C4858",
+    "ftCo_800C4858_cb",
+    "ftCo_800C48AC",
+    "ftCo_800C48AC_cb",
+    "ftCo_800C4A38",
+    "ftCo_800C4C60",
+    "ftCo_800C4C60_cb",
+    "ftCo_800C4ED8",
+    "ftCo_800C4F64",
+    "ftCo_800C511C",
+    "ftCo_800C5284",
+    "ftCo_800C52F4",
+    "ftCo_800C5500",
+    "ftCo_800C555C",
+    "ftCo_800C5614",
+    "ftCo_800C57B4",
+    "ftCo_800C5A98",
+    "ftCo_800C5D34",
+    "ftCo_800C6150",
+    "ftCo_800C61B0",
+    "ftCo_800C6408",
+    "ftCo_800C6B6C",
     "ftCo_800C8438",
     "ftCo_800C8540",
+    "ftCo_800CED30",
+    "ftCo_800CF280",
+    "ftCo_800CF3C8",
+    "ftCo_800CF4DC",
+    "ftCo_800D15D0",
     "ftCo_800D15D0_cb",
+    "ftCo_800D170C",
+    "ftCo_800D18CC",
+    "ftCo_800D1B04",
+    "ftCo_800D1B04_c",
+    "ftCo_800D1F6C",
     "ftCo_800D1F6C_cb",
+    "ftCo_800D1FFC",
+    "ftCo_800D21BC",
+    "ftCo_800D23F4",
     "ftCo_800D23F4_cb",
+    "ftCo_800D3004",
+    "ftCo_800D331C",
+    "ftCo_800D34E0",
+    "ftCo_800D3680",
+    "ftCo_800D3950",
+    "ftCo_800D3BC8",
+    "ftCo_800D3E40",
+    "ftCo_800D40B8",
+    "ftCo_800D41C4",
+    "ftCo_800D4780",
+    "ftCo_800D47B8",
+    "ftCo_800D4FF4",
+    "ftCo_800D5600",
+    "ftCo_800D638C",
+    "ftCo_800D71D8",
+    "ftCo_800D74A4",
+    "ftCo_800DB464",
+    "ftCo_800DB500",
+    "ftCo_800DCFD4",
+    "ftCo_800DD100",
+    "ftCo_800DD168",
+    "ftCo_800DD724",
+    "ftCo_800DE2F0",
+    "ftCo_800DE508",
+    "ftCo_800DE5A4",
+    "ftCo_800DE854",
+    "ftCo_800DE974",
+    "ftCo_800DEA28",
+    "ftCo_800DEBD0",
+    "ftCo_AppealS_Anim",
+    "ftCo_AppealS_Coll",
+    "ftCo_AppealS_IASA",
+    "ftCo_AppealS_Phys",
+    "ftCo_Attack100End_Anim",
+    "ftCo_Attack100End_Coll",
+    "ftCo_Attack100End_Phys",
+    "ftCo_Attack100Loop_Anim",
+    "ftCo_Attack100Loop_Coll",
+    "ftCo_Attack100Loop_IASA",
+    "ftCo_Attack100Loop_Phys",
+    "ftCo_Attack100Start_Anim",
+    "ftCo_Attack100Start_Coll",
+    "ftCo_Attack100Start_Phys",
+    "ftCo_Attack11_Anim",
+    "ftCo_Attack11_Coll",
+    "ftCo_Attack11_IASA",
+    "ftCo_Attack11_Phys",
+    "ftCo_Attack12_Anim",
+    "ftCo_Attack12_IASA",
+    "ftCo_Attack13_Anim",
+    "ftCo_Attack13_IASA",
+    "ftCo_AttackAirB_IASA",
+    "ftCo_AttackAirF_IASA",
+    "ftCo_AttackAirHi_IASA",
+    "ftCo_AttackAirLw_IASA",
+    "ftCo_AttackAirN_IASA",
+    "ftCo_AttackAir_Anim",
+    "ftCo_AttackAir_Coll",
+    "ftCo_AttackAir_EnterFromCStick",
+    "ftCo_AttackAir_Phys",
+    "ftCo_AttackDash_Anim",
+    "ftCo_AttackDash_Coll",
+    "ftCo_AttackDash_IASA",
+    "ftCo_AttackDash_Phys",
+    "ftCo_AttackDash_SetMv0",
+    "ftCo_AttackHi3_Anim",
+    "ftCo_AttackHi3_Coll",
+    "ftCo_AttackHi3_IASA",
+    "ftCo_AttackHi3_Phys",
+    "ftCo_AttackHi4_Anim",
+    "ftCo_AttackHi4_Coll",
+    "ftCo_AttackHi4_IASA",
+    "ftCo_AttackHi4_Phys",
+    "ftCo_AttackLw3_Anim",
+    "ftCo_AttackLw3_Coll",
+    "ftCo_AttackLw3_IASA",
+    "ftCo_AttackLw3_Phys",
+    "ftCo_AttackLw4_Anim",
+    "ftCo_AttackLw4_Coll",
+    "ftCo_AttackLw4_IASA",
+    "ftCo_AttackLw4_Phys",
+    "ftCo_AttackS3_Anim",
+    "ftCo_AttackS3_Coll",
+    "ftCo_AttackS3_IASA",
+    "ftCo_AttackS3_Phys",
+    "ftCo_AttackS42_Anim",
+    "ftCo_AttackS42_Coll",
+    "ftCo_AttackS42_IASA",
+    "ftCo_AttackS42_Phys",
+    "ftCo_AttackS4_Anim",
+    "ftCo_AttackS4_Coll",
+    "ftCo_AttackS4_IASA",
+    "ftCo_AttackS4_Phys",
+    "ftCo_BarrelWait_Anim",
+    "ftCo_BarrelWait_Coll",
+    "ftCo_BarrelWait_IASA",
+    "ftCo_BarrelWait_Phys",
+    "ftCo_Barrel_Accessory1_Cb",
+    "ftCo_Barrel_Anim",
+    "ftCo_Barrel_Coll",
+    "ftCo_Barrel_Death2_Cb",
+    "ftCo_Barrel_IASA",
+    "ftCo_Barrel_Phys",
+    "ftCo_Barrel_Take_Dmg_Cb",
+    "ftCo_BuryJump_Anim",
+    "ftCo_BuryJump_Coll",
+    "ftCo_BuryJump_IASA",
+    "ftCo_BuryJump_Phys",
+    "ftCo_BuryWait_Anim",
+    "ftCo_BuryWait_Coll",
+    "ftCo_BuryWait_IASA",
+    "ftCo_BuryWait_Phys",
+    "ftCo_Bury_Anim",
+    "ftCo_Bury_Coll",
+    "ftCo_Bury_IASA",
+    "ftCo_Bury_Phys",
+    "ftCo_CaptureCaptain_Anim",
+    "ftCo_CaptureCaptain_Coll",
+    "ftCo_CaptureCaptain_IASA",
+    "ftCo_CaptureCaptain_Phys",
     "ftCo_CaptureCrazyHand_Anim",
     "ftCo_CaptureCrazyHand_Coll",
     "ftCo_CaptureCrazyHand_IASA",
     "ftCo_CaptureCrazyHand_Phys",
+    "ftCo_CaptureCut_Anim",
+    "ftCo_CaptureCut_Coll",
+    "ftCo_CaptureCut_Enter",
+    "ftCo_CaptureCut_IASA",
+    "ftCo_CaptureCut_Phys",
     "ftCo_CaptureDamageCrazyHand_Anim",
     "ftCo_CaptureDamageCrazyHand_Coll",
     "ftCo_CaptureDamageCrazyHand_IASA",
     "ftCo_CaptureDamageCrazyHand_Phys",
+    "ftCo_CaptureDamageKoopaAir_Anim",
+    "ftCo_CaptureDamageKoopaAir_Coll",
+    "ftCo_CaptureDamageKoopaAir_IASA",
+    "ftCo_CaptureDamageKoopaAir_Phys",
+    "ftCo_CaptureDamageKoopa_Anim",
+    "ftCo_CaptureDamageKoopa_Coll",
+    "ftCo_CaptureDamageKoopa_IASA",
+    "ftCo_CaptureDamageKoopa_Phys",
+    "ftCo_CaptureJump_Anim",
+    "ftCo_CaptureJump_Coll",
+    "ftCo_CaptureJump_IASA",
+    "ftCo_CaptureJump_Phys",
     "ftCo_CaptureKirbyYoshi_Anim",
     "ftCo_CaptureKirbyYoshi_Coll",
     "ftCo_CaptureKirbyYoshi_IASA",
     "ftCo_CaptureKirbyYoshi_Phys",
+    "ftCo_CaptureKirby_Anim",
+    "ftCo_CaptureKirby_Coll",
+    "ftCo_CaptureKirby_IASA",
+    "ftCo_CaptureKirby_Phys",
+    "ftCo_CaptureKoopaAir_Anim",
+    "ftCo_CaptureKoopaAir_Coll",
+    "ftCo_CaptureKoopaAir_IASA",
+    "ftCo_CaptureKoopaAir_Phys",
+    "ftCo_CaptureKoopa_Anim",
+    "ftCo_CaptureKoopa_Coll",
+    "ftCo_CaptureKoopa_IASA",
+    "ftCo_CaptureKoopa_Phys",
+    "ftCo_CapturePulledHi_Anim",
+    "ftCo_CapturePulledHi_Coll",
+    "ftCo_CapturePulledHi_IASA",
+    "ftCo_CapturePulledHi_Phys",
+    "ftCo_CapturePulledLw_Anim",
+    "ftCo_CapturePulledLw_Coll",
+    "ftCo_CapturePulledLw_IASA",
+    "ftCo_CapturePulledLw_Phys",
     "ftCo_CaptureWaitCrazyHand_Anim",
     "ftCo_CaptureWaitCrazyHand_Coll",
     "ftCo_CaptureWaitCrazyHand_IASA",
     "ftCo_CaptureWaitCrazyHand_Phys",
+    "ftCo_CaptureWaitHi_Anim",
+    "ftCo_CaptureWaitHi_Coll",
+    "ftCo_CaptureWaitHi_IASA",
+    "ftCo_CaptureWaitHi_Phys",
+    "ftCo_CaptureWaitKirby_Anim",
+    "ftCo_CaptureWaitKirby_Coll",
+    "ftCo_CaptureWaitKirby_IASA",
+    "ftCo_CaptureWaitKirby_Phys",
+    "ftCo_CaptureWaitKoopaAir_Anim",
+    "ftCo_CaptureWaitKoopaAir_Coll",
+    "ftCo_CaptureWaitKoopaAir_IASA",
+    "ftCo_CaptureWaitKoopaAir_Phys",
+    "ftCo_CaptureWaitKoopa_Anim",
+    "ftCo_CaptureWaitKoopa_Coll",
+    "ftCo_CaptureWaitKoopa_IASA",
+    "ftCo_CaptureWaitKoopa_Phys",
+    "ftCo_CaptureWaitLw_Anim",
+    "ftCo_CaptureWaitLw_Coll",
+    "ftCo_CaptureWaitLw_IASA",
+    "ftCo_CaptureWaitLw_Phys",
+    "ftCo_CaptureYoshi_Anim",
+    "ftCo_CaptureYoshi_Coll",
+    "ftCo_CaptureYoshi_IASA",
+    "ftCo_CaptureYoshi_Phys",
+    "ftCo_CargoFall_Anim",
+    "ftCo_CargoFall_Coll",
+    "ftCo_CargoFall_IASA",
+    "ftCo_CargoFall_Phys",
+    "ftCo_CargoJump_Anim",
+    "ftCo_CargoJump_Coll",
+    "ftCo_CargoJump_IASA",
+    "ftCo_CargoJump_Phys",
+    "ftCo_CargoKneebend_Anim",
+    "ftCo_CargoKneebend_Coll",
+    "ftCo_CargoKneebend_IASA",
+    "ftCo_CargoKneebend_Phys",
+    "ftCo_CargoLanding_Anim",
+    "ftCo_CargoLanding_Coll",
+    "ftCo_CargoLanding_Phys",
+    "ftCo_CargoThrowAir_Anim",
+    "ftCo_CargoThrowAir_Coll",
+    "ftCo_CargoThrowAir_IASA",
+    "ftCo_CargoThrowAir_Phys",
+    "ftCo_CargoThrowB_Anim",
+    "ftCo_CargoThrowB_Coll",
+    "ftCo_CargoThrowB_IASA",
+    "ftCo_CargoThrowB_Phys",
+    "ftCo_CargoThrowF_Anim",
+    "ftCo_CargoThrowF_Coll",
+    "ftCo_CargoThrowF_IASA",
+    "ftCo_CargoThrowF_Phys",
+    "ftCo_CargoThrowHi_Anim",
+    "ftCo_CargoThrowHi_Coll",
+    "ftCo_CargoThrowHi_IASA",
+    "ftCo_CargoThrowHi_Phys",
+    "ftCo_CargoThrowLw_Anim",
+    "ftCo_CargoThrowLw_Coll",
+    "ftCo_CargoThrowLw_IASA",
+    "ftCo_CargoThrowLw_Phys",
+    "ftCo_CargoTurn_Anim",
+    "ftCo_CargoTurn_Coll",
+    "ftCo_CargoTurn_IASA",
+    "ftCo_CargoTurn_Phys",
+    "ftCo_CargoWait2_Anim",
+    "ftCo_CargoWait2_Coll",
+    "ftCo_CargoWait2_Phys",
+    "ftCo_CargoWait_Anim",
+    "ftCo_CargoWait_Coll",
+    "ftCo_CargoWait_IASA",
+    "ftCo_CargoWait_Phys",
+    "ftCo_CargoWalk_Anim",
+    "ftCo_CargoWalk_Coll",
+    "ftCo_CargoWalk_IASA",
+    "ftCo_CargoWalk_Phys",
+    "ftCo_CatchAttack_Anim",
+    "ftCo_CatchAttack_Coll",
+    "ftCo_CatchAttack_IASA",
+    "ftCo_CatchAttack_Phys",
+    "ftCo_CatchCut_Anim",
+    "ftCo_CatchCut_Coll",
+    "ftCo_CatchCut_IASA",
+    "ftCo_CatchCut_Phys",
+    "ftCo_CatchDash_Anim",
+    "ftCo_CatchDash_Coll",
+    "ftCo_CatchDash_IASA",
+    "ftCo_CatchDash_Phys",
+    "ftCo_CatchPull_Anim",
+    "ftCo_CatchPull_Coll",
+    "ftCo_CatchPull_IASA",
+    "ftCo_CatchPull_Phys",
+    "ftCo_CatchWait_Anim",
+    "ftCo_CatchWait_Coll",
+    "ftCo_CatchWait_IASA",
+    "ftCo_CatchWait_Phys",
+    "ftCo_Catch_Anim",
+    "ftCo_Catch_Coll",
+    "ftCo_Catch_IASA",
+    "ftCo_Catch_Phys",
+    "ftCo_CliffAttack_Anim",
+    "ftCo_CliffAttack_Coll",
+    "ftCo_CliffAttack_IASA",
+    "ftCo_CliffAttack_Phys",
+    "ftCo_CliffClimb_Anim",
+    "ftCo_CliffClimb_Coll",
+    "ftCo_CliffClimb_IASA",
+    "ftCo_CliffClimb_Phys",
+    "ftCo_CliffEscape_Anim",
+    "ftCo_CliffEscape_Coll",
+    "ftCo_CliffEscape_IASA",
+    "ftCo_CliffEscape_Phys",
+    "ftCo_CliffJump1_Anim",
+    "ftCo_CliffJump1_Coll",
+    "ftCo_CliffJump1_IASA",
+    "ftCo_CliffJump1_Phys",
+    "ftCo_CliffJump2_Anim",
+    "ftCo_CliffJump2_Coll",
+    "ftCo_CliffJump2_IASA",
+    "ftCo_CliffJump2_Phys",
+    "ftCo_CliffWait_Anim",
+    "ftCo_CliffWait_Coll",
+    "ftCo_CliffWait_IASA",
+    "ftCo_CliffWait_Phys",
+    "ftCo_DamageBind_Anim",
+    "ftCo_DamageBind_Coll",
+    "ftCo_DamageBind_IASA",
+    "ftCo_DamageBind_Phys",
+    "ftCo_DamageFall_Anim",
+    "ftCo_DamageFall_Coll",
+    "ftCo_DamageFall_IASA",
+    "ftCo_DamageFall_Phys",
+    "ftCo_DamageFlyRoll_Anim",
+    "ftCo_DamageFlyRoll_Coll",
+    "ftCo_DamageFlyRoll_IASA",
+    "ftCo_DamageFlyRoll_Phys",
+    "ftCo_DamageFly_Anim",
+    "ftCo_DamageFly_Coll",
+    "ftCo_DamageFly_IASA",
+    "ftCo_DamageFly_Phys",
+    "ftCo_DamageIceJump_Anim",
+    "ftCo_DamageIceJump_Coll",
+    "ftCo_DamageIceJump_IASA",
+    "ftCo_DamageIceJump_Phys",
+    "ftCo_DamageIce_Anim",
+    "ftCo_DamageIce_Coll",
+    "ftCo_DamageIce_HitWhileFrozen",
+    "ftCo_DamageIce_IASA",
+    "ftCo_DamageIce_InAirUpdate",
+    "ftCo_DamageIce_Init",
+    "ftCo_DamageIce_OnHit",
+    "ftCo_DamageIce_OnHit2",
+    "ftCo_DamageIce_Phys",
+    "ftCo_DamageScrew_Anim",
+    "ftCo_DamageScrew_Coll",
+    "ftCo_DamageScrew_IASA",
+    "ftCo_DamageScrew_Phys",
+    "ftCo_DamageSongRv_Anim",
+    "ftCo_DamageSongRv_Coll",
+    "ftCo_DamageSongRv_IASA",
+    "ftCo_DamageSongRv_Phys",
+    "ftCo_DamageSongWait_Anim",
+    "ftCo_DamageSongWait_Coll",
+    "ftCo_DamageSongWait_IASA",
+    "ftCo_DamageSongWait_Phys",
+    "ftCo_DamageSong_Anim",
+    "ftCo_DamageSong_Coll",
+    "ftCo_DamageSong_IASA",
+    "ftCo_DamageSong_Phys",
+    "ftCo_Damage_Anim",
+    "ftCo_Damage_Coll",
+    "ftCo_Damage_IASA",
+    "ftCo_Damage_OnEveryHitlag",
+    "ftCo_Damage_OnEveryHitlag_cb",
+    "ftCo_Damage_OnExitHitlag",
+    "ftCo_Damage_OnExitHitlag_cb",
+    "ftCo_Damage_Phys",
+    "ftCo_Dash_Anim",
+    "ftCo_Dash_Coll",
+    "ftCo_Dash_IASA",
+    "ftCo_Dash_Phys",
+    "ftCo_DeadDown_Anim",
+    "ftCo_DeadDown_Cam",
+    "ftCo_DeadLeft_Anim",
+    "ftCo_DeadLeft_Cam",
+    "ftCo_DeadRight_Anim",
+    "ftCo_DeadRight_Cam",
+    "ftCo_DeadUpFall_Anim",
+    "ftCo_DeadUpFall_Cam",
+    "ftCo_DeadUpFall_Phys",
+    "ftCo_DeadUpStar_Anim",
+    "ftCo_DeadUpStar_Cam",
+    "ftCo_DeadUp_Anim",
+    "ftCo_DeadUp_Cam",
+    "ftCo_DownAttack_Anim",
+    "ftCo_DownAttack_Coll",
+    "ftCo_DownAttack_IASA",
+    "ftCo_DownAttack_Phys",
+    "ftCo_DownBound_Anim",
+    "ftCo_DownBound_Coll",
+    "ftCo_DownBound_IASA",
+    "ftCo_DownBound_Phys",
+    "ftCo_DownDamage_Anim",
+    "ftCo_DownDamage_Coll",
+    "ftCo_DownDamage_IASA",
+    "ftCo_DownDamage_Phys",
+    "ftCo_DownSpot_Anim",
+    "ftCo_DownSpot_Coll",
+    "ftCo_DownSpot_Enter",
+    "ftCo_DownSpot_IASA",
+    "ftCo_DownSpot_Phys",
+    "ftCo_DownStand_Anim",
+    "ftCo_DownStand_Coll",
+    "ftCo_DownStand_IASA",
+    "ftCo_DownStand_Phys",
+    "ftCo_DownWait_Anim",
+    "ftCo_DownWait_Coll",
+    "ftCo_DownWait_IASA",
+    "ftCo_DownWait_Phys",
+    "ftCo_Down_Anim",
+    "ftCo_Down_Coll",
+    "ftCo_Down_IASA",
+    "ftCo_Down_Phys",
+    "ftCo_EntryEnd_Anim",
+    "ftCo_EntryEnd_Coll",
+    "ftCo_EntryEnd_IASA",
+    "ftCo_EntryEnd_Phys",
+    "ftCo_EntryStart_Anim",
+    "ftCo_EntryStart_Coll",
+    "ftCo_EntryStart_IASA",
+    "ftCo_EntryStart_Phys",
+    "ftCo_Entry_Anim",
+    "ftCo_Entry_Coll",
+    "ftCo_Entry_IASA",
+    "ftCo_Entry_Phys",
+    "ftCo_EscapeAir_Anim",
+    "ftCo_EscapeAir_Coll",
+    "ftCo_EscapeAir_IASA",
+    "ftCo_EscapeAir_Phys",
+    "ftCo_EscapeN_Anim",
+    "ftCo_EscapeN_Coll",
+    "ftCo_EscapeN_IASA",
+    "ftCo_EscapeN_Phys",
+    "ftCo_Escape_Anim",
+    "ftCo_Escape_Coll",
+    "ftCo_Escape_IASA",
+    "ftCo_Escape_Phys",
+    "ftCo_FallAerial_Anim",
     "ftCo_FallAerial_Coll",
+    "ftCo_FallAerial_Enter",
+    "ftCo_FallAerial_IASA",
+    "ftCo_FallAerial_Phys",
+    "ftCo_FallSpecial_Anim",
+    "ftCo_FallSpecial_Coll",
+    "ftCo_FallSpecial_IASA",
+    "ftCo_FallSpecial_Phys",
+    "ftCo_Fall_Anim",
+    "ftCo_Fall_Coll",
+    "ftCo_Fall_Enter",
+    "ftCo_Fall_Enter_YoshiEgg",
+    "ftCo_Fall_Enter_YoshiEgg_Kirby",
+    "ftCo_Fall_IASA",
+    "ftCo_Fall_Phys",
+    "ftCo_FlyReflect_Anim",
+    "ftCo_FlyReflect_Coll",
+    "ftCo_FlyReflect_IASA",
+    "ftCo_FlyReflect_Phys",
+    "ftCo_Furafura_Anim",
+    "ftCo_Furafura_Coll",
+    "ftCo_Furafura_IASA",
+    "ftCo_Furafura_Phys",
+    "ftCo_GuardOff_Anim",
+    "ftCo_GuardOff_Coll",
+    "ftCo_GuardOff_IASA",
+    "ftCo_GuardOff_Phys",
+    "ftCo_GuardOn_Anim",
+    "ftCo_GuardOn_Coll",
+    "ftCo_GuardOn_IASA",
+    "ftCo_GuardOn_Phys",
+    "ftCo_GuardReflect_Anim",
+    "ftCo_GuardReflect_Coll",
+    "ftCo_GuardReflect_IASA",
+    "ftCo_GuardReflect_Phys",
+    "ftCo_GuardSetOff_Anim",
+    "ftCo_GuardSetOff_Coll",
+    "ftCo_GuardSetOff_IASA",
+    "ftCo_GuardSetOff_Phys",
+    "ftCo_Guard_Anim",
+    "ftCo_Guard_Coll",
+    "ftCo_Guard_IASA",
+    "ftCo_Guard_Phys",
+    "ftCo_HammerFall_Anim",
+    "ftCo_HammerFall_Coll",
+    "ftCo_HammerFall_IASA",
+    "ftCo_HammerFall_Phys",
+    "ftCo_HammerJump_Anim",
+    "ftCo_HammerJump_Coll",
+    "ftCo_HammerJump_IASA",
+    "ftCo_HammerJump_Phys",
+    "ftCo_HammerKneeBend_Anim",
+    "ftCo_HammerKneeBend_Coll",
+    "ftCo_HammerKneeBend_IASA",
+    "ftCo_HammerKneeBend_Phys",
+    "ftCo_HammerLanding_Anim",
+    "ftCo_HammerLanding_Coll",
+    "ftCo_HammerLanding_Enter",
+    "ftCo_HammerLanding_IASA",
+    "ftCo_HammerLanding_Phys",
+    "ftCo_HammerTurn_Anim",
+    "ftCo_HammerTurn_Coll",
+    "ftCo_HammerTurn_IASA",
+    "ftCo_HammerTurn_Phys",
+    "ftCo_HammerWait_Anim",
+    "ftCo_HammerWait_Coll",
+    "ftCo_HammerWait_IASA",
+    "ftCo_HammerWait_Phys",
+    "ftCo_HammerWalk_Anim",
+    "ftCo_HammerWalk_Coll",
+    "ftCo_HammerWalk_IASA",
+    "ftCo_HammerWalk_Phys",
+    "ftCo_HeavyThrow_Coll",
+    "ftCo_ItemParasolDamageFall_Anim",
+    "ftCo_ItemParasolDamageFall_Coll",
+    "ftCo_ItemParasolDamageFall_IASA",
+    "ftCo_ItemParasolDamageFall_Phys",
+    "ftCo_ItemParasolFallSpecial_Anim",
+    "ftCo_ItemParasolFallSpecial_Coll",
+    "ftCo_ItemParasolFallSpecial_IASA",
+    "ftCo_ItemParasolFallSpecial_Phys",
+    "ftCo_ItemParasolFall_Anim",
+    "ftCo_ItemParasolFall_Coll",
+    "ftCo_ItemParasolFall_IASA",
+    "ftCo_ItemParasolFall_Phys",
+    "ftCo_ItemParasolOpen_Anim",
+    "ftCo_ItemParasolOpen_Coll",
+    "ftCo_ItemParasolOpen_IASA",
+    "ftCo_ItemParasolOpen_Phys",
+    "ftCo_ItemParasol_Phys",
+    "ftCo_ItemScopeAirEnd_Anim",
+    "ftCo_ItemScopeAirEnd_Coll",
+    "ftCo_ItemScopeAirEnd_IASA",
+    "ftCo_ItemScopeAirEnd_Phys",
+    "ftCo_ItemScopeAirFire_Anim",
+    "ftCo_ItemScopeAirFire_Coll",
+    "ftCo_ItemScopeAirFire_IASA",
+    "ftCo_ItemScopeAirFire_Phys",
+    "ftCo_ItemScopeAirRapid_Anim",
+    "ftCo_ItemScopeAirRapid_Coll",
+    "ftCo_ItemScopeAirRapid_IASA",
+    "ftCo_ItemScopeAirRapid_Phys",
+    "ftCo_ItemScopeAirStart_Anim",
+    "ftCo_ItemScopeAirStart_Coll",
+    "ftCo_ItemScopeAirStart_IASA",
+    "ftCo_ItemScopeAirStart_Phys",
+    "ftCo_ItemScopeEnd_Anim",
+    "ftCo_ItemScopeEnd_Coll",
+    "ftCo_ItemScopeEnd_IASA",
+    "ftCo_ItemScopeEnd_Phys",
+    "ftCo_ItemScopeFire_Anim",
+    "ftCo_ItemScopeFire_Coll",
+    "ftCo_ItemScopeFire_IASA",
+    "ftCo_ItemScopeFire_Phys",
+    "ftCo_ItemScopeRapid_Anim",
+    "ftCo_ItemScopeRapid_Coll",
+    "ftCo_ItemScopeRapid_IASA",
+    "ftCo_ItemScopeRapid_Phys",
+    "ftCo_ItemScopeStart_Anim",
+    "ftCo_ItemScopeStart_Coll",
+    "ftCo_ItemScopeStart_IASA",
+    "ftCo_ItemScopeStart_Phys",
+    "ftCo_ItemScrewAir_Anim",
+    "ftCo_ItemScrewAir_Coll",
+    "ftCo_ItemScrewAir_IASA",
+    "ftCo_ItemScrewAir_Phys",
+    "ftCo_ItemScrew_Anim",
+    "ftCo_ItemScrew_Coll",
+    "ftCo_ItemScrew_Enter",
+    "ftCo_ItemScrew_IASA",
+    "ftCo_ItemScrew_Phys",
+    "ftCo_ItemThrow_Anim",
+    "ftCo_ItemThrow_IASA",
+    "ftCo_ItemThrow_Phys",
+    "ftCo_JumpAerialF1_Anim",
+    "ftCo_JumpAerialF1_Coll",
+    "ftCo_JumpAerialF1_IASA",
+    "ftCo_JumpAerialF1_Phys",
+    "ftCo_JumpAerial_Anim",
+    "ftCo_JumpAerial_Coll",
+    "ftCo_JumpAerial_Enter_Basic",
+    "ftCo_JumpAerial_IASA",
+    "ftCo_JumpAerial_Phys",
+    "ftCo_JumpAerial_Phys_Cb",
+    "ftCo_JumpAerial_Phys_Cb_c",
+    "ftCo_Jump_Anim",
+    "ftCo_Jump_Coll",
+    "ftCo_Jump_Enter",
+    "ftCo_Jump_IASA",
+    "ftCo_Jump_Phys",
+    "ftCo_Jump_Phys_Inner",
+    "ftCo_KinokoGiantEndAir_Anim",
+    "ftCo_KinokoGiantEndAir_Coll",
+    "ftCo_KinokoGiantEnd_Anim",
+    "ftCo_KinokoGiantEnd_Coll",
+    "ftCo_KinokoGiantStartAir_Anim",
+    "ftCo_KinokoGiantStartAir_Coll",
+    "ftCo_KinokoGiantStart_Anim",
+    "ftCo_KinokoGiantStart_Coll",
+    "ftCo_KinokoSmallEndAir_Anim",
+    "ftCo_KinokoSmallEndAir_Coll",
+    "ftCo_KinokoSmallEnd_Anim",
+    "ftCo_KinokoSmallEnd_Coll",
+    "ftCo_KinokoSmallStartAir_Anim",
+    "ftCo_KinokoSmallStartAir_Coll",
+    "ftCo_KinokoSmallStart_Anim",
+    "ftCo_KinokoSmallStart_Coll",
     "ftCo_KirbyYoshiEgg_Anim",
     "ftCo_KirbyYoshiEgg_Coll",
     "ftCo_KirbyYoshiEgg_IASA",
     "ftCo_KirbyYoshiEgg_Phys",
+    "ftCo_KneeBend_Anim",
+    "ftCo_KneeBend_Check_ShortHop",
+    "ftCo_KneeBend_Coll",
+    "ftCo_KneeBend_IASA",
+    "ftCo_KneeBend_Phys",
+    "ftCo_LandingAir_Anim",
+    "ftCo_LandingAir_Coll",
+    "ftCo_LandingAir_EnterWithLag",
+    "ftCo_LandingAir_IASA",
+    "ftCo_LandingAir_Phys",
+    "ftCo_LandingFallSpecial_Enter_Basic",
+    "ftCo_Landing_Anim",
+    "ftCo_Landing_Coll",
+    "ftCo_Landing_Enter_Basic",
+    "ftCo_Landing_IASA",
+    "ftCo_Landing_Phys",
+    "ftCo_LiftTurn_Anim",
+    "ftCo_LiftTurn_Coll",
+    "ftCo_LiftTurn_IASA",
+    "ftCo_LiftTurn_Phys",
+    "ftCo_LiftWait_Anim",
+    "ftCo_LiftWait_Coll",
+    "ftCo_LiftWait_IASA",
+    "ftCo_LiftWait_Phys",
+    "ftCo_LiftWalk_Anim",
+    "ftCo_LiftWalk_Coll",
+    "ftCo_LiftWalk_IASA",
+    "ftCo_LiftWalk_Phys",
+    "ftCo_LightThrowAir_Coll",
+    "ftCo_LightThrowAir_Phys",
+    "ftCo_LightThrowDashDrop_Coll",
+    "ftCo_LightThrowDash_Phys",
+    "ftCo_LightThrow_Coll",
     "ftCo_LipstickSwing_Anim",
     "ftCo_LipstickSwing_Coll",
     "ftCo_LipstickSwing_IASA",
     "ftCo_LipstickSwing_Phys",
+    "ftCo_MissFoot_Anim",
+    "ftCo_MissFoot_Coll",
+    "ftCo_MissFoot_IASA",
+    "ftCo_MissFoot_Phys",
+    "ftCo_OttottoWait_Anim",
+    "ftCo_OttottoWait_Coll",
+    "ftCo_OttottoWait_IASA",
+    "ftCo_OttottoWait_Phys",
+    "ftCo_Ottotto_Anim",
+    "ftCo_Ottotto_Coll",
+    "ftCo_Ottotto_IASA",
+    "ftCo_Ottotto_Phys",
+    "ftCo_Pass_Anim",
+    "ftCo_Pass_Coll",
+    "ftCo_Pass_IASA",
+    "ftCo_Pass_Phys",
+    "ftCo_PassiveCeil_Anim",
+    "ftCo_PassiveCeil_Coll",
+    "ftCo_PassiveCeil_IASA",
+    "ftCo_PassiveCeil_Phys",
+    "ftCo_PassiveStand_Anim",
+    "ftCo_PassiveStand_Coll",
+    "ftCo_PassiveStand_IASA",
+    "ftCo_PassiveStand_Phys",
+    "ftCo_PassiveWall_Anim",
+    "ftCo_PassiveWall_Coll",
+    "ftCo_PassiveWall_IASA",
+    "ftCo_PassiveWall_Phys",
+    "ftCo_Passive_Anim",
+    "ftCo_Passive_Coll",
+    "ftCo_Passive_IASA",
+    "ftCo_Passive_Phys",
+    "ftCo_RebirthWait_Anim",
+    "ftCo_RebirthWait_Coll",
+    "ftCo_RebirthWait_IASA",
+    "ftCo_RebirthWait_Phys",
+    "ftCo_Rebirth_Anim",
+    "ftCo_Rebirth_Cam",
+    "ftCo_Rebirth_Coll",
+    "ftCo_Rebirth_IASA",
+    "ftCo_Rebirth_Phys",
+    "ftCo_ReboundStop_Anim",
+    "ftCo_Rebound_Anim",
+    "ftCo_Rebound_Coll",
+    "ftCo_Rebound_IASA",
+    "ftCo_Rebound_Phys",
+    "ftCo_RunBrake_Anim",
+    "ftCo_RunBrake_Coll",
+    "ftCo_RunBrake_Enter",
+    "ftCo_RunBrake_IASA",
+    "ftCo_RunBrake_Phys",
+    "ftCo_RunDirect_Anim",
+    "ftCo_RunDirect_Coll",
+    "ftCo_RunDirect_IASA",
+    "ftCo_RunDirect_Phys",
+    "ftCo_Run_Anim",
+    "ftCo_Run_Coll",
+    "ftCo_Run_IASA",
+    "ftCo_Run_Phys",
+    "ftCo_ShieldBreakDown_Anim",
+    "ftCo_ShieldBreakDown_Coll",
+    "ftCo_ShieldBreakDown_IASA",
+    "ftCo_ShieldBreakDown_Phys",
+    "ftCo_ShieldBreakFall_Anim",
+    "ftCo_ShieldBreakFall_Coll",
+    "ftCo_ShieldBreakFall_IASA",
+    "ftCo_ShieldBreakFall_Phys",
+    "ftCo_ShieldBreakFly_Anim",
+    "ftCo_ShieldBreakFly_Coll",
+    "ftCo_ShieldBreakFly_IASA",
+    "ftCo_ShieldBreakFly_Phys",
+    "ftCo_ShieldBreakStand_Anim",
+    "ftCo_ShieldBreakStand_Coll",
+    "ftCo_ShieldBreakStand_IASA",
+    "ftCo_ShieldBreakStand_Phys",
+    "ftCo_Shouldered_Anim",
+    "ftCo_Shouldered_Coll",
+    "ftCo_Shouldered_IASA",
+    "ftCo_Shouldered_Phys",
+    "ftCo_SquatRv_Anim",
+    "ftCo_SquatRv_Coll",
+    "ftCo_SquatRv_Enter",
+    "ftCo_SquatRv_IASA",
+    "ftCo_SquatRv_Phys",
+    "ftCo_SquatWait_Anim",
+    "ftCo_SquatWait_Coll",
+    "ftCo_SquatWait_IASA",
+    "ftCo_SquatWait_Phys",
+    "ftCo_Squat_Anim",
+    "ftCo_Squat_Coll",
+    "ftCo_Squat_Enter",
+    "ftCo_Squat_IASA",
+    "ftCo_Squat_Phys",
     "ftCo_StarRodSwing_Anim",
     "ftCo_StarRodSwing_Coll",
     "ftCo_StarRodSwing_IASA",
     "ftCo_StarRodSwing_Phys",
+    "ftCo_StopCeil_Anim",
+    "ftCo_StopCeil_Coll",
+    "ftCo_StopCeil_IASA",
+    "ftCo_StopCeil_Phys",
+    "ftCo_StopWall_Anim",
+    "ftCo_StopWall_Coll",
+    "ftCo_StopWall_IASA",
+    "ftCo_StopWall_Phys",
+    "ftCo_ThrowB_Anim",
+    "ftCo_ThrowB_Coll",
+    "ftCo_ThrowB_IASA",
+    "ftCo_ThrowB_Phys",
+    "ftCo_ThrowF_Anim",
+    "ftCo_ThrowF_Coll",
+    "ftCo_ThrowF_IASA",
+    "ftCo_ThrowF_Phys",
+    "ftCo_ThrowHi_Anim",
+    "ftCo_ThrowHi_Cam",
+    "ftCo_ThrowHi_Coll",
+    "ftCo_ThrowHi_IASA",
+    "ftCo_ThrowHi_Phys",
+    "ftCo_ThrowLw_Anim",
+    "ftCo_ThrowLw_Coll",
+    "ftCo_ThrowLw_IASA",
+    "ftCo_ThrowLw_Phys",
+    "ftCo_ThrownB_Anim",
+    "ftCo_ThrownB_Coll",
+    "ftCo_ThrownB_IASA",
+    "ftCo_ThrownB_Phys",
+    "ftCo_ThrownCopyStar_Anim",
+    "ftCo_ThrownCopyStar_Coll",
+    "ftCo_ThrownCopyStar_IASA",
+    "ftCo_ThrownCopyStar_Phys",
     "ftCo_ThrownCrazyHand_Anim",
     "ftCo_ThrownCrazyHand_Coll",
     "ftCo_ThrownCrazyHand_IASA",
     "ftCo_ThrownCrazyHand_Phys",
+    "ftCo_ThrownF_Anim",
+    "ftCo_ThrownF_Coll",
+    "ftCo_ThrownF_IASA",
+    "ftCo_ThrownF_Phys",
+    "ftCo_ThrownHi_Anim",
+    "ftCo_ThrownHi_Cam",
+    "ftCo_ThrownHi_Coll",
+    "ftCo_ThrownHi_IASA",
+    "ftCo_ThrownHi_Phys",
+    "ftCo_ThrownKirbyStar_Anim",
+    "ftCo_ThrownKirbyStar_Coll",
+    "ftCo_ThrownKirbyStar_IASA",
+    "ftCo_ThrownKirbyStar_Phys",
+    "ftCo_ThrownKirby_Anim",
+    "ftCo_ThrownKirby_Coll",
+    "ftCo_ThrownKirby_IASA",
+    "ftCo_ThrownKirby_Phys",
+    "ftCo_ThrownKoopaAirB_Anim",
+    "ftCo_ThrownKoopaAirB_Coll",
+    "ftCo_ThrownKoopaAirB_IASA",
+    "ftCo_ThrownKoopaAirB_Phys",
+    "ftCo_ThrownKoopaAirF_Anim",
+    "ftCo_ThrownKoopaAirF_Coll",
+    "ftCo_ThrownKoopaAirF_IASA",
+    "ftCo_ThrownKoopaAirF_Phys",
+    "ftCo_ThrownKoopaB_Anim",
+    "ftCo_ThrownKoopaB_Coll",
+    "ftCo_ThrownKoopaB_IASA",
+    "ftCo_ThrownKoopaB_Phys",
+    "ftCo_ThrownKoopaF_Anim",
+    "ftCo_ThrownKoopaF_Coll",
+    "ftCo_ThrownKoopaF_IASA",
+    "ftCo_ThrownKoopaF_Phys",
+    "ftCo_ThrownLw_Anim",
+    "ftCo_ThrownLw_Coll",
+    "ftCo_ThrownLw_IASA",
+    "ftCo_ThrownLw_Phys",
+    "ftCo_ThrownMewtwoAir_Anim",
+    "ftCo_ThrownMewtwoAir_Coll",
+    "ftCo_ThrownMewtwoAir_IASA",
+    "ftCo_ThrownMewtwoAir_Phys",
+    "ftCo_ThrownMewtwo_Anim",
+    "ftCo_ThrownMewtwo_Coll",
+    "ftCo_ThrownMewtwo_IASA",
+    "ftCo_ThrownMewtwo_Phys",
+    "ftCo_TurnRun_Anim",
+    "ftCo_TurnRun_Coll",
+    "ftCo_TurnRun_IASA",
+    "ftCo_TurnRun_Phys",
+    "ftCo_Turn_Anim",
+    "ftCo_Turn_Anim_Inner",
+    "ftCo_Turn_Coll",
+    "ftCo_Turn_Enter_Basic",
+    "ftCo_Turn_Enter_Smash",
+    "ftCo_Turn_IASA",
+    "ftCo_Turn_Phys",
+    "ftCo_Wait_Anim",
+    "ftCo_Wait_Coll",
+    "ftCo_Wait_IASA",
+    "ftCo_Wait_Phys",
+    "ftCo_Walk_Anim",
+    "ftCo_Walk_Coll",
+    "ftCo_Walk_IASA",
+    "ftCo_Walk_Phys",
+    "ftCo_WarpStarFall_Anim",
+    "ftCo_WarpStarFall_Cam",
+    "ftCo_WarpStarFall_Coll",
+    "ftCo_WarpStarFall_IASA",
+    "ftCo_WarpStarFall_Phys",
+    "ftCo_WarpStarJump_Anim",
+    "ftCo_WarpStarJump_Cam",
+    "ftCo_WarpStarJump_Coll",
+    "ftCo_WarpStarJump_IASA",
+    "ftCo_WarpStarJump_Phys",
+    "ftCo_YoshiEgg_Anim",
+    "ftCo_YoshiEgg_Coll",
+    "ftCo_YoshiEgg_IASA",
+    "ftCo_YoshiEgg_Phys",
+    "ftColl_8007AFF8",
     "ftDk_HeavyFall_Coll",
     "ftDk_HeavyFall_IASA",
     "ftDk_HeavyFall_Phys",
@@ -7101,6 +10355,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftGw_SpecialS_ItemJudgementSetFlag",
     "ftGw_SpecialS_ItemJudgementSetup",
     "ftGw_SpecialS_Phys",
+    "ftKb_AttackDashAir_800F22D4",
     "ftKb_AttackDashAir_Anim",
     "ftKb_AttackDashAir_Coll",
     "ftKb_AttackDashAir_IASA",
@@ -7117,6 +10372,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftKb_CaSpecialN_Coll",
     "ftKb_CaSpecialN_IASA",
     "ftKb_CaSpecialN_Phys",
+    "ftKb_ChargeShot_inline",
     "ftKb_DkSpecialAirNCancel_Anim",
     "ftKb_DkSpecialAirNCancel_Coll",
     "ftKb_DkSpecialAirNCancel_IASA",
@@ -7158,17 +10414,27 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftKb_DkSpecialN_Coll",
     "ftKb_DkSpecialN_IASA",
     "ftKb_DkSpecialN_Phys",
+    "ftKb_EatJump1_Anim",
     "ftKb_EatJump1_Coll",
+    "ftKb_EatJump1_IASA",
     "ftKb_EatJump1_Phys",
+    "ftKb_EatJump2_Anim",
     "ftKb_EatJump2_Coll",
+    "ftKb_EatJump2_Phys",
     "ftKb_EatLanding_Anim",
     "ftKb_EatLanding_Coll",
     "ftKb_EatLanding_Phys",
+    "ftKb_EatTurn_Anim",
     "ftKb_EatTurn_Coll",
     "ftKb_EatTurn_Phys",
+    "ftKb_EatWait_Anim",
     "ftKb_EatWait_Coll",
+    "ftKb_EatWait_IASA",
     "ftKb_EatWait_Phys",
+    "ftKb_EatWalk_Anim",
     "ftKb_EatWalk_Coll",
+    "ftKb_EatWalk_IASA",
+    "ftKb_EatWalk_Phys",
     "ftKb_Eat_Anim",
     "ftKb_Eat_Coll",
     "ftKb_Eat_Phys",
@@ -7217,74 +10483,245 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftKb_Init_UnkMotionStates3",
     "ftKb_Init_UnkMotionStates4",
     "ftKb_KpSpecialAirNEnd_Anim",
+    "ftKb_KpSpecialAirNEnd_Coll",
+    "ftKb_KpSpecialAirNEnd_IASA",
     "ftKb_KpSpecialAirNEnd_Phys",
+    "ftKb_KpSpecialAirNStart_Anim",
+    "ftKb_KpSpecialAirNStart_Coll",
+    "ftKb_KpSpecialAirNStart_IASA",
     "ftKb_KpSpecialAirNStart_Phys",
+    "ftKb_KpSpecialAirN_Anim",
+    "ftKb_KpSpecialAirN_Coll",
+    "ftKb_KpSpecialAirN_IASA",
     "ftKb_KpSpecialAirN_Phys",
     "ftKb_KpSpecialNEnd_Anim",
+    "ftKb_KpSpecialNEnd_Coll",
+    "ftKb_KpSpecialNEnd_IASA",
     "ftKb_KpSpecialNEnd_Phys",
+    "ftKb_KpSpecialNStart_Anim",
+    "ftKb_KpSpecialNStart_Coll",
+    "ftKb_KpSpecialNStart_IASA",
     "ftKb_KpSpecialNStart_Phys",
+    "ftKb_KpSpecialN_Anim",
+    "ftKb_KpSpecialN_Coll",
+    "ftKb_KpSpecialN_IASA",
     "ftKb_KpSpecialN_Phys",
     "ftKb_LgSpecialAirN_Anim",
     "ftKb_LgSpecialAirN_Coll",
+    "ftKb_LgSpecialAirN_IASA",
     "ftKb_LgSpecialAirN_Phys",
     "ftKb_LgSpecialN_Anim",
     "ftKb_LgSpecialN_Coll",
     "ftKb_LgSpecialN_IASA",
     "ftKb_LgSpecialN_Phys",
+    "ftKb_LkSpecialAirNEnd_Anim",
+    "ftKb_LkSpecialAirNEnd_Coll",
+    "ftKb_LkSpecialAirNEnd_IASA",
     "ftKb_LkSpecialAirNEnd_Phys",
+    "ftKb_LkSpecialAirNLoop_Anim",
+    "ftKb_LkSpecialAirNLoop_Coll",
+    "ftKb_LkSpecialAirNLoop_IASA",
     "ftKb_LkSpecialAirNLoop_Phys",
+    "ftKb_LkSpecialAirNStart_Anim",
+    "ftKb_LkSpecialAirNStart_Coll",
+    "ftKb_LkSpecialAirNStart_IASA",
     "ftKb_LkSpecialAirNStart_Phys",
+    "ftKb_LkSpecialNEnd_Anim",
+    "ftKb_LkSpecialNEnd_Coll",
+    "ftKb_LkSpecialNEnd_IASA",
     "ftKb_LkSpecialNEnd_Phys",
+    "ftKb_LkSpecialNLoop_Anim",
+    "ftKb_LkSpecialNLoop_Coll",
+    "ftKb_LkSpecialNLoop_IASA",
     "ftKb_LkSpecialNLoop_Phys",
+    "ftKb_LkSpecialNStart_Anim",
+    "ftKb_LkSpecialNStart_Coll",
+    "ftKb_LkSpecialNStart_IASA",
     "ftKb_LkSpecialNStart_Phys",
     "ftKb_MrSpecialAirN_Anim",
+    "ftKb_MrSpecialAirN_Coll",
+    "ftKb_MrSpecialAirN_IASA",
     "ftKb_MrSpecialAirN_Phys",
     "ftKb_MrSpecialN_Anim",
+    "ftKb_MrSpecialN_Coll",
     "ftKb_MrSpecialN_IASA",
     "ftKb_MrSpecialN_Phys",
+    "ftKb_MsSpecialAirNEnd_Anim",
+    "ftKb_MsSpecialAirNEnd_Coll",
+    "ftKb_MsSpecialAirNEnd_IASA",
     "ftKb_MsSpecialAirNEnd_Phys",
+    "ftKb_MsSpecialAirNLoop_Anim",
+    "ftKb_MsSpecialAirNLoop_Coll",
+    "ftKb_MsSpecialAirNLoop_IASA",
     "ftKb_MsSpecialAirNLoop_Phys",
+    "ftKb_MsSpecialAirNStart_Anim",
+    "ftKb_MsSpecialAirNStart_Coll",
+    "ftKb_MsSpecialAirNStart_IASA",
+    "ftKb_MsSpecialAirNStart_Phys",
+    "ftKb_MsSpecialNEnd_Anim",
+    "ftKb_MsSpecialNEnd_Coll",
+    "ftKb_MsSpecialNEnd_IASA",
     "ftKb_MsSpecialNEnd_Phys",
+    "ftKb_MsSpecialNLoop_Anim",
+    "ftKb_MsSpecialNLoop_Coll",
+    "ftKb_MsSpecialNLoop_IASA",
     "ftKb_MsSpecialNLoop_Phys",
+    "ftKb_MsSpecialNStart_Anim",
+    "ftKb_MsSpecialNStart_Coll",
+    "ftKb_MsSpecialNStart_IASA",
+    "ftKb_MsSpecialNStart_Phys",
+    "ftKb_MtSpecialAirNCancel_Anim",
     "ftKb_MtSpecialAirNCancel_Coll",
+    "ftKb_MtSpecialAirNCancel_IASA",
     "ftKb_MtSpecialAirNCancel_Phys",
+    "ftKb_MtSpecialAirNEnd_Anim",
     "ftKb_MtSpecialAirNEnd_Coll",
+    "ftKb_MtSpecialAirNEnd_IASA",
     "ftKb_MtSpecialAirNEnd_Phys",
+    "ftKb_MtSpecialAirNLoopFull_Anim",
     "ftKb_MtSpecialAirNLoopFull_Coll",
+    "ftKb_MtSpecialAirNLoopFull_IASA",
     "ftKb_MtSpecialAirNLoopFull_Phys",
+    "ftKb_MtSpecialAirNLoop_Anim",
     "ftKb_MtSpecialAirNLoop_Coll",
+    "ftKb_MtSpecialAirNLoop_IASA",
     "ftKb_MtSpecialAirNLoop_Phys",
+    "ftKb_MtSpecialAirNStart_Anim",
     "ftKb_MtSpecialAirNStart_Coll",
+    "ftKb_MtSpecialAirNStart_IASA",
     "ftKb_MtSpecialAirNStart_Phys",
+    "ftKb_MtSpecialNCancel_Anim",
     "ftKb_MtSpecialNCancel_Coll",
+    "ftKb_MtSpecialNCancel_IASA",
     "ftKb_MtSpecialNCancel_Phys",
+    "ftKb_MtSpecialNEnd_Anim",
     "ftKb_MtSpecialNEnd_Coll",
+    "ftKb_MtSpecialNEnd_IASA",
     "ftKb_MtSpecialNEnd_Phys",
+    "ftKb_MtSpecialNLoopFull_Anim",
     "ftKb_MtSpecialNLoopFull_Coll",
+    "ftKb_MtSpecialNLoopFull_IASA",
     "ftKb_MtSpecialNLoopFull_Phys",
+    "ftKb_MtSpecialNLoop_Anim",
     "ftKb_MtSpecialNLoop_Coll",
+    "ftKb_MtSpecialNLoop_IASA",
     "ftKb_MtSpecialNLoop_Phys",
+    "ftKb_MtSpecialNStart_Anim",
     "ftKb_MtSpecialNStart_Coll",
+    "ftKb_MtSpecialNStart_IASA",
     "ftKb_MtSpecialNStart_Phys",
+    "ftKb_NsSpecialAirNEnd_Anim",
     "ftKb_NsSpecialAirNEnd_Coll",
+    "ftKb_NsSpecialAirNEnd_IASA",
+    "ftKb_NsSpecialAirNEnd_Phys",
+    "ftKb_NsSpecialAirNHold_Anim",
     "ftKb_NsSpecialAirNHold_Coll",
+    "ftKb_NsSpecialAirNHold_IASA",
+    "ftKb_NsSpecialAirNHold_Phys",
+    "ftKb_NsSpecialAirNStart_Anim",
     "ftKb_NsSpecialAirNStart_Coll",
+    "ftKb_NsSpecialAirNStart_IASA",
+    "ftKb_NsSpecialAirNStart_Phys",
+    "ftKb_NsSpecialNEnd_Anim",
     "ftKb_NsSpecialNEnd_Coll",
+    "ftKb_NsSpecialNEnd_IASA",
     "ftKb_NsSpecialNEnd_Phys",
+    "ftKb_NsSpecialNHold_Anim",
     "ftKb_NsSpecialNHold_Coll",
+    "ftKb_NsSpecialNHold_IASA",
     "ftKb_NsSpecialNHold_Phys",
+    "ftKb_NsSpecialNStart_Anim",
     "ftKb_NsSpecialNStart_Coll",
+    "ftKb_NsSpecialNStart_IASA",
     "ftKb_NsSpecialNStart_Phys",
+    "ftKb_PeSpecialAirLwHit_Anim",
     "ftKb_PeSpecialAirLwHit_Coll",
+    "ftKb_PeSpecialAirLwHit_IASA",
+    "ftKb_PeSpecialAirLwHit_Phys",
+    "ftKb_PeSpecialAirLw_Anim",
+    "ftKb_PeSpecialAirLw_Coll",
+    "ftKb_PeSpecialAirLw_IASA",
+    "ftKb_PeSpecialAirLw_Phys",
+    "ftKb_PeSpecialLwHit_Anim",
     "ftKb_PeSpecialLwHit_Coll",
+    "ftKb_PeSpecialLwHit_IASA",
     "ftKb_PeSpecialLwHit_Phys",
+    "ftKb_PeSpecialLw_Anim",
+    "ftKb_PeSpecialLw_Coll",
+    "ftKb_PeSpecialLw_IASA",
     "ftKb_PeSpecialLw_Phys",
+    "ftKb_PkSpecialAirN_Anim",
+    "ftKb_PkSpecialAirN_Coll",
+    "ftKb_PkSpecialAirN_IASA",
     "ftKb_PkSpecialAirN_Phys",
+    "ftKb_PkSpecialN_Anim",
+    "ftKb_PkSpecialN_Coll",
+    "ftKb_PkSpecialN_IASA",
     "ftKb_PkSpecialN_Phys",
     "ftKb_PpSpecialAirN_Anim",
+    "ftKb_PpSpecialAirN_Coll",
+    "ftKb_PpSpecialAirN_IASA",
     "ftKb_PpSpecialAirN_Phys",
     "ftKb_PpSpecialN_Anim",
+    "ftKb_PpSpecialN_Coll",
+    "ftKb_PpSpecialN_IASA",
     "ftKb_PpSpecialN_Phys",
+    "ftKb_PrHitCapsuleToggle",
+    "ftKb_PrPlayRollSFX",
+    "ftKb_PrRestoreScale",
+    "ftKb_PrSetCallbacks",
+    "ftKb_PrSpecialAirNEndR_Anim",
+    "ftKb_PrSpecialAirNEndR_Coll",
+    "ftKb_PrSpecialAirNEndR_IASA",
+    "ftKb_PrSpecialAirNEndR_Phys",
+    "ftKb_PrSpecialAirNFull_Anim",
+    "ftKb_PrSpecialAirNFull_Coll",
+    "ftKb_PrSpecialAirNFull_IASA",
+    "ftKb_PrSpecialAirNFull_Phys",
+    "ftKb_PrSpecialAirNLoop_Anim",
+    "ftKb_PrSpecialAirNLoop_Coll",
+    "ftKb_PrSpecialAirNLoop_IASA",
+    "ftKb_PrSpecialAirNLoop_Phys",
+    "ftKb_PrSpecialAirNStart_Anim",
+    "ftKb_PrSpecialAirNStart_Coll",
+    "ftKb_PrSpecialAirNStart_IASA",
+    "ftKb_PrSpecialAirNStart_Phys",
+    "ftKb_PrSpecialAirN_Anim",
+    "ftKb_PrSpecialAirN_Coll",
+    "ftKb_PrSpecialAirN_IASA",
+    "ftKb_PrSpecialAirN_Phys",
+    "ftKb_PrSpecialN1_Anim",
+    "ftKb_PrSpecialN1_Coll",
+    "ftKb_PrSpecialN1_IASA",
+    "ftKb_PrSpecialN1_Phys",
+    "ftKb_PrSpecialNEnd_Anim",
+    "ftKb_PrSpecialNEnd_Coll",
+    "ftKb_PrSpecialNEnd_IASA",
+    "ftKb_PrSpecialNEnd_Phys",
+    "ftKb_PrSpecialNFull_Anim",
+    "ftKb_PrSpecialNFull_Coll",
+    "ftKb_PrSpecialNFull_IASA",
+    "ftKb_PrSpecialNFull_Phys",
+    "ftKb_PrSpecialNHit_Anim",
+    "ftKb_PrSpecialNHit_Coll",
+    "ftKb_PrSpecialNHit_IASA",
+    "ftKb_PrSpecialNHit_Phys",
+    "ftKb_PrSpecialNLoop_Anim",
+    "ftKb_PrSpecialNLoop_Coll",
+    "ftKb_PrSpecialNLoop_IASA",
+    "ftKb_PrSpecialNLoop_Phys",
+    "ftKb_PrSpecialNStart_Anim",
+    "ftKb_PrSpecialNStart_Coll",
+    "ftKb_PrSpecialNStart_IASA",
+    "ftKb_PrSpecialNStart_Phys",
+    "ftKb_PrSpecialNTurn_Anim",
+    "ftKb_PrSpecialNTurn_Coll",
+    "ftKb_PrSpecialNTurn_IASA",
+    "ftKb_PrSpecialNTurn_Phys",
+    "ftKb_PrSpecialN_Anim",
+    "ftKb_PrSpecialN_Coll",
+    "ftKb_PrSpecialN_IASA",
+    "ftKb_PrSpecialN_Phys",
     "ftKb_SetNsFlashAttr",
     "ftKb_SkSpecialAirNCancel_Anim",
     "ftKb_SkSpecialAirNCancel_Coll",
@@ -7320,29 +10757,64 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftKb_SkSpecialNStart_Phys",
     "ftKb_SpecialAirHi1_Anim",
     "ftKb_SpecialAirHi1_Coll",
+    "ftKb_SpecialAirHi1_IASA",
+    "ftKb_SpecialAirHi1_Phys",
     "ftKb_SpecialAirHi2_Anim",
+    "ftKb_SpecialAirHi2_Coll",
+    "ftKb_SpecialAirHi2_IASA",
+    "ftKb_SpecialAirHi2_Phys",
+    "ftKb_SpecialAirHi3_Anim",
+    "ftKb_SpecialAirHi3_Coll",
+    "ftKb_SpecialAirHi3_IASA",
+    "ftKb_SpecialAirHi3_Phys",
+    "ftKb_SpecialAirHiEnd_Anim",
+    "ftKb_SpecialAirHiEnd_Coll",
+    "ftKb_SpecialAirHiEnd_IASA",
     "ftKb_SpecialAirHiEnd_Phys",
+    "ftKb_SpecialAirHi_Enter",
+    "ftKb_SpecialAirLwEnd_Anim",
+    "ftKb_SpecialAirLwEnd_Coll",
+    "ftKb_SpecialAirLwEnd_IASA",
     "ftKb_SpecialAirLwEnd_Phys",
+    "ftKb_SpecialAirLwStart_Anim",
+    "ftKb_SpecialAirLwStart_Coll",
+    "ftKb_SpecialAirLwStart_IASA",
     "ftKb_SpecialAirLwStart_Phys",
+    "ftKb_SpecialAirLw_800F5318",
     "ftKb_SpecialAirLw_800F539C",
     "ftKb_SpecialAirLw_800F5524",
+    "ftKb_SpecialAirLw_Anim",
+    "ftKb_SpecialAirLw_Coll",
+    "ftKb_SpecialAirLw_Enter",
+    "ftKb_SpecialAirLw_IASA",
+    "ftKb_SpecialAirLw_Phys",
+    "ftKb_SpecialAirNCaptureTurn_Anim",
     "ftKb_SpecialAirNCaptureTurn_Coll",
     "ftKb_SpecialAirNCaptureTurn_Phys",
+    "ftKb_SpecialAirNCaptureWait_Anim",
     "ftKb_SpecialAirNCaptureWait_Coll",
+    "ftKb_SpecialAirNCaptureWait_IASA",
     "ftKb_SpecialAirNCaptureWait_Phys",
+    "ftKb_SpecialAirNCapture_Anim",
     "ftKb_SpecialAirNCapture_Coll",
     "ftKb_SpecialAirNCapture_Phys",
+    "ftKb_SpecialAirNCaptured_Anim",
     "ftKb_SpecialAirNCaptured_Coll",
     "ftKb_SpecialAirNCaptured_Phys",
+    "ftKb_SpecialAirNDrink_Anim",
     "ftKb_SpecialAirNDrink_Coll",
     "ftKb_SpecialAirNDrink_Phys",
     "ftKb_SpecialAirNEnd_Anim",
     "ftKb_SpecialAirNEnd_Coll",
     "ftKb_SpecialAirNEnd_Phys",
+    "ftKb_SpecialAirNLoop_Anim",
     "ftKb_SpecialAirNLoop_Coll",
+    "ftKb_SpecialAirNLoop_IASA",
     "ftKb_SpecialAirNLoop_Phys",
+    "ftKb_SpecialAirNSpit_Anim",
     "ftKb_SpecialAirNSpit_Coll",
     "ftKb_SpecialAirNSpit_Phys",
+    "ftKb_SpecialAirN_Anim",
     "ftKb_SpecialAirN_Coll",
     "ftKb_SpecialAirN_Enter",
     "ftKb_SpecialAirN_Phys",
@@ -7351,24 +10823,61 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftKb_SpecialAirS_Enter",
     "ftKb_SpecialAirS_Phys",
     "ftKb_SpecialHi1_Anim",
+    "ftKb_SpecialHi1_Coll",
+    "ftKb_SpecialHi1_IASA",
+    "ftKb_SpecialHi1_Phys",
     "ftKb_SpecialHi2_Anim",
+    "ftKb_SpecialHi2_Coll",
+    "ftKb_SpecialHi2_IASA",
+    "ftKb_SpecialHi2_Phys",
+    "ftKb_SpecialHi3_Anim",
+    "ftKb_SpecialHi3_Coll",
+    "ftKb_SpecialHi3_IASA",
+    "ftKb_SpecialHi3_Phys",
+    "ftKb_SpecialHi4_Anim",
+    "ftKb_SpecialHi4_Coll",
+    "ftKb_SpecialHi4_IASA",
     "ftKb_SpecialHi4_Phys",
+    "ftKb_SpecialHi_800F331C",
+    "ftKb_SpecialHi_800F346C",
+    "ftKb_SpecialHi_800F3570",
+    "ftKb_SpecialHi_800F36DC",
+    "ftKb_SpecialHi_800F37EC",
+    "ftKb_SpecialHi_800F3B28",
+    "ftKb_SpecialHi_Enter",
+    "ftKb_SpecialLw1_Anim",
+    "ftKb_SpecialLw1_Coll",
+    "ftKb_SpecialLw1_IASA",
     "ftKb_SpecialLw1_Phys",
+    "ftKb_SpecialLwEnd_Anim",
+    "ftKb_SpecialLwEnd_Coll",
+    "ftKb_SpecialLwEnd_IASA",
     "ftKb_SpecialLwEnd_Phys",
+    "ftKb_SpecialLw_Anim",
+    "ftKb_SpecialLw_Coll",
+    "ftKb_SpecialLw_Enter",
+    "ftKb_SpecialLw_IASA",
+    "ftKb_SpecialLw_Phys",
     "ftKb_SpecialNCa_800F99BC",
     "ftKb_SpecialNCa_800F9A54",
+    "ftKb_SpecialNCapture0_Anim",
     "ftKb_SpecialNCapture0_Coll",
     "ftKb_SpecialNCapture0_Phys",
+    "ftKb_SpecialNCapture1_Anim",
     "ftKb_SpecialNCapture1_Coll",
     "ftKb_SpecialNCapture1_Phys",
+    "ftKb_SpecialNCapture_Anim",
     "ftKb_SpecialNCapture_Coll",
     "ftKb_SpecialNCapture_Phys",
     "ftKb_SpecialNDk_800FF8EC",
     "ftKb_SpecialNDk_800FFA10",
+    "ftKb_SpecialNDrink0_Anim",
     "ftKb_SpecialNDrink0_Coll",
     "ftKb_SpecialNDrink0_Phys",
+    "ftKb_SpecialNDrink1_Anim",
     "ftKb_SpecialNDrink1_Coll",
     "ftKb_SpecialNDrink1_Phys",
+    "ftKb_SpecialNDrink_Anim",
     "ftKb_SpecialNDrink_Coll",
     "ftKb_SpecialNDrink_Phys",
     "ftKb_SpecialNEnd_Anim",
@@ -7391,27 +10900,90 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftKb_SpecialNGw_8010D204",
     "ftKb_SpecialNGw_8010D580",
     "ftKb_SpecialNGw_8010D5F0",
+    "ftKb_SpecialNIc_80108D04",
+    "ftKb_SpecialNIc_80108D64",
+    "ftKb_SpecialNIc_80108E14",
+    "ftKb_SpecialNKp_800FA588",
+    "ftKb_SpecialNKp_800FA7D4",
+    "ftKb_SpecialNKp_800FA8B4",
+    "ftKb_SpecialNKp_800FA958",
+    "ftKb_SpecialNLg_800F951C",
+    "ftKb_SpecialNLg_800F9598",
     "ftKb_SpecialNLg_800F9614",
     "ftKb_SpecialNLg_800F9684",
+    "ftKb_SpecialNLk800FB418",
+    "ftKb_SpecialNLk800FB444",
+    "ftKb_SpecialNLk800FB6DC",
+    "ftKb_SpecialNLk800FB800",
+    "ftKb_SpecialNLk800FB840",
+    "ftKb_SpecialNLk800FB880",
+    "ftKb_SpecialNLk800FBA00",
+    "ftKb_SpecialNLoop_Anim",
     "ftKb_SpecialNLoop_Coll",
+    "ftKb_SpecialNLoop_IASA",
     "ftKb_SpecialNLoop_Phys",
+    "ftKb_SpecialNMr_800F93CC",
+    "ftKb_SpecialNMs_8010B2FC",
+    "ftKb_SpecialNMs_8010B4A0",
+    "ftKb_SpecialNMs_8010B868",
+    "ftKb_SpecialNMs_8010B8E0",
+    "ftKb_SpecialNMs_8010BB50",
+    "ftKb_SpecialNMs_8010BBC8",
+    "ftKb_SpecialNMs_8010BC40",
+    "ftKb_SpecialNMs_8010BC90",
+    "ftKb_SpecialNMt_80107040",
+    "ftKb_SpecialNMt_8010709C",
+    "ftKb_SpecialNMt_80107130",
+    "ftKb_SpecialNMt_801071FC",
+    "ftKb_SpecialNMt_80107410",
+    "ftKb_SpecialNMt_80107568",
+    "ftKb_SpecialNMt_80107638",
+    "ftKb_SpecialNMt_SetRecoil",
     "ftKb_SpecialNNs_800FECBC",
     "ftKb_SpecialNNs_800FECE8",
+    "ftKb_SpecialNNs_800FED38",
+    "ftKb_SpecialNNs_800FEDD0",
+    "ftKb_SpecialNPe_8010BF90",
+    "ftKb_SpecialNPe_8010C06C",
+    "ftKb_SpecialNPe_8010C148",
+    "ftKb_SpecialNPe_8010C1E8",
+    "ftKb_SpecialNPe_8010C3C0",
+    "ftKb_SpecialNPe_8010C3F4",
+    "ftKb_SpecialNPe_8010C47C",
+    "ftKb_SpecialNPe_8010C4D4",
+    "ftKb_SpecialNPe_8010C560",
+    "ftKb_SpecialNPe_8010C8D8",
+    "ftKb_SpecialNPe_8010C9CC",
+    "ftKb_SpecialNPk_800F9FD4",
+    "ftKb_SpecialNPk_800FA064",
     "ftKb_SpecialNPr_80100DE0",
+    "ftKb_SpecialNPr_80100F94",
+    "ftKb_SpecialNPr_8010131C",
+    "ftKb_SpecialNPr_80101560",
+    "ftKb_SpecialNPr_80101618",
     "ftKb_SpecialNSk_80105E8C",
     "ftKb_SpecialNSk_80105F3C",
     "ftKb_SpecialNSk_8010603C",
     "ftKb_SpecialNSk_8010612C",
     "ftKb_SpecialNSk_801061E4",
+    "ftKb_SpecialNSpit0_Anim",
     "ftKb_SpecialNSpit0_Coll",
     "ftKb_SpecialNSpit0_Phys",
+    "ftKb_SpecialNSpit1_Anim",
     "ftKb_SpecialNSpit1_Coll",
     "ftKb_SpecialNSpit1_Phys",
+    "ftKb_SpecialNSpit_Anim",
     "ftKb_SpecialNSpit_Coll",
     "ftKb_SpecialNSpit_Phys",
+    "ftKb_SpecialNSs_800FCD04",
+    "ftKb_SpecialNSs_800FCD60",
+    "ftKb_SpecialNSs_800FCDE0",
+    "ftKb_SpecialNSs_800FCDE0_inline",
     "ftKb_SpecialNSs_800FCF74",
     "ftKb_SpecialNSs_800FD020",
+    "ftKb_SpecialNSs_DestroyChargeShot",
     "ftKb_SpecialNSs_UnsetChargeShot",
+    "ftKb_SpecialNSs_it_802B5974",
     "ftKb_SpecialNYs_801093B4",
     "ftKb_SpecialNYs_8010941C",
     "ftKb_SpecialNYs_801094FC",
@@ -7437,9 +11009,17 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftKb_SpecialN_800F1D24",
     "ftKb_SpecialN_800F1DAC",
     "ftKb_SpecialN_800F1F68",
+    "ftKb_SpecialN_800F5954",
+    "ftKb_SpecialN_800F5DE8",
+    "ftKb_SpecialN_800F5EA8",
+    "ftKb_SpecialN_800F5F68",
+    "ftKb_SpecialN_800F6070",
     "ftKb_SpecialN_800F6388",
     "ftKb_SpecialN_800F63EC",
     "ftKb_SpecialN_800F9070",
+    "ftKb_SpecialN_800F9090",
+    "ftKb_SpecialN_800F9110",
+    "ftKb_SpecialN_Anim",
     "ftKb_SpecialN_Coll",
     "ftKb_SpecialN_Enter",
     "ftKb_SpecialN_Phys",
@@ -7448,16 +11028,29 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftKb_SpecialS_Coll",
     "ftKb_SpecialS_Enter",
     "ftKb_SpecialS_Phys",
+    "ftKb_SsSpecialAirNStart_Anim",
     "ftKb_SsSpecialAirNStart_Coll",
+    "ftKb_SsSpecialAirNStart_IASA",
     "ftKb_SsSpecialAirNStart_Phys",
+    "ftKb_SsSpecialAirN_Anim",
     "ftKb_SsSpecialAirN_Coll",
+    "ftKb_SsSpecialAirN_IASA",
     "ftKb_SsSpecialAirN_Phys",
+    "ftKb_SsSpecialNCancel_Anim",
     "ftKb_SsSpecialNCancel_Coll",
+    "ftKb_SsSpecialNCancel_IASA",
     "ftKb_SsSpecialNCancel_Phys",
+    "ftKb_SsSpecialNHold_Anim",
+    "ftKb_SsSpecialNHold_Coll",
+    "ftKb_SsSpecialNHold_IASA",
     "ftKb_SsSpecialNHold_Phys",
+    "ftKb_SsSpecialNStart_Anim",
     "ftKb_SsSpecialNStart_Coll",
+    "ftKb_SsSpecialNStart_IASA",
     "ftKb_SsSpecialNStart_Phys",
+    "ftKb_SsSpecialN_Anim",
     "ftKb_SsSpecialN_Coll",
+    "ftKb_SsSpecialN_IASA",
     "ftKb_SsSpecialN_Phys",
     "ftKb_YsSpecialAirCapture1_Anim",
     "ftKb_YsSpecialAirCapture1_Coll",
@@ -7723,6 +11316,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftLg_SpecialS_Phys",
     "ftLg_SpecialS_SetGFX",
     "ftLg_SpecialS_SetVars",
+    "ftLib_UpdateLogicOffCamera",
     "ftLk_800EAF38",
     "ftLk_800EAF58",
     "ftLk_800EB334",
@@ -8269,6 +11863,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftMt_Init_OnLoad",
     "ftMt_Init_OnTakeDamage",
     "ftMt_Init_UnkMotionStates4",
+    "ftMt_JumpAerial_Enter",
     "ftMt_SpecialAirHiLost_Anim",
     "ftMt_SpecialAirHiLost_Coll",
     "ftMt_SpecialAirHiLost_Enter",
@@ -8459,6 +12054,9 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftNs_Init_OnKnockbackEnter",
     "ftNs_Init_OnKnockbackExit",
     "ftNs_Init_OnLoad",
+    "ftNs_JumpAerial_Enter",
+    "ftNs_JumpAerial_Phys_Cb",
+    "ftNs_JumpAerial_Phys_Cb_c",
     "ftNs_PKFlash_Init",
     "ftNs_SpecialAirHiEnd_Anim",
     "ftNs_SpecialAirHiEnd_Coll",
@@ -8633,6 +12231,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftPe_Init_OnKnockbackEnter",
     "ftPe_Init_OnKnockbackExit",
     "ftPe_Init_OnLoad",
+    "ftPe_JumpAerial_Enter",
     "ftPe_SpecialAirHiEnd_Anim",
     "ftPe_SpecialAirHiEnd_Coll",
     "ftPe_SpecialAirHiEnd_IASA",
@@ -8646,13 +12245,28 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftPe_SpecialAirLw_Coll",
     "ftPe_SpecialAirLw_Enter",
     "ftPe_SpecialAirLw_Phys",
+    "ftPe_SpecialAirNHit_Anim",
     "ftPe_SpecialAirNHit_Coll",
+    "ftPe_SpecialAirNHit_IASA",
     "ftPe_SpecialAirNHit_Phys",
+    "ftPe_SpecialAirN_Anim",
+    "ftPe_SpecialAirN_Coll",
+    "ftPe_SpecialAirN_Enter",
+    "ftPe_SpecialAirN_IASA",
+    "ftPe_SpecialAirN_Phys",
     "ftPe_SpecialAirSEnd_Anim",
     "ftPe_SpecialAirSEnd_Coll",
+    "ftPe_SpecialAirSEnd_IASA",
     "ftPe_SpecialAirSEnd_Phys",
+    "ftPe_SpecialAirSJump_Anim",
+    "ftPe_SpecialAirSJump_Coll",
+    "ftPe_SpecialAirSJump_IASA",
     "ftPe_SpecialAirSJump_Phys",
+    "ftPe_SpecialAirSStart_Anim",
+    "ftPe_SpecialAirSStart_Coll",
+    "ftPe_SpecialAirSStart_IASA",
     "ftPe_SpecialAirSStart_Phys",
+    "ftPe_SpecialAirS_Enter",
     "ftPe_SpecialHiEnd_Anim",
     "ftPe_SpecialHiEnd_Coll",
     "ftPe_SpecialHiEnd_IASA",
@@ -8673,13 +12287,26 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftPe_SpecialLw_Enter",
     "ftPe_SpecialLw_Phys",
     "ftPe_SpecialLw_UnsetVeg",
+    "ftPe_SpecialNHit_Anim",
     "ftPe_SpecialNHit_Coll",
+    "ftPe_SpecialNHit_IASA",
     "ftPe_SpecialNHit_Phys",
+    "ftPe_SpecialN_Anim",
+    "ftPe_SpecialN_Coll",
+    "ftPe_SpecialN_DoDeath2",
+    "ftPe_SpecialN_Enter",
+    "ftPe_SpecialN_IASA",
+    "ftPe_SpecialN_OnDeath2",
     "ftPe_SpecialN_Phys",
     "ftPe_SpecialSEnd_Anim",
     "ftPe_SpecialSEnd_Coll",
+    "ftPe_SpecialSEnd_IASA",
     "ftPe_SpecialSEnd_Phys",
+    "ftPe_SpecialSStart_Anim",
+    "ftPe_SpecialSStart_Coll",
+    "ftPe_SpecialSStart_IASA",
     "ftPe_SpecialSStart_Phys",
+    "ftPe_SpecialS_Enter",
     "ftPe_UpdateFloatDir",
     "ftPk_Init_LoadSpecialAttrs",
     "ftPk_Init_OnDeath",
@@ -8690,41 +12317,95 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftPk_Init_OnLoad",
     "ftPk_Init_UnkMotionStates1",
     "ftPk_Init_UnkMotionStates2",
+    "ftPk_SpecialAirHiEnd_Anim",
+    "ftPk_SpecialAirHiEnd_Coll",
+    "ftPk_SpecialAirHiEnd_IASA",
+    "ftPk_SpecialAirHiEnd_Phys",
+    "ftPk_SpecialAirHiStart0_Anim",
     "ftPk_SpecialAirHiStart0_Coll",
+    "ftPk_SpecialAirHiStart0_IASA",
+    "ftPk_SpecialAirHiStart0_Phys",
+    "ftPk_SpecialAirHiStart1_Anim",
+    "ftPk_SpecialAirHiStart1_Coll",
+    "ftPk_SpecialAirHiStart1_IASA",
+    "ftPk_SpecialAirHiStart1_Phys",
+    "ftPk_SpecialAirHi_Enter",
     "ftPk_SpecialAirLwEnd_Anim",
     "ftPk_SpecialAirLwEnd_Coll",
     "ftPk_SpecialAirLwEnd_Phys",
+    "ftPk_SpecialAirLwLoop0_Anim",
     "ftPk_SpecialAirLwLoop0_Coll",
     "ftPk_SpecialAirLwLoop0_Phys",
     "ftPk_SpecialAirLwLoop1_Anim",
     "ftPk_SpecialAirLwLoop1_Coll",
+    "ftPk_SpecialAirLwLoop1_Phys",
+    "ftPk_SpecialAirLwStart_Anim",
     "ftPk_SpecialAirLwStart_Coll",
     "ftPk_SpecialAirLwStart_Phys",
     "ftPk_SpecialAirLw_Enter",
+    "ftPk_SpecialAirN_Anim",
     "ftPk_SpecialAirN_Coll",
+    "ftPk_SpecialAirN_Enter",
+    "ftPk_SpecialAirN_IASA",
     "ftPk_SpecialAirN_Phys",
+    "ftPk_SpecialAirS0_Anim",
     "ftPk_SpecialAirS0_Coll",
+    "ftPk_SpecialAirS0_IASA",
     "ftPk_SpecialAirS0_Phys",
+    "ftPk_SpecialAirS1_Anim",
+    "ftPk_SpecialAirS1_Coll",
+    "ftPk_SpecialAirS1_IASA",
+    "ftPk_SpecialAirS1_Phys",
     "ftPk_SpecialAirSEnd_Anim",
+    "ftPk_SpecialAirSEnd_Coll",
+    "ftPk_SpecialAirSEnd_IASA",
+    "ftPk_SpecialAirSEnd_Phys",
+    "ftPk_SpecialAirSHold_Anim",
     "ftPk_SpecialAirSHold_Coll",
+    "ftPk_SpecialAirSHold_IASA",
     "ftPk_SpecialAirSHold_Phys",
+    "ftPk_SpecialAirSStart_Anim",
     "ftPk_SpecialAirSStart_Coll",
+    "ftPk_SpecialAirSStart_IASA",
+    "ftPk_SpecialAirSStart_Phys",
+    "ftPk_SpecialAirS_Enter",
+    "ftPk_SpecialHiEnd_Anim",
+    "ftPk_SpecialHiEnd_Coll",
+    "ftPk_SpecialHiEnd_IASA",
     "ftPk_SpecialHiEnd_Phys",
+    "ftPk_SpecialHiStart0_Anim",
     "ftPk_SpecialHiStart0_Coll",
+    "ftPk_SpecialHiStart0_IASA",
     "ftPk_SpecialHiStart0_Phys",
+    "ftPk_SpecialHiStart1_Anim",
+    "ftPk_SpecialHiStart1_Coll",
+    "ftPk_SpecialHiStart1_IASA",
+    "ftPk_SpecialHiStart1_Phys",
+    "ftPk_SpecialHi_8012642C",
+    "ftPk_SpecialHi_80126C0C",
+    "ftPk_SpecialHi_80126E1C",
     "ftPk_SpecialHi_ChangeMotion_Unk00",
     "ftPk_SpecialHi_ChangeMotion_Unk01",
+    "ftPk_SpecialHi_ChangeMotion_Unk02",
+    "ftPk_SpecialHi_ChangeMotion_Unk03",
     "ftPk_SpecialHi_ChangeMotion_Unk04",
+    "ftPk_SpecialHi_Enter",
+    "ftPk_SpecialHi_MotionChangeUpdateVel_Unk0",
+    "ftPk_SpecialHi_MotionChangeUpdateVel_Unk1",
+    "ftPk_SpecialHi_UpdateVel",
     "ftPk_SpecialLwEnd_Anim",
     "ftPk_SpecialLwEnd_Coll",
     "ftPk_SpecialLwEnd_Phys",
+    "ftPk_SpecialLwLoop0_Anim",
     "ftPk_SpecialLwLoop0_Coll",
     "ftPk_SpecialLwLoop0_Phys",
     "ftPk_SpecialLwLoop1_Anim",
     "ftPk_SpecialLwLoop1_Coll",
     "ftPk_SpecialLwLoop1_Phys",
+    "ftPk_SpecialLwStart_Anim",
     "ftPk_SpecialLwStart_Coll",
     "ftPk_SpecialLwStart_Phys",
+    "ftPk_SpecialLw_80127608",
     "ftPk_SpecialLw_ChangeMotion_Unk00",
     "ftPk_SpecialLw_ChangeMotion_Unk01",
     "ftPk_SpecialLw_ChangeMotion_Unk02",
@@ -8734,42 +12415,119 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftPk_SpecialLw_ChangeMotion_Unk06",
     "ftPk_SpecialLw_ChangeMotion_Unk07",
     "ftPk_SpecialLw_Enter",
+    "ftPk_SpecialLw_SetState_Unk0",
+    "ftPk_SpecialLw_SetState_Unk1",
+    "ftPk_SpecialLw_SpawnEffect",
+    "ftPk_SpecialN_80124DC8",
+    "ftPk_SpecialN_Anim",
     "ftPk_SpecialN_Coll",
+    "ftPk_SpecialN_Enter",
+    "ftPk_SpecialN_IASA",
     "ftPk_SpecialN_Phys",
+    "ftPk_SpecialN_SpawnEffect0",
+    "ftPk_SpecialN_SpawnEffect1",
+    "ftPk_SpecialS0_Anim",
     "ftPk_SpecialS0_Coll",
+    "ftPk_SpecialS0_IASA",
     "ftPk_SpecialS0_Phys",
+    "ftPk_SpecialS1_Anim",
+    "ftPk_SpecialS1_Coll",
+    "ftPk_SpecialS1_IASA",
+    "ftPk_SpecialS1_Phys",
     "ftPk_SpecialSEnd_Anim",
     "ftPk_SpecialSEnd_Coll",
+    "ftPk_SpecialSEnd_IASA",
+    "ftPk_SpecialSEnd_Phys",
+    "ftPk_SpecialSHold_Anim",
     "ftPk_SpecialSHold_Coll",
+    "ftPk_SpecialSHold_IASA",
     "ftPk_SpecialSHold_Phys",
+    "ftPk_SpecialSStart_Anim",
     "ftPk_SpecialSStart_Coll",
+    "ftPk_SpecialSStart_IASA",
+    "ftPk_SpecialSStart_Phys",
     "ftPk_SpecialS_ChangeMotion_Unk00",
     "ftPk_SpecialS_ChangeMotion_Unk01",
     "ftPk_SpecialS_ChangeMotion_Unk02",
     "ftPk_SpecialS_ChangeMotion_Unk03",
+    "ftPk_SpecialS_ChangeMotion_Unk04",
+    "ftPk_SpecialS_ChangeMotion_Unk05",
     "ftPk_SpecialS_ChangeMotion_Unk06",
     "ftPk_SpecialS_ChangeMotion_Unk07",
+    "ftPk_SpecialS_ChangeMotion_Unk08",
+    "ftPk_SpecialS_ChangeMotion_Unk09",
+    "ftPk_SpecialS_ChangeMotion_Unk10",
+    "ftPk_SpecialS_ChangeMotion_Unk11",
+    "ftPk_SpecialS_ChangeMotion_Unk12",
+    "ftPk_SpecialS_Enter",
+    "ftPk_SpecialS_ZeroVelocity",
+    "ftPp_Init_8011F060",
+    "ftPp_Init_LoadSpecialAttrs",
+    "ftPp_Init_OnDeath",
     "ftPp_Init_OnItemInvisible",
     "ftPp_Init_OnItemVisible",
     "ftPp_Init_OnKnockbackEnter",
     "ftPp_Init_OnKnockbackExit",
+    "ftPp_Init_OnLoad",
+    "ftPp_SpecialAirHiStart_0_Anim",
     "ftPp_SpecialAirHiStart_0_Coll",
+    "ftPp_SpecialAirHiStart_0_IASA",
+    "ftPp_SpecialAirHiStart_0_Phys",
     "ftPp_SpecialAirHiStart_1_Anim",
     "ftPp_SpecialAirHiStart_1_Coll",
+    "ftPp_SpecialAirHiStart_1_IASA",
+    "ftPp_SpecialAirHiStart_1_Phys",
+    "ftPp_SpecialAirHiThrow2_Anim",
+    "ftPp_SpecialAirHiThrow2_Coll",
+    "ftPp_SpecialAirHiThrow2_IASA",
+    "ftPp_SpecialAirHiThrow2_Phys",
+    "ftPp_SpecialAirHiThrow_0_Anim",
     "ftPp_SpecialAirHiThrow_0_Coll",
+    "ftPp_SpecialAirHiThrow_0_IASA",
+    "ftPp_SpecialAirHiThrow_0_Phys",
     "ftPp_SpecialAirHiThrow_1_Anim",
     "ftPp_SpecialAirHiThrow_1_Coll",
+    "ftPp_SpecialAirHiThrow_1_IASA",
+    "ftPp_SpecialAirHiThrow_1_Phys",
+    "ftPp_SpecialAirHi_Enter",
+    "ftPp_SpecialAirLw_Anim",
     "ftPp_SpecialAirLw_Coll",
+    "ftPp_SpecialAirLw_Enter",
+    "ftPp_SpecialAirLw_IASA",
     "ftPp_SpecialAirLw_Phys",
     "ftPp_SpecialAirN_Anim",
+    "ftPp_SpecialAirN_Coll",
+    "ftPp_SpecialAirN_Enter",
+    "ftPp_SpecialAirN_IASA",
     "ftPp_SpecialAirN_Phys",
+    "ftPp_SpecialAirS1_Anim",
+    "ftPp_SpecialAirS1_Coll",
+    "ftPp_SpecialAirS1_IASA",
+    "ftPp_SpecialAirS1_Phys",
+    "ftPp_SpecialAirS2_Anim",
+    "ftPp_SpecialAirS2_Coll",
+    "ftPp_SpecialAirS2_IASA",
+    "ftPp_SpecialAirS2_Phys",
+    "ftPp_SpecialAirS_Enter",
+    "ftPp_SpecialHiStart_0_Anim",
     "ftPp_SpecialHiStart_0_Coll",
+    "ftPp_SpecialHiStart_0_IASA",
+    "ftPp_SpecialHiStart_0_Phys",
+    "ftPp_SpecialHiStart_1_Anim",
     "ftPp_SpecialHiStart_1_Coll",
+    "ftPp_SpecialHiStart_1_IASA",
     "ftPp_SpecialHiStart_1_Phys",
+    "ftPp_SpecialHiThrow2_Anim",
     "ftPp_SpecialHiThrow2_Coll",
+    "ftPp_SpecialHiThrow2_IASA",
+    "ftPp_SpecialHiThrow2_Phys",
+    "ftPp_SpecialHiThrow_0_Anim",
     "ftPp_SpecialHiThrow_0_Coll",
+    "ftPp_SpecialHiThrow_0_IASA",
+    "ftPp_SpecialHiThrow_0_Phys",
     "ftPp_SpecialHiThrow_1_Anim",
     "ftPp_SpecialHiThrow_1_Coll",
+    "ftPp_SpecialHiThrow_1_IASA",
     "ftPp_SpecialHiThrow_1_Phys",
     "ftPp_SpecialHi_0_Anim",
     "ftPp_SpecialHi_0_Coll",
@@ -8811,14 +12569,33 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftPp_SpecialHi_80122098",
     "ftPp_SpecialHi_801220D4",
     "ftPp_SpecialHi_801222E8",
+    "ftPp_SpecialHi_80122348",
     "ftPp_SpecialHi_80122380",
     "ftPp_SpecialHi_801227AC",
+    "ftPp_SpecialHi_8012280C",
+    "ftPp_SpecialHi_80122898",
+    "ftPp_SpecialHi_Enter",
+    "ftPp_SpecialLw_Anim",
+    "ftPp_SpecialLw_Coll",
     "ftPp_SpecialLw_Coll_Land_fp",
+    "ftPp_SpecialLw_Enter",
+    "ftPp_SpecialLw_IASA",
     "ftPp_SpecialLw_Phys",
+    "ftPp_SpecialN_8011F500",
     "ftPp_SpecialN_Anim",
+    "ftPp_SpecialN_Coll",
     "ftPp_SpecialN_Enter",
+    "ftPp_SpecialN_IASA",
     "ftPp_SpecialN_Phys",
+    "ftPp_SpecialS1_Anim",
     "ftPp_SpecialS1_Anim_fp",
+    "ftPp_SpecialS1_Coll",
+    "ftPp_SpecialS1_IASA",
+    "ftPp_SpecialS1_Phys",
+    "ftPp_SpecialS2_Anim",
+    "ftPp_SpecialS2_Coll",
+    "ftPp_SpecialS2_IASA",
+    "ftPp_SpecialS2_Phys",
     "ftPp_SpecialS_0_Anim",
     "ftPp_SpecialS_0_Coll",
     "ftPp_SpecialS_0_IASA",
@@ -8829,22 +12606,117 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftPp_SpecialS_1_IASA",
     "ftPp_SpecialS_1_IASA_fp",
     "ftPp_SpecialS_1_Phys",
+    "ftPp_SpecialS_8011F68C",
+    "ftPp_SpecialS_8011F720",
+    "ftPp_SpecialS_80120E68",
+    "ftPp_SpecialS_801210C8",
     "ftPp_SpecialS_8012114C",
+    "ftPp_SpecialS_80121164",
+    "ftPp_SpecialS_Enter",
     "ftPp_set_cbs_fp",
+    "ftPr_Init_8013C360",
+    "ftPr_Init_8013C494",
+    "ftPr_Init_8013C94C",
+    "ftPr_Init_LoadSpecialAttrs",
     "ftPr_Init_OnDeath",
+    "ftPr_Init_OnItemInvisible",
+    "ftPr_Init_OnItemVisible",
     "ftPr_Init_OnKnockbackEnter",
     "ftPr_Init_OnKnockbackExit",
+    "ftPr_Init_OnLoad",
+    "ftPr_Init_OnUserDataRemove",
+    "ftPr_SpecialAirHi_Anim",
+    "ftPr_SpecialAirHi_Coll",
+    "ftPr_SpecialAirHi_Enter",
+    "ftPr_SpecialAirHi_IASA",
     "ftPr_SpecialAirHi_Phys",
+    "ftPr_SpecialAirLw_Anim",
+    "ftPr_SpecialAirLw_Coll",
+    "ftPr_SpecialAirLw_Enter",
+    "ftPr_SpecialAirLw_IASA",
     "ftPr_SpecialAirLw_Phys",
+    "ftPr_SpecialAirNChargeFull_Anim",
+    "ftPr_SpecialAirNChargeFull_Coll",
+    "ftPr_SpecialAirNChargeFull_IASA",
+    "ftPr_SpecialAirNChargeFull_Phys",
+    "ftPr_SpecialAirNChargeLoop_Anim",
+    "ftPr_SpecialAirNChargeLoop_Coll",
+    "ftPr_SpecialAirNChargeLoop_IASA",
+    "ftPr_SpecialAirNChargeLoop_Phys",
+    "ftPr_SpecialAirNChargeRelease_Anim",
+    "ftPr_SpecialAirNChargeRelease_Coll",
+    "ftPr_SpecialAirNChargeRelease_IASA",
+    "ftPr_SpecialAirNChargeRelease_Phys",
+    "ftPr_SpecialAirNEnd_Anim",
+    "ftPr_SpecialAirNEnd_Coll",
+    "ftPr_SpecialAirNEnd_IASA",
+    "ftPr_SpecialAirNEnd_Phys",
+    "ftPr_SpecialAirNStartTurn_Anim",
+    "ftPr_SpecialAirNStartTurn_Coll",
+    "ftPr_SpecialAirNStartTurn_IASA",
+    "ftPr_SpecialAirNStartTurn_Phys",
+    "ftPr_SpecialAirNStart_Anim",
+    "ftPr_SpecialAirNStart_Coll",
+    "ftPr_SpecialAirNStart_IASA",
+    "ftPr_SpecialAirNStart_Phys",
+    "ftPr_SpecialAirN_Enter",
     "ftPr_SpecialAirS_Anim",
     "ftPr_SpecialAirS_Coll",
     "ftPr_SpecialAirS_Enter",
     "ftPr_SpecialAirS_IASA",
     "ftPr_SpecialAirS_Phys",
+    "ftPr_SpecialHi_8013CD34",
+    "ftPr_SpecialHi_8013CDD8",
+    "ftPr_SpecialHi_8013CE7C",
+    "ftPr_SpecialHi_Anim",
+    "ftPr_SpecialHi_Coll",
+    "ftPr_SpecialHi_Enter",
+    "ftPr_SpecialHi_IASA",
     "ftPr_SpecialHi_Phys",
+    "ftPr_SpecialLw_8013D104",
+    "ftPr_SpecialLw_8013D19C",
+    "ftPr_SpecialLw_Anim",
+    "ftPr_SpecialLw_Coll",
+    "ftPr_SpecialLw_Enter",
+    "ftPr_SpecialLw_IASA",
     "ftPr_SpecialLw_Phys",
+    "ftPr_SpecialNEnd_Anim",
+    "ftPr_SpecialNEnd_Coll",
+    "ftPr_SpecialNEnd_IASA",
+    "ftPr_SpecialNEnd_Phys",
+    "ftPr_SpecialNFull_Anim",
+    "ftPr_SpecialNFull_Coll",
+    "ftPr_SpecialNFull_IASA",
+    "ftPr_SpecialNFull_Phys",
+    "ftPr_SpecialNHit_Anim",
+    "ftPr_SpecialNHit_Coll",
+    "ftPr_SpecialNHit_IASA",
+    "ftPr_SpecialNHit_Phys",
+    "ftPr_SpecialNLoop_Anim",
+    "ftPr_SpecialNLoop_Coll",
+    "ftPr_SpecialNLoop_IASA",
+    "ftPr_SpecialNLoop_Phys",
+    "ftPr_SpecialNRelease_Anim",
+    "ftPr_SpecialNRelease_Coll",
+    "ftPr_SpecialNRelease_IASA",
+    "ftPr_SpecialNRelease_Phys",
+    "ftPr_SpecialNStart_Anim",
+    "ftPr_SpecialNStart_Coll",
+    "ftPr_SpecialNStart_IASA",
+    "ftPr_SpecialNStart_Phys",
+    "ftPr_SpecialNTurn_Anim",
+    "ftPr_SpecialNTurn_Coll",
+    "ftPr_SpecialNTurn_IASA",
+    "ftPr_SpecialNTurn_Phys",
+    "ftPr_SpecialN_8014222C",
+    "ftPr_SpecialN_Enter",
     "ftPr_SpecialS_8013D590",
     "ftPr_SpecialS_8013D5F0",
+    "ftPr_SpecialS_8013D658",
+    "ftPr_SpecialS_8013D764",
+    "ftPr_SpecialS_8013D8B0",
+    "ftPr_SpecialS_8013D8E4",
+    "ftPr_SpecialS_8013DC64",
     "ftPr_SpecialS_Anim",
     "ftPr_SpecialS_Coll",
     "ftPr_SpecialS_Enter",
@@ -9016,6 +12888,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftSk_SpecialS_Enter",
     "ftSk_SpecialS_IASA",
     "ftSk_SpecialS_Phys",
+    "ftSs_Init_80128428",
     "ftSs_Init_LoadSpecialAttrs",
     "ftSs_Init_OnDeath",
     "ftSs_Init_OnItemInvisible",
@@ -9065,6 +12938,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftSs_SpecialLwBomb_Phys",
     "ftSs_SpecialLw_80129048",
     "ftSs_SpecialLw_801290A4",
+    "ftSs_SpecialLw_8012ADF0",
     "ftSs_SpecialLw_8012AEBC",
     "ftSs_SpecialLw_8012AF38",
     "ftSs_SpecialLw_8012B570",
@@ -9088,6 +12962,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftSs_SpecialNStart_IASA",
     "ftSs_SpecialNStart_Phys",
     "ftSs_SpecialN_801291F0",
+    "ftSs_SpecialN_80129258",
     "ftSs_SpecialN_801293BC",
     "ftSs_SpecialN_Anim",
     "ftSs_SpecialN_Coll",
@@ -9098,6 +12973,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftSs_SpecialSSmash_Coll",
     "ftSs_SpecialSSmash_IASA",
     "ftSs_SpecialSSmash_Phys",
+    "ftSs_SpecialS_8012A074",
     "ftSs_SpecialS_8012A640",
     "ftSs_SpecialS_Anim",
     "ftSs_SpecialS_Coll",
@@ -9145,6 +13021,9 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftYs_Init_OnKnockbackExit",
     "ftYs_Init_OnKnockbackExit_fp",
     "ftYs_Init_OnLoad",
+    "ftYs_JumpAerial_Anim_Cb",
+    "ftYs_JumpAerial_Anim_Cb_c",
+    "ftYs_JumpAerial_Enter",
     "ftYs_Shield_8012C1D4",
     "ftYs_Shield_8012C49C",
     "ftYs_Shield_8012C850",
@@ -9361,17 +13240,221 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "ftZd_SpecialSStart_IASA",
     "ftZd_SpecialSStart_Phys",
     "ftZd_SpecialS_Enter",
+    "ft_8007c114",
+    "ft_8007c17c",
+    "ft_8007c224",
+    "ft_8007c4bc",
+    "ft_8007c630",
+    "ft_8007c6dc",
+    "ft_8007c77c",
+    "ft_80081938",
+    "ft_800819a8",
+    "ft_80081b38",
+    "ft_80082b1c",
+    "ft_80082f28",
+    "ft_80083b68",
+    "ft_80083dcc",
+    "ft_80083f88",
+    "ft_80084104",
+    "ft_80084280",
+    "ft_800843fc",
+    "ft_800844ec",
+    "ft_800845b4",
+    "ft_80084eec",
+    "ft_80084f3c",
+    "ft_80084fa8",
+    "ft_80085004",
+    "ft_80085088",
+    "ft_800850b4",
+    "ft_80085134",
+    "ft_80085154",
+    "ft_800851c0",
+    "ft_800851d0",
+    "ft_80085204",
+    "ft_8008521C",
+    "ft_80088c5c",
     "ft_800892A0",
+    "ft_80089824_fp",
+    "ft_80089B08",
+    "ft_8008A2BC",
+    "ft_8008A324",
     "ft_800C85B8",
     "ft_800CD914",
     "ft_800CDB9C",
+    "ft_800CEF08",
+    "ft_800D76B8",
+    "ft_800D7770",
+    "ft_800cd31c",
+    "ft_800cd604",
+    "ft_800cd65c",
+    "ft_800ce528",
+    "ft_800ce5a0",
     "ftcamera_800762f4",
     "ftcamera_80076320",
     "ftcamera_update_camera_box",
+    "ftcliffcommon_80081370",
+    "ftco_800bfd04",
+    "ftco_800bfd9c",
+    "ftco_800c0408",
+    "ftco_800c3598",
+    "ftco_800c36dc",
+    "ftco_800c37a0",
+    "ftco_800c3be8",
+    "ftco_800c3cc0",
+    "ftco_800c6110",
     "ftco_800c703c",
+    "ftco_800c7070",
+    "ftco_800c70d0",
+    "ftco_800c7158",
+    "ftco_800c7178",
+    "ftco_800c7200",
+    "ftco_800c7220",
+    "ftco_800c7294",
+    "ftco_800c7308",
+    "ftco_800c737c",
+    "ftco_800c739c",
+    "ftco_800c7414",
+    "ftco_800c7434",
+    "ftco_800c74ac",
+    "ftco_800c7590",
+    "ftco_800c7800",
+    "ftco_800c7a30",
+    "ftco_800c884c",
+    "ftco_800c89a0",
+    "ftco_800c8a64",
+    "ftco_800c8d00",
+    "ftco_800c8fc4",
+    "ftco_800c9034",
+    "ftco_800cd1bc",
+    "ftco_800cd204",
+    "ftco_800cd278",
+    "ftco_800cdda0",
+    "ftco_800cde18",
+    "ftco_800cde54",
+    "ftco_800cde74",
+    "ftco_800cdf5c",
+    "ftco_800ce010",
+    "ftco_800ce0cc",
+    "ftco_800ce14c",
+    "ftco_800ce1d4",
+    "ftco_800ce3e0",
+    "ftco_800ce480",
+    "ftco_800ce620",
+    "ftco_800ce650",
     "ftco_800d0cbc",
     "ftco_800d0fa0",
     "ftco_800d105c",
+    "ftco_800d94d8",
+    "ftco_800d9c98",
+    "ftco_800dc284",
+    "ftco_800dc3a4",
+    "ftco_800deea8",
+    "ftco_800def38",
+    "ftco_800df0d0",
+    "ftco_air_catch_hit_coll",
+    "ftco_aircatch_anim",
+    "ftco_aircatch_coll",
+    "ftco_aircatch_iasa",
+    "ftco_aircatch_phys",
+    "ftco_aircatchhit_anim",
+    "ftco_aircatchhit_iasa",
+    "ftco_aircatchhit_phys",
+    "ftco_attack_800cdd14",
+    "ftco_batswing_anim",
+    "ftco_batswing_coll",
+    "ftco_batswing_iasa",
+    "ftco_batswing_phys",
+    "ftco_capture_leadead_anim",
+    "ftco_capture_leadead_coll",
+    "ftco_capture_leadead_iasa",
+    "ftco_capture_leadead_phys",
+    "ftco_capture_likelike_anim",
+    "ftco_capture_likelike_coll",
+    "ftco_capture_likelike_iasa",
+    "ftco_capture_likelike_phys",
+    "ftco_capturedamagehi_anim",
+    "ftco_capturedamagehi_coll",
+    "ftco_capturedamagehi_iasa",
+    "ftco_capturedamagehi_phys",
+    "ftco_capturedamagelw_anim",
+    "ftco_capturedamagelw_coll",
+    "ftco_capturedamagelw_iasa",
+    "ftco_capturedamagelw_phys",
+    "ftco_cliff_cam",
+    "ftco_cliff_catch_anim",
+    "ftco_cliff_catch_coll",
+    "ftco_cliff_catch_iasa",
+    "ftco_cliff_catch_phys",
+    "ftco_downreflect_anim",
+    "ftco_downreflect_coll",
+    "ftco_downreflect_iasa",
+    "ftco_downreflect_phys",
+    "ftco_fireflowershoot_anim",
+    "ftco_fireflowershoot_coll",
+    "ftco_fireflowershoot_iasa",
+    "ftco_fireflowershoot_phys",
+    "ftco_fireflowershootair_anim",
+    "ftco_fireflowershootair_coll",
+    "ftco_fireflowershootair_iasa",
+    "ftco_fireflowershootair_phys",
+    "ftco_harisenswing_anim",
+    "ftco_harisenswing_coll",
+    "ftco_harisenswing_iasa",
+    "ftco_harisenswing_phys",
+    "ftco_lgunshoot_anim",
+    "ftco_lgunshoot_coll",
+    "ftco_lgunshoot_iasa",
+    "ftco_lgunshoot_phys",
+    "ftco_lgunshootair_anim",
+    "ftco_lgunshootair_coll",
+    "ftco_lgunshootair_iasa",
+    "ftco_lgunshootair_phys",
+    "ftco_parasolswing_anim",
+    "ftco_parasolswing_coll",
+    "ftco_parasolswing_iasa",
+    "ftco_parasolswing_phys",
+    "ftco_release_item_and_victim",
+    "ftco_sleep_anim",
+    "ftco_sleep_iasa",
+    "ftco_swordswing_anim",
+    "ftco_swordswing_coll",
+    "ftco_swordswing_iasa",
+    "ftco_swordswing_phys",
+    "ftcoll_800788d4",
+    "ftcoll_80078a2c",
+    "ftcoll_80078c70",
+    "ftcoll_8007925c",
+    "ftcoll_8007ab48",
+    "ftcoll_8007ab80",
+    "ftcoll_8007ae80",
+    "ftcoll_8007af60",
+    "ftcoll_8007aff8",
+    "ftcoll_8007b320",
+    "ftcoll_8007b4e0",
+    "ftcoll_8007b6a0",
+    "ftcoll_8007b6ec",
+    "ftcoll_8007b8e8",
+    "ftcoll_8007ba0c",
+    "ftcoll_8007bac0",
+    "ftcoll_8007bc90",
+    "ftcoll_8007be3c",
+    "ftlib_80087140",
+    "ftlib_clearheldspecialitem",
+    "ftlib_disableinput",
+    "ftlib_enableinput",
+    "ftlib_isframesremaining",
+    "ftlib_stopitemrumble",
+    "ftparts_80074a8c",
+    "ftparts_80074acc",
+    "ftpickupitem_80094D90",
+    "ftpickupitem_80094DF8",
+    "ftpickupitem_80094DF8_cb",
+    "ftpickupitem_Anim",
+    "ftpickupitem_Coll",
+    "ftpickupitem_IASA",
+    "ftpickupitem_Phys",
+    "ftwalkcommon_800dfddc",
+    "ftwalkcommon_800e0060",
     "func_8026A158_helper",
     "func_8026A1E8_inline",
     "func_8026A8EC_inline1",
@@ -10555,10 +14638,16 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "onAccessory4",
     "onDetectAir",
     "onDetectGround",
+    "onEnterHitlag",
+    "onExitHitlag",
+    "onHitAccessory4",
     "onPkPc21EC",
+    "onUnkHit",
+    "pl_80037ecc",
     "pl_8003E70C",
     "reflect",
     "removeStageGObj",
+    "reset",
     "resetAnim_fp",
     "resetCmdVarsGround",
     "script_bench_test_wait",
@@ -10571,6 +14660,7 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "setGfx",
     "setGwVars",
     "setupAirStart",
+    "setupColl",
     "setupHitColl",
     "shellHit",
     "shootNeedles",
@@ -10754,6 +14844,8 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "un_8032110C",
     "un_80321130",
     "un_80321154",
+    "un_80321A00",
+    "un_80321AF4",
     "unsetCallbacks",
     "updateRot",
     "updateVelocity",
@@ -10767,4 +14859,6 @@ pub static GOBJ_FN_NAMES: &[&str] = &[
     "vi_8031CA04",
     "vi_8031D80C",
     "vi_8031E6EC",
+    "wobble_reset",
+    "wrapper",
 ];

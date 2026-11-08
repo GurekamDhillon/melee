@@ -111,6 +111,10 @@ pub const MEX_EVENT_ON_DEATH: usize = 1;
 pub const MEX_EVENT_ON_DESTROY: usize = 2;
 pub const MEX_EVENT_ON_FRAME: usize = 3;
 pub const MEX_EVENT_ON_ABSORB: usize = 4;
+/// ftcolanim's `ftData_UnkMotionStates4` call sites (m-ex onActionStateChange, slot 24).
+pub const MEX_EVENT_ON_ACTION_STATE_CHANGE: usize = 11;
+/// `ftCo_800D105C`'s `ftKindCalcIndiviParamTable` call (m-ex onReapplyAttr, slot 25).
+pub const MEX_EVENT_ON_REAPPLY_ATTR: usize = 12;
 pub const MEX_EVENT_SPECIAL_N: usize = 13;
 pub const MEX_EVENT_SPECIAL_N_AIR: usize = 14;
 pub const MEX_EVENT_SPECIAL_S: usize = 15;

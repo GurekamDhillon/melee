@@ -300,10 +300,17 @@ pub unsafe fn HSD_ObjDumpStat() {
         (ext::HSD_ChanGetAllocData, c"chan"),
         (ext::HSD_TevRegGetAllocData, c"tevreg"),
     ];
+    // the objalloc.h getters assert their argument (HSD_ASSERT(205, data)) before reading it
+    let data = |p: *mut _HSD_ObjAllocData| -> &_HSD_ObjAllocData {
+        if p.is_null() {
+            super::debug::__assert(c"objalloc.h".as_ptr(), 205, c"data".as_ptr());
+        }
+        &*(p as *const _)
+    };
     for (func, label) in types {
-        let using = melee_types::inline::HSD_ObjAllocGetUsing(&*(func() as *const _));
-        let freed = melee_types::inline::HSD_ObjAllocGetFreed(&*(func() as *const _));
-        let peak = melee_types::inline::HSD_ObjAllocGetPeak(&*(func() as *const _));
+        let using = melee_types::inline::HSD_ObjAllocGetUsing(data(func()));
+        let freed = melee_types::inline::HSD_ObjAllocGetFreed(data(func()));
+        let peak = melee_types::inline::HSD_ObjAllocGetPeak(data(func()));
         super::lbext::OSReport(
             "objalloc: %s\tusing %d\tfreed %d\tpeak %d\n",
             &[OsArg::S(label.as_ptr()), OsArg::I(using as i32), OsArg::I(freed as i32), OsArg::I(peak as i32)],

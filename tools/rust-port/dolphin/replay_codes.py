@@ -23,6 +23,11 @@ ftLib_UpdateScreenVisibility), so a skipped render moves the 1% offscreen tick b
 21cd149c 3378: render skipped at 7831 and 3317, x7AC frames earlier), and the phase of the 1001-frame cycle depends on
 how long playback waited before the match, which made playback nondeterministic (383fcf15). The recording console ran
 the fix; the recorded Post-Frame agrees with the engine (notes/dolphin-oracle.md, "Polling drift").
+
+Newer recording consoles carry the fix as "Polling Drift + Half Visual Buffer Fixes" (list_console_lag_pdhalfvb.json),
+which rewrites the engine loop at other addresses; a replay with only that variant played back with no pacing fix at
+all, and a render skipped in a Screen KO (whose position the draw callback writes) diverged 602a5cd8 for 25 frames
+(notes/dolphin-oracle.md, "Round 3"). Both variants are copied.
 """
 import os
 import struct
@@ -33,6 +38,11 @@ WIDE = {0x803BB05C, 0x8036A4A8, 0x804DDB58, 0x80086B24, 0x80030C7C, 0x80030C88, 
         0x804DDB2C, 0x804DDB28, 0x804DDB4C, 0x802FCFC4, 0x804DDB84}
 # Slippi Online's "Polling Drift Fix" (Sys/Slippi/InjectionLists/list_console_lag_pd.json)
 DRIFT = {0x801A4DA0, 0x801A4DB4, 0x80019860}
+# Slippi's newer "Polling Drift + Half Visual Buffer Fixes" (list_console_lag_pdhalfvb.json): the same pacing fix as a
+# rewrite of the engine loop (gm_801A4BD4/gm_801A4D34 at 0x801A4BEC, 0x801A4D98, 0x801A5050) plus the half-frame
+# video buffer and 480p deflicker-off. The 35 local 20689_* replays carry only this variant, so without it the
+# playback console skipped a render every ~1002 frames (602a5cd8 at 5328: notes/dolphin-oracle.md, "Round 3").
+DRIFT_HALFVB = {0x801A4D98, 0x801A5050, 0x801A4BEC, 0x80158268, 0x8034EB60, 0x80397878, 0x801A4570}
 
 
 def raw_events(d):
@@ -83,9 +93,10 @@ def codes(g):
 def main():
     slp, user = sys.argv[1], sys.argv[2]
     g = gecko_list(open(slp, "rb").read())
-    groups = {"widescreen": [], "polling drift fix": []}
+    groups = {"widescreen": [], "polling drift fix": [], "polling drift + half visual buffer fixes": []}
     for addr, words in codes(g):
-        name = "widescreen" if addr in WIDE else "polling drift fix" if addr in DRIFT else None
+        name = ("widescreen" if addr in WIDE else "polling drift fix" if addr in DRIFT
+                else "polling drift + half visual buffer fixes" if addr in DRIFT_HALFVB else None)
         if name is None:
             continue
         # a C2 code's last word is the branch back; the recording console's code handler had already patched it

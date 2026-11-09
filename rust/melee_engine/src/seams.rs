@@ -379,6 +379,12 @@ pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
             return Some(v);
         }
     }
+    // the script host's side of script_game's callees (pc/platform/gw_script*.c's gw_Script_*)
+    if name.starts_with("Script_") {
+        if let Some(v) = crate::script_host::by_name(name, args) {
+            return Some(v);
+        }
+    }
     if name.starts_with("Mex_") {
         if let Some(v) = crate::mex_host::by_name(name, args) {
             return Some(v);

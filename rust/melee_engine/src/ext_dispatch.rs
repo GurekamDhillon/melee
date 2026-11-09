@@ -168,6 +168,9 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "fn_80174920" => { let r = melee_modes::tu::gmresult::fn_80174920(w2p(a[0])); { r; 0 } }
         "ftCo_800A101C" => { let r = melee_fighter::tu::ftCo_0A01::ftCo_800A101C(w2p(a[0]), a[1] as i32, a[2] as i32, a[3] as i32); { r; 0 } }
         "ftCo_GetLStickAngle" => { let r = melee_fighter::tu::ftcommon::ftCo_GetLStickAngle(w2p(a[0])); r.to_bits() as u64 }
+        "ftColl_80076640" => { let r = melee_fighter::tu::ftcoll::ftcoll_80076640(w2p(a[0]), w2p(a[1])); r as u64 }
+        "ftColl_80079AB0" => { let r = melee_fighter::tu::ftcoll::ftcoll_80079ab0(w2p(a[0]), w2p(a[1]), a[2] as u32, f32::from_bits(a[3] as u32), f32::from_bits(a[4] as u32), f32::from_bits(a[5] as u32), f32::from_bits(a[6] as u32)); r.to_bits() as u64 }
+        "ftCommon_8007E2FC" => { let r = melee_fighter::tu::ftcommon::ftcommon_8007e2fc(w2p(a[0])); { r; 0 } }
         "ftCommon_CalcSelfAccel_DeaccelQuickAir" => { let r = melee_fighter::tu::ftcommon::ftCommon_CalcSelfAccel_DeaccelQuickAir(w2p(a[0])); r as u64 }
         "gmMainLib_8015ECB0" => { let r = melee_modes::tu::gmmain_lib::gmMainLib_8015ECB0(); r as i64 as u64 }
         "gmMainLib_8015ECBC" => { let r = melee_modes::tu::gmmain_lib::gmMainLib_8015ECBC(); { r; 0 } }

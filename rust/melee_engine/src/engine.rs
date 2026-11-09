@@ -205,6 +205,17 @@ impl Engine {
             }
         }
         Host::boot(disc, mem_size)?;
+        // tag pairs (rust/mods/tag_fighter): MELEE_TAG_PARTNER="marth" (port 1) or "marth,sheik,,falco" (ports 1-4)
+        if let Ok(v) = std::env::var("MELEE_TAG_PARTNER") {
+            for (i, name) in v.split(',').take(4).enumerate() {
+                let n = name.trim().to_ascii_lowercase();
+                if n.is_empty() || n == "none" { continue; }
+                match crate::scenario::ckind_by_name(&n) {
+                    Some(ck) => unsafe { melee_fighter::tu::player::TAG_PARTNER_CK[i] = ck as i8 },
+                    None => eprintln!("tag: MELEE_TAG_PARTNER: unknown character {n:?} for port {}", i + 1),
+                }
+            }
+        }
         unsafe {
             melee_runtime::tu::gobj_native::HEADLESS_RENDER = std::env::var_os("MELEE_ENGINE_HEADLESS").is_some();
             // The C golden recordings ran in the default 1920x1080 window with widescreen on in the match scenes:

@@ -63,6 +63,27 @@ fn at(cycle: &[(u32, u32, i8, i8)], frame: u32) -> RawPad {
     unreachable!()
 }
 
+/// The `MELEE_PAD_SCRIPT` txt script (melee_platform::script format) as a pure function of the golden frame, for the
+/// headless engine runs (`golden --engine tu`, `synctest`): sample `g` is segment time `g - 1`, the last segment
+/// holds; the channels are `MELEE_PAD_CHANNELS` (default port 1). None when no txt script is set.
+pub fn script_pad(port: usize, g: i32) -> Option<RawPad> {
+    static S: std::sync::OnceLock<Option<melee_platform::script::PadScript>> = std::sync::OnceLock::new();
+    let sc = S.get_or_init(melee_platform::script::PadScript::from_env).as_ref()?;
+    if sc.chan_mask >> port & 1 == 0 || sc.segments.is_empty() {
+        return Some(RawPad::default());
+    }
+    let mut n = (g - 1).max(0);
+    let mut seg = *sc.segments.last().unwrap();
+    for s in &sc.segments {
+        if n < s.frames {
+            seg = *s;
+            break;
+        }
+        n -= s.frames;
+    }
+    Some(RawPad { button: seg.buttons as u32, stick_x: seg.sx, stick_y: seg.sy, analog_l: seg.tl, analog_r: seg.tr, ..Default::default() })
+}
+
 /// The raw sample port `port` (0-based) reads on golden frame `g` (pad_fixed.lua, 1800 frames).
 pub fn pad_fixed(port: usize, g: i32) -> RawPad {
     let n = g - 1;

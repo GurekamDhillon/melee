@@ -595,6 +595,19 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         }
     });
     // stage
+    // tag pairs and the sim transition (melee_modes::tu::tag_swap; rust/mods/tag_fighter): all game state
+    w!("gd_tag_partner", |slot: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::partner_kind(slot) } });
+    w!("gd_tag_check", |slot: i32| -> i32 { if !(0..4).contains(&slot) { return -1 } unsafe { melee_modes::tu::tag_swap::check(slot) } });
+    w!("gd_tag_begin", |slot: i32, len: i32| -> i32 { if !(0..4).contains(&slot) { return -1 } unsafe { melee_modes::tu::tag_swap::begin(slot, len) } });
+    w!("gd_tag_swap", |skip: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::request_swap(skip != 0) } });
+    w!("gd_transition_phase", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.phase as i32 } });
+    w!("gd_transition_frame", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.frame as i32 } });
+    w!("gd_transition_slot", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.slot as i32 } });
+    // the pad a port pressed this logic frame (HSD_PadMasterStatus.trigger: the synced sim input, valid while frozen)
+    w!("gd_pad_pressed", |port: i32| -> u32 {
+        if !(0..4).contains(&port) { return 0 }
+        unsafe { melee_runtime::tu::controller::HSD_PadMasterStatus[port as usize].trigger }
+    });
     w!("gd_stage_kind", || -> i32 { unsafe { melee_world::tu::stage::selected_stage.stkind as i32 } });
     // the game's RNG (HSD_Randi / HSD_Randf on the logic seed): the draws are game state and roll back with it
     w!("gd_rand_u32", |bound: u32| -> u32 {
@@ -1015,6 +1028,10 @@ fn frame_hook(post: bool) {
             }
         }
         apply_requests(host);
+        if post {
+            // a queued tag swap and the transition clock: between logic frames, outside the procs
+            melee_modes::tu::tag_swap::tick();
+        }
     }
 }
 

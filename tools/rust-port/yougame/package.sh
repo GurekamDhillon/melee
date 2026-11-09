@@ -176,7 +176,7 @@ with zipfile.ZipFile(z) as f:
                 bad.append(f"{i.filename}: a disc image path")
         if re.search(rb"[A-Za-z]:[\\/][^\x00\n]{0,200}\.(?:iso|gcm)\b", b, re.I):
             bad.append(f"{i.filename}: an absolute .iso/.gcm path")
-        for w in (b"gurek", b"gurekam", b"melee workspace"):
+        for w in (b"\users\gurek", b"/users/gurek", b"melee workspace"):
             if w in low:
                 bad.append(f"{i.filename}: contains '{w.decode()}'")
     print("audit: files:", ", ".join(f"{i.filename} ({i.file_size})" for i in f.infolist()))

@@ -53,3 +53,39 @@ is native and stays 1:1.
 - The recorder (gw_script_rec.inc): it was a Lua host feature. The wasm LAB has its own record / play over LabCmd.
 - Script identity (gs_identity): it was a Lua host feature.
 - The parked Lua scene-loop attach (a local patch only).
+
+## geno 12: the `wasm` fighter block (built 2026-11-09, e1c938332)
+
+The geno 10 `lua` block, compiled. Rust-only: the C build reads up to geno 11; `melee_script::geno::GENO_FORMAT` = 12.
+
+```json
+"geno": 12,
+"fighters": [{ "define": {...},
+  "wasm": { "module": "wasm/goku.wasm", "state": { "charge": "int", "counter_damage": "float", "stored": "int" } },
+  "states": [ { "name": "KameCharge", "wasm": { "enter": "charge_enter", "frame": "charge_frame" } }, ... ] }]
+```
+
+- **Same rules as `lua`**: a define only; at most 16 slots of int / float / bool; per-state enter / frame name
+  exports; a frame function brings the "lua" anim callback. The module bytes and the slot layout fold into the id.
+  An entry carries `lua` or `wasm`, never both.
+- **Module ABI** (`rust/mods/geno_fighters/gd_geno.h`):
+  - callbacks are `void f(void)` exports;
+  - the ctx is imports from module `gd_geno`: `ctx(key) -> f64` (self.* / input.*), `slot(name, len)`,
+    `get(slot)`, `set(slot, v)`, `go(name, len)`, `velocity(fwd, up)`, `hitbox_damage(mask, dmg)`, `loop()`, `turn()`,
+    `ki(delta)`, `ledge(mode)`, each with the Lua ctx's checks and command encoding;
+  - no start section; `memory` exported with a maximum of at most 16 pages.
+- **Runtime** (`melee_engine::geno_wasm`):
+  - wasmi with the mod host's deterministic features;
+  - a fresh instance per call, so nothing survives a call (the state is the io block's slots, game memory, rolled back
+    with it);
+  - fuel 200,000 per call, running out = GENO_LUA_FAULT_INSNS.
+- **Goku**: `rust/mods/geno_fighters/goku.c` ports goku-xv2's `lua/goku.lua` line for line; `build.sh` builds it with
+  clang (wasm32, no libc). `tests/geno_wasm_fighters.rs` runs both over 4000 io blocks x 12 callbacks: identical io words
+  and codes.
+- **Converting a package**: `tools/rust-port/geno/lua_to_wasm_package.py <mod> <module.wasm> [--out <copy>]` rewrites
+  geno.json (geno 12, `lua` -> `wasm`) and copies the module to `wasm/`.
+- **Needs-PC**: mex_goku_cpu (and the charger / riposte scenarios once ported) against their C goldens with the
+  converted package. Those packages are not on the laptop.
+- **vanilla-charger / vanilla-riposte**: `charger.c` / `riposte.c` port their Lua the same way; the differential test
+  covers both (4000 blocks each).
+- **Still Lua**: goku_ki.lua (the combo / ki build). The Lua removal comes after every port matches its C golden.

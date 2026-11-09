@@ -1,4 +1,4 @@
-//! geno 12: Goku's fighter code compiled (rust/mods/geno_goku/goku.wasm, from goku.c) against the geno 10 Lua it
+//! geno 12: Goku's fighter code compiled (rust/mods/geno_fighters/goku.wasm, from goku.c) against the geno 10 Lua it
 //! replaces (tools/rust-port/golden/coverage/goku-xv2-lua/goku.lua, run by the same GLua the engine runs). Every
 //! callback over the same io blocks must leave the same 64 words and return the same code: then the game half sees
 //! no difference, and the C goldens the Lua build matches (mex_goku_cpu) hold for the wasm build. No disc needed.
@@ -25,7 +25,7 @@ fn both(targets: &[&str]) -> (Box<GLua>, geno_wasm::GenoWasm) {
     l.set_layout(&names, &types);
     l.set_targets(&targets);
     assert!(l.load(&src, "=lua/goku.lua"), "{}", l.err);
-    let bytes = std::fs::read(format!("{ROOT}/rust/mods/geno_goku/goku.wasm")).unwrap();
+    let bytes = std::fs::read(format!("{ROOT}/rust/mods/geno_fighters/goku.wasm")).unwrap();
     let w = geno_wasm::load(&bytes, &names, &types, &targets).unwrap();
     (l, w)
 }
@@ -162,7 +162,7 @@ fn define(version: i32, code: &str, state_code: &str) -> String {
 #[test]
 fn registry_wasm_block() {
     use melee_script::geno::Registry;
-    let wasm = std::fs::read(format!("{ROOT}/rust/mods/geno_goku/goku.wasm")).unwrap();
+    let wasm = std::fs::read(format!("{ROOT}/rust/mods/geno_fighters/goku.wasm")).unwrap();
     let env = DirEnv([("wasm/goku.wasm".to_string(), wasm)].into_iter().collect());
     let block = ",\"wasm\":{\"module\":\"wasm/goku.wasm\",\"state\":{\"charge\":\"int\",\"counter_damage\":\"float\",\"stored\":\"int\"}}";
     let st = ",\"wasm\":{\"enter\":\"charge_enter\",\"frame\":\"charge_frame\"}";
@@ -198,4 +198,72 @@ fn registry_wasm_block() {
     let mut r = Registry::default();
     r.parse_text(b"{\"geno\":12,\"fighters\":[{\"attach\":\"kirby\",\"wasm\":{\"module\":\"wasm/goku.wasm\"}}]}", "wasm-goku", &env);
     assert!(r.log.iter().any(|l| l.contains("an attach entry cannot carry a \"wasm\" block")), "{:?}", r.log);
+}
+
+
+/// The two vanilla packages' fighter Lua (pc/geno/mods/vanilla-{charger,riposte}/lua) against their geno 12 ports.
+fn compare_pkg(lua: &str, wasm: &str, names: &[&str], types: &[i32], targets: &[&str], fns: &[&str], fill: fn(&mut Rng, &mut [u32]), blocks: usize) {
+    let names: Vec<String> = names.iter().map(|s| s.to_string()).collect();
+    let targets: Vec<String> = targets.iter().map(|s| s.to_string()).collect();
+    let mut l = GLua::new().unwrap();
+    l.set_layout(&names, types);
+    l.set_targets(&targets);
+    assert!(l.load(&std::fs::read(format!("{ROOT}/{lua}")).unwrap(), "=lua"), "{}", l.err);
+    let mut w = geno_wasm::load(&std::fs::read(format!("{ROOT}/{wasm}")).unwrap(), &names, types, &targets).unwrap();
+    let mut r = Rng(0x7661_6E69_6C6C_61);
+    for _ in 0..blocks {
+        let mut base = io(&mut r);
+        fill(&mut r, &mut base);
+        for name in fns {
+            let (fl, fw) = (l.find(name), FighterCode::find(&w, name));
+            assert!(fl >= 0 && fw >= 0, "{name} missing (lua {fl}, wasm {fw})");
+            let (mut a, mut b) = (base, base);
+            let ra = unsafe { l.call(fl, a.as_mut_ptr()) };
+            let rb = unsafe { FighterCode::call(&mut w, fw, b.as_mut_ptr()) };
+            assert_eq!((ra, a), (rb, b), "{name}: lua {} / wasm {}\nio {base:08x?}", l.err, FighterCode::err(&w));
+        }
+    }
+}
+
+#[test]
+fn charger_wasm_equals_charger_lua() {
+    compare_pkg(
+        "pc/geno/mods/vanilla-charger/lua/charger.lua",
+        "rust/mods/geno_fighters/charger.wasm",
+        &["charge", "charged"],
+        &[GLUA_INT, melee_script::geno::lua::GLUA_BOOL],
+        &["Charge", "Release"],
+        &["charge_enter", "charge_frame", "release_enter", "release_frame"],
+        |r, w| {
+            w[GENO_LUA_IO_STATE as usize] = [0, 1, 30, 58, 59, 60][r.below(6) as usize];
+            w[GENO_LUA_IO_STATE as usize + 1] = r.below(2) as u32;
+        },
+        4000,
+    );
+}
+
+#[test]
+fn riposte_wasm_equals_riposte_lua() {
+    compare_pkg(
+        "pc/geno/mods/vanilla-riposte/lua/riposte.lua",
+        "rust/mods/geno_fighters/riposte.wasm",
+        &["power", "streak", "follow"],
+        &[GLUA_FLOAT, GLUA_INT, melee_script::geno::lua::GLUA_BOOL],
+        &["Parry", "Riposte", "Follow"],
+        &["parry_enter", "parry_frame", "riposte_enter", "riposte_frame", "follow_enter", "follow_frame"],
+        |r, w| {
+            // action frames around 6 / 8 / 16 / 24 / 30, hit damage across 6 (9 / 1.5) and 20 (30 / 1.5), both sides
+            w[GENO_LUA_IO_ACTION_FRAME as usize] = [0, 5, 6, 7, 8, 9, 16, 17, 23, 24, 25, 29, 30, 31][r.below(14) as usize];
+            w[GENO_LUA_IO_HIT_DAMAGE as usize] = match r.below(4) {
+                0 => 6.0f32.to_bits(),
+                1 => 20.0f32.to_bits(),
+                _ => r.f(0.0, 40.0),
+            };
+            w[GENO_LUA_IO_HIT_FROM as usize] = r.below(3) as u32;
+            w[GENO_LUA_IO_STATE as usize] = r.f(0.0, 35.0);
+            w[GENO_LUA_IO_STATE as usize + 1] = r.below(6) as u32;
+            w[GENO_LUA_IO_STATE as usize + 2] = r.below(2) as u32;
+        },
+        4000,
+    );
 }

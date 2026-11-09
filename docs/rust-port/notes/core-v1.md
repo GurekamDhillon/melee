@@ -162,3 +162,19 @@ range (`pe_check.py`). It also sets up no implicit TLS, and our image has 360 by
 - Depth (Z) and other non-colour EFB copies are encoded but unverified. Sized and indexed draws did not occur.
 - Items, 1P modes and the results screen were not compared shot for shot.
 - The sandbox limits above.
+
+## Image size on Linux (parked: no longer needed)
+
+Parked 2026-11-08: the project goes independent of Hero's host, so his Linux loader's 64 MiB check (a game ELF must end below
+0x84000000, 24 MB from the 0x82800000 base) no longer applies. Numbers measured before stopping, release profile, Linux:
+
+| artifact | loadable (sum of PT_LOAD memsz) | .text | .bss | .eh_frame | .gcc_except_table | .rodata | .data.rel.ro |
+|---|---|---|---|---|---|---|---|
+| `libmelee_game.so` (`-p melee_corev1`, rust-port db9d048e4) | 42.4 MB | 21.2 MB | 7.6 MB | 2.7 MB | 1.3 MB | 2.4 MB | 2.4 MB |
+| `melee` (the exe, for comparison) | 41.1 MB | 23.4 MB | 9.1 MB | 2.9 MB | 1.3 MB | 2.6 MB | 2.7 MB |
+
+No lever was built. One finding for anyone who picks this up: `panic=abort` (and with it dropping the unwind tables,
+.eh_frame + .gcc_except_table, about 4 MB) is not behaviour-neutral as the code stands: two game paths use unwinding as C's
+setjmp/longjmp (`melee_world/src/tu/granime.rs` resume_unwind(LongJmp) caught in the same TU, and
+`melee_runtime/src/tu/hsd_3B34.rs` jpeg_fail's JPEG_EXHAUSTED).
+

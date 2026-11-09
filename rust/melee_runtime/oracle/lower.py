@@ -1,7 +1,8 @@
 # Apply gwtool's IR rewrites (pc/tools/gwtool/gwtool.cpp) to textual LLVM IR, so a natively
 # compiled C oracle computes what the real (clang + gwtool) build computes:
 #   lowerFMulAdd:  f32 llvm.fmuladd -> fptrunc(fpext a * fpext b + fpext c); f64 -> llvm.fma.f64
-#   makeArithmeticSafe (float->int only): fptosi/fptoui to i32 -> llvm.fpto[su]i.sat.i32
+#   makeArithmeticSafe (float->int only): fptosi/fptoui to i32 -> llvm.fpto[su]i.sat.i32; a signed one gives
+#     0x80000000 for NaN as fctiwz does (select on fcmp uno; int-audit.md), unsigned keeps 0
 #   makeArithmeticSafe (variable shifts): i32/i64 shift by >= width -> 0 (ashr: sign fill)
 # Integer div/rem safety is not applied (no such operand reaches the oracle's inputs).
 import os
@@ -36,7 +37,12 @@ def frep(m):
     r, su, t, v = m.groups()
     name = f'@llvm.fpto{su}i.sat.i32.{"f32" if t == "float" else "f64"}'
     used.add((name, t))
-    return f'{r} = call i32 {name}({t} {v})'
+    if su == 'u':
+        return f'{r} = call i32 {name}({t} {v})'
+    # fctiwz: NaN -> 0x80000000 (llvm.fptosi.sat gives 0); the int-audit gwtool selects on fcmp uno the same way
+    q = f'%gwf{r.lstrip("%")}'
+    return (f'{q}s = call i32 {name}({t} {v})\n{q}n = fcmp uno {t} {v}, 0.0\n'
+            f'{r} = select i1 {q}n, i32 -2147483648, i32 {q}s')
 
 
 src, k = fp.subn(frep, src)

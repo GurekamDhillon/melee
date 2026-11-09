@@ -48,6 +48,10 @@ are right there and it was left alone (scope `host` in the scanner: 83 div, 49 r
 - Goldens: not re-recorded. No golden changes: the Rust engine now carries the new semantics and still matches every C golden
   (gate, coverage 212/10), so no recorded run hits a NaN conversion or `INT_MIN % -1`; a C build with the new gwtool gives
   the same CSVs. The shared `_build/gwtool/gwtool.exe` is NOT rebuilt (built and checked privately: the new IR has the selects).
+- TU oracles: `rust/melee_runtime/oracle/lower.py` (the gwtool rewrites the native C oracles get) carries the same NaN
+  select for a signed fptoi to i32 since port/testfix3 (it lowered to `llvm.fptosi.sat`, NaN -> 0, so the oracles recorded
+  before then expect 0 where the port's fctiwz gives 0x80000000: tu_ftwalkcommon line 5546, kinds_itsamusgrapple op 3
+  case 182). Rebuild gwtool with the select on the PC before regenerating any oracle, or the C side stays on NaN -> 0.
 
 Measures: slpcheck 86 of 125 frame-exact (86 before); gate OK; coverage 212 pass / 10 no golden.
 

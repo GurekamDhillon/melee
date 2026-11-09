@@ -1594,7 +1594,7 @@ fn install_melee_runtime() {
     // tu/sislib.rs
     unsafe { melee_runtime::tu::sislib::ext::hook::HSD_SisLib_803A947C = Some(|a0| unsafe { melee_runtime::tu::hsd_3A76::HSD_SisLib_803A947C(cast::<_, _, 79101>(a0)) }); }
     // tu/sislib.rs
-    unsafe { melee_runtime::tu::sislib::ext::hook::OSReport = Some(|a0, a1| unsafe { melee_runtime::tu::os_error::OSReport(cast::<_, _, 79201>(a0), cast::<_, _, 79202>(a1)) }); }
+    unsafe { melee_runtime::tu::sislib::ext::hook::OSReport = Some(|a0, a1| unsafe { melee_runtime::tu::os_error::OSReport(a0 as *const core::ffi::c_char, &[a1 as usize]) }); }
     // tu/sobjlib.rs
     unsafe { melee_runtime::tu::sobjlib::ext::hook::GObj_SetupGXLinkMax = Some(|a0, a1, a2| unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(cast::<_, _, 79301>(a0), cast::<_, _, 79302>(a1), cast::<_, _, 79303>(a2)) }); }
     // tu/sobjlib.rs
@@ -1652,7 +1652,7 @@ fn install_melee_runtime() {
     // tu/sobjlib.rs
     unsafe { melee_runtime::tu::sobjlib::ext::hook::HSD_StateSetZMode = Some(|a0, a1, a2| unsafe { melee_runtime::tu::state_native::HSD_StateSetZMode(cast::<_, _, 82001>(a0), cast::<_, _, 82002>(a1), cast::<_, _, 82003>(a2)) }); }
     // tu/sobjlib.rs
-    unsafe { melee_runtime::tu::sobjlib::ext::hook::OSReport = Some(|a0, a1| unsafe { melee_runtime::tu::os_error::OSReport(cast::<_, _, 82101>(a0), cast::<_, _, 82102>(a1)) }); }
+    unsafe { melee_runtime::tu::sobjlib::ext::hook::OSReport = Some(|a0, a1| unsafe { melee_runtime::tu::os_error::OSReport(a0 as *const core::ffi::c_char, &[a1 as usize]) }); }
     // tu/state_native.rs
     unsafe { melee_runtime::tu::state_native::ext::hook::HSD_ClearVtxDesc = Some(|| unsafe { melee_runtime::tu::pobj::native::HSD_ClearVtxDesc() }); }
     // tu/state_native.rs
@@ -1698,7 +1698,7 @@ fn install_melee_runtime() {
     // tu/synth.rs
     unsafe { melee_runtime::tu::synth::ext::hook::HSD_DevComRequest = Some(|a0, a1, a2, a3, a4, a5, a6, a7| unsafe { cast::<_, _, 84300>(melee_runtime::tu::devcom::HSD_DevComRequest(cast::<_, _, 84301>(a0), cast::<_, _, 84302>(a1), cast::<_, _, 84303>(a2), cast::<_, _, 84304>(a3), cast::<_, _, 84305>(a4), cast::<_, _, 84306>(a5), cast::<_, _, 84307>(a6), cast::<_, _, 84308>(a7))) }); }
     // tu/synth.rs
-    unsafe { melee_runtime::tu::synth::ext::hook::OSReport = Some(|a0, a1| unsafe { melee_runtime::tu::os_error::OSReport(cast::<_, _, 84401>(a0), cast::<_, _, 84402>(a1)) }); }
+    unsafe { melee_runtime::tu::synth::ext::hook::OSReport = Some(|a0, a1| unsafe { let m = std::format!("{}\0", a0); melee_runtime::tu::os_error::OSReport(m.as_ptr() as *const core::ffi::c_char, &[a1 as i64 as usize]) }); }
     // tu/tev_native.rs
     unsafe { melee_runtime::tu::tev_native::ext::hook::HSD_ObjAllocInit = Some(|a0, a1, a2| unsafe { melee_runtime::tu::objalloc::HSD_ObjAllocInit(cast::<_, _, 84501>(a0), cast::<_, _, 84502>(a1), cast::<_, _, 84503>(a2)) }); }
     // tu/texp.rs

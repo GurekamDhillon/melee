@@ -4,6 +4,7 @@ use mtu_harness::*;use melee_types::*;use melee_runtime::tu::sislib as m;
 #[path="mtu/sislib_gen.rs"]mod g;
 static mut ARENA:[u64;1024]=[0;1024];static mut TEX:[HSD_Text;3]=unsafe{core::mem::zeroed()};static mut E:[sislib_UnkAlloc3;3]=unsafe{core::mem::zeroed()};static mut BL:[SisBlock;9]=unsafe{core::mem::zeroed()};static mut G:[HSD_GObj;4]=unsafe{core::mem::zeroed()};static mut STR:[[i8;32];3]=[[0;32];3];static mut SI:[SIS;5]=unsafe{core::mem::zeroed()};static mut TABLE:[*mut SIS;5]=[core::ptr::null_mut();5];static mut AR:[u64;8]=[0;8];static mut CAM:HSD_CObj=unsafe{core::mem::zeroed()};static mut KCASE:u32=0;
 #[test]fn all_functions_vs_c(){unsafe{
+ m::HSD_SISLIB_POOL_SCALE=1; // the retail pool sizes (the native build doubles them)
  preg(&raw const ARENA,8192);preg(&raw const TEX,core::mem::size_of_val(&TEX));preg(&raw const E,core::mem::size_of_val(&E));preg(&raw const BL,core::mem::size_of_val(&BL));preg(&raw const G,core::mem::size_of_val(&G));preg(&raw const STR,core::mem::size_of_val(&STR));preg(&raw const SI,core::mem::size_of_val(&SI));preg(&raw const TABLE,core::mem::size_of_val(&TABLE));preg(&raw const AR,core::mem::size_of_val(&AR));preg(&raw const CAM,core::mem::size_of_val(&CAM));g::install();g::freg_all();let mut check=Check::new(include_str!("data/mtu_sislib.txt"));
  for op in 0..22{for k in 0..400{case(op,k);KCASE=k;let mut ret=0;
  for i in 0..8192{*((&raw mut ARENA).cast::<u8>().add(i))=fv() as u8;}

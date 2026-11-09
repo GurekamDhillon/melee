@@ -563,6 +563,7 @@ fn main_inner() -> ExitCode {
         Some("crash-test") => crash::crash_test(args.get(1).map(String::as_str).unwrap_or("panic")),
         Some("golden") => golden(&args),
         Some("geno-tests") => geno_suite::run(&args),
+        Some("mexid") => geno_suite::mexid(&args),
         Some("slpcheck") => slpcheck::slpcheck(&args),
         Some("dolphin-wide") => dolphin_oracle::dolphin_wide(&args),
         Some("diff") => diff::diff(&args),

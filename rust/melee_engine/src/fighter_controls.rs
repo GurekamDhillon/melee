@@ -102,13 +102,16 @@ fn tap_key(port: i32) -> String {
     format!("{}_tap", player_part(port))
 }
 
-/// fc_preference_key: retail fighters by their kind, a Geno define by its 64-bit content id (as the C uses the m-ex
-/// identity hash); None for anything else (never saved under a roster-order-dependent alias).
+/// gw_MexId_FindFighter + gw_MexId_Hash (crate::mexid); a test replaces it as pc/tests/fighter_controls_test.c does
+static mut IDENTITY: fn(i32) -> Option<u64> = crate::mexid::FighterHash;
+
+/// fc_preference_key: any fighter with an identity (retail, m-ex slot or Geno define: its files' hash) by that hash,
+/// else a retail kind by its number; None for anything else (never saved under a roster-order-dependent alias).
 fn preference_key(port: i32, ck: i32) -> Option<String> {
-    let id = if (0..33).contains(&ck) {
-        format!("retail{ck:02}")
-    } else {
-        format!("{:016x}", crate::geno_host::DefineContentId(ck)?)
+    let id = match unsafe { IDENTITY }(ck) {
+        Some(h) => format!("{h:016x}"),
+        None if ck < 33 => format!("retail{ck:02}"),
+        None => return None,
     };
     Some(format!("{}_{id}", player_part(port)))
 }
@@ -288,6 +291,8 @@ mod tests {
     fn freeze_apply_tap_and_preferences_like_c() {
         let _l = gh::TEST_REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
         MEMORY.lock().unwrap().clear();
+        // fighter_controls_test.c's identity stub (its define kinds have hashes 0xabc0 + index; retail kinds none)
+        unsafe { IDENTITY = |ck| (ck >= 34).then(|| 0xabc0 + (ck - 34) as u64) };
         assert_eq!(gh::TestInstall(DEFINE.as_ptr() as *const i8), 1);
         let ck = gh::DefineResolve("controls-fixture");
         assert!(ck >= 34, "ck {ck}");
@@ -324,6 +329,11 @@ mod tests {
         assert_eq!((Get(1, ck), Get(0, 255), Set(4, ck, 1), Set(0, 33, 1)), (0, 0, 0, 0));
         assert_eq!(Set(0, ck, 4), 1);
         assert_eq!(Get(0, ck), 4);
+        // the keys: Tap jump the player's, the layout under the fighter's identity hash
+        let saved = |k: &str| MEMORY.lock().unwrap().iter().find(|x| x.0 == k).map(|x| x.1);
+        let hk = format!("fc_f0_p0_s0_{:016x}", 0xabc0 + (ck - 34) as u64);
+        assert_eq!((saved("fc_f0_p0_s0_tap"), saved(&hk)), (Some(0), Some(4)));
+        assert_eq!((preference_key(1, 8), preference_key(2, ck), preference_key(0, 33)), (Some("fc_f1_p0_s1_retail08".into()), Some(format!("fc_f2_p0_s2_{:016x}", 0xabc0 + (ck - 34) as u64)), None));
 
         // MatchBegin: human controllers of the first four players only, each from its own preference (or the hook)
         let mut d = melee_types::StartMeleeData::zeroed();
@@ -363,6 +373,14 @@ mod tests {
         unsafe { MatchBegin(&mut e) };
         assert_eq!((MatchCK(0), MatchCK(1), MatchCK(2), MatchCK(3)), (8, ck, -1, -1));
         assert_eq!((Apply(1, 0x100), Apply(1, 0x800), Apply(0, 0x100)), (0x200, 0x200, 0x100), "P2's Swap attacks on controller 1 only");
+        MatchClear();
+        // fighter_controls_settings_test.c: no identity at all; a retail kind keeps its number, a define saves no layout
+        unsafe { IDENTITY = |_| None };
+        assert_eq!((preference_key(0, 8), preference_key(0, ck)), (Some("fc_f0_p0_s0_retail08".into()), None));
+        assert_eq!(Get(0, ck), 0, "the layout saved under the hash is not read without it");
+        assert_eq!(Set(0, ck, 4), 0, "no key: the layout is not saved");
+        assert_eq!((Get(0, ck), saved(&hk)), (0, Some(4)));
+        unsafe { IDENTITY = crate::mexid::FighterHash };
         MatchClear();
         MEMORY.lock().unwrap().clear();
         gh::TestRestore();

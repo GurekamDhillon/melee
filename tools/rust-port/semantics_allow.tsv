@@ -13,3 +13,4 @@
 *	rust/melee_runtime/src/pose_capture.rs	render: frame-interpolation capture (render-only)
 M1	rust/melee_runtime/src/tu/axdriver.rs	audio: MSL powf shim for voice pitch; the C build calls the host powf too (console MSL pow not ported, audio only)
 M1	rust/melee_runtime/src/bytecode.rs	robj bytecode op 0x13 logf: MSL logf not ported; the C build calls the host logf too (open, notes/semantics.md)
+*	rust/melee_modes/src/tu/petey_model.rs	host: presentation-only model loader / draw of the owner's local Brawl files (never feeds the sim)

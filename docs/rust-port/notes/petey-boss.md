@@ -1,7 +1,9 @@
 # Petey boss slice (port/petey)
 
-Status: code written, **not built or tested yet** (builds were on hold for the Envoy crash fix). Plan:
-brawl-boss-petey.md; decisions P1-P9 of 2026-11-09. Owner-run asset extraction: petey-extract.md.
+Status: built and checked 2026-11-09 (gate OK; replays 392/428, 125/125, 917/917 as before; lab-check ALL OK;
+geno-tests 64/64; a Petey synctest depth 4, 0 neutral mismatches). Petey is an enemy only: the Envoy boss entity,
+never a playable character (no CSS slot, no Vs / LAB selection, no fighter define). Plan:
+brawl-boss-petey.md; decisions P1-P9 of 2026-11-09. Where his data was found and how it loads: petey-extract.md.
 
 ## Play
 
@@ -27,13 +29,19 @@ x0.65, shorter idles, 50% attack chains, faster spin.
 Attacks (stand-in numbers [?]): cage slam, cage sweep, belly flop + ground shockwave (grounded-only), spin (re-hits
 every 12 frames), bite lunge; a head hit of 12+ damage stuns for 120 frames (once per 10 s).
 
+## Verified in game
+
+- The carrier stands still (x 60 over a whole fight, cpu_kind 0), invisible, no HUD slot and no CP pointer.
+- Attacks hit where the cages are (hitbox offsets through the root joint); a broken cage frees the partner, the
+  carrier takes the KO and Envoy's win check ends the run (RUN CLEAR).
+- No stage shift fires (the engine refuses it; the countdown is hidden). The tick keys on the match frame count
+  (`gm_GetFrameCount`; `gm_8016AEEC` is the timer seconds and froze Petey).
+- With the owner's local Brawl files present the real model draws (petey-extract.md); without them the capsules.
+
 ## Stubbed / not done
 
-- Not built or run yet: the root-joint offset maths, the cpu_kind-0 carrier standing still and the KO path need a
-  first in-game check, then gate / replays / lab-check / geno-tests / a Petey synctest.
-- Real model / animations from the owner's extracted files: not loaded (placeholder capsules only).
-- HP / cage HP / timings are guesses until the owner reads the real ones (petey-extract.md step 6).
+- Animation: the model is posed by the first frame of `Wait1` only; attacks move it rigidly (arms by the cage offset).
+- HP / cage HP / timings are our stand-ins (the params blob is located but its fields are not mapped).
 - Projectiles and items do not damage Petey (only fighter hitboxes); no hitlag or sfx on hitting him.
 - Player count for HP scaling is fixed at 1 (Envoy is single-player today).
-- The P2 HUD still shows the carrier's (always 0%) damage box.
 - Original arena: FD stands in.

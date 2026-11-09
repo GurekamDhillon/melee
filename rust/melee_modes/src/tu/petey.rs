@@ -19,6 +19,22 @@
 
 use melee_fighter::tu::player as pl;
 use melee_types::*;
+use melee_core::ppc::{fctiwz_f32, Ppc};
+
+// console-arithmetic helpers (notes/semantics.md): plain comparisons, explicit conversions
+fn fmin(a: f32, b: f32) -> f32 {
+    if a < b { a } else { b }
+}
+fn fmax(a: f32, b: f32) -> f32 {
+    if a > b { a } else { b }
+}
+fn fclamp(v: f32, lo: f32, hi: f32) -> f32 {
+    fmax(fmin(v, hi), lo)
+}
+/// Round half away from zero (f32::round) through the explicit truncation.
+fn round_i(v: f32) -> i32 {
+    fctiwz_f32(if v < 0.0 { v - 0.5 } else { v + 0.5 })
+}
 
 // --- tunables (stand-ins, [?]) ---
 pub const HP_BASE: i32 = 300;
@@ -139,6 +155,7 @@ pub unsafe fn arm(humans: i32, carrier_slot: i32, seed: u32) {
     ARMED = true;
     LATCH = [[[0; 4]; 2]; 4];
     SLOT_INST = [0; 4];
+    let _ = crate::tu::petey_model::get(); // presentation only: load (or miss) the local model before frame 0
 }
 
 /// Not a Petey match: everything off.
@@ -150,7 +167,7 @@ pub unsafe fn disarm() {
 fn rnd(n: u32) -> u32 {
     unsafe {
         B.rng = B.rng.wrapping_mul(1_103_515_245).wrapping_add(12345);
-        (B.rng >> 16) % n.max(1)
+        (B.rng >> 16).prem(n.max(1))
     }
 }
 
@@ -184,7 +201,7 @@ pub unsafe fn tick() {
     if carrier.is_null() {
         return; // not in a match yet (or it ended)
     }
-    let frame = crate::tu_ext::gm_8016AEEC();
+    let frame = crate::tu_ext::gm_GetFrameCount(); // the match logic frame (gm_8016AEEC is the timer seconds)
     if frame == B.last_frame {
         return; // frozen / paused: Petey waits too
     }
@@ -201,8 +218,14 @@ pub unsafe fn tick() {
         B.t = 0;
         B.dur = 60;
         eprintln!("petey: fight begins, hp {} cages {} players {}", B.hp, B.cage_max, PLAYERS);
+        // the carrier is not a fighter on screen: no damage / stock HUD slot
+        melee_world::tu::ifstatus::ifStatus_802F6788(B.carrier_slot as u8);
     }
+    hide_marker(B.carrier_slot);
     let cf = &mut *carrier;
+    if frame % 300 == 0 && std::env::var_os("MELEE_PETEY_LOG").is_some() {
+        eprintln!("petey: f{frame} carrier pos ({:.2}, {:.2}) petey x {:.1} st {}", cf.cur_pos.x, cf.cur_pos.y, B.px, B.st);
+    }
     if !B.ko_done {
         cf.set_invisible(1);
         cf.x1988 = 2; // intangible
@@ -230,6 +253,18 @@ pub unsafe fn tick() {
         cf.x1988 = 0;
         melee_fighter::tu::ft_0d31::ftCo_800D3BC8(cf.gobj);
         eprintln!("petey: defeated (cause {}), carrier KO", B.cause);
+    }
+}
+
+/// Hide the carrier's "CP" pointer: its proc shows it again each frame, this runs after the procs, before the draw.
+unsafe fn hide_marker(slot: i32) {
+    let g = melee_world::tu::ifnametag::un_804A1EE0[slot as usize];
+    if g.is_null() {
+        return;
+    }
+    let j = (*g).hsd_obj as *mut HSD_JObj;
+    if !j.is_null() && !(*j).child.is_null() {
+        melee_runtime::tu::jobj_world::HSD_JObjSetFlags((*j).child as _, JOBJ_HIDDEN as u32);
     }
 }
 
@@ -280,8 +315,8 @@ unsafe fn step() {
             B.face = if tx >= B.px { 1.0 } else { -1.0 };
             let want = tx - B.face * 35.0;
             let sp = if B.phase2 { 0.9 } else { 0.6 };
-            B.px += (want - B.px).clamp(-sp, sp);
-            B.px = B.px.clamp(-ARENA, ARENA);
+            B.px += fclamp(want - B.px, -sp, sp);
+            B.px = fclamp(B.px, -ARENA, ARENA);
             if B.t >= B.dur {
                 let mut a = rnd(N_ATK as u32) as i32;
                 if a == B.last_atk {
@@ -289,8 +324,8 @@ unsafe fn step() {
                 }
                 B.atk = a;
                 B.last_atk = a;
-                B.tx = tx.clamp(-ARENA, ARENA);
-                enter(ST_TELE, (ATTACKS[a as usize].tele as f32 * tele_mul()) as i32);
+                B.tx = fclamp(tx, -ARENA, ARENA);
+                enter(ST_TELE, fctiwz_f32(ATTACKS[a as usize].tele as f32 * tele_mul()));
             }
         }
         ST_TELE => {
@@ -302,7 +337,7 @@ unsafe fn step() {
         ST_ACTIVE => {
             active_motion();
             if B.t >= B.dur {
-                enter(ST_REC, (ATTACKS[B.atk as usize].rec as f32 * tele_mul()) as i32);
+                enter(ST_REC, fctiwz_f32(ATTACKS[B.atk as usize].rec as f32 * tele_mul()));
             }
         }
         ST_REC => {
@@ -339,7 +374,7 @@ unsafe fn active_motion() {
             let sp = if B.phase2 { 1.6 } else { 1.2 };
             B.px += B.face * sp;
             if B.px.abs() > ARENA {
-                B.px = B.px.clamp(-ARENA, ARENA);
+                B.px = fclamp(B.px, -ARENA, ARENA);
                 B.face = -B.face;
             }
             if t % 12 == 0 {
@@ -347,7 +382,7 @@ unsafe fn active_motion() {
             }
         }
         BITE => {
-            B.px = (B.px + B.face * 1.5).clamp(-ARENA, ARENA);
+            B.px = fclamp(B.px + B.face * 1.5, -ARENA, ARENA);
         }
         _ => {}
     }
@@ -369,7 +404,7 @@ pub fn pose() -> Pose {
         head: [x + b.face * 6.0, y + HEAD_Y],
         cage: [[x - CAGE_DX, y + CAGE_Y], [x + CAGE_DX, y + CAGE_Y]],
     };
-    let k = |t: i32, d: i32| (t as f32 / d.max(1) as f32).clamp(0.0, 1.0);
+    let k = |t: i32, d: i32| fclamp(t as f32 / d.max(1) as f32, 0.0, 1.0);
     match b.st {
         ST_TELE => match b.atk as usize {
             SLAM => {
@@ -380,7 +415,7 @@ pub fn pose() -> Pose {
             SWEEP => {
                 for (i, c) in p.cage.iter_mut().enumerate() {
                     c[0] = x - b.face * (30.0 + i as f32 * 4.0) * k(b.t, b.dur) + c[0] - x;
-                    c[0] = c[0].min(x + 40.0).max(x - 40.0);
+                    c[0] = fmax(fmin(c[0], x + 40.0), x - 40.0);
                 }
             }
             FLOP => p.body[1] -= 3.0 * k(b.t, b.dur),
@@ -420,7 +455,7 @@ pub fn pose() -> Pose {
         ST_STUN | ST_DOWN => {
             p.head = [x + b.face * 12.0, y + 22.0];
             if b.st == ST_DOWN {
-                let s = (b.t as f32 * 0.5).min(30.0);
+                let s = fmin(b.t as f32 * 0.5, 30.0);
                 p.body[1] -= s;
                 p.body[3] -= s;
                 p.head[1] -= s;
@@ -523,7 +558,8 @@ unsafe fn hitboxes(cf: &mut Fighter) {
             continue;
         }
         let (x, y, r, d, ang, kbg, bkb, grounded) = list[i];
-        let h = &mut cf.x914[i];
+        let cfp: *mut Fighter = cf;
+        let h = &mut *core::ptr::addr_of_mut!((*cfp).x914[i]);
         if SLOT_INST[i] == B.inst && h.state == HitCapsule_Disabled {
             *h = SAVED[i]; // cleared by the carrier's own state change: same attack, same victims
         }
@@ -531,7 +567,7 @@ unsafe fn hitboxes(cf: &mut Fighter) {
             *h = core::mem::zeroed();
             h.x4 = B.inst; // own hit group per instance
             h.state = HitCapsule_Enabled;
-            melee_fighter::tu::ftcoll::ftcoll_800768a0(cf, h);
+            melee_fighter::tu::ftcoll::ftcoll_800768a0(cfp, h);
             h.jobj = root;
             h.damage = d as f32;
             h.unk_count = d;
@@ -547,7 +583,7 @@ unsafe fn hitboxes(cf: &mut Fighter) {
             h.set_x42_b5(1);
             h.set_x42_b7(1);
             h.set_x42_b1(1);
-            cf.set_x2219_b3(1);
+            (*cfp).set_x2219_b3(1);
             SLOT_INST[i] = B.inst;
         }
         let m = &inv;
@@ -568,11 +604,11 @@ fn seg_dist(p: (f32, f32), q: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
     fn pt(p: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
         let (dx, dy) = (b.0 - a.0, b.1 - a.1);
         let l = dx * dx + dy * dy;
-        let t = if l > 0.0 { (((p.0 - a.0) * dx + (p.1 - a.1) * dy) / l).clamp(0.0, 1.0) } else { 0.0 };
+        let t = if l > 0.0 { fclamp(((p.0 - a.0) * dx + (p.1 - a.1) * dy) / l, 0.0, 1.0) } else { 0.0 };
         let (ex, ey) = (a.0 + t * dx - p.0, a.1 + t * dy - p.1);
-        (ex * ex + ey * ey).sqrt()
+        melee_runtime::gekko::sqrtf(ex * ex + ey * ey)
     }
-    pt(p, a, b).min(pt(q, a, b)).min(pt(a, p, q)).min(pt(b, p, q))
+    fmin(fmin(pt(p, a, b), pt(q, a, b)), fmin(pt(a, p, q), pt(b, p, q)))
 }
 
 unsafe fn player_hits(carrier: i32) {
@@ -603,7 +639,7 @@ unsafe fn player_hits(carrier: i32) {
                     let head = seg_dist(a, b, (p.head[0], p.head[1]), (p.head[0], p.head[1])) <= r + HEAD_R;
                     if body || head {
                         *latch |= 1;
-                        B.hp -= dmg.round() as i32;
+                        B.hp -= round_i(dmg);
                         B.flash[0] = 8;
                         if head && dmg >= STUN_DMG && B.stun_cd == 0 && B.st != ST_STUN {
                             B.atk = -1;
@@ -613,12 +649,12 @@ unsafe fn player_hits(carrier: i32) {
                     }
                 }
                 for c in 0..2 {
-                    let bit = 2u8 << c;
+                    let bit = 2u32.pshl(c as i64) as u8;
                     if *latch & bit == 0 {
                         let q = (p.cage[c][0], p.cage[c][1]);
                         if seg_dist(a, b, q, q) <= r + CAGE_R {
                             *latch |= bit;
-                            B.cage[c] -= dmg.round() as i32;
+                            B.cage[c] -= round_i(dmg);
                             B.flash[1 + c] = 8;
                         }
                     }
@@ -634,7 +670,8 @@ pub fn view() -> [i32; 12] {
     let b = unsafe { B };
     [
         (b.st != ST_OFF) as i32, b.hp.max(0), b.hp_max, b.cage[0].max(0), b.cage[1].max(0), b.cage_max, b.st,
-        b.phase2 as i32, b.cause, b.atk, unsafe { crate::tu::envoy::ROSTER[1] }, 0,
+        b.phase2 as i32, b.cause, b.atk, unsafe { crate::tu::envoy::ROSTER[1] },
+        crate::tu::petey_model::loaded() as i32,
     ]
 }
 
@@ -648,6 +685,24 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
         return;
     }
     let p = pose();
+    if let Some(m) = crate::tu::petey_model::get() {
+        // the owner's own extracted model (presentation only): body fitted to the placeholder's height
+        let h = fmax(m.body.max[1] - m.body.min[1], 1.0);
+        let sc = (HEAD_Y + HEAD_R) / h;
+        let sink = p.body[1] - (B.py + BODY_A);
+        let yaw = B.face * 0.35;
+        crate::tu::petey_model::draw_mesh(&m.body, [B.px, B.py + sink, 0.0], sc, yaw, B.flash[0] > 0);
+        for (i, arm) in [&m.arm_l, &m.arm_r].into_iter().enumerate() {
+            if let Some(a) = arm {
+                // the arm models are authored around Petey's root: move them rigidly by the cage's offset from rest
+                let c = p.cage[i];
+                let rest = [B.px + if i == 0 { -CAGE_DX } else { CAGE_DX }, B.py + CAGE_Y];
+                let at = [B.px + c[0] - rest[0], B.py + sink + c[1] - rest[1], 0.0];
+                crate::tu::petey_model::draw_mesh_rel(a, &m.body, at, sc, yaw, B.flash[1 + i] > 0);
+            }
+        }
+        return;
+    }
     let z = 0.0;
     let col = |r: u8, gg: u8, b: u8| GXColor { r, g: gg, b, a: 0xFF };
     let cap = |ax: f32, ay: f32, bx: f32, by: f32, r: f32, c: GXColor| {

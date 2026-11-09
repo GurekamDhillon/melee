@@ -162,9 +162,14 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
         e.layer(LAYER_OVERLAY, 12).space(SPACE_WINDOW, sc);
         let in_match = v[5] != 0;
         if in_match {
-            hud(e, &v, vw);
             let mut pv = [0i32; 12];
-            if gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0 {
+            let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
+            let mut hv = v;
+            if petey {
+                hv[27] = -1; // no stage shifts in the Petey fight: no countdown
+            }
+            hud(e, &hv, vw);
+            if petey {
                 petey_bars(e, &pv, vw);
             }
             if v[10] != 0 {
@@ -231,7 +236,7 @@ unsafe fn petey_bars(e: &mut Enc<16384>, p: &[i32; 12], vw: f32) {
     let y = 24.0;
     e.slice(SLICE_FILL_R6, x - 10.0, y - 6.0, w + 20.0, 92.0, PANEL);
     let mut s = Buf::new();
-    s.s("PETEY (STAND-IN)");
+    s.s(if p[11] != 0 { "PETEY PIRANHA" } else { "PETEY (STAND-IN)" }); // word 11: the real model is drawn
     if p[7] != 0 {
         s.s("  PHASE 2");
     }

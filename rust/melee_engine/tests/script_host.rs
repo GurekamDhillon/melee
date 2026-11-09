@@ -30,8 +30,6 @@ fn boot(frames: u32) -> Option<(std::sync::MutexGuard<'static, ()>, Engine)> {
 /// Every query (`&self`) forwarder against the direct call, at the first slot / index / field: catches a wrong argument
 /// order or cast in the forwarders, and that each runs on a live match.
 #[test]
-#[ignore = "script_game's by-name callees are not all routed yet (206 of 367 answer nothing, e.g. ScriptGame_LabKnockback ->
-            _HSD_mkEnvelopeModelNodeMtx): run with --ignored to see the next one"]
 fn queries_equal_the_game_side() {
     let Some((_g, _e)) = boot(120) else { return };
     let g = EngineGame;

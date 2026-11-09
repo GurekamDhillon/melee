@@ -1860,21 +1860,11 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.x588));
     hm(p.x58C as u32);
     hm(pi(p.x590));
-    hm(p.x594.x0.x594_b0() as u32);
-    hm(p.x594.x0.x594_b1_loop() as u32);
-    hm(p.x594.x0.x594_b2() as u32);
-    hm(p.x594.x0.x594_b3() as u32);
-    hm(p.x594.x0.x594_b4() as u32);
-    hm(p.x594.x0.x594_b5() as u32);
-    hm(p.x594.x0.x594_b6() as u32);
-    hm(p.x594.x0.x594_b7() as u32);
-    hm(p.x594.x0.x596_bits.x0() as u32);
-    hm(p.x594.x0.x596_bits.x7() as u32);
     hm(pi(p.x598));
     hm(pi(p.x59C));
     hm(pi(p.x5A0));
     hm(p.x5A4 as u32);
-    hm(p.x5A8 as u32);
+    hm(pi(p.x5A8 as *const u8));
     hm(p.x5AC.model_num as u32);
     for i0 in 0..5 {
     hm(p.x5AC.cleared[i0] as u32);
@@ -2840,14 +2830,6 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(fi(p.take_dmg_2_cb));
     hm(fi(p.hurtbox_detect_cb));
     hm(fi(p.x21F8));
-    hm(p.x21FC_flag.x0.b0() as u32);
-    hm(p.x21FC_flag.x0.b1() as u32);
-    hm(p.x21FC_flag.x0.b2() as u32);
-    hm(p.x21FC_flag.x0.b3() as u32);
-    hm(p.x21FC_flag.x0.b4() as u32);
-    hm(p.x21FC_flag.x0.b5() as u32);
-    hm(p.x21FC_flag.x0.b6() as u32);
-    hm(p.x21FC_flag.x0.b7() as u32);
     for i0 in 0..3 {
     hm(p.filler_x21FC[i0] as u32);
     }

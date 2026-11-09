@@ -317,7 +317,9 @@ static void hworld(void)
       for (q_ = 0; q_ < 6; q_++) { HM(ft_8045993C[q_].pad_x0); HM(ft_8045993C[q_].pad_x4[0]); HM(ft_8045993C[q_].pad_x4[1]); HM(ft_8045993C[q_].x6_b0); HM(ft_8045993C[q_].x6_b1_b2); }
       for (q_ = 0; q_ < 6; q_++) { HM((u32) ftData_ThrowBanks[q_].kind); HM(PI(ftData_ThrowBanks[q_].buf)); HM((u32) ftData_ThrowBanks[q_].cap); HM((u32) ftData_ThrowBanks[q_].sz); }
       HM(ftData_ThrowBankLoads); HM(ftData_ThrowBankEvicts); HM(PI(ftData_ThrowRegionCur));
-      for (k_ = 0; k_ < (int) (sizeof MEMBUF2 / sizeof(Fighter_WaitAnimData)); k_++) { Fighter_WaitAnimData* r_ = &((Fighter_WaitAnimData*) MEMBUF2)[k_]; HM(PI(r_->x0)); HM((u32) r_->x4); HM((u32) r_->x8); HM(PI(r_->xC)); HM((u32) r_->x10_animCurrFlags); HM(r_->x14); }
+      /* MEMBUF2 holds whatever HSD_MemAlloc callers put there (anim rows, captured motion rows): hash it word by word,
+         a word above 4 GB as a native pointer (by region), any other word by value */
+      for (k_ = 0; k_ < (int) (sizeof MEMBUF2 / 8); k_++) { unsigned long long w_ = ((const unsigned long long*) MEMBUF2)[k_]; if (w_ >> 32) HM(PI((const void*) (uintptr_t) w_)); else HM((u32) w_); }
     }
 
 }

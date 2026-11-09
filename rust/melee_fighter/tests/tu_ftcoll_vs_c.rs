@@ -91,6 +91,7 @@ unsafe fn world() {
         (*FT)[i].ft_data = &raw mut (*FDATA)[i];
         (*FT)[i].grab_cb = Some(cbev1); (*FT)[i].grabbed_cb = Some(cbev3);
         (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_idx %= 4; (*FT)[i].pad_port %= 4; (*FT)[i].x166C %= 2;
+        for j in 0..4 { (*FT)[i].x914[j].sfx_severity %= 3; } for j in 0..2 { (*FT)[i].xDF4[j].sfx_severity %= 3; } (*FT)[i].x1064_thrownHitbox.sfx_severity %= 3; // ftColl_803C0C40 has 3 entries
         for b in 0..64 { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
         (*FT)[i].parts = (*PARTS)[i].as_mut_ptr();
         // the ftData pointer words: one pad block each (the C driver's order)

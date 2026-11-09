@@ -281,6 +281,15 @@ pub unsafe extern "C" fn it_8026DBC8(gobj: *mut HSD_GObj) -> i32 {
     0
 }
 
+/// `static inline bool land(Item_GObj*)` (upstream helper in itgroundcoll.c; the callers keep the inlined form).
+#[inline(never)]
+pub unsafe fn land(gobj: *mut HSD_GObj) -> bool {
+    if it_8026DE98(gobj) != 0 && it_8026DC24(gobj) != 0 {
+        return it_8026DD5C(gobj) != 0;
+    }
+    false
+}
+
 pub unsafe extern "C" fn it_8026DC24(gobj: *mut HSD_GObj) -> i32 {
     melee_core::ct!("it_8026DC24");
     let ip = item(gobj);

@@ -20,9 +20,10 @@ import gen_tu as gt  # noqa: E402
 
 # Bitfields whose memory the C build lays out LSB-first (native clang) and the Rust types MSB-first (GC order): a value
 # written through the union's raw member (`x21FC_flag.byte = 1`, `x594_s32 = 0`) reads back differently through the
-# bit members, so those members are not part of the comparison hash (the raw members still are).
-ALIAS_C = r'p->(?:x21FC_flag\.b[0-9]|x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits|mv\.\w+\.\w+\.x?[0-9A-Za-z]*_b[0-9]+(?:_[0-9]+)?)(?!\w)'
-ALIAS_R = r'p\.(?:x21FC_flag\.anon_[0-9]+\.b[0-9]|anon_594\.anon_[0-9]+\.(?:x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits)|mv\.\w+\.\w+\.(?:set_)?x?[0-9A-Za-z]*_b[0-9]+(?:_[0-9]+)?\(?)'
+# bit members, so those members are not part of the comparison hash (the raw members still are). The member paths
+# follow both the pre- and post-363720e12 names (anon_594.anon_N / x594.x0, x21FC_flag.anon_N / .x0).
+ALIAS_C = r'p->(?:x21FC_flag\.(?:x0\.)?b[0-9]|(?:x594\.x0\.)?(?:x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits)|mv\.\w+\.\w+\.x?[0-9A-Za-z]*_b[0-9]+(?:_[0-9]+)?)(?!\w)'
+ALIAS_R = r'p\.(?:x21FC_flag\.(?:anon_[0-9]+|x0)\.b[0-9]|(?:anon_594|x594)\.(?:anon_[0-9]+|x0)\.(?:x594_b[0-9]\w*|x594_bits|x594_pad2?|x596_bits\.\w+|x597_bits)|mv\.\w+\.\w+\.(?:set_)?x?[0-9A-Za-z]*_b[0-9]+(?:_[0-9]+)?\(?)'
 
 
 def skip_alias(cdef, rdef):
@@ -51,6 +52,10 @@ def main():
     for t in types.split(","):
         cdef, rdef = w.gen(t)
         cdef, rdef = skip_alias(cdef, rdef)
+        # Fighter.x5A8 is a uintptr_t holding a native pointer (the figatree bank entry, ftdata.c): hash it by region
+        # like any pointer, not by its raw (per-build) address bits
+        cdef = cdef.replace("HM((u32) p->x5A8);", "HM(PI((const void*) p->x5A8));")
+        rdef = rdef.replace("hm(p.x5A8 as u32);", "hm(pi(p.x5A8 as *const u8));")
         # debug aid: name every hashed value ("N <expr>" before its "H" line when TUDBG selects the case)
         cdef = re.sub(r"^(\s*)(HM(?:64)?)\((.*)\);$",
                       lambda m: m.group(1) + '{ if (HDBG) printf("N %s%c", "' + m.group(3).replace("\\", "\\\\").replace('"', '\\"') + '", 10); ' + m.group(2) + "(" + m.group(3) + "); }",

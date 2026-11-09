@@ -91,7 +91,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (void*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -132,7 +132,7 @@ static void setup_stem(void)
     int i;
     (void) i;
 
-{ int q, k, n; setup_xpools(); zero(S70, sizeof S70); zero(S74, sizeof S74); for (q = 0; q < 2; q++) { S70[q].x2070_int = fv(); S74[q].x207C.x = fv(); S74[q].x207C.y = fv(); } n = rnd() % 28; for (k = 0; k < 32; k++) KL[k] = (k >= n) ? It_PKind_Terminate : It_PKind_Start + rnd() % (It_PKind_Terminate - It_PKind_Start); for (q = 0; q < 3; q++) { zero(&FT[q].x2070, sizeof FT[q].x2070); FT[q].x2070.x2070_int = fv(); zero(&FT[q].x2074, sizeof FT[q].x2074); FT[q].x2074.x2074_vec.x = rw(); FT[q].x2074.x2074_vec.y = rw(); FT[q].x2074.x207C.x = fv(); FT[q].x2074.x207C.y = fv(); FT[q].x2074.x2084 = fv(); FT[q].x2074.x2088 = fv(); } for (q = 0; q < 2; q++) { PDA[q].x38 = rnd() % 7; ART[q].x4_specialAttributes = (void*) &PDA[q]; } for (q = 0; q < 4; q++) { itPokemonSpawn_ItemVars* ps = &IT[q].xDD4_itemVar.pokemon_spawn; int k; zero(&IT[q].xDD4_itemVar, sizeof IT[q].xDD4_itemVar); ps->x0 = fv(); ps->x4.x = rw(); ps->x4.y = rw(); ps->x4.z = rw(); ps->x10.x = rw(); ps->x10.y = rw(); ps->x10.z = rw(); ps->x1C = rw(); ps->x20 = rw(); ps->x24 = rw(); ps->x28 = rw(); for (k = 0; k < 6; k++) ps->x2C[k] = rw(); ps->x44 = rw(); ps->x48 = rw(); ps->x4C = rw(); ps->x50 = rw(); ps->x58 = rnd() % 6; ps->x54 = rnd() % 8; ps->x5C = rnd() % 3; zero(&IT[q].xD90, sizeof IT[q].xD90); IT[q].xD90.x2070_int = fv(); } for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; }
+{ int q, k, n; setup_xpools(); zero(S70, sizeof S70); zero(S74, sizeof S74); for (q = 0; q < 2; q++) { S70[q].x2070_int = fv(); *(u32*) &S74[q].x207C.x = fv(); S74[q].x207C.y = fv(); } n = rnd() % 28; for (k = 0; k < 32; k++) KL[k] = (k >= n) ? It_PKind_Terminate : It_PKind_Start + rnd() % (It_PKind_Terminate - It_PKind_Start); for (q = 0; q < 3; q++) { zero(&FT[q].x2070, sizeof FT[q].x2070); FT[q].x2070.x2070_int = fv(); zero(&FT[q].x2074, sizeof FT[q].x2074); FT[q].x2074.x2074_vec.x = (s32) B(rw()); FT[q].x2074.x2074_vec.y = (s32) B(rw()); *(u32*) &FT[q].x2074.x207C.x = fv(); FT[q].x2074.x207C.y = fv(); FT[q].x2074.x10.x2084 = fv(); FT[q].x2074.x2088 = fv(); } for (q = 0; q < 2; q++) { PDA[q].x38 = rnd() % 7; ART[q].x4_specialAttributes = (void*) &PDA[q]; } for (q = 0; q < 4; q++) { itPokemonSpawn_ItemVars* ps = &IT[q].xDD4_itemVar.pokemon_spawn; int k; zero(&IT[q].xDD4_itemVar, sizeof IT[q].xDD4_itemVar); ps->x0 = fv(); ps->x4.x = rw(); ps->x4.y = rw(); ps->x4.z = rw(); ps->x10.x = rw(); ps->x10.y = rw(); ps->x10.z = rw(); ps->x1C = rw(); ps->x20 = rw(); ps->x24 = rw(); ps->x28 = rw(); for (k = 0; k < 6; k++) ps->x2C[k] = rw(); ps->x44 = rw(); ps->x48 = rw(); ps->x4C = rw(); ps->x50 = rw(); ps->x58 = rnd() % 6; ps->x54 = rnd() % 8; ps->x5C = rnd() % 3; zero(&IT[q].xD90, sizeof IT[q].xD90); IT[q].xD90.x2070_int = fv(); } for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; }
 }
 
 static void hash_stem(void)

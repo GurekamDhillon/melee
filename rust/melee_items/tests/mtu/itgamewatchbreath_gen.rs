@@ -206,7 +206,7 @@ pub fn fill_Item(p: &mut Item) {
     p.x378_itemColl.xE4_ecb.left.x = rg();
     p.x378_itemColl.xE4_ecb.left.y = rg();
     p.x378_itemColl.ecb_source.kind = fv() as _;
-    for j0 in 0..56 { unsafe { *(base(&p.x378_itemColl.ecb_source) as *mut u8).add(8 + j0) = rnd() as u8; } }
+    for i0 in 0..56 { unsafe { *(&mut p.x378_itemColl.ecb_source.x4 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     p.x378_itemColl.ecb_source.x124 = rg();
     p.x378_itemColl.ecb_source.x128 = rg();
     p.x378_itemColl.ecb_source.x12C = rg();
@@ -357,7 +357,7 @@ pub fn fill_Item(p: &mut Item) {
     for i1 in 0..12 {
     p.x5D4_hitboxes[i0].hit.victims_2[i1].x4 = fv() as _;
     }
-    for j1 in 0..8 { unsafe { *(base(&p.x5D4_hitboxes[i0].hit) as *mut u8).add(504 + j1) = rnd() as u8; } }
+    for i1 in 0..8 { unsafe { *(&mut p.x5D4_hitboxes[i0].hit.x134 as *mut _ as *mut u8).add(i1) = rnd() as u8; } }
     p.x5D4_hitboxes[i0].set_x138(fv() as _);
     p.x5D4_hitboxes[i0].set_x138_b1_7(fv() as _);
     for i1 in 0..3 {
@@ -461,9 +461,9 @@ pub fn fill_Item(p: &mut Item) {
     p.xC6C = rg();
     p.xC70 = rg();
     p.xC74 = fv() as _;
-    p.xC78.x = (rg()).to_bits().cast_signed();
-    p.xC78.y = (rg()).to_bits().cast_signed();
-    p.xC80.x = fv() as _;
+    p.xC78.x = fv() as _;
+    p.xC78.y = fv() as _;
+    p.xC80.x = rg();
     p.xC80.y = fv() as _;
     p.xC88 = fv() as _;
     p.xC8C = fv() as _;
@@ -518,18 +518,18 @@ pub fn fill_Item(p: &mut Item) {
     p.xD8C_attack_instance = fv() as _;
     p.xD8E = fv() as _;
     for i0 in 0..4 { unsafe { *(&mut p.xD90 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
-    p.xD94.x = (rg()).to_bits().cast_signed();
-    p.xD94.y = (rg()).to_bits().cast_signed();
-    p.xD9C.x = fv() as _;
+    p.xD94.x = fv() as _;
+    p.xD94.y = fv() as _;
+    p.xD9C.x = rg();
     p.xD9C.y = fv() as _;
     p.xDA4_word = fv() as _;
     p.xDA8_short = fv() as _;
-    for j0 in 0..1 { unsafe { *(base(p) as *mut u8).add(4870 + j0) = rnd() as u8; } }
+    for i0 in 0..1 { unsafe { *(&mut p.xDAA as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     p.xDAC_itcmd_var0 = fv() as _;
     p.xDB0_itcmd_var1 = fv() as _;
     p.xDB4_itcmd_var2 = fv() as _;
     p.xDB8_itcmd_var3 = fv() as _;
-    for j0 in 0..4 { unsafe { *(base(p) as *mut u8).add(4888 + j0) = rnd() as u8; } }
+    for i0 in 0..4 { unsafe { *(&mut p.xDBC as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     p.xDC0 = fv() as _;
     p.xDC4 = fv() as _;
     p.xDC8_word.flags.set_x0(fv() as _);
@@ -572,54 +572,12 @@ pub fn fill_Item(p: &mut Item) {
     p.xDCD_flag.x0.set_b5(fv() as _);
     p.xDCD_flag.x0.set_b6(fv() as _);
     p.xDCD_flag.x0.set_b7(fv() as _);
-    p.xDCE_flag.x0.set_b0(fv() as _);
-    p.xDCE_flag.x0.set_b1(fv() as _);
-    p.xDCE_flag.x0.set_b2(fv() as _);
-    p.xDCE_flag.x0.set_b3(fv() as _);
-    p.xDCE_flag.x0.set_b4(fv() as _);
-    p.xDCE_flag.x0.set_b5(fv() as _);
-    p.xDCE_flag.x0.set_b6(fv() as _);
-    p.xDCE_flag.x0.set_b7(fv() as _);
-    p.xDCF_flag.x0.set_b0(fv() as _);
-    p.xDCF_flag.x0.set_b1(fv() as _);
-    p.xDCF_flag.x0.set_b2(fv() as _);
-    p.xDCF_flag.x0.set_b3(fv() as _);
-    p.xDCF_flag.x0.set_b4(fv() as _);
-    p.xDCF_flag.x0.set_b5(fv() as _);
-    p.xDCF_flag.x0.set_b6(fv() as _);
-    p.xDCF_flag.x0.set_b7(fv() as _);
-    p.xDD0_flag.x0.set_b0(fv() as _);
-    p.xDD0_flag.x0.set_b1(fv() as _);
-    p.xDD0_flag.x0.set_b2(fv() as _);
-    p.xDD0_flag.x0.set_b3(fv() as _);
-    p.xDD0_flag.x0.set_b4(fv() as _);
-    p.xDD0_flag.x0.set_b5(fv() as _);
-    p.xDD0_flag.x0.set_b6(fv() as _);
-    p.xDD0_flag.x0.set_b7(fv() as _);
-    p.xDD1_flag.x0.set_b0(fv() as _);
-    p.xDD1_flag.x0.set_b1(fv() as _);
-    p.xDD1_flag.x0.set_b2(fv() as _);
-    p.xDD1_flag.x0.set_b3(fv() as _);
-    p.xDD1_flag.x0.set_b4(fv() as _);
-    p.xDD1_flag.x0.set_b5(fv() as _);
-    p.xDD1_flag.x0.set_b6(fv() as _);
-    p.xDD1_flag.x0.set_b7(fv() as _);
-    p.xDD2_flag.x0.set_b0(fv() as _);
-    p.xDD2_flag.x0.set_b1(fv() as _);
-    p.xDD2_flag.x0.set_b2(fv() as _);
-    p.xDD2_flag.x0.set_b3(fv() as _);
-    p.xDD2_flag.x0.set_b4(fv() as _);
-    p.xDD2_flag.x0.set_b5(fv() as _);
-    p.xDD2_flag.x0.set_b6(fv() as _);
-    p.xDD2_flag.x0.set_b7(fv() as _);
-    p.xDD3_flag.x0.set_b0(fv() as _);
-    p.xDD3_flag.x0.set_b1(fv() as _);
-    p.xDD3_flag.x0.set_b2(fv() as _);
-    p.xDD3_flag.x0.set_b3(fv() as _);
-    p.xDD3_flag.x0.set_b4(fv() as _);
-    p.xDD3_flag.x0.set_b5(fv() as _);
-    p.xDD3_flag.x0.set_b6(fv() as _);
-    p.xDD3_flag.x0.set_b7(fv() as _);
+    for i0 in 0..1 { unsafe { *(&mut p.xDCE_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    for i0 in 0..1 { unsafe { *(&mut p.xDCF_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    for i0 in 0..1 { unsafe { *(&mut p.xDD0_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    for i0 in 0..1 { unsafe { *(&mut p.xDD1_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    for i0 in 0..1 { unsafe { *(&mut p.xDD2_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    for i0 in 0..1 { unsafe { *(&mut p.xDD3_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     }
 }
 pub fn hash_Item(p: &Item) {
@@ -767,7 +725,7 @@ pub fn hash_Item(p: &Item) {
     hm(p.x378_itemColl.xE4_ecb.left.x.to_bits());
     hm(p.x378_itemColl.xE4_ecb.left.y.to_bits());
     hm(p.x378_itemColl.ecb_source.kind as u32);
-    for j0 in 0..56 { unsafe { hm(*base(&p.x378_itemColl.ecb_source).add(8 + j0) as u32); } }
+    for i0 in 0..56 { unsafe { hm(*(&p.x378_itemColl.ecb_source.x4 as *const _ as *const u8).add(i0) as u32); } }
     hm(p.x378_itemColl.ecb_source.x124.to_bits());
     hm(p.x378_itemColl.ecb_source.x128.to_bits());
     hm(p.x378_itemColl.ecb_source.x12C.to_bits());
@@ -928,7 +886,7 @@ pub fn hash_Item(p: &Item) {
     hm(pi(p.x5D4_hitboxes[i0].hit.victims_2[i1].victim));
     hm(p.x5D4_hitboxes[i0].hit.victims_2[i1].x4 as u32);
     }
-    for j1 in 0..8 { unsafe { hm(*base(&p.x5D4_hitboxes[i0].hit).add(504 + j1) as u32); } }
+    for i1 in 0..8 { unsafe { hm(*(&p.x5D4_hitboxes[i0].hit.x134 as *const _ as *const u8).add(i1) as u32); } }
     hm(p.x5D4_hitboxes[i0].x138() as u32);
     hm(p.x5D4_hitboxes[i0].x138_b1_7() as u32);
     for i1 in 0..3 {
@@ -1037,9 +995,9 @@ pub fn hash_Item(p: &Item) {
     hm(p.xC6C.to_bits());
     hm(p.xC70.to_bits());
     hm(p.xC74 as u32);
-    hm(p.xC78.x.cast_unsigned());
-    hm(p.xC78.y.cast_unsigned());
-    hm(p.xC80.x as u32);
+    hm(p.xC78.x as u32);
+    hm(p.xC78.y as u32);
+    hm(p.xC80.x.to_bits());
     hm(p.xC80.y as u32);
     hm(p.xC88 as u32);
     hm(p.xC8C as u32);
@@ -1112,18 +1070,18 @@ pub fn hash_Item(p: &Item) {
     hm(p.xD8C_attack_instance as u32);
     hm(p.xD8E as u32);
     for i0 in 0..4 { unsafe { hm(*(&p.xD90 as *const _ as *const u8).add(i0) as u32); } }
-    hm(p.xD94.x.cast_unsigned());
-    hm(p.xD94.y.cast_unsigned());
-    hm(p.xD9C.x as u32);
+    hm(p.xD94.x as u32);
+    hm(p.xD94.y as u32);
+    hm(p.xD9C.x.to_bits());
     hm(p.xD9C.y as u32);
     hm(p.xDA4_word as u32);
     hm(p.xDA8_short as u32);
-    for j0 in 0..1 { unsafe { hm(*base(p).add(4870 + j0) as u32); } }
+    for i0 in 0..1 { unsafe { hm(*(&p.xDAA as *const _ as *const u8).add(i0) as u32); } }
     hm(p.xDAC_itcmd_var0 as u32);
     hm(p.xDB0_itcmd_var1 as u32);
     hm(p.xDB4_itcmd_var2 as u32);
     hm(p.xDB8_itcmd_var3 as u32);
-    for j0 in 0..4 { unsafe { hm(*base(p).add(4888 + j0) as u32); } }
+    for i0 in 0..4 { unsafe { hm(*(&p.xDBC as *const _ as *const u8).add(i0) as u32); } }
     hm(p.xDC0 as u32);
     hm(p.xDC4 as u32);
     hm(p.xDC8_word.flags.x0() as u32);
@@ -1166,54 +1124,12 @@ pub fn hash_Item(p: &Item) {
     hm(p.xDCD_flag.x0.b5() as u32);
     hm(p.xDCD_flag.x0.b6() as u32);
     hm(p.xDCD_flag.x0.b7() as u32);
-    hm(p.xDCE_flag.x0.b0() as u32);
-    hm(p.xDCE_flag.x0.b1() as u32);
-    hm(p.xDCE_flag.x0.b2() as u32);
-    hm(p.xDCE_flag.x0.b3() as u32);
-    hm(p.xDCE_flag.x0.b4() as u32);
-    hm(p.xDCE_flag.x0.b5() as u32);
-    hm(p.xDCE_flag.x0.b6() as u32);
-    hm(p.xDCE_flag.x0.b7() as u32);
-    hm(p.xDCF_flag.x0.b0() as u32);
-    hm(p.xDCF_flag.x0.b1() as u32);
-    hm(p.xDCF_flag.x0.b2() as u32);
-    hm(p.xDCF_flag.x0.b3() as u32);
-    hm(p.xDCF_flag.x0.b4() as u32);
-    hm(p.xDCF_flag.x0.b5() as u32);
-    hm(p.xDCF_flag.x0.b6() as u32);
-    hm(p.xDCF_flag.x0.b7() as u32);
-    hm(p.xDD0_flag.x0.b0() as u32);
-    hm(p.xDD0_flag.x0.b1() as u32);
-    hm(p.xDD0_flag.x0.b2() as u32);
-    hm(p.xDD0_flag.x0.b3() as u32);
-    hm(p.xDD0_flag.x0.b4() as u32);
-    hm(p.xDD0_flag.x0.b5() as u32);
-    hm(p.xDD0_flag.x0.b6() as u32);
-    hm(p.xDD0_flag.x0.b7() as u32);
-    hm(p.xDD1_flag.x0.b0() as u32);
-    hm(p.xDD1_flag.x0.b1() as u32);
-    hm(p.xDD1_flag.x0.b2() as u32);
-    hm(p.xDD1_flag.x0.b3() as u32);
-    hm(p.xDD1_flag.x0.b4() as u32);
-    hm(p.xDD1_flag.x0.b5() as u32);
-    hm(p.xDD1_flag.x0.b6() as u32);
-    hm(p.xDD1_flag.x0.b7() as u32);
-    hm(p.xDD2_flag.x0.b0() as u32);
-    hm(p.xDD2_flag.x0.b1() as u32);
-    hm(p.xDD2_flag.x0.b2() as u32);
-    hm(p.xDD2_flag.x0.b3() as u32);
-    hm(p.xDD2_flag.x0.b4() as u32);
-    hm(p.xDD2_flag.x0.b5() as u32);
-    hm(p.xDD2_flag.x0.b6() as u32);
-    hm(p.xDD2_flag.x0.b7() as u32);
-    hm(p.xDD3_flag.x0.b0() as u32);
-    hm(p.xDD3_flag.x0.b1() as u32);
-    hm(p.xDD3_flag.x0.b2() as u32);
-    hm(p.xDD3_flag.x0.b3() as u32);
-    hm(p.xDD3_flag.x0.b4() as u32);
-    hm(p.xDD3_flag.x0.b5() as u32);
-    hm(p.xDD3_flag.x0.b6() as u32);
-    hm(p.xDD3_flag.x0.b7() as u32);
+    for i0 in 0..1 { unsafe { hm(*(&p.xDCE_flag as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in 0..1 { unsafe { hm(*(&p.xDCF_flag as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in 0..1 { unsafe { hm(*(&p.xDD0_flag as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in 0..1 { unsafe { hm(*(&p.xDD1_flag as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in 0..1 { unsafe { hm(*(&p.xDD2_flag as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in 0..1 { unsafe { hm(*(&p.xDD3_flag as *const _ as *const u8).add(i0) as u32); } }
     hm(pi(p.mex_original_owner));
     }
 }
@@ -1294,38 +1210,10 @@ pub fn fill_SpawnItem(p: &mut SpawnItem) {
     p.x3C_damage = fv() as _;
     p.x3E = fv() as _;
     p.x40 = fv() as _;
-    p.x44_flag.x0.set_b0(fv() as _);
-    p.x44_flag.x0.set_b1(fv() as _);
-    p.x44_flag.x0.set_b2(fv() as _);
-    p.x44_flag.x0.set_b3(fv() as _);
-    p.x44_flag.x0.set_b4(fv() as _);
-    p.x44_flag.x0.set_b5(fv() as _);
-    p.x44_flag.x0.set_b6(fv() as _);
-    p.x44_flag.x0.set_b7(fv() as _);
-    p.x45_flag.x0.set_b0(fv() as _);
-    p.x45_flag.x0.set_b1(fv() as _);
-    p.x45_flag.x0.set_b2(fv() as _);
-    p.x45_flag.x0.set_b3(fv() as _);
-    p.x45_flag.x0.set_b4(fv() as _);
-    p.x45_flag.x0.set_b5(fv() as _);
-    p.x45_flag.x0.set_b6(fv() as _);
-    p.x45_flag.x0.set_b7(fv() as _);
-    p.x46_flag.x0.set_b0(fv() as _);
-    p.x46_flag.x0.set_b1(fv() as _);
-    p.x46_flag.x0.set_b2(fv() as _);
-    p.x46_flag.x0.set_b3(fv() as _);
-    p.x46_flag.x0.set_b4(fv() as _);
-    p.x46_flag.x0.set_b5(fv() as _);
-    p.x46_flag.x0.set_b6(fv() as _);
-    p.x46_flag.x0.set_b7(fv() as _);
-    p.x47_flag.x0.set_b0(fv() as _);
-    p.x47_flag.x0.set_b1(fv() as _);
-    p.x47_flag.x0.set_b2(fv() as _);
-    p.x47_flag.x0.set_b3(fv() as _);
-    p.x47_flag.x0.set_b4(fv() as _);
-    p.x47_flag.x0.set_b5(fv() as _);
-    p.x47_flag.x0.set_b6(fv() as _);
-    p.x47_flag.x0.set_b7(fv() as _);
+    for i0 in 0..1 { unsafe { *(&mut p.x44_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    for i0 in 0..1 { unsafe { *(&mut p.x45_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    for i0 in 0..1 { unsafe { *(&mut p.x46_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    for i0 in 0..1 { unsafe { *(&mut p.x47_flag as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     p.x48_ground_or_air = fv() as _;
     }
 }
@@ -1350,38 +1238,10 @@ pub fn hash_SpawnItem(p: &SpawnItem) {
     hm(p.x3C_damage as u32);
     hm(p.x3E as u32);
     hm(p.x40 as u32);
-    hm(p.x44_flag.x0.b0() as u32);
-    hm(p.x44_flag.x0.b1() as u32);
-    hm(p.x44_flag.x0.b2() as u32);
-    hm(p.x44_flag.x0.b3() as u32);
-    hm(p.x44_flag.x0.b4() as u32);
-    hm(p.x44_flag.x0.b5() as u32);
-    hm(p.x44_flag.x0.b6() as u32);
-    hm(p.x44_flag.x0.b7() as u32);
-    hm(p.x45_flag.x0.b0() as u32);
-    hm(p.x45_flag.x0.b1() as u32);
-    hm(p.x45_flag.x0.b2() as u32);
-    hm(p.x45_flag.x0.b3() as u32);
-    hm(p.x45_flag.x0.b4() as u32);
-    hm(p.x45_flag.x0.b5() as u32);
-    hm(p.x45_flag.x0.b6() as u32);
-    hm(p.x45_flag.x0.b7() as u32);
-    hm(p.x46_flag.x0.b0() as u32);
-    hm(p.x46_flag.x0.b1() as u32);
-    hm(p.x46_flag.x0.b2() as u32);
-    hm(p.x46_flag.x0.b3() as u32);
-    hm(p.x46_flag.x0.b4() as u32);
-    hm(p.x46_flag.x0.b5() as u32);
-    hm(p.x46_flag.x0.b6() as u32);
-    hm(p.x46_flag.x0.b7() as u32);
-    hm(p.x47_flag.x0.b0() as u32);
-    hm(p.x47_flag.x0.b1() as u32);
-    hm(p.x47_flag.x0.b2() as u32);
-    hm(p.x47_flag.x0.b3() as u32);
-    hm(p.x47_flag.x0.b4() as u32);
-    hm(p.x47_flag.x0.b5() as u32);
-    hm(p.x47_flag.x0.b6() as u32);
-    hm(p.x47_flag.x0.b7() as u32);
+    for i0 in 0..1 { unsafe { hm(*(&p.x44_flag as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in 0..1 { unsafe { hm(*(&p.x45_flag as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in 0..1 { unsafe { hm(*(&p.x46_flag as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in 0..1 { unsafe { hm(*(&p.x47_flag as *const _ as *const u8).add(i0) as u32); } }
     hm(p.x48_ground_or_air as u32);
     }
 }
@@ -1399,7 +1259,7 @@ pub fn fill_ItemAttr(p: &mut ItemAttr) {
     p.set_x1_8(fv() as _);
     p.x3 = fv() as _;
     p.x4_throw_speed_mul = rg();
-    p.x8 = fv() as _;
+    p.x8 = rg();
     p.xC_spin_speed = rg();
     p.x10_fall_speed = rg();
     p.x14_fall_speed_max = rg();
@@ -1446,7 +1306,7 @@ pub fn hash_ItemAttr(p: &ItemAttr) {
     hm(p.x1_8() as u32);
     hm(p.x3 as u32);
     hm(p.x4_throw_speed_mul.to_bits());
-    hm(p.x8 as u32);
+    hm(p.x8.to_bits());
     hm(p.xC_spin_speed.to_bits());
     hm(p.x10_fall_speed.to_bits());
     hm(p.x14_fall_speed_max.to_bits());

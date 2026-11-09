@@ -14,7 +14,7 @@ SPEC = dict(
     null_ret_ok=["HSD_RObjAlloc", "HSD_RObjGetByType"],
     effects={
         "EulerToQuat": _Q("a1"),
-        "HSD_QuatLib_8037EF28": _Q("a2"),
+        "QuatSlerp": _Q("a2"),
         "PSMTXMultVec": ("if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); }", "if !a2.is_null() { (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); }"),
         "HSD_JObjClearFlags": ("a0->flags &= ~a1;", "(*a0).flags &= !a1;"),
         "HSD_JObjSetFlags": ("a0->flags |= a1;", "(*a0).flags |= a1;"),

@@ -29,7 +29,7 @@ pub fn install() {
         HSD_RObjSetConstraintObj = Some(|a0, a1| { t(1016); t(pi(a0)); t(pi(a1)); });
         HSD_RObjSetFlags = Some(|a0, a1| { t(1017); t(pi(a0)); t(a1 as u32); });
         PSMTXMultVec = Some(|a0, a1, a2| { t(1018); t(pi(a0)); t(pi(a1)); tvec(a1); t(pi(a2)); tvec(a2); if !a2.is_null() { (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); } });
-        // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
+        QuatSlerp = Some(|a0, a1, a2, a3| { t(1019); t(pi(a0)); t(pi(a1)); t(pi(a2)); t(a3.to_bits()); if !a2.is_null() { (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); (*a2).w = rw(); } fv() as _ });
     }
 }
 

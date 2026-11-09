@@ -15,7 +15,9 @@ def fnv(name):
     return h
 
 
-def sections_stub(fname, a0, table, ret=None, a1ty="void**"):
+def sections_stub(fname, a0, table, ret=None, a1ty=None):
+    if a1ty is None:  # upstream (363720e12) declares the symbols slot `void*`
+        a1ty = "void*"
     """A variadic `(a0, void* symbols, name, [dst, name]..., 0)` loader stub (lbArchive_LoadSections,
     lbArchive_80016DBC): traces a0, each destination slot and name hash, stores table[name] there.
     a0 = (C param decl, C trace stmt, Rust param type, Rust trace stmt); ret = (C type, C expr, Rust type, Rust expr).
@@ -267,7 +269,7 @@ SPECS["ifnametag"] = dict(
          dict(name="NameTag_RenderCallback", args=["pn:HSD_GObj", "v"]),
          dict(name="fn_802FCAC4", args=["p:HSD_GObj", "v"]),
          "un_802FCBA0", dict(name="has_nametag", args=["i:6"]),
-         dict(name="fn_802FCC44", args=[G0]), dict(name="inlineA1", args=["w"]),
+         dict(name="fn_802FCC44", args=[G0]), dict(name="getNametagColorFrame", args=["w"]),
          dict(name="NameTag_Create", args=["i:6"]), dict(name="un_802FD28C", args=["i:6"]),
          "un_802FD404", "un_802FD428", "un_802FD450", "un_802FD45C",
          dict(name="un_802FD468", pre_c="{ int q; for (q = 0; q < 6; q++) if (rnd() & 1) un_804A1EE0[q] = 0; }",

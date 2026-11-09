@@ -52,7 +52,7 @@ void (HSD_RObjRemove)(__typeof__(struct HSD_RObj *) a0) { T(1015); T(PI((const v
 void (HSD_RObjSetConstraintObj)(__typeof__(struct HSD_RObj *) a0, __typeof__(void *) a1) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 void (HSD_RObjSetFlags)(__typeof__(struct HSD_RObj *) a0, __typeof__(unsigned int) a1) { T(1017); T(PI((const void*) a0)); T((u32) a1); }
 void (PSMTXMultVec)(__typeof__(float (*)[4]) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1018); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const void*) a1); T(PI((const void*) a2)); TVEC((const void*) a2); if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); } }
-__typeof__(int) (QuatSlerp)(__typeof__(Quaternion *) a0, __typeof__(Quaternion *) a1, __typeof__(Quaternion *) a2, __typeof__(float) a3) { T(1019); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(B(a3)); return (__typeof__(int)) (fv()); }
+__typeof__(int) (QuatSlerp)(__typeof__(Quaternion *) a0, __typeof__(Quaternion *) a1, __typeof__(Quaternion *) a2, __typeof__(float) a3) { T(1019); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(B(a3)); if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); a2->w = rw(); } return (__typeof__(int)) (fv()); }
 static void fill_HSD_JObj(HSD_JObj* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;

@@ -64,7 +64,8 @@ SPECS["itgreatfoxlaser"] = dict(
     effects={**SPAWN_HASH, "lb_8000B1CC": LB_B1CC,
              "ftLib_GetPos": ("{ a1->x = rg(); a1->y = rg(); a1->z = rg(); }", "{ (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); }")},
     setup_c=JOBJ_SETUP_C + "\n" + BONES_C, setup_rs=JOBJ_SETUP_RS + "\n" + BONES_RS,
-    ops=[dict(name="it_802EAF28", uv={"Item_xDD4_itemVar": "likelike"}),
+    # it_802EAF28 retired here: upstream moved it to itleadead.c (55a188dd9 / #3568), compared by kinds_itleadead
+    ops=[
          dict(name="it_802EAF34", args=["p:HSD_GObj", "p:Vec3", "r:0:1"]),
          "it_802EB1EC", "it_802EB268", "itGreatfoxlaser_UnkMotion1_Anim", "itGreatfoxlaser_UnkMotion1_Phys",
          "itGreatFoxLaser_Logic27_DmgDealt", "itGreatFoxLaser_Logic27_Clanked", "itGreatFoxLaser_Logic27_Absorbed",

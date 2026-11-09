@@ -56,9 +56,9 @@ pub fn install() {
         PSVECAdd = Some(|a0, a1, a2| { t(1042); t(pi(a0)); t(pi(a1)); t(pi(a2)); });
         ftDrawCommon_80081168 = Some(|| { t(1043); });
         ftDrawCommon_80081200 = Some(|| { t(1044); });
-        ftLib_IsFighter = Some(|a0| { t(1045); t(pi(a0)); fv() as _ });
-        ftLib_GetShadow = Some(|a0| { t(1046); t(pi(a0)); if fv() & 7 != 0 { pick_LbShadow() } else { null_mut() } });
-        ftLib_CastsShadow = Some(|a0| { t(1047); t(pi(a0)); fv() as _ });
+        ftLib_CastsShadow = Some(|a0| { t(1045); t(pi(a0)); fv() as _ });
+        ftLib_GetShadow = Some(|a0| { t(1046); t(pi(a0)); core::ptr::null_mut() });
+        ftLib_IsFighter = Some(|a0| { t(1047); t(pi(a0)); fv() as _ });
         lbVector_CrossprodNormalized = Some(|a0, a1, a2| { t(1048); t(pi(a0)); t(pi(a1)); t(pi(a2)); core::ptr::null_mut() });
         lbVector_Diff = Some(|a0, a1, a2| { t(1049); t(pi(a0)); t(pi(a1)); t(pi(a2)); core::ptr::null_mut() });
         lbVector_Normalize = Some(|a0| { t(1050); t(pi(a0)); rg() });
@@ -215,7 +215,7 @@ pub fn hash_HSD_CObj(p: &HSD_CObj) { unsafe {
     for i0 in 0..12 { unsafe { hm(*(&p.u as *const _ as *const u8).add(i0) as u32); } }
     hm(p.near.to_bits());
     hm(p.far.to_bits());
-    for i0 in 0..16 { unsafe { hm(*(&p.projection_param as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in (0..16).step_by(8) { unsafe { let v8 = ((&p.projection_param as *const _ as *const u8).add(i0) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); if t8 != 0xFFFF_FFFF { hm(t8); } else { for b8 in 0..8 { hm(((v8 >> (8 * b8)) & 0xFF) as u32); } } } }
     hm(p.projection_type as u32);
     for i0 in 0..3 {
     for i1 in 0..4 {
@@ -274,7 +274,7 @@ pub fn hash_HSD_LObj(p: &HSD_LObj) { unsafe {
     hm(p.hw_color.a as u32);
     hm(pi(p.position));
     hm(pi(p.interest));
-    for i0 in 0..24 { unsafe { hm(*(&p.u as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in (0..24).step_by(8) { unsafe { let v8 = ((&p.u as *const _ as *const u8).add(i0) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); if t8 != 0xFFFF_FFFF { hm(t8); } else { for b8 in 0..8 { hm(((v8 >> (8 * b8)) & 0xFF) as u32); } } } }
     hm(p.shininess.to_bits());
     hm(p.lvec.x.to_bits());
     hm(p.lvec.y.to_bits());
@@ -619,6 +619,8 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.x594.x0.set_x594_b7(fv() as _);
     p.x594.x0.x596_bits.set_x0(fv() as _);
     p.x594.x0.x596_bits.set_x7(fv() as _);
+    p.x5A4 = fv() as _;
+    p.x5A8 = fv() as _;
     p.x5AC.model_num = fv() as _;
     for i0 in 0..5 {
     p.x5AC.cleared[i0] = fv() as _;
@@ -794,7 +796,7 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.coll_data.xE4_ecb.left.x = rg();
     p.coll_data.xE4_ecb.left.y = rg();
     p.coll_data.ecb_source.kind = fv() as _;
-    for j0 in 0..56 { unsafe { *(base(&p.coll_data.ecb_source) as *mut u8).add(8 + j0) = rnd() as u8; } }
+    for i0 in 0..56 { unsafe { *(&mut p.coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     p.coll_data.ecb_source.x124 = rg();
     p.coll_data.ecb_source.x128 = rg();
     p.coll_data.ecb_source.x12C = rg();
@@ -1125,7 +1127,7 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.dmg.x1880.z = rg();
     p.dmg.x188c = fv() as _;
     p.dmg.x1890 = fv() as _;
-    p.dmg.x1894 = fv() as _;
+    p.dmg.x1894 = pick_HSD_GObj();
     p.dmg.x1898 = rg();
     p.dmg.x189C_unk_num_frames = rg();
     p.dmg.x18a0 = rg();
@@ -1142,15 +1144,19 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.dmg.x18CC = fv() as _;
     p.dmg.x18D0 = fv() as _;
     p.dmg.x18d4.x0.x2070 = fv() as _;
-    p.dmg.x18d4.x0.bf_1[0] = fv() as _;
-    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 7)) | (v << 7); }
-    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 6)) | (v << 6); }
-    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 5)) | (v << 5); }
-    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 4)) | (v << 4); }
-    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 3)) | (v << 3); }
-    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 2)) | (v << 2); }
-    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 1)) | (v << 1); }
-    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 0)) | (v << 0); }
+    p.dmg.x18d4.x0.set_x2071_b0_3(fv() as _);
+    p.dmg.x18d4.x0.set_x2071_b4(fv() as _);
+    p.dmg.x18d4.x0.set_x2071_b5(fv() as _);
+    p.dmg.x18d4.x0.set_x2071_b6(fv() as _);
+    p.dmg.x18d4.x0.set_x2071_b7(fv() as _);
+    p.dmg.x18d4.x0.set_x2072_b0(fv() as _);
+    p.dmg.x18d4.x0.set_x2072_b1(fv() as _);
+    p.dmg.x18d4.x0.set_x2072_b2(fv() as _);
+    p.dmg.x18d4.x0.set_count_x1A4(fv() as _);
+    p.dmg.x18d4.x0.set_count_thrown_items(fv() as _);
+    p.dmg.x18d4.x0.set_count_aerials(fv() as _);
+    p.dmg.x18d4.x0.set_count_x1A0(fv() as _);
+    p.dmg.x18d4.x0.set_count_specials(fv() as _);
     p.dmg.x18d4.x0.x2073 = fv() as _;
     p.dmg.x18d8.x0 = fv() as _;
     p.dmg.x18d8.x4 = fv() as _;
@@ -1300,7 +1306,6 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.cpu.x3C = rg();
     p.cpu.x40 = rg();
     p.cpu.x44 = pick_Fighter();
-    p.cpu.x50 = fv() as _;
     p.cpu.x54.x = rg();
     p.cpu.x54.y = rg();
     p.cpu.x5C = rg();
@@ -1433,9 +1438,9 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.x2070.x0.set_count_x1A0(fv() as _);
     p.x2070.x0.set_count_specials(fv() as _);
     p.x2070.x0.x2073 = fv() as _;
-    p.x2074.x2074_vec.x = (rg()).to_bits().cast_signed();
-    p.x2074.x2074_vec.y = (rg()).to_bits().cast_signed();
-    p.x2074.x207C.x = fv() as _;
+    p.x2074.x2074_vec.x = fv() as _;
+    p.x2074.x2074_vec.y = fv() as _;
+    p.x2074.x207C.x = rg();
     p.x2074.x207C.y = fv() as _;
     p.x2074.x10.x0.set_x2084_b0(fv() as _);
     p.x2074.x10.x0.set_x2084_b1(fv() as _);
@@ -2002,7 +2007,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.dynamics_num as u32);
     hm(p.x3E4_fighterCmdScript.timer.to_bits());
     hm(p.x3E4_fighterCmdScript.frame_count.to_bits());
-    for j0 in 0..8 { unsafe { hm(*base(&p.x3E4_fighterCmdScript).add(8 + j0) as u32); } }
+    for j0 in (0..8).step_by(8) { unsafe { let v8 = (base(&p.x3E4_fighterCmdScript).add(8 + j0) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); if t8 != 0xFFFF_FFFF { hm(t8); } else { for b8 in 0..8 { hm(((v8 >> (8 * b8)) & 0xFF) as u32); } } } }
     hm(p.x3E4_fighterCmdScript.loop_count as u32);
     for i0 in 0..3 {
     hm(pi(p.x3E4_fighterCmdScript.event_return[i0]));
@@ -2019,7 +2024,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x408.x1c as u32);
     hm(p.x408.x20 as u32);
     hm(p.x408.x24 as u32);
-    for i0 in 0..8 { unsafe { hm(*(&p.x408.x28_colanim as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in (0..8).step_by(8) { unsafe { let v8 = ((&p.x408.x28_colanim as *const _ as *const u8).add(i0) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); if t8 != 0xFFFF_FFFF { hm(t8); } else { for b8 in 0..8 { hm(((v8 >> (8 * b8)) & 0xFF) as u32); } } } }
     hm(p.x408.x2C_hex.r as u32);
     hm(p.x408.x2C_hex.g as u32);
     hm(p.x408.x2C_hex.b as u32);
@@ -2064,7 +2069,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x488.x1c as u32);
     hm(p.x488.x20 as u32);
     hm(p.x488.x24 as u32);
-    for i0 in 0..8 { unsafe { hm(*(&p.x488.x28_colanim as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in (0..8).step_by(8) { unsafe { let v8 = ((&p.x488.x28_colanim as *const _ as *const u8).add(i0) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); if t8 != 0xFFFF_FFFF { hm(t8); } else { for b8 in 0..8 { hm(((v8 >> (8 * b8)) & 0xFF) as u32); } } } }
     hm(p.x488.x2C_hex.r as u32);
     hm(p.x488.x2C_hex.g as u32);
     hm(p.x488.x2C_hex.b as u32);
@@ -2109,7 +2114,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x508.x1c as u32);
     hm(p.x508.x20 as u32);
     hm(p.x508.x24 as u32);
-    for i0 in 0..8 { unsafe { hm(*(&p.x508.x28_colanim as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in (0..8).step_by(8) { unsafe { let v8 = ((&p.x508.x28_colanim as *const _ as *const u8).add(i0) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); if t8 != 0xFFFF_FFFF { hm(t8); } else { for b8 in 0..8 { hm(((v8 >> (8 * b8)) & 0xFF) as u32); } } } }
     hm(p.x508.x2C_hex.r as u32);
     hm(p.x508.x2C_hex.g as u32);
     hm(p.x508.x2C_hex.b as u32);
@@ -2160,8 +2165,8 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.x598));
     hm(pi(p.x59C));
     hm(pi(p.x5A0));
-    hm(pi(((p.x5A4) as *const u8)));
-    hm(pi(((p.x5A8) as *const u8)));
+    hm(p.x5A4 as u32);
+    hm(p.x5A8 as u32);
     hm(p.x5AC.model_num as u32);
     for i0 in 0..5 {
     hm(p.x5AC.cleared[i0] as u32);
@@ -2342,7 +2347,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.coll_data.xE4_ecb.left.x.to_bits());
     hm(p.coll_data.xE4_ecb.left.y.to_bits());
     hm(p.coll_data.ecb_source.kind as u32);
-    for j0 in 0..56 { unsafe { hm(*base(&p.coll_data.ecb_source).add(8 + j0) as u32); } }
+    for i0 in (0..56).step_by(8) { unsafe { let v8 = ((&p.coll_data.ecb_source.x4 as *const _ as *const u8).add(i0) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); if t8 != 0xFFFF_FFFF { hm(t8); } else { for b8 in 0..8 { hm(((v8 >> (8 * b8)) & 0xFF) as u32); } } } }
     hm(p.coll_data.ecb_source.x124.to_bits());
     hm(p.coll_data.ecb_source.x128.to_bits());
     hm(p.coll_data.ecb_source.x12C.to_bits());
@@ -2680,7 +2685,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.dmg.x1880.z.to_bits());
     hm(p.dmg.x188c as u32);
     hm(p.dmg.x1890 as u32);
-    hm(p.dmg.x1894 as u32);
+    hm(pi(p.dmg.x1894));
     hm(p.dmg.x1898.to_bits());
     hm(p.dmg.x189C_unk_num_frames.to_bits());
     hm(p.dmg.x18a0.to_bits());
@@ -2696,16 +2701,20 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.dmg.x18C8 as u32);
     hm(p.dmg.x18CC as u32);
     hm(p.dmg.x18D0 as u32);
-    hm(p.dmg.x18d4.x0.x2070 as u8 as u32);
-    hm(p.dmg.x18d4.x0.bf_1[0] as u32);
-    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 7) & 1) as u32 });
-    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 6) & 1) as u32 });
-    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 5) & 1) as u32 });
-    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 4) & 1) as u32 });
-    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 3) & 1) as u32 });
-    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 2) & 1) as u32 });
-    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 1) & 1) as u32 });
-    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 0) & 1) as u32 });
+    hm(p.dmg.x18d4.x0.x2070 as u32);
+    hm(p.dmg.x18d4.x0.x2071_b0_3() as u32);
+    hm(p.dmg.x18d4.x0.x2071_b4() as u32);
+    hm(p.dmg.x18d4.x0.x2071_b5() as u32);
+    hm(p.dmg.x18d4.x0.x2071_b6() as u32);
+    hm(p.dmg.x18d4.x0.x2071_b7() as u32);
+    hm(p.dmg.x18d4.x0.x2072_b0() as u32);
+    hm(p.dmg.x18d4.x0.x2072_b1() as u32);
+    hm(p.dmg.x18d4.x0.x2072_b2() as u32);
+    hm(p.dmg.x18d4.x0.count_x1A4() as u32);
+    hm(p.dmg.x18d4.x0.count_thrown_items() as u32);
+    hm(p.dmg.x18d4.x0.count_aerials() as u32);
+    hm(p.dmg.x18d4.x0.count_x1A0() as u32);
+    hm(p.dmg.x18d4.x0.count_specials() as u32);
     hm(p.dmg.x18d4.x0.x2073 as u32);
     hm(p.dmg.x18d8.x0 as u32);
     hm(p.dmg.x18d8.x4 as u32);
@@ -2859,7 +2868,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.cpu.x44));
     hm(pi(p.cpu.x48));
     hm(pi(p.cpu.x4C));
-    hm(p.cpu.x50 as u32);
+    hm(pi(p.cpu.x50));
     hm(p.cpu.x54.x.to_bits());
     hm(p.cpu.x54.y.to_bits());
     hm(p.cpu.x5C.to_bits());
@@ -2998,9 +3007,9 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x2070.x0.count_x1A0() as u32);
     hm(p.x2070.x0.count_specials() as u32);
     hm(p.x2070.x0.x2073 as u32);
-    hm(p.x2074.x2074_vec.x.cast_unsigned());
-    hm(p.x2074.x2074_vec.y.cast_unsigned());
-    hm(p.x2074.x207C.x as u32);
+    hm(p.x2074.x2074_vec.x as u32);
+    hm(p.x2074.x2074_vec.y as u32);
+    hm(p.x2074.x207C.x.to_bits());
     hm(p.x2074.x207C.y as u32);
     hm(p.x2074.x10.x0.x2084_b0() as u32);
     hm(p.x2074.x10.x0.x2084_b1() as u32);

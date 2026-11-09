@@ -162,7 +162,7 @@ int main(void)
             f->dmg.x1830_percent = (float) (int) (rnd() % 4001) / 13.0f;
             r2070(&f->x2070);
             *(u32*) &f->x2074.x2074_vec.x = rnd(); *(u32*) &f->x2074.x2074_vec.y = rnd();
-            f->x2074.x207C.x = (int) rnd(); f->x2074.x207C.y = (int) rnd();
+            *(u32*) &f->x2074.x207C.x = rnd(); f->x2074.x207C.y = (int) rnd();
             f->x2074.x10.x0.x2084_b0 = rnd() & 1; f->x2074.x10.x0.x2084_b1 = rnd() & 1; f->x2074.x10.x0.x2084_b2 = rnd() & 1;
             f->x2074.x10.x0.x2084_b3 = rnd() & 1; f->x2074.x10.x0.x2084_b4 = rnd() & 1; f->x2074.x10.x0.x2084_b5 = rnd() & 1;
             f->x2074.x10.x0.x2084_b6 = rnd() & 1; f->x2074.x10.x0.x2084_b7 = rnd() & 1; f->x2074.x10.x0.x2085_b0 = rnd() & 1;
@@ -207,8 +207,8 @@ int main(void)
             if (f->x2070.x2070_int == 0x240063) t = t * 31u + 0xA1u;
             else if (f->x2070.x2070_int == 0x44003D) t = t * 31u + 0xA2u;
             else t = h2070(t, &f->x2070);
-            t = t * 31u + B(f->x2074.x2074_vec.x); t = t * 31u + B(f->x2074.x2074_vec.y);
-            t = t * 31u + (u32) f->x2074.x207C.x; t = t * 31u + (u32) f->x2074.x207C.y;
+            t = t * 31u + (u32) f->x2074.x2074_vec.x; t = t * 31u + (u32) f->x2074.x2074_vec.y;
+            t = t * 31u + B(f->x2074.x207C.x); t = t * 31u + (u32) f->x2074.x207C.y;
             t = t * 31u + f->x2074.x10.x0.x2084_b0; t = t * 31u + f->x2074.x10.x0.x2084_b1; t = t * 31u + f->x2074.x10.x0.x2084_b2;
             t = t * 31u + f->x2074.x10.x0.x2084_b3; t = t * 31u + f->x2074.x10.x0.x2084_b4; t = t * 31u + f->x2074.x10.x0.x2084_b5;
             t = t * 31u + f->x2074.x10.x0.x2084_b6; t = t * 31u + f->x2074.x10.x0.x2084_b7; t = t * 31u + f->x2074.x10.x0.x2085_b0;

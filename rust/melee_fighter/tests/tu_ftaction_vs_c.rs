@@ -153,8 +153,7 @@ fn ftaction_matches_c() {
                     0 => {
                         fill_spawn_hitbox_0(&mut (*W)[0].create_hitbox_0); fill_spawn_hitbox_1(&mut (*W)[1].create_hitbox_1);
                         fill_spawn_hitbox_3(&mut (*W)[3].create_hitbox_3);
-                        // the skip test reads GC byte 0xF of the stream (word 3, bit 4) in the port but byte 16 of the C build's 8-byte union array (word 2, zero): keep it clear
-                        *((&raw mut (*W)[3]) as *mut u8).add(3) &= !0x08;
+                        // the skip test reads word 3's create_hitbox_3.ignore_thrown_fighters on both sides since the 363720e12 sync
                         fill_spawn_hitbox_4(&mut (*W)[4].create_hitbox_4); fill_spawn_hitbox_5(&mut (*W)[5].create_hitbox_5);
                         if (*W)[0].create_hitbox_0.id() >= 4 { (*fp).x914[3].state = HitCapsule_Disabled; }
                         m::ftAction_8007121C(g, &mut *ci);

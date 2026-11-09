@@ -492,7 +492,7 @@ fn install_melee_runtime() {
     // tu/lb_00B0.rs
     unsafe { melee_runtime::tu::lb_00B0::ext::hook::HSD_LObjGetFlags = Some(|a0| unsafe { cast::<_, _, 24300>(melee_runtime::tu::lobj::native::HSD_LObjGetFlags(cast::<_, _, 24301>(a0))) }); }
     // tu/lb_00B0.rs
-    unsafe { melee_runtime::tu::lb_00B0::ext::hook::HSD_QuatLib_8037EF28 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 24400>(melee_runtime::tu::quatlib::HSD_QuatLib_8037EF28(cast::<_, _, 24401>(a0), cast::<_, _, 24402>(a1), cast::<_, _, 24403>(a2), cast::<_, _, 24404>(a3))) }); }
+    unsafe { melee_runtime::tu::lb_00B0::ext::hook::QuatSlerp = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 24400>(melee_runtime::tu::quatlib::HSD_QuatLib_8037EF28(cast::<_, _, 24401>(a0), cast::<_, _, 24402>(a1), cast::<_, _, 24403>(a2), cast::<_, _, 24404>(a3))) }); }
     // tu/lb_00B0.rs
     unsafe { melee_runtime::tu::lb_00B0::ext::hook::HSD_RObjAlloc = Some(|| unsafe { cast::<_, _, 24500>(melee_runtime::tu::robj::HSD_RObjAlloc()) }); }
     // tu/lb_00B0.rs
@@ -41742,7 +41742,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("HSD_JObjSetupMatrixSub", "melee_runtime::tu::lb_00B0::ext::hook::HSD_JObjSetupMatrixSub", true, true),
     ("HSD_JObjWalkTree", "melee_runtime::tu::lb_00B0::ext::hook::HSD_JObjWalkTree", true, true),
     ("HSD_LObjGetFlags", "melee_runtime::tu::lb_00B0::ext::hook::HSD_LObjGetFlags", true, true),
-    ("HSD_QuatLib_8037EF28", "melee_runtime::tu::lb_00B0::ext::hook::HSD_QuatLib_8037EF28", true, true),
+    ("QuatSlerp", "melee_runtime::tu::lb_00B0::ext::hook::QuatSlerp", true, true),
     ("HSD_RObjAlloc", "melee_runtime::tu::lb_00B0::ext::hook::HSD_RObjAlloc", true, true),
     ("HSD_RObjGetByType", "melee_runtime::tu::lb_00B0::ext::hook::HSD_RObjGetByType", true, true),
     ("HSD_RObjRemove", "melee_runtime::tu::lb_00B0::ext::hook::HSD_RObjRemove", true, true),

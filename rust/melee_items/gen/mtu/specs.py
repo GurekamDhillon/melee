@@ -147,7 +147,24 @@ add("itzako", "src/melee/it/itzako.c", custom_stubs={}, skip_freg=["it_8027B798_
              "ftLib_GetGameWatchOutlineColor": ("*(u32*) a1 = fv();", "*(a1 as *mut u32) = fv();")})
 add("it_26B1", "src/melee/it/it_26B1.c")
 add("it_2725", "src/melee/it/it_2725.c")
-add("it_279C", "src/melee/it/it_279C.c")
+# it_279C: the full description (it lived only in the stale gen/mtu649 copy)
+add("it_279C", "src/melee/it/it_279C.c", custom_stubs=EF_CUSTOM, paren_stubs=["HSD_JObjSetMtxDirty"],
+    skip_freg=["it_80279E24_inline", "selectPokemonForOpening", "selectPokemonFromList"],
+    xpools=[("itPokemonSpawn_DatAttrs", "PDA", 2)],
+    gen_extra=("static ItemKind KL[32]; static union Struct2070 S70[2]; static struct Struct2074 S74[2];",
+               "pub static mut KL: [i32; 32] = [0; 32]; pub static mut S70: [Struct2070; 2] = unsafe { core::mem::zeroed() }; pub static mut S74: [Struct2074; 2] = unsafe { core::mem::zeroed() };"),
+    manual_data=['it_803F7A48', 'it_803F7A98', 'it_803F7AC8', 'it_803F7AD8', 'it_803F7B08', 'it_803F7B48', 'it_803F7B58', 'it_803F7BB0', 'it_803F7BC0', 'it_803F7C00', 'it_803F7C10', 'it_803F7C40', 'it_803F7C70', 'it_803F7CA0', 'it_803F7CF8', 'it_803F7D60', 'it_803F7DC8', 'it_803F7DE8', 'it_803F7E08', 'it_803F7E28', 'it_803F7E78', 'it_803F7EE8', 'it_803F7F48', 'it_803F7F58', 'it_803F7FB8', 'it_803F7FC8', 'it_803F7FF8', 'it_803F8058', 'it_803F80C8', 'it_803F80F8', 'it_803F8128', 'it_803F8180', 'it_803F8190', 'it_803F8200', 'it_803F8250', 'it_803F8270', 'it_803F82A0', 'it_803F82B0', 'it_803F82F0'],
+    null_ret_ok=["ft_80089768"],
+    ret={"gm_801BEC54": ("((rnd() & 1) ? (void*) KL : (void*) 0)", "if rnd() & 1 != 0 { (&raw mut KL) as *mut c_void } else { core::ptr::null_mut() }"),
+         "gm_8016AEB8": ("((rnd() % 4 == 0) ? (int) (fv() % 40) : (int) (rnd() % 3))", "if rnd() % 4 == 0 { (fv() % 40) as i32 } else { (rnd() % 3) as i32 }"),
+         "db_GetCurrentlySelectedPokemon": ("(int) (fv() % 32)", "(fv() % 32) as i32"),
+         "gm_GetCurrentGameMode": ("(u8) ((rnd() % 3 == 0) ? GM_OPENING_MV : (fv() & 0xFF))", "if rnd() % 3 == 0 { GM_OPENING_MV as u8 } else { (fv() & 0xFF) as u8 }"),
+         "ft_80089884": ("&S70[rnd() & 1]", "&raw mut S70[(rnd() & 1) as usize]"),
+         "ft_800898A8": ("&S74[rnd() & 1]", "&raw mut S74[(rnd() & 1) as usize]"),
+         "Item_80268B18": ("pick_igo()", "pick_igo()"), "ftLib_FindNearestOpponent": ("pick_fgo()", "pick_fgo()"),
+         "ftLib_IsFighter": ("(a0 >= &GO[4] && a0 <= &GO[6])", "(a0 >= &raw mut GO[4] && a0 <= &raw mut GO[6]) as i32")},
+    effects={"Item_80268B18": (_SPAWN_C, _SPAWN_R), "lbVector_Mirror": VEFF(inputs=["a0", "a1"], outputs=["a0"]),
+             "ftLib_GetPos": VEFF(outputs=["a1"]), "ft_80089768": ("a0->x = (s32) fv(); a0->y = (s32) fv();", "*(a0 as *mut i32) = fv() as i32; *(a0 as *mut i32).add(1) = fv() as i32; /* the port hook still types it Vec2*; S32Vec2 upstream */")})
 
 add("itdkinoko", "src/melee/it/kinds/itdkinoko.c")
 

@@ -140,8 +140,8 @@ int main(void)
                 Fighter_GObj* g = &GO[rnd() % NG];
                 Fighter* fp = &FT[(u32) (g - GO)];
                 switch (op) {
-                case 0: /* 8007121C: hitbox spawn. The skip test reads byte 16 bit 4 from the start of the stream in the C build (the first byte of word 2,
-                       a create_hitbox_2 field: sizeof(CmdUnion) is 8) and GC byte 0xF (padding) in the Rust types, so word 2 stays zero in both */
+                case 0: /* 8007121C: hitbox spawn. The skip test reads word 3's create_hitbox_3.ignore_thrown_fighters (upstream, since the
+                       363720e12 sync), the same field the port reads */
                     fill_spawn_hitbox_0(&W[0].create_hitbox_0); fill_spawn_hitbox_1(&W[1].create_hitbox_1);
                     fill_spawn_hitbox_3(&W[3].create_hitbox_3);
                     fill_spawn_hitbox_4(&W[4].create_hitbox_4); fill_spawn_hitbox_5(&W[5].create_hitbox_5);

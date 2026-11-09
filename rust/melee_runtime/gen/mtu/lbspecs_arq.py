@@ -41,5 +41,7 @@ add("lbarq", "src/melee/lb/lbarq.c", dict(
         "wait_idle": ("if (PEND) { ARQRequest* r = PEND; PEND = 0; lbArq_80014AC4((ARQRequest*) r); }",
                       "if !PEND.is_null() { let r = PEND; PEND = null_mut(); m::lbArq_80014AC4(r); }"),
     },
-    # (upstream derives the node from request->owner and indexes global->list since the 363720e12 sync: no patch needed)
-    patch=[])
+    # upstream derives the node from request->owner (the real ARQPostRequest stores it; the stub does not): take the
+    # embedding node instead, the same node, as the port does (offset_of!(lbArqNode, arq))
+    patch=[("    lbArqNode* node = (lbArqNode*) request->owner;",
+            "    lbArqNode* node = (lbArqNode*) ((char*) request - offsetof(lbArqNode, arq));")])

@@ -36,12 +36,15 @@ pub fn freg_all() {
     freg(m::DevText_ShowBackground as *const () as usize);
     freg(m::DevText_ShowText as *const () as usize);
     freg(m::DevText_StoreColorIndex as *const () as usize);
+    freg(m::alloc_text as *const () as usize);
     freg(m::find_by_id as *const () as usize);
+    freg(m::set_color as *const () as usize);
     freg(m::un_80302DF0 as *const () as usize);
     freg(m::un_80302DF8 as *const () as usize);
 }
 
 pub fn fill_DevText(p: &mut DevText) {
+    unsafe {
     p.x = fv() as _;
     p.y = fv() as _;
     p.w = fv() as _;
@@ -65,9 +68,11 @@ pub fn fill_DevText(p: &mut DevText) {
     p.flags = fv() as _;
     p.set_unk(fv() as _);
     p.set_current_color(fv() as _);
+    }
 }
 pub fn hash_DevText(p: &DevText) {
-    unsafe { if HDBG { println!("B DevText"); } }
+    unsafe {
+    if HDBG { println!("B DevText"); }
     hm(p.x as u32);
     hm(p.y as u32);
     hm(p.w as u32);
@@ -94,14 +99,18 @@ pub fn hash_DevText(p: &DevText) {
     hm(pi(p.buf));
     hm(pi(p.prev));
     hm(pi(p.next));
+    }
 }
 
 pub fn fill_un_80304138_objalloc_t(p: &mut un_80304138_objalloc_t) {
+    unsafe {
     p.x0 = fv() as _;
     p.x1 = fv() as _;
+    }
 }
 pub fn hash_un_80304138_objalloc_t(p: &un_80304138_objalloc_t) {
-    unsafe { if HDBG { println!("B un_80304138_objalloc_t"); } }
+    unsafe {
+    if HDBG { println!("B un_80304138_objalloc_t"); }
     hm(p.x0 as u32);
     hm(p.x1 as u32);
     hm(pi(p.x4));
@@ -111,4 +120,5 @@ pub fn hash_un_80304138_objalloc_t(p: &un_80304138_objalloc_t) {
     hm(pi(p.x14));
     hm(pi(p.prev));
     hm(pi(p.next));
+    }
 }

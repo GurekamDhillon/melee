@@ -35,7 +35,6 @@ pub fn freg_all() {
     freg(m::itGreatfoxlaser_UnkMotion1_Anim as *const () as usize);
     freg(m::itGreatfoxlaser_UnkMotion1_Phys as *const () as usize);
     freg(m::it_2725_Logic27_Reflected as *const () as usize);
-    freg(m::it_802EAF28 as *const () as usize);
     freg(m::it_802EAF34 as *const () as usize);
     freg(m::it_802EB1EC as *const () as usize);
     freg(m::it_802EB268 as *const () as usize);
@@ -425,11 +424,11 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.x378_itemColl.xE4_ecb.left.x = rg();
     p.x378_itemColl.xE4_ecb.left.y = rg();
     p.x378_itemColl.ecb_source.kind = fv() as _;
-    if UV_ECBSource_anon_4 == 0 {
+    if UV_ECBSource_x4 == 0 {
     for i1 in 0..6 {
     }
     }
-    if UV_ECBSource_anon_4 == 1 {
+    if UV_ECBSource_x4 == 1 {
     p.x378_itemColl.ecb_source.x4.x0_1.up = rg();
     p.x378_itemColl.ecb_source.x4.x0_1.down = rg();
     p.x378_itemColl.ecb_source.x4.x0_1.front = rg();
@@ -470,10 +469,18 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.x524_cmd.timer = rg();
     p.x524_cmd.frame_count = rg();
     if UV_CommandInfo_anon_8 == 0 {
-    for i1 in 0..1 {
+    if UV_CommandInfo_anon_1020_x8 == 0 {
+    for i2 in 0..1 {
+    }
+    }
+    if UV_CommandInfo_anon_1020_x8 == 1 {
     }
     }
     if UV_CommandInfo_anon_8 == 1 {
+    for i1 in 0..1 {
+    }
+    }
+    if UV_CommandInfo_anon_8 == 2 {
     }
     p.x524_cmd.loop_count = fv() as _;
     for i0 in 0..3 {
@@ -595,9 +602,9 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     for i1 in 0..12 {
     p.x5D4_hitboxes[i0].hit.victims_2[i1].x4 = fv() as _;
     }
-    if UV_HitCapsule_anon_134 == 0 {
+    if UV_HitCapsule_x134 == 0 {
     }
-    if UV_HitCapsule_anon_134 == 1 {
+    if UV_HitCapsule_x134 == 1 {
     p.x5D4_hitboxes[i0].hit.x134.set_hit_grabbed_victim_only(fv() as _);
     }
     p.x5D4_hitboxes[i0].set_x138(fv() as _);
@@ -704,9 +711,9 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.xC6C = rg();
     p.xC70 = rg();
     p.xC74 = fv() as _;
-    p.xC78.x = (rg()).to_bits().cast_signed();
-    p.xC78.y = (rg()).to_bits().cast_signed();
-    p.xC80.x = fv() as _;
+    p.xC78.x = fv() as _;
+    p.xC78.y = fv() as _;
+    p.xC80.x = rg();
     p.xC80.y = fv() as _;
     p.xC88 = fv() as _;
     p.xC8C = fv() as _;
@@ -780,17 +787,17 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     if UV_Item_xD90 == 1 {
     p.xD90.x2070_int = fv() as _;
     }
-    p.xD94.x = (rg()).to_bits().cast_signed();
-    p.xD94.y = (rg()).to_bits().cast_signed();
-    p.xD9C.x = fv() as _;
+    p.xD94.x = fv() as _;
+    p.xD94.y = fv() as _;
+    p.xD9C.x = rg();
     p.xD9C.y = fv() as _;
     p.xDA4_word = fv() as _;
     p.xDA8_short = fv() as _;
-    if UV_Item_anon_daa == 0 {
-    if UV_Item_anon_477_xDAA_flag == 0 {
+    if UV_Item_xDAA == 0 {
+    if UV_Item_xDAA_xDAA_flag == 0 {
     p.xDAA.xDAA_flag.byte = fv() as _;
     }
-    if UV_Item_anon_477_xDAA_flag == 1 {
+    if UV_Item_xDAA_xDAA_flag == 1 {
     p.xDAA.xDAA_flag.x0.set_b0(fv() as _);
     p.xDAA.xDAA_flag.x0.set_b1(fv() as _);
     p.xDAA.xDAA_flag.x0.set_b2(fv() as _);
@@ -801,14 +808,14 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.xDAA.xDAA_flag.x0.set_b7(fv() as _);
     }
     }
-    if UV_Item_anon_daa == 1 {
+    if UV_Item_xDAA == 1 {
     p.xDAA.xDAA_byte = fv() as _;
     }
     p.xDAC_itcmd_var0 = fv() as _;
     p.xDB0_itcmd_var1 = fv() as _;
     p.xDB4_itcmd_var2 = fv() as _;
     p.xDB8_itcmd_var3 = fv() as _;
-    if UV_Item_anon_dbc == 0 {
+    if UV_Item_xDBC == 0 {
     p.xDBC.xDBC_itcmd_var4.flags.set_x0(fv() as _);
     p.xDBC.xDBC_itcmd_var4.flags.set_x1(fv() as _);
     p.xDBC.xDBC_itcmd_var4.flags.set_x2(fv() as _);
@@ -838,7 +845,7 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.xDBC.xDBC_itcmd_var4.flags.set_x1E(fv() as _);
     p.xDBC.xDBC_itcmd_var4.flags.set_x1F(fv() as _);
     }
-    if UV_Item_anon_dbc == 1 {
+    if UV_Item_xDBC == 1 {
     p.xDBC.xDBC_itcmd_var4_word = fv() as _;
     }
     p.xDC0 = fv() as _;
@@ -1143,13 +1150,13 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.x378_itemColl.xE4_ecb.left.x.to_bits());
     hm(p.x378_itemColl.xE4_ecb.left.y.to_bits());
     hm(p.x378_itemColl.ecb_source.kind as u32);
-    if UV_ECBSource_anon_4 == 0 {
+    if UV_ECBSource_x4 == 0 {
     hm(pi(p.x378_itemColl.ecb_source.x4.x0.x108_joint));
     for i1 in 0..6 {
     hm(pi(p.x378_itemColl.ecb_source.x4.x0.x10C_joint[i1]));
     }
     }
-    if UV_ECBSource_anon_4 == 1 {
+    if UV_ECBSource_x4 == 1 {
     hm(p.x378_itemColl.ecb_source.x4.x0_1.up.to_bits());
     hm(p.x378_itemColl.ecb_source.x4.x0_1.down.to_bits());
     hm(p.x378_itemColl.ecb_source.x4.x0_1.front.to_bits());
@@ -1193,11 +1200,21 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.x524_cmd.timer.to_bits());
     hm(p.x524_cmd.frame_count.to_bits());
     if UV_CommandInfo_anon_8 == 0 {
+    if UV_CommandInfo_anon_1020_x8 == 0 {
+    for i2 in 0..1 {
+    hm(pi(p.x524_cmd.anon_8.x8.ptr[i2]));
+    }
+    }
+    if UV_CommandInfo_anon_1020_x8 == 1 {
+    hm(pi(p.x524_cmd.anon_8.x8.u));
+    }
+    }
+    if UV_CommandInfo_anon_8 == 1 {
     for i1 in 0..1 {
     hm(pi(p.x524_cmd.anon_8.ptr[i1]));
     }
     }
-    if UV_CommandInfo_anon_8 == 1 {
+    if UV_CommandInfo_anon_8 == 2 {
     hm(pi(p.x524_cmd.anon_8.u));
     }
     hm(p.x524_cmd.loop_count as u32);
@@ -1328,10 +1345,10 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(pi(p.x5D4_hitboxes[i0].hit.victims_2[i1].victim));
     hm(p.x5D4_hitboxes[i0].hit.victims_2[i1].x4 as u32);
     }
-    if UV_HitCapsule_anon_134 == 0 {
+    if UV_HitCapsule_x134 == 0 {
     hm(pi(p.x5D4_hitboxes[i0].hit.x134.owner));
     }
-    if UV_HitCapsule_anon_134 == 1 {
+    if UV_HitCapsule_x134 == 1 {
     hm(p.x5D4_hitboxes[i0].hit.x134.hit_grabbed_victim_only() as u32);
     }
     hm(p.x5D4_hitboxes[i0].x138() as u32);
@@ -1442,9 +1459,9 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.xC6C.to_bits());
     hm(p.xC70.to_bits());
     hm(p.xC74 as u32);
-    hm(p.xC78.x.cast_unsigned());
-    hm(p.xC78.y.cast_unsigned());
-    hm(p.xC80.x as u32);
+    hm(p.xC78.x as u32);
+    hm(p.xC78.y as u32);
+    hm(p.xC80.x.to_bits());
     hm(p.xC80.y as u32);
     hm(p.xC88 as u32);
     hm(p.xC8C as u32);
@@ -1536,17 +1553,17 @@ pub fn hash_Item(p: &Item) { unsafe {
     if UV_Item_xD90 == 1 {
     hm(p.xD90.x2070_int as u32);
     }
-    hm(p.xD94.x.cast_unsigned());
-    hm(p.xD94.y.cast_unsigned());
-    hm(p.xD9C.x as u32);
+    hm(p.xD94.x as u32);
+    hm(p.xD94.y as u32);
+    hm(p.xD9C.x.to_bits());
     hm(p.xD9C.y as u32);
     hm(p.xDA4_word as u32);
     hm(p.xDA8_short as u32);
-    if UV_Item_anon_daa == 0 {
-    if UV_Item_anon_477_xDAA_flag == 0 {
+    if UV_Item_xDAA == 0 {
+    if UV_Item_xDAA_xDAA_flag == 0 {
     hm(p.xDAA.xDAA_flag.byte as u32);
     }
-    if UV_Item_anon_477_xDAA_flag == 1 {
+    if UV_Item_xDAA_xDAA_flag == 1 {
     hm(p.xDAA.xDAA_flag.x0.b0() as u32);
     hm(p.xDAA.xDAA_flag.x0.b1() as u32);
     hm(p.xDAA.xDAA_flag.x0.b2() as u32);
@@ -1557,14 +1574,14 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.xDAA.xDAA_flag.x0.b7() as u32);
     }
     }
-    if UV_Item_anon_daa == 1 {
+    if UV_Item_xDAA == 1 {
     hm(p.xDAA.xDAA_byte as u32);
     }
     hm(p.xDAC_itcmd_var0 as u32);
     hm(p.xDB0_itcmd_var1 as u32);
     hm(p.xDB4_itcmd_var2 as u32);
     hm(p.xDB8_itcmd_var3 as u32);
-    if UV_Item_anon_dbc == 0 {
+    if UV_Item_xDBC == 0 {
     hm(p.xDBC.xDBC_itcmd_var4.flags.x0() as u32);
     hm(p.xDBC.xDBC_itcmd_var4.flags.x1() as u32);
     hm(p.xDBC.xDBC_itcmd_var4.flags.x2() as u32);
@@ -1594,7 +1611,7 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.xDBC.xDBC_itcmd_var4.flags.x1E() as u32);
     hm(p.xDBC.xDBC_itcmd_var4.flags.x1F() as u32);
     }
-    if UV_Item_anon_dbc == 1 {
+    if UV_Item_xDBC == 1 {
     hm(p.xDBC.xDBC_itcmd_var4_word as u32);
     }
     hm(p.xDC0 as u32);
@@ -1784,7 +1801,7 @@ pub fn fill_ItemAttr(p: &mut ItemAttr) { unsafe {
     p.set_x1_8(fv() as _);
     p.x3 = fv() as _;
     p.x4_throw_speed_mul = rg();
-    p.x8 = fv() as _;
+    p.x8 = rg();
     p.xC_spin_speed = rg();
     p.x10_fall_speed = rg();
     p.x14_fall_speed_max = rg();
@@ -1829,7 +1846,7 @@ pub fn hash_ItemAttr(p: &ItemAttr) { unsafe {
     hm(p.x1_8() as u32);
     hm(p.x3 as u32);
     hm(p.x4_throw_speed_mul.to_bits());
-    hm(p.x8 as u32);
+    hm(p.x8.to_bits());
     hm(p.xC_spin_speed.to_bits());
     hm(p.x10_fall_speed.to_bits());
     hm(p.x14_fall_speed_max.to_bits());
@@ -1904,14 +1921,15 @@ pub static mut UV_SpawnItem_x45_flag: i32 = 0;
 pub static mut UV_SpawnItem_x46_flag: i32 = 0;
 pub static mut UV_SpawnItem_x47_flag: i32 = 0;
 pub static mut UV_HSD_JObj_u: i32 = 0;
-pub static mut UV_ECBSource_anon_4: i32 = 0;
+pub static mut UV_ECBSource_x4: i32 = 0;
 pub static mut UV_CommandInfo_anon_8: i32 = 0;
+pub static mut UV_CommandInfo_anon_1020_x8: i32 = 0;
 pub static mut UV_ColorOverlay_x28_colanim: i32 = 0;
-pub static mut UV_HitCapsule_anon_134: i32 = 0;
+pub static mut UV_HitCapsule_x134: i32 = 0;
 pub static mut UV_Item_xD90: i32 = 0;
-pub static mut UV_Item_anon_daa: i32 = 0;
-pub static mut UV_Item_anon_477_xDAA_flag: i32 = 0;
-pub static mut UV_Item_anon_dbc: i32 = 0;
+pub static mut UV_Item_xDAA: i32 = 0;
+pub static mut UV_Item_xDAA_xDAA_flag: i32 = 0;
+pub static mut UV_Item_xDBC: i32 = 0;
 pub static mut UV_Item_xDCE_flag: i32 = 0;
 pub static mut UV_Item_xDCF_flag: i32 = 0;
 pub static mut UV_Item_xDD0_flag: i32 = 0;

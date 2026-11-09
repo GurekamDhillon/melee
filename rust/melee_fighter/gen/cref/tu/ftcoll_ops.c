@@ -5,6 +5,21 @@
  * random fighters in the fighter plink, filled field by field (gen/mtu/fill.py).
  * Each line: op case ret state-hash trace. */
 #include TU_SRC
+/* ftColl_800764DC moved to ft_0763.c upstream (363720e12 sync); the port keeps it callable from tu::ftcoll, so the
+ * oracle carries the upstream body verbatim (src/melee/ft/ft_0763.c) instead of dropping op 0. */
+void ftColl_800764DC(Fighter_GObj* gobj)
+{
+    Fighter* fp = gobj->user_data;
+    if (fp->x2098 != 0) {
+        fp->x2098--;
+    }
+    if (fp->x2094 != NULL) {
+        Fighter* fp1 = fp->x2094->user_data;
+        if (!fp1->x221C_b6 && fp1->x2098 == 0) {
+            fp->x2094 = NULL;
+        }
+    }
+}
 /* the game links lbtrigf.c's atanf/atan2f (not the CRT's) */
 #include <melee/lb/lbtrigf.c>
 #include <sysdolphin/baselib/jobj.h>
@@ -87,6 +102,8 @@ static void world(void)
         FT[i].ft_data = &FDATA[i];
         FT[i].grab_cb = cbev1; FT[i].grabbed_cb = cbev3;
         FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_idx %= 4; FT[i].pad_port %= 4;
+        { int j; for (j = 0; j < 4; j++) FT[i].x914[j].sfx_severity %= 3; for (j = 0; j < 2; j++) FT[i].xDF4[j].sfx_severity %= 3;
+          FT[i].x1064_thrownHitbox.sfx_severity %= 3; } /* indexes ftColl_803C0C40[3] (retail data: 0..2; past it the C reads the next global) */
         FT[i].x166C %= 2;   /* x1670 is declared [1] and the C indexes past it into the filler, whose native layout differs from the Rust types' */
         for (b = 0; b < 64; b++) { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
         FT[i].parts = PARTS[i];

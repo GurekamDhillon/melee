@@ -324,7 +324,7 @@ fn ft0892_matches_c() {
             }
             mix(&mut th, f.x2074.x2074_vec.x.cast_unsigned());
             mix(&mut th, f.x2074.x2074_vec.y.cast_unsigned());
-            mix(&mut th, f.x2074.x207C.x as u32);
+            mix(&mut th, f.x2074.x207C.x.to_bits());
             mix(&mut th, f.x2074.x207C.y as u32);
             {
                 let b = unsafe { &f.x2074.x10.x0 };

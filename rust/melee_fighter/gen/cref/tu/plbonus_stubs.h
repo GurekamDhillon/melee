@@ -235,27 +235,23 @@ void (pl_80037C60)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(111
 // stub pl_80037C60 = 1117
 __typeof__(int) (pl_80038628)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1118); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(int)) (fv()); }
 // stub pl_80038628 = 1118
-__typeof__(unsigned int) (pl_800386D8)(__typeof__(struct plActionStats *) a0, __typeof__(int) a1) { T(1119); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(unsigned int)) (fv()); }
-// stub pl_800386D8 = 1119
-__typeof__(int) (pl_800386E8)(__typeof__(struct pl_800386E8_arg0_t *) a0) { T(1120); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub pl_800386E8 = 1120
-void (pl_80040DDC)(__typeof__(int) a0) { T(1121); T((u32) a0); }
-// stub pl_80040DDC = 1121
-void (pl_80040ED4)(__typeof__(int) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(int) a3, __typeof__(int) a4, __typeof__(float) a5) { T(1122); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); T((u32) a4); T(B(a5)); }
-// stub pl_80040ED4 = 1122
-__typeof__(float) (pl_800414C0)(__typeof__(int) a0) { T(1123); T((u32) a0); return (__typeof__(float)) (rg()); }
-// stub pl_800414C0 = 1123
-void (pl_80041524)(__typeof__(int) a0) { T(1124); T((u32) a0); }
-// stub pl_80041524 = 1124
-void (pl_80041720)(__typeof__(int) a0, __typeof__(int) a1, __typeof__(unsigned short) a2) { T(1125); T((u32) a0); T((u32) a1); T((u32) a2); }
-// stub pl_80041720 = 1125
-void (pl_80041744)(__typeof__(int) a0, __typeof__(int) a1, __typeof__(unsigned short) a2) { T(1126); T((u32) a0); T((u32) a1); T((u32) a2); }
-// stub pl_80041744 = 1126
-void (pl_8004182C)(__typeof__(int) a0) { T(1127); T((u32) a0); }
-// stub pl_8004182C = 1127
-void (pl_800418F4)(__typeof__(int) a0) { T(1128); T((u32) a0); }
-// stub pl_800418F4 = 1128
-void (pl_800419AC)(__typeof__(int) a0, __typeof__(int) a1, __typeof__(unsigned short) a2) { T(1129); T((u32) a0); T((u32) a1); T((u32) a2); }
-// stub pl_800419AC = 1129
-void (pl_80041BFC)(__typeof__(int) a0) { T(1130); T((u32) a0); }
-// stub pl_80041BFC = 1130
+void (pl_80040DDC)(__typeof__(int) a0) { T(1119); T((u32) a0); }
+// stub pl_80040DDC = 1119
+void (pl_80040ED4)(__typeof__(int) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(int) a3, __typeof__(int) a4, __typeof__(float) a5) { T(1120); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); T((u32) a4); T(B(a5)); }
+// stub pl_80040ED4 = 1120
+__typeof__(float) (pl_800414C0)(__typeof__(int) a0) { T(1121); T((u32) a0); return (__typeof__(float)) (rg()); }
+// stub pl_800414C0 = 1121
+void (pl_80041524)(__typeof__(int) a0) { T(1122); T((u32) a0); }
+// stub pl_80041524 = 1122
+void (pl_80041720)(__typeof__(int) a0, __typeof__(int) a1, __typeof__(unsigned short) a2) { T(1123); T((u32) a0); T((u32) a1); T((u32) a2); }
+// stub pl_80041720 = 1123
+void (pl_80041744)(__typeof__(int) a0, __typeof__(int) a1, __typeof__(unsigned short) a2) { T(1124); T((u32) a0); T((u32) a1); T((u32) a2); }
+// stub pl_80041744 = 1124
+void (pl_8004182C)(__typeof__(int) a0) { T(1125); T((u32) a0); }
+// stub pl_8004182C = 1125
+void (pl_800418F4)(__typeof__(int) a0) { T(1126); T((u32) a0); }
+// stub pl_800418F4 = 1126
+void (pl_800419AC)(__typeof__(int) a0, __typeof__(int) a1, __typeof__(unsigned short) a2) { T(1127); T((u32) a0); T((u32) a1); T((u32) a2); }
+// stub pl_800419AC = 1127
+void (pl_80041BFC)(__typeof__(int) a0) { T(1128); T((u32) a0); }
+// stub pl_80041BFC = 1128

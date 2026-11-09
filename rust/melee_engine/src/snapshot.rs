@@ -737,13 +737,22 @@ impl Base {
 
     /// Put a saved state back. The caller restores the arena mode flag afterwards (it is a static too).
     pub fn load(&self, s: &Snapshot) {
+        self.load_with(s, !self.no_inc)
+    }
+
+    /// Put back a snapshot this base did not save ([`Base::import`]: a state file): the full way, every page that can
+    /// differ from the base and every page of `s` (its pages carry no write history the incremental way could use).
+    pub fn load_full(&self, s: &Snapshot) {
+        self.load_with(s, false)
+    }
+
+    fn load_with(&self, s: &Snapshot, inc: bool) {
         // core v1: the transcoder lets go of the game buffers it holds first (the load rewinds their refcounts)
         #[cfg(feature = "corev1")]
         melee_gx::corev1::snapshot_loaded();
         self.refresh();
         let was = arena::active();
         let (abase, alen_now) = arena::used_range();
-        let inc = !self.no_inc;
         let mut zeroed: Option<(usize, usize)> = None;
         {
             let since = self.since.borrow();
@@ -951,7 +960,118 @@ impl Base {
     }
 }
 
+/// One range of a snapshot as whole pages ([`Base::export`] / [`Base::import`]): its address, its length, and every
+/// page that is not all zero.
+pub struct RangeImage {
+    pub addr: usize,
+    pub len: usize,
+    pub pages: Vec<(u32, Vec<u8>)>,
+}
+
 impl Base {
+    /// The ranges a snapshot covers now: (address, length); the arena's length is its used range.
+    pub fn layout(&self) -> Vec<(usize, usize)> {
+        self.cur_ranges()
+    }
+
+    /// Bytes of the whole state (every range): what one full copy of it costs (gw_snap_slot_bytes' MEM1 + globals).
+    pub fn state_bytes(&self) -> usize {
+        self.cur_ranges().iter().map(|r| r.1).sum()
+    }
+
+    /// The counters (MELEE_SNAP_STATS).
+    pub fn stats(&self) -> Stats {
+        *self.stats.borrow()
+    }
+
+    /// Page `pi` of range `ri` as snapshot `s` holds it (its own page, else the base's, zero past either).
+    fn snap_page<'a>(&'a self, s: &'a Snapshot, ri: usize, pi: usize) -> &'a [u8] {
+        let r = &s.ranges[ri];
+        match r.pages.binary_search_by_key(&(pi as u32), |p| p.0) {
+            Ok(i) => &r.pages[i].1[..],
+            Err(_) if pi * PAGE < r.len => self.base_page(ri, pi),
+            Err(_) => &ZERO,
+        }
+    }
+
+    /// Snapshot `s` as whole pages: every non-zero page of every range (a state file's contents).
+    pub fn export(&self, s: &Snapshot) -> Vec<RangeImage> {
+        (0..s.ranges.len())
+            .map(|ri| {
+                let r = &s.ranges[ri];
+                let pages = (0..r.len / PAGE)
+                    .filter_map(|pi| {
+                        let p = self.snap_page(s, ri, pi);
+                        (p != &ZERO[..]).then(|| (pi as u32, p.to_vec()))
+                    })
+                    .collect();
+                RangeImage { addr: r.addr, len: r.len, pages }
+            })
+            .collect()
+    }
+
+    /// A snapshot holding the state [`Base::export`] wrote (a page not listed is zero), for [`Base::load_full`]. None when
+    /// the ranges are not this base's: another count, a range at another address, a fixed range of another length.
+    pub fn import(&self, img: &[RangeImage]) -> Option<SnapRef> {
+        let cur = self.cur_ranges();
+        if img.len() != cur.len() {
+            return None;
+        }
+        for (ri, (r, c)) in img.iter().zip(&cur).enumerate() {
+            // the arena's used length moves (a load handles that); every other range is fixed
+            if r.addr != c.0 || (ri > 0 && r.len != c.1) || r.len % PAGE != 0 || r.pages.iter().any(|p| p.1.len() != PAGE || p.0 as usize >= r.len / PAGE) {
+                return None;
+            }
+        }
+        let mut out = Vec::with_capacity(img.len());
+        for (ri, r) in img.iter().enumerate() {
+            let mut pages = Vec::new();
+            let mut k = 0usize;
+            for pi in 0..r.len / PAGE {
+                while k < r.pages.len() && (r.pages[k].0 as usize) < pi {
+                    k += 1;
+                }
+                let want: &[u8] = if k < r.pages.len() && r.pages[k].0 as usize == pi { &r.pages[k].1 } else { &ZERO };
+                if want != self.base_page(ri, pi) {
+                    pages.push((pi as u32, Rc::new(<[u8; PAGE]>::try_from(want).unwrap())));
+                }
+            }
+            out.push(RangeSnap { addr: r.addr, len: r.len, pages });
+        }
+        let id = self.next_id.get();
+        self.next_id.set(id + 1);
+        // epoch 0: older than every write, so nothing is assumed unchanged since it
+        Some(Rc::new_cyclic(|me| Snapshot { ranges: out, id, epoch: 0, me: me.clone(), pool: self.pool.clone() }))
+    }
+
+    /// The rewind self-test's compare of two snapshots: (bytes that differ in any range, bytes that differ in the
+    /// C-layout game state (the OS heap, the range `page_hash` covers: the arena and the statics hold Rust
+    /// bookkeeping), a 64-bit FNV-1a hash of each side's game-state range).
+    pub fn compare(&self, a: &Snapshot, b: &Snapshot) -> (u64, u64, u64, u64) {
+        let (mut all, mut sim) = (0u64, 0u64);
+        let (mut ha, mut hb) = (0xcbf29ce484222325u64, 0xcbf29ce484222325u64);
+        for ri in 0..a.ranges.len().min(b.ranges.len()) {
+            let n = a.ranges[ri].len.max(b.ranges[ri].len) / PAGE;
+            for pi in 0..n {
+                let (pa, pb) = (self.snap_page(a, ri, pi), self.snap_page(b, ri, pi));
+                if ri == HASHED {
+                    for i in 0..PAGE {
+                        ha = (ha ^ pa[i] as u64).wrapping_mul(0x100000001b3);
+                        hb = (hb ^ pb[i] as u64).wrapping_mul(0x100000001b3);
+                    }
+                }
+                if pa != pb {
+                    let d = (0..PAGE).filter(|&i| pa[i] != pb[i]).count() as u64;
+                    all += d;
+                    if ri == HASHED {
+                        sim += d;
+                    }
+                }
+            }
+        }
+        (all, sim, ha, hb)
+    }
+
     /// Debug: describe where two snapshots differ ("range R page P: first byte offsets ...").
     pub fn diff(&self, a: &Snapshot, b: &Snapshot, max: usize) -> Vec<String> {
         let mut out = Vec::new();

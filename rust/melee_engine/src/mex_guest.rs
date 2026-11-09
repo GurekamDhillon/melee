@@ -866,6 +866,12 @@ fn build_move_table(f: &mut Fighter_, table: u32) {
 }
 
 /// The installed MoveLogic table of `kind` (None: the retail / clone-base one).
+/// gw_Mex_MoveLogicEntriesForKind: the special states an m-ex fighter's MoveLogic table holds, 0 when the kind is not
+/// an installed m-ex slot or its table is not wired (the Geno Lab's state browser).
+pub fn move_logic_entries(kind: i32) -> i32 {
+    unsafe { ST.as_ref() }.and_then(|s| s.kinds.get(&kind)).map_or(0, |f| f.move_table.len() as i32)
+}
+
 pub fn move_logic_table(kind: i32) -> Option<*mut MotionState> {
     let f = unsafe { ST.as_mut()? }.kinds.get_mut(&kind)?;
     (!f.move_table.is_empty()).then(|| f.move_table.as_mut_ptr())

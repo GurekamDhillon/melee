@@ -53,6 +53,9 @@ OSTicksToCalendarTime
 DVDGetDriveStatus
 GX(?!Project$)\w+
 Wb_RenderOption	[$ARGS][1]
+# gw_surface.cpp gw_SurfaceBegin / gw_SurfaceEnd: no-ops while no mod surface program is registered (enabled_count 0);
+# the Rust renderer has no surface registry yet
+Surface(Begin|End)
 Wb_\w+
 Fx_\w+
 Prof\w+

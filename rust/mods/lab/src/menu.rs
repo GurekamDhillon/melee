@@ -712,6 +712,15 @@ impl Lab {
             match rd.kind {
                 K::Toggle => self.step(rd.id, rd.kind, 1),
                 K::Action | K::SliderApply(..) => self.activate(rd.id),
+                // the footer says "A apply": a dummy row re-sends its value (left / right already sent it) and says
+                // which port it went to, so a setting that seems to do nothing shows where it landed
+                _ if rd.id < D_N => {
+                    let p = self.dport();
+                    self.send_dummy(p, rd.id);
+                    let mut m = Txt::new();
+                    m.s("P").i(p as i32 + 1).s(": ").s(rd.name).s(" applied");
+                    self.toast(&m, None);
+                }
                 _ => {}
             }
             self.rec_lens();

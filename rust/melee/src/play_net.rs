@@ -379,6 +379,24 @@ pub struct Replay {
 const PAD_BYTES: usize = 16;
 pub const REC_BYTES: usize = 4 * PAD_BYTES + 4;
 
+/// The `controls` entry of a netplay recording: the session's agreed fighter-controls words (host, guest), which its
+/// playback freezes again (the local preferences of whoever replays it are not the match's).
+pub fn controls_meta() -> Option<(String, String)> {
+    match melee_engine::fighter_controls::session() {
+        melee_engine::fighter_controls::Session::Netplay(w) => Some(("controls".into(), format!("netplay:{}:{}", w[0], w[1]))),
+        _ => None,
+    }
+}
+
+/// Playback of a recording with a `controls` entry: the match freezes the recorded words.
+pub fn apply_controls_meta(r: &Replay) {
+    let Some(v) = r.meta("controls").and_then(|v| v.strip_prefix("netplay:")) else { return };
+    let w: Vec<u32> = v.split(':').filter_map(|x| x.parse().ok()).collect();
+    if let [a, b] = w[..] {
+        melee_engine::fighter_controls::set_session(melee_engine::fighter_controls::Session::Netplay([a, b]));
+    }
+}
+
 impl Replay {
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut h = String::new();

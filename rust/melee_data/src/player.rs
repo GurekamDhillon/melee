@@ -318,7 +318,10 @@ impl Player {
         self.match_cks = [-1; 4];
         for p in 0..4usize {
             let pl = &d[0x60 + 0x24 * p..];
-            let port = pl[7] as usize;
+            // the player's controller as gmvs.c sets it: PlayerInitData +4 `slot` - 1, or the player's own index when
+            // slot is 0. gw_replay.c reads +7 (`sub_color`, the team shade): its every human landed on controller 0
+            // (fixed there too, port/c-controls-slot)
+            let port = if pl[4] == 0 { p } else { pl[4] as usize - 1 };
             let ck = pl[0] as i32;
             if pl[1] != 0 || port >= 4 {
                 continue;

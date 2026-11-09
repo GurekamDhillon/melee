@@ -238,8 +238,11 @@ pub fn TapJumpOff(port: i32) -> i32 {
 }
 
 /// gw_FighterControls_MatchBegin (fn_8016E730, after match setup / replay restoration): each human controller of the
-/// first four players gets its choice frozen. PlayerInitData +0 is the CharacterKind, +1 the slot type (0 human) and
-/// +7 the physical controller (the decomp's `sub_color` byte, which the port uses for it).
+/// first four players gets its choice frozen. PlayerInitData +0 is the CharacterKind, +1 the slot type (0 human); the
+/// controller is the one gmvs.c gives the player (`Player_SetPadPort`): +4 `slot` - 1, or the player's own index when
+/// slot is 0. The C (gw_replay.c) reads +7 as the controller, which is `sub_color` (the team shade, mn/types.h;
+/// Slippi's Game Start agrees): every human was frozen onto controller 0 and the last one won, so P2's mapping never
+/// applied and a netplay host played with the guest's layout. Fixed here and in the C (port/c-controls-slot).
 pub unsafe fn MatchBegin(d: *mut melee_types::StartMeleeData) {
     MatchClear();
     if d.is_null() {
@@ -247,7 +250,8 @@ pub unsafe fn MatchBegin(d: *mut melee_types::StartMeleeData) {
     }
     for p in 0..4 {
         let pl = &(*d).players[p];
-        let (port, ck) = (pl.sub_color as i32, pl.ckind as i32);
+        let port = if pl.slot == 0 { p as i32 } else { pl.slot as i32 - 1 };
+        let ck = pl.ckind as i32;
         if pl.slot_type != 0 || port >= 4 {
             continue;
         }
@@ -324,13 +328,14 @@ mod tests {
         // MatchBegin: human controllers of the first four players only, each from its own preference (or the hook)
         let mut d = melee_types::StartMeleeData::zeroed();
         d.players[0].ckind = ck as i8;
-        d.players[0].sub_color = 0;
+        d.players[0].slot = 0; // its own index: controller 0
         d.players[1].ckind = 8;
-        d.players[1].sub_color = 2;
+        d.players[1].slot = 3; // controller 2
         d.players[2].ckind = 8;
         d.players[2].slot_type = 1; // a CPU
-        d.players[2].sub_color = 3;
-        d.players[3].sub_color = 4; // no such controller
+        d.players[2].slot = 4;
+        d.players[3].slot = 5; // no such controller
+        d.players[3].sub_color = 1; // a team shade is not a controller
         unsafe { MatchBegin(&mut d) };
         assert_eq!((MatchCK(0), MatchGet(0), MatchCK(2), MatchGet(2), MatchCK(3), MatchCK(1)), (ck, 4, 8, 0, -1, -1));
         // an offline replay: each controller's recorded word, and its samples are not mapped again
@@ -342,6 +347,22 @@ mod tests {
         unsafe { MatchBegin(&mut d) };
         assert_eq!((MatchGet(0), MatchGet(2), controls_raw()), (1 | 4, fc::TAP_OFF, true));
         set_session(Session::Local);
+        // the regression (gw_replay.c read +7 = sub_color): P2 on controller 1 with a remapping layout is mapped there,
+        // and P1's controller 0 keeps its own map; a team shade changes nothing
+        let mut e = melee_types::StartMeleeData::zeroed();
+        e.players[0].ckind = 8;
+        e.players[0].slot = 1; // controller 0
+        e.players[0].sub_color = 2;
+        e.players[1].ckind = ck as i8;
+        e.players[1].slot = 2; // controller 1
+        e.players[1].sub_color = 3;
+        for p in 2..6 {
+            e.players[p].slot_type = melee_types::Gm_PKind_NA as u8;
+        }
+        assert_eq!(Set(1, ck, 0), 1);
+        unsafe { MatchBegin(&mut e) };
+        assert_eq!((MatchCK(0), MatchCK(1), MatchCK(2), MatchCK(3)), (8, ck, -1, -1));
+        assert_eq!((Apply(1, 0x100), Apply(1, 0x800), Apply(0, 0x100)), (0x200, 0x200, 0x100), "P2's Swap attacks on controller 1 only");
         MatchClear();
         MEMORY.lock().unwrap().clear();
         gh::TestRestore();

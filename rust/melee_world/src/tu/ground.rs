@@ -3382,7 +3382,9 @@ pub unsafe extern "C" fn Ground_801C4A08(gobj: *mut HSD_GObj) {
         if let Some(f) = (*gp).x1C_callback {
             f(gobj);
         }
-        if stage_info.map_gobjs[map_id as usize] == gobj {
+        // Fountain's platform grounds carry map_id -1 (seen tearing it down mid-match, stage_hop): the C reads
+        // the word before map_gobjs[0], which is never this gobj, so an out-of-range id clears nothing.
+        if (map_id as usize) < stage_info.map_gobjs.len() && stage_info.map_gobjs[map_id as usize] == gobj {
             stage_info.map_gobjs[map_id as usize] = null_mut();
         }
         Ground_801C55AC(gp);

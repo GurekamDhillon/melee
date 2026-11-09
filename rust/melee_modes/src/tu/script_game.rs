@@ -79,7 +79,7 @@ crate::ext_fns! {extern "C" fn ftCo_800B49F4(a0 : * mut Fighter) -> () = crate::
 crate::ext_fns! {extern "C" fn ftCo_800B4A78(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCo_800B4A78__b296ba;}
 crate::ext_fns! {extern "C" fn ftParts_GetBoneIndex(a0 : * mut Fighter, a1 : Fighter_Part) -> Fighter_Part;}
 crate::ext_fns! {extern "C" fn ftCommon_CalcSelfAccel_DeaccelQuickAir(a0 : * mut Fighter) -> :: core :: ffi :: c_int;}
-crate::ext_fns! {extern "C" fn ftCommon_UnlockECB(a0 : * mut Fighter) -> ();}
+crate::ext_fns! {extern "C" fn ftCommon_UnlockECB(a0 : * mut Fighter) -> () = crate::tu::stage_hop::unlock_ecb;}
 crate::ext_fns! {extern "C" fn ftCommon_8007D5D4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D5D4__dfe1c5;}
 crate::ext_fns! {extern "C" fn ftCommon_8007D6A4(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D6A4__198fd1;}
 crate::ext_fns! {extern "C" fn ftCommon_8007D7FC(a0 : * mut Fighter) -> () = crate::tu::adapt::ftCommon_8007D7FC__b6f6a2;}

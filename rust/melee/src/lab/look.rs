@@ -208,6 +208,7 @@ impl LabRun {
         let mut prof = [0u64; 4]; // MELEE_LOOK_PROF: load-in, ticks, save-resume, load-live (ns)
         let errs: [i8; 4] = core::array::from_fn(|p| self.last_pads[p].err);
         let mut ticked = 0u32;
+        let mut max_tick = 0u64;
         let mut finished = true;
         'runs: while job.out.len() < job.runs.len() {
             let spec = job.runs[job.out.len()];
@@ -252,7 +253,9 @@ impl LabRun {
                 if let Some(b) = budget {
                     // stop early enough that the slice's tail (save the resume point, load the live state) fits
                     let tail = Duration::from_nanos(self.look_tail_ns);
-                    if ticked > 0 && t0.elapsed() + tail >= b {
+                    // and the next tick fits too (the slowest tick of this slice as its estimate): the check sits before a
+                    // tick, so without it a slice overran the budget by up to one tick
+                    if ticked > 0 && t0.elapsed() + tail + Duration::from_nanos(max_tick) >= b {
                         let tr = Instant::now();
                         job.resume = Some(Resume { snap: self.g.save(), k, def: d, att: a });
                         prof[2] += tr.elapsed().as_nanos() as u64;
@@ -271,7 +274,9 @@ impl LabRun {
                 self.ai_kind = ai_kind;
                 let tt = Instant::now();
                 self.g.step(pads);
-                prof[1] += tt.elapsed().as_nanos() as u64;
+                let dt = tt.elapsed().as_nanos() as u64;
+                prof[1] += dt;
+                max_tick = max_tick.max(dt);
                 k += 1;
                 ticked += 1;
                 job.ticks += 1;

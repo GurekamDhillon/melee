@@ -1000,7 +1000,10 @@ impl Lab {
             self.dummy_panel(20.0, 70.0 + dy);
         }
         if mo && self.vals[H_LOOK] != 0 {
-            self.look_readout(vw - 480.0, 20.0);
+            // beside the move readout; below the frame meter when the two would overlap (windows under 1658 wide)
+            let lx = vw - 480.0;
+            let ly = if s_meter && lx < vw * 0.5 + 350.0 + 8.0 { meter_y + 84.0 } else { 20.0 };
+            self.look_readout(lx, ly);
         }
         if s_combo {
             self.combo_panel(20.0, dy + if s_dummy { 300.0 } else { 70.0 });
@@ -1376,35 +1379,53 @@ impl Lab {
             return;
         }
         let (state, kind, anchor, adv, runs) = (r(1), r(2), r(3), r(7), r(9));
-        self.panel(x, y, 220.0, 112.0);
+        let nruns = (runs.max(0) as usize).min(LOOK_RUNS);
+        // the neutral run (tag 5; the RNG sweep's tag 0): its outcome qualifies the advantage
+        let neutral = (0..nruns).map(|i| LOOK_HEAD + i * LOOK_RUN_I32).find(|&b| r(b) == 5 || (kind == 3 && r(b) == 0));
+        self.panel(x, y, 220.0, 124.0);
         let (mu, ac) = (self.t(T_MUTED), self.t(T_ACCENT));
         let mut t = Txt::new();
         t.s("Lookahead · f").i(anchor);
         if state != 3 {
-            t.s(if state == 1 { " · freeze to run" } else { " · running" });
+            t.s(if state == 1 { " · freeze" } else { " · running" });
         }
-        self.enc.text(x + 14.0, y + 12.0, ROLE_LABEL, mu, t.as_str());
+        self.enc.text_ex(x + 14.0, y + 12.0, ROLE_LABEL, mu, ALIGN_LEFT, 192.0, t.as_str());
         let mut v = Txt::new();
-        if adv == i32::MIN {
-            v.s("-");
+        let what = if kind == 1 { " on shield" } else { " on hit" };
+        if adv != i32::MIN {
+            v.int(adv, true).s(what);
+        } else if let Some(b) = neutral {
+            // no number: the defender was KO'd, or did not act within the run's cap (300 frames)
+            match r(b + 1) {
+                2 => { v.s("KO"); }
+                3 => { v.s(">=").i(r(b + 2) - r(b + 3).max(0)).s(" (capped)"); }
+                _ => { v.s("-"); }
+            }
         } else {
-            v.int(adv, true).s(if kind == 1 { " on shield" } else { " on hit" });
+            v.s(if state == 3 { "-" } else { "..." });
         }
         self.row(x + 14.0, y + 31.0, 192.0, "True advantage", v.as_str());
         if kind == 0 {
-            // the fan: numpad layout, 3 x 3 cells of 20, the advantage per direction under the KO marks
-            for i in 0..(runs.max(0) as usize).min(LOOK_RUNS) {
+            // the fan: numpad layout, 3 x 3 cells of 36 x 16 (room for "+100"), the advantage per DI direction
+            const CW: f32 = 36.0;
+            const CH: f32 = 16.0;
+            for i in 0..nruns {
                 let b = LOOK_HEAD + i * LOOK_RUN_I32;
                 let (tag, out, df, af) = (r(b), r(b + 1), r(b + 2), r(b + 3));
+                if !(1..=9).contains(&tag) {
+                    continue;
+                }
                 let (col, row) = (((tag - 1) % 3) as f32, (2 - (tag - 1) / 3) as f32);
-                let (cx, cy) = (x + 14.0 + col * 22.0, y + 52.0 + row * 18.0);
+                let (cx, cy) = (x + 14.0 + col * (CW + 2.0), y + 56.0 + row * (CH + 2.0));
                 let c = if out == 2 { 0xE0564EE0 } else if out == 1 { self.t(T_CELL) } else { mu };
-                self.enc.rect(cx, cy, 20.0, 16.0, c);
+                self.enc.rect(cx, cy, CW, CH, c);
                 let mut s = Txt::new();
-                if out == 2 { s.s("KO"); } else if out == 1 && af >= 0 { s.int(df - af, true); } else { s.s("?"); }
-                self.enc.text_ex(cx + 10.0, cy + 2.0, R_NUM, ac, ALIGN_CENTER, 0.0, s.as_str());
+                if out == 2 { s.s("KO"); } else if out == 1 && af >= 0 { s.int(df - af, true); } else if out == 3 { s.s("cap"); } else { s.s("?"); }
+                self.enc.text_ex(cx + CW * 0.5, cy + 2.0, R_NUM, ac, ALIGN_CENTER, CW - 2.0, s.as_str());
             }
-            self.enc.text(x + 86.0, y + 56.0, ROLE_LABEL, mu, "DI fan (P-adv)");
+            let lx = x + 14.0 + 3.0 * (CW + 2.0) + 6.0;
+            self.enc.text(lx, y + 58.0, ROLE_LABEL, mu, "DI fan");
+            self.enc.text(lx, y + 76.0, ROLE_LABEL, mu, "P-adv");
         }
     }
 

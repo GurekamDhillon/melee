@@ -212,6 +212,11 @@ pub(super) fn lookahead_checks(lab: &mut LabRun, sh: &Rc<RefCell<LabShared>>, ch
         "lab-check: info frame time (lab tick), lookahead off: mean {bm:.3} ms, p99 {b99:.3}, max {bmax:.3}; live lookahead, 4 ms budget: mean {lm:.3} ms, p99 {l99:.3}, max {lmax:.3}; {} jobs finished in {} slices",
         lab.look_perf.jobs - jobs0, lab.look_perf.slices - slices0
     );
+    if std::env::var_os("MELEE_SNAP_CHECK").is_some() {
+        // every save and load is compared page by page with the full state (~6-7 ms each): a live slice does two of
+        // each, so these frame times measure the check, not the lookahead (run without MELEE_SNAP_CHECK to time it)
+        eprintln!("lab-check: info the frame times above include MELEE_SNAP_CHECK's per-save/load page compare (not representative)");
+    }
     check(hb == hl, format!("live lookahead: 300 frames after a hit hash-equal to the same frames with it off (first difference {:?})", diff(&hl, &hb)));
     sh.borrow_mut().look_cfg = LOOK_AUTO;
     lab.look_verify = false;

@@ -4,6 +4,7 @@
 #![allow(clippy::missing_safety_doc)]
 
 use melee_modes::tu::script_game as sg;
+use melee_world::tu::camera as cam;
 use melee_script::game::ScriptGame;
 
 /// The engine's game, as the script host sees it (stateless: everything lives in the game's own globals).
@@ -135,9 +136,10 @@ impl ScriptGame for EngineGame {
     fn lab_motion_anim(&self, slot: i32, motion: i32) -> i32 {
         unsafe { sg::ScriptGame_LabMotionAnim(slot as _, motion as _) as _ }
     }
-    /// `ScriptGame_LabRowCount`
+    /// `ScriptGame_LabRowCount` (spelled in full: script_game.c's static `lab_row_count` shares the method's name, and
+    /// lint_logic's R2 tells a forwarder by its `::tu::` path)
     fn lab_row_count(&self, slot: i32) -> i32 {
-        unsafe { sg::ScriptGame_LabRowCount(slot as _) as _ }
+        unsafe { melee_modes::tu::script_game::ScriptGame_LabRowCount(slot as _) as _ }
     }
     /// `ScriptGame_LabSetPreviewRow`
     fn lab_set_preview_row(&mut self, slot: i32, row: i32, facing: i32) {
@@ -557,6 +559,140 @@ impl ScriptGame for EngineGame {
     fn caps_give_item_reason(&self, reason: i32) -> String {
         unsafe { cstr(sg::ScriptGame_CapsGiveItemReason(reason as _)) }.unwrap_or_default()
     }
+
+    // ---- names the native half asks the registries for (gw_script.c gs_char_name, the Lab's state browser)
+    /// `gw_Geno_DefineName(ck, buf, 48)`: gs_char_name's 48-byte buffer
+    fn geno_define_name(&self, ck: i32) -> Option<String> {
+        define_name(ck, 48)
+    }
+    /// `gw_Mex_FighterName(gw_Mex_PortCKindToExt(ck))` (the caller lower-cases and truncates it)
+    fn mex_fighter_name(&self, ck: i32) -> Option<String> {
+        unsafe { cstr(crate::mex_host::FighterName(crate::mex_host::PortCKindToExt(ck))) }
+    }
+    /// `gw_Geno_ProfileForKind`
+    fn geno_profile_for_kind(&self, kind: i32) -> i32 {
+        crate::geno_host::ProfileForKind(kind)
+    }
+    /// `gw_Geno_StateName`
+    fn geno_state_name(&self, profile: i32, n: i32) -> Option<String> {
+        crate::geno_host::StateName(profile, n)
+    }
+    /// `gw_GenoGame_ScriptOriginal`: the retail script a Geno overlay slot at `addr` replaced; 0 when addr is not one
+    fn geno_script_original(&self, addr: u32) -> u32 {
+        unsafe { melee_modes::tu::geno_game::GenoGame_ScriptOriginal(addr) }
+    }
+    /// `gw_Mex_MoveLogicEntriesForKind`
+    fn mex_move_logic_entries(&self, kind: i32) -> i32 {
+        crate::mex_guest::move_logic_entries(kind)
+    }
+    /// `gw_Geno_StateCount`
+    fn geno_state_count(&self, profile: i32) -> i32 {
+        crate::geno_host::StateCount(profile)
+    }
+    /// `gw_Stage_80225194`: the loaded external StKind (the caller answers -1 outside a match)
+    fn stage_external(&self) -> i32 {
+        unsafe { melee_world::tu::stage::Stage_80225194() as i32 }
+    }
+
+    // ---- the Geno combo graph (docs/geno.md section 25)
+    /// `gw_GenoGame_ComboInfo`
+    fn combo_info(&self, slot: i32, what: i32) -> i32 {
+        unsafe { melee_modes::tu::geno_game::GenoGame_ComboInfo(slot, what) }
+    }
+    /// `gw_GenoGame_ComboSetKi`
+    fn combo_set_ki(&mut self, slot: i32, ki: i32) -> i32 {
+        unsafe { melee_modes::tu::geno_game::GenoGame_ComboSetKi(slot, ki) }
+    }
+    /// `gw_Geno_ComboWord`
+    fn combo_word(&self, profile: i32, route: i32, word: i32) -> i32 {
+        crate::geno_host::ComboWord(profile, route, word)
+    }
+    /// `gw_Geno_ComboName`
+    fn combo_name(&self, profile: i32, route: i32) -> String {
+        crate::geno_host::ComboName(profile, route)
+    }
+    /// `gw_Geno_ComboStateName`
+    fn combo_state_name(&self, profile: i32, n: i32) -> String {
+        crate::geno_host::ComboStateName(profile, n)
+    }
+    /// `gw_GenoGame_LabReload`: fighters re-applied
+    fn geno_lab_reload(&mut self) -> i32 {
+        unsafe { melee_modes::tu::geno_game::GenoGame_LabReload() }
+    }
+
+    // ---- the scripted camera (cm/camera.c's TARGET_PC Camera_Script* block, melee_world::tu::camera)
+    /// `gw_Camera_ScriptGetBits`
+    fn camera_script_get_bits(&self, field: i32) -> i32 {
+        unsafe { cam::Camera_ScriptGetBits(field) }
+    }
+    /// `gw_Camera_ScriptSet`
+    fn camera_script_set(&mut self, field: i32, bits: i32) {
+        unsafe { cam::Camera_ScriptSet(field, bits) }
+    }
+    /// `gw_Camera_ScriptState`
+    fn camera_script_state(&self) -> i32 {
+        unsafe { cam::Camera_ScriptState() }
+    }
+    /// `gw_Camera_ScriptMode`
+    fn camera_script_mode(&self) -> i32 {
+        unsafe { cam::Camera_ScriptMode() }
+    }
+    /// `gw_Camera_ScriptCompletion`
+    fn camera_script_completion(&self) -> i32 {
+        unsafe { cam::Camera_ScriptCompletion() }
+    }
+    /// `gw_Camera_ScriptCompletionKind`
+    fn camera_script_completion_kind(&self) -> i32 {
+        unsafe { cam::Camera_ScriptCompletionKind() }
+    }
+    /// `gw_Camera_ScriptDetach`
+    fn camera_script_detach(&mut self) -> bool {
+        unsafe { cam::Camera_ScriptDetach() != 0 }
+    }
+    /// `gw_Camera_ScriptAttach`
+    fn camera_script_attach(&mut self, frames: i32) {
+        unsafe { cam::Camera_ScriptAttach(frames) }
+    }
+    /// `gw_Camera_ScriptReset`
+    fn camera_script_reset(&mut self) {
+        unsafe { cam::Camera_ScriptReset() }
+    }
+    /// `gw_Camera_ScriptCommit`
+    fn camera_script_commit(&mut self) {
+        unsafe { cam::Camera_ScriptCommit() }
+    }
+    /// `gw_Camera_ScriptMoveBegin`
+    fn camera_script_move_begin(&mut self) {
+        unsafe { cam::Camera_ScriptMoveBegin() }
+    }
+    /// `gw_Camera_ScriptMove`
+    fn camera_script_move(&mut self, frames: i32, ease: i32) {
+        unsafe { cam::Camera_ScriptMove(frames, ease) }
+    }
+    /// `gw_Camera_ScriptPathClear`
+    fn camera_script_path_clear(&mut self) {
+        unsafe { cam::Camera_ScriptPathClear() }
+    }
+    /// `gw_Camera_ScriptPathKey`
+    fn camera_script_path_key(&mut self, frame: i32) -> bool {
+        unsafe { cam::Camera_ScriptPathKey(frame) != 0 }
+    }
+    /// `gw_Camera_ScriptPathStart`
+    fn camera_script_path_start(&mut self) {
+        unsafe { cam::Camera_ScriptPathStart() }
+    }
+    /// `gw_Camera_ScriptFollow(kind, id, px, py, pz, ox, oy, oz)`: point and offset as float bits
+    fn camera_script_follow(&mut self, kind: i32, id: i32, point: [i32; 3], offset: [i32; 3]) -> bool {
+        unsafe { cam::Camera_ScriptFollow(kind, id, point[0], point[1], point[2], offset[0], offset[1], offset[2]) != 0 }
+    }
+    /// `gw_Camera_ScriptShake`
+    fn camera_script_shake(&mut self, intensity_bits: i32, frames: i32) {
+        unsafe { cam::Camera_ScriptShake(intensity_bits, frames) }
+    }
+    /// `gw_Camera_ScriptLiftBounds`
+    fn camera_script_lift_bounds(&mut self, lift: bool) {
+        unsafe { cam::Camera_ScriptLiftBounds(lift as i32) }
+    }
     /// `ScriptGame_LabScript`: the animation's subaction script. Raw archive images live in the OS arena below 4 GiB
     /// (lowmem.rs), so its address is the 32-bit guest word the C host hands Lua.
     fn lab_script(&self, slot: i32, anim: i32) -> Option<u32> {
@@ -614,6 +750,15 @@ unsafe fn cstr(p: *const core::ffi::c_char) -> Option<String> {
     (!p.is_null()).then(|| unsafe { core::ffi::CStr::from_ptr(p) }.to_string_lossy().into_owned())
 }
 
+/// `gw_Geno_DefineName(ck, buf, cap)` into a `cap`-byte buffer, as gs_char_name reads it back; None when it answers 0.
+fn define_name(ck: i32, cap: usize) -> Option<String> {
+    let mut buf = vec![0i8; cap.max(1)];
+    if crate::geno_host::DefineName(ck, buf.as_mut_ptr(), cap as i32) == 0 {
+        return None;
+    }
+    unsafe { cstr(buf.as_ptr()) }
+}
+
 /// The rules a replace call reads back by index while it runs (the C host's `gs_echo_input` / `gs_hit_rules_input`).
 static ECHO_INPUT: std::sync::Mutex<Vec<i32>> = std::sync::Mutex::new(Vec::new());
 static HIT_RULES_INPUT: std::sync::Mutex<Vec<i32>> = std::sync::Mutex::new(Vec::new());
@@ -638,5 +783,56 @@ pub fn by_name(name: &str, args: &[u64]) -> Option<u64> {
         "Script_EchoInput" => Some(input_at(&ECHO_INPUT, a(0))),
         "Script_HitRulesInput" => Some(input_at(&HIT_RULES_INPUT, a(0))),
         _ => None,
+    }
+}
+
+/// The registry-side name queries over a test-installed define (pc/geno/geno_combo_tests.inc's TC_HEAD / TC_LUA /
+/// TC_STATES / TC_COMBO text): the C answers, including the empty / NULL ones out of range.
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::geno_host as gh;
+    use melee_script::geno::consts::GENO_CR_COUNT;
+
+    #[test]
+    fn geno_names_and_combo_graph_like_c() {
+        let t = concat!(
+            "{\"geno\":11,\"fighters\":[{\"define\":{\"key\":\"combo-t\",\"name\":\"Combo T\",\"base\":\"mario\",\"common\":\"melee.common.v1\",",
+            "\"resources\":\"retail:mario\"}",
+            ",\"lua\":{\"source\":\"local M = {} function M.f(ctx) end return M\",\"state\":{\"armed\":\"int\"}}",
+            ",\"states\":[{\"name\":\"Light2\",\"behavior\":\"geno.ground\"},{\"name\":\"Heavy\",\"behavior\":\"geno.ground\"}]",
+            ",\"combo\":{\"buffer\":3,\"max_links\":3,\"ki\":{\"max\":100,\"start\":20,\"on_hit\":5,\"on_block\":1,\"on_taken\":2},\"routes\":[",
+            "{\"name\":\"L1>L2\",\"from\":\"jab1\",\"to\":\"geno:Light2\",\"input\":\"light\",\"on\":\"hit\",\"window\":[5,20]},",
+            "{\"name\":\"L1>H\",\"from\":\"jab1\",\"to\":\"geno:Heavy\",\"input\":\"heavy\",\"dir\":\"forward\",\"on\":\"hit\",\"window\":[5,20],\"priority\":5},",
+            "{\"name\":\"L2>H\",\"from\":\"geno:Light2\",\"to\":\"geno:Heavy\",\"input\":\"heavy\",\"on\":\"hit\",\"ki_cost\":10,\"when\":{\"slot\":\"armed\",\"min\":1}},",
+            "{\"name\":\"H>L2\",\"from\":[\"geno:Heavy\"],\"to\":\"geno:Light2\",\"input\":\"light\",\"on\":\"contact\"}],",
+            "\"strings\":[{\"name\":\"L1 L2 H\",\"steps\":[\"jab1\",\"geno:Light2\",\"geno:Heavy\"]}]}}]}\0"
+        );
+        assert_eq!(gh::TestInstall(t.as_ptr() as *const i8), 1);
+        let g = EngineGame;
+        let ck = gh::DefineResolve("combo-t");
+        assert!(ck > 0, "ck {ck}");
+        // gs_char_name's buffer: the define's name as written; snprintf keeps cap - 1 bytes
+        assert_eq!(g.geno_define_name(ck).as_deref(), Some("Combo T"));
+        assert_eq!(define_name(ck, 4).as_deref(), Some("Com"));
+        assert_eq!((g.geno_define_name(2), define_name(ck, 0)), (None, None));
+        let p = g.geno_profile_for_kind(ck - 1);
+        assert!(p >= 0, "profile {p}");
+        assert_eq!(g.geno_profile_for_kind(2), -1);
+        assert_eq!((g.geno_state_count(p), g.geno_state_count(-1)), (2, 0));
+        assert_eq!(g.geno_state_name(p, 0).as_deref(), Some("Light2"));
+        assert_eq!(g.geno_state_name(p, 1).as_deref(), Some("Heavy"));
+        assert_eq!((g.geno_state_name(p, 2), g.geno_state_name(p, -1), g.geno_state_name(-1, 0)), (None, None, None));
+        assert_eq!((g.combo_state_name(p, 1), g.combo_state_name(p, 2), g.combo_state_name(-1, 0)), ("Heavy".into(), String::new(), String::new()));
+        // stably sorted by priority, highest first (gn_combo_build): L1>H (5) ahead of the file order
+        assert_eq!((g.combo_name(p, 0), g.combo_name(p, 1), g.combo_name(p, 3)), ("L1>H".into(), "L1>L2".into(), "H>L2".into()));
+        assert_eq!((g.combo_name(p, 4), g.combo_name(p, -1), g.combo_name(-1, 0)), (String::new(), String::new(), String::new()));
+        for w in 0..GENO_CR_COUNT as i32 {
+            assert_eq!(g.combo_word(p, 1, w), gh::ComboWord(p, 1, w));
+        }
+        assert_eq!((g.combo_word(p, 4, 0), g.combo_word(p, 0, GENO_CR_COUNT as i32), g.combo_word(-1, 0, 0)), (0, 0, 0));
+        // no m-ex slot is installed: no MoveLogic table, no m-ex name
+        assert_eq!((g.mex_move_logic_entries(ck - 1), g.mex_move_logic_entries(2)), (0, 0));
+        gh::TestRestore();
     }
 }

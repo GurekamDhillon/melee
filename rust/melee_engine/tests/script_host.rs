@@ -138,3 +138,44 @@ fn fighters_animation_and_guest_memory() {
     assert!(!g.guest_ok(0x10, 4));
     assert_eq!(g.guest_word(0x10), 0);
 }
+
+/// The scripted camera (cm/camera.c's Camera_Script* through gw_script.c's calls): detach captures the game camera's pose,
+/// a set moves the detached pose, attach(frames) eases back (state 2) and attach(0) / reset snaps back (state 0). And the
+/// match-side Geno / stage queries on a vanilla match: no profile, no combo graph, scripts are their own originals.
+#[test]
+fn camera_script_and_match_queries() {
+    let Some((_g, mut e)) = boot(120) else { return };
+    let mut g = EngineGame;
+    assert_eq!(g.camera_script_state(), 0, "attached");
+    let eye: Vec<i32> = (0..8).map(|f| g.camera_script_get_bits(f)).collect();
+    assert!(g.camera_script_detach());
+    assert_eq!(g.camera_script_state(), 1, "detached");
+    assert_eq!((0..8).map(|f| g.camera_script_get_bits(f)).collect::<Vec<_>>(), eye, "detach keeps the game camera's pose");
+    g.camera_script_set(6, 45.0f32.to_bits() as i32);
+    g.camera_script_set(0, 12.5f32.to_bits() as i32);
+    assert_eq!((g.camera_script_get_bits(6), g.camera_script_get_bits(0)), (45.0f32.to_bits() as i32, 12.5f32.to_bits() as i32));
+    e.tick();
+    assert_eq!(g.camera_script_get_bits(6), 45.0f32.to_bits() as i32, "a detached pose survives a frame");
+    g.camera_script_attach(10);
+    assert_eq!(g.camera_script_state(), 2, "attaching");
+    g.camera_script_reset();
+    assert_eq!(g.camera_script_state(), 0, "reset snaps back");
+    // a set while attached is ignored (Camera_ScriptSet: state != 1 returns)
+    let fov = g.camera_script_get_bits(6);
+    g.camera_script_set(6, 10.0f32.to_bits() as i32);
+    assert_eq!(g.camera_script_get_bits(6), fov);
+    assert_eq!(g.camera_script_mode(), unsafe { melee_world::tu::camera::Camera_ScriptMode() });
+    assert_eq!(g.camera_script_completion(), unsafe { melee_world::tu::camera::Camera_ScriptCompletion() });
+
+    assert_eq!(g.stage_external(), unsafe { melee_world::tu::stage::Stage_80225194() } as i32);
+    assert_eq!(g.stage_external(), 32, "Final Destination's external id");
+    let kind = g.lab_i(0, melee_script::game::lab::I_NAME_KIND);
+    assert_eq!((g.geno_profile_for_kind(kind), g.geno_state_count(-1), g.mex_move_logic_entries(kind)), (-1, 0, 0));
+    assert!(g.combo_info(0, 3) < 0, "Falcon has no combo graph");
+    assert_eq!(g.combo_info(0, 3), unsafe { melee_modes::tu::geno_game::GenoGame_ComboInfo(0, 3) });
+    assert!(g.combo_set_ki(0, 50) < 0);
+    let script = g.lab_script(0, -1).expect("a script");
+    // geno_game.c: an address that is not a Geno overlay slot answers 0 (gw_script.c only asks at a Geno ORIG)
+    assert_eq!(g.geno_script_original(script), 0, "no Geno overlay on a vanilla fighter");
+    assert_eq!(g.geno_lab_reload(), 0, "no Geno fighter to re-apply");
+}

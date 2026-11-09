@@ -144,6 +144,10 @@ pub fn PoolGen() -> i32 {
     unsafe { POOL_GEN }
 }
 pub fn StateCount(p: i32) -> i32 { at(p).map_or(0, |x| x.nstate as i32) }
+/// gw_Geno_StateName: the state's geno.json name (the Lab's state browser); None when there is no such state.
+pub fn StateName(p: i32, s: i32) -> Option<String> { st(p, s).map(|x| x.st_name[s as usize].clone()) }
+/// gw_Geno_ComboStateName: the name of state s of profile p (the LAB's combo panel), "" when there is none.
+pub fn ComboStateName(p: i32, s: i32) -> String { st(p, s).map_or(String::new(), |x| x.st_name[s as usize].clone()) }
 pub fn StateBehavior(p: i32, s: i32) -> i32 { st(p, s).map_or(GENO_BHV_NONE as i32, |x| x.st_bhv[s as usize]) }
 pub fn StateCb(p: i32, s: i32, slot: i32) -> i32 {
     st(p, s).filter(|_| slot >= 0 && slot < GENO_CB_SLOTS as i32).map_or(-1, |x| x.st_cb[s as usize][slot as usize])
@@ -1005,6 +1009,8 @@ pub fn LuaCall(p: i32, s: i32, phase: i32, io: *mut core::ffi::c_void) -> i32 {
 // geno 11: combo graph and meter
 pub fn ComboParam(p: i32, what: i32) -> i32 { reg().combo_param(p, what) }
 pub fn ComboWord(p: i32, route: i32, word: i32) -> i32 { reg().combo_word(p, route, word) }
+/// gw_Geno_ComboName: route `route`'s name, "" when the profile has no such route.
+pub fn ComboName(p: i32, route: i32) -> String { reg().combo_name(p, route).to_string() }
 pub fn MeterParam(p: i32, what: i32) -> i32 { reg().meter_param(p, what) }
 /// gw_Geno_ComboNote: the log of a taken link (rate-limited; never state).
 pub fn ComboNote(p: i32, route: i32, from: i32, to: i32, frame: i32, ki_links: i32) {

@@ -169,3 +169,39 @@ the ppc32 dump). What the sync (363720e12, incl. #3583 "name all anonymous types
   Handle / HSD_AllocEntry split in lbmemory, HSD_Text's state stack, HSD_AObj.jobj, the x4_specialAttributes /
   ftData_Item unions, CollVtx, the castle GroundVars variants merged into castle3, mpIsland, ifStock_804A157C,
   Camera x35C/x368 unions, Fighter x5A4/x5A8 as usize. Every workspace library compiles.
+- `OPAQUE_FIELDS` (gen_types.py): a pointer the port reads as raw big-endian bytes stays `d.ptr::<c_void>(..)`
+  even when upstream typed it (Article.x4_specialAttributes, ItemStateDesc.xC_script, the vertex / TLUT / image /
+  EF data pointers, TmBoxArrays.box2..4): a typed decode there pulled a native copy out of game memory and the
+  item scripts diverged (itemsum golden). `ftDynamics_x0.ftDynamicBones` decodes by `extent` (every row of the
+  table in the DAT), not by `dynamicsNum`: Puff's dynamics walk reads rows beyond the count
+  (ftCo_8009DC54 -> lb_8000FD48) and the hero replays crashed on them with the `count` rule.
+- Verification on port/mrg2: `gate.sh` GATE OK (4/4 goldens 1801/1801/3601/3601, synctest 0 mismatches, audio
+  mix hash equal, baselines 144, lints, snapguard under baseline); the replay sets against the m5 baselines:
+  hero 392/428, local 125/125, own 917/917, no row changed.
+- Oracle data regenerated with the existing generators against the new headers (each run rewrites the
+  `BEGIN GENERATED EXT` blocks in src/; `git checkout -- rust/*/src` after every batch, so src/ is exactly the
+  compile-carried port): runtime mtu (shadow with the real PSVECScale linked into the C oracle, archive,
+  lbcardgame, particle, wobj + the 32 that ran unchanged), lbtu (4), kinds (all 82 minus the stale-by-design
+  three; the spec strings in gen/kinds/specs_cfg*.py / cfg_809.py carry the renames: UnkFlagStruct.x0.bN,
+  itMaril x60.x0_s, itYaku x4_u, HitCapsule.x134, itSpecialAttrsHead for the itLeadead / itLikelike / itTincle
+  heads, ItemSpecialAttributes / ftData_ExtAttr union casts, efAsync_Spawn's EF_QueuedEffect** queue head),
+  tuoracle group B (tu_geno_game*, tu_script_game*), modes tuo (8), chara oracle (10 of 14), items mtu toy.
+  `port_legacy.h` takes `PORT_LEGACY_ITEMS_ONLY` so a kinds oracle pulls only the item views.
+- Generators that still do not run against the post-sync headers (their tests keep the committed data, which the
+  suite below checks): melee_world mtu / if / gr_oracle / tuo specs (member names: UnkStageDat unk0/unk4/unk8,
+  `cmd->u` patch texts, soundtest x10 union, textlib; specs_if.py has a pre-existing `setup_c` repeated keyword
+  SyntaxError), melee_fighter regen scripts (19 cref state/stub headers), chara oracle ftsamusspeciallw1 /
+  ftsamusspecialn / ftyoshispecialhi / ftyoshispeciallw, runtime lbarq (its `handle->node` patch is gone with
+  lbArqHandle), lbtu lbsnap / lbspdisplay / lbvector, items mtu run_tu stems (mk_driver must rewrite world.h first;
+  the walker now descends the newly named unions and asks for pick_fn / pick_HSD_DObj pools the per-item
+  harness does not have) and run_it stems incl. tu_itfoods (same pick_fn), item (`xDAA_byte` patch text).
+  Stale by design and left at their 2bcd8c9ee data: oracle_ftyoshispecialn, tu_ftCo_YoshiEgg, kinds_itsword,
+  kinds_itmariofireball, kinds_itluigifireball.
+- Oracle suite (per-binary runner with oracle_tests.sh's flags, `-Zmerge-functions=disabled -Clink-arg=/OPT:NOICF`,
+  shared target `_build/cargo-shared/oracle`, tests serial): NOT RUN on port/mrg2. The workspace `--tests` build was
+  stopped by the harness for critically low system memory three minutes in (one rustc at 7.6 GB with 6 jobs beside
+  other sessions); it is to be started again only on request, with `CARGO_BUILD_JOBS=2`. Reference before the
+  types regen (port/regen1): 1037 targets, 5 no-compile, 583 pass / 449 fail; 142 fail with /OPT:NOICF
+  (melee_fighter 39, melee_world 28, melee_runtime 24, melee_items 17, melee_chara 15, melee_modes 14, five
+  singles). tu_shadow's op 17 (HSD_ViewingRectAddRect) trace agreement is therefore unverified too; its C oracle
+  now links the real PSVECScale (mtx_pc.c copy in lbspecs_shadow.py) and the test data was regenerated.

@@ -962,8 +962,8 @@ pub struct GenoEnv {
     pub dir: std::path::PathBuf,
 }
 impl melee_script::geno::registry::Env for GenoEnv {
-    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::lua::FighterCode>, String> {
-        crate::geno_wasm::load(module, slot_names, slot_types, targets).map(|g| Box::new(g) as Box<dyn melee_script::geno::lua::FighterCode>)
+    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::code::FighterCode>, String> {
+        crate::geno_wasm::load(module, slot_names, slot_types, targets).map(|g| Box::new(g) as Box<dyn melee_script::geno::code::FighterCode>)
     }
     fn mex_pl_file(&self, slot: usize) -> Option<String> {
         let k = SlotInternal(slot as i32);

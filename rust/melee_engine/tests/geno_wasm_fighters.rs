@@ -1,33 +1,133 @@
-//! geno 12: Goku's fighter code compiled (rust/mods/geno_fighters/goku.wasm, from goku.c) against the geno 10 Lua it
-//! replaces (tools/rust-port/golden/coverage/goku-xv2-lua/goku.lua, run by the same GLua the engine runs). Every
-//! callback over the same io blocks must leave the same 64 words and return the same code: then the game half sees
-//! no difference, and the C goldens the Lua build matches (mex_goku_cpu) hold for the wasm build. No disc needed.
+//! geno 12: the fighter modules (rust/mods/geno_fighters: goku, goku_ki, charger, riposte, and the game-half suite's
+//! fixtures tests/charge, counter, empty) against the fighter Lua they replace. Each was compared word for word with
+//! its Lua through the engine's GLua over the io blocks below (every callback, the 64 io words and the return code)
+//! before Lua left the port (commits e1c938332 .. 8a98e4134); the digests of what the Lua produced over those blocks
+//! were recorded then and are what each module must reproduce now. The Lua texts stay as the reference:
+//! tools/rust-port/golden/coverage/goku-xv2-lua, pc/geno/mods/vanilla-{charger,riposte}/lua, pc/geno/geno_tests.c.
+//! A changed module that still matches the Lua would match these digests; any other change fails here.
 use melee_engine::geno_wasm;
+use melee_script::geno::code::{FighterCode, GLUA_BOOL, GLUA_FLOAT, GLUA_INT};
 use melee_script::geno::consts::*;
-use melee_script::geno::lua::{FighterCode, GLua, GLUA_FLOAT, GLUA_INT};
 
 const ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../..");
-const FNS: [&str; 13] = [
+const FNS: [&str; 12] = [
     "charge_enter", "charge_frame", "rush_enter", "rush_frame", "rushcombo_enter", "rushcombo_frame", "recovery_enter",
-    "counter_frame", "riposte_enter", "riposte_frame", "kicharge_frame", "it_targets", "nope",
+    "counter_frame", "riposte_enter", "riposte_frame", "kicharge_frame", "it_targets",
 ];
+const GOKU_SLOTS: [&str; 3] = ["charge", "counter_damage", "stored"];
+const GOKU_TYPES: [i32; 3] = [GLUA_INT, GLUA_FLOAT, GLUA_INT];
+const GOKU_TARGETS: [&str; 8] = ["KameTap", "KameMid", "KameFull", "KameSuper", "KiCharge", "ITEnd", "ITEndAir", "RushCombo"];
 
-fn layout() -> (Vec<String>, Vec<i32>) {
-    // goku-xv2's lua.state: {charge: int, counter_damage: float, stored: int}
-    (vec!["charge".into(), "counter_damage".into(), "stored".into()], vec![GLUA_INT, GLUA_FLOAT, GLUA_INT])
+/// FNV-1a over a call's return code and its 64 io words (as recorded from the Lua).
+fn fold(mut h: u64, rc: i32, io: &[u32]) -> u64 {
+    for w in std::iter::once(rc as u32).chain(io.iter().copied()) {
+        for b in w.to_le_bytes() {
+            h = (h ^ b as u64).wrapping_mul(0x100_0000_01b3);
+        }
+    }
+    h
 }
 
-fn both(targets: &[&str]) -> (Box<GLua>, geno_wasm::GenoWasm) {
-    let (names, types) = layout();
+/// Runs `fns` of a module over `blocks` io blocks from `seed` (`fill` adjusts each block, as when the digest was
+/// recorded), returns the digest and the number of faulting calls.
+#[allow(clippy::too_many_arguments)]
+fn run(wasm: &str, names: &[&str], types: &[i32], targets: &[&str], fns: &[&str], seed: u64, fill: fn(&mut Rng, &mut [u32]), blocks: usize) -> (u64, usize) {
+    let names: Vec<String> = names.iter().map(|s| s.to_string()).collect();
     let targets: Vec<String> = targets.iter().map(|s| s.to_string()).collect();
-    let src = std::fs::read(format!("{ROOT}/tools/rust-port/golden/coverage/goku-xv2-lua/goku.lua")).unwrap();
-    let mut l = GLua::new().unwrap();
-    l.set_layout(&names, &types);
-    l.set_targets(&targets);
-    assert!(l.load(&src, "=lua/goku.lua"), "{}", l.err);
-    let bytes = std::fs::read(format!("{ROOT}/rust/mods/geno_fighters/goku.wasm")).unwrap();
-    let w = geno_wasm::load(&bytes, &names, &types, &targets).unwrap();
-    (l, w)
+    let mut w = geno_wasm::load(&std::fs::read(format!("{ROOT}/{wasm}")).unwrap(), &names, types, &targets).unwrap();
+    let mut r = Rng(seed);
+    let (mut digest, mut faults) = (0xcbf2_9ce4_8422_2325u64, 0);
+    for _ in 0..blocks {
+        let mut base = io(&mut r);
+        fill(&mut r, &mut base);
+        for name in fns {
+            let f = FighterCode::find(&w, name);
+            assert!(f >= 0, "{wasm}: {name} is not exported");
+            let mut b = base;
+            let rc = unsafe { FighterCode::call(&mut w, f, b.as_mut_ptr()) };
+            faults += (rc != 0) as usize;
+            digest = fold(digest, rc, &b);
+        }
+    }
+    (digest, faults)
+}
+
+fn none(_: &mut Rng, _: &mut [u32]) {}
+
+fn layout() -> (Vec<String>, Vec<i32>) {
+    (GOKU_SLOTS.iter().map(|s| s.to_string()).collect(), GOKU_TYPES.to_vec())
+}
+
+#[test]
+fn goku_matches_goku_lua() {
+    let (d, faults) = run("rust/mods/geno_fighters/goku.wasm", &GOKU_SLOTS, &GOKU_TYPES, &GOKU_TARGETS, &FNS, 0x6F6B_7567_0001, none, 4000);
+    assert_eq!((d, faults), (0xd63d3f2354c2a60f, 0), "goku.lua's outputs");
+}
+
+#[test]
+fn goku_missing_targets_fault_as_lua() {
+    let (d, faults) = run("rust/mods/geno_fighters/goku.wasm", &GOKU_SLOTS, &GOKU_TYPES, &["KameTap", "KameMid", "ITEnd"], &FNS, 0x6F6B_7567_0002, none, 2000);
+    assert!(faults > 0);
+    assert_eq!(d, 0x113adab9fe113560, "goku.lua's outputs and faults with missing states");
+}
+
+const VSEED: u64 = 0x7661_6E69_6C6C_61;
+
+#[test]
+fn goku_ki_matches_goku_ki_lua() {
+    let (d, _) = run("rust/mods/geno_fighters/goku_ki.wasm", &GOKU_SLOTS, &GOKU_TYPES, &GOKU_TARGETS, &FNS, VSEED, |r, w| {
+        w[GENO_LUA_IO_KI as usize] = [0, 999, 1000, 1001, 9999, 10000, 10001, 15000][r.below(8) as usize];
+        w[GENO_LUA_IO_ACTION_FRAME as usize] = [1, 2, 3, 12, 20][r.below(5) as usize];
+    }, 4000);
+    assert_eq!(d, 0x6e44daeac34f2adb, "goku_ki.lua's outputs");
+}
+
+#[test]
+fn charger_matches_charger_lua() {
+    let (d, _) = run("rust/mods/geno_fighters/charger.wasm", &["charge", "charged"], &[GLUA_INT, GLUA_BOOL], &["Charge", "Release"],
+        &["charge_enter", "charge_frame", "release_enter", "release_frame"], VSEED, |r, w| {
+            w[GENO_LUA_IO_STATE as usize] = [0, 1, 30, 58, 59, 60][r.below(6) as usize];
+            w[GENO_LUA_IO_STATE as usize + 1] = r.below(2) as u32;
+        }, 4000);
+    assert_eq!(d, 0xe58091fe960c36a0, "charger.lua's outputs");
+}
+
+#[test]
+fn riposte_matches_riposte_lua() {
+    let (d, _) = run("rust/mods/geno_fighters/riposte.wasm", &["power", "streak", "follow"], &[GLUA_FLOAT, GLUA_INT, GLUA_BOOL],
+        &["Parry", "Riposte", "Follow"], &["parry_enter", "parry_frame", "riposte_enter", "riposte_frame", "follow_enter", "follow_frame"], VSEED, |r, w| {
+            w[GENO_LUA_IO_ACTION_FRAME as usize] = [0, 5, 6, 7, 8, 9, 16, 17, 23, 24, 25, 29, 30, 31][r.below(14) as usize];
+            w[GENO_LUA_IO_HIT_DAMAGE as usize] = match r.below(4) {
+                0 => 6.0f32.to_bits(),
+                1 => 20.0f32.to_bits(),
+                _ => r.f(0.0, 40.0),
+            };
+            w[GENO_LUA_IO_HIT_FROM as usize] = r.below(3) as u32;
+            w[GENO_LUA_IO_STATE as usize] = r.f(0.0, 35.0);
+            w[GENO_LUA_IO_STATE as usize + 1] = r.below(6) as u32;
+            w[GENO_LUA_IO_STATE as usize + 2] = r.below(2) as u32;
+        }, 4000);
+    assert_eq!(d, 0xa4e3ce887521d5a6, "riposte.lua's outputs");
+}
+
+/// The game-half suite's fixtures against the inline Lua it carried (pc/geno/geno_tests.c).
+#[test]
+fn suite_fixtures_match_their_lua() {
+    let (d, _) = run("rust/mods/geno_fighters/tests/charge.wasm", &["charge", "armed"], &[GLUA_INT, GLUA_BOOL], &["Charge", "Release", "Bad"],
+        &["enter", "frame", "rel", "relf", "boom"], VSEED, |r, w| {
+            w[GENO_LUA_IO_STATE as usize] = [0, 2, 3, 59, 60, 61][r.below(6) as usize];
+            w[GENO_LUA_IO_STATE as usize + 1] = r.below(2) as u32;
+        }, 3000);
+    assert_eq!(d, 0xa666dfc78fe14bfa, "charge fixture");
+    let (d, _) = run("rust/mods/geno_fighters/tests/counter.wasm", &["power", "seen", "from"], &[GLUA_FLOAT, GLUA_INT, GLUA_INT], &["Parry", "Answer", "Spin"],
+        &["answer", "strike", "spin"], VSEED, |r, w| {
+            w[GENO_LUA_IO_COUNTERED as usize] = r.below(3) as u32;
+            w[GENO_LUA_IO_HIT_FROM as usize] = r.below(3) as u32;
+            w[GENO_LUA_IO_HIT_DAMAGE as usize] = match r.below(3) { 0 => 6.0f32.to_bits(), 1 => 20.0f32.to_bits(), _ => r.f(0.0, 40.0) };
+        }, 3000);
+    assert_eq!(d, 0x778d9e9395438501, "counter fixture");
+    let (d, _) = run("rust/mods/geno_fighters/tests/empty.wasm", &["armed"], &[GLUA_INT], &["Light2", "Heavy"], &["f"], VSEED, none, 3000);
+    assert_eq!(d, 0x18d33f5d9bd80121, "empty fixture");
 }
 
 /// xorshift64*: the io blocks are a fixed sequence, so a failure reproduces
@@ -84,44 +184,6 @@ fn io(r: &mut Rng) -> [u32; GENO_LUA_IO_WORDS as usize] {
 fn held(r: &mut Rng) -> u32 {
     let all = [GENO_BTN_ATTACK, GENO_BTN_SPECIAL, GENO_BTN_JUMP, GENO_BTN_SHIELD, GENO_BTN_GRAB, GENO_BTN_BLAST];
     all.iter().filter(|_| r.below(2) == 1).fold(0, |a, b| a | b)
-}
-
-fn compare(targets: &[&str], blocks: usize, seed: u64) -> usize {
-    let (mut l, mut w) = both(targets);
-    let mut r = Rng(seed);
-    let mut faults = 0;
-    for _ in 0..blocks {
-        let base = io(&mut r);
-        for name in FNS {
-            let (fl, fw) = (l.find(name), FighterCode::find(&w, name));
-            assert_eq!(fl >= 0, fw >= 0, "{name}: exported by one side only");
-            if fl < 0 {
-                continue;
-            }
-            let (mut a, mut b) = (base, base);
-            let ra = unsafe { l.call(fl, a.as_mut_ptr()) };
-            let rb = unsafe { FighterCode::call(&mut w, fw, b.as_mut_ptr()) };
-            faults += (ra != 0) as usize;
-            assert_eq!(ra, rb, "{name}: return codes differ (lua: {}, wasm: {})\nio {base:08x?}", l.err, FighterCode::err(&w));
-            assert_eq!(a, b, "{name}: io words differ\nio   {base:08x?}\nlua  {a:08x?}\nwasm {b:08x?}");
-        }
-    }
-    faults
-}
-
-#[test]
-fn goku_wasm_equals_goku_lua() {
-    // the define's Geno states (any order: both sides encode `go` by this list's index)
-    let t = ["KameTap", "KameMid", "KameFull", "KameSuper", "KiCharge", "ITEnd", "ITEndAir", "RushCombo"];
-    let faults = compare(&t, 4000, 0x6F6B_7567_0001);
-    assert_eq!(faults, 0, "goku.lua faults on none of these blocks");
-}
-
-#[test]
-fn goku_missing_target_faults_alike() {
-    // without KameFull / KiCharge the `go` calls fault (GENO_LUA_FAULT_COMMAND) on both sides at the same point
-    let faults = compare(&["KameTap", "KameMid", "ITEnd"], 2000, 0x6F6B_7567_0002);
-    assert!(faults > 0, "some blocks reach a missing state");
 }
 
 #[test]
@@ -201,119 +263,3 @@ fn registry_wasm_block() {
 }
 
 
-/// The two vanilla packages' fighter Lua (pc/geno/mods/vanilla-{charger,riposte}/lua) against their geno 12 ports.
-fn compare_pkg(lua: &str, wasm: &str, names: &[&str], types: &[i32], targets: &[&str], fns: &[&str], fill: fn(&mut Rng, &mut [u32]), blocks: usize) {
-    let names: Vec<String> = names.iter().map(|s| s.to_string()).collect();
-    let targets: Vec<String> = targets.iter().map(|s| s.to_string()).collect();
-    let mut l = GLua::new().unwrap();
-    l.set_layout(&names, types);
-    l.set_targets(&targets);
-    let lp = if lua.starts_with('/') { lua.to_string() } else { format!("{ROOT}/{lua}") };
-    assert!(l.load(&std::fs::read(lp).unwrap(), "=lua"), "{}", l.err);
-    let mut w = geno_wasm::load(&std::fs::read(format!("{ROOT}/{wasm}")).unwrap(), &names, types, &targets).unwrap();
-    let mut r = Rng(0x7661_6E69_6C6C_61);
-    for _ in 0..blocks {
-        let mut base = io(&mut r);
-        fill(&mut r, &mut base);
-        for name in fns {
-            let (fl, fw) = (l.find(name), FighterCode::find(&w, name));
-            assert!(fl >= 0 && fw >= 0, "{name} missing (lua {fl}, wasm {fw})");
-            let (mut a, mut b) = (base, base);
-            let ra = unsafe { l.call(fl, a.as_mut_ptr()) };
-            let rb = unsafe { FighterCode::call(&mut w, fw, b.as_mut_ptr()) };
-            assert_eq!((ra, a), (rb, b), "{name}: lua {} / wasm {}\nio {base:08x?}", l.err, FighterCode::err(&w));
-        }
-    }
-}
-
-#[test]
-fn charger_wasm_equals_charger_lua() {
-    compare_pkg(
-        "pc/geno/mods/vanilla-charger/lua/charger.lua",
-        "rust/mods/geno_fighters/charger.wasm",
-        &["charge", "charged"],
-        &[GLUA_INT, melee_script::geno::lua::GLUA_BOOL],
-        &["Charge", "Release"],
-        &["charge_enter", "charge_frame", "release_enter", "release_frame"],
-        |r, w| {
-            w[GENO_LUA_IO_STATE as usize] = [0, 1, 30, 58, 59, 60][r.below(6) as usize];
-            w[GENO_LUA_IO_STATE as usize + 1] = r.below(2) as u32;
-        },
-        4000,
-    );
-}
-
-#[test]
-fn riposte_wasm_equals_riposte_lua() {
-    compare_pkg(
-        "pc/geno/mods/vanilla-riposte/lua/riposte.lua",
-        "rust/mods/geno_fighters/riposte.wasm",
-        &["power", "streak", "follow"],
-        &[GLUA_FLOAT, GLUA_INT, melee_script::geno::lua::GLUA_BOOL],
-        &["Parry", "Riposte", "Follow"],
-        &["parry_enter", "parry_frame", "riposte_enter", "riposte_frame", "follow_enter", "follow_frame"],
-        |r, w| {
-            // action frames around 6 / 8 / 16 / 24 / 30, hit damage across 6 (9 / 1.5) and 20 (30 / 1.5), both sides
-            w[GENO_LUA_IO_ACTION_FRAME as usize] = [0, 5, 6, 7, 8, 9, 16, 17, 23, 24, 25, 29, 30, 31][r.below(14) as usize];
-            w[GENO_LUA_IO_HIT_DAMAGE as usize] = match r.below(4) {
-                0 => 6.0f32.to_bits(),
-                1 => 20.0f32.to_bits(),
-                _ => r.f(0.0, 40.0),
-            };
-            w[GENO_LUA_IO_HIT_FROM as usize] = r.below(3) as u32;
-            w[GENO_LUA_IO_STATE as usize] = r.f(0.0, 35.0);
-            w[GENO_LUA_IO_STATE as usize + 1] = r.below(6) as u32;
-            w[GENO_LUA_IO_STATE as usize + 2] = r.below(2) as u32;
-        },
-        4000,
-    );
-}
-
-#[test]
-fn goku_ki_wasm_equals_goku_ki_lua() {
-    compare_pkg(
-        "tools/rust-port/golden/coverage/goku-xv2-lua/goku_ki.lua",
-        "rust/mods/geno_fighters/goku_ki.wasm",
-        &["charge", "counter_damage", "stored"],
-        &[GLUA_INT, GLUA_FLOAT, GLUA_INT],
-        &["KameTap", "KameMid", "KameFull", "KameSuper", "KiCharge", "ITEnd", "ITEndAir", "RushCombo"],
-        &FNS[..12],
-        |r, w| {
-            // ki (hundredths) around the vanish cost (10) and the super cost (100); action frames 2 and 12
-            w[GENO_LUA_IO_KI as usize] = [0, 999, 1000, 1001, 9999, 10000, 10001, 15000][r.below(8) as usize];
-            w[GENO_LUA_IO_ACTION_FRAME as usize] = [1, 2, 3, 12, 20][r.below(5) as usize];
-        },
-        4000,
-    );
-}
-
-/// The game-half suite's inline Lua (melee_modes::tu::geno_tests, from pc/geno/geno_tests.c) against the fixture modules
-/// the suite installs instead (rust/mods/geno_fighters/tests/*.c): the rewrite of the suite keeps its expectations
-/// only if these agree word for word.
-fn compare_src(src: &str, wasm: &str, names: &[&str], types: &[i32], targets: &[&str], fns: &[&str], fill: fn(&mut Rng, &mut [u32])) {
-    let dir = std::env::temp_dir().join(format!("genofix-{}-{}", std::process::id(), wasm.replace('/', "_")));
-    std::fs::write(&dir, src).unwrap();
-    compare_pkg(&dir.display().to_string(), wasm, names, types, targets, fns, fill, 3000);
-    let _ = std::fs::remove_file(&dir);
-}
-
-const CHARGE_LUA: &str = "local M = {} function M.enter(ctx) ctx.state.charge = 0 end function M.frame(ctx) local s = ctx.state if ctx.input.special_held and s.charge < 60 then s.charge = s.charge + 1 s.armed = s.charge >= 3 else ctx.go('Release') end end function M.rel(ctx) ctx.velocity(1.6 + 0.03 * ctx.state.charge, 0) end function M.relf(ctx) ctx.hitbox_damage(3, 6 + 0.15 * ctx.state.charge) end function M.boom(ctx) ctx.state.charge = 77 error('boom') end return M";
-const COUNTER_LUA: &str = "local M = {} function M.answer(ctx) local s = ctx.state s.power = math.min(30, math.max(9, 1.5 * ctx.self.hit_damage)) s.seen = ctx.self.countered s.from = ctx.self.hit_from end function M.strike(ctx) ctx.hitbox_damage(3, ctx.state.power) end function M.spin(ctx) ctx.turn() ctx.velocity(2, 0) end return M";
-const EMPTY_LUA: &str = "local M = {} function M.f(ctx) end return M";
-
-#[test]
-fn suite_fixtures_equal_their_lua() {
-    use melee_script::geno::lua::GLUA_BOOL;
-    compare_src(CHARGE_LUA, "rust/mods/geno_fighters/tests/charge.wasm", &["charge", "armed"], &[GLUA_INT, GLUA_BOOL],
-        &["Charge", "Release", "Bad"], &["enter", "frame", "rel", "relf", "boom"], |r, w| {
-            w[GENO_LUA_IO_STATE as usize] = [0, 2, 3, 59, 60, 61][r.below(6) as usize];
-            w[GENO_LUA_IO_STATE as usize + 1] = r.below(2) as u32;
-        });
-    compare_src(COUNTER_LUA, "rust/mods/geno_fighters/tests/counter.wasm", &["power", "seen", "from"], &[GLUA_FLOAT, GLUA_INT, GLUA_INT],
-        &["Parry", "Answer", "Spin"], &["answer", "strike", "spin"], |r, w| {
-            w[GENO_LUA_IO_COUNTERED as usize] = r.below(3) as u32;
-            w[GENO_LUA_IO_HIT_FROM as usize] = r.below(3) as u32;
-            w[GENO_LUA_IO_HIT_DAMAGE as usize] = match r.below(3) { 0 => 6.0f32.to_bits(), 1 => 20.0f32.to_bits(), _ => r.f(0.0, 40.0) };
-        });
-    compare_src(EMPTY_LUA, "rust/mods/geno_fighters/tests/empty.wasm", &["armed"], &[GLUA_INT], &["Light2", "Heavy"], &["f"], |_, _| {});
-}

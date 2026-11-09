@@ -53,7 +53,7 @@ pub trait Env {
     }
     /// geno 12: a define's `wasm` fighter module, ready to call (slot layout and the `go` target names given). Err is
     /// the refusal text; a host without a wasm runtime refuses every module.
-    fn fighter_wasm(&self, _module: &[u8], _slot_names: &[String], _slot_types: &[i32], _targets: &[String]) -> Result<Box<dyn super::lua::FighterCode>, String> {
+    fn fighter_wasm(&self, _module: &[u8], _slot_names: &[String], _slot_types: &[i32], _targets: &[String]) -> Result<Box<dyn super::code::FighterCode>, String> {
         Err("this host runs no wasm fighter modules".into())
     }
     /// gw_Fx_BindLoad: the fx binding set for a path in the mod, -1 none.

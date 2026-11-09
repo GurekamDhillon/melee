@@ -11,8 +11,8 @@ use crate::snap_host::host_heap;
 /// module). No m-ex slots are installed in this engine. Tests (no mods dir) read nothing.
 pub struct FsEnv;
 impl Env for FsEnv {
-    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::lua::FighterCode>, String> {
-        crate::geno_wasm::load(module, slot_names, slot_types, targets).map(|g| Box::new(g) as Box<dyn melee_script::geno::lua::FighterCode>)
+    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::code::FighterCode>, String> {
+        crate::geno_wasm::load(module, slot_names, slot_types, targets).map(|g| Box::new(g) as Box<dyn melee_script::geno::code::FighterCode>)
     }
     fn read_mod_file(&self, mod_id: &str, rel: &str) -> Option<Vec<u8>> {
         let (dir, _) = unsafe { BOOT_MODS.as_ref()? };
@@ -34,7 +34,7 @@ const SUITE_MODULES: [(&str, &[u8]); 3] = [
     ("tests/empty.wasm", include_bytes!("../../mods/geno_fighters/tests/empty.wasm")),
 ];
 impl Env for SuiteEnv {
-    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::lua::FighterCode>, String> {
+    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::code::FighterCode>, String> {
         FsEnv.fighter_wasm(module, slot_names, slot_types, targets)
     }
     fn read_mod_file(&self, _mod_id: &str, rel: &str) -> Option<Vec<u8>> {
@@ -1024,7 +1024,7 @@ pub fn DefineVoiceState(kind: i32, owner: u32, motion: i32) -> i32 {
     }
     let p = p as usize;
     let Some(a) = r.p[p].def.aud.as_ref() else { return 0 };
-    let s = motion - melee_script::gd::players::GENO_MOTION_BASE;
+    let s = motion - melee_script::geno::GENO_MOTION_BASE;
     let nstate = r.p[p].nstate as i32;
     let mut stopped = 0;
     for i in 0..a.voice_sfx.len() {
@@ -1687,7 +1687,7 @@ mod clip_tests {
         for (i, t) in tones.iter().enumerate() {
             gn_clip_slot(p, 1 + i).pcm = Some((t.clone(), 4, 1));
         }
-        let base = melee_script::gd::players::GENO_MOTION_BASE;
+        let base = melee_script::geno::GENO_MOTION_BASE;
         let play = |sfx, o| DefineVoicePlayOwner(kind, sfx, o);
         play(77, 1);
         play(77, 1);

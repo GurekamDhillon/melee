@@ -1,5 +1,5 @@
 //! geno 12: a define's fighter code as a wasm module (the `wasm` block), the compiled replacement of the geno 10
-//! `lua` block. Same contract as melee_script::geno::lua (geno_lua_core): the game half hands a call its io block of
+//! `lua` block. Same contract as melee_script::geno::code (geno_lua_core): the game half hands a call its io block of
 //! GENO_LUA_IO_WORDS words and gets a fault code back; the only state is the declared slots in that block, so a callback
 //! cannot keep anything between calls (each call runs in a fresh instance of the module) and a rollback needs nothing
 //! beyond the game state. The ctx surface is module `gd_geno`, one import per ctx value / command, each with the Lua
@@ -10,7 +10,7 @@
 //! 16 pages; each callback an exported `() -> ()` function. Fuel per call: FUEL (running out is
 //! GENO_LUA_FAULT_INSNS, the instruction budget; units differ from Lua's count, no shipped module comes near either).
 use melee_script::geno::consts::*;
-use melee_script::geno::lua::{FighterCode, GLUA_BOOL, GLUA_FLOAT, GLUA_INT};
+use melee_script::geno::code::{FighterCode, GLUA_BOOL, GLUA_FLOAT, GLUA_INT};
 use wasmi::{Caller, Config, Engine, Extern, Linker, Module, Store};
 
 /// Fuel for one callback.
@@ -353,7 +353,7 @@ impl FighterCode for GenoWasm {
     fn find(&self, name: &str) -> i32 {
         self.fns.iter().position(|n| n == name).map_or(-1, |i| i as i32)
     }
-    /// GLua::call's contract: the commands and fault word reset, the callback run, on a fault the command count
+    /// The geno_lua_core.h call contract: the commands and fault word reset, the callback run, on a fault the command count
     /// cleared (the state words it already wrote are the caller's to discard) and the fault word set.
     unsafe fn call(&mut self, f: i32, io: *mut u32) -> i32 {
         self.calls += 1;

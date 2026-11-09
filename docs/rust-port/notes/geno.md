@@ -256,3 +256,29 @@ play_net's ModesGame, netmatch, retail_flow's seek and the Lab's LabRun still ca
   `snap_host::REPLAY_CURSOR`.
 - **Not ported**: gw_script_1p.inc (the 1P mode host), so `onep_state_active` is false. Also
   `ScriptGame_StageReleaseOwner` on unload, which needs the script's stage token.
+
+## No Lua (2026-11-09)
+
+The Rust port runs no Lua, at my user's direction. The C build is frozen with its Lua.
+- **Removed** (one revertable commit): the scripting host (melee_script's engine, `gd.*` API, events, rewind, pad
+  scripts, the gdscript / luarun bins and their tests), the fighter-Lua core `geno::lua`, the `mlua` dependency and
+  `rust/third_party/lua-src`.
+- **Kept**: melee_script is the Geno registry and `game::ScriptGame` (the game half the wasm Lab calls through
+  `EngineGame`).
+- **Scripts and the LAB** are wasm mods (melee_modhost). A define's fighter code is the geno 12 `wasm` block
+  (geno-wasm-plan.md).
+- **A `lua` block** (an entry's, or a state's `lua` key) refuses the entry with:
+  `geno: <where>: fighter Lua is not supported (this build runs no Lua): convert the package to a geno 12 "wasm" block (tools/rust-port/geno/lua_to_wasm_package.py) - refused`
+- **Converting a package**: compile its callbacks against `rust/mods/geno_fighters/gd_geno.h` (a line-for-line C port
+  of the Lua, as goku.c / charger.c / riposte.c are; `build.sh` builds them with clang --target=wasm32). Then run
+  `python3 tools/rust-port/geno/lua_to_wasm_package.py <mod folder> <module.wasm> [--out <copy>]`. It rewrites geno.json
+  (`"geno": 12`, `lua` -> `wasm`, per-state keys too) and copies the module to `wasm/`. **Third-party packages with
+  fighter Lua need this conversion** before the Rust engine loads them.
+- **Shipped packages**: vanilla-charger and vanilla-riposte keep their Lua in pc/geno/mods for the C build. Their
+  geno 12 geno.json lives in rust/mods/geno_fighters/packages/<id>, and `scn.py tsv --rust` (run_rust.sh) lays it over
+  the copy. goku-xv2 (not in the repo) is converted with the tool, as the PC's mex_goku_cpu run does.
+- **The game-half suite** (geno_tests) installs the fixtures rust/mods/geno_fighters/tests/{charge,counter,empty}.wasm
+  where it carried inline Lua (8a98e4134). The expectations are unchanged.
+- **Proof the ports are the Lua**: tests/geno_wasm_fighters.rs checks each module's outputs over fixed io blocks
+  against digests recorded from the Lua before it was removed. The coverage scenarios geno_vanilla_charger /
+  riposte (laptop) and mex_goku_cpu (PC) pass hash for hash against the C goldens.

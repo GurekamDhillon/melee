@@ -19,7 +19,7 @@ one() {
   [ -f "$g" ] || { printf '%s\tNO_GOLDEN\t0\t0\t-\n' "$s"; return; }
   rows=$(( $(wc -l < "$g") - 1 ))
   # the scenario's env (scenarios.json "env", e.g. MELEE_MODS_DIR for the Geno mods), as record_coverage.sh passes to the C
-  envs=$(python tools/rust-port/golden/coverage/scn.py tsv "$s" 2>/dev/null | cut -f6)
+  envs=$(python tools/rust-port/golden/coverage/scn.py tsv --rust "$s" 2>/dev/null | cut -f6)
   IFS=',' read -ra kv <<< "$envs"; for e in "${kv[@]}"; do [ -n "$e" ] && export "$e"; done
   # COV_MODS_DIR=<dir>: the scenario's mods from <dir>/<name> instead (e.g. its packages converted to geno 12 by
   # tools/rust-port/geno/lua_to_wasm_package.py), compared against the same C golden

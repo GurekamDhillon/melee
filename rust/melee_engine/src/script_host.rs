@@ -798,15 +798,15 @@ impl ScriptGame for EngineGame {
         sh::rbviz_total()
     }
     /// `gw_RbViz_Get`
-    fn rbviz_get(&self, back: i32) -> Option<melee_script::gd::labmisc::RbRow> {
-        sh::rbviz_get(back).map(|r| melee_script::gd::labmisc::RbRow {
+    fn rbviz_get(&self, back: i32) -> Option<melee_script::game::RbRow> {
+        sh::rbviz_get(back).map(|r| melee_script::game::RbRow {
             frame: r.frame, first: r.first, depth: r.depth, cause: r.cause, kind: r.kind, mismatch: r.mismatch, ms: r.ms,
         })
     }
     /// `gw_RbViz_FirstMismatch` (frame -1: none)
-    fn rbviz_first_mismatch(&self) -> Option<melee_script::gd::labmisc::RbMismatch> {
+    fn rbviz_first_mismatch(&self) -> Option<melee_script::game::RbMismatch> {
         let m = sh::rbviz_first_mismatch();
-        Some(melee_script::gd::labmisc::RbMismatch { frame: m.frame, count: m.count, place: m.place, va: m.va, was: m.was, now: m.now })
+        Some(melee_script::game::RbMismatch { frame: m.frame, count: m.count, place: m.place, va: m.va, was: m.was, now: m.now })
     }
     /// `gw_RbViz_Reset`
     fn rbviz_reset(&mut self) {
@@ -1067,8 +1067,8 @@ pub fn by_name(name: &str, args: &[u64]) -> Option<u64> {
     }
 }
 
-/// The registry-side name queries over a test-installed define (pc/geno/geno_combo_tests.inc's TC_HEAD / TC_LUA /
-/// TC_STATES / TC_COMBO text): the C answers, including the empty / NULL ones out of range.
+/// The registry-side name queries over a test-installed define (pc/geno/geno_combo_tests.inc's TC_HEAD / TC_LUA (as the
+/// suite's empty.wasm fixture) / TC_STATES / TC_COMBO text): the C answers, including the empty / NULL ones out of range.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1080,9 +1080,11 @@ mod tests {
     fn geno_names_and_combo_graph_like_c() {
         let _l = gh::TEST_REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
         let t = concat!(
-            "{\"geno\":11,\"fighters\":[{\"define\":{\"key\":\"combo-t\",\"name\":\"Combo T\",\"base\":\"mario\",\"common\":\"melee.common.v1\",",
+            "{\"geno\":12,\"fighters\":[{\"define\":{\"key\":\"combo-t\",\"name\":\"Combo T\",\"base\":\"mario\",\"common\":\"melee.common.v1\",",
             "\"resources\":\"retail:mario\"}",
-            ",\"lua\":{\"source\":\"local M = {} function M.f(ctx) end return M\",\"state\":{\"armed\":\"int\"}}",
+            // TC_LUA's `function M.f(ctx) end` as the suite's fixture module (no Lua in the port): the `armed` slot the
+            // L2>H route's `when` names
+            ",\"wasm\":{\"module\":\"tests/empty.wasm\",\"state\":{\"armed\":\"int\"}}",
             ",\"states\":[{\"name\":\"Light2\",\"behavior\":\"geno.ground\"},{\"name\":\"Heavy\",\"behavior\":\"geno.ground\"}]",
             ",\"combo\":{\"buffer\":3,\"max_links\":3,\"ki\":{\"max\":100,\"start\":20,\"on_hit\":5,\"on_block\":1,\"on_taken\":2},\"routes\":[",
             "{\"name\":\"L1>L2\",\"from\":\"jab1\",\"to\":\"geno:Light2\",\"input\":\"light\",\"on\":\"hit\",\"window\":[5,20]},",

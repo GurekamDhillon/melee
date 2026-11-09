@@ -1,7 +1,8 @@
 //! Envoy run support (rust/mods/envoy_sim, envoy_ui): the native half of a single-player Envoy run.
 //!
-//! Everything here is inert until the Envoy sim mod publishes a plan (`gd_envoy_plan`); with no mod loaded PLAN[0]
-//! stays 0 and `match_begin` returns at once, so the goldens and replays are unchanged.
+//! Everything here is inert until the Envoy sim mod publishes a plan (`gd_envoy_plan`) and the run is armed
+//! (`ARMED`, from the Envoy camp); with no mod loaded PLAN[0] stays 0 and `match_begin` returns at once, so the goldens
+//! and replays are unchanged, and with the mods loaded but no run armed VS is retail.
 //!
 //! * plan: the next VS match the run wants (stage, the player's tag pair, stocks and ratios, the CPU line-up). The
 //!   mod keeps it current; `match_begin` (top of `fn_8016E730`, before the players and the stage are created)
@@ -42,6 +43,86 @@ pub static mut SEQ: i32 = 0;
 /// The pair the last rewrite used: main, partner (character kinds).
 pub static mut ROSTER: [i32; 2] = [-1, -1];
 
+// ---- the door (envoy-redesign.md 1.2-1.3): menu-time state, never match state
+/// The run is armed: only then does `match_begin` rewrite a VS match (and the sim mod publish a plan). Set by the
+/// camp's Continue / New run, cleared by Abandon, by the end of the run and by entering the main menu.
+pub static mut ARMED: i32 = 0;
+/// A rewritten fight has started since the run was armed: the camp replaces the VS CSS (the results land in it).
+pub static mut CAMP_DUE: i32 = 0;
+/// The 1-P menu's extra Envoy row exists (a presentation mod registered the camp scene with `gd_ui_envoy_door`).
+pub static mut DOOR_ON: i32 = 0;
+/// The 1-P menu cursor is on the Envoy row (below the retail rows).
+pub static mut DOOR_HOVER: i32 = 0;
+/// The Envoy row (or the browser's Envoy mode) was chosen: the host opens the camp scene at the next present.
+pub static mut DOOR_OPEN: i32 = 0;
+/// The camp asked for the VS mode (its Continue / New run on the main menu): the menu scene starts it next frame.
+pub static mut LAUNCH_VS: i32 = 0;
+
+/// The run record (envoy_sim publishes it in VIEW[REC_AT..]; the host keeps the last one on disk).
+pub const REC_WORDS: usize = 16;
+pub const REC_AT: usize = 40;
+pub const REC_MAGIC: i32 = 0x454E_5652; // "ENVR"
+pub const REC_VERSION: i32 = 1;
+/// The record the host holds (loaded from disk, updated from the view); `SAVED_LEN` 0 = no run saved.
+pub static mut SAVED: [i32; REC_WORDS] = [0; REC_WORDS];
+pub static mut SAVED_LEN: i32 = 0;
+/// The camp asked to forget the saved run (New run / Abandon): the host deletes the file.
+pub static mut SAVED_DROP: i32 = 0;
+
+/// The record's digest word (the last one): FNV-1a over the others. A stale or edited file fails it.
+pub fn rec_digest(r: &[i32]) -> i32 {
+    let mut h: u32 = 0x811C_9DC5;
+    for &w in &r[..REC_WORDS - 1] {
+        for b in w.to_le_bytes() {
+            h ^= b as u32;
+            h = h.wrapping_mul(0x0100_0193);
+        }
+    }
+    h as i32
+}
+
+pub fn rec_valid(r: &[i32]) -> bool {
+    r.len() >= REC_WORDS && r[0] == REC_MAGIC && r[1] == REC_VERSION && r[REC_WORDS - 1] == rec_digest(r)
+}
+
+/// The 1-P menu's input with the Envoy row (mnmain `mn_8022D7F4`, after the retail read): what the retail code must
+/// do. `at_last`: the retail cursor is on the last unlocked row.
+pub const DOOR_RETAIL: i32 = 0;
+pub const DOOR_EAT: i32 = 1;
+pub const DOOR_MOVE: i32 = 2;
+pub const DOOR_OPENED: i32 = 3;
+pub const DOOR_TO_TOP: i32 = 4;
+pub unsafe fn door_1p(confirm: bool, back: bool, up: bool, down: bool, at_last: bool) -> i32 {
+    if DOOR_ON == 0 {
+        DOOR_HOVER = 0;
+        return DOOR_RETAIL;
+    }
+    if DOOR_HOVER != 0 {
+        if confirm {
+            DOOR_OPEN = 1;
+            return DOOR_OPENED;
+        }
+        if back {
+            DOOR_HOVER = 0;
+            return DOOR_RETAIL;
+        }
+        if up {
+            DOOR_HOVER = 0;
+            return DOOR_MOVE;
+        }
+        if down {
+            DOOR_HOVER = 0;
+            return DOOR_TO_TOP;
+        }
+        return DOOR_EAT;
+    }
+    if down && at_last && !confirm && !back {
+        DOOR_HOVER = 1;
+        return DOOR_MOVE;
+    }
+    DOOR_RETAIL
+}
+
 const CK_ICS: i32 = 0x0E;
 const CK_ZELDA: i32 = 0x12;
 const CK_SHEIK: i32 = 0x13;
@@ -59,7 +140,7 @@ fn ratio(v: i32) -> f32 {
 
 /// Rewrite the VS match about to start from the plan (no-op without one, outside VS, and for a replay).
 pub unsafe fn match_begin(d: *mut StartMeleeData) {
-    if PLAN[P_ACTIVE] == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
+    if PLAN[P_ACTIVE] == 0 || ARMED == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
         return;
     }
     let d = &mut *d;
@@ -127,6 +208,7 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         r.stkind = melee_world::tu::stage::Stage_StageSlotSelect(PLAN[P_STAGE]) as u16;
     }
     SEQ = SEQ.wrapping_add(1);
+    CAMP_DUE = 1;
     eprintln!("envoy: match {} rewritten: main {main} partner {partner} stocks {} cpus {n} stage {}", SEQ, me_stocks(d), PLAN[P_STAGE]);
 }
 

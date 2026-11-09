@@ -5,6 +5,10 @@
 //! * reward screen (sim frozen): three cards with before -> after compare rows, the cursor and the 20 s timer.
 //! * tag cinematic (transition kind 1, the record's length) and the stage shift's wipe and flash (kind 2).
 //! * between fights: the run line; RUN CLEAR / RUN OVER.
+//! * the door (envoy-redesign.md 1.2-1.5): the 1-P menu's Envoy row (the host moves the cursor onto it, this mod draws
+//!   it), and the Envoy camp scene (kit nodes): Continue / New run / Party / Abandon / Back on the main menu, and after
+//!   a fight (the camp replaces the VS CSS while the run is armed) the run's line with Continue / Party / Abandon /
+//!   Leave, or RUN CLEAR / RUN OVER. Placeholder look only: kit panels and text.
 #![no_std]
 #![allow(static_mut_refs)]
 
@@ -19,6 +23,254 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
 extern "C" {
     fn gd_ui_transition(out: *mut i32) -> i32;
     fn gd_ui_envoy(out: *mut i32, n: u32) -> i32;
+    fn gd_ui_scene_register(s: *const u8, len: u32) -> u32;
+    fn gd_ui_scene_replace_when(major: i32, minor: i32, scene: u32, cond: u32) -> i32;
+    fn gd_ui_scene_goto(to: u32) -> i32;
+    fn gd_ui_retail_scene() -> i32;
+    fn gd_ui_envoy_door(scene: u32) -> i32;
+    fn gd_ui_envoy_state() -> i32;
+    fn gd_ui_envoy_saved(out: *mut i32, n: u32) -> i32;
+    fn gd_ui_envoy_arm(op: i32) -> i32;
+    fn gd_ui_node_free(n: u32);
+    fn gd_ui_focus(n: u32) -> i32;
+}
+
+const SCENE_RETAIL: u32 = 0x8000_0000;
+const GM_VS: i32 = 2;
+const GS_CSS: i32 = 8;
+const ST_ARMED: i32 = 1;
+const ST_1P: i32 = 2;
+const ST_HOVER: i32 = 4;
+const ARM_OFF: i32 = 0;
+const ARM_NEW: i32 = 1;
+const ARM_CONTINUE: i32 = 2;
+const ARM_ABANDON: i32 = 3;
+const ARM_LAUNCH: i32 = 0x10;
+
+// the camp's buttons
+const B_CONTINUE: usize = 0;
+const B_NEW: usize = 1;
+const B_PARTY: usize = 2;
+const B_ABANDON: usize = 3;
+const B_BACK: usize = 4;
+const B_DONE: usize = 5;
+const NB: usize = 6;
+
+struct Camp {
+    scene: u32,
+    open: bool,
+    cap: u32,
+    root: u32,
+    btn: [u32; NB],
+    /// Abandon was pressed once (asks again).
+    confirm: bool,
+    party: bool,
+    /// On the VS CSS (after a fight) rather than the main menu.
+    after_fight: bool,
+    /// Presents since the camp opened: the press that opened it must not also choose a row.
+    age: u32,
+}
+static mut CAMP: Camp = Camp { age: 0, scene: 0, open: false, cap: 0, root: 0, btn: [0; NB], confirm: false, party: false, after_fight: false };
+
+fn label(n: u32, t: &str) {
+    unsafe { gd_ui_node_label(n, t.as_ptr(), t.len() as u32) };
+}
+
+unsafe fn saved() -> Option<[i32; 16]> {
+    let mut r = [0i32; 16];
+    if gd_ui_envoy_saved(r.as_mut_ptr(), 16) == 16 { Some(r) } else { None }
+}
+
+/// (Re)build the camp's node tree for what is true now.
+unsafe fn camp_build() {
+    let c = &mut CAMP;
+    if c.root != 0 {
+        gd_ui_hide(c.root);
+        gd_ui_node_free(c.root);
+    }
+    c.btn = [0; NB];
+    let root = gd_ui_node(0, NODE_PANEL, 1);
+    label(root, "ENVOY CAMP");
+    gd_ui_node_rect(root, 220.0, 165.0, 200.0, 0.0);
+    let list = gd_ui_node(root, NODE_LIST, 2);
+    let mut v = [0i32; 64];
+    let view = gd_ui_envoy(v.as_mut_ptr(), 64) == 0 && v[0] == 0x454E_5659;
+    let ended = view && (v[1] == 2 || v[1] == 3);
+    let has = saved().is_some();
+    let rows: &[(usize, &str)] = if c.after_fight && ended {
+        &[(B_DONE, "Back to the character select"), (B_NEW, "New run")]
+    } else if c.after_fight {
+        &[(B_CONTINUE, "Continue"), (B_PARTY, "Party"), (B_ABANDON, "Abandon run"), (B_BACK, "Leave (the run is kept)")]
+    } else if has {
+        &[(B_CONTINUE, "Continue"), (B_NEW, "New run"), (B_PARTY, "Party"), (B_ABANDON, "Abandon run"), (B_BACK, "Back")]
+    } else {
+        &[(B_NEW, "New run"), (B_PARTY, "Party"), (B_BACK, "Back")]
+    };
+    for (k, &(b, t)) in rows.iter().enumerate() {
+        let n = gd_ui_node(list, NODE_BUTTON, 10 + k as u32);
+        label(n, if b == B_ABANDON && c.confirm { "Abandon run? Press A again" } else { t });
+        c.btn[b] = n;
+    }
+    c.root = root;
+    gd_ui_show(root, LAYER_MENU, 0);
+    if let Some(&(b, _)) = rows.first() {
+        gd_ui_focus(c.btn[b]);
+    }
+}
+
+/// Back to the retail scene under the camp (the main menu, or the VS CSS after a fight).
+unsafe fn camp_close() {
+    let r = gd_ui_retail_scene() as u32;
+    gd_ui_scene_goto(SCENE_RETAIL | (r & 0xFFFF));
+}
+
+#[no_mangle]
+pub extern "C" fn gd_ui_scene_enter(scene: u32) {
+    unsafe {
+        let c = &mut CAMP;
+        if scene != c.scene {
+            return;
+        }
+        c.open = true;
+        c.age = 0;
+        c.confirm = false;
+        c.party = false;
+        c.after_fight = gd_ui_retail_scene() >> 8 == GM_VS;
+        c.cap = gd_ui_capture(0xF, CAP_EXCLUSIVE);
+        camp_build();
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn gd_ui_scene_leave(scene: u32) {
+    unsafe {
+        let c = &mut CAMP;
+        if scene != c.scene {
+            return;
+        }
+        c.open = false;
+        if c.root != 0 {
+            gd_ui_hide(c.root);
+            gd_ui_node_free(c.root);
+            c.root = 0;
+        }
+        if c.cap != 0 {
+            gd_ui_release(c.cap);
+            c.cap = 0;
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn gd_ui_event(node: u32, ev: i32, _value: i32) {
+    unsafe {
+        let c = &mut CAMP;
+        if !c.open {
+            return;
+        }
+        if ev == EV_BACK && c.age >= 3 {
+            if c.after_fight {
+                gd_ui_envoy_arm(ARM_OFF);
+            }
+            return camp_close();
+        }
+        if ev != EV_ACTIVATE || node == 0 || c.age < 3 {
+            return;
+        }
+        let Some(b) = c.btn.iter().position(|&n| n == node) else { return };
+        if b != B_ABANDON {
+            c.confirm = false;
+        }
+        let launch = if c.after_fight { 0 } else { ARM_LAUNCH };
+        match b {
+            B_CONTINUE => {
+                gd_ui_envoy_arm(ARM_CONTINUE | launch);
+                camp_close();
+            }
+            B_NEW => {
+                gd_ui_envoy_arm(ARM_NEW | launch);
+                camp_close();
+            }
+            B_PARTY => c.party = !c.party,
+            B_ABANDON => {
+                if !c.confirm {
+                    c.confirm = true;
+                    camp_build();
+                    gd_ui_focus(c.btn[B_ABANDON]);
+                } else {
+                    c.confirm = false;
+                    gd_ui_envoy_arm(ARM_ABANDON);
+                    if c.after_fight {
+                        camp_close();
+                    } else {
+                        camp_build();
+                    }
+                }
+            }
+            B_BACK | B_DONE => {
+                if c.after_fight {
+                    gd_ui_envoy_arm(ARM_OFF);
+                }
+                camp_close();
+            }
+            _ => {}
+        }
+    }
+}
+
+/// The camp's backdrop and text (the buttons are host nodes).
+unsafe fn camp_draw(e: &mut Enc<16384>, vw: f32, vh: f32) {
+    let c = &CAMP;
+    e.layer(LAYER_SCENE, 0);
+    e.rect(0.0, 0.0, vw, vh, 0x0B0B_12FF);
+    let cx = vw * 0.5;
+    e.text_ex(cx, 90.0, ROLE_TITLE, WHITE, ALIGN_CENTER, 0.0, "ENVOY");
+    let mut v = [0i32; 64];
+    let view = gd_ui_envoy(v.as_mut_ptr(), 64) == 0 && v[0] == 0x454E_5659;
+    let mut l1 = Buf::new();
+    let mut l2 = Buf::new();
+    let mut col = WHITE;
+    if c.after_fight && view && v[1] == 2 {
+        l1.s("RUN CLEAR  -  pool left ").i(v[4]);
+        l2.s(ck_name(v[6])).s(" + ").s(ck_name(v[7])).s(" won all ").i(v[3]).s(" fights");
+        col = GOOD;
+    } else if c.after_fight && view && v[1] == 3 {
+        l1.s("RUN OVER at fight ").i(v[2] + 1).s("/").i(v[3]);
+        l2.s("The shared stock pool ran out");
+        col = ACCENT;
+    } else if c.after_fight && view && v[1] == 1 {
+        l1.s("Next: fight ").i(v[2] + 1).s("/").i(v[3]).s("   pool ").i(v[4]);
+        l2.s(ck_name(v[6])).s(" + ").s(ck_name(v[7])).s("  -  Continue, any stage, Start");
+    } else if let Some(r) = saved() {
+        l1.s("Saved run: fight ").i(r[4] + 1).s("/5   pool ").i(r[5]);
+        l2.s(ck_name(r[11])).s(" + ").s(ck_name(r[12]));
+    } else {
+        l1.s("No run saved");
+        l2.s("New run: pick your pair on the character select, any stage, Start");
+    }
+    e.text_ex(cx, 160.0, ROLE_VALUE, col, ALIGN_CENTER, 0.0, l1.str());
+    e.text_ex(cx, 190.0, ROLE_LABEL, DIM, ALIGN_CENTER, vw - 80.0, l2.str());
+    if c.party {
+        let (x, y, w) = (cx - 380.0, vh - 190.0, 760.0);
+        e.slice(SLICE_FILL_R6, x, y, w, 120.0, PANEL);
+        e.text_ex(cx, y + 14.0, ROLE_VALUE, WHITE, ALIGN_CENTER, 0.0, "PARTY");
+        e.text_ex(cx, y + 46.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, "P1's pick on the character select is your main; the P2 slot (human or CPU, any character) is your partner.");
+        e.text_ex(cx, y + 72.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, "Zelda, Sheik and Ice Climbers cannot tag: they fall back to Fox / Marth. A saved run keeps its pair.");
+    }
+    e.text_ex(cx, vh - 40.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, "A: choose   B: back");
+}
+
+/// The 1-P menu's Envoy row (the cursor itself is the host's: melee_modes::tu::envoy::DOOR_HOVER).
+unsafe fn door_draw(e: &mut Enc<16384>, st: i32, vw: f32, vh: f32) {
+    let hover = st & ST_HOVER != 0;
+    let (x, y, w, h) = (vw * 0.5 - 330.0, vh - 128.0, 300.0, 44.0);
+    e.layer(LAYER_OVERLAY, 10);
+    e.slice(SLICE_FILL_R6, x, y, w, h, if hover { 0xC83A_3AF0 } else { PANEL });
+    if hover {
+        e.slice(SLICE_LINE_R6, x, y, w, h, WHITE);
+    }
+    e.text_ex(x + 18.0, y + 11.0, ROLE_VALUE, WHITE, ALIGN_LEFT, 0.0, "ENVOY");
+    e.text_ex(x + w - 14.0, y + 14.0, ROLE_LABEL, if hover { WHITE } else { DIM }, ALIGN_RIGHT, 0.0, if hover { "A: open the camp" } else { "below Training" });
 }
 
 static mut ENC: Enc<16384> = Enc::new();
@@ -136,15 +388,44 @@ fn ck_name(k: i32) -> &'static str {
 
 #[no_mangle]
 pub extern "C" fn gd_ui_init() -> i32 {
-    unsafe { gd_ui_theme(0) };
+    unsafe {
+        gd_ui_theme(0);
+        let n = b"envoy.camp";
+        let sc = gd_ui_scene_register(n.as_ptr(), n.len() as u32);
+        CAMP.scene = sc;
+        if sc != 0 {
+            gd_ui_envoy_door(sc);
+            // the VS CSS is the camp while a run is armed and has fought (the results land there); retail otherwise
+            gd_ui_scene_replace_when(GM_VS, GS_CSS, sc, 1);
+        }
+    }
     0
 }
 
 #[no_mangle]
 pub extern "C" fn gd_ui_frame(_present: u32) {
     unsafe {
+        let st = gd_ui_envoy_state();
+        if CAMP.open || st & ST_1P != 0 {
+            let mut b = [0f32; 6];
+            gd_ui_band_rect(b.as_mut_ptr());
+            let sc = (b[5] / 720.0).max(0.25);
+            let vw = b[4] / sc;
+            let e = &mut *core::ptr::addr_of_mut!(ENC);
+            e.clear();
+            e.space(SPACE_WINDOW, sc);
+            if CAMP.open {
+                CAMP.age += 1;
+                camp_draw(e, vw, 720.0);
+            } else {
+                door_draw(e, st, vw, 720.0);
+            }
+            e.submit();
+            return;
+        }
         let mut v = [0i32; 64];
-        if gd_ui_envoy(v.as_mut_ptr(), 64) != 0 || v[0] != 0x454E_5659 {
+        // only an armed run has a HUD or a between-fights line: with the mods loaded and no run armed, VS is retail
+        if gd_ui_envoy(v.as_mut_ptr(), 64) != 0 || v[0] != 0x454E_5659 || st & ST_ARMED == 0 {
             return;
         }
         let mut t = [0i32; 10];
@@ -270,12 +551,12 @@ unsafe fn between(e: &mut Enc<16384>, v: &[i32; 64], vw: f32, _vh: f32) {
     match v[1] {
         2 => {
             l1.s("ENVOY  -  RUN CLEAR!  pool left ").i(v[4]);
-            l2.s("Start any VS match for a new run (P1 = main, P2 slot = partner)");
+            l2.s("The camp has the result");
             col = GOOD;
         }
         3 => {
             l1.s("ENVOY  -  RUN OVER at fight ").i(v[2] + 1).s("/").i(v[3]);
-            l2.s("Start any VS match for a new run (P1 = main, P2 slot = partner)");
+            l2.s("The camp has the result");
             col = ACCENT;
         }
         1 => {
@@ -283,7 +564,7 @@ unsafe fn between(e: &mut Enc<16384>, v: &[i32; 64], vw: f32, _vh: f32) {
             l2.s(ck_name(v[6])).s(" + ").s(ck_name(v[7])).s("   -  any stage, Start");
         }
         _ => {
-            l1.s("ENVOY RUN  -  start a VS match to begin");
+            l1.s("ENVOY RUN  -  pick your pair, any stage, Start");
             l2.s("P1's pick = your main, P2's slot (any) = your partner");
         }
     }
@@ -396,6 +677,6 @@ pub static gdmod_ui_abi: u32 = UI_ABI;
 #[no_mangle]
 pub static gd_mod_manifest: Manifest = Manifest {
     magic: 0x444D_4447, struct_size: 124, abi_min: 1 << 16, abi_max: 1 << 16, hook_table_version: 1, mod_version: 0x0001_0000,
-    required_features: FEATURE_UI_DRAW, optional_features: 0, state_bytes: 0, hook_count: 0,
+    required_features: FEATURE_UI_DRAW | FEATURE_UI_MENU | FEATURE_UI_INPUT | FEATURE_UI_SCENE, optional_features: 0, state_bytes: 0, hook_count: 0,
     hooks: core::ptr::null(), mod_id: text(b"gd.envoy_ui"), mod_name: text(b"Envoy run (presentation)"),
 };

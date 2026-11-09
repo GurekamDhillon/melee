@@ -65,3 +65,18 @@ Demo crash 2026-11-09 (`link cast: size mismatch *mut i8 -> &[usize] (site 79202
   pool by `HSD_SISLIB_POOL_SCALE` (2 on 64-bit; the C-oracle test sets 1). Reproduced with `MELEE_ENVOY_START_FIGHT=4`
   + `MELEE_ENVOY_TEST_P1CPU=1` on a pad-script loop (crashed at the 5th results screen); not Envoy-specific, any
   4-player VS results screen is near that limit.
+
+## The door (port/envoydoor, 2026-11-09; envoy-redesign.md A1)
+
+| piece | where |
+|---|---|
+| 1-P menu row | **native cursor, mod-drawn row.** The 1-P submenu is part of the mnMain scene (not a scene of its own), so `gd_ui_scene_replace` cannot replace it, and a real retail row would need a new jobj model from disc data. Instead `mn_8022D7F4` (1-P think) gets a virtual row past the last unlocked entry (`envoy::door_1p`, inert unless `DOOR_ON`); envoy_ui draws it as a kit panel under the list. The retail cursor stays lit on Training while the Envoy row is hovered (placeholder) |
+| camp | envoy_ui scene `envoy.camp` (kit nodes): Continue / New run / Party / Abandon (asks twice) / Back on the menu; after a fight Continue / Party / Abandon / Leave, or RUN CLEAR / OVER with Back |
+| imports | sim: `gd_envoy_armed()`, `gd_envoy_record(out, cap)`. UI: `gd_ui_envoy_door(scene)`, `gd_ui_envoy_state()`, `gd_ui_envoy_saved(out, n)`, `gd_ui_envoy_arm(op)`, `gd_ui_scene_replace_when(major, minor, scene, cond)` (cond 1: armed and a fight since arming, so plain VS never sees a custom frame) |
+| arming | `envoy::ARMED` (menu-time static). `match_begin` and the sim's `make_plan` both need it; cleared by Abandon, Leave, the end of a run (the camp's Back) and entering the main menu. Camp launches VS through `envoy::LAUNCH_VS` (mnMain on-frame, the menu's own two writes) |
+| record | 16 words in VIEW[40..56] (magic, version, seed, runs, fight, pool, stats x5, main, partner, picks, -, FNV digest); `melee/src/envoy_store.rs` writes `<exe>/melee_data/envoy/run.bin` (or `MELEE_ENVOY_DIR`) on change while live, deletes it on clear / over / New run / Abandon; offline only |
+| browser | MODES `envoy` (group Solo) is available while envoy_ui registered the door; LAUNCH opens the camp (`DOOR_OPEN`) and the browser closes |
+
+Verified (pad scripts, MELEE_BOOT_MENU=1, MELEE_PAD_CHANNELS=01): 1-P > Envoy > camp > New run > CSS > fight 1 won
+(`MELEE_ENVOY_TEST_P1CPU=1`) > results > camp "Next: fight 2/5 pool 4"; next session the camp shows the saved run;
+VS with both mods loaded and a saved run on disk: retail 2-minute time match, no "envoy: match rewritten" line, no HUD.

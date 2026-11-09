@@ -641,6 +641,20 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         *V.get_or_init(|| std::env::var("MELEE_ENVOY_START_FIGHT").ok().and_then(|v| v.parse::<i32>().ok()).map_or(0, |n| (n - 1).clamp(0, 4)))
     });
     w!("gd_envoy_seq", || -> i32 { unsafe { melee_modes::tu::envoy::SEQ } });
+    // the door (envoy-redesign.md 1.3): whether the run is armed (the camp's Continue / New run); the sim publishes a
+    // plan only while armed, so VS stays retail with the mods loaded
+    w!("gd_envoy_armed", || -> i32 { unsafe { melee_modes::tu::envoy::ARMED } });
+    // the saved run record (host-side file, read at arm time): the words copied (<= cap), 0 = no saved run
+    w!("gd_envoy_record", |mut c: Caller<'_, HostData>, out: u32, cap: u32| -> i32 {
+        let (rec, n) = unsafe { (melee_modes::tu::envoy::SAVED, melee_modes::tu::envoy::SAVED_LEN) };
+        let n = (n.max(0) as usize).min(cap as usize).min(rec.len());
+        let Some(m) = mem_of(&c) else { return -1 };
+        let Some(d) = m.data_mut(&mut c).get_mut(out as usize..out as usize + n * 4) else { return -1 };
+        for i in 0..n {
+            d[i * 4..i * 4 + 4].copy_from_slice(&rec[i].to_le_bytes());
+        }
+        n as i32
+    });
     w!("gd_envoy_roster", |i: i32| -> i32 { if !(0..2).contains(&i) { return -1 } unsafe { melee_modes::tu::envoy::ROSTER[i as usize] } });
     w!("gd_envoy_apply", |slot: i32, which: i32, v: i32| -> i32 { unsafe { melee_modes::tu::envoy::apply(slot, which, v) } });
     // the pad a port pressed this logic frame (HSD_PadMasterStatus.trigger: the synced sim input, valid while frozen)

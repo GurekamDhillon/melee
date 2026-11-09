@@ -701,6 +701,10 @@ impl B {
                 self.t.clear().s("browser: request launch ").s(utf8(&buf[..n]));
                 log(self.t.as_str());
                 self.request(R_LAUNCH, &buf[..n]);
+                if &buf[..n] == b"envoy" && self.lists[0].f(i, 4) == "1" {
+                    // the Envoy camp is a scene of envoy_ui on top of the menu: the browser steps aside
+                    self.close_now();
+                }
             }
             1 => {
                 let on = self.lists[1].f(i, 4) != "1";

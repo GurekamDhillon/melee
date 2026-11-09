@@ -42,6 +42,8 @@ extern "C" {
     fn gd_envoy_start_fight() -> i32;
     fn gd_envoy_roster(i: i32) -> i32;
     fn gd_envoy_apply(slot: i32, which: i32, v: i32) -> i32;
+    fn gd_envoy_armed() -> i32;
+    fn gd_envoy_record(out: *mut i32, cap: u32) -> i32;
     fn gd_hash_word(w: u32);
     fn gd_log(msg: *const u8, value: i32);
 }
@@ -144,6 +146,65 @@ static mut M: Match = Match { seq: 0, live: false, frames: 0, attrs_done: false,
 static mut RW: Reward = Reward { active: false, offers: [0, 1, 2], cursor: 0, timer: 0, last_pick: -1, since_pick: 9999 };
 static mut PLAN: [i32; 32] = [0; 32];
 static mut VIEW: [i32; 64] = [0; 64];
+/// The arm flag as this mod last took it (gd_envoy_armed): an edge restores / resets the run and re-plans.
+static mut ARM_SEEN: i32 = 0;
+
+// the run record (melee_modes::tu::envoy REC_*): published in VIEW[REC_AT..], saved by the host, handed back at arm
+const REC_WORDS: usize = 16;
+const REC_AT: usize = 40;
+const REC_MAGIC: i32 = 0x454E_5652;
+const REC_VERSION: i32 = 1;
+
+fn rec_digest(r: &[i32; REC_WORDS]) -> i32 {
+    let mut h: u32 = 0x811C_9DC5;
+    for &w in &r[..REC_WORDS - 1] {
+        for b in w.to_le_bytes() {
+            h ^= b as u32;
+            h = h.wrapping_mul(0x0100_0193);
+        }
+    }
+    h as i32
+}
+
+unsafe fn record() -> [i32; REC_WORDS] {
+    let mut r = [0i32; REC_WORDS];
+    r[0] = REC_MAGIC;
+    r[1] = REC_VERSION;
+    r[2] = RUN.seed as i32;
+    r[3] = RUN.runs as i32;
+    r[4] = RUN.fight;
+    r[5] = RUN.pool;
+    r[6..11].copy_from_slice(&RUN.stats);
+    r[11] = RUN.main;
+    r[12] = RUN.partner;
+    r[13] = RUN.picks;
+    r[REC_WORDS - 1] = rec_digest(&r);
+    r
+}
+
+/// The run on arm: the host's saved record (Continue) or a fresh one (New run: the host forgot the record).
+unsafe fn take_arm() {
+    let mut r = [0i32; REC_WORDS];
+    let n = gd_envoy_record(r.as_mut_ptr(), REC_WORDS as u32);
+    if n == REC_WORDS as i32 && r[0] == REC_MAGIC && r[1] == REC_VERSION && r[REC_WORDS - 1] == rec_digest(&r) && (0..FIGHTS as i32).contains(&r[4]) {
+        RUN.state = RUN_LIVE;
+        RUN.seed = r[2] as u32;
+        RUN.runs = r[3] as u32;
+        RUN.fight = r[4];
+        RUN.pool = r[5].max(1);
+        RUN.stats.copy_from_slice(&r[6..11]);
+        RUN.main = r[11];
+        RUN.partner = r[12];
+        RUN.picks = r[13];
+        log(b"envoy: armed, run continued at fight\0", RUN.fight + 1);
+    } else {
+        RUN.state = RUN_NONE;
+        log(b"envoy: armed, new run\0", 0);
+    }
+    M.outcome = 0;
+    RW.active = false;
+    RW.last_pick = -1;
+}
 
 fn mix(mut x: u32) -> u32 {
     x ^= x >> 16;
@@ -159,6 +220,12 @@ fn log(s: &[u8], v: i32) {
 
 /// The plan of the match the run wants next: the live run's current fight, or a new run's first.
 unsafe fn make_plan() {
+    if ARM_SEEN == 0 {
+        // not armed: no plan, so a VS match with the mods loaded is retail
+        PLAN = [0; 32];
+        gd_envoy_plan(PLAN.as_ptr(), 32);
+        return;
+    }
     let fresh = RUN.state != RUN_LIVE;
     let (fight, pool, stats, seed) = if fresh {
         (gd_envoy_start_fight() as usize, START_POOL, [1000; 5], mix(RUN.runs.wrapping_add(1).wrapping_mul(0x9E37_79B9)))
@@ -349,7 +416,7 @@ unsafe fn outcome_frame() {
     let key = me * 100 + foes;
     if key != M.last_stocks {
         M.last_stocks = key;
-        log(b"envoy: stocks (pool*100 + foes) ", key);
+        log(b"envoy: stocks (pool*100 + foes)\0", key);
     }
     if foes == 0 && me > 0 {
         M.outcome = 1;
@@ -404,11 +471,26 @@ unsafe fn publish() {
     v[33] = REWARD_TIME;
     v[34] = gd_tag_partner(0);
     v[35] = M.stage_switches;
+    v[36] = gd_envoy_seq();
+    v[37] = ARM_SEEN;
+    let r = record();
+    v[REC_AT..REC_AT + REC_WORDS].copy_from_slice(&r);
     gd_envoy_publish(v.as_ptr(), 64);
 }
 
 extern "C" fn on_frame_end() {
     unsafe {
+        let armed = (gd_envoy_armed() != 0) as i32;
+        if armed != ARM_SEEN {
+            ARM_SEEN = armed;
+            if armed != 0 {
+                take_arm();
+            } else {
+                RUN.state = RUN_NONE;
+                log(b"envoy: disarmed\0", 0);
+            }
+            make_plan();
+        }
         let seq = gd_envoy_seq();
         if seq != M.seq {
             on_new_match(seq);
@@ -455,6 +537,7 @@ extern "C" fn on_frame_end() {
 #[no_mangle]
 pub extern "C" fn gd_mod_loaded() {
     unsafe {
+        ARM_SEEN = (gd_envoy_armed() != 0) as i32;
         make_plan();
         publish();
     }

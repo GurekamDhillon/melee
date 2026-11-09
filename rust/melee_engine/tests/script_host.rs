@@ -8,6 +8,54 @@ use melee_script::game::{ScriptGame, SI_ACTION, SI_CHAR, SI_PRESENT};
 
 static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
+/// The `melee` binary's process allocator, its arena part (melee/src/main.rs DebugAlloc without the diagnostics): the
+/// game scope allocates from the arena, which is what makes a snapshot base possible in this test binary.
+struct ArenaAlloc;
+unsafe impl std::alloc::GlobalAlloc for ArenaAlloc {
+    unsafe fn alloc(&self, l: std::alloc::Layout) -> *mut u8 {
+        if melee_engine::arena::active() {
+            let p = melee_engine::arena::alloc(l);
+            if !p.is_null() {
+                return p;
+            }
+            melee_engine::arena::note_miss(l);
+        }
+        std::alloc::System.alloc(l)
+    }
+    unsafe fn dealloc(&self, p: *mut u8, l: std::alloc::Layout) {
+        if melee_engine::arena::contains(p) {
+            return melee_engine::arena::free(p, l);
+        }
+        // a rollback run inside the game scope: a snapshot may still point at this system block (main.rs rollback_pinned)
+        if melee_engine::arena::active() && melee_engine::cow::active() {
+            return;
+        }
+        std::alloc::System.dealloc(p, l)
+    }
+    unsafe fn alloc_zeroed(&self, l: std::alloc::Layout) -> *mut u8 {
+        if melee_engine::arena::active() {
+            let p = melee_engine::arena::alloc_zeroed(l);
+            if !p.is_null() {
+                return p;
+            }
+        }
+        std::alloc::System.alloc_zeroed(l)
+    }
+    unsafe fn realloc(&self, p: *mut u8, l: std::alloc::Layout, n: usize) -> *mut u8 {
+        if melee_engine::arena::contains(p) || melee_engine::arena::active() {
+            let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));
+            if !q.is_null() {
+                core::ptr::copy_nonoverlapping(p, q, l.size().min(n));
+                self.dealloc(p, l);
+            }
+            return q;
+        }
+        std::alloc::System.realloc(p, l, n)
+    }
+}
+#[global_allocator]
+static GLOBAL: ArenaAlloc = ArenaAlloc;
+
 fn boot(frames: u32) -> Option<(std::sync::MutexGuard<'static, ()>, Engine)> {
     let g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let Ok(iso) = std::env::var("GW_ISO_VANILLA") else {
@@ -248,10 +296,129 @@ fn fly_cpu_bounds_and_releases() {
     assert_eq!(u32::from_be_bytes(b[4..8].try_into().unwrap()), g.guest_word(script + 4));
     assert_eq!((g.mem1_read(0x10, 4), g.mem1_read(u32::MAX - 2, 4)), (None, None));
 
-    // the rollback's flag, as the play loop sets it
+    // the rollback's flag (gw_Snap_SessionResim), as the play loop sets it
     assert!(!g.resimulating());
-    melee_engine::script_host::set_resimulating(true);
+    melee_engine::snap_host::session_resim(true);
     assert!(g.resimulating());
-    melee_engine::script_host::set_resimulating(false);
+    melee_engine::snap_host::session_resim(false);
     assert!(!g.resimulating());
+}
+
+/// gw_snap.c's machinery through the script methods (melee_engine::snap_host, the one base): slots by index, the
+/// long rewind's keyframes, the exactness self-test, savestate files, the rollback ring. "The same state" is the game
+/// state's page hash (the OS heap, what rollback and synctest compare).
+#[test]
+fn snapshot_slots_rewind_files_rbviz() {
+    use melee_engine::snap_host as sh;
+    let Some((_g, mut e)) = boot(60) else { return };
+    let mut g = EngineGame;
+    let hash = || sh::with_base(|b| b.page_hash());
+
+    // slots: reserve opens the machinery and caps at GW_SNAP_MAX_SLOTS; a never-saved or missing slot does not load
+    assert_eq!(g.snap_reserve(4), 4);
+    assert_eq!(g.snap_reserve(100), sh::MAX_SLOTS as i32);
+    assert!(g.snap_slot_bytes() > 1 << 20);
+    g.snap_save_index(0, -1);
+    let h0 = hash();
+    for _ in 0..30 {
+        e.tick();
+    }
+    assert_ne!(hash(), h0, "30 frames changed the game");
+    assert_eq!(g.snap_load_index(0), 0);
+    assert_eq!(hash(), h0, "slot 0 put the state back");
+    assert_eq!((g.snap_load_index(1), g.snap_load_index(99), g.snap_load_index(-1)), (-1, -1, -1));
+
+    // the rewind: a base and keyframes with rising tags, each with its user block
+    assert_eq!(g.rw_begin(10, b"base"), 0);
+    e.tick();
+    assert_eq!(g.rw_save(11, b"k11"), 0);
+    let h11 = hash();
+    e.tick();
+    assert_eq!(g.rw_save(12, b"k12"), 0);
+    assert_eq!(g.rw_save(12, b"again"), -1, "a tag not above the latest");
+    assert_eq!((g.rw_count(), g.rw_base_tag(), g.rw_latest()), (3, 10, 12));
+    assert_eq!((g.rw_find_le(11), g.rw_find_le(100), g.rw_find_le(9)), (Some(11), Some(12), None));
+    assert!(g.rw_delta_bytes() > 0.0 && g.rw_bytes() >= g.rw_delta_bytes());
+    let u = g.rw_load(11).expect("keyframe 11");
+    assert_eq!((&u[..3], u.len()), (&b"k11"[..], sh::RW_USER));
+    assert_eq!(hash(), h11, "keyframe 11 put back");
+    assert!(g.rw_last_load_pages() > 0);
+    assert_eq!(g.rw_load(13), None);
+    assert_eq!(&g.rw_load(10).expect("the base")[..4], b"base");
+    assert_eq!(g.rw_drop_from(10), -1, "the base cannot go");
+    assert_eq!(g.rw_drop_from(12), 0);
+    assert_eq!((g.rw_count(), g.rw_latest()), (2, 11));
+    g.rw_trim(11);
+    assert_eq!((g.rw_count(), g.rw_base_tag()), (1, 11));
+    let ht = hash();
+    assert_eq!((g.rw_find_le(10), hash()), (None, ht), "trim folded 10 away and left the live state alone");
+    g.rw_end();
+    assert_eq!((g.rw_count(), g.rw_bytes()), (0, 0.0));
+
+    // the exactness self-test: equal right after the capture, different a frame later; the compare frees the capture
+    assert_eq!(g.rw_compare(), None);
+    assert_eq!(g.rw_capture(), 0);
+    let (d, h) = g.rw_compare().expect("a capture");
+    assert_eq!((d[1], h[0] == h[1]), (0.0, true));
+    assert_eq!(g.rw_capture(), 0);
+    e.tick();
+    let (d, h) = g.rw_compare().expect("a capture");
+    assert!(d[1] > 0.0 && d[0] >= d[1] && h[0] != h[1], "{d:?}");
+    assert_eq!(g.rw_compare(), None);
+
+    // savestate files: the header alone, renamed in place, a whole load; damage refused before anything is touched
+    let dir = std::env::temp_dir().join(format!("snaphost-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("s.gdst");
+    let p = path.to_str().unwrap();
+    let hf = hash();
+    assert_eq!(g.snap_file_save(p, b"HEAD0001"), 0);
+    assert_eq!(g.snap_file_header(p, 64).as_deref(), Some(&b"HEAD0001"[..]));
+    assert_eq!(g.snap_file_header(p, 4), None, "longer than the caller's buffer");
+    assert_eq!(g.snap_file_rewrite_header(p, b"HEAD0002"), 0);
+    assert_eq!(g.snap_file_rewrite_header(p, b"short"), -1);
+    for _ in 0..10 {
+        e.tick();
+    }
+    assert_ne!(hash(), hf);
+    assert_eq!(g.snap_file_load(p), 0);
+    assert_eq!(hash(), hf, "the file put the state back");
+    assert_eq!(g.snap_file_header(p, 64).as_deref(), Some(&b"HEAD0002"[..]));
+    let mut bad = std::fs::read(&path).unwrap();
+    let n = bad.len();
+    bad[n / 2] ^= 0xFF;
+    let badp = dir.join("bad.gdst");
+    std::fs::write(&badp, &bad).unwrap();
+    let hb = hash();
+    assert_eq!(g.snap_file_load(badp.to_str().unwrap()), -3, "damaged");
+    assert_eq!(hash(), hb, "a refused file touches nothing");
+    std::fs::write(&badp, b"not a state").unwrap();
+    assert_eq!((g.snap_file_load(badp.to_str().unwrap()), g.snap_file_header(badp.to_str().unwrap(), 64)), (-1, None));
+    assert_eq!(g.snap_file_load(dir.join("missing").to_str().unwrap()), -1);
+    let _ = std::fs::remove_dir_all(&dir);
+
+    // the rollback ring: newest first, a mismatch marks the newest, the first desync is kept
+    g.rbviz_reset();
+    assert_eq!((g.rbviz_total(), g.rbviz_get(0).is_none()), (0, true));
+    sh::rbviz_push(100, 98, 2, 1, 0.5, 0);
+    sh::rbviz_push(101, 100, 1, 2, 0.25, 1);
+    sh::rbviz_mark_mismatch();
+    let r = g.rbviz_get(0).unwrap();
+    assert_eq!((g.rbviz_total(), r.frame, r.depth, r.mismatch, g.rbviz_get(1).unwrap().mismatch), (2, 101, 1, true, false));
+    assert_eq!(g.rbviz_first_mismatch().unwrap().frame, -1);
+    sh::rbviz_desync(101, 0x1234, 0x5678);
+    sh::rbviz_desync(102, 1, 2);
+    let m = g.rbviz_first_mismatch().unwrap();
+    assert_eq!((m.frame, m.count, m.place.as_str()), (101, 2, "netplay checksum: local 00001234, peer 00005678"));
+    g.rbviz_reset();
+    assert_eq!((g.rbviz_total(), g.rbviz_first_mismatch().unwrap().frame), (0, -1));
+
+    // the Lab's silent re-simulation flag, while the machinery is open
+    g.snap_lab_resim(true);
+    assert!(g.resimulating());
+    g.snap_lab_resim(false);
+    assert!(!g.resimulating());
+    // the base belongs to this engine: let it go before the next test boots another
+    sh::release();
+    assert!(!sh::enabled());
 }

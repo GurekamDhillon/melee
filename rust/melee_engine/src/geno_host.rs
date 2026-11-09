@@ -5,6 +5,7 @@
 #![allow(non_snake_case, static_mut_refs)]
 use melee_script::geno::consts::*;
 use melee_script::geno::registry::{Env, Profile, Registry};
+use crate::snap_host::host_heap;
 
 /// The registry's view of the mounted mods: files under `<mods dir>/<mod id>/` (geno.json, words files, a define's Lua
 /// module). No m-ex slots are installed in this engine. Tests (no mods dir) read nothing.
@@ -397,56 +398,16 @@ pub fn install() {
     );
 }
 
-// ---- gw_snap's slots for the game half (geno_game_items.inc, the define snapshot tests): snap_open(k) opens a
-// session, snap_save(frame) / snap_load(frame) keep and put back whole-game states (crate::snapshot) ----
-struct SnapStore {
-    base: crate::snapshot::Base,
-    slots: Vec<(i32, crate::snapshot::SnapRef)>,
-}
-/// Set once by the first snap_open and never changed after, so a load (which puts the static sections back) keeps it.
-static mut SNAP: *mut SnapStore = core::ptr::null_mut();
-
-fn host_heap<R>(f: impl FnOnce() -> R) -> R {
-    let was = crate::arena::active();
-    crate::arena::set_active(false);
-    let r = f();
-    crate::arena::set_active(was);
-    r
-}
-pub fn snap_open(_k: i32) -> i32 {
-    unsafe {
-        if SNAP.is_null() {
-            SNAP = host_heap(|| Box::into_raw(Box::new(SnapStore { base: crate::snapshot::Base::capture(), slots: Vec::new() })));
-        }
-    }
-    0
+// ---- gw_snap's sessions for the game half (geno_game_items.inc, the define snapshot tests): snap_open(k) opens the
+// machinery, snap_save(frame) / snap_load(frame) keep and put back whole-game states (crate::snap_host, the one base) ----
+pub fn snap_open(k: i32) -> i32 {
+    crate::snap_host::open(k)
 }
 pub fn snap_save(frame: i32) {
-    unsafe {
-        if SNAP.is_null() {
-            snap_open(1);
-        }
-        let st = &mut *SNAP;
-        host_heap(|| {
-            let s = st.base.save();
-            st.slots.retain(|x| x.0 != frame);
-            st.slots.push((frame, s));
-        });
-    }
+    crate::snap_host::save(frame)
 }
 pub fn snap_load(frame: i32) -> i32 {
-    unsafe {
-        if SNAP.is_null() {
-            return -1;
-        }
-        let st = &mut *SNAP;
-        let Some(s) = st.slots.iter().find(|x| x.0 == frame).map(|x| x.1.clone()) else { return -1 };
-        let was = crate::arena::active();
-        crate::arena::set_active(false);
-        st.base.load(&s);
-        crate::arena::set_active(was);
-        0
-    }
+    crate::snap_host::load_frame(frame)
 }
 
 /// The out-of-TU callees the game half and its tests reach that no link-table row answers.

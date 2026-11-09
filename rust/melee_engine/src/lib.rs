@@ -4,6 +4,7 @@
 pub mod arena;
 pub mod geno_host;
 pub mod script_host;
+pub mod snap_host;
 pub mod uigen;
 pub mod mex_host;
 pub mod mex_guest;

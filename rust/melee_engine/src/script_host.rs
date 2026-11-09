@@ -7,6 +7,7 @@ use melee_modes::tu::script_game as sg;
 use melee_fighter::tu::fighter as ft;
 use melee_modes::tu::geno_lab_mode as lab;
 use melee_world::tu::camera as cam;
+use crate::snap_host as sh;
 use melee_script::game::ScriptGame;
 
 /// The engine's game, as the script host sees it (stateless: everything lives in the game's own globals).
@@ -761,10 +762,138 @@ impl ScriptGame for EngineGame {
         let len = u32::try_from(n).ok()?;
         self.guest_ok(addr, len).then(|| unsafe { core::slice::from_raw_parts(addr as usize as *const u8, n) }.to_vec())
     }
-    /// `gw_Snap_Resimulating` (gw_snap.c `sn.enabled && sn.cur_is_resim`): set by the play loop around a resimulated
-    /// frame ([`set_resimulating`])
+    /// `gw_Snap_Resimulating` (gw_snap.c `sn.enabled && sn.cur_is_resim`, crate::snap_host)
     fn resimulating(&self) -> bool {
-        RESIMULATING.load(core::sync::atomic::Ordering::Relaxed)
+        sh::resimulating()
+    }
+
+    // ---- gw_snap.c's machinery (crate::snap_host: the one snapshot base)
+    /// `gw_snap_reserve`
+    fn snap_reserve(&mut self, slots: i32) -> i32 {
+        sh::reserve(slots)
+    }
+    /// `gw_snap_save_index`
+    fn snap_save_index(&mut self, slot: i32, tag: i32) {
+        sh::save_index(slot, tag)
+    }
+    /// `gw_snap_load_index`
+    fn snap_load_index(&mut self, slot: i32) -> i32 {
+        sh::load_index(slot)
+    }
+    /// `gw_snap_slot_bytes`
+    fn snap_slot_bytes(&self) -> u64 {
+        sh::slot_bytes()
+    }
+    /// `gw_Snap_LabResim`
+    fn snap_lab_resim(&mut self, on: bool) {
+        sh::lab_resim(on)
+    }
+    /// `gw_RbViz_Total`
+    fn rbviz_total(&self) -> i32 {
+        sh::rbviz_total()
+    }
+    /// `gw_RbViz_Get`
+    fn rbviz_get(&self, back: i32) -> Option<melee_script::gd::labmisc::RbRow> {
+        sh::rbviz_get(back).map(|r| melee_script::gd::labmisc::RbRow {
+            frame: r.frame, first: r.first, depth: r.depth, cause: r.cause, kind: r.kind, mismatch: r.mismatch, ms: r.ms,
+        })
+    }
+    /// `gw_RbViz_FirstMismatch` (frame -1: none)
+    fn rbviz_first_mismatch(&self) -> Option<melee_script::gd::labmisc::RbMismatch> {
+        let m = sh::rbviz_first_mismatch();
+        Some(melee_script::gd::labmisc::RbMismatch { frame: m.frame, count: m.count, place: m.place, va: m.va, was: m.was, now: m.now })
+    }
+    /// `gw_RbViz_Reset`
+    fn rbviz_reset(&mut self) {
+        sh::rbviz_reset()
+    }
+    /// `gw_rw_begin`
+    fn rw_begin(&mut self, tag: i32, user: &[u8]) -> i32 {
+        sh::rw_begin(tag, user)
+    }
+    /// `gw_rw_save`
+    fn rw_save(&mut self, tag: i32, user: &[u8]) -> i32 {
+        sh::rw_save(tag, user)
+    }
+    /// `gw_rw_load`: the keyframe's user block
+    fn rw_load(&mut self, k: i32) -> Option<Vec<u8>> {
+        sh::rw_load(k)
+    }
+    /// `gw_rw_drop_from`
+    fn rw_drop_from(&mut self, tag: i32) -> i32 {
+        sh::rw_drop_from(tag)
+    }
+    /// `gw_rw_trim`
+    fn rw_trim(&mut self, limit: i32) {
+        sh::rw_trim(limit)
+    }
+    /// `gw_rw_end`
+    fn rw_end(&mut self) {
+        sh::rw_end()
+    }
+    /// `gw_rw_find_le` (INT_MIN: None)
+    fn rw_find_le(&self, tag: i32) -> Option<i32> {
+        sh::rw_find_le(tag)
+    }
+    /// `gw_rw_base_tag`
+    fn rw_base_tag(&self) -> i32 {
+        sh::rw_base_tag()
+    }
+    /// `gw_rw_latest`
+    fn rw_latest(&self) -> i32 {
+        sh::rw_latest()
+    }
+    /// `gw_rw_count`
+    fn rw_count(&self) -> i32 {
+        sh::rw_count()
+    }
+    /// `gw_rw_bytes`
+    fn rw_bytes(&self) -> f64 {
+        sh::rw_bytes()
+    }
+    /// `gw_rw_delta_bytes`
+    fn rw_delta_bytes(&self) -> f64 {
+        sh::rw_delta_bytes()
+    }
+    /// `gw_rw_ms_last_load`
+    fn rw_ms_last_load(&self) -> f64 {
+        sh::rw_ms_last_load()
+    }
+    /// `gw_rw_ms_save_avg`
+    fn rw_ms_save_avg(&self) -> f64 {
+        sh::rw_ms_save_avg()
+    }
+    /// `gw_rw_last_load_pages`
+    fn rw_last_load_pages(&self) -> u32 {
+        sh::rw_last_load_pages()
+    }
+    /// `gw_rw_capture`
+    fn rw_capture(&mut self) -> i32 {
+        sh::rw_capture()
+    }
+    /// `gw_rw_compare`
+    fn rw_compare(&mut self) -> Option<([f64; 2], [u64; 2])> {
+        sh::rw_compare()
+    }
+    /// `gw_rw_measure`
+    fn rw_measure(&mut self, on: bool) {
+        sh::rw_measure(on)
+    }
+    /// `gw_snap_file_save`
+    fn snap_file_save(&mut self, path: &str, hdr: &[u8]) -> i32 {
+        sh::file_save(path, hdr)
+    }
+    /// `gw_snap_file_header`
+    fn snap_file_header(&self, path: &str, len: usize) -> Option<Vec<u8>> {
+        sh::file_header(path, len)
+    }
+    /// `gw_snap_file_rewrite_header`
+    fn snap_file_rewrite_header(&mut self, path: &str, hdr: &[u8]) -> i32 {
+        sh::file_rewrite_header(path, hdr)
+    }
+    /// `gw_snap_file_load`
+    fn snap_file_load(&mut self, path: &str) -> i32 {
+        sh::file_load(path)
     }
 
     // ---- the scripted camera (cm/camera.c's TARGET_PC Camera_Script* block, melee_world::tu::camera)
@@ -895,12 +1024,6 @@ impl ScriptGame for EngineGame {
 /// A C string the game side returned (NUL-terminated, static or per-call buffer), None for NULL.
 unsafe fn cstr(p: *const core::ffi::c_char) -> Option<String> {
     (!p.is_null()).then(|| unsafe { core::ffi::CStr::from_ptr(p) }.to_string_lossy().into_owned())
-}
-
-/// gw_snap.c's resimulation flag: the rollback loop sets it while it re-runs a frame (no hooks, no queued events).
-static RESIMULATING: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
-pub fn set_resimulating(on: bool) {
-    RESIMULATING.store(on, core::sync::atomic::Ordering::Relaxed);
 }
 
 /// `gw_Geno_DefineName(ck, buf, cap)` into a `cap`-byte buffer, as gs_char_name reads it back; None when it answers 0.

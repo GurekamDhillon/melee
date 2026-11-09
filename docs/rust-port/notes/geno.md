@@ -219,3 +219,28 @@ regeneration. The `Surface(Begin|End)` row added to seams.txt reaches the engine
 
 **Surfaces**: gw_surface.cpp (mod shader programs: `gw_surface_register` / `select`) has no Rust counterpart.
 SurfaceBegin / SurfaceEnd are therefore the C's no-surface no-ops.
+
+**snap_host (2026-11-08)**: `melee_engine::snap_host` is gw_snap.c's `sn`. It owns the one `snapshot::Base` (cow.rs
+and pagewatch.rs are process-wide) and holds:
+- the frame-keyed sessions, which geno_host's game half uses (it no longer has a base of its own);
+- the indexed slots;
+- the long rewind's keyframes;
+- the rewind self-test;
+- the savestate files;
+- the rollback visualiser's ring;
+- the resimulation flag.
+
+play_net's ModesGame, netmatch, retail_flow's seek and the Lab's LabRun still capture their own base. Moving them onto
+`snap_host::with_base` / `release` is a later, separate change. Where the port differs from the C:
+- **Keyframes** share pages with the previous keyframe (`Base::save_after`). The C stores page deltas against a full
+  MEM1 copy. `rw_bytes` is therefore the base keyframe's pages plus the deltas.
+- **Self-test compare** counts the OS heap (the range `page_hash` covers) as the simulation. In the C, the
+  exemptions (the DVD stream, the light list, the slist) and `gw_rw_measure`'s render-owned bytes do that job.
+  `rw_measure` only records the request. Needs a PC check: does a paused-Lab render change OS-heap bytes?
+- **State files** are a Rust layout: each range at its address. They load only where the ranges sit at the same
+  addresses (the same run, or where they repeat); elsewhere the load answers -2.
+- **Slot loads**: a slot that was never saved answers -1. The C would copy the never-synced slot in.
+- **Replay cursor**: a keyframe keeps the replay cursor only once the `melee` crate installs
+  `snap_host::REPLAY_CURSOR`.
+- **Not ported**: gw_script_1p.inc (the 1P mode host), so `onep_state_active` is false. Also
+  `ScriptGame_StageReleaseOwner` on unload, which needs the script's stage token.

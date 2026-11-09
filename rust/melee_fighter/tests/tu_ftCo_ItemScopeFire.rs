@@ -2,6 +2,8 @@
 //! shipping contraction; regenerate with
 //! `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_ItemScopeFire`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_ItemScopeFire as m;
@@ -27,8 +29,8 @@ fn ftCo_ItemScopeFire_matches_c() {
             t(b(i.x)); t(b(i.y)); t(b(i.z));
             o.x = i.x * 2.0; o.y = i.y - 1.0; o.z = i.z + 3.0;
         });
-        hk::ft_800841B8 = Some(|g, cb| { t(12); t((cb as usize == m::fn_800D82EC as usize) as u32); cb(g) });
-        hk::ft_80082C74 = Some(|g, cb| { t(13); t((cb as usize == m::fn_800D8268 as usize) as u32); cb(g) });
+        hk::ft_800841B8 = Some(|g, cb| { t(12); t((fnsym::same(cb as usize, m::fn_800D82EC as usize)) as u32); cb(g) });
+        hk::ft_80082C74 = Some(|g, cb| { t(13); t((fnsym::same(cb as usize, m::fn_800D8268 as usize)) as u32); cb(g) });
         hk::ft_PlaySFX = Some(|fp, id, v, p| { t(14); t((fp as *const Fighter == f() as *const Fighter) as u32); t(id as u32); t(v as u32); t(p as u32) });
         hk::it_80291CCC = Some(|g, pos| { t(15); t((g == igo()) as u32); pos.x = rg(); pos.y = rg(); pos.z = rg(); });
         hk::it_80291FA8 = Some(|g, pos, n, facing| {
@@ -82,8 +84,8 @@ fn ftCo_ItemScopeFire_matches_c() {
             }
             let fr = f();
             let mut h = Hs::new();
-            h.m(match fr.accessory4_cb { None => 0, Some(p) if p as usize == m::fn_800D86B8_c as usize => 1, _ => 9 });
-            h.m(match fr.take_dmg_cb { None => 0, Some(p) if p as usize == m::fn_800D8378_c as usize => 2, _ => 9 });
+            h.m(match fr.accessory4_cb { None => 0, Some(p) if fnsym::same(p as usize, m::fn_800D86B8_c as usize) => 1, _ => 9 });
+            h.m(match fr.take_dmg_cb { None => 0, Some(p) if fnsym::same(p as usize, m::fn_800D8378_c as usize) => 2, _ => 9 });
             h.m(unsafe { fr.mv.co.common.x0 } as u32);
             {
                 let a = unsafe { &fr.anon_2210.anon_0 };

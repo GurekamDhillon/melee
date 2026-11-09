@@ -1,6 +1,8 @@
 //! src/tu/ftCo_Jump.rs vs the C (gen/cref/tu/ftCo_Jump.c: the whole TU, shipping contraction;
 //! regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_Jump`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_Jump as m;
@@ -40,7 +42,7 @@ fn ftCo_Jump_matches_c() {
         hk::ft_80084DB0 = Some(|g| { t(24); t(is_go(g)) });
         hk::ftCo_80096CC8 = Some(|_, _| { t(25); false });
         hk::ft_80082B1C = Some(|_| { t(26) });
-        hk::ft_800835B0 = Some(|g, a, bb| { t(27); t(is_go(g)); t((a as usize == m::ext::ftCo_80096CC8 as usize) as u32); t((bb as usize == m::ext::ft_80082B1C as usize) as u32) });
+        hk::ft_800835B0 = Some(|g, a, bb| { t(27); t(is_go(g)); t((fnsym::same(a as usize, m::ext::ftCo_80096CC8 as usize)) as u32); t((fnsym::same(bb as usize, m::ext::ft_80082B1C as usize)) as u32) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_Jump.txt"));
     for op in 0..11u32 {

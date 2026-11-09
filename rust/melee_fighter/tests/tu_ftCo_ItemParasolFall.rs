@@ -2,6 +2,8 @@
 //! shipping contraction; regenerate with
 //! `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_ItemParasolFall`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_ItemParasolFall as m;
@@ -25,7 +27,7 @@ fn ftCo_ItemParasolFall_matches_c() {
         hk::ftCo_ItemParasol_Phys = Some(|g| { t(10); t(is_go(g)) });
         hk::ftCo_Landing_Enter_Basic = Some(|g| { t(11); t(is_go(g)) });
         hk::ft_8008370C = Some(|g, cb| {
-            t(12); t(is_go(g)); t((cb as usize == m::ext::ftCo_Landing_Enter_Basic as usize) as u32); cb(g)
+            t(12); t(is_go(g)); t((fnsym::same(cb as usize, m::ext::ftCo_Landing_Enter_Basic as usize)) as u32); cb(g)
         });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_ItemParasolFall.txt"));

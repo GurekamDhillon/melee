@@ -2,6 +2,8 @@
 //! shipping contraction; regenerate with
 //! `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_KinokoGiantEnd`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_KinokoGiantEnd as m;
@@ -11,7 +13,7 @@ use melee_fighter::types::*;
 unsafe extern "C" fn mush(g: *mut HSD_GObj) { t(17); t(is_go(g)) }
 
 fn cbid(cb: HSD_GObjEvent) -> u32 {
-    match cb { None => 0, Some(p) if p as usize == m::ftCo_800D1B04_c as usize => 1, _ => 9 }
+    match cb { None => 0, Some(p) if fnsym::same(p as usize, m::ftCo_800D1B04_c as usize) => 1, _ => 9 }
 }
 
 #[test]
@@ -32,8 +34,8 @@ fn ftCo_KinokoGiantEnd_matches_c() {
         hk::fn_800D2CD4 = Some(|_| t(12));
         hk::fn_800D2A3C = Some(|_| { t(13); sr(1) });
         hk::Fighter_ChangeMotionState = Some(|g, ms, fl, a, bb, c, o| { t(14); t(is_go(g)); t(ms as u32); t(fl); t(b(a)); t(b(bb)); t(b(c)); t(o.is_null() as u32) });
-        hk::ft_8008403C = Some(|g, cb| { t(15); t((cb as usize == m::fn_800D1DB0 as usize) as u32); cb(g) });
-        hk::ft_80082C74 = Some(|g, cb| { t(16); t((cb as usize == m::fn_800D1C40 as usize) as u32); cb(g) });
+        hk::ft_8008403C = Some(|g, cb| { t(15); t((fnsym::same(cb as usize, m::fn_800D1DB0 as usize)) as u32); cb(g) });
+        hk::ft_80082C74 = Some(|g, cb| { t(16); t((fnsym::same(cb as usize, m::fn_800D1C40 as usize)) as u32); cb(g) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_KinokoGiantEnd.txt"));
     for op in 0..10u32 {

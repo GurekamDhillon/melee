@@ -3,6 +3,8 @@
 //! `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_ItemScopeRapid`). The C's GC-offset
 //! accesses (`fp + 0x2340`, `p_ftCommonData + 0x5BC`, `gobj + 0x2C`) are the named fields here.
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_ItemScopeRapid as m;
@@ -26,8 +28,8 @@ fn ftCo_ItemScopeRapid_matches_c() {
         hk::it_8026B594 = Some(|g| { t(11); t((g == igo()) as u32); sr(1) });
         hk::ftCo_800CDE54 = Some(|_| t(12));
         hk::ftCo_800CDE74 = Some(|_| t(13));
-        hk::ft_800841B8 = Some(|g, cb| { t(14); t((cb as usize == m::fn_800D7D70 as usize) as u32); cb(g) });
-        hk::ft_80082C74 = Some(|g, cb| { t(15); t((cb as usize == m::fn_800D7CEC as usize) as u32); cb(g) });
+        hk::ft_800841B8 = Some(|g, cb| { t(14); t((fnsym::same(cb as usize, m::fn_800D7D70 as usize)) as u32); cb(g) });
+        hk::ft_80082C74 = Some(|g, cb| { t(15); t((fnsym::same(cb as usize, m::fn_800D7CEC as usize)) as u32); cb(g) });
         hk::it_80291DAC = Some(|_, n| { t(16); t(n as u32); if sr(2) { 7 } else { -1 } });
         hk::fn_800D84D4 = Some(|_, n| { t(17); t(n as u32) });
     }
@@ -62,8 +64,8 @@ fn ftCo_ItemScopeRapid_matches_c() {
             }
             let fr = f();
             let mut h = Hs::new();
-            h.m(match fr.accessory4_cb { None => 0, Some(p) if p as usize == m::fn_800D80F4_c as usize => 1, _ => 9 });
-            h.m(match fr.take_dmg_cb { None => 0, Some(p) if p as usize == m::fn_800D8378_c as usize => 2, _ => 9 });
+            h.m(match fr.accessory4_cb { None => 0, Some(p) if fnsym::same(p as usize, m::fn_800D80F4_c as usize) => 1, _ => 9 });
+            h.m(match fr.take_dmg_cb { None => 0, Some(p) if fnsym::same(p as usize, m::fn_800D8378_c as usize) => 2, _ => 9 });
             h.m(unsafe { fr.mv.co.common.x0 } as u32);
             c.line(op, k, 0, h.0);
         }

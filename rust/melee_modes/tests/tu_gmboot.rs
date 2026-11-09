@@ -3,6 +3,8 @@
 //! tests/data/tu_gmboot.txt (regenerate with `python rust/melee_modes/gen/turef/tu_shard457_gm.py
 //! tu_gmboot`). Each line is the callee log, the boot-scene data the functions write and the skip flag.
 #![allow(static_mut_refs)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 
 use core::ffi::c_void;
 use melee_modes::tu::gmboot as t;
@@ -56,7 +58,7 @@ fn install_hooks() {
         });
         t::ext::GM_CHANGEGAMEMODEAFTERCURRENTSCENE = Some(|mode| log(&format!("chg({})", mode)));
         t::ext::GM_SETGAMEMODEOVERRIDE = Some(|f| {
-            let who = if f as usize == t::ext::lbCardGame_DecideGameMode as usize { "dec" } else { "?" };
+            let who = if fnsym::same(f as usize, t::ext::lbCardGame_DecideGameMode as usize) { "dec" } else { "?" };
             log(&format!("override({})", who));
         });
         t::ext::GM_SETPENDINGGAMEMODE = Some(|mode| log(&format!("pend({})", mode)));

@@ -1,6 +1,8 @@
 //! src/tu/ftCo_HammerWait.rs vs the C (gen/cref/tu/ftCo_HammerWait.c: the whole TU, shipping
 //! contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_HammerWait`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_HammerWait as m;
@@ -32,7 +34,7 @@ fn ftCo_HammerWait_matches_c() {
         hk::ft_80084F3C = Some(|g| { t(12); t(is_go(g)) });
         hk::ftCo_800C5D34 = Some(|g| { t(13); t(is_go(g)) });
         hk::ft_8008403C = Some(|g, cb| {
-            t(14); t(is_go(g)); t((cb as usize == m::ext::ftCo_800C5D34 as usize) as u32); cb(g)
+            t(14); t(is_go(g)); t((fnsym::same(cb as usize, m::ext::ftCo_800C5D34 as usize)) as u32); cb(g)
         });
         hk::it_80293E34 = Some(|i| { t(15); t(itid(i)) });
         hk::ftCommon_8007ECD4 = Some(|fr, a| { t(16); t(isf(fr)); t(a as u32) });

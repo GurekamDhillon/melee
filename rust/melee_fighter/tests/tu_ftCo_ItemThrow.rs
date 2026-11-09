@@ -1,6 +1,8 @@
 //! src/tu/ftCo_ItemThrow.rs vs the C (gen/cref/tu/ftCo_ItemThrow.c: the whole TU, shipping
 //! contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_ItemThrow`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_ItemThrow as m;
@@ -58,8 +60,8 @@ fn ftCo_ItemThrow_matches_c() {
         hk::ft_80085030 = Some(|_, a, bb| { t(24); t(b(a)); t(b(bb)) });
         hk::ft_80084DB0 = Some(|_| t(25));
         hk::ft_80084104 = Some(|_| t(26));
-        hk::ft_800841B8 = Some(|g, cb| { t(27); t((cb as usize == m::ftCo_80096250 as usize) as u32); t((cb as usize == m::ext::ftCo_80096E68 as usize) as u32); cb(g) });
-        hk::ft_80082C74 = Some(|g, cb| { t(28); t((cb as usize == m::ftCo_80096374 as usize) as u32); cb(g) });
+        hk::ft_800841B8 = Some(|g, cb| { t(27); t((fnsym::same(cb as usize, m::ftCo_80096250 as usize)) as u32); t((fnsym::same(cb as usize, m::ext::ftCo_80096E68 as usize)) as u32); cb(g) });
+        hk::ft_80082C74 = Some(|g, cb| { t(28); t((fnsym::same(cb as usize, m::ftCo_80096374 as usize)) as u32); cb(g) });
         hk::ft_80082708 = Some(|_| { t(29); sr(6) as u32 });
         hk::ft_80081D0C = Some(|_| { t(30); sr(7) as u32 });
         hk::ftCommon_8007D5D4 = Some(|_| t(31));

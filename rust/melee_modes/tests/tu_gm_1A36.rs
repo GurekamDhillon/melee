@@ -3,6 +3,8 @@
 //! `python rust/melee_modes/gen/turef/tu_shard537_gm.py tu_gm_1A36`). Each line is the callee log, the return
 //! value and the whole `controller_map` after the call.
 #![allow(static_mut_refs)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 
 mod tu537;
 use melee_modes::tu::gm_1A36 as t;
@@ -127,7 +129,7 @@ fn matches_c() {
                 let m = &t::controller_map;
                 let fl = match m.xF0 {
                     None => 0,
-                    Some(p) if p as usize == t::fn_801A396C as usize => 1,
+                    Some(p) if fnsym::same(p as usize, t::fn_801A396C as usize) => 1,
                     Some(_) => 2,
                 };
                 got += &format!("|xF0={},{},{},{},{},{},{}", fl, m.xF4, m.xF6, m.xF8, m.xFA, m.xFC, m.xFE);

@@ -1,6 +1,8 @@
 //! src/tu/ftCo_ItemScrew.rs vs the C (gen/cref/tu/ftCo_ItemScrew.c: the whole TU, shipping
 //! contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_ItemScrew`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_ItemScrew as m;
@@ -28,7 +30,7 @@ fn ftCo_ItemScrew_matches_c() {
         hk::ftCo_800CBAC4 = Some(|g, ms, v, a| { t(11); t(is_go(g)); t(ms as u32); t((v as *const Vec3 == &raw const V) as u32); t(b(v.x)); t(b(v.y)); t(b(v.z)); t(a as u32) });
         hk::ftCo_80096CC8 = Some(|_, _| { t(12); false });
         hk::ft_80082B1C = Some(|_| t(13));
-        hk::ft_800831CC = Some(|g, a, bb| { t(14); t(is_go(g)); t((a as usize == m::ext::ftCo_80096CC8 as usize) as u32); t((bb as usize == m::ext::ft_80082B1C as usize) as u32) });
+        hk::ft_800831CC = Some(|g, a, bb| { t(14); t(is_go(g)); t((fnsym::same(a as usize, m::ext::ftCo_80096CC8 as usize)) as u32); t((fnsym::same(bb as usize, m::ext::ft_80082B1C as usize)) as u32) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_ItemScrew.txt"));
     for op in 0..10u32 {

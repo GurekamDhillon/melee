@@ -3,6 +3,8 @@
 //! `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_ItemScopeStart`). The C's GC-offset
 //! overlay words (`fp + 0x2340/0x2344`) are `mv` words 0/1 here.
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_ItemScopeStart as m;
@@ -34,8 +36,8 @@ fn ftCo_ItemScopeStart_matches_c() {
         hk::fn_800D81D0 = Some(|_, n| { t(16); t(n as u32) });
         hk::ftCo_800CDE54 = Some(|_| t(17));
         hk::ftCo_800CDE74 = Some(|_| t(18));
-        hk::ft_800841B8 = Some(|g, cb| { t(19); t((cb as usize == m::fn_800D78B0 as usize) as u32); cb(g) });
-        hk::ft_80082C74 = Some(|g, cb| { t(20); t((cb as usize == m::fn_800D7830 as usize) as u32); cb(g) });
+        hk::ft_800841B8 = Some(|g, cb| { t(19); t((fnsym::same(cb as usize, m::fn_800D78B0 as usize)) as u32); cb(g) });
+        hk::ft_80082C74 = Some(|g, cb| { t(20); t((fnsym::same(cb as usize, m::fn_800D7830 as usize)) as u32); cb(g) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_ItemScopeStart.txt"));
     for op in 0..14u32 {
@@ -69,7 +71,7 @@ fn ftCo_ItemScopeStart_matches_c() {
                 _ => { m::ftCo_ItemScopeAirStart_Coll(g); 0 }
             };
             let mut h = Hs::new();
-            h.m(match f().take_dmg_cb { None => 0, Some(p) if p as usize == m::fn_800D7938_c as usize => 1, _ => 9 });
+            h.m(match f().take_dmg_cb { None => 0, Some(p) if fnsym::same(p as usize, m::fn_800D7938_c as usize) => 1, _ => 9 });
             h.m(b(*ovf())); h.m(*ovi() as u32);
             c.line(op, k, ret, h.0);
         }

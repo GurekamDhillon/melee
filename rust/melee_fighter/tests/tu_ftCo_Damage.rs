@@ -2,6 +2,8 @@
 //! regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_Damage`). Both Fighters
 //! and the common data are filled word for word from the xorshift; the hash covers both Fighters.
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use core::ffi::c_void;
 use m::ext::hook as hk;
@@ -500,7 +502,7 @@ fn hooks() {
         hk::ft_800848DC = Some(|g, cb| {
             t(76);
             t(gk(g));
-            t((cb as usize == m::ftCo_8008FC94 as usize) as u32);
+            t((fnsym::same(cb as usize, m::ftCo_8008FC94 as usize)) as u32);
         });
         hk::ft_80081DD4 = dchk!(77);
         hk::ftCo_80097D40 = dv!(78);

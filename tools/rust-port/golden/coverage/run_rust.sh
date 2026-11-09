@@ -2,6 +2,7 @@
 # Run coverage scenarios against the Rust engine and compare with the C goldens (docs/rust-port/golden/coverage/<name>.csv).
 #   bash tools/rust-port/golden/coverage/run_rust.sh [-j N] [--out RESULTS.tsv] [NAME...|--all]
 # Output rows: name <TAB> status (PASS|FAIL|NOT_WIRED|NO_GOLDEN) <TAB> matched frames <TAB> golden rows <TAB> first divergence / reason.
+# COV_MODS_DIR=<dir> mounts <dir>/<name> as the scenario's mods folder.
 # Headless, unfocused, no OS input. Needs a built build/cargo/${PROFILE:-release}/melee.exe (PROFILE=fast: cargo_fast.sh build -p melee --profile fast) and GW_ISO_VANILLA (workspace .env, never printed).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../../.." && pwd)"; cd "$repo"
@@ -20,6 +21,9 @@ one() {
   # the scenario's env (scenarios.json "env", e.g. MELEE_MODS_DIR for the Geno mods), as record_coverage.sh passes to the C
   envs=$(python tools/rust-port/golden/coverage/scn.py tsv "$s" 2>/dev/null | cut -f6)
   IFS=',' read -ra kv <<< "$envs"; for e in "${kv[@]}"; do [ -n "$e" ] && export "$e"; done
+  # COV_MODS_DIR=<dir>: the scenario's mods from <dir>/<name> instead (e.g. its packages converted to geno 12 by
+  # tools/rust-port/geno/lua_to_wasm_package.py), compared against the same C golden
+  [ -n "${COV_MODS_DIR:-}" ] && export MELEE_MODS_DIR="$COV_MODS_DIR/$s"
   iso="$GW_ISO_VANILLA"; if [ -n "${COV_ISO:-}" ]; then v="GW_ISO_$COV_ISO"; iso="${!v:-}"; [ -n "$iso" ] || { printf '%s	FAIL	0	%s	%s not set
 ' "$s" "$rows" "$v"; return; }; fi
   # a VS golden whose match ends (stock matches) goes on into the results screen, which the C hashes as a second live

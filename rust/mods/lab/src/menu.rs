@@ -120,7 +120,8 @@ const S_RESET: usize = 43;
 const S_SWAP: usize = 44;
 const S_CMD: usize = 45;
 const S_RESUME: usize = 46;
-pub const N_IDS: usize = 47;
+const S_CONTROLS: usize = 47;
+pub const N_IDS: usize = 48;
 
 pub const CONTROL: &[(&str, i32)] = &[("Live pad", 0), ("Stand", 1), ("Crouch", 2), ("Jump", 3), ("Shield", 4), ("CPU level", 5), ("Recording", 6)];
 pub const BLOCK: &[(&str, i32)] = &[("None", 0), ("All", 1), ("After first hit", 2), ("Random", 3)];
@@ -140,7 +141,7 @@ const fn r(id: usize, name: &'static str, kind: K, help: &'static str) -> RowDef
 }
 
 pub const DUMMY_ROWS: &[RowDef] = &[
-    r(D_CONTROL, "Control", K::Choice(CONTROL), "What drives the dummy between reactions.|Live pad: its own controller (or nobody).|Recording: loops the Record tab's slot."),
+    r(D_CONTROL, "Control", K::Choice(CONTROL), "What drives the dummy between reactions.|Live pad: its own controller (or nobody;|a CPU slot: its AI). Recording: loops the|Record tab's slot. On a CPU slot every option|but CPU level takes over from the AI."),
     r(D_LEVEL, "CPU level", K::Slider(1, 9, 1, ""), "The retail CPU level, for Control: CPU level.|The port must be a CPU at character select."),
     r(D_BLOCK, "Block", K::Choice(BLOCK), "Shield while you attack nearby.|After first hit: blocks for 2 s after a hit.|Random: blocks at the chance below."),
     r(D_BLOCK_PCT, "Block chance", K::Slider(10, 100, 10, "%"), "How often Block: Random shields."),
@@ -194,9 +195,33 @@ const SESSION_ROWS: &[RowDef] = &[
     r(S_RESET, "Reset positions", K::Action, "Both fighters back to the middle, P1 left."),
     r(S_SWAP, "Swap sides", K::Action, "P1 and P2 trade places."),
     r(S_CMD, "Command bar", K::Action, "Type part of a setting or action and press|Enter (keyboard). X opens it from any tab."),
+    r(S_CONTROLS, "Controls", K::Action, "Every LAB button, on one page.|B closes it."),
     r(S_RESUME, "Resume", K::Action, "Close the menu (B or START does too)."),
 ];
 pub const TABS: [(&str, &[RowDef]); 5] = [("Dummy", DUMMY_ROWS), ("Record", RECORD_ROWS), ("Display", DISPLAY_ROWS), ("HUD", HUD_ROWS), ("Session", SESSION_ROWS)];
+
+/// Every LAB control: (buttons, what they do). The one list of them: the Controls page (Session tab) draws it and
+/// lib.rs's header points here, so the two cannot drift.
+pub const CONTROLS: &[(&str, &str)] = &[
+    ("START tap", "freeze / resume"),
+    ("D-left / D-right", "frozen: step -1 / +1 frame (hold to repeat)"),
+    ("Z + L / Z + R", "frozen: step -10 / +10 frames"),
+    ("Z + A", "frozen: take over (go live from this frame)"),
+    ("D-down", "save to the current slot (on release)"),
+    ("D-up", "load the current slot"),
+    ("Z + D-left / D-right", "pick the save slot"),
+    ("Z + D-up", "next HUD preset"),
+    ("D-down + START", "the settings overlay"),
+    ("Hold START", "this menu"),
+    ("Hold Z (frozen)", "the radial quick menu: stick picks, release runs"),
+    ("X (in the menu)", "the command bar: type, Enter runs"),
+    ("L / R", "menu: previous / next tab"),
+    ("Up / down", "menu: row"),
+    ("Left / right", "menu: change the value"),
+    ("A", "menu: apply / run"),
+    ("B / START", "menu: close (B closes this page)"),
+    ("L + R + A + START", "the retail pause (quit the match)"),
+];
 
 /// The radial's 8 actions, clockwise from up (spec 4).
 const RADIAL: [&str; 8] = ["Save", "Load", "Reset", "Record", "Play", "Mirror", "Swap", "Menu"];
@@ -230,13 +255,15 @@ pub struct Menu {
     pub weights: [i32; 8],
     pub recording: i32,
     pub keys: [u32; 32],
+    /// the Controls page is open
+    pub controls: bool,
 }
 
 impl Menu {
     pub const fn new() -> Menu {
         Menu {
             open: false, port: 0, tab: 0, row: 0, scroll: 0, resume: false, hold: (0, 0), radial: false, rport: 0, rsel: -1, z_frames: 0, z_combo: false,
-            cmd: false, kcap: 0, q: Txt::new(), hits: [(0, 0, 0); 8], n_hits: 0, csel: 0, recs: [0; 8], weights: [1; 8], recording: -1, keys: [0; 32],
+            cmd: false, kcap: 0, q: Txt::new(), hits: [(0, 0, 0); 8], n_hits: 0, csel: 0, recs: [0; 8], weights: [1; 8], recording: -1, keys: [0; 32], controls: false,
         }
     }
 }
@@ -258,8 +285,14 @@ impl Lab {
     /// The port the Dummy tab edits: the opener's opponent. Online the opener is this peer's player (the pads the
     /// mod reads are this machine's controllers, not the match ports).
     pub fn dport(&self) -> usize {
-        let me = if self.online { self.status[8] as usize } else { self.menu.port as usize };
-        1 - (me & 1)
+        let me = if self.online { self.status[8] as usize } else { self.menu.port as usize } & 3;
+        let pref = 1 - (me & 1);
+        // P1 + P3 (or a dummy on P3 / P4): the first other port with a fighter, so a setting never goes nowhere
+        let present = |p: usize| unsafe { gd_lab_fighter(p as u32, core::ptr::null_mut(), 0) } >= 0;
+        if present(pref) {
+            return pref;
+        }
+        (0..4).find(|&p| p != me && present(p)).unwrap_or(pref)
     }
 
     pub fn val(&self, id: usize) -> i32 {
@@ -284,7 +317,7 @@ impl Lab {
     }
 
     pub fn menu_init(&mut self) {
-        self.dv = [D_DEFAULT; 2];
+        self.dv = [D_DEFAULT; 4];
         self.vals[R_LOOP] = 1;
         self.vals[S_SLOT] = 1;
     }
@@ -567,6 +600,7 @@ impl Lab {
             S_SWAP => self.swap(),
             S_CMD => self.open_cmd(),
             S_RESUME => self.close_menu(),
+            S_CONTROLS => self.menu.controls = true,
             _ => {}
         }
     }
@@ -619,6 +653,7 @@ impl Lab {
             self.close_cmd();
         }
         self.menu.open = false;
+        self.menu.controls = false;
         if self.menu.resume {
             unsafe { gd_lab_pause(0) };
         }
@@ -656,6 +691,12 @@ impl Lab {
             self.cmd_keys();
             if edge & BB != 0 {
                 self.close_cmd();
+            }
+            return true;
+        }
+        if self.menu.controls {
+            if edge & (BB | START) != 0 {
+                self.menu.controls = false;
             }
             return true;
         }
@@ -961,8 +1002,20 @@ impl Lab {
         let mut who = Txt::new();
         who.s("dummy P").i(self.dport() as i32 + 1);
         self.enc.text_ex(x0 + w, y0 + 8.0, ROLE_LABEL, mu, ALIGN_RIGHT, 0.0, who.as_str());
-        // rows
         let by = y0 + 34.0;
+        if self.menu.controls {
+            // the Controls page: the CONTROLS table, buttons left, action right
+            self.panel(x0, by, w, h - 34.0);
+            self.enc.text(x0 + 16.0, by + 12.0, ROLE_TITLE, tx, "Controls");
+            for (i, (k, what)) in CONTROLS.iter().enumerate() {
+                let ry = by + 44.0 + i as f32 * 20.0;
+                self.enc.text(x0 + 16.0, ry, ROLE_VALUE, tx, k);
+                self.enc.text(x0 + 230.0, ry, ROLE_BODY, mu, what);
+            }
+            self.enc.text_ex(x0 + w - 16.0, by + 14.0, ROLE_LABEL, mu, ALIGN_RIGHT, 0.0, "B close");
+            return;
+        }
+        // rows
         let lw = 500.0;
         self.panel(x0, by, lw, h - 34.0);
         let rows = TABS[self.menu.tab].1;

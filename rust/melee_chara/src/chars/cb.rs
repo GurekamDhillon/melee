@@ -629,10 +629,10 @@ pub unsafe extern "C" fn ftsamusspecialn__ftSs_SpecialS_8012A074(g: *mut HSD_GOb
     crate::tu::ftsamusspecialn::ftSs_SpecialS_8012A074(g);
 }
 
-/// `ftSk_Init_80110198` (defined in src/melee/ft/kinds/ftSeak/ftseak.c).
-pub unsafe extern "C" fn ftseak__ftSk_Init_80110198(g: *mut HSD_GObj) {
-    let _ = crate::tu::ftseak::ftSk_Init_80110198(g as _);
-}
+/// `ftSk_Init_80110198` (defined in src/melee/ft/kinds/ftSeak/ftseak.c). The same fn as tu::ftseak's callback entry,
+/// not a second wrapper: ftSk_SpecialN_80111FBC tests `death2_cb / take_dmg_cb == ftSk_Init_80110198` (ftseakspecialn.c:59)
+/// and ftSk_SpecialS_80111440 stores this one.
+pub use crate::tu::ftseak::cb_ftSk_Init_80110198 as ftseak__ftSk_Init_80110198;
 
 /// `fn_80113038` (defined in src/melee/ft/kinds/ftSeak/ftseakspecialhi.c).
 pub unsafe extern "C" fn ftseakspecialhi__fn_80113038(g: *mut HSD_GObj) {

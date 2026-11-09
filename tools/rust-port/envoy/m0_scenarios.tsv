@@ -1,0 +1,2 @@
+pad_envoy_m0a_fd	vs	3600	idle_synctest	mode=vs;at=match;p1=ck:0/human;p2=ck:2/human;p3=ck:20/cpu9;p4=none;stage=fd;match=time;minutes=0;items=off
+pad_envoy_m0a_bf	vs	3600	idle_synctest	mode=vs;at=match;p1=ck:9/human;p2=ck:19/human;p3=ck:12/cpu9;p4=ck:1/cpu9;stage=bf;match=time;minutes=0;items=off

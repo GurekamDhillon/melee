@@ -7,9 +7,11 @@
 //!    recorded frames' hashes; a mirrored playback on the other port hands the game the mirrored pads;
 //! 4. deterministic dummy: shield + random DI / SDI / tech / OoS reactions (lab RNG, weighted), twice from the same
 //!    state and seed: identical hashes; a different lab seed changes the choices;
-//! 5. cost: the step, ring capture, slot save, load and rewind times per frame (the perf line).
+//! 5. cost: the step, ring capture, slot save, load and rewind times per frame (the perf line);
+//! 6. the lookahead (lab_check/look.rs); 7. the Geno commands reach their game functions (lab_check/geno.rs).
 //! Exit 0 when every check passes.
 
+mod geno;
 mod look;
 mod train;
 
@@ -257,6 +259,8 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
     look::lookahead_checks(&mut lab, &sh, &mut check);
     // 7. drills, the adaptive trainer, mirror / jitter
     train::train_checks(&mut lab, &sh, &mut check);
+    // 8. the Geno commands and queries (gd-lab-v1.1)
+    geno::geno_checks(&mut lab, &sh, &mut check);
 
     if fails == 0 {
         eprintln!("lab-check: ALL OK");

@@ -8,7 +8,8 @@ use melee_fighter::tu::fighter as ft;
 use melee_modes::tu::geno_lab_mode as lab;
 use melee_world::tu::camera as cam;
 use crate::snap_host as sh;
-use melee_script::game::ScriptGame;
+/// Re-exported for the play flow (melee/src/lab/geno.rs), which calls EngineGame through it without linking melee_script.
+pub use melee_script::game::ScriptGame;
 
 /// The engine's game, as the script host sees it (stateless: everything lives in the game's own globals).
 #[derive(Default)]

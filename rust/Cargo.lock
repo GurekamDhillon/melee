@@ -1204,6 +1204,7 @@ dependencies = [
  "mex_import",
  "miniz_oxide 0.8.9",
  "png",
+ "wat",
  "winit",
 ]
 

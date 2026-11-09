@@ -10,4 +10,7 @@ cd "$repo/rust"
 export RUSTC_BOOTSTRAP=1
 export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-Zmerge-functions=disabled"
 export CARGO_TARGET_DIR="${ORACLE_TARGET_DIR:-$repo/build/cargo-oracle}"
+# one test at a time inside each binary: the harnesses keep their state in `static mut`s (the log, the arena, the
+# fn registry), and libtest's parallel threads race on it (tu_ftkirby segfaulted that way)
+export RUST_TEST_THREADS="${RUST_TEST_THREADS:-1}"
 exec cargo test --release "$@"

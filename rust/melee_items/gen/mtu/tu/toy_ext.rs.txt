@@ -19,7 +19,7 @@ pub mod ext {
     }
     ext_fns! {
     fn DevText_80302AC0(a0: *mut DevText) => unsafe { melee_world::hud::textlib::devtext_80302ac0(&mut *a0) };
-    fn DevText_Create(a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8) -> *mut DevText => unsafe { melee_world::tu::textlib::DevText_Create(a0, a1, a2, a3, a4, a5) };
+    fn DevText_Create(a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut c_void) -> *mut DevText => unsafe { melee_world::tu::textlib::DevText_Create(a0, a1, a2, a3, a4, a5) };
     fn DevText_Erase(a0: *mut DevText) => unsafe { melee_world::tu::textlib::DevText_Erase(a0) };
     fn DevText_GetGObj() -> *mut HSD_GObj => unsafe { melee_world::tu::textdraw::DevText_GetGObj() };
     fn DevText_HideBackground(a0: *mut DevText) => unsafe { melee_world::tu::textlib::DevText_HideBackground(a0) };
@@ -35,8 +35,8 @@ pub mod ext {
     fn DevText_Show(a0: *mut HSD_GObj, a1: *mut DevText) => unsafe { melee_world::tu::textdraw::DevText_Show(a0, a1) };
     fn DevText_StoreColorIndex(a0: *mut DevText, a1: u8) -> u8 => unsafe { melee_world::tu::textlib::DevText_StoreColorIndex(a0, a1) };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i64)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i64)>, a2: u32);
     fn GXBegin(a0: u32, a1: u32, a2: u16);
     fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8);
     fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
@@ -73,9 +73,9 @@ pub mod ext {
     fn HSD_GObjProc_RemoveProc(a0: *mut HSD_GObjProc);
     fn HSD_GObj_80390CD4(a0: *mut HSD_GObj);
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
-    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
-    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
+    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i64);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i64) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
+    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i64) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjAddChild(a0, a1) };
@@ -102,7 +102,7 @@ pub mod ext {
     fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
     fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj => unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A477C(a0, a1, a2, a3, a4, a5) };
-    fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0, a1) };
+    fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i64) => unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0, a1) };
     fn HSD_SObjLib_803A55DC(a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32) => unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A55DC(a0, a1, a2, a3) };
     fn HSD_SetEraseColor(a0: u8, a1: u8, a2: u8, a3: u8);
     fn HSD_SetupRenderMode(a0: u32);
@@ -153,11 +153,11 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_803910D8(a0, a1) }
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_LObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i64) { super::HSD_GObj_803910D8(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i64) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i64) { super::HSD_GObj_LObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) { super::HSD_SObjLib_803A49E0(a0, a1) }
+        pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i64) { super::HSD_SObjLib_803A49E0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };

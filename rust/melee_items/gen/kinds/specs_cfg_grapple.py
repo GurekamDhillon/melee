@@ -55,9 +55,9 @@ _G_C_TWEAK = """    {
         IT[0].owner = &GO[1];
         GO[1].user_data = &FT[0];
         FT[0].gobj = &GO[1];
-        FT[0].ft_data = &FD; FD.ext_attr = &DA; FT[0].dat_attrs = &DA; FT[0].parts = FB;
+        FT[0].ft_data = &FD; FD.ext_attr = (union ftData_ExtAttr*) &DA; FT[0].dat_attrs = &DA; FT[0].parts = FB;
         DA.xA0 = (int) (rnd() % 4); DA.xB0 = (int) (rnd() % 4); DA.xC0 = (int) (rnd() % 4);
-        DA.xD0 = (void*) (unsigned long long) (rnd() % 40);
+        DA.xD0 = (int) (rnd() % 40);
         FT[0].u.ss.x223C = (prof == 1 && (rnd() & 3) == 0) ? 0 : &GO[0];
         FT[0].u.ss.x2240 = (u8) (rnd() % 6);
         {
@@ -117,7 +117,7 @@ _G_R_TWEAK = """    {
         FT[0].gobj = &raw mut GO[1];
         FT[0].ft_data = &raw mut FD; FD.ext_attr = &raw mut DA as *mut _; FT[0].dat_attrs = &raw mut DA as *mut _; FT[0].parts = (&raw mut FB) as *mut FighterBone;
         DA.xA0 = (rnd() % 4) as i32; DA.xB0 = (rnd() % 4) as i32; DA.xC0 = (rnd() % 4) as i32;
-        DA.xD0 = (rnd() % 40) as usize as *mut _;
+        DA.xD0 = (rnd() % 40) as i32;
         FT[0].u.ss.x223C = if prof == 1 && (rnd() & 3) == 0 { null_mut() } else { &raw mut GO[0] };
         FT[0].u.ss.x2240 = (rnd() % 6) as u8;
         {

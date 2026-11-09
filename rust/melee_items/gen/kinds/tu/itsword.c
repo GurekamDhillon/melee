@@ -47,7 +47,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
+        ART[k].x4_specialAttributes = SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
     it_804D6D28 = &ICD;
@@ -94,7 +94,7 @@ int main(void)
             setup(prof);
             switch (op) {
             case 0: {  ret = PI(itSword_Spawn(&VA[0])); } break; /* itSword_Spawn */
-            case 1: { intptr_t v1 = (intptr_t) ((int) (rnd() % 6)); it_80284E10(&GO[0], v1); } break; /* it_80284E10 */
+            case 1: { int v1 = (int) ((int) (rnd() % 6)); it_80284E10(&GO[0], v1); } break; /* it_80284E10 */
             case 2: {  it_80284E30(&GO[0]); } break; /* it_80284E30 */
             case 3: { int v1 = (int) ((int) (rnd() % 6)); float v2 = (float) (rw()); it_80284FC4(&GO[0], v1, v2); } break; /* it_80284FC4 */
             case 4: { int v1 = (int) ((int) (rnd() % 6)); it_80285024(&GO[0], v1); } break; /* it_80285024 */

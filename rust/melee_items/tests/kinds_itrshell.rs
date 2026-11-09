@@ -99,7 +99,7 @@ unsafe fn setup(prof: i32) {
         rs.xDEC = (rnd() % 4) as i32;
         rs.xDF0 = (rnd() & 1) as i32;
         rs.set_xDF4_b0((rnd() & 1) as u8);
-        IT[k].xDCD_flag.anon_0.set_b5((rnd() & 1) as u8);
+        IT[k].xDCD_flag.x0.set_b5((rnd() & 1) as u8);
         if rnd() & 1 != 0 { IT[k].x40_vel.x = ((rnd() % 5) as i32 - 2) as f32 / 2.0; }
     }
 }

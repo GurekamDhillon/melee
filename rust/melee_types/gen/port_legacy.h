@@ -7,7 +7,10 @@
  * decode (arrays.tsv: SIS.kerning / SIS.textures run to the next object) still use the typed views below. */
 #ifndef MELEE_RUST_PORT_LEGACY_H
 #define MELEE_RUST_PORT_LEGACY_H
+/* A TU oracle that only needs the item views defines PORT_LEGACY_ITEMS_ONLY before including this header. */
+#ifndef PORT_LEGACY_ITEMS_ONLY
 #include <sysdolphin/baselib/sislib.h>
+#include <sysdolphin/baselib/sislib_font.h>
 
 typedef struct TextKerning {
     /*0x00*/ u8 left;
@@ -31,6 +34,8 @@ typedef struct sisLib_803A7664_t {
  * upstream now types x4_specialAttributes as a union of per-item records; the port's item ports still read these
  * generic views over the same bytes. itUnkAttributes itself survives upstream as a 1-float record (It_Kind_Unk1), so
  * the port's 5-float view keeps the old layout under the _legacy name. */
+#endif /* PORT_LEGACY_ITEMS_ONLY */
+
 #include <melee/it/types.h>
 #include <melee/it/kinds/types.h>
 typedef struct itUnkAttributes_legacy {
@@ -79,11 +84,13 @@ struct SisFontData {
 };
 
 
+#ifndef PORT_LEGACY_ITEMS_ONLY
 /* mn/ records before #3583 / #3562: mndiagram.c kept the menu archive pointers and the assert strings in its asset and
  * anim-table records (the port's mndiagram.rs mirrors that layout); mndatadel.static.h's WarnCmnData and
  * mnstagesel.static.h's model table are read by mndatadel.rs / mnstagesel.rs. */
 #include <melee/lb/types.h>
 #include <melee/mn/types.h>
+#include <melee/sc/types.h>
 typedef struct mnDiagram_Assets_legacy {
     /* 0x00 */ u8 sorted_fighters[0x19];
     /* 0x19 */ u8 pad_19[3];
@@ -145,4 +152,5 @@ struct StageListInfo {
     f32 xC, x10, x14, x18;
 };
 
+#endif /* PORT_LEGACY_ITEMS_ONLY */
 #endif

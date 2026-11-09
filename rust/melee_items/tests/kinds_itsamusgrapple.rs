@@ -117,7 +117,7 @@ unsafe fn setup(prof: i32) {
             LGO[j].hsd_obj = &raw mut JO[24 + j] as *mut _;
         }
         for j in 0..3 { ART[j].x4_specialAttributes = &raw mut AG[j] as *mut _; }
-        for j in 0..4 { core::ptr::write_bytes(&raw mut FT[0].x914[j].anon_134, 0, 1); }
+        for j in 0..4 { core::ptr::write_bytes(&raw mut FT[0].x914[j].x134, 0, 1); }
         IT[0].owner = &raw mut GO[1];
         GO[1].user_data = &raw mut FT[0] as *mut _;
         FT[0].gobj = &raw mut GO[1];
@@ -176,7 +176,7 @@ unsafe fn setup(prof: i32) {
 unsafe fn hash_all() {
     {
         hm(pi(FT[0].u.ss.x223C)); hm(FT[0].u.ss.x2240 as u32); core::ptr::write_bytes(&raw mut FT[0].u, 0, 1);
-        for j in 0..4 { hm(FT[0].x914[j].anon_134.hit_grabbed_victim_only() as u32); core::ptr::write_bytes(&raw mut FT[0].x914[j].anon_134, 0, 1); }
+        for j in 0..4 { hm(FT[0].x914[j].x134.hit_grabbed_victim_only() as u32); core::ptr::write_bytes(&raw mut FT[0].x914[j].x134, 0, 1); }
         for j in 0..2 { g::hash_Fighter(&FT[j]); }
         for j in 0..24 { g::hash_ItemLink(&LK[j]); g::hash_HSD_GObj(&LGO[j]); }
         for j in 0..256 { g::hash_FighterBone(&FB[j]); }

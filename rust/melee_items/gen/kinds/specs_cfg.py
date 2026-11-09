@@ -308,7 +308,7 @@ CFG["itpeachturnip"] = dict(
         pt.xDE4_owner = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
         pt.xDE8_scl = rw();
         IT[k].xD44_lifeTimer = if rnd() & 1 != 0 { 1.0 } else { rw() };"""),
-    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.xDE4_owner)); %s.xDE4_owner = 0; HM(%s.xDD4.b0); zero(&%s.xDD4, sizeof %s.xDD4); }""" % ((_pt,) * 5),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.xDE4_owner)); %s.xDE4_owner = 0; HM(%s.xDD4.x0.b0); zero(&%s.xDD4, sizeof %s.xDD4); }""" % ((_pt,) * 5),
           """    for k in 0..3 {
         let pt = &mut IT[k].xDD4_itemVar.peachturnip;
         hm(pi(pt.xDE4_owner)); pt.xDE4_owner = null_mut();
@@ -1271,7 +1271,7 @@ CFG["itrshell"] = dict(
         {_rs}.xDEC = (int) (rnd() % 4);
         {_rs}.xDF0 = (int) (rnd() & 1);
         {_rs}.xDF4_b0 = rnd() & 1;
-        IT[k].xDCD_flag.b5 = rnd() & 1;
+        IT[k].xDCD_flag.x0.b5 = rnd() & 1;
         if (rnd() & 1) IT[k].x40_vel.x = (float) ((int) (rnd() % 5) - 2) / 2.0f;""",
         """        let rs = &mut IT[k].xDD4_itemVar.rshell;
         IT[k].msid = (rnd() % 10) as i32 - 1;
@@ -1284,9 +1284,9 @@ CFG["itrshell"] = dict(
         rs.xDEC = (rnd() % 4) as i32;
         rs.xDF0 = (rnd() & 1) as i32;
         rs.set_xDF4_b0((rnd() & 1) as u8);
-        IT[k].xDCD_flag.anon_0.set_b5((rnd() & 1) as u8);
+        IT[k].xDCD_flag.x0.set_b5((rnd() & 1) as u8);
         if rnd() & 1 != 0 { IT[k].x40_vel.x = ((rnd() % 5) as i32 - 2) as f32 / 2.0; }"""),
-    ptrs=("""    for (k = 0; k < 3; k++) { HM(%s.xDF4_b0); zero(&%s, sizeof %s); HM(IT[k].xDCD_flag.b5); *(unsigned char*) &IT[k].xDCD_flag = 0; }""" % (_rs, _rs, _rs),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(%s.xDF4_b0); zero(&%s, sizeof %s); HM(IT[k].xDCD_flag.x0.b5); *(unsigned char*) &IT[k].xDCD_flag = 0; }""" % (_rs, _rs, _rs),
           """    for k in 0..3 { let rs = &mut IT[k].xDD4_itemVar.rshell; hm(rs.xDF4_b0() as u32); core::ptr::write_bytes(rs as *mut _ as *mut u8, 0, core::mem::size_of::<itRShell_ItemVars>()); hm(IT[k].xDCD_flag.anon_0.b5() as u32); *(&raw mut IT[k].xDCD_flag as *mut u8) = 0; }"""),
 )
 

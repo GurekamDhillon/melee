@@ -92,13 +92,13 @@ unsafe fn setup(prof: i32) {
     for k in 0..3 {
         let ml = &mut IT[k].xDD4_itemVar.maril;
         ml.x60.flags = 0;
-        ml.x60.anon_0.set_x0((rnd() & 1) as u8);
+        ml.x60.x0_s.set_x0((rnd() & 1) as u8);
         IT[k].xC9C = (rnd() % 60) as i32;
     }
 }
 
 unsafe fn hash_all() {
-    for k in 0..3 { let ml = &mut IT[k].xDD4_itemVar.maril; hm(ml.x60.anon_0.x0() as u32); ml.x60.flags = 0; }
+    for k in 0..3 { let ml = &mut IT[k].xDD4_itemVar.maril; hm(ml.x60.x0_s.x0() as u32); ml.x60.flags = 0; }
     for k in 0..3 {
         g::hash_HSD_GObj(&GO[k]);
         g::hash_Item(&IT[k]);

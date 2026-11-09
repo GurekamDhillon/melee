@@ -22,10 +22,10 @@ __typeof__(float) HSD_Randf(void) { T(1009); return (__typeof__(float)) (rw()); 
 __typeof__(int) ScriptGame_StageSlotParticleBegin(__typeof__(int) a0) { T(1010); T((u32) a0); return (__typeof__(int)) (fv()); }
 void ScriptGame_StageSlotProcEnd(void) { T(1011); }
 __typeof__(float) atan2f(__typeof__(float) a0, __typeof__(float) a1) { T(1012); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rw()); }
-__typeof__(unsigned short) psGetNewIDNum(void) { T(1013); return (__typeof__(unsigned short)) ((u16) (fv() % 3)); }
-__typeof__(struct HSD_Generator *) hsd_8039F05C(__typeof__(int) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1014); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_Generator *)) (0); }
-__typeof__(int) psAttachGeneratorAppSRT(__typeof__(struct HSD_Generator *) a0, __typeof__(struct HSD_psAppSRT *) a1) { T(1015); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
-__typeof__(int) psAttachParticleAppSRT(__typeof__(struct HSD_Particle *) a0, __typeof__(struct HSD_psAppSRT *) a1) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
+__typeof__(struct HSD_Generator *) hsd_8039F05C(__typeof__(int) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1013); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_Generator *)) (0); }
+__typeof__(int) psAttachGeneratorAppSRT(__typeof__(struct HSD_Generator *) a0, __typeof__(struct HSD_psAppSRT *) a1) { T(1014); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
+__typeof__(int) psAttachParticleAppSRT(__typeof__(struct HSD_Particle *) a0, __typeof__(struct HSD_psAppSRT *) a1) { T(1015); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
+__typeof__(unsigned short) psGetNewIDNum(void) { T(1016); return (__typeof__(unsigned short)) ((u16) (fv() % 3)); }
 __typeof__(int) psRemoveParticleAppSRT(__typeof__(struct HSD_Particle *) a0) { T(1017); T(PI((const void*) a0)); return (__typeof__(int)) ((int) (fv() & 1)); }
 static void fill_HSD_Particle(HSD_Particle* p)
 {
@@ -421,20 +421,20 @@ static void hashg_all(void)
 static void fillo_all(void)
 {
     int i0, i1, i2, j0, j1, j2, j3, j9;
-    hsd_804D78E2 = fv();
+    numActiveParticles = fv();
     numPeakParticles = fv();
-    hsd_804D78E2 = fv();
+    numActiveParticles = fv();
     numPeakParticles = fv();
 }
 static void hasho_all(void)
 {
     int i0, i1, i2, j0, j1, j2, j3, j9;
-    HM((u32) hsd_804D78E2);
+    HM((u32) numActiveParticles);
     HM((u32) numPeakParticles);
-    HM((u32) hsd_804D78E2);
+    HM((u32) numActiveParticles);
     HM((u32) numPeakParticles);
     for (i0 = 0; i0 < 8; i0++) {
-    HM(PI((const void*) hsd_804D08E8[i0]));
+    HM(PI((const void*) psPointJObj[i0]));
     }
     for (i0 = 0; i0 < 16; i0++) {
     HM(PI((const void*) hsd_804D0908[i0]));
@@ -455,11 +455,11 @@ static void hasho_all(void)
 }
 static void preg_own(void)
 {
-    preg(&hsd_804D78E2, sizeof hsd_804D78E2);
+    preg(&numActiveParticles, sizeof numActiveParticles);
     preg(&numPeakParticles, sizeof numPeakParticles);
-    preg(&hsd_804D78E2, sizeof hsd_804D78E2);
+    preg(&numActiveParticles, sizeof numActiveParticles);
     preg(&numPeakParticles, sizeof numPeakParticles);
-    preg(&hsd_804D08E8, sizeof hsd_804D08E8);
+    preg(&psPointJObj, sizeof psPointJObj);
     preg(&hsd_804D0908, sizeof hsd_804D0908);
     preg(&hsd_804D0F60, sizeof hsd_804D0F60);
 }
@@ -485,8 +485,8 @@ static void freg_all(void)
 // stub ScriptGame_StageSlotParticleBegin = 1010
 // stub ScriptGame_StageSlotProcEnd = 1011
 // stub atan2f = 1012
-// stub psGetNewIDNum = 1013
-// stub hsd_8039F05C = 1014
-// stub psAttachGeneratorAppSRT = 1015
-// stub psAttachParticleAppSRT = 1016
+// stub hsd_8039F05C = 1013
+// stub psAttachGeneratorAppSRT = 1014
+// stub psAttachParticleAppSRT = 1015
+// stub psGetNewIDNum = 1016
 // stub psRemoveParticleAppSRT = 1017

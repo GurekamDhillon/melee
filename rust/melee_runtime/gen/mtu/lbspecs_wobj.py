@@ -8,13 +8,13 @@ OWN = ["hsdWObj", "default_class"]
 _SETUP_C = (
     "{ int q; for (q = 0; q < 2; q++) WI[q].load = WObjLoad; "
     "for (q = 0; q < 3; q++) { WO[q].parent.parent.class_info = (HSD_ClassInfo*) &WI[q & 1]; WO[q].aobj = (fv() & 3) ? &AO[fv() % 3] : 0; WO[q].robj = (fv() & 3) ? &RO[fv() & 1] : 0; } "
-    "for (q = 0; q < 3; q++) AO[q].jobj = (HSD_Obj*) &JO[q & 1]; for (q = 0; q < 2; q++) JO[q].u.spline = (fv() & 3) ? &SPL[0] : 0; "
+    "for (q = 0; q < 3; q++) AO[q].jobj = &JO[q & 1]; for (q = 0; q < 2; q++) JO[q].u.spline = (fv() & 3) ? &SPL[0] : 0; "
     "hsdWObj.parent.parent.head.parent = &CI[0]; CI[0].release = (void*) cbev1; CI[0].amnesia = (void*) cbev1; default_class = (fv() & 1) ? &CI[1] : 0; }")
 _SETUP_R = (
     "{ for q in 0..2usize { WI[q].load = Some(m::WObjLoad); } "
     "for q in 0..3usize { WO[q].parent.parent.class_info = (&raw mut WI[q & 1]) as *mut HSD_ClassInfo; WO[q].aobj = if fv() & 3 != 0 { &raw mut AO[(fv() % 3) as usize] } else { null_mut() }; "
     "WO[q].robj = if fv() & 3 != 0 { &raw mut RO[(fv() & 1) as usize] } else { null_mut() }; } "
-    "for q in 0..3usize { AO[q].jobj = (&raw mut JO[q & 1]) as *mut HSD_Obj; } for q in 0..2usize { JO[q].u.spline = if fv() & 3 != 0 { &raw mut SPL[0] } else { null_mut() }; } "
+    "for q in 0..3usize { AO[q].jobj = &raw mut JO[q & 1]; } for q in 0..2usize { JO[q].u.spline = if fv() & 3 != 0 { &raw mut SPL[0] } else { null_mut() }; } "
     "m::hsdWObj.parent.parent.head.parent = &raw mut CI[0]; CI[0].release = Some(core::mem::transmute::<usize, unsafe extern \"C\" fn(*mut HSD_Class)>(cbev1 as usize)); "
     "CI[0].amnesia = Some(core::mem::transmute::<usize, unsafe extern \"C\" fn(*mut HSD_ClassInfo)>(cbev1 as usize)); m::default_class = if fv() & 1 != 0 { &raw mut CI[1] } else { null_mut() }; }")
 add("wobj", "src/sysdolphin/baselib/wobj.c", dict(

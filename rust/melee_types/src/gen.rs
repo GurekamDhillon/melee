@@ -96174,7 +96174,7 @@ impl GcLayout for AXFX_CHORUS {
 }
 const _: () = assert!(core::mem::size_of::<AXFX_CHORUS>() == 208);
 
-/// C `TextKerning` (rust/melee_types/gen/port_legacy.h:12); GameCube size 0x2, align 1.
+/// C `TextKerning` (rust/melee_types/gen/port_legacy.h:15); GameCube size 0x2, align 1.
 #[repr(C, align(1))]
 #[derive(Clone, Copy)]
 pub struct TextKerning {
@@ -96206,7 +96206,7 @@ impl GcLayout for TextKerning {
 }
 const _: () = assert!(core::mem::size_of::<TextKerning>() == 2);
 
-/// C `SIS` (rust/melee_types/gen/port_legacy.h:17); GameCube size 0x8, align 4.
+/// C `SIS` (rust/melee_types/gen/port_legacy.h:20); GameCube size 0x8, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct SIS {
@@ -96238,7 +96238,7 @@ impl GcLayout for SIS {
 }
 const _: () = assert!(core::mem::size_of::<SIS>() == 16);
 
-/// C `sisLib_803A7664_t` (rust/melee_types/gen/port_legacy.h:22); GameCube size 0x10, align 4.
+/// C `sisLib_803A7664_t` (rust/melee_types/gen/port_legacy.h:25); GameCube size 0x10, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct sisLib_803A7664_t {
@@ -96276,7 +96276,7 @@ impl GcLayout for sisLib_803A7664_t {
 }
 const _: () = assert!(core::mem::size_of::<sisLib_803A7664_t>() == 24);
 
-/// C `itUnkAttributes_legacy` (rust/melee_types/gen/port_legacy.h:36); GameCube size 0x14, align 4.
+/// C `itUnkAttributes_legacy` (rust/melee_types/gen/port_legacy.h:41); GameCube size 0x14, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct itUnkAttributes_legacy {
@@ -96317,7 +96317,7 @@ impl GcLayout for itUnkAttributes_legacy {
 }
 const _: () = assert!(core::mem::size_of::<itUnkAttributes_legacy>() == 20);
 
-/// C `itPokemonAttributes` (rust/melee_types/gen/port_legacy.h:44); GameCube size 0x1C, align 4.
+/// C `itPokemonAttributes` (rust/melee_types/gen/port_legacy.h:49); GameCube size 0x1C, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct itPokemonAttributes {
@@ -96364,7 +96364,7 @@ impl GcLayout for itPokemonAttributes {
 }
 const _: () = assert!(core::mem::size_of::<itPokemonAttributes>() == 28);
 
-/// C `itRshellAttributes` (rust/melee_types/gen/port_legacy.h:54); GameCube size 0x20, align 4.
+/// C `itRshellAttributes` (rust/melee_types/gen/port_legacy.h:59); GameCube size 0x20, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct itRshellAttributes {
@@ -96396,7 +96396,7 @@ impl GcLayout for itRshellAttributes {
 }
 const _: () = assert!(core::mem::size_of::<itRshellAttributes>() == 32);
 
-/// C `KinokoAnim` (rust/melee_types/gen/port_legacy.h:59); GameCube size 0x4, align 4.
+/// C `KinokoAnim` (rust/melee_types/gen/port_legacy.h:64); GameCube size 0x4, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct KinokoAnim {
@@ -96425,7 +96425,7 @@ impl GcLayout for KinokoAnim {
 }
 const _: () = assert!(core::mem::size_of::<KinokoAnim>() == 8);
 
-/// C `itSword_UnkArticle1` (rust/melee_types/gen/port_legacy.h:63); GameCube size 0x30, align 4.
+/// C `itSword_UnkArticle1` (rust/melee_types/gen/port_legacy.h:68); GameCube size 0x30, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct itSword_UnkArticle1 {
@@ -96475,7 +96475,7 @@ impl GcLayout for itSword_UnkArticle1 {
 }
 const _: () = assert!(core::mem::size_of::<itSword_UnkArticle1>() == 64);
 
-/// C `SisFontData` (rust/melee_types/gen/port_legacy.h:75); GameCube size 0x4EC, align 4.
+/// C `SisFontData` (rust/melee_types/gen/port_legacy.h:80); GameCube size 0x4EC, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct SisFontData {
@@ -96510,7 +96510,7 @@ impl GcLayout for SisFontData {
 }
 const _: () = assert!(core::mem::size_of::<SisFontData>() == 1312);
 
-/// C `mnDiagram_Assets_legacy` (rust/melee_types/gen/port_legacy.h:87); GameCube size 0x118, align 4.
+/// C `mnDiagram_Assets_legacy` (rust/melee_types/gen/port_legacy.h:94); GameCube size 0x118, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct mnDiagram_Assets_legacy {
@@ -96569,7 +96569,7 @@ impl GcLayout for mnDiagram_Assets_legacy {
 }
 const _: () = assert!(core::mem::size_of::<mnDiagram_Assets_legacy>() == 416);
 
-/// C `mnDiagram_AnimTable_legacy` (rust/melee_types/gen/port_legacy.h:101); GameCube size 0xA8, align 4.
+/// C `mnDiagram_AnimTable_legacy` (rust/melee_types/gen/port_legacy.h:108); GameCube size 0xA8, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct mnDiagram_AnimTable_legacy {
@@ -96622,7 +96622,7 @@ impl GcLayout for mnDiagram_AnimTable_legacy {
 }
 const _: () = assert!(core::mem::size_of::<mnDiagram_AnimTable_legacy>() == 168);
 
-/// C `WarnCmnData` (rust/melee_types/gen/port_legacy.h:113); GameCube size 0x3, align 1.
+/// C `WarnCmnData` (rust/melee_types/gen/port_legacy.h:120); GameCube size 0x3, align 1.
 #[repr(C, align(1))]
 #[derive(Clone, Copy)]
 pub struct WarnCmnData {
@@ -96657,7 +96657,7 @@ impl GcLayout for WarnCmnData {
 }
 const _: () = assert!(core::mem::size_of::<WarnCmnData>() == 3);
 
-/// C `mnStageSel_804D6C98_t` (rust/melee_types/gen/port_legacy.h:119); GameCube size 0xC0, align 4.
+/// C `mnStageSel_804D6C98_t` (rust/melee_types/gen/port_legacy.h:126); GameCube size 0xC0, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct mnStageSel_804D6C98_t {
@@ -96728,7 +96728,7 @@ impl GcLayout for mnStageSel_804D6C98_t {
 }
 const _: () = assert!(core::mem::size_of::<mnStageSel_804D6C98_t>() == 384);
 
-/// C `StageListInfo` (rust/melee_types/gen/port_legacy.h:140); GameCube size 0x20, align 4.
+/// C `StageListInfo` (rust/melee_types/gen/port_legacy.h:147); GameCube size 0x20, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct StageListInfo {

@@ -17,8 +17,8 @@ pub fn install() {
         GObj_SetupGXLinkMax = Some(|a0, a1, a2| { t(1003); t(pi(a0)); t(fi(a1)); t(a2 as u32); });
         HSD_CObjLoadDesc = Some(|a0| { t(1004); t(pi(a0)); core::ptr::null_mut() });
         HSD_GObjObject_80390A70 = Some(|a0, a1, a2| { t(1005); t(pi(a0)); t(a1 as u32); t(pi(a2)); });
-        HSD_GObj_803910D8 = Some(|a0, a1| { t(1006); t(pi(a0)); t(a1 as u32); });
-        HSD_GObj_JObjCallback = Some(|a0, a1| { t(1007); t(pi(a0)); t(a1 as u32); });
+        HSD_GObj_803910D8 = Some(|a0, a1| { t(1006); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
+        HSD_GObj_JObjCallback = Some(|a0, a1| { t(1007); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
         HSD_GObj_SetupProc = Some(|a0, a1, a2| { t(1008); t(pi(a0)); t(fi(a1)); t(a2 as u32); core::ptr::null_mut() });
         HSD_JObjAnimAll = Some(|a0| { t(1009); t(pi(a0)); });
         HSD_JObjLoadJoint = Some(|a0| { t(1010); t(pi(a0)); pick_HSD_JObj() });
@@ -163,7 +163,7 @@ pub fn fill_HSD_JObj(p: &mut HSD_JObj) { unsafe {
     p.mtx[i0][i1] = rg();
     }
     }
-    p.id = fv() as _;
+    p.id = fv64() as _;
 } }
 pub fn hash_HSD_JObj(p: &HSD_JObj) { unsafe {
     if HDBG { println!("B HSD_JObj"); }
@@ -174,7 +174,7 @@ pub fn hash_HSD_JObj(p: &HSD_JObj) { unsafe {
     hm(pi(p.parent));
     hm(pi(p.child));
     hm(p.flags as u32);
-    for i0 in 0..8 { unsafe { hm(*(&p.u as *const _ as *const u8).add(i0) as u32); } }
+    for i0 in (0..8).step_by(8) { unsafe { let v8 = ((&p.u as *const _ as *const u8).add(i0) as *const u64).read_unaligned(); let t8 = pi(v8 as usize as *const u8); if t8 != 0xFFFF_FFFF { hm(t8); } else { for b8 in 0..8 { hm(((v8 >> (8 * b8)) & 0xFF) as u32); } } } }
     hm(p.rotate.x.to_bits());
     hm(p.rotate.y.to_bits());
     hm(p.rotate.z.to_bits());
@@ -194,7 +194,7 @@ pub fn hash_HSD_JObj(p: &HSD_JObj) { unsafe {
     hm(pi(p.envelopemtx));
     hm(pi(p.aobj));
     hm(pi(p.robj));
-    hm(p.id as u32);
+    { let pk_ = pi(p.id as usize as *const u8); if pk_ != 0xFFFF_FFFF { hm(pk_); } else { hm(p.id as u32); hm(((p.id as u64) >> 32) as u32); } }
 } }
 
 pub fn fillg_all() {

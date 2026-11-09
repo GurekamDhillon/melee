@@ -23,7 +23,7 @@ static mut ICD: ItemCommonData = unsafe { core::mem::zeroed() };
 static mut SPECB: SpecBuf = SpecBuf([[0; 128]; 3]);
 static mut VA: [Vec3; 4] = unsafe { core::mem::zeroed() };
 
-static mut LDX: [itLeadeadAttr_x0; 3] = unsafe { core::mem::zeroed() }; static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() };
+static mut LDX: [itSpecialAttrsHead; 3] = unsafe { core::mem::zeroed() }; static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() };
 
 unsafe fn spec_fill(prof: i32) {
     match prof {
@@ -127,9 +127,9 @@ fn itleadead_matches_c() {
         preg(&raw const ART, core::mem::size_of_val(&ART)); preg(&raw const ATTR, core::mem::size_of_val(&ATTR));
         preg(&raw const ICD, core::mem::size_of_val(&ICD)); preg(&raw const SPECB, 3 * 128); preg(&raw const VA, core::mem::size_of_val(&VA));
         g::freg_all();
-        const PROFTAB: [u8; 78] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        const PROFTAB: [u8; 79] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let mut c = Check::new(include_str!("data/kinds_itleadead.txt"));
-        for op in 0..78u32 {
+        for op in 0..79u32 {
             for k in 0..400u32 {
                 case(op, k);
                 setup(PROFTAB[op as usize] as i32);
@@ -212,13 +212,14 @@ fn itleadead_matches_c() {
                     74 => {  m::it_802EAC8C(&raw mut GO[0]); } // it_802EAC8C
                     75 => {  m::it_802EADD8(&raw mut GO[0]); } // it_802EADD8
                     76 => {  m::it_802EAE80(&raw mut GO[0]); } // it_802EAE80
-                    77 => { for j in 0..18 { let row = &m::it_803F8EB0[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
+                    77 => {  ret = pi(m::it_802EAF28(&raw mut GO[0])); } // it_802EAF28
+                    78 => { for j in 0..18 { let row = &m::it_803F8EB0[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),
                 }
                 hash_all();
                 c.line(op, k, ret);
             }
         }
-        assert_eq!(c.done(), 31200);
+        assert_eq!(c.done(), 31600);
     }
 }

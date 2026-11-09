@@ -91,7 +91,7 @@ unsafe fn setup(prof: i32) {
     for k in 0..3 {
         let yk = &mut IT[k].xDD4_itemVar.yaku;
         yk.x2 = (1 + (rnd() & 1)) as i16;
-        if yk.x2 == 1 { yk.anon_4.x4 = &raw mut JO[3 + (rnd() % 3) as usize]; } else { yk.anon_4.x4_vec.x = rw(); yk.anon_4.x4_vec.y = rw(); yk.anon_4.x4_vec.z = rw(); }
+        if yk.x2 == 1 { yk.x4_u.x4 = &raw mut JO[3 + (rnd() % 3) as usize]; } else { yk.x4_u.x4_vec.x = rw(); yk.x4_u.x4_vec.y = rw(); yk.x4_u.x4_vec.z = rw(); }
         yk.x10 = if rnd() & 1 != 0 { GRD.as_mut_ptr() as *mut Ground } else { null_mut() };
         yk.x14 = if rnd() & 1 != 0 { Some(cb6) } else { None };
         yk.x18 = if rnd() & 1 != 0 { Some(cb7) } else { None };
@@ -106,9 +106,9 @@ unsafe fn hash_all() {
     for k in 0..3 {
         let yk = &mut IT[k].xDD4_itemVar.yaku;
         hm(yk.x2 as u32);
-        if yk.x2 == 1 { hm(pi(yk.anon_4.x4)); } else { hm(yk.anon_4.x4_vec.x.to_bits()); hm(yk.anon_4.x4_vec.y.to_bits()); hm(yk.anon_4.x4_vec.z.to_bits()); }
+        if yk.x2 == 1 { hm(pi(yk.x4_u.x4)); } else { hm(yk.x4_u.x4_vec.x.to_bits()); hm(yk.x4_u.x4_vec.y.to_bits()); hm(yk.x4_u.x4_vec.z.to_bits()); }
         hm(pi(yk.x10)); hm(fi(yk.x14)); hm(fi(yk.x18)); hm(fi(yk.x1C));
-        yk.anon_4.x4 = null_mut(); yk.anon_4.x4_vec.x = 0.0; yk.anon_4.x4_vec.y = 0.0; yk.anon_4.x4_vec.z = 0.0;
+        yk.x4_u.x4 = null_mut(); yk.x4_u.x4_vec.x = 0.0; yk.x4_u.x4_vec.y = 0.0; yk.x4_u.x4_vec.z = 0.0;
         yk.x10 = null_mut(); yk.x14 = None; yk.x18 = None; yk.x1C = None;
     }
     for k in 0..3 {

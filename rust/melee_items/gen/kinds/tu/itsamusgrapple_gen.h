@@ -25,7 +25,7 @@ u8 HSD_GObj_JObjKind;
 HSD_ObjAllocData item_link_alloc_data;
 __typeof__(struct HSD_GObj *) (GObj_Create)(__typeof__(unsigned short) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2) { T(1000); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_GObj *)) (((fv() % 8) == 0 ? 0 : &LGO[LGN++ % 24])); }
 void (GObj_InitUserData)(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned char) a1, __typeof__(void (*)(void *)) a2, __typeof__(void *) a3) { T(1001); T(PI((const void*) a0)); T((u32) a1); T(FI((const void*) a2)); T(PI((const void*) a3)); if (a0) { a0->user_data = a3; } }
-void (GObj_SetupGXLink)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
+void (GObj_SetupGXLink)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
 void (HSD_GObjFree)(__typeof__(struct HSD_GObj *) a0) { T(1003); T(PI((const void*) a0)); }
 void (HSD_GObjObject_80390A70)(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned char) a1, __typeof__(void *) a2) { T(1004); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); if (a0) { a0->hsd_obj = a2; } }
 void (HSD_JObjAddAnimAll)(__typeof__(struct HSD_JObj *) a0, __typeof__(struct HSD_AnimJoint *) a1, __typeof__(struct HSD_MatAnimJoint *) a2, __typeof__(struct HSD_ShapeAnimJoint *) a3) { T(1005); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(PI((const void*) a3)); }
@@ -63,7 +63,7 @@ __typeof__(struct HSD_GObj *) (ft_80082E3C)(__typeof__(struct HSD_GObj *) a0) { 
 __typeof__(int) (it_8026B894)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1037); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) ((int) (fv() & 1)); }
 void (it_802A2428)(__typeof__(struct HSD_GObj *) a0) { T(1038); T(PI((const void*) a0)); }
 void (it_802A2474)(__typeof__(void *) a0) { T(1039); T(PI((const void*) a0)); }
-void (it_802A24A0)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1040); T(PI((const void*) a0)); T((u32) a1); }
+void (it_802A24A0)(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1040); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
 __typeof__(float) (it_802A3C98)(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1041); T(PI((const void*) a0)); TVEC((const Vec3*) a0); T(PI((const void*) a1)); TVEC((const Vec3*) a1); T(PI((const void*) a2)); TVEC((const Vec3*) a2); if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); } return (__typeof__(float)) ((float) (rnd() % 40) / 4.0f); }
 __typeof__(int) (it_802A3D90)(__typeof__(struct ItemLink *) a0) { T(1042); T(PI((const void*) a0)); return (__typeof__(int)) (((fv() % 3) == 0 ? 0 : (int) (fv() & 0x1FFF))); }
 void (it_802A43B8)(__typeof__(struct ItemLink *) a0) { T(1043); T(PI((const void*) a0)); }
@@ -246,7 +246,7 @@ static void fill_Item(Item* p)
     p->x378_itemColl.xE4_ecb.left.x = rg();
     p->x378_itemColl.xE4_ecb.left.y = rg();
     p->x378_itemColl.ecb_source.kind = fv();
-    for (j0 = 0; j0 < 56; j0++) ((unsigned char*) &p->x378_itemColl.ecb_source)[8 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 56; i0++) ((unsigned char*) &p->x378_itemColl.ecb_source.x4)[i0] = (unsigned char) rnd();
     p->x378_itemColl.ecb_source.x124 = rg();
     p->x378_itemColl.ecb_source.x128 = rg();
     p->x378_itemColl.ecb_source.x12C = rg();
@@ -397,7 +397,7 @@ static void fill_Item(Item* p)
     for (i1 = 0; i1 < 12; i1++) {
     p->x5D4_hitboxes[i0].hit.victims_2[i1].x4 = fv();
     }
-    for (j1 = 0; j1 < 8; j1++) ((unsigned char*) &p->x5D4_hitboxes[i0].hit)[504 + j1] = (unsigned char) rnd();
+    for (i1 = 0; i1 < 8; i1++) ((unsigned char*) &p->x5D4_hitboxes[i0].hit.x134)[i1] = (unsigned char) rnd();
     p->x5D4_hitboxes[i0].x138 = fv();
     p->x5D4_hitboxes[i0].x138_b1_7 = fv();
     for (i1 = 0; i1 < 3; i1++) {
@@ -501,9 +501,9 @@ static void fill_Item(Item* p)
     p->xC6C = rg();
     p->xC70 = rg();
     p->xC74 = fv();
-    p->xC78.x = rg();
-    p->xC78.y = rg();
-    p->xC80.x = fv();
+    p->xC78.x = fv();
+    p->xC78.y = fv();
+    p->xC80.x = rg();
     p->xC80.y = fv();
     p->xC88 = fv();
     p->xC8C = fv();
@@ -557,67 +557,67 @@ static void fill_Item(Item* p)
     p->xD88_attackID = fv();
     p->xD8C_attack_instance = fv();
     p->xD8E = fv();
-    p->xD90.x2070 = fv();
-    p->xD90.x2071_b0_3 = fv();
-    p->xD90.x2071_b4 = fv();
-    p->xD90.x2071_b5 = fv();
-    p->xD90.x2071_b6 = fv();
-    p->xD90.x2071_b7 = fv();
-    p->xD90.x2072_b0 = fv();
-    p->xD90.x2072_b1 = fv();
-    p->xD90.x2072_b2 = fv();
-    p->xD90.count_x1A4 = fv();
-    p->xD90.count_thrown_items = fv();
-    p->xD90.count_aerials = fv();
-    p->xD90.count_x1A0 = fv();
-    p->xD90.count_specials = fv();
-    p->xD90.x2073 = fv();
-    p->xD94.x = rg();
-    p->xD94.y = rg();
-    p->xD9C.x = fv();
+    p->xD90.x0.x2070 = fv();
+    p->xD90.x0.x2071_b0_3 = fv();
+    p->xD90.x0.x2071_b4 = fv();
+    p->xD90.x0.x2071_b5 = fv();
+    p->xD90.x0.x2071_b6 = fv();
+    p->xD90.x0.x2071_b7 = fv();
+    p->xD90.x0.x2072_b0 = fv();
+    p->xD90.x0.x2072_b1 = fv();
+    p->xD90.x0.x2072_b2 = fv();
+    p->xD90.x0.count_x1A4 = fv();
+    p->xD90.x0.count_thrown_items = fv();
+    p->xD90.x0.count_aerials = fv();
+    p->xD90.x0.count_x1A0 = fv();
+    p->xD90.x0.count_specials = fv();
+    p->xD90.x0.x2073 = fv();
+    p->xD94.x = fv();
+    p->xD94.y = fv();
+    p->xD9C.x = rg();
     p->xD9C.y = fv();
     p->xDA4_word = fv();
     p->xDA8_short = fv();
-    p->xDAA_flag.b0 = fv();
-    p->xDAA_flag.b1 = fv();
-    p->xDAA_flag.b2 = fv();
-    p->xDAA_flag.b3 = fv();
-    p->xDAA_flag.b4 = fv();
-    p->xDAA_flag.b5 = fv();
-    p->xDAA_flag.b6 = fv();
-    p->xDAA_flag.b7 = fv();
+    p->xDAA.xDAA_flag.x0.b0 = fv();
+    p->xDAA.xDAA_flag.x0.b1 = fv();
+    p->xDAA.xDAA_flag.x0.b2 = fv();
+    p->xDAA.xDAA_flag.x0.b3 = fv();
+    p->xDAA.xDAA_flag.x0.b4 = fv();
+    p->xDAA.xDAA_flag.x0.b5 = fv();
+    p->xDAA.xDAA_flag.x0.b6 = fv();
+    p->xDAA.xDAA_flag.x0.b7 = fv();
     p->xDAC_itcmd_var0 = fv();
     p->xDB0_itcmd_var1 = fv();
     p->xDB4_itcmd_var2 = fv();
     p->xDB8_itcmd_var3 = fv();
-    p->xDBC_itcmd_var4.flags.x0 = fv();
-    p->xDBC_itcmd_var4.flags.x1 = fv();
-    p->xDBC_itcmd_var4.flags.x2 = fv();
-    p->xDBC_itcmd_var4.flags.x3 = fv();
-    p->xDBC_itcmd_var4.flags.x4 = fv();
-    p->xDBC_itcmd_var4.flags.x5 = fv();
-    p->xDBC_itcmd_var4.flags.x6 = fv();
-    p->xDBC_itcmd_var4.flags.x7 = fv();
-    p->xDBC_itcmd_var4.flags.x8 = fv();
-    p->xDBC_itcmd_var4.flags.x9 = fv();
-    p->xDBC_itcmd_var4.flags.xA = fv();
-    p->xDBC_itcmd_var4.flags.xB = fv();
-    p->xDBC_itcmd_var4.flags.xC = fv();
-    p->xDBC_itcmd_var4.flags.xD = fv();
-    p->xDBC_itcmd_var4.flags.xE = fv();
-    p->xDBC_itcmd_var4.flags.xF = fv();
-    p->xDBC_itcmd_var4.flags.x13 = fv();
-    p->xDBC_itcmd_var4.flags.x14 = fv();
-    p->xDBC_itcmd_var4.flags.x15 = fv();
-    p->xDBC_itcmd_var4.flags.x16 = fv();
-    p->xDBC_itcmd_var4.flags.x17 = fv();
-    p->xDBC_itcmd_var4.flags.x19 = fv();
-    p->xDBC_itcmd_var4.flags.x1A = fv();
-    p->xDBC_itcmd_var4.flags.x1B = fv();
-    p->xDBC_itcmd_var4.flags.x1C = fv();
-    p->xDBC_itcmd_var4.flags.x1D = fv();
-    p->xDBC_itcmd_var4.flags.x1E = fv();
-    p->xDBC_itcmd_var4.flags.x1F = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x0 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x1 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x2 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x3 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x4 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x5 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x6 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x7 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x8 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x9 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.xA = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.xB = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.xC = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.xD = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.xE = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.xF = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x13 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x14 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x15 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x16 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x17 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x19 = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x1A = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x1B = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x1C = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x1D = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x1E = fv();
+    p->xDBC.xDBC_itcmd_var4.flags.x1F = fv();
     p->xDC0 = fv();
     p->xDC4 = fv();
     p->xDC8_word.flags.x0 = fv();
@@ -653,55 +653,61 @@ static void fill_Item(Item* p)
     p->xDCC_flag.b2 = fv();
     p->xDCC_flag.b3 = fv();
     p->xDCC_flag.b4567 = fv();
-    for (j0 = 0; j0 < 1; j0++) ((unsigned char*) &p->xDCD_flag)[0 + j0] = (unsigned char) rnd();
-    p->xDCE_flag.b0 = fv();
-    p->xDCE_flag.b1 = fv();
-    p->xDCE_flag.b2 = fv();
-    p->xDCE_flag.b3 = fv();
-    p->xDCE_flag.b4 = fv();
-    p->xDCE_flag.b5 = fv();
-    p->xDCE_flag.b6 = fv();
-    p->xDCE_flag.b7 = fv();
-    p->xDCF_flag.b0 = fv();
-    p->xDCF_flag.b1 = fv();
-    p->xDCF_flag.b2 = fv();
-    p->xDCF_flag.b3 = fv();
-    p->xDCF_flag.b4 = fv();
-    p->xDCF_flag.b5 = fv();
-    p->xDCF_flag.b6 = fv();
-    p->xDCF_flag.b7 = fv();
-    p->xDD0_flag.b0 = fv();
-    p->xDD0_flag.b1 = fv();
-    p->xDD0_flag.b2 = fv();
-    p->xDD0_flag.b3 = fv();
-    p->xDD0_flag.b4 = fv();
-    p->xDD0_flag.b5 = fv();
-    p->xDD0_flag.b6 = fv();
-    p->xDD0_flag.b7 = fv();
-    p->xDD1_flag.b0 = fv();
-    p->xDD1_flag.b1 = fv();
-    p->xDD1_flag.b2 = fv();
-    p->xDD1_flag.b3 = fv();
-    p->xDD1_flag.b4 = fv();
-    p->xDD1_flag.b5 = fv();
-    p->xDD1_flag.b6 = fv();
-    p->xDD1_flag.b7 = fv();
-    p->xDD2_flag.b0 = fv();
-    p->xDD2_flag.b1 = fv();
-    p->xDD2_flag.b2 = fv();
-    p->xDD2_flag.b3 = fv();
-    p->xDD2_flag.b4 = fv();
-    p->xDD2_flag.b5 = fv();
-    p->xDD2_flag.b6 = fv();
-    p->xDD2_flag.b7 = fv();
-    p->xDD3_flag.b0 = fv();
-    p->xDD3_flag.b1 = fv();
-    p->xDD3_flag.b2 = fv();
-    p->xDD3_flag.b3 = fv();
-    p->xDD3_flag.b4 = fv();
-    p->xDD3_flag.b5 = fv();
-    p->xDD3_flag.b6 = fv();
-    p->xDD3_flag.b7 = fv();
+    p->xDCD_flag.x0.b01 = fv();
+    p->xDCD_flag.x0.b2 = fv();
+    p->xDCD_flag.x0.b3 = fv();
+    p->xDCD_flag.x0.b4 = fv();
+    p->xDCD_flag.x0.b5 = fv();
+    p->xDCD_flag.x0.b6 = fv();
+    p->xDCD_flag.x0.b7 = fv();
+    p->xDCE_flag.x0.b0 = fv();
+    p->xDCE_flag.x0.b1 = fv();
+    p->xDCE_flag.x0.b2 = fv();
+    p->xDCE_flag.x0.b3 = fv();
+    p->xDCE_flag.x0.b4 = fv();
+    p->xDCE_flag.x0.b5 = fv();
+    p->xDCE_flag.x0.b6 = fv();
+    p->xDCE_flag.x0.b7 = fv();
+    p->xDCF_flag.x0.b0 = fv();
+    p->xDCF_flag.x0.b1 = fv();
+    p->xDCF_flag.x0.b2 = fv();
+    p->xDCF_flag.x0.b3 = fv();
+    p->xDCF_flag.x0.b4 = fv();
+    p->xDCF_flag.x0.b5 = fv();
+    p->xDCF_flag.x0.b6 = fv();
+    p->xDCF_flag.x0.b7 = fv();
+    p->xDD0_flag.x0.b0 = fv();
+    p->xDD0_flag.x0.b1 = fv();
+    p->xDD0_flag.x0.b2 = fv();
+    p->xDD0_flag.x0.b3 = fv();
+    p->xDD0_flag.x0.b4 = fv();
+    p->xDD0_flag.x0.b5 = fv();
+    p->xDD0_flag.x0.b6 = fv();
+    p->xDD0_flag.x0.b7 = fv();
+    p->xDD1_flag.x0.b0 = fv();
+    p->xDD1_flag.x0.b1 = fv();
+    p->xDD1_flag.x0.b2 = fv();
+    p->xDD1_flag.x0.b3 = fv();
+    p->xDD1_flag.x0.b4 = fv();
+    p->xDD1_flag.x0.b5 = fv();
+    p->xDD1_flag.x0.b6 = fv();
+    p->xDD1_flag.x0.b7 = fv();
+    p->xDD2_flag.x0.b0 = fv();
+    p->xDD2_flag.x0.b1 = fv();
+    p->xDD2_flag.x0.b2 = fv();
+    p->xDD2_flag.x0.b3 = fv();
+    p->xDD2_flag.x0.b4 = fv();
+    p->xDD2_flag.x0.b5 = fv();
+    p->xDD2_flag.x0.b6 = fv();
+    p->xDD2_flag.x0.b7 = fv();
+    p->xDD3_flag.x0.b0 = fv();
+    p->xDD3_flag.x0.b1 = fv();
+    p->xDD3_flag.x0.b2 = fv();
+    p->xDD3_flag.x0.b3 = fv();
+    p->xDD3_flag.x0.b4 = fv();
+    p->xDD3_flag.x0.b5 = fv();
+    p->xDD3_flag.x0.b6 = fv();
+    p->xDD3_flag.x0.b7 = fv();
     for (i0 = 0; i0 < 504; i0++) ((unsigned char*) &p->xDD4_itemVar)[i0] = (unsigned char) rnd();
 }
 static void hash_Item(const Item* p)
@@ -850,7 +856,7 @@ static void hash_Item(const Item* p)
     HM(B(p->x378_itemColl.xE4_ecb.left.x));
     HM(B(p->x378_itemColl.xE4_ecb.left.y));
     HM((u32) p->x378_itemColl.ecb_source.kind);
-    for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->x378_itemColl.ecb_source)[8 + j0]);
+    for (i0 = 0; i0 < 56; i0++) HM(((const unsigned char*) &p->x378_itemColl.ecb_source.x4)[i0]);
     HM(B(p->x378_itemColl.ecb_source.x124));
     HM(B(p->x378_itemColl.ecb_source.x128));
     HM(B(p->x378_itemColl.ecb_source.x12C));
@@ -1011,7 +1017,7 @@ static void hash_Item(const Item* p)
     HM(PI((const void*) p->x5D4_hitboxes[i0].hit.victims_2[i1].victim));
     HM((u32) p->x5D4_hitboxes[i0].hit.victims_2[i1].x4);
     }
-    for (j1 = 0; j1 < 8; j1++) HM(((const unsigned char*) &p->x5D4_hitboxes[i0].hit)[504 + j1]);
+    for (i1 = 0; i1 < 8; i1++) HM(((const unsigned char*) &p->x5D4_hitboxes[i0].hit.x134)[i1]);
     HM((u32) p->x5D4_hitboxes[i0].x138);
     HM((u32) p->x5D4_hitboxes[i0].x138_b1_7);
     for (i1 = 0; i1 < 3; i1++) {
@@ -1120,9 +1126,9 @@ static void hash_Item(const Item* p)
     HM(B(p->xC6C));
     HM(B(p->xC70));
     HM((u32) p->xC74);
-    HM(B(p->xC78.x));
-    HM(B(p->xC78.y));
-    HM((u32) p->xC80.x);
+    HM((u32) p->xC78.x);
+    HM((u32) p->xC78.y);
+    HM(B(p->xC80.x));
     HM((u32) p->xC80.y);
     HM((u32) p->xC88);
     HM((u32) p->xC8C);
@@ -1194,67 +1200,67 @@ static void hash_Item(const Item* p)
     HM((u32) p->xD88_attackID);
     HM((u32) p->xD8C_attack_instance);
     HM((u32) p->xD8E);
-    HM((u32) p->xD90.x2070);
-    HM((u32) p->xD90.x2071_b0_3);
-    HM((u32) p->xD90.x2071_b4);
-    HM((u32) p->xD90.x2071_b5);
-    HM((u32) p->xD90.x2071_b6);
-    HM((u32) p->xD90.x2071_b7);
-    HM((u32) p->xD90.x2072_b0);
-    HM((u32) p->xD90.x2072_b1);
-    HM((u32) p->xD90.x2072_b2);
-    HM((u32) p->xD90.count_x1A4);
-    HM((u32) p->xD90.count_thrown_items);
-    HM((u32) p->xD90.count_aerials);
-    HM((u32) p->xD90.count_x1A0);
-    HM((u32) p->xD90.count_specials);
-    HM((u32) p->xD90.x2073);
-    HM(B(p->xD94.x));
-    HM(B(p->xD94.y));
-    HM((u32) p->xD9C.x);
+    HM((u32) p->xD90.x0.x2070);
+    HM((u32) p->xD90.x0.x2071_b0_3);
+    HM((u32) p->xD90.x0.x2071_b4);
+    HM((u32) p->xD90.x0.x2071_b5);
+    HM((u32) p->xD90.x0.x2071_b6);
+    HM((u32) p->xD90.x0.x2071_b7);
+    HM((u32) p->xD90.x0.x2072_b0);
+    HM((u32) p->xD90.x0.x2072_b1);
+    HM((u32) p->xD90.x0.x2072_b2);
+    HM((u32) p->xD90.x0.count_x1A4);
+    HM((u32) p->xD90.x0.count_thrown_items);
+    HM((u32) p->xD90.x0.count_aerials);
+    HM((u32) p->xD90.x0.count_x1A0);
+    HM((u32) p->xD90.x0.count_specials);
+    HM((u32) p->xD90.x0.x2073);
+    HM((u32) p->xD94.x);
+    HM((u32) p->xD94.y);
+    HM(B(p->xD9C.x));
     HM((u32) p->xD9C.y);
     HM((u32) p->xDA4_word);
     HM((u32) p->xDA8_short);
-    HM((u32) p->xDAA_flag.b0);
-    HM((u32) p->xDAA_flag.b1);
-    HM((u32) p->xDAA_flag.b2);
-    HM((u32) p->xDAA_flag.b3);
-    HM((u32) p->xDAA_flag.b4);
-    HM((u32) p->xDAA_flag.b5);
-    HM((u32) p->xDAA_flag.b6);
-    HM((u32) p->xDAA_flag.b7);
+    HM((u32) p->xDAA.xDAA_flag.x0.b0);
+    HM((u32) p->xDAA.xDAA_flag.x0.b1);
+    HM((u32) p->xDAA.xDAA_flag.x0.b2);
+    HM((u32) p->xDAA.xDAA_flag.x0.b3);
+    HM((u32) p->xDAA.xDAA_flag.x0.b4);
+    HM((u32) p->xDAA.xDAA_flag.x0.b5);
+    HM((u32) p->xDAA.xDAA_flag.x0.b6);
+    HM((u32) p->xDAA.xDAA_flag.x0.b7);
     HM((u32) p->xDAC_itcmd_var0);
     HM((u32) p->xDB0_itcmd_var1);
     HM((u32) p->xDB4_itcmd_var2);
     HM((u32) p->xDB8_itcmd_var3);
-    HM((u32) p->xDBC_itcmd_var4.flags.x0);
-    HM((u32) p->xDBC_itcmd_var4.flags.x1);
-    HM((u32) p->xDBC_itcmd_var4.flags.x2);
-    HM((u32) p->xDBC_itcmd_var4.flags.x3);
-    HM((u32) p->xDBC_itcmd_var4.flags.x4);
-    HM((u32) p->xDBC_itcmd_var4.flags.x5);
-    HM((u32) p->xDBC_itcmd_var4.flags.x6);
-    HM((u32) p->xDBC_itcmd_var4.flags.x7);
-    HM((u32) p->xDBC_itcmd_var4.flags.x8);
-    HM((u32) p->xDBC_itcmd_var4.flags.x9);
-    HM((u32) p->xDBC_itcmd_var4.flags.xA);
-    HM((u32) p->xDBC_itcmd_var4.flags.xB);
-    HM((u32) p->xDBC_itcmd_var4.flags.xC);
-    HM((u32) p->xDBC_itcmd_var4.flags.xD);
-    HM((u32) p->xDBC_itcmd_var4.flags.xE);
-    HM((u32) p->xDBC_itcmd_var4.flags.xF);
-    HM((u32) p->xDBC_itcmd_var4.flags.x13);
-    HM((u32) p->xDBC_itcmd_var4.flags.x14);
-    HM((u32) p->xDBC_itcmd_var4.flags.x15);
-    HM((u32) p->xDBC_itcmd_var4.flags.x16);
-    HM((u32) p->xDBC_itcmd_var4.flags.x17);
-    HM((u32) p->xDBC_itcmd_var4.flags.x19);
-    HM((u32) p->xDBC_itcmd_var4.flags.x1A);
-    HM((u32) p->xDBC_itcmd_var4.flags.x1B);
-    HM((u32) p->xDBC_itcmd_var4.flags.x1C);
-    HM((u32) p->xDBC_itcmd_var4.flags.x1D);
-    HM((u32) p->xDBC_itcmd_var4.flags.x1E);
-    HM((u32) p->xDBC_itcmd_var4.flags.x1F);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x0);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x1);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x2);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x3);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x4);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x5);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x6);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x7);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x8);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x9);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.xA);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.xB);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.xC);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.xD);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.xE);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.xF);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x13);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x14);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x15);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x16);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x17);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x19);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x1A);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x1B);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x1C);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x1D);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x1E);
+    HM((u32) p->xDBC.xDBC_itcmd_var4.flags.x1F);
     HM((u32) p->xDC0);
     HM((u32) p->xDC4);
     HM((u32) p->xDC8_word.flags.x0);
@@ -1290,55 +1296,61 @@ static void hash_Item(const Item* p)
     HM((u32) p->xDCC_flag.b2);
     HM((u32) p->xDCC_flag.b3);
     HM((u32) p->xDCC_flag.b4567);
-    for (j0 = 0; j0 < 1; j0++) HM(((const unsigned char*) &p->xDCD_flag)[0 + j0]);
-    HM((u32) p->xDCE_flag.b0);
-    HM((u32) p->xDCE_flag.b1);
-    HM((u32) p->xDCE_flag.b2);
-    HM((u32) p->xDCE_flag.b3);
-    HM((u32) p->xDCE_flag.b4);
-    HM((u32) p->xDCE_flag.b5);
-    HM((u32) p->xDCE_flag.b6);
-    HM((u32) p->xDCE_flag.b7);
-    HM((u32) p->xDCF_flag.b0);
-    HM((u32) p->xDCF_flag.b1);
-    HM((u32) p->xDCF_flag.b2);
-    HM((u32) p->xDCF_flag.b3);
-    HM((u32) p->xDCF_flag.b4);
-    HM((u32) p->xDCF_flag.b5);
-    HM((u32) p->xDCF_flag.b6);
-    HM((u32) p->xDCF_flag.b7);
-    HM((u32) p->xDD0_flag.b0);
-    HM((u32) p->xDD0_flag.b1);
-    HM((u32) p->xDD0_flag.b2);
-    HM((u32) p->xDD0_flag.b3);
-    HM((u32) p->xDD0_flag.b4);
-    HM((u32) p->xDD0_flag.b5);
-    HM((u32) p->xDD0_flag.b6);
-    HM((u32) p->xDD0_flag.b7);
-    HM((u32) p->xDD1_flag.b0);
-    HM((u32) p->xDD1_flag.b1);
-    HM((u32) p->xDD1_flag.b2);
-    HM((u32) p->xDD1_flag.b3);
-    HM((u32) p->xDD1_flag.b4);
-    HM((u32) p->xDD1_flag.b5);
-    HM((u32) p->xDD1_flag.b6);
-    HM((u32) p->xDD1_flag.b7);
-    HM((u32) p->xDD2_flag.b0);
-    HM((u32) p->xDD2_flag.b1);
-    HM((u32) p->xDD2_flag.b2);
-    HM((u32) p->xDD2_flag.b3);
-    HM((u32) p->xDD2_flag.b4);
-    HM((u32) p->xDD2_flag.b5);
-    HM((u32) p->xDD2_flag.b6);
-    HM((u32) p->xDD2_flag.b7);
-    HM((u32) p->xDD3_flag.b0);
-    HM((u32) p->xDD3_flag.b1);
-    HM((u32) p->xDD3_flag.b2);
-    HM((u32) p->xDD3_flag.b3);
-    HM((u32) p->xDD3_flag.b4);
-    HM((u32) p->xDD3_flag.b5);
-    HM((u32) p->xDD3_flag.b6);
-    HM((u32) p->xDD3_flag.b7);
+    HM((u32) p->xDCD_flag.x0.b01);
+    HM((u32) p->xDCD_flag.x0.b2);
+    HM((u32) p->xDCD_flag.x0.b3);
+    HM((u32) p->xDCD_flag.x0.b4);
+    HM((u32) p->xDCD_flag.x0.b5);
+    HM((u32) p->xDCD_flag.x0.b6);
+    HM((u32) p->xDCD_flag.x0.b7);
+    HM((u32) p->xDCE_flag.x0.b0);
+    HM((u32) p->xDCE_flag.x0.b1);
+    HM((u32) p->xDCE_flag.x0.b2);
+    HM((u32) p->xDCE_flag.x0.b3);
+    HM((u32) p->xDCE_flag.x0.b4);
+    HM((u32) p->xDCE_flag.x0.b5);
+    HM((u32) p->xDCE_flag.x0.b6);
+    HM((u32) p->xDCE_flag.x0.b7);
+    HM((u32) p->xDCF_flag.x0.b0);
+    HM((u32) p->xDCF_flag.x0.b1);
+    HM((u32) p->xDCF_flag.x0.b2);
+    HM((u32) p->xDCF_flag.x0.b3);
+    HM((u32) p->xDCF_flag.x0.b4);
+    HM((u32) p->xDCF_flag.x0.b5);
+    HM((u32) p->xDCF_flag.x0.b6);
+    HM((u32) p->xDCF_flag.x0.b7);
+    HM((u32) p->xDD0_flag.x0.b0);
+    HM((u32) p->xDD0_flag.x0.b1);
+    HM((u32) p->xDD0_flag.x0.b2);
+    HM((u32) p->xDD0_flag.x0.b3);
+    HM((u32) p->xDD0_flag.x0.b4);
+    HM((u32) p->xDD0_flag.x0.b5);
+    HM((u32) p->xDD0_flag.x0.b6);
+    HM((u32) p->xDD0_flag.x0.b7);
+    HM((u32) p->xDD1_flag.x0.b0);
+    HM((u32) p->xDD1_flag.x0.b1);
+    HM((u32) p->xDD1_flag.x0.b2);
+    HM((u32) p->xDD1_flag.x0.b3);
+    HM((u32) p->xDD1_flag.x0.b4);
+    HM((u32) p->xDD1_flag.x0.b5);
+    HM((u32) p->xDD1_flag.x0.b6);
+    HM((u32) p->xDD1_flag.x0.b7);
+    HM((u32) p->xDD2_flag.x0.b0);
+    HM((u32) p->xDD2_flag.x0.b1);
+    HM((u32) p->xDD2_flag.x0.b2);
+    HM((u32) p->xDD2_flag.x0.b3);
+    HM((u32) p->xDD2_flag.x0.b4);
+    HM((u32) p->xDD2_flag.x0.b5);
+    HM((u32) p->xDD2_flag.x0.b6);
+    HM((u32) p->xDD2_flag.x0.b7);
+    HM((u32) p->xDD3_flag.x0.b0);
+    HM((u32) p->xDD3_flag.x0.b1);
+    HM((u32) p->xDD3_flag.x0.b2);
+    HM((u32) p->xDD3_flag.x0.b3);
+    HM((u32) p->xDD3_flag.x0.b4);
+    HM((u32) p->xDD3_flag.x0.b5);
+    HM((u32) p->xDD3_flag.x0.b6);
+    HM((u32) p->xDD3_flag.x0.b7);
     for (i0 = 0; i0 < 504; i0++) HM(((const unsigned char*) &p->xDD4_itemVar)[i0]);
     HM(PI((const void*) p->mex_original_owner));
 }
@@ -1415,7 +1427,7 @@ static void fill_ItemAttr(ItemAttr* p)
     p->x1_8 = fv();
     p->x3 = fv();
     p->x4_throw_speed_mul = rg();
-    p->x8 = fv();
+    p->x8 = rg();
     p->xC_spin_speed = rg();
     p->x10_fall_speed = rg();
     p->x14_fall_speed_max = rg();
@@ -1462,7 +1474,7 @@ static void hash_ItemAttr(const ItemAttr* p)
     HM((u32) p->x1_8);
     HM((u32) p->x3);
     HM(B(p->x4_throw_speed_mul));
-    HM((u32) p->x8);
+    HM(B(p->x8));
     HM(B(p->xC_spin_speed));
     HM(B(p->x10_fall_speed));
     HM(B(p->x14_fall_speed_max));
@@ -1658,7 +1670,7 @@ static void fill_Fighter(Fighter* p)
     int i0, i1, i2, j0, j1, j2, j3;
     p->kind = fv();
     p->x8_spawnNum = fv();
-    p->player_id = fv();
+    p->player_idx = fv();
     p->motion_id = fv();
     p->anim_id = fv();
     p->x18 = fv();
@@ -1972,7 +1984,18 @@ static void fill_Fighter(Fighter* p)
     p->x508.x7C_flag7 = fv();
     p->x508.x7C_flag8 = fv();
     p->x58C = fv();
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &(*p))[1696 + j0] = (unsigned char) rnd();
+    p->x594.x0.x594_b0 = fv();
+    p->x594.x0.x594_b1_loop = fv();
+    p->x594.x0.x594_b2 = fv();
+    p->x594.x0.x594_b3 = fv();
+    p->x594.x0.x594_b4 = fv();
+    p->x594.x0.x594_b5 = fv();
+    p->x594.x0.x594_b6 = fv();
+    p->x594.x0.x594_b7 = fv();
+    p->x594.x0.x596_bits.x0 = fv();
+    p->x594.x0.x596_bits.x7 = fv();
+    p->x5A4 = fv();
+    p->x5A8 = fv();
     p->x5AC.model_num = fv();
     for (i0 = 0; i0 < 5; i0++) {
     p->x5AC.cleared[i0] = fv();
@@ -1993,9 +2016,9 @@ static void fill_Fighter(Fighter* p)
     p->x610_color_rgba[i0].b = fv();
     p->x610_color_rgba[i0].a = fv();
     }
-    p->x618_player_id = fv();
-    p->x619_costume_id = fv();
-    p->x61A_controller_index = fv();
+    p->pad_port = fv();
+    p->costume_id = fv();
+    p->sub_color = fv();
     p->team = fv();
     p->x61C = fv();
     p->x61D = fv();
@@ -2146,7 +2169,7 @@ static void fill_Fighter(Fighter* p)
     p->coll_data.xE4_ecb.left.x = rg();
     p->coll_data.xE4_ecb.left.y = rg();
     p->coll_data.ecb_source.kind = fv();
-    for (j0 = 0; j0 < 56; j0++) ((unsigned char*) &p->coll_data.ecb_source)[8 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 56; i0++) ((unsigned char*) &p->coll_data.ecb_source.x4)[i0] = (unsigned char) rnd();
     p->coll_data.ecb_source.x124 = rg();
     p->coll_data.ecb_source.x128 = rg();
     p->coll_data.ecb_source.x12C = rg();
@@ -2255,7 +2278,7 @@ static void fill_Fighter(Fighter* p)
     for (i1 = 0; i1 < 12; i1++) {
     p->x914[i0].victims_2[i1].x4 = fv();
     }
-    for (j1 = 0; j1 < 8; j1++) ((unsigned char*) &p->x914[i0])[504 + j1] = (unsigned char) rnd();
+    for (i1 = 0; i1 < 8; i1++) ((unsigned char*) &p->x914[i0].x134)[i1] = (unsigned char) rnd();
     }
     for (i0 = 0; i0 < 2; i0++) {
     p->xDF4[i0].state = fv();
@@ -2320,7 +2343,7 @@ static void fill_Fighter(Fighter* p)
     for (i1 = 0; i1 < 12; i1++) {
     p->xDF4[i0].victims_2[i1].x4 = fv();
     }
-    for (j1 = 0; j1 < 8; j1++) ((unsigned char*) &p->xDF4[i0])[504 + j1] = (unsigned char) rnd();
+    for (i1 = 0; i1 < 8; i1++) ((unsigned char*) &p->xDF4[i0].x134)[i1] = (unsigned char) rnd();
     }
     p->x1064_thrownHitbox.state = fv();
     p->x1064_thrownHitbox.x4 = fv();
@@ -2384,7 +2407,7 @@ static void fill_Fighter(Fighter* p)
     for (i0 = 0; i0 < 12; i0++) {
     p->x1064_thrownHitbox.victims_2[i0].x4 = fv();
     }
-    for (j0 = 0; j0 < 8; j0++) ((unsigned char*) &p->x1064_thrownHitbox)[504 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 8; i0++) ((unsigned char*) &p->x1064_thrownHitbox.x134)[i0] = (unsigned char) rnd();
     p->x119C_teamUnk = fv();
     p->grabber_unk1 = fv();
     p->hurt_capsules_len = fv();
@@ -2468,7 +2491,6 @@ static void fill_Fighter(Fighter* p)
     p->dmg.x1880.z = rg();
     p->dmg.x188c = fv();
     p->dmg.x1890 = fv();
-    p->dmg.x1894 = fv();
     p->dmg.x1898 = rg();
     p->dmg.x189C_unk_num_frames = rg();
     p->dmg.x18a0 = rg();
@@ -2484,17 +2506,21 @@ static void fill_Fighter(Fighter* p)
     p->dmg.x18C8 = fv();
     p->dmg.x18CC = fv();
     p->dmg.x18D0 = fv();
-    p->dmg.x18d4.x0 = fv();
-    p->dmg.x18d4.x1 = fv();
-    p->dmg.x18d4.x2_b0 = fv();
-    p->dmg.x18d4.x2_b1 = fv();
-    p->dmg.x18d4.x2_b2 = fv();
-    p->dmg.x18d4.x2_b3 = fv();
-    p->dmg.x18d4.x2_b4 = fv();
-    p->dmg.x18d4.x2_b5 = fv();
-    p->dmg.x18d4.x2_b6 = fv();
-    p->dmg.x18d4.x2_b7 = fv();
-    p->dmg.x18d4.x3 = fv();
+    p->dmg.x18d4.x0.x2070 = fv();
+    p->dmg.x18d4.x0.x2071_b0_3 = fv();
+    p->dmg.x18d4.x0.x2071_b4 = fv();
+    p->dmg.x18d4.x0.x2071_b5 = fv();
+    p->dmg.x18d4.x0.x2071_b6 = fv();
+    p->dmg.x18d4.x0.x2071_b7 = fv();
+    p->dmg.x18d4.x0.x2072_b0 = fv();
+    p->dmg.x18d4.x0.x2072_b1 = fv();
+    p->dmg.x18d4.x0.x2072_b2 = fv();
+    p->dmg.x18d4.x0.count_x1A4 = fv();
+    p->dmg.x18d4.x0.count_thrown_items = fv();
+    p->dmg.x18d4.x0.count_aerials = fv();
+    p->dmg.x18d4.x0.count_x1A0 = fv();
+    p->dmg.x18d4.x0.count_specials = fv();
+    p->dmg.x18d4.x0.x2073 = fv();
     p->dmg.x18d8.x0 = fv();
     p->dmg.x18d8.x4 = fv();
     p->dmg.x18d8.kb_applied1 = rg();
@@ -2630,7 +2656,6 @@ static void fill_Fighter(Fighter* p)
     p->cpu.x38 = rg();
     p->cpu.x3C = rg();
     p->cpu.x40 = rg();
-    p->cpu.x50 = fv();
     p->cpu.x54.x = rg();
     p->cpu.x54.y = rg();
     p->cpu.x5C = rg();
@@ -2747,26 +2772,26 @@ static void fill_Fighter(Fighter* p)
     p->x2068_attackID = fv();
     p->x206C_attack_instance = fv();
     p->x206E = fv();
-    p->x2070.x2070 = fv();
-    p->x2070.x2071_b0_3 = fv();
-    p->x2070.x2071_b4 = fv();
-    p->x2070.x2071_b5 = fv();
-    p->x2070.x2071_b6 = fv();
-    p->x2070.x2071_b7 = fv();
-    p->x2070.x2072_b0 = fv();
-    p->x2070.x2072_b1 = fv();
-    p->x2070.x2072_b2 = fv();
-    p->x2070.count_x1A4 = fv();
-    p->x2070.count_thrown_items = fv();
-    p->x2070.count_aerials = fv();
-    p->x2070.count_x1A0 = fv();
-    p->x2070.count_specials = fv();
-    p->x2070.x2073 = fv();
-    p->x2074.x2074_vec.x = rg();
-    p->x2074.x2074_vec.y = rg();
-    p->x2074.x207C.x = fv();
+    p->x2070.x0.x2070 = fv();
+    p->x2070.x0.x2071_b0_3 = fv();
+    p->x2070.x0.x2071_b4 = fv();
+    p->x2070.x0.x2071_b5 = fv();
+    p->x2070.x0.x2071_b6 = fv();
+    p->x2070.x0.x2071_b7 = fv();
+    p->x2070.x0.x2072_b0 = fv();
+    p->x2070.x0.x2072_b1 = fv();
+    p->x2070.x0.x2072_b2 = fv();
+    p->x2070.x0.count_x1A4 = fv();
+    p->x2070.x0.count_thrown_items = fv();
+    p->x2070.x0.count_aerials = fv();
+    p->x2070.x0.count_x1A0 = fv();
+    p->x2070.x0.count_specials = fv();
+    p->x2070.x0.x2073 = fv();
+    p->x2074.x2074_vec.x = fv();
+    p->x2074.x2074_vec.y = fv();
+    p->x2074.x207C.x = rg();
     p->x2074.x207C.y = fv();
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &p->x2074)[16 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x2074.x10)[i0] = (unsigned char) rnd();
     p->x2074.x2088 = fv();
     p->x208C = fv();
     p->x2090 = fv();
@@ -2840,21 +2865,21 @@ static void fill_Fighter(Fighter* p)
     p->x2180 = fv();
     p->x2188.x = fv();
     p->x2188.y = fv();
-    p->x21FC_flag.b0 = fv();
-    p->x21FC_flag.b1 = fv();
-    p->x21FC_flag.b2 = fv();
-    p->x21FC_flag.b3 = fv();
-    p->x21FC_flag.b4 = fv();
-    p->x21FC_flag.b5 = fv();
-    p->x21FC_flag.b6 = fv();
-    p->x21FC_flag.b7 = fv();
+    p->x21FC_flag.x0.b0 = fv();
+    p->x21FC_flag.x0.b1 = fv();
+    p->x21FC_flag.x0.b2 = fv();
+    p->x21FC_flag.x0.b3 = fv();
+    p->x21FC_flag.x0.b4 = fv();
+    p->x21FC_flag.x0.b5 = fv();
+    p->x21FC_flag.x0.b6 = fv();
+    p->x21FC_flag.x0.b7 = fv();
     for (i0 = 0; i0 < 3; i0++) {
     p->filler_x21FC[i0] = fv();
     }
     for (i0 = 0; i0 < 4; i0++) {
     p->cmd_vars[i0] = fv();
     }
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &(*p))[10924 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x2210)[i0] = (unsigned char) rnd();
     p->cmd_timer = rg();
     p->allow_interrupt = fv();
     p->x2218_b1 = fv();
@@ -2880,7 +2905,14 @@ static void fill_Fighter(Fighter* p)
     p->x221A_b5 = fv();
     p->x221A_b6 = fv();
     p->x221A_b7 = fv();
-    for (j0 = 0; j0 < 1; j0++) ((unsigned char*) &(*p))[10935 + j0] = (unsigned char) rnd();
+    p->x221B.x221B_b0 = fv();
+    p->x221B.x221B_b1 = fv();
+    p->x221B.x221B_b2 = fv();
+    p->x221B.x221B_b3 = fv();
+    p->x221B.x221B_b4 = fv();
+    p->x221B.x221B_b5 = fv();
+    p->x221B.x221B_b6 = fv();
+    p->x221B.x221B_b7 = fv();
     p->x221C_b0 = fv();
     p->x221C_b1 = fv();
     p->x221C_b2 = fv();
@@ -2890,8 +2922,8 @@ static void fill_Fighter(Fighter* p)
     p->x221C_b6 = fv();
     p->x221C_u16_y = fv();
     p->x221D_b2 = fv();
-    p->x221D_b3 = fv();
-    p->x221D_b4 = fv();
+    p->has_prev_input = fv();
+    p->input_disabled = fv();
     p->x221D_b5 = fv();
     p->x221D_b6 = fv();
     p->x221D_b7 = fv();
@@ -2906,7 +2938,7 @@ static void fill_Fighter(Fighter* p)
     p->x221F_b0 = fv();
     p->x221F_b1 = fv();
     p->x221F_b2 = fv();
-    p->x221F_b3 = fv();
+    p->is_sleeping = fv();
     p->is_sub_fighter = fv();
     p->x221F_b5 = fv();
     p->x221F_b6 = fv();
@@ -2943,7 +2975,7 @@ static void fill_Fighter(Fighter* p)
     p->is_metal = fv();
     p->x2224_b0 = fv();
     p->x2224_b1 = fv();
-    p->x2224_b2 = fv();
+    p->stamina_dead = fv();
     p->x2224_b3 = fv();
     p->x2224_b4 = fv();
     p->x2224_b5 = fv();
@@ -3012,7 +3044,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->gobj));
     HM((u32) p->kind);
     HM((u32) p->x8_spawnNum);
-    HM((u32) p->player_id);
+    HM((u32) p->player_idx);
     HM((u32) p->motion_id);
     HM((u32) p->anim_id);
     HM((u32) p->x18);
@@ -3349,12 +3381,21 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->x588));
     HM((u32) p->x58C);
     HM(PI((const void*) p->x590));
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &(*p))[1696 + j0]);
+    HM((u32) p->x594.x0.x594_b0);
+    HM((u32) p->x594.x0.x594_b1_loop);
+    HM((u32) p->x594.x0.x594_b2);
+    HM((u32) p->x594.x0.x594_b3);
+    HM((u32) p->x594.x0.x594_b4);
+    HM((u32) p->x594.x0.x594_b5);
+    HM((u32) p->x594.x0.x594_b6);
+    HM((u32) p->x594.x0.x594_b7);
+    HM((u32) p->x594.x0.x596_bits.x0);
+    HM((u32) p->x594.x0.x596_bits.x7);
     HM(PI((const void*) p->x598));
     HM(PI((const void*) p->x59C));
     HM(PI((const void*) p->x5A0));
-    HM(PI((const void*) p->x5A4));
-    HM(PI((const void*) p->x5A8));
+    HM((u32) p->x5A4);
+    HM((u32) p->x5A8);
     HM((u32) p->x5AC.model_num);
     for (i0 = 0; i0 < 5; i0++) {
     HM((u32) p->x5AC.cleared[i0]);
@@ -3381,9 +3422,9 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x610_color_rgba[i0].b);
     HM((u32) p->x610_color_rgba[i0].a);
     }
-    HM((u32) p->x618_player_id);
-    HM((u32) p->x619_costume_id);
-    HM((u32) p->x61A_controller_index);
+    HM((u32) p->pad_port);
+    HM((u32) p->costume_id);
+    HM((u32) p->sub_color);
     HM((u32) p->team);
     HM((u32) p->x61C);
     HM((u32) p->x61D);
@@ -3535,7 +3576,7 @@ static void hash_Fighter(const Fighter* p)
     HM(B(p->coll_data.xE4_ecb.left.x));
     HM(B(p->coll_data.xE4_ecb.left.y));
     HM((u32) p->coll_data.ecb_source.kind);
-    for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->coll_data.ecb_source)[8 + j0]);
+    for (i0 = 0; i0 < 56; i0++) HM(((const unsigned char*) &p->coll_data.ecb_source.x4)[i0]);
     HM(B(p->coll_data.ecb_source.x124));
     HM(B(p->coll_data.ecb_source.x128));
     HM(B(p->coll_data.ecb_source.x12C));
@@ -3649,7 +3690,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->x914[i0].victims_2[i1].victim));
     HM((u32) p->x914[i0].victims_2[i1].x4);
     }
-    for (j1 = 0; j1 < 8; j1++) HM(((const unsigned char*) &p->x914[i0])[504 + j1]);
+    for (i1 = 0; i1 < 8; i1++) HM(((const unsigned char*) &p->x914[i0].x134)[i1]);
     }
     for (i0 = 0; i0 < 2; i0++) {
     HM((u32) p->xDF4[i0].state);
@@ -3717,7 +3758,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->xDF4[i0].victims_2[i1].victim));
     HM((u32) p->xDF4[i0].victims_2[i1].x4);
     }
-    for (j1 = 0; j1 < 8; j1++) HM(((const unsigned char*) &p->xDF4[i0])[504 + j1]);
+    for (i1 = 0; i1 < 8; i1++) HM(((const unsigned char*) &p->xDF4[i0].x134)[i1]);
     }
     HM((u32) p->x1064_thrownHitbox.state);
     HM((u32) p->x1064_thrownHitbox.x4);
@@ -3784,7 +3825,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->x1064_thrownHitbox.victims_2[i0].victim));
     HM((u32) p->x1064_thrownHitbox.victims_2[i0].x4);
     }
-    for (j0 = 0; j0 < 8; j0++) HM(((const unsigned char*) &p->x1064_thrownHitbox)[504 + j0]);
+    for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->x1064_thrownHitbox.x134)[i0]);
     HM((u32) p->x119C_teamUnk);
     HM((u32) p->grabber_unk1);
     HM((u32) p->hurt_capsules_len);
@@ -3873,7 +3914,7 @@ static void hash_Fighter(const Fighter* p)
     HM(B(p->dmg.x1880.z));
     HM((u32) p->dmg.x188c);
     HM((u32) p->dmg.x1890);
-    HM((u32) p->dmg.x1894);
+    HM(PI((const void*) p->dmg.x1894));
     HM(B(p->dmg.x1898));
     HM(B(p->dmg.x189C_unk_num_frames));
     HM(B(p->dmg.x18a0));
@@ -3889,17 +3930,21 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->dmg.x18C8);
     HM((u32) p->dmg.x18CC);
     HM((u32) p->dmg.x18D0);
-    HM((u32) p->dmg.x18d4.x0);
-    HM((u32) p->dmg.x18d4.x1);
-    HM((u32) p->dmg.x18d4.x2_b0);
-    HM((u32) p->dmg.x18d4.x2_b1);
-    HM((u32) p->dmg.x18d4.x2_b2);
-    HM((u32) p->dmg.x18d4.x2_b3);
-    HM((u32) p->dmg.x18d4.x2_b4);
-    HM((u32) p->dmg.x18d4.x2_b5);
-    HM((u32) p->dmg.x18d4.x2_b6);
-    HM((u32) p->dmg.x18d4.x2_b7);
-    HM((u32) p->dmg.x18d4.x3);
+    HM((u32) p->dmg.x18d4.x0.x2070);
+    HM((u32) p->dmg.x18d4.x0.x2071_b0_3);
+    HM((u32) p->dmg.x18d4.x0.x2071_b4);
+    HM((u32) p->dmg.x18d4.x0.x2071_b5);
+    HM((u32) p->dmg.x18d4.x0.x2071_b6);
+    HM((u32) p->dmg.x18d4.x0.x2071_b7);
+    HM((u32) p->dmg.x18d4.x0.x2072_b0);
+    HM((u32) p->dmg.x18d4.x0.x2072_b1);
+    HM((u32) p->dmg.x18d4.x0.x2072_b2);
+    HM((u32) p->dmg.x18d4.x0.count_x1A4);
+    HM((u32) p->dmg.x18d4.x0.count_thrown_items);
+    HM((u32) p->dmg.x18d4.x0.count_aerials);
+    HM((u32) p->dmg.x18d4.x0.count_x1A0);
+    HM((u32) p->dmg.x18d4.x0.count_specials);
+    HM((u32) p->dmg.x18d4.x0.x2073);
     HM((u32) p->dmg.x18d8.x0);
     HM((u32) p->dmg.x18d8.x4);
     HM(B(p->dmg.x18d8.kb_applied1));
@@ -4052,7 +4097,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->cpu.x44));
     HM(PI((const void*) p->cpu.x48));
     HM(PI((const void*) p->cpu.x4C));
-    HM((u32) p->cpu.x50);
+    HM(PI((const void*) p->cpu.x50));
     HM(B(p->cpu.x54.x));
     HM(B(p->cpu.x54.y));
     HM(B(p->cpu.x5C));
@@ -4176,26 +4221,26 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x2068_attackID);
     HM((u32) p->x206C_attack_instance);
     HM((u32) p->x206E);
-    HM((u32) p->x2070.x2070);
-    HM((u32) p->x2070.x2071_b0_3);
-    HM((u32) p->x2070.x2071_b4);
-    HM((u32) p->x2070.x2071_b5);
-    HM((u32) p->x2070.x2071_b6);
-    HM((u32) p->x2070.x2071_b7);
-    HM((u32) p->x2070.x2072_b0);
-    HM((u32) p->x2070.x2072_b1);
-    HM((u32) p->x2070.x2072_b2);
-    HM((u32) p->x2070.count_x1A4);
-    HM((u32) p->x2070.count_thrown_items);
-    HM((u32) p->x2070.count_aerials);
-    HM((u32) p->x2070.count_x1A0);
-    HM((u32) p->x2070.count_specials);
-    HM((u32) p->x2070.x2073);
-    HM(B(p->x2074.x2074_vec.x));
-    HM(B(p->x2074.x2074_vec.y));
-    HM((u32) p->x2074.x207C.x);
+    HM((u32) p->x2070.x0.x2070);
+    HM((u32) p->x2070.x0.x2071_b0_3);
+    HM((u32) p->x2070.x0.x2071_b4);
+    HM((u32) p->x2070.x0.x2071_b5);
+    HM((u32) p->x2070.x0.x2071_b6);
+    HM((u32) p->x2070.x0.x2071_b7);
+    HM((u32) p->x2070.x0.x2072_b0);
+    HM((u32) p->x2070.x0.x2072_b1);
+    HM((u32) p->x2070.x0.x2072_b2);
+    HM((u32) p->x2070.x0.count_x1A4);
+    HM((u32) p->x2070.x0.count_thrown_items);
+    HM((u32) p->x2070.x0.count_aerials);
+    HM((u32) p->x2070.x0.count_x1A0);
+    HM((u32) p->x2070.x0.count_specials);
+    HM((u32) p->x2070.x0.x2073);
+    HM((u32) p->x2074.x2074_vec.x);
+    HM((u32) p->x2074.x2074_vec.y);
+    HM(B(p->x2074.x207C.x));
     HM((u32) p->x2074.x207C.y);
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &p->x2074)[16 + j0]);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x2074.x10)[i0]);
     HM((u32) p->x2074.x2088);
     HM((u32) p->x208C);
     HM((u32) p->x2090);
@@ -4301,21 +4346,21 @@ static void hash_Fighter(const Fighter* p)
     HM(FI((const void*) p->take_dmg_2_cb));
     HM(FI((const void*) p->hurtbox_detect_cb));
     HM(FI((const void*) p->x21F8));
-    HM((u32) p->x21FC_flag.b0);
-    HM((u32) p->x21FC_flag.b1);
-    HM((u32) p->x21FC_flag.b2);
-    HM((u32) p->x21FC_flag.b3);
-    HM((u32) p->x21FC_flag.b4);
-    HM((u32) p->x21FC_flag.b5);
-    HM((u32) p->x21FC_flag.b6);
-    HM((u32) p->x21FC_flag.b7);
+    HM((u32) p->x21FC_flag.x0.b0);
+    HM((u32) p->x21FC_flag.x0.b1);
+    HM((u32) p->x21FC_flag.x0.b2);
+    HM((u32) p->x21FC_flag.x0.b3);
+    HM((u32) p->x21FC_flag.x0.b4);
+    HM((u32) p->x21FC_flag.x0.b5);
+    HM((u32) p->x21FC_flag.x0.b6);
+    HM((u32) p->x21FC_flag.x0.b7);
     for (i0 = 0; i0 < 3; i0++) {
     HM((u32) p->filler_x21FC[i0]);
     }
     for (i0 = 0; i0 < 4; i0++) {
     HM((u32) p->cmd_vars[i0]);
     }
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &(*p))[10924 + j0]);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x2210)[i0]);
     HM(B(p->cmd_timer));
     HM((u32) p->allow_interrupt);
     HM((u32) p->x2218_b1);
@@ -4341,7 +4386,14 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x221A_b5);
     HM((u32) p->x221A_b6);
     HM((u32) p->x221A_b7);
-    for (j0 = 0; j0 < 1; j0++) HM(((const unsigned char*) &(*p))[10935 + j0]);
+    HM((u32) p->x221B.x221B_b0);
+    HM((u32) p->x221B.x221B_b1);
+    HM((u32) p->x221B.x221B_b2);
+    HM((u32) p->x221B.x221B_b3);
+    HM((u32) p->x221B.x221B_b4);
+    HM((u32) p->x221B.x221B_b5);
+    HM((u32) p->x221B.x221B_b6);
+    HM((u32) p->x221B.x221B_b7);
     HM((u32) p->x221C_b0);
     HM((u32) p->x221C_b1);
     HM((u32) p->x221C_b2);
@@ -4351,8 +4403,8 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x221C_b6);
     HM((u32) p->x221C_u16_y);
     HM((u32) p->x221D_b2);
-    HM((u32) p->x221D_b3);
-    HM((u32) p->x221D_b4);
+    HM((u32) p->has_prev_input);
+    HM((u32) p->input_disabled);
     HM((u32) p->x221D_b5);
     HM((u32) p->x221D_b6);
     HM((u32) p->x221D_b7);
@@ -4367,7 +4419,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x221F_b0);
     HM((u32) p->x221F_b1);
     HM((u32) p->x221F_b2);
-    HM((u32) p->x221F_b3);
+    HM((u32) p->is_sleeping);
     HM((u32) p->is_sub_fighter);
     HM((u32) p->x221F_b5);
     HM((u32) p->x221F_b6);
@@ -4404,7 +4456,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->is_metal);
     HM((u32) p->x2224_b0);
     HM((u32) p->x2224_b1);
-    HM((u32) p->x2224_b2);
+    HM((u32) p->stamina_dead);
     HM((u32) p->x2224_b3);
     HM((u32) p->x2224_b4);
     HM((u32) p->x2224_b5);
@@ -4562,7 +4614,7 @@ static void fill_ItemLink(ItemLink* p)
     p->coll_data.xE4_ecb.left.x = rg();
     p->coll_data.xE4_ecb.left.y = rg();
     p->coll_data.ecb_source.kind = fv();
-    for (j0 = 0; j0 < 56; j0++) ((unsigned char*) &p->coll_data.ecb_source)[8 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 56; i0++) ((unsigned char*) &p->coll_data.ecb_source.x4)[i0] = (unsigned char) rnd();
     p->coll_data.ecb_source.x124 = rg();
     p->coll_data.ecb_source.x128 = rg();
     p->coll_data.ecb_source.x12C = rg();
@@ -4694,7 +4746,7 @@ static void hash_ItemLink(const ItemLink* p)
     HM(B(p->coll_data.xE4_ecb.left.x));
     HM(B(p->coll_data.xE4_ecb.left.y));
     HM((u32) p->coll_data.ecb_source.kind);
-    for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->coll_data.ecb_source)[8 + j0]);
+    for (i0 = 0; i0 < 56; i0++) HM(((const unsigned char*) &p->coll_data.ecb_source.x4)[i0]);
     HM(B(p->coll_data.ecb_source.x124));
     HM(B(p->coll_data.ecb_source.x128));
     HM(B(p->coll_data.ecb_source.x12C));
@@ -4733,8 +4785,23 @@ static void hash_ItemLink(const ItemLink* p)
 static void fill_FighterBone(FighterBone* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
-    for (j0 = 0; j0 < 2; j0++) ((unsigned char*) &(*p))[16 + j0] = (unsigned char) rnd();
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &(*p))[20 + j0] = (unsigned char) rnd();
+    p->x8.x0.flags_b0 = fv();
+    p->x8.x0.flags_b1 = fv();
+    p->x8.x0.flags_b2 = fv();
+    p->x8.x0.flags_b3 = fv();
+    p->x8.x0.flags_b4 = fv();
+    p->x8.x0.flags_b5 = fv();
+    p->x8.x0.flags_b6 = fv();
+    p->x8.x0.flags_b7 = fv();
+    p->x8.x0.flags2_b0 = fv();
+    p->x8.x0.flags2_b1 = fv();
+    p->x8.x0.flags2_b2 = fv();
+    p->x8.x0.flags2_b3 = fv();
+    p->x8.x0.flags2_b4 = fv();
+    p->x8.x0.flags2_b5 = fv();
+    p->x8.x0.flags2_b6 = fv();
+    p->x8.x0.flags2_b7 = fv();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->xC_u)[i0] = (unsigned char) rnd();
 }
 static void hash_FighterBone(const FighterBone* p)
 {
@@ -4742,8 +4809,23 @@ static void hash_FighterBone(const FighterBone* p)
     if (HDBG) printf("B FighterBone%c", 10);
     HM(PI((const void*) p->joint));
     HM(PI((const void*) p->x4_jobj2));
-    for (j0 = 0; j0 < 2; j0++) HM(((const unsigned char*) &(*p))[16 + j0]);
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &(*p))[20 + j0]);
+    HM((u32) p->x8.x0.flags_b0);
+    HM((u32) p->x8.x0.flags_b1);
+    HM((u32) p->x8.x0.flags_b2);
+    HM((u32) p->x8.x0.flags_b3);
+    HM((u32) p->x8.x0.flags_b4);
+    HM((u32) p->x8.x0.flags_b5);
+    HM((u32) p->x8.x0.flags_b6);
+    HM((u32) p->x8.x0.flags_b7);
+    HM((u32) p->x8.x0.flags2_b0);
+    HM((u32) p->x8.x0.flags2_b1);
+    HM((u32) p->x8.x0.flags2_b2);
+    HM((u32) p->x8.x0.flags2_b3);
+    HM((u32) p->x8.x0.flags2_b4);
+    HM((u32) p->x8.x0.flags2_b5);
+    HM((u32) p->x8.x0.flags2_b6);
+    HM((u32) p->x8.x0.flags2_b7);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->xC_u)[i0]);
 }
 
 static void fill_ftSs_DatAttrs(ftSs_DatAttrs* p)
@@ -4801,6 +4883,7 @@ static void fill_ftSs_DatAttrs(ftSs_DatAttrs* p)
     p->xC4 = fv();
     p->xC8 = fv();
     p->xCC = rg();
+    p->xD0 = fv();
 }
 static void hash_ftSs_DatAttrs(const ftSs_DatAttrs* p)
 {
@@ -4858,7 +4941,7 @@ static void hash_ftSs_DatAttrs(const ftSs_DatAttrs* p)
     HM((u32) p->xC4);
     HM((u32) p->xC8);
     HM(B(p->xCC));
-    HM(PI((const void*) p->xD0));
+    HM((u32) p->xD0);
 }
 
 static void fill_itSamusGrappleAttributes(itSamusGrappleAttributes* p)

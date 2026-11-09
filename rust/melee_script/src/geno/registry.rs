@@ -51,6 +51,11 @@ pub trait Env {
     fn read_mod_file(&self, _mod_id: &str, _rel: &str) -> Option<Vec<u8>> {
         None
     }
+    /// geno 12: a define's `wasm` fighter module, ready to call (slot layout and the `go` target names given). Err is
+    /// the refusal text; a host without a wasm runtime refuses every module.
+    fn fighter_wasm(&self, _module: &[u8], _slot_names: &[String], _slot_types: &[i32], _targets: &[String]) -> Result<Box<dyn super::lua::FighterCode>, String> {
+        Err("this host runs no wasm fighter modules".into())
+    }
     /// gw_Fx_BindLoad: the fx binding set for a path in the mod, -1 none.
     fn fx_bind_load(&self, _mod_id: &str, _rel: &str) -> i32 {
         -1
@@ -1624,8 +1629,8 @@ impl Registry {
             return -1;
         }
         let version = d.n[v as usize].num as i32;
-        if version > GENO_VERSION as i32 {
-            self.logf(format!("geno: {where_} is Geno v{version}, this build is v{GENO_VERSION} - reading what it knows"));
+        if version > super::GENO_FORMAT as i32 {
+            self.logf(format!("geno: {where_} is Geno v{version}, this build is v{} - reading what it knows", super::GENO_FORMAT));
         }
         let f = d.get(root, "fighters");
         if d.is(f, Ty::Arr) {

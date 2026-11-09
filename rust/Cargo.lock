@@ -1289,6 +1289,7 @@ dependencies = [
  "melee_types",
  "melee_world",
  "mex_import",
+ "wasmi",
 ]
 
 [[package]]

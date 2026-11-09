@@ -21,6 +21,8 @@ melee_chara.workspace = true
 melee_items.workspace = true
 melee_data = { path = "../melee_data" }
 melee_modhost = { path = "../melee_modhost" }
+# geno 12 fighter modules (geno_wasm): the mod host's runtime, its deterministic NaN handling
+wasmi = { version = "2.0.0", default-features = false, features = ["std", "validate", "deterministic"] }
 melee_script = { path = "../melee_script" }
 # m-ex fighters' ftFunction PPC code (mex_guest): the interpreter and the field rewriting
 mex_import = { path = "../../tools/mex-import" }

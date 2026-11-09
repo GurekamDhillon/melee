@@ -11,6 +11,9 @@ use crate::snap_host::host_heap;
 /// module). No m-ex slots are installed in this engine. Tests (no mods dir) read nothing.
 pub struct FsEnv;
 impl Env for FsEnv {
+    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::lua::FighterCode>, String> {
+        crate::geno_wasm::load(module, slot_names, slot_types, targets).map(|g| Box::new(g) as Box<dyn melee_script::geno::lua::FighterCode>)
+    }
     fn read_mod_file(&self, mod_id: &str, rel: &str) -> Option<Vec<u8>> {
         let (dir, _) = unsafe { BOOT_MODS.as_ref()? };
         if rel.contains("..") || mod_id.contains("..") {

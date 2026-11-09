@@ -695,6 +695,10 @@ impl GLua {
         ffi::lua_rawgeti(L, ffi::LUA_REGISTRYINDEX, self.fn_ref[fn_ as usize] as ffi::lua_Integer);
         self.push_ctx();
         let st = ffi::lua_pcall(L, 1, 0, 0);
+        // the ctx functions record their fault through the state's extraspace pointer while this `&mut self` is held:
+        // read it back through that pointer (a plain `self.fault` may be assumed unchanged across the FFI call, which
+        // reported every fault as GENO_LUA_FAULT_ERROR in an optimized build)
+        self.fault = core::ptr::read_volatile(core::ptr::addr_of!((*glua_of(L)).fault));
         if st != ffi::LUA_OK {
             if self.fault == 0 {
                 self.fault = if st == ffi::LUA_ERRMEM { GENO_LUA_FAULT_HEAP } else { GENO_LUA_FAULT_ERROR } as i32;
@@ -711,6 +715,45 @@ impl GLua {
         self.io = core::ptr::null_mut();
         *io.add(GENO_LUA_IO_FAULT as usize) = st as u32;
         st
+    }
+}
+
+/// A define's fighter code (the geno 10 `lua` block or the geno 12 `wasm` block): stateless callbacks over the game
+/// half's io block. The registry and the game half see only this.
+pub trait FighterCode {
+    fn nslot(&self) -> usize;
+    fn slot_name(&self, i: usize) -> &str;
+    fn slot_type(&self, i: usize) -> i32;
+    /// The index of a callback by name, -1 none.
+    fn find(&self, name: &str) -> i32;
+    /// Runs callback `f` over `io`: 0 ok, GENO_LUA_FAULT_* otherwise (the io's fault word set, its commands cleared).
+    unsafe fn call(&mut self, f: i32, io: *mut u32) -> i32;
+    /// The last refusal or fault, for the log.
+    fn err(&self) -> &str;
+    fn faults(&self) -> u32;
+}
+
+impl FighterCode for GLua {
+    fn nslot(&self) -> usize {
+        self.nslot
+    }
+    fn slot_name(&self, i: usize) -> &str {
+        &self.slot_name[i]
+    }
+    fn slot_type(&self, i: usize) -> i32 {
+        self.slot_type[i]
+    }
+    fn find(&self, name: &str) -> i32 {
+        GLua::find(self, name)
+    }
+    unsafe fn call(&mut self, f: i32, io: *mut u32) -> i32 {
+        GLua::call(self, f, io)
+    }
+    fn err(&self) -> &str {
+        &self.err
+    }
+    fn faults(&self) -> u32 {
+        self.faults
     }
 }
 

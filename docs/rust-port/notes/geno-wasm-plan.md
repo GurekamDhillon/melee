@@ -7,9 +7,6 @@ is native and stays 1:1.
 ## What does not change
 - **Native Geno**: the registry (`melee_script::geno`), the game half (`geno_game.rs`), defines, base "none", audio,
   and the stable ids / netplay identity. melee geno-tests 64/64.
-- **Fighter Lua (geno 10 `lua` blocks, per-state `lua`, combo slots)**: `melee_script::geno::lua` on the vendored
-  Lua 5.4.7. It belongs to Geno's own format, not the script host, and is kept so those fighters stay 1:1 (default
-  taken while my user was away; they can still say otherwise).
 - **EngineGame** (237 methods: the game half of gw_ScriptGame_*) and **snap_host**: the game side the wasm imports call.
 
 ## Work, in order
@@ -37,7 +34,19 @@ is native and stays 1:1.
      (`gw_Geno_Reload` with its refusal text);
    - sim-side Geno writes for mods (Envoy's elites) wait for `gd_fighter_mod_set` and are not duplicated here.
    No ABI major bump: new imports are additive (a mod importing one fails instantiation on an older host, as today).
-5. **Re-verify items 2-3**: the coverage scenarios (`geno_vanilla_*`, `geno_courier_cpu`, `mex_goku_cpu`) and the v5
+5. **Fighter Lua -> wasm (my user, 2026-11-09: "virtually 0% lua in this project")**:
+   - Geno's fighter Lua (geno 10 `lua` blocks, per-state `lua` keys, combo `when.slot`) runs today on the vendored
+     Lua 5.4.7 (`melee_script::geno::lua`, geno-tests 64/64). Only vanilla-charger and vanilla-riposte ship it.
+   - Replace it with a wasm fighter block in Geno's format: the same callback points (state enter / frame, the
+     combo state slots) on the mod host's deterministic, fuel-metered, snapshotted wasmi. It takes a new format
+     number, coordinated with the sprite plan's proposed "geno": 12, and the id folds the module hash where it folded
+     the Lua hash.
+   - Rewrite the two mods' Lua as wasm and prove them against the existing C goldens (geno_vanilla_charger,
+     geno_vanilla_riposte) hash for hash.
+   - Then remove the Lua dependencies: melee_script's script host and geno::lua, and third_party/lua-src.
+   - A `lua` key from a third-party mod becomes a conversion job: it is the one part that does not stay
+     format-compatible.
+6. **Re-verify items 2-3**: the coverage scenarios (`geno_vanilla_*`, `geno_courier_cpu`, `mex_goku_cpu`) and the v5
    conformance fixture (vanilla-hero jab, section 10).
 
 ## Dropped from this job

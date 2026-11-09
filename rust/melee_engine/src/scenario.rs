@@ -322,7 +322,7 @@ fn install_onep() {
         });
         c::SceneLaunch_OnePLevel = Some(|| SCN.as_ref().map_or(2, |s| if s.onep_level < 0 { 2 } else { s.onep_level }));
         c::SceneLaunch_PlayerCKind = Some(|n| p(n).map_or(-1, |x| x.ckind));
-        c::SceneLaunch_PlayerColor = Some(|n| p(n).map_or(-1, |x| x.color));
+        c::SceneLaunch_PlayerColor = Some(|n| p(n).map_or(-1, |x| crate::skins_host::scene_color(n, x.ckind, x.color)));
         c::SceneLaunch_PlayerStocks = Some(|n| p(n).map_or(-1, |x| x.stocks));
     }
 }
@@ -352,7 +352,7 @@ pub fn install(mut s: Scenario) {
         h::SceneLaunch_PlayerCpuLevel = Some(|n| p(n).map_or(-1, |x| x.cpu_level));
         h::SceneLaunch_RuleMatch = Some(|| SCN.as_ref().map_or(-1, |s| s.rule_match));
         h::SceneLaunch_RuleMinutes = Some(|| SCN.as_ref().map_or(-1, |s| s.rule_minutes));
-        h::SceneLaunch_PlayerColor = Some(|n| p(n).map_or(-1, |x| x.color));
+        h::SceneLaunch_PlayerColor = Some(|n| p(n).map_or(-1, |x| crate::skins_host::scene_color(n, x.ckind, x.color)));
         h::SceneLaunch_PlayerTeam = Some(|n| p(n).map_or(-1, |x| x.team));
         h::SceneLaunch_PlayerHandicap = Some(|n| p(n).map_or(-1, |x| x.handicap));
         h::SceneLaunch_PlayerSubColor = Some(|n| p(n).map_or(-1, |x| x.sub_color));

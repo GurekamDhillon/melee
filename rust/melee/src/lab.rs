@@ -28,6 +28,7 @@ use std::rc::Rc;
 /// frames, ~2 ms: the depth stays the full ring, the capture cost per frame halves).
 pub const RING_EVERY: i32 = 8;
 
+mod geno;
 mod look;
 pub use look::LookPerf;
 pub mod train;
@@ -276,6 +277,7 @@ impl LabRun {
         let t = std::time::Instant::now();
         drop(r.g.save());
         eprintln!("lab: snapshot base captured in {:.1} ms", t.elapsed().as_secs_f64() * 1e3);
+        r.geno_tables();
         r.observe(false);
         r.publish();
         r
@@ -286,6 +288,9 @@ impl LabRun {
         let mut s = self.sh.borrow_mut();
         s.active = false;
         s.fighters = [None; 4];
+        for p in 0..4 {
+            s.geno.clear_port(p);
+        }
         drop(s);
         self.g
     }
@@ -532,8 +537,50 @@ impl LabRun {
                 }
                 self.note(format!("lab: frame {}: P{} dummy option {} = {}", self.f, port + 1, c.a, c.b));
             }
+            op if is_geno_op(op) => self.apply_geno(c),
             _ => {}
         }
+    }
+
+    /// The Geno commands (lab/geno.rs, through the engine's ScriptGame). Offline only: the presentation side never
+    /// queues one online, and a peer that sent one anyway is ignored on both sides alike (no desync, no v1 break).
+    fn apply_geno(&mut self, c: &LabCmd) {
+        if self.sh.borrow().session != melee_modhost::pres::Session::Offline {
+            self.note(format!("lab: frame {}: Geno command {} ignored (offline only)", self.f, c.op));
+            return;
+        }
+        let Some(a) = geno::apply(&mut melee_engine::script_host::EngineGame, c) else { return };
+        if a.fork {
+            self.look_drop();
+        }
+        if a.reloaded {
+            // the history before the reload ran on other data: rewinding into it would mix the two (gs_hot_do restarts
+            // the history at the reload); slots stay, as the layout still fits unless the match restarts
+            self.ring.clear();
+            self.log.clear();
+            self.log_f0 = self.f;
+            self.replay_until = None;
+            self.geno_tables();
+        }
+        if a.pause {
+            self.paused = true;
+            self.steps = 0;
+        }
+        self.note(format!("lab: frame {}: Geno op {} P{}: rc {}{}{}", self.f, c.op, (c.port & 3) + 1, a.rc, if a.text.is_empty() { "" } else { ": " }, a.text));
+        let mut s = self.sh.borrow_mut();
+        let r = &mut s.geno.result;
+        r.seq = r.seq.wrapping_add(1).max(1);
+        r.op = c.op;
+        r.port = c.port & 3;
+        r.rc = a.rc;
+        r.text = a.text;
+    }
+
+    /// Republish the Geno registry tables (names and counts) for the `gd_geno_*` name queries.
+    fn geno_tables(&mut self) {
+        use melee_engine::geno_host as gh;
+        let routes = |p: i32| gh::ComboParam(p, melee_types::GENO_CP_ROUTES as i32);
+        geno::tables(&melee_engine::script_host::EngineGame, &mut self.sh.borrow_mut().geno, gh::ProfileCount(), &routes, gh::KindCount());
     }
 
     fn note(&self, s: String) {
@@ -1198,6 +1245,8 @@ impl LabRun {
         s.publish_events(&ev);
         self.events = ev;
         for port in 0..4 {
+            let kind = unsafe { fighter(port as i32) }.map(|fp| fp.kind as i32);
+            geno::publish_port(&melee_engine::script_host::EngineGame, &mut s.geno, port, kind);
             let Some(fp) = (unsafe { fighter(port as i32) }) else {
                 s.fighters[port] = None;
                 s.hitboxes[port].clear();

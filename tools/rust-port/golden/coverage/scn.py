@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Read docs/rust-port/golden/coverage/scenarios.json for the recorder.
   scn.py names [--group G] [--status S]      one scenario name per line
-  scn.py tsv NAME...                         name <TAB> pad <TAB> scene <TAB> seed <TAB> max_seconds <TAB> env(k=v,...)
+  scn.py tsv [--rust] NAME...                name <TAB> pad <TAB> scene <TAB> seed <TAB> max_seconds <TAB> env(k=v,...)
                                              (a scenario's "mods": [id, ...] names shipped mods of pc/geno/mods: they are
-                                             copied into build/covmods/NAME, git-ignored, which becomes MELEE_MODS_DIR)
+                                             copied into build/covmods/NAME, git-ignored, which becomes MELEE_MODS_DIR;
+                                             --rust, the Rust engine's runs: a package with a geno 12 copy under
+                                             rust/mods/geno_fighters/packages/<id> gets that geno.json and its wasm module,
+                                             since the Rust engine runs no Lua; the C recorder keeps pc/geno/mods as shipped)
   scn.py batch N                             names of recorded batch N (from the file's "batches")
 """
 import json, os, shutil, sys
@@ -20,7 +23,8 @@ if a[0] == "names":
         if (g is None or v.get("group") == g) and (s is None or v.get("status", "ready") == s):
             print(n)
 elif a[0] == "tsv":
-    for n in a[1:]:
+    rust = "--rust" in a
+    for n in [x for x in a[1:] if x != "--rust"]:
         v = sc[n]
         # "{wt}" in an env value: this worktree (Windows form), so a run root elsewhere still finds the scenario's mods
         wt = os.path.abspath(os.path.join(here, "..", "..", "..", "..")).replace("\\", "/")
@@ -35,6 +39,14 @@ elif a[0] == "tsv":
             shutil.rmtree(md, ignore_errors=True)
             for m in v["mods"]:
                 shutil.copytree(os.path.join(wt, "pc", "geno", "mods", m), os.path.join(md, m))
+                over = os.path.join(wt, "rust", "mods", "geno_fighters", "packages", m, "geno.json")
+                if rust and os.path.exists(over):
+                    shutil.copyfile(over, os.path.join(md, m, "geno.json"))
+                    for f in json.load(open(over))["fighters"]:
+                        rel = f.get("wasm", {}).get("module")
+                        if rel:
+                            os.makedirs(os.path.join(md, m, os.path.dirname(rel)), exist_ok=True)
+                            shutil.copyfile(os.path.join(wt, "rust", "mods", "geno_fighters", os.path.basename(rel)), os.path.join(md, m, rel))
             envd["MELEE_MODS_DIR"] = md.replace("\\", "/")
         env = ",".join("%s=%s" % (k, val.replace("{wt}", wt).replace("{ws}", ws)) for k, val in sorted(envd.items()))
         print("\t".join([n, v["pad"], v.get("scene", ""), str(v.get("seed", d["defaults"]["seed"])),

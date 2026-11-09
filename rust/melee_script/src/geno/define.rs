@@ -7,7 +7,7 @@
 //! game half reads it through scalars (melee_engine::geno_host).
 use super::consts::*;
 use super::json::{Doc, Ty};
-use super::lua::{GLua, GLUA_BOOL, GLUA_FLOAT, GLUA_INT, GLUA_NAME, GLUA_SLOT_NAME};
+use super::code::{FighterCode, GLUA_BOOL, GLUA_FLOAT, GLUA_INT, GLUA_NAME, GLUA_SLOT_NAME};
 use super::registry::{callback_find, cap, eq_ic, mix, Env, Profile, Registry, MAX_STATES, VANILLA};
 
 pub const GN_PRES_ICON: usize = 0;
@@ -69,7 +69,8 @@ pub struct Def {
     pub kb_copy: i32,
     pub thrown_row: [i32; 4],
     pub thrown_as: i32,
-    pub lua: Option<Box<GLua>>,
+    /// The fighter code: the geno 12 `wasm` block's module (the geno 10 `lua` block is refused).
+    pub lua: Option<Box<dyn FighterCode>>,
     pub st_lua: [[i32; 2]; MAX_STATES],
     pub lua_hash: u64,
     pub combo: Option<Box<super::combo::Combo>>,
@@ -691,7 +692,7 @@ impl Registry {
         }
         let has = |k: &str| d.get(e, k) >= 0;
         if version < 6
-            || version > GENO_VERSION as i32
+            || version > super::GENO_FORMAT as i32
             || has("attach")
             || !d.is(def, Ty::Obj)
             || (version < 8 && (has("articles") || has("sounds")))
@@ -969,56 +970,69 @@ impl Registry {
 
     /// gn_lua_parse: true when the entry is fine (with or without Lua); false refuses it.
     pub(super) fn lua_parse(&mut self, p: &mut Profile, d: &Doc, e: i32, env: &dyn Env, mod_id: &str, where_: &str, version: i32) -> bool {
-        let lb = d.get(e, "lua");
         let st = d.get(e, "states");
-        let any = d.is(st, Ty::Arr) && d.kids(st).into_iter().any(|c| d.get(c, "lua") >= 0);
-        if lb < 0 && !any {
+        let names_fns = |k: &str| d.is(st, Ty::Arr) && d.kids(st).into_iter().any(|c| d.get(c, k) >= 0);
+        // geno 12: the `wasm` block (the same callbacks as compiled code); an entry carries one kind, never both
+        let (wb, wany) = (d.get(e, "wasm"), names_fns("wasm"));
+        let (lb0, lany) = (d.get(e, "lua"), names_fns("lua"));
+        if (wb >= 0 || wany) && (lb0 >= 0 || lany) {
+            self.logf(format!("geno: {where_}: an entry carries either \"lua\" or \"wasm\" fighter code, not both - refused"));
+            return false;
+        }
+        if wb >= 0 || wany {
+            return self.wasm_parse(p, d, e, env, mod_id, where_, version);
+        }
+        if lb0 < 0 && !lany {
             return true;
         }
+        // the geno 10 `lua` block: no Lua in the Rust port (geno-wasm-plan.md); the package converts to a geno 12 `wasm`
+        // block once its callbacks are compiled (rust/mods/geno_fighters, tools/rust-port/geno/lua_to_wasm_package.py)
+        let _ = (p, env, mod_id, version);
+        self.logf(format!(
+            "geno: {where_}: fighter Lua is not supported (this build runs no Lua): convert the package to a geno 12 \"wasm\" block (tools/rust-port/geno/lua_to_wasm_package.py) - refused"
+        ));
+        false
+    }
+}
+
+impl Registry {
+    /// geno 12 `wasm`: the `lua` block's rules (a define only, the state slots, per-state enter / frame names, the
+    /// "lua" anim callback for a frame function) over a compiled module the host instantiates (`Env::fighter_wasm`).
+    #[allow(clippy::too_many_arguments)]
+    fn wasm_parse(&mut self, p: &mut Profile, d: &Doc, e: i32, env: &dyn Env, mod_id: &str, where_: &str, version: i32) -> bool {
+        let wb = d.get(e, "wasm");
+        let st = d.get(e, "states");
         if !p.defined {
-            self.logf(format!("geno: {where_}: fighter Lua is for a define; an attach entry cannot carry a \"lua\" block - refused"));
+            self.logf(format!("geno: {where_}: fighter code is for a define; an attach entry cannot carry a \"wasm\" block - refused"));
             return false;
         }
-        if version < 10 {
-            self.logf(format!("geno: {where_}: \"lua\" needs \"geno\": 10 - refused"));
+        if version < 12 {
+            self.logf(format!("geno: {where_}: \"wasm\" needs \"geno\": 12 - refused"));
             return false;
         }
-        if !d.is(lb, Ty::Obj) {
-            self.logf(format!("geno: {where_}: a state names Lua functions but the entry has no \"lua\" block - refused"));
+        if !d.is(wb, Ty::Obj) {
+            self.logf(format!("geno: {where_}: a state names wasm functions but the entry has no \"wasm\" block - refused"));
             return false;
         }
-        let (sc, so, sl) = (d.get(lb, "script"), d.get(lb, "source"), d.get(lb, "state"));
-        if (sc < 0) == (so < 0) || (sc >= 0 && !d.is(sc, Ty::Str)) || (so >= 0 && !d.is(so, Ty::Str)) {
-            self.logf(format!("geno: {where_}: lua needs exactly one of \"script\" (a file of the mod) and \"source\" (inline text) - refused"));
+        let (mo, sl) = (d.get(wb, "module"), d.get(wb, "state"));
+        if !d.is(mo, Ty::Str) {
+            self.logf(format!("geno: {where_}: wasm needs \"module\" (a .wasm file of the mod) - refused"));
             return false;
         }
-        let src: Vec<u8> = if sc >= 0 {
-            let rel = d.text(sc);
-            if rel.is_empty() || rel.contains("..") || rel.contains(':') || rel.starts_with('/') || rel.starts_with('\\') {
-                self.logf(format!("geno: {where_}: lua.script \"{rel}\" must be a relative path inside the mod - refused"));
-                return false;
-            }
-            match env.read_mod_file(mod_id, &rel).filter(|t| t.len() <= 1 << 20) {
-                // gn_read_file + strlen: the text up to its first NUL
-                Some(t) => t.split(|&b| b == 0).next().unwrap_or(&[]).to_vec(),
-                None => {
-                    self.logf(format!("geno: {where_}: cannot read lua.script {mod_id}/{rel} - refused"));
-                    return false;
-                }
-            }
-        } else {
-            d.n[so as usize].str.split(|&b| b == 0).next().unwrap_or(&[]).to_vec()
+        let rel = d.text(mo);
+        if rel.is_empty() || rel.contains("..") || rel.contains(':') || rel.starts_with('/') || rel.starts_with('\\') {
+            self.logf(format!("geno: {where_}: wasm.module \"{rel}\" must be a relative path inside the mod - refused"));
+            return false;
+        }
+        let Some(bytes) = env.read_mod_file(mod_id, &rel).filter(|t| !t.is_empty() && t.len() <= 1 << 20) else {
+            self.logf(format!("geno: {where_}: cannot read wasm.module {mod_id}/{rel} (1 byte .. 1 MiB) - refused"));
+            return false;
         };
-        const MAX_SOURCE: usize = 64 * 1024;
-        if src.is_empty() || src.len() > MAX_SOURCE {
-            self.logf(format!("geno: {where_}: the Lua module must be 1..{MAX_SOURCE} bytes - refused"));
-            return false;
-        }
         let mut names: Vec<String> = Vec::new();
         let mut types: Vec<i32> = Vec::new();
         if sl >= 0 {
             if !d.is(sl, Ty::Obj) {
-                self.logf(format!("geno: {where_}: lua.state must be an object of name: type - refused"));
+                self.logf(format!("geno: {where_}: wasm.state must be an object of name: type - refused"));
                 return false;
             }
             for c in d.kids(sl) {
@@ -1031,51 +1045,42 @@ impl Registry {
                 };
                 let k = String::from_utf8_lossy(&d.n[c as usize].key).into_owned();
                 if names.len() >= GENO_LUA_STATE_SLOTS as usize {
-                    self.logf(format!("geno: {where_}: lua.state has more than {GENO_LUA_STATE_SLOTS} slots - refused"));
+                    self.logf(format!("geno: {where_}: wasm.state has more than {GENO_LUA_STATE_SLOTS} slots - refused"));
                     return false;
                 }
                 let name_ok = !k.is_empty()
                     && k.len() < GLUA_SLOT_NAME
                     && k.bytes().enumerate().all(|(i, c)| c.is_ascii_alphabetic() || c == b'_' || (i > 0 && c.is_ascii_digit()));
-                if t < 0 || !name_ok {
-                    self.logf(format!("geno: {where_}: lua.state \"{k}\": a name of 1..{} letters, digits and underscores, and a type of int / float / bool - refused", GLUA_SLOT_NAME - 1));
-                    return false;
-                }
-                if names.contains(&k) {
-                    self.logf(format!("geno: {where_}: lua.state \"{k}\" is declared twice - refused"));
+                if t < 0 || !name_ok || names.contains(&k) {
+                    self.logf(format!("geno: {where_}: wasm.state \"{k}\": a unique name of 1..{} letters, digits and underscores, and a type of int / float / bool - refused", GLUA_SLOT_NAME - 1));
                     return false;
                 }
                 names.push(k);
                 types.push(t);
             }
         }
-        let Some(mut g) = GLua::new() else {
-            self.logf(format!("geno: {where_}: Lua could not allocate - refused"));
-            return false;
-        };
         let tnames: Vec<String> = (0..p.nstate.min(MAX_STATES)).map(|k| cap(&p.st_name[k], GLUA_NAME)).collect();
-        g.set_layout(&names, &types);
-        g.set_targets(&tnames);
-        let chunk = format!("={}", if sc >= 0 { d.text(sc) } else { "lua.source".into() });
-        let chunk = cap(&chunk, 96);
-        if !g.load(&src, &chunk) {
-            self.logf(format!("geno: {where_}: the Lua module was refused: {}", g.err));
-            return false;
-        }
+        let g = match env.fighter_wasm(&bytes, &names, &types, &tnames) {
+            Ok(g) => g,
+            Err(why) => {
+                self.logf(format!("geno: {where_}: the wasm module was refused: {why}"));
+                return false;
+            }
+        };
         p.def.st_lua = [[-1; 2]; MAX_STATES];
         if d.is(st, Ty::Arr) {
             const PHASES: [&str; 2] = ["enter", "frame"];
             for (k, c) in d.kids(st).into_iter().enumerate().take(p.nstate) {
-                let lk = d.get(c, "lua");
-                if lk < 0 {
+                let wk = d.get(c, "wasm");
+                if wk < 0 {
                     continue;
                 }
-                if !d.is(lk, Ty::Obj) {
-                    self.logf(format!("geno: {where_}: state {}: \"lua\" must be an object {{enter, frame}} - refused", p.st_name[k]));
+                if !d.is(wk, Ty::Obj) {
+                    self.logf(format!("geno: {where_}: state {}: \"wasm\" must be an object {{enter, frame}} - refused", p.st_name[k]));
                     return false;
                 }
                 for (ph, phase) in PHASES.iter().enumerate() {
-                    let v = d.get(lk, phase);
+                    let v = d.get(wk, phase);
                     if v < 0 {
                         continue;
                     }
@@ -1083,7 +1088,7 @@ impl Registry {
                     p.def.st_lua[k][ph] = f;
                     if f < 0 {
                         let shown = if d.is(v, Ty::Str) { d.text(v) } else { "?".into() };
-                        self.logf(format!("geno: {where_}: state {}: lua.{phase} \"{shown}\" is not a function of the module - refused", p.st_name[k]));
+                        self.logf(format!("geno: {where_}: state {}: wasm.{phase} \"{shown}\" is not an export of the module - refused", p.st_name[k]));
                         return false;
                     }
                 }
@@ -1096,7 +1101,8 @@ impl Registry {
                 }
             }
         }
-        let mut h = lua_mix_text(0x4C55_412D_5631_0000, &src);
+        // the module's bytes and the slot layout join the id, as the Lua source does
+        let mut h = lua_mix_text(0x5741_534D_2D56_3100, &bytes);
         for (k, nm) in names.iter().enumerate() {
             let mut b = nm.as_bytes().to_vec();
             b.push(0);
@@ -1187,7 +1193,7 @@ impl Registry {
     pub fn define_template_skeleton(&self, kind: i32) -> i32 {
         (self.fm_for_kind(kind).is_some() && self.define_base_kind(kind) > 0) as i32
     }
-    /// gw_Geno_DefineCostumeCount without installed skins (gw_skins_boot.inc is not hosted).
+    /// gw_Geno_DefineCostumeCountNative: the declared costumes, without skins (the engine adds skins_host's rows).
     pub fn define_costume_count(&self, kind: i32) -> i32 {
         self.fm_for_kind(kind).map_or(0, |f| f.cos_file.len() as i32)
     }
@@ -1289,29 +1295,35 @@ impl Registry {
         self.definitions.profile_for_kind(ck - 1)
     }
 
+    /// gw_Geno_ControlsSchema(ck): a define's controls, None when ck is not a define or it declares none.
+    pub fn controls_schema(&self, ck: i32) -> Option<&super::controls::Schema> {
+        let p = self.define_profile_ck(ck);
+        self.p.get(p as usize).filter(|_| p >= 0).map(|x| &x.controls).filter(|c| c.any())
+    }
+
     // ---- slice 5: the Lua scalars ----
     pub fn lua_fn(&self, p: i32, s: i32, phase: i32) -> bool {
         let Some(x) = self.p.get(p as usize).filter(|_| p >= 0) else { return false };
         x.def.lua.is_some() && s >= 0 && (s as usize) < MAX_STATES && (0..2).contains(&phase) && x.def.st_lua[s as usize][phase as usize] >= 0
     }
     pub fn lua_slots(&self, p: i32) -> i32 {
-        self.p.get(p as usize).filter(|_| p >= 0).and_then(|x| x.def.lua.as_ref()).map_or(0, |g| g.nslot as i32)
+        self.p.get(p as usize).filter(|_| p >= 0).and_then(|x| x.def.lua.as_ref()).map_or(0, |g| g.nslot() as i32)
     }
     pub fn lua_slot_type(&self, p: i32, i: i32) -> i32 {
         self.p
             .get(p as usize)
             .filter(|_| p >= 0)
             .and_then(|x| x.def.lua.as_ref())
-            .filter(|g| i >= 0 && (i as usize) < g.nslot)
-            .map_or(-1, |g| g.slot_type[i as usize])
+            .filter(|g| i >= 0 && (i as usize) < g.nslot())
+            .map_or(-1, |g| g.slot_type(i as usize))
     }
     pub fn lua_slot_name(&self, p: i32, i: i32) -> &str {
         self.p
             .get(p as usize)
             .filter(|_| p >= 0)
             .and_then(|x| x.def.lua.as_ref())
-            .filter(|g| i >= 0 && (i as usize) < g.nslot)
-            .map_or("", |g| g.slot_name[i as usize].as_str())
+            .filter(|g| i >= 0 && (i as usize) < g.nslot())
+            .map_or("", |g| g.slot_name(i as usize))
     }
     /// gw_Geno_LuaCall: GENO_LUA_NONE when the state has no function for the phase; 0 ok; a GENO_LUA_FAULT_* otherwise.
     /// The fault log line (at most 8 per profile) goes to the registry log.
@@ -1323,13 +1335,13 @@ impl Registry {
         let f = x.def.st_lua[s as usize][phase as usize];
         let g = x.def.lua.as_mut().unwrap();
         let rc = g.call(f, io);
-        if rc != 0 && g.faults <= 8 {
+        if rc != 0 && g.faults() <= 8 {
             let m = format!(
                 "geno: lua fault {rc} in profile {p} state {} ({}): {}{}",
                 x.st_name[s as usize],
                 if phase == GENO_LUA_PHASE_ENTER as i32 { "enter" } else { "frame" },
-                g.err,
-                if g.faults == 8 { " (further faults of this profile are not logged)" } else { "" }
+                g.err(),
+                if g.faults() == 8 { " (further faults of this profile are not logged)" } else { "" }
             );
             self.log.push(m);
         }

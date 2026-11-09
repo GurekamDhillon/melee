@@ -51,6 +51,11 @@ pub trait Env {
     fn read_mod_file(&self, _mod_id: &str, _rel: &str) -> Option<Vec<u8>> {
         None
     }
+    /// geno 12: a define's `wasm` fighter module, ready to call (slot layout and the `go` target names given). Err is
+    /// the refusal text; a host without a wasm runtime refuses every module.
+    fn fighter_wasm(&self, _module: &[u8], _slot_names: &[String], _slot_types: &[i32], _targets: &[String]) -> Result<Box<dyn super::code::FighterCode>, String> {
+        Err("this host runs no wasm fighter modules".into())
+    }
     /// gw_Fx_BindLoad: the fx binding set for a path in the mod, -1 none.
     fn fx_bind_load(&self, _mod_id: &str, _rel: &str) -> i32 {
         -1
@@ -65,7 +70,7 @@ pub trait Env {
 pub struct NoEnv;
 impl Env for NoEnv {}
 
-pub(super) const VANILLA: [(&str, &str, Option<&str>); 27] = [
+pub const VANILLA: [(&str, &str, Option<&str>); 27] = [
     ("Mr", "mario", None),
     ("Fx", "fox", None),
     ("Ca", "captain", Some("falcon")),
@@ -360,6 +365,8 @@ pub struct Profile {
     pub toon: [f32; 16],
     /// The native define half (geno_define_registry.inc and its slices); `define::Def::default()` for an attach entry.
     pub def: super::define::Def,
+    /// A define's `controls` (the menus' schema, copied into the frozen match mapping); empty when absent or malformed.
+    pub controls: super::controls::Schema,
 }
 
 impl Profile {
@@ -436,6 +443,7 @@ impl Profile {
             toon_on: false,
             toon: [0.0; 16],
             def: super::define::Def::default(),
+            controls: Default::default(),
         })
     }
 }
@@ -1414,10 +1422,17 @@ impl Registry {
             p.name = if d.is(nm, Ty::Str) { cap(&d.text(nm), 64) } else { p.plfile.clone() };
         }
 
-        // "controls" (the menus' control schema of a define) is presentation and is not hosted; an attach entry's is ignored
+        // gn_add_fighter: a define's `controls` (docs/geno.md 26); malformed falls back atomically, an attach's is ignored
         let x = d.get(e, "controls");
-        if x >= 0 && !p.defined {
-            self.logf(format!("geno: {where_}: controls requires a define - ignored"));
+        if x >= 0 {
+            if !p.defined {
+                self.logf(format!("geno: {where_}: controls requires a define - ignored"));
+            } else if let Some(c) = super::controls::parse(d, x) {
+                self.logf(format!("geno: {}: controls {} layouts, {} opt-in extras", p.name, c.layout.len(), c.extra.len()));
+                p.controls = c;
+            } else {
+                self.logf(format!("geno: {where_}: malformed controls - using Both/Default/no extras"));
+            }
         }
 
         let x = d.get(e, "attributes");
@@ -1614,8 +1629,8 @@ impl Registry {
             return -1;
         }
         let version = d.n[v as usize].num as i32;
-        if version > GENO_VERSION as i32 {
-            self.logf(format!("geno: {where_} is Geno v{version}, this build is v{GENO_VERSION} - reading what it knows"));
+        if version > super::GENO_FORMAT as i32 {
+            self.logf(format!("geno: {where_} is Geno v{version}, this build is v{} - reading what it knows", super::GENO_FORMAT));
         }
         let f = d.get(root, "fighters");
         if d.is(f, Ty::Arr) {

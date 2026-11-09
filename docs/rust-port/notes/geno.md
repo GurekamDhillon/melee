@@ -130,9 +130,21 @@ Interactions to keep in mind:
   stock icon (`DefineArtOpen` + a .gxtex handle table in geno_host, `uigen::UI_TextI4` over GDI for the initials
   fallback; render-only). Netplay identity: a base "none" define's resource files' bytes join its handshake part
   (mx_add_defines; a missing file drops it), test `geno_host::tests::identity_covers_base_none_files`.
+- Art and skins (port/geno3-art): `melee_engine::skins_host` ports gw_skins_core.h + gw_skins_boot.inc (every mounted
+  mod of kind "skin", `main.rs` hands the list over; target `{"retail"|"mex"|"geno": ...}`; the 255 cap, team claims,
+  partner rows, the wire costume and `SceneLaunch_PlayerColor`'s FromWire step). Its callees: ftdata
+  `SKINS_ADDED/BASE/STRING`, gm_1601 `Skins_CostumeCountCK` / `Skins_TeamCostumeCK` (the seams default for the team one
+  was 0, i.e. every team colour = costume 0; the C answers -1 without skins), mex_data `SKINS` (+ `SKINS_ENSURE`). The
+  define queries add skins as the C does (`DefineCostumeCount(CK)`, `DefineCostumeName`, `DefineString` for a skin
+  costume, `DefineHasArt`, `DefineArtOpen`: results override, then skin CSP, then package portrait, plain formats only
+  for stock / emblem / results). gmresultplayer's card picture / stock / emblem reach `Geno_DefineArtOpen`,
+  `Geno_DefineName`, `GxTex_*` and `UI_TextI4` by name (`geno_host::by_name_art`; before this they hit seam_off: handle
+  0 and a `TODO ext` panic on the initials path). Tests: `cargo test -p melee_engine --test geno_art`, `--lib skins_host`.
+  Art files are read from the mod's own folder (`files/`), not the mounted DVD path the C reads: the same file unless
+  another mod mounts the same path.
 - Not hosted: the controls schema, the records memory-card
-  path (only `MELEE_GENO_RECORDS`), installed skins, the CSS/results art paths (`gm_1601` / gmresultplayer `UI_TextI4`
-  and kit textures), the `cape.*` keys of goku-xv2 (the Rust registry logs them as unknown; Goku's CPU match still
+  path (only `MELEE_GENO_RECORDS`), the kit's art textures (`gw_Geno_DefineArtTex` / `gw_Skins_ArtTexCK`: the kit
+  frontend is off, `Frontend_NativeSelect` = 1), the `cape.*` keys of goku-xv2 (the Rust registry logs them as unknown; Goku's CPU match still
   matches C hash for hash, so the C does not use them either there, but the C log was not compared line by line), define overlays using Subroutine/Goto (op 5/7 take a 32-bit pointer: needs the script pool
   below 4 GiB; no shipped mod uses them), Marth / Jigglypuff / Sheik templates of a base "none" define
   (`GenoDefine_ExtAttrBytes` stops).
@@ -244,3 +256,29 @@ play_net's ModesGame, netmatch, retail_flow's seek and the Lab's LabRun still ca
   `snap_host::REPLAY_CURSOR`.
 - **Not ported**: gw_script_1p.inc (the 1P mode host), so `onep_state_active` is false. Also
   `ScriptGame_StageReleaseOwner` on unload, which needs the script's stage token.
+
+## No Lua (2026-11-09)
+
+The Rust port runs no Lua, at my user's direction. The C build is frozen with its Lua.
+- **Removed** (one revertable commit): the scripting host (melee_script's engine, `gd.*` API, events, rewind, pad
+  scripts, the gdscript / luarun bins and their tests), the fighter-Lua core `geno::lua`, the `mlua` dependency and
+  `rust/third_party/lua-src`.
+- **Kept**: melee_script is the Geno registry and `game::ScriptGame` (the game half the wasm Lab calls through
+  `EngineGame`).
+- **Scripts and the LAB** are wasm mods (melee_modhost). A define's fighter code is the geno 12 `wasm` block
+  (geno-wasm-plan.md).
+- **A `lua` block** (an entry's, or a state's `lua` key) refuses the entry with:
+  `geno: <where>: fighter Lua is not supported (this build runs no Lua): convert the package to a geno 12 "wasm" block (tools/rust-port/geno/lua_to_wasm_package.py) - refused`
+- **Converting a package**: compile its callbacks against `rust/mods/geno_fighters/gd_geno.h` (a line-for-line C port
+  of the Lua, as goku.c / charger.c / riposte.c are; `build.sh` builds them with clang --target=wasm32). Then run
+  `python3 tools/rust-port/geno/lua_to_wasm_package.py <mod folder> <module.wasm> [--out <copy>]`. It rewrites geno.json
+  (`"geno": 12`, `lua` -> `wasm`, per-state keys too) and copies the module to `wasm/`. **Third-party packages with
+  fighter Lua need this conversion** before the Rust engine loads them.
+- **Shipped packages**: vanilla-charger and vanilla-riposte keep their Lua in pc/geno/mods for the C build. Their
+  geno 12 geno.json lives in rust/mods/geno_fighters/packages/<id>, and `scn.py tsv --rust` (run_rust.sh) lays it over
+  the copy. goku-xv2 (not in the repo) is converted with the tool, as the PC's mex_goku_cpu run does.
+- **The game-half suite** (geno_tests) installs the fixtures rust/mods/geno_fighters/tests/{charge,counter,empty}.wasm
+  where it carried inline Lua (8a98e4134). The expectations are unchanged.
+- **Proof the ports are the Lua**: tests/geno_wasm_fighters.rs checks each module's outputs over fixed io blocks
+  against digests recorded from the Lua before it was removed. The coverage scenarios geno_vanilla_charger /
+  riposte (laptop) and mex_goku_cpu (PC) pass hash for hash against the C goldens.

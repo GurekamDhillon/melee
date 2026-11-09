@@ -1,5 +1,9 @@
 # Scripting (melee_script)
 
+> **Removed 2026-11-09.** The Lua scripting host described below was taken out of the Rust port (no Lua: scripts and the
+> LAB are wasm mods, notes/modhost.md; fighter code is the geno 12 `wasm` block, notes/geno-wasm-plan.md). This note
+> stays as the record of what it was; the C build keeps its Lua.
+
 Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth: docs/rust-port/STATUS.md. Append new notes here, not in RUST_PORT.md.
 
 <!-- RUST_PORT.md lines 1343-1413 -->

@@ -120,7 +120,10 @@ const S_RESET: usize = 43;
 const S_SWAP: usize = 44;
 const S_CMD: usize = 45;
 const S_RESUME: usize = 46;
-pub const N_IDS: usize = 47;
+pub const H_LOOK: usize = 47;
+const S_LOOK_LIVE: usize = 48;
+const S_LOOK_BUDGET: usize = 49;
+pub const N_IDS: usize = 50;
 
 pub const CONTROL: &[(&str, i32)] = &[("Live pad", 0), ("Stand", 1), ("Crouch", 2), ("Jump", 3), ("Shield", 4), ("CPU level", 5), ("Recording", 6)];
 pub const BLOCK: &[(&str, i32)] = &[("None", 0), ("All", 1), ("After first hit", 2), ("Random", 3)];
@@ -186,6 +189,7 @@ const HUD_ROWS: &[RowDef] = &[
     r(H_COMBO, "Combo panel", K::Toggle, "Hits, damage and the move chain."),
     r(H_INPUT, "Input display", K::Toggle, "P1's stick, buttons and input history."),
     r(H_HINTS, "Button hints", K::Toggle, "The key caps at the bottom right."),
+    r(H_LOOK, "Lookahead", K::Toggle, "True frame advantage and the DI fan,|simulated ahead on every hit and shield."),
 ];
 const SESSION_ROWS: &[RowDef] = &[
     r(S_SLOT, "Save slot", K::Slider(1, 16, 1, ""), "The slot D-down saves to and D-up loads."),
@@ -194,6 +198,8 @@ const SESSION_ROWS: &[RowDef] = &[
     r(S_RESET, "Reset positions", K::Action, "Both fighters back to the middle, P1 left."),
     r(S_SWAP, "Swap sides", K::Action, "P1 and P2 trade places."),
     r(S_CMD, "Command bar", K::Action, "Type part of a setting or action and press|Enter (keyboard). X opens it from any tab."),
+    r(S_LOOK_LIVE, "Lookahead live", K::Toggle, "Simulate ahead while playing too (else|only when frozen). Costs frame time."),
+    r(S_LOOK_BUDGET, "Lookahead budget", K::Slider(1, 8, 1, " ms"), "Time per frame the live lookahead may use."),
     r(S_RESUME, "Resume", K::Action, "Close the menu (B or START does too)."),
 ];
 pub const TABS: [(&str, &[RowDef]); 5] = [("Dummy", DUMMY_ROWS), ("Record", RECORD_ROWS), ("Display", DISPLAY_ROWS), ("HUD", HUD_ROWS), ("Session", SESSION_ROWS)];
@@ -287,6 +293,13 @@ impl Lab {
         self.dv = [D_DEFAULT; 2];
         self.vals[R_LOOP] = 1;
         self.vals[S_SLOT] = 1;
+        self.vals[S_LOOK_BUDGET] = 4;
+    }
+
+    /// The lookahead settings (local: never a command): auto on hit / shield, live per the toggle.
+    pub fn look_cfg(&mut self) {
+        let live = if self.vals[S_LOOK_LIVE] != 0 { LOOK_LIVE } else { 0 };
+        unsafe { gd_lab_lookahead_cfg(LOOK_AUTO | live, self.vals[S_LOOK_BUDGET].clamp(1, 8) as u32 * 1000) };
     }
 
     /// Show mask and overlay toggles from the preset (spec 5.1).
@@ -301,6 +314,7 @@ impl Lab {
             self.vals[id] = full as i32;
         }
         self.vals[H_HINTS] = (p != FRAMEDATA) as i32;
+        self.vals[H_LOOK] = fd as i32;
         self.vals[V_HIT] = full as i32;
         self.apply_overlay();
     }
@@ -585,6 +599,7 @@ impl Lab {
             }
             V_HIT..=V_DI => self.apply_overlay(),
             S_SLOT => self.slot = (self.vals[S_SLOT] - 1).clamp(0, 15) as u32,
+            S_LOOK_LIVE | S_LOOK_BUDGET => self.look_cfg(),
             _ => {}
         }
     }

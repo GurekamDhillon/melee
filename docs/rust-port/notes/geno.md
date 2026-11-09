@@ -174,3 +174,48 @@ Interactions to keep in mind:
   --mods build/covmods-audio` (the audio2 striker copy): 3594 frames, 0 different hashes, replay 0 mismatches. Both peers
   log the same 4 confirmed starts of sfx 1 (frames 591, 1687, 1790, 2926), one start line each; the host cut one
   mispredicted start (frame 2710) after a rollback. Gate OK, rematch css OK, coverage 212 pass, geno-tests 64/64.
+
+## The script host's game side (port/geno3, 2026-11-08)
+
+`melee_engine::script_host::EngineGame` implements `melee_script::game::ScriptGame` the way pc/platform/gw_script*.c
+calls script_game.c and the registries. Done so far: the 132 scalar `ScriptGame_*` forwarders (three take gs_fbits
+floats), the C-string, slice and guest-memory calls, the Geno / m-ex name queries, the combo graph and the 18
+`Camera_Script*` calls. Tests: `cargo test -p melee_engine --test script_host` (disc) and `--lib script_host`.
+
+By-name callees (`ext_fns!` with no `= port`) resolve in `tools/rust-port/engine/gen_ext_dispatch.py` like this:
+- gen_link's `choose`;
+- else lint_logic's canonical body (the R2 pick);
+- a `pub use` pick calls the original it names;
+- a TU's local `pub mod ext` forwarder is called as `<tu>::ext::NAME`;
+- a `<c file>_native.rs` home counts as the C file's.
+
+Every callee script_game.c reaches is routed. A name with `= port` calls its port directly, because EXT_HOOK is unset
+in the engine.
+
+**Gaps (2026-11-08)**: 70 by-name callees that nothing answers. Each one panics "TODO ext" if it is reached. None of
+them are script_game's, and all were unresolved before the canonical-body change.
+- The port's own kit frontend and launch helpers (unused while `Frontend_NativeSelect` = 1), 54 names:
+  - `fe_*`, `fl_*`, `fk_*`, `fm_*`, `fms_*`, `fss_*`, `fa_*`, `fcr_*`, `fp_*`, `fsm_*`, `fte_*`;
+  - `ff_load`, `kit_load`;
+  - `SceneLaunch_*`, `Settings_Int` / `Settings_SetInt`, `Controls_Menu`, `UI_TextI4`, `TestTargetTestCKind`,
+    `DrawRectangle`.
+- `gm_80160968`: no canonical body. Its port is in gm_1798.
+- `gm_801677E8`: the C declaration has 0 parameters and the port gm_1601 has 1. Check this against the C.
+- `gm_801B0730`, `gm_MatchHasMultipleWinners`, `gmVsMelee_WasAnyPlayerHuman`: no port body.
+- `hsd_80392528`: the canonical body (hsd_3924) has another arity.
+- `PADSetSamplingRate`.
+- `lbArchive_80016DBC` / `lbArchive_80017040`: variadic (gen_link's LB_FAMILY handles the linked form).
+
+List them with `python3 tools/rust-port/engine/gen_ext_dispatch.py -v`.
+
+**gen_seams.py drift**: regenerating seams_gen.rs from this tree drops hooks that are installed today:
+- the `ScriptGame_Camera*` / `ScriptGame_MapWide` / `ScriptGame_WbDraw` hooks of melee_world camera;
+- the `ScriptGame_Caps*` / `Cpu*` / `StageJointActive` hooks of ftCo_0A01;
+- the geno_lab_mode `Netplay_Enabled` / `RB_Enabled` / `Replay_Active` / `Script_LabRequest` hooks.
+
+It also moves ftcolanim's MEX hook to ftcolanimlist. It was not rerun on port/geno3. Fix the generator before its next
+regeneration. The `Surface(Begin|End)` row added to seams.txt reaches the engine only through ext_dispatch's
+`seam_off`, until gen_seams.py runs again.
+
+**Surfaces**: gw_surface.cpp (mod shader programs: `gw_surface_register` / `select`) has no Rust counterpart.
+SurfaceBegin / SurfaceEnd are therefore the C's no-surface no-ops.

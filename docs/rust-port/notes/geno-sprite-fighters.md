@@ -1,5 +1,7 @@
 # Geno sprite fighters (plan, 2026-11-08)
 
+> 2026-11-09 renumber: "geno": 11 is already the combo/meter format and the wasm fighter block takes 12, so the sprite block is **13** (it builds on the wasm block).
+
 Planning note only: nothing here is built. Goal: a Geno `define` whose look is 2D sprites (PNG) rather than a
 skinned 3D model. The fighter still plays by Melee's rules (Geno scope rule, docs/geno.md 1): Melee's knockback,
 hitstun, shield, ledge, tech and air-dodge code runs unchanged. Reference designs (structure only, nothing copied):
@@ -103,11 +105,11 @@ Authoring accepts WAV/OGG; a build step converts to `.gnsnd`.
 
 ## 2. Format: Geno define for sprite fighters
 
-Proposed `"geno": 12` (next free number; additive). One `define` with `"base": "none"` and a `"sprite"` block;
+Proposed `"geno": 13` (next free number; additive). One `define` with `"base": "none"` and a `"sprite"` block;
 everything else is the existing define keys (attributes, sounds, specials, states, articles, costumes).
 
 ```json
-{"geno": 12, "fighters": [{
+{"geno": 13, "fighters": [{
   "define": {"key": "sample-sprite", "name": "Sample Sprite", "base": "none", "common": "melee.common.v1"},
   "attributes": {"walk_max_vel": 1.4, "weight": 90},
   "sprite": {
@@ -225,6 +227,6 @@ ripped-art temptation in community content (policy above); depth sorting of semi
 5. ECB: start with fixed attribute ECB (simple) or go straight to per-frame joints?
 6. Is a crude "thrown" sprite set acceptable for being thrown, or do you want per-thrower throw poses?
 7. Should the LAB box editor be in scope for the first release, or JSON-only at first?
-8. Format number: take `"geno": 12`, or fold into an existing number?
+8. Format number: take `"geno": 13`, or fold into an existing number?
 9. Any YouGame listing planned that would include the sample fighter (affects art licence choice)?
 10. Should sprite fighters appear on the normal CSS beside 3D fighters immediately, or behind a mods toggle first?

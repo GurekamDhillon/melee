@@ -151,20 +151,19 @@ fn reload_layout() {
         \"articles\":[{\"name\":\"Fire\"},{\"name\":\"Ice\"}],\
         \"subactions\":[{\"index\":44,\"words\":[\"0x04000001\"]},\
         {\"index\":45,\"words\":[\"0x04000002\"]}]}]}";
-    let (mut a, n) = reg(json, "reload-test");
-    assert_eq!(n, 1);
-    a.build_kinds(&NoEnv);
-    a.p[0].nstate = 1;
-    a.p[0].st_bhv[0] = GENO_BHV_GROUND as i32;
-    a.p[0].st_cb[0] = [-1; 4];
-    let clone = |a: &Registry| {
-        let mut b = Registry::default();
-        b.p = a.p.clone();
-        b.slot_off = a.slot_off.clone();
-        b.slot_len = a.slot_len.clone();
-        b.pool = a.pool.clone();
-        b
+    // A profile holds its Lua state (define::Def) and is not Clone: each copy is the same registry built again.
+    let build = || {
+        let (mut a, n) = reg(json, "reload-test");
+        assert_eq!(n, 1);
+        a.build_kinds(&NoEnv);
+        a.p[0].nstate = 1;
+        a.p[0].st_bhv[0] = GENO_BHV_GROUND as i32;
+        a.p[0].st_cb[0] = [-1; 4];
+        a
     };
+    let a = build();
+    assert!(Registry::reload_layout_changed(&a, &build()).is_none(), "a rebuild has the same layout");
+    let clone = |_: &Registry| build();
     for slot in 0..GENO_CB_SLOTS {
         let mut b = clone(&a);
         b.p[0].st_cb[0][slot as usize] = callback_find(slot, if slot == GENO_CB_ANIM { "hold" } else { "none" });

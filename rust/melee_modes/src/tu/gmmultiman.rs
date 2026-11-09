@@ -130,7 +130,12 @@ pub mod ext {
     hook!(H_gm_801B0730, gm_801B0730, (a0: *mut melee_types::CSSData, a1: *mut i8, a2: *mut u8, a3: *mut u8, a4: *mut u8, a5: *mut u8));
     pub static mut H_gm_80168F88: Option<unsafe extern "C" fn()> = None;
     #[allow(non_snake_case)]
-    pub fn gm_80168F88() { unsafe { crate::tu::gm_1601::gm_80168F88(); } }
+    pub fn gm_80168F88() {
+        match unsafe { H_gm_80168F88 } {
+            Some(f) => unsafe { f() },
+            None => unsafe { crate::tu::gm_1601::gm_80168F88(); },
+        }
+    }
     hook!(H_TestTargetTestCKind, TestTargetTestCKind, () -> i32);
     hook!(H_OSReport, OSReport, (a0: *mut i8, a1: i32));
     pub static mut H_gm_80165290: Option<unsafe extern "C" fn(i32) > = None;
@@ -157,10 +162,20 @@ pub mod ext {
     }
     pub static mut H_gm_801647F8: Option<unsafe extern "C" fn(u8) -> i32> = None;
     #[allow(non_snake_case)]
-    pub fn gm_801647F8(a0: u8) -> i32 { unsafe { crate::tu::gm_1601::gm_801647F8(a0 as _) as _ } }
+    pub fn gm_801647F8(a0: u8) -> i32 {
+        match unsafe { H_gm_801647F8 } {
+            Some(f) => unsafe { f(a0) },
+            None => unsafe { crate::tu::gm_1601::gm_801647F8(a0 as _) as _ },
+        }
+    }
     pub static mut H_lbDvd_GetPreloadCacheScene: Option<unsafe extern "C" fn() -> *mut melee_types::PreloadedGameModeState> = None;
     #[allow(non_snake_case)]
-    pub fn lbDvd_GetPreloadCacheScene() -> *mut melee_types::PreloadedGameModeState { unsafe { melee_runtime::tu::lbdvd::lbDvd_GetPreloadCacheScene() as _ } }
+    pub fn lbDvd_GetPreloadCacheScene() -> *mut melee_types::PreloadedGameModeState {
+        match unsafe { H_lbDvd_GetPreloadCacheScene } {
+            Some(f) => unsafe { f() },
+            None => unsafe { melee_runtime::tu::lbdvd::lbDvd_GetPreloadCacheScene() as _ },
+        }
+    }
     pub static mut H_lbDvd_80018254: Option<unsafe extern "C" fn() > = None;
             pub unsafe extern "C" fn lbDvd_80018254()  {
                 match H_lbDvd_80018254 {
@@ -451,13 +466,28 @@ pub mod ext {
     }
     pub static mut H_gm_80181B64: Option<unsafe extern "C" fn(i32, i32, i32)> = None;
     #[allow(non_snake_case)]
-    pub fn gm_80181B64(a0: i32, a1: i32, a2: i32) { unsafe { crate::tu::gm_181A::gm_80181B64(a0 as _, a1 as _, a2 as _); } }
+    pub fn gm_80181B64(a0: i32, a1: i32, a2: i32) {
+        match unsafe { H_gm_80181B64 } {
+            Some(f) => unsafe { f(a0, a1, a2) },
+            None => unsafe { crate::tu::gm_181A::gm_80181B64(a0 as _, a1 as _, a2 as _); },
+        }
+    }
     pub static mut H_gm_80181AC8: Option<unsafe extern "C" fn(i32, i32, u16)> = None;
     #[allow(non_snake_case)]
-    pub fn gm_80181AC8(a0: i32, a1: i32, a2: u16) { unsafe { crate::tu::gm_181A::gm_80181AC8(a0 as _, a1 as _, a2 as _); } }
+    pub fn gm_80181AC8(a0: i32, a1: i32, a2: u16) {
+        match unsafe { H_gm_80181AC8 } {
+            Some(f) => unsafe { f(a0, a1, a2) },
+            None => unsafe { crate::tu::gm_181A::gm_80181AC8(a0 as _, a1 as _, a2 as _); },
+        }
+    }
     pub static mut H_gmMainLib_8015D6F8: Option<unsafe extern "C" fn(u8) -> *mut i32> = None;
     #[allow(non_snake_case)]
-    pub fn gmMainLib_8015D6F8(a0: u8) -> *mut i32 { unsafe { crate::tu::gmmain_lib::gmMainLib_8015D6F8(a0 as _) as _ } }
+    pub fn gmMainLib_8015D6F8(a0: u8) -> *mut i32 {
+        match unsafe { H_gmMainLib_8015D6F8 } {
+            Some(f) => unsafe { f(a0) },
+            None => unsafe { crate::tu::gmmain_lib::gmMainLib_8015D6F8(a0 as _) as _ },
+        }
+    }
     pub static mut H_gmMainLib_8015D710: Option<unsafe extern "C" fn(u8) -> i32> = None;
             pub unsafe extern "C" fn gmMainLib_8015D710(a0: u8) -> i32 {
                 match H_gmMainLib_8015D710 {

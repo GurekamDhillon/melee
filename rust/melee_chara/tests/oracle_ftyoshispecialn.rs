@@ -605,12 +605,12 @@ unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
     let g = w.g;
     match fi {
         0 => { let r = t::ftYs_SpecialN_GetBoneIndex(g) as u32; (r as u64, r) }
-        1 => { t::ftYs_SpecialN_SetupItemVel(&*((*g).user_data as *const Fighter), &mut a.v3[0]); (0, 0) }
-        2 => { let r = t::ftYs_SpecialN_GetFacingDir(&*((*g).user_data as *const Fighter)); (bc(r) as u64, bc(r)) }
-        3 => { let r = t::ftYs_SpecialN_GetDatAttr18(&*((*g).user_data as *const Fighter)); (bc(r) as u64, bc(r)) }
-        4 => { let r = t::ftYs_SpecialN_GetDatAttr1C(&*((*g).user_data as *const Fighter)); (bc(r) as u64, bc(r)) }
-        5 => { let r = t::ftYs_SpecialN_GetDatAttr20(&*((*g).user_data as *const Fighter)); (bc(r) as u64, bc(r)) }
-        6 => { let r = t::ftYs_SpecialN_GetDatAttr24(&*((*g).user_data as *const Fighter)); (bc(r) as u64, bc(r)) }
+        1 => { t::ftYs_SpecialN_SetupItemVel(g, &mut a.v3[0]); (0, 0) }
+        2 => { let r = t::ftYs_SpecialN_GetFacingDir(g); (bc(r) as u64, bc(r)) }
+        3 => { let r = t::ftYs_SpecialN_GetDatAttr18(g); (bc(r) as u64, bc(r)) }
+        4 => { let r = t::ftYs_SpecialN_GetDatAttr1C(g); (bc(r) as u64, bc(r)) }
+        5 => { let r = t::ftYs_SpecialN_GetDatAttr20(g); (bc(r) as u64, bc(r)) }
+        6 => { let r = t::ftYs_SpecialN_GetDatAttr24(g); (bc(r) as u64, bc(r)) }
         7 => { let r = t::ftYs_SpecialN_GetExtAttr28(); (bc(r) as u64, bc(r)) }
         8 => { let r = t::ftYs_SpecialN_GetExtAttr2C(); (bc(r) as u64, bc(r)) }
         9 => { let r = t::ftYs_SpecialN_8012CD40(); (bc(r) as u64, bc(r)) }

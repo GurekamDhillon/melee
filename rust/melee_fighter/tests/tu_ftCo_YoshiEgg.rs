@@ -73,7 +73,7 @@ fn ftCo_YoshiEgg_matches_c() {
         hk::ftYs_SpecialN_8012CD40 = Some(|| { t(24); rw() });
         hk::ftYs_SpecialN_GetExtAttr34 = Some(|| { t(25); rw() });
         hk::ftYs_SpecialN_8012CDB4 = Some(|| { t(26); rw() });
-        hk::ftYs_SpecialN_GetExtAttr38 = Some(|| { t(27); sr(27) });
+        hk::ftYs_SpecialN_GetExtAttr38 = Some(|| { t(27); sr(27) as i32 });
         hk::ftCommon_GrabMash = Some(|fr, v| { t(28); t(isf(fr)); t(b(v)); sr(28) });
         hk::ft_PlaySFX = Some(|fr, id, v, p| { t(29); t(isf(fr)); t(id as u32); t(v as u32); t(p as u32) });
         hk::efAsync_Spawn = Some(|g, q, k, gfx, j, a| {

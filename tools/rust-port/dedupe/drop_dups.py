@@ -116,6 +116,8 @@ for rel, names in want.items():
         _cs = canon_sig(_cr, _cn)
         if _cs is None or not _cs[2] or _cs[:2] + _cs[3:] != sig(t, m)[:2] + sig(t, m)[3:]: continue   # the canonical body differs in safety / arity
         if n.lower() in seam_set or n.lower().startswith(('lbaudioax_', 'mex_', 'geno_', 'osreport', 'hsd_dvd')): continue
+        # a body that routes through an override (seam_set only sees non-test installers; the tests install most of them)
+        if re.search(r'match unsafe \{ [\w:]+ \}|\bhooks::|\bext_call(_va|_vk)?\(|\bHOOKS\.read\(\)', t[b[0] + 1:b[1]]): continue
         if '--methods' not in args and re.search(r"[(,]\s*&?(mut\s+)?self\b", hdr): continue
         if re.search(r'\)\s*(->[^={;]*)?=', hdr): continue   # an ext_fns! / hook entry with a default
         if re.match(r'[ \t]{4,}', hdr) and 'mod' not in hdr and False: continue

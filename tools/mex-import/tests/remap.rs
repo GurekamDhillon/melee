@@ -8,8 +8,7 @@
 use mex_import::ppc::{Bridge, Cpu, Fault, Machine, Mem};
 use mex_import::remap::{GuestSpace, Loc};
 use mex_import::translate::{judge, Verdict};
-use melee_core::gcdecode::{GcDecode, GcDecoder};
-use std::collections::HashSet;
+use melee_core::gcdecode::{GcDecode, GcDecoder, RelocSet};
 
 struct Rng(u64);
 impl Rng {
@@ -39,7 +38,7 @@ fn check_record<T: GcDecode>(rec: &'static str, seed: u64) -> (u32, u32) {
     let mut g = Rng(seed);
     let gc_size = T::GC_BYTES;
     let mut gc: Vec<u8> = (0..gc_size).map(|_| g.next() as u8).collect();
-    let relocs = HashSet::new();
+    let relocs = RelocSet::default();
     let mut d = GcDecoder::new(&gc, &relocs);
     let mut native: Box<T> = Box::new(T::gc_decode(&mut d, 0));
     let (_arena, _issues) = d.finish();
@@ -123,7 +122,7 @@ fn interpreter_on_native_fighter() {
     use melee_types::*;
     let mut fp: Box<Fighter> = {
         let gc = vec![0u8; Fighter::GC_BYTES as usize];
-        let relocs = HashSet::new();
+        let relocs = RelocSet::default();
         let mut d = GcDecoder::new(&gc, &relocs);
         Box::new(Fighter::gc_decode(&mut d, 0))
     };

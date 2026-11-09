@@ -32,8 +32,29 @@ pub fn rf() -> f32 {
 }
 
 pub const ARENA_SZ: usize = 1 << 22;
+#[cfg(windows)]
 extern "system" {
     fn VirtualAlloc(addr: *mut u8, size: usize, ty: u32, prot: u32) -> *mut u8;
+}
+/// Unix stand-in for `VirtualAlloc(addr, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE)`: a zeroed anonymous mapping
+/// at exactly `addr`, or null when that range is taken (MAP_FIXED_NOREPLACE, as melee_engine::lowmem).
+#[cfg(not(windows))]
+unsafe fn VirtualAlloc(addr: *mut u8, size: usize, _ty: u32, _prot: u32) -> *mut u8 {
+    extern "C" {
+        fn mmap(addr: *mut u8, len: usize, prot: i32, flags: i32, fd: i32, off: i64) -> *mut u8;
+        fn munmap(addr: *mut u8, len: usize) -> i32;
+    }
+    // PROT_READ | PROT_WRITE; MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE
+    let p = mmap(addr, size, 3, 0x02 | 0x20 | 0x10_0000, -1, 0);
+    if p as isize == -1 {
+        return core::ptr::null_mut();
+    }
+    if p != addr {
+        // a kernel without MAP_FIXED_NOREPLACE treats the address as a hint
+        munmap(p, size);
+        return core::ptr::null_mut();
+    }
+    p
 }
 pub struct Arena(pub *mut u8);
 /// The arena lives below 4 GB at a fixed address: the game casts pointers through int/u32.

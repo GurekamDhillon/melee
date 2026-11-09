@@ -123,7 +123,7 @@ unsafe fn setup(prof: i32) {
         FT[0].gobj = &raw mut GO[1];
         FT[0].ft_data = &raw mut FD; FD.ext_attr = &raw mut DA as *mut _; FT[0].dat_attrs = &raw mut DA as *mut _; FT[0].parts = (&raw mut FB) as *mut FighterBone;
         DA.xA0 = (rnd() % 4) as i32; DA.xB0 = (rnd() % 4) as i32; DA.xC0 = (rnd() % 4) as i32;
-        DA.xD0 = (rnd() % 40) as usize as *mut _;
+        DA.xD0 = (rnd() % 40) as i32;
         FT[0].u.ss.x223C = if prof == 1 && (rnd() & 3) == 0 { null_mut() } else { &raw mut GO[0] };
         FT[0].u.ss.x2240 = (rnd() % 6) as u8;
         {

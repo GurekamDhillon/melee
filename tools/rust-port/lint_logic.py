@@ -44,7 +44,7 @@ def c_index():
     """lower(name) -> (name, c file stem, all defining stems); static names shared by several files only static are dropped."""
     defs = defaultdict(list)
     files = list((REPO / 'src/melee').rglob('*.c')) + list((REPO / 'src/sysdolphin').rglob('*.c')) + list((REPO / 'pc/gameworld').glob('*.c'))
-    for f in files:
+    for f in sorted(files, key=path_order):
         try:
             t = strip_c(f.read_text(errors='replace'))
         except OSError:
@@ -91,8 +91,14 @@ def allowed(rel, pats):
 FN = re.compile(r'^[ \t]*(?:pub(?:\([a-z]+\))?[ \t]+)?(?:const[ \t]+)?(?:unsafe[ \t]+)?(?:extern[ \t]+"C"[ \t]+)?fn[ \t]+([A-Za-z_]\w*)', re.M)
 
 
+def path_order(p):
+    """Sort key of a walk: the lowercased path parts, which is how Windows' pathlib orders paths, so the first body
+    (the canonical pick's tie-break) is the same file on NTFS and on a case-sensitive Linux file system."""
+    return tuple(x.lower() for x in Path(p).relative_to(REPO).parts)
+
+
 def rust_files():
-    for f in sorted((REPO / 'rust').glob('*/src/**/*.rs')):
+    for f in sorted((REPO / 'rust').glob('*/src/**/*.rs'), key=path_order):
         rel = f.relative_to(REPO).as_posix()
         parts = rel.split('/')
         if any(x in parts for x in ('raw', 'c2r', 'tests')) or f.name == 'gen.rs':
@@ -142,7 +148,8 @@ def trivial(body, name=None):
     if 'match unsafe { HOOK }' in b or re.search(r'Some\(f\) => f\(', b):
         return True
     flat = ' '.join(b.split())
-    if re.match(r'match unsafe \{ [A-Z][A-Z0-9_]* \} \{ Some\(f\) =>', flat) and ', None =>' in flat and len(flat) < 700 and re.search(r'\b(?:crate|melee_\w+|super)(?:::\w+)*::tu::', flat) and not re.search(r'\b(if|while|for|loop|let)\b', flat):
+    # (any static name: the TU-oracle hooks are `H_<C name>`; the hook call may sit in `unsafe { }`, an extern "C" fn pointer)
+    if re.match(r'match unsafe \{ [A-Za-z_]\w* \} \{ Some\((\w+)\) => (?:unsafe \{ )?\1\(', flat) and ', None =>' in flat and len(flat) < 700 and re.search(r'\b(?:crate|melee_\w+|super)(?:::\w+)*::tu::', flat) and not re.search(r'\b(if|while|for|loop|let)\b', flat):
         return True   # a host-hook wrapper whose fallback is a call of the canonical fn
     if len(b.split('\n')) <= 4 and re.search(r'\b(crate|melee_\w+)::tu::', flat) and not re.search(r'\b(if|match|while|for|loop|let)\b', flat):
         return True

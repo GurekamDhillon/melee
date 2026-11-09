@@ -37,7 +37,12 @@ pub mod ext {
     }
     /// `ftAnim_SetAnimRate`: shared hook in `crate::hooks`.
     #[allow(non_snake_case)]
-    pub fn ftAnim_SetAnimRate(g: G, rate: f32) { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } }
+    pub fn ftAnim_SetAnimRate(g: G, rate: f32) {
+        match unsafe { crate::hooks::FTANIM_SET_ANIM_RATE } {
+            Some(f) => f(g, rate),
+            None => unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); },
+        }
+    }
 }
 
 #[inline(always)]

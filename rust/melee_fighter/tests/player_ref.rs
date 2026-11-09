@@ -5,6 +5,8 @@
 
 use melee_fighter::hooks as h;
 use melee_fighter::player as pl;
+// Bodies drop_dups.py (Step 23) removed from player.rs without a re-export: no non-test caller named them.
+use melee_fighter::tu::player as tu_pl;
 use melee_fighter::stale::PLAYER_SLOTS;
 use melee_fighter::types::{pl_x5EC_t, HSD_GObj, StaticPlayer, Vec3};
 
@@ -456,21 +458,21 @@ fn player_matches_c() {
                 122 => pl::set_flags_ae_bit1(slot, rnd() as u8),
                 123 => ret = pl::get_unk4c(slot) as u32,
                 124 => pl::set_unk4c(slot, rnd() as u8),
-                125 => ret = pl::player_80036058(slot) as u32,
+                125 => ret = tu_pl::Player_80036058(slot) as u32,
                 126 => ret = b(pl::player_800360d8(slot)),
                 127 => pl::set_struct_func(slot, if rnd() % 2 != 0 { Some(sf) } else { None }),
                 128 => ret = (pl::get_unk6a8_ptr(slot) as *mut pl_x5EC_t as usize - base) as u32,
                 129 => ret = (pl::get_stale_move_table_index_ptr2(slot) as usize - base) as u32,
                 130 => ret = pl::player_80036394(slot),
-                131 => ret = pl::player_80036428(slot) as u32,
+                131 => ret = tu_pl::Player_80036428(slot) as u32,
                 132 => pl::set_unk45(slot, rnd() as i32),
                 133 => ret = pl::get_unk45(slot),
                 134 => pl::update_joystick_count_by_index(slot, (rnd() % 2) as i32),
                 135 => ret = pl::get_joystick_count_by_index(slot, (rnd() % 2) as i32) as u32,
-                136 => pl::player_800366dc(slot, rnd() as i32),
+                136 => tu_pl::Player_800366DC(slot, rnd() as i32),
                 137 => pl::player_80036790(slot, rf()),
                 138 => pl::player_80036844(slot, rnd() as i32),
-                139 => ret = pl::player_800368f8(slot) as u32,
+                139 => ret = tu_pl::Player_800368F8(slot) as u32,
                 140 => pl::player_80036978(slot, &mut v),
                 141 => {
                     let c = (rnd() % 40) as i32;

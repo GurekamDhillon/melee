@@ -4900,7 +4900,8 @@ pub fn hash_ftSs_DatAttrs(p: &ftSs_DatAttrs) {
     hm(p.xC4 as u32);
     hm(p.xC8 as u32);
     hm(p.xCC.to_bits());
-    hm(pi(p.xD0));
+    // int in gen.rs since dcd321181, `void *` in the C header the oracle hashed it from (pi() of the raw word)
+    hm(pi(p.xD0 as usize as *const u8));
     }
 }
 

@@ -130,9 +130,21 @@ Interactions to keep in mind:
   stock icon (`DefineArtOpen` + a .gxtex handle table in geno_host, `uigen::UI_TextI4` over GDI for the initials
   fallback; render-only). Netplay identity: a base "none" define's resource files' bytes join its handshake part
   (mx_add_defines; a missing file drops it), test `geno_host::tests::identity_covers_base_none_files`.
+- Art and skins (port/geno3-art): `melee_engine::skins_host` ports gw_skins_core.h + gw_skins_boot.inc (every mounted
+  mod of kind "skin", `main.rs` hands the list over; target `{"retail"|"mex"|"geno": ...}`; the 255 cap, team claims,
+  partner rows, the wire costume and `SceneLaunch_PlayerColor`'s FromWire step). Its callees: ftdata
+  `SKINS_ADDED/BASE/STRING`, gm_1601 `Skins_CostumeCountCK` / `Skins_TeamCostumeCK` (the seams default for the team one
+  was 0, i.e. every team colour = costume 0; the C answers -1 without skins), mex_data `SKINS` (+ `SKINS_ENSURE`). The
+  define queries add skins as the C does (`DefineCostumeCount(CK)`, `DefineCostumeName`, `DefineString` for a skin
+  costume, `DefineHasArt`, `DefineArtOpen`: results override, then skin CSP, then package portrait, plain formats only
+  for stock / emblem / results). gmresultplayer's card picture / stock / emblem reach `Geno_DefineArtOpen`,
+  `Geno_DefineName`, `GxTex_*` and `UI_TextI4` by name (`geno_host::by_name_art`; before this they hit seam_off: handle
+  0 and a `TODO ext` panic on the initials path). Tests: `cargo test -p melee_engine --test geno_art`, `--lib skins_host`.
+  Art files are read from the mod's own folder (`files/`), not the mounted DVD path the C reads: the same file unless
+  another mod mounts the same path.
 - Not hosted: the controls schema, the records memory-card
-  path (only `MELEE_GENO_RECORDS`), installed skins, the CSS/results art paths (`gm_1601` / gmresultplayer `UI_TextI4`
-  and kit textures), the `cape.*` keys of goku-xv2 (the Rust registry logs them as unknown; Goku's CPU match still
+  path (only `MELEE_GENO_RECORDS`), the kit's art textures (`gw_Geno_DefineArtTex` / `gw_Skins_ArtTexCK`: the kit
+  frontend is off, `Frontend_NativeSelect` = 1), the `cape.*` keys of goku-xv2 (the Rust registry logs them as unknown; Goku's CPU match still
   matches C hash for hash, so the C does not use them either there, but the C log was not compared line by line), define overlays using Subroutine/Goto (op 5/7 take a 32-bit pointer: needs the script pool
   below 4 GiB; no shipped mod uses them), Marth / Jigglypuff / Sheik templates of a base "none" define
   (`GenoDefine_ExtAttrBytes` stops).

@@ -1318,7 +1318,7 @@ impl Registry {
     pub fn define_template_skeleton(&self, kind: i32) -> i32 {
         (self.fm_for_kind(kind).is_some() && self.define_base_kind(kind) > 0) as i32
     }
-    /// gw_Geno_DefineCostumeCount without installed skins (gw_skins_boot.inc is not hosted).
+    /// gw_Geno_DefineCostumeCountNative: the declared costumes, without skins (the engine adds skins_host's rows).
     pub fn define_costume_count(&self, kind: i32) -> i32 {
         self.fm_for_kind(kind).map_or(0, |f| f.cos_file.len() as i32)
     }

@@ -1075,12 +1075,10 @@ mod tests {
     use crate::geno_host as gh;
     use melee_script::geno::consts::GENO_CR_COUNT;
 
-    /// The registry is process-wide: one of these tests at a time.
-    static REG: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
     #[test]
     fn geno_names_and_combo_graph_like_c() {
-        let _l = REG.lock().unwrap_or_else(|e| e.into_inner());
+        let _l = gh::TEST_REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
         let t = concat!(
             "{\"geno\":11,\"fighters\":[{\"define\":{\"key\":\"combo-t\",\"name\":\"Combo T\",\"base\":\"mario\",\"common\":\"melee.common.v1\",",
             "\"resources\":\"retail:mario\"}",
@@ -1125,7 +1123,7 @@ mod tests {
     /// refusals (a geno.json that does not parse, a native define) that keep the current data.
     #[test]
     fn geno_reload_like_c() {
-        let _l = REG.lock().unwrap_or_else(|e| e.into_inner());
+        let _l = gh::TEST_REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
         let d = std::env::temp_dir().join(format!("genoreload-{}", std::process::id()));
         let m = d.join("rl-mod");
         let _ = std::fs::remove_dir_all(&d);

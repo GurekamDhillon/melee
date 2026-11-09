@@ -871,7 +871,8 @@ impl RetailPlay {
             self.settings = Some(o);
         }
         let o = self.settings.as_mut().unwrap();
-        let f1 = pads.focused && pads.keys_down.contains(&winit::keyboard::KeyCode::F1);
+        // Shift+Tab under YouGame (own window) opens this menu too: one F1 press.
+        let f1 = (pads.focused && pads.keys_down.contains(&winit::keyboard::KeyCode::F1)) || melee_platform::yougame::take_menu_request();
         let keys: Vec<u32> = if o.open { pads.ui_keys.as_mut().map(std::mem::take).unwrap_or_default() } else { Vec::new() };
         let held = o.input(live, four, self.feed.is_none(), f1, &keys);
         if held && pads.ui_keys.is_none() {

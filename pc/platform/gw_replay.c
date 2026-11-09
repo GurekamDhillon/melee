@@ -455,7 +455,7 @@ uint32_t gw_Replay_ApplyMatch(void *start_melee_data) {
 
 
 /* fn_8016E730: resolve profiles once after match setup/replay restoration.
- * PlayerInitData +7 is the physical controller; +0 is CharacterKind. */
+ * The physical controller is PlayerInitData +4 `slot` - 1 (or the player index for slot 0); +0 is CharacterKind. */
 void gw_FighterControls_MatchBegin(void *start_melee_data) {
     const uint8_t *d = (const uint8_t *)start_melee_data;
     int p;
@@ -463,7 +463,10 @@ void gw_FighterControls_MatchBegin(void *start_melee_data) {
     gw_FighterControls_MatchClear();
     for (p = 0; p < 4; ++p) {
         const uint8_t *pl = d + 0x60 + 0x24 * p;
-        int port = pl[7], ck = pl[0];
+        /* the player's controller as gmvs.c sets it (Player_SetPadPort): +4 `slot` - 1, or the player's own index
+         * when slot is 0. +7 is `sub_color` (the team shade), not a controller: reading it froze every human onto
+         * controller 0 (P2's mapping never applied; online, the guest's word landed on the host's port). */
+        int port = pl[4] == 0 ? p : pl[4] - 1, ck = pl[0];
         unsigned choice;
         if (pl[1] != 0 || port >= 4) continue; /* human controllers only */
         if (rp.active && !rp.live) choice = rp.controls[port];

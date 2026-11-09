@@ -1041,10 +1041,27 @@ pub fn ComboNote(p: i32, route: i32, from: i32, to: i32, frame: i32, ki_links: i
     );
 }
 
-// slice 6: records (MELEE_GENO_RECORDS names the file; with no card folder hosted, nothing is written without it)
+// slice 6: records (geno_define_records.inc)
 static mut RECORDS: Option<melee_script::geno::define::Records> = None;
 fn rec_path() -> Option<std::path::PathBuf> {
-    std::env::var("MELEE_GENO_RECORDS").ok().filter(|e| !e.is_empty()).map(std::path::PathBuf::from)
+    rec_path_from(std::env::var("MELEE_GENO_RECORDS").ok(), crate::card::base_path())
+}
+/// gn_rec_path: `MELEE_GENO_RECORDS` when set, else `geno_records.json` in the folder holding the card folder (the
+/// card base with its trailing separators cut, then its last component; a base with no separator leaves the bare
+/// name); None with the card off and no override (nothing is written).
+fn rec_path_from(env: Option<String>, card_base: Option<std::path::PathBuf>) -> Option<std::path::PathBuf> {
+    if let Some(e) = env.filter(|e| !e.is_empty()) {
+        return Some(e.into());
+    }
+    let base = card_base?.to_string_lossy().into_owned();
+    if base.is_empty() {
+        return None;
+    }
+    let t = base.trim_end_matches(['/', '\\']);
+    Some(match t.rfind(['/', '\\']) {
+        Some(i) => format!("{}geno_records.json", &t[..=i]).into(),
+        None => "geno_records.json".into(),
+    })
 }
 fn rec_row(ck: i32) -> Option<(usize, std::path::PathBuf)> {
     let r = built();
@@ -1391,6 +1408,20 @@ pub fn install_art() {
 
 #[cfg(test)]
 mod tests {
+    /// gn_rec_path: the override, beside the card folder (either separator, trailing ones cut), a bare base, card off.
+    #[test]
+    fn records_path_like_c() {
+        use super::rec_path_from as f;
+        use std::path::PathBuf;
+        let p = |s: &str| Some(PathBuf::from(s));
+        assert_eq!(f(Some("x/r.json".into()), p("/a/card")), p("x/r.json"));
+        assert_eq!(f(Some(String::new()), p("/a/card")), p("/a/geno_records.json"));
+        assert_eq!(f(None, p("/a/b/card/")), p("/a/b/geno_records.json"));
+        assert_eq!(f(None, p("C:\\g\\card\\")), p("C:\\g\\geno_records.json"));
+        assert_eq!(f(None, p("card")), p("geno_records.json"));
+        assert_eq!((f(None, None), f(None, p(""))), (None, None));
+    }
+
     /// The netplay identity covers a base "none" define: its resource files' bytes change it, and a missing one drops
     /// the define (mx_add_defines). Uses the text fixture pc/geno/mods/vanilla-courier with stand-in file bytes.
     #[test]

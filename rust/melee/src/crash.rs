@@ -207,6 +207,10 @@ fn write_report_with(kind: &str, reason: &str, fault: &str) {
     if REPORTING.swap(true, std::sync::atomic::Ordering::SeqCst) {
         return;
     }
+    if melee_platform::yougame::active() {
+        // the YouGame app's "stopped" notice reads the last stderr line
+        eprintln!("{}", melee_platform::yougame::crash_line(&format!("{kind}: {reason}")));
+    }
     let text = build_report(kind, reason, fault);
     let (y, mo, d, h, mi, s) = now();
     let dir = Path::new("crashlogs");

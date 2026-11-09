@@ -349,6 +349,8 @@ struct App<G: Game> {
     vrr_votes: (Option<bool>, u32),
     /// Presents dropped because a tick came due first (their in-between pose was already stale).
     stale: u64,
+    /// YouGame bridge: the Tab press was taken as Shift+Tab, so its release is ours too.
+    yg_tab: bool,
 }
 
 /// The `q` quantile of `v` (sorted in place).
@@ -590,6 +592,9 @@ impl<G: Game> ApplicationHandler for App<G> {
                 attrs = attrs.with_window_level(winit::window::WindowLevel::AlwaysOnBottom);
             }
         }
+        if crate::yougame::embedded() {
+            attrs = yougame_box_attrs(attrs);
+        }
         let unattended = std::env::var_os("MELEE_WINDOW_UNFOCUSED").is_some();
         if self.cfg.fullscreen != FullscreenMode::Off && unattended {
             plog!("gw: video: fullscreen ignored under MELEE_WINDOW_UNFOCUSED (a test run never takes the screen)");
@@ -641,11 +646,27 @@ impl<G: Game> ApplicationHandler for App<G> {
                 } else {
                     self.focus_lost_at = Some(Instant::now());
                     self.pads.focused = false;
+                    crate::yougame::focus_lost();
                 }
             }
             WindowEvent::ModifiersChanged(m) => self.mods = m.state(),
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(k) = event.physical_key {
+                    if crate::yougame::active() {
+                        // YouGame shortcuts (notes/yougame.md): Shift+Esc goes to the app, Shift+Tab opens the menu.
+                        let down = event.state == ElementState::Pressed;
+                        if k == KeyCode::Escape && self.mods.shift_key() {
+                            if down && !event.repeat {
+                                crate::yougame::relay_escape();
+                            }
+                            return;
+                        }
+                        if k == KeyCode::Tab && ((down && self.mods.shift_key()) || (!down && self.yg_tab)) {
+                            self.yg_tab = down;
+                            crate::yougame::shift_tab(down, event.repeat);
+                            return;
+                        }
+                    }
                     let enter = matches!(k, KeyCode::Enter | KeyCode::NumpadEnter);
                     if enter && self.mods.alt_key() {
                         // Alt+Enter: fullscreen <-> window (the key never reaches the pads)
@@ -713,6 +734,9 @@ impl<G: Game> ApplicationHandler for App<G> {
                     let extra = self.last.map(|l| at.saturating_duration_since(l)).unwrap_or_default();
                     let t = Instant::now();
                     self.game.present(&w, self.clock.alpha_after(extra));
+                    if !self.game.should_quit() {
+                        crate::yougame::presented();
+                    }
                     let d = t.elapsed();
                     self.present_time += d;
                     if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
@@ -740,6 +764,14 @@ impl<G: Game> ApplicationHandler for App<G> {
 
     fn about_to_wait(&mut self, el: &ActiveEventLoop) {
         self.focus_tick();
+        if crate::yougame::active() {
+            if crate::yougame::quit_requested() {
+                self.quit = true;
+            }
+            if let Some(w) = self.window.as_ref() {
+                yougame_box(w, crate::yougame::take_box_commands());
+            }
+        }
         self.run_due_ticks();
         if self.quit {
             el.exit();
@@ -772,6 +804,42 @@ impl<G: Game> ApplicationHandler for App<G> {
             el.set_control_flow(ControlFlow::Poll);
         } else {
             el.set_control_flow(ControlFlow::WaitUntil(Instant::now() + self.clock.until_next()));
+        }
+    }
+}
+
+/// The YouGame player box (YOUGAME_EMBED=1): the class and caption the app's launcher finds the window by, no frame,
+/// hidden until the page says `show`; a child of YOUGAME_EMBED_PARENT when the app passes one (unverified on Windows).
+fn yougame_box_attrs(mut attrs: winit::window::WindowAttributes) -> winit::window::WindowAttributes {
+    attrs = attrs.with_title("Melee Unlocked").with_decorations(false).with_visible(false);
+    #[cfg(windows)]
+    {
+        use winit::platform::windows::WindowAttributesExtWindows;
+        attrs = attrs.with_class_name("MeleePortWindow");
+        if let Some(h) = std::env::var("YOUGAME_EMBED_PARENT").ok().and_then(|v| v.trim().parse::<isize>().ok()).and_then(std::num::NonZeroIsize::new) {
+            let raw = winit::raw_window_handle::RawWindowHandle::Win32(winit::raw_window_handle::Win32WindowHandle::new(h));
+            // SAFETY: the app guarantees the parent outlives us; winit only passes it to CreateWindowEx.
+            attrs = unsafe { attrs.with_parent_window(Some(raw)) };
+            plog!("yougame: player box: parent window from YOUGAME_EMBED_PARENT");
+        }
+    }
+    attrs
+}
+
+/// The player box's commands, on the window thread: `rect x y w h`, `show` / `hide`, `focus` (`blur`, `view`,
+/// `volume` are logged and ignored).
+fn yougame_box(w: &Window, cmds: Vec<String>) {
+    for c in cmds {
+        let n: Vec<i32> = c.split_whitespace().skip(1).filter_map(|v| v.parse().ok()).collect();
+        match c.split_whitespace().next().unwrap_or("") {
+            "rect" if n.len() == 4 && n[2] > 0 && n[3] > 0 => {
+                w.set_outer_position(winit::dpi::PhysicalPosition::new(n[0], n[1]));
+                let _ = w.request_inner_size(winit::dpi::PhysicalSize::new(n[2] as u32, n[3] as u32));
+            }
+            "show" => w.set_visible(true),
+            "hide" => w.set_visible(false),
+            "focus" => w.focus_window(),
+            _ => plog!("yougame: player box command ignored: {}", c.chars().take(60).collect::<String>()),
         }
     }
 }
@@ -825,6 +893,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         vrr_last: None,
         vrr_votes: (None, 0),
         stale: 0,
+        yg_tab: false,
     };
     if let Some(f) = app.trace.as_mut() {
         use std::io::Write;

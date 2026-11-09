@@ -443,6 +443,8 @@ fn arena_misuse(what: &str, p: usize, n: usize) {
     }
 }
 fn main() -> ExitCode {
+    // The YouGame app's stdio bridge (notes/yougame.md): first, before anything can print to stdout or open the log.
+    let yougame = melee_platform::yougame::init();
     sys_live(); // the counter's cell exists before any snapshot base is captured
     #[cfg(windows)]
     melee_engine::arena::set_misuse_hook(arena_misuse);
@@ -476,6 +478,10 @@ fn main() -> ExitCode {
     // The Melee Unlocked launcher's command line (launcher_compat.rs): its environment is set before the log redirect.
     let compat = launcher_compat::prepare(&args);
     crash::install();
+    if let Some(notes) = yougame {
+        eprintln!("yougame: stdio bridge on ({}){}", if melee_platform::yougame::embedded() { "player box" } else { "own window" },
+            if notes.is_empty() { String::new() } else { format!(", {}", notes.join(", ")) });
+    }
     match compat {
         None => {}
         Some(Err(refused)) => {

@@ -1,6 +1,8 @@
 //! src/tu/ftCo_ItemScope.rs vs the C (gen/cref/tu/ftCo_ItemScope.c: the whole TU, shipping
 //! contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_ItemScope`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_ItemScope as m;
@@ -20,8 +22,8 @@ fn ftCo_ItemScope_matches_c() {
         hk::ftCo_ItemScopeFire_Anim = Some(|g| { t(7); t(is_go(g)) });
         hk::ftCo_800CDE54 = Some(|_| t(8));
         hk::ftCo_800CDE74 = Some(|_| t(9));
-        hk::ft_800841B8 = Some(|g, cb| { t(10); t((cb as usize == m::fn_800D8838 as usize) as u32); cb(g) });
-        hk::ft_80082C74 = Some(|g, cb| { t(11); t((cb as usize == m::fn_800D87C0 as usize) as u32); cb(g) });
+        hk::ft_800841B8 = Some(|g, cb| { t(10); t((fnsym::same(cb as usize, m::fn_800D8838 as usize)) as u32); cb(g) });
+        hk::ft_80082C74 = Some(|g, cb| { t(11); t((fnsym::same(cb as usize, m::fn_800D87C0 as usize)) as u32); cb(g) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_ItemScope.txt"));
     for op in 0..12u32 {
@@ -48,7 +50,7 @@ fn ftCo_ItemScope_matches_c() {
             }
             let fr = f();
             let mut h = Hs::new();
-            h.m(match fr.take_dmg_cb { None => 0, Some(p) if p as usize == m::fn_800D8378_c as usize => 2, _ => 9 });
+            h.m(match fr.take_dmg_cb { None => 0, Some(p) if fnsym::same(p as usize, m::fn_800D8378_c as usize) => 2, _ => 9 });
             c.line(op, k, 0, h.0);
         }
     }

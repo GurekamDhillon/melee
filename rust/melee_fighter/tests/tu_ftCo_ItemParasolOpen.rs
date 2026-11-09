@@ -2,6 +2,8 @@
 //! shipping contraction; regenerate with
 //! `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_ItemParasolOpen`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_ItemParasolOpen as m;
@@ -31,7 +33,7 @@ fn ftCo_ItemParasolOpen_matches_c() {
         hk::ftCommon_CalcSelfAccel_AccelToVelClamped = Some(|fr, a, bb, c| { t(13); t(isf(fr)); t(b(a)); t(b(bb)); t(b(c)) });
         hk::ftCo_Landing_Enter_Basic = Some(|g| { t(14); t(is_go(g)) });
         hk::ft_8008370C = Some(|g, cb| {
-            t(15); t(is_go(g)); t((cb as usize == m::ext::ftCo_Landing_Enter_Basic as usize) as u32); cb(g)
+            t(15); t(is_go(g)); t((fnsym::same(cb as usize, m::ext::ftCo_Landing_Enter_Basic as usize)) as u32); cb(g)
         });
     }
     let ms = [29, ftCo_MS_FallSpecial as i32, 36, 360];

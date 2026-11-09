@@ -1,6 +1,8 @@
 //! src/tu/ftCo_Lift.rs vs the C (gen/cref/tu/ftCo_Lift.c: the whole TU, shipping contraction;
 //! regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_Lift`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_Lift as m;
@@ -15,7 +17,7 @@ fn itid(p: *mut Item_GObj) -> u32 { if p.is_null() { 0 } else if p as *mut HSD_G
 fn isf(fr: &Fighter) -> u32 { (fr as *const Fighter == f() as *const Fighter) as u32 }
 fn cbid(e: HSD_GObjEvent) -> u32 {
     let Some(p) = e else { return 0 };
-    if p as usize == m::ftCo_800974C4_cb as usize { 1 } else { 99 }
+    if fnsym::same(p as usize, m::ftCo_800974C4_cb as usize) { 1 } else { 99 }
 }
 
 macro_rules! v { ($($n:ident = $id:expr),*) => { unsafe { $( hk::$n = Some(|g| { t($id); t(is_go(g)) }); )* } } }
@@ -34,7 +36,7 @@ fn ftCo_Lift_matches_c() {
         });
         hk::ftCo_80094EA4 = Some(|g| { t(2); t(is_go(g)); sr(2) & sr(18) });
         hk::Item_8026ABD8 = Some(|i, p, fv| { t(5); t(itid(i)); t(b((*p).x)); t(b((*p).y)); t(b((*p).z)); t(b(fv)) });
-        hk::ft_8008403C = Some(|g, cb| { t(8); t(is_go(g)); t(if cb as usize == m::ftCo_80096E68 as usize { 2 } else { 99 }) });
+        hk::ft_8008403C = Some(|g, cb| { t(8); t(is_go(g)); t(if fnsym::same(cb as usize, m::ftCo_80096E68 as usize) { 2 } else { 99 }) });
         hk::ftAnim_IsFramesRemaining = Some(|g| { t(10); t(is_go(g)); sr(10) });
         hk::ftParts_GetBoneIndex = Some(|fr, p| { t(11); t(isf(fr)); t(p as u32); (rnd() % 4) as i32 });
         hk::ftPartGetRotZ = Some(|fr, p| { t(12); t(isf(fr)); t(p as u32); rw() });

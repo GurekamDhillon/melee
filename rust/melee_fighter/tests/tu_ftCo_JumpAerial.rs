@@ -1,6 +1,8 @@
 //! src/tu/ftCo_JumpAerial.rs vs the C (gen/cref/tu/ftCo_JumpAerial.c: the whole TU, shipping
 //! contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_JumpAerial`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_JumpAerial as m;
@@ -14,9 +16,9 @@ fn is_f(p: &Fighter) -> u32 { (p as *const Fighter == f() as *const Fighter) as 
 fn cbid(cb: HSD_GObjEvent) -> u32 {
     match cb {
         None => 0,
-        Some(p) if p as usize == m::ftNs_JumpAerial_Phys_Cb_c as usize => 1,
-        Some(p) if p as usize == m::ftCo_JumpAerial_Phys_Cb_c as usize => 2,
-        Some(p) if p as usize == m::ftYs_JumpAerial_Anim_Cb_c as usize => 3,
+        Some(p) if fnsym::same(p as usize, m::ftNs_JumpAerial_Phys_Cb_c as usize) => 1,
+        Some(p) if fnsym::same(p as usize, m::ftCo_JumpAerial_Phys_Cb_c as usize) => 2,
+        Some(p) if fnsym::same(p as usize, m::ftYs_JumpAerial_Anim_Cb_c as usize) => 3,
         _ => 9,
     }
 }
@@ -67,7 +69,7 @@ fn ftCo_JumpAerial_matches_c() {
         hk::ft_800851D0 = Some(|_| t(31));
         hk::ftCo_80096CC8 = Some(|_, _| { t(32); false });
         hk::ft_80082B1C = Some(|_| t(33));
-        hk::ft_800835B0 = Some(|g, a, bb| { t(34); t(is_go(g)); t((a as usize == m::ext::ftCo_80096CC8 as usize) as u32); t((bb as usize == m::ext::ft_80082B1C as usize) as u32) });
+        hk::ft_800835B0 = Some(|g, a, bb| { t(34); t(is_go(g)); t((fnsym::same(a as usize, m::ext::ftCo_80096CC8 as usize)) as u32); t((fnsym::same(bb as usize, m::ext::ft_80082B1C as usize)) as u32) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_JumpAerial.txt"));
     for op in 0..18u32 {

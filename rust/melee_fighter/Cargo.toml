@@ -24,3 +24,7 @@ c2r = ["dep:c2rust-bitfields"]
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fptrace)'] }
+
+[dev-dependencies]
+# the C-oracle harnesses name fn pointers by symbol (melee_core/test_support/fnsym.rs)
+backtrace = "0.3"

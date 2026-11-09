@@ -2,6 +2,8 @@
 //! UCF checks, shipping contraction; regenerate with
 //! `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_Escape`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 #[macro_use]
 mod tu_ftco_dfe;
@@ -14,9 +16,9 @@ use m::ext::hook as hk;
 fn cbid(p: HSD_GObjEvent) -> u32 {
     match p {
         None => 0,
-        Some(x) if x as usize == m::ftCo_80099564 as usize => 1,
-        Some(x) if x as usize == m::ftCo_80099754 as usize => 2,
-        Some(x) if x as usize == m::ftCo_80099644 as usize => 3,
+        Some(x) if fnsym::same(x as usize, m::ftCo_80099564 as usize) => 1,
+        Some(x) if fnsym::same(x as usize, m::ftCo_80099754 as usize) => 2,
+        Some(x) if fnsym::same(x as usize, m::ftCo_80099644 as usize) => 3,
         _ => 99,
     }
 }

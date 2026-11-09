@@ -1,6 +1,8 @@
 //! src/tu/ftcolanim.rs vs the C (gen/cref/tu/ftcolanim.c), 9000 cases: every function with
 //! recording stubs for the colanim interpreter, ftAction, Mex and the PlCo tables.
 #![allow(static_mut_refs)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_s25;
 use melee_fighter::hooks;
 use melee_fighter::tu::ftcolanim as c;
@@ -56,7 +58,7 @@ fn mex(kind: i32, g: *mut HSD_GObj, v: *mut core::ffi::c_void) {
 }
 fn l258(g: *mut HSD_GObj, co: *mut ColorOverlay, cb: c::ColAnimCb) -> bool {
     t(7); t(which(co));
-    t(if cb as usize == c::ft_800bff34 as usize { 1 } else if cb as usize == c::ft_800bff70 as usize { 2 } else { 9 });
+    t(if fnsym::same(cb as usize, c::ft_800bff34 as usize) { 1 } else if fnsym::same(cb as usize, c::ft_800bff70 as usize) { 2 } else { 9 });
     if h().rnd() & 1 != 0 {
         let a = 21 + (h().rnd() % 3) as i32;
         cb(g, core::ptr::null_mut(), a);

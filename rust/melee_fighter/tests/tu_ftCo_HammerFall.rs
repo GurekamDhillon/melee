@@ -1,6 +1,8 @@
 //! src/tu/ftCo_HammerFall.rs vs the C (gen/cref/tu/ftCo_HammerFall.c: the whole TU, shipping
 //! contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_HammerFall`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_HammerFall as m;
@@ -26,7 +28,7 @@ fn ftCo_HammerFall_matches_c() {
         hk::ftCo_Fall_Enter = Some(|g| { t(10); t(is_go(g)) });
         hk::pl_8003FDF4 = Some(|a, bb| { t(11); t(a as u32); t(bb as u32) });
         hk::ft_80084DB0 = Some(|g| { t(12); t(is_go(g)) });
-        hk::ft_80082C74 = Some(|g, cb| { t(13); t(is_go(g)); t((cb as usize == m::ext::ftCo_HammerLanding_Enter as usize) as u32) });
+        hk::ft_80082C74 = Some(|g, cb| { t(13); t(is_go(g)); t((fnsym::same(cb as usize, m::ext::ftCo_HammerLanding_Enter as usize)) as u32) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_HammerFall.txt"));
     for op in 0..7u32 {

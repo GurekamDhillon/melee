@@ -1,6 +1,8 @@
 //! src/tu/ftpickupitem.rs vs the C (gen/cref/tu/ftpickupitem.c: the whole TU with TARGET_PC,
 //! shipping contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftpickupitem`).
 #![allow(static_mut_refs, non_snake_case, unused_unsafe)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftpickupitem as m;
@@ -85,7 +87,7 @@ fn ftpickupitem_matches_c() {
         hk::ftCo_80096D9C = Some(|g| { t(33); t(iid(g)) });
         hk::ft_8008A2BC = Some(|g| { t(34); t(iid(g)) });
         hk::ft_80084F3C = Some(|g| { t(35); t(iid(g)) });
-        hk::ft_800841B8 = Some(|g, cb| { t(36); t(iid(g)); t((cb as usize == m::ftpickupitem_80094D90 as usize) as u32) });
+        hk::ft_800841B8 = Some(|g, cb| { t(36); t(iid(g)); t((fnsym::same(cb as usize, m::ftpickupitem_80094D90 as usize)) as u32) });
         hk::Item_8026ABD8 = Some(|i, p, x| { t(37); t(iid(i)); t(b(p.x)); t(b(p.y)); t(b(p.z)); t(b(x)) });
         hk::ftCo_800C5284 = Some(|g| { t(38); t(iid(g)) });
         hk::ftCo_8009750C = Some(|g| { t(39); t(iid(g)) });
@@ -160,8 +162,8 @@ fn ftpickupitem_matches_c() {
             h.m(fr.mv.co.itemget.x0 as u32);
             h.m(match fr.take_dmg_cb {
                 None => 0,
-                Some(p) if p as usize == m::ftCo_800974C4_cb as usize => 1,
-                Some(p) if p as usize == m::ftpickupitem_80094DF8_cb as usize => 2,
+                Some(p) if fnsym::same(p as usize, m::ftCo_800974C4_cb as usize) => 1,
+                Some(p) if fnsym::same(p as usize, m::ftpickupitem_80094DF8_cb as usize) => 2,
                 _ => 3,
             });
             c.line(op, k, ret, h.0);

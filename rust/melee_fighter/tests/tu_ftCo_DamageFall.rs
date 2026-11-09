@@ -2,6 +2,8 @@
 //! contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_DamageFall`).
 //! Covers the functions new in that file; the re-exported leaves are checked by ftdmgfall_ref.
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_DamageFall as m;
@@ -36,7 +38,7 @@ fn ftCo_DamageFall_matches_c() {
         hk::ftCo_Fall_Enter = Some(|g| { t(17); t(is_go(g)) });
         hk::ftCo_800C5DDC = Some(|g| { t(18); t(is_go(g)); s8(12) });
         hk::ftCo_800C5CD4 = Some(|g| { t(19); t(is_go(g)); s8(13) });
-        hk::ft_8008370C = Some(|g, cb| { t(20); t(is_go(g)); t((cb as usize == m::ext::ftCo_80090984 as usize) as u32) });
+        hk::ft_8008370C = Some(|g, cb| { t(20); t(is_go(g)); t((fnsym::same(cb as usize, m::ext::ftCo_80090984 as usize)) as u32) });
     }
     let mut c = Check::new(include_str!("data/tu_ftCo_DamageFall.txt"));
     for op in 0..4u32 {

@@ -1,6 +1,8 @@
 //! Rust half of gen/cref/tu/mtu_common.h: same xorshift, same draws, same trace hash, same
 //! pointer / function ids. Shared by every tests/tu_<stem>.rs of melee_modes::tu.
 #![allow(dead_code, static_mut_refs)]
+#[path = "../../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 
 pub static mut TR: u32 = 0;
 pub static mut TRACEON: bool = false;
@@ -86,10 +88,9 @@ pub fn fi<F: Copy>(f: Option<F>) -> u32 {
             assert_eq!(core::mem::size_of::<F>(), core::mem::size_of::<usize>());
             let a: usize = unsafe { core::mem::transmute_copy(&f) };
             unsafe {
-                for (i, &x) in FP.iter().enumerate() {
-                    if x == a {
-                        return (i + 1) as u32;
-                    }
+                // by address, else by symbol (a lib-stored pointer can be a crate-local copy: fnsym.rs)
+                if let Some(i) = fnsym::find(&*core::ptr::addr_of!(FP), a) {
+                    return (i + 1) as u32;
                 }
             }
             0xFFFF_FFFE
@@ -122,10 +123,9 @@ pub fn pi<T>(p: *const T) -> u32 {
                 return (((i + 1) as u32) << 16) | (a - b) as u32;
             }
         }
-        for (i, &x) in FP.iter().enumerate() {
-            if x == a {
-                return 0xF000_0000 | (i + 1) as u32;
-            }
+        // by address, else by symbol (a lib-stored pointer can be a crate-local copy: fnsym.rs)
+        if let Some(i) = fnsym::find(&*core::ptr::addr_of!(FP), a) {
+            return 0xF000_0000 | (i + 1) as u32;
         }
     }
     0xFFFF_FFFF

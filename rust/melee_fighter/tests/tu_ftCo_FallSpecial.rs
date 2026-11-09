@@ -1,6 +1,8 @@
 //! src/tu/ftCo_FallSpecial.rs vs the C (gen/cref/tu/ftCo_FallSpecial.c: the whole TU, shipping
 //! contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_FallSpecial`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 #[macro_use]
 mod tu_ftco_dfe;
@@ -38,7 +40,7 @@ fn ftCo_FallSpecial_matches_c() {
         hk::Geno_FallSpecialColl = Some(|g| { t(15); t(is_go(g)); chk(15) as i32 });
         hk::ft_80083090 = Some(|g, a, bb| {
             t(16); t(is_go(g));
-            t((a as usize == m::ftCo_80096CC8 as usize) as u32);
+            t((fnsym::same(a as usize, m::ftCo_80096CC8 as usize)) as u32);
             t((bb.map(|x| x as usize) == Some(m::ftCo_80096D28 as usize)) as u32);
         });
         hk::mpLineGetFlags = Some(|l| { t(17); t(l as u32); SRV[6] & 0x1FF });

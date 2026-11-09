@@ -1,6 +1,8 @@
 //! src/tu/ftCo_YoshiEgg.rs vs the C (gen/cref/tu/ftCo_YoshiEgg.c: the whole TU, shipping
 //! contraction; regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_YoshiEgg`).
 #![allow(static_mut_refs, non_snake_case, unused_unsafe)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_YoshiEgg as m;
@@ -86,8 +88,8 @@ fn ftCo_YoshiEgg_matches_c() {
         hk::ftAnim_SetAnimRate = Some(|g, r| { t(34); t(is_go(g)); t(b(r)) });
         hk::ft_80084F3C = Some(|g| { t(35); t(is_go(g)) });
         hk::ft_80084DB0 = Some(|g| { t(36); t(is_go(g)) });
-        hk::ft_8008403C = Some(|g, cb| { t(37); t(is_go(g)); t((cb as usize == m::ftCo_800BC3AC as usize) as u32) });
-        hk::ft_80082C74 = Some(|g, cb| { t(38); t(is_go(g)); t((cb as usize == m::ftCo_800BC388 as usize) as u32) });
+        hk::ft_8008403C = Some(|g, cb| { t(37); t(is_go(g)); t((fnsym::same(cb as usize, m::ftCo_800BC3AC as usize)) as u32) });
+        hk::ft_80082C74 = Some(|g, cb| { t(38); t(is_go(g)); t((fnsym::same(cb as usize, m::ftCo_800BC388 as usize)) as u32) });
         hk::ftCommon_8007D7FC = Some(|fr| { t(39); t(isf(fr)) });
         hk::ftCo_800C0C88 = Some(|ty| { t(40); t(ty as u32); sr(40) });
     }
@@ -149,9 +151,9 @@ fn ftCo_YoshiEgg_matches_c() {
             h.m(b(ye.xC)); h.m(b(ye.x10)); h.m(b(ye.x14));
             hv(&mut h, &ye.x18); hv(&mut h, &ye.scale); h.m(b(fr.mv.ca.specialhi.vel.y));
             hv(&mut h, &fr.self_vel); h.m(b(fr.facing_dir)); h.m(b(fr.dmg.x182c_behavior));
-            h.m(fr.take_dmg_cb.map_or(false, |p| p as usize == m::ftCo_800BC438_cb as usize) as u32);
-            h.m(fr.take_dmg_2_cb.map_or(false, |p| p as usize == m::ftCo_800BC3D0_cb as usize) as u32);
-            h.m(match fr.accessory4_cb { None => 0, Some(p) if p as usize == m::ftCo_800BBCC0_cb as usize => 1, _ => 2 });
+            h.m(fr.take_dmg_cb.map_or(false, |p| fnsym::same(p as usize, m::ftCo_800BC438_cb as usize)) as u32);
+            h.m(fr.take_dmg_2_cb.map_or(false, |p| fnsym::same(p as usize, m::ftCo_800BC3D0_cb as usize)) as u32);
+            h.m(match fr.accessory4_cb { None => 0, Some(p) if fnsym::same(p as usize, m::ftCo_800BBCC0_cb as usize) => 1, _ => 2 });
             unsafe { hv(&mut h, &(*JG).scale); hv(&mut h, &(*JA).scale); }
             c.line(op, k, 0, h.0);
         } }

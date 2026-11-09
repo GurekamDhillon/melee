@@ -1,6 +1,8 @@
 //! src/tu/ftCo_DamageIce.rs vs the C (gen/cref/tu/ftCo_DamageIce.c, shipping contraction;
 //! regenerate with `python rust/melee_fighter/gen/cref/tu/run_tu.py ftCo_DamageIce`).
 #![allow(static_mut_refs, non_snake_case)]
+#[path = "../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 mod tu_ftco_harness;
 use tu_ftco_harness::*;
 use melee_fighter::tu::ftCo_DamageIce as m;
@@ -20,8 +22,8 @@ fn icoll() -> *mut ftCollisionBox { unsafe { &mut f().mv.co.damageice.ice_coll a
 fn cbid(cb: HSD_GObjEvent) -> u32 {
     match cb {
         None => 0,
-        Some(p) if p as usize == m::ftCo_DamageIce_OnHit as usize => 1,
-        Some(p) if p as usize == m::ftCo_DamageIce_OnHit2 as usize => 2,
+        Some(p) if fnsym::same(p as usize, m::ftCo_DamageIce_OnHit as usize) => 1,
+        Some(p) if fnsym::same(p as usize, m::ftCo_DamageIce_OnHit2 as usize) => 2,
         _ => 3,
     }
 }

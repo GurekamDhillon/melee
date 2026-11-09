@@ -377,6 +377,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(not(windows), ignore = "the Windows launcher's command line: its paths only split on `\\` on Windows")]
     fn maps_the_launchers_command_line() {
         let ini = "fps 60\nscale 3\nfullscreen 1\nexclusivefullscreen 0\nvsync 0\nwidescreen 1\nwindow 1600x1200\nvolume 40\nmsaa 4\n";
         let args = s(&[
@@ -388,9 +389,7 @@ mod tests {
         assert!(p.refused.is_empty());
         assert_eq!(p.play_args[..3], s(&["play", "--iso", "C:\\d\\melee.iso"]));
         assert_eq!(p.play_args[3], "--record");
-        // joined with this OS's separator (the launcher hands us Windows paths; the port builds the rest with Path)
-        let rec = Path::new("C:\\g\\Replays").join("RustPort").join("melee-");
-        assert!(p.play_args[4].starts_with(rec.to_str().unwrap()) && p.play_args[4].ends_with(".mrpl"));
+        assert!(p.play_args[4].starts_with("C:\\g\\Replays\\RustPort\\melee-") && p.play_args[4].ends_with(".mrpl"));
         assert_eq!(p.play_args[5..], s(&["--slp", "auto", "--quit-after-matches", "1"]));
         let env = |k: &str| p.env.iter().find(|(a, _)| a == k).map(|(_, v)| v.as_str());
         assert_eq!(env("MELEE_FULLSCREEN"), Some("borderless"));

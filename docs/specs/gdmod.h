@@ -192,6 +192,11 @@ GD_API(gd_f32, gd_cosf, (gd_f32 x));
 GD_API(gd_f32, gd_atan2f, (gd_f32 y, gd_f32 x));
 GD_API(gd_f32, gd_powf, (gd_f32 x, gd_f32 y));
 
+/* a sim mod's state digest for this logic frame: folded into the hash a netplay session compares (NHV1 mixed with the
+ * mods' word, only when some mod gave one), so a peer whose mod state diverges desyncs at that frame. Call it from a
+ * frame or gameplay hook; the word is cleared at each frame begin. */
+GD_API(void, gd_hash_word, (gd_u32 word));
+
 /* diagnostics: a host log line, never part of the game state; may be a no-op in a release build */
 GD_API(void, gd_log, (const char* msg, gd_i32 value));
 

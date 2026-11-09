@@ -180,6 +180,10 @@ pub struct HostData {
     stage_switch: Option<i32>,
     /// The result of the last applied switch (`gd_stage_switch_result`): 0 done, < 0 refused, 1 pending.
     stage_switch_rc: i32,
+    /// `gd_hash_word`: this logic frame's mod words folded together (cleared at frame begin; in the store, so it rolls
+    /// back with the arena), and whether any mod gave one.
+    hash_acc: u32,
+    hash_any: bool,
     origs: Vec<OrigFrame>,
     depth: BTreeMap<u32, u32>,
 }
@@ -621,6 +625,12 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         rc
     });
     w!("gd_stage_switch_result", |c: Caller<'_, HostData>| -> i32 { c.data().stage_switch_rc });
+    // a sim mod's state digest: folded into this frame's word, which the netplay session mixes into its compared hash
+    w!("gd_hash_word", |mut c: Caller<'_, HostData>, word: u32| {
+        let d = c.data_mut();
+        d.hash_acc = hash_mix(if d.hash_any { d.hash_acc } else { 0x811C_9DC5 }, word);
+        d.hash_any = true;
+    });
     // the game's RNG (HSD_Randi / HSD_Randf on the logic seed): the draws are game state and roll back with it
     w!("gd_rand_u32", |bound: u32| -> u32 {
         if bound == 0 { 0 } else { melee_runtime::tu::random::global::HSD_Randi(bound.min(i32::MAX as u32) as i32) as u32 }
@@ -1026,6 +1036,7 @@ fn frame_hook(post: bool) {
             d.frame += 1;
             d.items.clear();
             d.gobjs.clear();
+            d.begin_hash();
         }
         let Some(chain) = (*host).chains.get(&ADDR_FRAME).cloned() else { return };
         if !post {
@@ -1056,6 +1067,47 @@ fn frame_hook(post: bool) {
 fn damage_hook(fp: &mut Fighter, d: f32, orig: &mut dyn FnMut() -> Ret) {
     if std::env::var_os("MELEE_MODHOST_TRACE").is_some() { eprintln!("modhost: damage slot {} {d}", fp.player_id); }
     dispatch(ADDR_DAMAGE, &[Arg::Fighter(fp.gobj as _), Arg::F32(d)], orig);
+}
+
+/// fighter.c's `nh_Mix` (the NHV1 step)
+fn hash_mix(mut h: u32, v: u32) -> u32 {
+    h ^= v;
+    h = h.wrapping_mul(0x0100_0193);
+    h ^ (h >> 15)
+}
+
+impl HostData {
+    /// Frame begin: no mod word yet.
+    fn begin_hash(&mut self) {
+        self.hash_acc = 0;
+        self.hash_any = false;
+    }
+    /// This frame's mod word, 0 when no mod gave one (never 0 otherwise).
+    pub fn hash_word(&self) -> u32 {
+        if self.hash_any { self.hash_acc | 1 } else { 0 }
+    }
+}
+
+/// NHV1 word 0 with a mod word mixed in (unchanged for 0).
+fn mix_session(nhv1: u32, word: u32) -> u32 {
+    if word == 0 { nhv1 } else { hash_mix(nhv1, word) }
+}
+
+/// The mods' word for the current logic frame (`gd_hash_word`), 0 when no host or no mod gave one this frame.
+pub fn hash_word() -> u32 {
+    unsafe { HOST.as_deref() }.map_or(0, |h| h.store.data().hash_word())
+}
+
+/// The hash a netplay session compares: the engine's NHV1 word with the mods' word mixed in when there is one (as the C
+/// mixes `ScriptGame_BuildHashWord` only when it is nonzero), so a vanilla match and every golden hash are unchanged and
+/// NHV1 itself stays the pure cross-engine format.
+pub fn session_hash(nhv1: u32) -> u32 {
+    mix_session(nhv1, hash_word())
+}
+
+/// [`session_hash`] with a given mod word (a netplay test perturbs the word of one peer).
+pub fn session_hash_with(nhv1: u32, word: u32) -> u32 {
+    mix_session(nhv1, word)
 }
 
 /// The loaded host, if any.

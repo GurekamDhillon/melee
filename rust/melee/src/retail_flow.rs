@@ -331,9 +331,9 @@ impl RetailPlay {
                         }
                         if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, next) {
                             let (e, _) = g.into_engine();
-                            log(&format!("netplay {}: final hash {:08X}", nd.tag(), e.neutral_row()[0] | 1));
+                            log(&format!("netplay {}: final hash {:08X}", nd.tag(), melee_modhost::session_hash(e.neutral_row()[0]) | 1));
                             if let Some(r) = self.rec.as_mut() {
-                                nd.flush_rec(&mut r.1, e.neutral_row()[0] | 1);
+                                nd.flush_rec(&mut r.1, melee_modhost::session_hash(e.neutral_row()[0]) | 1);
                             }
                             self.e = Some(e);
                         }
@@ -411,7 +411,7 @@ impl RetailPlay {
                     self.frame_aspect = melee_engine::view::aspect();
                 }
                 if let Some(r) = self.rec.as_mut() {
-                    r.1.ticks.push((four, g.e.neutral_row()[0] | 1));
+                    r.1.ticks.push((four, melee_modhost::session_hash(g.e.neutral_row()[0]) | 1));
                 }
                 if self.tick_no % 600 == 0 {
                     let st = &ps.st;
@@ -457,7 +457,7 @@ impl RetailPlay {
             // each match tick once, as the plain path logs it (a re-run frame is not logged again)
             if h.g.e.frames > h.logged {
                 h.logged = h.g.e.frames;
-                hash_log(h.g.e.frames as u64, h.g.e.neutral_row()[0] | 1);
+                hash_log(h.g.e.frames as u64, melee_modhost::session_hash(h.g.e.neutral_row()[0]) | 1);
             }
             if h.g.e.ended {
                 let h = self.hosted_g.take().unwrap();
@@ -519,7 +519,7 @@ impl RetailPlay {
         crate::slp_export::begin_tick(&four);
         let entered = e.tick_modes();
         crate::slp_export::end_tick(!e.ended && e.mode_scene().1 == SCENE_VS);
-        let hash = if vs_tick { e.neutral_row()[0] | 1 } else { 0 };
+        let hash = if vs_tick { melee_modhost::session_hash(e.neutral_row()[0]) | 1 } else { 0 };
         if vs_tick {
             hash_log(e.frames as u64, hash);
         }
@@ -607,7 +607,7 @@ impl RetailPlay {
             }
             let lab = self.lab.take().unwrap();
             let (e, _) = lab.finish().into_engine();
-            log(&format!("lab: match over, final hash {:08X}", e.neutral_row()[0] | 1));
+            log(&format!("lab: match over, final hash {:08X}", melee_modhost::session_hash(e.neutral_row()[0]) | 1));
             self.e = Some(e);
         }
     }
@@ -1528,7 +1528,7 @@ impl Hosted {
         self.inputs = self.inputs.split_off(&keep_from);
     }
     pub fn state_hash(&self) -> u32 {
-        self.g.e.neutral_row()[0] | 1
+        melee_modhost::session_hash(self.g.e.neutral_row()[0]) | 1
     }
     pub fn set_input(&mut self, frame: i32, pads: [melee_types::PADStatus; 4]) {
         self.inputs.insert(frame + melee_net::session::FIRST, pads);

@@ -206,7 +206,8 @@ pub mod engine_game {
             timed(2, || self.with_base(|b| b.page_hash()))
         }
         fn game_hash(&self) -> u32 {
-            timed(3, || self.e.neutral_row()[0])
+            // the session hash: NHV1 with the sim mods' gd_hash_word mixed in when they gave one
+            timed(3, || melee_modhost::session_hash(self.e.neutral_row()[0]))
         }
         fn live(&self) -> bool {
             self.live
@@ -340,7 +341,8 @@ pub mod engine_game {
                 let gf = g.e.frames as i32 - 1;
                 if let Some(&want) = gm.get(&gf) {
                     n += 1;
-                    if g.game_hash() != want {
+                    // the golden CSV is NHV1 (the cross-engine format), not the session hash with the mods' word
+                    if g.e.neutral_row()[0] != want {
                         bad += 1;
                         if bad < 5 {
                             eprintln!("melee: golden mismatch at frame {gf}");

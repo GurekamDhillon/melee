@@ -2,7 +2,8 @@
 # Two `melee play --netplay` instances on loopback (127.0.0.1), scripted pads (no OS input), a 60 s match.
 #   bash tools/rust-port/netplay/play_pair.sh NAME LAG_MS LOSS_PCT [--headless] [extra play args]
 # NP_MATCH_HOST / NP_MATCH_GUEST: the peers' --match (default falcon,32 / fox; e.g. geno:<key>,32 with --mods DIR)
-# NP_HOST_ENV / NP_GUEST_ENV: extra NAME=VALUE words for one peer only (e.g. its own MELEE_CONTROLS_CFG)
+# NP_HOST_ENV / NP_GUEST_ENV: extra NAME=VALUE words for one peer only (e.g. its own MELEE_CONTROLS_CFG); the replay of
+# the host's recording runs with NP_HOST_ENV (a sim mod the match ran with, MELEE_WASM_MODS, must be there to replay it)
 # Each peer delays its INBOUND datagrams by LAG_MS and drops LOSS_PCT % of them (--np-lag-ms / --np-loss-pct), so
 # the round trip is 2 x LAG_MS. Writes $NP_SCRATCH/NAME-{host,guest}.{log,csv,mrpl}; compares the per-frame final hash
 # CSVs of both peers and plays the host's recorded replay back to the same final hash. Exit 0 = all equal.
@@ -42,7 +43,7 @@ common_rows=$(join -t, <(tail -n +2 "$out/$name-host.csv" | sort) <(tail -n +2 "
 diffs=$(join -t, <(tail -n +2 "$out/$name-host.csv" | sort -t, -k1,1) <(tail -n +2 "$out/$name-guest.csv" | sort -t, -k1,1) | awk -F, '$2!=$3' | wc -l)
 echo "$name: host $nh frames, guest $ng frames, $common_rows frames in both, $diffs with different hashes"
 [ "$diffs" -eq 0 ] && [ "$nh" -gt 1000 ] || { echo "FAIL $name: hashes"; fail=1; }
-MELEE_WINDOW_TITLE="netplay: $name replay" bash "$here/idle.sh" "$exe" play --headless --no-audio --iso "$GW_ISO_VANILLA" --replay "$out/$name-host.mrpl" >"$out/$name-replay.log" 2>&1 || { echo "FAIL $name: replay"; fail=1; }
+env ${NP_HOST_ENV:-} MELEE_WINDOW_TITLE="netplay: $name replay" bash "$here/idle.sh" "$exe" play --headless --no-audio --iso "$GW_ISO_VANILLA" --replay "$out/$name-host.mrpl" >"$out/$name-replay.log" 2>&1 || { echo "FAIL $name: replay"; fail=1; }
 grep -h "^play: replay: " "$out/$name-replay.log"
 [ $fail -eq 0 ] && echo "OK $name" || echo "FAILED $name"
 exit $fail

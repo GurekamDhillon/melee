@@ -327,7 +327,17 @@ impl RbGame for ModesGame {
         self.with_base(|b| b.page_hash())
     }
     fn game_hash(&self) -> u32 {
-        self.e.neutral_row()[0]
+        // the session hash: NHV1 with the sim mods' gd_hash_word mixed in when they gave one (NHV1 itself stays the
+        // cross-engine format the goldens and oracles read)
+        // MELEE_NP_TEST_HASHWORD=<game frame>: this peer's mod word is perturbed from that frame on, the game itself
+        // untouched (the gd_hash_word desync test: only the mods' state differs, and the session must catch it)
+        static TEST_WORD: std::sync::OnceLock<Option<i32>> = std::sync::OnceLock::new();
+        let w = melee_modhost::hash_word();
+        let w = match *TEST_WORD.get_or_init(|| std::env::var("MELEE_NP_TEST_HASHWORD").ok().and_then(|v| v.parse().ok())) {
+            Some(f) if w != 0 && self.frame() - FIRST >= f => w ^ 0x5A5A_5A5A | 1,
+            _ => w,
+        };
+        melee_modhost::session_hash_with(self.e.neutral_row()[0], w)
     }
     fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], resim: bool) {
         if self.e.ended {

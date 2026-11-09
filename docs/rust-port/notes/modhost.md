@@ -141,3 +141,14 @@ Differences from the C mod: no logic freeze and no wipe/flash/morph cover or cou
 import `gd_ui`, and the presentation host has no read-only sim getters yet); the music does not change; no Lua script
 geometry is carried (`script_stage.cap` is 0). Found on the way: Fountain's platform grounds carry `map_id` -1; the
 C reads `map_gobjs[-1]`, the port panicked on the index (`Ground_801C4A08` now ignores an out-of-range id).
+
+## `gd_hash_word`: sim mod state in the compared hash (Envoy M0 probe b)
+
+Wasm linear memory lives in `GameScope`, so synctest's page hash already sees a local resimulation that differs; but
+two peers compare only the session hash, and NHV1 (`neutral_row()[0]`) is the cross-engine format that leaves every
+PC add-on out (fighter.c's NHV1 comment). `gd_hash_word(u32)` folds a word into the frame's mod word (`nh_Mix` steps,
+in `HostData`, so it rolls back; cleared at frame begin). `melee_modhost::session_hash` mixes it into NHV1 word 0
+only when some mod gave one this frame, as the C mixes `ScriptGame_BuildHashWord` only when nonzero: the netplay
+session (`play_net`), the synctest (`netmatch`) and the LAB desync check (`lab.rs frame_hash`) compare it. NHV1, the
+goldens, the oracles and the `.mrpl` tick hashes are unchanged. Probe mod: `rust/mods/hashword_probe` (C, clang).
+

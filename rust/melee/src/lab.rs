@@ -1324,9 +1324,9 @@ impl LabRun {
         }
     }
 
-    /// The frame's hash (the desync check's and the tests').
+    /// The frame's hash (the desync check's and the tests'): the session hash, NHV1 with the sim mods' word mixed in.
     pub fn frame_hash(&self) -> u32 {
-        self.g.e.neutral_row()[0] | 1
+        melee_modhost::session_hash(self.g.e.neutral_row()[0]) | 1
     }
 
     pub fn perf_line(&self) -> String {

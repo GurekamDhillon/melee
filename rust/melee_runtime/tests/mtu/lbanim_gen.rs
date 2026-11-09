@@ -37,6 +37,7 @@ pub fn fill_FigaTrack(p: &mut FigaTrack) { unsafe {
     p.obj_type = fv() as _;
     p.frac_value = fv() as _;
     p.frac_slope = fv() as _;
+    p.dummy0 = fv() as _;
 } }
 pub fn hash_FigaTrack(p: &FigaTrack) { unsafe {
     if HDBG { println!("B FigaTrack"); }
@@ -45,6 +46,7 @@ pub fn hash_FigaTrack(p: &FigaTrack) { unsafe {
     hm(p.obj_type as u32);
     hm(p.frac_value as u32);
     hm(p.frac_slope as u32);
+    hm(p.dummy0 as u32);
     hm(pi(p.ad_head));
 } }
 
@@ -87,7 +89,7 @@ pub fn fill_HSD_JObj(p: &mut HSD_JObj) { unsafe {
     }
     }
     p.aobj = pick_HSD_AObj();
-    p.id = fv() as _;
+    p.id = fv64() as _;
 } }
 pub fn hash_HSD_JObj(p: &HSD_JObj) { unsafe {
     if HDBG { println!("B HSD_JObj"); }
@@ -118,7 +120,7 @@ pub fn hash_HSD_JObj(p: &HSD_JObj) { unsafe {
     hm(pi(p.envelopemtx));
     hm(pi(p.aobj));
     hm(pi(p.robj));
-    hm(p.id as u32);
+    { let pk_ = pi(p.id as usize as *const u8); if pk_ != 0xFFFF_FFFF { hm(pk_); } else { hm(p.id as u32); hm(((p.id as u64) >> 32) as u32); } }
 } }
 
 pub fn fill_HSD_AObj(p: &mut HSD_AObj) { unsafe {
@@ -128,6 +130,7 @@ pub fn fill_HSD_AObj(p: &mut HSD_AObj) { unsafe {
     p.end_frame = rg();
     p.framerate = rg();
     p.fobj = pick_HSD_FObj();
+    p.jobj = pick_HSD_JObj();
 } }
 pub fn hash_HSD_AObj(p: &HSD_AObj) { unsafe {
     if HDBG { println!("B HSD_AObj"); }

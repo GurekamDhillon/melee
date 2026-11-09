@@ -4,7 +4,9 @@ static void TVEC(const Vec3* v)
 {
     if (v) { T(B(v->x)); T(B(v->y)); T(B(v->z)); }
 }
-#define TFL(f) do { T((f).b0); T((f).b1); T((f).b2); T((f).b3); T((f).b4); T((f).b5); T((f).b6); T((f).b7); } while (0)
+/* the item attribute views upstream dropped (the port still reads them): the one generator's legacy declarations */
+#include "../../../../melee_types/gen/port_legacy.h"
+#define TFL(f) do { T((f).x0.b0); T((f).x0.b1); T((f).x0.b2); T((f).x0.b3); T((f).x0.b4); T((f).x0.b5); T((f).x0.b6); T((f).x0.b7); } while (0)  /* UnkFlagStruct.x0 since upstream named the bits' struct */
 static void TSPAWN(const SpawnItem* s)
 {
     if (!s) return;

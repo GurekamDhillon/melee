@@ -43,8 +43,9 @@ FigaTree.tracks	extent
 ftData_x30.inits	count
 ftDynamics.x8	x4
 # ftdynamics.c: ftDynamicBones is one BoneDynamicsTemplate per dynamics bone (it was a pointer to a fixed [10] record before upstream
-# typed it `BoneDynamicsTemplate* DAT_COUNT(dynamicsNum)`; one decoded record and `tbl[i]` ran off it: the Marth / Peach goldens crashed)
-ftDynamics_x0.ftDynamicBones	dynamicsNum
+# typed it `BoneDynamicsTemplate* DAT_COUNT(dynamicsNum)`; one decoded record and `tbl[i]` ran off it: the Marth / Peach goldens crashed).
+# The table runs to the next object, not to dynamicsNum: ftCo_8009DC54 reads Jigglypuff's rows 1..4 with dynamicsNum 3 (replays crashed)
+ftDynamics_x0.ftDynamicBones	extent
 ftData.x38	2
 # ftanim.c ftAnim_80070200: one u16[x8] texture-anim row per costume visibility row (null rows fall back to row 0)
 ftData_x8_x8.xC	tab[x8]

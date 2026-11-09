@@ -80,6 +80,7 @@ pub fn freg_all() {
     freg(m::HSD_CObjGetInterestWObj as *const () as usize);
     freg(m::HSD_CObjGetNear as *const () as usize);
     freg(m::HSD_CObjGetProjectionType as *const () as usize);
+    freg(m::HSD_CObjGetViewingMtx as *const () as usize);
     freg(m::HSD_CObjInit as *const () as usize);
     freg(m::HSD_CObjLoadDesc as *const () as usize);
     freg(m::HSD_CObjMtxIsDirty as *const () as usize);
@@ -304,14 +305,13 @@ pub fn hash_HSD_WObjAnim(p: &HSD_WObjAnim) { unsafe {
 pub fn fill_HSD_AObjDesc(p: &mut HSD_AObjDesc) { unsafe {
     p.flags = fv() as _;
     p.end_frame = rg();
-    p.obj_id = fv64() as _;
 } }
 pub fn hash_HSD_AObjDesc(p: &HSD_AObjDesc) { unsafe {
     if HDBG { println!("B HSD_AObjDesc"); }
     hm(p.flags as u32);
     hm(p.end_frame.to_bits());
     hm(pi(p.fobjdesc));
-    { let pk_ = pi(p.obj_id as usize as *const u8); if pk_ != 0xFFFF_FFFF { hm(pk_); } else { hm(p.obj_id as u32); hm(((p.obj_id as u64) >> 32) as u32); } }
+    hm(pi(p.obj_id));
 } }
 
 pub fn fill_GXRenderModeObj(p: &mut GXRenderModeObj) { unsafe {

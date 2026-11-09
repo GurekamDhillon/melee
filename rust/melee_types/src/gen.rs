@@ -56025,7 +56025,7 @@ impl GcDecode for ftDynamics_x0 {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.dynamicsNum = <i32 as GcDecode>::gc_decode(d, at + 0x0);
-        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x0) as i64)).max(0) as usize; v.ftDynamicBones = d.ptr_array::<BoneDynamicsTemplate>(at + 0x4, n) as *mut BoneDynamicsTemplate; }
+        v.ftDynamicBones = d.ptr_array_extent::<BoneDynamicsTemplate>(at + 0x4) as *mut BoneDynamicsTemplate;
         v
     }
 }

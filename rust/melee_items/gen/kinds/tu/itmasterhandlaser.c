@@ -51,7 +51,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -104,9 +104,9 @@ int main(void)
             case 1: {  itMasterHandLaser_Logic84_EvtUnk(&GO[0], &GO[1]); } break; /* itMasterHandLaser_Logic84_EvtUnk */
             case 2: {  it_802F046C(&GO[0]); } break; /* it_802F046C */
             case 3: {  it_802F0484(&GO[0]); } break; /* it_802F0484 */
-            case 4: {  ret = (u32) itMasterhandlaser_UnkMotion0_Anim(&GO[0]); } break; /* itMasterhandlaser_UnkMotion0_Anim */
+            case 4: {  ret = (u32) ((itMasterhandlaser_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itMasterhandlaser_UnkMotion0_Anim */
             case 5: {  itMasterhandlaser_UnkMotion0_Phys(&GO[0]); } break; /* itMasterhandlaser_UnkMotion0_Phys */
-            case 6: {  ret = (u32) itMasterhandlaser_UnkMotion0_Coll(&GO[0]); } break; /* itMasterhandlaser_UnkMotion0_Coll */
+            case 6: {  ret = (u32) ((itMasterhandlaser_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itMasterhandlaser_UnkMotion0_Coll */
             case 7: {  it_802F05A8(&GO[0]); } break; /* it_802F05A8 */
             case 8: {  it_802F063C(&GO[0], &GO[1]); } break; /* it_802F063C */
             case 9: { { int j; for (j = 0; j < 1; j++) { HM((u32) it_803F9378[j].anim_id); HM(FI((const void*) it_803F9378[j].animated)); HM(FI((const void*) it_803F9378[j].physics_updated)); HM(FI((const void*) it_803F9378[j].collided)); } } } break; /* state tables */

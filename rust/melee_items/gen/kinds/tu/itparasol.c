@@ -47,7 +47,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -89,27 +89,27 @@ int main(void)
             case 0: { int v1 = (int) (((const int[]){1, 2, 4, 5, 6, 7, 8, 9, 10})[rnd() % 9]); ret = (u32) it_8028B08C(&GO[0], v1); } break; /* it_8028B08C */
             case 1: {  itParasol_Logic13_Spawned(&GO[0]); } break; /* itParasol_Logic13_Spawned */
             case 2: {  it_8028B0EC(&GO[0]); } break; /* it_8028B0EC */
-            case 3: {  ret = (u32) itParasol_UnkMotion0_Anim(&GO[0]); } break; /* itParasol_UnkMotion0_Anim */
+            case 3: {  ret = (u32) ((itParasol_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itParasol_UnkMotion0_Anim */
             case 4: {  itParasol_UnkMotion0_Phys(&GO[0]); } break; /* itParasol_UnkMotion0_Phys */
-            case 5: {  ret = (u32) itParasol_UnkMotion0_Coll(&GO[0]); } break; /* itParasol_UnkMotion0_Coll */
+            case 5: {  ret = (u32) ((itParasol_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itParasol_UnkMotion0_Coll */
             case 6: {  it_8028B17C(&GO[0]); } break; /* it_8028B17C */
-            case 7: {  ret = (u32) itParasol_UnkMotion2_Anim(&GO[0]); } break; /* itParasol_UnkMotion2_Anim */
+            case 7: {  ret = (u32) ((itParasol_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itParasol_UnkMotion2_Anim */
             case 8: {  itParasol_UnkMotion1_Phys(&GO[0]); } break; /* itParasol_UnkMotion1_Phys */
-            case 9: {  ret = (u32) itParasol_UnkMotion2_Coll(&GO[0]); } break; /* itParasol_UnkMotion2_Coll */
+            case 9: {  ret = (u32) ((itParasol_UnkMotion2_Coll(&GO[0])) != 0); } break; /* itParasol_UnkMotion2_Coll */
             case 10: {  itParasol_Logic13_Dropped(&GO[0]); } break; /* itParasol_Logic13_Dropped */
             case 11: {  itParasol_Logic13_Thrown(&GO[0]); } break; /* itParasol_Logic13_Thrown */
             case 12: {  itParasol_UnkMotion2_Phys(&GO[0]); } break; /* itParasol_UnkMotion2_Phys */
-            case 13: {  ret = (u32) itParasol_Logic13_DmgDealt(&GO[0]); } break; /* itParasol_Logic13_DmgDealt */
-            case 14: {  ret = (u32) itParasol_Logic13_Clanked(&GO[0]); } break; /* itParasol_Logic13_Clanked */
-            case 15: {  ret = (u32) itParasol_Logic13_HitShield(&GO[0]); } break; /* itParasol_Logic13_HitShield */
-            case 16: {  ret = (u32) itParasol_Logic13_Reflected(&GO[0]); } break; /* itParasol_Logic13_Reflected */
-            case 17: {  ret = (u32) itParasol_Logic13_ShieldBounced(&GO[0]); } break; /* itParasol_Logic13_ShieldBounced */
+            case 13: {  ret = (u32) ((itParasol_Logic13_DmgDealt(&GO[0])) != 0); } break; /* itParasol_Logic13_DmgDealt */
+            case 14: {  ret = (u32) ((itParasol_Logic13_Clanked(&GO[0])) != 0); } break; /* itParasol_Logic13_Clanked */
+            case 15: {  ret = (u32) ((itParasol_Logic13_HitShield(&GO[0])) != 0); } break; /* itParasol_Logic13_HitShield */
+            case 16: {  ret = (u32) ((itParasol_Logic13_Reflected(&GO[0])) != 0); } break; /* itParasol_Logic13_Reflected */
+            case 17: {  ret = (u32) ((itParasol_Logic13_ShieldBounced(&GO[0])) != 0); } break; /* itParasol_Logic13_ShieldBounced */
             case 18: {  itParasol_Logic13_EnteredAir(&GO[0]); } break; /* itParasol_Logic13_EnteredAir */
-            case 19: {  ret = (u32) itParasol_UnkMotion3_Anim(&GO[0]); } break; /* itParasol_UnkMotion3_Anim */
+            case 19: {  ret = (u32) ((itParasol_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itParasol_UnkMotion3_Anim */
             case 20: {  itParasol_UnkMotion3_Phys(&GO[0]); } break; /* itParasol_UnkMotion3_Phys */
-            case 21: {  ret = (u32) itParasol_UnkMotion3_Coll(&GO[0]); } break; /* itParasol_UnkMotion3_Coll */
+            case 21: {  ret = (u32) ((itParasol_UnkMotion3_Coll(&GO[0])) != 0); } break; /* itParasol_UnkMotion3_Coll */
             case 22: {  itParasol_Logic13_PickedUp(&GO[0]); } break; /* itParasol_Logic13_PickedUp */
-            case 23: {  ret = (u32) itParasol_UnkMotion10_Anim(&GO[0]); } break; /* itParasol_UnkMotion10_Anim */
+            case 23: {  ret = (u32) ((itParasol_UnkMotion10_Anim(&GO[0])) != 0); } break; /* itParasol_UnkMotion10_Anim */
             case 24: {  itParasol_UnkMotion10_Phys(&GO[0]); } break; /* itParasol_UnkMotion10_Phys */
             case 25: { f32 v1 = (f32) (rw()); it_8028B618(&GO[0], v1); } break; /* it_8028B618 */
             case 26: { f32 v1 = (f32) (rw()); it_8028B648(&GO[0], v1); } break; /* it_8028B648 */

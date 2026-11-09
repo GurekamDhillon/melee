@@ -336,19 +336,19 @@ def c_driver(stem, cfg, tu, funcs):
     d.append("    JT.child = (rnd() & 1) ? &JC : 0;")
     d.append("    ITEM.xC4_article_data = &ART; SITEM.xC4_article_data = &SART;")
     if atc:
-        d.append("    ART.x4_specialAttributes = &ATTR; SART.x4_specialAttributes = &SATTR;")
+        d.append("    ART.x4_specialAttributes = (union ItemSpecialAttributes*) &ATTR; SART.x4_specialAttributes = (union ItemSpecialAttributes*) &SATTR;")
     d.append("    ITEM.xCC_item_attr = &IATTR; SITEM.xCC_item_attr = &SIATTR;")
     d.append("    ITEM.xBBC_dynamicBoneTable = &DBT; SITEM.xBBC_dynamicBoneTable = &SDBT;")
     d.append("    for (i = 0; i < 100; i++) { DBT.bones[i] = &BONES[i % 24]; SDBT.bones[i] = &BONES[(i + 5) % 24]; }")
     d.append("    ITEM.owner = (rnd() & 1) ? &OWNG : 0; SITEM.owner = (rnd() & 1) ? &OWNG : 0;")
     if stem == "itkirbygamewatchchefpan":
-        d.append("    ART.x4_specialAttributes = ATTRP; SART.x4_specialAttributes = SATTRP;")
+        d.append("    ART.x4_specialAttributes = (union ItemSpecialAttributes*) ATTRP; SART.x4_specialAttributes = (union ItemSpecialAttributes*) SATTRP;")
         d.append("    SATTRP[0] = (rnd() & 1) ? (void*) &SATTRP[1] : 0; SATTRP[1] = 0;")
     if cfg.get("setup_c"):
         d.append(cfg["setup_c"])
     if stem == "itkinoko":
         d.append("    for (i = 0; i < 8; i++) { KANIM[i].joint = &AJ[i]; }")
-        d.append("    zero(KART, sizeof KART); KART[It_Kind_Kinoko] = &SART; SART.x4_specialAttributes = KANIM; it_804D6D24 = KART;")
+        d.append("    zero(KART, sizeof KART); KART[It_Kind_Kinoko] = &SART; SART.x4_specialAttributes = (union ItemSpecialAttributes*) KANIM; it_804D6D24 = KART;")
         d.append("    ART.x4_specialAttributes = &ATTR;")
     d.append("}\n")
     d.append("static void hash_all(void)\n{")

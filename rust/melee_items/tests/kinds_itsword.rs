@@ -131,7 +131,7 @@ fn itsword_matches_c() {
                 let mut ret = 0u32;
                 match op {
                     0 => {  ret = pi(m::itSword_Spawn(&raw mut VA[0])); } // itSword_Spawn
-                    1 => { let v1: i32 = (rnd() % 6) as i32 as i32; m::it_80284E10(&raw mut GO[0], v1); } // it_80284E10
+                    1 => { let v1: i64 = (rnd() % 6) as i32 as i64; m::it_80284E10(&raw mut GO[0], v1); } // it_80284E10
                     2 => {  m::it_80284E30(&raw mut GO[0]); } // it_80284E30
                     3 => { let v1: i32 = (rnd() % 6) as i32 as i32; let v2: f32 = rw() as f32; m::it_80284FC4(&raw mut GO[0], v1, v2); } // it_80284FC4
                     4 => { let v1: i32 = (rnd() % 6) as i32 as i32; m::it_80285024(&raw mut GO[0], v1); } // it_80285024

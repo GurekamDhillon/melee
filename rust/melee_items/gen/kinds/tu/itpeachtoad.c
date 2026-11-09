@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -92,9 +92,9 @@ int main(void)
             case 3: {  it_802BDFA0(&GO[0]); } break; /* it_802BDFA0 */
             case 4: {  it_802BDFC0(&GO[0]); } break; /* it_802BDFC0 */
             case 5: {  itPeachToad_Logic91_PickedUp(&GO[0]); } break; /* itPeachToad_Logic91_PickedUp */
-            case 6: {  ret = (u32) itPeachtoad_UnkMotion0_Anim(&GO[0]); } break; /* itPeachtoad_UnkMotion0_Anim */
+            case 6: {  ret = (u32) ((itPeachtoad_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itPeachtoad_UnkMotion0_Anim */
             case 7: {  it_802BE100(&GO[0]); } break; /* it_802BE100 */
-            case 8: {  ret = (u32) itPeachtoad_UnkMotion1_Anim(&GO[0]); } break; /* itPeachtoad_UnkMotion1_Anim */
+            case 8: {  ret = (u32) ((itPeachtoad_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itPeachtoad_UnkMotion1_Anim */
             case 9: {  itPeachToad_Logic91_EvtUnk(&GO[0], &GO[1]); } break; /* itPeachToad_Logic91_EvtUnk */
             case 10: { { int j; for (j = 0; j < 2; j++) { HM((u32) it_803F7528[j].anim_id); HM(FI((const void*) it_803F7528[j].animated)); HM(FI((const void*) it_803F7528[j].physics_updated)); HM(FI((const void*) it_803F7528[j].collided)); } } } break; /* state tables */
             }

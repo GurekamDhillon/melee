@@ -24,6 +24,7 @@ pub fn freg_all() {
 }
 
 pub fn fill_grDynamicAttr_UnkStruct(p: &mut grDynamicAttr_UnkStruct) {
+    unsafe {
     p.unk4 = fv() as _;
     p.unk8.x = rg();
     p.unk8.y = rg();
@@ -34,9 +35,11 @@ pub fn fill_grDynamicAttr_UnkStruct(p: &mut grDynamicAttr_UnkStruct) {
     for i0 in 0..4 {
     p.x0_fill[i0] = fv() as _;
     }
+    }
 }
 pub fn hash_grDynamicAttr_UnkStruct(p: &grDynamicAttr_UnkStruct) {
-    unsafe { if HDBG { println!("B grDynamicAttr_UnkStruct"); } }
+    unsafe {
+    if HDBG { println!("B grDynamicAttr_UnkStruct"); }
     hm(pi(p.next));
     hm(p.unk4 as u32);
     hm(p.unk8.x.to_bits());
@@ -47,5 +50,6 @@ pub fn hash_grDynamicAttr_UnkStruct(p: &grDynamicAttr_UnkStruct) {
     hm(p.unk1C as u32);
     for i0 in 0..4 {
     hm(p.x0_fill[i0] as u32);
+    }
     }
 }

@@ -36,9 +36,13 @@ pub fn freg_all() {
     freg(m::HSD_MtxAlloc as *const () as usize);
     freg(m::HSD_MtxFree as *const () as usize);
     freg(m::HSD_MtxGetAllocData as *const () as usize);
+    freg(m::HSD_MtxGetRotation as *const () as usize);
     freg(m::HSD_MtxGetTranslate as *const () as usize);
     freg(m::HSD_MtxInitAllocData as *const () as usize);
+    freg(m::HSD_MtxInverse as *const () as usize);
     freg(m::HSD_MtxInverseTranspose as *const () as usize);
+    freg(m::HSD_MtxQuat as *const () as usize);
+    freg(m::HSD_MtxSRT as *const () as usize);
     freg(m::HSD_MtxSRTQuat as *const () as usize);
     freg(m::HSD_MtxScaledAdd as *const () as usize);
     freg(m::HSD_VecAlloc as *const () as usize);

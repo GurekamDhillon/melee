@@ -26,6 +26,7 @@ static void fill_FigaTrack(FigaTrack* p)
     p->obj_type = fv();
     p->frac_value = fv();
     p->frac_slope = fv();
+    p->dummy0 = fv();
 }
 static void hash_FigaTrack(const FigaTrack* p)
 {
@@ -36,6 +37,7 @@ static void hash_FigaTrack(const FigaTrack* p)
     HM((u32) p->obj_type);
     HM((u32) p->frac_value);
     HM((u32) p->frac_slope);
+    HM((u32) p->dummy0);
     HM(PI((const void*) p->ad_head));
 }
 
@@ -84,7 +86,7 @@ static void fill_HSD_JObj(HSD_JObj* p)
     }
     }
     p->aobj = pick_HSD_AObj();
-    p->id = fv();
+    p->id = fv64();
 }
 static void hash_HSD_JObj(const HSD_JObj* p)
 {
@@ -117,7 +119,7 @@ static void hash_HSD_JObj(const HSD_JObj* p)
     HM(PI((const void*) p->envelopemtx));
     HM(PI((const void*) p->aobj));
     HM(PI((const void*) p->robj));
-    HM((u32) p->id);
+    { u32 pk_ = PI((const void*) (unsigned long long) p->id); if (pk_ != 0xFFFFFFFFu) HM(pk_); else { HM((u32) p->id); HM((u32) ((unsigned long long) p->id >> 32)); } }
 }
 
 static void fill_HSD_AObj(HSD_AObj* p)
@@ -129,6 +131,7 @@ static void fill_HSD_AObj(HSD_AObj* p)
     p->end_frame = rg();
     p->framerate = rg();
     p->fobj = pick_HSD_FObj();
+    p->jobj = pick_HSD_JObj();
 }
 static void hash_HSD_AObj(const HSD_AObj* p)
 {
@@ -140,7 +143,7 @@ static void hash_HSD_AObj(const HSD_AObj* p)
     HM(B(p->end_frame));
     HM(B(p->framerate));
     HM(PI((const void*) p->fobj));
-    HM(PI((const void*) p->hsd_obj));
+    HM(PI((const void*) p->jobj));
 }
 
 static void fill_HSD_FObj(HSD_FObj* p)

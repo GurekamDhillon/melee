@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -87,22 +87,22 @@ int main(void)
             switch (op) {
             case 0: {  itSpyCloak_Logic33_Spawned(&GO[0]); } break; /* itSpyCloak_Logic33_Spawned */
             case 1: {  it_80295C68(&GO[0]); } break; /* it_80295C68 */
-            case 2: {  ret = (u32) itSpycloak_UnkMotion0_Anim(&GO[0]); } break; /* itSpycloak_UnkMotion0_Anim */
+            case 2: {  ret = (u32) ((itSpycloak_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itSpycloak_UnkMotion0_Anim */
             case 3: {  itSpycloak_UnkMotion0_Phys(&GO[0]); } break; /* itSpycloak_UnkMotion0_Phys */
-            case 4: {  ret = (u32) itSpycloak_UnkMotion0_Coll(&GO[0]); } break; /* itSpycloak_UnkMotion0_Coll */
+            case 4: {  ret = (u32) ((itSpycloak_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itSpycloak_UnkMotion0_Coll */
             case 5: {  it_80295D04(&GO[0]); } break; /* it_80295D04 */
-            case 6: {  ret = (u32) itSpycloak_UnkMotion3_Anim(&GO[0]); } break; /* itSpycloak_UnkMotion3_Anim */
+            case 6: {  ret = (u32) ((itSpycloak_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itSpycloak_UnkMotion3_Anim */
             case 7: {  itSpycloak_UnkMotion1_Phys(&GO[0]); } break; /* itSpycloak_UnkMotion1_Phys */
-            case 8: {  ret = (u32) itSpycloak_UnkMotion1_Coll(&GO[0]); } break; /* itSpycloak_UnkMotion1_Coll */
+            case 8: {  ret = (u32) ((itSpycloak_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itSpycloak_UnkMotion1_Coll */
             case 9: {  itSpyCloak_Logic33_PickedUp(&GO[0]); } break; /* itSpyCloak_Logic33_PickedUp */
-            case 10: {  ret = (u32) itSpycloak_UnkMotion2_Anim(&GO[0]); } break; /* itSpycloak_UnkMotion2_Anim */
+            case 10: {  ret = (u32) ((itSpycloak_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itSpycloak_UnkMotion2_Anim */
             case 11: {  itSpyCloak_Logic33_Dropped(&GO[0]); } break; /* itSpyCloak_Logic33_Dropped */
             case 12: {  itSpycloak_UnkMotion3_Phys(&GO[0]); } break; /* itSpycloak_UnkMotion3_Phys */
-            case 13: {  ret = (u32) itSpycloak_UnkMotion3_Coll(&GO[0]); } break; /* itSpycloak_UnkMotion3_Coll */
+            case 13: {  ret = (u32) ((itSpycloak_UnkMotion3_Coll(&GO[0])) != 0); } break; /* itSpycloak_UnkMotion3_Coll */
             case 14: {  itSpyCloak_Logic33_EnteredAir(&GO[0]); } break; /* itSpyCloak_Logic33_EnteredAir */
-            case 15: {  ret = (u32) itSpycloak_UnkMotion4_Anim(&GO[0]); } break; /* itSpycloak_UnkMotion4_Anim */
+            case 15: {  ret = (u32) ((itSpycloak_UnkMotion4_Anim(&GO[0])) != 0); } break; /* itSpycloak_UnkMotion4_Anim */
             case 16: {  itSpycloak_UnkMotion4_Phys(&GO[0]); } break; /* itSpycloak_UnkMotion4_Phys */
-            case 17: {  ret = (u32) itSpycloak_UnkMotion4_Coll(&GO[0]); } break; /* itSpycloak_UnkMotion4_Coll */
+            case 17: {  ret = (u32) ((itSpycloak_UnkMotion4_Coll(&GO[0])) != 0); } break; /* itSpycloak_UnkMotion4_Coll */
             case 18: {  itSpyCloak_Logic33_EvtUnk(&GO[0], &GO[1]); } break; /* itSpyCloak_Logic33_EvtUnk */
             case 19: { { int j; for (j = 0; j < 5; j++) { HM((u32) it_803F6370[j].anim_id); HM(FI((const void*) it_803F6370[j].animated)); HM(FI((const void*) it_803F6370[j].physics_updated)); HM(FI((const void*) it_803F6370[j].collided)); } } } break; /* state tables */
             }

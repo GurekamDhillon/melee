@@ -10,7 +10,7 @@ static void hash_StageCallbacks(const StageCallbacks* p);
 static void fill_StageData(StageData* p);
 static void hash_StageData(const StageData* p);
 StageInfo stage_info;
-void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1000); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
+void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1000); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
 void Ground_801C39C0(void) { T(1001); }
 void Ground_801C3BB4(void) { T(1002); }
 __typeof__(struct HSD_GObj *) Ground_GetStageGObj(__typeof__(int) a0) { T(1003); T((u32) a0); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &SGO : 0)); }
@@ -20,7 +20,7 @@ __typeof__(int) Ground_UpdateMapColl(__typeof__(struct HSD_GObj *) a0) { T(1006)
 __typeof__(struct HSD_GObjProc *) HSD_GObj_SetupProc(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1, __typeof__(unsigned char) a2) { T(1007); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); return (__typeof__(struct HSD_GObjProc *)) (0); }
 __typeof__(void *) Mex_GrBind(__typeof__(void *) a0) { T(1008); T(PI((const void*) a0)); return (__typeof__(void *)) (a0); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1009); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
-void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1010); T(PI((const void*) a0)); T((u32) a1); }
+void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1010); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
 void grFigure1_8020E270(__typeof__(int) a0) { T(1011); T((u32) a0); }
 __typeof__(struct HSD_GObj *) grZakoGenerator_801CAE04(__typeof__(struct grZakoGenerator_SpawnDesc *) a0) { T(1012); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (0); }
 void lb_800115F4(void) { T(1013); }
@@ -445,7 +445,7 @@ static void hash_StageInfo(const StageInfo* p)
 static void fill_StageCallbacks(StageCallbacks* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &(*p))[32 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x10)[i0] = (unsigned char) rnd();
 }
 static void hash_StageCallbacks(const StageCallbacks* p)
 {
@@ -455,7 +455,7 @@ static void hash_StageCallbacks(const StageCallbacks* p)
     HM(FI((const void*) p->callback1));
     HM(FI((const void*) p->gobj_proc));
     HM(FI((const void*) p->callback3));
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &(*p))[32 + j0]);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x10)[i0]);
 }
 
 static void fill_StageData(StageData* p)

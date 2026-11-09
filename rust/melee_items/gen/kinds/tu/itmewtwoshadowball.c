@@ -48,7 +48,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -121,27 +121,27 @@ int main(void)
             case 5: {  it_2725_Logic101_Destroyed(&GO[0]); } break; /* it_2725_Logic101_Destroyed */
             case 6: {  it_802C573C(&GO[0]); } break; /* it_802C573C */
             case 7: {  it_2725_Logic101_PickedUp(&GO[0]); } break; /* it_2725_Logic101_PickedUp */
-            case 8: {  ret = (u32) itMewtwoshadowball_UnkMotion0_Anim(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion0_Anim */
+            case 8: {  ret = (u32) ((itMewtwoshadowball_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itMewtwoshadowball_UnkMotion0_Anim */
             case 9: {  itMewtwoshadowball_UnkMotion0_Phys(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion0_Phys */
-            case 10: {  ret = (u32) itMewtwoshadowball_UnkMotion0_Coll(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion0_Coll */
+            case 10: {  ret = (u32) ((itMewtwoshadowball_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itMewtwoshadowball_UnkMotion0_Coll */
             case 11: {  it_802C5B18(&GO[0], &GO[1]); } break; /* it_802C5B18 */
-            case 12: {  ret = (u32) itMewtwoshadowball_UnkMotion8_Anim(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion8_Anim */
+            case 12: {  ret = (u32) ((itMewtwoshadowball_UnkMotion8_Anim(&GO[0])) != 0); } break; /* itMewtwoshadowball_UnkMotion8_Anim */
             case 13: {  itMewtwoshadowball_UnkMotion8_Phys(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion8_Phys */
-            case 14: {  ret = (u32) itMewtwoshadowball_UnkMotion8_Coll(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion8_Coll */
-            case 15: {  ret = (u32) itMewtwoshadowball_UnkMotion9_Anim(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion9_Anim */
+            case 14: {  ret = (u32) ((itMewtwoshadowball_UnkMotion8_Coll(&GO[0])) != 0); } break; /* itMewtwoshadowball_UnkMotion8_Coll */
+            case 15: {  ret = (u32) ((itMewtwoshadowball_UnkMotion9_Anim(&GO[0])) != 0); } break; /* itMewtwoshadowball_UnkMotion9_Anim */
             case 16: {  itMewtwoshadowball_UnkMotion9_Phys(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion9_Phys */
-            case 17: {  ret = (u32) itMewtwoshadowball_UnkMotion9_Coll(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion9_Coll */
+            case 17: {  ret = (u32) ((itMewtwoshadowball_UnkMotion9_Coll(&GO[0])) != 0); } break; /* itMewtwoshadowball_UnkMotion9_Coll */
             case 18: {  fn_802C5E18(&GO[0]); } break; /* fn_802C5E18 */
             case 19: {  it_802C5E5C(&GO[0]); } break; /* it_802C5E5C */
-            case 20: {  ret = (u32) itMewtwoshadowball_UnkMotion17_Anim(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion17_Anim */
+            case 20: {  ret = (u32) ((itMewtwoshadowball_UnkMotion17_Anim(&GO[0])) != 0); } break; /* itMewtwoshadowball_UnkMotion17_Anim */
             case 21: {  itMewtwoshadowball_UnkMotion17_Phys(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion17_Phys */
-            case 22: {  ret = (u32) itMewtwoshadowball_UnkMotion17_Coll(&GO[0]); } break; /* itMewtwoshadowball_UnkMotion17_Coll */
-            case 23: {  ret = (u32) itMewtwoShadowball_Logic101_DmgDealt(&GO[0]); } break; /* itMewtwoShadowball_Logic101_DmgDealt */
-            case 24: {  ret = (u32) itMewtwoShadowball_Logic101_Clanked(&GO[0]); } break; /* itMewtwoShadowball_Logic101_Clanked */
-            case 25: {  ret = (u32) itMewtwoShadowball_Logic101_Absorbed(&GO[0]); } break; /* itMewtwoShadowball_Logic101_Absorbed */
-            case 26: {  ret = (u32) it_2725_Logic101_Reflected(&GO[0]); } break; /* it_2725_Logic101_Reflected */
-            case 27: {  ret = (u32) itMewtwoShadowball_Logic101_HitShield(&GO[0]); } break; /* itMewtwoShadowball_Logic101_HitShield */
-            case 28: {  ret = (u32) it_2725_Logic101_ShieldBounced(&GO[0]); } break; /* it_2725_Logic101_ShieldBounced */
+            case 22: {  ret = (u32) ((itMewtwoshadowball_UnkMotion17_Coll(&GO[0])) != 0); } break; /* itMewtwoshadowball_UnkMotion17_Coll */
+            case 23: {  ret = (u32) ((itMewtwoShadowball_Logic101_DmgDealt(&GO[0])) != 0); } break; /* itMewtwoShadowball_Logic101_DmgDealt */
+            case 24: {  ret = (u32) ((itMewtwoShadowball_Logic101_Clanked(&GO[0])) != 0); } break; /* itMewtwoShadowball_Logic101_Clanked */
+            case 25: {  ret = (u32) ((itMewtwoShadowball_Logic101_Absorbed(&GO[0])) != 0); } break; /* itMewtwoShadowball_Logic101_Absorbed */
+            case 26: {  ret = (u32) ((it_2725_Logic101_Reflected(&GO[0])) != 0); } break; /* it_2725_Logic101_Reflected */
+            case 27: {  ret = (u32) ((itMewtwoShadowball_Logic101_HitShield(&GO[0])) != 0); } break; /* itMewtwoShadowball_Logic101_HitShield */
+            case 28: {  ret = (u32) ((it_2725_Logic101_ShieldBounced(&GO[0])) != 0); } break; /* it_2725_Logic101_ShieldBounced */
             case 29: {  itMewtwoShadowball_Logic101_EvtUnk(&GO[0], &GO[1]); } break; /* itMewtwoShadowball_Logic101_EvtUnk */
             case 30: { { int j; for (j = 0; j < 18; j++) { HM((u32) it_803F7760[j].anim_id); HM(FI((const void*) it_803F7760[j].animated)); HM(FI((const void*) it_803F7760[j].physics_updated)); HM(FI((const void*) it_803F7760[j].collided)); } } } break; /* state tables */
             }

@@ -5,7 +5,6 @@ use super::m;
 use super::*;
 use melee_types::*;
 use super::m::*;
-use super::m::LbCardEntry;
 use core::ffi::c_void;
 
 
@@ -45,6 +44,8 @@ pub fn install() {
 }
 
 pub fn freg_all() {
+    freg(m::addTask as *const () as usize);
+    freg(m::addTaskEntries as *const () as usize);
     freg(m::convertHsdResult as *const () as usize);
     freg(m::convertSdkResult as *const () as usize);
     freg(m::executeNextTask as *const () as usize);

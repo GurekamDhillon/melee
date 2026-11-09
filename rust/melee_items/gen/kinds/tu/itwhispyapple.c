@@ -47,7 +47,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
     it_804D6D28 = &ICD;
@@ -92,38 +92,38 @@ int main(void)
             prof = PROFTAB[op];
             setup(prof);
             switch (op) {
-            case 0: {  ret = (u32) itWhispyapple_UnkMotion0_Anim_inline(&GO[0]); } break; /* itWhispyapple_UnkMotion0_Anim_inline */
+            case 0: {  ret = (u32) ((itWhispyapple_UnkMotion0_Anim_inline(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion0_Anim_inline */
             case 1: { f32 v2 = (f32) ((float) (rnd() % 10) / 10.0f); f32 v3 = (f32) ((float) (rnd() % 10) / 10.0f); ret = PI(it_802EE200(&GO[0], &VA[0], v2, v3)); } break; /* it_802EE200 */
             case 2: {  it_802EE374(&GO[0]); } break; /* it_802EE374 */
-            case 3: {  ret = (u32) itWhispyapple_UnkMotion0_Anim(&GO[0]); } break; /* itWhispyapple_UnkMotion0_Anim */
+            case 3: {  ret = (u32) ((itWhispyapple_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion0_Anim */
             case 4: {  itWhispyapple_UnkMotion0_Phys(&GO[0]); } break; /* itWhispyapple_UnkMotion0_Phys */
-            case 5: {  ret = (u32) itWhispyapple_UnkMotion0_Coll(&GO[0]); } break; /* itWhispyapple_UnkMotion0_Coll */
+            case 5: {  ret = (u32) ((itWhispyapple_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion0_Coll */
             case 6: {  it_802EE6A0(&GO[0]); } break; /* it_802EE6A0 */
-            case 7: {  ret = (u32) itWhispyapple_UnkMotion1_Anim(&GO[0]); } break; /* itWhispyapple_UnkMotion1_Anim */
+            case 7: {  ret = (u32) ((itWhispyapple_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion1_Anim */
             case 8: {  itWhispyapple_UnkMotion1_Phys(&GO[0]); } break; /* itWhispyapple_UnkMotion1_Phys */
-            case 9: {  ret = (u32) itWhispyapple_UnkMotion1_Coll(&GO[0]); } break; /* itWhispyapple_UnkMotion1_Coll */
+            case 9: {  ret = (u32) ((itWhispyapple_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion1_Coll */
             case 10: {  fn_802EE7FC(&GO[0]); } break; /* fn_802EE7FC */
-            case 11: {  ret = (u32) itWhispyapple_UnkMotion5_Anim(&GO[0]); } break; /* itWhispyapple_UnkMotion5_Anim */
+            case 11: {  ret = (u32) ((itWhispyapple_UnkMotion5_Anim(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion5_Anim */
             case 12: {  itWhispyapple_UnkMotion5_Phys(&GO[0]); } break; /* itWhispyapple_UnkMotion5_Phys */
-            case 13: {  ret = (u32) itWhispyapple_UnkMotion5_Coll(&GO[0]); } break; /* itWhispyapple_UnkMotion5_Coll */
+            case 13: {  ret = (u32) ((itWhispyapple_UnkMotion5_Coll(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion5_Coll */
             case 14: {  it_802EEA08(&GO[0]); } break; /* it_802EEA08 */
-            case 15: {  ret = (u32) itWhispyapple_UnkMotion3_Anim(&GO[0]); } break; /* itWhispyapple_UnkMotion3_Anim */
+            case 15: {  ret = (u32) ((itWhispyapple_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion3_Anim */
             case 16: {  itWhispyapple_UnkMotion3_Phys(&GO[0]); } break; /* itWhispyapple_UnkMotion3_Phys */
             case 17: {  it_802EEA70(&GO[0]); } break; /* it_802EEA70 */
             case 18: {  it_802EEB28(&GO[0]); } break; /* it_802EEB28 */
             case 19: {  itWhispyApple_Logic18_EnteredAir(&GO[0]); } break; /* itWhispyApple_Logic18_EnteredAir */
-            case 20: {  ret = (u32) itWhispyapple_UnkMotion6_Anim(&GO[0]); } break; /* itWhispyapple_UnkMotion6_Anim */
+            case 20: {  ret = (u32) ((itWhispyapple_UnkMotion6_Anim(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion6_Anim */
             case 21: {  itWhispyapple_UnkMotion6_Phys(&GO[0]); } break; /* itWhispyapple_UnkMotion6_Phys */
-            case 22: {  ret = (u32) itWhispyapple_UnkMotion6_Coll(&GO[0]); } break; /* itWhispyapple_UnkMotion6_Coll */
+            case 22: {  ret = (u32) ((itWhispyapple_UnkMotion6_Coll(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion6_Coll */
             case 23: {  it_802EED00(&GO[0]); } break; /* it_802EED00 */
-            case 24: {  ret = (u32) itWhispyapple_UnkMotion7_Anim(&GO[0]); } break; /* itWhispyapple_UnkMotion7_Anim */
+            case 24: {  ret = (u32) ((itWhispyapple_UnkMotion7_Anim(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion7_Anim */
             case 25: {  itWhispyapple_UnkMotion7_Phys(&GO[0]); } break; /* itWhispyapple_UnkMotion7_Phys */
-            case 26: {  ret = (u32) itWhispyapple_UnkMotion7_Coll(&GO[0]); } break; /* itWhispyapple_UnkMotion7_Coll */
-            case 27: {  ret = (u32) it_802EEED0(&GO[0]); } break; /* it_802EEED0 */
-            case 28: {  ret = (u32) it_802EEED8(&GO[0]); } break; /* it_802EEED8 */
-            case 29: {  ret = (u32) it_802EEF10(&GO[0]); } break; /* it_802EEF10 */
-            case 30: {  ret = (u32) it_802EEF30(&GO[0]); } break; /* it_802EEF30 */
-            case 31: {  ret = (u32) it_802EEF68(&GO[0]); } break; /* it_802EEF68 */
+            case 26: {  ret = (u32) ((itWhispyapple_UnkMotion7_Coll(&GO[0])) != 0); } break; /* itWhispyapple_UnkMotion7_Coll */
+            case 27: {  ret = (u32) ((it_802EEED0(&GO[0])) != 0); } break; /* it_802EEED0 */
+            case 28: {  ret = (u32) ((it_802EEED8(&GO[0])) != 0); } break; /* it_802EEED8 */
+            case 29: {  ret = (u32) ((it_802EEF10(&GO[0])) != 0); } break; /* it_802EEF10 */
+            case 30: {  ret = (u32) ((it_802EEF30(&GO[0])) != 0); } break; /* it_802EEF30 */
+            case 31: {  ret = (u32) ((it_802EEF68(&GO[0])) != 0); } break; /* it_802EEF68 */
             case 32: {  it_802EEF88(&GO[0], &GO[1]); } break; /* it_802EEF88 */
             case 33: { { int j; for (j = 0; j < 8; j++) { HM((u32) it_803F91D0[j].anim_id); HM(FI((const void*) it_803F91D0[j].animated)); HM(FI((const void*) it_803F91D0[j].physics_updated)); HM(FI((const void*) it_803F91D0[j].collided)); } } } break; /* state tables */
             }

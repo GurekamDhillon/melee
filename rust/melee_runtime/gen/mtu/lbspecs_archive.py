@@ -39,10 +39,5 @@ add("archive", "src/sysdolphin/baselib/archive.c", dict(
     pub_only=True, types=[p[0] for p in POOLS], pools=[p[0] for p in POOLS], skip_stubs=["memset", "memcpy", "strcmp"],
     # the console's uintptr_t is 32 bits: the extern chain is made of u32 words (a native 64-bit uintptr_t would read 8 bytes)
     # the console's uintptr_t is 32 bits: the extern chain is made of u32 words (a native 64-bit uintptr_t would read 8 bytes)
-    patch=[("""    uintptr_t next;
-    uintptr_t offset = -1;""", """    u32 next;
-    u32 offset = -1;"""),
-           ("""        next = *(uintptr_t*) ((uintptr_t) archive->data + offset);
-        *(u32*) ((uintptr_t) archive->data + offset) = (uintptr_t) addr;""",
-            """        next = *(u32*) (archive->data + offset);
-        *(u32*) (archive->data + offset) = (u32) (uintptr_t) addr;""")])
+    # (the extern chain is u32 words upstream since the 363720e12 sync: no patch needed)
+    patch=[])

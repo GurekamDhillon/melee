@@ -183,7 +183,7 @@ static void hash_HSD_AObj(const HSD_AObj* p)
     HM(B(p->end_frame));
     HM(B(p->framerate));
     HM(PI((const void*) p->fobj));
-    HM(PI((const void*) p->hsd_obj));
+    HM(PI((const void*) p->jobj));
 }
 
 static void fill_HSD_CObjDesc(HSD_CObjDesc* p)
@@ -313,7 +313,6 @@ static void fill_HSD_AObjDesc(HSD_AObjDesc* p)
     int i0, i1, i2, j0, j1, j2, j3;
     p->flags = fv();
     p->end_frame = rg();
-    p->obj_id = fv64();
 }
 static void hash_HSD_AObjDesc(const HSD_AObjDesc* p)
 {
@@ -322,7 +321,7 @@ static void hash_HSD_AObjDesc(const HSD_AObjDesc* p)
     HM((u32) p->flags);
     HM(B(p->end_frame));
     HM(PI((const void*) p->fobjdesc));
-    { u32 pk_ = PI((const void*) (unsigned long long) p->obj_id); if (pk_ != 0xFFFFFFFFu) HM(pk_); else { HM((u32) p->obj_id); HM((u32) ((unsigned long long) p->obj_id >> 32)); } }
+    HM(PI((const void*) p->obj_id));
 }
 
 static void fill_GXRenderModeObj(GXRenderModeObj* p)
@@ -715,6 +714,7 @@ static void freg_all(void)
     freg((const void*) HSD_CObjGetInterestWObj);
     freg((const void*) HSD_CObjGetNear);
     freg((const void*) HSD_CObjGetProjectionType);
+    freg((const void*) HSD_CObjGetViewingMtx);
     freg((const void*) HSD_CObjInit);
     freg((const void*) HSD_CObjLoadDesc);
     freg((const void*) HSD_CObjMtxIsDirty);

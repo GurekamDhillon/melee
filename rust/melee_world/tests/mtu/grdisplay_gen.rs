@@ -25,7 +25,7 @@ pub fn install() {
         HSD_FogSet = Some(|a0| { t(1012); t(pi(a0)); });
         HSD_GObj_80390EB8 = Some(|a0| { t(1013); t(a0 as u32); fv() as _ });
         HSD_GObj_80390ED0 = Some(|a0, a1| { t(1014); t(pi(a0)); t(a1 as u32); });
-        HSD_GObj_JObjCallback = Some(|a0, a1| { t(1015); t(pi(a0)); t(a1 as u32); });
+        HSD_GObj_JObjCallback = Some(|a0, a1| { t(1015); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
         HSD_JObjDisp = Some(|a0, a1, a2, a3| { t(1016); t(pi(a0)); t(pi(a1)); t(a2 as u32); t(a3 as u32); });
         HSD_JObjSetupMatrixSub = Some(|a0| { t(1017); t(pi(a0)); });
         HSD_MtxInverseConcat = Some(|a0, a1, a2| { t(1018); t(pi(a0)); t(pi(a1)); t(pi(a2)); });
@@ -51,6 +51,7 @@ pub fn freg_all() {
 }
 
 pub fn fill_Ground(p: &mut Ground) {
+    unsafe {
     p.x0 = fv() as _;
     p.x10_flags.set_b0(fv() as _);
     p.x10_flags.set_b1(fv() as _);
@@ -114,9 +115,11 @@ pub fn fill_Ground(p: &mut Ground) {
     p.color_overlay.set_x7C_flag8(fv() as _);
     p.xC0 = rg();
     for i0 in 0..400 { unsafe { *(&mut p.u as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    }
 }
 pub fn hash_Ground(p: &Ground) {
-    unsafe { if HDBG { println!("B Ground"); } }
+    unsafe {
+    if HDBG { println!("B Ground"); }
     hm(p.x0 as u32);
     hm(pi(p.gobj));
     hm(fi(p.x8_callback));
@@ -188,9 +191,11 @@ pub fn hash_Ground(p: &Ground) {
     hm(p.color_overlay.x7C_flag8() as u32);
     hm(p.xC0.to_bits());
     for i0 in 0..400 { unsafe { hm(*(&p.u as *const _ as *const u8).add(i0) as u32); } }
+    }
 }
 
 pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
+    unsafe {
     p.classifier = fv() as _;
     p.p_link = fv() as _;
     p.gx_link = fv() as _;
@@ -199,9 +204,11 @@ pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
     p.obj_kind = fv() as _;
     p.user_data_kind = fv() as _;
     p.gxlink_prios = fv64() as _;
+    }
 }
 pub fn hash_HSD_GObj(p: &HSD_GObj) {
-    unsafe { if HDBG { println!("B HSD_GObj"); } }
+    unsafe {
+    if HDBG { println!("B HSD_GObj"); }
     hm(p.classifier as u32);
     hm(p.p_link as u32);
     hm(p.gx_link as u32);
@@ -220,9 +227,11 @@ pub fn hash_HSD_GObj(p: &HSD_GObj) {
     hm(pi(p.user_data));
     hm(fi(p.user_data_remove_func));
     hm(pi(p.x34_unk));
+    }
 }
 
 pub fn fill_LbShadow(p: &mut LbShadow) {
+    unsafe {
     p.set_x0_b0(fv() as _);
     p.set_x0_b1(fv() as _);
     p.set_x0_b2(fv() as _);
@@ -231,9 +240,11 @@ pub fn fill_LbShadow(p: &mut LbShadow) {
     p.set_x0_b5(fv() as _);
     p.set_x0_b6(fv() as _);
     p.set_x0_b7(fv() as _);
+    }
 }
 pub fn hash_LbShadow(p: &LbShadow) {
-    unsafe { if HDBG { println!("B LbShadow"); } }
+    unsafe {
+    if HDBG { println!("B LbShadow"); }
     hm(p.x0_b0() as u32);
     hm(p.x0_b1() as u32);
     hm(p.x0_b2() as u32);
@@ -243,9 +254,11 @@ pub fn hash_LbShadow(p: &LbShadow) {
     hm(p.x0_b6() as u32);
     hm(p.x0_b7() as u32);
     hm(pi(p.shadow));
+    }
 }
 
 pub fn fill_HSD_JObj(p: &mut HSD_JObj) {
+    unsafe {
     p.object.ref_count = fv() as _;
     p.object.ref_count_individual = fv() as _;
     p.flags = fv() as _;
@@ -266,9 +279,11 @@ pub fn fill_HSD_JObj(p: &mut HSD_JObj) {
     }
     }
     p.id = fv() as _;
+    }
 }
 pub fn hash_HSD_JObj(p: &HSD_JObj) {
-    unsafe { if HDBG { println!("B HSD_JObj"); } }
+    unsafe {
+    if HDBG { println!("B HSD_JObj"); }
     hm(pi(p.object.parent.class_info));
     hm(p.object.ref_count as u32);
     hm(p.object.ref_count_individual as u32);
@@ -297,4 +312,5 @@ pub fn hash_HSD_JObj(p: &HSD_JObj) {
     hm(pi(p.aobj));
     hm(pi(p.robj));
     hm(p.id as u32);
+    }
 }

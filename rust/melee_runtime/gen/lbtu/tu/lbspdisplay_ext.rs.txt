@@ -7,7 +7,7 @@ pub mod ext {
         use super::*;
         pub static mut GObj_Create: Option<fn(u16, u8, u8) -> *mut HSD_GObj> = None;
         pub static mut GObj_InitUserData: Option<fn(*mut HSD_GObj, u8, Option<unsafe extern "C" fn(*mut c_void)>, *mut c_void)> = None;
-        pub static mut GObj_SetupGXLinkMax: Option<fn(*mut HSD_GObj, Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, u32)> = None;
+        pub static mut GObj_SetupGXLinkMax: Option<fn(*mut HSD_GObj, Option<unsafe extern "C" fn(*mut HSD_GObj, i64)>, u32)> = None;
         pub static mut GXBegin: Option<fn(u32, u32, u16)> = None;
         pub static mut GXClearVtxDesc: Option<fn()> = None;
         pub static mut GXGetTexBufferSize: Option<fn(u16, u16, u32, u8, u8) -> u32> = None;
@@ -78,7 +78,7 @@ pub mod ext {
     pub fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) {
         match unsafe { hook::GObj_InitUserData } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: GObj_InitUserData is not ported") } }
     }
-    pub fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) {
+    pub fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i64)>, a2: u32) {
         match unsafe { hook::GObj_SetupGXLinkMax } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GObj_SetupGXLinkMax is not ported") } }
     }
     pub fn GXBegin(a0: u32, a1: u32, a2: u16) {

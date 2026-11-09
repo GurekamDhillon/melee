@@ -426,15 +426,6 @@ unsafe extern "C" fn s_un_802FF620() { let v = vv(); v.call_begin("un_802FF620")
 unsafe extern "C" fn s_lb_80011E24(a0: *mut melee_types::HSD_JObj, a1: *mut *mut melee_types::HSD_JObj, a2: i32, a3: i32) -> i32 { let v = vv(); v.call_begin("lb_80011E24"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.arg_i(a2 as i64); v.arg_i(a3 as i64); v.call_end(); if !a1.is_null() { *(a1 as *mut usize) = v.leaf_ptr("out:lb_80011E24#1"); }   v.ret_int("lb_80011E24", 32, 1) as _ }
 unsafe extern "C" fn s_lb_8000B1CC(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::Vec, a2: *mut melee_types::Vec) { let v = vv(); v.call_begin("lb_8000B1CC"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.arg_p(a2 as usize); v.call_end();   if !a2.is_null() { for k in 0..3usize { *(a2 as *mut u32).add(k) = v.leaf_f32(&format!("out:lb_8000B1CC#2[{}]", k)); } }  }
 unsafe extern "C" fn s_Wb_RenderOption(a0: i32, a1: i32) -> i32 { let v = vv(); v.call_begin("Wb_RenderOption"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.call_end();    v.ret_int("Wb_RenderOption", 32, 1) as _ }
-unsafe extern "C" fn s_lbArchive_80016F80(a0: *mut *mut melee_types::HSD_Archive, a1: *const i8) -> i32 { let v = vv(); v.call_begin("lbArchive_80016F80"); v.arg_p(a0 as usize); v.arg_s(a1 as *const u8); v.call_end();    v.ret_int("lbArchive_80016F80", 32, 1) as _ }
-unsafe extern "C" fn s_lbArchive_LoadSections(a0: *mut melee_types::HSD_Archive, a1: *mut *mut core::ffi::c_void, a2: *const i8, a3: i32) { let v = vv(); v.call_begin("lbArchive_LoadSections"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.arg_s(a2 as *const u8); v.arg_i(a3 as i64); v.call_end(); if !a1.is_null() { *(a1 as *mut usize) = v.leaf_ptr("out:lbArchive_LoadSections#1"); }    }
-unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end();    v.ret_ptr("GObj_Create") as _ }
-unsafe extern "C" fn s_lb_80013B14(a0: *mut melee_types::HSD_CameraDescPerspective) -> *mut melee_types::HSD_CObj { let v = vv(); v.call_begin("lb_80013B14"); v.arg_p(a0 as usize); v.call_end();    v.ret_ptr("lb_80013B14") as _ }
-unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();     }
-unsafe extern "C" fn s_GObj_SetupGXLinkMax(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u32) { let v = vv(); v.call_begin("GObj_SetupGXLinkMax"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.call_end();     }
-unsafe extern "C" fn s_HSD_LObjLoadDesc(a0: *mut melee_types::HSD_LightDesc) -> *mut melee_types::HSD_LObj { let v = vv(); v.call_begin("HSD_LObjLoadDesc"); v.arg_p(a0 as usize); v.call_end();    v.ret_ptr("HSD_LObjLoadDesc") as _ }
-unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();     }
-unsafe extern "C" fn s_HSD_GObj_LObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("HSD_GObj_LObjCallback"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();     }
 unsafe extern "C" fn s_ifStatus_802F7134() { let v = vv(); v.call_begin("ifStatus_802F7134");  v.call_end();     }
 unsafe extern "C" fn s_ifStatus_802F66A4() { let v = vv(); v.call_begin("ifStatus_802F66A4");  v.call_end();     }
 unsafe extern "C" fn s_ifStock_802FAEC4() { let v = vv(); v.call_begin("ifStock_802FAEC4");  v.call_end();     }
@@ -460,10 +451,19 @@ unsafe extern "C" fn s_un_802FD468() { let v = vv(); v.call_begin("un_802FD468")
 unsafe extern "C" fn s_un_802FD90C() { let v = vv(); v.call_begin("un_802FD90C");  v.call_end();     }
 unsafe extern "C" fn s_un_802FF190() { let v = vv(); v.call_begin("un_802FF190");  v.call_end();     }
 unsafe extern "C" fn s_un_802FF4FC() { let v = vv(); v.call_begin("un_802FF4FC");  v.call_end();     }
+unsafe extern "C" fn s_lbArchive_80016F80(a0: *mut *mut melee_types::HSD_Archive, a1: *const i8) -> i32 { let v = vv(); v.call_begin("lbArchive_80016F80"); v.arg_p(a0 as usize); v.arg_s(a1 as *const u8); v.call_end();    v.ret_int("lbArchive_80016F80", 32, 1) as _ }
+unsafe extern "C" fn s_lbArchive_LoadSections(a0: *mut melee_types::HSD_Archive, a1: *mut *mut core::ffi::c_void, a2: *const i8, a3: i32) { let v = vv(); v.call_begin("lbArchive_LoadSections"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.arg_s(a2 as *const u8); v.arg_i(a3 as i64); v.call_end(); if !a1.is_null() { *(a1 as *mut usize) = v.leaf_ptr("out:lbArchive_LoadSections#1"); }    }
+unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end();    v.ret_ptr("GObj_Create") as _ }
 unsafe extern "C" fn s_HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj { let v = vv(); v.call_begin("HSD_JObjLoadJoint"); v.arg_p(a0 as usize); v.call_end();    v.ret_ptr("HSD_JObjLoadJoint") as _ }
+unsafe extern "C" fn s_lb_80013B14(a0: *mut melee_types::HSD_CameraDescPerspective) -> *mut melee_types::HSD_CObj { let v = vv(); v.call_begin("lb_80013B14"); v.arg_p(a0 as usize); v.call_end();    v.ret_ptr("lb_80013B14") as _ }
+unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();     }
+unsafe extern "C" fn s_GObj_SetupGXLinkMax(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i64)>, a2: u32) { let v = vv(); v.call_begin("GObj_SetupGXLinkMax"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.call_end();     }
 unsafe extern "C" fn s_HSD_CObjSetCurrent(a0: *mut melee_types::HSD_CObj) -> i32 { let v = vv(); v.call_begin("HSD_CObjSetCurrent"); v.arg_p(a0 as usize); v.call_end();    v.ret_int("HSD_CObjSetCurrent", 32, 1) as _ }
 unsafe extern "C" fn s_HSD_GObj_80390ED0(a0: *mut melee_types::HSD_GObj, a1: u32) { let v = vv(); v.call_begin("HSD_GObj_80390ED0"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.call_end();     }
 unsafe extern "C" fn s_HSD_CObjEndCurrent() { let v = vv(); v.call_begin("HSD_CObjEndCurrent");  v.call_end();     }
+unsafe extern "C" fn s_HSD_LObjLoadDesc(a0: *mut melee_types::HSD_LightDesc) -> *mut melee_types::HSD_LObj { let v = vv(); v.call_begin("HSD_LObjLoadDesc"); v.arg_p(a0 as usize); v.call_end();    v.ret_ptr("HSD_LObjLoadDesc") as _ }
+unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i64)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();     }
+unsafe extern "C" fn s_HSD_GObj_LObjCallback(a0: *mut melee_types::HSD_GObj, a1: i64) { let v = vv(); v.call_begin("HSD_GObj_LObjCallback"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();     }
 pub fn glue() -> Glue {
     Glue {
         types: vec![
@@ -523,15 +523,6 @@ pub fn glue() -> Glue {
             ("lb_80011E24", tu::ext::lb_80011E24 as *const () as usize),
             ("lb_8000B1CC", tu::ext::lb_8000B1CC as *const () as usize),
             ("Wb_RenderOption", tu::ext::Wb_RenderOption as *const () as usize),
-            ("lbArchive_80016F80", tu::ext::lbArchive_80016F80 as *const () as usize),
-            ("lbArchive_LoadSections", tu::ext::lbArchive_LoadSections as *const () as usize),
-            ("GObj_Create", tu::ext::GObj_Create as *const () as usize),
-            ("lb_80013B14", tu::ext::lb_80013B14 as *const () as usize),
-            ("HSD_GObjObject_80390A70", tu::ext::HSD_GObjObject_80390A70 as *const () as usize),
-            ("GObj_SetupGXLinkMax", tu::ext::GObj_SetupGXLinkMax as *const () as usize),
-            ("HSD_LObjLoadDesc", tu::ext::HSD_LObjLoadDesc as *const () as usize),
-            ("GObj_SetupGXLink", tu::ext::GObj_SetupGXLink as *const () as usize),
-            ("HSD_GObj_LObjCallback", tu::ext::HSD_GObj_LObjCallback as *const () as usize),
             ("ifStatus_802F7134", tu::ext::ifStatus_802F7134 as *const () as usize),
             ("ifStatus_802F66A4", tu::ext::ifStatus_802F66A4 as *const () as usize),
             ("ifStock_802FAEC4", tu::ext::ifStock_802FAEC4 as *const () as usize),
@@ -557,10 +548,19 @@ pub fn glue() -> Glue {
             ("un_802FD90C", tu::ext::un_802FD90C as *const () as usize),
             ("un_802FF190", tu::ext::un_802FF190 as *const () as usize),
             ("un_802FF4FC", tu::ext::un_802FF4FC as *const () as usize),
+            ("lbArchive_80016F80", tu::ext::lbArchive_80016F80 as *const () as usize),
+            ("lbArchive_LoadSections", tu::ext::lbArchive_LoadSections as *const () as usize),
+            ("GObj_Create", tu::ext::GObj_Create as *const () as usize),
             ("HSD_JObjLoadJoint", tu::ext::HSD_JObjLoadJoint as *const () as usize),
+            ("lb_80013B14", tu::ext::lb_80013B14 as *const () as usize),
+            ("HSD_GObjObject_80390A70", tu::ext::HSD_GObjObject_80390A70 as *const () as usize),
+            ("GObj_SetupGXLinkMax", tu::ext::GObj_SetupGXLinkMax as *const () as usize),
             ("HSD_CObjSetCurrent", tu::ext::HSD_CObjSetCurrent as *const () as usize),
             ("HSD_GObj_80390ED0", tu::ext::HSD_GObj_80390ED0 as *const () as usize),
             ("HSD_CObjEndCurrent", tu::ext::HSD_CObjEndCurrent as *const () as usize),
+            ("HSD_LObjLoadDesc", tu::ext::HSD_LObjLoadDesc as *const () as usize),
+            ("GObj_SetupGXLink", tu::ext::GObj_SetupGXLink as *const () as usize),
+            ("HSD_GObj_LObjCallback", tu::ext::HSD_GObj_LObjCallback as *const () as usize),
         ],
         size_ok: &["HSD_JObj"],
         install: || unsafe {
@@ -581,15 +581,6 @@ pub fn glue() -> Glue {
         tu::ext::H_lb_80011E24 = Some(s_lb_80011E24);
         tu::ext::H_lb_8000B1CC = Some(s_lb_8000B1CC);
         tu::ext::H_Wb_RenderOption = Some(s_Wb_RenderOption);
-        tu::ext::H_lbArchive_80016F80 = Some(s_lbArchive_80016F80);
-        tu::ext::H_lbArchive_LoadSections = Some(s_lbArchive_LoadSections);
-        tu::ext::H_GObj_Create = Some(s_GObj_Create);
-        tu::ext::H_lb_80013B14 = Some(s_lb_80013B14);
-        tu::ext::H_HSD_GObjObject_80390A70 = Some(s_HSD_GObjObject_80390A70);
-        tu::ext::H_GObj_SetupGXLinkMax = Some(s_GObj_SetupGXLinkMax);
-        tu::ext::H_HSD_LObjLoadDesc = Some(s_HSD_LObjLoadDesc);
-        tu::ext::H_GObj_SetupGXLink = Some(s_GObj_SetupGXLink);
-        tu::ext::H_HSD_GObj_LObjCallback = Some(s_HSD_GObj_LObjCallback);
         tu::ext::H_ifStatus_802F7134 = Some(s_ifStatus_802F7134);
         tu::ext::H_ifStatus_802F66A4 = Some(s_ifStatus_802F66A4);
         tu::ext::H_ifStock_802FAEC4 = Some(s_ifStock_802FAEC4);
@@ -615,10 +606,19 @@ pub fn glue() -> Glue {
         tu::ext::H_un_802FD90C = Some(s_un_802FD90C);
         tu::ext::H_un_802FF190 = Some(s_un_802FF190);
         tu::ext::H_un_802FF4FC = Some(s_un_802FF4FC);
+        tu::ext::H_lbArchive_80016F80 = Some(s_lbArchive_80016F80);
+        tu::ext::H_lbArchive_LoadSections = Some(s_lbArchive_LoadSections);
+        tu::ext::H_GObj_Create = Some(s_GObj_Create);
         tu::ext::H_HSD_JObjLoadJoint = Some(s_HSD_JObjLoadJoint);
+        tu::ext::H_lb_80013B14 = Some(s_lb_80013B14);
+        tu::ext::H_HSD_GObjObject_80390A70 = Some(s_HSD_GObjObject_80390A70);
+        tu::ext::H_GObj_SetupGXLinkMax = Some(s_GObj_SetupGXLinkMax);
         tu::ext::H_HSD_CObjSetCurrent = Some(s_HSD_CObjSetCurrent);
         tu::ext::H_HSD_GObj_80390ED0 = Some(s_HSD_GObj_80390ED0);
         tu::ext::H_HSD_CObjEndCurrent = Some(s_HSD_CObjEndCurrent);
+        tu::ext::H_HSD_LObjLoadDesc = Some(s_HSD_LObjLoadDesc);
+        tu::ext::H_GObj_SetupGXLink = Some(s_GObj_SetupGXLink);
+        tu::ext::H_HSD_GObj_LObjCallback = Some(s_HSD_GObj_LObjCallback);
         },
         expr: |n| match n {
             _ => panic!("no such expr {n}"),

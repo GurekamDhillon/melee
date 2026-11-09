@@ -50,8 +50,8 @@ _G_C_TWEAK = """    {
             LK[j].jobj = &JO[3 + (int) (rnd() % 3)];
             LGO[j].hsd_obj = &JO[24 + j];
         }
-        for (j = 0; j < 3; j++) ART[j].x4_specialAttributes = &AG[j];
-        for (j = 0; j < 4; j++) FT[0].x914[j].owner = 0;
+        for (j = 0; j < 3; j++) ART[j].x4_specialAttributes = (union ItemSpecialAttributes*) &AG[j];
+        for (j = 0; j < 4; j++) FT[0].x914[j].x134.owner = 0;
         IT[0].owner = &GO[1];
         GO[1].user_data = &FT[0];
         FT[0].gobj = &GO[1];
@@ -111,7 +111,7 @@ _G_R_TWEAK = """    {
             LGO[j].hsd_obj = &raw mut JO[24 + j] as *mut _;
         }
         for j in 0..3 { ART[j].x4_specialAttributes = &raw mut AG[j] as *mut _; }
-        for j in 0..4 { core::ptr::write_bytes(&raw mut FT[0].x914[j].anon_134, 0, 1); }
+        for j in 0..4 { core::ptr::write_bytes(&raw mut FT[0].x914[j].x134, 0, 1); }
         IT[0].owner = &raw mut GO[1];
         GO[1].user_data = &raw mut FT[0] as *mut _;
         FT[0].gobj = &raw mut GO[1];
@@ -155,7 +155,7 @@ _G_R_TWEAK = """    {
 _G_C_PTRS = """    {
         int j;
         HM(PI(FT[0].u.ss.x223C)); HM(FT[0].u.ss.x2240); zero(&FT[0].u, sizeof FT[0].u);
-        for (j = 0; j < 4; j++) { HM(FT[0].x914[j].hit_grabbed_victim_only); FT[0].x914[j].owner = 0; }
+        for (j = 0; j < 4; j++) { HM(FT[0].x914[j].x134.hit_grabbed_victim_only); FT[0].x914[j].x134.owner = 0; }
         for (j = 0; j < 2; j++) hash_Fighter(&FT[j]);
         for (j = 0; j < 24; j++) { hash_ItemLink(&LK[j]); hash_HSD_GObj(&LGO[j]); }
         for (j = 0; j < 256; j++) hash_FighterBone(&FB[j]);
@@ -171,7 +171,7 @@ _G_C_PTRS = """    {
 
 _G_R_PTRS = """    {
         hm(pi(FT[0].u.ss.x223C)); hm(FT[0].u.ss.x2240 as u32); core::ptr::write_bytes(&raw mut FT[0].u, 0, 1);
-        for j in 0..4 { hm(FT[0].x914[j].anon_134.hit_grabbed_victim_only() as u32); core::ptr::write_bytes(&raw mut FT[0].x914[j].anon_134, 0, 1); }
+        for j in 0..4 { hm(FT[0].x914[j].x134.hit_grabbed_victim_only() as u32); core::ptr::write_bytes(&raw mut FT[0].x914[j].x134, 0, 1); }
         for j in 0..2 { g::hash_Fighter(&FT[j]); }
         for j in 0..24 { g::hash_ItemLink(&LK[j]); g::hash_HSD_GObj(&LGO[j]); }
         for j in 0..256 { g::hash_FighterBone(&FB[j]); }

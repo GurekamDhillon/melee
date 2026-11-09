@@ -47,7 +47,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -95,21 +95,21 @@ int main(void)
             case 0: {  itThunder_Logic7_Spawned(&GO[0]); } break; /* itThunder_Logic7_Spawned */
             case 1: {  it_802CCB10(&GO[0]); } break; /* it_802CCB10 */
             case 2: {  it_802CCB14(&GO[0], &GO[1]); } break; /* it_802CCB14 */
-            case 3: {  ret = (u32) itThunder_UnkMotion1_Anim(&GO[0]); } break; /* itThunder_UnkMotion1_Anim */
+            case 3: {  ret = (u32) ((itThunder_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itThunder_UnkMotion1_Anim */
             case 4: {  itThunder_UnkMotion1_Phys(&GO[0]); } break; /* itThunder_UnkMotion1_Phys */
-            case 5: {  ret = (u32) itThunder_UnkMotion1_Coll(&GO[0]); } break; /* itThunder_UnkMotion1_Coll */
+            case 5: {  ret = (u32) ((itThunder_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itThunder_UnkMotion1_Coll */
             case 6: {  it_802CCBF8(&GO[0]); } break; /* it_802CCBF8 */
             case 7: {  it_802CCC68(&GO[0]); } break; /* it_802CCC68 */
             case 8: {  itThunder_UnkMotion2_Anim_inline2(&GO[0]); } break; /* itThunder_UnkMotion2_Anim_inline2 */
-            case 9: {  ret = (u32) itThunder_UnkMotion2_Anim(&GO[0]); } break; /* itThunder_UnkMotion2_Anim */
+            case 9: {  ret = (u32) ((itThunder_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itThunder_UnkMotion2_Anim */
             case 10: {  itThunder_UnkMotion2_Phys(&GO[0]); } break; /* itThunder_UnkMotion2_Phys */
-            case 11: {  ret = (u32) itThunder_UnkMotion2_Coll(&GO[0]); } break; /* itThunder_UnkMotion2_Coll */
+            case 11: {  ret = (u32) ((itThunder_UnkMotion2_Coll(&GO[0])) != 0); } break; /* itThunder_UnkMotion2_Coll */
             case 12: {  it_802CCE28(&GO[0]); } break; /* it_802CCE28 */
-            case 13: {  ret = (u32) itThunder_UnkMotion0_Anim(&GO[0]); } break; /* itThunder_UnkMotion0_Anim */
+            case 13: {  ret = (u32) ((itThunder_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itThunder_UnkMotion0_Anim */
             case 14: {  itThunder_UnkMotion0_Phys_inline2(&GO[0]); } break; /* itThunder_UnkMotion0_Phys_inline2 */
             case 15: {  itThunder_UnkMotion0_Phys_inline(&GO[0]); } break; /* itThunder_UnkMotion0_Phys_inline */
             case 16: {  itThunder_UnkMotion0_Phys(&GO[0]); } break; /* itThunder_UnkMotion0_Phys */
-            case 17: {  ret = (u32) itThunder_UnkMotion0_Coll(&GO[0]); } break; /* itThunder_UnkMotion0_Coll */
+            case 17: {  ret = (u32) ((itThunder_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itThunder_UnkMotion0_Coll */
             case 18: { { int j; for (j = 0; j < 3; j++) { HM((u32) it_803F7C40[j].anim_id); HM(FI((const void*) it_803F7C40[j].animated)); HM(FI((const void*) it_803F7C40[j].physics_updated)); HM(FI((const void*) it_803F7C40[j].collided)); } } } break; /* state tables */
             }
             hash_all();

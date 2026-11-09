@@ -54,15 +54,15 @@ _ctime_c = "a1->sec = (int) fv(); a1->min = (int) fv(); a1->hour = (int) fv(); a
 _ctime_r = "(*a1).sec = fv() as i32; (*a1).min = fv() as i32; (*a1).hour = fv() as i32; (*a1).mday = fv() as i32; (*a1).mon = fv() as i32; (*a1).year = (fv() % 3000) as i32 - 100; (*a1).wday = fv() as i32; (*a1).yday = fv() as i32; (*a1).msec = fv() as i32; (*a1).usec = fv() as i32;"
 add("lbcardgame", "src/melee/lb/lbcardgame.c", dict(
     pools=GO4 + [("SceneDesc", "SD", 2), ("DynamicModelDesc", "DM", 2), ("SceneCameraDesc", "SC", 2), ("HSD_JObj", "JO", 2)],
-    c_decl="static void* ICN[4]; static DynamicModelDesc* DMP[2]; static unsigned char NTB[7 * 0x1F2C + 16];",
-    rs_extra="static mut ICN: [*mut c_void; 4] = [null_mut(); 4]; static mut DMP: [*mut DynamicModelDesc; 2] = [null_mut(); 2]; static mut NTB: [u8; 7 * 0x1F2C + 16] = [0; 7 * 0x1F2C + 16];",
+    c_decl="static u8* ICN[4]; static DynamicModelDesc* DMP[2]; static unsigned char NTB[7 * 0x1F2C + 16];",
+    rs_extra="static mut ICN: [*mut u8; 4] = [null_mut(); 4]; static mut DMP: [*mut DynamicModelDesc; 2] = [null_mut(); 2]; static mut NTB: [u8; 7 * 0x1F2C + 16] = [0; 7 * 0x1F2C + 16];",
     pregs=("preg(ICN, sizeof ICN); preg(DMP, sizeof DMP); preg(NTB, sizeof NTB);",
            "preg(&raw const ICN, core::mem::size_of_val(&ICN)); preg(&raw const DMP, core::mem::size_of_val(&DMP)); preg(&raw const NTB, core::mem::size_of_val(&NTB));"),
-    setup=("{ int q; for (q = 0; q < 4; q++) ICN[q] = (fv() & 7) ? (void*) (BUF + 8 * q) : 0; state.icon_data = (op == OP_lbCardGame_LoadArchive && (fv() & 1)) ? 0 : ICN;"
+    setup=("{ int q; for (q = 0; q < 4; q++) ICN[q] = (fv() & 7) ? (u8*) (BUF + 8 * q) : 0; state.icon_data = (op == OP_lbCardGame_LoadArchive && (fv() & 1)) ? 0 : ICN;"
            " DMP[0] = &DM[0]; DMP[1] = &DM[1]; SD[0].models = DMP; SD[0].cameras = SC; SD[1].models = DMP + 1; SD[1].cameras = SC + 1;"
            " state.scene_data = (fv() & 7) ? &SD[fv() & 1] : 0; state.jobj_translate_idx = 0; state.enable = (fv() & 7) != 0 || op == OP_lb_8001C8BC || op == OP_lbCardGame_SaveChanges; state.x10 = fv() & 1;"
            " OS_BusClock = (fv() & 1) ? 162000000u : 4u + fv() % 100000u; }",
-           "{ for q in 0..4usize { ICN[q] = if fv() & 7 != 0 { (&raw mut BUF as *mut u8).add(8 * q) as *mut c_void } else { null_mut() }; }"
+           "{ for q in 0..4usize { ICN[q] = if fv() & 7 != 0 { (&raw mut BUF as *mut u8).add(8 * q) } else { null_mut() }; }"
            " m::state.icon_data = if op == OP_lbCardGame_LoadArchive && fv() & 1 != 0 { null_mut() } else { (&raw mut ICN) as *mut *mut c_void };"
            " DMP[0] = &raw mut DM[0]; DMP[1] = &raw mut DM[1]; SD[0].models = (&raw mut DMP) as *mut *mut DynamicModelDesc; SD[0].cameras = &raw mut SC[0];"
            " SD[1].models = (&raw mut DMP as *mut *mut DynamicModelDesc).add(1); SD[1].cameras = &raw mut SC[1];"

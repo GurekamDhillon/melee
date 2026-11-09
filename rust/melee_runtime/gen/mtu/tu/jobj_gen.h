@@ -332,6 +332,7 @@ static void fill_HSD_AObj(HSD_AObj* p)
     p->rewind_frame = rg();
     p->end_frame = rg();
     p->framerate = rg();
+    p->jobj = pick_HSD_JObj();
 }
 static void hash_HSD_AObj(const HSD_AObj* p)
 {
@@ -343,7 +344,7 @@ static void hash_HSD_AObj(const HSD_AObj* p)
     HM(B(p->end_frame));
     HM(B(p->framerate));
     HM(PI((const void*) p->fobj));
-    HM(PI((const void*) p->hsd_obj));
+    HM(PI((const void*) p->jobj));
 }
 
 static void fill_HSD_SList(HSD_SList* p)

@@ -128,8 +128,12 @@ if v.set() { (*p).x34 = v.leaf_int(&format!("{}.x34", path), 16, 0) as _; } else
 {
 if v.set() { (*p).x36 = v.leaf_int(&format!("{}.x36", path), 16, 0) as _; } else { v.dump_u(&format!("{}.x36", path), (((*p).x36) as u16) as u64); }
 }
-v.bytes(&format!("{}.anon_38", path), &mut (*p).anon_38 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_38));
-v.bytes(&format!("{}.anon_3c", path), &mut (*p).anon_3c as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_3c));
+{
+v.bytes(&format!("{}.x38_u", path), &mut (*p).x38_u as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x38_u));
+}
+{
+v.bytes(&format!("{}.x3C_u", path), &mut (*p).x3C_u as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x3C_u));
+}
 {
 if v.set() { (*p).x40 = v.leaf_int(&format!("{}.x40", path), 32, 0) as _; } else { v.dump_u(&format!("{}.x40", path), (((*p).x40) as u32) as u64); }
 }
@@ -187,8 +191,8 @@ vis_struct_gmMainLib_8046B0F0_t(v, path, &mut (*p) as *mut _ as *mut u8);
 unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end();   v.ret_ptr("GObj_Create") as _ }
 unsafe extern "C" fn s_gm_801A9DD0(a0: *mut melee_types::HSD_GObj, a1: u16, a2: u16, a3: i32, a4: i32) { let v = vv(); v.call_begin("gm_801A9DD0"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.arg_i(a3 as i64); v.arg_i(a4 as i64); v.call_end();    }
 unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();    }
-unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();    }
-unsafe extern "C" fn s_lbMthp_8001F67C(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("lbMthp_8001F67C"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
+unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i64)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();    }
+unsafe extern "C" fn s_lbMthp_8001F67C(a0: *mut melee_types::HSD_GObj, a1: i64) { let v = vv(); v.call_begin("lbMthp_8001F67C"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
 unsafe extern "C" fn s_lbMthp_8001F624(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) -> *mut melee_types::HSD_SObj { let v = vv(); v.call_begin("lbMthp_8001F624"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.arg_i(a2 as i64); v.call_end();   v.ret_ptr("lbMthp_8001F624") as _ }
 unsafe extern "C" fn s_lbAudioAx_80023F28(a0: i32) -> i32 { let v = vv(); v.call_begin("lbAudioAx_80023F28"); v.arg_i(a0 as i64); v.call_end();   v.ret_int("lbAudioAx_80023F28", 32, 1) as _ }
 unsafe extern "C" fn s_lbAudioAx_80024E50(a0: i32) { let v = vv(); v.call_begin("lbAudioAx_80024E50"); v.arg_i(a0 as i64); v.call_end();    }

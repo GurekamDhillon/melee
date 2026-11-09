@@ -132,7 +132,7 @@ SPECS["itraikou"]["custom_stubs"] = {"efSync_Spawn": _EFS4}
 
 # ---------------------------------------------------------------- shard 809-816
 _EFA = dict(
-    c="void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { __builtin_va_list ap; float* a5 = 0; "
+    c="void efAsync_Spawn(HSD_GObj* a0, EF_QueuedEffect** a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { __builtin_va_list ap; float* a5 = 0; "
       "if (a2 == 4) { __builtin_va_start(ap, a4); a5 = __builtin_va_arg(ap, float*); __builtin_va_end(ap); } "
       "T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); if (a2 == 4) { T(PI(a5)); T(B(*a5)); } }",
     ext="fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj, a5: *mut f32);",
@@ -221,7 +221,7 @@ _B["deep_ecb"] = True
 _B["effects"].update({})
 # ------------------------------------------------------------------------ shard 737-744
 _EFA = dict(
-    c="void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); }",
+    c="void efAsync_Spawn(HSD_GObj* a0, EF_QueuedEffect** a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); }",
     ext="fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);",
     hook="|a0, a1, a2, a3, a4| { t(@ID@); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); }")
 _EFS2 = dict(
@@ -310,7 +310,7 @@ SPECS["itmetalb"]["ret"]["it_8027236C"] = ("((fv() & 3) ? &GO[2] : 0)", "if fv()
 SPECS["itmetalb"]["null_ret_ok"].append("it_8027236C")
 
 SPECS["itmball"]["custom_stubs"] = {"efAsync_Spawn": dict(
-    c="void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); }",
+    c="void efAsync_Spawn(HSD_GObj* a0, EF_QueuedEffect** a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); }",
     ext="fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);",
     hook="|a0, a1, a2, a3, a4| { t(@ID@); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); }")}
 
@@ -369,7 +369,7 @@ _C["effects"]["ftKb_SpecialNSs_800FCC14"] = _IE
 
 _R = SPECS["itrshell"]
 _R["custom_stubs"] = {"efAsync_Spawn": dict(
-    c="void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { __builtin_va_list ap; Vec3* a5; "
+    c="void efAsync_Spawn(HSD_GObj* a0, EF_QueuedEffect** a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { __builtin_va_list ap; Vec3* a5; "
       "__builtin_va_start(ap, a4); a5 = __builtin_va_arg(ap, Vec3*); __builtin_va_end(ap); "
       "T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); T(PI(a5)); TVEC(a5); }",
     ext="fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj, a5: *mut Vec);",

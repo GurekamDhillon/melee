@@ -160,7 +160,7 @@ fn itlinkarrow_matches_c() {
                 setup(PROFTAB[op as usize] as i32);
                 let mut ret = 0u32;
                 match op {
-                    0 => { let v1: i32 = (rnd() % 3) as i32 as i32; m::it_802A7D8C(&raw mut GO[0], v1); } // it_802A7D8C
+                    0 => { let v1: i64 = (rnd() % 3) as i32 as i64; m::it_802A7D8C(&raw mut GO[0], v1); } // it_802A7D8C
                     1 => {  m::it_802A7E40(&raw mut GO[0]); } // it_802A7E40
                     2 => {  m::itLinkArrow_802A81C4(&raw mut GO[0]); } // itLinkArrow_802A81C4
                     3 => {  m::it_802A8330(&raw mut GO[0]); } // it_802A8330

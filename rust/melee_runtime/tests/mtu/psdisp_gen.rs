@@ -402,7 +402,7 @@ pub fn hashg_all() {
         hm(pi(m::ext::hsd_804D0908[i0]));
         }
         for i0 in 0..65 {
-        hm(pi(m::ext::psNumCmdList[i0]));
+        hm(pi(m::ext::psCmdListArray[i0]));
         }
         for i0 in 0..65 {
         hm(pi(m::ext::psTexGroupArray[i0]));

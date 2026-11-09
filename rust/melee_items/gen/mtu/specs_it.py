@@ -20,8 +20,8 @@ COMMON_RET = {
 
 
 def flags(p):
-    c = " | ".join(f"((u32) {p}.b{i} << {i})" for i in range(8))
-    r = " | ".join(f"(({p}.anon_0.b{i}() as u32) << {i})" for i in range(8))
+    c = " | ".join(f"((u32) {p}.x0.b{i} << {i})" for i in range(8))
+    r = " | ".join(f"(({p}.x0.b{i}() as u32) << {i})" for i in range(8))
     return c, r
 
 

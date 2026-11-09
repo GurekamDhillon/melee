@@ -49,7 +49,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -94,14 +94,14 @@ int main(void)
             switch (op) {
             case 0: { ItemKind v2 = (ItemKind) ((int) fv()); f32 v3 = (f32) (rw()); ret = PI(it_802BE214(&GO[0], &VA[0], v2, v3)); } break; /* it_802BE214 */
             case 1: {  it_802BE2E8(&GO[0], &GO[1]); } break; /* it_802BE2E8 */
-            case 2: {  ret = (u32) itPeachtoadspore_UnkMotion0_Anim(&GO[0]); } break; /* itPeachtoadspore_UnkMotion0_Anim */
+            case 2: {  ret = (u32) ((itPeachtoadspore_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itPeachtoadspore_UnkMotion0_Anim */
             case 3: {  itPeachtoadspore_UnkMotion0_Phys(&GO[0]); } break; /* itPeachtoadspore_UnkMotion0_Phys */
-            case 4: {  ret = (u32) itPeachToadSpore_Logic92_DmgDealt(&GO[0]); } break; /* itPeachToadSpore_Logic92_DmgDealt */
-            case 5: {  ret = (u32) itPeachToadSpore_Logic68_Clanked(&GO[0]); } break; /* itPeachToadSpore_Logic68_Clanked */
-            case 6: {  ret = (u32) itPeachToadSpore_Logic68_HitShield(&GO[0]); } break; /* itPeachToadSpore_Logic68_HitShield */
-            case 7: {  ret = (u32) itPeachToadSpore_Logic68_Absorbed(&GO[0]); } break; /* itPeachToadSpore_Logic68_Absorbed */
-            case 8: {  ret = (u32) itPeachToadSpore_Logic68_ShieldBounced(&GO[0]); } break; /* itPeachToadSpore_Logic68_ShieldBounced */
-            case 9: {  ret = (u32) itPeachToadSpore_Logic68_Reflected(&GO[0]); } break; /* itPeachToadSpore_Logic68_Reflected */
+            case 4: {  ret = (u32) ((itPeachToadSpore_Logic92_DmgDealt(&GO[0])) != 0); } break; /* itPeachToadSpore_Logic92_DmgDealt */
+            case 5: {  ret = (u32) ((itPeachToadSpore_Logic68_Clanked(&GO[0])) != 0); } break; /* itPeachToadSpore_Logic68_Clanked */
+            case 6: {  ret = (u32) ((itPeachToadSpore_Logic68_HitShield(&GO[0])) != 0); } break; /* itPeachToadSpore_Logic68_HitShield */
+            case 7: {  ret = (u32) ((itPeachToadSpore_Logic68_Absorbed(&GO[0])) != 0); } break; /* itPeachToadSpore_Logic68_Absorbed */
+            case 8: {  ret = (u32) ((itPeachToadSpore_Logic68_ShieldBounced(&GO[0])) != 0); } break; /* itPeachToadSpore_Logic68_ShieldBounced */
+            case 9: {  ret = (u32) ((itPeachToadSpore_Logic68_Reflected(&GO[0])) != 0); } break; /* itPeachToadSpore_Logic68_Reflected */
             case 10: {  itPeachToadSpore_Logic92_EvtUnk(&GO[0], &GO[1]); } break; /* itPeachToadSpore_Logic92_EvtUnk */
             case 11: { { int j; for (j = 0; j < 1; j++) { HM((u32) it_803F7548[j].anim_id); HM(FI((const void*) it_803F7548[j].animated)); HM(FI((const void*) it_803F7548[j].physics_updated)); HM(FI((const void*) it_803F7548[j].collided)); } } } break; /* state tables */
             }

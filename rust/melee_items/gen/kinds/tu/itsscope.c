@@ -50,7 +50,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
     it_804D6D28 = &ICD;
@@ -100,28 +100,28 @@ int main(void)
             case 6: { int v1 = (int) ((int) (rnd() % 10)); it_80291F14(&GO[0], v1); } break; /* it_80291F14 */
             case 7: { int v2 = (int) ((int) (rnd() % 10)); float v3 = (float) (rw()); it_80291FA8(&GO[0], &VA[0], v2, v3); } break; /* it_80291FA8 */
             case 8: {  it_80292030(&GO[0]); } break; /* it_80292030 */
-            case 9: {  ret = (u32) itSscope_UnkMotion0_Anim(&GO[0]); } break; /* itSscope_UnkMotion0_Anim */
+            case 9: {  ret = (u32) ((itSscope_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itSscope_UnkMotion0_Anim */
             case 10: {  itSscope_UnkMotion0_Phys(&GO[0]); } break; /* itSscope_UnkMotion0_Phys */
-            case 11: {  ret = (u32) itSscope_UnkMotion0_Coll(&GO[0]); } break; /* itSscope_UnkMotion0_Coll */
+            case 11: {  ret = (u32) ((itSscope_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itSscope_UnkMotion0_Coll */
             case 12: {  it_802920B8(&GO[0]); } break; /* it_802920B8 */
-            case 13: {  ret = (u32) itSscope_UnkMotion3_Anim(&GO[0]); } break; /* itSscope_UnkMotion3_Anim */
+            case 13: {  ret = (u32) ((itSscope_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itSscope_UnkMotion3_Anim */
             case 14: {  itSscope_UnkMotion1_Phys(&GO[0]); } break; /* itSscope_UnkMotion1_Phys */
-            case 15: {  ret = (u32) itSscope_UnkMotion3_Coll(&GO[0]); } break; /* itSscope_UnkMotion3_Coll */
+            case 15: {  ret = (u32) ((itSscope_UnkMotion3_Coll(&GO[0])) != 0); } break; /* itSscope_UnkMotion3_Coll */
             case 16: {  itSScope_Logic21_PickedUp(&GO[0]); } break; /* itSScope_Logic21_PickedUp */
-            case 17: {  ret = (u32) itSscope_UnkMotion2_Anim(&GO[0]); } break; /* itSscope_UnkMotion2_Anim */
+            case 17: {  ret = (u32) ((itSscope_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itSscope_UnkMotion2_Anim */
             case 18: {  itSscope_UnkMotion2_Phys(&GO[0]); } break; /* itSscope_UnkMotion2_Phys */
             case 19: {  itSScope_Logic21_Dropped(&GO[0]); } break; /* itSScope_Logic21_Dropped */
             case 20: {  itSScope_Logic21_Thrown(&GO[0]); } break; /* itSScope_Logic21_Thrown */
             case 21: {  itSscope_UnkMotion3_Phys(&GO[0]); } break; /* itSscope_UnkMotion3_Phys */
-            case 22: {  ret = (u32) itSScope_Logic21_DmgDealt(&GO[0]); } break; /* itSScope_Logic21_DmgDealt */
-            case 23: {  ret = (u32) itSScope_Logic21_Clanked(&GO[0]); } break; /* itSScope_Logic21_Clanked */
-            case 24: {  ret = (u32) itSScope_Logic21_HitShield(&GO[0]); } break; /* itSScope_Logic21_HitShield */
-            case 25: {  ret = (u32) itSScope_Logic21_Reflected(&GO[0]); } break; /* itSScope_Logic21_Reflected */
-            case 26: {  ret = (u32) itSScope_Logic21_ShieldBounced(&GO[0]); } break; /* itSScope_Logic21_ShieldBounced */
+            case 22: {  ret = (u32) ((itSScope_Logic21_DmgDealt(&GO[0])) != 0); } break; /* itSScope_Logic21_DmgDealt */
+            case 23: {  ret = (u32) ((itSScope_Logic21_Clanked(&GO[0])) != 0); } break; /* itSScope_Logic21_Clanked */
+            case 24: {  ret = (u32) ((itSScope_Logic21_HitShield(&GO[0])) != 0); } break; /* itSScope_Logic21_HitShield */
+            case 25: {  ret = (u32) ((itSScope_Logic21_Reflected(&GO[0])) != 0); } break; /* itSScope_Logic21_Reflected */
+            case 26: {  ret = (u32) ((itSScope_Logic21_ShieldBounced(&GO[0])) != 0); } break; /* itSScope_Logic21_ShieldBounced */
             case 27: {  itSScope_Logic21_EnteredAir(&GO[0]); } break; /* itSScope_Logic21_EnteredAir */
-            case 28: {  ret = (u32) itSscope_UnkMotion4_Anim(&GO[0]); } break; /* itSscope_UnkMotion4_Anim */
+            case 28: {  ret = (u32) ((itSscope_UnkMotion4_Anim(&GO[0])) != 0); } break; /* itSscope_UnkMotion4_Anim */
             case 29: {  itSscope_UnkMotion4_Phys(&GO[0]); } break; /* itSscope_UnkMotion4_Phys */
-            case 30: {  ret = (u32) itSscope_UnkMotion4_Coll(&GO[0]); } break; /* itSscope_UnkMotion4_Coll */
+            case 30: {  ret = (u32) ((itSscope_UnkMotion4_Coll(&GO[0])) != 0); } break; /* itSscope_UnkMotion4_Coll */
             case 31: {  itSScope_Logic21_EvtUnk(&GO[0], &GO[1]); } break; /* itSScope_Logic21_EvtUnk */
             case 32: { { int j; for (j = 0; j < 5; j++) { HM((u32) it_803F5F40[j].anim_id); HM(FI((const void*) it_803F5F40[j].animated)); HM(FI((const void*) it_803F5F40[j].physics_updated)); HM(FI((const void*) it_803F5F40[j].collided)); } } } break; /* state tables */
             }

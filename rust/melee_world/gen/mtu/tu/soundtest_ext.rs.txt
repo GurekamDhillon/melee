@@ -18,43 +18,8 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn HSD_GObjFree(a0: *mut HSD_GObj);
-    fn HSD_MemAlloc(a0: i32) -> *mut c_void;
-    fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj;
-    fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_SObjLib_803A55DC(a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32);
-    fn Toy_80311680();
-    fn Toy_803124BC();
-    fn Toy_SetUnlockState(a0: i32, a1: i32);
-    fn gmMainLib_8015CCF0() -> *mut u32;
-    fn gmMainLib_8015CDC8() -> *mut gmm_x0_528_t;
-    fn gmMainLib_8015CDD4() -> *mut gmm_x0_528_t;
-    fn gmMainLib_8015CDE0() -> *mut gmm_x0_528_t;
-    fn gmMainLib_8015D06C(a0: u8) -> *mut i32;
-    fn gmMainLib_8015D48C(a0: u8) -> i32;
-    fn gmMainLib_8015D4E8(a0: u8, a1: i32);
-    fn gmMainLib_8015FA34(a0: i32);
-    fn gmMainLib_8015FB68();
-    fn gmMainLib_GetBonusMatchTotal() -> *mut u32;
-    fn gmMainLib_GetCoinMatchTotal() -> *mut u32;
-    fn gmMainLib_GetKOTotal() -> *mut i32;
-    fn gmMainLib_GetStockMatchTotal() -> *mut u32;
-    fn gmMainLib_GetTimeMatchTotal() -> *mut u32;
-    fn gm_8016468C();
-    fn gm_80164F18();
     fn gm_801A4B60();
-    fn gm_801BEB74(a0: u8);
-    fn gm_801BEFA4(a0: i32);
-    fn gm_801BEFC0(a0: i32);
-    fn gm_801BF040(a0: i8);
-    fn gm_801BF708(a0: i8);
     fn gm_ChangeGameModeAfterCurrentScene(a0: i32);
-    fn gm_GetAllStarData() -> *mut UnkAllstarData;
-    fn gm_SetNextGameModeStateId(a0: u8);
-    fn gm_SetupAllPlayerDefaults(a0: *mut PlayerInitData);
-    fn gm_SetupRulesDefaults(a0: *mut StartMeleeRules);
     fn lbArchive_LoadSymbols(a0: *const i8, a1: *mut c_void, a2: *const i8);
     fn lbAudioAx_80023694() -> i32;
     fn lbAudioAx_800236DC() -> i32;
@@ -68,40 +33,13 @@ pub mod ext {
     fn lbAudioAx_80024BD0() -> i32;
     fn lbAudioAx_80024C08(a0: i32) -> i32;
     fn lbAudioAx_80024E50(a0: i32);
-    fn lbCardGame_LoadArchive(a0: i32);
-    fn lbCardGame_SaveChanges();
-    fn lbCardGame_SetCardStatus(a0: u32);
-    fn lbCardNew_AllocWorkArea();
-    fn lbCardNew_CompleteNextTask() -> i32;
-    fn lbLang_SetSavedLanguage(a0: i32);
-    fn lbSnap_8001D40C(a0: i32) -> i32;
-    fn lbSnap_8001D5FC(a0: i32, a1: i32) -> i32;
-    fn lbSnap_8001D7B0(a0: i32, a1: i32, a2: i32) -> i32;
-    fn lbSnap_8001DE8C(a0: *mut c_void) -> i32;
-    fn lbSnap_8001E058(a0: i32, a1: i32) -> i32;
-    fn lbSnap_8001E204() -> i32;
-    fn lbSnap_8001E210() -> i32;
-    fn lbSnap_8001E218(a0: *mut c_void, a1: *mut c_void /* Unk80433380_48 */);
-    fn lb_8001B8C8(a0: i32) -> i32;
-    fn lb_8001C87C() -> u32;
-    fn lb_8001C8BC() -> i32;
-    fn lb_8001CBBC() -> u32;
-    fn lb_8001CC4C() -> i32;
     fn un_80302DF0() -> *mut un_80304138_objalloc_t;
     fn un_80302DF8(a0: *mut un_80304138_objalloc_t, a1: Option<unsafe extern "C" fn(u32) -> i32>);
-    fn un_80304210(a0: *mut un_80304138_objalloc_t, a1: *mut c_void, a2: i32, a3: i32, a4: i32) -> *mut un_80304138_objalloc_t;
-    fn un_80304334(a0: *mut un_80304138_objalloc_t);
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) { super::HSD_SObjLib_803A49E0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
-    pub static mut db_804D4AF8: i32 = unsafe { core::mem::zeroed() };
-    pub static mut db_804D6B88: i32 = unsafe { core::mem::zeroed() };
-    pub static mut db_build_timestamp: [i8; 1] = unsafe { core::mem::zeroed() };
-    pub static mut gmMainLib_8045A6C0: [u8; 73728] = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT

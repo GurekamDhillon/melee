@@ -48,7 +48,7 @@ if v.set() { (*p).x8 = v.leaf_ptr(&format!("{}.x8", path)) as _; } else { v.dump
 if v.set() { (*p).xC = v.leaf_ptr(&format!("{}.xC", path)) as _; } else { v.dump_p(&format!("{}.xC", path), ((*p).xC) as usize); }
 }
 {
-if v.set() { (*p).x10 = v.leaf_ptr(&format!("{}.x10", path)) as _; } else { v.dump_p(&format!("{}.x10", path), ((*p).x10) as usize); }
+v.bytes(&format!("{}.x10", path), &mut (*p).x10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x10));
 }
 {
 if v.set() { (*p).x14 = f32::from_bits(v.leaf_f32(&format!("{}.x14", path))); } else { v.dump_f32(&format!("{}.x14", path), ((*p).x14).to_bits()); }
@@ -218,7 +218,7 @@ unsafe extern "C" fn s_un_802FF7DC() { let v = vv(); v.call_begin("un_802FF7DC")
 unsafe extern "C" fn s_un_802FF884(a0: *mut i8) -> i32 { let v = vv(); v.call_begin("un_802FF884"); v.arg_s(a0 as *const u8); v.call_end();   v.ret_int("un_802FF884", 32, 1) as _ }
 unsafe extern "C" fn s_lbCardNew_AllocWorkArea() { let v = vv(); v.call_begin("lbCardNew_AllocWorkArea");  v.call_end();    }
 unsafe extern "C" fn s_lbCardGame_LoadArchive(a0: i32) { let v = vv(); v.call_begin("lbCardGame_LoadArchive"); v.arg_i(a0 as i64); v.call_end();    }
-unsafe extern "C" fn s_lbSnap_8001E218(a0: *mut core::ffi::c_void, a1: *mut core::ffi::c_void) { let v = vv(); v.call_begin("lbSnap_8001E218"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();    }
+unsafe extern "C" fn s_lbSnap_8001E218(a0: *mut core::ffi::c_void, a1: *mut melee_types::Unk80433380_48) { let v = vv(); v.call_begin("lbSnap_8001E218"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.call_end();    }
 unsafe extern "C" fn s_HSD_MemAlloc(a0: i32) -> *mut core::ffi::c_void { let v = vv(); v.call_begin("HSD_MemAlloc"); v.arg_i(a0 as i64); v.call_end();   v.ret_ptr("HSD_MemAlloc") as _ }
 unsafe extern "C" fn s_lbSnap_8001E204() -> i32 { let v = vv(); v.call_begin("lbSnap_8001E204");  v.call_end();   v.ret_int("lbSnap_8001E204", 32, 1) as _ }
 unsafe extern "C" fn s_lbSnap_8001E210() -> i32 { let v = vv(); v.call_begin("lbSnap_8001E210");  v.call_end();   v.ret_int("lbSnap_8001E210", 32, 1) as _ }

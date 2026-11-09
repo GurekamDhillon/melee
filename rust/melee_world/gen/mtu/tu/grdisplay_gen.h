@@ -25,7 +25,7 @@ __typeof__(int) HSD_CObjSetCurrent(__typeof__(struct HSD_CObj *) a0) { T(1011); 
 void HSD_FogSet(__typeof__(struct HSD_Fog *) a0) { T(1012); T(PI((const void*) a0)); }
 __typeof__(unsigned int) HSD_GObj_80390EB8(__typeof__(int) a0) { T(1013); T((u32) a0); return (__typeof__(unsigned int)) (fv()); }
 void HSD_GObj_80390ED0(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned int) a1) { T(1014); T(PI((const void*) a0)); T((u32) a1); }
-void HSD_GObj_JObjCallback(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1015); T(PI((const void*) a0)); T((u32) a1); }
+void HSD_GObj_JObjCallback(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1015); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
 void HSD_JObjDisp(__typeof__(struct HSD_JObj *) a0, __typeof__(float (*)[4]) a1, __typeof__(enum HSD_TrspMask) a2, __typeof__(unsigned int) a3) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); T((u32) a3); }
 void HSD_JObjSetupMatrixSub(__typeof__(struct HSD_JObj *) a0) { T(1017); T(PI((const void*) a0)); }
 void HSD_MtxInverseConcat(__typeof__(float (*)[4]) a0, __typeof__(float (*)[4]) a1, __typeof__(float (*)[4]) a2) { T(1018); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); }

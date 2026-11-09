@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -93,9 +93,9 @@ int main(void)
             case 0: {  it_802B18B0(&GO[0]); } break; /* it_802B18B0 */
             case 1: { Fighter_Part v2 = (Fighter_Part) ((int) fv()); ItemKind v3 = (ItemKind) (((rnd() & 1) ? 80 : 153)); float v4 = (float) (rw()); ret = PI(it_802B19AC(&GO[0], &VA[0], v2, v3, v4)); } break; /* it_802B19AC */
             case 2: {  itSeakNeedleHeld_Logic110_PickedUp(&GO[0]); } break; /* itSeakNeedleHeld_Logic110_PickedUp */
-            case 3: {  ret = (u32) itSeakneedleheld_UnkMotion0_Anim(&GO[0]); } break; /* itSeakneedleheld_UnkMotion0_Anim */
+            case 3: {  ret = (u32) ((itSeakneedleheld_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itSeakneedleheld_UnkMotion0_Anim */
             case 4: {  itSeakneedleheld_UnkMotion0_Phys(&GO[0]); } break; /* itSeakneedleheld_UnkMotion0_Phys */
-            case 5: {  ret = (u32) itSeakneedleheld_UnkMotion0_Coll(&GO[0]); } break; /* itSeakneedleheld_UnkMotion0_Coll */
+            case 5: {  ret = (u32) ((itSeakneedleheld_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itSeakneedleheld_UnkMotion0_Coll */
             case 6: {  itSeakNeedleHeld_Logic110_EvtUnk(&GO[0], &GO[1]); } break; /* itSeakNeedleHeld_Logic110_EvtUnk */
             case 7: { { int j; for (j = 0; j < 1; j++) { HM((u32) it_803F70A8[j].anim_id); HM(FI((const void*) it_803F70A8[j].animated)); HM(FI((const void*) it_803F70A8[j].physics_updated)); HM(FI((const void*) it_803F70A8[j].collided)); } } } break; /* state tables */
             }

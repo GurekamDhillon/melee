@@ -636,7 +636,10 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
     let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}")).expect("scene");
     let mut e = melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn).map_err(|e| format!("engine boot: {e}"))?;
     // the scenario's pad script (pad_fixed.lua): golden frame k reads sample k-1 (a fixed one-frame latency), as the legacy path does
-    if scenario.starts_with("pad_") {
+    // a MELEE_PAD_SCRIPT txt script replaces it (the tag scenario: rust/mods/tag_fighter)
+    if pads::script_pad(0, 0).is_some() {
+        e.set_pad_feed(|tick, port| raw_pad_status(pads::script_pad(port, tick as i32).unwrap_or_default(), port));
+    } else if scenario.starts_with("pad_") {
         e.set_pad_feed(|tick, port| raw_pad_status(pads::pad_fixed(port, tick as i32), port));
     }
     Ok(e)

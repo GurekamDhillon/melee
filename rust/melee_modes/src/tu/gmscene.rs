@@ -211,7 +211,8 @@ type Pred = Option<unsafe extern "C" fn() -> i32>;
 /* 4D6724 */ pub static mut gm_804D6724: Option<unsafe extern "C" fn()> = None;
 /* 4D6720 */ pub static mut gm_804D6720: *mut GameSceneInfo = null_mut();
 
-pub static mut gm_803DA888: [u64; 8] = [0, 0x82FFFA, 0, 0x8EFFFA, 0x800FFA, 0x808FFA, 0x800FFA, 0];
+// TARGET_PC: row 7 (unused by retail) is the Start pause's mask, the tag / stage transition freeze (tu::tag_swap)
+pub static mut gm_803DA888: [u64; 8] = [0, 0x82FFFA, 0, 0x8EFFFA, 0x800FFA, 0x808FFA, 0x800FFA, 0x82FFFA];
 
 pub static mut gm_803DA8C8: [u64; 2] = [u64::MAX, u64::MAX];
 

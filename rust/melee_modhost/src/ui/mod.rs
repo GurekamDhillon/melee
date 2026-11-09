@@ -616,6 +616,18 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         };
         if write_bytes(&mut c, out, &b) { GD_OK } else { GD_EINVAL }
     });
+    // read-only view of the sim transition (melee_modes::tu::tag_swap; the tag cinematic): 9 i32 words, phase, kind,
+    // slot, frame, len, frames since the last release (saturating), release count, from kind, to kind; then skipped
+    f!("gd_ui_transition", |mut c: Caller<'_, PresData>, out: u32| -> i32 {
+        let t = unsafe { melee_modes::tu::tag_swap::TRANSITION };
+        let since = unsafe { melee_modes::tu::tag_swap::LOGIC_FRAMES.wrapping_sub(t.released_at) };
+        let w = [t.phase as i32, t.kind as i32, t.slot as i32, t.frame as i32, t.len as i32,
+                 if t.count == 0 { i32::MAX } else { since.min(i32::MAX as u32) as i32 }, t.count as i32,
+                 t.from_kind as i32, t.to_kind as i32, t.skipped as i32];
+        let mut b = [0u8; 40];
+        for (i, x) in w.iter().enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
+        if write_bytes(&mut c, out, &b) { GD_OK } else { GD_EINVAL }
+    });
     f!("gd_ui_inject", |c: Caller<'_, PresData>, port: u32, pad: u32| -> i32 {
         if !feat(&c, FEATURE_UI_SIM_INPUT) {
             return GD_ECAP;

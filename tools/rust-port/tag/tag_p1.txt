@@ -1,0 +1,17 @@
+# tag_fighter headless scenario (P1 only; MELEE_PAD_CHANNELS=0): pad_falcon_fox_fd with MELEE_TAG_PARTNER=marth.
+# <frames> <buttons hex> [stickX stickY]; 0004 = D-pad down (the tag button)
+150 0000
+2 0004
+# tag 1 (falcon -> marth): 66 frozen frames, then a walk right and a jab
+120 0000
+30 0000 80 0
+4 0100
+60 0000
+2 0004
+# tag 2 (marth -> falcon), skipped 15 frames in with D-pad down again
+15 0000
+2 0004
+140 0000
+2 0004
+# tag 3 (falcon -> marth), plays out
+200 0000

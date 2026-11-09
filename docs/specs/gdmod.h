@@ -192,6 +192,13 @@ GD_API(gd_f32, gd_cosf, (gd_f32 x));
 GD_API(gd_f32, gd_atan2f, (gd_f32 y, gd_f32 x));
 GD_API(gd_f32, gd_powf, (gd_f32 x, gd_f32 y));
 
+/* stage switching (notes/modhost.md "Stage switching"): the live ground kind; a switch queued for after this frame's
+ * procs (0 queued, else the refusal: -1 not gameplay, -5 same, -9 fighter grabbed / thrown / respawning, -18 stage not
+ * one of FD / BF / YS / DL / FoD); the last applied switch's result (1 pending, 0 done, < 0 refused at apply) */
+GD_API(gd_i32, gd_stage_grkind, (void));
+GD_API(gd_i32, gd_stage_switch, (gd_i32 grkind));
+GD_API(gd_i32, gd_stage_switch_result, (void));
+
 /* a sim mod's state digest for this logic frame: folded into the hash a netplay session compares (NHV1 mixed with the
  * mods' word, only when some mod gave one), so a peer whose mod state diverges desyncs at that frame. Call it from a
  * frame or gameplay hook; the word is cleared at each frame begin. */

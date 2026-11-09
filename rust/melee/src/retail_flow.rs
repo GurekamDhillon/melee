@@ -543,7 +543,8 @@ impl RetailPlay {
             let sh = self.lab.as_ref().unwrap().sh.clone();
             let mut s = sh.borrow_mut();
             let n = s.outbox.len().min(melee_modhost::lab::LAB_CMDS_PER_FRAME);
-            let v = s.outbox.drain(..n).collect();
+            let mut v: Vec<melee_modhost::lab::LabCmd> = s.outbox.drain(..n).collect();
+            v.extend(crate::lab::script_cmds(self.lab_clock));
             self.lab_clock += 1;
             s.apply_frame = self.lab_clock + 1;
             v
@@ -557,6 +558,7 @@ impl RetailPlay {
             s.applied.extend(cmds.iter().enumerate().map(|(i, c)| ((i >= n_host) as u8, *c)));
         }
         let ran = lab.tick(four, &cmds);
+        lab.trace(self.lab_clock);
         // a frozen Lab holds the sound like the retail pause (music stream paused, stage sfx ducked); stepping keeps it held;
         let hold = lab.paused && !lab.g.e.ended;
         // re-applied every held frame: a slot load or rewind restores the sound state (it is a snapshotted static)

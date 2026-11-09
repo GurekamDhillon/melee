@@ -190,6 +190,8 @@ pub struct ModesGame {
     f0: u32,
     /// the newest drawn frame, still in the arena; taken (detached) before the next snapshot load can happen
     raw: Option<Vec<melee_gx::draw::DrawCmd>>,
+    /// a detached frame waiting for `take_frame` (a frozen redraw's)
+    held: Option<Vec<melee_gx::draw::DrawCmd>>,
     detach: Detacher,
 }
 
@@ -209,7 +211,7 @@ impl ModesSnap {
 
 impl ModesGame {
     pub fn new(e: Engine) -> Self {
-        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, detach: Detacher::default() }
+        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, held: None, detach: Detacher::default() }
     }
     fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
         if self.base.borrow().is_none() {
@@ -225,6 +227,7 @@ impl ModesGame {
     }
     /// One engine tick with these pads; the frame it drew is kept on the system heap.
     pub fn step(&mut self, pads: [PADStatus; 4]) {
+        self.held = None;
         self.e.set_pads(Some(pads));
         self.e.tick();
         let f = {
@@ -270,7 +273,29 @@ impl ModesGame {
 
     /// The tick's newest frame as a detached copy (after the session's frames of this tick).
     pub fn take_frame(&mut self) -> Option<Vec<melee_gx::draw::DrawCmd>> {
+        if let Some(f) = self.held.take() {
+            return Some(f);
+        }
         self.raw.take().map(|f| self.detach.detach(f))
+    }
+
+    /// Draw the current state without advancing it (the LAB's frozen redraw after a load / rewind / position change):
+    /// a render-only tick (gmscene `RENDER_ONLY`, no logic frames) between a save and a load of the state, so the
+    /// pass leaves no trace in the game (hash-neutral); its frame is detached before the load and is what
+    /// `take_frame` hands out next.
+    pub fn redraw(&mut self, pads: [PADStatus; 4]) {
+        if self.e.ended {
+            return;
+        }
+        let s = RbGame::save(self);
+        unsafe { melee_modes::tu::gmscene::RENDER_ONLY = true };
+        self.step(pads);
+        unsafe { melee_modes::tu::gmscene::RENDER_ONLY = false };
+        let f = self.raw.take().map(|f| self.detach.detach(f));
+        RbGame::load(self, &s);
+        if f.is_some() {
+            self.held = f;
+        }
     }
 }
 

@@ -436,11 +436,11 @@ file; `DOLPHIN_PRIORITY=BelowNormal` (Idle starved while builds ran).
 | 21/Game_20190309T173910 | stage 5, Puff v Marth | -123 P4 x 1e-3 | **match** | recording console only |
 | 14/Game_20190309T111022 | Yoshi's, ICs v Fox | match | **match**, 11,430 | - |
 | 12/Game_20190309T094028 | Stadium, Marth v Falcon | match | **match**, 7,374 | - |
-| 14/Game_20190309T134017 | BF teams, Peach/Sheik/Peach/Marth | 207 P2 percent 0 vs 14 | 206 s2 (P2 Sheik): hit by s0 (Peach, motion 64) lands on the console, not in Rust (motion 42 vs 80); s0 `x2144` 0 vs 13019 at 204 | engine: doubles hit |
-| 20/Game_20190309T131733 | BF teams, Fox/Fox/Falco/Sheik | 1030 P2 percent | 1029 s2 (P2 Fox) damaged on the console (motion 14 vs 87); s4 (P3 Falco, motion 60) hitbox `x914[0..1].hurt_coll_pos` differs at 1028 | engine: doubles hit |
-| 16/Game_20190309T123832 | DL teams, Marth/ICs/Marth/Fox | 368 P1 x | 367 s0 (P1 Marth) damaged on the console (motion 60 vs 83), 13.95 % vs 10 % | engine: doubles hit |
-| stream/Game_20190309T162146 | BF teams, Falco/Marth/Peach/Fox | 517 P2 x | 516 s4 (P3 Peach, motion 341) damaged on the console (vs 90); s2 (P2 Marth, motion 56) hitbox collides elsewhere at 515, `x195c_hitlag` 0 vs 7 | engine: doubles hit |
-| 19/Game_20190309T152343 | stage 15, 4 players | -123 P1 x 38.42 vs -77.07 | -123 s0 cur_pos: Dolphin -77.07 = the .slp | engine: 4-player spawn off the neutral-spawn table |
+| 14/Game_20190309T134017 | BF teams, Peach/Sheik/Peach/Marth | 207 P2 percent 0 vs 14 | 206 s2 (P2 Sheik): hit by s4 (P3 Peach, the teammate, motion 64) lands on the console, not in Rust (motion 42 vs 80) | engine: Team Attack off (fixed, round 11) |
+| 20/Game_20190309T131733 | BF teams, Fox/Fox/Falco/Sheik | 1030 P2 percent | 1029 s2 (P2 Fox) damaged by s4 (P3 Falco, the teammate, motion 60) on the console (motion 14 vs 87) | engine: Team Attack off (fixed, round 11) |
+| 16/Game_20190309T123832 | DL teams, Marth/ICs/Marth/Fox | 368 P1 x | 367 s0 (P1 Marth) damaged by s6 (P4 Fox, the teammate) on the console (motion 60 vs 83), 13.95 % vs 10 % | engine: Team Attack off (fixed, round 11) |
+| stream/Game_20190309T162146 | BF teams, Falco/Marth/Peach/Fox | 517 P2 x | 516 s4 (P3 Peach, motion 341) damaged by s2 (P2 Marth, the teammate, motion 56) on the console (vs 90) | engine: Team Attack off (fixed, round 11) |
+| 19/Game_20190309T152343 | stage 15, 4 players | -123 P1 x 38.42 vs -77.07 | -123 s0 cur_pos: Dolphin -77.07 = the .slp | engine: 1.x spawn off the six-stage table (fixed, round 11) |
 | 11/Game_20190308T115404 | Stadium, ICs v Peach | match | 2773 s3 (Nana) `cpu.x30` 15 vs 24 only | Nana CPU scratch (Randf draw count), Stadium |
 | 13/Game_20190309T122423 | Stadium, ICs v Marth | match | 5327 s1 (Nana) `cpu.x30` 14 vs 7 only | same |
 
@@ -560,3 +560,39 @@ of a gobj the guest spawns mid-frame.
 Numbers (port/fak7 on rust-port b05adf319 + port/akoracle): Akaneia files 16 -> 17 of 51 at .slp level (231850 Dedede
 matches), no crash; the other five Dedede files move far later (223810 65 -> 138, 230601 169 -> 1098, 233221 437 -> 2122,
 233518 81 -> 1882, 232950 -8 -> 1207). Hero 391 -> 392 of 428, local 125/125, own 917/917 (no row changed).
+
+## Round 11 (port/oracle-fix11): doubles Team Attack and the 1.x spawn off the six-stage table
+
+**Team Attack.** The four "doubles hit" files above were all friendly fire: the recorded Post-Frame's `last_hit_by` names
+the teammate (134017 P2 Sheik hit by P3 Peach, both team 0; 131733 P2 Fox by P3 Falco, team 1; 123832 P1 Marth by
+P4 Fox, team 1; 162146 P3 Peach by P2 Marth, team 1), and every Gang-Steals file (all 206 with 3+ players, 3,257 of
+the singles) records Game Start bitfield 2 bit 0 = 1: `StartMeleeRules.friendly_fire` on. The engine ran every
+replay with the saved rules' default (off), so `ftColl_80078C70`'s team test (`!gm_8016B168() || gm_8016B0D4() ||
+team differs`) refused a teammate's hitbox. (The earlier reading of 134017, "s0 Peach hits", was the other Peach:
+`x2144` is an AX voice slot and differs anyway.) Fix: `slpcheck::convert` puts the bit in `Scenario.friendly_fire`
+(scene token `teamattack=0|1`), `SceneLaunch_RuleFriendlyFire` writes `GameRules.friendly_fire` (what gm_1601 copies
+into the match rules) and the launch's `start.rules`. The C build has no .slp playback: Rust only.
+
+**The 1.x spawn.** `g_spawns.bin` (20XX Neutral Spawns, disassembled; `legacy171_codes.py` plays it in the oracle)
+has two halves. The CSS half (C2 0x80263058) writes `PlayerInitData.spawn_pos`: FFA in port order (0, 1, 2, ...);
+teams: the first port 0, its teammate 3, the other team 1 then 2 (0xFF, vanilla, with three teams or a team of three).
+The stage half (C2 0x801C0A48, in Ground_801C0800) moves the four joints of Battlefield (0x1F), Dream Land (0x1C) and
+Yoshi's Story (8) to left high, right high, right low, left low and flips the sign of two Final Destination (0x20)
+joints; nothing else. So the recorded `spawn_pos` bytes are the console's spawn points: `GameInfo::player().spawn_pos`
+-> `PlayerSpec.spawn_pos` -> `SceneLaunch_PlayerSpawnPos` -> `PlayerInitData.spawn_pos` (`getSpawnPoint`), and
+`legacy_neutral_spawn_replay()` now holds on every stage of a 1.x replay (the m-ex `neutral_spawn` order is Slippi
+Online's, later): on a stage outside `legacy_spawn_table` the fighter stays on that joint (152343, Brinstar Depths:
+P1 -77.07). Facing was the side of the spawn; the console's is `fn_8016DEEC` on an unfilled spawn table (every x
+equal, so its tie branch: the first other port not on this team, when lower, already has its facing and this one takes
+the opposite; else +1): FFA on Battlefield faces + - - - (left-low P4 faces left; 6 files diverged at -123 on P4's
+facing), 2v2 P1+P4 vs P2+P3 faces + - - +, Brinstar's P3 at x -50.6 faces left. Applied with 3+ fighters; 1v1 keeps
+facing the centre from its own spawn (on Corneria, Kongo Jungle and Big Blue the first port's joint is on the right
+and it faces left: 030631, 174456, 174719 match that way and not the other).
+
+**Results (fast profile, 7f200f065 + port/oracle171 + this).** Gang-Steals files with 3+ players (206; 202 with four):
+**1 -> 106 of 206 match** (Team Attack alone 99), 198 better, none worse, none left at frame -123. The four bucket
+files: 131733 and 162146 match the .slp to the end and the oracle on every frame (12,221 / 8,234 frames); 152343
+matches both (a 2-frame game, 126 oracle frames); 134017 207 -> 8718 (oracle: s2's `active_duration.lstick` /
+`anim_id` at 8718, an input-class difference, not a hit), 123832 368 -> 5344 (.slp) / 1989 (oracle: s3 Nana
+`cpu.lstick.y`, the Nana CPU class). Singles sample (every singles file off the six stages plus 40 across them):
+42 -> 43 of 47 (152343), none worse. What is left in the 4-player set: x 55, stocks 43, percent 2.

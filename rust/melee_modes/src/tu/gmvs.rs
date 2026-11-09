@@ -1891,55 +1891,73 @@ static legacy_spawn_table: [LegacySpawnEntry; 6] = [
     LegacySpawnEntry { stage_id: 0x20, singles: [(0, None), (1, None)], teams: [(0, None), (2, None), (1, None), (3, None)] },
 ];
 
-/// Whether the replay playing is a Slippi 1.x one on a stage of `legacy_spawn_table` (its Neutral Spawn is
-/// `legacy_neutral_spawn`).
+/// Whether the replay playing is a Slippi 1.x one (its Neutral Spawn is `legacy_neutral_spawn`, on every stage: the
+/// 2019 code's stage half only moves the joints of `legacy_spawn_table`'s stages; elsewhere the fighters stand on the
+/// stage's own joint of their recorded `spawn_pos`, not on m-ex's `neutral_spawn` order).
 unsafe fn legacy_neutral_spawn_replay() -> bool {
-    let stage_id = gm_GetStKind() as i32;
-    ext::Replay_Active() != 0
-        && melee_runtime::tu::mex_data::Slippi_Version() < 20000
-        && legacy_spawn_table.iter().any(|e| e.stage_id == stage_id)
+    ext::Replay_Active() != 0 && melee_runtime::tu::mex_data::Slippi_Version() < 20000
 }
 
-/// Slippi 1.x's Neutral Spawn for fighter slot `slot`: 1v1 by port order; 2v2 with the team of the first port on the
-/// left and each team's lower port high; anything else by the port itself onto left high, right high, right low, left
-/// low.
+/// Slippi 1.x's Neutral Spawn for fighter slot `slot`. Position, on a `legacy_spawn_table` stage: 1v1 by port order; 2v2
+/// with the team of the first port on the left and each team's lower port high; anything else by the port itself onto
+/// left high, right high, right low, left low. On any other stage the joint `getSpawnPoint` already chose (the
+/// recorded `spawn_pos`) stays.
+///
+/// Facing, on every stage: what `fn_8016DEEC` decides on the console, where the spawn table it reads is still
+/// unfilled, so every x is equal and its tie branch runs: the first other port not on this team, when it is a lower
+/// port, has its facing already and this fighter takes the opposite; otherwise +1. Read off the Gang-Steals 1.7.1
+/// frame -123 post-frames: 2v2 P1+P4 vs P2+P3 face + - - +, FFA on Battlefield + - - - (left-low P4 faces left), the
+/// 4-player Brinstar Depths file's P3 at x -50.6 faces left. Not the side of the spawn.
 unsafe fn legacy_neutral_spawn(slot: i32) {
     let stage_id = gm_GetStKind() as i32;
-    let Some(e) = legacy_spawn_table.iter().find(|e| e.stage_id == stage_id) else { return };
     let active: std::vec::Vec<i32> = (0..4).filter(|&p| ext::Player_GetPlayerSlotType(p) != Gm_PKind_NA).collect();
     let teams = controller.start.is_teams == 1;
-    // 2v2: the first port's team, then the other, each in port order
-    let mut order: std::vec::Vec<i32> = std::vec::Vec::new();
-    if teams && active.len() == 4 {
-        let first_team = ext::Player_GetTeam(active[0]);
-        order.extend(active.iter().copied().filter(|&p| ext::Player_GetTeam(p) == first_team));
-        order.extend(active.iter().copied().filter(|&p| ext::Player_GetTeam(p) != first_team));
-        if order.len() != 4 || ext::Player_GetTeam(order[1]) != first_team || ext::Player_GetTeam(order[2]) != ext::Player_GetTeam(order[3]) {
-            order.clear();
+    if let Some(e) = legacy_spawn_table.iter().find(|e| e.stage_id == stage_id) {
+        // 2v2: the first port's team, then the other, each in port order
+        let mut order: std::vec::Vec<i32> = std::vec::Vec::new();
+        if teams && active.len() == 4 {
+            let first_team = ext::Player_GetTeam(active[0]);
+            order.extend(active.iter().copied().filter(|&p| ext::Player_GetTeam(p) == first_team));
+            order.extend(active.iter().copied().filter(|&p| ext::Player_GetTeam(p) != first_team));
+            if order.len() != 4 || ext::Player_GetTeam(order[1]) != first_team || ext::Player_GetTeam(order[2]) != ext::Player_GetTeam(order[3]) {
+                order.clear();
+            }
+        }
+        let entry = if !order.is_empty() {
+            order.iter().position(|&p| p == slot).map(|idx| e.teams[idx])
+        } else if !teams && active.len() == 2 {
+            active.iter().position(|&p| p == slot).map(|idx| e.singles[idx])
+        } else {
+            // anything else (FFA, uneven or two-fighter teams) by port: P1 left high, P2 right high, P3 right low, P4 left low
+            const BY_PORT: [usize; 4] = [0, 2, 3, 1];
+            Some(e.teams[BY_PORT[slot as usize]])
+        };
+        if let Some(entry) = entry {
+            let mut pos: Vec3 = core::mem::zeroed();
+            ext::Stage_80224E64(entry.0, &mut pos);
+            if let Some(y) = entry.1 {
+                pos.y = y;
+            }
+            ext::Player_80032768(slot, &mut pos);
+            ext::Player_LoadPlayerCoords(slot, &mut pos);
         }
     }
-    // (entry, Some(faces right)): None faces by the side, as neutral_spawn_set
-    let (entry, left) = if !order.is_empty() {
-        let Some(idx) = order.iter().position(|&p| p == slot) else { return };
-        (e.teams[idx], Some(idx < 2))
-    } else if !teams && active.len() == 2 {
-        let Some(idx) = active.iter().position(|&p| p == slot) else { return };
-        (e.singles[idx], Some(idx == 0))
+    let facing = if active.len() >= 3 {
+        // fn_8016E2BC runs the slots in port order, so a lower port's facing is the one set here
+        let opponent = active.iter().copied().find(|&p| p != slot && (!teams || ext::Player_GetTeam(p) != ext::Player_GetTeam(slot)));
+        match opponent {
+            Some(p) if p < slot && ext::Player_GetFacingDirection(p) == 1.0 => -1.0,
+            _ => 1.0,
+        }
     } else {
-        // anything else (FFA, uneven or two-fighter teams) by port: P1 left high, P2 right high, P3 right low, P4 left low
-        const BY_PORT: [usize; 4] = [0, 2, 3, 1];
-        (e.teams[BY_PORT[slot as usize]], None)
+        // 1v1 faces the stage's centre from its own spawn (also from a centre joint): on the six stages the same as the
+        // rule above; on Corneria, Kongo Jungle and Big Blue the first port's joint is on the right and it faces left
+        // (Gang-Steals 030631, 174456, 174719), which the rule above gets wrong
+        let mut pos: Vec3 = core::mem::zeroed();
+        ext::Player_LoadPlayerCoords(slot, &mut pos);
+        if pos.x <= 0.0 { 1.0 } else { -1.0 }
     };
-    let mut pos: Vec3 = core::mem::zeroed();
-    ext::Stage_80224E64(entry.0, &mut pos);
-    if let Some(y) = entry.1 {
-        pos.y = y;
-    }
-    ext::Player_80032768(slot, &mut pos);
-    ext::Player_LoadPlayerCoords(slot, &mut pos);
-    // the left side faces right, also from a centre joint (Fountain of Dreams' x 0 teams spawns)
-    let right = left.unwrap_or(pos.x <= 0.0);
-    ext::Player_SetFacingDirection(slot, if right { 1.0 } else { -1.0 });
+    ext::Player_SetFacingDirection(slot, facing);
 }
 
 pub unsafe fn fn_8016E2BC() {

@@ -28,6 +28,8 @@ pub struct PlayerInfo {
     pub ptype: u8,
     pub stocks: u8,
     pub costume: u8,
+    /// `PlayerInitData.spawn_pos` (+5): the spawn point the CSS (or a Neutral Spawn code's CSS half) assigned.
+    pub spawn_pos: u8,
     pub team_shade: u8,
     pub handicap: u8,
     pub team: u8,
@@ -106,6 +108,7 @@ impl GameInfo {
             ptype: self.u8(b + 1),
             stocks: self.u8(b + 2),
             costume: self.u8(b + 3),
+            spawn_pos: self.u8(b + 5),
             team_shade: self.u8(b + 7),
             handicap: self.u8(b + 8),
             team: self.u8(b + 9),

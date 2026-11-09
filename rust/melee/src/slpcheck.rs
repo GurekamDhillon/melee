@@ -81,6 +81,9 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
             handicap: p.handicap as i32,
             cpu_idle: false,
             sub_color: p.team_shade as i32,
+            // the console's spawn point: the CSS's, or on a 1.x replay the 20XX Neutral Spawn code's CSS half (first
+            // port's team on points 0 and 3, the other team on 1 and 2; FFA in port order)
+            spawn_pos: p.spawn_pos as i32,
         });
     }
     if scn.players.iter().flatten().count() < 2 {
@@ -109,6 +112,9 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     }
     scn.rule_stocks = max_stocks;
     scn.teams = info.is_teams() as i32;
+    // Game Bitfield 2 bit 0: StartMeleeRules.friendly_fire (Team Attack). Every 2019 Gang-Steals doubles file has it on;
+    // left at the saved default (off) a teammate's hit never landed (201 of 203 teams files diverged at one).
+    scn.friendly_fire = (info.bitfield2() & 1) as i32;
     scn.item_freq = if info.item_spawn() < 0 { -2 } else { info.item_spawn() as i32 };
     if info.item_spawn() >= 0 {
         notes.push(format!("items on (frequency {}), item mask {:02x?}: item spawns are not driven by the file", info.item_spawn(), info.item_bits()));

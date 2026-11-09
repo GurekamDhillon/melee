@@ -872,7 +872,7 @@ pub fn scenario_of_scene(sc: &str) -> Result<melee_engine::scenario::Scenario, S
     let p = parse_scene(sc).ok_or_else(|| format!("netplay scene does not parse: {sc}"))?;
     PlayEnv::default().scene_check(&p)?;
     let ck = |t: &str| PlayEnv::default().ck_for_token(t);
-    let spec = |c: i32, color: i32| PlayerSpec { ckind: c, slot_type: 0, cpu_level: -1, color, team: -1, stocks: -1, handicap: -1, cpu_idle: false, sub_color: -1 };
+    let spec = |c: i32, color: i32| PlayerSpec { ckind: c, slot_type: 0, cpu_level: -1, color, team: -1, stocks: -1, handicap: -1, cpu_idle: false, sub_color: -1, spawn_pos: -1 };
     let mut players = [None; 6];
     players[0] = Some(spec(ck(&p.host_tok), p.host_color));
     players[1] = Some(spec(ck(&p.guest_tok), p.guest_color));
@@ -885,6 +885,7 @@ pub fn scenario_of_scene(sc: &str) -> Result<melee_engine::scenario::Scenario, S
         teams: 0,
         time_limit: HostRules::from_scene(&p).and_then(|r| r.time_secs).map_or(p.minutes * 60, |s| s.max(1)),
         rule_stocks: p.stocks,
+        friendly_fire: -1,
         onep_mode: -1,
         onep_step: -1,
         onep_level: -1, game_mode: -1, entry_state: -1,

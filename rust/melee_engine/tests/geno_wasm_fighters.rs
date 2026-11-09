@@ -267,3 +267,21 @@ fn riposte_wasm_equals_riposte_lua() {
         4000,
     );
 }
+
+#[test]
+fn goku_ki_wasm_equals_goku_ki_lua() {
+    compare_pkg(
+        "tools/rust-port/golden/coverage/goku-xv2-lua/goku_ki.lua",
+        "rust/mods/geno_fighters/goku_ki.wasm",
+        &["charge", "counter_damage", "stored"],
+        &[GLUA_INT, GLUA_FLOAT, GLUA_INT],
+        &["KameTap", "KameMid", "KameFull", "KameSuper", "KiCharge", "ITEnd", "ITEndAir", "RushCombo"],
+        &FNS[..12],
+        |r, w| {
+            // ki (hundredths) around the vanish cost (10) and the super cost (100); action frames 2 and 12
+            w[GENO_LUA_IO_KI as usize] = [0, 999, 1000, 1001, 9999, 10000, 10001, 15000][r.below(8) as usize];
+            w[GENO_LUA_IO_ACTION_FRAME as usize] = [1, 2, 3, 12, 20][r.below(5) as usize];
+        },
+        4000,
+    );
+}

@@ -82,10 +82,10 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "HSD_GObjProc_RemoveProc" => { let r = melee_runtime::tu::gobjproc::HSD_GObjProc_RemoveProc(w2p(a[0])); { r; 0 } }
         "HSD_GObj_80390CD4" => { let r = melee_runtime::tu::gobj::HSD_GObj_80390CD4(w2p(a[0])); { r; 0 } }
         "HSD_GObj_80390ED0" => { let r = melee_runtime::tu::gobj::HSD_GObj_80390ED0(w2p(a[0]), a[1] as u32); { r; 0 } }
-        "HSD_GObj_803910D8" => { let r = melee_runtime::tu::gobj::HSD_GObj_803910D8(w2p(a[0]), a[1] as i32); { r; 0 } }
-        "HSD_GObj_FogCallback" => { let r = melee_runtime::tu::gobj::HSD_GObj_FogCallback(w2p(a[0]), a[1] as i32); { r; 0 } }
-        "HSD_GObj_JObjCallback" => { let r = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(w2p(a[0]), a[1] as i32); { r; 0 } }
-        "HSD_GObj_LObjCallback" => { let r = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(w2p(a[0]), a[1] as i32); { r; 0 } }
+        "HSD_GObj_803910D8" => { let r = melee_runtime::tu::hsd_3910::HSD_GObj_803910D8(w2p(a[0]), a[1] as i32); { r; 0 } }
+        "HSD_GObj_FogCallback" => { let r = melee_runtime::tu::hsd_3910::HSD_GObj_FogCallback(w2p(a[0]), a[1] as i32); { r; 0 } }
+        "HSD_GObj_JObjCallback" => { let r = melee_runtime::tu::hsd_3910::HSD_GObj_JObjCallback(w2p(a[0]), a[1] as i32); { r; 0 } }
+        "HSD_GObj_LObjCallback" => { let r = melee_runtime::tu::hsd_3910::HSD_GObj_LObjCallback(w2p(a[0]), a[1] as i32); { r; 0 } }
         "HSD_GObj_SetupProc" => { let r = melee_runtime::tu::gobjproc::HSD_GObj_SetupProc(w2p(a[0]), w2p(a[1]), a[2] as u8); p2w(r) }
         "HSD_JObjAddAnimAll" => { let r = melee_runtime::tu::jobj_ptr::HSD_JObjAddAnimAll(w2p(a[0]), w2p(a[1]), w2p(a[2]), w2p(a[3])); { r; 0 } }
         "HSD_JObjAddChild" => { let r = melee_items::tu::jobj::HSD_JObjAddChild(w2p(a[0]), w2p(a[1])); { r; 0 } }
@@ -158,6 +158,7 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "Player_SetCostumeId" => { let r = melee_fighter::tu::player::Player_SetCostumeId(a[0] as i32, a[1] as i32); { r; 0 } }
         "Player_SetPlayerCharacter" => { let r = melee_fighter::tu::player::Player_SetPlayerCharacter(a[0] as i32, w2v(a[1])); { r; 0 } }
         "Player_SetSlottype" => { let r = melee_fighter::tu::player::Player_SetSlottype(a[0] as i32, w2v(a[1])); { r; 0 } }
+        "_HSD_mkEnvelopeModelNodeMtx" => { let r = melee_runtime::tu::displayfunc_native::_HSD_mkEnvelopeModelNodeMtx(w2p(a[0]), w2p(a[1])); p2w(r) }
         "__assert" => { let r = melee_runtime::tu::debug::__assert(w2p(a[0]), a[1] as u32, w2p(a[2])); { r; 0 } }
         "__frsqrte" => { let r = melee_runtime::tu::gekko_fp::__frsqrte(f64::from_bits(a[0])); r.to_bits() }
         "efAsync_LoadSync" => { let r = melee_world::tu::efn::efasync::efAsync_LoadSync(a[0] as i32); { r; 0 } }
@@ -169,9 +170,18 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "ftCo_800A101C" => { let r = melee_fighter::tu::ftCo_0A01::ftCo_800A101C(w2p(a[0]), a[1] as i32, a[2] as i32, a[3] as i32); { r; 0 } }
         "ftCo_GetLStickAngle" => { let r = melee_fighter::tu::ftcommon::ftCo_GetLStickAngle(w2p(a[0])); r.to_bits() as u64 }
         "ftColl_80076640" => { let r = melee_fighter::tu::ftcoll::ftcoll_80076640(w2p(a[0]), w2p(a[1])); r as u64 }
+        "ftColl_8007891C" => { let r = melee_fighter::tu::ftcoll::ftcoll_8007891c(w2v(a[0]), w2v(a[1]), f32::from_bits(a[2] as u32)); { r; 0 } }
         "ftColl_80079AB0" => { let r = melee_fighter::tu::ftcoll::ftcoll_80079ab0(w2p(a[0]), w2p(a[1]), a[2] as u32, f32::from_bits(a[3] as u32), f32::from_bits(a[4] as u32), f32::from_bits(a[5] as u32), f32::from_bits(a[6] as u32)); r.to_bits() as u64 }
+        "ftColl_8007A06C" => { let r = melee_fighter::tu::ftcoll::ftcoll_8007a06c(w2v(a[0]), w2p(a[1]), w2p(a[2]), a[3] as usize, a[4] as i32); { r; 0 } }
+        "ftColl_8007B760" => { let r = melee_fighter::tu::ftcoll::ftColl_8007B760(w2v(a[0]), a[1] as i32); { r; 0 } }
+        "ftColl_8007B7A4" => { let r = melee_fighter::tu::ftcoll::ftcoll_8007b7a4(w2v(a[0]), a[1] as i32); { r; 0 } }
         "ftCommon_8007E2FC" => { let r = melee_fighter::tu::ftcommon::ftcommon_8007e2fc(w2p(a[0])); { r; 0 } }
+        "ftCommon_CalcHitlag" => { let r = melee_fighter::tu::fighter::ext::ftCommon_CalcHitlag(a[0] as i32, a[1] as i32, f32::from_bits(a[2] as u32)); r.to_bits() as u64 }
         "ftCommon_CalcSelfAccel_DeaccelQuickAir" => { let r = melee_fighter::tu::ftcommon::ftCommon_CalcSelfAccel_DeaccelQuickAir(w2p(a[0])); r as u64 }
+        "ftCommon_UnlockECB" => { let r = melee_fighter::tu::fighter::ext::ftCommon_UnlockECB(w2v(a[0])); { r; 0 } }
+        "ftLib_GetKind" => { let r = melee_fighter::tu::player::ext::ftLib_GetKind(w2p(a[0])); v2w(r) }
+        "ftLib_SetScale" => { let r = melee_fighter::tu::player::ext::ftLib_SetScale(w2p(a[0]), f32::from_bits(a[1] as u32)); { r; 0 } }
+        "ftParts_GetBoneIndex" => { let r = melee_fighter::tu::fighter::ext::ftParts_GetBoneIndex(w2v(a[0]), a[1] as i32); r as i64 as u64 }
         "gmMainLib_8015ECB0" => { let r = melee_modes::tu::gmmain_lib::gmMainLib_8015ECB0(); r as i64 as u64 }
         "gmMainLib_8015ECBC" => { let r = melee_modes::tu::gmmain_lib::gmMainLib_8015ECBC(); { r; 0 } }
         "gmMainLib_8015ED30" => { let r = melee_modes::tu::gmmain_lib::gmMainLib_8015ED30(); r as i64 as u64 }
@@ -190,9 +200,9 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "gm_80173754" => { let r = melee_modes::tu::gm_1736::gm_80173754(a[0] as u8, a[1] as u8); r as i64 as u64 }
         "gm_80173EEC" => { let r = melee_modes::tu::gm_1736::gm_80173EEC(); { r; 0 } }
         "gm_8017C984" => { let r = melee_modes::tu::gm_17c0::gm_8017C984(w2p(a[0])); { r; 0 } }
-        "gm_8017DB58" => { let r = melee_modes::tu::gm_17c0::gm_8017DB58(w2p(a[0])); { r; 0 } }
-        "gm_8017DB6C" => { let r = melee_modes::tu::gm_17c0::gm_8017DB6C(w2p(a[0]), a[1] as i32); r as i64 as u64 }
-        "gm_8017DB78" => { let r = melee_modes::tu::gm_17c0::gm_8017DB78(w2p(a[0]), a[1] as i32); r as i64 as u64 }
+        "gm_8017DB58" => { let r = melee_modes::tu::gm_17DB::gm_8017DB58(w2p(a[0])); { r; 0 } }
+        "gm_8017DB6C" => { let r = melee_modes::tu::gm_17DB::gm_8017DB6C(w2p(a[0]), a[1] as i32); r as i64 as u64 }
+        "gm_8017DB78" => { let r = melee_modes::tu::gm_17DB::gm_8017DB78(w2p(a[0]), a[1] as i32); r as i64 as u64 }
         "gm_801A36C0" => { let r = melee_modes::tu::gm_1A36::gm_801A36C0(a[0] as u8); r as i64 as u64 }
         "gm_801A4B60" => { let r = melee_modes::tu::gmscene::gm_801A4B60(); { r; 0 } }
         "gm_801BF708" => { let r = melee_modes::tu::gmopeningmode::gm_801BF708(a[0] as i8); { r; 0 } }
@@ -428,6 +438,8 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "Script_TargetBroken" => 0i64 as u64,
         "Script_WarmModelDraw" => 0i64 as u64,
         "Script_WarmSync" => 0i64 as u64,
+        "SurfaceBegin" => 0i64 as u64,
+        "SurfaceEnd" => 0i64 as u64,
         "Ui_CssKnown" => 0i64 as u64,
         "Ui_Ready" => 0i64 as u64,
         "Ui_RetailHidden" => 0i64 as u64,

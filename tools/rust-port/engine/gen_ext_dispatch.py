@@ -13,6 +13,15 @@ converts the words to the definition's parameter types. Names with a by-value st
 import os, re, sys, collections
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'link'))
 import gen_link as gl
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import lint_logic
+
+
+def canon_map():
+    """lower(C name) -> (crate, path under src/) of its canonical body: lint_logic's pick among the duplicate bodies
+    (R2), the one the port treats as the real function."""
+    _v, canon, _b = lint_logic.violations(lint_logic.allow_patterns())
+    return {ln: (rel.split('/')[1], rel.split('/', 3)[3]) for ln, (_c, rel) in canon.items()}
 
 OUT = os.path.join(gl.RUST, 'melee_engine', 'src', 'ext_dispatch.rs')
 INTS = {'i8', 'i16', 'i32', 'i64', 'isize', 'u8', 'u16', 'u32', 'u64', 'usize', 'c_int', 'c_uint', 'c_char', 'c_long', 'c_ulong', 'c_uchar', 's32', 'u32', 's16', 's8', 'BOOL'}
@@ -116,8 +125,10 @@ def conv_arg(ty, w):
     if ty.startswith('*') or ty.startswith('&') or ty.startswith('Option<') or ty.startswith('fn(') or ty.startswith('unsafe extern') \
             or re.match(r'^[A-Z]\w*(Func|Event|Callback|Fn|Cb|Proc)$', base):
         return f'w2p({w})'
-    if re.fullmatch(r'[A-Za-z_][\w:]*', ty) and len(ty) > 1:
-        return f'w2v({w})'   # a scalar alias (CharacterKind, Gm_PKind, bool_0...): its low bytes; by-value records fail the size check
+    if re.fullmatch(r'[A-Za-z_][\w:]*', ty):
+        # a scalar alias (CharacterKind, Gm_PKind, bool_0...) or a TU's one-letter pointer alias (`type G = *mut HSD_GObj`):
+        # its low bytes; by-value records fail the size check
+        return f'w2v({w})'
     return None
 
 
@@ -147,10 +158,39 @@ def seam_rows():
     return rows
 
 
+def forwarders():
+    """lower(name) -> [(crate, path, plist, ret, rel, name)] of the bodied entries of a TU's local `pub mod ext` forwarder macro
+    (`fn NAME(params) -> R = { body };` / `=> body;`, melee_fighter tu/fighter.rs and tu/player.rs ...): each expands to
+    `pub fn NAME` in `<tu>::ext`, the canonical body lint_logic picks for many fighter callees."""
+    out = collections.defaultdict(list)
+    for crate, f, rel in gl.tu_files():
+        if not rel.startswith('tu/') or 'test' in rel: continue
+        t = gl.blank(open(f, encoding='utf8', errors='replace').read())
+        em = re.search(r'(?m)^pub mod ext\s*\{', t)
+        if not em or not re.search(r'macro_rules!\s+ext_fns[^}]*?\$name:ident', t[em.end():]): continue
+        if not re.search(r'pub fn \$name\(', t[em.end():em.end() + 3000]): continue
+        cl = gl.match_close(t, em.end() - 1)
+        c, mp = gl.modpath_of(f)
+        for blk in re.finditer(r'(?<![\w$])ext_fns!\s*\{', t[em.end():cl]):
+            b0 = em.end() + blk.end() - 1
+            b1 = gl.match_close(t, b0)
+            for d in re.finditer(r'(?m)^\s*fn\s+(\w+)\s*\(', t[b0:b1]):
+                op = b0 + d.end() - 1
+                pc = gl.match_close(t, op, '(', ')')
+                semi = t.find(';', pc)
+                tail = t[pc + 1:semi]
+                bm = re.match(r'\s*(?:->\s*(.+?))?\s*(=>|=)\s*\S', tail, re.S)
+                if not bm: continue
+                out[d.group(1).lower()].append((c, f'{mp}::ext', t[op + 1:pc], (bm.group(1) or '').strip(), rel, d.group(1)))
+    return out
+
+
 def main():
     seams = seam_rows()
     defs = gl.index_defs()
     cmap = gl.cfile_map()
+    canon = canon_map()
+    fwds = forwarders()
     arms, skipped, seam_arms = [], [], []
     for name, (npar, has, own) in sorted(decls().items()):
         hit = next((v for rx, v in seams if rx.fullmatch(name)), False)
@@ -166,17 +206,43 @@ def main():
             # a `pub use` re-export and its original: the original (only real definitions have a parameter list)
             real = [c for c in cands if c[4] != own and (c[0], c[1], rname) in gl.PLIST]
             if len(real) == 1: pick = real[0]
-        if not pick:
+        if not pick and cmap.get(name):
+            # a `<c file>_native.rs` home (displayfunc_native.rs: displayfunc.c's native rewrite) over a TU's adapter
+            home = [c for c in cands if c[4] != own and os.path.splitext(os.path.basename(c[4]))[0].lower() == cmap[name] + '_native']
+            if len(home) == 1: pick = home[0]
+        if not pick and name.lower() in canon:
+            # several bodies for one C name: lint_logic's canonical one (the R2 rule's pick)
+            home = [c for c in cands if (c[0], c[4]) == canon[name.lower()] and c[4] != own]
+            if len(home) == 1: pick = home[0]
+        if pick and (pick[0], pick[1], rname) not in gl.PLIST:
+            # a `pub use` re-export carries no parameter list: call the original it names
+            real = [c for c in cands if c[4] != own and (c[0], c[1], rname) in gl.PLIST]
+            if len(real) == 1: pick = real[0]
+        fwd = None
+        if not pick and name.lower() in canon:
+            # the canonical body is a TU's `ext` forwarder: call it
+            fwd = [x for x in fwds.get(name.lower(), []) if (x[0], x[4]) == canon[name.lower()]
+                   and x[4] != own and len([p for p in gl.split_top(x[2], ',') if p.strip()]) == npar]
+            fwd = fwd[0] if len(fwd) == 1 else None
+        if not pick and not fwd:
             skipped.append((name, "no unique port")); continue
-        crate, mp, _, _, rel = pick
-        if crate == 'melee_modes' and mp.split('::')[-1] in ('gmtoulib',) and False: pass
-        plist = gl.PLIST.get((crate, mp, rname), '')
+        if fwd:
+            crate, mp, plist, rty, rel, rname = fwd
+        else:
+            crate, mp, _, _, rel = pick
+            plist = gl.PLIST.get((crate, mp, rname), '')
         params = [p for p in gl.split_top(plist, ',') if p.strip()]
         types = [p.split(':', 1)[1] for p in params]
         args = [conv_arg(ty, f'a[{i}]') for i, ty in enumerate(types)]
         if any(x is None for x in args):
             skipped.append((name, "param " + plist)); continue
         # the return type, from the original text (blank() keeps offsets)
+        if fwd:
+            ret = conv_ret(rty)
+            if ret is None:
+                skipped.append((name, "ret " + rty)); continue
+            arms.append(f'        "{name}" => {{ let r = {crate}::{mp}::{rname}({", ".join(args)}); {ret} }}')
+            continue
         src = open(os.path.join(gl.RUST, crate, 'src', rel), encoding='utf8', errors='replace').read()
         m = re.search(r'(?m)^[ \t]*pub\s+(?:unsafe\s+)?(?:extern\s+"C"\s+)?fn\s+' + re.escape(rname) + r'\s*\(', src)
         rty = ''

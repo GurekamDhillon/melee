@@ -1421,7 +1421,7 @@ pub(crate) fn window_title(spec: Option<&str>) -> String {
     if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
         return t;
     }
-    let id = format!("melee [{} {}]", env!("MELEE_GIT_WHERE"), env!("MELEE_GIT_HASH"));
+    let id = format!("melee [{} {}{}]", env!("MELEE_GIT_WHERE"), env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix());
     let Some(spec) = spec else { return id };
     // "a/cpu9,b/cpu9,STAGE": fighters without their slot kind, then the stage first
     let parts: Vec<&str> = spec.split(',').map(str::trim).collect();
@@ -1788,7 +1788,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
             }
             if rp.rec.is_none() {
-                let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), env!("MELEE_GIT_HASH").to_string())];
+                let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), format!("{}{}", env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix()))];
                 if np_css {
                     meta.push(("np_css".into(), "1".into()));
                 }
@@ -1807,7 +1807,7 @@ pub fn play(args: &[String]) -> ExitCode {
             } else {
                 path
             };
-            let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), env!("MELEE_GIT_HASH").to_string())];
+            let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), format!("{}{}", env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix()))];
             if np_css {
                 meta.push(("np_css".into(), "1".into()));
             }

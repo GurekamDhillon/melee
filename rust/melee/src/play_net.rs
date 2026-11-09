@@ -582,16 +582,32 @@ pub struct PlayEnv {
     pub mods_desc: String,
 }
 
-/// The engine build both peers must share (the sim is compared bit for bit): the git commit this exe was built from.
+/// The engine build both peers must share (the sim is compared bit for bit): the git commit this exe was built from,
+/// mixed with the digest of its uncommitted changes when the tree was dirty (build.rs `MELEE_GIT_DIRTY`), so two
+/// builds of one commit with different local edits refuse each other instead of pairing.
 pub fn build_hash() -> u64 {
     if let Some(h) = std::env::var("MELEE_NP_BUILD_HASH").ok().and_then(|v| u64::from_str_radix(&v, 16).ok()) {
         return h; // test hook: pretend to be another build
     }
-    let h = u64::from_str_radix(&env!("MELEE_GIT_HASH").chars().filter(|c| c.is_ascii_hexdigit()).take(15).collect::<String>(), 16).unwrap_or(0);
+    let mut h = u64::from_str_radix(&env!("MELEE_GIT_HASH").chars().filter(|c| c.is_ascii_hexdigit()).take(15).collect::<String>(), 16).unwrap_or(0);
+    if let Ok(d) = u64::from_str_radix(env!("MELEE_GIT_DIRTY"), 16) {
+        // keep it within the 15 hex digits the log prints; the top bit of those marks a dirty build
+        h = (h ^ d.rotate_left(17)) & 0x0FFF_FFFF_FFFF_FFFF | 0x0800_0000_0000_0000;
+    }
     if h == 0 {
         1
     } else {
         h
+    }
+}
+
+/// "" for a clean build, "+dirty:<digest>" when it was built with uncommitted changes (for titles, logs, replay metadata).
+pub fn dirty_suffix() -> &'static str {
+    const D: &str = env!("MELEE_GIT_DIRTY");
+    if D.is_empty() {
+        ""
+    } else {
+        concat!("+dirty:", env!("MELEE_GIT_DIRTY"))
     }
 }
 
@@ -1122,7 +1138,7 @@ impl NetDriver {
         }
         let (mods_hash, mods_desc) = with_codes(mods_identity(args)?);
         let env = PlayEnv { mods_hash, mods_desc: mods_desc.clone() };
-        log(&format!("netplay {tag}: build {:015x}, {mods_desc}", build_hash()));
+        log(&format!("netplay {tag}: build {:015x}{}, {mods_desc}", build_hash(), dirty_suffix()));
         let mut rp = RoomParams {
             host,
             rcfg: RbConfig { net: true, local_port, delay, maxb, src: InputSource::Live, ..RbConfig::default() },

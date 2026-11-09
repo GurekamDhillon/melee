@@ -142,7 +142,10 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         c.model_scale = 1.0;
         c.attack_ratio = 1.0;
         c.defense_ratio = 1.0;
-        crate::tu::petey::arm(1, 1, 0x5E7E_u32 ^ (SEQ as u32).wrapping_mul(0x9E37_79B9));
+        // HP scales with the players on the player's side (P3: 1-2; one today, two once Envoy has a 2nd human)
+        let side = d.players[0].team;
+        let humans = [0usize, 2, 3].iter().filter(|&&i| d.players[i].slot_type != Gm_PKind_NA as u8 && d.players[i].team == side).count();
+        crate::tu::petey::arm(humans.clamp(1, 2) as i32, 1, 0x5E7E_u32 ^ (SEQ as u32).wrapping_mul(0x9E37_79B9));
         melee_fighter::tu::ftdrawcommon::BOSS_DRAW = Some(crate::tu::petey::draw);
     } else {
         crate::tu::petey::disarm();

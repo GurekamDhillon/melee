@@ -17,12 +17,21 @@ git-ignored local folder outside this repository; nothing from it is in git, and
   `emBosspackun` / `emBosspackunParamAccesser` (the code reading it) and `sora_adv_stage.rel` the
   `ENEMY_EVENT_BOSSPACKUN_DEAD_LEFT/RIGHT` events.
 
-## Numbers (not yet mapped to fields)
+## Numbers (HP not confirmed)
 
-The params blob was not decoded field by field (that needs the accessor in `sora_enemy.rel`), so HP and cage HP are
-**not confirmed**. Values seen near its start, in order of offset: 1.0, 56.0, 0.75, 120.0, 0.7, 45 (int), 8.0, 12.0,
-10000.0, 30 (int), 50 (int), 10.0, 77.0, 13.0, 2.2, 99999.0, 25.0, 10.0, 20.0, 8.0, 15.0, 50 (int), 20 (int), 25.0,
-50.0, 200.0, 90.0, 100.0. Our stand-ins (`petey.rs`: HP 300, cage 70) stay until a field is pinned down.
+`emBosspackunParamAccesser` was traced in `sora_enemy.rel` (2026-11-09): its type name is referenced from its RTTI
+record, whose vtable lists three getters. Each fetches the boss's param block (the blob above, through the enemy's
+resource handle, `+0x2C`) and switches on a numeric parameter id:
+
+| getter | ids | reads |
+|---|---|---|
+| float | 0xFA0 | `+0x150` (0xFA1 / 0xFA2: a ratio computed from two live fighter fields, not the blob) |
+| int | 0x5DC0, 0x5DC1, 0x5DC2 | `+0x144`, `+0x148`, `+0x14C` |
+| sub-block pointer | 16 ids from 0xABE0 (jump table) | `+0x100`, `+0x124`, `+0x154`, ... `+0x314` |
+
+None of these is named, and HP is not among them as far as this accessor shows: Brawl's enemies take HP from the
+common enemy parameters read by the shared enemy code, which was not traced. So HP and cage HP are **not
+confirmed** and the stand-ins stay (`petey.rs`: HP 300, cage 70).
 
 ## Loading (runtime, presentation only)
 
@@ -30,11 +39,12 @@ The params blob was not decoded field by field (that needs the accessor in `sora
 walking up from the working folder or the exe (`MELEE_PETEY_NO_MODEL` forces the placeholder). It reads the stage
 archive on a helper thread (system heap, outside the rollback arena), unpacks ARC + LZ77 in memory, finds the BRRES
 members by name, decodes the textures (CMPR and the plain formats) and the MDL0 display lists, and skins the
-vertices once with frame 0 of `<model>Wait1` (CHR0): a vertex on one bone is stored in that bone's space, a
+vertices per drawn frame from the CHR0 picked by the sim state (all twelve `<model><Name>` animations are kept,
+Hermite keys and baked tracks both read): a vertex on one bone is stored in that bone's space, a
 NodeMix vertex in model space (weights x world x inverse bind); the matrix slots come from the display list's
 indexed loads (XF address in the low 12 bits). It keeps a triangle list with per-vertex colour (texel x vertex
 colour x a fixed light). The draw hook (`petey::draw`) puts the body at Petey's sim position scaled to the placeholder height
 and the arm models at the cage positions. Nothing feeds back into the sim, so replays / rollback are unaffected;
 without the folder the capsule placeholder draws as before.
 
-Not done: CHR0 playback (one static pose), materials beyond one texture per polygon, effects.
+Not done: materials beyond one texture per polygon, effects.

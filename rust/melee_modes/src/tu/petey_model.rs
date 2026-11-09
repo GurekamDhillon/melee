@@ -8,23 +8,17 @@
 //! from the working folder or the exe. Nothing from it is ever written anywhere.
 //!
 //! What is read: the adventure stage archive holding the boss (ARC, LZ77 inside), the BRRES with Petey's body MDL0
-//! and the two arm / cage MDL0s, their TEX0 textures (CMPR / RGB / I formats). Drawn in bind pose with each
-//! vertex coloured from its texture texel and vertex colour, plus a fixed light. CHR0 animation is not played yet.
+//! and the two arm / cage MDL0s, their TEX0 textures (CMPR / RGB / I formats) and their CHR0 animations. Each part
+//! is kept as a rig (bones, matrix sources, unlit triangles); the draw poses it per frame from a CHR0 (bone
+//! matrices -> skinning -> a fixed light). Which animation and frame is chosen by `petey::draw` from the sim state.
 #![allow(clippy::missing_safety_doc)]
 
 use std::path::{Path, PathBuf};
 
-/// One drawable mesh: triangles as (model-space position, rgba).
-pub struct Mesh {
-    pub tris: Vec<([f32; 3], [u8; 4])>,
-    pub min: [f32; 3],
-    pub max: [f32; 3],
-}
-
 pub struct Model {
-    pub body: Mesh,
-    pub arm_l: Option<Mesh>,
-    pub arm_r: Option<Mesh>,
+    pub body: Rig,
+    pub arm_l: Option<Rig>,
+    pub arm_r: Option<Rig>,
 }
 
 /// The model was loaded (without loading it: the HUD asks every frame).
@@ -44,7 +38,7 @@ pub fn get() -> Option<&'static Model> {
         // snapshots rewrite (the model must survive every load / resimulation)
         let r = std::thread::spawn(load).join().unwrap_or_else(|_| Err("loader panicked".into()));
         match &r {
-            Ok(m) => eprintln!("petey: real model loaded ({} body triangles)", m.body.tris.len() / 3),
+            Ok(m) => eprintln!("petey: real model loaded ({} animations)", m.body.anims.len()),
             Err(e) => eprintln!("petey: no real model ({e}); placeholder look"),
         }
         LOADED.store(r.is_ok(), std::sync::atomic::Ordering::Relaxed);
@@ -119,15 +113,25 @@ fn load() -> Result<Model, String> {
             }
         }
     }
-    let mesh = |want: &str| -> Option<Mesh> {
+    let rig = |want: &str| -> Option<Rig> {
         let (_, b, off) = mdls.iter().find(|(n, _, _)| n == want)?;
-        // posed by the first frame of its idle animation (CHR0 `<model>Wait1`); bind pose without one
-        let wait = format!("{want}Wait1");
-        let pose = chrs.iter().find(|(n, _, _)| *n == wait).map(|(_, cb, co)| chr0_frame0(cb, *co)).unwrap_or_default();
-        mdl0(b, *off, &texs, &pose)
+        let mut r = mdl0(b, *off, &texs)?;
+        // its animations: CHR0 `<model><Name>`, kept by suffix
+        for (n, cb, co) in &chrs {
+            if let Some(suf) = n.strip_prefix(want) {
+                if !suf.is_empty() && !suf.starts_with("Arm") {
+                    r.anims.push((suf.to_string(), chr0(cb, *co)));
+                }
+            }
+        }
+        // extent from the first frame of the idle (bind pose without one): feet and scale stay put while animating
+        let mut tris = vec![];
+        r.skin(r.anim("Wait1"), 0.0, &mut tris);
+        (r.min, r.max) = extent(&tris);
+        Some(r)
     };
-    let body = mesh("EnmBosspackun").ok_or("body model not found")?;
-    Ok(Model { body, arm_l: mesh("WpnBosspackunArmL"), arm_r: mesh("WpnBosspackunArmR") })
+    let body = rig("EnmBosspackun").ok_or("body model not found")?;
+    Ok(Model { body, arm_l: rig("WpnBosspackunArmL"), arm_r: rig("WpnBosspackunArmR") })
 }
 
 // ---------------------------------------------------------------- containers
@@ -385,7 +389,7 @@ fn tex0(d: &[u8], o: usize) -> Option<Tex> {
     Some(Tex { w, h, px })
 }
 
-// ---------------------------------------------------------------- MDL0 (v9, bind pose)
+// ---------------------------------------------------------------- MDL0 (v9) arrays
 
 struct Arr {
     data: usize,
@@ -481,27 +485,115 @@ fn xf(m: &M34, p: [f32; 3], w: f32) -> [f32; 3] {
     [f(0), f(1), f(2)]
 }
 
-/// Bone name -> scale / rotation (degrees) / translation tracks at frame 0 of a CHR0 (None: not animated).
-fn chr0_frame0(d: &[u8], c: usize) -> Vec<(String, [Option<f32>; 9])> {
+// ---------------------------------------------------------------- CHR0
+
+/// One animated channel.
+enum Track {
+    Fixed(f32),
+    /// Hermite keys: (frame, value, tangent).
+    Keys(Vec<[f32; 3]>),
+    /// One value per frame (linear between them).
+    Baked(Vec<f32>),
+}
+
+impl Track {
+    fn at(&self, f: f32) -> f32 {
+        match self {
+            Track::Fixed(v) => *v,
+            Track::Baked(v) => {
+                if v.is_empty() {
+                    return 0.0;
+                }
+                let i = (f.max(0.0) as usize).min(v.len() - 1);
+                let j = (i + 1).min(v.len() - 1);
+                let t = (f - i as f32).clamp(0.0, 1.0);
+                v[i] + (v[j] - v[i]) * t
+            }
+            Track::Keys(k) => {
+                if k.is_empty() {
+                    return 0.0;
+                }
+                if f <= k[0][0] {
+                    return k[0][1];
+                }
+                for w in k.windows(2) {
+                    let (a, b) = (w[0], w[1]);
+                    if f <= b[0] {
+                        let span = b[0] - a[0];
+                        if span <= 0.0 {
+                            return b[1];
+                        }
+                        let t = (f - a[0]) / span;
+                        let (t2, t3) = (t * t, t * t * t);
+                        return (2.0 * t3 - 3.0 * t2 + 1.0) * a[1]
+                            + (t3 - 2.0 * t2 + t) * span * a[2]
+                            + (-2.0 * t3 + 3.0 * t2) * b[1]
+                            + (t3 - t2) * span * b[2];
+                    }
+                }
+                k[k.len() - 1][1]
+            }
+        }
+    }
+}
+
+/// A CHR0: its length and, per bone name, the nine channels (scale xyz, rotation xyz degrees, translation xyz).
+pub struct Anim {
+    pub frames: f32,
+    tracks: Vec<(String, [Option<Track>; 9])>,
+}
+
+fn chr0(d: &[u8], c: usize) -> Anim {
+    let ver = be32(d, c + 8);
+    let frames = be16(d, c + if ver >= 5 { 0x20 } else { 0x1C }) as usize;
     let data = at(c, bei(d, c + 0x10));
-    let mut out = vec![];
+    let mut tracks = vec![];
     for (name, e) in group(d, data) {
         let code = be32(d, e + 4);
-        let mut v: [Option<f32>; 9] = [None; 9];
+        let mut v: [Option<Track>; 9] = Default::default();
         let mut q = e + 8;
-        // one track: a fixed value, or an offset (from the entry) to keyframes in the given format; frame 0 = key 0
-        let track = |q: usize, fixed: bool, fmt: u32| -> f32 {
+        // one channel: a fixed value, or an offset (from the entry) to keyframes in the given format
+        let track = |q: usize, fixed: bool, fmt: u32| -> Track {
             if fixed {
-                return bef(d, q);
+                return Track::Fixed(bef(d, q));
             }
             let k = at(e, bei(d, q));
             match fmt {
-                1 => bef(d, k + 12) + bef(d, k + 8) * ((be32(d, k + 16) >> 12) & 0xFFF) as f32,
-                2 => bef(d, k + 12) + bef(d, k + 8) * be16(d, k + 18) as f32,
-                3 => bef(d, k + 12),
-                4 => bef(d, k + 4) + bef(d, k) * d.get(k + 8).copied().unwrap_or(0) as f32,
-                5 => bef(d, k + 4) + bef(d, k) * be16(d, k + 8) as f32,
-                _ => bef(d, k),
+                1..=3 => {
+                    let n = be16(d, k) as usize;
+                    let (step, base) = (bef(d, k + 8), bef(d, k + 12));
+                    let mut keys = Vec::with_capacity(n.min(4096));
+                    for i in 0..n.min(4096) {
+                        keys.push(match fmt {
+                            1 => {
+                                let w = be32(d, k + 16 + 4 * i);
+                                let tan = (((w & 0xFFF) as i32) << 20 >> 20) as f32 / 32.0;
+                                [(w >> 24) as f32, base + step * ((w >> 12) & 0xFFF) as f32, tan]
+                            }
+                            2 => {
+                                let o = k + 16 + 6 * i;
+                                [be16(d, o) as f32 / 32.0, base + step * be16(d, o + 2) as f32, be16(d, o + 4) as i16 as f32 / 256.0]
+                            }
+                            _ => {
+                                let o = k + 16 + 12 * i;
+                                [bef(d, o), bef(d, o + 4), bef(d, o + 8)]
+                            }
+                        });
+                    }
+                    Track::Keys(keys)
+                }
+                4 | 5 => {
+                    let (step, base) = (bef(d, k), bef(d, k + 4));
+                    Track::Baked(
+                        (0..=frames)
+                            .map(|i| {
+                                let x = if fmt == 4 { d.get(k + 8 + i).copied().unwrap_or(0) as f32 } else { be16(d, k + 8 + 2 * i) as f32 };
+                                base + step * x
+                            })
+                            .collect(),
+                    )
+                }
+                _ => Track::Baked((0..=frames).map(|i| bef(d, k + 4 * i)).collect()),
             }
         };
         if code & 2 == 0 {
@@ -513,11 +605,11 @@ fn chr0_frame0(d: &[u8], c: usize) -> Vec<(String, [Option<f32>; 9])> {
                 }
                 let fmt = (code >> fmt_sh) & fmt_mask;
                 if code & (1 << iso_bit) != 0 {
-                    let x = track(q, code & (1 << fixed_sh) != 0, fmt);
-                    q += 4;
+                    let fixed = code & (1 << fixed_sh) != 0;
                     for a in 0..3 {
-                        v[part * 3 + a] = Some(x);
+                        v[part * 3 + a] = Some(track(q, fixed, fmt));
                     }
+                    q += 4;
                 } else {
                     for a in 0..3 {
                         v[part * 3 + a] = Some(track(q, code & (1 << (fixed_sh + a)) != 0, fmt));
@@ -529,19 +621,125 @@ fn chr0_frame0(d: &[u8], c: usize) -> Vec<(String, [Option<f32>; 9])> {
         // flags that fix a part without data: identity, scale one, rotation + translation zero
         for a in 0..3 {
             if code & 2 != 0 || code & 8 != 0 {
-                v[a].get_or_insert(1.0);
+                v[a].get_or_insert(Track::Fixed(1.0));
             }
             if code & 2 != 0 || code & 4 != 0 {
-                v[3 + a].get_or_insert(0.0);
-                v[6 + a].get_or_insert(0.0);
+                v[3 + a].get_or_insert(Track::Fixed(0.0));
+                v[6 + a].get_or_insert(Track::Fixed(0.0));
             }
         }
-        out.push((name, v));
+        tracks.push((name, v));
     }
-    out
+    Anim { frames: frames.max(1) as f32, tracks }
 }
 
-fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)], pose: &[(String, [Option<f32>; 9])]) -> Option<Mesh> {
+// ---------------------------------------------------------------- MDL0 -> skinned rig
+
+struct Bone {
+    name: String,
+    srt: [[f32; 3]; 3],
+    parent: Option<usize>,
+    inv: M34,
+}
+
+/// Where a vertex's matrix comes from.
+enum Src {
+    Ident,
+    /// stored in that bone's space: the bone's world
+    Bone(usize),
+    /// weights x (world x inverse bind)
+    Mix(Vec<(usize, f32)>),
+}
+
+/// One body part ready to pose: bones, matrix sources and a triangle list in source space.
+pub struct Rig {
+    bones: Vec<Bone>,
+    srcs: Vec<Src>,
+    /// (source, position, normal (zero: none), unlit colour)
+    verts: Vec<(u16, [f32; 3], [f32; 3], [u8; 4])>,
+    /// animations by suffix (the CHR0 name after the model name: `Wait1`, `BasketAttackL`, ...)
+    pub anims: Vec<(String, Anim)>,
+    /// Extent in the first frame of `Wait1` (feet and scale stay fixed while animating).
+    pub min: [f32; 3],
+    pub max: [f32; 3],
+}
+
+impl Rig {
+    pub fn anim(&self, name: &str) -> Option<&Anim> {
+        self.anims.iter().find(|(n, _)| n == name).map(|(_, a)| a)
+    }
+
+    /// Each bone's world matrix at `frame` of `anim` (bind pose where a bone has no channel).
+    fn pose_bones(&self, anim: Option<&Anim>, frame: f32) -> Vec<M34> {
+        let mut world: Vec<M34> = Vec::with_capacity(self.bones.len());
+        for b in &self.bones {
+            let mut s = b.srt;
+            if let Some((_, v)) = anim.and_then(|a| a.tracks.iter().find(|(n, _)| *n == b.name)) {
+                for (k, t) in v.iter().enumerate() {
+                    if let Some(t) = t {
+                        s[k / 3][k % 3] = t.at(frame);
+                    }
+                }
+            }
+            let local = srt(s[0], s[1], s[2]);
+            world.push(match b.parent {
+                Some(p) if p < world.len() => mul(&world[p], &local),
+                _ => local,
+            });
+        }
+        world
+    }
+
+    /// Skin the triangle list for `frame` of `anim` into `out` (model space, lit colour).
+    pub fn skin(&self, anim: Option<&Anim>, frame: f32, out: &mut Vec<([f32; 3], [u8; 4])>) {
+        let world = self.pose_bones(anim, frame);
+        let mats: Vec<M34> = self
+            .srcs
+            .iter()
+            .map(|s| match s {
+                Src::Ident => IDENT,
+                Src::Bone(i) => world.get(*i).copied().unwrap_or(IDENT),
+                Src::Mix(ws) => {
+                    let mut acc = [[0.0f32; 4]; 3];
+                    for (bi, w) in ws {
+                        if let (Some(bw), Some(b)) = (world.get(*bi), self.bones.get(*bi)) {
+                            let m = mul(bw, &b.inv);
+                            for i in 0..3 {
+                                for j in 0..4 {
+                                    acc[i][j] += w * m[i][j];
+                                }
+                            }
+                        }
+                    }
+                    acc
+                }
+            })
+            .collect();
+        let light = {
+            let l = [0.35f32, 0.55, 0.75];
+            let n = (l[0] * l[0] + l[1] * l[1] + l[2] * l[2]).sqrt();
+            [l[0] / n, l[1] / n, l[2] / n]
+        };
+        out.clear();
+        out.reserve(self.verts.len());
+        for (si, p, n, c) in &self.verts {
+            let m = &mats[*si as usize];
+            let mut c = *c;
+            if *n != [0.0; 3] {
+                let n = xf(m, *n, 0.0);
+                let l = (n[0] * n[0] + n[1] * n[1] + n[2] * n[2]).sqrt().max(1e-6);
+                let dot = ((n[0] * light[0] + n[1] * light[1] + n[2] * light[2]) / l).max(0.0);
+                let s = 0.6 + 0.6 * dot;
+                for ck in c.iter_mut().take(3) {
+                    *ck = (*ck as f32 * s).min(255.0) as u8;
+                }
+            }
+            out.push((xf(m, *p, 1.0), c));
+        }
+    }
+}
+
+fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
     if be32(d, m + 8) != 9 {
         return None; // only the v9 layout is read
     }
@@ -550,40 +748,30 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)], pose: &[(String, [Option<f32
         if s == 0 { vec![] } else { group(d, at(m, s)) }
     };
     let (defs, verts, norms, cols, uvs, mats, objs, texlinks) = (sec(0), sec(2), sec(3), sec(4), sec(5), sec(6), sec(8), sec(9));
-    // skinning: each bone's posed world matrix (bind SRT where the pose has no track) x its inverse bind
-    let bones = sec(1);
-    let mut world: Vec<(usize, M34)> = vec![]; // (bone header offset, world)
-    let mut node_mtx: Vec<(u32, M34)> = vec![]; // node id -> skin matrix
-    let mut single: Vec<(u32, M34)> = vec![]; // node id -> world (single-bound objects)
-    let mut skin: Vec<(u32, M34)> = vec![]; // bone node id -> world x inverse bind (weights of a mix)
-    for (name, b) in &bones {
+    // bones in file order (parents come first); node id -> matrix source
+    let mut bones: Vec<Bone> = vec![];
+    let mut offs: Vec<usize> = vec![];
+    let mut srcs: Vec<Src> = vec![Src::Ident];
+    let mut node_src: Vec<(u32, u16)> = vec![];
+    let mut bone_of_node: Vec<(u32, usize)> = vec![];
+    for (name, b) in &sec(1) {
         let b = *b;
         let rd = |o: usize| [bef(d, b + o), bef(d, b + o + 4), bef(d, b + o + 8)];
-        let (mut sc, mut ro, mut tr) = (rd(0x20), rd(0x2C), rd(0x38));
-        if let Some((_, v)) = pose.iter().find(|(n, _)| n == name) {
-            for a in 0..3 {
-                sc[a] = v[a].unwrap_or(sc[a]);
-                ro[a] = v[3 + a].unwrap_or(ro[a]);
-                tr[a] = v[6 + a].unwrap_or(tr[a]);
-            }
-        }
-        let local = srt(sc, ro, tr);
         let par = bei(d, b + 0x5C);
-        let w = if par == 0 {
-            local
-        } else {
-            world.iter().find(|(o, _)| *o == at(b, par)).map(|(_, pw)| mul(pw, &local)).unwrap_or(local)
-        };
-        world.push((b, w));
+        let parent = if par == 0 { None } else { offs.iter().position(|o| *o == at(b, par)) };
         let mut inv = [[0.0; 4]; 3];
         for (i, row) in inv.iter_mut().enumerate() {
             for (j, x) in row.iter_mut().enumerate() {
                 *x = bef(d, b + 0xA0 + 16 * i + 4 * j);
             }
         }
-        skin.push((be32(d, b + 0x10), mul(&w, &inv)));
-        node_mtx.push((be32(d, b + 0x10), w)); // a vertex bound to one bone is stored in that bone's space
-        single.push((be32(d, b + 0x10), w));
+        let bi = bones.len();
+        bones.push(Bone { name: name.clone(), srt: [rd(0x20), rd(0x2C), rd(0x38)], parent, inv });
+        offs.push(b);
+        let id = be32(d, b + 0x10);
+        srcs.push(Src::Bone(bi));
+        node_src.push((id, (srcs.len() - 1) as u16));
+        bone_of_node.push((id, bi));
     }
     if let Some((_, o)) = defs.iter().find(|(n, _)| n == "NodeMix") {
         let mut p = *o;
@@ -592,25 +780,22 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)], pose: &[(String, [Option<f32
                 Some(5) => p += 5,
                 Some(3) => {
                     let (id, n) = (be16(d, p + 1) as u32, d[p + 3] as usize);
-                    let mut acc = [[0.0f32; 4]; 3];
+                    let mut ws = vec![];
                     for k in 0..n {
                         let (bn, w) = (be16(d, p + 4 + 6 * k) as u32, bef(d, p + 6 + 6 * k));
-                        if let Some((_, bm)) = skin.iter().find(|(i, _)| *i == bn) {
-                            for i in 0..3 {
-                                for j in 0..4 {
-                                    acc[i][j] += w * bm[i][j];
-                                }
-                            }
+                        if let Some((_, bi)) = bone_of_node.iter().find(|(i, _)| *i == bn) {
+                            ws.push((*bi, w));
                         }
                     }
-                    node_mtx.push((id, acc));
+                    srcs.push(Src::Mix(ws));
+                    node_src.push((id, (srcs.len() - 1) as u16));
                     p += 4 + 6 * n;
                 }
                 _ => break,
             }
         }
     }
-    let node_of = |id: u32| node_mtx.iter().rev().find(|(i, _)| *i == id).map(|(_, m)| *m).unwrap_or(IDENT);
+    let src_of = |id: u32| node_src.iter().rev().find(|(i, _)| *i == id).map(|(_, s)| *s).unwrap_or(0);
     // material header offset -> texture
     let mut mat_tex: Vec<(usize, usize)> = vec![];
     for (name, list) in &texlinks {
@@ -634,14 +819,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)], pose: &[(String, [Option<f32
             p += 8;
         }
     }
-    let light = {
-        let l = [0.35f32, 0.55, 0.75];
-        let n = (l[0] * l[0] + l[1] * l[1] + l[2] * l[2]).sqrt();
-        [l[0] / n, l[1] / n, l[2] / n]
-    };
     let mut tris = vec![];
-    let mut mn = [f32::MAX; 3];
-    let mut mx = [f32::MIN; 3];
     for (oi, (_, o)) in objs.iter().enumerate() {
         let o = *o;
         let idx_of = |id: i16, set: &Vec<(String, usize)>| -> Option<usize> {
@@ -691,16 +869,20 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)], pose: &[(String, [Option<f32
         }
         let vsize: usize = lay.iter().map(|l| l.1).sum();
         let obj_node = bei(d, o + 8);
-        let obj_world = single.iter().find(|(i, _)| obj_node >= 0 && *i == obj_node as u32).map(|(_, m)| *m).unwrap_or(IDENT);
+        let obj_src = if obj_node >= 0 {
+            bone_of_node.iter().find(|(i, _)| *i == obj_node as u32).map(|(_, bi)| (*bi + 1) as u16)
+        } else {
+            None
+        };
         let mut slots = [0u32; 10];
         let dl = at(o + 0x24, bei(d, o + 0x2C));
         let dl_end = dl + be32(d, o + 0x28) as usize;
         let mut p = dl;
-        let vert = |p: usize, slots: &[u32; 10]| -> ([f32; 3], [u8; 4]) {
+        let vert = |p: usize, slots: &[u32; 10]| -> (u16, [f32; 3], [f32; 3], [u8; 4]) {
             let mut q = p;
             let (mut pi, mut ni, mut ci, mut ti) = (0, usize::MAX, usize::MAX, usize::MAX);
             let mtx_idx = if lo & 1 != 0 { d.get(q).copied().unwrap_or(0) as usize / 3 } else { 0 };
-            let sm = if obj_node >= 0 { obj_world } else { node_of(slots[mtx_idx.min(9)]) };
+            let si = obj_src.unwrap_or_else(|| src_of(slots[mtx_idx.min(9)]));
             for (attr, s) in &lay {
                 let v = if *s == 1 { d.get(q).copied().unwrap_or(0) as usize } else { be16(d, q) as usize };
                 match attr {
@@ -712,7 +894,6 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)], pose: &[(String, [Option<f32
                 }
                 q += s;
             }
-            let pp = xf(&sm, comp_read(d, &pos, pi, 3), 1.0);
             let mut c = match (tex, &uv) {
                 (Some(t), Some(u)) if ti != usize::MAX => {
                     let st = comp_read(d, u, ti, 2);
@@ -728,20 +909,12 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)], pose: &[(String, [Option<f32
                     }
                 }
             }
-            if let Some(na) = &nrm {
-                if ni != usize::MAX {
-                    let n = xf(&sm, comp_read(d, na, ni, 3), 0.0);
-                    let l = (n[0] * n[0] + n[1] * n[1] + n[2] * n[2]).sqrt().max(1e-6);
-                    let n = [n[0] / l, n[1] / l, n[2] / l];
-                    let dot = (n[0] * light[0] + n[1] * light[1] + n[2] * light[2]).max(0.0);
-                    let s = 0.6 + 0.6 * dot;
-                    for ck in c.iter_mut().take(3) {
-                        *ck = (*ck as f32 * s).min(255.0) as u8;
-                    }
-                }
-            }
             c[3] = 255;
-            (pp, c)
+            let n = match &nrm {
+                Some(na) if ni != usize::MAX => comp_read(d, na, ni, 3),
+                _ => [0.0; 3],
+            };
+            (si, comp_read(d, &pos, pi, 3), n, c)
         };
         while p < dl_end {
             let op = d.get(p).copied().unwrap_or(0);
@@ -787,36 +960,40 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)], pose: &[(String, [Option<f32
             }
         }
     }
-    for (p, _) in &tris {
+    if tris.is_empty() {
+        return None;
+    }
+    Some(Rig { bones, srcs, verts: tris, anims: vec![], min: [0.0; 3], max: [0.0; 3] })
+}
+
+/// Extent of a posed triangle list; y from the 1st..99th percentile (a few far-off vertices must not set the feet
+/// or the scale).
+fn extent(tris: &[([f32; 3], [u8; 4])]) -> ([f32; 3], [f32; 3]) {
+    let mut mn = [f32::MAX; 3];
+    let mut mx = [f32::MIN; 3];
+    for (p, _) in tris {
         for k in 0..3 {
             mn[k] = mn[k].min(p[k]);
             mx[k] = mx[k].max(p[k]);
         }
     }
-    if tris.is_empty() {
-        return None;
+    if !tris.is_empty() {
+        let mut ys: Vec<f32> = tris.iter().map(|(p, _)| p[1]).collect();
+        ys.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
+        mn[1] = ys[ys.len() / 100];
+        mx[1] = ys[ys.len() - 1 - ys.len() / 100];
     }
-    // height from the 1st..99th percentile of y: a few far-off vertices (weights the pose leaves behind) must not
-    // set the feet or the scale
-    let mut ys: Vec<f32> = tris.iter().map(|(p, _)| p[1]).collect();
-    ys.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
-    mn[1] = ys[ys.len() / 100];
-    mx[1] = ys[ys.len() - 1 - ys.len() / 100];
-    Some(Mesh { tris, min: mn, max: mx })
+    (mn, mx)
 }
 
 // ---------------------------------------------------------------- draw
 
-/// Draw a mesh: model x scale, yawed, its feet at `at` (world). Opaque, vertex colours, back faces kept.
-pub unsafe fn draw_mesh(m: &Mesh, at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
-    draw_mesh_rel(m, m, at, scale, yaw, flash)
-}
-
-/// As `draw_mesh`, with the feet taken from `base` (a part authored in the same space as the body).
-pub unsafe fn draw_mesh_rel(m: &Mesh, base: &Mesh, at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
+/// Draw a posed triangle list: model x scale, yawed, with model-space y `foot` at `at` (world). Opaque, vertex
+/// colours, back faces kept.
+pub unsafe fn draw_tris(tris: &[([f32; 3], [u8; 4])], foot: f32, at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
     use melee_runtime::tu::displayfunc_native::ext as gx;
     use melee_types::*;
-    if m.tris.is_empty() {
+    if tris.is_empty() {
         return;
     }
     melee_runtime::tu::state_native::HSD_StateInvalidate(-1);
@@ -845,9 +1022,8 @@ pub unsafe fn draw_mesh_rel(m: &Mesh, base: &Mesh, at: [f32; 3], scale: f32, yaw
     melee_runtime::tu::pobj::native::mx::GXLoadPosMtxImm((&mut (*cobj).view_mtx) as *mut Mtx as _, 0);
     gx::GXSetCurrentMtx(0);
     let (s, c) = (yaw.sin(), yaw.cos());
-    let foot = base.min[1];
     // GX vertex counts are u16: send in chunks of whole triangles
-    for chunk in m.tris.chunks(3 * 20000) {
+    for chunk in tris.chunks(3 * 20000) {
         gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
         for (p, col) in chunk {
             let (x, y, z) = (p[0] * scale, (p[1] - foot) * scale, p[2] * scale);

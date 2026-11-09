@@ -112,12 +112,14 @@ pub struct Boss {
     pub carrier_slot: i32,
     pub last_frame: u32,
     pub dmg_hp: [f32; 1],
+    /// Match frame phase 2 began (the Angry roar plays from it; 0 before).
+    pub p2_frame: u32,
 }
 
 const OFF: Boss = Boss {
     st: ST_OFF, atk: -1, t: 0, dur: 0, px: 0.0, py: 0.0, face: -1.0, tx: 0.0, hp: 0, hp_max: 1, cage: [0; 2], cage_max: 1,
     phase2: false, rng: 1, last_atk: -1, stun_cd: 0, inst: 0, flash: [0; 3], cause: 0, ko_done: false, carrier_slot: -1,
-    last_frame: u32::MAX, dmg_hp: [0.0],
+    last_frame: u32::MAX, dmg_hp: [0.0], p2_frame: 0,
 };
 pub static mut B: Boss = OFF;
 /// The match about to start is a Petey fight (set by `envoy::match_begin`, consumed at the first tick).
@@ -130,6 +132,8 @@ static mut LATCH: [[[u8; 4]; 2]; 4] = [[[0; 4]; 2]; 4];
 /// attack instance each slot belongs to.
 static mut SAVED: [HitCapsule; 4] = unsafe { core::mem::zeroed() };
 static mut SLOT_INST: [u32; 4] = [0; 4];
+/// Item hitbox latches: (item gobj, per hitbox target bits).
+static mut LATCH_IT: [(usize, [u8; 4]); 16] = [(0, [0; 4]); 16];
 
 /// Is Petey selected for boss fights (`MELEE_ENVOY_BOSS=petey`; fixed for the process).
 pub fn selected() -> bool {
@@ -151,9 +155,10 @@ pub unsafe fn arm(humans: i32, carrier_slot: i32, seed: u32) {
     B = OFF;
     B.carrier_slot = carrier_slot;
     B.rng = seed | 1;
-    PLAYERS = humans.max(1);
+    PLAYERS = humans.clamp(1, 2);
     ARMED = true;
     LATCH = [[[0; 4]; 2]; 4];
+    LATCH_IT = [(0, [0; 4]); 16];
     SLOT_INST = [0; 4];
     let _ = crate::tu::petey_model::get(); // presentation only: load (or miss) the local model before frame 0
 }
@@ -242,6 +247,7 @@ pub unsafe fn tick() {
             down(1);
         } else if !B.phase2 && B.hp * 2 <= B.hp_max {
             B.phase2 = true;
+            B.p2_frame = frame;
             eprintln!("petey: phase 2");
         }
     }
@@ -611,6 +617,40 @@ fn seg_dist(p: (f32, f32), q: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
     fmin(fmin(pt(p, a, b), pt(q, a, b)), fmin(pt(a, p, q), pt(b, p, q)))
 }
 
+/// What one live hitbox did to Petey this frame: test it against the body / head and both cages (bits in `latch`:
+/// 0 body/head, 1 cage L, 2 cage R, each once per hitbox lifetime) and apply the damage. Returns true if it hit.
+unsafe fn hit_test(p: &Pose, a: (f32, f32), b: (f32, f32), r: f32, dmg: f32, latch: &mut u8) -> bool {
+    let mut any = false;
+    if *latch & 1 == 0 {
+        let body = seg_dist(a, b, (p.body[0], p.body[1]), (p.body[2], p.body[3])) <= r + BODY_R;
+        let head = seg_dist(a, b, (p.head[0], p.head[1]), (p.head[0], p.head[1])) <= r + HEAD_R;
+        if body || head {
+            *latch |= 1;
+            any = true;
+            B.hp -= round_i(dmg);
+            B.flash[0] = 8;
+            if head && dmg >= STUN_DMG && B.stun_cd == 0 && B.st != ST_STUN {
+                B.atk = -1;
+                B.stun_cd = 600;
+                enter(ST_STUN, STUN_LEN);
+            }
+        }
+    }
+    for c in 0..2 {
+        let bit = 2u32.pshl(c as i64) as u8;
+        if *latch & bit == 0 {
+            let q = (p.cage[c][0], p.cage[c][1]);
+            if seg_dist(a, b, q, q) <= r + CAGE_R {
+                *latch |= bit;
+                any = true;
+                B.cage[c] -= round_i(dmg);
+                B.flash[1 + c] = 8;
+            }
+        }
+    }
+    any
+}
+
 unsafe fn player_hits(carrier: i32) {
     let p = pose();
     for s in 0..4i32 {
@@ -622,48 +662,76 @@ unsafe fn player_hits(carrier: i32) {
             if f.is_null() {
                 continue;
             }
-            let f = &*f;
             let ratio = pl::Player_GetAttackRatio(s);
             for i in 0..4 {
-                let h = &f.x914[i];
+                let h: *mut HitCapsule = core::ptr::addr_of_mut!((*f).x914[i]);
                 let latch = &mut LATCH[s as usize][e][i];
-                if h.state == HitCapsule_Disabled {
+                if (*h).state == HitCapsule_Disabled {
                     *latch = 0;
                     continue;
                 }
-                let r = if h.x43_b1() != 0 { h.scale } else { h.scale * f.x34_scale.y };
-                let (a, b) = ((h.x58.x, h.x58.y), (h.x4C.x, h.x4C.y));
-                let dmg = h.damage * ratio;
-                if *latch & 1 == 0 {
-                    let body = seg_dist(a, b, (p.body[0], p.body[1]), (p.body[2], p.body[3])) <= r + BODY_R;
-                    let head = seg_dist(a, b, (p.head[0], p.head[1]), (p.head[0], p.head[1])) <= r + HEAD_R;
-                    if body || head {
-                        *latch |= 1;
-                        B.hp -= round_i(dmg);
-                        B.flash[0] = 8;
-                        if head && dmg >= STUN_DMG && B.stun_cd == 0 && B.st != ST_STUN {
-                            B.atk = -1;
-                            B.stun_cd = 600;
-                            enter(ST_STUN, STUN_LEN);
-                        }
+                let r = if (*h).x43_b1() != 0 { (*h).scale } else { (*h).scale * (*f).x34_scale.y };
+                let (a, b) = (((*h).x58.x, (*h).x58.y), ((*h).x4C.x, (*h).x4C.y));
+                let dmg = (*h).damage * ratio;
+                if hit_test(&p, a, b, r, dmg, latch) {
+                    // the attacker's side of a landed hit, as for hitting an item: Fighter_procCollResolve gives
+                    // it hitlag (and the deal-damage callback) from dmg.x1914 next frame; the hit's own sound
+                    let fp = &mut *f;
+                    let d = round_i(dmg).max(1);
+                    if (fp.dmg.x1914 as i32) < d {
+                        fp.dmg.x1914 = d as _;
                     }
-                }
-                for c in 0..2 {
-                    let bit = 2u32.pshl(c as i64) as u8;
-                    if *latch & bit == 0 {
-                        let q = (p.cage[c][0], p.cage[c][1]);
-                        if seg_dist(a, b, q, q) <= r + CAGE_R {
-                            *latch |= bit;
-                            B.cage[c] -= round_i(dmg);
-                            B.flash[1 + c] = 8;
-                        }
-                    }
+                    let slot = 0x7E + fp.player_id as i32 * 2 + fp.is_sub_fighter() as i32;
+                    melee_runtime::tu::lbcollision::lbColl_80005BB0(h, slot);
                 }
             }
         }
     }
+    item_hits(&p, carrier);
 }
 
+/// Items and projectiles (every item's live hitboxes) hit Petey and the cages. Latched per item and hitbox until
+/// that hitbox goes off; the table is plain statics (snapshot / rollback covered) keyed by the item's gobj.
+unsafe fn item_hits(p: &Pose, carrier: i32) {
+    let mut next: [(usize, [u8; 4]); 16] = [(0, [0; 4]); 16];
+    let mut n = 0;
+    let mut g = *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize);
+    while !g.is_null() {
+        let ip = (*g).user_data as *mut Item;
+        g = (*g).next;
+        if ip.is_null() {
+            continue;
+        }
+        let it = &mut *ip;
+        let owner = it.owner;
+        if !owner.is_null() {
+            let of = (*owner).user_data as *mut Fighter;
+            if (*owner).classifier == HSD_GOBJ_CLASS_FIGHTER as _ && !of.is_null() && (*of).player_id as i32 == carrier {
+                continue;
+            }
+        }
+        let key = it.entity as usize;
+        let mut lat = LATCH_IT.iter().find(|(k, _)| *k == key).map(|(_, l)| *l).unwrap_or([0; 4]);
+        let mut live = false;
+        for i in 0..4 {
+            let h: *mut HitCapsule = core::ptr::addr_of_mut!(it.x5D4_hitboxes[i].hit);
+            if (*h).state == HitCapsule_Disabled {
+                lat[i] = 0;
+                continue;
+            }
+            live = true;
+            let (a, b) = (((*h).x58.x, (*h).x58.y), ((*h).x4C.x, (*h).x4C.y));
+            if hit_test(p, a, b, (*h).scale, (*h).damage, &mut lat[i]) {
+                melee_runtime::tu::lbcollision::lbColl_80005BB0(h, 0x7E);
+            }
+        }
+        if live && n < next.len() {
+            next[n] = (key, lat);
+            n += 1;
+        }
+    }
+    LATCH_IT = next;
+}
 /// Words for the presentation (`gd_ui_petey`): active, hp, hp max, cage L, cage R, cage max, state, phase2, cause,
 /// attack, partner kind (CharacterKind of the run's partner).
 pub fn view() -> [i32; 12] {
@@ -686,21 +754,7 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
     }
     let p = pose();
     if let Some(m) = crate::tu::petey_model::get() {
-        // the owner's own extracted model (presentation only): body fitted to the placeholder's height
-        let h = fmax(m.body.max[1] - m.body.min[1], 1.0);
-        let sc = (HEAD_Y + HEAD_R) / h;
-        let sink = p.body[1] - (B.py + BODY_A);
-        let yaw = B.face * 0.35;
-        crate::tu::petey_model::draw_mesh(&m.body, [B.px, B.py + sink, 0.0], sc, yaw, B.flash[0] > 0);
-        for (i, arm) in [&m.arm_l, &m.arm_r].into_iter().enumerate() {
-            if let Some(a) = arm {
-                // the arm models are authored around Petey's root: move them rigidly by the cage's offset from rest
-                let c = p.cage[i];
-                let rest = [B.px + if i == 0 { -CAGE_DX } else { CAGE_DX }, B.py + CAGE_Y];
-                let at = [B.px + c[0] - rest[0], B.py + sink + c[1] - rest[1], 0.0];
-                crate::tu::petey_model::draw_mesh_rel(a, &m.body, at, sc, yaw, B.flash[1 + i] > 0);
-            }
-        }
+        draw_model(m, &p);
         return;
     }
     let z = 0.0;
@@ -729,4 +783,125 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
             cap(c[0], c[1] + hh, p.body[0], p.body[1] + 10.0, 1.6, col(0x50, 0x60, 0x50)); // arm
         }
     }
+}
+
+/// Which animation (CHR0 suffix) and frame the sim state shows; `hold` keeps the last frame instead of looping.
+/// Presentation only: a pure function of the boss statics and the match frame, so a replay / rollback redraws the
+/// same picture.
+fn anim_choice(frame: u32) -> (&'static str, f32, bool) {
+    let b = unsafe { B };
+    let tf = b.t as f32;
+    // an attack's whole timeline (wind-up + active + recovery) as 0..1
+    let whole = |a: usize| -> f32 {
+        let at = ATTACKS[a];
+        let m = if b.phase2 { 0.65 } else { 1.0 };
+        let (tele, rec) = (fctiwz_f32(at.tele as f32 * m).max(1), fctiwz_f32(at.rec as f32 * m).max(1));
+        let total = tele + at.active + rec;
+        let start = match b.st {
+            ST_TELE => 0,
+            ST_ACTIVE => tele,
+            _ => tele + at.active,
+        };
+        fclamp((start as f32 + tf) / total.max(1) as f32, 0.0, 1.0)
+    };
+    match b.st {
+        ST_DOWN => ("Down", tf, true),
+        ST_STUN => (if b.face > 0.0 { "DamageRight" } else { "DamageLeft" }, tf, true),
+        ST_TELE | ST_ACTIVE | ST_REC if b.atk >= 0 => match b.atk as usize {
+            SLAM => ("BasketAttackL", -whole(SLAM), true),
+            SWEEP => ("BasketAttackR", -whole(SWEEP), true),
+            FLOP => match b.st {
+                ST_TELE => ("JumpStart", -fclamp(tf / b.dur.max(1) as f32, 0.0, 1.0), true),
+                ST_ACTIVE if b.t <= 20 => ("JumpLoop", tf, false),
+                ST_ACTIVE if b.t <= 30 => ("JumpAttack", -fclamp((tf - 20.0) / 10.0, 0.0, 1.0), true),
+                _ => ("JumpAttackLanding", tf, true),
+            },
+            BITE => ("Angry", -whole(BITE), true),
+            _ => ("Wait2", tf * 2.0, false), // spin: a fast idle while the yaw turns
+        },
+        _ => {
+            if b.phase2 && frame.wrapping_sub(b.p2_frame) < 600 && b.p2_frame != 0 {
+                ("Angry", frame.wrapping_sub(b.p2_frame) as f32, true)
+            } else if b.phase2 || (b.last_atk >= 0 && b.inst % 2 == 1) {
+                ("Wait2", frame as f32, false)
+            } else {
+                ("Wait1", frame as f32, false)
+            }
+        }
+    }
+}
+
+/// Frame inside an animation: negative `f` is a 0..1 fraction of its length; otherwise a frame count that loops
+/// or holds at the end.
+fn anim_frame(a: &crate::tu::petey_model::Anim, f: f32, hold: bool) -> f32 {
+    let n = a.frames;
+    if f < 0.0 {
+        return -f * n;
+    }
+    if hold {
+        fmin(f, n)
+    } else {
+        f - n * (f / n).floor()
+    }
+}
+
+/// The owner's own extracted model (presentation only), posed by the animation the sim state picks.
+unsafe fn draw_model(m: &'static crate::tu::petey_model::Model, p: &Pose) {
+    use crate::tu::petey_model as pm;
+    thread_local! {
+        // one buffer per part, kept until the next draw: the GX bridge may read the vertex data after the call returns
+        static SCRATCH: core::cell::RefCell<[std::vec::Vec<([f32; 3], [u8; 4])>; 3]> = const { core::cell::RefCell::new([std::vec::Vec::new(), std::vec::Vec::new(), std::vec::Vec::new()]) };
+    }
+    let frame = crate::tu_ext::gm_GetFrameCount();
+    let (mut name, mut f, mut hold) = anim_choice(frame);
+    if name == "Angry" && B.st == ST_IDLE && m.body.anim("Angry").map(|a| f >= a.frames).unwrap_or(true) {
+        (name, f, hold) = ("Wait2", frame as f32, false); // the phase-2 roar played once
+    }
+    let h = fmax(m.body.max[1] - m.body.min[1], 1.0);
+    let sc = (HEAD_Y + HEAD_R) / h;
+    let foot = m.body.min[1];
+    let mut yaw = B.face * 0.35;
+    if B.st == ST_ACTIVE && B.atk as usize == SPIN {
+        yaw += B.t as f32 * 0.25; // the spin turns the whole body
+    }
+    let pick = |r: &'static pm::Rig| -> (Option<&'static pm::Anim>, f32) {
+        let a = r.anim(name).or_else(|| r.anim("Wait1"));
+        let fr = a.map(|a| anim_frame(a, if r.anim(name).is_some() { f } else { frame as f32 }, hold)).unwrap_or(0.0);
+        (a, fr)
+    };
+    SCRATCH.with(|s| {
+        let mut bufs = s.borrow_mut();
+        let [body_t, arm_t0, arm_t1] = &mut *bufs;
+        let tris = body_t;
+        let (a, fr) = pick(&m.body);
+        m.body.skin(a, fr, tris);
+        // the down animation carries its own fall: no extra sink with the real model
+        pm::draw_tris(tris, foot, [B.px, B.py, 0.0], sc, yaw, B.flash[0] > 0);
+        for (i, (arm, tris)) in [(&m.arm_l, arm_t0), (&m.arm_r, arm_t1)].into_iter().enumerate() {
+            let Some(r) = arm else { continue };
+            let (a, fr) = pick(r);
+            r.skin(a, fr, tris);
+            // the arms are authored around Petey's root; their animation moves the cage, then the whole arm is
+            // shifted so its centre sits on the sim's cage (what the hit test uses): the picture matches the hits
+            let (mn, mx) = extent_xy(tris);
+            let cx = (mn[0] + mx[0]) * 0.5;
+            let cy = (mn[1] + mx[1]) * 0.5;
+            let drawn = [B.px + cx * sc * libm_cos(yaw), B.py + (cy - foot) * sc];
+            let c = p.cage[i];
+            let at = [B.px + c[0] - drawn[0], B.py + c[1] - drawn[1], 0.0];
+            pm::draw_tris(tris, foot, at, sc, yaw, B.flash[1 + i] > 0);
+        }
+    });
+}
+
+fn extent_xy(t: &[([f32; 3], [u8; 4])]) -> ([f32; 2], [f32; 2]) {
+    let mut mn = [f32::MAX; 2];
+    let mut mx = [f32::MIN; 2];
+    for (p, _) in t {
+        for k in 0..2 {
+            mn[k] = fmin(mn[k], p[k]);
+            mx[k] = fmax(mx[k], p[k]);
+        }
+    }
+    (mn, mx)
 }

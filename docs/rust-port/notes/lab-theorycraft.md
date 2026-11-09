@@ -1,6 +1,6 @@
 # LAB theorycraft: next-generation training features on the deterministic engine (2026-11-08, port/labtheory)
 
-Design exploration only. No code, no UI: behaviour and engine mapping. The user designs screens separately, one step at
+Design exploration (no UI): behaviour and engine mapping. Revised 2026-11-08 after an external review (corrections folded in, decisions in section 7, additions in section 8); the lookahead primitive is built on port/lablook. The user designs screens separately, one step at
 a time. Input was a generic fighting-game list (Tekken-flavoured); this note translates it to Melee and to what this
 engine measurably does. Everything "exists" below was checked in the repo at `pub/rust-port` db9d048e4; every number is
 from `notes/perf.md`, `notes/wasm-ui-lab-api.md`, `notes/lab-ui-spec.md`, `notes/spectate-replay.md`,
@@ -13,8 +13,8 @@ from `notes/perf.md`, `notes/wasm-ui-lab-api.md`, `notes/lab-ui-spec.md`, `notes
 | sim tick | 0.20 ms (pad_falcon_fox_fd) / 0.53 ms (cpu_fox_falco_dl), release, headless; so **30-80x real time** per core | perf.md 2026-11-01 |
 | full-state snapshot | save 0.24-0.29 ms, load 0.35-0.44 ms (epoch pages, watched statics); page sharing between consecutive snapshots | perf.md 2026-11-05 |
 | rollback | depth-7 resim 7 x 0.47 = 3.3 ms; whole depth-7 synctest tick 4.0-5.6 ms | perf.md |
-| LAB ring | a snapshot every 8 frames, depth 600 frames, 58 MB, 1.25 ms per capture = ~112 us/frame amortised; slot save 1.8 ms, load 1.4 ms, rewind ~2.2 ms | lab-ui-spec.md status |
-| determinism | bit-identical to the C build on the four goldens, seed included; synctest 0 mismatches; 38 of 125 external Slippi tournament replays frame-exact against the console's own post-frame data, the other 87 diverge for listed reasons (Stadium/Fountain platform state, DamageFlyRoll RNG draw count, hit-timing, Dream Land wind) | STATUS.md, slpcheck.md |
+| LAB ring | a snapshot every 8 frames, depth 600 frames, 58 MB; slot save 1.8 ms, load 1.4 ms, rewind ~2.2 ms. Capture cost (corrected 2026-11-08): the lab-ui-spec figure of 1.25 ms per capture predates incremental saves, and 1.25 / 8 is **~156 us/frame**, not the ~112 us it was quoted as; perf.md 2026-11-05 measured the ring save at 333 us after `save_after` page sharing, i.e. **~42 us/frame**. The 0.24-0.29 ms row above is a plain save; a ring capture also compares against the previous capture to share pages | lab-ui-spec.md status, perf.md |
+| determinism | bit-identical to the C build on the four goldens, seed included; synctest 0 mismatches; 38 of 125 external Slippi tournament replays frame-exact against the console's own post-frame data, the other 87 diverge for listed reasons (Stadium/Fountain platform state, DamageFlyRoll RNG draw count, hit-timing, Dream Land wind). Three of the four causes are stage- or state-specific, so **exactness is reported per stage**: the rate on FD / Battlefield / Yoshi's may be far above 38/125 (to be measured; slpcheck knows each file's stage) | STATUS.md, slpcheck.md |
 | `.slp` | `melee slpcheck` / `melee golden --slp`: Game Start converted to a scenario (any stage, ports kept, costumes, stocks, timer, UCF words, Frozen PS), inputs replayed, post-frame compared each frame. **Headless only, no window, no controls** | slpcheck.md, spectate-replay.md |
 | `.mrpl` (our own replay) | `melee play --replay` with pause / step / back / speed 0.25-8 / seek; back-seek loads the nearest match snapshot (every 300 ticks) and resims | spectate-replay.md |
 | mod host | wasmi 2.0 interpreter, fuel-metered (1 M per sim hook, 4 M per presentation call), fixed memory <= 1 MiB (16 pages), 16 KiB stack, imports only from `gd` / `gd_ui` / `gd_lab`; sim stores live in the arena (roll back), presentation stores are harness-owned (never snapshotted) | modhost.md, wasm-ui-lab-api.md section 0 |
@@ -67,9 +67,10 @@ Host-side (`LabRun` + a replay feed):
   frames): a sparse keyframe set every 300 frames costs 36 snapshots; at 0.3 ms each and sharing unchanged pages they
   are cheap in time, and in memory about the ring's ratio (58 MB per 75 snapshots when 8 frames apart; 300 frames
   apart more pages change, so budget ~1-2 MB per keyframe = 40-70 MB per game; measure). Seeking to any frame then
-  costs load (0.4 ms) + at most 299 resim ticks (60 ms) — well under one presented frame of perceived delay only if the
-  seek runs unpaced on the game thread with presentation held; otherwise two frames. A denser ring around the current
-  playhead (the existing 8-frame ring) gives frame-precise scrubbing locally.
+  costs load (0.4 ms) + at most 299 resim ticks at 0.2-0.5 ms = **60-150 ms, i.e. 4-9 presented frames** (corrected
+  2026-11-08: not "under one frame"). Seeks that feel instant need keyframes every 30-60 frames (6-15 ms worst case),
+  which multiplies the keyframe memory 5-10x (an estimated 200-700 MB per game: too much). So: sparse keyframes and a
+  short hitch on far seeks, plus the dense 8-frame ring around the playhead for frame-precise local scrubbing.
 - **Divergence handling**: once the human takes over, the recorded opponent's inputs are replayed verbatim, which is
   correct for a few frames (they were already committed) and then nonsense. Behaviour: the recorded inputs play for a
   configurable "commitment window" (e.g. until the opponent's next actionable frame as observed by `cell`), then the
@@ -88,8 +89,12 @@ Mod-side: scrubber marks for keyframes and the divergence frame, the loop setup 
 `gd_lab_events_range` as today.
 
 ### Cost
-- Seek: load 0.4 ms + 0-299 resims at 0.2-0.5 ms = up to ~150 ms worst case (cpu scenario) once per seek; 8-frame ring
-  around the playhead keeps scrubbing at ~2 ms. Per-frame steady state unchanged from the lab today (~112 us ring).
+- Seek: load 0.4 ms + 0-299 resims at 0.2-0.5 ms = 60-150 ms worst case (4-9 frames) once per far seek; the 8-frame
+  ring around the playhead keeps scrubbing at ~2 ms. Per-frame steady state unchanged from the lab today (~42 us/frame
+  ring after page sharing; ~156 us/frame with the older 1.25 ms capture).
+- **Split (decided 2026-11-08): `.mrpl` first, `.slp` later.** `.mrpl` is always exact and already seekable, so the
+  takeover milestone is the replay pad feed + per-port go-live + `OP_LOOP` on `.mrpl`, with overlays in playback and
+  the bookmark hotkey; the windowed `.slp` boot comes last, with exactness shown per stage.
 - Memory: keyframes 40-70 MB per game (estimate; measure), plus the 58 MB ring.
 - Loading a `.slp` in the windowed flow: slpcheck boots the engine with the file's scenario in ~0.2 s (boot) and the
   VS load ~80 ms.
@@ -206,18 +211,34 @@ corrects it. Melee's event interpreter is small and its opcodes are documented i
 executor over the opcodes (no fighter) is a few hundred lines. **S-M**, no determinism impact (read-only data).
 
 **3b. Live frame advantage by headless lookahead ("if both do nothing from here").** On a frozen or live frame: save,
-step the engine K frames with neutral pads on both ports (or "hold shield" for the defender), read the first
-actionable frame of each from `cell`, load back. That is the true on-hit / on-shield advantage for *this* exchange,
-including hitlag, shield push, landing lag and platform landings, before it happens. Cost per evaluation: save 0.3 ms +
-load 0.4 ms + K ticks; K is bounded by the longest stun plus a recovery (~60 frames) = 12-30 ms, so **one evaluation
-per exchange** (triggered by a hit / shield event) fits between frames in paced play (the lab runs headless-fast when
-frozen anyway) and is instant when frozen. It must run on the game thread with presentation held (one engine). Online
-lab: both peers would compute it, or it stays a local presentation-only readout (preferred: the result changes
-nothing in the sim; the save/load is sim-neutral because the load restores every static). **Determinism check**: a
-lookahead is save -> N ticks -> load; the ring already proves load restores to hash-equal (`MELEE_SNAP_CHECK`). The
-only leak risk is a static written by the lookahead that the snapshot does not cover: by the snapshot rule there are
-none, and `MELEE_SNAP_CHECK` after every lookahead is the test. **S**, the primitive is 20 lines in `LabRun`; its
-value is large because the observed `frame_adv` arrives late and is often wrong when a player acts early.
+step the engine with neutral pads on both ports (or "hold shield" for the defender) **until each fighter is actionable
+(the stop condition), capped at 300 frames** (the observed `frame_adv` timeout), read the first actionable frame of each
+from `cell`, load back. (Corrected 2026-11-08: a fixed K of ~60 is too low; at high percent hitstun alone exceeds it.)
+That is the true on-hit / on-shield advantage for *this* exchange, including hitlag, shield push, landing lag and
+platform landings, before it happens. Cost per evaluation: save 0.3 ms + load 0.4 ms + up to 300 ticks at 0.2-0.5 ms.
+**That does not fit between frames** (corrected: a 16.7 ms frame also has to tick and draw): live use slices the work
+across presented frames under a per-frame time budget (each slice: save live, load the job's resume point, tick until
+the budget is spent, save the resume point, load live), and the result arrives some frames later, still about the
+anchored frame. Frozen, it runs to completion at once. It runs on the game thread (one engine). Online lab: a local
+presentation-only readout (the result changes nothing in the sim; the save/load is sim-neutral because the load
+restores every static).
+
+**The speculative flag (gap found by the 2026-11-08 review).** The load restores the arena and the statics, but the
+host-side observers live on the system heap: `LabRun`'s event log, toasts (fed by events), frame-meter cells, observed
+frame data, `frame_adv`, the ring, the input log, recordings, playback cursors, the dummy's per-hit draws and the lab
+RNG, the perf counters, the log lines; outside `LabRun`, the installed sound (`melee_audio::sim`: sfx starts and the
+positional objects' RNG draws), define audio (geno_host), the GX frame the tick produced (the load forgets it) and
+rumble (today `PADControlMotor` is a no-op sink). Lookahead ticks run with a **speculative flag** that mutes every one of
+them, or every DI fan fires phantom hit toasts and sounds. `MELEE_SNAP_CHECK` does not catch this because the sim hash
+is fine; it needs its own test (observer state equal before and after a lookahead, no sound installed during a
+speculative tick). Caveat: with the sound out the sim sees "no sound" answers (voice handle -1, no positional-object
+RNG draw), so a lookahead equals a `--no-audio` continuation; with audio on, RNG-sensitive outcomes (DamageFlyRoll)
+can differ from the live continuation.
+
+**Determinism check**: a lookahead is save -> N ticks -> load; the ring already proves load restores to hash-equal
+(`MELEE_SNAP_CHECK`). The only sim leak risk is a static written by the lookahead that the snapshot does not cover: by
+the snapshot rule there are none, and `MELEE_SNAP_CHECK` after every lookahead is the test. **S**; its value is large
+because the observed `frame_adv` arrives late and is often wrong when a player acts early.
 
 **3c. Per-frame flag timeline from the engine, not the mod.** Extend the meter cell with a bit set rather than a
 single kind: `ACTIVE_HITBOX | INTANGIBLE | INVINCIBLE | HITLAG | HITSTUN | SHIELDSTUN | LANDING_LAG | IASA | GRAB_RELEASE
@@ -226,7 +247,8 @@ overlay already computes the line; the knockback arc `KB_ARC` is accepted and no
 the same (one `gd_lab_meter` per present). **S**.
 
 ### Cost
-3a: data parse once per character load, KB of host memory. 3b: ~15-30 ms per exchange, on demand. 3c: free.
+3a: data parse once per character load, KB of host memory. 3b: 5-30 ms per exchange typical, up to ~150 ms at the
+300-frame cap (sliced when live). 3c: free.
 
 ### Risk: low (3a: run-time-dependent moves need the observed overlay; 3b: must not run during LabNetplay without being
 a cmd, or peers would differ in wall time only, which is fine since presentation is never hashed; run it locally).
@@ -261,7 +283,10 @@ browse and play**: pick a line and the lab plays it as a recording on the port, 
   memory-constrained: **measure before choosing N**, and make N a setting with a default of 2.
 - Alternative without processes: time-slice on the game thread while frozen (the user is looking at a frozen frame;
   presentation keeps drawing at 60 Hz from the harness-owned side while the engine does 16 ms of search per present).
-  Same throughput as one worker, zero new infrastructure, no memory multiplier. **Start here.**
+  Same throughput as one worker, zero new infrastructure, no memory multiplier. **Start here.** Drawing rule (review
+  2026-11-08): if the engine is mid-search at present time the fighters cannot be drawn from the arena, so each slice
+  ends with the live state loaded back (part of the ~1.4 ms slice overhead), or the last frame is held and only
+  overlays are redrawn. The lookahead primitive does the former and hands the held frame back.
 - Macro-actions are the lab's recordings: a macro library per character (jab, dtilt, utilt, grab, nair, bair, dair,
   up-B, shine, wavedash L/R, dash L/R, SH, FH, shield, spot dodge, roll, DI classes) shipped as pad sequences, with
   "wait until actionable" semantics via `cell`.
@@ -311,9 +336,15 @@ but not drawn; hitbox `prev_x/prev_y` already published.
 **Mapping.** Draw the accepted-but-undrawn bits (S). The **DI fan and KO check are lookahead** (3b's primitive): on a
 hit frame, for each of ~9 DI classes, save, inject the DI stick for the victim, run until actionable or blast zone,
 record the trajectory points, load. 9 x (0.7 ms + up to ~80 ticks x 0.3 ms) = ~0.2 s worst case, instant on a frozen
-frame; cache per (hit frame, percent). The arc is then exact (the game's own gravity, fall speed, hitstun, SDI-free),
-not a formula. "Percent at which this KOs" = bisection over `set_percent` + lookahead (8 steps = ~1.5 s at worst,
-usually less; run it in the background slices). **M.**
+frame; cache per (hit frame, percent). The arc is then the engine's own (gravity, fall speed, hitstun, SDI-free), not a
+formula, and exactly as console-true as slpcheck says the engine is (hit-timing is one of the listed divergence causes;
+claim no more). "Percent at which this KOs" = bisection over `set_percent` + lookahead, with two rules from the review:
+**(1) rewind before the hit**: knockback is fixed when the hit is applied, so `set_percent` on the hit frame changes
+nothing; each step loads a state from before the hit (the ring frame before it), sets the victim's percent, replays
+the logged pads through the hit, then runs the lookahead; **(2) confirm**: KO versus percent is not strictly monotonic
+(blast-zone corners, stage collisions, a tech opportunity can flip it), so the bisection result gets a confirming run
+at the reported percent and one below it. 8-10 steps x (resim to the hit + lookahead) = ~1.5-2 s at worst, in the
+background slices. **M.**
 
 Also the one thing the user asked for by name in a different form: **hit-frame "why"**: when a hit lands or whiffs by a
 hair, the host can report the distance between the closest hitbox and hurtbox (volumes are known), and for a trade,
@@ -337,62 +368,111 @@ preview in LabNetplay.
 
 New host primitives, in dependency order (each small):
 
-1. `lookahead(port pads as a closure or table, K, stop_cond) -> per-frame fighter structs` inside `LabRun`
-   (save, tick K with injected pads, load; `MELEE_SNAP_CHECK` able). Used by 3b, 4a, 4c.
+1. `lookahead(pad policy per port, stop_cond, cap 300) -> first actionable / KO frame per fighter` inside `LabRun`
+   (save, tick with injected pads under the speculative flag until the stop condition, load; `MELEE_SNAP_CHECK` able;
+   sliced across frames when live). Used by 3b, 4a, 4c, F, I.
 2. Per-port `go_live` and a replay pad feed (1).
 3. `OP_LOOP(anchor, frames, cond)` auto-rewind (1, 4b drills).
 4. Script-derived frame data (3a).
 5. Macro library and outcome scoring (4a, 4b).
 6. Ghost profiles: offline tool + `OP_PROFILE` (2A), policy pad source (2B).
-7. Worker pool (4a scale-up).
+7. ~~Worker pool (4a scale-up).~~ Shelved (section 8).
 
-## 6. Ranked shortlist: the best first features
+## 6. Ranked shortlist (revised 2026-11-08 after the external review)
 
-1. **Headless lookahead primitive + true frame advantage + DI fan / KO check (3b, 3c, 4c).** Size S+S+M, risk low.
-   One primitive (save, tick K, load: 0.7 ms + K x 0.2-0.5 ms) unlocks the three readouts players ask for most and
-   that no other Melee trainer has exactly (UnclePunch computes KB from formulas; we simulate the real frames). It is
-   also the foundation for every "unlimited compute" feature, so it gets built first regardless. Testable with
-   `MELEE_SNAP_CHECK` and the existing lab-check.
-2. **Replay takeover on `.mrpl` and `.slp` with auto-rewind (1).** Size M, risk medium. The lab already has scrub,
-   step, take over, slots and a logged future; the missing pieces are a replay pad feed, per-port go-live, the loop
-   command and booting a `.slp` scenario in the windowed lab (slpcheck has the converter). This is the feature with
-   the most player value per line: "lab the situation from my last set". The 38/125 frame-exact figure and the
-   divergence marker keep expectations honest.
-3. **Adaptive mixup trainer (4b).** Size S-M, risk low. The weighted reaction tables, delays, lab RNG and events exist;
-   add outcome scoring and a weight update rule. Deterministic, works online in LabNetplay as a cmd, and turns the
-   existing dummy into a real training partner for tech chases, ledge coverage and OoS.
-4. **Script-derived frame data (3a).** Size M, risk low. Replaces the observed-only `gd_lab_framedata` with the nominal
-   timeline for any move, enabling a move library and future-cell prediction on the meter. Pure data, no sim impact.
-5. **Replay-derived reaction profiles (2, Tier A).** Size M, risk low-medium. The "ghost" that costs little: an offline
-   tool over `.slp` post-frame data fills the dummy's option tables with a real player's habits. Prefer it over the
-   bucketed policy ghost until the taxonomy is proven on real files.
+The review (a companion note on prior art in first-party games, community tools and Melee tools) agreed that the
+lookahead is the one thing no shipped trainer has, and moved the cheap, engine-free trainer work ahead of the replay
+work. The order is now:
 
-Deferred: punish/combo search (4a) until 1 exists and a macro library is in place; the bucketed policy ghost (2B) until
-Tier A shows the buckets are right; the worker pool until single-engine time-slicing is measured as too slow on real
-searches.
+1. **Lookahead primitive** with the speculative flag (3b), true frame advantage on hit and on shield, the DI fan with
+   KO / survive per direction (4c), plus the cheap riders on the same primitive: **RNG sweep** (F) and **percent sweep**
+   (I), then the KO-percent bisection with the rewind-before-hit rule (4c). Size S + S + M, risk low. Built first on
+   port/lablook.
+2. **Adaptive trainer** (4b) with the **drill format and session log** (C) and **mirror / jitter on load** (K). Size
+   S-M, risk low, needs nothing new from the engine.
+3. **`.mrpl` takeover** with auto-rewind (section 1), **overlays and meter in playback** (L) and the **bookmark hotkey**
+   (M). Size M, risk medium.
+4. **Script-derived frame data** (3a) with the **Melee frame-meter additions** (H). Size M, risk low.
+5. **Recipes and notation** (D, E in the review). Size S-M.
+6. **`.slp` in the windowed lab** with exactness per stage, then the **replay coach** (A). Size M + M.
 
-## 7. Open design questions for the user
+Later or shelved: punish / combo search (4a) waits for the lookahead, the notation and a macro library; replay-derived
+reaction profiles (section 2, Tier A) after 6. **Shelved by decision**: worker processes (section 4a), fixed-address
+snapshots (to make snapshots cross processes), GPU simulation, a hosted pretrained AI policy (review O), a learned
+evaluator for search (review P) and snippet ghosts (review N) / the bucketed policy ghost (Tier B; the review also
+noted its numbers do not add up: 8-16 sectors x ~20 button sets is 160-320 classes, which a 64 B histogram cannot
+hold except as a sparse top-k, and one player's share of the corpus leaves most of 100 k buckets empty).
 
-1. **Lookahead while playing, or only when frozen?** Running 15-30 ms of lookahead between live frames is possible in
-   paced play (the engine idles ~16 ms per frame) but shows as a frame-time spike on slow machines. Frozen-only is
-   safe; live needs a budget setting.
-2. **Replay takeover: when the recorded opponent stops making sense, what takes over by default?** Recorded inputs
-   until next actionable frame, then CPU level 9? the lab's dummy settings? a ghost profile? Or freeze and ask.
-3. **Which replays matter first: our `.mrpl` (always exact, seekable today) or Slippi `.slp` (the real tournament set,
-   38/125 exact)?** This decides whether the first milestone is "wire the replay feed" or "boot `.slp` in the windowed
-   lab".
-4. **How honest should the divergence marker be?** Show the console-exact frame always, only when known, or hide it
-   and treat every `.slp` as "our sim's rendition"?
-5. **Search UX: anytime results that improve on screen, or a fixed "think for N seconds" with a progress toast?** And
-   is a browsable tree desired, or only "top 3 lines, press to play"?
-6. **Macro library: shipped per character by us (curated pad sequences), recorded by the user into slots, or both?**
-   Shipped macros make search work out of the box; user recordings make it personal.
-7. **Worker processes: acceptable on this memory-constrained PC?** Default N = 1 (time-sliced) with an opt-in pool,
-   or no pool at all until a measurement says the single engine is too slow?
-8. **Ghost taxonomy: which situations count?** A first list: tech (percent band x position), DI (move x percent),
-   ledge option (opponent distance x state), OoS (move on shield), recovery (height x distance), neutral approach
-   (spacing band). Which ones matter enough to design first?
-9. **Online lab for the new features: local-only readouts (lookahead, DI fan), with only the applied result (a
-   playback, a weight change) sent as a cmd?** That is the determinism-safe default; is a shared search view wanted?
-10. **Auto-rewind conditions: which events are worth a condition?** took damage, lost stock, grabbed ledge, became
-    actionable, entered action X, left a zone, N frames passed.
+## 7. Design decisions (answered 2026-11-08) and still-open questions
+
+Decided by the user:
+- **Lookahead runs both frozen and live.** Frozen: runs to completion at once. Live: behind a toggle (off by default),
+  with a per-presented-frame time budget; the work is sliced across frames and the readout says which frame it is
+  about. Online lab: a local-only readout, never a command.
+- **`.mrpl` before `.slp`** (section 1).
+- **No worker processes, no fixed-address snapshots, no GPU sim, no hosted AI model / learned evaluator / snippet
+  ghosts** for now (section 6).
+
+Still open:
+1. Replay takeover: when the recorded opponent stops making sense, what takes over by default? Recorded inputs until
+   the next actionable frame, then CPU level 9? the lab's dummy settings? Or freeze and ask.
+2. How honest should the divergence marker be on `.slp`: the console-exact frame always, only when known, or hidden?
+3. Search UX (when 4a comes back): anytime results that improve on screen, or "think for N seconds"? Top-3 lines or
+   a browsable tree?
+4. Macro library: shipped per character, recorded by the user, or both?
+5. Ghost taxonomy (Tier A): which situations first? Tech, DI, ledge, OoS, recovery, approach.
+6. Auto-rewind conditions: took damage, lost stock, grabbed ledge, became actionable, entered action X, left a zone,
+   N frames passed.
+7. Lookahead pad policies beyond neutral / shield / DI: should the dummy's own reaction settings be a policy (a
+   "what will my dummy do" preview)? It needs the synthesiser to run without advancing the lab RNG.
+
+## 8. Additions from the review (2026-11-08)
+
+Letters are the review's. Each maps onto existing pieces; none needs a new engine capability beyond the lookahead.
+
+**C. Drill format with scoring and a session log [S-M].** One file holds a slot, the dummy config, a loop condition
+(`OP_LOOP`), a success predicate and a score. Per attempt: success and frames late; trend across sessions. Punish
+training, tech-chase reaction, edgeguard and hit-confirm ("the dummy randomly shields or gets hit; did you pick the
+right follow-up") all become content. Builds on `OP_LOOP` and 4b's outcome scoring. Stats are presentation-side and
+never touch the sim. Rides with rank 2.
+
+**F. RNG sweep [S].** The snapshot includes the game's seed, so the lookahead reruns one moment across N seeds and
+shows the outcome spread (Peach turnips, misfire, G&W hammer, DamageFlyRoll). Also seed pinning and reseed-on-load for
+the dummy. No emulator-based tool does this cheaply. Rides on rank 1.
+
+**H. Frame-meter additions in Melee terms [S].** IASA, autocancel and L-cancel windows; jump-cancel windows; shield
+pressure gaps (frames the defender could act out of shield); button hold and release timing; GALINT on ledgedash.
+Extends 3c's bit set. Rank 4.
+
+**I. Percent sweep, angle arrows, stun tint [S].** The 4c arc at several percents at once (each a rewind-before-hit
+lookahead), launch-angle arrows on hitboxes, fighters tinted during hitstun and hitlag. Rank 1 (the sweep) and the
+overlay pass (arrows, tint).
+
+**K. Mirror and jitter on load [S].** Flip the saved state across stage centre and randomise percent and position in a
+range on each rewind; logged as "forks the timeline" like `set_pos`. Rank 2.
+
+**L. Overlays and meter in replay playback [S].** Hitboxes, frame meter and input display while watching a replay,
+not only in the lab. Presentation-only. Rank 3.
+
+**M. Bookmark hotkey during live play [S].** A button in a match drops a marker; the replay opens at the markers
+afterwards; notes saved alongside the replay. Rank 3.
+
+**A. Replay coach as a batch job [M], later.** Run the lookahead (3b, 4c) and, once it exists, a shallow punish search
+over a whole replay headless at 30-80x, and mark the scrubber ("actionable 9 frames early", "this DI died, that DI
+lived", "missed tech, three punishes available", "missed L-cancel cost the follow-up"). Results are (frame, kind,
+payload) served through a `gd_lab_*_range` query. Only as trustworthy as the replay is exact: findings are gated at the
+slpcheck divergence frame. Rank 6.
+
+Not taken now: B (situation playlists from a replay folder) follows A; G (threat-range overlay) follows 3a; J (TM-CE
+dummy details) fits rank 2 when the drill work starts; N, O, P are shelved (section 6).
+
+### Sources (canonical URLs)
+- Training Mode - Community Edition: https://github.com/AlexanderHarrison/TrainingMode-CommunityEdition
+- rwing replay takeover: https://github.com/AlexanderHarrison/HOW-TO-SETUP-RWING-REPLAY-TAKEOVER
+- MBAACC Extended Training Mode (RNG control): https://github.com/fangdreth/MBAACC-Extended-Training-Mode
+- SF6 Training Tools: https://github.com/Wael3rd/SF6_Tools
+- BBCF Improvement Mod: https://codeberg.org/March_FGC/BBCF-Improvement-Mod
+- TekkenBot: https://github.com/WAZAAAAA0/TekkenBot, https://github.com/dcep93/TekkenBot
+- Slippipedia: https://github.com/cbartsch/Slippipedia ; slip.py: https://github.com/pcrain/slip.py
+- slippi-ai: https://github.com/vladfi1/slippi-ai ; SmashBot Analysis: https://github.com/altf4/smashbot_analysis
+- SF6 frame meter and training (Infil): https://words.infil.net/w03-sf6beta-p6.html

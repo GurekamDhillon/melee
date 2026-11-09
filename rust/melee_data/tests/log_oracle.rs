@@ -34,7 +34,8 @@ fn fnv(mut h: u64, b: &[u8]) -> u64 {
 
 #[test]
 fn logger_matches_the_c() {
-    let user = std::env::var("USERNAME").unwrap();
+    // the name the report redacts: %USERNAME% on Windows, $USER elsewhere
+    let user = std::env::var("USERNAME").or_else(|_| std::env::var("USER")).unwrap();
     let stamp = "1badcafe";
     let dir = std::env::temp_dir().join(format!("melee_data_log_{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();

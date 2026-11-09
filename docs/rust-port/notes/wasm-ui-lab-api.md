@@ -368,6 +368,24 @@ All queries copy into the mod's memory and none of them write. They are:
 - `gd_lab_events(out, max) -> n`: hits, shields, techs and L-cancels of the last frame, with the L-cancel rule from
   `practice.rs`.
 
+### B5a. Geno (gd-lab-v1.1, `gd_geno_*`)
+
+The LAB's Geno panel over the mod host (geno-wasm-plan.md step 4; declarations in `docs/specs/gd-ui-lab-v1.h`).
+`LAB_ABI_VERSION` 1.1 (additive: a mod importing a `gd_geno_*` call fails instantiation on a 1.0 host).
+
+| import | reaches | how |
+|---|---|---|
+| `gd_geno_profile(port)`, `gd_geno_combo_info(port, what)`, `gd_geno_fly_get(port)`, `gd_geno_fly_state(port, field)` | `gw_Geno_ProfileForKind(fp->kind)`, `GenoGame_ComboInfo`, `GenoFly_Get`, `GenoFly_State` | published per port after every frame (`LabShared::geno`, `melee/src/lab/geno.rs::publish_port`) |
+| `gd_geno_state_count(p)`, `gd_geno_state_name(p, s, out, cap)`, `gd_geno_combo_route_name(p, r, out, cap)`, `gd_geno_define_name(ck, out, cap)` | `gw_Geno_StateCount/StateName`, `gw_Geno_ComboName`, `gw_Geno_DefineName` | registry tables, published when the lab run starts and after a reload (`tables`); the presentation side never calls the registry |
+| `gd_geno_result(out, cap)` | the last Geno command's code and text | published when a Geno command applies |
+| `gd_geno_fly` / `_teleport` / `_fly_attack` / `_fly_clear` / `_combo_ki` (LAB_CPU), `gd_geno_reload` (LAB_STATE) | `GenoFly_Set`, `GenoFly_Teleport`, `GenoFly_AttackConfig` (flight first when on, as gs_fly_attack_cfg), `GenoFly_Clear`, `GenoGame_ComboSetKi`, `gw_Geno_Reload` + `GenoGame_LabReload` / `GenoLab_Leave(3)` | `LabCmd` ops 20-25, applied by `LabRun::apply` through `EngineGame` |
+
+Offline only, as the C LAB (`gs_require_offline`): the imports return `EOFFLINE` in `LabNetplay` and the play flow
+ignores a Geno op there, so none rides the lockstep stream and `lab cmd v1` stays. A write drops a running lookahead
+(the C's `gs_rw_branch`). The reload applies on its command frame (the C rewinds to the request frame and replays; not
+done here) and restarts the rewind history there; with the layout changed it restarts a LAB-mode match, else freezes
+the lab. Tests: `cargo test -p melee_modhost lab::tests::geno`, `cargo test -p melee lab::geno`.
+
 ### B6. Gating: offline only
 
 - A mod declaring `LAB` must not declare sim hooks (load refusal otherwise). So it is sim-inert and outside the

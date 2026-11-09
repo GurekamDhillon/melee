@@ -104,6 +104,8 @@ pub fn ProfileForKind(kind: i32) -> i32 {
     k
 }
 pub fn ProfileCount() -> i32 { reg().p.len() as i32 }
+/// The CSS kinds a define can name: `gw_Geno_DefineName(ck)` answers only for 1..=KindCount() (ck - 1 < GN_KINDS).
+pub fn KindCount() -> i32 { melee_script::geno::registry::GN_KINDS as i32 }
 pub fn Scale(p: i32) -> f32 { at(p).map_or(1.0, |x| if x.scale > 0.0 { x.scale } else { 1.0 }) }
 pub fn MaxJumps(p: i32) -> i32 { at(p).map_or(-1, |x| x.max_jumps) }
 pub fn JumpVyCount(p: i32) -> i32 { at(p).map_or(0, |x| x.njvy as i32) }

@@ -45,6 +45,40 @@ pub const OP_POS: u8 = 16;
 pub const OP_PLAY_SET: u8 = 17;
 pub const OP_RNG_SEED: u8 = 18;
 pub const OP_REACTION_WEIGHTS: u8 = 19;
+// Geno (gd-lab-v1.1, docs/rust-port/notes/geno-wasm-plan.md step 4): offline only, as the C's gs_require_offline. The
+// presentation side never queues them in LabNetplay and the play flow ignores them there, so a v1 peer never meets
+// one and LAB_CMD_VERSION stays 1.
+/// port, a = mode (0 off, 1 on, 2 place): `GenoFly_Set`
+pub const OP_GENO_FLY: u8 = 20;
+/// port, b = x bits, c = y bits: `GenoFly_Teleport`
+pub const OP_GENO_TELEPORT: u8 = 21;
+/// port, a = flags (bit 0 on, bit 1 every frame) | damage << 2 | angle << 7, b = radius bits, c = active | gap << 16,
+/// d = kb | kbg << 16: `GenoFly_AttackConfig` (on: the fighter is put in flight first, as gs_fly_attack_cfg)
+pub const OP_GENO_FLY_ATTACK: u8 = 22;
+/// port: `GenoFly_Clear` (the cursor's target and attack)
+pub const OP_GENO_FLY_CLEAR: u8 = 23;
+/// port, b = ki (the meter's hundredths, as `GenoGame_ComboSetKi`)
+pub const OP_GENO_KI: u8 = 24;
+/// `gw_Geno_Reload` (then `GenoGame_LabReload`, or the restart when the layout changed); the text is published
+pub const OP_GENO_RELOAD: u8 = 25;
+/// The last opcode `LabCmd::from_bytes` accepts.
+pub const OP_LAST: u8 = OP_GENO_RELOAD;
+
+pub fn is_geno_op(op: u8) -> bool {
+    (OP_GENO_FLY..=OP_GENO_RELOAD).contains(&op)
+}
+
+// ---- Geno queries (published by the play flow: GenoView)
+/// GENO_COMBO_MAX_ROUTES (melee_script::geno::consts).
+pub const GENO_ROUTES_MAX: usize = 128;
+/// `gd_geno_combo_info` what codes: 0..15 as `GenoGame_ComboInfo`, then 16 + route for the route states.
+pub const GENO_COMBO_WHATS: usize = 16 + GENO_ROUTES_MAX;
+/// `GenoFly_State` fields 0..13.
+pub const GENO_FLY_FIELDS: usize = 14;
+/// `gd_geno_result` header bytes: u32 seq, i32 op, i32 port, i32 rc.
+pub const GENO_RESULT_HEAD: usize = 16;
+/// The fly cursor's coordinate bound (the C's fly_target check).
+pub const GENO_FLY_COORD_MAX: f32 = 49000.0;
 
 // ---- B1..B3 constants (docs/specs/gd-ui-lab-v1.h)
 pub const SLOTS: usize = 16;
@@ -239,7 +273,7 @@ impl LabCmd {
         o
     }
     pub fn from_bytes(b: &[u8]) -> Option<Self> {
-        if b.len() < LAB_CMD_BYTES || b[0] == 0 || b[0] > OP_REACTION_WEIGHTS {
+        if b.len() < LAB_CMD_BYTES || b[0] == 0 || b[0] > OP_LAST {
             return None;
         }
         let u = |i: usize| u32::from_le_bytes([b[i], b[i + 1], b[i + 2], b[i + 3]]);
@@ -275,6 +309,79 @@ pub struct FrameData {
     pub first_active: i32,
     pub last_active: i32,
     pub iasa: i32,
+}
+
+/// The result of the last applied Geno command (`gd_geno_result`).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct GenoResult {
+    /// Applied Geno commands so far (0: none yet).
+    pub seq: u32,
+    pub op: u8,
+    pub port: u8,
+    /// The game function's code (reload: `gw_Geno_Reload`'s, <0 refused, 0 layout changed, >0 re-applied).
+    pub rc: i32,
+    /// Why, as the C LAB says it (reload: the hot-reload line; fly: gs_fly_err); empty on plain success.
+    pub text: String,
+}
+
+/// What the play flow publishes for the `gd_geno_*` queries: the per-port part after every frame, the registry tables
+/// (names, counts) when the lab run starts and after a reload. The tables are registry data, not sim state, but the
+/// presentation side still reads only what is published here (the file's rule; melee_modhost does not link the
+/// registry).
+#[derive(Clone, Debug)]
+pub struct GenoView {
+    /// Bumped every time the tables are republished.
+    pub tables_gen: u32,
+    /// `gw_Geno_ProfileForKind(fp->kind)` per port (-1 none or no fighter).
+    pub profile: [i32; 4],
+    /// `GenoGame_ComboInfo(port, what)` per port and what code (-1 where it answers -1).
+    pub combo: [[i32; GENO_COMBO_WHATS]; 4],
+    /// `GenoFly_Get` per port (-1 no fighter).
+    pub fly_mode: [i32; 4],
+    /// `GenoFly_State(port, field)`.
+    pub fly: [[i32; GENO_FLY_FIELDS]; 4],
+    /// State names by profile (`gw_Geno_StateName`; the count is the length).
+    pub states: Vec<Vec<String>>,
+    /// Route names by profile (`gw_Geno_ComboName`, the registry's route order).
+    pub routes: Vec<Vec<String>>,
+    /// Define display names by CSS kind (`gw_Geno_DefineName`), None where it answers 0.
+    pub defines: Vec<Option<String>>,
+    pub result: GenoResult,
+}
+
+impl Default for GenoView {
+    fn default() -> Self {
+        GenoView {
+            tables_gen: 0,
+            profile: [-1; 4],
+            combo: [[-1; GENO_COMBO_WHATS]; 4],
+            fly_mode: [-1; 4],
+            fly: [[-1; GENO_FLY_FIELDS]; 4],
+            states: Vec::new(),
+            routes: Vec::new(),
+            defines: Vec::new(),
+            result: GenoResult::default(),
+        }
+    }
+}
+
+impl GenoView {
+    /// No fighter on a port (the lab run ended, or the port is empty).
+    pub fn clear_port(&mut self, port: usize) {
+        self.profile[port] = -1;
+        self.combo[port] = [-1; GENO_COMBO_WHATS];
+        self.fly_mode[port] = -1;
+        self.fly[port] = [-1; GENO_FLY_FIELDS];
+    }
+    pub fn state_name(&self, p: i32, s: i32) -> Option<&str> {
+        self.states.get(usize::try_from(p).ok()?)?.get(usize::try_from(s).ok()?).map(String::as_str)
+    }
+    pub fn route_name(&self, p: i32, r: i32) -> Option<&str> {
+        self.routes.get(usize::try_from(p).ok()?)?.get(usize::try_from(r).ok()?).map(String::as_str)
+    }
+    pub fn define_name(&self, ck: i32) -> Option<&str> {
+        self.defines.get(usize::try_from(ck).ok()?)?.as_deref()
+    }
 }
 
 /// What the presentation side and the play flow share (one per process, Rc on the system heap: never in the arena,
@@ -331,6 +438,8 @@ pub struct LabShared {
     pub look_req: Option<(u32, u32)>,
     /// The latest result (LOOK_HEAD + runs).
     pub look: [i32; LOOK_I32],
+    // ---- Geno (published by the play flow)
+    pub geno: GenoView,
 }
 
 impl Default for LabShared {
@@ -372,6 +481,7 @@ impl Default for LabShared {
             look_budget_us: 4000,
             look_req: None,
             look: [0; LOOK_I32],
+            geno: GenoView::default(),
         }
     }
 }
@@ -491,6 +601,14 @@ fn read(c: &Caller<'_, PresData>, ptr: u32, len: u32) -> Option<Vec<u8>> {
     m.data(c).get(ptr as usize..(ptr as usize).checked_add(len as usize)?).map(|s| s.to_vec())
 }
 
+/// Copy a published string into the mod's memory, truncated to `cap` (no NUL, as gd_ui_list_get): the bytes written;
+/// GD_EINVAL when there is no such string or the buffer is outside the memory.
+fn put_str(c: &mut Caller<'_, PresData>, out: u32, cap: u32, s: Option<&str>) -> i32 {
+    let Some(s) = s else { return GD_EINVAL };
+    let b = &s.as_bytes()[..s.len().min(cap as usize)];
+    if write(c, out, b) { b.len() as i32 } else { GD_EINVAL }
+}
+
 /// The feature gate of an import: LAB plus the sub-area, and an allowed session.
 fn gate(c: &Caller<'_, PresData>, sub: u32) -> Result<Rc<RefCell<LabShared>>, i32> {
     let f = c.data().features;
@@ -502,6 +620,19 @@ fn gate(c: &Caller<'_, PresData>, sub: u32) -> Result<Rc<RefCell<LabShared>>, i3
         return Err(GD_EOFFLINE);
     }
     Ok(l)
+}
+
+/// A Geno command: the gate, then offline only (the C refuses these online: gs_require_offline).
+macro_rules! geno_cmd {
+    ($c:expr, $sub:expr, $cmd:expr) => {
+        match gate(&$c, $sub) {
+            Ok(l) => {
+                let mut s = l.borrow_mut();
+                if s.session != Session::Offline { GD_EOFFLINE } else { s.push($cmd) }
+            }
+            Err(e) => e,
+        }
+    };
 }
 
 macro_rules! cmd {
@@ -772,7 +903,119 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
         }
         if write(&mut c, out, &b) { GD_OK } else { GD_EINVAL }
     });
+    // ---- Geno (gd-lab-v1.1): queries copy from LabShared::geno; writes are offline-only commands
+    f!("gd_geno_profile", |c: Caller<'_, PresData>, port: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if port > 3 { return GD_EINVAL }
+        let v = l.borrow().geno.profile[port as usize];
+        v
+    });
+    f!("gd_geno_state_count", |c: Caller<'_, PresData>, profile: i32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let v = usize::try_from(profile).ok().and_then(|p| l.borrow().geno.states.get(p).map(|v| v.len() as i32)).unwrap_or(0);
+        v
+    });
+    f!("gd_geno_state_name", |mut c: Caller<'_, PresData>, profile: i32, s: i32, out: u32, cap: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let sh = l.borrow();
+        put_str(&mut c, out, cap, sh.geno.state_name(profile, s))
+    });
+    f!("gd_geno_define_name", |mut c: Caller<'_, PresData>, ck: i32, out: u32, cap: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let sh = l.borrow();
+        put_str(&mut c, out, cap, sh.geno.define_name(ck))
+    });
+    f!("gd_geno_combo_info", |c: Caller<'_, PresData>, port: u32, what: i32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if port > 3 || !(0..GENO_COMBO_WHATS as i32).contains(&what) { return GD_EINVAL }
+        let v = l.borrow().geno.combo[port as usize][what as usize];
+        v
+    });
+    f!("gd_geno_combo_route_name", |mut c: Caller<'_, PresData>, profile: i32, route: i32, out: u32, cap: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let sh = l.borrow();
+        put_str(&mut c, out, cap, sh.geno.route_name(profile, route))
+    });
+    f!("gd_geno_fly_get", |c: Caller<'_, PresData>, port: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if port > 3 { return GD_EINVAL }
+        let v = l.borrow().geno.fly_mode[port as usize];
+        v
+    });
+    f!("gd_geno_fly_state", |c: Caller<'_, PresData>, port: u32, field: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if port > 3 || field as usize >= GENO_FLY_FIELDS { return GD_EINVAL }
+        let v = l.borrow().geno.fly[port as usize][field as usize];
+        v
+    });
+    // the last applied Geno command: u32 seq, i32 op, i32 port, i32 rc, then its text; truncated to cap; bytes written
+    f!("gd_geno_result", |mut c: Caller<'_, PresData>, out: u32, cap: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let b = {
+            let sh = l.borrow();
+            let r = &sh.geno.result;
+            if r.seq == 0 { return GD_ESTATE }
+            let mut b = Vec::with_capacity(GENO_RESULT_HEAD + r.text.len());
+            b.extend_from_slice(&r.seq.to_le_bytes());
+            b.extend_from_slice(&(r.op as i32).to_le_bytes());
+            b.extend_from_slice(&(r.port as i32).to_le_bytes());
+            b.extend_from_slice(&r.rc.to_le_bytes());
+            b.extend_from_slice(r.text.as_bytes());
+            b.truncate(cap as usize);
+            b
+        };
+        if write(&mut c, out, &b) { b.len() as i32 } else { GD_EINVAL }
+    });
+    f!("gd_geno_fly", |c: Caller<'_, PresData>, port: u32, mode: i32| -> i32 {
+        if port > 3 || !(0..=2).contains(&mode) { return GD_EINVAL }
+        geno_cmd!(c, FEATURE_LAB_CPU, LabCmd::new(OP_GENO_FLY, port as u8, mode as u16, 0, 0, 0))
+    });
+    f!("gd_geno_teleport", |c: Caller<'_, PresData>, port: u32, x: f32, y: f32| -> i32 {
+        let ok = |v: f32| v.is_finite() && v.abs() <= GENO_FLY_COORD_MAX;
+        if port > 3 || !ok(x) || !ok(y) { return GD_EINVAL }
+        geno_cmd!(c, FEATURE_LAB_CPU, LabCmd::new(OP_GENO_TELEPORT, port as u8, 0, x.to_bits(), y.to_bits(), 0))
+    });
+    // flags: 1 on (0 = attack off), 2 every frame; damage 1..30, radius 1..30, active 0..600, gap 0..3000, kb / kbg
+    // 0..2000, angle 0..361 (0 = the game's default): the ranges GenoFly_AttackConfig accepts
+    f!("gd_geno_fly_attack", |c: Caller<'_, PresData>, port: u32, flags: u32, damage: u32, radius: f32, active: u32, gap: u32, kb: u32, kbg: u32, angle: u32| -> i32 {
+        match geno_attack_cmd(port, flags, damage, radius, active, gap, kb, kbg, angle) {
+            Some(cmd) => geno_cmd!(c, FEATURE_LAB_CPU, cmd),
+            None => GD_EINVAL,
+        }
+    });
+    f!("gd_geno_fly_clear", |c: Caller<'_, PresData>, port: u32| -> i32 {
+        if port > 3 { return GD_EINVAL }
+        geno_cmd!(c, FEATURE_LAB_CPU, LabCmd::new(OP_GENO_FLY_CLEAR, port as u8, 0, 0, 0, 0))
+    });
+    f!("gd_geno_combo_ki", |c: Caller<'_, PresData>, port: u32, ki: i32| -> i32 {
+        if port > 3 || ki < 0 { return GD_EINVAL }
+        geno_cmd!(c, FEATURE_LAB_CPU, LabCmd::new(OP_GENO_KI, port as u8, 0, ki as u32, 0, 0))
+    });
+    f!("gd_geno_reload", |c: Caller<'_, PresData>| -> i32 { geno_cmd!(c, FEATURE_LAB_STATE, LabCmd::new(OP_GENO_RELOAD, 0, 0, 0, 0, 0)) });
     Ok(())
+}
+
+/// `gd_geno_fly_attack`'s command (None: out of the ranges GenoFly_AttackConfig accepts). With the attack off only
+/// the flags travel.
+#[allow(clippy::too_many_arguments)]
+pub fn geno_attack_cmd(port: u32, flags: u32, damage: u32, radius: f32, active: u32, gap: u32, kb: u32, kbg: u32, angle: u32) -> Option<LabCmd> {
+    if port > 3 || flags > 3 {
+        return None;
+    }
+    if flags & 1 == 0 {
+        return Some(LabCmd::new(OP_GENO_FLY_ATTACK, port as u8, flags as u16, 0, 0, 0));
+    }
+    if !(1..=30).contains(&damage) || !(1.0..=30.0).contains(&radius) || active > 600 || gap > 3000 || kb > 2000 || kbg > 2000 || angle > 361 {
+        return None;
+    }
+    Some(LabCmd::new(OP_GENO_FLY_ATTACK, port as u8, (flags | damage << 2 | angle << 7) as u16, radius.to_bits(), active | gap << 16, kb | kbg << 16))
+}
+
+/// The arguments of `GenoFly_AttackConfig` an OP_GENO_FLY_ATTACK carries: (flags, damage, radius bits, active_gap,
+/// kb_kbg, angle).
+pub fn geno_attack_args(c: &LabCmd) -> (i32, i32, i32, i32, i32, i32) {
+    let a = c.a as i32;
+    (a & 3, a >> 2 & 0x1F, c.b as i32, c.c as i32, c.d as i32, a >> 7 & 0x1FF)
 }
 
 impl PresExtension for LabExt {

@@ -9,7 +9,7 @@
  * the i32 global gdmod_ui_abi (gdmod_lab_abi) whose VALUE is the version: major must equal the host's, minor may
  * be lower. */
 #define GD_UI_ABI_VERSION  ((1u << 16) | 3u) /* 1.1: text style bits (GD_UI_TEXT_*); 1.2: UI_HOST catalogs + requests; 1.3: Nucleus lists, requests, gd_ui_host_pic */
-#define GD_LAB_ABI_VERSION (1u << 16)
+#define GD_LAB_ABI_VERSION ((1u << 16) | 1u) /* 1.1: gd_geno_* (Geno queries, offline-only Geno commands) */
 
 /* features bits, extending GD_FEATURE_* in gdmod.h */
 enum {
@@ -182,7 +182,10 @@ unsigned gd_ui_host_pic(unsigned key);
  * 6 STEP(b n) 7 GO_LIVE 8 REC_START(a mask, b rec) 9 REC_STOP(b rec) 10 PLAY(a mask, b rec, c flags) 11 PLAY_STOP(a mask)
  * 12 REC_FREE(b rec) 13 CPU(port, a behaviour, b param) 14 REACTION(port, a kind, b option, c param) 15 PERCENT(port,
  * b f32) 16 POS(port, b x, c y) 17 PLAY_SET(port, a order | flags << 8, b/c 8 rec ids, d 8 x 4-bit weights)
- * 18 RNG_SEED(b seed) 19 REACTION_WEIGHTS(port, a kind, b weights). */
+ * 18 RNG_SEED(b seed) 19 REACTION_WEIGHTS(port, a kind, b weights). v1.1 (Geno, offline only, so never on the lockstep
+ * stream and the version stays 1): 20 GENO_FLY(port, a mode) 21 GENO_TELEPORT(port, b x, c y) 22 GENO_FLY_ATTACK(port,
+ * a flags | damage << 2 | angle << 7, b radius f32, c active | gap << 16, d kb | kbg << 16) 23 GENO_FLY_CLEAR(port)
+ * 24 GENO_KI(port, b ki) 25 GENO_RELOAD. */
 #define GD_LAB_CMD_VERSION 1
 #define GD_LAB_SLOTS       16
 #define GD_LAB_RING_MAX    600
@@ -282,5 +285,40 @@ int      gd_lab_applied(void* out, unsigned max); /* the commands applied on the
                                                      command record (the other player's actions as toasts online) */
 int      gd_lab_status(int* out10);  /* active, match frame, paused, replaying, ring frames, ring length, command delay,
                                         recording mask, issuer (0 host / offline, 1 guest), apply frame */
+
+/* ---- gd-lab-v1.1: Geno (docs/geno.md; docs/rust-port/notes/geno-wasm-plan.md step 4). Queries (LAB) copy from what
+ * the play flow publishes after each frame (per port) and when the lab match starts or a reload installs new data
+ * (the registry's names and counts); they answer in every lab session. Strings are copied truncated to cap, with no
+ * NUL: the bytes written, or -1 (GD_EINVAL) when there is no such string or the buffer is outside the memory.
+ * Commands (cmd) need LAB_CPU (the reload: LAB_STATE) and are OFFLINE only, as the C LAB's (GD_EOFFLINE in LAB_NETPLAY too); a refusal by the game is read
+ * back with gd_geno_result. */
+#define GD_GENO_COMBO_WHATS 144 /* gd_geno_combo_info what codes: 0..15, then 16 + route (128 routes) */
+enum { GD_GENO_FLY_OFF = 0, GD_GENO_FLY_ON = 1, GD_GENO_FLY_PLACE = 2 };
+enum { GD_GENO_ATTACK_ON = 1, GD_GENO_ATTACK_EVERY_FRAME = 2 };
+int gd_geno_profile(unsigned port);                       /* the port's Geno profile (gw_Geno_ProfileForKind), -1 none */
+int gd_geno_state_count(int profile);                     /* 0 when none */
+int gd_geno_state_name(int profile, int state, char* out, unsigned cap);  /* geno.json name; motion 0x400 + state */
+int gd_geno_define_name(int css_kind, char* out, unsigned cap);           /* a define's display name */
+int gd_geno_combo_info(unsigned port, int what);  /* GenoGame_ComboInfo: 0 links, 1 ki (x100), 2 last route, 3 routes,
+                                                     4 hits, 5 blocked, 6 taken, 7 max links, 8 ki max, 9 action time,
+                                                     11 profile, 16 + r route r (0 closed, 1 open, 2 input ok); -1 off */
+int gd_geno_combo_route_name(int profile, int route, char* out, unsigned cap);
+int gd_geno_fly_get(unsigned port);                       /* GenoFly_Get: the fly mode, -1 no fighter */
+int gd_geno_fly_state(unsigned port, unsigned field);     /* GenoFly_State 0..13: attack, target, damage, radius f32
+                                                             bits, x, y bits, pulses, every frame, active, gap, kb, kbg,
+                                                             angle, phase */
+int gd_geno_result(void* out, unsigned cap);  /* the last applied Geno command: u32 seq, i32 op, i32 port, i32 rc, then
+                                                 the text (reload: the hot-reload line; fly: why it was refused); bytes
+                                                 written, GD_ESTATE before the first */
+int gd_geno_fly(unsigned port, int mode);                 /* (cmd) GenoFly_Set */
+int gd_geno_teleport(unsigned port, float x, float y);    /* (cmd) GenoFly_Teleport; finite, |x|, |y| <= 49000 */
+int gd_geno_fly_attack(unsigned port, unsigned flags, unsigned damage /* 1..30 */, float radius /* 1..30 */,
+                       unsigned active /* 0..600 */, unsigned gap /* 0..3000 */, unsigned kb, unsigned kbg /* 0..2000 */,
+                       unsigned angle /* 0..361 */);      /* (cmd) GenoFly_AttackConfig (0 = the game's default);
+                                                             flags 0 = attack off; on puts the fighter in flight first */
+int gd_geno_fly_clear(unsigned port);                     /* (cmd) GenoFly_Clear */
+int gd_geno_combo_ki(unsigned port, int ki);              /* (cmd) GenoGame_ComboSetKi, ki x100, >= 0 */
+int gd_geno_reload(void);                                 /* (cmd, LAB_STATE) gw_Geno_Reload: refused (data kept),
+                                                             layout changed (the LAB match restarts) or re-applied */
 
 #endif

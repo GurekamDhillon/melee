@@ -476,3 +476,33 @@ dummy details) fits rank 2 when the drill work starts; N, O, P are shelved (sect
 - Slippipedia: https://github.com/cbartsch/Slippipedia ; slip.py: https://github.com/pcrain/slip.py
 - slippi-ai: https://github.com/vladfi1/slippi-ai ; SmashBot Analysis: https://github.com/altf4/smashbot_analysis
 - SF6 frame meter and training (Infil): https://words.infil.net/w03-sf6beta-p6.html
+
+## 9. Status on port/lablook (2026-11-08): the lookahead primitive
+
+Built: `LabRun::look_request / look_run` (`rust/melee/src/lab/look.rs`), auto on hit / shield events, frozen to
+completion, live behind `LOOK_LIVE` with a per-frame budget (sliced with a resume snapshot); kinds hit (no-DI + DI fan),
+shield, neutral, RNG sweep. Queries `gd_lab_lookahead`, `gd_lab_lookahead_cfg`, `gd_lab_lookahead_result` (local only,
+gated like every `gd_lab_*`). The lab mod shows a Lookahead panel and has the live toggle and budget in Session.
+
+Measured (`melee lab-check`, release, pad_falcon_fox_fd, P1 Falcon forward smash on P2 Fox at 130 %):
+- hit job, 9 runs, 458 ticks: ~91-105 ms frozen = ~10-12 ms per run, ~0.2 ms per tick including the save / load;
+- on-hit result equals playing the frames out (P1 acts +49, P2 KO'd at +50; the DI fan spreads the KO frame from +40
+  to +58); on shield: P1 +50, P2 +9 (-41), equal to playing it out;
+- the observed `frame_adv` read -40 on the same hit (stale: the KO'd victim never "acts"): the case the lookahead fixes;
+- live, 4 ms budget: slices of ~4.0-4.1 ms (save live 0.15, load 0.2-0.3, ~16 ticks, save resume 0.2, load live 0.26),
+  lab tick mean 0.76 ms / p99 5.0 / max 5.9 ms against 0.27 / 1.8 / 2.3 ms with it off; the 9-run job lands in 34
+  slices (~0.6 s); the 300 frames are hash-equal to the run with it off;
+- `MELEE_SNAP_CHECK=1` clean over the whole lab-check; observer digest unchanged; 0 speculative ticks with the sound in.
+
+Found on the way: `Base::load` did not record the arena pages it zeroes past the new used range, so loading a newer
+snapshot after an older one could leave them zero (fixed in `snapshot.rs`; the live slices hit it). Saves after a
+slice were 5 ms each until the previous live / resume snapshots were kept alive for incremental saves.
+
+Classification note: the lookahead's "actionable" is the frame meter's cell plus a hitstun check (`mv` timer in
+DamageFly*), since the interrupt flag can be up in tumble before hitstun ends; the observed meter does not have it.
+
+Left as stubs: **KO-percent bisection** (rule: rewind to the ring frame before the hit, set percent, replay the logged
+pads, lookahead, confirm the boundary), **percent sweep** (the same loop at a few fixed percents), lookahead policies
+from the dummy's own settings (open question 7.7), the RNG sweep's seed pinning / reseed-on-load. The RNG sweep reruns
+the game seed only: in the tested clip all 9 seeds gave the same KO frame (no random draw on that path). With the
+sound installed the lookahead equals a `--no-audio` continuation (section 3b caveat). Not checked on screen.

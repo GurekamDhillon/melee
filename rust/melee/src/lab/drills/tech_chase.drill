@@ -1,0 +1,15 @@
+# Tech-chase reaction: knock the dummy down; it techs in place, rolls in, rolls away or misses. Hit it after the tech.
+name: Tech chase
+about: Knock the dummy down, read its tech and hit it within 30 frames of the landing.
+start: here
+cpu: none
+react: di in strength 60
+adapt: tech
+options: in_place roll_in roll_away miss
+weights: 4 4 4 4
+react: getup stand delay 10
+trigger: dummy_tech
+success: hit 30
+par: 12
+timeout: 600
+loop: after 45

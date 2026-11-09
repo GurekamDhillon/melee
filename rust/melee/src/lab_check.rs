@@ -10,6 +10,9 @@
 //! 5. cost: the step, ring capture, slot save, load and rewind times per frame (the perf line).
 //! Exit 0 when every check passes.
 
+mod look;
+mod train;
+
 use crate::lab::LabRun;
 use crate::play_net::ModesGame;
 use melee_modhost::lab::*;
@@ -60,7 +63,12 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
             return std::process::ExitCode::FAILURE;
         }
     };
+    // the session log of the checks goes to a scratch folder, never the user's
+    if std::env::var_os("MELEE_LAB_DIR").is_none() {
+        std::env::set_var("MELEE_LAB_DIR", std::env::temp_dir().join(format!("melee-lab-check-{}", std::process::id())));
+    }
     let sh = LabShared::new();
+    look::init_probe();
     let mut lab = LabRun::new(ModesGame::new(e), sh.clone(), 4242);
     let mut fails = 0;
     let mut check = |ok: bool, what: String| {
@@ -245,6 +253,11 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
         "lab-check: info ring: {} snapshots held for {} frames, {:.1} MB distinct page data",
         sh.borrow().ring_len / crate::lab::RING_EVERY as u32 + 1, sh.borrow().ring_len, p.ring_bytes as f64 / 1e6
     );
+    // 6. the lookahead
+    look::lookahead_checks(&mut lab, &sh, &mut check);
+    // 7. drills, the adaptive trainer, mirror / jitter
+    train::train_checks(&mut lab, &sh, &mut check);
+
     if fails == 0 {
         eprintln!("lab-check: ALL OK");
         std::process::ExitCode::SUCCESS

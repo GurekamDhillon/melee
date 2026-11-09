@@ -1,0 +1,15 @@
+# Hit-confirm: the dummy randomly shields or gets hit. Hit: finish the combo (a second hit within 20 frames).
+# Shield: stop safely (its grab out of shield must not land within 40 frames).
+name: Hit confirm
+about: Attack. On hit, confirm a second hit within 20 frames; on shield, stop and stay safe from its grab.
+start: here
+cpu: none
+react: oos grab delay 2
+adapt: shield
+options: none all
+weights: 4 4
+trigger: dummy_hit_or_shield
+success: confirm 20 40
+par: 4
+timeout: 360
+loop: after 40

@@ -45,9 +45,79 @@ pub const OP_POS: u8 = 16;
 pub const OP_PLAY_SET: u8 = 17;
 pub const OP_RNG_SEED: u8 = 18;
 pub const OP_REACTION_WEIGHTS: u8 = 19;
+/// Drills (lab-theorycraft.md 8 C / 4b): `port` = the dummy, `a` = drill index (DRILL_STOP stops), `b` = the recording
+/// handles of Record slots 1-4 (a byte each; a drill may pick among them). The attempt loop, the picks (lab RNG) and the
+/// weight updates then run sim-side on both peers from the same events: no further commands.
+pub const OP_DRILL: u8 = 20;
+/// Adaptive trainer mode for the running drill: `a` = ADAPT_*, `b` = rate (weight added per failure).
+pub const OP_ADAPT: u8 = 21;
+/// Mirror and jitter on load (8 K): `port` = the varied fighter, `a` = VARY_* flags, `b` = percent range, `c` = x range.
+pub const OP_LOAD_VARY: u8 = 22;
+/// TM-CE dummy details (8 J): `a` = DO_*, `b` = value.
+pub const OP_DUMMY_OPT: u8 = 23;
+pub const OP_LAST: u8 = OP_DUMMY_OPT;
+
+pub const DRILL_STOP: u16 = 0xFFFF;
+/// Drills compiled in (the same on every peer; the only ones the online LAB accepts).
+pub const DRILL_BUILTIN: usize = 5;
+pub const ADAPT_OFF: u16 = 0;
+/// Weights move toward the options the user fails against ("weak spots").
+pub const ADAPT_WEAK: u16 = 1;
+pub const VARY_MIRROR: u16 = 1;
+pub const VARY_MIRROR_RANDOM: u16 = 2;
+/// Frames after the counter action starts before the last slot reloads (0 off).
+pub const DO_AUTO_RESTORE: u16 = 1;
+/// Chance (percent) the dummy presses tech early and is locked out (a missed tech by the game's own 40-frame rule).
+pub const DO_TECH_LOCKOUT: u16 = 2;
+/// SDI pushes per hit (0 = one every interval for the whole hitlag).
+pub const DO_SDI_COUNT: u16 = 3;
+/// Drill status (i32): active, drill, phase (0 waiting for the trigger, 1 in the window, 2 showing the result), attempts,
+/// successes, result sequence, last verdict (DV_*), last frames late, last option, options, adapt mode, streak, best
+/// streak, late sum, late count, error (DE_*), then weights[8], attempts per option[8], successes per option[8].
+pub const DRILL_I32: usize = 40;
+pub const DV_NONE: i32 = 0;
+pub const DV_SUCCESS: i32 = 1;
+pub const DV_MISSED: i32 = 2;
+pub const DV_PUNISHED: i32 = 3;
+pub const DE_OK: i32 = 0;
+pub const DE_NEEDS_REC: i32 = 1;
+pub const DE_NO_DRILL: i32 = 2;
 
 // ---- B1..B3 constants (docs/specs/gd-ui-lab-v1.h)
 pub const SLOTS: usize = 16;
+
+// ---- lookahead (docs/rust-port/notes/lab-theorycraft.md 3b / 4c): save, tick under the speculative flag until each
+// fighter can act (cap LOOK_CAP frames), load. Local only: a request is never a command, the result never touches the sim.
+/// `gd_lab_lookahead(kind, port)`: `port` is the defender (the one hit / shielding); the attacker is the other of P1 / P2.
+/// Hit: the no-DI run (frame advantage on hit) and the 8-direction DI fan (KO / survive and advantage per direction).
+pub const LOOK_HIT: u32 = 0;
+/// Shield: the defender holds shield, the attacker is neutral (frame advantage on shield).
+pub const LOOK_SHIELD: u32 = 1;
+/// Both neutral from now (frame advantage of the current exchange, whatever it is).
+pub const LOOK_NEUTRAL: u32 = 2;
+/// RNG sweep: the neutral run across LOOK_RUNS game seeds (the outcome spread of the random draws from here).
+pub const LOOK_RNG: u32 = 3;
+/// `gd_lab_lookahead_cfg` flags: run automatically on hit / shield events; run while playing (else only when frozen).
+pub const LOOK_AUTO: u32 = 1;
+pub const LOOK_LIVE: u32 = 2;
+pub const LOOK_CAP: i32 = 300;
+pub const LOOK_RUNS: usize = 9;
+/// Result header (i32): version, state (LS_*), kind, anchor match frame, generation, attacker, defender, advantage
+/// (attacker relative to defender, from the no-DI / neutral / shield run; i32::MIN when not known), runs, runs done,
+/// ticks, cost us, slices, longest slice us, snapshot-verify mismatches, 0.
+pub const LOOK_HEAD: usize = 16;
+/// Per run (i32): tag (DI as a numpad direction 1-9, 5 = none; RNG: the seed index), outcome (LO_*), defender frame
+/// (first actionable, or the KO frame; frames after the anchor), attacker frame (first actionable, -1 none).
+pub const LOOK_RUN_I32: usize = 4;
+pub const LOOK_I32: usize = LOOK_HEAD + LOOK_RUNS * LOOK_RUN_I32;
+pub const LS_NONE: i32 = 0;
+pub const LS_PENDING: i32 = 1;
+pub const LS_RUNNING: i32 = 2;
+pub const LS_DONE: i32 = 3;
+pub const LO_NOT_RUN: i32 = 0;
+pub const LO_ACTS: i32 = 1;
+pub const LO_KO: i32 = 2;
+pub const LO_CAP: i32 = 3;
 pub const RING_MAX: u32 = 600;
 pub const PLAY_LOOP: u32 = 1;
 pub const PLAY_MIRROR: u32 = 2;
@@ -71,7 +141,9 @@ pub const RK_GETUP: i32 = 3;
 pub const RK_LEDGE: i32 = 4;
 pub const RK_SHIELD: i32 = 5;
 pub const RK_OOS: i32 = 6;
-pub const RK_COUNT: usize = 7;
+/// TM-CE counter action: once the dummy can act again after a hit (or shield stun).
+pub const RK_COUNTER: i32 = 7;
+pub const RK_COUNT: usize = 8;
 
 // options (per kind; RANDOM draws from the lab RNG, a weighted table from gd_lab_reaction_weights)
 pub const RO_NONE: i32 = 0;
@@ -105,6 +177,12 @@ pub const RO_OOS_GRAB: i32 = 3;
 pub const RO_OOS_UPB: i32 = 4;
 pub const RO_OOS_SPOTDODGE: i32 = 5;
 pub const RO_OOS_ROLL: i32 = 6;
+// COUNTER
+pub const RO_COUNTER_JUMP: i32 = 1;
+pub const RO_COUNTER_ATTACK: i32 = 2;
+pub const RO_COUNTER_SHIELD: i32 = 3;
+pub const RO_COUNTER_SPOTDODGE: i32 = 4;
+pub const RO_COUNTER_GRAB: i32 = 5;
 /// Random out of shield (RO_RANDOM is 5, which is spot-dodge here).
 pub const RO_OOS_RANDOM: i32 = 8;
 /// Any kind: play recording `param.rec` as the reaction (GAP-5).
@@ -206,7 +284,7 @@ impl LabCmd {
         o
     }
     pub fn from_bytes(b: &[u8]) -> Option<Self> {
-        if b.len() < LAB_CMD_BYTES || b[0] == 0 || b[0] > OP_REACTION_WEIGHTS {
+        if b.len() < LAB_CMD_BYTES || b[0] == 0 || b[0] > OP_LAST {
             return None;
         }
         let u = |i: usize| u32::from_le_bytes([b[i], b[i + 1], b[i + 2], b[i + 3]]);
@@ -291,6 +369,20 @@ pub struct LabShared {
     pub overlay: [u32; 4],
     pub style: [u32; OV_STYLE_KINDS],
     pub log: Vec<String>,
+    // ---- lookahead (local, presentation-side: never a command)
+    pub look_cfg: u32,
+    pub look_budget_us: u32,
+    /// A requested lookahead (kind, defender port), taken by the play flow's lab run.
+    pub look_req: Option<(u32, u32)>,
+    /// The latest result (LOOK_HEAD + runs).
+    pub look: [i32; LOOK_I32],
+    // ---- drills (published by the lab run; the names, labels and trend are presentation-side reads)
+    pub drill_names: Vec<String>,
+    /// The running drill's option labels.
+    pub drill_opts: Vec<String>,
+    pub drill: [i32; DRILL_I32],
+    /// Earlier sessions of the running drill from the session log: (success per mille, attempts), oldest first.
+    pub drill_trend: Vec<(i32, i32)>,
 }
 
 impl Default for LabShared {
@@ -328,6 +420,14 @@ impl Default for LabShared {
             overlay: [0; 4],
             style: DEFAULT_STYLE,
             log: Vec::new(),
+            look_cfg: LOOK_AUTO,
+            look_budget_us: 4000,
+            look_req: None,
+            look: [0; LOOK_I32],
+            drill_names: Vec::new(),
+            drill_opts: Vec::new(),
+            drill: [0; DRILL_I32],
+            drill_trend: Vec::new(),
         }
     }
 }
@@ -391,6 +491,9 @@ impl LabShared {
             self.outbox.clear();
             self.overlay = [0; 4];
             self.issuer = 0;
+            // a lookahead belongs to the session it was asked in
+            self.look_req = None;
+            self.look = [0; LOOK_I32];
         }
     }
 
@@ -685,6 +788,89 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
             n
         };
         if write(&mut c, out, &b[..n * 20]) { n as i32 } else { GD_EINVAL }
+    });
+    // lookahead (local only: nothing goes to the command stream, so it is the same online and offline)
+    f!("gd_lab_lookahead", |c: Caller<'_, PresData>, kind: u32, port: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if kind > LOOK_RNG || port > 1 { return GD_EINVAL }
+        let mut s = l.borrow_mut();
+        if !s.active { return GD_ESTATE }
+        s.look_req = Some((kind, port));
+        GD_OK
+    });
+    f!("gd_lab_lookahead_cfg", |c: Caller<'_, PresData>, flags: u32, budget_us: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let mut s = l.borrow_mut();
+        s.look_cfg = flags & (LOOK_AUTO | LOOK_LIVE);
+        s.look_budget_us = budget_us.clamp(500, 16_000);
+        GD_OK
+    });
+    // the latest lookahead result: LOOK_I32 little-endian i32 (header, then LOOK_RUNS runs); bytes written
+    f!("gd_lab_lookahead_result", |mut c: Caller<'_, PresData>, out: u32, len: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let mut b = [0u8; LOOK_I32 * 4];
+        for (i, v) in l.borrow().look.iter().enumerate() {
+            b[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
+        }
+        let n = (len as usize).min(b.len());
+        if write(&mut c, out, &b[..n]) { n as i32 } else { GD_EINVAL }
+    });
+    // ---- drills, the adaptive trainer, mirror / jitter on load, TM-CE dummy details (lab-theorycraft.md 4b, 8 C J K)
+    f!("gd_lab_drill", |c: Caller<'_, PresData>, index: u32, port: u32, recs: u32| -> i32 {
+        if port > 3 { return GD_EINVAL }
+        if index != DRILL_STOP as u32 {
+            let l = match gate(&c, FEATURE_LAB_CPU) { Ok(l) => l, Err(e) => return e };
+            let s = l.borrow();
+            // online only the compiled-in drills: a drill file is local, the other peer may not have it
+            if index as usize >= s.drill_names.len() || (s.session == Session::LabNetplay && index as usize >= DRILL_BUILTIN) { return GD_EINVAL }
+        }
+        cmd!(c, FEATURE_LAB_CPU, LabCmd::new(OP_DRILL, port as u8, index.min(0xFFFF) as u16, recs, 0, 0))
+    });
+    f!("gd_lab_adapt", |c: Caller<'_, PresData>, mode: u32, rate: u32| -> i32 {
+        if mode > ADAPT_WEAK as u32 || rate > 15 { return GD_EINVAL }
+        cmd!(c, FEATURE_LAB_CPU, LabCmd::new(OP_ADAPT, 0, mode as u16, rate, 0, 0))
+    });
+    f!("gd_lab_load_vary", |c: Caller<'_, PresData>, port: u32, flags: u32, pct: u32, x: u32| -> i32 {
+        if port > 3 || flags > 3 || pct > 300 || x > 200 { return GD_EINVAL }
+        cmd!(c, FEATURE_LAB_STATE, LabCmd::new(OP_LOAD_VARY, port as u8, flags as u16, pct, x, 0))
+    });
+    f!("gd_lab_dummy_opt", |c: Caller<'_, PresData>, port: u32, opt: u32, value: u32| -> i32 {
+        if port > 3 || !(1..=DO_SDI_COUNT as u32).contains(&opt) || value > 600 { return GD_EINVAL }
+        cmd!(c, FEATURE_LAB_CPU, LabCmd::new(OP_DUMMY_OPT, port as u8, opt as u16, value, 0, 0))
+    });
+    f!("gd_lab_drill_count", |c: Caller<'_, PresData>| -> i32 {
+        match gate(&c, 0) { Ok(l) => l.borrow().drill_names.len() as i32, Err(e) => e }
+    });
+    // text: kind 0 = drill name i, 1 = the running drill's option label i; bytes written (UTF-8)
+    f!("gd_lab_drill_text", |mut c: Caller<'_, PresData>, kind: u32, i: u32, out: u32, len: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let b = {
+            let s = l.borrow();
+            let Some(t) = (match kind { 0 => s.drill_names.get(i as usize), 1 => s.drill_opts.get(i as usize), _ => None }) else { return GD_EINVAL };
+            let mut n = t.len().min(len as usize);
+            while !t.is_char_boundary(n) { n -= 1; }
+            t.as_bytes()[..n].to_vec()
+        };
+        if write(&mut c, out, &b) { b.len() as i32 } else { GD_EINVAL }
+    });
+    f!("gd_lab_drill_status", |mut c: Caller<'_, PresData>, out: u32, len: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let mut b = [0u8; DRILL_I32 * 4];
+        for (i, v) in l.borrow().drill.iter().enumerate() {
+            b[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
+        }
+        let n = (len as usize).min(b.len());
+        if write(&mut c, out, &b[..n]) { n as i32 } else { GD_EINVAL }
+    });
+    // earlier sessions of the running drill: (i32 success per mille, i32 attempts) pairs, oldest first; pairs written
+    f!("gd_lab_drill_trend", |mut c: Caller<'_, PresData>, out: u32, max: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let v: Vec<u8> = {
+            let s = l.borrow();
+            let k = s.drill_trend.len().saturating_sub(max.min(16) as usize);
+            s.drill_trend[k..].iter().flat_map(|&(a, b)| a.to_le_bytes().into_iter().chain(b.to_le_bytes())).collect()
+        };
+        if write(&mut c, out, &v) { (v.len() / 8) as i32 } else { GD_EINVAL }
     });
     // status: i32 x 10 = active, match frame, paused, replaying, ring frames, ring length, command delay, recording mask,
     // issuer (0 offline / host, 1 guest), apply frame of a command issued now

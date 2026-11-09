@@ -8,6 +8,14 @@ fn cmd_round_trip() {
     assert_eq!(LabCmd::from_bytes(&b), Some(c));
     assert_eq!(LabCmd::from_bytes(&[0u8; 16]), None, "op 0 is not a command");
     assert_eq!(LabCmd::from_bytes(&b[..15]), None);
+    // the drill / trainer / vary / dummy-option commands ride the lockstep stream; past the last op is not a command
+    for op in [OP_DRILL, OP_ADAPT, OP_LOAD_VARY, OP_DUMMY_OPT] {
+        let c = LabCmd::new(op, 1, 3, 4, 5, 0);
+        assert_eq!(LabCmd::from_bytes(&c.to_bytes()), Some(c));
+    }
+    let mut x = LabCmd::new(OP_LAST, 0, 0, 0, 0, 0).to_bytes();
+    x[0] = OP_LAST + 1;
+    assert_eq!(LabCmd::from_bytes(&x), None);
 }
 
 #[test]
@@ -73,4 +81,15 @@ fn event_history_is_bounded() {
     assert_eq!(s.events.len(), 1);
     assert!(s.history.len() as i32 <= EVENT_HISTORY + 1);
     assert_eq!(s.history.front().unwrap().frame, 1999 - EVENT_HISTORY + 0);
+}
+
+#[test]
+fn lookahead_state_is_dropped_with_the_session() {
+    let mut s = LabShared::default();
+    assert_eq!(s.look_cfg, LOOK_AUTO, "auto on, live off by default");
+    s.look_req = Some((LOOK_HIT, 1));
+    s.look[1] = LS_DONE;
+    s.set_session(Session::Netplay);
+    assert!(s.look_req.is_none() && s.look[1] == LS_NONE);
+    assert_eq!(LOOK_I32, LOOK_HEAD + LOOK_RUNS * LOOK_RUN_I32);
 }

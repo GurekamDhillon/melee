@@ -87,6 +87,13 @@ POINTER_KEY_FIELDS = {"HSD_AObjDesc.obj_id": "HSD_Joint"}
 # `void*` fields that hold a pointer to a known record (the C casts at the use): decode the pointee so pointer identity
 # with the typed views of the same object holds.
 VOID_TYPED_FIELDS = {"UnkStageDat_x8_t.x10": "HSD_CObjDesc"}
+# Pointers upstream typed (doldecomp #3583 ff.) that the port still reads as the raw GameCube bytes in place (the `void*`
+# rule: GcPointee for c_void hands out the image address): item state scripts and attribute blocks (the engine's
+# dat_custom.rs builds the typed ones), vertex / TLUT / texture data, effect data, the rumble and tournament tables.
+# Decoding them as the header's record would materialise one native record where the port expects the block.
+OPAQUE_FIELDS = {"Article.x4_specialAttributes", "ItemStateDesc.xC_script", "HSD_VtxDescList.vertex", "_HSD_TlutDesc.lut",
+                 "HSD_ImageDesc.image_ptr", "EF_DAT_Entry.data", "Fighter_804D653C_t.unk",
+                 "TmBoxArrays.box2", "TmBoxArrays.box3", "TmBoxArrays.box4"}
 
 # TU-local records needed by native ports. Parse the original declarations on both
 # targets rather than copying their fields into Rust or a second layout generator.
@@ -1009,6 +1016,9 @@ class Gen:
             e("    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {")
         e("        let mut v = Self::zeroed();")
         for fn_, off, ty in live:
+            if f"{nm}.{fn_}" in OPAQUE_FIELDS:
+                e(f"        v.{fn_} = d.ptr::<c_void>(at + 0x{off:X}) as {ty};")
+                continue
             vt = VOID_TYPED_FIELDS.get(f"{nm}.{fn_}")
             if vt is not None:
                 e(f"        v.{fn_} = d.ptr::<{vt}>(at + 0x{off:X}) as {ty};")
@@ -1184,6 +1194,17 @@ def dump_check(records):
     return len(sizes), len(missing)
 
 
+def check_field_rules(txt):
+    """arrays.tsv / VOID_TYPED_FIELDS / POINTER_KEY_FIELDS name `Record.field`s of the generated code: a key an upstream
+    rename orphaned would silently drop its decode rule (the stage anim tables did on the 363720e12 sync)."""
+    recs = {m.group(1): set(re.findall(r"^\s*pub (?:r#)?(\w+):", m.group(2), re.M))
+            for m in re.finditer(r"^pub (?:struct|union) (\w+) \{" + chr(10) + r"(.*?)^\}", txt, re.M | re.S)}
+    bad = [k for k in [*ARRAY_FIELDS, *VOID_TYPED_FIELDS, *POINTER_KEY_FIELDS, *OPAQUE_FIELDS]
+           if k.split(".", 1)[0] not in recs or k.split(".", 1)[1] not in recs[k.split(".", 1)[0]]]
+    if bad:
+        raise SystemExit("gen_types: field rules name members the headers no longer have: " + ", ".join(bad))
+
+
 def main():
     nprobe = write_probe()
     nat = native_sizes([parse(NAT, src) for src in EXTRA_SOURCES])
@@ -1192,6 +1213,7 @@ def main():
     tu = parse(PPC)
     g = Gen(tu, nat, local_records(PPC), [parse(PPC, src) for src in EXTRA_SOURCES])
     txt = g.gen()
+    check_field_rules(txt)
     n_dump, miss = dump_check(g.records)
     helpers = (
         "\n/// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.\n"

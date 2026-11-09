@@ -137,3 +137,35 @@ select only reaches the data then).
 
 Expected-fail by design (listed here, not gated; native C cannot reproduce the GC layout these depend on):
 oracle_ftyoshispecialn, tu_ftCo_YoshiEgg, kinds_itsword, kinds_itmariofireball / kinds_itluigifireball (unfused square).
+
+
+## melee_types regenerated for the upstream sync (port/mrg2, 2026-11-08)
+
+`gen_types.py` follows the post-sync headers again (`--check` passes, 2051 records, every layout cross-checked against
+the ppc32 dump). What the sync (363720e12, incl. #3583 "name all anonymous types") changed for the generator:
+- the baselib / mn / gm / lb `.static.h` files are gone: their records live in the TUs. `write_probe` extracts them
+  from the .c (devcom.c HSD_DevCom; synth.c HSD_SynthSFXGroup/Node and the three `static struct` tables; lbheap.c
+  Heap/lbHeap_HeapState/HeapDesc; lbmemory.c LBMgr/Allocator; state.c matstate; mndiagram3.c, mndatadel.c (+ its
+  WarnCommonJoints enum), gmtoulib.c, mnstagesel.c StageSelUserData; grzebes.c grZe_AcidState). Hoisted records come
+  from their new headers (mncharsel.h, gr/types.h Ground_801C34AC_entry, lbmemory.h HSD_AllocEntry); dolphin/ax.h and
+  axfx.h are included directly (they came through axdriver.static.h).
+- `rust/melee_types/gen/port_legacy.h` holds the records upstream DROPPED that the port still reads, in the decomp's
+  pre-sync words, so the one generator still produces their native type, GC layout and decoder: sislib's SIS /
+  TextKerning / sisLib_803A7664_t views (sislib.c reads `u8*` now), the item attribute views (itPokemonAttributes,
+  itRshellAttributes, KinokoAnim, itSword_UnkArticle1, SisFontData, the 5-float itUnkAttributes as
+  `itUnkAttributes_legacy`), mndiagram.c's asset / anim-table layouts (`*_legacy`), WarnCmnData, the mnstagesel model
+  table, StageListInfo (its closing brace sits inside `#if TARGET_PC`, so no verbatim extent). A record that only
+  moved keeps its name; a record whose shape changed and that the port mirrors keeps the OLD shape under `_legacy`.
+- `arrays.tsv` keys renamed with the headers (UnkStageDat.unk0 -> count, UnkStageDat_x8_t.anims/matanims/shapeanims,
+  Ground_801C34AC_entry.pairs). The generator now refuses a rule whose `Record.field` no longer exists
+  (`check_field_rules`): the three anim-table keys had silently stopped decoding the NULL-terminated tables, and the
+  goldens segfaulted on a joint instance whose target was never registered. ftDynamics.x10 is the `s32` bone-set word
+  upstream types it as, so the FigaTree*** post-decode hack is gone; ftData_x20.x0 is one joint (`x0->child`), not a
+  table of 3.
+- Carrying the port (rust/*/src): a compiler-driven rename pass (scratch tools: `build_map.py` diffs the old and new
+  gen.rs by GC offset / bit position into a rename map, `fixanon.py` applies it at the exact spots `cargo check`
+  reports, round after round) did ~5500 member/type renames; the type changes were done by hand: ssize_t render /
+  line callbacks (isize; adapters narrow to the runtime ports that still take i32), `u8*` image pointers, the
+  Handle / HSD_AllocEntry split in lbmemory, HSD_Text's state stack, HSD_AObj.jobj, the x4_specialAttributes /
+  ftData_Item unions, CollVtx, the castle GroundVars variants merged into castle3, mpIsland, ifStock_804A157C,
+  Camera x35C/x368 unions, Fighter x5A4/x5A8 as usize. Every workspace library compiles.

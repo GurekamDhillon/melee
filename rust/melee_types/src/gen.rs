@@ -13544,7 +13544,7 @@ impl GcDecode for HSD_VtxDescList {
         v.comp_type = <_GXCompType as GcDecode>::gc_decode(d, at + 0xC);
         v.frac = <u8 as GcDecode>::gc_decode(d, at + 0x10);
         v.stride = <u16 as GcDecode>::gc_decode(d, at + 0x12);
-        v.vertex = <*mut HSD_VertexArray as GcDecode>::gc_decode(d, at + 0x14);
+        v.vertex = d.ptr::<c_void>(at + 0x14) as *mut HSD_VertexArray;
         v
     }
 }
@@ -15415,7 +15415,7 @@ impl GcDecode for _HSD_TlutDesc {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.lut = <*mut u16 as GcDecode>::gc_decode(d, at + 0x0);
+        v.lut = d.ptr::<c_void>(at + 0x0) as *mut u16;
         v.fmt = <_GXTlutFmt as GcDecode>::gc_decode(d, at + 0x4);
         v.tlut_name = <u32 as GcDecode>::gc_decode(d, at + 0x8);
         v.n_entries = <u16 as GcDecode>::gc_decode(d, at + 0xC);
@@ -15497,7 +15497,7 @@ impl GcDecode for HSD_ImageDesc {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.image_ptr = <*mut HSD_ImageData as GcDecode>::gc_decode(d, at + 0x0);
+        v.image_ptr = d.ptr::<c_void>(at + 0x0) as *mut HSD_ImageData;
         v.width = <u16 as GcDecode>::gc_decode(d, at + 0x4);
         v.height = <u16 as GcDecode>::gc_decode(d, at + 0x6);
         v.format = <_GXTexFmt as GcDecode>::gc_decode(d, at + 0x8);
@@ -22187,7 +22187,7 @@ impl GcDecode for EF_DAT_Entry {
         let mut v = Self::zeroed();
         v.ef_DAT_file = <*mut i8 as GcDecode>::gc_decode(d, at + 0x0);
         v.effDataTable_name = <*mut i8 as GcDecode>::gc_decode(d, at + 0x4);
-        v.data = <*mut EF_EffectDesc as GcDecode>::gc_decode(d, at + 0x8);
+        v.data = d.ptr::<c_void>(at + 0x8) as *mut EF_EffectDesc;
         v
     }
 }
@@ -28395,7 +28395,7 @@ impl GcDecode for Fighter_804D653C_t {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.unk = <*mut ColorOverlay_x8_t as GcDecode>::gc_decode(d, at + 0x0);
+        v.unk = d.ptr::<c_void>(at + 0x0) as *mut ColorOverlay_x8_t;
         v.unk4 = <u8 as GcDecode>::gc_decode(d, at + 0x4);
         v.unk5 = <u8 as GcDecode>::gc_decode(d, at + 0x5);
         v
@@ -56025,7 +56025,7 @@ impl GcDecode for ftDynamics_x0 {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.dynamicsNum = <i32 as GcDecode>::gc_decode(d, at + 0x0);
-        v.ftDynamicBones = <*mut BoneDynamicsTemplate as GcDecode>::gc_decode(d, at + 0x4);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x0) as i64)).max(0) as usize; v.ftDynamicBones = d.ptr_array::<BoneDynamicsTemplate>(at + 0x4, n) as *mut BoneDynamicsTemplate; }
         v
     }
 }
@@ -66352,9 +66352,9 @@ impl GcDecode for UnkStageDat_x8_t {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.joint = <*mut HSD_Joint as GcDecode>::gc_decode(d, at + 0x0);
-        v.anims = <*mut *mut HSD_AnimJoint as GcDecode>::gc_decode(d, at + 0x4);
-        v.matanims = <*mut *mut HSD_MatAnimJoint as GcDecode>::gc_decode(d, at + 0x8);
-        v.shapeanims = <*mut *mut HSD_ShapeAnimJoint as GcDecode>::gc_decode(d, at + 0xC);
+        v.anims = d.ptr_table_arrays::<HSD_AnimJoint>(at + 0x4) as *mut *mut HSD_AnimJoint;
+        v.matanims = d.ptr_table_arrays::<HSD_MatAnimJoint>(at + 0x8) as *mut *mut HSD_MatAnimJoint;
+        v.shapeanims = d.ptr_table_arrays::<HSD_ShapeAnimJoint>(at + 0xC) as *mut *mut HSD_ShapeAnimJoint;
         v.x10 = d.ptr::<HSD_CObjDesc>(at + 0x10) as *mut HSD_CameraDescPerspective;
         v.camera_anim = <*mut HSD_CameraAnim as GcDecode>::gc_decode(d, at + 0x14);
         v.x18 = d.ptr_table::<LightList>(at + 0x18) as *mut *mut LightList;
@@ -83357,7 +83357,7 @@ impl GcDecode for ItemStateDesc {
         v.x0_anim_joint = <*mut HSD_AnimJoint as GcDecode>::gc_decode(d, at + 0x0);
         v.x4_matanim_joint = <*mut HSD_MatAnimJoint as GcDecode>::gc_decode(d, at + 0x4);
         v.x8_parameters = <*mut HSD_ShapeAnimJoint as GcDecode>::gc_decode(d, at + 0x8);
-        v.xC_script = <*mut CmdUnion as GcDecode>::gc_decode(d, at + 0xC);
+        v.xC_script = d.ptr::<c_void>(at + 0xC) as *mut CmdUnion;
         v
     }
 }
@@ -83532,7 +83532,7 @@ impl GcDecode for Article {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.x0_common_attr = <*mut ItemAttr as GcDecode>::gc_decode(d, at + 0x0);
-        v.x4_specialAttributes = <*mut ItemSpecialAttributes as GcDecode>::gc_decode(d, at + 0x4);
+        v.x4_specialAttributes = d.ptr::<c_void>(at + 0x4) as *mut ItemSpecialAttributes;
         v.x8_hurtbones = <*mut ItHurtBoneList as GcDecode>::gc_decode(d, at + 0x8);
         v.xC_itemStates = <*mut ItemStateArray as GcDecode>::gc_decode(d, at + 0xC);
         v.x10_modelDesc = <*mut ItemModelDesc as GcDecode>::gc_decode(d, at + 0x10);
@@ -93357,9 +93357,9 @@ impl GcDecode for TmBoxArrays {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.box2 = <*mut BracketSrcEntry as GcDecode>::gc_decode(d, at + 0x0);
-        v.box3 = <*mut BracketSrcEntry as GcDecode>::gc_decode(d, at + 0x4);
-        v.box4 = <*mut BracketSrcEntry as GcDecode>::gc_decode(d, at + 0x8);
+        v.box2 = d.ptr::<c_void>(at + 0x0) as *mut BracketSrcEntry;
+        v.box3 = d.ptr::<c_void>(at + 0x4) as *mut BracketSrcEntry;
+        v.box4 = d.ptr::<c_void>(at + 0x8) as *mut BracketSrcEntry;
         v
     }
 }

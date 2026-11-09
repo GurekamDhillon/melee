@@ -9,9 +9,9 @@ UnkStageDat.unk10	unk14
 UnkStageDat.unk20	unk24
 UnkStageDat.unk28	unk2C	*mut HSD_MObjDesc
 # UnkStageDat_x8_t: per-model tables (stage .dat model set), NULL terminated `T**`; unk20 runs unk24 entries
-UnkStageDat_x8_t.unk4	null[]
-UnkStageDat_x8_t.unk8	null[]
-UnkStageDat_x8_t.unkC	null[]
+UnkStageDat_x8_t.anims	null[]
+UnkStageDat_x8_t.matanims	null[]
+UnkStageDat_x8_t.shapeanims	null[]
 UnkStageDat_x8_t.x18	null
 UnkStageDat_x8_t.unk20	unk24
 UnkStageDat.unk18	unk1C	LightOverrideEntry
@@ -42,6 +42,9 @@ FigaTree.tracks	extent
 # ft/ftcoll.c ftColl_8007B320: the hurtbox init list has `count` entries, the dynamics hit list `x4` entries
 ftData_x30.inits	count
 ftDynamics.x8	x4
+# ftdynamics.c: ftDynamicBones is one BoneDynamicsTemplate per dynamics bone (it was a pointer to a fixed [10] record before upstream
+# typed it `BoneDynamicsTemplate* DAT_COUNT(dynamicsNum)`; one decoded record and `tbl[i]` ran off it: the Marth / Peach goldens crashed)
+ftDynamics_x0.ftDynamicBones	dynamicsNum
 ftData.x38	2
 # ftanim.c ftAnim_80070200: one u16[x8] texture-anim row per costume visibility row (null rows fall back to row 0)
 ftData_x8_x8.xC	tab[x8]

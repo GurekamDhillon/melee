@@ -377,6 +377,15 @@ reports mean abs 2.1-11.6/255, PSNR 18-32 dB today, dominated by his 73:60 prese
 
 **Linux.** His Source Port runs on Linux with GL or Vulkan; our cdylib would need the console base there
 (`-Wl,-Ttext-segment=0x82800000`). With Vulkan on both OSes this is the same backend code. Not started.
+Checked against his public v0.9.107 (6d5e2e4, read-only, 2026-11-08): the Linux route needs three things on his side, none
+of them build config. (1) The core v1 header and its host side: `mu_core_v1.h` / `mu_game_entry_core_v1` are not in his
+tree; they exist only on our local `gd/core-v1` branch, for the Windows `source_host.cpp`. (2) A core v1 entry in his Linux
+host: `port/linux/host_services.cpp` `initialize()` dlopens `melee_game.so` and requires his full native `mu_game_entry`
+table (`state_snapshot` ...). (3) An image-size exemption: `inspect_image()` refuses a game ELF that ends past 0x84000000
+("64 MiB GX physical address window", 24 MB from the base); our engine's loadable image on Linux is about 41 MB (the
+Windows image, 36 MB, passes only because his unsandboxed loader checks the base alone). The transcoder copies every byte GX
+reads into MEM1, so core v1 does not need the window; either his check exempts core v1, or our image goes under 24 MB
+(the size study in notes/core-v1.md). Until then phase 1 runs on the PC (Windows, `backend vulkan`).
 
 **What must stay.** `melee_gx` tests (`tests/render.rs` 0-diff vs Aurora, `tests/oracle.rs`), the render proof vs the C
 build (notes/render.md, mean abs 1.1-3.4/255 per frame), every scripted shot consumer (`melee play --shots/--shot-ages/

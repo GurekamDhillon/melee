@@ -53,9 +53,11 @@ for hd in sorted(glob.glob(runs + '/h[0-9]*'), key=lambda p: int(os.path.basenam
     h = np.asarray(hreg, dtype=np.float32)
     d = np.abs(h - r)
     big = (d.max(axis=2) > 24).mean() * 100
+    # the gate's bar (notes/hero-renderer-plan.md section 5): >= 97% of pixels within 16 on every channel
+    near = (d.max(axis=2) <= 16).mean() * 100
     psnr = 10 * np.log10(255 ** 2 / ((h - r) ** 2).mean())
     out = Image.new('RGB', (W * 3, H))
     out.paste(hreg, (0, 0)); out.paste(Image.fromarray(r.astype(np.uint8)), (W, 0))
     out.paste(Image.fromarray(np.clip(d * 4, 0, 255).astype(np.uint8)), (W * 2, 0))
     out.save(f'{runs}/cmp_{seq}.png')
-    print(f'seq {seq} -> ref tick {t}: crop {[round(v) for v in box]}, mean abs {m:.2f}/255, PSNR {psnr:.1f} dB, {big:.1f}% px > 24')
+    print(f'seq {seq} -> ref tick {t}: crop {[round(v) for v in box]}, mean abs {m:.2f}/255, PSNR {psnr:.1f} dB, {big:.1f}% px > 24, {near:.1f}% px <= 16')

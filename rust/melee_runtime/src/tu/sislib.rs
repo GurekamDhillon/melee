@@ -487,9 +487,17 @@ pub unsafe extern "C" fn HSD_SisLib_803A5FBC() {
     }
     HSD_Free(HSD_SisLib_804D796C as *mut ::core::ffi::c_void);
 }
+/// Multiplier on the retail text pool sizes for the native 8-byte-pointer structs (see `HSD_SisLib_803A6048`).
+/// The C-oracle test (tests/tu_sislib.rs) sets it to 1 to compare against the retail layout.
+pub static mut HSD_SISLIB_POOL_SCALE: u32 = if ::core::mem::size_of::<usize>() >= 8 { 2 } else { 1 };
 pub unsafe extern "C" fn HSD_SisLib_803A6048(mut size: u32) {
     melee_core::ct!("HSD_SisLib_803A6048");
     let mut i: ::core::ffi::c_int = 0;
+    // The callers pass the retail pool sizes (0x2400 / 0x4800 / 0xC000), measured for 32-bit `SisBlock` / `HSD_Text`.
+    // The native structs hold 8-byte pointers (a `SisBlock` header is 24 bytes, not 12), so the same texts take about
+    // twice the room: a 4-player results screen (126 live texts, 39 KB + 9.7 KB of headers) ran the 0xC000 pool out
+    // ("Memory Empty", the Envoy 1P demo crash in a 1-vs-3 team result). Scale the pool by HSD_SISLIB_POOL_SCALE.
+    let size = size.wrapping_mul(HSD_SISLIB_POOL_SCALE.max(1));
     HSD_SisLib_804D7968 = size as u32;
     used_head = ::core::ptr::null_mut::<SisBlock>();
     free_head = HSD_MemAlloc(HSD_SisLib_804D7968 as ssize_t) as *mut SisBlock;

@@ -55,3 +55,13 @@ synctest depth 4 over 2400 frames 0 mismatches (9588 checks); `MELEE_SNAP_CHECK=
 headless: fight won -> results -> CSS -> SSS -> fight 5 with the pool carried -> RUN OVER -> results -> a new run.
 Found on the way: a VS rewrite must also set `match_kind` (the `--match` preset is a time match) and keep handicap 9;
 CPUs need `cpu_kind` 4. Stage switches leak a little heap 0 each time (~0.7 MB per switch in a long fight; stage_hop).
+
+Demo crash 2026-11-09 (`link cast: size mismatch *mut i8 -> &[usize] (site 79202)`), two faults:
+- The `OSReport(fmt, arg)` link glue of sislib / sobjlib / synth cast the varargs argument into `os_error::OSReport`'s
+  `&[usize]` and panicked on any report. gen_link.py `osreport_adapter` now builds the slice (melee_link/tests/osreport_glue.rs).
+  gen_link.py's full output has drifted from the committed gen_table.rs, so only the three OSReport lines were spliced in.
+- The report was sislib's "Memory Empty": a 4-player results screen (1 vs 3 CPUs, fights 3-4) holds ~126 texts, which
+  overflows the retail 0xC000 text pool with the native 8-byte-pointer structs. `HSD_SisLib_803A6048` now scales the
+  pool by `HSD_SISLIB_POOL_SCALE` (2 on 64-bit; the C-oracle test sets 1). Reproduced with `MELEE_ENVOY_START_FIGHT=4`
+  + `MELEE_ENVOY_TEST_P1CPU=1` on a pad-script loop (crashed at the 5th results screen); not Envoy-specific, any
+  4-player VS results screen is near that limit.

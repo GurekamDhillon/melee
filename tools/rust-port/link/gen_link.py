@@ -628,6 +628,35 @@ def variadic_adapter(h):
     return ' '.join(lines)
 
 
+def osreport_adapter(h):
+    """Body for an `OSReport(fmt, ...)` hook that spells the C varargs as fixed parameters (`fn OSReport(a0: *mut c_char,
+    a1: *mut c_char)` in sislib / sobjlib, `fn OSReport(message: &str, value: i32)` in synth). The canonical
+    `os_error::OSReport(fmt, va: &[usize])` takes a slice, and a plain `cast` of a pointer or int into `&[usize]` is a
+    size mismatch that panics the game (Envoy demo crash, site 79202). Build the register-width slice here instead;
+    a parameter of an unknown shape is dropped (the format still prints), so this never panics."""
+    pt = h.get('ptypes')
+    if not pt or h['hasret']: return None
+    norm = lambda t: re.sub(r'\s+', ' ', t.replace('::core::ffi::', '').replace('core::ffi::', '')).strip()
+    f = norm(pt[0])
+    pre = ''
+    if re.fullmatch(r'\*(?:const|mut) (?:c_char|i8|u8)', f):
+        msg = 'a0 as *const core::ffi::c_char'
+    elif re.fullmatch(r"&(?:'\w+ )?str", f):
+        pre = 'let m = std::format!("{}\\0", a0); '
+        msg = 'm.as_ptr() as *const core::ffi::c_char'
+    else:
+        return None
+    va = []
+    for j, t in enumerate(pt[1:], 1):
+        t = norm(t)
+        if re.fullmatch(r'&\[usize\]', t): return None  # already the canonical shape: the plain cast links it
+        if t.startswith(('*mut ', '*const ')) or t in ('usize', 'isize', 'u64', 'i64'): va.append(f'a{j} as usize')
+        elif t in ('i32', 'c_int', 'i16', 'i8', 'c_long'): va.append(f'a{j} as i64 as usize')
+        elif t in ('u32', 'c_uint', 'u16', 'u8', 'c_ulong'): va.append(f'a{j} as u64 as usize')
+        elif t in ('f32', 'f64'): va.append(f'(a{j} as f64).to_bits() as usize')
+    return f'{pre}melee_runtime::tu::os_error::OSReport({msg}, &[{", ".join(va)}])'
+
+
 STATIC_DECL = re.compile(r'(?m)^[ \t]*pub[ \t]+static[ \t]+mut[ \t]+(\w+)\s*:\s*([^=;]+?)\s*(?:=|;)')
 
 
@@ -675,6 +704,12 @@ def main():
         why = None
         if h['name'] in LB_FAMILY and h['path'] and not (h.get('cabi') and h.get('ref')):
             ad = variadic_adapter(h)
+            if ad:
+                h['custom'] = ad
+                linked.append(h)
+                continue
+        if h['name'] == 'OSReport' and h['path'] and h['npar'] >= 2 and not (h.get('cabi') and h.get('ref')):
+            ad = osreport_adapter(h)
             if ad:
                 h['custom'] = ad
                 linked.append(h)

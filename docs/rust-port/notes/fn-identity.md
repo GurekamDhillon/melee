@@ -33,13 +33,14 @@ Measured on Linux (melee_items, 198 test binaries): 44 pass merged, 67 with merg
 The shipping build keeps merging (the release / perf profiles are unchanged). Game code that compares function
 pointers is therefore audited separately (`fn-pointer audit` below).
 
-## 3. Adapters in the state tables (open)
+## 3. Adapters in the state tables (handled: `pred_adapter`)
 
-`pred_b!` (melee_items tu/kinds_inl.rs) stores a fresh adapter `w` (the C bool predicate as an `i32` one) in a table
-row, not the C function: the adapter's symbol is `<table>::w` for every row, so neither the address nor the symbol
-names the C function the row holds. 58 of the 96 `kinds_*` item tests still fail first at a state-table op for this
-reason (with merging off). Naming the adapter needs either the adapter to carry its target (a library change) or the
-harness to read the call target out of its code.
+A state-table predicate slot holds an `int`-returning shim of the C `bool` callback (`pred_b!`, melee_items
+tu/kinds_inl.rs). The shim is the generic `pred_adapter::<T>`, `T` a block-local type named after the callback, so its
+symbol is `pred_adapter::<..::itBat_UnkMotion0_Anim>`; the TUs' own `pred_i32!` shims are named `<callback>_p`.
+`fnsym::find` matches either to the registered callback by its last path segment when no name matches exactly.
+Measured on Linux (melee_items through oracle_tests.sh): 67 test binaries pass before, 127 after; kinds_* 0 -> 60, and
+none of the 36 still failing stops first at a state-table op.
 
 ## Fn-pointer audit (game code)
 
@@ -51,6 +52,9 @@ The C compares a stored callback with a named function in two places: `ftseakspe
   (stored by ftSk_SpecialS_80111440 / 801114E4 / 80111D54), and the compare (ftSk_SpecialN_80111FBC) names the first. Their addresses differ in the
   shipping binary (separate codegen units: MergeFunctions does not fold them), so after the SpecialS stores the C's
   test was true and the port's false. Fixed: the chars::cb name re-exports the tu fn.
-- Open: melee_engine/src/mex_bridge.rs:487 hands mods a third wrapper (a local `fn f`) for "cb_ftSk_Init_80110198";
-  a mod storing it as death2_cb would miss the same compare.
+- mex_bridge.rs (`gobj_fn`, the callbacks m-ex guests store) gave every name a local shim, so a guest's
+  `ftKb_Init_800EE74C` / `ftSk_Init_80110198` / `cb_ftSk_Init_80110198` never equalled the game's. gen_mex_bridge.py
+  now hands out the pointer the game stores: melee_chara's CALLBACKS wrapper (128 names), else a TU's `cb_X` entry
+  (98), else the port itself when it is an `unsafe extern "C" fn(*mut HSD_GObj)` (1574); 3404 keep a shim (plain
+  Rust fns with no single stored pointer; none is compared by game code).
 - Port-only compares (not in the C): geno_lab_mode.rs:353 (`phys_cb == fly_phys`), geno_tests.rs:4376 / 4403.

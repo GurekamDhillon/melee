@@ -326,15 +326,39 @@ pub use kinds_jobj_inl;
 /// A state-table predicate slot from a `bool`-returning function, through a real `int`-returning shim: a Rust `bool` comes back in
 /// `al` only, and the C side (`animated`, `collided`, ... read as `int`) tests all of `eax`, whose upper bits are whatever the
 /// callee left there (a transmute of the function pointer made items vanish at random: cpu_peach frame 1572).
+/// The shim is one generic fn, [`pred_adapter`], instantiated per callback on a block-local type named after it, so
+/// its symbol names the C function (`pred_adapter::<..::itBat_UnkMotion0_Anim>`): the TU oracles identify the
+/// function a state-table row holds by symbol (melee_core/test_support/fnsym.rs).
 macro_rules! pred_b {
-    ($f:expr) => {{
-        unsafe extern "C" fn w(g: *mut HSD_GObj) -> i32 {
-            unsafe { ($f)(g) as i32 }
+    ($($p:ident)::+) => { $crate::tu::kinds_inl::pred_b!(@ [$($p)::+] $($p)+) };
+    (@ [$($f:tt)*] $last:ident) => {{
+        #[allow(non_camel_case_types)]
+        struct $last {}
+        impl $crate::tu::kinds_inl::PredB for $last {
+            unsafe fn call(g: *mut HSD_GObj) -> i32 {
+                unsafe { ($($f)*)(g) as i32 }
+            }
         }
-        Some(w as unsafe extern "C" fn(*mut HSD_GObj) -> i32)
+        Some($crate::tu::kinds_inl::pred_adapter::<$last> as unsafe extern "C" fn(*mut HSD_GObj) -> i32)
     }};
+    (@ [$($f:tt)*] $first:ident $($rest:ident)+) => { $crate::tu::kinds_inl::pred_b!(@ [$($f)*] $($rest)+) };
 }
 pub(crate) use pred_b;
+
+/// One `bool`-returning state-table callback, as [`pred_b!`] wraps it.
+pub trait PredB {
+    /// # Safety
+    /// As the wrapped callback.
+    unsafe fn call(g: *mut HSD_GObj) -> i32;
+}
+
+/// The `int`-returning shim of [`pred_b!`].
+///
+/// # Safety
+/// As the wrapped callback.
+pub unsafe extern "C" fn pred_adapter<T: PredB>(g: *mut HSD_GObj) -> i32 {
+    unsafe { T::call(g) }
+}
 
 /// A state-table row.
 pub const fn st_row(anim_id: i32, animated: HSD_GObjPredicate, phys: HSD_GObjEvent, coll: HSD_GObjPredicate) -> ItemStateTable {

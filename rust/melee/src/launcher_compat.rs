@@ -377,6 +377,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(not(windows), ignore = "the Windows launcher's command line: its paths only split on `\\` on Windows")]
     fn maps_the_launchers_command_line() {
         let ini = "fps 60\nscale 3\nfullscreen 1\nexclusivefullscreen 0\nvsync 0\nwidescreen 1\nwindow 1600x1200\nvolume 40\nmsaa 4\n";
         let args = s(&[

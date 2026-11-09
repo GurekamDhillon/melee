@@ -3,6 +3,8 @@
 //! cfg file against the Rust port and compares the per-case log hash with the one the C
 //! produced (tests/data/tuo_<tu>.txt). Set TUO_FULL=<fn> or <fn>:<idx> to print the full logs.
 #![allow(dead_code, static_mut_refs)]
+#[path = "../../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 
 use std::alloc::{alloc_zeroed, dealloc, Layout};
 
@@ -10,6 +12,25 @@ use std::alloc::{alloc_zeroed, dealloc, Layout};
 #[link(name = "kernel32")]
 extern "system" {
     fn VirtualAlloc(addr: *mut u8, size: usize, alloc_type: u32, protect: u32) -> *mut u8;
+}
+/// Unix stand-in for `VirtualAlloc(addr, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE)`: a zeroed anonymous mapping
+/// at exactly `addr`, or null when that range is taken (MAP_FIXED_NOREPLACE, as melee_engine::lowmem).
+#[cfg(not(windows))]
+unsafe fn VirtualAlloc(addr: *mut u8, size: usize, _ty: u32, _prot: u32) -> *mut u8 {
+    extern "C" {
+        fn mmap(addr: *mut u8, len: usize, prot: i32, flags: i32, fd: i32, off: i64) -> *mut u8;
+        fn munmap(addr: *mut u8, len: usize) -> i32;
+    }
+    // PROT_READ | PROT_WRITE; MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE
+    let p = mmap(addr, size, 3, 0x02 | 0x20 | 0x10_0000, -1, 0);
+    if p as isize == -1 {
+        return core::ptr::null_mut();
+    }
+    if p != addr {
+        munmap(p, size);
+        return core::ptr::null_mut();
+    }
+    p
 }
 use std::fmt::Write as _;
 
@@ -391,10 +412,10 @@ impl V {
                 return if a == r.base { r.name.clone() } else { format!("{}+{:x}", r.name, a - r.base) };
             }
         }
-        for (n, f) in &self.fps {
-            if *f == a {
-                return format!("fn:{n}");
-            }
+        // by address, else by symbol (a lib-stored pointer can be a crate-local copy or a predicate shim: fnsym.rs)
+        let addrs: Vec<usize> = self.fps.iter().map(|&(_, f)| f).collect();
+        if let Some(i) = fnsym::find(&addrs, a) {
+            return format!("fn:{}", self.fps[i].0);
         }
         "X".into()
     }
@@ -556,7 +577,6 @@ impl V {
         if !self.lowmem {
             return unsafe { alloc_zeroed(layout) };
         }
-        #[cfg(windows)]
         unsafe {
             if self.lowbase.is_null() {
                 let mut a: usize = 0x20000000;
@@ -573,8 +593,6 @@ impl V {
             std::ptr::write_bytes(p, 0, layout.size());
             p
         }
-        #[cfg(not(windows))]
-        panic!("lowmem needs Windows")
     }
     pub fn new_buf(&mut self, label: Option<&str>, n: usize) -> *mut u8 {
         let layout = Layout::from_size_align(n + 16, 16).unwrap();

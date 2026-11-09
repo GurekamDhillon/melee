@@ -68,6 +68,9 @@ pub struct PlayerSpec {
     pub cpu_idle: bool,
     /// costume shade, `PlayerInitData.sub_color` (-1 = unset; token `shadeN`)
     pub sub_color: i32,
+    /// `PlayerInitData.spawn_pos`, the stage spawn point (-1 = the slot's own, gm_SetupPlayerDefaults); a replay's
+    /// Game Start carries the CSS's (or the Neutral Spawn code's CSS half's) assignment
+    pub spawn_pos: i32,
 }
 
 #[derive(Clone, Debug)]
@@ -81,6 +84,9 @@ pub struct Scenario {
     pub item_freq: i32,
     /// `is_teams` (-1 = leave alone)
     pub teams: i32,
+    /// Team Attack (`StartMeleeRules.friendly_fire`, GameRules.friendly_fire): 0 off, 1 on, -1 = the saved rules.
+    /// A replay carries the console's bit (Game Start bitfield 2 bit 0); the 2019 Gang-Steals doubles all ran it on.
+    pub friendly_fire: i32,
     /// timer in seconds, 0 = no timer (-1 = leave alone)
     pub time_limit: i32,
     /// rule stock count (-1 = unset)
@@ -99,7 +105,7 @@ pub struct Scenario {
 impl Scenario {
     /// The `record.sh` scene strings: `p1=falcon/human;p2=fox/human;stage=fd;match=time;minutes=0;items=off`.
     pub fn parse(scene: &str) -> Result<Scenario, String> {
-        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1, teams: -1, time_limit: -1, rule_stocks: -1, onep_mode: -1, onep_step: -1, onep_level: -1, game_mode: -1, entry_state: -1 };
+        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1, teams: -1, friendly_fire: -1, time_limit: -1, rule_stocks: -1, onep_mode: -1, onep_step: -1, onep_level: -1, game_mode: -1, entry_state: -1 };
         for kv in scene.split(';') {
             let Some((k, v)) = kv.split_once('=') else { continue };
             match k {
@@ -112,6 +118,8 @@ impl Scenario {
                 // coverage scenarios (scenarios.tsv): modes and rules the engine's launcher does not answer yet
                 // the saved VS rules (gw_sl_set: teams=0|1, stocks=N)
                 "teams" => s.teams = v.starts_with('1') as i32,
+                // Team Attack (GameRules.friendly_fire); slpcheck sets it from the replay's Game Start
+                "teamattack" => s.friendly_fire = v.starts_with('1') as i32,
                 "stocks" => s.rule_stocks = v.parse().map_err(|_| "stocks")?,
                 // gw_sl_modes (pc/platform/gw_runtime.c): the 1P modes a scene launches through their OnLoad (gm_OnePSceneDirect)
                 "at" => s.entry_state = match v { "css" => 0, "sss" => 1, "match" => 2, _ => return Err(format!("at={v}")) },
@@ -175,7 +183,7 @@ impl Scenario {
                         else if let Some(n) = digits(t, "cpu") { slot_type = 1; cpu_level = n; }
                         else { return Err(format!("slot token {t} in {v} not wired")); }
                     }
-                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color, team, stocks, handicap, cpu_idle, sub_color });
+                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color, team, stocks, handicap, cpu_idle, sub_color, spawn_pos: -1 });
                 }
                 _ => {}
             }
@@ -348,7 +356,9 @@ pub fn install(mut s: Scenario) {
         h::SceneLaunch_PlayerTeam = Some(|n| p(n).map_or(-1, |x| x.team));
         h::SceneLaunch_PlayerHandicap = Some(|n| p(n).map_or(-1, |x| x.handicap));
         h::SceneLaunch_PlayerSubColor = Some(|n| p(n).map_or(-1, |x| x.sub_color));
+        h::SceneLaunch_PlayerSpawnPos = Some(|n| p(n).map_or(-1, |x| x.spawn_pos));
         h::SceneLaunch_Teams = Some(|| SCN.as_ref().map_or(-1, |s| s.teams));
+        h::SceneLaunch_RuleFriendlyFire = Some(|| SCN.as_ref().map_or(-1, |s| s.friendly_fire));
         h::SceneLaunch_TimeLimit = Some(|| SCN.as_ref().map_or(-1, |s| s.time_limit));
         h::SceneLaunch_RuleStocks = Some(|| SCN.as_ref().map_or(-1, |s| s.rule_stocks));
         h::SceneLaunch_ItemFreq = Some(|| SCN.as_ref().map_or(-1, |s| s.item_freq));

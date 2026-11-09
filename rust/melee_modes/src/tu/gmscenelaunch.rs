@@ -36,6 +36,7 @@ pub mod ext {
         SceneLaunch_PlayerCpuLevel(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerHandicap(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerSubColor(a0: i32) -> i32 = |_| -1;
+        SceneLaunch_PlayerSpawnPos(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerNametag(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerSlotType(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerStocks(a0: i32) -> i32 = |_| -1;
@@ -44,6 +45,7 @@ pub mod ext {
         SceneLaunch_RuleMatch() -> i32 = || -1;
         SceneLaunch_RuleMinutes() -> i32 = || -1;
         SceneLaunch_RulePause() -> i32 = || -1;
+        SceneLaunch_RuleFriendlyFire() -> i32 = || -1;
         SceneLaunch_RuleStocks() -> i32 = || -1;
         SceneLaunch_StageExternal() -> i32 = || -1;
         SceneLaunch_Teams() -> i32 = || -1;
@@ -165,6 +167,11 @@ pub unsafe fn SceneLaunch_SeedPlayers(vs: *mut VsModeData, dummy_fallback: i32) 
         if v >= 0 {
             players[i].sub_color = v as u8;
         }
+        // the recorded spawn point (a replay's Game Start); the default -1 is the slot's own joint (getSpawnPoint)
+        v = ext::SceneLaunch_PlayerSpawnPos(i as i32);
+        if v >= 0 {
+            players[i].spawn_pos = v as i8;
+        }
         v = ext::SceneLaunch_PlayerTeam(i as i32);
         if v >= 0 {
             players[i].team = v as u8;
@@ -283,6 +290,13 @@ pub unsafe fn SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: i32) -> i3
         }
         if ext::SceneLaunch_RulePause() >= 0 {
             (*gr).pause = ext::SceneLaunch_RulePause() as u8;
+        }
+        // Team Attack: the match rules take GameRules.friendly_fire when the match starts (gm_1601's
+        // `set_friendly_fire((*rules).friendly_fire & 1)`); a replay's Game Start carries the console's bit
+        // (2019 doubles ran it on; off, a teammate's hit never lands: ftColl_80078C70's team test)
+        if ext::SceneLaunch_RuleFriendlyFire() >= 0 {
+            (*gr).friendly_fire = (ext::SceneLaunch_RuleFriendlyFire() & 1) as u8;
+            (*vs).start.rules.set_friendly_fire((ext::SceneLaunch_RuleFriendlyFire() & 1) as u32);
         }
         SceneLaunch_ApplyItemFrequency(&raw mut (*vs).start.rules, gp);
         if any {

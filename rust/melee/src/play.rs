@@ -829,6 +829,7 @@ impl Play {
                 handicap: -1,
                 cpu_idle: false,
                 sub_color: -1,
+                spawn_pos: -1,
             });
         }
         Scenario {
@@ -842,6 +843,7 @@ impl Play {
             // (the C VS mode's GameRules.stock_time_limit: the HUD clock and the Stadium screen show it)
             time_limit: if r.stock { r.stock_time_secs } else { r.time_secs },
             rule_stocks: if r.stock { r.stocks } else { -1 },
+            friendly_fire: -1,
             onep_mode: -1,
             onep_step: -1,
             onep_level: -1, game_mode: -1, entry_state: -1,

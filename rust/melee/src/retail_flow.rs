@@ -124,6 +124,8 @@ pub struct RetailPlay {
     lab_frame: Option<u32>,
     /// The lab RNG's seed (the agreed netplay seed, else the test seed).
     pub lab_seed: u32,
+    /// The Lab is frozen and its sound is held (music paused, stage sfx ducked), so a frozen frame doesn't loop.
+    lab_audio_held: bool,
     /// Launched as the LAB (`MELEE_SCENE=mode=lab..`, the browser's Modes / LAB relaunch): only then does a loaded Lab
     /// mod take the engine offline. Any other match with lab.wasm loaded is ordinary play (START pauses, no HUD).
     pub lab_launch: bool,
@@ -155,7 +157,7 @@ impl RetailPlay {
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
-            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
+            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_audio_held: false, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
@@ -555,6 +557,14 @@ impl RetailPlay {
             s.applied.extend(cmds.iter().enumerate().map(|(i, c)| ((i >= n_host) as u8, *c)));
         }
         let ran = lab.tick(four, &cmds);
+        // a frozen Lab holds the sound like the retail pause (music stream paused, stage sfx ducked); stepping keeps it held;
+        let hold = lab.paused && !lab.g.e.ended;
+        // re-applied every held frame: a slot load or rewind restores the sound state (it is a snapshotted static)
+        if (hold || self.lab_audio_held) && self.audio.is_some() {
+            self.lab_audio_held = hold;
+            melee_audio::sim::pause_bgm(hold);
+            melee_audio::sim::set_pause_duck(hold);
+        }
         let hash = if ran { lab.frame_hash() } else { 0 };
         if let (true, Some(fr)) = (online, self.lab_frame.take()) {
             if let Some(ls) = self.net.as_mut().and_then(|n| n.ls.as_mut()) {
@@ -588,6 +598,10 @@ impl RetailPlay {
                 if ls.desyncs > 0 {
                     self.failed = Some("lab netplay desync".into());
                 }
+            }
+            if std::mem::take(&mut self.lab_audio_held) {
+                melee_audio::sim::pause_bgm(false);
+                melee_audio::sim::set_pause_duck(false);
             }
             let lab = self.lab.take().unwrap();
             let (e, _) = lab.finish().into_engine();

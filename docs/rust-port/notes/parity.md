@@ -138,7 +138,7 @@ Playable in the menu: 7 of 26 (Falcon, Fox, Falco, Marth, Sheik, Peach, Samus). 
 | Gamepads (gilrs) | SDL gamepads, per-device mapping | PART: SDL-convention conversion, untried; no per-device mapping files | platform.md step 1 "Not ported" | M |
 | Controller remapping (`gw_controls*`, profiles in settings.cfg, F9 recalibrate) | works | PART: F9 recal ported; remap profiles and `ctl_poll` remapping not ported; stick dead-zone setting not ported | platform.md step 1 | M |
 | Rumble | adapter + Aurora SDL rumble | PART: adapter rumble yes; gamepad rumble not implemented; Rumble options screen toast | rust/melee_platform/src/pad_read.rs:219-224, mainmenu.rs:741 | S |
-| Fighter-controls profiles (`gw_fighter_controls*`) | works | MISSING | pc/platform/gw_fighter_controls*.inc | M |
+| Fighter-controls profiles (`gw_fighter_controls*`) | works | PARTIAL: layouts / extras / Tap jump, the match freeze, netplay and replay words, preferences keyed by the gw_mexid fighter identity (`melee_engine::mexid`, the fighter half: retail, m-ex slots, defines); controller profiles (`d<device>_p<profile>` keys) missing | pc/platform/gw_fighter_controls*.inc | M |
 | Lua/live/bot pads (`gd.input`, gw_script_pad) | works | MISSING in bin; melee_script has the pad API but is not linked into the engine | rust/melee/Cargo.toml (no melee_script), notes/script.md | M |
 | Linux adapter | works (Linux build) | MISSING (Windows target only) | platform.md step 1 | S |
 

@@ -467,6 +467,11 @@ fn kirby_cap_file(k: i32) -> *const c_char {
     let Some(m) = m() else { return core::ptr::null() };
     if k < 0 { core::ptr::null() } else { m.cstr(m.word(m.kirbyfield(0x00), k as u32, 8)) }
 }
+/// The Kirby hat file of internal kind `k` as the m-ex table names it (gw_Mex_KirbyCapFile without its disc check: the
+/// identity table's only caller hashes a missing file as 0, which is what the C's NULL gives).
+pub fn KirbyCapFile(k: i32) -> *const c_char {
+    kirby_cap_file(k)
+}
 fn kirby_cap_symbol(k: i32) -> *const c_char {
     let Some(m) = m() else { return core::ptr::null() };
     let t = m.kirbyfield(0x00);

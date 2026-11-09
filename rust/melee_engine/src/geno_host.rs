@@ -569,6 +569,12 @@ pub fn ControlsSchema(ck: i32) -> Option<melee_script::geno::controls::Schema> {
 pub fn DefineIdentityWord(kind: i32, high: i32) -> i32 { built().define_identity_word(kind, high != 0) }
 /// A define's 64-bit content id by its CSS kind (the stable identity a per-fighter preference is saved under), None
 /// when ck is not a define.
+/// gw_Geno_SaltForPlFile: the stable id of the last attach entry overlaying Pl file `pl` (a define never salts its
+/// donor), 0 for none
+pub fn SaltForPlFile(pl: &str) -> u64 {
+    reg().salt_for_pl_file(pl)
+}
+
 pub fn DefineContentId(ck: i32) -> Option<u64> {
     let r = built();
     let p = r.define_profile_ck(ck);

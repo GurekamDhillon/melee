@@ -10,4 +10,9 @@ cd "$repo/rust"
 export RUSTC_BOOTSTRAP=1
 export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-Zmerge-functions=disabled"
 export CARGO_TARGET_DIR="${ORACLE_TARGET_DIR:-$repo/build/cargo-oracle}"
+# the disc tests (melee_core/test_support/disc.rs) fail without GW_ISO_VANILLA unless MELEE_SKIP_DISC_TESTS=1
+if [ -z "${GW_ISO_VANILLA:-}" ]; then
+  if [ -n "${MELEE_SKIP_DISC_TESTS:-}" ]; then echo "oracle_tests: WARNING no disc - the disc tests are SKIPPED, not passed" >&2
+  else echo "oracle_tests: no disc - the disc tests will FAIL (set GW_ISO_VANILLA, or MELEE_SKIP_DISC_TESTS=1 to skip them)" >&2; fi
+fi
 exec cargo test --release "$@"

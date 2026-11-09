@@ -622,6 +622,10 @@ impl ScriptGame for EngineGame {
     fn combo_state_name(&self, profile: i32, n: i32) -> String {
         crate::geno_host::ComboStateName(profile, n)
     }
+    /// `gw_Geno_Reload`: <0 refused (msg says why), 0 the layout changed (restart), >0 re-apply
+    fn geno_reload(&mut self, msg: &mut String) -> i32 {
+        crate::geno_host::Reload(msg)
+    }
     /// `gw_GenoGame_LabReload`: fighters re-applied
     fn geno_lab_reload(&mut self) -> i32 {
         unsafe { melee_modes::tu::geno_game::GenoGame_LabReload() }
@@ -1070,8 +1074,12 @@ mod tests {
     use crate::geno_host as gh;
     use melee_script::geno::consts::GENO_CR_COUNT;
 
+    /// The registry is process-wide: one of these tests at a time.
+    static REG: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
     #[test]
     fn geno_names_and_combo_graph_like_c() {
+        let _l = REG.lock().unwrap_or_else(|e| e.into_inner());
         let t = concat!(
             "{\"geno\":11,\"fighters\":[{\"define\":{\"key\":\"combo-t\",\"name\":\"Combo T\",\"base\":\"mario\",\"common\":\"melee.common.v1\",",
             "\"resources\":\"retail:mario\"}",
@@ -1110,5 +1118,37 @@ mod tests {
         // no m-ex slot is installed: no MoveLogic table, no m-ex name
         assert_eq!((g.mex_move_logic_entries(ck - 1), g.mex_move_logic_entries(2)), (0, 0));
         gh::TestRestore();
+    }
+
+    /// gw_Geno_Reload over a mods folder: in place (nothing / one entry changed), a layout change, and the two
+    /// refusals (a geno.json that does not parse, a native define) that keep the current data.
+    #[test]
+    fn geno_reload_like_c() {
+        let _l = REG.lock().unwrap_or_else(|e| e.into_inner());
+        let d = std::env::temp_dir().join(format!("genoreload-{}", std::process::id()));
+        let m = d.join("rl-mod");
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(&m).unwrap();
+        let put = |t: &str| std::fs::write(m.join("geno.json"), t).unwrap();
+        put("{\"geno\":1,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":9}}]}");
+        gh::set_boot_mods(&d, &["rl-mod"]);
+        let mut g = EngineGame;
+        let mut msg = String::new();
+        assert_eq!(g.geno_profile_for_kind(4), 0, "Kirby has the profile");
+        assert_eq!((g.geno_reload(&mut msg), msg.as_str()), (1, "geno.json: 0 entries changed, overlay words unchanged"));
+        put("{\"geno\":1,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":8}}]}");
+        assert_eq!((g.geno_reload(&mut msg), msg.as_str()), (1, "geno.json: 1 entry changed, overlay words unchanged"));
+        put("{\"geno\":1,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":8}},{\"attach\":\"mario\"}]}");
+        assert_eq!(g.geno_reload(&mut msg), 0, "{msg}");
+        assert!(msg.starts_with("geno.json: "), "{msg}");
+        assert_eq!(g.geno_profile_for_kind(0), 1, "the new layout is installed: Mario's profile");
+        put("{\"geno\":1,\"fighters\":[{\"attach\":\"kirby\"");
+        assert_eq!((g.geno_reload(&mut msg), msg.as_str()), (-1, "rl-mod/geno.json does not parse - kept the old data"));
+        assert_eq!(g.geno_profile_for_kind(0), 1, "kept");
+        put("{\"geno\":10,\"fighters\":[{\"define\":{\"key\":\"rl\",\"name\":\"RL\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"}}]}");
+        assert_eq!((g.geno_reload(&mut msg), msg.as_str()), (-1, "native definitions require a process restart; current data kept"));
+        assert_eq!(g.geno_profile_for_kind(0), 1, "kept");
+        gh::set_boot_mods(std::path::Path::new(""), &[]);
+        let _ = std::fs::remove_dir_all(&d);
     }
 }

@@ -367,6 +367,53 @@ pub fn TestReloadLayout(text: *const i8) -> i32 {
     Registry::reload_layout_changed(reg(), &next).is_some() as i32
 }
 
+/// gw_Geno_Reload(msg, cap): the LAB's hot reload. Re-reads every active mod's geno.json (in reg's order) into a new
+/// registry. Answers <0 when it is refused (`msg` says why; the current data is kept), 0 when the layout changed (a
+/// restart is needed; the new data is installed) and 1 when the profiles can be re-applied in place.
+pub fn Reload(msg: &mut String) -> i32 {
+    let cur = reg();
+    let refuse = "native definitions require a process restart; current data kept";
+    if !cur.definitions.rows.is_empty() {
+        *msg = refuse.into();
+        return -1;
+    }
+    let dir = dir_of_boot();
+    let env = crate::mex_host::GenoEnv { dir: dir.clone() };
+    let mut next = Registry::default();
+    let mut ids = unsafe { BOOT_MODS.as_ref().map(|b| b.1.clone()).unwrap_or_default() };
+    ids.sort();
+    for id in &ids {
+        let Ok(t) = std::fs::read(dir.join(id).join("geno.json")) else { continue };
+        if next.parse_text(&t, id, &env) < 0 {
+            next.log.clear();
+            *msg = format!("{id}/geno.json does not parse - kept the old data");
+            return -1;
+        }
+    }
+    next.build_kinds(&env);
+    if next.p.iter().any(|p| p.defined) {
+        *msg = refuse.into();
+        return -1;
+    }
+    flush_log(&mut next);
+    let layout = Registry::reload_layout_changed(cur, &next);
+    let changed = if layout.is_some() { 0 } else { (0..cur.p.len()).filter(|&i| next.p.get(i).map(|q| q.id) != Some(cur.p[i].id)).count() };
+    let pool_changed = next.pool != cur.pool;
+    unsafe {
+        BOOT = Some(next);
+        POOL_GEN += 1;
+    }
+    if let Some(why) = layout {
+        *msg = format!("geno.json: {why}");
+        eprintln!("geno: hot reload: layout changed ({why})");
+        return 0;
+    }
+    let words = if pool_changed { "changed" } else { "unchanged" };
+    *msg = format!("geno.json: {changed} entr{} changed, overlay words {words}", if changed == 1 { "y" } else { "ies" });
+    eprintln!("geno: hot reload: {changed} profile(s) changed, overlay words {words}");
+    1
+}
+
 /// Point the game half's (and the test suite's) registry hooks here. Called before seams_gen fills the rest.
 pub fn install() {
     macro_rules! set {

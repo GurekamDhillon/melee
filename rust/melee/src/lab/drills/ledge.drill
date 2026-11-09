@@ -1,0 +1,15 @@
+# Ledge: start it with the dummy hanging on the ledge (or save that state to slot 2 and use "start: slot 2").
+# The dummy stands, rolls, attacks or jumps from the ledge; hit it as it comes up.
+name: Ledge getup
+about: Start with the dummy on the ledge. It stands, rolls, attacks or jumps; hit it within 40 frames.
+start: here
+cpu: none
+adapt: ledge
+options: stand roll attack jump
+weights: 4 4 4 4
+react: ledge stand delay 20
+trigger: dummy_ledge
+success: hit 40
+par: 12
+timeout: 360
+loop: after 45

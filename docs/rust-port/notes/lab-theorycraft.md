@@ -506,3 +506,14 @@ pads, lookahead, confirm the boundary), **percent sweep** (the same loop at a fe
 from the dummy's own settings (open question 7.7), the RNG sweep's seed pinning / reseed-on-load. The RNG sweep reruns
 the game seed only: in the tested clip all 9 seeds gave the same KO frame (no random draw on that path). With the
 sound installed the lookahead equals a `--no-audio` continuation (section 3b caveat). Not checked on screen.
+
+## 10. Status on port/labtrain (2026-11-08): roadmap item 2
+
+Built: drills (`rust/melee/src/lab/train.rs`, five starter `.drill` files beside it, user files in `<lab dir>/drills/`),
+the adaptive trainer (weak-spot weights, picks from the lab RNG, all sim-side from `OP_DRILL` / `OP_ADAPT`), the
+session log (`<lab dir>/drill-log.tsv`; lab dir = `MELEE_LAB_DIR`, else `YOUGAME_DATA/lab`, else `lab` beside
+settings.cfg), mirror / jitter on load (`OP_LOAD_VARY`), TM-CE details (`OP_DUMMY_OPT`, `RK_COUNTER`: counter action,
+auto-restore, tech lockout, SDI count). lab-check part 7 covers them; ALL OK with `MELEE_SNAP_CHECK=1`; gate OK.
+Not done: hiding the tech animation until distinguishable (optional; needs a render-only hide); online user drills
+(refused: compiled-in only); mirror assumes the stage centre at x = 0 and keeps grounded fighters on their line
+(platforms on asymmetric stages untested); ring rewinds are not varied (only loads and attempts). Not seen on screen.

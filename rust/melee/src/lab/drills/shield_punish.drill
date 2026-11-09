@@ -1,0 +1,14 @@
+# Punish on shield: the dummy plays one of your Record slots 1-4 (its attack) each attempt; you shield it and punish.
+# The trainer picks the slot by weight and moves weight to the attacks you punish worst.
+name: Punish on shield
+about: Record the dummy's attacks in Record slots 1-4 first. Shield, then hit it within 25 frames.
+start: here
+cpu: none
+adapt: recording
+options: rec1 rec2 rec3 rec4
+weights: 4 4 4 4
+trigger: user_shield
+success: hit 25
+par: 6
+timeout: 360
+loop: after 40

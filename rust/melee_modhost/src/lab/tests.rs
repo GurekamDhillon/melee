@@ -8,6 +8,14 @@ fn cmd_round_trip() {
     assert_eq!(LabCmd::from_bytes(&b), Some(c));
     assert_eq!(LabCmd::from_bytes(&[0u8; 16]), None, "op 0 is not a command");
     assert_eq!(LabCmd::from_bytes(&b[..15]), None);
+    // the drill / trainer / vary / dummy-option commands ride the lockstep stream; past the last op is not a command
+    for op in [OP_DRILL, OP_ADAPT, OP_LOAD_VARY, OP_DUMMY_OPT] {
+        let c = LabCmd::new(op, 1, 3, 4, 5, 0);
+        assert_eq!(LabCmd::from_bytes(&c.to_bytes()), Some(c));
+    }
+    let mut x = LabCmd::new(OP_LAST, 0, 0, 0, 0, 0).to_bytes();
+    x[0] = OP_LAST + 1;
+    assert_eq!(LabCmd::from_bytes(&x), None);
 }
 
 #[test]

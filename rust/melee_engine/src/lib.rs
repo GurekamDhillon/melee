@@ -3,6 +3,7 @@
 #![allow(static_mut_refs, non_snake_case, clippy::missing_safety_doc)]
 pub mod arena;
 pub mod geno_host;
+pub mod skins_host;
 pub mod script_host;
 pub mod snap_host;
 pub mod uigen;

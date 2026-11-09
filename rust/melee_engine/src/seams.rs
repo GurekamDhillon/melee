@@ -390,6 +390,13 @@ pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
             return Some(v);
         }
     }
+    // a define's menu / results art (gmresultplayer_geno_art.inc: the package file as a .gxtex handle, the initials
+    // over UI_TextI4) and the skin registry (gw_skins_boot.inc), as the C's gw_Geno_* / gw_GxTex_* / gw_Skins_* answer
+    if name.starts_with("Geno_") || name.starts_with("GxTex_") || name.starts_with("Skins_") || name == "UI_TextI4" {
+        if let Some(v) = crate::geno_host::by_name_art(name, args) {
+            return Some(v);
+        }
+    }
     if let Some(v) = ext_hand(name, args) {
         return Some(v);
     }
@@ -445,11 +452,8 @@ fn ext_hand(name: &str, args: &[u64]) -> Option<u64> {
         },
         "OSReport" => 0,
         // gw_runtime.c gw_GxTex_OpenEnv: MELEE_MENUTEX names a replacement texture; unset (no mods) it is -1 and the
-        // CSS keeps the disc's art. The handle queries answer like the C does for a bad handle.
+        // CSS keeps the disc's art. The handle queries are geno_host's table (`by_name_art`, checked before this).
         "GxTex_OpenEnv" | "GxTex_OpenUI" => -1i64 as u64,
-        "GxTex_Width" | "GxTex_Height" | "GxTex_ImageSize" | "GxTex_TlutSize" | "GxTex_TlutEntries" => 0,
-        "GxTex_Format" | "GxTex_TlutFormat" => -1i64 as u64,
-        "GxTex_Close" | "GxTex_CopyImage" | "GxTex_CopyTlut" => 0,
         "HSD_SisLib_803A70A0" => unsafe {
             let s = c_format(args[2], &args[3..]);
             melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0_bytes(args[0] as usize as *mut melee_types::HSD_Text, args[1] as i32, Some(&s)) as i64 as u64

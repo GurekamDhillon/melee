@@ -544,12 +544,32 @@ pub fn DefineOverrideCount(kind: i32) -> i32 { built().define_override_count(kin
 pub fn DefineOverrideField(kind: i32, row: i32, field: i32) -> i32 { built().define_override_field(kind, row, field) }
 pub fn DefineIsNone(kind: i32) -> i32 { built().define_is_none(kind) }
 pub fn DefineTemplateSkeleton(kind: i32) -> i32 { built().define_template_skeleton(kind) }
-pub fn DefineCostumeCount(kind: i32) -> i32 { built().define_costume_count(kind) }
-pub fn DefineCostumeCountCK(ck: i32) -> i32 { built().define_costume_count_ck(ck) }
+/// gw_Geno_DefineCostumeCountNative: a base "none" define's declared costumes, without skins.
+pub fn DefineCostumeCountNative(kind: i32) -> i32 { built().define_costume_count(kind) }
+/// gw_Geno_DefineCostumeCount: the declared costumes plus the skins installed for the define.
+pub fn DefineCostumeCount(kind: i32) -> i32 {
+    if DefineIsNone(kind) == 0 {
+        return 0;
+    }
+    DefineCostumeCountNative(kind) + crate::skins_host::Added(kind)
+}
+/// gw_Geno_DefineCostumeCountCK: 0 for anything that is not a base "none" define (the caller keeps its own count).
+pub fn DefineCostumeCountCK(ck: i32) -> i32 {
+    if DefineIsNone(ck - 1) == 0 {
+        return 0;
+    }
+    built().define_costume_count_ck(ck) + crate::skins_host::Added(ck - 1)
+}
 pub fn DefineArtBaseCK(ck: i32) -> i32 { built().define_art_base_ck(ck) }
+/// gn_pres_file by CK: the package file a define declares for `what` / `costume` (results falls back to the portrait).
+pub fn DefinePresFile(ck: i32, what: i32, costume: i32) -> Option<String> { built().define_pres_file(ck, what, costume).map(str::to_string) }
 pub fn DefineTeamCostume(ck: i32, team: i32) -> i32 { built().define_team_costume(ck, team) }
-/// gw_Geno_DefineHasArt (no skins are installed in this engine).
-pub fn DefineHasArt(ck: i32, what: i32, costume: i32) -> i32 { built().define_pres_file(ck, what, costume).is_some() as i32 }
+/// gw_Geno_DefineHasArt: a skin costume's own art (results asks for the portrait), else the package's declaration.
+pub fn DefineHasArt(ck: i32, what: i32, costume: i32) -> i32 {
+    use melee_script::geno::define::{GN_PRES_PORTRAIT, GN_PRES_RESULTS};
+    let sk = if what == GN_PRES_RESULTS as i32 { GN_PRES_PORTRAIT as i32 } else { what };
+    (crate::skins_host::HasArtCK(ck, sk, costume) || built().define_pres_file(ck, what, costume).is_some()) as i32
+}
 pub fn DefineAiLike(kind: i32) -> i32 {
     static mut SAID: [bool; 128] = [false; 128];
     let r = built();
@@ -597,6 +617,10 @@ fn intern(s: &str) -> *const core::ffi::c_char {
     }
 }
 pub fn DefineString(kind: i32, which: i32, costume: i32) -> *const core::ffi::c_char {
+    // gw_Geno_DefineString: a costume past the declared ones is a skin's row (file / joint / matanim)
+    if DefineIsNone(kind) != 0 && costume >= DefineCostumeCountNative(kind) && (2..=4).contains(&which) {
+        return crate::skins_host::StringPtr(kind, costume, which - 2);
+    }
     built().define_string(kind, which, costume).map_or(core::ptr::null(), intern)
 }
 /// gw_Geno_DefineName: snprintf the define's name into out (cap bytes). 1 when it is a define.
@@ -613,8 +637,20 @@ pub fn DefineName(ck: i32, out: *mut i8, cap: i32) -> i32 {
     }
     1
 }
-/// gw_Geno_DefineCostumeName: a base "none" define's declared costume name (no skins here).
+/// gw_Geno_DefineCostumeName: a skin costume's own name (any fighter), else a base "none" define's declared one.
 pub fn DefineCostumeName(ck: i32, costume: i32, out: *mut i8, cap: i32) -> i32 {
+    if let Some(n) = crate::skins_host::NameCK(ck, costume) {
+        if out.is_null() || cap <= 0 {
+            return 0;
+        }
+        let b = n.as_bytes();
+        let k = b.len().min(cap as usize - 1);
+        unsafe {
+            core::ptr::copy_nonoverlapping(b.as_ptr() as *const i8, out, k);
+            *out.add(k) = 0;
+        }
+        return 1;
+    }
     let Some(n) = built().define_costume_name(ck, costume) else { return 0 };
     if out.is_null() || cap <= 0 {
         return 0;
@@ -1282,6 +1318,10 @@ struct GxTex {
     height: u32,
     image_off: u32,
     image_size: u32,
+    tlut_fmt: u32,
+    tlut_entries: u32,
+    tlut_off: u32,
+    tlut_size: u32,
 }
 /// GW_GXTEX_MAX open handles.
 static mut GXTEX: [Option<GxTex>; 8] = [const { None }; 8];
@@ -1310,7 +1350,7 @@ fn gxtex_install(blob: Vec<u8>, label: &str) -> i32 {
         return -1;
     }
     let (format, width, height, tl_n, tl_f) = (be(8), be(12), be(16), be(24), be(20));
-    let t = GxTex { format, width, height, image_off, image_size, blob };
+    let t = GxTex { format, width, height, image_off, image_size, tlut_fmt: tl_f, tlut_entries: tl_n, tlut_off, tlut_size, blob };
     eprintln!(
         "gxtex: {label} -> handle {i}: {}x{} fmt {}, image {} B, tlut {} entries fmt {}",
         t.width, t.height, t.format, t.image_size, tl_n, tl_f
@@ -1318,14 +1358,32 @@ fn gxtex_install(blob: Vec<u8>, label: &str) -> i32 {
     unsafe { GXTEX[i] = Some(t) };
     i as i32
 }
+/// gw_GxTex_OpenBlob: a copy of a .gxtex file's bytes into a handle, -1 for a short or malformed blob.
+pub fn GxTex_OpenBlob(blob: Vec<u8>, label: &str) -> i32 {
+    if blob.len() < 64 {
+        return -1;
+    }
+    gxtex_install(blob, label)
+}
 pub fn GxTex_Width(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.width as i32) }
 pub fn GxTex_Height(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.height as i32) }
 pub fn GxTex_Format(h: i32) -> i32 { gxtex_get(h).map_or(-1, |t| t.format as i32) }
 pub fn GxTex_ImageSize(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.image_size as i32) }
+pub fn GxTex_TlutSize(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.tlut_size as i32) }
+/// 0xFFFFFFFF in the file means "no TLUT": -1.
+pub fn GxTex_TlutFormat(h: i32) -> i32 { gxtex_get(h).filter(|t| t.tlut_size != 0).map_or(-1, |t| t.tlut_fmt as i32) }
+pub fn GxTex_TlutEntries(h: i32) -> i32 { gxtex_get(h).filter(|t| t.tlut_size != 0).map_or(0, |t| t.tlut_entries as i32) }
 pub fn GxTex_CopyImage(h: i32, dst: *mut core::ffi::c_void) {
     if let Some(t) = gxtex_get(h) {
         if !dst.is_null() {
             unsafe { core::ptr::copy_nonoverlapping(t.blob.as_ptr().add(t.image_off as usize), dst as *mut u8, t.image_size as usize) };
+        }
+    }
+}
+pub fn GxTex_CopyTlut(h: i32, dst: *mut core::ffi::c_void) {
+    if let Some(t) = gxtex_get(h) {
+        if !dst.is_null() && t.tlut_size != 0 {
+            unsafe { core::ptr::copy_nonoverlapping(t.blob.as_ptr().add(t.tlut_off as usize), dst as *mut u8, t.tlut_size as usize) };
         }
     }
 }
@@ -1335,46 +1393,80 @@ pub fn GxTex_Close(h: i32) {
     }
 }
 
-/// gw_Geno_DefineArtOpen: a .gxtex handle for a define's art (`what` GN_PRES_*), -1 when none. No skins are installed
-/// here, so it is the declared file of the mod's files/ (gn_pres_open_file); stock / emblem / results must be unpaletted.
-pub fn DefineArtOpen(ck: i32, what: i32, costume: i32) -> i32 {
-    use melee_script::geno::define::*;
-    if !(0..GN_PRES_KINDS as i32).contains(&what) {
-        return -1;
-    }
-    let plain = what as usize == GN_PRES_STOCK || what as usize == GN_PRES_EMBLEM || what as usize == GN_PRES_RESULTS;
-    let r = built();
-    let p = r.define_profile_ck(ck);
+/// gn_pres_open_file: one package file of the define's mod (files/) as a handle; `plain` refuses a paletted format
+/// (result / HUD TObjs carry no palette), logged once per file.
+fn pres_open_file(p: i32, file: Option<&str>, plain: bool) -> i32 {
+    let Some(file) = file else { return -1 };
     if p < 0 {
         return -1;
     }
+    let r = built();
     let (mod_id, name) = (r.p[p as usize].mod_id.clone(), r.p[p as usize].name.clone());
-    // results without its own file falls back to the portrait (gn_pres_file)
-    let file = r.define_pres_file(ck, what, costume).map(str::to_string);
-    let Some(file) = file else { return -1 };
     let env = crate::mex_host::GenoEnv { dir: dir_of_boot() };
     use melee_script::geno::Env as _;
-    // on the system heap: a read into the copy-on-write arena fails (ERROR_NOACCESS) during a rollback match
+    // gn_pres_read; on the system heap: a read into the copy-on-write arena fails (ERROR_NOACCESS) during a rollback match
     let Some(raw) = host_heap(|| env.read_mod_file(&mod_id, &format!("files/{file}"))) else {
         static mut SAID: Vec<String> = Vec::new();
         unsafe {
-            if !SAID.contains(&file) && SAID.len() < 16 {
-                SAID.push(file.clone());
+            if !SAID.iter().any(|s| s == file) && SAID.len() < 16 {
+                SAID.push(file.to_string());
                 eprintln!("geno: {name}: presentation file {file} is not in the mod's files/");
             }
         }
         return -1;
     };
-    let h = gxtex_install(raw, &file);
+    let h = GxTex_OpenBlob(raw, file);
     if h >= 0 && plain && GxTex_Format(h) >= 8 {
-        eprintln!("geno: {name}: presentation file {file} needs a format without a palette for stock/results");
+        static mut SAID: Vec<String> = Vec::new();
+        unsafe {
+            if !SAID.iter().any(|s| s == file) && SAID.len() < 16 {
+                SAID.push(file.to_string());
+                eprintln!("geno: {name}: presentation file {file} needs a format without a palette for stock/results");
+            }
+        }
         GxTex_Close(h);
         return -1;
     }
     h
 }
 
-/// The HUD's art callees (ifstock: the stock icon of a define).
+/// gw_Geno_DefineArtOpen: a .gxtex handle for a define's art (`what` GN_PRES_*), -1 when none. Results: the results
+/// override, then (as the portrait) a skin costume's CSP, then the package CSP; the caller then tries the retail donor
+/// or draws letters. Stock / emblem / results must be unpaletted.
+pub fn DefineArtOpen(ck: i32, what: i32, costume: i32) -> i32 {
+    use melee_script::geno::define::*;
+    if !(0..GN_PRES_KINDS as i32).contains(&what) {
+        return -1;
+    }
+    let plain = what as usize == GN_PRES_STOCK || what as usize == GN_PRES_EMBLEM || what as usize == GN_PRES_RESULTS;
+    let p = built().define_profile_ck(ck);
+    let mut what = what;
+    if what as usize == GN_PRES_RESULTS {
+        let own = p >= 0 && built().p[p as usize].def.pres.as_deref().is_some_and(|pr| !pr.file[GN_PRES_RESULTS].is_empty());
+        if own {
+            let f = built().define_pres_file(ck, what, costume).map(str::to_string);
+            let h = pres_open_file(p, f.as_deref(), true);
+            if h >= 0 {
+                return h;
+            }
+        }
+        what = GN_PRES_PORTRAIT as i32;
+    }
+    let mut h = crate::skins_host::ArtOpenCK(ck, what, costume);
+    if h >= 0 && plain && GxTex_Format(h) >= 8 {
+        GxTex_Close(h);
+        h = -1;
+    }
+    if h >= 0 {
+        return h;
+    }
+    let f = built().define_pres_file(ck, what, costume).map(str::to_string);
+    pres_open_file(p, f.as_deref(), plain)
+}
+
+/// The art callees of the game TUs that hold their own hook copies (ifstock: the HUD stock icon of a define). The
+/// string-hook TUs (gmresultplayer's card picture / stock / emblem, mncharsel) reach the same functions by name
+/// (`by_name_art`).
 pub fn install_art() {
     use melee_world::tu::ifstock::ext::hook as s;
     unsafe {
@@ -1387,6 +1479,52 @@ pub fn install_art() {
         s::GxTex_Close = Some(GxTex_Close);
         s::UI_TextI4 = Some(|t, w, h, st, d| unsafe { crate::uigen::UI_TextI4(t as _, w, h, st, d as _) });
     }
+    crate::skins_host::install();
+}
+
+/// The art and skin callees reached by name (seams::ext_real): gmresultplayer_geno_art.inc's `Geno_DefineArtOpen`,
+/// `Geno_DefineName`, the `GxTex_*` handle queries and `UI_TextI4`; the define costume queries; the `Skins_*` API.
+/// Pointer arguments are the words as passed.
+pub fn by_name_art(name: &str, a: &[u64]) -> Option<u64> {
+    let i = |k: usize| a.get(k).copied().unwrap_or(0) as i32;
+    let ptr = |k: usize| a.get(k).copied().unwrap_or(0) as usize as *mut core::ffi::c_void;
+    let v: i32 = match name {
+        "Geno_DefineArtOpen" => DefineArtOpen(i(0), i(1), i(2)),
+        "Geno_DefineHasArt" => DefineHasArt(i(0), i(1), i(2)),
+        "Geno_DefineName" => DefineName(i(0), ptr(1) as *mut i8, i(2)),
+        "Geno_DefineCostumeName" => DefineCostumeName(i(0), i(1), ptr(2) as *mut i8, i(3)),
+        "Geno_DefineCostumeCountCK" => DefineCostumeCountCK(i(0)),
+        "Geno_DefineTeamCostume" => DefineTeamCostume(i(0), i(1)),
+        "GxTex_Width" => GxTex_Width(i(0)),
+        "GxTex_Height" => GxTex_Height(i(0)),
+        "GxTex_Format" => GxTex_Format(i(0)),
+        "GxTex_ImageSize" => GxTex_ImageSize(i(0)),
+        "GxTex_TlutSize" => GxTex_TlutSize(i(0)),
+        "GxTex_TlutFormat" => GxTex_TlutFormat(i(0)),
+        "GxTex_TlutEntries" => GxTex_TlutEntries(i(0)),
+        "GxTex_CopyImage" => {
+            GxTex_CopyImage(i(0), ptr(1));
+            0
+        }
+        "GxTex_CopyTlut" => {
+            GxTex_CopyTlut(i(0), ptr(1));
+            0
+        }
+        "GxTex_Close" => {
+            GxTex_Close(i(0));
+            0
+        }
+        "UI_TextI4" => unsafe { crate::uigen::UI_TextI4(ptr(0) as *const i8, i(1), i(2), i(3), ptr(4)) },
+        "Skins_CostumeCountCK" => crate::skins_host::CostumeCountCK(i(0)),
+        "Skins_TeamCostumeCK" => crate::skins_host::TeamCostumeCK(i(0), i(1)),
+        "Skins_Added" => crate::skins_host::Added(i(0)),
+        "Skins_Base" => crate::skins_host::Base(i(0)),
+        "Skins_Like" => crate::skins_host::Like(i(0), i(1)),
+        "Skins_KirbyRow" => crate::skins_host::KirbyRow(i(0), i(1)),
+        "Skins_String" => return Some(crate::skins_host::StringPtr(i(0), i(1), i(2)) as usize as u64),
+        _ => return None,
+    };
+    Some(v as i64 as u64)
 }
 
 #[cfg(test)]

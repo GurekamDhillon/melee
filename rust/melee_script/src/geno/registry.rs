@@ -65,7 +65,7 @@ pub trait Env {
 pub struct NoEnv;
 impl Env for NoEnv {}
 
-pub(super) const VANILLA: [(&str, &str, Option<&str>); 27] = [
+pub const VANILLA: [(&str, &str, Option<&str>); 27] = [
     ("Mr", "mario", None),
     ("Fx", "fox", None),
     ("Ca", "captain", Some("falcon")),

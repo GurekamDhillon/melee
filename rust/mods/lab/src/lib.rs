@@ -263,7 +263,7 @@ struct Lab {
     dv: [[i32; D_N]; 4],
     vals: [i32; N_IDS],
     rec_len: [i32; 8],
-    w_tab: [f32; 6],
+    w_tab: [f32; 7],
     // drills: the status as published, the last running drill's copy (the summary page), its labels and trend
     drill_st: [i32; DRILL_I32],
     drill_last: [i32; DRILL_I32],
@@ -358,7 +358,7 @@ static mut L: Lab = Lab {
     dv: [D_DEFAULT; 4],
     vals: [0; N_IDS],
     rec_len: [-1; 8],
-    w_tab: [0.0; 6],
+    w_tab: [0.0; 7],
     drill_st: [0; DRILL_I32],
     drill_last: [0; DRILL_I32],
     drill_seen: -1,
@@ -1673,7 +1673,7 @@ pub static gdmod_abi_version: u32 = 1 << 16;
 #[no_mangle]
 pub static gdmod_ui_abi: u32 = UI_ABI_1_1;
 #[no_mangle]
-pub static gdmod_lab_abi: u32 = 1 << 16;
+pub static gdmod_lab_abi: u32 = (1 << 16) | 1; // 1.1: the Geno tab's gd_geno_* and gd_controls_*
 
 #[no_mangle]
 pub static gd_mod_manifest: Manifest = Manifest {

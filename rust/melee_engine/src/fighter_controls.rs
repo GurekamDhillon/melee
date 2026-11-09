@@ -81,13 +81,67 @@ pub fn Name(ck: i32, field: i32, index: i32) -> String {
     if index < 0 { String::new() } else { rows.get(index as usize).map_or(String::new(), |m| m.name.clone()) }
 }
 
-// ---- saved preferences (fc_preference_key / fc_tap_key): Tap jump per player, a layout and extras per player and
-// fighter, only for a fighter that declares them. Held for the process; persisting them is the menu host's part.
-static PREFS: std::sync::Mutex<Vec<(i32, i32, u32)>> = std::sync::Mutex::new(Vec::new());
-const TAP_KEY: i32 = -1;
+// ---- saved preferences (gw_fighter_controls_runtime.inc fc_tap_key / fc_preference_key / fc_read_saved / fc_save):
+// Tap jump is one key per player, shared by every fighter; a layout and extras one key per player and fighter, only for a
+// fighter that declares them, under its stable content identity (never a roster-order alias). The `melee` crate
+// installs the store (STORE: a key's saved text, and a write that answers whether it was saved); without one (tests,
+// tools) the values live for the process.
 
-fn pref(port: i32, key: i32) -> Option<u32> {
-    PREFS.lock().unwrap_or_else(|e| e.into_inner()).iter().find(|p| p.0 == port && p.1 == key).map(|p| p.2)
+/// (read a key's saved text, write a key's value -> saved)
+pub static mut STORE: Option<(fn(&str) -> Option<String>, fn(&str, u32) -> bool)> = None;
+static MEMORY: std::sync::Mutex<Vec<(String, u32)>> = std::sync::Mutex::new(Vec::new());
+
+/// The controller profile part of a key: `d<device>` for a recognised device, else `f<port>`, then `p<profile>`. This
+/// port has no controller profiles yet, so every key is `f<port>_p0` (the C's no-device form).
+fn player_part(port: i32) -> String {
+    format!("fc_f{port}_p0_s{port}")
+}
+
+/// fc_tap_key
+fn tap_key(port: i32) -> String {
+    format!("{}_tap", player_part(port))
+}
+
+/// fc_preference_key: retail fighters by their kind, a Geno define by its 64-bit content id (as the C uses the m-ex
+/// identity hash); None for anything else (never saved under a roster-order-dependent alias).
+fn preference_key(port: i32, ck: i32) -> Option<String> {
+    let id = if (0..33).contains(&ck) {
+        format!("retail{ck:02}")
+    } else {
+        format!("{:016x}", crate::geno_host::DefineContentId(ck)?)
+    };
+    Some(format!("{}_{id}", player_part(port)))
+}
+
+/// fc_read_saved: decimal digits only (no sign), fitting 32 bits; anything else reads as unset
+fn read_saved(key: &str) -> Option<u32> {
+    let text = match unsafe { STORE } {
+        Some((read, _)) => read(key)?,
+        None => return MEMORY.lock().unwrap_or_else(|e| e.into_inner()).iter().find(|x| x.0 == key).map(|x| x.1),
+    };
+    if text.is_empty() || !text.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    text.parse::<u64>().ok().filter(|&v| v <= u32::MAX as u64).map(|v| v as u32)
+}
+
+/// fc_save
+fn save(key: &str, value: u32, port: i32) -> bool {
+    let ok = match unsafe { STORE } {
+        Some((_, write)) => write(key, value),
+        None => {
+            let mut m = MEMORY.lock().unwrap_or_else(|e| e.into_inner());
+            match m.iter_mut().find(|x| x.0 == key) {
+                Some(x) => x.1 = value,
+                None => m.push((key.to_string(), value)),
+            }
+            true
+        }
+    };
+    if !ok {
+        eprintln!("fighter controls: P{} preference save failed", port + 1);
+    }
+    ok
 }
 
 fn has_options(ck: i32) -> bool {
@@ -99,34 +153,32 @@ pub fn Get(port: i32, ck: i32) -> u32 {
     if !(0..4).contains(&port) {
         return 0;
     }
-    let mut choice = pref(port, TAP_KEY).unwrap_or(0) & fc::TAP_MASK;
+    let mut choice = read_saved(&tap_key(port)).unwrap_or(0) & fc::TAP_MASK;
     if has_options(ck) {
-        choice |= pref(port, ck).unwrap_or(0) & !fc::TAP_MASK;
+        if let Some(k) = preference_key(port, ck) {
+            choice |= read_saved(&k).unwrap_or(0) & !fc::TAP_MASK;
+        }
     }
     Normalize(ck, choice)
 }
 
-/// gw_FighterControls_Set: saves a choice (normalized; the layout / extras part only for a fighter with options).
-/// 0 for a bad port or kind.
+/// gw_FighterControls_Set: saves a choice (normalized; the layout / extras part only for a fighter with options). The
+/// panel changes one row per call, so at most one key is written and a failed save leaves both as they were. 0 for a
+/// bad port or kind, or when the save failed.
 pub fn Set(port: i32, ck: i32, choice: u32) -> i32 {
     if !(0..4).contains(&port) || !ck_valid(ck) {
         return 0;
     }
     let choice = Normalize(ck, choice);
     let old = Get(port, ck);
-    let mut p = PREFS.lock().unwrap_or_else(|e| e.into_inner());
-    let mut put = |key: i32, v: u32| match p.iter_mut().find(|x| x.0 == port && x.1 == key) {
-        Some(x) => x.2 = v,
-        None => p.push((port, key, v)),
-    };
-    if (choice ^ old) & fc::TAP_MASK != 0 {
-        put(TAP_KEY, choice & fc::TAP_MASK);
+    if (choice ^ old) & fc::TAP_MASK != 0 && !save(&tap_key(port), choice & fc::TAP_MASK, port) {
+        return 0;
     }
     if (choice ^ old) & !fc::TAP_MASK != 0 {
-        if !has_options(ck) {
+        let Some(k) = preference_key(port, ck).filter(|_| has_options(ck)) else { return 0 };
+        if !save(&k, choice & !fc::TAP_MASK, port) {
             return 0;
         }
-        put(ck, choice & !fc::TAP_MASK);
     }
     eprintln!("fighter controls: saved P{} ck {ck} choice {choice:04x}", port + 1);
     1
@@ -231,7 +283,7 @@ mod tests {
     #[test]
     fn freeze_apply_tap_and_preferences_like_c() {
         let _l = gh::TEST_REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
-        PREFS.lock().unwrap().clear();
+        MEMORY.lock().unwrap().clear();
         assert_eq!(gh::TestInstall(DEFINE.as_ptr() as *const i8), 1);
         let ck = gh::DefineResolve("controls-fixture");
         assert!(ck >= 34, "ck {ck}");
@@ -291,7 +343,7 @@ mod tests {
         assert_eq!((MatchGet(0), MatchGet(2), controls_raw()), (1 | 4, fc::TAP_OFF, true));
         set_session(Session::Local);
         MatchClear();
-        PREFS.lock().unwrap().clear();
+        MEMORY.lock().unwrap().clear();
         gh::TestRestore();
     }
 }

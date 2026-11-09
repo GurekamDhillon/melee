@@ -27,6 +27,7 @@ use melee_types::neutral_hash::nh_game;
 use std::io::Write;
 use std::process::ExitCode;
 
+mod controls_store;
 mod firstrun;
 mod geno_suite;
 mod cosmetics;
@@ -457,6 +458,7 @@ fn main_inner() -> ExitCode {
         eprintln!("yougame: saves: cloud {} down {:?} up {:?} same {}", r.cloud, r.downloaded, r.uploaded, r.same);
     }
     sys_live(); // the counter's cell exists before any snapshot base is captured
+    controls_store::install(); // fighter-controls preferences: fighter_controls.cfg (YOUGAME_DATA or beside settings.cfg)
     #[cfg(windows)]
     melee_engine::arena::set_misuse_hook(arena_misuse);
     if std::env::var_os("MELEE_LEAK_ALLOC").is_some() {

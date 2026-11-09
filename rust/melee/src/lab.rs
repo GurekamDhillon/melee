@@ -1241,6 +1241,7 @@ impl LabRun {
         }
         s.recording_mask = self.recs.values().filter(|r| r.open).fold(0, |m, r| m | r.mask as u32);
         self.drill_publish(&mut s);
+        controls_publish(&mut s);
         let ev = std::mem::take(&mut self.events);
         s.publish_events(&ev);
         self.events = ev;
@@ -1634,6 +1635,37 @@ impl LabRun {
                     fp.cpu.kind, fp.ground_or_air, p.button, p.stickX, p.stickY, self.play[port].is_some() as u8, fp.dmg.x195c_hitlag_frames
                 );
             }
+        }
+    }
+}
+
+/// Fighter controls for the Lab's menu (gd_controls_*): the saves it asked for (each a preference for the next match,
+/// written through melee_engine::fighter_controls and its store; the running match keeps the mapping frozen at its
+/// start), then every port's view: its CSS kind, the saved choice for that fighter, the layout and extra names.
+fn controls_publish(s: &mut LabShared) {
+    use melee_engine::fighter_controls as fc;
+    use melee_fighter::tu::player as pl;
+    let ck_of = |port: usize| unsafe {
+        (pl::Player_GetPlayerSlotType(port as i32) as i32 != melee_types::Gm_PKind_NA as i32).then(|| pl::Player_GetPlayerCharacter(port as i32) as i32)
+    };
+    for (port, choice) in std::mem::take(&mut s.controls_req) {
+        if let Some(ck) = ck_of(port as usize) {
+            let ok = fc::Set(port as i32, ck, choice) != 0;
+            s.log.push(format!("lab: P{} fighter controls {} 0x{choice:04x} (next match)", port + 1, if ok { "saved" } else { "not saved" }));
+        }
+    }
+    for port in 0..4 {
+        let v = match ck_of(port) {
+            Some(ck) => melee_modhost::lab::ControlsView {
+                ck,
+                choice: fc::Get(port as i32, ck),
+                layouts: (0..fc::Count(ck, 0)).map(|i| fc::Name(ck, 0, i)).collect(),
+                extras: (0..fc::Count(ck, 1)).map(|i| fc::Name(ck, 1, i)).collect(),
+            },
+            None => melee_modhost::lab::ControlsView { ck: -1, ..Default::default() },
+        };
+        if s.controls[port] != v {
+            s.controls[port] = v;
         }
     }
 }

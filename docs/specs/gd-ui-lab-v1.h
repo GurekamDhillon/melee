@@ -320,5 +320,12 @@ int gd_geno_fly_clear(unsigned port);                     /* (cmd) GenoFly_Clear
 int gd_geno_combo_ki(unsigned port, int ki);              /* (cmd) GenoGame_ComboSetKi, ki x100, >= 0 */
 int gd_geno_reload(void);                                 /* (cmd, LAB_STATE) gw_Geno_Reload: refused (data kept),
                                                              layout changed (the LAB match restarts) or re-applied */
+/* v1.1 fighter controls (docs/geno.md 26): the port's fighter's layouts / extras and its saved choice (published by the
+ * host), and a save of the choice for the next match (a preference: never a lab command; the running match keeps the
+ * mapping frozen at its start). The choice word: bit 0 Tap jump off, bits 2-5 the layout, bits 8-15 the extras. */
+int gd_controls_count(unsigned port, unsigned field /* 0 layouts, 1 extras */);
+int gd_controls_name(unsigned port, unsigned field, unsigned index, char* out, unsigned cap); /* bytes, no NUL */
+int gd_controls_get(unsigned port);                       /* the saved choice, -1 with no fighter on the port */
+int gd_controls_set(unsigned port, unsigned choice);      /* queued for the host; GD_EINVAL for bit 1 / bits 6, 7, 16+ */
 
 #endif

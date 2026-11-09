@@ -112,6 +112,10 @@ const GENO_WAT: &str = r#"(module
   (import "gd_lab" "gd_geno_fly_clear" (func $clear (param i32) (result i32)))
   (import "gd_lab" "gd_geno_combo_ki" (func $ki (param i32 i32) (result i32)))
   (import "gd_lab" "gd_geno_reload" (func $reload (result i32)))
+  (import "gd_lab" "gd_controls_count" (func $ccount (param i32 i32) (result i32)))
+  (import "gd_lab" "gd_controls_name" (func $cname (param i32 i32 i32 i32 i32) (result i32)))
+  (import "gd_lab" "gd_controls_get" (func $cget (param i32) (result i32)))
+  (import "gd_lab" "gd_controls_set" (func $cset (param i32 i32) (result i32)))
   (memory (export "memory") 1 1)
   (func (export "profile") (param i32) (result i32) (call $profile (local.get 0)))
   (func (export "count") (param i32) (result i32) (call $count (local.get 0)))
@@ -129,6 +133,10 @@ const GENO_WAT: &str = r#"(module
   (func (export "clear") (param i32) (result i32) (call $clear (local.get 0)))
   (func (export "ki") (param i32 i32) (result i32) (call $ki (local.get 0) (local.get 1)))
   (func (export "reload") (result i32) (call $reload))
+  (func (export "ccount") (param i32 i32) (result i32) (call $ccount (local.get 0) (local.get 1)))
+  (func (export "cname") (param i32 i32 i32 i32 i32) (result i32) (call $cname (local.get 0) (local.get 1) (local.get 2) (local.get 3) (local.get 4)))
+  (func (export "cget") (param i32) (result i32) (call $cget (local.get 0)))
+  (func (export "cset") (param i32 i32) (result i32) (call $cset (local.get 0) (local.get 1)))
 )"#;
 
 struct GenoMod {
@@ -309,4 +317,35 @@ fn geno_commands_are_offline_only() {
     m.sh.borrow_mut().geno.profile[0] = 4;
     assert_eq!(m.call::<i32, i32>("profile", 0), 4);
     assert_eq!(LAB_CMD_VERSION, 1, "no Geno op ever rides the lockstep stream: the command version stays");
+}
+
+/// gd_controls_*: what the play flow published, and saves queued for it (never a lab command: a preference for the next
+/// match, offline and online alike).
+#[test]
+fn controls_queries_and_saves() {
+    let mut m = GenoMod::new(FEATURE_LAB);
+    {
+        let mut s = m.sh.borrow_mut();
+        s.controls[0] = ControlsView { ck: 127, choice: 0x105, layouts: vec!["Swap attacks".into(), "Standard".into()], extras: vec!["Y boost".into()] };
+        s.controls[1] = ControlsView { ck: 2, choice: 1, layouts: vec![], extras: vec![] };
+        s.controls[2].ck = -1;
+    }
+    let c: Vec<i32> = [(0, 0), (0, 1), (1, 0), (0, 2), (4, 0)].iter().map(|&a| m.call::<(i32, i32), i32>("ccount", a)).collect();
+    assert_eq!(c, [2, 1, 0, GD_EINVAL, GD_EINVAL]);
+    assert_eq!(m.call::<(i32, i32, i32, i32, i32), i32>("cname", (0, 0, 1, 100, 32)), 8);
+    assert_eq!(m.mem(100, 8), b"Standard");
+    assert_eq!(m.call::<(i32, i32, i32, i32, i32), i32>("cname", (0, 1, 0, 100, 3)), 3, "truncated to cap");
+    assert_eq!(m.call::<(i32, i32, i32, i32, i32), i32>("cname", (0, 0, 2, 100, 32)), GD_EINVAL, "no such layout");
+    assert_eq!(m.call::<(i32, i32, i32, i32, i32), i32>("cname", (1, 1, 0, 100, 32)), GD_EINVAL);
+    let g: Vec<i32> = [0, 1, 2, 5].iter().map(|&p| m.call::<i32, i32>("cget", p)).collect();
+    assert_eq!(g, [0x105, 1, -1, GD_EINVAL]);
+    // a save is queued for the play flow; a bad word, port or a port with no fighter is refused
+    assert_eq!(m.call::<(i32, i32), i32>("cset", (0, 0x101)), GD_OK);
+    assert_eq!(m.call::<(i32, i32), i32>("cset", (0, 2)), GD_EINVAL, "bit 1 is reserved");
+    assert_eq!(m.call::<(i32, i32), i32>("cset", (2, 1)), GD_EINVAL, "no fighter");
+    assert_eq!(m.call::<(i32, i32), i32>("cset", (4, 1)), GD_EINVAL);
+    assert_eq!(m.sh.borrow().controls_req, vec![(0u32, 0x101u32)]);
+    assert!(m.sh.borrow().outbox.is_empty(), "never a lab command");
+    let mut n = GenoMod::new(FEATURE_UI_DRAW);
+    assert_eq!(n.call::<i32, i32>("cget", 0), GD_ECAP);
 }

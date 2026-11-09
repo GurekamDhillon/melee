@@ -567,6 +567,13 @@ pub fn DefineResolve(token: &str) -> i32 { built().define_resolve(token) }
 /// gw_Geno_ControlsSchema: a define's controls (a copy), None when ck is not a define or it declares none.
 pub fn ControlsSchema(ck: i32) -> Option<melee_script::geno::controls::Schema> { built().controls_schema(ck).cloned() }
 pub fn DefineIdentityWord(kind: i32, high: i32) -> i32 { built().define_identity_word(kind, high != 0) }
+/// A define's 64-bit content id by its CSS kind (the stable identity a per-fighter preference is saved under), None
+/// when ck is not a define.
+pub fn DefineContentId(ck: i32) -> Option<u64> {
+    let r = built();
+    let p = r.define_profile_ck(ck);
+    (p >= 0).then(|| r.p[p as usize].id)
+}
 pub fn DefineOverrideCount(kind: i32) -> i32 { built().define_override_count(kind) }
 pub fn DefineOverrideField(kind: i32, row: i32, field: i32) -> i32 { built().define_override_field(kind, row, field) }
 pub fn DefineIsNone(kind: i32) -> i32 { built().define_is_none(kind) }

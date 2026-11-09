@@ -116,6 +116,20 @@ pub const GENO_RESULT_HEAD: usize = 16;
 /// The fly cursor's coordinate bound (the C's fly_target check).
 pub const GENO_FLY_COORD_MAX: f32 = 49000.0;
 
+/// The fighter-controls word (melee_script::geno::controls): bit 0 Tap jump off, bits 2-5 the layout, bits 8-15 extras.
+pub const CONTROLS_CHOICE_MASK: u32 = 0xff3d;
+
+/// One port's controls, as the menu shows them (published by the play flow at lab start and after each save).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ControlsView {
+    /// The port's CSS kind, -1 with no fighter.
+    pub ck: i32,
+    /// The saved choice for that fighter (gw_FighterControls_Get).
+    pub choice: u32,
+    pub layouts: Vec<String>,
+    pub extras: Vec<String>,
+}
+
 // ---- B1..B3 constants (docs/specs/gd-ui-lab-v1.h)
 pub const SLOTS: usize = 16;
 
@@ -491,6 +505,9 @@ pub struct LabShared {
     pub drill_trend: Vec<(i32, i32)>,
     // ---- Geno (published by the play flow)
     pub geno: GenoView,
+    /// Fighter controls per port (published by the play flow) and the saves the menu asked for (drained by it).
+    pub controls: [ControlsView; 4],
+    pub controls_req: Vec<(u32, u32)>,
 }
 
 impl Default for LabShared {
@@ -537,6 +554,8 @@ impl Default for LabShared {
             drill: [0; DRILL_I32],
             drill_trend: Vec::new(),
             geno: GenoView::default(),
+            controls: Default::default(),
+            controls_req: Vec::new(),
         }
     }
 }
@@ -1104,6 +1123,38 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
         geno_cmd!(c, FEATURE_LAB_CPU, LabCmd::new(OP_GENO_KI, port as u8, 0, ki as u32, 0, 0))
     });
     f!("gd_geno_reload", |c: Caller<'_, PresData>| -> i32 { geno_cmd!(c, FEATURE_LAB_STATE, LabCmd::new(OP_GENO_RELOAD, 0, 0, 0, 0, 0)) });
+    // ---- fighter controls (docs/geno.md 26): the port's fighter's layouts / extras and its saved choice, published by
+    // the play flow; a save is a request it drains (a preference for the next match, never a sim change: the match keeps
+    // the mapping frozen at its start)
+    f!("gd_controls_count", |c: Caller<'_, PresData>, port: u32, field: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if port > 3 || field > 1 { return GD_EINVAL }
+        let sh = l.borrow();
+        let v = &sh.controls[port as usize];
+        if field == 0 { v.layouts.len() as i32 } else { v.extras.len() as i32 }
+    });
+    f!("gd_controls_name", |mut c: Caller<'_, PresData>, port: u32, field: u32, index: u32, out: u32, cap: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if port > 3 || field > 1 { return GD_EINVAL }
+        let sh = l.borrow();
+        let v = &sh.controls[port as usize];
+        let rows = if field == 0 { &v.layouts } else { &v.extras };
+        put_str(&mut c, out, cap, rows.get(index as usize).map(|s| s.as_str()))
+    });
+    f!("gd_controls_get", |c: Caller<'_, PresData>, port: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if port > 3 { return GD_EINVAL }
+        let v = &l.borrow().controls[port as usize];
+        if v.ck < 0 { -1 } else { v.choice as i32 }
+    });
+    f!("gd_controls_set", |c: Caller<'_, PresData>, port: u32, choice: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if port > 3 || choice & !CONTROLS_CHOICE_MASK != 0 { return GD_EINVAL }
+        let mut sh = l.borrow_mut();
+        if sh.controls[port as usize].ck < 0 { return GD_EINVAL }
+        sh.controls_req.push((port, choice));
+        GD_OK
+    });
     Ok(())
 }
 

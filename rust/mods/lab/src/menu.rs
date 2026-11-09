@@ -30,6 +30,20 @@ extern "C" {
 extern "C" {
     fn gd_ui_keys(out: *mut u32, max: u32) -> i32;
 }
+// gd-lab-v1.1: Geno (offline only) and fighter controls (docs/specs/gd-ui-lab-v1.h)
+#[link(wasm_import_module = "gd_lab")]
+extern "C" {
+    fn gd_geno_fly(port: u32, mode: i32) -> i32;
+    fn gd_geno_fly_get(port: u32) -> i32;
+    fn gd_geno_fly_clear(port: u32) -> i32;
+    fn gd_geno_combo_ki(port: u32, ki: i32) -> i32;
+    fn gd_geno_combo_info(port: u32, what: i32) -> i32;
+    fn gd_geno_reload() -> i32;
+    fn gd_controls_count(port: u32, field: u32) -> i32;
+    fn gd_controls_name(port: u32, field: u32, index: u32, out: *mut u8, cap: u32) -> i32;
+    fn gd_controls_get(port: u32) -> i32;
+    fn gd_controls_set(port: u32, choice: u32) -> i32;
+}
 
 // lab command ops seen in gd_lab_applied (the other peer's dummy changes)
 pub const OP_CPU: u8 = 13;
@@ -143,7 +157,17 @@ const DR_JIT_X: usize = 60;
 const DR_START: usize = 61;
 const DR_STOP: usize = 62;
 const DR_SUMMARY: usize = 63;
-pub const N_IDS: usize = 64;
+// Geno and fighter controls (appended: earlier ids keep their numbers)
+const G_FLY: usize = 64;
+const G_FLY_CLEAR: usize = 65;
+const G_KI: usize = 66;
+const G_RELOAD: usize = 67;
+const C_TAP: usize = 68;
+const C_LAYOUT: usize = 69;
+const C_EX1: usize = 70;
+const C_EX4: usize = 73;
+const C_SAVE: usize = 74;
+pub const N_IDS: usize = 75;
 
 pub const CONTROL: &[(&str, i32)] = &[("Live pad", 0), ("Stand", 1), ("Crouch", 2), ("Jump", 3), ("Shield", 4), ("CPU level", 5), ("Recording", 6)];
 pub const BLOCK: &[(&str, i32)] = &[("None", 0), ("All", 1), ("After first hit", 2), ("Random", 3)];
@@ -243,7 +267,21 @@ const DRILL_ROWS: &[RowDef] = &[
     r(DR_JIT_X, "Jitter position", K::Slider(0, 40, 5, ""), "The dummy moves sideways by up to this|many units on every load and attempt."),
     r(DR_SUMMARY, "Session summary", K::Action, "Results per option, frames late, and the|trend over earlier sessions. B closes it."),
 ];
-pub const TABS: [(&str, &[RowDef]); 6] = [("Dummy", DUMMY_ROWS), ("Record", RECORD_ROWS), ("Display", DISPLAY_ROWS), ("HUD", HUD_ROWS), ("Session", SESSION_ROWS), ("Drills", DRILL_ROWS)];
+const FLY: &[(&str, i32)] = &[("Off", 0), ("On", 1), ("Place", 2)];
+const GENO_ROWS: &[RowDef] = &[
+    r(G_FLY, "Fly", K::Choice(FLY), "Noclip flight for your fighter (On), or|Place: fly to a spot and drop there.|Offline only."),
+    r(G_FLY_CLEAR, "Clear fly target", K::Action, "Drops the fly cursor's target and attack."),
+    r(G_KI, "Ki", K::SliderApply(0, 100, 10, ""), "Pick a ki value, A sets your combo meter.|Only fighters with a combo graph have one."),
+    r(G_RELOAD, "Reload geno.json", K::Action, "Re-reads every mod's geno.json. A change of|layout restarts the match; else the fighters|are re-applied. Offline only."),
+    r(C_TAP, "Tap jump off", K::Toggle, "Up on the stick does not jump (X / Y still|do). Saved for every fighter; applies from|the next match."),
+    r(C_LAYOUT, "Layout", K::Slider(0, 15, 1, ""), "Your fighter's button layout (only fighters|whose Geno define declares layouts). The|name shows when it changes."),
+    r(C_EX1, "Extra 1", K::Toggle, "Your fighter's first opt-in extra."),
+    r(C_EX1 + 1, "Extra 2", K::Toggle, "The second opt-in extra."),
+    r(C_EX1 + 2, "Extra 3", K::Toggle, "The third opt-in extra."),
+    r(C_EX4, "Extra 4", K::Toggle, "The fourth opt-in extra."),
+    r(C_SAVE, "Save controls", K::Action, "Saves the controls above for your fighter.|They apply from the next match."),
+];
+pub const TABS: [(&str, &[RowDef]); 7] = [("Dummy", DUMMY_ROWS), ("Record", RECORD_ROWS), ("Display", DISPLAY_ROWS), ("HUD", HUD_ROWS), ("Session", SESSION_ROWS), ("Drills", DRILL_ROWS), ("Geno", GENO_ROWS)];
 
 /// Every LAB control: (buttons, what they do). The one list of them: the Controls page (Session tab) draws it and
 /// lib.rs's header points here, so the two cannot drift.
@@ -270,6 +308,9 @@ pub const CONTROLS: &[(&str, &str)] = &[
     ("Session: Lookahead live", "also simulate ahead while playing (budget: ms per frame)"),
     ("Menu > Drills > Start drill", "loop a drill from the state now; a toast scores each attempt"),
     ("Menu > Drills > Session summary", "per option results and the trend (B closes)"),
+    ("Menu > Geno > Fly", "noclip flight / place (offline)"),
+    ("Menu > Geno > Reload geno.json", "hot reload of every mod's geno.json (offline)"),
+    ("Menu > Geno > Save controls", "Tap jump, layout and extras for your fighter (next match)"),
 ];
 
 /// The radial's 8 actions, clockwise from up (spec 4).
@@ -715,6 +756,29 @@ impl Lab {
                 self.toast_s("Drill stopped");
             }
             DR_SUMMARY => self.menu.summary = true,
+            G_FLY_CLEAR => {
+                unsafe { gd_geno_fly_clear(self.menu.port) };
+                self.toast_s("Fly target cleared");
+            }
+            G_KI => {
+                // ComboInfo what 3: the route count, negative without a combo graph
+                if unsafe { gd_geno_combo_info(self.menu.port, 3) } < 0 {
+                    self.toast_s("No combo meter on this fighter");
+                } else {
+                    unsafe { gd_geno_combo_ki(self.menu.port, self.vals[G_KI] * 100) };
+                    let mut m = Txt::new();
+                    m.s("Ki ").i(self.vals[G_KI]);
+                    self.toast(&m, None);
+                }
+            }
+            G_RELOAD => {
+                let r = unsafe { gd_geno_reload() };
+                self.toast_s(if r < 0 { "Reload: offline only" } else { "Reloading geno.json" });
+            }
+            C_SAVE => {
+                let r = unsafe { gd_controls_set(self.menu.port, self.controls_word()) };
+                self.toast_s(if r < 0 { "Controls not saved" } else { "Controls saved for the next match" });
+            }
             _ => {}
         }
     }
@@ -739,6 +803,14 @@ impl Lab {
                 self.send_dummy(p, id);
             }
             DR_ADAPT | DR_RATE | DR_MIRROR | DR_JIT_PCT | DR_JIT_X => self.drill_cfg(),
+            G_FLY => {
+                let r = unsafe { gd_geno_fly(self.menu.port, self.vals[G_FLY]) };
+                if r < 0 {
+                    self.toast_s("Fly: offline only");
+                }
+            }
+            C_LAYOUT => self.controls_toast(0, self.vals[C_LAYOUT] as u32),
+            C_EX1..=C_EX4 => self.controls_toast(1, (id - C_EX1) as u32),
             _ => {}
         }
     }
@@ -766,6 +838,44 @@ impl Lab {
         self.menu.resume = resume;
         self.menu.hold = (0, 0);
         self.rec_lens();
+        self.geno_load(port);
+    }
+
+    /// The Geno tab's values from the host: the fly mode and the saved fighter controls of `port`.
+    fn geno_load(&mut self, port: u32) {
+        let fly = unsafe { gd_geno_fly_get(port) };
+        self.vals[G_FLY] = fly.max(0);
+        let w = unsafe { gd_controls_get(port) };
+        let w = if w < 0 { 0 } else { w as u32 };
+        self.vals[C_TAP] = (w & 1) as i32;
+        self.vals[C_LAYOUT] = ((w >> 2) & 15) as i32;
+        for i in 0..4 {
+            self.vals[C_EX1 + i] = ((w >> (8 + i)) & 1) as i32;
+        }
+    }
+
+    /// The controls word the Geno tab's rows describe.
+    fn controls_word(&self) -> u32 {
+        let mut w = (self.vals[C_TAP] & 1) as u32 | ((self.vals[C_LAYOUT] & 15) as u32) << 2;
+        for i in 0..4 {
+            w |= ((self.vals[C_EX1 + i] & 1) as u32) << (8 + i);
+        }
+        w
+    }
+
+    /// A toast naming layout / extra `index` of the opener's fighter (field 0 layouts, 1 extras), or saying it has none.
+    fn controls_toast(&mut self, field: u32, index: u32) {
+        let port = self.menu.port;
+        let mut b = [0u8; 32];
+        let n = unsafe { gd_controls_name(port, field, index, b.as_mut_ptr(), b.len() as u32) };
+        let mut m = Txt::new();
+        if n > 0 {
+            m.s(if field == 0 { "Layout: " } else { "Extra: " }).s(core::str::from_utf8(&b[..n as usize]).unwrap_or("?"));
+        } else {
+            let have = unsafe { gd_controls_count(port, field) };
+            m.s(if field == 0 { "Layouts: " } else { "Extras: " }).i(have.max(0)).s(" on this fighter");
+        }
+        self.toast(&m, None);
     }
 
     pub fn close_menu(&mut self) {

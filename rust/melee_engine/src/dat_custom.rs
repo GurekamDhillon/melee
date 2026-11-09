@@ -329,21 +329,21 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
         // `T**` field would give one entry, and ftCommonData_ExtendCpuTables reads up to Ft_Kind_Mex0 of them.
         let p = parr::<Fighter_804D64FC_t>(d, b, at(22)) as *mut Fighter_804D64FC_t;
         if let Some(t) = d.target(at(22)) {
-            // the lists are `ftCo_AttackEntry` arrays (nine 32-bit words each, 0-terminated by `cmd`): word-swapped native copies
+            // the lists are `melee_types::ftCo_AttackEntry` arrays (nine 32-bit words each, 0-terminated by `cmd`): word-swapped native copies
             let tables = [4u32, 8, 0xC, 0x10, 0x14, 0x18, 0x1C].map(|f| attack_lists(d, b, t + f, melee_types::Ft_Kind_Mex0 as u32));
             unsafe {
                 // x20: `f32[kind]` (a hurt-distance threshold per fighter); x24: the six weapon reaches
                 // cmdscripts: `u8*` per script id, byte streams read bytewise (kept in the raw image)
                 (*p).cmdscripts = raw_table(d, b, t) as *mut *mut u8;
                 (*p).x20 = swapped_words(d, b, t + 0x20, melee_types::Ft_Kind_Mex0 as usize) as *mut f32;
-                (*p).x24 = swapped_words(d, b, t + 0x24, 8) as *mut c_void;
-                (*p).x4 = tables[0];
-                (*p).x8 = tables[1];
-                (*p).xC = tables[2];
-                (*p).x10 = tables[3];
-                (*p).x14 = tables[4];
-                (*p).x18 = tables[5];
-                (*p).x1C = tables[6];
+                (*p).x24 = swapped_words(d, b, t + 0x24, 8) as *mut f32;
+                (*p).x4 = tables[0] as *mut *mut melee_types::ftCo_AttackEntry;
+                (*p).x8 = tables[1] as *mut *mut melee_types::ftCo_AttackEntry;
+                (*p).xC = tables[2] as *mut *mut melee_types::ftCo_AttackEntry;
+                (*p).x10 = tables[3] as *mut *mut melee_types::ftCo_AttackEntry;
+                (*p).x14 = tables[4] as *mut *mut melee_types::ftCo_AttackEntry;
+                (*p).x18 = tables[5] as *mut *mut melee_types::ftCo_AttackEntry;
+                (*p).x1C = tables[6] as *mut *mut melee_types::ftCo_AttackEntry;
             }
         }
         p as *mut c_void
@@ -390,7 +390,7 @@ fn raw_table(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut c_void {
     Box::leak(v.into_boxed_slice()).as_mut_ptr()
 }
 
-/// A kind-indexed table (`void**`) of 0-terminated `ftCo_AttackEntry` lists, as word-swapped native copies. `min` entries at least.
+/// A kind-indexed table (`void**`) of 0-terminated `melee_types::ftCo_AttackEntry` lists, as word-swapped native copies. `min` entries at least.
 fn attack_lists(d: &mut GcDecoder<'_>, b: &Bounds, at: u32, min: u32) -> *mut *mut c_void {
     const WORDS: u32 = 9;
     let Some(t) = d.target(at) else { return core::ptr::null_mut() };
@@ -471,7 +471,11 @@ fn note_article_states(d: &mut GcDecoder<'_>, b: &Bounds, ta: u32) {
 
 /// Common-item articles whose special attributes hold `HSD_Joint*` fields the word swap cannot relocate (the Foods rows
 /// `{s32, HSD_Joint*, s32, s32}`): (raw block address, the decoded joint of every row). Patched by [`fix_articles`].
-static mut ARTICLE_JOINT_ROWS: Vec<(usize, Vec<melee_types::itFoodsAttributes>)> = Vec::new();
+/// One 16-byte row of the Foods attribute block (upstream types the block as a count + itFoodEntry[]; the port's
+/// itfoods.rs keeps the row view with the joint index in x4).
+#[derive(Clone, Copy)] #[allow(non_snake_case, dead_code)]
+struct FoodsRow { count: i32, x4: *mut HSD_Joint, x8: i32, xC: i32 }
+static mut ARTICLE_JOINT_ROWS: Vec<(usize, Vec<FoodsRow>)> = Vec::new();
 
 /// `ItemKind` of Foods (the index of its article in the common-item table).
 const KIND_FOODS: u32 = 18;
@@ -540,14 +544,12 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
                 if i == KIND_FOODS && n > KIND_FOODS as usize {
                     if let Some(sa) = d.target(ta + 4) {
                         let rows = (b.extent(sa) / 0x10) as u32;
-                        let js: Vec<melee_types::itFoodsAttributes> = (0..rows)
-                            .map(|r| {
-                                let mut a = melee_types::itFoodsAttributes::zeroed();
-                                a.x0 = d.u32_at(sa + 0x10 * r) as i32;
-                                a.x4 = d.ptr::<HSD_Joint>(sa + 0x10 * r + 4);
-                                a.x8 = d.u32_at(sa + 0x10 * r + 8) as i32;
-                                a.xC = d.u32_at(sa + 0x10 * r + 12) as i32;
-                                a
+                        let js: Vec<FoodsRow> = (0..rows)
+                            .map(|r| FoodsRow {
+                                count: d.u32_at(sa + 0x10 * r) as i32,
+                                x4: d.ptr::<HSD_Joint>(sa + 0x10 * r + 4),
+                                x8: d.u32_at(sa + 0x10 * r + 8) as i32,
+                                xC: d.u32_at(sa + 0x10 * r + 12) as i32,
                             })
                             .collect();
                         unsafe { (*core::ptr::addr_of_mut!(ARTICLE_JOINT_ROWS)).push((b.1 + sa as usize, js)) };
@@ -634,7 +636,7 @@ pub fn fix_articles() {
     use std::collections::HashMap;
     let typed = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_TYPED)) };
     for (a, t) in typed {
-        unsafe { (*a).x4_specialAttributes = t };
+        unsafe { (*a).x4_specialAttributes = t as *mut melee_types::ItemSpecialAttributes };
     }
     let dyns = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_DYNAMICS)) };
     for (a, base, off) in dyns {
@@ -697,7 +699,7 @@ pub fn fix_articles() {
                     }
                     out as usize
                 });
-                (*a).x4_specialAttributes = copy as *mut c_void;
+                (*a).x4_specialAttributes = copy as *mut melee_types::ItemSpecialAttributes;
             }
         }
     }
@@ -855,7 +857,7 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
     v.x18 = d.ptr_array::<[u8; 2]>(at("x18"), m);
     // `int* x54`: the random-bone table `ftCo_8009F834` indexes with the 0..4 counter `x2220_b0` (the plain pointer decode would read one `int`)
     v.x54 = d.ptr_array::<i32>(at("x54"), 5);
-    v.x48_items = rtable_articles(d, b, at("x48_items")) as *mut *mut c_void;
+    v.x48_items = rtable_articles(d, b, at("x48_items")) as *mut melee_types::ftData_Item;
     typed_article_attrs(d, b, sym.trim_start_matches("ftData").to_lowercase().as_str(), at("x48_items"));
     if sym.trim_start_matches("ftData").eq_ignore_ascii_case("gamewatch") {
         gw_article_attrs(d, b, at("x48_items"));
@@ -867,7 +869,7 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
             if n > 4 {
                 let mut tbl: std::vec::Vec<*mut c_void> = (0..n).map(|i| unsafe { *(v.x48_items as *mut *mut c_void).add(i) }).collect();
                 tbl[4] = d.ptr::<melee_types::UNK_SAMUS_S1>(t + 16) as *mut c_void;
-                v.x48_items = Box::leak(tbl.into_boxed_slice()).as_mut_ptr() as *mut *mut c_void;
+                v.x48_items = Box::leak(tbl.into_boxed_slice()).as_mut_ptr() as *mut melee_types::ftData_Item;
             }
         }
     }
@@ -901,13 +903,13 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
             for (i, p) in over {
                 tbl[i] = p;
             }
-            v.x48_items = Box::leak(tbl.into_boxed_slice()).as_mut_ptr() as *mut *mut c_void;
+            v.x48_items = Box::leak(tbl.into_boxed_slice()).as_mut_ptr() as *mut melee_types::ftData_Item;
         }
     }
     note_dynamics(d, &v, at("x2C"));
     let lower = sym.trim_start_matches("ftData").to_lowercase();
     if let Some(p) = crate::extattr::decode(&lower, d, at("ext_attr")) {
-        v.ext_attr = p;
+        v.ext_attr = p as *mut melee_types::ftData_ExtAttr;
     }
     Box::leak(Box::new(v)) as *mut ftData as *mut c_void
 }
@@ -1192,7 +1194,7 @@ pub fn fix_dynamics() {
     use melee_types::{DynamicsData, ftDynamics};
     let todo = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(DYNAMICS_FIX)) };
     for (obj, bones) in todo {
-        let tbl = unsafe { (*(obj as *mut ftDynamics)).anon_0.ftDynamicBones };
+        let tbl = unsafe { (*(obj as *mut ftDynamics)).x0.ftDynamicBones };
         if tbl.is_null() {
             eprintln!("engine: an ftDynamics table decoded to null");
             continue;
@@ -1202,7 +1204,8 @@ pub fn fix_dynamics() {
             for (k, w) in words.iter().enumerate() {
                 unsafe { (buf as *mut u32).add(k).write(*w) };
             }
-            unsafe { (*tbl).array[i].dyn_desc.data = buf as *mut DynamicsData };
+            // DynamicsTemplate.params is the word the old DynamicsDesc.data occupied
+            unsafe { (*tbl.add(i)).dyn_desc.params = buf as *mut melee_types::lb_00F9_UnkDesc1Inner };
         }
     }
 }

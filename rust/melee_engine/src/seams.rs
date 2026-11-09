@@ -326,7 +326,7 @@ fn arq_post_request(
 ) {
     unsafe {
         if !request.is_null() {
-            (*request).owner = owner;
+            (*request).owner = owner as usize;
             (*request).r#type = ty;
             (*request).priority = priority;
             (*request).source = source;

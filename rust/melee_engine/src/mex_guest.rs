@@ -829,7 +829,7 @@ fn build_move_table(f: &mut Fighter_, table: u32) {
         m.anim_id = rd(r) as _;
         m.x4_flags = rd(r + 4) as _;
         // the anon_8 word (move_id << 24 and the flag bits) as the retail tables spell it (retail_ms.rs: `_x0 = (id << 24 | ...).to_be()`, GC byte order)
-        m.anon_8._x0 = rd(r + 8).to_be();
+        m.x8._x0 = rd(r + 8).to_be();
         let mut g = [0u32; 4];
         let mut cbs: [melee_types::HSD_GObjEvent; 5] = [None; 5];
         for (w, cb) in cbs.iter_mut().enumerate() {
@@ -1495,7 +1495,7 @@ fn hand_bridge(cpu: &mut Cpu, mem: &mut GuestSpace, target: u32) -> Result<bool,
             let cb = match r(7) {
                 0 => None,
                 a => match fn_native(a) {
-                    Some(p) => Some(unsafe { core::mem::transmute::<usize, unsafe extern "C" fn(G, i32) -> i32>(p) }),
+                    Some(p) => Some(unsafe { core::mem::transmute::<usize, unsafe extern "C" fn(G, isize) -> i32>(p) }),
                     None => return Err(Fault::Unresolved(a)),
                 },
             };

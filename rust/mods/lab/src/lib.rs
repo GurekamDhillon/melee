@@ -3,14 +3,10 @@
 //! / save-load on the D-pad / slot cards, and the M4 HUD widgets the presets need (frame meter, move and state
 //! readouts, dummy and combo panels, input display): presets Clean, Frame data, Full.
 //!
-//! Controls (ports 1 and 2, shared capture; the Lab owns START, the host strips it from the game):
-//!   START tap: freeze / resume.  Frozen: D-left / D-right step -1 / +1 (hold to repeat), Z + L / Z + R step -10 / +10,
-//!   Z + A take over (go live from the scrubbed frame). Every other button and the sticks are the game's while frozen:
-//!   what is held when a step runs is that frame's input (hold down + B, D-right: the shine comes out), and no lab
-//!   control reads them (only an open menu does).
-//!   D-down save to the current slot (on release; D-down + START is the settings overlay), D-up load it; Z + D-left / D-right pick the slot; Z + D-up next HUD preset.
-//!   Hold START (30 frames): the full menu (menu.rs; L / R tabs, up / down rows, left / right values, A apply, X the
-//!   command bar, B / START close). Frozen, hold Z (12 frames): the radial quick menu, stick picks, release runs.
+//! Controls (ports 1 and 2, shared capture; the Lab owns START, the host strips it from the game): the list is
+//! `menu::CONTROLS`, which the menu's Controls page (Session tab) draws. While frozen every other button and the
+//! sticks are the game's: what is held when a step runs is that frame's input (hold down + B, D-right: the shine comes
+//! out), and no lab control reads them (only an open menu does).
 //! Online (LabNetplay) every sim action is a lab command both peers apply; the other player's freeze, rewind, step,
 //! save and load show here as a toast ("P2 rewound") from `gd_lab_applied`.
 //!
@@ -230,7 +226,7 @@ struct Lab {
     // the menu (M3), the radial and the command bar (M9)
     menu: Menu,
     /// dummy settings per port (menu.rs D_*), kept in step with the applied commands of both peers
-    dv: [[i32; D_N]; 2],
+    dv: [[i32; D_N]; 4],
     vals: [i32; N_IDS],
     rec_len: [i32; 8],
     w_tab: [f32; 5],
@@ -315,7 +311,7 @@ static mut L: Lab = Lab {
     stick_p: [(0, 0); 2],
     start_hold: (-1, 0, false),
     menu: Menu::new(),
-    dv: [D_DEFAULT; 2],
+    dv: [D_DEFAULT; 4],
     vals: [0; N_IDS],
     rec_len: [-1; 8],
     w_tab: [0.0; 5],
@@ -365,7 +361,7 @@ const F_ACTION_FRAME: usize = 120;
 
 /// Hint key caps and labels: (key, label); widths measured once at init.
 const HINTS_PLAY: [(&str, &str); 4] = [("START", "freeze"), ("D↓", "save"), ("D↑", "load"), ("Z+D↑", "HUD preset")];
-const HINTS_FROZEN: [(&str, &str); 4] = [("◀ ▶", "step"), ("Z+A", "take over"), ("Z hold", "quick"), ("START hold", "menu")];
+const HINTS_FROZEN: [(&str, &str); 4] = [("◀ ▶", "step"), ("Z+A", "take over"), ("Z hold", "quick"), ("START hold", "menu · Controls")];
 
 fn measure(s: &str, role: i32) -> f32 {
     gd_ui_enc::measure(s, role)

@@ -821,6 +821,10 @@ unsafe fn maybe_gm_801A48A4(i: u8) -> u64 {
 /// `gm_onep_interstage` (TARGET_PC): set while `gm_OnePInterstage` pumps the loop.
 pub static mut gm_onep_interstage: i32 = 0;
 
+/// A render-only tick (no logic frames: the scene is drawn as it stands). The LAB's frozen redraw after a load or rewind
+/// (melee/src/play_net.rs `ModesGame::redraw`, which restores the state around it so the pass is hash-neutral).
+pub static mut RENDER_ONLY: bool = false;
+
 /// TARGET_PC split of the scene loop (consolidation step 6), so the engine can run exactly one iteration:
 /// the C's pre-loop setup (`gm_801677C0` through `Script_SceneBegin`).
 pub unsafe fn gm_801A4D34_begin(info: *mut GameSceneInfo) {
@@ -892,7 +896,7 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
             return false;
         }
     }
-    pad_queue_count = if gm_onep_interstage != 0 { 0 } else { ext::Script_Iterations(pad_queue_count) };
+    pad_queue_count = if gm_onep_interstage != 0 || RENDER_ONLY { 0 } else { ext::Script_Iterations(pad_queue_count) };
     pad_queue_count = ext::RenderTest_Iterations(pad_queue_count);
 
     if ext::HSD_PadGetResetSwitch() != 0 {

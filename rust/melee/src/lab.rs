@@ -104,6 +104,11 @@ struct DummyState {
     wait_since: i32,
     hit_at: i32,
     nair: bool,
+    /// The hitlag and motion the previous synth call saw. `obs` is read after the frame that just ran, i.e. the
+    /// same state synth now reads, so "obs differs from now" never held: a fresh hit (the DI / SDI / tech draws),
+    /// the end of shield stun (out of shield) and the entry to a wait state (the getup / ledge delay) never fired.
+    prev_hl: f32,
+    prev_motion: i32,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -184,6 +189,8 @@ pub struct LabRun {
     /// The last frame's pads as stepped (the input display's source and the tests').
     pub last_pads: [PADStatus; 4],
     pub drew: bool,
+    /// Per port: the retail AI kind a pad-driven dummy on a CPU slot suspended (`ai_hold`), restored when it is not.
+    ai_kind: [Option<u32>; 4],
 }
 
 fn xorshift(s: &mut u32) -> u32 {
@@ -205,7 +212,7 @@ impl LabRun {
         let mut r = LabRun {
             g, sh, f: 0, slots: vec![None; SLOTS], ring_frames: 0, ring: VecDeque::new(), log: VecDeque::new(), log_f0: 0, replay_until: None,
             paused: false, steps: 0, recs: BTreeMap::new(), play: Default::default(), dummy: [Dummy::default(); 4], rng: mix32(seed) | 1, obs: Default::default(),
-            exchange: None, events: Vec::new(), perf: Perf::default(), last_pads: [PADStatus::zeroed(); 4], drew: false,
+            exchange: None, events: Vec::new(), perf: Perf::default(), last_pads: [PADStatus::zeroed(); 4], drew: false, ai_kind: [None; 4],
         };
         r.sh.borrow_mut().active = true;
         // the match's timer (as ifTime_CreateTimers decides whether to show it); read once, the rules are fixed
@@ -265,6 +272,7 @@ impl LabRun {
     fn step_engine(&mut self, pads: [PADStatus; 4], resim: bool) {
         melee_engine::gxbridge::shim().set_suppress_draws(resim);
         unsafe { melee_runtime::tu::pobj::ext::gx_suppress_draws = resim as i32 };
+        self.ai_hold();
         let t = std::time::Instant::now();
         self.g.step(pads);
         if !resim {
@@ -612,7 +620,7 @@ impl LabRun {
             _ => {}
         }
         // a fresh hit: the per-hit random draws
-        if hitlag > 0.0 && self.obs[port].hitlag <= 0.0 {
+        if hitlag > 0.0 && st.prev_hl <= 0.0 {
             st.hit_at = f;
             let r = d.react[RK_DI as usize];
             st.di = if r.option == RO_RANDOM { self.draw(r.weights, &[RO_IN, RO_OUT, RO_AWAY, RO_TOWARD, RO_UP, RO_DOWN]) } else { r.option };
@@ -668,7 +676,7 @@ impl LabRun {
         }
         // getup and ledge options after `delay` frames in the wait state
         if matches!(m, 184 | 192 | 253) {
-            if self.obs[port].motion != m {
+            if st.prev_motion != m {
                 st.wait_since = f;
             }
             let k = if m == 253 { RK_LEDGE } else { RK_GETUP } as usize;
@@ -708,7 +716,7 @@ impl LabRun {
         // out of shield: when shield stun ends, the option after `delay` frames (the shield held meanwhile)
         let r = d.react[RK_OOS as usize];
         if r.option != RO_NONE {
-            if self.obs[port].motion == 181 && m != 181 {
+            if st.prev_motion == 181 && m != 181 {
                 st.oos = Some((f, if r.option == RO_OOS_RANDOM { self.draw(r.weights, &[1, 2, 3, 4, 5, 6]) } else { r.option }));
             }
             if let Some((at, o)) = st.oos {
@@ -751,6 +759,8 @@ impl LabRun {
             p.button |= BTN_A;
             st.nair = false;
         }
+        st.prev_hl = hitlag;
+        st.prev_motion = m;
         self.dummy[port].st = st;
         p
     }
@@ -769,6 +779,7 @@ impl LabRun {
         for c in cmds {
             self.apply(c);
         }
+        let reframe = cmds.iter().any(|c| matches!(c.op, OP_LOAD | OP_POS | OP_PERCENT));
         if self.g.e.ended {
             self.publish();
             // the match is over (results): no more lab commands (the results' START presses are not freezes)
@@ -776,6 +787,9 @@ impl LabRun {
             return false;
         }
         if self.paused && self.steps == 0 {
+            if reframe {
+                self.redraw();
+            }
             self.events.clear();
             self.publish();
             return self.drew;
@@ -801,9 +815,10 @@ impl LabRun {
             }
             for port in 0..4 {
                 if let Some(p) = self.playback(port) {
-                    let err = pads[port].err;
+                    // the recorded pad as recorded, connected: a dummy on a port nobody holds (err = no controller)
+                    // would otherwise read the playback as unplugged and never move
                     pads[port] = p;
-                    pads[port].err = err;
+                    pads[port].err = 0;
                 } else {
                     pads[port] = self.synth(port, pads[port]);
                 }
@@ -1327,6 +1342,103 @@ unsafe fn stage_lines(ui: &mut crate::ui::Ui, cam: &Camera, bits: u32, c_line: c
         if bits & OV_LEDGE_GRAB != 0 && l.flags & melee_types::LINE_FLAG_LEDGE as u32 != 0 {
             for e in [p, q] {
                 ui.rect(e.0 - 3.0, e.1 - 3.0, 6.0, 6.0, c_ledge);
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------ CPU slots, frozen redraw
+
+impl LabRun {
+    /// Whether the dummy on `port` is driven by a pad this frame (a playback, a base behaviour other than the retail
+    /// CPU level, or reactions on top of nothing).
+    fn pad_driven(&self, port: usize) -> bool {
+        let d = &self.dummy[port];
+        self.play[port].is_some()
+            || matches!(d.beh, CPU_STAND | CPU_CROUCH | CPU_JUMP | CPU_SHIELD | CPU_RECORDING)
+            || (d.beh == CPU_NONE && d.react.iter().any(|r| r.option != RO_NONE))
+    }
+
+    /// A CPU slot's fighter reads the AI's virtual pad, not the port's: the input proc (src/melee/ft/fighter.c ~2408,
+    /// melee_fighter tu/fighter.rs `Fighter_procInput`) takes the sticks and buttons from `ftCo_GetCpu*` whenever
+    /// `ftCo_IsCpuControlled` (src/melee/ft/kinds/ftCommon/ftCo_0A01.c:1101: `Player_8003248C(slot, sub) ==
+    /// Gm_PKind_Cpu && cpu.kind != 5`), and the CPU proc (fighter.c ~2208) runs the AI think (`ftCo_800B3900`) under
+    /// the same test. So every pad-driven dummy feature
+    /// did nothing on a CPU-slot dummy. While one is active the AI kind is set to 5 (the retail "not CPU-controlled"
+    /// kind: the pad is read and the AI does not think); the slot's kind comes back for Control: CPU level or Off.
+    /// Reapplied before every engine frame (a respawn re-inits `cpu.kind` from the slot, ftCo_800A101C); the kind is
+    /// fighter memory, so snapshots and rewinds carry it.
+    fn ai_hold(&mut self) {
+        for port in 0..4 {
+            let Some(fp) = (unsafe { fighter(port as i32) }) else { continue };
+            if unsafe { melee_fighter::tu::player::Player_GetPlayerSlotType(port as i32) } as i32 != melee_types::Gm_PKind_Cpu as i32 {
+                continue;
+            }
+            if self.pad_driven(port) {
+                if fp.cpu.kind != 5 {
+                    self.ai_kind[port] = Some(fp.cpu.kind);
+                    fp.cpu.kind = 5;
+                }
+            } else if let Some(k) = self.ai_kind[port].take() {
+                if fp.cpu.kind == 5 {
+                    fp.cpu.kind = k;
+                }
+            }
+        }
+    }
+
+    /// A state change while frozen (a slot load, a position or percent set) is drawn at once: a render-only pass of
+    /// the state as it stands (`ModesGame::redraw`, hash-neutral), else the screen keeps the old frame until a step.
+    fn redraw(&mut self) {
+        self.g.redraw(self.last_pads);
+        self.drew = true;
+    }
+}
+
+// ------------------------------------------------------------------------------------------------ test hooks
+
+/// `MELEE_LAB_CMDS="clock:op,port,a,b,c,d;..."`: lab commands injected into the offline lab at a command-clock frame,
+/// exactly as the menu's `gd_lab_*` imports queue them (the retail-flow LAB checks, tools/rust-port/lab/lab_flow.sh).
+/// A value `f<x>` is the f32 `x`'s bits (percent, positions).
+pub fn script_cmds(clock: i32) -> Vec<LabCmd> {
+    static CMDS: std::sync::OnceLock<Vec<(i32, LabCmd)>> = std::sync::OnceLock::new();
+    let all = CMDS.get_or_init(|| {
+        let v = std::env::var("MELEE_LAB_CMDS").unwrap_or_default();
+        let num = |t: &str| -> u32 {
+            let t = t.trim();
+            if let Some(f) = t.strip_prefix('f') {
+                f.parse::<f32>().map_or(0, f32::to_bits)
+            } else if let Some(h) = t.strip_prefix("0x") {
+                u32::from_str_radix(h, 16).unwrap_or(0)
+            } else {
+                t.parse::<i64>().map_or(0, |x| x as u32)
+            }
+        };
+        v.split(';').filter_map(|e| {
+            let (at, rest) = e.split_once(':')?;
+            let f: Vec<u32> = rest.split(',').map(num).chain(std::iter::repeat(0)).take(6).collect();
+            Some((at.trim().parse().ok()?, LabCmd::new(f[0] as u8, f[1] as u8, f[2] as u16, f[3], f[4], f[5])))
+        }).collect()
+    });
+    all.iter().filter(|(at, _)| *at == clock).map(|(_, c)| *c).collect()
+}
+
+impl LabRun {
+    /// `MELEE_LAB_TRACE=1`: one line per command-clock frame and fighter: motion, position, percent, AI kind, the pad
+    /// the game was handed (the retail-flow LAB checks read it).
+    pub fn trace(&self, clock: i32) {
+        static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        if !*ON.get_or_init(|| std::env::var_os("MELEE_LAB_TRACE").is_some()) {
+            return;
+        }
+        for port in 0..4 {
+            if let Some(fp) = unsafe { fighter(port as i32) } {
+                let p = self.last_pads[port];
+                eprintln!(
+                    "labtrace c={clock} f={} paused={} drew={} P{} motion={} x={:.2} y={:.2} pct={:.1} cpukind={} air={} btn={:04x} sx={} sy={} play={} hl={}",
+                    self.f, self.paused as u8, self.drew as u8, port + 1, fp.motion_id, fp.cur_pos.x, fp.cur_pos.y, fp.dmg.x1830_percent,
+                    fp.cpu.kind, fp.ground_or_air, p.button, p.stickX, p.stickY, self.play[port].is_some() as u8, fp.dmg.x195c_hitlag_frames
+                );
             }
         }
     }

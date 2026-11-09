@@ -10,6 +10,8 @@
 //! 5. cost: the step, ring capture, slot save, load and rewind times per frame (the perf line).
 //! Exit 0 when every check passes.
 
+mod look;
+
 use crate::lab::LabRun;
 use crate::play_net::ModesGame;
 use melee_modhost::lab::*;
@@ -61,6 +63,7 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
         }
     };
     let sh = LabShared::new();
+    look::init_probe();
     let mut lab = LabRun::new(ModesGame::new(e), sh.clone(), 4242);
     let mut fails = 0;
     let mut check = |ok: bool, what: String| {
@@ -245,6 +248,9 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
         "lab-check: info ring: {} snapshots held for {} frames, {:.1} MB distinct page data",
         sh.borrow().ring_len / crate::lab::RING_EVERY as u32 + 1, sh.borrow().ring_len, p.ring_bytes as f64 / 1e6
     );
+    // 6. the lookahead
+    look::lookahead_checks(&mut lab, &sh, &mut check);
+
     if fails == 0 {
         eprintln!("lab-check: ALL OK");
         std::process::ExitCode::SUCCESS

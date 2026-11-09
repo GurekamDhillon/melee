@@ -1529,9 +1529,28 @@ pub fn play(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     crate::crash::note_disc(&iso);
+    // The player's own disc (YouGame: the listing's disc, `{disc}` in yougame-native.json): check it is the one the
+    // engine plays before anything boots, with a message the player can act on (never the path).
+    let yg = melee_platform::yougame::active();
+    if yg || has("--verify-disc") {
+        if let Err(e) = crate::disc::identify(&iso) {
+            crate::disc::tell_player(&format!("This disc image can't be played: {e}. Choose your disc again on the game's page."));
+            return ExitCode::from(4);
+        }
+    }
     if let Err(e) = crate::disc::Disc::open(&iso) {
-        eprintln!("play: {e}");
+        if yg {
+            crate::disc::tell_player("The disc image could not be read. Choose your disc again on the game's page.");
+        } else {
+            eprintln!("play: {e}");
+        }
         return ExitCode::FAILURE;
+    }
+    // Optional second disc (Brawl) and the first-run build step (firstrun.rs): a failure is told, Melee still plays.
+    let brawl = get("--brawl-disc").or_else(|| std::env::var("MELEE_BRAWL_DISC").ok()).filter(|s| !s.is_empty());
+    match crate::firstrun::run(brawl.as_deref(), &mut |f, l| eprintln!("first-run: {:3.0}% {l}", f * 100.0)) {
+        Ok(step) => eprintln!("first-run: {step:?}"),
+        Err(e) => crate::disc::tell_player(&format!("Brawl characters were not built: {e}. Melee plays without them.")),
     }
     let shot_dir = get("--shot-dir").map(PathBuf::from).or_else(|| has("--shots").then(|| PathBuf::from("target/shots")));
     if let Some(d) = &shot_dir {

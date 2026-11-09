@@ -28,6 +28,8 @@ pub const CAPS_STANDALONE: &str = r#"yg {"caps":["ready"]}"#;
 /// Caps in the player box (YOUGAME_EMBED=1): Shift+Tab goes to the page as overlay down/up. No `pads` (the pad
 /// mirror is not implemented), no `view` / `volume` (not implemented).
 pub const CAPS_EMBEDDED: &str = r#"yg {"caps":["ready","overlay"]}"#;
+/// The app's own line limit (StdioBridge: 48 MiB, a save file's base64 fits).
+pub const MAX_LINE: usize = 48 << 20;
 pub const READY: &str = r#"yg {"ready":true}"#;
 
 struct State {
@@ -42,6 +44,7 @@ struct State {
     /// Player-box commands for the window thread (rect / show / hide / focus / blur), oldest first.
     box_cmds: Mutex<VecDeque<String>>,
     answers: Mutex<Vec<(i64, String)>>,
+    stdin_closed: AtomicBool,
 }
 
 static STATE: OnceLock<State> = OnceLock::new();
@@ -88,6 +91,7 @@ pub fn init() -> Option<Vec<String>> {
         next_id: AtomicI64::new(1),
         box_cmds: Mutex::new(VecDeque::new()),
         answers: Mutex::new(Vec::new()),
+        stdin_closed: AtomicBool::new(false),
     };
     if STATE.set(s).is_err() {
         return Some(notes);
@@ -109,6 +113,10 @@ fn apply_data_dir(d: &str) -> Vec<String> {
         ("MELEE_CARD_PATH", "card", true),
         ("MELEE_SETTINGS_CFG", "settings.cfg", false),
         ("MELEE_SLP_DIR", "replays", true),
+        ("MELEE_AUDIO_CFG", "audio.cfg", false),
+        ("MELEE_MODS_DIR", "mods", true),
+        ("MELEE_NUCLEUS_DIR", "nucleus", true),
+        ("MELEE_COSMETICS_DIR", "Cosmetics", true),
     ] {
         if std::env::var_os(key).is_some() {
             continue;
@@ -206,6 +214,7 @@ pub fn request_quit(why: &str) {
         std::thread::spawn(|| {
             std::thread::sleep(QUIT_GRACE);
             crate::plog!("yougame: the main loop did not end within {:?} of the quit; exiting", QUIT_GRACE);
+            crate::yougame_saves::finish(Duration::from_millis(800));
             std::process::exit(0);
         });
     }
@@ -270,6 +279,37 @@ pub fn exit_reason(reason: &str, extra: &[(&str, &str)]) {
     }
 }
 
+/// Send a request `yg {"id":N,"type":T,<fields>}` (`fields`: a JSON object's members, may be empty) and return N.
+pub fn send_request(ty: &str, fields: &str) -> Option<i64> {
+    let s = st()?;
+    let id = s.next_id.fetch_add(1, Ordering::SeqCst);
+    let sep = if fields.is_empty() { "" } else { "," };
+    write_line(&format!(r#"yg {{"id":{id},"type":{}{sep}{fields}}}"#, json_str(ty)));
+    Some(id)
+}
+/// Wait for the answer to request `id` (the JSON after `yg `), `None` on timeout or once stdin closed.
+pub fn wait_answer(id: i64, timeout: Duration) -> Option<String> {
+    let s = st()?;
+    let until = std::time::Instant::now() + timeout;
+    loop {
+        {
+            let mut a = s.answers.lock().unwrap();
+            if let Some(k) = a.iter().position(|(i, _)| *i == id) {
+                let line = a.swap_remove(k).1;
+                return Some(line.strip_prefix("yg ").unwrap_or(&line).to_string());
+            }
+        }
+        if std::time::Instant::now() >= until || s.stdin_closed.load(Ordering::SeqCst) {
+            return None;
+        }
+        std::thread::sleep(Duration::from_millis(5));
+    }
+}
+/// One request and its answer.
+pub fn request(ty: &str, fields: &str, timeout: Duration) -> Option<String> {
+    wait_answer(send_request(ty, fields)?, timeout)
+}
+
 /// A crash's one stderr line for the app's "stopped" notice: `crash: <reason>`, first clause only, no paths.
 pub fn crash_line(reason: &str) -> String {
     let r = reason.split([';', '\r', '\n']).next().unwrap_or("").trim_end();
@@ -287,7 +327,7 @@ fn clean_field(v: &str) -> String {
     c.chars().take(60).collect::<String>().trim().to_string()
 }
 
-fn json_str(v: &str) -> String {
+pub fn json_str(v: &str) -> String {
     let mut o = String::from("\"");
     for ch in v.chars() {
         match ch {
@@ -347,7 +387,7 @@ fn read_stdin<R: BufRead>(mut r: R) {
             Ok(0) | Err(_) => break,
             Ok(_) => {}
         }
-        if buf.len() > 1 << 20 {
+        if buf.len() > MAX_LINE {
             continue;
         }
         let line = String::from_utf8_lossy(&buf);
@@ -365,6 +405,9 @@ fn read_stdin<R: BufRead>(mut r: R) {
             AppLine::Push => crate::plog!("yougame: push from the app (not handled yet): {}", line.chars().take(200).collect::<String>()),
             AppLine::PadRelay | AppLine::Ignored => {}
         }
+    }
+    if let Some(s) = st() {
+        s.stdin_closed.store(true, Ordering::SeqCst);
     }
     request_quit("the app closed stdin");
 }

@@ -27,6 +27,7 @@ use melee_types::neutral_hash::nh_game;
 use std::io::Write;
 use std::process::ExitCode;
 
+mod firstrun;
 mod geno_suite;
 mod cosmetics;
 mod cosmetics_import;
@@ -443,8 +444,18 @@ fn arena_misuse(what: &str, p: usize, n: usize) {
     }
 }
 fn main() -> ExitCode {
+    let code = main_inner();
+    // YouGame: the last saves go up before the process (and with it the bridge) ends.
+    melee_platform::yougame_saves::finish(std::time::Duration::from_secs(3));
+    code
+}
+fn main_inner() -> ExitCode {
     // The YouGame app's stdio bridge (notes/yougame.md): first, before anything can print to stdout or open the log.
     let yougame = melee_platform::yougame::init();
+    // Saves that follow the account (yougame_saves.rs): before anything reads the card or settings.
+    if let Some(r) = melee_platform::yougame_saves::start() {
+        eprintln!("yougame: saves: cloud {} down {:?} up {:?} same {}", r.cloud, r.downloaded, r.uploaded, r.same);
+    }
     sys_live(); // the counter's cell exists before any snapshot base is captured
     #[cfg(windows)]
     melee_engine::arena::set_misuse_hook(arena_misuse);

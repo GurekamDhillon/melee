@@ -1025,7 +1025,7 @@ impl Lab {
             self.panel(x0, by, w, h - 34.0);
             self.enc.text(x0 + 16.0, by + 12.0, ROLE_TITLE, tx, "Controls");
             for (i, (k, what)) in CONTROLS.iter().enumerate() {
-                let ry = by + 44.0 + i as f32 * 20.0;
+                let ry = by + 44.0 + i as f32 * 18.0;
                 self.enc.text(x0 + 16.0, ry, ROLE_VALUE, tx, k);
                 self.enc.text(x0 + 230.0, ry, ROLE_BODY, mu, what);
             }

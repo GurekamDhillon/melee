@@ -1,12 +1,12 @@
-char_dk	PASS	3601	3601	-
 char_captain	PASS	3601	3601	-
+char_dk	PASS	3601	3601	-
 char_fox	PASS	3601	3601	-
 char_gaw	PASS	3601	3601	-
 char_kirby	PASS	3601	3601	-
 char_bowser	PASS	3601	3601	-
 char_link	PASS	3601	3601	-
 char_luigi	PASS	3601	3601	-
-char_mario	PASS	3601	3601	-
+char_mario	FAIL	1498	3601	frame 1498: differs in hash, s0     hash     golden ADD56777  candidate A3BEA71F 
 char_marth	PASS	3601	3601	-
 char_mewtwo	PASS	3601	3601	-
 char_ness	PASS	3601	3601	-
@@ -15,30 +15,30 @@ char_pikachu	PASS	3601	3601	-
 char_icies	PASS	3601	3601	-
 char_jigglypuff	PASS	3601	3601	-
 char_samus	PASS	3601	3601	-
-char_yoshi	PASS	3601	3601	-
+char_yoshi	FAIL	1611	3601	frame 1611: differs in hash, s2     hash     golden 91B5AFA4  candidate 1E720898 
 char_zelda	PASS	3601	3601	-
 char_sheik	PASS	3601	3601	-
 char_falco	PASS	3601	3601	-
-char_drmario	PASS	3601	3601	-
 char_younglink	PASS	3601	3601	-
-char_pichu	PASS	3601	3601	-
+char_drmario	PASS	3601	3601	-
 char_roy	PASS	3601	3601	-
+char_pichu	PASS	3601	3601	-
+char_ganondorf	FAIL	712	3601	frame 712: differs in hash, itemsum     hash     golden 8B9FB36E  candidate 945F6BB5 
 zelda_sheik_transform	PASS	2401	2401	-
-char_ganondorf	PASS	3601	3601	-
 kirby_copy_a	PASS	2401	2401	-
 kirby_copy_b	PASS	3001	3001	-
 ic_vs_fox_human	PASS	1801	1801	-
 sheik_cpu_vs_zelda_cpu	PASS	3601	3601	-
 stage_02_fountain	PASS	3601	3601	-
 stage_03_stadium	PASS	3601	3601	-
-stage_04_castle	PASS	3601	3601	-
-stage_05_jungle	PASS	3601	3601	-
-stage_06_brinstar	PASS	3601	3601	-
+stage_04_castle	FAIL	1447	3601	frame 1447: differs in hash, s0     hash     golden DD6F685B  candidate 82DDB017 
+stage_05_jungle	FAIL	1384	3601	frame 1384: differs in hash, s2     hash     golden C02C3905  candidate F7C354D2 
+stage_06_brinstar	FAIL	2058	3601	frame 2058: differs in hash, seed, s2     hash     golden C10333AD  candidate 7FB591ED 
 stage_07_corneria	PASS	3601	3601	-
 stage_08_yoshistory	PASS	3601	3601	-
 stage_09_onett	PASS	3601	3601	-
-stage_10_mutecity	PASS	3601	3601	-
-stage_11_rainbowcruise	PASS	3601	3601	-
+stage_10_mutecity	FAIL	1833	3601	frame 1833: differs in hash, s2     hash     golden 3ADADEC9  candidate 5D6FE2AE 
+stage_11_rainbowcruise	FAIL	2650	3601	frame 2650: differs in hash, s2     hash     golden 466AEDB7  candidate BF5C77F7 
 stage_12_garden	PASS	3601	3601	-
 stage_13_greatbay	PASS	3601	3601	-
 stage_14_temple	PASS	3601	3601	-
@@ -47,26 +47,26 @@ stage_16_yoshiisland	PASS	3601	3601	-
 stage_17_greens	PASS	3601	3601	-
 stage_18_fourside	PASS	3601	3601	-
 stage_19_mushroomkingdom	PASS	3601	3601	-
-stage_21_akaneia	NO_GOLDEN	0	0	-
 stage_20_mushroomkingdom2	PASS	3601	3601	-
+stage_21_akaneia	NO_GOLDEN	0	0	-
 stage_22_venom	PASS	3601	3601	-
-stage_23_pokefloats	PASS	3601	3601	-
+stage_23_pokefloats	FAIL	736	3601	frame 736: differs in hash, seed, s2     hash     golden FBAF04E1  candidate F7456F40 
 stage_24_bigblue	PASS	3601	3601	-
+stage_25_icemt	FAIL	215	3601	frame 215: differs in hash, s0     hash     golden C547BDB4  candidate B1CD5DA7 
 stage_26_icetop	NO_GOLDEN	0	0	-
-stage_25_icemt	PASS	3601	3601	-
 stage_27_flatzone	PASS	3601	3601	-
 stage_28_dreamland64	PASS	3601	3601	-
 stage_29_yoshistory64	PASS	3601	3601	-
-stage_30_kongojungle64	PASS	3601	3601	-
-stage_31_battlefield	PASS	3601	3601	-
+stage_30_kongojungle64	FAIL	2851	3601	frame 2851: differs in hash, s2     hash     golden 1C9C6C67  candidate BBAAD575 
+stage_31_battlefield	FAIL	1110	3601	frame 1110: differs in hash, s2     hash     golden 8B0EACB0  candidate 6DA8CA3C 
 stage_32_finaldestination	PASS	3601	3601	-
 items_hi_finaldestination	PASS	3601	3601	-
 items_hi_battlefield	PASS	3601	3601	-
-items_hi_yoshistory	PASS	3601	3601	-
+items_hi_yoshistory	FAIL	3437	3601	frame 3437: differs in hash, s2     hash     golden 3E218A19  candidate 4B53F09C 
 items_hi_stadium	PASS	3601	3601	-
 items_hi_dreamland64	PASS	3601	3601	-
-items_low_fd	PASS	3601	3601	-
 items_hi_4p_ffa	PASS	3601	3601	-
+items_low_fd	PASS	3601	3601	-
 items_hi_human_bf	PASS	1801	1801	-
 items_off_4p_ps	PASS	3601	3601	-
 items_off_fd	PASS	3601	3601	-
@@ -81,17 +81,17 @@ cpulv5_puff_link	PASS	3601	3601	-
 cpulv9_fox_falco	PASS	3601	3601	-
 cpulv9_marth_sheik	PASS	3601	3601	-
 cpulv9_ganon_peach	PASS	3601	3601	-
-cpulv9_puff_link	PASS	3601	3601	-
+cpulv9_puff_link	FAIL	3368	3601	frame 3368: differs in hash, s2     hash     golden E625BD4E  candidate 90C94413 
 cpu_mixed_1_9	PASS	3601	3601	-
 cpu_ffa4_levels	PASS	3601	3601	-
 cpu_teams4	PASS	3601	3601	-
 cpu_stock2_fd	PASS	3601	3601	-
-cpu_stock1_bf	PASS	1803	1803	-
+cpu_stock1_bf	PASS	3026	3026	-
 pad_captain_fox_finaldestination	PASS	1801	1801	-
 pad_marth_sheik_battlefield	PASS	1801	1801	-
 pad_bowser_ganondorf_yoshistory	PASS	1801	1801	-
-pad_peach_samus_dreamland64	PASS	1801	1801	-
 pad_icies_jigglypuff_stadium	PASS	1801	1801	-
+pad_peach_samus_dreamland64	PASS	1801	1801	-
 pad_luigi_drmario_fountain	PASS	1801	1801	-
 padcpu_fox_vs_cpu_marth	PASS	1801	1801	-
 padcpu_pikachu_vs_cpu_pichu	PASS	1801	1801	-
@@ -100,20 +100,20 @@ human_captain_fountain	PASS	1801	1801	-
 human_dk_onett	PASS	1801	1801	-
 human_fox_yoshiisland	PASS	1801	1801	-
 human_gaw_bigblue	PASS	1801	1801	-
-human_kirby_finaldestination	PASS	1801	1801	-
+human_kirby_finaldestination	FAIL	1244	1801	frame 1244: differs in hash, s2     hash     golden C08DF4FB  candidate D2A1D561 
 human_bowser_yoshistory	PASS	1801	1801	-
 human_link_kraid	PASS	1801	1801	-
 human_luigi_pokefloats	PASS	1801	1801	-
-human_marth_corneria	PASS	1801	1801	-
 human_mario_battlefield	PASS	1801	1801	-
-human_ness_venom	PASS	1801	1801	-
+human_marth_corneria	PASS	1801	1801	-
 human_mewtwo_temple	PASS	1801	1801	-
+human_ness_venom	PASS	1801	1801	-
 human_peach_kongojungle64	PASS	1801	1801	-
 human_pikachu_brinstar	PASS	1801	1801	-
 human_icies_greatbay	PASS	1801	1801	-
 human_jigglypuff_mushroomkingdom2	PASS	1801	1801	-
 human_samus_yoshistory64	PASS	1801	1801	-
-human_yoshi_jungle	PASS	1801	1801	-
+human_yoshi_jungle	FAIL	953	1801	frame 953: differs in hash, seed, s0, s2     hash     golden 104C50D1  candidate 26B8957A 
 human_zelda_garden	PASS	1801	1801	-
 human_sheik_mushroomkingdom	PASS	1801	1801	-
 human_falco_dreamland64	PASS	1801	1801	-
@@ -123,16 +123,16 @@ human_roy_fourside	PASS	1801	1801	-
 human_pichu_flatzone	PASS	1801	1801	-
 human_ganondorf_stadium	PASS	1801	1801	-
 items_hi3_fountain	PASS	3601	3601	-
-items_hi3_brinstar	PASS	3601	3601	-
-items_hi3_onett	PASS	3601	3601	-
+items_hi3_brinstar	FAIL	1238	3601	frame 1238: differs in hash, s2     hash     golden BA739918  candidate 789565D0 
+items_hi3_onett	FAIL	3491	3601	frame 3491: differs in hash, s0     hash     golden B2D02D4F  candidate C700874D 
 items_hi3_garden	PASS	3601	3601	-
 items_hi3_yoshiisland	PASS	3601	3601	-
 items_hi3_fourside	PASS	3601	3601	-
-items_hi3_pokefloats	PASS	3601	3601	-
-items_hi3_bigblue	PASS	3601	3601	-
-items_hi3_flatzone	PASS	3601	3601	-
-targettest_captain	PASS	1713	1713	-
+items_hi3_pokefloats	FAIL	1100	3601	frame 1100: differs in hash, s2     hash     golden 83D1788F  candidate 4ECF5D47 
+items_hi3_bigblue	FAIL	1432	3601	frame 1432: differs in hash, s4     hash     golden E2A0D811  candidate D8574051 
+items_hi3_flatzone	FAIL	2214	3601	frame 2214: differs in hash, s4     hash     golden 50F38CEA  candidate 2226D918 
 items_hi3_yoshistory64	PASS	3601	3601	-
+targettest_captain	PASS	1713	1713	-
 targettest_dk	PASS	1798	1798	-
 targettest_fox	PASS	1761	1761	-
 targettest_gaw	PASS	1798	1798	-
@@ -158,41 +158,42 @@ targettest_drmario	PASS	1617	1617	-
 targettest_roy	PASS	1665	1665	-
 targettest_pichu	PASS	1665	1665	-
 targettest_ganondorf	PASS	1713	1713	-
-classic_step00	PASS	3598	3598	-
+classic_step00	FAIL	1415	3598	frame 1274: differs in hash, s2     hash     golden 73AC9D2D  candidate CF7DBBA7 
 classic_step01	PASS	3598	3598	-
-classic_step02	PASS	3456	3456	-
+classic_step02	FAIL	683	3456	frame 684: differs in hash, itemsum     hash     golden 3C4D136A  candidate D6AA0F46 
 classic_step03	PASS	3598	3598	-
-classic_step04	PASS	3283	3283	-
-classic_step05	PASS	3339	3339	-
+classic_step04	FAIL	2327	3598	frame 2186: differs in hash, s2     hash     golden CE8A4016  candidate 3BD2A84F 
+classic_step05	PASS	3456	3456	-
 classic_step06	PASS	3483	3483	-
+classic_step07	PASS	3598	3598	-
 classic_step08	PASS	3456	3456	-
-classic_step07	PASS	3483	3483	-
 classic_step09	PASS	3598	3598	-
 classic_step10	PASS	3597	3597	-
 adventure_step00	PASS	3536	3536	-
-adventure_step01	PASS	3368	3368	-
+adventure_step01	FAIL	2591	3368	frame (560, 2591): differs in hash, seed, s0     hash     golden D135C51D  candidate 4E4C7C31 
 adventure_step02	PASS	3536	3536	-
 adventure_step03	PASS	3536	3536	-
 adventure_step04	PASS	3536	3536	-
 adventure_step05	PASS	3536	3536	-
 adventure_step06	PASS	3368	3368	-
 adventure_step07	PASS	3534	3534	-
+adventure_step08	FAIL	2242	3536	frame 2243: differs in hash, itemsum     hash     golden 6B38C701  candidate F7B353A1 
 adventure_step09	PASS	3171	3171	-
-adventure_step08	PASS	3536	3536	-
 adventure_step10	PASS	3368	3368	-
-adventure_step11	PASS	3536	3536	-
+adventure_step11	PASS	3368	3368	-
 allstar_step00	PASS	3598	3598	-
-allstar_step01	PASS	3598	3598	-
-allstar_step02	PASS	3598	3598	-
-allstar_step03	PASS	3283	3283	-
-allstar_step04	PASS	3598	3598	-
-allstar_step05	PASS	3283	3283	-
+allstar_step01	PASS	3283	3283	-
+allstar_step02	PASS	3283	3283	-
+allstar_step03	PASS	3598	3598	-
+allstar_step04	FAIL	2561	3598	frame 2561: differs in hash, seed     hash     golden 0768A70F  candidate DF6F606D 
+allstar_step05	PASS	3079	3079	-
 allstar_step06	PASS	3598	3598	-
-allstar_step07	PASS	3283	3283	-
+allstar_step07	FAIL	951	3598	frame 951: differs in hash, itemsum     hash     golden 413AA595  candidate 1B7E48D9 
 allstar_step08	PASS	3283	3283	-
 allstar_step09	PASS	3598	3598	-
 allstar_step10	PASS	3598	3598	-
-allstar_step11	PASS	3283	3283	-
+allstar_step11	FAIL	2831	3283	frame (641, 2831): differs in hash, s2     hash     golden 0B3A0F87  candidate F5DA27AB 
+allstar_step12	PASS	3598	3598	-
 homerun_contest	NO_GOLDEN	0	0	-
 multiman_10	NO_GOLDEN	0	0	-
 multiman_100	NO_GOLDEN	0	0	-
@@ -202,7 +203,6 @@ multiman_endless	NO_GOLDEN	0	0	-
 multiman_cruel	NO_GOLDEN	0	0	-
 event_match	NO_GOLDEN	0	0	-
 geno_kirby_bhv	PASS	2401	2401	-
-allstar_step12	PASS	3283	3283	-
 geno_fox_dash	PASS	2401	2401	-
 geno_cpu_kirby_fox	PASS	3601	3601	-
 geno_lab_cpu	PASS	3601	3601	-
@@ -213,10 +213,10 @@ geno_vanilla_hero_caster	PASS	3601	3601	-
 mex_ace_cpu	PASS	3601	3601	-
 mex_halberd_cpu	PASS	3601	3601	-
 mex_ukirby_cpu	PASS	3601	3601	-
-geno_glide	PASS	601	601	-
-mex_sorapal_cpu	PASS	3601	3601	-
 mex_sora_cpu	PASS	3601	3601	-
+geno_glide	PASS	601	601	-
+mex_sorapal_cpu	FAIL	3035	3601	frame 3035: differs in hash, seed, s2     hash     golden 662965F7  candidate 805A8207 
 mex_halberd_bhv	PASS	2401	2401	-
 mex_sorapal_bhv	PASS	2401	2401	-
-geno_courier_cpu	PASS	3601	3601	-
 mex_goku_cpu	PASS	3601	3601	-
+geno_courier_cpu	PASS	3601	3601	-

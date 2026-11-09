@@ -458,3 +458,36 @@ runs one 1P launch in the C build and the engine and compares the hash rows and 
 - Fixed: `gm_801B9DD8` (Home-Run record) compares `u32 distance > s32 record` unsigned, as the C.
 - Not run end to end: Home-Run Contest (no scene launch in either build), the Classic / Adventure / All-Star end-of-mode
   records (gm_8017CBAC / gm_8017CA38: a random pad never clears or gives up a mode); those paths were compared by reading.
+
+## port/onepseed (2026-11-08): the "1P seed" failures were stale goldens; one shared Venom bug
+Measured at rust-port 443726c70 with `run_rust.sh --all`: **50 pass, 162 fail, 10 no golden** against the committed goldens
+(28 of the 62 1P rows and 132 of the 152 VS rows: every row with a CPU fighter; Target Test and human-only rows passed).
+- **Root cause (160 rows):** the goldens, not the engine. ef0c6dad2 (oracle-fix10) mirrored `ftCo_800ADE48`'s caller-r31
+  level-roll branch into the C (`TARGET_PC`) and re-recorded only the two gate CPU goldens ("Coverage goldens with CPU
+  fighters were not re-recorded"). Every CPU fighter now switches to command 0x12 where the old C build never did, so the
+  committed CSVs describe the pre-mirror C. Proof: cpulv9_marth_sheik / classic_step01 re-recorded from the current C differ
+  from the committed CSVs at exactly the frames the engine diverged (113 / 518), and the engine matches the fresh C 3601/3601
+  and 3598/3598. Eight more rows (the Fountain scenarios, char_bowser/ness/yoshi: seed at frame 4) were the "post-sync C
+  tree records differently" set that dcd321181 kept from the pre-sync lane; the engine matches the post-sync C there too.
+- **C oracle used:** a HEAD-tree lane (`_build/agents/onepseed-hc`: lane of10's objects hardlinked, records copied, 107 TUs
+  rebuilt by content hash, Aurora rebuilt; recipe in this section's commit message). It records the same CSVs as lane of10
+  (7632ed28c + ftCo_0A01.c) on the rows checked (cpulv9_marth_sheik identical over 3601 rows).
+- **Result:** `run_rust.sh -j 3 --all` (release): **182 pass, 30 fail, 10 no golden** (was 50 / 162 / 10).
+- **Re-recorded:** 161 coverage goldens (all 160 failing rows minus the Venom pair below, from lane of10 or the HEAD lane;
+  each twice, identical). `results.tsv` regenerated.
+- **Shared bug, Venom (stage_22_venom / human_ness_venom, seed at 1141):** `getFireKind` in grvenom.c read
+  `base[xC8 + 14]` (14 words past `grVe_803E5348`, i.e. `grVe_803E5380[xC8]` on the GameCube) without a `TARGET_PC`
+  guard, so the x86 build read whatever static the linker placed there: fire kind -1, a different fire animation and so a
+  different re-fire frame (C 1277 vs the console/engine's 1141). Found with `MELEE_RAND_TRACE` on both sides (`rand_resolve.py`):
+  the draw sequences were identical, the engine's second `HSD_Randi(4)` in `grVenom_80205F30` came 136 frames earlier.
+  Fixed in the C (TARGET_PC), goldens re-recorded from the fixed lane; the engine was already right.
+- **Left (30 rows, real engine-vs-C divergences; all re-recorded from the HEAD-tree lane, which agrees with lane of10 on them
+  except char_zelda, where only the HEAD lane (with 85b233d06's Sheik-needle evaluation order) matches the engine: PASS):** char_mario 1498, char_yoshi 1611, char_ganondorf 712, stage_04_castle 1447, stage_05_jungle 1384, stage_06_brinstar 2058, stage_10_mutecity 1833, stage_11_rainbowcruise 2650, stage_23_pokefloats 736, stage_25_icemt 215, stage_30_kongojungle64 2851, stage_31_battlefield 1110, items_hi_yoshistory 3437, cpulv9_puff_link 3368, human_kirby_finaldestination 1244, human_yoshi_jungle 953, items_hi3_brinstar 1238, items_hi3_onett 3491, items_hi3_pokefloats 1100, items_hi3_bigblue 1432, items_hi3_flatzone 2214, classic_step00 1274, classic_step02 684, classic_step04 2186, adventure_step01 (560, 2591), adventure_step08 2243, allstar_step04 2561, allstar_step07 951, allstar_step11 (641, 2831), mex_sorapal_cpu 3035.
+  All are mid-match CPU / item divergences (s0/s2/s4/itemsum, a few with seed); classic_step00 1274 and classic_step02 684
+  fail at the same frames as before the re-record (the ftCo change did not touch them). Tooling note: for these VS coverage
+  scenes the C's `MELEE_SNAP_DUMP=N` frame counter runs 36-37 frames ahead of the golden row (align by the `seed` column, as
+  `rand_resolve.py` describes), and `melee diff --snap` refuses a snapshot whose frame differs from `--frame`, so the
+  field-level diff needs that offset handled before it is usable here.
+- Build note: the shared cargo target (`_build/cargo-shared`) was being built from another worktree at the same time
+  (`present_posed` signature mismatch in `melee` bin); the engine for this round was built in a private
+  `_build/cargo-agents/onepseed` (deleted at hand-back).

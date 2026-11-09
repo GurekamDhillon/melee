@@ -614,6 +614,14 @@ pub unsafe extern "C" fn Item_802674AC(spawnItem: *mut SpawnItem) {
         (*spawnItem).hold_kind = 8;
         return;
     }
+    // m-ex "Determine Item Type" (codes.gct C2 at 0x802674AC, the function's entry): a custom item kind (>= 237, the
+    // first past the retail kinds) is a fighter article, hold kind 8, and the retail ladder below is skipped. Without it
+    // the ladder's last rung gave Charizard's 0x106 hold kind 5 (the console holds 8; the strict oracle on the four
+    // Charizard files of Hero's 2026-11-06 corpus, notes/dolphin-oracle.md "Akaneia").
+    if kind >= 237 {
+        (*spawnItem).hold_kind = 8;
+        return;
+    }
 
     if kind == It_Kind_Foods {
         (*spawnItem).hold_kind = 2;

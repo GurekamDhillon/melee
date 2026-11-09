@@ -353,7 +353,14 @@ pub struct Renderer {
     /// The HUD overlay's flat-colour quad pipeline per target format (`overlay_to`).
     overlay_pipes: HashMap<wgpu::TextureFormat, wgpu::RenderPipeline>,
     /// The last [`Renderer::prepare`]d frame: persistent GPU buffers, per-draw pipeline / bind group / offsets.
-    frame: FrameCache,
+    /// Two prepared frames: a prepare fills the slot the last one did not, so the frame drawn last stays drawable
+    /// (a skipped frame's EFB copies are rendered without clobbering it, and a new frame can be prepared at one
+    /// present and drawn at the next: [`Renderer::prepare`], [`Renderer::draw_prepared`]).
+    frames: [FrameCache; 2],
+    /// The slot the last [`Renderer::prepare`] filled.
+    fc: usize,
+    /// The presenter's current frame ([`Renderer::pin`]): a prepare of another frame never takes its slot.
+    pinned: (usize, usize, usize, usize),
     /// EFB copies (GXCopyTex) by guest destination address: textures later draws sample.
     efb_copies: FxMap<u64, CopyTarget>,
     copy_pipe: Option<(wgpu::RenderPipeline, wgpu::BindGroupLayout, wgpu::Sampler)>,
@@ -637,6 +644,41 @@ fn batching() -> bool {
 }
 
 /// `d` draws with exactly `p`'s state, so it can be appended to `p`'s draw call (see [`pack`]).
+/// `p` and `d` sample the same textures through the same TLUTs (the texture half of [`can_merge`]): they can share
+/// one texture bind group.
+fn same_textures(p: &DrawCmd, d: &DrawCmd) -> bool {
+    if p.info.sampled_textures != d.info.sampled_textures || p.info.sampled_ind_textures != d.info.sampled_ind_textures {
+        return false;
+    }
+    let ptr = |x: &Option<crate::resources::GxData>| x.as_ref().map(|v| (v.as_ptr() as usize, v.len()));
+    let used = p.info.sampled_textures | p.info.sampled_ind_textures;
+    for m in 0..MAX_TEXTURES {
+        if used & (1 << m) == 0 {
+            continue;
+        }
+        let (a, b) = (&p.textures[m], &d.textures[m]);
+        if a.mode0 != b.mode0 || a.mode1 != b.mode1 || a.image0 != b.image0 || a.image3 != b.image3 || a.width != b.width || a.height != b.height
+            || a.format != b.format || a.tlut != b.tlut || a.guest != b.guest || a.flags != b.flags || ptr(&a.data) != ptr(&b.data)
+        {
+            return false;
+        }
+    }
+    p.tluts.len() == d.tluts.len()
+        && p.tluts.iter().zip(d.tluts.iter()).all(|(a, b)| a.format == b.format && a.num_entries == b.num_entries && ptr(&a.data) == ptr(&b.data))
+}
+
+/// [`Renderer::draw_prepared`] calls that found their frame in no slot and prepared it first; `add` 0 reads.
+pub fn repairs(add: u64) -> u64 {
+    static N: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    N.fetch_add(add, std::sync::atomic::Ordering::Relaxed) + add
+}
+
+/// Frames [`Renderer::prepare`] had to pack on the calling thread (no decode-thread packing for them); `add` 0 reads.
+pub fn main_packs(add: u64) -> u64 {
+    static N: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    N.fetch_add(add, std::sync::atomic::Ordering::Relaxed) + add
+}
+
 fn can_merge(p: &DrawCmd, d: &DrawCmd) -> bool {
     if p.copy.is_some() || d.copy.is_some() || p.instance_count != 1 || d.instance_count != 1 || p.info.line_mode != 0 || d.info.line_mode != 0 {
         return false;
@@ -881,8 +923,17 @@ struct GpuBuf {
     cap: u64,
 }
 
+/// Identity of a prepared draw list: its allocation and length, plus two allocations inside it (a freed list's
+/// address can be reused by the next frame's list of the same length; its draws' own buffers make that collision
+/// practically impossible).
+fn frame_key(draws: &[DrawCmd]) -> (usize, usize, usize, usize) {
+    (draws.as_ptr() as usize, draws.len(), draws.first().map_or(0, |d| d.uniform.as_ptr() as usize), draws.last().map_or(0, |d| d.verts.as_ptr() as usize))
+}
+
 #[derive(Default)]
 struct FrameCache {
+    /// The draw list this slot holds ([`frame_key`]); the default: nothing prepared.
+    key: (usize, usize, usize, usize),
     draws: Vec<PreparedDraw>,
     vbuf: Vec<u8>,
     abuf: Vec<u8>,
@@ -954,8 +1005,8 @@ fn fnv(d: &[u8]) -> u64 {
 }
 
 impl Renderer {
-    /// A headless renderer with a `width` x `height` target. `backends` defaults to the platform's
-    /// primary backends; WGPU_BACKEND (e.g. `dx12`, `vulkan`) overrides as in wgpu.
+    /// A headless renderer with a `width` x `height` target. Vulkan only; WGPU_BACKEND
+    /// (e.g. `dx12`) overrides as in wgpu (tests and comparisons only).
     pub fn new(width: u32, height: u32) -> Result<Self, String> {
         Self::with_instance(&Self::instance(), None, width, height)
     }
@@ -1029,9 +1080,9 @@ impl Renderer {
         true
     }
 
-    /// The wgpu instance [`Renderer::new`] uses (primary backends, WGPU_BACKEND overrides).
+    /// The wgpu instance [`Renderer::new`] uses (Vulkan; WGPU_BACKEND overrides).
     pub fn instance() -> wgpu::Instance {
-        let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::PRIMARY);
+        let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::VULKAN);
         wgpu::Instance::new(&wgpu::InstanceDescriptor { backends, ..Default::default() })
     }
 
@@ -1180,7 +1231,9 @@ impl Renderer {
             blit: HashMap::new(),
             blit_sampler: None,
             overlay_pipes: HashMap::new(),
-            frame: FrameCache::default(),
+            frames: Default::default(),
+            fc: 0,
+            pinned: (0, 0, 0, 0),
             efb_copies: FxMap::default(),
             copy_pipe: None,
             zcopy_pipe: None,
@@ -1519,14 +1572,43 @@ impl Renderer {
         self.packed = Some(p);
     }
 
+    /// Keep the prepared `draws` (the presenter's current frame) through prepares of other frames: a skipped frame's
+    /// EFB copies, a screenshot's redraw of the previous frame.
+    pub fn pin(&mut self, draws: &[DrawCmd]) {
+        self.pinned = frame_key(draws);
+    }
+
+    /// `draws` is about to be freed: its slot, if any, no longer claims to hold it (its allocations may come back
+    /// as another frame's; the key would then describe that frame).
+    pub fn forget(&mut self, draws: &[DrawCmd]) {
+        let key = frame_key(draws);
+        for f in &mut self.frames {
+            if f.key == key {
+                f.key = Default::default();
+            }
+        }
+        if self.pinned == key {
+            self.pinned = Default::default();
+        }
+    }
+
     pub fn prepare(&mut self, _state: &GxState, draws: &[DrawCmd]) {
         if self.gpu_fault().is_some() {
             return;
         }
         let t0 = std::time::Instant::now();
+        let fkey = frame_key(draws);
+        let g = crate::tex_override::generation();
+        if g == self.ovr_gen {
+            if let Some(i) = self.frames.iter().position(|f| f.key == fkey) {
+                // already prepared and untouched since (a screenshot's redraw of the previous frame, a frame drawn
+                // again after a skipped frame's copies): its slot is still exactly this frame
+                self.fc = i;
+                return;
+            }
+        }
         self.prepared += 1;
         frame_stats(self.prepared, draws);
-        let g = crate::tex_override::generation();
         if g != self.ovr_gen {
             // the override set changed: decode every texture again (a replaced one back to the game's, or anew)
             self.ovr_gen = g;
@@ -1537,15 +1619,26 @@ impl Renderer {
         }
         self.evict_textures();
         if self.prepared % 600 == 0 && std::env::var_os("MELEE_GX_CACHE_LOG").is_some() {
-            let f = &self.frame;
+            let f = &self.frames[self.fc];
             eprintln!("gx cache: prepared {} textures {} tex_bgs {} samplers {} pipelines {} efb_copies {} wgsl {} frame vecs {} {} {} {} draws {}", self.prepared, self.textures.len(), self.tex_bgs.len(), self.samplers.len(), self.pipes.len(), self.efb_copies.len(), self.pipes.wgsl_hashes.lock().unwrap().len(), f.vbuf.capacity(), f.abuf.capacity(), f.ibuf.capacity(), f.ubytes, f.draws.capacity());
         }
-        let mut fc = std::mem::take(&mut self.frame);
+        // The slot: the one already holding this frame (prepared again in place, after an override change), else one
+        // that is not the pinned frame's, the other than the last prepared when both qualify (see `frames`).
+        self.fc = match self.frames.iter().position(|f| f.key == fkey) {
+            Some(i) => i,
+            None if self.frames[self.fc ^ 1].key != self.pinned || self.frames[self.fc].key == self.pinned => self.fc ^ 1,
+            None => self.fc,
+        };
+        let mut fc = std::mem::take(&mut self.frames[self.fc]);
+        fc.key = fkey;
         // the CPU packing, done on the GX decode thread when it handed one over for exactly these draws
         let key = (draws.as_ptr() as usize, draws.len());
         let pk = match self.packed.take() {
             Some(p) if p.key == key => p,
-            _ => pack(draws),
+            _ => {
+                main_packs(1);
+                pack(draws)
+            }
         };
         fc.vbuf = pk.vbuf;
         fc.abuf = pk.abuf;
@@ -1619,13 +1712,20 @@ impl Renderer {
             self.ensure_copy_target(c);
         }
         let mut last_pipe = std::mem::take(&mut fc.last_pipe);
-        let (mut miss_pipe, mut miss_tex, mut n_pipe, mut n_tex) = (std::time::Duration::ZERO, std::time::Duration::ZERO, 0usize, 0usize);
+        let (mut miss_pipe, mut miss_tex, mut n_pipe, mut n_tex, mut n_reuse) = (std::time::Duration::ZERO, std::time::Duration::ZERO, 0usize, 0usize, 0usize);
+        // the previous unmerged draw: a run of draws over one material differs only in its uniforms (so the
+        // batcher keeps them apart) and shares the texture bind group (8 maps of key hashing otherwise)
+        let mut prev_tex: Option<usize> = None;
+        // MELEE_GX_PROF only (a clock read per draw is not free): time in pipeline / texture resolution, factory calls
+        let profiling = prof();
+        let (mut t_pipe, mut t_tex, mut n_factory) = (std::time::Duration::ZERO, std::time::Duration::ZERO, 0usize);
         for (i, d) in draws.iter().enumerate() {
             if d.copy.is_some() || fc.draws[i].merged {
                 fc.draws[i].pipeline = None;
                 fc.draws[i].tex_bg = None;
                 continue;
             }
+            let tq = profiling.then(std::time::Instant::now);
             let p = if d.config.cull_mode == GX_CULL_ALL {
                 None
             } else {
@@ -1639,6 +1739,7 @@ impl Renderer {
                         p
                     }
                     None => {
+                        n_factory += 1;
                         let (n0, tp) = (self.pipes.len(), std::time::Instant::now());
                         let p = self.pipeline(d);
                         if self.pipes.len() != n0 {
@@ -1652,30 +1753,48 @@ impl Renderer {
                 }
             };
             fc.draws[i].pipeline = p;
-            let (n0, tt) = (self.textures.len(), std::time::Instant::now());
-            fc.draws[i].tex_bg = Some(self.tex_bind_group(d));
-            if self.textures.len() != n0 {
-                miss_tex += tt.elapsed();
-                n_tex += self.textures.len() - n0;
+            if let Some(t) = tq {
+                t_pipe += t.elapsed();
             }
+            let tq = profiling.then(std::time::Instant::now);
+            if let Some(j) = prev_tex.filter(|&j| same_textures(&draws[j], d)) {
+                fc.draws[i].tex_bg = fc.draws[j].tex_bg.clone();
+                n_reuse += 1;
+            } else {
+                let (n0, tt) = (self.textures.len(), std::time::Instant::now());
+                fc.draws[i].tex_bg = Some(self.tex_bind_group(d));
+                if self.textures.len() != n0 {
+                    miss_tex += tt.elapsed();
+                    n_tex += self.textures.len() - n0;
+                }
+            }
+            if let Some(t) = tq {
+                t_tex += t.elapsed();
+            }
+            prev_tex = Some(i);
         }
         fc.last_pipe = last_pipe;
-        self.frame = fc;
+        self.frames[self.fc] = fc;
         if prof() {
+            let f = &self.frames[self.fc];
             eprintln!(
-                "gxprof prepare n={} calls={} pack={:?} upload={:?} lookup={:?} vb={} ab={} ub={} newpipe={} pipe={:?} newtex={} tex={:?}",
+                "gxprof prepare n={} calls={} pack={:?} upload={:?} lookup={:?} vb={} ab={} ub={} newpipe={} pipe={:?} newtex={} tex={:?} texreuse={} tpipe={:?} ttex={:?} factory={}",
                 draws.len(),
-                self.frame.draws.iter().filter(|d| !d.merged && d.pipeline.is_some()).count(),
+                f.draws.iter().filter(|d| !d.merged && d.pipeline.is_some()).count(),
                 t1 - t0,
                 t2 - t1,
                 t2.elapsed(),
-                self.frame.vbuf.len(),
-                self.frame.abuf.len(),
-                self.frame.ubytes,
+                f.vbuf.len(),
+                f.abuf.len(),
+                f.ubytes,
                 n_pipe,
                 miss_pipe,
                 n_tex,
-                miss_tex
+                miss_tex,
+                n_reuse,
+                t_pipe,
+                t_tex,
+                n_factory
             );
         }
     }
@@ -1777,9 +1896,19 @@ impl Renderer {
         if self.gpu_fault().is_some() {
             return;
         }
+        let key = frame_key(draws);
+        let slot = match self.frames.iter().position(|f| f.key == key && f.draws.len() == draws.len()) {
+            Some(i) => i,
+            None => {
+                // not prepared (or its slot was taken since): prepare it now rather than draw another frame's data
+                repairs(1);
+                self.prepare(state, draws);
+                self.fc
+            }
+        };
         let t0 = std::time::Instant::now();
-        let fc = &mut self.frame;
-        assert_eq!(fc.draws.len(), draws.len(), "draw_prepared: not the prepared frame");
+        let fc = &mut self.frames[slot];
+        assert!(fc.key == frame_key(draws) && fc.draws.len() == draws.len(), "draw_prepared: not a prepared frame");
         // Every presentation writes the uniform blocks straight into the upload staging: each owner's block from its
         // draw, then `fill(i, block)` may rewrite it (it must write every byte it ever changes, from its own inputs,
         // each time it is called). Alignment gaps are zeroed so the upload never carries stale staging bytes.
@@ -1821,7 +1950,7 @@ impl Renderer {
         let depth_view = self.depth.create_view(&Default::default());
         let msaa_view = self.msaa.as_ref().map(|t| t.create_view(&Default::default()));
         let mut enc = self.device.create_command_encoder(&Default::default());
-        let fc = &self.frame;
+        let fc = &self.frames[slot];
         let dims = (self.width, self.height, self.width as f32 / self.base.0 as f32, self.height as f32 / self.base.1 as f32);
         // One EFB pass per run of draws between EFB copies; a copy with `clear` starts the next pass cleared.
         let cc = state.clear_color;

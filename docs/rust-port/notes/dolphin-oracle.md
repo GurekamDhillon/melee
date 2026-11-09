@@ -458,3 +458,105 @@ Falco 32/1067 | 101/102, Marth 25/1135 | 99/100, Sheik 20/552 | 87/87, Peach 14/
 ICs 12/308 | 39/41, Puff 18/358 | 25/25, Luigi 7/122 | -, Ganon 6/106 | 14/14, Samus 5/50 | 17/17, Doc 3/30 | 12/12,
 Pikachu 3/30 | 8/8, G&W 1/40 | 8/9, YLink 0/27 | 20/20, Ness 0/5 | 14/14, Mario 0/40 | 4/4, Zelda 0/28 | 2/2,
 Bowser 0/6 | 1/1; DK, Link, Mewtwo, Roy, Yoshi 0. Singles first fields: x 56, percent 41, facing ~15, action ~10.
+
+## Akaneia (m-ex) replays (port/akoracle)
+
+Hero's 2026-11-06 corpus has 50 replays recorded on Akaneia with one of its m-ex fighters (external id > 25: 26-32,
+Charizard, Wolf, Sonic, Tails, Diddy, Dedede...). The oracle plays them on the Akaneia disc, the same one slpcheck uses.
+
+**Which disc.** slpcheck (melee/src/slpcheck.rs) switches to `GW_ISO_AKANEIA` (workspace `.env`) when no `--iso` is given,
+the Gecko list has Akaneia's codes.gct marker (C2 0x803D7060, `melee_data::slp::akaneia_codeset`) and a human/CPU player
+has an external id > 25; an Akaneia replay with only vanilla fighters stays on the vanilla disc. `replay_codes.py --disc
+REPLAY` applies the same rule and prints `akaneia` or `vanilla`; `run_dolphin.ps1` and `oracle.sh` use it for both sides
+(`DOLPHIN_DISC=vanilla|akaneia` overrides). oracle.sh passes the chosen disc to slpcheck explicitly.
+
+**Is it the recording build?** Checked from the disc and the replays (nothing written): the Akaneia disc is GALE01 with
+the retail section layout; its main.dol differs from vanilla in 2994 text words, none at the oracle's hook addresses
+(0x801A4FA4, 0x8006B0DC, 0x8006B120) or the replay-code sites. The disc ships its own codes.gct (1163 codes) that m-ex
+loads at boot, so playback runs Akaneia's codes from the disc without help; the replay's Gecko list (287 codes in the
+April files, 291 from May on) holds 86 of them byte-identical, the 0x803D7060 marker among them. Codes at 25 addresses
+exist in both with different bodies (Slippi's own versions of the same hooks, e.g. 0x8016E510, 0x80394A74); the
+engine's 16 exact files on this disc are the evidence it is the recording build.
+
+**Build.** `_build/dolphin-oracle-akaneia`: a copy of the strict2 source (same patch as
+`slippi-dolphin-nhv1.patch`, plus `MELEE_DOLPHIN_NHV1_WATCHDOG=boot`: the PC/scene watchdog from process start), built fresh by its `build.bat` (`-j 4`), `DOLPHIN_ORACLE_DIR` selects it.
+The NHV1 word set is unchanged: the m-ex fighters use the retail `struct Fighter` layout at the same offsets.
+
+**Akaneia or ACE?** ACE (Akaneia Community Edition, `GW_ISO_ACE`) has the same main.dol (same hash) and the same
+fighter order in MxDt.dat for the first 34 fighter files, so ids 26-32 are the same fighters. The two discs still run
+different code: codes.gct shares 1144 codes, 6 are Akaneia-only and 12 ACE-only (ACE adds C2 hooks at 0x800857E0 and
+0x800A1CF8 in fighter code, plus menu/CSS hooks). PlCo.dat, MxDt.dat, MxPt/MxSr and several Ef*Data.dat files also
+differ. None of the 18 codes that tell the discs apart is in any of the 50 replays' Gecko lists: the replays carry
+Slippi's list, not the disc's codes.gct. slpcheck gives line-identical results on both discs for all 50 (15 match, 35
+diverge at the same frames). So the replays do not say which disc recorded them. Playing them all on ACE is **not**
+shown valid (the code differs). Akaneia stays the default (it is slpcheck's), and `DOLPHIN_DISC=ace` plays one file on
+ACE as a tie-break: whichever disc's console matches the recorded Post-Frame is the recording disc.
+
+**Hero's "drift" codes are not the drift fix.** Hero's 2026 replays carry a 26-line C2 at 0x801A4DB4 and a 04 at
+0x80019860, but no C2 at 0x801A4DA0. That is not Slippi's Polling Drift Fix. Copied into playback (as replay_codes.py
+did by address), it kept the game from ever requesting a replay frame (boot watchdog: main loop, no NoteFrame), on the
+vanilla disc too. replay_codes.py now copies the drift-site codes only when the C2 at 0x801A4DA0 is in the list. So
+these replays play without any drift code. The 60 Hz pacing skip of "Polling drift" can then move a 1% offscreen tick.
+None of the runs below shows it.
+
+### Results (port/akoracle on rust-port ade7c4862, `_build/dolphin-oracle-akaneia`, one Dolphin run per file)
+
+The 15 slpcheck-exact Akaneia files: **11 strict-equal** (all NHV1 words, seed ignored). The other 4 (224457, 000702,
+232021, 225437) all have external id 28 (Charizard; Akaneia's ids 26-32 are Wolf, Diddy, Charizard, Lucas, Sonic,
+Dedede, Tails, from MxDt's file order Wf Dd Lz Lc Sn De Ts). Each diverges only in `itemsum`, the first time that
+fighter's m-ex item kind 0x106 exists: `hold_kind` is 5 in Rust and 8 on the console, then its position and item
+collision follow. slpcheck cannot see items, so this is a real engine difference in the m-ex item's setup, not an
+oracle artifact.
+
+Akaneia vs ACE: two Wolf files (225652, 232036) played on both discs give byte-identical `dolphin.csv` (seed
+included), and both match Rust. For these games the two discs behave the same. The question of which disc recorded
+them is still open, but nothing measured depends on it.
+
+First NHV1 difference on diverging files (all are the same class: a large ECB difference with a 1-ULP x):
+
+| file | first diff (slippi) | fields |
+|---|---|---|
+| 20260815T232950 (Dedede, s0) | -8 | `coll_data.cur_pos.x` c227d3d8 vs c227d3d7; `ecb`/`desired_ecb` top.y 21.03 vs 14.09; `prev_ecb` from another pose |
+| 20260411T225454 (Wolf game, s2) | 7719 | `cur_pos.x`/`last_pos.x`/`prev_pos.x` 1 ULP; `prev_ecb` bottom.y 0.49 vs 1.60, top.y 12.01 vs 8.41 |
+| 20260612T230702 (Tails, s0) | 476 | `cur_pos.x` 1 ULP; `prev_pos` -4.031,4.777 vs -4.158,6.147; `prev_ecb`, `xE4_ecb` |
+
+On each file the frame before shows only `x2188` (screen position, render side). On the divergent frame `prev_pos`
+and `prev_ecb` differ by far more than the final x does. The console's `prev_pos` is the step's start point, the
+engine's a mid-move point. This fits the lead that the engine splits the move into two mpColl_80043754 steps where the
+console takes one (an ECB, i.e. bone-matrix, computed from another pose).
+
+### Round 7 (port/fak7): what the step-split class was
+
+The three "step split" files had three different causes, none of them in mpColl; the oracle's bone dump
+(`MELEE_DOLPHIN_NHV1_BONES` / `MELEE_WIDE_BONES`) and a `MELEE_DOLPHIN_NHV1_PROBE_AT=8000B1CC` probe (every `lb_8000B1CC`
+read: r3 = the JObj, `PROBE_MEM=r3+0x0:0x80` its flags, SRT and matrix) told them apart:
+
+- **Dedede 232950 (slippi -8).** Local SRT and frame-end matrices equal on both sides; only the sixth ECB joint differs:
+  the console reads `parts[5]` (translate 0, 2.96, -0.02), the engine `parts[46]` (the hammer tip, 0, 17.35, 0), which is
+  what PlDe.dat's ftData x44 table says (32 39 16 63 57 **46**). Dedede's guest `OnActionStateChange` stores
+  `fp->coll_data.ecb_source.joint[5] = motion_id == 69 ? parts[46] : parts[5]` on every state change (the two JObj
+  handles its onLoad keeps at fp+0x223C/0x2240). The engine never dispatched m-ex slot 24 (onActionStateChange) nor 25
+  (onReapplyAttr): `SLOT_EVENTS` had no row and the seam ran the clone base's `ftData_UnkMotionStates4` entry only. Both
+  now go through `Mex_GObjDispatch` (platform events 11/12, the C port's numbering). The same file then diverged at 809:
+  Dedede's MoveLogic rows 0-3 (the multi-jump states 341-344) keep retail `ftCo_JumpAerialF1_{Anim,IASA,Phys,Coll}`, and
+  `gen_mex_bridge.py`'s `gobj_fn` only accepted a literal `*mut HSD_GObj` parameter, not the TUs' `G` alias, so the rows
+  got `None` callbacks (no gravity or drift on the jump frame: self_vel 2.2/0.5 vs 2.11/0.53). The generator takes `G`
+  now (7249 gobj callbacks, was 5204), and the install log names every row callback the bridge cannot wire and every
+  override the engine does not dispatch (`not dispatched: ...`). Next divergence of the file: 1207.
+- **Tails 230702 (slippi 476).** A thrown-victim pose: while Falcon throws Tails (Falcon motion 221, Tails 241) the
+  console animates Tails' bones (bone[5] rotate -0.61, 0.61, 0.27 ...) and the engine leaves them at bind pose (0, 0, ...).
+  The ECB is locked during the throw, so nothing shows until the release frame reads the pose for the first ECB of the
+  step (xE4_ecb -2.30/8.22/12.70 vs -2.0/7.35/10.63). Open: which animation m-ex plays on a thrown custom fighter.
+- **Wolf game 225454 (slippi 7719, s2).** The diverging fighter is the retail Falcon (p2), not Wolf. Open.
+
+Items (`hold_kind` 5 vs 8 on the four Charizard files): the disc's codes.gct has a C2 at `Item_802674AC`'s entry
+(`lwz r0,8(r3); cmpwi r0,0xED; blt; li r0,8; stw r0,0xC(r3); blr`): every item kind >= 237 is hold kind 8, the retail
+ladder skipped. `Item_802674AC` has the rung now; on 224457 the item's `hold_kind` is 8 on both sides at its first frame
+(slippi 4239) and the file's first strict difference is now the item's own collision step on that frame
+(`x378_itemColl.cur_pos` -17.93/73.28 vs -20.62/70.24, the console's `last_pos` equal to the engine's `cur_pos`: the
+console's item has run one collision step more on its spawn frame; `xB54.unk_x` -1.34 vs -2.68). Open: the proc order
+of a gobj the guest spawns mid-frame.
+
+Numbers (port/fak7 on rust-port b05adf319 + port/akoracle): Akaneia files 16 -> 17 of 51 at .slp level (231850 Dedede
+matches), no crash; the other five Dedede files move far later (223810 65 -> 138, 230601 169 -> 1098, 233221 437 -> 2122,
+233518 81 -> 1882, 232950 -8 -> 1207). Hero 391 -> 392 of 428, local 125/125, own 917/917 (no row changed).

@@ -2,7 +2,7 @@
 # Dolphin oracle: play one .slp in the patched Slippi Dolphin (headless, Null video, no audio, no window, no input)
 # and write the NHV1 memory records. See docs/rust-port/notes/dolphin-oracle.md.
 #   powershell -File run_dolphin.ps1 -Slp FILE.slp -Out DIR [-Wide] [-TimeoutSec 900]
-# Writes DIR\dolphin.nhraw, DIR\dolphin.stderr.txt. The disc comes from GW_ISO_VANILLA in the workspace .env and is never printed.
+# Writes DIR\dolphin.nhraw, DIR\dolphin.stderr.txt. The disc comes from GW_ISO_VANILLA (GW_ISO_AKANEIA for an Akaneia replay) in the workspace .env and is never printed.
 # stdout/stderr MUST be redirected: dolphin-emu-nogui is a GUI-subsystem exe, and its first fprintf to an invalid
 # stdio handle fast-fails the process (0xC0000409) right after "Starting core".
 param(
@@ -22,8 +22,13 @@ if ($env:DOLPHIN_USER_DIR) {
     $user = $env:DOLPHIN_USER_DIR
 }
 if (-not (Test-Path $exe)) { Write-Error "dolphin oracle not built: $exe"; exit 2 }
-$m = Select-String -Path (Join-Path $ws '.env') -Pattern '^(export )?GW_ISO_VANILLA=(.*)$'
-if (-not $m) { Write-Error 'GW_ISO_VANILLA is not in .env'; exit 2 }
+# an Akaneia replay with one of the disc's m-ex fighters plays on the Akaneia disc (GW_ISO_AKANEIA), the rule slpcheck
+# uses (replay_codes.py --disc); DOLPHIN_DISC=vanilla|akaneia|ace overrides (ace: GW_ISO_ACE, a tie-break, not the default). notes/dolphin-oracle.md, "Akaneia (m-ex) replays"
+$disc = if ($env:DOLPHIN_DISC) { $env:DOLPHIN_DISC } else { (python -I (Join-Path $PSScriptRoot 'replay_codes.py') --disc $Slp).Trim() }
+$key = switch ($disc) { 'akaneia' { 'GW_ISO_AKANEIA' } 'ace' { 'GW_ISO_ACE' } default { 'GW_ISO_VANILLA' } }
+$m = Select-String -Path (Join-Path $ws '.env') -Pattern "^(export )?$key=(.*)$"
+if (-not $m) { Write-Error "$key is not in .env"; exit 2 }
+Write-Output "dolphin: disc $disc"
 $iso = $m.Matches[0].Groups[2].Value.Trim().Trim('"')
 New-Item -ItemType Directory -Force $Out | Out-Null
 $Out = (Resolve-Path $Out).Path

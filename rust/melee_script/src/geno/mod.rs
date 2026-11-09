@@ -7,4 +7,5 @@ pub mod define;
 pub mod lua;
 pub mod combo;
 pub mod plan;
+pub mod controls;
 pub use registry::{Env, NoEnv, Profile, Registry};

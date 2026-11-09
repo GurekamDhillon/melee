@@ -360,6 +360,8 @@ pub struct Profile {
     pub toon: [f32; 16],
     /// The native define half (geno_define_registry.inc and its slices); `define::Def::default()` for an attach entry.
     pub def: super::define::Def,
+    /// A define's `controls` (the menus' schema, copied into the frozen match mapping); empty when absent or malformed.
+    pub controls: super::controls::Schema,
 }
 
 impl Profile {
@@ -436,6 +438,7 @@ impl Profile {
             toon_on: false,
             toon: [0.0; 16],
             def: super::define::Def::default(),
+            controls: Default::default(),
         })
     }
 }
@@ -1414,10 +1417,17 @@ impl Registry {
             p.name = if d.is(nm, Ty::Str) { cap(&d.text(nm), 64) } else { p.plfile.clone() };
         }
 
-        // "controls" (the menus' control schema of a define) is presentation and is not hosted; an attach entry's is ignored
+        // gn_add_fighter: a define's `controls` (docs/geno.md 26); malformed falls back atomically, an attach's is ignored
         let x = d.get(e, "controls");
-        if x >= 0 && !p.defined {
-            self.logf(format!("geno: {where_}: controls requires a define - ignored"));
+        if x >= 0 {
+            if !p.defined {
+                self.logf(format!("geno: {where_}: controls requires a define - ignored"));
+            } else if let Some(c) = super::controls::parse(d, x) {
+                self.logf(format!("geno: {}: controls {} layouts, {} opt-in extras", p.name, c.layout.len(), c.extra.len()));
+                p.controls = c;
+            } else {
+                self.logf(format!("geno: {where_}: malformed controls - using Both/Default/no extras"));
+            }
         }
 
         let x = d.get(e, "attributes");

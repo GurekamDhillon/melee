@@ -1289,6 +1289,12 @@ impl Registry {
         self.definitions.profile_for_kind(ck - 1)
     }
 
+    /// gw_Geno_ControlsSchema(ck): a define's controls, None when ck is not a define or it declares none.
+    pub fn controls_schema(&self, ck: i32) -> Option<&super::controls::Schema> {
+        let p = self.define_profile_ck(ck);
+        self.p.get(p as usize).filter(|_| p >= 0).map(|x| &x.controls).filter(|c| c.any())
+    }
+
     // ---- slice 5: the Lua scalars ----
     pub fn lua_fn(&self, p: i32, s: i32, phase: i32) -> bool {
         let Some(x) = self.p.get(p as usize).filter(|_| p >= 0) else { return false };

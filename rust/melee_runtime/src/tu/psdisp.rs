@@ -5,6 +5,10 @@ use melee_types::*;
 use melee_core::fp::fmadds;
 use crate::gekko::{sinf,cosf,tanf,sqrtf};
 use ext::*;
+/// psdisp.c's TU-local `psdisp_Tlut` (a stack aggregate of psDispParticles; upstream #3627 replaced it with a stack
+/// `HSD_TlutDesc`, so melee_types no longer generates it). Not game memory: no GC layout to match.
+#[repr(C)] #[derive(Clone, Copy)]
+pub struct psdisp_Tlut { pub fmt: GXTlutFmt, pub tlut_name: u32, pub n_entries: u16 }
 // BEGIN GENERATED EXT (rust/melee_runtime/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]

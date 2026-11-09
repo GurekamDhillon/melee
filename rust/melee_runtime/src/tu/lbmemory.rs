@@ -4,7 +4,7 @@
 //! compaction pass (`lbMemory_8001529C`) that slides every block down, by DevCom (ARAM) or by a timer
 //! driven memcpy (RAM).
 //!
-//! Addresses in the handles are 32-bit quantities (`(u32) iter->x4_lo`), as on the GameCube; the port keeps
+//! Addresses in the handles are 32-bit quantities (`(u32) iter->lo`), as on the GameCube; the port keeps
 //! those casts. Checked against the C (compiled natively with the allocator at a fixed address below 4 GB)
 //! by a state oracle: tests/tu_lbheap.rs over gen/turef/tu_lbheap_ref.c.
 #![allow(non_snake_case, non_upper_case_globals, dead_code, static_mut_refs)]
@@ -56,8 +56,9 @@ pub fn lbMemory_FireCopyAlarm() -> bool {
     }
 }
 
-// TU-local records, including pointer-sized LBMgr.cb_arg, are generated from the C.
-pub use melee_types::{MemEntry, LBMgr, Allocator};
+// TU-local records are generated from the C: `Handle` is a heap (lbmemory.h), `HSD_AllocEntry` one of its blocks
+// (upstream #3547 split the two; before it both were the port's `Handle`).
+pub use melee_types::{HSD_AllocEntry, LBMgr, Allocator};
 
 /// `struct Allocator lbMemory_804318B0` (zero initialised).
 pub static mut lbMemory_804318B0: Allocator = unsafe { core::mem::zeroed() };
@@ -70,15 +71,28 @@ fn a() -> &'static mut Allocator {
 /// `PUSH_HANDLE(list, handle)`.
 #[inline]
 unsafe fn push_handle(list: *mut *mut Handle, handle: *mut Handle) {
-    (*handle).x0_next = *list;
+    (*handle).next = *list;
     *list = handle;
+}
+/// `PUSH_HANDLE` over the block free list (`HSD_AllocEntry`).
+#[inline]
+unsafe fn push_block(list: *mut *mut HSD_AllocEntry, block: *mut HSD_AllocEntry) {
+    (*block).next = *list;
+    *list = block;
 }
 /// `POP_HANDLE(list, handle)`.
 #[inline]
 unsafe fn pop_handle(list: *mut *mut Handle) -> *mut Handle {
     let handle = *list;
-    *list = (*handle).x0_next;
+    *list = (*handle).next;
     handle
+}
+/// `POP_HANDLE` over the block free list.
+#[inline]
+unsafe fn pop_block(list: *mut *mut HSD_AllocEntry) -> *mut HSD_AllocEntry {
+    let block = *list;
+    *list = (*block).next;
+    block
 }
 #[inline]
 fn u32_of(p: *mut c_void) -> u32 {
@@ -99,10 +113,10 @@ fn os_milliseconds_to_ticks(msec: i32) -> OSTime {
 fn round_up_32b(x: u32) -> u32 {
     x.wrapping_add(31) & !31
 }
-/// `(Handle*) &h->xC_prev`: the list head seen as a handle whose `x0_next` is the first child.
+/// `(HSD_AllocEntry*) &h->blocks`: the list head seen as a block whose `next` is the first child.
 #[inline]
-unsafe fn head_of(h: *mut Handle) -> *mut Handle {
-    addr_of_mut!((*h).xC_prev) as *mut Handle
+unsafe fn head_of(h: *mut Handle) -> *mut HSD_AllocEntry {
+    addr_of_mut!((*h).blocks) as *mut HSD_AllocEntry
 }
 
 /// `lbMemory_80014E24`: a new heap handle over `[arena_lo, arena_hi)`.
@@ -115,15 +129,15 @@ pub unsafe fn lbMemory_80014E24(arena_lo: *mut c_void, arena_hi: *mut c_void) ->
         ext::__assert(FILE, 66, "_p(free_heap)");
     }
     if u32_of(arena_lo) < 0x8000_0000 && u32_of(arena_hi) < 0x8000_0000 {
-        if !(u32_of(arena_lo) >= u32_of(a().a_arenaLo) && u32_of(arena_hi) <= u32_of(a().a_arenaHi)) {
+        if !(u32_of(arena_lo) >= a().a_arenaLo as u32 && u32_of(arena_hi) <= a().a_arenaHi as u32) {
             ext::__assert(FILE, 69, "(u32)arenaLo >= (u32)_p(a_arenaLo) && (u32)arenaHi <= (u32)_p(a_arenaHi)");
         }
     }
     let h = pop_handle(addr_of_mut!(a().free_heap));
-    (*h).x0_next = null_mut();
-    (*h).x4_lo = arena_lo;
-    (*h).x8_hi = arena_hi;
-    (*h).xC_prev = null_mut();
+    (*h).next = null_mut();
+    (*h).lo = arena_lo;
+    (*h).hi = arena_hi;
+    (*h).blocks = null_mut();
     h
 }
 
@@ -136,12 +150,12 @@ pub unsafe fn lbMemory_80014EEC(handle: *mut Handle) {
     if handle.is_null() {
         ext::__assert(FILE, 84, "handle");
     }
-    let mut iter = (*handle).xC_prev;
+    let mut iter = (*handle).blocks;
     while !iter.is_null() {
-        let tmp_next = (*iter).x0_next;
-        push_handle(addr_of_mut!(a().free_mem), iter);
+        let tmp_next = (*iter).next;
+        push_block(addr_of_mut!(a().free_mem), iter);
         iter = tmp_next;
-        a().x630_num_allocs -= 1;
+        a().num_allocs -= 1;
     }
     push_handle(addr_of_mut!(a().free_heap), handle);
 }
@@ -152,27 +166,27 @@ pub unsafe fn lbMemory_80014EEC(handle: *mut Handle) {
 /// `h` is a heap handle of this allocator.
 pub unsafe fn lbMemory_80014F7C(h: *mut Handle) -> u32 {
     melee_core::ct!("lbMemory_80014F7C");
-    let mut r4 = u32_of((*h).x4_lo);
+    let mut r4 = u32_of((*h).lo);
     let mut iter = head_of(h);
     let mut sum: u32 = 0;
     loop {
-        iter = (*iter).x0_next;
-        let r0 = u32_of(if !iter.is_null() { (*iter).x4_lo } else { (*h).x8_hi });
+        iter = (*iter).next;
+        let r0 = u32_of(if !iter.is_null() { (*iter).addr } else { (*h).hi });
         sum = sum.wrapping_add(r0.wrapping_sub(r4));
         if iter.is_null() {
             break;
         }
-        r4 = u32_of((*iter).x4_lo).wrapping_add(u32_of((*iter).x8_hi));
+        r4 = u32_of((*iter).addr).wrapping_add((*iter).size as u32);
     }
     sum
 }
 
 /// `lbMemory_80014FC8`: best-fit allocation of `size` bytes (rounded up to 32) from heap `arg0`; returns the
-/// child handle (its `x4_lo` is the block).
+/// block entry (its `addr` is the block).
 ///
 /// # Safety
 /// `arg0` is a heap handle of this allocator.
-pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut Handle {
+pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut HSD_AllocEntry {
     melee_core::ct!("lbMemory_80014FC8");
     let mut least_leftover: u32 = 0x4000_0000;
     let mut lo: *mut c_void = null_mut();
@@ -180,12 +194,12 @@ pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut Handle {
         ext::__assert(FILE, 124, "_p(free_mem)");
     }
     let size = round_up_32b(size as u32);
-    let mut start = (*arg0).x4_lo;
+    let mut start = (*arg0).lo;
     let mut iter = head_of(arg0);
-    let mut memp_kouho: *mut Handle = null_mut();
+    let mut memp_kouho: *mut HSD_AllocEntry = null_mut();
 
     loop {
-        let end = if !(*iter).x0_next.is_null() { (*(*iter).x0_next).x4_lo } else { (*arg0).x8_hi };
+        let end = if !(*iter).next.is_null() { (*(*iter).next).addr } else { (*arg0).hi };
         let available_space = u32_of(end).wrapping_sub(u32_of(start));
         if available_space >= size {
             let leftover = available_space.wrapping_sub(size);
@@ -195,11 +209,11 @@ pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut Handle {
                 memp_kouho = iter;
             }
         }
-        if (*iter).x0_next.is_null() {
+        if (*iter).next.is_null() {
             break;
         }
-        iter = (*iter).x0_next;
-        start = ptr_of(u32_of((*iter).x4_lo).wrapping_add(u32_of((*iter).x8_hi)));
+        iter = (*iter).next;
+        start = ptr_of(u32_of((*iter).addr).wrapping_add((*iter).size as u32));
     }
     // TARGET_PC failure-path diagnostic: only runs when the allocation is about to assert.
     if memp_kouho.is_null() {
@@ -207,17 +221,17 @@ pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut Handle {
         let heap = super::lbheap::lbHeap_IdOfHandle(arg0 as *mut c_void, name.as_mut_ptr() as *mut core::ffi::c_char, 16);
         let mut largest: u32 = 0;
         let mut it = head_of(arg0);
-        let mut from = (*arg0).x4_lo;
+        let mut from = (*arg0).lo;
         loop {
-            let to = if !(*it).x0_next.is_null() { (*(*it).x0_next).x4_lo } else { (*arg0).x8_hi };
+            let to = if !(*it).next.is_null() { (*(*it).next).addr } else { (*arg0).hi };
             if u32_of(to).wrapping_sub(u32_of(from)) > largest {
                 largest = u32_of(to).wrapping_sub(u32_of(from));
             }
-            if (*it).x0_next.is_null() {
+            if (*it).next.is_null() {
                 break;
             }
-            it = (*it).x0_next;
-            from = ptr_of(u32_of((*it).x4_lo).wrapping_add(u32_of((*it).x8_hi)));
+            it = (*it).next;
+            from = ptr_of(u32_of((*it).addr).wrapping_add((*it).size as u32));
         }
         static mut REPORTED: i32 = 0;
         let not_lb = b"not an lbHeap\0";
@@ -228,8 +242,8 @@ pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut Handle {
                 ext::OsArg::S(if heap >= 0 { name.as_ptr() as *const core::ffi::c_char } else { not_lb.as_ptr() as *const core::ffi::c_char }),
                 ext::OsArg::U(size),
                 ext::OsArg::U(largest),
-                ext::OsArg::U(u32_of((*arg0).x4_lo)),
-                ext::OsArg::U(u32_of((*arg0).x8_hi)),
+                ext::OsArg::U(u32_of((*arg0).lo)),
+                ext::OsArg::U(u32_of((*arg0).hi)),
             ],
         );
         if REPORTED == 0 {
@@ -240,15 +254,15 @@ pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut Handle {
     if memp_kouho.is_null() {
         ext::__assert(FILE, 186, "memp_kouho");
     }
-    let result = pop_handle(addr_of_mut!(a().free_mem));
-    (*result).x8_hi = ptr_of(size);
-    (*result).x4_lo = lo;
-    (*result).x0_next = (*memp_kouho).x0_next;
-    (*memp_kouho).x0_next = result;
+    let result = pop_block(addr_of_mut!(a().free_mem));
+    (*result).size = size as usize;
+    (*result).addr = lo;
+    (*result).next = (*memp_kouho).next;
+    (*memp_kouho).next = result;
 
-    a().x630_num_allocs += 1;
-    if a().x630_num_allocs > a().x634_max_num_allocs {
-        a().x634_max_num_allocs = a().x630_num_allocs;
+    a().num_allocs += 1;
+    if a().num_allocs > a().max_num_allocs {
+        a().max_num_allocs = a().num_allocs;
     }
     result
 }
@@ -259,18 +273,18 @@ pub unsafe fn lbMemory_80014FC8(arg0: *mut Handle, size: usize) -> *mut Handle {
 /// `h` is a heap handle of this allocator.
 pub unsafe fn lbMemFreeToHeap(h: *mut Handle, arg1: *mut c_void) {
     melee_core::ct!("lbMemFreeToHeap");
-    let mut handle = (*h).xC_prev;
+    let mut handle = (*h).blocks;
     let mut r6 = head_of(h);
 
     while !handle.is_null() {
-        if (*handle).x4_lo == arg1 {
-            (*r6).x0_next = (*handle).x0_next;
-            push_handle(addr_of_mut!(a().free_mem), handle);
-            a().x630_num_allocs -= 1;
+        if (*handle).addr == arg1 {
+            (*r6).next = (*handle).next;
+            push_block(addr_of_mut!(a().free_mem), handle);
+            a().num_allocs -= 1;
             return;
         }
         r6 = handle;
-        handle = (*handle).x0_next;
+        handle = (*handle).next;
     }
     ext::OSReport("[LbMem] Error: lbMemFreeToHeap %x.\n", &[ext::OsArg::U(arg1 as usize as u32)]);
     ext::__assert(FILE, 219, "0");
@@ -280,7 +294,7 @@ pub unsafe fn lbMemFreeToHeap(h: *mut Handle, arg1: *mut c_void) {
 pub fn fn_80015184_body() {
     melee_core::ct!("fn_80015184_body");
     unsafe {
-        let p = addr_of_mut!(a().x6A0_mgr);
+        let p = addr_of_mut!(a().mgr);
         if (*p).size == 0 {
             ext::__assert(FILE, 230, "p->size");
         }
@@ -327,28 +341,28 @@ pub unsafe extern "C-unwind" fn fn_80015184(_alarm: *mut OSAlarm, _context: *mut
 /// `h` is a heap handle of this allocator.
 pub unsafe fn lbMemory_8001529C(h: *mut Handle, arg1: Option<unsafe extern "C" fn(u32)>, arg2: u32) -> u32 {
     melee_core::ct!("lbMemory_8001529C");
-    a().x6E8 = arg1;
-    a().x6E0 = arg2;
-    a().x6E4 = (*h).x4_lo;
+    a().compact_cb = arg1;
+    a().compact_arg = arg2;
+    a().compact_cursor = (*h).lo as usize;
 
-    let r7 = addr_of_mut!(a().x6E4);
-    let mut iter = (*h).xC_prev;
+    let r7 = addr_of_mut!(a().compact_cursor);
+    let mut iter = (*h).blocks;
     while !iter.is_null() {
-        let lo = (*iter).x4_lo;
-        if lo != *r7 {
+        let lo = (*iter).addr;
+        if lo as usize != *r7 {
             lbMemory_80015320_body(0, iter as usize, null_mut(), 0);
             return 1;
         }
-        *r7 = ptr_of(u32_of(lo).wrapping_add(u32_of((*iter).x8_hi)));
-        iter = (*iter).x0_next;
+        *r7 = u32_of(lo).wrapping_add((*iter).size as u32) as usize;
+        iter = (*iter).next;
     }
     0
 }
 
 /// `start_ram_copy`: queue the timer driven copy of `size` bytes from `old` to `current`; `next` is the
 /// continuation's argument.
-unsafe fn start_ram_copy(old: u32, current: u32, size: u32, next: *mut Handle) {
-    let p = addr_of_mut!(a().x6A0_mgr);
+unsafe fn start_ram_copy(old: u32, current: u32, size: u32, next: *mut HSD_AllocEntry) {
+    let p = addr_of_mut!(a().mgr);
     let enabled = ext::OSDisableInterrupts();
     if (*p).size != 0 {
         ext::__assert(FILE, 276, "!p->size");
@@ -365,13 +379,13 @@ unsafe fn start_ram_copy(old: u32, current: u32, size: u32, next: *mut Handle) {
 }
 
 /// `lbMemory_80015320`: the compaction state machine, one block per step. `_handle` is the next block to move
-/// (a `Handle*`), 0 when done.
+/// (an `HSD_AllocEntry*`), 0 when done.
 pub fn lbMemory_80015320_body(_arg0: i32, _handle: usize, _arg2: *mut c_void, cancelflag: i32) {
     melee_core::ct!("lbMemory_80015320_body");
     unsafe {
-        let handle = _handle as *mut Handle;
-        let currentp = addr_of_mut!(a().x6E4);
-        let current = u32_of(a().x6E4);
+        let handle = _handle as *mut HSD_AllocEntry;
+        let currentp = addr_of_mut!(a().compact_cursor);
+        let current = a().compact_cursor as u32;
         let null_or_old: *mut c_void = null_mut();
 
         if cancelflag != 0 {
@@ -379,37 +393,37 @@ pub fn lbMemory_80015320_body(_arg0: i32, _handle: usize, _arg2: *mut c_void, ca
         }
 
         if !handle.is_null() {
-            let loaded_old = (*handle).x4_lo;
+            let loaded_old = (*handle).addr;
             let old = loaded_old;
             if old != ptr_of(current) {
                 let null_or_old = old;
-                (*handle).x4_lo = ptr_of(current);
-                *currentp = ptr_of(u32_of((*handle).x4_lo).wrapping_add(u32_of((*handle).x8_hi)));
+                (*handle).addr = ptr_of(current);
+                *currentp = u32_of((*handle).addr).wrapping_add((*handle).size as u32) as usize;
                 let copy_src = null_or_old;
 
-                if u32_of((*handle).x4_lo) < 0x8000_0000 {
+                if u32_of((*handle).addr) < 0x8000_0000 {
                     ext::HSD_DevComRequest(
                         0,
                         u32_of(copy_src) as usize,
                         current as usize,
-                        round_up_32b(u32_of((*handle).x8_hi)) as usize,
+                        round_up_32b((*handle).size as u32) as usize,
                         0x1B,
                         1,
                         lbMemory_80015320_callback(),
-                        (*handle).x0_next as usize,
+                        (*handle).next as usize,
                     );
                     return;
                 } else {
-                    start_ram_copy(u32_of(copy_src), current, round_up_32b(u32_of((*handle).x8_hi)), (*handle).x0_next);
+                    start_ram_copy(u32_of(copy_src), current, round_up_32b((*handle).size as u32), (*handle).next);
                     return;
                 }
             }
-            *currentp = ptr_of(u32_of(old).wrapping_add(u32_of((*handle).x8_hi)));
-            lbMemory_80015320_body(0, (*handle).x0_next as usize, null_or_old, 0);
+            *currentp = u32_of(old).wrapping_add((*handle).size as u32) as usize;
+            lbMemory_80015320_body(0, (*handle).next as usize, null_or_old, 0);
             return;
         }
 
-        (a().x6E8.unwrap())(a().x6E0);
+        (a().compact_cb.unwrap())(a().compact_arg);
     }
 }
 
@@ -424,8 +438,8 @@ pub unsafe extern "C-unwind" fn lbMemory_80015320(arg0: i32, handle: usize, arg2
 /// Both pointers valid for writes.
 pub unsafe fn lbMemory_800154BC(arena_lo: *mut usize, arena_hi: *mut usize) {
     melee_core::ct!("lbMemory_800154BC");
-    *arena_lo = a().a_arenaLo as usize;
-    *arena_hi = a().a_arenaHi as usize;
+    *arena_lo = a().a_arenaLo;
+    *arena_hi = a().a_arenaHi;
 }
 
 /// `lbMemory_800154D4`: creates the ARAM heap handle.
@@ -434,8 +448,8 @@ pub unsafe fn lbMemory_800154BC(arena_lo: *mut usize, arena_hi: *mut usize) {
 /// As `lbMemory_80014E24`.
 pub unsafe fn lbMemory_800154D4(arena_lo: *mut c_void, arena_hi: *mut c_void) -> *mut Handle {
     melee_core::ct!("lbMemory_800154D4");
-    a().x69C = lbMemory_80014E24(arena_lo, arena_hi);
-    a().x69C
+    a().aram_heap = lbMemory_80014E24(arena_lo, arena_hi);
+    a().aram_heap
 }
 
 /// `lbMemory_800155A4`: releases the ARAM heap handle.
@@ -444,20 +458,20 @@ pub unsafe fn lbMemory_800154D4(arena_lo: *mut c_void, arena_hi: *mut c_void) ->
 /// The ARAM heap handle must exist.
 pub unsafe fn lbMemory_800155A4() {
     melee_core::ct!("lbMemory_800155A4");
-    let handle = a().x69C;
+    let handle = a().aram_heap;
     if handle.is_null() {
         ext::__assert(FILE, 352, "handle");
     }
     let r5 = addr_of_mut!(a().free_mem);
-    let mut iter = (*handle).xC_prev;
+    let mut iter = (*handle).blocks;
     while !iter.is_null() {
-        let tmp_next = (*iter).x0_next;
-        push_handle(r5, iter);
+        let tmp_next = (*iter).next;
+        push_block(r5, iter);
         iter = tmp_next;
-        a().x630_num_allocs -= 1;
+        a().num_allocs -= 1;
     }
     push_handle(addr_of_mut!(a().free_heap), handle);
-    a().x69C = null_mut();
+    a().aram_heap = null_mut();
 }
 
 /// `lbMemory_8001564C`: initialises the allocator (ARAM bounds, the free lists, the ARAM heap handle).
@@ -468,31 +482,31 @@ pub unsafe fn lbMemory_8001564C() {
     melee_core::ct!("lbMemory_8001564C");
     let mut freed_size: u32 = 0;
 
-    a().a_arenaLo = ext::ARAlloc(0x20) as usize as *mut c_void;
+    a().a_arenaLo = ext::ARAlloc(0x20) as usize;
     ext::ARFree(&mut freed_size);
     // TARGET_PC: the port's ARAM is 32 MB; no 16 MB cap
-    a().a_arenaHi = ext::ARGetSize() as usize as *mut c_void;
+    a().a_arenaHi = ext::ARGetSize() as usize;
 
-    a().free_mem = addr_of_mut!(a().x8_mem[0]) as *mut Handle;
-    let n = a().x8_mem.len();
+    a().free_mem = addr_of_mut!(a().mem[0]);
+    let n = a().mem.len();
     for i in 0..n - 1 {
-        a().x8_mem[i].x0_next = addr_of_mut!(a().x8_mem[i + 1]);
+        a().mem[i].next = addr_of_mut!(a().mem[i + 1]);
     }
-    a().x8_mem[n - 1].x0_next = null_mut();
+    a().mem[n - 1].next = null_mut();
 
-    a().x634_max_num_allocs = 0;
-    a().x630_num_allocs = 0;
-    a().free_heap = addr_of_mut!(a().x638_heap[0]);
-    let n = a().x638_heap.len();
+    a().max_num_allocs = 0;
+    a().num_allocs = 0;
+    a().free_heap = addr_of_mut!(a().heap[0]);
+    let n = a().heap.len();
     for i in 0..n - 1 {
-        a().x638_heap[i].x0_next = addr_of_mut!(a().x638_heap[i + 1]);
+        a().heap[i].next = addr_of_mut!(a().heap[i + 1]);
     }
-    a().x638_heap[n - 1].x0_next = null_mut();
-    a().x69C = null_mut();
+    a().heap[n - 1].next = null_mut();
+    a().aram_heap = null_mut();
     {
-        let hi = a().a_arenaHi;
-        let lo = a().a_arenaLo;
+        let hi = a().a_arenaHi as *mut c_void;
+        let lo = a().a_arenaLo as *mut c_void;
         lbMemory_800154D4(lo, hi);
     }
-    a().x6A0_mgr.size = 0;
+    a().mgr.size = 0;
 }

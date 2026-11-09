@@ -619,34 +619,34 @@ pub unsafe extern "C" fn lbDvd_GetPreloadedArchive(entry_num: isize) -> *mut c_v
 }
 
 unsafe fn inline1_inner(data: &lbDvd_803B72C0_t) {
-    let x4 = data.x4;
-    let x8 = data.x8;
-    let tmp = data.x0;
+    let x4 = data.name;
+    let x8 = data.effect_index;
+    let tmp = data.r#type;
     let temp_r3_2 = ext::DVDConvertPathToEntrynum(ext::lbFileGetFullName(x4));
     lbDvd_80017740(tmp as i32, temp_r3_2, 2, 2, 0, 1, 9, 0x80, x8);
 }
 
 unsafe fn inline1() {
-    let sp_a0 = lbDvd_803B72C0_t { x0: 2, x4: c"LbRb.dat".as_ptr() as *mut i8, x8: 0 };
+    let sp_a0 = lbDvd_803B72C0_t { r#type: 2, name: c"LbRb.dat".as_ptr() as *const i8, effect_index: 0 };
     if preloadCache.new_scene.is_heap_persistent[0] != 0 {
         inline1_inner(&sp_a0);
     }
 }
 
 unsafe fn inline2_inner(data: &lbDvd_803B72C0_t) {
-    let filename = data.x4;
-    let effect_index = data.x8;
-    let ty = data.x0;
+    let filename = data.name;
+    let effect_index = data.effect_index;
+    let ty = data.r#type;
     let entry_num = ext::DVDConvertPathToEntrynum(ext::lbFileGetFullName(filename));
     lbDvd_80017740(ty as i32, entry_num, 3, 3, 0, 1, 8, 0x40, effect_index);
 }
 
 unsafe fn inline2() {
     let sp28 = [
-        lbDvd_803B72C0_t { x0: 3, x4: c"EfMnData.dat".as_ptr() as *mut i8, x8: 0x1F },
-        lbDvd_803B72C0_t { x0: 3, x4: c"EfCoData.dat".as_ptr() as *mut i8, x8: 0 },
-        lbDvd_803B72C0_t { x0: 2, x4: c"ItCo.".as_ptr() as *mut i8, x8: 0 },
-        lbDvd_803B72C0_t { x0: 2, x4: c"IfAll".as_ptr() as *mut i8, x8: 0 },
+        lbDvd_803B72C0_t { r#type: 3, name: c"EfMnData.dat".as_ptr() as *const i8, effect_index: 0x1F },
+        lbDvd_803B72C0_t { r#type: 3, name: c"EfCoData.dat".as_ptr() as *const i8, effect_index: 0 },
+        lbDvd_803B72C0_t { r#type: 2, name: c"ItCo.".as_ptr() as *const i8, effect_index: 0 },
+        lbDvd_803B72C0_t { r#type: 2, name: c"IfAll".as_ptr() as *const i8, effect_index: 0 },
     ];
     if preloadCache.new_scene.is_heap_persistent[1] != 0 {
         for d in sp28.iter() {

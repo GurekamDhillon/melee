@@ -55,9 +55,9 @@ pub static mut HSD_Synth_804D6018:i32=-1;
 pub static mut HSD_Synth_804D6030:f32=1.0;
 zero_statics! {
     HSD_Synth_804D6028:[i32;2], voicelist:[*mut AXVPB;64], hsd_SynthSFXDataHash:[*mut c_void;32],
-    HSD_Synth_804C2A60:[Anon_anon_49;6], hsd_SynthSFXLoadBuf:[u32;8], HSD_Synth_804C2AE0:[*mut AXVPB;64],
+    HSD_Synth_804C2A60:[HSD_Synth_804C2A60_t;6], hsd_SynthSFXLoadBuf:[u32;8], HSD_Synth_804C2AE0:[*mut AXVPB;64],
     hsd_SynthSFXBank:[i32;32], hsd_SynthSFXBankHead:[i32;33], hsd_SynthSFXNodes:[HSD_SynthSFXNode;64],
-    voicelist_1784:[Anon_anon_64;16], voicelist_1844:[i32;256], pstHakoHeader:[Anon_anon_76;3],
+    voicelist_1784:[voicelist_1784_t;16], voicelist_1844:[i32;256], pstHakoHeader:[pstHakoHeader_t;3],
     HSD_Synth_804D7720:i32,hsd_SynthSFXBankNum:i32,hsd_SynthSFXBankAREnd:u32,HSD_Synth_804D772C:i32,
     HSD_Synth_804D7730:*mut SfxLoadStreamNode,HSD_Synth_804D7734:*mut u32,HSD_Synth_804D7738:i32,
     sfxGroupDataReaddressCounter:i32,driverInactivatedCallback:Option<unsafe extern "C" fn(i32)>,
@@ -112,7 +112,7 @@ pub unsafe extern "C" fn HSD_SynthSFXPause(id:i32){ melee_core::ct!("HSD_SynthSF
 pub unsafe extern "C" fn HSD_SynthSFXResume(id:i32){ melee_core::ct!("HSD_SynthSFXResume");let n=getNode(id);if !n.is_null()&&(*n).flags&2!=0{(*n).flags&=!6;HSD_SynthSFXUpdatePitch(n);HSD_SynthSFXUpdateVolume(n);}}
 pub unsafe extern "C" fn HSD_SynthSFXCheck(id:i32)->i32{ melee_core::ct!("HSD_SynthSFXCheck");let n=getNode(id);if !n.is_null(){if (*n).flags&1!=0{return -1;}for i in 0..(*n).voice_count as usize{if (*(*n).voice[i]).pb.state==0{return -1;}}return id;}-1}
 pub unsafe extern "C" fn HSD_SynthSFXSetVolumeFade(id:i32,vol:u8,flag:i32){ melee_core::ct!("HSD_SynthSFXSetVolumeFade");let n=getNode(id);if !n.is_null(){assert!((0..2).contains(&flag));(*n).user_vol[flag as usize].volume=((1.0/255.0f64)*vol as f64) as f32;(*n).user_vol[flag as usize].x4=1;HSD_SynthSFXUpdateVolume(n);}}
-pub unsafe extern "C" fn HSD_SynthSFXSetPan(id:i32,vol:u8){ melee_core::ct!("HSD_SynthSFXSetPan");let n=getNode(id);if !n.is_null(){(*n).user_vol[1].anon_8.x8=vol;HSD_SynthSFXUpdateMix(n,1);}}
+pub unsafe extern "C" fn HSD_SynthSFXSetPan(id:i32,vol:u8){ melee_core::ct!("HSD_SynthSFXSetPan");let n=getNode(id);if !n.is_null(){(*n).user_vol[1].x8_u.x8=vol;HSD_SynthSFXUpdateMix(n,1);}}
 pub unsafe extern "C" fn HSD_SynthSFXSetMix(id:i32,a:f32,b:f32,c:f32){ melee_core::ct!("HSD_SynthSFXSetMix");let n=getNode(id);if !n.is_null(){(*n).x44=a;(*n).x48=b;(*n).x4C=c;HSD_SynthSFXUpdateMix(n,1);}}
 pub unsafe extern "C" fn HSD_SynthSFXUpdatePitch(n:*mut HSD_SynthSFXNode){ melee_core::ct!("HSD_SynthSFXUpdatePitch");let r=if (*n).flags&4!=0{0.0}else{(*n).x14*(*n).x18[0]*(*n).x18[1]};if (*n).flags&8==0{for i in 0..(*n).voice_count as usize{ext::AXSetVoiceSrcRatio((*n).voice[i],r);}}}
 pub unsafe extern "C" fn HSD_SynthSFXSetPitchRatio(id:i32,flag:i32,r:f32){ melee_core::ct!("HSD_SynthSFXSetPitchRatio");let n=getNode(id);if !n.is_null()&&(*n).flags&1==0{assert!((0..2).contains(&flag));(*n).x18[flag as usize]=r;HSD_SynthSFXUpdatePitch(n);}}
@@ -134,7 +134,7 @@ pub unsafe extern "C" fn HSD_SynthSFXVolumeEnvelope()->i32 {
     while !(*link).is_null(){let n=*link;let mut active=false;if (*n).x0<=0{(*n).volume_update_pending=0;*link=(*n).x20;continue;}
         for k in 0..2{let c=(*n).user_vol[k].x4;if c!=0 {
             // user_vol[k].volume[-1] is unk28 for k=0, user_vol[0].x8_float for k=1.
-            let cur=if k==0{&raw mut (*n).unk28}else{&raw mut (*n).user_vol[0].anon_8.x8_float};
+            let cur=if k==0{&raw mut (*n).unk28}else{&raw mut (*n).user_vol[0].x8_u.x8_float};
             *cur=(*cur*(c as f32-1.0))/c as f32+(*n).user_vol[k].volume/c as f32;
             (*n).user_vol[k].x4=c.wrapping_sub(1);if (*n).user_vol[k].x4!=0{active=true;}
         }}
@@ -149,7 +149,7 @@ pub unsafe extern "C" fn HSD_SynthSFXVolumeEnvelope()->i32 {
         }link=&raw mut (*n).x20;
     }ext::OSRestoreInterrupts(intr)
 }
-unsafe fn node_volume(n:*mut HSD_SynthSFXNode)->f32 {32767.0*((*n).user_vol[0].anon_8.x8_float*((*n).unk28*(HSD_Synth_804D6030*voicelist_1784[(*n).xB as usize].x1784)))}
+unsafe fn node_volume(n:*mut HSD_SynthSFXNode)->f32 {32767.0*((*n).user_vol[0].x8_u.x8_float*((*n).unk28*(HSD_Synth_804D6030*voicelist_1784[(*n).xB as usize].x1784)))}
 pub unsafe fn my_memzero(dst:*mut c_void,size:usize){ melee_core::ct!("my_memzero");for i in (0..size).step_by(4){write_unaligned(dst.cast::<u8>().add(i).cast::<u32>(),0);}}
 pub const lbl_8040806C:[u8;128]=[
 0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,14,14,
@@ -158,7 +158,7 @@ pub const lbl_8040806C:[u8;128]=[
 29,29,29,30,30,30,30,30,30,30,30,30,30,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31,31];
 pub unsafe extern "C" fn HSD_SynthSFXUpdateMix(n:*mut HSD_SynthSFXNode,interpolate:i32){
     melee_core::ct!("HSD_SynthSFXUpdateMix");
-    let pan=(*n).user_vol[1].anon_8.x8;
+    let pan=(*n).user_vol[1].x8_u.x8;
     let (mut l,r)=if HSD_Synth_804D7754!=0{(32767.0*crate::gekko::sqrtf_accurate(0.003921569*(255-pan) as f32),32767.0*crate::gekko::sqrtf_accurate(0.003921569*pan as f32))}else{(23169.768,23169.768)};
     let m=&raw mut lbl_80407FB4;
     if (*n).voice_count==1{(*m).vL=melee_core::ppc::fctiwz_f32(l*(*n).x44) as u16;(*m).vR=melee_core::ppc::fctiwz_f32(r*(*n).x44) as u16;(*m).vAuxAL=melee_core::ppc::fctiwz_f32(l*(*n).x48) as u16;(*m).vAuxAR=melee_core::ppc::fctiwz_f32(r*(*n).x48) as u16;(*m).vAuxBL=melee_core::ppc::fctiwz_f32(l*(*n).x4C) as u16;(*m).vAuxBR=melee_core::ppc::fctiwz_f32(r*(*n).x4C) as u16;ext::AXSetVoiceMix((*n).voice[0],m);}
@@ -176,7 +176,7 @@ pub unsafe extern "C" fn HSD_Synth_80389334(id:i32,vol:u8,vol2:u8,pan:u8,priorit
         if (*entry).unk8==2&&voices[0]==voices[1]{ext::AXFreeVoice(voices[0]);ext::OSRestoreInterrupts(e);return -1;}
         if (*entry).unk8==2{let secondary=hsd_SynthSFXNodeAt((*voices[1]).index as i32);(*secondary).x0=-1;(*secondary).voice[0]=voices[0];}
         let idx=(*voices[0]).index;let n=hsd_SynthSFXNodeAt(idx as i32);(*n).x27=1;(*n).sfx_id=id;(*n).flags=0;(*n).voice_count=(*entry).unk8 as u8;(*n).xB=itd as u8;(*n).voice=voices;(*n).x14=0.00003125*(*entry).unkC as f32;(*n).x18=[p1,p2];
-        let v=(1.0/255.0f32)*vol as f32;let v2=(1.0/255.0f32)*vol2 as f32;(*n).unk28=v;(*n).user_vol[0].volume=v;(*n).user_vol[0].x4=0;(*n).user_vol[0].anon_8.x8_float=v2;(*n).user_vol[1].volume=v2;(*n).user_vol[1].x4=0;(*n).user_vol[1].anon_8.x8=pan;(*n).x44=a;(*n).x48=b;(*n).x4C=c;
+        let v=(1.0/255.0f32)*vol as f32;let v2=(1.0/255.0f32)*vol2 as f32;(*n).unk28=v;(*n).user_vol[0].volume=v;(*n).user_vol[0].x4=0;(*n).user_vol[0].x8_u.x8_float=v2;(*n).user_vol[1].volume=v2;(*n).user_vol[1].x4=0;(*n).user_vol[1].x8_u.x8=pan;(*n).x44=a;(*n).x48=b;(*n).x4C=c;
         HSD_SynthSFXUpdateVolume(n);HSD_SynthSFXUpdateMix(n,0);let mut ve=AXPBVE{currentVolume:melee_core::ppc::fctiwz_f32(node_volume(n)) as u16,currentDelta:0};(*n).x24=ve.currentVolume;
         for i in 0..(*entry).unk8 as usize {let v=voices[i];ext::AXSetVoicePriority(v,priority as u32);ext::AXSetVoiceVe(v,&mut ve);set_src_ratio(melee_core::ppc::fcvt_u32((65536.0*((*n).x18[1]*((*n).x14*(*n).x18[0])))));ext::AXSetVoiceSrc(v,&raw mut HSD_Synth_80407FD8);
             let block=entry.cast::<u8>().add(i*64).cast::<HSD_SynthVoiceEntry>();ext::AXSetVoiceAddr(v,&raw mut (*block).x10);ext::AXSetVoiceAdpcm(v,&raw mut (*block).x20);ext::AXSetVoiceAdpcmLoop(v,&raw mut (*block).x48);ext::AXSetVoiceState(v,1);
@@ -203,7 +203,7 @@ pub unsafe extern "C" fn first_data_adapter(_:i32,_:usize,_:*mut c_void,_:i32){ 
 pub unsafe extern "C" fn HSD_SynthPStreamFirstHakoHeaderCallback(_:i32,_:usize,_:*mut c_void,_:i32){ melee_core::ct!("HSD_SynthPStreamFirstHakoHeaderCallback");ext::HSD_DevComRequest(HSD_Synth_804D7764,0xa0,HSD_Synth_804D7780.wrapping_add(HSD_Synth_804D7768<<16) as usize,pstHakoHeader[HSD_Synth_804D7768 as usize].x0 as u32 as usize,0x23,0,Some(first_data_adapter),0);}
 pub unsafe extern "C" fn HSD_SynthPStreamHeaderCallback(_:i32,_:usize,buf:*mut c_void,_:i32){ melee_core::ct!("HSD_SynthPStreamHeaderCallback");let entry=buf.cast::<u32>();let n=getNode(HSD_Synth_804D7760);if !n.is_null(){(*n).voice_count=*entry.add(3) as u8;if (*n).voice_count==2{(*n).voice[1]=ext::AXAcquireVoice(29,Some(dropcallback),0);assert!(!(*n).voice[1].is_null());}(*n).x14=0.00003125*(*entry.add(2) as f32);for i in 0..(*n).voice_count as usize{set_src_ratio(melee_core::ppc::fcvt_u32((65536.0*(*n).x14)));ext::AXSetVoiceAddr((*n).voice[i],entry.add(i*14+4).cast());ext::AXSetVoiceAdpcm((*n).voice[i],entry.add(i*14+8).cast());}HSD_Synth_804D7774=(HSD_Synth_804D7774+2)%3;HSD_Synth_804D776C=HSD_Synth_804D7774;HSD_Synth_804D7770=HSD_Synth_804D7774;HSD_Synth_804D7768=HSD_Synth_804D7774;ext::HSD_DevComRequest(HSD_Synth_804D7764,128,(&raw mut pstHakoHeader[HSD_Synth_804D7768 as usize]) as usize,32,0x21,0,Some(HSD_SynthPStreamFirstHakoHeaderCallback),0);}else{HSD_Synth_804D7778=0;}}
 pub unsafe fn HSD_SynthPStreamStart_inline(){ melee_core::ct!("HSD_SynthPStreamStart_inline");let n=getNode(HSD_Synth_804D7760);if n.is_null(){return;}if (*n).flags&8!=0{HSD_SynthSFXStopNode(n);}else if (*n).flags&1==0{(*n).flags|=1;HSD_SynthSFXUpdateVolume(n);for i in 0..(*n).voice_count as usize{ext::AXSetVoicePriority((*n).voice[i],1);}}}
-pub unsafe extern "C" fn HSD_SynthPStreamStart(entry:i32,vol:u8,vol2:u8,ch:i32)->i32 { melee_core::ct!("HSD_SynthPStreamStart");loop{ext::wait_idle();if core::ptr::read_volatile(&raw const HSD_Synth_804D7778)==0{break;}}HSD_Synth_804D7778=1;let e=ext::OSDisableInterrupts();if !getNode(HSD_Synth_804D7760).is_null(){HSD_SynthPStreamStart_inline();}HSD_Synth_804D7764=entry;let v=ext::AXAcquireVoice(29,Some(dropcallback),0);let idx=(*v).index;let n=hsd_SynthSFXNodeAt(idx as i32);HSD_Synth_804D7750=HSD_Synth_804D7750.wrapping_add(64);if HSD_Synth_804D7750<0{HSD_Synth_804D7750=64;}(*n).x27=2;HSD_Synth_804D7760=HSD_Synth_804D7750.wrapping_add(idx as i32);(*n).x0=HSD_Synth_804D7760;(*n).sfx_id=0;(*n).flags=8;(*n).voice_count=1;(*n).xB=ch as u8;(*n).voice[0]=v;(*n).x18=[1.0;2];(*n).unk28=0.003921569*vol as f32;(*n).user_vol[0].volume=(*n).unk28;(*n).user_vol[0].x4=0;(*n).user_vol[0].anon_8.x8_float=0.003921569*vol2 as f32;(*n).user_vol[1].volume=0.003921569*vol2 as f32;(*n).user_vol[1].x4=0;(*n).user_vol[1].anon_8.x8=128;(*n).x44=1.0;(*n).x48=0.0;(*n).x4C=0.0;ext::HSD_DevComRequest(entry,0,0,128,0x22,1,Some(HSD_SynthPStreamHeaderCallback),0);ext::OSRestoreInterrupts(e);HSD_Synth_804D7760}
+pub unsafe extern "C" fn HSD_SynthPStreamStart(entry:i32,vol:u8,vol2:u8,ch:i32)->i32 { melee_core::ct!("HSD_SynthPStreamStart");loop{ext::wait_idle();if core::ptr::read_volatile(&raw const HSD_Synth_804D7778)==0{break;}}HSD_Synth_804D7778=1;let e=ext::OSDisableInterrupts();if !getNode(HSD_Synth_804D7760).is_null(){HSD_SynthPStreamStart_inline();}HSD_Synth_804D7764=entry;let v=ext::AXAcquireVoice(29,Some(dropcallback),0);let idx=(*v).index;let n=hsd_SynthSFXNodeAt(idx as i32);HSD_Synth_804D7750=HSD_Synth_804D7750.wrapping_add(64);if HSD_Synth_804D7750<0{HSD_Synth_804D7750=64;}(*n).x27=2;HSD_Synth_804D7760=HSD_Synth_804D7750.wrapping_add(idx as i32);(*n).x0=HSD_Synth_804D7760;(*n).sfx_id=0;(*n).flags=8;(*n).voice_count=1;(*n).xB=ch as u8;(*n).voice[0]=v;(*n).x18=[1.0;2];(*n).unk28=0.003921569*vol as f32;(*n).user_vol[0].volume=(*n).unk28;(*n).user_vol[0].x4=0;(*n).user_vol[0].x8_u.x8_float=0.003921569*vol2 as f32;(*n).user_vol[1].volume=0.003921569*vol2 as f32;(*n).user_vol[1].x4=0;(*n).user_vol[1].x8_u.x8=128;(*n).x44=1.0;(*n).x48=0.0;(*n).x4C=0.0;ext::HSD_DevComRequest(entry,0,0,128,0x22,1,Some(HSD_SynthPStreamHeaderCallback),0);ext::OSRestoreInterrupts(e);HSD_Synth_804D7760}
 pub unsafe extern "C" fn HSD_SynthStreamSetVolume(v:f32){ melee_core::ct!("HSD_SynthStreamSetVolume");HSD_Synth_804D6030=v;ext::AISetStreamVolLeft(melee_core::ppc::fctiwz_f32(v*HSD_Synth_804D777C as f32) as u8);ext::AISetStreamVolRight(melee_core::ppc::fctiwz_f32(v*HSD_Synth_804D777C as f32) as u8);updateAllVolume(65535);}
 pub unsafe extern "C" fn HSD_SynthInit(_:i32,_:i32,_:i32,bank_size:i32){ melee_core::ct!("HSD_SynthInit");ext::AXInit();ext::AISetDSPSampleRate(0);HSD_Synth_804D7784=ext::ARAlloc(1280);ext::HSD_DevComRequest(0,0,HSD_Synth_804D7784 as usize,1280,3,0,None,0);HSD_Synth_804D7784=HSD_Synth_804D7784.wrapping_mul(2);hsd_SynthSFXBankHead[0]=ext::ARAlloc(bank_size as u32) as i32;ext::AXRegisterCallback(Some(HSD_SynthCallback));ext::watch_page((&raw mut hsd_SynthSFXNodes).cast(),core::mem::size_of_val(&hsd_SynthSFXNodes) as u32);HSD_Synth_804D777C=255;ext::AISetStreamVolLeft(melee_core::ppc::fctiwz_f32(HSD_Synth_804D6030*255.0) as u8);ext::AISetStreamVolRight(melee_core::ppc::fctiwz_f32(HSD_Synth_804D6030*255.0) as u8);for v in &mut voicelist_1784{v.x1784=1.0;v.x1788=1.0;v.x178C=0;}hsd_SynthSFXBankAREnd=hsd_SynthSFXBankHead[0].wrapping_add(bank_size) as u32;HSD_Synth_804D7780=ext::ARAlloc(0x30000);HSD_Synth_804D7754=ext::OSGetSoundMode();}
 

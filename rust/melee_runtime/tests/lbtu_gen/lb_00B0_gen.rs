@@ -187,7 +187,7 @@ pub fn hash_HSD_AObj(p: &HSD_AObj) {
     hm(p.end_frame.to_bits());
     hm(p.framerate.to_bits());
     hm(pi(p.fobj));
-    hm(pi(p.hsd_obj));
+    hm(pi(p.jobj));
     }
 }
 

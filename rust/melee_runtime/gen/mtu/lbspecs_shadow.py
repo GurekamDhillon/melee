@@ -6,6 +6,14 @@ POOLS = [('HSD_Shadow', 'P0', 2), ('HSD_JObj', 'P1', 2), ('HSD_ViewingRect', 'P2
 C_DECL = r'''
 static void cb_rel(HSD_Class* c) { T(8203); T(PI(c)); }
 static void cb_dest(HSD_Class* c) { T(8204); T(PI(c)); }
+/* The real PSVECScale (pc/gameworld/mtx_pc.c), linked into the oracle instead of a traced stub: the port's shadow.rs
+ * calls mtx_pc::raw::PSVECScale directly (since d323c49bb), so neither side traces it and both compute it. */
+void PSVECScale(Vec* src, Vec* dst, f32 scale)
+{
+    dst->x = (src->x * scale);
+    dst->y = (src->y * scale);
+    dst->z = (src->z * scale);
+}
 '''
 RS_EXTRA = r'''
 unsafe extern "C" fn cb_rel(c: *mut HSD_Class) { t(8203); t(pi(c)); }
@@ -22,7 +30,7 @@ add("shadow", "src/sysdolphin/baselib/shadow.c", dict(
            " IM[q].image_ptr = if fv() & 1 != 0 { (&raw mut BUF) as *mut c_void } else { null_mut() }; IM[q].width = (fv() % 300) as u16; IM[q].height = (fv() % 300) as u16; } }"),
     pregs=("freg((const void*) cb_rel); freg((const void*) cb_dest);", "freg(cb_rel as usize); freg(cb_dest as usize); m::use_ext_data = true; melee_runtime::tu::lbext::H_OSReport = Some(|_f, _a| ());")),
     pub_only=True, types=[p[0] for p in POOLS], pools=[p[0] for p in POOLS], own_fill=[], own_hash=OWN,
-    skip_stubs=["memcpy", "memset", "sqrtf", "__frsqrte", "tanf"],
+    skip_stubs=["memcpy", "memset", "sqrtf", "__frsqrte", "tanf", "PSVECScale"],
     ret={"HSD_CObjAlloc": ("pick_HSD_CObj()", "pick_HSD_CObj()"), "HSD_TObjAlloc": ("pick_HSD_TObj()", "pick_HSD_TObj()"),
          "HSD_ImageDescAlloc": ("pick_HSD_ImageDesc()", "pick_HSD_ImageDesc()"), "HSD_ObjAlloc": ("(void*) pick_HSD_Shadow()", "pick_HSD_Shadow() as *mut c_void"),
          "HSD_SListAllocAndPrepend": ("pick_HSD_SList()", "pick_HSD_SList()"), "HSD_SListRemove": ("picko_HSD_SList()", "picko_HSD_SList()"),

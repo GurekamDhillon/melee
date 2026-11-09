@@ -188,7 +188,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A477C(
         );
         GXInitTexObjCI(
             &raw mut (*sobj).x50_texobj,
-            (*image).image_ptr,
+            (*image).image_ptr as *mut ::core::ffi::c_void,
             (*image).width,
             (*image).height,
             (*image).format,
@@ -200,7 +200,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A477C(
     } else {
         GXInitTexObj(
             &raw mut (*sobj).x50_texobj,
-            (*image).image_ptr,
+            (*image).image_ptr as *mut ::core::ffi::c_void,
             (*image).width,
             (*image).height,
             (*image).format,
@@ -212,7 +212,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A477C(
     if use_secondary != 0 {
         GXInitTexObj(
             &raw mut (*sobj).x7C_texobj,
-            (*image2).image_ptr,
+            (*image2).image_ptr as *mut ::core::ffi::c_void,
             (*image2).width,
             (*image2).height,
             (*image2).format,
@@ -229,14 +229,14 @@ pub unsafe extern "C" fn HSD_SObjLib_803A477C(
     (*sobj).x18 = 0.0f32 as f32;
     (*sobj).x20 = 1.0f32 as f32;
     (*sobj).x1C = 1.0f32 as f32;
-    (*sobj).anon_3c.anon_0.x3F = 0xff as u8;
-    (*sobj).anon_3c.anon_0.x3E = 0xff as u8;
-    (*sobj).anon_3c.anon_0.x3D = 0xff as u8;
-    (*sobj).anon_3c.anon_0.x3C = 0xff as u8;
-    (*sobj).anon_38.anon_0.x3B = 0xff as u8;
-    (*sobj).anon_38.anon_0.x3A = 0xff as u8;
-    (*sobj).anon_38.anon_0.x39 = 0xff as u8;
-    (*sobj).anon_38.anon_0.x38 = 0xff as u8;
+    (*sobj).x3C_u.x0.x3F = 0xff as u8;
+    (*sobj).x3C_u.x0.x3E = 0xff as u8;
+    (*sobj).x3C_u.x0.x3D = 0xff as u8;
+    (*sobj).x3C_u.x0.x3C = 0xff as u8;
+    (*sobj).x38_u.x0.x3B = 0xff as u8;
+    (*sobj).x38_u.x0.x3A = 0xff as u8;
+    (*sobj).x38_u.x0.x39 = 0xff as u8;
+    (*sobj).x38_u.x0.x38 = 0xff as u8;
     (*sobj).x40 = 0 as u32;
     (*sobj).x48 = 0 as u32;
     (*sobj).x4C_callback = None;
@@ -515,7 +515,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
         }
         GXSetAlphaCompare(GX_ALWAYS, 0 as u8, GX_AOP_OR, GX_ALWAYS, 0 as u8);
         if (*sobj).x40 & 4 as u32 != 0 {
-            GXSetTevColor(GX_TEVREG0, (*sobj).anon_3c.x3C_color);
+            GXSetTevColor(GX_TEVREG0, (*sobj).x3C_u.x3C_color);
             GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_TEXC, GX_CC_C0, GX_CC_ZERO);
             GXSetTevColorOp(
                 GX_TEVSTAGE0,
@@ -562,8 +562,8 @@ pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
         } else {
             match tex_fmt as ::core::ffi::c_int {
                 0 | 1 => {
-                    GXSetTevColor(GX_TEVREG0, (*sobj).anon_38.x38_color);
-                    GXSetTevColor(GX_TEVREG1, (*sobj).anon_3c.x3C_color);
+                    GXSetTevColor(GX_TEVREG0, (*sobj).x38_u.x38_color);
+                    GXSetTevColor(GX_TEVREG1, (*sobj).x3C_u.x3C_color);
                     GXSetTevColorIn(
                         GX_TEVSTAGE0,
                         GX_CC_C0,
@@ -596,8 +596,8 @@ pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
                     );
                 }
                 2 | 3 => {
-                    GXSetTevColor(GX_TEVREG0, (*sobj).anon_38.x38_color);
-                    GXSetTevColor(GX_TEVREG1, (*sobj).anon_3c.x3C_color);
+                    GXSetTevColor(GX_TEVREG0, (*sobj).x38_u.x38_color);
+                    GXSetTevColor(GX_TEVREG1, (*sobj).x3C_u.x3C_color);
                     GXSetTevColorIn(
                         GX_TEVSTAGE0,
                         GX_CC_C0,
@@ -630,7 +630,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
                     );
                 }
                 4 => {
-                    GXSetTevColor(GX_TEVREG0, (*sobj).anon_3c.x3C_color);
+                    GXSetTevColor(GX_TEVREG0, (*sobj).x3C_u.x3C_color);
                     GXSetTevColorIn(
                         GX_TEVSTAGE0,
                         GX_CC_ZERO,
@@ -663,7 +663,7 @@ pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
                     );
                 }
                 5 | 6 | 8 | 9 | 10 | 14 => {
-                    GXSetTevColor(GX_TEVREG0, (*sobj).anon_3c.x3C_color);
+                    GXSetTevColor(GX_TEVREG0, (*sobj).x3C_u.x3C_color);
                     GXSetTevColorIn(
                         GX_TEVSTAGE0,
                         GX_CC_ZERO,
@@ -700,8 +700,8 @@ pub unsafe extern "C" fn HSD_SObjLib_803A4A68(mut sobj: *mut HSD_SObj) {
             GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
         }
     }
-    discard_color((*sobj).anon_38.x38_color);
-    discard_color((*sobj).anon_3c.x3C_color);
+    discard_color((*sobj).x38_u.x38_color);
+    discard_color((*sobj).x3C_u.x3C_color);
     sin_half = (0.5f32 * crate::gekko::sinf((*sobj).x18 as ::core::ffi::c_float)) as f32;
     angle = (*sobj).x18;
     cos_val = crate::gekko::cosf(angle as ::core::ffi::c_float) as f32;

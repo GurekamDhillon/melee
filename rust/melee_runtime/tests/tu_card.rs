@@ -63,7 +63,7 @@ static mut card_oracle_state: CardState = CardState {
 static mut card_oracle_cmd: CardCmd = CardCmd {
     r#type: CARD_CMD_NONE,
     state: ::core::ptr::null::<CardState>() as *mut CardState,
-    anon_8: CardCmd_anon_193 {
+    x8: CardCmd_x8 {
         write: CardWriteArgs {
             file_idx: 0,
             phys: 0,
@@ -80,7 +80,7 @@ static mut card_oracle_cmd_buf: [CardCmdBuf; 2] = [CardCmdBuf {
     cmd: CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -629,35 +629,35 @@ unsafe extern "C" fn card_oracle_hash_cmd(mut c: *const CardCmd) {
     card_oracle_h(card_oracle_ptr((*c).state as *const c_void));
     match (*c).r#type as i32 {
         1 | 2 | 5 | 4 | 13 | 15 | 16 => {
-            card_oracle_h((*c).anon_8.write.file_idx as u32);
-            card_oracle_h((*c).anon_8.write.phys as u32);
-            card_oracle_h((*c).anon_8.write.block_id as u32);
-            card_oracle_h((*c).anon_8.write.seq as u32);
-            card_oracle_h(card_oracle_ptr((*c).anon_8.write.data));
-            card_oracle_h((*c).anon_8.write.offset as u32);
-            card_oracle_h((*c).anon_8.write.size as u32);
+            card_oracle_h((*c).x8.write.file_idx as u32);
+            card_oracle_h((*c).x8.write.phys as u32);
+            card_oracle_h((*c).x8.write.block_id as u32);
+            card_oracle_h((*c).x8.write.seq as u32);
+            card_oracle_h(card_oracle_ptr((*c).x8.write.data));
+            card_oracle_h((*c).x8.write.offset as u32);
+            card_oracle_h((*c).x8.write.size as u32);
         }
         7 => {
             card_oracle_h(
                 card_oracle_ptr(
-                    (*c).anon_8.create.filename as *const c_void,
+                    (*c).x8.create.filename as *const c_void,
                 ),
             );
-            card_oracle_h((*c).anon_8.create.size as u32);
+            card_oracle_h((*c).x8.create.size as u32);
         }
         9 | 10 => {
-            card_oracle_h((*c).anon_8.header.index as u32);
-            card_oracle_h(card_oracle_ptr((*c).anon_8.header.banner));
-            card_oracle_h(card_oracle_ptr((*c).anon_8.header.icons));
+            card_oracle_h((*c).x8.header.index as u32);
+            card_oracle_h(card_oracle_ptr((*c).x8.header.banner));
+            card_oracle_h(card_oracle_ptr((*c).x8.header.icons));
         }
         11 => {
-            card_oracle_h((*c).anon_8.read_header.index as u32);
-            card_oracle_h(card_oracle_ptr((*c).anon_8.read_header.comment));
-            card_oracle_h(card_oracle_ptr((*c).anon_8.read_header.banner));
-            card_oracle_h(card_oracle_ptr((*c).anon_8.read_header.icons));
+            card_oracle_h((*c).x8.read_header.index as u32);
+            card_oracle_h(card_oracle_ptr((*c).x8.read_header.comment));
+            card_oracle_h(card_oracle_ptr((*c).x8.read_header.banner));
+            card_oracle_h(card_oracle_ptr((*c).x8.read_header.icons));
         }
         12 => {
-            card_oracle_h((*c).anon_8.get_status.file_no as u32);
+            card_oracle_h((*c).x8.get_status.file_no as u32);
         }
         _ => {}
     };
@@ -669,34 +669,34 @@ unsafe extern "C" fn card_oracle_hash_req(mut r: *const CardRequest) {
     card_oracle_h((*r).callback.is_some() as i32 as u32);
     match (*r).r#type as i32 {
         1 | 2 => {
-            card_oracle_h((*r).anon_8.file.file_idx as u32);
+            card_oracle_h((*r).x8.file.file_idx as u32);
             card_oracle_h(
                 card_oracle_ptr(
-                    (*r).anon_8.file.buf as *const c_void,
+                    (*r).x8.file.buf as *const c_void,
                 ),
             );
         }
         3 => {
             card_oracle_h(
                 card_oracle_ptr(
-                    (*r).anon_8.create.filename as *const c_void,
+                    (*r).x8.create.filename as *const c_void,
                 ),
             );
-            card_oracle_h(card_oracle_ptr((*r).anon_8.create.banner));
-            card_oracle_h(card_oracle_ptr((*r).anon_8.create.icons));
+            card_oracle_h(card_oracle_ptr((*r).x8.create.banner));
+            card_oracle_h(card_oracle_ptr((*r).x8.create.icons));
         }
         4 => {
-            card_oracle_h((*r).anon_8.status.x0 as u32);
-            card_oracle_h(card_oracle_ptr((*r).anon_8.status.banner));
-            card_oracle_h(card_oracle_ptr((*r).anon_8.status.icons));
+            card_oracle_h((*r).x8.status.x0 as u32);
+            card_oracle_h(card_oracle_ptr((*r).x8.status.banner));
+            card_oracle_h(card_oracle_ptr((*r).x8.status.icons));
         }
         5 => {
-            card_oracle_h((*r).anon_8.open.file_no as u32);
+            card_oracle_h((*r).x8.open.file_no as u32);
         }
         6 => {
-            card_oracle_h(card_oracle_ptr((*r).anon_8.header.comment));
-            card_oracle_h(card_oracle_ptr((*r).anon_8.header.banner));
-            card_oracle_h(card_oracle_ptr((*r).anon_8.header.icons));
+            card_oracle_h(card_oracle_ptr((*r).x8.header.comment));
+            card_oracle_h(card_oracle_ptr((*r).x8.header.banner));
+            card_oracle_h(card_oracle_ptr((*r).x8.header.icons));
         }
         _ => {}
     };
@@ -1178,9 +1178,9 @@ unsafe extern "C" fn card_oracle_setup(mut k: i32) {
     card_oracle_k = k;
     card_oracle_cmd.state = s;
     card_oracle_cmd.r#type = CARD_CMD_CLEAR_BUF;
-    card_oracle_cmd.anon_8.clear.data = &raw mut card_oracle_data as *mut u8
+    card_oracle_cmd.x8.clear.data = &raw mut card_oracle_data as *mut u8
         as *mut c_void;
-    card_oracle_cmd.anon_8.clear.size = (16 as i32
+    card_oracle_cmd.x8.clear.size = (16 as i32
         + k % 128 as i32) as s32;
     memset(
         &raw mut card_oracle_hit as *mut u32 as *mut c_void,
@@ -1213,8 +1213,8 @@ unsafe extern "C" fn card_oracle_run(
         commands[curr_head as usize] = *c;
         requests[hsd_804D7990 as usize].r#type = CARD_REQ_READ_FILE;
         requests[hsd_804D7990 as usize].state = s;
-        requests[hsd_804D7990 as usize].anon_8.file.file_idx = f as s32;
-        requests[hsd_804D7990 as usize].anon_8.file.buf = &raw mut card_oracle_data
+        requests[hsd_804D7990 as usize].x8.file.file_idx = f as s32;
+        requests[hsd_804D7990 as usize].x8.file.buf = &raw mut card_oracle_data
             as *mut u8;
     }
     match op {
@@ -1224,45 +1224,45 @@ unsafe extern "C" fn card_oracle_run(
         1 => {
             (*c).r#type = (k % 18 as i32) as CardCmdType;
             memset(
-                &raw mut (*c).anon_8.write as *mut c_void,
+                &raw mut (*c).x8.write as *mut c_void,
                 0 as i32,
                 ::core::mem::size_of::<CardWriteArgs>() as usize,
             );
             if (*c).r#type as i32
                 == CARD_CMD_CREATE_FILE as i32
             {
-                (*c).anon_8.create.filename = &raw const card_oracle_filename
+                (*c).x8.create.filename = &raw const card_oracle_filename
                     as *const i8;
-                (*c).anon_8.create.size = 8192 as i32 as s32;
+                (*c).x8.create.size = 8192 as i32 as s32;
             } else if (*c).r#type as i32
                 == CARD_CMD_WRITE_HEADER as i32
                 || (*c).r#type as i32
                     == CARD_CMD_VERIFY_HEADER as i32
             {
-                (*c).anon_8.header.index = 0 as i32 as s32;
-                (*c).anon_8.header.banner = &raw mut card_oracle_banner
+                (*c).x8.header.index = 0 as i32 as s32;
+                (*c).x8.header.banner = &raw mut card_oracle_banner
                     as *mut u8 as *mut c_void;
-                (*c).anon_8.header.icons = &raw mut card_oracle_icons
+                (*c).x8.header.icons = &raw mut card_oracle_icons
                     as *mut u8 as *mut c_void;
             } else if (*c).r#type as i32
                 == CARD_CMD_READ_HEADER as i32
             {
-                (*c).anon_8.read_header.index = 0 as i32 as s32;
-                (*c).anon_8.read_header.comment = &raw mut card_oracle_comment
+                (*c).x8.read_header.index = 0 as i32 as s32;
+                (*c).x8.read_header.comment = &raw mut card_oracle_comment
                     as *mut u8 as *mut c_void;
-                (*c).anon_8.read_header.banner = &raw mut card_oracle_banner
+                (*c).x8.read_header.banner = &raw mut card_oracle_banner
                     as *mut u8 as *mut c_void;
-                (*c).anon_8.read_header.icons = &raw mut card_oracle_icons
+                (*c).x8.read_header.icons = &raw mut card_oracle_icons
                     as *mut u8 as *mut c_void;
             } else {
-                (*c).anon_8.write.file_idx = f as s32;
-                (*c).anon_8.write.phys = b as s32;
-                (*c).anon_8.write.block_id = b as s32;
-                (*c).anon_8.write.seq = (k & 255 as i32) as s32;
-                (*c).anon_8.write.data = &raw mut card_oracle_data as *mut u8
+                (*c).x8.write.file_idx = f as s32;
+                (*c).x8.write.phys = b as s32;
+                (*c).x8.write.block_id = b as s32;
+                (*c).x8.write.seq = (k & 255 as i32) as s32;
+                (*c).x8.write.data = &raw mut card_oracle_data as *mut u8
                     as *mut c_void;
-                (*c).anon_8.write.size = len as s32;
-                (*c).anon_8.write.offset = fn_803ACBE8(s, b as s32);
+                (*c).x8.write.size = len as s32;
+                (*c).x8.write.offset = fn_803ACBE8(s, b as s32);
             }
             commands[curr_head as usize] = *c;
             ::core::ptr::write_volatile(
@@ -1298,31 +1298,31 @@ unsafe extern "C" fn card_oracle_run(
             if (*req).r#type as i32
                 == CARD_REQ_CREATE_FILE as i32
             {
-                (*req).anon_8.create.filename = &raw const card_oracle_filename
+                (*req).x8.create.filename = &raw const card_oracle_filename
                     as *const i8;
-                (*req).anon_8.create.banner = &raw mut card_oracle_banner
+                (*req).x8.create.banner = &raw mut card_oracle_banner
                     as *mut u8 as *mut c_void;
-                (*req).anon_8.create.icons = &raw mut card_oracle_icons
+                (*req).x8.create.icons = &raw mut card_oracle_icons
                     as *mut u8 as *mut c_void;
             } else if (*req).r#type as i32
                 == CARD_REQ_SET_STATUS as i32
             {
-                (*req).anon_8.status.banner = &raw mut card_oracle_banner
+                (*req).x8.status.banner = &raw mut card_oracle_banner
                     as *mut u8 as *mut c_void;
-                (*req).anon_8.status.icons = &raw mut card_oracle_icons
+                (*req).x8.status.icons = &raw mut card_oracle_icons
                     as *mut u8 as *mut c_void;
             } else if (*req).r#type as i32
                 == CARD_REQ_READ_HEADER as i32
             {
-                (*req).anon_8.header.comment = &raw mut card_oracle_comment
+                (*req).x8.header.comment = &raw mut card_oracle_comment
                     as *mut u8 as *mut c_void;
-                (*req).anon_8.header.banner = &raw mut card_oracle_banner
+                (*req).x8.header.banner = &raw mut card_oracle_banner
                     as *mut u8 as *mut c_void;
-                (*req).anon_8.header.icons = &raw mut card_oracle_icons
+                (*req).x8.header.icons = &raw mut card_oracle_icons
                     as *mut u8 as *mut c_void;
             } else {
-                (*req).anon_8.file.file_idx = f as s32;
-                (*req).anon_8.file.buf = &raw mut card_oracle_data as *mut u8;
+                (*req).x8.file.file_idx = f as s32;
+                (*req).x8.file.buf = &raw mut card_oracle_data as *mut u8;
             }
             hsd_804D7994 = ((hsd_804D7990 as i32
                 + 1 as i32) % 32 as i32) as s32;
@@ -1458,45 +1458,45 @@ unsafe extern "C" fn card_oracle_run(
         17 => {
             (*c).r#type = (k % 18 as i32) as CardCmdType;
             memset(
-                &raw mut (*c).anon_8.write as *mut c_void,
+                &raw mut (*c).x8.write as *mut c_void,
                 0 as i32,
                 ::core::mem::size_of::<CardWriteArgs>() as usize,
             );
             if (*c).r#type as i32
                 == CARD_CMD_CREATE_FILE as i32
             {
-                (*c).anon_8.create.filename = &raw const card_oracle_filename
+                (*c).x8.create.filename = &raw const card_oracle_filename
                     as *const i8;
-                (*c).anon_8.create.size = 8192 as i32 as s32;
+                (*c).x8.create.size = 8192 as i32 as s32;
             } else if (*c).r#type as i32
                 == CARD_CMD_WRITE_HEADER as i32
                 || (*c).r#type as i32
                     == CARD_CMD_VERIFY_HEADER as i32
             {
-                (*c).anon_8.header.index = 0 as i32 as s32;
-                (*c).anon_8.header.banner = &raw mut card_oracle_banner
+                (*c).x8.header.index = 0 as i32 as s32;
+                (*c).x8.header.banner = &raw mut card_oracle_banner
                     as *mut u8 as *mut c_void;
-                (*c).anon_8.header.icons = &raw mut card_oracle_icons
+                (*c).x8.header.icons = &raw mut card_oracle_icons
                     as *mut u8 as *mut c_void;
             } else if (*c).r#type as i32
                 == CARD_CMD_READ_HEADER as i32
             {
-                (*c).anon_8.read_header.index = 0 as i32 as s32;
-                (*c).anon_8.read_header.comment = &raw mut card_oracle_comment
+                (*c).x8.read_header.index = 0 as i32 as s32;
+                (*c).x8.read_header.comment = &raw mut card_oracle_comment
                     as *mut u8 as *mut c_void;
-                (*c).anon_8.read_header.banner = &raw mut card_oracle_banner
+                (*c).x8.read_header.banner = &raw mut card_oracle_banner
                     as *mut u8 as *mut c_void;
-                (*c).anon_8.read_header.icons = &raw mut card_oracle_icons
+                (*c).x8.read_header.icons = &raw mut card_oracle_icons
                     as *mut u8 as *mut c_void;
             } else {
-                (*c).anon_8.write.file_idx = f as s32;
-                (*c).anon_8.write.phys = b as s32;
-                (*c).anon_8.write.block_id = b as s32;
-                (*c).anon_8.write.seq = (k & 255 as i32) as s32;
-                (*c).anon_8.write.data = &raw mut card_oracle_data as *mut u8
+                (*c).x8.write.file_idx = f as s32;
+                (*c).x8.write.phys = b as s32;
+                (*c).x8.write.block_id = b as s32;
+                (*c).x8.write.seq = (k & 255 as i32) as s32;
+                (*c).x8.write.data = &raw mut card_oracle_data as *mut u8
                     as *mut c_void;
-                (*c).anon_8.write.size = len as s32;
-                (*c).anon_8.write.offset = fn_803ACBE8(s, b as s32);
+                (*c).x8.write.size = len as s32;
+                (*c).x8.write.offset = fn_803ACBE8(s, b as s32);
             }
             commands[curr_head as usize] = *c;
             ::core::ptr::write_volatile(

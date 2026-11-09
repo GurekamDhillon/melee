@@ -242,7 +242,7 @@ pub unsafe fn lbHeap_80015BD0(heap_id: i32, size: usize) -> *mut c_void {
                 ext::OSReport("lbHeap: heap %d type %d alloc 0x%X\n", &[ext::OsArg::I(heap_id), ext::OsArg::I((*p).r#type), ext::OsArg::U(size as u32)]);
             }
             let h = super::lbmemory::lbMemory_80014FC8((*p).handle, size);
-            result = if (*p).r#type == 3 { (*h).x4_lo } else { h as *mut c_void };
+            result = if (*p).r#type == 3 { (*h).addr } else { h as *mut c_void };
         }
     } else {
         result = null_mut();

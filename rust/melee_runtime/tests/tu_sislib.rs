@@ -10,10 +10,10 @@ static mut ARENA:[u64;1024]=[0;1024];static mut TEX:[HSD_Text;3]=unsafe{core::me
  for i in 0..3{g::fill_HSD_Text(&mut TEX[i]);g::fill_sislib_UnkAlloc3(&mut E[i]);}for i in 0..9{g::fill_SisBlock(&mut BL[i]);}for i in 0..4{g::fill_HSD_GObj(&mut G[i]);}
  m::HSD_SisLib_803A6048(8192);TR=0;
  for i in 0..3{
- TEX[i].next=if i<2{&raw mut TEX[i+1]}else{core::ptr::null_mut()};TEX[i].entity=if fv()%2!=0{&raw mut G[i]}else{core::ptr::null_mut()};TEX[i].font_idx=(i%2) as u8;TEX[i].alloc_data=core::ptr::null_mut();TEX[i].string_buffer=if fv()%2!=0{STR[i].as_mut_ptr()}else{core::ptr::null_mut()};TEX[i].render_callback=None;
+ TEX[i].next=if i<2{&raw mut TEX[i+1]}else{core::ptr::null_mut()};TEX[i].entity=if fv()%2!=0{&raw mut G[i]}else{core::ptr::null_mut()};TEX[i].font_idx=(i%2) as u8;TEX[i].alloc_data=core::ptr::null_mut();TEX[i].state_stack=if fv()%2!=0{STR[i].as_mut_ptr() as *mut u8}else{core::ptr::null_mut()};TEX[i].render_callback=None;
  E[i].x0=if i<2{&raw mut E[i+1]}else{core::ptr::null_mut()};E[i].x4=if fv()%2!=0{&raw mut G[i]}else{core::ptr::null_mut()};E[i].xA=(i%2) as u16;E[i].xE%=16;
  for j in 0..32{STR[i][j]=fv() as i8;}
- BL[i].data=&raw mut TEX[i];BL[i+3].data=(&raw mut E[i]).cast();BL[i+6].data=STR[i].as_mut_ptr().cast();
+ BL[i].data=(&raw mut TEX[i]).cast();BL[i+3].data=(&raw mut E[i]).cast();BL[i+6].data=STR[i].as_mut_ptr().cast();
  }
  for i in 0..9{BL[i].next=if i<8{&raw mut BL[i+1]}else{core::ptr::null_mut()};BL[i].size=32;}
  m::used_head=&raw mut BL[0];m::HSD_SisLib_804D7978=&raw mut TEX[0];m::HSD_SisLib_804D797C=&raw mut E[0];
@@ -33,7 +33,7 @@ static mut ARENA:[u64;1024]=[0;1024];static mut TEX:[HSD_Text;3]=unsafe{core::me
 10=>{m::HSD_SisLib_803A5FBC();},
 11=>{m::HSD_SisLib_803A6048(8192);},
 12=>{m::fn_803A60EC((&raw mut G[ix]).cast());},
-13=>{m::sislib_WideCamera(&raw mut G[ix],font);},
+13=>{m::sislib_WideCamera(&raw mut G[ix],font as isize);},
 14=>{m::HSD_SisLib_SetWideCanvas(font,(k%4) as i32);},
 15=>{ret=m::HSD_SisLib_803A611C(font,if k%2!=0{&raw mut G[0]}else{core::ptr::null_mut()},cl,pl,pp,gl,gp,rp) as u32;},
 16=>{m::HSD_SisLib_803A62A0(font,c"archive".as_ptr() as *mut _,c"symbol".as_ptr() as *mut _);},
@@ -47,7 +47,7 @@ _=>unreachable!(),}
  hm(pi(m::used_head));hm(pi(m::free_head));hm(m::HSD_SisLib_804D7968);hm(pi(m::HSD_SisLib_804D796C));hm(pi(m::HSD_SisLib_804D7978));hm(pi(m::HSD_SisLib_804D797C));
  for i in 0..5{hm(pi(m::HSD_SisLib_804D1110[i]));hm(pi(m::HSD_SisLib_804D1124[i]));}
  let mut b=m::used_head;while !b.is_null(){g::hash_SisBlock(&*b);b=(*b).next;}b=m::free_head;while !b.is_null(){g::hash_SisBlock(&*b);b=(*b).next;}
- let mut t=m::HSD_SisLib_804D7978;while !t.is_null(){g::hash_HSD_Text(&*t);if op==17&&t==&raw mut TEX[ix%3]{for j in 0..16{hm(*(*t).string_buffer.add(j) as u8 as u32);}}t=(*t).next;}
+ let mut t=m::HSD_SisLib_804D7978;while !t.is_null(){g::hash_HSD_Text(&*t);if op==17&&t==&raw mut TEX[ix%3]{for j in 0..16{hm(*(*t).state_stack.add(j) as u8 as u32);}}t=(*t).next;}
  let mut e=m::HSD_SisLib_804D797C;while !e.is_null(){g::hash_sislib_UnkAlloc3(&*e);e=(*e).x0;}
  check.line(op,k,ret);
  }}assert_eq!(check.done(),8800);}}

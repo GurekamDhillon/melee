@@ -145,33 +145,33 @@ fn hfn(f: usize) -> u32 {
 unsafe fn state_hash() -> u32 {
     H = 2166136261;
     let a = &lm::lbMemory_804318B0;
-    hx(hv(a.a_arenaLo));
-    hx(hv(a.a_arenaHi));
+    hx(hv(a.a_arenaLo as *const c_void));
+    hx(hv(a.a_arenaHi as *const c_void));
     for i in 0..0x83 {
-        hx(hv(a.x8_mem[i].x0_next));
-        hx(hv(a.x8_mem[i].x4_lo));
-        hx(hv(a.x8_mem[i].x8_hi));
+        hx(hv(a.mem[i].next));
+        hx(hv(a.mem[i].addr));
+        hx(hv(a.mem[i].size as *const c_void));
     }
     hx(hv(a.free_mem));
-    hx(a.x630_num_allocs as u32);
-    hx(a.x634_max_num_allocs as u32);
+    hx(a.num_allocs as u32);
+    hx(a.max_num_allocs as u32);
     for i in 0..6 {
-        hx(hv(a.x638_heap[i].x0_next));
-        hx(hv(a.x638_heap[i].x4_lo));
-        hx(hv(a.x638_heap[i].x8_hi));
-        hx(hv(a.x638_heap[i].xC_prev));
+        hx(hv(a.heap[i].next));
+        hx(hv(a.heap[i].lo));
+        hx(hv(a.heap[i].hi));
+        hx(hv(a.heap[i].blocks));
     }
     hx(hv(a.free_heap));
-    hx(hv(a.x69C));
-    hx(a.x6A0_mgr.src as usize as u32);
-    hx(a.x6A0_mgr.dst as usize as u32);
-    hx(a.x6A0_mgr.size);
-    hx(a.x6A0_mgr.offset);
-    hx(hv(a.x6A0_mgr.cb_arg as *const c_void));
-    hx(hfn(a.x6A0_mgr.cb.map_or(0usize, |f| f as usize)));
-    hx(a.x6E0);
-    hx(hv(a.x6E4));
-    hx(hfn(a.x6E8.map_or(0usize, |f| f as usize)));
+    hx(hv(a.aram_heap));
+    hx(a.mgr.src as usize as u32);
+    hx(a.mgr.dst as usize as u32);
+    hx(a.mgr.size);
+    hx(a.mgr.offset);
+    hx(hv(a.mgr.cb_arg as *const c_void));
+    hx(hfn(a.mgr.cb.map_or(0usize, |f| f as usize)));
+    hx(a.compact_arg);
+    hx(hv(a.compact_cursor as *const c_void));
+    hx(hfn(a.compact_cb.map_or(0usize, |f| f as usize)));
     let s = &lh::lbHeap_80431FA0;
     hx(hv(s.arena_lo));
     hx(hv(s.arena_hi));
@@ -261,7 +261,7 @@ unsafe fn do_free(pa: &mut i32, pb: &mut u32) {
             mode = 1;
         }
         if mode == 1 && in_alloc(v) {
-            v = (*(v as *mut Handle)).x4_lo;
+            v = (*(v as *mut Handle)).lo;
         }
         if mode == 2 {
             v = (rnd() % 4096) as usize as *mut c_void;

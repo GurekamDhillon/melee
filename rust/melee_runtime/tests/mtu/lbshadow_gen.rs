@@ -294,7 +294,7 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.gobj = pick_HSD_GObj();
     p.kind = fv() as _;
     p.x8_spawnNum = fv() as _;
-    p.player_id = fv() as _;
+    p.player_idx = fv() as _;
     p.motion_id = fv() as _;
     p.anim_id = fv() as _;
     p.x18 = fv() as _;
@@ -609,16 +609,16 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.x508.set_x7C_flag8(fv() as _);
     p.x588 = pick_HSD_LObj();
     p.x58C = fv() as _;
-    p.anon_594.anon_0.set_x594_b0(fv() as _);
-    p.anon_594.anon_0.set_x594_b1_loop(fv() as _);
-    p.anon_594.anon_0.set_x594_b2(fv() as _);
-    p.anon_594.anon_0.set_x594_b3(fv() as _);
-    p.anon_594.anon_0.set_x594_b4(fv() as _);
-    p.anon_594.anon_0.set_x594_b5(fv() as _);
-    p.anon_594.anon_0.set_x594_b6(fv() as _);
-    p.anon_594.anon_0.set_x594_b7(fv() as _);
-    p.anon_594.anon_0.x596_bits.set_x0(fv() as _);
-    p.anon_594.anon_0.x596_bits.set_x7(fv() as _);
+    p.x594.x0.set_x594_b0(fv() as _);
+    p.x594.x0.set_x594_b1_loop(fv() as _);
+    p.x594.x0.set_x594_b2(fv() as _);
+    p.x594.x0.set_x594_b3(fv() as _);
+    p.x594.x0.set_x594_b4(fv() as _);
+    p.x594.x0.set_x594_b5(fv() as _);
+    p.x594.x0.set_x594_b6(fv() as _);
+    p.x594.x0.set_x594_b7(fv() as _);
+    p.x594.x0.x596_bits.set_x0(fv() as _);
+    p.x594.x0.x596_bits.set_x7(fv() as _);
     p.x5AC.model_num = fv() as _;
     for i0 in 0..5 {
     p.x5AC.cleared[i0] = fv() as _;
@@ -640,9 +640,9 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.x610_color_rgba[i0].b = fv() as _;
     p.x610_color_rgba[i0].a = fv() as _;
     }
-    p.x618_player_id = fv() as _;
-    p.x619_costume_id = fv() as _;
-    p.x61A_controller_index = fv() as _;
+    p.pad_port = fv() as _;
+    p.costume_id = fv() as _;
+    p.sub_color = fv() as _;
     p.team = fv() as _;
     p.x61C = fv() as _;
     p.x61D = fv() as _;
@@ -906,7 +906,7 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     for i1 in 0..12 {
     p.x914[i0].victims_2[i1].x4 = fv() as _;
     }
-    p.x914[i0].anon_134.set_hit_grabbed_victim_only(fv() as _);
+    p.x914[i0].x134.set_hit_grabbed_victim_only(fv() as _);
     }
     for i0 in 0..2 {
     p.xDF4[i0].state = fv() as _;
@@ -972,7 +972,7 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     for i1 in 0..12 {
     p.xDF4[i0].victims_2[i1].x4 = fv() as _;
     }
-    p.xDF4[i0].anon_134.set_hit_grabbed_victim_only(fv() as _);
+    p.xDF4[i0].x134.set_hit_grabbed_victim_only(fv() as _);
     }
     p.x1064_thrownHitbox.state = fv() as _;
     p.x1064_thrownHitbox.x4 = fv() as _;
@@ -1037,7 +1037,7 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     for i0 in 0..12 {
     p.x1064_thrownHitbox.victims_2[i0].x4 = fv() as _;
     }
-    p.x1064_thrownHitbox.anon_134.set_hit_grabbed_victim_only(fv() as _);
+    p.x1064_thrownHitbox.x134.set_hit_grabbed_victim_only(fv() as _);
     p.x119C_teamUnk = fv() as _;
     p.grabber_unk1 = fv() as _;
     p.hurt_capsules_len = fv() as _;
@@ -1418,41 +1418,41 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.x2068_attackID = fv() as _;
     p.x206C_attack_instance = fv() as _;
     p.x206E = fv() as _;
-    p.x2070.anon_0.x2070 = fv() as _;
-    p.x2070.anon_0.set_x2071_b0_3(fv() as _);
-    p.x2070.anon_0.set_x2071_b4(fv() as _);
-    p.x2070.anon_0.set_x2071_b5(fv() as _);
-    p.x2070.anon_0.set_x2071_b6(fv() as _);
-    p.x2070.anon_0.set_x2071_b7(fv() as _);
-    p.x2070.anon_0.set_x2072_b0(fv() as _);
-    p.x2070.anon_0.set_x2072_b1(fv() as _);
-    p.x2070.anon_0.set_x2072_b2(fv() as _);
-    p.x2070.anon_0.set_count_x1A4(fv() as _);
-    p.x2070.anon_0.set_count_thrown_items(fv() as _);
-    p.x2070.anon_0.set_count_aerials(fv() as _);
-    p.x2070.anon_0.set_count_x1A0(fv() as _);
-    p.x2070.anon_0.set_count_specials(fv() as _);
-    p.x2070.anon_0.x2073 = fv() as _;
+    p.x2070.x0.x2070 = fv() as _;
+    p.x2070.x0.set_x2071_b0_3(fv() as _);
+    p.x2070.x0.set_x2071_b4(fv() as _);
+    p.x2070.x0.set_x2071_b5(fv() as _);
+    p.x2070.x0.set_x2071_b6(fv() as _);
+    p.x2070.x0.set_x2071_b7(fv() as _);
+    p.x2070.x0.set_x2072_b0(fv() as _);
+    p.x2070.x0.set_x2072_b1(fv() as _);
+    p.x2070.x0.set_x2072_b2(fv() as _);
+    p.x2070.x0.set_count_x1A4(fv() as _);
+    p.x2070.x0.set_count_thrown_items(fv() as _);
+    p.x2070.x0.set_count_aerials(fv() as _);
+    p.x2070.x0.set_count_x1A0(fv() as _);
+    p.x2070.x0.set_count_specials(fv() as _);
+    p.x2070.x0.x2073 = fv() as _;
     p.x2074.x2074_vec.x = rg();
     p.x2074.x2074_vec.y = rg();
     p.x2074.x207C.x = fv() as _;
     p.x2074.x207C.y = fv() as _;
-    p.x2074.anon_10.anon_0.set_x2084_b0(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2084_b1(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2084_b2(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2084_b3(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2084_b4(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2084_b5(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2084_b6(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2084_b7(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2085_b0(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2085_b1(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2085_b2(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2085_b3(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2085_b4(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2085_b5(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2085_b6(fv() as _);
-    p.x2074.anon_10.anon_0.set_x2085_b7(fv() as _);
+    p.x2074.x10.x0.set_x2084_b0(fv() as _);
+    p.x2074.x10.x0.set_x2084_b1(fv() as _);
+    p.x2074.x10.x0.set_x2084_b2(fv() as _);
+    p.x2074.x10.x0.set_x2084_b3(fv() as _);
+    p.x2074.x10.x0.set_x2084_b4(fv() as _);
+    p.x2074.x10.x0.set_x2084_b5(fv() as _);
+    p.x2074.x10.x0.set_x2084_b6(fv() as _);
+    p.x2074.x10.x0.set_x2084_b7(fv() as _);
+    p.x2074.x10.x0.set_x2085_b0(fv() as _);
+    p.x2074.x10.x0.set_x2085_b1(fv() as _);
+    p.x2074.x10.x0.set_x2085_b2(fv() as _);
+    p.x2074.x10.x0.set_x2085_b3(fv() as _);
+    p.x2074.x10.x0.set_x2085_b4(fv() as _);
+    p.x2074.x10.x0.set_x2085_b5(fv() as _);
+    p.x2074.x10.x0.set_x2085_b6(fv() as _);
+    p.x2074.x10.x0.set_x2085_b7(fv() as _);
     p.x2074.x2088 = fv() as _;
     p.x208C = fv() as _;
     p.x2090 = fv() as _;
@@ -1558,28 +1558,28 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.take_dmg_2_cb = unsafe { core::mem::transmute::<usize, _>(pick_fn(1)) };
     p.hurtbox_detect_cb = unsafe { core::mem::transmute::<usize, _>(pick_fn(1)) };
     p.x21F8 = unsafe { core::mem::transmute::<usize, _>(pick_fn(1)) };
-    p.x21FC_flag.anon_0.set_b0(fv() as _);
-    p.x21FC_flag.anon_0.set_b1(fv() as _);
-    p.x21FC_flag.anon_0.set_b2(fv() as _);
-    p.x21FC_flag.anon_0.set_b3(fv() as _);
-    p.x21FC_flag.anon_0.set_b4(fv() as _);
-    p.x21FC_flag.anon_0.set_b5(fv() as _);
-    p.x21FC_flag.anon_0.set_b6(fv() as _);
-    p.x21FC_flag.anon_0.set_b7(fv() as _);
+    p.x21FC_flag.x0.set_b0(fv() as _);
+    p.x21FC_flag.x0.set_b1(fv() as _);
+    p.x21FC_flag.x0.set_b2(fv() as _);
+    p.x21FC_flag.x0.set_b3(fv() as _);
+    p.x21FC_flag.x0.set_b4(fv() as _);
+    p.x21FC_flag.x0.set_b5(fv() as _);
+    p.x21FC_flag.x0.set_b6(fv() as _);
+    p.x21FC_flag.x0.set_b7(fv() as _);
     for i0 in 0..3 {
     p.filler_x21FC[i0] = fv() as _;
     }
     for i0 in 0..4 {
     p.cmd_vars[i0] = fv() as _;
     }
-    p.anon_2210.anon_0.set_throw_flags_b0(fv() as _);
-    p.anon_2210.anon_0.set_throw_flags_b1(fv() as _);
-    p.anon_2210.anon_0.set_throw_flags_b2(fv() as _);
-    p.anon_2210.anon_0.set_throw_flags_b3(fv() as _);
-    p.anon_2210.anon_0.set_throw_flags_b4(fv() as _);
-    p.anon_2210.anon_0.set_throw_flags_b5(fv() as _);
-    p.anon_2210.anon_0.set_throw_flags_b6(fv() as _);
-    p.anon_2210.anon_0.set_throw_flags_b7(fv() as _);
+    p.x2210.x0.set_throw_flags_b0(fv() as _);
+    p.x2210.x0.set_throw_flags_b1(fv() as _);
+    p.x2210.x0.set_throw_flags_b2(fv() as _);
+    p.x2210.x0.set_throw_flags_b3(fv() as _);
+    p.x2210.x0.set_throw_flags_b4(fv() as _);
+    p.x2210.x0.set_throw_flags_b5(fv() as _);
+    p.x2210.x0.set_throw_flags_b6(fv() as _);
+    p.x2210.x0.set_throw_flags_b7(fv() as _);
     p.cmd_timer = rg();
     p.set_allow_interrupt(fv() as _);
     p.set_x2218_b1(fv() as _);
@@ -1605,14 +1605,14 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.set_x221A_b5(fv() as _);
     p.set_x221A_b6(fv() as _);
     p.set_x221A_b7(fv() as _);
-    p.anon_221b.set_x221B_b0(fv() as _);
-    p.anon_221b.set_x221B_b1(fv() as _);
-    p.anon_221b.set_x221B_b2(fv() as _);
-    p.anon_221b.set_x221B_b3(fv() as _);
-    p.anon_221b.set_x221B_b4(fv() as _);
-    p.anon_221b.set_x221B_b5(fv() as _);
-    p.anon_221b.set_x221B_b6(fv() as _);
-    p.anon_221b.set_x221B_b7(fv() as _);
+    p.x221B.set_x221B_b0(fv() as _);
+    p.x221B.set_x221B_b1(fv() as _);
+    p.x221B.set_x221B_b2(fv() as _);
+    p.x221B.set_x221B_b3(fv() as _);
+    p.x221B.set_x221B_b4(fv() as _);
+    p.x221B.set_x221B_b5(fv() as _);
+    p.x221B.set_x221B_b6(fv() as _);
+    p.x221B.set_x221B_b7(fv() as _);
     p.set_x221C_b0(fv() as _);
     p.set_x221C_b1(fv() as _);
     p.set_x221C_b2(fv() as _);
@@ -1810,7 +1810,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.gobj));
     hm(p.kind as u32);
     hm(p.x8_spawnNum as u32);
-    hm(p.player_id as u32);
+    hm(p.player_idx as u32);
     hm(p.motion_id as u32);
     hm(p.anim_id as u32);
     hm(p.x18 as u32);
@@ -2147,16 +2147,16 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.x588));
     hm(p.x58C as u32);
     hm(pi(p.x590));
-    hm(p.anon_594.anon_0.x594_b0() as u32);
-    hm(p.anon_594.anon_0.x594_b1_loop() as u32);
-    hm(p.anon_594.anon_0.x594_b2() as u32);
-    hm(p.anon_594.anon_0.x594_b3() as u32);
-    hm(p.anon_594.anon_0.x594_b4() as u32);
-    hm(p.anon_594.anon_0.x594_b5() as u32);
-    hm(p.anon_594.anon_0.x594_b6() as u32);
-    hm(p.anon_594.anon_0.x594_b7() as u32);
-    hm(p.anon_594.anon_0.x596_bits.x0() as u32);
-    hm(p.anon_594.anon_0.x596_bits.x7() as u32);
+    hm(p.x594.x0.x594_b0() as u32);
+    hm(p.x594.x0.x594_b1_loop() as u32);
+    hm(p.x594.x0.x594_b2() as u32);
+    hm(p.x594.x0.x594_b3() as u32);
+    hm(p.x594.x0.x594_b4() as u32);
+    hm(p.x594.x0.x594_b5() as u32);
+    hm(p.x594.x0.x594_b6() as u32);
+    hm(p.x594.x0.x594_b7() as u32);
+    hm(p.x594.x0.x596_bits.x0() as u32);
+    hm(p.x594.x0.x596_bits.x7() as u32);
     hm(pi(p.x598));
     hm(pi(p.x59C));
     hm(pi(p.x5A0));
@@ -2188,9 +2188,9 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x610_color_rgba[i0].b as u32);
     hm(p.x610_color_rgba[i0].a as u32);
     }
-    hm(p.x618_player_id as u32);
-    hm(p.x619_costume_id as u32);
-    hm(p.x61A_controller_index as u32);
+    hm(p.pad_port as u32);
+    hm(p.costume_id as u32);
+    hm(p.sub_color as u32);
     hm(p.team as u32);
     hm(p.x61C as u32);
     hm(p.x61D as u32);
@@ -2456,7 +2456,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.x914[i0].victims_2[i1].victim));
     hm(p.x914[i0].victims_2[i1].x4 as u32);
     }
-    hm(p.x914[i0].anon_134.hit_grabbed_victim_only() as u32);
+    hm(p.x914[i0].x134.hit_grabbed_victim_only() as u32);
     }
     for i0 in 0..2 {
     hm(p.xDF4[i0].state as u32);
@@ -2524,7 +2524,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.xDF4[i0].victims_2[i1].victim));
     hm(p.xDF4[i0].victims_2[i1].x4 as u32);
     }
-    hm(p.xDF4[i0].anon_134.hit_grabbed_victim_only() as u32);
+    hm(p.xDF4[i0].x134.hit_grabbed_victim_only() as u32);
     }
     hm(p.x1064_thrownHitbox.state as u32);
     hm(p.x1064_thrownHitbox.x4 as u32);
@@ -2591,7 +2591,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.x1064_thrownHitbox.victims_2[i0].victim));
     hm(p.x1064_thrownHitbox.victims_2[i0].x4 as u32);
     }
-    hm(p.x1064_thrownHitbox.anon_134.hit_grabbed_victim_only() as u32);
+    hm(p.x1064_thrownHitbox.x134.hit_grabbed_victim_only() as u32);
     hm(p.x119C_teamUnk as u32);
     hm(p.grabber_unk1 as u32);
     hm(p.hurt_capsules_len as u32);
@@ -2983,41 +2983,41 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x2068_attackID as u32);
     hm(p.x206C_attack_instance as u32);
     hm(p.x206E as u32);
-    hm(p.x2070.anon_0.x2070 as u32);
-    hm(p.x2070.anon_0.x2071_b0_3() as u32);
-    hm(p.x2070.anon_0.x2071_b4() as u32);
-    hm(p.x2070.anon_0.x2071_b5() as u32);
-    hm(p.x2070.anon_0.x2071_b6() as u32);
-    hm(p.x2070.anon_0.x2071_b7() as u32);
-    hm(p.x2070.anon_0.x2072_b0() as u32);
-    hm(p.x2070.anon_0.x2072_b1() as u32);
-    hm(p.x2070.anon_0.x2072_b2() as u32);
-    hm(p.x2070.anon_0.count_x1A4() as u32);
-    hm(p.x2070.anon_0.count_thrown_items() as u32);
-    hm(p.x2070.anon_0.count_aerials() as u32);
-    hm(p.x2070.anon_0.count_x1A0() as u32);
-    hm(p.x2070.anon_0.count_specials() as u32);
-    hm(p.x2070.anon_0.x2073 as u32);
+    hm(p.x2070.x0.x2070 as u32);
+    hm(p.x2070.x0.x2071_b0_3() as u32);
+    hm(p.x2070.x0.x2071_b4() as u32);
+    hm(p.x2070.x0.x2071_b5() as u32);
+    hm(p.x2070.x0.x2071_b6() as u32);
+    hm(p.x2070.x0.x2071_b7() as u32);
+    hm(p.x2070.x0.x2072_b0() as u32);
+    hm(p.x2070.x0.x2072_b1() as u32);
+    hm(p.x2070.x0.x2072_b2() as u32);
+    hm(p.x2070.x0.count_x1A4() as u32);
+    hm(p.x2070.x0.count_thrown_items() as u32);
+    hm(p.x2070.x0.count_aerials() as u32);
+    hm(p.x2070.x0.count_x1A0() as u32);
+    hm(p.x2070.x0.count_specials() as u32);
+    hm(p.x2070.x0.x2073 as u32);
     hm(p.x2074.x2074_vec.x.to_bits());
     hm(p.x2074.x2074_vec.y.to_bits());
     hm(p.x2074.x207C.x as u32);
     hm(p.x2074.x207C.y as u32);
-    hm(p.x2074.anon_10.anon_0.x2084_b0() as u32);
-    hm(p.x2074.anon_10.anon_0.x2084_b1() as u32);
-    hm(p.x2074.anon_10.anon_0.x2084_b2() as u32);
-    hm(p.x2074.anon_10.anon_0.x2084_b3() as u32);
-    hm(p.x2074.anon_10.anon_0.x2084_b4() as u32);
-    hm(p.x2074.anon_10.anon_0.x2084_b5() as u32);
-    hm(p.x2074.anon_10.anon_0.x2084_b6() as u32);
-    hm(p.x2074.anon_10.anon_0.x2084_b7() as u32);
-    hm(p.x2074.anon_10.anon_0.x2085_b0() as u32);
-    hm(p.x2074.anon_10.anon_0.x2085_b1() as u32);
-    hm(p.x2074.anon_10.anon_0.x2085_b2() as u32);
-    hm(p.x2074.anon_10.anon_0.x2085_b3() as u32);
-    hm(p.x2074.anon_10.anon_0.x2085_b4() as u32);
-    hm(p.x2074.anon_10.anon_0.x2085_b5() as u32);
-    hm(p.x2074.anon_10.anon_0.x2085_b6() as u32);
-    hm(p.x2074.anon_10.anon_0.x2085_b7() as u32);
+    hm(p.x2074.x10.x0.x2084_b0() as u32);
+    hm(p.x2074.x10.x0.x2084_b1() as u32);
+    hm(p.x2074.x10.x0.x2084_b2() as u32);
+    hm(p.x2074.x10.x0.x2084_b3() as u32);
+    hm(p.x2074.x10.x0.x2084_b4() as u32);
+    hm(p.x2074.x10.x0.x2084_b5() as u32);
+    hm(p.x2074.x10.x0.x2084_b6() as u32);
+    hm(p.x2074.x10.x0.x2084_b7() as u32);
+    hm(p.x2074.x10.x0.x2085_b0() as u32);
+    hm(p.x2074.x10.x0.x2085_b1() as u32);
+    hm(p.x2074.x10.x0.x2085_b2() as u32);
+    hm(p.x2074.x10.x0.x2085_b3() as u32);
+    hm(p.x2074.x10.x0.x2085_b4() as u32);
+    hm(p.x2074.x10.x0.x2085_b5() as u32);
+    hm(p.x2074.x10.x0.x2085_b6() as u32);
+    hm(p.x2074.x10.x0.x2085_b7() as u32);
     hm(p.x2074.x2088 as u32);
     hm(p.x208C as u32);
     hm(p.x2090 as u32);
@@ -3123,28 +3123,28 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(fi(p.take_dmg_2_cb));
     hm(fi(p.hurtbox_detect_cb));
     hm(fi(p.x21F8));
-    hm(p.x21FC_flag.anon_0.b0() as u32);
-    hm(p.x21FC_flag.anon_0.b1() as u32);
-    hm(p.x21FC_flag.anon_0.b2() as u32);
-    hm(p.x21FC_flag.anon_0.b3() as u32);
-    hm(p.x21FC_flag.anon_0.b4() as u32);
-    hm(p.x21FC_flag.anon_0.b5() as u32);
-    hm(p.x21FC_flag.anon_0.b6() as u32);
-    hm(p.x21FC_flag.anon_0.b7() as u32);
+    hm(p.x21FC_flag.x0.b0() as u32);
+    hm(p.x21FC_flag.x0.b1() as u32);
+    hm(p.x21FC_flag.x0.b2() as u32);
+    hm(p.x21FC_flag.x0.b3() as u32);
+    hm(p.x21FC_flag.x0.b4() as u32);
+    hm(p.x21FC_flag.x0.b5() as u32);
+    hm(p.x21FC_flag.x0.b6() as u32);
+    hm(p.x21FC_flag.x0.b7() as u32);
     for i0 in 0..3 {
     hm(p.filler_x21FC[i0] as u32);
     }
     for i0 in 0..4 {
     hm(p.cmd_vars[i0] as u32);
     }
-    hm(p.anon_2210.anon_0.throw_flags_b0() as u32);
-    hm(p.anon_2210.anon_0.throw_flags_b1() as u32);
-    hm(p.anon_2210.anon_0.throw_flags_b2() as u32);
-    hm(p.anon_2210.anon_0.throw_flags_b3() as u32);
-    hm(p.anon_2210.anon_0.throw_flags_b4() as u32);
-    hm(p.anon_2210.anon_0.throw_flags_b5() as u32);
-    hm(p.anon_2210.anon_0.throw_flags_b6() as u32);
-    hm(p.anon_2210.anon_0.throw_flags_b7() as u32);
+    hm(p.x2210.x0.throw_flags_b0() as u32);
+    hm(p.x2210.x0.throw_flags_b1() as u32);
+    hm(p.x2210.x0.throw_flags_b2() as u32);
+    hm(p.x2210.x0.throw_flags_b3() as u32);
+    hm(p.x2210.x0.throw_flags_b4() as u32);
+    hm(p.x2210.x0.throw_flags_b5() as u32);
+    hm(p.x2210.x0.throw_flags_b6() as u32);
+    hm(p.x2210.x0.throw_flags_b7() as u32);
     hm(p.cmd_timer.to_bits());
     hm(p.allow_interrupt() as u32);
     hm(p.x2218_b1() as u32);
@@ -3170,14 +3170,14 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x221A_b5() as u32);
     hm(p.x221A_b6() as u32);
     hm(p.x221A_b7() as u32);
-    hm(p.anon_221b.x221B_b0() as u32);
-    hm(p.anon_221b.x221B_b1() as u32);
-    hm(p.anon_221b.x221B_b2() as u32);
-    hm(p.anon_221b.x221B_b3() as u32);
-    hm(p.anon_221b.x221B_b4() as u32);
-    hm(p.anon_221b.x221B_b5() as u32);
-    hm(p.anon_221b.x221B_b6() as u32);
-    hm(p.anon_221b.x221B_b7() as u32);
+    hm(p.x221B.x221B_b0() as u32);
+    hm(p.x221B.x221B_b1() as u32);
+    hm(p.x221B.x221B_b2() as u32);
+    hm(p.x221B.x221B_b3() as u32);
+    hm(p.x221B.x221B_b4() as u32);
+    hm(p.x221B.x221B_b5() as u32);
+    hm(p.x221B.x221B_b6() as u32);
+    hm(p.x221B.x221B_b7() as u32);
     hm(p.x221C_b0() as u32);
     hm(p.x221C_b1() as u32);
     hm(p.x221C_b2() as u32);

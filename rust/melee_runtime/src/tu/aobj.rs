@@ -249,10 +249,10 @@ pub unsafe extern "C" fn HSD_AObjLoadDesc(aobjdesc: *mut HSD_AObjDesc) -> *mut H
             phi_r30 = ext::HSD_JObjLoadJoint((*aobjdesc).obj_id as usize as *mut HSD_Joint) as *mut HSD_Obj;
         }
         if !aobj.is_null() {
-            if !(*aobj).hsd_obj.is_null() {
-                ext::HSD_JObjUnref((*aobj).hsd_obj as *mut HSD_JObj);
+            if !(*aobj).jobj.is_null() {
+                ext::HSD_JObjUnref((*aobj).jobj as *mut HSD_JObj);
             }
-            (*aobj).hsd_obj = phi_r30;
+            (*aobj).jobj = phi_r30 as *mut HSD_JObj;
         }
     }
     aobj
@@ -268,10 +268,10 @@ pub unsafe extern "C" fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
     }
     (*aobj).fobj = null_mut();
 
-    if !(*aobj).hsd_obj.is_null() {
-        ext::HSD_JObjUnref((*aobj).hsd_obj as *mut HSD_JObj);
+    if !(*aobj).jobj.is_null() {
+        ext::HSD_JObjUnref((*aobj).jobj as *mut HSD_JObj);
     }
-    (*aobj).hsd_obj = null_mut();
+    (*aobj).jobj = null_mut();
     HSD_AObjFree(aobj);
 }
 

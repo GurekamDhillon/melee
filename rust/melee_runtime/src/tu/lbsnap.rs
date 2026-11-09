@@ -98,7 +98,7 @@ pub mod ext {
 // END GENERATED EXT
 
 // C-local records are extracted verbatim by the ONE melee_types generator.
-pub use melee_types::{LbCardEntry, LbMcSnapMemSnapIconData, Unk803BACC8,
+pub use melee_types::{LbCardEntry, Unk803BACC8,
                       Unk80433380, Unk80433380_0, Unk80433380_48};
 
 /// `static struct Unk80433380 lbSnap_80433380;`
@@ -304,7 +304,7 @@ pub fn RGB565_TO_RGB5A3(pixel: u16) -> u16 {
 #[inline]
 pub unsafe fn lbSnap_GetMemSnapIconData() -> *mut u8 {
     melee_core::ct!("lbSnap_GetMemSnapIconData");
-    (*lbSnap_80433380.icon_data).ptr
+    *lbSnap_80433380.icon_data
 }
 
 /// Scale the 448x204 snapshot region to 64x32, centered in the 96x32 banner.
@@ -468,8 +468,8 @@ pub unsafe fn lbSnap_8001DF6C(chan: i32) -> i32 {
             (*desc).entries.as_mut_ptr() as *mut c_void,
             desc as *mut c_void,
             lbSnap_80433380.filename.as_mut_ptr(),
-            (*lbSnap_80433380.icon_data).ptr as *mut c_void,
-            (*lbSnap_80433380.icon_data.add(1)).ptr as *mut c_void,
+            *lbSnap_80433380.icon_data as *mut c_void,
+            *lbSnap_80433380.icon_data.add(1) as *mut c_void,
             null_mut(),
         );
     }
@@ -492,8 +492,8 @@ pub unsafe fn lbSnap_8001E058(chan: i32, index: i32) -> i32 {
             text.as_mut_ptr(),
             lbSnap_803BACC8.entries.as_mut_ptr() as *mut c_void,
             lbSnap_80433380.filename.as_mut_ptr(),
-            (*lbSnap_80433380.icon_data).ptr as *mut c_void,
-            (*lbSnap_80433380.icon_data.add(1)).ptr as *mut c_void,
+            *lbSnap_80433380.icon_data as *mut c_void,
+            *lbSnap_80433380.icon_data.add(1) as *mut c_void,
             null_mut(),
         );
     }

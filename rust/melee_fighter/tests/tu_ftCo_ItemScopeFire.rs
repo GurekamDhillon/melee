@@ -57,7 +57,7 @@ fn ftCo_ItemScopeFire_matches_c() {
             fr.facing_dir = rg();
             let tf = (rnd() & 0xFF) as u8;
             {
-                let a = unsafe { &mut fr.anon_2210.anon_0 };
+                let a = unsafe { &mut fr.x2210.x0 };
                 a.set_throw_flags_b0(tf & 1); a.set_throw_flags_b1((tf >> 1) & 1);
                 a.set_throw_flags_b2((tf >> 2) & 1); a.set_throw_flags_b3((tf >> 3) & 1);
                 a.set_throw_flags_b4((tf >> 4) & 1); a.set_throw_flags_b5((tf >> 5) & 1);
@@ -88,7 +88,7 @@ fn ftCo_ItemScopeFire_matches_c() {
             h.m(match fr.take_dmg_cb { None => 0, Some(p) if fnsym::same(p as usize, m::fn_800D8378_c as usize) => 2, _ => 9 });
             h.m(unsafe { fr.mv.co.common.x0 } as u32);
             {
-                let a = unsafe { &fr.anon_2210.anon_0 };
+                let a = unsafe { &fr.x2210.x0 };
                 h.m(a.throw_flags_b0() as u32); h.m(a.throw_flags_b1() as u32); h.m(a.throw_flags_b2() as u32); h.m(a.throw_flags_b3() as u32);
                 h.m(a.throw_flags_b4() as u32); h.m(a.throw_flags_b5() as u32); h.m(a.throw_flags_b6() as u32); h.m(a.throw_flags_b7() as u32);
             }

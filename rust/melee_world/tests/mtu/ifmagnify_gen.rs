@@ -564,7 +564,7 @@ pub fn fill_VsSceneController(p: &mut VsSceneController) {
     for i1 in 0..4 {
     p.state.x24C.player_standings[i0].kills[i1] = fv() as _;
     }
-    p.state.x24C.player_standings[i0].x18 = fv() as _;
+    p.state.x24C.player_standings[i0].kills[4] = fv() as _;
     p.state.x24C.player_standings[i0].x1C = fv() as _;
     p.state.x24C.player_standings[i0].x20 = fv() as _;
     p.state.x24C.player_standings[i0].x24 = fv() as _;
@@ -769,7 +769,7 @@ pub fn hash_VsSceneController(p: &VsSceneController) {
     for i1 in 0..4 {
     hm(p.state.x24C.player_standings[i0].kills[i1] as u32);
     }
-    hm(p.state.x24C.player_standings[i0].x18 as u32);
+    hm(p.state.x24C.player_standings[i0].kills[4] as u32);
     hm(p.state.x24C.player_standings[i0].x1C as u32);
     hm(p.state.x24C.player_standings[i0].x20 as u32);
     hm(p.state.x24C.player_standings[i0].x24 as u32);
@@ -938,10 +938,10 @@ pub fn hash_HSD_Archive(p: &HSD_Archive) {
 
 pub fn fill_ifMagnify(p: &mut ifMagnify) {
     p.model_desc = (&raw mut super::PMDL) as _;
-    p.x4 = fv() as _;
-    p.x8 = fv() as _;
-    p.xC = fv() as _;
-    p.x10 = fv() as _;
+    p.x4 = unsafe { core::mem::transmute::<u32, _GXColor>(fv() as u32) };
+    p.x8 = unsafe { core::mem::transmute::<u32, _GXColor>(fv() as u32) };
+    p.xC = unsafe { core::mem::transmute::<u32, _GXColor>(fv() as u32) };
+    p.x10 = unsafe { core::mem::transmute::<u32, _GXColor>(fv() as u32) };
     for i0 in 0..6 {
     p.player[i0].gobj = pick_HSD_GObj(0) as _;
     p.player[i0].jobj = pick_HSD_JObj(0) as _;
@@ -965,10 +965,10 @@ pub fn fill_ifMagnify(p: &mut ifMagnify) {
 pub fn hash_ifMagnify(p: &ifMagnify) {
     unsafe { if HDBG { println!("B ifMagnify"); } }
     hm(pi(p.model_desc));
-    hm(p.x4 as u32);
-    hm(p.x8 as u32);
-    hm(p.xC as u32);
-    hm(p.x10 as u32);
+    hm(unsafe { core::mem::transmute::<_GXColor, u32>(p.x4) });
+    hm(unsafe { core::mem::transmute::<_GXColor, u32>(p.x8) });
+    hm(unsafe { core::mem::transmute::<_GXColor, u32>(p.xC) });
+    hm(unsafe { core::mem::transmute::<_GXColor, u32>(p.x10) });
     for i0 in 0..6 {
     hm(pi(p.player[i0].gobj));
     hm(pi(p.player[i0].jobj));

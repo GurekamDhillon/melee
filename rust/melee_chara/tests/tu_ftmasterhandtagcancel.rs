@@ -25,8 +25,8 @@ fn smoke() {
         t::ext::FTCOMMON_INITGRAB = Some(|_, a, timer| log(format!("initgrab {a} {timer}")));
         t::ext::FTCO_800DB368 = Some(|_, _| log("b368"));
     }
-    r.f.anon_221b.set_x221B_b5(1);
-    r.f.anon_221b.set_x221B_b7(1);
+    r.f.x221B.set_x221B_b5(1);
+    r.f.x221B.set_x221B_b7(1);
     t::ftMh_MS_388_80155A58(gp, vgp);
     assert_eq!(
         take(),
@@ -36,6 +36,6 @@ fn smoke() {
     assert_eq!(r.f.victim_gobj, vgp);
     assert_eq!(r.f.facing_dir, -1.0);
     assert_eq!((r.f.invisible(), r.f.x2220_b3()), (1, 1));
-    assert_eq!((r.f.anon_221b.x221B_b5(), r.f.anon_221b.x221B_b7()), (0, 0));
+    assert_eq!((r.f.x221B.x221B_b5(), r.f.x221B.x221B_b7()), (0, 0));
     assert!(r.f.accessory1_cb.is_some());
 }

@@ -38,7 +38,7 @@ fn ftCo_HammerFall_matches_c() {
             let fr = f();
             fr.input.pressed_buttons = rnd(); fr.input.held_buttons[0] = rnd();
             fr.x2338.y = (rnd() & 1) as i32; fr.x683 = (rnd() & 0xFF) as u8; cd().x1C = (rnd() % 256) as i32;
-            fr.ground_or_air = (rnd() & 1) as _; fr.item_gobj = igo() as _; fr.player_id = (rnd() % 6) as u8;
+            fr.ground_or_air = (rnd() & 1) as _; fr.item_gobj = igo() as _; fr.player_idx = (rnd() % 6) as u8;
             fr.set_is_sub_fighter((rnd() & 1) as u8);
             let g = go();
             let ret = match op {

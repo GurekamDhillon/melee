@@ -131,7 +131,7 @@ fn matches_c() {
         cd.x71C = rw(); cd.x720 = rw(); cd.x724 = rw(); cd.x728 = rw(); cd.x72C = rw(); cd.x730 = rw();
         cd.leadead_grab_timer_step = rw(); cd.leadead_grab_break_threshold = rw();
         cd.x370 = rw(); cd.x73C = rnd() as i32;
-        ftr.player_id = (rnd() % 6) as u8;
+        ftr.player_idx = (rnd() % 6) as u8;
         ftr.dmg.x1830_percent = rw();
         ftr.dmg.x1868_source = unsafe { ITEM };
         ftr.mv.co.captureleadead.x0 = unsafe { ITEM };

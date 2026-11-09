@@ -454,7 +454,7 @@ pub fn fill_mp_UnkStruct0(p: &mut mpIsland) {
     p.line0 = fv() as _;
     p.line1 = fv() as _;
     p.joint_id = fv() as _;
-    p.x2A = fv() as _;
+    let _ = fv();
     }
 }
 pub fn hash_mp_UnkStruct0(p: &mpIsland) {
@@ -473,8 +473,8 @@ pub fn hash_mp_UnkStruct0(p: &mpIsland) {
     hm(p.line0 as u32);
     hm(p.line1 as u32);
     hm(p.joint_id as u32);
-    hm(p.x2A as u32);
-    hm(pi(p.ptr));
+    hm(0);
+    hm(0);
     }
 }
 

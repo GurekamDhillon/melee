@@ -19,7 +19,7 @@ fn enter_sequence() {
     vg.user_data = (v as *mut Fighter).cast();
     v.facing_dir = -1.0;
     f.facing_dir = 1.0;
-    f.anon_221b.set_x221B_b5(1);
+    f.x221B.set_x221B_b5(1);
     unsafe {
         h::ftCo_ReleaseItemAndVictim = Some(|_| log("release".into()));
         h::ftCo_800DB368 = Some(|_, _| log("db368".into()));
@@ -35,7 +35,7 @@ fn enter_sequence() {
     let f = unsafe { &*((*gp).user_data as *const Fighter) };
     assert_eq!(f.victim_gobj, vp);
     assert_eq!(f.x1A5C, vp);
-    assert_eq!(f.anon_221b.x221B_b5(), 0);
+    assert_eq!(f.x221B.x221B_b5(), 0);
     assert_eq!(f.facing_dir, -1.0);
     let want = vec![
         "release".to_string(),

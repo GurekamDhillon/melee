@@ -38,7 +38,7 @@ pub fn install() {
 }
 
 pub fn freg_all() {
-    freg(m::ext::cb::hsdIsDescendantOf as *const () as usize);
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
     freg(m::ext::cb::hsdNew as *const () as usize);
     freg(m::DObjAmnesia as *const () as usize);
     freg(m::DObjInfoInit as *const () as usize);

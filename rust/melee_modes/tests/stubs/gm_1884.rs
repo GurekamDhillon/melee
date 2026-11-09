@@ -6,7 +6,7 @@ mod gen_stubs {
     fn t_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj { unsafe { out("GObj_Create"); tri(a0 as i64); tri(a1 as i64); tri(a2 as i64); out("\n"); az(core::mem::size_of::<HSD_GObj>()) as *mut HSD_GObj } }
     fn t_GObj_SetupGXLink(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32) { unsafe { out("GObj_SetupGXLink"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); tri(a2 as i64); tru(a3 as u64); out("\n");  } }
     fn t_HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { unsafe { out("HSD_GObjObject_80390A70"); trp(a0 as *const u8); tri(a1 as i64); trp(a2 as *const u8); out("\n"); (*a0).hsd_obj = a2;  } }
-    fn t_HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_JObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_JObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
     fn t_HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc { unsafe { out("HSD_GObj_SetupProc"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); tri(a2 as i64); out("\n"); az(core::mem::size_of::<HSD_GObjProc>()) as *mut HSD_GObjProc } }
     fn t_HSD_JObjAnimAll(a0: *mut HSD_JObj) { unsafe { out("HSD_JObjAnimAll"); trp(a0 as *const u8); out("\n");  } }
     fn t_HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) { unsafe { out("HSD_JObjClearFlagsAll"); trp(a0 as *const u8); tru(a1 as u64); out("\n");  } }

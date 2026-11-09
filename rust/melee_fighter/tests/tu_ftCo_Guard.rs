@@ -183,7 +183,7 @@ fn ftCo_Guard_matches_c() {
                 (*OWN.add(1)).next = OWN.add(2);
                 if rnd() & 1 != 0 { (*OWN.add(2)).child = core::ptr::null_mut(); }
                 (*JPOSE).flags = rnd(); (*JPOSE).rotation.y = rg();
-                *JTAB.add(2) = JPOSE; (*FD20).x0 = JTAB; (*FD).x20 = FD20;
+                *JTAB.add(2) = JPOSE; (*FD20).x0 = (JTAB) as *mut _; (*FD).x20 = FD20;
                 (*FD8).x11 = (rnd() % 4) as u8; (*FD).x8 = FD8;
                 (*CJ).child = CJC;
                 (*MS.add(ftCo_MS_Guard as usize)).anim_id = (rnd() % 50) as i32;
@@ -196,7 +196,7 @@ fn ftCo_Guard_matches_c() {
                 fr.x1C_actionStateList = MS;
             }
             fr.kind = kinds[(rnd() % 4) as usize];
-            fr.player_id = (rnd() % 4) as u8; fr.x618_player_id = (rnd() % 4) as u8; fr.set_is_sub_fighter((rnd() & 1) as u8);
+            fr.player_idx = (rnd() % 4) as u8; fr.pad_port = (rnd() % 4) as u8; fr.set_is_sub_fighter((rnd() & 1) as u8);
             fr.input.held_buttons[0] = rnd(); fr.input.pressed_buttons = rnd();
             fr.input.triggers[0] = rg();
             fr.input.lstick[0].x = rg(); fr.input.lstick[0].y = rg(); fr.input.lstick[1].x = rg();
@@ -217,7 +217,7 @@ fn ftCo_Guard_matches_c() {
             fr.x19A4 = (rnd() % 30) as i32; fr.x19B0 = if rnd() & 1 != 0 { 10 } else { 3 };
             fr.specialn_facing_dir = rg();
             fr.set_allow_sdi((rnd() & 1) as u8); fr.ground_or_air = rnd() & 1;
-            fr.set_reflecting((rnd() & 1) as u8); fr.anon_221b.set_x221B_b0((rnd() & 1) as u8);
+            fr.set_reflecting((rnd() & 1) as u8); fr.x221B.set_x221B_b0((rnd() & 1) as u8);
             fr.set_x221C_b1((rnd() & 1) as u16); fr.set_x221C_b2((rnd() & 1) as u16); fr.set_x221C_b3((rnd() & 1) as u16);
             fr.co_attrs.initial_shield_size = rg();
             fr.cur_anim_frame = rg(); fr.cur_pos.x = rw(); fr.cur_pos.y = rw();
@@ -303,7 +303,7 @@ fn ftCo_Guard_matches_c() {
             }
             h.m(b(fr.lightshield_amount)); h.m(b(fr.shield_health)); h.m(b(fr.gr_vel)); h.m(b(fr.cur_pos.x)); h.m(b(fr.cur_pos.y));
             h.m(fr.active_timer.trigger as u32); h.m(fr.active_timer.lstick.x as u32);
-            h.m(fr.reflecting() as u32); h.m(fr.anon_221b.x221B_b0() as u32); h.m(fr.x221A_b7() as u32); h.m(fr.x2219_b0() as u32);
+            h.m(fr.reflecting() as u32); h.m(fr.x221B.x221B_b0() as u32); h.m(fr.x221A_b7() as u32); h.m(fr.x2219_b0() as u32);
             h.m(fr.x221C_b1() as u32); h.m(fr.x221C_b2() as u32); h.m(fr.x221C_b3() as u32);
             h.m(cbeq(fr.hitlag_cb, m::ftCo_80093240)); h.m(cbeq(fr.post_hitlag_cb, m::ftCo_800932DC));
             unsafe {

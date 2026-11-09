@@ -1823,9 +1823,9 @@ unsafe fn h_ScriptGame_HitRuleItemCreate(a: &[u64]) -> u64 {
         rt::h_f32((*p).x524_cmd.timer);
         rt::h_f32((*p).x524_cmd.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x524_cmd.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x524_cmd.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x524_cmd.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x524_cmd.anon_8.u as *const u8);
         rt::h_u((*p).x524_cmd.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x524_cmd.event_return[i0] as *const u8);
@@ -2447,9 +2447,9 @@ unsafe fn h_ScriptGame_HitRuleItemCreate(a: &[u64]) -> u64 {
         (*p0).x524_cmd.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x524_cmd.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x524_cmd.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x524_cmd.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x524_cmd.anon_8.anon_0.u = 0usize as _;
+        (*p0).x524_cmd.anon_8.u = 0usize as _;
         (*p0).x524_cmd.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x524_cmd.event_return[i1] = 0usize as _;
@@ -3091,9 +3091,9 @@ unsafe fn h_ScriptGame_NoteSpecialInput(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -4529,9 +4529,9 @@ unsafe fn h_ScriptGame_NoteSpecialInput(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -7219,9 +7219,9 @@ unsafe fn h_ftCo_IsCpuControlled(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -8657,9 +8657,9 @@ unsafe fn h_ftCo_IsCpuControlled(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -10540,9 +10540,9 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -11978,9 +11978,9 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -13420,9 +13420,9 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -14858,9 +14858,9 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -16300,9 +16300,9 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelAir(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -17738,9 +17738,9 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelAir(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -19180,9 +19180,9 @@ unsafe fn h_ftCommon_CalcSelfAccel_Drift(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -20618,9 +20618,9 @@ unsafe fn h_ftCommon_CalcSelfAccel_Drift(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -22060,9 +22060,9 @@ unsafe fn h_ftCommon_Fall(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -23500,9 +23500,9 @@ unsafe fn h_ftCommon_Fall(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -24988,9 +24988,9 @@ unsafe fn h_ftPartSetRotY(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -26428,9 +26428,9 @@ unsafe fn h_ftPartSetRotY(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -28288,9 +28288,9 @@ unsafe fn h_ft_PlaySFX(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -29729,9 +29729,9 @@ unsafe fn h_ft_PlaySFX(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -31472,9 +31472,9 @@ unsafe fn h_it_8026FCF8(a: &[u64]) -> u64 {
         rt::h_f32((*p).x524_cmd.timer);
         rt::h_f32((*p).x524_cmd.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x524_cmd.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x524_cmd.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x524_cmd.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x524_cmd.anon_8.u as *const u8);
         rt::h_u((*p).x524_cmd.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x524_cmd.event_return[i0] as *const u8);
@@ -32096,9 +32096,9 @@ unsafe fn h_it_8026FCF8(a: &[u64]) -> u64 {
         (*p0).x524_cmd.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x524_cmd.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x524_cmd.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x524_cmd.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x524_cmd.anon_8.anon_0.u = 0usize as _;
+        (*p0).x524_cmd.anon_8.u = 0usize as _;
         (*p0).x524_cmd.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x524_cmd.event_return[i1] = 0usize as _;
@@ -34690,9 +34690,9 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.timer = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.frame_count = rt::draw_f32(&mut rt::ST);
     for i0 in 0..1 {
-        (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.anon_8.anon_0.ptr[i0] = 0usize as _;
+        (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.anon_8.ptr[i0] = 0usize as _;
     }
-    (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.anon_8.anon_0.u = 0usize as _;
+    (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.anon_8.u = 0usize as _;
     (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.loop_count = rt::draw_int(&mut rt::ST) as _;
     for i0 in 0..3 {
         (*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.event_return[i0] = 0usize as _;
@@ -35094,95 +35094,95 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::ext::HSD_GObjPLinkHead)) = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::HSD_GObj_CurrentInvokedProc)) = 0usize as _;
     for i0 in 0..400 {
-        (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].x8), 4); for i1 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
+        (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).x8), 4); for i1 in 0..4 { *(&mut (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
-        (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].x8), 4); for i1 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
+        (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).x8), 4); for i1 in 0..4 { *(&mut (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
-        (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].x8), 4); for i1 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
+        (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).x8), 4); for i1 in 0..4 { *(&mut (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
-        (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].x8), 4); for i1 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
+        (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).x8), 4); for i1 in 0..4 { *(&mut (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
-        (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].x8), 4); for i1 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
+        (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).x8), 4); for i1 in 0..4 { *(&mut (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
-        (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].x8), 4); for i1 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
+        (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).x8), 4); for i1 in 0..4 { *(&mut (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     (*core::ptr::addr_of_mut!(m::ext::ftPartsTable)) = 0usize as _;
     for i0 in 0..400 {
-        (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].x8), 4); for i1 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
+        (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).x8), 4); for i1 in 0..4 { *(&mut (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
-        (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].x8), 4); for i1 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
+        (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).x8), 4); for i1 in 0..4 { *(&mut (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..400 {
-        (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].anim_id = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].x4_flags = rt::draw_int(&mut rt::ST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].x8), 4); for i1 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
+        (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).x8), 4); for i1 in 0..4 { *(&mut (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).x8 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
+        { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     for i0 in 0..16 {
         (*core::ptr::addr_of_mut!(m::ext::hsd_804D0908))[i0] = 0usize as _;
@@ -35893,9 +35893,9 @@ unsafe fn hash_objs() {
     rt::h_f32((*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.timer);
     rt::h_f32((*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.frame_count);
     for i0 in 0..1 {
-        rt::h_p((*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.anon_8.anon_0.ptr[i0] as *const u8);
+        rt::h_p((*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.anon_8.ptr[i0] as *const u8);
     }
-    rt::h_p((*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.anon_8.anon_0.u as *const u8);
+    rt::h_p((*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.anon_8.u as *const u8);
     rt::h_u((*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.loop_count as u64);
     for i0 in 0..3 {
         rt::h_p((*core::ptr::addr_of_mut!(m::geno_item_snap_fixture)).x524_cmd.event_return[i0] as *const u8);
@@ -36334,74 +36334,74 @@ unsafe fn hash_objs() {
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..400 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].anim_id as i64);
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].x4_flags as i64);
-        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].x8 as *const _ as *const u8, 4);
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable))[i0].cam_cb.map_or(0usize, |f| f as usize));
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).anim_id as i64);
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).x4_flags as i64);
+        rt::h_bytes(&(*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).x8 as *const _ as *const u8, 4);
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).anim_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).input_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).phys_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).coll_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).cam_cb.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..400 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].anim_id as i64);
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].x4_flags as i64);
-        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].x8 as *const _ as *const u8, 4);
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList))[i0].cam_cb.map_or(0usize, |f| f as usize));
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).anim_id as i64);
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).x4_flags as i64);
+        rt::h_bytes(&(*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).x8 as *const _ as *const u8, 4);
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).anim_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).input_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).phys_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).coll_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).cam_cb.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..400 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].anim_id as i64);
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].x4_flags as i64);
-        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].x8 as *const _ as *const u8, 4);
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable))[i0].cam_cb.map_or(0usize, |f| f as usize));
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).anim_id as i64);
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).x4_flags as i64);
+        rt::h_bytes(&(*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).x8 as *const _ as *const u8, 4);
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).anim_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).input_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).phys_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).coll_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).cam_cb.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..400 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].anim_id as i64);
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].x4_flags as i64);
-        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].x8 as *const _ as *const u8, 4);
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable))[i0].cam_cb.map_or(0usize, |f| f as usize));
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).anim_id as i64);
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).x4_flags as i64);
+        rt::h_bytes(&(*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).x8 as *const _ as *const u8, 4);
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).anim_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).input_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).phys_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).coll_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).cam_cb.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..400 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].anim_id as i64);
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].x4_flags as i64);
-        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].x8 as *const _ as *const u8, 4);
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable))[i0].cam_cb.map_or(0usize, |f| f as usize));
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).anim_id as i64);
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).x4_flags as i64);
+        rt::h_bytes(&(*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).x8 as *const _ as *const u8, 4);
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).anim_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).input_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).phys_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).coll_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).cam_cb.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..400 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].anim_id as i64);
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].x4_flags as i64);
-        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].x8 as *const _ as *const u8, 4);
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable))[i0].cam_cb.map_or(0usize, |f| f as usize));
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).anim_id as i64);
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).x4_flags as i64);
+        rt::h_bytes(&(*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).x8 as *const _ as *const u8, 4);
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).anim_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).input_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).phys_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).coll_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).cam_cb.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
@@ -36409,38 +36409,38 @@ unsafe fn hash_objs() {
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..400 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].anim_id as i64);
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].x4_flags as i64);
-        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].x8 as *const _ as *const u8, 4);
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable))[i0].cam_cb.map_or(0usize, |f| f as usize));
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).anim_id as i64);
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).x4_flags as i64);
+        rt::h_bytes(&(*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).x8 as *const _ as *const u8, 4);
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).anim_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).input_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).phys_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).coll_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).cam_cb.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..400 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].anim_id as i64);
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].x4_flags as i64);
-        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].x8 as *const _ as *const u8, 4);
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable))[i0].cam_cb.map_or(0usize, |f| f as usize));
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).anim_id as i64);
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).x4_flags as i64);
+        rt::h_bytes(&(*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).x8 as *const _ as *const u8, 4);
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).anim_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).input_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).phys_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).coll_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).cam_cb.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..400 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].anim_id as i64);
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].x4_flags as i64);
-        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].x8 as *const _ as *const u8, 4);
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable))[i0].cam_cb.map_or(0usize, |f| f as usize));
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).anim_id as i64);
+        rt::h_i((*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).x4_flags as i64);
+        rt::h_bytes(&(*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).x8 as *const _ as *const u8, 4);
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).anim_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).input_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).phys_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).coll_cb.map_or(0usize, |f| f as usize));
+        rt::h_fn((*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).cam_cb.map_or(0usize, |f| f as usize));
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
@@ -37480,9 +37480,9 @@ unsafe fn run_Geno_FallLimit(seed: u64) -> [u64; 3] {
         AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -38925,9 +38925,9 @@ unsafe fn run_Geno_FallLimit(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_Geno_FallLimit_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -40369,9 +40369,9 @@ unsafe fn run_Geno_FighterScale(seed: u64) -> [u64; 3] {
         AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -41813,9 +41813,9 @@ unsafe fn run_Geno_FighterScale(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_Geno_FighterScale_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -43257,9 +43257,9 @@ unsafe fn run_Geno_GroundEdge(seed: u64) -> [u64; 3] {
         AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -44703,9 +44703,9 @@ unsafe fn run_Geno_GroundEdge(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_Geno_GroundEdge_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -46147,9 +46147,9 @@ unsafe fn run_Geno_HitReact(seed: u64) -> [u64; 3] {
         AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -47592,9 +47592,9 @@ unsafe fn run_Geno_HitReact(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_Geno_HitReact_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -48861,7 +48861,7 @@ unsafe extern "C" fn cb2(a0: *mut Q::HSD_GObj) -> i32 {
     rt::t_p(a0 as *const u8);
     rt::draw_int(&mut rt::MST) as _
 }
-unsafe extern "C" fn cb3(a0: *mut Q::HSD_GObj, a1: i64) {
+unsafe extern "C" fn cb3(a0: *mut Q::HSD_GObj, a1: isize) {
     rt::t_begin(1003);
     rt::t_p(a0 as *const u8);
     rt::t_i(a1 as i64);

@@ -1141,17 +1141,17 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.dmg.x18C8 = fv() as _;
     p.dmg.x18CC = fv() as _;
     p.dmg.x18D0 = fv() as _;
-    p.dmg.x18d4.x0 = fv() as _;
-    p.dmg.x18d4.x1 = fv() as _;
-    p.dmg.x18d4.set_x2_b0(fv() as _);
-    p.dmg.x18d4.set_x2_b1(fv() as _);
-    p.dmg.x18d4.set_x2_b2(fv() as _);
-    p.dmg.x18d4.set_x2_b3(fv() as _);
-    p.dmg.x18d4.set_x2_b4(fv() as _);
-    p.dmg.x18d4.set_x2_b5(fv() as _);
-    p.dmg.x18d4.set_x2_b6(fv() as _);
-    p.dmg.x18d4.set_x2_b7(fv() as _);
-    p.dmg.x18d4.x3 = fv() as _;
+    p.dmg.x18d4.x0.x2070 = fv() as _;
+    p.dmg.x18d4.x0.bf_1[0] = fv() as _;
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 7)) | (v << 7); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 6)) | (v << 6); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 5)) | (v << 5); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 4)) | (v << 4); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 3)) | (v << 3); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 2)) | (v << 2); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 1)) | (v << 1); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 0)) | (v << 0); }
+    p.dmg.x18d4.x0.x2073 = fv() as _;
     p.dmg.x18d8.x0 = fv() as _;
     p.dmg.x18d8.x4 = fv() as _;
     p.dmg.x18d8.kb_applied1 = rg();
@@ -1433,8 +1433,8 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.x2070.x0.set_count_x1A0(fv() as _);
     p.x2070.x0.set_count_specials(fv() as _);
     p.x2070.x0.x2073 = fv() as _;
-    p.x2074.x2074_vec.x = rg();
-    p.x2074.x2074_vec.y = rg();
+    p.x2074.x2074_vec.x = (rg()).to_bits().cast_signed();
+    p.x2074.x2074_vec.y = (rg()).to_bits().cast_signed();
     p.x2074.x207C.x = fv() as _;
     p.x2074.x207C.y = fv() as _;
     p.x2074.x10.x0.set_x2084_b0(fv() as _);
@@ -1622,8 +1622,8 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.set_x221C_b6(fv() as _);
     p.set_x221C_u16_y(fv() as _);
     p.set_x221D_b2(fv() as _);
-    p.set_x221D_b3(fv() as _);
-    p.set_x221D_b4(fv() as _);
+    p.set_has_prev_input(fv() as _);
+    p.set_input_disabled(fv() as _);
     p.set_x221D_b5(fv() as _);
     p.set_x221D_b6(fv() as _);
     p.set_x221D_b7(fv() as _);
@@ -1638,7 +1638,7 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.set_x221F_b0(fv() as _);
     p.set_x221F_b1(fv() as _);
     p.set_x221F_b2(fv() as _);
-    p.set_x221F_b3(fv() as _);
+    p.set_is_sleeping(fv() as _);
     p.set_is_sub_fighter(fv() as _);
     p.set_x221F_b5(fv() as _);
     p.set_x221F_b6(fv() as _);
@@ -1675,7 +1675,7 @@ pub fn fill_Fighter(p: &mut Fighter) { unsafe {
     p.set_is_metal(fv() as _);
     p.set_x2224_b0(fv() as _);
     p.set_x2224_b1(fv() as _);
-    p.set_x2224_b2(fv() as _);
+    p.set_stamina_dead(fv() as _);
     p.set_x2224_b3(fv() as _);
     p.set_x2224_b4(fv() as _);
     p.set_x2224_b5(fv() as _);
@@ -2160,8 +2160,8 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(pi(p.x598));
     hm(pi(p.x59C));
     hm(pi(p.x5A0));
-    hm(pi(p.x5A4));
-    hm(pi(p.x5A8));
+    hm(pi(((p.x5A4) as *const u8)));
+    hm(pi(((p.x5A8) as *const u8)));
     hm(p.x5AC.model_num as u32);
     for i0 in 0..5 {
     hm(p.x5AC.cleared[i0] as u32);
@@ -2696,17 +2696,17 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.dmg.x18C8 as u32);
     hm(p.dmg.x18CC as u32);
     hm(p.dmg.x18D0 as u32);
-    hm(p.dmg.x18d4.x0 as u32);
-    hm(p.dmg.x18d4.x1 as u32);
-    hm(p.dmg.x18d4.x2_b0() as u32);
-    hm(p.dmg.x18d4.x2_b1() as u32);
-    hm(p.dmg.x18d4.x2_b2() as u32);
-    hm(p.dmg.x18d4.x2_b3() as u32);
-    hm(p.dmg.x18d4.x2_b4() as u32);
-    hm(p.dmg.x18d4.x2_b5() as u32);
-    hm(p.dmg.x18d4.x2_b6() as u32);
-    hm(p.dmg.x18d4.x2_b7() as u32);
-    hm(p.dmg.x18d4.x3 as u32);
+    hm(p.dmg.x18d4.x0.x2070 as u8 as u32);
+    hm(p.dmg.x18d4.x0.bf_1[0] as u32);
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 7) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 6) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 5) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 4) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 3) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 2) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 1) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 0) & 1) as u32 });
+    hm(p.dmg.x18d4.x0.x2073 as u32);
     hm(p.dmg.x18d8.x0 as u32);
     hm(p.dmg.x18d8.x4 as u32);
     hm(p.dmg.x18d8.kb_applied1.to_bits());
@@ -2998,8 +2998,8 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x2070.x0.count_x1A0() as u32);
     hm(p.x2070.x0.count_specials() as u32);
     hm(p.x2070.x0.x2073 as u32);
-    hm(p.x2074.x2074_vec.x.to_bits());
-    hm(p.x2074.x2074_vec.y.to_bits());
+    hm(p.x2074.x2074_vec.x.cast_unsigned());
+    hm(p.x2074.x2074_vec.y.cast_unsigned());
     hm(p.x2074.x207C.x as u32);
     hm(p.x2074.x207C.y as u32);
     hm(p.x2074.x10.x0.x2084_b0() as u32);
@@ -3187,8 +3187,8 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x221C_b6() as u32);
     hm(p.x221C_u16_y() as u32);
     hm(p.x221D_b2() as u32);
-    hm(p.x221D_b3() as u32);
-    hm(p.x221D_b4() as u32);
+    hm(p.has_prev_input() as u32);
+    hm(p.input_disabled() as u32);
     hm(p.x221D_b5() as u32);
     hm(p.x221D_b6() as u32);
     hm(p.x221D_b7() as u32);
@@ -3203,7 +3203,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.x221F_b0() as u32);
     hm(p.x221F_b1() as u32);
     hm(p.x221F_b2() as u32);
-    hm(p.x221F_b3() as u32);
+    hm(p.is_sleeping() as u32);
     hm(p.is_sub_fighter() as u32);
     hm(p.x221F_b5() as u32);
     hm(p.x221F_b6() as u32);
@@ -3240,7 +3240,7 @@ pub fn hash_Fighter(p: &Fighter) { unsafe {
     hm(p.is_metal() as u32);
     hm(p.x2224_b0() as u32);
     hm(p.x2224_b1() as u32);
-    hm(p.x2224_b2() as u32);
+    hm(p.stamina_dead() as u32);
     hm(p.x2224_b3() as u32);
     hm(p.x2224_b4() as u32);
     hm(p.x2224_b5() as u32);

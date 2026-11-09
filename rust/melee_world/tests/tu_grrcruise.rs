@@ -416,8 +416,8 @@ fn matches_c() {
             let g = mkgobj();
             t::grRCruise_801FF924(g);
             state();
-            t::fn_80201BE0(g, (rnd() % 4) as i32);
-            t::fn_80201BE0(g, (rnd() % 4) as i32);
+            t::fn_80201BE0(g, (rnd() % 4) as isize);
+            t::fn_80201BE0(g, (rnd() % 4) as isize);
             state();
         }
         for c in 0..80usize {

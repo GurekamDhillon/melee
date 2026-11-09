@@ -67,8 +67,8 @@ pub fn fill_HSD_Text(p: &mut HSD_Text) {
     p.hidden = fv() as _;
     p.x4E = fv() as _;
     p.font_idx = fv() as _;
-    p.x6C = fv() as _;
-    p.x6E = fv() as _;
+    p.state_stack_used = fv() as _;
+    p.state_stack_capacity = fv() as _;
     p.current_width = rg();
     p.current_height = rg();
     p.x78.x = rg();
@@ -129,9 +129,9 @@ pub fn hash_HSD_Text(p: &HSD_Text) {
     hm(pi(p.sis_buffer));
     hm(pi(p.x60));
     hm(pi(p.alloc_data));
-    hm(pi(p.string_buffer));
-    hm(p.x6C as u32);
-    hm(p.x6E as u32);
+    hm(pi(p.state_stack));
+    hm(p.state_stack_used as u32);
+    hm(p.state_stack_capacity as u32);
     hm(p.current_width.to_bits());
     hm(p.current_height.to_bits());
     hm(p.x78.x.to_bits());

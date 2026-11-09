@@ -78,7 +78,7 @@ const KINDS: [u32; 8] = [1, 22, 16, 17, 33, 34, 2, 9];
 const NOPS: u32 = 19;
 
 fn r2070(rg: &mut Rng, u: &mut Struct2070) {
-    let e = unsafe { &mut u.anon_0 };
+    let e = unsafe { &mut u.x0 };
     e.x2070 = (1 + rg.rnd() % 0x30) as i8;
     e.set_x2071_b0_3((rg.rnd() & 15) as u8);
     e.set_x2071_b4(rg.b());
@@ -123,7 +123,7 @@ fn mix(t: &mut u32, v: u32) {
     *t = t.wrapping_mul(31).wrapping_add(v);
 }
 fn h2070(t: &mut u32, u: &Struct2070) {
-    let e = unsafe { &u.anon_0 };
+    let e = unsafe { &u.x0 };
     for v in [
         e.x2070 as u8, e.x2071_b0_3(), e.x2071_b4(), e.x2071_b5(), e.x2071_b6(), e.x2071_b7(), e.x2072_b0(),
         e.x2072_b1(), e.x2072_b2(), e.count_x1A4(), e.count_thrown_items(), e.count_aerials(), e.count_x1A0(),
@@ -168,7 +168,7 @@ fn ratk(rg: &mut Rng, a: &mut plAttackStats) {
 fn hstats(t: &mut u32, s: &plActionStats) {
     hatk(t, &s.attacks);
     hatk(t, &s.hits);
-    hatk(t, unsafe { &s.anon_358.x358_hits });
+    hatk(t, unsafe { &s.x358.x358_hits });
     for v in s.x504 {
         mix(t, v as u32);
     }
@@ -213,7 +213,7 @@ fn ft0892_matches_c() {
             go.user_data = fpp as *mut _;
             f.gobj = g;
             f.kind = KINDS[(rg.rnd() % 8) as usize];
-            f.player_id = (rg.rnd() % 6) as _;
+            f.player_idx = (rg.rnd() % 6) as _;
             f.set_is_sub_fighter(rg.b());
             f.set_is_metal(rg.b());
             f.set_x221D_b6(rg.b() as _);
@@ -225,12 +225,12 @@ fn ft0892_matches_c() {
             f.motion_id = (rg.rnd() % 400) as _;
             f.dmg.x1830_percent = (rg.rnd() % 4001) as i32 as f32 / 13.0;
             r2070(&mut rg, &mut f.x2070);
-            f.x2074.x2074_vec.x = f32::from_bits(rg.rnd());
-            f.x2074.x2074_vec.y = f32::from_bits(rg.rnd());
-            f.x2074.x207C.x = rg.rnd() as i32;
+            f.x2074.x2074_vec.x = (f32::from_bits(rg.rnd())).to_bits().cast_signed();
+            f.x2074.x2074_vec.y = (f32::from_bits(rg.rnd())).to_bits().cast_signed();
+            f.x2074.x207C.x = f32::from_bits((rg.rnd() as i32).cast_unsigned());
             f.x2074.x207C.y = rg.rnd() as i32;
             {
-                let b = unsafe { &mut f.x2074.anon_10.anon_0 };
+                let b = unsafe { &mut f.x2074.x10.x0 };
                 b.set_x2084_b0(rg.b());
                 b.set_x2084_b1(rg.b());
                 b.set_x2084_b2(rg.b());
@@ -249,18 +249,18 @@ fn ft0892_matches_c() {
                 b.set_x2085_b7(rg.b());
             }
             f.x2074.x2088 = rg.rnd() as u16;
-            f.dmg.x18d4.x0 = rg.rnd() as u8;
-            f.dmg.x18d4.x1 = rg.rnd() as u8;
-            f.dmg.x18d4.set_x2_b0(rg.b());
-            f.dmg.x18d4.set_x2_b7(rg.b());
-            f.dmg.x18d4.x3 = rg.rnd() as u8;
+            f.dmg.x18d4.x0.x2070 = rg.rnd() as i8;
+            unsafe { f.dmg.x18d4.x0.bf_1[0] = rg.rnd() as u8; }
+            unsafe { let v = ((rg.b()) as u8) & 1; let b = &mut f.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 7)) | (v << 7); }
+            unsafe { let v = ((rg.b()) as u8) & 1; let b = &mut f.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 0)) | (v << 0); }
+            f.dmg.x18d4.x0.x2073 = rg.rnd() as u8;
             r18d8(&mut rg, &mut f.dmg.x18d8);
             f.dmg.x18ec_instancehitby = rg.rnd() as u16;
-            let st: *mut plActionStats = stale::action_stats(f.player_id as i32);
+            let st: *mut plActionStats = stale::action_stats(f.player_idx as i32);
             let st = unsafe { &mut *st };
             ratk(&mut rg, &mut st.attacks);
             ratk(&mut rg, &mut st.hits);
-            ratk(&mut rg, unsafe { &mut st.anon_358.x358_hits });
+            ratk(&mut rg, unsafe { &mut st.x358.x358_hits });
             for v in st.x504.iter_mut() {
                 *v = rg.rnd() as u8;
             }
@@ -271,10 +271,10 @@ fn ft0892_matches_c() {
             let mut arg = Struct2070::zeroed();
             r2070(&mut rg, &mut arg);
             if rg.rnd() % 3 == 0 {
-                arg.anon_0.x2073 = unsafe { f.x2070.anon_0.x2073 };
+                arg.x0.x2073 = unsafe { f.x2070.x0.x2073 };
             }
             if rg.rnd() % 4 == 0 {
-                arg.anon_0.x2073 = [0x71, 0x62, 0x63][(rg.rnd() % 3) as usize];
+                arg.x0.x2073 = [0x71, 0x62, 0x63][(rg.rnd() % 3) as usize];
             }
             let mut evd = ft_800898B4_t::zeroed();
             r18d8(&mut rg, &mut evd);
@@ -322,12 +322,12 @@ fn ft0892_matches_c() {
                 0x44003D => mix(&mut th, 0xA2),
                 _ => h2070(&mut th, &f.x2070),
             }
-            mix(&mut th, f.x2074.x2074_vec.x.to_bits());
-            mix(&mut th, f.x2074.x2074_vec.y.to_bits());
+            mix(&mut th, f.x2074.x2074_vec.x.cast_unsigned());
+            mix(&mut th, f.x2074.x2074_vec.y.cast_unsigned());
             mix(&mut th, f.x2074.x207C.x as u32);
             mix(&mut th, f.x2074.x207C.y as u32);
             {
-                let b = unsafe { &f.x2074.anon_10.anon_0 };
+                let b = unsafe { &f.x2074.x10.x0 };
                 for v in [
                     b.x2084_b0(), b.x2084_b1(), b.x2084_b2(), b.x2084_b3(), b.x2084_b4(), b.x2084_b5(), b.x2084_b6(),
                     b.x2084_b7(), b.x2085_b0(), b.x2085_b1(), b.x2085_b2(), b.x2085_b3(), b.x2085_b4(), b.x2085_b5(),
@@ -338,12 +338,12 @@ fn ft0892_matches_c() {
             }
             mix(&mut th, f.x2074.x2088 as u32);
             let d = &f.dmg.x18d4;
-            for v in [d.x0, d.x1, d.x2_b0(), d.x2_b7(), d.x3] {
+            for v in unsafe { [d.x0.x2070 as u8, d.x0.bf_1[0], (d.x0.bf_1[1] >> 7) & 1, d.x0.bf_1[1] & 1, d.x0.x2073] } {
                 mix(&mut th, v as u32);
             }
             h18d8(&mut th, &f.dmg.x18d8);
             mix(&mut th, f.dmg.x18ec_instancehitby as u32);
-            hstats(&mut th, stale::action_stats(f.player_id as i32));
+            hstats(&mut th, stale::action_stats(f.player_idx as i32));
             mix(&mut th, unsafe { stale::ATTACK_COUNTER } as u32);
             let got = format!("{} {} {:08X} {:08X} {:08X}", op, k, ret, th, tr());
             let want = lines.next().expect("expected file too short");

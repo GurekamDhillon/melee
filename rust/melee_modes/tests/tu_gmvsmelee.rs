@@ -387,7 +387,7 @@ unsafe fn fix_end(e: *mut MatchEnd) {
         p.pkind = (rnd() % 5) as u8;
         p.is_small_loser = (rnd() % 200) as u8;
         p.team = (rnd() % 5) as u8;
-        p.anon_3.anon_0.set_x3_b0((rnd() & 63) as u8);
+        p.x3_u.x0.set_x3_b0((rnd() & 63) as u8);
     }
     if rnd() & 1 != 0 {
         (*e).player_standings[4].pkind = 3;

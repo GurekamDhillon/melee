@@ -144,7 +144,7 @@ fn matches_c() {
             arena_reset();
             let g = mkgobj();
             (*g).gxlink_prios = rnd() as _;
-            t::fn_80187494(g, rnd() as i32);
+            t::fn_80187494(g, rnd() as isize);
             state();
         }
         for c in 0..8usize {

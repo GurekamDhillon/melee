@@ -36,7 +36,7 @@ static mut FTR: Fighter = unsafe { core::mem::zeroed() };
 static mut FPB: [FighterBone; 160] = unsafe { core::mem::zeroed() };
 static mut FTD: ftData = unsafe { core::mem::zeroed() };
 static mut LKA: ftLk_DatAttrs = unsafe { core::mem::zeroed() };
-static mut MPU: mp_UnkStruct0 = unsafe { core::mem::zeroed() };
+static mut MPU: mpIsland = unsafe { core::mem::zeroed() };
 static mut MTXB: [[f32; 4]; 3] = [[0.0; 4]; 3];
 static mut MF: f32 = 0.0;
 static mut LTAIL: *mut ItemLink = null_mut();
@@ -77,7 +77,7 @@ unsafe fn fill_ftr() {
     FTR.accessory2_cb = if rnd() & 1 != 0 { Some(m::it_802A7AAC) } else { None };
     FTR.death1_cb = if rnd() & 1 != 0 { Some(m::it_802A7AF0) } else { None };
     FTR.accessory3_cb = if rnd() & 1 != 0 { Some(m::it_802A7B34) } else { None };
-    FTR.ft_data = &raw mut FTD; FTD.ext_attr = (&raw mut LKA) as *mut c_void; FTR.dat_attrs = (&raw mut LKA) as *mut _; FTR.parts = FPB.as_mut_ptr();
+    FTR.ft_data = &raw mut FTD; FTD.ext_attr = (&raw mut LKA) as *mut _; FTR.dat_attrs = (&raw mut LKA) as *mut _; FTR.parts = FPB.as_mut_ptr();
     for i in 0..160usize { FPB[i].joint = &raw mut JO[i & 3]; }
 }
 unsafe fn hash_ftr() {
@@ -138,7 +138,7 @@ unsafe fn setup() {
     for i in 0..4usize { for r in 0..3usize { for c in 0..4usize { JO[i].mtx[r][c] = rw(); } } }
     for r in 0..3usize { for c in 0..4usize { MTXB[r][c] = rw(); } }
     MF = rw();
-    MPU.x8.x = rw(); MPU.x8.y = rw(); MPU.x8.z = rw(); MPU.x14.x = rw(); MPU.x14.y = rw(); MPU.x14.z = rw();
+    MPU.pos0.x = rw(); MPU.pos0.y = rw(); MPU.pos0.z = rw(); MPU.pos1.x = rw(); MPU.pos1.y = rw(); MPU.pos1.z = rw();
     {
         let k = 3 + (rnd() % 3) as usize;
         for i in 0..16usize { LK[i] = core::mem::zeroed(); g::fill_ItemLink(&mut LK[i]); LG[i] = core::mem::zeroed(); g::fill_HSD_GObj(&mut LG[i]); }
@@ -210,7 +210,7 @@ fn itlinkhookshot_matches_c() {
         preg(&raw const LG, core::mem::size_of::<[HSD_GObj; 16]>());
         preg(&raw const FTR, core::mem::size_of::<Fighter>());
         preg(&raw const FPB, core::mem::size_of::<[FighterBone; 160]>());
-        preg(&raw const MPU, core::mem::size_of::<mp_UnkStruct0>());
+        preg(&raw const MPU, core::mem::size_of::<mpIsland>());
         g::freg_all();
         freg(m::it_802A2418 as usize);
         freg(m::it_802A2428 as usize);
@@ -314,7 +314,7 @@ fn itlinkhookshot_matches_c() {
                     0 => { m::it_802A2418(&raw mut G); }
                     1 => { m::it_802A2428(&raw mut G); }
                     2 => { m::it_802A2474((&raw mut IT) as *mut c_void); }
-                    3 => { m::it_802A24A0(&raw mut LG[0], fv() as i32); }
+                    3 => { m::it_802A24A0(&raw mut LG[0], fv() as isize); }
                     4 => { m::it_802A24D0(LTAIL, rw()); }
                     5 => { ret = m::link_fighter_compare(&raw mut FTR) as u32; }
                     6 => { m::it_802A2568_inline(LTAIL, &raw mut JO[1], &raw mut G, &raw mut V1); }

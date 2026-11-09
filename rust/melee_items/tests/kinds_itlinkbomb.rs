@@ -103,8 +103,8 @@ unsafe fn hash_all() {
     for k in 0..3 {
         let lb = &mut IT[k].xDD4_itemVar.linkbomb;
         hm(pi(lb.x10));
-        hm(lb.x0.anon_0.b0() as u32); hm(lb.x0.anon_0.b1() as u32); hm(lb.x0.anon_0.b2() as u32); hm(lb.x0.anon_0.b3() as u32);
-        hm(lb.x0.anon_0.b4() as u32); hm(lb.x0.anon_0.b5() as u32); hm(lb.x0.anon_0.b6() as u32); hm(lb.x0.anon_0.b7() as u32);
+        hm(lb.x0.x0.b0() as u32); hm(lb.x0.x0.b1() as u32); hm(lb.x0.x0.b2() as u32); hm(lb.x0.x0.b3() as u32);
+        hm(lb.x0.x0.b4() as u32); hm(lb.x0.x0.b5() as u32); hm(lb.x0.x0.b6() as u32); hm(lb.x0.x0.b7() as u32);
         lb.x10 = null_mut(); core::ptr::write_bytes(&raw mut lb.x0 as *mut u8, 0, core::mem::size_of_val(&lb.x0));
     }
     for k in 0..3 {

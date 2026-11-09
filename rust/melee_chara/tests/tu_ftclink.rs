@@ -79,7 +79,7 @@ fn matches_c_and_smoke() {
     t::ftCl_Init_OnItemDropExt(gp, 1);
     assert_eq!(f.x8B0[1].x10, -1);
     t::ftCl_Init_8014919C(gp);
-    assert_eq!((f.anon_221b.x221B_b2(), f.anon_221b.x221B_b3(), f.anon_221b.x221B_b4()), (1, 1, 1));
+    assert_eq!((f.x221B.x221B_b2(), f.x221B.x221B_b3(), f.x221B.x221B_b4()), (1, 1, 1));
     assert!(t::ftCl_Init_8014920C(core::ptr::null_mut()));
     f.motion_id = 342;
     assert!(t::ftCl_Init_8014920C(gp));

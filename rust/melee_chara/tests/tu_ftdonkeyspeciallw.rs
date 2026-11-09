@@ -33,10 +33,10 @@ fn smoke() {
         t::ext::FTDK_INIT_8010DB3C = Some(|_| log("DB3C".into()));
     }
     // Start anim done -> loop: flags cleared, effect spawned once, callbacks installed.
-    unsafe { f.anon_2210.throw_flags = 5 };
+    unsafe { f.x2210.throw_flags = 5 };
     t::ftDk_SpecialLwStart_Anim(gp);
     assert_eq!(take(), ["ms 384 0 1", "async 1 1228 4096"]);
-    unsafe { assert_eq!(f.anon_2210.throw_flags, 0) };
+    unsafe { assert_eq!(f.x2210.throw_flags, 0) };
     assert_eq!(f.x2219_b0(), 1);
     assert!(f.x21EC.is_some() && f.accessory4_cb.is_some());
     assert!(f.pre_hitlag_cb.is_some() && f.post_hitlag_cb.is_some());

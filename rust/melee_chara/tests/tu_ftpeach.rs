@@ -16,7 +16,7 @@ fn smoke() {
     unsafe {
         st::FTPARTS_80074A4C = Some(|_, i, v| log(format!("{i}:{v}")));
     }
-    f.x619_costume_id = 1;
+    f.costume_id = 1;
     t::ftPe_Init_OnDeath(gp);
     assert_eq!(unsafe { f.u.pe.has_float }, 1);
     assert_eq!(unsafe { LOG.join(",") }, "0:0,2:0,3:-1,4:0,1:-1,5:0,6:-1");

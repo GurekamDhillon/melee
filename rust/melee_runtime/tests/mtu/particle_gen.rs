@@ -415,17 +415,17 @@ pub fn hashg_all() {
 
 pub fn fillo_all() {
     unsafe {
-        m::numActiveParticles = fv() as _;
+        m::hsd_804D78E2 = fv() as _;
         m::numPeakParticles = fv() as _;
-        m::numActiveParticles = fv() as _;
+        m::hsd_804D78E2 = fv() as _;
         m::numPeakParticles = fv() as _;
     }
 }
 pub fn hasho_all() {
     unsafe {
-        hm(m::numActiveParticles as u32);
+        hm(m::hsd_804D78E2 as u32);
         hm(m::numPeakParticles as u32);
-        hm(m::numActiveParticles as u32);
+        hm(m::hsd_804D78E2 as u32);
         hm(m::numPeakParticles as u32);
         for i0 in 0..8 {
         hm(pi(m::psPointJObj[i0]));
@@ -451,9 +451,9 @@ pub fn hasho_all() {
 
 pub fn preg_own() {
     unsafe {
-        preg(&raw const m::numActiveParticles, core::mem::size_of_val(&m::numActiveParticles));
+        preg(&raw const m::hsd_804D78E2, core::mem::size_of_val(&m::hsd_804D78E2));
         preg(&raw const m::numPeakParticles, core::mem::size_of_val(&m::numPeakParticles));
-        preg(&raw const m::numActiveParticles, core::mem::size_of_val(&m::numActiveParticles));
+        preg(&raw const m::hsd_804D78E2, core::mem::size_of_val(&m::hsd_804D78E2));
         preg(&raw const m::numPeakParticles, core::mem::size_of_val(&m::numPeakParticles));
         preg(&raw const m::psPointJObj, core::mem::size_of_val(&m::psPointJObj));
         preg(&raw const m::hsd_804D0908, core::mem::size_of_val(&m::hsd_804D0908));

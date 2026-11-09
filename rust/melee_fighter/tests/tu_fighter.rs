@@ -151,10 +151,10 @@ fn self_contained_stateful_smoke() {
         assert!(!m::cpu_assist_config_ok(1001, 0, 0, 0, 0, 0));
         // an unowned slot's overlays return before touching netplay / gm / mp
         let mut fp: Fighter = core::mem::zeroed();
-        fp.player_id = 2;
+        fp.player_idx = 2;
         m::technical_ai_overlay(&mut fp);
         m::cpu_assist_overlay(&mut fp);
-        fp.player_id = 9;
+        fp.player_idx = 9;
         m::technical_ai_overlay(&mut fp);
         m::cpu_assist_overlay(&mut fp);
         assert_eq!(m::ScriptGame_CpuAssistState(2, 5, 0), 0);

@@ -348,9 +348,9 @@ unsafe fn fill(w: &mut World) {
             *a.add(i) = (w.rng.below(256)) as u8;
         }
         match k {
-            0 => boxes.box2 = a as *mut core::ffi::c_void,
-            1 => boxes.box3 = a as *mut core::ffi::c_void,
-            _ => boxes.box4 = a as *mut core::ffi::c_void,
+            0 => boxes.box2 = (a as *mut core::ffi::c_void) as *mut _,
+            1 => boxes.box3 = (a as *mut core::ffi::c_void) as *mut _,
+            _ => boxes.box4 = (a as *mut core::ffi::c_void) as *mut _,
         }
     }
     gmtoulib::lbl_804D663C = w.rng.below(4) as i32;

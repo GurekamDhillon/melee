@@ -29,7 +29,7 @@ unsafe fn spec_fill(prof: i32) {
     match prof {
         0 => {
             let a = SPECB.0[0].as_mut_ptr() as *mut m::itOldkuriAttributes;
-            (*a).x0 = SPECB.0[0].as_mut_ptr().add(64) as *mut m::itOldkuriAttributes_x0; (*(*a).x0).x0 = (rnd() % 30) as i32; (*(*a).x0).x4 = rw();
+            let o = SPECB.0[0].as_mut_ptr().add(64) as *mut melee_types::itOldkuriAttributes_x0; (*a).x0 = o as *mut _; (*o).x0 = (rnd() % 30) as i32; (*o).x4 = rw();
             (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = (rnd() % 10) as f32;
         }
         _ => unreachable!(),

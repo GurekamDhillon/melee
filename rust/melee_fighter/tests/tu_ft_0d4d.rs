@@ -90,7 +90,7 @@ fn ft_0d4d_vs_c() {
             o.cur_pos.y = rf();
             o.self_vel.x = rf();
             o.self_vel.y = rf();
-            o.set_x221F_b3((rnd() & 1) as _);
+            o.set_is_sleeping((rnd() & 1) as _);
             unsafe {
                 STAGE = Vec3 { x: rf(), y: rf(), z: rf() };
                 let sp = Vec3 { x: rf(), y: rf(), z: rf() };

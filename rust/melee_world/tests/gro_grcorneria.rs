@@ -862,7 +862,7 @@ unsafe fn call_fn(fi: usize, a: &mut Args) -> (u64, u32) {
         84 => { t::grCorneria_801E2228(g); (0, 0) }
         85 => { let r = normptr(t::grCorneria_801E2454(&mut a.v3[0], a.i[0] as _) as *const u8 as usize); (r, r as u32) }
         86 => { let r = normptr(t::grCorneria_801E2480(&mut a.v3[0], a.i[0] as _) as *const u8 as usize); (r, r as u32) }
-        87 => { t::smashTaunt_801E24AC(g, a.i[0] as i32); (0, 0) }
+        87 => { t::smashTaunt_801E24AC(g, a.i[0] as isize); (0, 0) }
         88 => { t::smashTaunt_801E2550(g, addr_of_mut!(OGP[0].u.smashtaunt)); (0, 0) }
         89 => { let r = t::grCorneria_801E2598(a.i[0] as u32, a.i[1] as u32) as u32; (r as u64, r) }
         90 => { t::grCorneria_801E25C4(g, addr_of_mut!(OGP[0].u.smashtaunt), a.i[0] as i32, a.i[1] as i32, a.i[2] as i32); (0, 0) }
@@ -901,7 +901,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grcorneria::ext::GROUND_801C11AC = Some(|a0: *mut HSD_GObj| { lg_s("Ground_801C11AC("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GROUND_801C39C0 = Some(|| { lg_s("Ground_801C39C0("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GROUND_801C3BB4 = Some(|| { lg_s("Ground_801C3BB4("); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grcorneria::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: i32| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (if NN != 0 || rnd() % 5 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _ } else { null_mut() }) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grcorneria::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: isize| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (if NN != 0 || rnd() % 5 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _ } else { null_mut() }) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grcorneria::ext::GROUND_801C4A08 = Some(|a0: *mut HSD_GObj| { lg_s("Ground_801C4A08("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GROUND_801C4E70 = Some(|a0: *mut HSD_JObj, a1: *mut HSD_JObj, a2: *mut HSD_JObj, a3: *mut HSD_JObj, a4: *mut HSD_JObj, a5: *mut HSD_JObj| { lg_s("Ground_801C4E70("); lg_ptr(a0 as *const u8 as usize); lg_ptr(a1 as *const u8 as usize); lg_ptr(a2 as *const u8 as usize); lg_ptr(a3 as *const u8 as usize); lg_ptr(a4 as *const u8 as usize); lg_ptr(a5 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::GROUND_801C53EC = Some(|a0: u32| { lg_s("Ground_801C53EC("); lg_int(a0 as u32); lg_s(")"); lg_c(';'); });
@@ -983,7 +983,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grcorneria::ext::UN_802FF570 = Some(|| { lg_s("un_802FF570("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grcorneria::ext::UN_802FF620 = Some(|| { lg_s("un_802FF620("); lg_s(")"); lg_c(';'); });
     melee_world::tu::grinl::ext::STAGE_INFO = Some(|| addr_of_mut!(G_stage_info) as *mut StageInfo);
-    melee_world::tu::grcorneria::ext::GRDISPLAY_801C5DB0 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("grDisplay_801C5DB0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
+    melee_world::tu::grcorneria::ext::GRDISPLAY_801C5DB0 = Some(|a0: *mut HSD_GObj, a1: isize| { lg_s("grDisplay_801C5DB0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
     melee_world::tu::grcorneria::ext::HSD_GOBJPLINKHEAD = Some(|_l: i32| addr_of_mut!(OGO[0]));
     melee_world::tu::grcorneria::ext::HSD_PADMASTERSTATUS = Some(|| addr_of_mut!(OPAD) as *mut HSD_PadStatus);
     melee_world::tu::grcorneria::ext::HSD_SISLIB_804D1124 = Some(|| addr_of_mut!(OSIS) as *mut *mut SIS);

@@ -254,7 +254,7 @@ pub fn tspawn(s: *const SpawnItem) {
         t(s.x3E as u32);
         t(s.x40 as u32);
         for f in [&s.x44_flag, &s.x45_flag, &s.x46_flag, &s.x47_flag] {
-            let a = &f.anon_0;
+            let a = &f.x0;
             t(a.b0() as u32);
             t(a.b1() as u32);
             t(a.b2() as u32);

@@ -66,7 +66,7 @@ impl Match {
         let mut fighters = Vec::new();
         for i in 0..2 {
             let mut fp: Box<Fighter> = Box::new(Fighter::zeroed());
-            fp.player_id = i as u8;
+            fp.player_idx = i as u8;
             let a = &mut fp.co_attrs;
             a.walk_max_vel = 1.6;
             a.walk_accel_base = 0.1;
@@ -147,7 +147,7 @@ impl Match {
             fp.shield_health -= 0.28;
         }
         if fp.cur_pos.x.abs() > 160.0 {
-            let id = fp.player_id as i32;
+            let id = fp.player_idx as i32;
             stale::set_stocks(id, stale::stocks(id) - 1);
             fp.cur_pos.x = 0.0;
             fp.self_vel.x = 0.0;

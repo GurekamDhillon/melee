@@ -22,8 +22,8 @@ fn smoke() {
     let (kp, yp): (*mut HSD_GObj, *mut HSD_GObj) = (&mut *kg, &mut *yg);
     y.facing_dir = 1.0;
     k.facing_dir = 1.0;
-    k.anon_221b.set_x221B_b5(1);
-    k.anon_221b.set_x221B_b7(1);
+    k.x221B.set_x221B_b5(1);
+    k.x221B.set_x221B_b7(1);
     unsafe {
         st::FIGHTER_CHANGEMOTIONSTATE = Some(|_, msid, flags, a, b, c, _| log(format!("cms {msid:x} {flags} {a} {b} {c}")));
         st::FTANIM_8006EBA4 = Some(|_| log("8006EBA4".into()));
@@ -37,8 +37,8 @@ fn smoke() {
     t::fn_8010A930(kp, yp);
     assert_eq!(k.x1A5C, yp);
     assert_eq!(k.victim_gobj, yp);
-    assert_eq!(k.anon_221b.x221B_b5(), 0);
-    assert_eq!(k.anon_221b.x221B_b7(), 0);
+    assert_eq!(k.x221B.x221B_b5(), 0);
+    assert_eq!(k.x221B.x221B_b7(), 0);
     assert_eq!(k.facing_dir, -1.0);
     assert!(k.accessory1_cb.is_some());
     // The four state callbacks are empty; SpecialNYs_8010AA2C hides Kirby and calls ftColl_8007B62C(gobj, 2).

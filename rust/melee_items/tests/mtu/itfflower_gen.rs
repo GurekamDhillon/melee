@@ -10,7 +10,7 @@ use core::ffi::c_void;
 pub fn install() {
     use m::ext::hook::*;
     unsafe {
-        Item_80268B18 = Some(|a0| { t(1000); t(pi(a0)); { t((*a0).kind as u32); t((*a0).hold_kind as u32); t((*a0).x10 as u32); t((*a0).x3C_damage as u32); t((*a0).x3E as u32); t((*a0).x40 as u32); t((*a0).x48_ground_or_air as u32); t((*a0).pos.x.to_bits()); t((*a0).pos.y.to_bits()); t((*a0).pos.z.to_bits()); t((*a0).prev_pos.x.to_bits()); t((*a0).prev_pos.y.to_bits()); t((*a0).prev_pos.z.to_bits()); t((*a0).vel.x.to_bits()); t((*a0).vel.y.to_bits()); t((*a0).vel.z.to_bits()); t((*a0).facing_dir.to_bits()); t(pi((*a0).x0_parent_gobj)); t(pi((*a0).x4_parent_gobj2)); t((((*a0).x44_flag.anon_0.b0() as u32) << 0) | (((*a0).x44_flag.anon_0.b1() as u32) << 1) | (((*a0).x44_flag.anon_0.b2() as u32) << 2) | (((*a0).x44_flag.anon_0.b3() as u32) << 3) | (((*a0).x44_flag.anon_0.b4() as u32) << 4) | (((*a0).x44_flag.anon_0.b5() as u32) << 5) | (((*a0).x44_flag.anon_0.b6() as u32) << 6) | (((*a0).x44_flag.anon_0.b7() as u32) << 7)); t((((*a0).x45_flag.anon_0.b0() as u32) << 0) | (((*a0).x45_flag.anon_0.b1() as u32) << 1) | (((*a0).x45_flag.anon_0.b2() as u32) << 2) | (((*a0).x45_flag.anon_0.b3() as u32) << 3) | (((*a0).x45_flag.anon_0.b4() as u32) << 4) | (((*a0).x45_flag.anon_0.b5() as u32) << 5) | (((*a0).x45_flag.anon_0.b6() as u32) << 6) | (((*a0).x45_flag.anon_0.b7() as u32) << 7)); t((((*a0).x46_flag.anon_0.b0() as u32) << 0) | (((*a0).x46_flag.anon_0.b1() as u32) << 1) | (((*a0).x46_flag.anon_0.b2() as u32) << 2) | (((*a0).x46_flag.anon_0.b3() as u32) << 3) | (((*a0).x46_flag.anon_0.b4() as u32) << 4) | (((*a0).x46_flag.anon_0.b5() as u32) << 5) | (((*a0).x46_flag.anon_0.b6() as u32) << 6) | (((*a0).x46_flag.anon_0.b7() as u32) << 7)); t((((*a0).x47_flag.anon_0.b0() as u32) << 0) | (((*a0).x47_flag.anon_0.b1() as u32) << 1) | (((*a0).x47_flag.anon_0.b2() as u32) << 2) | (((*a0).x47_flag.anon_0.b3() as u32) << 3) | (((*a0).x47_flag.anon_0.b4() as u32) << 4) | (((*a0).x47_flag.anon_0.b5() as u32) << 5) | (((*a0).x47_flag.anon_0.b6() as u32) << 6) | (((*a0).x47_flag.anon_0.b7() as u32) << 7)); } if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::G2 } });
+        Item_80268B18 = Some(|a0| { t(1000); t(pi(a0)); { t((*a0).kind as u32); t((*a0).hold_kind as u32); t((*a0).x10 as u32); t((*a0).x3C_damage as u32); t((*a0).x3E as u32); t((*a0).x40 as u32); t((*a0).x48_ground_or_air as u32); t((*a0).pos.x.to_bits()); t((*a0).pos.y.to_bits()); t((*a0).pos.z.to_bits()); t((*a0).prev_pos.x.to_bits()); t((*a0).prev_pos.y.to_bits()); t((*a0).prev_pos.z.to_bits()); t((*a0).vel.x.to_bits()); t((*a0).vel.y.to_bits()); t((*a0).vel.z.to_bits()); t((*a0).facing_dir.to_bits()); t(pi((*a0).x0_parent_gobj)); t(pi((*a0).x4_parent_gobj2)); t((((*a0).x44_flag.x0.b0() as u32) << 0) | (((*a0).x44_flag.x0.b1() as u32) << 1) | (((*a0).x44_flag.x0.b2() as u32) << 2) | (((*a0).x44_flag.x0.b3() as u32) << 3) | (((*a0).x44_flag.x0.b4() as u32) << 4) | (((*a0).x44_flag.x0.b5() as u32) << 5) | (((*a0).x44_flag.x0.b6() as u32) << 6) | (((*a0).x44_flag.x0.b7() as u32) << 7)); t((((*a0).x45_flag.x0.b0() as u32) << 0) | (((*a0).x45_flag.x0.b1() as u32) << 1) | (((*a0).x45_flag.x0.b2() as u32) << 2) | (((*a0).x45_flag.x0.b3() as u32) << 3) | (((*a0).x45_flag.x0.b4() as u32) << 4) | (((*a0).x45_flag.x0.b5() as u32) << 5) | (((*a0).x45_flag.x0.b6() as u32) << 6) | (((*a0).x45_flag.x0.b7() as u32) << 7)); t((((*a0).x46_flag.x0.b0() as u32) << 0) | (((*a0).x46_flag.x0.b1() as u32) << 1) | (((*a0).x46_flag.x0.b2() as u32) << 2) | (((*a0).x46_flag.x0.b3() as u32) << 3) | (((*a0).x46_flag.x0.b4() as u32) << 4) | (((*a0).x46_flag.x0.b5() as u32) << 5) | (((*a0).x46_flag.x0.b6() as u32) << 6) | (((*a0).x46_flag.x0.b7() as u32) << 7)); t((((*a0).x47_flag.x0.b0() as u32) << 0) | (((*a0).x47_flag.x0.b1() as u32) << 1) | (((*a0).x47_flag.x0.b2() as u32) << 2) | (((*a0).x47_flag.x0.b3() as u32) << 3) | (((*a0).x47_flag.x0.b4() as u32) << 4) | (((*a0).x47_flag.x0.b5() as u32) << 5) | (((*a0).x47_flag.x0.b6() as u32) << 6) | (((*a0).x47_flag.x0.b7() as u32) << 7)); } if fv() & 3 == 0 { core::ptr::null_mut() } else { &raw mut super::G2 } });
         Item_80268E5C = Some(|a0, a1, a2| { t(1001); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         Item_8026AE60 = Some(|| { t(1002); fv() as _ });
         efLib_DestroyAll = Some(|a0| { t(1003); t(pi(a0)); });
@@ -486,8 +486,8 @@ pub fn fill_Item(p: &mut Item) {
     p.xC6C = rg();
     p.xC70 = rg();
     p.xC74 = fv() as _;
-    p.xC78.x = rg();
-    p.xC78.y = rg();
+    p.xC78.x = (rg()).to_bits().cast_signed();
+    p.xC78.y = (rg()).to_bits().cast_signed();
     p.xC80.x = fv() as _;
     p.xC80.y = fv() as _;
     p.xC88 = fv() as _;
@@ -543,8 +543,8 @@ pub fn fill_Item(p: &mut Item) {
     p.xD8C_attack_instance = fv() as _;
     p.xD8E = fv() as _;
     for i0 in 0..4 { unsafe { *(&mut p.xD90 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
-    p.xD94.x = rg();
-    p.xD94.y = rg();
+    p.xD94.x = (rg()).to_bits().cast_signed();
+    p.xD94.y = (rg()).to_bits().cast_signed();
     p.xD9C.x = fv() as _;
     p.xD9C.y = fv() as _;
     p.xDA4_word = fv() as _;
@@ -591,54 +591,54 @@ pub fn fill_Item(p: &mut Item) {
     p.xDCC_flag.set_b3(fv() as _);
     p.xDCC_flag.set_b4567(fv() as _);
     for j0 in 0..1 { unsafe { *(base(&p.xDCD_flag) as *mut u8).add(0 + j0) = rnd() as u8; } }
-    unsafe { p.xDCE_flag.anon_0.set_b0((rnd() & 1) as u8); }
-    unsafe { p.xDCE_flag.anon_0.set_b1((rnd() & 1) as u8); }
-    unsafe { p.xDCE_flag.anon_0.set_b2((rnd() & 1) as u8); }
-    unsafe { p.xDCE_flag.anon_0.set_b3((rnd() & 1) as u8); }
-    unsafe { p.xDCE_flag.anon_0.set_b4((rnd() & 1) as u8); }
-    unsafe { p.xDCE_flag.anon_0.set_b5((rnd() & 1) as u8); }
-    unsafe { p.xDCE_flag.anon_0.set_b6((rnd() & 1) as u8); }
-    unsafe { p.xDCE_flag.anon_0.set_b7((rnd() & 1) as u8); }
-    unsafe { p.xDCF_flag.anon_0.set_b0((rnd() & 1) as u8); }
-    unsafe { p.xDCF_flag.anon_0.set_b1((rnd() & 1) as u8); }
-    unsafe { p.xDCF_flag.anon_0.set_b2((rnd() & 1) as u8); }
-    unsafe { p.xDCF_flag.anon_0.set_b3((rnd() & 1) as u8); }
-    unsafe { p.xDCF_flag.anon_0.set_b4((rnd() & 1) as u8); }
-    unsafe { p.xDCF_flag.anon_0.set_b5((rnd() & 1) as u8); }
-    unsafe { p.xDCF_flag.anon_0.set_b6((rnd() & 1) as u8); }
-    unsafe { p.xDCF_flag.anon_0.set_b7((rnd() & 1) as u8); }
-    unsafe { p.xDD0_flag.anon_0.set_b0((rnd() & 1) as u8); }
-    unsafe { p.xDD0_flag.anon_0.set_b1((rnd() & 1) as u8); }
-    unsafe { p.xDD0_flag.anon_0.set_b2((rnd() & 1) as u8); }
-    unsafe { p.xDD0_flag.anon_0.set_b3((rnd() & 1) as u8); }
-    unsafe { p.xDD0_flag.anon_0.set_b4((rnd() & 1) as u8); }
-    unsafe { p.xDD0_flag.anon_0.set_b5((rnd() & 1) as u8); }
-    unsafe { p.xDD0_flag.anon_0.set_b6((rnd() & 1) as u8); }
-    unsafe { p.xDD0_flag.anon_0.set_b7((rnd() & 1) as u8); }
-    unsafe { p.xDD1_flag.anon_0.set_b0((rnd() & 1) as u8); }
-    unsafe { p.xDD1_flag.anon_0.set_b1((rnd() & 1) as u8); }
-    unsafe { p.xDD1_flag.anon_0.set_b2((rnd() & 1) as u8); }
-    unsafe { p.xDD1_flag.anon_0.set_b3((rnd() & 1) as u8); }
-    unsafe { p.xDD1_flag.anon_0.set_b4((rnd() & 1) as u8); }
-    unsafe { p.xDD1_flag.anon_0.set_b5((rnd() & 1) as u8); }
-    unsafe { p.xDD1_flag.anon_0.set_b6((rnd() & 1) as u8); }
-    unsafe { p.xDD1_flag.anon_0.set_b7((rnd() & 1) as u8); }
-    unsafe { p.xDD2_flag.anon_0.set_b0((rnd() & 1) as u8); }
-    unsafe { p.xDD2_flag.anon_0.set_b1((rnd() & 1) as u8); }
-    unsafe { p.xDD2_flag.anon_0.set_b2((rnd() & 1) as u8); }
-    unsafe { p.xDD2_flag.anon_0.set_b3((rnd() & 1) as u8); }
-    unsafe { p.xDD2_flag.anon_0.set_b4((rnd() & 1) as u8); }
-    unsafe { p.xDD2_flag.anon_0.set_b5((rnd() & 1) as u8); }
-    unsafe { p.xDD2_flag.anon_0.set_b6((rnd() & 1) as u8); }
-    unsafe { p.xDD2_flag.anon_0.set_b7((rnd() & 1) as u8); }
-    unsafe { p.xDD3_flag.anon_0.set_b0((rnd() & 1) as u8); }
-    unsafe { p.xDD3_flag.anon_0.set_b1((rnd() & 1) as u8); }
-    unsafe { p.xDD3_flag.anon_0.set_b2((rnd() & 1) as u8); }
-    unsafe { p.xDD3_flag.anon_0.set_b3((rnd() & 1) as u8); }
-    unsafe { p.xDD3_flag.anon_0.set_b4((rnd() & 1) as u8); }
-    unsafe { p.xDD3_flag.anon_0.set_b5((rnd() & 1) as u8); }
-    unsafe { p.xDD3_flag.anon_0.set_b6((rnd() & 1) as u8); }
-    unsafe { p.xDD3_flag.anon_0.set_b7((rnd() & 1) as u8); }
+    unsafe { p.xDCE_flag.x0.set_b0((rnd() & 1) as u8); }
+    unsafe { p.xDCE_flag.x0.set_b1((rnd() & 1) as u8); }
+    unsafe { p.xDCE_flag.x0.set_b2((rnd() & 1) as u8); }
+    unsafe { p.xDCE_flag.x0.set_b3((rnd() & 1) as u8); }
+    unsafe { p.xDCE_flag.x0.set_b4((rnd() & 1) as u8); }
+    unsafe { p.xDCE_flag.x0.set_b5((rnd() & 1) as u8); }
+    unsafe { p.xDCE_flag.x0.set_b6((rnd() & 1) as u8); }
+    unsafe { p.xDCE_flag.x0.set_b7((rnd() & 1) as u8); }
+    unsafe { p.xDCF_flag.x0.set_b0((rnd() & 1) as u8); }
+    unsafe { p.xDCF_flag.x0.set_b1((rnd() & 1) as u8); }
+    unsafe { p.xDCF_flag.x0.set_b2((rnd() & 1) as u8); }
+    unsafe { p.xDCF_flag.x0.set_b3((rnd() & 1) as u8); }
+    unsafe { p.xDCF_flag.x0.set_b4((rnd() & 1) as u8); }
+    unsafe { p.xDCF_flag.x0.set_b5((rnd() & 1) as u8); }
+    unsafe { p.xDCF_flag.x0.set_b6((rnd() & 1) as u8); }
+    unsafe { p.xDCF_flag.x0.set_b7((rnd() & 1) as u8); }
+    unsafe { p.xDD0_flag.x0.set_b0((rnd() & 1) as u8); }
+    unsafe { p.xDD0_flag.x0.set_b1((rnd() & 1) as u8); }
+    unsafe { p.xDD0_flag.x0.set_b2((rnd() & 1) as u8); }
+    unsafe { p.xDD0_flag.x0.set_b3((rnd() & 1) as u8); }
+    unsafe { p.xDD0_flag.x0.set_b4((rnd() & 1) as u8); }
+    unsafe { p.xDD0_flag.x0.set_b5((rnd() & 1) as u8); }
+    unsafe { p.xDD0_flag.x0.set_b6((rnd() & 1) as u8); }
+    unsafe { p.xDD0_flag.x0.set_b7((rnd() & 1) as u8); }
+    unsafe { p.xDD1_flag.x0.set_b0((rnd() & 1) as u8); }
+    unsafe { p.xDD1_flag.x0.set_b1((rnd() & 1) as u8); }
+    unsafe { p.xDD1_flag.x0.set_b2((rnd() & 1) as u8); }
+    unsafe { p.xDD1_flag.x0.set_b3((rnd() & 1) as u8); }
+    unsafe { p.xDD1_flag.x0.set_b4((rnd() & 1) as u8); }
+    unsafe { p.xDD1_flag.x0.set_b5((rnd() & 1) as u8); }
+    unsafe { p.xDD1_flag.x0.set_b6((rnd() & 1) as u8); }
+    unsafe { p.xDD1_flag.x0.set_b7((rnd() & 1) as u8); }
+    unsafe { p.xDD2_flag.x0.set_b0((rnd() & 1) as u8); }
+    unsafe { p.xDD2_flag.x0.set_b1((rnd() & 1) as u8); }
+    unsafe { p.xDD2_flag.x0.set_b2((rnd() & 1) as u8); }
+    unsafe { p.xDD2_flag.x0.set_b3((rnd() & 1) as u8); }
+    unsafe { p.xDD2_flag.x0.set_b4((rnd() & 1) as u8); }
+    unsafe { p.xDD2_flag.x0.set_b5((rnd() & 1) as u8); }
+    unsafe { p.xDD2_flag.x0.set_b6((rnd() & 1) as u8); }
+    unsafe { p.xDD2_flag.x0.set_b7((rnd() & 1) as u8); }
+    unsafe { p.xDD3_flag.x0.set_b0((rnd() & 1) as u8); }
+    unsafe { p.xDD3_flag.x0.set_b1((rnd() & 1) as u8); }
+    unsafe { p.xDD3_flag.x0.set_b2((rnd() & 1) as u8); }
+    unsafe { p.xDD3_flag.x0.set_b3((rnd() & 1) as u8); }
+    unsafe { p.xDD3_flag.x0.set_b4((rnd() & 1) as u8); }
+    unsafe { p.xDD3_flag.x0.set_b5((rnd() & 1) as u8); }
+    unsafe { p.xDD3_flag.x0.set_b6((rnd() & 1) as u8); }
+    unsafe { p.xDD3_flag.x0.set_b7((rnd() & 1) as u8); }
     for i0 in 0..504 { unsafe { *(&mut p.xDD4_itemVar as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
 }
 pub fn hash_Item(p: &Item) {
@@ -1055,8 +1055,8 @@ pub fn hash_Item(p: &Item) {
     hm(p.xC6C.to_bits());
     hm(p.xC70.to_bits());
     hm(p.xC74 as u32);
-    hm(p.xC78.x.to_bits());
-    hm(p.xC78.y.to_bits());
+    hm(p.xC78.x.cast_unsigned());
+    hm(p.xC78.y.cast_unsigned());
     hm(p.xC80.x as u32);
     hm(p.xC80.y as u32);
     hm(p.xC88 as u32);
@@ -1130,8 +1130,8 @@ pub fn hash_Item(p: &Item) {
     hm(p.xD8C_attack_instance as u32);
     hm(p.xD8E as u32);
     for i0 in 0..4 { unsafe { hm(*(&p.xD90 as *const _ as *const u8).add(i0) as u32); } }
-    hm(p.xD94.x.to_bits());
-    hm(p.xD94.y.to_bits());
+    hm(p.xD94.x.cast_unsigned());
+    hm(p.xD94.y.cast_unsigned());
     hm(p.xD9C.x as u32);
     hm(p.xD9C.y as u32);
     hm(p.xDA4_word as u32);
@@ -1178,54 +1178,54 @@ pub fn hash_Item(p: &Item) {
     hm(p.xDCC_flag.b3() as u32);
     hm(p.xDCC_flag.b4567() as u32);
     for j0 in 0..1 { unsafe { hm(*base(&p.xDCD_flag).add(0 + j0) as u32); } }
-    unsafe { hm(p.xDCE_flag.anon_0.b0() as u32); }
-    unsafe { hm(p.xDCE_flag.anon_0.b1() as u32); }
-    unsafe { hm(p.xDCE_flag.anon_0.b2() as u32); }
-    unsafe { hm(p.xDCE_flag.anon_0.b3() as u32); }
-    unsafe { hm(p.xDCE_flag.anon_0.b4() as u32); }
-    unsafe { hm(p.xDCE_flag.anon_0.b5() as u32); }
-    unsafe { hm(p.xDCE_flag.anon_0.b6() as u32); }
-    unsafe { hm(p.xDCE_flag.anon_0.b7() as u32); }
-    unsafe { hm(p.xDCF_flag.anon_0.b0() as u32); }
-    unsafe { hm(p.xDCF_flag.anon_0.b1() as u32); }
-    unsafe { hm(p.xDCF_flag.anon_0.b2() as u32); }
-    unsafe { hm(p.xDCF_flag.anon_0.b3() as u32); }
-    unsafe { hm(p.xDCF_flag.anon_0.b4() as u32); }
-    unsafe { hm(p.xDCF_flag.anon_0.b5() as u32); }
-    unsafe { hm(p.xDCF_flag.anon_0.b6() as u32); }
-    unsafe { hm(p.xDCF_flag.anon_0.b7() as u32); }
-    unsafe { hm(p.xDD0_flag.anon_0.b0() as u32); }
-    unsafe { hm(p.xDD0_flag.anon_0.b1() as u32); }
-    unsafe { hm(p.xDD0_flag.anon_0.b2() as u32); }
-    unsafe { hm(p.xDD0_flag.anon_0.b3() as u32); }
-    unsafe { hm(p.xDD0_flag.anon_0.b4() as u32); }
-    unsafe { hm(p.xDD0_flag.anon_0.b5() as u32); }
-    unsafe { hm(p.xDD0_flag.anon_0.b6() as u32); }
-    unsafe { hm(p.xDD0_flag.anon_0.b7() as u32); }
-    unsafe { hm(p.xDD1_flag.anon_0.b0() as u32); }
-    unsafe { hm(p.xDD1_flag.anon_0.b1() as u32); }
-    unsafe { hm(p.xDD1_flag.anon_0.b2() as u32); }
-    unsafe { hm(p.xDD1_flag.anon_0.b3() as u32); }
-    unsafe { hm(p.xDD1_flag.anon_0.b4() as u32); }
-    unsafe { hm(p.xDD1_flag.anon_0.b5() as u32); }
-    unsafe { hm(p.xDD1_flag.anon_0.b6() as u32); }
-    unsafe { hm(p.xDD1_flag.anon_0.b7() as u32); }
-    unsafe { hm(p.xDD2_flag.anon_0.b0() as u32); }
-    unsafe { hm(p.xDD2_flag.anon_0.b1() as u32); }
-    unsafe { hm(p.xDD2_flag.anon_0.b2() as u32); }
-    unsafe { hm(p.xDD2_flag.anon_0.b3() as u32); }
-    unsafe { hm(p.xDD2_flag.anon_0.b4() as u32); }
-    unsafe { hm(p.xDD2_flag.anon_0.b5() as u32); }
-    unsafe { hm(p.xDD2_flag.anon_0.b6() as u32); }
-    unsafe { hm(p.xDD2_flag.anon_0.b7() as u32); }
-    unsafe { hm(p.xDD3_flag.anon_0.b0() as u32); }
-    unsafe { hm(p.xDD3_flag.anon_0.b1() as u32); }
-    unsafe { hm(p.xDD3_flag.anon_0.b2() as u32); }
-    unsafe { hm(p.xDD3_flag.anon_0.b3() as u32); }
-    unsafe { hm(p.xDD3_flag.anon_0.b4() as u32); }
-    unsafe { hm(p.xDD3_flag.anon_0.b5() as u32); }
-    unsafe { hm(p.xDD3_flag.anon_0.b6() as u32); }
-    unsafe { hm(p.xDD3_flag.anon_0.b7() as u32); }
+    unsafe { hm(p.xDCE_flag.x0.b0() as u32); }
+    unsafe { hm(p.xDCE_flag.x0.b1() as u32); }
+    unsafe { hm(p.xDCE_flag.x0.b2() as u32); }
+    unsafe { hm(p.xDCE_flag.x0.b3() as u32); }
+    unsafe { hm(p.xDCE_flag.x0.b4() as u32); }
+    unsafe { hm(p.xDCE_flag.x0.b5() as u32); }
+    unsafe { hm(p.xDCE_flag.x0.b6() as u32); }
+    unsafe { hm(p.xDCE_flag.x0.b7() as u32); }
+    unsafe { hm(p.xDCF_flag.x0.b0() as u32); }
+    unsafe { hm(p.xDCF_flag.x0.b1() as u32); }
+    unsafe { hm(p.xDCF_flag.x0.b2() as u32); }
+    unsafe { hm(p.xDCF_flag.x0.b3() as u32); }
+    unsafe { hm(p.xDCF_flag.x0.b4() as u32); }
+    unsafe { hm(p.xDCF_flag.x0.b5() as u32); }
+    unsafe { hm(p.xDCF_flag.x0.b6() as u32); }
+    unsafe { hm(p.xDCF_flag.x0.b7() as u32); }
+    unsafe { hm(p.xDD0_flag.x0.b0() as u32); }
+    unsafe { hm(p.xDD0_flag.x0.b1() as u32); }
+    unsafe { hm(p.xDD0_flag.x0.b2() as u32); }
+    unsafe { hm(p.xDD0_flag.x0.b3() as u32); }
+    unsafe { hm(p.xDD0_flag.x0.b4() as u32); }
+    unsafe { hm(p.xDD0_flag.x0.b5() as u32); }
+    unsafe { hm(p.xDD0_flag.x0.b6() as u32); }
+    unsafe { hm(p.xDD0_flag.x0.b7() as u32); }
+    unsafe { hm(p.xDD1_flag.x0.b0() as u32); }
+    unsafe { hm(p.xDD1_flag.x0.b1() as u32); }
+    unsafe { hm(p.xDD1_flag.x0.b2() as u32); }
+    unsafe { hm(p.xDD1_flag.x0.b3() as u32); }
+    unsafe { hm(p.xDD1_flag.x0.b4() as u32); }
+    unsafe { hm(p.xDD1_flag.x0.b5() as u32); }
+    unsafe { hm(p.xDD1_flag.x0.b6() as u32); }
+    unsafe { hm(p.xDD1_flag.x0.b7() as u32); }
+    unsafe { hm(p.xDD2_flag.x0.b0() as u32); }
+    unsafe { hm(p.xDD2_flag.x0.b1() as u32); }
+    unsafe { hm(p.xDD2_flag.x0.b2() as u32); }
+    unsafe { hm(p.xDD2_flag.x0.b3() as u32); }
+    unsafe { hm(p.xDD2_flag.x0.b4() as u32); }
+    unsafe { hm(p.xDD2_flag.x0.b5() as u32); }
+    unsafe { hm(p.xDD2_flag.x0.b6() as u32); }
+    unsafe { hm(p.xDD2_flag.x0.b7() as u32); }
+    unsafe { hm(p.xDD3_flag.x0.b0() as u32); }
+    unsafe { hm(p.xDD3_flag.x0.b1() as u32); }
+    unsafe { hm(p.xDD3_flag.x0.b2() as u32); }
+    unsafe { hm(p.xDD3_flag.x0.b3() as u32); }
+    unsafe { hm(p.xDD3_flag.x0.b4() as u32); }
+    unsafe { hm(p.xDD3_flag.x0.b5() as u32); }
+    unsafe { hm(p.xDD3_flag.x0.b6() as u32); }
+    unsafe { hm(p.xDD3_flag.x0.b7() as u32); }
     for i0 in 0..504 { unsafe { hm(*(&p.xDD4_itemVar as *const _ as *const u8).add(i0) as u32); } }
     hm(pi(p.mex_original_owner));
 }

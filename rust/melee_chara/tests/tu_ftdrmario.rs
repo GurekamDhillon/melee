@@ -24,7 +24,7 @@ fn smoke() {
     let fd: &'static mut ftData = Box::leak(Box::new(unsafe { core::mem::zeroed() }));
     let sa: &'static mut ftDrMarioAttributes = Box::leak(Box::new(ftDrMarioAttributes::zeroed()));
     let mut items: [*mut c_void; 4] = [1000 as *mut c_void, 1001 as *mut c_void, 1002 as *mut c_void, 1003 as *mut c_void];
-    fd.x48_items = items.as_mut_ptr();
+    fd.x48_items = (items.as_mut_ptr()) as *mut _;
     f.ft_data = fd;
     f.dat_attrs = sa as *mut _ as *mut _;
     g.user_data = &mut *f as *mut Fighter as *mut _;
@@ -41,7 +41,7 @@ fn smoke() {
     }
 
     // OnLoad: Mario's hook first, then the vitamin item (Dr. Mario's kind) and attr x14.
-    sa.x14 = 99;
+    sa.cape_kind = 99;
     t::ftDr_Init_OnLoad(gp);
     assert_eq!(take(), format!("onload_for_dr,it 1001 {},it 1003 99", It_Kind_DrMario_Vitamin));
     t::ftDr_Init_LoadSpecialAttrs(gp);

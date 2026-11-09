@@ -51,7 +51,7 @@ fn pick_fn(kind: i32) -> usize {
 }
 
 fn bz<T>() -> *mut T { Box::leak(Box::new(unsafe { core::mem::zeroed::<T>() })) }
-static mut DYN: *mut [ftDynamics; NG] = null_mut(); static mut ADB: *mut [ArticleDynamicBones; NG] = null_mut();
+static mut DYN: *mut [ftDynamics; NG] = null_mut(); static mut ADB: *mut [[BoneDynamicsTemplate; Ft_Dynamics_NumMax as usize]; NG] = null_mut();
 static mut DDP: *mut [[[DynamicsData; 3]; Ft_Dynamics_NumMax as usize]; NG] = null_mut();
 static mut X10: [[*mut *mut FigaTree; 5]; NG] = [[null_mut(); 5]; NG];
 static mut TREES: [[[*mut FigaTree; Ft_Dynamics_NumMax as usize]; 4]; NG] = [[[null_mut(); Ft_Dynamics_NumMax as usize]; 4]; NG];
@@ -79,8 +79,8 @@ unsafe fn world() {
         (*FT)[i].gobj = &raw mut (*GO)[i];
         (*FT)[i].ft_data = &raw mut (*FDATA)[i];
         (*FT)[i].grab_cb = Some(cbev1); (*FT)[i].grabbed_cb = Some(cbev3);
-        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_id %= 4; (*FT)[i].x618_player_id %= 4;
-        for b in 0..64 { if b < NP { fill_FighterBone(&mut (*PARTS)[i][b]); } else { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].anon_8.anon_0.set_flags_b1(1); } (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
+        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_idx %= 4; (*FT)[i].pad_port %= 4;
+        for b in 0..64 { if b < NP { fill_FighterBone(&mut (*PARTS)[i][b]); } else { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].x8.x0.set_flags_b1(1); } (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
         (*FT)[i].parts = (*PARTS)[i].as_mut_ptr();
 // the ftData pointer words: one pad block each (the C driver's order)
         { let mut pk = i * 24; macro_rules! nx { () => {{ pk += 1; (*PADB)[pk - 1].as_mut_ptr() as *mut _ }}; }
@@ -102,9 +102,9 @@ unsafe fn world() {
       SGK = if fv() & 1 != 0 { Gr_Kind_Flatzone as i32 } else { 0 };
       for q in 0..NG {
         (*DYN)[q] = core::mem::zeroed(); (*ADB)[q] = core::mem::zeroed(); (*DDP)[q] = core::mem::zeroed();
-        (*DYN)[q].anon_0.dynamicsNum = (fv() % 10) as i32; (*DYN)[q].anon_0.ftDynamicBones = &raw mut (*ADB)[q];
+        (*DYN)[q].x0.dynamicsNum = (fv() % 10) as i32; (*DYN)[q].x0.ftDynamicBones = (*ADB)[q].as_mut_ptr();
         for k in 0..Ft_Dynamics_NumMax as usize {
-          (*ADB)[q].array[k].bone_id = (fv() % 60) as _; (*ADB)[q].array[k].dyn_desc.count = fv() % 5;
+          (*ADB)[q][k].bone_id = (fv() % 60) as _; (*ADB)[q][k].dyn_desc.count = fv() % 5;
           for j in 0..3 {
             let d: *mut DynamicsData = &raw mut (*DDP)[q][k][j];
             (*d).next = if j < 2 && (fv() & 1) != 0 { &raw mut (*DDP)[q][k][j + 1] } else { null_mut() };
@@ -121,12 +121,12 @@ unsafe fn world() {
           X10[q][a] = if fv() % 5 == 0 { null_mut() } else { TREES[q][a].as_mut_ptr() };
         }
         X10[q][4] = null_mut();
-        (*DYN)[q].x10 = X10[q].as_mut_ptr();
+        (*DYN)[q].x10 = (X10[q].as_mut_ptr()) as *mut _;
         (*FT)[q].x28 = &raw mut X28A[q][1];
         for a in 0..8 { X28A[q][a][0] = (fv() % 256) as u8; X28A[q][a][1] = (fv() % 5) as u8; }
         (*FT)[q].anim_id = (fv() % 7) as i32 - 1;
         if fv() & 1 != 0 { (*FT)[q].x34_scale.y = 1.0; }
-        (*FT)[q].anon_594.anon_0.set_x594_b3((fv() & 1) as _); (*FT)[q].anon_594.anon_0.set_x594_b4((fv() & 1) as _);
+        (*FT)[q].x594.x0.set_x594_b3((fv() & 1) as _); (*FT)[q].x594.x0.set_x594_b4((fv() & 1) as _);
       }
       ARG1[0] = (fv() % 256) as u8; ARG1[1] = (fv() % 5) as u8;
     }

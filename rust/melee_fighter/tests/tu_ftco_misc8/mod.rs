@@ -62,7 +62,7 @@ pub fn m8_fill() {
     fr.self_vel.x = rg(); fr.self_vel.y = rw(); fr.self_vel.z = rg(); fr.gr_vel = rw();
     fr.input.lstick[0].x = rg(); fr.input.lstick[0].y = rg();
     fr.active_timer.lstick.x = (rnd() % 256) as u8; fr.active_timer.lstick.y = (rnd() % 256) as u8;
-    fr.input.held_buttons[0] = rnd(); fr.x618_player_id = (rnd() % 4) as u8; fr.player_id = (rnd() % 6) as _;
+    fr.input.held_buttons[0] = rnd(); fr.pad_port = (rnd() % 4) as u8; fr.player_idx = (rnd() % 6) as _;
     fr.ground_or_air = (rnd() & 1) as _; fr.dmg.x191C = rw(); fr.dmg.facing_dir = rg();
     fr.co_attrs.clank_animation_length = rw(); fr.co_attrs.passiveceil_vel_x = rg();
     fr.co_attrs.passivewall_vel_x = rg(); fr.co_attrs.wall_jump_horizontal_velocity = rg();
@@ -78,8 +78,8 @@ pub fn m8_fill() {
     fr.x67E = (rnd() % 20) as u8; fr.x1969_walljumpUsed = (rnd() & 1) as u8; fr.cmd_vars[0] = rnd() & 1;
     fr.motion_id = if rnd() & 1 != 0 { ftCo_MS_PassiveWall as _ } else { (rnd() % 400) as _ };
     unsafe {
-        fr.anon_2210.anon_0.set_throw_flags_b0((rnd() & 1) as u8);
-        fr.anon_2210.anon_0.set_throw_flags_b3((rnd() & 1) as u8);
+        fr.x2210.x0.set_throw_flags_b0((rnd() & 1) as u8);
+        fr.x2210.x0.set_throw_flags_b3((rnd() & 1) as u8);
     }
     fr.cur_anim_frame = rw(); fr.frame_speed_mul = rg();
     let mv = &mut fr.mv as *mut _ as *mut u32;
@@ -99,8 +99,8 @@ pub fn state_hash() -> u32 {
     h.m(bits(fr.cur_pos.x)); h.m(bits(fr.cur_pos.y)); h.m(bits(fr.cur_pos.z)); h.m(bits(fr.facing_dir));
     h.m(fr.active_timer.lstick.x as u32); h.m(fr.active_timer.lstick.y as u32); h.m(fr.cmd_vars[0]);
     unsafe {
-        h.m(fr.anon_2210.anon_0.throw_flags_b0() as u32);
-        h.m(fr.anon_2210.anon_0.throw_flags_b3() as u32);
+        h.m(fr.x2210.x0.throw_flags_b0() as u32);
+        h.m(fr.x2210.x0.throw_flags_b3() as u32);
     }
     let mv = &fr.mv as *const _ as *const u32;
     for i in 0..4 { h.m(unsafe { *mv.add(i) }); }

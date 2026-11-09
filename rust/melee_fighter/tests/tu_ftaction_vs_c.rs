@@ -82,7 +82,7 @@ unsafe fn world() {
         (*FT)[i].gobj = &raw mut (*GO)[i];
         (*FT)[i].ft_data = &raw mut (*FDATA)[i];
         (*FT)[i].grab_cb = Some(cbev1); (*FT)[i].grabbed_cb = Some(cbev3);
-        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_id %= 4; (*FT)[i].x618_player_id %= 4;
+        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_idx %= 4; (*FT)[i].pad_port %= 4;
         for b in 0..256 { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
         (*FT)[i].parts = (*PARTS)[i].as_mut_ptr();
         // the ftData pointer words: one pad block each (the C driver's order)

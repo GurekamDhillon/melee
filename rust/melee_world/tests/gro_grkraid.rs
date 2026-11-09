@@ -343,7 +343,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grkraid::ext::GROUND_801C0498 = Some(|| -> f32 { lg_s("Ground_801C0498("); lg_s(")"); { let r = rf(); lg_retf(r); lg_c(';'); r } });
         melee_world::tu::grkraid::ext::GROUND_801C39C0 = Some(|| { lg_s("Ground_801C39C0("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grkraid::ext::GROUND_801C3BB4 = Some(|| { lg_s("Ground_801C3BB4("); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grkraid::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: i32| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grkraid::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: isize| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grkraid::ext::GROUND_801C53EC = Some(|a0: u32| { lg_s("Ground_801C53EC("); lg_int(a0 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grkraid::ext::GROUND_801C5440 = Some(|a0: *mut Ground, a1: s32, a2: u32| { lg_s("Ground_801C5440("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grkraid::ext::GROUND_801C5544 = Some(|a0: *mut Ground, a1: s32| { lg_s("Ground_801C5544("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });

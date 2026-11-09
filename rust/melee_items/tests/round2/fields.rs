@@ -147,10 +147,10 @@ pub fn fill(ip: &mut Item, g: &mut Gen) {
         ip.xD4C = ((g.r() % 5) as i32 - 2) as _;
         ip.xD88_attackID = (g.r()) as _;
         ip.xDC0 = (g.r()) as _;
-        { ip.anon_daa.xDAA_flag.byte = g.r() as u8; }
+        { ip.xDAA.xDAA_flag.byte = g.r() as u8; }
         { ip.xDC8_word.flags.bf_0 = g.r().to_be_bytes(); }
         { ip.xDCC_flag.bf_0[0] = g.r() as u8; }
-        { ip.xDCD_flag.anon_0.bf_0[0] = g.r() as u8; }
+        { ip.xDCD_flag.x0.bf_0[0] = g.r() as u8; }
         { ip.xDCE_flag.byte = g.r() as u8; }
         { ip.xDD0_flag.byte = g.r() as u8; }
         ip.xDD4_itemVar.heart.xDD4_heal = (g.r()) as _;
@@ -342,10 +342,10 @@ pub fn snap(ip: &Item, g: &Gen) -> u32 {
         h = hmix(h, ip.xD4C as u32);
         h = hmix(h, ip.xD88_attackID as u32);
         h = hmix(h, ip.xDC0 as u32);
-        h = hmix(h, (ip.anon_daa.xDAA_flag.byte as u32));
+        h = hmix(h, (ip.xDAA.xDAA_flag.byte as u32));
         h = hmix(h, u32::from_be_bytes(ip.xDC8_word.flags.bf_0));
         h = hmix(h, (ip.xDCC_flag.bf_0[0] as u32));
-        h = hmix(h, (ip.xDCD_flag.anon_0.bf_0[0] as u32));
+        h = hmix(h, (ip.xDCD_flag.x0.bf_0[0] as u32));
         h = hmix(h, (ip.xDCE_flag.byte as u32));
         h = hmix(h, (ip.xDD0_flag.byte as u32));
         h = hmix(h, ip.xDD4_itemVar.heart.xDD4_heal as u32);

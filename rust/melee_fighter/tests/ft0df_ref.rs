@@ -62,7 +62,7 @@ fn state_hash(f: &Fighter, gg: *mut HSD_GObj, hb: &HitCapsule) -> u32 {
     for i in 0..15 {
         s.m(f.hurt_capsules[i].capsule.skip_update_pos() as u32);
     }
-    let owner = unsafe { f.x1064_thrownHitbox.anon_134.owner };
+    let owner = unsafe { f.x1064_thrownHitbox.x134.owner };
     s.m((owner == gg) as u32);
     s.m(owner.is_null() as u32);
     s.m(f.x119C_teamUnk as u32);
@@ -144,10 +144,10 @@ fn ft0df_matches_c() {
                 G_IT = (r.rnd() % 3) as i32;
                 G_P354 = r.rnd() & 1 != 0;
             }
-            f.set_x221F_b3((r.rnd() & 1) as u8);
-            f.set_x2224_b2((r.rnd() & 1) as u8);
-            f.x618_player_id = (r.rnd() % 4) as u8;
-            f.player_id = (r.rnd() % 4) as u8;
+            f.set_is_sleeping((r.rnd() & 1) as u8);
+            f.set_stamina_dead((r.rnd() & 1) as u8);
+            f.pad_port = (r.rnd() % 4) as u8;
+            f.player_idx = (r.rnd() % 4) as u8;
             f.set_is_sub_fighter((r.rnd() & 1) as u8);
             cd.dash_smash_stick_threshold = r.rg();
             cd.xCC = r.rg();
@@ -183,7 +183,7 @@ fn ft0df_matches_c() {
                 f.hurt_capsules[i].capsule.set_skip_update_pos((r.rnd() & 1) as u8);
             }
             gf.team = r.rnd() as u8;
-            gf.player_id = r.rnd() as u8;
+            gf.player_idx = r.rnd() as u8;
             hb.jobj = &mut *jo;
             let v = Vec3 { x: r.rg(), y: r.rg(), z: r.rg() };
             f.x5AC.model_num = r.rnd() % 13;

@@ -104,8 +104,8 @@ unsafe fn world() {
         (*FT)[i].gobj = &raw mut (*GO)[i];
         (*FT)[i].ft_data = &raw mut (*FDATA)[i];
         (*FT)[i].grab_cb = Some(cbev1); (*FT)[i].grabbed_cb = Some(cbev3);
-        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_id %= 4; (*FT)[i].x618_player_id %= 4;
-        for b in 0..64 { if b < NP { fill_FighterBone(&mut (*PARTS)[i][b]); } else { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].anon_8.anon_0.set_flags_b1(1); } (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
+        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_idx %= 4; (*FT)[i].pad_port %= 4;
+        for b in 0..64 { if b < NP { fill_FighterBone(&mut (*PARTS)[i][b]); } else { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].x8.x0.set_flags_b1(1); } (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
         (*FT)[i].parts = (*PARTS)[i].as_mut_ptr();
 // the ftData pointer words: one pad block each (the C driver's order)
         { let mut pk = i * 24; macro_rules! nx { () => {{ pk += 1; (*PADB)[pk - 1].as_mut_ptr() as *mut _ }}; }
@@ -245,14 +245,14 @@ unsafe fn world() {
         for k_ in 0..KM { ts.prepared[k_] = fv() as u8; } }
       for k_ in 0..KM { fdm::GenoDefine_ContentIdentity[k_][0] = fv(); fdm::GenoDefine_ContentIdentity[k_][1] = fv(); fdm::GenoDefine_InterpreterAttempts[k_] = fv(); }
       for q_ in 0..NG {
-        (*FT)[q_].kind = ((*FT)[q_].kind as u32 % 27) as _; (*FT)[q_].x619_costume_id %= 4;
+        (*FT)[q_].kind = ((*FT)[q_].kind as u32 % 27) as _; (*FT)[q_].costume_id %= 4;
         (*FT)[q_].x24 = (*PADB)[70 + q_].as_mut_ptr() as *mut Fighter_WaitAnimData; (*FT)[q_].x59C = (*PADB)[80 + q_].as_mut_ptr() as *mut _;
-        (*FT)[q_].x5A4 = (fv() % 8) as usize as *mut c_void; (*FT)[q_].x5A8 = pw() as *mut c_void; (*FT)[q_].x58C = fv() % 70;
+        (*FT)[q_].x5A4 = (fv() % 8) as usize; (*FT)[q_].x5A8 = pw() as usize; (*FT)[q_].x58C = fv() % 70;
         for j_ in 0..64usize {
           let r_ = (*PADB)[70 + q_].as_mut_ptr().cast::<Fighter_WaitAnimData>().add(j_);
-          (*r_).x0 = pw() as *mut _; (*r_).x4 = (fv() % 256) as i32; (*r_).x8 = (fv() % 1024) as i32; (*r_).xC = pw() as *mut _; (*r_).x10_animCurrFlags = fv() as i32; (*r_).x14 = fv() % 8;
+          (*r_).x0 = pw() as *mut _; (*r_).x4 = (fv() % 256) as i32; (*r_).x8 = (fv() % 1024) as i32; (*r_).xC = pw() as *mut _; (*r_).x10_animCurrFlags = fv() as i32; (*r_).x14 = ((fv() % 8) as usize);
           let r_ = (*PADB)[3 + q_ * 24].as_mut_ptr().cast::<Fighter_WaitAnimData>().add(j_);
-          (*r_).x0 = pw() as *mut _; (*r_).x4 = (fv() % 256) as i32; (*r_).x8 = (fv() % 1024) as i32; (*r_).xC = pw() as *mut _; (*r_).x10_animCurrFlags = fv() as i32; (*r_).x14 = fv() % 8;
+          (*r_).x0 = pw() as *mut _; (*r_).x4 = (fv() % 256) as i32; (*r_).x8 = (fv() % 1024) as i32; (*r_).xC = pw() as *mut _; (*r_).x10_animCurrFlags = fv() as i32; (*r_).x14 = ((fv() % 8) as usize);
         }
       }
     }
@@ -327,7 +327,7 @@ unsafe fn hworld() {
       { let ts = fdm::throw_state();
         for q_ in 0..6 { hm(ts.banks[q_].kind as u32); hm(pi(ts.banks[q_].buf as *const u8)); hm(ts.banks[q_].cap as u32); hm(ts.banks[q_].sz as u32); }
         hm(ts.loads); hm(ts.evicts); hm(pi(ts.region_cur as *const u8)); }
-      for k_ in 0..(16384 / core::mem::size_of::<Fighter_WaitAnimData>()) { let r_ = (*MEMBUF2).as_ptr().cast::<Fighter_WaitAnimData>().add(k_); hm(pi((*r_).x0 as *const u8)); hm((*r_).x4 as u32); hm((*r_).x8 as u32); hm(pi((*r_).xC as *const u8)); hm((*r_).x10_animCurrFlags as u32); hm((*r_).x14); }
+      for k_ in 0..(16384 / core::mem::size_of::<Fighter_WaitAnimData>()) { let r_ = (*MEMBUF2).as_ptr().cast::<Fighter_WaitAnimData>().add(k_); hm(pi((*r_).x0 as *const u8)); hm((*r_).x4 as u32); hm((*r_).x8 as u32); hm(pi((*r_).xC as *const u8)); hm((*r_).x10_animCurrFlags as u32); hm((((*r_).x14) as u32)); }
     }
 
 }

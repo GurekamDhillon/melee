@@ -117,7 +117,7 @@ fn ft_081b_matches_c() {
                 f.parts = bones.as_mut_ptr();
                 f.ecb_lock = rg.rnd() as i32;
                 f.set_allow_sdi((rg.rnd() & 1) as u8);
-                f.set_x2224_b2((rg.rnd() % 3 == 0) as u8);
+                f.set_stamina_dead((rg.rnd() % 3 == 0) as u8);
                 f.x2064_ledgeCooldown = if rg.rnd() % 3 == 0 { 5 } else { 0 };
                 f.cur_pos.x = rg.rf();
                 f.cur_pos.y = rg.rf();

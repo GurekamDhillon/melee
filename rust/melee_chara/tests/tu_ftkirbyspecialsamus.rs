@@ -202,9 +202,9 @@ fn matches_c_and_smoke() {
     unsafe { f.u.kb.xA4 = core::ptr::null_mut() };
     assert_eq!(t::ftKb_SpecialNSs_800FCC14(gp, &mut a, &mut b), -1);
     f.motion_id = 0x199;
-    unsafe { f.x2070.anon_0.set_x2071_b6(1) };
+    unsafe { f.x2070.x0.set_x2071_b6(1) };
     assert!(t::ftKb_SpecialNSs_800FCC6C(gp));
-    unsafe { f.x2070.anon_0.set_x2071_b6(0) };
+    unsafe { f.x2070.x0.set_x2071_b6(0) };
     assert!(!t::ftKb_SpecialNSs_800FCC6C(gp));
     assert!(t::ftKb_SpecialNSs_800FCCBC(gp));
     f.motion_id = 0x19A;

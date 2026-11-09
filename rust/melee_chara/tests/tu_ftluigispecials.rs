@@ -114,7 +114,7 @@ fn matches_c() {
                 f.mv.lg.SpecialS.chargeFrames,
                 f.mv.lg.SpecialS.isMisfire,
                 RANDI_ARG,
-                f.x2070.anon_0.count_thrown_items(),
+                f.x2070.x0.count_thrown_items(),
                 f.cmd_vars[0]
             )
         };

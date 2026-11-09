@@ -45,7 +45,7 @@ unsafe extern "C" fn jcb_b(ud: *mut c_void, jid: i32, c: *mut CollData, x50: i32
 unsafe extern "C" fn cb_pipe(c: *mut CollData, f: u32) -> i32 {
     t(0xCC); t(pi(c)); t(f); (*c).cur_pos.x += 0.5; (fv() & 1) as i32
 }
-unsafe extern "C" fn cb_floor(g: *mut HSD_GObj, i: i32) -> i32 {
+unsafe extern "C" fn cb_floor(g: *mut HSD_GObj, i: isize) -> i32 {
     t(0xCD); t(pi(g)); t(i as u32); (fv() & 1) as i32
 }
 unsafe fn jp(i: usize) -> *mut HSD_JObj {

@@ -69,7 +69,7 @@ fn ftCo_FallSpecial_matches_c() {
                 4 => { m::ftCo_FallSpecial_IASA(g); 0 }
                 5 => { m::ftCo_FallSpecial_Phys(g); 0 }
                 6 => { m::ftCo_FallSpecial_Coll(g); 0 }
-                7 => m::ftCo_80096CC8(g, line) as u32,
+                7 => m::ftCo_80096CC8(g, line as isize) as u32,
                 _ => { m::ftCo_80096D28(g); 0 }
             };
             c.line(op, k, ret, df_hash().0);

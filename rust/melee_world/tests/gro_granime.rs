@@ -453,7 +453,7 @@ unsafe fn world_fill(fi: usize) {
     for i in 0..4 {
         OX8T[i].joint = if rnd() % 4 != 0 { addr_of_mut!(OJNT[(rnd() % 6) as usize]) } else { null_mut() };
         OX8T[i].anims = addr_of_mut!(OAJP) as *mut _; OX8T[i].matanims = addr_of_mut!(OMJP) as *mut _; OX8T[i].shapeanims = addr_of_mut!(OSJP) as *mut _;
-        OX8T[i].anim_loops = if rnd() % 4 != 0 { addr_of_mut!(OEF) as *mut c_void } else { null_mut() };
+        OX8T[i].anim_loops = if rnd() % 4 != 0 { addr_of_mut!(OEF) as *mut _ } else { null_mut() };
     }
     OUSD[0].unk8 = addr_of_mut!(OX8T) as *mut _; OUSD[0].unkC = 4;
     for i in 0..2 { OAR[i].unk4 = addr_of_mut!(OUSD[0]); OAR[i].unk0 = if rnd() % 3 != 0 { if rnd() % 2 != 0 { addr_of_mut!(OGO[0]) as *mut _ } else { usize::MAX as *mut _ } } else { null_mut() }; }
@@ -638,7 +638,7 @@ unsafe fn call_fn(fi: usize, a: &mut Args) -> (u64, u32) {
     }
 }
 unsafe fn install_hooks() {
-        melee_world::tu::granime::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: i32| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (if rnd() % 5 != 0 { addr_of_mut!(OJT[(rnd() % 8) as usize]) as *mut _ } else { null_mut() }) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::granime::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: isize| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (if rnd() % 5 != 0 { addr_of_mut!(OJT[(rnd() % 8) as usize]) as *mut _ } else { null_mut() }) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::granime::ext::GROUND_801C498C = Some(|| -> *mut HSD_GObj { lg_s("Ground_801C498C("); lg_s(")"); { let r = gen_gobj() as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::granime::ext::HSD_AOBJCLEARFLAGS = Some(|a0: *mut HSD_AObj, a1: u32| { lg_s("HSD_AObjClearFlags("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::granime::ext::HSD_AOBJGETFLAGS = Some(|a0: *mut HSD_AObj| -> u32 { lg_s("HSD_AObjGetFlags("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); { let r = (rnd()) as u32; lg_retu(r as u32); lg_c(';'); r } });

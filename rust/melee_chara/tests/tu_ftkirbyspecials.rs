@@ -110,7 +110,7 @@ fn smoke() {
     fd.ext_attr = &mut *cd as *mut ftCommonData as *mut _;
     let mut items: [*mut core::ffi::c_void; 8] = [core::ptr::null_mut(); 8];
     items[4] = 0x1234 as *mut _;
-    fd.x48_items = items.as_mut_ptr();
+    fd.x48_items = (items.as_mut_ptr()) as *mut _;
     unsafe { melee_fighter::tu::ftdata::gFtDataList[Ft_Kind_Kirby as usize] = &mut *fd };
     f.ft_data = &mut *fd;
     let mut out = Vec2 { x: 0.0, y: 0.0 };

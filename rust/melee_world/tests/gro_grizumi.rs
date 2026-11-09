@@ -477,7 +477,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grizumi::ext::GROUND_801C1A20 = Some(|a0: *mut HSD_Joint, a1: s32| -> *mut HSD_GObj { lg_s("Ground_801C1A20("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = gen_gobj() as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grizumi::ext::GROUND_801C39C0 = Some(|| { lg_s("Ground_801C39C0("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grizumi::ext::GROUND_801C3BB4 = Some(|| { lg_s("Ground_801C3BB4("); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grizumi::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: i32| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grizumi::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: isize| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grizumi::ext::GROUND_GETSTAGEGOBJ = Some(|a0: i32| -> *mut HSD_GObj { lg_s("Ground_GetStageGObj("); lg_int(a0 as u32); lg_s(")"); { let r = (if NN != 0 || rnd() % 4 != 0 { addr_of_mut!(OGO[(a0 as u32 % NGO as u32) as usize]) as *mut _ } else { core::ptr::null_mut() }) as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grizumi::ext::GROUND_GETYAKUMONOPARAM = Some(|| -> *mut c_void { lg_s("Ground_GetYakumonoParam("); lg_s(")"); { let r = (addr_of_mut!(OP_grIzumi_YakumonoParam[0]) as *mut _) as *mut c_void; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grinl2::ext::GROUND_INITMAPCOLL = Some(|a0: *mut HSD_JObj, a1: s32| -> i32 { lg_s("Ground_InitMapColl("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
@@ -541,7 +541,7 @@ unsafe fn install_hooks() {
     melee_world::tu::grinl::ext::STAGE_INFO = Some(|| addr_of_mut!(G_stage_info) as *mut StageInfo);
     t::ext::SCRIPTGAME_STAGESLOTNATIVECONTEXT = Some(|| -> i32 { lg_s("ScriptGame_StageSlotNativeContext("); lg_s(")"); let r = (rnd() % 2) as i32; lg_retu(r as u32); lg_c(';'); r });
     t::ext::SCRIPTGAME_STAGESLOTRETAILLOADING = Some(|| -> i32 { lg_s("ScriptGame_StageSlotRetailLoading("); lg_s(")"); let r = (rnd() % 2) as i32; lg_retu(r as u32); lg_c(';'); r });
-    melee_world::tu::grinl2::ext::GRDISPLAY_801C5DB0 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("grDisplay_801C5DB0("); lg_ptr(a0 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
+    melee_world::tu::grinl2::ext::GRDISPLAY_801C5DB0 = Some(|a0: *mut HSD_GObj, a1: isize| { lg_s("grDisplay_801C5DB0("); lg_ptr(a0 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
     t::ext::SCRIPTGAME_STAGESLOTRETAILBUFFER = Some(|p: *mut c_void| { lg_s("ScriptGame_StageSlotRetailBuffer("); lg_ptr(p as usize); lg_s(")"); lg_c(';'); });
     core::ptr::copy_nonoverlapping(addr_of!(t::grIz_803E0D60) as *const u8, addr_of_mut!(SNAP_grIz_803E0D60) as *mut u8, core::mem::size_of::<GrJoint>() * 3);
     core::ptr::copy_nonoverlapping(addr_of!(t::grIz_StageCallbacks) as *const u8, addr_of_mut!(SNAP_grIz_StageCallbacks) as *mut u8, core::mem::size_of::<StageCallbacks>() * 11);

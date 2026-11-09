@@ -16,7 +16,7 @@ static mut SATTR: [[u32; 6]; 2] = [[0; 6]; 2];
 
 unsafe fn setup_stem() {
     m::ext::it_804D6D28 = &raw mut ICD[0];
-{ for q in 0..2usize { ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut c_void; for w in 0..6usize { *(&raw mut SATTR[q] as *mut f32).add(w) = rw(); } } } { for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } } { for q in 0..4usize { let r = rnd(); let p: *mut HSD_GObj = if r & 3 == 0 { null_mut() } else { &raw mut GO[4 + ((r >> 8) % 3) as usize] }; IT[q].xDD4_itemVar.drmariopill.x4 = p; IT[q].owner = if r & 16 != 0 { p } else { pick_fgo() }; } }
+{ for q in 0..2usize { ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut _; for w in 0..6usize { *(&raw mut SATTR[q] as *mut f32).add(w) = rw(); } } } { for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } } { for q in 0..4usize { let r = rnd(); let p: *mut HSD_GObj = if r & 3 == 0 { null_mut() } else { &raw mut GO[4 + ((r >> 8) % 3) as usize] }; IT[q].xDD4_itemVar.drmariopill.x4 = p; IT[q].owner = if r & 16 != 0 { p } else { pick_fgo() }; } }
 }
 
 unsafe fn hash_stem() {

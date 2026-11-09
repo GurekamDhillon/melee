@@ -882,9 +882,9 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -2321,9 +2321,9 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -3768,9 +3768,9 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -5207,9 +5207,9 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -6649,9 +6649,9 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -8088,9 +8088,9 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -11462,9 +11462,9 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         rt::h_f32((*p).x524_cmd.timer);
         rt::h_f32((*p).x524_cmd.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x524_cmd.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x524_cmd.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x524_cmd.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x524_cmd.anon_8.u as *const u8);
         rt::h_u((*p).x524_cmd.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x524_cmd.event_return[i0] as *const u8);
@@ -12018,9 +12018,9 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         (*p0).x524_cmd.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x524_cmd.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x524_cmd.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x524_cmd.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x524_cmd.anon_8.anon_0.u = 0usize as _;
+        (*p0).x524_cmd.anon_8.u = 0usize as _;
         (*p0).x524_cmd.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x524_cmd.event_return[i1] = 0usize as _;
@@ -13366,9 +13366,9 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -14804,9 +14804,9 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -16389,9 +16389,9 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -17830,9 +17830,9 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -19272,9 +19272,9 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -20710,9 +20710,9 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -22152,9 +22152,9 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -23590,9 +23590,9 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -25032,9 +25032,9 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -26470,9 +26470,9 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -27912,9 +27912,9 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -29352,9 +29352,9 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -30794,9 +30794,9 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -32232,9 +32232,9 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -33674,9 +33674,9 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -35113,9 +35113,9 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -37013,9 +37013,9 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -38451,9 +38451,9 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -39893,9 +39893,9 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -41331,9 +41331,9 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -42773,9 +42773,9 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -44211,9 +44211,9 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -45791,9 +45791,9 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -47229,9 +47229,9 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -48993,9 +48993,9 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -50431,9 +50431,9 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -51965,9 +51965,9 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -53403,9 +53403,9 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -55075,9 +55075,9 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -56514,9 +56514,9 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -58045,9 +58045,9 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -59557,9 +59557,9 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -61212,9 +61212,9 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -62650,9 +62650,9 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -64092,9 +64092,9 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -65530,9 +65530,9 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -66972,9 +66972,9 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -68410,9 +68410,9 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -69944,9 +69944,9 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -71382,9 +71382,9 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -72831,9 +72831,9 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -74269,9 +74269,9 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -75711,9 +75711,9 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -77149,9 +77149,9 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -78689,9 +78689,9 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -80128,9 +80128,9 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -82383,9 +82383,9 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         rt::h_f32((*p).x524_cmd.timer);
         rt::h_f32((*p).x524_cmd.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x524_cmd.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x524_cmd.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x524_cmd.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x524_cmd.anon_8.u as *const u8);
         rt::h_u((*p).x524_cmd.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x524_cmd.event_return[i0] as *const u8);
@@ -83034,9 +83034,9 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         (*p3).x524_cmd.timer = rt::draw_f32(&mut rt::MST);
         (*p3).x524_cmd.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p3).x524_cmd.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p3).x524_cmd.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p3).x524_cmd.anon_8.anon_0.u = 0usize as _;
+        (*p3).x524_cmd.anon_8.u = 0usize as _;
         (*p3).x524_cmd.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p3).x524_cmd.event_return[i1] = 0usize as _;
@@ -83620,9 +83620,9 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         rt::h_f32((*p).x524_cmd.timer);
         rt::h_f32((*p).x524_cmd.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x524_cmd.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x524_cmd.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x524_cmd.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x524_cmd.anon_8.u as *const u8);
         rt::h_u((*p).x524_cmd.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x524_cmd.event_return[i0] as *const u8);
@@ -84244,9 +84244,9 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         (*p0).x524_cmd.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x524_cmd.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x524_cmd.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x524_cmd.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x524_cmd.anon_8.anon_0.u = 0usize as _;
+        (*p0).x524_cmd.anon_8.u = 0usize as _;
         (*p0).x524_cmd.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x524_cmd.event_return[i1] = 0usize as _;
@@ -88934,7 +88934,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::ext::gobjproc_alloc_data)).align = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::gobjproc_alloc_data)).next = 0usize as _;
     for i0 in 0..13 {
-        (*core::ptr::addr_of_mut!(m::ext::grPushOn_803E7CCC))[i0] = rt::draw_f32(&mut rt::ST);
+        let _ = rt::draw_f32(&mut rt::ST); // grPushOn_803E7CCC is an immutable table in the port: not randomised
     }
     (*core::ptr::addr_of_mut!(m::ext::gx_suppress_draws)) = rt::draw_int(&mut rt::ST) as _;
     for i0 in 0..16 {
@@ -88989,7 +88989,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760)).joints = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760)).joint_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760)).x2C = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(m::ext::numActiveParticles)) = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2)) = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::p_ftCommonData)) = 0usize as _;
     for i0 in 0..65 {
         (*core::ptr::addr_of_mut!(m::ext::psCmdListArray))[i0] = 0usize as _;
@@ -91860,7 +91860,7 @@ unsafe fn hash_objs() {
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..13 {
-        rt::h_f32((*core::ptr::addr_of_mut!(m::ext::grPushOn_803E7CCC))[i0]);
+        rt::h_f32((*core::ptr::addr_of!(m::ext::grPushOn_803E7CCC))[i0]);
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
@@ -91945,7 +91945,7 @@ unsafe fn hash_objs() {
     rt::h_i((*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760)).x2C as i64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
-    rt::h_u((*core::ptr::addr_of_mut!(m::ext::numActiveParticles)) as u64);
+    rt::h_u((*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2)) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(m::ext::p_ftCommonData)) as *const u8);
@@ -92725,7 +92725,7 @@ unsafe fn init() {
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::gm_804D6720))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::gm_804D6720))), "gm_804D6720");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::gobj_alloc_data))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::gobj_alloc_data))), "gobj_alloc_data");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::gobjproc_alloc_data))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::gobjproc_alloc_data))), "gobjproc_alloc_data");
-    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::grPushOn_803E7CCC))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::grPushOn_803E7CCC))), "grPushOn_803E7CCC");
+    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of!(m::ext::grPushOn_803E7CCC))), core::mem::size_of_val(&(*core::ptr::addr_of!(m::ext::grPushOn_803E7CCC))), "grPushOn_803E7CCC");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::gx_suppress_draws))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::gx_suppress_draws))), "gx_suppress_draws");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D0908))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D0908))), "hsd_804D0908");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D0948))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D0948))), "hsd_804D0948");
@@ -92740,7 +92740,7 @@ unsafe fn init() {
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::it_804D6D30))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::it_804D6D30))), "it_804D6D30");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::it_804D6D38))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::it_804D6D38))), "it_804D6D38");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760))), "mpLib_803BF760");
-    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::numActiveParticles))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::numActiveParticles))), "numActiveParticles");
+    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2))), "hsd_804D78E2");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::p_ftCommonData))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::p_ftCommonData))), "p_ftCommonData");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::psCmdListArray))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::psCmdListArray))), "psCmdListArray");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::psFormGroupArray))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::psFormGroupArray))), "psFormGroupArray");
@@ -94256,9 +94256,9 @@ unsafe fn run_ScriptGame_EchoBlocked(seed: u64) -> [u64; 3] {
         AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -95771,9 +95771,9 @@ unsafe fn run_ScriptGame_EchoBlocked(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_EchoBlocked_1[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -97215,9 +97215,9 @@ unsafe fn run_ScriptGame_EchoCapsule(seed: u64) -> [u64; 3] {
         AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -98660,9 +98660,9 @@ unsafe fn run_ScriptGame_EchoCapsule(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_EchoCapsule_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -100104,9 +100104,9 @@ unsafe fn run_ScriptGame_EchoCapsuleCount(seed: u64) -> [u64; 3] {
         AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -101549,9 +101549,9 @@ unsafe fn run_ScriptGame_EchoCapsuleCount(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_EchoCapsuleCount_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -102993,9 +102993,9 @@ unsafe fn run_ScriptGame_EchoCapture(seed: u64) -> [u64; 3] {
         AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -104438,9 +104438,9 @@ unsafe fn run_ScriptGame_EchoCapture(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_EchoCapture_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -106395,9 +106395,9 @@ unsafe fn run_ScriptGame_FighterBenchTick(seed: u64) -> [u64; 3] {
         AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -107840,9 +107840,9 @@ unsafe fn run_ScriptGame_FighterBenchTick(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_FighterBenchTick_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -109346,9 +109346,9 @@ unsafe fn run_ScriptGame_HitRulePercentClear(seed: u64) -> [u64; 3] {
         AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -110791,9 +110791,9 @@ unsafe fn run_ScriptGame_HitRulePercentClear(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_HitRulePercentClear_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -112373,9 +112373,9 @@ unsafe fn run_ScriptGame_LabPreviewRow(seed: u64) -> [u64; 3] {
         AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -113819,9 +113819,9 @@ unsafe fn run_ScriptGame_LabPreviewRow(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_LabPreviewRow_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -115288,9 +115288,9 @@ unsafe fn run_ScriptGame_NoteMotion(seed: u64) -> [u64; 3] {
         AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -116734,9 +116734,9 @@ unsafe fn run_ScriptGame_NoteMotion(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_NoteMotion_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -118178,9 +118178,9 @@ unsafe fn run_ScriptGame_NoteSpecialInput(seed: u64) -> [u64; 3] {
         AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -119623,9 +119623,9 @@ unsafe fn run_ScriptGame_NoteSpecialInput(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_NoteSpecialInput_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -121067,9 +121067,9 @@ unsafe fn run_ScriptGame_OnePSpawn(seed: u64) -> [u64; 3] {
         AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -122512,9 +122512,9 @@ unsafe fn run_ScriptGame_OnePSpawn(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_OnePSpawn_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -124339,9 +124339,9 @@ unsafe fn run_ScriptGame_VirtualPadApply(seed: u64) -> [u64; 3] {
         AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -125784,9 +125784,9 @@ unsafe fn run_ScriptGame_VirtualPadApply(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_VirtualPadApply_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -127239,9 +127239,9 @@ unsafe fn run_ScriptGame_VirtualPadObserve(seed: u64) -> [u64; 3] {
         AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -128684,9 +128684,9 @@ unsafe fn run_ScriptGame_VirtualPadObserve(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_ScriptGame_VirtualPadObserve_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -130312,9 +130312,9 @@ unsafe fn run_script_crit_launch_clear(seed: u64) -> [u64; 3] {
         AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -131757,9 +131757,9 @@ unsafe fn run_script_crit_launch_clear(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_script_crit_launch_clear_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -133201,9 +133201,9 @@ unsafe fn run_script_hit_family_move(seed: u64) -> [u64; 3] {
         AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -134646,9 +134646,9 @@ unsafe fn run_script_hit_family_move(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_script_hit_family_move_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -136090,9 +136090,9 @@ unsafe fn run_script_lab_mission_floor_height(seed: u64) -> [u64; 3] {
         AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -137548,9 +137548,9 @@ unsafe fn run_script_lab_mission_floor_height(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_script_lab_mission_floor_height_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -139006,9 +139006,9 @@ unsafe fn run_script_lab_mission_floor_valid(seed: u64) -> [u64; 3] {
         AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -140451,9 +140451,9 @@ unsafe fn run_script_lab_mission_floor_valid(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_script_lab_mission_floor_valid_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -141980,9 +141980,9 @@ unsafe fn run_script_skill_one(seed: u64) -> [u64; 3] {
         AB_script_skill_one_1[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_script_skill_one_1[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_script_skill_one_1[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_script_skill_one_1[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_script_skill_one_1[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_script_skill_one_1[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_script_skill_one_1[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_script_skill_one_1[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -143452,9 +143452,9 @@ unsafe fn run_script_skill_one(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_script_skill_one_1[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_script_skill_one_1[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_script_skill_one_1[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_script_skill_one_1[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_script_skill_one_1[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_script_skill_one_1[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_script_skill_one_1[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_script_skill_one_1[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -144799,7 +144799,7 @@ unsafe extern "C" fn cb1(a0: *mut Q::HSD_GObj, a1: *mut Q::HSD_GObj) {
     rt::t_p(a0 as *const u8);
     rt::t_p(a1 as *const u8);
 }
-unsafe extern "C" fn cb2(a0: *mut Q::HSD_GObj, a1: i64) {
+unsafe extern "C" fn cb2(a0: *mut Q::HSD_GObj, a1: isize) {
     rt::t_begin(1002);
     rt::t_p(a0 as *const u8);
     rt::t_i(a1 as i64);

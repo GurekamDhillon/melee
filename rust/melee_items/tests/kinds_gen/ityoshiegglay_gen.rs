@@ -14,7 +14,7 @@ pub fn install() {
         Item_80268B18 = Some(|a0| { t(1001); t(pi(a0)); tspawn(a0); if fv() & 1 != 0 { &raw mut crate::GO[2] } else { core::ptr::null_mut() } });
         Item_80268E5C = Some(|a0, a1, a2| { t(1002); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         Item_8026AE84 = Some(|a0, a1, a2, a3| { t(1003); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
-        efAsync_Spawn = Some(|a0, a1, a2, a3, a4| { t(1004); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); });
+        efAsync_Spawn = Some(|a0, a1, a2, a3, a4, _a5| { t(1004); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); });
         it_8026B3A8 = Some(|a0| { t(1005); t(pi(a0)); });
         it_8026B894 = Some(|a0, a1| { t(1006); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });
         it_8026D62C = Some(|a0, a1| { t(1007); t(pi(a0)); t(fi(a1)); });

@@ -27,7 +27,7 @@ unsafe fn body() {
     let items: &'static mut [*mut core::ffi::c_void; 8] = Box::leak(Box::new([core::ptr::null_mut(); 8]));
     items[0] = 0x77 as *mut _;
     fd.ext_attr = ea as *mut _ as *mut _;
-    fd.x48_items = items.as_mut_ptr();
+    fd.x48_items = (items.as_mut_ptr()) as *mut _;
     f.ft_data = fd;
     f.dat_attrs_backup = backup as *mut _ as *mut _;
     g.user_data = &mut *f as *mut Fighter as *mut _;

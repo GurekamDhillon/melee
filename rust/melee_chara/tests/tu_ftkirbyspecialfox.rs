@@ -71,12 +71,12 @@ fn smoke() {
     assert_eq!(t::ftKb_SpecialNFx_800FDD4C(core::ptr::null_mut()), 9);
     // 800FDDF4: x2071_b6 inside the block motions, true elsewhere / without a fighter.
     f.motion_id = ftKb_MS_FcSpecialAirNStart as _;
-    unsafe { f.x2070.anon_0.set_x2071_b6(0) };
+    unsafe { f.x2070.x0.set_x2071_b6(0) };
     assert!(!t::ftKb_SpecialNFx_800FDDF4(gp));
-    unsafe { f.x2070.anon_0.set_x2071_b6(1) };
+    unsafe { f.x2070.x0.set_x2071_b6(1) };
     assert!(t::ftKb_SpecialNFx_800FDDF4(gp));
     f.motion_id = 1 as _;
-    unsafe { f.x2070.anon_0.set_x2071_b6(0) };
+    unsafe { f.x2070.x0.set_x2071_b6(0) };
     assert!(t::ftKb_SpecialNFx_800FDDF4(gp));
     assert!(t::ftKb_SpecialNFx_800FDDF4(core::ptr::null_mut()));
 

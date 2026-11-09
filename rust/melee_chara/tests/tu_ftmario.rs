@@ -20,7 +20,7 @@ fn attrs_push_and_copy() {
     ext.specialhi.vel_x = 3.5;
     ext.specials.cape_kind = 99;
     fd.ext_attr = &mut *ext as *mut _ as *mut _;
-    fd.x48_items = items.as_mut_ptr();
+    fd.x48_items = (items.as_mut_ptr()) as *mut _;
     f.ft_data = &mut *fd;
     f.dat_attrs_backup = &mut *backup as *mut _ as *mut _;
     f.dat_attrs = &mut *live as *mut _ as *mut _;

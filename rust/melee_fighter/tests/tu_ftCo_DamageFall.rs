@@ -46,7 +46,7 @@ fn ftCo_DamageFall_matches_c() {
             case(op, k);
             let fr = f();
             fr.ground_or_air = (rnd() & 1) as _;
-            fr.x618_player_id = (rnd() % 4) as u8;
+            fr.pad_port = (rnd() % 4) as u8;
             fr.input.lstick[1].x = rg();
             fr.input.lstick[0].x = rg();
             cd().x210 = rg();

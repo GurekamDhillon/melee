@@ -230,7 +230,7 @@ fn matches_c_and_smoke() {
     assert!(unsafe { f.u.kb.x98 }.is_null());
     assert_eq!(unsafe { LOG.join(",") }, "release,destroy,wait");
     f.motion_id = ftKb_MS_MtSpecialNLoop as _;
-    unsafe { f.x2070.anon_0.set_x2071_b6(0) };
+    unsafe { f.x2070.x0.set_x2071_b6(0) };
     assert!(!t::ftKb_SpecialNMt_80106F9C(gp));
     assert!(!t::ftKb_SpecialNMt_80106FEC(gp));
     f.motion_id = 0;

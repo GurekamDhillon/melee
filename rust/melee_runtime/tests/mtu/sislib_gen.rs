@@ -12,8 +12,8 @@ pub fn install() {
     unsafe {
         GObj_Create = Some(|a0, a1, a2| { t(1000); t(a0 as u32); t(a1 as u32); t(a2 as u32); &raw mut super::G[3] });
         GObj_InitUserData = Some(|a0, a1, a2, a3| { t(1001); t(pi(a0)); t(a1 as u32); t(fi(a2)); t(pi(a3)); (*a0).user_data_kind=a1;(*a0).user_data_remove_func=a2;(*a0).user_data=a3; });
-        GObj_SetupGXLink = Some(|a0, a1, a2, a3| { t(1002); t(pi(a0)); t(fi(a1)); t(a2 as u32); t(a3 as u32); (*a0).render_cb=a1;(*a0).gx_link=a2;(*a0).render_priority=a3 as u8; });
-        GObj_SetupGXLinkMax = Some(|a0, a1, a2| { t(1003); t(pi(a0)); t(fi(a1)); t(a2 as u32); (*a0).render_cb=a1;(*a0).render_priority=a2 as u8; });
+        GObj_SetupGXLink = Some(|a0, a1, a2, a3| { t(1002); t(pi(a0)); t(fi(a1)); t(a2 as u32); t(a3 as u32); (*a0).render_cb=core::mem::transmute(a1);(*a0).gx_link=a2;(*a0).render_priority=a3 as u8; });
+        GObj_SetupGXLinkMax = Some(|a0, a1, a2| { t(1003); t(pi(a0)); t(fi(a1)); t(a2 as u32); (*a0).render_cb=core::mem::transmute(a1);(*a0).render_priority=a2 as u8; });
         HSD_ArchiveGetPublicAddress = Some(|a0, a1| { t(1004); t(pi(a0)); t(sh(a1 as *const u8)); (&raw mut super::TABLE).cast() });
         HSD_CObjLoadDesc = Some(|a0| { t(1005); t(pi(a0)); if super::KCASE%5!=0 {&raw mut super::CAM} else {core::ptr::null_mut()} });
         HSD_CObjSetOrtho = Some(|a0, a1, a2, a3, a4| { t(1006); t(pi(a0)); t(a1.to_bits()); t(a2.to_bits()); t(a3.to_bits()); t(a4.to_bits()); });

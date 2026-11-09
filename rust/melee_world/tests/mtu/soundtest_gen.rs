@@ -233,7 +233,7 @@ pub fn hash_un_80304138_objalloc_t_x8(p: &un_80304138_objalloc_t_x8) {
     hm(fi(p.x4));
     hm(pi(p.x8));
     hm(pi(p.xC));
-    hm(pi(p.x10));
+    hm(pi(unsafe { p.x10.any }));
     hm(p.x14.to_bits());
     hm(p.x18.to_bits());
     hm(p.x1C.to_bits());

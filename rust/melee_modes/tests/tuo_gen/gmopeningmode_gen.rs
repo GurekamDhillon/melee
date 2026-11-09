@@ -959,7 +959,7 @@ unsafe extern "C" fn s_lbAudioAx_80026F2C(a0: u32) { let v = vv(); v.call_begin(
 unsafe extern "C" fn s_lbAudioAx_8002702C(a0: u32, a1: u64) { let v = vv(); v.call_begin("lbAudioAx_8002702C"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.call_end();    }
 unsafe extern "C" fn s_lbAudioAx_80027168() { let v = vv(); v.call_begin("lbAudioAx_80027168");  v.call_end();    }
 unsafe extern "C" fn s_gm_GetGameModeStateExitData(a0: *mut melee_types::GameModeState) -> *mut core::ffi::c_void { let v = vv(); v.call_begin("gm_GetGameModeStateExitData"); v.arg_p(a0 as usize); v.call_end();   v.ret_ptr("gm_GetGameModeStateExitData") as _ }
-unsafe extern "C" fn s_PcDebugMenuShortcut() -> i32 { let v = vv(); v.call_begin("PcDebugMenuShortcut");  v.call_end();   v.ret_int("PcDebugMenuShortcut", 32, 1) as _ }
+// removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
 unsafe extern "C" fn s_gm_SetPendingGameMode(a0: u8) { let v = vv(); v.call_begin("gm_SetPendingGameMode"); v.arg_u(a0 as u64); v.call_end();    }
 unsafe extern "C" fn s_gm_SetNewGameModePending() { let v = vv(); v.call_begin("gm_SetNewGameModePending");  v.call_end();    }
 unsafe extern "C" fn s_gm_80173EEC() { let v = vv(); v.call_begin("gm_80173EEC");  v.call_end();    }
@@ -1059,7 +1059,7 @@ pub fn glue() -> Glue {
             ("lbAudioAx_8002702C", tu::ext::lbAudioAx_8002702C as *const () as usize),
             ("lbAudioAx_80027168", tu::ext::lbAudioAx_80027168 as *const () as usize),
             ("gm_GetGameModeStateExitData", tu::ext::gm_GetGameModeStateExitData as *const () as usize),
-            ("PcDebugMenuShortcut", tu::ext::PcDebugMenuShortcut as *const () as usize),
+            // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
             ("gm_SetPendingGameMode", tu::ext::gm_SetPendingGameMode as *const () as usize),
             ("gm_SetNewGameModePending", tu::ext::gm_SetNewGameModePending as *const () as usize),
             ("gm_80173EEC", tu::ext::gm_80173EEC as *const () as usize),
@@ -1098,7 +1098,7 @@ pub fn glue() -> Glue {
         tu::ext::H_lbAudioAx_8002702C = Some(s_lbAudioAx_8002702C);
         tu::ext::H_lbAudioAx_80027168 = Some(s_lbAudioAx_80027168);
         tu::ext::H_gm_GetGameModeStateExitData = Some(s_gm_GetGameModeStateExitData);
-        tu::ext::H_PcDebugMenuShortcut = Some(s_PcDebugMenuShortcut);
+        // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
         tu::ext::H_gm_SetPendingGameMode = Some(s_gm_SetPendingGameMode);
         tu::ext::H_gm_SetNewGameModePending = Some(s_gm_SetNewGameModePending);
         tu::ext::H_gm_80173EEC = Some(s_gm_80173EEC);

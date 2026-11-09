@@ -212,7 +212,7 @@ fn itleadead_matches_c() {
                     74 => {  m::it_802EAC8C(&raw mut GO[0]); } // it_802EAC8C
                     75 => {  m::it_802EADD8(&raw mut GO[0]); } // it_802EADD8
                     76 => {  m::it_802EAE80(&raw mut GO[0]); } // it_802EAE80
-                    77 => {  ret = pi(m::it_802EAF28(&raw mut GO[0])); } // it_802EAF28
+                    77 => {  ret = (m::it_802EAF28(&raw mut GO[0]) as u32); } // it_802EAF28
                     78 => { for j in 0..18 { let row = &m::it_803F8EB0[j]; hm(row.anim_id as u32); hm(fi(row.animated)); hm(fi(row.physics_updated)); hm(fi(row.collided)); } }
                     _ => unreachable!(),
                 }

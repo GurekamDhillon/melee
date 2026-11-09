@@ -85,7 +85,7 @@ impl World {
         hm(f.x221A_b5() as u32);
         hm(f.x221A_b6() as u32);
         hm(f.x2219_b3() as u32);
-        let a = unsafe { f.anon_221b };
+        let a = unsafe { f.x221B };
         hm(a.x221B_b0() as u32);
         hm(a.x221B_b1() as u32);
         hm(a.x221B_b2() as u32);
@@ -296,7 +296,7 @@ fn ftcollset_matches_c() {
             }
             let ret = {
                 let f = &*w.f;
-                let a = unsafe { f.anon_221b };
+                let a = unsafe { f.x221B };
                 let b = [
                     f.x221A_b5(), f.x221A_b6(), f.x2219_b3(), a.x221B_b0(), a.x221B_b1(), a.x221B_b2(), a.x221B_b3(),
                     a.x221B_b4(), f.x2218_b4(), f.x2218_b5(), f.x2218_b6(), f.x2218_b7(),

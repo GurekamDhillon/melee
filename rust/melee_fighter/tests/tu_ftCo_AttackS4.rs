@@ -71,7 +71,7 @@ fn ftCo_AttackS4_matches_c() {
             fr.kind = if rnd() & 1 != 0 { KINDS[(rnd() % 5) as usize] } else { (rnd() % 33) as _ };
             fr.set_allow_interrupt((rnd() & 1) as u8);
             fr.cmd_vars[0] = rnd();
-            fr.anon_2210.throw_flags = rnd();
+            fr.x2210.throw_flags = rnd();
             let a0 = rg();
             let a1 = rg() * 2.0;
             let g = go();
@@ -94,7 +94,7 @@ fn ftCo_AttackS4_matches_c() {
             h.m(fr.allow_interrupt() as u32);
             h.m(fr.facing_dir.to_bits());
             h.m(fr.cmd_vars[0]);
-            h.m(unsafe { fr.anon_2210.throw_flags });
+            h.m(unsafe { fr.x2210.throw_flags });
             h.m((fr.pre_hitlag_cb.map(|p| p as usize) == Some(pause_all as usize)) as u32);
             h.m((fr.post_hitlag_cb.map(|p| p as usize) == Some(resume_all as usize)) as u32);
             h.m(fr.pre_hitlag_cb.is_none() as u32);

@@ -35,7 +35,7 @@ fn ftCo_Wait_matches_c() {
             }
             let fr = f();
             fr.ft_data = fdp;
-            fr.set_x2224_b2((rnd() & 1) as _);
+            fr.set_stamina_dead((rnd() & 1) as _);
             let g = go();
             match op {
                 0 => m::ftCo_Wait_Anim(g),

@@ -48,7 +48,7 @@ mod gen_stubs {
     fn t_ftLib_GetPos(a0: *mut Fighter_GObj, a1: *mut Vec3) { unsafe { out("ftLib_GetPos"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); if !a1.is_null() { if FMODE == 1 { (*a1).x = 1500.0 + 10.0 * ((rnd() % 5) as f32); (*a1).y = 330.0 + 4.0 * ((rnd() % 5) as f32); (*a1).z = rf(); } else { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } }  } }
     fn t_gm_MexVanillaKind(a0: i32, a1: i32) -> i32 { unsafe { out("gm_MexVanillaKind"); tri(a0 as i64); tri(a1 as i64); out("\n"); (if rnd() % 3 == 0 { (rnd() % 8) as i32 } else { a0 }) as i32 } }
     fn t_grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("grAnime_801C8138"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
-    fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
     fn t_grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj { unsafe { out("grZakoGenerator_801CAE04"); trp(a0 as *const u8); out("\n"); az(core::mem::size_of::<HSD_GObj>()) as *mut HSD_GObj } }
     fn t_grZakoGenerator_801CAEB0(a0: i32, a1: i32) { unsafe { out("grZakoGenerator_801CAEB0"); tri(a0 as i64); tri(a1 as i64); out("\n");  } }
     fn t_lbVector_Add(a0: *mut Vec3, a1: *mut Vec3) -> *mut Vec3 { unsafe { out("lbVector_Add"); trp(a0 as *const u8); trp(a1 as *const u8); out("\n"); (*a0).x = (*a0).x + (*a1).x; (*a0).y = (*a0).y + (*a1).y; (*a0).z = (*a0).z + (*a1).z; (a0) as *mut Vec3 } }

@@ -90,8 +90,8 @@ pub fn state_hash() -> u32 {
     h.m(fr.accessory1_cb.is_some() as u32);
     h.m(fr.x2226_b2() as u32);
     h.m(fr.invisible() as u32);
-    h.m(fr.anon_221b.x221B_b5() as u32);
-    h.m(fr.anon_221b.x221B_b7() as u32);
+    h.m(fr.x221B.x221B_b5() as u32);
+    h.m(fr.x221B.x221B_b7() as u32);
     h.m(pi(fr.x1A5C));
     h.m(pi(fr.victim_gobj));
     h.m(fr.ground_or_air);

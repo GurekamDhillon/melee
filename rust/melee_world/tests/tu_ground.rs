@@ -78,7 +78,7 @@ unsafe extern "C" fn sd_od(a: i32) { t(9002); t(a as u32); }
 unsafe extern "C" fn sd_ol() { t(9003); }
 unsafe extern "C" fn sd_os() { t(9004); }
 unsafe extern "C" fn sd_c4() -> i32 { t(9005); (fv() & 1) as i32 }
-unsafe extern "C" fn sd_tl(a: i32) -> *mut DynamicsDesc { t(9006); t(a as u32); if fv() & 1 != 0 { null_mut() } else { (&raw mut DUMD) as *mut DynamicsDesc } }
+unsafe extern "C" fn sd_tl(a: i32) -> *mut lbColl_80008D30_arg1 { t(9006); t(a as u32); if fv() & 1 != 0 { null_mut() } else { (&raw mut DUMD) as *mut lbColl_80008D30_arg1 } }
 unsafe extern "C" fn sd_cs(p: *mut Vec, a: i32, j: *mut HSD_JObj) -> i32 { t(9007); tv(p); t(a as u32); t(pi(j)); (fv() & 1) as i32 }
 unsafe extern "C" fn pr90(p: *mut Vec, i: i32) -> i32 { t(9008); tv(p); t(i as u32); (fv() & 1) as i32 }
 unsafe extern "C" fn pr94(p: *mut Vec, i: i32) -> i32 { t(9009); tv(p); t(i as u32); (fv() & 1) as i32 }
@@ -231,8 +231,8 @@ unsafe fn setup_world() {
     m::stage_info.param = &raw mut GP;
 
     ARCH.unk0 = (&raw mut ARCHB) as *mut HSD_Archive; ARCH.unk4 = &raw mut STD; ARCH.unk8 = fv();
-    STD.unk0 = (&raw mut ENT) as *mut c_void; STD.count = (fv() % 5) as i32; STD.unk8 = (&raw mut X8) as *mut UnkStageDat_x8_t; STD.unkC = 1 + (fv() % 8) as i32;
-    STD.unk10 = (&raw mut SPLP) as *mut *mut HSD_Spline; STD.unk14 = (fv() % 5) as i32; STD.unk18 = (&raw mut LOE) as *mut c_void; STD.unk1C = (fv() % 7) as i32;
+    STD.unk0 = (&raw mut ENT) as *mut _; STD.count = (fv() % 5) as i32; STD.unk8 = (&raw mut X8) as *mut UnkStageDat_x8_t; STD.unkC = 1 + (fv() % 8) as i32;
+    STD.unk10 = (&raw mut SPLP) as *mut *mut HSD_Spline; STD.unk14 = (fv() % 5) as i32; STD.unk18 = (&raw mut LOE) as *mut _; STD.unk1C = (fv() % 7) as i32;
     STD.unk20 = (&raw mut GSE) as *mut GroundShadowEntry; STD.unk24 = GSN;
     for i in 0..8usize {
         HJ[i].child = if 2 * i + 1 < 8 { &raw mut HJ[2 * i + 1] } else { null_mut() };
@@ -307,7 +307,7 @@ unsafe fn setup_world() {
     m::stage_info.itemdata = if fv() % 3 == 0 { null_mut() } else { (&raw mut ITD) as *mut *mut GroundItemData };
     AYA[0] = null_mut(); AYA[1] = (&raw mut DUM[0]) as *mut c_void; AYA[2] = (&raw mut DUM[1]) as *mut c_void;
     AYA[3] = if fv() & 1 != 0 { (&raw mut DUM[2]) as *mut c_void } else { null_mut() }; AYA[4] = (&raw mut DUM[3]) as *mut c_void; AYA[5] = null_mut();
-    m::stage_info.ald_yaku_all = if fv() % 3 == 0 { null_mut() } else { (&raw mut AYA) as *mut *mut *mut c_void };
+    m::stage_info.ald_yaku_all = if fv() % 3 == 0 { null_mut() } else { ((&raw mut AYA) as *mut *mut *mut c_void) as *mut _ };
     ART.xC_itemStates = &raw mut ISA;
     for i in 0..256usize { TB[i] = &raw mut ART; }
     m::ext::it_804D6D38 = (&raw mut TB) as *mut *mut Article;

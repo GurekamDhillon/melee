@@ -221,15 +221,15 @@ unsafe fn bf_fill_Ground_2(p: *mut Ground) {
     (*p).color_overlay.set_x7C_flag6((rnd() & 1) as _);
     (*p).color_overlay.set_x7C_flag7((rnd() & 1) as _);
     (*p).color_overlay.set_x7C_flag8((rnd() & 1) as _);
-    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0.set_x0_b1((rnd() & 1) as _);
-    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_b0((rnd() & 1) as _);
-    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_b1((rnd() & 1) as _);
-    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_b2((rnd() & 1) as _);
-    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_prev_lane((rnd() & 127) as _);
-    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_cur_lane((rnd() & 127) as _);
-    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_next_lane((rnd() & 127) as _);
-    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_nibble_hi((rnd() & 15) as _);
-    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_nibble_lo((rnd() & 15) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0_u.x0_1.set_x0_b1((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.set_b0((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.set_b1((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.set_b2((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.set_prev_lane((rnd() & 127) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.set_cur_lane((rnd() & 127) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.set_next_lane((rnd() & 127) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.set_nibble_hi((rnd() & 15) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.set_nibble_lo((rnd() & 15) as _);
     (*p).u.bigblue.x0_u.car.lanes[0].x0.x0.set_state((rnd() & 63) as _);
     (*p).u.bigblue.x0_u.car.lanes[0].x0.x0.set_direction((rnd() & 1) as _);
     (*p).u.bigblue.x0_u.car.lanes[0].x0.x0_1.set_collision_slot((rnd() & 31) as _);
@@ -269,15 +269,15 @@ unsafe fn bf_hash_Ground_2(mut h: u64, p: *const Ground) -> u64 {
     h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
     h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
     h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0.x0_b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0.x0_b1()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b0()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b1()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b2()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.prev_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.prev_lane()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.cur_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.cur_lane()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.next_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.next_lane()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.nibble_hi()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.nibble_hi()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.nibble_lo()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.nibble_lo()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0_u.x0_1.x0_b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0_u.x0_1.x0_b1()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.b0()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.b1()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.b2()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.prev_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.prev_lane()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.cur_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.cur_lane()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.next_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.next_lane()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.nibble_hi()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.nibble_hi()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.nibble_lo()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0_u.x0_2.nibble_lo()) as u32); }
     h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.state()) as u32); }
     h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.direction()) as u32); }
     h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[0].x0.x0_1.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[0].x0.x0_1.collision_slot()) as u32); }
@@ -822,7 +822,7 @@ unsafe fn call_fn(fi: usize, a: &mut Args) -> (u64, u32) {
         64 => { t::fn_801EF60C(addr_of_mut!(OGP[0]) as *mut c_void, t::lbl_803E2DFC[(a.i[0] % 30) as usize] as i32, addr_of_mut!(OCD), (a.i[1] % 1500) as i32, if rnd() % 4 != 0 { 1 } else { 2 }, a.f[0]); (0, 0) }
         65 => { t::grBigBlue_801EF7D8(&mut a.v3[0]); (0, 0) }
         66 => { let r = t::grBigBlue_801EF844(if a.i[0] % 4 == 0 { -1 } else { (a.i[1] % 70) as i32 }) as u32; (r as u64, r) }
-        67 => { t::fn_801EFB9C(g, a.i[0] as i32); (0, 0) }
+        67 => { t::fn_801EFB9C(g, a.i[0] as isize); (0, 0) }
         68 => { let r = t::grBigBlue_801EFC14(&mut a.v3[0], a.i[0] as i32, addr_of_mut!(OJO[0])) as u32; (r as u64, r) }
         _ => unreachable!(),
     }
@@ -835,7 +835,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grbigblue::ext::GROUND_801C2CF4 = Some(|a0: s32| -> *mut HSD_JObj { lg_s("Ground_801C2CF4("); lg_int(a0 as u32); lg_s(")"); { let r = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _ as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grbigblue::ext::GROUND_801C39C0 = Some(|| { lg_s("Ground_801C39C0("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblue::ext::GROUND_801C3BB4 = Some(|| { lg_s("Ground_801C3BB4("); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grbigblue::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: i32| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _ as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grbigblue::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: isize| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _ as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grbigblue::ext::GROUND_801C4A08 = Some(|a0: *mut HSD_GObj| { lg_s("Ground_801C4A08("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblue::ext::GROUND_801C4E70 = Some(|a0: *mut HSD_JObj, a1: *mut HSD_JObj, a2: *mut HSD_JObj, a3: *mut HSD_JObj, a4: *mut HSD_JObj, a5: *mut HSD_JObj| { lg_s("Ground_801C4E70("); lg_ptr(a0 as *const u8 as usize); lg_ptr(a1 as *const u8 as usize); lg_ptr(a2 as *const u8 as usize); lg_ptr(a3 as *const u8 as usize); lg_ptr(a4 as *const u8 as usize); lg_ptr(a5 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblue::ext::GROUND_801C5440 = Some(|a0: *mut Ground, a1: s32, a2: u32| { lg_s("Ground_801C5440("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
@@ -864,7 +864,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grbigblue::ext::ATAN2F = Some(|a0: f32, a1: f32| -> f32 { lg_s("atan2f("); lg_f(a0); lg_f(a1); lg_s(")"); { let r = rf(); lg_retf(r); lg_c(';'); r } });
         melee_world::tu::grbigblue::ext::GM_GETDBPAUSEFLAG = Some(|a0: i32| -> i32 { lg_s("gm_GetDbPauseFlag("); lg_int(a0 as u32); lg_s(")"); { let r = (((rnd() % 2) as i32)) as i32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grbigblue::ext::GRANIME_801C8138 = Some(|a0: *mut HSD_GObj, a1: enum_t, a2: i32| { lg_s("grAnime_801C8138("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grbigblue::ext::GRDISPLAY_801C5DB0 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("grDisplay_801C5DB0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
+        melee_world::tu::grbigblue::ext::GRDISPLAY_801C5DB0 = Some(|a0: *mut HSD_GObj, a1: isize| { lg_s("grDisplay_801C5DB0("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblue::ext::GRFZEROCAR_801CAFBC = Some(|a0: *mut HSD_GObj, a1: *mut c_void, a2: s32, a3: s32| { lg_s("grFZeroCar_801CAFBC("); lg_ptr(a0 as *const u8 as usize); lg_ptr(a1 as *const u8 as usize); lg_int(a2 as u32); lg_int(a3 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblue::ext::GRMATERIAL_801C8858 = Some(|a0: *mut HSD_JObj, a1: u32| { lg_s("grMaterial_801C8858("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_world::tu::grbigblue::ext::GRMATERIAL_801C8A04 = Some(|a0: *mut HSD_JObj, a1: u32| { lg_s("grMaterial_801C8A04("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
@@ -1749,7 +1749,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.x0_u.x0_s.x0.anon_0_0_);
+} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.x0_u.x0_s.x0_u.x0_2);
   (*l_).set_cur_lane(rnd() % 12); (*l_).set_next_lane(rnd() % 12); (*l_).set_prev_lane(rnd() % 12);
   (*l_).set_nibble_hi(rnd() % 5);
   (*r_).u.bigblue.x0_u.road.direction = ((rnd() % 3) as i32 - 1) as i16;
@@ -1970,8 +1970,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -1998,8 +1998,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
 } { let p_ = addr_of_mut!(OGP[R36 as usize]);
-  (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*p_).u.bigblue.x0_u.x0_s.x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   (*p_).u.bigblue.x0_u.platform.xC8_timer = (rnd() % 6) as i32 - 1;
   if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
   if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
@@ -2033,8 +2033,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2080,8 +2080,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2153,8 +2153,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2200,8 +2200,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2342,8 +2342,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } R32 = 1; R33 = 2; R34 = 3; R36 = 4; { let p_ = addr_of_mut!(OGP[0]);
-  (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*p_).u.bigblue.x0_u.x0_s.x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   (*p_).u.bigblue.x0_u.platform.xC8_timer = (rnd() % 6) as i32 - 1;
   if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
   if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
@@ -2351,8 +2351,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2431,8 +2431,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } R32 = 1; R33 = 2; R34 = 3; R36 = 0; { let p_ = addr_of_mut!(OGP[0]);
-  (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*p_).u.bigblue.x0_u.x0_s.x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   (*p_).u.bigblue.x0_u.platform.xC8_timer = (rnd() % 6) as i32 - 1;
   if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
   if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
@@ -2440,8 +2440,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2497,8 +2497,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2544,8 +2544,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2562,8 +2562,8 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     (*mg_).event_data[j_] = if v_ == 0 { null_mut() } else if v_ == 1 { 1usize as *mut c_void } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut c_void };
   }
 } { let p_ = addr_of_mut!(OGP[R36 as usize]);
-  (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*p_).u.bigblue.x0_u.x0_s.x0_u.x0_s.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0_u.x0_s.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   (*p_).u.bigblue.x0_u.platform.xC8_timer = (rnd() % 6) as i32 - 1;
   if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
   if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
@@ -2619,7 +2619,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.x0_u.x0_s.x0.anon_0_0_);
+} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.x0_u.x0_s.x0_u.x0_2);
   (*l_).set_cur_lane(rnd() % 12); (*l_).set_next_lane(rnd() % 12); (*l_).set_prev_lane(rnd() % 12);
   (*l_).set_nibble_hi(rnd() % 5);
   (*r_).u.bigblue.x0_u.road.direction = ((rnd() % 3) as i32 - 1) as i16;
@@ -2650,7 +2650,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.x0_u.x0_s.x0.anon_0_0_);
+} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.x0_u.x0_s.x0_u.x0_2);
   (*l_).set_cur_lane(rnd() % 12); (*l_).set_next_lane(rnd() % 12); (*l_).set_prev_lane(rnd() % 12);
   (*l_).set_nibble_hi(rnd() % 5);
   (*r_).u.bigblue.x0_u.road.direction = ((rnd() % 3) as i32 - 1) as i16;

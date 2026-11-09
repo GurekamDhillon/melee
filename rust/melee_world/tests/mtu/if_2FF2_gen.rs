@@ -38,12 +38,12 @@ pub fn install() {
 pub fn freg_all() {
     freg(m::ext::cb::HSD_GObj_803910D8 as *const () as usize);
     freg(m::ext::cb::HSD_GObj_LObjCallback as *const () as usize);
-    freg(m::findSlot as *const () as usize);
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
     freg(m::fn_802FF218 as *const () as usize);
     freg(m::fn_802FF360 as *const () as usize);
-    freg(m::freeEntry as *const () as usize);
-    freg(m::getEntry as *const () as usize);
-    freg(m::getScore as *const () as usize);
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
     freg(m::un_802FF364 as *const () as usize);
     freg(m::un_802FF498 as *const () as usize);
     freg(m::un_802FF4FC as *const () as usize);

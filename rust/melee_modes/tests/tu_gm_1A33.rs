@@ -115,7 +115,7 @@ fn matches_c() {
                 TX = (0..16).map(|_| HSD_Text::zeroed()).collect();
                 NTX = 0;
                 for k in 0..3usize {
-                    t::gmCamera_VsCameraTextLayout.anon_4.text[k] =
+                    t::gmCamera_VsCameraTextLayout.x4.text[k] =
                         if r.rnd() % 2 != 0 { &mut TX[10 + k] as *mut HSD_Text } else { core::ptr::null_mut() };
                 }
                 X0V = r.rnd();
@@ -163,9 +163,9 @@ fn matches_c() {
                     LOG,
                     x0,
                     X0V,
-                    txid(d.anon_4.anon_0.slot_a),
-                    txid(d.anon_4.anon_0.slot_b),
-                    txid(d.anon_4.anon_0.bottom_text)
+                    txid(d.x4.x0.slot_a),
+                    txid(d.x4.x0.slot_b),
+                    txid(d.x4.x0.bottom_text)
                 );
                 for k in 0..NTX {
                     let x = &TX[k];

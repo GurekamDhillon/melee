@@ -12,17 +12,17 @@ static mut KILLED: i32 = 0;
 #[test]
 fn ft_07c6_smoke() {
     let mut f = Fighter::zeroed();
-    let mut x38 = [ftData_x38::zeroed(), ftData_x38::zeroed()];
-    x38[0].x10 = 3.0;
-    x38[1].x0 = 1;
-    x38[1].x10 = 5.0;
+    let mut x38 = [AbsorbDesc::zeroed(), AbsorbDesc::zeroed()];
+    x38[0].x10_size = 3.0;
+    x38[1].x0_bone_id = 1;
+    x38[1].x10_size = 5.0;
     let mut ftd = ftData::zeroed();
     ftd.x38 = x38.as_mut_ptr();
     let mut parts = [FighterBone::zeroed(), FighterBone::zeroed()];
     parts[1].joint = 0x10 as *mut HSD_JObj;
     f.ft_data = &mut ftd;
     f.parts = parts.as_mut_ptr();
-    f.player_id = 1;
+    f.player_idx = 1;
     f.x34_scale.y = 1.0;
     let mut g = HSD_GObj::zeroed();
     g.user_data = &mut f as *mut Fighter as *mut _;
@@ -56,7 +56,7 @@ fn ft_07c6_smoke() {
     assert_eq!(f.x1614[1].x4, 0x10 as *mut HSD_JObj);
     assert_eq!((f.x1614[1].x8.x, f.x1614[1].x8.y, f.x1614[1].x8.z), (16.0, 7.0, 0.0));
     assert_eq!(f.x1614[1].x14.x, 16.0);
-    x38[1].x4.x = 1.0;
+    x38[1].x4_offset.x = 1.0;
     m::ft_8007c6dc(gp);
     assert_eq!((f.x1614[1].x14.x, f.x1614[1].x8.x), (16.0, 17.0));
 
@@ -66,7 +66,7 @@ fn ft_07c6_smoke() {
     assert_eq!(melee_fighter::player::get_coins(1), c0 + 10);
     assert_eq!(unsafe { KILLED }, 1);
     // parity mismatch: flag set, nothing collected
-    f.player_id = 0;
+    f.player_idx = 0;
     m::ft_8007c77c(gp);
     assert_eq!(f.x2229_b4(), 1);
     assert_eq!(unsafe { KILLED }, 1);

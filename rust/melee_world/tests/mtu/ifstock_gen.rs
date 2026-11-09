@@ -572,7 +572,7 @@ pub fn fill_VsSceneController(p: &mut VsSceneController) {
     for i1 in 0..4 {
     p.state.x24C.player_standings[i0].kills[i1] = fv() as _;
     }
-    p.state.x24C.player_standings[i0].x18 = fv() as _;
+    p.state.x24C.player_standings[i0].kills[4] = fv() as _;
     p.state.x24C.player_standings[i0].x1C = fv() as _;
     p.state.x24C.player_standings[i0].x20 = fv() as _;
     p.state.x24C.player_standings[i0].x24 = fv() as _;
@@ -777,7 +777,7 @@ pub fn hash_VsSceneController(p: &VsSceneController) {
     for i1 in 0..4 {
     hm(p.state.x24C.player_standings[i0].kills[i1] as u32);
     }
-    hm(p.state.x24C.player_standings[i0].x18 as u32);
+    hm(p.state.x24C.player_standings[i0].kills[4] as u32);
     hm(p.state.x24C.player_standings[i0].x1C as u32);
     hm(p.state.x24C.player_standings[i0].x20 as u32);
     hm(p.state.x24C.player_standings[i0].x24 as u32);
@@ -1056,25 +1056,25 @@ pub fn fill_ifStock_804A1378(p: &mut ifStock_804A1378) {
     p.jobj_c = pick_HSD_JObj(0) as _;
     p.jobj_d = pick_HSD_JObj(0) as _;
     for i0 in 0..6 {
-    p.x204[i0].player = (0 + (fv() % 6) as i32) as _;
-    p.x204[i0].mode = (0 + (fv() % 4) as i32) as _;
-    p.x204[i0].flag = (0 + (fv() % 3) as i32) as _;
+    unsafe { m::ifStock_804A157C[i0].player = (0 + (fv() % 6) as i32) as _; }
+    unsafe { m::ifStock_804A157C[i0].mode = (0 + (fv() % 4) as i32) as _; }
+    unsafe { m::ifStock_804A157C[i0].flag = (0 + (fv() % 3) as i32) as _; }
     for i1 in 0..2 {
-    p.x204[i0].x3[i1] = (0 + (fv() % 6) as i32) as _;
+    unsafe { m::ifStock_804A157C[i0].x3[i1] = (0 + (fv() % 6) as i32) as _; }
     }
     for i1 in 0..7 {
-    p.x204[i0].anim[i1] = (0 + (fv() % 13) as i32) as _;
+    unsafe { m::ifStock_804A157C[i0].anim[i1] = (0 + (fv() % 13) as i32) as _; }
     }
     for i1 in 0..2 {
-    p.x204[i0].steal[i1].start.x = rg();
-    p.x204[i0].steal[i1].start.y = rg();
-    p.x204[i0].steal[i1].start.z = rg();
-    p.x204[i0].steal[i1].mid.x = rg();
-    p.x204[i0].steal[i1].mid.y = rg();
-    p.x204[i0].steal[i1].mid.z = rg();
-    p.x204[i0].steal[i1].end.x = rg();
-    p.x204[i0].steal[i1].end.y = rg();
-    p.x204[i0].steal[i1].end.z = rg();
+    unsafe { m::ifStock_804A157C[i0].steal[i1].start.x = rg(); }
+    unsafe { m::ifStock_804A157C[i0].steal[i1].start.y = rg(); }
+    unsafe { m::ifStock_804A157C[i0].steal[i1].start.z = rg(); }
+    unsafe { m::ifStock_804A157C[i0].steal[i1].mid.x = rg(); }
+    unsafe { m::ifStock_804A157C[i0].steal[i1].mid.y = rg(); }
+    unsafe { m::ifStock_804A157C[i0].steal[i1].mid.z = rg(); }
+    unsafe { m::ifStock_804A157C[i0].steal[i1].end.x = rg(); }
+    unsafe { m::ifStock_804A157C[i0].steal[i1].end.y = rg(); }
+    unsafe { m::ifStock_804A157C[i0].steal[i1].end.z = rg(); }
     }
     }
 }
@@ -1106,25 +1106,25 @@ pub fn hash_ifStock_804A1378(p: &ifStock_804A1378) {
     hm(pi(p.jobj_c));
     hm(pi(p.jobj_d));
     for i0 in 0..6 {
-    hm(p.x204[i0].player as u32);
-    hm(p.x204[i0].mode as u32);
-    hm(p.x204[i0].flag as u32);
+    unsafe { hm(m::ifStock_804A157C[i0].player as u32); }
+    unsafe { hm(m::ifStock_804A157C[i0].mode as u32); }
+    unsafe { hm(m::ifStock_804A157C[i0].flag as u32); }
     for i1 in 0..2 {
-    hm(p.x204[i0].x3[i1] as u32);
+    unsafe { hm(m::ifStock_804A157C[i0].x3[i1] as u32); }
     }
     for i1 in 0..7 {
-    hm(p.x204[i0].anim[i1] as u32);
+    unsafe { hm(m::ifStock_804A157C[i0].anim[i1] as u32); }
     }
     for i1 in 0..2 {
-    hm(p.x204[i0].steal[i1].start.x.to_bits());
-    hm(p.x204[i0].steal[i1].start.y.to_bits());
-    hm(p.x204[i0].steal[i1].start.z.to_bits());
-    hm(p.x204[i0].steal[i1].mid.x.to_bits());
-    hm(p.x204[i0].steal[i1].mid.y.to_bits());
-    hm(p.x204[i0].steal[i1].mid.z.to_bits());
-    hm(p.x204[i0].steal[i1].end.x.to_bits());
-    hm(p.x204[i0].steal[i1].end.y.to_bits());
-    hm(p.x204[i0].steal[i1].end.z.to_bits());
+    unsafe { hm(m::ifStock_804A157C[i0].steal[i1].start.x.to_bits()); }
+    unsafe { hm(m::ifStock_804A157C[i0].steal[i1].start.y.to_bits()); }
+    unsafe { hm(m::ifStock_804A157C[i0].steal[i1].start.z.to_bits()); }
+    unsafe { hm(m::ifStock_804A157C[i0].steal[i1].mid.x.to_bits()); }
+    unsafe { hm(m::ifStock_804A157C[i0].steal[i1].mid.y.to_bits()); }
+    unsafe { hm(m::ifStock_804A157C[i0].steal[i1].mid.z.to_bits()); }
+    unsafe { hm(m::ifStock_804A157C[i0].steal[i1].end.x.to_bits()); }
+    unsafe { hm(m::ifStock_804A157C[i0].steal[i1].end.y.to_bits()); }
+    unsafe { hm(m::ifStock_804A157C[i0].steal[i1].end.z.to_bits()); }
     }
     }
 }

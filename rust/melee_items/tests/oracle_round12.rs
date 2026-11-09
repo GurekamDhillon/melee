@@ -87,7 +87,7 @@ pub struct Ext {
     sa: [u32; 256],
     attr: ItemAttr,
     art: Article,
-    unk: itUnkAttributes,
+    unk: itUnkAttributes_legacy,
     common: ItemCommonData,
 }
 
@@ -100,7 +100,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
     let mut ext = Box::new(Ext {
         attr: ItemAttr::zeroed(),
         art: Article::zeroed(),
-        unk: itUnkAttributes::zeroed(),
+        unk: itUnkAttributes_legacy::zeroed(),
         common: ItemCommonData::zeroed(),
         sa: [0; 256],
     });
@@ -115,7 +115,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         let x = &mut *ext;
         x.attr = ItemAttr::zeroed();
         x.art = Article::zeroed();
-        x.unk = itUnkAttributes::zeroed();
+        x.unk = itUnkAttributes_legacy::zeroed();
         x.common = ItemCommonData::zeroed();
         x.attr.set_x0_is_heavy(g.r() as u8);
         x.attr.set_x0_78(g.r() as u8);
@@ -123,7 +123,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         x.attr.x1C_damage_mul = g.rf();
         x.unk.x0_float = g.rf();
         x.unk.x4_float = g.rf();
-        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes as *mut _;
+        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes_legacy as *mut _;
         x.art.x8_hurtbones = if g.r() & 1 != 0 { g.ga as *mut _ } else { null_mut() };
         x.common.xB8 = g.rf();
         x.common.xBC = g.rf();
@@ -372,7 +372,7 @@ fn r11_list(w: &mut World, ip: &mut Item, g: &mut Gen) -> *mut HSD_GObj {
         let li = &mut w.li[k];
         li.xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         li.ground_or_air = if g.r() & 3 != 0 { GA_Ground } else { GA_Air };
-        unsafe { li.xDD1_flag.anon_0.set_b0((g.r() & 3 == 0) as u8) };
+        unsafe { li.xDD1_flag.x0.set_b0((g.r() & 3 == 0) as u8) };
         w.la[k].set_x0_is_heavy((g.r() & 3 != 0) as u8);
         li.xCC_item_attr = &mut w.la[k];
         li.x70_nudge.x = r7_c(g);
@@ -398,7 +398,7 @@ fn r11_list(w: &mut World, ip: &mut Item, g: &mut Gen) -> *mut HSD_GObj {
             w.li[0].xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         }
         w.li[0].ground_or_air = GA_Ground;
-        unsafe { w.li[0].xDD1_flag.anon_0.set_b0(0) };
+        unsafe { w.li[0].xDD1_flag.x0.set_b0(0) };
         w.la[0].set_x0_is_heavy(1);
     }
     w.gl[0] = unsafe { core::ptr::read(&*w.g) };
@@ -423,7 +423,7 @@ fn r11_trk(w: &mut World, ip: &mut Item, g: &mut Gen) {
     let t = &mut *w.track;
     *t = Item_FtTrack::zeroed();
     t.count = ((g.r() >> 16) % 12) as usize;
-    unsafe { t.x154.anon_0.set_b0((g.r() & 3 == 0) as u8) };
+    unsafe { t.x154.x0.set_b0((g.r() & 3 == 0) as u8) };
     for k in 0..11 {
         r11_ecb(&mut t.ecb_offset_arr[k], g);
         t.ft_pos_arr[k].x = g.rm() / 4.0;
@@ -473,7 +473,7 @@ fn r12_list(g: &mut Gen) -> (L12, *mut HSD_GObj) {
     let gb = l.gl.as_mut_ptr();
     for k in 0..3 {
         let li = &mut l.li[k];
-        li.hold_kind = (3 + (g.r() >> 16) % 6) as i32;
+        li.hold_kind = (3 + (g.r() >> 16) % 6) as u32;
         li.grab_victim = if g.r() & 3 != 0 { null_mut() } else { gb };
         li.xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         li.owner = if g.r() & 1 != 0 { null_mut() } else { unsafe { gb.add(1) } };
@@ -537,7 +537,7 @@ fn r12_ini(e: HSD_GObjInteraction) -> u32 {
 fn r12_atk(ip: &Item) -> u32 {
     let mut h = hmix(hmix(0, ip.xD88_attackID as u32), ip.xD8C_attack_instance as u32);
     let w = unsafe { ip.xD90.x2070_int } as u32;
-    h = hmix(hmix(hmix(h, w), ip.xD94.x.to_bits()), ip.xD94.y.to_bits());
+    h = hmix(hmix(hmix(h, w), ip.xD94.x.cast_unsigned()), ip.xD94.y.cast_unsigned());
     h = hmix(hmix(hmix(h, ip.xD9C.x as u32), ip.xD9C.y as u32), ip.xDA4_word);
     hmix(h, ip.xDA8_short as u32)
 }
@@ -560,7 +560,7 @@ cases! { hand_match_c, 15;
         hmix(hmix(hmix(hmix(0, dd0), ip.xD08 as u32), r12_evi(ip.grab_dealt)), r12_ini(ip.grabbed_for_victim)) };
     3213 R12_80277544 |ip, g, ov, x| { r4_pre(ip, g, x); r10_coll(ip, g); x.attr.x50 = if (g.r() >> 16) % 4 != 0 { r7_c(g) } else { g.rm() / 16777216.0 }; ip.x88 = r7_vin(g); ip.xAC_unk = r7_vin(g); ip.xC2C = ((g.r() >> 16) % 3) as i32; ip.xC30 = ((g.r() >> 16) % 3) as i32; ip.xD58 = (g.r() >> 16) % 4; ip.xD5C = (g.r() >> 16) % 3; x.common.xC0 = g.rm() / 64.0; x.common.xC4 = g.rm() / 64.0; x.common.x38_float = (g.r() >> 16) % 4; ip.x40_vel = r7_vin(g); ip.x70_nudge = r7_vin(g); x.common.xCC = if g.r() & 1 != 0 { g.rm() } else { r7_c(g) }; let c = x.common; let r = it_80277544(ip, &c) as u32; hmix(r, r10_h(ip)) };
     3214 R12_802775F0 |ip, g, ov, x| { ip.spin_spd = if g.r() & 3 != 0 { g.rm() } else { 0.0 }; let a = r7_vin(g); ip.xC1C.bottom = if g.r() & 7 != 0 { g.rm() / 8.0 } else { 0.0 }; ip.facing_dir = r12_face(g); it_802775f0(ip, &a); ip.xD3C_spinSpeed.to_bits() };
-    3215 R12_8027B070 |ip, g, ov, x| { let mut fp: Box<Fighter> = Box::new(Fighter::zeroed()); let mut fg = HSD_GObj::zeroed(); fp.x2068_attackID = g.r() as i32; fp.x206C_attack_instance = g.r() as u16; fp.x2070.x2070_int = g.r() as i32; fp.x2074.x2074_vec.x = g.rf(); fp.x2074.x2074_vec.y = g.rf(); fp.x2074.x207C.x = g.r() as i32; fp.x2074.x207C.y = g.r() as i32; fp.x2074.anon_10.x2084 = g.r(); fp.x2074.x2088 = g.r() as u16; fg.user_data = &mut *fp as *mut Fighter as *mut _; it_8027b070(ip, &mut fg); r12_atk(ip) };
+    3215 R12_8027B070 |ip, g, ov, x| { let mut fp: Box<Fighter> = Box::new(Fighter::zeroed()); let mut fg = HSD_GObj::zeroed(); fp.x2068_attackID = g.r() as i32; fp.x206C_attack_instance = g.r() as u16; fp.x2070.x2070_int = g.r() as i32; fp.x2074.x2074_vec.x = (g.rf()).to_bits().cast_signed(); fp.x2074.x2074_vec.y = (g.rf()).to_bits().cast_signed(); fp.x2074.x207C.x = f32::from_bits((g.r() as i32).cast_unsigned()); fp.x2074.x207C.y = g.r() as i32; fp.x2074.x10.x2084 = g.r(); fp.x2074.x2088 = g.r() as u16; fg.user_data = &mut *fp as *mut Fighter as *mut _; it_8027b070(ip, &mut fg); r12_atk(ip) };
 }
 
 // ---- fused-site / boundary tables (round12.c 3216..3222) ----------------------------------

@@ -105,7 +105,7 @@ unsafe fn setup(prof: i32) {
 }
 
 unsafe fn hash_all() {
-    for k in 0..3 { let rs = &mut IT[k].xDD4_itemVar.rshell; hm(rs.xDF4_b0() as u32); core::ptr::write_bytes(rs as *mut _ as *mut u8, 0, core::mem::size_of::<itRShell_ItemVars>()); hm(IT[k].xDCD_flag.anon_0.b5() as u32); *(&raw mut IT[k].xDCD_flag as *mut u8) = 0; }
+    for k in 0..3 { let rs = &mut IT[k].xDD4_itemVar.rshell; hm(rs.xDF4_b0() as u32); core::ptr::write_bytes(rs as *mut _ as *mut u8, 0, core::mem::size_of::<itRShell_ItemVars>()); hm(IT[k].xDCD_flag.x0.b5() as u32); *(&raw mut IT[k].xDCD_flag as *mut u8) = 0; }
     for k in 0..3 {
         g::hash_HSD_GObj(&GO[k]);
         g::hash_Item(&IT[k]);

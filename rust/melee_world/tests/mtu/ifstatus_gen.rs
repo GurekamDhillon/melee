@@ -485,7 +485,7 @@ pub fn fill_VsSceneController(p: &mut VsSceneController) {
     for i1 in 0..4 {
     p.state.x24C.player_standings[i0].kills[i1] = fv() as _;
     }
-    p.state.x24C.player_standings[i0].x18 = fv() as _;
+    p.state.x24C.player_standings[i0].kills[4] = fv() as _;
     p.state.x24C.player_standings[i0].x1C = fv() as _;
     p.state.x24C.player_standings[i0].x20 = fv() as _;
     p.state.x24C.player_standings[i0].x24 = fv() as _;
@@ -690,7 +690,7 @@ pub fn hash_VsSceneController(p: &VsSceneController) {
     for i1 in 0..4 {
     hm(p.state.x24C.player_standings[i0].kills[i1] as u32);
     }
-    hm(p.state.x24C.player_standings[i0].x18 as u32);
+    hm(p.state.x24C.player_standings[i0].kills[4] as u32);
     hm(p.state.x24C.player_standings[i0].x1C as u32);
     hm(p.state.x24C.player_standings[i0].x20 as u32);
     hm(p.state.x24C.player_standings[i0].x24 as u32);

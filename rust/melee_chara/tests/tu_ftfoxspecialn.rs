@@ -170,9 +170,9 @@ fn smoke() {
     assert_eq!(t::ftFx_SpecialN_GetBlasterAction(gp), 9);
     assert_eq!(t::ftFx_SpecialN_GetBlasterAction(core::ptr::null_mut()), 9);
     f.motion_id = ftFx_MS_SpecialNEnd as FtMotionId;
-    unsafe { f.x2070.anon_0.set_x2071_b6(1) };
+    unsafe { f.x2070.x0.set_x2071_b6(1) };
     assert!(t::ftFx_SpecialN_CheckBlasterAction(gp));
-    unsafe { f.x2070.anon_0.set_x2071_b6(0) };
+    unsafe { f.x2070.x0.set_x2071_b6(0) };
     assert!(!t::ftFx_SpecialN_CheckBlasterAction(gp));
     f.motion_id = 0;
     assert!(t::ftFx_SpecialN_CheckBlasterAction(gp));
@@ -189,21 +189,21 @@ fn smoke() {
     t::ftFx_Throw_Anim(gp);
     assert_eq!(take()[1], "scale 1.7");
     f.motion_id = ftCo_MS_ThrowHi as FtMotionId;
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(1) };
     t::ftFx_Throw_Anim(gp);
     let l = take();
     assert_eq!(l[0], "vis 1");
     assert!(l[1].starts_with("throwshot "), "{l:?}");
     assert_eq!(&l[2..], ["1D0", "sfx 110109 127 64"]);
-    assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b0() }, 0);
+    assert_eq!(unsafe { f.x2210.x0.throw_flags_b0() }, 0);
     f.motion_id = ftCo_MS_ThrowB as FtMotionId;
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(1) };
     t::ftFx_Throw_Anim(gp);
     let l = take();
     assert!(l[1].starts_with("throwshot "));
     assert_eq!(l[3], "sfx 110106 127 64"); // foxSFX[1 == facing_dir]
     f.motion_id = 0;
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(1) };
     t::ftFx_Throw_Anim(gp);
     assert!(take()[1].starts_with("shot "));
     f.cmd_vars[1] = 2;

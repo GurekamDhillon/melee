@@ -437,9 +437,9 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_f32((*p).x3E4_fighterCmdScript.timer);
         rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
         for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i0] as *const u8);
+            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
-        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -1945,9 +1945,9 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
         (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
         for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.anon_0.ptr[i1] = 0usize as _;
+            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
-        (*p0).x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -7845,9 +7845,9 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::ST);
         for i2 in 0..1 {
-            AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] = 0usize as _;
+            AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
-        AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u = 0usize as _;
+        AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -9290,9 +9290,9 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.timer);
         rt::h_f32(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.frame_count);
         for i2 in 0..1 {
-            rt::h_p(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.anon_0.ptr[i2] as *const u8);
+            rt::h_p(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
-        rt::h_p(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.anon_0.u as *const u8);
+        rt::h_p(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -10580,7 +10580,7 @@ unsafe extern "C" fn cb5(a0: u8) {
     rt::t_begin(1005);
     rt::t_i(a0 as i64);
 }
-unsafe extern "C" fn cb6(a0: *mut Q::HSD_GObj, a1: i64) {
+unsafe extern "C" fn cb6(a0: *mut Q::HSD_GObj, a1: isize) {
     rt::t_begin(1006);
     rt::t_p(a0 as *const u8);
     rt::t_i(a1 as i64);

@@ -37,7 +37,7 @@ unsafe fn setup() {
         e.h = (1 + rnd() % 6) as u8;
         e.id = ((rnd() % 7) as i32 - 2) as i8;
         e.set_unk((rnd() % 24) as u8);
-        e.buf = BUFS[i].as_mut_ptr();
+        e.buf = (BUFS[i].as_mut_ptr()) as *mut _;
         for j in 0..192 {
             BUFS[i][j] = if rnd() % 4 == 0 { 0 } else { rnd() as i8 };
         }

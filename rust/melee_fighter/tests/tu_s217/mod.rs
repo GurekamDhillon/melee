@@ -110,11 +110,11 @@ fn fill_one(f: &mut Fighter, me: *mut HSD_GObj, other: *mut HSD_GObj) {
     f.cmd_vars[0] = rnd() & 1;
     f.cur_anim_frame = rg();
     f.grab_timer = if rnd() & 1 != 0 { 0.0 } else { rw() };
-    f.player_id = (rnd() % 4) as u8;
+    f.player_idx = (rnd() % 4) as u8;
     f.set_is_sub_fighter((rnd() & 1) as u8);
     unsafe {
-        f.anon_2210.throw_flags = (rnd() & 0xFF) << 8;
-        let t = &mut f.anon_2210.anon_0;
+        f.x2210.throw_flags = (rnd() & 0xFF) << 8;
+        let t = &mut f.x2210.x0;
         t.set_throw_flags_b0((rnd() & 1) as u8);
         t.set_throw_flags_b1((rnd() & 1) as u8);
         t.set_throw_flags_b2((rnd() & 1) as u8);
@@ -124,8 +124,8 @@ fn fill_one(f: &mut Fighter, me: *mut HSD_GObj, other: *mut HSD_GObj) {
         t.set_throw_flags_b6((rnd() & 1) as u8);
         t.set_throw_flags_b7((rnd() & 1) as u8);
     }
-    f.anon_221b.set_x221B_b5((rnd() & 1) as u8);
-    f.anon_221b.set_x221B_b7((rnd() & 1) as u8);
+    f.x221B.set_x221B_b5((rnd() & 1) as u8);
+    f.x221B.set_x221B_b7((rnd() & 1) as u8);
     f.set_x2219_b2((rnd() & 1) as u8);
     f.set_x2222_b0((rnd() & 1) as u8);
     f.set_x2226_b2((rnd() & 1) as u8);
@@ -210,8 +210,8 @@ fn hash_one(h: &mut Hs, f: &Fighter) {
     h.m(b(f.cur_pos.y));
     h.m(b(f.cur_pos.z));
     unsafe {
-        h.m(f.anon_2210.throw_flags >> 8);
-        let t = &f.anon_2210.anon_0;
+        h.m(f.x2210.throw_flags >> 8);
+        let t = &f.x2210.x0;
         h.m(t.throw_flags_b0() as u32);
         h.m(t.throw_flags_b1() as u32);
         h.m(t.throw_flags_b2() as u32);
@@ -221,8 +221,8 @@ fn hash_one(h: &mut Hs, f: &Fighter) {
         h.m(t.throw_flags_b6() as u32);
         h.m(t.throw_flags_b7() as u32);
     }
-    h.m(f.anon_221b.x221B_b5() as u32);
-    h.m(f.anon_221b.x221B_b7() as u32);
+    h.m(f.x221B.x221B_b5() as u32);
+    h.m(f.x221B.x221B_b7() as u32);
     h.m(f.x2219_b2() as u32);
     h.m(f.x2226_b2() as u32);
     h.m(f.cmd_vars[0]);

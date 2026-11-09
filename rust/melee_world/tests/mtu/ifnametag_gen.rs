@@ -1125,17 +1125,17 @@ pub fn fill_Fighter(p: &mut Fighter) {
     p.dmg.x18C8 = fv() as _;
     p.dmg.x18CC = fv() as _;
     p.dmg.x18D0 = fv() as _;
-    p.dmg.x18d4.x0 = fv() as _;
-    p.dmg.x18d4.x1 = fv() as _;
-    p.dmg.x18d4.set_x2_b0(fv() as _);
-    p.dmg.x18d4.set_x2_b1(fv() as _);
-    p.dmg.x18d4.set_x2_b2(fv() as _);
-    p.dmg.x18d4.set_x2_b3(fv() as _);
-    p.dmg.x18d4.set_x2_b4(fv() as _);
-    p.dmg.x18d4.set_x2_b5(fv() as _);
-    p.dmg.x18d4.set_x2_b6(fv() as _);
-    p.dmg.x18d4.set_x2_b7(fv() as _);
-    p.dmg.x18d4.x3 = fv() as _;
+    unsafe { p.dmg.x18d4.x0.x2070 = fv() as _; }
+    unsafe { p.dmg.x18d4.x0.bf_1[0] = fv() as _; }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 7)) | (v << 7); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 6)) | (v << 6); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 5)) | (v << 5); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 4)) | (v << 4); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 3)) | (v << 3); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 2)) | (v << 2); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 1)) | (v << 1); }
+    unsafe { let v = ((fv()) as u8) & 1; let b = &mut p.dmg.x18d4.x0.bf_1[1]; *b = (*b & !(1u8 << 0)) | (v << 0); }
+    unsafe { p.dmg.x18d4.x0.x2073 = fv() as _; }
     p.dmg.x18d8.x0 = fv() as _;
     p.dmg.x18d8.x4 = fv() as _;
     p.dmg.x18d8.kb_applied1 = rg();
@@ -1389,8 +1389,8 @@ pub fn fill_Fighter(p: &mut Fighter) {
     p.x206C_attack_instance = fv() as _;
     p.x206E = fv() as _;
     for i0 in 0..4 { unsafe { *(&mut p.x2070 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
-    p.x2074.x2074_vec.x = rg();
-    p.x2074.x2074_vec.y = rg();
+    p.x2074.x2074_vec.x = (rg()).to_bits().cast_signed();
+    p.x2074.x2074_vec.y = (rg()).to_bits().cast_signed();
     p.x2074.x207C.x = fv() as _;
     p.x2074.x207C.y = fv() as _;
     for j0 in 0..4 { unsafe { *(base(&p.x2074) as *mut u8).add(16 + j0) = rnd() as u8; } }
@@ -1971,8 +1971,8 @@ pub fn hash_Fighter(p: &Fighter) {
     hm(pi(p.x598));
     hm(pi(p.x59C));
     hm(pi(p.x5A0));
-    hm(pi(p.x5A4));
-    hm(pi(p.x5A8));
+    hm(pi(((p.x5A4) as *const u8)));
+    hm(pi(((p.x5A8) as *const u8)));
     hm(p.x5AC.model_num as u32);
     for i0 in 0..5 {
     hm(p.x5AC.cleared[i0] as u32);
@@ -2507,17 +2507,17 @@ pub fn hash_Fighter(p: &Fighter) {
     hm(p.dmg.x18C8 as u32);
     hm(p.dmg.x18CC as u32);
     hm(p.dmg.x18D0 as u32);
-    hm(p.dmg.x18d4.x0 as u32);
-    hm(p.dmg.x18d4.x1 as u32);
-    hm(p.dmg.x18d4.x2_b0() as u32);
-    hm(p.dmg.x18d4.x2_b1() as u32);
-    hm(p.dmg.x18d4.x2_b2() as u32);
-    hm(p.dmg.x18d4.x2_b3() as u32);
-    hm(p.dmg.x18d4.x2_b4() as u32);
-    hm(p.dmg.x18d4.x2_b5() as u32);
-    hm(p.dmg.x18d4.x2_b6() as u32);
-    hm(p.dmg.x18d4.x2_b7() as u32);
-    hm(p.dmg.x18d4.x3 as u32);
+    unsafe { hm(p.dmg.x18d4.x0.x2070 as u8 as u32); }
+    unsafe { hm(p.dmg.x18d4.x0.bf_1[0] as u32); }
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 7) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 6) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 5) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 4) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 3) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 2) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 1) & 1) as u32 });
+    hm(unsafe { (((p.dmg.x18d4.x0.bf_1[1]) >> 0) & 1) as u32 });
+    unsafe { hm(p.dmg.x18d4.x0.x2073 as u32); }
     hm(p.dmg.x18d8.x0 as u32);
     hm(p.dmg.x18d8.x4 as u32);
     hm(p.dmg.x18d8.kb_applied1.to_bits());
@@ -2795,8 +2795,8 @@ pub fn hash_Fighter(p: &Fighter) {
     hm(p.x206C_attack_instance as u32);
     hm(p.x206E as u32);
     for i0 in 0..4 { unsafe { hm(*(&p.x2070 as *const _ as *const u8).add(i0) as u32); } }
-    hm(p.x2074.x2074_vec.x.to_bits());
-    hm(p.x2074.x2074_vec.y.to_bits());
+    hm(p.x2074.x2074_vec.x.cast_unsigned());
+    hm(p.x2074.x2074_vec.y.cast_unsigned());
     hm(p.x2074.x207C.x as u32);
     hm(p.x2074.x207C.y as u32);
     for j0 in 0..4 { unsafe { hm(*base(&p.x2074).add(16 + j0) as u32); } }
@@ -3264,7 +3264,7 @@ pub fn fill_VsSceneController(p: &mut VsSceneController) {
     for i1 in 0..4 {
     p.state.x24C.player_standings[i0].kills[i1] = fv() as _;
     }
-    p.state.x24C.player_standings[i0].x18 = fv() as _;
+    p.state.x24C.player_standings[i0].kills[4] = fv() as _;
     p.state.x24C.player_standings[i0].x1C = fv() as _;
     p.state.x24C.player_standings[i0].x20 = fv() as _;
     p.state.x24C.player_standings[i0].x24 = fv() as _;
@@ -3469,7 +3469,7 @@ pub fn hash_VsSceneController(p: &VsSceneController) {
     for i1 in 0..4 {
     hm(p.state.x24C.player_standings[i0].kills[i1] as u32);
     }
-    hm(p.state.x24C.player_standings[i0].x18 as u32);
+    hm(p.state.x24C.player_standings[i0].kills[4] as u32);
     hm(p.state.x24C.player_standings[i0].x1C as u32);
     hm(p.state.x24C.player_standings[i0].x20 as u32);
     hm(p.state.x24C.player_standings[i0].x24 as u32);

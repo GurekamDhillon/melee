@@ -35,10 +35,10 @@ fn ftCo_DamageBind_matches_c() {
             let fr = f();
             fr.dmg.x1860_element = rnd() % 12;
             fr.set_is_sandbag((rnd() & 1) as _);
-            unsafe { fr.x2070.anon_0.set_x2071_b0_3((rnd() % 16) as u8) };
+            unsafe { fr.x2070.x0.set_x2071_b0_3((rnd() % 16) as u8) };
             fr.ground_or_air = (rnd() & 1) as _;
             fr.dmg.x1830_percent = rw();
-            fr.player_id = (rnd() % 4) as u8;
+            fr.player_idx = (rnd() % 4) as u8;
             fr.grab_timer = rw();
             let d = cd();
             d.x658 = rw();

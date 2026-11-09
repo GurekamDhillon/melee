@@ -157,13 +157,13 @@ unsafe fn world_links(w: &mut World) {
 }
 unsafe fn bf_get(f: &Fighter, i: usize) -> u32 {
     (match i {
-        0 => f.anon_2210.anon_0.throw_flags_b0(),
+        0 => f.x2210.x0.throw_flags_b0(),
         _ => 0,
     }) as u32
 }
 unsafe fn bf_set(f: &mut Fighter, i: usize, v: u32) {
     match i {
-        0 => f.anon_2210.anon_0.set_throw_flags_b0(v as _),
+        0 => f.x2210.x0.set_throw_flags_b0(v as _),
         _ => {}
     }
 }

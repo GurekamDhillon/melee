@@ -349,7 +349,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grmaterial::ext::LB_8000CCA4 = Some(|a0: s32| -> s32 { lg_s("lb_8000CCA4("); lg_int(a0 as u32); lg_s(")"); { let r = gen_i() as s32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grmaterial::ext::LB_8000CD90 = Some(|a0: s32| -> s32 { lg_s("lb_8000CD90("); lg_int(a0 as u32); lg_s(")"); { let r = gen_i() as s32; lg_retu(r as u32); lg_c(';'); r } });
         melee_world::tu::grmaterial::ext::LB_80014258 = Some(|a0: *mut HSD_GObj, a1: *mut c_void, a2: FtCmd2| -> i32 { lg_s("lb_80014258("); lg_ptr(a0 as *const u8 as usize); lg_ptr(a1 as *const u8 as usize); lg_ptr(fnaddr(a2)); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
-    melee_world::tu::grmaterial::ext::HSD_IDINSERTTOTABLE = Some(|a0, a1, a2| { lg_s("HSD_IDInsertToTable("); lg_ptr(a0 as usize); lg_int((a1 == a2 as usize as u32) as u32); lg_ptr(a2 as usize); lg_s(")"); lg_c(';'); });
+    melee_world::tu::grmaterial::ext::HSD_IDINSERTTOTABLE = Some(|a0, a1, a2| { lg_s("HSD_IDInsertToTable("); lg_ptr(a0 as usize); lg_int((a1 == a2 as usize as usize) as u32); lg_ptr(a2 as usize); lg_s(")"); lg_c(';'); });
     melee_world::tu::grmaterial::ext::LB_80014498 = Some(|a0| { lg_s("lb_80014498("); lg_ptr(a0 as usize); lg_s(")"); lg_c(';'); });
     melee_world::tu::grmaterial::ext::HSD_SETMATERIALCOLOR = Some(|a0, a1, a2, a3| { lg_s("HSD_SetMaterialColor("); for c in [a0, a1, a2] { lg_int(u32::from_le_bytes([c.r, c.g, c.b, c.a])); } lg_f(a3); lg_s(")"); lg_c(';'); });
 }

@@ -125,8 +125,8 @@ fn smoke() {
     assert!(t::ftNn_Init_80123B10(np));
 
     // 80123954: sub-states 1..=13 free Nana unless Slippi's FreezeGlitchFix is active.
-    nana.x2070.anon_0 = unsafe { core::mem::zeroed() };
-    unsafe { nana.x2070.anon_0.set_x2071_b0_3(4) };
+    nana.x2070.x0 = unsafe { core::mem::zeroed() };
+    unsafe { nana.x2070.x0.set_x2071_b0_3(4) };
     nana.x1A5C = unsafe { POPO };
     assert!(t::ftNn_Init_80123954(np, GA_Ground as _));
     assert!(nana.x1A5C.is_null());
@@ -137,7 +137,7 @@ fn smoke() {
     assert!(t::ftNn_Init_80123954(core::ptr::null_mut(), GA_Ground as _));
 
     // Otherwise: close enough to Popo -> snapped back (returns false), else released.
-    unsafe { nana.x2070.anon_0.set_x2071_b0_3(0) };
+    unsafe { nana.x2070.x0.set_x2071_b0_3(0) };
     attrs.xD0 = 10.0;
     popo.x34_scale.y = 1.0;
     popo.cur_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

@@ -84,7 +84,7 @@ fn smoke() {
     v.cur_pos = Vec3 { x: 1.0, y: 2.0, z: 3.0 };
     t::ftCa_SpecialLw_800E5128(gp);
     assert_eq!(take(), ["ms 355 2", "DB368"]);
-    assert_eq!(f.anon_221b.x221B_b7(), 1);
+    assert_eq!(f.x221B.x221B_b7(), 1);
     assert!(f.accessory4_cb.is_some());
     t::ftCa_SpecialLw_800E550C(gp);
     assert_eq!((f.cur_pos.x, f.cur_pos.y, f.cur_pos.z), (1.0, 2.0, 3.0));

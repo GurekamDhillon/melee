@@ -86,7 +86,7 @@ unsafe fn smoke_inner() {
     // Accessory callback: Kirby himself does nothing; Mario shoots a fireball; Dr. Mario a pill
     // that avoids the last two colours.
     f.u.kb.hat.kind = Ft_Kind_Kirby;
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(1) };
     t::fn_800F9260(gp);
     assert!(take().is_empty());
     f.u.kb.hat.kind = Ft_Kind_Mario;
@@ -96,7 +96,7 @@ unsafe fn smoke_inner() {
     f.u.kb.x68 = 2;
     f.u.kb.x6C = 5;
     unsafe {
-        f.anon_2210.anon_0.set_throw_flags_b0(1);
+        f.x2210.x0.set_throw_flags_b0(1);
         RANDI = vec![4];
     }
     t::fn_800F9260(gp);

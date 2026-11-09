@@ -25,6 +25,23 @@ impl Env for FsEnv {
 #[allow(non_upper_case_globals)]
 static NoEnv: FsEnv = FsEnv;
 
+/// The game-half suite's registry (`Geno_TestInstall`): its texts' `wasm.module` names the suite's fixture modules
+/// (rust/mods/geno_fighters/tests, built by its build.sh), embedded so the suite runs from any directory. Nothing else.
+struct SuiteEnv;
+const SUITE_MODULES: [(&str, &[u8]); 3] = [
+    ("tests/charge.wasm", include_bytes!("../../mods/geno_fighters/tests/charge.wasm")),
+    ("tests/counter.wasm", include_bytes!("../../mods/geno_fighters/tests/counter.wasm")),
+    ("tests/empty.wasm", include_bytes!("../../mods/geno_fighters/tests/empty.wasm")),
+];
+impl Env for SuiteEnv {
+    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::lua::FighterCode>, String> {
+        FsEnv.fighter_wasm(module, slot_names, slot_types, targets)
+    }
+    fn read_mod_file(&self, _mod_id: &str, rel: &str) -> Option<Vec<u8>> {
+        SUITE_MODULES.iter().find(|m| m.0 == rel).map(|m| m.1.to_vec())
+    }
+}
+
 static mut BOOT: Option<Registry> = None;
 static mut SAVED: Option<Option<Registry>> = None;
 static mut POOL_GEN: i32 = 1;
@@ -349,8 +366,8 @@ pub fn TestInstall(text: *const i8) -> i32 {
             SAVED = Some(BOOT.take());
         }
         let mut r = Registry::default();
-        let n = r.parse_text(t, "test", &NoEnv);
-        r.build_kinds(&NoEnv);
+        let n = r.parse_text(t, "test", &SuiteEnv);
+        r.build_kinds(&SuiteEnv);
         flush_log(&mut r);
         BOOT = Some(r);
         POOL_GEN += 1;

@@ -208,7 +208,8 @@ fn compare_pkg(lua: &str, wasm: &str, names: &[&str], types: &[i32], targets: &[
     let mut l = GLua::new().unwrap();
     l.set_layout(&names, types);
     l.set_targets(&targets);
-    assert!(l.load(&std::fs::read(format!("{ROOT}/{lua}")).unwrap(), "=lua"), "{}", l.err);
+    let lp = if lua.starts_with('/') { lua.to_string() } else { format!("{ROOT}/{lua}") };
+    assert!(l.load(&std::fs::read(lp).unwrap(), "=lua"), "{}", l.err);
     let mut w = geno_wasm::load(&std::fs::read(format!("{ROOT}/{wasm}")).unwrap(), &names, types, &targets).unwrap();
     let mut r = Rng(0x7661_6E69_6C6C_61);
     for _ in 0..blocks {
@@ -284,4 +285,35 @@ fn goku_ki_wasm_equals_goku_ki_lua() {
         },
         4000,
     );
+}
+
+/// The game-half suite's inline Lua (melee_modes::tu::geno_tests, from pc/geno/geno_tests.c) against the fixture modules
+/// the suite installs instead (rust/mods/geno_fighters/tests/*.c): the rewrite of the suite keeps its expectations
+/// only if these agree word for word.
+fn compare_src(src: &str, wasm: &str, names: &[&str], types: &[i32], targets: &[&str], fns: &[&str], fill: fn(&mut Rng, &mut [u32])) {
+    let dir = std::env::temp_dir().join(format!("genofix-{}-{}", std::process::id(), wasm.replace('/', "_")));
+    std::fs::write(&dir, src).unwrap();
+    compare_pkg(&dir.display().to_string(), wasm, names, types, targets, fns, fill, 3000);
+    let _ = std::fs::remove_file(&dir);
+}
+
+const CHARGE_LUA: &str = "local M = {} function M.enter(ctx) ctx.state.charge = 0 end function M.frame(ctx) local s = ctx.state if ctx.input.special_held and s.charge < 60 then s.charge = s.charge + 1 s.armed = s.charge >= 3 else ctx.go('Release') end end function M.rel(ctx) ctx.velocity(1.6 + 0.03 * ctx.state.charge, 0) end function M.relf(ctx) ctx.hitbox_damage(3, 6 + 0.15 * ctx.state.charge) end function M.boom(ctx) ctx.state.charge = 77 error('boom') end return M";
+const COUNTER_LUA: &str = "local M = {} function M.answer(ctx) local s = ctx.state s.power = math.min(30, math.max(9, 1.5 * ctx.self.hit_damage)) s.seen = ctx.self.countered s.from = ctx.self.hit_from end function M.strike(ctx) ctx.hitbox_damage(3, ctx.state.power) end function M.spin(ctx) ctx.turn() ctx.velocity(2, 0) end return M";
+const EMPTY_LUA: &str = "local M = {} function M.f(ctx) end return M";
+
+#[test]
+fn suite_fixtures_equal_their_lua() {
+    use melee_script::geno::lua::GLUA_BOOL;
+    compare_src(CHARGE_LUA, "rust/mods/geno_fighters/tests/charge.wasm", &["charge", "armed"], &[GLUA_INT, GLUA_BOOL],
+        &["Charge", "Release", "Bad"], &["enter", "frame", "rel", "relf", "boom"], |r, w| {
+            w[GENO_LUA_IO_STATE as usize] = [0, 2, 3, 59, 60, 61][r.below(6) as usize];
+            w[GENO_LUA_IO_STATE as usize + 1] = r.below(2) as u32;
+        });
+    compare_src(COUNTER_LUA, "rust/mods/geno_fighters/tests/counter.wasm", &["power", "seen", "from"], &[GLUA_FLOAT, GLUA_INT, GLUA_INT],
+        &["Parry", "Answer", "Spin"], &["answer", "strike", "spin"], |r, w| {
+            w[GENO_LUA_IO_COUNTERED as usize] = r.below(3) as u32;
+            w[GENO_LUA_IO_HIT_FROM as usize] = r.below(3) as u32;
+            w[GENO_LUA_IO_HIT_DAMAGE as usize] = match r.below(3) { 0 => 6.0f32.to_bits(), 1 => 20.0f32.to_bits(), _ => r.f(0.0, 40.0) };
+        });
+    compare_src(EMPTY_LUA, "rust/mods/geno_fighters/tests/empty.wasm", &["armed"], &[GLUA_INT], &["Light2", "Heavy"], &["f"], |_, _| {});
 }

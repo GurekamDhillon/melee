@@ -26,6 +26,10 @@
 
 <p align="center">Join <a href="https://discord.gg/FU4KTGQS5m">GD's Workshop on Discord</a> for matchmaking, setup help, bug reports, and modding.</p>
 
+## Melee rewritten in Rust
+
+A native **Rust rewrite of Super Smash Bros. Melee** is being built on the [`rust-port`](https://github.com/GurekamDhillon/melee/tree/rust-port) branch. It is a bit-identical port: every frame is checked against the original game, against Slippi replays and against the real console through a Dolphin memory oracle. It runs rollback netplay, renders with Vulkan, and plays m-ex modded content. The Rust port is licensed GPL-3.0-or-later ([`rust/LICENSE`](https://github.com/GurekamDhillon/melee/blob/rust-port/rust/LICENSE)). It will become this repository's default branch once it is ready; until then the C port below is the release build.
+
 This fork of [doldecomp/melee](https://github.com/doldecomp/melee) adds a native PC port of
 *Super Smash Bros. Melee* (NTSC 1.02, `GALE01`) on the **`pc-port`** branch. It is built from the
 matching decompilation — every game translation unit is real, editable C — rather than by emulation

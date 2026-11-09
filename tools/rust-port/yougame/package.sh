@@ -2,7 +2,7 @@
 # The YouGame desktop build of the Rust engine (Windows x64), for a "Patches" listing: the player's own disc comes
 # from the YouGame app ("disc": true, {disc} in yougame-native.json); nothing of the disc is in the zip.
 #   bash tools/rust-port/yougame/package.sh [--skip-build] [--out DIR]
-# Builds melee.exe (release, cargo -j 4), lays out
+# Builds melee.exe (release, cargo -j 4, own target dir YG_TARGET_DIR, static CRT, paths remapped), lays out
 #   melee-rust/melee.exe  yougame-native.json  version.txt  LICENSE.txt (GPL-3, rust/LICENSE)
 #   THIRD_PARTY_NOTICES.txt (every crate linked in, with its licence texts)  README.txt
 # zips it, then audits the zip: no disc data (GameCube/Wii disc headers, Melee's DAT/USD/HPS file names, big
@@ -20,8 +20,23 @@ while [ $# -gt 0 ]; do
     *) echo "package: unknown option $1" >&2; exit 2 ;;
   esac; shift
 done
-target="${CARGO_TARGET_DIR:-$(cd "$repo/../.." 2>/dev/null && pwd)/_build/cargo-shared}"
+# A target of its own: the release exe is built with the CRT linked in (no vcruntime140.dll to ship) and every
+# build-machine path remapped (panic locations and the PDB path would otherwise carry the user's folders).
+target="${YG_TARGET_DIR:-$(cd "$repo/../.." 2>/dev/null && pwd)/_build/cargo-ygpack}"
 export CARGO_TARGET_DIR="$target"
+unset RUSTFLAGS
+win() { cygpath -w "$1" 2>/dev/null || echo "$1"; }
+cargo_home="${CARGO_HOME:-$HOME/.cargo}"
+rustup_home="${RUSTUP_HOME:-$HOME/.rustup}"
+flags=("-Ctarget-feature=+crt-static" "-Clink-arg=/PDBALTPATH:melee.pdb")
+ws_root="$(cd "$repo/../.." && pwd)"
+for pair in "$cargo_home/registry/src=crates" "$cargo_home=cargo" "$rustup_home=rustup" "$repo=melee" "$target=target" "$ws_root=workspace"; do
+  from="$(win "${pair%%=*}")"; to="${pair#*=}"
+  fwd="$(printf '%s' "$from" | tr '\\' '/')"
+  flags+=("--remap-path-prefix=$from=$to" "--remap-path-prefix=$fwd=$to")
+done
+CARGO_ENCODED_RUSTFLAGS="$(IFS=$''; echo "${flags[*]}")"
+export CARGO_ENCODED_RUSTFLAGS
 if [ $build = 1 ]; then
   (cd "$repo/rust" && cargo build -j 4 --release -p melee 2>&1 | tail -2)
 fi
@@ -147,7 +162,7 @@ with zipfile.ZipFile(z) as f:
             bad.append(f"{i.filename}: names disc files {hits[:5]}")
         if n.endswith(".exe") and hits:
             print(f"audit: note: melee.exe names {len(hits)} disc file names (the engine looks them up on the player's disc; names, not data)")
-        if i.file_size > 1 << 20 and not n.endswith(".exe"):
+        if i.file_size > 1 << 20 and not n.endswith((".exe", ".txt")):
             bad.append(f"{i.filename}: a large binary ({i.file_size} bytes)")
         if i.file_size > 256 << 20:
             bad.append(f"{i.filename}: over 256 MB")

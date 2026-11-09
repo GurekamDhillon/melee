@@ -260,7 +260,7 @@ fn find_snap(scn: &str, frame: i32, explicit: Option<String>) -> Result<String, 
         return Ok(p);
     }
     let file = format!("{scn}.f{frame}.snap");
-    let ws = std::env::var("GW_WORKSPACE").unwrap_or_else(|_| "E:/Projects/Melee Workspace".into());
+    let ws = std::env::var("GW_WORKSPACE").unwrap_or_else(|_| "../..".into());
     let mut dirs = vec![];
     if let Ok(r) = std::env::var("GW_BUILD_ROOT") {
         dirs.push(std::path::PathBuf::from(r).join("snaps"));

@@ -744,6 +744,7 @@ impl Base {
         let was = arena::active();
         let (abase, alen_now) = arena::used_range();
         let inc = !self.no_inc;
+        let mut zeroed: Option<(usize, usize)> = None;
         {
             let since = self.since.borrow();
             let stamp = self.stamp.borrow();
@@ -796,6 +797,10 @@ impl Base {
             if let Some(a) = s.ranges.first() {
                 if alen_now > a.len {
                     unsafe { core::ptr::write_bytes((abase + a.len) as *mut u8, 0, alen_now - a.len) };
+                    // these writes lie past the arena's new used range, which the next refresh does not scan: record
+                    // them as written in the coming epoch, or a later load of a snapshot that does reach that far (a
+                    // newer one: the lab's lookahead resume point, a slot saved later) would skip them as unchanged
+                    zeroed = Some((a.len / PAGE, alen_now.div_ceil(PAGE)));
                 }
             }
             arena::set_active(was);
@@ -806,6 +811,12 @@ impl Base {
         }
         // the live state is `s` now (the load's own writes show up as written in the next epoch: compared once)
         self.close(s.id, s.me.clone());
+        if let Some((p0, p1)) = zeroed {
+            let mut since = self.since.borrow_mut();
+            for pi in p0..p1 {
+                set_bit(&mut since[0], pi);
+            }
+        }
     }
 
     /// MELEE_SNAP_CHECK: the live state must equal `s` page for page, as a full-copy restore would leave it: every page

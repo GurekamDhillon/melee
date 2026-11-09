@@ -880,7 +880,7 @@ pub fn define_audio_play(ck: i32, which: i32, sfx: i32, owner: u32) -> i32 {
                 stopped += melee_audio::sim::with(|s| s.ax.stop_owned_clips(&pcm, owner)).unwrap_or(0);
             }
         }
-        if any && !gn_rb_active() {
+        if any && !gn_rb_active() && !crate::engine::speculative() {
             eprintln!("geno: {name}: stop id 540001 cut {stopped} stoppable clip instance(s)");
         }
         return any as i32;
@@ -902,6 +902,10 @@ pub fn define_audio_play(ck: i32, which: i32, sfx: i32, owner: u32) -> i32 {
         };
         (1 + i, a.voice_file[i].clone(), a.voice_vol[i])
     };
+    if crate::engine::speculative() {
+        // a lab lookahead tick (melee/src/lab.rs): the same answer, no clip, no ledger entry
+        return 1;
+    }
     let Some((pcm, frames, ch)) = gn_clip_load(p, slot, &file) else { return 1 };
     let net = &mut gn_host().net;
     if net.on {

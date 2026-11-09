@@ -28,6 +28,9 @@ use std::rc::Rc;
 /// frames, ~2 ms: the depth stays the full ring, the capture cost per frame halves).
 pub const RING_EVERY: i32 = 8;
 
+mod look;
+pub use look::LookPerf;
+
 const BTN_A: u16 = 0x100;
 const BTN_B: u16 = 0x200;
 const BTN_X: u16 = 0x400;
@@ -191,6 +194,17 @@ pub struct LabRun {
     pub drew: bool,
     /// Per port: the retail AI kind a pad-driven dummy on a CPU slot suspended (`ai_hold`), restored when it is not.
     ai_kind: [Option<u32>; 4],
+    // ---- lookahead (look.rs): local, never part of the command stream
+    look: Option<look::Job>,
+    done_look: Option<look::Job>,
+    held: Option<Vec<melee_gx::draw::DrawCmd>>,
+    pub look_perf: LookPerf,
+    /// Compare the state hash before and after every lookahead (MELEE_LOOK_VERIFY=1, lab-check).
+    pub look_verify: bool,
+    /// A live slice's tail cost estimate (save + load), ns.
+    look_tail_ns: u64,
+    /// The live snapshot of the last unfinished lookahead slice (kept so the next save is incremental against it).
+    look_keep: Vec<ModesSnap>,
 }
 
 fn xorshift(s: &mut u32) -> u32 {
@@ -213,6 +227,7 @@ impl LabRun {
             g, sh, f: 0, slots: vec![None; SLOTS], ring_frames: 0, ring: VecDeque::new(), log: VecDeque::new(), log_f0: 0, replay_until: None,
             paused: false, steps: 0, recs: BTreeMap::new(), play: Default::default(), dummy: [Dummy::default(); 4], rng: mix32(seed) | 1, obs: Default::default(),
             exchange: None, events: Vec::new(), perf: Perf::default(), last_pads: [PADStatus::zeroed(); 4], drew: false, ai_kind: [None; 4],
+            look: None, done_look: None, held: None, look_perf: LookPerf::default(), look_verify: std::env::var("MELEE_LOOK_VERIFY").is_ok_and(|v| v == "1"), look_tail_ns: 0, look_keep: Vec::new(),
         };
         r.sh.borrow_mut().active = true;
         // the match's timer (as ifTime_CreateTimers decides whether to show it); read once, the rules are fixed
@@ -299,6 +314,7 @@ impl LabRun {
                 self.note(format!("lab: frame {}: saved slot {}", self.f, c.a));
             }
             OP_LOAD => {
+                self.look_drop();
                 if let Some(Some((fr, s))) = self.slots.get(c.a as usize).cloned() {
                     let t = std::time::Instant::now();
                     self.load_state(&s);
@@ -327,6 +343,7 @@ impl LabRun {
                 }
             }
             OP_REWIND => {
+                self.look_drop();
                 let f = self.f;
                 self.rewind(c.b as i32);
                 self.note(format!("lab: frame {f}: rewound {} frames to {}", f - self.f, self.f));
@@ -434,6 +451,7 @@ impl LabRun {
                 }
             }
             OP_PERCENT => {
+                self.look_drop();
                 let v = f32::from_bits(c.b);
                 melee_fighter::tu::player::Player_SetHUDDamage(port as i32, v as i32);
                 if let Some(fp) = unsafe { fighter(port as i32) } {
@@ -442,6 +460,7 @@ impl LabRun {
                 self.note(format!("lab: frame {}: P{} percent {v} (forks the timeline)", self.f, port + 1));
             }
             OP_POS => {
+                self.look_drop();
                 let (x, y) = (f32::from_bits(c.b), f32::from_bits(c.c));
                 unsafe {
                     let g = melee_fighter::player::get_entity(port as i32);
@@ -464,6 +483,9 @@ impl LabRun {
     }
 
     fn note(&self, s: String) {
+        if melee_engine::engine::speculative() {
+            return;
+        }
         eprintln!("{s}");
     }
 
@@ -792,6 +814,7 @@ impl LabRun {
             }
             self.events.clear();
             self.publish();
+            self.look_frame(false);
             return self.drew;
         }
         if self.paused {
@@ -845,7 +868,9 @@ impl LabRun {
         self.drew = true;
         if self.ring_frames > 0 && self.f % RING_EVERY == 0 && !self.ring.iter().any(|r| r.0 == self.f) {
             let t = std::time::Instant::now();
-            let (s, fresh) = self.g.save_after(self.ring.back().map(|r| &r.1));
+            // after a lookahead slice the live state was last loaded from its snapshot: save against that (incremental)
+            let prev = if self.look_keep.is_empty() { self.ring.back().map(|r| &r.1) } else { None };
+            let (s, fresh) = self.g.save_after(prev);
             self.perf.ring_fresh += fresh as u64;
             self.perf.ring_saves += 1;
             self.perf.ring_ns += t.elapsed().as_nanos() as u64;
@@ -856,11 +881,16 @@ impl LabRun {
         }
         self.observe(true);
         self.publish();
+        self.look_frame(true);
         true
     }
 
     /// Read the fighters after a frame: events, cells, observed frame data (reads only).
     fn observe(&mut self, events: bool) {
+        // never inside a lookahead tick (look.rs steps the engine itself): the speculative flag guards it anyway
+        if melee_engine::engine::speculative() {
+            return;
+        }
         self.events.clear();
         let f = self.f;
         for port in 0..4 {
@@ -1038,6 +1068,9 @@ impl LabRun {
 
     /// Copy what the queries read into the shared state.
     fn publish(&mut self) {
+        if melee_engine::engine::speculative() {
+            return;
+        }
         let mut s = self.sh.borrow_mut();
         s.match_frame = self.f;
         s.paused = self.paused;
@@ -1390,6 +1423,10 @@ impl LabRun {
     /// A state change while frozen (a slot load, a position or percent set) is drawn at once: a render-only pass of
     /// the state as it stands (`ModesGame::redraw`, hash-neutral), else the screen keeps the old frame until a step.
     fn redraw(&mut self) {
+        // render-only and host-facing: never inside a lookahead tick
+        if melee_engine::engine::speculative() {
+            return;
+        }
         self.g.redraw(self.last_pads);
         self.drew = true;
     }

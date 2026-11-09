@@ -548,10 +548,16 @@ pub fn os_ticks_to_calendar_time(ticks: i64, td: *mut melee_types::OSCalendarTim
         extern "C" { fn _localtime64_s(tm: *mut Tm, t: *const i64) -> i32; }
         unsafe { _localtime64_s(&mut tm, &secs) };
     }
+    // libc's own `struct tm`: glibc's has tm_gmtoff and tm_zone after the nine ints, so localtime_r into the Windows-shaped
+    // `Tm` wrote 20 bytes past it (the zone offset landed in a saved register: the prize screen's date after a netplay
+    // match segfaulted in gm_801692E8)
     #[cfg(not(windows))]
     {
-        extern "C" { fn localtime_r(t: *const i64, tm: *mut Tm) -> *mut Tm; }
-        unsafe { localtime_r(&secs, &mut tm) };
+        let mut lt: libc::tm = unsafe { core::mem::zeroed() };
+        let t = secs as libc::time_t;
+        unsafe { libc::localtime_r(&t, &mut lt) };
+        tm = Tm { sec: lt.tm_sec, min: lt.tm_min, hour: lt.tm_hour, mday: lt.tm_mday, mon: lt.tm_mon, year: lt.tm_year, wday: lt.tm_wday,
+                  yday: lt.tm_yday, isdst: lt.tm_isdst };
     }
     if td.is_null() {
         return;

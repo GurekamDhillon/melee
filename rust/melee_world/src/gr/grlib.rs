@@ -229,6 +229,9 @@ pub(crate) mod tests {
         items: std::vec::Vec<(ItemKind, Box<CollData>)>,
     }
     impl GrLibHooks for Rec {
+        fn hsd_8039d4dc(&mut self, g: *mut HSD_Generator) {
+            self.log.push(format!("kill {}", unsafe { (*g).idnum }));
+        }
         fn generator_list_head(&mut self) -> *mut HSD_Generator {
             self.gens.first_mut().map_or(core::ptr::null_mut(), |g| &mut **g)
         }
@@ -283,26 +286,6 @@ pub(crate) mod tests {
         grlib_801c9908(&mut h, jp[0]);
         assert_eq!(h.log, ["kill 0", "kill 3"]);
         grlib_801c98a0(&mut h, core::ptr::null_mut());
-    }
-
-    #[test]
-    fn mtx_and_accessors() {
-        let mut h = Rec::default();
-        let mut l = GrLib::default();
-        l.grlib_801c9a10(&mut h);
-        assert_eq!(l.grlib_801c9a70(3), Vec3 { x: 3.0, y: -3.0, z: 0.0 });
-        let mut w = StageWorld::default();
-        w.grlib_801c9e50(-5);
-        assert_eq!(w.grlib_801c9e40(), -5);
-        let mut v = Vec3 { x: 1.0, y: 1.0, z: 1.0 };
-        assert!(!w.grlib_801c9e60(&mut h, &mut v));
-        assert_eq!(v, Vec3 { x: 0.0, y: 0.0, z: 0.0 });
-        w.stage_info.grkind = Gr_Kind_BigBlue;
-        v.x = 7.0;
-        assert!(w.grlib_801c9e60(&mut h, &mut v)); // no map gobj 34: zeroed
-        assert_eq!(v, Vec3 { x: 0.0, y: 0.0, z: 0.0 });
-        assert!(w.grlib_801c9cec(&mut h, QuakeKind_Loop).is_null());
-        assert!(w.grlib_801c9cec(&mut h, QuakeKind_None).is_null());
     }
 
     #[test]

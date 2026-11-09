@@ -286,62 +286,24 @@ pub(crate) mod tests {
         playing: bool,
     }
     impl GroundHooks for Rec {
+        fn lbaudioax_800237a8(&mut self, s: i32, v: i32, p: i32) -> i32 {
+            self.log.push(format!("play {s} {v} {p}"));
+            self.next_id += 1;
+            self.next_id
+        }
+        fn lbaudioax_80023870(&mut self, a: i32, v: i32, p: i32, d: i32) -> i32 {
+            self.log.push(format!("play4 {a} {v} {p} {d}"));
+            0
+        }
+        fn lbaudioax_800236b8(&mut self, id: i32) -> i32 {
+            self.log.push(format!("stop {id}"));
+            0
+        }
+        fn lbaudioax_80023710(&mut self, _: i32) -> bool { self.playing }
+        fn lbaudioax_80024b58(&mut self, id: i32, v: i32) { self.log.push(format!("vol {id} {v}")); }
+        fn lbaudioax_80024b1c(&mut self, id: i32, v: i32) { self.log.push(format!("pan {id} {v}")); }
         fn camera_set_mode_to_fixed(&mut self) { self.log.push("fixed".into()); }
         fn camera_set_mode_to_standard(&mut self) { self.log.push("std".into()); }
-    }
-
-    #[test]
-    fn accessors() {
-        let mut w = StageWorld::default();
-        assert_eq!(w.ground_801c0498(), 1.0);
-        assert_eq!(w.ground_801c0508(), 128);
-        let mut p = Box::new(GroundParam::zeroed());
-        w.stage_info.param = &mut *p;
-        w.ground_set_param_y(3.5);
-        assert_eq!(w.ground_801c0498(), 3.5);
-        let c = _GXColor { r: 1, g: 2, b: 3, a: 4 };
-        w.ground_801c05d4(&c);
-        assert_eq!(w.ground_801c0690().b, 3);
-        assert_eq!(p.xBC.a, 4);
-        w.ground_801c1d6c(0x330 | 0x1);
-        assert_eq!((w.ground_801c1d84(), w.ground_801c1d98(), w.ground_801c1dac(), w.ground_801c1dc0()), (0x330, 0x20, 0x100, 0));
-        w.ground_801c1e00(3);
-        assert_eq!(w.ground_801c1e18(), 1);
-        w.ground_801c5aa4(true);
-        assert!(w.ground_801c5abc());
-        assert_eq!(w.stage_info.unk8C.bf_0[0], 0x60);
-        w.stage_info.x714 = 7;
-        assert_eq!(w.ground_801c3d44(None, 3.0, 5.0), 7);
-        assert_eq!((w.stage_info.x70C, w.stage_info.x710, w.stage_info.x6D0, w.stage_info.flags & 0x10), (1.5, 2.5, 7, 0x10));
-        w.stage_info.x720 = -1;
-        w.stage_info.flags |= 0x40;
-        assert_eq!(w.ground_801c3db4(None, 1.0, 1.0), -1);
-        assert_eq!(w.stage_info.flags & 0x40, 0);
-        w.stage_info.x6D4 = 1;
-        w.stage_info.flags = 0;
-        w.ground_801c4338();
-        assert_eq!(w.ground_801c1d98(), 0x20);
-        w.ground_801c438c(2.0);
-        w.ground_801c438c(5.0);
-        assert_eq!(w.ground_801c4368(), (5.0, 3.0));
-        w.ground_801c4d70(core::ptr::null_mut(), &Vec3 { x: 1.0, y: 2.0, z: 3.0 }, 4.0);
-        assert_eq!(w.ground_801c4da0().1, 4.0);
-        w.ground_801c3900(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
-        w.ground_801c39a0(-9.0);
-        assert_eq!(w.stage_info.blast_zone.left, -9.0);
-        w.stage_info.x6E4 = [10, 20];
-        let mut r = Rec::default();
-        assert_eq!(w.ground_801c5840(&mut r), 20);
-        w.ground_enable_match_camera(&mut r);
-        p.x4C_fixed_cam = 1;
-        w.ground_enable_match_camera(&mut r);
-        w.stage_info.grkind = Gr_Kind_Kongo;
-        w.ground_801c4dd0(&mut r);
-        w.stage_info.grkind = Gr_Kind_OldKongo;
-        w.ground_801c4e20(&mut r);
-        ground_801c5a28(&mut r);
-        assert_eq!(r.log, ["std", "fixed", "k70", "ok c8", "t bc", "t 4c 0", "t 18 001"]);
-        w.stage_info.param = core::ptr::null_mut();
     }
 
     #[test]

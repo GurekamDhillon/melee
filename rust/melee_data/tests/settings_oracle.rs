@@ -26,6 +26,7 @@ fn file_line(path: &std::path::Path) -> String {
 }
 
 #[test]
+#[cfg_attr(not(windows), ignore = "the C oracle ran on Windows: text-mode stdio (CRLF on write; CR before LF dropped and ^Z = EOF on read); see glibc_text_mode")]
 fn settings_match_the_c() {
     let script = include_str!("data/settings_script.txt");
     let want: Vec<&str> = include_str!("data/settings_oracle.txt").lines().collect();
@@ -88,7 +89,9 @@ fn settings_match_the_c() {
                 got.push(format!("RELOAD rows={}", st.len()));
             }
             "BADPATH" => {
-                st.set_path("Z:\\no\\such\\dir\\settings.cfg");
+                // unwritable on every OS: its parent is a regular file (off Windows "Z:\\no\\such\\dir\\settings.cfg" is a
+                // valid file name, so the saves succeeded and left that file in the crate directory)
+                st.set_path(concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml/settings.cfg"));
                 got.push("BADPATH".into());
             }
             "GOODPATH" => {
@@ -105,4 +108,26 @@ fn settings_match_the_c() {
     }
     assert_eq!(want.len(), got.len());
     assert!(want.len() > 3000);
+}
+
+/// Off Windows the store does what the C's stdio does on glibc (settings.rs text_mode_read / text_mode_write): a save
+/// writes "\n" line ends, and a ^Z byte is data, not end of file, so the rows after it load.
+#[test]
+#[cfg(not(windows))]
+fn glibc_text_mode() {
+    let dir = std::env::temp_dir().join(format!("melee_data_settings_glibc_{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let p = dir.join("glibc.cfg");
+    let _ = std::fs::remove_file(&p);
+    let mut st = Settings::new(&p);
+    st.set_str("server", "h");
+    st.set_int("ucf", 9);
+    let raw = std::fs::read(&p).unwrap();
+    assert!(st.last_save_ok());
+    assert!(!raw.contains(&b'\r') && raw.ends_with(b"ucf=9\n"), "{raw:?}");
+    std::fs::write(&p, b"a=1\r\n\x1ab=2\nc=3\n").unwrap();
+    st.reload();
+    assert_eq!((st.get_int("a", -1), st.get_int("c", -1)), (1, 3));
+    assert_eq!(st.len(), 3, "^Z ends nothing: a, \\x1ab and c load");
+    let _ = std::fs::remove_dir_all(&dir);
 }

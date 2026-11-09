@@ -169,6 +169,24 @@ def trivial(body, name=None):
     return False
 
 
+def test_spans(t):
+    """(start, end) of each `#[cfg(test)] mod x { .. }` in t: a unit-test module's hook mocks are named like the C
+    functions they stand in for but are not port bodies (tests/ directories are not scanned for the same reason)."""
+    out = []
+    for m in re.finditer(r'#\[cfg\(test\)\]\s*(?:pub(?:\([\w:]+\))?\s+)?mod\s+\w+\s*\{', t):
+        d, k = 0, m.end() - 1
+        while k < len(t):
+            if t[k] == '{':
+                d += 1
+            elif t[k] == '}':
+                d -= 1
+                if d == 0:
+                    break
+            k += 1
+        out.append((m.start(), k))
+    return out
+
+
 def scan(pats):
     cidx = c_index()
     bodies = defaultdict(list)    # lower C name -> [(rel, line, in_tu, name)]
@@ -176,9 +194,10 @@ def scan(pats):
     for f, rel in rust_files():
         t = f.read_text(errors='replace')
         in_tu = '/src/tu/' in rel
+        tests = test_spans(t)
         for m in FN.finditer(t):
             n = m.group(1)
-            if n.lower() not in cidx:
+            if n.lower() not in cidx or any(a <= m.start() < b for a, b in tests):
                 continue
             b = body_of(t, m.start())
             if b is None or trivial(t[b[0] + 1:b[1]], n):

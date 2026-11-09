@@ -170,6 +170,41 @@ fn install() {
             v.x = (tr() % 100) as i32 as f32;
             v.y = -1.0;
         });
+        // The canonical tu::player bodies (cb505a49a) call out through tu::player::ext; route every hook to the
+        // h:: mock above so the trace is the same as through the old player.rs bodies.
+        tu_pl::ext::hook::ft_80087AC0 = Some(|a0, a1| h::ft_80087ac0(a0, a1));
+        tu_pl::ext::hook::ft_80087BAC = Some(|a0, a1| h::ft_80087bac(a0, a1));
+        tu_pl::ext::hook::ft_80087BC0 = Some(|a0, a1| h::ft_80087bc0(a0, a1));
+        tu_pl::ext::hook::ft_80087BEC = Some(|a0, a1| h::ft_80087bec(a0, a1));
+        tu_pl::ext::hook::ftCo_800D4F24 = Some(|a0, a1| h::ftco_800d4f24(a0, a1));
+        tu_pl::ext::hook::ftCo_800D4FF4 = Some(|a0| h::ftco_800d4ff4(a0));
+        tu_pl::ext::hook::ftDemo_SetFacingDirection = Some(|a0, a1| h::ftdemo_set_facing_direction(a0, a1));
+        tu_pl::ext::hook::ftKb_SpecialN_800EED50 = Some(|a0, a1| h::ftkb_specialn_800eed50(a0, a1));
+        tu_pl::ext::hook::ftLib_800869F8 = Some(|a0| h::ftlib_800869f8(a0));
+        tu_pl::ext::hook::ftLib_80086A4C = Some(|a0, a1| h::ftlib_80086a4c(a0, a1));
+        tu_pl::ext::hook::ftLib_80086F4C = Some(|a0| h::ftlib_80086f4c(a0));
+        tu_pl::ext::hook::ftLib_80087140 = Some(|a0| h::ftlib_80087140(a0));
+        tu_pl::ext::hook::ftLib_DisableInput = Some(|a0| h::ftlib_disableinput(a0));
+        tu_pl::ext::hook::ftLib_EnableInput = Some(|a0| h::ftlib_enableinput(a0));
+        tu_pl::ext::hook::ftLib_GetCameraSubjectBonePos = Some(|a0, a1| unsafe { h::ftlib_getcamerasubjectbonepos(a0, &mut *a1) });
+        tu_pl::ext::hook::ftLib_GetKind = Some(|a0| h::ftlib_get_kind(a0));
+        tu_pl::ext::hook::ftLib_GetLastAttackerSlot = Some(|a0| h::ftlib_getlastattackerslot(a0));
+        tu_pl::ext::hook::ftLib_GetNameTagHeight = Some(|a0| h::ftlib_getnametagheight(a0));
+        tu_pl::ext::hook::ftLib_IsCameraSubjectInBounds = Some(|a0| h::ftlib_iscamerasubjectinbounds(a0));
+        tu_pl::ext::hook::ftLib_IsRebirth = Some(|a0| h::ftlib_isrebirth(a0));
+        tu_pl::ext::hook::ftLib_IsSleeping = Some(|a0| h::ftlib_issleeping(a0));
+        tu_pl::ext::hook::ftLib_SetPercent = Some(|a0, a1| h::ftlib_setpercent(a0, a1));
+        tu_pl::ext::hook::ftLib_SetPos = Some(|a0, a1| unsafe { h::ftlib_setpos(a0, &*a1) });
+        tu_pl::ext::hook::ftLib_SetScale = Some(|a0, a1| h::ftlib_set_scale(a0, a1));
+        tu_pl::ext::hook::gm_8016B168 = Some(|| h::gm_8016b168());
+        tu_pl::ext::hook::gm_8016C5C0 = Some(|a0| h::gm_8016c5c0(a0));
+        tu_pl::ext::hook::gm_GetFrameCount = Some(|| h::gm_get_frame_count());
+        tu_pl::ext::hook::HSD_GObjFree = Some(|a0| h::hsd_gobj_free(a0));
+        tu_pl::ext::hook::ifStatus_802F69C0 = Some(|a0, a1| h::ifstatus_802f69c0(a0, a1));
+        tu_pl::ext::hook::ifStatus_802F6AF8 = Some(|a0| h::ifstatus_802f6af8(a0));
+        tu_pl::ext::hook::ifStatus_802F6C04 = Some(|a0| h::ifstatus_802f6c04(a0));
+        tu_pl::ext::hook::ifStatus_802F6D10 = Some(|a0| h::ifstatus_802f6d10(a0));
+        tu_pl::ext::hook::ifStatus_802F6E1C = Some(|a0| h::ifstatus_802f6e1c(a0));
     }
 }
 

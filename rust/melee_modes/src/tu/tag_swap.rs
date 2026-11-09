@@ -84,7 +84,7 @@ unsafe fn fighter(g: *mut HSD_GObj) -> *mut Fighter {
 
 /// The partner's fighter kind of `slot` (the sleeping sub-fighter), or -1 if the slot has no tag pair.
 pub unsafe fn partner_kind(slot: i32) -> i32 {
-    if !(0..4).contains(&slot) || pl::TAG_SLOT[slot as usize] == 0 {
+    if !(0..4).contains(&slot) || pl::TAG_SLOT[slot as usize] == 0 || crate::tu::petey::partner_caged() {
         return -1;
     }
     let f = fighter(entity(slot, 1));
@@ -210,6 +210,9 @@ unsafe fn release() {
 pub unsafe fn stage_begin(grkind: i32, len: i32) -> i32 {
     if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 {
         return TAG_BUSY;
+    }
+    if crate::tu::petey::active() {
+        return crate::tu::stage_hop::HOP_UNSUPPORTED; // the boss arena stays put
     }
     let rc = crate::tu::stage_hop::check(grkind);
     if rc != 0 {

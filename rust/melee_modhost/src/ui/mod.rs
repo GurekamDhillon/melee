@@ -636,6 +636,14 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         for (i, x) in v.iter().take(n).enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
         if write_bytes(&mut c, out, &b[..n * 4]) { GD_OK } else { GD_EINVAL }
     });
+    // read-only view of the Petey boss (melee_modes::tu::petey::view): n i32 words (notes/petey-boss.md)
+    f!("gd_ui_petey", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
+        let v = melee_modes::tu::petey::view();
+        let n = (n as usize).min(v.len());
+        let mut b = [0u8; 48];
+        for (i, x) in v.iter().take(n).enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
+        if write_bytes(&mut c, out, &b[..n * 4]) { GD_OK } else { GD_EINVAL }
+    });
     f!("gd_ui_inject", |c: Caller<'_, PresData>, port: u32, pad: u32| -> i32 {
         if !feat(&c, FEATURE_UI_SIM_INPUT) {
             return GD_ECAP;

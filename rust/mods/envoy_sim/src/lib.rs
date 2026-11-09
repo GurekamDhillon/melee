@@ -189,6 +189,7 @@ unsafe fn make_plan() {
         p[17] = 1250;
         p[20] = 750;
         p[23] = 1250;
+        p[26] = 1; // the boss fight (the engine swaps in Petey when MELEE_ENVOY_BOSS=petey)
     }
     gd_envoy_plan(p.as_ptr(), 32);
 }

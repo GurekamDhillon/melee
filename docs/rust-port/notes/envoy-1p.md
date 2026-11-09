@@ -42,3 +42,16 @@ each fight start.
   when the main is Marth).
 - Run state lives in the sim mod's memory for the session only (no save); quitting a fight retries it.
 - Offline only: the plan is not in the netplay handshake.
+
+## Test knobs and checks
+
+| knob | effect |
+|---|---|
+| `MELEE_ENVOY_START_FIGHT=N` | each new run starts at fight N (1-5): reward / stage shift / boss without winning the earlier fights |
+| `MELEE_ENVOY_TEST_P1CPU=1` | the player's slot is a level-9 CPU (the headless win path) |
+
+Verified 2026-11-09 (pad scripts only): two goldens with tags + reward + a stage shift byte-identical (2401 rows);
+synctest depth 4 over 2400 frames 0 mismatches (9588 checks); `MELEE_SNAP_CHECK=1` passes; `melee play --match`
+headless: fight won -> results -> CSS -> SSS -> fight 5 with the pool carried -> RUN OVER -> results -> a new run.
+Found on the way: a VS rewrite must also set `match_kind` (the `--match` preset is a time match) and keep handicap 9;
+CPUs need `cpu_kind` 4. Stage switches leak a little heap 0 each time (~0.7 MB per switch in a long fight; stage_hop).

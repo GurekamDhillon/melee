@@ -10,14 +10,15 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../..
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "m0_hashword: GW_ISO_VANILLA not set"; exit 2; }
 exe="$repo/build/cargo/release/melee"; [ -e "$exe" ] || exe="$exe.exe"
 mods="$repo/build/mods-hashword"; bash rust/mods/hashword_probe/build.sh "$mods" >/dev/null || exit 1
-export NP_SCRATCH="${NP_SCRATCH:-${TEMP:-/tmp}/np}" MELEE_VOLUME=3
+qmods=$(printf %q "$mods") # play_pair reads NP_*_ENV as shell words: the path may hold spaces
+export NP_SCRATCH="${NP_SCRATCH:-${TEMP:-/tmp}/np}" MELEE_VOLUME=3; mkdir -p "$NP_SCRATCH"
 fail=0
 line=$(MELEE_WASM_MODS="$mods" "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" --scenario cpu_fox_falco_dl --depth 12 --frames 3600 --timeout 1500 --golden docs/rust-port/golden/cpu_fox_falco_dl.csv 2>&1 | grep 'engine synctest')
 case "$line" in *" 0 MISMATCHES"*"golden 3600/3600"*) echo "ok   1. ${line#melee: }";; *) echo "FAIL 1. ${line:-no result}"; fail=1;; esac
-if NP_HOST_ENV="MELEE_WASM_MODS=$mods" NP_GUEST_ENV="MELEE_WASM_MODS=$mods" bash tools/rust-port/netplay/play_pair.sh m0_hw_same 20 2 --headless >"$NP_SCRATCH/m0_hw_same.out" 2>&1; then
+if NP_HOST_ENV="MELEE_WASM_MODS=$qmods" NP_GUEST_ENV="MELEE_WASM_MODS=$qmods" bash tools/rust-port/netplay/play_pair.sh m0_hw_same 20 2 --headless >"$NP_SCRATCH/m0_hw_same.out" 2>&1; then
   echo "ok   2. $(grep 'frames in both' "$NP_SCRATCH/m0_hw_same.out"); $(grep '^play: replay: [0-9]' "$NP_SCRATCH/m0_hw_same.out" | cut -c15-)"
 else echo "FAIL 2. (see $NP_SCRATCH/m0_hw_same.out)"; fail=1; fi
-NP_HOST_ENV="MELEE_WASM_MODS=$mods" NP_GUEST_ENV="MELEE_WASM_MODS=$mods MELEE_NP_TEST_HASHWORD=600" bash tools/rust-port/netplay/play_pair.sh m0_hw_skew 20 2 --headless >"$NP_SCRATCH/m0_hw_skew.out" 2>&1
+NP_HOST_ENV="MELEE_WASM_MODS=$qmods" NP_GUEST_ENV="MELEE_WASM_MODS=$qmods MELEE_NP_TEST_HASHWORD=600" bash tools/rust-port/netplay/play_pair.sh m0_hw_skew 20 2 --headless >"$NP_SCRATCH/m0_hw_skew.out" 2>&1
 first=$(python - "$NP_SCRATCH/m0_hw_skew-host.csv" "$NP_SCRATCH/m0_hw_skew-guest.csv" <<'PY'
 import sys, csv
 a = {int(r[0]): r[1] for r in list(csv.reader(open(sys.argv[1])))[1:]}

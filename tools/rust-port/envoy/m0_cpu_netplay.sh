@@ -8,7 +8,7 @@
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "m0_cpu_netplay: GW_ISO_VANILLA not set"; exit 2; }
-export NP_SCRATCH="${NP_SCRATCH:-${TEMP:-/tmp}/np}" MELEE_VOLUME=3
+export NP_SCRATCH="${NP_SCRATCH:-${TEMP:-/tmp}/np}" MELEE_VOLUME=3; mkdir -p "$NP_SCRATCH"
 fail=0
 pair() { # name lag loss cpus want-players
   local name=$1 lag=$2 loss=$3 cpus=$4 want=$5

@@ -119,3 +119,25 @@ Post hook on damage: slot 0 takes 1% extra per hit, counted in a static; post ho
 `action.Squat.enter` through `gd_orig_call_void`, pre on `action.Landing.enter`, an action request at frame 900.
 `rust/mods/world_mod` (`gd.world`): `item.spawn` pre / post with the spawn accessors, `item.change_state` post,
 `stage.update` pre, `stage.on_start` post, an item walk and trig in the frame hook. build_mods.sh builds all three.
+
+## Stage switching (port/stagesw, 2026-11-08)
+
+Port of the C build's seamless stage switch (pc/gameworld/script_stage_slot_retail.inc, demo
+pc/scripts/examples/stage_switch_demo): the live stage is torn down and the destination's complete retail init /
+load / start runs mid-match, with no scene change.
+
+| piece | where |
+|---|---|
+| native switch | `melee_modes::tu::stage_hop` (`check`, `switch_to`): reads the destination `GrXx.dat` from the disc into heap 0 at the switch, then the C's order through the ported helpers: `script_retail_items(1)` / `script_retail_destroy` (ownership ledger captured during the normal stage init), `Ground_StageSlotRetailInstall` (collision through `ScriptGame_StageSlotRetailCollision`), camera handover, `script_retail_carry`, `script_retail_items(0)` |
+| imports | `gd_stage_grkind() -> i32`, `gd_stage_switch(grkind) -> i32` (0 queued, else the refusal: -1 not gameplay, -5 same, -9 fighter grabbed/thrown/respawning, -18 stage not one of FD/BF/YS/DL/FoD), `gd_stage_switch_result()` (1 pending, 0 done, < 0 refused at apply). The switch is applied after the `frame.run_procs` post chain, outside the procs |
+| the mod | `rust/mods/stage_switch`: every 600 logic frames after `stage.on_start` (match start and each switch), the next of BF -> YS -> DL -> FoD -> FD after the live stage; -9 retries next frame |
+| check | `tools/rust-port/modhost/stage_switch.sh` (two identical goldens with 5 switches; synctest depth 4 over 3601 frames with MELEE_SNAP_CHECK=1) |
+
+Rollback: no state outside the arena/statics (the C kept a raw-bytes cache outside its snapshot and refused online;
+here the file is re-read on resimulation). Verified: synctest 14392 hash checks, 0 mismatches, each switch resimulated
+5 times; `play_pair.sh` 20 ms / 2 % loss with the mod on both peers: 3 switches, 398 rollbacks, 0 desyncs, replay equal.
+
+Differences from the C mod: no logic freeze and no wipe/flash/morph cover or countdown indicator (a sim mod cannot
+import `gd_ui`, and the presentation host has no read-only sim getters yet); the music does not change; no Lua script
+geometry is carried (`script_stage.cap` is 0). Found on the way: Fountain's platform grounds carry `map_id` -1; the
+C reads `map_gobjs[-1]`, the port panicked on the index (`Ground_801C4A08` now ignores an out-of-range id).

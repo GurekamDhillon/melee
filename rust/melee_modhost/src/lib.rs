@@ -176,6 +176,10 @@ pub struct HostData {
     set_return: Option<Val>,
     /// Queued `gd_fighter_request_action_state` (handle, state), applied after the chain.
     requests: Vec<(u32, i32)>,
+    /// Queued `gd_stage_switch` ground kind, applied after the `frame.run_procs` post chain (outside the procs).
+    stage_switch: Option<i32>,
+    /// The result of the last applied switch (`gd_stage_switch_result`): 0 done, < 0 refused, 1 pending.
+    stage_switch_rc: i32,
     origs: Vec<OrigFrame>,
     depth: BTreeMap<u32, u32>,
 }
@@ -595,7 +599,28 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         }
     });
     // stage
+    // tag pairs and the sim transition (melee_modes::tu::tag_swap; rust/mods/tag_fighter): all game state
+    w!("gd_tag_partner", |slot: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::partner_kind(slot) } });
+    w!("gd_tag_check", |slot: i32| -> i32 { if !(0..4).contains(&slot) { return -1 } unsafe { melee_modes::tu::tag_swap::check(slot) } });
+    w!("gd_tag_begin", |slot: i32, len: i32| -> i32 { if !(0..4).contains(&slot) { return -1 } unsafe { melee_modes::tu::tag_swap::begin(slot, len) } });
+    w!("gd_tag_swap", |skip: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::request_swap(skip != 0) } });
+    w!("gd_transition_phase", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.phase as i32 } });
+    w!("gd_transition_frame", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.frame as i32 } });
+    w!("gd_transition_slot", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.slot as i32 } });
+    // the pad a port pressed this logic frame (HSD_PadMasterStatus.trigger: the synced sim input, valid while frozen)
+    w!("gd_pad_pressed", |port: i32| -> u32 {
+        if !(0..4).contains(&port) { return 0 }
+        unsafe { melee_runtime::tu::controller::HSD_PadMasterStatus[port as usize].trigger }
+    });
     w!("gd_stage_kind", || -> i32 { unsafe { melee_world::tu::stage::selected_stage.stkind as i32 } });
+    // in-match stage switching (melee_modes::tu::stage_hop): checked now, applied between logic frames
+    w!("gd_stage_grkind", || -> i32 { melee_modes::tu::stage_hop::current() });
+    w!("gd_stage_switch", |mut c: Caller<'_, HostData>, kind: i32| -> i32 {
+        let rc = unsafe { melee_modes::tu::stage_hop::check(kind) };
+        if rc == 0 { c.data_mut().stage_switch = Some(kind); c.data_mut().stage_switch_rc = 1; }
+        rc
+    });
+    w!("gd_stage_switch_result", |c: Caller<'_, HostData>| -> i32 { c.data().stage_switch_rc });
     // the game's RNG (HSD_Randi / HSD_Randf on the logic seed): the draws are game state and roll back with it
     w!("gd_rand_u32", |bound: u32| -> u32 {
         if bound == 0 { 0 } else { melee_runtime::tu::random::global::HSD_Randi(bound.min(i32::MAX as u32) as i32) as u32 }
@@ -1015,6 +1040,15 @@ fn frame_hook(post: bool) {
             }
         }
         apply_requests(host);
+        if post {
+            if let Some(kind) = ctx(host).data_mut().stage_switch.take() {
+                let rc = melee_modes::tu::stage_hop::switch_to(kind);
+                if rc != 0 { eprintln!("modhost: stage switch to {kind} refused ({rc})"); }
+                ctx(host).data_mut().stage_switch_rc = rc;
+            }
+            // a queued tag swap and the transition clock: between logic frames, outside the procs
+            melee_modes::tu::tag_swap::tick();
+        }
     }
 }
 

@@ -1,6 +1,8 @@
 //! Loads real archives through the game's own `lbFile` and `lbArchive` TUs on the engine host, and checks the
 //! native image against the reference decode (`melee_runtime::dat`, which `fighter_data` / `stage` use) and the
 //! raw image against the file. Needs the disc (`GW_ISO_VANILLA`); without it the tests pass vacuously.
+#[path = "../../melee_core/test_support/disc.rs"]
+mod disc;
 use melee_engine::{gcm::Gcm, Host};
 use melee_runtime::dat::DatArchive;
 use melee_runtime::tu::{lbarchive, lbfile};
@@ -11,10 +13,12 @@ static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 /// The host is a global: tests take the lock and boot a fresh one.
 fn boot() -> Option<std::sync::MutexGuard<'static, ()>> {
     let g = LOCK.lock().unwrap_or_else(|e| e.into_inner());
-    let iso = std::env::var("GW_ISO_VANILLA").ok()?;
+    let iso = disc::iso("archive_host")?;
     let disc = Gcm::open(&iso).ok()?;
     Host::boot(disc, 256 << 20).unwrap();
     melee_engine::install();
+    // the retail data tables (ftData_803C1F40's Pl*.dat symbol names, ...), as Engine's boot installs them (fe6a566a0)
+    melee_link::install_retail();
     Some(g)
 }
 
@@ -97,16 +101,24 @@ fn stage_item_effect_files() {
     for sym in ["coll_data", "grGroundParam"] {
         assert!(unsafe { !melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(rec, c(sym).as_ptr()).is_null() }, "{sym}");
     }
-    // a `raw` symbol answers inside the raw image
+    // the stage's particle command bank: a native decoded copy (dat_custom "ptclcmd", 12878a285; it was a `raw`
+    // symbol answering inside the raw image before)
     let ptcl = unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(rec, c("map_ptcl").as_ptr()) } as usize;
-    assert!(ptcl > img.raw && ptcl < img.raw + img.raw_len);
-    // a public symbol outside the type table is a hard stop that names it
-    let r = std::panic::catch_unwind(|| unsafe {
-        // the engine function directly: the TU's `extern "C"` entry cannot unwind
-        melee_engine::archive::host_public_address(rec, c("ALDYakuAll").as_ptr())
-    });
-    let msg = *r.expect_err("must stop").downcast::<String>().unwrap();
-    assert!(msg.contains("ALDYakuAll"), "{msg}");
+    assert!(ptcl != 0 && !(ptcl > img.raw && ptcl < img.raw + img.raw_len));
+    // a public symbol outside the type table is a hard stop that names it (the table grows: ALDYakuAll, once the
+    // example, is decoded since 65d986b52, so take whichever public of the file the table does not know)
+    let unknown = DatArchive::parse(&orig).unwrap().publics.iter().map(|p| p.name.clone())
+        .find(|n| melee_engine::dat_types::type_of(n).is_none());
+    if let Some(sym) = unknown {
+        let r = std::panic::catch_unwind(|| unsafe {
+            // the engine function directly: the TU's `extern "C"` entry cannot unwind
+            melee_engine::archive::host_public_address(rec, c(&sym).as_ptr())
+        });
+        let msg = *r.expect_err("must stop").downcast::<String>().unwrap();
+        assert!(msg.contains(sym.as_str()), "{msg}");
+    } else {
+        eprintln!("GrNLa.dat: every public symbol is in the type table; the hard stop is not exercised");
+    }
 
     let (rec, orig, _) = unsafe { load("ItCo.dat") };
     raw_matches(rec, &orig);

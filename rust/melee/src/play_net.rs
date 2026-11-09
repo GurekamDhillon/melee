@@ -190,6 +190,8 @@ pub struct ModesGame {
     f0: u32,
     /// the newest drawn frame, still in the arena; taken (detached) before the next snapshot load can happen
     raw: Option<Vec<melee_gx::draw::DrawCmd>>,
+    /// a detached frame waiting for `take_frame` (a frozen redraw's)
+    held: Option<Vec<melee_gx::draw::DrawCmd>>,
     detach: Detacher,
 }
 
@@ -209,7 +211,7 @@ impl ModesSnap {
 
 impl ModesGame {
     pub fn new(e: Engine) -> Self {
-        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, detach: Detacher::default() }
+        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, held: None, detach: Detacher::default() }
     }
     fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
         if self.base.borrow().is_none() {
@@ -225,6 +227,7 @@ impl ModesGame {
     }
     /// One engine tick with these pads; the frame it drew is kept on the system heap.
     pub fn step(&mut self, pads: [PADStatus; 4]) {
+        self.held = None;
         self.e.set_pads(Some(pads));
         self.e.tick();
         let f = {
@@ -270,7 +273,29 @@ impl ModesGame {
 
     /// The tick's newest frame as a detached copy (after the session's frames of this tick).
     pub fn take_frame(&mut self) -> Option<Vec<melee_gx::draw::DrawCmd>> {
+        if let Some(f) = self.held.take() {
+            return Some(f);
+        }
         self.raw.take().map(|f| self.detach.detach(f))
+    }
+
+    /// Draw the current state without advancing it (the LAB's frozen redraw after a load / rewind / position change):
+    /// a render-only tick (gmscene `RENDER_ONLY`, no logic frames) between a save and a load of the state, so the
+    /// pass leaves no trace in the game (hash-neutral); its frame is detached before the load and is what
+    /// `take_frame` hands out next.
+    pub fn redraw(&mut self, pads: [PADStatus; 4]) {
+        if self.e.ended {
+            return;
+        }
+        let s = RbGame::save(self);
+        unsafe { melee_modes::tu::gmscene::RENDER_ONLY = true };
+        self.step(pads);
+        unsafe { melee_modes::tu::gmscene::RENDER_ONLY = false };
+        let f = self.raw.take().map(|f| self.detach.detach(f));
+        RbGame::load(self, &s);
+        if f.is_some() {
+            self.held = f;
+        }
     }
 }
 
@@ -582,16 +607,32 @@ pub struct PlayEnv {
     pub mods_desc: String,
 }
 
-/// The engine build both peers must share (the sim is compared bit for bit): the git commit this exe was built from.
+/// The engine build both peers must share (the sim is compared bit for bit): the git commit this exe was built from,
+/// mixed with the digest of its uncommitted changes when the tree was dirty (build.rs `MELEE_GIT_DIRTY`), so two
+/// builds of one commit with different local edits refuse each other instead of pairing.
 pub fn build_hash() -> u64 {
     if let Some(h) = std::env::var("MELEE_NP_BUILD_HASH").ok().and_then(|v| u64::from_str_radix(&v, 16).ok()) {
         return h; // test hook: pretend to be another build
     }
-    let h = u64::from_str_radix(&env!("MELEE_GIT_HASH").chars().filter(|c| c.is_ascii_hexdigit()).take(15).collect::<String>(), 16).unwrap_or(0);
+    let mut h = u64::from_str_radix(&env!("MELEE_GIT_HASH").chars().filter(|c| c.is_ascii_hexdigit()).take(15).collect::<String>(), 16).unwrap_or(0);
+    if let Ok(d) = u64::from_str_radix(env!("MELEE_GIT_DIRTY"), 16) {
+        // keep it within the 15 hex digits the log prints; the top bit of those marks a dirty build
+        h = (h ^ d.rotate_left(17)) & 0x0FFF_FFFF_FFFF_FFFF | 0x0800_0000_0000_0000;
+    }
     if h == 0 {
         1
     } else {
         h
+    }
+}
+
+/// "" for a clean build, "+dirty:<digest>" when it was built with uncommitted changes (for titles, logs, replay metadata).
+pub fn dirty_suffix() -> &'static str {
+    const D: &str = env!("MELEE_GIT_DIRTY");
+    if D.is_empty() {
+        ""
+    } else {
+        concat!("+dirty:", env!("MELEE_GIT_DIRTY"))
     }
 }
 
@@ -1122,7 +1163,7 @@ impl NetDriver {
         }
         let (mods_hash, mods_desc) = with_codes(mods_identity(args)?);
         let env = PlayEnv { mods_hash, mods_desc: mods_desc.clone() };
-        log(&format!("netplay {tag}: build {:015x}, {mods_desc}", build_hash()));
+        log(&format!("netplay {tag}: build {:015x}{}, {mods_desc}", build_hash(), dirty_suffix()));
         let mut rp = RoomParams {
             host,
             rcfg: RbConfig { net: true, local_port, delay, maxb, src: InputSource::Live, ..RbConfig::default() },

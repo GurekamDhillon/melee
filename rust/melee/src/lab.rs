@@ -30,6 +30,7 @@ pub const RING_EVERY: i32 = 8;
 
 mod look;
 pub use look::LookPerf;
+pub mod train;
 
 const BTN_A: u16 = 0x100;
 const BTN_B: u16 = 0x200;
@@ -95,6 +96,17 @@ struct React {
     weights: u32,
 }
 
+/// TM-CE details (8 J) a dummy can have on top of its reactions (OP_DUMMY_OPT).
+#[derive(Clone, Copy, Default)]
+struct DummyOpt {
+    /// Frames after the counter action starts before the last loaded / saved slot reloads (0 off).
+    auto_restore: i32,
+    /// Chance in percent of an early, locked-out tech press.
+    lockout: u8,
+    /// SDI pushes per hit (0: every interval).
+    sdi_max: u8,
+}
+
 #[derive(Clone, Copy, Default)]
 struct DummyState {
     since_l: i32,
@@ -107,6 +119,18 @@ struct DummyState {
     wait_since: i32,
     hit_at: i32,
     nair: bool,
+    /// The hitlag and motion the previous synth call saw. `obs` is read after the frame that just ran, i.e. the
+    /// same state synth now reads, so "obs differs from now" never held: a fresh hit (the DI / SDI / tech draws),
+    /// the end of shield stun (out of shield) and the entry to a wait state (the getup / ledge delay) never fired.
+    prev_hl: f32,
+    prev_motion: i32,
+    /// The counter action is armed (a hit landed, it has not fired yet).
+    counter_armed: bool,
+    /// This hit's tech is mistimed early (lockout), and the early press is done.
+    lockout: bool,
+    lock_pressed: bool,
+    /// SDI pushes made this hit.
+    sdi_n: u8,
 }
 
 #[derive(Clone, Copy, Default)]
@@ -115,6 +139,7 @@ struct Dummy {
     param: i32,
     react: [React; RK_COUNT],
     st: DummyState,
+    opt: DummyOpt,
 }
 
 /// Per-port observation for the events, the frame meter and the observed frame data.
@@ -187,6 +212,8 @@ pub struct LabRun {
     /// The last frame's pads as stepped (the input display's source and the tests').
     pub last_pads: [PADStatus; 4],
     pub drew: bool,
+    /// Per port: the retail AI kind a pad-driven dummy on a CPU slot suspended (`ai_hold`), restored when it is not.
+    ai_kind: [Option<u32>; 4],
     // ---- lookahead (look.rs): local, never part of the command stream
     look: Option<look::Job>,
     done_look: Option<look::Job>,
@@ -198,6 +225,19 @@ pub struct LabRun {
     look_tail_ns: u64,
     /// The live snapshot of the last unfinished lookahead slice (kept so the next save is incremental against it).
     look_keep: Vec<ModesSnap>,
+    // ---- drills and the adaptive trainer (train.rs): sim state, driven by commands and events only
+    drills: Vec<train::Drill>,
+    drill: Option<train::Run>,
+    drill_err: i32,
+    /// OP_ADAPT: (mode, rate).
+    adapt_mode: (u16, u8),
+    /// OP_LOAD_VARY: the variation every load gets, and the port it moves.
+    vary: (train::Vary, usize),
+    /// The slot last saved or loaded (auto-restore reloads it).
+    last_slot: Option<u16>,
+    restore_at: Option<i32>,
+    /// The session log (presentation: written, never read by the sim).
+    trlog: train::SessionLog,
 }
 
 fn xorshift(s: &mut u32) -> u32 {
@@ -219,9 +259,12 @@ impl LabRun {
         let mut r = LabRun {
             g, sh, f: 0, slots: vec![None; SLOTS], ring_frames: 0, ring: VecDeque::new(), log: VecDeque::new(), log_f0: 0, replay_until: None,
             paused: false, steps: 0, recs: BTreeMap::new(), play: Default::default(), dummy: [Dummy::default(); 4], rng: mix32(seed) | 1, obs: Default::default(),
-            exchange: None, events: Vec::new(), perf: Perf::default(), last_pads: [PADStatus::zeroed(); 4], drew: false,
+            exchange: None, events: Vec::new(), perf: Perf::default(), last_pads: [PADStatus::zeroed(); 4], drew: false, ai_kind: [None; 4],
             look: None, done_look: None, held: None, look_perf: LookPerf::default(), look_verify: std::env::var("MELEE_LOOK_VERIFY").is_ok_and(|v| v == "1"), look_tail_ns: 0, look_keep: Vec::new(),
+            drills: train::load_all(), drill: None, drill_err: 0, adapt_mode: (ADAPT_OFF, 2), vary: (train::Vary::default(), 1), last_slot: None, restore_at: None,
+            trlog: train::SessionLog::new(),
         };
+        r.sh.borrow_mut().drill_names = r.drills.iter().map(|d| d.name.clone()).collect();
         r.sh.borrow_mut().active = true;
         // the match's timer (as ifTime_CreateTimers decides whether to show it); read once, the rules are fixed
         r.sh.borrow_mut().timed = unsafe {
@@ -280,6 +323,7 @@ impl LabRun {
     fn step_engine(&mut self, pads: [PADStatus; 4], resim: bool) {
         melee_engine::gxbridge::shim().set_suppress_draws(resim);
         unsafe { melee_runtime::tu::pobj::ext::gx_suppress_draws = resim as i32 };
+        self.ai_hold();
         let t = std::time::Instant::now();
         self.g.step(pads);
         if !resim {
@@ -302,6 +346,7 @@ impl LabRun {
                 self.perf.slot_ns += t.elapsed().as_nanos() as u64;
                 if let Some(slot) = self.slots.get_mut(c.a as usize) {
                     *slot = Some((self.f, s));
+                    self.last_slot = Some(c.a);
                 }
                 self.note(format!("lab: frame {}: saved slot {}", self.f, c.a));
             }
@@ -322,6 +367,11 @@ impl LabRun {
                     self.obs = Default::default();
                     self.observe(false);
                     self.note(format!("lab: loaded slot {} (frame {fr})", c.a));
+                    self.last_slot = Some(c.a);
+                    self.restore_at = None;
+                    let (v, vp) = self.vary;
+                    self.vary_apply(v, vp);
+                    self.drill_void();
                 }
             }
             OP_RING => {
@@ -338,6 +388,7 @@ impl LabRun {
                 self.look_drop();
                 let f = self.f;
                 self.rewind(c.b as i32);
+                self.drill_void();
                 self.note(format!("lab: frame {f}: rewound {} frames to {}", f - self.f, self.f));
             }
             OP_PAUSE => {
@@ -470,6 +521,17 @@ impl LabRun {
                 self.note(format!("lab: frame {}: P{} position {x},{y} (forks the timeline)", self.f, port + 1));
             }
             OP_RNG_SEED => self.rng = mix32(c.b) | 1,
+            OP_DRILL | OP_ADAPT | OP_LOAD_VARY => self.drill_cmd(c),
+            OP_DUMMY_OPT => {
+                let o = &mut self.dummy[port].opt;
+                match c.a {
+                    DO_AUTO_RESTORE => o.auto_restore = c.b.min(600) as i32,
+                    DO_TECH_LOCKOUT => o.lockout = c.b.min(100) as u8,
+                    DO_SDI_COUNT => o.sdi_max = c.b.min(60) as u8,
+                    _ => {}
+                }
+                self.note(format!("lab: frame {}: P{} dummy option {} = {}", self.f, port + 1, c.a, c.b));
+            }
             _ => {}
         }
     }
@@ -634,7 +696,7 @@ impl LabRun {
             _ => {}
         }
         // a fresh hit: the per-hit random draws
-        if hitlag > 0.0 && self.obs[port].hitlag <= 0.0 {
+        if hitlag > 0.0 && st.prev_hl <= 0.0 {
             st.hit_at = f;
             let r = d.react[RK_DI as usize];
             st.di = if r.option == RO_RANDOM { self.draw(r.weights, &[RO_IN, RO_OUT, RO_AWAY, RO_TOWARD, RO_UP, RO_DOWN]) } else { r.option };
@@ -642,6 +704,12 @@ impl LabRun {
             st.sdi = if r.option == RO_RANDOM { self.draw(r.weights, &[RO_IN, RO_AWAY, RO_UP, RO_DOWN]) } else { r.option };
             let r = d.react[RK_TECH as usize];
             st.tech = if r.option == RO_RANDOM { self.draw(r.weights, &[RO_TECH_IN_PLACE, RO_TECH_ROLL_IN, RO_TECH_ROLL_AWAY, RO_TECH_MISS]) } else { r.option };
+            st.counter_armed = d.react[RK_COUNTER as usize].option != RO_NONE;
+            st.sdi_n = 0;
+            // TM-CE tech lockout: a press about 20 frames early, which the game's own 40-frame rule then locks out (drawn
+            // only when the option is on, so a dummy without it keeps its old random sequence)
+            st.lock_pressed = false;
+            st.lockout = d.opt.lockout > 0 && st.tech != RO_NONE && st.tech != RO_TECH_MISS && self.rnd(100) < d.opt.lockout as u32;
         }
         let dir = |o: i32| -> (i8, i8) {
             match o {
@@ -665,7 +733,12 @@ impl LabRun {
             } else if st.sdi != RO_NONE {
                 // SDI: pulses every `delay` frames (each a fresh push out of the dead zone)
                 let every = d.react[RK_SDI as usize].p.delay.max(1) as i32;
-                if (f - st.hit_at) % (every * 2) < every {
+                let phase = (f - st.hit_at) % (every * 2);
+                // TM-CE "SDI by input count": each push starts at phase 0; past the count the stick stays neutral
+                if phase == 0 {
+                    st.sdi_n = st.sdi_n.saturating_add(1);
+                }
+                if phase < every && (d.opt.sdi_max == 0 || st.sdi_n <= d.opt.sdi_max) {
                     let (sx, sy) = dir(st.sdi);
                     let s = d.react[RK_SDI as usize].p.strength;
                     p.stickX = scale(sx, s);
@@ -677,7 +750,12 @@ impl LabRun {
         st.since_l += 1;
         if fp.ground_or_air == melee_types::GA_Air && matches!(m, 75..=91) && hitlag <= 0.0 && st.tech != RO_NONE && st.tech != RO_TECH_MISS {
             let vy = fp.self_vel.y + fp.x8c_kb_vel.y;
-            if vy < 0.0 && y + vy * 6.0 <= self.obs[port].ground_y + 2.0 && st.since_l > 41 {
+            if st.lockout && !st.lock_pressed && vy < 0.0 && y + vy * 20.0 <= self.obs[port].ground_y + 2.0 {
+                p.button |= BTN_L;
+                p.triggerLeft = 255;
+                st.since_l = 0;
+                st.lock_pressed = true;
+            } else if vy < 0.0 && y + vy * 6.0 <= self.obs[port].ground_y + 2.0 && st.since_l > 41 {
                 p.button |= BTN_L;
                 p.triggerLeft = 255;
                 st.since_l = 0;
@@ -690,7 +768,7 @@ impl LabRun {
         }
         // getup and ledge options after `delay` frames in the wait state
         if matches!(m, 184 | 192 | 253) {
-            if self.obs[port].motion != m {
+            if st.prev_motion != m {
                 st.wait_since = f;
             }
             let k = if m == 253 { RK_LEDGE } else { RK_GETUP } as usize;
@@ -730,7 +808,7 @@ impl LabRun {
         // out of shield: when shield stun ends, the option after `delay` frames (the shield held meanwhile)
         let r = d.react[RK_OOS as usize];
         if r.option != RO_NONE {
-            if self.obs[port].motion == 181 && m != 181 {
+            if st.prev_motion == 181 && m != 181 {
                 st.oos = Some((f, if r.option == RO_OOS_RANDOM { self.draw(r.weights, &[1, 2, 3, 4, 5, 6]) } else { r.option }));
             }
             if let Some((at, o)) = st.oos {
@@ -769,10 +847,39 @@ impl LabRun {
                 }
             }
         }
+        // TM-CE counter action: once the dummy can act after the hit (or its shield stun)
+        if st.counter_armed && hitlag <= 0.0 && !is_stun_motion(m) && (is_idle(m) || fp.allow_interrupt() != 0) {
+            st.counter_armed = false;
+            let r = d.react[RK_COUNTER as usize];
+            match r.option {
+                RO_COUNTER_JUMP => p.button |= BTN_X,
+                RO_COUNTER_ATTACK => p.button |= BTN_A,
+                RO_COUNTER_SHIELD => {
+                    p.button |= BTN_R;
+                    p.triggerRight = 255;
+                }
+                RO_COUNTER_SPOTDODGE => {
+                    p.button |= BTN_R;
+                    p.triggerRight = 255;
+                    p.stickY = -127;
+                }
+                RO_COUNTER_GRAB => {
+                    p.button |= BTN_R | BTN_A;
+                    p.triggerRight = 255;
+                }
+                RO_RECORDING => self.react_rec(port, r.p.rec),
+                _ => {}
+            }
+            if d.opt.auto_restore > 0 && self.drill.is_none() {
+                self.restore_at = Some(f + d.opt.auto_restore);
+            }
+        }
         if st.nair && fp.ground_or_air == melee_types::GA_Air && m != 24 {
             p.button |= BTN_A;
             st.nair = false;
         }
+        st.prev_hl = hitlag;
+        st.prev_motion = m;
         self.dummy[port].st = st;
         p
     }
@@ -791,6 +898,7 @@ impl LabRun {
         for c in cmds {
             self.apply(c);
         }
+        let reframe = cmds.iter().any(|c| matches!(c.op, OP_LOAD | OP_POS | OP_PERCENT | OP_DRILL));
         if self.g.e.ended {
             self.publish();
             // the match is over (results): no more lab commands (the results' START presses are not freezes)
@@ -798,6 +906,9 @@ impl LabRun {
             return false;
         }
         if self.paused && self.steps == 0 {
+            if reframe {
+                self.redraw();
+            }
             self.events.clear();
             self.publish();
             self.look_frame(false);
@@ -806,6 +917,15 @@ impl LabRun {
         if self.paused {
             self.steps -= 1;
         }
+        // auto-restore after a counter action (TM-CE), then a drill's next attempt: both reload before this frame
+        if self.restore_at.is_some_and(|t| self.f >= t) {
+            self.restore_at = None;
+            if let Some(s) = self.last_slot {
+                self.note(format!("lab: frame {}: auto-restore after the counter action", self.f));
+                self.apply(&LabCmd::new(OP_LOAD, 0, s, 0, 0, 0));
+            }
+        }
+        self.drill_pre();
         let f = self.f;
         let mut pads = live;
         // START belongs to the Lab (freeze, lab-ui-spec.md 4): the game never sees it, except with L+R+A held (the
@@ -824,9 +944,10 @@ impl LabRun {
             }
             for port in 0..4 {
                 if let Some(p) = self.playback(port) {
-                    let err = pads[port].err;
+                    // the recorded pad as recorded, connected: a dummy on a port nobody holds (err = no controller)
+                    // would otherwise read the playback as unplugged and never move
                     pads[port] = p;
-                    pads[port].err = err;
+                    pads[port].err = 0;
                 } else {
                     pads[port] = self.synth(port, pads[port]);
                 }
@@ -865,6 +986,7 @@ impl LabRun {
             self.trim_ring();
         }
         self.observe(true);
+        self.drill_post();
         self.publish();
         self.look_frame(true);
         true
@@ -1071,6 +1193,7 @@ impl LabRun {
             s.rec_len[*k as usize] = r.frames.len() as i32;
         }
         s.recording_mask = self.recs.values().filter(|r| r.open).fold(0, |m, r| m | r.mask as u32);
+        self.drill_publish(&mut s);
         let ev = std::mem::take(&mut self.events);
         s.publish_events(&ev);
         self.events = ev;
@@ -1360,6 +1483,107 @@ unsafe fn stage_lines(ui: &mut crate::ui::Ui, cam: &Camera, bits: u32, c_line: c
         if bits & OV_LEDGE_GRAB != 0 && l.flags & melee_types::LINE_FLAG_LEDGE as u32 != 0 {
             for e in [p, q] {
                 ui.rect(e.0 - 3.0, e.1 - 3.0, 6.0, 6.0, c_ledge);
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------------------------ CPU slots, frozen redraw
+
+impl LabRun {
+    /// Whether the dummy on `port` is driven by a pad this frame (a playback, a base behaviour other than the retail
+    /// CPU level, or reactions on top of nothing).
+    fn pad_driven(&self, port: usize) -> bool {
+        let d = &self.dummy[port];
+        self.play[port].is_some()
+            || matches!(d.beh, CPU_STAND | CPU_CROUCH | CPU_JUMP | CPU_SHIELD | CPU_RECORDING)
+            || (d.beh == CPU_NONE && d.react.iter().any(|r| r.option != RO_NONE))
+    }
+
+    /// A CPU slot's fighter reads the AI's virtual pad, not the port's: the input proc (src/melee/ft/fighter.c ~2408,
+    /// melee_fighter tu/fighter.rs `Fighter_procInput`) takes the sticks and buttons from `ftCo_GetCpu*` whenever
+    /// `ftCo_IsCpuControlled` (src/melee/ft/kinds/ftCommon/ftCo_0A01.c:1101: `Player_8003248C(slot, sub) ==
+    /// Gm_PKind_Cpu && cpu.kind != 5`), and the CPU proc (fighter.c ~2208) runs the AI think (`ftCo_800B3900`) under
+    /// the same test. So every pad-driven dummy feature
+    /// did nothing on a CPU-slot dummy. While one is active the AI kind is set to 5 (the retail "not CPU-controlled"
+    /// kind: the pad is read and the AI does not think); the slot's kind comes back for Control: CPU level or Off.
+    /// Reapplied before every engine frame (a respawn re-inits `cpu.kind` from the slot, ftCo_800A101C); the kind is
+    /// fighter memory, so snapshots and rewinds carry it.
+    fn ai_hold(&mut self) {
+        for port in 0..4 {
+            let Some(fp) = (unsafe { fighter(port as i32) }) else { continue };
+            if unsafe { melee_fighter::tu::player::Player_GetPlayerSlotType(port as i32) } as i32 != melee_types::Gm_PKind_Cpu as i32 {
+                continue;
+            }
+            if self.pad_driven(port) {
+                if fp.cpu.kind != 5 {
+                    self.ai_kind[port] = Some(fp.cpu.kind);
+                    fp.cpu.kind = 5;
+                }
+            } else if let Some(k) = self.ai_kind[port].take() {
+                if fp.cpu.kind == 5 {
+                    fp.cpu.kind = k;
+                }
+            }
+        }
+    }
+
+    /// A state change while frozen (a slot load, a position or percent set) is drawn at once: a render-only pass of
+    /// the state as it stands (`ModesGame::redraw`, hash-neutral), else the screen keeps the old frame until a step.
+    fn redraw(&mut self) {
+        // render-only and host-facing: never inside a lookahead tick
+        if melee_engine::engine::speculative() {
+            return;
+        }
+        self.g.redraw(self.last_pads);
+        self.drew = true;
+    }
+}
+
+// ------------------------------------------------------------------------------------------------ test hooks
+
+/// `MELEE_LAB_CMDS="clock:op,port,a,b,c,d;..."`: lab commands injected into the offline lab at a command-clock frame,
+/// exactly as the menu's `gd_lab_*` imports queue them (the retail-flow LAB checks, tools/rust-port/lab/lab_flow.sh).
+/// A value `f<x>` is the f32 `x`'s bits (percent, positions).
+pub fn script_cmds(clock: i32) -> Vec<LabCmd> {
+    static CMDS: std::sync::OnceLock<Vec<(i32, LabCmd)>> = std::sync::OnceLock::new();
+    let all = CMDS.get_or_init(|| {
+        let v = std::env::var("MELEE_LAB_CMDS").unwrap_or_default();
+        let num = |t: &str| -> u32 {
+            let t = t.trim();
+            if let Some(f) = t.strip_prefix('f') {
+                f.parse::<f32>().map_or(0, f32::to_bits)
+            } else if let Some(h) = t.strip_prefix("0x") {
+                u32::from_str_radix(h, 16).unwrap_or(0)
+            } else {
+                t.parse::<i64>().map_or(0, |x| x as u32)
+            }
+        };
+        v.split(';').filter_map(|e| {
+            let (at, rest) = e.split_once(':')?;
+            let f: Vec<u32> = rest.split(',').map(num).chain(std::iter::repeat(0)).take(6).collect();
+            Some((at.trim().parse().ok()?, LabCmd::new(f[0] as u8, f[1] as u8, f[2] as u16, f[3], f[4], f[5])))
+        }).collect()
+    });
+    all.iter().filter(|(at, _)| *at == clock).map(|(_, c)| *c).collect()
+}
+
+impl LabRun {
+    /// `MELEE_LAB_TRACE=1`: one line per command-clock frame and fighter: motion, position, percent, AI kind, the pad
+    /// the game was handed (the retail-flow LAB checks read it).
+    pub fn trace(&self, clock: i32) {
+        static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        if !*ON.get_or_init(|| std::env::var_os("MELEE_LAB_TRACE").is_some()) {
+            return;
+        }
+        for port in 0..4 {
+            if let Some(fp) = unsafe { fighter(port as i32) } {
+                let p = self.last_pads[port];
+                eprintln!(
+                    "labtrace c={clock} f={} paused={} drew={} P{} motion={} x={:.2} y={:.2} pct={:.1} cpukind={} air={} btn={:04x} sx={} sy={} play={} hl={}",
+                    self.f, self.paused as u8, self.drew as u8, port + 1, fp.motion_id, fp.cur_pos.x, fp.cur_pos.y, fp.dmg.x1830_percent,
+                    fp.cpu.kind, fp.ground_or_air, p.button, p.stickX, p.stickY, self.play[port].is_some() as u8, fp.dmg.x195c_hitlag_frames
+                );
             }
         }
     }

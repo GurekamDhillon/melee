@@ -248,6 +248,9 @@ pub fn Player_80031AD0(slot: i32) {
     let mut first_struct: plAllocInfo = unsafe { core::mem::zeroed() };
     let mut second_struct: plAllocInfo = unsafe { core::mem::zeroed() };
     let player = sp(slot);
+    // TARGET_PC: a tag pair (MELEE_TAG_PARTNER, melee_modes::tu::tag_swap) rides the Zelda / Sheik transform path:
+    // the partner is this ckind's sub-fighter, created asleep beside the main one.
+    tag_apply_partner(slot, player.ckind);
 
     // `offset_arr[ckind * sizeof(ftMapping)]` is `ftMapping_list[ckind].extra_internal_id`
     if map(player.ckind).extra_internal_id != -1 {
@@ -293,6 +296,36 @@ pub fn Player_80031AD0(slot: i32) {
         }
     }
 }
+
+/// TARGET_PC: the tag partner character kind per port (-1 none), set at engine boot from `MELEE_TAG_PARTNER`.
+pub static mut TAG_PARTNER_CK: [i8; 4] = [-1; 4];
+/// TARGET_PC: whether a slot's sub-fighter this match is a tag partner (not a retail Zelda / Sheik or Nana).
+pub static mut TAG_SLOT: [u8; 4] = [0; 4];
+
+/// TARGET_PC: give `ckind` the configured partner of `slot` as its transform sub-fighter (`Player_MexSetPartner`),
+/// unless the kind already owns one (Zelda, Sheik, the Ice Climbers, a define pair) or the partner is the same kind.
+fn tag_apply_partner(slot: i32, ckind: CharacterKind) {
+    let s = slot as usize;
+    unsafe {
+        TAG_SLOT[s] = 0;
+        let pk = TAG_PARTNER_CK[s];
+        if pk < 0 || pk as i32 == ckind as i32 {
+            return;
+        }
+        let m = map(ckind);
+        let pf = map(pk as CharacterKind).internal_id;
+        if pf < 0 || map(pk as CharacterKind).extra_internal_id != -1 {
+            return;
+        }
+        if m.extra_internal_id != -1 && !(m.has_transformation != 0 && TAG_MAPPED[ckind as usize] != 0) {
+            return;
+        }
+        Player_MexSetPartner(ckind as i32, pf as i32);
+        TAG_MAPPED[ckind as usize] = 1;
+        TAG_SLOT[s] = 1;
+    }
+}
+static mut TAG_MAPPED: [u8; 256] = [0; 256];
 
 pub fn Player_80031CB0(kind: CharacterKind, color: u8) {
     melee_core::ct!("Player_80031CB0");

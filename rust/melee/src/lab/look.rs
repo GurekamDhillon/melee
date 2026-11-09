@@ -265,6 +265,10 @@ impl LabRun {
                 if melee_audio::sim::is_installed() {
                     self.look_perf.sound_leaks += 1;
                 }
+                // the AI hold is sim state (a respawn re-inits cpu.kind): the speculative ticks keep it like a live step
+                let ai_kind = self.ai_kind;
+                self.ai_hold();
+                self.ai_kind = ai_kind;
                 let tt = Instant::now();
                 self.g.step(pads);
                 prof[1] += tt.elapsed().as_nanos() as u64;

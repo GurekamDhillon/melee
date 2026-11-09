@@ -204,7 +204,11 @@ unsafe fn setup() {
         ea::efAsync_MexBhv[i] = if rnd() & 1 != 0 { &raw mut BHV } else { null_mut() };
     }
     ea::efAsync_MexReady = (rnd() & 1) as i32;
-    for i in 0..128 { ea::ext::ftData_UnkBytePerCharacter[i] = if rnd() % 6 == 0 { 0xFF } else { (rnd() % 70) as u8 }; }
+    // 128 draws as the C driver makes; the table is Ft_Kind_Max (127) long since b9e539b85, so the last one is dropped
+    for i in 0..128 {
+        let v = if rnd() % 6 == 0 { 0xFF } else { (rnd() % 70) as u8 };
+        if let Some(e) = ea::ext::ftData_UnkBytePerCharacter.get_mut(i) { *e = v; }
+    }
     ed::efLib_EffectCount = rnd() % 64; ed::efLib_LoadKind = rnd() & 1; ed::efLib_AnimCount = (rnd() % 8) as i32;
     el::efLib_AnimQueue = core::mem::zeroed();
     for i in 0..ed::efLib_AnimCount as usize { *(el::efLib_AnimQueue.as_mut_ptr() as *mut *mut HSD_JObj).add(i) = &raw mut JO[(rnd() % 16) as usize]; }

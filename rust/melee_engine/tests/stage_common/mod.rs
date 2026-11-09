@@ -2,13 +2,15 @@
 //! Step 9: the real stage collision on the engine (needs GW_ISO_VANILLA; vacuous without). A free `CollData` with a fixed ECB
 //! box (`mpColl_8004730C`, no fighter, no joints) is dropped onto the stage that `StartMelee` loaded from the disc, so the
 //! `mpLib` line data decoded from the DAT, `mpColl_80043754` stepping and the floor callback are exercised alone.
+#[path = "../../../melee_core/test_support/disc.rs"]
+mod disc;
 use melee_engine::{gcm::Gcm, scenario::Scenario, Engine};
 use melee_platform::PadSystem;
 use melee_types::{CollData, ftCollisionBox, Vec2};
 use melee_world::tu::mpcoll;
 
 pub fn boot(stage: &str) -> Option<Engine> {
-    let iso = std::env::var("GW_ISO_VANILLA").ok()?;
+    let iso = disc::iso("stage_coll")?;
     let disc = Gcm::open(&iso).expect("disc");
     let scn = Scenario::parse(&format!("mode=vs;at=match;p1=falcon/human;p2=fox/human;p3=none;p4=none;stage={stage};match=time;minutes=0;items=off")).expect("scene");
     let mut e = Engine::boot_vs(disc, 64 << 20, PadSystem::headless(), scn).expect("boot_vs");

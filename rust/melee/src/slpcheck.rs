@@ -425,6 +425,14 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     unsafe {
         SLP_SEED = seed;
         melee_modes::tu::gmvs::ext::hook::Replay_ApplyMatch = Some(|_| unsafe { SLP_SEED });
+        // gmvs only calls Replay_ApplyMatch when Replay_Active(), which the engine's seam answers 0 (and answering 1
+        // would also force Neutral Spawn, against SLPCHECK_VANILLA_SPAWN), so the seed was never applied: the fighters were
+        // created from whatever the boot left in the RNG instead of the file's seed (the first Frame Start resync comes
+        // later). A match started from the character select carries a real seed, so its export diverged (the
+        // CSS-started .slp drift, notes/net.md); a direct `--match` start has the same RNG at creation as slpcheck's boot,
+        // so it matched without the seed.
+        // Replay_RecordMatch runs right after, before anything draws: load the seed there.
+        melee_modes::tu::gmvs::ext::hook::Replay_RecordMatch = Some(|_, _| unsafe { *melee_modes::tu::globals::HSD_RandSeedPtr = SLP_SEED });
     }
     // SAFETY: single-threaded start-up, before the engine reads them.
     unsafe {

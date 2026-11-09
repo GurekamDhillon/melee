@@ -233,6 +233,10 @@ impl Ring {
 // ---- master volume --------------------------------------------------------------------------
 
 fn cfg_path() -> PathBuf {
+    // MELEE_AUDIO_CFG moves it (the YouGame build sets it under YOUGAME_DATA: the exe's folder is read-only there).
+    if let Some(p) = std::env::var_os("MELEE_AUDIO_CFG").filter(|p| !p.is_empty()) {
+        return PathBuf::from(p);
+    }
     std::env::current_exe()
         .ok()
         .and_then(|p| p.parent().map(|d| d.join("audio.cfg")))

@@ -11,6 +11,7 @@
 //! Exit 0 when every check passes.
 
 mod look;
+mod train;
 
 use crate::lab::LabRun;
 use crate::play_net::ModesGame;
@@ -62,6 +63,10 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
             return std::process::ExitCode::FAILURE;
         }
     };
+    // the session log of the checks goes to a scratch folder, never the user's
+    if std::env::var_os("MELEE_LAB_DIR").is_none() {
+        std::env::set_var("MELEE_LAB_DIR", std::env::temp_dir().join(format!("melee-lab-check-{}", std::process::id())));
+    }
     let sh = LabShared::new();
     look::init_probe();
     let mut lab = LabRun::new(ModesGame::new(e), sh.clone(), 4242);
@@ -250,6 +255,8 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
     );
     // 6. the lookahead
     look::lookahead_checks(&mut lab, &sh, &mut check);
+    // 7. drills, the adaptive trainer, mirror / jitter
+    train::train_checks(&mut lab, &sh, &mut check);
 
     if fails == 0 {
         eprintln!("lab-check: ALL OK");

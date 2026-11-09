@@ -20,7 +20,7 @@ pub fn live_frame_seed(seed: u32, frame: i32) -> u32 {
 
 /// The scenario script's sample as a session input (the "controller" of a scripted player).
 pub fn script_input(port: usize, g: i32) -> RbInput {
-    let r = crate::pads::pad_fixed(port, g);
+    let r = crate::pads::script_pad(port, g).unwrap_or_else(|| crate::pads::pad_fixed(port, g));
     RbInput {
         present: 1,
         is_raw: 1,
@@ -326,7 +326,7 @@ pub mod engine_game {
         let t0 = std::time::Instant::now();
         let script = |f: i32| {
             let mut a = [None; SLOTS];
-            if scenario.starts_with("pad_") {
+            if scenario.starts_with("pad_") || crate::pads::script_pad(0, 0).is_some() {
                 for p in 0..2 {
                     a[p * 2] = Some(crate::netmatch::script_input(p, f - FIRST));
                 }

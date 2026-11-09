@@ -1421,7 +1421,7 @@ pub(crate) fn window_title(spec: Option<&str>) -> String {
     if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
         return t;
     }
-    let id = format!("melee [{} {}]", env!("MELEE_GIT_WHERE"), env!("MELEE_GIT_HASH"));
+    let id = format!("melee [{} {}{}]", env!("MELEE_GIT_WHERE"), env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix());
     let Some(spec) = spec else { return id };
     // "a/cpu9,b/cpu9,STAGE": fighters without their slot kind, then the stage first
     let parts: Vec<&str> = spec.split(',').map(str::trim).collect();
@@ -1529,9 +1529,28 @@ pub fn play(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     crate::crash::note_disc(&iso);
+    // The player's own disc (YouGame: the listing's disc, `{disc}` in yougame-native.json): check it is the one the
+    // engine plays before anything boots, with a message the player can act on (never the path).
+    let yg = melee_platform::yougame::active();
+    if yg || has("--verify-disc") {
+        if let Err(e) = crate::disc::identify(&iso) {
+            crate::disc::tell_player(&format!("This disc image can't be played: {e}. Choose your disc again on the game's page."));
+            return ExitCode::from(4);
+        }
+    }
     if let Err(e) = crate::disc::Disc::open(&iso) {
-        eprintln!("play: {e}");
+        if yg {
+            crate::disc::tell_player("The disc image could not be read. Choose your disc again on the game's page.");
+        } else {
+            eprintln!("play: {e}");
+        }
         return ExitCode::FAILURE;
+    }
+    // Optional second disc (Brawl) and the first-run build step (firstrun.rs): a failure is told, Melee still plays.
+    let brawl = get("--brawl-disc").or_else(|| std::env::var("MELEE_BRAWL_DISC").ok()).filter(|s| !s.is_empty());
+    match crate::firstrun::run(brawl.as_deref(), &mut |f, l| eprintln!("first-run: {:3.0}% {l}", f * 100.0)) {
+        Ok(step) => eprintln!("first-run: {step:?}"),
+        Err(e) => crate::disc::tell_player(&format!("Brawl characters were not built: {e}. Melee plays without them.")),
     }
     let shot_dir = get("--shot-dir").map(PathBuf::from).or_else(|| has("--shots").then(|| PathBuf::from("target/shots")));
     if let Some(d) = &shot_dir {
@@ -1788,7 +1807,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
             }
             if rp.rec.is_none() {
-                let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), env!("MELEE_GIT_HASH").to_string())];
+                let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), format!("{}{}", env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix()))];
                 if np_css {
                     meta.push(("np_css".into(), "1".into()));
                 }
@@ -1807,7 +1826,7 @@ pub fn play(args: &[String]) -> ExitCode {
             } else {
                 path
             };
-            let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), env!("MELEE_GIT_HASH").to_string())];
+            let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), format!("{}{}", env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix()))];
             if np_css {
                 meta.push(("np_css".into(), "1".into()));
             }

@@ -3,6 +3,8 @@
 //! cfg file against the Rust port and compares the per-case log hash with the one the C
 //! produced (tests/data/tuo_<tu>.txt). Set TUO_FULL=<fn> or <fn>:<idx> to print the full logs.
 #![allow(dead_code, static_mut_refs)]
+#[path = "../../../melee_core/test_support/fnsym.rs"]
+mod fnsym;
 
 use std::alloc::{alloc_zeroed, dealloc, Layout};
 use std::fmt::Write as _;
@@ -263,10 +265,10 @@ impl V {
                 return if a == r.base { r.name.clone() } else { format!("{}+{:x}", r.name, a - r.base) };
             }
         }
-        for (n, f) in &self.fps {
-            if *f == a {
-                return format!("fn:{n}");
-            }
+        // by address, else by symbol (a lib-stored pointer can be a crate-local copy or a predicate shim: fnsym.rs)
+        let addrs: Vec<usize> = self.fps.iter().map(|&(_, f)| f).collect();
+        if let Some(i) = fnsym::find(&addrs, a) {
+            return format!("fn:{}", self.fps[i].0);
         }
         "X".into()
     }

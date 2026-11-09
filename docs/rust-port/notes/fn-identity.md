@@ -25,7 +25,8 @@ lookup can tell them apart, so the oracle tests run with merging off:
 
     bash tools/rust-port/oracle_tests.sh -p melee_items --no-fail-fast
 
-(`RUSTC_BOOTSTRAP=1 RUSTFLAGS=-Zmerge-functions=disabled`, own target dir `build/cargo-oracle`, overridable with
+(`RUSTC_BOOTSTRAP=1 RUSTFLAGS=-Zmerge-functions=disabled`, `RUST_TEST_THREADS=1` since the harnesses share `static
+ mut` state across a binary's tests, own target dir `build/cargo-oracle`, overridable with
 `ORACLE_TARGET_DIR`). `fnsym::require_unmerged` runs on the first lookup and panics with that command when two
 body-identical probe functions share an address, so a plain `cargo test` cannot silently compare merged ids.
 Measured on Linux (melee_items, 198 test binaries): 44 pass merged, 67 with merging off.

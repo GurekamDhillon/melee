@@ -3,14 +3,10 @@
 //! / save-load on the D-pad / slot cards, and the M4 HUD widgets the presets need (frame meter, move and state
 //! readouts, dummy and combo panels, input display): presets Clean, Frame data, Full.
 //!
-//! Controls (ports 1 and 2, shared capture; the Lab owns START, the host strips it from the game):
-//!   START tap: freeze / resume.  Frozen: D-left / D-right step -1 / +1 (hold to repeat), Z + L / Z + R step -10 / +10,
-//!   Z + A take over (go live from the scrubbed frame). Every other button and the sticks are the game's while frozen:
-//!   what is held when a step runs is that frame's input (hold down + B, D-right: the shine comes out), and no lab
-//!   control reads them (only an open menu does).
-//!   D-down save to the current slot (on release; D-down + START is the settings overlay), D-up load it; Z + D-left / D-right pick the slot; Z + D-up next HUD preset.
-//!   Hold START (30 frames): the full menu (menu.rs; L / R tabs, up / down rows, left / right values, A apply, X the
-//!   command bar, B / START close). Frozen, hold Z (12 frames): the radial quick menu, stick picks, release runs.
+//! Controls (ports 1 and 2, shared capture; the Lab owns START, the host strips it from the game): the list is
+//! `menu::CONTROLS`, which the menu's Controls page (Session tab) draws. While frozen every other button and the
+//! sticks are the game's: what is held when a step runs is that frame's input (hold down + B, D-right: the shine comes
+//! out), and no lab control reads them (only an open menu does).
 //! Online (LabNetplay) every sim action is a lab command both peers apply; the other player's freeze, rewind, step,
 //! save and load show here as a toast ("P2 rewound") from `gd_lab_applied`.
 //!
@@ -35,6 +31,25 @@ const LOOK_HEAD: usize = 16;
 const LOOK_RUNS: usize = 9;
 const LOOK_RUN_I32: usize = 4;
 const LOOK_I32: usize = LOOK_HEAD + LOOK_RUNS * LOOK_RUN_I32;
+/// gd_lab_drill_status (melee_modhost::lab DRILL_I32): see the field list there.
+const DRILL_I32: usize = 40;
+const DS_ACTIVE: usize = 0;
+const DS_PHASE: usize = 2;
+const DS_N: usize = 3;
+const DS_OK: usize = 4;
+const DS_SEQ: usize = 5;
+const DS_VERDICT: usize = 6;
+const DS_LATE: usize = 7;
+const DS_OPTION: usize = 8;
+const DS_NOPT: usize = 9;
+const DS_STREAK: usize = 11;
+const DS_BEST: usize = 12;
+const DS_LATE_SUM: usize = 13;
+const DS_LATE_N: usize = 14;
+const DS_ERR: usize = 15;
+const DS_W: usize = 16;
+const DS_TRIES: usize = 24;
+const DS_SUCC: usize = 32;
 
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
@@ -63,6 +78,9 @@ extern "C" {
     fn gd_lab_timed() -> i32;
     fn gd_lab_lookahead_cfg(flags: u32, budget_us: u32) -> i32;
     fn gd_lab_lookahead_result(out: *mut u8, len: u32) -> i32;
+    fn gd_lab_drill_status(out: *mut u8, len: u32) -> i32;
+    fn gd_lab_drill_text(kind: u32, i: u32, out: *mut u8, len: u32) -> i32;
+    fn gd_lab_drill_trend(out: *mut u8, max: u32) -> i32;
 }
 
 const FEATURE_LAB: u32 = 1 << 10;
@@ -115,6 +133,7 @@ const OP_REWIND: u8 = 4;
 const OP_PAUSE: u8 = 5;
 const OP_STEP: u8 = 6;
 const OP_GO_LIVE: u8 = 7;
+const OP_DRILL: u8 = 20;
 const CELL_STUN: u8 = 4;
 const GD_ESTATE: i32 = -4;
 
@@ -241,10 +260,19 @@ struct Lab {
     // the menu (M3), the radial and the command bar (M9)
     menu: Menu,
     /// dummy settings per port (menu.rs D_*), kept in step with the applied commands of both peers
-    dv: [[i32; D_N]; 2],
+    dv: [[i32; D_N]; 4],
     vals: [i32; N_IDS],
     rec_len: [i32; 8],
-    w_tab: [f32; 5],
+    w_tab: [f32; 6],
+    // drills: the status as published, the last running drill's copy (the summary page), its labels and trend
+    drill_st: [i32; DRILL_I32],
+    drill_last: [i32; DRILL_I32],
+    drill_seen: i32,
+    drill_name: Txt,
+    drill_opts: [Txt; 8],
+    drill_trend: [(i32, i32); 8],
+    drill_n_trend: usize,
+    drill_err_seen: i32,
     // freeze controls
     hold: (u16, u32),
     dummy_toast: i32,
@@ -327,10 +355,18 @@ static mut L: Lab = Lab {
     stick_p: [(0, 0); 2],
     start_hold: (-1, 0, false),
     menu: Menu::new(),
-    dv: [D_DEFAULT; 2],
+    dv: [D_DEFAULT; 4],
     vals: [0; N_IDS],
     rec_len: [-1; 8],
-    w_tab: [0.0; 5],
+    w_tab: [0.0; 6],
+    drill_st: [0; DRILL_I32],
+    drill_last: [0; DRILL_I32],
+    drill_seen: -1,
+    drill_name: Txt::new(),
+    drill_opts: [Txt::new(); 8],
+    drill_trend: [(0, 0); 8],
+    drill_n_trend: 0,
+    drill_err_seen: 0,
     hold: (0, 0),
     dummy_toast: -1,
     dd_armed: false,
@@ -377,7 +413,7 @@ const F_ACTION_FRAME: usize = 120;
 
 /// Hint key caps and labels: (key, label); widths measured once at init.
 const HINTS_PLAY: [(&str, &str); 4] = [("START", "freeze"), ("D↓", "save"), ("D↑", "load"), ("Z+D↑", "HUD preset")];
-const HINTS_FROZEN: [(&str, &str); 4] = [("◀ ▶", "step"), ("Z+A", "take over"), ("Z hold", "quick"), ("START hold", "menu")];
+const HINTS_FROZEN: [(&str, &str); 4] = [("◀ ▶", "step"), ("Z+A", "take over"), ("Z hold", "quick"), ("START hold", "menu · Controls")];
 
 fn measure(s: &str, role: i32) -> f32 {
     gd_ui_enc::measure(s, role)
@@ -675,7 +711,7 @@ impl Lab {
             r.copy_from_slice(&self.abuf[k * 20..k * 20 + 20]);
             let (side, op, a) = (r[0] as i32, r[4], u16::from_le_bytes([r[6], r[7]]) as i32);
             // the other peer's dummy changes (ours are in the menu already, and may be ahead of what applied)
-            if (op == OP_CPU || op == OP_REACTION) && side != me {
+            if (op == OP_CPU || op == OP_REACTION || op == OP_DUMMY_OPT) && side != me {
                 let b = u32::from_le_bytes([r[8], r[9], r[10], r[11]]);
                 let c = u32::from_le_bytes([r[12], r[13], r[14], r[15]]);
                 self.applied_dummy(op, r[5] as usize, a as u32, b, c);
@@ -698,6 +734,7 @@ impl Lab {
                 OP_PAUSE => m.s(if a != 0 { " froze" } else { " resumed" }),
                 OP_STEP => m.s(" stepped"),
                 OP_GO_LIVE => m.s(" took over"),
+                OP_DRILL => m.s(if a == 0xFFFF { " stopped the drill" } else { " started a drill" }),
                 OP_REACTION | OP_CPU => {
                     if self.dummy_toast == self.status[1] {
                         continue;
@@ -918,6 +955,7 @@ impl Lab {
         if self.slots_dirty {
             self.read_slots();
         }
+        self.drill_frame();
         self.draw();
     }
 
@@ -952,14 +990,20 @@ impl Lab {
         if s_state {
             self.state_readout(vw - 240.0, if s_move { 236.0 } else { 20.0 });
         }
+        let dy = if mo && self.drill_st[DS_ACTIVE] != 0 {
+            self.drill_panel(20.0, 58.0);
+            74.0
+        } else {
+            0.0
+        };
         if s_dummy {
-            self.dummy_panel(20.0, 70.0);
+            self.dummy_panel(20.0, 70.0 + dy);
         }
         if mo && self.vals[H_LOOK] != 0 {
             self.look_readout(vw - 480.0, 20.0);
         }
         if s_combo {
-            self.combo_panel(20.0, if s_dummy { 300.0 } else { 70.0 });
+            self.combo_panel(20.0, dy + if s_dummy { 300.0 } else { 70.0 });
         }
         if s_input && !self.paused {
             self.input_display(20.0, bottom(20.0, 270.0, 80.0, 20.0));
@@ -984,6 +1028,196 @@ impl Lab {
         }
         self.toasts(vw * 0.5, if self.preset == CLEAN { if self.timed { meter_y } else { 40.0 } } else { meter_y + 100.0 });
         self.enc.submit();
+    }
+
+    // -------------------------------------------------------------------------------------------- drills
+
+    /// The drill status: a new result becomes a toast; a new drill reads its name, option labels and trend.
+    fn drill_frame(&mut self) {
+        let mut b = [0u8; DRILL_I32 * 4];
+        if unsafe { gd_lab_drill_status(b.as_mut_ptr(), b.len() as u32) } < 0 {
+            return;
+        }
+        let was = self.drill_st[DS_ACTIVE] != 0;
+        for i in 0..DRILL_I32 {
+            self.drill_st[i] = rd_i32(&b, i * 4);
+        }
+        let st = self.drill_st;
+        if st[DS_ERR] != self.drill_err_seen {
+            self.drill_err_seen = st[DS_ERR];
+            match st[DS_ERR] {
+                1 => self.toast_s("Drill needs a recording in Record slots 1-4"),
+                2 => self.toast_s("No such drill"),
+                _ => {}
+            }
+        }
+        if st[DS_ACTIVE] == 0 {
+            return;
+        }
+        if !was || self.drill_seen < 0 {
+            // a drill (re)started: its texts, once
+            let mut t = [0u8; 48];
+            let n = unsafe { gd_lab_drill_text(0, st[1] as u32, t.as_mut_ptr(), 48) }.max(0) as usize;
+            self.drill_name.clear().s(core::str::from_utf8(&t[..n]).unwrap_or("Drill"));
+            for i in 0..(st[DS_NOPT].clamp(0, 8) as usize) {
+                let n = unsafe { gd_lab_drill_text(1, i as u32, t.as_mut_ptr(), 48) }.max(0) as usize;
+                self.drill_opts[i].clear().s(core::str::from_utf8(&t[..n]).unwrap_or("?"));
+            }
+            let mut tb = [0u8; 64];
+            self.drill_n_trend = unsafe { gd_lab_drill_trend(tb.as_mut_ptr(), 8) }.clamp(0, 8) as usize;
+            for i in 0..self.drill_n_trend {
+                self.drill_trend[i] = (rd_i32(&tb, i * 8), rd_i32(&tb, i * 8 + 4));
+            }
+            self.drill_seen = st[DS_SEQ];
+            let mut m = Txt::new();
+            m.s("Drill · ").s(self.drill_name.as_str());
+            self.toast(&m, None);
+        }
+        self.drill_last = st;
+        if st[DS_SEQ] != self.drill_seen {
+            self.drill_seen = st[DS_SEQ];
+            // the attempt result toast: verdict and option, then the running tally
+            let o = st[DS_OPTION].clamp(0, 7) as usize;
+            let mut m = Txt::new();
+            match st[DS_VERDICT] {
+                1 => {
+                    m.s("✓ ").s(self.drill_opts[o].as_str());
+                    if st[DS_LATE] > 0 {
+                        m.s(" · ").i(st[DS_LATE]).s("f late");
+                    } else {
+                        m.s(" · on time");
+                    }
+                }
+                3 => {
+                    m.s("✗ ").s(self.drill_opts[o].as_str()).s(" · punished");
+                }
+                _ => {
+                    m.s("✗ ").s(self.drill_opts[o].as_str()).s(" · missed");
+                }
+            }
+            let mut sub = Txt::new();
+            sub.i(st[DS_OK]).s("/").i(st[DS_N]).s(" · ").i(st[DS_OK] * 100 / st[DS_N].max(1)).s("%");
+            if st[DS_STREAK] > 1 {
+                sub.s(" · streak ").i(st[DS_STREAK]);
+            }
+            self.toast(&m, Some(&sub));
+        }
+    }
+
+    /// The in-play drill panel: name, tally, what it waits for, and the option weights as small bars.
+    fn drill_panel(&mut self, x: f32, y: f32) {
+        let st = self.drill_st;
+        let (ac, mu, tx) = (self.t(T_ACCENT), self.t(T_MUTED), self.t(T_TEXT));
+        let w = 270.0;
+        self.panel(x, y, w, 64.0);
+        self.enc.text(x + 12.0, y + 8.0, ROLE_LABEL, ac, "DRILL");
+        let name = self.drill_name;
+        self.enc.text(x + 60.0, y + 7.0, ROLE_VALUE, tx, name.as_str());
+        let mut t = Txt::new();
+        t.i(st[DS_OK]).s("/").i(st[DS_N]);
+        self.enc.text_ex(x + w - 12.0, y + 7.0, R_NUM, tx, ALIGN_RIGHT, 0.0, t.as_str());
+        let phase = match st[DS_PHASE] {
+            0 => "set it up",
+            1 => "now",
+            _ => "next attempt",
+        };
+        self.enc.text(x + 12.0, y + 28.0, ROLE_LABEL, if st[DS_PHASE] == 1 { ac } else { mu }, phase);
+        // the weights: one bar per option, the current pick in the accent
+        let n = st[DS_NOPT].clamp(0, 8) as usize;
+        let wmax = (0..n).map(|i| st[DS_W + i]).max().unwrap_or(1).max(1);
+        for i in 0..n {
+            let h = 2.0 + 18.0 * st[DS_W + i] as f32 / wmax as f32;
+            let bx = x + w - 12.0 - (n - i) as f32 * 12.0;
+            let c = if i as i32 == st[DS_OPTION] && st[DS_PHASE] != 2 { ac } else { mu };
+            self.enc.rect(bx, y + 56.0 - h, 8.0, h, c);
+        }
+    }
+
+    /// The session summary page (Drills > Session summary): totals, per option, and the trend across sessions.
+    pub fn draw_summary(&mut self, x0: f32, by: f32, w: f32, h: f32) {
+        let st = self.drill_last;
+        let (ac, mu, tx, dv) = (self.t(T_ACCENT), self.t(T_MUTED), self.t(T_TEXT), self.t(T_DIVIDER));
+        self.panel(x0, by, w, h);
+        self.enc.text(x0 + 16.0, by + 12.0, ROLE_TITLE, tx, "Session summary");
+        self.enc.text_ex(x0 + w - 16.0, by + 14.0, ROLE_LABEL, mu, ALIGN_RIGHT, 0.0, "B close");
+        if st[DS_N] == 0 && self.drill_name.is_empty() {
+            self.enc.text(x0 + 16.0, by + 52.0, ROLE_BODY, mu, "No drill yet: Drills > Start drill.");
+            return;
+        }
+        let mut t = Txt::new();
+        t.s(self.drill_name.as_str());
+        if st[DS_ACTIVE] == 0 {
+            t.s(" (stopped)");
+        }
+        self.enc.text(x0 + 16.0, by + 40.0, ROLE_VALUE, mu, t.as_str());
+        // the totals: four figures
+        let mean = if st[DS_LATE_N] > 0 { st[DS_LATE_SUM] * 10 / st[DS_LATE_N] } else { -1 };
+        let figs: [(&str, i32, u8); 4] = [("attempts", st[DS_N], 0), ("success", st[DS_OK] * 100 / st[DS_N].max(1), 1), ("mean frames late", mean, 2), ("best streak", st[DS_BEST], 0)];
+        for (i, (k, v, kind)) in figs.iter().enumerate() {
+            let fx = x0 + 16.0 + i as f32 * 196.0;
+            t.clear();
+            match kind {
+                1 => {
+                    t.i(*v).s("%");
+                }
+                2 if *v < 0 => {
+                    t.s("–");
+                }
+                2 => {
+                    t.fix(*v as f32 / 10.0, 1);
+                }
+                _ => {
+                    t.i(*v);
+                }
+            }
+            self.enc.text(fx, by + 66.0, R_ADV, if i == 1 { ac } else { tx }, t.as_str());
+            self.enc.text(fx, by + 92.0, ROLE_LABEL, mu, k);
+        }
+        // per option: weight bar, attempts, success
+        let ty = by + 124.0;
+        self.enc.rect(x0 + 16.0, ty, w - 32.0, 1.0, dv);
+        self.enc.text(x0 + 16.0, ty + 6.0, ROLE_LABEL, mu, "option");
+        self.enc.text(x0 + 220.0, ty + 6.0, ROLE_LABEL, mu, "dummy picks it");
+        self.enc.text_ex(x0 + 520.0, ty + 6.0, ROLE_LABEL, mu, ALIGN_RIGHT, 0.0, "tries");
+        self.enc.text_ex(x0 + 620.0, ty + 6.0, ROLE_LABEL, mu, ALIGN_RIGHT, 0.0, "success");
+        let n = st[DS_NOPT].clamp(0, 8) as usize;
+        let wsum: i32 = (0..n).map(|i| st[DS_W + i]).sum::<i32>().max(1);
+        for i in 0..n {
+            let ry = ty + 26.0 + i as f32 * 24.0;
+            let o = self.drill_opts[i];
+            self.enc.text(x0 + 16.0, ry, ROLE_VALUE, tx, o.as_str());
+            let share = st[DS_W + i] as f32 / wsum as f32;
+            self.enc.rect(x0 + 220.0, ry + 6.0, 200.0, 4.0, self.t(T_CELL));
+            self.enc.rect(x0 + 220.0, ry + 6.0, 200.0 * share, 4.0, ac);
+            t.clear().i((share * 100.0 + 0.5) as i32).s("%");
+            self.enc.text(x0 + 428.0, ry, R_NUM, mu, t.as_str());
+            t.clear().i(st[DS_TRIES + i]);
+            self.enc.text_ex(x0 + 520.0, ry, R_NUM, tx, ALIGN_RIGHT, 0.0, t.as_str());
+            t.clear();
+            if st[DS_TRIES + i] > 0 {
+                t.i(st[DS_SUCC + i] * 100 / st[DS_TRIES + i]).s("%");
+            } else {
+                t.s("–");
+            }
+            self.enc.text_ex(x0 + 620.0, ry, R_NUM, tx, ALIGN_RIGHT, 0.0, t.as_str());
+        }
+        // the trend: earlier sessions, then this one (success %)
+        let gx = x0 + 660.0;
+        self.enc.text(gx, ty + 6.0, ROLE_LABEL, mu, "sessions");
+        let k = self.drill_n_trend;
+        let cur = st[DS_OK] * 1000 / st[DS_N].max(1);
+        for i in 0..=k {
+            let (v, cur_bar) = if i < k { (self.drill_trend[i].0, false) } else { (cur, true) };
+            let bh = 4.0 + 96.0 * v.clamp(0, 1000) as f32 / 1000.0;
+            let bx = gx + i as f32 * 16.0;
+            self.enc.rect(bx, ty + 130.0 - bh, 11.0, bh, if cur_bar { ac } else { mu });
+        }
+        if k == 0 {
+            self.enc.text(gx, ty + 138.0, ROLE_LABEL, mu, "first session");
+        } else {
+            t.clear().s("now ").i(cur / 10).s("% · was ").i(self.drill_trend[k - 1].0 / 10).s("%");
+            self.enc.text(gx, ty + 138.0, ROLE_LABEL, mu, t.as_str());
+        }
     }
 
     // -------------------------------------------------------------------------------------------- kit parts

@@ -10,6 +10,7 @@
 //! * [`main_loop`]: fixed-step logic decoupled from presentation; headless runner.
 //! * [`gfx`]: swapchain + present of melee_gx's EFB on the window.
 pub mod log;
+pub mod yougame_saves;
 pub mod pad;
 pub mod adapter;
 pub mod aurora;

@@ -205,6 +205,17 @@ impl Engine {
             }
         }
         Host::boot(disc, mem_size)?;
+        // tag pairs (rust/mods/tag_fighter): MELEE_TAG_PARTNER="marth" (port 1) or "marth,sheik,,falco" (ports 1-4)
+        if let Ok(v) = std::env::var("MELEE_TAG_PARTNER") {
+            for (i, name) in v.split(',').take(4).enumerate() {
+                let n = name.trim().to_ascii_lowercase();
+                if n.is_empty() || n == "none" { continue; }
+                match crate::scenario::ckind_by_name(&n) {
+                    Some(ck) => unsafe { melee_fighter::tu::player::TAG_PARTNER_CK[i] = ck as i8 },
+                    None => eprintln!("tag: MELEE_TAG_PARTNER: unknown character {n:?} for port {}", i + 1),
+                }
+            }
+        }
         unsafe {
             melee_runtime::tu::gobj_native::HEADLESS_RENDER = std::env::var_os("MELEE_ENGINE_HEADLESS").is_some();
             // The C golden recordings ran in the default 1920x1080 window with widescreen on in the match scenes:
@@ -285,6 +296,7 @@ impl Engine {
                 melee_runtime::tu::pobj::native::ext::hook::GXAuroraEndPalette = Some(crate::gxbridge::GXAuroraEndPalette);
             }
             crate::geno_host::install();
+            crate::fighter_controls::install();
             crate::geno_host::install_define();
             crate::geno_host::install_callees();
             crate::mex_host::install(); // an m-ex disc's MxDt.dat (ACE): fighter slots, sound banks, effects, stage tables
@@ -655,7 +667,7 @@ impl Engine {
             let el = t0.elapsed();
             let pn = crate::archive::PARSE_NS.swap(0, core::sync::atomic::Ordering::Relaxed);
             let n = crate::archive::PARSE_N.swap(0, core::sync::atomic::Ordering::Relaxed);
-            if el.as_secs_f64() * 1e3 >= ms {
+            if el.as_secs_f64() * 1e3 >= ms && !speculative() {
                 eprintln!("engine: slow tick {} : {:.1} ms, {n} file parse(s) {:.1} ms", self.frames, el.as_secs_f64() * 1e3, pn as f64 / 1e6);
             }
         }
@@ -672,6 +684,20 @@ impl Engine {
         }
         more
     }
+}
+
+/// Lab lookahead (melee/src/lab.rs): set while speculative ticks run (save, tick, load). Host-side observers that the
+/// snapshot does not restore (define audio, logs) check it and stay silent. It is a static, so a snapshot load restores it:
+/// the lab sets it after every load it does inside a lookahead and clears it after the final one.
+static SPECULATIVE: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
+/// True while a lab lookahead tick runs.
+pub fn speculative() -> bool {
+    SPECULATIVE.load(core::sync::atomic::Ordering::Relaxed)
+}
+
+pub fn set_speculative(on: bool) {
+    SPECULATIVE.store(on, core::sync::atomic::Ordering::Relaxed);
 }
 
 /// `MELEE_TICK_SPIKE=<ms>`: log each engine tick at least that long, with its file-parse time.

@@ -379,8 +379,21 @@ pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
             return Some(v);
         }
     }
+    // the script host's side of script_game's callees (pc/platform/gw_script*.c's gw_Script_*)
+    if name.starts_with("Script_") {
+        if let Some(v) = crate::script_host::by_name(name, args) {
+            return Some(v);
+        }
+    }
     if name.starts_with("Mex_") {
         if let Some(v) = crate::mex_host::by_name(name, args) {
+            return Some(v);
+        }
+    }
+    // a define's menu / results art (gmresultplayer_geno_art.inc: the package file as a .gxtex handle, the initials
+    // over UI_TextI4) and the skin registry (gw_skins_boot.inc), as the C's gw_Geno_* / gw_GxTex_* / gw_Skins_* answer
+    if name.starts_with("Geno_") || name.starts_with("GxTex_") || name.starts_with("Skins_") || name == "UI_TextI4" {
+        if let Some(v) = crate::geno_host::by_name_art(name, args) {
             return Some(v);
         }
     }
@@ -439,11 +452,8 @@ fn ext_hand(name: &str, args: &[u64]) -> Option<u64> {
         },
         "OSReport" => 0,
         // gw_runtime.c gw_GxTex_OpenEnv: MELEE_MENUTEX names a replacement texture; unset (no mods) it is -1 and the
-        // CSS keeps the disc's art. The handle queries answer like the C does for a bad handle.
+        // CSS keeps the disc's art. The handle queries are geno_host's table (`by_name_art`, checked before this).
         "GxTex_OpenEnv" | "GxTex_OpenUI" => -1i64 as u64,
-        "GxTex_Width" | "GxTex_Height" | "GxTex_ImageSize" | "GxTex_TlutSize" | "GxTex_TlutEntries" => 0,
-        "GxTex_Format" | "GxTex_TlutFormat" => -1i64 as u64,
-        "GxTex_Close" | "GxTex_CopyImage" | "GxTex_CopyTlut" => 0,
         "HSD_SisLib_803A70A0" => unsafe {
             let s = c_format(args[2], &args[3..]);
             melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0_bytes(args[0] as usize as *mut melee_types::HSD_Text, args[1] as i32, Some(&s)) as i64 as u64
@@ -548,10 +558,16 @@ pub fn os_ticks_to_calendar_time(ticks: i64, td: *mut melee_types::OSCalendarTim
         extern "C" { fn _localtime64_s(tm: *mut Tm, t: *const i64) -> i32; }
         unsafe { _localtime64_s(&mut tm, &secs) };
     }
+    // libc's own `struct tm`: glibc's has tm_gmtoff and tm_zone after the nine ints, so localtime_r into the Windows-shaped
+    // `Tm` wrote 20 bytes past it (the zone offset landed in a saved register: the prize screen's date after a netplay
+    // match segfaulted in gm_801692E8)
     #[cfg(not(windows))]
     {
-        extern "C" { fn localtime_r(t: *const i64, tm: *mut Tm) -> *mut Tm; }
-        unsafe { localtime_r(&secs, &mut tm) };
+        let mut lt: libc::tm = unsafe { core::mem::zeroed() };
+        let t = secs as libc::time_t;
+        unsafe { libc::localtime_r(&t, &mut lt) };
+        tm = Tm { sec: lt.tm_sec, min: lt.tm_min, hour: lt.tm_hour, mday: lt.tm_mday, mon: lt.tm_mon, year: lt.tm_year, wday: lt.tm_wday,
+                  yday: lt.tm_yday, isdst: lt.tm_isdst };
     }
     if td.is_null() {
         return;

@@ -109,3 +109,43 @@ pub fn run(args: &[String]) -> ExitCode {
     println!("TESTS: pass={pass} fail={fail} total={n}");
     if fail == 0 { ExitCode::SUCCESS } else { ExitCode::FAILURE }
 }
+
+/// `melee mexid --iso DISC [--mods ...]`: the fighter identity table (melee_engine::mexid) on this disc and mods, one
+/// line per entry as gw_mexid.c's `mexid_disc_table` test logs it ("mexid:   fighter <ck> <hash> <name>"), so the two
+/// builds' tables diff line for line (the C's stage lines aside). Fails when a retail fighter has no identity.
+pub fn mexid(args: &[String]) -> ExitCode {
+    let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+    let Some(iso) = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok()) else {
+        eprintln!("usage: melee mexid --iso DISC.iso [--mods ...]");
+        return ExitCode::from(2);
+    };
+    if let Err(e) = crate::set_engine_mods(args) {
+        eprintln!("melee: {e}");
+        return ExitCode::from(2);
+    }
+    let disc = match crate::engine_disc(&iso) {
+        Ok(d) => d,
+        Err(e) => {
+            eprintln!("melee: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let scn = melee_engine::scenario::Scenario::parse("mode=vs;at=match;p1=none;p2=none;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off").expect("scene");
+    let _e = match melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn) {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("melee: engine boot: {e}");
+            return ExitCode::from(2);
+        }
+    };
+    let t = melee_engine::mexid::Fighters();
+    for e in &t {
+        println!("mexid:   {:<7} {:>3} {:016x} {}", "fighter", e.local, e.hash, e.name);
+    }
+    let retail = t.iter().filter(|e| (0..26).contains(&e.local)).count();
+    if retail < 26 {
+        eprintln!("mexid: only {retail} of the 26 retail fighters have identities");
+        return ExitCode::FAILURE;
+    }
+    ExitCode::SUCCESS
+}

@@ -146,3 +146,33 @@ fn examples_load_together() {
         assert!(ids.contains(&want), "{want} missing from {ids:?}");
     }
 }
+
+/// gd_hash_word (Envoy M0 probe b): no word without a call; the word follows the mod's state; frame begin clears it;
+/// the session hash is NHV1 unchanged for 0 and differs when the word does (the desync a peer would see).
+#[test]
+fn hash_word_and_session_hash() {
+    // frame.run_procs post: the state at 4096 grows by 7 each frame and is handed to gd_hash_word
+    let m = mod_full("t.hash", &[(ADDR_FRAME, POST)], 0, "1 1",
+        "(func $f0 (i32.store (i32.const 4096) (i32.add (i32.load (i32.const 4096)) (i32.const 7))) (call $hw (i32.load (i32.const 4096))))",
+        r#"(import "gd" "gd_hash_word" (func $hw (param i32)))"#, ABI_VERSION);
+    let mut h = Host::new();
+    h.load(&m).unwrap();
+    let entry = h.chains[&ADDR_FRAME].post[0];
+    let hp: *mut Host = &mut h;
+    let frame = |hp: *mut Host| unsafe {
+        (*hp).store.data_mut().begin_hash();
+        call_hook(hp, entry, &[], 0);
+        (*hp).store.data().hash_word()
+    };
+    assert_eq!(h.store.data().hash_word(), 0, "no call yet: no word");
+    assert_eq!(mix_session(0x1234_5678, 0), 0x1234_5678, "no word: the session hash is NHV1");
+    let w1 = frame(hp);
+    let w2 = frame(hp);
+    assert!(w1 != 0 && w2 != 0 && w1 != w2, "the word follows the state: {w1:08x} {w2:08x}");
+    assert_eq!(w1, hash_mix(0x811C_9DC5, 7) | 1);
+    assert_ne!(mix_session(0x1234_5678, w1), 0x1234_5678);
+    assert_ne!(mix_session(0x1234_5678, w1), mix_session(0x1234_5678, w2), "same NHV1, different mod state: a desync");
+    unsafe { (*hp).store.data_mut().begin_hash() };
+    assert_eq!(h.store.data().hash_word(), 0, "frame begin clears it");
+    assert!(!h.mods[0].disabled);
+}

@@ -1,18 +1,8 @@
-//! Lua scripting host for the Rust port: the sandbox and `gd.*` API of `pc/platform/gw_script.c`, the Geno
-//! registry and the LAB mod loader. Lua is the vendored 5.4.7 of the C build (see rust/third_party/lua-src).
-pub mod args;
-pub mod engine;
-pub mod events;
+//! The Geno registry (melee_script::geno, ported from pc/platform/geno_registry.c and its slices) and the script-facing
+//! game interface (melee_script::game::ScriptGame, the C's gw_ScriptGame_* surface, implemented by
+//! melee_engine::script_host::EngineGame for the wasm Lab). The C build's Lua scripting host is not part of the Rust
+//! port: scripts and the LAB are wasm mods (melee_modhost), and a define's fighter code is the geno 12 `wasm` block.
 pub mod game;
 pub mod geno;
-pub mod gd;
-pub mod host;
-pub mod manifest;
-pub mod motion_names;
-pub mod pad;
-pub mod rewind;
-pub mod zones_core;
 
-pub use engine::{Config, Engine};
 pub use game::{NoGame, RecRead, RecRow, RecStatus, ScriptGame};
-pub use host::{FxQuery, Host, KitData, KitVal, MemHost, SceneLaunchInfo};

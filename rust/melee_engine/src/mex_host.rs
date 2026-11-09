@@ -467,6 +467,11 @@ fn kirby_cap_file(k: i32) -> *const c_char {
     let Some(m) = m() else { return core::ptr::null() };
     if k < 0 { core::ptr::null() } else { m.cstr(m.word(m.kirbyfield(0x00), k as u32, 8)) }
 }
+/// The Kirby hat file of internal kind `k` as the m-ex table names it (gw_Mex_KirbyCapFile without its disc check: the
+/// identity table's only caller hashes a missing file as 0, which is what the C's NULL gives).
+pub fn KirbyCapFile(k: i32) -> *const c_char {
+    kirby_cap_file(k)
+}
 fn kirby_cap_symbol(k: i32) -> *const c_char {
     let Some(m) = m() else { return core::ptr::null() };
     let t = m.kirbyfield(0x00);
@@ -962,6 +967,9 @@ pub struct GenoEnv {
     pub dir: std::path::PathBuf,
 }
 impl melee_script::geno::registry::Env for GenoEnv {
+    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::code::FighterCode>, String> {
+        crate::geno_wasm::load(module, slot_names, slot_types, targets).map(|g| Box::new(g) as Box<dyn melee_script::geno::code::FighterCode>)
+    }
     fn mex_pl_file(&self, slot: usize) -> Option<String> {
         let k = SlotInternal(slot as i32);
         if k < 0 {

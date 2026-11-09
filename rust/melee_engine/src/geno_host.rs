@@ -5,11 +5,15 @@
 #![allow(non_snake_case, static_mut_refs)]
 use melee_script::geno::consts::*;
 use melee_script::geno::registry::{Env, Profile, Registry};
+use crate::snap_host::host_heap;
 
 /// The registry's view of the mounted mods: files under `<mods dir>/<mod id>/` (geno.json, words files, a define's Lua
 /// module). No m-ex slots are installed in this engine. Tests (no mods dir) read nothing.
 pub struct FsEnv;
 impl Env for FsEnv {
+    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::code::FighterCode>, String> {
+        crate::geno_wasm::load(module, slot_names, slot_types, targets).map(|g| Box::new(g) as Box<dyn melee_script::geno::code::FighterCode>)
+    }
     fn read_mod_file(&self, mod_id: &str, rel: &str) -> Option<Vec<u8>> {
         let (dir, _) = unsafe { BOOT_MODS.as_ref()? };
         if rel.contains("..") || mod_id.contains("..") {
@@ -20,6 +24,23 @@ impl Env for FsEnv {
 }
 #[allow(non_upper_case_globals)]
 static NoEnv: FsEnv = FsEnv;
+
+/// The game-half suite's registry (`Geno_TestInstall`): its texts' `wasm.module` names the suite's fixture modules
+/// (rust/mods/geno_fighters/tests, built by its build.sh), embedded so the suite runs from any directory. Nothing else.
+struct SuiteEnv;
+const SUITE_MODULES: [(&str, &[u8]); 3] = [
+    ("tests/charge.wasm", include_bytes!("../../mods/geno_fighters/tests/charge.wasm")),
+    ("tests/counter.wasm", include_bytes!("../../mods/geno_fighters/tests/counter.wasm")),
+    ("tests/empty.wasm", include_bytes!("../../mods/geno_fighters/tests/empty.wasm")),
+];
+impl Env for SuiteEnv {
+    fn fighter_wasm(&self, module: &[u8], slot_names: &[String], slot_types: &[i32], targets: &[String]) -> Result<Box<dyn melee_script::geno::code::FighterCode>, String> {
+        FsEnv.fighter_wasm(module, slot_names, slot_types, targets)
+    }
+    fn read_mod_file(&self, _mod_id: &str, rel: &str) -> Option<Vec<u8>> {
+        SUITE_MODULES.iter().find(|m| m.0 == rel).map(|m| m.1.to_vec())
+    }
+}
 
 static mut BOOT: Option<Registry> = None;
 static mut SAVED: Option<Option<Registry>> = None;
@@ -103,6 +124,8 @@ pub fn ProfileForKind(kind: i32) -> i32 {
     k
 }
 pub fn ProfileCount() -> i32 { reg().p.len() as i32 }
+/// The CSS kinds a define can name: `gw_Geno_DefineName(ck)` answers only for 1..=KindCount() (ck - 1 < GN_KINDS).
+pub fn KindCount() -> i32 { melee_script::geno::registry::GN_KINDS as i32 }
 pub fn Scale(p: i32) -> f32 { at(p).map_or(1.0, |x| if x.scale > 0.0 { x.scale } else { 1.0 }) }
 pub fn MaxJumps(p: i32) -> i32 { at(p).map_or(-1, |x| x.max_jumps) }
 pub fn JumpVyCount(p: i32) -> i32 { at(p).map_or(0, |x| x.njvy as i32) }
@@ -144,6 +167,10 @@ pub fn PoolGen() -> i32 {
     unsafe { POOL_GEN }
 }
 pub fn StateCount(p: i32) -> i32 { at(p).map_or(0, |x| x.nstate as i32) }
+/// gw_Geno_StateName: the state's geno.json name (the Lab's state browser); None when there is no such state.
+pub fn StateName(p: i32, s: i32) -> Option<String> { st(p, s).map(|x| x.st_name[s as usize].clone()) }
+/// gw_Geno_ComboStateName: the name of state s of profile p (the LAB's combo panel), "" when there is none.
+pub fn ComboStateName(p: i32, s: i32) -> String { st(p, s).map_or(String::new(), |x| x.st_name[s as usize].clone()) }
 pub fn StateBehavior(p: i32, s: i32) -> i32 { st(p, s).map_or(GENO_BHV_NONE as i32, |x| x.st_bhv[s as usize]) }
 pub fn StateCb(p: i32, s: i32, slot: i32) -> i32 {
     st(p, s).filter(|_| slot >= 0 && slot < GENO_CB_SLOTS as i32).map_or(-1, |x| x.st_cb[s as usize][slot as usize])
@@ -328,6 +355,9 @@ pub fn diag_stun(port: i32, base: i32, bonus: i32) {
 }
 
 // ---- test support (never called outside the suite) ----
+/// The registry is process-wide: every unit test that installs or swaps it (TestInstall, set_boot_mods) holds this.
+#[cfg(test)]
+pub(crate) static TEST_REGISTRY: std::sync::Mutex<()> = std::sync::Mutex::new(());
 pub fn TestInstall(text: *const i8) -> i32 {
     let t = unsafe { core::ffi::CStr::from_ptr(text) }.to_bytes();
     reg();
@@ -336,8 +366,8 @@ pub fn TestInstall(text: *const i8) -> i32 {
             SAVED = Some(BOOT.take());
         }
         let mut r = Registry::default();
-        let n = r.parse_text(t, "test", &NoEnv);
-        r.build_kinds(&NoEnv);
+        let n = r.parse_text(t, "test", &SuiteEnv);
+        r.build_kinds(&SuiteEnv);
         flush_log(&mut r);
         BOOT = Some(r);
         POOL_GEN += 1;
@@ -360,6 +390,53 @@ pub fn TestReloadLayout(text: *const i8) -> i32 {
     }
     next.build_kinds(&NoEnv);
     Registry::reload_layout_changed(reg(), &next).is_some() as i32
+}
+
+/// gw_Geno_Reload(msg, cap): the LAB's hot reload. Re-reads every active mod's geno.json (in reg's order) into a new
+/// registry. Answers <0 when it is refused (`msg` says why; the current data is kept), 0 when the layout changed (a
+/// restart is needed; the new data is installed) and 1 when the profiles can be re-applied in place.
+pub fn Reload(msg: &mut String) -> i32 {
+    let cur = reg();
+    let refuse = "native definitions require a process restart; current data kept";
+    if !cur.definitions.rows.is_empty() {
+        *msg = refuse.into();
+        return -1;
+    }
+    let dir = dir_of_boot();
+    let env = crate::mex_host::GenoEnv { dir: dir.clone() };
+    let mut next = Registry::default();
+    let mut ids = unsafe { BOOT_MODS.as_ref().map(|b| b.1.clone()).unwrap_or_default() };
+    ids.sort();
+    for id in &ids {
+        let Ok(t) = std::fs::read(dir.join(id).join("geno.json")) else { continue };
+        if next.parse_text(&t, id, &env) < 0 {
+            next.log.clear();
+            *msg = format!("{id}/geno.json does not parse - kept the old data");
+            return -1;
+        }
+    }
+    next.build_kinds(&env);
+    if next.p.iter().any(|p| p.defined) {
+        *msg = refuse.into();
+        return -1;
+    }
+    flush_log(&mut next);
+    let layout = Registry::reload_layout_changed(cur, &next);
+    let changed = if layout.is_some() { 0 } else { (0..cur.p.len()).filter(|&i| next.p.get(i).map(|q| q.id) != Some(cur.p[i].id)).count() };
+    let pool_changed = next.pool != cur.pool;
+    unsafe {
+        BOOT = Some(next);
+        POOL_GEN += 1;
+    }
+    if let Some(why) = layout {
+        *msg = format!("geno.json: {why}");
+        eprintln!("geno: hot reload: layout changed ({why})");
+        return 0;
+    }
+    let words = if pool_changed { "changed" } else { "unchanged" };
+    *msg = format!("geno.json: {changed} entr{} changed, overlay words {words}", if changed == 1 { "y" } else { "ies" });
+    eprintln!("geno: hot reload: {changed} profile(s) changed, overlay words {words}");
+    1
 }
 
 /// Point the game half's (and the test suite's) registry hooks here. Called before seams_gen fills the rest.
@@ -393,56 +470,16 @@ pub fn install() {
     );
 }
 
-// ---- gw_snap's slots for the game half (geno_game_items.inc, the define snapshot tests): snap_open(k) opens a
-// session, snap_save(frame) / snap_load(frame) keep and put back whole-game states (crate::snapshot) ----
-struct SnapStore {
-    base: crate::snapshot::Base,
-    slots: Vec<(i32, crate::snapshot::SnapRef)>,
-}
-/// Set once by the first snap_open and never changed after, so a load (which puts the static sections back) keeps it.
-static mut SNAP: *mut SnapStore = core::ptr::null_mut();
-
-fn host_heap<R>(f: impl FnOnce() -> R) -> R {
-    let was = crate::arena::active();
-    crate::arena::set_active(false);
-    let r = f();
-    crate::arena::set_active(was);
-    r
-}
-pub fn snap_open(_k: i32) -> i32 {
-    unsafe {
-        if SNAP.is_null() {
-            SNAP = host_heap(|| Box::into_raw(Box::new(SnapStore { base: crate::snapshot::Base::capture(), slots: Vec::new() })));
-        }
-    }
-    0
+// ---- gw_snap's sessions for the game half (geno_game_items.inc, the define snapshot tests): snap_open(k) opens the
+// machinery, snap_save(frame) / snap_load(frame) keep and put back whole-game states (crate::snap_host, the one base) ----
+pub fn snap_open(k: i32) -> i32 {
+    crate::snap_host::open(k)
 }
 pub fn snap_save(frame: i32) {
-    unsafe {
-        if SNAP.is_null() {
-            snap_open(1);
-        }
-        let st = &mut *SNAP;
-        host_heap(|| {
-            let s = st.base.save();
-            st.slots.retain(|x| x.0 != frame);
-            st.slots.push((frame, s));
-        });
-    }
+    crate::snap_host::save(frame)
 }
 pub fn snap_load(frame: i32) -> i32 {
-    unsafe {
-        if SNAP.is_null() {
-            return -1;
-        }
-        let st = &mut *SNAP;
-        let Some(s) = st.slots.iter().find(|x| x.0 == frame).map(|x| x.1.clone()) else { return -1 };
-        let was = crate::arena::active();
-        crate::arena::set_active(false);
-        st.base.load(&s);
-        crate::arena::set_active(was);
-        0
-    }
+    crate::snap_host::load_frame(frame)
 }
 
 /// The out-of-TU callees the game half and its tests reach that no link-table row answers.
@@ -527,17 +564,52 @@ pub fn DefineBaseKind(kind: i32) -> i32 { built().define_base_kind(kind) }
 pub fn DefinePartnerKind(kind: i32) -> i32 { built().define_partner_kind(kind) }
 pub fn DefineBaseCK(ck: i32) -> i32 { built().define_base_ck(ck) }
 pub fn DefineResolve(token: &str) -> i32 { built().define_resolve(token) }
+/// gw_Geno_ControlsSchema: a define's controls (a copy), None when ck is not a define or it declares none.
+pub fn ControlsSchema(ck: i32) -> Option<melee_script::geno::controls::Schema> { built().controls_schema(ck).cloned() }
 pub fn DefineIdentityWord(kind: i32, high: i32) -> i32 { built().define_identity_word(kind, high != 0) }
+/// A define's 64-bit content id by its CSS kind (the stable identity a per-fighter preference is saved under), None
+/// when ck is not a define.
+/// gw_Geno_SaltForPlFile: the stable id of the last attach entry overlaying Pl file `pl` (a define never salts its
+/// donor), 0 for none
+pub fn SaltForPlFile(pl: &str) -> u64 {
+    reg().salt_for_pl_file(pl)
+}
+
+pub fn DefineContentId(ck: i32) -> Option<u64> {
+    let r = built();
+    let p = r.define_profile_ck(ck);
+    (p >= 0).then(|| r.p[p as usize].id)
+}
 pub fn DefineOverrideCount(kind: i32) -> i32 { built().define_override_count(kind) }
 pub fn DefineOverrideField(kind: i32, row: i32, field: i32) -> i32 { built().define_override_field(kind, row, field) }
 pub fn DefineIsNone(kind: i32) -> i32 { built().define_is_none(kind) }
 pub fn DefineTemplateSkeleton(kind: i32) -> i32 { built().define_template_skeleton(kind) }
-pub fn DefineCostumeCount(kind: i32) -> i32 { built().define_costume_count(kind) }
-pub fn DefineCostumeCountCK(ck: i32) -> i32 { built().define_costume_count_ck(ck) }
+/// gw_Geno_DefineCostumeCountNative: a base "none" define's declared costumes, without skins.
+pub fn DefineCostumeCountNative(kind: i32) -> i32 { built().define_costume_count(kind) }
+/// gw_Geno_DefineCostumeCount: the declared costumes plus the skins installed for the define.
+pub fn DefineCostumeCount(kind: i32) -> i32 {
+    if DefineIsNone(kind) == 0 {
+        return 0;
+    }
+    DefineCostumeCountNative(kind) + crate::skins_host::Added(kind)
+}
+/// gw_Geno_DefineCostumeCountCK: 0 for anything that is not a base "none" define (the caller keeps its own count).
+pub fn DefineCostumeCountCK(ck: i32) -> i32 {
+    if DefineIsNone(ck - 1) == 0 {
+        return 0;
+    }
+    built().define_costume_count_ck(ck) + crate::skins_host::Added(ck - 1)
+}
 pub fn DefineArtBaseCK(ck: i32) -> i32 { built().define_art_base_ck(ck) }
+/// gn_pres_file by CK: the package file a define declares for `what` / `costume` (results falls back to the portrait).
+pub fn DefinePresFile(ck: i32, what: i32, costume: i32) -> Option<String> { built().define_pres_file(ck, what, costume).map(str::to_string) }
 pub fn DefineTeamCostume(ck: i32, team: i32) -> i32 { built().define_team_costume(ck, team) }
-/// gw_Geno_DefineHasArt (no skins are installed in this engine).
-pub fn DefineHasArt(ck: i32, what: i32, costume: i32) -> i32 { built().define_pres_file(ck, what, costume).is_some() as i32 }
+/// gw_Geno_DefineHasArt: a skin costume's own art (results asks for the portrait), else the package's declaration.
+pub fn DefineHasArt(ck: i32, what: i32, costume: i32) -> i32 {
+    use melee_script::geno::define::{GN_PRES_PORTRAIT, GN_PRES_RESULTS};
+    let sk = if what == GN_PRES_RESULTS as i32 { GN_PRES_PORTRAIT as i32 } else { what };
+    (crate::skins_host::HasArtCK(ck, sk, costume) || built().define_pres_file(ck, what, costume).is_some()) as i32
+}
 pub fn DefineAiLike(kind: i32) -> i32 {
     static mut SAID: [bool; 128] = [false; 128];
     let r = built();
@@ -585,6 +657,10 @@ fn intern(s: &str) -> *const core::ffi::c_char {
     }
 }
 pub fn DefineString(kind: i32, which: i32, costume: i32) -> *const core::ffi::c_char {
+    // gw_Geno_DefineString: a costume past the declared ones is a skin's row (file / joint / matanim)
+    if DefineIsNone(kind) != 0 && costume >= DefineCostumeCountNative(kind) && (2..=4).contains(&which) {
+        return crate::skins_host::StringPtr(kind, costume, which - 2);
+    }
     built().define_string(kind, which, costume).map_or(core::ptr::null(), intern)
 }
 /// gw_Geno_DefineName: snprintf the define's name into out (cap bytes). 1 when it is a define.
@@ -601,8 +677,20 @@ pub fn DefineName(ck: i32, out: *mut i8, cap: i32) -> i32 {
     }
     1
 }
-/// gw_Geno_DefineCostumeName: a base "none" define's declared costume name (no skins here).
+/// gw_Geno_DefineCostumeName: a skin costume's own name (any fighter), else a base "none" define's declared one.
 pub fn DefineCostumeName(ck: i32, costume: i32, out: *mut i8, cap: i32) -> i32 {
+    if let Some(n) = crate::skins_host::NameCK(ck, costume) {
+        if out.is_null() || cap <= 0 {
+            return 0;
+        }
+        let b = n.as_bytes();
+        let k = b.len().min(cap as usize - 1);
+        unsafe {
+            core::ptr::copy_nonoverlapping(b.as_ptr() as *const i8, out, k);
+            *out.add(k) = 0;
+        }
+        return 1;
+    }
     let Some(n) = built().define_costume_name(ck, costume) else { return 0 };
     if out.is_null() || cap <= 0 {
         return 0;
@@ -880,7 +968,7 @@ pub fn define_audio_play(ck: i32, which: i32, sfx: i32, owner: u32) -> i32 {
                 stopped += melee_audio::sim::with(|s| s.ax.stop_owned_clips(&pcm, owner)).unwrap_or(0);
             }
         }
-        if any && !gn_rb_active() {
+        if any && !gn_rb_active() && !crate::engine::speculative() {
             eprintln!("geno: {name}: stop id 540001 cut {stopped} stoppable clip instance(s)");
         }
         return any as i32;
@@ -902,6 +990,10 @@ pub fn define_audio_play(ck: i32, which: i32, sfx: i32, owner: u32) -> i32 {
         };
         (1 + i, a.voice_file[i].clone(), a.voice_vol[i])
     };
+    if crate::engine::speculative() {
+        // a lab lookahead tick (melee/src/lab.rs): the same answer, no clip, no ledger entry
+        return 1;
+    }
     let Some((pcm, frames, ch)) = gn_clip_load(p, slot, &file) else { return 1 };
     let net = &mut gn_host().net;
     if net.on {
@@ -947,7 +1039,7 @@ pub fn DefineVoiceState(kind: i32, owner: u32, motion: i32) -> i32 {
     }
     let p = p as usize;
     let Some(a) = r.p[p].def.aud.as_ref() else { return 0 };
-    let s = motion - melee_script::gd::players::GENO_MOTION_BASE;
+    let s = motion - melee_script::geno::GENO_MOTION_BASE;
     let nstate = r.p[p].nstate as i32;
     let mut stopped = 0;
     for i in 0..a.voice_sfx.len() {
@@ -1005,6 +1097,8 @@ pub fn LuaCall(p: i32, s: i32, phase: i32, io: *mut core::ffi::c_void) -> i32 {
 // geno 11: combo graph and meter
 pub fn ComboParam(p: i32, what: i32) -> i32 { reg().combo_param(p, what) }
 pub fn ComboWord(p: i32, route: i32, word: i32) -> i32 { reg().combo_word(p, route, word) }
+/// gw_Geno_ComboName: route `route`'s name, "" when the profile has no such route.
+pub fn ComboName(p: i32, route: i32) -> String { reg().combo_name(p, route).to_string() }
 pub fn MeterParam(p: i32, what: i32) -> i32 { reg().meter_param(p, what) }
 /// gw_Geno_ComboNote: the log of a taken link (rate-limited; never state).
 pub fn ComboNote(p: i32, route: i32, from: i32, to: i32, frame: i32, ki_links: i32) {
@@ -1023,10 +1117,27 @@ pub fn ComboNote(p: i32, route: i32, from: i32, to: i32, frame: i32, ki_links: i
     );
 }
 
-// slice 6: records (MELEE_GENO_RECORDS names the file; with no card folder hosted, nothing is written without it)
+// slice 6: records (geno_define_records.inc)
 static mut RECORDS: Option<melee_script::geno::define::Records> = None;
 fn rec_path() -> Option<std::path::PathBuf> {
-    std::env::var("MELEE_GENO_RECORDS").ok().filter(|e| !e.is_empty()).map(std::path::PathBuf::from)
+    rec_path_from(std::env::var("MELEE_GENO_RECORDS").ok(), crate::card::base_path())
+}
+/// gn_rec_path: `MELEE_GENO_RECORDS` when set, else `geno_records.json` in the folder holding the card folder (the
+/// card base with its trailing separators cut, then its last component; a base with no separator leaves the bare
+/// name); None with the card off and no override (nothing is written).
+fn rec_path_from(env: Option<String>, card_base: Option<std::path::PathBuf>) -> Option<std::path::PathBuf> {
+    if let Some(e) = env.filter(|e| !e.is_empty()) {
+        return Some(e.into());
+    }
+    let base = card_base?.to_string_lossy().into_owned();
+    if base.is_empty() {
+        return None;
+    }
+    let t = base.trim_end_matches(['/', '\\']);
+    Some(match t.rfind(['/', '\\']) {
+        Some(i) => format!("{}geno_records.json", &t[..=i]).into(),
+        None => "geno_records.json".into(),
+    })
 }
 fn rec_row(ck: i32) -> Option<(usize, std::path::PathBuf)> {
     let r = built();
@@ -1264,6 +1375,10 @@ struct GxTex {
     height: u32,
     image_off: u32,
     image_size: u32,
+    tlut_fmt: u32,
+    tlut_entries: u32,
+    tlut_off: u32,
+    tlut_size: u32,
 }
 /// GW_GXTEX_MAX open handles.
 static mut GXTEX: [Option<GxTex>; 8] = [const { None }; 8];
@@ -1292,7 +1407,7 @@ fn gxtex_install(blob: Vec<u8>, label: &str) -> i32 {
         return -1;
     }
     let (format, width, height, tl_n, tl_f) = (be(8), be(12), be(16), be(24), be(20));
-    let t = GxTex { format, width, height, image_off, image_size, blob };
+    let t = GxTex { format, width, height, image_off, image_size, tlut_fmt: tl_f, tlut_entries: tl_n, tlut_off, tlut_size, blob };
     eprintln!(
         "gxtex: {label} -> handle {i}: {}x{} fmt {}, image {} B, tlut {} entries fmt {}",
         t.width, t.height, t.format, t.image_size, tl_n, tl_f
@@ -1300,14 +1415,32 @@ fn gxtex_install(blob: Vec<u8>, label: &str) -> i32 {
     unsafe { GXTEX[i] = Some(t) };
     i as i32
 }
+/// gw_GxTex_OpenBlob: a copy of a .gxtex file's bytes into a handle, -1 for a short or malformed blob.
+pub fn GxTex_OpenBlob(blob: Vec<u8>, label: &str) -> i32 {
+    if blob.len() < 64 {
+        return -1;
+    }
+    gxtex_install(blob, label)
+}
 pub fn GxTex_Width(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.width as i32) }
 pub fn GxTex_Height(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.height as i32) }
 pub fn GxTex_Format(h: i32) -> i32 { gxtex_get(h).map_or(-1, |t| t.format as i32) }
 pub fn GxTex_ImageSize(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.image_size as i32) }
+pub fn GxTex_TlutSize(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.tlut_size as i32) }
+/// 0xFFFFFFFF in the file means "no TLUT": -1.
+pub fn GxTex_TlutFormat(h: i32) -> i32 { gxtex_get(h).filter(|t| t.tlut_size != 0).map_or(-1, |t| t.tlut_fmt as i32) }
+pub fn GxTex_TlutEntries(h: i32) -> i32 { gxtex_get(h).filter(|t| t.tlut_size != 0).map_or(0, |t| t.tlut_entries as i32) }
 pub fn GxTex_CopyImage(h: i32, dst: *mut core::ffi::c_void) {
     if let Some(t) = gxtex_get(h) {
         if !dst.is_null() {
             unsafe { core::ptr::copy_nonoverlapping(t.blob.as_ptr().add(t.image_off as usize), dst as *mut u8, t.image_size as usize) };
+        }
+    }
+}
+pub fn GxTex_CopyTlut(h: i32, dst: *mut core::ffi::c_void) {
+    if let Some(t) = gxtex_get(h) {
+        if !dst.is_null() && t.tlut_size != 0 {
+            unsafe { core::ptr::copy_nonoverlapping(t.blob.as_ptr().add(t.tlut_off as usize), dst as *mut u8, t.tlut_size as usize) };
         }
     }
 }
@@ -1317,46 +1450,80 @@ pub fn GxTex_Close(h: i32) {
     }
 }
 
-/// gw_Geno_DefineArtOpen: a .gxtex handle for a define's art (`what` GN_PRES_*), -1 when none. No skins are installed
-/// here, so it is the declared file of the mod's files/ (gn_pres_open_file); stock / emblem / results must be unpaletted.
-pub fn DefineArtOpen(ck: i32, what: i32, costume: i32) -> i32 {
-    use melee_script::geno::define::*;
-    if !(0..GN_PRES_KINDS as i32).contains(&what) {
-        return -1;
-    }
-    let plain = what as usize == GN_PRES_STOCK || what as usize == GN_PRES_EMBLEM || what as usize == GN_PRES_RESULTS;
-    let r = built();
-    let p = r.define_profile_ck(ck);
+/// gn_pres_open_file: one package file of the define's mod (files/) as a handle; `plain` refuses a paletted format
+/// (result / HUD TObjs carry no palette), logged once per file.
+fn pres_open_file(p: i32, file: Option<&str>, plain: bool) -> i32 {
+    let Some(file) = file else { return -1 };
     if p < 0 {
         return -1;
     }
+    let r = built();
     let (mod_id, name) = (r.p[p as usize].mod_id.clone(), r.p[p as usize].name.clone());
-    // results without its own file falls back to the portrait (gn_pres_file)
-    let file = r.define_pres_file(ck, what, costume).map(str::to_string);
-    let Some(file) = file else { return -1 };
     let env = crate::mex_host::GenoEnv { dir: dir_of_boot() };
     use melee_script::geno::Env as _;
-    // on the system heap: a read into the copy-on-write arena fails (ERROR_NOACCESS) during a rollback match
+    // gn_pres_read; on the system heap: a read into the copy-on-write arena fails (ERROR_NOACCESS) during a rollback match
     let Some(raw) = host_heap(|| env.read_mod_file(&mod_id, &format!("files/{file}"))) else {
         static mut SAID: Vec<String> = Vec::new();
         unsafe {
-            if !SAID.contains(&file) && SAID.len() < 16 {
-                SAID.push(file.clone());
+            if !SAID.iter().any(|s| s == file) && SAID.len() < 16 {
+                SAID.push(file.to_string());
                 eprintln!("geno: {name}: presentation file {file} is not in the mod's files/");
             }
         }
         return -1;
     };
-    let h = gxtex_install(raw, &file);
+    let h = GxTex_OpenBlob(raw, file);
     if h >= 0 && plain && GxTex_Format(h) >= 8 {
-        eprintln!("geno: {name}: presentation file {file} needs a format without a palette for stock/results");
+        static mut SAID: Vec<String> = Vec::new();
+        unsafe {
+            if !SAID.iter().any(|s| s == file) && SAID.len() < 16 {
+                SAID.push(file.to_string());
+                eprintln!("geno: {name}: presentation file {file} needs a format without a palette for stock/results");
+            }
+        }
         GxTex_Close(h);
         return -1;
     }
     h
 }
 
-/// The HUD's art callees (ifstock: the stock icon of a define).
+/// gw_Geno_DefineArtOpen: a .gxtex handle for a define's art (`what` GN_PRES_*), -1 when none. Results: the results
+/// override, then (as the portrait) a skin costume's CSP, then the package CSP; the caller then tries the retail donor
+/// or draws letters. Stock / emblem / results must be unpaletted.
+pub fn DefineArtOpen(ck: i32, what: i32, costume: i32) -> i32 {
+    use melee_script::geno::define::*;
+    if !(0..GN_PRES_KINDS as i32).contains(&what) {
+        return -1;
+    }
+    let plain = what as usize == GN_PRES_STOCK || what as usize == GN_PRES_EMBLEM || what as usize == GN_PRES_RESULTS;
+    let p = built().define_profile_ck(ck);
+    let mut what = what;
+    if what as usize == GN_PRES_RESULTS {
+        let own = p >= 0 && built().p[p as usize].def.pres.as_deref().is_some_and(|pr| !pr.file[GN_PRES_RESULTS].is_empty());
+        if own {
+            let f = built().define_pres_file(ck, what, costume).map(str::to_string);
+            let h = pres_open_file(p, f.as_deref(), true);
+            if h >= 0 {
+                return h;
+            }
+        }
+        what = GN_PRES_PORTRAIT as i32;
+    }
+    let mut h = crate::skins_host::ArtOpenCK(ck, what, costume);
+    if h >= 0 && plain && GxTex_Format(h) >= 8 {
+        GxTex_Close(h);
+        h = -1;
+    }
+    if h >= 0 {
+        return h;
+    }
+    let f = built().define_pres_file(ck, what, costume).map(str::to_string);
+    pres_open_file(p, f.as_deref(), plain)
+}
+
+/// The art callees of the game TUs that hold their own hook copies (ifstock: the HUD stock icon of a define). The
+/// string-hook TUs (gmresultplayer's card picture / stock / emblem, mncharsel) reach the same functions by name
+/// (`by_name_art`).
 pub fn install_art() {
     use melee_world::tu::ifstock::ext::hook as s;
     unsafe {
@@ -1369,10 +1536,70 @@ pub fn install_art() {
         s::GxTex_Close = Some(GxTex_Close);
         s::UI_TextI4 = Some(|t, w, h, st, d| unsafe { crate::uigen::UI_TextI4(t as _, w, h, st, d as _) });
     }
+    crate::skins_host::install();
+}
+
+/// The art and skin callees reached by name (seams::ext_real): gmresultplayer_geno_art.inc's `Geno_DefineArtOpen`,
+/// `Geno_DefineName`, the `GxTex_*` handle queries and `UI_TextI4`; the define costume queries; the `Skins_*` API.
+/// Pointer arguments are the words as passed.
+pub fn by_name_art(name: &str, a: &[u64]) -> Option<u64> {
+    let i = |k: usize| a.get(k).copied().unwrap_or(0) as i32;
+    let ptr = |k: usize| a.get(k).copied().unwrap_or(0) as usize as *mut core::ffi::c_void;
+    let v: i32 = match name {
+        "Geno_DefineArtOpen" => DefineArtOpen(i(0), i(1), i(2)),
+        "Geno_DefineHasArt" => DefineHasArt(i(0), i(1), i(2)),
+        "Geno_DefineName" => DefineName(i(0), ptr(1) as *mut i8, i(2)),
+        "Geno_DefineCostumeName" => DefineCostumeName(i(0), i(1), ptr(2) as *mut i8, i(3)),
+        "Geno_DefineCostumeCountCK" => DefineCostumeCountCK(i(0)),
+        "Geno_DefineTeamCostume" => DefineTeamCostume(i(0), i(1)),
+        "GxTex_Width" => GxTex_Width(i(0)),
+        "GxTex_Height" => GxTex_Height(i(0)),
+        "GxTex_Format" => GxTex_Format(i(0)),
+        "GxTex_ImageSize" => GxTex_ImageSize(i(0)),
+        "GxTex_TlutSize" => GxTex_TlutSize(i(0)),
+        "GxTex_TlutFormat" => GxTex_TlutFormat(i(0)),
+        "GxTex_TlutEntries" => GxTex_TlutEntries(i(0)),
+        "GxTex_CopyImage" => {
+            GxTex_CopyImage(i(0), ptr(1));
+            0
+        }
+        "GxTex_CopyTlut" => {
+            GxTex_CopyTlut(i(0), ptr(1));
+            0
+        }
+        "GxTex_Close" => {
+            GxTex_Close(i(0));
+            0
+        }
+        "UI_TextI4" => unsafe { crate::uigen::UI_TextI4(ptr(0) as *const i8, i(1), i(2), i(3), ptr(4)) },
+        "Skins_CostumeCountCK" => crate::skins_host::CostumeCountCK(i(0)),
+        "Skins_TeamCostumeCK" => crate::skins_host::TeamCostumeCK(i(0), i(1)),
+        "Skins_Added" => crate::skins_host::Added(i(0)),
+        "Skins_Base" => crate::skins_host::Base(i(0)),
+        "Skins_Like" => crate::skins_host::Like(i(0), i(1)),
+        "Skins_KirbyRow" => crate::skins_host::KirbyRow(i(0), i(1)),
+        "Skins_String" => return Some(crate::skins_host::StringPtr(i(0), i(1), i(2)) as usize as u64),
+        _ => return None,
+    };
+    Some(v as i64 as u64)
 }
 
 #[cfg(test)]
 mod tests {
+    /// gn_rec_path: the override, beside the card folder (either separator, trailing ones cut), a bare base, card off.
+    #[test]
+    fn records_path_like_c() {
+        use super::rec_path_from as f;
+        use std::path::PathBuf;
+        let p = |s: &str| Some(PathBuf::from(s));
+        assert_eq!(f(Some("x/r.json".into()), p("/a/card")), p("x/r.json"));
+        assert_eq!(f(Some(String::new()), p("/a/card")), p("/a/geno_records.json"));
+        assert_eq!(f(None, p("/a/b/card/")), p("/a/b/geno_records.json"));
+        assert_eq!(f(None, p("C:\\g\\card\\")), p("C:\\g\\geno_records.json"));
+        assert_eq!(f(None, p("card")), p("geno_records.json"));
+        assert_eq!((f(None, None), f(None, p(""))), (None, None));
+    }
+
     /// The netplay identity covers a base "none" define: its resource files' bytes change it, and a missing one drops
     /// the define (mx_add_defines). Uses the text fixture pc/geno/mods/vanilla-courier with stand-in file bytes.
     #[test]
@@ -1441,6 +1668,7 @@ mod clip_tests {
     /// One test (the registry and the sound are process-wide): the C's two in-engine checks in order.
     #[test]
     fn define_clips_play_stop_and_state_exit_like_c() {
+        let _l = TEST_REGISTRY.lock().unwrap_or_else(|e| e.into_inner());
         melee_audio::sim::install(melee_audio::Sound::new());
         let stat = || melee_audio::sim::with(|s| s.ax.clip_stat(0)).unwrap();
         let stop = |pcm: &std::sync::Arc<[i16]>, o: u32| melee_audio::sim::with(|s| s.ax.stop_owned_clips(pcm, o)).unwrap();
@@ -1474,7 +1702,7 @@ mod clip_tests {
         for (i, t) in tones.iter().enumerate() {
             gn_clip_slot(p, 1 + i).pcm = Some((t.clone(), 4, 1));
         }
-        let base = melee_script::gd::players::GENO_MOTION_BASE;
+        let base = melee_script::geno::GENO_MOTION_BASE;
         let play = |sfx, o| DefineVoicePlayOwner(kind, sfx, o);
         play(77, 1);
         play(77, 1);

@@ -28,6 +28,9 @@ pub fn dir() -> PathBuf {
     if let Some(d) = crate::cfg::text("cosmetics_dir") {
         return PathBuf::from(d);
     }
+    if let Some(d) = std::env::var_os("MELEE_COSMETICS_DIR").filter(|d| !d.is_empty()) {
+        return PathBuf::from(d);
+    }
     std::env::current_exe().ok().and_then(|e| e.parent().map(|p| p.join("Cosmetics"))).unwrap_or_else(|| PathBuf::from("Cosmetics"))
 }
 

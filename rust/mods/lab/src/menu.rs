@@ -10,6 +10,10 @@ use super::*;
 
 #[link(wasm_import_module = "gd_lab")]
 extern "C" {
+    fn gd_lab_drill(index: u32, port: u32, recs: u32) -> i32;
+    fn gd_lab_adapt(mode: u32, rate: u32) -> i32;
+    fn gd_lab_load_vary(port: u32, flags: u32, pct: u32, x: u32) -> i32;
+    fn gd_lab_dummy_opt(port: u32, opt: u32, value: u32) -> i32;
     fn gd_lab_cpu(port: u32, beh: i32, param: i32) -> i32;
     fn gd_lab_reaction(port: u32, kind: i32, option: i32, param: u32) -> i32;
     fn gd_lab_set_percent(port: u32, pct: f32) -> i32;
@@ -26,10 +30,26 @@ extern "C" {
 extern "C" {
     fn gd_ui_keys(out: *mut u32, max: u32) -> i32;
 }
+// gd-lab-v1.1: Geno (offline only) and fighter controls (docs/specs/gd-ui-lab-v1.h)
+#[link(wasm_import_module = "gd_lab")]
+extern "C" {
+    fn gd_geno_fly(port: u32, mode: i32) -> i32;
+    fn gd_geno_fly_get(port: u32) -> i32;
+    fn gd_geno_fly_clear(port: u32) -> i32;
+    fn gd_geno_combo_ki(port: u32, ki: i32) -> i32;
+    fn gd_geno_combo_info(port: u32, what: i32) -> i32;
+    fn gd_geno_reload() -> i32;
+    fn gd_controls_count(port: u32, field: u32) -> i32;
+    fn gd_controls_name(port: u32, field: u32, index: u32, out: *mut u8, cap: u32) -> i32;
+    fn gd_controls_get(port: u32) -> i32;
+    fn gd_controls_set(port: u32, choice: u32) -> i32;
+}
 
 // lab command ops seen in gd_lab_applied (the other peer's dummy changes)
 pub const OP_CPU: u8 = 13;
 pub const OP_REACTION: u8 = 14;
+pub const OP_DUMMY_OPT: u8 = 23;
+const RK_COUNTER: i32 = 7;
 const RK_DI: i32 = 0;
 const RK_SDI: i32 = 1;
 const RK_TECH: i32 = 2;
@@ -85,42 +105,69 @@ pub const D_GETUP: usize = 11;
 pub const D_LEDGE: usize = 12;
 pub const D_WAKE_DELAY: usize = 13;
 pub const D_PERCENT: usize = 14;
-pub const D_N: usize = 15;
-pub const D_DEFAULT: [i32; D_N] = [0, 9, 0, 50, 0, 0, 0, 0, 100, 0, 2, 0, 0, 0, 0];
+pub const D_COUNTER: usize = 15;
+pub const D_RESTORE: usize = 16;
+pub const D_LOCKOUT: usize = 17;
+pub const D_SDI_N: usize = 18;
+pub const D_N: usize = 19;
+pub const D_DEFAULT: [i32; D_N] = [0, 9, 0, 50, 0, 0, 0, 0, 100, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0];
 // local settings
-const R_SLOT: usize = 15;
-const R_PORT: usize = 16;
-const R_REC: usize = 17;
-const R_LOOP: usize = 18;
-const R_MIRROR: usize = 19;
-const R_FROM: usize = 20;
-const R_PLAY: usize = 21;
-const R_STOP: usize = 22;
-const R_WEIGHT: usize = 23;
-const R_ORDER: usize = 24;
-const R_PLAYALL: usize = 25;
-const R_FREE: usize = 26;
-const V_PRESET: usize = 27;
-pub const V_HIT: usize = 28;
-const V_HURT: usize = 29;
-const V_ECB: usize = 30;
-const V_LEDGE: usize = 31;
-const V_DI: usize = 32;
-pub const H_METER: usize = 33;
-pub const H_MOVE: usize = 34;
-pub const H_STATE: usize = 35;
-pub const H_DUMMY: usize = 36;
-pub const H_COMBO: usize = 37;
-pub const H_INPUT: usize = 38;
-pub const H_HINTS: usize = 39;
-const S_SLOT: usize = 40;
-const S_SAVE: usize = 41;
-const S_LOAD: usize = 42;
-const S_RESET: usize = 43;
-const S_SWAP: usize = 44;
-const S_CMD: usize = 45;
-const S_RESUME: usize = 46;
-pub const N_IDS: usize = 47;
+const R_SLOT: usize = 19;
+const R_PORT: usize = 20;
+const R_REC: usize = 21;
+const R_LOOP: usize = 22;
+const R_MIRROR: usize = 23;
+const R_FROM: usize = 24;
+const R_PLAY: usize = 25;
+const R_STOP: usize = 26;
+const R_WEIGHT: usize = 27;
+const R_ORDER: usize = 28;
+const R_PLAYALL: usize = 29;
+const R_FREE: usize = 30;
+const V_PRESET: usize = 31;
+pub const V_HIT: usize = 32;
+const V_HURT: usize = 33;
+const V_ECB: usize = 34;
+const V_LEDGE: usize = 35;
+const V_DI: usize = 36;
+pub const H_METER: usize = 37;
+pub const H_MOVE: usize = 38;
+pub const H_STATE: usize = 39;
+pub const H_DUMMY: usize = 40;
+pub const H_COMBO: usize = 41;
+pub const H_INPUT: usize = 42;
+pub const H_HINTS: usize = 43;
+const S_SLOT: usize = 44;
+const S_SAVE: usize = 45;
+const S_LOAD: usize = 46;
+const S_RESET: usize = 47;
+const S_SWAP: usize = 48;
+const S_CMD: usize = 49;
+const S_RESUME: usize = 50;
+const S_CONTROLS: usize = 51;
+pub const H_LOOK: usize = 52;
+const S_LOOK_LIVE: usize = 53;
+const S_LOOK_BUDGET: usize = 54;
+const DR_DRILL: usize = 55;
+const DR_ADAPT: usize = 56;
+const DR_RATE: usize = 57;
+const DR_MIRROR: usize = 58;
+const DR_JIT_PCT: usize = 59;
+const DR_JIT_X: usize = 60;
+const DR_START: usize = 61;
+const DR_STOP: usize = 62;
+const DR_SUMMARY: usize = 63;
+// Geno and fighter controls (appended: earlier ids keep their numbers)
+const G_FLY: usize = 64;
+const G_FLY_CLEAR: usize = 65;
+const G_KI: usize = 66;
+const G_RELOAD: usize = 67;
+const C_TAP: usize = 68;
+const C_LAYOUT: usize = 69;
+const C_EX1: usize = 70;
+const C_EX4: usize = 73;
+const C_SAVE: usize = 74;
+pub const N_IDS: usize = 75;
 
 pub const CONTROL: &[(&str, i32)] = &[("Live pad", 0), ("Stand", 1), ("Crouch", 2), ("Jump", 3), ("Shield", 4), ("CPU level", 5), ("Recording", 6)];
 pub const BLOCK: &[(&str, i32)] = &[("None", 0), ("All", 1), ("After first hit", 2), ("Random", 3)];
@@ -133,6 +180,11 @@ const LEDGE: &[(&str, i32)] = &[("None", 0), ("Stand", 1), ("Roll", 2), ("Attack
 const PORTS: &[(&str, i32)] = &[("P1", 0), ("P2", 1)];
 const ORDER: &[(&str, i32)] = &[("Ordered", 0), ("Random", 1), ("Weighted", 2)];
 const PRESETS: &[(&str, i32)] = &[("Clean", 0), ("Frame data", 1), ("Full", 2)];
+pub const COUNTER: &[(&str, i32)] = &[("None", 0), ("Jump", 1), ("Attack", 2), ("Shield", 3), ("Spot-dodge", 4), ("Grab", 5), ("Recording", 15)];
+/// The compiled-in drills in the host's order (melee/src/lab/drills), then files from the lab folder's drills/.
+pub const DRILLS: &[(&str, i32)] = &[("Punish on shield", 0), ("Tech chase", 1), ("Hit confirm", 2), ("Ledge getup", 3), ("Out of shield", 4), ("User drill 1", 5), ("User drill 2", 6), ("User drill 3", 7)];
+const ADAPT: &[(&str, i32)] = &[("Off", 0), ("Weak spots", 1)];
+const MIRROR: &[(&str, i32)] = &[("Off", 0), ("Always", 1), ("Random", 2)];
 const SLOTS8: &[(&str, i32)] = &[("1", 0), ("2", 1), ("3", 2), ("4", 3), ("5", 4), ("6", 5), ("7", 6), ("8", 7)];
 
 const fn r(id: usize, name: &'static str, kind: K, help: &'static str) -> RowDef {
@@ -140,7 +192,7 @@ const fn r(id: usize, name: &'static str, kind: K, help: &'static str) -> RowDef
 }
 
 pub const DUMMY_ROWS: &[RowDef] = &[
-    r(D_CONTROL, "Control", K::Choice(CONTROL), "What drives the dummy between reactions.|Live pad: its own controller (or nobody).|Recording: loops the Record tab's slot."),
+    r(D_CONTROL, "Control", K::Choice(CONTROL), "What drives the dummy between reactions.|Live pad: its own controller (or nobody;|a CPU slot: its AI). Recording: loops the|Record tab's slot. On a CPU slot every option|but CPU level takes over from the AI."),
     r(D_LEVEL, "CPU level", K::Slider(1, 9, 1, ""), "The retail CPU level, for Control: CPU level.|The port must be a CPU at character select."),
     r(D_BLOCK, "Block", K::Choice(BLOCK), "Shield while you attack nearby.|After first hit: blocks for 2 s after a hit.|Random: blocks at the chance below."),
     r(D_BLOCK_PCT, "Block chance", K::Slider(10, 100, 10, "%"), "How often Block: Random shields."),
@@ -154,6 +206,10 @@ pub const DUMMY_ROWS: &[RowDef] = &[
     r(D_GETUP, "Getup", K::Choice(GETUP), "From lying down after a missed tech:|stand, roll in, roll away or getup attack."),
     r(D_LEDGE, "Ledge", K::Choice(LEDGE), "From hanging on the ledge: stand, roll,|attack, jump or drop."),
     r(D_WAKE_DELAY, "Getup delay", K::Slider(0, 60, 1, "f"), "Frames the dummy waits on the ground or|the ledge before its option."),
+    r(D_COUNTER, "Counter", K::Choice(COUNTER), "What the dummy does once it can act after|a hit or shield stun (TM-CE). Recording:|plays the Record tab's slot."),
+    r(D_RESTORE, "Auto-restore", K::Slider(0, 120, 10, "f"), "Reload the last saved / loaded slot this|many frames after the counter action|starts (0 off)."),
+    r(D_LOCKOUT, "Tech lockout", K::Slider(0, 100, 10, "%"), "How often the dummy presses tech too early|and is locked out (the game's 40-frame|rule): a missed tech you must react to."),
+    r(D_SDI_N, "SDI inputs", K::Slider(0, 8, 1, ""), "SDI pushes per hit (0: one every interval|for the whole hitlag)."),
     r(D_PERCENT, "Percent", K::SliderApply(0, 300, 10, "%"), "Pick a percent, A sets it on the dummy now.|Setting it forks the timeline."),
 ];
 const RECORD_ROWS: &[RowDef] = &[
@@ -186,6 +242,7 @@ const HUD_ROWS: &[RowDef] = &[
     r(H_COMBO, "Combo panel", K::Toggle, "Hits, damage and the move chain."),
     r(H_INPUT, "Input display", K::Toggle, "P1's stick, buttons and input history."),
     r(H_HINTS, "Button hints", K::Toggle, "The key caps at the bottom right."),
+    r(H_LOOK, "Lookahead", K::Toggle, "True frame advantage and the DI fan,|simulated ahead on every hit and shield."),
 ];
 const SESSION_ROWS: &[RowDef] = &[
     r(S_SLOT, "Save slot", K::Slider(1, 16, 1, ""), "The slot D-down saves to and D-up loads."),
@@ -194,9 +251,67 @@ const SESSION_ROWS: &[RowDef] = &[
     r(S_RESET, "Reset positions", K::Action, "Both fighters back to the middle, P1 left."),
     r(S_SWAP, "Swap sides", K::Action, "P1 and P2 trade places."),
     r(S_CMD, "Command bar", K::Action, "Type part of a setting or action and press|Enter (keyboard). X opens it from any tab."),
+    r(S_CONTROLS, "Controls", K::Action, "Every LAB button, on one page.|B closes it."),
+    r(S_LOOK_LIVE, "Lookahead live", K::Toggle, "Simulate ahead while playing too (else|only when frozen). Costs frame time."),
+    r(S_LOOK_BUDGET, "Lookahead budget", K::Slider(1, 8, 1, " ms"), "Time per frame the live lookahead may use."),
     r(S_RESUME, "Resume", K::Action, "Close the menu (B or START does too)."),
 ];
-pub const TABS: [(&str, &[RowDef]); 5] = [("Dummy", DUMMY_ROWS), ("Record", RECORD_ROWS), ("Display", DISPLAY_ROWS), ("HUD", HUD_ROWS), ("Session", SESSION_ROWS)];
+const DRILL_ROWS: &[RowDef] = &[
+    r(DR_DRILL, "Drill", K::Choice(DRILLS), "A drill loops one situation: each attempt|reloads the start, the dummy picks an option|and your answer is scored. User drills are|.drill files in the lab folder's drills/."),
+    r(DR_START, "Start drill", K::Action, "Starts from the state right now (set it up,|then start). The menu closes and the game|runs."),
+    r(DR_STOP, "Stop drill", K::Action, "The dummy keeps the drill's settings."),
+    r(DR_ADAPT, "Adaptive", K::Choice(ADAPT), "Weak spots: the dummy picks the options you|fail against more often (a failure adds the|rate below, a success takes one away)."),
+    r(DR_RATE, "Adapt rate", K::Slider(1, 4, 1, ""), "Weight added to an option per failure."),
+    r(DR_MIRROR, "Mirror on load", K::Choice(MIRROR), "Flip the state across the stage centre on|every load and attempt (Random: half of|them). Forks the timeline."),
+    r(DR_JIT_PCT, "Jitter percent", K::Slider(0, 60, 5, "%"), "The dummy's percent moves by up to this|on every load and attempt."),
+    r(DR_JIT_X, "Jitter position", K::Slider(0, 40, 5, ""), "The dummy moves sideways by up to this|many units on every load and attempt."),
+    r(DR_SUMMARY, "Session summary", K::Action, "Results per option, frames late, and the|trend over earlier sessions. B closes it."),
+];
+const FLY: &[(&str, i32)] = &[("Off", 0), ("On", 1), ("Place", 2)];
+const GENO_ROWS: &[RowDef] = &[
+    r(G_FLY, "Fly", K::Choice(FLY), "Noclip flight for your fighter (On), or|Place: fly to a spot and drop there.|Offline only."),
+    r(G_FLY_CLEAR, "Clear fly target", K::Action, "Drops the fly cursor's target and attack."),
+    r(G_KI, "Ki", K::SliderApply(0, 100, 10, ""), "Pick a ki value, A sets your combo meter.|Only fighters with a combo graph have one."),
+    r(G_RELOAD, "Reload geno.json", K::Action, "Re-reads every mod's geno.json. A change of|layout restarts the match; else the fighters|are re-applied. Offline only."),
+    r(C_TAP, "Tap jump off", K::Toggle, "Up on the stick does not jump (X / Y still|do). Saved for every fighter; applies from|the next match."),
+    r(C_LAYOUT, "Layout", K::Slider(0, 15, 1, ""), "Your fighter's button layout (only fighters|whose Geno define declares layouts). The|name shows when it changes."),
+    r(C_EX1, "Extra 1", K::Toggle, "Your fighter's first opt-in extra."),
+    r(C_EX1 + 1, "Extra 2", K::Toggle, "The second opt-in extra."),
+    r(C_EX1 + 2, "Extra 3", K::Toggle, "The third opt-in extra."),
+    r(C_EX4, "Extra 4", K::Toggle, "The fourth opt-in extra."),
+    r(C_SAVE, "Save controls", K::Action, "Saves the controls above for your fighter.|They apply from the next match."),
+];
+pub const TABS: [(&str, &[RowDef]); 7] = [("Dummy", DUMMY_ROWS), ("Record", RECORD_ROWS), ("Display", DISPLAY_ROWS), ("HUD", HUD_ROWS), ("Session", SESSION_ROWS), ("Drills", DRILL_ROWS), ("Geno", GENO_ROWS)];
+
+/// Every LAB control: (buttons, what they do). The one list of them: the Controls page (Session tab) draws it and
+/// lib.rs's header points here, so the two cannot drift.
+pub const CONTROLS: &[(&str, &str)] = &[
+    ("START tap", "freeze / resume"),
+    ("D-left / D-right", "frozen: step -1 / +1 frame (hold to repeat)"),
+    ("Z + L / Z + R", "frozen: step -10 / +10 frames"),
+    ("Z + A", "frozen: take over (go live from this frame)"),
+    ("D-down", "save to the current slot (on release)"),
+    ("D-up", "load the current slot"),
+    ("Z + D-left / D-right", "pick the save slot"),
+    ("Z + D-up", "next HUD preset"),
+    ("D-down + START", "the settings overlay"),
+    ("Hold START", "this menu"),
+    ("Hold Z (frozen)", "the radial quick menu: stick picks, release runs"),
+    ("X (in the menu)", "the command bar: type, Enter runs"),
+    ("L / R", "menu: previous / next tab"),
+    ("Up / down", "menu: row"),
+    ("Left / right", "menu: change the value"),
+    ("A", "menu: apply / run"),
+    ("B / START", "menu: close (B closes this page)"),
+    ("L + R + A + START", "the retail pause (quit the match)"),
+    ("HUD tab: Lookahead", "the lookahead panel: true advantage, DI fan on hit / shield"),
+    ("Session: Lookahead live", "also simulate ahead while playing (budget: ms per frame)"),
+    ("Menu > Drills > Start drill", "loop a drill from the state now; a toast scores each attempt"),
+    ("Menu > Drills > Session summary", "per option results and the trend (B closes)"),
+    ("Menu > Geno > Fly", "noclip flight / place (offline)"),
+    ("Menu > Geno > Reload geno.json", "hot reload of every mod's geno.json (offline)"),
+    ("Menu > Geno > Save controls", "Tap jump, layout and extras for your fighter (next match)"),
+];
 
 /// The radial's 8 actions, clockwise from up (spec 4).
 const RADIAL: [&str; 8] = ["Save", "Load", "Reset", "Record", "Play", "Mirror", "Swap", "Menu"];
@@ -230,13 +345,19 @@ pub struct Menu {
     pub weights: [i32; 8],
     pub recording: i32,
     pub keys: [u32; 32],
+    /// the Controls page is open
+    pub controls: bool,
+    /// the drill session summary page is open
+    pub summary: bool,
+    /// the Controls page's first visible CONTROLS row
+    pub controls_top: usize,
 }
 
 impl Menu {
     pub const fn new() -> Menu {
         Menu {
             open: false, port: 0, tab: 0, row: 0, scroll: 0, resume: false, hold: (0, 0), radial: false, rport: 0, rsel: -1, z_frames: 0, z_combo: false,
-            cmd: false, kcap: 0, q: Txt::new(), hits: [(0, 0, 0); 8], n_hits: 0, csel: 0, recs: [0; 8], weights: [1; 8], recording: -1, keys: [0; 32],
+            cmd: false, kcap: 0, q: Txt::new(), hits: [(0, 0, 0); 8], n_hits: 0, csel: 0, recs: [0; 8], weights: [1; 8], recording: -1, keys: [0; 32], controls: false, summary: false, controls_top: 0,
         }
     }
 }
@@ -258,8 +379,14 @@ impl Lab {
     /// The port the Dummy tab edits: the opener's opponent. Online the opener is this peer's player (the pads the
     /// mod reads are this machine's controllers, not the match ports).
     pub fn dport(&self) -> usize {
-        let me = if self.online { self.status[8] as usize } else { self.menu.port as usize };
-        1 - (me & 1)
+        let me = if self.online { self.status[8] as usize } else { self.menu.port as usize } & 3;
+        let pref = 1 - (me & 1);
+        // P1 + P3 (or a dummy on P3 / P4): the first other port with a fighter, so a setting never goes nowhere
+        let present = |p: usize| unsafe { gd_lab_fighter(p as u32, core::ptr::null_mut(), 0) } >= 0;
+        if present(pref) {
+            return pref;
+        }
+        (0..4).find(|&p| p != me && present(p)).unwrap_or(pref)
     }
 
     pub fn val(&self, id: usize) -> i32 {
@@ -283,10 +410,27 @@ impl Lab {
         }
     }
 
+    /// The trainer's settings as commands: the adaptive mode and the load variation (on the dummy).
+    pub fn drill_cfg(&mut self) {
+        unsafe {
+            gd_lab_adapt(self.vals[DR_ADAPT] as u32, self.vals[DR_RATE].clamp(1, 4) as u32);
+            gd_lab_load_vary(self.dport() as u32, self.vals[DR_MIRROR] as u32, self.vals[DR_JIT_PCT] as u32, self.vals[DR_JIT_X] as u32);
+        }
+    }
+
     pub fn menu_init(&mut self) {
-        self.dv = [D_DEFAULT; 2];
+        self.dv = [D_DEFAULT; 4];
+        self.vals[DR_ADAPT] = 1;
+        self.vals[DR_RATE] = 2;
         self.vals[R_LOOP] = 1;
         self.vals[S_SLOT] = 1;
+        self.vals[S_LOOK_BUDGET] = 4;
+    }
+
+    /// The lookahead settings (local: never a command): auto on hit / shield, live per the toggle.
+    pub fn look_cfg(&mut self) {
+        let live = if self.vals[S_LOOK_LIVE] != 0 { LOOK_LIVE } else { 0 };
+        unsafe { gd_lab_lookahead_cfg(LOOK_AUTO | live, self.vals[S_LOOK_BUDGET].clamp(1, 8) as u32 * 1000) };
     }
 
     /// Show mask and overlay toggles from the preset (spec 5.1).
@@ -301,6 +445,7 @@ impl Lab {
             self.vals[id] = full as i32;
         }
         self.vals[H_HINTS] = (p != FRAMEDATA) as i32;
+        self.vals[H_LOOK] = fd as i32;
         self.vals[V_HIT] = full as i32;
         self.apply_overlay();
     }
@@ -363,6 +508,24 @@ impl Lab {
                 D_PERCENT => {
                     gd_lab_set_percent(p, d[D_PERCENT] as f32);
                 }
+                D_COUNTER => {
+                    let o = opt(COUNTER, D_COUNTER);
+                    let rec = if o == 15 { self.menu.recs[self.vals[R_SLOT] as usize & 7] } else { 0 };
+                    if o == 15 && rec == 0 {
+                        self.toast_slot("Record slot ", self.vals[R_SLOT] + 1, " is empty");
+                        return;
+                    }
+                    gd_lab_reaction(p, RK_COUNTER, o, (rec & 0xFF) << 24);
+                }
+                D_RESTORE => {
+                    gd_lab_dummy_opt(p, 1, d[D_RESTORE] as u32);
+                }
+                D_LOCKOUT => {
+                    gd_lab_dummy_opt(p, 2, d[D_LOCKOUT] as u32);
+                }
+                D_SDI_N => {
+                    gd_lab_dummy_opt(p, 3, d[D_SDI_N] as u32);
+                }
                 _ => {}
             }
         }
@@ -374,6 +537,15 @@ impl Lab {
             return;
         }
         let d = &mut self.dv[port];
+        if op == OP_DUMMY_OPT {
+            match a {
+                1 => d[D_RESTORE] = b as i32,
+                2 => d[D_LOCKOUT] = b as i32,
+                3 => d[D_SDI_N] = b as i32,
+                _ => {}
+            }
+            return;
+        }
         if op == OP_CPU {
             d[D_CONTROL] = find(CONTROL, a as i32);
             if a == 5 {
@@ -412,6 +584,7 @@ impl Lab {
                 d[D_LEDGE] = find(LEDGE, o);
                 d[D_WAKE_DELAY] = delay;
             }
+            RK_COUNTER => d[D_COUNTER] = find(COUNTER, o),
             _ => {}
         }
     }
@@ -567,6 +740,50 @@ impl Lab {
             S_SWAP => self.swap(),
             S_CMD => self.open_cmd(),
             S_RESUME => self.close_menu(),
+            S_CONTROLS => {
+                self.menu.controls = true;
+                self.menu.controls_top = 0;
+            }
+            DR_START => {
+                let recs = (0..4).fold(0u32, |m, s| m | (self.menu.recs[s] & 0xFF) << (s * 8));
+                let r = unsafe { gd_lab_drill(self.vals[DR_DRILL] as u32, self.dport() as u32, recs) };
+                if r < 0 {
+                    self.toast_s(if self.vals[DR_DRILL] >= 5 { "No such drill file" } else { "Drill refused" });
+                } else {
+                    self.drill_cfg();
+                    self.drill_seen = -1;
+                    self.menu.resume = true;
+                    self.close_menu();
+                }
+            }
+            DR_STOP => {
+                unsafe { gd_lab_drill(0xFFFF, self.dport() as u32, 0) };
+                self.toast_s("Drill stopped");
+            }
+            DR_SUMMARY => self.menu.summary = true,
+            G_FLY_CLEAR => {
+                unsafe { gd_geno_fly_clear(self.menu.port) };
+                self.toast_s("Fly target cleared");
+            }
+            G_KI => {
+                // ComboInfo what 3: the route count, negative without a combo graph
+                if unsafe { gd_geno_combo_info(self.menu.port, 3) } < 0 {
+                    self.toast_s("No combo meter on this fighter");
+                } else {
+                    unsafe { gd_geno_combo_ki(self.menu.port, self.vals[G_KI] * 100) };
+                    let mut m = Txt::new();
+                    m.s("Ki ").i(self.vals[G_KI]);
+                    self.toast(&m, None);
+                }
+            }
+            G_RELOAD => {
+                let r = unsafe { gd_geno_reload() };
+                self.toast_s(if r < 0 { "Reload: offline only" } else { "Reloading geno.json" });
+            }
+            C_SAVE => {
+                let r = unsafe { gd_controls_set(self.menu.port, self.controls_word()) };
+                self.toast_s(if r < 0 { "Controls not saved" } else { "Controls saved for the next match" });
+            }
             _ => {}
         }
     }
@@ -585,6 +802,20 @@ impl Lab {
             }
             V_HIT..=V_DI => self.apply_overlay(),
             S_SLOT => self.slot = (self.vals[S_SLOT] - 1).clamp(0, 15) as u32,
+            S_LOOK_LIVE | S_LOOK_BUDGET => self.look_cfg(),
+            D_COUNTER..=D_SDI_N => {
+                let p = self.dport();
+                self.send_dummy(p, id);
+            }
+            DR_ADAPT | DR_RATE | DR_MIRROR | DR_JIT_PCT | DR_JIT_X => self.drill_cfg(),
+            G_FLY => {
+                let r = unsafe { gd_geno_fly(self.menu.port, self.vals[G_FLY]) };
+                if r < 0 {
+                    self.toast_s("Fly: offline only");
+                }
+            }
+            C_LAYOUT => self.controls_toast(0, self.vals[C_LAYOUT] as u32),
+            C_EX1..=C_EX4 => self.controls_toast(1, (id - C_EX1) as u32),
             _ => {}
         }
     }
@@ -612,6 +843,44 @@ impl Lab {
         self.menu.resume = resume;
         self.menu.hold = (0, 0);
         self.rec_lens();
+        self.geno_load(port);
+    }
+
+    /// The Geno tab's values from the host: the fly mode and the saved fighter controls of `port`.
+    fn geno_load(&mut self, port: u32) {
+        let fly = unsafe { gd_geno_fly_get(port) };
+        self.vals[G_FLY] = fly.max(0);
+        let w = unsafe { gd_controls_get(port) };
+        let w = if w < 0 { 0 } else { w as u32 };
+        self.vals[C_TAP] = (w & 1) as i32;
+        self.vals[C_LAYOUT] = ((w >> 2) & 15) as i32;
+        for i in 0..4 {
+            self.vals[C_EX1 + i] = ((w >> (8 + i)) & 1) as i32;
+        }
+    }
+
+    /// The controls word the Geno tab's rows describe.
+    fn controls_word(&self) -> u32 {
+        let mut w = (self.vals[C_TAP] & 1) as u32 | ((self.vals[C_LAYOUT] & 15) as u32) << 2;
+        for i in 0..4 {
+            w |= ((self.vals[C_EX1 + i] & 1) as u32) << (8 + i);
+        }
+        w
+    }
+
+    /// A toast naming layout / extra `index` of the opener's fighter (field 0 layouts, 1 extras), or saying it has none.
+    fn controls_toast(&mut self, field: u32, index: u32) {
+        let port = self.menu.port;
+        let mut b = [0u8; 32];
+        let n = unsafe { gd_controls_name(port, field, index, b.as_mut_ptr(), b.len() as u32) };
+        let mut m = Txt::new();
+        if n > 0 {
+            m.s(if field == 0 { "Layout: " } else { "Extra: " }).s(core::str::from_utf8(&b[..n as usize]).unwrap_or("?"));
+        } else {
+            let have = unsafe { gd_controls_count(port, field) };
+            m.s(if field == 0 { "Layouts: " } else { "Extras: " }).i(have.max(0)).s(" on this fighter");
+        }
+        self.toast(&m, None);
     }
 
     pub fn close_menu(&mut self) {
@@ -619,6 +888,8 @@ impl Lab {
             self.close_cmd();
         }
         self.menu.open = false;
+        self.menu.controls = false;
+        self.menu.summary = false;
         if self.menu.resume {
             unsafe { gd_lab_pause(0) };
         }
@@ -659,7 +930,6 @@ impl Lab {
             }
             return true;
         }
-        let rows = TABS[self.menu.tab].1;
         // stick or D-pad, with repeat (15 frames, then every 4)
         let mut dir = held & (DL | DR | DU | DD);
         if stick.1 > 50 { dir |= DU; }
@@ -673,6 +943,21 @@ impl Lab {
             self.menu.hold = (dir, 0);
             dir != 0
         };
+        if self.menu.controls || self.menu.summary {
+            if edge & (BB | START) != 0 {
+                self.menu.controls = false;
+                self.menu.summary = false;
+            } else if self.menu.controls && fire {
+                // up/down scroll the Controls page (the draw clamps to the last full page)
+                if dir & DU != 0 {
+                    self.menu.controls_top = self.menu.controls_top.saturating_sub(1);
+                } else if dir & DD != 0 {
+                    self.menu.controls_top += 1;
+                }
+            }
+            return true;
+        }
+        let rows = TABS[self.menu.tab].1;
         if edge & (BB | START) != 0 {
             self.close_menu();
             return true;
@@ -712,6 +997,15 @@ impl Lab {
             match rd.kind {
                 K::Toggle => self.step(rd.id, rd.kind, 1),
                 K::Action | K::SliderApply(..) => self.activate(rd.id),
+                // the footer says "A apply": a dummy row re-sends its value (left / right already sent it) and says
+                // which port it went to, so a setting that seems to do nothing shows where it landed
+                _ if rd.id < D_N => {
+                    let p = self.dport();
+                    self.send_dummy(p, rd.id);
+                    let mut m = Txt::new();
+                    m.s("P").i(p as i32 + 1).s(": ").s(rd.name).s(" applied");
+                    self.toast(&m, None);
+                }
                 _ => {}
             }
             self.rec_lens();
@@ -952,8 +1246,35 @@ impl Lab {
         let mut who = Txt::new();
         who.s("dummy P").i(self.dport() as i32 + 1);
         self.enc.text_ex(x0 + w, y0 + 8.0, ROLE_LABEL, mu, ALIGN_RIGHT, 0.0, who.as_str());
-        // rows
         let by = y0 + 34.0;
+        if self.menu.controls {
+            // the Controls page: the CONTROLS table, buttons left, action right; the rows that fit the panel,
+            // scrolled with up/down, with a "more" hint at each clipped end
+            let ph = h - 34.0;
+            self.panel(x0, by, w, ph);
+            self.enc.text(x0 + 16.0, by + 12.0, ROLE_TITLE, tx, "Controls");
+            let vis = (((ph - 40.0 - 24.0) / 17.0) as usize).max(1);
+            let top = self.menu.controls_top.min(CONTROLS.len().saturating_sub(vis));
+            self.menu.controls_top = top;
+            for (i, (k, what)) in CONTROLS.iter().enumerate().skip(top).take(vis) {
+                let ry = by + 40.0 + (i - top) as f32 * 17.0;
+                self.enc.text(x0 + 16.0, ry, ROLE_VALUE, tx, k);
+                self.enc.text(x0 + 230.0, ry, ROLE_BODY, mu, what);
+            }
+            if top > 0 {
+                self.enc.text_ex(x0 + w * 0.5, by + 14.0, ROLE_LABEL, mu, ALIGN_CENTER, 0.0, "Up: more");
+            }
+            if top + vis < CONTROLS.len() {
+                self.enc.text_ex(x0 + w * 0.5, by + ph - 20.0, ROLE_LABEL, mu, ALIGN_CENTER, 0.0, "Down: more");
+            }
+            self.enc.text_ex(x0 + w - 16.0, by + 14.0, ROLE_LABEL, mu, ALIGN_RIGHT, 0.0, "B close");
+            return;
+        }
+        if self.menu.summary {
+            self.draw_summary(x0, by, w, h - 34.0);
+            return;
+        }
+        // rows
         let lw = 500.0;
         self.panel(x0, by, lw, h - 34.0);
         let rows = TABS[self.menu.tab].1;

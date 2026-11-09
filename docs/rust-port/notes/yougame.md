@@ -104,3 +104,18 @@ a different protocol (notes/net.md), so it is a separate project and needs Crunc
 4. Which caps a Rust build should claim once we draw notices ourselves (`notice`, `join`).
 5. Whether the Rust engine ever goes into YouGame's sandboxed player box at all, or only standalone (then section 3
    can be dropped).
+
+## 7. Update 2026-11-08 (branch `port/ygpack`): the Patches desktop build
+
+Read from the installed desktop app's launch code (app 0.13) and the public publish.md / sdk.md; details and the
+listing draft in `yougame-listing.md`.
+- The spec schema is now known: fields `version` (1), `args` (<=64, placeholders `{build}` `{data}` `{disc}` only),
+  `disc` (bool), `embed` {class,title}, `controllers` ("mirror"|"none"), `net` ("internet"|"yougame"|"none"; a spec
+  WITHOUT `net` runs offline), `memoryMb` (512..16384, default 4096). Unknown fields are refused.
+- `YOUGAME_DATA` is `<app>/data/<game id>`, one per listing, kept across build updates (open decision 3 above:
+  settled), and it is the working directory (crash logs land there). The build folder is read-only.
+- Bridge lines may be up to 48 MiB (the app's StdioBridge limit), so a save file's base64 fits in one line.
+- New env defaults under YOUGAME_DATA: `MELEE_AUDIO_CFG` (audio.cfg was beside the exe: read-only there),
+  `MELEE_MODS_DIR`, `MELEE_NUCLEUS_DIR`, `MELEE_COSMETICS_DIR`.
+- Saves: `yougame_saves.rs` (hello, saveFileList at start, coalesced uploads, upload + wait at exit).
+- Test: `bridge_test.py` now also checks the spec, a wrong disc, and save sync against a fake account.

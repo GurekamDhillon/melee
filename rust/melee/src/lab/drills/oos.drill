@@ -1,0 +1,13 @@
+# Out of shield: hit the shielding dummy; it answers out of shield. Punish its option, don't get punished.
+name: Out of shield
+about: Hit the dummy's shield. It jumps, nairs, grabs, up-Bs, spot-dodges or rolls; punish it within 35 frames.
+start: here
+cpu: shield
+adapt: oos
+options: jump nair grab upb spotdodge roll
+weights: 4 4 4 4 4 4
+trigger: dummy_oos
+success: hit 35
+par: 8
+timeout: 480
+loop: after 45

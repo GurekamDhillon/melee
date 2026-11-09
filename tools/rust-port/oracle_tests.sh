@@ -13,6 +13,11 @@ export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-Zmerge-functions=disabled"
 # same twins after rustc: fnsym::require_unmerged fails in every harness on Windows. Keep them apart there too.
 case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) export RUSTFLAGS="$RUSTFLAGS -Clink-arg=/OPT:NOICF" ;; esac
 export CARGO_TARGET_DIR="${ORACLE_TARGET_DIR:-$repo/build/cargo-oracle}"
+# the disc tests (melee_core/test_support/disc.rs) fail without GW_ISO_VANILLA unless MELEE_SKIP_DISC_TESTS=1
+if [ -z "${GW_ISO_VANILLA:-}" ]; then
+  if [ -n "${MELEE_SKIP_DISC_TESTS:-}" ]; then echo "oracle_tests: WARNING no disc - the disc tests are SKIPPED, not passed" >&2
+  else echo "oracle_tests: no disc - the disc tests will FAIL (set GW_ISO_VANILLA, or MELEE_SKIP_DISC_TESTS=1 to skip them)" >&2; fi
+fi
 # one test at a time inside each binary: the harnesses keep their state in `static mut`s (the log, the arena, the
 # fn registry), and libtest's parallel threads race on it (tu_ftkirby segfaulted that way)
 export RUST_TEST_THREADS="${RUST_TEST_THREADS:-1}"

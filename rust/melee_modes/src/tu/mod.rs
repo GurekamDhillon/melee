@@ -33,6 +33,7 @@ macro_rules! ext_fns_h {
 pub mod gmapproach;
 pub mod gmboot;
 pub mod gmcamera;
+pub mod tag_swap;
 // Per-TU native ports of the game's gm/mn/lb/if translation units (one module per `.c` file,
 // `pub mod <tu_stem>;`). Each module's `ext` lists the callees of unported TUs as settable
 // hooks named like the C functions (unset: panics "TODO"); the oracle tests in
@@ -182,6 +183,7 @@ pub mod geno_game;
 pub mod mex_tests;
 pub mod geno_tests;
 pub mod script_game;
+pub mod stage_hop;
 pub mod textlib;
 pub mod ifstock;
 pub mod soundtest;

@@ -1421,7 +1421,7 @@ pub(crate) fn window_title(spec: Option<&str>) -> String {
     if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
         return t;
     }
-    let id = format!("melee [{} {}]", env!("MELEE_GIT_WHERE"), env!("MELEE_GIT_HASH"));
+    let id = format!("melee [{} {}{}]", env!("MELEE_GIT_WHERE"), env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix());
     let Some(spec) = spec else { return id };
     // "a/cpu9,b/cpu9,STAGE": fighters without their slot kind, then the stage first
     let parts: Vec<&str> = spec.split(',').map(str::trim).collect();
@@ -1529,9 +1529,28 @@ pub fn play(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     crate::crash::note_disc(&iso);
+    // The player's own disc (YouGame: the listing's disc, `{disc}` in yougame-native.json): check it is the one the
+    // engine plays before anything boots, with a message the player can act on (never the path).
+    let yg = melee_platform::yougame::active();
+    if yg || has("--verify-disc") {
+        if let Err(e) = crate::disc::identify(&iso) {
+            crate::disc::tell_player(&format!("This disc image can't be played: {e}. Choose your disc again on the game's page."));
+            return ExitCode::from(4);
+        }
+    }
     if let Err(e) = crate::disc::Disc::open(&iso) {
-        eprintln!("play: {e}");
+        if yg {
+            crate::disc::tell_player("The disc image could not be read. Choose your disc again on the game's page.");
+        } else {
+            eprintln!("play: {e}");
+        }
         return ExitCode::FAILURE;
+    }
+    // Optional second disc (Brawl) and the first-run build step (firstrun.rs): a failure is told, Melee still plays.
+    let brawl = get("--brawl-disc").or_else(|| std::env::var("MELEE_BRAWL_DISC").ok()).filter(|s| !s.is_empty());
+    match crate::firstrun::run(brawl.as_deref(), &mut |f, l| eprintln!("first-run: {:3.0}% {l}", f * 100.0)) {
+        Ok(step) => eprintln!("first-run: {step:?}"),
+        Err(e) => crate::disc::tell_player(&format!("Brawl characters were not built: {e}. Melee plays without them.")),
     }
     let shot_dir = get("--shot-dir").map(PathBuf::from).or_else(|| has("--shots").then(|| PathBuf::from("target/shots")));
     if let Some(d) = &shot_dir {
@@ -1639,6 +1658,9 @@ pub fn play(args: &[String]) -> ExitCode {
         // netplay: connect first (blocking: the room agrees the match), then boot straight into it
         let mut net = None;
         let mut np_scene = feed.as_ref().and_then(|f: &crate::play_net::ReplayFeed| f.r.meta("np_scene").map(str::to_string));
+        if let Some(f) = feed.as_ref() {
+            crate::play_net::apply_controls_meta(&f.r);
+        }
         let mut seed = feed.as_ref().and_then(|f| f.r.meta("seed").and_then(|s| s.parse::<u32>().ok()));
         // the guest plays by the host's rules (sent in the agreed scene): its own --stocks / --time-secs / --items are
         // replaced, for the presets and for the replay's boot options
@@ -1674,7 +1696,7 @@ pub fn play(args: &[String]) -> ExitCode {
                         let mut a = Vec::new();
                         let mut i = 0;
                         while i < eff_args.len() {
-                            if matches!(eff_args[i].as_str(), "--stocks" | "--time-secs" | "--items") {
+                            if matches!(eff_args[i].as_str(), "--stocks" | "--time-secs" | "--items" | "--cpu") {
                                 i += 2;
                                 continue;
                             }
@@ -1747,7 +1769,13 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
             }
             match crate::play_net::scenario_of_scene(sc) {
-                Ok(s) => presets.scenario = Some(s),
+                Ok(s) => {
+                    let who: Vec<String> = s.players.iter().enumerate().filter_map(|(i, p)| p.map(|p| {
+                        format!("P{} ck {} {}", i + 1, p.ckind, if p.slot_type == 1 { format!("CPU {}", p.cpu_level) } else { "human".into() })
+                    })).collect();
+                    log(&format!("netplay scene players: {}", who.join(", ")));
+                    presets.scenario = Some(s);
+                }
                 Err(e) => {
                     eprintln!("play: {e}");
                     return ExitCode::FAILURE;
@@ -1788,7 +1816,7 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
             }
             if rp.rec.is_none() {
-                let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), env!("MELEE_GIT_HASH").to_string())];
+                let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), format!("{}{}", env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix()))];
                 if np_css {
                     meta.push(("np_css".into(), "1".into()));
                 }
@@ -1796,6 +1824,7 @@ pub fn play(args: &[String]) -> ExitCode {
                     meta.push(("np_scene".into(), sc.clone()));
                 }
                 meta.push(("np_role".into(), "host".into()));
+                meta.extend(crate::play_net::controls_meta());
                 rp.rec = Some((String::new(), crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() }));
             }
         }
@@ -1807,7 +1836,7 @@ pub fn play(args: &[String]) -> ExitCode {
             } else {
                 path
             };
-            let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), env!("MELEE_GIT_HASH").to_string())];
+            let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), format!("{}{}", env!("MELEE_GIT_HASH"), crate::play_net::dirty_suffix()))];
             if np_css {
                 meta.push(("np_css".into(), "1".into()));
             }
@@ -1817,6 +1846,7 @@ pub fn play(args: &[String]) -> ExitCode {
             if let Some(n) = &net {
                 meta.push(("np_role".into(), n.tag().into()));
             }
+            meta.extend(crate::play_net::controls_meta());
             let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() };
             rp.rec = Some((path, r));
         }

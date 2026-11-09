@@ -2,6 +2,8 @@
 # Two `melee play --netplay` instances on loopback (127.0.0.1), scripted pads (no OS input), a 60 s match.
 #   bash tools/rust-port/netplay/play_pair.sh NAME LAG_MS LOSS_PCT [--headless] [extra play args]
 # NP_MATCH_HOST / NP_MATCH_GUEST: the peers' --match (default falcon,32 / fox; e.g. geno:<key>,32 with --mods DIR)
+# NP_HOST_ENV / NP_GUEST_ENV: extra NAME=VALUE words for one peer only (e.g. its own MELEE_CONTROLS_CFG); the replay of
+# the host's recording runs with NP_HOST_ENV (a sim mod the match ran with, MELEE_WASM_MODS, must be there to replay it)
 # Each peer delays its INBOUND datagrams by LAG_MS and drops LOSS_PCT % of them (--np-lag-ms / --np-loss-pct), so
 # the round trip is 2 x LAG_MS. Writes $NP_SCRATCH/NAME-{host,guest}.{log,csv,mrpl}; compares the per-frame final hash
 # CSVs of both peers and plays the host's recorded replay back to the same final hash. Exit 0 = all equal.
@@ -19,7 +21,7 @@ bind="${NP_BIND:-127.0.0.1}"; case "$bind" in *:*) dial="[$bind]:$port";; *) dia
 srv=(); [ -n "${NP_SERVER:-}" ] && { srv=(--np-server "$NP_SERVER"); case "$bind" in *:*) ;; *) srv+=(--np-lan "$bind");; esac; }
 export MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_SHOW_FPS=1
 common=(play --iso "$GW_ISO_VANILLA" --time-secs 60 --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames 9000 "$@")
-MELEE_WINDOW_TITLE="netplay: $name host" MELEE_PAD_SCRIPT="${NP_HOST_SCRIPT:-$here/np_fight.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
+env ${NP_HOST_ENV:-} MELEE_WINDOW_TITLE="netplay: $name host" MELEE_PAD_SCRIPT="${NP_HOST_SCRIPT:-$here/np_fight.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
   --netplay host --np-bind "$bind" "${srv[@]}" --np-port $port --match "${NP_MATCH_HOST:-falcon,32}" --np-seed 4242 --np-hash-out "$out/$name-host.csv" --record "$out/$name-host.mrpl" >"$out/$name-host.log" 2>&1 &
 h=$!
 sleep 1
@@ -27,7 +29,7 @@ if [ -n "${NP_SERVER:-}" ]; then
   for _ in $(seq 100); do dial=$(grep -o "MATCH CODE [A-Z0-9]*" "$out/$name-host.log" | head -1 | cut -d" " -f3); [ -n "$dial" ] && break; sleep 0.2; done
   echo "$name: match code $dial"
 fi
-MELEE_WINDOW_TITLE="netplay: $name guest" MELEE_PAD_SCRIPT="${NP_GUEST_SCRIPT:-$here/np_fight2.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
+env ${NP_GUEST_ENV:-} MELEE_WINDOW_TITLE="netplay: $name guest" MELEE_PAD_SCRIPT="${NP_GUEST_SCRIPT:-$here/np_fight2.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
   --netplay join "$dial" --np-bind "$bind" "${srv[@]}" --match "${NP_MATCH_GUEST:-fox}" --np-hash-out "$out/$name-guest.csv" --record "$out/$name-guest.mrpl" >"$out/$name-guest.log" 2>&1
 rg=$?
 wait $h; rh=$?
@@ -41,7 +43,7 @@ common_rows=$(join -t, <(tail -n +2 "$out/$name-host.csv" | sort) <(tail -n +2 "
 diffs=$(join -t, <(tail -n +2 "$out/$name-host.csv" | sort -t, -k1,1) <(tail -n +2 "$out/$name-guest.csv" | sort -t, -k1,1) | awk -F, '$2!=$3' | wc -l)
 echo "$name: host $nh frames, guest $ng frames, $common_rows frames in both, $diffs with different hashes"
 [ "$diffs" -eq 0 ] && [ "$nh" -gt 1000 ] || { echo "FAIL $name: hashes"; fail=1; }
-MELEE_WINDOW_TITLE="netplay: $name replay" bash "$here/idle.sh" "$exe" play --headless --no-audio --iso "$GW_ISO_VANILLA" --replay "$out/$name-host.mrpl" >"$out/$name-replay.log" 2>&1 || { echo "FAIL $name: replay"; fail=1; }
+env ${NP_HOST_ENV:-} MELEE_WINDOW_TITLE="netplay: $name replay" bash "$here/idle.sh" "$exe" play --headless --no-audio --iso "$GW_ISO_VANILLA" --replay "$out/$name-host.mrpl" >"$out/$name-replay.log" 2>&1 || { echo "FAIL $name: replay"; fail=1; }
 grep -h "^play: replay: " "$out/$name-replay.log"
 [ $fail -eq 0 ] && echo "OK $name" || echo "FAILED $name"
 exit $fail

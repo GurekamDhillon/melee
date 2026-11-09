@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "args": ["play", "--iso", "{disc}"],
+  "disc": true,
+  "controllers": "none",
+  "net": "internet",
+  "memoryMb": 4096
+}

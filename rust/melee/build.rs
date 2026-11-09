@@ -1,5 +1,7 @@
 //! Build-time identity for the window title: the git short hash and the worktree / branch name
-//! (`MELEE_GIT_HASH`, `MELEE_GIT_WHERE`; "unknown" outside a git checkout).
+//! (`MELEE_GIT_HASH`, `MELEE_GIT_WHERE`; "unknown" outside a git checkout), and `MELEE_GIT_DIRTY`: empty for a clean
+//! tree, else a 16-hex digest of the uncommitted changes to what is compiled in (netplay's build word mixes it in, so two
+//! builds of one commit that differ in uncommitted code cannot pair: play_net::build_hash).
 use std::process::Command;
 
 fn git(args: &[&str]) -> Option<String> {
@@ -21,12 +23,22 @@ fn main() {
     };
     println!("cargo:rustc-env=MELEE_GIT_HASH={hash}");
     println!("cargo:rustc-env=MELEE_GIT_WHERE={place}");
+    println!("cargo:rustc-env=MELEE_GIT_DIRTY={}", top.as_deref().map(dirty).unwrap_or_default());
     // re-run when HEAD moves (a commit, a checkout)
     if let Some(dir) = git(&["rev-parse", "--absolute-git-dir"]) {
         println!("cargo:rerun-if-changed={dir}/HEAD");
         println!("cargo:rerun-if-changed={dir}/logs/HEAD");
     }
     println!("cargo:rerun-if-changed=build.rs");
+    // and when compiled-in source changes, so the dirty digest follows uncommitted edits (the index: a staged change)
+    if let Some(t) = top.as_deref() {
+        for p in compiled_dirs(t) {
+            println!("cargo:rerun-if-changed={p}");
+        }
+        if let Some(dir) = git(&["rev-parse", "--absolute-git-dir"]) {
+            println!("cargo:rerun-if-changed={dir}/index");
+        }
+    }
     // melee_corev1 (these sources as a core v1 game library): the host maps the image at 0x82800000, beside MEM1,
     // and refuses it anywhere else, so no ASLR
     if std::env::var_os("CARGO_FEATURE_COREV1").is_some() && std::env::var("TARGET").unwrap_or_default().contains("windows-msvc") {
@@ -34,6 +46,58 @@ fn main() {
         println!("cargo:rustc-cdylib-link-arg=/DYNAMICBASE:NO");
     }
     version_resource(&hash);
+}
+
+/// What the exe is built from, as git pathspecs: every crate's sources and manifest, the lock file, the build scripts
+/// (tests, docs, data and tools outside the workspace do not change the exe).
+const COMPILED: &[&str] = &[":(glob)rust/*/src/**", ":(glob)rust/*/Cargo.toml", ":(glob)rust/*/build.rs", "rust/Cargo.toml",
+    "rust/Cargo.lock", ":(glob)tools/mex-import/src/**", "tools/mex-import/Cargo.toml"];
+
+/// The directories of COMPILED, for cargo's rerun-if-changed.
+fn compiled_dirs(top: &str) -> Vec<String> {
+    let mut v = vec![format!("{top}/rust/Cargo.toml"), format!("{top}/rust/Cargo.lock"), format!("{top}/tools/mex-import/src")];
+    if let Ok(rd) = std::fs::read_dir(format!("{top}/rust")) {
+        for e in rd.flatten() {
+            let p = e.path();
+            if p.join("Cargo.toml").is_file() {
+                for sub in ["src", "Cargo.toml", "build.rs"] {
+                    if p.join(sub).exists() {
+                        v.push(p.join(sub).display().to_string());
+                    }
+                }
+            }
+        }
+    }
+    v
+}
+
+/// Empty when COMPILED has no uncommitted change, else an FNV-1a digest (16 hex) of `git diff HEAD` over it plus the
+/// names and bytes of its untracked files.
+fn dirty(top: &str) -> String {
+    let run = |args: &[&str]| -> Option<Vec<u8>> {
+        let o = Command::new("git").arg("-C").arg(top).args(args).output().ok()?;
+        o.status.success().then_some(o.stdout)
+    };
+    let mut diff_args = vec!["diff", "HEAD", "--binary", "--no-ext-diff", "--"];
+    diff_args.extend(COMPILED);
+    let mut new_args = vec!["ls-files", "--others", "--exclude-standard", "-z", "--"];
+    new_args.extend(COMPILED);
+    let (Some(diff), Some(untracked)) = (run(&diff_args), run(&new_args)) else { return String::new() };
+    if diff.is_empty() && untracked.is_empty() {
+        return String::new();
+    }
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    let mut eat = |b: &[u8]| {
+        for &c in b {
+            h = (h ^ c as u64).wrapping_mul(0x0000_0100_0000_01b3);
+        }
+    };
+    eat(&diff);
+    for name in untracked.split(|&c| c == 0).filter(|n| !n.is_empty()) {
+        eat(name);
+        eat(&std::fs::read(std::path::Path::new(top).join(String::from_utf8_lossy(name).as_ref())).unwrap_or_default());
+    }
+    format!("{h:016x}")
 }
 
 /// A Windows version resource on melee.exe (`FileVersion` etc., the block Explorer and the Melee Unlocked launcher

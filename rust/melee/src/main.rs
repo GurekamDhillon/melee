@@ -27,6 +27,8 @@ use melee_types::neutral_hash::nh_game;
 use std::io::Write;
 use std::process::ExitCode;
 
+mod controls_store;
+mod firstrun;
 mod geno_suite;
 mod cosmetics;
 mod cosmetics_import;
@@ -443,9 +445,20 @@ fn arena_misuse(what: &str, p: usize, n: usize) {
     }
 }
 fn main() -> ExitCode {
+    let code = main_inner();
+    // YouGame: the last saves go up before the process (and with it the bridge) ends.
+    melee_platform::yougame_saves::finish(std::time::Duration::from_secs(3));
+    code
+}
+fn main_inner() -> ExitCode {
     // The YouGame app's stdio bridge (notes/yougame.md): first, before anything can print to stdout or open the log.
     let yougame = melee_platform::yougame::init();
+    // Saves that follow the account (yougame_saves.rs): before anything reads the card or settings.
+    if let Some(r) = melee_platform::yougame_saves::start() {
+        eprintln!("yougame: saves: cloud {} down {:?} up {:?} same {}", r.cloud, r.downloaded, r.uploaded, r.same);
+    }
     sys_live(); // the counter's cell exists before any snapshot base is captured
+    controls_store::install(); // fighter-controls preferences: fighter_controls.cfg (YOUGAME_DATA or beside settings.cfg)
     #[cfg(windows)]
     melee_engine::arena::set_misuse_hook(arena_misuse);
     if std::env::var_os("MELEE_LEAK_ALLOC").is_some() {
@@ -550,6 +563,7 @@ fn main() -> ExitCode {
         Some("crash-test") => crash::crash_test(args.get(1).map(String::as_str).unwrap_or("panic")),
         Some("golden") => golden(&args),
         Some("geno-tests") => geno_suite::run(&args),
+        Some("mexid") => geno_suite::mexid(&args),
         Some("slpcheck") => slpcheck::slpcheck(&args),
         Some("dolphin-wide") => dolphin_oracle::dolphin_wide(&args),
         Some("diff") => diff::diff(&args),
@@ -625,7 +639,10 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
     let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}")).expect("scene");
     let mut e = melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn).map_err(|e| format!("engine boot: {e}"))?;
     // the scenario's pad script (pad_fixed.lua): golden frame k reads sample k-1 (a fixed one-frame latency), as the legacy path does
-    if scenario.starts_with("pad_") {
+    // a MELEE_PAD_SCRIPT txt script replaces it (the tag scenario: rust/mods/tag_fighter)
+    if pads::script_pad(0, 0).is_some() {
+        e.set_pad_feed(|tick, port| raw_pad_status(pads::script_pad(port, tick as i32).unwrap_or_default(), port));
+    } else if scenario.starts_with("pad_") {
         e.set_pad_feed(|tick, port| raw_pad_status(pads::pad_fixed(port, tick as i32), port));
     }
     Ok(e)
@@ -754,6 +771,16 @@ fn engine_gdmods_overlay(args: &[String]) -> Result<Option<melee_engine::gcm::Ov
     eprintln!("melee: mods mounted: {} ({} files)", ids.join(", "), m.files());
     // Geno reads each mounted mod's geno.json (geno_registry.c gn_reg: the active mods in id order)
     melee_engine::geno_host::set_boot_mods(&m.dir, &ids);
+    // the skin registry reads every mounted mod of kind "skin" (gw_skins_boot.inc gw_Skins_Build: gw_Mods_ActiveAt order)
+    let skins = m
+        .set
+        .order
+        .iter()
+        .map(|&i| &m.set.mods[i])
+        .filter(|x| x.kind_str() == "skin")
+        .map(|x| melee_engine::skins_host::SkinMod { id: x.id_str(), dir: m.dir.join(x.id_str()), payload: x.payload.clone() })
+        .collect();
+    melee_engine::skins_host::set_mods(skins);
     Ok(Some(Box::new(move |path: &str| m.lookup(path).and_then(|p| std::fs::read(p).ok()))))
 }
 
@@ -786,6 +813,11 @@ pub(crate) fn install_replay(mut pl: melee_data::player::Player) {
         melee_world::tu::grlast::ext::SLIPPI_CODES = Some(|| unsafe { CODES });
         melee_world::tu::grpstadium::ext::hook::Slippi_FrozenStadium = Some(|| unsafe { FROZEN });
         melee_runtime::tu::mex_data::SLIPPI_REPLAY_VERSION = Some(ver);
+        // an offline replay plays each controller's recorded fighter-controls word, its samples already mapped
+        // (gw_FighterControls_MatchBegin's rp.controls, gw_Replay_ControlsRaw)
+        if !pl.live {
+            melee_engine::fighter_controls::set_session(melee_engine::fighter_controls::Session::Replay(pl.r.controls));
+        }
         REPLAY = Some(pl);
         let r = || REPLAY.as_mut().unwrap();
         h::Replay_Active = Some(|| 1);

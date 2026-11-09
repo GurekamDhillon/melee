@@ -20,7 +20,7 @@ pub fn live_frame_seed(seed: u32, frame: i32) -> u32 {
 
 /// The scenario script's sample as a session input (the "controller" of a scripted player).
 pub fn script_input(port: usize, g: i32) -> RbInput {
-    let r = crate::pads::pad_fixed(port, g);
+    let r = crate::pads::script_pad(port, g).unwrap_or_else(|| crate::pads::pad_fixed(port, g));
     RbInput {
         present: 1,
         is_raw: 1,
@@ -206,7 +206,8 @@ pub mod engine_game {
             timed(2, || self.with_base(|b| b.page_hash()))
         }
         fn game_hash(&self) -> u32 {
-            timed(3, || self.e.neutral_row()[0])
+            // the session hash: NHV1 with the sim mods' gd_hash_word mixed in when they gave one
+            timed(3, || melee_modhost::session_hash(self.e.neutral_row()[0]))
         }
         fn live(&self) -> bool {
             self.live
@@ -326,7 +327,7 @@ pub mod engine_game {
         let t0 = std::time::Instant::now();
         let script = |f: i32| {
             let mut a = [None; SLOTS];
-            if scenario.starts_with("pad_") {
+            if scenario.starts_with("pad_") || crate::pads::script_pad(0, 0).is_some() {
                 for p in 0..2 {
                     a[p * 2] = Some(crate::netmatch::script_input(p, f - FIRST));
                 }
@@ -340,7 +341,8 @@ pub mod engine_game {
                 let gf = g.e.frames as i32 - 1;
                 if let Some(&want) = gm.get(&gf) {
                     n += 1;
-                    if g.game_hash() != want {
+                    // the golden CSV is NHV1 (the cross-engine format), not the session hash with the mods' word
+                    if g.e.neutral_row()[0] != want {
                         bad += 1;
                         if bad < 5 {
                             eprintln!("melee: golden mismatch at frame {gf}");

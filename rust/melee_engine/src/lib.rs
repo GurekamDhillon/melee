@@ -3,8 +3,14 @@
 #![allow(static_mut_refs, non_snake_case, clippy::missing_safety_doc)]
 pub mod arena;
 pub mod geno_host;
+pub mod fighter_controls;
+pub mod geno_wasm;
+pub mod skins_host;
+pub mod script_host;
+pub mod snap_host;
 pub mod uigen;
 pub mod mex_host;
+pub mod mexid;
 pub mod mex_guest;
 pub mod mex_bridge;
 pub mod archive;

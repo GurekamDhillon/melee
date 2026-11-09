@@ -130,9 +130,21 @@ Interactions to keep in mind:
   stock icon (`DefineArtOpen` + a .gxtex handle table in geno_host, `uigen::UI_TextI4` over GDI for the initials
   fallback; render-only). Netplay identity: a base "none" define's resource files' bytes join its handshake part
   (mx_add_defines; a missing file drops it), test `geno_host::tests::identity_covers_base_none_files`.
+- Art and skins (port/geno3-art): `melee_engine::skins_host` ports gw_skins_core.h + gw_skins_boot.inc (every mounted
+  mod of kind "skin", `main.rs` hands the list over; target `{"retail"|"mex"|"geno": ...}`; the 255 cap, team claims,
+  partner rows, the wire costume and `SceneLaunch_PlayerColor`'s FromWire step). Its callees: ftdata
+  `SKINS_ADDED/BASE/STRING`, gm_1601 `Skins_CostumeCountCK` / `Skins_TeamCostumeCK` (the seams default for the team one
+  was 0, i.e. every team colour = costume 0; the C answers -1 without skins), mex_data `SKINS` (+ `SKINS_ENSURE`). The
+  define queries add skins as the C does (`DefineCostumeCount(CK)`, `DefineCostumeName`, `DefineString` for a skin
+  costume, `DefineHasArt`, `DefineArtOpen`: results override, then skin CSP, then package portrait, plain formats only
+  for stock / emblem / results). gmresultplayer's card picture / stock / emblem reach `Geno_DefineArtOpen`,
+  `Geno_DefineName`, `GxTex_*` and `UI_TextI4` by name (`geno_host::by_name_art`; before this they hit seam_off: handle
+  0 and a `TODO ext` panic on the initials path). Tests: `cargo test -p melee_engine --test geno_art`, `--lib skins_host`.
+  Art files are read from the mod's own folder (`files/`), not the mounted DVD path the C reads: the same file unless
+  another mod mounts the same path.
 - Not hosted: the controls schema, the records memory-card
-  path (only `MELEE_GENO_RECORDS`), installed skins, the CSS/results art paths (`gm_1601` / gmresultplayer `UI_TextI4`
-  and kit textures), the `cape.*` keys of goku-xv2 (the Rust registry logs them as unknown; Goku's CPU match still
+  path (only `MELEE_GENO_RECORDS`), the kit's art textures (`gw_Geno_DefineArtTex` / `gw_Skins_ArtTexCK`: the kit
+  frontend is off, `Frontend_NativeSelect` = 1), the `cape.*` keys of goku-xv2 (the Rust registry logs them as unknown; Goku's CPU match still
   matches C hash for hash, so the C does not use them either there, but the C log was not compared line by line), define overlays using Subroutine/Goto (op 5/7 take a 32-bit pointer: needs the script pool
   below 4 GiB; no shipped mod uses them), Marth / Jigglypuff / Sheik templates of a base "none" define
   (`GenoDefine_ExtAttrBytes` stops).
@@ -174,3 +186,99 @@ Interactions to keep in mind:
   --mods build/covmods-audio` (the audio2 striker copy): 3594 frames, 0 different hashes, replay 0 mismatches. Both peers
   log the same 4 confirmed starts of sfx 1 (frames 591, 1687, 1790, 2926), one start line each; the host cut one
   mispredicted start (frame 2710) after a rollback. Gate OK, rematch css OK, coverage 212 pass, geno-tests 64/64.
+
+## The script host's game side (port/geno3, 2026-11-08)
+
+`melee_engine::script_host::EngineGame` implements `melee_script::game::ScriptGame` the way pc/platform/gw_script*.c
+calls script_game.c and the registries. Done so far: the 132 scalar `ScriptGame_*` forwarders (three take gs_fbits
+floats), the C-string, slice and guest-memory calls, the Geno / m-ex name queries, the combo graph and the 18
+`Camera_Script*` calls. Tests: `cargo test -p melee_engine --test script_host` (disc) and `--lib script_host`.
+
+By-name callees (`ext_fns!` with no `= port`) resolve in `tools/rust-port/engine/gen_ext_dispatch.py` like this:
+- gen_link's `choose`;
+- else lint_logic's canonical body (the R2 pick);
+- a `pub use` pick calls the original it names;
+- a TU's local `pub mod ext` forwarder is called as `<tu>::ext::NAME`;
+- a `<c file>_native.rs` home counts as the C file's.
+
+Every callee script_game.c reaches is routed. A name with `= port` calls its port directly, because EXT_HOOK is unset
+in the engine.
+
+**Gaps (2026-11-08)**: 70 by-name callees that nothing answers. Each one panics "TODO ext" if it is reached. None of
+them are script_game's, and all were unresolved before the canonical-body change.
+- The port's own kit frontend and launch helpers (unused while `Frontend_NativeSelect` = 1), 54 names:
+  - `fe_*`, `fl_*`, `fk_*`, `fm_*`, `fms_*`, `fss_*`, `fa_*`, `fcr_*`, `fp_*`, `fsm_*`, `fte_*`;
+  - `ff_load`, `kit_load`;
+  - `SceneLaunch_*`, `Settings_Int` / `Settings_SetInt`, `Controls_Menu`, `UI_TextI4`, `TestTargetTestCKind`,
+    `DrawRectangle`.
+- `gm_80160968`: no canonical body. Its port is in gm_1798.
+- `gm_801677E8`: the C declaration has 0 parameters and the port gm_1601 has 1. Check this against the C.
+- `gm_801B0730`, `gm_MatchHasMultipleWinners`, `gmVsMelee_WasAnyPlayerHuman`: no port body.
+- `hsd_80392528`: the canonical body (hsd_3924) has another arity.
+- `PADSetSamplingRate`.
+- `lbArchive_80016DBC` / `lbArchive_80017040`: variadic (gen_link's LB_FAMILY handles the linked form).
+
+List them with `python3 tools/rust-port/engine/gen_ext_dispatch.py -v`.
+
+**gen_seams.py drift**: regenerating seams_gen.rs from this tree drops hooks that are installed today:
+- the `ScriptGame_Camera*` / `ScriptGame_MapWide` / `ScriptGame_WbDraw` hooks of melee_world camera;
+- the `ScriptGame_Caps*` / `Cpu*` / `StageJointActive` hooks of ftCo_0A01;
+- the geno_lab_mode `Netplay_Enabled` / `RB_Enabled` / `Replay_Active` / `Script_LabRequest` hooks.
+
+It also moves ftcolanim's MEX hook to ftcolanimlist. It was not rerun on port/geno3. Fix the generator before its next
+regeneration. The `Surface(Begin|End)` row added to seams.txt reaches the engine only through ext_dispatch's
+`seam_off`, until gen_seams.py runs again.
+
+**Surfaces**: gw_surface.cpp (mod shader programs: `gw_surface_register` / `select`) has no Rust counterpart.
+SurfaceBegin / SurfaceEnd are therefore the C's no-surface no-ops.
+
+**snap_host (2026-11-08)**: `melee_engine::snap_host` is gw_snap.c's `sn`. It owns the one `snapshot::Base` (cow.rs
+and pagewatch.rs are process-wide) and holds:
+- the frame-keyed sessions, which geno_host's game half uses (it no longer has a base of its own);
+- the indexed slots;
+- the long rewind's keyframes;
+- the rewind self-test;
+- the savestate files;
+- the rollback visualiser's ring;
+- the resimulation flag.
+
+play_net's ModesGame, netmatch, retail_flow's seek and the Lab's LabRun still capture their own base. Moving them onto
+`snap_host::with_base` / `release` is a later, separate change. Where the port differs from the C:
+- **Keyframes** share pages with the previous keyframe (`Base::save_after`). The C stores page deltas against a full
+  MEM1 copy. `rw_bytes` is therefore the base keyframe's pages plus the deltas.
+- **Self-test compare** counts the OS heap (the range `page_hash` covers) as the simulation. In the C, the
+  exemptions (the DVD stream, the light list, the slist) and `gw_rw_measure`'s render-owned bytes do that job.
+  `rw_measure` only records the request. Needs a PC check: does a paused-Lab render change OS-heap bytes?
+- **State files** are a Rust layout: each range at its address. They load only where the ranges sit at the same
+  addresses (the same run, or where they repeat); elsewhere the load answers -2.
+- **Slot loads**: a slot that was never saved answers -1. The C would copy the never-synced slot in.
+- **Replay cursor**: a keyframe keeps the replay cursor only once the `melee` crate installs
+  `snap_host::REPLAY_CURSOR`.
+- **Not ported**: gw_script_1p.inc (the 1P mode host), so `onep_state_active` is false. Also
+  `ScriptGame_StageReleaseOwner` on unload, which needs the script's stage token.
+
+## No Lua (2026-11-09)
+
+The Rust port runs no Lua, at my user's direction. The C build is frozen with its Lua.
+- **Removed** (one revertable commit): the scripting host (melee_script's engine, `gd.*` API, events, rewind, pad
+  scripts, the gdscript / luarun bins and their tests), the fighter-Lua core `geno::lua`, the `mlua` dependency and
+  `rust/third_party/lua-src`.
+- **Kept**: melee_script is the Geno registry and `game::ScriptGame` (the game half the wasm Lab calls through
+  `EngineGame`).
+- **Scripts and the LAB** are wasm mods (melee_modhost). A define's fighter code is the geno 12 `wasm` block
+  (geno-wasm-plan.md).
+- **A `lua` block** (an entry's, or a state's `lua` key) refuses the entry with:
+  `geno: <where>: fighter Lua is not supported (this build runs no Lua): convert the package to a geno 12 "wasm" block (tools/rust-port/geno/lua_to_wasm_package.py) - refused`
+- **Converting a package**: compile its callbacks against `rust/mods/geno_fighters/gd_geno.h` (a line-for-line C port
+  of the Lua, as goku.c / charger.c / riposte.c are; `build.sh` builds them with clang --target=wasm32). Then run
+  `python3 tools/rust-port/geno/lua_to_wasm_package.py <mod folder> <module.wasm> [--out <copy>]`. It rewrites geno.json
+  (`"geno": 12`, `lua` -> `wasm`, per-state keys too) and copies the module to `wasm/`. **Third-party packages with
+  fighter Lua need this conversion** before the Rust engine loads them.
+- **Shipped packages**: vanilla-charger and vanilla-riposte keep their Lua in pc/geno/mods for the C build. Their
+  geno 12 geno.json lives in rust/mods/geno_fighters/packages/<id>, and `scn.py tsv --rust` (run_rust.sh) lays it over
+  the copy. goku-xv2 (not in the repo) is converted with the tool, as the PC's mex_goku_cpu run does.
+- **The game-half suite** (geno_tests) installs the fixtures rust/mods/geno_fighters/tests/{charge,counter,empty}.wasm
+  where it carried inline Lua (8a98e4134). The expectations are unchanged.
+- **Proof the ports are the Lua**: tests/geno_wasm_fighters.rs checks each module's outputs over fixed io blocks
+  against digests recorded from the Lua before it was removed. The coverage scenarios geno_vanilla_charger /
+  riposte (laptop) and mex_goku_cpu (PC) pass hash for hash against the C goldens.

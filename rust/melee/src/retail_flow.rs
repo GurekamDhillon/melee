@@ -124,6 +124,8 @@ pub struct RetailPlay {
     lab_frame: Option<u32>,
     /// The lab RNG's seed (the agreed netplay seed, else the test seed).
     pub lab_seed: u32,
+    /// The Lab is frozen and its sound is held (music paused, stage sfx ducked), so a frozen frame doesn't loop.
+    lab_audio_held: bool,
     /// Launched as the LAB (`MELEE_SCENE=mode=lab..`, the browser's Modes / LAB relaunch): only then does a loaded Lab
     /// mod take the engine offline. Any other match with lab.wasm loaded is ordinary play (START pauses, no HUD).
     pub lab_launch: bool,
@@ -155,7 +157,7 @@ impl RetailPlay {
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
-            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
+            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_audio_held: false, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
@@ -329,9 +331,9 @@ impl RetailPlay {
                         }
                         if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, next) {
                             let (e, _) = g.into_engine();
-                            log(&format!("netplay {}: final hash {:08X}", nd.tag(), e.neutral_row()[0] | 1));
+                            log(&format!("netplay {}: final hash {:08X}", nd.tag(), melee_modhost::session_hash(e.neutral_row()[0]) | 1));
                             if let Some(r) = self.rec.as_mut() {
-                                nd.flush_rec(&mut r.1, e.neutral_row()[0] | 1);
+                                nd.flush_rec(&mut r.1, melee_modhost::session_hash(e.neutral_row()[0]) | 1);
                             }
                             self.e = Some(e);
                         }
@@ -409,7 +411,7 @@ impl RetailPlay {
                     self.frame_aspect = melee_engine::view::aspect();
                 }
                 if let Some(r) = self.rec.as_mut() {
-                    r.1.ticks.push((four, g.e.neutral_row()[0] | 1));
+                    r.1.ticks.push((four, melee_modhost::session_hash(g.e.neutral_row()[0]) | 1));
                 }
                 if self.tick_no % 600 == 0 {
                     let st = &ps.st;
@@ -455,7 +457,7 @@ impl RetailPlay {
             // each match tick once, as the plain path logs it (a re-run frame is not logged again)
             if h.g.e.frames > h.logged {
                 h.logged = h.g.e.frames;
-                hash_log(h.g.e.frames as u64, h.g.e.neutral_row()[0] | 1);
+                hash_log(h.g.e.frames as u64, melee_modhost::session_hash(h.g.e.neutral_row()[0]) | 1);
             }
             if h.g.e.ended {
                 let h = self.hosted_g.take().unwrap();
@@ -517,7 +519,7 @@ impl RetailPlay {
         crate::slp_export::begin_tick(&four);
         let entered = e.tick_modes();
         crate::slp_export::end_tick(!e.ended && e.mode_scene().1 == SCENE_VS);
-        let hash = if vs_tick { e.neutral_row()[0] | 1 } else { 0 };
+        let hash = if vs_tick { melee_modhost::session_hash(e.neutral_row()[0]) | 1 } else { 0 };
         if vs_tick {
             hash_log(e.frames as u64, hash);
         }
@@ -541,7 +543,8 @@ impl RetailPlay {
             let sh = self.lab.as_ref().unwrap().sh.clone();
             let mut s = sh.borrow_mut();
             let n = s.outbox.len().min(melee_modhost::lab::LAB_CMDS_PER_FRAME);
-            let v = s.outbox.drain(..n).collect();
+            let mut v: Vec<melee_modhost::lab::LabCmd> = s.outbox.drain(..n).collect();
+            v.extend(crate::lab::script_cmds(self.lab_clock));
             self.lab_clock += 1;
             s.apply_frame = self.lab_clock + 1;
             v
@@ -555,6 +558,15 @@ impl RetailPlay {
             s.applied.extend(cmds.iter().enumerate().map(|(i, c)| ((i >= n_host) as u8, *c)));
         }
         let ran = lab.tick(four, &cmds);
+        lab.trace(self.lab_clock);
+        // a frozen Lab holds the sound like the retail pause (music stream paused, stage sfx ducked); stepping keeps it held;
+        let hold = lab.paused && !lab.g.e.ended;
+        // re-applied every held frame: a slot load or rewind restores the sound state (it is a snapshotted static)
+        if (hold || self.lab_audio_held) && self.audio.is_some() {
+            self.lab_audio_held = hold;
+            melee_audio::sim::pause_bgm(hold);
+            melee_audio::sim::set_pause_duck(hold);
+        }
         let hash = if ran { lab.frame_hash() } else { 0 };
         if let (true, Some(fr)) = (online, self.lab_frame.take()) {
             if let Some(ls) = self.net.as_mut().and_then(|n| n.ls.as_mut()) {
@@ -567,7 +579,7 @@ impl RetailPlay {
         if let Some(r) = self.rec.as_mut() {
             r.1.ticks.push((four, hash));
         }
-        if let Some(f) = lab.g.take_frame() {
+        if let Some(f) = lab.take_frame() {
             let mut f = f;
             let gfx = self.lab_gfx.get_or_insert_with(|| (crate::ui::Ui::new(), melee_gx::shim::GxShim::new()));
             gfx.0.clear();
@@ -589,9 +601,13 @@ impl RetailPlay {
                     self.failed = Some("lab netplay desync".into());
                 }
             }
+            if std::mem::take(&mut self.lab_audio_held) {
+                melee_audio::sim::pause_bgm(false);
+                melee_audio::sim::set_pause_duck(false);
+            }
             let lab = self.lab.take().unwrap();
             let (e, _) = lab.finish().into_engine();
-            log(&format!("lab: match over, final hash {:08X}", e.neutral_row()[0] | 1));
+            log(&format!("lab: match over, final hash {:08X}", melee_modhost::session_hash(e.neutral_row()[0]) | 1));
             self.e = Some(e);
         }
     }
@@ -1512,7 +1528,7 @@ impl Hosted {
         self.inputs = self.inputs.split_off(&keep_from);
     }
     pub fn state_hash(&self) -> u32 {
-        self.g.e.neutral_row()[0] | 1
+        melee_modhost::session_hash(self.g.e.neutral_row()[0]) | 1
     }
     pub fn set_input(&mut self, frame: i32, pads: [melee_types::PADStatus; 4]) {
         self.inputs.insert(frame + melee_net::session::FIRST, pads);

@@ -282,8 +282,8 @@ impl Registry {
                 if d.is(sl, Ty::Str) {
                     if let Some(g) = p.def.lua.as_ref() {
                         let s = d.text(sl);
-                        for i in 0..g.nslot {
-                            if g.slot_name[i] == s {
+                        for i in 0..g.nslot() {
+                            if g.slot_name(i) == s {
                                 idx = i as i32;
                             }
                         }

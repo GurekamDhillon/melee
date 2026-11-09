@@ -1,4 +1,6 @@
 //! Step 7: VS boot to frame 0 on the engine (needs GW_ISO_VANILLA; vacuous without).
+#[path = "../../melee_core/test_support/disc.rs"]
+mod disc;
 #[cfg(feature = "guard")]
 mod guard_alloc;
 #[cfg(feature = "guard")]
@@ -9,7 +11,7 @@ use melee_engine::{gcm::Gcm, scenario::Scenario, Engine};
 use melee_platform::PadSystem;
 
 fn boot(scene: &str) -> Option<Engine> {
-    let iso = std::env::var("GW_ISO_VANILLA").ok()?;
+    let iso = disc::iso("vs_boot")?;
     let disc = Gcm::open(&iso).expect("disc");
     let scn = Scenario::parse(scene).expect("scene");
     Some(Engine::boot_vs(disc, 64 << 20, PadSystem::headless(), scn).expect("boot_vs"))

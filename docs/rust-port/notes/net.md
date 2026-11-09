@@ -215,10 +215,14 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   mismatches; four .slp files (two per peer, one per match) parse in peppi and py-slippi. `play_pair.sh` after the
   change: 0 ms 2154 frames, 50 ms + 5 % 1727, 150 ms + 5 % (`--np-delay 4 --np-rollback 12`) 3080, all equal on both
   peers and in the replay.
-- Open: `melee slpcheck` (SLPCHECK_VANILLA_SPAWN=1) on the exports of the CSS-started matches diverges at frame ~870-930
-  (a hitlag / x difference), while the same characters and stage started from `--match` (Mario v Fox, Battlefield)
-  match over all 7448 fighter-frames. The file's values are the live engine's; the gap is state that a CSS-started
-  match carries and the Game Info Block (slpcheck's scenario boot) does not. Not isolated.
+- Fixed (port/disctests): `melee slpcheck` (SLPCHECK_VANILLA_SPAWN=1) on the exports of the CSS-started matches
+  diverged (frames ~870-2014). The exports were right; slpcheck never applied the Game Start seed: gmvs calls
+  `Replay_ApplyMatch` only when `Replay_Active()`, which the engine's seam answers 0, so the fighters were created from
+  the boot's RNG (the first Frame Start resync comes after creation). A direct `--match` start has the same RNG at
+  creation as slpcheck's boot, so it matched anyway; a match started from the character select carries the menus' seed.
+  slpcheck now loads the seed in its `Replay_RecordMatch` hook (the next call, before any draw): both matches of a CSS
+  pair (Mario v Fox) match over all 7448 fighter-frames. Found by diffing slpcheck's `--wide-out` against the same
+  fields of the .mrpl replay. Host and guest .slp files of a pair are byte-identical.
 - Slippi playback caveat: Slippi players apply Neutral Spawn (and UCF) to every replay; these exports were played
   without either, so a Slippi Dolphin viewer can drift from frame -123 on stages whose vanilla spawns differ (FD
   matched in slpcheck with Neutral Spawn on, Battlefield did not).

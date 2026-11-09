@@ -68,6 +68,8 @@ pub struct SkinRegistry {
 
 pub static mut MEX: Option<MexData> = None;
 pub static mut SKINS: Option<SkinRegistry> = None;
+/// The host's `sk_ensure`: builds `SKINS` from the mounted skin mods on first use (melee_engine skins_host).
+pub static mut SKINS_ENSURE: Option<fn()> = None;
 /// The replay's Slippi version (`major*10000 + minor*100 + build`) while a replay plays.
 pub static mut SLIPPI_REPLAY_VERSION: Option<i32> = None;
 /// `gw_Mex_GObjPredDispatch(GW_MEX_EVENT_ON_FLOAT, kind, gobj, NULL)`: the m-ex float handler of a
@@ -127,6 +129,10 @@ pub fn Mex_FtBaseKind(k: i32) -> i32 {
 }
 
 fn skin_row(fk: i32, idx: i32) -> Option<SkinRow> {
+    // gw_Skins_Like / gw_Skins_KirbyRow: sk_ensure (the host builds the registry on first use)
+    if let Some(f) = unsafe { SKINS_ENSURE } {
+        f();
+    }
     let reg = unsafe { (*(&raw const SKINS)).as_ref()? };
     let base = *reg.base.get(usize::try_from(fk).ok()?)?;
     if idx < base {

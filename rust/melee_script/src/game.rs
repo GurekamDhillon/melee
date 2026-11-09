@@ -417,10 +417,10 @@ pub trait ScriptGame {
     fn rbviz_total(&self) -> i32 {
         0
     }
-    fn rbviz_get(&self, _back: i32) -> Option<crate::gd::labmisc::RbRow> {
+    fn rbviz_get(&self, _back: i32) -> Option<RbRow> {
         None
     }
-    fn rbviz_first_mismatch(&self) -> Option<crate::gd::labmisc::RbMismatch> {
+    fn rbviz_first_mismatch(&self) -> Option<RbMismatch> {
         None
     }
     fn rbviz_reset(&mut self) {}
@@ -1009,4 +1009,27 @@ impl ScriptGame for NoGame {}
 /// `gs_players_present`
 pub fn players_present(g: &dyn ScriptGame, slot: usize) -> bool {
     g.fighter_i(slot as i32, SI_PRESENT) == 1
+}
+
+/// One row of the rollback visualiser ring (`gw_RbViz_Get`).
+#[derive(Clone, Copy, Default, Debug)]
+pub struct RbRow {
+    pub frame: i32,
+    pub first: i32,
+    pub depth: i32,
+    pub cause: i32,
+    pub kind: i32,
+    pub mismatch: bool,
+    pub ms: f32,
+}
+
+/// `gw_RbViz_FirstMismatch`
+#[derive(Clone, Debug)]
+pub struct RbMismatch {
+    pub frame: i32,
+    pub count: i32,
+    pub place: String,
+    pub va: u32,
+    pub was: i32,
+    pub now: i32,
 }

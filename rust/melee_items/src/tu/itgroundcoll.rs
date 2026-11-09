@@ -129,7 +129,7 @@ pub unsafe extern "C" fn it_8026D62C(gobj: *mut HSD_GObj, arg1: HSD_GObjEvent) {
         ev(arg1, gobj);
         return;
     }
-    if ext::it_80277544(gobj) != 0 && (*ip).xDCD_flag.anon_0.b3() == 0 {
+    if ext::it_80277544(gobj) != 0 && (*ip).xDCD_flag.x0.b3() == 0 {
         ext::Item_8026ADC0(gobj);
     }
 }
@@ -299,7 +299,7 @@ pub unsafe extern "C" fn it_8026DC24(gobj: *mut HSD_GObj) -> i32 {
     if abs_c((*ip).x40_vel.x) <= (*attr).x5c && abs_c((*ip).x40_vel.y) <= (*attr).x5c {
         rest = true;
     }
-    if rest || (*ip).xDCD_flag.anon_0.b4() != 0 || (*attr).x58 == 0.0 {
+    if rest || (*ip).xDCD_flag.x0.b4() != 0 || (*attr).x58 == 0.0 {
         itResetVelocity(ip);
         return 1;
     }
@@ -311,7 +311,7 @@ pub unsafe extern "C" fn it_8026DD5C(gobj: *mut HSD_GObj) -> i32 {
     let ip = item(gobj);
     (*ip).xD50_landNum = 0;
     ext::it_802762B0(ip);
-    if ext::it_80277040(gobj) == 0 || (*ip).xDCD_flag.anon_0.b3() != 0 {
+    if ext::it_80277040(gobj) == 0 || (*ip).xDCD_flag.x0.b3() != 0 {
         ext::it_80274740(gobj);
         ext::it_80276CEC(gobj);
     } else {

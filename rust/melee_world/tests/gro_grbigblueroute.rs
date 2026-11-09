@@ -168,27 +168,27 @@ static D_UnkFlagStruct: &[ODesc] = &[(0, 1, b'C'), (0, 1, b'b')];
 static F_UnkFlagStruct: &[ODesc] = &[(0, 1, b'C')];
 unsafe fn bf_fill_UnkFlagStruct(p: *mut UnkFlagStruct) {
     let _ = p;
-    (*p).anon_0.set_b0((rnd() & 1) as _);
-    (*p).anon_0.set_b1((rnd() & 1) as _);
-    (*p).anon_0.set_b2((rnd() & 1) as _);
-    (*p).anon_0.set_b3((rnd() & 1) as _);
-    (*p).anon_0.set_b4((rnd() & 1) as _);
-    (*p).anon_0.set_b5((rnd() & 1) as _);
-    (*p).anon_0.set_b6((rnd() & 1) as _);
-    (*p).anon_0.set_b7((rnd() & 1) as _);
+    (*p).x0.set_b0((rnd() & 1) as _);
+    (*p).x0.set_b1((rnd() & 1) as _);
+    (*p).x0.set_b2((rnd() & 1) as _);
+    (*p).x0.set_b3((rnd() & 1) as _);
+    (*p).x0.set_b4((rnd() & 1) as _);
+    (*p).x0.set_b5((rnd() & 1) as _);
+    (*p).x0.set_b6((rnd() & 1) as _);
+    (*p).x0.set_b7((rnd() & 1) as _);
 }
 unsafe fn bf_hash_UnkFlagStruct(mut h: u64, p: *const UnkFlagStruct) -> u64 {
     let _ = p;
     if DUMP_N != 0 { print!("
   BFV:"); }
-    h = fnv(h, &(((*p).anon_0.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b0()) as u32); }
-    h = fnv(h, &(((*p).anon_0.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b1()) as u32); }
-    h = fnv(h, &(((*p).anon_0.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b2()) as u32); }
-    h = fnv(h, &(((*p).anon_0.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b3()) as u32); }
-    h = fnv(h, &(((*p).anon_0.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b4()) as u32); }
-    h = fnv(h, &(((*p).anon_0.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b5()) as u32); }
-    h = fnv(h, &(((*p).anon_0.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b6()) as u32); }
-    h = fnv(h, &(((*p).anon_0.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).anon_0.b7()) as u32); }
+    h = fnv(h, &(((*p).x0.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x0.b0()) as u32); }
+    h = fnv(h, &(((*p).x0.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x0.b1()) as u32); }
+    h = fnv(h, &(((*p).x0.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x0.b2()) as u32); }
+    h = fnv(h, &(((*p).x0.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x0.b3()) as u32); }
+    h = fnv(h, &(((*p).x0.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x0.b4()) as u32); }
+    h = fnv(h, &(((*p).x0.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x0.b5()) as u32); }
+    h = fnv(h, &(((*p).x0.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x0.b6()) as u32); }
+    h = fnv(h, &(((*p).x0.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x0.b7()) as u32); }
     h
 }
 static D_Ground_2: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (256, 8, b'p'), (264, 8, b'p'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'f'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 2, b's'), (346, 2, b's')];

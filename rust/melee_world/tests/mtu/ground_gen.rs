@@ -136,7 +136,7 @@ pub fn install() {
         grStadium_801D511C = Some(|| { t(1123); });
         grZebes_801DA3F4 = Some(|a0| { t(1124); t(pi(a0)); });
         it_8026B40C = Some(|a0, a1| { t(1125); t(pi(a0)); t(a1 as u32); });
-        it_8026BE84 = Some(|a0| { t(1126); t(pi(a0)); t(pi((*a0).x0)); t(pi((*a0).x4)); super::tv(&(*a0).x8_vec); t((*a0).x14 as u32); t((*a0).x18 as u32); t((*a0).x1C.anon_0.b0() as u32); if fv() & 1 == 0 { core::ptr::null_mut() } else { &raw mut super::GO[(fv() & 3) as usize] } });
+        it_8026BE84 = Some(|a0| { t(1126); t(pi(a0)); t(pi((*a0).x0)); t(pi((*a0).x4)); super::tv(&(*a0).x8_vec); t((*a0).x14 as u32); t((*a0).x18 as u32); t((*a0).x1C.x0.b0() as u32); if fv() & 1 == 0 { core::ptr::null_mut() } else { &raw mut super::GO[(fv() & 3) as usize] } });
         it_8027B5B0 = Some(|a0, a1, a2, a3, a4| { t(1127); t(a0 as u32); t(pi(a1)); t(pi(a2)); t(pi(a3)); t(a4 as u32); super::tv(a1); if fv() & 1 == 0 { core::ptr::null_mut() } else { &raw mut super::GO[(fv() & 3) as usize] } });
         it_802F2094 = Some(|a0, a1, a2, a3| { t(1128); t(pi(a0)); t(pi(a1)); t(a2 as u32); t(a3 as u32); super::tv(a1); if fv() & 1 == 0 { core::ptr::null_mut() } else { &raw mut super::GO[(fv() & 3) as usize] } });
         it_ResetStageArticleTable = Some(|| { t(1129); });
@@ -1018,7 +1018,7 @@ pub fn hash_CollJoint(p: &CollJoint) {
     hn("p->bounding_max.y");
     hm(p.bounding_max.y.to_bits());
     hn("p->x20");
-    hm(pi(p.x20));
+    hm(pi(p.jobj));
     hn("p->cb_0");
     hm(fi(p.cb_0));
     hn("p->cb_data_0");
@@ -1034,7 +1034,7 @@ pub fn fill_CollLine(p: &mut CollLine) {
 }
 pub fn hash_CollLine(p: &CollLine) {
     hn("p->x0");
-    hm(pi(p.x0));
+    hm(pi(p.inner));
     hn("p->flags");
     hm(p.flags as u32);
 }

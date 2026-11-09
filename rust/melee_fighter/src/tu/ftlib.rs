@@ -116,7 +116,7 @@ pub fn ftlib_getgroundslopeangle(g: G) -> f32 {
 pub fn ftLib_UpdateLogicOffCamera(gobj: G) {
     melee_core::ct!("ftLib_UpdateLogicOffCamera");
     let f = fp(gobj);
-    if f.x221F_b3() != 0 {
+    if f.is_sleeping() != 0 {
         return; // ftDrawCommon_80080E18 skips the test then too
     }
     if f.x2229_b3() == 0 && f.x2220_b7() == 0 && !h::camera_80030a50().is_null() {
@@ -149,7 +149,7 @@ pub fn ftlib_findlowestpercentopponent(g: G) -> G {
     each(|cur| {
         if !ftlib_issameplayer(g, cur) {
             let cf = fp_ftlib(cur);
-            if cf.x221F_b3() != 0 {
+            if cf.is_sleeping() != 0 {
                 return false;
             }
             if h::gm_8016b168() && own.is_some_and(|f| cf.team == f.team) {
@@ -295,12 +295,12 @@ pub fn ftlib_isholdingitem(g: G, arg1: G) -> bool { unsafe { melee_items::tu::ft
 
 pub fn ftlib_getheldspecialitem(g: G) -> G { unsafe { melee_items::tu::ftlib::ftLib_GetHeldSpecialItem(g as _) as _ } }
 
-pub fn ftlib_isinputdisabled(g: G) -> bool { melee_core::ct!("ftlib_isinputdisabled"); fp_ftlib(g).x221D_b4() != 0 }
+pub fn ftlib_isinputdisabled(g: G) -> bool { melee_core::ct!("ftlib_isinputdisabled"); fp_ftlib(g).input_disabled() != 0 }
 
 pub fn ftlib_disableinput(g: G) {
     melee_core::ct!("ftlib_disableinput");
     h::fighter_reset_input_data(g);
-    fp_ftlib(g).set_x221D_b4(1);
+    fp_ftlib(g).set_input_disabled(1);
 }
 
 pub fn ftlib_disableallinput() {
@@ -311,7 +311,7 @@ pub fn ftlib_disableallinput() {
     });
 }
 
-pub fn ftlib_enableinput(g: G) { melee_core::ct!("ftlib_enableinput"); fp_ftlib(g).set_x221D_b4(0); }
+pub fn ftlib_enableinput(g: G) { melee_core::ct!("ftlib_enableinput"); fp_ftlib(g).set_input_disabled(0); }
 
 pub fn ftlib_enableallinput() {
     melee_core::ct!("ftlib_enableallinput");
@@ -413,8 +413,8 @@ pub fn ftlib_startitemrumbleall(a: i32, b: i32) {
 pub fn ftlib_stopitemrumble(g: G) {
     melee_core::ct!("ftlib_stopitemrumble");
     let f = fp_ftlib(g);
-    if h::player_8003544c(f.player_id as i32, f.is_sub_fighter() as i32) {
-        h::hsd_pad_rumble_remove_id(f.x618_player_id, 1);
+    if h::player_8003544c(f.player_idx as i32, f.is_sub_fighter() as i32) {
+        h::hsd_pad_rumble_remove_id(f.pad_port, 1);
     }
 }
 
@@ -427,7 +427,7 @@ pub fn ftlib_canbemagnified(g: G) -> bool {
     let f = fp_ftlib(g);
     !(f.invisible() != 0
         || f.x221E_b2() != 0
-        || h::player_get_more_flags_bit4(f.player_id as i32) != 0
+        || h::player_get_more_flags_bit4(f.player_idx as i32) != 0
         || f.is_sandbag() != 0
         || f.x2229_b3() != 0
         || f.x2220_b7() != 0)
@@ -461,7 +461,7 @@ pub fn ftlib_issameplayer(g0: G, g1: G) -> bool {
         if g0 == g1 {
             return true;
         }
-        if fp_ftlib(g0).player_id == fp_ftlib(g1).player_id {
+        if fp_ftlib(g0).player_idx == fp_ftlib(g1).player_idx {
             return true;
         }
     }
@@ -489,9 +489,9 @@ pub fn ftlib_getshakeoffset(g: G, v: &mut Vec3) -> bool {
 /// `ftLib_GetSubColor`: `p_ftCommonData->x6D8[controller_index]` (a flexible array in the C).
 pub fn ftlib_getsubcolor(g: G, val: &mut i32) -> bool {
     melee_core::ct!("ftlib_getsubcolor");
-    let i = fp_ftlib(g).x61A_controller_index;
+    let i = fp_ftlib(g).sub_color;
     if i != 0 {
-        *val = unsafe { *h::common_data().x6D8.as_ptr().add(i as usize) };
+        *val = unsafe { *(&raw const h::common_data().x6D8 as *const i32).add(i as usize) };
         return true;
     }
     false
@@ -505,7 +505,7 @@ pub fn ftlib_getpercent(g: G) -> i32 { melee_core::ct!("ftlib_getpercent"); mele
 
 pub fn ftlib_80087140(g: G) {
     melee_core::ct!("ftlib_80087140");
-    if fp_ftlib(g).x221F_b3() == 0 {
+    if fp_ftlib(g).is_sleeping() == 0 {
         h::ftco_800d4f24(g, 1);
         c2::ftcommon_8007ed2c(fp_ftlib(g));
         h::fighter_unk_process_death(g);
@@ -571,7 +571,7 @@ pub fn ftlib_issubfighter(g: G) -> i32 { melee_core::ct!("ftlib_issubfighter"); 
 pub fn ftlib_800874cc(g: G, arg1: *mut core::ffi::c_void, arg2: i32) {
     melee_core::ct!("ftlib_800874cc");
     let f = fp_ftlib(g);
-    h::pl_8003e4a4(f.player_id as i32, f.is_sub_fighter() as i32, arg1, arg2);
+    h::pl_8003e4a4(f.player_idx as i32, f.is_sub_fighter() as i32, arg1, arg2);
 }
 
 pub fn ftlib_isframesremaining(g: G) { melee_core::ct!("ftlib_isframesremaining"); h::ftanim_is_frames_remaining(g); }

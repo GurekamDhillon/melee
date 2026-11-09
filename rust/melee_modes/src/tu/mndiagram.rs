@@ -15,7 +15,7 @@ unsafe fn Menu_GetAllInputs()->u64 { mn_804A04F0.buttons = ext::mn_80229624(4) a
 pub mod ext { use super::*; crate::oext_fns! {
 fn __assert(a0: *const i8,a1: u32,a2: *const i8) -> ();
 fn GObj_Create(a0: u16,a1: u8,a2: u8) -> *mut HSD_GObj;
-fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj,a1: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj,a1: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
 fn lbAudioAx_80024030(a0: i32) -> () = crate::tu::adapt::lbAudioAx_80024030__36458a;
 fn mn_80229624(a0: u32) -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
 fn mn_80229894(a0: i32,a1: u16,a2: i32) -> () = crate::tu::adapt::mn_80229894__f7df64;
@@ -126,7 +126,7 @@ rw pub MenMainConB2_Top: StaticModelDesc = StaticModelDesc {
     matanim_joint: ::core::ptr::null::<HSD_MatAnimJoint>() as *mut HSD_MatAnimJoint,
     shapeanim_joint: ::core::ptr::null::<HSD_ShapeAnimJoint>() as *mut HSD_ShapeAnimJoint,
 };
-rw pub mnDiagram_PcBlock: mnDiagram_Assets = mnDiagram_Assets {
+rw pub mnDiagram_PcBlock: mnDiagram_Assets_legacy = mnDiagram_Assets_legacy {
     sorted_fighters: [0; 25],
     pad_19: [0; 3],
     sorted_names: [0; 120],
@@ -204,8 +204,8 @@ rw pub mnDiagram_ArrowAnim: AnimLoopSettings = AnimLoopSettings {
     end_frame: 199.0f32,
     loop_frame: 0.0f32,
 };
-rw pub mnDiagram_PcAnimTable: mnDiagram_AnimTable = unsafe {
-    mnDiagram_AnimTable {
+rw pub mnDiagram_PcAnimTable: mnDiagram_AnimTable_legacy = unsafe {
+    mnDiagram_AnimTable_legacy {
         points: [
             Vec3 {
                 x: 4.0f32,
@@ -1077,8 +1077,8 @@ pub unsafe extern "C" fn mnDiagram_SortNamesByKOs() {
     let mut max_idx: i32 = 0;
     let mut dst_iter: *mut u8 = ::core::ptr::null_mut::<u8>();
     let mut i: i32 = 0;
-    let mut assets: *mut mnDiagram_Assets = &raw mut mnDiagram_PcBlock.sorted_fighters
-        as *mut u8 as *mut [u8; 28] as *mut mnDiagram_Assets;
+    let mut assets: *mut mnDiagram_Assets_legacy = &raw mut mnDiagram_PcBlock.sorted_fighters
+        as *mut u8 as *mut [u8; 28] as *mut mnDiagram_Assets_legacy;
     let mut dst: *mut u8 = &raw mut (*assets).sorted_names as *mut u8;
     let mut tp: *mut u32 = ::core::ptr::null_mut::<u32>();
     let mut candidate: *mut u8 = ::core::ptr::null_mut::<u8>();
@@ -2132,7 +2132,7 @@ pub unsafe extern "C" fn mnDiagram_PopupCleanup(mut arg0: *mut ::core::ffi::c_vo
 }
 #[inline]
 pub unsafe extern "C" fn mnDiagram_PopupAnimProc_Inline(
-    mut arg0: *mut mnDiagram_AnimTable,
+    mut arg0: *mut mnDiagram_AnimTable_legacy,
     mut arg1: i32,
 ) -> *mut Vec3 {
     melee_core::ct!("mnDiagram_PopupAnimProc_Inline");
@@ -2144,7 +2144,7 @@ pub unsafe extern "C" fn mnDiagram_PopupAnimProc(mut arg0: *mut HSD_GObj) {
     let mut data: *mut mnDiagram_PopupData = (*arg0).user_data
         as *mut mnDiagram_PopupData;
     let mut text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
-    let mut tbl: *mut mnDiagram_AnimTable = &raw mut mnDiagram_PcAnimTable;
+    let mut tbl: *mut mnDiagram_AnimTable_legacy = &raw mut mnDiagram_PcAnimTable;
     let mut pos: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
     let mut new_var: f32 = 0.;
     let mut anim_frame: f32 = 0.;
@@ -2485,8 +2485,8 @@ pub unsafe extern "C" fn mnDiagram_CreatePopup(
 ) {
     melee_core::ct!("mnDiagram_CreatePopup");
     let mut i: i32 = 0;
-    let mut tbl: *mut mnDiagram_AnimTable = ::core::ptr::null_mut::<
-        mnDiagram_AnimTable,
+    let mut tbl: *mut mnDiagram_AnimTable_legacy = ::core::ptr::null_mut::<
+        mnDiagram_AnimTable_legacy,
     >();
     let mut model: *mut StaticModelDesc = ::core::ptr::null_mut::<StaticModelDesc>();
     let mut data: *mut Diagram = ::core::ptr::null_mut::<Diagram>();
@@ -2506,7 +2506,7 @@ pub unsafe extern "C" fn mnDiagram_CreatePopup(
         gobj,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, i32) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         6 as u8,
         0x80 as u32,
@@ -3430,8 +3430,8 @@ pub unsafe extern "C" fn mnDiagram_DrawFighterHeaders(
     let mut row_jobj: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut col_idx: i32 = 0;
     let mut col_remaining: i32 = 0;
-    let mut assets: *mut mnDiagram_Assets = &raw mut mnDiagram_PcBlock.sorted_fighters
-        as *mut u8 as *mut [u8; 28] as *mut mnDiagram_Assets;
+    let mut assets: *mut mnDiagram_Assets_legacy = &raw mut mnDiagram_PcBlock.sorted_fighters
+        as *mut u8 as *mut [u8; 28] as *mut mnDiagram_Assets_legacy;
     let mut x_spacing: f32 = 0.;
     let mut y_spacing: f32 = 0.;
     let mut i: i32 = 0;
@@ -3602,7 +3602,7 @@ pub unsafe extern "C" fn mnDiagram_CreateCursor() {
         gobj,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, i32) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         4 as u8,
         0x80 as u32,
@@ -3642,7 +3642,7 @@ pub unsafe extern "C" fn mnDiagram_CreateScreen(mut arg0: u8) {
         gobj,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, i32) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         6 as u8,
         0x80 as u32,
@@ -3800,8 +3800,8 @@ pub unsafe extern "C" fn mnDiagram_CreateScreen(mut arg0: u8) {
 
 pub unsafe extern "C" fn mnDiagram_Init(mut arg0: u8, mut arg1: u8) {
     melee_core::ct!("mnDiagram_Init");
-    let mut assets: *mut mnDiagram_Assets = &raw mut mnDiagram_PcBlock.sorted_fighters
-        as *mut u8 as *mut [u8; 28] as *mut mnDiagram_Assets;
+    let mut assets: *mut mnDiagram_Assets_legacy = &raw mut mnDiagram_PcBlock.sorted_fighters
+        as *mut u8 as *mut [u8; 28] as *mut mnDiagram_Assets_legacy;
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut proc_0: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     let mut archive: *mut HSD_Archive = ::core::ptr::null_mut::<HSD_Archive>();

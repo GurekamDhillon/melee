@@ -57,8 +57,6 @@ SIS.textures	extent
 # tobj.c HSD_TObjAddAnim: the texture animation tables hold n_imagetbl / n_tluttbl descriptors
 _HSD_TexAnim.imagetbl	n_imagetbl
 _HSD_TexAnim.tluttbl	n_tluttbl
-# ftCo_Guard.c GUARD_POSE_TREE: ft_data->x20->x0[2] (entries 0 and 1 may be NULL: a count, not a NULL-terminated table)
-ftData_x20.x0	3
 # ftdynamics.c ftCo_8009E4A8: x10[blend slot][bone] is an s32 word (ftDynamicsBoneSet, upstream types it `s32*`: a count 1, 2 or 0x100 handed to ftCo_8009CB40's `s32 arg3`);
 # the slot count is not stated, the table runs to the next object, each entry has one word per dynamics bone (10 covers every fighter)
 ftDynamics.x10	tab[10]	*mut s32

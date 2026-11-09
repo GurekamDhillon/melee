@@ -10,7 +10,7 @@ use crate::itacc::{ip, it_802714C0};
 /// `it_80275414_fp`.
 pub unsafe fn it_80275414_fp(gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80275414_fp");
-    ip(gobj).xDCD_flag.anon_0.set_b7(1);
+    ip(gobj).xDCD_flag.x0.set_b7(1);
 }
 
 /// `it_802756D0_fp`.

@@ -119,7 +119,7 @@ if v.set() { (*p).gobj_proc = unsafe { core::mem::transmute::<usize, _>(v.leaf_p
 {
 if v.set() { (*p).callback3 = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(&format!("{}.callback3", path))) }; } else { v.dump_p(&format!("{}.callback3", path), unsafe { core::mem::transmute_copy::<_, usize>(&(*p).callback3) }); }
 }
-v.bytes_be32(&format!("{}.anon_10", path), &mut (*p).anon_10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_10));
+v.bytes_be32(&format!("{}.anon_10", path), &mut (*p).x10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x10));
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_grZe_ColorEntry(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_world::tu::grzebes::grZe_ColorEntry; unsafe {
@@ -672,7 +672,7 @@ fn vis_UnkStageDat(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut mele
 if v.set() { (*p).unk0 = v.leaf_ptr(&format!("{}.unk0", path)) as _; } else { v.dump_p(&format!("{}.unk0", path), ((*p).unk0) as usize); }
 }
 {
-if v.set() { (*p).unk4 = v.leaf_int(&format!("{}.unk4", path), 32, 1) as _; } else { v.dump_i(&format!("{}.unk4", path), (((*p).unk4) as i32) as i64); }
+if v.set() { (*p).count = v.leaf_int(&format!("{}.unk4", path), 32, 1) as _; } else { v.dump_i(&format!("{}.unk4", path), (((*p).count) as i32) as i64); }
 }
 {
 if v.set() { (*p).unk8 = v.leaf_ptr(&format!("{}.unk8", path)) as _; } else { v.dump_p(&format!("{}.unk8", path), ((*p).unk8) as usize); }
@@ -1007,7 +1007,7 @@ if v.fn_in("grZebes_801D9508|grZebes_801D95B8|fn_801D94F0") {
 if v.set() { (*p).set_x0_b0(v.leaf_int(&format!("{}.x0_b0", path), 1, 0) as _); } else { v.dump_u(&format!("{}.x0_b0", path), ((*p).x0_b0()) as u64); }
 }
 {
-if v.set() { (*p).x4 = v.leaf_int(&format!("{}.x4", path), 32, 0) as _; } else { v.dump_u(&format!("{}.x4", path), (((*p).x4) as u32) as u64); }
+if v.set() { (*p).stored_jobj = v.leaf_int(&format!("{}.x4", path), 32, 0) as _; } else { v.dump_u(&format!("{}.x4", path), (((*p).stored_jobj) as u32) as u64); }
 }
 {
 if v.set() { (*p).x8 = v.leaf_int(&format!("{}.x8", path), 16, 1) as _; } else { v.dump_i(&format!("{}.x8", path), (((*p).x8) as i16) as i64); }

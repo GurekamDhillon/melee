@@ -37,12 +37,12 @@ pub(crate) fn fp<'a>(g: G) -> &'a mut Fighter {
 
 #[inline(always)]
 pub(crate) fn ids(f: &Fighter) -> (i32, i32) {
-    (f.player_id as i32, f.is_sub_fighter() as i32)
+    (f.player_idx as i32, f.is_sub_fighter() as i32)
 }
 
 #[inline(always)]
 pub(crate) fn x594_b0(f: &Fighter) -> u8 {
-    unsafe { f.anon_594.anon_0.x594_b0() }
+    unsafe { f.x594.x0.x594_b0() }
 }
 
 /// `ftCommon_PcFloorMisses[6]` (static, TARGET_PC): never reset, as in the C.
@@ -55,8 +55,8 @@ pub(crate) fn pc_floor_guard(f: &mut Fighter, valid: bool, fall: fn(G)) -> bool 
         return false;
     }
     let mut n = 0u32;
-    if f.player_id < 6 {
-        n = PC_FLOOR_MISSES[f.player_id as usize].fetch_add(1, Ordering::Relaxed);
+    if f.player_idx < 6 {
+        n = PC_FLOOR_MISSES[f.player_idx as usize].fetch_add(1, Ordering::Relaxed);
     }
     if n % 120 == 0 {
         h::pc_floor_lost_report(f);

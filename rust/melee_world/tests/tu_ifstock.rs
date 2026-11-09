@@ -75,11 +75,11 @@ fn ifstock_matches_c() {
                     12 => { for q in 0..16usize { if m::ifStock_804A1A8C[q].is_null() { m::ifStock_804A1A8C[q] = &raw mut g::P_HSD_GObj[0]; } } let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; m::fn_802F916C(a0); }
                     13 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: *mut IfStockUserData = ((&raw mut m::ifStock_804A1378.x204[(rnd() % 6) as usize]) as *mut IfStockUserData) as *mut IfStockUserData; m::fn_802F9410_inline(a0, a1); }
                     14 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; m::fn_802F9410(a0); }
-                    15 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F94E0(a0, a1); }
-                    16 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F9548(a0, a1); }
-                    17 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F9598(a0, a1); }
-                    18 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F95E8(a0, a1); }
-                    19 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F9680(a0, a1); }
+                    15 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F94E0(a0, a1 as isize); }
+                    16 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F9548(a0, a1 as isize); }
+                    17 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F9598(a0, a1 as isize); }
+                    18 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F95E8(a0, a1 as isize); }
+                    19 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802F9680(a0, a1 as isize); }
                     20 => {  let a0: *mut HSD_JObj = g::pick_HSD_JObj(1) as *mut HSD_JObj; m::ifStock_MexAttach(a0); }
                     21 => {  let a0: i32 = (fv()) as i32; let a1: i32 = (fv()) as i32; ret = m::ifStock_MexFrame(a0, a1).to_bits(); }
                     22 => {  let a0: i32 = (fv()) as i32; let a1: i32 = (fv()) as i32; let a2: f32 = (rg()) as f32; let a3: f32 = (rg()) as f32; ret = pi(m::ifStock_802F96D0(a0, a1, a2, a3)); }

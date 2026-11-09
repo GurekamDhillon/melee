@@ -274,8 +274,8 @@ pub unsafe extern "C" fn it_802D5CF8(gobj: *mut Item_GObj) {
     let ip = ip_of(gobj);
     (*ip).xDAC_itcmd_var0 = 0;
     (*ip).xDB0_itcmd_var1 = 0;
-    (*ip).xDD4_itemVar.hinoarashi.x60.anon_0.set_b0(0);
-    (*ip).xDD4_itemVar.hinoarashi.x60.anon_0.set_b1(0);
+    (*ip).xDD4_itemVar.hinoarashi.x60.x0.set_b0(0);
+    (*ip).xDD4_itemVar.hinoarashi.x60.x0.set_b1(0);
     (*ip).xDD4_itemVar.hinoarashi.x64 = 0.0;
     ext::it_80279CDC(gobj, (*ip).scl);
     ext::Item_8026AE84(ip, 0x2734, 0x7F, 0x40);
@@ -289,8 +289,8 @@ pub unsafe extern "C" fn it_802D5D7C(gobj: *mut HSD_GObj) {
     let mut pos = Vec { x: 0.0, y: 0.0, z: 0.0 };
 
     if (*ip).xDAC_itcmd_var0 != 0 {
-        if (*ip).xDD4_itemVar.hinoarashi.x60.anon_0.b0() == 0 {
-            (*ip).xDD4_itemVar.hinoarashi.x60.anon_0.set_b0(1);
+        if (*ip).xDD4_itemVar.hinoarashi.x60.x0.b0() == 0 {
+            (*ip).xDD4_itemVar.hinoarashi.x60.x0.set_b0(1);
             ext::efSync_Spawn(
                 0x473,
                 gobj,
@@ -303,7 +303,7 @@ pub unsafe extern "C" fn it_802D5D7C(gobj: *mut HSD_GObj) {
     }
     if (*ip).xDB0_itcmd_var1 != 0 {
         ext::efLib_DestroyAll(gobj);
-        (*ip).xDD4_itemVar.hinoarashi.x60.anon_0.set_b1(1);
+        (*ip).xDD4_itemVar.hinoarashi.x60.x0.set_b1(1);
         (*ip).xDB0_itcmd_var1 = 0;
     }
 }
@@ -346,7 +346,7 @@ pub unsafe extern "C" fn it_802D5F34(gobj: *mut HSD_GObj) {
     ext::it_802754BC(gobj);
     ext::it_80273454(gobj);
     (*ip).on_accessory = Some(it_802D5D7C);
-    (*ip).xDD1_flag.anon_0.set_b1(1);
+    (*ip).xDD1_flag.x0.set_b1(1);
 }
 
 /// `bool itHinoarashi_UnkMotion1_Anim(Item_GObj*)` (2D5FC8)
@@ -357,8 +357,8 @@ pub unsafe extern "C" fn itHinoarashi_UnkMotion1_Anim(gobj: *mut Item_GObj) -> i
     if ext::it_80272C6C(gobj) == 0 {
         return 1;
     }
-    if (*ip).xDD4_itemVar.hinoarashi.x60.anon_0.b0() != 0
-        && (*ip).xDD4_itemVar.hinoarashi.x60.anon_0.b1() == 0
+    if (*ip).xDD4_itemVar.hinoarashi.x60.x0.b0() != 0
+        && (*ip).xDD4_itemVar.hinoarashi.x60.x0.b1() == 0
     {
         if (*ip).xDD4_itemVar.hinoarashi.x64 == 0.0 {
             (*ip).xDD4_itemVar.hinoarashi.x64 = (*attr).x8;
@@ -509,7 +509,7 @@ pub unsafe extern "C" fn it_802D64B8(gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: 
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = (*ip).owner;
     spawn.x4_parent_gobj2 = gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = arg2 as i32;
     {
         let new_gobj = ext::Item_80268B18(&mut spawn);

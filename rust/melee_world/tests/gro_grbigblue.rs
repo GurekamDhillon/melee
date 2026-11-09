@@ -87,18 +87,18 @@ unsafe fn bf_fill_Ground_0(p: *mut Ground) {
     (*p).color_overlay.set_x7C_flag6((rnd() & 1) as _);
     (*p).color_overlay.set_x7C_flag7((rnd() & 1) as _);
     (*p).color_overlay.set_x7C_flag8((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.set_state((rnd() & 63) as _);
-    (*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.set_direction((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0_0.set_collision_slot((rnd() & 31) as _);
-    (*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.set_state((rnd() & 63) as _);
-    (*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.set_direction((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0_0.set_collision_slot((rnd() & 31) as _);
-    (*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.set_state((rnd() & 63) as _);
-    (*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.set_direction((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0_0.set_collision_slot((rnd() & 31) as _);
-    (*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.set_state((rnd() & 63) as _);
-    (*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.set_direction((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0_0.set_collision_slot((rnd() & 31) as _);
+    (*p).u.bigblue.x0_u.car.lanes[0].x0.x0.set_state((rnd() & 63) as _);
+    (*p).u.bigblue.x0_u.car.lanes[0].x0.x0.set_direction((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.car.lanes[0].x0.x0_1.set_collision_slot((rnd() & 31) as _);
+    (*p).u.bigblue.x0_u.car.lanes[1].x0.x0.set_state((rnd() & 63) as _);
+    (*p).u.bigblue.x0_u.car.lanes[1].x0.x0.set_direction((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.car.lanes[1].x0.x0_1.set_collision_slot((rnd() & 31) as _);
+    (*p).u.bigblue.x0_u.car.lanes[2].x0.x0.set_state((rnd() & 63) as _);
+    (*p).u.bigblue.x0_u.car.lanes[2].x0.x0.set_direction((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.car.lanes[2].x0.x0_1.set_collision_slot((rnd() & 31) as _);
+    (*p).u.bigblue.x0_u.car.lanes[3].x0.x0.set_state((rnd() & 63) as _);
+    (*p).u.bigblue.x0_u.car.lanes[3].x0.x0.set_direction((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.car.lanes[3].x0.x0_1.set_collision_slot((rnd() & 31) as _);
 }
 unsafe fn bf_hash_Ground_0(mut h: u64, p: *const Ground) -> u64 {
     let _ = p;
@@ -126,18 +126,18 @@ unsafe fn bf_hash_Ground_0(mut h: u64, p: *const Ground) -> u64 {
     h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
     h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
     h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.state()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.direction()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0_0.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0_0.collision_slot()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.state()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.direction()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0_0.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0_0.collision_slot()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.state()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.direction()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0_0.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0_0.collision_slot()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.state()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.direction()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0_0.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0_0.collision_slot()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.state()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.direction()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[0].x0.x0_1.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[0].x0.x0_1.collision_slot()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[1].x0.x0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[1].x0.x0.state()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[1].x0.x0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[1].x0.x0.direction()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[1].x0.x0_1.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[1].x0.x0_1.collision_slot()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[2].x0.x0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[2].x0.x0.state()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[2].x0.x0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[2].x0.x0.direction()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[2].x0.x0_1.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[2].x0.x0_1.collision_slot()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[3].x0.x0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[3].x0.x0.state()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[3].x0.x0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[3].x0.x0.direction()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[3].x0.x0_1.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[3].x0.x0_1.collision_slot()) as u32); }
     h
 }
 static D_Ground_1: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (256, 4, b'u'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (256, 1, b'b'), (256, 1, b'b'), (257, 1, b'b'), (258, 1, b'b'), (259, 1, b'b'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 1, b'c'), (313, 1, b'c'), (314, 1, b'c'), (315, 1, b'c'), (316, 1, b'C'), (317, 1, b'C'), (318, 1, b'c'), (319, 1, b'C'), (320, 4, b'i'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 4, b'f'), (348, 4, b'f'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'i'), (364, 4, b'i'), (368, 4, b'i'), (372, 4, b'f'), (376, 4, b'f'), (380, 4, b'f'), (384, 4, b'f'), (388, 4, b'f'), (392, 4, b'f'), (396, 4, b'i'), (400, 1, b'C'), (401, 1, b'C'), (402, 1, b'c'), (403, 1, b'C'), (404, 4, b'i'), (408, 4, b'f'), (412, 4, b'f'), (416, 4, b'f'), (420, 4, b'f'), (424, 4, b'f'), (428, 4, b'f'), (432, 4, b'f'), (436, 4, b'f'), (440, 4, b'f'), (444, 4, b'i'), (448, 4, b'i'), (452, 4, b'i'), (456, 4, b'f'), (460, 4, b'f'), (464, 4, b'f'), (468, 4, b'f'), (472, 4, b'f'), (476, 4, b'f'), (480, 4, b'i'), (484, 1, b'C'), (485, 1, b'C'), (486, 1, b'c'), (487, 1, b'C'), (488, 4, b'i'), (492, 4, b'f'), (496, 4, b'f'), (500, 4, b'f'), (504, 4, b'f'), (508, 4, b'f'), (512, 4, b'f'), (516, 4, b'f'), (520, 4, b'f'), (524, 4, b'f'), (528, 4, b'i'), (532, 4, b'i'), (536, 4, b'i'), (540, 4, b'f'), (544, 4, b'f'), (548, 4, b'f'), (552, 4, b'f'), (556, 4, b'f'), (560, 4, b'f'), (564, 4, b'i'), (256, 4, b'u'), (264, 8, b'p'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 1, b'C'), (321, 1, b'C'), (322, 1, b'c'), (323, 1, b'C'), (324, 4, b'i'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 4, b'f'), (348, 4, b'f'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'f'), (364, 4, b'i'), (368, 4, b'i'), (372, 4, b'i'), (376, 4, b'f'), (380, 4, b'f'), (384, 4, b'f'), (388, 4, b'f'), (392, 4, b'f'), (396, 4, b'f'), (400, 4, b'i'), (404, 1, b'C'), (405, 1, b'C'), (406, 1, b'c'), (407, 1, b'C'), (408, 4, b'i'), (412, 4, b'f'), (416, 4, b'f'), (420, 4, b'f'), (424, 4, b'f'), (428, 4, b'f'), (432, 4, b'f'), (436, 4, b'f'), (440, 4, b'f'), (444, 4, b'f'), (448, 4, b'i'), (452, 4, b'i'), (456, 4, b'i'), (460, 4, b'f'), (464, 4, b'f'), (468, 4, b'f'), (472, 4, b'f'), (476, 4, b'f'), (480, 4, b'f'), (484, 4, b'i'), (488, 1, b'C'), (489, 1, b'C'), (490, 1, b'c'), (491, 1, b'C'), (492, 4, b'i'), (496, 4, b'f'), (500, 4, b'f'), (504, 4, b'f'), (508, 4, b'f'), (512, 4, b'f'), (516, 4, b'f'), (520, 4, b'f'), (524, 4, b'f'), (528, 4, b'f'), (532, 4, b'i'), (536, 4, b'i'), (540, 4, b'i'), (544, 4, b'f'), (548, 4, b'f'), (552, 4, b'f'), (556, 4, b'f'), (560, 4, b'f'), (564, 4, b'f'), (568, 4, b'i'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'f'), (276, 4, b'f'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 4, b'u'), (260, 4, b'f'), (264, 4, b'f'), (268, 4, b'f'), (272, 4, b'f'), (276, 4, b'f'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 2, b's'), (302, 1, b'C'), (303, 1, b'C'), (304, 1, b'C'), (305, 1, b'C'), (306, 1, b'C'), (307, 1, b'C'), (308, 4, b'f'), (256, 4, b'u'), (264, 8, b'p'), (272, 8, b'p'), (280, 2, b's'), (282, 1, b'C'), (283, 1, b'C'), (284, 2, b'S'), (285, 1, b'C'), (284, 1, b'b'), (284, 1, b'b'), (285, 1, b'b'), (286, 1, b'c'), (287, 1, b'C'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'i'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 4, b'f'), (348, 2, b'S'), (349, 1, b'C'), (348, 1, b'b'), (348, 1, b'b'), (349, 1, b'b'), (350, 1, b'c'), (351, 1, b'C'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'f'), (364, 4, b'f'), (368, 4, b'f'), (372, 4, b'f'), (376, 4, b'i'), (380, 4, b'f'), (384, 4, b'f'), (388, 4, b'f'), (392, 4, b'f'), (396, 4, b'f'), (400, 4, b'f'), (404, 4, b'f'), (408, 4, b'f'), (412, 2, b'S'), (413, 1, b'C'), (412, 1, b'b'), (412, 1, b'b'), (413, 1, b'b'), (414, 1, b'c'), (415, 1, b'C'), (416, 4, b'f'), (420, 4, b'f'), (424, 4, b'f'), (428, 4, b'f'), (432, 4, b'f'), (436, 4, b'f'), (440, 4, b'i'), (444, 4, b'f'), (448, 4, b'f'), (452, 4, b'f'), (456, 4, b'f'), (460, 4, b'f'), (464, 4, b'f'), (468, 4, b'f'), (472, 4, b'f'), (476, 2, b'S'), (477, 1, b'C'), (476, 1, b'b'), (476, 1, b'b'), (477, 1, b'b'), (478, 1, b'c'), (479, 1, b'C'), (480, 4, b'f'), (484, 4, b'f'), (488, 4, b'f'), (492, 4, b'f'), (496, 4, b'f'), (500, 4, b'f'), (504, 4, b'i'), (508, 4, b'f'), (512, 4, b'f'), (516, 4, b'f'), (520, 4, b'f'), (524, 4, b'f'), (528, 4, b'f'), (532, 4, b'f'), (536, 4, b'f')];
@@ -221,27 +221,27 @@ unsafe fn bf_fill_Ground_2(p: *mut Ground) {
     (*p).color_overlay.set_x7C_flag6((rnd() & 1) as _);
     (*p).color_overlay.set_x7C_flag7((rnd() & 1) as _);
     (*p).color_overlay.set_x7C_flag8((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0.set_x0_b1((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.set_b0((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.set_b1((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.set_b2((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.set_prev_lane((rnd() & 127) as _);
-    (*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.set_cur_lane((rnd() & 127) as _);
-    (*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.set_next_lane((rnd() & 127) as _);
-    (*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.set_nibble_hi((rnd() & 15) as _);
-    (*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.set_nibble_lo((rnd() & 15) as _);
-    (*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.set_state((rnd() & 63) as _);
-    (*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.set_direction((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0_0.set_collision_slot((rnd() & 31) as _);
-    (*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.set_state((rnd() & 63) as _);
-    (*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.set_direction((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0_0.set_collision_slot((rnd() & 31) as _);
-    (*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.set_state((rnd() & 63) as _);
-    (*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.set_direction((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0_0.set_collision_slot((rnd() & 31) as _);
-    (*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.set_state((rnd() & 63) as _);
-    (*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.set_direction((rnd() & 1) as _);
-    (*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0_0.set_collision_slot((rnd() & 31) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0.set_x0_b1((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_b0((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_b1((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_b2((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_prev_lane((rnd() & 127) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_cur_lane((rnd() & 127) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_next_lane((rnd() & 127) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_nibble_hi((rnd() & 15) as _);
+    (*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.set_nibble_lo((rnd() & 15) as _);
+    (*p).u.bigblue.x0_u.car.lanes[0].x0.x0.set_state((rnd() & 63) as _);
+    (*p).u.bigblue.x0_u.car.lanes[0].x0.x0.set_direction((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.car.lanes[0].x0.x0_1.set_collision_slot((rnd() & 31) as _);
+    (*p).u.bigblue.x0_u.car.lanes[1].x0.x0.set_state((rnd() & 63) as _);
+    (*p).u.bigblue.x0_u.car.lanes[1].x0.x0.set_direction((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.car.lanes[1].x0.x0_1.set_collision_slot((rnd() & 31) as _);
+    (*p).u.bigblue.x0_u.car.lanes[2].x0.x0.set_state((rnd() & 63) as _);
+    (*p).u.bigblue.x0_u.car.lanes[2].x0.x0.set_direction((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.car.lanes[2].x0.x0_1.set_collision_slot((rnd() & 31) as _);
+    (*p).u.bigblue.x0_u.car.lanes[3].x0.x0.set_state((rnd() & 63) as _);
+    (*p).u.bigblue.x0_u.car.lanes[3].x0.x0.set_direction((rnd() & 1) as _);
+    (*p).u.bigblue.x0_u.car.lanes[3].x0.x0_1.set_collision_slot((rnd() & 31) as _);
 }
 unsafe fn bf_hash_Ground_2(mut h: u64, p: *const Ground) -> u64 {
     let _ = p;
@@ -269,27 +269,27 @@ unsafe fn bf_hash_Ground_2(mut h: u64, p: *const Ground) -> u64 {
     h = fnv(h, &(((*p).color_overlay.x7C_flag6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag6()) as u32); }
     h = fnv(h, &(((*p).color_overlay.x7C_flag7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag7()) as u32); }
     h = fnv(h, &(((*p).color_overlay.x7C_flag8()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).color_overlay.x7C_flag8()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0.x0_b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0.x0_b1()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.b0()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.b1()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.b2()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.prev_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.prev_lane()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.cur_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.cur_lane()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.next_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.next_lane()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.nibble_hi()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.nibble_hi()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.nibble_lo()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_.nibble_lo()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.state()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0.direction()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0_0.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[0].anon_0.anon_0_0.collision_slot()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.state()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0.direction()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0_0.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[1].anon_0.anon_0_0.collision_slot()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.state()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0.direction()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0_0.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[2].anon_0.anon_0_0.collision_slot()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.state()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0.direction()) as u32); }
-    h = fnv(h, &(((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0_0.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.anon_0.car.lanes[3].anon_0.anon_0_0.collision_slot()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0.x0_b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0.x0_b1()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b0()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b1()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.b2()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.prev_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.prev_lane()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.cur_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.cur_lane()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.next_lane()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.next_lane()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.nibble_hi()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.nibble_hi()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.nibble_lo()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.x0_s.x0.anon_0_0_.nibble_lo()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.state()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[0].x0.x0.direction()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[0].x0.x0_1.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[0].x0.x0_1.collision_slot()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[1].x0.x0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[1].x0.x0.state()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[1].x0.x0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[1].x0.x0.direction()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[1].x0.x0_1.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[1].x0.x0_1.collision_slot()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[2].x0.x0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[2].x0.x0.state()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[2].x0.x0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[2].x0.x0.direction()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[2].x0.x0_1.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[2].x0.x0_1.collision_slot()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[3].x0.x0.state()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[3].x0.x0.state()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[3].x0.x0.direction()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[3].x0.x0.direction()) as u32); }
+    h = fnv(h, &(((*p).u.bigblue.x0_u.car.lanes[3].x0.x0_1.collision_slot()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).u.bigblue.x0_u.car.lanes[3].x0.x0_1.collision_slot()) as u32); }
     h
 }
 static D_Ground_3: &[ODesc] = &[(0, 4, b'i'), (8, 8, b'p'), (16, 8, b'p'), (24, 8, b'p'), (32, 1, b'b'), (33, 1, b'b'), (36, 4, b'u'), (40, 8, b'p'), (48, 8, b'p'), (56, 4, b'i'), (60, 4, b'i'), (64, 4, b'i'), (68, 4, b'i'), (72, 4, b'i'), (76, 4, b'i'), (80, 4, b'i'), (84, 4, b'i'), (88, 4, b'i'), (92, 4, b'i'), (96, 8, b'p'), (104, 4, b'i'), (112, 8, b'p'), (120, 4, b'i'), (128, 8, b'p'), (136, 4, b'i'), (140, 4, b'i'), (144, 4, b'i'), (152, 4, b'i'), (152, 8, b'p'), (160, 1, b'C'), (161, 1, b'C'), (162, 1, b'C'), (163, 1, b'C'), (164, 4, b'f'), (168, 4, b'f'), (172, 4, b'f'), (176, 4, b'f'), (180, 4, b'f'), (184, 4, b'f'), (188, 4, b'f'), (192, 4, b'f'), (196, 1, b'C'), (197, 1, b'C'), (198, 1, b'C'), (199, 1, b'C'), (200, 4, b'f'), (204, 4, b'f'), (208, 4, b'f'), (212, 4, b'f'), (216, 4, b'f'), (220, 4, b'f'), (224, 4, b'f'), (228, 4, b'f'), (232, 4, b'f'), (236, 4, b'f'), (240, 1, b'b'), (248, 4, b'f'), (256, 4, b'u'), (256, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (257, 1, b'C'), (258, 1, b'C'), (259, 1, b'C'), (264, 8, b'p'), (272, 8, b'p'), (280, 4, b'f'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 1, b'c'), (313, 1, b'c'), (314, 1, b'c'), (315, 1, b'c'), (316, 1, b'C'), (317, 1, b'C'), (318, 1, b'c'), (319, 1, b'C'), (320, 4, b'i'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 4, b'f'), (348, 4, b'f'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'i'), (364, 4, b'i'), (368, 4, b'i'), (372, 4, b'f'), (376, 4, b'f'), (380, 4, b'f'), (384, 4, b'f'), (388, 4, b'f'), (392, 4, b'f'), (396, 4, b'i'), (400, 1, b'C'), (401, 1, b'C'), (402, 1, b'c'), (403, 1, b'C'), (404, 4, b'i'), (408, 4, b'f'), (412, 4, b'f'), (416, 4, b'f'), (420, 4, b'f'), (424, 4, b'f'), (428, 4, b'f'), (432, 4, b'f'), (436, 4, b'f'), (440, 4, b'f'), (444, 4, b'i'), (448, 4, b'i'), (452, 4, b'i'), (456, 4, b'f'), (460, 4, b'f'), (464, 4, b'f'), (468, 4, b'f'), (472, 4, b'f'), (476, 4, b'f'), (480, 4, b'i'), (484, 1, b'C'), (485, 1, b'C'), (486, 1, b'c'), (487, 1, b'C'), (488, 4, b'i'), (492, 4, b'f'), (496, 4, b'f'), (500, 4, b'f'), (504, 4, b'f'), (508, 4, b'f'), (512, 4, b'f'), (516, 4, b'f'), (520, 4, b'f'), (524, 4, b'f'), (528, 4, b'i'), (532, 4, b'i'), (536, 4, b'i'), (540, 4, b'f'), (544, 4, b'f'), (548, 4, b'f'), (552, 4, b'f'), (556, 4, b'f'), (560, 4, b'f'), (564, 4, b'i'), (256, 4, b'u'), (264, 8, b'p'), (272, 8, b'p'), (280, 8, b'p'), (288, 8, b'p'), (296, 8, b'p'), (304, 8, b'p'), (312, 8, b'p'), (320, 1, b'C'), (321, 1, b'C'), (322, 1, b'c'), (323, 1, b'C'), (324, 4, b'i'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 4, b'f'), (348, 4, b'f'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'f'), (364, 4, b'i'), (368, 4, b'i'), (372, 4, b'i'), (376, 4, b'f'), (380, 4, b'f'), (384, 4, b'f'), (388, 4, b'f'), (392, 4, b'f'), (396, 4, b'f'), (400, 4, b'i'), (404, 1, b'C'), (405, 1, b'C'), (406, 1, b'c'), (407, 1, b'C'), (408, 4, b'i'), (412, 4, b'f'), (416, 4, b'f'), (420, 4, b'f'), (424, 4, b'f'), (428, 4, b'f'), (432, 4, b'f'), (436, 4, b'f'), (440, 4, b'f'), (444, 4, b'f'), (448, 4, b'i'), (452, 4, b'i'), (456, 4, b'i'), (460, 4, b'f'), (464, 4, b'f'), (468, 4, b'f'), (472, 4, b'f'), (476, 4, b'f'), (480, 4, b'f'), (484, 4, b'i'), (488, 1, b'C'), (489, 1, b'C'), (490, 1, b'c'), (491, 1, b'C'), (492, 4, b'i'), (496, 4, b'f'), (500, 4, b'f'), (504, 4, b'f'), (508, 4, b'f'), (512, 4, b'f'), (516, 4, b'f'), (520, 4, b'f'), (524, 4, b'f'), (528, 4, b'f'), (532, 4, b'i'), (536, 4, b'i'), (540, 4, b'i'), (544, 4, b'f'), (548, 4, b'f'), (552, 4, b'f'), (556, 4, b'f'), (560, 4, b'f'), (564, 4, b'f'), (568, 4, b'i'), (256, 4, b'u'), (260, 4, b'i'), (264, 4, b'i'), (268, 4, b'i'), (272, 4, b'f'), (276, 4, b'f'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (256, 4, b'u'), (260, 4, b'f'), (264, 4, b'f'), (268, 4, b'f'), (272, 4, b'f'), (276, 4, b'f'), (280, 4, b'f'), (284, 4, b'f'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 2, b's'), (302, 1, b'C'), (303, 1, b'C'), (304, 1, b'C'), (305, 1, b'C'), (306, 1, b'C'), (307, 1, b'C'), (308, 4, b'f'), (256, 4, b'u'), (264, 8, b'p'), (272, 8, b'p'), (280, 2, b's'), (282, 1, b'C'), (283, 1, b'C'), (284, 2, b'S'), (285, 1, b'C'), (284, 1, b'b'), (284, 1, b'b'), (285, 1, b'b'), (286, 1, b'c'), (287, 1, b'C'), (288, 4, b'f'), (292, 4, b'f'), (296, 4, b'f'), (300, 4, b'f'), (304, 4, b'f'), (308, 4, b'f'), (312, 4, b'i'), (316, 4, b'f'), (320, 4, b'f'), (324, 4, b'f'), (328, 4, b'f'), (332, 4, b'f'), (336, 4, b'f'), (340, 4, b'f'), (344, 4, b'f'), (348, 2, b'S'), (349, 1, b'C'), (348, 1, b'b'), (348, 1, b'b'), (349, 1, b'b'), (350, 1, b'c'), (351, 1, b'C'), (352, 4, b'f'), (356, 4, b'f'), (360, 4, b'f'), (364, 4, b'f'), (368, 4, b'f'), (372, 4, b'f'), (376, 4, b'i'), (380, 4, b'f'), (384, 4, b'f'), (388, 4, b'f'), (392, 4, b'f'), (396, 4, b'f'), (400, 4, b'f'), (404, 4, b'f'), (408, 4, b'f'), (412, 2, b'S'), (413, 1, b'C'), (412, 1, b'b'), (412, 1, b'b'), (413, 1, b'b'), (414, 1, b'c'), (415, 1, b'C'), (416, 4, b'f'), (420, 4, b'f'), (424, 4, b'f'), (428, 4, b'f'), (432, 4, b'f'), (436, 4, b'f'), (440, 4, b'i'), (444, 4, b'f'), (448, 4, b'f'), (452, 4, b'f'), (456, 4, b'f'), (460, 4, b'f'), (464, 4, b'f'), (468, 4, b'f'), (472, 4, b'f'), (476, 2, b'S'), (477, 1, b'C'), (476, 1, b'b'), (476, 1, b'b'), (477, 1, b'b'), (478, 1, b'c'), (479, 1, b'C'), (480, 4, b'f'), (484, 4, b'f'), (488, 4, b'f'), (492, 4, b'f'), (496, 4, b'f'), (500, 4, b'f'), (504, 4, b'i'), (508, 4, b'f'), (512, 4, b'f'), (516, 4, b'f'), (520, 4, b'f'), (524, 4, b'f'), (528, 4, b'f'), (532, 4, b'f'), (536, 4, b'f')];
@@ -442,27 +442,27 @@ static D_BobOmbRain: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 4, b'f'), (20
 static F_BobOmbRain: &[ODesc] = &[(0, 8, b'p'), (8, 8, b'p'), (16, 4, b'f'), (20, 4, b'f'), (24, 4, b'f'), (28, 4, b'i'), (32, 4, b'i'), (36, 1, b'C')];
 unsafe fn bf_fill_BobOmbRain(p: *mut BobOmbRain) {
     let _ = p;
-    (*p).x1C.anon_0.set_b0((rnd() & 1) as _);
-    (*p).x1C.anon_0.set_b1((rnd() & 1) as _);
-    (*p).x1C.anon_0.set_b2((rnd() & 1) as _);
-    (*p).x1C.anon_0.set_b3((rnd() & 1) as _);
-    (*p).x1C.anon_0.set_b4((rnd() & 1) as _);
-    (*p).x1C.anon_0.set_b5((rnd() & 1) as _);
-    (*p).x1C.anon_0.set_b6((rnd() & 1) as _);
-    (*p).x1C.anon_0.set_b7((rnd() & 1) as _);
+    (*p).x1C.x0.set_b0((rnd() & 1) as _);
+    (*p).x1C.x0.set_b1((rnd() & 1) as _);
+    (*p).x1C.x0.set_b2((rnd() & 1) as _);
+    (*p).x1C.x0.set_b3((rnd() & 1) as _);
+    (*p).x1C.x0.set_b4((rnd() & 1) as _);
+    (*p).x1C.x0.set_b5((rnd() & 1) as _);
+    (*p).x1C.x0.set_b6((rnd() & 1) as _);
+    (*p).x1C.x0.set_b7((rnd() & 1) as _);
 }
 unsafe fn bf_hash_BobOmbRain(mut h: u64, p: *const BobOmbRain) -> u64 {
     let _ = p;
     if DUMP_N != 0 { print!("
   BFV:"); }
-    h = fnv(h, &(((*p).x1C.anon_0.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.anon_0.b0()) as u32); }
-    h = fnv(h, &(((*p).x1C.anon_0.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.anon_0.b1()) as u32); }
-    h = fnv(h, &(((*p).x1C.anon_0.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.anon_0.b2()) as u32); }
-    h = fnv(h, &(((*p).x1C.anon_0.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.anon_0.b3()) as u32); }
-    h = fnv(h, &(((*p).x1C.anon_0.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.anon_0.b4()) as u32); }
-    h = fnv(h, &(((*p).x1C.anon_0.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.anon_0.b5()) as u32); }
-    h = fnv(h, &(((*p).x1C.anon_0.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.anon_0.b6()) as u32); }
-    h = fnv(h, &(((*p).x1C.anon_0.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.anon_0.b7()) as u32); }
+    h = fnv(h, &(((*p).x1C.x0.b0()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.x0.b0()) as u32); }
+    h = fnv(h, &(((*p).x1C.x0.b1()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.x0.b1()) as u32); }
+    h = fnv(h, &(((*p).x1C.x0.b2()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.x0.b2()) as u32); }
+    h = fnv(h, &(((*p).x1C.x0.b3()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.x0.b3()) as u32); }
+    h = fnv(h, &(((*p).x1C.x0.b4()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.x0.b4()) as u32); }
+    h = fnv(h, &(((*p).x1C.x0.b5()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.x0.b5()) as u32); }
+    h = fnv(h, &(((*p).x1C.x0.b6()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.x0.b6()) as u32); }
+    h = fnv(h, &(((*p).x1C.x0.b7()) as u32).to_le_bytes()); if DUMP_N != 0 { print!(" {:x}", ((*p).x1C.x0.b7()) as u32); }
     h
 }
 static D_grZakoGenerator_SpawnDesc: &[ODesc] = &[(0, 2, b'S'), (2, 1, b'C'), (3, 1, b'C')];
@@ -796,7 +796,7 @@ unsafe fn call_fn(fi: usize, a: &mut Args) -> (u64, u32) {
         38 => { t::grBigBlue_801E6904(g); (0, 0) }
         39 => { t::grBigBlue_801E6C60(g); (0, 0) }
         40 => { t::fn_801E8560(addr_of_mut!(OGP[0]) as *mut c_void, (a.i[0] % 4) as i32, addr_of_mut!(OCD), (a.i[1] % 1500) as i32, a.i[2] % 3, a.f[0]); (0, 0) }
-        41 => { let r = t::grBigBlue_801E8794(if rnd() % 2 != 0 { OGP[R32 as usize].u.bigblue.anon_0.anon_0.xD4[(rnd() % 3) as usize] as *mut c_void } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut c_void }, &mut a.v3[0], a.i[0] & 1 != 0, a.f[0], a.f[1]) as u32; (r as u64, r) }
+        41 => { let r = t::grBigBlue_801E8794(if rnd() % 2 != 0 { OGP[R32 as usize].u.bigblue.x0_u.x0_s.xD4[(rnd() % 3) as usize] as *mut c_void } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut c_void }, &mut a.v3[0], a.i[0] & 1 != 0, a.f[0], a.f[1]) as u32; (r as u64, r) }
         42 => { t::grBigBlue_801E8978((a.i[0] % 3) as i32, if rnd() % 2 != 0 { 1usize as *mut c_void } else { null_mut() }, if rnd() % 2 != 0 { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut c_void } else { null_mut() }); (0, 0) }
         43 => { let r = normptr(t::grBigBlue_801E89DC((a.i[0] % 3) as i32) as *const u8 as usize); (r, r as u32) }
         44 => { t::grBigBlue_801E8A1C((a.i[0] % 3) as i32); (0, 0) }
@@ -807,7 +807,7 @@ unsafe fn call_fn(fi: usize, a: &mut Args) -> (u64, u32) {
         49 => { t::grBigBlue_801E9F3C(g); (0, 0) }
         50 => { t::grBigBlue_801EA05C(g); (0, 0) }
         51 => { let r = t::grBigBlue_801EAB50(&mut a.v3[0], (a.i[0] & 1) as i32, a.f[0], a.f[1]) as u32; (r as u64, r) }
-        52 => { let r = t::grBigBlue_801EACE8(if rnd() % 2 != 0 { OGP[R32 as usize].u.bigblue.anon_0.anon_0.xD4[(rnd() % 3) as usize] } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) }, &mut a.v3[0], &mut a.pf[0], (rnd() % 120) as f32, (rnd() % 60) as f32) as u32; (r as u64, r) }
+        52 => { let r = t::grBigBlue_801EACE8(if rnd() % 2 != 0 { OGP[R32 as usize].u.bigblue.x0_u.x0_s.xD4[(rnd() % 3) as usize] } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) }, &mut a.v3[0], &mut a.pf[0], (rnd() % 120) as f32, (rnd() % 60) as f32) as u32; (r as u64, r) }
         53 => { t::grBigBlue_801EB004(g); (0, 0) }
         54 => { t::grBigBlue_801EB4AC(g); (0, 0) }
         55 => { t::grBigBlue_801EBAF8(g); (0, 0) }
@@ -905,10 +905,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -931,10 +931,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -957,10 +957,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -983,10 +983,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1009,10 +1009,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1035,10 +1035,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1061,10 +1061,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1087,10 +1087,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1113,10 +1113,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1139,10 +1139,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1165,10 +1165,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1191,10 +1191,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1217,10 +1217,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1243,10 +1243,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1269,10 +1269,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1295,10 +1295,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1321,10 +1321,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1347,10 +1347,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1373,10 +1373,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1399,10 +1399,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1425,10 +1425,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1451,10 +1451,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1477,10 +1477,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1503,10 +1503,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1529,10 +1529,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1555,10 +1555,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1581,10 +1581,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1607,10 +1607,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1633,10 +1633,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1659,10 +1659,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1685,10 +1685,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1711,10 +1711,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1737,10 +1737,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1749,11 +1749,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_);
+} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.x0_u.x0_s.x0.anon_0_0_);
   (*l_).set_cur_lane(rnd() % 12); (*l_).set_next_lane(rnd() % 12); (*l_).set_prev_lane(rnd() % 12);
   (*l_).set_nibble_hi(rnd() % 5);
-  (*r_).u.bigblue.anon_0.road.direction = ((rnd() % 3) as i32 - 1) as i16;
-  (*r_).u.bigblue.anon_0.road.position.y = -100000.0;
+  (*r_).u.bigblue.x0_u.road.direction = ((rnd() % 3) as i32 - 1) as i16;
+  (*r_).u.bigblue.x0_u.road.position.y = -100000.0;
 }  }
         33 => { {
   NN = 1; R32 = 1; R33 = 2; R34 = 3; R36 = 4;
@@ -1768,10 +1768,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1794,10 +1794,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1820,10 +1820,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1832,13 +1832,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -1856,10 +1856,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1868,13 +1868,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -1892,10 +1892,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1904,13 +1904,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -1928,10 +1928,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1954,10 +1954,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -1967,11 +1967,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } R32 = 0; R33 = 2; R34 = 3; R36 = 4; { let mut p_ = [0usize, 1, 2]; let m_ = addr_of_mut!(OGP[0]);
-  let s_ = addr_of_mut!((*m_).u.bigblue.anon_0.anon_0); let mg_ = addr_of_mut!((*m_).u.bigblue.anon_0.manager);
+  let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -1987,22 +1987,22 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     let v_ = rnd() % 4;
     (*mg_).event_data[j_] = if v_ == 0 { null_mut() } else if v_ == 1 { 1usize as *mut c_void } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut c_void };
   }
-} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
 } { let p_ = addr_of_mut!(OGP[R36 as usize]);
-  (*p_).u.bigblue.anon_0.anon_0.anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*p_).u.bigblue.anon_0.anon_0.anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
-  (*p_).u.bigblue.anon_0.platform.xC8_timer = (rnd() % 6) as i32 - 1;
-  if rnd() % 2 != 0 { (*p_).u.bigblue.anon_0.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
-  if rnd() % 2 != 0 { (*p_).u.bigblue.anon_0.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
+  (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*p_).u.bigblue.x0_u.platform.xC8_timer = (rnd() % 6) as i32 - 1;
+  if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
+  if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
 }  }
         40 => { {
   NN = 1; R32 = 1; R33 = 2; R34 = 3; R36 = 4;
@@ -2017,10 +2017,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2030,11 +2030,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } { let mut p_ = [0usize, 1, 2]; let m_ = addr_of_mut!(OGP[0]);
-  let s_ = addr_of_mut!((*m_).u.bigblue.anon_0.anon_0); let mg_ = addr_of_mut!((*m_).u.bigblue.anon_0.manager);
+  let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2064,10 +2064,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2077,11 +2077,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } { let mut p_ = [0usize, 1, 2]; let m_ = addr_of_mut!(OGP[R32 as usize]);
-  let s_ = addr_of_mut!((*m_).u.bigblue.anon_0.anon_0); let mg_ = addr_of_mut!((*m_).u.bigblue.anon_0.manager);
+  let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2111,10 +2111,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2137,10 +2137,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2150,11 +2150,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } { let mut p_ = [0usize, 1, 2]; let m_ = addr_of_mut!(OGP[R32 as usize]);
-  let s_ = addr_of_mut!((*m_).u.bigblue.anon_0.anon_0); let mg_ = addr_of_mut!((*m_).u.bigblue.anon_0.manager);
+  let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2184,10 +2184,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2197,11 +2197,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } { let mut p_ = [0usize, 1, 2]; let m_ = addr_of_mut!(OGP[R32 as usize]);
-  let s_ = addr_of_mut!((*m_).u.bigblue.anon_0.anon_0); let mg_ = addr_of_mut!((*m_).u.bigblue.anon_0.manager);
+  let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2231,10 +2231,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2243,13 +2243,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2267,10 +2267,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2279,13 +2279,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2303,10 +2303,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2329,10 +2329,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2342,17 +2342,17 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } R32 = 1; R33 = 2; R34 = 3; R36 = 4; { let p_ = addr_of_mut!(OGP[0]);
-  (*p_).u.bigblue.anon_0.anon_0.anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*p_).u.bigblue.anon_0.anon_0.anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
-  (*p_).u.bigblue.anon_0.platform.xC8_timer = (rnd() % 6) as i32 - 1;
-  if rnd() % 2 != 0 { (*p_).u.bigblue.anon_0.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
-  if rnd() % 2 != 0 { (*p_).u.bigblue.anon_0.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
+  (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*p_).u.bigblue.x0_u.platform.xC8_timer = (rnd() % 6) as i32 - 1;
+  if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
+  if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
 } { let mut p_ = [0usize, 1, 2]; let m_ = addr_of_mut!(OGP[R32 as usize]);
-  let s_ = addr_of_mut!((*m_).u.bigblue.anon_0.anon_0); let mg_ = addr_of_mut!((*m_).u.bigblue.anon_0.manager);
+  let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2368,13 +2368,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     let v_ = rnd() % 4;
     (*mg_).event_data[j_] = if v_ == 0 { null_mut() } else if v_ == 1 { 1usize as *mut c_void } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut c_void };
   }
-} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2392,10 +2392,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2418,10 +2418,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2431,17 +2431,17 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } R32 = 1; R33 = 2; R34 = 3; R36 = 0; { let p_ = addr_of_mut!(OGP[0]);
-  (*p_).u.bigblue.anon_0.anon_0.anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*p_).u.bigblue.anon_0.anon_0.anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
-  (*p_).u.bigblue.anon_0.platform.xC8_timer = (rnd() % 6) as i32 - 1;
-  if rnd() % 2 != 0 { (*p_).u.bigblue.anon_0.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
-  if rnd() % 2 != 0 { (*p_).u.bigblue.anon_0.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
+  (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*p_).u.bigblue.x0_u.platform.xC8_timer = (rnd() % 6) as i32 - 1;
+  if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
+  if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
 } { let mut p_ = [0usize, 1, 2]; let m_ = addr_of_mut!(OGP[R32 as usize]);
-  let s_ = addr_of_mut!((*m_).u.bigblue.anon_0.anon_0); let mg_ = addr_of_mut!((*m_).u.bigblue.anon_0.manager);
+  let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2457,13 +2457,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     let v_ = rnd() % 4;
     (*mg_).event_data[j_] = if v_ == 0 { null_mut() } else if v_ == 1 { 1usize as *mut c_void } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut c_void };
   }
-} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[R33 as usize].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2481,10 +2481,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2494,11 +2494,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } { let mut p_ = [0usize, 1, 2]; let m_ = addr_of_mut!(OGP[R32 as usize]);
-  let s_ = addr_of_mut!((*m_).u.bigblue.anon_0.anon_0); let mg_ = addr_of_mut!((*m_).u.bigblue.anon_0.manager);
+  let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2528,10 +2528,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2541,11 +2541,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
 } { let mut p_ = [0usize, 1, 2]; let m_ = addr_of_mut!(OGP[R32 as usize]);
-  let s_ = addr_of_mut!((*m_).u.bigblue.anon_0.anon_0); let mg_ = addr_of_mut!((*m_).u.bigblue.anon_0.manager);
+  let s_ = addr_of_mut!((*m_).u.bigblue.x0_u.x0_s); let mg_ = addr_of_mut!((*m_).u.bigblue.x0_u.manager);
   { let a_ = (rnd() % 3) as usize; let b_ = (rnd() % 3) as usize; p_.swap(a_, b_); }
   (*mg_).flags = rnd() % 12;
-  (*s_).anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*s_).anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*s_).x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*s_).x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
   for j_ in 0..3usize {
     (*s_).xD4[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]);
     (*s_).data[j_].index = p_[j_] as u8;
@@ -2562,11 +2562,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     (*mg_).event_data[j_] = if v_ == 0 { null_mut() } else if v_ == 1 { 1usize as *mut c_void } else { addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut c_void };
   }
 } { let p_ = addr_of_mut!(OGP[R36 as usize]);
-  (*p_).u.bigblue.anon_0.anon_0.anon_0.anon_0.x0 = (rnd() % 4) as u8;
-  { let t_ = rnd() % 3; (*p_).u.bigblue.anon_0.anon_0.anon_0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
-  (*p_).u.bigblue.anon_0.platform.xC8_timer = (rnd() % 6) as i32 - 1;
-  if rnd() % 2 != 0 { (*p_).u.bigblue.anon_0.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
-  if rnd() % 2 != 0 { (*p_).u.bigblue.anon_0.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
+  (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x0 = (rnd() % 4) as u8;
+  { let t_ = rnd() % 3; (*p_).u.bigblue.x0_u.x0_s.x0.anon_0.x1 = if t_ == 0 { 0 } else if t_ == 1 { 1 } else { 0xFF }; }
+  (*p_).u.bigblue.x0_u.platform.xC8_timer = (rnd() % 6) as i32 - 1;
+  if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xCC_timer = (rnd() % 6) as i32 - 1; }
+  if rnd() % 2 != 0 { (*p_).u.bigblue.x0_u.platform.xD0_timer = (rnd() % 6) as i32 - 1; }
 }  }
         53 => { {
   NN = 1; R32 = 1; R33 = 2; R34 = 3; R36 = 4;
@@ -2581,10 +2581,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2607,10 +2607,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2619,11 +2619,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_);
+} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.x0_u.x0_s.x0.anon_0_0_);
   (*l_).set_cur_lane(rnd() % 12); (*l_).set_next_lane(rnd() % 12); (*l_).set_prev_lane(rnd() % 12);
   (*l_).set_nibble_hi(rnd() % 5);
-  (*r_).u.bigblue.anon_0.road.direction = ((rnd() % 3) as i32 - 1) as i16;
-  (*r_).u.bigblue.anon_0.road.position.y = -100000.0;
+  (*r_).u.bigblue.x0_u.road.direction = ((rnd() % 3) as i32 - 1) as i16;
+  (*r_).u.bigblue.x0_u.road.position.y = -100000.0;
 }  }
         55 => { {
   NN = 1; R32 = 1; R33 = 2; R34 = 3; R36 = 4;
@@ -2638,10 +2638,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2650,11 +2650,11 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.anon_0.anon_0.anon_0.anon_0_0_);
+} { let r_ = addr_of_mut!(OGP[0]); let l_ = addr_of_mut!((*r_).u.bigblue.x0_u.x0_s.x0.anon_0_0_);
   (*l_).set_cur_lane(rnd() % 12); (*l_).set_next_lane(rnd() % 12); (*l_).set_prev_lane(rnd() % 12);
   (*l_).set_nibble_hi(rnd() % 5);
-  (*r_).u.bigblue.anon_0.road.direction = ((rnd() % 3) as i32 - 1) as i16;
-  (*r_).u.bigblue.anon_0.road.position.y = -100000.0;
+  (*r_).u.bigblue.x0_u.road.direction = ((rnd() % 3) as i32 - 1) as i16;
+  (*r_).u.bigblue.x0_u.road.position.y = -100000.0;
 }  }
         56 => { {
   NN = 1; R32 = 1; R33 = 2; R34 = 3; R36 = 4;
@@ -2669,10 +2669,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2695,10 +2695,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2707,13 +2707,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2731,10 +2731,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2743,13 +2743,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2767,10 +2767,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2779,13 +2779,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2803,10 +2803,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2815,13 +2815,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2839,10 +2839,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2851,13 +2851,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2875,10 +2875,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2887,13 +2887,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2911,10 +2911,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2923,13 +2923,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2947,10 +2947,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -2959,13 +2959,13 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
     t::grBb_TrackEntries[j_].delta.x = rf(); t::grBb_TrackEntries[j_].delta.y = rf(); t::grBb_TrackEntries[j_].delta.z = rf();
   }
   if rnd() % 2 != 0 { OJO[NGO].child = addr_of_mut!(OJO[3 * NGO + 1]); }
-} { let c_ = addr_of_mut!(OGP[0].u.bigblue.anon_0.car);
+} { let c_ = addr_of_mut!(OGP[0].u.bigblue.x0_u.car);
   (*c_).collision_jobjs = addr_of_mut!(OJAR) as *mut *mut HSD_JObj; (*c_).ranks = addr_of_mut!(ORK) as *mut u8;
   for j_ in 0..32usize { OJAR[j_] = addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]); ORK[j_] = (rnd() % 3) as u8; }
   (*c_).spawn_timer = ((rnd() % 14) as i32 - 4) as i16;
   for k_ in 0..4usize {
     let l_ = addr_of_mut!((*c_).lanes[k_]);
-    (*l_).anon_0.anon_0.set_state((rnd() % 11) as u8); (*l_).anon_0.anon_0.set_direction((rnd() % 2) as u8); (*l_).anon_0.anon_0_0.set_collision_slot((rnd() % 30) as u16);
+    (*l_).x0.x0.set_state((rnd() % 11) as u8); (*l_).x0.x0.set_direction((rnd() % 2) as u8); (*l_).x0.x0_1.set_collision_slot((rnd() % 30) as u16);
     (*l_).threshold = (rnd() % 30) as i32 - 5;
     { let t_ = rnd() % 4; if t_ == 0 { (*l_).alpha = 0.0; } else if t_ == 1 { (*l_).alpha = 1.0; } }
   }
@@ -2983,10 +2983,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -3009,10 +3009,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -3035,10 +3035,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {
@@ -3061,10 +3061,10 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
   (*y_).x5C = (rnd() % 30) as i32 as f32; (*y_).x60 = (rnd() % 30) as i32 as f32;
   for j_ in 0..NGO {
     for k_ in 0..4usize {
-      let l_ = addr_of_mut!(OGP[j_].u.bigblue.anon_0.car.lanes[k_].anon_0);
-      (*l_).anon_0.set_state((rnd() % 11) as u8);
-      (*l_).anon_0.set_direction((rnd() % 2) as u8);
-      (*l_).anon_0_0.set_collision_slot((rnd() % 30) as u16);
+      let l_ = addr_of_mut!(OGP[j_].u.bigblue.x0_u.car.lanes[k_].x0);
+      (*l_).x0.set_state((rnd() % 11) as u8);
+      (*l_).x0.set_direction((rnd() % 2) as u8);
+      (*l_).x0_1.set_collision_slot((rnd() % 30) as u16);
     }
   }
   for j_ in 0..12usize {

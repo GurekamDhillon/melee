@@ -484,7 +484,7 @@ fn run_grtdrmario() -> String {
         begin_case("tables", 0, 1);
         for i in 0..4 {
             let e = &*m.add(i);
-            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.anon_10.flags));
+            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.x10.flags));
         }
         let sd = &*melee_world::tu::grtdrmario::stage_data();
         rec(&format!(" SD kind={} cb={} data1={}", sd.grkind, if sd.callbacks == m { "tbl" } else { "?" }, CStr::from_ptr(sd.data1).to_str().unwrap()));
@@ -774,7 +774,7 @@ fn run_grtemblem() -> String {
         begin_case("tables", 0, 1);
         for i in 0..4 {
             let e = &*m.add(i);
-            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.anon_10.flags));
+            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.x10.flags));
         }
         let sd = &*melee_world::tu::grtemblem::stage_data();
         rec(&format!(" SD kind={} cb={} data1={}", sd.grkind, if sd.callbacks == m { "tbl" } else { "?" }, CStr::from_ptr(sd.data1).to_str().unwrap()));
@@ -1065,7 +1065,7 @@ fn run_grtest() -> String {
         begin_case("tables", 0, 1);
         for i in 0..4 {
             let e = &*m.add(i);
-            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.anon_10.flags));
+            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.x10.flags));
         }
         let sd = &*melee_world::tu::grtest::stage_data();
         rec(&format!(" SD kind={} cb={} data1={}", sd.grkind, if sd.callbacks == m { "tbl" } else { "?" }, CStr::from_ptr(sd.data1).to_str().unwrap()));
@@ -1366,7 +1366,7 @@ fn run_grtfalco() -> String {
         begin_case("tables", 0, 1);
         for i in 0..4 {
             let e = &*m.add(i);
-            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.anon_10.flags));
+            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.x10.flags));
         }
         let sd = &*melee_world::tu::grtfalco::stage_data();
         rec(&format!(" SD kind={} cb={} data1={}", sd.grkind, if sd.callbacks == m { "tbl" } else { "?" }, CStr::from_ptr(sd.data1).to_str().unwrap()));
@@ -1659,7 +1659,7 @@ fn run_grtfox() -> String {
         begin_case("tables", 0, 1);
         for i in 0..4 {
             let e = &*m.add(i);
-            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.anon_10.flags));
+            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.x10.flags));
         }
         let sd = &*melee_world::tu::grtfox::stage_data();
         rec(&format!(" SD kind={} cb={} data1={}", sd.grkind, if sd.callbacks == m { "tbl" } else { "?" }, CStr::from_ptr(sd.data1).to_str().unwrap()));
@@ -1952,7 +1952,7 @@ fn run_grtgamewatch() -> String {
         begin_case("tables", 0, 1);
         for i in 0..4 {
             let e = &*m.add(i);
-            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.anon_10.flags));
+            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.x10.flags));
         }
         let sd = &*melee_world::tu::grtgamewatch::stage_data();
         rec(&format!(" SD kind={} cb={} data1={}", sd.grkind, if sd.callbacks == m { "tbl" } else { "?" }, CStr::from_ptr(sd.data1).to_str().unwrap()));
@@ -2242,7 +2242,7 @@ fn run_grtganon() -> String {
         begin_case("tables", 0, 1);
         for i in 0..4 {
             let e = &*m.add(i);
-            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.anon_10.flags));
+            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.x10.flags));
         }
         let sd = &*melee_world::tu::grtganon::stage_data();
         rec(&format!(" SD kind={} cb={} data1={}", sd.grkind, if sd.callbacks == m { "tbl" } else { "?" }, CStr::from_ptr(sd.data1).to_str().unwrap()));
@@ -2537,7 +2537,7 @@ fn run_grticeclimber() -> String {
         begin_case("tables", 0, 1);
         for i in 0..4 {
             let e = &*m.add(i);
-            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.anon_10.flags));
+            rec(&format!(" [{} {} {} {} {} {:08x}]", i, fname(e.on_init.map_or(0, |f| f as usize)), fname(e.callback1.map_or(0, |f| f as usize)), fname(e.gobj_proc.map_or(0, |f| f as usize)), fname(e.callback3.map_or(0, |f| f as usize)), e.x10.flags));
         }
         let sd = &*melee_world::tu::grticeclimber::stage_data();
         rec(&format!(" SD kind={} cb={} data1={}", sd.grkind, if sd.callbacks == m { "tbl" } else { "?" }, CStr::from_ptr(sd.data1).to_str().unwrap()));

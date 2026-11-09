@@ -855,7 +855,7 @@ pub unsafe fn fn_801701C0(rules: *mut MatchEnd, arg1: i32, arg2: i32) -> i32 {
         }
         0xFC => {
             for i in 0..4 {
-                if (*p(i)).pkind != Gm_PKind_NA && i as i32 != arg1 && ((*p(i)).anon_3.x3 & 1) != 0 {
+                if (*p(i)).pkind != Gm_PKind_NA && i as i32 != arg1 && ((*p(i)).x3_u.x3 & 1) != 0 {
                     return 0;
                 }
             }
@@ -865,7 +865,7 @@ pub unsafe fn fn_801701C0(rules: *mut MatchEnd, arg1: i32, arg2: i32) -> i32 {
                         return 0;
                     }
                 }
-                if ((*p(arg1 as usize)).anon_3.anon_0.x3_b7() & 1) == 0
+                if ((*p(arg1 as usize)).x3_u.x0.x3_b7() & 1) == 0
                     && rk(arg1) == 0
                     && (*p(arg1 as usize)).x20 == 0
                 {
@@ -879,13 +879,13 @@ pub unsafe fn fn_801701C0(rules: *mut MatchEnd, arg1: i32, arg2: i32) -> i32 {
                             return 0;
                         }
                     }
-                    if ((*p(arg1 as usize)).anon_3.anon_0.x3_b7() & 1) == 0
+                    if ((*p(arg1 as usize)).x3_u.x0.x3_b7() & 1) == 0
                         && (*p(arg1 as usize)).is_big_loser == 0
                         && (*p(arg1 as usize)).x20 == 0
                     {
                         return 1;
                     }
-                } else if ((*p(arg1 as usize)).anon_3.anon_0.x3_b7() & 1) == 0 && (*p(arg1 as usize)).x20 == 0 {
+                } else if ((*p(arg1 as usize)).x3_u.x0.x3_b7() & 1) == 0 && (*p(arg1 as usize)).x20 == 0 {
                     return 1;
                 }
             }

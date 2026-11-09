@@ -867,6 +867,73 @@ typedef struct RankEntry {
     u8 selkind; ///< SelectableCharacterKind
     u32 value;
 } RankEntry;
+#line 25 "src/melee/mn/mndiagram3.c"
+typedef struct mnDiagram3_PosTable {
+    /* 0x00 */ Vec3 x0;  ///< title_pos (3.3,0.5,0)
+    /* 0x0C */ Vec3 xC;  ///< rank_name_pos (-2,0.57,0)
+    /* 0x18 */ Vec3 x18; ///< value_pos (8,0.57,0)
+} mnDiagram3_PosTable;
+#line 31 "src/melee/mn/mndiagram3.c"
+typedef struct mnDiagram3_StatTable {
+    /* 0x00 */ u16 label_ids[24];      ///< SIS string ids, 0x62..0x79
+    /* 0x30 */ u16 unit_glyph_ids[24]; ///< mnDiagram2 unit/icon column entries
+} mnDiagram3_StatTable;
+#line 36 "src/melee/mn/mndiagram3.c"
+typedef struct mnDiagram3_DataTable {
+    /* 0x00 */ AnimLoopSettings x0;
+    /* 0x0C */ AnimLoopSettings xC;
+    /* 0x18 */ mnDiagram3_PosTable positions;
+    /* 0x3C */ mnDiagram3_StatTable stats;
+} mnDiagram3_DataTable;
+#line 42 "src/melee/mn/mndatadel.c"
+enum WarnCommonJoints {
+    WARN_JOINT_ROOT,
+    WARN_JOINT_BACKGROUND,
+    WARN_JOINT_PANEL,             ///< main panel root
+    WARN_JOINT_PANEL_TOP,         ///< top position of the panel/text box
+    WARN_JOINT_PANEL_TEXT_BOTTOM, ///< bottom position of the text box
+    WARN_JOINT_PANEL_BOTTOM,      ///< bottom position of the panel
+    WARN_JOINT_CURSOR_YES,
+    WARN_JOINT_CURSOR_NO,
+    WARN_JOINT_EXCLAIM,
+    WARN_JOINT_EXCLAIM_MARK,
+    WARN_JOINT_EXCLAIM_ARROW,
+    WARN_JOINT_PROGRESS_BAR,
+    WARN_JOINT_PROGRESS_BAR_START,
+    WARN_JOINT_PROGRESS_BAR_END,
+};
+#line 59 "src/melee/mn/mndatadel.c"
+struct MnDataDelData {
+    AnimLoopSettings x0;
+    AnimLoopSettings xC;
+};
+#line 64 "src/melee/mn/mndatadel.c"
+struct MnDataDelGObjUserData {
+    /* +00 */ u8 x0;
+    /* +01 */ u8 x1;
+    /* +02 */ u8 x2;
+    /* +03 */ u8 x3[6];
+    /* +0C */ HSD_Text* xC;
+    /* +10 */ HSD_JObj* x10[8];
+};
+#line 60 "src/melee/gm/gmtoulib.c"
+struct lbl_803D9DAC_t {
+    Vec3 current;
+    Vec3 target;
+    Vec3 step;
+};
+#line 70 "src/melee/gm/gmtoulib.c"
+struct lbl_803D9DD0_t {
+    /* +00 */ HSD_CObj* cobj;
+    /* +04 */ char pad_B4[0xD0 - 0xB4];
+    /* +20 */ float xD0;
+};
+#line 157 "src/melee/mn/mnstagesel.c"
+struct StageSelUserData {
+    u16 x0;
+    u16 x2;
+    int x4;
+};
 // From src/sysdolphin/baselib/hsd_3915.c
 typedef void (*GlyphFn)(u8* dst, s32 flags, s32 unused1, s32 unused2,
                         const u8* src);

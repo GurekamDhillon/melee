@@ -221,7 +221,7 @@ pub unsafe extern "C" fn it_802F23EC(gobj: *mut Item_GObj, owner_gobj: *mut Figh
     (*ip).atk_victim = owner_gobj;
     (*ip).grab_victim = owner_gobj;
     ext::it_8026C220(gobj, owner_gobj);
-    (*ip).xDD0_flag.anon_0.set_b1(0);
+    (*ip).xDD0_flag.x0.set_b1(0);
     (*ip).facing_dir = facing_dir;
     (*ip).xBC_itemStateContainer = it_803F9450.as_mut_ptr();
     ext::Item_80268E5C(gobj, 0, 0);

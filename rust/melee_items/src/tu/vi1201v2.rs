@@ -100,9 +100,9 @@ pub mod ext {
         fn HSD_FogReqAnim(a0: *mut HSD_Fog, a1: f32);
         fn HSD_Fog_8037DE7C(a0: *mut HSD_Fog, a1: *mut HSD_AObjDesc);
         fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u8);
-        fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0, a1) };
-        fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
-        fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
+        fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0, a1 as i32) };
+        fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) };
+        fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1 as i32) };
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
         fn HSD_GObjFree(a0: *mut HSD_GObj);
         fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
@@ -268,7 +268,7 @@ pub unsafe extern "C" fn un_803207C4() {
     }
 }
 
-pub unsafe extern "C" fn un_803208F0(gobj: *mut HSD_GObj, unused: i32) {
+pub unsafe extern "C" fn un_803208F0(gobj: *mut HSD_GObj, unused: isize) {
     melee_core::ct!("un_803208F0");
     ext::lbShadow_8000F38C(0);
     vi_RunCamera(gobj, &raw const un_804D7028 as *const u8, 0x881);

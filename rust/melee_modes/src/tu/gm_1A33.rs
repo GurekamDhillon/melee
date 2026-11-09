@@ -177,14 +177,14 @@ pub fn gmCamera_801A33BC() {
         let layout = &raw mut gmCamera_VsCameraTextLayout;
 
         ext::gmCamera_801A25C8();
-        (*layout).anon_4.anon_0.slot_a = ext::gmCamera_801A2334(
+        (*layout).x4.x0.slot_a = ext::gmCamera_801A2334(
             0,
             gmCamera_803DA758[2],
             gmCamera_803DA758[3],
             gmCamera_803DA758[0],
             gmCamera_803DA758[1],
         );
-        (*layout).anon_4.anon_0.slot_b = ext::gmCamera_801A2334(
+        (*layout).x4.x0.slot_b = ext::gmCamera_801A2334(
             1,
             gmCamera_803DA758[6],
             gmCamera_803DA758[7],
@@ -193,7 +193,7 @@ pub fn gmCamera_801A33BC() {
         );
         ext::gmCamera_801A253C(&mut sp10, &mut spC);
         let text = ext::HSD_SisLib_803A5ACC(3, ext::gmCamera_801A2640(), gmCamera_803DA758[10], gmCamera_803DA758[11], 0.0, 914.2857, 64.0);
-        (*layout).anon_4.anon_0.bottom_text = text;
+        (*layout).x4.x0.bottom_text = text;
         (*text).default_alignment = 1;
         (*text).default_kerning = 1;
         (*text).default_fitting = 1;
@@ -227,9 +227,9 @@ pub fn gm_Scene_CameraVs_OnFrame() {
         let data = &raw mut gmCamera_VsCameraTextLayout;
         if ext::lbSnap_8001D338(0) != 0 || ext::lbSnap_8001D338(1) != 0 {
             for i in 0..3usize {
-                if !(*data).anon_4.text[i].is_null() {
-                    ext::HSD_SisLib_803A5CC4((*data).anon_4.text[i]);
-                    (*data).anon_4.text[i] = core::ptr::null_mut();
+                if !(*data).x4.text[i].is_null() {
+                    ext::HSD_SisLib_803A5CC4((*data).x4.text[i]);
+                    (*data).x4.text[i] = core::ptr::null_mut();
                 }
             }
             gmCamera_801A33BC();
@@ -257,9 +257,9 @@ pub fn gm_Scene_CameraVs_OnEnter(arg0: *mut c_void) {
         let layout = &raw mut gmCamera_VsCameraTextLayout;
         (*layout).x0 = arg0 as *mut u32;
         ext::gmCamera_801A2650();
-        (*layout).anon_4.anon_0.slot_a = core::ptr::null_mut();
-        (*layout).anon_4.anon_0.slot_b = core::ptr::null_mut();
-        (*layout).anon_4.anon_0.bottom_text = core::ptr::null_mut();
+        (*layout).x4.x0.slot_a = core::ptr::null_mut();
+        (*layout).x4.x0.slot_b = core::ptr::null_mut();
+        (*layout).x4.x0.bottom_text = core::ptr::null_mut();
         gmCamera_801A33BC();
     }
 }

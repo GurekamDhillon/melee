@@ -65,7 +65,7 @@ fn set_cbs(f: &mut Fighter) {
 
 pub fn fn_800D8140(g: G, arg1: i32) {
     melee_core::ct!("fn_800D8140");
-    unsafe { fp(g).anon_2210.throw_flags = 0 };
+    unsafe { fp(g).x2210.throw_flags = 0 };
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeFire as i32);
     ext::Fighter_ChangeMotionState(g, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
@@ -75,7 +75,7 @@ pub fn fn_800D8140(g: G, arg1: i32) {
 
 pub fn fn_800D81D0(g: G, arg1: i32) {
     melee_core::ct!("fn_800D81D0");
-    unsafe { fp(g).anon_2210.throw_flags = 0 };
+    unsafe { fp(g).x2210.throw_flags = 0 };
     let msid = ext::fn_800D769C(fp(g), ftCo_MS_ItemScopeAirFire as i32);
     ext::Fighter_ChangeMotionState(g, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftCommon_ClampAirDrift(fp(g));
@@ -158,10 +158,10 @@ pub fn fn_800D84D4(g: G, arg1: i32) {
         return;
     }
     // ftCheckThrowB0: test and clear.
-    if unsafe { f.anon_2210.anon_0.throw_flags_b0() } == 0 {
+    if unsafe { f.x2210.x0.throw_flags_b0() } == 0 {
         return;
     }
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(0) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(0) };
     let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp20 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     ext::it_80291CCC(f.item_gobj, &mut sp14);

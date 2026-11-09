@@ -78,8 +78,8 @@ pub unsafe fn likelike_velocity(ip: &mut Item, attrs: &itLikelikeAttributes, mul
     let ll = ip.xDD4_itemVar.likelike;
     let dx = ll.x20.x - ip.pos.x;
     let dy = ll.x20.y - ip.pos.y;
-    let lim = (*attrs.x0.x0_f32).y * multiplier;
-    if (if dx < 0.0 { -dx } else { dx }) < lim && (if dy < 0.0 { -dy } else { dy }) < (*attrs.x0.x0_f32).y * multiplier {
+    let lim = (*attrs.x0).x4 * multiplier;
+    if (if dx < 0.0 { -dx } else { dx }) < lim && (if dy < 0.0 { -dy } else { dy }) < (*attrs.x0).x4 * multiplier {
         if ip.xDD4_itemVar.likelike.x48 >= 4 {
             swap_velocity(ip);
             ip.xDD4_itemVar.likelike.x48 = 0;

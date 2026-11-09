@@ -68,10 +68,10 @@ pub mod ext {
     pub fn Ground_801C3BB4() {
         match unsafe { GROUND_801C3BB4 } { Some(f) => f(), None => { unsafe { crate::tu::ground::Ground_801C3BB4(); } return; } }
     }
-    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
-        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
     }
     pub static mut GROUND_801C4A08: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
@@ -172,9 +172,9 @@ pub mod ext {
     pub fn grAnime_801C8138(a0: *mut HSD_GObj, a1: enum_t, a2: i32) {
         match unsafe { GRANIME_801C8138 } { Some(f) => f(a0, a1, a2), None => { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } return; } }
     }
-    pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, i32)> = None;
+    pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, isize)> = None;
     #[allow(non_snake_case)]
-    pub fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) {
+    pub fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) {
         match unsafe { GRDISPLAY_801C5DB0 } { Some(f) => f(a0, a1), None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; } }
     }
     pub static mut GRFZEROCAR_801CAFBC: Option<fn(*mut HSD_GObj, *mut c_void, s32, s32)> = None;
@@ -286,8 +286,8 @@ pub mod ext {
     }
 
     /// `grDisplay_801C5DB0` as a render callback: its address is what `GObj_SetupGXLink` receives.
-    pub unsafe extern "C" fn grDisplay_801C5DB0_cb(gobj: *mut HSD_GObj, pass: i32) {
-        grDisplay_801C5DB0(gobj, pass)
+    pub unsafe extern "C" fn grDisplay_801C5DB0_cb(gobj: *mut HSD_GObj, pass: isize) {
+        grDisplay_801C5DB0(gobj, pass as isize)
     }
 }
 use ext::*;
@@ -413,7 +413,7 @@ pub static mut yakumono_param: *mut grBb_YakumonoParam = null_mut();
 
 macro_rules! cbs {
     () => {
-        StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, anon_10: StageCallbacks_anon_135 { flags: 0 } }
+        StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, x10: StageCallbacks_x10 { flags: 0 } }
     };
     ($a:ident, $b:ident, $c:ident, $d:ident, $flags:expr) => {
         StageCallbacks {
@@ -421,7 +421,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
+            x10: StageCallbacks_x10 { flags: u32::to_be($flags) },
         }
     };
 }
@@ -519,33 +519,33 @@ pub static mut grBb_TrackEntries: [grBb_TrackEntry; 12] = {
 
 // ---------------------------------------------------------------------------------------------------- views
 /// The `Ground.u.bigblue` record's anonymous struct (header word, `xC8`, `xCC`, `xD0`, `xD4[3]`, `data[3]`).
-type BbS = grBigBlue_GroundVars_anon_1430_anon_1431;
+type BbS = grBigBlue_GroundVars_x0_x0;
 /// Its header union (`x0_w`, the four bytes `x0..x3`, `x0_b1`, the lane bitfields).
-type BbH = grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432;
-type BbL = grBigBlue_GroundVars_anon_1430_anon_1431_anon_1432_anon_1444;
+type BbH = grBigBlue_GroundVars_x0_x0_x0;
+type BbL = grBigBlue_GroundVars_x0_x0_x0_x0_2;
 
 #[inline(always)]
 unsafe fn bbs(gp: *mut Ground) -> *mut BbS {
-    addr_of_mut!((*gp).u.bigblue.anon_0.anon_0)
+    addr_of_mut!((*gp).u.bigblue.x0_u.x0_s)
 }
 #[inline(always)]
 unsafe fn bbh(gp: *mut Ground) -> *mut BbH {
-    addr_of_mut!((*gp).u.bigblue.anon_0.anon_0.anon_0)
+    addr_of_mut!((*gp).u.bigblue.x0_u.x0_s.x0_u)
 }
 /// `gp->u.bigblue.x0` (byte 0 of the union).
 #[inline(always)]
 unsafe fn bb_x0(gp: *mut Ground) -> *mut u8 {
-    addr_of_mut!((*bbh(gp)).anon_0.x0)
+    addr_of_mut!((*bbh(gp)).x0_s.x0)
 }
 /// `gp->u.bigblue.x1` (byte 1).
 #[inline(always)]
 unsafe fn bb_x1(gp: *mut Ground) -> *mut u8 {
-    addr_of_mut!((*bbh(gp)).anon_0.x1)
+    addr_of_mut!((*bbh(gp)).x0_s.x1)
 }
 /// The 32-bit bitfield view of the header (`b0`, `b1`, `b2`, `prev_lane`, ...).
 #[inline(always)]
 unsafe fn bb_lane(gp: *mut Ground) -> *mut BbL {
-    addr_of_mut!((*bbh(gp)).anon_0_0_)
+    addr_of_mut!((*bbh(gp)).x0_2)
 }
 /// `Ground_GetMapGObj(id)->user_data`.
 #[inline(always)]
@@ -695,7 +695,7 @@ pub unsafe extern "C" fn grBigBlue_801E6120(_arg: *mut HSD_GObj) { melee_core::c
 pub unsafe extern "C" fn fn_801E6124(gobj: *mut HSD_GObj) {
     melee_core::ct!("fn_801E6124");
     let g = GET_GROUND(gobj);
-    (*bbh(g)).anon_0_0.set_x0_b1(0);
+    (*bbh(g)).x0_1.set_x0_b1(0);
 }
 
 /// `grBigBlue_801E613C` (gobj 34: the moving road).
@@ -707,7 +707,7 @@ pub unsafe extern "C" fn grBigBlue_801E613C(gobj: *mut HSD_GObj) {
     grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
     Ground_InitMapColl(jobj, (*gp).map_id as s32);
     grBigBlue_801EB004(gobj);
-    (*bbh(gp)).anon_0_0.set_x0_b1(1);
+    (*bbh(gp)).x0_1.set_x0_b1(1);
     Ground_801C10B8(gobj, Some(fn_801E6124));
 }
 
@@ -759,7 +759,7 @@ pub unsafe extern "C" fn grBigBlue_801E6364(gobj: *mut HSD_GObj) {
     melee_core::ct!("grBigBlue_801E6364");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = GET_GROUND(gobj);
-    let car = addr_of_mut!((*gp).u.bigblue.anon_0.car);
+    let car = addr_of_mut!((*gp).u.bigblue.x0_u.car);
 
     Ground_InitMapColl(jobj, (*gp).map_id as s32);
 
@@ -849,7 +849,7 @@ pub unsafe extern "C" fn grBigBlue_801E6884(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn grBigBlue_801E68B8(gobj: *mut HSD_GObj) {
     melee_core::ct!("grBigBlue_801E68B8");
     let gp = GET_GROUND(gobj);
-    let car = addr_of_mut!((*gp).u.bigblue.anon_0.car);
+    let car = addr_of_mut!((*gp).u.bigblue.x0_u.car);
 
     HSD_Free((*car).collision_jobjs as *mut c_void);
     (*car).collision_jobjs = null_mut();
@@ -1071,7 +1071,7 @@ pub unsafe extern "C" fn grBigBlue_801E6C60(gobj: *mut HSD_GObj) {
                                 grBigBlue_801E8A1C(i as i32);
                             }
                         }
-                        let mgr = addr_of_mut!((*gp).u.bigblue.anon_0.manager);
+                        let mgr = addr_of_mut!((*gp).u.bigblue.x0_u.manager);
                         (*mgr).flags = (*mgr).flags.wrapping_add(1);
                         if ptr_i32(grBigBlue_801E89DC(2)) == 0 {
                             let params = yakumono_param;
@@ -1445,14 +1445,14 @@ pub unsafe extern "C" fn grBigBlue_801E8978(index: i32, data: *mut c_void, extra
         // GC +0xE0: a 4-byte slot (`pad_3` here); the native `manager.event_extra` would overlap `data[0]`
         *(addr_of_mut!((*s).pad_3) as *mut u32) = ptr_u32(extra);
     }
-    *addr_of_mut!((*gp).u.bigblue.anon_0.manager.event_data).cast::<*mut c_void>().offset(index as isize) = data;
+    *addr_of_mut!((*gp).u.bigblue.x0_u.manager.event_data).cast::<*mut c_void>().offset(index as isize) = data;
 }
 
 /// `grBigBlue_801E89DC`: `manager.event_data[arg]`.
 pub unsafe extern "C" fn grBigBlue_801E89DC(arg: i32) -> *mut c_void {
     melee_core::ct!("grBigBlue_801E89DC");
     let gp = GET_GROUND(Ground_GetMapGObj(32));
-    *addr_of_mut!((*gp).u.bigblue.anon_0.manager.event_data).cast::<*mut c_void>().offset(arg as isize)
+    *addr_of_mut!((*gp).u.bigblue.x0_u.manager.event_data).cast::<*mut c_void>().offset(arg as isize)
 }
 
 /// `grBigBlue_801E8A1C`: drop a random item onto platform `idx`.
@@ -1491,7 +1491,7 @@ pub unsafe extern "C" fn grBigBlue_801E8A1C(idx: i32) {
             spawn.x8_vec.y += 5.0f32;
         }
 
-        spawn.x1C.anon_0.set_b0(1);
+        spawn.x1C.x0.set_b0(1);
         (*(*s).data.as_mut_ptr().offset(idx as isize)).x50 = ptr_i32(it_8026BE84(&mut spawn));
     }
 }
@@ -1502,12 +1502,12 @@ pub unsafe extern "C" fn grBigBlue_801E8A1C(idx: i32) {
 pub unsafe extern "C" fn grBigBlue_801E8B84(right: f32, left: f32, bottom: f32, top: f32) -> f32 {
     melee_core::ct!("grBigBlue_801E8B84");
     let gp = (*Ground_GetMapGObj(33)).user_data as *mut Ground;
-    let car = addr_of_mut!((*gp).u.bigblue.anon_0.car);
+    let car = addr_of_mut!((*gp).u.bigblue.x0_u.car);
     let mut result: f32 = -F32_MAX;
 
     for k in 0..4usize {
         let lane = addr_of_mut!((*car).lanes[k]);
-        if (*lane).anon_0.anon_0.state() as u32 != 1 {
+        if (*lane).x0.x0.state() as u32 != 1 {
             if (*lane).pos.y < right && (*lane).pos.y > left {
                 if (*lane).pos.x < top && (*lane).pos.x > bottom {
                     if (*lane).pos.y > result {
@@ -1554,7 +1554,7 @@ pub unsafe extern "C" fn grBigBlue_801E8D64(gobj: *mut HSD_GObj) {
     let mut pos = Z3;
     let mut scale = Z3;
     let mut translate = Z3;
-    let plat = addr_of_mut!((*gp).u.bigblue.anon_0.platform);
+    let plat = addr_of_mut!((*gp).u.bigblue.x0_u.platform);
 
     Ground_InitMapColl(jobj, (*gp).map_id as s32);
     (*gp).x10_flags.set_b5(1);
@@ -1642,7 +1642,7 @@ pub unsafe extern "C" fn grBigBlue_801E93D8(gobj: *mut HSD_GObj) {
     let mut check_pos = Z3;
     let gp = (*gobj).user_data as *mut Ground;
     let jobj = GET_JOBJ(gobj);
-    let plat = addr_of_mut!((*gp).u.bigblue.anon_0.platform);
+    let plat = addr_of_mut!((*gp).u.bigblue.x0_u.platform);
     let f_cc = addr_of_mut!((*plat).xCC_timer) as *mut f32;
     let f_d0 = addr_of_mut!((*plat).xD0_timer) as *mut f32;
 
@@ -1889,7 +1889,7 @@ pub unsafe extern "C" fn grBigBlue_801EA05C(gobj: *mut HSD_GObj) {
     melee_core::ct!("grBigBlue_801EA05C");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
-    let plat = addr_of_mut!((*gp).u.bigblue.anon_0.platform);
+    let plat = addr_of_mut!((*gp).u.bigblue.x0_u.platform);
     let mut pos = Z3;
     let mut half_top = Z3;
     let mut half_bot = Z3;
@@ -2301,7 +2301,7 @@ pub unsafe extern "C" fn grBigBlue_801EB004(gobj: *mut HSD_GObj) {
     melee_core::ct!("grBigBlue_801EB004");
     let stage_jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
-    let road = addr_of_mut!((*gp).u.bigblue.anon_0.road);
+    let road = addr_of_mut!((*gp).u.bigblue.x0_u.road);
     let mut jobj: *mut HSD_JObj;
     let mut pos = Z3;
     let mut scale = Z3;
@@ -2399,7 +2399,7 @@ pub unsafe extern "C" fn grBigBlue_801EB004(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn grBigBlue_801EB4AC(gobj: *mut HSD_GObj) {
     melee_core::ct!("grBigBlue_801EB4AC");
     let gp = GET_GROUND(gobj);
-    let road = addr_of_mut!((*gp).u.bigblue.anon_0.road);
+    let road = addr_of_mut!((*gp).u.bigblue.x0_u.road);
     let lane = bb_lane(gp);
     let mut entry: *mut grBb_TrackEntry;
     let new_jobj: *mut HSD_JObj;
@@ -2600,7 +2600,7 @@ pub unsafe extern "C" fn grBigBlue_801EBAF8(gobj: *mut HSD_GObj) {
     melee_core::ct!("grBigBlue_801EBAF8");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let gp = (*gobj).user_data as *mut Ground;
-    let road = addr_of_mut!((*gp).u.bigblue.anon_0.road);
+    let road = addr_of_mut!((*gp).u.bigblue.x0_u.road);
     let lane = bb_lane(gp);
     let mut bone_pos = Z3;
     let mut vel = Z3;
@@ -2871,7 +2871,7 @@ type CarLane = grBigBlue_CarLane;
 
 #[inline(always)]
 unsafe fn car_of(gp: *mut Ground) -> *mut grBigBlue_CarVars {
-    addr_of_mut!((*gp).u.bigblue.anon_0.car)
+    addr_of_mut!((*gp).u.bigblue.x0_u.car)
 }
 #[inline(always)]
 unsafe fn lane_at(gp: *mut Ground, i: i32) -> *mut CarLane {
@@ -2880,23 +2880,23 @@ unsafe fn lane_at(gp: *mut Ground, i: i32) -> *mut CarLane {
 /// `lanes[i].state` (the PPC reads it as `(byte >> 2) & 0x3F`).
 #[inline(always)]
 unsafe fn lane_state(gp: *mut Ground, i: i32) -> u32 {
-    (*lane_at(gp, i)).anon_0.anon_0.state() as u32
+    (*lane_at(gp, i)).x0.x0.state() as u32
 }
 #[inline(always)]
 unsafe fn lane_set_state(gp: *mut Ground, i: i32, v: i32) {
-    (*lane_at(gp, i)).anon_0.anon_0.set_state(v as u8);
+    (*lane_at(gp, i)).x0.x0.set_state(v as u8);
 }
 #[inline(always)]
 unsafe fn lane_direction(gp: *mut Ground, i: i32) -> u8 {
-    (*lane_at(gp, i)).anon_0.anon_0.direction()
+    (*lane_at(gp, i)).x0.x0.direction()
 }
 #[inline(always)]
 unsafe fn lane_slot(gp: *mut Ground, i: i32) -> u16 {
-    (*lane_at(gp, i)).anon_0.anon_0_0.collision_slot()
+    (*lane_at(gp, i)).x0.x0_1.collision_slot()
 }
 #[inline(always)]
 unsafe fn lane_set_slot(gp: *mut Ground, i: i32, v: i32) {
-    (*lane_at(gp, i)).anon_0.anon_0_0.set_collision_slot(v as u16);
+    (*lane_at(gp, i)).x0.x0_1.set_collision_slot(v as u16);
 }
 
 /// `grBigBlue_801EC6C0_inline`: set up car `car_idx` on collision line `line_idx`. Fused sites: `lerp + 0.5 * -(...)`
@@ -2907,7 +2907,7 @@ unsafe fn grBigBlue_801EC6C0_inline(gp: *mut Ground, car_idx: s32, line_idx: s32
 
     lane_set_slot(gp, car_idx, line_idx);
 
-    (*lane).anon_0.anon_0.set_direction(0);
+    (*lane).x0.x0.set_direction(0);
 
     let mut params = yakumono_param;
     let mut scale = Ground_801C0498();
@@ -3349,7 +3349,7 @@ pub unsafe extern "C" fn grBigBlue_801ED694(gobj: *mut HSD_GObj, lane: s32) {
 
             if -F32_MAX != ground_y && ground_y > rank_factor {
                 if (*l).angular_velocity < 0.0 {
-                    (*l).anon_0.anon_0.set_direction(0);
+                    (*l).x0.x0.set_direction(0);
                     // goto heading_converge: skip collision/grounding
                     break 'converge;
                 }
@@ -3374,7 +3374,7 @@ pub unsafe extern "C" fn grBigBlue_801ED694(gobj: *mut HSD_GObj, lane: s32) {
                 assert_(!map_gobj.is_null(), 3255, "map_gobj");
                 let gp2 = (*map_gobj).user_data as *mut Ground;
                 assert_(!gp2.is_null(), 3256, "gp2");
-                let road = addr_of_mut!((*gp2).u.bigblue.anon_0.road);
+                let road = addr_of_mut!((*gp2).u.bigblue.x0_u.road);
                 (*l).pos.y += (*road).position.y - (*road).previous_position.y;
             }
         } else {
@@ -3386,7 +3386,7 @@ pub unsafe extern "C" fn grBigBlue_801ED694(gobj: *mut HSD_GObj, lane: s32) {
                 // heading_osc + (height + (x2C * scale + ground_y))
                 (*l).pos.y = heading_osc + ((*l).height + fmadds((*yakumono_param).x2C, Ground_801C0498(), ground_y));
             } else {
-                (*l).anon_0.anon_0.set_direction(1);
+                (*l).x0.x0.set_direction(1);
                 rank_factor = (*yakumono_param).x84 * Ground_801C0498();
                 heading_osc = sinf(f31_rot);
                 (*l).angular_velocity = heading_osc * rank_factor;
@@ -3628,7 +3628,7 @@ pub unsafe extern "C" fn grBigBlue_801EE398(gobj: *mut HSD_GObj, arg1: s32, arg2
                     }
 
                     lane_set_slot(gp, arg1, slot);
-                    (*ln).anon_0.anon_0.set_direction(0);
+                    (*ln).x0.x0.set_direction(0);
 
                     (*ln).pos.x = pos.x;
                     // x2C * scale + pos.y
@@ -3984,12 +3984,12 @@ pub unsafe extern "C" fn grBigBlue_801EF844(line_id: enum_t) -> bool {
 }
 
 /// `fn_801EFB9C` (render callback of the backdrop).
-pub unsafe extern "C" fn fn_801EFB9C(gobj: *mut HSD_GObj, pass: i32) {
+pub unsafe extern "C" fn fn_801EFB9C(gobj: *mut HSD_GObj, pass: isize) {
     melee_core::ct!("fn_801EFB9C");
     if gm_GetDbPauseFlag(1) != 0 || gm_GetDbPauseFlag(2) != 0 || Camera_8003010C() != 0 {
         return;
     }
-    grDisplay_801C5DB0(gobj, pass);
+    grDisplay_801C5DB0(gobj, pass as isize);
 }
 
 /// `grBigBlue_801EFC14` (on_check_shadow_render).
@@ -4036,4 +4036,4 @@ pub unsafe extern "C" fn grBigBlue_801EFC14(a: *mut Vec3, _b: i32, jobj: *mut HS
     pub extern "C" fn grBigBlue_801EA054(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grBigBlue_801EFC0C (gr/grbigblue.c:4576)
-    pub extern "C" fn grBigBlue_801EFC0C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grBigBlue_801EFC0C(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

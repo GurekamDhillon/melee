@@ -44,7 +44,7 @@ pub fn ftCo_800D2FA4(g: G) -> bool {
     melee_core::ct!("ftCo_800D2FA4");
     let f = fp(g);
     if f.dmg.x1860_element == HitElement_Scball as u32 {
-        let x = unsafe { f.x2070.anon_0.x2071_b0_3() } as i32;
+        let x = unsafe { f.x2070.x0.x2071_b0_3() } as i32;
         match x {
             11 | 12 => return false,
             _ => {}

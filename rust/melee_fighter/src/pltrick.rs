@@ -32,7 +32,7 @@ pub static PL_803BCE70: [i32; 16] = [-1, 0x2F, 0x30, 0x31, -1, -1, -1, -1, -1, -
 pub(crate) fn by_attack_hi_inc(acp: &mut plActionStats, id: u8) {
     match id {
         100..=115 => {
-            let hi = unsafe { acp.anon_358.anon_0.by_attack_hi.as_mut_ptr().add(id as usize) };
+            let hi = unsafe { acp.x358.x0.by_attack_hi.as_mut_ptr().add(id as usize) };
             unsafe { *hi = (*hi).wrapping_add(1) };
         }
         116 | 117 => {

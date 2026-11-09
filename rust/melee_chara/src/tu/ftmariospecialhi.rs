@@ -34,13 +34,13 @@ pub mod ext {
     }
     hook_or!(FT_80083B68, ft_80083B68, melee_fighter::tu::ft_081b::ft_80083b68, (gobj: *mut HSD_GObj));
     hook_or!(FT_800831CC, ft_800831CC, melee_fighter::tu::ft_081b::ft_800831cc,
-        (gobj: *mut HSD_GObj, coll: fn(*mut HSD_GObj, i32) -> bool, cb: fn(*mut HSD_GObj)));
+        (gobj: *mut HSD_GObj, coll: fn(*mut HSD_GObj, isize) -> bool, cb: fn(*mut HSD_GObj)));
     hook_or!(FTPARTSETROTY, ftPartSetRotY, ftpartsetroty_port, (fp: *mut Fighter, part: i32, v: f32));
     fn ftpartsetroty_port(fp: *mut Fighter, part: i32, v: f32) {
         melee_fighter::tu::ftparts::ftPartSetRotY(unsafe { &*fp }, part, v)
     }
     /// `ftCo_80096CC8` (ftCo_FallSpecial.c) with the Rust ABI the collision helper takes.
-    pub fn ftCo_80096CC8(gobj: *mut HSD_GObj, line_id: i32) -> bool {
+    pub fn ftCo_80096CC8(gobj: *mut HSD_GObj, line_id: isize) -> bool {
         unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8(gobj, line_id) }
     }
 }
@@ -66,7 +66,7 @@ pub fn ftMr_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
         (*fp).cmd_vars[0] = 0;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).self_vel.y = 0.0;
         (*fp).self_vel.x = (*fp).self_vel.x * (*sa).specialhi.vel_x;
         st::Fighter_ChangeMotionState(gobj, ftMr_MS_SpecialAirHi as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -114,8 +114,8 @@ pub fn ftMr_SpecialHi_IASA(gobj: *mut HSD_GObj) {
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
         special_hi_iasa_lstick(&mut *fp);
         // ftCheckThrowB3
-        if (*fp).anon_2210.anon_0.throw_flags_b3() != 0 {
-            (*fp).anon_2210.anon_0.set_throw_flags_b3(0);
+        if (*fp).x2210.x0.throw_flags_b3() != 0 {
+            (*fp).x2210.x0.set_throw_flags_b3(0);
             if abs_m((*fp).input.lstick[0].x) > (*sa).specialhi.reverse_stick_range {
                 st::ftCommon_UpdateFacing(&mut *fp);
                 ext::ftPartSetRotY(fp, 0, (core::f64::consts::FRAC_PI_2 * (*fp).facing_dir as f64) as f32);
@@ -203,7 +203,7 @@ pub fn ftMr_SpecialHi_Enter(gobj: *mut HSD_GObj) {
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 347 /* ftMr_MS_SpecialHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
     }

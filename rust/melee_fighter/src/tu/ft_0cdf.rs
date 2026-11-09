@@ -30,7 +30,7 @@ pub mod ext {
 }
 
 fn shoot_enter(g: G, full: i32, empty: i32, air: bool) {
-    unsafe { fp(g).anon_2210.throw_flags = 0 };
+    unsafe { fp(g).x2210.throw_flags = 0 };
     let ms = if !it_8026b594(fp(g).item_gobj) { full } else { empty };
     e::Fighter_ChangeMotionState(g, ms, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     e::ftAnim_8006EBA4(g);

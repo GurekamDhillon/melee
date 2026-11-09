@@ -270,24 +270,24 @@ pub static mut HOOK_HSD_GObj_80390ED0: Option<fn(*mut HSD_GObj, u32)> = None;
 pub fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) {
     match unsafe { HOOK_HSD_GObj_80390ED0 } { Some(f) => f(a0, a1), None => melee_core::unported!("TODO: HSD_GObj_80390ED0 is not ported") }
 }
-pub static mut HOOK_HSD_GObj_803910D8: Option<fn(*mut HSD_GObj, i32)> = None;
+pub static mut HOOK_HSD_GObj_803910D8: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_GObj_803910D8` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
-pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) {
+pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) {
     match HOOK_HSD_GObj_803910D8 { Some(f) => f(a0, a1), None => melee_core::unported!("TODO: HSD_GObj_803910D8 is not ported") }
 }
-pub static mut HOOK_HSD_GObj_FogCallback: Option<fn(*mut HSD_GObj, i32)> = None;
+pub static mut HOOK_HSD_GObj_FogCallback: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_GObj_FogCallback` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
-pub unsafe extern "C" fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: i32) {
+pub unsafe extern "C" fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: isize) {
     match HOOK_HSD_GObj_FogCallback { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0 as _, a1 as _); } return; } }
 }
-pub static mut HOOK_HSD_GObj_JObjCallback: Option<fn(*mut HSD_GObj, i32)> = None;
+pub static mut HOOK_HSD_GObj_JObjCallback: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
-pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) {
+pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) {
     match HOOK_HSD_GObj_JObjCallback { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; } }
 }
-pub static mut HOOK_HSD_GObj_LObjCallback: Option<fn(*mut HSD_GObj, i32)> = None;
+pub static mut HOOK_HSD_GObj_LObjCallback: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_GObj_LObjCallback` (sysdolphin/baselib/gobj.h); referenced as a function value, so it is `extern "C"`.
-pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) {
+pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) {
     match HOOK_HSD_GObj_LObjCallback { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_GObj_SetupProc: Option<fn(*mut HSD_GObj, HSD_GObjEvent, u8) -> *mut HSD_GObjProc> = None;
@@ -365,14 +365,14 @@ pub static mut HOOK_HSD_SObjLib_803A477C: Option<fn(*mut HSD_GObj, *mut HSD_SObj
 pub fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: i32, a3: i32, a4: u8, a5: u8) -> *mut HSD_SObj {
     match unsafe { HOOK_HSD_SObjLib_803A477C } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { return unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A477C(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _) as _ }; } }
 }
-pub static mut HOOK_HSD_SObjLib_803A49E0: Option<fn(*mut HSD_GObj, i32)> = None;
+pub static mut HOOK_HSD_SObjLib_803A49E0: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_SObjLib_803A49E0` (sysdolphin/baselib/sobjlib.h); referenced as a function value, so it is `extern "C"`.
-pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) {
+pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: isize) {
     match HOOK_HSD_SObjLib_803A49E0 { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0 as _, a1 as _); } return; } }
 }
-pub static mut HOOK_HSD_SObjLib_803A54EC: Option<fn(*mut HSD_GObj, i32)> = None;
+pub static mut HOOK_HSD_SObjLib_803A54EC: Option<fn(*mut HSD_GObj, isize)> = None;
 /// C `HSD_SObjLib_803A54EC` (sysdolphin/baselib/sobjlib.h).
-pub fn HSD_SObjLib_803A54EC(a0: *mut HSD_GObj, a1: i32) {
+pub fn HSD_SObjLib_803A54EC(a0: *mut HSD_GObj, a1: isize) {
     match unsafe { HOOK_HSD_SObjLib_803A54EC } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::sobjlib::HSD_SObjLib_803A54EC(a0 as _, a1 as _); } return; } }
 }
 pub static mut HOOK_HSD_SObjLib_803A55DC: Option<fn(*mut HSD_GObj, u16, u16, i32)> = None;

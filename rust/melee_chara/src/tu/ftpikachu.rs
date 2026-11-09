@@ -96,9 +96,9 @@ pub fn ftPk_Init_OnLoad(gobj: *mut HSD_GObj) {
         let item_list = (*(*fp).ft_data).x48_items;
         push_attrs::<ftPikachuAttributes>(fp);
         let pika_attr = (*fp).dat_attrs as *const ftPikachuAttributes;
-        ext::it_8026B3F8(*item_list.add(0), (*pika_attr).xDC as i32);
-        ext::it_8026B3F8(*item_list.add(1), (*pika_attr).specialn_itkind as i32);
-        ext::it_8026B3F8(*item_list.add(2), (*pika_attr).specialairn_itkind as i32);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, (*pika_attr).xDC as i32);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, (*pika_attr).specialn_itkind as i32);
+        ext::it_8026B3F8((*item_list.add(2)).article as *mut ::core::ffi::c_void, (*pika_attr).specialairn_itkind as i32);
     }
 }
 

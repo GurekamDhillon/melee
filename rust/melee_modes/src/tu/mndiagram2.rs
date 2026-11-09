@@ -13,7 +13,7 @@ pub use crate::mn::{mnDiagram2_IsTimeStat,mnDiagram2_IsDistanceStat,mnDiagram2_I
 pub mod ext { use super::*; crate::oext_fns! {
 fn __assert(a0: *const i8, a1: u32, a2: *const i8) -> ();
 fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
 fn lbAudioAx_80024030(a0: i32) -> () = crate::tu::adapt::lbAudioAx_80024030__36458a;
 fn mn_80229624(a0: u32) -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
 fn mn_80229894(a0: i32, a1: u16, a2: i32) -> () = crate::tu::adapt::mn_80229894__f7df64;
@@ -191,7 +191,7 @@ rw pub mnDiagram2_804D4FD0: [u8; 3]  = [
     0 as i32 as u8,
 ];
 }
-unsafe fn entry_value(e:&mnDiagram2_SortEntry)->u64{((e.anon_0.x8 as u32 as u64)<<32)|(e.anon_0.xC as u32 as u64)}
+unsafe fn entry_value(e:&mnDiagram2_SortEntry)->u64{((e.x0.x8 as u32 as u64)<<32)|(e.x0.xC as u32 as u64)}
 unsafe fn HSD_GObjGetHSDObj(g:*mut HSD_GObj)->*mut c_void { (*g).hsd_obj }
 unsafe fn HSD_GObjGetUserData(g:*mut HSD_GObj)->*mut c_void { (*g).user_data }
 unsafe fn Menu_GetAllInputs()->u64 { mn_804A04F0.buttons = mn_80229624(4) as u64; mn_804A04F0.buttons }
@@ -1168,7 +1168,7 @@ pub unsafe extern "C" fn mnDiagram2_Create(mut arg0: i32) {
         gobj,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, i32) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         6 as u8,
         0x80 as u32,
@@ -1305,7 +1305,7 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedFighter(
     melee_core::ct!("mnDiagram2_GetRankedFighter");
     let mut j: i32 = 0;
     let mut entries: [mnDiagram2_SortEntry; 25] = [mnDiagram2_SortEntry {
-        anon_0: mnDiagram2_SortEntry_anon_9 {
+        x0: mnDiagram2_SortEntry_x0 {
             idx: 0,
             pad1: [0; 7],
             x8: 0,
@@ -1313,7 +1313,7 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedFighter(
         },
     }; 25];
     let mut temp: mnDiagram2_SortEntry = mnDiagram2_SortEntry {
-        anon_0: mnDiagram2_SortEntry_anon_9 {
+        x0: mnDiagram2_SortEntry_x0 {
             idx: 0,
             pad1: [0; 7],
             x8: 0,
@@ -1330,17 +1330,17 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedFighter(
     i = 0 as i32;
     while i < SELKIND_COUNT as i32 {
         selkind = mnDiagram_GetFighterByIndex(i) as SelectableCharacterKind;
-        entries[i as usize].anon_0.idx = selkind as u8;
+        entries[i as usize].x0.idx = selkind as u8;
         if mn_IsFighterUnlocked(selkind) != 0 as i32 {
-            entries[i as usize].anon_0.xC = mnDiagram2_GetStatValue(
+            entries[i as usize].x0.xC = mnDiagram2_GetStatValue(
                 0 as u8,
                 stat_type,
                 selkind as u8,
             ) as i32;
-            entries[i as usize].anon_0.x8 = 0 as i32 as i32;
+            entries[i as usize].x0.x8 = 0 as i32 as i32;
         } else {
-            entries[i as usize].anon_0.xC = neg1 as i32;
-            entries[i as usize].anon_0.x8 = neg1 as i32;
+            entries[i as usize].x0.xC = neg1 as i32;
+            entries[i as usize].x0.x8 = neg1 as i32;
         }
         i += 1;
     }
@@ -1375,7 +1375,7 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedFighter(
     {
         return SELKIND_COUNT as i32 as u8;
     }
-    return entries[rank as usize].anon_0.idx;
+    return entries[rank as usize].x0.idx;
 }
 pub unsafe extern "C" fn mnDiagram2_GetRankedName(
     mut stat_type: u8,
@@ -1383,7 +1383,7 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedName(
 ) -> u8 {
     melee_core::ct!("mnDiagram2_GetRankedName");
     let mut entries: [mnDiagram2_SortEntry; 120] = [mnDiagram2_SortEntry {
-        anon_0: mnDiagram2_SortEntry_anon_9 {
+        x0: mnDiagram2_SortEntry_x0 {
             idx: 0,
             pad1: [0; 7],
             x8: 0,
@@ -1391,7 +1391,7 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedName(
         },
     }; 120];
     let mut temp: mnDiagram2_SortEntry = mnDiagram2_SortEntry {
-        anon_0: mnDiagram2_SortEntry_anon_9 {
+        x0: mnDiagram2_SortEntry_x0 {
             idx: 0,
             pad1: [0; 7],
             x8: 0,
@@ -1418,14 +1418,14 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedName(
     i = 0 as i32;
     zero = 0 as i32;
     while i < count {
-        (*ptr).anon_0.idx = mnDiagram_GetNameByIndex(i);
-        (*ptr).anon_0.xC = mnDiagram2_GetStatValue(
+        (*ptr).x0.idx = mnDiagram_GetNameByIndex(i);
+        (*ptr).x0.xC = mnDiagram2_GetStatValue(
             1 as u8,
             stat_type,
             mnDiagram_GetNameByIndex(i),
         ) as i32;
         i += 1;
-        (*ptr).anon_0.x8 = zero as i32;
+        (*ptr).x0.x8 = zero as i32;
         ptr = ptr.offset(1);
     }
     i = 0 as i32;
@@ -1455,7 +1455,7 @@ pub unsafe extern "C" fn mnDiagram2_GetRankedName(
         base = base.offset(1);
         i += 1;
     }
-    return entries[rank as usize].anon_0.idx;
+    return entries[rank as usize].x0.idx;
 }
 pub unsafe extern "C" fn mnDiagram2_GetAggregatedFighterRank(
     mut out: *mut mnDiagram2_SortEntry,
@@ -1464,7 +1464,7 @@ pub unsafe extern "C" fn mnDiagram2_GetAggregatedFighterRank(
 ) {
     melee_core::ct!("mnDiagram2_GetAggregatedFighterRank");
     let mut entries: [mnDiagram2_SortEntry; 25] = [mnDiagram2_SortEntry {
-        anon_0: mnDiagram2_SortEntry_anon_9 {
+        x0: mnDiagram2_SortEntry_x0 {
             idx: 0,
             pad1: [0; 7],
             x8: 0,
@@ -1472,7 +1472,7 @@ pub unsafe extern "C" fn mnDiagram2_GetAggregatedFighterRank(
         },
     }; 25];
     let mut temp: mnDiagram2_SortEntry = mnDiagram2_SortEntry {
-        anon_0: mnDiagram2_SortEntry_anon_9 {
+        x0: mnDiagram2_SortEntry_x0 {
             idx: 0,
             pad1: [0; 7],
             x8: 0,
@@ -1501,10 +1501,10 @@ pub unsafe extern "C" fn mnDiagram2_GetAggregatedFighterRank(
     n = 0 as i32;
     zero = 0 as i32;
     loop {
-        (*ptr).anon_0.idx = mnDiagram_GetFighterByIndex(n);
+        (*ptr).x0.idx = mnDiagram_GetFighterByIndex(n);
         n += 1;
-        (*ptr).anon_0.xC = zero as i32;
-        (*ptr).anon_0.x8 = zero as i32;
+        (*ptr).x0.xC = zero as i32;
+        (*ptr).x0.x8 = zero as i32;
         ptr = ptr.offset(1);
         if !(n < SELKIND_COUNT as i32) {
             break;
@@ -1590,10 +1590,10 @@ pub unsafe extern "C" fn mnDiagram2_GetAggregatedFighterRank(
             k = 0 as i32;
             m = SELKIND_COUNT as i32;
             while m > 0 as i32 {
-                if res == (*ptr).anon_0.idx as i32 {
+                if res == (*ptr).x0.idx as i32 {
                     let nv = entry_value(&entries[k as usize]).wrapping_add(1 as u64);
-                    entries[k as usize].anon_0.x8 = (nv >> 32) as u32 as i32;
-                    entries[k as usize].anon_0.xC = nv as u32 as i32;
+                    entries[k as usize].x0.x8 = (nv >> 32) as u32 as i32;
+                    entries[k as usize].x0.xC = nv as u32 as i32;
                     break;
                 } else {
                     ptr = ptr.offset(1);
@@ -1624,7 +1624,7 @@ pub unsafe extern "C" fn mnDiagram2_GetAggregatedFighterRank(
     if entry_value(&entries[idx as usize]) != 0 as u64 {
         *out = entries[idx as usize];
     } else {
-        entries[idx as usize].anon_0.idx = SELKIND_COUNT as i32
+        entries[idx as usize].x0.idx = SELKIND_COUNT as i32
             as u8;
         *out = entries[idx as usize];
     };

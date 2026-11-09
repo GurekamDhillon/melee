@@ -64,11 +64,11 @@ pub mod ext {
                     None => { unsafe { melee_fighter::tu::ft_0cdd::ftco_800cdda0(gobj as _); } return; },
                 }
             }
-    pub static mut FTCO_ATTACKAIR_ENTERFROMMSID: Option<fn(*mut HSD_GObj, i32) > = None;
+    pub static mut FTCO_ATTACKAIR_ENTERFROMMSID: Option<fn(*mut HSD_GObj, isize) > = None;
             #[allow(non_snake_case)]
             pub fn ftCo_AttackAir_EnterFromMsid(gobj: *mut HSD_GObj, msid: i32)  {
                 match unsafe { FTCO_ATTACKAIR_ENTERFROMMSID } {
-                    Some(f) => f(gobj, msid),
+                    Some(f) => f(gobj, msid as isize),
                     None => { unsafe { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(gobj as _, msid as _); } return; },
                 }
             }
@@ -97,8 +97,8 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftCheckThrowB3(fp)` (ft/inlines.h): test and clear `throw_flags_b3`.
 unsafe fn ftCheckThrowB3(fp: *mut Fighter) -> bool {
-    if (*fp).anon_2210.anon_0.throw_flags_b3() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b3(0);
+    if (*fp).x2210.x0.throw_flags_b3() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b3(0);
         true
     } else {
         false

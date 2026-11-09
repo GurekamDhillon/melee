@@ -13,15 +13,15 @@ pub mod ext {
     hook_or!(ITISHEAVY, itIsHeavy, (item: *mut Item_GObj) -> bool, melee_fighter::hooks::it_is_heavy);
     hook_or!(ITGETHOLDKIND, itGetHoldKind, (item: *mut Item_GObj) -> i32, melee_fighter::tu::ftwaitanim::ext::itGetHoldKind);
     hook_or!(FTANIM_80070FB4, ftAnim_80070FB4, (gobj: *mut HSD_GObj, a: i32, b: i32), melee_fighter::ftanim::ftanim_80070fb4);
-    pub static mut FTANIM_80070C48: Option<fn(*mut HSD_GObj, i32)> = None;
+    pub static mut FTANIM_80070C48: Option<fn(*mut HSD_GObj, isize)> = None;
     #[allow(non_snake_case)]
     pub fn ftAnim_80070C48(gobj: *mut HSD_GObj, flag: i32) {
-        match unsafe { FTANIM_80070C48 } { Some(f) => f(gobj, flag), None => { unsafe { melee_fighter::tu::ftanim::ftAnim_80070C48(gobj as _, flag as _); } return; } }
+        match unsafe { FTANIM_80070C48 } { Some(f) => f(gobj, flag as isize), None => { unsafe { melee_fighter::tu::ftanim::ftAnim_80070C48(gobj as _, flag as _); } return; } }
     }
-    pub static mut FTANIM_80070CC4: Option<fn(*mut HSD_GObj, i32)> = None;
+    pub static mut FTANIM_80070CC4: Option<fn(*mut HSD_GObj, isize)> = None;
     #[allow(non_snake_case)]
     pub fn ftAnim_80070CC4(gobj: *mut HSD_GObj, flag: i32) {
-        match unsafe { FTANIM_80070CC4 } { Some(f) => f(gobj, flag), None => { unsafe { melee_fighter::tu::ftanim::ftAnim_80070CC4(gobj as _, flag as _); } return; } }
+        match unsafe { FTANIM_80070CC4 } { Some(f) => f(gobj, flag as isize), None => { unsafe { melee_fighter::tu::ftanim::ftAnim_80070CC4(gobj as _, flag as _); } return; } }
     }
     pub static mut FTANIM_800704F0: Option<fn(*mut HSD_GObj, i32, f32)> = None;
     #[allow(non_snake_case)]

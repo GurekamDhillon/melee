@@ -84,7 +84,7 @@ fn grgreens_matches_c() {
                     }
                 }
                 for i in 0..30usize { VB[i].z = 0.0; }
-                GG[6].u.greens.x0_flags.anon_0.set_b0((fv() & 1) as u8);
+                GG[6].u.greens.x0_flags.x0.set_b0((fv() & 1) as u8);
                 for i in 0..0x20usize { m::grGr_8049F9E0[i] = (fv() % 3) as u8; }
                 m::grGr_804D6AAC = (fv() & 1) as u8; m::grGr_804D6AAD = (fv() & 1) as u8;
                 NOK = false; NID = 99;
@@ -163,7 +163,7 @@ fn grgreens_matches_c() {
 
                 for i in 0..7usize { USEL = (if i == 5 { OPUSEL[op as usize] } else { 0 }); g::hash_Ground(&GG[i]); }
                 USEL = OPUSEL[op as usize];
-                hm(GG[6].u.greens.x0_flags.anon_0.b0() as u32);
+                hm(GG[6].u.greens.x0_flags.x0.b0() as u32);
                 hm(pi(m::yakumono_param)); hm(m::grGr_804D6AAC as u32); hm(m::grGr_804D6AAD as u32); hm(rh(&m::grGr_8049F9E0));
 
                 c.line(op, k, ret);

@@ -87,7 +87,7 @@ pub unsafe fn gm_8016B184_fp() -> bool {
 /// `gm_8016B258_fp`.
 pub unsafe fn gm_8016B258_fp(arg0: i32) -> i32 {
     melee_core::ct!("gm_8016B258_fp");
-    (*gmVs_GetSceneController_fp()).state.fighters[arg0 as usize].anon_4.anon_0.x4_b3() as i32
+    (*gmVs_GetSceneController_fp()).state.fighters[arg0 as usize].x4.x0.x4_b3() as i32
 }
 
 /// `gm_8016B774_fp`: the match-end record.

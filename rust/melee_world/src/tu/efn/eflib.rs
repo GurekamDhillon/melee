@@ -36,10 +36,10 @@ pub mod ext {
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
@@ -85,7 +85,7 @@ pub mod ext {
     }
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
         pub unsafe extern "C" fn hsd_8039D688(a0: *mut HSD_JObj, a1: *mut *mut f32, a2: i32) { super::hsd_8039D688(a0, a1, a2) }
     }
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
@@ -253,7 +253,7 @@ pub unsafe extern "C" fn efLib_DestroyAll(mut gobj: *mut HSD_GObj) {
     {
         i = 0;
         'l40: while i < 8 {
-            if efLib_ParamTable[i as usize].gobj == (gobj as *mut c_void) {
+            if efLib_ParamTable[i as usize].gobj == gobj as *mut HSD_GObj {
                 efLib_ParamTable[i as usize].gobj = null_mut();
             }
             i = i + 1;
@@ -632,7 +632,7 @@ pub unsafe extern "C" fn efLib_Create_Attach_Pos(mut gfx_id: u32, mut gobj: *mut
 }
 
 /// `efLib_render_callback`
-pub unsafe extern "C" fn efLib_render_callback(mut gobj: *mut HSD_GObj, mut code: i32) {
+pub unsafe extern "C" fn efLib_render_callback(mut gobj: *mut HSD_GObj, mut code: isize) {
     melee_core::ct!("efLib_render_callback");
     let mut particles_code: u32 = 0;
     's50: {
@@ -1344,7 +1344,7 @@ pub unsafe extern "C" fn efLib_SetParamAlpha(mut gobj: *mut HSD_GObj, mut alpha:
         {
             idx = 0;
             'l62: while idx < 8 {
-                if (*base.offset(idx as isize)).gobj == (gobj as *mut c_void) {
+                if (*base.offset(idx as isize)).gobj == gobj as *mut HSD_GObj {
                     break 'b61;
                 }
                 idx = idx + 1;
@@ -1361,7 +1361,7 @@ pub unsafe extern "C" fn efLib_SetParamAlpha(mut gobj: *mut HSD_GObj, mut alpha:
         }
         return;
     }
-    efLib_ParamTable[idx as usize].gobj = gobj as *mut c_void;
+    efLib_ParamTable[idx as usize].gobj = gobj as *mut HSD_GObj;
     efLib_ParamTable[idx as usize].alpha = alpha as u16;
 }
 
@@ -1374,7 +1374,7 @@ pub unsafe extern "C" fn efLib_SetParamGfxId(mut gobj: *mut HSD_GObj, mut gfx_id
         {
             idx = 0;
             'l65: while idx < 8 {
-                if (*base.offset(idx as isize)).gobj == (gobj as *mut c_void) {
+                if (*base.offset(idx as isize)).gobj == gobj as *mut HSD_GObj {
                     break 'b64;
                 }
                 idx = idx + 1;
@@ -1391,7 +1391,7 @@ pub unsafe extern "C" fn efLib_SetParamGfxId(mut gobj: *mut HSD_GObj, mut gfx_id
         }
         return;
     }
-    efLib_ParamTable[idx as usize].gobj = gobj as *mut c_void;
+    efLib_ParamTable[idx as usize].gobj = gobj as *mut HSD_GObj;
     efLib_ParamTable[idx as usize].gfx_id = gfx_id as u16;
 }
 
@@ -1415,7 +1415,7 @@ pub unsafe extern "C" fn efLib_Cb_ApplyStoredAlpha(mut effect: *mut EF_Effect) {
         {
             i = 0;
             'l67: while i != 8 {
-                if (*entry).gobj == ((*effect).parent_gobj as *mut c_void) {
+                if (*entry).gobj == (*effect).parent_gobj {
                     if (efLib_ParamTable[i as usize].gfx_id as i32) == 1047 {
                         tobj = (*tobj).next;
                     }

@@ -94,7 +94,7 @@ pub mod ext {
     fn ftLib_GetGroundAir(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_GetGroundAir(a0) };
     fn it_8026B3A8(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026b3a8(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
-    fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
+    fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
     fn it_80272A3C(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A3C(a0) };
     fn it_80272F7C(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::it_2725::it_80272F7C(a0, a1) };
     fn it_80274594(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80274594(a0) };
@@ -161,7 +161,7 @@ pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD
     (*spawn).vel.x = 0.0;
     (*spawn).x0_parent_gobj = parent;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(initial_collision as u8);
+    (*spawn).x44_flag.x0.set_b0(initial_collision as u8);
     (*spawn).x40 = 0;
 }
 
@@ -177,7 +177,7 @@ pub unsafe extern "C" fn it_8029CD18(item_gobj: *mut Item_GObj, arg1: i32) {
     melee_core::ct!("it_8029CD18");
     let item = item_of(item_gobj);
     let jobj = (*item).xDD4_itemVar.foxillusion.xDDC;
-    ext::it_8026EECC(item_gobj, arg1);
+    ext::it_8026EECC(item_gobj, arg1 as isize);
     if !jobj.is_null() {
         let mask = ext::HSD_GObj_80390EB8(arg1);
         ext::HSD_JObjDispAll(jobj, null_mut(), mask, 0);

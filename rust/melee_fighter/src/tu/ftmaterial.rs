@@ -256,7 +256,7 @@ pub unsafe fn ftMaterial_800BF6BC(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *
     let overlay = (ext::ftCo_800C0658(crate::mtu_ptr::ptr(&(&mut *fp))) as *mut ColorOverlay);
     let mut chk1 = false;
     let mut sp168: GXColor = core::mem::zeroed();
-    let mut var_r5 = (*fp).x61A_controller_index as usize;
+    let mut var_r5 = (*fp).sub_color as usize;
     if (*fp).x2228_b0() != 0 && (*fp).x2224_b0() != 0 {
         if (*fp).is_metal() != 0 {
             var_r5 = 4;

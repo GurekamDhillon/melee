@@ -29,9 +29,9 @@ pub mod ext {
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void);
         fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32);
         fn GObj_SetupGXLinkMax(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32);
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32);
-        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: i32);
-        fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, unused: i32);
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize);
+        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: isize);
+        fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, unused: isize);
         fn HSD_GObj_80390ED0(gobj: *mut HSD_GObj, mask: u32);
         fn HSD_JObjAddAnimAll(jobj: *mut HSD_JObj, anim: *mut HSD_AnimJoint, matanim: *mut HSD_MatAnimJoint, shapeanim: *mut HSD_ShapeAnimJoint);
         fn HSD_JObjReqAnimAll(jobj: *mut HSD_JObj, frame: f32);
@@ -255,7 +255,7 @@ pub unsafe extern "C" fn gmTitle_801A165C() -> *mut HSD_GObj {
     gobj
 }
 
-pub unsafe extern "C" fn gmTitle_801A1814(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn gmTitle_801A1814(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("gmTitle_801A1814");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         ext::HSD_GObj_80390ED0(gobj, 0x7);
@@ -272,7 +272,7 @@ pub unsafe extern "C" fn gmTitle_801A185C() {
     (*gobj).gxlink_prios = 0x209;
 }
 
-pub unsafe extern "C" fn gmTitle_801A18D4(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn gmTitle_801A18D4(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("gmTitle_801A18D4");
     let erase_color: GXColor = (*fog_desc).color;
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {

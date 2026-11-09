@@ -101,9 +101,9 @@ pub fn ftcommon_8007e5ac(fp: &mut Fighter) {
 pub fn ftcommon_8007efc8(gobj: G, arg1: fn(G)) {
     melee_core::ct!("ftcommon_8007efc8");
     let src = fpg(gobj);
-    let dst_gobj = ext::Player_GetEntityAtIndex(src.player_id as i32, 1);
+    let dst_gobj = ext::Player_GetEntityAtIndex(src.player_idx as i32, 1);
     let dst = fpg(dst_gobj);
-    ext::Player_SwapTransformedStates(src.player_id as i32, src.is_sub_fighter() as i32, dst.is_sub_fighter() as i32);
+    ext::Player_SwapTransformedStates(src.player_idx as i32, src.is_sub_fighter() as i32, dst.is_sub_fighter() as i32);
     let tmp_bit = src.is_sub_fighter();
     src.set_is_sub_fighter(dst.is_sub_fighter());
     dst.set_is_sub_fighter(tmp_bit);
@@ -115,7 +115,7 @@ pub fn ftcommon_8007efc8(gobj: G, arg1: fn(G)) {
     dst.pos_delta = src.pos_delta;
     dst.facing_dir = src.facing_dir;
     dst.dmg.x1830_percent = src.dmg.x1830_percent;
-    ext::Player_SetHPByIndex(dst.player_id as i32, dst.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(dst.dmg.x1830_percent));
+    ext::Player_SetHPByIndex(dst.player_idx as i32, dst.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(dst.dmg.x1830_percent));
     let (src, dst) = (fpg(gobj), fpg(dst_gobj));
     dst.dmg.x18F0 = src.dmg.x18F0;
     dst.self_vel = src.self_vel;
@@ -171,7 +171,7 @@ pub fn ftcommon_8007efc8(gobj: G, arg1: fn(G)) {
     dst.bury_timer_2 = src.bury_timer_2;
     dst.x2330 = src.x2330;
     dst.x2338 = src.x2338;
-    dst.set_x2224_b2(src.x2224_b2() as _);
+    dst.set_stamina_dead(src.stamina_dead() as _);
     if src.x221D_b6() != 0 {
         ext::ftColl_8007B7FC(dst, src.x2004);
         super::ftcolanim::ftco_800c0358(fpg(gobj), fpg(dst_gobj), 0x6B);
@@ -340,8 +340,8 @@ pub fn ftcommon_8007e2fc(fp: &mut Fighter) {
 pub fn ftcommon_8007ebac(fp: &mut Fighter, arg1: u32, arg2: u32) {
     melee_core::ct!("ftcommon_8007ebac");
     let (s, u) = ids(fp);
-    if h::player_8003544c(s, u) && fp.x221F_b3() == 0 && fp.x2224_b2() == 0 {
-        h::lb_rumble_start(fp.x618_player_id, arg1.wrapping_add(2) as i32, arg1 as i32, arg2 as i32);
+    if h::player_8003544c(s, u) && fp.is_sleeping() == 0 && fp.stamina_dead() == 0 {
+        h::lb_rumble_start(fp.pad_port, arg1.wrapping_add(2) as i32, arg1 as i32, arg2 as i32);
     }
 }
 
@@ -349,13 +349,13 @@ pub fn ftcommon_8007ecd4(fp: &mut Fighter, arg1: i32) {
     melee_core::ct!("ftcommon_8007ecd4");
     let (s, u) = ids(fp);
     if h::player_8003544c(s, u) {
-        h::hsd_pad_rumble_remove_id(fp.x618_player_id, arg1.wrapping_add(2));
+        h::hsd_pad_rumble_remove_id(fp.pad_port, arg1.wrapping_add(2));
     }
 }
 
 pub fn ftcommon_8007ed2c(fp: &mut Fighter) {
     melee_core::ct!("ftcommon_8007ed2c");
-    h::lb_rumble_stop(fp.x618_player_id);
+    h::lb_rumble_stop(fp.pad_port);
 }
 
 /// `ftCommon_8007ED50`: `arg1 * x138 + x13C` is one fmuladd in the shipping build -> fmadds.
@@ -480,7 +480,7 @@ pub fn ftcommon_8007ffd8(fp: &mut Fighter, arg8: f32) -> bool {
 /// `ftCommon_80080144`: Ice Climbers in costume 2 or higher.
 pub fn ftcommon_80080144(fp: &Fighter) -> bool {
     melee_core::ct!("ftcommon_80080144");
-    (fp.kind == Ft_Kind_Popo || fp.kind == Ft_Kind_Nana) && fp.x619_costume_id >= 2
+    (fp.kind == Ft_Kind_Popo || fp.kind == Ft_Kind_Nana) && fp.costume_id >= 2
 }
 
 /// `ftCommon_80080174`: rescale the head (x197C) and held (x1980) items.
@@ -591,7 +591,7 @@ pub fn ftcommon_8007d6a4(f: &mut Fighter) {
     let max = h::script_value(f, 2, f.co_attrs.ground_max_horizontal_velocity);
     clamp_ground_vel(f, max);
     if f.ground_or_air == GA_Air {
-        h::script_game_event(4, f.player_id as i32, f.motion_id as i32, f.is_sub_fighter() as i32, 0);
+        h::script_game_event(4, f.player_idx as i32, f.motion_id as i32, f.is_sub_fighter() as i32, 0);
     }
     f.ground_or_air = GA_Ground;
     f.gr_vel = f.self_vel.x;
@@ -660,7 +660,7 @@ pub fn ftcommon_8007dd7c(g: G_ftcommon3, v: &Vec3) {
     while !cur.is_null() {
         if cur != g && !h::ftlib_issameplayer(cur, g) {
             let c = unsafe { &*((*cur).user_data as *const Fighter) };
-            if !(c.x221F_b3() != 0 || c.ground_or_air != GA_Ground || !c.victim_gobj.is_null() || c.is_sub_fighter() != 0) {
+            if !(c.is_sleeping() != 0 || c.ground_or_air != GA_Ground || !c.victim_gobj.is_null() || c.is_sub_fighter() != 0) {
                 let (a2c4, a_dir, arg_gnd) = unsafe { ((*arg).x2C4, (*arg).facing_dir, (*arg).coll_data.floor.index) };
                 let cur_gnd = c.coll_data.floor.index;
                 if same_or_adjacent_floor(arg_gnd, cur_gnd) {
@@ -696,10 +696,10 @@ pub fn ftcommon_8007dd7c(g: G_ftcommon3, v: &Vec3) {
 pub fn ftcommon_8007dfd0(g: G_ftcommon3, arg1: &Vec3) {
     melee_core::ct!("ftcommon_8007dfd0");
     let f = unsafe { (*g).user_data as *mut Fighter };
-    let (pid, f2c4, f_dir, f_gnd) = unsafe { ((*f).player_id, (*f).x2C4, (*f).facing_dir, (*f).coll_data.floor.index) };
+    let (pid, f2c4, f_dir, f_gnd) = unsafe { ((*f).player_idx, (*f).x2C4, (*f).facing_dir, (*f).coll_data.floor.index) };
     let ng = h::player_get_entity(pid as i32);
     let t = unsafe { &*((*ng).user_data as *const Fighter) };
-    if t.x221F_b3() == 0 && t.ground_or_air == GA_Ground {
+    if t.is_sleeping() == 0 && t.ground_or_air == GA_Ground {
         let t_gnd = t.coll_data.floor.index;
         if same_or_adjacent_floor(f_gnd, t_gnd) {
             let t = unsafe { &*((*ng).user_data as *const Fighter) };

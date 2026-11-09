@@ -560,7 +560,7 @@ pub unsafe extern "C" fn itRshell_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool 
     melee_core::ct!("itRshell_UnkMotion3_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.rshell.xDD8 <= 0.0 {
-        if (*ip).xDCD_flag.anon_0.b5() == 0 {
+        if (*ip).xDCD_flag.x0.b5() == 0 {
             ext::it_80275444(gobj);
         }
     } else {
@@ -594,7 +594,7 @@ pub unsafe extern "C" fn itRshell_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bool 
     melee_core::ct!("itRshell_UnkMotion4_Anim");
     let ip = GET_ITEM(gobj);
     if (*ip).xDD4_itemVar.rshell.xDD8 <= 0.0 {
-        if (*ip).xDCD_flag.anon_0.b5() == 0 {
+        if (*ip).xDCD_flag.x0.b5() == 0 {
             ext::it_80275444(gobj);
         }
     } else {
@@ -653,7 +653,7 @@ pub unsafe extern "C" fn itRshell_UnkMotion5_Anim(gobj: *mut Item_GObj) -> bool 
     }
     (*ip).xDD4_itemVar.rshell.xDD4 -= 1.0;
     if (*ip).xDD4_itemVar.rshell.xDD8 <= 0.0 {
-        if (*ip).xDCD_flag.anon_0.b5() == 0 {
+        if (*ip).xDCD_flag.x0.b5() == 0 {
             ext::it_80275444(gobj);
         }
     } else {
@@ -784,7 +784,7 @@ pub unsafe extern "C" fn itRshell_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool 
     if !((*ip).xDD4_itemVar.rshell.xDD4 <= 0.0) {
         (*ip).xDD4_itemVar.rshell.xDD4 -= 1.0;
         if (*ip).xDD4_itemVar.rshell.xDD8 <= 0.0 {
-            if (*ip).xDCD_flag.anon_0.b5() == 0 {
+            if (*ip).xDCD_flag.x0.b5() == 0 {
                 ext::it_80275444(gobj);
             }
         } else {

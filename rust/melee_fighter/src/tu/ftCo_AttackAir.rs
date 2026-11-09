@@ -146,7 +146,7 @@ pub fn ftCo_AttackAir_EnterFromMsid(g: G, msid: i32) {
     let f = fp(g);
     f.set_allow_interrupt(0);
     f.cmd_vars[0] = 0;
-    f.anon_2210.throw_flags = 0;
+    f.x2210.throw_flags = 0;
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_KeepFastFall as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
 }
@@ -154,8 +154,8 @@ pub fn ftCo_AttackAir_EnterFromMsid(g: G, msid: i32) {
 /// `ftCheckThrowB3` (ft/inlines.h): test and clear throw_flags_b3.
 fn check_throw_b3(f: &mut Fighter) -> bool {
     unsafe {
-        if f.anon_2210.anon_0.throw_flags_b3() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b3(0);
+        if f.x2210.x0.throw_flags_b3() != 0 {
+            f.x2210.x0.set_throw_flags_b3(0);
             true
         } else {
             false

@@ -44,8 +44,8 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 pub(crate) fn ftCheckThrowB0(fp: &mut Fighter) -> bool {
     melee_core::ct!("ftCheckThrowB0");
     unsafe {
-        if fp.anon_2210.anon_0.throw_flags_b0() != 0 {
-            fp.anon_2210.anon_0.set_throw_flags_b0(0);
+        if fp.x2210.x0.throw_flags_b0() != 0 {
+            fp.x2210.x0.set_throw_flags_b0(0);
             true
         } else {
             false
@@ -102,7 +102,7 @@ fn doEnter(gobj: *mut HSD_GObj, msid0: i32, msid1: i32) {
     unsafe {
         let fp = fpp(gobj);
         if !updateBomb(gobj, msid0) {
-            (*fp).anon_2210.throw_flags = 0;
+            (*fp).x2210.throw_flags = 0;
             st::Fighter_ChangeMotionState(gobj, msid1, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
             st::ftAnim_8006EBA4(gobj);
             (*fp).accessory4_cb = Some(cb_spawnBomb);

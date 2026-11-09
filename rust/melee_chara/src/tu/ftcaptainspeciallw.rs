@@ -84,8 +84,8 @@ pub unsafe extern "C" fn cb_ftCa_SpecialHi_800E400C(g: *mut HSD_GObj) {
 pub fn ftCa_Special_Inline_Check_Flag(fp: &mut Fighter) -> bool {
     melee_core::ct!("ftCa_Special_Inline_Check_Flag");
     unsafe {
-        if fp.anon_2210.anon_0.throw_flags_b1() != 0 {
-            fp.anon_2210.anon_0.set_throw_flags_b1(0);
+        if fp.x2210.x0.throw_flags_b1() != 0 {
+            fp.x2210.x0.set_throw_flags_b1(0);
             true
         } else {
             false
@@ -269,7 +269,7 @@ pub fn ftCa_SpecialLw_Coll(gobj: *mut HSD_GObj) {
                 || ((*fp).facing_dir == 1.0 && (env & Collide_LeftWallHug as i32) != 0))
         {
             ftCa_Special_Inline_SetFlags(gobj);
-            (*fp).anon_2210.throw_flags = 0;
+            (*fp).x2210.throw_flags = 0;
             st::ftCommon_8007D5D4(&mut *fp);
             st::Fighter_ChangeMotionState(gobj, ftCa_MS_SpecialHiThrow1 as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
         }
@@ -307,7 +307,7 @@ pub fn resetCmdAndThrow(fp: &mut Fighter) {
     fp.cmd_vars[2] = 0;
     fp.cmd_vars[1] = 0;
     fp.cmd_vars[0] = 0;
-    fp.anon_2210.throw_flags = 0;
+    fp.x2210.throw_flags = 0;
 }
 
 /// `ftCa_SpecialLw_Enter` (src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c).
@@ -318,7 +318,7 @@ pub fn ftCa_SpecialLw_Enter(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[2] = 0_u32;
         (*fp).cmd_vars[1] = 0_u32;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         (*fp).mv.ca.speciallw.x0 = (0_u16 /* 0.0F */);
         (*fp).mv.ca.speciallw.friction = f32::from_bits(0x3F800000) /* 1.0F */;
         st::Fighter_ChangeMotionState(gobj, 357 /* ftCa_MS_SpecialLw */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
@@ -337,7 +337,7 @@ pub fn ftCa_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[2] = 0_u32;
         (*fp).cmd_vars[1] = 0_u32;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 359 /* ftCa_MS_SpecialAirLw */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
         (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
@@ -459,7 +459,7 @@ pub fn ftCa_SpecialAirLw_Anim_inline(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[2] = 0_u32;
         (*fp).cmd_vars[1] = 0_u32;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
     }
 }
 

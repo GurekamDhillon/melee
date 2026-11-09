@@ -70,11 +70,11 @@ pub mod ext {
     crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: CmQuakeKind, pos: *mut Vec3));
     crate::port_hook!(FTCOLL_8007B128, ftColl_8007B128, crate::adapt::ftColl_8007B128, (gobj: *mut HSD_GObj, bone_id: i32, state: i32));
     crate::port_hook!(FTCOLL_8007B0C0, ftColl_8007B0C0, crate::adapt::ftColl_8007B0C0, (gobj: *mut HSD_GObj, state: i32));
-    pub static mut FTCOMMON_8007F5CC: Option<fn(*mut HSD_GObj, i32) > = None;
+    pub static mut FTCOMMON_8007F5CC: Option<fn(*mut HSD_GObj, isize) > = None;
             #[allow(non_snake_case)]
             pub fn ftCommon_8007F5CC(gobj: *mut HSD_GObj, arg: i32)  {
                 match unsafe { FTCOMMON_8007F5CC } {
-                    Some(f) => f(gobj, arg),
+                    Some(f) => f(gobj, arg as isize),
                     None => { unsafe { let _ = melee_fighter::ftcommon3::ftcommon_8007f5cc(gobj as _, arg as _); } return; },
                 }
             }

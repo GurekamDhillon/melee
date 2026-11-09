@@ -116,7 +116,7 @@ pub fn ftPe_Init_OnDeath(gobj: *mut HSD_GObj) {
         st::ftParts_80074A4C(gobj, 3, -1);
         st::ftParts_80074A4C(gobj, 4, 0);
 
-        match (*fp).x619_costume_id {
+        match (*fp).costume_id {
             1 => {
                 st::ftParts_80074A4C(gobj, 1, -1);
                 st::ftParts_80074A4C(gobj, 5, 0);
@@ -143,11 +143,11 @@ pub fn ftPe_Init_OnLoad(gobj: *mut HSD_GObj) {
         let backup = (*fp).dat_attrs_backup;
         *((*fp).dat_attrs_backup as *mut ftPe_DatAttrs) = *ext_attrs;
         (*fp).dat_attrs = backup;
-        ext::it_8026B3F8(*items.add(0), It_Kind_Peach_Explode);
-        ext::it_8026B3F8(*items.add(1), It_Kind_Peach_Turnip);
-        ext::it_8026B3F8(*items.add(2), It_Kind_Peach_Parasol);
-        ext::it_8026B3F8(*items.add(3), It_Kind_Peach_Toad);
-        ext::it_8026B3F8(*items.add(4), It_Kind_Peach_ToadSpore);
+        ext::it_8026B3F8((*items.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Peach_Explode);
+        ext::it_8026B3F8((*items.add(1)).article as *mut ::core::ffi::c_void, It_Kind_Peach_Turnip);
+        ext::it_8026B3F8((*items.add(2)).article as *mut ::core::ffi::c_void, It_Kind_Peach_Parasol);
+        ext::it_8026B3F8((*items.add(3)).article as *mut ::core::ffi::c_void, It_Kind_Peach_Toad);
+        ext::it_8026B3F8((*items.add(4)).article as *mut ::core::ffi::c_void, It_Kind_Peach_ToadSpore);
     }
 }
 

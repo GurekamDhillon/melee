@@ -48,8 +48,8 @@ pub mod ext {
         fn Frontend_OnlinePick() -> i32 = crate::tu::adapt::Frontend_OnlinePick__100e6e;
         fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
         fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) -> ();
-        fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) -> ();
-        fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) -> ();
+        fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) -> ();
+        fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32) -> ();
         fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32) -> ();
         fn GXSetChanCtrl(a0: u32, a1: u8, a2: u32, a3: u32, a4: u32, a5: u32, a6: u32) -> ();
         fn GXSetChanMatColor(a0: u32, a1: crate::GXColor) -> ();
@@ -83,9 +83,9 @@ pub mod ext {
         fn HSD_Free(a0: *mut c_void) -> () = crate::tu::adapt::HSD_Free__3ee311;
         fn HSD_GObjGXLink_803909D8(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> ();
         fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) -> ();
-        fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) -> ();
-        fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
-        fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
+        fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) -> ();
+        fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
         fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint) -> ();
         fn HSD_JObjAnimAll(a0: *mut HSD_JObj) -> ();
@@ -104,7 +104,7 @@ pub mod ext {
         fn HSD_Randf() -> f32;
         fn HSD_Randi(a0: i32) -> i32;
         fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj = crate::tu::adapt::HSD_SObjLib_803A477C__a0c4ae;
-        fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) -> () = crate::tu::adapt::HSD_SObjLib_803A49E0__00f645;
+        fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: isize) -> () = crate::tu::adapt::HSD_SObjLib_803A49E0__00f645;
         fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text = crate::tu::adapt::HSD_SisLib_803A5ACC__27fcb1;
         fn HSD_SisLib_803A5E70() -> () = crate::tu::adapt::HSD_SisLib_803A5E70__5f9c7d;
         fn HSD_SisLib_803A5FBC() -> () = crate::tu::adapt::HSD_SisLib_803A5FBC__b031ed;
@@ -1200,7 +1200,7 @@ pub unsafe fn mnCharSel_8025D1C4(port: i32, mode: i32) {
                 mnCharSel_8025BC20(tmp, star_count as u32);
             }
             ext::HSD_SisLib_803A6368(text, 0x56);
-            (*text).sis_buffer = sis_buf as *mut SIS;
+            (*text).sis_buffer = sis_buf as *mut u8;
             sp10 = jobj_child(sp10);
             ext::HSD_JObjSetFlags(sp10, JOBJ_HIDDEN as u32);
             sp10 = jobj_next(sp10);
@@ -3997,7 +3997,7 @@ static mut mnCharSel_MenuTexImage: HSD_ImageDesc = unsafe { core::mem::zeroed() 
 static mut mnCharSel_MenuTexTlut: HSD_Tlut = unsafe { core::mem::zeroed() };
 static mut mnCharSel_MenuTexDesc: HSD_SObjDesc = unsafe { core::mem::zeroed() };
 
-unsafe extern "C" fn mnCharSel_MenuTexDraw(gobj: *mut HSD_GObj, pass: i32) {
+unsafe extern "C" fn mnCharSel_MenuTexDraw(gobj: *mut HSD_GObj, pass: isize) {
     let mut proj: Mtx44 = [[0.0; 4]; 4];
     let mut view: Mtx = [[0.0; 4]; 3];
 
@@ -4065,7 +4065,7 @@ unsafe fn mnCharSel_MenuTexSetup() {
     }
     ext::GxTex_CopyImage(handle, image);
 
-    mnCharSel_MenuTexImage.image_ptr = image;
+    mnCharSel_MenuTexImage.image_ptr = image as *mut u8;
     mnCharSel_MenuTexImage.width = w as u16;
     mnCharSel_MenuTexImage.height = h as u16;
     mnCharSel_MenuTexImage.format = fmt as _GXTexFmt;
@@ -4581,7 +4581,7 @@ pub unsafe fn mnCharSel_802640A0() -> i32 {
     }
     ext::GObj_SetupGXLink(
         gobj,
-        Some(core::mem::transmute::<unsafe extern "C" fn(*mut HSD_GObj), unsafe extern "C" fn(*mut HSD_GObj, i32)>(fn_8026407C)),
+        Some(core::mem::transmute::<unsafe extern "C" fn(*mut HSD_GObj), unsafe extern "C" fn(*mut HSD_GObj, isize)>(fn_8026407C)),
         0,
         0x80,
     );

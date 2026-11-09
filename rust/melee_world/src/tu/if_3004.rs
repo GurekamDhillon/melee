@@ -504,7 +504,7 @@ pub unsafe extern "C" fn un_80301964(arg0: soundtest_callback_arg0) -> i32 {
             }
             let gobj = ext::GObj_Create(0xE, 0xF, 0);
             ext::GObj_SetupGXLink(gobj, Some(ext::cb::HSD_SObjLib_803A49E0), 0x12, 0);
-            un_803FD274.image_ptr = un_804D6E04;
+            un_803FD274.image_ptr = un_804D6E04 as *mut u8;
             let sobj = ext::HSD_SObjLib_803A477C(gobj, &raw mut un_804D5990, 0, 0, 0x80, 0);
             (*sobj).x10 = 320.0;
             (*sobj).x14 = 240.0;

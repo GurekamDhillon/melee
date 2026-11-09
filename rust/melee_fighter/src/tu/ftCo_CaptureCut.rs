@@ -192,7 +192,7 @@ pub fn ftCo_800DC920(arg0: G, gobj: G) {
     ext::Fighter_UnkSetFlag_8006CFBC(arg0);
     ext::Fighter_UnkSetFlag_8006CFBC(gobj);
     let r30: *mut Fighter;
-    if unsafe { (*r31).anon_221b.x221B_b7() } != 0 {
+    if unsafe { (*r31).x221B.x221B_b7() } != 0 {
         r30 = r31;
         r31 = fp(gobj);
     } else {
@@ -202,8 +202,8 @@ pub fn ftCo_800DC920(arg0: G, gobj: G) {
     a.x1A5C = core::ptr::null_mut();
     let mut placed = false;
     a.victim_gobj = core::ptr::null_mut();
-    a.anon_221b.set_x221B_b5(0);
-    a.anon_221b.set_x221B_b7(0);
+    a.x221B.set_x221B_b5(0);
+    a.x221B.set_x221B_b7(0);
     if b.x2226_b2() != 0 {
         if is_kirby(a.kind as i32)
             && (a.motion_id == ftKb_MS_SpecialNCapture0 as i32 || a.motion_id == ftKb_MS_SpecialAirNCapture0 as i32)
@@ -271,8 +271,8 @@ pub fn ftCo_800DC920(arg0: G, gobj: G) {
     }
     b.x1A5C = core::ptr::null_mut();
     b.victim_gobj = core::ptr::null_mut();
-    b.anon_221b.set_x221B_b5(0);
-    b.anon_221b.set_x221B_b7(0);
+    b.x221B.set_x221B_b5(0);
+    b.x221B.set_x221B_b7(0);
 }
 
 /// `ftCo_800DCE34` (TARGET_PC: a NULL partner means the grab was already cut).
@@ -283,7 +283,7 @@ pub fn ftCo_800DCE34(gobj0: G, gobj1: G) {
     }
     ftCo_800DC920(gobj0, gobj1);
     let fp1 = fp(gobj1);
-    if fp1.anon_221b.x221B_b7() != 0 {
+    if fp1.x221B.x221B_b7() != 0 {
         let p = fp(gobj0).cur_pos;
         set_translate(jobj(gobj0), &p);
     } else {

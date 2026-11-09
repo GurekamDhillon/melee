@@ -102,7 +102,7 @@ pub fn ftCo_800DE3FC(g: G, msid: i32, anim_speed: f32) {
         }
         if !is_kirby(thrower.kind) || (msid.wrapping_sub(ftCo_MS_ThrownF as i32) as u32) > 1 {
             let f = fp(g);
-            ext::pl_80040614(thrower.player_id as i32, thrower.is_sub_fighter() != 0, f.grab_timer);
+            ext::pl_80040614(thrower.player_idx as i32, thrower.is_sub_fighter() != 0, f.grab_timer);
             fp(g).grab_timer = 0.0;
         }
         fp(g).accessory1_cb = Some(ftCo_800DE508_cb);

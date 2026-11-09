@@ -51,7 +51,7 @@ unsafe fn SetVars(gobj: G) {
     let fp = fpp(gobj);
     (*fp).cmd_vars[0] = 0;
     (*fp).accessory4_cb = Some(crate::chars::cb::ftpurin__ftPr_Init_8013C94C);
-    if ext::gm_8016B1D8() != 0 && ext::grStadium_801D4FF8((*fp).player_id as i32) != 0 {
+    if ext::gm_8016B1D8() != 0 && ext::grStadium_801D4FF8((*fp).player_idx as i32) != 0 {
         (*fp).mv.pr.specialhi.x0 = 1;
     } else {
         (*fp).mv.pr.specialhi.x0 = 0;

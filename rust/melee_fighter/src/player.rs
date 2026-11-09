@@ -156,12 +156,12 @@ pub fn set_costume_id(slot: i32, v: i32) {
 
 /// `Player_GetControllerIndex` (s8 field returned as u8).
 pub fn get_controller_index(slot: i32) -> u8 {
-    player(slot).controller_index as u8
+    player(slot).sub_color as u8
 }
 
 /// `Player_SetControllerIndex`.
 pub fn set_controller_index(slot: i32, v: i8) {
-    player(slot).controller_index = v;
+    player(slot).sub_color = v;
 }
 
 /// `Player_GetTeam`.
@@ -176,12 +176,12 @@ pub fn set_team(slot: i32, v: i8) {
 
 /// `Player_GetPlayerId`.
 pub fn get_player_id(slot: i32) -> i32 {
-    player(slot).player_id as i32
+    player(slot).pad_port as i32
 }
 
 /// `Player_SetPlayerId`.
 pub fn set_player_id(slot: i32, v: i32) {
-    player(slot).player_id = v as u8;
+    player(slot).pad_port = v as u8;
 }
 
 /// `Player_GetCpuLevel`.

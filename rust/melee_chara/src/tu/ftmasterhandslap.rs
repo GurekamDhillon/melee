@@ -60,7 +60,7 @@ pub fn ftMh_Slap_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_Slap_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0) {
             st::ftBossLib_8015BD20(gobj);
         }
     }

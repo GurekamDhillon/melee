@@ -160,7 +160,7 @@ pub fn ftMt_SpecialN_CheckShadowBallRemove(gobj: *mut HSD_GObj) -> bool {
                 | ftMt_MS_SpecialAirNLoopFull
                 | ftMt_MS_SpecialAirNCancel
                 | ftMt_MS_SpecialAirNEnd => {
-                    if (*fp).x2070.anon_0.x2071_b6() != 0 {
+                    if (*fp).x2070.x0.x2071_b6() != 0 {
                         return true;
                     }
                     return false;

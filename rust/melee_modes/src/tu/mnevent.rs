@@ -9,7 +9,7 @@ use melee_core::fp::fmadds;
 pub mod ext { use super::*; crate::oext_fns! {
 fn __assert(a0: *const ::core::ffi::c_char, a1: u32, a2: *const ::core::ffi::c_char,)  -> ();
 fn GObj_Create(classifier: u16, p_link: u8, priority: u8)  -> *mut HSD_GObj;
-fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: ::core::ffi::c_int)  -> () = crate::tu::adapt::HSD_GObj_JObjCallback__b37ff8;
+fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize)  -> () = crate::tu::adapt::HSD_GObj_JObjCallback__b37ff8;
 fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32)  -> ();
 fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj)  -> ();
 fn HSD_JObjLoadJoint(a0: *mut HSD_Joint)  -> *mut HSD_JObj = crate::tu::adapt::HSD_JObjLoadJoint__3efee1;
@@ -254,7 +254,7 @@ unsafe extern "C" fn mnEvent_CreateIconForSlot(
         icon_gobj,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, i32) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         4 as u8,
         0x80 as u32,
@@ -820,7 +820,7 @@ pub unsafe extern "C" fn mnEvent_8024E524(mut event_idx: i32) {
         gobj,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         4 as u8,
         0x80 as u32,

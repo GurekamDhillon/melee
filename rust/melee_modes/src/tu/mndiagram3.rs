@@ -19,7 +19,7 @@ use melee_core::fp::fmadds;
 pub mod ext { use super::*; crate::oext_fns! {
 fn __assert(a0: *const ::core::ffi::c_char, a1: u32, a2: *const ::core::ffi::c_char,)  -> ();
 fn GObj_Create(classifier: u16, p_link: u8, priority: u8)  -> *mut HSD_GObj;
-fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: ::core::ffi::c_int)  -> () = crate::tu::adapt::HSD_GObj_JObjCallback__b37ff8;
+fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize)  -> () = crate::tu::adapt::HSD_GObj_JObjCallback__b37ff8;
 fn lbAudioAx_80024030(a0: ::core::ffi::c_int)  -> () = crate::tu::adapt::lbAudioAx_80024030__52c54d;
 fn mn_80229624(a0: u32)  -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
 fn mn_80229894(a0: i32, a1: u16, a2: i32)  -> () = crate::tu::adapt::mn_80229894__f7df64;
@@ -171,7 +171,7 @@ pub unsafe extern "C" fn mnDiagram3_PopulateRankings(mut gobj: *mut HSD_GObj) {
     let mut max_time: u32 = 0;
     let mut sp58: [u8; 16] = [0; 16];
     let mut first_rank: mnDiagram2_SortEntry = mnDiagram2_SortEntry {
-        anon_0: mnDiagram2_SortEntry_anon_9 {
+        x0: mnDiagram2_SortEntry_x0 {
             idx: 0,
             pad1: [0; 7],
             x8: 0,
@@ -179,7 +179,7 @@ pub unsafe extern "C" fn mnDiagram3_PopulateRankings(mut gobj: *mut HSD_GObj) {
         },
     };
     let mut fighter_rank: mnDiagram2_SortEntry = mnDiagram2_SortEntry {
-        anon_0: mnDiagram2_SortEntry_anon_9 {
+        x0: mnDiagram2_SortEntry_x0 {
             idx: 0,
             pad1: [0; 7],
             x8: 0,
@@ -187,7 +187,7 @@ pub unsafe extern "C" fn mnDiagram3_PopulateRankings(mut gobj: *mut HSD_GObj) {
         },
     };
     let mut rank_value: mnDiagram2_SortEntry = mnDiagram2_SortEntry {
-        anon_0: mnDiagram2_SortEntry_anon_9 {
+        x0: mnDiagram2_SortEntry_x0 {
             idx: 0,
             pad1: [0; 7],
             x8: 0,
@@ -323,7 +323,7 @@ pub unsafe extern "C" fn mnDiagram3_PopulateRankings(mut gobj: *mut HSD_GObj) {
                             stat_type,
                             rank,
                         );
-                        first_rank.anon_0.idx as ::core::ffi::c_int
+                        first_rank.x0.idx as ::core::ffi::c_int
                             != 0x19 as ::core::ffi::c_int
                     }
                 {
@@ -334,7 +334,7 @@ pub unsafe extern "C" fn mnDiagram3_PopulateRankings(mut gobj: *mut HSD_GObj) {
                         rank_0,
                     );
                     icon = mnDiagram_CreateFighterIcon(
-                        fighter_rank.anon_0.idx as ::core::ffi::c_int,
+                        fighter_rank.x0.idx as ::core::ffi::c_int,
                         0 as ::core::ffi::c_int,
                     );
                     HSD_JObjSetTranslateY(icon, row_spacing * i as f32);
@@ -350,7 +350,7 @@ pub unsafe extern "C" fn mnDiagram3_PopulateRankings(mut gobj: *mut HSD_GObj) {
                     );
                     mnDiagram_FormatDecimalNumber(
                         &raw mut sp58 as *mut u8 as *mut ::core::ffi::c_char,
-                        rank_value.anon_0.xC as u32,
+                        rank_value.x0.xC as u32,
                         0 as ::core::ffi::c_int,
                     );
                     let mut offset_y: f32 = neg_spacing * i as f32 / 0.035f32;
@@ -869,7 +869,7 @@ pub unsafe extern "C" fn mnDiagram3_Create(mut arg0: ::core::ffi::c_int) {
         gobj,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         6 as u8,
         0x80 as u32,
@@ -1000,7 +1000,7 @@ pub unsafe extern "C" fn mnDiagram3_CreatePopup(
         popup,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         4 as u8,
         0x80 as u32,

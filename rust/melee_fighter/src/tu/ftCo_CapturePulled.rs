@@ -78,9 +78,9 @@ fn hold_delta(f: &Fighter) -> Vec3 {
 /// The grab timer: `x358*(x35C-handicap)+x354 + x360*(x364-(slot+1)) + percent*x368`.
 fn grab_timer(f: &Fighter) -> f32 {
     let co = cd();
-    let slot = ext::Player_80033BB8(f.player_id as i32) + 1;
+    let slot = ext::Player_80033BB8(f.player_idx as i32) + 1;
     let value = co.x360 * (co.x364 - slot as f32);
-    let h = ext::Player_GetHandicap(f.player_id as i32);
+    let h = ext::Player_GetHandicap(f.player_idx as i32);
     let mut t = fmadds(co.x358, co.x35C - h as f32, co.x354);
     t += value;
     fmadds(f.dmg.x1830_percent, co.x368, t)
@@ -100,8 +100,8 @@ pub fn fn_800DA8E4(g: G, vg: G, msid: i32) {
     ext::ftCo_ReleaseItemAndVictim(g);
     f.x1A5C = vg;
     f.victim_gobj = vg;
-    f.anon_221b.set_x221B_b5(0);
-    f.anon_221b.set_x221B_b7(0);
+    f.x221B.set_x221B_b5(0);
+    f.x221B.set_x221B_b7(0);
     f.facing_dir = -v.facing_dir;
     let t = grab_timer(f);
     ext::ftCommon_InitGrab(f, 0, t);

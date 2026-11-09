@@ -14,5 +14,5 @@ pub unsafe fn it_802714C0_fp(gobj: *mut HSD_GObj) {
     for k in 0..i.xAC8_hurtboxNum as usize {
         i.xACC_itemHurtbox[k].set_skip_update_pos(0);
     }
-    i.anon_daa.xDAA_flag.anon_0.set_b1(1);
+    i.xDAA.xDAA_flag.x0.set_b1(1);
 }

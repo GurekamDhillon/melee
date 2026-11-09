@@ -56,8 +56,8 @@ pub mod ext {
     fn Camera_RequestQuake(a0: u32, a1: *mut Vec) = |a0: u32, a1: *mut Vec| unsafe { crate::tu::camera::Camera_RequestQuake(a0 as _, a1 as _) };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
     fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32;
     fn Ground_801C0498() -> f32 = || unsafe { crate::tu::ground::Ground_801C0498() as _ };
     fn Ground_801C10B8(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>| { unsafe { crate::tu::ground::Ground_801C10B8(a0 as _, a1 as _); } };
@@ -127,7 +127,7 @@ pub mod ext {
     fn grDatFiles_801C6330(a0: i32) -> *mut UnkArchiveStruct = |a0: i32| unsafe { crate::tu::grdatfiles::grDatFiles_801C6330(a0 as _) as _ };
     fn grDatFiles_801C6478(a0: *mut c_void, a1: i32) -> *mut UnkArchiveStruct = |a0: *mut c_void, a1: i32| unsafe { crate::tu::grdatfiles::grDatFiles_801C6478(a0 as _, a1 as _) as _ };
     fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct = || unsafe { crate::tu::grdatfiles::grDatFiles_GetArchive() as _ };
-    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
+    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
     fn grLib_801C96F8(a0: i32, a1: i32, a2: *mut Vec) -> *mut HSD_Generator = |a0: i32, a1: i32, a2: *mut Vec| unsafe { crate::tu::grlib::grLib_801C96F8(a0 as _, a1 as _, a2 as _) as _ };
     fn grLib_801C9808(a0: i32, a1: i32, a2: *mut HSD_JObj) -> *mut HSD_Generator = |a0: i32, a1: i32, a2: *mut HSD_JObj| unsafe { crate::tu::grlib::grLib_801C9808(a0 as _, a1 as _, a2 as _) as _ };
     fn grLib_801C9834(a0: *mut HSD_Generator) = |a0: *mut HSD_Generator| { unsafe { crate::tu::grlib::grLib_801C9834(a0 as _); } };
@@ -162,7 +162,7 @@ pub mod ext {
         pub unsafe extern "C" fn Ground_GetMapGObj(a0: i32) -> *mut HSD_GObj { super::Ground_GetMapGObj(a0) }
         pub unsafe extern "C" fn HSD_Free(a0: *mut c_void) { super::HSD_Free(a0) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { super::grDisplay_801C5DB0(a0, a1) }
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -261,7 +261,7 @@ pub static mut grPs_803E1248: [GrJoint; 6] = [
 ];
 
 const fn cb(on_init: HSD_GObjEvent, callback1: HSD_GObjPredicate, gobj_proc: HSD_GObjEvent, callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>, flags: u32) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, x10: StageCallbacks_x10 { flags: u32::to_be(flags) } }
 }
 
 /// `static StageCallbacks grPs_StageCallbacks[]`
@@ -1265,7 +1265,7 @@ pub unsafe extern "C" fn grStadium_801D2E24() -> *mut HSD_GObj {
     gobj
 }
 
-pub unsafe extern "C" fn fn_801D2ED0(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn fn_801D2ED0(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("fn_801D2ED0");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     let wrapper = GET_WRAPPER(gobj);
@@ -1288,7 +1288,7 @@ pub unsafe extern "C" fn fn_801D2ED0(gobj: *mut HSD_GObj, _unused: i32) {
     (*gp2).u.display.set_xF8_0(1);
 }
 
-pub unsafe extern "C" fn grStadium_801D2FD0(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn grStadium_801D2FD0(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("grStadium_801D2FD0");
     let wrapper = GET_WRAPPER(gobj);
     let copy = wrapper;
@@ -1308,7 +1308,7 @@ pub unsafe extern "C" fn grStadium_801D2FD0(gobj: *mut HSD_GObj, _unused: i32) {
     }
 }
 
-pub unsafe extern "C" fn grStadium_801D3084(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn grStadium_801D3084(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("grStadium_801D3084");
     let wrapper = GET_WRAPPER(gobj);
     let new_var = wrapper;
@@ -2218,13 +2218,13 @@ pub unsafe extern "C" fn grStadium_801D4FF8(pl_slot: i32) -> i32 {
     0
 }
 
-pub unsafe extern "C" fn fn_801D5074(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe extern "C" fn fn_801D5074(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("fn_801D5074");
     grStadium_801D1EF8(gobj);
-    ext::grDisplay_801C5DB0(gobj, arg1);
+    ext::grDisplay_801C5DB0(gobj, arg1 as isize);
 }
 
-pub unsafe extern "C" fn grStadium_OnTouchLine(_unused: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn grStadium_OnTouchLine(_unused: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("grStadium_OnTouchLine");
     null_mut()
 }
@@ -2290,4 +2290,4 @@ pub unsafe extern "C" fn grStadium_801D511C() {
     pub extern "C" fn grStadium_801D1E10_fp(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grStadium_OnTouchLine_fp (gr/grpstadium.c:2245)
-    pub extern "C" fn grStadium_OnTouchLine_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grStadium_OnTouchLine_fp(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

@@ -325,7 +325,7 @@ pub fn ftCo_800957F4(g: G, msid: i32) {
     let f = fp(g);
     f.cmd_vars[0] = 0;
     f.cmd_vars[1] = 0;
-    f.anon_2210.throw_flags = 0;
+    f.x2210.throw_flags = 0;
     let anim_spd = getAnimSpeed(g, msid);
     unsafe { fp(g).mv.co.itemthrow4.anim_spd = anim_spd };
     ftCo_80095700(g, msid);
@@ -340,7 +340,7 @@ pub fn ftCo_800958FC(g: G, msid: i32) {
     let f = fp(g);
     f.cmd_vars[0] = 0;
     f.cmd_vars[1] = 0;
-    f.anon_2210.throw_flags = 0;
+    f.x2210.throw_flags = 0;
     let speed = getAnimSpeed(g, msid);
     ftCo_80095700(g, msid);
     ext::Fighter_ChangeMotionState(g, msid, 0, 0.0, speed, 0.0, core::ptr::null_mut());
@@ -440,8 +440,8 @@ pub fn ftCo_80095D5C(f: &mut Fighter, arg1: &mut Vec3) {
 pub fn ftCo_ItemThrow_Anim(g: G) {
     melee_core::ct!("ftCo_ItemThrow_Anim");
     let f = fp(g);
-    if unsafe { f.anon_2210.anon_0.throw_flags_b4() } != 0 {
-        unsafe { f.anon_2210.anon_0.set_throw_flags_b4(0) };
+    if unsafe { f.x2210.x0.throw_flags_b4() } != 0 {
+        unsafe { f.x2210.x0.set_throw_flags_b4(0) };
         f.facing_dir = -f.facing_dir;
     }
     if !ext::ftAnim_IsFramesRemaining(g) {
@@ -461,8 +461,8 @@ pub fn ftCo_80095EFC(g: G) {
     ext::lb_8000B1CC(j, core::ptr::null(), &mut vec0);
     let f = fp(g);
     let b3 = unsafe {
-        if f.anon_2210.anon_0.throw_flags_b3() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b3(0);
+        if f.x2210.x0.throw_flags_b3() != 0 {
+            f.x2210.x0.set_throw_flags_b3(0);
             true
         } else {
             false
@@ -494,7 +494,7 @@ pub fn ftCo_80095EFC(g: G) {
         y: fmadds(fsm, t8y - vec0.y, vec0.y),
         z: 0.0,
     };
-    ext::pl_8003E978(f.player_id as i32, f.is_sub_fighter() != 0, f.item_gobj);
+    ext::pl_8003E978(f.player_idx as i32, f.is_sub_fighter() != 0, f.item_gobj);
     let f = fp(g);
     let msid = f.motion_id;
     if msid == ftCo_MS_LightThrowDrop as i32 {

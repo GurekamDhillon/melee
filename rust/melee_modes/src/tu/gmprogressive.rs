@@ -146,8 +146,8 @@ pub mod ext {
                 }
             }
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void));
-    hook!(H_GObj_SetupGXLinkMax, GObj_SetupGXLinkMax, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u32));
-    hook!(H_HSD_GObj_803910D8, HSD_GObj_803910D8, (a0: *mut melee_types::HSD_GObj, a1: i32));
+    hook!(H_GObj_SetupGXLinkMax, GObj_SetupGXLinkMax, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u32));
+    hook!(H_HSD_GObj_803910D8, HSD_GObj_803910D8, (a0: *mut melee_types::HSD_GObj, a1: isize));
     pub static mut H_HSD_SisLib_803A611C: Option<unsafe extern "C" fn(i32, *mut melee_types::HSD_GObj, u16, u8, u8, u8, u8, u32) -> i32> = None;
             pub unsafe extern "C" fn HSD_SisLib_803A611C(a0: i32, a1: *mut melee_types::HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 {
                 match H_HSD_SisLib_803A611C {
@@ -183,9 +183,9 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ }; },
                 }
             }
-    hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32));
-    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
-            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+    hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32));
+    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: isize)  {
                 match H_HSD_GObj_JObjCallback {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },

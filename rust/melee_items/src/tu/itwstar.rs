@@ -50,7 +50,7 @@ use crate::layout::itTaruCann_DatAttrs;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -209,7 +209,7 @@ pub unsafe extern "C" fn it_802944AC(gobj: *mut Item_GObj, r#box: *mut ftCollisi
 pub unsafe extern "C" fn itWStar_Logic29_Spawned(gobj: *mut Item_GObj) {
     melee_core::ct!("itWStar_Logic29_Spawned");
     let ip = GET_ITEM(gobj);
-    (*ip).xDCE_flag.anon_0.set_b7(0);
+    (*ip).xDCE_flag.x0.set_b7(0);
     (*ip).xDD4_itemVar.wstar.xDD8 = 1.0;
     (*ip).xDD4_itemVar.wstar.xDD4 = 1.0;
     it_80294624(gobj);

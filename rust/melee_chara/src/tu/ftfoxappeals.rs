@@ -125,8 +125,8 @@ fn ftGetTemplateKind(fp: &Fighter) -> i32 {
 /// `ftCheckThrowB3` (ft/inlines.h): test and clear the flag.
 fn ftCheckThrowB3(fp: &mut Fighter) -> bool {
     unsafe {
-        if fp.anon_2210.anon_0.throw_flags_b3() != 0 {
-            fp.anon_2210.anon_0.set_throw_flags_b3(0);
+        if fp.x2210.x0.throw_flags_b3() != 0 {
+            fp.x2210.x0.set_throw_flags_b3(0);
             true
         } else {
             false
@@ -138,7 +138,7 @@ fn ftCheckThrowB3(fp: &mut Fighter) -> bool {
 pub fn ftFx_AppealS_CheckIfUsed(fp: *mut Fighter) -> bool {
     melee_core::ct!("ftFx_AppealS_CheckIfUsed");
     unsafe {
-        let attack_count = ext::Player_GetActionStats((*fp).player_id as i32);
+        let attack_count = ext::Player_GetActionStats((*fp).player_idx as i32);
         ext::pl_800386D8(attack_count, FTFOX_APPEALS_ATTACKID) != 0 && ext::grCorneria_801E2D14()
     }
 }
@@ -168,7 +168,7 @@ pub fn ftFx_AppealS_CheckInput(gobj: *mut HSD_GObj) -> bool {
             && !ftFox_CheckAppealSCount()
         {
             ftFx_AppealS_Enter(gobj);
-            ext::pl_80040120((*fp).player_id as i32, (*fp).is_sub_fighter() as i32);
+            ext::pl_80040120((*fp).player_idx as i32, (*fp).is_sub_fighter() as i32);
             return true;
         }
         false
@@ -188,7 +188,7 @@ pub fn ftFx_AppealS_Enter(gobj: *mut HSD_GObj) {
         (*fp).mv.fx.AppealS.animCount = 0;
         let facing_dir = ftFox_AppealS_GetLR(1.0, (*fp).facing_dir) as i32;
         (*fp).mv.fx.AppealS.facingDir = facing_dir;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         let action_dir = (*fp).mv.fx.AppealS.facingDir;
         let anim_count = (*fp).mv.fx.AppealS.animCount;
         st::Fighter_ChangeMotionState(

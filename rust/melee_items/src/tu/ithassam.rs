@@ -180,7 +180,7 @@ pub unsafe extern "C" fn itHassam_802CDE1C(vec: *mut Vec3, gobj: *mut HSD_GObj) 
     while !cur_fgobj.is_null() {
         if ext::ftLib_IsSamePlayer(gobj, cur_fgobj) == 0 {
             let cur_fp = (*cur_fgobj).user_data as *mut Fighter;
-            if (*cur_fp).x221F_b3() == 0 && (ext::gm_8016B168() == 0 || fp.is_null() || (*cur_fp).team != (*fp).team) {
+            if (*cur_fp).is_sleeping() == 0 && (ext::gm_8016B168() == 0 || fp.is_null() || (*cur_fp).team != (*fp).team) {
                 ext::ftLib_GetCameraBonePos(cur_fgobj, &raw mut sp20);
                 let y_dist = (*vec).y - sp20.y;
                 let x_dist = (*vec).x - sp20.x;

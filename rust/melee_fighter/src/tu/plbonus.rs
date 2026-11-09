@@ -200,7 +200,7 @@ pub fn pl_8003891C(player: i32) {
 
         // `volatile int temp_zero = 0;` stored through an int* over UnkPlBonusBits.x0..x3
         m.xCB8 = 6;
-        core::ptr::write_volatile(&mut m.xCBC as *mut UnkPlBonusBits as *mut i32, 0);
+        core::ptr::write_volatile(&mut m.xCBC as *mut Struct2070 as *mut i32, 0);
 
         m.xCC0.x0 = 0;
         m.xCC0.x4 = 0;
@@ -281,23 +281,23 @@ pub fn pl_8003891C(player: i32) {
         (*t).xDC4 = 0;
         (*t).xDC8 = 0;
         (*t).xDCC = 0;
-        (*t).xDD0.anon_0.set_bit0(0);
-        (*t).xDD0.anon_0.set_bit1(0);
-        (*t).xDD0.anon_0.set_bit2(0);
-        (*t).xDD0.anon_0.set_bit3(0);
-        (*t).xDD0.anon_0.set_bit4(0);
-        (*t).xDD0.anon_0.set_bit5(0);
-        (*t).xDD0.anon_0.set_bit6(0);
-        (*t).xDD0.anon_0.set_bit7(0);
-        (*t).xDD1.anon_0.set_bit0(0);
-        (*t).xDD1.anon_0.set_bit1(0);
-        (*t).xDD1.anon_0.set_bit2(0);
-        (*t).xDD1.anon_0.set_bit3(0);
+        (*t).xDD0.x0.set_bit0(0);
+        (*t).xDD0.x0.set_bit1(0);
+        (*t).xDD0.x0.set_bit2(0);
+        (*t).xDD0.x0.set_bit3(0);
+        (*t).xDD0.x0.set_bit4(0);
+        (*t).xDD0.x0.set_bit5(0);
+        (*t).xDD0.x0.set_bit6(0);
+        (*t).xDD0.x0.set_bit7(0);
+        (*t).xDD1.x0.set_bit0(0);
+        (*t).xDD1.x0.set_bit1(0);
+        (*t).xDD1.x0.set_bit2(0);
+        (*t).xDD1.x0.set_bit3(0);
         (*t).xDB8 = 0;
-        (*t).xDD1.anon_0.set_bit4(0);
-        (*t).xDD1.anon_0.set_bit5(0);
-        (*t).xDD1.anon_0.set_bit6(0);
-        (*t).xDD1.anon_0.set_bit7(0);
+        (*t).xDD1.x0.set_bit4(0);
+        (*t).xDD1.x0.set_bit5(0);
+        (*t).xDD1.x0.set_bit6(0);
+        (*t).xDD1.x0.set_bit7(0);
     }
 }
 
@@ -438,15 +438,15 @@ pub fn pl_80039450(player: i32) {
     fn_8003D2EC(player);
 
     unsafe {
-        if (*table).xDD0.anon_0.bit1() == 0 {
+        if (*table).xDD0.x0.bit1() == 0 {
             setFlag(player, 0x4F);
         }
 
-        if !ext::gm_8016B0FC() && (*table).xDD0.anon_0.bit2() == 0 {
+        if !ext::gm_8016B0FC() && (*table).xDD0.x0.bit2() == 0 {
             setFlag(player, 0x55);
         }
 
-        if (*table).xDCC != 0 && (*table).xDD1.anon_0.bit5() != 0 {
+        if (*table).xDCC != 0 && (*table).xDD1.x0.bit5() != 0 {
             setFlag(player, 0x4E);
         }
     }
@@ -465,14 +465,14 @@ pub fn fn_80039618(player: i32) {
         let atk_x1A8: u32 = stats.attacks.x1A8;
         let hit_counts: [u32; 100] = stats.hits.by_attack_counts;
         let hit_thrown: u32 = stats.hits.thrown_item_count;
-        let x358_counts: [u32; 100] = stats.anon_358.x358_hits.by_attack_counts;
+        let x358_counts: [u32; 100] = stats.x358.x358_hits.by_attack_counts;
         let hit_specials: u32 = stats.hits.specials_count;
         let hit_x1A0: u32 = stats.hits.x1A0_count;
         let hit_x1A8: u32 = stats.hits.x1A8;
-        let x358_x1A8: u32 = stats.anon_358.x358_hits.x1A8;
+        let x358_x1A8: u32 = stats.x358.x358_hits.x1A8;
         let attacks_total: u32 = stats.attacks.total;
         let hits_total: u32 = stats.hits.total;
-        let x358_total: u32 = stats.anon_358.x358_hits.total;
+        let x358_total: u32 = stats.x358.x358_hits.total;
         let pl = c();
 
         if aerials != 0 && aerials == hits_total {
@@ -650,10 +650,10 @@ pub fn fn_80039618(player: i32) {
                 setFlag(player, 0x66);
             }
         }
-        if (*table).xDD1.anon_0.bit0() != 0
-            && (*table).xDD1.anon_0.bit1() != 0
-            && (*table).xDD1.anon_0.bit2() != 0
-            && (*table).xDD1.anon_0.bit3() != 0
+        if (*table).xDD1.x0.bit0() != 0
+            && (*table).xDD1.x0.bit1() != 0
+            && (*table).xDD1.x0.bit2() != 0
+            && (*table).xDD1.x0.bit3() != 0
         {
             setFlag(player, 0x86);
         }
@@ -691,8 +691,8 @@ pub fn fn_80039618(player: i32) {
         {
             let sum_attacks: u32 = fn_80038700(stats_p as *const i32, 1, 0x10) as u32;
             let sum_x358: u32 =
-                fn_80038700((&stats.anon_358.x358_hits as *const plAttackStats) as *const i32, 1, 0x10) as u32;
-            if sum_x358 != 0 && sum_attacks == sum_x358 && (*table).xDD1.anon_0.bit4() == 0 {
+                fn_80038700((&stats.x358.x358_hits as *const plAttackStats) as *const i32, 1, 0x10) as u32;
+            if sum_x358 != 0 && sum_attacks == sum_x358 && (*table).xDD1.x0.bit4() == 0 {
                 setFlag(player, 0x23);
             }
         }
@@ -785,7 +785,7 @@ pub fn fn_8003B044(player: i32) {
                 setFlag(player, 0x3A);
             }
         }
-        if (*temp_r31).xDD0.anon_0.bit0() == 0 && (*temp_r3).x5BC_b3() != 0 {
+        if (*temp_r31).xDD0.x0.bit0() == 0 && (*temp_r3).x5BC_b3() != 0 {
             setFlag(player, 0x39);
         }
         if pl_800386D8(temp_r3, 0x6C) != 0 && pl_800386D8(temp_r3, 0x6D) == 0 {
@@ -848,7 +848,7 @@ pub fn fn_8003B044(player: i32) {
                 setFlag(player, 0x6C);
             }
         }
-        if (*temp_r31).xDD1.anon_0.bit6() != 0 && (*temp_r31).xDD1.anon_0.bit7() == 0 {
+        if (*temp_r31).xDD1.x0.bit6() != 0 && (*temp_r31).xDD1.x0.bit7() == 0 {
             setFlag(player, 0x5A);
         }
     }
@@ -942,10 +942,10 @@ pub fn fn_8003BD60(player: i32) {
                 setFlag(player, 0x5D);
             }
         }
-        if (*temp_r31).xDD0.anon_0.bit3() != 0
-            && (*temp_r31).xDD0.anon_0.bit4() != 0
-            && (*temp_r31).xDD0.anon_0.bit5() != 0
-            && (*temp_r31).xDD0.anon_0.bit6() != 0
+        if (*temp_r31).xDD0.x0.bit3() != 0
+            && (*temp_r31).xDD0.x0.bit4() != 0
+            && (*temp_r31).xDD0.x0.bit5() != 0
+            && (*temp_r31).xDD0.x0.bit6() != 0
         {
             setFlag(player, 0x5E);
         }

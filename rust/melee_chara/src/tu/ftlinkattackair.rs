@@ -54,9 +54,9 @@ pub fn ftLk_AttackAir_800EB3BC(gobj: *mut HSD_GObj) {
         if (*fp).x5F4_arr[2].prev == 0 {
             let a = (*fp).dat_attrs as *mut ftLk_DatAttrs;
             ext::ftColl_8007B1B8(gobj, &mut (*a).xC4 as *mut AbsorbDesc as *mut _, Some(cb_ftLk_800EB334));
-            (*fp).anon_221b.set_x221B_b3(1);
-            (*fp).anon_221b.set_x221B_b4(1);
-            (*fp).anon_221b.set_x221B_b2(1);
+            (*fp).x221B.set_x221B_b3(1);
+            (*fp).x221B.set_x221B_b4(1);
+            (*fp).x221B.set_x221B_b2(1);
         }
     }
 }

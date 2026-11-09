@@ -332,7 +332,7 @@ pub fn fill_StartMeleeData(p: &mut StartMeleeData) {
     p.rules.x1C_pad[i0] = fv() as _;
     }
     p.rules.x20 = fv64() as _;
-    p.rules.x28 = fv() as _;
+    p.rules.it_kind = fv() as _;
     p.rules.x2C = rg();
     p.rules.x30 = rg();
     p.rules.game_speed = rg();
@@ -440,7 +440,7 @@ pub fn hash_StartMeleeData(p: &StartMeleeData) {
     hm(p.rules.x1C_pad[i0] as u32);
     }
     hm(p.rules.x20 as u32); hm(((p.rules.x20 as u64) >> 32) as u32);
-    hm(p.rules.x28 as u32);
+    hm(p.rules.it_kind as u32);
     hm(p.rules.x2C.to_bits());
     hm(p.rules.x30.to_bits());
     hm(p.rules.game_speed.to_bits());

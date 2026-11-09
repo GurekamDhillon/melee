@@ -176,7 +176,7 @@ pub mod ext {
         fn HSD_CObjSetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor) = crate::tu::adapt::HSD_CObjSetScissor__2d3b20;
         fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
         fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
-        extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
+        extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
         fn HSD_ImageDescCopyFromEFB(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: GXBool, a4: i32) = crate::tu::adapt::HSD_ImageDescCopyFromEFB__464d65;
         fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
         fn HSD_Randi(a0: i32) -> i32;
@@ -308,7 +308,7 @@ pub unsafe fn gm_1798_MexSetResultModels(show_slot: i32) {
         }
         let fp = (*entity).user_data as *mut Fighter;
         (*fp).x21FC_flag
-            .anon_0
+            .x0
             .set_b0(if show_slot < 0 { 1 } else { (i == show_slot) as u8 });
     }
 }
@@ -466,24 +466,24 @@ pub unsafe fn fn_80179990(arg0: *mut HSD_GObj, _arg1: i32, arg2: i32) {
     }
 }
 
-pub unsafe fn fn_80179D3C(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe fn fn_80179D3C(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("fn_80179D3C");
-    fn_80179990(gobj, arg1, 0);
+    fn_80179990(gobj, arg1 as i32, 0);
 }
 
-pub unsafe fn fn_80179D60(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe fn fn_80179D60(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("fn_80179D60");
-    fn_80179990(gobj, arg1, 1);
+    fn_80179990(gobj, arg1 as i32, 1);
 }
 
-pub unsafe fn fn_80179D84(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe fn fn_80179D84(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("fn_80179D84");
-    fn_80179990(gobj, arg1, 2);
+    fn_80179990(gobj, arg1 as i32, 2);
 }
 
-pub unsafe fn fn_80179DA8(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe fn fn_80179DA8(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("fn_80179DA8");
-    fn_80179990(gobj, arg1, 3);
+    fn_80179990(gobj, arg1 as i32, 3);
 }
 
 /// Shared body of fn_80179DCC / E34 / E9C / F04 (they differ only in the slot passed to the m-ex hook).
@@ -500,22 +500,22 @@ unsafe fn draw_result_cobj(gobj: *mut HSD_GObj, slot: i32) {
     gm_1798_MexSetResultModels(-1);
 }
 
-pub unsafe fn fn_80179DCC(gobj: *mut HSD_GObj, _arg1: i32) {
+pub unsafe fn fn_80179DCC(gobj: *mut HSD_GObj, _arg1: isize) {
     melee_core::ct!("fn_80179DCC");
     draw_result_cobj(gobj, 0);
 }
 
-pub unsafe fn fn_80179E34(gobj: *mut HSD_GObj, _arg1: i32) {
+pub unsafe fn fn_80179E34(gobj: *mut HSD_GObj, _arg1: isize) {
     melee_core::ct!("fn_80179E34");
     draw_result_cobj(gobj, 1);
 }
 
-pub unsafe fn fn_80179E9C(gobj: *mut HSD_GObj, _arg1: i32) {
+pub unsafe fn fn_80179E9C(gobj: *mut HSD_GObj, _arg1: isize) {
     melee_core::ct!("fn_80179E9C");
     draw_result_cobj(gobj, 2);
 }
 
-pub unsafe fn fn_80179F04(gobj: *mut HSD_GObj, _arg1: i32) {
+pub unsafe fn fn_80179F04(gobj: *mut HSD_GObj, _arg1: isize) {
     melee_core::ct!("fn_80179F04");
     draw_result_cobj(gobj, 3);
 }

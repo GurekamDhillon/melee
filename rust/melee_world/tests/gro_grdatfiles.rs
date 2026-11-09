@@ -261,7 +261,7 @@ unsafe fn world_fill(fi: usize) {
     {
         let m = rnd() % 4;
         for i in 0..6 { OPI[i] = if rnd() % 3 != 0 { addr_of_mut!(OSI[i]) } else { core::ptr::null_mut() }; }
-        for j in 0..4 { OX8[j].unk0 = if rnd() & 1 != 0 { addr_of_mut!(OGO[j]) as *mut _ } else { core::ptr::null_mut() }; }
+        for j in 0..4 { OX8[j].joint = if rnd() & 1 != 0 { addr_of_mut!(OGO[j]) as *mut _ } else { core::ptr::null_mut() }; }
         for i in 0..4 { OSD[i].unk8 = addr_of_mut!(OX8) as *mut UnkStageDat_x8_t; OSD[i].unk28 = addr_of_mut!(OPI) as *mut *mut UnkStageDatInternal; OSD[i].unk2C = (rnd() % 6) as i32; OSD[i].unkC = (rnd() % 5) as i32; }
         for i in 0..(m as usize) { t::grDatFiles_8049EE10[i].unk0 = addr_of_mut!(OGO[i]) as *mut _; t::grDatFiles_8049EE10[i].unk4 = if rnd() % 4 != 0 { addr_of_mut!(OSD[i]) } else { core::ptr::null_mut() }; }
     }

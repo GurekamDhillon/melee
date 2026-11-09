@@ -31,10 +31,10 @@ pub mod ext {
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::HSD_JObjSetMtxDirtySub;
-    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
-        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
     }
     pub static mut GROUND_801C498C: Option<fn() -> *mut HSD_GObj> = None;
     #[allow(non_snake_case)]
@@ -787,7 +787,7 @@ pub unsafe fn grAnime_801C7C1C(jobj: *mut HSD_JObj, map_id: s32, arg2: s32, arg3
     }
     let mut archive = ext::grDatFiles_801C6330(map_id);
     assert_(!archive.is_null(), 0x4DE, "archive");
-    let ajp = (*x8_of(archive, map_id)).unk4;
+    let ajp = (*x8_of(archive, map_id)).anims;
     if (arg3 & 1) != 0 && !ajp.is_null() && !(*ajp.offset(arg4 as isize)).is_null() {
         aj = (*ajp.offset(arg4 as isize)).offset(arg2 as isize);
         req_flags |= 0x81;
@@ -795,7 +795,7 @@ pub unsafe fn grAnime_801C7C1C(jobj: *mut HSD_JObj, map_id: s32, arg2: s32, arg3
     } else {
         aj = null_mut();
     }
-    let mjp = (*x8_of(archive, map_id)).unk8;
+    let mjp = (*x8_of(archive, map_id)).matanims;
     if (arg3 & 2) != 0 && !mjp.is_null() && !(*mjp.offset(arg4 as isize)).is_null() {
         mj = (*mjp.offset(arg4 as isize)).offset(arg2 as isize);
         req_flags |= 0x416;
@@ -803,7 +803,7 @@ pub unsafe fn grAnime_801C7C1C(jobj: *mut HSD_JObj, map_id: s32, arg2: s32, arg3
     } else {
         mj = null_mut();
     }
-    let sjp = (*x8_of(archive, map_id)).unkC;
+    let sjp = (*x8_of(archive, map_id)).shapeanims;
     if (arg3 & 4) != 0 && !sjp.is_null() && !(*sjp.offset(arg4 as isize)).is_null() {
         sj = (*sjp.offset(arg4 as isize)).offset(arg2 as isize);
         req_flags |= 8;
@@ -821,7 +821,7 @@ pub unsafe fn grAnime_801C7C1C(jobj: *mut HSD_JObj, map_id: s32, arg2: s32, arg3
     grAnime_801C752C(jobj, arg5, anim_flags, ext::HSD_AObjSetRate_cb as *mut c_void, 1, &[(farg1 as f64).to_bits()]);
     archive = ext::grDatFiles_801C6330(map_id);
     assert_(!archive.is_null(), 0x148, "archive");
-    let eflags = (*x8_of(archive, map_id)).x28 as *mut u8;
+    let eflags = (*x8_of(archive, map_id)).anim_loops as *mut u8;
     let flag: s32 = if !eflags.is_null() { *eflags.offset(arg4 as isize) as s32 } else { 0 };
     if flag != 0 {
         grAnime_801C752C(jobj, arg5, anim_flags, ext::HSD_AObjSetFlags_cb as *mut c_void, 3, &[0x20000000]);
@@ -863,7 +863,7 @@ pub unsafe fn grAnime_801C8138(gobj: *mut HSD_GObj, arg1: enum_t, arg2: i32) {
     }
     let mut archive = ext::grDatFiles_801C6330(arg1);
     assert_(!archive.is_null(), 0x556, "archive");
-    let joint = (*x8_of(archive, arg1)).unk0;
+    let joint = (*x8_of(archive, arg1)).joint;
     if !HSD_JObjGetChild(jobj).is_null() {
         jobj = HSD_JObjGetChild(jobj);
     }
@@ -872,9 +872,9 @@ pub unsafe fn grAnime_801C8138(gobj: *mut HSD_GObj, arg1: enum_t, arg2: i32) {
     }
     ext::grMaterial_801C8B68(jobj, 0);
     ext::HSD_JObjRemoveAnimAll(jobj);
-    let sap = (*x8_of(archive, arg1)).unkC;
-    let ajp = (*x8_of(archive, arg1)).unk4;
-    let mjp = (*x8_of(archive, arg1)).unk8;
+    let sap = (*x8_of(archive, arg1)).shapeanims;
+    let ajp = (*x8_of(archive, arg1)).anims;
+    let mjp = (*x8_of(archive, arg1)).matanims;
     let sa = if !sap.is_null() { *sap.offset(arg2 as isize) } else { null_mut() };
     let ma = if !mjp.is_null() { *mjp.offset(arg2 as isize) } else { null_mut() };
     let aj = if !ajp.is_null() { *ajp.offset(arg2 as isize) } else { null_mut() };
@@ -882,7 +882,7 @@ pub unsafe fn grAnime_801C8138(gobj: *mut HSD_GObj, arg1: enum_t, arg2: i32) {
     ext::HSD_JObjReqAnimAll(jobj, 0.0);
     archive = ext::grDatFiles_801C6330(arg1);
     assert_(!archive.is_null(), 0x148, "archive");
-    let flags = (*x8_of(archive, arg1)).x28 as *mut u8;
+    let flags = (*x8_of(archive, arg1)).anim_loops as *mut u8;
     let flag: s32 = if !flags.is_null() { *flags.offset(arg2 as isize) as s32 } else { 0 };
     if flag != 0 {
         grAnime_801C752C(jobj, 1, 0x77A4, ext::HSD_AObjSetFlags_cb as *mut c_void, 3, &[0x20000000]);
@@ -979,7 +979,7 @@ pub unsafe fn grAnime_801C86D4(arg0: s32, arg1: *mut HSD_GObj, arg2: s32) {
     ext::Ground_801C3FA4(arg1, arg2);
     let archive = ext::grDatFiles_801C6330(arg0);
     assert_(!archive.is_null(), 1538, "archive");
-    let root = (*x8_of(archive, arg0)).unk0;
+    let root = (*x8_of(archive, arg0)).joint;
     let mut sp: s32 = arg2;
     let joint = grAnime_801C8578_noinline(root, &mut sp);
     ext::HSD_JObjResetRST(ext::Ground_801C3FA4(arg1, arg2), joint);

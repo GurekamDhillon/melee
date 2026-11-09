@@ -165,10 +165,10 @@ pub mod ext {
     use super::*;
     use crate::ext_fns;
     ext_fns! {
-        extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
+        extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize);
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
-        extern "C" fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: i32) = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
+        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        extern "C" fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: isize) = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
         fn lbAudioAx_80023F28(a0: i32) -> i32 = crate::tu::adapt::lbAudioAx_80023F28__582fc2;
         extern "C" fn mn_8022BA1C(a0: *mut HSD_GObj) = crate::tu::adapt::mn_8022BA1C__3b39ba;
         extern "C" fn mn_8022EAE0(a0: *mut HSD_GObj) = crate::tu::adapt::mn_8022EAE0__7ca08a;
@@ -239,8 +239,8 @@ static mut mnStageSel_MexActive: i32 = 0;
 pub const SSS_EXT_MEX_FIRST: i32 = 288;
 pub const SSS_RANDOM_ID_COUNT: i32 = 30;
 pub const MAX_ITER: i32 = 100000;
-pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
-    stagelistinfo {
+pub static mut mnStageSel_803F06D0: [StageListInfo; 256] = [
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -252,7 +252,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -264,7 +264,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -276,7 +276,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -288,7 +288,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -300,7 +300,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -312,7 +312,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -324,7 +324,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -336,7 +336,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -348,7 +348,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -360,7 +360,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -372,7 +372,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -384,7 +384,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -396,7 +396,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -408,7 +408,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -420,7 +420,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -432,7 +432,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -444,7 +444,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -456,7 +456,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -468,7 +468,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -480,7 +480,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -492,7 +492,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -504,7 +504,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -516,7 +516,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.1_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -528,7 +528,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.0_f32,
         x18: 1.1_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -540,7 +540,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.8_f32,
         x18: 0.8_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -552,7 +552,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.8_f32,
         x18: 0.8_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -564,7 +564,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.8_f32,
         x18: 0.8_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -576,7 +576,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.8_f32,
         x18: 0.8_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -588,7 +588,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.8_f32,
         x18: 0.8_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0 as i32,
         x8: 0x2 as u8,
@@ -600,7 +600,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 1.2_f32,
         x18: 1.0_f32,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -612,7 +612,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -624,7 +624,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -636,7 +636,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -648,7 +648,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -660,7 +660,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -672,7 +672,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -684,7 +684,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -696,7 +696,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -708,7 +708,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -720,7 +720,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -732,7 +732,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -744,7 +744,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -756,7 +756,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -768,7 +768,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -780,7 +780,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -792,7 +792,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -804,7 +804,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -816,7 +816,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -828,7 +828,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -840,7 +840,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -852,7 +852,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -864,7 +864,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -876,7 +876,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -888,7 +888,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -900,7 +900,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -912,7 +912,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -924,7 +924,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -936,7 +936,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -948,7 +948,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -960,7 +960,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -972,7 +972,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -984,7 +984,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -996,7 +996,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1008,7 +1008,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1020,7 +1020,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1032,7 +1032,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1044,7 +1044,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1056,7 +1056,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1068,7 +1068,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1080,7 +1080,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1092,7 +1092,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1104,7 +1104,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1116,7 +1116,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1128,7 +1128,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1140,7 +1140,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1152,7 +1152,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1164,7 +1164,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1176,7 +1176,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1188,7 +1188,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1200,7 +1200,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1212,7 +1212,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1224,7 +1224,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1236,7 +1236,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1248,7 +1248,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1260,7 +1260,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1272,7 +1272,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1284,7 +1284,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1296,7 +1296,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1308,7 +1308,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1320,7 +1320,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1332,7 +1332,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1344,7 +1344,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1356,7 +1356,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1368,7 +1368,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1380,7 +1380,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1392,7 +1392,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1404,7 +1404,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1416,7 +1416,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1428,7 +1428,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1440,7 +1440,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1452,7 +1452,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1464,7 +1464,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1476,7 +1476,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1488,7 +1488,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1500,7 +1500,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1512,7 +1512,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1524,7 +1524,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1536,7 +1536,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1548,7 +1548,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1560,7 +1560,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1572,7 +1572,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1584,7 +1584,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1596,7 +1596,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1608,7 +1608,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1620,7 +1620,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1632,7 +1632,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1644,7 +1644,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1656,7 +1656,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1668,7 +1668,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1680,7 +1680,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1692,7 +1692,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1704,7 +1704,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1716,7 +1716,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1728,7 +1728,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1740,7 +1740,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1752,7 +1752,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1764,7 +1764,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1776,7 +1776,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1788,7 +1788,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1800,7 +1800,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1812,7 +1812,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1824,7 +1824,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1836,7 +1836,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1848,7 +1848,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1860,7 +1860,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1872,7 +1872,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1884,7 +1884,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1896,7 +1896,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1908,7 +1908,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1920,7 +1920,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1932,7 +1932,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1944,7 +1944,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1956,7 +1956,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1968,7 +1968,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1980,7 +1980,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -1992,7 +1992,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2004,7 +2004,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2016,7 +2016,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2028,7 +2028,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2040,7 +2040,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2052,7 +2052,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2064,7 +2064,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2076,7 +2076,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2088,7 +2088,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2100,7 +2100,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2112,7 +2112,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2124,7 +2124,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2136,7 +2136,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2148,7 +2148,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2160,7 +2160,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2172,7 +2172,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2184,7 +2184,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2196,7 +2196,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2208,7 +2208,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2220,7 +2220,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2232,7 +2232,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2244,7 +2244,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2256,7 +2256,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2268,7 +2268,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2280,7 +2280,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2292,7 +2292,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2304,7 +2304,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2316,7 +2316,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2328,7 +2328,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2340,7 +2340,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2352,7 +2352,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2364,7 +2364,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2376,7 +2376,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2388,7 +2388,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2400,7 +2400,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2412,7 +2412,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2424,7 +2424,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2436,7 +2436,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2448,7 +2448,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2460,7 +2460,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2472,7 +2472,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2484,7 +2484,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2496,7 +2496,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2508,7 +2508,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2520,7 +2520,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2532,7 +2532,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2544,7 +2544,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2556,7 +2556,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2568,7 +2568,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2580,7 +2580,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2592,7 +2592,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2604,7 +2604,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2616,7 +2616,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2628,7 +2628,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2640,7 +2640,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2652,7 +2652,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2664,7 +2664,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2676,7 +2676,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2688,7 +2688,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2700,7 +2700,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2712,7 +2712,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2724,7 +2724,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2736,7 +2736,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2748,7 +2748,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2760,7 +2760,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2772,7 +2772,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2784,7 +2784,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2796,7 +2796,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2808,7 +2808,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2820,7 +2820,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2832,7 +2832,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2844,7 +2844,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2856,7 +2856,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2868,7 +2868,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2880,7 +2880,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2892,7 +2892,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2904,7 +2904,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2916,7 +2916,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2928,7 +2928,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2940,7 +2940,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2952,7 +2952,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2964,7 +2964,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2976,7 +2976,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -2988,7 +2988,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3000,7 +3000,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3012,7 +3012,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3024,7 +3024,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3036,7 +3036,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3048,7 +3048,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3060,7 +3060,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3072,7 +3072,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3084,7 +3084,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3096,7 +3096,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3108,7 +3108,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3120,7 +3120,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3132,7 +3132,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3144,7 +3144,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3156,7 +3156,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3168,7 +3168,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3180,7 +3180,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3192,7 +3192,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3204,7 +3204,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3216,7 +3216,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3228,7 +3228,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3240,7 +3240,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3252,7 +3252,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3264,7 +3264,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3276,7 +3276,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3288,7 +3288,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3300,7 +3300,7 @@ pub static mut mnStageSel_803F06D0: [stagelistinfo; 256] = [
         x14: 0.,
         x18: 0.,
     },
-    stagelistinfo {
+    StageListInfo {
         x0: null_mut(),
         x4: 0,
         x8: 0,
@@ -3398,9 +3398,9 @@ unsafe extern "C" fn mnStageSel_MexSetup(mut archive: *mut HSD_Archive) {
     }
     i = 0;
     while i < n {
-        let mut icon: *mut stagelistinfo = (&raw mut mnStageSel_803F06D0
-            as *mut stagelistinfo)
-            .offset(i as isize) as *mut stagelistinfo;
+        let mut icon: *mut StageListInfo = (&raw mut mnStageSel_803F06D0
+            as *mut StageListInfo)
+            .offset(i as isize) as *mut StageListInfo;
         (*icon).x0 = null_mut();
         (*icon).x4 = 0;
         (*icon).x8 = (*tbl.offset(i as isize)).type_0;
@@ -3421,9 +3421,9 @@ unsafe extern "C" fn mnStageSel_MexScanUnlocked() {
     let mut i: i32 = 0;
     i = 0;
     while i < mnStageSel_IconCount {
-        let mut icon: *mut stagelistinfo = (&raw mut mnStageSel_803F06D0
-            as *mut stagelistinfo)
-            .offset(i as isize) as *mut stagelistinfo;
+        let mut icon: *mut StageListInfo = (&raw mut mnStageSel_803F06D0
+            as *mut StageListInfo)
+            .offset(i as isize) as *mut StageListInfo;
         let mut grkind: i32 = 0;
         if !((*icon).x8 as i32 == 0
             || (*icon).x8 as i32 == 3)
@@ -3486,9 +3486,9 @@ unsafe extern "C" fn mnStageSel_MexInitIcons() {
     pos = (*root).child as *mut HSD_JObj;
     i = 0;
     while i < mnStageSel_IconCount && !pos.is_null() {
-        let mut icon: *mut stagelistinfo = (&raw mut mnStageSel_803F06D0
-            as *mut stagelistinfo)
-            .offset(i as isize) as *mut stagelistinfo;
+        let mut icon: *mut StageListInfo = (&raw mut mnStageSel_803F06D0
+            as *mut StageListInfo)
+            .offset(i as isize) as *mut StageListInfo;
         let mut jobj: *mut HSD_JObj = null_mut();
         let mut g: *mut HSD_GObj = GObj_Create(4, 5, 0x80);
         jobj = HSD_JObjLoadJoint(
@@ -3999,7 +3999,7 @@ pub unsafe extern "C" fn fn_8025A91C(mut gobj: *mut HSD_GObj) {
 }
 pub unsafe extern "C" fn fn_8025A974(
     mut gobj: *mut HSD_GObj,
-    mut unused: i32,
+    mut unused: isize,
 ) {
     melee_core::ct!("fn_8025A974");
     HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
@@ -5099,9 +5099,9 @@ pub unsafe extern "C" fn mnStageSel_PcArtIcon(
             );
         }
     } else {
-        let mut row_0: *mut stagelistinfo = (&raw mut mnStageSel_803F06D0
-            as *mut stagelistinfo)
-            .offset(i as isize) as *mut stagelistinfo;
+        let mut row_0: *mut StageListInfo = (&raw mut mnStageSel_803F06D0
+            as *mut StageListInfo)
+            .offset(i as isize) as *mut StageListInfo;
         *ext = (*row_0).stkind as i32;
         *type_0 = if i == NUM_STAGES_RETAIL {
             3 as i32

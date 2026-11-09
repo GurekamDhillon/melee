@@ -220,7 +220,7 @@ pub fn ftMh_Wait1_0_Anim(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = (*gobj).user_data as *mut Fighter;
         let data = &ftMh_Init_803D40D0;
-        if st::Player_GetPlayerSlotType((*fp).player_id as i32) == 0 {
+        if st::Player_GetPlayerSlotType((*fp).player_idx as i32) == 0 {
             ftMh_MS_341_80150894(gobj);
             if st::ftAnim_IsFramesRemaining(gobj) == 0 {
                 if (*fp).motion_id as i32 == ftMh_MS_Wait1_0 as i32 {
@@ -290,7 +290,7 @@ pub fn ftMh_Wait1_0_Anim(gobj: *mut HSD_GObj) {
 
                     (*fp).u.mh.x224C = tmp as u32;
                     (*fp).u.mh.x2250 = tmp2 as i32;
-                    if (*fp).x221D_b4() != 0 {
+                    if (*fp).input_disabled() != 0 {
                         tmp2 = ftMh_MS_Wait1_0;
                     }
                     match tmp2 {
@@ -598,7 +598,7 @@ pub fn ftMh_Wait1_0_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_Wait1_0_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0) {
             st::ftBossLib_8015BD20(gobj);
         }
     }

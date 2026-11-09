@@ -106,7 +106,7 @@ pub unsafe extern "C" fn itMewtwoDisable_Logic67_SpawnMewtwoDisable(
     spawnitem.vel.x = 0.0;
     spawnitem.x0_parent_gobj = fighter_gobj;
     spawnitem.x4_parent_gobj2 = spawnitem.x0_parent_gobj;
-    spawnitem.x44_flag.anon_0.set_b0(1);
+    spawnitem.x44_flag.x0.set_b0(1);
     spawnitem.x40 = 0;
 
     let item_gobj = ext::Item_80268B18(&mut spawnitem);

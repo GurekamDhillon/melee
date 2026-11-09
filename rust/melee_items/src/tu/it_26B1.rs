@@ -63,7 +63,7 @@ use std::ptr::null_mut as null_mut_itlib3;
 #[allow(unused_imports)]
 use crate::itlib3::{it_80272828};
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::CollData;
 #[allow(unused_imports)]
@@ -492,7 +492,7 @@ pub unsafe extern "C" fn it_8026B4F0(gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn it_8026B54C(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("it_8026B54C");
     let temp_item = item_of(gobj);
-    let unk_attr = (*(*temp_item).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
+    let unk_attr = (*(*temp_item).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes_legacy;
     (*unk_attr).x0_float
 }
 
@@ -500,7 +500,7 @@ pub unsafe extern "C" fn it_8026B54C(gobj: *mut HSD_GObj) -> f32 {
 pub unsafe extern "C" fn it_8026B560(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("it_8026B560");
     let temp_item = item_of(gobj);
-    let unk_attr = (*(*temp_item).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
+    let unk_attr = (*(*temp_item).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes_legacy;
     (*unk_attr).x0_float
 }
 
@@ -508,7 +508,7 @@ pub unsafe extern "C" fn it_8026B560(gobj: *mut HSD_GObj) -> f32 {
 pub unsafe extern "C" fn it_8026B574(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("it_8026B574");
     let temp_item = item_of(gobj);
-    let unk_attr = (*(*temp_item).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
+    let unk_attr = (*(*temp_item).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes_legacy;
     (*unk_attr).x4_float
 }
 
@@ -837,19 +837,19 @@ pub unsafe extern "C" fn it_8026BC90(gobj: *mut HSD_GObj, pos: *mut Vec3) {
 /// `it_8026BCF4`: clears `xDCD` bit 2.
 pub unsafe extern "C" fn it_8026BCF4(gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8026BCF4");
-    (*item_of(gobj)).xDCD_flag.anon_0.set_b2(0);
+    (*item_of(gobj)).xDCD_flag.x0.set_b2(0);
 }
 
 /// `it_8026BD0C`: sets `xDCD` bit 2.
 pub unsafe extern "C" fn it_8026BD0C(gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8026BD0C");
-    (*item_of(gobj)).xDCD_flag.anon_0.set_b2(1);
+    (*item_of(gobj)).xDCD_flag.x0.set_b2(1);
 }
 
 /// `it_8026BD24`: sets `xDD0` bit 3.
 pub unsafe extern "C" fn it_8026BD24(gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8026BD24");
-    (*item_of(gobj)).xDD0_flag.anon_0.set_b3(1);
+    (*item_of(gobj)).xDD0_flag.x0.set_b3(1);
 }
 
 /// `it_8026BD3C`: sets `xDCC` bit 3.
@@ -867,13 +867,13 @@ pub unsafe extern "C" fn it_8026BD54(gobj: *mut HSD_GObj) {
 /// `it_8026BD6C`: sets `xDCD` bit 3.
 pub unsafe extern "C" fn it_8026BD6C(gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8026BD6C");
-    (*item_of(gobj)).xDCD_flag.anon_0.set_b3(1);
+    (*item_of(gobj)).xDCD_flag.x0.set_b3(1);
 }
 
 /// `it_8026BD84`: sets `xDCD` bit 4.
 pub unsafe extern "C" fn it_8026BD84(gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8026BD84");
-    (*item_of(gobj)).xDCD_flag.anon_0.set_b4(1);
+    (*item_of(gobj)).xDCD_flag.x0.set_b4(1);
 }
 
 /// `it_8026BD9C`: sets bit 0x1A of the `0xDC8` word.
@@ -892,10 +892,10 @@ pub unsafe extern "C" fn it_8026BDB4(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_8026BDCC(gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8026BDCC");
     let ip = item_of(gobj);
-    (*ip).xDD0_flag.anon_0.set_b3(0);
+    (*ip).xDD0_flag.x0.set_b3(0);
     (*ip).xDCC_flag.set_b3(1);
-    (*ip).xDCD_flag.anon_0.set_b3(0);
-    (*ip).xDCD_flag.anon_0.set_b4(0);
+    (*ip).xDCD_flag.x0.set_b3(0);
+    (*ip).xDCD_flag.x0.set_b4(0);
     (*ip).xDC8_word.flags.set_x1A(1);
 }
 
@@ -903,10 +903,10 @@ pub unsafe extern "C" fn it_8026BDCC(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_8026BE28(gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8026BE28");
     let ip = item_of(gobj);
-    (*ip).xDD0_flag.anon_0.set_b3(1);
+    (*ip).xDD0_flag.x0.set_b3(1);
     (*ip).xDCC_flag.set_b3(0);
-    (*ip).xDCD_flag.anon_0.set_b3(1);
-    (*ip).xDCD_flag.anon_0.set_b4(1);
+    (*ip).xDCD_flag.x0.set_b3(1);
+    (*ip).xDCD_flag.x0.set_b4(1);
     (*ip).xDC8_word.flags.set_x1A(0);
 }
 
@@ -997,12 +997,12 @@ pub unsafe extern "C" fn it_8026BE84(bobOmbRain: *mut BobOmbRain) -> *mut HSD_GO
         }
     }
 
-    if !gobj.is_null() && (*bobOmbRain).x1C.anon_0.b0() != 0 {
+    if !gobj.is_null() && (*bobOmbRain).x1C.x0.b0() != 0 {
         let ip = item_of(gobj);
-        (*ip).xDD0_flag.anon_0.set_b3(1);
+        (*ip).xDD0_flag.x0.set_b3(1);
         (*ip).xDCC_flag.set_b3(0);
-        (*ip).xDCD_flag.anon_0.set_b3(1);
-        (*ip).xDCD_flag.anon_0.set_b4(1);
+        (*ip).xDCD_flag.x0.set_b3(1);
+        (*ip).xDCD_flag.x0.set_b4(1);
         (*ip).xDC8_word.flags.set_x1A(0);
     }
     gobj
@@ -1218,7 +1218,7 @@ pub unsafe extern "C" fn it_8026B7F8(fighter_gobj: *mut HSD_GObj) {
 /// `it_8026BC68`: `xDD0_flag.b0`.
 pub unsafe extern "C" fn it_8026BC68(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("it_8026BC68");
-    (*item_of(gobj)).xDD0_flag.anon_0.b0() != 0
+    (*item_of(gobj)).xDD0_flag.x0.b0() != 0
 }
 
 /// `it_8026C3FC`: sets bit 3 of the `0xDC8` word of every item gobj.
@@ -1592,25 +1592,25 @@ pub fn it_8026bbcc(ip: &Item, pos: &mut GcVec) {
 /// `it_8026BC68`: `xDD0_flag.b0`.
 pub fn it_8026bc68(ip: &Item) -> bool {
     melee_core::ct!("it_8026bc68");
-    unsafe { ip.xDD0_flag.anon_0.b0() != 0 }
+    unsafe { ip.xDD0_flag.x0.b0() != 0 }
 }
 
 /// `it_8026BCF4`: `xDCD_flag.b2 = 0`.
 pub fn it_8026bcf4(ip: &mut Item) {
     melee_core::ct!("it_8026bcf4");
-    ip.xDCD_flag.anon_0.set_b2(0);
+    ip.xDCD_flag.x0.set_b2(0);
 }
 
 /// `it_8026BD0C`: `xDCD_flag.b2 = 1`.
 pub fn it_8026bd0c(ip: &mut Item) {
     melee_core::ct!("it_8026bd0c");
-    ip.xDCD_flag.anon_0.set_b2(1);
+    ip.xDCD_flag.x0.set_b2(1);
 }
 
 /// `it_8026BD24`: `xDD0_flag.b3 = 1`.
 pub fn it_8026bd24(ip: &mut Item) {
     melee_core::ct!("it_8026bd24");
-    unsafe { ip.xDD0_flag.anon_0.set_b3(1) }
+    unsafe { ip.xDD0_flag.x0.set_b3(1) }
 }
 
 /// `it_8026BD3C`: `xDCC_flag.b3 = 1`.
@@ -1628,13 +1628,13 @@ pub fn it_8026bd54(ip: &mut Item) {
 /// `it_8026BD6C`: `xDCD_flag.b3 = 1`.
 pub fn it_8026bd6c(ip: &mut Item) {
     melee_core::ct!("it_8026bd6c");
-    ip.xDCD_flag.anon_0.set_b3(1);
+    ip.xDCD_flag.x0.set_b3(1);
 }
 
 /// `it_8026BD84`: `xDCD_flag.b4 = 1`.
 pub fn it_8026bd84(ip: &mut Item) {
     melee_core::ct!("it_8026bd84");
-    ip.xDCD_flag.anon_0.set_b4(1);
+    ip.xDCD_flag.x0.set_b4(1);
 }
 
 /// `it_8026BD9C`: `xDC8_word.flags.x1A = 1`.
@@ -1646,20 +1646,20 @@ pub fn it_8026bd9c(ip: &mut Item) {
 /// `it_8026BDCC` (five inlined setters).
 pub fn it_8026bdcc(ip: &mut Item) {
     melee_core::ct!("it_8026bdcc");
-    unsafe { ip.xDD0_flag.anon_0.set_b3(0) };
+    unsafe { ip.xDD0_flag.x0.set_b3(0) };
     ip.xDCC_flag.set_b3(1);
-    ip.xDCD_flag.anon_0.set_b3(0);
-    ip.xDCD_flag.anon_0.set_b4(0);
+    ip.xDCD_flag.x0.set_b3(0);
+    ip.xDCD_flag.x0.set_b4(0);
     ip.xDC8_word.flags.set_x1A(1);
 }
 
 /// `it_8026BE28` (the inverse of `it_8026BDCC`).
 pub fn it_8026be28(ip: &mut Item) {
     melee_core::ct!("it_8026be28");
-    unsafe { ip.xDD0_flag.anon_0.set_b3(1) };
+    unsafe { ip.xDD0_flag.x0.set_b3(1) };
     ip.xDCC_flag.set_b3(0);
-    ip.xDCD_flag.anon_0.set_b3(1);
-    ip.xDCD_flag.anon_0.set_b4(1);
+    ip.xDCD_flag.x0.set_b3(1);
+    ip.xDCD_flag.x0.set_b4(1);
     ip.xDC8_word.flags.set_x1A(0);
 }
 

@@ -159,7 +159,7 @@ use crate::layout::itTaruCann_DatAttrs;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -237,59 +237,59 @@ pub unsafe extern "C" fn it_802753DC(item_gobj: *mut HSD_GObj) {
     (*item).xC48 = 0;
     (*item).xC4C = 0;
     (*item).xC50 = 0;
-    (*item).xDCE_flag.anon_0.set_b6(0);
+    (*item).xDCE_flag.x0.set_b6(0);
 }
 
 pub unsafe extern "C" fn it_80275414(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80275414");
-    (*item(item_gobj)).xDCD_flag.anon_0.set_b7(1);
+    (*item(item_gobj)).xDCD_flag.x0.set_b7(1);
 }
 
 pub unsafe extern "C" fn it_8027542C(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8027542C");
-    (*item(item_gobj)).xDCD_flag.anon_0.set_b7(0);
+    (*item(item_gobj)).xDCD_flag.x0.set_b7(0);
 }
 
 pub unsafe extern "C" fn it_80275444(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80275444");
     let item = item(item_gobj);
-    (*item).xDCD_flag.anon_0.set_b5(1);
-    (*item).xDCD_flag.anon_0.set_b7(1);
-    (*item).xDCD_flag.anon_0.set_b6(1);
+    (*item).xDCD_flag.x0.set_b5(1);
+    (*item).xDCD_flag.x0.set_b7(1);
+    (*item).xDCD_flag.x0.set_b6(1);
 }
 
 pub unsafe extern "C" fn it_80275474(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80275474");
     let item = item(item_gobj);
-    (*item).xDCD_flag.anon_0.set_b5(0);
-    (*item).xDCD_flag.anon_0.set_b7(0);
-    (*item).xDCD_flag.anon_0.set_b6(0);
+    (*item).xDCD_flag.x0.set_b5(0);
+    (*item).xDCD_flag.x0.set_b7(0);
+    (*item).xDCD_flag.x0.set_b6(0);
 }
 
 pub unsafe extern "C" fn it_802754A4(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_802754A4");
-    (*item(item_gobj)).xDCE_flag.anon_0.set_b2(1);
+    (*item(item_gobj)).xDCE_flag.x0.set_b2(1);
 }
 
 pub unsafe extern "C" fn it_802754BC(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_802754BC");
-    (*item(item_gobj)).xDCE_flag.anon_0.set_b2(0);
+    (*item(item_gobj)).xDCE_flag.x0.set_b2(0);
 }
 
 pub unsafe extern "C" fn it_802754D4(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_802754D4");
     let item = item(item_gobj);
-    (*item).xDCE_flag.anon_0.set_b0(1);
-    (*item).xDCE_flag.anon_0.set_b2(1);
-    (*item).xDCE_flag.anon_0.set_b1(1);
+    (*item).xDCE_flag.x0.set_b0(1);
+    (*item).xDCE_flag.x0.set_b2(1);
+    (*item).xDCE_flag.x0.set_b1(1);
 }
 
 pub unsafe extern "C" fn it_80275504(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80275504");
     let item = item(item_gobj);
-    (*item).xDCE_flag.anon_0.set_b0(0);
-    (*item).xDCE_flag.anon_0.set_b2(0);
-    (*item).xDCE_flag.anon_0.set_b1(0);
+    (*item).xDCE_flag.x0.set_b0(0);
+    (*item).xDCE_flag.x0.set_b2(0);
+    (*item).xDCE_flag.x0.set_b1(0);
 }
 
 pub unsafe extern "C" fn it_80275534(item_gobj: *mut HSD_GObj, scale: f32) {
@@ -379,7 +379,7 @@ pub unsafe extern "C" fn it_80275788(item_gobj: *mut HSD_GObj) {
         let hitcapsule = &mut (*item).x5D4_hitboxes[var_ctr].hit;
         if hitcapsule.state != HitCapsule_Disabled {
             hitcapsule.state = state;
-            (*item).anon_daa.xDAA_flag.anon_0.set_b2(1);
+            (*item).xDAA.xDAA_flag.x0.set_b2(1);
         }
         var_ctr += 1;
     }
@@ -464,25 +464,25 @@ pub fn it_802753dc(ip: &mut Item) {
     ip.xC48 = 0;
     ip.xC4C = 0;
     ip.xC50 = 0;
-    unsafe { ip.xDCE_flag.anon_0.set_b6(0) }
+    unsafe { ip.xDCE_flag.x0.set_b6(0) }
 }
 
 /// `it_80275414_fp`: `xDCD_flag.b7 = 1`.
 pub fn it_80275414_fp(ip: &mut Item) {
     melee_core::ct!("it_80275414_fp");
-    ip.xDCD_flag.anon_0.set_b7(1);
+    ip.xDCD_flag.x0.set_b7(1);
 }
 
 /// `it_8027542C`: `xDCD_flag.b7 = 0`.
 pub fn it_8027542c(ip: &mut Item) {
     melee_core::ct!("it_8027542c");
-    ip.xDCD_flag.anon_0.set_b7(0);
+    ip.xDCD_flag.x0.set_b7(0);
 }
 
 /// `it_80275444_fp`: `xDCD_flag.b5 = b7 = b6 = 1`.
 pub fn it_80275444_fp(ip: &mut Item) {
     melee_core::ct!("it_80275444_fp");
-    let f = &mut ip.xDCD_flag.anon_0;
+    let f = &mut ip.xDCD_flag.x0;
     f.set_b5(1);
     f.set_b7(1);
     f.set_b6(1);
@@ -491,7 +491,7 @@ pub fn it_80275444_fp(ip: &mut Item) {
 /// `it_80275474_fp`: `xDCD_flag.b5 = b7 = b6 = 0`.
 pub fn it_80275474_fp(ip: &mut Item) {
     melee_core::ct!("it_80275474_fp");
-    let f = &mut ip.xDCD_flag.anon_0;
+    let f = &mut ip.xDCD_flag.x0;
     f.set_b5(0);
     f.set_b7(0);
     f.set_b6(0);
@@ -500,20 +500,20 @@ pub fn it_80275474_fp(ip: &mut Item) {
 /// `it_802754A4`: `xDCE_flag.b2 = 1`.
 pub fn it_802754a4(ip: &mut Item) {
     melee_core::ct!("it_802754a4");
-    unsafe { ip.xDCE_flag.anon_0.set_b2(1) }
+    unsafe { ip.xDCE_flag.x0.set_b2(1) }
 }
 
 /// `it_802754BC`: `xDCE_flag.b2 = 0`.
 pub fn it_802754bc(ip: &mut Item) {
     melee_core::ct!("it_802754bc");
-    unsafe { ip.xDCE_flag.anon_0.set_b2(0) }
+    unsafe { ip.xDCE_flag.x0.set_b2(0) }
 }
 
 /// `it_802754D4`: `xDCE_flag.b0 = b2 = b1 = 1`.
 pub fn it_802754d4(ip: &mut Item) {
     melee_core::ct!("it_802754d4");
     unsafe {
-        let f = &mut ip.xDCE_flag.anon_0;
+        let f = &mut ip.xDCE_flag.x0;
         f.set_b0(1);
         f.set_b2(1);
         f.set_b1(1);
@@ -524,7 +524,7 @@ pub fn it_802754d4(ip: &mut Item) {
 pub fn it_80275504_fp(ip: &mut Item) {
     melee_core::ct!("it_80275504_fp");
     unsafe {
-        let f = &mut ip.xDCE_flag.anon_0;
+        let f = &mut ip.xDCE_flag.x0;
         f.set_b0(0);
         f.set_b2(0);
         f.set_b1(0);
@@ -585,7 +585,7 @@ pub fn it_80275788_fp(ip: &mut Item) {
     for k in 0..4 {
         if ip.x5D4_hitboxes[k].hit.state != HitCapsule_Disabled {
             ip.x5D4_hitboxes[k].hit.state = HitCapsule_Unk4;
-            unsafe { ip.anon_daa.xDAA_flag.anon_0.set_b2(1) };
+            unsafe { ip.xDAA.xDAA_flag.x0.set_b2(1) };
         }
     }
 }

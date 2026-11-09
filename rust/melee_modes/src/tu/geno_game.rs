@@ -421,15 +421,15 @@ pub const GENO_SF_SCRIPT: u32 = 1 as u32;
 pub const GENO_PLAYERS: i32 = 6 as i32;
 
 pub const GENO_NHOOKS: i32 = (::core::mem::size_of::<
-    [Anon_anon_333; 7],
+    [Anon_anon_335; 7],
 >() as usize)
-    .wrapping_div(::core::mem::size_of::<Anon_anon_333>() as usize)
+    .wrapping_div(::core::mem::size_of::<Anon_anon_335>() as usize)
     as i32;
 
 pub const GENO_NATTRS: i32 = (::core::mem::size_of::<
-    [Anon_anon_766; 76],
+    [Anon_anon_768; 76],
 >() as usize)
-    .wrapping_div(::core::mem::size_of::<Anon_anon_766>() as usize)
+    .wrapping_div(::core::mem::size_of::<Anon_anon_768>() as usize)
     as i32;
 
 pub const GENO_PROFILE_STORAGE_BYTES: u32 = (2 as u32)
@@ -465,9 +465,9 @@ pub const EF_MEX_MDL_START: i32 = 5000 as i32;
 pub const EF_MEX_END: i32 = 9000 as i32;
 
 pub const GENO_NSF: i32 = (::core::mem::size_of::<
-    [Anon_anon_2375; 42],
+    [Anon_anon_2377; 42],
 >() as usize)
-    .wrapping_div(::core::mem::size_of::<Anon_anon_2375>() as usize)
+    .wrapping_div(::core::mem::size_of::<Anon_anon_2377>() as usize)
     as i32;
 
 pub const GENO_ITEM_KIND_BASE: i32 = GENO_ART_KIND_END;
@@ -520,9 +520,9 @@ pub static mut Geno_StateBlock: [[GenoState; 2]; 6] = unsafe { core::mem::zeroed
 
 pub static mut Geno_LuaBlock: [[GenoLuaBlock; 2]; 6] = unsafe { core::mem::zeroed() };
 
-pub static mut geno_hooks: [Anon_anon_333; 7] = unsafe {
+pub static mut geno_hooks: [Anon_anon_335; 7] = unsafe {
     [
-        Anon_anon_333 {
+        Anon_anon_335 {
             id: GENO_HOOK_LOG as i32,
             name: b"geno.log\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -535,7 +535,7 @@ pub static mut geno_hooks: [Anon_anon_333; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_333 {
+        Anon_anon_335 {
             id: GENO_HOOK_JUMPS_REFILL as i32,
             name: b"geno.jumps.refill\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -548,7 +548,7 @@ pub static mut geno_hooks: [Anon_anon_333; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_333 {
+        Anon_anon_335 {
             id: GENO_HOOK_JUMPS_TO_VAR as i32,
             name: b"geno.jumps.to_var\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -561,7 +561,7 @@ pub static mut geno_hooks: [Anon_anon_333; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_333 {
+        Anon_anon_335 {
             id: GENO_HOOK_COUNT_FRAMES as i32,
             name: b"geno.count_frames\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -574,7 +574,7 @@ pub static mut geno_hooks: [Anon_anon_333; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_333 {
+        Anon_anon_335 {
             id: GENO_HOOK_ARTICLE_SPAWN as i32,
             name: b"geno.article.spawn\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -587,7 +587,7 @@ pub static mut geno_hooks: [Anon_anon_333; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_333 {
+        Anon_anon_335 {
             id: GENO_HOOK_LOCKON as i32,
             name: b"geno.lockon\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -600,7 +600,7 @@ pub static mut geno_hooks: [Anon_anon_333; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_333 {
+        Anon_anon_335 {
             id: GENO_HOOK_AIM_STICK as i32,
             name: b"geno.aim_stick\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -622,396 +622,396 @@ pub static mut Geno_ScriptPoolGen: i32 = unsafe { core::mem::zeroed() };
 
 pub static mut Geno_OverlayOrig: [*mut CmdUnion; 2560] = unsafe { core::mem::zeroed() };
 
-pub static mut geno_attrs: [Anon_anon_766; 76] = [
-    Anon_anon_766 {
+pub static mut geno_attrs: [Anon_anon_768; 76] = [
+    Anon_anon_768 {
         name: b"walk_accel_mul\0" as *const u8 as *const i8,
         offset: 0 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"walk_accel_base\0" as *const u8 as *const i8,
         offset: 4 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"walk_max_vel\0" as *const u8 as *const i8,
         offset: 8 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"slow_walk_max\0" as *const u8 as *const i8,
         offset: 12 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"mid_walk_point\0" as *const u8 as *const i8,
         offset: 16 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"fast_walk_min\0" as *const u8 as *const i8,
         offset: 20 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"ground_friction\0" as *const u8 as *const i8,
         offset: 24 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"dash_initial_velocity\0" as *const u8 as *const i8,
         offset: 28 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"dash_accel_mul\0" as *const u8 as *const i8,
         offset: 32 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"dash_accel_base\0" as *const u8 as *const i8,
         offset: 36 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"dash_max_velocity\0" as *const u8 as *const i8,
         offset: 40 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"run_animation_scaling\0" as *const u8 as *const i8,
         offset: 44 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"max_run_brake_frames\0" as *const u8 as *const i8,
         offset: 48 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"ground_max_horizontal_velocity\0" as *const u8
             as *const i8,
         offset: 52 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"jump_startup_time\0" as *const u8 as *const i8,
         offset: 56 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"jump_h_initial_velocity\0" as *const u8 as *const i8,
         offset: 60 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"jump_v_initial_velocity\0" as *const u8 as *const i8,
         offset: 64 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"ground_to_air_jump_momentum_multiplier\0" as *const u8
             as *const i8,
         offset: 68 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"jump_h_max_velocity\0" as *const u8 as *const i8,
         offset: 72 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"hop_v_initial_velocity\0" as *const u8 as *const i8,
         offset: 76 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"air_jump_v_multiplier\0" as *const u8 as *const i8,
         offset: 80 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"air_jump_h_multiplier\0" as *const u8 as *const i8,
         offset: 84 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"max_jumps\0" as *const u8 as *const i8,
         offset: 88 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"gravity\0" as *const u8 as *const i8,
         offset: 92 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"terminal_velocity\0" as *const u8 as *const i8,
         offset: 96 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"air_drift_stick_mul\0" as *const u8 as *const i8,
         offset: 100 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"aerial_drift_base\0" as *const u8 as *const i8,
         offset: 104 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"air_drift_max\0" as *const u8 as *const i8,
         offset: 108 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"aerial_friction\0" as *const u8 as *const i8,
         offset: 112 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"fast_fall_velocity\0" as *const u8 as *const i8,
         offset: 116 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"air_max_horizontal_velocity\0" as *const u8
             as *const i8,
         offset: 120 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"jab_2_input_window\0" as *const u8 as *const i8,
         offset: 124 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"jab_3_input_window\0" as *const u8 as *const i8,
         offset: 128 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"standing_turn_frames\0" as *const u8 as *const i8,
         offset: 132 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"weight\0" as *const u8 as *const i8,
         offset: 136 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"model_scaling\0" as *const u8 as *const i8,
         offset: 140 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"initial_shield_size\0" as *const u8 as *const i8,
         offset: 144 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"shield_break_initial_velocity\0" as *const u8
             as *const i8,
         offset: 148 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"rapid_jab_window\0" as *const u8 as *const i8,
         offset: 152 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"clank_animation_length\0" as *const u8 as *const i8,
         offset: 156 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"hit_spark_variant\0" as *const u8 as *const i8,
         offset: 160 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"ledge_jump_horizontal_velocity\0" as *const u8
             as *const i8,
         offset: 168 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"ledge_jump_vertical_velocity\0" as *const u8
             as *const i8,
         offset: 172 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"item_throw_velocity_multiplier\0" as *const u8
             as *const i8,
         offset: 176 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"heavy_throw_velocity_multiplier\0" as *const u8
             as *const i8,
         offset: 180 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"specials_ground_speed_retention\0" as *const u8
             as *const i8,
         offset: 184 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"kirby_b_star_damage\0" as *const u8 as *const i8,
         offset: 224 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"normal_landing_lag\0" as *const u8 as *const i8,
         offset: 228 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"landingairn_lag\0" as *const u8 as *const i8,
         offset: 232 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"landingairf_lag\0" as *const u8 as *const i8,
         offset: 236 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"landingairb_lag\0" as *const u8 as *const i8,
         offset: 240 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"landingairhi_lag\0" as *const u8 as *const i8,
         offset: 244 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"landingairlw_lag\0" as *const u8 as *const i8,
         offset: 248 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"name_tag_height\0" as *const u8 as *const i8,
         offset: 252 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"passivewall_vel_x\0" as *const u8 as *const i8,
         offset: 256 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"wall_jump_horizontal_velocity\0" as *const u8
             as *const i8,
         offset: 260 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"wall_jump_vertical_velocity\0" as *const u8
             as *const i8,
         offset: 264 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"passiveceil_vel_x\0" as *const u8 as *const i8,
         offset: 268 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"trophy_scale\0" as *const u8 as *const i8,
         offset: 272 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"screw_attack_launch_velocity\0" as *const u8
             as *const i8,
         offset: 320 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"wall_jump_min_approach_speed\0" as *const u8
             as *const i8,
         offset: 328 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"damageice_ice_size\0" as *const u8 as *const i8,
         offset: 332 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"damageicejump_vel_y\0" as *const u8 as *const i8,
         offset: 344 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"damageicejump_vel_x_mult\0" as *const u8 as *const i8,
         offset: 348 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"respawn_platform_scale\0" as *const u8 as *const i8,
         offset: 352 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"warp_star_hitbox_scale\0" as *const u8 as *const i8,
         offset: 356 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"camera_zoom_target_bone\0" as *const u8 as *const i8,
         offset: 364 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"unused_0\0" as *const u8 as *const i8,
         offset: 164 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"xDC\0" as *const u8 as *const i8,
         offset: 220 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"x12C\0" as *const u8 as *const i8,
         offset: 300 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"x13C\0" as *const u8 as *const i8,
         offset: 316 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"x144\0" as *const u8 as *const i8,
         offset: 324 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"x150_damageice_unk\0" as *const u8 as *const i8,
         offset: 336 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"x154_damageice_unk\0" as *const u8 as *const i8,
         offset: 340 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"x168\0" as *const u8 as *const i8,
         offset: 360 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_766 {
+    Anon_anon_768 {
         name: b"x17C\0" as *const u8 as *const i8,
         offset: 380 as u64 as i32,
         is_int: 0 as i32,
@@ -2320,213 +2320,213 @@ pub static mut geno_art_logic: ItemLogicTable = unsafe {
     }
 };
 
-pub static mut geno_sfields: [Anon_anon_2375; 42] = unsafe { [
-        Anon_anon_2375 {
+pub static mut geno_sfields: [Anon_anon_2377; 42] = unsafe { [
+        Anon_anon_2377 {
             name: b"profile\0" as *const u8 as *const i8,
             off: 0 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"kind\0" as *const u8 as *const i8,
             off: 4 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"flags\0" as *const u8 as *const i8,
             off: 8 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"resets\0" as *const u8 as *const i8,
             off: 12 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"la_i\0" as *const u8 as *const i8,
             off: 16 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 64]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"ra_i\0" as *const u8 as *const i8,
             off: 272 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 64]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"la_f\0" as *const u8 as *const i8,
             off: 528 as u64 as i32,
             size: ::core::mem::size_of::<[f32; 64]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"ra_f\0" as *const u8 as *const i8,
             off: 784 as u64 as i32,
             size: ::core::mem::size_of::<[f32; 64]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"hook_calls\0" as *const u8 as *const i8,
             off: 1040 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"extra_jumps\0" as *const u8 as *const i8,
             off: 1044 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"action_time\0" as *const u8 as *const i8,
             off: 1048 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"nchecks\0" as *const u8 as *const i8,
             off: 1052 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"last_check\0" as *const u8 as *const i8,
             off: 1056 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"checks\0" as *const u8 as *const i8,
             off: 1060 as u64 as i32,
             size: ::core::mem::size_of::<[GenoCheck; 8]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"rehit_period\0" as *const u8 as *const i8,
             off: 1444 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 4]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"rehit_count\0" as *const u8 as *const i8,
             off: 1460 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 4]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"link_mode\0" as *const u8 as *const i8,
             off: 1476 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 4]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"in_coll\0" as *const u8 as *const i8,
             off: 1540 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"edge_pending\0" as *const u8 as *const i8,
             off: 1544 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"edge_target\0" as *const u8 as *const i8,
             off: 1548 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"changes\0" as *const u8 as *const i8,
             off: 1552 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"hold_motion\0" as *const u8 as *const i8,
             off: 1556 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"hold_frames\0" as *const u8 as *const i8,
             off: 1560 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"move_i\0" as *const u8 as *const i8,
             off: 1564 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 8]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"move_f\0" as *const u8 as *const i8,
             off: 1596 as u64 as i32,
             size: ::core::mem::size_of::<[f32; 8]>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"state_entries\0" as *const u8 as *const i8,
             off: 1628 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"enter_from\0" as *const u8 as *const i8,
             off: 1632 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"hidden\0" as *const u8 as *const i8,
             off: 1636 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"ledge\0" as *const u8 as *const i8,
             off: 1668 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"motion_started\0" as *const u8 as *const i8,
             off: 1672 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"motion_vy\0" as *const u8 as *const i8,
             off: 1676 as u64 as i32,
             size: ::core::mem::size_of::<f32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"motion_land\0" as *const u8 as *const i8,
             off: 1680 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"motion_facing\0" as *const u8 as *const i8,
             off: 1684 as u64 as i32,
             size: ::core::mem::size_of::<f32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"motion_gravity\0" as *const u8 as *const i8,
             off: 1688 as u64 as i32,
             size: ::core::mem::size_of::<f32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"enter_keep\0" as *const u8 as *const i8,
             off: 1692 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"hit_count\0" as *const u8 as *const i8,
             off: 1640 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"hit_damage\0" as *const u8 as *const i8,
             off: 1644 as u64 as i32,
             size: ::core::mem::size_of::<f32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"hit_port\0" as *const u8 as *const i8,
             off: 1648 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"hit_counter\0" as *const u8 as *const i8,
             off: 1652 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"counters\0" as *const u8 as *const i8,
             off: 1656 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"art_spawned\0" as *const u8 as *const i8,
             off: 1660 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2375 {
+        Anon_anon_2377 {
             name: b"fall_ledge\0" as *const u8 as *const i8,
             off: 1664 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
@@ -2858,10 +2858,10 @@ pub unsafe extern "C" fn geno_cmd_words(mut w0: u32) -> i32 {
 
 pub unsafe extern "C" fn geno_state(mut fp: *mut Fighter) -> *mut GenoState {
     melee_core::ct!("geno_state");
-    let mut p: i32 = if ((*fp).player_id as i32)
+    let mut p: i32 = if ((*fp).player_idx as i32)
         < GENO_PLAYERS
     {
-        (*fp).player_id as i32
+        (*fp).player_idx as i32
     } else {
         GENO_PLAYERS - 1 as i32
     };
@@ -2904,7 +2904,7 @@ pub unsafe extern "C" fn hook_log(
     Geno_Event(
         2 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         arg as i32,
         (*st).la_i[0 as i32 as usize],
     );
@@ -3091,7 +3091,7 @@ pub unsafe extern "C" fn hook_aim_stick(
     Geno_Event(
         42 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         used,
         melee_core::ppc::fctiwz_f32(atan2f(
             (*st).move_f[1 as i32 as usize],
@@ -3124,8 +3124,8 @@ pub unsafe extern "C" fn hook_lockon(
             let mut dy: f32 = 0.;
             let mut d: f32 = 0.;
             if !(o.is_null() || cur == gobj as *mut HSD_GObj
-                || (*o).player_id as i32
-                    == (*fp).player_id as i32)
+                || (*o).player_idx as i32
+                    == (*fp).player_idx as i32)
             {
                 dx = (*o).cur_pos.x - (*fp).cur_pos.x;
                 dy = (*o).cur_pos.y - (*fp).cur_pos.y;
@@ -3165,7 +3165,7 @@ pub unsafe extern "C" fn hook_lockon(
     Geno_Event(
         40 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         has,
         melee_core::ppc::fctiwz_f32(atan2f(
             (*st).move_f[1 as i32 as usize],
@@ -3253,7 +3253,7 @@ pub unsafe extern "C" fn GenoGame_CallHook(
     Geno_Event(
         4 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         id,
         0 as i32,
     );
@@ -3407,7 +3407,7 @@ pub unsafe extern "C" fn geno_install_overlays(
                 Geno_Event(
                     13 as i32,
                     (*fp).kind as i32,
-                    (*fp).player_id as i32,
+                    (*fp).player_idx as i32,
                     anim,
                     slot,
                 );
@@ -3564,7 +3564,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
     ];
     let mut pc: *const u32 = script as *const u32;
     let mut ret: [*const u32; 8] = [::core::ptr::null::<u32>(); 8];
-    let mut pending: [Anon_anon_545; 32] = unsafe { core::mem::zeroed() };
+    let mut pending: [Anon_anon_547; 32] = unsafe { core::mem::zeroed() };
     let mut nret: i32 = 0 as i32;
     let mut npending: i32 = 0 as i32;
     let mut steps: i32 = 0;
@@ -3832,7 +3832,7 @@ pub unsafe extern "C" fn Geno_FighterReset(mut fp: *mut Fighter) {
         Geno_Event(
             0 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             (*st).profile as i32,
             0 as i32,
         );
@@ -3890,7 +3890,7 @@ pub unsafe extern "C" fn Geno_OnActionChange(mut gobj: *mut Fighter_GObj) {
     if ProfActive() != 0 {
         ProfBegin(
             GW_PROF_GENO_HOOK as i32,
-            ((*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).player_id
+            ((*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).player_idx
                 as i32) << 16 as i32
                 | (*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).kind
                     as i32,
@@ -3942,7 +3942,7 @@ pub unsafe extern "C" fn Geno_OnFrame(mut gobj: *mut Fighter_GObj) {
     if ProfActive() != 0 {
         ProfBegin(
             GW_PROF_GENO_HOOK as i32,
-            ((*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).player_id
+            ((*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).player_idx
                 as i32) << 16 as i32
                 | (*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).kind
                     as i32,
@@ -4034,7 +4034,7 @@ pub unsafe extern "C" fn geno_apply_special(
     Geno_Event(
         12 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         n,
         Geno_SpecialIndex(p, 0 as i32),
     );
@@ -4071,7 +4071,7 @@ pub unsafe extern "C" fn Geno_ApplyAttrs(mut fp: *mut Fighter) {
     Geno_Event(
         5 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         n,
         (*fp).co_attrs.max_jumps,
     );
@@ -4131,7 +4131,7 @@ pub unsafe extern "C" fn Geno_MultiJump(
         Geno_Event(
             1 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             n + 1 as i32,
             (*fp).co_attrs.max_jumps - 1 as i32,
         );
@@ -4139,7 +4139,7 @@ pub unsafe extern "C" fn Geno_MultiJump(
         Geno_Event(
             6 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             n + 1 as i32,
             (*fp).co_attrs.max_jumps - 1 as i32,
         );
@@ -4552,7 +4552,7 @@ pub unsafe extern "C" fn geno_val_get(
             r.i = (*st).hidden;
         }
         50 => {
-            r.f = (if (*fp).anon_594.anon_0.x594_b0() as i32
+            r.f = (if (*fp).x594.x0.x594_b0() as i32
                 != 0
             {
                 (*fp).x6A4_transNOffset.z as f32
@@ -4561,7 +4561,7 @@ pub unsafe extern "C" fn geno_val_get(
             }) as f32;
         }
         51 => {
-            r.f = (if (*fp).anon_594.anon_0.x594_b0() as i32
+            r.f = (if (*fp).x594.x0.x594_b0() as i32
                 != 0
             {
                 (*fp).x6A4_transNOffset.y as f32
@@ -4757,7 +4757,7 @@ pub unsafe extern "C" fn geno_val_put(
             Geno_Event(
                 14 as i32,
                 (*fp).kind as i32,
-                (*fp).player_id as i32,
+                (*fp).player_idx as i32,
                 id as i32,
                 0 as i32,
             );
@@ -4856,7 +4856,7 @@ pub unsafe extern "C" fn geno_do_change(
             Geno_Event(
                 8 as i32,
                 (*fp).kind as i32,
-                (*fp).player_id as i32,
+                (*fp).player_idx as i32,
                 s,
                 0 as i32,
             );
@@ -4877,7 +4877,7 @@ pub unsafe extern "C" fn geno_do_change(
     Geno_Event(
         7 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         (*fp).motion_id,
         target as i32,
     );
@@ -5100,7 +5100,7 @@ pub unsafe extern "C" fn geno_register_check(
         Geno_Event(
             15 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             GENO_MAX_CHECKS,
             0 as i32,
         );
@@ -5197,7 +5197,7 @@ pub unsafe extern "C" fn geno_rehit_tick(mut fp: *mut Fighter, mut st: *mut Geno
             Geno_Event(
                 10 as i32,
                 (*fp).kind as i32,
-                (*fp).player_id as i32,
+                (*fp).player_idx as i32,
                 <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, (i) as i64),
                 (*st).rehit_period[i as usize],
             );
@@ -5238,7 +5238,7 @@ pub unsafe extern "C" fn Geno_PreAnim(
                 Geno_Event(
                     8 as i32,
                     (*fp).kind as i32,
-                    (*fp).player_id as i32,
+                    (*fp).player_idx as i32,
                     ((*st).checks[i as usize].target & 0xffff as u32)
                         as i32,
                     0 as i32,
@@ -5328,7 +5328,7 @@ pub unsafe extern "C" fn Geno_GroundEdge(
             Geno_Event(
                 9 as i32,
                 (*fp).kind as i32,
-                (*fp).player_id as i32,
+                (*fp).player_idx as i32,
                 (*fp).motion_id,
                 (*k).target as i32,
             );
@@ -5354,7 +5354,7 @@ pub unsafe extern "C" fn Geno_GroundEdge(
                 Geno_Event(
                     9 as i32,
                     (*fp).kind as i32,
-                    (*fp).player_id as i32,
+                    (*fp).player_idx as i32,
                     (*fp).motion_id,
                     (*st).edge_target as i32,
                 );
@@ -5436,7 +5436,7 @@ pub unsafe extern "C" fn Geno_Autolink(
     Geno_Event(
         11 as i32,
         (*attacker).kind as i32,
-        (*attacker).player_id as i32,
+        (*attacker).player_idx as i32,
         melee_core::ppc::fctiwz_f32(*angle),
         melee_core::ppc::fctiwz_f32(*kb),
     );
@@ -5452,7 +5452,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
     if ProfActive() != 0 {
         ProfBegin(
             GW_PROF_GENO_HOOK as i32,
-            ((*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).player_id
+            ((*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).player_idx
                 as i32) << 16 as i32
                 | (*(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter)).kind
                     as i32,
@@ -5799,7 +5799,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
             Geno_Event(
                 3 as i32,
                 (*fp).kind as i32,
-                (*fp).player_id as i32,
+                (*fp).player_idx as i32,
                 sub,
                 0 as i32,
             );
@@ -5851,9 +5851,9 @@ pub unsafe extern "C" fn Geno_HitFlags(
     s = geno_state(vic);
 
     diag_geno_stun(
-        -(1000 as i32) - (*vic).player_id as i32,
+        -(1000 as i32) - (*vic).player_idx as i32,
         f as i32,
-        (*atk).player_id as i32,
+        (*atk).player_idx as i32,
     );
     if (*s).react_frame != geno_stun_frame() {
         (*s).react_flags = 0 as i32 as i32;
@@ -6440,7 +6440,7 @@ pub unsafe extern "C" fn geno_build_rows(mut fp: *mut Fighter, mut p: i32) {
         }
         if Geno_StateMoveId(p, s) >= 0 as i32 {
             (*row)
-                .anon_8.anon_0
+                .x8.x0
                 .set_move_id(Geno_StateMoveId(p, s) as u8 as u8);
         }
         slot = 0 as i32;
@@ -6490,7 +6490,7 @@ pub unsafe extern "C" fn geno_build_rows(mut fp: *mut Fighter, mut p: i32) {
         Geno_Event(
             20 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             s,
             (*row).anim_id,
         );
@@ -6524,7 +6524,7 @@ pub unsafe extern "C" fn Geno_MotionRow(
     Geno_Event(
         8 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         s,
         0 as i32,
     );
@@ -6574,7 +6574,7 @@ pub unsafe extern "C" fn geno_enter_state(
         Geno_Event(
             8 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             s,
             0 as i32,
         );
@@ -6588,7 +6588,7 @@ pub unsafe extern "C" fn geno_enter_state(
     Geno_Event(
         16 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         s,
         from,
     );
@@ -6900,7 +6900,7 @@ pub unsafe extern "C" fn geno_become_ground(mut gobj: *mut Fighter_GObj) {
         as *mut Fighter;
     let mut vx: f32 = (*fp).self_vel.x;
     ftCommon_8007D7FC(fp);
-    if (*fp).anon_594.anon_0.x594_b0() != 0 {
+    if (*fp).x594.x0.x594_b0() != 0 {
         (*fp).self_vel.x = vx;
         (*fp).gr_vel = vx as f32;
     }
@@ -6973,7 +6973,7 @@ pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
         }
         lr = (if (*st).motion_facing < 0.0f32 { -1.0f32 } else { 1.0f32 }) as f32;
     }
-    if (*fp).anon_594.anon_0.x594_b0() != 0 {
+    if (*fp).x594.x0.x594_b0() != 0 {
         fwd = (*fp).x6A4_transNOffset.z;
         up = (*fp).x6A4_transNOffset.y;
         if (*st).motion_started == 0
@@ -6986,7 +6986,7 @@ pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
     (*st).motion_started = 1 as i32 as i32;
     GenoBhv_AnimMotionFrameDelta(fwd, up, lr, &raw mut dx, &raw mut dy);
     if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        if (*fp).anon_594.anon_0.x594_b0() == 0 {
+        if (*fp).x594.x0.x594_b0() == 0 {
             ft_80084F3C(gobj);
             return;
         }
@@ -6994,7 +6994,7 @@ pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
             Geno_Event(
                 23 as i32,
                 (*fp).kind as i32,
-                (*fp).player_id as i32,
+                (*fp).player_idx as i32,
                 s,
                 (*st).action_time as i32,
             );
@@ -7011,7 +7011,7 @@ pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
             (*st).motion_vy = -(*fp).co_attrs.terminal_velocity as f32;
         }
     }
-    if (*fp).anon_594.anon_0.x594_b0() == 0 && g == 0.0f32 {
+    if (*fp).x594.x0.x594_b0() == 0 && g == 0.0f32 {
         (*fp).self_vel.x = 0.0f32 as f32;
         (*fp).self_vel.y = 0.0f32 as f32;
         return;
@@ -7029,7 +7029,7 @@ pub unsafe extern "C" fn geno_motion_land(mut gobj: *mut Fighter_GObj) {
     Geno_Event(
         24 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         s,
         if s >= 0 as i32 {
             geno_land_of(st, s) as i32
@@ -7058,7 +7058,7 @@ pub unsafe extern "C" fn geno_coll_air_ledge(
     (*coll).cur_pos = (*fp).cur_pos;
     mpColl_LedgeLevelOK = (both != 0 && (*geno_state(fp)).fall_ledge != 0)
         as i32;
-    if (*fp).x2064_ledgeCooldown != 0 || (*fp).x2224_b2() as i32 != 0 {
+    if (*fp).x2064_ledgeCooldown != 0 || (*fp).stamina_dead() as i32 != 0 {
         touched = mpColl_80047AC8(
             coll,
             Some(
@@ -7106,7 +7106,7 @@ pub unsafe extern "C" fn geno_coll_air_ledge(
         Geno_Event(
             25 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             (*fp).motion_id - GENO_MOTION_BASE,
             if both != 0 { 2 as i32 } else { 1 as i32 },
         );
@@ -9631,10 +9631,10 @@ pub unsafe extern "C" fn geno_lua_bitsf(mut u: u32) -> f32 {
 
 pub unsafe extern "C" fn geno_lua_block(mut fp: *mut Fighter) -> *mut GenoLuaBlock {
     melee_core::ct!("geno_lua_block");
-    let mut p: i32 = if ((*fp).player_id as i32)
+    let mut p: i32 = if ((*fp).player_idx as i32)
         < GENO_PLAYERS
     {
-        (*fp).player_id as i32
+        (*fp).player_idx as i32
     } else {
         GENO_PLAYERS - 1 as i32
     };
@@ -9669,7 +9669,7 @@ pub unsafe extern "C" fn GenoGame_LuaInfo(
     cur = *HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
     while !cur.is_null() {
         let mut fp: *mut Fighter = HSD_GObjGetUserData(cur) as *mut Fighter;
-        if (*fp).player_id as i32 == port && (*fp).is_sub_fighter() == 0 {
+        if (*fp).player_idx as i32 == port && (*fp).is_sub_fighter() == 0 {
             let mut st: *mut GenoState = geno_state(fp);
             let mut lb: *mut GenoLuaBlock = geno_lua_block(fp);
             g = cur as *mut Fighter_GObj;
@@ -9724,7 +9724,7 @@ pub unsafe extern "C" fn geno_lua_hit_from(
     cur = *HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
     while !cur.is_null() {
         let mut ap: *mut Fighter = HSD_GObjGetUserData(cur) as *mut Fighter;
-        if ap != fp && (*ap).player_id as i32 == (*st).hit_port
+        if ap != fp && (*ap).player_idx as i32 == (*st).hit_port
             && (*ap).is_sub_fighter() == 0
         {
             let mut dx: f32 = ((*ap).cur_pos.x - (*fp).cur_pos.x)
@@ -10181,7 +10181,7 @@ pub unsafe extern "C" fn Geno_SpecialEnter(
     Geno_Event(
         18 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         which,
         t as i32,
     );
@@ -10310,7 +10310,7 @@ pub unsafe extern "C" fn GenoGame_DefineApplyRows(
         }
         value = Geno_DefineOverrideField(kind, i, 4 as i32);
         if value >= 0 as i32 {
-            (*row).anon_8.anon_0.set_move_id(value as u8 as u8);
+            (*row).x8.x0.set_move_id(value as u8 as u8);
         }
         field = 5 as i32;
         while field < 9 as i32 {
@@ -10366,7 +10366,7 @@ pub unsafe extern "C" fn Item_InitSpawnCommonFields(
     (*spawn).vel.x = (*spawn).vel.y;
     (*spawn).x0_parent_gobj = parent;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(initial_collision as u8 as u8);
+    (*spawn).x44_flag.x0.set_b0(initial_collision as u8 as u8);
     (*spawn).x40 = 0 as i32 as i32;
 }
 
@@ -10562,7 +10562,7 @@ pub unsafe extern "C" fn geno_art_build(
         ::core::mem::size_of::<Article>() as i32,
     );
     (*d).x0_common_attr = at;
-    (*d).x4_specialAttributes = ::core::ptr::null_mut::<c_void>();
+    (*d).x4_specialAttributes = ::core::ptr::null_mut::<ItemSpecialAttributes>();
     (*d).x8_hurtbones = ::core::ptr::null_mut::<ItHurtBoneList>();
     (*d).xC_itemStates = &raw mut Geno_ArtStates;
     (*d).x10_modelDesc = m;
@@ -10607,7 +10607,7 @@ pub unsafe extern "C" fn geno_art_hide_model(mut j: *mut HSD_JObj) {
 
 pub unsafe extern "C" fn geno_fx_render(
     mut gobj: *mut HSD_GObj,
-    mut code: i32,
+    mut code: isize,
 ) {
     melee_core::ct!("geno_fx_render");
     let mut cobj: *mut HSD_CObj = ::core::ptr::null_mut::<HSD_CObj>();
@@ -10623,7 +10623,7 @@ pub unsafe extern "C" fn geno_fx_render(
     }
     diag_fx_cam(
         cur as i32,
-        code,
+        code as i32,
         mc as i32,
         e.x as f32,
         e.y as f32,
@@ -10632,7 +10632,7 @@ pub unsafe extern "C" fn geno_fx_render(
         m.y as f32,
         m.z as f32,
     );
-    if code != 2 as i32 {
+    if code != 2 as isize {
         return;
     }
     cobj = HSD_CObjGetCurrent();
@@ -10789,7 +10789,7 @@ pub unsafe extern "C" fn Geno_FxFramePost(mut frame: i32) {
                 geno_fx_gobj,
                 Some(
                     geno_fx_render
-                        as unsafe extern "C" fn(*mut HSD_GObj, i32) -> (),
+                        as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
                 ),
                 7 as u8,
                 255 as u32,
@@ -10931,7 +10931,7 @@ pub unsafe extern "C" fn geno_art_hitbox_on(
         (*hit).x4 = 0 as u32;
         (*hit).state = HitCapsule_Enabled;
         (*ip).xDC8_word.flags.set_x16(1 as u32 as u32);
-        (*ip).anon_daa.xDAA_flag.anon_0.set_b2(0 as u8 as u8);
+        (*ip).xDAA.xDAA_flag.x0.set_b2(0 as u8 as u8);
         it_8026FCF8(ip, hit);
     }
     (*hit).jobj = (*gobj).hsd_obj as *mut HSD_JObj;
@@ -11173,8 +11173,8 @@ pub unsafe extern "C" fn geno_art_target(
         let mut d: f32 = 0.;
         if !(fp.is_null() || cur == (*ip).owner
             || !(*ip).owner.is_null()
-                && (*fp).player_id as i32
-                    == (*(HSD_GObjGetUserData((*ip).owner) as *mut Fighter)).player_id
+                && (*fp).player_idx as i32
+                    == (*(HSD_GObjGetUserData((*ip).owner) as *mut Fighter)).player_idx
                         as i32)
         {
             dx = (*fp).cur_pos.x - (*ip).pos.x;
@@ -11245,7 +11245,7 @@ pub unsafe extern "C" fn geno_art_gone(
             -(1 as i32)
         },
         if !o.is_null() {
-            (*(HSD_GObjGetUserData(o) as *mut Fighter)).player_id as i32
+            (*(HSD_GObjGetUserData(o) as *mut Fighter)).player_idx as i32
         } else {
             -(1 as i32)
         },
@@ -11710,7 +11710,7 @@ pub unsafe extern "C" fn geno_art_reflected(mut gobj: *mut Item_GObj) -> i32 {
         Fx_SetOwnerPort(
             HSD_GObjGetHSDObj(gobj as *mut HSD_GObj) as *mut HSD_JObj
                 as i32,
-            (*(HSD_GObjGetUserData((*ip).owner) as *mut Fighter)).player_id
+            (*(HSD_GObjGetUserData((*ip).owner) as *mut Fighter)).player_idx
                 as i32 + 1 as i32,
         );
     }
@@ -11770,7 +11770,7 @@ pub unsafe extern "C" fn geno_art_spawn(
         Geno_Event(
             30 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             a,
             0 as i32,
         );
@@ -11781,7 +11781,7 @@ pub unsafe extern "C" fn geno_art_spawn(
         Geno_Event(
             30 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             a,
             1 as i32,
         );
@@ -11831,7 +11831,7 @@ pub unsafe extern "C" fn geno_art_spawn(
         Geno_Event(
             30 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             a,
             2 as i32,
         );
@@ -11899,7 +11899,7 @@ pub unsafe extern "C" fn geno_art_spawn(
             Fx_SetOwner(
                 h,
                 2 as i32,
-                (*fp).player_id as i32 + 1 as i32,
+                (*fp).player_idx as i32 + 1 as i32,
             );
         }
         if Geno_ArticleParam(p, a, GENO_AP_SHOW_MODEL as i32)
@@ -11928,7 +11928,7 @@ pub unsafe extern "C" fn geno_art_spawn(
     Geno_Event(
         28 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         a,
         kind,
     );
@@ -11982,7 +11982,7 @@ pub unsafe extern "C" fn GenoGame_ArticleSpawn(
         Geno_Event(
             30 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             a,
             0 as i32,
         );
@@ -12056,7 +12056,7 @@ pub unsafe extern "C" fn Geno_OnHit(mut gobj: *mut Fighter_GObj) -> i32 {
     Geno_Event(
         31 as i32,
         (*fp).kind as i32,
-        (*fp).player_id as i32,
+        (*fp).player_idx as i32,
         melee_core::ppc::fctiwz_f32((*st).hit_damage as f32 * 100.0f32),
         (*st).hit_port as i32,
     );
@@ -12087,7 +12087,7 @@ pub unsafe extern "C" fn Geno_OnHit(mut gobj: *mut Fighter_GObj) -> i32 {
         Geno_Event(
             32 as i32,
             (*fp).kind as i32,
-            (*fp).player_id as i32,
+            (*fp).player_idx as i32,
             s,
             (*st).action_time as i32,
         );
@@ -12292,12 +12292,12 @@ pub unsafe extern "C" fn Geno_ItemPressDist(
     {
         return -1.0f32;
     }
-    if (*fp).player_id as i32 >= 6 as i32
+    if (*fp).player_idx as i32 >= 6 as i32
         || (*fp).is_sub_fighter() as i32 != 0
         || (*fp).motion_id <= ftCo_MS_RebirthWait as i32
         || (*fp).team as u32 >= 32 as u32
         || Geno_ItemParam(d, GENO_IP_PORT_MASK as i32)
-            & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, ((*fp).player_id as i32) as i64) == 0
+            & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, ((*fp).player_idx as i32) as i64) == 0
         || Geno_ItemParam(d, GENO_IP_TEAM_MASK as i32)
             as u32
             & <u32 as melee_core::ppc::Ppc>::pshl(1 as u32, ((*fp).team as i32) as i64) == 0
@@ -12397,12 +12397,12 @@ pub unsafe extern "C" fn geno_item_anim(mut g: *mut Item_GObj) -> i32 {
         let mut dy: f32 = 0.;
         let mut r: f32 = 0.;
         if !(fp.is_null()
-            || (*fp).player_id as i32 >= 6 as i32
+            || (*fp).player_idx as i32 >= 6 as i32
             || (*fp).is_sub_fighter() as i32 != 0
             || (*fp).motion_id <= ftCo_MS_RebirthWait as i32
             || (*fp).team as u32 >= 32 as u32
             || Geno_ItemParam(d, GENO_IP_PORT_MASK as i32)
-                & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, ((*fp).player_id as i32) as i64) == 0
+                & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, ((*fp).player_idx as i32) as i64) == 0
             || Geno_ItemParam(d, GENO_IP_TEAM_MASK as i32)
                 as u32
                 & <u32 as melee_core::ppc::Ppc>::pshl(1 as u32, ((*fp).team as i32) as i64) == 0)
@@ -12421,7 +12421,7 @@ pub unsafe extern "C" fn geno_item_anim(mut g: *mut Item_GObj) -> i32 {
                 geno_item_event(
                     ip,
                     0 as i32,
-                    (*fp).player_id as i32,
+                    (*fp).player_idx as i32,
                 );
                 return 1;
             }
@@ -13383,7 +13383,7 @@ pub unsafe extern "C" fn Geno_ItemFixture(
     }
     (*geno_item_vars(&raw mut ip)).age = 0 as i32;
     fighter.user_data = &raw mut fp as *mut c_void;
-    fp.player_id = 0 as u8;
+    fp.player_idx = 0 as u8;
     fp.team = 0 as u8;
     fp.motion_id = ftCo_MS_Wait as i32 as FtMotionId;
     fp.cur_pos = ip.pos;
@@ -13808,10 +13808,10 @@ pub unsafe extern "C" fn Geno_ItemInterleaveFixture(
 
 pub unsafe extern "C" fn geno_combo_block(mut fp: *mut Fighter) -> *mut GenoComboBlock {
     melee_core::ct!("geno_combo_block");
-    let mut p: i32 = if ((*fp).player_id as i32)
+    let mut p: i32 = if ((*fp).player_idx as i32)
         < GENO_PLAYERS
     {
-        (*fp).player_id as i32
+        (*fp).player_idx as i32
     } else {
         GENO_PLAYERS - 1 as i32
     };
@@ -14620,7 +14620,7 @@ pub unsafe extern "C" fn GenoGame_ComboInfo(
     cur = *HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
     while !cur.is_null() {
         let mut fp: *mut Fighter = HSD_GObjGetUserData(cur) as *mut Fighter;
-        if (*fp).player_id as i32 == port && (*fp).is_sub_fighter() == 0 {
+        if (*fp).player_idx as i32 == port && (*fp).is_sub_fighter() == 0 {
             let mut st: *mut GenoState = geno_state(fp);
             let mut cb: *mut GenoComboBlock = geno_combo_block(fp);
             if geno_combo_on(st) == 0 {
@@ -14692,7 +14692,7 @@ pub unsafe extern "C" fn GenoGame_ComboSetKi(
     cur = *HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
     while !cur.is_null() {
         let mut fp: *mut Fighter = HSD_GObjGetUserData(cur) as *mut Fighter;
-        if (*fp).player_id as i32 == port && (*fp).is_sub_fighter() == 0 {
+        if (*fp).player_idx as i32 == port && (*fp).is_sub_fighter() == 0 {
             let mut st: *mut GenoState = geno_state(fp);
             if geno_combo_on(st) == 0 {
                 return -(1 as i32);

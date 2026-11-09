@@ -82,7 +82,7 @@ if v.set() { (*p).gobj_proc = unsafe { core::mem::transmute::<usize, _>(v.leaf_p
 {
 if v.set() { (*p).callback3 = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(&format!("{}.callback3", path))) }; } else { v.dump_p(&format!("{}.callback3", path), unsafe { core::mem::transmute_copy::<_, usize>(&(*p).callback3) }); }
 }
-v.bytes_be32(&format!("{}.anon_10", path), &mut (*p).anon_10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_10));
+v.bytes_be32(&format!("{}.anon_10", path), &mut (*p).x10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x10));
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_StageInfo(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::StageInfo; unsafe {
@@ -513,7 +513,7 @@ if v.set() { (*p).framerate = f32::from_bits(v.leaf_f32(&format!("{}.framerate",
 if v.set() { (*p).fobj = v.leaf_ptr(&format!("{}.fobj", path)) as _; } else { v.dump_p(&format!("{}.fobj", path), ((*p).fobj) as usize); }
 }
 {
-if v.set() { (*p).hsd_obj = v.leaf_ptr(&format!("{}.hsd_obj", path)) as _; } else { v.dump_p(&format!("{}.hsd_obj", path), ((*p).hsd_obj) as usize); }
+if v.set() { (*p).jobj = v.leaf_ptr(&format!("{}.hsd_obj", path)) as _; } else { v.dump_p(&format!("{}.hsd_obj", path), ((*p).jobj) as usize); }
 }
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
@@ -789,12 +789,12 @@ if v.set() { (*p).set_x7C_flag8(v.leaf_int(&format!("{}.x7C_flag8", path), 1, 0)
 fn vis_struct_grVenom_GroundVars(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::grVenom_GroundVars; unsafe {
 if v.view_on("grVenom_GroundVars.anon0", "xC4") {
 {
-if v.set() { (*p).anon_0.xC4 = v.leaf_int(&format!("{}.anon_0.xC4", path), 32, 0) as _; } else { v.dump_u(&format!("{}.anon_0.xC4", path), (((*p).anon_0.xC4) as u32) as u64); }
+if v.set() { (*p).x0.xC4 = v.leaf_int(&format!("{}.anon_0.xC4", path), 32, 0) as _; } else { v.dump_u(&format!("{}.anon_0.xC4", path), (((*p).x0.xC4) as u32) as u64); }
 }
 }
 if v.view_on("grVenom_GroundVars.anon0", "xC4_flags") {
 {
-if v.set() { (*p).anon_0.xC4_flags.set_b0(v.leaf_int(&format!("{}.b0", format!("{}.anon_0.xC4_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b0", format!("{}.anon_0.xC4_flags", path)), ((*p).anon_0.xC4_flags.b0()) as u64); }
+if v.set() { (*p).x0.xC4_flags.set_b0(v.leaf_int(&format!("{}.b0", format!("{}.anon_0.xC4_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b0", format!("{}.anon_0.xC4_flags", path)), ((*p).x0.xC4_flags.b0()) as u64); }
 }
 }
 {
@@ -814,18 +814,18 @@ if v.set() { (*p).xD8 = v.leaf_int(&format!("{}.xD8", path), 32, 1) as _; } else
 }
 if v.view_on("grVenom_GroundVars.anon1", "xDC") {
 {
-if v.set() { (*p).anon_18.xDC = f32::from_bits(v.leaf_f32(&format!("{}.anon_18.xDC", path))); } else { v.dump_f32(&format!("{}.anon_18.xDC", path), ((*p).anon_18.xDC).to_bits()); }
+if v.set() { (*p).x18.xDC = f32::from_bits(v.leaf_f32(&format!("{}.anon_18.xDC", path))); } else { v.dump_f32(&format!("{}.anon_18.xDC", path), ((*p).x18.xDC).to_bits()); }
 }
 }
 if v.view_on("grVenom_GroundVars.anon1", "linked_gobj") {
 {
-if v.set() { (*p).anon_18.linked_gobj = v.leaf_ptr(&format!("{}.anon_18.linked_gobj", path)) as _; } else { v.dump_p(&format!("{}.anon_18.linked_gobj", path), ((*p).anon_18.linked_gobj) as usize); }
+if v.set() { (*p).x18.linked_gobj = v.leaf_ptr(&format!("{}.anon_18.linked_gobj", path)) as _; } else { v.dump_p(&format!("{}.anon_18.linked_gobj", path), ((*p).x18.linked_gobj) as usize); }
 }
 }
-v.bytes(&format!("{}.anon_1c", path), &mut (*p).anon_1c as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_1c));
-v.bytes(&format!("{}.anon_20", path), &mut (*p).anon_20 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_20));
-v.bytes(&format!("{}.anon_24", path), &mut (*p).anon_24 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_24));
-v.bytes(&format!("{}.anon_28", path), &mut (*p).anon_28 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_28));
+v.bytes(&format!("{}.anon_1c", path), &mut (*p).x1C as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x1C));
+v.bytes(&format!("{}.anon_20", path), &mut (*p).x20 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x20));
+v.bytes(&format!("{}.anon_24", path), &mut (*p).x24 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x24));
+v.bytes(&format!("{}.anon_28", path), &mut (*p).x28 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x28));
 {
 if v.set() { (*p).xF0 = v.leaf_int(&format!("{}.xF0", path), 32, 1) as _; } else { v.dump_i(&format!("{}.xF0", path), (((*p).xF0) as i32) as i64); }
 }
@@ -867,13 +867,13 @@ if v.set() { (*p).xDC = v.leaf_ptr(&format!("{}.xDC", path)) as _; } else { v.du
 }
 {
 if v.view_on("grVenom_GroundVars2.xE0_state", "anon:anon_0") {
-if v.set() { (*p).xE0_state.anon_0.set_b0(v.leaf_int(&format!("{}.b0", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b0", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.anon_0.b0()) as u64); }
-if v.set() { (*p).xE0_state.anon_0.set_b1(v.leaf_int(&format!("{}.b1", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b1", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.anon_0.b1()) as u64); }
-if v.set() { (*p).xE0_state.anon_0.set_b2(v.leaf_int(&format!("{}.b2", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b2", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.anon_0.b2()) as u64); }
-if v.set() { (*p).xE0_state.anon_0.set_b3(v.leaf_int(&format!("{}.b3", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b3", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.anon_0.b3()) as u64); }
-if v.set() { (*p).xE0_state.anon_0.set_b4(v.leaf_int(&format!("{}.b4", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b4", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.anon_0.b4()) as u64); }
-if v.set() { (*p).xE0_state.anon_0.set_b5(v.leaf_int(&format!("{}.b5", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b5", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.anon_0.b5()) as u64); }
-if v.set() { (*p).xE0_state.anon_0.set_b6(v.leaf_int(&format!("{}.b6", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b6", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.anon_0.b6()) as u64); }
+if v.set() { (*p).xE0_state.x0.set_b0(v.leaf_int(&format!("{}.b0", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b0", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.x0.b0()) as u64); }
+if v.set() { (*p).xE0_state.x0.set_b1(v.leaf_int(&format!("{}.b1", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b1", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.x0.b1()) as u64); }
+if v.set() { (*p).xE0_state.x0.set_b2(v.leaf_int(&format!("{}.b2", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b2", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.x0.b2()) as u64); }
+if v.set() { (*p).xE0_state.x0.set_b3(v.leaf_int(&format!("{}.b3", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b3", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.x0.b3()) as u64); }
+if v.set() { (*p).xE0_state.x0.set_b4(v.leaf_int(&format!("{}.b4", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b4", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.x0.b4()) as u64); }
+if v.set() { (*p).xE0_state.x0.set_b5(v.leaf_int(&format!("{}.b5", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b5", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.x0.b5()) as u64); }
+if v.set() { (*p).xE0_state.x0.set_b6(v.leaf_int(&format!("{}.b6", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), 1, 0) as _); } else { v.dump_u(&format!("{}.b6", format!("{}.anon:anon_0", format!("{}.xE0_state", path))), ((*p).xE0_state.x0.b6()) as u64); }
 }
 if v.view_on("grVenom_GroundVars2.xE0_state", "xE0_state_pad") {
 {

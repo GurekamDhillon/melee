@@ -250,7 +250,7 @@ pub unsafe extern "C" fn it_802CA49C(gobj: *mut Item_GObj) {
 
     ext::it_80279C48(gobj);
     (*ip).xDD4_itemVar.pokemon.timer = -1;
-    (*ip).anon_dbc.xDBC_itcmd_var4.flags.set_x0(0);
+    (*ip).xDBC.xDBC_itcmd_var4.flags.set_x0(0);
     (*ip).xDD4_itemVar.pokemon.x64 = 0;
     (*ip).xDD4_itemVar.pokemon.x68 = 0.0;
     (*ip).xDD4_itemVar.pokemon.x6C = 0.0;
@@ -376,10 +376,10 @@ pub unsafe extern "C" fn itKamex_UnkMotion1_Coll(gobj: *mut Item_GObj) -> i32 {
 pub unsafe extern "C" fn it_802CA8DC(gobj: *mut Item_GObj) {
     melee_core::ct!("it_802CA8DC");
     let ip = (*gobj).user_data as *mut Item;
-    if (*ip).anon_dbc.xDBC_itcmd_var4.flags.x0() != 0 {
+    if (*ip).xDBC.xDBC_itcmd_var4.flags.x0() != 0 {
         it_802CAB10(gobj);
         (*ip).x40_vel.x = (*ip).xDD4_itemVar.pokemon.x68 * -(*ip).facing_dir;
-        (*ip).anon_dbc.xDBC_itcmd_var4.flags.set_x0(0);
+        (*ip).xDBC.xDBC_itcmd_var4.flags.set_x0(0);
     }
 }
 
@@ -473,7 +473,7 @@ pub unsafe extern "C" fn it_802CAB10(gobj: *mut Item_GObj) {
     (*ip).xDD4_itemVar.pokemon.x64 ^= 1;
     spawn.x0_parent_gobj = (*ip).owner;
     spawn.x4_parent_gobj2 = gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     if !ext::Item_80268B18(&mut spawn).is_null() {
         if (*ip).facing_dir == 1.0 {

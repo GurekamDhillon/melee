@@ -215,10 +215,10 @@ pub mod ext {
     pub fn Ground_801C3BB4() {
         match unsafe { GROUND_801C3BB4 } { Some(f) => f(), None => { unsafe { crate::tu::ground::Ground_801C3BB4(); } return; } }
     }
-    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
-        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
     }
     pub static mut GROUND_801C4A08: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
@@ -412,8 +412,8 @@ pub mod ext {
         match unsafe { UN_802FF620 } { Some(f) => f(), None => { unsafe { crate::tu::if_2FF2::un_802FF620(); } return; } }
     }
     /// `grDisplay_801C5DB0` is passed as a render callback and called by the smash-taunt renderer.
-    pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, i32)> = None;
-    pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, pass: i32) {
+    pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, isize)> = None;
+    pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, pass: isize) {
         match GRDISPLAY_801C5DB0 {
             Some(f) => f(gobj, pass),
             None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(gobj as _, pass as _); } return; },
@@ -497,7 +497,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
+            x10: StageCallbacks_x10 { flags: u32::to_be($flags) },
         }
     };
 }
@@ -2574,7 +2574,7 @@ pub unsafe extern "C" fn grCorneria_801E2480(vec: *mut Vec3, _arg1: s32) -> *mut
 }
 
 /// `smashTaunt_801E24AC`: the smash-taunt text hides while paused.
-pub unsafe extern "C" fn smashTaunt_801E24AC(gobj: *mut Ground_GObj, renderpass: i32) {
+pub unsafe extern "C" fn smashTaunt_801E24AC(gobj: *mut Ground_GObj, renderpass: isize) {
     melee_core::ct!("smashTaunt_801E24AC");
     let gp = GET_GROUND(gobj);
 
@@ -2588,7 +2588,7 @@ pub unsafe extern "C" fn smashTaunt_801E24AC(gobj: *mut Ground_GObj, renderpass:
     if !(*gp).u.smashtaunt.text.is_null() {
         (*(*gp).u.smashtaunt.text).hidden = 0;
     }
-    ext::grDisplay_801C5DB0(gobj, renderpass);
+    ext::grDisplay_801C5DB0(gobj, renderpass as isize);
 }
 
 pub unsafe extern "C" fn smashTaunt_801E2550(gobj: *mut Ground_GObj, gv: *mut grSmashTaunt_GroundVars) {
@@ -2873,7 +2873,7 @@ pub unsafe extern "C" fn grCorneria_801E2EA0() -> f32 {
 }
 
 /// `grCorneria_801E2EE4` (on_touch_line).
-pub unsafe extern "C" fn grCorneria_801E2EE4(_arg: enum_t) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn grCorneria_801E2EE4(_arg: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("grCorneria_801E2EE4");
     null_mut()
 }
@@ -2967,4 +2967,4 @@ pub unsafe extern "C" fn grCorneria_801E2FCC() -> f32 {
     pub extern "C" fn grCorneria_801E1058_fp(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grCorneria_801E2EE4_fp (gr/grcorneria.c:2796)
-    pub extern "C" fn grCorneria_801E2EE4_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grCorneria_801E2EE4_fp(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

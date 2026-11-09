@@ -292,7 +292,7 @@ pub unsafe extern "C" fn itThunder_UnkMotion0_Phys_inline(gobj: *mut Item_GObj) 
     let item = GET_ITEM(gobj);
     ext::it_80273454(gobj);
     itThunder_UnkMotion0_Phys_inline2(gobj);
-    (*item).xDD1_flag.anon_0.set_b1(1);
+    (*item).xDD1_flag.x0.set_b1(1);
 }
 
 pub unsafe extern "C" fn itThunder_UnkMotion0_Phys(gobj: *mut Item_GObj) {

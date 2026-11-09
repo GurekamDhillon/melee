@@ -182,7 +182,7 @@ pub unsafe extern "C" fn it_80283AE4(gobj: *mut HSD_GObj, pos: *mut Vec3, arg2: 
     }
     if !item_gobj.is_null() {
         let ip = GET_ITEM(item_gobj);
-        (*ip).xDD4_itemVar.heart.xDD8.anon_0.set_b0(1);
+        (*ip).xDD4_itemVar.heart.xDD8.x0.set_b0(1);
         (*ip).xDD4_itemVar.heart.xDDC = arg2;
         ext::Item_80267454(item_gobj);
     }
@@ -205,7 +205,7 @@ pub unsafe extern "C" fn itHeart_Logic8_Spawned(gobj: *mut HSD_GObj) {
     (*ip).x40_vel.y = (*vars).x14;
     (*ip).x40_vel.z = 0.0;
     (*ip).xDD4_itemVar.heart.xDD4_heal = (*vars).x0_heal;
-    (*ip).xDD4_itemVar.heart.xDD8.anon_0.set_b0(0);
+    (*ip).xDD4_itemVar.heart.xDD8.x0.set_b0(0);
     (*ip).xDD4_itemVar.heart.xDDC = 0;
     it_80283DD4(gobj);
 }
@@ -213,7 +213,7 @@ pub unsafe extern "C" fn itHeart_Logic8_Spawned(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn itHeart_Logic8_Destroyed(gobj: *mut HSD_GObj) {
     melee_core::ct!("itHeart_Logic8_Destroyed");
     let ip = GET_ITEM(gobj);
-    if (*ip).xDD4_itemVar.heart.xDD8.anon_0.b0() != 0 {
+    if (*ip).xDD4_itemVar.heart.xDD8.x0.b0() != 0 {
         ext::gm_80473A18.x90[(*ip).xDD4_itemVar.heart.xDDC as usize] = 0;
     }
 }

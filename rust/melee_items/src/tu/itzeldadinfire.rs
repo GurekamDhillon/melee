@@ -196,7 +196,7 @@ pub unsafe extern "C" fn it_802C3BAC(gobj: *mut Item_GObj, vec: *mut Vec, facing
     si.vel.x = 0.0;
     si.x0_parent_gobj = gobj;
     si.x4_parent_gobj2 = si.x0_parent_gobj;
-    si.x44_flag.anon_0.set_b0(1);
+    si.x44_flag.x0.set_b0(1);
     si.x40 = 0;
     let n = ext::Item_80268B18(&mut si);
     if !n.is_null() {

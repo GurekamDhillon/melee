@@ -143,13 +143,13 @@ pub mod ext {
     fn Camera_800290D4(a0: *mut CmSubject);
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32);
     fn Geno_ArticleDesc(a0: i32) -> *mut c_void;
     fn Geno_ArticleLogic(a0: i32) -> *mut c_void;
     fn Geno_ItemActive(a0: i32) -> i32;
     fn Geno_ItemCap(a0: i32) -> i32;
     fn Geno_ItemDesc(a0: i32) -> *mut c_void;
-    fn Geno_ItemDraw(a0: *mut HSD_GObj, a1: i32);
+    fn Geno_ItemDraw(a0: *mut HSD_GObj, a1: isize);
     fn Geno_ItemFamilyEvent(a0: *mut HSD_GObj, a1: i32, a2: i32);
     fn Geno_ItemLogic(a0: i32) -> *mut c_void;
     fn HSD_GObjFree(a0: *mut HSD_GObj);
@@ -207,7 +207,7 @@ pub mod ext {
     fn it_8026BDCC(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_8026bdcc(&mut *((*a0).user_data as *mut Item)) };
     fn it_8026C368(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026C368(a0) };
     fn it_8026D604(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026D604(a0) };
-    fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
+    fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
     fn it_8026F9A0() => unsafe { crate::tu::itcoll::it_8026F9A0() };
     fn it_802701BC(a0: *mut HSD_GObj) => unsafe { crate::tu::itcoll::it_802701BC(a0) };
     fn it_802703E8(a0: *mut HSD_GObj) => unsafe { crate::tu::itcoll::it_802703E8(a0) };
@@ -286,9 +286,9 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn Geno_ItemDraw(a0: *mut HSD_GObj, a1: i32) { super::Geno_ItemDraw(a0, a1) }
+        pub unsafe extern "C" fn Geno_ItemDraw(a0: *mut HSD_GObj, a1: isize) { super::Geno_ItemDraw(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) { super::it_8026EECC(a0, a1) }
+        pub unsafe extern "C" fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) { super::it_8026EECC(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -474,9 +474,11 @@ pub unsafe extern "C" fn Item_80266FCC() {
     (*c).x5C = (*d).x28 as _;
     (*c).x64 = (*d).x148 as _;
 
-    Item_804A0CCC.x154.anon_0.set_b0(1);
+    Item_804A0CCC.x154.x0.set_b0(1);
     Item_804A0CCC.count = 1;
 
+    // upstream dropped the It_Kind_Unselected enumerator (item.c writes -1)
+    const It_Kind_Unselected: ItemKind = -1;
     Item_804A0E24.last_kind = It_Kind_Unselected;
     Item_804A0E24.previous_kind = It_Kind_Unselected;
     Item_804A0E24.rare_spawned = 0;
@@ -594,10 +596,10 @@ pub unsafe extern "C" fn Item_80267130(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
 pub unsafe extern "C" fn Item_80267454(gobj: *mut HSD_GObj) {
     melee_core::ct!("Item_80267454");
     let item_data = (*gobj).user_data as *mut Item;
-    if (*item_data).xDCD_flag.anon_0.b01() != 0 && !(*item_data).x520_cameraBox.is_null() {
+    if (*item_data).xDCD_flag.x0.b01() != 0 && !(*item_data).x520_cameraBox.is_null() {
         ext::Camera_800290D4((*item_data).x520_cameraBox);
         (*item_data).x520_cameraBox = null_mut();
-        (*item_data).xDCD_flag.anon_0.set_b01(0);
+        (*item_data).xDCD_flag.x0.set_b01(0);
     }
 }
 
@@ -854,8 +856,8 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
     (*item_data).xDC4 = 0;
     (*item_data).xDC8_word.flags.set_xF(0);
     (*item_data).xCC4 = 0;
-    (*item_data).xDCF_flag.anon_0.set_b6(0);
-    (*item_data).xDCF_flag.anon_0.set_b7(0);
+    (*item_data).xDCF_flag.x0.set_b6(0);
+    (*item_data).xDCF_flag.x0.set_b7(0);
     (*item_data).xCB0_source_ply = 6;
     (*item_data).xCB4 = -1;
     (*item_data).xC38 = -1;
@@ -865,7 +867,7 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
     (*item_data).xCD4.z = 0.0;
     (*item_data).xCD4.y = 0.0;
     (*item_data).xCD4.x = 0.0;
-    (*item_data).xDD0_flag.anon_0.set_b1(0);
+    (*item_data).xDD0_flag.x0.set_b1(0);
     (*item_data).xDC8_word.flags.set_x14(0);
     (*item_data).xDC8_word.flags.set_xE(0);
     (*item_data).xCEC_fighterGObj = null_mut();
@@ -881,7 +883,7 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
     (*item_data).xC68 = 0.0;
     (*item_data).xCD0 = 0.0;
     ext::it_80275158(gobj, (*ext::it_804D6D28).x30_lifetime as f32);
-    (*item_data).xDD0_flag.anon_0.set_b3(0);
+    (*item_data).xDD0_flag.x0.set_b3(0);
     (*item_data).spin_spd = (*(*item_data).xCC_item_attr).xC_spin_speed;
     (*item_data).xDC8_word.flags.set_x19((*(*item_data).xCC_item_attr).x1_3() as _);
     (*item_data).xDC8_word.flags.set_x17((*(*item_data).xCC_item_attr).x1_1() as _);
@@ -902,8 +904,8 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
     (*item_data).xBFC = (*item_data).xC0C;
     (*item_data).xDC8_word.flags.set_xC((*(*item_data).xCC_item_attr).x1_5() as _);
     (*item_data).xDC8_word.flags.set_xD(1);
-    (*item_data).xDCD_flag.anon_0.set_b01((*(*item_data).xCC_item_attr).x1_67_cam_kind() as _);
-    (*item_data).xDCE_flag.anon_0.set_b3(0);
+    (*item_data).xDCD_flag.x0.set_b01((*(*item_data).xCC_item_attr).x1_67_cam_kind() as _);
+    (*item_data).xDCE_flag.x0.set_b3(0);
     (*item_data).xD54_throwNum = 0;
     (*item_data).xD50_landNum = 0;
     (*item_data).xD58 = 0;
@@ -912,8 +914,8 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
     (*item_data).xDCC_flag.set_b4567(15);
     (*item_data).xAC4_ignoreItemID = (*spawnItem).x40 as _;
     (*item_data).destroy_type = 4;
-    (*item_data).xDCE_flag.anon_0.set_b5(0);
-    (*item_data).xDCE_flag.anon_0.set_b4(0);
+    (*item_data).xDCE_flag.x0.set_b5(0);
+    (*item_data).xDCE_flag.x0.set_b4(0);
     (*item_data).xC54 = 0.0;
     (*item_data).xC58.x = 0.0;
     (*item_data).xC58.x = 0.0;
@@ -925,9 +927,9 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
     (*item_data).xDC8_word.flags.set_x6(0);
     (*item_data).xDC8_word.flags.set_x7(0);
     (*item_data).xDC8_word.flags.set_x8(0);
-    (*item_data).xDD0_flag.anon_0.set_b5(0);
+    (*item_data).xDD0_flag.x0.set_b5(0);
     (*item_data).xD09 = 0;
-    (*item_data).xDD0_flag.anon_0.set_b4(0);
+    (*item_data).xDD0_flag.x0.set_b4(0);
     (*item_data).xCA8 = 0;
     (*item_data).xCBC_hitlagFrames = 0.0;
     (*item_data).xCC0 = 0.0;
@@ -937,21 +939,21 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
     (*item_data).xC70 = 1.0;
     (*item_data).xC6C = 1.0;
     (*item_data).xDCC_flag.set_b2(0);
-    (*item_data).xDD0_flag.anon_0.set_b0(0);
-    (*item_data).xDCE_flag.anon_0.set_b6(0);
-    (*item_data).xDCF_flag.anon_0.set_b0(0);
-    (*item_data).xDCF_flag.anon_0.set_b1(0);
-    (*item_data).xDCF_flag.anon_0.set_b2(0);
-    (*item_data).xDD1_flag.anon_0.set_b0(0);
-    (*item_data).xDCE_flag.anon_0.set_b7(1);
+    (*item_data).xDD0_flag.x0.set_b0(0);
+    (*item_data).xDCE_flag.x0.set_b6(0);
+    (*item_data).xDCF_flag.x0.set_b0(0);
+    (*item_data).xDCF_flag.x0.set_b1(0);
+    (*item_data).xDCF_flag.x0.set_b2(0);
+    (*item_data).xDD1_flag.x0.set_b0(0);
+    (*item_data).xDCE_flag.x0.set_b7(1);
     (*item_data).scl = (*(*item_data).xCC_item_attr).x60_scale;
     (*item_data).x3C = 0.0;
-    (*item_data).xDCD_flag.anon_0.set_b3(0);
-    (*item_data).xDCD_flag.anon_0.set_b4(0);
-    (*item_data).xDD0_flag.anon_0.set_b7(0);
+    (*item_data).xDCD_flag.x0.set_b3(0);
+    (*item_data).xDCD_flag.x0.set_b4(0);
+    (*item_data).xDD0_flag.x0.set_b7(0);
     (*item_data).xBC0 = null_mut();
-    (*item_data).xDD1_flag.anon_0.set_b1(0);
-    (*item_data).xDCD_flag.anon_0.set_b2(0);
+    (*item_data).xDD1_flag.x0.set_b1(0);
+    (*item_data).xDCD_flag.x0.set_b2(0);
     (*item_data).xD6C = -1;
     (*item_data).sfx_unk2 = SFX_NONE as _;
     (*item_data).sfx_unk1 = SFX_NONE as _;
@@ -982,14 +984,14 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
 
     ext::it_80279B64(item_data);
 
-    (*item_data).xDCF_flag.anon_0.set_b3(0);
-    (*item_data).xDCF_flag.anon_0.set_b4(0);
-    (*item_data).xDCF_flag.anon_0.set_b5(0);
+    (*item_data).xDCF_flag.x0.set_b3(0);
+    (*item_data).xDCF_flag.x0.set_b4(0);
+    (*item_data).xDCF_flag.x0.set_b5(0);
 
-    (*item_data).anon_daa.xDAA_byte = 1;
+    (*item_data).xDAA.xDAA_byte = 1;
 
     if ext::db_ShowItemPickupRange() != 0 {
-        (*item_data).anon_daa.xDAA_flag.anon_0.set_b4(1);
+        (*item_data).xDAA.xDAA_flag.x0.set_b4(1);
     }
 
     if (*spawnItem).x0_parent_gobj.is_null() {
@@ -1129,7 +1131,7 @@ pub unsafe extern "C" fn Item_80268560(gobj: *mut HSD_GObj) {
         ext::lb_8000FD48(jobj, &raw mut (*ip).xD4_dynamicBones[i as usize].dyn_desc, (*desc).dyn_desc.count as u32);
         (*ip).xD4_dynamicBones[i as usize].skeleton = jobj;
         (*ip).xD4_dynamicBones[i as usize].flags = 0;
-        ext::lb_80011710(&raw mut (*(*(*article_data).x14_dynamics).dyn_descs.add(i as usize)).dyn_desc,
+        ext::lb_80011710(&raw mut (*(*(*article_data).x14_dynamics).dyn_descs.add(i as usize)).dyn_desc as *mut DynamicsDesc,
                          &raw mut (*ip).xD4_dynamicBones[i as usize].dyn_desc);
         i += 1;
     }
@@ -1141,16 +1143,16 @@ pub unsafe extern "C" fn foobar(gobj: *mut HSD_GObj) {
     match (*it).hold_kind {
         0 | 6 => {
             if (*it).xD0C == 2 {
-                (*it).xDD0_flag.anon_0.set_b7(1);
+                (*it).xDD0_flag.x0.set_b7(1);
             }
             (*it).xD40 = (*ext::it_804D6D28).x2C as _;
-            (*it).xDD0_flag.anon_0.set_b6(1);
+            (*it).xDD0_flag.x0.set_b6(1);
             ext::it_802756D0(gobj);
             ext::it_80279B88(it, 3, 0);
         }
         _ => {
             (*it).xD40 = 0.0;
-            (*it).xDD0_flag.anon_0.set_b6(0);
+            (*it).xDD0_flag.x0.set_b6(0);
         }
     }
 }
@@ -1169,8 +1171,8 @@ pub unsafe extern "C" fn foobar2(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn foobar3(gobj: *mut HSD_GObj) {
     melee_core::ct!("foobar3");
     let it = get_item(gobj);
-    if (*it).xDCD_flag.anon_0.b01() != 0 {
-        if (*it).xDCD_flag.anon_0.b01() == 1 {
+    if (*it).xDCD_flag.x0.b01() != 0 {
+        if (*it).xDCD_flag.x0.b01() == 1 {
             (*it).x520_cameraBox = ext::Camera_80029044(0);
         } else {
             (*it).x520_cameraBox = ext::Camera_80029044(2);
@@ -1560,7 +1562,7 @@ unsafe extern "C" fn Item_80268E5C__orig(gobj: *mut HSD_GObj, msid: enum_t, flag
     (*item_data).exited_hitlag = None;
     (*item_data).jumped_on = None;
 
-    (*item_data).xDD0_flag.anon_0.set_b5(0);
+    (*item_data).xDD0_flag.x0.set_b5(0);
     (*item_data).xD09 = 0;
 
     ext::it_802714C0(gobj);
@@ -1620,18 +1622,18 @@ pub unsafe extern "C" fn Item_80269528(gobj: *mut HSD_GObj) {
             }
         }
     }
-    if (*item_data).xDD0_flag.anon_0.b6() != 0 {
+    if (*item_data).xDD0_flag.x0.b6() != 0 {
         (*item_data).xD40 -= 1.0;
         if (*item_data).xD40 <= 0.0 {
-            (*item_data).xDD0_flag.anon_0.set_b6(0);
+            (*item_data).xDD0_flag.x0.set_b6(0);
             (*item_data).xD40 = 0.0;
             ext::it_80279BBC(item_data);
-            if (*item_data).xDD0_flag.anon_0.b7() == 0 {
+            if (*item_data).xDD0_flag.x0.b7() == 0 {
                 ext::it_802756E0(gobj);
             }
         }
     }
-    if (*item_data).xDC8_word.flags.x15() != 0 && (*item_data).kind < It_Kind_L_Gun_Ray && (*item_data).xDD0_flag.anon_0.b3() == 0 {
+    if (*item_data).xDC8_word.flags.x15() != 0 && (*item_data).kind < It_Kind_L_Gun_Ray && (*item_data).xDD0_flag.x0.b3() == 0 {
         (*item_data).xD44_lifeTimer -= 1.0;
         if (*item_data).xD44_lifeTimer <= 0.0 {
             ext::Geno_ItemFamilyEvent(gobj, 1, -1);
@@ -1689,7 +1691,7 @@ pub unsafe extern "C" fn Item_802697D4(gobj: *mut HSD_GObj) {
     if (*item_data).xDC8_word.flags.x13() == 0 {
         if (*item_data).xDC8_word.flags.x9() == 0 {
             ext::PSVECAdd(&raw mut (*item_data).x40_vel, &raw mut (*item_data).x70_nudge, &raw mut sp1C);
-            if (*item_data).ground_or_air == 0 && (*item_data).xDCD_flag.anon_0.b3() == 0 {
+            if (*item_data).ground_or_air == 0 && (*item_data).xDCD_flag.x0.b3() == 0 {
                 ext::it_8027737C(gobj, &raw mut sp1C);
             }
             ext::PSVECAdd(&raw mut (*item_data).pos, &raw mut sp1C, &raw mut (*item_data).pos);
@@ -1701,13 +1703,13 @@ pub unsafe extern "C" fn Item_802697D4(gobj: *mut HSD_GObj) {
             ext::it_80274A64(gobj);
         }
     }
-    if (*item_data).xDD1_flag.anon_0.b1() != 0 && (*item_data).ground_or_air == 1 {
+    if (*item_data).xDD1_flag.x0.b1() != 0 && (*item_data).ground_or_air == 1 {
         ext::grLib_801C9E60(&raw mut (*item_data).x58_vec_unk);
     }
     ext::PSVECAdd(&raw mut (*item_data).pos, &raw mut (*item_data).x58_vec_unk, &raw mut (*item_data).pos);
     ext::it_80273484(gobj);
     if (*item_data).ground_or_air == 0 {
-        if (*item_data).xDCE_flag.anon_0.b3() != 0 && ext::it_8026D604(gobj) != 0 {
+        if (*item_data).xDCE_flag.x0.b3() != 0 && ext::it_8026D604(gobj) != 0 {
             ext::mpGetSpeed((*item_data).xC30, &raw mut (*item_data).pos, &raw mut (*item_data).x64_vec_unk2);
         } else {
             ext::mpGetSpeed((*item_data).x378_itemColl.floor.index, &raw mut (*item_data).pos, &raw mut (*item_data).x64_vec_unk2);
@@ -1754,7 +1756,7 @@ pub unsafe extern "C" fn Item_80269A9C(gobj: *mut HSD_GObj) {
         }
     }
     item_data = get_item(gobj);
-    if (*item_data).xDCD_flag.anon_0.b01() != 0 {
+    if (*item_data).xDCD_flag.x0.b01() != 0 {
         let cm_subject = (*item_data).x520_cameraBox;
         if !cm_subject.is_null() {
             (*cm_subject).pos = (*item_data).pos;
@@ -1782,7 +1784,7 @@ pub unsafe extern "C" fn Item_80269B60(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn Item_80269BE4(gobj: *mut HSD_GObj) {
     melee_core::ct!("Item_80269BE4");
     let item_data = (*gobj).user_data as *mut Item;
-    if (*item_data).xDD0_flag.anon_0.b5() != 0 {
+    if (*item_data).xDD0_flag.x0.b5() != 0 {
         ext::it_802701BC(gobj);
         if !(*item_data).grab_victim.is_null() {
             ((*item_data).grab_dealt.unwrap())(gobj);
@@ -1827,7 +1829,7 @@ pub unsafe extern "C" fn Item_80269CC4(gobj: *mut HSD_GObj) {
     (*temp_item).xC68 = 0.0;
     (*temp_item).xCD0 = 0.0;
     (*temp_item).xCC0 = 0.0;
-    (*temp_item).xDCF_flag.anon_0.set_b6(0);
+    (*temp_item).xDCF_flag.x0.set_b6(0);
     (*temp_item).xCC4 = 0;
     (*temp_item).xCEC_fighterGObj = null_mut();
     (*temp_item).xCF0_itemGObj = null_mut();
@@ -1844,8 +1846,8 @@ pub unsafe extern "C" fn Item_80269CC4(gobj: *mut HSD_GObj) {
     (*temp_item).xCD4.z = 0.0;
     (*temp_item).xCD4.y = 0.0;
     (*temp_item).xCD4.x = 0.0;
-    (*temp_item).xDCE_flag.anon_0.set_b5(0);
-    (*temp_item).xDCE_flag.anon_0.set_b4(0);
+    (*temp_item).xDCE_flag.x0.set_b5(0);
+    (*temp_item).xDCE_flag.x0.set_b4(0);
     (*temp_item).xDCC_flag.set_b1(0);
     (*temp_item).xC70 = 1.0;
     (*temp_item).xC6C = 1.0;
@@ -1854,7 +1856,7 @@ pub unsafe extern "C" fn Item_80269CC4(gobj: *mut HSD_GObj) {
     (*temp_item).xCA8 = 0;
     (*temp_item).xDC8_word.flags.set_x3(0);
     (*temp_item).xDC8_word.flags.set_x4(0);
-    (*temp_item).xDCE_flag.anon_0.set_b6(0);
+    (*temp_item).xDCE_flag.x0.set_b6(0);
 }
 
 /// Item Think - Shield Collision
@@ -1862,12 +1864,12 @@ pub unsafe extern "C" fn Item_80269DC8(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("Item_80269DC8");
     let item_data = (*gobj).user_data as *mut Item;
 
-    if (*item_data).xDCE_flag.anon_0.b5() != 0
+    if (*item_data).xDCE_flag.x0.b5() != 0
         && (*item_data).ground_or_air == 1
-        && ((*item_data).xDCE_flag.anon_0.b4() != 0
+        && ((*item_data).xDCE_flag.x0.b4() != 0
             || (*item_data).xC54 < (M_PI as f32) / 180.0 * (90.0 + (*ext::it_804D6D28).unk_degrees))
     {
-        if (*item_data).xDCE_flag.anon_0.b4() == 0 {
+        if (*item_data).xDCE_flag.x0.b4() == 0 {
             (*item_data).xC54 = ((*item_data).xC54 as f64 - M_PI / 2.0) as f32;
             if (*item_data).xC54 < 0.0 {
                 (*item_data).xC54 = 0.0;
@@ -2115,7 +2117,7 @@ pub unsafe extern "C" fn Item_8026A294(gobj: *mut HSD_GObj) {
         if processCallback((*(*item_data).xB8_itemLogicTable).absorbed, gobj, item_data) {
             return;
         }
-    } else if (*item_data).xDCE_flag.anon_0.b6() != 0 {
+    } else if (*item_data).xDCE_flag.x0.b6() != 0 {
         if processCallback((*item_data).touched, gobj, item_data) {
             return;
         }
@@ -2252,10 +2254,10 @@ pub unsafe extern "C" fn func_8026A8EC_inline2(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn func_8026A8EC_inline3(gobj: *mut HSD_GObj) {
     melee_core::ct!("func_8026A8EC_inline3");
     let it = get_item(gobj);
-    if (*it).xDCD_flag.anon_0.b01() != 0 && !(*it).x520_cameraBox.is_null() {
+    if (*it).xDCD_flag.x0.b01() != 0 && !(*it).x520_cameraBox.is_null() {
         ext::Camera_800290D4((*it).x520_cameraBox);
         (*it).x520_cameraBox = null_mut();
-        (*it).xDCD_flag.anon_0.set_b01(0);
+        (*it).xDCD_flag.x0.set_b01(0);
     }
 }
 
@@ -2272,7 +2274,7 @@ pub unsafe extern "C" fn Item_8026A8EC(gobj: *mut HSD_GObj) {
     func_8026A8EC_inline1(gobj);
     ext::efLib_DestroyAll(gobj);
 
-    if (*ip).xDCF_flag.anon_0.b2() == 0 && ((*ip).xDC8_word.flags.x13() == 0 || (*ip).owner.is_null()) {
+    if (*ip).xDCF_flag.x0.b2() == 0 && ((*ip).xDC8_word.flags.x13() == 0 || (*ip).owner.is_null()) {
         ItemSwitch(gobj);
     }
 
@@ -2306,7 +2308,7 @@ pub unsafe extern "C" fn Item_8026AB54(gobj: *mut HSD_GObj, owner_gobj: *mut HSD
 
     ext::it_80273168(gobj); // sets pickup sfx?
     ext::it_802742F4(gobj, owner_gobj, part);
-    ext::Geno_ItemFamilyEvent(gobj, 0, if !owner_gobj.is_null() { (*((*owner_gobj).user_data as *mut Fighter)).player_id as i32 } else { -1 });
+    ext::Geno_ItemFamilyEvent(gobj, 0, if !owner_gobj.is_null() { (*((*owner_gobj).user_data as *mut Fighter)).player_idx as i32 } else { -1 });
     RunGObjCallback(gobj, (*(*item_data).xB8_itemLogicTable).picked_up);
     Item_8026B074(item_data);
 }
@@ -2568,7 +2570,7 @@ pub fn item_80269cc4(ip: &mut Item) {
     ip.xC68 = 0.0;
     ip.xCD0 = 0.0;
     ip.xCC0 = 0.0;
-    unsafe { ip.xDCF_flag.anon_0.set_b6(0) };
+    unsafe { ip.xDCF_flag.x0.set_b6(0) };
     ip.xCC4 = 0;
     ip.xCEC_fighterGObj = null_mut_itlib3();
     ip.xCF0_itemGObj = null_mut_itlib3();
@@ -2582,8 +2584,8 @@ pub fn item_80269cc4(ip: &mut Item) {
     ip.xCE0 = GcVec { x: 0.0, y: 0.0, z: 0.0 };
     ip.xCD4 = GcVec { x: 0.0, y: 0.0, z: 0.0 };
     unsafe {
-        ip.xDCE_flag.anon_0.set_b5(0);
-        ip.xDCE_flag.anon_0.set_b4(0);
+        ip.xDCE_flag.x0.set_b5(0);
+        ip.xDCE_flag.x0.set_b4(0);
     }
     ip.xDCC_flag.set_b1(0);
     ip.xC70 = 1.0;
@@ -2593,7 +2595,7 @@ pub fn item_80269cc4(ip: &mut Item) {
     ip.xCA8 = 0;
     ip.xDC8_word.flags.set_x3(0);
     ip.xDC8_word.flags.set_x4(0);
-    unsafe { ip.xDCE_flag.anon_0.set_b6(0) };
+    unsafe { ip.xDCE_flag.x0.set_b6(0) };
 }
 
 /// `Item_8026AE60`: next nonzero spawn id from the `it_804D6D14` counter.

@@ -177,7 +177,7 @@ pub fn ftMh_WalkShoot_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_WalkShoot_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0) {
             st::ftBossLib_8015BD20(gobj);
         }
     }
@@ -188,7 +188,7 @@ pub fn ftMh_Walk2_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_Walk2_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0) {
             st::ftBossLib_8015BD20(gobj);
         }
     }
@@ -199,7 +199,7 @@ pub fn ftMh_WalkLoop_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_WalkLoop_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0) {
             st::ftBossLib_8015BD20(gobj);
         }
     }

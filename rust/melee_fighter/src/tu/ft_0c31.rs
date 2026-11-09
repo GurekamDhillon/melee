@@ -76,7 +76,7 @@ fn set_scale(j: *mut HSD_JObj, s: &Vec3) {
     ji::HSD_JObjSetScale(unsafe { &mut *j }, s, &mut Dirty);
 }
 fn leader(f: &Fighter, index: i32) -> G {
-    crate::player::get_entity_at_index(f.player_id as i32, index)
+    crate::player::get_entity_at_index(f.player_idx as i32, index)
 }
 
 /// `ftCo_800C61B0` (Entry_Enter): wait `Player_GetUnk4C` frames, invisible, root squashed to
@@ -84,7 +84,7 @@ fn leader(f: &Fighter, index: i32) -> G {
 pub fn ftCo_800C61B0(g: G) {
     melee_core::ct!("ftCo_800C61B0");
     let f = fp(g);
-    let timer = crate::player::get_unk4c(f.player_id as i32);
+    let timer = crate::player::get_unk4c(f.player_idx as i32);
     let e = entry(f);
     e.timer = timer;
     ji::HSD_JObjGetScale(jobj(g), &mut e.x8);
@@ -164,7 +164,7 @@ pub fn ftCo_800C6408(g: G) {
     }
     let f = fp(g);
     f.accessory1_cb = Some(fn_800C69F4_cb);
-    let q = &mut f.x60C as *mut *mut core::ffi::c_void as *mut core::ffi::c_void;
+    let q = (&raw mut f.x60C) as *mut *mut core::ffi::c_void as *mut core::ffi::c_void;
     let x8 = &mut entry(f).x8 as *mut Vec3;
     ext::efAsync_Spawn(g, q, 3, 0x43E, unsafe { (*g).hsd_obj as *mut HSD_JObj }, x8);
     ext::lbAudioAx_80024304(0x8B);
@@ -234,7 +234,7 @@ fn accessory_follow(g: G, out_of_line: bool) {
         let sub = leader(f, 1);
         if !sub.is_null() {
             let s = fp(sub);
-            if s.x221F_b3() == 0 && s.cur_pos.y > f.cur_pos.y {
+            if s.is_sleeping() == 0 && s.cur_pos.y > f.cur_pos.y {
                 f.cur_pos.y = s.cur_pos.y;
             }
         }
@@ -295,7 +295,7 @@ pub fn ftCo_EntryEnd_Anim(g: G) {
     let e = entry(f);
     e.timer = e.timer.wrapping_sub(1);
     if e.timer == 0 {
-        if crate::player::get_flags_bit4(f.player_id as i32) != 0 {
+        if crate::player::get_flags_bit4(f.player_idx as i32) != 0 {
             ext::ftColl_8007B760(g, cd().x6C8);
         }
         crate::ftcommon3::ftcommon_8007d92c(g);

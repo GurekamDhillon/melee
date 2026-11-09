@@ -170,7 +170,7 @@ pub unsafe extern "C" fn it_802EAF34(owner: *mut HSD_GObj, offset: *mut Vec3, ty
     spawn.vel.z = 0.0;
     spawn.x0_parent_gobj = null_mut();
     spawn.x4_parent_gobj2 = null_mut();
-    spawn.x44_flag.anon_0.set_b0(0);
+    spawn.x44_flag.x0.set_b0(0);
     spawn.x40 = 0;
     HSD_JObjGetRotation(jobj, &raw mut unused);
     let item_gobj = ext::Item_80268B18(&raw mut spawn);

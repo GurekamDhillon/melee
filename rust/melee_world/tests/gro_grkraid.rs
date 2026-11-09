@@ -179,11 +179,11 @@ unsafe fn world_reg() {
     oreg(addr_of!(t::grKr_StageData), core::mem::size_of_val(&*addr_of!(t::grKr_StageData)));
     oreg(addr_of!(t::grKr_803E4C78), core::mem::size_of_val(&*addr_of!(t::grKr_803E4C78)));
     oreg(addr_of!(t::ext::HSD_PadMasterStatus), core::mem::size_of_val(&*addr_of!(t::ext::HSD_PadMasterStatus)));
-    oreg(addr_of!(t::grKr_StageCallbacks[0].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[0].anon_10.flags)));
-    oreg(addr_of!(t::grKr_StageCallbacks[1].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[1].anon_10.flags)));
-    oreg(addr_of!(t::grKr_StageCallbacks[2].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[2].anon_10.flags)));
-    oreg(addr_of!(t::grKr_StageCallbacks[3].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[3].anon_10.flags)));
-    oreg(addr_of!(t::grKr_StageCallbacks[4].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[4].anon_10.flags)));
+    oreg(addr_of!(t::grKr_StageCallbacks[0].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[0].x10.flags)));
+    oreg(addr_of!(t::grKr_StageCallbacks[1].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[1].x10.flags)));
+    oreg(addr_of!(t::grKr_StageCallbacks[2].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[2].x10.flags)));
+    oreg(addr_of!(t::grKr_StageCallbacks[3].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[3].x10.flags)));
+    oreg(addr_of!(t::grKr_StageCallbacks[4].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[4].x10.flags)));
     oreg(addr_of!(OSCR), core::mem::size_of_val(&*addr_of!(OSCR)));
 }
 unsafe fn world_reg_fns() {
@@ -227,11 +227,11 @@ unsafe fn world_fill(fi: usize) {
     core::ptr::write_bytes(addr_of_mut!(t::grKr_StageData) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageData)));
     core::ptr::write_bytes(addr_of_mut!(t::grKr_803E4C78) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_803E4C78)));
     core::ptr::write_bytes(addr_of_mut!(t::ext::HSD_PadMasterStatus) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::ext::HSD_PadMasterStatus)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[0].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[0].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[1].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[1].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[2].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[2].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[3].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[3].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[4].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[4].anon_10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[0].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[0].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[1].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[1].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[2].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[2].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[3].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[3].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKr_StageCallbacks[4].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[4].x10.flags)));
     OSCR = [[0; 64]; 4];
     for i in 0..NGO { ofill(addr_of_mut!(OGO[i]) as *mut u8, F_HSD_GObj);  }
     for i in 0..NGO {
@@ -420,11 +420,11 @@ unsafe fn world_hash(fi: usize) -> u64 {
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageData) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageData))), D_st3);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_803E4C78) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_803E4C78))), D_st4);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::ext::HSD_PadMasterStatus) as *const u8, core::mem::size_of_val(&*addr_of!(t::ext::HSD_PadMasterStatus))), D_st5);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[0].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[0].anon_10.flags))), D_st6);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[1].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[1].anon_10.flags))), D_st7);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[2].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[2].anon_10.flags))), D_st8);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[3].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[3].anon_10.flags))), D_st9);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[4].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[4].anon_10.flags))), D_st10);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[0].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[0].x10.flags))), D_st6);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[1].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[1].x10.flags))), D_st7);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[2].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[2].x10.flags))), D_st8);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[3].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[3].x10.flags))), D_st9);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKr_StageCallbacks[4].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[4].x10.flags))), D_st10);
     h = word_hash(h, core::slice::from_raw_parts(addr_of!(OSCR) as *const u8, core::mem::size_of_val(&*addr_of!(OSCR))));
     h
 }
@@ -435,7 +435,7 @@ fn state_matches_c() {
         let mut lines = want.lines();
         let verbose = std::env::var("ORACLE_VERBOSE").ok();
         let hdr: std::vec::Vec<usize> = lines.next().unwrap().split_whitespace().skip(1).map(|s| s.parse().unwrap()).collect();
-        let sizes: std::vec::Vec<usize> = std::vec![core::mem::size_of::<Ground>(), core::mem::size_of::<HSD_GObj>(), core::mem::size_of::<HSD_JObj>(), core::mem::size_of::<StageInfo>(), core::mem::size_of_val(&*addr_of!(t::yakumono_param)), core::mem::size_of_val(&*addr_of!(t::grKr_804D6A0C)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks)), core::mem::size_of_val(&*addr_of!(t::grKr_StageData)), core::mem::size_of_val(&*addr_of!(t::grKr_803E4C78)), core::mem::size_of_val(&*addr_of!(t::ext::HSD_PadMasterStatus)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[0].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[1].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[2].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[3].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[4].anon_10.flags))];
+        let sizes: std::vec::Vec<usize> = std::vec![core::mem::size_of::<Ground>(), core::mem::size_of::<HSD_GObj>(), core::mem::size_of::<HSD_JObj>(), core::mem::size_of::<StageInfo>(), core::mem::size_of_val(&*addr_of!(t::yakumono_param)), core::mem::size_of_val(&*addr_of!(t::grKr_804D6A0C)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks)), core::mem::size_of_val(&*addr_of!(t::grKr_StageData)), core::mem::size_of_val(&*addr_of!(t::grKr_803E4C78)), core::mem::size_of_val(&*addr_of!(t::ext::HSD_PadMasterStatus)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[0].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[1].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[2].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[3].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKr_StageCallbacks[4].x10.flags))];
         assert_eq!(hdr, sizes, "struct sizes (C native layout vs the Rust port)");
         install_hooks();
         world_reg();

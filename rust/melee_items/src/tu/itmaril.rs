@@ -305,7 +305,7 @@ pub unsafe extern "C" fn itMaril_Logic28_Spawned(gobj: *mut Item_GObj) {
     melee_core::ct!("itMaril_Logic28_Spawned");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMarilAttributes;
-    (*ip).xDD4_itemVar.maril.x60.anon_0.set_x0(0);
+    (*ip).xDD4_itemVar.maril.x60.x0_s.set_x0(0);
     (*ip).x5D0_animFrameSpeed = (*attr).x10;
     ext::it_80279CDC(gobj, (*attr).x0);
     ext::Item_8026AE84(ip, 0x273D, 0x7F, 0x40);
@@ -326,10 +326,10 @@ pub unsafe extern "C" fn itMaril_UnkMotion1_Coll_inline(gobj: *mut Item_GObj) {
     melee_core::ct!("itMaril_UnkMotion1_Coll_inline");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMarilAttributes;
-    if (*ip).xDD4_itemVar.maril.x60.anon_0.x0() == 0 {
+    if (*ip).xDD4_itemVar.maril.x60.x0_s.x0() == 0 {
         (*ip).xDD4_itemVar.maril.x6C.y = (*attr).x8;
         (*ip).xDD4_itemVar.maril.x6C.x = ((core::f64::consts::PI * (-(*ip).facing_dir) as f64) / (*attr).x8 as f64) as f32;
-        (*ip).xDD4_itemVar.maril.x60.anon_0.set_x0(1);
+        (*ip).xDD4_itemVar.maril.x60.x0_s.set_x0(1);
         (*ip).facing_dir = -(*ip).facing_dir;
         (*ip).xDC8_word.flags.set_x19(0);
         (*ip).xDD4_itemVar.maril.x64 = -(*ip).xDD4_itemVar.maril.x64;
@@ -382,12 +382,12 @@ pub unsafe extern "C" fn itMaril_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
     let ip = GET_ITEM(gobj);
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::it_8027A160((*(*ip).xBBC_dynamicBoneTable).bones[1], ip);
-    if (*ip).xDD4_itemVar.maril.x60.anon_0.x0() != 0 {
+    if (*ip).xDD4_itemVar.maril.x60.x0_s.x0() != 0 {
         let rot = (*ip).xDD4_itemVar.maril.x6C.x;
         HSD_JObjAddRotationY(jobj, rot);
         (*ip).xDD4_itemVar.maril.x6C.y -= 1.0;
         if (*ip).xDD4_itemVar.maril.x6C.y <= 0.0 {
-            (*ip).xDD4_itemVar.maril.x60.anon_0.set_x0(0);
+            (*ip).xDD4_itemVar.maril.x60.x0_s.set_x0(0);
             (*ip).xDC8_word.flags.set_x19(1);
         }
     }

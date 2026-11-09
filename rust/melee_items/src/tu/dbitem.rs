@@ -24,12 +24,12 @@ pub unsafe fn db_80225DD8(item: *mut HSD_GObj, owner: *mut HSD_GObj) {
     melee_core::ct!("db_80225DD8");
     let it = (*item).user_data as *mut Item;
     if !ftLib_IsFighter(owner) {
-        (*it).anon_daa.xDAA_byte |= db_ShowItemCollisionBubbles as u8;
+        (*it).xDAA.xDAA_byte |= db_ShowItemCollisionBubbles as u8;
     } else {
-        (*it).anon_daa.xDAA_byte &= 0xFC;
+        (*it).xDAA.xDAA_byte &= 0xFC;
         let x = fn_8022697C(owner) as i32;
         if x != 0 {
-            (*it).anon_daa.xDAA_byte |= (x & 3) as u8;
+            (*it).xDAA.xDAA_byte |= (x & 3) as u8;
         }
     }
 }
@@ -93,5 +93,5 @@ pub unsafe fn db_AreItemSpawnsEnabled() -> i32 {
 pub unsafe fn db_80225D64(item: *mut HSD_GObj, _owner: *mut HSD_GObj) {
     melee_core::ct!("db_80225D64");
     let it = (*item).user_data as *mut Item;
-    (*it).anon_daa.xDAA_byte |= db_ShowItemCollisionBubbles as u8;
+    (*it).xDAA.xDAA_byte |= db_ShowItemCollisionBubbles as u8;
 }

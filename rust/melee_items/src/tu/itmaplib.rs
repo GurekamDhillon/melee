@@ -170,7 +170,7 @@ use crate::layout::itTaruCann_DatAttrs;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -543,7 +543,7 @@ pub unsafe extern "C" fn it_80275BC8(item_gobj: *mut HSD_GObj, arg_gobj: *mut HS
     sp24.right *= e8;
     sp24.left *= e8;
     (*ip).xC0C = (*ip).xC1C;
-    if (*ip).xDCE_flag.anon_0.b7() == 1 {
+    if (*ip).xDCE_flag.x0.b7() == 1 {
         it_80275D5C(item_gobj, &raw mut sp24);
     }
     it_80276100(item_gobj, &raw mut sp14);
@@ -601,7 +601,7 @@ pub unsafe extern "C" fn it_80275E98(item_gobj: *mut HSD_GObj, spawn: *mut Spawn
     (*item2).xC1C = (*item1).xC1C;
     set_ecb_source(item_gobj, item2, scale);
     (*coll).x50 = (*attr).x1C_damage_mul;
-    if (*spawn).x44_flag.anon_0.b0() == 1 {
+    if (*spawn).x44_flag.x0.b0() == 1 {
         if (*spawn).x48_ground_or_air == GA_Air {
             it_80276100(item_gobj, &raw mut (*spawn).pos);
             return;
@@ -641,7 +641,7 @@ pub unsafe extern "C" fn it_80276214(item_gobj: *mut HSD_GObj) {
     let it = (*item_gobj).user_data as *mut Item;
     (*it).x378_itemColl.last_pos = (*it).x378_itemColl.cur_pos;
     (*it).x378_itemColl.cur_pos = (*it).pos;
-    if (*it).xDCE_flag.anon_0.b7() == 1 {
+    if (*it).xDCE_flag.x0.b7() == 1 {
         it_80276278(item_gobj);
     }
 }
@@ -1187,7 +1187,7 @@ pub unsafe extern "C" fn it_80277C40(item_gobj: *mut HSD_GObj, arg1: i32) {
         sp20.x = (*coll).ecb.bottom.x;
         sp20.y = (*coll).ecb.bottom.y;
     }
-    if (*it).xDCF_flag.anon_0.b0() == 0 {
+    if (*it).xDCF_flag.x0.b0() == 0 {
         ext::it_80278800(item_gobj, 0x405, 0, &raw mut sp20, &raw mut sp14, 0, 0.0);
     }
 }

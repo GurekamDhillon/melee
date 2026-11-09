@@ -225,7 +225,7 @@ pub unsafe extern "C" fn it_8029D9A4(gobj: *mut HSD_GObj, msid: i32, arg2: u32) 
     let jobj = (*(*item).xBBC_dynamicBoneTable).bones[3];
     let y = HSD_JObjGetTranslationY(jobj);
     let x = HSD_JObjGetRotationX(jobj);
-    if (*item).xDD4_itemVar.linkbomb.x0.anon_0.b0() != 0 {
+    if (*item).xDD4_itemVar.linkbomb.x0.x0.b0() != 0 {
         ext::Item_80268E5C(gobj, msid, arg2 | ITEM_CMD_UPDATE as u32);
     } else {
         ext::Item_80268E5C(gobj, msid, arg2 | ITEM_ANIM_UPDATE as u32);
@@ -238,7 +238,7 @@ pub unsafe extern "C" fn it_8029D9A4(gobj: *mut HSD_GObj, msid: i32, arg2: u32) 
 #[inline]
 unsafe fn it_8029DB5C_Inline_AnimAddWithMtxDirty(gobj: *mut HSD_GObj) {
     let item_2 = GET_ITEM(gobj);
-    if (*item_2).xDD4_itemVar.linkbomb.x0.anon_0.b0() == 0 {
+    if (*item_2).xDD4_itemVar.linkbomb.x0.x0.b0() == 0 {
         let temp_f31 = (*item_2).xDD4_itemVar.linkbomb.x8;
         let temp_r31_2 = (*(*item_2).xBBC_dynamicBoneTable).bones[3];
         HSD_JObjAddTranslationYWithMtxDirty(temp_r31_2, temp_f31);
@@ -250,7 +250,7 @@ unsafe fn it_8029DB5C_Inline_AnimAddWithMtxDirty(gobj: *mut HSD_GObj) {
 /// `static inline it_8029DB5C_Inline_Matching`
 #[inline]
 unsafe fn it_8029DB5C_Inline_Matching(gobj: *mut HSD_GObj, item: *mut Item, article: *mut Article, sa: *mut itLinkBombAttributes) {
-    if (*item).xD44_lifeTimer <= (*sa).xC as f32 && (*item).xDD4_itemVar.linkbomb.x0.anon_0.b0() == 0 {
+    if (*item).xD44_lifeTimer <= (*sa).xC as f32 && (*item).xDD4_itemVar.linkbomb.x0.x0.b0() == 0 {
         let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
         (*item).xD0_itemStateDesc = &raw mut (*(*article).xC_itemStates).x0_itemStateDesc[3];
         let item_state_desc = (*item).xD0_itemStateDesc;
@@ -258,7 +258,7 @@ unsafe fn it_8029DB5C_Inline_Matching(gobj: *mut HSD_GObj, item: *mut Item, arti
             ext::Item_80268D34(gobj, item_state_desc);
         }
         ext::HSD_JObjAnimAll(jobj);
-        (*item).xDD4_itemVar.linkbomb.x0.anon_0.set_b0(1);
+        (*item).xDD4_itemVar.linkbomb.x0.x0.set_b0(1);
     }
     (*item).xD44_lifeTimer = (*item).xD44_lifeTimer - 1.0;
     it_8029DB5C_Inline_AnimAddWithMtxDirty(gobj);
@@ -268,7 +268,7 @@ unsafe fn it_8029DB5C_Inline_Matching(gobj: *mut HSD_GObj, item: *mut Item, arti
 #[inline]
 unsafe fn it_8029DB5C_Inline_AnimAdd_Part(gobj: *mut HSD_GObj) {
     let item_2 = GET_ITEM(gobj);
-    if (*item_2).xDD4_itemVar.linkbomb.x0.anon_0.b0() == 0 {
+    if (*item_2).xDD4_itemVar.linkbomb.x0.x0.b0() == 0 {
         let temp_f31 = (*item_2).xDD4_itemVar.linkbomb.x8;
         let temp_r31_2 = (*(*item_2).xBBC_dynamicBoneTable).bones[3];
         HSD_JObjAddTranslationY(temp_r31_2, temp_f31);
@@ -280,7 +280,7 @@ unsafe fn it_8029DB5C_Inline_AnimAdd_Part(gobj: *mut HSD_GObj) {
 /// `static inline it_8029DB5C_Inline_TimerCheck_Part`
 #[inline]
 unsafe fn it_8029DB5C_Inline_TimerCheck_Part(gobj: *mut HSD_GObj, item: *mut Item, article: *mut Article, sa: *mut itLinkBombAttributes) {
-    if (*item).xD44_lifeTimer <= (*sa).xC as f32 && (*item).xDD4_itemVar.linkbomb.x0.anon_0.b0() == 0 {
+    if (*item).xD44_lifeTimer <= (*sa).xC as f32 && (*item).xDD4_itemVar.linkbomb.x0.x0.b0() == 0 {
         let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
         (*item).xD0_itemStateDesc = &raw mut (*(*article).xC_itemStates).x0_itemStateDesc[3];
         let item_state_desc = (*item).xD0_itemStateDesc;
@@ -288,7 +288,7 @@ unsafe fn it_8029DB5C_Inline_TimerCheck_Part(gobj: *mut HSD_GObj, item: *mut Ite
             ext::Item_80268D34(gobj, item_state_desc);
         }
         ext::HSD_JObjAnimAll(jobj);
-        (*item).xDD4_itemVar.linkbomb.x0.anon_0.set_b0(1);
+        (*item).xDD4_itemVar.linkbomb.x0.x0.set_b0(1);
     }
     (*item).xD44_lifeTimer -= 1.0;
 }
@@ -311,9 +311,9 @@ pub unsafe extern "C" fn it_8029DB5C(gobj: *mut HSD_GObj) {
 #[inline]
 unsafe fn it_8029DD58_inline(item: *mut Item, attr: *mut itLinkBombAttributes, fighter_gobj: *mut Item_GObj, temp_r3: *mut Item_GObj, arg2: u32) {
     ext::it_80275158(temp_r3, (*attr).lifetime as f32);
-    (*item).xDD4_itemVar.linkbomb.x0.anon_0.set_b0(0);
+    (*item).xDD4_itemVar.linkbomb.x0.x0.set_b0(0);
     (*item).xDD4_itemVar.linkbomb.x10 = fighter_gobj;
-    (*item).xDD4_itemVar.linkbomb.x0.anon_0.set_b2(0);
+    (*item).xDD4_itemVar.linkbomb.x0.x0.set_b2(0);
     let temp_f2: f32 = (*attr).lifetime.wrapping_sub((*attr).xC) as f32;
     (*item).xDD4_itemVar.linkbomb.x8 = (-2.8000002f32 / temp_f2) * (*item).scl;
     (*item).xDD4_itemVar.linkbomb.xC = (-0.15707964f32 / temp_f2) * (*item).scl;
@@ -336,7 +336,7 @@ pub unsafe extern "C" fn it_8029DD58(fighter_gobj: *mut Item_GObj, arg1: *mut Ve
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = fighter_gobj;
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     let temp_r3 = ext::Item_80268B18(&mut spawn);
     if !temp_r3.is_null() {
@@ -550,7 +550,7 @@ pub unsafe extern "C" fn it_8029F18C(gobj: *mut HSD_GObj) {
     let temp_r0 = (*item).msid;
     (*item).xDD4_itemVar.linkbomb.x4 = fsign_inline((*item).x40_vel.x);
     ext::mpCollSetFacingDir(&mut (*item).x378_itemColl, float_sign_int_inline((*item).xDD4_itemVar.linkbomb.x4));
-    (*item).xDD4_itemVar.linkbomb.x0.anon_0.set_b1(1);
+    (*item).xDD4_itemVar.linkbomb.x0.x0.set_b1(1);
     it_8029D9A4(gobj, 4, 0);
 }
 
@@ -578,7 +578,7 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion4_Phys(gobj: *mut HSD_GObj) {
 
     let item = GET_ITEM(gobj);
     let sa = (*(*item).xC4_article_data).x4_specialAttributes as *mut itLinkBombAttributes;
-    if (*item).xDD4_itemVar.linkbomb.x0.anon_0.b1() != 0 {
+    if (*item).xDD4_itemVar.linkbomb.x0.x0.b1() != 0 {
         let temp_f2 = (*item).x40_vel.x;
         if temp_f2 != zero {
             // `(x2C * x4) + temp_f2`: fused multiply-add
@@ -662,7 +662,7 @@ pub unsafe extern "C" fn itLinkBomb_Logic16_DmgReceived(gobj: *mut Item_GObj) ->
     if (*item).msid != 5 {
         if (*item).xCA0 >= (*sa).x10 {
             it_8029F69C(gobj);
-        } else if (*item).xDD4_itemVar.linkbomb.x0.anon_0.b2() == 0 {
+        } else if (*item).xDD4_itemVar.linkbomb.x0.x0.b2() == 0 {
             if (*item).x40_vel.x > (*sa).x30 {
                 (*item).facing_dir = -(*item).xCCC_incDamageDirection;
                 (*item).x40_vel.x = (*sa).x14 * (*item).facing_dir;
@@ -672,7 +672,7 @@ pub unsafe extern "C" fn itLinkBomb_Logic16_DmgReceived(gobj: *mut Item_GObj) ->
                 ext::it_80272980(gobj);
             }
             (*item).x40_vel.y = (*sa).x18 * (*item).facing_dir;
-            (*item).xDD4_itemVar.linkbomb.x0.anon_0.set_b2(1);
+            (*item).xDD4_itemVar.linkbomb.x0.x0.set_b2(1);
         }
     }
     false

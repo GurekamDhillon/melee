@@ -214,7 +214,7 @@ pub fn ftCo_800D6B00(g: G, msid: i32) {
     melee_core::ct!("ftCo_800D6B00");
     let f = fp(g);
     if !ext::ftpickupitem_80094790(g) {
-        f.anon_2210.throw_flags = 0;
+        f.x2210.throw_flags = 0;
         ext::Fighter_ChangeMotionState(g, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         ext::ftAnim_8006EBA4(g);
         let f = fp(g);
@@ -246,8 +246,8 @@ fn loop_anim(g: G, end: &dyn Fn(G)) {
     }
     let f = fp(g);
     let b3 = unsafe {
-        if f.anon_2210.anon_0.throw_flags_b3() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b3(0);
+        if f.x2210.x0.throw_flags_b3() != 0 {
+            f.x2210.x0.set_throw_flags_b3(0);
             true
         } else {
             false
@@ -320,7 +320,7 @@ pub fn fn_800D6F58(g: G, item: *mut Item_GObj) {
     melee_core::ct!("fn_800D6F58");
     let f = fp(g);
     if ext::Geno_ItemPressDist(item, f) >= 0.0 {
-        ext::Geno_ItemPressCollect(item, f.player_id as i32);
+        ext::Geno_ItemPressCollect(item, f.player_idx as i32);
         fp(g).set_x2224_b1(1);
         return;
     }
@@ -336,12 +336,12 @@ pub fn fn_800D6F58(g: G, item: *mut Item_GObj) {
     } else {
         unsafe { (*(*f.ft_data).x8).x10 as i32 }
     };
-    ext::pl_8003E854(f.player_id as i32, f.is_sub_fighter() as i32, item);
+    ext::pl_8003E854(f.player_idx as i32, f.is_sub_fighter() as i32, item);
     ext::Item_8026AB54(item, g, part);
     ext::ftpickupitem_8009447C(g, item);
     let f = fp(g);
     let jobj = unsafe { (*f.parts.add((*(*f.ft_data).x8).x10 as usize)).joint };
-    ext::efAsync_Spawn(g, &mut f.x60C as *mut *mut c_void as *mut c_void, 0, 0x422, jobj);
+    ext::efAsync_Spawn(g, (&raw mut f.x60C) as *mut *mut c_void as *mut c_void, 0, 0x422, jobj);
     fp(g).set_x2224_b1(1);
 }
 

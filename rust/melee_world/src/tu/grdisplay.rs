@@ -48,7 +48,7 @@ pub mod ext {
     fn HSD_FogSet(a0: *mut HSD_Fog);
     fn HSD_GObj_80390EB8(a0: i32) -> u32 = |a0: i32| unsafe { melee_runtime::tu::gobj::HSD_GObj_80390EB8(a0 as _) as _ };
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) = |a0: *mut HSD_GObj, a1: u32| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _); } };
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_JObjDisp(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
     fn HSD_MtxInverseConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = |a0: *mut c_void, a1: *mut c_void, a2: *mut c_void| { unsafe { melee_runtime::tu::mtx_world::HSD_MtxInverseConcat(a0 as _, a1 as _, a2 as _); } };
@@ -212,7 +212,7 @@ pub unsafe extern "C" fn grDisplay_801C5DB0_surface_impl(gobj: *mut HSD_GObj, co
                     ext::lbShadow_8000EEE0(fighter);
                     fighter = (*fighter).next;
                 }
-                ext::HSD_GObj_JObjCallback(gobj, code);
+                ext::HSD_GObj_JObjCallback(gobj, code as isize);
             }
 
             if (*gp).x10_flags.b2() == 0 && ext::Camera_80030A78() == 0 && ext::Ground_801C1E18() != 0 {
@@ -226,15 +226,15 @@ pub unsafe extern "C" fn grDisplay_801C5DB0_surface_impl(gobj: *mut HSD_GObj, co
 }
 
 /// 1C5DB0 (`TARGET_PC` wrapper): the stage render callback.
-pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, code: i32) {
+pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, code: isize) {
     melee_core::ct!("grDisplay_801C5DB0");
     ext::SurfaceBegin(7);
-    grDisplay_801C5DB0_surface_impl(gobj, code);
+    grDisplay_801C5DB0_surface_impl(gobj, code as i32);
     ext::SurfaceEnd();
 }
 
 /// 1C5F60
-pub unsafe extern "C" fn grDisplay_801C5F60(gobj: *mut HSD_GObj, _code: i32) {
+pub unsafe extern "C" fn grDisplay_801C5F60(gobj: *mut HSD_GObj, _code: isize) {
     melee_core::ct!("grDisplay_801C5F60");
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
     if ext::HSD_CObjSetCurrent(cobj) != 0 {

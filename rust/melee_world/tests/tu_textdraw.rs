@@ -173,7 +173,7 @@ fn textdraw_matches_c() {
                     7 => m::DevText_Draw(p((rnd() % 32) as usize)),
                     8 => {
                         let pass = if rnd() & 1 != 0 { 2 } else { fv() as i32 };
-                        m::DevText_DrawAll(&raw mut GOBJ, pass);
+                        m::DevText_DrawAll(&raw mut GOBJ, pass as isize);
                     }
                     9 => {
                         let a = fv() as i32;

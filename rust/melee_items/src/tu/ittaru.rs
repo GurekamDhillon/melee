@@ -49,7 +49,7 @@ use crate::layout::itTaruCann_DatAttrs;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -190,7 +190,7 @@ pub unsafe extern "C" fn it_3F14_Logic2_Spawned(gobj: *mut Item_GObj) {
     let ip = GET_ITEM(gobj);
     (*ip).facing_dir = -1.0;
     (*ip).xD5C = 0;
-    (*ip).xDCE_flag.anon_0.set_b7(0);
+    (*ip).xDCE_flag.x0.set_b7(0);
     (*ip).xDAC_itcmd_var0 = 0;
     (*ip).xDB0_itcmd_var1 = 0;
     (*ip).xDD4_itemVar.taru.xDD4 = 0;
@@ -633,7 +633,7 @@ pub unsafe extern "C" fn it_802885C8(gobj: *mut Item_GObj) {
 
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
-    (*ip).xDCF_flag.anon_0.set_b2(1);
+    (*ip).xDCF_flag.x0.set_b2(1);
     (*ip).xDD4_itemVar.taru.xDD4 = 1;
     (*ip).xDD4_itemVar.taru.xDD8 = 40;
 
@@ -685,7 +685,7 @@ pub unsafe extern "C" fn it_802886C4(gobj: *mut Item_GObj) {
     ext::it_802756D0(gobj);
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
-    (*ip).xDCF_flag.anon_0.set_b2(1);
+    (*ip).xDCF_flag.x0.set_b2(1);
     (*ip).xDD4_itemVar.taru.xDD4 = 1;
     (*ip).xDD4_itemVar.taru.xDD8 = 0x28;
     ext::it_8026B3A8(gobj);

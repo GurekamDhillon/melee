@@ -44,8 +44,8 @@ fn ifnametag_matches_c() {
                 let mut ret = 0u32;
                 match op {
                     0 => {  let a0: u8 = (rnd() % 6) as u8; let a1: u8 = ((0 + (rnd() % 5) as i32)) as u8; let a2: u8 = (fv()) as u8; let a3: u8 = (fv()) as u8; ret = m::un_802FC9B4(a0, a1, a2, a3).to_bits(); }
-                    1 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(1) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::NameTag_RenderCallback(a0, a1); }
-                    2 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802FCAC4(a0, a1); }
+                    1 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(1) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::NameTag_RenderCallback(a0, a1 as isize); }
+                    2 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802FCAC4(a0, a1 as isize); }
                     3 => {   m::un_802FCBA0(); }
                     4 => {  let a0: i32 = (rnd() % 6) as i32; ret = m::has_nametag(a0) as u32; }
                     5 => {  let a0: *mut HSD_GObj = (&raw mut g::P_HSD_GObj[0]) as *mut HSD_GObj; m::fn_802FCC44(a0); }

@@ -119,7 +119,7 @@ pub unsafe extern "C" fn DevText_Create(id: i8, x: i32, y: i32, w: i32, h: i32, 
     t.set_current_color(0);
     t.prev = null_mut();
     t.next = null_mut();
-    t.buf = buf;
+    t.buf = buf as *mut DevTextGlyph;
     memzero(buf as *mut u8, h.wrapping_mul(w.wrapping_mul(2)));
     text
 }

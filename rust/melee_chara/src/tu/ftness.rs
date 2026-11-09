@@ -79,17 +79,17 @@ pub fn ftNs_Init_OnLoad(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let item_list = (*(*fp).ft_data).x48_items;
         push_attrs::<ftNessAttributes>(fp);
-        ext::it_8026B3F8(*item_list.add(0), It_Kind_Ness_PKFire as i32);
-        ext::it_8026B3F8(*item_list.add(1), It_Kind_Ness_PKFire_Flame as i32);
-        ext::it_8026B3F8(*item_list.add(2), It_Kind_Ness_PKFlush as i32);
-        ext::it_8026B3F8(*item_list.add(8), It_Kind_Ness_PKFlush_Explode as i32);
-        ext::it_8026B3F8(*item_list.add(3), It_Kind_Ness_PKThunder as i32);
-        ext::it_8026B3F8(*item_list.add(4), It_Kind_Ness_PKThunder1 as i32);
-        ext::it_8026B3F8(*item_list.add(5), It_Kind_Ness_PKThunder2 as i32);
-        ext::it_8026B3F8(*item_list.add(6), It_Kind_Ness_PKThunder3 as i32);
-        ext::it_8026B3F8(*item_list.add(7), It_Kind_Ness_PKThunder4 as i32);
-        ext::it_8026B3F8(*item_list.add(9), It_Kind_Ness_Bat as i32);
-        ext::it_8026B3F8(*item_list.add(10), It_Kind_Ness_Yoyo as i32);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Ness_PKFire as i32);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, It_Kind_Ness_PKFire_Flame as i32);
+        ext::it_8026B3F8((*item_list.add(2)).article as *mut ::core::ffi::c_void, It_Kind_Ness_PKFlush as i32);
+        ext::it_8026B3F8((*item_list.add(8)).article as *mut ::core::ffi::c_void, It_Kind_Ness_PKFlush_Explode as i32);
+        ext::it_8026B3F8((*item_list.add(3)).article as *mut ::core::ffi::c_void, It_Kind_Ness_PKThunder as i32);
+        ext::it_8026B3F8((*item_list.add(4)).article as *mut ::core::ffi::c_void, It_Kind_Ness_PKThunder1 as i32);
+        ext::it_8026B3F8((*item_list.add(5)).article as *mut ::core::ffi::c_void, It_Kind_Ness_PKThunder2 as i32);
+        ext::it_8026B3F8((*item_list.add(6)).article as *mut ::core::ffi::c_void, It_Kind_Ness_PKThunder3 as i32);
+        ext::it_8026B3F8((*item_list.add(7)).article as *mut ::core::ffi::c_void, It_Kind_Ness_PKThunder4 as i32);
+        ext::it_8026B3F8((*item_list.add(9)).article as *mut ::core::ffi::c_void, It_Kind_Ness_Bat as i32);
+        ext::it_8026B3F8((*item_list.add(10)).article as *mut ::core::ffi::c_void, It_Kind_Ness_Yoyo as i32);
     }
 }
 

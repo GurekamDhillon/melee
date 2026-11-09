@@ -152,7 +152,7 @@ pub fn ftKb_SpecialNMt_80106F9C(gobj: G) -> bool {
         if !gobj.is_null() {
             let fp = (*gobj).user_data as *mut Fighter;
             if is_mt_special_n_motion((*fp).motion_id as i32) {
-                return (*fp).x2070.anon_0.x2071_b6() != 0;
+                return (*fp).x2070.x0.x2071_b6() != 0;
             }
             return true;
         }

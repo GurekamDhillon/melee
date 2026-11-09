@@ -141,7 +141,7 @@ unsafe fn lights_pre() {
     set_gsn(5);
     let sd = m::stage_datas[m::stage_info.grkind as usize];
     if (*sd).callbacks.is_null() { (*sd).callbacks = (&raw mut SCB[0]) as *mut StageCallbacks; }
-    (*(*sd).callbacks).anon_10.anon_0.set_flags_b0(1);
+    (*(*sd).callbacks).x10.x0.set_flags_b0(1);
     STD.unkC = 1 + (fv() % 8) as i32;
 }
 unsafe fn pick_bgmflags() -> u32 {
@@ -231,7 +231,7 @@ unsafe fn setup_world() {
     m::stage_info.param = &raw mut GP;
 
     ARCH.unk0 = (&raw mut ARCHB) as *mut HSD_Archive; ARCH.unk4 = &raw mut STD; ARCH.unk8 = fv();
-    STD.unk0 = (&raw mut ENT) as *mut c_void; STD.unk4 = (fv() % 5) as i32; STD.unk8 = (&raw mut X8) as *mut UnkStageDat_x8_t; STD.unkC = 1 + (fv() % 8) as i32;
+    STD.unk0 = (&raw mut ENT) as *mut c_void; STD.count = (fv() % 5) as i32; STD.unk8 = (&raw mut X8) as *mut UnkStageDat_x8_t; STD.unkC = 1 + (fv() % 8) as i32;
     STD.unk10 = (&raw mut SPLP) as *mut *mut HSD_Spline; STD.unk14 = (fv() % 5) as i32; STD.unk18 = (&raw mut LOE) as *mut c_void; STD.unk1C = (fv() % 7) as i32;
     STD.unk20 = (&raw mut GSE) as *mut GroundShadowEntry; STD.unk24 = GSN;
     for i in 0..8usize {
@@ -241,7 +241,7 @@ unsafe fn setup_world() {
         HJ[i].rotation.x = rg(); HJ[i].rotation.y = rg(); HJ[i].rotation.z = rg();
         HJ[i].scale.x = rg(); HJ[i].scale.y = rg(); HJ[i].scale.z = rg();
         HJ[i].position.x = rg(); HJ[i].position.y = rg(); HJ[i].position.z = rg();
-        X8[i].unk0 = &raw mut HJ[i];
+        X8[i].joint = &raw mut HJ[i];
         X8[i].x10 = if fv() % 3 == 0 { null_mut() } else { &raw mut CAMD[(fv() & 1) as usize] };
         X8[i].x18 = (&raw mut LLP[(fv() % 3) as usize]) as *mut *mut LightList;
         X8[i].x1C = if fv() % 4 == 0 { null_mut() } else { &raw mut FD };
@@ -302,7 +302,7 @@ unsafe fn setup_world() {
         LNP[i].a = (fv() % 50) as usize as *mut c_void; LNP[i].f = lnfn as *mut c_void;
     }
     m::stage_info.x6A4 = if fv() % 3 == 0 { null_mut() } else { (&raw mut LNP[0]) as *mut c_void };
-    for i in 0..3usize { GID[i].unk0 = (fv() % 30) as i32; GID[i].unk4 = &raw mut ART; ITD[i] = &raw mut GID[i]; }
+    for i in 0..3usize { GID[i].gr_itkind = (fv() % 30) as i32; GID[i].article_data = &raw mut ART; ITD[i] = &raw mut GID[i]; }
     ITD[3] = null_mut();
     m::stage_info.itemdata = if fv() % 3 == 0 { null_mut() } else { (&raw mut ITD) as *mut *mut GroundItemData };
     AYA[0] = null_mut(); AYA[1] = (&raw mut DUM[0]) as *mut c_void; AYA[2] = (&raw mut DUM[1]) as *mut c_void;
@@ -320,7 +320,7 @@ unsafe fn setup_world() {
     m::stage_info.on_touch_line = if fv() % 3 == 0 { None } else { Some(sd_tl) };
     m::stage_info.on_check_shadow_render = if fv() % 3 == 0 { None } else { Some(sd_cs) };
     for i in 0..3usize { for j in 0..8usize {
-        SCB[i][j].anon_10.anon_0.set_flags_b0((fv() % 4 == 0) as u8); SCB[i][j].anon_10.anon_0.set_flags_b1((fv() % 4 == 0) as u8); SCB[i][j].anon_10.anon_0.set_flags_b2((fv() % 2 == 0) as u8);
+        SCB[i][j].x10.x0.set_flags_b0((fv() % 4 == 0) as u8); SCB[i][j].x10.x0.set_flags_b1((fv() % 4 == 0) as u8); SCB[i][j].x10.x0.set_flags_b2((fv() % 2 == 0) as u8);
     } }
     { let vv: [*mut Vec; 6] = [&raw mut m::stage_info.x130, &raw mut m::stage_info.x13C, &raw mut m::stage_info.x148, &raw mut m::stage_info.x154, &raw mut m::stage_info.x160, &raw mut m::stage_info.x16C];
       for i in 0..6usize { let k2 = if fv() % 2 == 0 { 30.0f32 } else { 1.0f32 }; (*vv[i]).x *= k2; (*vv[i]).y *= k2; (*vv[i]).z *= k2; } }
@@ -1026,7 +1026,7 @@ fn ground_matches_c() {
                         if TRACEON { let hs = H; hn("PRE"); hash_world(); H = hs; }
                         let a0: *mut HSD_GObj = &raw mut GO[(fv() & 3) as usize];
                         let a1: i32 = (fv() % 8) as i32;
-                        m::Ground_801C1E2C(a0, a1);
+                        m::Ground_801C1E2C(a0, a1 as isize);
                     }
                     74 => { // Ground_801C1E84
                         USEL = 0; USELH = 0;
@@ -1588,7 +1588,7 @@ fn ground_matches_c() {
                         if TRACEON { let hs = H; hn("PRE"); hash_world(); H = hs; }
                         let a0: *mut HSD_GObj = &raw mut GO[(fv() & 3) as usize];
                         let a1: i32 = (fv() % 8) as i32;
-                        m::Ground_801C4640(a0, a1);
+                        m::Ground_801C4640(a0, a1 as isize);
                     }
                     144 => { // Ground_801C466C
                         USEL = 0; USELH = 0;

@@ -447,7 +447,7 @@ pub fn ftKb_CopyCostumeRow(costume: i32) -> i32 {
 /// `FTKB_COPY_ROW(fp)`.
 #[inline(always)]
 unsafe fn copy_row(fp: *mut Fighter) -> usize {
-    ftKb_CopyCostumeRow((*fp).x619_costume_id as i32) as usize
+    ftKb_CopyCostumeRow((*fp).costume_id as i32) as usize
 }
 
 /// `ft_80459B88`: the loaded hat archives (slot 0 is `x0`, slot k+1 is `hats[k]`).
@@ -463,7 +463,7 @@ unsafe fn hat_slot(k: usize) -> *mut *mut c_void {
 #[inline(always)]
 pub unsafe fn hat_table(kind: usize) -> *mut KirbyHatStruct {
     melee_core::ct!("hat_table");
-    ft_80459B88.hats[kind]
+    ft_80459B88.anon_0.anon_0.hats[kind]
 }
 
 /// `ftKb_Init_803B7548`: ten zero floats.
@@ -1276,8 +1276,8 @@ pub fn ftKb_Init_OnDeath(gobj: *mut HSD_GObj) {
         (*fp).u.kb.hat.x14.data = null_mut();
         (*fp).u.kb.x60 = 0;
         (*fp).u.kb.x64 = 0;
-        if ext::Player_GetFlagsBit1((*fp).player_id as i32) != 0 && ext::Player_GetUnk4D((*fp).player_id as i32) != 4 {
-            ftKb_SpecialN_800F1BAC(gobj, ext::Player_GetUnk4D((*fp).player_id as i32), false);
+        if ext::Player_GetFlagsBit1((*fp).player_idx as i32) != 0 && ext::Player_GetUnk4D((*fp).player_idx as i32) != 4 {
+            ftKb_SpecialN_800F1BAC(gobj, ext::Player_GetUnk4D((*fp).player_idx as i32), false);
         }
     }
 }
@@ -1295,11 +1295,11 @@ pub fn ftKb_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*fp).dat_attrs = backup;
         (*fp).set_can_multijump(1);
         (*fp).x2D0 = (*fp).dat_attrs as *mut Fighter_x2D0_t;
-        (*fp).u.kb.hat.set_x8_b0((ext::Player_GetFlagsAEBit1((*fp).player_id as i32) & 1) as u8);
-        ext::it_8026B3F8(*item_list.add(0), It_Kind_Kirby_CBeam as i32);
-        ext::it_8026B3F8(*item_list.add(1), It_Kind_Kirby_Hammer as i32);
-        ext::it_8026B3F8(*item_list.add(2), It_Kind_Unk1 as i32);
-        ext::it_8026B3F8(*item_list.add(3), It_Kind_Unk2 as i32);
+        (*fp).u.kb.hat.set_x8_b0((ext::Player_GetFlagsAEBit1((*fp).player_idx as i32) & 1) as u8);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Kirby_CBeam as i32);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, It_Kind_Kirby_Hammer as i32);
+        ext::it_8026B3F8((*item_list.add(2)).article as *mut ::core::ffi::c_void, It_Kind_Unk1 as i32);
+        ext::it_8026B3F8((*item_list.add(3)).article as *mut ::core::ffi::c_void, It_Kind_Unk2 as i32);
     }
 }
 
@@ -1408,7 +1408,7 @@ pub fn ftKb_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 }
 
 /// `ftKb_Init_800EEB00(gobj, out)`: Pichu hat's dynamic-bones pointer, or NULL.
-pub fn ftKb_Init_800EEB00(_gobj: *mut HSD_GObj, arg1: *mut *mut ArticleDynamicBones) {
+pub fn ftKb_Init_800EEB00(_gobj: *mut HSD_GObj, arg1: *mut *mut BoneDynamicsTemplate) {
     melee_core::ct!("ftKb_Init_800EEB00");
     unsafe {
         let hat = hat_table(Ft_Kind_Pichu as usize);
@@ -1416,7 +1416,7 @@ pub fn ftKb_Init_800EEB00(_gobj: *mut HSD_GObj, arg1: *mut *mut ArticleDynamicBo
             *arg1 = null_mut();
             return;
         }
-        *arg1 = (*(*hat).hat_dynamics[4]).anon_0.ftDynamicBones;
+        *arg1 = (*(*hat).hat_dynamics[4]).x0.ftDynamicBones;
     }
 }
 
@@ -1628,7 +1628,7 @@ unsafe fn ftKb_SpecialN_insert_joint_refs(
     while !(*joint).is_null() {
         let parts = (*fp).parts;
         let mut bone = parts.add(*part_idx as usize);
-        while (*bone).anon_8.anon_0.flags_b1() == 0 {
+        while (*bone).x8.x0.flags_b1() == 0 {
             bone = bone.add(1);
             *part_idx += 1;
         }
@@ -1678,7 +1678,7 @@ pub fn ftKb_SpecialN_800EF0E4(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut u8) {
             let mut group_count: i32 = 0;
             // ftKb_SpecialN_800EF0E4_find_bone
             let mut bone = (*fp).parts.add(insert_part_idx as usize);
-            while (*bone).anon_8.anon_0.flags_b1() == 0 {
+            while (*bone).x8.x0.flags_b1() == 0 {
                 bone = bone.add(1);
                 arg2_idx += 1;
                 insert_part_idx += 1;
@@ -1710,7 +1710,7 @@ pub fn ftKb_SpecialN_800EF0E4(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut u8) {
                 if group_count >= 0x80 {
                     panic!("fighter dobj num over! (HSD_ASSERT ftkirby.c:0x44C)");
                 }
-                (*(*fp).parts.add(insert_part_idx as usize)).anon_8.anon_0.set_flags_b6(1);
+                (*(*fp).parts.add(insert_part_idx as usize)).x8.x0.set_flags_b6(1);
             }
             arg2_idx += 1;
             insert_part_idx += 1;
@@ -1767,14 +1767,14 @@ pub fn ftKb_SpecialN_800EF438(gobj: *mut HSD_GObj, hat: *mut KirbyHatStruct) {
             insert_part_idx = 0;
             while !current_joint.is_null() {
                 let mut group_count: i32 = 0;
-                while (*(*fp).parts.add(insert_part_idx as usize)).anon_8.anon_0.flags_b1() == 0 {
+                while (*(*fp).parts.add(insert_part_idx as usize)).x8.x0.flags_b1() == 0 {
                     insert_part_idx += 1;
                 }
                 let jobj = (*(*fp).parts.add(insert_part_idx as usize)).joint;
                 let mut dobj = ext::HSD_DObjLoadDesc((*current_joint).u.dobjdesc);
                 if !dobj.is_null() {
                     let tail = ext::HSD_JObjGetDObj(jobj);
-                    (*(*fp).parts.add(insert_part_idx as usize)).anon_8.anon_0.set_flags2_b7(1);
+                    (*(*fp).parts.add(insert_part_idx as usize)).x8.x0.set_flags2_b7(1);
                     ext::HSD_DObjResolveRefsAll(dobj, (*current_joint).u.dobjdesc);
                     append_dobj(jobj, tail, dobj);
                     loop {
@@ -1833,15 +1833,15 @@ pub fn ftKb_SpecialN_800EF69C(gobj: *mut HSD_GObj, _arg1: i32, hat: *mut KirbyHa
             while i < parts_num as usize {
                 let bone = (*fp).parts.add(i);
                 let jobj = (*bone).joint;
-                if !jobj.is_null() && ((*bone).anon_8.anon_0.flags_b6() != 0 || (*bone).anon_8.anon_0.flags2_b7() != 0) {
+                if !jobj.is_null() && ((*bone).x8.x0.flags_b6() != 0 || (*bone).x8.x0.flags2_b7() != 0) {
                     // (*b9p >> 1) & 1 and (*b9p >> 2) & 1 are the LSB-numbered bits 1 and 2 of flags2:
                     // flags2_b6 / flags2_b5 in the MSB-first bitfield names.
-                    if (*bone).anon_8.anon_0.flags2_b6() != 0 {
+                    if (*bone).x8.x0.flags2_b6() != 0 {
                         let dobj;
-                        if (*bone).anon_8.anon_0.flags2_b5() != 0 {
-                            dobj = *(*fp).x203C.data.add((*bone).anon_c.anon_0.xD() as usize);
+                        if (*bone).x8.x0.flags2_b5() != 0 {
+                            dobj = *(*fp).x203C.data.add((*bone).xC_u.x0.xD() as usize);
                         } else {
-                            dobj = *(*fp).dobj_list.data.add((*bone).anon_c.anon_0.xD() as usize);
+                            dobj = *(*fp).dobj_list.data.add((*bone).xC_u.x0.xD() as usize);
                         }
                         ext::HSD_DObjRemoveAll(if !dobj.is_null() { (*dobj).next } else { null_mut() });
                         ext::lb_8000CE30(dobj, null_mut());
@@ -1849,8 +1849,8 @@ pub fn ftKb_SpecialN_800EF69C(gobj: *mut HSD_GObj, _arg1: i32, hat: *mut KirbyHa
                         ext::HSD_DObjRemoveAll(ext::HSD_JObjGetDObj(jobj));
                         ext::lb_8000CE40(jobj, null_mut());
                     }
-                    (*(*fp).parts.add(i)).anon_8.anon_0.set_flags_b6(0);
-                    (*(*fp).parts.add(i)).anon_8.anon_0.set_flags2_b7(0);
+                    (*(*fp).parts.add(i)).x8.x0.set_flags_b6(0);
+                    (*(*fp).parts.add(i)).x8.x0.set_flags2_b7(0);
                 }
                 i += 1;
             }
@@ -1928,14 +1928,15 @@ pub fn ftKb_SpecialN_800EFA40(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         if (*fp).u.kb.hat.jobj.is_null() {
-            let unk = ft_80459B88.x0;
+            // `ft_80459B88.hats_pad`: Mario's hat row (the port's `Kirby_Unk` view is a KirbyHatStruct: x0 = hat_joint, x4 = desc, xC.. = hat_dynamics)
+            let unk = ft_80459B88.anon_0.anon_0.hats_pad;
             (*fp).u.kb.hat.x14.data = ext::HSD_ObjAlloc(ext::fighter_x2040_alloc_data()) as *mut *mut HSD_DObj;
             ext::ftPartsPObjSetDefaultClass();
-            (*fp).u.kb.hat.jobj = ext::HSD_JObjLoadJoint((*unk).x0);
+            (*fp).u.kb.hat.jobj = ext::HSD_JObjLoadJoint((*unk).hat_joint);
             (*fp).set_x2225_b2(1);
             ext::ftPartsPObjClearDefaultClass();
             ext::ftParts_80075650(gobj, (*fp).u.kb.hat.jobj, &mut (*fp).u.kb.hat.x14);
-            ext::ftParts_8007487C(&mut (*unk).x4, &mut (*fp).u.kb.hat.x24, 0, &mut (*fp).u.kb.hat.x14, &mut (*fp).u.kb.hat.x14);
+            ext::ftParts_8007487C(&mut (*unk).desc, &mut (*fp).u.kb.hat.x24, 0, &mut (*fp).u.kb.hat.x14, &mut (*fp).u.kb.hat.x14);
         }
     }
 }
@@ -2317,8 +2318,8 @@ pub fn ftKb_SpecialN_800F16D0(_gobj: *mut HSD_GObj, kind: i32) {
         }
         match kind as u32 {
             Ft_Kind_Mario => {
-                if !ft_80459B88.x0.is_null() {
-                    ext::it_8026B3F8((*ft_80459B88.x0).xC, It_Kind_Kirby_MarioFire as i32);
+                if !ft_80459B88.anon_0.anon_0.hats_pad.is_null() {
+                    ext::it_8026B3F8((*ft_80459B88.anon_0.anon_0.hats_pad).hat_dynamics[0] as *mut ::core::ffi::c_void, It_Kind_Kirby_MarioFire as i32);
                 }
             }
             Ft_Kind_Luigi => with_hat!(16, |hat| {
@@ -2503,7 +2504,7 @@ pub fn ftKb_SpecialN_800F1BAC(gobj: *mut HSD_GObj, kind: i32, arg2: bool) {
         if (*fp).u.kb.hat.kind as i32 != kind {
             // TARGET_PC: the hat archive table is zeroed before demo scenes; reload on demand.
             if (*hat_slot(kind as usize)).is_null() {
-                ftKb_SpecialN_800EED50(kind, (*fp).x619_costume_id as i32);
+                ftKb_SpecialN_800EED50(kind, (*fp).costume_id as i32);
             }
             (*fp).u.kb.hat.kind = kind as FighterKind;
             ftKb_SpecialN_800F190C(gobj, (*fp).u.kb.hat.kind as i32);

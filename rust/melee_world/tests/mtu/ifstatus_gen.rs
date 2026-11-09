@@ -365,7 +365,7 @@ pub fn hash_HSD_AObj(p: &HSD_AObj) {
     hm(p.end_frame.to_bits());
     hm(p.framerate.to_bits());
     hm(pi(p.fobj));
-    hm(pi(p.hsd_obj));
+    hm(pi(p.jobj));
 }
 
 pub fn fill_HSD_MatAnimJoint(p: &mut HSD_MatAnimJoint) {
@@ -596,7 +596,7 @@ pub fn fill_VsSceneController(p: &mut VsSceneController) {
     p.start.x1C_pad[i0] = fv() as _;
     }
     p.start.x20 = fv64() as _;
-    p.start.x28 = fv() as _;
+    p.start.it_kind = fv() as _;
     p.start.x2C = rg();
     p.start.x30 = rg();
     p.start.game_speed = rg();
@@ -801,7 +801,7 @@ pub fn hash_VsSceneController(p: &VsSceneController) {
     hm(p.start.x1C_pad[i0] as u32);
     }
     hm(p.start.x20 as u32); hm(((p.start.x20 as u64) >> 32) as u32);
-    hm(p.start.x28 as u32);
+    hm(p.start.it_kind as u32);
     hm(p.start.x2C.to_bits());
     hm(p.start.x30.to_bits());
     hm(p.start.game_speed.to_bits());

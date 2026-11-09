@@ -39,8 +39,8 @@ pub mod ext {
     fn DrawASCII(a0: i32, a1: f32, a2: f32, a3: *mut _GXColor) -> f32;
     fn DrawRectangle(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut _GXColor);
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
     fn HSD_CObjAlloc() -> *mut HSD_CObj = || unsafe { melee_runtime::tu::cobj::HSD_CObjAlloc() as _ };
     fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj = |a0: *mut HSD_CObjDesc| unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ };
     fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 = |a0: *mut HSD_CObj| unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ };
@@ -56,14 +56,14 @@ pub mod ext {
     fn HSD_FogSet(a0: *mut HSD_Fog);
     fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
-    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_803910D8(a0 as _, a1 as _); } };
+    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_803910D8(a0 as _, a1 as _); } };
     fn Wb_RenderActive() -> i32;
     fn hsd_80391A04(a0: f32, a1: f32, a2: i32) = |a0, a1, a2| unsafe { melee_runtime::tu::hsd_3915::native_80391A04(a0, a1, a2) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_803910D8(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_803910D8(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -307,8 +307,8 @@ pub unsafe extern "C" fn DevText_Draw(text: *mut DevText) {
             let mut col = 0i32;
             while col < t.w as i32 {
                 let index = (col + t.w as i32 * row) * 2;
-                let chr = *t.buf.offset(index as isize);
-                let color_idx = ((*t.buf.offset(index as isize + 1) as u8) & 0xC0) >> 6;
+                let chr = *(t.buf as *mut i8).offset(index as isize);
+                let color_idx = ((*(t.buf as *mut i8).offset(index as isize + 1) as u8) & 0xC0) >> 6;
                 if chr != 0 {
                     let mut color = t.text_colors[color_idx as usize];
                     ext::DrawASCII(chr as i32, x as f32, y as f32, &mut color);
@@ -339,7 +339,7 @@ pub unsafe extern "C" fn DevText_Draw(text: *mut DevText) {
 }
 
 /// `void DevText_DrawAll(HSD_GObj*, int pass)`: the bottom-half pass draws the whole list.
-pub unsafe extern "C" fn DevText_DrawAll(_gobj: *mut HSD_GObj, pass: i32) {
+pub unsafe extern "C" fn DevText_DrawAll(_gobj: *mut HSD_GObj, pass: isize) {
     melee_core::ct!("DevText_DrawAll");
     if pass as u32 == HSD_RP_BOTTOMHALF as u32 {
         let mut text = devtext_drawlist;

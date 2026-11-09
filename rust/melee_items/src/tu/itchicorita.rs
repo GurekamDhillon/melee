@@ -85,7 +85,7 @@ pub unsafe extern "C" fn it_802C9588(item_gobj: *mut Item_GObj) {
     let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut itChicoritaAttr;
     ext::it_80279C48(item_gobj);
     (*item).xDD4_itemVar.chicorita.x60 = -1;
-    (*item).anon_dbc.xDBC_itcmd_var4.flags.set_x0(0);
+    (*item).xDBC.xDBC_itcmd_var4.flags.set_x0(0);
     ext::it_80279CDC(item_gobj, (*attr).scale);
     (*item).xDD4_itemVar.chicorita.x64 = 0.0;
     it_802C9A74(item_gobj);
@@ -193,9 +193,9 @@ pub unsafe extern "C" fn itChicorita_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -
 pub unsafe extern "C" fn it_802C989C(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_802C989C");
     let item = (*item_gobj).user_data as *mut Item;
-    if (*item).anon_dbc.xDBC_itcmd_var4.flags.x0() != 0 {
+    if (*item).xDBC.xDBC_itcmd_var4.flags.x0() != 0 {
         it_802C9B20(item_gobj);
-        (*item).anon_dbc.xDBC_itcmd_var4.flags.set_x0(0);
+        (*item).xDBC.xDBC_itcmd_var4.flags.set_x0(0);
     }
 }
 
@@ -279,7 +279,7 @@ pub unsafe extern "C" fn it_802C9B20(chicorita_gobj: *mut Item_GObj) {
     spawn.kind = It_Kind_Chicorita_Leaf;
     spawn.x0_parent_gobj = (*chicorita).owner;
     spawn.x4_parent_gobj2 = chicorita_gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     if !ext::Item_80268B18(&mut spawn).is_null() {
         ext::Item_8026AE84(chicorita, 0x2710, 0x7F, 0x40);
     }

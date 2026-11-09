@@ -133,7 +133,7 @@ pub fn ftPp_SpecialS_80120E68(gobj: G) {
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
-        let gobj2 = ext::Player_GetEntityAtIndex((*fp).player_id as i32, 1);
+        let gobj2 = ext::Player_GetEntityAtIndex((*fp).player_idx as i32, 1);
 
         if !gobj2.is_null() {
             let fp2 = fpp(gobj2);
@@ -271,7 +271,7 @@ pub fn ftPp_SpecialAirHi_Enter(gobj: G) {
 unsafe fn checkNanaInRange(gobj: G) -> bool {
     let fp = fpp(gobj);
     let da = da(fp);
-    let nana_gobj = ext::Player_GetEntityAtIndex((*fp).player_id as i32, 1);
+    let nana_gobj = ext::Player_GetEntityAtIndex((*fp).player_idx as i32, 1);
     if !nana_gobj.is_null() {
         let nana_pos = &(*fpp(nana_gobj)).cur_pos;
         let dx = ((*fp).cur_pos.x - nana_pos.x) * ((*fp).cur_pos.x - nana_pos.x);
@@ -359,7 +359,7 @@ unsafe fn store_nana_hand(gobj: G, fp: *mut Fighter) {
     sp.x = 0.0;
     sp.y = 0.0;
     sp.z = 0.0;
-    let nn_gobj = ext::Player_GetEntityAtIndex((*fpp(gobj)).player_id as i32, 1);
+    let nn_gobj = ext::Player_GetEntityAtIndex((*fpp(gobj)).player_idx as i32, 1);
     if !nn_gobj.is_null() {
         let nn_fp = fpp(nn_gobj);
         if (*nn_fp).motion_id >= ftPp_MS_SpecialHi_0 as _ && (*nn_fp).motion_id <= ftPp_MS_SpecialHi_5 as _ {
@@ -400,7 +400,7 @@ unsafe fn throw0_nana_poll(gobj: G) -> bool {
     let fp = fpp(gobj);
     if (*fp).cmd_vars[1] != 0 {
         (*fp).cmd_vars[1] = 0;
-        let nn_gobj = ext::Player_GetEntityAtIndex((*fpp(gobj)).player_id as i32, 1);
+        let nn_gobj = ext::Player_GetEntityAtIndex((*fpp(gobj)).player_idx as i32, 1);
         let found = if !nn_gobj.is_null() && ext::ftNn_Init_8012309C(nn_gobj) == 1 { 1 } else { 0 };
         if found == 1 {
             ftPp_SpecialHi_8012280C(gobj);

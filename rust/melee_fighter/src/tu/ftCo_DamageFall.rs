@@ -108,7 +108,7 @@ fn abs_c(x: f32) -> f32 {
 /// counts on a fast stick move). 3417139d frame 4689: timer 2 is inside vanilla's window, not UCF's.
 pub fn ftCo_Ucf084Tumble(f: &Fighter) -> bool {
     melee_core::ct!("ftCo_Ucf084Tumble");
-    let port = f.x618_player_id as i32;
+    let port = f.pad_port as i32;
     let t = f.active_timer.lstick.x as i32;
     let prev = f.input.lstick[1].x;
     if ext::Replay_UcfVersion(port) != 84 {

@@ -316,6 +316,12 @@ def write_probe():
         # upstream #3562 removed mnDiagram_CleanupData / _AnimData / _MainOverlay (no port use)
         "src/melee/mn/mndiagram.c": {"mnDiagram_Assets", "mnDiagram_PopupAnimTableHead", "mnDiagram_AnimTable",
                                     "RankEntry", "mnDiagram_PopupData"},
+        # upstream #3583: the mn/gm .static.h records live in their TUs now
+        "src/melee/mn/mndiagram3.c": {"mnDiagram3_PosTable", "mnDiagram3_StatTable", "mnDiagram3_DataTable"},
+        "src/melee/mn/mndatadel.c": {"MnDataDelData", "MnDataDelGObjUserData", "WarnCommonJoints"},
+        "src/melee/gm/gmtoulib.c": {"lbl_803D9DAC_t", "lbl_803D9DD0_t"},
+        # StageListInfo closes inside its `#if defined(TARGET_PC)` branch (no verbatim extent): port_legacy.h declares it
+        "src/melee/mn/mnstagesel.c": {"StageSelUserData"},
     }
     for src, names in tu_records.items():
         source = (ROOT / src).read_bytes()
@@ -323,7 +329,7 @@ def write_probe():
         declarations = []
         for cur in tu.cursor.get_children():
             if (cur.spelling in names and cur.location.file and Path(cur.location.file.name).resolve() == ROOT / src
-                    and cur.kind in (K.STRUCT_DECL, K.UNION_DECL, K.TYPEDEF_DECL)):
+                    and cur.kind in (K.STRUCT_DECL, K.UNION_DECL, K.TYPEDEF_DECL, K.ENUM_DECL)):
                 declarations.append(cur)
         # A typedef struct appears twice in clang's cursor list; keep the containing typedef.
         declarations = [c for c in declarations if not any(

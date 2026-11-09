@@ -451,9 +451,9 @@ unsafe fn world_fill(fi: usize) {
     }
     for i in 0..2 { OIT[i] = (if rnd() % 3 != 0 { addr_of_mut!(OAD[i]) as *mut c_void } else { null_mut() }) as *mut HSD_ImageDesc; }
     for i in 0..4 {
-        OX8T[i].unk0 = if rnd() % 4 != 0 { addr_of_mut!(OJNT[(rnd() % 6) as usize]) } else { null_mut() };
-        OX8T[i].unk4 = addr_of_mut!(OAJP) as *mut _; OX8T[i].unk8 = addr_of_mut!(OMJP) as *mut _; OX8T[i].unkC = addr_of_mut!(OSJP) as *mut _;
-        OX8T[i].x28 = if rnd() % 4 != 0 { addr_of_mut!(OEF) as *mut c_void } else { null_mut() };
+        OX8T[i].joint = if rnd() % 4 != 0 { addr_of_mut!(OJNT[(rnd() % 6) as usize]) } else { null_mut() };
+        OX8T[i].anims = addr_of_mut!(OAJP) as *mut _; OX8T[i].matanims = addr_of_mut!(OMJP) as *mut _; OX8T[i].shapeanims = addr_of_mut!(OSJP) as *mut _;
+        OX8T[i].anim_loops = if rnd() % 4 != 0 { addr_of_mut!(OEF) as *mut c_void } else { null_mut() };
     }
     OUSD[0].unk8 = addr_of_mut!(OX8T) as *mut _; OUSD[0].unkC = 4;
     for i in 0..2 { OAR[i].unk4 = addr_of_mut!(OUSD[0]); OAR[i].unk0 = if rnd() % 3 != 0 { if rnd() % 2 != 0 { addr_of_mut!(OGO[0]) as *mut _ } else { usize::MAX as *mut _ } } else { null_mut() }; }
@@ -711,7 +711,7 @@ unsafe fn case_pre(fi: usize, a: &mut Args) {
         57 => { OPAR = rnd(); }
         73 => { OGP[0].map_id = rnd() % 4; }
         74 => { OGP[0].map_id = rnd() % 4; }
-        82 => { { for j in 0..4 { if OX8T[j].unk0.is_null() { OX8T[j].unk0 = addr_of_mut!(OJNT[0]); } } } }
+        82 => { { for j in 0..4 { if OX8T[j].joint.is_null() { OX8T[j].joint = addr_of_mut!(OJNT[0]); } } } }
         _ => {}
     }
 }

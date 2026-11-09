@@ -139,11 +139,11 @@ pub mod ext {
                     None => { return unsafe { melee_items::tu::itpeachparasol::it_802BDC38(item as _) as _ }; },
                 }
             }
-    pub static mut FTCO_800CEFE0: Option<fn(*mut HSD_GObj, i32) > = None;
+    pub static mut FTCO_800CEFE0: Option<fn(*mut HSD_GObj, isize) > = None;
             #[allow(non_snake_case)]
             pub fn ftCo_800CEFE0(gobj: *mut HSD_GObj, arg1: i32)  {
                 match unsafe { FTCO_800CEFE0 } {
-                    Some(f) => f(gobj, arg1),
+                    Some(f) => f(gobj, arg1 as isize),
                     None => { unsafe { melee_fighter::tu::ftCo_ItemParasolOpen::ftCo_800CEFE0(gobj as _, arg1 as _); } return; },
                 }
             }
@@ -177,8 +177,8 @@ fn MTXDegToRad(a: f32) -> f32 {
 
 /// `ftCheckThrowB3(fp)` (ft/inlines.h): test and clear `throw_flags_b3`.
 unsafe fn ftCheckThrowB3(fp: *mut Fighter) -> bool {
-    if (*fp).anon_2210.anon_0.throw_flags_b3() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b3(0);
+    if (*fp).x2210.x0.throw_flags_b3() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b3(0);
         true
     } else {
         false
@@ -335,7 +335,7 @@ fn doEnter(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[0] = 0;
         (*fp).cmd_vars[1] = 0;
         (*fp).cmd_vars[2] = 0;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).mv.pe.specialhi.kind = It_Kind_Capsule;
         (*fp).set_x2222_b2(1);
         let igobj = (*fp).item_gobj;

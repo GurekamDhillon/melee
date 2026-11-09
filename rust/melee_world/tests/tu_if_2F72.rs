@@ -170,7 +170,7 @@ fn if_2F72_matches_c() {
                         let gi = (rnd() % 8) as usize;
                         let cb = fv() as i32;
                         m::scinfstc_models.slots[si].gobj = &raw mut G[gi];
-                        m::fn_802F770C(&raw mut G[gi], cb);
+                        m::fn_802F770C(&raw mut G[gi], cb as isize);
                     }
                     6 => {
                         let gi = (rnd() % 8) as usize;

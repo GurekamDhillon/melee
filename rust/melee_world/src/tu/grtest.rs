@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::{Once, RwLock};
 
 use melee_types::{
-    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_JObj, HSD_PadStatus, Item, StageCallbacks, StageCallbacks_anon_135,
+    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_JObj, HSD_PadStatus, Item, StageCallbacks, StageCallbacks_x10,
     StageData, StageInfo, Vec3, CollLine_Ceiling, CollLine_Floor, CollLine_LeftWall, CollLine_RightWall, HSD_PAD_A,
     JOBJ_HIDDEN, JOBJ_MTX_DIRTY, JOBJ_MTX_INDEP_SRT, JOBJ_USER_DEF_MTX, QuakeKind_Small, Gr_Kind_Test,
 };
@@ -192,28 +192,28 @@ fn init_tables() {
             callback1: Some(grTest_8020715C),
             gobj_proc: Some(grTest_80207164),
             callback3: Some(grTest_80207168),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[1] = StageCallbacks {
             on_init: Some(stageGObj1_OnInit),
             callback1: Some(grTest_802073FC),
             gobj_proc: Some(grTest_80207404),
             callback3: Some(grTest_80207408),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[2] = StageCallbacks {
             on_init: Some(stageGObj2_OnInit),
             callback1: Some(grTest_802071BC),
             gobj_proc: Some(grTest_802071C4),
             callback3: Some(grTest_802073AC),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be(0xC0000000) },
+            x10: StageCallbacks_x10 { flags: u32::to_be(0xC0000000) },
         };
         t[3] = StageCallbacks {
             on_init: None,
             callback1: None,
             gobj_proc: None,
             callback3: None,
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         CALLBACKS.write(t);
         let mut sd: StageData = core::mem::zeroed();
@@ -398,7 +398,7 @@ pub unsafe extern "C" fn grTest_80207408(gobj: *mut HSD_GObj) {
     pub extern "C" fn grTest_802073FC(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grTest_8020740C (gr/grtest.c:199)
-    pub extern "C" fn grTest_8020740C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grTest_8020740C(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grTest_80207414 (gr/grtest.c:204)
     pub extern "C" fn grTest_80207414(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

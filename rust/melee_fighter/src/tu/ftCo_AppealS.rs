@@ -105,7 +105,7 @@ pub fn ftCo_800DEA28(g: G) {
         _ => ftCo_800DEBD0(g),
     }
     let f = fp(g);
-    ext::pl_80040120(f.player_id as i32, f.is_sub_fighter() as i32);
+    ext::pl_80040120(f.player_idx as i32, f.is_sub_fighter() as i32);
 }
 
 /// `ftCo_800DEAE8(gobj, msid0, msid1)`: enter msid1 (the left-facing variant) when facing

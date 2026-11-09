@@ -345,7 +345,7 @@ pub unsafe extern "C" fn itMatadogas_UnkMotion2_Phys(gobj: *mut Item_GObj) {
             ext::HSD_JObjSetMtxDirty(jobj);
         }
         (*item2).on_accessory = Some(it_802CB2B0);
-        (*item).xDD1_flag.anon_0.set_b1(1);
+        (*item).xDD1_flag.x0.set_b1(1);
     }
 }
 
@@ -371,7 +371,7 @@ pub unsafe extern "C" fn it_802CB4F0(gobj: *mut Item_GObj, kind: i32, radius: f3
     spawn.kind = kind;
     spawn.x0_parent_gobj = (*ip).owner;
     spawn.x4_parent_gobj2 = gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
 
     if !ext::Item_80268B18(&mut spawn).is_null() {

@@ -266,7 +266,7 @@ pub(crate) fn combo_count_push(fp: &mut Fighter) {
 pub fn ftcoll_800765f0(fp: &Fighter, victim: G, mut arg2: f32) -> f32 {
     melee_core::ct!("ftcoll_800765f0");
     let cur = fp.victim_gobj;
-    if !cur.is_null() && fp.anon_221b.x221B_b5() == 0 && cur != victim {
+    if !cur.is_null() && fp.x221B.x221B_b5() == 0 && cur != victim {
         arg2 *= cd().x128;
     }
     if fp.motion_id == ftCo_MS_DamageIce as _ {
@@ -307,8 +307,8 @@ pub fn ftcoll_80076764(arg0: i32, arg1: i32, arg2: G, arg3: *mut DynamicsDesc, f
             e.x0 = arg0 as _;
             e.kind = arg1 as _;
             e.gobj = arg2;
-            e.anon_c.unk_anim0 = arg3;
-            e.anon_10.hurt1 = hurt;
+            e.xC.unk_anim0 = arg3 as *mut lbColl_80008D30_arg1;
+            e.x10.hurt1 = hurt;
             e.pos = fp.cur_pos;
             e.size_of_xC = (*(arg3 as *const lbColl_80008D30_arg1)).damage as usize; // word 1 (`arg3->count` in the C)
         }
@@ -327,8 +327,8 @@ fn tiplog(kind: i32, gobj: G, hit0: HC, hit1: HC, len: u32, temp_dmg: f32) {
             e.x0 = 1;
             e.kind = kind as _;
             e.gobj = gobj;
-            e.anon_c.hit0 = hit0;
-            e.anon_10.hit1 = hit1;
+            e.xC.hit0 = hit0;
+            e.x10.hit1 = hit1;
             e.pos = (*hit0).hurt_coll_pos;
             e.x20 = temp_dmg;
             e.size_of_xC = len as usize;
@@ -431,15 +431,15 @@ unsafe fn script_clank_observe(a: F, ha: HC, b: F, item: It, hb: HC) {
         return;
     }
     if !b.is_null() {
-        ext::ScriptMods_Clank((*a).player_id as i32, (*b).player_id as i32, (*ha).damage, (*hb).damage);
+        ext::ScriptMods_Clank((*a).player_idx as i32, (*b).player_idx as i32, (*ha).damage, (*hb).damage);
     }
     if ext::Script_ClankWanted() == 0 {
         return;
     }
     let (pa, pb) = ((*ha).hurt_coll_pos, (*hb).hurt_coll_pos);
     ext::Script_Clank(
-        (*a).player_id as i32,
-        if b.is_null() { -1 } else { (*b).player_id as i32 },
+        (*a).player_idx as i32,
+        if b.is_null() { -1 } else { (*b).player_idx as i32 },
         if item.is_null() { 0 } else { (*item).entity as usize as i32 },
         if item.is_null() { -1 } else { (*item).kind as i32 },
         ((pa.x + pb.x) * 0.5).to_bits() as i32,
@@ -481,9 +481,9 @@ pub fn ftcoll_80076cbc(fp0: F, hit0: HC, fp1: F) {
         ext::ScriptGame_EchoConnected(hit0, fp1);
         {
             let f1 = &*fp1;
-            ext::Script_GameEvent(16, f1.player_id as i32, f1.motion_id as i32, 7, f1.is_sub_fighter() as i32);
+            ext::Script_GameEvent(16, f1.player_idx as i32, f1.motion_id as i32, 7, f1.is_sub_fighter() as i32);
             if f1.x221C_b2() != 0 {
-                ext::Script_GameEvent(16, f1.player_id as i32, f1.motion_id as i32, 8, f1.is_sub_fighter() as i32);
+                ext::Script_GameEvent(16, f1.player_idx as i32, f1.motion_id as i32, 8, f1.is_sub_fighter() as i32);
             }
             if f1.x221C_b2() != 0 {
                 ext::ScriptGame_SkillPerfectShield(fp1, fp0, 0, (*hit0).damage);
@@ -513,14 +513,14 @@ pub fn ftcoll_80076cbc(fp0: F, hit0: HC, fp1: F) {
             if f1.x221C_b2() == 0 {
                 let tmp = int_dmg.wrapping_add((*hit0).x34);
                 f1.x19A0_shieldDamageTaken = f1.x19A0_shieldDamageTaken.wrapping_add(if tmp < 0 { 0 } else { tmp } as _);
-                f1.x19BC_shieldDamageTaken3 = (*fp0).player_id as _;
+                f1.x19BC_shieldDamageTaken3 = (*fp0).player_idx as _;
                 f1.set_x221F_b6((*fp0).is_sub_fighter() as _);
                 spawn(1052, &(*hit0).hurt_coll_pos);
             } else {
                 ext::ftCo_80094138(fp1);
                 ext::ftCo_800BFFD0(&mut *fp1, 118, 0);
                 sfx(fp1, 104);
-                ext::pl_8003E150((*fp1).player_id as i32, (*fp1).is_sub_fighter() as i32);
+                ext::pl_8003E150((*fp1).player_idx as i32, (*fp1).is_sub_fighter() as i32);
                 spawn(27, &(*hit0).hurt_coll_pos);
             }
         }
@@ -570,7 +570,7 @@ unsafe fn inline_b3(fp0: F, hit0: HC, fp1: F) -> f32 {
     let vg = f1.victim_gobj;
     let gobj = (*fp0).gobj;
     let mut ret = (*hit0).damage;
-    if !vg.is_null() && f1.anon_221b.x221B_b5() == 0 && vg != gobj {
+    if !vg.is_null() && f1.x221B.x221B_b5() == 0 && vg != gobj {
         ret *= cd().x128;
     }
     if f1.motion_id == ftCo_MS_DamageIce as _ {
@@ -610,8 +610,8 @@ pub fn ftcoll_80076ed8(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
                         f1.dmg.x1840 = ti as _;
                     }
                     let mut fp = fp0;
-                    if !(*fp0).x1064_thrownHitbox.anon_134.owner.is_null() && !is_echo(hit0) {
-                        fp = fpg((*fp0).x1064_thrownHitbox.anon_134.owner);
+                    if !(*fp0).x1064_thrownHitbox.x134.owner.is_null() && !is_echo(hit0) {
+                        fp = fpg((*fp0).x1064_thrownHitbox.x134.owner);
                     }
                     tiplog((*fp).kind as i32, (*fp).gobj, hit0, hit1, len, temp_dmg);
                 }
@@ -645,8 +645,8 @@ pub fn ftcoll_80076ed8(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
                 }
                 if inline_b2(f1, dmg, count) {
                     let mut fp = fp0;
-                    if !(*fp0).x1064_thrownHitbox.anon_134.owner.is_null() && !is_echo(hit0) {
-                        fp = fpg((*fp0).x1064_thrownHitbox.anon_134.owner);
+                    if !(*fp0).x1064_thrownHitbox.x134.owner.is_null() && !is_echo(hit0) {
+                        fp = fpg((*fp0).x1064_thrownHitbox.x134.owner);
                     }
                     let len = (*hit0).unk_count as usize;
                     let (gobj, kind) = ((*fp).gobj, (*fp).kind);
@@ -656,8 +656,8 @@ pub fn ftcoll_80076ed8(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
                         e.x0 = 1;
                         e.kind = kind as _;
                         e.gobj = gobj;
-                        e.anon_c.hit0 = hit0;
-                        e.anon_10.hit1 = hit1;
+                        e.xC.hit0 = hit0;
+                        e.x10.hit1 = hit1;
                         e.pos = (*hit0).hurt_coll_pos;
                         e.x20 = (*hit0).damage;
                         e.size_of_xC = len;
@@ -691,8 +691,8 @@ pub fn ftcoll_80076ed8(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
                     let (f0, f1) = (&*fp0, &*fp1);
                     ext::Script_GameEvent(
                         2,
-                        f0.player_id as i32,
-                        f1.player_id as i32,
+                        f0.player_idx as i32,
+                        f1.player_idx as i32,
                         (if (0..4).contains(&idx) { idx } else { 0xFF })
                             | if f0.is_sub_fighter() != 0 { 0x100 } else { 0 }
                             | if f1.is_sub_fighter() != 0 { 0x200 } else { 0 },
@@ -760,7 +760,7 @@ pub fn ftcoll_80077464(item: It, hit: HC, fp: F) {
             it.xC74 = f.x2070.x2070_int;
             it.xC78 = f.x2074.x2074_vec;
             it.xC80 = f.x2074.x207C;
-            it.xC88 = f.x2074.anon_10.x2084 as i32;
+            it.xC88 = f.x2074.x10.x2084 as i32;
             it.xC8C = f.x2074.x2088;
             it.xC68 = if f.cur_pos.x > it.pos.x { -1.0 } else { 1.0 };
             it.xC6C = f.ReflectAttr.x1A34_damageMul;
@@ -780,7 +780,7 @@ pub fn ftcoll_80077688(item: It, hurt: HC, fp: F, pos: *mut Vec3, mut val: f32) 
     unsafe {
         {
             let f = &*fp;
-            ext::Script_GameEvent(16, f.player_id as i32, f.motion_id as i32, 7, f.is_sub_fighter() as i32);
+            ext::Script_GameEvent(16, f.player_idx as i32, f.motion_id as i32, 7, f.is_sub_fighter() as i32);
             if f.x221C_b2() != 0 {
                 ext::ScriptGame_SkillPerfectShield(fp, core::ptr::null_mut(), 1, 0.0);
             }
@@ -791,10 +791,10 @@ pub fn ftcoll_80077688(item: It, hurt: HC, fp: F, pos: *mut Vec3, mut val: f32) 
         let (it, f) = (&mut *item, &mut *fp);
         if dmg > it.xC34_damageDealt {
             it.xC50 = dmg;
-            if f.anon_221b.x221B_b2() == 0 {
-                it.xDCE_flag.anon_0.set_b5((*hurt).x42_b3() as _);
+            if f.x221B.x221B_b2() == 0 {
+                it.xDCE_flag.x0.set_b5((*hurt).x42_b3() as _);
             } else {
-                it.xDCE_flag.anon_0.set_b5(0);
+                it.xDCE_flag.x0.set_b5(0);
             }
             it.xCF4_fighterGObjUnk = f.gobj;
             let vel_x = it.x40_vel.x;
@@ -806,8 +806,8 @@ pub fn ftcoll_80077688(item: It, hurt: HC, fp: F, pos: *mut Vec3, mut val: f32) 
             } else {
                 1.0
             };
-            if it.xDCE_flag.anon_0.b5() != 0 {
-                if f.anon_221b.x221B_b1() != 0 {
+            if it.xDCE_flag.x0.b5() != 0 {
+                if f.x221B.x221B_b1() != 0 {
                     val = cd().x2D0 * 0.01745329252_f32;
                     it.xC54 = 0.0;
                     let c = melee_runtime::gekko::cosf(val);
@@ -815,7 +815,7 @@ pub fn ftcoll_80077688(item: It, hurt: HC, fp: F, pos: *mut Vec3, mut val: f32) 
                     it.xC58.x = if (*pos).x >= 0.0 { c } else { -c };
                     it.xC58.y = val;
                     it.xC58.z = 0.0;
-                    it.xDCE_flag.anon_0.set_b4(1);
+                    it.xDCE_flag.x0.set_b4(1);
                 } else {
                     it.xC54 = val;
                     it.xC58 = *pos;
@@ -829,7 +829,7 @@ pub fn ftcoll_80077688(item: It, hurt: HC, fp: F, pos: *mut Vec3, mut val: f32) 
         f.x19A0_shieldDamageTaken = f.x19A0_shieldDamageTaken.wrapping_add(if total < 0 { 0 } else { total } as _);
         if ext::ftLib_IsFighter(it.owner) {
             let o = &*fpg(it.owner);
-            f.x19BC_shieldDamageTaken3 = o.player_id as _;
+            f.x19BC_shieldDamageTaken3 = o.player_idx as _;
             f.set_x221F_b6(o.is_sub_fighter() as _);
         } else {
             f.x19BC_shieldDamageTaken3 = 6;
@@ -921,10 +921,10 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
             let mode = if (*hit).x41_b5() != 0 { 5 } else { 0 };
             ext::it_8026FAC4(item, hit, mode, fp as *mut c_void, false);
             let f = &mut *fp;
-            if f.x2224_b2() == 0 {
+            if f.stamina_dead() == 0 {
                 let k = it.kind as i32;
                 if k == It_Kind_Star as i32 || k == It_Kind_Kinoko as i32 || k == It_Kind_DKinoko as i32 {
-                    ext::Geno_ItemFamilyEvent(it.entity, 0, f.player_id as i32);
+                    ext::Geno_ItemFamilyEvent(it.entity, 0, f.player_idx as i32);
                 }
                 if k == It_Kind_Star as i32 {
                     (*hit).state = HC_DISABLED as _;
@@ -941,7 +941,7 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                     f.x2010 = f.x2010.wrapping_add(1);
                     it.xC34_damageDealt = 1;
                 }
-                ext::pl_8003E17C((*fp).player_id as i32, (*fp).is_sub_fighter() as i32, it.entity);
+                ext::pl_8003E17C((*fp).player_idx as i32, (*fp).is_sub_fighter() as i32, it.entity);
             }
             return false;
         }
@@ -949,7 +949,7 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
         let mut f3 = raw_dmg;
         {
             let f = &*fp;
-            if !f.victim_gobj.is_null() && f.anon_221b.x221B_b5() == 0 && !f.victim_gobj.is_null() {
+            if !f.victim_gobj.is_null() && f.x221B.x221B_b5() == 0 && !f.victim_gobj.is_null() {
                 f3 *= cd().x128;
             }
             if f.motion_id == ftCo_MS_DamageIce as _ {
@@ -986,8 +986,8 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                         e.x0 = 2;
                         e.kind = it.kind as _;
                         e.gobj = it.entity;
-                        e.anon_c.hit0 = hit;
-                        e.anon_10.hit1 = hit2;
+                        e.xC.hit0 = hit;
+                        e.x10.hit1 = hit2;
                         e.pos = (*hit).hurt_coll_pos;
                         e.x20 = f4;
                         e.size_of_xC = f2usize(half_raw_f);
@@ -1042,8 +1042,8 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                         e.x0 = 2;
                         e.kind = it.kind as _;
                         e.gobj = it.entity;
-                        e.anon_c.hit0 = hit;
-                        e.anon_10.hit1 = hit2;
+                        e.xC.hit0 = hit;
+                        e.x10.hit1 = hit2;
                         e.pos = (*hit).hurt_coll_pos;
                         e.x20 = (*hit).damage;
                         e.size_of_xC = f2usize(raw_dmg);
@@ -1057,7 +1057,7 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                 {
                     let mut owner = -1;
                     if !it.owner.is_null() && ext::ftLib_IsFighter(it.owner) {
-                        owner = (*fpg(it.owner)).player_id as i32;
+                        owner = (*fpg(it.owner)).player_idx as i32;
                     }
                     ext::ScriptGame_HitRuleWon(hit, fp);
                     ext::Geno_ArticleStunBonus(item, hit, fp);
@@ -1068,12 +1068,12 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                         ext::ScriptGame_CritHit(fpg(it.owner), hit, fp, scaled, 1);
                     }
                     let f = &*fp;
-                    let enemy = if f.is_sub_fighter() != 0 { 0 } else { ext::ScriptGame_EnemyContact(it.entity, f.player_id as i32, (*hit).x4) };
+                    let enemy = if f.is_sub_fighter() != 0 { 0 } else { ext::ScriptGame_EnemyContact(it.entity, f.player_idx as i32, (*hit).x4) };
                     let flags = 0xFF | 0x400 | if f.is_sub_fighter() != 0 { 0x200 } else { 0 };
                     if enemy != 0 {
-                        ext::Script_EnemyGameEvent(enemy, owner, f.player_id as i32, flags, scaled.to_bits() as i32, 0);
+                        ext::Script_EnemyGameEvent(enemy, owner, f.player_idx as i32, flags, scaled.to_bits() as i32, 0);
                     } else {
-                        ext::Script_GameEvent(2, owner, f.player_id as i32, flags, scaled.to_bits() as i32);
+                        ext::Script_GameEvent(2, owner, f.player_idx as i32, flags, scaled.to_bits() as i32);
                     }
                     let ofp = if owner < 0 { core::ptr::null_mut() } else { fpg(it.owner) };
                     ext::ScriptGame_ReportHitContext(ofp, fp, (*hit).element, 1);
@@ -1106,7 +1106,7 @@ fn f2usize(f: f32) -> usize {
 
 #[inline(always)]
 fn unk_val(fp: &Fighter, i: i32) -> i32 {
-    i + fp.player_id as i32 * 2 + fp.is_sub_fighter() as i32
+    i + fp.player_idx as i32 * 2 + fp.is_sub_fighter() as i32
 }
 
 /// The hurt sfx tail shared by 80078384 / 80078C70 / 8007925C: returns true if it played
@@ -1194,7 +1194,7 @@ pub fn ftcoll_8007861c(arg0: G, gobj: G, arg2: i32, arg3: i32, arg4: i32, arg5: 
         let prev = victim.dmg.x18c4_source_ply;
         if !attacker.is_null() {
             victim.dmg.x18C0 = if attacker == victim as *mut Fighter { 0 } else { (*attacker).x8_spawnNum as _ };
-            victim.dmg.x18c4_source_ply = (*attacker).player_id as _;
+            victim.dmg.x18c4_source_ply = (*attacker).player_idx as _;
             victim.dmg.x18C8 = -1;
             victim.set_x221F_b5((*attacker).is_sub_fighter() as _);
         } else {
@@ -1238,7 +1238,7 @@ pub fn ftcoll_80078754(arg0: G, arg1: G, arg2: bool) {
 
 unsafe fn item_damage_record(ip: It, victim: G, arg: *mut c_void) {
     let owner = (*ip).owner;
-    let p = &mut (*ip).xD94 as *mut Vec2 as *mut c_void;
+    let p = (&raw mut (*ip).xD94) as *mut c_void;
     let (kind, x2070, short) = ((*ip).kind as i32, (*ip).xD90.x2070_int, (*ip).xDA8_short);
     if ext::ftLib_IsFighter(owner) {
         ftcoll_8007861c(owner, victim, 2, kind, x2070, p, short, arg, 0);
@@ -1256,7 +1256,7 @@ pub fn ftcoll_800787b4(arg0: G, arg1: G, arg2: i32) {
         let ip = fpg(arg0) as It;
         let fp = &*fpg(arg1);
         if (*ip).kind as i32 == It_Kind_BombHei as i32 {
-            ext::pl_80041B08(fp.player_id as i32, fp.is_sub_fighter() as usize as *mut c_void, (*ip).x1C as u16);
+            ext::pl_80041B08(fp.player_idx as i32, fp.is_sub_fighter() as usize as *mut c_void, (*ip).x1C as u16);
         }
         item_damage_record(ip, arg1, arg2 as isize as *mut c_void);
     }
@@ -1275,7 +1275,7 @@ pub fn ftcoll_8007891c(arg0: G, arg1: G, arg2: f32) {
     ftcoll_80076444(arg0, arg1);
     unsafe {
         let (f0, f1) = (&*fpg(arg0), &*fpg(arg1));
-        ext::pl_8003EB30(arg2, f0.player_id as i32, f0.is_sub_fighter() as i32, f1.player_id as i32, f1.is_sub_fighter() as i32, f0.x2070.anon_0.x2073 as i32);
+        ext::pl_8003EB30(arg2, f0.player_idx as i32, f0.is_sub_fighter() as i32, f1.player_idx as i32, f1.is_sub_fighter() as i32, f0.x2070.x0.x2073 as i32);
     }
 }
 
@@ -1288,7 +1288,7 @@ pub fn ftcoll_80078998(arg0: G, arg1: G, arg2: f32) {
         let ip = &*(fpg(arg0) as It);
         if ext::ftLib_IsFighter(ip.owner) {
             let (o, v) = (&*fpg(ip.owner), &*fpg(arg1));
-            ext::pl_8003EB30(arg2, o.player_id as i32, o.is_sub_fighter() as i32, v.player_id as i32, v.is_sub_fighter() as i32, ip.xD90.anon_0.x2073 as i32);
+            ext::pl_8003EB30(arg2, o.player_idx as i32, o.is_sub_fighter() as i32, v.player_idx as i32, v.is_sub_fighter() as i32, ip.xD90.x0.x2073 as i32);
         }
     }
 }
@@ -1317,7 +1317,7 @@ pub fn ftcoll_80078a2c(this_gobj: G) {
                 && vf.x198C == 0
                 && vf.x221D_b6() == 0
                 && (vf.x1A6A & tf.x1A68) == 0
-                && vf.x2224_b2() == 0)
+                && vf.stamina_dead() == 0)
             {
                 continue;
             }
@@ -1346,7 +1346,7 @@ pub fn ftcoll_80078a2c(this_gobj: G) {
                                     let gg = (*v).gobj;
                                     tf.x1A5C = gg;
                                     tf.victim_gobj = gg;
-                                    tf.anon_221b.set_x221B_b5(1);
+                                    tf.x221B.set_x221B_b5(1);
                                     tf.unk_grab_val = d;
                                 }
                             }
@@ -1382,9 +1382,9 @@ pub fn ftcoll_80078c70(this_gobj: G) {
             }
             let v = fpg(victim_gobj);
             let (vf, tf) = (&*v, &*this_fp);
-            let thrown = vf.x1064_thrownHitbox.anon_134.owner;
-            let ordinary_allowed = (thrown.is_null() || tf.player_id as i32 != vf.grabber_unk1 as i32)
-                && (!thrown.is_null() || tf.player_id != vf.player_id)
+            let thrown = vf.x1064_thrownHitbox.x134.owner;
+            let ordinary_allowed = (thrown.is_null() || tf.player_idx as i32 != vf.grabber_unk1 as i32)
+                && (!thrown.is_null() || tf.player_idx != vf.player_idx)
                 && (!crate::hooks::gm_8016b168()
                     || ext::gm_8016B0D4()
                     || vf.x2225_b4() != 0
@@ -1393,7 +1393,7 @@ pub fn ftcoll_80078c70(this_gobj: G) {
             if !(ordinary_allowed || (cap_count(v) > 4 && echo_allowed(v, this_fp))) {
                 continue;
             }
-            if is_same_gobj && (*this_fp).anon_221b.x221B_b5() == 0 {
+            if is_same_gobj && (*this_fp).x221B.x221B_b5() == 0 {
                 count = 0;
                 let mut i = 0u32;
                 while i < cap_count(this_fp) {
@@ -1426,9 +1426,9 @@ pub fn ftcoll_80078c70(this_gobj: G) {
                     && (*hit0).element != HitElement_Catch as u32
                     && (*hit0).x42_b5() == 1
                     && (((*hit0).x40_b2() != 0 && ga((*this_fp).ground_or_air) == AIR) || ((*hit0).x40_b3() != 0 && ga((*this_fp).ground_or_air) == 0))
-                    && ((*hit0).anon_134.hit_grabbed_victim_only() == 0
+                    && ((*hit0).x134.hit_grabbed_victim_only() == 0
                         || vf.victim_gobj.is_null()
-                        || vf.anon_221b.x221B_b5() == 0
+                        || vf.x221B.x221B_b5() == 0
                         || vf.victim_gobj == this_gobj)
                     && (ext::ScriptGame_EchoBlocked(hit0, this_fp) == 0 && !ext::lbColl_8000ACFC(this_fp as *mut c_void, hit0));
                 if !ok {
@@ -1441,7 +1441,7 @@ pub fn ftcoll_80078c70(this_gobj: G) {
                     && this_gobj != vf.victim_gobj
                     && ga(tf.ground_or_air) == GROUND
                     && ga(vf.ground_or_air) == GROUND
-                    && tf.anon_221b.x221B_b5() == 0
+                    && tf.x221B.x221B_b5() == 0
                     && (*hit0).element != HitElement_Inert as u32
                     && (*hit0).x40_b0() == 1
                     && count != 0;
@@ -1467,10 +1467,10 @@ pub fn ftcoll_80078c70(this_gobj: G) {
                     continue;
                 }
                 let mut block_81 = true;
-                if (*this_fp).anon_221b.x221B_b0() != 0 {
+                if (*this_fp).x221B.x221B_b0() != 0 {
                     let tf = &*this_fp;
                     let mut var_r3 = true;
-                    if tf.anon_221b.x221B_b3() != 0 {
+                    if tf.x221B.x221B_b3() != 0 {
                         if -1.0 == tf.facing_dir {
                             if tf.cur_pos.x < (*v).cur_pos.x {
                                 var_r3 = false;
@@ -1479,7 +1479,7 @@ pub fn ftcoll_80078c70(this_gobj: G) {
                             var_r3 = false;
                         }
                     }
-                    if tf.anon_221b.x221B_b4() != 0 && (*hit0).x42_b4() == 0 {
+                    if tf.x221B.x221B_b4() != 0 && (*hit0).x42_b4() == 0 {
                         var_r3 = false;
                     }
                     if var_r3
@@ -1552,21 +1552,21 @@ pub fn ftcoll_8007925c(gobj: G) {
             if it.kind as i32 == It_Kind_Unk4 as i32 {
                 continue;
             }
-            if crate::hooks::ftlib_issameplayer(gobj, it.owner) && it.xDCD_flag.anon_0.b5() == 0 {
+            if crate::hooks::ftlib_issameplayer(gobj, it.owner) && it.xDCD_flag.x0.b5() == 0 {
                 continue;
             }
-            if crate::hooks::gm_8016b168() && !ext::gm_8016B0D4() && it.xDCD_flag.anon_0.b6() == 0 && it.x20_team_id as i32 == (*fp).team as i32 {
+            if crate::hooks::gm_8016b168() && !ext::gm_8016B0D4() && it.xDCD_flag.x0.b6() == 0 && it.x20_team_id as i32 == (*fp).team as i32 {
                 continue;
             }
-            if (*fp).anon_221b.x221B_b5() == 0 {
+            if (*fp).x221B.x221B_b5() == 0 {
                 hit_count = 0;
                 let f = &*fp;
-                let thrown = f.x1064_thrownHitbox.anon_134.owner;
+                let thrown = f.x1064_thrownHitbox.x134.owner;
                 if thrown.is_null()
-                    || ((!crate::hooks::ftlib_issameplayer(thrown, it.owner) || it.xDCD_flag.anon_0.b5() != 0)
+                    || ((!crate::hooks::ftlib_issameplayer(thrown, it.owner) || it.xDCD_flag.x0.b5() != 0)
                         && (!crate::hooks::gm_8016b168()
                             || ext::gm_8016B0D4()
-                            || it.xDCD_flag.anon_0.b6() != 0
+                            || it.xDCD_flag.x0.b6() != 0
                             || it.x20_team_id as i32 != f.x119C_teamUnk as i32))
                 {
                     let mut i = 0u32;
@@ -1635,7 +1635,7 @@ pub fn ftcoll_8007925c(gobj: G) {
                         continue;
                     }
                 }
-                if (*fp).anon_221b.x221B_b5() == 0 && var_r22 == 0 && hit_count != 0 {
+                if (*fp).x221B.x221B_b5() == 0 && var_r22 == 0 && hit_count != 0 {
                     let mut m = 0u32;
                     while m < cap_count(fp) {
                         if ftColl_804D6560[m as usize] as u8 == 0 {
@@ -1650,7 +1650,7 @@ pub fn ftcoll_8007925c(gobj: G) {
                                 continue;
                             }
                             if ext::lbColl_80007AFC(hurt, th, (*item).scl, (*fp).x34_scale.y) {
-                                (*item).xDCE_flag.anon_0.set_b6(1);
+                                (*item).xDCE_flag.x0.set_b6(1);
                                 (*item).toucher = gobj;
                                 continue 'hitbox;
                             }
@@ -1666,10 +1666,10 @@ pub fn ftcoll_8007925c(gobj: G) {
                     }
                 }
                 let f = &*fp;
-                if (*hurt).element != HitElement_Inert as u32 && f.anon_221b.x221B_b0() != 0 && (*hurt).x42_b1() != 0 {
+                if (*hurt).element != HitElement_Inert as u32 && f.x221B.x221B_b0() != 0 && (*hurt).x42_b1() != 0 {
                     let mut var_r3 = true;
                     let ix = (*item).pos.x;
-                    if f.anon_221b.x221B_b3() != 0 {
+                    if f.x221B.x221B_b3() != 0 {
                         if -1.0 == f.facing_dir {
                             if f.cur_pos.x < ix {
                                 var_r3 = false;
@@ -1678,13 +1678,13 @@ pub fn ftcoll_8007925c(gobj: G) {
                             var_r3 = false;
                         }
                     }
-                    if f.anon_221b.x221B_b4() != 0 && (*hurt).x42_b4() == 0 {
+                    if f.x221B.x221B_b4() != 0 && (*hurt).x42_b4() == 0 {
                         var_r3 = false;
                     }
                     if var_r3
                         && ext::lbColl_80007BCC(hurt, &mut (*fp).shield_hit, mtx(fp), var_r22, (*item).scl, (*fp).x34_scale.y, (*fp).cur_pos.z)
                     {
-                        if (*fp).anon_221b.x221B_b2() == 0 && ((*hurt).x42_b3() != 0 || (*fp).anon_221b.x221B_b1() != 0) {
+                        if (*fp).x221B.x221B_b2() == 0 && ((*hurt).x42_b3() != 0 || (*fp).x221B.x221B_b1() != 0) {
                             ext::lbColl_80007DD8(hurt, &mut (*fp).shield_hit, mtx(fp), &mut coll_pos, &mut coll_dist, (*item).scl);
                         }
                         ftcoll_80077688(item, hurt, fp, &mut coll_pos, coll_dist);
@@ -1702,7 +1702,7 @@ pub fn ftcoll_8007925c(gobj: G) {
                             (*fp).x34_scale.y,
                             (*fp).cur_pos.z,
                         ) {
-                            (*item).xDCE_flag.anon_0.set_b6(1);
+                            (*item).xDCE_flag.x0.set_b6(1);
                             (*item).toucher = gobj;
                             break;
                         }
@@ -1741,8 +1741,8 @@ pub fn ftcoll_8007925c(gobj: G) {
 /// `ftColl_GetDamageCount` (static inline).
 fn damage_count(fp: &Fighter, ftd: &ftCommonData) -> i32 {
     if fp.x2225_b7() != 0 {
-        if fp.x2224_b2() != 0 {
-            return ftd.x6D8[0];
+        if fp.stamina_dead() != 0 {
+            return ftd.x6D8;
         }
         return ftd.x6D4;
     }
@@ -1796,8 +1796,8 @@ pub fn ftcoll_80079c70(fp: F, attacker: F, hit: HC, unk_count: i32) -> f32 {
     unsafe {
         let f = &*fp;
         let weight = crate::hooks::script_value(f, 9, f.co_attrs.weight);
-        let defense = ext::Player_GetDefenseRatio(f.player_id as i32);
-        let attack = ext::Player_GetAttackRatio((*attacker).player_id as i32);
+        let defense = ext::Player_GetDefenseRatio(f.player_idx as i32);
+        let attack = ext::Player_GetAttackRatio((*attacker).player_idx as i32);
         let stage = ext::gm_8016B248();
         let ftd = cd();
         let h = &*hit;
@@ -1895,26 +1895,26 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
                 1 => {
                     let unk_count = entry.size_of_xC as i32;
                     let attacker = fpg(entry.gobj);
-                    let hit = entry.anon_c.hit0;
+                    let hit = entry.xC.hit0;
                     // clang evaluates the call arguments right to left (checked against the C oracle).
                     let weight = crate::hooks::script_value(&*fp, 9, (*fp).co_attrs.weight);
-                    let defense = ext::Player_GetDefenseRatio((*fp).player_id as i32);
-                    let attack = ext::Player_GetAttackRatio((*attacker).player_id as i32);
+                    let defense = ext::Player_GetDefenseRatio((*fp).player_idx as i32);
+                    let attack = ext::Player_GetAttackRatio((*attacker).player_idx as i32);
                     let stage = ext::gm_8016B248();
                     kb = ftcoll_80079ab0(&*fp, &*hit, unk_count as u32, stage, attack, defense, weight);
                     if arg4 != 0 && !ace_hide_hit_fx(gobj) {
-                        let h = entry.anon_c.hit0;
+                        let h = entry.xC.hit0;
                         hit_fx(gobj, &entry.pos, (*h).element, (*h).sfx_severity, entry.x20, kb);
                     }
                 }
                 2 => {
                     let item = &*(fpg(entry.gobj) as It);
                     let owner = item.owner;
-                    let attack = if ext::ftLib_IsFighter(owner) { ext::Player_GetAttackRatio((*fpg(owner)).player_id as i32) } else { 1.0 };
+                    let attack = if ext::ftLib_IsFighter(owner) { ext::Player_GetAttackRatio((*fpg(owner)).player_idx as i32) } else { 1.0 };
                     let weight = (*fp).co_attrs.weight;
-                    let defense = ext::Player_GetDefenseRatio((*fp).player_id as i32);
+                    let defense = ext::Player_GetDefenseRatio((*fp).player_idx as i32);
                     let stage = ext::gm_8016B248();
-                    let hit = &*entry.anon_c.hit0;
+                    let hit = &*entry.xC.hit0;
                     let ftd = cd();
                     let w = weight * ftd.xF4;
                     let unk_count = entry.size_of_xC as i32;
@@ -1934,9 +1934,9 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
                 }
                 3 => {
                     let mut stack_hit: HitCapsule = core::mem::zeroed();
-                    ext::lbColl_80008D30(&mut stack_hit, entry.anon_c.unk_anim0 as *mut c_void);
+                    ext::lbColl_80008D30(&mut stack_hit, entry.xC.unk_anim0 as *mut c_void);
                     let weight = (*fp).co_attrs.weight;
-                    let defense = ext::Player_GetDefenseRatio((*fp).player_id as i32);
+                    let defense = ext::Player_GetDefenseRatio((*fp).player_idx as i32);
                     let stage = ext::gm_8016B248();
                     let ftd = cd();
                     let w = weight * ftd.xF4;
@@ -1955,11 +1955,11 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
                 _ => {}
             }
             if entry.x0 as i32 == 1 || entry.x0 as i32 == 2 {
-                kb = ext::ScriptGame_HitRuleContact(entry.anon_c.hit0, fp, kb, 1);
+                kb = ext::ScriptGame_HitRuleContact(entry.xC.hit0, fp, kb, 1);
             }
             if kb > best_kb {
                 let f = &mut *fp;
-                let v = entry.x0 as i32 == 1 && !f.victim_gobj.is_null() && f.anon_221b.x221B_b5() == 0 && f.victim_gobj == entry.gobj;
+                let v = entry.x0 as i32 == 1 && !f.victim_gobj.is_null() && f.x221B.x221B_b5() == 0 && f.victim_gobj == entry.gobj;
                 f.set_x221C_b0(v as _);
                 best_kb = kb;
                 best_idx = i;
@@ -1981,9 +1981,9 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
         match best.x0 as i32 {
             1 => {
                 let attacker = &*fpg(best.gobj);
-                let src = f32::from_bits(ext::ScriptGame_EchoSourceX(best.anon_c.hit0, attacker.cur_pos.x.to_bits() as i32) as u32);
+                let src = f32::from_bits(ext::ScriptGame_EchoSourceX(best.xC.hit0, attacker.cur_pos.x.to_bits() as i32) as u32);
                 dir = if (*fp).cur_pos.x > src { -1.0 } else { 1.0 };
-                let h = &*best.anon_c.hit0;
+                let h = &*best.xC.hit0;
                 angle = h.kb_angle as u32 as f32;
                 element = h.element;
                 sfx_severity = h.sfx_severity;
@@ -2001,13 +2001,13 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
                 } else {
                     -1.0
                 };
-                let h = &*best.anon_c.hit0;
+                let h = &*best.xC.hit0;
                 angle = h.kb_angle as u32 as f32;
                 element = h.element;
                 sfx_severity = h.sfx_severity;
             }
             3 => {
-                let env = &*(best.anon_c.unk_anim0 as *const lbColl_80008D30_arg1);
+                let env = &*(best.xC.unk_anim0 as *const lbColl_80008D30_arg1);
                 dir = (*fp).facing_dir;
                 sfx_severity = 0;
                 angle = env.kb_angle as u32 as f32;
@@ -2015,8 +2015,8 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
             }
             _ => {}
         }
-        if (*best.anon_c.hit0).kb_angle as u32 == 0x16A {
-            let hurt = &*best.anon_10.hurt1;
+        if (*best.xC.hit0).kb_angle as u32 == 0x16A {
+            let hurt = &*best.x10.hurt1;
             let dx = fmadds(0.5, hurt.capsule.a_pos.x + hurt.capsule.b_pos.x, -best.pos.x);
             let dy = fmadds(0.5, hurt.capsule.a_pos.y + hurt.capsule.b_pos.y, -best.pos.y);
             dir = if dx < 0.0 { 1.0 } else { -1.0 };
@@ -2025,11 +2025,11 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
             angle = angle_int as f32;
         }
         if best.x0 as i32 == 1 {
-            ext::Geno_Autolink(fpg(best.gobj), best.anon_c.hit0, &mut dir, &mut angle, &mut best_kb);
+            ext::Geno_Autolink(fpg(best.gobj), best.xC.hit0, &mut dir, &mut angle, &mut best_kb);
         }
         out.dir = dir;
         out.angle = melee_core::ppc::fctiwz_f32(angle);
-        out.hurt_height = (*best.anon_10.hurt1).height as i32;
+        out.hurt_height = (*best.x10.hurt1).height as i32;
         out.kb = best_kb;
         out.pos = best.pos;
         out.element = element;
@@ -2048,7 +2048,7 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
                 let victim = &*fpg(gobj);
                 let ip = fpg(item_sub.entity) as It;
                 if (*ip).kind as i32 == It_Kind_BombHei as i32 {
-                    ext::pl_80041B08(victim.player_id as i32, victim.is_sub_fighter() as usize as *mut c_void, (*ip).x1C as u16);
+                    ext::pl_80041B08(victim.player_idx as i32, victim.is_sub_fighter() as usize as *mut c_void, (*ip).x1C as u16);
                 }
                 item_damage_record(ip, gobj, dmg_ptr);
             }
@@ -2069,7 +2069,7 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
             d.x1880 = out.pos;
             d.x188c = out.element as _;
             d.x1890 = out.sfx_severity;
-            d.x1894 = out.source as usize as u32 as i32;
+            d.x1894 = out.source as usize as *mut HSD_GObj;
             d.x1898 = out.damage;
         }
     }
@@ -2126,8 +2126,8 @@ pub fn ftcoll_8007ac9c(arg0: HC, arg1: i32, arg2: G) {
     unsafe {
         let fp = &mut *fpg(arg2);
         (*arg0).kb_angle = arg1 as _;
-        if ftcoll_8007ac68(arg1 as u32) && fp.x2074.anon_10.anon_0.x2084_b0() == 0 {
-            fp.x2074.anon_10.anon_0.set_x2084_b0(1);
+        if ftcoll_8007ac68(arg1 as u32) && fp.x2074.x10.x0.x2084_b0() == 0 {
+            fp.x2074.x10.x0.set_x2084_b0(1);
             ext::pl_80037ECC(arg2);
         }
     }
@@ -2260,11 +2260,11 @@ pub fn ftcoll_8007b1b8(g: G, shield: &ShieldDesc, cb: HSD_GObjEvent) {
     melee_core::ct!("ftcoll_8007b1b8");
     unsafe {
         let fp = &mut *fpg(g);
-        fp.anon_221b.set_x221B_b0(1);
-        fp.anon_221b.set_x221B_b1(0);
-        fp.anon_221b.set_x221B_b2(0);
-        fp.anon_221b.set_x221B_b3(0);
-        fp.anon_221b.set_x221B_b4(0);
+        fp.x221B.set_x221B_b0(1);
+        fp.x221B.set_x221B_b1(0);
+        fp.x221B.set_x221B_b2(0);
+        fp.x221B.set_x221B_b3(0);
+        fp.x221B.set_x221B_b4(0);
         fp.shield_hit_cb = cb;
         fp.shield_hit.bone = (*fp.parts.add(shield.bone as usize)).joint;
         fp.shield_hit.size = shield.radius;
@@ -2340,12 +2340,12 @@ pub fn ftcoll_8007b320(g: G) {
         let mut i = 0u32;
         while i < dyn_.x4 as u32 {
             let init = &*dyn_.x8.add(i as usize);
-            let joint = (*fp.parts.add(init.x0 as usize)).joint;
+            let joint = (*fp.parts.add(init.x0_bone_id as usize)).joint;
             let dst = &mut *fp.x1670.as_mut_ptr().add(i as usize); // the C indexes past the declared [1]
-            dst.x24 = init.x0 as _;
+            dst.x24 = init.x0_bone_id as _;
             dst.jobj = joint;
-            dst.v1 = init.x4;
-            dst.v2 = init.x10;
+            dst.v1 = init.x4_offset;
+            dst.v2 = init.x10_size;
             i += 1;
         }
     }
@@ -2488,8 +2488,8 @@ pub fn ftcoll_8007b8e8(gobj: G) {
         unsafe {
             if gobj != cur {
                 let fp = &mut *fpg(cur);
-                if fp.x1064_thrownHitbox.anon_134.owner == gobj {
-                    fp.x1064_thrownHitbox.anon_134.owner = core::ptr::null_mut();
+                if fp.x1064_thrownHitbox.x134.owner == gobj {
+                    fp.x1064_thrownHitbox.x134.owner = core::ptr::null_mut();
                 }
             }
             cur = (*cur).next;
@@ -2591,14 +2591,14 @@ pub fn ftcoll_8007bbcc(_g: G) -> f32 {
         for e in dmg_log0.iter().take(n) {
             match e.x0 as i32 {
                 x if x == EntityKind_Fighter as i32 => {
-                    let h = &*e.anon_c.hit0;
+                    let h = &*e.xC.hit0;
                     if h.element == HitElement_Lipstick as u32 {
                         dmg += h.damage;
                     }
                 }
                 x if x == EntityKind_Item as i32 => {
-                    if (*e.anon_c.hit0).element == HitElement_Lipstick as u32 {
-                        dmg += ext::it_8026B1D4(e.gobj, e.anon_c.hit0);
+                    if (*e.xC.hit0).element == HitElement_Lipstick as u32 {
+                        dmg += ext::it_8026B1D4(e.gobj, e.xC.hit0);
                     }
                 }
                 _ => {}
@@ -2621,7 +2621,7 @@ pub fn ftcoll_8007bc90(g: G) {
             cur = (*cur).next;
             let ip = fpg(ipg) as It;
             let it = &mut *ip;
-            if it.xD0C != 0 || it.xDD0_flag.anon_0.b4() == 0 || it.xD09 != 0 {
+            if it.xD0C != 0 || it.xDD0_flag.x0.b4() == 0 || it.xD09 != 0 {
                 continue;
             }
             for i in 0..4usize {
@@ -2649,7 +2649,7 @@ pub fn ftcoll_8007bc90(g: G) {
                             let ent = it.entity;
                             f.x1A64 = ent as *mut c_void;
                             f.target_item_gobj = ent;
-                            f.anon_221b.set_x221B_b6(1);
+                            f.x221B.set_x221B_b6(1);
                             f.unk_grab_val = dist;
                         }
                         continue 'next;
@@ -2690,7 +2690,7 @@ pub fn ftcoll_8007be3c(g: G) {
                 ext::plStale_UpdateStaleMovesFromFighter(source, victim);
                 ftcoll_80076444(source, victim);
                 let (s, v) = (&*fpg(source), &*fpg(victim));
-                ext::pl_8003EB30(amount, s.player_id as i32, s.is_sub_fighter() as i32, v.player_id as i32, v.is_sub_fighter() as i32, s.x2070.anon_0.x2073 as i32);
+                ext::pl_8003EB30(amount, s.player_idx as i32, s.is_sub_fighter() as i32, v.player_idx as i32, v.is_sub_fighter() as i32, s.x2070.x0.x2073 as i32);
             }
             x if x == HSD_GOBJ_CLASS_ITEM as i32 => {
                 let victim = (*fpg(g)).gobj;
@@ -2700,7 +2700,7 @@ pub fn ftcoll_8007be3c(g: G) {
                 let ip = &*(fpg(source) as It);
                 if ext::ftLib_IsFighter(ip.owner) {
                     let (o, v) = (&*fpg(ip.owner), &*fpg(victim));
-                    ext::pl_8003EB30(amount, o.player_id as i32, o.is_sub_fighter() as i32, v.player_id as i32, v.is_sub_fighter() as i32, ip.xD90.anon_0.x2073 as i32);
+                    ext::pl_8003EB30(amount, o.player_idx as i32, o.is_sub_fighter() as i32, v.player_idx as i32, v.is_sub_fighter() as i32, ip.xD90.x0.x2073 as i32);
                 }
             }
             _ => {}
@@ -2816,11 +2816,11 @@ pub fn ftColl_8007B128(gobj: G, bone_id: i32, state: HurtCapsuleState) {
 pub fn ftColl_8007B1B8(gobj: G, shield: *const ShieldDesc, cb: HSD_GObjEvent) {
     melee_core::ct!("ftColl_8007B1B8");
     let fp = fpg_r(gobj);
-    fp.anon_221b.set_x221B_b0(1);
-    fp.anon_221b.set_x221B_b1(0);
-    fp.anon_221b.set_x221B_b2(0);
-    fp.anon_221b.set_x221B_b3(0);
-    fp.anon_221b.set_x221B_b4(0);
+    fp.x221B.set_x221B_b0(1);
+    fp.x221B.set_x221B_b1(0);
+    fp.x221B.set_x221B_b2(0);
+    fp.x221B.set_x221B_b3(0);
+    fp.x221B.set_x221B_b4(0);
     fp.shield_hit_cb = cb;
     unsafe {
         fp.shield_hit.bone = (*fp.parts.add((*shield).bone as usize)).joint;
@@ -2937,8 +2937,8 @@ pub fn ftcoll_8007b8a8(hit: &mut HitCapsule, v: &Vec3) {
 pub fn ftcoll_8007b8cc(f: &mut Fighter, grabber: G_ft0df) {
     melee_core::ct!("ftcoll_8007b8cc");
     let gf = fp(grabber);
-    let (team, pid) = (gf.team, gf.player_id);
-    f.x1064_thrownHitbox.anon_134.owner = grabber;
+    let (team, pid) = (gf.team, gf.player_idx);
+    f.x1064_thrownHitbox.x134.owner = grabber;
     f.x119C_teamUnk = team;
     f.grabber_unk1 = pid;
 }

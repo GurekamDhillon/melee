@@ -209,7 +209,7 @@ pub unsafe extern "C" fn it_802E72E0(parent: *mut Item_GObj, bone: *mut HSD_JObj
     spawn.vel.y = 0.0;
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = null_mut();
-    spawn.x44_flag.anon_0.set_b0(0);
+    spawn.x44_flag.x0.set_b0(0);
     spawn.x40 = 0;
     let new_gobj = ext::Item_80268B18(&mut spawn);
     if !new_gobj.is_null() {
@@ -287,7 +287,7 @@ pub unsafe extern "C" fn it_802E7654(owner: *mut Item_GObj, bone: *mut HSD_JObj,
     spawn.vel.y = 0.0;
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = null_mut();
-    spawn.x44_flag.anon_0.set_b0(0);
+    spawn.x44_flag.x0.set_b0(0);
     spawn.x40 = 0;
     let new_gobj = ext::Item_80268B18(&mut spawn);
     if !new_gobj.is_null() {

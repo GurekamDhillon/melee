@@ -88,8 +88,8 @@ pub fn ftCo_800BD1DC(g: G, vg: G) {
     ext::ftCo_ReleaseItemAndVictim(g);
     f.x1A5C = vg;
     f.victim_gobj = vg;
-    f.anon_221b.set_x221B_b5(0);
-    f.anon_221b.set_x221B_b7(0);
+    f.x221B.set_x221B_b5(0);
+    f.x221B.set_x221B_b7(0);
     f.facing_dir = -vf.facing_dir;
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureKirby as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);

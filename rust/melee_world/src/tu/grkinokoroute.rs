@@ -103,10 +103,10 @@ pub mod ext {
     pub fn Ground_801C3DB4(a0: *mut c_void, a1: f32, a2: f32) -> s32 {
         match unsafe { GROUND_801C3DB4 } { Some(f) => f(a0, a1, a2), None => { return unsafe { crate::tu::ground::Ground_801C3DB4(a0 as _, a1 as _, a2 as _) as _ }; } }
     }
-    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
-        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
     }
     pub static mut GROUND_801C4A08: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
@@ -328,7 +328,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
+            x10: StageCallbacks_x10 { flags: u32::to_be($flags) },
         }
     };
 }
@@ -757,7 +757,7 @@ pub unsafe extern "C" fn grKinokoRoute_802084B4(gobj: *mut HSD_GObj) {
     melee_core::ct!("grKinokoRoute_802084B4");
     let mut sp_vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let ip = (*gobj).user_data as *mut Item;
-    let jobj = (*ip).xDD4_itemVar.yaku.anon_4.x4 as *mut HSD_JObj;
+    let jobj = (*ip).xDD4_itemVar.yaku.x4_u.x4 as *mut HSD_JObj;
 
     ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
 
@@ -862,4 +862,4 @@ type _Unused = c_void;
     pub extern "C" fn grKinokoRoute_80207C80(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grKinokoRoute_80208754 (gr/grkinokoroute.c:646)
-    pub extern "C" fn grKinokoRoute_80208754(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grKinokoRoute_80208754(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

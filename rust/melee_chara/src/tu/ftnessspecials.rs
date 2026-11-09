@@ -60,8 +60,8 @@ pub fn ftNs_SpecialS_ItemPKFireSpawn(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let ness_attr = (*fp).dat_attrs as *const ftNessAttributes;
         // `ftCheckThrowB0`-style test and clear of throw_flags_b0.
-        let flag_result = if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-            (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+        let flag_result = if (*fp).x2210.x0.throw_flags_b0() != 0 {
+            (*fp).x2210.x0.set_throw_flags_b0(0);
             true
         } else {
             false
@@ -100,7 +100,7 @@ pub fn ftNs_SpecialS_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftNs_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialS as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
@@ -113,7 +113,7 @@ pub fn ftNs_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftNs_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialAirS as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);

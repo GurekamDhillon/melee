@@ -370,7 +370,7 @@ pub unsafe fn gmMainLib_8015CFCC(arg0: u8) -> i32 {
 
 pub unsafe fn gmMainLib_8015D00C(arg0: u8) {
     melee_core::ct!("gmMainLib_8015D00C");
-    (*persistent_fighter_base_x7a(arg0)).anon_0.set_b0(1);
+    (*persistent_fighter_base_x7a(arg0)).x0.set_b0(1);
     (*gmMainLib_8015ED98()).xC |= selkind_mask(arg0);
 }
 

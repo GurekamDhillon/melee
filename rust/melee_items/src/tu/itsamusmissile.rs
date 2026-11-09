@@ -100,7 +100,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
     (*spawn).vel.x = 0.0;
     (*spawn).x0_parent_gobj = parent;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(initial_collision as _);
+    (*spawn).x44_flag.x0.set_b0(initial_collision as _);
     (*spawn).x40 = 0;
 }
 

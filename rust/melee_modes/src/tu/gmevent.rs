@@ -719,7 +719,7 @@ pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
     (*md).rules.x14 = 0;
     (*md).rules.x18 = 0;
     (*md).rules.x20 = (*(*lvl).evinit).x10;
-    (*md).rules.x28 = (*(*lvl).evinit).x18;
+    (*md).rules.it_kind = (*(*lvl).evinit).x18;
     (*md).rules.x30 = (*(*lvl).evinit).x1C;
     (*md).rules.game_speed = (*(*lvl).evinit).game_speed;
     (*md).rules.on_match_start = Some(fn_801BBFE8);

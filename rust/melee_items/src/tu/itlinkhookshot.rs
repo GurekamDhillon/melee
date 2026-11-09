@@ -70,7 +70,7 @@ use crate::layout::itTaruAttributes;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -184,10 +184,10 @@ pub mod ext {
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) };
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
@@ -221,13 +221,13 @@ pub mod ext {
     fn mpColl_8004B108(a0: *mut CollData) -> i32 => unsafe { melee_world::tu::mpcoll::mpColl_8004B108(a0) };
     fn mpColl_SetECBSource_Fixed(a0: *mut CollData, a1: *mut HSD_GObj, a2: f32, a3: f32, a4: f32, a5: f32) => unsafe { melee_world::tu::mpcoll::mpColl_SetECBSource_Fixed(a0, a1, a2, a3, a4, a5) };
     fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32 => unsafe { melee_world::tu::mplib::mpGetSpeed(a0, a1, a2) };
-    fn mpIsland_8005AB54(a0: i32) -> *mut mp_UnkStruct0 => unsafe { melee_world::tu::mpisland::mpIsland_8005AB54(a0) };
+    fn mpIsland_8005AB54(a0: i32) -> *mut mpIsland => unsafe { melee_world::tu::mpisland::mpIsland_8005AB54(a0) };
     fn mpLib_80054ED8(a0: i32) -> i32 => unsafe { melee_world::tu::mplib::mpLib_80054ED8(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
@@ -304,11 +304,11 @@ pub unsafe extern "C" fn it_802A2474(arg0: *mut c_void) {
     ext::HSD_ObjFree(&raw mut ext::item_link_alloc_data, arg0);
 }
 
-pub unsafe extern "C" fn it_802A24A0(obj: *mut HSD_GObj, arg1: i32) {
+pub unsafe extern "C" fn it_802A24A0(obj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("it_802A24A0");
     let link = (*obj).user_data as *mut ItemLink;
     if (*link).x2C_b0() != 0 {
-        ext::HSD_GObj_JObjCallback(obj, arg1);
+        ext::HSD_GObj_JObjCallback(obj, arg1 as isize);
     }
 }
 
@@ -997,14 +997,14 @@ pub unsafe fn it_802A3E50(item_link: *mut ItemLink, arg1: FighterKind, arg8: f32
         if (*item_link_next_2).x2C_b1() != 0 && (*item_link).x2C_b1() == 0 {
             let mp_island = ext::mpIsland_8005AB54((*item_link_next_2).coll_data.floor.index);
             if !mp_island.is_null() {
-                if (*mp_island).x14.x < (*item_link).pos.x && (*mp_island).x14.y > (*item_link).pos.y {
+                if (*mp_island).pos1.x < (*item_link).pos.x && (*mp_island).pos1.y > (*item_link).pos.y {
                     (*item_link).pos.x = (*item_link).pos.x;
-                    (*item_link).pos.y = (*mp_island).x14.y;
+                    (*item_link).pos.y = (*mp_island).pos1.y;
                     return (*coll).env_flags & (Collide_FloorMask | Collide_WallMask);
                 }
-                if (*mp_island).x8.x > (*item_link).pos.x && (*mp_island).x8.y > (*item_link).pos.y {
+                if (*mp_island).pos0.x > (*item_link).pos.x && (*mp_island).pos0.y > (*item_link).pos.y {
                     (*item_link).pos.x = (*item_link).pos.x;
-                    (*item_link).pos.y = (*mp_island).x14.y;
+                    (*item_link).pos.y = (*mp_island).pos1.y;
                     return (*coll).env_flags & (Collide_FloorMask | Collide_WallMask);
                 }
             }
@@ -1050,14 +1050,14 @@ pub unsafe fn it_802A40D0(item_link: *mut ItemLink, arg8: f32) -> i32 {
         if (*item_link_next_2).x2C_b1() != 0 && (*item_link).x2C_b1() == 0 {
             let mp_island = ext::mpIsland_8005AB54((*item_link_next_2).coll_data.floor.index);
             if !mp_island.is_null() {
-                if (*mp_island).x14.x < (*item_link).pos.x && (*mp_island).x14.y > (*item_link).pos.y {
+                if (*mp_island).pos1.x < (*item_link).pos.x && (*mp_island).pos1.y > (*item_link).pos.y {
                     (*item_link).pos.x = (*item_link).pos.x;
-                    (*item_link).pos.y = (*mp_island).x14.y;
+                    (*item_link).pos.y = (*mp_island).pos1.y;
                     return (*coll).env_flags & (Collide_FloorMask | Collide_WallMask);
                 }
-                if (*mp_island).x8.x > (*item_link).pos.x && (*mp_island).x8.y > (*item_link).pos.y {
+                if (*mp_island).pos0.x > (*item_link).pos.x && (*mp_island).pos0.y > (*item_link).pos.y {
                     (*item_link).pos.x = (*item_link).pos.x;
-                    (*item_link).pos.y = (*mp_island).x14.y;
+                    (*item_link).pos.y = (*mp_island).pos1.y;
                     return (*coll).env_flags & (Collide_FloorMask | Collide_WallMask);
                 }
             }

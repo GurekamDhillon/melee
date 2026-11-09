@@ -104,7 +104,7 @@ pub unsafe fn it_freeze_logic17_destroyed(ip: &mut Item) {
 /// `xDDC` indexes inside `gm` (as in C, `x90[i]` is not bounds-checked).
 pub unsafe fn it_heart_logic8_destroyed(ip: &mut Item, gm: &mut UnkAllstarData) {
     let h = &ip.xDD4_itemVar.heart;
-    if h.xDD8.anon_0.b0() != 0 {
+    if h.xDD8.x0.b0() != 0 {
         *(gm.x90.as_mut_ptr()).offset(h.xDDC as isize) = 0;
     }
 }
@@ -155,7 +155,7 @@ pub fn it_whitebea_unk_motion11_coll(ip: &mut Item) -> bool {
 pub unsafe fn it_swap_velocity(ip: &mut Item) {
     let attr = sa::<itLikelikeAttributes>(ip);
     ip.facing_dir = -ip.facing_dir;
-    ip.x40_vel.x = ip.facing_dir * (*attr.x0.x0_f32).y;
+    ip.x40_vel.x = ip.facing_dir * (*attr.x0).x4;
 }
 
 /// `swapVelocity` (itlikelike.c, static inline): `itSwapVelocity(gobj->user_data)`.

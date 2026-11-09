@@ -69,20 +69,20 @@ pub fn with_ev<R>(cb: HSD_GObjEvent, f: impl FnOnce(fn(*mut HSD_GObj)) -> R) -> 
 }
 
 thread_local! {
-    static COLL: core::cell::Cell<Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> bool>> = const { core::cell::Cell::new(None) };
+    static COLL: core::cell::Cell<Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> bool>> = const { core::cell::Cell::new(None) };
 }
 
-fn coll_tramp(g: *mut HSD_GObj, i: i32) -> bool {
+fn coll_tramp(g: *mut HSD_GObj, i: isize) -> bool {
     let f = COLL.with(|c| c.get()).expect("NULL collision callback called");
-    unsafe { f(g, i) }
+    unsafe { f(g, i as isize) }
 }
 
 /// Like [`with_ev`] for the `(collision callback, event callback)` pair the `ft_081b` landing / cliff
 /// helpers take.
 pub fn with_coll_ev<R>(
-    coll: unsafe extern "C" fn(*mut HSD_GObj, i32) -> bool,
+    coll: unsafe extern "C" fn(*mut HSD_GObj, isize) -> bool,
     cb: HSD_GObjEvent,
-    f: impl FnOnce(fn(*mut HSD_GObj, i32) -> bool, fn(*mut HSD_GObj)) -> R,
+    f: impl FnOnce(fn(*mut HSD_GObj, isize) -> bool, fn(*mut HSD_GObj)) -> R,
 ) -> R {
     let prev = COLL.with(|c| c.replace(Some(coll)));
     let r = with_ev(cb, |ev| f(coll_tramp, ev));

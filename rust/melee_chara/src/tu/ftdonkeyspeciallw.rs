@@ -105,7 +105,7 @@ pub fn doAnim(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         (*fp).x21EC = Some(callback_cb);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         st::Fighter_ChangeMotionState(gobj, ftDk_MS_SpecialLwLoop as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         ftDonkey_8010DE88_inner(gobj);
         (*fp).accessory4_cb = Some(cb_ftDk_Init_8010DB3C);

@@ -287,7 +287,7 @@ pub unsafe fn lb_80014534() {
 pub unsafe fn lb_80014574(arg0: u8, arg1: i32, arg2: i32, arg3: i32) {
     melee_core::ct!("lb_80014574");
     let e = lb_804D63C0.offset(arg2 as isize);
-    ext::HSD_PadRumbleAdd(arg0, arg1, if arg3 != 0 { arg3 } else { -2 }, (*e).unk4 as i32, (*e).unk);
+    ext::HSD_PadRumbleAdd(arg0, arg1, if arg3 != 0 { arg3 } else { -2 }, (*e).unk4 as i32, (*e).unk as *mut c_void);
 }
 
 /// 0145C0

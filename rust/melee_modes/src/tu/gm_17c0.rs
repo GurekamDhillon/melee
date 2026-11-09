@@ -294,7 +294,7 @@ pub unsafe fn BossHook_DriveDeaths() -> i32 {
             if BossHook_Kind((*fp).kind as i32) != 0
                 && ext::Player_GetRemainingHP(port) <= 0
                 && (*fp).motion_id != ftCo_MS_Sleep as _
-                && (*fp).x2224_b2() == 0
+                && (*fp).stamina_dead() == 0
                 && boss_hook.driven_mask & (<i32 as melee_core::ppc::Ppc>::pshl(1, (port) as i64)) == 0
             {
                 if ext::ftCo_800C8C84(gobj) != 0 {

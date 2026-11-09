@@ -74,14 +74,14 @@ pub mod ext {
     fn lbVector_Normalize(a0: *mut Vec) -> f32;
     fn lb_8000D008(a0: f32, a1: f32) -> f32;
     fn mpCheckCeiling(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: i32, a9: i32) -> i32;
-    fn mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, a13: *mut HSD_GObj) -> i32;
+    fn mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, a13: *mut HSD_GObj) -> i32;
     fn mpCheckLeftWall(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: i32, a9: i32) -> i32;
     fn mpCheckRightWall(a0: f32, a1: f32, a2: f32, a3: f32, a4: *mut Vec, a5: *mut i32, a6: *mut u32, a7: *mut Vec, a8: i32, a9: i32) -> i32;
     fn mpGetSpeed(a0: i32, a1: *mut Vec, a2: *mut Vec) -> i32;
-    fn mpIsland_8005AB54(a0: i32) -> *mut mp_UnkStruct0;
-    fn mpIsland_8005AC14(a0: *mut Vec, a1: f32) -> *mut mp_UnkStruct0;
-    fn mpIsland_8005AC8C(a0: *mut mp_UnkStruct0) -> i32;
-    fn mpIsland_8005ACE8(a0: *mut mp_UnkStruct0, a1: *mut Vec, a2: *mut Vec);
+    fn mpIsland_8005AB54(a0: i32) -> *mut mpIsland;
+    fn mpIsland_8005AC14(a0: *mut Vec, a1: f32) -> *mut mpIsland;
+    fn mpIsland_8005AC8C(a0: *mut mpIsland) -> i32;
+    fn mpIsland_8005ACE8(a0: *mut mpIsland, a1: *mut Vec, a2: *mut Vec);
     fn mpLineGetFlags(a0: i32) -> u32;
     }
     pub use crate::tu::fighter::Fighter_804D64FC;
@@ -554,7 +554,7 @@ pub unsafe fn ftCo_800A101C(mut arg0: *mut Fighter, mut arg1: i32, mut arg2: i32
     (*temp_r30).x40 = 5e+01f32;
     (*temp_r30).x44 = null_mut();
     (*temp_r30).x48 = null_mut();
-    (*temp_r30).x50 = 0 as u32;
+    (*temp_r30).x50 = core::ptr::null_mut();
     (*temp_r30).x98 = (*arg0).cur_pos;
     if ftCo_800A0FB0(core::ptr::addr_of_mut!(sp50) as *mut Vec, core::ptr::addr_of_mut!(sp34) as *mut i32, core::ptr::addr_of_mut!(sp30) as *mut u32, core::ptr::addr_of_mut!(sp44) as *mut Vec, (-1_i32), (-1_i32), (-1_i32), (*arg0).cur_pos.x, 1e+01f32 + (*arg0).cur_pos.y, (*arg0).cur_pos.x, (*arg0).cur_pos.y - 1e+03f32, 0.0f32) != 0 {
         (*temp_r30).x64.x = { (*temp_r30).x54.x = sp50.x; (*temp_r30).x54.x };
@@ -789,7 +789,7 @@ pub unsafe fn ftCo_800A1C44(mut fp: *mut Fighter) -> i32 {
     if ((*fp).x2168 != 0) && ((*fp).x2338.x == 0) {
         return 1;
     }
-    if (*fp).x221F_b3() != 0 {
+    if (*fp).is_sleeping() != 0 {
         return 1;
     }
     return 0;
@@ -802,7 +802,7 @@ pub unsafe fn ftCo_800A1CA8(mut fp: *mut Fighter) -> i32 {
 }
 
 /// `ftCo_800A1CC4_inline0`
-unsafe fn ftCo_800A1CC4_inline0(mut fp: *mut Fighter, mut var_r29: *mut ftCo_803C6594_t, mut temp_r3: *mut mp_UnkStruct0) -> i32 {
+unsafe fn ftCo_800A1CC4_inline0(mut fp: *mut Fighter, mut var_r29: *mut ftCo_803C6594_t, mut temp_r3: *mut mpIsland) -> i32 {
     if ext::mpIsland_8005AC14(core::ptr::addr_of_mut!((*var_r29).x0) as *mut Vec, -1e+01f32) == temp_r3 {
         if ((*var_r29).x44 as i32) != 0 {
             let mut temp_f1: f32 = (*fp).cur_pos.x;
@@ -834,7 +834,7 @@ unsafe fn ftCo_800A1CC4(mut fp: *mut Fighter, mut var_r29: *mut ftCo_803C6594_t)
     let mut data: *mut CpuFighter = null_mut();
     data = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if ((((!var_r29.is_null()) && ((*data).x60 == 0)) && ((*data).kind != (0 as u32))) && ((*fp).ground_or_air != ((GA_Air as i32) as u32))) && (!(ftCo_800A21FC(fp) != 0)) {
-        let mut temp_r3: *mut mp_UnkStruct0 = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
+        let mut temp_r3: *mut mpIsland = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
         if !temp_r3.is_null() {
             let mut dy: f32 = (*data).x54.y - (*fp).cur_pos.y;
             let mut angle: f32 = ext::lb_8000D008(dy, if ((*data).x54.x - (*fp).cur_pos.x) < (0 as f32) { -((*data).x54.x - (*fp).cur_pos.x) } else { (*data).x54.x - (*fp).cur_pos.x });
@@ -891,7 +891,7 @@ pub unsafe fn ftCo_800A1F3C(mut fp: *mut Fighter, mut arg1: f32, mut arg2: f32, 
         (*data).x54.x = arg1;
         (*data).x54.y = arg2;
         (*data).x38 = arg3;
-        if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("x38 set1 {} p{} t {:?} x56C {} ", arg3, (*fp).player_id, ((*data).x54.x, (*data).x54.y), (*data).x56C); }
+        if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("x38 set1 {} p{} t {:?} x56C {} ", arg3, (*fp).player_idx, ((*data).x54.x, (*data).x54.y), (*data).x56C); }
         ftCo_800A1CC4(fp, ext::ftCo_803C6594[ext::stage_info.grkind as usize]);
     }
 }
@@ -908,7 +908,7 @@ unsafe fn ftCo_800A75DC_set_target(mut fp: *mut Fighter, mut x60: *const i32, mu
         (*data).x54.x = arg1;
         (*data).x54.y = arg2;
         (*data).x38 = arg3;
-        if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("x38 set2 {} p{} t {:?}", arg3, (*fp).player_id, ((*data).x54.x, (*data).x54.y)); }
+        if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("x38 set2 {} p{} t {:?}", arg3, (*fp).player_idx, ((*data).x54.x, (*data).x54.y)); }
         ftCo_ApplyStageEntry(fp, ext::stage_info.grkind);
     }
 }
@@ -934,7 +934,7 @@ pub unsafe fn ftCo_800A1F98(mut x: i32, mut y: f32) -> i32 {
 /// `ftCo_IsCpuControlled`
 pub unsafe fn ftCo_IsCpuControlled(mut fp: *mut Fighter) -> i32 {
     melee_core::ct!("ftCo_IsCpuControlled");
-    if ext::Player_8003248C((*fp).player_id as i32, (*fp).is_sub_fighter() as i32) != ((Gm_PKind_Cpu as i32) as u32) {
+    if ext::Player_8003248C((*fp).player_idx as i32, (*fp).is_sub_fighter() as i32) != ((Gm_PKind_Cpu as i32) as u32) {
         return 0;
     }
     if (*fp).cpu.kind == (5 as u32) {
@@ -962,7 +962,7 @@ pub unsafe fn ftCo_800A20A0(mut fp: *mut Fighter) {
 /// `ftCo_800A2170`
 pub unsafe fn ftCo_800A2170(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> i32 {
     melee_core::ct!("ftCo_800A2170");
-    let mut temp_r3: *mut mp_UnkStruct0 = null_mut();
+    let mut temp_r3: *mut mpIsland = null_mut();
     if (*fp0).ground_or_air == ((GA_Air as i32) as u32) {
         return 0;
     }
@@ -983,7 +983,7 @@ pub unsafe fn ftCo_800A2170(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> i32
 pub unsafe fn ftCo_800A21FC(mut fp: *mut Fighter) -> i32 {
     melee_core::ct!("ftCo_800A21FC");
     let mut vec: Vec3 = unsafe { core::mem::zeroed() };
-    let mut data0: *mut mp_UnkStruct0 = null_mut();
+    let mut data0: *mut mpIsland = null_mut();
     let mut data1: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     if (*fp).ground_or_air == ((GA_Air as i32) as u32) {
         return 0;
@@ -1113,9 +1113,9 @@ pub unsafe fn ftCo_800A229C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
 }
 
 /// `ftCo_800A2718`
-pub unsafe fn ftCo_800A2718(mut arg0: *mut mp_UnkStruct0) -> i32 {
+pub unsafe fn ftCo_800A2718(mut arg0: *mut mpIsland) -> i32 {
     melee_core::ct!("ftCo_800A2718");
-    let mut island: *mut mp_UnkStruct0 = arg0;
+    let mut island: *mut mpIsland = arg0;
     if arg0.is_null() {
         return 0;
     }
@@ -1149,11 +1149,11 @@ pub unsafe fn ftCo_800A2718(mut arg0: *mut mp_UnkStruct0) -> i32 {
                 }
                 8 => {
                     {
-                        let mut y: f32 = (*island).x14.y;
+                        let mut y: f32 = (*island).pos1.y;
                         if ftCo_800A1F98(90, y) != 0 {
                             return 1;
                         }
-                        y = (*island).x8.y;
+                        y = (*island).pos0.y;
                         if ftCo_800A1F98(90, y) != 0 {
                             return 1;
                         }
@@ -1164,7 +1164,7 @@ pub unsafe fn ftCo_800A2718(mut arg0: *mut mp_UnkStruct0) -> i32 {
                     {
                         let mut ret: i32 = 0;
                         let mut ret2: i32 = 0;
-                        let mut y: f32 = (*island).x14.y;
+                        let mut y: f32 = (*island).pos1.y;
                         if (*stage) != ((Gr_Kind_Onett as i32) as u32) {
                             ret = 0;
                         } else if ((y as f64) <= 5.0f64) && (ext::Ground_801C5794() != 0) {
@@ -1175,7 +1175,7 @@ pub unsafe fn ftCo_800A2718(mut arg0: *mut mp_UnkStruct0) -> i32 {
                         if ret != 0 {
                             return 1;
                         }
-                        y = (*island).x8.y;
+                        y = (*island).pos0.y;
                         if (*stage) != ((Gr_Kind_Onett as i32) as u32) {
                             ret2 = 0;
                         } else if ((y as f64) <= 5.0f64) && (ext::Ground_801C5794() != 0) {
@@ -1198,17 +1198,17 @@ pub unsafe fn ftCo_800A2718(mut arg0: *mut mp_UnkStruct0) -> i32 {
 }
 
 /// `ftCo_800A2718_dontinline`
-unsafe fn ftCo_800A2718_dontinline(mut arg0: *mut mp_UnkStruct0) -> i32 {
+unsafe fn ftCo_800A2718_dontinline(mut arg0: *mut mpIsland) -> i32 {
     return ftCo_800A2718(arg0);
 }
 
 /// `ftCo_800A2718_dontinline2`
-unsafe fn ftCo_800A2718_dontinline2(mut arg0: *mut mp_UnkStruct0) -> i32 {
+unsafe fn ftCo_800A2718_dontinline2(mut arg0: *mut mpIsland) -> i32 {
     return ftCo_800A2718_dontinline(arg0);
 }
 
 /// `ftCo_800A2718_dontinline3`
-unsafe fn ftCo_800A2718_dontinline3(mut arg0: *mut mp_UnkStruct0) -> i32 {
+unsafe fn ftCo_800A2718_dontinline3(mut arg0: *mut mpIsland) -> i32 {
     return ftCo_800A2718_dontinline2(arg0);
 }
 
@@ -1219,16 +1219,16 @@ pub unsafe fn ftCo_800A28D0(mut fp: *mut Fighter, mut arg1: f32) -> i32 {
         return 0;
     }
     {
-        let mut data: *mut mp_UnkStruct0 = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
+        let mut data: *mut mpIsland = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
         if data.is_null() {
             return 0;
         }
         {
             let mut x_offset: f32 = 0.0;
             if ((*fp).facing_dir as f64) > 0.0f64 {
-                x_offset = if ((*data).x14.x - (*fp).cur_pos.x) < (0 as f32) { -((*data).x14.x - (*fp).cur_pos.x) } else { (*data).x14.x - (*fp).cur_pos.x };
+                x_offset = if ((*data).pos1.x - (*fp).cur_pos.x) < (0 as f32) { -((*data).pos1.x - (*fp).cur_pos.x) } else { (*data).pos1.x - (*fp).cur_pos.x };
             } else {
-                x_offset = if ((*data).x8.x - (*fp).cur_pos.x) < (0 as f32) { -((*data).x8.x - (*fp).cur_pos.x) } else { (*data).x8.x - (*fp).cur_pos.x };
+                x_offset = if ((*data).pos0.x - (*fp).cur_pos.x) < (0 as f32) { -((*data).pos0.x - (*fp).cur_pos.x) } else { (*data).pos0.x - (*fp).cur_pos.x };
             }
             if (x_offset as f64) < (5.0f64 * (arg1 as f64)) {
                 return 1;
@@ -1245,15 +1245,15 @@ pub unsafe fn ftCo_800A2998(mut fp: *mut Fighter, mut arg1: f32) -> i32 {
         return 0;
     }
     {
-        let mut data: *mut mp_UnkStruct0 = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
+        let mut data: *mut mpIsland = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
         if data.is_null() {
             return 0;
         }
         {
             let mut diff_x8: f32 = 0.0;
             let mut diff_x14: f32 = 0.0;
-            diff_x14 = if ((*data).x14.x - (*fp).cur_pos.x) < (0 as f32) { -((*data).x14.x - (*fp).cur_pos.x) } else { (*data).x14.x - (*fp).cur_pos.x };
-            diff_x8 = if ((*data).x8.x - (*fp).cur_pos.x) < (0 as f32) { -((*data).x8.x - (*fp).cur_pos.x) } else { (*data).x8.x - (*fp).cur_pos.x };
+            diff_x14 = if ((*data).pos1.x - (*fp).cur_pos.x) < (0 as f32) { -((*data).pos1.x - (*fp).cur_pos.x) } else { (*data).pos1.x - (*fp).cur_pos.x };
+            diff_x8 = if ((*data).pos0.x - (*fp).cur_pos.x) < (0 as f32) { -((*data).pos0.x - (*fp).cur_pos.x) } else { (*data).pos0.x - (*fp).cur_pos.x };
             if diff_x14 < diff_x8 {
                 if (diff_x14 as f64) < (5.0f64 * (arg1 as f64)) {
                     return 1;
@@ -1275,19 +1275,19 @@ pub unsafe fn ftCo_800A2A70(mut fp: *mut Fighter, mut arg1: i32) -> f32 {
         return -1.0f32;
     }
     {
-        let mut data: *mut mp_UnkStruct0 = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
+        let mut data: *mut mpIsland = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
         if data.is_null() {
             return -1.0f32;
         }
         {
             let mut r: f32 = 0.0;
             if arg1 != 0 {
-                let mut x: f32 = (*data).x8.x - (*fp).cur_pos.x;
-                let mut y: f32 = (*data).x8.y - (*fp).cur_pos.y;
+                let mut x: f32 = (*data).pos0.x - (*fp).cur_pos.x;
+                let mut y: f32 = (*data).pos0.y - (*fp).cur_pos.y;
                 r = melee_runtime::gekko::sqrtf(fmadds(x, x, y * y));
             } else {
-                let mut x: f32 = (*data).x14.x - (*fp).cur_pos.x;
-                let mut y: f32 = (*data).x14.y - (*fp).cur_pos.y;
+                let mut x: f32 = (*data).pos1.x - (*fp).cur_pos.x;
+                let mut y: f32 = (*data).pos1.y - (*fp).cur_pos.y;
                 r = melee_runtime::gekko::sqrtf(fmadds(x, x, y * y));
             }
             return r;
@@ -1662,7 +1662,7 @@ pub unsafe fn ftCo_800A3554(mut fp: *mut Fighter, mut arg1: f32) -> i32 {
 
 /// `ftCo_800A2170_it`
 unsafe fn ftCo_800A2170_it(mut fp: *mut Fighter, mut ip: *mut Item) -> i32 {
-    let mut data: *mut mp_UnkStruct0 = null_mut();
+    let mut data: *mut mpIsland = null_mut();
     if (*fp).ground_or_air == ((GA_Air as i32) as u32) {
         return 0;
     }
@@ -1718,7 +1718,7 @@ pub unsafe fn ftCo_IsAlly(mut fp0: *mut Fighter, mut fp1: *mut Fighter) -> i32 {
     if fp1.is_null() {
         return 0;
     }
-    if ((*fp0).player_id as i32) == ((*fp1).player_id as i32) {
+    if ((*fp0).player_idx as i32) == ((*fp1).player_idx as i32) {
         return 1;
     }
     if ext::gm_8016B168() != 0 {
@@ -1782,7 +1782,7 @@ pub unsafe fn ftCo_800A3908(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
     let mut grav: f32 = 0.0;
     let mut dx: f32 = 0.0;
     let mut px: f32 = 0.0;
-    let mut island: *mut mp_UnkStruct0 = null_mut();
+    let mut island: *mut mpIsland = null_mut();
     let mut ddy: f32 = 0.0;
     let mut t: i32 = 0;
     let mut frames: i32 = 0;
@@ -1799,14 +1799,14 @@ pub unsafe fn ftCo_800A3908(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
         frames = melee_core::ppc::fctiwz_f32((-((-(*fp).co_attrs.terminal_velocity) - (*fp).pos_delta.y)) / grav);
     }
     {
-        island = ext::mpIsland_80458E88.next;
+        island = ext::mpIsland_80458E88.floors;
         'l81: while !island.is_null() {
             'c81: {
-                if !(ext::ScriptGame_StageJointActive((*island).x28 as i32) != 0) {
+                if !(ext::ScriptGame_StageJointActive((*island).joint_id as i32) != 0) {
                     break 'c81;
                 }
                 let mut data2: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
-                island_pos = (*island).x14;
+                island_pos = (*island).pos1;
                 ex = island_pos.x;
                 {
                     let mut y: f32 = island_pos.y;
@@ -1821,7 +1821,7 @@ pub unsafe fn ftCo_800A3908(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
                 if ok != 0 {
                     break 'c81;
                 }
-                if ext::grCorneria_801E2E50((*island).x4 as i32) != 0 {
+                if ext::grCorneria_801E2E50((*island).vtx0 as i32) != 0 {
                     break 'c81;
                 }
                 dx = (*fp).cur_pos.x - ex;
@@ -1914,7 +1914,7 @@ pub unsafe fn ftCo_800A4038(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
     melee_core::ct!("ftCo_800A4038");
     let mut ez: f32 = 0.0;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
-    let mut island: *mut mp_UnkStruct0 = null_mut();
+    let mut island: *mut mpIsland = null_mut();
     let mut island_pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut ex: f32 = 0.0;
     let mut ey: f32 = 0.0;
@@ -1939,14 +1939,14 @@ pub unsafe fn ftCo_800A4038(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
         frames = melee_core::ppc::fctiwz_f32((-((-(*fp).co_attrs.terminal_velocity) - (*fp).pos_delta.y)) / grav);
     }
     {
-        island = ext::mpIsland_80458E88.next;
+        island = ext::mpIsland_80458E88.floors;
         'l82: while !island.is_null() {
             'c82: {
-                if !(ext::ScriptGame_StageJointActive((*island).x28 as i32) != 0) {
+                if !(ext::ScriptGame_StageJointActive((*island).joint_id as i32) != 0) {
                     break 'c82;
                 }
                 let mut data2: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
-                island_pos = (*island).x8;
+                island_pos = (*island).pos0;
                 ex = island_pos.x;
                 {
                     let mut y: f32 = island_pos.y;
@@ -1961,7 +1961,7 @@ pub unsafe fn ftCo_800A4038(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
                 if ok != 0 {
                     break 'c82;
                 }
-                if ext::grCorneria_801E2E50((*island).x4 as i32) != 0 {
+                if ext::grCorneria_801E2E50((*island).vtx0 as i32) != 0 {
                     break 'c82;
                 }
                 dx = ex - (*fp).cur_pos.x;
@@ -2039,7 +2039,7 @@ unsafe fn ftCo_800A4768_inline0(mut fp: *mut Fighter, mut p: *mut Vec) -> i32 {
 pub unsafe fn ftCo_800A4768(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
     melee_core::ct!("ftCo_800A4768");
     let mut pad: u32 = 0;
-    let mut island: *mut mp_UnkStruct0 = null_mut();
+    let mut island: *mut mpIsland = null_mut();
     let mut best: f32 = 0.0;
     let mut pt: Vec3 = unsafe { core::mem::zeroed() };
     let mut dx: f32 = 0.0;
@@ -2049,13 +2049,13 @@ pub unsafe fn ftCo_800A4768(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
     let mut dist: f32 = 0.0;
     best = -1.0f32;
     {
-        island = ext::mpIsland_80458E88.next;
+        island = ext::mpIsland_80458E88.floors;
         'l83: while !island.is_null() {
             'c83: {
-                if !(ext::ScriptGame_StageJointActive((*island).x28 as i32) != 0) {
+                if !(ext::ScriptGame_StageJointActive((*island).joint_id as i32) != 0) {
                     break 'c83;
                 }
-                pt = (*island).x14;
+                pt = (*island).pos1;
                 tmp_y = pt.y;
                 if !(ftCo_800A4768_inline0(fp, core::ptr::addr_of_mut!(pt) as *mut Vec) != 0) {
                     dx = (*fp).cur_pos.x - pt.x;
@@ -2072,7 +2072,7 @@ pub unsafe fn ftCo_800A4768(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
                     }
                 }
                 if !(ftCo_800A4768_inline0(fp, core::ptr::addr_of_mut!(pt) as *mut Vec) != 0) {
-                    pt = (*island).x8;
+                    pt = (*island).pos0;
                     dx = (*fp).cur_pos.x - pt.x;
                     if dx < 0.0f32 {
                         dy = (*fp).cur_pos.y - pt.y;
@@ -2130,7 +2130,7 @@ unsafe fn inlineD0_it(mut fp: *mut Fighter, mut it: *mut Item) -> i32 {
 /// `inlineD1`
 unsafe fn inlineD1(mut fp: *mut Fighter) -> i32 {
     let mut gobj: *mut HSD_GObj = (*fp).gobj;
-    if (((((*fp).x221F_b3() as i32) != 0) || (((*fp).x2224_b2() as i32) != 0)) || (ftCo_800A0F00(gobj) != 0)) || (ext::ftLib_IsDead(gobj) != 0) {
+    if (((((*fp).is_sleeping() as i32) != 0) || (((*fp).stamina_dead() as i32) != 0)) || (ftCo_800A0F00(gobj) != 0)) || (ext::ftLib_IsDead(gobj) != 0) {
         return 1;
     } else {
         return 0;
@@ -2349,7 +2349,7 @@ pub unsafe fn ftCo_800A5294(mut fp: *mut Fighter, mut player_id: i32) -> *mut Fi
                 if (*fp).gobj != cur {
                     cur_fp = HSD_GObjGetUserData(cur) as *mut Fighter;
                     if !(inlineD0(fp, cur_fp) != 0) {
-                        if (!(inlineD1(cur_fp) != 0)) && (((*cur_fp).player_id as i32) == player_id) {
+                        if (!(inlineD1(cur_fp) != 0)) && (((*cur_fp).player_idx as i32) == player_id) {
                             return cur_fp;
                         }
                     }
@@ -2493,8 +2493,8 @@ pub unsafe fn ftCo_800A589C(mut fp: *mut Fighter) -> *mut Fighter {
             'l91: while !cur.is_null() {
                 if (*fp).gobj != cur {
                     let mut cur_fp: *mut Fighter = HSD_GObjGetUserData(cur) as *mut Fighter;
-                    if ((*fp).player_id as i32) == ((*cur_fp).player_id as i32) {
-                        if (*cur_fp).x221F_b3() != 0 {
+                    if ((*fp).player_idx as i32) == ((*cur_fp).player_idx as i32) {
+                        if (*cur_fp).is_sleeping() != 0 {
                             return null_mut();
                         }
                         return cur_fp;
@@ -2932,7 +2932,7 @@ unsafe fn ftCo_800A6700_inline0(mut fp: *mut Fighter, mut x: f32, mut y: f32) ->
 /// `ftCo_800A6700`
 pub unsafe fn ftCo_800A6700(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: *mut Vec) -> i32 {
     melee_core::ct!("ftCo_800A6700");
-    let mut island: *mut mp_UnkStruct0 = null_mut();
+    let mut island: *mut mpIsland = null_mut();
     let mut best: f32 = 0.0;
     let mut px: f32 = 0.0;
     let mut ay: f32 = 0.0;
@@ -2946,17 +2946,17 @@ pub unsafe fn ftCo_800A6700(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: 
     let mut result: i32 = 0;
     best = -1.0f32;
     {
-        island = ext::mpIsland_80458E88.next;
+        island = ext::mpIsland_80458E88.floors;
         'l99: while !island.is_null() {
             'c99: {
-                if !(ext::ScriptGame_StageJointActive((*island).x28 as i32) != 0) {
+                if !(ext::ScriptGame_StageJointActive((*island).joint_id as i32) != 0) {
                     break 'c99;
                 }
                 if ftCo_800A2718(island) == 0 {
                     let mut line_id: i32 = 0;
                     let mut flags: u32 = 0;
                     let mut by: f32 = 0.0;
-                    a = (*island).x8;
+                    a = (*island).pos0;
                     ax = a.x;
                     ay = a.y;
                     px = ((ax as f64) + 5.0f64) as f32;
@@ -2974,7 +2974,7 @@ pub unsafe fn ftCo_800A6700(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: 
                             }
                         }
                     }
-                    b = (*island).x14;
+                    b = (*island).pos1;
                     ax = b.x;
                     by = b.y;
                     px = ((ax as f64) - 5.0f64) as f32;
@@ -3024,19 +3024,19 @@ pub unsafe fn ftCo_800A6A98(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
     let mut dx: f32 = 0.0;
     let mut dy: f32 = 0.0;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
-    let mut island: *mut mp_UnkStruct0 = null_mut();
+    let mut island: *mut mpIsland = null_mut();
     let mut best: f32 = 0.0;
     best = -1.0f32;
     {
-        island = ext::mpIsland_80458E88.next;
+        island = ext::mpIsland_80458E88.floors;
         'l100: while !island.is_null() {
             'c100: {
-                if !(ext::ScriptGame_StageJointActive((*island).x28 as i32) != 0) {
+                if !(ext::ScriptGame_StageJointActive((*island).joint_id as i32) != 0) {
                     break 'c100;
                 }
                 if ftCo_800A2718(island) == 0 {
-                    a = (*island).x8;
-                    b = (*island).x14;
+                    a = (*island).pos0;
+                    b = (*island).pos1;
                     blocked = 0;
                     line_id = (-1_i32);
                     mx = 0.5f32 * (b.x + a.x);
@@ -3100,7 +3100,7 @@ pub unsafe fn ftCo_800A6D2C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
     let mut mx: f32 = 0.0;
     let mut my: f32 = 0.0;
     let mut result: i32 = 0;
-    let mut cur_island: *mut mp_UnkStruct0 = null_mut();
+    let mut cur_island: *mut mpIsland = null_mut();
     let mut blocked: i32 = 0;
     let mut line: i32 = 0;
     let mut fy: f32 = 0.0;
@@ -3108,20 +3108,20 @@ pub unsafe fn ftCo_800A6D2C(mut fp: *mut Fighter, mut arg1: *mut Vec) -> i32 {
     let mut dx: f32 = 0.0;
     let mut dy: f32 = 0.0;
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
-    let mut island: *mut mp_UnkStruct0 = null_mut();
+    let mut island: *mut mpIsland = null_mut();
     let mut best: f32 = 0.0;
     best = -1.0f32;
     cur_island = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
     {
-        island = ext::mpIsland_80458E88.next;
+        island = ext::mpIsland_80458E88.floors;
         'l101: while !island.is_null() {
             'c101: {
-                if !(ext::ScriptGame_StageJointActive((*island).x28 as i32) != 0) {
+                if !(ext::ScriptGame_StageJointActive((*island).joint_id as i32) != 0) {
                     break 'c101;
                 }
                 if (ftCo_800A2718(island) == 0) && (island != cur_island) {
-                    a = (*island).x8;
-                    b = (*island).x14;
+                    a = (*island).pos0;
+                    b = (*island).pos1;
                     let _ = ext::HSD_Randf();
                     blocked = 0;
                     line_id = (-1_i32);
@@ -3179,8 +3179,8 @@ pub unsafe fn ftCo_800A6FC4(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: 
     let mut line_id: i32 = 0;
     let mut flags: u32 = 0;
     let mut dir: Vec3 = unsafe { core::mem::zeroed() };
-    let mut island: *mut mp_UnkStruct0 = null_mut();
-    let mut cur_island: *mut mp_UnkStruct0 = null_mut();
+    let mut island: *mut mpIsland = null_mut();
+    let mut cur_island: *mut mpIsland = null_mut();
     let mut data: *mut CpuFighter = null_mut();
     let mut px: f32 = 0.0;
     let mut floor_y: f32 = 0.0;
@@ -3201,17 +3201,17 @@ pub unsafe fn ftCo_800A6FC4(mut fp: *mut Fighter, mut arg1: *mut Vec, mut arg2: 
     let _ = ext::lbVector_Normalize(arg2);
     data = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     {
-        island = ext::mpIsland_80458E88.next;
+        island = ext::mpIsland_80458E88.floors;
         'l102: while !island.is_null() {
             'c102: {
-                if !(ext::ScriptGame_StageJointActive((*island).x28 as i32) != 0) {
+                if !(ext::ScriptGame_StageJointActive((*island).joint_id as i32) != 0) {
                     break 'c102;
                 }
                 if island == cur_island {
                     break 'c102;
                 }
-                b = (*island).x14;
-                a = (*island).x8;
+                b = (*island).pos1;
+                a = (*island).pos0;
                 let _ = ext::HSD_Randf();
                 line_id = (-1_i32);
                 blocked = 0;
@@ -3405,22 +3405,22 @@ pub unsafe fn ftCo_800A75DC(mut fp0: *mut Fighter, mut fp1: *mut Fighter) {
         }
         if result != 0 {
             let mut x60: *mut i32 = null_mut();
-            let mut island: *mut mp_UnkStruct0 = null_mut();
+            let mut island: *mut mpIsland = null_mut();
             island = ext::mpIsland_8005AB54(line_id);
             if ftCo_800A2718(island) == 0 {
                 x60 = core::ptr::addr_of_mut!((*fp0).cpu.x60) as *mut i32;
                 ftCo_800A1F3C(fp0, floor_pos.x, floor_pos.y, (*data).x56C + (*fp1).cpu.x564);
                 if !island.is_null() {
-                    d = (*island).x14.x - (*data).x54.x;
+                    d = (*island).pos1.x - (*data).x54.x;
                     if d < 0.0f32 {
                         d = -d;
                     }
                     if (d as f64) < 5.0f64 {
-                        ftCo_800A75DC_set_target(fp0, x60 as *const i32, (((*island).x14.x as f64) - 5.0f64) as f32, (*island).x14.y, (*data).x56C + (*fp1).cpu.x564);
+                        ftCo_800A75DC_set_target(fp0, x60 as *const i32, (((*island).pos1.x as f64) - 5.0f64) as f32, (*island).pos1.y, (*data).x56C + (*fp1).cpu.x564);
                     } else {
-                        d = if ((*island).x8.x - (*data).x54.x) < (0 as f32) { -((*island).x8.x - (*data).x54.x) } else { (*island).x8.x - (*data).x54.x };
+                        d = if ((*island).pos0.x - (*data).x54.x) < (0 as f32) { -((*island).pos0.x - (*data).x54.x) } else { (*island).pos0.x - (*data).x54.x };
                         if (d as f64) < 5.0f64 {
-                            ftCo_800A1F3C(fp0, (5.0f64 + ((*island).x8.x as f64)) as f32, (*island).x8.y, (*data).x56C + (*fp1).cpu.x564);
+                            ftCo_800A1F3C(fp0, (5.0f64 + ((*island).pos0.x as f64)) as f32, (*island).pos0.y, (*data).x56C + (*fp1).cpu.x564);
                         }
                     }
                 }
@@ -3431,8 +3431,8 @@ pub unsafe fn ftCo_800A75DC(mut fp0: *mut Fighter, mut fp1: *mut Fighter) {
         }
     } else if ftCo_800A2718(ext::mpIsland_8005AB54((*fp1).coll_data.floor.index)) == 0 {
         let mut x60: *mut i32 = null_mut();
-        let mut island: *mut mp_UnkStruct0 = null_mut();
-        let mut fp0_island: *mut mp_UnkStruct0 = null_mut();
+        let mut island: *mut mpIsland = null_mut();
+        let mut fp0_island: *mut mpIsland = null_mut();
         let mut same_island: i32 = 0;
         x60 = core::ptr::addr_of_mut!((*fp0).cpu.x60) as *mut i32;
         ftCo_800A1F3C(fp0, (*fp1).cur_pos.x, (*fp1).cur_pos.y, (*data).x56C + (*fp1).cpu.x564);
@@ -3452,12 +3452,12 @@ pub unsafe fn ftCo_800A75DC(mut fp0: *mut Fighter, mut fp1: *mut Fighter) {
         }
         if ((same_island == 0) && (!{ island = ext::mpIsland_8005AB54((*fp1).coll_data.floor.index); island }.is_null())) && ((((*data).x54.y - (*fp0).cur_pos.y) as f64) > 0.0f64) {
             if (((*data).x54.x - (*fp0).cur_pos.x) as f64) > 0.0f64 {
-                if (*fp0).cur_pos.x < (*island).x8.x {
-                    ftCo_800A75DC_set_target(fp0, x60 as *const i32, (5.0f64 + ((*island).x8.x as f64)) as f32, (*island).x8.y, (*data).x56C + (*fp1).cpu.x564);
+                if (*fp0).cur_pos.x < (*island).pos0.x {
+                    ftCo_800A75DC_set_target(fp0, x60 as *const i32, (5.0f64 + ((*island).pos0.x as f64)) as f32, (*island).pos0.y, (*data).x56C + (*fp1).cpu.x564);
                 }
             } else {
-                if (*fp0).cur_pos.x > (*island).x14.x {
-                    ftCo_800A1F3C(fp0, (((*island).x14.x as f64) - 5.0f64) as f32, (*island).x14.y, (*data).x56C + (*fp1).cpu.x564);
+                if (*fp0).cur_pos.x > (*island).pos1.x {
+                    ftCo_800A1F3C(fp0, (((*island).pos1.x as f64) - 5.0f64) as f32, (*island).pos1.y, (*data).x56C + (*fp1).cpu.x564);
                 }
             }
         }
@@ -3483,7 +3483,7 @@ pub unsafe fn ftCo_800A7AAC(mut fp: *mut Fighter) {
     partner_pos = (*partner).cur_pos;
     if (*partner).ground_or_air == ((GA_Air as i32) as u32) {
         let mut result: i32 = 0;
-        let mut island: *mut mp_UnkStruct0 = null_mut();
+        let mut island: *mut mpIsland = null_mut();
         let mut below: f32 = partner_pos.y - 1e+03f32;
         let mut above: f32 = 1e+01f32 + partner_pos.y;
         result = ftCo_800A75DC_CheckFloor(partner_pos.x, above, partner_pos.x, below, core::ptr::addr_of_mut!(floor_pos) as *mut Vec, core::ptr::addr_of_mut!(line_id) as *mut i32, core::ptr::addr_of_mut!(flags) as *mut u32, core::ptr::addr_of_mut!(floor_normal) as *mut Vec);
@@ -3492,16 +3492,16 @@ pub unsafe fn ftCo_800A7AAC(mut fp: *mut Fighter) {
             if ftCo_800A2718(island) == 0 {
                 ftCo_800A1F3C(fp, floor_pos.x, floor_pos.y, (*data).x56C + (*partner).cpu.x564);
                 if !island.is_null() {
-                    d = (*island).x14.x - (*data).x54.x;
+                    d = (*island).pos1.x - (*data).x54.x;
                     if d < 0.0f32 {
                         d = -d;
                     }
                     if (d as f64) < 5.0f64 {
-                        ftCo_800A1F3C(fp, (((*island).x14.x as f64) - 5.0f64) as f32, (*island).x14.y, (*data).x56C + (*partner).cpu.x564);
+                        ftCo_800A1F3C(fp, (((*island).pos1.x as f64) - 5.0f64) as f32, (*island).pos1.y, (*data).x56C + (*partner).cpu.x564);
                     } else {
-                        d = if ((*island).x8.x - (*data).x54.x) < (0 as f32) { -((*island).x8.x - (*data).x54.x) } else { (*island).x8.x - (*data).x54.x };
+                        d = if ((*island).pos0.x - (*data).x54.x) < (0 as f32) { -((*island).pos0.x - (*data).x54.x) } else { (*island).pos0.x - (*data).x54.x };
                         if (d as f64) < 5.0f64 {
-                            ftCo_800A1F3C(fp, (5.0f64 + ((*island).x8.x as f64)) as f32, (*island).x8.y, (*data).x56C + (*partner).cpu.x564);
+                            ftCo_800A1F3C(fp, (5.0f64 + ((*island).pos0.x as f64)) as f32, (*island).pos0.y, (*data).x56C + (*partner).cpu.x564);
                         }
                     }
                 }
@@ -3511,8 +3511,8 @@ pub unsafe fn ftCo_800A7AAC(mut fp: *mut Fighter) {
         let mut blocked: i32 = 0;
         let mut line: i32 = 0;
         let mut result: i32 = 0;
-        let mut fp_island: *mut mp_UnkStruct0 = null_mut();
-        let mut island: *mut mp_UnkStruct0 = null_mut();
+        let mut fp_island: *mut mpIsland = null_mut();
+        let mut island: *mut mpIsland = null_mut();
         let mut same_island: i32 = 0;
         let mut sub: i32 = 0;
         let mut below: f32 = ((partner_pos.y as f64) - 2.0f64) as f32;
@@ -3568,11 +3568,11 @@ pub unsafe fn ftCo_800A7AAC(mut fp: *mut Fighter) {
                         island = ext::mpIsland_8005AB54((*partner).coll_data.floor.index);
                         if (!island.is_null()) && ((((*data).x54.y - (*fp).cur_pos.y) as f64) > 0.0f64) {
                             if (((*data).x54.x - (*fp).cur_pos.x) as f64) > 0.0f64 {
-                                if (*fp).cur_pos.x < (*island).x8.x {
-                                    ftCo_800A1F3C(fp, (5.0f64 + ((*island).x8.x as f64)) as f32, (*island).x8.y, (*data).x56C + (*partner).cpu.x564);
+                                if (*fp).cur_pos.x < (*island).pos0.x {
+                                    ftCo_800A1F3C(fp, (5.0f64 + ((*island).pos0.x as f64)) as f32, (*island).pos0.y, (*data).x56C + (*partner).cpu.x564);
                                 }
-                            } else if (*fp).cur_pos.x > (*island).x14.x {
-                                ftCo_800A1F3C(fp, (((*island).x14.x as f64) - 5.0f64) as f32, (*island).x14.y, (*data).x56C + (*partner).cpu.x564);
+                            } else if (*fp).cur_pos.x > (*island).pos1.x {
+                                ftCo_800A1F3C(fp, (((*island).pos1.x as f64) - 5.0f64) as f32, (*island).pos1.y, (*data).x56C + (*partner).cpu.x564);
                             }
                         }
                     }
@@ -3696,8 +3696,8 @@ pub unsafe fn ftCo_800A866C(mut fp: *mut Fighter) {
     melee_core::ct!("ftCo_800A866C");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
     let mut item: *mut Item = (*fp).cpu.x4C;
-    let mut island: *mut mp_UnkStruct0 = null_mut();
-    let mut fp_island: *mut mp_UnkStruct0 = null_mut();
+    let mut island: *mut mpIsland = null_mut();
+    let mut fp_island: *mut mpIsland = null_mut();
     let mut floor_pos: Vec3 = unsafe { core::mem::zeroed() };
     let mut floor_normal: Vec3 = unsafe { core::mem::zeroed() };
     let mut line_id: i32 = 0;
@@ -3751,16 +3751,16 @@ pub unsafe fn ftCo_800A866C(mut fp: *mut Fighter) {
             }
             if ((same_island == 0) && (!island.is_null())) && ((((*data).x54.y - (*fp).cur_pos.y) as f64) > 0.0f64) {
                 if (((*data).x54.x - (*fp).cur_pos.x) as f64) > 0.0f64 {
-                    let mut x: f32 = (*island).x8.x;
+                    let mut x: f32 = (*island).pos0.x;
                     if (*fp).cur_pos.x < x {
-                        let mut y: f32 = (*island).x8.y;
+                        let mut y: f32 = (*island).pos0.y;
                         x = (5.0f64 + (x as f64)) as f32;
                         ftCo_800A1F3C(fp, x, y, 1.0f32);
                     }
                 } else {
-                    let mut x: f32 = (*island).x14.x;
+                    let mut x: f32 = (*island).pos1.x;
                     if (*fp).cur_pos.x > x {
-                        let mut y: f32 = (*island).x14.y;
+                        let mut y: f32 = (*island).pos1.y;
                         x = ((x as f64) - 5.0f64) as f32;
                         ftCo_800A1F3C(fp, x, y, 1.0f32);
                     }
@@ -3790,9 +3790,9 @@ unsafe fn ftCo_800A8940_inline0(mut result_in: i32, mut blocked_in: i32, mut lin
 /// `ftCo_800A8940`
 pub unsafe fn ftCo_800A8940(mut fp: *mut Fighter) {
     melee_core::ct!("ftCo_800A8940");
-    let mut island: *mut mp_UnkStruct0 = null_mut();
-    let mut cur_island: *mut mp_UnkStruct0 = null_mut();
-    let mut chosen: *mut mp_UnkStruct0 = null_mut();
+    let mut island: *mut mpIsland = null_mut();
+    let mut cur_island: *mut mpIsland = null_mut();
+    let mut chosen: *mut mpIsland = null_mut();
     let mut total: f32 = 0.0;
     let mut accum: f32 = 0.0;
     let mut rnd: f32 = 0.0;
@@ -3812,16 +3812,16 @@ pub unsafe fn ftCo_800A8940(mut fp: *mut Fighter) {
     cur_island = ext::mpIsland_8005AB54((*fp).coll_data.floor.index);
     total = 0.0f32;
     {
-        island = ext::mpIsland_80458E88.next;
+        island = ext::mpIsland_80458E88.floors;
         'l105: while !island.is_null() {
             'c105: {
-                if !(ext::ScriptGame_StageJointActive((*island).x28 as i32) != 0) {
+                if !(ext::ScriptGame_StageJointActive((*island).joint_id as i32) != 0) {
                     break 'c105;
                 }
                 if (cur_island != island) && (ftCo_800A2718_dontinline3(island) == 0) {
-                    if !(ftCo_800A6700_inline0(fp, (*island).x14.x, (*island).x14.y) != 0) {
-                        if !(ftCo_800A6700_inline0(fp, (*island).x8.x, (*island).x8.y) != 0) {
-                            total = total + ((*island).x14.x - (*island).x8.x);
+                    if !(ftCo_800A6700_inline0(fp, (*island).pos1.x, (*island).pos1.y) != 0) {
+                        if !(ftCo_800A6700_inline0(fp, (*island).pos0.x, (*island).pos0.y) != 0) {
+                            total = total + ((*island).pos1.x - (*island).pos0.x);
                         }
                     }
                 }
@@ -3840,16 +3840,16 @@ pub unsafe fn ftCo_800A8940(mut fp: *mut Fighter) {
     accum = 0.0f32;
     total = (1.0f64 / (total as f64)) as f32;
     {
-        island = ext::mpIsland_80458E88.next;
+        island = ext::mpIsland_80458E88.floors;
         'l106: while !island.is_null() {
             'c106: {
-                if !(ext::ScriptGame_StageJointActive((*island).x28 as i32) != 0) {
+                if !(ext::ScriptGame_StageJointActive((*island).joint_id as i32) != 0) {
                     break 'c106;
                 }
                 if cur_island != island {
-                    if !(ftCo_800A6700_inline0(fp, (*island).x14.x, (*island).x14.y) != 0) {
-                        if !(ftCo_800A6700_inline0(fp, (*island).x8.x, (*island).x8.y) != 0) {
-                            accum = accum + ((*island).x14.x - (*island).x8.x);
+                    if !(ftCo_800A6700_inline0(fp, (*island).pos1.x, (*island).pos1.y) != 0) {
+                        if !(ftCo_800A6700_inline0(fp, (*island).pos0.x, (*island).pos0.y) != 0) {
+                            accum = accum + ((*island).pos1.x - (*island).pos0.x);
                             if rnd < (accum * total) {
                                 chosen = island;
                                 break 'l106;
@@ -3862,14 +3862,14 @@ pub unsafe fn ftCo_800A8940(mut fp: *mut Fighter) {
         }
     }
     rnd2 = ext::HSD_Randf();
-    width = (*island).x14.x - (*island).x8.x;
+    width = (*island).pos1.x - (*island).pos0.x;
     if (width as f64) > 10.0f64 {
-        px = ((width as f64) - 10.0f64).mul_add(rnd2 as f64, 5.0f64 + ((*chosen).x8.x as f64)) as f32;
+        px = ((width as f64) - 10.0f64).mul_add(rnd2 as f64, 5.0f64 + ((*chosen).pos0.x as f64)) as f32;
     } else {
-        px = fmadds(width, rnd2, (*chosen).x8.x);
+        px = fmadds(width, rnd2, (*chosen).pos0.x);
     }
     blocked = 0;
-    py = fmadds(rnd2, (*island).x14.y - (*island).x8.y, (*chosen).x8.y);
+    py = fmadds(rnd2, (*island).pos1.y - (*island).pos0.y, (*chosen).pos0.y);
     line_id = (-1_i32);
     {
         let mut bottom: f32 = py - 1e+02f32;
@@ -4607,7 +4607,7 @@ unsafe fn ftCo_800AABC8_dontinline(mut fp: *mut Fighter) {
 pub unsafe fn ftCo_800AACD0(mut fp: *mut Fighter) {
     melee_core::ct!("ftCo_800AACD0");
     let mut data: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
-    let mut temp_r3_2: *mut mp_UnkStruct0 = null_mut();
+    let mut temp_r3_2: *mut mpIsland = null_mut();
     let mut __: [u8; 8] = [0; 8];
     let mut stick: i32 = 0;
     let mut clamp: i32 = 0;
@@ -4643,7 +4643,7 @@ pub unsafe fn ftCo_800AACD0(mut fp: *mut Fighter) {
 pub unsafe fn ftCo_800AAF48(mut fp: *mut Fighter) -> i32 {
     melee_core::ct!("ftCo_800AAF48");
     let mut temp_r29: *mut CpuFighter = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
-    let mut cur: *mut mp_UnkStruct0 = null_mut();
+    let mut cur: *mut mpIsland = null_mut();
     let mut dx: f32 = 0.0;
     let mut dy: f32 = 0.0;
     let mut sp44: Vec3 = unsafe { core::mem::zeroed() };
@@ -4659,13 +4659,13 @@ pub unsafe fn ftCo_800AAF48(mut fp: *mut Fighter) -> i32 {
     }
     if ((*fp).facing_dir as f64) > 0.0f64 {
         {
-            cur = ext::mpIsland_80458E88.next;
+            cur = ext::mpIsland_80458E88.floors;
             'l109: while !cur.is_null() {
                 'c109: {
-                    if !(ext::ScriptGame_StageJointActive((*cur).x28 as i32) != 0) {
+                    if !(ext::ScriptGame_StageJointActive((*cur).joint_id as i32) != 0) {
                         break 'c109;
                     }
-                    sp44 = (*cur).x8;
+                    sp44 = (*cur).pos0;
                     dx = sp44.x - (*fp).cur_pos.x;
                     dy = sp44.y - (*fp).cur_pos.y;
                     if dx < 0.0f32 {
@@ -4695,13 +4695,13 @@ pub unsafe fn ftCo_800AAF48(mut fp: *mut Fighter) -> i32 {
         }
     } else {
         {
-            cur = ext::mpIsland_80458E88.next;
+            cur = ext::mpIsland_80458E88.floors;
             'l110: while !cur.is_null() {
                 'c110: {
-                    if !(ext::ScriptGame_StageJointActive((*cur).x28 as i32) != 0) {
+                    if !(ext::ScriptGame_StageJointActive((*cur).joint_id as i32) != 0) {
                         break 'c110;
                     }
-                    let mut spC: Vec3 = (*cur).x14;
+                    let mut spC: Vec3 = (*cur).pos1;
                     dx = (*fp).cur_pos.x - spC.x;
                     dy = (*fp).cur_pos.y - spC.y;
                     if dx < 0.0f32 {
@@ -4742,7 +4742,7 @@ pub unsafe fn ftCo_800AB224(mut fp: *mut Fighter) {
     let mut var_f2: f32 = 0.0;
     let mut var_f31: f32 = 0.0;
     let mut temp_r0: *mut Fighter = null_mut();
-    let mut temp_r29: *mut mp_UnkStruct0 = null_mut();
+    let mut temp_r29: *mut mpIsland = null_mut();
     let mut temp_r28: *mut CpuFighter = null_mut();
     let mut var_r0_5: i32 = 0;
     let mut var_r0_6: i32 = 0;
@@ -5683,7 +5683,7 @@ unsafe fn ftCo_800ADE48_impl(mut fp: *mut Fighter, caller_r31_nonzero: bool) -> 
             (*data).set_xF8_b5((0 as u8) as u8);
         }
     }
-    if !((*fp).anon_221b.x221B_b5() != 0) {
+    if !((*fp).x221B.x221B_b5() != 0) {
         (*data).x94 = 0;
     }
     if (*data).x18 != 18 {
@@ -5946,7 +5946,7 @@ unsafe fn ftCo_CpuUpdateCommonItemTarget(mut fp: *mut Fighter) {
 
 /// `ftCo_CpuUpdateSpecialItemTarget`
 unsafe fn ftCo_CpuUpdateSpecialItemTarget(mut fp: *mut Fighter) {
-    (*fp).cpu.x50 = ftCo_800A648C(fp) as u32;
+    (*fp).cpu.x50 = ftCo_800A648C(fp) as usize as *mut Item;
 }
 
 /// `ftCo_CpuDataShouldAct`
@@ -8047,7 +8047,7 @@ pub unsafe fn ftCo_800B3900(mut gobj: *mut HSD_GObj) {
         }
     }
     let dbg = std::env::var_os("MELEE_DBG_CPU").is_some();
-    macro_rules! st { ($n:expr) => { if dbg { eprintln!("cpu p{} x7C {} {} x38 {:08X}", (*fp).player_id, (*fp).cpu.x7C, $n, (*fp).cpu.x38.to_bits()); } } }
+    macro_rules! st { ($n:expr) => { if dbg { eprintln!("cpu p{} x7C {} {} x38 {:08X}", (*fp).player_idx, (*fp).cpu.x7C, $n, (*fp).cpu.x38.to_bits()); } } }
     st!("start");
     ftCo_800B33B0(fp);
     st!("33B0");
@@ -8075,7 +8075,7 @@ pub unsafe fn ftCo_800B395C(mut gobj: *mut HSD_GObj, mut arg1: i32) -> i32 {
     let mut sp38: Vec3 = unsafe { core::mem::zeroed() };
     fp = HSD_GObjGetUserData(gobj) as *mut Fighter;
     temp_r30 = core::ptr::addr_of_mut!((*fp).cpu) as *mut CpuFighter;
-    if ext::Player_8003248C((*fp).player_id as i32, (*fp).is_sub_fighter() as i32) == ((Gm_PKind_Cpu as i32) as u32) {
+    if ext::Player_8003248C((*fp).player_idx as i32, (*fp).is_sub_fighter() as i32) == ((Gm_PKind_Cpu as i32) as u32) {
         's130: {
             match (*temp_r30).x18 {
                 2 | 3 => {
@@ -8320,7 +8320,7 @@ pub fn ftco_800a101c(
         c.x40 = 50.0;
         c.x44 = core::ptr::null_mut();
         c.x48 = core::ptr::null_mut();
-        c.x50 = 0;
+        c.x50 = core::ptr::null_mut();
         c.x98 = cur_pos;
         let (fx, fy) = floor.unwrap_or((cur_pos.x, cur_pos.y));
         c.x54.x = fx;

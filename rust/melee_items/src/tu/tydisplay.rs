@@ -72,8 +72,8 @@ pub mod ext {
     fn DevText_Show(a0: *mut HSD_GObj, a1: *mut DevText) => unsafe { melee_world::tu::textdraw::DevText_Show(a0, a1) };
     fn DevText_StoreColorIndex(a0: *mut DevText, a1: u8) -> u8 => unsafe { melee_world::tu::textlib::DevText_StoreColorIndex(a0, a1) };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32);
     fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void => unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0, a1) };
     fn HSD_CObjGetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) => unsafe { crate::tu::cobj::HSD_CObjGetEyePosition(a0, a1) };
     fn HSD_CObjGetFov(a0: *mut HSD_CObj) -> f32 => unsafe { crate::tu::cobj::HSD_CObjGetFov(a0) };
@@ -86,8 +86,8 @@ pub mod ext {
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObjProc_RemoveAllProcs(a0: *mut HSD_GObj);
     fn HSD_GObj_80390CD4(a0: *mut HSD_GObj);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
-    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) };
+    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1 as i32) };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjAddChild(a0, a1) };
     fn HSD_JObjAlloc() -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjAlloc() };
@@ -119,8 +119,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_LObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_LObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     /// Variadic C callees modelled by hand (fixed arity; the format is applied by the caller).

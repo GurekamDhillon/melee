@@ -602,7 +602,7 @@ pub unsafe extern "C" fn it_802D1DD8(gobj: *mut Item_GObj) {
         let ip = GET_ITEM(gobj);
         ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
         Item_SetEffectHitlagCallbacks(ip);
-        (*old_ip).xDD1_flag.anon_0.set_b1(1);
+        (*old_ip).xDD1_flag.x0.set_b1(1);
     }
 }
 
@@ -625,7 +625,7 @@ pub unsafe fn it_802D1E8C(gobj: *mut Item_GObj, kind: ItemKind, param: f32) -> *
     spawn.kind = kind;
     spawn.x0_parent_gobj = (*ip).owner;
     spawn.x4_parent_gobj2 = gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     ext::Item_80268B18(&mut spawn)
 }

@@ -773,7 +773,7 @@ pub unsafe extern "C" fn t_setup() -> *mut TestGenoState {
     t_gobj.user_data = &raw mut t_fp as *mut c_void;
     t_fp.gobj = &raw mut t_gobj;
     t_fp.kind = Ft_Kind_Kirby;
-    t_fp.player_id = 5 as u8;
+    t_fp.player_idx = 5 as u8;
     t_fp.set_is_sub_fighter(1 as u8 as u8);
     t_fp.frame_speed_mul = 1.0f32;
     t_fp.ft_data = &raw mut t_ftdata as *mut ftData;
@@ -784,7 +784,7 @@ pub unsafe extern "C" fn t_setup() -> *mut TestGenoState {
     t_fp.x1C_actionStateList = &raw mut t_rows as *mut MotionState;
     t_fp.x20_actionStateList = &raw mut t_rows as *mut MotionState;
     t_fp.facing_dir = 1.0f32;
-    t_ftdata.ext_attr = &raw mut t_ext_attr as *mut u32 as *mut c_void;
+    t_ftdata.ext_attr = &raw mut t_ext_attr as *mut u32 as *mut ftData_ExtAttr;
     t_ftdata.xC = &raw mut t_subactions as *mut Fighter_WaitAnimData;
     Geno_FighterReset(&raw mut t_fp);
     return GenoGame_StateOf(&raw mut t_fp) as *mut TestGenoState;
@@ -2273,9 +2273,8 @@ pub unsafe extern "C" fn test_geno_ordinary_jumps() -> i32 {
         x6CC: 0,
         x6D0: 0.,
         x6D4: 0,
-        x6D8: [0; 1],
-        x6DC_colorsByPlayer: [_GXColor { r: 0, g: 0, b: 0, a: 0 }; 4],
-        x6EC: [0; 4],
+        x6D8: 0,
+        sub_colors: [_GXColor { r: 0, g: 0, b: 0, a: 0 }; 5],
         metal_armor: 0.,
         x6F4_unkDamage: 0,
         x6F8: 0,
@@ -4391,7 +4390,7 @@ pub unsafe extern "C" fn test_geno_v2_states() -> i32 {
         rc = 1 as i32;
     }
     r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 2 as i32);
-    if (*r).anon_8.anon_0.move_id() as i32
+    if (*r).x8.x0.move_id() as i32
         != 9 as i32
     {
         TestFail(
@@ -4675,7 +4674,7 @@ pub unsafe extern "C" fn test_geno_v3_anim_motion() -> i32 {
     }
     t_fp.co_attrs.gravity = 0.1f32;
     t_fp.co_attrs.terminal_velocity = 2.0f32;
-    t_fp.anon_594.anon_0.set_x594_b0(1 as u8 as u8);
+    t_fp.x594.x0.set_x594_b0(1 as u8 as u8);
     t_fp.motion_id = (GENO_MOTION_BASE + 0 as i32) as FtMotionId;
     Geno_OnActionChange(&raw mut t_gobj);
     t_fp.ground_or_air = GA_Air;
@@ -4790,7 +4789,7 @@ pub unsafe extern "C" fn test_geno_v3_anim_motion() -> i32 {
     }
     t_fp.motion_id = (GENO_MOTION_BASE + 0 as i32) as FtMotionId;
     Geno_OnActionChange(&raw mut t_gobj);
-    t_fp.anon_594.anon_0.set_x594_b0(0 as u8 as u8);
+    t_fp.x594.x0.set_x594_b0(0 as u8 as u8);
     t_fp.ground_or_air = GA_Air;
     t_fp.self_vel.x = 4.0f32 as f32;
     t_fp.self_vel.y = -1.0f32 as f32;
@@ -7598,7 +7597,7 @@ pub unsafe extern "C" fn test_rb_game_hash() -> i32 {
     let mut v: u32 = 0;
     let mut n: u32 = 0;
     t_setup();
-    t_fp.player_id = 0 as u8;
+    t_fp.player_idx = 0 as u8;
     t_fp.kind = Ft_Kind_Mario;
     t_fp.motion_id = 14 as i32 as FtMotionId;
     t_fp.cur_pos.x = 3.5f32 as f32;
@@ -9038,15 +9037,15 @@ pub unsafe extern "C" fn test_geno_none_guard_contact() -> i32 {
     static mut guard_trees: [*mut HSD_Joint; 3] = [::core::ptr::null::<HSD_Joint>()
         as *mut HSD_Joint; 3];
     static mut guard_data: ftData_x20 = ftData_x20 {
-        x0: ::core::ptr::null::<*mut HSD_Joint>() as *mut *mut HSD_Joint,
+        x0: ::core::ptr::null_mut::<HSD_Joint>(),
         x8: 0.,
     };
     static mut bones: [FighterBone; 4] = unsafe { core::mem::zeroed() };
     static mut x8: ftData_x8 = ftData_x8 {
         x0: FtPartsDesc {
             model_num: 0,
-            vis_table: ::core::ptr::null::<[*mut c_void; 4]>()
-                as *mut [*mut c_void; 4],
+            vis_table: ::core::ptr::null::<[*mut FtPartsVisLookup; 4]>()
+                as *mut [*mut FtPartsVisLookup; 4],
         },
         x8: ftData_x8_x8 {
             x8: 0,
@@ -9493,9 +9492,8 @@ pub unsafe extern "C" fn test_geno_none_guard_contact() -> i32 {
         x6CC: 0,
         x6D0: 0.,
         x6D4: 0,
-        x6D8: [0; 1],
-        x6DC_colorsByPlayer: [_GXColor { r: 0, g: 0, b: 0, a: 0 }; 4],
-        x6EC: [0; 4],
+        x6D8: 0,
+        sub_colors: [_GXColor { r: 0, g: 0, b: 0, a: 0 }; 5],
         metal_armor: 0.,
         x6F4_unkDamage: 0,
         x6F8: 0,
@@ -9705,7 +9703,7 @@ pub unsafe extern "C" fn test_geno_none_guard_contact() -> i32 {
         let ref mut fresh218 = (*t_fp.parts.offset(i as isize)).x4_jobj2;
         *fresh218 = b as *mut HSD_JObj;
         let ref mut fresh219 = (*t_fp.parts.offset(i as isize))
-            .anon_8.anon_0;
+            .x8.x0;
         (*fresh219).set_flags_b1(1 as u8 as u8);
         j = HSD_JObjGetChild(j);
         b = HSD_JObjGetChild(b);
@@ -9745,10 +9743,10 @@ pub unsafe extern "C" fn test_geno_none_guard_contact() -> i32 {
         0 as i32,
         ::core::mem::size_of::<[Fighter_WaitAnimData; 40]>() as usize,
     );
-    rows[39 as i32 as usize].x14 = 1 as u32;
+    rows[39 as i32 as usize].x14 = 1 as usize;
     t_fp.x24 = &raw mut rows as *mut Fighter_WaitAnimData as *mut Fighter_WaitAnimData;
     t_fp.x58C = 40 as u32;
-    t_fp.x5A8 = 1 as i32 as *mut c_void;
+    t_fp.x5A8 = 1usize;
     memset(
         &raw mut tracks as *mut FigaTrack as *mut c_void,
         0 as i32,
@@ -9769,7 +9767,7 @@ pub unsafe extern "C" fn test_geno_none_guard_contact() -> i32 {
     tree.nodes = &raw mut nodes as *mut i8;
     tree.tracks = &raw mut tracks as *mut FigaTrack;
     t_fp.x598 = &raw mut tree;
-    t_fp.anon_221b.set_x221B_b0(1 as u8 as u8);
+    t_fp.x221B.set_x221B_b0(1 as u8 as u8);
     t_fp.shield_health = 60 as i32 as f32;
     t_fp.co_attrs.initial_shield_size = 2 as i32 as f32;
     ftCo_80091E78(&raw mut t_gobj, 1 as i32 as f32);
@@ -9864,7 +9862,7 @@ pub unsafe extern "C" fn test_geno_none_guard_contact() -> i32 {
         as f32;
     guard_trees[2 as i32 as usize] = (&raw mut guard as *mut HSD_Joint)
         .offset(1 as i32 as isize) as *mut HSD_Joint;
-    guard_data.x0 = &raw mut guard_trees as *mut *mut HSD_Joint as *mut *mut HSD_Joint;
+    guard_data.x0 = &raw mut guard_trees as *mut *mut HSD_Joint as *mut HSD_Joint;
     t_ftdata.x20 = &raw mut guard_data;
     t_fp.mv.co.guard.x4 = 0 as i32 as f32;
     parts_tables[Ft_Kind_Mario as i32 as usize] = &raw mut parts_table;
@@ -12410,7 +12408,7 @@ pub unsafe extern "C" fn test_geno_none_independence() -> i32 {
     melee_core::ct!("test_geno_none_independence");
     static mut a: ftData = ftData {
         x0: ::core::ptr::null::<ftCo_DatAttrs>() as *mut ftCo_DatAttrs,
-        ext_attr: ::core::ptr::null::<c_void>() as *mut c_void,
+        ext_attr: ::core::ptr::null_mut::<ftData_ExtAttr>(),
         x8: ::core::ptr::null::<ftData_x8>() as *mut ftData_x8,
         xC: ::core::ptr::null::<Fighter_WaitAnimData>() as *mut Fighter_WaitAnimData,
         x10: ::core::ptr::null::<[u8; 2]>() as *mut [u8; 2],
@@ -12423,12 +12421,11 @@ pub unsafe extern "C" fn test_geno_none_independence() -> i32 {
         x2C: ::core::ptr::null::<ftDynamics>() as *mut ftDynamics,
         x30: ::core::ptr::null::<ftData_x30>() as *mut ftData_x30,
         x34: ::core::ptr::null::<ftData_x34>() as *mut ftData_x34,
-        x38: ::core::ptr::null::<ftData_x38>() as *mut ftData_x38,
+        x38: ::core::ptr::null::<AbsorbDesc>() as *mut AbsorbDesc,
         x3C: ::core::ptr::null::<UnkFloat6_Camera>() as *mut UnkFloat6_Camera,
         x40: ::core::ptr::null::<itPickup>() as *mut itPickup,
         x44: ::core::ptr::null::<ftData_x44_t>() as *mut ftData_x44_t,
-        x48_items: ::core::ptr::null::<*mut c_void>()
-            as *mut *mut c_void,
+        x48_items: ::core::ptr::null_mut::<ftData_Item>(),
         x4C_sfx: ::core::ptr::null::<FtSFX>() as *mut FtSFX,
         x50: ::core::ptr::null::<Vec2>() as *mut Vec2,
         x54: ::core::ptr::null::<i32>() as *mut i32,
@@ -12437,7 +12434,7 @@ pub unsafe extern "C" fn test_geno_none_independence() -> i32 {
     };
     static mut b: ftData = ftData {
         x0: ::core::ptr::null::<ftCo_DatAttrs>() as *mut ftCo_DatAttrs,
-        ext_attr: ::core::ptr::null::<c_void>() as *mut c_void,
+        ext_attr: ::core::ptr::null_mut::<ftData_ExtAttr>(),
         x8: ::core::ptr::null::<ftData_x8>() as *mut ftData_x8,
         xC: ::core::ptr::null::<Fighter_WaitAnimData>() as *mut Fighter_WaitAnimData,
         x10: ::core::ptr::null::<[u8; 2]>() as *mut [u8; 2],
@@ -12450,12 +12447,11 @@ pub unsafe extern "C" fn test_geno_none_independence() -> i32 {
         x2C: ::core::ptr::null::<ftDynamics>() as *mut ftDynamics,
         x30: ::core::ptr::null::<ftData_x30>() as *mut ftData_x30,
         x34: ::core::ptr::null::<ftData_x34>() as *mut ftData_x34,
-        x38: ::core::ptr::null::<ftData_x38>() as *mut ftData_x38,
+        x38: ::core::ptr::null::<AbsorbDesc>() as *mut AbsorbDesc,
         x3C: ::core::ptr::null::<UnkFloat6_Camera>() as *mut UnkFloat6_Camera,
         x40: ::core::ptr::null::<itPickup>() as *mut itPickup,
         x44: ::core::ptr::null::<ftData_x44_t>() as *mut ftData_x44_t,
-        x48_items: ::core::ptr::null::<*mut c_void>()
-            as *mut *mut c_void,
+        x48_items: ::core::ptr::null_mut::<ftData_Item>(),
         x4C_sfx: ::core::ptr::null::<FtSFX>() as *mut FtSFX,
         x50: ::core::ptr::null::<Vec2>() as *mut Vec2,
         x54: ::core::ptr::null::<i32>() as *mut i32,

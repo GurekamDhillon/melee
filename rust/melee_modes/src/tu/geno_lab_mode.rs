@@ -61,7 +61,7 @@ pub mod ext {
         gm_SetNextGameModeStateId(a0: u8) = |a0| crate::tu::gm_1A3F::gm_SetNextGameModeStateId(a0);
         gm_SetupAllPlayerDefaults(a0: *mut PlayerInitData) = |a0| unsafe { crate::tu::gm_1601::gm_SetupAllPlayerDefaults(a0) };
         lbColl_80008440(a0: *mut HitCapsule) = |a0| unsafe { crate::lb_ptr::lbColl_80008440(&mut *a0) };
-        mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, a13: *mut HSD_GObj) -> i32 = |a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, a13: *mut HSD_GObj| -> i32 { unsafe { melee_world::tu::mplib::mpCheckFloor(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _, a8 as _, a9 as _, a10 as _, a11 as _, a12 as _, a13 as _) as _ } };
+        mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, a13: *mut HSD_GObj) -> i32 = |a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, a13: *mut HSD_GObj| -> i32 { unsafe { melee_world::tu::mplib::mpCheckFloor(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _, a8 as _, a9 as _, a10 as _, a11 as _, a12 as _, a13 as _) as _ } };
         mpColl_80043680(a0: *mut CollData, a1: *mut Vec) = |a0: *mut CollData, a1: *mut Vec| { unsafe { melee_world::tu::mpcoll::mpColl_80043680(a0 as _, a1 as _); } };
         plStale_IncrementAttackInstance() -> u16 = || melee_fighter::stale::increment_attack_instance();
     }
@@ -202,7 +202,7 @@ pub unsafe extern "C" fn GenoFly_OfflineAllowed() -> i32 {
 }
 pub unsafe extern "C" fn fly_cursor_for(fp: *mut Fighter) -> *mut FlyCursor {
     melee_core::ct!("fly_cursor_for");
-    let slot = (*fp).player_id as usize;
+    let slot = (*fp).player_idx as usize;
     if slot < 6 && fly_cursor[slot].fighter == fp { &raw mut fly_cursor[slot] } else { null_mut() }
 }
 pub unsafe extern "C" fn fly_cursor_pulse(fp: *mut Fighter, c: *mut FlyCursor) {
@@ -300,7 +300,7 @@ pub unsafe extern "C" fn hold_live(fp: *mut Fighter) -> i32 {
 pub unsafe extern "C" fn hold_step(gobj: *mut HSD_GObj) {
     melee_core::ct!("hold_step");
     let fp = (*gobj).user_data as *mut Fighter;
-    let slot=(*fp).player_id as usize;
+    let slot=(*fp).player_idx as usize;
     if slot>=6 || hold_on[slot]==0 { return; }
     if (*fp).motion_id!=hold_action[slot] || hold_frozen[slot]<0 {
         ext::Fighter_ChangeMotionState(gobj,hold_action[slot],0,0.,1.,0.,null_mut());
@@ -420,7 +420,7 @@ pub unsafe extern "C" fn GenoFly_State(slot:i32,field:i32)->i32 {
 pub unsafe extern "C" fn GenoFly_Pulses(slot:i32)->i32 { melee_core::ct!("GenoFly_Pulses");GenoFly_State(slot,6)}
 pub unsafe extern "C" fn fly_refused(fp:*mut Fighter)->i32 {
     melee_core::ct!("fly_refused");
-    if (*fp).x221F_b3()!=0 || (*fp).kind==Ft_Kind_MasterH || (*fp).kind==Ft_Kind_CrezyH {return 1;}
+    if (*fp).is_sleeping()!=0 || (*fp).kind==Ft_Kind_MasterH || (*fp).kind==Ft_Kind_CrezyH {return 1;}
     let motion=(*fp).motion_id;
     for (lo,hi) in [(ftCo_MS_DeadDown,ftCo_MS_RebirthWait),(ftCo_MS_CapturePulledHi,ftCo_MS_CaptureFoot),(ftCo_MS_ThrownF,ftCo_MS_ThrownlwWomen),(ftCo_MS_ShoulderedWait,ftCo_MS_ThrownCrazyHand)] {
         if motion>=lo as i32 && motion<=hi as i32 {return 1;}
@@ -515,7 +515,7 @@ pub unsafe extern "C" fn GenoFly_CursorTest() -> i32 {
     let saved=fly_cursor[0]; let speed=fly_speed; let solid=fly_solid;
     let mut rc=0;
     core::ptr::write_bytes(&raw mut fp,0,1); core::ptr::write_bytes(&raw mut gobj,0,1);
-    gobj.user_data=(&raw mut fp).cast(); fp.player_id=0;
+    gobj.user_data=(&raw mut fp).cast(); fp.player_idx=0;
     GenoFly_TestArm(&raw mut fp); fly_speed=2.; fly_solid=1;
     core::ptr::write_bytes(&raw mut fly_cursor[0],0,1);
     fly_cursor[0].fighter=&raw mut fp; fly_cursor[0].target=1;

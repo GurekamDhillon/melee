@@ -92,7 +92,7 @@ pub fn ft_800889f4(f: &mut Fighter, sfx: *const FtSFXArr) {
 /// Stops both (main + sub) channels of every bank, then the lbAudioAx counters.
 pub fn ft_80088a50(f: &mut Fighter) {
     melee_core::ct!("ft_80088a50");
-    let p = f.player_id as i32 * 2;
+    let p = f.player_idx as i32 * 2;
     for (base, slot) in [(0x36, 2usize), (0x1E, 0), (0x2A, 1), (0x42, 3), (0x4E, 4), (0x5A, 5), (0x72, 6)] {
         h::lbaudioax_80023870(STOP, 0, 0x40, p + base);
         h::lbaudioax_80023870(STOP, 0, 0x40, p + base + 1);

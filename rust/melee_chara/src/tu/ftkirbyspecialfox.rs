@@ -286,7 +286,7 @@ pub fn ftKb_SpecialNFx_800FDDF4(gobj: *mut HSD_GObj) -> bool {
                             | THROW_B
                             | THROW_HI
                             | THROW_LW => {
-                                if (*fp).x2070.anon_0.x2071_b6() != 0 {
+                                if (*fp).x2070.x0.x2071_b6() != 0 {
                                     return true;
                                 }
                                 return false;
@@ -306,7 +306,7 @@ pub fn ftKb_SpecialNFx_800FDDF4(gobj: *mut HSD_GObj) -> bool {
                             | THROW_B
                             | THROW_HI
                             | THROW_LW => {
-                                if (*fp).x2070.anon_0.x2071_b6() != 0 {
+                                if (*fp).x2070.x0.x2071_b6() != 0 {
                                     return true;
                                 }
                                 return false;

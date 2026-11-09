@@ -78,10 +78,10 @@ pub mod ext {
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) };
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
@@ -105,7 +105,7 @@ pub mod ext {
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_80275328(a0: *mut HSD_GObj, a1: *mut ItemLink) => unsafe { crate::itlib3::it_80275328(a0, &mut *a1) };
     fn it_802A2474(a0: *mut c_void) => unsafe { crate::tu::itlinkhookshot::it_802A2474(a0) };
-    fn it_802A24A0(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itlinkhookshot::it_802A24A0(a0, a1) };
+    fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) => unsafe { crate::tu::itlinkhookshot::it_802A24A0(a0, a1) };
     fn it_802A24D0(a0: *mut ItemLink, a1: f32) => unsafe { crate::tu::itlinkhookshot::it_802A24D0(a0, a1) };
     fn it_802A3C98(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> f32 => unsafe { crate::tu::itlinkhookshot::it_802A3C98(a0 as _, a1 as _, a2 as _) };
     fn it_802A3D90(a0: *mut ItemLink) -> i32 => unsafe { crate::tu::itlinkhookshot::it_802A3D90(a0) };
@@ -121,10 +121,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
         pub unsafe extern "C" fn it_802A2474(a0: *mut c_void) { super::it_802A2474(a0) }
-        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: i32) { super::it_802A24A0(a0, a1) }
+        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) { super::it_802A24A0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;

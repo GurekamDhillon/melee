@@ -80,7 +80,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
     (*spawn).vel.x = 0.0;
     (*spawn).x0_parent_gobj = parent;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(initial_collision as u8);
+    (*spawn).x44_flag.x0.set_b0(initial_collision as u8);
     (*spawn).x40 = 0;
 }
 
@@ -112,7 +112,7 @@ pub unsafe extern "C" fn it_802C01AC(gobj: *mut Item_GObj, pos: *mut Vec3, kind:
 pub unsafe extern "C" fn it_802C027C(gobj: *mut Item_GObj) {
     melee_core::ct!("it_802C027C");
     let ip = GET_ITEM(gobj);
-    let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
+    let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes_legacy;
     (*ip).x40_vel.x = (*attrs).x0_float * (*ip).facing_dir;
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.y = 0.0;
@@ -146,7 +146,7 @@ pub unsafe extern "C" fn itLuigifireball_UnkMotion0_Coll(gobj: *mut Item_GObj) -
     if ext::it_8027781C(gobj) != 0 {
         let ip = GET_ITEM(gobj);
         let jobj = GET_JOBJ(gobj);
-        let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
+        let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes_legacy;
         if calc_dist_2d_accurate(&mut (*ip).x40_vel) < (*attrs).xC as f64 {
             return true;
         }

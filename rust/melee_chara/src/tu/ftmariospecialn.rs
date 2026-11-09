@@ -119,8 +119,8 @@ pub fn ftMr_SpecialN_ItemFireSpawn(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMr_SpecialN_ItemFireSpawn");
     unsafe {
         let fp = fpp(gobj);
-        let flag_res = if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-            (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+        let flag_res = if (*fp).x2210.x0.throw_flags_b0() != 0 {
+            (*fp).x2210.x0.set_throw_flags_b0(0);
             true
         } else {
             false
@@ -241,7 +241,7 @@ pub fn ftMr_SpecialN_Enter(gobj: *mut HSD_GObj) {
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 343 /* ftMr_MS_SpecialN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
         (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);
@@ -254,7 +254,7 @@ pub fn ftMr_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 344 /* ftMr_MS_SpecialAirN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
         (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);

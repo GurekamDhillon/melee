@@ -45,7 +45,7 @@ fn set_wait_anim(gobj: *mut HSD_GObj, anim_id: i32) {
     f.x3E4_fighterCmdScript.loop_count = 0;
     if !f.x590.is_null() {
         // `fp->x594_s32 = ...`: a whole s32 over the bitfield word, GC byte order.
-        f.anon_594.anon_0_0.bf_0 = (anim.x10_animCurrFlags as u32).to_be_bytes();
+        f.x594.x0_1.bf_0 = (anim.x10_animCurrFlags as u32).to_be_bytes();
         ext::ftAnim_8006EBE8(gobj, 0.0, 1.0, unsafe { (*blend)[0] } as f32);
     }
     f.x3E4_fighterCmdScript.timer = 0.0;

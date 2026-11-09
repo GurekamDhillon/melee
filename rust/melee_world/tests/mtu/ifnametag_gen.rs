@@ -209,8 +209,8 @@ pub fn fill_HSD_Text(p: &mut HSD_Text) {
     p.hidden = fv() as _;
     p.x4E = fv() as _;
     p.font_idx = fv() as _;
-    p.x6C = fv() as _;
-    p.x6E = fv() as _;
+    p.state_stack_used = fv() as _;
+    p.state_stack_capacity = fv() as _;
     p.current_width = rg();
     p.current_height = rg();
     p.x78.x = rg();
@@ -272,9 +272,9 @@ pub fn hash_HSD_Text(p: &HSD_Text) {
     hm(pi(p.sis_buffer));
     hm(pi(p.x60));
     hm(pi(p.alloc_data));
-    hm(pi(p.string_buffer));
-    hm(p.x6C as u32);
-    hm(p.x6E as u32);
+    hm(pi(p.state_stack));
+    hm(p.state_stack_used as u32);
+    hm(p.state_stack_capacity as u32);
     hm(p.current_width.to_bits());
     hm(p.current_height.to_bits());
     hm(p.x78.x.to_bits());
@@ -299,7 +299,7 @@ pub fn hash_HSD_Text(p: &HSD_Text) {
 pub fn fill_Fighter(p: &mut Fighter) {
     p.kind = fv() as _;
     p.x8_spawnNum = fv() as _;
-    p.player_id = fv() as _;
+    p.player_idx = fv() as _;
     p.motion_id = fv() as _;
     p.anim_id = fv() as _;
     p.x18 = fv() as _;
@@ -634,9 +634,9 @@ pub fn fill_Fighter(p: &mut Fighter) {
     p.x610_color_rgba[i0].b = fv() as _;
     p.x610_color_rgba[i0].a = fv() as _;
     }
-    p.x618_player_id = fv() as _;
-    p.x619_costume_id = fv() as _;
-    p.x61A_controller_index = fv() as _;
+    p.pad_port = fv() as _;
+    p.costume_id = fv() as _;
+    p.sub_color = fv() as _;
     p.team = fv() as _;
     p.x61C = fv() as _;
     p.x61D = fv() as _;
@@ -1510,8 +1510,8 @@ pub fn fill_Fighter(p: &mut Fighter) {
     p.set_x221C_b6(fv() as _);
     p.set_x221C_u16_y(fv() as _);
     p.set_x221D_b2(fv() as _);
-    p.set_x221D_b3(fv() as _);
-    p.set_x221D_b4(fv() as _);
+    p.set_has_prev_input(fv() as _);
+    p.set_input_disabled(fv() as _);
     p.set_x221D_b5(fv() as _);
     p.set_x221D_b6(fv() as _);
     p.set_x221D_b7(fv() as _);
@@ -1526,7 +1526,7 @@ pub fn fill_Fighter(p: &mut Fighter) {
     p.set_x221F_b0(fv() as _);
     p.set_x221F_b1(fv() as _);
     p.set_x221F_b2(fv() as _);
-    p.set_x221F_b3(fv() as _);
+    p.set_is_sleeping(fv() as _);
     p.set_is_sub_fighter(fv() as _);
     p.set_x221F_b5(fv() as _);
     p.set_x221F_b6(fv() as _);
@@ -1563,7 +1563,7 @@ pub fn fill_Fighter(p: &mut Fighter) {
     p.set_is_metal(fv() as _);
     p.set_x2224_b0(fv() as _);
     p.set_x2224_b1(fv() as _);
-    p.set_x2224_b2(fv() as _);
+    p.set_stamina_dead(fv() as _);
     p.set_x2224_b3(fv() as _);
     p.set_x2224_b4(fv() as _);
     p.set_x2224_b5(fv() as _);
@@ -1630,7 +1630,7 @@ pub fn hash_Fighter(p: &Fighter) {
     hm(pi(p.gobj));
     hm(p.kind as u32);
     hm(p.x8_spawnNum as u32);
-    hm(p.player_id as u32);
+    hm(p.player_idx as u32);
     hm(p.motion_id as u32);
     hm(p.anim_id as u32);
     hm(p.x18 as u32);
@@ -1999,9 +1999,9 @@ pub fn hash_Fighter(p: &Fighter) {
     hm(p.x610_color_rgba[i0].b as u32);
     hm(p.x610_color_rgba[i0].a as u32);
     }
-    hm(p.x618_player_id as u32);
-    hm(p.x619_costume_id as u32);
-    hm(p.x61A_controller_index as u32);
+    hm(p.pad_port as u32);
+    hm(p.costume_id as u32);
+    hm(p.sub_color as u32);
     hm(p.team as u32);
     hm(p.x61C as u32);
     hm(p.x61D as u32);
@@ -2948,8 +2948,8 @@ pub fn hash_Fighter(p: &Fighter) {
     hm(p.x221C_b6() as u32);
     hm(p.x221C_u16_y() as u32);
     hm(p.x221D_b2() as u32);
-    hm(p.x221D_b3() as u32);
-    hm(p.x221D_b4() as u32);
+    hm(p.has_prev_input() as u32);
+    hm(p.input_disabled() as u32);
     hm(p.x221D_b5() as u32);
     hm(p.x221D_b6() as u32);
     hm(p.x221D_b7() as u32);
@@ -2964,7 +2964,7 @@ pub fn hash_Fighter(p: &Fighter) {
     hm(p.x221F_b0() as u32);
     hm(p.x221F_b1() as u32);
     hm(p.x221F_b2() as u32);
-    hm(p.x221F_b3() as u32);
+    hm(p.is_sleeping() as u32);
     hm(p.is_sub_fighter() as u32);
     hm(p.x221F_b5() as u32);
     hm(p.x221F_b6() as u32);
@@ -3001,7 +3001,7 @@ pub fn hash_Fighter(p: &Fighter) {
     hm(p.is_metal() as u32);
     hm(p.x2224_b0() as u32);
     hm(p.x2224_b1() as u32);
-    hm(p.x2224_b2() as u32);
+    hm(p.stamina_dead() as u32);
     hm(p.x2224_b3() as u32);
     hm(p.x2224_b4() as u32);
     hm(p.x2224_b5() as u32);
@@ -3375,7 +3375,7 @@ pub fn fill_VsSceneController(p: &mut VsSceneController) {
     p.start.x1C_pad[i0] = fv() as _;
     }
     p.start.x20 = fv64() as _;
-    p.start.x28 = fv() as _;
+    p.start.it_kind = fv() as _;
     p.start.x2C = rg();
     p.start.x30 = rg();
     p.start.game_speed = rg();
@@ -3580,7 +3580,7 @@ pub fn hash_VsSceneController(p: &VsSceneController) {
     hm(p.start.x1C_pad[i0] as u32);
     }
     hm(p.start.x20 as u32); hm(((p.start.x20 as u64) >> 32) as u32);
-    hm(p.start.x28 as u32);
+    hm(p.start.it_kind as u32);
     hm(p.start.x2C.to_bits());
     hm(p.start.x30.to_bits());
     hm(p.start.game_speed.to_bits());

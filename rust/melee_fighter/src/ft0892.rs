@@ -44,19 +44,19 @@ pub fn s2070_from_gc_int(v: i32) -> Struct2070 {
 
 #[inline(always)]
 pub(crate) fn x2073(s: &Struct2070) -> u8 {
-    unsafe { s.anon_0.x2073 }
+    unsafe { s.x0.x2073 }
 }
 
 #[inline(always)]
-pub(crate) fn bits2074(f: &mut Fighter) -> &mut Struct2074_anon_1061_anon_1063 {
-    unsafe { &mut f.x2074.anon_10.anon_0 }
+pub(crate) fn bits2074(f: &mut Fighter) -> &mut Struct2074_x10_x0 {
+    unsafe { &mut f.x2074.x10.x0 }
 }
 
 /// The 2074 reset shared by 800892D4 / 80089460 / 80089768 (same stores, same order).
 pub(crate) fn reset_2074(f: &mut Fighter) {
-    f.x2074.x2074_vec.x = f32::from_bits(0);
-    f.x2074.x2074_vec.y = f32::from_bits(0);
-    f.x2074.x207C.x = 0.0f32.to_bits() as i32;
+    f.x2074.x2074_vec.x = 0;
+    f.x2074.x2074_vec.y = 0;
+    f.x2074.x207C.x = 0.0;
     f.x2074.x207C.y = 6;
     let b = bits2074(f);
     b.set_x2084_b0(0);
@@ -96,7 +96,7 @@ pub fn reset_18d8(e: &mut ft_800898B4_t) {
 }
 
 pub(crate) fn snapshot_flags(f: &mut Fighter) {
-    f.x2074.x2074_vec.x = f32::from_bits(melee_core::ppc::fctiwz_f32(f.dmg.x1830_percent) as u32);
+    f.x2074.x2074_vec.x = melee_core::ppc::fctiwz_f32(f.dmg.x1830_percent);
     let metal = f.is_metal() != 0;
     let x197c = !f.x197C.is_null();
     let (b3, b4, b5, b6) = (f.x221D_b6() != 0, f.x2226_b4() != 0, f.x2220_b5() != 0, f.x2220_b6() != 0);

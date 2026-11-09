@@ -598,7 +598,7 @@ pub fn ftLk_SpecialN_IsActiveAnd2071b6_fp(fp: &Fighter) -> bool {
         ftLk_MS_SpecialAirNLoop,
         ftLk_MS_SpecialAirNEnd,
     ];
-    if active.iter().any(|&s| s as u32 == m) && unsafe { fp.x2070.anon_0.x2071_b6() } == 0 {
+    if active.iter().any(|&s| s as u32 == m) && unsafe { fp.x2070.x0.x2071_b6() } == 0 {
         return false;
     }
     true

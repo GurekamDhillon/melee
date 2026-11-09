@@ -1566,7 +1566,7 @@ pub unsafe fn fe_draw_frame() {
     ext::fe_panel_art_frame(&bounds, 64.0f32, 16.0f32, 0, 0);
 }
 
-pub unsafe extern "C" fn fe_draw_panels(_gobj: *mut HSD_GObj, pass: i32) {
+pub unsafe extern "C" fn fe_draw_panels(_gobj: *mut HSD_GObj, pass: isize) {
     melee_core::ct!("fe_draw_panels");
     if pass != 0 {
         return;
@@ -1681,7 +1681,7 @@ pub unsafe extern "C" fn fe_draw_panels(_gobj: *mut HSD_GObj, pass: i32) {
     }
 }
 
-pub unsafe extern "C" fn fe_draw_fade(_gobj: *mut HSD_GObj, pass: i32) {
+pub unsafe extern "C" fn fe_draw_fade(_gobj: *mut HSD_GObj, pass: isize) {
     melee_core::ct!("fe_draw_fade");
     if pass != 2 {
         return;

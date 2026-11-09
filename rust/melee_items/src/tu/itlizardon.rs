@@ -515,7 +515,7 @@ pub unsafe fn it_802CC1CC(gobj: *mut Item_GObj, kind: ItemKind) {
     spawn.kind = kind;
     spawn.x0_parent_gobj = (*ip).owner;
     spawn.x4_parent_gobj2 = gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     if !ext::Item_80268B18(&mut spawn).is_null() {
         (*ip).xDD4_itemVar.lizardon.x6C ^= 1;

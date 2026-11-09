@@ -94,10 +94,10 @@ pub fn ftMt_Init_OnLoad(gobj: *mut HSD_GObj) {
 
         push_attrs::<ftMewtwoAttributes>(fp);
 
-        (*(*fp).parts.add(FtPart_TransN as usize)).anon_8.anon_0.set_flags_b4(1);
+        (*(*fp).parts.add(FtPart_TransN as usize)).x8.x0.set_flags_b4(1);
         (*fp).set_x2221_b2(1);
-        ext::it_8026B3F8(*item_list.add(0), It_Kind_Mewtwo_Disable as i32);
-        ext::it_8026B3F8(*item_list.add(1), It_Kind_Mewtwo_ShadowBall as i32);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Mewtwo_Disable as i32);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, It_Kind_Mewtwo_ShadowBall as i32);
     }
 }
 

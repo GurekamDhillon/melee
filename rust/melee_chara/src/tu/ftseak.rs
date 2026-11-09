@@ -91,10 +91,10 @@ pub fn ftSk_Init_OnLoad(gobj: *mut HSD_GObj) {
 
         crate::tu::ftfox::push_attrs::<ftSeakAttributes>(fp);
 
-        ext::it_8026B3F8(*item_list.add(0), It_Kind_Seak_NeedleThrow as i32);
-        ext::it_8026B3F8(*item_list.add(1), It_Kind_Seak_NeedleHeld as i32);
-        ext::it_8026B3F8(*item_list.add(2), It_Kind_Seak_Vanish as i32);
-        ext::it_8026B3F8(*item_list.add(3), It_Kind_Seak_Chain as i32);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Seak_NeedleThrow as i32);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, It_Kind_Seak_NeedleHeld as i32);
+        ext::it_8026B3F8((*item_list.add(2)).article as *mut ::core::ffi::c_void, It_Kind_Seak_Vanish as i32);
+        ext::it_8026B3F8((*item_list.add(3)).article as *mut ::core::ffi::c_void, It_Kind_Seak_Chain as i32);
     }
 }
 

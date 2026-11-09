@@ -60,7 +60,7 @@ pub fn fn_800DA1D8(g: G) {
     let f = fp(g);
     f.accessory1_cb = Some(fn_800DA4A0_cb);
     f.take_dmg_cb = Some(fn_800DA490_cb);
-    f.anon_221b.set_x221B_b7(0);
+    f.x221B.set_x221B_b7(0);
     let jobj = unsafe { (*f.parts.offset((*(*f.ft_data).x8).x11 as isize)).joint };
     f.mv.co.capturedamage.x18 = jobj;
     let q = &mut f.x60C as *mut _ as *mut core::ffi::c_void;

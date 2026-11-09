@@ -44,7 +44,7 @@ fn set_cbs(f: &mut Fighter) {
 /// `ftCo_800CE3E0`: grounded FireFlowerShoot enter.
 pub fn ftco_800ce3e0(g: G) {
     melee_core::ct!("ftco_800ce3e0");
-    unsafe { fp(g).anon_2210.throw_flags = 0 };
+    unsafe { fp(g).x2210.throw_flags = 0 };
     reset_vars(fp(g));
     e::Fighter_ChangeMotionState(g, ftCo_MS_FireFlowerShoot as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     e::ftAnim_8006EBA4(g);
@@ -54,7 +54,7 @@ pub fn ftco_800ce3e0(g: G) {
 /// `ftCo_800CE480`: aerial FireFlowerShootAir enter.
 pub fn ftco_800ce480(g: G) {
     melee_core::ct!("ftco_800ce480");
-    unsafe { fp(g).anon_2210.throw_flags = 0 };
+    unsafe { fp(g).x2210.throw_flags = 0 };
     reset_vars(fp(g));
     e::Fighter_ChangeMotionState(g, ftCo_MS_FireFlowerShootAir as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     e::ftAnim_8006EBA4(g);

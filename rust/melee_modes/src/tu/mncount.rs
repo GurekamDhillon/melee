@@ -44,7 +44,7 @@ pub mod ext {
         fn HSD_GObjFree(a0: *mut HSD_GObj) -> ();
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void) -> ();
         fn HSD_GObjProc_RemoveProc(gproc: *mut HSD_GObjProc) -> ();
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc;
         fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint) -> ();
         fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, flags: u32) -> ();

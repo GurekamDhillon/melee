@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::{Once, RwLock};
 
 use melee_types::{
-    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_GObjEvent, HSD_Generator, HSD_JObj, HSD_PadStatus, HSD_psAppSRT, Item, StageCallbacks, StageCallbacks_anon_135,
+    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_GObjEvent, HSD_Generator, HSD_JObj, HSD_PadStatus, HSD_psAppSRT, Item, StageCallbacks, StageCallbacks_x10,
     StageData, StageInfo, Vec3, CollLine_Ceiling, CollLine_Floor, CollLine_LeftWall, CollLine_RightWall, HSD_PAD_A,
     JOBJ_HIDDEN, JOBJ_MTX_DIRTY, JOBJ_MTX_INDEP_SRT, JOBJ_USER_DEF_MTX, QuakeKind_Small, Gr_Kind_TSamus,
 };
@@ -79,21 +79,21 @@ fn init_tables() {
             callback1: Some(grTSamus_80223738),
             gobj_proc: Some(grTSamus_80223740),
             callback3: Some(grTSamus_80223744),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[1] = StageCallbacks {
             on_init: Some(stageGObj1_OnInit),
             callback1: Some(grTSamus_80223828),
             gobj_proc: Some(stageGObj1_GObjProc),
             callback3: Some(grTSamus_80223850),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[2] = StageCallbacks {
             on_init: Some(stageGObj2_OnInit),
             callback1: Some(grTSamus_80223798),
             gobj_proc: Some(stageGObj2_GObjProc),
             callback3: Some(grTSamus_802237D4),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be(0xC0000000) },
+            x10: StageCallbacks_x10 { flags: u32::to_be(0xC0000000) },
         };
         CALLBACKS.write(t);
         let mut sd: StageData = core::mem::zeroed();
@@ -226,7 +226,7 @@ pub unsafe extern "C" fn grTSamus_80223850(gobj: *mut HSD_GObj) {
     pub extern "C" fn grTSamus_80223828(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grTSamus_OnTouchLine (gr/grtsamus.c:156)
-    pub extern "C" fn grTSamus_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grTSamus_OnTouchLine(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grTSamus_OnCheckShadowRender (gr/grtsamus.c:161)
     pub extern "C" fn grTSamus_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

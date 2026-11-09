@@ -108,15 +108,20 @@ fn part<'a>(f: &Fighter, i: i32) -> &'a mut FighterBone {
 }
 #[inline(always)]
 fn pflag(b: &FighterBone) -> u8 {
-    unsafe { b.anon_8.anon_0.flags_b0() }
+    unsafe { b.x8.x0.flags_b0() }
 }
 #[inline(always)]
 fn set_pflag(b: &mut FighterBone, v: u8) {
-    unsafe { b.anon_8.anon_0.set_flags_b0(v) }
+    unsafe { b.x8.x0.set_flags_b0(v) }
 }
 #[inline(always)]
-fn dyn_bones<'a>(d: *mut ftDynamics) -> &'a mut ArticleDynamicBones {
-    unsafe { &mut *(*d).anon_0.ftDynamicBones }
+fn dyn_bones(d: *mut ftDynamics) -> *mut BoneDynamicsTemplate {
+    unsafe { (*d).x0.ftDynamicBones }
+}
+/// `d->x0.ftDynamicBones[i]`.
+#[inline(always)]
+fn dyn_bone<'a>(d: *mut ftDynamics, i: usize) -> &'a mut BoneDynamicsTemplate {
+    unsafe { &mut *(*d).x0.ftDynamicBones.add(i) }
 }
 
 fn cb40_inline(data: *mut DynamicsData) {
@@ -133,21 +138,21 @@ fn cb40_inline(data: *mut DynamicsData) {
 }
 
 /// `ftCo_8009CB40` (static). `arg3` is a FigaTree* also used as an int count (truncated to s32).
-pub fn ftCo_8009CB40(f: &mut Fighter, bone_idx: isize, arg2: i32, arg3: *mut FigaTree) {
+pub fn ftCo_8009CB40(f: &mut Fighter, bone_idx: isize, arg2: i32, arg3: i32) {
     melee_core::ct!("ftCo_8009CB40");
     let dy = unsafe { (*f.ft_data).x2C };
-    if unsafe { (*dy).anon_0.dynamicsNum } == 0 {
+    if unsafe { (*dy).x0.dynamicsNum } == 0 {
         return;
     }
-    let mut bone_id = dyn_bones(dy).array[bone_idx as usize].bone_id;
+    let mut bone_id = dyn_bone(dy, bone_idx as usize).bone_id;
     let flag: i32 = (arg2 != 0) as i32;
     let mut j = part(f, bone_id).joint;
     let mut k: i32 = 0;
     f.dynamic_bone_sets[bone_idx as usize].bone_id =
-        if arg2 == 1 { arg3 as isize as i32 } else { 0x100 };
+        if arg2 == 1 { arg3 } else { 0x100 };
     let mut data = f.dynamic_bone_sets[bone_idx as usize].dyn_desc.data;
     let inverse = 1 - flag;
-    let limit = arg3 as isize as i32;
+    let limit = arg3;
     while !data.is_null() {
         let b = part(f, bone_id);
         let v = if k < limit { inverse } else { flag };
@@ -176,15 +181,15 @@ pub fn ftCo_8009CF84(f: &mut Fighter) {
     melee_core::ct!("ftCo_8009CF84");
     let data = f.ft_data;
     let dy = unsafe { (*data).x2C };
-    f.dynamics_num = unsafe { (*dy).anon_0.dynamicsNum };
+    f.dynamics_num = unsafe { (*dy).x0.dynamicsNum };
     num_over(f, 109);
     let mut i: isize = 0;
-    while i < unsafe { (*dy).anon_0.dynamicsNum } as isize {
-        let bones = &mut dyn_bones(dy).array[i as usize];
+    while i < unsafe { (*dy).x0.dynamicsNum } as isize {
+        let bones = dyn_bone(dy, i as usize);
         ext::lb_8000FD48(part(f, bones.bone_id).joint, &mut f.dynamic_bone_sets[i as usize].dyn_desc, bones.dyn_desc.count as usize);
         f.dynamic_bone_sets[i as usize].bone_id = 0;
-        ftCo_8009CB40(f, i, 1, core::ptr::null_mut());
-        ext::lb_80011710(&mut dyn_bones(dy).array[i as usize].dyn_desc, &mut f.dynamic_bone_sets[i as usize].dyn_desc);
+        ftCo_8009CB40(f, i, 1, 0);
+        ext::lb_80011710((&raw mut dyn_bone(dy, i as usize).dyn_desc) as *mut DynamicsDesc, &mut f.dynamic_bone_sets[i as usize].dyn_desc);
         i += 1;
     }
 }
@@ -211,11 +216,11 @@ fn walk(mut cur: *mut HSD_JObj, n: i32) -> *mut HSD_JObj {
 /// `ftCo_SetupKirbyHatBone` (static inline).
 fn setup_kirby_hat_bone(f: &mut Fighter, hat: *mut KirbyHatStruct, dyn_idx: usize, i: isize) {
     let hd = unsafe { (*hat).hat_dynamics[dyn_idx] };
-    let article = &mut dyn_bones(hd).array[i as usize];
+    let article = dyn_bone(hd, i as usize);
     let cur = walk(unsafe { f.u.kb.hat.jobj }, article.bone_id);
     ext::lb_8000FD48(cur, &mut f.dynamic_bone_sets[i as usize].dyn_desc, article.dyn_desc.count as usize);
     f.dynamic_bone_sets[i as usize].bone_id = 0;
-    ext::lb_80011710(&mut dyn_bones(hd).array[i as usize].dyn_desc, &mut f.dynamic_bone_sets[i as usize].dyn_desc);
+    ext::lb_80011710((&raw mut dyn_bone(hd, i as usize).dyn_desc) as *mut DynamicsDesc, &mut f.dynamic_bone_sets[i as usize].dyn_desc);
 }
 
 fn kirby_hat(f: &mut Fighter, kind: FighterKind, dyn_idx: usize, line: u32) {
@@ -223,7 +228,7 @@ fn kirby_hat(f: &mut Fighter, kind: FighterKind, dyn_idx: usize, line: u32) {
     if hat.is_null() {
         return;
     }
-    f.dynamics_num = unsafe { (*(*hat).hat_dynamics[dyn_idx]).anon_0.dynamicsNum };
+    f.dynamics_num = unsafe { (*(*hat).hat_dynamics[dyn_idx]).x0.dynamicsNum };
     num_over(f, line);
     let mut i: isize = 0;
     while i < f.dynamics_num as isize {
@@ -239,16 +244,16 @@ fn kirby_hat_parts(f: &mut Fighter, kind: FighterKind, dyn_idx: usize, line: u32
         return;
     }
     let hd = unsafe { (*hat).hat_dynamics[dyn_idx] };
-    f.dynamics_num = unsafe { (*hd).anon_0.dynamicsNum };
+    f.dynamics_num = unsafe { (*hd).x0.dynamicsNum };
     num_over(f, line);
     let mut i: isize = 0;
     while i < f.dynamics_num as isize {
-        let bone_id = dyn_bones(hd).array[i as usize].bone_id;
+        let bone_id = dyn_bone(hd, i as usize).bone_id;
         set_pflag(part(f, bone_id), 1);
         ext::lb_8000FD48(part(f, bone_id).joint, &mut f.dynamic_bone_sets[i as usize].dyn_desc,
-                         dyn_bones(hd).array[i as usize].dyn_desc.count as usize);
+                         dyn_bone(hd, i as usize).dyn_desc.count as usize);
         f.dynamic_bone_sets[i as usize].bone_id = FtPart_TopN as i32;
-        ext::lb_80011710(&mut dyn_bones(hd).array[i as usize].dyn_desc, &mut f.dynamic_bone_sets[i as usize].dyn_desc);
+        ext::lb_80011710((&raw mut dyn_bone(hd, i as usize).dyn_desc) as *mut DynamicsDesc, &mut f.dynamic_bone_sets[i as usize].dyn_desc);
         i += 1;
     }
 }
@@ -268,7 +273,7 @@ pub fn ftCo_8009DB50(f: &mut Fighter) { melee_core::ct!("ftCo_8009DB50"); kirby_
 /// `ftCo_8009DC54`: Jigglypuff costume 2/3 accessory dynamics (sets 1..2).
 pub fn ftCo_8009DC54(f: &mut Fighter) {
     melee_core::ct!("ftCo_8009DC54");
-    let idx: isize = match f.x619_costume_id {
+    let idx: isize = match f.costume_id {
         2 => 0,
         3 => 1,
         _ => return,
@@ -281,11 +286,11 @@ pub fn ftCo_8009DC54(f: &mut Fighter) {
     let mut i: isize = 0;
     while i < 2 {
         let dy = unsafe { (*data).x2C };
-        let cur = walk(unsafe { f.u.pr.x223C }, dyn_bones(dy).array[bone_idx as usize].bone_id);
+        let cur = walk(unsafe { f.u.pr.x223C }, dyn_bone(dy, bone_idx as usize).bone_id);
         let desc: *mut DynamicsDesc = &mut f.dynamic_bone_sets[(i + 1) as usize].dyn_desc;
-        ext::lb_8000FD48(cur, desc, dyn_bones(dy).array[bone_idx as usize].dyn_desc.count as usize);
+        ext::lb_8000FD48(cur, desc, dyn_bone(dy, bone_idx as usize).dyn_desc.count as usize);
         f.dynamic_bone_sets[(dyn_idx + 1) as usize].bone_id = FtPart_TopN as i32;
-        ext::lb_80011710(&mut dyn_bones(unsafe { (*data).x2C }).array[bone_idx as usize].dyn_desc, desc);
+        ext::lb_80011710((&raw mut dyn_bone(unsafe { (*data).x2C }, bone_idx as usize).dyn_desc) as *mut DynamicsDesc, desc);
         i += 1;
         bone_idx += 1;
         dyn_idx += 1;
@@ -382,19 +387,19 @@ fn set_all(f: &mut Fighter, flag: i32) {
         return;
     }
     if template_kind(f) == Ft_Kind_Purin as i32 {
-        ftCo_8009CB40(f, 0, flag, core::ptr::null_mut());
+        ftCo_8009CB40(f, 0, flag, 0);
         return;
     }
     let mut i: isize = 0;
     while i < f.dynamics_num as isize {
-        ftCo_8009CB40(f, i, flag, core::ptr::null_mut());
+        ftCo_8009CB40(f, i, flag, 0);
         i += 1;
     }
 }
 fn set_each(f: &mut Fighter, flag: i32) {
     let mut i: isize = 0;
     while i < f.dynamics_num as isize {
-        ftCo_8009CB40(f, i, flag, core::ptr::null_mut());
+        ftCo_8009CB40(f, i, flag, 0);
         i += 1;
     }
 }
@@ -464,12 +469,12 @@ pub fn ftCo_8009E318(g: G, arg1: i32, arg2: f32) -> i32 {
     -1
 }
 
-fn x594_b4(f: &Fighter) -> bool { unsafe { f.anon_594.anon_0.x594_b4() != 0 } }
-fn x594_b3(f: &Fighter) -> bool { unsafe { f.anon_594.anon_0.x594_b3() != 0 } }
+fn x594_b4(f: &Fighter) -> bool { unsafe { f.x594.x0.x594_b4() != 0 } }
+fn x594_b3(f: &Fighter) -> bool { unsafe { f.x594.x0.x594_b3() != 0 } }
 
 fn reanim(f: &mut Fighter, i: usize, frame: f32, speed: f32) {
     if !f.x590.is_null() {
-        let bone = unsafe { dyn_bones((*f.ft_data).x2C).array[i].bone_id };
+        let bone = unsafe { dyn_bone((*f.ft_data).x2C, i).bone_id };
         let t = f.x590;
         ext::ftAnim_8006EED4(f, bone, t, frame, speed);
     }
@@ -496,7 +501,7 @@ pub fn ftCo_8009E4A8(f: &mut Fighter) {
     } else if x594_b3(f) {
         let mut i = 0;
         while i < f.dynamics_num {
-            ftCo_8009CB40(f, i as isize, 0, core::ptr::null_mut());
+            ftCo_8009CB40(f, i as isize, 0, 0);
             reanim(f, i as usize, frame, speed);
             i += 1;
         }
@@ -522,8 +527,8 @@ pub fn ftCo_8009E614(f: &mut Fighter) {
             let speed = f.frame_speed_mul;
             if x594_b4(f) || x594_b3(f) {
                 let mut i: isize = 0;
-                while i < unsafe { (*(*data).x2C).anon_0.dynamicsNum } as isize {
-                    ftCo_8009CB40(f, i, 1, core::ptr::null_mut());
+                while i < unsafe { (*(*data).x2C).x0.dynamicsNum } as isize {
+                    ftCo_8009CB40(f, i, 1, 0);
                     i += 1;
                 }
                 if !f.x590.is_null() {
@@ -556,7 +561,7 @@ pub fn ftCo_8009E7B4(f: &mut Fighter, arg1: *const [u8; 2]) {
         if b6 != 0 {
             if !is_kirby(f.kind as i32) {
                 if template_kind(f) == Ft_Kind_Purin as i32 {
-                    ftCo_8009CB40(f, 0, 0, core::ptr::null_mut());
+                    ftCo_8009CB40(f, 0, 0, 0);
                     return;
                 }
                 set_each(f, 0);
@@ -590,7 +595,7 @@ pub fn ftCo_8009E7B4(f: &mut Fighter, arg1: *const [u8; 2]) {
         }
     } else if f.x2227_b6() != 0 && !is_kirby(f.kind as i32) {
         if template_kind(f) == Ft_Kind_Purin as i32 {
-            ftCo_8009CB40(f, 0, 0, core::ptr::null_mut());
+            ftCo_8009CB40(f, 0, 0, 0);
             return;
         }
         set_each(f, 0);

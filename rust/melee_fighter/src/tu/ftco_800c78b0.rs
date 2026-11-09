@@ -27,7 +27,7 @@ pub fn ftco_800c78b0(g: G, owner: *mut HSD_GObj) {
     e90::ftCommon_8007E2FC(fp(g));
     let cd = crate::hooks::common_data();
     let f = fp(g);
-    let pid = f.player_id as i32;
+    let pid = f.player_idx as i32;
     let tmp1 = cd.x74C * (cd.x750 - (e90::Player_80033BB8(pid) + 1) as f32);
     let mut tmp2 = fmadds(cd.x744, cd.x748 - e90::Player_GetHandicap(pid) as f32, cd.x740);
     tmp2 += tmp1;

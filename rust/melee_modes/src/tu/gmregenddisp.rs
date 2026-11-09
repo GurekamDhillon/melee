@@ -42,10 +42,10 @@ pub mod ext {
         fn HSD_FogReqAnim(fog: *mut HSD_Fog, frame: f32) -> ();
         fn HSD_Fog_8037DE7C(fog: *mut HSD_Fog, aobjdesc: *mut HSD_AObjDesc) -> ();
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void) -> ();
-        fn HSD_GObj_803910D8(gobj: *mut HSD_GObj, pass: i32) -> ();
-        fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, pass: i32) -> () = crate::tu::adapt::HSD_GObj_FogCallback__2aeaad;
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, pass: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
-        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, pass: i32) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
+        fn HSD_GObj_803910D8(gobj: *mut HSD_GObj, pass: isize) -> ();
+        fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, pass: isize) -> () = crate::tu::adapt::HSD_GObj_FogCallback__2aeaad;
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, pass: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, pass: isize) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
         fn HSD_GObj_SetupProc(gobj: *mut HSD_GObj, cb: HSD_GObjEvent, priority: u8) -> *mut HSD_GObjProc;
         fn HSD_JObjAddAnimAll(jobj: *mut HSD_JObj, anim: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, shape: *mut HSD_ShapeAnimJoint) -> ();
         fn HSD_JObjAddChild(parent: *mut HSD_JObj, child: *mut HSD_JObj) -> ();

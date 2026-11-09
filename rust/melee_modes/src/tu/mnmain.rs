@@ -1970,7 +1970,7 @@ pub unsafe extern "C" fn mn_80229B2C() -> *mut HSD_GObj {
         temp_r30,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         2 as u8_0,
         0x80 as u32_0,
@@ -2195,7 +2195,7 @@ pub unsafe extern "C" fn mn_80229DC0() -> *mut HSD_GObj {
         temp_r31,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         3 as u8_0,
         0x80 as u32_0,
@@ -2914,7 +2914,7 @@ pub unsafe extern "C" fn mn_8022B3A0(mut state: u8_0) -> *mut HSD_GObj {
         gobj,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         4 as u8_0,
         0x80 as u32_0,
@@ -3191,7 +3191,7 @@ pub unsafe extern "C" fn mn_8022BA1C(mut gp: *mut HSD_GObj) {
 }
 pub unsafe extern "C" fn fn_8022BCD4(
     mut gobj: *mut HSD_GObj,
-    mut unused: ::core::ffi::c_int,
+    mut unused: isize,
 ) {
     melee_core::ct!("fn_8022BCD4");
     HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
@@ -3211,7 +3211,7 @@ pub unsafe extern "C" fn mn_8022BCF8() -> *mut HSD_GObj {
     GObj_SetupGXLink(
         gobj,
         Some(
-            fn_8022BCD4 as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+            fn_8022BCD4 as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         1 as u8_0,
         0x80 as u32_0,
@@ -3230,7 +3230,7 @@ pub unsafe extern "C" fn mn_8022BD8C() {
 }
 pub unsafe extern "C" fn fn_8022BDB4(
     mut gobj: *mut HSD_GObj,
-    mut unused: ::core::ffi::c_int,
+    mut unused: isize,
 ) {
     melee_core::ct!("fn_8022BDB4");
     let mut fog: *mut HSD_Fog = HSD_GObjGetHSDObj(mn_804D6BA8) as *mut HSD_Fog;
@@ -3265,7 +3265,7 @@ pub unsafe extern "C" fn mn_8022BE34() -> *mut HSD_GObj {
     GObj_SetupGXLinkMax(
         gobj,
         Some(
-            fn_8022BDB4 as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+            fn_8022BDB4 as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         0 as u32_0,
     );
@@ -3289,7 +3289,7 @@ pub unsafe extern "C" fn mn_8022BE34_OnEnter(mut pos: *mut Vec3) -> *mut HSD_GOb
     GObj_SetupGXLinkMax(
         gobj,
         Some(
-            fn_8022BDB4 as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+            fn_8022BDB4 as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         0 as u32_0,
     );
@@ -3327,7 +3327,7 @@ pub unsafe extern "C" fn mn_8022BEDC(mut gobj: *mut HSD_GObj) {
         temp_r3,
         Some(
             HSD_GObj_803910D8
-                as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         0 as u32_0,
     );
@@ -3478,7 +3478,7 @@ pub unsafe extern "C" fn mn_8022C304() {
         gobj,
         Some(
             HSD_GObj_LObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         0 as u8_0,
         0x80 as u32_0,
@@ -4728,7 +4728,7 @@ pub unsafe extern "C" fn mn_8022DDA8_inline(mut sp2B4: *const u16_0) {
         gobj,
         Some(
             HSD_GObj_LObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         0 as u8_0,
         0x80 as u32_0,
@@ -5087,18 +5087,18 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::lbtrigf::atan2f(a0 as _, a1 as _) as _ }; },
                 }
             }
-    hook!(H_HSD_GObj_803910D8, HSD_GObj_803910D8, (a0: *mut HSD_GObj, a1: ::core::ffi::c_int));
+    hook!(H_HSD_GObj_803910D8, HSD_GObj_803910D8, (a0: *mut HSD_GObj, a1: isize));
     hook!(H_GObj_Create, GObj_Create, (a0: u16_0, a1: u8_0, a2: u8_0) -> *mut HSD_GObj);
-    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) > = None;
-            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: ::core::ffi::c_int)  {
+    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) > = None;
+            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize)  {
                 match H_HSD_GObj_JObjCallback {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
                 }
             }
     hook!(H_HSD_GObj_80390CD4, HSD_GObj_80390CD4, (a0: *mut HSD_GObj));
-    pub static mut H_HSD_GObj_LObjCallback: Option<unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) > = None;
-            pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: ::core::ffi::c_int)  {
+    pub static mut H_HSD_GObj_LObjCallback: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) > = None;
+            pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize)  {
                 match H_HSD_GObj_LObjCallback {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } return; },

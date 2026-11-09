@@ -54,7 +54,7 @@ pub fn ftco_800d27c4(f: &Fighter) -> bool {
     if f.motion_id as i32 == ftCo_MS_DamageIce as i32 {
         return false;
     }
-    !matches!(unsafe { f.x2070.anon_0 }.x2071_b0_3(), 12 | 13)
+    !matches!(unsafe { f.x2070.x0 }.x2071_b0_3(), 12 | 13)
 }
 
 /// `fn_800D2818`.
@@ -67,8 +67,8 @@ pub fn fn_800d2818(f: &Fighter) -> bool {
     if m >= ftCo_MS_KinokoGiantStart as i32 && m <= ftCo_MS_KinokoSmallEndAir as i32 {
         return false;
     }
-    let tmp = unsafe { f.x2070.anon_0 }.x2071_b0_3() as i32;
-    !(tmp != 5 && (tmp >= 5 || tmp != 0) && unsafe { f.x2070.anon_0 }.x2071_b4() == 0)
+    let tmp = unsafe { f.x2070.x0 }.x2071_b0_3() as i32;
+    !(tmp != 5 && (tmp >= 5 || tmp != 0) && unsafe { f.x2070.x0 }.x2071_b4() == 0)
 }
 
 /// `fn_800D2890(gobj, msid)`: pick the fall state to return to.
@@ -95,7 +95,7 @@ pub fn fn_800d290c(g: G) {
     k::ftCo_8009750C(g);
     let victim = fp(g).victim_gobj;
     if !victim.is_null() {
-        if fp(g).anon_221b.x221B_b5() != 0 {
+        if fp(g).x221B.x221B_b5() != 0 {
             k::ftCo_CaptureCut_Enter(victim);
         } else {
             k::ftCo_CaptureCut_Enter(g);
@@ -110,7 +110,7 @@ static mut KINOKO_SCRATCH: [[f32; 2]; 16] = [[0.0; 2]; 16];
 
 /// The (middle, fast) scale pair the Kinoko states keep across `fn_800D2BF8` (see `fn_800d299c`).
 pub fn kinoko_scratch(f: &Fighter) -> &'static mut [f32; 2] {
-    let i = (f.player_id as usize & 3) * 2 + f.is_sub_fighter() as usize;
+    let i = (f.player_idx as usize & 3) * 2 + f.is_sub_fighter() as usize;
     unsafe { &mut (*core::ptr::addr_of_mut!(KINOKO_SCRATCH))[i] }
 }
 

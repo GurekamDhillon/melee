@@ -91,7 +91,7 @@ pub fn ftKb_SpecialN_800F9110(gobj: G) {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_MrSpecialN as i32;
         (*fp).cmd_vars[0] = 0;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         if (*fpp(gobj)).u.kb.hat.kind as u32 != Ft_Kind_Mario as u32 {
             msid = 0x200;
         }
@@ -135,8 +135,8 @@ pub fn fn_800F9260(gobj: G) {
         let fp = fpp(gobj);
         if (*fp).u.kb.hat.kind as u32 != Ft_Kind_Kirby as u32 {
             // `ftCheckThrowB0`: test and clear.
-            if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-                (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+            if (*fp).x2210.x0.throw_flags_b0() != 0 {
+                (*fp).x2210.x0.set_throw_flags_b0(0);
                 let mut sp44: Vec3 = core::mem::zeroed();
                 let bone0 = melee_fighter::hooks::ftparts_get_bone_index(&*fp, FtPart_LHandN as i32);
                 ext::lb_8000B1CC((*(*fp).parts.add(bone0 as usize)).joint, core::ptr::null(), &mut sp44);
@@ -160,7 +160,7 @@ pub fn ftKb_SpecialNMr_800F93CC(gobj: G) {
         let fp = fpp(gobj);
         let mut msid = ftKb_MS_MrSpecialAirN as i32;
         (*fp).cmd_vars[0] = 0;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         if (*fpp(gobj)).u.kb.hat.kind as u32 != Ft_Kind_Mario as u32 {
             msid = ftKb_MS_DrSpecialAirN as i32;
         }

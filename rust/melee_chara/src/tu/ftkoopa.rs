@@ -125,7 +125,7 @@ pub fn ftKp_Init_OnLoad(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let items = (*(*fp).ft_data).x48_items;
         ftKp_Init_OnLoadForGKoopa(fp);
-        ext::it_8026B3F8(*items.add(0), It_Kind_Koopa_Flame as i32);
+        ext::it_8026B3F8((*items.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Koopa_Flame as i32);
         (*fp).set_x2226_b1(1);
     }
 }
@@ -155,8 +155,8 @@ pub fn ftKp_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 /// `ftCheckThrowB4` (ft/inlines.h): test and clear the script's throw flag.
 fn ftCheckThrowB4(fp: &mut Fighter) -> bool {
     unsafe {
-        if fp.anon_2210.anon_0.throw_flags_b4() != 0 {
-            fp.anon_2210.anon_0.set_throw_flags_b4(0);
+        if fp.x2210.x0.throw_flags_b4() != 0 {
+            fp.x2210.x0.set_throw_flags_b4(0);
             true
         } else {
             false

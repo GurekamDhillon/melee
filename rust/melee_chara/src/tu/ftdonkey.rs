@@ -152,8 +152,8 @@ pub fn ftDk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftCheckThrowB3(fp)` (ft/inlines.h, static inline): test and clear `throw_flags_b3`.
 unsafe fn ftCheckThrowB3(fp: *mut Fighter) -> bool {
-    if (*fp).anon_2210.anon_0.throw_flags_b3() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b3(0);
+    if (*fp).x2210.x0.throw_flags_b3() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b3(0);
         true
     } else {
         false

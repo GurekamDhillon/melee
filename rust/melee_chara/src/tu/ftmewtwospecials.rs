@@ -147,7 +147,7 @@ pub fn ftMt_SpecialS_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMt_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         (*fp).cmd_vars[1] = 0;
         (*fp).mv.mt.SpecialS.set_isConfusionReflect(0);
@@ -164,7 +164,7 @@ pub fn ftMt_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         let a = (*fp).dat_attrs as *const ftMewtwoAttributes;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         (*fp).cmd_vars[1] = 0;
         (*fp).mv.mt.SpecialS.set_isConfusionReflect(0);

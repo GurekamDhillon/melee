@@ -176,8 +176,8 @@ pub fn fn_8012E110(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         let da = &*((*fp).dat_attrs as *const YsDat);
-        if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-            (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+        if (*fp).x2210.x0.throw_flags_b0() != 0 {
+            (*fp).x2210.x0.set_throw_flags_b0(0);
             let mut sp30 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
             ext::lb_8000B1CC((*(*fp).parts.add(31)).joint, core::ptr::null_mut(), &mut sp30);
             let item = ext::it_802B2A10(gobj, &mut sp30, 0x1F, (*fp).facing_dir);
@@ -328,7 +328,7 @@ pub fn ftYs_SpecialHi_Enter(gobj: *mut HSD_GObj) {
         (*fp).mv.ys.specialhi.x0 = 0_i32;
         (*fp).mv.ys.specialhi.x4 = 0_i32;
         (*fp).u.ys.x2238 = core::mem::zeroed(); /* NULL */
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         (*fp).cmd_vars[0] = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 364 /* ftYs_MS_SpecialHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         (*fp).accessory4_cb = Some(crate::chars::cb::ftyoshispecialhi__fn_8012E110);
@@ -344,7 +344,7 @@ pub fn ftYs_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
         (*fp).mv.ys.specialhi.x0 = 0_i32;
         (*fp).mv.ys.specialhi.x4 = 0_i32;
         (*fp).u.ys.x2238 = core::mem::zeroed(); /* NULL */
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         (*fp).cmd_vars[0] = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 365 /* ftYs_MS_SpecialAirHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         (*fp).accessory4_cb = Some(crate::chars::cb::ftyoshispecialhi__fn_8012E110);

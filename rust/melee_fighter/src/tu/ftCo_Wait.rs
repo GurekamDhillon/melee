@@ -59,7 +59,7 @@ pub mod ext {
 pub fn ftCo_Wait_Anim(g: G) {
     melee_core::ct!("ftCo_Wait_Anim");
     let f = fp(g);
-    if f.x2224_b2() != 0 {
+    if f.stamina_dead() != 0 {
         ext::ftCo_DownSpot_Enter(g);
     } else {
         let ws = unsafe { (*f.ft_data).x24 };

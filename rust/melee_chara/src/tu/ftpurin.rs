@@ -231,16 +231,16 @@ pub fn ftPr_Init_8013C360(gobj: G) {
     unsafe {
         let joints = ft_8045A1E0.as_mut_ptr();
         let fp = fpp(gobj);
-        let vis = ext::Mex_CostumeVisIdx((*fp).kind as i32, (*fp).x619_costume_id as i32) as u32;
+        let vis = ext::Mex_CostumeVisIdx((*fp).kind as i32, (*fp).costume_id as i32) as u32;
 
         if let Some(name) = ftPr_Init_803D05B4[vis as usize] {
             let items = (*(*fp).ft_data).x48_items;
-            let items_shifted = *items.add(1) as *mut *mut core::ffi::c_void;
+            let items_shifted = (*items.add(1)).article as *mut *mut core::ffi::c_void;
 
             if (*joints.add(vis as usize)).is_null() {
                 let costume_list = ext::CostumeListsForeachCharacter_costume_list((*fp).kind as i32);
                 *joints.add(vis as usize) = ext::HSD_ArchiveGetPublicAddress(
-                    (*costume_list.add((*fp).x619_costume_id as usize)).x14_archive,
+                    (*costume_list.add((*fp).costume_id as usize)).x14_archive,
                     name,
                 ) as *mut HSD_Joint;
             }

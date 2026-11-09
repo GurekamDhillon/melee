@@ -23,7 +23,7 @@ pub(crate) const NOP: i32 = 0x83D60;
 
 #[inline(always)]
 pub(crate) fn chan(f: &Fighter, base: i32) -> i32 {
-    base + f.player_id as i32 * 2 + f.is_sub_fighter() as i32
+    base + f.player_idx as i32 * 2 + f.is_sub_fighter() as i32
 }
 
 #[inline(always)]

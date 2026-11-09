@@ -56,7 +56,7 @@ use crate::layout::itTaruCann_DatAttrs;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -202,7 +202,7 @@ pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD
     (*spawn).vel.x = 0.0;
     (*spawn).x0_parent_gobj = parent;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(initial_collision as u8);
+    (*spawn).x44_flag.x0.set_b0(initial_collision as u8);
     (*spawn).x40 = 0;
 }
 
@@ -338,7 +338,7 @@ pub unsafe extern "C" fn it_802ADF10(item_gobj: *mut HSD_GObj) {
                     item_gobj,
                     &mut ft_hold_joint_pos,
                     &raw mut (*item).xDD4_itemVar.foxblaster.angle[0],
-                ) as usize as i32;
+                ) as *mut EF_Effect;
             }
             It_Kind_Kirby_FoxBlaster | It_Kind_Kirby_FalcoBlaster => {
                 ext::ftKb_SpecialNFx_800FDC00((*item).xDD4_itemVar.foxblaster.owner, &mut ft_hold_joint_pos);
@@ -350,7 +350,7 @@ pub unsafe extern "C" fn it_802ADF10(item_gobj: *mut HSD_GObj) {
                     item_gobj,
                     &mut ft_hold_joint_pos,
                     &raw mut (*item).xDD4_itemVar.foxblaster.angle[0],
-                ) as usize as i32;
+                ) as *mut EF_Effect;
             }
             _ => {}
         }
@@ -367,7 +367,7 @@ pub unsafe extern "C" fn it_802ADF10(item_gobj: *mut HSD_GObj) {
 
         item = item_of(item_gobj);
         let fb = &mut (*item).xDD4_itemVar.foxblaster;
-        fb.xDE4[0] = 0;
+        fb.xDE4[0] = core::ptr::null_mut();
         fb.xDFC[0] = 0;
         fb.xE14[0].z = 0.0;
         fb.xE14[0].y = 0.0;
@@ -486,7 +486,7 @@ pub unsafe fn itFoxBlaster_ClearShot(item_gobj: *mut Item_GObj, index: i32) {
     melee_core::ct!("itFoxBlaster_ClearShot");
     let item = item_of(item_gobj);
     let i = index as usize;
-    (*item).xDD4_itemVar.foxblaster.xDE4[i] = 0;
+    (*item).xDD4_itemVar.foxblaster.xDE4[i] = core::ptr::null_mut();
     (*item).xDD4_itemVar.foxblaster.xDFC[i] = 0;
     (*item).xDD4_itemVar.foxblaster.xE14[i].z = 0.0;
     (*item).xDD4_itemVar.foxblaster.xE14[i].y = 0.0;

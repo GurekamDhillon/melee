@@ -24,7 +24,7 @@ static mut JOINTS: [MapJoint; NJ] = unsafe { core::mem::zeroed() };
 static mut VTXA: [CollVtx; 2048] = unsafe { core::mem::zeroed() };
 static mut LINEA: [CollLine; 1536] = unsafe { core::mem::zeroed() };
 static mut JOINTA: [CollJoint; 8] = unsafe { core::mem::zeroed() };
-static mut ISL: [mp_UnkStruct0; 48] = unsafe { core::mem::zeroed() };
+static mut ISL: [mpIsland; 48] = unsafe { core::mem::zeroed() };
 static mut ISLN: i32 = 0;
 static mut CD: CollData = unsafe { core::mem::zeroed() };
 static mut GO: HSD_GObj = unsafe { core::mem::zeroed() };
@@ -168,7 +168,7 @@ unsafe fn setup() {
         if rnd() % 6 == 0 { (*cj).flags |= CollJoint_Hidden as u32; }
         (*cj).flags |= fv() & 0x1F00;
         (*cj).set_xE((rnd() & 1) as u8);
-        (*cj).x20 = if rnd() & 1 != 0 { &raw mut JO[j] } else { null_mut() };
+        (*cj).jobj = if rnd() & 1 != 0 { &raw mut JO[j] } else { null_mut() };
         (*cj).cb_0 = if rnd() % 3 != 0 { if rnd() & 1 != 0 { Some(jcb_a) } else { Some(jcb_b) } } else { None };
         (*cj).cb_data_0 = if rnd() & 1 != 0 { &raw mut GO as *mut _ } else { null_mut() };
         (*cj).cb_1 = if rnd() % 3 != 0 { if rnd() & 1 != 0 { Some(jcb_a) } else { Some(jcb_b) } } else { None };
@@ -208,12 +208,12 @@ unsafe fn setup() {
     CD.env_flags = rnd() as i32; CD.prev_env_flags = rnd() as i32; CD.x130_flags = rnd() & 0xFF; CD.x13C = rnd() as i32;
     if rnd() & 1 != 0 {
         CD.ecb_source.kind = ECBSource_Fixed as _;
-        CD.ecb_source.anon_4.anon_0_0.up = (8 + (rnd() % 8)) as f32; CD.ecb_source.anon_4.anon_0_0.down = (rnd() % 3) as f32; CD.ecb_source.anon_4.anon_0_0.front = (3 + (rnd() % 3)) as f32; CD.ecb_source.anon_4.anon_0_0.back = (3 + (rnd() % 3)) as f32;
-        CD.ecb_source.anon_4.anon_0_0.angle = ((rnd() % 13) as i32 - 6) as f32 * 0.5;
+        CD.ecb_source.x4.x0_1.up = (8 + (rnd() % 8)) as f32; CD.ecb_source.x4.x0_1.down = (rnd() % 3) as f32; CD.ecb_source.x4.x0_1.front = (3 + (rnd() % 3)) as f32; CD.ecb_source.x4.x0_1.back = (3 + (rnd() % 3)) as f32;
+        CD.ecb_source.x4.x0_1.angle = ((rnd() % 13) as i32 - 6) as f32 * 0.5;
     } else {
         CD.ecb_source.kind = ECBSource_JObj as _;
-        CD.ecb_source.anon_4.anon_0.x108_joint = &raw mut JO[0];
-        for i in 0..6 { CD.ecb_source.anon_4.anon_0.x10C_joint[i] = &raw mut JO[i + 1]; }
+        CD.ecb_source.x4.x0.x108_joint = &raw mut JO[0];
+        for i in 0..6 { CD.ecb_source.x4.x0.x10C_joint[i] = &raw mut JO[i + 1]; }
     }
     CD.ecb_source.x124 = ((rnd() % 41) as i32 - 20) as f32 / 20.0; CD.ecb_source.x128 = (rnd() % 12) as f32; CD.ecb_source.x12C = (rnd() % 12) as f32;
     CD.floor.index = rlid(); CD.floor.flags = fv(); CD.ceiling.index = rlid(); CD.ceiling.flags = fv();
@@ -229,10 +229,10 @@ unsafe fn hash_all() {
     g::hash_CollData(&CD);
     hm(CD.ecb_source.kind as u32);
     if CD.ecb_source.kind == ECBSource_Fixed as _ {
-        hm(CD.ecb_source.anon_4.anon_0_0.up.to_bits()); hm(CD.ecb_source.anon_4.anon_0_0.down.to_bits()); hm(CD.ecb_source.anon_4.anon_0_0.front.to_bits());
-        hm(CD.ecb_source.anon_4.anon_0_0.back.to_bits()); hm(CD.ecb_source.anon_4.anon_0_0.angle.to_bits());
+        hm(CD.ecb_source.x4.x0_1.up.to_bits()); hm(CD.ecb_source.x4.x0_1.down.to_bits()); hm(CD.ecb_source.x4.x0_1.front.to_bits());
+        hm(CD.ecb_source.x4.x0_1.back.to_bits()); hm(CD.ecb_source.x4.x0_1.angle.to_bits());
     } else {
-        hm(pi(CD.ecb_source.anon_4.anon_0.x108_joint)); for i in 0..6 { hm(pi(CD.ecb_source.anon_4.anon_0.x10C_joint[i])); }
+        hm(pi(CD.ecb_source.x4.x0.x108_joint)); for i in 0..6 { hm(pi(CD.ecb_source.x4.x0.x10C_joint[i])); }
     }
     hm(CD.ecb_source.x124.to_bits()); hm(CD.ecb_source.x128.to_bits()); hm(CD.ecb_source.x12C.to_bits());
     g::hash_MapCollData(&M);
@@ -257,8 +257,8 @@ unsafe fn hash_all() {
     hm(pc::mpColl_80458810.normal.x.to_bits()); hm(pc::mpColl_80458810.normal.y.to_bits()); hm(pc::mpColl_80458810.normal.z.to_bits());
     hm(pc::mpColl_804D6488 as u32); hm(pc::mpColl_804D648C as u32); hm(pc::mpColl_804D6490_max_x.to_bits()); hm(pc::mpColl_804D6494_line_id as u32); hm(pc::mpColl_804D6498_flags as u32); hm(pc::mpColl_IsEcbTiny as u32);
     hm(fi(pc::mpColl_804D64A0)); hm(pi(pc::mpColl_804D64A4)); hm(fi(pc::mpColl_804D64A8)); hm(pc::mpColl_804D64AC as u32); hm(pc::mpColl_LedgeLevelOK as u32);
-    hm(pi(pi_::mpIsland_80458E88.next)); hm(pi(pi_::mpIsland_80458E88.x4)); hm(pi(pi_::mpIsland_80458E88.x8)); hm(pi(pi_::mpIsland_80458E88.xC)); hm(pi(pi_::mpIsland_80458E88.x10));
-    hm(pi(pi_::mpIsland_80458E88.x14)); hm(pi(pi_::mpIsland_80458E88.x18)); hm(pi(pi_::mpIsland_80458E88.x1C)); hm(pi(pi_::mpIsland_80458E88.x20));
+    hm(pi(pi_::mpIsland_80458E88.floors)); hm(pi(pi_::mpIsland_80458E88.ceilings)); hm(pi(pi_::mpIsland_80458E88.non_dynamic_floors_tail)); hm(pi(pi_::mpIsland_80458E88.non_dynamic_ceilings_tail)); hm(pi(pi_::mpIsland_80458E88.dynamic_floors));
+    hm(pi(pi_::mpIsland_80458E88.dynamic_ceilings)); hm(pi(pi_::mpIsland_80458E88.b1_floors)); hm(pi(pi_::mpIsland_80458E88.b1_ceilings)); hm(pi(pi_::mpIsland_80458E88.free_list));
     hm(pl::ext::stage_info.grkind as u32);
     for i in 0..3 { hm(V3[i].x.to_bits()); hm(V3[i].y.to_bits()); hm(V3[i].z.to_bits()); }
     hm(OUTU[0]); hm(OUTU[1]); hm(OUTI[0] as u32); hm(OUTI[1] as u32); hm(OUTF[0].to_bits()); hm(OUTF[1].to_bits());
@@ -303,7 +303,7 @@ fn mp_matches_c() {
                     6 => { ret = pc::mpColl_80048AB0_RightWall(&raw mut CD) as u32; }
                     7 => { ret = pc::mpColl_80049778_LeftWall(&raw mut CD) as u32; }
                     8 => { ret = pc::mpColl_8004B4B0(&raw mut CD) as u32; }
-                    9 => { { if CD.ecb_source.kind != ECBSource_Fixed as _ { CD.ecb_source.kind = ECBSource_Fixed as _; CD.ecb_source.anon_4.anon_0_0.up = 12.0; CD.ecb_source.anon_4.anon_0_0.down = 1.0; CD.ecb_source.anon_4.anon_0_0.front = 4.0; CD.ecb_source.anon_4.anon_0_0.back = 3.0; CD.ecb_source.anon_4.anon_0_0.angle = 0.5; } pc::mpColl_LoadECB_Fixed(&raw mut CD); } }
+                    9 => { { if CD.ecb_source.kind != ECBSource_Fixed as _ { CD.ecb_source.kind = ECBSource_Fixed as _; CD.ecb_source.x4.x0_1.up = 12.0; CD.ecb_source.x4.x0_1.down = 1.0; CD.ecb_source.x4.x0_1.front = 4.0; CD.ecb_source.x4.x0_1.back = 3.0; CD.ecb_source.x4.x0_1.angle = 0.5; } pc::mpColl_LoadECB_Fixed(&raw mut CD); } }
                     10 => { pc::mpCollCheckBounding(&raw mut CD, fv()); }
                     11 => { { let a = (fv() & 1) as i32; let b = (fv() & 1) as i32; pc::mpCollEnd(&raw mut CD, a, b); } }
                     12 => { pc::mpCollInterpolateECB(&raw mut CD, (rnd() % 11) as f32 / 10.0); }
@@ -341,8 +341,8 @@ fn mp_matches_c() {
                     44 => { { let (a, b, c, d, e, f, g) = (ri(), ri(), ri(), ri(), ri(), ri(), ri()); ret = pl::mpLineIntersectionH(&raw mut OUTF[0], &raw mut OUTF[1], a, b, c, d, e, f, g) as u32; hm(OUTF[0].to_bits()); hm(OUTF[1].to_bits()); } }
                     45 => { { let (a, b, c, d, e, f, g) = (ri(), ri(), ri(), ri(), ri(), ri(), ri()); ret = pl::mpLineIntersectionV(&raw mut OUTF[0], &raw mut OUTF[1], a, b, c, d, e, f, g) as u32; hm(OUTF[0].to_bits()); hm(OUTF[1].to_bits()); } }
                     46 => { pi_::mpIsland_8005A728(); }
-                    47 => { { let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005AE1C(&raw mut pi_::mpIsland_80458E88.next, &raw mut pi_::mpIsland_80458E88.x18, s, c, b); } }
-                    48 => { { let j = (rnd() % 3) as i32; let k = (1 + (rnd() & 1)) as i32; let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005B004(if k == 1 { &raw mut pi_::mpIsland_80458E88.x10 } else { &raw mut pi_::mpIsland_80458E88.x14 }, &raw mut pi_::mpIsland_80458E88.x20, j, k, s, c, b); } }
+                    47 => { { let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005AE1C(&raw mut pi_::mpIsland_80458E88.floors, &raw mut pi_::mpIsland_80458E88.b1_floors, s, c, b); } }
+                    48 => { { let j = (rnd() % 3) as i32; let k = (1 + (rnd() & 1)) as i32; let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005B004(if k == 1 { &raw mut pi_::mpIsland_80458E88.dynamic_floors } else { &raw mut pi_::mpIsland_80458E88.dynamic_ceilings }, &raw mut pi_::mpIsland_80458E88.free_list, j, k, s, c, b); } }
                     49 => { { let j = (rnd() % 3) as i32; let s = (rnd() % 30) as i32; let c = (rnd() % 12) as i32; let b = (fv() & 1) as i32; pi_::mpIsland_8005B334(j, s, c, b); } }
                     50 => { { let id = rvid(); ret = pl::mpLineGetNext(id) as u32; } }
                     51 => { { let id = rvid(); ret = pl::mpLineGetPrev(id) as u32; } }

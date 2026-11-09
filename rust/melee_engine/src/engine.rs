@@ -296,6 +296,7 @@ impl Engine {
                 melee_runtime::tu::pobj::native::ext::hook::GXAuroraEndPalette = Some(crate::gxbridge::GXAuroraEndPalette);
             }
             crate::geno_host::install();
+            crate::fighter_controls::install();
             crate::geno_host::install_define();
             crate::geno_host::install_callees();
             crate::mex_host::install(); // an m-ex disc's MxDt.dat (ACE): fighter slots, sound banks, effects, stage tables

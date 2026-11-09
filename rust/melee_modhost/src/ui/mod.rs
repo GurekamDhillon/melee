@@ -628,6 +628,14 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         for (i, x) in w.iter().enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
         if write_bytes(&mut c, out, &b) { GD_OK } else { GD_EINVAL }
     });
+    // read-only view of the Envoy run (melee_modes::tu::envoy::VIEW, published by the envoy sim mod): n i32 words
+    f!("gd_ui_envoy", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
+        let v = unsafe { melee_modes::tu::envoy::VIEW };
+        let n = (n as usize).min(v.len());
+        let mut b = [0u8; 4 * melee_modes::tu::envoy::VIEW_WORDS];
+        for (i, x) in v.iter().take(n).enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
+        if write_bytes(&mut c, out, &b[..n * 4]) { GD_OK } else { GD_EINVAL }
+    });
     f!("gd_ui_inject", |c: Caller<'_, PresData>, port: u32, pad: u32| -> i32 {
         if !feat(&c, FEATURE_UI_SIM_INPUT) {
             return GD_ECAP;

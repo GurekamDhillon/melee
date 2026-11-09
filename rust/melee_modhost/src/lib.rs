@@ -611,6 +611,38 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_transition_phase", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.phase as i32 } });
     w!("gd_transition_frame", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.frame as i32 } });
     w!("gd_transition_slot", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.slot as i32 } });
+    w!("gd_transition_kind", || -> i32 { unsafe { melee_modes::tu::tag_swap::TRANSITION.kind as i32 } });
+    // tag with air tags allowed (flags bit 0); a stage switch under the transition freeze; a hold freeze (Envoy)
+    w!("gd_tag_begin_ex", |slot: i32, len: i32, flags: i32| -> i32 {
+        if !(0..4).contains(&slot) { return -1 }
+        unsafe { melee_modes::tu::tag_swap::begin_ex(slot, len, flags & 1 != 0) }
+    });
+    w!("gd_stage_transition", |kind: i32, len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::stage_begin(kind, len) } });
+    w!("gd_hold_begin", |len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::hold_begin(len) } });
+    w!("gd_hold_release", || -> i32 { unsafe { melee_modes::tu::tag_swap::hold_release() } });
+    // Envoy run (melee_modes::tu::envoy): the next match's plan, the presentation view, live upgrades
+    w!("gd_envoy_plan", |c: Caller<'_, HostData>, ptr: u32, n: u32| -> i32 {
+        let n = (n as usize).min(melee_modes::tu::envoy::PLAN_WORDS);
+        let Some(m) = mem_of(&c) else { return -1 };
+        let Some(b) = m.data(&c).get(ptr as usize..ptr as usize + n * 4) else { return -1 };
+        unsafe { for i in 0..n { melee_modes::tu::envoy::PLAN[i] = i32::from_le_bytes(b[i * 4..i * 4 + 4].try_into().unwrap()); } }
+        0
+    });
+    w!("gd_envoy_publish", |c: Caller<'_, HostData>, ptr: u32, n: u32| -> i32 {
+        let n = (n as usize).min(melee_modes::tu::envoy::VIEW_WORDS);
+        let Some(m) = mem_of(&c) else { return -1 };
+        let Some(b) = m.data(&c).get(ptr as usize..ptr as usize + n * 4) else { return -1 };
+        unsafe { for i in 0..n { melee_modes::tu::envoy::VIEW[i] = i32::from_le_bytes(b[i * 4..i * 4 + 4].try_into().unwrap()); } }
+        0
+    });
+    // test knob: MELEE_ENVOY_START_FIGHT=N (1-5) starts each new run at fight N (fixed for the process: deterministic)
+    w!("gd_envoy_start_fight", || -> i32 {
+        static V: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
+        *V.get_or_init(|| std::env::var("MELEE_ENVOY_START_FIGHT").ok().and_then(|v| v.parse::<i32>().ok()).map_or(0, |n| (n - 1).clamp(0, 4)))
+    });
+    w!("gd_envoy_seq", || -> i32 { unsafe { melee_modes::tu::envoy::SEQ } });
+    w!("gd_envoy_roster", |i: i32| -> i32 { if !(0..2).contains(&i) { return -1 } unsafe { melee_modes::tu::envoy::ROSTER[i as usize] } });
+    w!("gd_envoy_apply", |slot: i32, which: i32, v: i32| -> i32 { unsafe { melee_modes::tu::envoy::apply(slot, which, v) } });
     // the pad a port pressed this logic frame (HSD_PadMasterStatus.trigger: the synced sim input, valid while frozen)
     w!("gd_pad_pressed", |port: i32| -> u32 {
         if !(0..4).contains(&port) { return 0 }
@@ -808,6 +840,15 @@ impl Host {
         self.mods.push(LoadedMod { id, name, version, digest: fnv64(bytes), disabled: false, features, hooks });
         self.store.data_mut().features.push(features);
         self.rebuild();
+        // an optional `gd_mod_loaded() -> ()` export runs once now (setup a mod wants before the first match, e.g.
+        // the Envoy run's first plan); same fuel budget as a hook, a trap is logged and the mod stays loaded
+        if let Ok(f) = inst.get_typed_func::<(), ()>(&self.store, "gd_mod_loaded") {
+            self.store.data_mut().cur_module = self.mods.len() - 1;
+            let _ = self.store.set_fuel(HOOK_FUEL);
+            if let Err(e) = f.call(&mut self.store, ()) {
+                eprintln!("modhost: {}: gd_mod_loaded trapped: {e}", self.mods.last().unwrap().id);
+            }
+        }
         Ok(self.mods.len() - 1)
     }
 

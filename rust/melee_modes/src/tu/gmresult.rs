@@ -148,7 +148,7 @@ pub mod ext {
         fn gmRst_GenoArtClose() -> () = super::super::gmresultplayer::gmRst_GenoArtClose;
         fn gmRst_GenoArtReset() -> () = super::super::gmresultplayer::gmRst_GenoArtReset;
         fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32 = crate::tu::adapt::gm_80160854__387c80;
-        fn gm_80160968(a0: u32) -> GXColor;
+        fn gm_80160968(a0: u32) -> GXColor = crate::gm::gm_80160968;
         fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, idx: i32) -> () = crate::tu::adapt::gm_8016895C__f7ee90;
         fn lbAudioAx_80023F28(a0: i32) -> i32 = crate::tu::adapt::lbAudioAx_80023F28__582fc2;
         fn lbLang_IsSavedLanguageUS() -> i32 = crate::tu::adapt::lbLang_IsSavedLanguageUS__90e41e;

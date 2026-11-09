@@ -68,7 +68,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -102,6 +102,8 @@ static void hash_world(int ft)
     for (i = 0; i < 16; i++) HM(PI(PLINK[i]));
 }
 
+static int CUR_OP = -1;
+enum { OP_it_8026F3AC = 0, OP_it_8026F3D4_check_kind = 1, OP_it_8026F3D4 = 2, OP_it_8026F53C = 3, OP_it_8026F5C8 = 4, OP_it_8026F6BC = 5, OP_it_8026F7C8 = 6, OP_it_8026F8B4 = 7 };
 static struct it_8026F3D4_arg1_t A1;
 
 static void setup_stem(void)
@@ -146,6 +148,7 @@ preg(&A1, sizeof A1);
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
+            CUR_OP = op;
             setup_stem();
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             switch (op) {

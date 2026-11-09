@@ -2,7 +2,7 @@
 #include TU_SRC
 #include "mtu_common.h"
 static int VIEWPUN;
-#define FLG(f) ((u32) ((f).b0 | (f).b1 << 1 | (f).b2 << 2 | (f).b3 << 3 | (f).b4 << 4 | (f).b5 << 5 | (f).b6 << 6 | (f).b7 << 7))
+#define FLG(f) ((u32) ((f).x0.b0 | (f).x0.b1 << 1 | (f).x0.b2 << 2 | (f).x0.b3 << 3 | (f).x0.b4 << 4 | (f).x0.b5 << 5 | (f).x0.b6 << 6 | (f).x0.b7 << 7))
 static HSD_GObj G, REFG, OWNG, SG;
 static Item ITEM, SITEM;
 static HSD_JObj JT, JC, SJT, BONES[24];
@@ -31,7 +31,7 @@ static void setup(void)
     ITEM.xBBC_dynamicBoneTable = &DBT; SITEM.xBBC_dynamicBoneTable = &SDBT;
     for (i = 0; i < 100; i++) { DBT.bones[i] = &BONES[i % 24]; SDBT.bones[i] = &BONES[(i + 5) % 24]; }
     ITEM.owner = (rnd() & 1) ? &OWNG : 0; SITEM.owner = (rnd() & 1) ? &OWNG : 0;
-    ART.x4_specialAttributes = ATTRP; SART.x4_specialAttributes = SATTRP;
+    ART.x4_specialAttributes = (union ItemSpecialAttributes*) ATTRP; SART.x4_specialAttributes = (union ItemSpecialAttributes*) SATTRP;
     SATTRP[0] = (rnd() & 1) ? (void*) &SATTRP[1] : 0; SATTRP[1] = 0;
 }
 

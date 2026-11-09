@@ -12,9 +12,9 @@ ITEM_RULES = {
     "Item.xCC_item_attr": ("ptr", "ItemAttr", False),
 }
 # C-side bit-view of every UnkFlagStruct / flag32 union the item code reads as bitfields
-FLAG_UV = {f"Item_x{n}_flag": "anon0" for n in ("DCE", "DCF", "DD0", "DD1", "DD2", "DD3")}
-FLAG_UV.update({f"SpawnItem_x{n}_flag": "anon0" for n in (44, 45, 46, 47)})
-FLAG_UV.update({"Item_anon_477_xDAA_flag": "anon0", "Item_xD90": "anon0"})
+FLAG_UV = {f"Item_x{n}_flag": "x0" for n in ("DCE", "DCF", "DD0", "DD1", "DD2", "DD3")}
+FLAG_UV.update({f"SpawnItem_x{n}_flag": "x0" for n in (44, 45, 46, 47)})
+FLAG_UV.update({"Item_anon_477_xDAA_flag": "x0", "Item_xD90": "x0"})
 JOBJ_SETUP_C = "    for (n = 0; n < 6; n++) P_HSD_JObj[n].flags &= ~(1u << 17);"
 JOBJ_SETUP_RS = "    for n in 0..6usize { g::P_HSD_JObj[n].flags &= !(1u32 << 17); }"
 

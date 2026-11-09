@@ -62,17 +62,17 @@ static const int KINDS[8] = { 1, 22, 16, 17, 33, 34, 2, 9 };
 /* x2070 field 1..0x30: never 0 or 0x63/0x3D, so random fields never read as the two literals */
 static void r2070(union Struct2070* u)
 {
-    u->x2070 = (s8) (1 + rnd() % 0x30);
-    u->x2071_b0_3 = rnd() & 15; u->x2071_b4 = rnd() & 1; u->x2071_b5 = rnd() & 1;
-    u->x2071_b6 = rnd() & 1; u->x2071_b7 = rnd() & 1; u->x2072_b0 = rnd() & 1;
-    u->x2072_b1 = rnd() & 1; u->x2072_b2 = rnd() & 1; u->count_x1A4 = rnd() & 1;
-    u->count_thrown_items = rnd() & 1; u->count_aerials = rnd() & 1; u->count_x1A0 = rnd() & 1;
-    u->count_specials = rnd() & 1;
+    u->x0.x2070 = (s8) (1 + rnd() % 0x30);
+    u->x0.x2071_b0_3 = rnd() & 15; u->x0.x2071_b4 = rnd() & 1; u->x0.x2071_b5 = rnd() & 1;
+    u->x0.x2071_b6 = rnd() & 1; u->x0.x2071_b7 = rnd() & 1; u->x0.x2072_b0 = rnd() & 1;
+    u->x0.x2072_b1 = rnd() & 1; u->x0.x2072_b2 = rnd() & 1; u->x0.count_x1A4 = rnd() & 1;
+    u->x0.count_thrown_items = rnd() & 1; u->x0.count_aerials = rnd() & 1; u->x0.count_x1A0 = rnd() & 1;
+    u->x0.count_specials = rnd() & 1;
     switch (rnd() % 6) {
-    case 0: u->x2073 = 0; break;
-    case 1: u->x2073 = (u8) (0x60 + rnd() % 0x14); break; /* 0x60..0x73: 0x62/0x63/0x71/0x72 */
-    case 2: u->x2073 = (u8) (100 + rnd() % 16); break;    /* by_attack_hi, u32 fields */
-    default: u->x2073 = (u8) (rnd() % 100); break;
+    case 0: u->x0.x2073 = 0; break;
+    case 1: u->x0.x2073 = (u8) (0x60 + rnd() % 0x14); break; /* 0x60..0x73: 0x62/0x63/0x71/0x72 */
+    case 2: u->x0.x2073 = (u8) (100 + rnd() % 16); break;    /* by_attack_hi, u32 fields */
+    default: u->x0.x2073 = (u8) (rnd() % 100); break;
     }
 }
 static void r18d8(ft_800898B4_t* e)
@@ -86,11 +86,11 @@ static void r18d8(ft_800898B4_t* e)
 }
 static u32 h2070(u32 t, union Struct2070* u)
 {
-    t = t * 31u + (u32) (u8) u->x2070; t = t * 31u + u->x2071_b0_3; t = t * 31u + u->x2071_b4;
-    t = t * 31u + u->x2071_b5; t = t * 31u + u->x2071_b6; t = t * 31u + u->x2071_b7;
-    t = t * 31u + u->x2072_b0; t = t * 31u + u->x2072_b1; t = t * 31u + u->x2072_b2;
-    t = t * 31u + u->count_x1A4; t = t * 31u + u->count_thrown_items; t = t * 31u + u->count_aerials;
-    t = t * 31u + u->count_x1A0; t = t * 31u + u->count_specials; t = t * 31u + u->x2073;
+    t = t * 31u + (u32) (u8) u->x0.x2070; t = t * 31u + u->x0.x2071_b0_3; t = t * 31u + u->x0.x2071_b4;
+    t = t * 31u + u->x0.x2071_b5; t = t * 31u + u->x0.x2071_b6; t = t * 31u + u->x0.x2071_b7;
+    t = t * 31u + u->x0.x2072_b0; t = t * 31u + u->x0.x2072_b1; t = t * 31u + u->x0.x2072_b2;
+    t = t * 31u + u->x0.count_x1A4; t = t * 31u + u->x0.count_thrown_items; t = t * 31u + u->x0.count_aerials;
+    t = t * 31u + u->x0.count_x1A0; t = t * 31u + u->x0.count_specials; t = t * 31u + u->x0.x2073;
     return t;
 }
 static u32 h18d8(u32 t, ft_800898B4_t* e)
@@ -123,7 +123,7 @@ static void ratk(struct plAttackStats* a)
 static u32 hstats(u32 t, plActionStats* s)
 {
     int i;
-    t = hatk(t, &s->attacks); t = hatk(t, &s->hits); t = hatk(t, &s->x358_hits);
+    t = hatk(t, &s->attacks); t = hatk(t, &s->hits); t = hatk(t, &s->x358.x358_hits);
     for (i = 0; i < 100; i++) t = t * 31u + s->x504[i];
     t = t * 31u + s->x568; t = t * 31u + s->x56C; t = t * 31u + s->x570; t = t * 31u + s->x574;
     t = t * 31u + s->x578; t = t * 31u + s->x57C; t = t * 31u + s->x580; t = t * 31u + s->x584;
@@ -151,7 +151,7 @@ int main(void)
             GO.user_data = f;
             f->gobj = &GO;
             f->kind = KINDS[rnd() % 8];
-            f->player_id = (u8) (rnd() % 6);
+            f->player_idx = (u8) (rnd() % 6);
             f->is_sub_fighter = rnd() & 1;
             f->is_metal = rnd() & 1;
             f->x221D_b6 = rnd() & 1; f->x2226_b4 = rnd() & 1;
@@ -163,25 +163,25 @@ int main(void)
             r2070(&f->x2070);
             *(u32*) &f->x2074.x2074_vec.x = rnd(); *(u32*) &f->x2074.x2074_vec.y = rnd();
             f->x2074.x207C.x = (int) rnd(); f->x2074.x207C.y = (int) rnd();
-            f->x2074.x2084_b0 = rnd() & 1; f->x2074.x2084_b1 = rnd() & 1; f->x2074.x2084_b2 = rnd() & 1;
-            f->x2074.x2084_b3 = rnd() & 1; f->x2074.x2084_b4 = rnd() & 1; f->x2074.x2084_b5 = rnd() & 1;
-            f->x2074.x2084_b6 = rnd() & 1; f->x2074.x2084_b7 = rnd() & 1; f->x2074.x2085_b0 = rnd() & 1;
-            f->x2074.x2085_b1 = rnd() & 1; f->x2074.x2085_b2 = rnd() & 1; f->x2074.x2085_b3 = rnd() & 1;
-            f->x2074.x2085_b4 = rnd() & 1; f->x2074.x2085_b5 = rnd() & 1; f->x2074.x2085_b6 = rnd() & 1;
-            f->x2074.x2085_b7 = rnd() & 1;
+            f->x2074.x10.x0.x2084_b0 = rnd() & 1; f->x2074.x10.x0.x2084_b1 = rnd() & 1; f->x2074.x10.x0.x2084_b2 = rnd() & 1;
+            f->x2074.x10.x0.x2084_b3 = rnd() & 1; f->x2074.x10.x0.x2084_b4 = rnd() & 1; f->x2074.x10.x0.x2084_b5 = rnd() & 1;
+            f->x2074.x10.x0.x2084_b6 = rnd() & 1; f->x2074.x10.x0.x2084_b7 = rnd() & 1; f->x2074.x10.x0.x2085_b0 = rnd() & 1;
+            f->x2074.x10.x0.x2085_b1 = rnd() & 1; f->x2074.x10.x0.x2085_b2 = rnd() & 1; f->x2074.x10.x0.x2085_b3 = rnd() & 1;
+            f->x2074.x10.x0.x2085_b4 = rnd() & 1; f->x2074.x10.x0.x2085_b5 = rnd() & 1; f->x2074.x10.x0.x2085_b6 = rnd() & 1;
+            f->x2074.x10.x0.x2085_b7 = rnd() & 1;
             f->x2074.x2088 = (u16) rnd();
-            f->dmg.x18d4.x0 = (u8) rnd(); f->dmg.x18d4.x1 = (u8) rnd();
-            f->dmg.x18d4.x2_b0 = rnd() & 1; f->dmg.x18d4.x2_b7 = rnd() & 1;
-            f->dmg.x18d4.x3 = (u8) rnd();
+            f->dmg.x18d4.x0.x2070 = (s8) rnd(); ((u8*) &f->dmg.x18d4)[1] = (u8) rnd();
+            f->dmg.x18d4.x0.x2072_b0 = rnd() & 1; f->dmg.x18d4.x0.count_specials = rnd() & 1;
+            f->dmg.x18d4.x0.x2073 = (u8) rnd();
             r18d8(&f->dmg.x18d8);
             f->dmg.x18ec_instancehitby = (u16) rnd();
-            st = Player_GetActionStats(f->player_id);
-            ratk(&st->attacks); ratk(&st->hits); ratk(&st->x358_hits);
+            st = Player_GetActionStats(f->player_idx);
+            ratk(&st->attacks); ratk(&st->hits); ratk(&st->x358.x358_hits);
             for (i = 0; i < 100; i++) st->x504[i] = (u8) rnd();
             st->x5BC_b0 = rnd() & 1; st->x5BC_b1 = rnd() & 1; st->x5BC_b2 = rnd() & 1; st->x5BC_b3 = rnd() & 1;
             r2070(&arg);
-            if ((rnd() % 3) == 0) arg.x2073 = f->x2070.x2073;
-            if ((rnd() % 4) == 0) { u32 q = rnd() % 3; arg.x2073 = q == 0 ? 0x71 : q == 1 ? 0x62 : 0x63; }
+            if ((rnd() % 3) == 0) arg.x0.x2073 = f->x2070.x0.x2073;
+            if ((rnd() % 4) == 0) { u32 q = rnd() % 3; arg.x0.x2073 = q == 0 ? 0x71 : q == 1 ? 0x62 : 0x63; }
             r18d8(&evd);
             switch (op) {
             case 0: ft_800892D4(f); break;
@@ -209,14 +209,14 @@ int main(void)
             else t = h2070(t, &f->x2070);
             t = t * 31u + B(f->x2074.x2074_vec.x); t = t * 31u + B(f->x2074.x2074_vec.y);
             t = t * 31u + (u32) f->x2074.x207C.x; t = t * 31u + (u32) f->x2074.x207C.y;
-            t = t * 31u + f->x2074.x2084_b0; t = t * 31u + f->x2074.x2084_b1; t = t * 31u + f->x2074.x2084_b2;
-            t = t * 31u + f->x2074.x2084_b3; t = t * 31u + f->x2074.x2084_b4; t = t * 31u + f->x2074.x2084_b5;
-            t = t * 31u + f->x2074.x2084_b6; t = t * 31u + f->x2074.x2084_b7; t = t * 31u + f->x2074.x2085_b0;
-            t = t * 31u + f->x2074.x2085_b1; t = t * 31u + f->x2074.x2085_b2; t = t * 31u + f->x2074.x2085_b3;
-            t = t * 31u + f->x2074.x2085_b4; t = t * 31u + f->x2074.x2085_b5; t = t * 31u + f->x2074.x2085_b6;
-            t = t * 31u + f->x2074.x2085_b7; t = t * 31u + f->x2074.x2088;
-            t = t * 31u + f->dmg.x18d4.x0; t = t * 31u + f->dmg.x18d4.x1; t = t * 31u + f->dmg.x18d4.x2_b0;
-            t = t * 31u + f->dmg.x18d4.x2_b7; t = t * 31u + f->dmg.x18d4.x3;
+            t = t * 31u + f->x2074.x10.x0.x2084_b0; t = t * 31u + f->x2074.x10.x0.x2084_b1; t = t * 31u + f->x2074.x10.x0.x2084_b2;
+            t = t * 31u + f->x2074.x10.x0.x2084_b3; t = t * 31u + f->x2074.x10.x0.x2084_b4; t = t * 31u + f->x2074.x10.x0.x2084_b5;
+            t = t * 31u + f->x2074.x10.x0.x2084_b6; t = t * 31u + f->x2074.x10.x0.x2084_b7; t = t * 31u + f->x2074.x10.x0.x2085_b0;
+            t = t * 31u + f->x2074.x10.x0.x2085_b1; t = t * 31u + f->x2074.x10.x0.x2085_b2; t = t * 31u + f->x2074.x10.x0.x2085_b3;
+            t = t * 31u + f->x2074.x10.x0.x2085_b4; t = t * 31u + f->x2074.x10.x0.x2085_b5; t = t * 31u + f->x2074.x10.x0.x2085_b6;
+            t = t * 31u + f->x2074.x10.x0.x2085_b7; t = t * 31u + f->x2074.x2088;
+            t = t * 31u + (u8) f->dmg.x18d4.x0.x2070; t = t * 31u + ((u8*) &f->dmg.x18d4)[1]; t = t * 31u + f->dmg.x18d4.x0.x2072_b0;
+            t = t * 31u + f->dmg.x18d4.x0.count_specials; t = t * 31u + f->dmg.x18d4.x0.x2073;
             t = h18d8(t, &f->dmg.x18d8);
             t = t * 31u + f->dmg.x18ec_instancehitby;
             t = hstats(t, st);

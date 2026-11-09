@@ -27,8 +27,8 @@ def _one(self, t, f, cexpr, rexpr, cf, ch, rf, rh, depth):
     c = gen_tu.canon(t)
     if c.kind == gen_tu.T.RECORD and c.get_declaration().spelling == "UnkFlagStruct":
         for b in range(8):
-            cf.append(f"{cexpr}.b{b} = rnd() & 1;")
-            ch.append(f"HM((u32) {cexpr}.b{b});")
+            cf.append(f"{cexpr}.x0.b{b} = rnd() & 1;")
+            ch.append(f"HM((u32) {cexpr}.x0.b{b});")
             rf.append(f"unsafe {{ {rexpr}.anon_0.set_b{b}((rnd() & 1) as u8); }}")
             rh.append(f"unsafe {{ hm({rexpr}.anon_0.b{b}() as u32); }}")
         return
@@ -39,6 +39,7 @@ gen_tu.Walk.one = _one
 
 
 def build(stem):
+    sys.modules.pop('specs_it', None); sys.path.insert(0, str(HERE))  # gen_tu pulls melee_world's specs_it first; this dir's must win
     from specs_it import SPECS
     return gen_tu.build(stem, SPECS[stem], False)
 

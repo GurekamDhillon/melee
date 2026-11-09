@@ -169,7 +169,7 @@ def build(stem):
         both(f"fill_{attr}((void*) ATTR);", f"fill_{attr}(&mut *(attr_ptr() as *mut {attr}));")
     both("fill_ItemAttr(&IATTR); fill_ItemCommonData(&ICD);",
          "fill_ItemAttr(&mut *(&raw mut IATTR)); fill_ItemCommonData(&mut *(&raw mut ICD));")
-    both("ART.x0_common_attr = &IATTR; ART.x4_specialAttributes = ATTR; ART.x10_modelDesc = &MD;",
+    both("ART.x0_common_attr = &IATTR; ART.x4_specialAttributes = (union ItemSpecialAttributes*) ATTR; ART.x10_modelDesc = &MD;",
          "ART.x0_common_attr = &raw mut IATTR; ART.x4_specialAttributes = attr_ptr() as *mut c_void; "
          "ART.x10_modelDesc = &raw mut MD;")
     both("MD.x0_joint = (rnd() % 3u == 0) ? 0 : &JNT;",

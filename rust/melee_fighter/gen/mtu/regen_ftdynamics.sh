@@ -3,5 +3,5 @@
 set -e
 cd "$(dirname "$0")/../../../.."
 python rust/melee_fighter/gen/mtu/fill.py ftdynamics src/melee/ft/ftdynamics.c HSD_GObj,HSD_JObj,Fighter,Item,HSD_DObj Fighter,HSD_JObj,HSD_GObj,FighterBone
-python rust/melee_fighter/gen/mtu/stubs.py ftdynamics src/melee/ft/ftdynamics.c rust/melee_fighter/src/tu/ftdynamics.rs --ret "ftParts_GetBoneIndex=(int) (fv() % 16)|(fv() % 16) as _" --ret "ftParts_8007506C=({ u32 q_ = fv(); (q_ % 3) == 0 ? 0u : q_ * 2u + 1u; })|{ let q = fv(); if q % 3 == 0 { 0 } else { q.wrapping_mul(2).wrapping_add(1) } }" --ret "lb_80011ABC=(int) (fv() % 3) - 1|(fv() % 3) as i32 - 1"
+python rust/melee_fighter/gen/mtu/stubs.py ftdynamics src/melee/ft/ftdynamics.c rust/melee_fighter/src/tu/ftdynamics.rs --ret "ftParts_GetBoneIndex=(int) (fv() % 16)|(fv() % 16) as _" --ret "ftParts_8007506C=({ u32 q_ = fv(); (q_ % 3) == 0 ? 0u : q_ * 2u + 1u; })|{ let q = fv(); if q % 3 == 0 { 0 } else { q.wrapping_mul(2).wrapping_add(1) } }" --ret "lb_80011ABC=(int) (fv() % 3) - 1|(fv() % 3) as i32 - 1" --skip rp_ecb_on
 python rust/melee_fighter/gen/cref/tu/run_tu.py ftdynamics_ops

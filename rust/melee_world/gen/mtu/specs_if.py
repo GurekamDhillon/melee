@@ -912,8 +912,6 @@ SPECS["ifstock"] = dict(
     skip_stubs=["memset"],
     setup_c="int k;\n    for (k = 0; k < 6; k++) P_HSD_GObj[k].user_data = &ifStock_804A1378.x204[rnd() % 6u];",
     setup_rs="for k in 0..6usize { g::P_HSD_GObj[k].user_data = &raw mut m::ifStock_804A1378.x204[(rnd() % 6) as usize] as *mut _; }",
-    setup_c="int k;\n    if (HDBG) printf(\"PAD %02X %02X %02X %02X rs=%08X\\n\", (u8)ifStock_804A1378.pad1F0[0], (u8)ifStock_804A1378.pad1F0[1], (u8)ifStock_804A1378.pad1F0[2], (u8)ifStock_804A1378.pad1F0[3], rs);\n    for (k = 0; k < 6; k++) P_HSD_GObj[k].user_data = &ifStock_804A1378.x204[rnd() % 6u];",
-    setup_rs="if HDBG { let pd = m::ifStock_804A1378.pad1F0; println!(\"PAD {:02X} {:02X} {:02X} {:02X} rs={:08X}\", pd[0] as u8, pd[1] as u8, pd[2] as u8, pd[3] as u8, RS); } for k in 0..6usize { g::P_HSD_GObj[k].user_data = &raw mut m::ifStock_804A1378.x204[(rnd() % 6) as usize] as *mut _; }",
     ret={"GObj_Create": ("pick_HSD_GObj(0)", "pick_HSD_GObj(0)"),
          "HSD_JObjLoadJoint": ("((NULLJ && (fv() & 1)) ? 0 : pick_HSD_JObj(0))",
                                "if super::NULLJ != 0 && fv() & 1 != 0 { null_mut() } else { pick_HSD_JObj(0) }"),

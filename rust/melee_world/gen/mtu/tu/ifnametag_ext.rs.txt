@@ -25,15 +25,15 @@ pub mod ext {
     fn Camera_80030A50() -> *mut HSD_GObj;
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i64)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i64)>, a2: u32);
     fn GetNameText(a0: i32) -> *mut i8;
     fn HSD_CObjEndCurrent();
     fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32;
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i64);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
@@ -55,7 +55,7 @@ pub mod ext {
     fn Player_800360D8(a0: i32) -> f32;
     fn Player_GetEntity(a0: i32) -> *mut HSD_GObj;
     fn Player_GetNametagSlotID(a0: i32) -> u8;
-    fn Player_GetPlayerId(a0: i32) -> i32;
+    fn Player_GetPadPort(a0: i32) -> i32;
     fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind;
     fn Player_GetPlayerState(a0: i32) -> i32;
     fn Player_GetStocks(a0: i32) -> i32;

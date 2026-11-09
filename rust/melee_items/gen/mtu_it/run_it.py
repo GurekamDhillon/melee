@@ -44,6 +44,7 @@ def run(cmd, n):
 
 def main():
     BUILD.mkdir(parents=True, exist_ok=True)
+    sys.modules.pop('specs_it', None); sys.path.insert(0, str(HERE))  # gen_tu pulls melee_world's specs_it first; this dir's must win
     from specs_it import SPECS
     for n in sys.argv[1:]:
         spec = SPECS[n]

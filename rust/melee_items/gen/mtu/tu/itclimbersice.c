@@ -91,7 +91,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -125,6 +125,8 @@ static void hash_world(int ft)
     for (i = 0; i < 16; i++) HM(PI(PLINK[i]));
 }
 
+static int CUR_OP = -1;
+enum { OP_itClimbersIce_sub_x4 = 0, OP_itClimbersice_Spawn = 1, OP_itClimbersice_Spawn2 = 2, OP_it_802C1590 = 3, OP_it_802C16F8 = 4, OP_it_802C17DC = 5, OP_it_2725_Logic90_Destroyed = 6, OP_it_802C1854 = 7, OP_it_802C1950 = 8, OP_itClimbersice_UnkMotion0_Anim = 9, OP_itClimbersice_UnkMotion0_Phys = 10, OP_itClimbersice_UnkMotion0_Coll = 11, OP_it_802C1A58 = 12, OP_itClimbersice_UnkMotion1_Anim = 13, OP_itClimbersice_UnkMotion1_Phys = 14, OP_itClimbersice_UnkMotion1_Coll = 15, OP_it_802C1AE4 = 16, OP_itClimbersice_UnkMotion2_Anim = 17, OP_itClimbersice_Phys_inline = 18, OP_itClimbersice_UnkMotion2_Phys = 19, OP_itClimbersice_Coll = 20, OP_itClimbersice_UnkMotion2_Coll = 21, OP_fn_802C1D44 = 22, OP_itClimbersice_UnkMotion3_Anim = 23, OP_itClimbersice_UnkMotion3_Phys = 24, OP_itClimbersice_UnkMotion3_Coll = 25, OP_itClimbersIce_Logic90_DmgDealt = 26, OP_itClimbersIce_Logic90_Reflected = 27, OP_itClimbersIce_Logic90_Clanked = 28, OP_it_2725_Logic90_HitShield = 29, OP_itClimbersIce_Logic90_Absorbed = 30, OP_itClimbersIce_Logic90_ShieldBounced = 31, OP_itClimbersIce_Logic90_EvtUnk = 32 };
 static u32 SATTR[2][13];
 
 static void setup_stem(void)
@@ -132,7 +134,7 @@ static void setup_stem(void)
     int i;
     (void) i;
     it_804D6D28 = &ICD[0];
-{ int q, w; for (q = 0; q < 2; q++) { ART[q].x4_specialAttributes = SATTR[q]; for (w = 0; w < 13; w++) { if (w == 11 || w == 12) ((int*) SATTR[q])[w] = (int) (fv() % 6); else ((float*) SATTR[q])[w] = rw(); } } } { int q; for (q = 0; q < 4; q++) { u32 r = rnd(); IT[q].kind = It_Kind_IceClimber_Ice + (r & 1); *(void**) &IT[q].xDD4_itemVar = (r & 6) == 0 ? (void*) 0 : (void*) &GO[4 + (r >> 8) % 3]; } }
+{ int q, w; for (q = 0; q < 2; q++) { ART[q].x4_specialAttributes = (union ItemSpecialAttributes*) SATTR[q]; for (w = 0; w < 13; w++) { if (w == 11 || w == 12) ((int*) SATTR[q])[w] = (int) (fv() % 6); else ((float*) SATTR[q])[w] = rw(); } } } { int q; for (q = 0; q < 4; q++) { u32 r = rnd(); IT[q].kind = It_Kind_IceClimber_Ice + (r & 1); *(void**) &IT[q].xDD4_itemVar = (r & 6) == 0 ? (void*) 0 : (void*) &GO[4 + (r >> 8) % 3]; } }
 }
 
 static void hash_stem(void)
@@ -194,6 +196,7 @@ preg(SATTR, sizeof SATTR);
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
+            CUR_OP = op;
             setup_stem();
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             switch (op) {

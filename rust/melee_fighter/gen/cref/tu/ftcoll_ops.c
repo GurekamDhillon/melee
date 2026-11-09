@@ -86,7 +86,7 @@ static void world(void)
         FT[i].gobj = &GO[i];
         FT[i].ft_data = &FDATA[i];
         FT[i].grab_cb = cbev1; FT[i].grabbed_cb = cbev3;
-        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_id %= 4; FT[i].x618_player_id %= 4;
+        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_idx %= 4; FT[i].pad_port %= 4;
         FT[i].x166C %= 2;   /* x1670 is declared [1] and the C indexes past it into the filler, whose native layout differs from the Rust types' */
         for (b = 0; b < 64; b++) { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
         FT[i].parts = PARTS[i];

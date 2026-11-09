@@ -68,7 +68,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -102,6 +102,8 @@ static void hash_world(int ft)
     for (i = 0; i < 16; i++) HM(PI(PLINK[i]));
 }
 
+static int CUR_OP = -1;
+enum { OP_it_80277D08 = 0, OP_fn_80277D8C = 1, OP_it_80277F90 = 2, OP_it_80278108 = 3, OP_it_80278574 = 4 };
 static unsigned char TBOG[16]; static GXColor GCOL[2]; static HSD_TExp TX[3];
 static void cb_stev(HSD_MObj* m, HSD_TObj* t, u32 r) { T(7010); T(PI(m)); T(PI(t)); T(r); }
 static void* IT0P;
@@ -145,6 +147,7 @@ preg_xpools(); preg(TBOG, sizeof TBOG); preg(GCOL, sizeof GCOL); preg(TX, sizeof
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
+            CUR_OP = op;
             setup_stem();
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             switch (op) {

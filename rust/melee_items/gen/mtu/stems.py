@@ -408,7 +408,7 @@ def attrs_stem(words=16, ints=()):
         c_extra=f"static u32 SATTR[2][{words}];",
         rs_extra=f"static mut SATTR: [[u32; {words}]; 2] = [[0; {words}]; 2];",
         pregs=("preg(SATTR, sizeof SATTR);", "preg(&raw const SATTR, core::mem::size_of_val(&SATTR));"),
-        setup=(f"{{ int q, w; for (q = 0; q < 2; q++) {{ ART[q].x4_specialAttributes = SATTR[q]; for (w = 0; w < {words}; w++) {{ {c_fill} }} }} }}",
+        setup=(f"{{ int q, w; for (q = 0; q < 2; q++) {{ ART[q].x4_specialAttributes = (union ItemSpecialAttributes*) SATTR[q]; for (w = 0; w < {words}; w++) {{ {c_fill} }} }} }}",
                f"{{ for q in 0..2usize {{ ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut c_void; for w in 0..{words}usize {{ {r_fill} }} }} }}"),
         hash=(f"{{ int q, w; for (q = 0; q < 2; q++) for (w = 0; w < {words}; w++) HM(SATTR[q][w]); }}",
               f"{{ for q in 0..2usize {{ for w in 0..{words}usize {{ hm(SATTR[q][w]); }} }} }}"),

@@ -98,8 +98,8 @@ static void world(void)
         FT[i].gobj = &GO[i];
         FT[i].ft_data = &FDATA[i];
         FT[i].grab_cb = cbev1; FT[i].grabbed_cb = cbev3;
-        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_id %= 4; FT[i].x618_player_id %= 4;
-        for (b = 0; b < 64; b++) { if (b < NP) fill_FighterBone(&PARTS[i][b]); else { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].flags_b1 = 1; } PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
+        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_idx %= 4; FT[i].pad_port %= 4;
+        for (b = 0; b < 64; b++) { if (b < NP) fill_FighterBone(&PARTS[i][b]); else { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].x8.x0.flags_b1 = 1; } PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
         FT[i].parts = PARTS[i];
         { int pk = i * 24; FDATA[i].x0 = (void*) PADB[pk++]; FDATA[i].ext_attr = (void*) PADB[pk++]; FDATA[i].x8 = (void*) PADB[pk++]; FDATA[i].xC = (void*) PADB[pk++]; FDATA[i].x10 = (void*) PADB[pk++]; FDATA[i].x14 = (void*) PADB[pk++]; FDATA[i].x18 = (void*) PADB[pk++]; FDATA[i].x1C = (void*) PADB[pk++]; FDATA[i].x20 = (void*) PADB[pk++]; FDATA[i].x24 = (void*) PADB[pk++]; FDATA[i].x28 = (void*) PADB[pk++]; FDATA[i].x2C = (void*) PADB[pk++]; FDATA[i].x30 = (void*) PADB[pk++]; FDATA[i].x34 = (void*) PADB[pk++]; FDATA[i].x38 = (void*) PADB[pk++]; FDATA[i].x3C = (void*) PADB[pk++]; FDATA[i].x40 = (void*) PADB[pk++]; FDATA[i].x44 = (void*) PADB[pk++]; FDATA[i].x48_items = (void*) PADB[pk++]; FDATA[i].x4C_sfx = (void*) PADB[pk++]; FDATA[i].x50 = (void*) PADB[pk++]; FDATA[i].x54 = (void*) PADB[pk++]; FDATA[i].x58 = (void*) PADB[pk++]; FDATA[i].x5C = (void*) PADB[pk++]; }
     }
@@ -234,7 +234,7 @@ static void world(void)
       for (k_ = 0; k_ < KM; k_++) ftData_ThrownPrepared[k_] = (u8) fv();
       for (k_ = 0; k_ < KM; k_++) { GenoDefine_ContentIdentity[k_][0] = fv(); GenoDefine_ContentIdentity[k_][1] = fv(); GenoDefine_InterpreterAttempts[k_] = fv(); }
       for (q_ = 0; q_ < NG; q_++) {
-        FT[q_].kind = (FighterKind) ((u32) FT[q_].kind % 27u); FT[q_].x619_costume_id %= 4;
+        FT[q_].kind = (FighterKind) ((u32) FT[q_].kind % 27u); FT[q_].costume_id %= 4;
         FT[q_].x24 = (Fighter_WaitAnimData*) PADB[70 + q_]; FT[q_].x59C = (void*) PADB[80 + q_];
         FT[q_].x5A4 = (void*) (uintptr_t) (fv() % 8); FT[q_].x5A8 = (void*) pw(); FT[q_].x58C = (int) (fv() % 70);
         for (j_ = 0; j_ < 64; j_++) {

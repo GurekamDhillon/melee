@@ -47,58 +47,58 @@ static void fill_StaticModelDesc(StaticModelDesc* p);
 static void hash_StaticModelDesc(const StaticModelDesc* p);
 u8 HSD_GObj_CameraKind;
 u8 HSD_GObj_JObjKind;
-__typeof__(struct HSD_GObj *) Camera_80030A50(void) { T(1000); return (__typeof__(struct HSD_GObj *)) (&P_HSD_GObj[0]); }
-__typeof__(struct HSD_GObj *) GObj_Create(__typeof__(unsigned short) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2) { T(1001); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_GObj *)) (pick_HSD_GObj(0)); }
-void GObj_InitUserData(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned char) a1, __typeof__(void (*)(void *)) a2, __typeof__(void *) a3) { T(1002); T(PI((const void*) a0)); T((u32) a1); T(FI((const void*) a2)); T(PI((const void*) a3)); }
-void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1003); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
-void GObj_SetupGXLinkMax(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned int) a2) { T(1004); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); }
-__typeof__(char *) GetNameText(__typeof__(int) a0) { T(1005); T((u32) a0); return (__typeof__(char *)) (0); }
-void HSD_CObjEndCurrent(void) { T(1006); }
-__typeof__(int) HSD_CObjSetCurrent(__typeof__(struct HSD_CObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-void HSD_GObjFree(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); }
-void HSD_GObjObject_80390A70(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned char) a1, __typeof__(void *) a2) { T(1009); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
-void HSD_GObj_80390ED0(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned int) a1) { T(1010); T(PI((const void*) a0)); T((u32) a1); }
-void HSD_GObj_JObjCallback(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1011); T(PI((const void*) a0)); T((u32) a1); }
-__typeof__(struct HSD_GObjProc *) HSD_GObj_SetupProc(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1, __typeof__(unsigned char) a2) { T(1012); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); return (__typeof__(struct HSD_GObjProc *)) (0); }
-void HSD_JObjAddAnimAll(__typeof__(struct HSD_JObj *) a0, __typeof__(struct HSD_AnimJoint *) a1, __typeof__(struct HSD_MatAnimJoint *) a2, __typeof__(struct HSD_ShapeAnimJoint *) a3) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(PI((const void*) a3)); }
-void HSD_JObjAnimAll(__typeof__(struct HSD_JObj *) a0) { T(1014); T(PI((const void*) a0)); }
-void HSD_JObjClearFlags(__typeof__(struct HSD_JObj *) a0, __typeof__(unsigned int) a1) { T(1015); T(PI((const void*) a0)); T((u32) a1); }
-__typeof__(struct HSD_JObj *) HSD_JObjLoadJoint(__typeof__(struct HSD_Joint *) a0) { T(1016); T(PI((const void*) a0)); return (__typeof__(struct HSD_JObj *)) (pick_HSD_JObj(0)); }
-void HSD_JObjReqAnimAll(__typeof__(struct HSD_JObj *) a0, __typeof__(float) a1) { T(1017); T(PI((const void*) a0)); T(B(a1)); }
-void HSD_JObjSetFlags(__typeof__(struct HSD_JObj *) a0, __typeof__(unsigned int) a1) { T(1018); T(PI((const void*) a0)); T((u32) a1); }
-void HSD_JObjSetMtxDirtySub(__typeof__(struct HSD_JObj *) a0) { T(1019); T(PI((const void*) a0)); }
-__typeof__(void *) HSD_MemAlloc(__typeof__(int) a0) { T(1020); T((u32) a0); return (__typeof__(void *)) (HEAPB); }
-__typeof__(int) HSD_SisLib_803A611C(__typeof__(int) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(unsigned short) a2, __typeof__(unsigned char) a3, __typeof__(unsigned char) a4, __typeof__(unsigned char) a5, __typeof__(unsigned char) a6, __typeof__(unsigned int) a7) { T(1021); T((u32) a0); T(PI((const void*) a1)); T((u32) a2); T((u32) a3); T((u32) a4); T((u32) a5); T((u32) a6); T((u32) a7); return (__typeof__(int)) (fv()); }
-void HSD_SisLib_803A62A0(__typeof__(int) a0, __typeof__(char *) a1, __typeof__(char *) a2) { T(1022); T((u32) a0); T(PI((const void*) a1)); T(PI((const void*) a2)); }
-__typeof__(struct HSD_Text *) HSD_SisLib_803A6754(__typeof__(int) a0, __typeof__(int) a1) { T(1023); T((u32) a0); T((u32) a1); return (__typeof__(struct HSD_Text *)) (&P_HSD_Text[0]); }
+__typeof__(struct HSD_GObj *) (Camera_80030A50)(void) { T(1000); return (__typeof__(struct HSD_GObj *)) (&P_HSD_GObj[0]); }
+__typeof__(struct HSD_GObj *) (GObj_Create)(__typeof__(unsigned short) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2) { T(1001); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_GObj *)) (pick_HSD_GObj(0)); }
+void (GObj_InitUserData)(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned char) a1, __typeof__(void (*)(void *)) a2, __typeof__(void *) a3) { T(1002); T(PI((const void*) a0)); T((u32) a1); T(FI((const void*) a2)); T(PI((const void*) a3)); }
+void (GObj_SetupGXLink)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1003); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
+void (GObj_SetupGXLinkMax)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned int) a2) { T(1004); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); }
+__typeof__(char *) (GetNameText)(__typeof__(int) a0) { T(1005); T((u32) a0); return (__typeof__(char *)) (0); }
+void (HSD_CObjEndCurrent)(void) { T(1006); }
+__typeof__(int) (HSD_CObjSetCurrent)(__typeof__(struct HSD_CObj *) a0) { T(1007); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+void (HSD_GObjFree)(__typeof__(struct HSD_GObj *) a0) { T(1008); T(PI((const void*) a0)); }
+void (HSD_GObjObject_80390A70)(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned char) a1, __typeof__(void *) a2) { T(1009); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
+void (HSD_GObj_80390ED0)(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned int) a1) { T(1010); T(PI((const void*) a0)); T((u32) a1); }
+void (HSD_GObj_JObjCallback)(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1011); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
+__typeof__(struct HSD_GObjProc *) (HSD_GObj_SetupProc)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1, __typeof__(unsigned char) a2) { T(1012); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); return (__typeof__(struct HSD_GObjProc *)) (0); }
+void (HSD_JObjAddAnimAll)(__typeof__(struct HSD_JObj *) a0, __typeof__(struct HSD_AnimJoint *) a1, __typeof__(struct HSD_MatAnimJoint *) a2, __typeof__(struct HSD_ShapeAnimJoint *) a3) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(PI((const void*) a3)); }
+void (HSD_JObjAnimAll)(__typeof__(struct HSD_JObj *) a0) { T(1014); T(PI((const void*) a0)); }
+void (HSD_JObjClearFlags)(__typeof__(struct HSD_JObj *) a0, __typeof__(unsigned int) a1) { T(1015); T(PI((const void*) a0)); T((u32) a1); }
+__typeof__(struct HSD_JObj *) (HSD_JObjLoadJoint)(__typeof__(struct HSD_Joint *) a0) { T(1016); T(PI((const void*) a0)); return (__typeof__(struct HSD_JObj *)) (pick_HSD_JObj(0)); }
+void (HSD_JObjReqAnimAll)(__typeof__(struct HSD_JObj *) a0, __typeof__(float) a1) { T(1017); T(PI((const void*) a0)); T(B(a1)); }
+void (HSD_JObjSetFlags)(__typeof__(struct HSD_JObj *) a0, __typeof__(unsigned int) a1) { T(1018); T(PI((const void*) a0)); T((u32) a1); }
+void (HSD_JObjSetMtxDirtySub)(__typeof__(struct HSD_JObj *) a0) { T(1019); T(PI((const void*) a0)); }
+__typeof__(void *) (HSD_MemAlloc)(__typeof__(int) a0) { T(1020); T((u32) a0); return (__typeof__(void *)) (HEAPB); }
+__typeof__(int) (HSD_SisLib_803A611C)(__typeof__(int) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(unsigned short) a2, __typeof__(unsigned char) a3, __typeof__(unsigned char) a4, __typeof__(unsigned char) a5, __typeof__(unsigned char) a6, __typeof__(unsigned int) a7) { T(1021); T((u32) a0); T(PI((const void*) a1)); T((u32) a2); T((u32) a3); T((u32) a4); T((u32) a5); T((u32) a6); T((u32) a7); return (__typeof__(int)) (fv()); }
+void (HSD_SisLib_803A62A0)(__typeof__(int) a0, __typeof__(char *) a1, __typeof__(char *) a2) { T(1022); T((u32) a0); T(PI((const void*) a1)); T(PI((const void*) a2)); }
+__typeof__(struct HSD_Text *) (HSD_SisLib_803A6754)(__typeof__(int) a0, __typeof__(int) a1) { T(1023); T((u32) a0); T((u32) a1); return (__typeof__(struct HSD_Text *)) (&P_HSD_Text[0]); }
 int HSD_SisLib_803A6B98(HSD_Text* a0, float a1, float a2, const char* a3, ...) { T(1024); T(PI(a0)); T(B(a1)); T(B(a2)); T(SH(a3)); return (int) fv(); }
-void HSD_SisLib_803A746C(__typeof__(struct HSD_Text *) a0, __typeof__(int) a1, __typeof__(float) a2, __typeof__(float) a3) { T(1025); T(PI((const void*) a0)); T((u32) a1); T(B(a2)); T(B(a3)); }
-void HSD_SisLib_803A7548(__typeof__(struct HSD_Text *) a0, __typeof__(int) a1, __typeof__(float) a2, __typeof__(float) a3) { T(1026); T(PI((const void*) a0)); T((u32) a1); T(B(a2)); T(B(a3)); }
-void HSD_SisLib_803A75E0(__typeof__(struct HSD_Text *) a0, __typeof__(int) a1) { T(1027); T(PI((const void*) a0)); T((u32) a1); }
-__typeof__(int) Mex_Enabled(__typeof__(const char *) a0) { T(1028); T(SH((const char*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(int) Player_80036058(__typeof__(int) a0) { T(1029); T((u32) a0); return (__typeof__(int)) ((fv() & 1)); }
-__typeof__(float) Player_800360D8(__typeof__(int) a0) { T(1030); T((u32) a0); return (__typeof__(float)) (rg()); }
-__typeof__(struct HSD_GObj *) Player_GetEntity(__typeof__(int) a0) { T(1031); T((u32) a0); return (__typeof__(struct HSD_GObj *)) (&P_HSD_GObj[1 + fv() % 3]); }
-__typeof__(unsigned char) Player_GetNametagSlotID(__typeof__(int) a0) { T(1032); T((u32) a0); return (__typeof__(unsigned char)) (((fv() & 1) ? 120 : (int) (fv() % 100))); }
-__typeof__(int) Player_GetPlayerId(__typeof__(int) a0) { T(1033); T((u32) a0); return (__typeof__(int)) ((fv() % 4)); }
-__typeof__(Gm_PKind) Player_GetPlayerSlotType(__typeof__(int) a0) { T(1034); T((u32) a0); return (__typeof__(Gm_PKind)) ((fv() % 4)); }
-__typeof__(int) Player_GetPlayerState(__typeof__(int) a0) { T(1035); T((u32) a0); return (__typeof__(int)) ((fv() & 1)); }
-__typeof__(int) Player_GetStocks(__typeof__(int) a0) { T(1036); T((u32) a0); return (__typeof__(int)) ((int) (fv() % 4)); }
-__typeof__(int) Player_GetTeam(__typeof__(int) a0) { T(1037); T((u32) a0); return (__typeof__(int)) ((fv() % 5)); }
-void Player_LoadPlayerCoords(__typeof__(int) a0, __typeof__(Vec *) a1) { T(1038); T((u32) a0); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
-__typeof__(int) Ui_RetailHidden(__typeof__(int) a0) { T(1039); T((u32) a0); return (__typeof__(int)) (fv()); }
-__typeof__(int) Wb_RenderActive(void) { T(1040); return (__typeof__(int)) (fv()); }
-__typeof__(struct VsSceneController *) gmVs_GetSceneController(void) { T(1041); return (__typeof__(struct VsSceneController *)) (&P_VsSceneController[0]); }
-__typeof__(int) gm_8016B0E8(void) { T(1042); return (__typeof__(int)) ((fv() & 1)); }
-__typeof__(int) gm_8016B168(void) { T(1043); return (__typeof__(int)) ((fv() & 1)); }
-__typeof__(int) gm_8016B258(__typeof__(int) a0) { T(1044); T((u32) a0); return (__typeof__(int)) ((fv() & 1)); }
-__typeof__(struct HSD_Archive **) ifAll_GetArchive(void) { T(1045); return (__typeof__(struct HSD_Archive **)) (&ARCP); }
-__typeof__(int) ifAll_IsHUDHidden(void) { T(1046); return (__typeof__(int)) (fv()); }
+void (HSD_SisLib_803A746C)(__typeof__(struct HSD_Text *) a0, __typeof__(int) a1, __typeof__(float) a2, __typeof__(float) a3) { T(1025); T(PI((const void*) a0)); T((u32) a1); T(B(a2)); T(B(a3)); }
+void (HSD_SisLib_803A7548)(__typeof__(struct HSD_Text *) a0, __typeof__(int) a1, __typeof__(float) a2, __typeof__(float) a3) { T(1026); T(PI((const void*) a0)); T((u32) a1); T(B(a2)); T(B(a3)); }
+void (HSD_SisLib_803A75E0)(__typeof__(struct HSD_Text *) a0, __typeof__(int) a1) { T(1027); T(PI((const void*) a0)); T((u32) a1); }
+__typeof__(int) (Mex_Enabled)(__typeof__(const char *) a0) { T(1028); T(SH((const char*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) (Player_80036058)(__typeof__(int) a0) { T(1029); T((u32) a0); return (__typeof__(int)) ((fv() & 1)); }
+__typeof__(float) (Player_800360D8)(__typeof__(int) a0) { T(1030); T((u32) a0); return (__typeof__(float)) (rg()); }
+__typeof__(struct HSD_GObj *) (Player_GetEntity)(__typeof__(int) a0) { T(1031); T((u32) a0); return (__typeof__(struct HSD_GObj *)) (&P_HSD_GObj[1 + fv() % 3]); }
+__typeof__(unsigned char) (Player_GetNametagSlotID)(__typeof__(int) a0) { T(1032); T((u32) a0); return (__typeof__(unsigned char)) (((fv() & 1) ? 120 : (int) (fv() % 100))); }
+__typeof__(int) (Player_GetPadPort)(__typeof__(int) a0) { T(1033); T((u32) a0); return (__typeof__(int)) (fv()); }
+__typeof__(Gm_PKind) (Player_GetPlayerSlotType)(__typeof__(int) a0) { T(1034); T((u32) a0); return (__typeof__(Gm_PKind)) ((fv() % 4)); }
+__typeof__(int) (Player_GetPlayerState)(__typeof__(int) a0) { T(1035); T((u32) a0); return (__typeof__(int)) ((fv() & 1)); }
+__typeof__(int) (Player_GetStocks)(__typeof__(int) a0) { T(1036); T((u32) a0); return (__typeof__(int)) ((int) (fv() % 4)); }
+__typeof__(int) (Player_GetTeam)(__typeof__(int) a0) { T(1037); T((u32) a0); return (__typeof__(int)) ((fv() % 5)); }
+void (Player_LoadPlayerCoords)(__typeof__(int) a0, __typeof__(Vec *) a1) { T(1038); T((u32) a0); T(PI((const void*) a1)); a1->x = rw(); a1->y = rw(); a1->z = rw(); }
+__typeof__(int) (Ui_RetailHidden)(__typeof__(int) a0) { T(1039); T((u32) a0); return (__typeof__(int)) (fv()); }
+__typeof__(int) (Wb_RenderActive)(void) { T(1040); return (__typeof__(int)) (fv()); }
+__typeof__(struct VsSceneController *) (gmVs_GetSceneController)(void) { T(1041); return (__typeof__(struct VsSceneController *)) (&P_VsSceneController[0]); }
+__typeof__(int) (gm_8016B0E8)(void) { T(1042); return (__typeof__(int)) ((fv() & 1)); }
+__typeof__(int) (gm_8016B168)(void) { T(1043); return (__typeof__(int)) ((fv() & 1)); }
+__typeof__(int) (gm_8016B258)(__typeof__(int) a0) { T(1044); T((u32) a0); return (__typeof__(int)) ((fv() & 1)); }
+__typeof__(struct HSD_Archive **) (ifAll_GetArchive)(void) { T(1045); return (__typeof__(struct HSD_Archive **)) (&ARCP); }
+__typeof__(int) (ifAll_IsHUDHidden)(void) { T(1046); return (__typeof__(int)) (fv()); }
 void lbArchive_LoadSections(HSD_Archive* a0, void** a1, ...) { __builtin_va_list ap; void** cur = (void**) a1; const char* nm; u32 h; __builtin_va_start(ap, a1); T(1047); T(PI(a0)); while (cur) { nm = __builtin_va_arg(ap, const char*); h = SH(nm); T(PI(cur)); T(h); if (h == 0xFB0EED2Bu) *cur = (void*) (NMODELS); else *cur = 0; cur = __builtin_va_arg(ap, void**); } __builtin_va_end(ap); }
-__typeof__(Vec *) lbVector_WorldToScreen(__typeof__(struct HSD_CObj *) a0, __typeof__(const Vec *) a1, __typeof__(Vec *) a2, __typeof__(int) a3) { T(1048); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T((u32) a3); T(RH((const void*) a1, sizeof *a1)); a2->x = rw(); a2->y = rw(); a2->z = rw(); return (__typeof__(Vec *)) (a2); }
-__typeof__(struct HSD_CObj *) lb_80013B14(__typeof__(struct HSD_CameraDescPerspective *) a0) { T(1049); T(PI((const void*) a0)); return (__typeof__(struct HSD_CObj *)) (&P_HSD_CObj[0]); }
-void memzero(__typeof__(void *) a0, __typeof__(int) a1) { T(1050); T(PI((const void*) a0)); T((u32) a1); zero(a0, (unsigned) a1); }
-void mn_8022EB04(__typeof__(void *) a0) { T(1051); T(PI((const void*) a0)); }
+__typeof__(Vec *) (lbVector_WorldToScreen)(__typeof__(struct HSD_CObj *) a0, __typeof__(const Vec *) a1, __typeof__(Vec *) a2, __typeof__(int) a3) { T(1048); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T((u32) a3); T(RH((const void*) a1, sizeof *a1)); a2->x = rw(); a2->y = rw(); a2->z = rw(); return (__typeof__(Vec *)) (a2); }
+__typeof__(struct HSD_CObj *) (lb_80013B14)(__typeof__(struct HSD_CameraDescPerspective *) a0) { T(1049); T(PI((const void*) a0)); return (__typeof__(struct HSD_CObj *)) (&P_HSD_CObj[0]); }
+void (memzero)(__typeof__(void *) a0, __typeof__(int) a1) { T(1050); T(PI((const void*) a0)); T((u32) a1); zero(a0, (unsigned) a1); }
+void (mn_8022EB04)(__typeof__(void *) a0) { T(1051); T(PI((const void*) a0)); }
 static void fill_HSD_GObj(HSD_GObj* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
@@ -232,8 +232,8 @@ static void fill_HSD_Text(HSD_Text* p)
     p->hidden = fv();
     p->x4E = fv();
     p->font_idx = fv();
-    p->x6C = fv();
-    p->x6E = fv();
+    p->state_stack_used = fv();
+    p->state_stack_capacity = fv();
     p->current_width = rg();
     p->current_height = rg();
     p->x78.x = rg();
@@ -297,9 +297,9 @@ static void hash_HSD_Text(const HSD_Text* p)
     HM(PI((const void*) p->sis_buffer));
     HM(PI((const void*) p->x60));
     HM(PI((const void*) p->alloc_data));
-    HM(PI((const void*) p->string_buffer));
-    HM((u32) p->x6C);
-    HM((u32) p->x6E);
+    HM(PI((const void*) p->state_stack));
+    HM((u32) p->state_stack_used);
+    HM((u32) p->state_stack_capacity);
     HM(B(p->current_width));
     HM(B(p->current_height));
     HM(B(p->x78.x));
@@ -326,7 +326,7 @@ static void fill_Fighter(Fighter* p)
     int i0, i1, i2, j0, j1, j2, j3;
     p->kind = fv();
     p->x8_spawnNum = fv();
-    p->player_id = fv();
+    p->player_idx = fv();
     p->motion_id = fv();
     p->anim_id = fv();
     p->x18 = fv();
@@ -640,7 +640,9 @@ static void fill_Fighter(Fighter* p)
     p->x508.x7C_flag7 = fv();
     p->x508.x7C_flag8 = fv();
     p->x58C = fv();
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &(*p))[1696 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x594)[i0] = (unsigned char) rnd();
+    p->x5A4 = fv();
+    p->x5A8 = fv();
     p->x5AC.model_num = fv();
     for (i0 = 0; i0 < 5; i0++) {
     p->x5AC.cleared[i0] = fv();
@@ -661,9 +663,9 @@ static void fill_Fighter(Fighter* p)
     p->x610_color_rgba[i0].b = fv();
     p->x610_color_rgba[i0].a = fv();
     }
-    p->x618_player_id = fv();
-    p->x619_costume_id = fv();
-    p->x61A_controller_index = fv();
+    p->pad_port = fv();
+    p->costume_id = fv();
+    p->sub_color = fv();
     p->team = fv();
     p->x61C = fv();
     p->x61D = fv();
@@ -814,7 +816,7 @@ static void fill_Fighter(Fighter* p)
     p->coll_data.xE4_ecb.left.x = rg();
     p->coll_data.xE4_ecb.left.y = rg();
     p->coll_data.ecb_source.kind = fv();
-    for (j0 = 0; j0 < 56; j0++) ((unsigned char*) &p->coll_data.ecb_source)[8 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 56; i0++) ((unsigned char*) &p->coll_data.ecb_source.x4)[i0] = (unsigned char) rnd();
     p->coll_data.ecb_source.x124 = rg();
     p->coll_data.ecb_source.x128 = rg();
     p->coll_data.ecb_source.x12C = rg();
@@ -923,7 +925,7 @@ static void fill_Fighter(Fighter* p)
     for (i1 = 0; i1 < 12; i1++) {
     p->x914[i0].victims_2[i1].x4 = fv();
     }
-    for (j1 = 0; j1 < 8; j1++) ((unsigned char*) &p->x914[i0])[504 + j1] = (unsigned char) rnd();
+    for (i1 = 0; i1 < 8; i1++) ((unsigned char*) &p->x914[i0].x134)[i1] = (unsigned char) rnd();
     }
     for (i0 = 0; i0 < 2; i0++) {
     p->xDF4[i0].state = fv();
@@ -988,7 +990,7 @@ static void fill_Fighter(Fighter* p)
     for (i1 = 0; i1 < 12; i1++) {
     p->xDF4[i0].victims_2[i1].x4 = fv();
     }
-    for (j1 = 0; j1 < 8; j1++) ((unsigned char*) &p->xDF4[i0])[504 + j1] = (unsigned char) rnd();
+    for (i1 = 0; i1 < 8; i1++) ((unsigned char*) &p->xDF4[i0].x134)[i1] = (unsigned char) rnd();
     }
     p->x1064_thrownHitbox.state = fv();
     p->x1064_thrownHitbox.x4 = fv();
@@ -1052,7 +1054,7 @@ static void fill_Fighter(Fighter* p)
     for (i0 = 0; i0 < 12; i0++) {
     p->x1064_thrownHitbox.victims_2[i0].x4 = fv();
     }
-    for (j0 = 0; j0 < 8; j0++) ((unsigned char*) &p->x1064_thrownHitbox)[504 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 8; i0++) ((unsigned char*) &p->x1064_thrownHitbox.x134)[i0] = (unsigned char) rnd();
     p->x119C_teamUnk = fv();
     p->grabber_unk1 = fv();
     p->hurt_capsules_len = fv();
@@ -1136,7 +1138,6 @@ static void fill_Fighter(Fighter* p)
     p->dmg.x1880.z = rg();
     p->dmg.x188c = fv();
     p->dmg.x1890 = fv();
-    p->dmg.x1894 = fv();
     p->dmg.x1898 = rg();
     p->dmg.x189C_unk_num_frames = rg();
     p->dmg.x18a0 = rg();
@@ -1152,17 +1153,7 @@ static void fill_Fighter(Fighter* p)
     p->dmg.x18C8 = fv();
     p->dmg.x18CC = fv();
     p->dmg.x18D0 = fv();
-    p->dmg.x18d4.x0 = fv();
-    p->dmg.x18d4.x1 = fv();
-    p->dmg.x18d4.x2_b0 = fv();
-    p->dmg.x18d4.x2_b1 = fv();
-    p->dmg.x18d4.x2_b2 = fv();
-    p->dmg.x18d4.x2_b3 = fv();
-    p->dmg.x18d4.x2_b4 = fv();
-    p->dmg.x18d4.x2_b5 = fv();
-    p->dmg.x18d4.x2_b6 = fv();
-    p->dmg.x18d4.x2_b7 = fv();
-    p->dmg.x18d4.x3 = fv();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->dmg.x18d4)[i0] = (unsigned char) rnd();
     p->dmg.x18d8.x0 = fv();
     p->dmg.x18d8.x4 = fv();
     p->dmg.x18d8.kb_applied1 = rg();
@@ -1298,7 +1289,6 @@ static void fill_Fighter(Fighter* p)
     p->cpu.x38 = rg();
     p->cpu.x3C = rg();
     p->cpu.x40 = rg();
-    p->cpu.x50 = fv();
     p->cpu.x54.x = rg();
     p->cpu.x54.y = rg();
     p->cpu.x5C = rg();
@@ -1416,11 +1406,11 @@ static void fill_Fighter(Fighter* p)
     p->x206C_attack_instance = fv();
     p->x206E = fv();
     for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x2070)[i0] = (unsigned char) rnd();
-    p->x2074.x2074_vec.x = rg();
-    p->x2074.x2074_vec.y = rg();
-    p->x2074.x207C.x = fv();
+    p->x2074.x2074_vec.x = fv();
+    p->x2074.x2074_vec.y = fv();
+    p->x2074.x207C.x = rg();
     p->x2074.x207C.y = fv();
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &p->x2074)[16 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x2074.x10)[i0] = (unsigned char) rnd();
     p->x2074.x2088 = fv();
     p->x208C = fv();
     p->x2090 = fv();
@@ -1501,7 +1491,7 @@ static void fill_Fighter(Fighter* p)
     for (i0 = 0; i0 < 4; i0++) {
     p->cmd_vars[i0] = fv();
     }
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &(*p))[10924 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x2210)[i0] = (unsigned char) rnd();
     p->cmd_timer = rg();
     p->allow_interrupt = fv();
     p->x2218_b1 = fv();
@@ -1527,7 +1517,14 @@ static void fill_Fighter(Fighter* p)
     p->x221A_b5 = fv();
     p->x221A_b6 = fv();
     p->x221A_b7 = fv();
-    for (j0 = 0; j0 < 1; j0++) ((unsigned char*) &(*p))[10935 + j0] = (unsigned char) rnd();
+    p->x221B.x221B_b0 = fv();
+    p->x221B.x221B_b1 = fv();
+    p->x221B.x221B_b2 = fv();
+    p->x221B.x221B_b3 = fv();
+    p->x221B.x221B_b4 = fv();
+    p->x221B.x221B_b5 = fv();
+    p->x221B.x221B_b6 = fv();
+    p->x221B.x221B_b7 = fv();
     p->x221C_b0 = fv();
     p->x221C_b1 = fv();
     p->x221C_b2 = fv();
@@ -1537,8 +1534,8 @@ static void fill_Fighter(Fighter* p)
     p->x221C_b6 = fv();
     p->x221C_u16_y = fv();
     p->x221D_b2 = fv();
-    p->x221D_b3 = fv();
-    p->x221D_b4 = fv();
+    p->has_prev_input = fv();
+    p->input_disabled = fv();
     p->x221D_b5 = fv();
     p->x221D_b6 = fv();
     p->x221D_b7 = fv();
@@ -1553,7 +1550,7 @@ static void fill_Fighter(Fighter* p)
     p->x221F_b0 = fv();
     p->x221F_b1 = fv();
     p->x221F_b2 = fv();
-    p->x221F_b3 = fv();
+    p->is_sleeping = fv();
     p->is_sub_fighter = fv();
     p->x221F_b5 = fv();
     p->x221F_b6 = fv();
@@ -1590,7 +1587,7 @@ static void fill_Fighter(Fighter* p)
     p->is_metal = fv();
     p->x2224_b0 = fv();
     p->x2224_b1 = fv();
-    p->x2224_b2 = fv();
+    p->stamina_dead = fv();
     p->x2224_b3 = fv();
     p->x2224_b4 = fv();
     p->x2224_b5 = fv();
@@ -1659,7 +1656,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->gobj));
     HM((u32) p->kind);
     HM((u32) p->x8_spawnNum);
-    HM((u32) p->player_id);
+    HM((u32) p->player_idx);
     HM((u32) p->motion_id);
     HM((u32) p->anim_id);
     HM((u32) p->x18);
@@ -1996,12 +1993,12 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->x588));
     HM((u32) p->x58C);
     HM(PI((const void*) p->x590));
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &(*p))[1696 + j0]);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x594)[i0]);
     HM(PI((const void*) p->x598));
     HM(PI((const void*) p->x59C));
     HM(PI((const void*) p->x5A0));
-    HM(PI((const void*) p->x5A4));
-    HM(PI((const void*) p->x5A8));
+    HM((u32) p->x5A4);
+    HM((u32) p->x5A8);
     HM((u32) p->x5AC.model_num);
     for (i0 = 0; i0 < 5; i0++) {
     HM((u32) p->x5AC.cleared[i0]);
@@ -2028,9 +2025,9 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x610_color_rgba[i0].b);
     HM((u32) p->x610_color_rgba[i0].a);
     }
-    HM((u32) p->x618_player_id);
-    HM((u32) p->x619_costume_id);
-    HM((u32) p->x61A_controller_index);
+    HM((u32) p->pad_port);
+    HM((u32) p->costume_id);
+    HM((u32) p->sub_color);
     HM((u32) p->team);
     HM((u32) p->x61C);
     HM((u32) p->x61D);
@@ -2182,7 +2179,7 @@ static void hash_Fighter(const Fighter* p)
     HM(B(p->coll_data.xE4_ecb.left.x));
     HM(B(p->coll_data.xE4_ecb.left.y));
     HM((u32) p->coll_data.ecb_source.kind);
-    for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->coll_data.ecb_source)[8 + j0]);
+    for (i0 = 0; i0 < 56; i0++) HM(((const unsigned char*) &p->coll_data.ecb_source.x4)[i0]);
     HM(B(p->coll_data.ecb_source.x124));
     HM(B(p->coll_data.ecb_source.x128));
     HM(B(p->coll_data.ecb_source.x12C));
@@ -2296,7 +2293,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->x914[i0].victims_2[i1].victim));
     HM((u32) p->x914[i0].victims_2[i1].x4);
     }
-    for (j1 = 0; j1 < 8; j1++) HM(((const unsigned char*) &p->x914[i0])[504 + j1]);
+    for (i1 = 0; i1 < 8; i1++) HM(((const unsigned char*) &p->x914[i0].x134)[i1]);
     }
     for (i0 = 0; i0 < 2; i0++) {
     HM((u32) p->xDF4[i0].state);
@@ -2364,7 +2361,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->xDF4[i0].victims_2[i1].victim));
     HM((u32) p->xDF4[i0].victims_2[i1].x4);
     }
-    for (j1 = 0; j1 < 8; j1++) HM(((const unsigned char*) &p->xDF4[i0])[504 + j1]);
+    for (i1 = 0; i1 < 8; i1++) HM(((const unsigned char*) &p->xDF4[i0].x134)[i1]);
     }
     HM((u32) p->x1064_thrownHitbox.state);
     HM((u32) p->x1064_thrownHitbox.x4);
@@ -2431,7 +2428,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->x1064_thrownHitbox.victims_2[i0].victim));
     HM((u32) p->x1064_thrownHitbox.victims_2[i0].x4);
     }
-    for (j0 = 0; j0 < 8; j0++) HM(((const unsigned char*) &p->x1064_thrownHitbox)[504 + j0]);
+    for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->x1064_thrownHitbox.x134)[i0]);
     HM((u32) p->x119C_teamUnk);
     HM((u32) p->grabber_unk1);
     HM((u32) p->hurt_capsules_len);
@@ -2520,7 +2517,7 @@ static void hash_Fighter(const Fighter* p)
     HM(B(p->dmg.x1880.z));
     HM((u32) p->dmg.x188c);
     HM((u32) p->dmg.x1890);
-    HM((u32) p->dmg.x1894);
+    HM(PI((const void*) p->dmg.x1894));
     HM(B(p->dmg.x1898));
     HM(B(p->dmg.x189C_unk_num_frames));
     HM(B(p->dmg.x18a0));
@@ -2536,17 +2533,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->dmg.x18C8);
     HM((u32) p->dmg.x18CC);
     HM((u32) p->dmg.x18D0);
-    HM((u32) p->dmg.x18d4.x0);
-    HM((u32) p->dmg.x18d4.x1);
-    HM((u32) p->dmg.x18d4.x2_b0);
-    HM((u32) p->dmg.x18d4.x2_b1);
-    HM((u32) p->dmg.x18d4.x2_b2);
-    HM((u32) p->dmg.x18d4.x2_b3);
-    HM((u32) p->dmg.x18d4.x2_b4);
-    HM((u32) p->dmg.x18d4.x2_b5);
-    HM((u32) p->dmg.x18d4.x2_b6);
-    HM((u32) p->dmg.x18d4.x2_b7);
-    HM((u32) p->dmg.x18d4.x3);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->dmg.x18d4)[i0]);
     HM((u32) p->dmg.x18d8.x0);
     HM((u32) p->dmg.x18d8.x4);
     HM(B(p->dmg.x18d8.kb_applied1));
@@ -2699,7 +2686,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->cpu.x44));
     HM(PI((const void*) p->cpu.x48));
     HM(PI((const void*) p->cpu.x4C));
-    HM((u32) p->cpu.x50);
+    HM(PI((const void*) p->cpu.x50));
     HM(B(p->cpu.x54.x));
     HM(B(p->cpu.x54.y));
     HM(B(p->cpu.x5C));
@@ -2824,11 +2811,11 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x206C_attack_instance);
     HM((u32) p->x206E);
     for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x2070)[i0]);
-    HM(B(p->x2074.x2074_vec.x));
-    HM(B(p->x2074.x2074_vec.y));
-    HM((u32) p->x2074.x207C.x);
+    HM((u32) p->x2074.x2074_vec.x);
+    HM((u32) p->x2074.x2074_vec.y);
+    HM(B(p->x2074.x207C.x));
     HM((u32) p->x2074.x207C.y);
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &p->x2074)[16 + j0]);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x2074.x10)[i0]);
     HM((u32) p->x2074.x2088);
     HM((u32) p->x208C);
     HM((u32) p->x2090);
@@ -2941,7 +2928,7 @@ static void hash_Fighter(const Fighter* p)
     for (i0 = 0; i0 < 4; i0++) {
     HM((u32) p->cmd_vars[i0]);
     }
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &(*p))[10924 + j0]);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x2210)[i0]);
     HM(B(p->cmd_timer));
     HM((u32) p->allow_interrupt);
     HM((u32) p->x2218_b1);
@@ -2967,7 +2954,14 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x221A_b5);
     HM((u32) p->x221A_b6);
     HM((u32) p->x221A_b7);
-    for (j0 = 0; j0 < 1; j0++) HM(((const unsigned char*) &(*p))[10935 + j0]);
+    HM((u32) p->x221B.x221B_b0);
+    HM((u32) p->x221B.x221B_b1);
+    HM((u32) p->x221B.x221B_b2);
+    HM((u32) p->x221B.x221B_b3);
+    HM((u32) p->x221B.x221B_b4);
+    HM((u32) p->x221B.x221B_b5);
+    HM((u32) p->x221B.x221B_b6);
+    HM((u32) p->x221B.x221B_b7);
     HM((u32) p->x221C_b0);
     HM((u32) p->x221C_b1);
     HM((u32) p->x221C_b2);
@@ -2977,8 +2971,8 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x221C_b6);
     HM((u32) p->x221C_u16_y);
     HM((u32) p->x221D_b2);
-    HM((u32) p->x221D_b3);
-    HM((u32) p->x221D_b4);
+    HM((u32) p->has_prev_input);
+    HM((u32) p->input_disabled);
     HM((u32) p->x221D_b5);
     HM((u32) p->x221D_b6);
     HM((u32) p->x221D_b7);
@@ -2993,7 +2987,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x221F_b0);
     HM((u32) p->x221F_b1);
     HM((u32) p->x221F_b2);
-    HM((u32) p->x221F_b3);
+    HM((u32) p->is_sleeping);
     HM((u32) p->is_sub_fighter);
     HM((u32) p->x221F_b5);
     HM((u32) p->x221F_b6);
@@ -3030,7 +3024,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->is_metal);
     HM((u32) p->x2224_b0);
     HM((u32) p->x2224_b1);
-    HM((u32) p->x2224_b2);
+    HM((u32) p->stamina_dead);
     HM((u32) p->x2224_b3);
     HM((u32) p->x2224_b4);
     HM((u32) p->x2224_b5);
@@ -3259,7 +3253,7 @@ static void fill_VsSceneController(VsSceneController* p)
     p->state.fighters[i0].x1 = fv();
     p->state.fighters[i0].slot_type = fv();
     p->state.fighters[i0].spawn_point = fv();
-    for (j1 = 0; j1 < 1; j1++) ((unsigned char*) &p->state.fighters[i0])[4 + j1] = (unsigned char) rnd();
+    for (i1 = 0; i1 < 1; i1++) ((unsigned char*) &p->state.fighters[i0].x4)[i1] = (unsigned char) rnd();
     p->state.fighters[i0].x5 = fv();
     p->state.fighters[i0].x6 = fv();
     p->state.fighters[i0].x8 = fv();
@@ -3298,7 +3292,7 @@ static void fill_VsSceneController(VsSceneController* p)
     p->state.x24C.player_standings[i0].pkind = fv();
     p->state.x24C.player_standings[i0].ckind = fv();
     p->state.x24C.player_standings[i0].ftkind = fv();
-    for (j1 = 0; j1 < 1; j1++) ((unsigned char*) &p->state.x24C.player_standings[i0])[3 + j1] = (unsigned char) rnd();
+    for (i1 = 0; i1 < 1; i1++) ((unsigned char*) &p->state.x24C.player_standings[i0].x3_u)[i1] = (unsigned char) rnd();
     p->state.x24C.player_standings[i0].x4 = fv();
     p->state.x24C.player_standings[i0].is_big_loser = fv();
     p->state.x24C.player_standings[i0].is_small_loser = fv();
@@ -3308,10 +3302,9 @@ static void fill_VsSceneController(VsSceneController* p)
     p->state.x24C.player_standings[i0].self_destructs = fv();
     p->state.x24C.player_standings[i0].percent = fv();
     p->state.x24C.player_standings[i0].xE = fv();
-    for (i1 = 0; i1 < 4; i1++) {
+    for (i1 = 0; i1 < 6; i1++) {
     p->state.x24C.player_standings[i0].kills[i1] = fv();
     }
-    p->state.x24C.player_standings[i0].x18 = fv();
     p->state.x24C.player_standings[i0].x1C = fv();
     p->state.x24C.player_standings[i0].x20 = fv();
     p->state.x24C.player_standings[i0].x24 = fv();
@@ -3422,7 +3415,7 @@ static void fill_VsSceneController(VsSceneController* p)
     p->start.x1C_pad[i0] = fv();
     }
     p->start.x20 = fv64();
-    p->start.x28 = fv();
+    p->start.it_kind = fv();
     p->start.x2C = rg();
     p->start.x30 = rg();
     p->start.game_speed = rg();
@@ -3466,7 +3459,7 @@ static void hash_VsSceneController(const VsSceneController* p)
     HM((u32) p->state.fighters[i0].x1);
     HM((u32) p->state.fighters[i0].slot_type);
     HM((u32) p->state.fighters[i0].spawn_point);
-    for (j1 = 0; j1 < 1; j1++) HM(((const unsigned char*) &p->state.fighters[i0])[4 + j1]);
+    for (i1 = 0; i1 < 1; i1++) HM(((const unsigned char*) &p->state.fighters[i0].x4)[i1]);
     HM((u32) p->state.fighters[i0].x5);
     HM((u32) p->state.fighters[i0].x6);
     HM((u32) p->state.fighters[i0].x8);
@@ -3505,7 +3498,7 @@ static void hash_VsSceneController(const VsSceneController* p)
     HM((u32) p->state.x24C.player_standings[i0].pkind);
     HM((u32) p->state.x24C.player_standings[i0].ckind);
     HM((u32) p->state.x24C.player_standings[i0].ftkind);
-    for (j1 = 0; j1 < 1; j1++) HM(((const unsigned char*) &p->state.x24C.player_standings[i0])[3 + j1]);
+    for (i1 = 0; i1 < 1; i1++) HM(((const unsigned char*) &p->state.x24C.player_standings[i0].x3_u)[i1]);
     HM((u32) p->state.x24C.player_standings[i0].x4);
     HM((u32) p->state.x24C.player_standings[i0].is_big_loser);
     HM((u32) p->state.x24C.player_standings[i0].is_small_loser);
@@ -3515,10 +3508,9 @@ static void hash_VsSceneController(const VsSceneController* p)
     HM((u32) p->state.x24C.player_standings[i0].self_destructs);
     HM((u32) p->state.x24C.player_standings[i0].percent);
     HM((u32) p->state.x24C.player_standings[i0].xE);
-    for (i1 = 0; i1 < 4; i1++) {
+    for (i1 = 0; i1 < 6; i1++) {
     HM((u32) p->state.x24C.player_standings[i0].kills[i1]);
     }
-    HM((u32) p->state.x24C.player_standings[i0].x18);
     HM((u32) p->state.x24C.player_standings[i0].x1C);
     HM((u32) p->state.x24C.player_standings[i0].x20);
     HM((u32) p->state.x24C.player_standings[i0].x24);
@@ -3629,7 +3621,7 @@ static void hash_VsSceneController(const VsSceneController* p)
     HM((u32) p->start.x1C_pad[i0]);
     }
     HM((u32) p->start.x20); HM((u32) ((u64) p->start.x20 >> 32));
-    HM((u32) p->start.x28);
+    HM((u32) p->start.it_kind);
     HM(B(p->start.x2C));
     HM(B(p->start.x30));
     HM(B(p->start.game_speed));
@@ -3779,10 +3771,13 @@ static void freg_all(void)
     freg((const void*) mn_8022EB04);
     freg((const void*) NameTag_Create);
     freg((const void*) NameTag_RenderCallback);
+    freg((const void*) createNameText);
     freg((const void*) fn_802FCAC4);
     freg((const void*) fn_802FCC44);
+    freg((const void*) getNameTagFrame);
+    freg((const void*) getNametagColorFrame);
     freg((const void*) has_nametag);
-    freg((const void*) inlineA1);
+    freg((const void*) initSis);
     freg((const void*) un_802FC9B4);
     freg((const void*) un_802FCBA0);
     freg((const void*) un_802FD28C);
@@ -3827,7 +3822,7 @@ static void freg_all(void)
 // stub Player_800360D8 = 1030
 // stub Player_GetEntity = 1031
 // stub Player_GetNametagSlotID = 1032
-// stub Player_GetPlayerId = 1033
+// stub Player_GetPadPort = 1033
 // stub Player_GetPlayerSlotType = 1034
 // stub Player_GetPlayerState = 1035
 // stub Player_GetStocks = 1036

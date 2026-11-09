@@ -39,6 +39,7 @@ pub fn name(addr: usize) -> Option<String> {
 }
 
 /// `a` and `b` are the same function: the same address, or two copies of one symbol.
+/// (A predicate shim matches its target only through [`find`]: the C side never compares a shim directly.)
 pub fn same(a: usize, b: usize) -> bool {
     static CHECKED: std::sync::Once = std::sync::Once::new();
     CHECKED.call_once(require_unmerged);
@@ -74,6 +75,22 @@ pub fn find(regs: &[usize], addr: usize) -> Option<usize> {
     CHECKED.call_once(require_unmerged);
     regs.iter().position(|&x| x == addr).or_else(|| {
         let n = name(addr)?;
-        regs.iter().position(|&x| name(x).as_deref() == Some(n.as_str()))
+        regs.iter().position(|&x| name(x).as_deref() == Some(n.as_str())).or_else(|| {
+            let t = adapter_target(&n)?;
+            regs.iter().position(|&x| name(x).as_deref().map(last) == Some(t))
+        })
     })
+}
+
+/// The C function an `int`-returning predicate shim stands for: the type argument of melee_items'
+/// `pred_adapter::<..::f>` (pred_b!), or `f` of a TU's `f_p` (its local pred_i32!).
+fn adapter_target(n: &str) -> Option<&str> {
+    if let Some(i) = n.find("::pred_adapter::<") {
+        return Some(last(n[i + "::pred_adapter::<".len()..].trim_end_matches('>')));
+    }
+    last(n).strip_suffix("_p")
+}
+
+fn last(n: &str) -> &str {
+    n.rsplit("::").next().unwrap_or(n)
 }

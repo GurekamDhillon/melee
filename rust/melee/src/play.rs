@@ -1696,7 +1696,7 @@ pub fn play(args: &[String]) -> ExitCode {
                         let mut a = Vec::new();
                         let mut i = 0;
                         while i < eff_args.len() {
-                            if matches!(eff_args[i].as_str(), "--stocks" | "--time-secs" | "--items") {
+                            if matches!(eff_args[i].as_str(), "--stocks" | "--time-secs" | "--items" | "--cpu") {
                                 i += 2;
                                 continue;
                             }
@@ -1769,7 +1769,13 @@ pub fn play(args: &[String]) -> ExitCode {
                 }
             }
             match crate::play_net::scenario_of_scene(sc) {
-                Ok(s) => presets.scenario = Some(s),
+                Ok(s) => {
+                    let who: Vec<String> = s.players.iter().enumerate().filter_map(|(i, p)| p.map(|p| {
+                        format!("P{} ck {} {}", i + 1, p.ckind, if p.slot_type == 1 { format!("CPU {}", p.cpu_level) } else { "human".into() })
+                    })).collect();
+                    log(&format!("netplay scene players: {}", who.join(", ")));
+                    presets.scenario = Some(s);
+                }
                 Err(e) => {
                     eprintln!("play: {e}");
                     return ExitCode::FAILURE;

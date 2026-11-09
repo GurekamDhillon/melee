@@ -787,6 +787,9 @@ pub struct HostRules {
     pub time_secs: Option<i32>,
     /// the `--items` text (`_` for spaces)
     pub items: Option<String>,
+    /// CPU seats on ports 3 and 4 (`--cpu fighter[/level][,fighter[/level]]`, level 1-9, default 9): (CharacterKind,
+    /// level), resolved by the host; the guest takes them from the agreed scene like the rest of the rules
+    pub cpus: Vec<(i32, i32)>,
 }
 
 impl HostRules {
@@ -795,11 +798,17 @@ impl HostRules {
             stocks: arg(args, "--stocks").and_then(|s| s.parse().ok()),
             time_secs: arg(args, "--time-secs").and_then(|s| s.parse().ok()),
             items: arg(args, "--items").map(|s| s.trim().replace(' ', "_")),
+            cpus: Vec::new(),
         }
     }
     pub fn encode(&self) -> String {
         let o = |v: &Option<String>| v.clone().unwrap_or_else(|| "-".into());
-        format!(";np_rules=s{},t{},i{}", o(&self.stocks.map(|x| x.to_string())), o(&self.time_secs.map(|x| x.to_string())), o(&self.items))
+        let mut e = format!(";np_rules=s{},t{},i{}", o(&self.stocks.map(|x| x.to_string())), o(&self.time_secs.map(|x| x.to_string())), o(&self.items));
+        // the CPU seats only when there are any, so a two-human scene string is what it always was
+        if !self.cpus.is_empty() {
+            e += &format!(",c{}", self.cpus.iter().map(|(ck, l)| format!("{ck}.{l}")).collect::<Vec<_>>().join("+"));
+        }
+        e
     }
     pub fn from_scene(p: &ParsedScene) -> Option<HostRules> {
         let v = p.extras.iter().find_map(|e| e.strip_prefix("np_rules="))?;
@@ -813,18 +822,37 @@ impl HostRules {
                 "s" => r.stocks = x.parse().ok(),
                 "t" => r.time_secs = x.parse().ok(),
                 "i" => r.items = Some(x.to_string()),
+                "c" => {
+                    r.cpus = x.split('+').map(|c| c.split_once('.').and_then(|(k, l)| Some((k.parse().ok()?, l.parse().ok()?)))).collect::<Option<Vec<_>>>()?;
+                }
                 _ => {}
             }
         }
         Some(r)
     }
     pub fn describe(&self) -> String {
+        let cpus = if self.cpus.is_empty() { String::new() } else {
+            format!(", CPUs {}", self.cpus.iter().map(|(ck, l)| format!("ck {ck} level {l}")).collect::<Vec<_>>().join(" + "))
+        };
         format!(
-            "stocks {}, time {}, items {}",
+            "stocks {}, time {}, items {}{cpus}",
             self.stocks.map_or("default".into(), |x| x.to_string()),
             self.time_secs.map_or("default".into(), |x| format!("{x} s")),
             self.items.clone().unwrap_or_else(|| "default".into())
         )
+    }
+    /// `--cpu fighter[/level][,...]`: at most two seats (ports 3 and 4), level 1-9 (default 9)
+    pub fn parse_cpus(spec: &str, ck_of: &dyn Fn(&str) -> Option<i32>) -> Result<Vec<(i32, i32)>, String> {
+        let v = spec.split(',').map(str::trim).filter(|s| !s.is_empty()).map(|c| {
+            let (name, lvl) = c.split_once('/').unwrap_or((c, "9"));
+            let ck = ck_of(name).ok_or_else(|| format!("--cpu: unknown fighter '{name}'"))?;
+            let l: i32 = lvl.trim_start_matches("cpu").parse().ok().filter(|l| (1..=9).contains(l)).ok_or_else(|| format!("--cpu {c}: level 1-9"))?;
+            Ok((ck, l))
+        }).collect::<Result<Vec<_>, String>>()?;
+        if v.len() > 2 {
+            return Err("--cpu: at most two CPU seats (ports 3 and 4)".into());
+        }
+        Ok(v)
     }
 }
 
@@ -945,6 +973,13 @@ pub fn scenario_of_scene(sc: &str) -> Result<melee_engine::scenario::Scenario, S
     let mut players = [None; 6];
     players[0] = Some(spec(ck(&p.host_tok), p.host_color));
     players[1] = Some(spec(ck(&p.guest_tok), p.guest_color));
+    // the host's CPU seats (np_rules c): ports 3 and 4, in the order given
+    for (i, &(c, level)) in HostRules::from_scene(&p).map(|r| r.cpus).unwrap_or_default().iter().enumerate().take(2) {
+        if c < 0 || !(1..=9).contains(&level) {
+            return Err(format!("netplay scene: bad CPU seat ck {c} level {level}"));
+        }
+        players[2 + i] = Some(PlayerSpec { slot_type: 1, cpu_level: level, ..spec(c, -1) });
+    }
     Ok(Scenario {
         stage: melee_net::app::lobby::LobbyEnv::ext_for_token(&PlayEnv::default(), &p.stage_tok),
         players,
@@ -1129,7 +1164,12 @@ impl NetDriver {
         let parts: Vec<&str> = spec.split(',').map(str::trim).collect();
         let ck = ck_of(parts[0]).ok_or_else(|| format!("--match: unknown fighter '{}'", parts[0]))?;
         let stage_ext = parts.iter().skip(1).find_map(|p| stage_of(p)).unwrap_or(32);
-        let rules = HostRules::from_args(args);
+        let mut rules = HostRules::from_args(args);
+        if host {
+            if let Some(c) = arg(args, "--cpu") {
+                rules.cpus = HostRules::parse_cpus(&c, ck_of)?;
+            }
+        }
         let stocks = rules.stocks.unwrap_or(4);
         let minutes = rules.time_secs.map_or(8, |s| (s.max(1) + 59) / 60);
         let local_port = if host { 0 } else { 1 };
@@ -1702,5 +1742,36 @@ mod lab_identity_tests {
         assert!(plain.starts_with("a_sim#") && !plain.contains("b_menu") && !plain.contains("c_lab"), "{plain}");
         assert!(online_lab.contains("a_sim#") && online_lab.contains("c_lab#") && !online_lab.contains("b_menu"), "{online_lab}");
         let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
+/// CPU seats in a netplay match (Envoy M0): the host's `--cpu` rides in the agreed scene's np_rules and becomes CPU
+/// players on ports 3 and 4; a scene without it is the two-human scene it always was.
+#[cfg(test)]
+mod cpu_seat_tests {
+    use super::*;
+
+    #[test]
+    fn cpu_seats_round_trip_into_the_scenario() {
+        let ck = |n: &str| match n { "fox" => Some(2), "falco" => Some(20), "peach" => Some(12), _ => None };
+        assert_eq!(HostRules::parse_cpus("falco/9, peach/3", &ck), Ok(vec![(20, 9), (12, 3)]));
+        assert_eq!(HostRules::parse_cpus("fox", &ck), Ok(vec![(2, 9)]));
+        assert!(HostRules::parse_cpus("mewthree/9", &ck).is_err());
+        assert!(HostRules::parse_cpus("fox/0", &ck).is_err() && HostRules::parse_cpus("fox/10", &ck).is_err());
+        assert!(HostRules::parse_cpus("fox,falco,peach", &ck).is_err(), "two seats at most");
+
+        let base = melee_net::app::scene::build_scene("ck:0", 0, "ck:2", 0, "ext:32", 4, 8, 0);
+        let plain = HostRules { stocks: Some(4), ..HostRules::default() };
+        assert!(!plain.encode().contains(",c"), "no CPUs: the rules text is unchanged");
+        let s0 = scenario_of_scene(&format!("{base}{}", plain.encode())).unwrap();
+        assert!(s0.players[2].is_none() && s0.players[3].is_none());
+
+        let r = HostRules { cpus: vec![(20, 9), (12, 3)], ..plain };
+        let s = scenario_of_scene(&format!("{base}{}", r.encode())).unwrap();
+        let p = |i: usize| s.players[i].map(|x| (x.ckind, x.slot_type, x.cpu_level));
+        assert_eq!((p(0), p(1), p(2), p(3)), (Some((0, 0, -1)), Some((2, 0, -1)), Some((20, 1, 9)), Some((12, 1, 3))));
+        let back = HostRules::from_scene(&melee_net::app::scene::parse_scene(&format!("{base}{}", r.encode())).unwrap()).unwrap();
+        assert_eq!(back.cpus, vec![(20, 9), (12, 3)]);
+        assert!(back.describe().contains("CPUs ck 20 level 9 + ck 12 level 3"));
     }
 }

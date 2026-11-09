@@ -9,6 +9,9 @@ repo="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$repo/rust"
 export RUSTC_BOOTSTRAP=1
 export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-Zmerge-functions=disabled"
+# MSVC's linker folds identical COMDATs in a release link (/OPT:ICF is its default with /OPT:REF), which merges the
+# same twins after rustc: fnsym::require_unmerged fails in every harness on Windows. Keep them apart there too.
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) export RUSTFLAGS="$RUSTFLAGS -Clink-arg=/OPT:NOICF" ;; esac
 export CARGO_TARGET_DIR="${ORACLE_TARGET_DIR:-$repo/build/cargo-oracle}"
 # one test at a time inside each binary: the harnesses keep their state in `static mut`s (the log, the arena, the
 # fn registry), and libtest's parallel threads race on it (tu_ftkirby segfaulted that way)

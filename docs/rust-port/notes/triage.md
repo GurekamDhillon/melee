@@ -97,3 +97,43 @@ earlier is a state difference the hash only shows later (typical for item / hitb
 - Value-only (no call difference, 3 scenarios: venom, captain, yoshi): fighter position `cur_pos`, probably a float (FMA) site.
 
 Re-run after fixes: the C side is cached per C build commit, so only the Rust runs repeat (about 10 minutes for all 26).
+
+
+## Oracle regen on Windows (port/regen1, 2026-11-08)
+
+Suite through a per-binary runner (oracle flags, one test thread): 1037 test targets, 5 do not compile
+(tu_geno_game, tu_geno_game_g, tu_script_game, tu_script_game_t, tu_shadow), 583 pass, 449 fail. 307 of the 449
+were `fnsym::require_unmerged` on every harness: MSVC link.exe folds identical COMDATs in a release link (/OPT:ICF),
+after rustc, so `-Zmerge-functions=disabled` alone does not keep the twins apart on Windows. oracle_tests.sh now adds
+`-Clink-arg=/OPT:NOICF` there (checked on tuo_gmmultiman: guard gone, 37 of 2060 cases differ in gm_801B6428).
+
+**Blocker: the C side cannot be regenerated against the current headers yet.** The upstream sync 363720e12 (116
+commits, incl. #3583 "name all anonymous types") renamed record members (`HitCapsule.x134.owner`,
+`UnkFlagStruct.x0.b0`, ...) and removed headers (`axdriver.static.h`), but rust/melee_types/src/gen.rs was not
+regenerated (`gen_types.py --check` stops on "missing TU records in src/melee/mn/mndiagram.c"). So:
+- tuoracle.py (tu_geno_game*, tu_script_game*) fails at once: all_types.c includes the removed header.
+- gen/mtu/run_it.py itfoods: "rust_names: no melee_types block for CommandInfo".
+- gen/kinds itsamusgrapple: the C driver builds after fixture renames (`.x134.owner`, `.x0.bN`, `(void*)` casts,
+  `xD0` int), but the generated Rust walker then names C members melee_types does not have (no field `x134`, `x0`,
+  `xDAA`): no compile. Its one-line hand edit stays until melee_types is regenerated.
+- oracle/tuo gmmultiman regenerates but then 2060 of 2060 cases differ (old data: 37): the C walk and the stale
+  melee_types disagree, so the old data is kept.
+- The generators also rewrite the port's `// BEGIN GENERATED EXT` block and drop the hand-wired fallbacks
+  (`=> crate::tu::...`): after any regen, restore `src/`.
+Order of work: regenerate melee_types for the post-sync headers (and fix the port's uses of the renamed members),
+then regen group B, the mtu/kinds hash set, gmmultiman, itfoods, grapple and the NaN-class tests (lower.py's fptoi
+select only reaches the data then).
+
+- gwtool: gwtool.cpp already had the `fcmp uno` select; rebuilt into _build/agents/regen1/gwtool (fptosi -> select
+  on fcmp uno checked on a sample module; the shared _build/gwtool/gwtool.exe still lacks it and was not replaced:
+  every game TU must be rebuilt after it). No TU oracle uses gwtool.exe: they all apply lower.py.
+- log_oracle: re-recorded with the user name injected as "Testy" (oracle/log_oracle.c wraps GetUserNameA; the test
+  uses the same name).
+- tu_shadow (open decision): regeneration changes no data. The C oracle stubs PSVECScale (traced, the C mtx is not
+  linked), while the port calls `mtx_pc::raw::PSVECScale` directly since d323c49bb, so the generated test still sets
+  a hook that no longer exists (compile error). With that line dropped, ops 0-16 agree and op 17
+  (HSD_ViewingRectAddRect) agrees on return and state but differs in the trace. Pick one: link the real PSVECScale
+  into the C oracle, or call it through `ext` again in the port.
+
+Expected-fail by design (listed here, not gated; native C cannot reproduce the GC layout these depend on):
+oracle_ftyoshispecialn, tu_ftCo_YoshiEgg, kinds_itsword, kinds_itmariofireball / kinds_itluigifireball (unfused square).

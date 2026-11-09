@@ -349,13 +349,15 @@ pub struct Menu {
     pub controls: bool,
     /// the drill session summary page is open
     pub summary: bool,
+    /// the Controls page's first visible CONTROLS row
+    pub controls_top: usize,
 }
 
 impl Menu {
     pub const fn new() -> Menu {
         Menu {
             open: false, port: 0, tab: 0, row: 0, scroll: 0, resume: false, hold: (0, 0), radial: false, rport: 0, rsel: -1, z_frames: 0, z_combo: false,
-            cmd: false, kcap: 0, q: Txt::new(), hits: [(0, 0, 0); 8], n_hits: 0, csel: 0, recs: [0; 8], weights: [1; 8], recording: -1, keys: [0; 32], controls: false, summary: false,
+            cmd: false, kcap: 0, q: Txt::new(), hits: [(0, 0, 0); 8], n_hits: 0, csel: 0, recs: [0; 8], weights: [1; 8], recording: -1, keys: [0; 32], controls: false, summary: false, controls_top: 0,
         }
     }
 }
@@ -738,7 +740,10 @@ impl Lab {
             S_SWAP => self.swap(),
             S_CMD => self.open_cmd(),
             S_RESUME => self.close_menu(),
-            S_CONTROLS => self.menu.controls = true,
+            S_CONTROLS => {
+                self.menu.controls = true;
+                self.menu.controls_top = 0;
+            }
             DR_START => {
                 let recs = (0..4).fold(0u32, |m, s| m | (self.menu.recs[s] & 0xFF) << (s * 8));
                 let r = unsafe { gd_lab_drill(self.vals[DR_DRILL] as u32, self.dport() as u32, recs) };
@@ -925,14 +930,6 @@ impl Lab {
             }
             return true;
         }
-        if self.menu.controls || self.menu.summary {
-            if edge & (BB | START) != 0 {
-                self.menu.controls = false;
-                self.menu.summary = false;
-            }
-            return true;
-        }
-        let rows = TABS[self.menu.tab].1;
         // stick or D-pad, with repeat (15 frames, then every 4)
         let mut dir = held & (DL | DR | DU | DD);
         if stick.1 > 50 { dir |= DU; }
@@ -946,6 +943,21 @@ impl Lab {
             self.menu.hold = (dir, 0);
             dir != 0
         };
+        if self.menu.controls || self.menu.summary {
+            if edge & (BB | START) != 0 {
+                self.menu.controls = false;
+                self.menu.summary = false;
+            } else if self.menu.controls && fire {
+                // up/down scroll the Controls page (the draw clamps to the last full page)
+                if dir & DU != 0 {
+                    self.menu.controls_top = self.menu.controls_top.saturating_sub(1);
+                } else if dir & DD != 0 {
+                    self.menu.controls_top += 1;
+                }
+            }
+            return true;
+        }
+        let rows = TABS[self.menu.tab].1;
         if edge & (BB | START) != 0 {
             self.close_menu();
             return true;
@@ -1236,13 +1248,24 @@ impl Lab {
         self.enc.text_ex(x0 + w, y0 + 8.0, ROLE_LABEL, mu, ALIGN_RIGHT, 0.0, who.as_str());
         let by = y0 + 34.0;
         if self.menu.controls {
-            // the Controls page: the CONTROLS table, buttons left, action right
-            self.panel(x0, by, w, h - 34.0);
+            // the Controls page: the CONTROLS table, buttons left, action right; the rows that fit the panel,
+            // scrolled with up/down, with a "more" hint at each clipped end
+            let ph = h - 34.0;
+            self.panel(x0, by, w, ph);
             self.enc.text(x0 + 16.0, by + 12.0, ROLE_TITLE, tx, "Controls");
-            for (i, (k, what)) in CONTROLS.iter().enumerate() {
-                let ry = by + 40.0 + i as f32 * 17.0;
+            let vis = (((ph - 40.0 - 24.0) / 17.0) as usize).max(1);
+            let top = self.menu.controls_top.min(CONTROLS.len().saturating_sub(vis));
+            self.menu.controls_top = top;
+            for (i, (k, what)) in CONTROLS.iter().enumerate().skip(top).take(vis) {
+                let ry = by + 40.0 + (i - top) as f32 * 17.0;
                 self.enc.text(x0 + 16.0, ry, ROLE_VALUE, tx, k);
                 self.enc.text(x0 + 230.0, ry, ROLE_BODY, mu, what);
+            }
+            if top > 0 {
+                self.enc.text_ex(x0 + w * 0.5, by + 14.0, ROLE_LABEL, mu, ALIGN_CENTER, 0.0, "Up: more");
+            }
+            if top + vis < CONTROLS.len() {
+                self.enc.text_ex(x0 + w * 0.5, by + ph - 20.0, ROLE_LABEL, mu, ALIGN_CENTER, 0.0, "Down: more");
             }
             self.enc.text_ex(x0 + w - 16.0, by + 14.0, ROLE_LABEL, mu, ALIGN_RIGHT, 0.0, "B close");
             return;

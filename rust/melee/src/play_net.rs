@@ -1183,6 +1183,8 @@ impl NetDriver {
                 exe_hash: build_hash(),
                 scene_extra: if host { rules.encode() } else { String::new() },
                 caps: if early_on { melee_net::early::CAP_EARLY } else { 0 },
+                // gw_Netplay: this peer's fighter-controls word for its fighter
+                controls: melee_engine::fighter_controls::Get(0, ck as i32),
                 ..RoomSettings::default()
             },
             env,
@@ -1197,6 +1199,8 @@ impl NetDriver {
             (b.scene.clone(), b.seed, b.s.delay)
         };
         let scene = parse_scene(&scene_str).ok_or_else(|| format!("netplay: the agreed scene does not parse: {scene_str}"))?;
+        // both peers freeze the same words: player 1 the host's, player 2 the guest's (the room's agreed `J` pair)
+        melee_engine::fighter_controls::set_session(melee_engine::fighter_controls::Session::Netplay(room.sh.borrow().controls));
         log(&format!("netplay {tag}: match agreed after {:.2}s: \"{scene_str}\" (seed {seed}, delay {adelay}, rollback window {maxb})", t0.elapsed().as_secs_f32()));
         let host_rules = HostRules::from_scene(&scene).unwrap_or_default();
         if !host {

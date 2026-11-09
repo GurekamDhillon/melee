@@ -810,6 +810,11 @@ pub(crate) fn install_replay(mut pl: melee_data::player::Player) {
         melee_world::tu::grlast::ext::SLIPPI_CODES = Some(|| unsafe { CODES });
         melee_world::tu::grpstadium::ext::hook::Slippi_FrozenStadium = Some(|| unsafe { FROZEN });
         melee_runtime::tu::mex_data::SLIPPI_REPLAY_VERSION = Some(ver);
+        // an offline replay plays each controller's recorded fighter-controls word, its samples already mapped
+        // (gw_FighterControls_MatchBegin's rp.controls, gw_Replay_ControlsRaw)
+        if !pl.live {
+            melee_engine::fighter_controls::set_session(melee_engine::fighter_controls::Session::Replay(pl.r.controls));
+        }
         REPLAY = Some(pl);
         let r = || REPLAY.as_mut().unwrap();
         h::Replay_Active = Some(|| 1);

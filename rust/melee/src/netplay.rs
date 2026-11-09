@@ -156,6 +156,8 @@ fn netplay_with<G: NetGame + 'static>(args: &[String]) -> std::process::ExitCode
         name: arg(args, "--name").unwrap_or_default(),
         exe_hash: u64::from_str_radix(arg(args, "--exe-hash").as_deref().unwrap_or("0"), 16).unwrap_or(0),
         seed: arg(args, "--seed").and_then(|s| s.parse().ok()),
+        // gw_Netplay: this peer's fighter-controls word for its fighter (np.controls[who] = gw_FighterControls_Get(0, ck))
+        controls: melee_engine::fighter_controls::Get(0, ck as i32),
         ..RoomSettings::default()
     };
     let mut room = match Room::begin(settings, Box::new(NativeEnv), inner, tp, rdv, room_code, random, host_port) {
@@ -203,6 +205,8 @@ fn netplay_with<G: NetGame + 'static>(args: &[String]) -> std::process::ExitCode
         (b.scene.clone(), b.seed, b.s.delay)
     };
     eprintln!("melee: {tag}: match agreed after {:.2}s - \"{scene_str}\" (seed {agreed_seed}, delay {agreed_delay})", t0.elapsed().as_secs_f32());
+    // both peers freeze the same words: player 1 the host's, player 2 the guest's (the room's agreed `J` pair)
+    melee_engine::fighter_controls::set_session(melee_engine::fighter_controls::Session::Netplay(room.sh.borrow().controls));
     let Some(ps) = parse_scene(&scene_str) else {
         eprintln!("melee: {tag}: the agreed scene does not parse");
         return ExitCode::FAILURE;

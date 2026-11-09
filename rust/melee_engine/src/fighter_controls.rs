@@ -21,13 +21,35 @@ const NONE: Frozen = Frozen { active: false, ck: -1, choice: 0, map: [0; BUTTONS
 /// fc_match: one frozen mapping per port.
 static mut MATCH: [Frozen; 4] = [NONE; 4];
 
-/// The choice a port plays a match with (gw_FighterControls_MatchBegin's sources): a replay's recorded word, a netplay
-/// peer's announced word, else the player's saved preference. The `melee` crate installs the replay / netplay part;
-/// None from it (or no hook) means the preference.
-pub static mut MATCH_CHOICE: Option<fn(player: i32, port: i32, ck: i32) -> Option<u32>> = None;
-/// gw_Replay_ControlsRaw: false while an offline replay plays (its samples are already mapped); the `melee` crate's
-/// replay player sets it. Default: raw samples, mapped once here.
-pub static mut CONTROLS_RAW: fn() -> bool = || true;
+/// Where a match's choices come from (gw_FighterControls_MatchBegin): a netplay session's agreed words (the room's
+/// `J` exchange: host's for player 1, guest's for player 2, gw_Netplay_FighterControls), an offline replay's recorded
+/// words per controller (the GDC1 block, rp.controls), else each player's saved preference.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Session {
+    Local,
+    Netplay([u32; 2]),
+    Replay([u32; 4]),
+}
+static mut SESSION: Session = Session::Local;
+
+/// Set by the `melee` crate when a netplay match is agreed or a replay starts playing; Local when it ends.
+pub fn set_session(s: Session) {
+    unsafe { SESSION = s };
+}
+
+pub fn session() -> Session {
+    unsafe { SESSION }
+}
+
+/// gw_Netplay_FighterControls(player): the agreed word of netplay player 0 / 1, 0 for the others
+fn netplay_word(w: &[u32; 2], player: i32) -> u32 {
+    if (0..2).contains(&player) { w[player as usize] } else { 0 }
+}
+
+/// gw_Replay_ControlsRaw: `!rp.active || rp.live`. An offline replay's samples were mapped when it was recorded.
+pub fn controls_raw() -> bool {
+    !matches!(session(), Session::Replay(_))
+}
 
 /// fc_ck_valid
 fn ck_valid(ck: i32) -> bool {
@@ -177,9 +199,13 @@ pub unsafe fn MatchBegin(d: *mut melee_types::StartMeleeData) {
         if pl.slot_type != 0 || port >= 4 {
             continue;
         }
-        let choice = MATCH_CHOICE.and_then(|f| f(p as i32, port, ck)).unwrap_or_else(|| Get(port, ck));
+        let (choice, how) = match session() {
+            Session::Replay(w) => (w[port as usize], "replay"),
+            Session::Netplay(w) => (netplay_word(&w, p as i32), "online"),
+            Session::Local => (Get(port, ck), "offline"),
+        };
         MatchSet(port, ck, choice);
-        eprintln!("fighter controls: frozen P{} controller {} ck {ck} choice 0x{:04x}", p + 1, port + 1, MatchGet(port));
+        eprintln!("fighter controls: frozen P{} controller {} ck {ck} choice 0x{:04x} ({how})", p + 1, port + 1, MatchGet(port));
     }
 }
 
@@ -187,7 +213,7 @@ pub unsafe fn MatchBegin(d: *mut melee_types::StartMeleeData) {
 pub fn install() {
     unsafe {
         melee_runtime::tu::controller::ext::hook::FighterControls_Apply = Some(Apply);
-        melee_runtime::tu::controller::ext::hook::Replay_ControlsRaw = Some(|| CONTROLS_RAW() as i32);
+        melee_runtime::tu::controller::ext::hook::Replay_ControlsRaw = Some(|| controls_raw() as i32);
         melee_fighter::platform::hook::FighterControls_TapJumpOff = Some(TapJumpOff);
         melee_modes::tu::gmvs::ext::hook::FighterControls_MatchBegin = Some(|d| MatchBegin(d as *mut melee_types::StartMeleeData));
     }
@@ -255,10 +281,15 @@ mod tests {
         d.players[3].sub_color = 4; // no such controller
         unsafe { MatchBegin(&mut d) };
         assert_eq!((MatchCK(0), MatchGet(0), MatchCK(2), MatchGet(2), MatchCK(3), MatchCK(1)), (ck, 4, 8, 0, -1, -1));
-        unsafe { MATCH_CHOICE = Some(|_, port, _| (port == 2).then_some(fc::TAP_OFF)) };
+        // an offline replay: each controller's recorded word, and its samples are not mapped again
+        set_session(Session::Replay([0, 0, fc::TAP_OFF, 0]));
         unsafe { MatchBegin(&mut d) };
-        assert_eq!((TapJumpOff(2), MatchGet(0)), (1, 4), "a replay / netplay word for P2, the preference for P1");
-        unsafe { MATCH_CHOICE = None };
+        assert_eq!((TapJumpOff(2), MatchGet(0), controls_raw()), (1, 0, false));
+        // netplay: player 1 the host's word, player 2 the guest's (by player, not controller), the rest 0
+        set_session(Session::Netplay([1 | 4, fc::TAP_OFF]));
+        unsafe { MatchBegin(&mut d) };
+        assert_eq!((MatchGet(0), MatchGet(2), controls_raw()), (1 | 4, fc::TAP_OFF, true));
+        set_session(Session::Local);
         MatchClear();
         PREFS.lock().unwrap().clear();
         gh::TestRestore();

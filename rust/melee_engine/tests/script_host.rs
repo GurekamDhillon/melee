@@ -179,3 +179,79 @@ fn camera_script_and_match_queries() {
     assert_eq!(g.geno_script_original(script), 0, "no Geno overlay on a vanilla fighter");
     assert_eq!(g.geno_lab_reload(), 0, "no Geno fighter to re-apply");
 }
+
+/// The LAB fly mode, CPU skills, stage bounds and the release / peek / resimulation calls, on a VS match (not the LAB):
+/// each forwarder answers what the game function answers, and the C's clamps and refusals hold.
+#[test]
+fn fly_cpu_bounds_and_releases() {
+    use melee_modes::tu::geno_lab_mode as lab;
+    let Some((_g, _e)) = boot(120) else { return };
+    let mut g = EngineGame;
+    // fly: slot 9 has no fighter; speed clamps to [0.05, 200] (GenoFly_SetSpeed); solid round-trips
+    assert_eq!((g.geno_fly_get(0), g.geno_fly_get(9)), unsafe { (lab::GenoFly_Get(0), lab::GenoFly_Get(9)) });
+    assert_eq!((g.geno_fly_get(9), g.geno_fly_set(9, 1)), (-1, -1));
+    g.geno_fly_set_speed(500.0f32.to_bits() as i32);
+    assert_eq!(g.geno_fly_speed(), 200.0);
+    g.geno_fly_set_speed(0.01f32.to_bits() as i32);
+    assert_eq!(g.geno_fly_speed(), 0.05);
+    g.geno_fly_set_speed(1.5f32.to_bits() as i32);
+    assert_eq!(g.geno_fly_speed(), unsafe { lab::GenoFly_Speed() });
+    for v in [true, false] {
+        g.geno_fly_set_solid(v);
+        assert_eq!(g.geno_fly_solid(), v);
+    }
+    assert_eq!((g.geno_fly_holding(0), g.geno_fly_hold_hits(0), g.geno_fly_hold_hits(9)), (false, 0, 0));
+    for f in 0..14 {
+        assert_eq!(g.geno_fly_state(0, f), unsafe { lab::GenoFly_State(0, f) }, "fly state {f}");
+    }
+    assert_eq!(g.geno_fly_teleport(9, 0, 0), unsafe { lab::GenoFly_Teleport(9, 0, 0) });
+    assert_eq!(g.geno_fly_target(9, 0, 0), unsafe { lab::GenoFly_Target(9, 0, 0) });
+    assert_eq!(g.geno_fly_attack_config(9, 1, 5, 4.0f32.to_bits() as i32, 2, 0, 45), unsafe {
+        lab::GenoFly_AttackConfig(9, 1, 5, 4.0f32.to_bits() as i32, 2, 0, 45)
+    });
+    assert_eq!(g.geno_fly_hold_hitbox(9, true, 0, 0), unsafe { lab::GenoFly_HoldHitbox(9, 1, 0, 0) });
+    g.geno_fly_clear(0);
+    assert_eq!(g.geno_fly_state(0, 0), 0, "cleared: not attacking");
+    // not the LAB: leaving is refused and changes nothing
+    assert!(!g.geno_lab_mode_active());
+    assert!(!g.geno_lab_leave(0));
+
+    // CPU skills on human fighters: nothing enabled; the controller has no CPU fighter (GCC_G_ACTIVE -1)
+    for f in 0..18 {
+        assert_eq!(g.cpu_assist_state(0, 1, f), unsafe { melee_fighter::tu::fighter::ScriptGame_CpuAssistState(0, 1, f) }, "assist {f}");
+        assert_eq!(g.cpu_technical_state(0, 1, f), unsafe { melee_fighter::tu::fighter::ScriptGame_CpuTechnicalState(0, 1, f) }, "technical {f}");
+    }
+    assert_eq!(g.cpu_assist_state(0, 1, 0), 0, "assist off");
+    assert_eq!(g.cpu_assist_clear_slot(0, 1), unsafe { melee_fighter::tu::fighter::ScriptGame_CpuAssistClearSlot(0, 1) });
+    assert_eq!(g.cpu_ctl_read(0, 0, 100, 0), -1, "no CPU fighter in slot 0");
+    assert_eq!(g.cpu_ctl_read(0, 0, 100, 0), unsafe { sg::ScriptGame_CpuCtl(0, 0, 100, 0) } as i32);
+
+    // stage bounds as float bits; FD has a main floor (field 12)
+    for f in 0..14 {
+        assert_eq!(g.stage_bounds_i(f), unsafe { sg::ScriptGame_StageBounds(f) } as i32, "bounds {f}");
+    }
+    assert_eq!(g.stage_bounds_i(12), 1);
+    assert!(f32::from_bits(g.stage_bounds_i(0) as u32) != 0.0, "a blast zone");
+
+    // a script owner that holds nothing: the releases leave the match as it is
+    let before = (g.fighter_i(0, SI_ACTION), g.fighter_i(1, SI_ACTION), g.echo_next_handle());
+    g.caps_release(1);
+    g.owner_release(1);
+    g.arena_release(1);
+    g.mods_game_event(0, 0, 0, 0, 0);
+    assert_eq!((g.fighter_i(0, SI_ACTION), g.fighter_i(1, SI_ACTION), g.echo_next_handle()), before);
+
+    // lab_peek: the bytes of game memory as stored (big-endian); outside it, None
+    let script = g.lab_script(0, -1).expect("a script");
+    let b = g.mem1_read(script, 8).expect("game memory");
+    assert_eq!(u32::from_be_bytes(b[0..4].try_into().unwrap()), g.guest_word(script));
+    assert_eq!(u32::from_be_bytes(b[4..8].try_into().unwrap()), g.guest_word(script + 4));
+    assert_eq!((g.mem1_read(0x10, 4), g.mem1_read(u32::MAX - 2, 4)), (None, None));
+
+    // the rollback's flag, as the play loop sets it
+    assert!(!g.resimulating());
+    melee_engine::script_host::set_resimulating(true);
+    assert!(g.resimulating());
+    melee_engine::script_host::set_resimulating(false);
+    assert!(!g.resimulating());
+}

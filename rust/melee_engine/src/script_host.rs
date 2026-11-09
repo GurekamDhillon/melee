@@ -4,6 +4,8 @@
 #![allow(clippy::missing_safety_doc)]
 
 use melee_modes::tu::script_game as sg;
+use melee_fighter::tu::fighter as ft;
+use melee_modes::tu::geno_lab_mode as lab;
 use melee_world::tu::camera as cam;
 use melee_script::game::ScriptGame;
 
@@ -237,9 +239,13 @@ impl ScriptGame for EngineGame {
     fn arena_group_set(&mut self, owner: i32, id: i32, enabled: bool) {
         unsafe { sg::ScriptGame_ArenaGroupSet(owner as _, id as _, enabled as _) };
     }
-    /// `ScriptGame_ArenaRelease`
+    /// `ScriptGame_ArenaRelease`, then `ScriptGame_CameraParamsRelease`: the unload's `if (gs.match_active)` block, the
+    /// one place the Lua half calls this from (outside a match the camera fields the params restore are not live)
     fn arena_release(&mut self, owner: i32) {
-        unsafe { sg::ScriptGame_ArenaRelease(owner as _) };
+        unsafe {
+            sg::ScriptGame_ArenaRelease(owner as _);
+            sg::ScriptGame_CameraParamsRelease(owner as _);
+        }
     }
     /// `ScriptGame_MapBounds`
     fn map_bounds(&mut self, which: i32, l: i32, r: i32, b: i32, t: i32) {
@@ -620,6 +626,147 @@ impl ScriptGame for EngineGame {
         unsafe { melee_modes::tu::geno_game::GenoGame_LabReload() }
     }
 
+    // ---- the LAB's fly mode and match control (pc/geno/geno_lab_mode.c, melee_modes::tu::geno_lab_mode)
+    /// `gw_GenoFly_Get`: the fly mode, -1 without the fighter
+    fn geno_fly_get(&self, slot: i32) -> i32 {
+        unsafe { lab::GenoFly_Get(slot) }
+    }
+    /// `gw_GenoFly_Set`
+    fn geno_fly_set(&mut self, slot: i32, mode: i32) -> i32 {
+        unsafe { lab::GenoFly_Set(slot, mode) }
+    }
+    /// `gw_GenoFly_Teleport(slot, x, y)`, x and y as float bits
+    fn geno_fly_teleport(&mut self, slot: i32, x_bits: i32, y_bits: i32) -> i32 {
+        unsafe { lab::GenoFly_Teleport(slot, x_bits, y_bits) }
+    }
+    /// `gw_GenoFly_SetSpeed(bits)`
+    fn geno_fly_set_speed(&mut self, bits: i32) {
+        unsafe { lab::GenoFly_SetSpeed(bits) }
+    }
+    /// `gw_GenoFly_Speed`
+    fn geno_fly_speed(&self) -> f32 {
+        unsafe { lab::GenoFly_Speed() }
+    }
+    /// `gw_GenoFly_SetSolid`
+    fn geno_fly_set_solid(&mut self, solid: bool) {
+        unsafe { lab::GenoFly_SetSolid(solid as i32) }
+    }
+    /// `gw_GenoFly_Solid`
+    fn geno_fly_solid(&self) -> bool {
+        unsafe { lab::GenoFly_Solid() != 0 }
+    }
+    /// `gw_GenoFly_HoldHitbox`
+    fn geno_fly_hold_hitbox(&mut self, slot: i32, on: bool, action: i32, frame: i32) -> i32 {
+        unsafe { lab::GenoFly_HoldHitbox(slot, on as i32, action, frame) }
+    }
+    /// `gw_GenoFly_Holding`
+    fn geno_fly_holding(&self, slot: i32) -> bool {
+        unsafe { lab::GenoFly_Holding(slot) != 0 }
+    }
+    /// `gw_GenoFly_HoldHits`
+    fn geno_fly_hold_hits(&self, slot: i32) -> i32 {
+        unsafe { lab::GenoFly_HoldHits(slot) }
+    }
+    /// `gw_GenoFly_Target(slot, x, y)`, float bits
+    fn geno_fly_target(&mut self, slot: i32, x_bits: i32, y_bits: i32) -> i32 {
+        unsafe { lab::GenoFly_Target(slot, x_bits, y_bits) }
+    }
+    /// `gw_GenoFly_AttackConfig` (gw_script_fly_attack.inc: flags 1 on, 2 every frame; radius as float bits)
+    fn geno_fly_attack_config(&mut self, slot: i32, flags: i32, damage: i32, radius_bits: i32, active_gap: i32, kb_kbg: i32, angle: i32) -> i32 {
+        unsafe { lab::GenoFly_AttackConfig(slot, flags, damage, radius_bits, active_gap, kb_kbg, angle) }
+    }
+    /// `gw_GenoFly_State`
+    fn geno_fly_state(&self, slot: i32, field: i32) -> i32 {
+        unsafe { lab::GenoFly_State(slot, field) }
+    }
+    /// `gw_GenoFly_Clear`
+    fn geno_fly_clear(&mut self, slot: i32) {
+        unsafe { lab::GenoFly_Clear(slot) }
+    }
+    /// `gw_GenoLab_ModeActive`
+    fn geno_lab_mode_active(&self) -> bool {
+        unsafe { lab::GenoLab_ModeActive() != 0 }
+    }
+    /// `gw_GenoLab_Leave(where)`: 0 css, 1 sss, 2 menu, 3 restart
+    fn geno_lab_leave(&mut self, r#where: i32) -> bool {
+        unsafe { lab::GenoLab_Leave(r#where) != 0 }
+    }
+
+    // ---- CPU skills (ft/technical_ai.inc, ft/cpu_assist.inc: melee_fighter::tu::fighter) and the CPU controller
+    /// `gw_ScriptGame_CpuTechnicalState`
+    fn cpu_technical_state(&self, slot: i32, owner: i32, field: i32) -> i32 {
+        unsafe { ft::ScriptGame_CpuTechnicalState(slot, owner, field) }
+    }
+    /// `gw_ScriptGame_CpuTechnical`
+    fn cpu_technical(&mut self, slot: i32, owner: i32, skill: i32, seed: i32) -> i32 {
+        unsafe { ft::ScriptGame_CpuTechnical(slot, owner, skill, seed) }
+    }
+    /// `gw_ScriptGame_CpuAssistState`
+    fn cpu_assist_state(&self, slot: i32, owner: i32, field: i32) -> i32 {
+        unsafe { ft::ScriptGame_CpuAssistState(slot, owner, field) }
+    }
+    /// `gw_ScriptGame_CpuAssistClearSlot`
+    fn cpu_assist_clear_slot(&mut self, slot: i32, owner: i32) -> i32 {
+        unsafe { ft::ScriptGame_CpuAssistClearSlot(slot, owner) }
+    }
+    /// `gw_ScriptGame_CpuAssist`
+    #[allow(clippy::too_many_arguments)]
+    fn cpu_assist(&mut self, slot: i32, owner: i32, lc: i32, ps: i32, tech: i32, tdir: i32, wd: i32, ff: i32, seed: i32) -> i32 {
+        unsafe { ft::ScriptGame_CpuAssist(slot, owner, lc, ps, tech, tdir, wd, ff, seed) }
+    }
+    /// gw_script_cpu_ctl.inc's getters: the same `gw_ScriptGame_CpuCtl` with a GCC_G_* op
+    fn cpu_ctl_read(&self, slot: i32, sub: i32, op: i32, a: i32) -> i32 {
+        unsafe { sg::ScriptGame_CpuCtl(slot as _, sub as _, op as _, a as _) as _ }
+    }
+
+    // ---- the rest of the game side gw_script.c reaches
+    /// `gw_ScriptGame_StageBounds` (gameworld/script_bounds.inc)
+    fn stage_bounds_i(&self, field: i32) -> i32 {
+        unsafe { sg::ScriptGame_StageBounds(field as _) as _ }
+    }
+    /// `gw_ScriptMods_GameEvent` (gameworld/script_mods.inc)
+    fn mods_game_event(&mut self, what: i32, a: i32, b: i32, c: i32, d: i32) {
+        unsafe { sg::ScriptMods_GameEvent(what as _, a as _, b as _, c as _, d as _) }
+    }
+    /// gw_script_fighter_caps.inc `gs_caps_release(owner)`, in its order. (The unload calls it alone; netbuild's
+    /// `gw_ScriptGame_ArmorRelease` after it is that path's own call.)
+    fn caps_release(&mut self, owner: i32) {
+        unsafe {
+            sg::ScriptGame_IntrWinRelease(owner as _);
+            sg::ScriptGame_CapsMovementRelease(owner as _);
+            sg::ScriptGame_CapsEffectsRelease(owner as _);
+            sg::ScriptGame_CapsStatusRelease(owner as _);
+            sg::ScriptGame_CritRelease(owner as _);
+            sg::ScriptGame_ShockRelease(owner as _);
+        }
+    }
+    /// The game-side releases of gw_script.c's script unload, in its order (around gs_caps_release, which the Lua
+    /// half calls just before this): echoes, parts, CPU skills, fighter mods, then 1P templates, the bench, Geno items
+    /// (the camera params go with arena_release, in the match-only block). `ScriptGame_StageReleaseOwner` takes the script's stage token, not this owner: the Lua half
+    /// does not pass it (notes/geno.md).
+    fn owner_release(&mut self, owner: i32) {
+        unsafe {
+            sg::ScriptGame_EchoClear(owner as _);
+            sg::ScriptGame_PartsReset(owner as _);
+            ft::ScriptGame_CpuTechnicalClear(owner);
+            sg::ScriptGame_FighterModsRelease(owner as _);
+            sg::ScriptGame_OnePTemplatesRelease(owner as _);
+            sg::ScriptGame_FighterBenchRelease(owner as _);
+            melee_modes::tu::geno_game::Geno_ItemReleaseOwner(owner);
+        }
+    }
+    /// `gd.lab_peek`: n raw bytes of game memory at a guest address, as memory holds them (big-endian); None outside it.
+    /// The C bounds it to MEM1 (0x80000000 + gw_mem1_size); here game memory is the OS arena guest_ok checks.
+    fn mem1_read(&self, addr: u32, n: usize) -> Option<Vec<u8>> {
+        let len = u32::try_from(n).ok()?;
+        self.guest_ok(addr, len).then(|| unsafe { core::slice::from_raw_parts(addr as usize as *const u8, n) }.to_vec())
+    }
+    /// `gw_Snap_Resimulating` (gw_snap.c `sn.enabled && sn.cur_is_resim`): set by the play loop around a resimulated
+    /// frame ([`set_resimulating`])
+    fn resimulating(&self) -> bool {
+        RESIMULATING.load(core::sync::atomic::Ordering::Relaxed)
+    }
+
     // ---- the scripted camera (cm/camera.c's TARGET_PC Camera_Script* block, melee_world::tu::camera)
     /// `gw_Camera_ScriptGetBits`
     fn camera_script_get_bits(&self, field: i32) -> i32 {
@@ -748,6 +895,12 @@ impl ScriptGame for EngineGame {
 /// A C string the game side returned (NUL-terminated, static or per-call buffer), None for NULL.
 unsafe fn cstr(p: *const core::ffi::c_char) -> Option<String> {
     (!p.is_null()).then(|| unsafe { core::ffi::CStr::from_ptr(p) }.to_string_lossy().into_owned())
+}
+
+/// gw_snap.c's resimulation flag: the rollback loop sets it while it re-runs a frame (no hooks, no queued events).
+static RESIMULATING: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+pub fn set_resimulating(on: bool) {
+    RESIMULATING.store(on, core::sync::atomic::Ordering::Relaxed);
 }
 
 /// `gw_Geno_DefineName(ck, buf, cap)` into a `cap`-byte buffer, as gs_char_name reads it back; None when it answers 0.

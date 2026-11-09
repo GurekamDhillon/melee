@@ -28,6 +28,14 @@ use gd_ui_enc::*;
 use menu::*;
 use txt::Txt;
 
+// the lookahead (gd_lab_lookahead_*; melee_modhost::lab LOOK_*)
+pub const LOOK_AUTO: u32 = 1;
+pub const LOOK_LIVE: u32 = 2;
+const LOOK_HEAD: usize = 16;
+const LOOK_RUNS: usize = 9;
+const LOOK_RUN_I32: usize = 4;
+const LOOK_I32: usize = LOOK_HEAD + LOOK_RUNS * LOOK_RUN_I32;
+
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
     core::arch::wasm32::unreachable()
@@ -53,6 +61,8 @@ extern "C" {
     fn gd_lab_status(out: *mut i32) -> i32;
     fn gd_lab_applied(out: *mut u8, max: u32) -> i32;
     fn gd_lab_timed() -> i32;
+    fn gd_lab_lookahead_cfg(flags: u32, budget_us: u32) -> i32;
+    fn gd_lab_lookahead_result(out: *mut u8, len: u32) -> i32;
 }
 
 const FEATURE_LAB: u32 = 1 << 10;
@@ -195,6 +205,7 @@ struct Lab {
     meter: [[u8; CELLS]; 2],
     adv: i32,
     adv_shield: bool,
+    look: [u8; LOOK_I32 * 4],
     toasts: [Toast; 3],
     // P1 move tracking
     p1_action: i32,
@@ -286,6 +297,7 @@ static mut L: Lab = Lab {
     meter: [[0; CELLS]; 2],
     adv: 0,
     adv_shield: false,
+    look: [0; LOOK_I32 * 4],
     toasts: [Toast::new(); 3],
     p1_action: -1,
     p1_char: -1,
@@ -943,6 +955,9 @@ impl Lab {
         if s_dummy {
             self.dummy_panel(20.0, 70.0);
         }
+        if mo && self.vals[H_LOOK] != 0 {
+            self.look_readout(vw - 480.0, 20.0);
+        }
         if s_combo {
             self.combo_panel(20.0, if s_dummy { 300.0 } else { 70.0 });
         }
@@ -1114,6 +1129,48 @@ impl Lab {
         for i in 0..6 {
             let v = lab.mv_rows[i].v;
             self.row(x + 14.0, y + 31.0 + i as f32 * 20.0, 192.0, K[i], v.as_str());
+        }
+    }
+
+    /// The lookahead readout: the true advantage of the last exchange (simulated ahead) and, for a hit, the DI fan
+    /// (each direction on a numpad: KO red, survives in the cell colour, the advantage it leaves).
+    fn look_readout(&mut self, x: f32, y: f32) {
+        let n = unsafe { gd_lab_lookahead_result(self.look.as_mut_ptr(), (LOOK_I32 * 4) as u32) };
+        let lk = self.look;
+        let r = |i: usize| rd_i32(&lk, i * 4);
+        if n < (LOOK_HEAD * 4) as i32 || r(1) == 0 {
+            return;
+        }
+        let (state, kind, anchor, adv, runs) = (r(1), r(2), r(3), r(7), r(9));
+        self.panel(x, y, 220.0, 112.0);
+        let (mu, ac) = (self.t(T_MUTED), self.t(T_ACCENT));
+        let mut t = Txt::new();
+        t.s("Lookahead · f").i(anchor);
+        if state != 3 {
+            t.s(if state == 1 { " · freeze to run" } else { " · running" });
+        }
+        self.enc.text(x + 14.0, y + 12.0, ROLE_LABEL, mu, t.as_str());
+        let mut v = Txt::new();
+        if adv == i32::MIN {
+            v.s("-");
+        } else {
+            v.int(adv, true).s(if kind == 1 { " on shield" } else { " on hit" });
+        }
+        self.row(x + 14.0, y + 31.0, 192.0, "True advantage", v.as_str());
+        if kind == 0 {
+            // the fan: numpad layout, 3 x 3 cells of 20, the advantage per direction under the KO marks
+            for i in 0..(runs.max(0) as usize).min(LOOK_RUNS) {
+                let b = LOOK_HEAD + i * LOOK_RUN_I32;
+                let (tag, out, df, af) = (r(b), r(b + 1), r(b + 2), r(b + 3));
+                let (col, row) = (((tag - 1) % 3) as f32, (2 - (tag - 1) / 3) as f32);
+                let (cx, cy) = (x + 14.0 + col * 22.0, y + 52.0 + row * 18.0);
+                let c = if out == 2 { 0xE0564EE0 } else if out == 1 { self.t(T_CELL) } else { mu };
+                self.enc.rect(cx, cy, 20.0, 16.0, c);
+                let mut s = Txt::new();
+                if out == 2 { s.s("KO"); } else if out == 1 && af >= 0 { s.int(df - af, true); } else { s.s("?"); }
+                self.enc.text_ex(cx + 10.0, cy + 2.0, R_NUM, ac, ALIGN_CENTER, 0.0, s.as_str());
+            }
+            self.enc.text(x + 86.0, y + 56.0, ROLE_LABEL, mu, "DI fan (P-adv)");
         }
     }
 

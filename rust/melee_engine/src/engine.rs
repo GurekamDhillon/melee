@@ -655,7 +655,7 @@ impl Engine {
             let el = t0.elapsed();
             let pn = crate::archive::PARSE_NS.swap(0, core::sync::atomic::Ordering::Relaxed);
             let n = crate::archive::PARSE_N.swap(0, core::sync::atomic::Ordering::Relaxed);
-            if el.as_secs_f64() * 1e3 >= ms {
+            if el.as_secs_f64() * 1e3 >= ms && !speculative() {
                 eprintln!("engine: slow tick {} : {:.1} ms, {n} file parse(s) {:.1} ms", self.frames, el.as_secs_f64() * 1e3, pn as f64 / 1e6);
             }
         }
@@ -672,6 +672,20 @@ impl Engine {
         }
         more
     }
+}
+
+/// Lab lookahead (melee/src/lab.rs): set while speculative ticks run (save, tick, load). Host-side observers that the
+/// snapshot does not restore (define audio, logs) check it and stay silent. It is a static, so a snapshot load restores it:
+/// the lab sets it after every load it does inside a lookahead and clears it after the final one.
+static SPECULATIVE: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
+/// True while a lab lookahead tick runs.
+pub fn speculative() -> bool {
+    SPECULATIVE.load(core::sync::atomic::Ordering::Relaxed)
+}
+
+pub fn set_speculative(on: bool) {
+    SPECULATIVE.store(on, core::sync::atomic::Ordering::Relaxed);
 }
 
 /// `MELEE_TICK_SPIKE=<ms>`: log each engine tick at least that long, with its file-parse time.

@@ -48,6 +48,39 @@ pub const OP_REACTION_WEIGHTS: u8 = 19;
 
 // ---- B1..B3 constants (docs/specs/gd-ui-lab-v1.h)
 pub const SLOTS: usize = 16;
+
+// ---- lookahead (docs/rust-port/notes/lab-theorycraft.md 3b / 4c): save, tick under the speculative flag until each
+// fighter can act (cap LOOK_CAP frames), load. Local only: a request is never a command, the result never touches the sim.
+/// `gd_lab_lookahead(kind, port)`: `port` is the defender (the one hit / shielding); the attacker is the other of P1 / P2.
+/// Hit: the no-DI run (frame advantage on hit) and the 8-direction DI fan (KO / survive and advantage per direction).
+pub const LOOK_HIT: u32 = 0;
+/// Shield: the defender holds shield, the attacker is neutral (frame advantage on shield).
+pub const LOOK_SHIELD: u32 = 1;
+/// Both neutral from now (frame advantage of the current exchange, whatever it is).
+pub const LOOK_NEUTRAL: u32 = 2;
+/// RNG sweep: the neutral run across LOOK_RUNS game seeds (the outcome spread of the random draws from here).
+pub const LOOK_RNG: u32 = 3;
+/// `gd_lab_lookahead_cfg` flags: run automatically on hit / shield events; run while playing (else only when frozen).
+pub const LOOK_AUTO: u32 = 1;
+pub const LOOK_LIVE: u32 = 2;
+pub const LOOK_CAP: i32 = 300;
+pub const LOOK_RUNS: usize = 9;
+/// Result header (i32): version, state (LS_*), kind, anchor match frame, generation, attacker, defender, advantage
+/// (attacker relative to defender, from the no-DI / neutral / shield run; i32::MIN when not known), runs, runs done,
+/// ticks, cost us, slices, longest slice us, snapshot-verify mismatches, 0.
+pub const LOOK_HEAD: usize = 16;
+/// Per run (i32): tag (DI as a numpad direction 1-9, 5 = none; RNG: the seed index), outcome (LO_*), defender frame
+/// (first actionable, or the KO frame; frames after the anchor), attacker frame (first actionable, -1 none).
+pub const LOOK_RUN_I32: usize = 4;
+pub const LOOK_I32: usize = LOOK_HEAD + LOOK_RUNS * LOOK_RUN_I32;
+pub const LS_NONE: i32 = 0;
+pub const LS_PENDING: i32 = 1;
+pub const LS_RUNNING: i32 = 2;
+pub const LS_DONE: i32 = 3;
+pub const LO_NOT_RUN: i32 = 0;
+pub const LO_ACTS: i32 = 1;
+pub const LO_KO: i32 = 2;
+pub const LO_CAP: i32 = 3;
 pub const RING_MAX: u32 = 600;
 pub const PLAY_LOOP: u32 = 1;
 pub const PLAY_MIRROR: u32 = 2;
@@ -291,6 +324,13 @@ pub struct LabShared {
     pub overlay: [u32; 4],
     pub style: [u32; OV_STYLE_KINDS],
     pub log: Vec<String>,
+    // ---- lookahead (local, presentation-side: never a command)
+    pub look_cfg: u32,
+    pub look_budget_us: u32,
+    /// A requested lookahead (kind, defender port), taken by the play flow's lab run.
+    pub look_req: Option<(u32, u32)>,
+    /// The latest result (LOOK_HEAD + runs).
+    pub look: [i32; LOOK_I32],
 }
 
 impl Default for LabShared {
@@ -328,6 +368,10 @@ impl Default for LabShared {
             overlay: [0; 4],
             style: DEFAULT_STYLE,
             log: Vec::new(),
+            look_cfg: LOOK_AUTO,
+            look_budget_us: 4000,
+            look_req: None,
+            look: [0; LOOK_I32],
         }
     }
 }
@@ -391,6 +435,9 @@ impl LabShared {
             self.outbox.clear();
             self.overlay = [0; 4];
             self.issuer = 0;
+            // a lookahead belongs to the session it was asked in
+            self.look_req = None;
+            self.look = [0; LOOK_I32];
         }
     }
 
@@ -685,6 +732,32 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
             n
         };
         if write(&mut c, out, &b[..n * 20]) { n as i32 } else { GD_EINVAL }
+    });
+    // lookahead (local only: nothing goes to the command stream, so it is the same online and offline)
+    f!("gd_lab_lookahead", |c: Caller<'_, PresData>, kind: u32, port: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        if kind > LOOK_RNG || port > 1 { return GD_EINVAL }
+        let mut s = l.borrow_mut();
+        if !s.active { return GD_ESTATE }
+        s.look_req = Some((kind, port));
+        GD_OK
+    });
+    f!("gd_lab_lookahead_cfg", |c: Caller<'_, PresData>, flags: u32, budget_us: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let mut s = l.borrow_mut();
+        s.look_cfg = flags & (LOOK_AUTO | LOOK_LIVE);
+        s.look_budget_us = budget_us.clamp(500, 16_000);
+        GD_OK
+    });
+    // the latest lookahead result: LOOK_I32 little-endian i32 (header, then LOOK_RUNS runs); bytes written
+    f!("gd_lab_lookahead_result", |mut c: Caller<'_, PresData>, out: u32, len: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let mut b = [0u8; LOOK_I32 * 4];
+        for (i, v) in l.borrow().look.iter().enumerate() {
+            b[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
+        }
+        let n = (len as usize).min(b.len());
+        if write(&mut c, out, &b[..n]) { n as i32 } else { GD_EINVAL }
     });
     // status: i32 x 10 = active, match frame, paused, replaying, ring frames, ring length, command delay, recording mask,
     // issuer (0 offline / host, 1 guest), apply frame of a command issued now

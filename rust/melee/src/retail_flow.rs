@@ -567,7 +567,7 @@ impl RetailPlay {
         if let Some(r) = self.rec.as_mut() {
             r.1.ticks.push((four, hash));
         }
-        if let Some(f) = lab.g.take_frame() {
+        if let Some(f) = lab.take_frame() {
             let mut f = f;
             let gfx = self.lab_gfx.get_or_insert_with(|| (crate::ui::Ui::new(), melee_gx::shim::GxShim::new()));
             gfx.0.clear();

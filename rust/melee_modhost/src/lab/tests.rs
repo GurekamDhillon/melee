@@ -74,3 +74,14 @@ fn event_history_is_bounded() {
     assert!(s.history.len() as i32 <= EVENT_HISTORY + 1);
     assert_eq!(s.history.front().unwrap().frame, 1999 - EVENT_HISTORY + 0);
 }
+
+#[test]
+fn lookahead_state_is_dropped_with_the_session() {
+    let mut s = LabShared::default();
+    assert_eq!(s.look_cfg, LOOK_AUTO, "auto on, live off by default");
+    s.look_req = Some((LOOK_HIT, 1));
+    s.look[1] = LS_DONE;
+    s.set_session(Session::Netplay);
+    assert!(s.look_req.is_none() && s.look[1] == LS_NONE);
+    assert_eq!(LOOK_I32, LOOK_HEAD + LOOK_RUNS * LOOK_RUN_I32);
+}

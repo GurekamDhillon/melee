@@ -224,3 +224,6 @@ docs/rust-port/shots/play_*.png
 /docs/rust-port/golden/slp
 /rust/melee_data/tests/data/gdlp
 /rust/melee_data/tests/data/replay_real_oracle.txt
+
+# Brawl data the owner extracts from their own disc (notes/petey-extract.md): never commit
+/local/brawl/

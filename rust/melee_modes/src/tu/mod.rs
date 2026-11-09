@@ -182,6 +182,7 @@ pub mod geno_game;
 pub mod mex_tests;
 pub mod geno_tests;
 pub mod script_game;
+pub mod stage_hop;
 pub mod textlib;
 pub mod ifstock;
 pub mod soundtest;

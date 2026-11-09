@@ -176,6 +176,10 @@ pub struct HostData {
     set_return: Option<Val>,
     /// Queued `gd_fighter_request_action_state` (handle, state), applied after the chain.
     requests: Vec<(u32, i32)>,
+    /// Queued `gd_stage_switch` ground kind, applied after the `frame.run_procs` post chain (outside the procs).
+    stage_switch: Option<i32>,
+    /// The result of the last applied switch (`gd_stage_switch_result`): 0 done, < 0 refused, 1 pending.
+    stage_switch_rc: i32,
     origs: Vec<OrigFrame>,
     depth: BTreeMap<u32, u32>,
 }
@@ -596,6 +600,14 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     });
     // stage
     w!("gd_stage_kind", || -> i32 { unsafe { melee_world::tu::stage::selected_stage.stkind as i32 } });
+    // in-match stage switching (melee_modes::tu::stage_hop): checked now, applied between logic frames
+    w!("gd_stage_grkind", || -> i32 { melee_modes::tu::stage_hop::current() });
+    w!("gd_stage_switch", |mut c: Caller<'_, HostData>, kind: i32| -> i32 {
+        let rc = unsafe { melee_modes::tu::stage_hop::check(kind) };
+        if rc == 0 { c.data_mut().stage_switch = Some(kind); c.data_mut().stage_switch_rc = 1; }
+        rc
+    });
+    w!("gd_stage_switch_result", |c: Caller<'_, HostData>| -> i32 { c.data().stage_switch_rc });
     // the game's RNG (HSD_Randi / HSD_Randf on the logic seed): the draws are game state and roll back with it
     w!("gd_rand_u32", |bound: u32| -> u32 {
         if bound == 0 { 0 } else { melee_runtime::tu::random::global::HSD_Randi(bound.min(i32::MAX as u32) as i32) as u32 }
@@ -1015,6 +1027,13 @@ fn frame_hook(post: bool) {
             }
         }
         apply_requests(host);
+        if post {
+            if let Some(kind) = ctx(host).data_mut().stage_switch.take() {
+                let rc = melee_modes::tu::stage_hop::switch_to(kind);
+                if rc != 0 { eprintln!("modhost: stage switch to {kind} refused ({rc})"); }
+                ctx(host).data_mut().stage_switch_rc = rc;
+            }
+        }
     }
 }
 

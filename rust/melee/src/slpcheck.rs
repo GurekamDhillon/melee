@@ -129,9 +129,10 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     // Game Bitfield 2 bit 0: StartMeleeRules.friendly_fire (Team Attack). Every 2019 Gang-Steals doubles file has it on;
     // left at the saved default (off) a teammate's hit never landed (201 of 203 teams files diverged at one).
     scn.friendly_fire = (info.bitfield2() & 1) as i32;
-    // Game Bitfield 3 bit 0x08: StartMeleeRules.disable_pausing (tournament rules: pause off). Left at the saved default
-    // (on), a player with no stocks pressing START (the team stock steal) paused the engine.
-    scn.pause = (info.bitfield3() & 0x08 == 0) as i32;
+    // Pausing off, whatever the file's rule (Game Bitfield 3 bit 0x08, StartMeleeRules.disable_pausing): a console pause
+    // takes no gameplay frames, so the replay records neither the pause nor the unpause and simply goes on. With the
+    // pads fed, an engine pause (a START press, or the team stock steal's START) would swallow replay frames.
+    scn.pause = 0;
     scn.item_freq = if info.item_spawn() < 0 { -2 } else { info.item_spawn() as i32 };
     if info.item_spawn() >= 0 {
         notes.push(format!("items on (frequency {}), item mask {:02x?}: item spawns are not driven by the file", info.item_spawn(), info.item_bits()));

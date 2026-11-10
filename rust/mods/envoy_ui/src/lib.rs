@@ -33,6 +33,7 @@ extern "C" {
     fn gd_ui_envoy_arm(op: i32) -> i32;
     fn gd_ui_node_free(n: u32);
     fn gd_ui_focus(n: u32) -> i32;
+    fn gd_ui_petey(out: *mut i32, n: u32) -> i32;
 }
 
 const SCENE_RETAIL: u32 = 0x8000_0000;
@@ -442,7 +443,16 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
         e.layer(LAYER_OVERLAY, 12).space(SPACE_WINDOW, sc);
         let in_match = v[5] != 0;
         if in_match {
-            hud(e, &v, vw);
+            let mut pv = [0i32; 12];
+            let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
+            let mut hv = v;
+            if petey {
+                hv[27] = -1; // no stage shifts in the Petey fight: no countdown
+            }
+            hud(e, &hv, vw);
+            if petey {
+                petey_bars(e, &pv, vw);
+            }
             if v[10] != 0 {
                 reward(e, &v, vw, vh);
             } else if v[30] >= 0 && v[31] < 150 {
@@ -498,6 +508,36 @@ unsafe fn hud(e: &mut Enc<16384>, v: &[i32; 64], _vw: f32) {
         s.s("STAGE SHIFT IN ").i((v[27] + 59) / 60).s("s");
         e.text(x + 14.0, y + 106.0, ROLE_LABEL, DIM, s.str());
     }
+}
+
+/// Petey's HP bar (top centre) and the two cage bars under it.
+unsafe fn petey_bars(e: &mut Enc<16384>, p: &[i32; 12], vw: f32) {
+    let w = 420.0;
+    let x = vw * 0.5 - w * 0.5;
+    let y = 24.0;
+    e.slice(SLICE_FILL_R6, x - 10.0, y - 6.0, w + 20.0, 92.0, PANEL);
+    let mut s = Buf::new();
+    s.s(if p[11] != 0 { "PETEY PIRANHA" } else { "PETEY (STAND-IN)" }); // word 11: the real model is drawn
+    if p[7] != 0 {
+        s.s("  PHASE 2");
+    }
+    if p[6] == 7 {
+        s.s(if p[8] == 2 { "  CAGE BROKEN: PARTNER FREE" } else { "  DEFEATED" });
+    } else if p[6] == 6 {
+        s.s("  STUNNED");
+    }
+    e.text(x, y, ROLE_LABEL, if p[7] != 0 { ACCENT } else { WHITE }, s.str());
+    let bar = |e: &mut Enc<16384>, bx: f32, by: f32, bw: f32, v: i32, m: i32, c: u32| {
+        e.rect(bx, by, bw, 12.0, 0x2020_30FF);
+        let f = (v as f32 / m.max(1) as f32).clamp(0.0, 1.0);
+        e.rect(bx, by, bw * f, 12.0, c);
+    };
+    bar(e, x, y + 28.0, w, p[1], p[2], if p[7] != 0 { ACCENT } else { GOOD });
+    let cw = w * 0.5 - 8.0;
+    bar(e, x, y + 58.0, cw, p[3], p[5], DIM);
+    bar(e, x + w - cw, y + 58.0, cw, p[4], p[5], DIM);
+    e.text(x, y + 42.0, ROLE_LABEL, DIM, "CAGE");
+    e.text_ex(x + w, y + 42.0, ROLE_LABEL, DIM, ALIGN_RIGHT, 0.0, "CAGE");
 }
 
 unsafe fn reward(e: &mut Enc<16384>, v: &[i32; 64], vw: f32, vh: f32) {

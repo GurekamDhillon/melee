@@ -1114,6 +1114,7 @@ fn frame_hook(post: bool) {
             }
             // a queued tag swap and the transition clock: between logic frames, outside the procs
             melee_modes::tu::tag_swap::tick();
+            melee_modes::tu::petey::tick();
         }
     }
 }

@@ -121,6 +121,9 @@ fn opt(p: Option<*mut [f32; 4]>) -> *mut [f32; 4] {
     p.unwrap_or(core::ptr::null_mut())
 }
 
+/// An extra world-space draw for one fighter's render pass (the Envoy boss placeholder, melee_modes::tu::petey).
+pub static mut BOSS_DRAW: Option<unsafe fn(G, i32)> = None;
+
 /// `ftDrawCommon_800805C8`: debug overlays, then (bit 7) the model itself.
 pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
     melee_core::ct!("ftDrawCommon_800805C8");
@@ -210,6 +213,10 @@ pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
                 inv = true;
             }
         }
+    }
+    if let Some(d) = unsafe { BOSS_DRAW } {
+        unsafe { d(g, arg1) };
+        inv = true;
     }
     if inv {
         ext::HSD_StateInvalidate(-1);

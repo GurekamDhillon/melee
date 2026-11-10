@@ -35,6 +35,10 @@ pub const P_CPU_STOCKS: usize = 14;
 pub const P_CPU_ATK: usize = 17;
 pub const P_CPU_DEF: usize = 20;
 pub const P_CPU_SCALE: usize = 23;
+/// 1: this fight is the run's boss (the Petey boss replaces the stand-in when `MELEE_ENVOY_BOSS=petey`).
+pub const P_BOSS: usize = 26;
+/// Final Destination (Gr_Kind): the Petey arena for now (an original stage is later work).
+const GR_FD: i32 = 37;
 
 pub static mut PLAN: [i32; PLAN_WORDS] = [0; PLAN_WORDS];
 pub static mut VIEW: [i32; VIEW_WORDS] = [0; VIEW_WORDS];
@@ -140,6 +144,7 @@ fn ratio(v: i32) -> f32 {
 
 /// Rewrite the VS match about to start from the plan (no-op without one, outside VS, and for a replay).
 pub unsafe fn match_begin(d: *mut StartMeleeData) {
+    crate::tu::petey::disarm();
     if PLAN[P_ACTIVE] == 0 || ARMED == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
         return;
     }
@@ -204,8 +209,27 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     r.set_timer_enabled(0);
     r.time_limit = 0;
     r.item_freq = -1;
-    if PLAN[P_STAGE] > 0 && crate::tu::stage_hop::supported(PLAN[P_STAGE]) {
-        r.stkind = melee_world::tu::stage::Stage_StageSlotSelect(PLAN[P_STAGE]) as u16;
+    let petey = PLAN[P_BOSS] == 1 && crate::tu::petey::selected();
+    let stage = if petey { GR_FD } else { PLAN[P_STAGE] };
+    if stage > 0 && crate::tu::stage_hop::supported(stage) {
+        r.stkind = melee_world::tu::stage::Stage_StageSlotSelect(stage) as u16;
+    }
+    if petey {
+        // the one CPU is Petey's carrier: stands still (cpu_kind 0), plain size and ratios, one stock
+        let c = &mut d.players[1];
+        c.cpu_kind = 0;
+        c.cpu_level = 1;
+        c.stocks = 1;
+        c.model_scale = 1.0;
+        c.attack_ratio = 1.0;
+        c.defense_ratio = 1.0;
+        // HP scales with the players on the player's side (P3: 1-2; one today, two once Envoy has a 2nd human)
+        let side = d.players[0].team;
+        let humans = [0usize, 2, 3].iter().filter(|&&i| d.players[i].slot_type != Gm_PKind_NA as u8 && d.players[i].team == side).count();
+        crate::tu::petey::arm(humans.clamp(1, 2) as i32, 1, 0x5E7E_u32 ^ (SEQ as u32).wrapping_mul(0x9E37_79B9));
+        melee_fighter::tu::ftdrawcommon::BOSS_DRAW = Some(crate::tu::petey::draw);
+    } else {
+        crate::tu::petey::disarm();
     }
     SEQ = SEQ.wrapping_add(1);
     CAMP_DUE = 1;

@@ -26,7 +26,7 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     let mut scn = Scenario::parse("")?;
     scn.stage = info.stage() as i32;
     // Up-front domain checks (a malformed or synthetic Game Start must be refused, not reach the sim): the VS stage
-    // range (external ids 2..=32), and per present player the team (0..=2 in a teams match) and the CSS spawn point (0..=3)
+    // range (external ids 2..=32), and per present player the team (0..=2 in a teams match; a real file's spawn point may be 255, unset)
     if !(2..=32).contains(&info.stage()) {
         return Err(format!("stage id {} is not a VS stage (2..=32)", info.stage()));
     }
@@ -37,9 +37,6 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         }
         if info.is_teams() && p.team > 2 {
             return Err(format!("p{}: team {} is outside 0..=2", i + 1, p.team));
-        }
-        if p.spawn_pos > 3 {
-            return Err(format!("p{}: spawn point {} is outside 0..=3", i + 1, p.spawn_pos));
         }
     }
     let mut max_stocks = 0;

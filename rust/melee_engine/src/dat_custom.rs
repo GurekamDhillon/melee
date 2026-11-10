@@ -104,6 +104,24 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                                 unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
                             }
                         }
+                        let k = d.u32_at(rec);
+                        if k == melee_types::It_Kind_Tincle as u32
+                            || k == melee_types::It_Kind_WhispyApple as u32
+                            || k == melee_types::It_Kind_WhispyHealApple as u32
+                        {
+                            // Tingle (Great Bay) and Whispy's apples (Green Greens): since the upstream sync (9f7cc5634) their records
+                            // start with `itSpecialAttrsHead* x0` (was a 4-byte scalar), so the native record is 4 bytes wider than the
+                            // word-swapped block and every later field read one word early (Tingle spawned at the wrong x / y: slpcheck
+                            // Great Bay fox file, frame 1624). Decoded as their records, as the Kyasarin's.
+                            if let Some(sa) = d.target(ta + 4) {
+                                let typed = if k == melee_types::It_Kind_Tincle as u32 {
+                                    d.object::<melee_types::itTincleAttributes>(sa) as *mut c_void
+                                } else {
+                                    d.object::<melee_types::itWhispyAppleAttributes>(sa) as *mut c_void
+                                };
+                                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                            }
+                        }
                         if d.u32_at(rec) == melee_types::It_Kind_Arwing_Laser as u32 {
                             // Arwing laser (Corneria, Venom): `ArwingLaserAttr { ItemAttr* x0; f32 x4, x8; }` starts with a relocated pointer
                             // (`itArwinglaser_UnkMotion2_Phys` reads `attrs->x0->x4_throw_speed_mul`); the word swap leaves it a big-endian

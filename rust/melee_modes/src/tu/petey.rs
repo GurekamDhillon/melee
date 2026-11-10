@@ -47,8 +47,9 @@ const PHASE1_PCT: f32 = 50.0;
 const PHASE2_PCT: f32 = 25.0;
 /// Kinetic scale passed into every movement start (param 3056) [spec: L].
 const KIN_SCALE: f32 = 0.75;
-/// The difficulty index the fight uses (0-14). Open question Q1: which index each SSE setting maps to.
-const DIFFICULTY: usize = 3;
+/// The difficulty index the fight uses (0-14): clamp(3 tier + 2 - min(retries, 5)) in Brawl (spec §3); Envoy has no
+/// SSE tier or continues, so a fresh Normal game: 5.
+const DIFFICULTY: usize = 5;
 /// Strength by phase (param 24001 / 24002; phase 0 is the placement's 1).
 const STRENGTH: [usize; 3] = [1, 2, 3];
 /// L table, default mode (§3).
@@ -59,8 +60,10 @@ const L_TABLE: [[f32; 15]; 5] = [
     [1.8, 2.1, 2.3, 3.9, 4.3, 4.7, 5.5, 5.9, 6.3, 7.3, 7.8, 8.3, 9.5, 10.0, 10.5],
     [2.4, 2.7, 2.9, 4.5, 5.0, 5.5, 6.2, 6.6, 7.0, 8.0, 8.5, 9.0, 10.0, 10.5, 11.0],
 ];
-/// Petey's x range on FD (ours: FD is narrower than his Brawl arena).
-const ARENA: f32 = 55.0;
+/// Petey's x range on FD (FD's edges; the jump goals are +-68, spec §7.2).
+const ARENA: f32 = 85.0;
+/// The jump's absolute world goal x (params 44006 / 44007).
+const JUMP_GOAL: f32 = 68.0;
 
 // motions (§1.2): index = the spec's motion number
 pub const M_ANGRY: usize = 0;
@@ -141,13 +144,16 @@ pub struct Boss {
     pub flash: [i32; 3],
     /// last player slot targeted (repeat weighting)
     pub last_slot: i32,
+    /// absolute world goal x set by rule 13 (spec §7.2); `has_goal` false = unset
+    pub has_goal: bool,
+    pub goal_x: f32,
 }
 
 const OFF: Boss = Boss {
     st: ST_OFF, prev_st: ST_OFF, sf: 0, t_out: 0.0, mot: M_WAIT1 as i32, mf: 0, px: 0.0, vx: 0.0, cage: [CAGE_HP; 2],
     phase: 0, cage_ctr: 0, rule28: false, rule29: false, jump_count: 1, jumps_wanted: 1, side: 0, flinch_to: ST_MENU,
     aim: 1.0, cage_broken: false, cause: 0, freed: -1, ko_done: false, down_t: 0, rng: 1, carrier_slot: -1,
-    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1,
+    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, has_goal: false, goal_x: 0.0,
 };
 pub static mut B: Boss = OFF;
 /// The match about to start is a Petey fight (set by `envoy::match_begin`, consumed at the first tick).
@@ -414,10 +420,10 @@ unsafe fn target_x() -> Option<f32> {
     Some(xs[s])
 }
 
-/// Side 1 = the target is on the boss's +x (spec §11 item 2: the side the boss's +x faces; Petey never turns).
+/// Side 1 = the target's world x is less than the boss's (screen-left; spec §4.4 rule 13, reader 2).
 unsafe fn target_side() -> i32 {
     match target_x() {
-        Some(x) if x > B.px => 1,
+        Some(x) if x < B.px => 1,
         Some(_) => 0,
         None => 0,
     }
@@ -449,6 +455,13 @@ unsafe fn rules() {
             B.phase = 2;
             B.cage_ctr = 2;
             eprintln!("petey: phase 2 (L {:.1})", level());
+        }
+    }
+    // 200: rule 13 in JumpStart / JumpLoop: lock the target, set the absolute goal x (-68 on side 1, else +68)
+    if st == ST_JUMP_START || st == ST_JUMP_LOOP {
+        if let Some(x) = target_x() {
+            B.has_goal = true;
+            B.goal_x = if x < B.px { -JUMP_GOAL } else { JUMP_GOAL };
         }
     }
     // 200: the status's own rules
@@ -588,6 +601,10 @@ unsafe fn advance() {
         B.vx = if B.vx > 0.0 { fmax(B.vx - dec, 0.0) } else { fmin(B.vx + dec, 0.0) };
     }
     B.px = fclamp(B.px + B.vx, -ARENA, ARENA);
+    // §7.2: within reach of the goal x, snap to it and hold (every status, after the movement step)
+    if B.has_goal && (B.goal_x - B.px).abs() <= 0.1 + B.vx.abs() {
+        B.px = B.goal_x;
+    }
     if B.px.abs() >= ARENA {
         B.vx = 0.0;
     }
@@ -823,7 +840,7 @@ fn hit_list() -> ([HitDef; 4], usize) {
     // basket cage boxes: frames 70-114 on the swinging cage
     if basket && (70..=114).contains(&f) {
         let (a, c) = if mot == M_BASKET_L { (P_HIT_L_A, P_HIT_L_B) } else { (P_HIT_R_A, P_HIT_R_B) };
-        let face = if mot == M_BASKET_L { -1.0 } else { 1.0 }; // the swing's direction (open question Q2)
+        let face = if mot == M_BASKET_L { 1.0 } else { -1.0 }; // the cage's own facing (proc 15: left +1, right -1)
         let dmg = fctiwz_f32(10.0 + 2.7 * l).max(0) as u32;
         let bkb = fctiwz_f32(105.0 - 2.0 * l).max(0) as u32;
         for (i, (pi, r)) in [(a, 8.0f32), (c, 10.0)].into_iter().enumerate() {

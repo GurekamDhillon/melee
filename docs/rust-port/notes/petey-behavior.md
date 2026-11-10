@@ -109,14 +109,25 @@ Brawl column = spec / data (no observation possible). "ours" = this build.
 | cage swing | baked animation, no physics | same (bones) | none |
 | camera | stage camera with the boss's range box and clip sphere | range box fed into Melee's camera | the clip sphere and the stage's scripted shots (events 5-9) not used |
 | idle between attacks | Wait A 100-150 (-9L/-12L), Wait B 2-20 | same | none |
-| difficulty | L from strength and the game's difficulty index | difficulty index 3 assumed [Q1] | which index the user's setting means |
-| size | model 102 tall in Brawl units | scale 1.0 [Q1] | whether a placement scale applies |
+| difficulty | L from strength and the game's difficulty index | index 5 (fresh Normal) | Envoy has no SSE tier / continues |
+| size | model 102 tall, no placement scale | scale 1.0 | none |
 | end | stage cutscene (events 9 / 1000 / 1001) frees a princess | Down / dying, then the carrier's KO ends the fight; the broken cage's model hides | cutscene not reproduced |
 
 Measured in our build (MELEE_PETEY_LOG, idle P1, phase 0, L 1.7): Wait A 95-120 f, basket 159 f, Wait B 1-9 f,
 jump chain 19 + 51 + 89 + 70 f (T = 50.8 at L 1.7), the dive reaching the arena edge, matching the spec's numbers.
 
-## Questions for the reader (also in `_build/petey-spec/questions.md`)
+## Reader answers applied (2026-11-09, second pass)
+
+- Scale 1.0 confirmed (0.75 is movement only). Difficulty index 5 (a fresh Normal game; Brawl: 3 tier + 2 - min(retries,
+  5)), so L = 2.5 / 3.3 / 4.1 by phase.
+- Side 1 = target x < boss x (screen-left) -> right basket (Zelda's cage, model -x). This replaces the data-based guess
+  above (the swing direction is not what decides it).
+- Basket 145 degrees in the cage's own facing: left cage +1, right cage -1 (up and backwards). Landing centre -90 =
+  straight down (our 270).
+- The +-68 is an absolute world goal x set by rule 13 (target left -> -68, else +68); each frame after movement, within
+  0.1 + |vx| of it, x snaps to it and holds. Our clamp is now FD's edges (+-85) so the goals are reachable.
+
+## Questions for the reader (answered; kept for the record)
 
 Q1 model / hitbox scale and the difficulty index per SSE setting; Q2 the reference for the basket's 145 degrees and
 whether -90 is a straight-down launch; Q3 whether the +-68 lead offset affects the dive at all.

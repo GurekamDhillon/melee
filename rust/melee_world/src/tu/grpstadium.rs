@@ -1252,7 +1252,7 @@ pub unsafe extern "C" fn grStadium_801D2BEC() -> *mut HSD_GObj {
     // `memzero(text, 0x18)` clears the GameCube `HSD_ImageDesc` (0x18 bytes there; wider natively: an 8-byte image_ptr)
     ext::memzero(&raw mut (*text).desc as *mut c_void, core::mem::size_of::<HSD_ImageDesc>() as _);
     ext::lb_800121FC(&raw mut (*text).desc, 0xFA, 0xA0, 4, 0x7D2);
-    stage_slot_own_image((*text).desc.image_ptr, 0x7D2);
+    stage_slot_own_image((*text).desc.image_ptr as *mut c_void, 0x7D2);
     let archive = ext::grDatFiles_GetArchive();
     ext::HSD_SisLib_803A611C(1, gobj, 9, 0xD, 0, 1, 0, 1);
     ext::HSD_SisLib_804D1124[1] = ext::HSD_ArchiveGetPublicAddress((*archive).unk0, b"SIS_GrPStadiumData\0".as_ptr() as *const i8) as *mut SIS;
@@ -1273,7 +1273,7 @@ pub unsafe extern "C" fn grStadium_801D2D78() -> *mut HSD_GObj {
     ext::GObj_InitUserData(temp_r3, 3, Some(ext::cb::HSD_Free), wrapper as *mut c_void);
     ext::memzero(&raw mut (*wrapper).desc as *mut c_void, core::mem::size_of::<HSD_ImageDesc>() as i32);
     ext::lb_800121FC(&raw mut (*wrapper).desc, 0x280, 0x196, 4, 0x7D3);
-    stage_slot_own_image((*wrapper).desc.image_ptr, 0x7D3);
+    stage_slot_own_image((*wrapper).desc.image_ptr as *mut c_void, 0x7D3);
     (*wrapper).set_flag(1);
     temp_r3
 }
@@ -1286,7 +1286,7 @@ pub unsafe extern "C" fn grStadium_801D2E24() -> *mut HSD_GObj {
     ext::GObj_InitUserData(gobj, 3, Some(ext::cb::HSD_Free), wrapper as *mut c_void);
     ext::memzero(&raw mut (*wrapper).desc as *mut c_void, core::mem::size_of::<HSD_ImageDesc>() as i32);
     ext::lb_800121FC(&raw mut (*wrapper).desc, 0x7C, 0x50, 4, 0x7D4);
-    stage_slot_own_image((*wrapper).desc.image_ptr, 0x7D4);
+    stage_slot_own_image((*wrapper).desc.image_ptr as *mut c_void, 0x7D4);
     (*wrapper).set_flag(0);
     gobj
 }

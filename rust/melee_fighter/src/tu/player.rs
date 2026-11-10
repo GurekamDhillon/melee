@@ -355,8 +355,8 @@ pub fn tag_inplace_spawn(slot: i32, idx: usize, ck: CharacterKind) -> *mut HSD_G
     let mut info: plAllocInfo = unsafe { core::mem::zeroed() };
     info.internal_id = map(ck).internal_id as FighterKind;
     info.slot = slot as u8;
-    info.anon_6.set_b0(1);
-    info.anon_6.set_has_transformation(1);
+    info.x6.set_b0(1);
+    info.x6.set_has_transformation(1);
     info.x5 = -1;
     let g = ext::Fighter_Create(&mut info);
     sp(slot).player_entity[idx] = g;

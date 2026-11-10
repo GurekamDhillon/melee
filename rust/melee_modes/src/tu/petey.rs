@@ -1017,7 +1017,7 @@ unsafe fn player_hits(carrier: i32) -> (bool, [bool; 2]) {
                     if (fp.dmg.x1914 as i32) < d {
                         fp.dmg.x1914 = d as _;
                     }
-                    let slot = 0x7E + fp.player_id as i32 * 2 + fp.is_sub_fighter() as i32;
+                    let slot = 0x7E + fp.player_idx as i32 * 2 + fp.is_sub_fighter() as i32;
                     melee_runtime::tu::lbcollision::lbColl_80005BB0(h, slot);
                 }
             }
@@ -1046,7 +1046,7 @@ unsafe fn item_hits(hs: &[Option<[f32; 5]>; 3], carrier: i32) -> (bool, u8) {
         let owner = it.owner;
         if !owner.is_null() {
             let of = (*owner).user_data as *mut Fighter;
-            if (*owner).classifier == HSD_GOBJ_CLASS_FIGHTER as _ && !of.is_null() && (*of).player_id as i32 == carrier {
+            if (*owner).classifier == HSD_GOBJ_CLASS_FIGHTER as _ && !of.is_null() && (*of).player_idx as i32 == carrier {
                 continue;
             }
         }

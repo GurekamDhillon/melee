@@ -18,7 +18,7 @@ use melee_fighter::tu::player as pl;
 use melee_types::*;
 
 pub const PLAN_WORDS: usize = 32;
-pub const VIEW_WORDS: usize = 160;
+pub const VIEW_WORDS: usize = 256;
 
 // plan layout (i32 words)
 pub const P_ACTIVE: usize = 0;
@@ -73,7 +73,7 @@ pub static mut LAUNCH_VS: i32 = 0;
 pub const REC_WORDS: usize = 32;
 pub const REC_AT: usize = 40;
 pub const REC_MAGIC: i32 = 0x454E_5652; // "ENVR"
-pub const REC_VERSION: i32 = 2; // 2: crests (milestone 1); a v1 record is dropped
+pub const REC_VERSION: i32 = 3; // 3: drives and keystones (V1); an older record is dropped
 /// The record the host holds (loaded from disk, updated from the view); `SAVED_LEN` 0 = no run saved.
 pub static mut SAVED: [i32; REC_WORDS] = [0; REC_WORDS];
 pub static mut SAVED_LEN: i32 = 0;

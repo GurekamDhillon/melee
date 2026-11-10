@@ -1,292 +1,153 @@
-# The Envoy crest pool (envoy-redesign.md section 2, full-game-plan.md 4.2). Hand-authored; build.rs lints it and
-# generates pool_gen.rs for envoy_sim (rules, numbers, weights, words) and envoy_ui (names, texts, families).
+# The Envoy drive pool as data (envoy-core-v2.md 4): pool.toml -> build.rs (envoy_lint) -> pool_gen.rs, a no_std
+# library used by envoy_sim and envoy_ui. This is the V1 slice: 9 drives and 3 keystones ("S" in the note).
 #
-# A crest: one rule, one number, worn by one fighter of the pair, firing at a moment.
-#   family  ALWAYS | RELAY | BENCH | SHIFT | POOL | OPENER   (HEAVY waits for the bosses, milestone 3)
-#   moment  the one trigger (the family fixes which moments are allowed; see src/spec.rs MOMENTS)
-#   effect  the one effect (src/spec.rs EFFECTS)
-#   number  the one number (x1000): the thing a hone changes (+50%, once; milestone 2)
-#   weight  1-3, the foe budget unit (never shown)
-#   gives / reads  0-1 word each from Fresh, Benched, Marked, Burning; the word is written in the rule
+# A drive: one rule, one charge source, one effect, one number; it orbits its fighter and fires when its charge is
+# full. A second copy levels it up (1 -> 3; the number x1.0 / x1.6 / x2.4).
+#   family  RED | GREEN | BLUE | YELLOW | PURPLE | WHITE   (the model body; see src/codes.rs)
+#   charge  hit | taken | landing | jump | time | tag_in    (one source)
+#   need    how many of them (time: milliseconds)
+#   effect  one of src/codes.rs EFFECTS
+#   number  x1000: a percent (6000 = 6%) or a time (4000 = 4 s)
+#   gives / reads  0-1 word each from Burning, Chilled, Marked, Haste; the word is written in the rule
+#   sound   the presentation's sound key (envoy_ui maps it to a Brawl sound); never read by the sim
+# A keystone: one rule and one price (one of the seven, or own); belongs to the player.
 #
-# Numbers are first guesses for a playtest; the harness (milestone 2) tunes them.
+# Numbers are first guesses for the playtest (Q5: start loud).
 
-# ---- ALWAYS: no moment, on while the wearer is in
-[[crest]]
-key = "power"
-name = "Power"
-family = "ALWAYS"
-moment = "always"
-effect = "attack"
-number = 200
-weight = 1
-rule = "This fighter's hits deal +20%."
-
-[[crest]]
-key = "guard"
-name = "Guard"
-family = "ALWAYS"
-moment = "always"
-effect = "defense"
-number = 150
-weight = 1
-rule = "This fighter takes 15% less damage."
-
-[[crest]]
-key = "heavy"
-name = "Heavy"
-family = "ALWAYS"
-moment = "always"
-effect = "weight"
-number = 200
-weight = 1
-rule = "This fighter's weight +20%."
-
-[[crest]]
-key = "swift"
-name = "Swift"
-family = "ALWAYS"
-moment = "always"
-effect = "speed"
-number = 120
-weight = 1
-rule = "This fighter walks and dashes 12% faster."
-
-[[crest]]
-key = "spring"
-name = "Spring"
-family = "ALWAYS"
-moment = "always"
-effect = "jump"
-number = 120
-weight = 1
-rule = "This fighter jumps 12% higher."
-
-# ---- RELAY: the tag-in and the Fresh window
-[[crest]]
-key = "keen"
-name = "Keen"
-family = "RELAY"
-moment = "fresh"
-effect = "attack"
-number = 350
-weight = 2
-reads = "Fresh"
-rule = "While Fresh, this fighter's hits deal +35%."
-
-[[crest]]
-key = "mend"
-name = "Mend"
-family = "RELAY"
-moment = "tag_in"
-effect = "heal"
-number = 12000
-weight = 2
-rule = "Tag in: heal 12%."
-
-[[crest]]
-key = "hunter"
-name = "Hunter"
-family = "RELAY"
-moment = "tag_in"
-effect = "mark"
-number = 4000
-weight = 2
-gives = "Marked"
-rule = "Tag in: the nearest foe is Marked."
-
-[[crest]]
-key = "linger"
-name = "Linger"
-family = "RELAY"
-moment = "tag_in"
-effect = "fresh_len"
-number = 6000
-weight = 1
-reads = "Fresh"
-rule = "Your Fresh lasts 6 s instead of 3."
-
-[[crest]]
-key = "quick"
-name = "Quick"
-family = "RELAY"
-moment = "tag_in"
-effect = "tag_cooldown"
-number = 3500
-weight = 1
-rule = "The tag cooldown is 3.5 s instead of 5."
-
-# ---- BENCH: the fighter on the bench, the tag-out
-[[crest]]
-key = "rest"
-name = "Rest"
-family = "BENCH"
-moment = "benched"
-effect = "heal"
-number = 1000
-weight = 2
-reads = "Benched"
-rule = "While Benched, heal 1% per second."
-
-[[crest]]
-key = "charge"
-name = "Charge"
-family = "BENCH"
-moment = "tag_in"
-effect = "fresh_len"
-number = 6000
-weight = 2
-reads = "Benched"
-gives = "Fresh"
-rule = "Benched 10 s or more: your next Fresh lasts 6 s."
-
-[[crest]]
+# ---- RED: damage
+[[drive]]
 key = "ember"
 name = "Ember"
-family = "BENCH"
-moment = "tag_out"
-effect = "burn"
-number = 5000
-weight = 2
-gives = "Burning"
-rule = "Tag out: the nearest foe is Burning."
-
-[[crest]]
-key = "handoff"
-name = "Handoff"
-family = "BENCH"
-moment = "tag_out"
-effect = "partner_attack"
-number = 150
-weight = 2
-rule = "Tag out: your partner's hits deal +15% for 5 s."
-
-# ---- SHIFT: the stage switch (from fight 2)
-[[crest]]
-key = "refit"
-name = "Refit"
-family = "SHIFT"
-moment = "shift"
-effect = "heal_both"
-number = 8000
-weight = 2
-rule = "Shift: both fighters heal 8%."
-
-[[crest]]
-key = "exposure"
-name = "Exposure"
-family = "SHIFT"
-moment = "shift"
-effect = "mark_all"
-number = 4000
-weight = 2
-gives = "Marked"
-rule = "Shift: every foe is Marked."
-
-[[crest]]
-key = "second_breath"
-name = "Second Breath"
-family = "SHIFT"
-moment = "shift"
-effect = "fresh"
-number = 3000
-weight = 1
-gives = "Fresh"
-rule = "Shift: the active fighter is Fresh."
-
-[[crest]]
-key = "wildfire"
-name = "Wildfire"
-family = "SHIFT"
-moment = "shift"
-effect = "burn_all"
-number = 5000
-weight = 2
-gives = "Burning"
-rule = "Shift: every foe is Burning."
-
-# ---- POOL: the shared stock pool
-[[crest]]
-key = "rebirth"
-name = "Rebirth"
-family = "POOL"
-moment = "stock_lost"
-effect = "fresh"
-number = 5000
-weight = 1
-gives = "Fresh"
-rule = "Stock lost: this fighter's respawn is Fresh for 5 s."
-
-[[crest]]
-key = "last_stand"
-name = "Last Stand"
-family = "POOL"
-moment = "last_stock"
-effect = "attack"
-number = 250
-weight = 2
-rule = "On the last stock, this fighter's hits deal +25%."
-
-[[crest]]
-key = "spite"
-name = "Spite"
-family = "POOL"
-moment = "stock_lost"
-effect = "burn_all"
-number = 5000
-weight = 2
-gives = "Burning"
-rule = "Stock lost: every foe is Burning."
-
-[[crest]]
-key = "trophy"
-name = "Trophy"
-family = "POOL"
-moment = "ko_dealt"
-effect = "heal"
-number = 15000
-weight = 2
-rule = "KO dealt: this fighter heals 15%."
-
-# ---- OPENER: the first moments of a fight
-[[crest]]
-key = "head_start"
-name = "Head Start"
-family = "OPENER"
-moment = "opener"
-effect = "fresh"
-number = 10000
-weight = 1
-gives = "Fresh"
-rule = "Opener: this fighter is Fresh for 10 s."
-
-[[crest]]
-key = "softened"
-name = "Softened"
-family = "OPENER"
-moment = "opener"
-effect = "foe_percent"
-number = 20000
-weight = 2
-rule = "Opener: foes start at 20%."
-
-[[crest]]
-key = "early_shift"
-name = "Early Shift"
-family = "OPENER"
-moment = "opener"
-effect = "first_shift"
-number = 15000
-weight = 1
-rule = "Opener: the first shift comes at 15 s."
-
-[[crest]]
-key = "called_shot"
-name = "Called Shot"
-family = "OPENER"
-moment = "opener"
-effect = "mark_all"
+family = "RED"
+charge = "hit"
+need = 4
+effect = "burst"
 number = 6000
-weight = 2
-gives = "Marked"
-rule = "Opener: every foe is Marked for 6 s."
+gives = "Burning"
+sound = "fire_red"
+rule = "Every 4th hit: a fire burst, 6% and Burning."
+
+[[drive]]
+key = "nova"
+name = "Nova"
+family = "RED"
+charge = "time"
+need = 12000
+effect = "nova"
+number = 12000
+sound = "fire_red"
+rule = "Every 12 seconds: a blast around you, 12%."
+
+[[drive]]
+key = "bolt"
+name = "Bolt"
+family = "RED"
+charge = "time"
+need = 8000
+effect = "bolt"
+number = 8000
+sound = "fire_bolt"
+rule = "Every 8 seconds: lightning strikes the nearest foe, 8%."
+
+# ---- GREEN: speed
+[[drive]]
+key = "rush"
+name = "Rush"
+family = "GREEN"
+charge = "hit"
+need = 5
+effect = "haste"
+number = 4000
+gives = "Haste"
+sound = "fire_green"
+rule = "Every 5th hit: Haste for 4 seconds."
+
+# ---- BLUE: defence
+[[drive]]
+key = "bulwark"
+name = "Bulwark"
+family = "BLUE"
+charge = "time"
+need = 15000
+effect = "shield"
+number = 1000
+sound = "fire_blue"
+rule = "Every 15 seconds: an orb absorbs the next hit's damage."
+
+# ---- YELLOW: air
+[[drive]]
+key = "comet"
+name = "Comet"
+family = "YELLOW"
+charge = "landing"
+need = 3
+effect = "shockwave"
+number = 6000
+sound = "fire_yellow"
+rule = "Every 3rd landing: a shockwave, 6%."
+
+# ---- PURPLE: status
+[[drive]]
+key = "frost"
+name = "Frost"
+family = "PURPLE"
+charge = "hit"
+need = 4
+effect = "chill"
+number = 4000
+gives = "Chilled"
+sound = "fire_purple"
+rule = "Every 4th hit: the foe is Chilled for 4 seconds."
+
+[[drive]]
+key = "shatter"
+name = "Shatter"
+family = "PURPLE"
+charge = "hit"
+need = 1
+effect = "shatter"
+number = 10000
+reads = "Chilled"
+sound = "fire_shatter"
+rule = "Hit a Chilled foe: ice shards, 10%, ending the Chill."
+
+# ---- WHITE: wild
+[[drive]]
+key = "relay"
+name = "Relay"
+family = "WHITE"
+charge = "tag_in"
+need = 1
+effect = "relay"
+number = 1000
+sound = "fire_white"
+rule = "Tag in: all of this fighter's drives fire at once."
+
+# ---- keystones
+[[keystone]]
+key = "plague_bearer"
+name = "Plague Bearer"
+effect = "plague"
+number = 3
+gives = "Burning"
+price = "Fragile"
+sound = "keystone"
+rule = "Every hit sets the foe Burning, stacking to 3."
+
+[[keystone]]
+key = "echo_oath"
+name = "Echo Oath"
+effect = "echo"
+number = 500
+price = "Weak"
+sound = "keystone"
+rule = "Every drive fire repeats once at half strength."
+
+[[keystone]]
+key = "overclock"
+name = "Overclock"
+effect = "overclock"
+number = 2
+price = "Bleed"
+sound = "keystone"
+rule = "Drives charge twice as fast."

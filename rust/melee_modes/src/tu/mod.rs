@@ -37,6 +37,7 @@ pub mod tag_swap;
 pub mod envoy;
 pub mod petey;
 pub mod petey_model;
+pub mod drive_draw;
 // Per-TU native ports of the game's gm/mn/lb/if translation units (one module per `.c` file,
 // `pub mod <tu_stem>;`). Each module's `ext` lists the callees of unported TUs as settable
 // hooks named like the C functions (unset: panics "TODO"); the oracle tests in

@@ -1,23 +1,30 @@
 // pool.toml -> records, the lint (envoy_lint), and pool_gen.rs. std only: used by build.rs and the crate's tests.
-// The parser reads the subset pool.toml uses: `[[crest]]` tables of `key = "string"` / `key = integer` lines and
-// `#` comments.
+// The parser reads the subset pool.toml uses: `[[drive]]` / `[[keystone]]` tables of `key = "string"` /
+// `key = integer` lines and `#` comments.
 
 use super::codes::*;
 
 #[derive(Clone, Debug, Default)]
 pub struct Rec {
+    pub kind: u8,
     pub key: String,
     pub name: String,
     pub rule: String,
     pub family: u8,
-    pub moment: u8,
+    pub charge: u8,
+    pub need: i32,
     pub effect: u8,
     pub number: i32,
-    pub weight: u8,
     pub gives: u8,
     pub reads: u8,
+    pub price: u8,
+    pub sound: String,
     pub line: usize,
 }
+
+/// The V1 slice ships 9 drives and 3 keystones: the full-pool rules (3 per family, 2 givers per read word) are
+/// checked once the full pool lands (envoy-core-v2.md 4, V2).
+pub const FULL_POOL: bool = false;
 
 fn find(t: &[&str], v: &str) -> Option<u8> {
     t.iter().position(|x| *x == v).map(|i| i as u8)
@@ -32,12 +39,13 @@ pub fn parse(src: &str) -> Result<Vec<Rec>, String> {
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
-        if line == "[[crest]]" {
-            out.push(Rec { line: ln, weight: 1, ..Default::default() });
+        if line == "[[drive]]" || line == "[[keystone]]" {
+            let kind = if line == "[[drive]]" { K_DRIVE } else { K_KEYSTONE };
+            out.push(Rec { line: ln, kind, ..Default::default() });
             seen.clear();
             continue;
         }
-        let Some(r) = out.last_mut() else { return Err(format!("line {ln}: a field outside a [[crest]] table")) };
+        let Some(r) = out.last_mut() else { return Err(format!("line {ln}: a field outside a [[drive]] / [[keystone]] table")) };
         let Some((k, v)) = line.split_once('=') else { return Err(format!("line {ln}: expected `key = value`")) };
         let (k, v) = (k.trim(), v.trim());
         if seen.iter().any(|s| s == k) {
@@ -56,13 +64,15 @@ pub fn parse(src: &str) -> Result<Vec<Rec>, String> {
             "key" => r.key = s()?,
             "name" => r.name = s()?,
             "rule" => r.rule = s()?,
+            "sound" => r.sound = s()?,
             "family" => r.family = find(&FAMILIES, &s()?).ok_or(format!("line {ln}: unknown family"))?,
-            "moment" => r.moment = find(&MOMENTS, &s()?).ok_or(format!("line {ln}: unknown moment"))?,
+            "charge" => r.charge = find(&CHARGES, &s()?).ok_or(format!("line {ln}: unknown charge source"))?,
             "effect" => r.effect = find(&EFFECTS, &s()?).ok_or(format!("line {ln}: unknown effect"))?,
+            "price" => r.price = find(&PRICES[1..], &s()?).map(|w| w + 1).ok_or(format!("line {ln}: price: not one of the seven (or own)"))?,
             "gives" => r.gives = find(&WORDS[1..], &s()?).map(|w| w + 1).ok_or(format!("line {ln}: gives: not one of the four words"))?,
             "reads" => r.reads = find(&WORDS[1..], &s()?).map(|w| w + 1).ok_or(format!("line {ln}: reads: not one of the four words"))?,
+            "need" => r.need = i()?,
             "number" => r.number = i()?,
-            "weight" => r.weight = i()?.clamp(0, 255) as u8,
             _ => return Err(format!("line {ln}: unknown field `{k}`")),
         }
     }
@@ -86,11 +96,29 @@ fn count_numbers(s: &str) -> usize {
     n
 }
 
-/// envoy_lint: the readability limits (envoy-redesign.md 3.1). Every problem found, one per line.
+/// Estimated seconds between fires of a level-1 drive at a CPU-proxy pace (envoy-core-v2.md 3.3: the harness band):
+/// a hit landed a second, a hit taken every 3 s, a landing every 2 s, a jump every 1.5 s, a tag every 15 s.
+pub fn est_period_ms(r: &Rec) -> i32 {
+    let per_event_ms = match r.charge {
+        C_HIT => 1000,
+        C_TAKEN => 3000,
+        C_LANDING => 2000,
+        C_JUMP => 1500,
+        C_TIME => return r.need,
+        _ => 15000,
+    };
+    // reading a word: only some hits qualify (about one in three)
+    let k = if r.reads != W_NONE && r.charge == C_HIT { 3 } else { 1 };
+    r.need.saturating_mul(per_event_ms).saturating_mul(k)
+}
+/// The band one drive's estimated period must sit in (ms): never a pile, never a rarity.
+pub const PERIOD_BAND: (i32, i32) = (2000, 16000);
+
+/// envoy_lint: the readability limits and the slice's rules. Every problem found, one per line.
 pub fn lint(p: &[Rec]) -> Vec<String> {
     let mut e = Vec::new();
     for (i, r) in p.iter().enumerate() {
-        let at = format!("crest `{}` (line {})", r.key, r.line);
+        let at = format!("{} `{}` (line {})", KINDS[r.kind as usize], r.key, r.line);
         if r.key.is_empty() || !r.key.bytes().all(|c| c.is_ascii_lowercase() || c == b'_') {
             e.push(format!("{at}: key must be lower_snake_case"));
         }
@@ -114,17 +142,33 @@ pub fn lint(p: &[Rec]) -> Vec<String> {
         if nums > 2 {
             e.push(format!("{at}: rule has {nums} numbers (at most 2)"));
         }
-        if !FAMILY_MOMENTS[r.family as usize].contains(&r.moment) {
-            e.push(format!("{at}: moment `{}` is not one family {} keys on", MOMENTS[r.moment as usize], FAMILIES[r.family as usize]));
-        }
-        if r.family == F_HEAVY {
-            e.push(format!("{at}: HEAVY crests need a price (milestone 3)"));
-        }
         if r.number <= 0 {
             e.push(format!("{at}: number must be > 0"));
         }
-        if !(1..=3).contains(&r.weight) {
-            e.push(format!("{at}: weight must be 1-3"));
+        if r.sound.is_empty() {
+            e.push(format!("{at}: no sound"));
+        }
+        if r.kind == K_DRIVE {
+            if r.effect >= E_KEYSTONE0 {
+                e.push(format!("{at}: effect `{}` is a keystone rule", EFFECTS[r.effect as usize]));
+            }
+            if r.need <= 0 {
+                e.push(format!("{at}: need must be > 0"));
+            }
+            if r.price != P_NONE {
+                e.push(format!("{at}: a drive has no price"));
+            }
+            let ms = est_period_ms(r);
+            if r.effect != E_RELAY && r.effect != E_SHATTER && !(PERIOD_BAND.0..=PERIOD_BAND.1).contains(&ms) {
+                e.push(format!("{at}: estimated fire period {ms} ms is outside the band {:?}", PERIOD_BAND));
+            }
+        } else {
+            if r.effect < E_KEYSTONE0 {
+                e.push(format!("{at}: effect `{}` is a drive effect", EFFECTS[r.effect as usize]));
+            }
+            if r.price == P_NONE {
+                e.push(format!("{at}: a keystone needs exactly one price (or own)"));
+            }
         }
         for (what, w) in [("gives", r.gives), ("reads", r.reads)] {
             if w != W_NONE && !r.rule.contains(WORDS[w as usize]) {
@@ -134,29 +178,31 @@ pub fn lint(p: &[Rec]) -> Vec<String> {
         if r.gives != W_NONE && r.gives == r.reads {
             e.push(format!("{at}: gives and reads the same word"));
         }
-        // a word the rule says is a word it gives or reads (one meaning per word, R11)
+        // a word the rule says is a word it gives or reads (one meaning per word)
         for (k, w) in WORDS.iter().enumerate().skip(1) {
             if r.rule.contains(w) && r.gives != k as u8 && r.reads != k as u8 {
                 e.push(format!("{at}: the rule says {w} but neither gives nor reads it"));
             }
         }
     }
+    let need_givers = if FULL_POOL { 2 } else { 1 };
     for (k, w) in WORDS.iter().enumerate().skip(1) {
         let k = k as u8;
         let readers = p.iter().filter(|r| r.reads == k).count();
         let givers = p.iter().filter(|r| r.gives == k).count();
-        if readers > 0 && givers < 2 && !INHERENT.contains(&k) {
-            e.push(format!("word {w}: {readers} crest(s) read it but only {givers} give it (at least 2)"));
+        if readers > 0 && givers < need_givers {
+            e.push(format!("word {w}: {readers} record(s) read it but only {givers} give it (at least {need_givers})"));
         }
     }
+    let need_members = if FULL_POOL { 3 } else { 1 };
     for (f, name) in FAMILIES.iter().enumerate() {
-        let n = p.iter().filter(|r| r.family == f as u8).count();
-        if f as u8 != F_HEAVY && n < 4 {
-            e.push(format!("family {name}: {n} crests (at least 4)"));
+        let n = p.iter().filter(|r| r.kind == K_DRIVE && r.family == f as u8).count();
+        if n < need_members {
+            e.push(format!("family {name}: {n} drives (at least {need_members})"));
         }
     }
     if p.len() > 250 {
-        e.push("more than 250 crests (ids are u8)".into());
+        e.push("more than 250 records (ids are u8)".into());
     }
     e
 }
@@ -171,11 +217,12 @@ pub fn digest(p: &[Rec]) -> u32 {
         }
     };
     for r in p {
-        for s in [&r.key, &r.name, &r.rule] {
+        for s in [&r.key, &r.name, &r.rule, &r.sound] {
             eat(s.as_bytes());
             eat(&[0]);
         }
-        eat(&[r.family, r.moment, r.effect, r.weight, r.gives, r.reads]);
+        eat(&[r.kind, r.family, r.charge, r.effect, r.gives, r.reads, r.price]);
+        eat(&r.need.to_le_bytes());
         eat(&r.number.to_le_bytes());
     }
     h
@@ -187,11 +234,11 @@ pub fn generate(p: &[Rec]) -> String {
     s.push_str("// @generated by envoy_data/build.rs from pool.toml. Do not edit.\n");
     s.push_str(&format!("pub const POOL_LEN: usize = {};\n", p.len()));
     s.push_str(&format!("pub const POOL_DIGEST: u32 = 0x{:08X};\n", digest(p)));
-    s.push_str("pub static POOL: [Crest; POOL_LEN] = [\n");
+    s.push_str("pub static POOL: [Drive; POOL_LEN] = [\n");
     for r in p {
         s.push_str(&format!(
-            "    Crest {{ key: {:?}, name: {:?}, rule: {:?}, family: {}, moment: {}, effect: {}, number: {}, weight: {}, gives: {}, reads: {} }},\n",
-            r.key, r.name, r.rule, r.family, r.moment, r.effect, r.number, r.weight, r.gives, r.reads
+            "    Drive {{ kind: {}, key: {:?}, name: {:?}, rule: {:?}, family: {}, charge: {}, need: {}, effect: {}, number: {}, gives: {}, reads: {}, price: {}, sound: {:?} }},\n",
+            r.kind, r.key, r.name, r.rule, r.family, r.charge, r.need, r.effect, r.number, r.gives, r.reads, r.price, r.sound
         ));
     }
     s.push_str("];\n");

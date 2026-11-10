@@ -60,6 +60,7 @@ pub mod ext {
     pub unsafe extern "C" fn gm_Mode_InvisibleVs_OnInit() { if let Some(h) = HOOK { h("gm_Mode_InvisibleVs_OnInit", &[]); return; } { unsafe { crate::tu::gminvisible::gm_Mode_InvisibleVs_OnInit(); } return; } }
     pub unsafe extern "C" fn gm_Mode_InvisibleVs_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_InvisibleVs_OnLoad", &[]); return; } { unsafe { crate::tu::gminvisible::gm_Mode_InvisibleVs_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_Lab_OnInit() { if let Some(h) = HOOK { h("gm_Mode_Lab_OnInit", &[]); return; } { unsafe { crate::tu::geno_lab_mode::gm_Mode_Lab_OnInit(); } return; } }
+    #[inline(never)] // compared by address in geno_tests: keep one copy
     pub unsafe extern "C" fn gm_Mode_Lab_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_Lab_OnLoad", &[]); return; } { unsafe { crate::tu::geno_lab_mode::gm_Mode_Lab_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_LightningVs_OnInit() { if let Some(h) = HOOK { h("gm_Mode_LightningVs_OnInit", &[]); return; } { unsafe { crate::tu::gmlightning::gm_Mode_LightningVs_OnInit(); } return; } }
     pub unsafe extern "C" fn gm_Mode_LightningVs_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_LightningVs_OnLoad", &[]); return; } { unsafe { crate::tu::gmlightning::gm_Mode_LightningVs_OnLoad(); } return; } }

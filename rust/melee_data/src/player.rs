@@ -804,12 +804,18 @@ impl Player {
         self.r.version[0] >= 3 && !self.r.ucf_073_list && !self.r.no_ucf_cardinals
     }
 
-    /// `gw_Replay_RawStick`
+    /// `gw_Replay_RawStick`. A record without the raw C-stick bytes (Slippi before they were added)
+    /// gets them back from the processed floats; a C-stick held on a cardinal reads 79/80 = 0.9875
+    /// after Melee's clamp while the pad's raw byte was 80 or more, which UCF 0.84 snaps to 1.0
+    /// (an ASDI with the C-stick then moves 3.0, not 2.9625). So 0.9875 with 0 on the other axis
+    /// is taken as a raw 80. (Over the Pichu set this is right 15 times and wrong once, a stick creeping
+    /// 78 -> 79; a "crept there" or "held" rule only trades files.) SLPCHECK_RAWC_OFF=1: leave them 0.
     pub fn raw_stick(&self, port: i32, which: i32) -> i32 {
         if !self.active && !self.live {
             return self.ucf_pad_back(port, which, 0);
         }
         match self.rp_cur(port, false) {
+            Some(r) if which >= 2 && which < 4 && !r.raw_c && std::env::var_os("SLPCHECK_RAWC_OFF").is_none() => raw_c_from_processed(r.cx, r.cy, which),
             Some(r) if (0..4).contains(&which) => r.raw[which as usize] as i32,
             _ => 0,
         }
@@ -1387,4 +1393,14 @@ pub fn online_forced_seed(rec: u32, sd: u32, off: &mut u32) -> Option<u32> {
     let c = cand?;
     *off = c.wrapping_sub(sd);
     Some(c)
+}
+
+fn raw_c_from_processed(cx: f32, cy: f32, which: i32) -> i32 {
+    let (v, o) = if which == 2 { (cx, cy) } else { (cy, cx) };
+    let b = (v * 80.0).round() as i32;
+    if o == 0.0 && b.abs() == 79 {
+        b.signum() * 80
+    } else {
+        b
+    }
 }

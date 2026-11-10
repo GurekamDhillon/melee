@@ -1348,6 +1348,7 @@ dependencies = [
 name = "melee_modhost"
 version = "0.1.0"
 dependencies = [
+ "melee_audio",
  "melee_core",
  "melee_fighter",
  "melee_gx",

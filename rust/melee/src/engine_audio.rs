@@ -25,8 +25,33 @@ pub fn load_frame() {
 pub static mut WAV: Option<Vec<i16>> = None;
 static mut BGM_STARTED: bool = false;
 
+/// Petey's fight plays Brawl's boss theme from the player's disc while the boss ticks; when the match stops ticking
+/// it (the scene left) the music fades and the game's own music returns with the next scene. Presentation only.
+fn petey_music() {
+    use std::sync::atomic::{AtomicU32, Ordering};
+    static SEEN: AtomicU32 = AtomicU32::new(0);
+    static IDLE: AtomicU32 = AtomicU32::new(u32::MAX);
+    let hb = melee_modes::tu::petey::HEARTBEAT.load(Ordering::Relaxed);
+    let idle = IDLE.load(Ordering::Relaxed);
+    if hb != SEEN.swap(hb, Ordering::Relaxed) {
+        if idle == u32::MAX && melee_modes::tu::petey::selected() && melee_audio::brawl::play_music(melee_modes::tu::petey::BOSS_MUSIC) {
+            eprintln!("brawl audio: Petey's boss theme");
+        }
+        IDLE.store(0, Ordering::Relaxed);
+    } else if idle != u32::MAX {
+        // paused / frozen frames still tick Petey; 2 s without a tick is a scene change
+        if idle >= 120 {
+            melee_audio::brawl::stop_music(30);
+            IDLE.store(u32::MAX, Ordering::Relaxed);
+        } else {
+            IDLE.store(idle + 1, Ordering::Relaxed);
+        }
+    }
+}
+
 /// The DSP sub-frames of one logic frame (`lbAudioAx_80027DF8`, the deferred sfx and loop voices, runs inside the scene tick).
 pub fn dsp_frame() {
+    petey_music();
     unsafe {
         match (*std::ptr::addr_of_mut!(WAV)).as_mut() {
             Some(w) => {

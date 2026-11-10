@@ -127,7 +127,11 @@ pub fn music_on() -> bool {
 /// Whether the player's Brawl sound files are present.
 pub fn present() -> bool {
     static P: OnceLock<bool> = OnceLock::new();
-    *P.get_or_init(|| reader::sound_dir().is_some())
+    *P.get_or_init(|| {
+        let p = reader::sound_dir().is_some();
+        eprintln!("brawl audio: sound archive {}", if p { "found" } else { "not found (Brawl audio off)" });
+        p
+    })
 }
 
 fn archive() -> Option<&'static reader::Rsar> {
@@ -135,7 +139,10 @@ fn archive() -> Option<&'static reader::Rsar> {
     A.get_or_init(|| {
         let d = reader::sound_dir()?;
         match reader::Rsar::open(&d.join(reader::ARCHIVE)) {
-            Ok(a) => Some(a),
+            Ok(a) => {
+                eprintln!("brawl audio: sound archive read: {} sounds", a.sounds.len());
+                Some(a)
+            }
             Err(e) => {
                 eprintln!("brawl audio: sound archive unreadable: {e}");
                 None
@@ -204,6 +211,7 @@ fn play_music_impl(name: &str) -> bool {
         Ok(p) => {
             let mut m = mix().lock().unwrap_or_else(|e| e.into_inner());
             if MUSIC_GEN.load(Ordering::Relaxed) == g {
+                eprintln!("brawl audio: music '{name}' started ({} ch, {} Hz, {:.1} s, loop {})", p.channels, p.rate, p.frames() as f32 / p.rate.max(1) as f32, p.loop_start.is_some());
                 let gain = env_pct("MELEE_BRAWL_MUSIC_VOL", 60) * 256 / 100;
                 m.music = Some(Voice::new(Arc::new(p), gain, true));
                 ACTIVE.store(true, Ordering::Relaxed);

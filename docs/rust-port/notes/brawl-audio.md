@@ -91,8 +91,7 @@ Other stream names that mention bosses:
 
 The constant is `melee_modes::tu::petey::BOSS_MUSIC`.
 
-How it is driven: `petey::tick` bumps `petey::HEARTBEAT` while the boss is live. `engine_audio::dsp_frame` (once per
-logic frame) starts the music on the first beat. After 2 s with no beat (the match scene has ended), it fades the
+How it is driven: `petey::tick` bumps `petey::HEARTBEAT` while the boss is live. `engine_audio::petey_music` starts the music on the first beat. After 2 s with no beat (the match scene has ended), it fades the
 music out over 30 frames. The next scene's own music then plays again.
 
 ## Mod API (wasm host imports, module `env`)
@@ -115,3 +114,18 @@ extern "C" { fn gd_brawl_sfx(p: *const u8, n: u32) -> i32; }
 let n = "snd_se_boss_Bosspackun_03";
 unsafe { gd_brawl_sfx(n.as_ptr(), n.len() as u32) };
 ```
+
+`petey_music` runs on both audio paths: from `Audio::tick` in live play, and from `engine_audio::dsp_frame` in the
+headless golden. The first build had only the golden call, so live play stayed silent. Each state is logged once to
+stderr, prefixed `brawl audio:`:
+
+- the archive found or not found;
+- the theme requested or skipped;
+- the music started, with its channels, rate, length and loop;
+- the music fading out.
+
+The Brawl mix is added before the master volume, so `MELEE_VOLUME` scales it exactly like the game's own sound.
+
+Verified with a headless golden of Envoy fight 5 (Petey), captured with `--audio-wav`, once with the Brawl files and
+once with `MELEE_BRAWL_ABSENT=1`. With the files, the boss theme replaces the stage music (per-second RMS difference
+2.2k-5k). The sim hash CSVs of the two runs are identical.

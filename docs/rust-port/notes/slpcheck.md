@@ -313,3 +313,29 @@ Open: Pichu (14 files left); Ice Climbers (0/10); Link (2/12, hookshot 361 1-ULP
 6ae56a1d4e8c2675493473ce now diverges at frame 1624 (Fox up-B hold, action 236, airborne: console x +0.958 on the
 third frame, engine stays put) before the Tingle RNG frame 4185. That looks like a collision or platform-carry change
 from the upstream sync merge (9f7cc5634), not the RNG order. Kirby and Mewtwo singles are still open.
+
+## slpfuzz round 4 (2026-11-10, port/slpfuzz4): keep set 33 -> 35 of 109 frame-exact
+
+Bisect of the Great Bay fox file 6ae56a1d4e8c2675493473ce (fast profile): 7ec67b37e first divergence frame 6895;
+9f7cc5634 (mrg2, the upstream-sync merge), 2734199e4 and b45ebbb72 frame 1624. A regression of 9f7cc5634.
+
+Cause: the regenerated melee_types turned `itTincleAttributes.x0` (f32) and `itWhispyAppleAttributes.x0` ([u8; 4]) into
+`itSpecialAttrsHead*`. Item special attributes are a word-swapped block cast to the record, so with an 8-byte pointer every
+later field read one word early: Tingle spawned at (175, 0.8) instead of (39, 200) from frame -123 on, and its balloon wall
+(the line Fox's up-B hold was pushed by) was elsewhere. Fix (dat_custom `ptrtable_itemdata`): Tingle and both Whispy apples
+are decoded as their records, as the Kyasarin's already were. An audit of every struct where the regen changed a scalar
+field to a pointer (or back) found no other data-overlaid record that moved (`KinokoAttrs.x8` grew, but it is the last
+field and nothing reads it; the rest are runtime-only structs).
+
+Keep set (114 files, 5 refused) at dcbf9d605 against b45ebbb72: 33 -> 35 match, both Great Bay (the fox file is now
+frame-exact through its last frame, so the "Tingle RNG draw order at 4185" was this layout bug); the 3 other Great Bay
+files diverge 5000-7000 frames later; no file diverges earlier. Per-file baseline (id, character, status, stage, first
+frame/port/field; no names): `_build/slp-lunar/keep/baseline-dcbf9d605.csv`. Compare future runs against it file by file.
+
+| char | match | char | match | char | match | char | match |
+|---|---|---|---|---|---|---|---|
+| Bowser | 6/8 | DK | 2/2 | Falcon | 0/1 | Fox | 5/8 |
+| Ganon | 0/3 | G&W | 2/2 | ICs | 0/10 | Kirby | 1/6 |
+| Link | 2/12 | Mario | 3/4 | Marth | 0/6 | Mewtwo | 0/5 |
+| Ness | 0/5 | Peach | 0/1 | Pichu | 14/28 | Roy | 0/2 |
+| Samus | 0/1 | Sheik | 0/1 | Young Link | 0/3 | Zelda | 0/6 (5 refused) |

@@ -262,7 +262,7 @@ pub unsafe extern "C" fn grRCruise_801FF7A4(gobj: *mut HSD_GObj) {
 
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
     ext::grAnime_801C8138(stage_gobj, (*gp).map_id as i32, 0);
-    ext::grAnime_801C752C(jobj, 1, 30628, ext::HSD_AObjSetFlags as *mut c_void, 3, AOBJ_LOOP as u32);
+    ext::grAnime_801C752C(jobj, 1, 30628, crate::tu::granime::ext::HSD_AObjSetFlags_cb as *mut c_void, 3, AOBJ_LOOP as u32);
     let archive = ext::grDatFiles_GetArchive();
     let mut data: *mut DynamicsDesc = core::ptr::null_mut();
     let mut have = false;
@@ -335,7 +335,7 @@ pub unsafe extern "C" fn grRCruise_801FF924(gobj: *mut HSD_GObj) {
     (*gp).u.scroll.x1C.x = 0.0;
     (*gp).u.scroll.set_x0(0);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
-    ext::grAnime_801C752C(jobj, 1, 30628, ext::HSD_AObjSetFlags as *mut c_void, 3, 0x20000000);
+    ext::grAnime_801C752C(jobj, 1, 30628, crate::tu::granime::ext::HSD_AObjSetFlags_cb as *mut c_void, 3, 0x20000000);
     (*gobj).render_cb = Some(fn_80201BE0);
 }
 

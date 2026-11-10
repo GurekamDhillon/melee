@@ -246,7 +246,7 @@ pub unsafe extern "C" fn grPushOn_802185A0(gobj: *mut HSD_GObj) {
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::ftCo_800C07F8(gobj, 3, fn_802192A4 as *mut c_void);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
-    ext::grAnime_801C752C(jobj, 1, 0x77A4, ext::HSD_AObjSetFlags as *mut c_void, 3, 0x20000000);
+    ext::grAnime_801C752C(jobj, 1, 0x77A4, crate::tu::granime::ext::HSD_AObjSetFlags_cb as *mut c_void, 3, 0x20000000);
     (*gp).u.map.set_xC4_b0(0);
     ext::mpJointSetCb1(3, gp as *mut c_void, Some(fn_802190A0));
     ext::mpJointSetCb1(4, gp as *mut c_void, Some(fn_802190A0));

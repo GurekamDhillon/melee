@@ -53,6 +53,8 @@ pub const KEY_TAB: u32 = 8;
 
 /// `gd_ui_scene_goto` argument for a retail scene (`RETAIL | major << 8 | minor`).
 pub const SCENE_RETAIL: u32 = 0x8000_0000;
+/// `gd_ui_scene_replace_when` condition: an Envoy run is armed and has fought since arming.
+pub const REPLACE_WHEN_ENVOY: u32 = 1;
 
 pub fn session_code(s: Session) -> i32 {
     match s {
@@ -104,6 +106,10 @@ pub struct Shared {
     pub keys: Vec<u32>,
     pub scenes: Vec<SceneDef>,
     pub replace: Vec<((i32, i32), u32)>,
+    /// `gd_ui_scene_replace_when` rows: (retail scene, custom scene, condition); entered only while the condition holds.
+    pub replace_when: Vec<((i32, i32), u32, u32)>,
+    /// The Envoy camp scene (`gd_ui_envoy_door`): opened by the 1-P menu's Envoy row and the browser's Envoy mode.
+    pub door: u32,
     /// Custom scenes on top of the retail flow, innermost last.
     pub stack: Vec<u32>,
     /// A goto / back for the next frame boundary: Some(0) pops everything (back to retail), Some(-1) pops one.
@@ -202,6 +208,8 @@ impl Shared {
             keys: Vec::with_capacity(64),
             scenes: Vec::new(),
             replace: Vec::new(),
+            replace_when: Vec::new(),
+            door: 0,
             stack: Vec::new(),
             pending: None,
             texs: Vec::new(),
@@ -628,6 +636,22 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         for (i, x) in w.iter().enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
         if write_bytes(&mut c, out, &b) { GD_OK } else { GD_EINVAL }
     });
+    // read-only view of the Envoy run (melee_modes::tu::envoy::VIEW, published by the envoy sim mod): n i32 words
+    f!("gd_ui_envoy", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
+        let v = unsafe { melee_modes::tu::envoy::VIEW };
+        let n = (n as usize).min(v.len());
+        let mut b = [0u8; 4 * melee_modes::tu::envoy::VIEW_WORDS];
+        for (i, x) in v.iter().take(n).enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
+        if write_bytes(&mut c, out, &b[..n * 4]) { GD_OK } else { GD_EINVAL }
+    });
+    // read-only view of the Petey boss (melee_modes::tu::petey::view): n i32 words (notes/petey-boss.md)
+    f!("gd_ui_petey", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
+        let v = melee_modes::tu::petey::view();
+        let n = (n as usize).min(v.len());
+        let mut b = [0u8; 48];
+        for (i, x) in v.iter().take(n).enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
+        if write_bytes(&mut c, out, &b[..n * 4]) { GD_OK } else { GD_EINVAL }
+    });
     f!("gd_ui_inject", |c: Caller<'_, PresData>, port: u32, pad: u32| -> i32 {
         if !feat(&c, FEATURE_UI_SIM_INPUT) {
             return GD_ECAP;
@@ -696,6 +720,96 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             return GD_ESTATE;
         }
         sh.replace.push(((major, minor), scene));
+        GD_OK
+    });
+    // replace a retail scene only while a host condition holds (1: an Envoy run is armed and has fought since arming,
+    // so the VS CSS after its results is the camp, and every other VS CSS stays retail with no custom frame)
+    f!("gd_ui_scene_replace_when", |c: Caller<'_, PresData>, major: i32, minor: i32, scene: u32, cond: u32| -> i32 {
+        scene!(c);
+        let m = c.data().module;
+        let mut sh = c.data().ui().borrow_mut();
+        if scene == 0 || cond != REPLACE_WHEN_ENVOY || sh.scenes.get(scene as usize - 1).is_none_or(|s| s.module != m) {
+            return GD_EINVAL;
+        }
+        if sh.replace.iter().any(|r| r.0 == (major, minor)) || sh.replace_when.iter().any(|r| r.0 == (major, minor)) {
+            sh.log.push(format!("gd_ui_scene_replace_when({major}, {minor}): that retail scene already has a replacer"));
+            return GD_ESTATE;
+        }
+        sh.replace_when.push(((major, minor), scene, cond));
+        GD_OK
+    });
+    // ---- the Envoy door (envoy-redesign.md 1.2-1.3; melee_modes::tu::envoy). Offline only.
+    // register the camp scene: the 1-P menu grows its Envoy row, and the row / the browser's Envoy mode open the scene
+    f!("gd_ui_envoy_door", |c: Caller<'_, PresData>, scene: u32| -> i32 {
+        scene!(c);
+        let m = c.data().module;
+        let mut sh = c.data().ui().borrow_mut();
+        if scene == 0 || sh.scenes.get(scene as usize - 1).is_none_or(|s| s.module != m) {
+            return GD_EINVAL;
+        }
+        sh.door = scene;
+        unsafe { melee_modes::tu::envoy::DOOR_ON = 1 };
+        GD_OK
+    });
+    // bits: 1 armed, 2 the 1-P menu is up with no custom scene on it (the Envoy row is drawn), 4 its cursor is on the
+    // Envoy row, 8 a run record is saved, 16 a fight was played since arming, 32 the player's Brawl files are missing (Envoy is
+    // blocked: the camp asks for the Brawl disc image)
+    f!("gd_ui_envoy_state", |c: Caller<'_, PresData>| -> i32 {
+        use melee_modes::tu::envoy as ev;
+        let sh = c.data().ui().borrow();
+        let on_1p = sh.retail == (melee_types::GM_MENU as i32, 1)
+            && sh.stack.is_empty()
+            && unsafe { melee_modes::tu::mnmain::mn_804A04F0.cur_menu } as i32 == melee_types::MENU_KIND_1P as i32;
+        unsafe {
+            (ev::ARMED != 0) as i32 | (on_1p as i32) << 1 | ((on_1p && ev::DOOR_HOVER != 0) as i32) << 2 | ((ev::SAVED_LEN > 0) as i32) << 3 | ((ev::CAMP_DUE != 0) as i32) << 4
+                | (!melee_modes::tu::petey_model::brawl_present() as i32) << 5
+        }
+    });
+    // the saved run record (melee_modes::tu::envoy::SAVED): the words written, 0 = none
+    f!("gd_ui_envoy_saved", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
+        let (rec, len) = unsafe { (melee_modes::tu::envoy::SAVED, melee_modes::tu::envoy::SAVED_LEN) };
+        let n = (n as usize).min(len.max(0) as usize).min(rec.len());
+        let mut b = [0u8; 4 * melee_modes::tu::envoy::REC_WORDS];
+        for (i, x) in rec.iter().take(n).enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
+        if write_bytes(&mut c, out, &b[..n * 4]) { n as i32 } else { GD_EINVAL }
+    });
+    // arm / disarm the run: op 0 disarm, 1 new run (forgets the saved run), 2 continue, 3 abandon (forget + disarm);
+    // | 0x10: start the VS mode now (the camp on the main menu; the first CSS is the party pick, not the camp)
+    f!("gd_ui_envoy_arm", |c: Caller<'_, PresData>, op: i32| -> i32 {
+        use melee_modes::tu::envoy as ev;
+        let sh = c.data().ui().borrow();
+        if sh.session != Session::Offline {
+            return GD_EOFFLINE;
+        }
+        let launch = op & 0x10 != 0;
+        // no Brawl files, no Envoy run (full-game plan Q3): arming is refused, disarm / abandon still work
+        if matches!(op & 0xF, 1 | 2) && !melee_modes::tu::petey_model::brawl_present() {
+            return GD_ESTATE;
+        }
+        if launch && sh.retail.0 != melee_types::GM_MENU as i32 {
+            return GD_ESTATE;
+        }
+        unsafe {
+            match op & 0xF {
+                0 => ev::ARMED = 0,
+                1 => {
+                    ev::SAVED_LEN = 0;
+                    ev::SAVED_DROP = 1;
+                    ev::ARMED = 1;
+                }
+                2 => ev::ARMED = 1,
+                3 => {
+                    ev::SAVED_LEN = 0;
+                    ev::SAVED_DROP = 1;
+                    ev::ARMED = 0;
+                }
+                _ => return GD_EINVAL,
+            }
+            if launch {
+                ev::CAMP_DUE = 0;
+                ev::LAUNCH_VS = 1;
+            }
+        }
         GD_OK
     });
     f!("gd_ui_scene_goto", |c: Caller<'_, PresData>, to: u32| -> i32 {
@@ -1120,7 +1234,10 @@ impl PresHost {
                 return;
             }
             sh.retail = (major, minor);
-            sh.replace.iter().find(|r| r.0 == (major, minor)).map(|r| r.1)
+            sh.replace.iter().find(|r| r.0 == (major, minor)).map(|r| r.1).or_else(|| {
+                let envoy = unsafe { melee_modes::tu::envoy::ARMED != 0 && melee_modes::tu::envoy::CAMP_DUE != 0 };
+                sh.replace_when.iter().find(|r| r.0 == (major, minor) && (r.2 == REPLACE_WHEN_ENVOY && envoy)).map(|r| r.1)
+            })
         };
         if let Some(s) = enter {
             self.shared.borrow_mut().pending = Some(s as i64);
@@ -1169,6 +1286,16 @@ impl PresHost {
     }
 
     fn scene_switch(&mut self) {
+        // the Envoy door: the 1-P menu's row or the browser chose Envoy (melee_modes::tu::envoy::DOOR_OPEN)
+        unsafe {
+            if melee_modes::tu::envoy::DOOR_OPEN != 0 {
+                melee_modes::tu::envoy::DOOR_OPEN = 0;
+                let mut sh = self.shared.borrow_mut();
+                if sh.door != 0 && sh.pending.is_none() && !sh.stack.contains(&sh.door) {
+                    sh.pending = Some(sh.door as i64);
+                }
+            }
+        }
         let Some(p) = self.shared.borrow_mut().pending.take() else { return };
         let leave: Vec<u32> = {
             let sh = self.shared.borrow();

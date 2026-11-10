@@ -26,7 +26,21 @@ pub const HOP_UNSUPPORTED: i32 = -18;
 
 /// The five audited retail stages (FD, BF, Yoshi's Story, Dream Land, Fountain of Dreams).
 pub fn supported(kind: i32) -> bool {
-    unsafe { sg::st_retail_supported(kind) != 0 }
+    (unsafe { sg::st_retail_supported(kind) != 0 }) || audit_extra(kind)
+}
+
+/// Audit knob (notes/envoy-stage-audit.md): `MELEE_STAGE_HOP_EXTRA=30,29,16` also allows those ground kinds, so a
+/// candidate stage can be started on and shifted into / out of before it is added to `st_retail_supported`.
+/// Unset (every normal run) it changes nothing; fixed for the process, so it is deterministic.
+fn audit_extra(kind: i32) -> bool {
+    static EXTRA: std::sync::OnceLock<std::vec::Vec<i32>> = std::sync::OnceLock::new();
+    EXTRA
+        .get_or_init(|| {
+            std::env::var("MELEE_STAGE_HOP_EXTRA")
+                .map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect())
+                .unwrap_or_default()
+        })
+        .contains(&kind)
 }
 
 /// The ground kind that is live now.
@@ -54,6 +68,11 @@ pub unsafe fn check(kind: i32) -> i32 {
         let fp = sg::HSD_GObjGetUserData(g) as *mut Fighter;
         if !fp.is_null() {
             let m = (*fp).motion_id as i32;
+            // TARGET_PC: a sleeping sub-fighter (a tag partner, the Zelda / Sheik other half) is not (re)spawning
+            if m == ftCo_MS_Sleep as i32 {
+                g = (*g).next as *mut HSD_GObj;
+                continue;
+            }
             if !(*fp).victim_gobj.is_null() || !(*fp).x1A5C.is_null() || m <= ftCo_MS_RebirthWait as i32
                 || (m >= ftCo_MS_CapturePulledHi as i32 && m <= ftCo_MS_CaptureFoot as i32)
                 || (m >= ftCo_MS_ThrownF as i32 && m <= ftCo_MS_ThrownlwWomen as i32)
@@ -166,7 +185,14 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
     core::ptr::write_bytes(archive as *mut u8, 0, core::mem::size_of::<HSD_Archive>());
     let mut actual: usize = 0;
     sg::lbFile_8001668C(path.as_ptr(), work, &mut actual);
-    if actual != bytes as usize || sg::HSD_ArchiveParse(archive, work as *mut u8, bytes as usize) < 0 {
+    // The engine decodes the archive's custom roots (`yakumono_param`: melee_engine::dat_custom, the per-stage layouts of
+    // yakumono_layouts.rs) at parse time, picking the layout by `stage_info.grkind`: that must already name the destination,
+    // or the record is decoded with the outgoing stage's layout (Kongo Jungle 64: all zeros, the barrel launcher asserts).
+    let live_kind = sg::stage_info.grkind;
+    sg::stage_info.grkind = kind as _;
+    let parsed = actual == bytes as usize && sg::HSD_ArchiveParse(archive, work as *mut u8, bytes as usize) >= 0;
+    sg::stage_info.grkind = live_kind;
+    if !parsed {
         free_both(work, archive);
         return HOP_READ;
     }
@@ -205,6 +231,7 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
     sg::script_retail_carry();
     sg::script_retail_items(0);
     sg::script_switch.epoch += 1;
+    melee_core::heaptrace::mark("stage switch");
     if std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
         eprintln!("stage switch: {from} -> {kind} ({bytes} bytes, {} owned objects, heap0 free {})",
             sg::script_retail_owned.count, sg::lbHeap_Free(0));

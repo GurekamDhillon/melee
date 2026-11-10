@@ -41,9 +41,17 @@ fn fighter_mut(p: *const melee_types::Fighter) -> *mut melee_types::Fighter {
 pub fn install() {
     unsafe {
         // pc/platform gw_replay.c `gw_Slippi_FrozenStadium` outside playback: `MELEE_SLIPPI_FROZEN_PS=1` enables Slippi's Frozen PS (default off, as the C goldens)
+        // in-match stage switching: the visit's own buffers (Fountain's reflection, Pokemon Stadium's jumbotron) are freed
+        // when the stage is left (melee_modes::tu::stage_hop; the heap leak fix of the full-game plan's milestone 0)
+        melee_world::tu::grpstadium::STAGE_SLOT_LOADING = Some(|| unsafe { melee_modes::tu::script_game::ScriptGame_StageSlotRetailLoading() });
+        melee_world::tu::grpstadium::STAGE_SLOT_BUFFER = Some(|p| unsafe { melee_modes::tu::script_game::ScriptGame_StageSlotRetailBuffer(p) });
+        melee_world::tu::grizumi::ext::SCRIPTGAME_STAGESLOTRETAILLOADING = Some(|| unsafe { melee_modes::tu::script_game::ScriptGame_StageSlotRetailLoading() });
+        melee_world::tu::grizumi::ext::SCRIPTGAME_STAGESLOTRETAILBUFFER = Some(|p| unsafe { melee_modes::tu::script_game::ScriptGame_StageSlotRetailBuffer(p) });
         melee_world::tu::grpstadium::ext::hook::Slippi_FrozenStadium = Some(|| {
             static LIVE: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
             *LIVE.get_or_init(|| std::env::var("MELEE_SLIPPI_FROZEN_PS").map_or(0, |v| v.starts_with('1') as i32)) | melee_core::codes::on(melee_core::codes::FROZEN_PS | melee_core::codes::FROZEN_STAGES) as i32
+                // an armed Envoy run always plays frozen PS (full-game plan, milestone 0)
+                | melee_modes::tu::envoy::armed()
         });
         // the three `ftAction_*` skip handlers the macro in ftaction.rs defines (the generator only sees `fn` items): ColAnim command stream
         melee_fighter::tu::ftcolanim::ext::FTACTION_800711DC = Some(|g, c| unsafe { melee_fighter::tu::ftaction::ftAction_800711DC(g, &mut *c) });

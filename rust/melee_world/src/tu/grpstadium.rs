@@ -413,6 +413,28 @@ pub unsafe extern "C" fn fn_801D13C8(gobj: *mut HSD_GObj) {
     (*gp).u.stadium.set_xC4_b0(0);
 }
 
+/// TARGET_PC, in-match stage switching (melee_modes::tu::stage_hop): a buffer the stage allocates instead of using a
+/// scene preload (the match did not start on Pokemon Stadium) is handed to the switch's teardown, which frees it when
+/// the stage is left. Retail never frees them (the scene heap is reset after the match); a hop visit leaked ~0.9 MB.
+/// Set by melee_link (the script_game stage-slot hooks); unset, nothing changes.
+pub static mut STAGE_SLOT_LOADING: Option<fn() -> i32> = None;
+pub static mut STAGE_SLOT_BUFFER: Option<fn(*mut c_void)> = None;
+
+unsafe fn stage_slot_own(p: *mut c_void) {
+    if let (Some(l), Some(b)) = (STAGE_SLOT_LOADING, STAGE_SLOT_BUFFER) {
+        if !p.is_null() && l() != 0 {
+            b(p);
+        }
+    }
+}
+
+/// `stage_slot_own` for a jumbotron image: only when `lb_800121FC` allocated it (no preloaded archive for `entry`).
+unsafe fn stage_slot_own_image(p: *mut c_void, entry: i32) {
+    if ext::lbDvd_GetPreloadedArchive(entry).is_null() {
+        stage_slot_own(p);
+    }
+}
+
 pub unsafe extern "C" fn grStadium_801D13E0(gobj: *mut HSD_GObj) {
     melee_core::ct!("grStadium_801D13E0");
     let gr = (*gobj).user_data as *mut Ground;
@@ -424,6 +446,7 @@ pub unsafe extern "C" fn grStadium_801D13E0(gobj: *mut HSD_GObj) {
     (*gr).u.stadium.xCC = mobj as *mut HSD_MObj;
     if mobj.is_null() {
         (*gr).u.stadium.xCC = ext::HSD_MemAlloc(0x50000) as *mut HSD_MObj;
+        stage_slot_own((*gr).u.stadium.xCC as *mut c_void);
     }
     (*gr).u.stadium.set_xC4_b1(0);
     (*gr).u.stadium.xD0 = null_mut();
@@ -1229,6 +1252,7 @@ pub unsafe extern "C" fn grStadium_801D2BEC() -> *mut HSD_GObj {
     // `memzero(text, 0x18)` clears the GameCube `HSD_ImageDesc` (0x18 bytes there; wider natively: an 8-byte image_ptr)
     ext::memzero(&raw mut (*text).desc as *mut c_void, core::mem::size_of::<HSD_ImageDesc>() as _);
     ext::lb_800121FC(&raw mut (*text).desc, 0xFA, 0xA0, 4, 0x7D2);
+    stage_slot_own_image((*text).desc.image_ptr as *mut c_void, 0x7D2);
     let archive = ext::grDatFiles_GetArchive();
     ext::HSD_SisLib_803A611C(1, gobj, 9, 0xD, 0, 1, 0, 1);
     ext::HSD_SisLib_804D1124[1] = ext::HSD_ArchiveGetPublicAddress((*archive).unk0, b"SIS_GrPStadiumData\0".as_ptr() as *const i8) as *mut SIS;
@@ -1249,6 +1273,7 @@ pub unsafe extern "C" fn grStadium_801D2D78() -> *mut HSD_GObj {
     ext::GObj_InitUserData(temp_r3, 3, Some(ext::cb::HSD_Free), wrapper as *mut c_void);
     ext::memzero(&raw mut (*wrapper).desc as *mut c_void, core::mem::size_of::<HSD_ImageDesc>() as i32);
     ext::lb_800121FC(&raw mut (*wrapper).desc, 0x280, 0x196, 4, 0x7D3);
+    stage_slot_own_image((*wrapper).desc.image_ptr as *mut c_void, 0x7D3);
     (*wrapper).set_flag(1);
     temp_r3
 }
@@ -1261,6 +1286,7 @@ pub unsafe extern "C" fn grStadium_801D2E24() -> *mut HSD_GObj {
     ext::GObj_InitUserData(gobj, 3, Some(ext::cb::HSD_Free), wrapper as *mut c_void);
     ext::memzero(&raw mut (*wrapper).desc as *mut c_void, core::mem::size_of::<HSD_ImageDesc>() as i32);
     ext::lb_800121FC(&raw mut (*wrapper).desc, 0x7C, 0x50, 4, 0x7D4);
+    stage_slot_own_image((*wrapper).desc.image_ptr as *mut c_void, 0x7D4);
     (*wrapper).set_flag(0);
     gobj
 }

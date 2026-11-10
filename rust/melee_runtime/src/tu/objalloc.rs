@@ -132,6 +132,13 @@ pub unsafe fn HSD_ObjAllocAddFree(data: *mut HSD_ObjAllocData, mut num: u32) -> 
     num as i32
 }
 pub unsafe fn HSD_ObjAlloc(data: *mut HSD_ObjAllocData) -> *mut c_void {
+    let p = HSD_ObjAlloc_body(data);
+    if !data.is_null() {
+        melee_core::heaptrace::piece_alloc(p as usize, (*data).size as u32);
+    }
+    p
+}
+unsafe fn HSD_ObjAlloc_body(data: *mut HSD_ObjAllocData) -> *mut c_void {
     melee_core::ct!("HSD_ObjAlloc");
     if (*data).num_limit_flag() != 0 && (*data).used >= (*data).num_limit { return core::ptr::null_mut(); }
     if (*data).heap_limit_flag() != 0 {
@@ -155,6 +162,7 @@ pub unsafe fn HSD_ObjAlloc(data: *mut HSD_ObjAllocData) -> *mut c_void {
     cur.cast()
 }
 pub unsafe fn HSD_ObjFree(data: *mut HSD_ObjAllocData, obj: *mut c_void) {
+    melee_core::heaptrace::piece_free(obj as usize);
     melee_core::ct!("HSD_ObjFree");
     ext::Snap_NoteObj(data.cast(), obj, 1);
     snap_note_render(data, -1);

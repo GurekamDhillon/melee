@@ -70,6 +70,20 @@ pub unsafe fn HSD_GObj_80391260(arg0: *mut _HSD_GObjLibInitDataType) {
         HSD_GObj_80408600[0] = Some(HSD_GObj_80391120);
         HSD_GObj_80408600[3] = Some(HSD_GObj_803911C0);
     }
+    // gobjinit.c registers `HSD_LObjRemoveAll` and `HSD_JObjRemoveAll` as the light / jobj kinds' release functions.
+    // They were missing (None), so freeing a GObj never released its light or model tree: retail resets the scene heap
+    // after a scene, but an in-match stage switch (melee_modes::tu::stage_hop) leaked every outgoing stage model,
+    // ~0.2-0.6 MB of heap 0 per switch (the full-game plan's milestone 0, risk R2).
+    if HSD_GObj_80408600[1].is_none() {
+        unsafe extern "C" fn lobj_remove(o: *mut melee_types::HSD_Obj) {
+            super::lobj::native::HSD_LObjRemoveAll(o.cast());
+        }
+        unsafe extern "C" fn jobj_remove(o: *mut melee_types::HSD_Obj) {
+            super::jobj::HSD_JObjRemoveAll_ptr(o.cast());
+        }
+        HSD_GObj_80408600[1] = Some(lobj_remove);
+        HSD_GObj_80408600[2] = Some(jobj_remove);
+    }
     HSD_GObj_80408610.funcs = HSD_GObj_80408600.as_mut_ptr();
     let mut count = HSD_GObj_803912A8(arg0, &mut HSD_GObj_80408610);
     HSD_GObj_CameraKind = count;

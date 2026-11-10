@@ -4394,6 +4394,37 @@ pub unsafe extern "C" fn mn_8022D7F4(mut gp: *mut HSD_GObj) {
         .selection_count as ::core::ffi::c_int & 0xff as ::core::ffi::c_int;
     buttons = mn_80229624(4 as u32_0);
     mn_804A04F0.buttons = buttons as u64_0;
+    // port: the Envoy row below the retail 1-P rows (envoy-redesign.md 1.2; inert unless an Envoy presentation mod
+    // registered its camp, melee_modes::tu::envoy::DOOR_ON)
+    if crate::tu::envoy::DOOR_ON != 0 {
+        let mut at_last = true;
+        let mut j = mn_804A04F0.hovered_selection as s32 + 1;
+        while j < selection_count {
+            if mn_80229938(MENU_KIND_1P, j) != 0 {
+                at_last = false;
+            }
+            j += 1;
+        }
+        let has = |b: _MenuInput| buttons & b as u32_0 != 0;
+        match crate::tu::envoy::door_1p(has(MenuInput_Confirm), has(MenuInput_Back), has(MenuInput_Up), has(MenuInput_Down), at_last) {
+            crate::tu::envoy::DOOR_EAT => return,
+            crate::tu::envoy::DOOR_MOVE => {
+                sfxMove();
+                return;
+            }
+            crate::tu::envoy::DOOR_TO_TOP => {
+                sfxMove();
+                mn_804A04F0.hovered_selection = SEL_1P_REG as u16_0;
+                return;
+            }
+            crate::tu::envoy::DOOR_OPENED => {
+                sfxForward();
+                mn_804D6BC8.cooldown = 5 as u16_0;
+                return;
+            }
+            _ => {}
+        }
+    }
     if buttons & MenuInput_Confirm as ::core::ffi::c_int as u32_0 != 0 {
         mn_804A04F0.entering_menu = 1 as u8_0;
         gm_801677E8(mn_8022C7CC_inline() as s8);
@@ -4595,6 +4626,17 @@ pub unsafe extern "C" fn mn_8022DB10(mut gp: *mut HSD_GObj) {
 pub unsafe extern "C" fn mnMain_Scene_OnFrame() {
     melee_core::ct!("mnMain_Scene_OnFrame");
     let mut data: *mut MenuExitData = ::core::ptr::null_mut::<MenuExitData>();
+    // port: the Envoy camp started the run (melee_modes::tu::envoy::LAUNCH_VS): the menu's own VS pick
+    if crate::tu::envoy::LAUNCH_VS != 0 {
+        crate::tu::envoy::LAUNCH_VS = 0;
+        crate::tu::envoy::DOOR_HOVER = 0;
+        if !crate::menuguard::deny(GM_VS as i32) {
+            data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
+            (*data).pending_mode = GM_VS as ::core::ffi::c_int as s8;
+            gm_801A4B60();
+            return;
+        }
+    }
     if mn_8022F218() != 0
         && mn_804A04F0.cur_menu as ::core::ffi::c_int
             != MENU_KIND_MAIN as ::core::ffi::c_int
@@ -4764,6 +4806,7 @@ pub unsafe extern "C" fn mnMain_Scene_OnEnter(mut user_data: *mut ::core::ffi::c
     let mut pc_native_kind: u8_0 = 0 as u8_0;
     let mut pc_native_sel: u8_0 = 0 as u8_0;
     let mut _pad: [u8_0; 20] = [0; 20];
+    crate::tu::envoy::DOOR_HOVER = 0; // port: the Envoy row starts unhovered
     mn_804D6BC8.cooldown = 0x14 as u16_0;
     mn_804D6BC8.x2 = 0 as u16_0;
     mn_804D6BC8.x4 = 0 as ::core::ffi::c_int as s32;

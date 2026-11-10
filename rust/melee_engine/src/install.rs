@@ -24,12 +24,16 @@ fn destroy_heap(id: i32) { os().destroy_heap(id) }
 fn set_current(id: i32) -> i32 { os().set_current_heap(id) }
 fn alloc_from(id: i32, n: u32) -> *mut c_void {
     let p = os().alloc_from_heap(id, n);
+    melee_core::heaptrace::alloc(id, p as usize, n);
     if p.is_null() {
         eprintln!("engine: OSAllocFromHeap(heap {id}, {n:#x}) failed; heap has {:#x} free", os().check_heap(id));
     }
     p
 }
-fn free_to(id: i32, p: *mut c_void) { os().free_to_heap(id, p) }
+fn free_to(id: i32, p: *mut c_void) {
+    melee_core::heaptrace::free(p as usize);
+    os().free_to_heap(id, p)
+}
 fn check_heap(id: i32) -> i32 { os().check_heap(id) }
 
 /// Install every seam. Call after `Host::boot`.

@@ -231,7 +231,13 @@ pub unsafe fn GetMemoryEntry(idx: i32) -> *mut HSD_MemoryEntry {
 }
 
 /// `hsdAllocMemPiece`.
+/// `hsdAllocMemPiece` (with the MELEE_HEAP_LEAKS piece census around it).
 pub unsafe fn hsdAllocMemPiece(size: i32) -> *mut c_void {
+    let p = hsdAllocMemPiece_body(size);
+    melee_core::heaptrace::piece_alloc(p as usize, size as u32);
+    p
+}
+unsafe fn hsdAllocMemPiece_body(size: i32) -> *mut c_void {
     melee_core::ct!("hsdAllocMemPiece");
     let mut temp_r29 = (size + 0x1F) / 32 - 1;
     let temp_r3_3 = GetMemoryEntry((size + 0x1F) / 32 - 1);
@@ -293,6 +299,7 @@ pub unsafe fn hsdAllocMemPiece(size: i32) -> *mut c_void {
 pub unsafe fn hsdFreeMemPiece(mem: *mut c_void, size: i32) {
     melee_core::ct!("hsdFreeMemPiece");
     let piece = mem as *mut HSD_FreeList;
+    melee_core::heaptrace::piece_free(mem as usize);
     if !mem.is_null() {
         let entry = GetMemoryEntry((size + 31) / 32 - 1);
         (*piece).next = (*entry).free_list;

@@ -823,6 +823,10 @@ impl RetailPlay {
                 log(&format!("tick {}: event {}", self.tick_no, unsafe { (*melee_modes::tu::gmmain_lib::gmMainLib_804D3EE0).vs.unk_530.unk_535 }));
             }
             self.arm = now.1 == crate::play_net::SCENE_VS;
+            // the Envoy run disarms on the way back to the main menu (envoy-redesign.md 1.3); VS from there is retail
+            if now.0 == melee_types::GM_MENU as u8 && prev.0 != melee_types::GM_MENU as u8 {
+                unsafe { melee_modes::tu::envoy::ARMED = 0 };
+            }
             if prev.1 == melee_types::GS_RESULTS as u8 {
                 self.matches += 1;
                 if self.quit_after.is_some_and(|n| self.matches >= n) {
@@ -830,6 +834,9 @@ impl RetailPlay {
                     self.quit = true;
                 }
             }
+        }
+        if self.net.is_none() && self.sync.is_none() && self.feed.is_none() && self.spec_client.is_none() {
+            crate::envoy_store::sync();
         }
         if self.max_frames.is_some_and(|n| self.tick_no >= n) {
             log(&format!("max frames reached in {}", scene_name(self.cur.1)));

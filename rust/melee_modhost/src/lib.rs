@@ -643,7 +643,7 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_envoy_seq", || -> i32 { unsafe { melee_modes::tu::envoy::SEQ } });
     // the door (envoy-redesign.md 1.3): whether the run is armed (the camp's Continue / New run); the sim publishes a
     // plan only while armed, so VS stays retail with the mods loaded
-    w!("gd_envoy_armed", || -> i32 { unsafe { melee_modes::tu::envoy::ARMED } });
+    w!("gd_envoy_armed", || -> i32 { melee_modes::tu::envoy::armed() });
     // the saved run record (host-side file, read at arm time): the words copied (<= cap), 0 = no saved run
     w!("gd_envoy_record", |mut c: Caller<'_, HostData>, out: u32, cap: u32| -> i32 {
         let (rec, n) = unsafe { (melee_modes::tu::envoy::SAVED, melee_modes::tu::envoy::SAVED_LEN) };

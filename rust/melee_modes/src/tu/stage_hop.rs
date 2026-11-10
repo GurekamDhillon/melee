@@ -26,7 +26,21 @@ pub const HOP_UNSUPPORTED: i32 = -18;
 
 /// The five audited retail stages (FD, BF, Yoshi's Story, Dream Land, Fountain of Dreams).
 pub fn supported(kind: i32) -> bool {
-    unsafe { sg::st_retail_supported(kind) != 0 }
+    (unsafe { sg::st_retail_supported(kind) != 0 }) || audit_extra(kind)
+}
+
+/// Audit knob (notes/envoy-stage-audit.md): `MELEE_STAGE_HOP_EXTRA=30,29,16` also allows those ground kinds, so a
+/// candidate stage can be started on and shifted into / out of before it is added to `st_retail_supported`.
+/// Unset (every normal run) it changes nothing; fixed for the process, so it is deterministic.
+fn audit_extra(kind: i32) -> bool {
+    static EXTRA: std::sync::OnceLock<std::vec::Vec<i32>> = std::sync::OnceLock::new();
+    EXTRA
+        .get_or_init(|| {
+            std::env::var("MELEE_STAGE_HOP_EXTRA")
+                .map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect())
+                .unwrap_or_default()
+        })
+        .contains(&kind)
 }
 
 /// The ground kind that is live now.
@@ -171,7 +185,14 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
     core::ptr::write_bytes(archive as *mut u8, 0, core::mem::size_of::<HSD_Archive>());
     let mut actual: usize = 0;
     sg::lbFile_8001668C(path.as_ptr(), work, &mut actual);
-    if actual != bytes as usize || sg::HSD_ArchiveParse(archive, work as *mut u8, bytes as usize) < 0 {
+    // The engine decodes the archive's custom roots (`yakumono_param`: melee_engine::dat_custom, the per-stage layouts of
+    // yakumono_layouts.rs) at parse time, picking the layout by `stage_info.grkind`: that must already name the destination,
+    // or the record is decoded with the outgoing stage's layout (Kongo Jungle 64: all zeros, the barrel launcher asserts).
+    let live_kind = sg::stage_info.grkind;
+    sg::stage_info.grkind = kind as _;
+    let parsed = actual == bytes as usize && sg::HSD_ArchiveParse(archive, work as *mut u8, bytes as usize) >= 0;
+    sg::stage_info.grkind = live_kind;
+    if !parsed {
         free_both(work, archive);
         return HOP_READ;
     }

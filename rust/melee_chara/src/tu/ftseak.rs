@@ -76,6 +76,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 }
 
 /// `ftSk_Init_80110198` as a callback entry (the take-damage / death2 callback).
+#[inline(never)] // compared by address in ftSk_SpecialN: keep one copy
 pub unsafe extern "C" fn cb_ftSk_Init_80110198(g: *mut HSD_GObj) {
     melee_core::ct!("cb_ftSk_Init_80110198");
     ftSk_Init_80110198(g);

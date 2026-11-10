@@ -85,7 +85,7 @@ pub mod ext {
         fn Player_SetCostumeId(slot: i32, id: i32) -> () = crate::tu::adapt::Player_SetCostumeId__920e80;
         fn Player_SetFacingDirection(slot: i32, dir: f32) -> () = crate::tu::adapt::Player_SetFacingDirection__e0fc0a;
         fn Player_SetPlayerCharacter(slot: i32, ckind: CharacterKind) -> () = crate::tu::adapt::Player_SetPlayerCharacter__d99f81;
-        fn Player_SetPlayerId(slot: i32, id: i32) -> () = crate::tu::adapt::Player_SetPlayerId__dba656;
+        fn Player_SetPadPort(slot: i32, id: i32) -> () = crate::tu::adapt::Player_SetPlayerId__dba656;
         fn Player_SetScale(slot: i32, scale: f32) -> () = crate::tu::adapt::Player_SetScale__3c042c;
         fn Player_SetSlottype(slot: i32, kind: u32) -> () = crate::tu::adapt::Player_SetSlottype__6536f1;
         // ---- lb / mn / ty / sfx
@@ -283,7 +283,7 @@ pub unsafe fn gm_801A68D8() {
     ext::Player_80036CF0(0);
     ext::Player_SetPlayerCharacter(0, ext::gm_801BEFB0());
     ext::Player_SetCostumeId(0, ext::gm_801BEFD0());
-    ext::Player_SetPlayerId(0, 0);
+    ext::Player_SetPadPort(0, 0);
     ext::Player_SetSlottype(0, melee_types::Gm_PKind_Demo);
     ext::Player_SetFacingDirection(0, 1.0f32);
     ext::Player_80032768(0, addr_of!(gm_803DB2C8) as *mut Vec3);

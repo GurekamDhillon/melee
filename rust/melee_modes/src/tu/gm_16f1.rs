@@ -1183,16 +1183,19 @@ pub unsafe fn gm_801721EC() -> i32 {
     (gm_801721EC_2() || gm_801721EC_4()) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_801722BC() -> i32 {
     melee_core::ct!("fn_801722BC");
     (ext::fn_80163FA4(0x1E) == 0x1E) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_801722F4() -> i32 {
     melee_core::ct!("fn_801722F4");
     (ext::fn_80163FA4(0x33) == 0x33) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_8017232C() -> i32 {
     melee_core::ct!("fn_8017232C");
     for i in 0..0x19 {
@@ -1203,6 +1206,7 @@ pub unsafe fn fn_8017232C() -> i32 {
     0
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172380() -> i32 {
     melee_core::ct!("fn_80172380");
     for i in 0..0x19 {
@@ -1213,6 +1217,7 @@ pub unsafe fn fn_80172380() -> i32 {
     0
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_801723D4() -> i32 {
     melee_core::ct!("fn_801723D4");
     for i in 0..0x19 {
@@ -1223,6 +1228,7 @@ pub unsafe fn fn_801723D4() -> i32 {
     0
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172428() -> i32 {
     melee_core::ct!("fn_80172428");
     for i in 0..0x19 {
@@ -1233,6 +1239,7 @@ pub unsafe fn fn_80172428() -> i32 {
     0
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172478() -> i32 {
     melee_core::ct!("fn_80172478");
     for i in 0..0x19 {
@@ -1245,71 +1252,85 @@ pub unsafe fn fn_80172478() -> i32 {
 
 /// Same as `crate::gm::fn_801724C8`, but int-returning so its address fits the `bool (*)(void)` table slots
 /// (`lbl_803D6300_t::x4`), which hold `unsafe fn() -> i32`.
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_801724C8() -> i32 {
     melee_core::ct!("fn_801724C8");
     0
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_801724D0() -> i32 {
     melee_core::ct!("fn_801724D0");
     (ext::gm_GetVsPlayMatchTotal() >= 0x64) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172504() -> i32 {
     melee_core::ct!("fn_80172504");
     (ext::gm_GetVsPlayMatchTotal() >= 0x3E8) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172538() -> i32 {
     melee_core::ct!("fn_80172538");
     (ext::gm_GetVsPlayMatchTotal() >= 0x2710) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_8017256C() -> i32 {
     melee_core::ct!("fn_8017256C");
     (ext::gm_GetVsPlayMatchTotal() >= 0x186A0) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_801725A8() -> i32 {
     melee_core::ct!("fn_801725A8");
     (ext::gm_GetVsPlayMatchTotal() >= 0xF4240) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_801725E4() -> i32 {
     melee_core::ct!("fn_801725E4");
     (ext::lbLang_GetLanguageSetting() == LANG_JP && ext::gm_GetVsPlayMatchTotal() >= 0x1A90) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172624() -> i32 {
     melee_core::ct!("fn_80172624");
     (ext::lbLang_GetLanguageSetting() == LANG_US && ext::gm_GetVsPlayMatchTotal() >= 0x1383) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172664() -> i32 {
     melee_core::ct!("fn_80172664");
     (ext::gm_GetVsPlayMatchTotal() >= 0xC350) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172698() -> i32 {
     melee_core::ct!("fn_80172698");
     (ext::Toy_GetTrophyTotal() >= 0x32) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_801726CC() -> i32 {
     melee_core::ct!("fn_801726CC");
     (ext::Toy_GetTrophyTotal() >= 0x64) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172700() -> i32 {
     melee_core::ct!("fn_80172700");
     (ext::Toy_GetTrophyTotal() >= 0x96) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172734() -> i32 {
     melee_core::ct!("fn_80172734");
     (ext::Toy_GetTrophyTotal() >= 0xC8) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80172768() -> i32 {
     melee_core::ct!("fn_80172768");
     (ext::Toy_GetTrophyTotal() >= 0xFA) as i32
@@ -1790,6 +1811,7 @@ pub unsafe fn gm_801734D0(arg0: u32) -> u16 {
     0x148
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80173510() -> i32 {
     melee_core::ct!("fn_80173510");
     let temp_r31 = ext::gmMainLib_8015EDA4();
@@ -1809,6 +1831,7 @@ pub unsafe fn fn_80173510() -> i32 {
     (*ext::gmMainLib_8015EDC8()).x5 as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_801735F0() -> i32 {
     melee_core::ct!("fn_801735F0");
     if (*ext::gmMainLib_8015EDC8()).x4 == 0 && ext::gm_80164ABC() != 0 {
@@ -1817,11 +1840,13 @@ pub unsafe fn fn_801735F0() -> i32 {
     (*ext::gmMainLib_8015EDC8()).x4 as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_80173644() -> i32 {
     melee_core::ct!("fn_80173644");
     ((*ext::gmMainLib_8015EDC8()).x0 >= 0x1388) as i32
 }
 
+#[inline(never)] // in the lbl_803D6300 table, compared by address in the oracle
 pub unsafe fn fn_8017367C() -> i32 {
     melee_core::ct!("fn_8017367C");
     if (*ext::gmMainLib_8015EDC8()).x6 == 0 && ext::gm_80164ABC() != 0 && ext::gm_80164600() != 0 {

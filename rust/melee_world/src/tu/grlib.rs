@@ -37,6 +37,7 @@ pub mod ext {
     }
     pub static mut HSD_AOBJSETFLAGS: Option<fn(*mut HSD_AObj, u32)> = None;
     #[allow(non_snake_case)]
+    #[inline(never)] // its address is handed to HSD_ForeachAnim and compared: keep one copy
     pub fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
         match unsafe { HSD_AOBJSETFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { melee_runtime::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; } }
     }
@@ -258,6 +259,7 @@ pub unsafe fn grLib_801C9B8C(arg0: *mut DynamicsDesc) {
 }
 
 /// `static void grLib_801C9BC8(HSD_GObj*)`.
+#[inline(never)] // compared by address: keep one copy
 pub unsafe extern "C" fn grLib_801C9BC8(gobj: *mut HSD_GObj) {
     melee_core::ct!("grLib_801C9BC8");
     let jobj = GET_JOBJ(gobj);
@@ -266,6 +268,7 @@ pub unsafe extern "C" fn grLib_801C9BC8(gobj: *mut HSD_GObj) {
 }
 
 /// `static void grLib_801C9C40(HSD_GObj*)`.
+#[inline(never)] // compared by address: keep one copy
 pub unsafe extern "C" fn grLib_801C9C40(gobj: *mut HSD_GObj) {
     melee_core::ct!("grLib_801C9C40");
     let jobj = GET_JOBJ(gobj);

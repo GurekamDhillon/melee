@@ -155,6 +155,8 @@ pub unsafe extern "C" fn ftZd_SpecialN_8013A8AC(gobj: *mut HSD_GObj) {
 }
 
 /// `ftZd_SpecialN_8013ADB0` (the reflect-hit callback; the body is in chars::r12).
+// never inlined: tests compare this callback by address, and an empty body would be copied per crate
+#[inline(never)]
 pub unsafe extern "C" fn ftZd_SpecialN_8013ADB0_cb(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftZd_SpecialN_8013ADB0_cb");
     crate::chars::r12::ftZelda::ftzeldaspecialn::ftZd_SpecialN_8013ADB0(gobj)

@@ -218,6 +218,10 @@ unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
     }
 }
 unsafe fn install_hooks() {
+        melee_chara::stubs::FTANIM_80070C48 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("ftAnim_80070C48("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FTANIM_80070C48 = Some(|a0: *mut HSD_GObj, a1: isize| { lg_s("ftAnim_80070C48("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTANIM_80070CC4 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("ftAnim_80070CC4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
+        melee_chara::tu::ftinl::ext::FTANIM_80070CC4 = Some(|a0: *mut HSD_GObj, a1: isize| { lg_s("ftAnim_80070CC4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::FTANIM_80070FB4 = Some(|a0: *mut HSD_GObj, a1: i32, a2: i32| { lg_s("ftAnim_80070FB4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
         melee_chara::stubs::FTPARTS_80074A4C = Some(|a0: *mut HSD_GObj, a1: i32, a2: i32| { lg_s("ftParts_80074A4C("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftinl::ext::ITGETHOLDKIND = Some(|a0: *mut Item_GObj| -> i32 { lg_s("itGetHoldKind("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); { let r = gen_i() as i32; lg_retu(r as u32); lg_c(';'); r } });

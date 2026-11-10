@@ -280,6 +280,25 @@ def parse_hooks(rs_text):
             n, t = p.split(":", 1)
             params.append((n.strip(), t.strip()))
         out[name] = dict(hook=hook, params=params, ret=ret)
+    return parse_manual_hooks(rs_text, out)
+
+
+def parse_manual_hooks(rs_text, out):
+    """Hand-expanded hooks: `pub static mut HOOK: Option<fn(T, ..) [-> R]> = None;` followed by the
+    `pub fn name(` wrapper that consults it (the macro forms are parsed above)."""
+    for m in re.finditer(r"pub static mut (\w+): Option<fn\(", rs_text):
+        hook = m.group(1)
+        params_src = scan_balanced(rs_text, m.end())
+        j = m.end() + len(params_src) + 1
+        rm = re.match(r"\s*(?:->\s*([^=]+?))?>\s*=\s*None;", rs_text[j:j + 200])
+        if not rm:
+            continue
+        fm = re.search(r"pub fn (\w+)\(", rs_text[j:j + 600])
+        if not fm or fm.group(1) in out:
+            continue
+        params = [(f"a{i}", t.strip()) for i, t in enumerate(split_top(params_src)) if t.strip()]
+        ret = rm.group(1).strip() if rm.group(1) else None
+        out[fm.group(1)] = dict(hook=hook, params=params, ret=ret)
     return out
 
 
@@ -309,6 +328,11 @@ def parse_stubs(rs_text):
                 t = t.strip()
                 params.append((n.strip(), "*mut HSD_GObj" if t == "G" else t))
         out[name] = dict(hook=hook, params=params, ret="*mut HSD_GObj" if ret == "G" else ret)
+    g = lambda t: "*mut HSD_GObj" if t == "G" else t
+    for n, info in parse_manual_hooks(rs_text, {}).items():
+        if n not in out:
+            out[n] = dict(hook=info["hook"], params=[(a, g(t)) for a, t in info["params"]],
+                          ret=g(info["ret"]) if info["ret"] else None)
     return out
 
 
@@ -407,7 +431,7 @@ def stub_c(name, fn):
         L.append("    { float r = rf(); lg_retf(r); lg_c(';'); return r; }")
     elif rk == "d":
         L.append("    { double r = (double) rf(); lg_retd(r); lg_c(';'); return r; }")
-    elif rk in ("G", "FP", "p", "v3", "v2", "pf", "pi", "fn"):
+    elif rk in ("G", "FP", "p", "v3", "v2", "pf", "pi", "fn") or rk.startswith("ps:"):  # ps: a pointer to a small record
         L.append(f"    {{ {ret.spelling} r = ({ret.spelling}) gen_p(); lg_retp((const void*) r); lg_c(';'); return r; }}")
     L.append("}")
     return "\n".join(L), kinds, rk, ret

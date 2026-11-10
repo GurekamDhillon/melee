@@ -93,6 +93,63 @@ def strip(t):
     return t
 
 
+class _SugaredProto:
+    """A canonical function type whose parameter types are taken from the typedef's PARM_DECLs (so
+    intptr_t parameters keep their sugar and map to isize, like melee_types)."""
+    def __init__(self, canon, parms):
+        self.canon, self.parms = canon, parms
+        self.kind = canon.kind
+        self.spelling = canon.spelling + " /*" + ",".join(a.spelling for a in parms) + "*/"
+
+    def argument_types(self):
+        return list(self.parms)
+
+    def get_result(self):
+        return self.canon.get_result()
+
+    def get_canonical(self):
+        return self.canon
+
+    def __getattr__(self, n):
+        return getattr(self.canon, n)
+
+
+def sugared_fnproto(t):
+    """The function type a fn-pointer typedef points to, with the typedef's parameter sugar; None when
+    the type is not a typedef or no parameter is pointer-sized-int sugared (nothing to keep)."""
+    tt = t
+    for _ in range(16):
+        if tt.kind == T.ELABORATED:
+            tt = tt.get_named_type()
+        elif tt.kind == T.TYPEDEF:
+            d = tt.get_declaration()
+            parms = [c.type for c in d.get_children() if c.kind == K.PARM_DECL]
+            canon = tt.get_canonical().get_pointee().get_canonical() if tt.get_canonical().kind == T.POINTER else None
+            if canon is not None and canon.kind == T.FUNCTIONPROTO and len(parms) == len(list(canon.argument_types())):
+                if any(a.spelling in ("intptr_t", "uintptr_t") for a in parms):
+                    return _SugaredProto(canon, parms)
+                return None
+            tt = d.underlying_typedef_type
+        else:
+            return None
+    return None
+
+
+def sugared_element(t):
+    """The element type of a (possibly typedef'd) constant array, with its sugar kept."""
+    tt = t
+    for _ in range(16):
+        if tt.kind == T.ELABORATED:
+            tt = tt.get_named_type()
+        elif tt.kind == T.TYPEDEF:
+            tt = tt.get_declaration().underlying_typedef_type
+        elif tt.kind == T.CONSTANTARRAY:
+            return tt.element_type
+        else:
+            return None
+    return None
+
+
 def classify(t):
     # uintptr_t/intptr_t are 4 bytes in the melee_types (GameCube) layout, 8 on the native C side:
     # draw and hash them as 32-bit on both
@@ -121,10 +178,10 @@ def classify(t):
     if k == T.POINTER:
         p = c.get_pointee().get_canonical()
         if p.kind in (T.FUNCTIONPROTO, T.FUNCTIONNOPROTO):
-            return ("fnptr", p)
+            return ("fnptr", sugared_fnproto(t) or p)
         return ("ptr", c.get_pointee())
     if k == T.CONSTANTARRAY:
-        return ("arr", c.element_type, c.element_count)
+        return ("arr", sugared_element(t) or c.element_type, c.element_count)
     if k in (T.INCOMPLETEARRAY,):
         return ("arr", c.element_type, 0)
     if k == T.RECORD:
@@ -154,14 +211,33 @@ class Gen2:
         return self.n.rty(t)
 
     def bit_union(self, d):
-        """A union of one scalar byte and an anonymous struct of bitfields (UnkFlagStruct): the bit order
-        differs between PPC (MSB first) and the native C, so it is walked bit by bit, by name."""
+        """A union of one scalar byte and a struct of bitfields (UnkFlagStruct; the struct anonymous, or
+        named and declared in place: `struct UnkFlagStruct_x0 {..} x0;`): the bit order differs between
+        PPC (MSB first) and the native C, so it is walked bit by bit, by name."""
         kids = list(d.get_children())
-        anon = [c for c in kids if c.kind == K.STRUCT_DECL and c.is_anonymous_record_decl()]
-        if len(anon) != 1:
+        sts = [c for c in kids if c.kind == K.STRUCT_DECL]
+        if len(sts) != 1:
             return False
-        fl = [c for c in anon[0].get_children() if c.kind == K.FIELD_DECL]
+        if not sts[0].is_anonymous_record_decl():
+            named = [c for c in kids if c.kind == K.FIELD_DECL
+                     and c.type.get_canonical().kind == T.RECORD
+                     and c.type.get_canonical().get_declaration() == sts[0]]
+            if len(named) != 1:
+                return False
+        fl = [c for c in sts[0].get_children() if c.kind == K.FIELD_DECL]
         return bool(fl) and all(c.is_bitfield() for c in fl)
+
+    def bu_members(self, d, cp, rp):
+        """members() of a record, but for a bit union with a named bitfield struct, that struct's bits
+        (C path cp.x0.b0, Rust path rp.x0.b0)."""
+        kids = list(d.get_children())
+        sts = [c for c in kids if c.kind == K.STRUCT_DECL]
+        if len(sts) == 1 and not sts[0].is_anonymous_record_decl() and self.bit_union(d):
+            f = next(c for c in kids if c.kind == K.FIELD_DECL and c.type.get_canonical().kind == T.RECORD
+                     and c.type.get_canonical().get_declaration() == sts[0])
+            yield from self.members(sts[0], f"{cp}.{f.spelling}", f"{rp}.{g.ident(f.spelling)}")
+            return
+        yield from self.members(d, cp, rp)
 
     # ---- field iteration
     def members(self, d, cp, rp):
@@ -184,6 +260,9 @@ class Gen2:
                     # walk only the first member of the union
                     ukids = list(ch.get_children())
                     first = ukids[0]
+                    if first.kind in (K.STRUCT_DECL, K.UNION_DECL) and not first.is_anonymous_record_decl():
+                        # a named nested record declared in place (`union T {..} x8;`): its field follows
+                        first = next(c for c in ukids if c.kind == K.FIELD_DECL)
                     if first.kind == K.FIELD_DECL:
                         yield first, f"{cp}.{first.spelling}", f"{rp}.{nm}.{g.ident(first.spelling)}"
                     else:
@@ -241,7 +320,7 @@ class Gen2:
                 return ([f"{{ int {i}; for ({i} = 0; {i} < {sz}; {i}++) ((unsigned char*)&{cp})[{i}] = (unsigned char) tuo_draw_int(&{stream}); }}"],
                         [f"{{ assert_eq!(core::mem::size_of_val(&{rp}), {sz}); for {i} in 0..{sz} {{ *(&mut {rp} as *mut _ as *mut u8).add({i}) = rt::draw_int(&mut {rstream}) as u8; }} }}"])
             cl, rl = [], []
-            for f, fc, fr in self.members(d, cp, rp):
+            for f, fc, fr in self.bu_members(d, cp, rp):
                 if not f.spelling:
                     continue  # unnamed bitfield padding
                 if k[2] and not f.is_bitfield():
@@ -326,7 +405,7 @@ class Gen2:
                 return ([f"tuo_h_bytes(&{cp}, {sz});"],
                         [f"rt::h_bytes(&{rp} as *const _ as *const u8, {sz});"])
             cl, rl = [], []
-            for f, fc, fr in self.members(d, cp, rp):
+            for f, fc, fr in self.bu_members(d, cp, rp):
                 if not f.spelling:
                     continue
                 if k[2] and not f.is_bitfield():
@@ -1291,8 +1370,12 @@ class TuGen:
             L.append(f"    SNAP{k} = core::slice::from_raw_parts({o['r_ptr']} as *const u8, core::mem::size_of_val(&*{o['r_ptr']})).to_vec();")
         L.append("    rt::NSTATIC = rt::REGS.len();")
         L.append("    rt::CONSTS = vec![" + ", ".join(str(v) for v in self.consts()) + "];")
-        for n in sorted(self.funcs):
-            L.append(f"    rt::fn_add(m::{self.rn(n)} as usize);")
+        for j, n in enumerate(sorted(self.funcs)):
+            if n in self.skip:
+                # a skipped function (e.g. a static inline the port folds away): keep its slot only
+                L.append(f"    rt::fn_add(usize::MAX - 0x10000 - {j});")
+            else:
+                L.append(f"    rt::fn_add(m::{self.rn(n)} as usize);")
         for k, s in enumerate(self.ext):
             if s["name"] in self.cfg.get("rust_missing", ()):
                 # the port has no such external (it inlines or ports the callee): keep the slot so function-pointer classes line up

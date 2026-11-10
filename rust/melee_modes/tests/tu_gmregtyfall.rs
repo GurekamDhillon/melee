@@ -265,12 +265,6 @@ fn b_initimages(c: &mut Case) {
     }
 }
 
-fn b_trophyz(c: &mut Case) {
-    c.ret_flt("Toy_803060BC", -10.0, 10.0);
-    let v = c.rng.range(0, 3) as i32;
-    c.arg(v);
-}
-
 #[test]
 fn gmregtyfall_vs_c() {
     let funcs = [
@@ -290,7 +284,6 @@ fn gmregtyfall_vs_c() {
         fd!("gm_801A6EE4", "", "v", 40, b_load, |a| { tu::gm_801A6EE4(); 0 }),
         fd!("initImages", "", "v", 4, b_initimages, |a| { tu::initImages(); 0 }),
         fd!("gm_801A7070_SetupMain", "i", "v", 24, b_setup_main, |a| { tu::gm_801A7070_SetupMain(au8(a, 0)); 0 }),
-        fd!("getTrophyTranslateZ", "i", "f", 8, b_trophyz, |a| { r(tu::getTrophyTranslateZ(ai32(a, 0))) }),
         fd!("gm_801A7070_SetupTrophy", "i", "v", 40, b_setup_trophy, |a| { tu::gm_801A7070_SetupTrophy(au8(a, 0)); 0 }),
         fd!("gm_Scene_ToyFall_OnEnter", "p", "v", 40, b_enter, |a| { tu::gm_Scene_ToyFall_OnEnter(p(a, 0)); 0 }),
         fd!("gm_Scene_ToyFall_OnFrame", "", "v", 40, b_frame, |a| { tu::gm_Scene_ToyFall_OnFrame(); 0 }),

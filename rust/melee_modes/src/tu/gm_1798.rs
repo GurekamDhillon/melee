@@ -194,7 +194,7 @@ pub mod ext {
         fn Player_SetCostumeId(a0: i32, a1: i32) = crate::tu::adapt::Player_SetCostumeId__920e80;
         fn Player_SetFacingDirection(a0: i32, a1: f32) = crate::tu::adapt::Player_SetFacingDirection__e0fc0a;
         fn Player_SetPlayerCharacter(a0: i32, a1: CharacterKind) = crate::tu::adapt::Player_SetPlayerCharacter__d99f81;
-        fn Player_SetPlayerId(a0: i32, a1: i32) = crate::tu::adapt::Player_SetPlayerId__dba656;
+        fn Player_SetPadPort(a0: i32, a1: i32) = crate::tu::adapt::Player_SetPlayerId__dba656;
         fn Player_SetScale(a0: i32, a1: f32) = crate::tu::adapt::Player_SetScale__3c042c;
         fn Player_SetSlottype(a0: i32, a1: Gm_PKind) = crate::tu::adapt::Player_SetSlottype__ff2974;
         fn Stage_802251E8(a0: StKind, a1: *mut i32) = crate::tu::adapt::Stage_802251E8__6e8910;
@@ -683,7 +683,7 @@ pub unsafe fn fn_8017A67C(mut kind: CharacterKind, arg1: i32, arg2: i32) -> *mut
         ext::Player_80036E20(kind, ext::lbArchive_LoadArchive(ext::gm_80160438(kind as i32)), 0);
         ext::Player_SetPlayerCharacter(arg2, kind);
         ext::Player_SetCostumeId(arg2, arg1);
-        ext::Player_SetPlayerId(arg2, arg2);
+        ext::Player_SetPadPort(arg2, arg2);
         ext::Player_SetSlottype(arg2, Gm_PKind_Demo);
 
         if kind == CKind_GameWatch {

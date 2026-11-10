@@ -179,6 +179,8 @@ unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
     }
 }
 unsafe fn install_hooks() {
+        melee_chara::stubs::FTANIM_80070C48 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("ftAnim_80070C48("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
+        melee_chara::stubs::FTANIM_80070CC4 = Some(|a0: *mut HSD_GObj, a1: i32| { lg_s("ftAnim_80070CC4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); lg_c(';'); });
         melee_chara::tu::ftsamus::ext::FTCO_800D9C98 = Some(|a0: *mut HSD_GObj| { lg_s("ftCo_800D9C98("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::stubs::FTCO_AIRCATCHHIT_COLL = Some(|a0: *mut HSD_GObj| { lg_s("ftCo_AirCatchHit_Coll("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_chara::stubs::FTPARTS_80074A4C = Some(|a0: *mut HSD_GObj, a1: i32, a2: i32| { lg_s("ftParts_80074A4C("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_int(a2 as u32); lg_s(")"); lg_c(';'); });

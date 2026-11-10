@@ -107,6 +107,13 @@ pub mod ext {
     /// gm_18A1.c
     pub use crate::tu::gm_18A1::gm_80473A18;
     ext_fns! {
+        // moved to gm_17DB.c upstream: externs of this TU now
+        fn fn_8017DD7C(a0: *mut PlayerInitData, a1: *mut Unk1PData_x24, a2: u8) -> i32 = crate::tu::gm_17DB::fn_8017DD7C;
+        fn fn_8017DF28() -> *mut Unk1PData = crate::tu::gm_17DB::fn_8017DF28;
+        fn fn_8017DF90() -> u8 = crate::tu::gm_17DB::fn_8017DF90;
+        fn fn_8017E21C() = crate::tu::gm_17DB::fn_8017E21C;
+        fn fn_8017E3C8() = crate::tu::gm_17DB::fn_8017E3C8;
+        fn gm_8017E068() -> i32 = crate::tu::gm_17DB::gm_8017E068;
         fn Camera_RequestQuake(a0: CmQuakeKind, a1: *mut Vec);
         fn Camera_SetQuakeScale(a0: f32) = crate::tu::adapt::Camera_SetQuakeScale__cmc;
         fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
@@ -124,7 +131,7 @@ pub mod ext {
         fn Player_GetCpuType(a0: i32) -> i32 = crate::tu::adapt::Player_GetCpuType__ec7fec;
         fn Player_GetEntity(a0: i32) -> *mut HSD_GObj = crate::tu::adapt::Player_GetEntity__090538;
         fn Player_GetNametagSlotID(a0: i32) -> u8 = crate::tu::adapt::Player_GetNametagSlotID__655434;
-        fn Player_GetPlayerId(a0: i32) -> i32 = crate::tu::adapt::Player_GetPlayerId__aaadbd;
+        fn Player_GetPadPort(a0: i32) -> i32 = crate::tu::adapt::Player_GetPlayerId__aaadbd;
         fn Player_GetRemainingHP(a0: i32) -> i32 = crate::tu::adapt::Player_GetRemainingHP__d5e70f;
         fn Player_GetUnk50(a0: i32) -> f32 = crate::tu::adapt::Player_GetUnk50__869319;
         fn Player_SetMoreFlagsBit3(a0: i32, a1: u8) = crate::tu::adapt::Player_SetMoreFlagsBit3__e7d064;
@@ -548,7 +555,7 @@ pub unsafe extern "C" fn fn_8017C1A4(_unused: *mut HSD_GObj) {
                 ext::lbAudioAx_80028B6C();
             }
             if (*tmp).x8 <= temp_r28 && (*tmp).x8 % 30 == 0 {
-                ext::gm_80167858(ext::Player_GetPlayerId(0), ext::Player_GetNametagSlotID(0) as i32, 2, 0x1E);
+                ext::gm_80167858(ext::Player_GetPadPort(0), ext::Player_GetNametagSlotID(0) as i32, 2, 0x1E);
                 ext::Camera_RequestQuake(QuakeKind_Medium, core::ptr::null_mut());
             }
             if (*tmp).x8 <= temp_r29_2 {
@@ -628,7 +635,7 @@ pub unsafe extern "C" fn fn_8017C71C() {
     boss_hook.elapsed = 0;
     boss_hook.sleep_wait = 0;
     boss_hook.driven_mask = 0;
-    (*tmp).xC = ext::ftBossLib_8015C530(gm_8017E068());
+    (*tmp).xC = ext::ftBossLib_8015C530(ext::gm_8017E068());
     ext::Player_SetOtherStamina(2, (*tmp).xC);
     ext::ftLib_LoadFighterCostume(Ft_Kind_CrezyH as i8, 0);
 }
@@ -645,7 +652,7 @@ pub unsafe extern "C" fn fn_8017C7A0() {
 
 pub unsafe extern "C" fn fn_8017C7EC() {
     melee_core::ct!("fn_8017C7EC");
-    let temp_r30 = fn_8017DF28();
+    let temp_r30 = ext::fn_8017DF28();
     let scene_state = ext::gmVs_GetSceneState();
     (*scene_state).timer_seconds = ext::grPushOn_80219230((*temp_r30).x0.ckind as i32) as _;
 }
@@ -735,7 +742,7 @@ pub unsafe fn gm_8017CA38(arg0: *mut DebugGameOverData, arg1: *mut Unk1PData, ar
             _ => {}
         }
         ext::Ground_801C5A60();
-        ext::gm_8017390C(fn_8017DF90() as i32, 0);
+        ext::gm_8017390C(ext::fn_8017DF90() as i32, 0);
         ext::gm_80173EEC();
         ext::gm_80172898(0x40);
         if temp_r31 as u32 == ChKind_None as u32 {
@@ -885,7 +892,7 @@ pub unsafe fn gm_8017CE34(
     }
     ext::Script_OnePStage(onep_mode, count, (*arg1).x8 as i32, 0);
     (*arg1).xC.xC = 1;
-    fn_8017E21C();
+    ext::fn_8017E21C();
     ext::fn_8016F030(arg0);
     (*arg0).rules.x30 = 1.0;
     (*arg0).rules.set_x4_4(1);
@@ -971,7 +978,7 @@ pub unsafe fn gm_8017CE34(
             Some(f) => f(count as u8, gm_8017CE34_GetCpuLevel(arg1), 0),
             None => 0,
         };
-        player_idx = fn_8017DD7C((*arg0).players.as_mut_ptr(), (*arg1).xC.x24.as_mut_ptr(), team_color) + 1;
+        player_idx = ext::fn_8017DD7C((*arg0).players.as_mut_ptr(), (*arg1).xC.x24.as_mut_ptr(), team_color) + 1;
         (*arg0).rules.is_teams = 1;
     }
     player_idx_m = player_idx;
@@ -1211,7 +1218,7 @@ pub unsafe fn gm_8017D7AC(arg0: *mut MatchExitInfo, arg1: *mut Unk1PData, arg2: 
         return 0;
     }
     if ext::Script_OnePScripted() == 0 {
-        fn_8017E3C8();
+        ext::fn_8017E3C8();
     }
     if (*arg1).x8 & 0x80 == 0 {
         (*arg1).x0.stocks = (*arg0).match_end.player_standings[0].stocks as _;

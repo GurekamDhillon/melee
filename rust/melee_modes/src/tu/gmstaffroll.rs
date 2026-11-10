@@ -1523,6 +1523,7 @@ pub unsafe extern "C" fn gm_Scene_StaffRoll_OnEnter(_unused: *mut c_void) {
     }
 }
 
+#[inline(never)] // compared by address: keep one copy
 pub unsafe extern "C" fn gm_Scene_StaffRoll_OnExit(_unused: *mut c_void) { melee_core::ct!("gm_Scene_StaffRoll_OnExit");}
 
 #[allow(dead_code)]

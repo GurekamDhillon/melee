@@ -87,6 +87,10 @@ pub unsafe fn partner_kind(slot: i32) -> i32 {
     if !(0..4).contains(&slot) || pl::TAG_SLOT[slot as usize] == 0 || crate::tu::petey::partner_caged() {
         return -1;
     }
+    if pl::tag_inplace() {
+        // the in-place prototype: the benched character, which has no fighter object
+        return pl::tag_internal_kind(pl::TAG_BENCH_CK[slot as usize] as i32);
+    }
     let f = fighter(entity(slot, 1));
     if f.is_null() { -1 } else { (*f).kind as i32 }
 }
@@ -247,6 +251,9 @@ pub unsafe fn hold_release() -> i32 {
 
 /// The swap itself (`ftCommon_8007EFC8` with Wait as the entry), keeping each character's own percent.
 unsafe fn swap(slot: i32) {
+    if pl::tag_inplace() {
+        return swap_inplace(slot);
+    }
     let out_g = entity(slot, 0);
     let in_g = entity(slot, 1);
     if fighter(out_g).is_null() || fighter(in_g).is_null() {
@@ -263,6 +270,56 @@ unsafe fn swap(slot: i32) {
     pl::Player_SetHPByIndex(slot, f.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(own));
     if std::env::var_os("MELEE_TAG_QUIET").is_none() {
         eprintln!("tag: slot {slot} {} -> {} at frame {}", TRANSITION.from_kind, TRANSITION.to_kind, LOGIC_FRAMES);
+    }
+}
+
+/// The in-place prototype (`MELEE_TAG_INPLACE=1`, notes/envoy-tag-swap.md): spawn the benched character on this slot
+/// as a sleeping sub-fighter, run the retail transform swap onto it (position, velocity, input, damage state...), then
+/// free the outgoing fighter and bench its character and percent in plain statics. The slot owns one fighter object
+/// between tags, so a character with its own sub-fighter (Ice Climbers, Zelda / Sheik) is not blocked by the tag.
+unsafe fn swap_inplace(slot: i32) {
+    let s = slot as usize;
+    let p = &mut *pl::Player_GetPtrForSlot(slot);
+    let out_idx = p.transformed[0] as usize;
+    let free_idx = 1 - out_idx;
+    let out_g = p.player_entity[out_idx];
+    let ck_in = pl::TAG_BENCH_CK[s] as i32;
+    if fighter(out_g).is_null() || ck_in < 0 {
+        return;
+    }
+    if !p.player_entity[free_idx].is_null() {
+        // the active character owns a sub-fighter (Nana): the prototype does not carry pairs yet
+        eprintln!("tag: slot {slot} in-place swap refused: the entity slot is taken");
+        return;
+    }
+    let t0 = std::time::Instant::now();
+    let in_g = pl::tag_inplace_spawn(slot, free_idx, ck_in as CharacterKind);
+    let t1 = std::time::Instant::now();
+    if fighter(in_g).is_null() {
+        return;
+    }
+    let own = pl::TAG_BENCH_PCT[s];
+    let out_pct = (*fighter(out_g)).dmg.x1830_percent;
+    let ck_out = p.ckind as i32;
+    if (*fighter(out_g)).ground_or_air == GA_Ground {
+        melee_fighter::tu::ftcommon::ftcommon_8007efc8(out_g, |g| melee_fighter::tu::ft_08a1::ft_8008A2BC(g));
+    } else {
+        melee_fighter::tu::ftcommon::ftcommon_8007efc8(out_g, |g| melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(g));
+    }
+    let f = &mut *fighter(in_g);
+    f.dmg.x1830_percent = own;
+    pl::Player_SetHPByIndex(slot, f.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(own));
+    let t2 = std::time::Instant::now();
+    pl::tag_inplace_free(slot, out_idx);
+    let t3 = std::time::Instant::now();
+    p.ckind = ck_in as CharacterKind;
+    pl::TAG_BENCH_CK[s] = ck_out as i8;
+    pl::TAG_BENCH_PCT[s] = out_pct;
+    // wall-clock diagnostics stay local (never in a static the snapshot would compare)
+    let us = [(t1 - t0).as_micros(), (t3 - t2).as_micros()];
+    if std::env::var_os("MELEE_TAG_QUIET").is_none() {
+        eprintln!("tag: slot {slot} {} -> {} at frame {} (in place: spawn {} us, despawn {} us)", TRANSITION.from_kind,
+            TRANSITION.to_kind, LOGIC_FRAMES, us[0], us[1]);
     }
 }
 

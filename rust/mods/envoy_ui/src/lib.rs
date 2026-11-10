@@ -42,6 +42,8 @@ const GS_CSS: i32 = 8;
 const ST_ARMED: i32 = 1;
 const ST_1P: i32 = 2;
 const ST_HOVER: i32 = 4;
+/// The player's Brawl files are missing: Envoy is blocked (full-game plan Q3).
+const ST_NO_BRAWL: i32 = 32;
 const ARM_OFF: i32 = 0;
 const ARM_NEW: i32 = 1;
 const ARM_CONTINUE: i32 = 2;
@@ -98,7 +100,17 @@ unsafe fn camp_build() {
     let view = gd_ui_envoy(v.as_mut_ptr(), 64) == 0 && v[0] == 0x454E_5659;
     let ended = view && (v[1] == 2 || v[1] == 3);
     let has = saved().is_some();
-    let rows: &[(usize, &str)] = if c.after_fight && ended {
+    let no_brawl = gd_ui_envoy_state() & ST_NO_BRAWL != 0;
+    if no_brawl {
+        // Envoy needs the player's own Brawl disc (Petey, Brawl music); without it the whole mode is closed
+        for (k, t) in ["Envoy needs your Brawl disc.", "Add your Brawl disc image", "and restart the game."].iter().enumerate() {
+            let n = gd_ui_node(list, NODE_LABEL, 30 + k as u32);
+            label(n, t);
+        }
+    }
+    let rows: &[(usize, &str)] = if no_brawl {
+        &[(B_BACK, "Back")]
+    } else if c.after_fight && ended {
         &[(B_DONE, "Back to the character select"), (B_NEW, "New run")]
     } else if c.after_fight {
         &[(B_CONTINUE, "Continue"), (B_PARTY, "Party"), (B_ABANDON, "Abandon run"), (B_BACK, "Leave (the run is kept)")]

@@ -113,6 +113,18 @@ pub fn get() -> Option<&'static Model> {
     .as_ref()
 }
 
+/// Whether the player's own Brawl files are present (the boss archive under the local Brawl folder). Envoy requires them
+/// (the full-game plan, Q3: no Brawl disc, no Envoy); checked once per process, never prints the path.
+pub fn brawl_present() -> bool {
+    static P: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *P.get_or_init(|| {
+        if std::env::var_os("MELEE_BRAWL_ABSENT").is_some() {
+            return false; // test knob: behave as if the files were missing
+        }
+        local_root().is_some_and(|r| r.join("disc").join("files").join("stage").join("adventure").join(STAGE).is_file())
+    })
+}
+
 fn local_root() -> Option<PathBuf> {
     if let Some(p) = std::env::var_os("MELEE_BRAWL_LOCAL") {
         return Some(PathBuf::from(p));

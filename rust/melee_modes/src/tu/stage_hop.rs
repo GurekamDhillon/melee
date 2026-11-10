@@ -231,6 +231,7 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
     sg::script_retail_carry();
     sg::script_retail_items(0);
     sg::script_switch.epoch += 1;
+    melee_core::heaptrace::mark("stage switch");
     if std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
         eprintln!("stage switch: {from} -> {kind} ({bytes} bytes, {} owned objects, heap0 free {})",
             sg::script_retail_owned.count, sg::lbHeap_Free(0));

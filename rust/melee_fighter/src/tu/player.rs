@@ -312,6 +312,17 @@ fn tag_apply_partner(slot: i32, ckind: CharacterKind) {
         if pk < 0 || pk as i32 == ckind as i32 {
             return;
         }
+        if tag_inplace() {
+            // the in-place prototype (notes/envoy-tag-swap.md): no sub-fighter; the partner is benched in TAG_BENCH_* and
+            // spawned on this slot at the swap (its files were preloaded with the slot's: Player_80031CB0)
+            if map(pk as CharacterKind).internal_id < 0 {
+                return;
+            }
+            TAG_BENCH_CK[s] = pk;
+            TAG_BENCH_PCT[s] = 0.0;
+            TAG_SLOT[s] = 1;
+            return;
+        }
         let m = map(ckind);
         let pf = map(pk as CharacterKind).internal_id;
         if pf < 0 || map(pk as CharacterKind).extra_internal_id != -1 {
@@ -327,6 +338,51 @@ fn tag_apply_partner(slot: i32, ckind: CharacterKind) {
 }
 static mut TAG_MAPPED: [u8; 256] = [0; 256];
 
+/// TARGET_PC, the in-place tag prototype (`MELEE_TAG_INPLACE=1`, notes/envoy-tag-swap.md): the benched character of each
+/// slot (CharacterKind, -1 none) and its own percent. Plain statics: the snapshot covers them.
+pub static mut TAG_BENCH_CK: [i8; 4] = [-1; 4];
+pub static mut TAG_BENCH_PCT: [f32; 4] = [0.0; 4];
+
+/// Whether the in-place tag prototype is on (fixed for the process).
+pub fn tag_inplace() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var("MELEE_TAG_INPLACE").is_ok_and(|v| v.starts_with('1')))
+}
+
+/// The in-place prototype's spawn: `Fighter_Create` of character `ck` as `slot`'s sleeping sub-fighter in entity index
+/// `idx` (the transform path's shape, so `ftCommon_8007EFC8` can wake it). Returns the new GObj.
+pub fn tag_inplace_spawn(slot: i32, idx: usize, ck: CharacterKind) -> *mut HSD_GObj {
+    let mut info: plAllocInfo = unsafe { core::mem::zeroed() };
+    info.internal_id = map(ck).internal_id as FighterKind;
+    info.slot = slot as u8;
+    info.anon_6.set_b0(1);
+    info.anon_6.set_has_transformation(1);
+    info.x5 = -1;
+    let g = ext::Fighter_Create(&mut info);
+    sp(slot).player_entity[idx] = g;
+    g
+}
+
+/// The in-place prototype's despawn of a sleeping fighter (`Player_80031EBC` for one entity).
+pub fn tag_inplace_free(slot: i32, idx: usize) {
+    let p = sp(slot);
+    let g = p.player_entity[idx];
+    if !g.is_null() {
+        ext::HSD_GObjFree(g);
+        p.player_entity[idx] = null_mut();
+    }
+}
+
+/// The internal fighter kind of a character kind (-1 none).
+pub fn tag_internal_kind(ck: i32) -> i32 {
+    if ck < 0 { -1 } else { map(ck as CharacterKind).internal_id as i32 }
+}
+
+/// The extra (sub / transform) fighter kind a character owns (-1 none): Nana for Popo, Sheik for Zelda...
+pub fn tag_extra_kind(ck: i32) -> i32 {
+    if ck < 0 { -1 } else { map(ck as CharacterKind).extra_internal_id as i32 }
+}
+
 pub fn Player_80031CB0(kind: CharacterKind, color: u8) {
     melee_core::ct!("Player_80031CB0");
     // TARGET_PC: make the Geno define's character-kind mapping before the preload asks for files
@@ -336,6 +392,18 @@ pub fn Player_80031CB0(kind: CharacterKind, color: u8) {
     }
     if hasExtraFighterId(map(kind)) {
         ext::ftData_800855C8(map(kind).extra_internal_id as i32 as FighterKind, color);
+    }
+    // TARGET_PC, the in-place tag prototype: preload every configured partner with the match's files, so the swap's
+    // Fighter_Create never reads the disc mid-match (the partner kinds are fixed for the match)
+    if tag_inplace() {
+        for pk in unsafe { TAG_PARTNER_CK } {
+            if pk >= 0 && pk as i32 != kind as i32 && map(pk as CharacterKind).internal_id != -1 {
+                ext::ftData_800855C8(map(pk as CharacterKind).internal_id as i32 as FighterKind, color);
+                if hasExtraFighterId(map(pk as CharacterKind)) {
+                    ext::ftData_800855C8(map(pk as CharacterKind).extra_internal_id as i32 as FighterKind, color);
+                }
+            }
+        }
     }
 }
 

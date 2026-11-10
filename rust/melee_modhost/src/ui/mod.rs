@@ -752,7 +752,8 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         GD_OK
     });
     // bits: 1 armed, 2 the 1-P menu is up with no custom scene on it (the Envoy row is drawn), 4 its cursor is on the
-    // Envoy row, 8 a run record is saved, 16 a fight was played since arming
+    // Envoy row, 8 a run record is saved, 16 a fight was played since arming, 32 the player's Brawl files are missing (Envoy is
+    // blocked: the camp asks for the Brawl disc image)
     f!("gd_ui_envoy_state", |c: Caller<'_, PresData>| -> i32 {
         use melee_modes::tu::envoy as ev;
         let sh = c.data().ui().borrow();
@@ -761,6 +762,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             && unsafe { melee_modes::tu::mnmain::mn_804A04F0.cur_menu } as i32 == melee_types::MENU_KIND_1P as i32;
         unsafe {
             (ev::ARMED != 0) as i32 | (on_1p as i32) << 1 | ((on_1p && ev::DOOR_HOVER != 0) as i32) << 2 | ((ev::SAVED_LEN > 0) as i32) << 3 | ((ev::CAMP_DUE != 0) as i32) << 4
+                | (!melee_modes::tu::petey_model::brawl_present() as i32) << 5
         }
     });
     // the saved run record (melee_modes::tu::envoy::SAVED): the words written, 0 = none
@@ -780,6 +782,10 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             return GD_EOFFLINE;
         }
         let launch = op & 0x10 != 0;
+        // no Brawl files, no Envoy run (full-game plan Q3): arming is refused, disarm / abandon still work
+        if matches!(op & 0xF, 1 | 2) && !melee_modes::tu::petey_model::brawl_present() {
+            return GD_ESTATE;
+        }
         if launch && sh.retail.0 != melee_types::GM_MENU as i32 {
             return GD_ESTATE;
         }

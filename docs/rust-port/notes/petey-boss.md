@@ -1,5 +1,8 @@
 # Petey boss slice (port/petey)
 
+Superseded for behaviour by petey-behavior.md (2026-11-09, petey4): the rules, timings, HP and hitboxes now follow
+the clean-room spec; the stand-in attacks, HP and stun below are gone.
+
 Status: built and checked 2026-11-09 (gate OK; replays 392/428, 125/125, 917/917 as before; lab-check ALL OK;
 geno-tests 64/64; a Petey synctest depth 4, 0 neutral mismatches). Second pass the same day: CHR0 animation played
 per frame from the sim state, item / projectile hits, attacker hitlag + hit sound, the player-count HP scale; the same

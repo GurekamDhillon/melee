@@ -19,6 +19,72 @@ pub struct Model {
     pub body: Rig,
     pub arm_l: Option<Rig>,
     pub arm_r: Option<Rig>,
+    /// The boss's enemy param file (hurtbox sets, camera range), when found.
+    pub params: Option<Params>,
+}
+
+/// One hurtbox record (BrawlBox "HurtBox" layout): offset and stretch in the bone's space, radius, flag word whose
+/// top byte is the bone index.
+#[derive(Clone, Copy, Debug)]
+pub struct Hurt {
+    pub off: [f32; 3],
+    pub stretch: [f32; 3],
+    pub r: f32,
+    pub flags: u32,
+}
+
+/// What is read from the boss's enemy param file (a relocatable section: header, data, relocations, named roots).
+#[derive(Default, Debug)]
+pub struct Params {
+    pub body: Vec<Hurt>,
+    pub arm_l: Vec<Hurt>,
+    pub arm_r: Vec<Hurt>,
+    /// cameraRangeSet floats, CameraClipSphereData floats
+    pub camera_range: Vec<f32>,
+    pub camera_clip: Vec<f32>,
+}
+
+fn params(d: &[u8]) -> Option<Params> {
+    if d.len() < 0x20 || be32(d, 0) as usize != d.len() {
+        return None;
+    }
+    let (ds, rc, r1, r2) = (be32(d, 4) as usize, be32(d, 8) as usize, be32(d, 12) as usize, be32(d, 16) as usize);
+    let t = 0x20 + ds + rc * 4;
+    let names = t + (r1 + r2) * 8;
+    let root = |want: &str| -> Option<usize> {
+        (0..r1 + r2).find_map(|i| {
+            let (o, n) = (be32(d, t + 8 * i) as usize, be32(d, t + 8 * i + 4) as usize);
+            (cstr(d, names + n) == want).then_some(0x20 + o)
+        })
+    };
+    // a set: (data offset of the records, count)
+    let set = |want: &str| -> Vec<Hurt> {
+        let Some(r) = root(want) else { return vec![] };
+        let (p, n) = (0x20 + be32(d, r) as usize, be32(d, r + 4) as usize);
+        (0..n.min(16))
+            .map(|i| {
+                let q = p + 0x20 * i;
+                let v = |o: usize| [bef(d, q + o), bef(d, q + o + 4), bef(d, q + o + 8)];
+                Hurt { off: v(0), stretch: v(12), r: bef(d, q + 24), flags: be32(d, q + 28) }
+            })
+            .collect()
+    };
+    let floats = |want: &str, n: usize| -> Vec<f32> {
+        let Some(r) = root(want) else { return vec![] };
+        let p = 0x20 + be32(d, r) as usize;
+        (0..n).map(|i| bef(d, p + 4 * i)).collect()
+    };
+    let body = set("HitDataSet");
+    if body.is_empty() {
+        return None;
+    }
+    Some(Params {
+        body,
+        arm_l: set("wpnHitDataSet_ArmLeft"),
+        arm_r: set("wpnHitDataSet_ArmRight"),
+        camera_range: floats("cameraRangeSet", 8),
+        camera_clip: floats("CameraClipSphereData", 5),
+    })
 }
 
 /// The model was loaded (without loading it: the HUD asks every frame).
@@ -85,6 +151,7 @@ fn load() -> Result<Model, String> {
     let mut texs: Vec<(String, Tex)> = vec![];
     let mut mdls: Vec<(String, Vec<u8>, usize)> = vec![];
     let mut chrs: Vec<(String, Vec<u8>, usize)> = vec![];
+    let par = leaves.iter().find_map(|b| params(b));
     for b in &leaves {
         if b.len() < 0x10 || &b[..4] != b"bres" {
             continue;
@@ -131,7 +198,7 @@ fn load() -> Result<Model, String> {
         Some(r)
     };
     let body = rig("EnmBosspackun").ok_or("body model not found")?;
-    Ok(Model { body, arm_l: rig("WpnBosspackunArmL"), arm_r: rig("WpnBosspackunArmR") })
+    Ok(Model { body, arm_l: rig("WpnBosspackunArmL"), arm_r: rig("WpnBosspackunArmR"), params: par })
 }
 
 // ---------------------------------------------------------------- containers
@@ -639,6 +706,8 @@ fn chr0(d: &[u8], c: usize) -> Anim {
 
 struct Bone {
     name: String,
+    /// the bone's own index (MDL0 bone header +0x0C), what param files refer to
+    index: u32,
     srt: [[f32; 3]; 3],
     parent: Option<usize>,
     inv: M34,
@@ -669,6 +738,23 @@ pub struct Rig {
 impl Rig {
     pub fn anim(&self, name: &str) -> Option<&Anim> {
         self.anims.iter().find(|(n, _)| n == name).map(|(_, a)| a)
+    }
+
+    /// Bone slot by its MDL0 index (param files name bones by index).
+    pub fn bone_by_index(&self, i: u32) -> Option<usize> {
+        self.bones.iter().position(|b| b.index == i)
+    }
+    /// Bone slot whose name ends with `suffix` (arm bones carry the model name as a prefix).
+    pub fn bone_named(&self, suffix: &str) -> Option<usize> {
+        self.bones.iter().position(|b| b.name.ends_with(suffix))
+    }
+    pub fn bone_name(&self, slot: usize) -> &str {
+        self.bones.get(slot).map(|b| b.name.as_str()).unwrap_or("")
+    }
+    /// A point given in a bone's local space, in model space at `frame` of `anim`.
+    pub fn bone_point(&self, anim: Option<&Anim>, frame: f32, slot: usize, local: [f32; 3]) -> [f32; 3] {
+        let w = self.pose_bones(anim, frame);
+        w.get(slot).map(|m| xf(m, local, 1.0)).unwrap_or(local)
     }
 
     /// Each bone's world matrix at `frame` of `anim` (bind pose where a bone has no channel).
@@ -768,7 +854,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
             }
         }
         let bi = bones.len();
-        bones.push(Bone { name: name.clone(), srt: [rd(0x20), rd(0x2C), rd(0x38)], parent, inv });
+        bones.push(Bone { name: name.clone(), index: be32(d, b + 0x0C), srt: [rd(0x20), rd(0x2C), rd(0x38)], parent, inv });
         offs.push(b);
         let id = be32(d, b + 0x10);
         srcs.push(Src::Bone(bi));
@@ -1068,6 +1154,35 @@ mod tests {
                     let lo = super::extent(&t).0[1];
                     assert!((-2.0..6.0).contains(&lo), "{an} f{f}: lowest point {lo}");
                 }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod probe {
+    /// Local-only probe (needs the owner's files; prints derived numbers only).
+    #[test]
+    #[ignore]
+    fn petey_probe() {
+        let m = super::load().expect("local data");
+        let p = m.params.as_ref().expect("params");
+        eprintln!("params {:?}", p);
+        for (nm, r) in [("body", Some(&m.body)), ("armL", m.arm_l.as_ref()), ("armR", m.arm_r.as_ref())] {
+            let r = r.unwrap();
+            eprintln!("{nm} extent {:?} {:?}", r.min, r.max);
+            for i in 0..r.bones.len() {
+                eprintln!("  {nm} slot {i} idx {} {}", r.bones[i].index, r.bones[i].name);
+            }
+            for (an, a) in &r.anims {
+                eprintln!("  {nm} anim {an} frames {}", a.frames);
+            }
+        }
+        let w = m.arm_l.as_ref().unwrap();
+        for b in ["XRotN", "LWeakN", "LIronNa", "PeachBodyM"] {
+            let s = w.bone_named(b).unwrap();
+            for f in [0.0, 40.0, 80.0, 120.0] {
+                eprintln!("armL {b} BasketAttackL f{f} {:?}", w.bone_point(w.anim("BasketAttackL"), f, s, [0.0; 3]));
             }
         }
     }

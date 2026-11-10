@@ -102,6 +102,11 @@ pub fn set(w: u32, lgl: u32) {
     CONFIGURED.store(true, Ordering::Relaxed);
 }
 
+/// Turn `bit` on without marking the codes configured (slpcheck: a code found in the replay's own Gecko list).
+pub fn enable(bit: u32) {
+    WORD.fetch_or(bit, Ordering::Relaxed);
+}
+
 /// Back to the unconfigured vanilla state (tests).
 pub fn reset() {
     WORD.store(0, Ordering::Relaxed);

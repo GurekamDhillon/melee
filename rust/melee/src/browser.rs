@@ -45,6 +45,8 @@ enum Launch {
     Retail(u32),
     Scene(&'static str),
     ModMode(String),
+    /// The Envoy camp scene (envoy_ui's door, envoy-redesign.md 1.2 B).
+    Envoy,
     Unavailable(&'static str),
 }
 
@@ -205,6 +207,7 @@ impl RetailPlay {
                 Launch::Retail(_) => "Opens from the main menu.",
                 Launch::Scene(_) => "Relaunches the game into the match.",
                 Launch::ModMode(_) => "Enables the mod and relaunches.",
+                Launch::Envoy => "Opens the Envoy camp (also 1-P > Envoy).",
             };
             v.push(rec(&[id, group, title, desc, if avail { "1" } else { "0" }, note]));
             ids.push((id.to_string(), l));
@@ -215,7 +218,9 @@ impl RetailPlay {
             push(&mut v, id, group, title, desc, if ok { Launch::Retail(mode) } else { Launch::Unavailable("Not ported yet: the menu refuses it too.") });
         }
         push(&mut v, "workbench", "Geno", "Workbench", "Geno's workbench match (GM_LAB with two level-9 CPUs) for watching a define.", Launch::Scene("mode=workbench;p1=kirby/cpu9;p2=fox/cpu9;stage=fd"));
-        push(&mut v, "envoy", "Online", "Envoy", "Best-of sets with an Envoy build per game. Needs the Envoy mod.", Launch::Unavailable("Envoy is not in this build yet."));
+        // the Envoy camp: available while the Envoy presentation mod has registered its door (envoy_ui + envoy_sim loaded)
+        let envoy = if unsafe { melee_modes::tu::envoy::DOOR_ON } != 0 { Launch::Envoy } else { Launch::Unavailable("Needs the Envoy mods (envoy_sim, envoy_ui).") };
+        push(&mut v, "envoy", "Solo", "Envoy", "A run of five fights with a tag partner and a shared stock pool. Continue, start or abandon a run in the camp.", envoy);
         if let Some(ms) = self.browser.modset.as_ref() {
             for m in &ms.mods {
                 let k = m.kind_str().to_ascii_lowercase();
@@ -319,6 +324,16 @@ impl RetailPlay {
                         if ok { st(self, 2, &format!("starting mode {arg}")) } else { st(self, 1, "That mode cannot start from here.") }
                     }
                     Launch::Scene(scene) => self.browser_relaunch(&[], Some(scene), &format!("mode {arg}")),
+                    Launch::Envoy => {
+                        if !self.browser_offline() {
+                            return st(self, 1, "Envoy starts offline only.");
+                        }
+                        if self.cur.0 as u32 != melee_types::GM_MENU {
+                            return st(self, 1, "Open the browser from the main menu to start Envoy.");
+                        }
+                        unsafe { melee_modes::tu::envoy::DOOR_OPEN = 1 };
+                        st(self, 2, "opening the Envoy camp")
+                    }
                     Launch::ModMode(id) => {
                         if let Some(ms) = self.browser.modset.as_mut() {
                             if let Some(i) = ms.find(id.as_bytes()) {

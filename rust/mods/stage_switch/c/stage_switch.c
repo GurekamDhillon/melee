@@ -14,7 +14,15 @@
 #define BUSY (-9)
 
 /* Gr_Kind_Battle, Story, OldPupupu, Izumi, Last: the C demo's order after its initial FD */
-static const gd_i32 k_rotation[5] = {36, 10, 28, 12, 37};
+#ifdef ROTATION_EXT
+/* the leak test (tools/rust-port/envoy/heap_leak.sh): the five plus Kongo Jungle 64, Yoshi's Island 64 and Pokemon Stadium
+ * (needs MELEE_STAGE_HOP_EXTRA=30,29,16) */
+#define NROT 8
+static const gd_i32 k_rotation[NROT] = {36, 10, 30, 28, 29, 12, 16, 37};
+#else
+#define NROT 5
+static const gd_i32 k_rotation[NROT] = {36, 10, 28, 12, 37};
+#endif
 
 static gd_i32 g_clock = -1; /* -1: no match / rotation stopped */
 static gd_i32 g_warned;
@@ -34,8 +42,8 @@ static void on_frame_end(void)
     if (g_clock < PERIOD) return;
     cur = gd_stage_grkind();
     next = -1;
-    for (i = 0; i < 5; ++i) {
-        if (k_rotation[i] == cur) { next = k_rotation[(i + 1) % 5]; break; }
+    for (i = 0; i < NROT; ++i) {
+        if (k_rotation[i] == cur) { next = k_rotation[(i + 1) % NROT]; break; }
     }
     if (next < 0) {
         if (!g_warned) { gd_log("stage_switch: host stage not supported, rotation off; grkind", cur); g_warned = 1; }

@@ -507,3 +507,20 @@ a wgpu `GX texture is invalid` panic; early inputs were off and no sampler was r
   All CSV-EQUAL, 0 desyncs. The network round trip is unchanged (it excludes poll waits by design); the pad-ack ping drops
   ~16.6 ms (one frame), resimulated frames ~30%, depth 7 -> 4-5, waits ~3x fewer. Rollback count is unchanged: at 50 ms
   one-way the peer's pads are still ~3 frames late with delay 0.
+
+## CPUs under two-peer rollback (Envoy milestone 0, risk R1, 2026-11-09)
+
+`tools/rust-port/envoy/m0_np_envoy.sh` (on `play_pair.sh`): two `melee play --netplay` peers on loopback, scripted pads on
+ports 1-2 (no OS input), two CPU9 seats on ports 3-4 (`--cpu falco/9,samus/9`, agreed in the handshake), 30 ms inbound
+delay and 3 % loss on each peer, the tag mod (partners Marth / Peach, D-pad-down holds in the scripts) and the stage_switch
+mod (C twin) shifting the stage every 1800 frames, a 4-stock / 240 s match:
+
+* 14213 frames finalised on both peers, **0 with different hashes**, 0 session / checksum desyncs;
+* 2248 host rollbacks (max depth 3) and 124 guest rollbacks: the CPUs were resimulated thousands of times;
+* 7-8 stage-switch executions per peer (resimulations included) and a tag on both peers;
+* the host's recorded replay plays back to the same final hash (029B8A45).
+
+An earlier run without the tag landing (14637 frames, 2380 rollbacks, 8 switch executions) was also 0 differing hashes.
+With the in-place tag prototype (`TAG_INPLACE=1`, notes/envoy-tag-swap.md): 7503 frames, 0 differing, 1210 rollbacks.
+So R1 holds for CPUs + stage shifts + a tag; not yet covered: an Envoy-armed run (the reward hold, the boss) over two
+peers, which needs the `envoy=` handshake token (milestone 6).

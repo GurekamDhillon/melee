@@ -33878,8 +33878,23 @@ pub unsafe extern "C" fn ScriptGame_StageSlotRetailBuffer(
     mut p: *mut ::core::ffi::c_void,
 ) {
     melee_core::ct!("ScriptGame_StageSlotRetailBuffer");
-    script_retail.buffer = p;
+    // TARGET_PC: a visit can own several buffers (Fountain's reflection, Pokemon Stadium's jumbotron images and
+    // transformation area); the first keeps the C's field, the rest go to SCRIPT_RETAIL_BUFFERS
+    if script_retail.buffer.is_null() {
+        script_retail.buffer = p;
+        return;
+    }
+    for b in SCRIPT_RETAIL_BUFFERS.iter_mut() {
+        if b.is_null() {
+            *b = p;
+            return;
+        }
+    }
+    OSReport(b"stage switch: ERROR retail buffers exhausted
+ " as *const u8 as *const ::core::ffi::c_char as *mut ::core::ffi::c_char, &[]);
 }
+/// TARGET_PC: the visit's extra owned buffers (ScriptGame_StageSlotRetailBuffer), freed by script_retail_destroy.
+pub static mut SCRIPT_RETAIL_BUFFERS: [*mut ::core::ffi::c_void; 8] = [::core::ptr::null_mut(); 8];
 pub unsafe extern "C" fn script_retail_forget_devices(mut g: *mut HSD_GObj) {
     melee_core::ct!("script_retail_forget_devices");
     let mut i: ::core::ffi::c_int = 0;
@@ -34582,6 +34597,12 @@ pub unsafe extern "C" fn script_retail_destroy() {
         HSD_Free(script_retail.buffer);
     }
     script_retail.buffer = ::core::ptr::null_mut::<::core::ffi::c_void>();
+    for b in SCRIPT_RETAIL_BUFFERS.iter_mut() {
+        if !b.is_null() {
+            HSD_Free(*b);
+            *b = ::core::ptr::null_mut();
+        }
+    }
     if !script_retail.archive.is_null() {
         lbHeap_80015CA8(
             0 as ::core::ffi::c_int,

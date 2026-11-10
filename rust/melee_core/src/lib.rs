@@ -13,6 +13,7 @@ pub mod fptrace;
 pub mod gc;
 pub mod gcdecode;
 pub mod hash;
+pub mod heaptrace;
 pub mod modhook;
 pub mod pose;
 pub mod slippi_online;

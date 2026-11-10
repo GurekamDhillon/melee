@@ -431,6 +431,17 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         Ok("card") => pl.r.no_ucf_cardinals = no_card,
         _ => pl.r.ucf_073_list = no_card,
     }
+    // The 0.7x list's tumble code (C2 800908F4, ftCo_DamageFall_IASA+0xCC, 23 lines) is UCF 0.84's tumble rule (timer 1
+    // counts when |prev x| < x210 and the raw x moved > 75 over two polls) reading the HSD pad queue (804C1F78, entries
+    // qnum-1 and qnum-3) instead of UCF's own history: one poll per frame, so the same raw values. Answer 84 to the
+    // tumble check only (the rest of the 0.7x set stays 0.73).
+    unsafe {
+        use melee_fighter::tu::ftCo_DamageFall::ext::hook as dfh;
+        let on = no_card && slp::gecko_has(&file.gecko, 0x8009_08F4) && std::env::var("SLPCHECK_UCF07").is_err();
+        dfh::Replay_UcfVersion = if on { Some(|p| match unsafe { crate::r_in() }.ucf_version(p) { 73 => 84, v => v }) } else { None };
+        // UCF's own raw history is only pushed with the 1.0 cardinals on: read the pad queue's raw x from the replay
+        dfh::ftUcf_PadRaw = if on { Some(|p, w, b| unsafe { crate::r_in() }.raw_stick_back(p, w, b)) } else { None };
+    }
     // The engine's seam answers 0 for Replay_ApplyMatch (the RNG was zeroed at the match start); answer the file's seed.
     unsafe {
         SLP_SEED = seed;

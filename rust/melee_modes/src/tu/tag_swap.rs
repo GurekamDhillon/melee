@@ -38,6 +38,8 @@ pub const PHASE_FREEZE: u8 = 1;
 pub const KIND_TAG: u8 = 1;
 /// Reserved for the stage switch (rust/mods/stage_switch) when it adopts the freeze.
 pub const KIND_STAGE: u8 = 2;
+/// A plain hold (the Envoy reward pick): no change at the release, released by the mod (`hold_release`).
+pub const KIND_HOLD: u8 = 3;
 
 /// The transition record (sim state; read-only for presentation).
 #[repr(C)]
@@ -65,6 +67,11 @@ pub static mut TRANSITION: Transition =
 pub static mut LOGIC_FRAMES: u32 = 0;
 /// A swap queued by the mod (`gd_tag_swap`), applied after the frame's post chain.
 pub static mut PENDING_SWAP: i8 = -1;
+/// A stage transition's destination (ground kind) and the freeze frame its switch is applied at (KIND_STAGE).
+pub static mut STAGE_TO: i32 = -1;
+pub static mut STAGE_AT: u16 = 0;
+/// A queued release of a KIND_HOLD freeze.
+pub static mut PENDING_RELEASE: u8 = 0;
 
 unsafe fn entity(slot: i32, i: i32) -> *mut HSD_GObj {
     let p = &*pl::Player_GetPtrForSlot(slot);
@@ -87,6 +94,11 @@ pub unsafe fn partner_kind(slot: i32) -> i32 {
 /// Whether `slot` could tag now (0) or why not: grounded, actionable (Wait / walk / dash / run / turn / squat),
 /// not grabbed or grabbing, no item held, no transition running.
 pub unsafe fn check(slot: i32) -> i32 {
+    check_ex(slot, false)
+}
+
+/// `check`, optionally also in the air (actionable airborne: jump, aerial jump, fall).
+pub unsafe fn check_ex(slot: i32, air: bool) -> i32 {
     if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 {
         return TAG_BUSY;
     }
@@ -102,6 +114,12 @@ pub unsafe fn check(slot: i32) -> i32 {
     let ok = matches!(m as ftCommon_MotionState,
         ftCo_MS_Wait | ftCo_MS_WalkSlow | ftCo_MS_WalkMiddle | ftCo_MS_WalkFast | ftCo_MS_Turn | ftCo_MS_Dash
         | ftCo_MS_Run | ftCo_MS_RunBrake | ftCo_MS_Squat | ftCo_MS_SquatWait | ftCo_MS_SquatRv);
+    let air_ok = air && f.ground_or_air != GA_Ground && matches!(m as ftCommon_MotionState,
+        ftCo_MS_JumpF | ftCo_MS_JumpB | ftCo_MS_JumpAerialF | ftCo_MS_JumpAerialB | ftCo_MS_Fall | ftCo_MS_FallF
+        | ftCo_MS_FallB | ftCo_MS_FallAerial | ftCo_MS_FallAerialF | ftCo_MS_FallAerialB);
+    if air_ok && f.victim_gobj.is_null() && f.x1A5C.is_null() && f.item_gobj.is_null() {
+        return 0;
+    }
     if !ok || f.ground_or_air != GA_Ground || !f.victim_gobj.is_null() || !f.x1A5C.is_null() || !f.item_gobj.is_null() {
         return TAG_NOT_ACTIONABLE;
     }
@@ -111,7 +129,12 @@ pub unsafe fn check(slot: i32) -> i32 {
 /// Start the freeze for a tag of `slot` lasting `len` frames. Returns `check`'s code; on 0 the next logic frame is
 /// frozen.
 pub unsafe fn begin(slot: i32, len: i32) -> i32 {
-    let rc = check(slot);
+    begin_ex(slot, len, false)
+}
+
+/// `begin` with air tags allowed (`air`): the incoming fighter enters Fall instead of Wait.
+pub unsafe fn begin_ex(slot: i32, len: i32, air: bool) -> i32 {
+    let rc = check_ex(slot, air);
     if rc != 0 {
         return rc;
     }
@@ -128,7 +151,7 @@ pub unsafe fn freeze_begin(kind: u8, slot: i32, len: i32, from: i32, to: i32) {
     TRANSITION.slot = slot as i8;
     TRANSITION.skipped = 0;
     TRANSITION.frame = 0;
-    TRANSITION.len = len.clamp(1, 600) as u16;
+    TRANSITION.len = len.clamp(1, 3600) as u16;
     TRANSITION.from_kind = from as i16;
     TRANSITION.to_kind = to as i16;
     crate::tu::gmscene::gm_SetDbPauseFlag(TRANSITION_PAUSE_BIT);
@@ -155,9 +178,68 @@ pub unsafe fn tick() {
         TRANSITION.released_at = LOGIC_FRAMES;
         TRANSITION.count = TRANSITION.count.wrapping_add(1);
         crate::tu::gmscene::gm_ClearDbPauseFlag(TRANSITION_PAUSE_BIT);
+    } else if PENDING_RELEASE != 0 {
+        PENDING_RELEASE = 0;
+        release();
     } else if TRANSITION.phase == PHASE_FREEZE {
         TRANSITION.frame = TRANSITION.frame.saturating_add(1);
+        if TRANSITION.kind == KIND_STAGE {
+            if TRANSITION.frame == STAGE_AT && STAGE_TO >= 0 {
+                let rc = crate::tu::stage_hop::switch_to(STAGE_TO);
+                if rc != 0 {
+                    eprintln!("transition: stage switch to {STAGE_TO} refused at apply ({rc})");
+                }
+                STAGE_TO = -1;
+            }
+            if TRANSITION.frame >= TRANSITION.len {
+                release();
+            }
+        }
     }
+}
+
+unsafe fn release() {
+    TRANSITION.phase = PHASE_IDLE;
+    TRANSITION.released_at = LOGIC_FRAMES;
+    TRANSITION.count = TRANSITION.count.wrapping_add(1);
+    crate::tu::gmscene::gm_ClearDbPauseFlag(TRANSITION_PAUSE_BIT);
+}
+
+/// A stage switch under the transition freeze: frozen for `len` frames, the switch applied halfway (under the cover),
+/// released at the end. Returns `stage_hop::check`'s code, or TAG_BUSY while another transition runs.
+pub unsafe fn stage_begin(grkind: i32, len: i32) -> i32 {
+    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 {
+        return TAG_BUSY;
+    }
+    let rc = crate::tu::stage_hop::check(grkind);
+    if rc != 0 {
+        return rc;
+    }
+    let len = len.clamp(2, 600);
+    STAGE_TO = grkind;
+    STAGE_AT = (len / 2) as u16;
+    freeze_begin(KIND_STAGE, -1, len, crate::tu::stage_hop::current(), grkind);
+    0
+}
+
+/// A hold freeze (KIND_HOLD) of at most `len` frames; the mod releases it (`hold_release`).
+pub unsafe fn hold_begin(len: i32) -> i32 {
+    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 {
+        return TAG_BUSY;
+    }
+    if crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
+        return TAG_NOT_GAMEPLAY;
+    }
+    freeze_begin(KIND_HOLD, -1, len, -1, -1);
+    0
+}
+
+pub unsafe fn hold_release() -> i32 {
+    if TRANSITION.phase != PHASE_FREEZE || TRANSITION.kind != KIND_HOLD {
+        return TAG_BUSY;
+    }
+    PENDING_RELEASE = 1;
+    0
 }
 
 /// The swap itself (`ftCommon_8007EFC8` with Wait as the entry), keeping each character's own percent.
@@ -168,7 +250,11 @@ unsafe fn swap(slot: i32) {
         return;
     }
     let own = (*fighter(in_g)).dmg.x1830_percent;
-    melee_fighter::tu::ftcommon::ftcommon_8007efc8(out_g, |g| melee_fighter::tu::ft_08a1::ft_8008A2BC(g));
+    if (*fighter(out_g)).ground_or_air == GA_Ground {
+        melee_fighter::tu::ftcommon::ftcommon_8007efc8(out_g, |g| melee_fighter::tu::ft_08a1::ft_8008A2BC(g));
+    } else {
+        melee_fighter::tu::ftcommon::ftcommon_8007efc8(out_g, |g| melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(g));
+    }
     let f = &mut *fighter(in_g);
     f.dmg.x1830_percent = own;
     pl::Player_SetHPByIndex(slot, f.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(own));
@@ -185,4 +271,6 @@ pub unsafe fn reset() {
     TRANSITION.phase = PHASE_IDLE;
     TRANSITION.slot = -1;
     PENDING_SWAP = -1;
+    PENDING_RELEASE = 0;
+    STAGE_TO = -1;
 }

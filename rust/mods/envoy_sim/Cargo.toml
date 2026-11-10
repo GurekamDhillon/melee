@@ -1,0 +1,18 @@
+# Envoy run sim mod (mod-c-v1): built by tools/rust-port/modhost/build_mods.sh for wasm32-unknown-unknown.
+# Not a member of the engine workspace.
+[package]
+name = "envoy_sim"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "s"
+panic = "abort"
+lto = true
+
+[workspace]

@@ -81,6 +81,7 @@ mod practice;
 mod lab;
 mod lab_check;
 mod cov1p;
+mod envoy_store;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {

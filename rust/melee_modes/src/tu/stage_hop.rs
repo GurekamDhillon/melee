@@ -54,6 +54,11 @@ pub unsafe fn check(kind: i32) -> i32 {
         let fp = sg::HSD_GObjGetUserData(g) as *mut Fighter;
         if !fp.is_null() {
             let m = (*fp).motion_id as i32;
+            // TARGET_PC: a sleeping sub-fighter (a tag partner, the Zelda / Sheik other half) is not (re)spawning
+            if m == ftCo_MS_Sleep as i32 {
+                g = (*g).next as *mut HSD_GObj;
+                continue;
+            }
             if !(*fp).victim_gobj.is_null() || !(*fp).x1A5C.is_null() || m <= ftCo_MS_RebirthWait as i32
                 || (m >= ftCo_MS_CapturePulledHi as i32 && m <= ftCo_MS_CaptureFoot as i32)
                 || (m >= ftCo_MS_ThrownF as i32 && m <= ftCo_MS_ThrownlwWomen as i32)

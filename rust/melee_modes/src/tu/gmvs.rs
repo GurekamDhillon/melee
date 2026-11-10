@@ -2121,6 +2121,10 @@ pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
     if ext::Replay_Active() != 0 {
         *HSD_RandSeedPtr = ext::Replay_ApplyMatch(arg0 as *mut c_void);
     }
+    // Envoy (rust/mods/envoy_sim): the run's next fight, only while that mod has published a plan; never on playback
+    if ext::Replay_Active() == 0 {
+        crate::tu::envoy::match_begin(arg0);
+    }
     ext::FighterControls_MatchBegin(arg0 as *mut c_void);
     // gd-lab-v1: a Lab mod's match is untimed (no timer, no time-out), before anything reads the rules
     if melee_core::codes::lab_untimed() {

@@ -785,8 +785,8 @@ fn inlineB2(g: G) {
 }
 
 /// Slippi "Disable Wobbling" (External/PreventWobbling, injected at 8008F090 in this function and 800DB880 /
-/// 800DBBD4 in the capture enters): per grabbed fighter a count of distinct attacks by the grabbing Ice Climber's
-/// partner; the 4th one breaks the grab (`ftCo_800DA698` on the grabber) instead of the capture-damage motion.
+/// 800DBBD4 in the capture enters): per grabbed fighter a count of distinct attacks by the grabbing Ice Climber
+/// itself (or its items); the 4th one breaks the grab (`ftCo_800DA698` on the grabber) instead of the capture-damage motion.
 /// Not in teams (`gm_8016B168`). State: (count, last attack id) per victim slot, a static so a rollback restores it.
 pub static mut WOBBLE: [[(u8, u16); 2]; 6] = [[(0, 0xFFFF); 2]; 6];
 
@@ -802,24 +802,42 @@ pub fn wobble_reset(g: G) {
     }
 }
 
-/// True when the grab broke.
+/// True when the grab broke. The Gecko code's words (C2 8008F090, 61 lines, read from the Lunar replays' lists):
+/// - only in CapturePulledHi..CaptureDamageLw (0xDF..0xE4), with a grabber (`victim_gobj`, +0x1A58) that is an Ice Climber
+///   (`x2222_b5`, set by `ftPp_Init_OnLoad`);
+/// - the hit counts when its source (+0x1868) is the grabber itself (id: the grabber's attack instance, +0x2088), or an
+///   item (class 6) owned by the grabber (id: the item's +0xDA8). Nana's hits do not count: the grabber's own pummels do;
+/// - a new id bumps the victim's count (+0x2384; id at +0x2386); not in teams; the 4th breaks the grab: CatchCut on the
+///   grabber with the victim's CaptureCut (r4 is gm_8016B168's leftover, non-zero: the console's victim goes 229), then
+///   Nana (`Player_GetEntityAtIndex(slot, 1)`), unless dead/hidden (`x221F_b1`, `x2219_b5`, `x2071` high nibble 0xD),
+///   CatchCut too when grounded (an airborne Nana goes to CaptureJump with the code's own speeds: not ported, logged).
 fn wobble_check(g: G) -> bool {
     let f = fp(g);
     let m = f.motion_id as i32;
-    if !(0xDF..=0xE4).contains(&m) || f.victim_gobj.is_null() || f.dmg.x1868_source.is_null() {
+    if !(0xDF..=0xE4).contains(&m) || f.victim_gobj.is_null() {
         return false;
     }
     let grabber = f.victim_gobj;
+    let gf = fp(grabber);
+    if gf.x2222_b5() == 0 {
+        return false;
+    }
     let src = f.dmg.x1868_source;
-    // only a fighter hit counts, from the grabber's partner (same player, other gobj): Nana's ftilt / dsmash
-    if src == grabber || unsafe { (*src).classifier } as i32 != HSD_GOBJ_CLASS_FIGHTER {
+    if src.is_null() {
         return false;
     }
-    let (sf, gf) = (fp(src), fp(grabber));
-    if sf.pad_port != gf.pad_port {
-        return false;
-    }
-    let id = sf.x2074.x2088;
+    let id = if src == grabber {
+        gf.x2074.x2088
+    } else {
+        if unsafe { (*src).classifier } as i32 != HSD_GOBJ_CLASS_ITEM {
+            return false;
+        }
+        let ip = unsafe { &*((*src).user_data as *const Item) };
+        if ip.owner as G != grabber {
+            return false;
+        }
+        ip.xDA8_short
+    };
     let (a, b) = wobble_slot(f);
     let w = unsafe { &mut WOBBLE[a][b] };
     if id == w.1 {
@@ -830,7 +848,18 @@ fn wobble_check(g: G) -> bool {
     if crate::tu::player::ext::gm_8016B168() || w.0 <= 3 {
         return false;
     }
-    crate::tu::ftCo_CatchCut::ftCo_800DA698(grabber, false);
+    crate::tu::ftCo_CatchCut::ftCo_800DA698(grabber, true);
+    let nana = crate::tu::fighter::ext::Player_GetEntityAtIndex(fp(grabber).player_idx as i32, 1);
+    if !nana.is_null() {
+        let nf = fp(nana);
+        if nf.x221F_b1() == 0 && nf.x2219_b5() == 0 && unsafe { nf.x2070.x0.x2071_b0_3() } != 0xD {
+            if nf.ground_or_air == GA_Ground {
+                crate::tu::ftCo_CatchCut::ftCo_800DA698(nana, false);
+            } else {
+                eprintln!("wobble: airborne Nana break (CaptureJump) not ported");
+            }
+        }
+    }
     true
 }
 

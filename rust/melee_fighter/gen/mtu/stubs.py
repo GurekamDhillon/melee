@@ -229,6 +229,8 @@ def main():
         txt = " ".join(toks).rstrip(";").strip()
         if "{" in toks:  # the declaration carries the struct definition: the headers already have it
             txt = v.type.spelling + " " + dn
+            if v.type.kind == ci.TypeKind.CONSTANTARRAY:
+                txt = v.type.element_type.spelling + " " + dn + "[%d]" % v.type.element_count
         if "unnamed" in v.type.spelling:  # an anonymous struct type: redeclare through the extern's own type
             txt = "__typeof__(" + dn + ") " + dn
         txt = txt.replace("[ ]", "[160]")

@@ -49,8 +49,8 @@ pub mod ext {
     use crate::hook::{Hook, A};
     pub static mut HOOK: Option<Hook> = None;
     pub unsafe extern "C" fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj { if let Some(h) = HOOK { let r = h("GObj_Create", &[A::I(classifier as u16 as u64), A::I(p_link as u8 as u64), A::I(priority as u8 as u64)]); return r as usize as *mut HSD_GObj; } { return unsafe { melee_runtime::tu::gobjplink::GObj_Create(classifier as _, p_link as _, priority as _) as _ }; } }
-    pub unsafe extern "C" fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, gx_link: u8, priority: u32) { if let Some(h) = HOOK { h("GObj_SetupGXLink", &[A::P(gobj as usize), A::P(render_cb.map_or(0, |f| f as usize)), A::I(gx_link as u8 as u64), A::I(priority as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobjgxlink::GObj_SetupGXLink(gobj, core::mem::transmute(render_cb), gx_link, priority); } return; } }
-    pub unsafe extern "C" fn GObj_SetupGXLinkMax(gobj: *mut HSD_GObj, render_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, priority: u32) { if let Some(h) = HOOK { h("GObj_SetupGXLinkMax", &[A::P(gobj as usize), A::P(render_cb.map_or(0, |f| f as usize)), A::I(priority as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobjgxlink::GObj_SetupGXLinkMax(gobj, core::mem::transmute(render_cb), priority); } return; } }
+    pub unsafe extern "C" fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, gx_link: u8, priority: u32) { if let Some(h) = HOOK { h("GObj_SetupGXLink", &[A::P(gobj as usize), A::P(render_cb.map_or(0, |f| f as usize)), A::I(gx_link as u8 as u64), A::I(priority as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobjgxlink::GObj_SetupGXLink(gobj, core::mem::transmute(render_cb), gx_link, priority); } return; } }
+    pub unsafe extern "C" fn GObj_SetupGXLinkMax(gobj: *mut HSD_GObj, render_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, priority: u32) { if let Some(h) = HOOK { h("GObj_SetupGXLinkMax", &[A::P(gobj as usize), A::P(render_cb.map_or(0, |f| f as usize)), A::I(priority as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobjgxlink::GObj_SetupGXLinkMax(gobj, core::mem::transmute(render_cb), priority); } return; } }
     pub unsafe extern "C" fn HSD_CObjAddAnim(cobj: *mut HSD_CObj, canim: *mut HSD_CameraAnim) { if let Some(h) = HOOK { h("HSD_CObjAddAnim", &[A::P(cobj as usize), A::P(canim as usize)]); return; } { unsafe { melee_runtime::tu::cobj::HSD_CObjAddAnim(cobj as _, canim as _); } return; } }
     pub unsafe extern "C" fn HSD_CObjAnim(cobj: *mut HSD_CObj) { if let Some(h) = HOOK { h("HSD_CObjAnim", &[A::P(cobj as usize)]); return; } { unsafe { melee_runtime::tu::cobj::HSD_CObjAnim(cobj as _); } return; } }
     pub unsafe extern "C" fn HSD_CObjEndCurrent() { if let Some(h) = HOOK { h("HSD_CObjEndCurrent", &[]); return; } { unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } return; } }
@@ -70,10 +70,10 @@ pub mod ext {
     pub unsafe extern "C" fn HSD_GObj_80390C5C(gobj: *mut HSD_GObj) { if let Some(h) = HOOK { h("HSD_GObj_80390C5C", &[A::P(gobj as usize)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_80390C5C(gobj as _); } return; } }
     pub unsafe extern "C" fn HSD_GObj_80390C84(gobj: *mut HSD_GObj) { if let Some(h) = HOOK { h("HSD_GObj_80390C84", &[A::P(gobj as usize)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_80390C84(gobj as _); } return; } }
     pub unsafe extern "C" fn HSD_GObj_80390ED0(gobj: *mut HSD_GObj, mask: u32) { if let Some(h) = HOOK { h("HSD_GObj_80390ED0", &[A::P(gobj as usize), A::I(mask as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_80390ED0(gobj as _, mask as _); } return; } }
-    pub unsafe extern "C" fn HSD_GObj_803910D8(p0: *mut HSD_GObj, p1: i32) { if let Some(h) = HOOK { h("HSD_GObj_803910D8", &[A::P(p0 as usize), A::I(p1 as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(p0 as _, p1 as _); } return; } }
-    pub unsafe extern "C" fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, unused: i32) { if let Some(h) = HOOK { h("HSD_GObj_FogCallback", &[A::P(gobj as usize), A::I(unused as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(gobj as _, unused as _); } return; } }
-    pub unsafe extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) { if let Some(h) = HOOK { h("HSD_GObj_JObjCallback", &[A::P(gobj as usize), A::I(arg1 as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(gobj as _, arg1 as _); } return; } }
-    pub unsafe extern "C" fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: i32) { if let Some(h) = HOOK { h("HSD_GObj_LObjCallback", &[A::P(gobj as usize), A::I(unused as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(gobj as _, unused as _); } return; } }
+    pub unsafe extern "C" fn HSD_GObj_803910D8(p0: *mut HSD_GObj, p1: isize) { if let Some(h) = HOOK { h("HSD_GObj_803910D8", &[A::P(p0 as usize), A::I(p1 as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(p0 as _, p1 as _); } return; } }
+    pub unsafe extern "C" fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, unused: isize) { if let Some(h) = HOOK { h("HSD_GObj_FogCallback", &[A::P(gobj as usize), A::I(unused as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(gobj as _, unused as _); } return; } }
+    pub unsafe extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) { if let Some(h) = HOOK { h("HSD_GObj_JObjCallback", &[A::P(gobj as usize), A::I(arg1 as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(gobj as _, arg1 as _); } return; } }
+    pub unsafe extern "C" fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: isize) { if let Some(h) = HOOK { h("HSD_GObj_LObjCallback", &[A::P(gobj as usize), A::I(unused as u32 as u64)]); return; } { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(gobj as _, unused as _); } return; } }
     pub unsafe extern "C" fn HSD_GObj_SetupProc(p0: *mut HSD_GObj, p1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, p2: u8) -> *mut HSD_GObjProc { if let Some(h) = HOOK { let r = h("HSD_GObj_SetupProc", &[A::P(p0 as usize), A::P(p1.map_or(0, |f| f as usize)), A::I(p2 as u8 as u64)]); return r as usize as *mut HSD_GObjProc; } { return unsafe { melee_runtime::tu::gobjproc::HSD_GObj_SetupProc(p0, core::mem::transmute(p1), p2) }; } }
     pub unsafe extern "C" fn HSD_JObjAnimAll(p0: *mut HSD_JObj) { if let Some(h) = HOOK { h("HSD_JObjAnimAll", &[A::P(p0 as usize)]); return; } { unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(p0 as _); } return; } }
     pub unsafe extern "C" fn HSD_JObjGetFlags(jobj: *mut HSD_JObj) -> u32 { if let Some(h) = HOOK { let r = h("HSD_JObjGetFlags", &[A::P(jobj as usize)]); return r as u32; } { return unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(jobj as _) as _ }; } }
@@ -699,7 +699,7 @@ unsafe fn hsd_assert(cond: bool, line: u32, expr: &core::ffi::CStr) {
 pub const Gm_GObj_GXLink_PlyCursor: usize = 9;
 
 /// Render callback of the staff-roll camera: draws the entry text windows back to front.
-pub unsafe extern "C" fn fn_801AA854(gobj: *mut HSD_GObj, _code: i32) {
+pub unsafe extern "C" fn fn_801AA854(gobj: *mut HSD_GObj, _code: isize) {
     melee_core::ct!("fn_801AA854");
     let mut gobj = gobj;
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;
@@ -737,7 +737,7 @@ pub unsafe extern "C" fn fn_801AA854(gobj: *mut HSD_GObj, _code: i32) {
 
 /* 480D58 */ pub static mut gm_80480D58: [*mut HSD_Text; 6] = [null_mut(); 6];
 
-pub unsafe extern "C" fn fn_801AAA28(gobj: *mut HSD_GObj, code: i32) {
+pub unsafe extern "C" fn fn_801AAA28(gobj: *mut HSD_GObj, code: isize) {
     melee_core::ct!("fn_801AAA28");
     ext::HSD_GObj_803910D8(gobj, code);
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
@@ -1523,6 +1523,7 @@ pub unsafe extern "C" fn gm_Scene_StaffRoll_OnEnter(_unused: *mut c_void) {
     }
 }
 
+#[inline(never)] // compared by address: keep one copy
 pub unsafe extern "C" fn gm_Scene_StaffRoll_OnExit(_unused: *mut c_void) { melee_core::ct!("gm_Scene_StaffRoll_OnExit");}
 
 #[allow(dead_code)]

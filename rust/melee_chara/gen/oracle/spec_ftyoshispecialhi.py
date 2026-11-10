@@ -13,7 +13,7 @@ SPEC = dict(
 void __assert(const char* f, u32 l, const char* c) { (void) f; (void) l; (void) c; for (;;) {} }
 """,
     outs={"lb_8000B1CC": [2]},
-    bitfields=[("throw_flags_b0", "anon_2210.anon_0.throw_flags_b0")],
+    bitfields=[("x2210.x0.throw_flags_b0", "x2210.x0.throw_flags_b0")],
     motions=[348, 350, 353, 355],
     opt_links=[("target_item_gobj", "OIG[0]"), ("u.ys.x2238", "OIG[1]")],
     opt_targets_rs={"OIG[0]": "&mut w.oig[0] as *mut HSD_GObj", "OIG[1]": "&mut w.oig[1] as *mut HSD_GObj"},
@@ -27,7 +27,7 @@ void __assert(const char* f, u32 l, const char* c) { (void) f; (void) l; (void) 
         "ftYs_SpecialS_8012DF18",
         "ftYs_SpecialS_8012DF8C",
         "ftYs_SpecialS_8012DF8C_outline",
-        dict(name="fn_8012E110", bf=["throw_flags_b0"]),
+        dict(name="fn_8012E110", bf=["x2210.x0.throw_flags_b0"]),
         "ftYs_SpecialS_8012E270",
         "ftYs_SpecialHi_Coll",
         "ftYs_SpecialAirHi_Coll",

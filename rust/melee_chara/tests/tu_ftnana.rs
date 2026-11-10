@@ -57,15 +57,15 @@ fn smoke() {
         f.motion_id = m;
         assert_eq!(t::ftNn_Init_8012309C(gp), want, "motion {m}");
     }
-    f.set_x221F_b3(1);
+    f.set_is_sleeping(1);
     assert!(!t::ftNn_Init_8012309C(gp));
-    f.set_x221F_b3(0);
+    f.set_is_sleeping(0);
 
     // 8012300C: refuses when frozen / flagged; otherwise acts for the "free" sub-states only.
     f.set_x2219_b5(1);
     assert!(!t::ftNn_Init_8012300C(gp));
     f.set_x2219_b5(0);
-    unsafe { f.x2070.anon_0.set_x2071_b0_3(1) };
+    unsafe { f.x2070.x0.set_x2071_b0_3(1) };
     assert!(!t::ftNn_Init_8012300C(gp));
     assert_eq!(take(), "");
 

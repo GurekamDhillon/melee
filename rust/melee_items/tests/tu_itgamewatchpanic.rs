@@ -62,7 +62,7 @@ unsafe fn setup() {
     NEWG.user_data = &raw mut NEWITEM as *mut c_void;
     NEWG.hsd_obj = &raw mut JT[0] as *mut c_void;
     ATTRS[0] = &raw mut ATTR0[0] as *mut c_void;
-    ART.x4_specialAttributes = &raw mut ATTRS as *mut c_void;
+    ART.x4_specialAttributes = &raw mut ATTRS as *mut _;
     ITEM.xC4_article_data = &raw mut ART;
     NEWITEM.xC4_article_data = &raw mut ART;
     ITEM.owner = pickg();

@@ -42,14 +42,14 @@ pub mod ext {
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ft_800831CC(g: G, a: fn(G, i32) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_800831cc;
-        ftCo_80096CC8(g: G, line_id: i32) -> bool = |g: G, line_id: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line_id as _) as _ } };
+        ft_800831CC(g: G, a: fn(G, isize) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_800831cc;
+        ftCo_80096CC8(g: G, line_id: isize) -> bool = |g: G, line_id: isize| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line_id as _) as _ } };
         ft_80082B1C(g: G) = crate::tu::ft_081b::ft_80082b1c;
     }
 }
 
-fn cb_80096CC8(g: G, line_id: i32) -> bool {
-    ext::ftCo_80096CC8(g, line_id)
+fn cb_80096CC8(g: G, line_id: isize) -> bool {
+    ext::ftCo_80096CC8(g, line_id as isize)
 }
 fn cb_80082B1C(g: G) {
     ext::ft_80082B1C(g)
@@ -68,7 +68,7 @@ pub fn ftCo_800C23FC(g: G) {
     melee_core::ct!("ftCo_800C23FC");
     ext::ftCommon_8007E2FC(g);
     let f = fp(g);
-    f.anon_2210.throw_flags = 0;
+    f.x2210.throw_flags = 0;
     let mut ef_offset = Vec3 { x: 0.0, y: f.coll_data.ecb.top.y, z: 0.0 };
     ext::ftKb_SpecialN_800F1F1C(g, &mut ef_offset);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_PassiveCeil as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -92,8 +92,8 @@ pub fn ftCo_PassiveCeil_Anim(g: G) {
     let f = fp(g);
     // ftCheckThrowB3 (ft/inlines.h)
     let b3 = unsafe {
-        if f.anon_2210.anon_0.throw_flags_b3() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b3(0);
+        if f.x2210.x0.throw_flags_b3() != 0 {
+            f.x2210.x0.set_throw_flags_b3(0);
             true
         } else {
             false

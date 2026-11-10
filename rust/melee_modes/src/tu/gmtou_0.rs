@@ -36,7 +36,7 @@ pub mod ext {
     use super::*;
 
     crate::gmtou_ext! {
-        fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, unused: i32);
+        fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, unused: isize);
         fn gm_IsCKindUnlocked(ckind: u8) -> i32;
         fn gm_SetNextGameModeStateId(pending_scene: u8);
         fn gm_ChangeGameModeAfterCurrentScene(pending_mode: i32);

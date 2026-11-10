@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::{Once, RwLock};
 
 use melee_types::{
-    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_GObjEvent, HSD_Generator, HSD_JObj, HSD_PadStatus, HSD_psAppSRT, Item, StageCallbacks, StageCallbacks_anon_135,
+    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_GObjEvent, HSD_Generator, HSD_JObj, HSD_PadStatus, HSD_psAppSRT, Item, StageCallbacks, StageCallbacks_x10,
     StageData, StageInfo, Vec3, CollLine_Ceiling, CollLine_Floor, CollLine_LeftWall, CollLine_RightWall, HSD_PAD_A,
     JOBJ_HIDDEN, JOBJ_MTX_DIRTY, JOBJ_MTX_INDEP_SRT, JOBJ_USER_DEF_MTX, QuakeKind_Small, Gr_Kind_TKirby,
 };
@@ -79,21 +79,21 @@ fn init_tables() {
             callback1: Some(grTKirby_8022151C),
             gobj_proc: Some(grTKirby_80221524),
             callback3: Some(grTKirby_80221528),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[1] = StageCallbacks {
             on_init: Some(stageGObj1_OnInit),
             callback1: Some(grTKirby_8022160C),
             gobj_proc: Some(stageGObj1_GObjProc),
             callback3: Some(grTKirby_80221634),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[2] = StageCallbacks {
             on_init: Some(stageGObj2_OnInit),
             callback1: Some(grTKirby_8022157C),
             gobj_proc: Some(stageGObj2_GObjProc),
             callback3: Some(grTKirby_802215B8),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be(0xC0000000) },
+            x10: StageCallbacks_x10 { flags: u32::to_be(0xC0000000) },
         };
         CALLBACKS.write(t);
         let mut sd: StageData = core::mem::zeroed();
@@ -226,7 +226,7 @@ pub unsafe extern "C" fn grTKirby_80221634(gobj: *mut HSD_GObj) {
     pub extern "C" fn grTKirby_8022160C(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grTKirby_80221638 (gr/grtkirby.c:159)
-    pub extern "C" fn grTKirby_80221638(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grTKirby_80221638(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grTKirby_80221640 (gr/grtkirby.c:164)
     pub extern "C" fn grTKirby_80221640(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

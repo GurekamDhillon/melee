@@ -37,8 +37,8 @@ pub mod ext {
     fn Camera_80030BBC(a0: *mut Vec, a1: *mut S32Vec2) -> i32;
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
     fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32;
     fn Ground_801C0604() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0604() as _ };
     fn Ground_801C0618() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0618() as _ };
@@ -61,7 +61,7 @@ pub mod ext {
     fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) = |a0: *mut HSD_GObj, a1: u32| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _); } };
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
@@ -301,7 +301,7 @@ pub unsafe extern "C" fn ifMagnify_802FB73C(player: *mut ifMagnifyPlayer, pos: *
     player
 }
 
-pub unsafe extern "C" fn ifMagnify_802FB8C0(gobj: *mut HSD_GObj, code: i32) {
+pub unsafe extern "C" fn ifMagnify_802FB8C0(gobj: *mut HSD_GObj, code: isize) {
     melee_core::ct!("ifMagnify_802FB8C0");
     let mut screen_pos = S32Vec2 { x: 0, y: 0 };
     let mut edge_pos = Vec2 { x: 0.0, y: 0.0 };
@@ -576,7 +576,7 @@ pub unsafe extern "C" fn ifMagnify_802FC3C0(slot: i32) {
         let w = (*(*player).idesc).width;
         let h = (*(*player).idesc).height;
         let f = (*(*player).idesc).format;
-        (*(*player).idesc).image_ptr = ext::HSD_MemAlloc(((ext::GXGetTexBufferSize(w, h, f as u32, 0, 0).wrapping_add(0x1F)) & !0x1F) as i32);
+        (*(*player).idesc).image_ptr = ext::HSD_MemAlloc(((ext::GXGetTexBufferSize(w, h, f as u32, 0, 0).wrapping_add(0x1F)) & !0x1F) as i32) as *mut u8;
         (*(*(*(*(*child).u.dobj).next).mobj).tobj).imagedesc = (*player).idesc;
     }
 
@@ -612,7 +612,7 @@ pub unsafe extern "C" fn ifMagnify_802FC618() {
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_CameraKind, cobj.cast());
     ext::GObj_SetupGXLinkMax(
         gobj,
-        core::mem::transmute::<unsafe extern "C" fn(*mut HSD_GObj), Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>>(ifMagnify_802FBBDC),
+        core::mem::transmute::<unsafe extern "C" fn(*mut HSD_GObj), Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>>(ifMagnify_802FBBDC),
         0,
     );
     // see ifMagnify_UpdateLogicOffscreen
@@ -650,30 +650,30 @@ pub unsafe extern "C" fn ifMagnify_802FC7C0(magnify: *mut ifMagnify) {
 
     let result = ext::Ground_801C0604();
     if !result.is_null() {
-        (*magnify).x4 = *(result as *const i32);
+        (*magnify).x4 = *(result as *const _GXColor);
     } else {
-        (*magnify).x4 = default_val;
+        (*magnify).x4 = *(&default_val as *const i32 as *const _GXColor);
     }
 
     let result = ext::Ground_801C0618();
     if !result.is_null() {
-        (*magnify).x8 = *(result as *const i32);
+        (*magnify).x8 = *(result as *const _GXColor);
     } else {
-        (*magnify).x8 = default_val;
+        (*magnify).x8 = *(&default_val as *const i32 as *const _GXColor);
     }
 
     let result = ext::Ground_801C062C();
     if !result.is_null() {
-        (*magnify).xC = *(result as *const i32);
+        (*magnify).xC = *(result as *const _GXColor);
     } else {
-        (*magnify).xC = default_val;
+        (*magnify).xC = *(&default_val as *const i32 as *const _GXColor);
     }
 
     let result = ext::Ground_801C0640();
     if !result.is_null() {
-        (*magnify).x10 = *(result as *const i32);
+        (*magnify).x10 = *(result as *const _GXColor);
     } else {
-        (*magnify).x10 = default_val;
+        (*magnify).x10 = *(&default_val as *const i32 as *const _GXColor);
     }
 }
 

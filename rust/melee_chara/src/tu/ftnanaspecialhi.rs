@@ -45,7 +45,7 @@ pub fn ftNn_Init_801230D0(nana_gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftNn_Init_801230D0");
     unsafe {
         let nana_fp = fpp(nana_gobj);
-        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
         let mut popo_vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         let mut nana_vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         if !popo_gobj.is_null() {
@@ -88,7 +88,7 @@ pub fn fn_80123218(nana_gobj: *mut HSD_GObj) {
     melee_core::ct!("fn_80123218");
     unsafe {
         let nana_fp = fpp(nana_gobj);
-        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
         if !popo_gobj.is_null() {
             let popo_fp = fpp(popo_gobj);
             let mut nana_vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -115,7 +115,7 @@ pub fn ftNn_Init_801232A4(nana_gobj: *mut HSD_GObj) {
     melee_core::ct!("ftNn_Init_801232A4");
     unsafe {
         let nana_fp = fpp(nana_gobj);
-        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
         if !popo_gobj.is_null() {
             let popo_fp = fpp(popo_gobj);
             (*nana_fp).facing_dir = (*popo_fp).facing_dir;
@@ -240,7 +240,7 @@ pub fn ftNn_Init_801237F8(nana_gobj: *mut HSD_GObj) {
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let attrs = (*nana_fp).dat_attrs as *const ftIceClimberAttributes;
-        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
         if !popo_gobj.is_null() {
             let popo_fp = fpp(popo_gobj);
             ext::ft_800849EC(popo_fp, nana_fp);

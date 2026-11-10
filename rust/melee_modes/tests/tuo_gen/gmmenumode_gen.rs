@@ -48,7 +48,7 @@ if v.set() { (*p).x8 = v.leaf_ptr(&format!("{}.x8", path)) as _; } else { v.dump
 if v.set() { (*p).xC = v.leaf_ptr(&format!("{}.xC", path)) as _; } else { v.dump_p(&format!("{}.xC", path), ((*p).xC) as usize); }
 }
 {
-if v.set() { (*p).x10 = v.leaf_ptr(&format!("{}.x10", path)) as _; } else { v.dump_p(&format!("{}.x10", path), ((*p).x10) as usize); }
+v.bytes(&format!("{}.x10", path), &mut (*p).x10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x10));
 }
 {
 if v.set() { (*p).x14 = f32::from_bits(v.leaf_f32(&format!("{}.x14", path))); } else { v.dump_f32(&format!("{}.x14", path), ((*p).x14).to_bits()); }

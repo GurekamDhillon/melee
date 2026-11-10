@@ -89,9 +89,9 @@ pub mod ext {
             }
     hook!(H_lb_80011E24, lb_80011E24, (a0: *mut melee_types::HSD_JObj, a1: *mut *mut melee_types::HSD_JObj, a2: i32, a3: i32) -> i32);
     hook!(H_HSD_GObjObject_80390A70, HSD_GObjObject_80390A70, (a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void));
-    hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32));
-    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
-            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+    hook!(H_GObj_SetupGXLink, GObj_SetupGXLink, (a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32));
+    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: isize)  {
                 match H_HSD_GObj_JObjCallback {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },

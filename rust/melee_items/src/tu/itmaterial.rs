@@ -203,10 +203,10 @@ pub unsafe extern "C" fn fn_80277D8C(mobj: *mut HSD_MObj, rendermode_arg: u32, u
     if (*item).x5C9 != 0xFF {
         rendermode |= RENDER_BLENDING;
     }
-    if (*item).xDCF_flag.anon_0.b4() != 0 && (*item).xDCF_flag.anon_0.b5() == 0 {
+    if (*item).xDCF_flag.x0.b4() != 0 && (*item).xDCF_flag.x0.b5() == 0 {
         rendermode |= RENDER_NO_ZUPDATE;
     }
-    if (*item).xDCF_flag.anon_0.b5() != 0 && (*item).x5C9 == 0xFF {
+    if (*item).xDCF_flag.x0.b5() != 0 && (*item).x5C9 == 0xFF {
         pe_desc.flags = 0x38;
         pe_desc.dst_alpha = 0;
         pe_desc.r#type = 0;
@@ -239,7 +239,7 @@ pub unsafe extern "C" fn it_80277F90(item: *mut Item, mobj: *mut HSD_MObj, arg2:
     let mut chk: i32;
 
     let ov = &raw mut (*item).x548_colorOverlay;
-    if (*item).xDCF_flag.anon_0.b4() == 0 && (*ov).x7C_flag2() != 0 && (*ov).x7C_light_enable() != 0 {
+    if (*item).xDCF_flag.x0.b4() == 0 && (*ov).x7C_flag2() != 0 && (*ov).x7C_light_enable() != 0 {
         (*arg2).cnst = (*info).texp_tmpl;
         reg = ext::lbGetFreeColorRegister(0, mobj, null_mut());
         if reg == -1 {
@@ -285,16 +285,16 @@ pub unsafe extern "C" fn it_80278108(item: *mut Item, mobj: *mut HSD_MObj, texp:
     let info = &raw mut it_mobj;
     let mut overlay: *mut ColorOverlay;
 
-    if (*item).xDCF_flag.anon_0.b5() != 0 {
+    if (*item).xDCF_flag.x0.b5() != 0 {
         return;
     }
     overlay = &raw mut (*item).x548_colorOverlay;
-    if (*item).xDCF_flag.anon_0.b3() != 0 {
+    if (*item).xDCF_flag.x0.b3() != 0 {
         if !(*item).owner.is_null() && (*item).xDC8_word.flags.x13() != 0 {
             overlay = ext::ftCo_800C0674((*item).owner);
         }
     }
-    if (*item).xDCF_flag.anon_0.b4() != 0 {
+    if (*item).xDCF_flag.x0.b4() != 0 {
         chk1 = true;
         sp168 = (*item).xBC8.x0_unk;
     } else if (*item).x5C8 != 0 {

@@ -150,8 +150,8 @@ unsafe fn dispatch(name: &str, a: &[u64]) -> Option<Ret> {
         "gm_801AA774" => Ret::Int(m::gm_801AA774(a[0] as i16) as u32 as u64),
         "gm_Scene_StaffRoll_OnFrame" => { m::gm_Scene_StaffRoll_OnFrame(); Ret::Void }
         "fn_801AA7F8" => { m::fn_801AA7F8(a[0] as usize as *mut HSD_GObj); Ret::Void }
-        "fn_801AA854" => { m::fn_801AA854(a[0] as usize as *mut HSD_GObj, a[1] as i32); Ret::Void }
-        "fn_801AAA28" => { m::fn_801AAA28(a[0] as usize as *mut HSD_GObj, a[1] as i32); Ret::Void }
+        "fn_801AA854" => { m::fn_801AA854(a[0] as usize as *mut HSD_GObj, a[1] as isize); Ret::Void }
+        "fn_801AAA28" => { m::fn_801AAA28(a[0] as usize as *mut HSD_GObj, a[1] as isize); Ret::Void }
         "fn_801AAABC" => { m::fn_801AAABC(a[0] as usize as *mut HSD_GObj); Ret::Void }
         "fn_801AAB18" => { m::fn_801AAB18(a[0] as usize as *mut HSD_GObj); Ret::Void }
         "fn_801AAB74" => { m::fn_801AAB74(a[0] as usize as *mut HSD_GObj); Ret::Void }

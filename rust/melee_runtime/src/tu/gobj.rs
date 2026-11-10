@@ -228,7 +228,7 @@ pub unsafe fn HSD_GObj_80390ED0(gobj: *mut HSD_GObj, mut mask: u32) {
                         if let Some(cb) = (*cur).render_cb {
                             let saved = HSD_GObj_804D7814;
                             HSD_GObj_804D7814 = cur;
-                            cb(cur, i);
+                            cb(cur, i as isize);
                             HSD_GObj_804D7814 = saved;
                         }
                         cur = (*cur).next_gx;

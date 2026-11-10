@@ -64,11 +64,11 @@ fn smoke() {
     f.cmd_vars[1] = 1;
     t::ftMs_SpecialLw_Anim(gp);
     assert_eq!(take(), ["shield true true", "wait"]);
-    assert_eq!((f.cmd_vars[1], f.anon_221b.x221B_b1(), f.shield_unk0, f.shield_unk1), (2, 1, 12.0, 12.0));
+    assert_eq!((f.cmd_vars[1], f.x221B.x221B_b1(), f.shield_unk0, f.shield_unk1), (2, 1, 12.0, 12.0));
     f.cmd_vars[1] = 0;
-    f.anon_221b.set_x221B_b0(1);
+    f.x221B.set_x221B_b0(1);
     t::ftMs_SpecialAirLw_Anim(gp);
-    assert_eq!(f.anon_221b.x221B_b0(), 0);
+    assert_eq!(f.x221B.x221B_b0(), 0);
     assert_eq!(take(), ["fall"]);
 
     // Phys / Coll.

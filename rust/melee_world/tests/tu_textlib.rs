@@ -38,7 +38,7 @@ unsafe fn setup() {
         P[i].cursor_x = (rnd() % P[i].w as u32) as u8;
         P[i].cursor_y = (rnd() % P[i].h as u32) as u8;
         P[i].id = ((rnd() % 7) as i32 - 2) as i8;
-        P[i].buf = BUFS[i].as_mut_ptr();
+        P[i].buf = (BUFS[i].as_mut_ptr()) as *mut _;
         for j in 0..192 {
             let b = if rnd() % 4 == 0 { 0 } else { rnd() as u8 };
             BUFS[i][j] = (if j & 1 != 0 { gcb(b as u32) as u8 } else { b }) as i8;

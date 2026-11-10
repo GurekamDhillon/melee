@@ -255,7 +255,8 @@ def main():
         for k, c in enumerate(argk):
             if c == "o":  # pointer to a local void* (zeroed): a cursor out-parameter
                 pre += f"void* o{k} = 0; "
-            a.append({"i": f"a[{k}]", "p": f"(void*)(__UINTPTR_TYPE__)a[{k}]", "f": f"rt_f32(a[{k}])", "d": f"rt_f64(a[{k}])", "o": f"&o{k}", "c": f"rt_gxcolor(a[{k}])"}[c])
+            a.append({"i": f"(int) a[{k}]",  # the cases carry 32-bit ints: an intptr_t parameter gets the sign-extended value, as in the port
+                      "p": f"(void*)(__UINTPTR_TYPE__)a[{k}]", "f": f"rt_f32(a[{k}])", "d": f"rt_f64(a[{k}])", "o": f"&o{k}", "c": f"rt_gxcolor(a[{k}])"}[c])
         call = f"{name}({', '.join(a)})"
         body = {
             "v": f"{call}; return 0;",

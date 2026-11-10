@@ -1313,7 +1313,7 @@ pub unsafe extern "C" fn efAsync_LoadSync(mut idx: i32) {
                 ext::psInitDataBank(idx, ((*spC).ef_DAT_file as *mut c_void) as *mut i32, ((*spC).effDataTable_name as *mut c_void) as *mut i32, null_mut(), null_mut());
             }
         }
-        (*lookup).data = (core::ptr::addr_of_mut!((*spC).data) as *mut *mut c_void) as *mut c_void;
+        (*lookup).data = (core::ptr::addr_of_mut!((*spC).data) as *mut *mut c_void) as *mut EF_EffectDesc;
     }
 }
 

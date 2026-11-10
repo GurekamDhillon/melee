@@ -20,7 +20,7 @@ pub fn install() {
         HSD_GObj_SetupProc = Some(|a0, a1, a2| { t(1007); t(pi(a0)); t(fi(a1)); t(a2 as u32); core::ptr::null_mut() });
         Mex_GrBind = Some(|a0| { t(1008); t(pi(a0)); a0 });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1009); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
-        grDisplay_801C5DB0 = Some(|a0, a1| { t(1010); t(pi(a0)); t(a1 as u32); });
+        grDisplay_801C5DB0 = Some(|a0, a1| { t(1010); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
         grZakoGenerator_801CAE04 = Some(|a0| { t(1011); t(pi(a0)); core::ptr::null_mut() });
         lb_800115F4 = Some(|| { t(1012); });
     }
@@ -51,6 +51,7 @@ pub fn freg_all() {
 }
 
 pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
+    unsafe {
     p.classifier = fv() as _;
     p.p_link = fv() as _;
     p.gx_link = fv() as _;
@@ -59,9 +60,11 @@ pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
     p.obj_kind = fv() as _;
     p.user_data_kind = fv() as _;
     p.gxlink_prios = fv64() as _;
+    }
 }
 pub fn hash_HSD_GObj(p: &HSD_GObj) {
-    unsafe { if HDBG { println!("B HSD_GObj"); } }
+    unsafe {
+    if HDBG { println!("B HSD_GObj"); }
     hm(p.classifier as u32);
     hm(p.p_link as u32);
     hm(p.gx_link as u32);
@@ -80,9 +83,11 @@ pub fn hash_HSD_GObj(p: &HSD_GObj) {
     hm(pi(p.user_data));
     hm(fi(p.user_data_remove_func));
     hm(pi(p.x34_unk));
+    }
 }
 
 pub fn fill_Ground(p: &mut Ground) {
+    unsafe {
     p.x0 = fv() as _;
     p.x10_flags.set_b0(fv() as _);
     p.x10_flags.set_b1(fv() as _);
@@ -146,9 +151,11 @@ pub fn fill_Ground(p: &mut Ground) {
     p.color_overlay.set_x7C_flag8(fv() as _);
     p.xC0 = rg();
     for i0 in 0..400 { unsafe { *(&mut p.u as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    }
 }
 pub fn hash_Ground(p: &Ground) {
-    unsafe { if HDBG { println!("B Ground"); } }
+    unsafe {
+    if HDBG { println!("B Ground"); }
     hm(p.x0 as u32);
     hm(pi(p.gobj));
     hm(fi(p.x8_callback));
@@ -220,9 +227,11 @@ pub fn hash_Ground(p: &Ground) {
     hm(p.color_overlay.x7C_flag8() as u32);
     hm(p.xC0.to_bits());
     for i0 in 0..400 { unsafe { hm(*(&p.u as *const _ as *const u8).add(i0) as u32); } }
+    }
 }
 
 pub fn fill_StageInfo(p: &mut StageInfo) {
+    unsafe {
     p.cam_info.cam_bounds.left = rg();
     p.cam_info.cam_bounds.right = rg();
     p.cam_info.cam_bounds.top = rg();
@@ -327,9 +336,11 @@ pub fn fill_StageInfo(p: &mut StageInfo) {
     for i0 in 0..4 {
     p.x744_pad[i0] = fv() as _;
     }
+    }
 }
 pub fn hash_StageInfo(p: &StageInfo) {
-    unsafe { if HDBG { println!("B StageInfo"); } }
+    unsafe {
+    if HDBG { println!("B StageInfo"); }
     hm(p.cam_info.cam_bounds.left.to_bits());
     hm(p.cam_info.cam_bounds.right.to_bits());
     hm(p.cam_info.cam_bounds.top.to_bits());
@@ -454,27 +465,35 @@ pub fn hash_StageInfo(p: &StageInfo) {
     for i0 in 0..4 {
     hm(p.x744_pad[i0] as u32);
     }
+    }
 }
 
 pub fn fill_StageCallbacks(p: &mut StageCallbacks) {
-    for j0 in 0..4 { unsafe { *(base(p) as *mut u8).add(32 + j0) = rnd() as u8; } }
+    unsafe {
+    for i0 in 0..4 { unsafe { *(&mut p.x10 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    }
 }
 pub fn hash_StageCallbacks(p: &StageCallbacks) {
-    unsafe { if HDBG { println!("B StageCallbacks"); } }
+    unsafe {
+    if HDBG { println!("B StageCallbacks"); }
     hm(fi(p.on_init));
     hm(fi(p.callback1));
     hm(fi(p.gobj_proc));
     hm(fi(p.callback3));
-    for j0 in 0..4 { unsafe { hm(*base(p).add(32 + j0) as u32); } }
+    for i0 in 0..4 { unsafe { hm(*(&p.x10 as *const _ as *const u8).add(i0) as u32); } }
+    }
 }
 
 pub fn fill_StageData(p: &mut StageData) {
+    unsafe {
     p.grkind = fv() as _;
     p.flags2 = fv() as _;
     p.joint_count = fv() as _;
+    }
 }
 pub fn hash_StageData(p: &StageData) {
-    unsafe { if HDBG { println!("B StageData"); } }
+    unsafe {
+    if HDBG { println!("B StageData"); }
     hm(p.grkind as u32);
     hm(pi(p.callbacks));
     hm(pi(p.data1));
@@ -488,4 +507,5 @@ pub fn hash_StageData(p: &StageData) {
     hm(p.flags2 as u32);
     hm(pi(p.joints));
     hm(p.joint_count as u32);
+    }
 }

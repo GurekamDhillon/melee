@@ -48,7 +48,7 @@ fn mk_me(c: &mut Case) -> *mut MatchEnd {
             (*ps).x28 = pick(c, &[0u32, 3600, 3601, (*me).frame_count, 400000]);
             (*ps).is_big_loser = c.rng.range(0, 4) as u8;
             (*ps).is_small_loser = c.rng.range(0, 4) as u8;
-            c.bitfields::<MatchPlayerData>(ps, offset_of!(MatchPlayerData, anon_3), 3, 1);
+            c.bitfields::<MatchPlayerData>(ps, offset_of!(MatchPlayerData, x3_u), 3, 1);
         }
         for t in 0..5usize {
             (*me).team_standings[t].is_big_loser = c.rng.range(0, 3) as u8;
@@ -492,7 +492,7 @@ fn b_enter(c: &mut Case) {
         (*info).match_end = *me;
         for i in 0..6usize {
             let ps = addr_of_mut!((*info).match_end.player_standings[i]);
-            c.bitfields::<MatchPlayerData>(ps, offset_of!(MatchPlayerData, anon_3), 3, 1);
+            c.bitfields::<MatchPlayerData>(ps, offset_of!(MatchPlayerData, x3_u), 3, 1);
         }
     }
     // the scene state the stubs would leave (memzero / archive loads do nothing in the oracle)
@@ -538,7 +538,7 @@ fn gmresult_vs_c() {
         }),
         fd!("fn_80174B4C", "pi", "v", 120, b_rows, |a| { tu::fn_80174B4C(p(a, 0), ai32(a, 1)); 0 }),
         fd!("fn_80174FD0", "pi", "v", 8, b_dobj, |a| { tu::fn_80174FD0(p(a, 0), ai32(a, 1)); 0 }),
-        fd!("fn_80175038", "pi", "v", 8, b_disp, |a| { tu::fn_80175038(p(a, 0), ai32(a, 1)); 0 }),
+        fd!("fn_80175038", "pi", "v", 8, b_disp, |a| { tu::fn_80175038(p(a, 0), ai32(a, 1) as isize); 0 }),
         fd!("fn_8017507C", "i", "g4", 40, b_slot, |a| { r(tu::fn_8017507C(ai32(a, 0))) }),
         fd!("fn_80175240", "i", "v", 40, b_slot, |a| { tu::fn_80175240(ai32(a, 0)); 0 }),
         fd!("fn_8017556C", "i", "v", 40, b_slot, |a| { tu::fn_8017556C(ai32(a, 0)); 0 }),

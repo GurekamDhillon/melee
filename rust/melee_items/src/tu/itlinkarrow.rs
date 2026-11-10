@@ -119,7 +119,7 @@ pub mod ext {
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026BB44(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026BB44(a0) };
     fn it_8026EA20(a0: *mut HSD_GObj, a1: *mut Vec, a2: *mut Vec, a3: *mut Vec, a4: *mut i32, a5: *mut u32) -> i32 => unsafe { crate::tu::itgroundcoll::it_8026EA20(a0, a1 as _, a2 as _, a3 as _, a4, a5) };
-    fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
+    fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
     fn it_80272460(a0: *mut HitCapsule, a1: u32, a2: *mut HSD_GObj) => unsafe { crate::tu::itcoll::it_80272460(a0, a1, a2) };
     fn it_80272A18(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A18(a0) };
     fn it_80272D40(a0: *mut HSD_GObj) -> i32 => unsafe { crate::tu::it_2725::it_80272D40(a0) };
@@ -222,7 +222,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
     (*spawn).vel.x = 0.0;
     (*spawn).x0_parent_gobj = parent;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(initial_collision as u8);
+    (*spawn).x44_flag.x0.set_b0(initial_collision as u8);
     (*spawn).x40 = 0;
 }
 
@@ -245,7 +245,7 @@ pub unsafe extern "C" fn it_802A7D8C(gobj: *mut HSD_GObj, arg1: i32) {
     if !(*item).xDD4_itemVar.linkarrow.xB4[1].is_null() && (*item).xDB0_itcmd_var1 == 1 {
         ext::HSD_JObjDispAll((*item).xDD4_itemVar.linkarrow.xB4[1], null_mut(), ext::HSD_GObj_80390EB8(arg1), 0);
     }
-    ext::it_8026EECC(gobj, arg1);
+    ext::it_8026EECC(gobj, arg1 as isize);
 }
 
 /// 2A7E40: shifts the trail history and updates the trail objects.
@@ -784,7 +784,7 @@ pub unsafe extern "C" fn itLinkarrow_UnkMotion4_Anim(gobj: *mut Item_GObj) -> bo
             ext::it_802756D0(gobj);
         }
         ext::it_8026BB44(gobj);
-        (*ip).xDCF_flag.anon_0.set_b2(1);
+        (*ip).xDCF_flag.x0.set_b2(1);
         (*lv).xF0 = (*lv).xF0.wrapping_add(1);
         if (*lv).xF0 > 0x12C {
             return true;

@@ -139,7 +139,7 @@ pub unsafe extern "C" fn it_802F295C(owner_gobj: *mut HSD_GObj, attr: *mut itUnk
     spawn.vel = (*attr).vel;
     spawn.x0_parent_gobj = owner_gobj;
     spawn.x4_parent_gobj2 = owner_gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     let item_gobj = ext::Item_80268B18(&mut spawn);
 
@@ -159,7 +159,7 @@ pub unsafe extern "C" fn it_802F2A58(item_gobj: *mut Item_GObj) {
     let item = (*item_gobj).user_data as *mut Item;
     ext::it_8026B3A8(item_gobj);
     ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
-    (*item).xDCE_flag.anon_0.set_b7(0);
+    (*item).xDCE_flag.x0.set_b7(0);
 }
 
 /// `static bool it_2F28_UnkMotion0_Anim`

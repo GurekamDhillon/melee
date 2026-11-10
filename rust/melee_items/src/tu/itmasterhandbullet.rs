@@ -98,7 +98,7 @@ pub unsafe extern "C" fn it_802F0AE0(
     spawn.vel.z = 0.0;
     spawn.x0_parent_gobj = gobj;
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = ext::Item_8026AE60() as i32;
     let spawned = ext::Item_80268B18(&mut spawn);
     it_802F0AE0_sub(spawned, msid, gobj);

@@ -82,11 +82,11 @@ unsafe fn shield_window(gobj: *mut HSD_GObj, fp: *mut Fighter) {
     if (*fp).cmd_vars[1] == 1 {
         (*fp).cmd_vars[1] = 2;
         ext::ftColl_8007B1B8(gobj, &mut (*da).x64 as *mut AbsorbDesc as *mut _, Some(cb_ftMs_SpecialLw_80139140));
-        (*fp).anon_221b.set_x221B_b1(1);
+        (*fp).x221B.set_x221B_b1(1);
         (*fp).shield_unk0 = (*da).x60;
         (*fp).shield_unk1 = (*da).x60;
     } else if (*fp).cmd_vars[1] == 0 {
-        (*fp).anon_221b.set_x221B_b0(0);
+        (*fp).x221B.set_x221B_b0(0);
     }
 }
 
@@ -147,7 +147,7 @@ unsafe fn rearm_shield(gobj: *mut HSD_GObj) {
     let da = da(fp);
     if (*fp).cmd_vars[1] == 2 {
         ext::ftColl_8007B1B8(gobj, &mut (*da).x64 as *mut AbsorbDesc as *mut _, Some(cb_ftMs_SpecialLw_80139140));
-        (*fp).anon_221b.set_x221B_b1(1);
+        (*fp).x221B.set_x221B_b1(1);
     }
 }
 

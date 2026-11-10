@@ -59,8 +59,8 @@ pub mod ext {
                 }
             }
     /// `ft_800831CC(gobj, line_cb, coll_cb)` (ft/ft_081B.c): air collision with a landing-line filter.
-    crate::port_hook!(FT_800831CC, ft_800831CC, crate::adapt::ft_800831CC, (gobj: *mut HSD_GObj, line_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> bool>, cb: HSD_GObjEvent));
-    hook_or!(FTCO_80096CC8, ftCo_80096CC8, melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8, (gobj: *mut HSD_GObj, line_id: i32) -> bool);
+    crate::port_hook!(FT_800831CC, ft_800831CC, crate::adapt::ft_800831CC, (gobj: *mut HSD_GObj, line_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> bool>, cb: HSD_GObjEvent));
+    hook_or!(FTCO_80096CC8, ftCo_80096CC8, melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8, (gobj: *mut HSD_GObj, line_id: isize) -> bool);
     /// `ft_80082B1C(gobj)` (ft/ft_081B.c), used as the landing callback.
     pub static mut FT_80082B1C: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]
@@ -74,9 +74,9 @@ pub mod ext {
 }
 
 /// `ftCo_80096CC8` as the `bool (*)(Fighter_GObj*, int)` callback entry.
-pub unsafe extern "C" fn cb_ftCo_80096CC8(g: *mut HSD_GObj, line_id: i32) -> bool {
+pub unsafe extern "C" fn cb_ftCo_80096CC8(g: *mut HSD_GObj, line_id: isize) -> bool {
     melee_core::ct!("cb_ftCo_80096CC8");
-    ext::ftCo_80096CC8(g, line_id)
+    ext::ftCo_80096CC8(g, line_id as isize)
 }
 /// `ft_80082B1C` as an `HSD_GObjEvent` entry.
 pub unsafe extern "C" fn cb_ft_80082B1C(g: *mut HSD_GObj) {

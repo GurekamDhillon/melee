@@ -49,7 +49,7 @@ static void setup(void)
     V1.x = rw(); V1.y = rw(); V1.z = rw(); V2.x = rw(); V2.y = rw(); V2.z = rw();
     G.user_data = &IT; G.hsd_obj = &JO[0]; G2.user_data = &IT2; G2.hsd_obj = &JO[3]; OWN.user_data = 0; OWN.hsd_obj = 0;
     IT.entity = &G; IT2.entity = &G2;
-    IT.xC4_article_data = &ART; IT2.xC4_article_data = &ART; ART.x4_specialAttributes = SA; ART.x0_common_attr = &IA;
+    IT.xC4_article_data = &ART; IT2.xC4_article_data = &ART; ART.x4_specialAttributes = (union ItemSpecialAttributes*) SA; ART.x0_common_attr = &IA;
     IT.xCC_item_attr = &IA; IT2.xCC_item_attr = &IA;
     IT.xBBC_dynamicBoneTable = &DBT; IT2.xBBC_dynamicBoneTable = &DBT;
     for (i = 0; i < 100; i++) DBT.bones[i] = &JO[i & 3];

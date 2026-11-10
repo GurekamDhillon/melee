@@ -163,7 +163,7 @@ unsafe fn setup_stem() {
         MD[i].x0_joint = if rnd() & 1 != 0 { (&raw mut JNT[(rnd() & 1) as usize]) as *mut _ } else { null_mut() };
         MD[i].x4_bone_count = bc as _;
         DY[i].count = (rnd() % 4) as i32;
-        DY[i].dyn_descs = (&raw mut BDD) as *mut BoneDynamicsDesc;
+        DY[i].dyn_descs = ((&raw mut BDD) as *mut BoneDynamicsDesc) as *mut _;
         ART[i].x14_dynamics = if bc != 0 && (rnd() & 1) != 0 { &raw mut DY[i] } else { null_mut() };
     }
     for k in 0..43usize { A24[k] = if CUR_OP == OP_Item_8026862C && k % 17 == 5 { null_mut() } else { &raw mut ART[(rnd() % 2) as usize] }; }
@@ -189,7 +189,7 @@ unsafe fn setup_stem() {
     for i in 0..8usize { JO[i].flags &= !(JOBJ_USE_QUATERNION as u32); }
     SP.kind = pick_kind(true) as _;
     for i in 0..26usize { *((&raw mut m::Item_804A0C64) as *mut i32).add(i) = (fv() & 7) as i32; }
-    m::Item_804A0CCC.count = rnd() as _; m::Item_804A0CCC.x154.anon_0.set_b0((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b1((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b2((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b3((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b4((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b5((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b6((rnd() & 1) as u8); m::Item_804A0CCC.x154.anon_0.set_b7((rnd() & 1) as u8); for i in 0..0xB0usize { *((&raw mut m::Item_804A0CCC) as *mut u8).add(i) = rnd() as u8; }
+    m::Item_804A0CCC.count = rnd() as _; m::Item_804A0CCC.x154.x0.set_b0((rnd() & 1) as u8); m::Item_804A0CCC.x154.x0.set_b1((rnd() & 1) as u8); m::Item_804A0CCC.x154.x0.set_b2((rnd() & 1) as u8); m::Item_804A0CCC.x154.x0.set_b3((rnd() & 1) as u8); m::Item_804A0CCC.x154.x0.set_b4((rnd() & 1) as u8); m::Item_804A0CCC.x154.x0.set_b5((rnd() & 1) as u8); m::Item_804A0CCC.x154.x0.set_b6((rnd() & 1) as u8); m::Item_804A0CCC.x154.x0.set_b7((rnd() & 1) as u8); for i in 0..0xB0usize { *((&raw mut m::Item_804A0CCC) as *mut u8).add(i) = rnd() as u8; }
     m::Item_804A0E24.last_kind = rnd() as i32; m::Item_804A0E24.previous_kind = rnd() as i32; m::Item_804A0E24.rare_spawned = (rnd() & 1) as _;
 }
 
@@ -198,7 +198,7 @@ unsafe fn setup_stem() {
 unsafe fn hash_stem() {
     g::hashg_all();
     hm(pi(m::ext::it_804D6D28));
-hm(rh(&m::Item_804A0C64)); hm(m::Item_804A0CCC.count as u32); hm(m::Item_804A0CCC.x154.anon_0.b0() as u32); hm(m::Item_804A0CCC.x154.anon_0.b1() as u32); hm(m::Item_804A0CCC.x154.anon_0.b2() as u32); hm(m::Item_804A0CCC.x154.anon_0.b3() as u32); hm(m::Item_804A0CCC.x154.anon_0.b4() as u32); hm(m::Item_804A0CCC.x154.anon_0.b5() as u32); hm(m::Item_804A0CCC.x154.anon_0.b6() as u32); hm(m::Item_804A0CCC.x154.anon_0.b7() as u32); hm(rh(&m::Item_804A0CCC.ecb_offset_arr)); hm(m::Item_804A0E24.last_kind as u32); hm(m::Item_804A0E24.previous_kind as u32); hm(m::Item_804A0E24.rare_spawned as u32);
+hm(rh(&m::Item_804A0C64)); hm(m::Item_804A0CCC.count as u32); hm(m::Item_804A0CCC.x154.x0.b0() as u32); hm(m::Item_804A0CCC.x154.x0.b1() as u32); hm(m::Item_804A0CCC.x154.x0.b2() as u32); hm(m::Item_804A0CCC.x154.x0.b3() as u32); hm(m::Item_804A0CCC.x154.x0.b4() as u32); hm(m::Item_804A0CCC.x154.x0.b5() as u32); hm(m::Item_804A0CCC.x154.x0.b6() as u32); hm(m::Item_804A0CCC.x154.x0.b7() as u32); hm(rh(&m::Item_804A0CCC.ecb_offset_arr)); hm(m::Item_804A0E24.last_kind as u32); hm(m::Item_804A0E24.previous_kind as u32); hm(m::Item_804A0E24.rare_spawned as u32);
 }
 
 #[test]

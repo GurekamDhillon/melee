@@ -58,8 +58,8 @@ pub mod ext {
         ftCo_800CB870(g: G) -> bool = crate::tu::ftCo_JumpAerial::ftCo_800CB870;
         ftPe_8011BAD8(g: G) -> bool = |_| todo!("TODO(port) ftPe_8011BAD8 (ftpeachfloat.c)");
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
-        ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
+        ft_800835B0(g: G, a: fn(G, isize) -> bool, b: fn(G)) = |g: G, a: fn(G, isize) -> bool, b: fn(G)| { unsafe { crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
+        ftCo_80096CC8(g: G, line: isize) -> bool = |g: G, line: isize| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
         ft_80082B1C(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
@@ -67,7 +67,7 @@ pub mod ext {
 #[inline(always)]
 pub(crate) fn tap_jump_ok(f: &Fighter) -> bool {
     melee_core::ct!("tap_jump_ok");
-    ext::FighterControls_TapJumpOff(f.player_id as i32) == 0
+    ext::FighterControls_TapJumpOff(f.player_idx as i32) == 0
 }
 
 pub fn ftCo_Jump_GetInput(g: G) -> ftCo_JumpInput {
@@ -143,7 +143,7 @@ pub fn ftCo_800CB110(g: G, arg1: bool, jump_mul: f32) {
     unsafe {
         let h_init_v = f.input.lstick[0].x * f.co_attrs.jump_h_initial_velocity;
         let mut h_vel = f.mv.co.jump.jump_mul * h_init_v;
-        let pid = f.player_id as i32;
+        let pid = f.player_idx as i32;
         let v_init_v = if f.mv.co.jump.x0 != 0 {
             ext::ScriptGame_ModJump(pid, 5, f.co_attrs.hop_v_initial_velocity) * f.mv.co.jump.jump_mul
         } else {

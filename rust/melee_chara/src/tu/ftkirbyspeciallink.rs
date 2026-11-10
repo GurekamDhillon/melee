@@ -220,7 +220,7 @@ pub fn ftKb_SpecialNLk800FB470(gobj: G) -> bool {
                 } else {
                     false
                 };
-                if in_set && (*fp).x2070.anon_0.x2071_b6() == 0 {
+                if in_set && (*fp).x2070.x0.x2071_b6() == 0 {
                     return false;
                 }
             }

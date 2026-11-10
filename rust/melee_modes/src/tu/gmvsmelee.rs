@@ -467,7 +467,7 @@ pub unsafe fn gmVsMelee_ExitResults(state: *mut GameModeState, vs: *mut VsModeDa
             if unk as i32 != none {
                 ext::gm_InitChallengerData(
                     (*match_end).player_standings[idx].ckind as u8,
-                    (*match_end).player_standings[idx].anon_3.anon_0.x3_b0(),
+                    (*match_end).player_standings[idx].x3_u.x0.x3_b0(),
                     idx as u8,
                     (*match_end).player_standings[idx].x4,
                     unk,
@@ -481,7 +481,7 @@ pub unsafe fn gmVsMelee_ExitResults(state: *mut GameModeState, vs: *mut VsModeDa
             } {
                 ext::gm_InitChallengerData(
                     (*match_end).player_standings[idx].ckind as u8,
-                    (*match_end).player_standings[idx].anon_3.anon_0.x3_b0(),
+                    (*match_end).player_standings[idx].x3_u.x0.x3_b0(),
                     idx as u8,
                     (*match_end).player_standings[idx].x4,
                     unk,
@@ -495,7 +495,7 @@ pub unsafe fn gmVsMelee_ExitResults(state: *mut GameModeState, vs: *mut VsModeDa
             } {
                 ext::gm_InitChallengerData(
                     (*match_end).player_standings[idx].ckind as u8,
-                    (*match_end).player_standings[idx].anon_3.anon_0.x3_b0(),
+                    (*match_end).player_standings[idx].x3_u.x0.x3_b0(),
                     idx as u8,
                     (*match_end).player_standings[idx].x4,
                     unk,

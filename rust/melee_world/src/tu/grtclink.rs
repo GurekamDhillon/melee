@@ -58,23 +58,23 @@ pub static mut grTCLink_StageCallbacks: [StageCallbacks; 4] = [
         callback1: Some(grTCLink_802200FC),
         gobj_proc: Some(grTCLink_80220104),
         callback3: Some(grTCLink_80220108),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(stageGObj1_OnInit),
         callback1: Some(grTCLink_802201EC),
         gobj_proc: Some(stageGObj1_GObjProc),
         callback3: Some(grTCLink_80220214),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(stageGObj2_OnInit),
         callback1: Some(grTCLink_8022015C),
         gobj_proc: Some(stageGObj2_GObjProc),
         callback3: Some(grTCLink_80220198),
-        anon_10: StageCallbacks_anon_135 { flags: u32::to_be((1 << 30) | (1 << 31)) },
+        x10: StageCallbacks_x10 { flags: u32::to_be((1 << 30) | (1 << 31)) },
     },
-    StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, anon_10: StageCallbacks_anon_135 { flags: 0 } },
+    StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, x10: StageCallbacks_x10 { flags: 0 } },
 ];
 
 pub static mut grTCLink_StageData: StageData = StageData {
@@ -111,7 +111,7 @@ pub static mut grTCLink_StageData: StageData = StageData {
     pub extern "C" fn grTCLink_802201EC(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grTCLink_80220218 (gr/grtclink.c:142)
-    pub extern "C" fn grTCLink_80220218(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grTCLink_80220218(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grTCLink_80220220 (gr/grtclink.c:147)
     pub extern "C" fn grTCLink_80220220(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

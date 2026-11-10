@@ -88,7 +88,7 @@ fn gricemt_matches_c() {
                 }
                 for i in 0..8usize { IG[i].user_data = &raw mut IT as *mut c_void; IG[i].hsd_obj = &raw mut JO[(i + 9) % 24] as *mut c_void; }
                 IT.xDD4_itemVar.mato.x4 = &raw mut JO[3];
-                ARCH.unk4 = &raw mut SD; SD.unk8 = X8.as_mut_ptr(); X8[7].unk0 = &raw mut JO[5] as *mut HSD_Joint;
+                ARCH.unk4 = &raw mut SD; SD.unk8 = X8.as_mut_ptr(); X8[7].joint = &raw mut JO[5] as *mut HSD_Joint;
                 FG.user_data = core::ptr::null_mut(); FG.hsd_obj = core::ptr::null_mut();
                 for i in 0..12usize {
                     GS[i].user_data = &raw mut GG[i] as *mut c_void; GS[i].hsd_obj = &raw mut JO[i] as *mut c_void;

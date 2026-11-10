@@ -244,7 +244,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -439,6 +439,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -583,21 +584,12 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -624,9 +616,9 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -778,10 +770,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -895,7 +884,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -963,7 +952,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -1030,7 +1019,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -1119,7 +1108,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -1135,17 +1124,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -1298,7 +1277,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -1423,11 +1402,11 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -1533,21 +1512,14 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -1573,14 +1545,14 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -1590,8 +1562,8 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -1606,7 +1578,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -1643,7 +1615,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -1772,7 +1744,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
             rt::h_p((*p).victims_2[i0].victim as *const u8);
             rt::h_u((*p).victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x134 as *const _ as *const u8, 8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     rt::t_i(a[2] as i64);
     let p0 = a[0] as usize as *mut Q::Fighter;
@@ -1780,7 +1752,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -1975,6 +1947,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -2119,21 +2092,12 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -2160,9 +2124,9 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -2314,10 +2278,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -2431,7 +2392,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -2499,7 +2460,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -2566,7 +2527,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -2655,7 +2616,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -2671,17 +2632,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -2834,7 +2785,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -2959,11 +2910,11 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -3069,21 +3020,14 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3109,14 +3053,14 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3126,8 +3070,8 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3142,7 +3086,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3179,7 +3123,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3308,7 +3252,7 @@ unsafe fn h_ScriptGame_HitRuleCreate(a: &[u64]) -> u64 {
             (*p1).victims_2[i1].victim = 0usize as _;
             (*p1).victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p1).anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p1).x134), 8); for i1 in 0..8 { *(&mut (*p1).x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
     }
     0
 }
@@ -3584,7 +3528,7 @@ unsafe fn h_gmVsMelee_EnterCss(a: &[u64]) -> u64 {
             rt::h_u((*p).start.rules.x1C_pad[i0] as u64);
         }
         rt::h_u((*p).start.rules.x20 as u64);
-        rt::h_i((*p).start.rules.x28 as i64);
+        rt::h_i((*p).start.rules.it_kind as i64);
         rt::h_f32((*p).start.rules.x2C);
         rt::h_f32((*p).start.rules.x30);
         rt::h_f32((*p).start.rules.game_speed);
@@ -3721,7 +3665,7 @@ unsafe fn h_gmVsMelee_EnterCss(a: &[u64]) -> u64 {
             (*p1).start.rules.x1C_pad[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         (*p1).start.rules.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p1).start.rules.x28 = rt::draw_int(&mut rt::MST) as _;
+        (*p1).start.rules.it_kind = rt::draw_int(&mut rt::MST) as _;
         (*p1).start.rules.x2C = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.x30 = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.game_speed = rt::draw_f32(&mut rt::MST);
@@ -3861,7 +3805,7 @@ unsafe fn h_gmVsMelee_EnterSss(a: &[u64]) -> u64 {
             rt::h_u((*p).start.rules.x1C_pad[i0] as u64);
         }
         rt::h_u((*p).start.rules.x20 as u64);
-        rt::h_i((*p).start.rules.x28 as i64);
+        rt::h_i((*p).start.rules.it_kind as i64);
         rt::h_f32((*p).start.rules.x2C);
         rt::h_f32((*p).start.rules.x30);
         rt::h_f32((*p).start.rules.game_speed);
@@ -3997,7 +3941,7 @@ unsafe fn h_gmVsMelee_EnterSss(a: &[u64]) -> u64 {
             (*p1).start.rules.x1C_pad[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         (*p1).start.rules.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p1).start.rules.x28 = rt::draw_int(&mut rt::MST) as _;
+        (*p1).start.rules.it_kind = rt::draw_int(&mut rt::MST) as _;
         (*p1).start.rules.x2C = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.x30 = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.game_speed = rt::draw_f32(&mut rt::MST);
@@ -4137,7 +4081,7 @@ unsafe fn h_gmVsMelee_EnterVs(a: &[u64]) -> u64 {
             rt::h_u((*p).start.rules.x1C_pad[i0] as u64);
         }
         rt::h_u((*p).start.rules.x20 as u64);
-        rt::h_i((*p).start.rules.x28 as i64);
+        rt::h_i((*p).start.rules.it_kind as i64);
         rt::h_f32((*p).start.rules.x2C);
         rt::h_f32((*p).start.rules.x30);
         rt::h_f32((*p).start.rules.game_speed);
@@ -4275,7 +4219,7 @@ unsafe fn h_gmVsMelee_EnterVs(a: &[u64]) -> u64 {
             (*p1).start.rules.x1C_pad[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         (*p1).start.rules.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p1).start.rules.x28 = rt::draw_int(&mut rt::MST) as _;
+        (*p1).start.rules.it_kind = rt::draw_int(&mut rt::MST) as _;
         (*p1).start.rules.x2C = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.x30 = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.game_speed = rt::draw_f32(&mut rt::MST);
@@ -4415,7 +4359,7 @@ unsafe fn h_gmVsMelee_ExitCss(a: &[u64]) -> u64 {
             rt::h_u((*p).start.rules.x1C_pad[i0] as u64);
         }
         rt::h_u((*p).start.rules.x20 as u64);
-        rt::h_i((*p).start.rules.x28 as i64);
+        rt::h_i((*p).start.rules.it_kind as i64);
         rt::h_f32((*p).start.rules.x2C);
         rt::h_f32((*p).start.rules.x30);
         rt::h_f32((*p).start.rules.game_speed);
@@ -4551,7 +4495,7 @@ unsafe fn h_gmVsMelee_ExitCss(a: &[u64]) -> u64 {
             (*p1).start.rules.x1C_pad[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         (*p1).start.rules.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p1).start.rules.x28 = rt::draw_int(&mut rt::MST) as _;
+        (*p1).start.rules.it_kind = rt::draw_int(&mut rt::MST) as _;
         (*p1).start.rules.x2C = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.x30 = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.game_speed = rt::draw_f32(&mut rt::MST);
@@ -4691,7 +4635,7 @@ unsafe fn h_gmVsMelee_ExitSss(a: &[u64]) -> u64 {
             rt::h_u((*p).start.rules.x1C_pad[i0] as u64);
         }
         rt::h_u((*p).start.rules.x20 as u64);
-        rt::h_i((*p).start.rules.x28 as i64);
+        rt::h_i((*p).start.rules.it_kind as i64);
         rt::h_f32((*p).start.rules.x2C);
         rt::h_f32((*p).start.rules.x30);
         rt::h_f32((*p).start.rules.game_speed);
@@ -4828,7 +4772,7 @@ unsafe fn h_gmVsMelee_ExitSss(a: &[u64]) -> u64 {
             (*p1).start.rules.x1C_pad[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         (*p1).start.rules.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p1).start.rules.x28 = rt::draw_int(&mut rt::MST) as _;
+        (*p1).start.rules.it_kind = rt::draw_int(&mut rt::MST) as _;
         (*p1).start.rules.x2C = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.x30 = rt::draw_f32(&mut rt::MST);
         (*p1).start.rules.game_speed = rt::draw_f32(&mut rt::MST);
@@ -5043,7 +4987,7 @@ unsafe fn h_gm_InitVsMode(a: &[u64]) -> u64 {
             rt::h_u((*p).start.rules.x1C_pad[i0] as u64);
         }
         rt::h_u((*p).start.rules.x20 as u64);
-        rt::h_i((*p).start.rules.x28 as i64);
+        rt::h_i((*p).start.rules.it_kind as i64);
         rt::h_f32((*p).start.rules.x2C);
         rt::h_f32((*p).start.rules.x30);
         rt::h_f32((*p).start.rules.game_speed);
@@ -5168,7 +5112,7 @@ unsafe fn h_gm_InitVsMode(a: &[u64]) -> u64 {
             (*p0).start.rules.x1C_pad[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         (*p0).start.rules.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).start.rules.x28 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).start.rules.it_kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).start.rules.x2C = rt::draw_f32(&mut rt::MST);
         (*p0).start.rules.x30 = rt::draw_f32(&mut rt::MST);
         (*p0).start.rules.game_speed = rt::draw_f32(&mut rt::MST);
@@ -5468,7 +5412,7 @@ unsafe fn h_lbColl_80008440(a: &[u64]) -> u64 {
             rt::h_p((*p).victims_2[i0].victim as *const u8);
             rt::h_u((*p).victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x134 as *const _ as *const u8, 8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     let p0 = a[0] as usize as *mut Q::HitCapsule;
     if !p0.is_null() {
@@ -5537,7 +5481,7 @@ unsafe fn h_lbColl_80008440(a: &[u64]) -> u64 {
             (*p0).victims_2[i1].victim = 0usize as _;
             (*p0).victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x134), 8); for i1 in 0..8 { *(&mut (*p0).x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
     }
     0
 }
@@ -5714,10 +5658,7 @@ unsafe fn h_mpColl_80043680(a: &[u64]) -> u64 {
         rt::h_f32((*p).xE4_ecb.left.x);
         rt::h_f32((*p).xE4_ecb.left.y);
         rt::h_u((*p).ecb_source.kind as u64);
-        rt::h_p((*p).ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).ecb_source.x124);
         rt::h_f32((*p).ecb_source.x128);
         rt::h_f32((*p).ecb_source.x12C);
@@ -5833,10 +5774,7 @@ unsafe fn h_mpColl_80043680(a: &[u64]) -> u64 {
         (*p0).xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -6067,7 +6005,7 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x1C_pad[i0] = rt::draw_int(&mut rt::ST) as _;
     }
     (*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x20 = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x28 = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.it_kind = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x2C = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x30 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.game_speed = rt::draw_f32(&mut rt::ST);
@@ -6194,7 +6132,7 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x1C_pad[i0] = rt::draw_int(&mut rt::ST) as _;
     }
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x20 = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x28 = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.it_kind = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x2C = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x30 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.game_speed = rt::draw_f32(&mut rt::ST);
@@ -6321,7 +6259,7 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x1C_pad[i0] = rt::draw_int(&mut rt::ST) as _;
     }
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x20 = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x28 = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.it_kind = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x2C = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x30 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.game_speed = rt::draw_f32(&mut rt::ST);
@@ -6435,7 +6373,7 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x1C_pad[i0] = rt::draw_int(&mut rt::ST) as _;
     }
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x20 = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x28 = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.it_kind = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x2C = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x30 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.game_speed = rt::draw_f32(&mut rt::ST);
@@ -6519,9 +6457,7 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].pkind = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].ckind = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].ftkind = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].anon_3.anon_0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
-        (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].anon_3.anon_0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].anon_3.anon_0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x3_u), 1); for i1 in 0..1 { *(&mut (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x3_u as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::ST) as u8; } }
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x4 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].is_big_loser = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].is_small_loser = rt::draw_int(&mut rt::ST) as _;
@@ -6531,10 +6467,9 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].self_destructs = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].percent = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].xE = rt::draw_int(&mut rt::ST) as _;
-        for i1 in 0..4 {
+        for i1 in 0..6 {
             (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].kills[i1] = rt::draw_int(&mut rt::ST) as _;
         }
-        (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x18 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x1C = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x20 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x24 = rt::draw_int(&mut rt::ST) as _;
@@ -6863,7 +6798,7 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x1C_pad[i0] as u64);
     }
     rt::h_u((*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x20 as u64);
-    rt::h_i((*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x28 as i64);
+    rt::h_i((*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.it_kind as i64);
     rt::h_f32((*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x2C);
     rt::h_f32((*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.x30);
     rt::h_f32((*core::ptr::addr_of_mut!(m::lab_vs)).start.rules.game_speed);
@@ -6994,7 +6929,7 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x1C_pad[i0] as u64);
     }
     rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x20 as u64);
-    rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x28 as i64);
+    rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.it_kind as i64);
     rt::h_f32((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x2C);
     rt::h_f32((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.x30);
     rt::h_f32((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_CssData)).vs.start.rules.game_speed);
@@ -7123,7 +7058,7 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x1C_pad[i0] as u64);
     }
     rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x20 as u64);
-    rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x28 as i64);
+    rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.it_kind as i64);
     rt::h_f32((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x2C);
     rt::h_f32((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.x30);
     rt::h_f32((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_SssData)).vs.start.rules.game_speed);
@@ -7239,7 +7174,7 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x1C_pad[i0] as u64);
     }
     rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x20 as u64);
-    rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x28 as i64);
+    rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.it_kind as i64);
     rt::h_f32((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x2C);
     rt::h_f32((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.x30);
     rt::h_f32((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_StartData)).rules.game_speed);
@@ -7325,9 +7260,7 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].pkind as u64);
         rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].ckind as i64);
         rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].ftkind as i64);
-        rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].anon_3.anon_0.x3_b0() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].anon_3.anon_0.x3_b6() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].anon_3.anon_0.x3_b7() as u64);
+        rt::h_bytes(&(*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x3_u as *const _ as *const u8, 1);
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x4 as u64);
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].is_big_loser as u64);
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].is_small_loser as u64);
@@ -7337,10 +7270,9 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].self_destructs as u64);
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].percent as u64);
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].xE as u64);
-        for i1 in 0..4 {
+        for i1 in 0..6 {
             rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].kills[i1] as u64);
         }
-        rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x18 as u64);
         rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x1C as i64);
         rt::h_u((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x20 as u64);
         rt::h_i((*core::ptr::addr_of_mut!(m::ext::gmVsMelee_VsExitInfo)).match_end.player_standings[i0].x24 as i64);
@@ -7720,7 +7652,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].gobj = 0usize as _;
         AB_GenoFly_Fighter_0[e].kind = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].x8_spawnNum = rt::draw_int(&mut rt::ST) as _;
-        AB_GenoFly_Fighter_0[e].player_id = rt::draw_int(&mut rt::ST) as _;
+        AB_GenoFly_Fighter_0[e].player_idx = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].motion_id = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].anim_id = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].x18 = rt::draw_int(&mut rt::ST) as _;
@@ -7915,6 +7847,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         for i2 in 0..1 {
             AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] = 0usize as _;
         }
+        AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..3 {
             AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.event_return[i2] = 0usize as _;
@@ -8059,21 +7992,12 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].x588 = 0usize as _;
         AB_GenoFly_Fighter_0[e].x58C = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].x590 = 0usize as _;
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::ST) & 0x7F) as _);
-        AB_GenoFly_Fighter_0[e].anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::ST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].x594), 4); for i2 in 0..4 { *(&mut AB_GenoFly_Fighter_0[e].x594 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
         AB_GenoFly_Fighter_0[e].x598 = 0usize as _;
         AB_GenoFly_Fighter_0[e].x59C = 0usize as _;
         AB_GenoFly_Fighter_0[e].x5A0 = 0usize as _;
-        AB_GenoFly_Fighter_0[e].x5A4 = 0usize as _;
-        AB_GenoFly_Fighter_0[e].x5A8 = 0usize as _;
+        AB_GenoFly_Fighter_0[e].x5A4 = (rt::draw_int(&mut rt::ST) as u32) as _;
+        AB_GenoFly_Fighter_0[e].x5A8 = (rt::draw_int(&mut rt::ST) as u32) as _;
         AB_GenoFly_Fighter_0[e].x5AC.model_num = rt::draw_int(&mut rt::ST) as _;
         for i2 in 0..5 {
             AB_GenoFly_Fighter_0[e].x5AC.cleared[i2] = rt::draw_int(&mut rt::ST) as _;
@@ -8100,9 +8024,9 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
             AB_GenoFly_Fighter_0[e].x610_color_rgba[i2].b = rt::draw_int(&mut rt::ST) as _;
             AB_GenoFly_Fighter_0[e].x610_color_rgba[i2].a = rt::draw_int(&mut rt::ST) as _;
         }
-        AB_GenoFly_Fighter_0[e].x618_player_id = rt::draw_int(&mut rt::ST) as _;
-        AB_GenoFly_Fighter_0[e].x619_costume_id = rt::draw_int(&mut rt::ST) as _;
-        AB_GenoFly_Fighter_0[e].x61A_controller_index = rt::draw_int(&mut rt::ST) as _;
+        AB_GenoFly_Fighter_0[e].pad_port = rt::draw_int(&mut rt::ST) as _;
+        AB_GenoFly_Fighter_0[e].costume_id = rt::draw_int(&mut rt::ST) as _;
+        AB_GenoFly_Fighter_0[e].sub_color = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].team = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].x61C = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].x61D = rt::draw_int(&mut rt::ST) as _;
@@ -8254,10 +8178,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].coll_data.ecb_source.kind = rt::draw_int(&mut rt::ST) as _;
-        AB_GenoFly_Fighter_0[e].coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i2 in 0..6 {
-            AB_GenoFly_Fighter_0[e].coll_data.ecb_source.anon_4.anon_0.x10C_joint[i2] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].coll_data.ecb_source.x4), 56); for i2 in 0..56 { *(&mut AB_GenoFly_Fighter_0[e].coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
         AB_GenoFly_Fighter_0[e].coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::ST);
@@ -8371,7 +8292,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
                 AB_GenoFly_Fighter_0[e].x914[i2].victims_2[i3].victim = 0usize as _;
                 AB_GenoFly_Fighter_0[e].x914[i2].victims_2[i3].x4 = rt::draw_int(&mut rt::ST) as _;
             }
-            AB_GenoFly_Fighter_0[e].x914[i2].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].x914[i2].x134), 8); for i3 in 0..8 { *(&mut AB_GenoFly_Fighter_0[e].x914[i2].x134 as *mut _ as *mut u8).add(i3) = rt::draw_int(&mut rt::ST) as u8; } }
         }
         for i2 in 0..2 {
             AB_GenoFly_Fighter_0[e].xDF4[i2].state = rt::draw_int(&mut rt::ST) as _;
@@ -8439,7 +8360,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
                 AB_GenoFly_Fighter_0[e].xDF4[i2].victims_2[i3].victim = 0usize as _;
                 AB_GenoFly_Fighter_0[e].xDF4[i2].victims_2[i3].x4 = rt::draw_int(&mut rt::ST) as _;
             }
-            AB_GenoFly_Fighter_0[e].xDF4[i2].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].xDF4[i2].x134), 8); for i3 in 0..8 { *(&mut AB_GenoFly_Fighter_0[e].xDF4[i2].x134 as *mut _ as *mut u8).add(i3) = rt::draw_int(&mut rt::ST) as u8; } }
         }
         AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.state = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::ST) as _;
@@ -8506,7 +8427,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
             AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.victims_2[i2].victim = 0usize as _;
             AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.victims_2[i2].x4 = rt::draw_int(&mut rt::ST) as _;
         }
-        AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.x134), 8); for i2 in 0..8 { *(&mut AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
         AB_GenoFly_Fighter_0[e].x119C_teamUnk = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].grabber_unk1 = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].hurt_capsules_len = rt::draw_int(&mut rt::ST) as _;
@@ -8595,7 +8516,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].dmg.x1880.z = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].dmg.x188c = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].dmg.x1890 = rt::draw_int(&mut rt::ST) as _;
-        AB_GenoFly_Fighter_0[e].dmg.x1894 = rt::draw_int(&mut rt::ST) as _;
+        AB_GenoFly_Fighter_0[e].dmg.x1894 = 0usize as _;
         AB_GenoFly_Fighter_0[e].dmg.x1898 = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].dmg.x18a0 = rt::draw_f32(&mut rt::ST);
@@ -8611,17 +8532,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].dmg.x18C8 = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].dmg.x18CC = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].dmg.x18D0 = rt::draw_int(&mut rt::ST) as _;
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.x0 = rt::draw_int(&mut rt::ST) as _;
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.x1 = rt::draw_int(&mut rt::ST) as _;
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].dmg.x18d4.x3 = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].dmg.x18d4), 4); for i2 in 0..4 { *(&mut AB_GenoFly_Fighter_0[e].dmg.x18d4 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
         AB_GenoFly_Fighter_0[e].dmg.x18d8.x0 = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].dmg.x18d8.x4 = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::ST);
@@ -8774,7 +8685,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].cpu.x44 = 0usize as _;
         AB_GenoFly_Fighter_0[e].cpu.x48 = 0usize as _;
         AB_GenoFly_Fighter_0[e].cpu.x4C = 0usize as _;
-        AB_GenoFly_Fighter_0[e].cpu.x50 = rt::draw_int(&mut rt::ST) as _;
+        AB_GenoFly_Fighter_0[e].cpu.x50 = 0usize as _;
         AB_GenoFly_Fighter_0[e].cpu.x54.x = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].cpu.x54.y = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].cpu.x5C = rt::draw_f32(&mut rt::ST);
@@ -8899,11 +8810,11 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].x206C_attack_instance = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].x206E = rt::draw_int(&mut rt::ST) as _;
         { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].x2070), 4); for i2 in 0..4 { *(&mut AB_GenoFly_Fighter_0[e].x2070 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
-        AB_GenoFly_Fighter_0[e].x2074.x2074_vec.x = rt::draw_f32(&mut rt::ST);
-        AB_GenoFly_Fighter_0[e].x2074.x2074_vec.y = rt::draw_f32(&mut rt::ST);
-        AB_GenoFly_Fighter_0[e].x2074.x207C.x = rt::draw_int(&mut rt::ST) as _;
+        AB_GenoFly_Fighter_0[e].x2074.x2074_vec.x = rt::draw_int(&mut rt::ST) as _;
+        AB_GenoFly_Fighter_0[e].x2074.x2074_vec.y = rt::draw_int(&mut rt::ST) as _;
+        AB_GenoFly_Fighter_0[e].x2074.x207C.x = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].x2074.x207C.y = rt::draw_int(&mut rt::ST) as _;
-        AB_GenoFly_Fighter_0[e].x2074.anon_10.x2084 = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].x2074.x10), 4); for i2 in 0..4 { *(&mut AB_GenoFly_Fighter_0[e].x2074.x10 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
         AB_GenoFly_Fighter_0[e].x2074.x2088 = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].x208C = rt::draw_int(&mut rt::ST) as _;
         AB_GenoFly_Fighter_0[e].x2090 = rt::draw_int(&mut rt::ST) as _;
@@ -9009,21 +8920,14 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         { let d = rt::next(&mut rt::ST); AB_GenoFly_Fighter_0[e].take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::ST); AB_GenoFly_Fighter_0[e].hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::ST); AB_GenoFly_Fighter_0[e].x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
-        AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].x21FC_flag), 1); for i2 in 0..1 { *(&mut AB_GenoFly_Fighter_0[e].x21FC_flag as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
         for i2 in 0..3 {
             AB_GenoFly_Fighter_0[e].filler_x21FC[i2] = rt::draw_int(&mut rt::ST) as _;
         }
         for i2 in 0..4 {
             AB_GenoFly_Fighter_0[e].cmd_vars[i2] = rt::draw_int(&mut rt::ST) as _;
         }
-        AB_GenoFly_Fighter_0[e].anon_2210.throw_flags = rt::draw_int(&mut rt::ST) as _;
+        { assert_eq!(core::mem::size_of_val(&AB_GenoFly_Fighter_0[e].x2210), 4); for i2 in 0..4 { *(&mut AB_GenoFly_Fighter_0[e].x2210 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::ST) as u8; } }
         AB_GenoFly_Fighter_0[e].cmd_timer = rt::draw_f32(&mut rt::ST);
         AB_GenoFly_Fighter_0[e].set_allow_interrupt((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x2218_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
@@ -9049,14 +8953,14 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].set_x221A_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221A_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221A_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_221b.set_x221B_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_221b.set_x221B_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_221b.set_x221B_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_221b.set_x221B_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_221b.set_x221B_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_221b.set_x221B_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_221b.set_x221B_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].anon_221b.set_x221B_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].x221B.set_x221B_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].x221B.set_x221B_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].x221B.set_x221B_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].x221B.set_x221B_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].x221B.set_x221B_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].x221B.set_x221B_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].x221B.set_x221B_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].x221B.set_x221B_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221C_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221C_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221C_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
@@ -9066,8 +8970,8 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].set_x221C_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221C_u16_y((rt::draw_int(&mut rt::ST) & 0x7) as _);
         AB_GenoFly_Fighter_0[e].set_x221D_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].set_x221D_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].set_x221D_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].set_has_prev_input((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].set_input_disabled((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221D_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221D_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221D_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
@@ -9082,7 +8986,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].set_x221F_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221F_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221F_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].set_x221F_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].set_is_sleeping((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_is_sub_fighter((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221F_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x221F_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
@@ -9119,7 +9023,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         AB_GenoFly_Fighter_0[e].set_is_metal((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x2224_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x2224_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        AB_GenoFly_Fighter_0[e].set_x2224_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        AB_GenoFly_Fighter_0[e].set_stamina_dead((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x2224_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x2224_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
         AB_GenoFly_Fighter_0[e].set_x2224_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
@@ -9193,7 +9097,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_p(AB_GenoFly_Fighter_0[e].gobj as *const u8);
         rt::h_u(AB_GenoFly_Fighter_0[e].kind as u64);
         rt::h_i(AB_GenoFly_Fighter_0[e].x8_spawnNum as i64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].player_id as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].player_idx as u64);
         rt::h_i(AB_GenoFly_Fighter_0[e].motion_id as i64);
         rt::h_i(AB_GenoFly_Fighter_0[e].anim_id as i64);
         rt::h_i(AB_GenoFly_Fighter_0[e].x18 as i64);
@@ -9388,6 +9292,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         for i2 in 0..1 {
             rt::h_p(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.ptr[i2] as *const u8);
         }
+        rt::h_p(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.loop_count as u64);
         for i2 in 0..3 {
             rt::h_p(AB_GenoFly_Fighter_0[e].x3E4_fighterCmdScript.event_return[i2] as *const u8);
@@ -9532,21 +9437,12 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_p(AB_GenoFly_Fighter_0[e].x588 as *const u8);
         rt::h_u(AB_GenoFly_Fighter_0[e].x58C as u64);
         rt::h_p(AB_GenoFly_Fighter_0[e].x590 as *const u8);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x594_b0() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x594_b2() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x594_b3() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x594_b4() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x594_b5() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x594_b6() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x594_b7() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&AB_GenoFly_Fighter_0[e].x594 as *const _ as *const u8, 4);
         rt::h_p(AB_GenoFly_Fighter_0[e].x598 as *const u8);
         rt::h_p(AB_GenoFly_Fighter_0[e].x59C as *const u8);
         rt::h_p(AB_GenoFly_Fighter_0[e].x5A0 as *const u8);
-        rt::h_p(AB_GenoFly_Fighter_0[e].x5A4 as *const u8);
-        rt::h_p(AB_GenoFly_Fighter_0[e].x5A8 as *const u8);
+        rt::h_u((AB_GenoFly_Fighter_0[e].x5A4 as u32) as u64);
+        rt::h_u((AB_GenoFly_Fighter_0[e].x5A8 as u32) as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x5AC.model_num as u64);
         for i2 in 0..5 {
             rt::h_u(AB_GenoFly_Fighter_0[e].x5AC.cleared[i2] as u64);
@@ -9573,9 +9469,9 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
             rt::h_u(AB_GenoFly_Fighter_0[e].x610_color_rgba[i2].b as u64);
             rt::h_u(AB_GenoFly_Fighter_0[e].x610_color_rgba[i2].a as u64);
         }
-        rt::h_u(AB_GenoFly_Fighter_0[e].x618_player_id as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x619_costume_id as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x61A_controller_index as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].pad_port as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].costume_id as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].sub_color as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].team as u64);
         rt::h_i(AB_GenoFly_Fighter_0[e].x61C as i64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x61D as u64);
@@ -9727,10 +9623,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_GenoFly_Fighter_0[e].coll_data.xE4_ecb.left.x);
         rt::h_f32(AB_GenoFly_Fighter_0[e].coll_data.xE4_ecb.left.y);
         rt::h_u(AB_GenoFly_Fighter_0[e].coll_data.ecb_source.kind as u64);
-        rt::h_p(AB_GenoFly_Fighter_0[e].coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i2 in 0..6 {
-            rt::h_p(AB_GenoFly_Fighter_0[e].coll_data.ecb_source.anon_4.anon_0.x10C_joint[i2] as *const u8);
-        }
+        rt::h_bytes(&AB_GenoFly_Fighter_0[e].coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32(AB_GenoFly_Fighter_0[e].coll_data.ecb_source.x124);
         rt::h_f32(AB_GenoFly_Fighter_0[e].coll_data.ecb_source.x128);
         rt::h_f32(AB_GenoFly_Fighter_0[e].coll_data.ecb_source.x12C);
@@ -9844,7 +9737,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
                 rt::h_p(AB_GenoFly_Fighter_0[e].x914[i2].victims_2[i3].victim as *const u8);
                 rt::h_u(AB_GenoFly_Fighter_0[e].x914[i2].victims_2[i3].x4 as u64);
             }
-            rt::h_p(AB_GenoFly_Fighter_0[e].x914[i2].anon_134.owner as *const u8);
+            rt::h_bytes(&AB_GenoFly_Fighter_0[e].x914[i2].x134 as *const _ as *const u8, 8);
         }
         for i2 in 0..2 {
             rt::h_u(AB_GenoFly_Fighter_0[e].xDF4[i2].state as u64);
@@ -9912,7 +9805,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
                 rt::h_p(AB_GenoFly_Fighter_0[e].xDF4[i2].victims_2[i3].victim as *const u8);
                 rt::h_u(AB_GenoFly_Fighter_0[e].xDF4[i2].victims_2[i3].x4 as u64);
             }
-            rt::h_p(AB_GenoFly_Fighter_0[e].xDF4[i2].anon_134.owner as *const u8);
+            rt::h_bytes(&AB_GenoFly_Fighter_0[e].xDF4[i2].x134 as *const _ as *const u8, 8);
         }
         rt::h_u(AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.state as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.x4 as u64);
@@ -9979,7 +9872,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
             rt::h_p(AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.victims_2[i2].victim as *const u8);
             rt::h_u(AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.victims_2[i2].x4 as u64);
         }
-        rt::h_p(AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&AB_GenoFly_Fighter_0[e].x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u(AB_GenoFly_Fighter_0[e].x119C_teamUnk as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].grabber_unk1 as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].hurt_capsules_len as u64);
@@ -10068,7 +9961,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_f32(AB_GenoFly_Fighter_0[e].dmg.x1880.z);
         rt::h_i(AB_GenoFly_Fighter_0[e].dmg.x188c as i64);
         rt::h_i(AB_GenoFly_Fighter_0[e].dmg.x1890 as i64);
-        rt::h_i(AB_GenoFly_Fighter_0[e].dmg.x1894 as i64);
+        rt::h_p(AB_GenoFly_Fighter_0[e].dmg.x1894 as *const u8);
         rt::h_f32(AB_GenoFly_Fighter_0[e].dmg.x1898);
         rt::h_f32(AB_GenoFly_Fighter_0[e].dmg.x189C_unk_num_frames);
         rt::h_f32(AB_GenoFly_Fighter_0[e].dmg.x18a0);
@@ -10084,17 +9977,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_i(AB_GenoFly_Fighter_0[e].dmg.x18C8 as i64);
         rt::h_i(AB_GenoFly_Fighter_0[e].dmg.x18CC as i64);
         rt::h_i(AB_GenoFly_Fighter_0[e].dmg.x18D0 as i64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x0 as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x1 as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x2_b0() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x2_b1() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x2_b2() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x2_b3() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x2_b4() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x2_b5() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x2_b6() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x2_b7() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].dmg.x18d4.x3 as u64);
+        rt::h_bytes(&AB_GenoFly_Fighter_0[e].dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i(AB_GenoFly_Fighter_0[e].dmg.x18d8.x0 as i64);
         rt::h_i(AB_GenoFly_Fighter_0[e].dmg.x18d8.x4 as i64);
         rt::h_f32(AB_GenoFly_Fighter_0[e].dmg.x18d8.kb_applied1);
@@ -10247,7 +10130,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_p(AB_GenoFly_Fighter_0[e].cpu.x44 as *const u8);
         rt::h_p(AB_GenoFly_Fighter_0[e].cpu.x48 as *const u8);
         rt::h_p(AB_GenoFly_Fighter_0[e].cpu.x4C as *const u8);
-        rt::h_u(AB_GenoFly_Fighter_0[e].cpu.x50 as u64);
+        rt::h_p(AB_GenoFly_Fighter_0[e].cpu.x50 as *const u8);
         rt::h_f32(AB_GenoFly_Fighter_0[e].cpu.x54.x);
         rt::h_f32(AB_GenoFly_Fighter_0[e].cpu.x54.y);
         rt::h_f32(AB_GenoFly_Fighter_0[e].cpu.x5C);
@@ -10372,11 +10255,11 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_u(AB_GenoFly_Fighter_0[e].x206C_attack_instance as u64);
         rt::h_i(AB_GenoFly_Fighter_0[e].x206E as i64);
         rt::h_bytes(&AB_GenoFly_Fighter_0[e].x2070 as *const _ as *const u8, 4);
-        rt::h_f32(AB_GenoFly_Fighter_0[e].x2074.x2074_vec.x);
-        rt::h_f32(AB_GenoFly_Fighter_0[e].x2074.x2074_vec.y);
-        rt::h_i(AB_GenoFly_Fighter_0[e].x2074.x207C.x as i64);
+        rt::h_i(AB_GenoFly_Fighter_0[e].x2074.x2074_vec.x as i64);
+        rt::h_i(AB_GenoFly_Fighter_0[e].x2074.x2074_vec.y as i64);
+        rt::h_f32(AB_GenoFly_Fighter_0[e].x2074.x207C.x);
         rt::h_i(AB_GenoFly_Fighter_0[e].x2074.x207C.y as i64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&AB_GenoFly_Fighter_0[e].x2074.x10 as *const _ as *const u8, 4);
         rt::h_u(AB_GenoFly_Fighter_0[e].x2074.x2088 as u64);
         rt::h_i(AB_GenoFly_Fighter_0[e].x208C as i64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x2090 as u64);
@@ -10482,21 +10365,14 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_fn(AB_GenoFly_Fighter_0[e].take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn(AB_GenoFly_Fighter_0[e].hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn(AB_GenoFly_Fighter_0[e].x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u(AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.b0() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.b1() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.b2() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.b3() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.b4() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.b5() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.b6() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&AB_GenoFly_Fighter_0[e].x21FC_flag as *const _ as *const u8, 1);
         for i2 in 0..3 {
             rt::h_u(AB_GenoFly_Fighter_0[e].filler_x21FC[i2] as u64);
         }
         for i2 in 0..4 {
             rt::h_u(AB_GenoFly_Fighter_0[e].cmd_vars[i2] as u64);
         }
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_2210.throw_flags as u64);
+        rt::h_bytes(&AB_GenoFly_Fighter_0[e].x2210 as *const _ as *const u8, 4);
         rt::h_f32(AB_GenoFly_Fighter_0[e].cmd_timer);
         rt::h_u(AB_GenoFly_Fighter_0[e].allow_interrupt() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x2218_b1() as u64);
@@ -10522,14 +10398,14 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_u(AB_GenoFly_Fighter_0[e].x221A_b5() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221A_b6() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221A_b7() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_221b.x221B_b0() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_221b.x221B_b1() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_221b.x221B_b2() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_221b.x221B_b3() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_221b.x221B_b4() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_221b.x221B_b5() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_221b.x221B_b6() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].anon_221b.x221B_b7() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].x221B.x221B_b0() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].x221B.x221B_b1() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].x221B.x221B_b2() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].x221B.x221B_b3() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].x221B.x221B_b4() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].x221B.x221B_b5() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].x221B.x221B_b6() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].x221B.x221B_b7() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221C_b0() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221C_b1() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221C_b2() as u64);
@@ -10539,8 +10415,8 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_u(AB_GenoFly_Fighter_0[e].x221C_b6() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221C_u16_y() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221D_b2() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x221D_b3() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x221D_b4() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].has_prev_input() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].input_disabled() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221D_b5() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221D_b6() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221D_b7() as u64);
@@ -10555,7 +10431,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_u(AB_GenoFly_Fighter_0[e].x221F_b0() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221F_b1() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221F_b2() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x221F_b3() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].is_sleeping() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].is_sub_fighter() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221F_b5() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x221F_b6() as u64);
@@ -10592,7 +10468,7 @@ unsafe fn run_GenoFly_Fighter(seed: u64) -> [u64; 3] {
         rt::h_u(AB_GenoFly_Fighter_0[e].is_metal() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x2224_b0() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x2224_b1() as u64);
-        rt::h_u(AB_GenoFly_Fighter_0[e].x2224_b2() as u64);
+        rt::h_u(AB_GenoFly_Fighter_0[e].stamina_dead() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x2224_b3() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x2224_b4() as u64);
         rt::h_u(AB_GenoFly_Fighter_0[e].x2224_b5() as u64);
@@ -10704,7 +10580,7 @@ unsafe extern "C" fn cb5(a0: u8) {
     rt::t_begin(1005);
     rt::t_i(a0 as i64);
 }
-unsafe extern "C" fn cb6(a0: *mut Q::HSD_GObj, a1: i32) {
+unsafe extern "C" fn cb6(a0: *mut Q::HSD_GObj, a1: isize) {
     rt::t_begin(1006);
     rt::t_p(a0 as *const u8);
     rt::t_i(a1 as i64);

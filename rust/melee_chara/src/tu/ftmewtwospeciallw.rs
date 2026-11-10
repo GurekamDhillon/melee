@@ -228,7 +228,7 @@ pub fn ftMt_SpecialLw_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMt_SpecialLw_Enter");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         (*fp).cmd_vars[0] = 0_u32;
         (*fp).u.mt.x222C_disableGObj = core::mem::zeroed(); /* NULL */
         st::Fighter_ChangeMotionState(gobj, 359 /* ftMt_MS_SpecialLw */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
@@ -242,7 +242,7 @@ pub fn ftMt_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMt_SpecialAirLw_Enter");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         (*fp).cmd_vars[0] = 0_u32;
         (*fp).u.mt.x222C_disableGObj = core::mem::zeroed(); /* NULL */
         (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;

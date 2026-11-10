@@ -157,7 +157,7 @@ fn if_2FD9_matches_c() {
                     4 => {
                         let gi = (rnd() % 4) as usize;
                         let pass = fv() as i32;
-                        m::fn_802FDA4C(&raw mut G[gi], pass);
+                        m::fn_802FDA4C(&raw mut G[gi], pass as isize);
                     }
                     5 => m::fn_802FDA78(&raw mut G[(rnd() % 4) as usize]),
                     6 => m::un_802FE260(),

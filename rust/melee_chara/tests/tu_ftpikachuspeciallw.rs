@@ -49,7 +49,7 @@ fn smoke() {
 
     // CheckProperty: Thunder property values 1, 2 and 4..=13 are true.
     for (v, want) in [(0u8, false), (1, true), (2, true), (3, false), (4, true), (13, true), (14, false), (15, false)] {
-        unsafe { f.x2070.anon_0.set_x2071_b0_3(v) };
+        unsafe { f.x2070.x0.set_x2071_b0_3(v) };
         assert_eq!(t::ftPk_SpecialLw_CheckProperty(gp), want, "{v}");
     }
 
@@ -95,21 +95,21 @@ fn smoke() {
     da.xDC = 6;
     t::ftPk_SpecialLw_SpawnEffect(gp);
     assert!(take().is_empty());
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(1) };
     t::ftPk_SpecialLw_SpawnEffect(gp);
     assert_eq!(take(), ["efsync 1219 1 13", "cloud 11 -3 0 4 5 6"]);
-    assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b0() }, 0);
+    assert_eq!(unsafe { f.x2210.x0.throw_flags_b0() }, 0);
     assert_eq!(unsafe { f.mv.pk.speciallw.x0 } as usize, 0x2000);
 
     // Start anim end: Loop0 motion with the callbacks; throw flags cleared.
-    unsafe { f.anon_2210.throw_flags = 0xff };
+    unsafe { f.x2210.throw_flags = 0xff };
     unsafe { FRAMES = 1 };
     t::ftPk_SpecialLwStart_Anim(gp);
     assert!(take().is_empty());
     unsafe { FRAMES = 0 };
     t::ftPk_SpecialLwStart_Anim(gp);
     assert_eq!(take(), ["ms 360 800 0 1 0"]);
-    assert_eq!(unsafe { f.anon_2210.throw_flags }, 0);
+    assert_eq!(unsafe { f.x2210.throw_flags }, 0);
     assert!(f.take_dmg_cb.is_some() && f.accessory4_cb.is_some());
     t::ftPk_SpecialAirLwStart_Anim(gp);
     assert_eq!(take(), ["ms 364 800 0 1 0"]);

@@ -70,13 +70,13 @@ pub fn ft_800CD914(gobj: *mut HSD_GObj) {
         let joint = unsafe { (*f.parts.add(x)).joint };
         ext::lb_8000B1CC(joint, &v, &mut v2);
         if !melee_items::itlib::it_8026b594(item(it)) {
-            let q = &mut f.x60C as *mut *mut c_void as *mut c_void;
+            let q = (&raw mut f.x60C) as *mut *mut c_void as *mut c_void;
             let dir = f.facing_dir;
             ext::efAsync_Spawn(gobj, q, 5, 1070, core::ptr::null_mut(), &v2, &dir);
             ext::it_802923BC(it, &v2, f.facing_dir, f.cmd_vars[1]);
         } else {
             let z = 0.0f32;
-            let q = &mut f.x60C as *mut *mut c_void as *mut c_void;
+            let q = (&raw mut f.x60C) as *mut *mut c_void as *mut c_void;
             ext::efAsync_Spawn(gobj, q, 5, 1032, core::ptr::null_mut(), &v2, &z);
         }
     }

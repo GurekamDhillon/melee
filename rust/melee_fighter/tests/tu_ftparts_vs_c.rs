@@ -172,13 +172,13 @@ unsafe fn tables() {
 unsafe fn hbone(bn: &FighterBone) {
     hm(ep(bn.joint));
     hm(ep(bn.x4_jobj2));
-    let a = &bn.anon_8.anon_0;
+    let a = &bn.x8.x0;
     for v in [a.flags_b0(), a.flags_b1(), a.flags_b2(), a.flags_b3(), a.flags_b4(), a.flags_b5(), a.flags_b6(), a.flags_b7(),
               a.flags2_b0(), a.flags2_b1(), a.flags2_b2(), a.flags2_b3(), a.flags2_b4(), a.flags2_b5(), a.flags2_b6(), a.flags2_b7()] {
         hm(v as u32);
     }
-    hm(bn.anon_c.anon_0.xC as u32);
-    hm(bn.anon_c.anon_0.xD() as u32);
+    hm(bn.xC_u.x0.xC as u32);
+    hm(bn.xC_u.x0.xD() as u32);
 }
 
 unsafe fn vis_world() {
@@ -232,7 +232,7 @@ unsafe fn vis_world() {
         }
     }
     (*w.fdesc).model_num = rnd() % 12;
-    (*w.fdesc).vis_table = (*w.vt).as_mut_ptr();
+    (*w.fdesc).vis_table = ((*w.vt).as_mut_ptr()) as *mut _;
     (*w.fx8).x0 = *w.fdesc;
     (*w.fdata).x8 = w.fx8;
     f.ft_data = w.fdata;
@@ -240,7 +240,7 @@ unsafe fn vis_world() {
     f.kind = KIND as _;
 }
 trait CostumeHack { fn set_x619_costume_id_hack(&mut self, v: u8); }
-impl CostumeHack for Fighter { fn set_x619_costume_id_hack(&mut self, v: u8) { self.x619_costume_id = v; } }
+impl CostumeHack for Fighter { fn set_x619_costume_id_hack(&mut self, v: u8) { self.costume_id = v; } }
 
 unsafe fn hvis() {
     let w = w();
@@ -303,7 +303,7 @@ fn ftparts_matches_c() {
                 *w.j2p = [0; 64];
                 (*GO).user_data = F as *mut c_void;
                 (*F).gobj = GO;
-                (*F).player_id = (rnd() % 4) as u8;
+                (*F).player_idx = (rnd() % 4) as u8;
                 (*F).kind = KIND as _;
                 gen_tree();
                 tables();

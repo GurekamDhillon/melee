@@ -368,7 +368,7 @@ pub unsafe extern "C" fn it_802E5AC4(item_gobj: *mut Item_GObj, arg_check: bool)
         }
         // block_18 (reset) when both components are at most x5c; block_16 otherwise
         let at_rest = ABS((*item).x40_vel.x) <= (*comm_attr).x5c && ABS((*item).x40_vel.y) <= (*comm_attr).x5c;
-        if at_rest || (*item).xDCD_flag.anon_0.b4() != 0 || (*comm_attr).x58 == 0.0 {
+        if at_rest || (*item).xDCD_flag.x0.b4() != 0 || (*comm_attr).x58 == 0.0 {
             itResetVelocity(item);
             (*item).xD50_landNum = 0;
         } else {
@@ -413,8 +413,8 @@ pub unsafe extern "C" fn it_802E5AC4(item_gobj: *mut Item_GObj, arg_check: bool)
             (*item).x40_vel.x *= (*spec_attr).x14;
             (*item).xD50_landNum = (*item).xD50_landNum.wrapping_add(1);
             if (*item).xD50_landNum >= 3 {
-                if (*item).xDCF_flag.anon_0.b0() == 0 {
-                    (*item).xDCF_flag.anon_0.set_b0(1);
+                if (*item).xDCF_flag.x0.b0() == 0 {
+                    (*item).xDCF_flag.x0.set_b0(1);
                 }
             }
         }
@@ -513,7 +513,7 @@ pub unsafe extern "C" fn it_802E614C(parent_gobj1: *mut Item_GObj, parent_gobj2:
     (*spawn).vel = *vel;
     (*spawn).x0_parent_gobj = parent_gobj1;
     (*spawn).x4_parent_gobj2 = parent_gobj2;
-    (*spawn).x44_flag.anon_0.set_b0(1);
+    (*spawn).x44_flag.x0.set_b0(1);
     (*spawn).x40 = 0;
 }
 
@@ -561,8 +561,8 @@ pub unsafe extern "C" fn it_802E628C(item_gobj: *mut Item_GObj, arg8: f32, arg9:
 #[inline]
 unsafe fn it_802E6380_inline(item_gobj: *mut Item_GObj) {
     let item = GET_ITEM(item_gobj);
-    (*item).xDD4_itemVar.it_2E5A.x18.anon_0.set_b1(0);
-    (*item).xDD4_itemVar.it_2E5A.x18.anon_0.set_b0(0);
+    (*item).xDD4_itemVar.it_2E5A.x18.x0.set_b1(0);
+    (*item).xDD4_itemVar.it_2E5A.x18.x0.set_b0(0);
 
     if (*item).xDD4_itemVar.it_2E5A.x8 != 0 {
         let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut it_2E5A_Attrs;
@@ -573,7 +573,7 @@ unsafe fn it_802E6380_inline(item_gobj: *mut Item_GObj) {
         ext::lb_8000B1CC((*sub).x4, null_mut(), &mut (*sub).x8);
         (*sub).x14 = (*sub).x8;
         if ext::db_ShowCoinPickupRange() != 0 {
-            (*item).anon_daa.xDAA_flag.anon_0.set_b0(1);
+            (*item).xDAA.xDAA_flag.x0.set_b0(1);
         }
     }
 }
@@ -612,7 +612,7 @@ pub unsafe extern "C" fn it_802E6380(item_gobj: *mut Item_GObj, arg1: *mut it_80
 
     (*item).xDD4_itemVar.it_2E5A.x14 = (*attr).x8;
     (*item).xDD4_itemVar.it_2E5A.x8 = (*arg1).x14;
-    (*item).xDCD_flag.anon_0.set_b6(1);
+    (*item).xDCD_flag.x0.set_b6(1);
 
     {
         let tier_idx = off as usize;
@@ -642,18 +642,18 @@ pub unsafe extern "C" fn it_802E657C(item_gobj: *mut Item_GObj) -> bool {
     if (*item).xDD4_itemVar.it_2E5A.x8 == 1 {
         let temp_f0_2 = (*item).xDD4_itemVar.it_2E5A.x10;
         if temp_f0_2 <= 0.0 {
-            let temp_r4 = (*item).xDD4_itemVar.it_2E5A.x18.anon_0.b0();
+            let temp_r4 = (*item).xDD4_itemVar.it_2E5A.x18.x0.b0();
             if temp_r4 == 0 {
-                (*item).xDD4_itemVar.it_2E5A.x18.anon_0.set_b0(1);
+                (*item).xDD4_itemVar.it_2E5A.x18.x0.set_b0(1);
             }
         } else {
             (*item).xDD4_itemVar.it_2E5A.x10 = temp_f0_2 - 1.0;
         }
         let temp_f1 = (*item).xDD4_itemVar.it_2E5A.x14;
         if temp_f1 <= 0.0 {
-            if (*item).xDCD_flag.anon_0.b5() != 1 {
+            if (*item).xDCD_flag.x0.b5() != 1 {
                 ext::it_80275444(item_gobj);
-                (*item).xDD4_itemVar.it_2E5A.x18.anon_0.set_b1(1);
+                (*item).xDD4_itemVar.it_2E5A.x18.x0.set_b1(1);
             }
         } else {
             (*item).xDD4_itemVar.it_2E5A.x14 = temp_f1 - 1.0;
@@ -720,7 +720,7 @@ pub unsafe extern "C" fn it_2E5A_UnkMotion0_Coll(item_gobj: *mut HSD_GObj) -> bo
     if it_802E5AC4(item_gobj, true) {
         it_802E6888(item_gobj);
         (*item).xD50_landNum = 0;
-        (*item).xDCF_flag.anon_0.set_b0(0);
+        (*item).xDCF_flag.x0.set_b0(0);
     }
     false
 }
@@ -802,17 +802,17 @@ pub fn it_802e657c(ip: &mut Item) -> bool {
         if ip.xDD4_itemVar.it_2E5A.x8 == 1 {
             let t0 = ip.xDD4_itemVar.it_2E5A.x10;
             if t0 <= 0.0 {
-                if ip.xDD4_itemVar.it_2E5A.x18.anon_0.b0() == 0 {
-                    ip.xDD4_itemVar.it_2E5A.x18.anon_0.set_b0(1);
+                if ip.xDD4_itemVar.it_2E5A.x18.x0.b0() == 0 {
+                    ip.xDD4_itemVar.it_2E5A.x18.x0.set_b0(1);
                 }
             } else {
                 ip.xDD4_itemVar.it_2E5A.x10 = t0 - 1.0;
             }
             let t1 = ip.xDD4_itemVar.it_2E5A.x14;
             if t1 <= 0.0 {
-                if ip.xDCD_flag.anon_0.b5() != 1 {
+                if ip.xDCD_flag.x0.b5() != 1 {
                     it_80275444(ip);
-                    ip.xDD4_itemVar.it_2E5A.x18.anon_0.set_b1(1);
+                    ip.xDD4_itemVar.it_2E5A.x18.x0.set_b1(1);
                 }
             } else {
                 ip.xDD4_itemVar.it_2E5A.x14 = t1 - 1.0;
@@ -869,7 +869,7 @@ pub fn it_802e614c(parent_gobj1: *mut HSD_GObj, parent_gobj2: *mut HSD_GObj, spa
     spawn.x0_parent_gobj = parent_gobj1;
     spawn.x4_parent_gobj2 = parent_gobj2;
     // SAFETY: plain-data union member.
-    unsafe { spawn.x44_flag.anon_0.set_b0(1) };
+    unsafe { spawn.x44_flag.x0.set_b0(1) };
     spawn.x40 = 0;
 }
 

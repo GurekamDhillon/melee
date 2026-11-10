@@ -107,7 +107,9 @@ static void freg_all(void)
     freg((const void*) DevText_ShowBackground);
     freg((const void*) DevText_ShowText);
     freg((const void*) DevText_StoreColorIndex);
+    freg((const void*) alloc_text);
     freg((const void*) find_by_id);
+    freg((const void*) set_color);
     freg((const void*) un_80302DF0);
     freg((const void*) un_80302DF8);
 }

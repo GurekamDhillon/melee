@@ -19,7 +19,7 @@ fn sfx(_f: &mut Fighter, id: i32, vol: i32, pan: i32) {
 fn ko_bits() {
     let (mut g, mut f) = mk();
     let gp: *mut HSD_GObj = &mut *g;
-    f.set_x2224_b2(1);
+    f.set_stamina_dead(1);
     assert!(!t::ftco_800c8c84(gp));
     // not yet knocked back: only arms x2224_b3
     f.kind = Ft_Kind_Mario;

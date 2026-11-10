@@ -9,6 +9,6 @@ SPEC = dict(
 void __assert(const char* f, u32 l, const char* c) { (void) f; (void) l; (void) c; for (;;) {} }
 """,
     outs={"lb_8000B1CC": [2]},
-    bitfields=[("throw_flags_b0", "anon_2210.anon_0.throw_flags_b0")],
-    funcs=[dict(name="ftSs_SpecialLw_8012ADF0", bf=["throw_flags_b0"])],
+    bitfields=[("x2210.x0.throw_flags_b0", "x2210.x0.throw_flags_b0")],
+    funcs=[dict(name="ftSs_SpecialLw_8012ADF0", bf=["x2210.x0.throw_flags_b0"])],
 )

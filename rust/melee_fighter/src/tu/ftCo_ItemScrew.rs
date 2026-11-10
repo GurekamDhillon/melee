@@ -42,8 +42,8 @@ pub mod ext {
         ftCo_JumpAerial_IASA(g: G) = crate::tu::ftCo_JumpAerial::ftCo_JumpAerial_IASA;
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
         ftCo_800CBAC4(g: G, msid: i32, vel: &Vec3, arg3: bool) = crate::tu::ftCo_JumpAerial::ftCo_800CBAC4;
-        ft_800831CC(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { crate::tu::ft_081b::ft_800831cc(g as _, a as _, b as _); } };
-        ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
+        ft_800831CC(g: G, a: fn(G, isize) -> bool, b: fn(G)) = |g: G, a: fn(G, isize) -> bool, b: fn(G)| { unsafe { crate::tu::ft_081b::ft_800831cc(g as _, a as _, b as _); } };
+        ftCo_80096CC8(g: G, line: isize) -> bool = |g: G, line: isize| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
         ft_80082B1C(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }

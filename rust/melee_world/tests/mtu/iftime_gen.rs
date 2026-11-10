@@ -272,7 +272,7 @@ pub fn hash_HSD_AObj(p: &HSD_AObj) {
     hm(p.end_frame.to_bits());
     hm(p.framerate.to_bits());
     hm(pi(p.fobj));
-    hm(pi(p.hsd_obj));
+    hm(pi(p.jobj));
 }
 
 pub fn fill_HSD_Material(p: &mut HSD_Material) {
@@ -384,7 +384,7 @@ pub fn fill_StartMeleeRules(p: &mut StartMeleeRules) {
     p.x1C_pad[i0] = fv() as _;
     }
     p.x20 = fv64() as _;
-    p.x28 = fv() as _;
+    p.it_kind = fv() as _;
     p.x2C = rg();
     p.x30 = rg();
     p.game_speed = rg();
@@ -454,7 +454,7 @@ pub fn hash_StartMeleeRules(p: &StartMeleeRules) {
     hm(p.x1C_pad[i0] as u32);
     }
     hm(p.x20 as u32); hm(((p.x20 as u64) >> 32) as u32);
-    hm(p.x28 as u32);
+    hm(p.it_kind as u32);
     hm(p.x2C.to_bits());
     hm(p.x30.to_bits());
     hm(p.game_speed.to_bits());

@@ -47,9 +47,10 @@ static void* pick_fn(int kind)
 }
 static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : (void*) cbev1); }
 
-static ftDynamics DYN[NG]; static ArticleDynamicBones ADB[NG]; static struct DynamicsData DDP[NG][Ft_Dynamics_NumMax][3];
+static ftDynamics DYN[NG]; static BoneDynamicsTemplate ADB[NG][Ft_Dynamics_NumMax]; static struct DynamicsData DDP[NG][Ft_Dynamics_NumMax][3];
 static FigaTree** X10[NG][5]; static FigaTree* TREES[NG][4][Ft_Dynamics_NumMax]; static u8 X28A[NG][8][2]; static u8 ARG1[2]; static int SGK;
 static void HF(float f) { union { float f; u32 u; } c; c.f = f; HM(c.u); }
+int rp_ecb_on(void) { return 0; } void rp_ecb_log(const char* fmt, ...) { }
 #include "ftdynamics_stubs.h"
 #include "ftdynamics_state.h"
 HSD_GObj** HSD_GObjPLinkHead;   /* tentative: the stub header defines it only for TUs that read it */
@@ -71,8 +72,8 @@ static void world(void)
         FT[i].gobj = &GO[i];
         FT[i].ft_data = &FDATA[i];
         FT[i].grab_cb = cbev1; FT[i].grabbed_cb = cbev3;
-        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_id %= 4; FT[i].x618_player_id %= 4;
-        for (b = 0; b < 64; b++) { if (b < NP) fill_FighterBone(&PARTS[i][b]); else { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].flags_b1 = 1; } PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
+        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_idx %= 4; FT[i].pad_port %= 4;
+        for (b = 0; b < 64; b++) { if (b < NP) fill_FighterBone(&PARTS[i][b]); else { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].x8.x0.flags_b1 = 1; } PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
         FT[i].parts = PARTS[i];
         { int pk = i * 24; FDATA[i].x0 = (void*) PADB[pk++]; FDATA[i].ext_attr = (void*) PADB[pk++]; FDATA[i].x8 = (void*) PADB[pk++]; FDATA[i].xC = (void*) PADB[pk++]; FDATA[i].x10 = (void*) PADB[pk++]; FDATA[i].x14 = (void*) PADB[pk++]; FDATA[i].x18 = (void*) PADB[pk++]; FDATA[i].x1C = (void*) PADB[pk++]; FDATA[i].x20 = (void*) PADB[pk++]; FDATA[i].x24 = (void*) PADB[pk++]; FDATA[i].x28 = (void*) PADB[pk++]; FDATA[i].x2C = (void*) PADB[pk++]; FDATA[i].x30 = (void*) PADB[pk++]; FDATA[i].x34 = (void*) PADB[pk++]; FDATA[i].x38 = (void*) PADB[pk++]; FDATA[i].x3C = (void*) PADB[pk++]; FDATA[i].x40 = (void*) PADB[pk++]; FDATA[i].x44 = (void*) PADB[pk++]; FDATA[i].x48_items = (void*) PADB[pk++]; FDATA[i].x4C_sfx = (void*) PADB[pk++]; FDATA[i].x50 = (void*) PADB[pk++]; FDATA[i].x54 = (void*) PADB[pk++]; FDATA[i].x58 = (void*) PADB[pk++]; FDATA[i].x5C = (void*) PADB[pk++]; }
     }
@@ -89,9 +90,9 @@ static void world(void)
       SGK = (fv() & 1) ? Gr_Kind_Flatzone : 0; stage_info.grkind = SGK;
       for (q_ = 0; q_ < NG; q_++) {
         zero(&DYN[q_], sizeof DYN[q_]); zero(&ADB[q_], sizeof ADB[q_]); zero(&DDP[q_], sizeof DDP[q_]);
-        DYN[q_].dynamicsNum = (int) (fv() % 10); DYN[q_].ftDynamicBones = &ADB[q_];
+        DYN[q_].x0.dynamicsNum = (int) (fv() % 10); DYN[q_].x0.ftDynamicBones = ADB[q_];
         for (k_ = 0; k_ < Ft_Dynamics_NumMax; k_++) {
-          ADB[q_].array[k_].bone_id = fv() % 60; ADB[q_].array[k_].dyn_desc.count = fv() % 5;
+          ADB[q_][k_].bone_id = fv() % 60; ADB[q_][k_].dyn_desc.count = fv() % 5;
           for (j_ = 0; j_ < 3; j_++) {
             struct DynamicsData* d_ = &DDP[q_][k_][j_];
             d_->next = (j_ < 2 && (fv() & 1)) ? &DDP[q_][k_][j_ + 1] : 0;
@@ -113,7 +114,7 @@ static void world(void)
         for (a_ = 0; a_ < 8; a_++) { X28A[q_][a_][0] = fv() % 256; X28A[q_][a_][1] = fv() % 5; }
         FT[q_].anim_id = (int) (fv() % 7) - 1;
         if (fv() & 1) FT[q_].x34_scale.y = 1.0f;
-        FT[q_].x594_b3 = fv() & 1; FT[q_].x594_b4 = fv() & 1;
+        FT[q_].x594.x0.x594_b3 = fv() & 1; FT[q_].x594.x0.x594_b4 = fv() & 1;
       }
       ARG1[0] = fv() % 256; ARG1[1] = fv() % 5;
     }

@@ -52,23 +52,23 @@ pub static mut grTDk_StageCallbacks: [StageCallbacks; 4] = [
         callback1: Some(grTDonkey_802203E0),
         gobj_proc: Some(grTDonkey_802203E8),
         callback3: Some(grTDonkey_802203EC),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(stageGObj1_OnInit),
         callback1: Some(grTDonkey_802204D0),
         gobj_proc: Some(stageGObj1_GObjProc),
         callback3: Some(grTDonkey_802204F8),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(stageGObj2_OnInit),
         callback1: Some(grTDonkey_80220440),
         gobj_proc: Some(stageGObj2_GObjProc),
         callback3: Some(grTDonkey_8022047C),
-        anon_10: StageCallbacks_anon_135 { flags: u32::to_be((1 << 30) | (1 << 31)) },
+        x10: StageCallbacks_x10 { flags: u32::to_be((1 << 30) | (1 << 31)) },
     },
-    StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, anon_10: StageCallbacks_anon_135 { flags: 0 } },
+    StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, x10: StageCallbacks_x10 { flags: 0 } },
 ];
 
 pub static mut grTDk_StageData: StageData = StageData {
@@ -105,7 +105,7 @@ pub static mut grTDk_StageData: StageData = StageData {
     pub extern "C" fn grTDonkey_802204D0(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grTDonkey_802204FC (gr/grtdonkey.c:154)
-    pub extern "C" fn grTDonkey_802204FC(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grTDonkey_802204FC(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grTDonkey_80220504 (gr/grtdonkey.c:159)
     pub extern "C" fn grTDonkey_80220504(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

@@ -6,7 +6,7 @@ __typeof__(int) (Geno_DefineTemplateSkeleton)(__typeof__(int) a0) { T(1001); T((
 // stub Geno_DefineTemplateSkeleton = 1001
 __typeof__(void *) (HSD_ObjAlloc)(__typeof__(struct _HSD_ObjAllocData *) a0) { T(1002); T(PI((const void*) a0)); return (__typeof__(void *)) (0); }
 // stub HSD_ObjAlloc = 1002
-__typeof__(int) (ftCo_800BFFD0)(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1003); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
+__typeof__(int) (ftCo_800BFFD0)(__typeof__(struct Fighter *) a0, __typeof__(enum FtColAnim) a1, __typeof__(int) a2) { T(1003); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
 // stub ftCo_800BFFD0 = 1003
 void (ftPartsPObjClearDefaultClass)(void) { T(1004); }
 // stub ftPartsPObjClearDefaultClass = 1004

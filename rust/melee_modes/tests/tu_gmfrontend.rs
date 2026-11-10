@@ -1063,8 +1063,8 @@ fn gmfrontend_vs_c() {
         fd!("fe_row_offset", "i", "f", 24, b_slot, |a| { r(tu::fe_row_offset(ai32(a, 0))) }),
         fd!("fe_rows_shown", "", "i32", 12, b_scene, |a| { r(tu::fe_rows_shown()) }),
         fd!("fe_draw_frame", "", "v", 6, b_aspect, |a| { tu::fe_draw_frame(); 0 }),
-        fd!("fe_draw_panels", "pi", "v", 400, gobj_pass, |a| { tu::fe_draw_panels(p(a, 0), ai32(a, 1)); 0 }),
-        fd!("fe_draw_fade", "pi", "v", 80, b_fade, |a| { tu::fe_draw_fade(p(a, 0), ai32(a, 1)); 0 }),
+        fd!("fe_draw_panels", "pi", "v", 400, gobj_pass, |a| { tu::fe_draw_panels(p(a, 0), ai32(a, 1) as isize); 0 }),
+        fd!("fe_draw_fade", "pi", "v", 80, b_fade, |a| { tu::fe_draw_fade(p(a, 0), ai32(a, 1) as isize); 0 }),
         fd!("fe_text", "ffficp", "p", 40, b_text, |a| {
             r(tu::fe_text(af32(a, 0), af32(a, 1), af32(a, 2), ai32(a, 3) as u8, <GXColor as OVal>::from_bits(a[4]), p(a, 5)))
         }),

@@ -49,7 +49,7 @@ fn ftCo_TurnRun_matches_c() {
             fr.input.lstick[0].x = rg();
             fr.facing_dir = rg();
             fr.cur_anim_frame = rw();
-            fr.player_id = (rnd() % 6) as u8;
+            fr.player_idx = (rnd() % 6) as u8;
             fr.x197C = if rnd() & 1 != 0 { go2() } else { core::ptr::null_mut() };
             fr.cmd_vars[1] = rnd() & 1;
             fr.gr_vel = rw();

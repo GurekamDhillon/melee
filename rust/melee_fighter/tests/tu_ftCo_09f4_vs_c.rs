@@ -112,7 +112,7 @@ fn ftCo_09f4_matches_c() {
                 match op {
                     0 => m::ftCo_8009F480(go()),
                     1 => m::ftCo_8009F4A4(),
-                    2 => m::ftCo_8009F54C(go(), rnd() as i32),
+                    2 => m::ftCo_8009F54C(go(), rnd() as isize),
                     3 => m::ftCo_8009F578(f),
                     4 => m::ftCo_8009F5AC(f),
                     5 => m::ftCo_8009F75C(f, rnd() & 1 != 0),

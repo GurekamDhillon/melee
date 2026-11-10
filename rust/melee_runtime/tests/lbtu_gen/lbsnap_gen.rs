@@ -21,7 +21,7 @@ pub fn install() {
         hsd_803B5C2C = Some(|a0| { t(1007); t(a0 as u32); });
         hsd_803B6BE4 = Some(|a0, a1, a2| { t(1008); t(pi(a0)); t(a1 as u32); t(pi(a2)); fv() as _ });
         it_8026C47C = Some(|a0| { t(1009); t(pi(a0)); for i in 0..core::mem::size_of::<it_8026C47C_arg0_t>() / 4 { *(a0 as *mut i32).add(i) = fv() as i32; } });
-        lbArchive_80016DBC = Some(|a0, a1, a2, a3| { t(1010); t(sh(a0 as *const u8)); t(pi(a1)); t(sh(a2 as *const u8)); t(a3 as u32); *(a1 as *mut *mut crate::m::LbMcSnapMemSnapIconData) = &raw mut crate::ICON as *mut _; core::ptr::null_mut() });
+        lbArchive_80016DBC = Some(|a0, a1, a2, a3| { t(1010); t(sh(a0 as *const u8)); t(pi(a1)); t(sh(a2 as *const u8)); t(a3 as u32); *(a1 as *mut *mut *mut u8) = &raw mut crate::ICON as *mut _; core::ptr::null_mut() });
         lbCardNew_DeleteSnap = Some(|a0, a1, a2| { t(1011); t(a0 as u32); t(sh(a1 as *const u8)); t(pi(a2)); fv() as _ });
         lbLang_IsSettingJP = Some(|| { t(1012); (fv() & 1) as i32 });
         lb_8001BB48 = Some(|a0, a1, a2, a3, a4, a5, a6, a7| { t(1013); t(a0 as u32); t(pi(a1)); t(pi(a2)); t(pi(a3)); t(pi(a4)); t(pi(a5)); t(pi(a6)); t(pi(a7)); fv() as _ });

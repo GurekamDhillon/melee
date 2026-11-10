@@ -63,7 +63,7 @@ pub fn ftLg_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*fp).dat_attrs = backup;
         // TARGET_PC: read-before-write of x222C_cycloneCharge (HSD_ObjAlloc does not clear it).
         (*fp).u.lg.x222C_cycloneCharge = 0;
-        ext::it_8026B3F8(*item_list.add(0), It_Kind_Luigi_Fire as i32);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Luigi_Fire as i32);
     }
 }
 

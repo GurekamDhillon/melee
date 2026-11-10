@@ -42,7 +42,7 @@ use crate::layout::itTaruAttributes;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -228,7 +228,7 @@ pub unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD
     (*spawn).vel.x = 0.0;
     (*spawn).x0_parent_gobj = parent;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(initial_collision as u8);
+    (*spawn).x44_flag.x0.set_b0(initial_collision as u8);
     (*spawn).x40 = 0;
 }
 
@@ -334,7 +334,7 @@ pub unsafe extern "C" fn it_3F14_Logic17_Spawned(gobj: *mut Item_GObj) {
 pub unsafe extern "C" fn it_8028EDBC(gobj: *mut Item_GObj) {
     melee_core::ct!("it_8028EDBC");
     let ip = item_of(gobj);
-    let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
+    let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes_legacy;
 
     if (*ip).ground_or_air != GA_Air {
         let fz = &mut (*ip).xDD4_itemVar.freeze;
@@ -752,10 +752,10 @@ pub fn it_8028ec98(ip: &mut Item, vel: f32, common: &ItemCommonData) {
 // ---- folded from itkinds6.rs (consolidation steps 21/22) ----
 /// `it_8028EDBC` (itfreeze.c): ground speed of the freezie (1 fused site).
 /// # Safety
-/// The special attributes must be a valid `itUnkAttributes`.
+/// The special attributes must be a valid `itUnkAttributes_legacy`.
 pub unsafe fn it_8028edbc(ip: &mut Item) {
     melee_core::ct!("it_8028edbc");
-    let attrs = sa::<itUnkAttributes>(ip);
+    let attrs = sa::<itUnkAttributes_legacy>(ip);
     if ip.ground_or_air != 1 {
         let fr = &mut ip.xDD4_itemVar.freeze;
         if c_abs_itkinds6(fr.x4.x) > 0.1 {

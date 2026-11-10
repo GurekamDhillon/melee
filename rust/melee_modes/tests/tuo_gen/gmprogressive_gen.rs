@@ -220,13 +220,13 @@ if v.set() { (*p).x60 = v.leaf_ptr(&format!("{}.x60", path)) as _; } else { v.du
 if v.set() { (*p).alloc_data = v.leaf_ptr(&format!("{}.alloc_data", path)) as _; } else { v.dump_p(&format!("{}.alloc_data", path), ((*p).alloc_data) as usize); }
 }
 {
-if v.set() { (*p).string_buffer = v.leaf_ptr(&format!("{}.string_buffer", path)) as _; } else { v.dump_p(&format!("{}.string_buffer", path), ((*p).string_buffer) as usize); }
+if v.set() { (*p).state_stack = v.leaf_ptr(&format!("{}.state_stack", path)) as _; } else { v.dump_p(&format!("{}.state_stack", path), ((*p).state_stack) as usize); }
 }
 {
-if v.set() { (*p).x6C = v.leaf_int(&format!("{}.x6C", path), 16, 0) as _; } else { v.dump_u(&format!("{}.x6C", path), (((*p).x6C) as u16) as u64); }
+if v.set() { (*p).state_stack_used = v.leaf_int(&format!("{}.state_stack_used", path), 16, 0) as _; } else { v.dump_u(&format!("{}.state_stack_used", path), (((*p).state_stack_used) as u16) as u64); }
 }
 {
-if v.set() { (*p).x6E = v.leaf_int(&format!("{}.x6E", path), 16, 0) as _; } else { v.dump_u(&format!("{}.x6E", path), (((*p).x6E) as u16) as u64); }
+if v.set() { (*p).state_stack_capacity = v.leaf_int(&format!("{}.state_stack_capacity", path), 16, 0) as _; } else { v.dump_u(&format!("{}.state_stack_capacity", path), (((*p).state_stack_capacity) as u16) as u64); }
 }
 {
 if v.set() { (*p).current_width = f32::from_bits(v.leaf_f32(&format!("{}.current_width", path))); } else { v.dump_f32(&format!("{}.current_width", path), ((*p).current_width).to_bits()); }
@@ -534,15 +534,15 @@ unsafe extern "C" fn s_lbArchive_80016DBC(a0: *const i8, a1: *mut core::ffi::c_v
 unsafe extern "C" fn s_GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("GObj_Create"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.arg_u(a2 as u64); v.call_end();   v.ret_ptr("GObj_Create") as _ }
 unsafe extern "C" fn s_HSD_CObjLoadDesc(a0: *mut melee_types::HSD_CObjDesc) -> *mut melee_types::HSD_CObj { let v = vv(); v.call_begin("HSD_CObjLoadDesc"); v.arg_p(a0 as usize); v.call_end();   v.ret_ptr("HSD_CObjLoadDesc") as _ }
 unsafe extern "C" fn s_HSD_GObjObject_80390A70(a0: *mut melee_types::HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { let v = vv(); v.call_begin("HSD_GObjObject_80390A70"); v.arg_p(a0 as usize); v.arg_u(a1 as u64); v.arg_p(a2 as usize); v.call_end();    }
-unsafe extern "C" fn s_GObj_SetupGXLinkMax(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u32) { let v = vv(); v.call_begin("GObj_SetupGXLinkMax"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.call_end();    }
-unsafe extern "C" fn s_HSD_GObj_803910D8(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("HSD_GObj_803910D8"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
+unsafe extern "C" fn s_GObj_SetupGXLinkMax(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u32) { let v = vv(); v.call_begin("GObj_SetupGXLinkMax"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.call_end();    }
+unsafe extern "C" fn s_HSD_GObj_803910D8(a0: *mut melee_types::HSD_GObj, a1: isize) { let v = vv(); v.call_begin("HSD_GObj_803910D8"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
 unsafe extern "C" fn s_HSD_SisLib_803A611C(a0: i32, a1: *mut melee_types::HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 { let v = vv(); v.call_begin("HSD_SisLib_803A611C"); v.arg_i(a0 as i64); v.arg_p(a1 as usize); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.arg_u(a4 as u64); v.arg_u(a5 as u64); v.arg_u(a6 as u64); v.arg_u(a7 as u64); v.call_end();   v.ret_int("HSD_SisLib_803A611C", 32, 1) as _ }
 unsafe extern "C" fn s_lbLang_IsSavedLanguageUS() -> i32 { let v = vv(); v.call_begin("lbLang_IsSavedLanguageUS");  v.call_end();   v.ret_int("lbLang_IsSavedLanguageUS", 32, 1) as _ }
 unsafe extern "C" fn s_HSD_SisLib_803A62A0(a0: i32, a1: *mut i8, a2: *mut i8) { let v = vv(); v.call_begin("HSD_SisLib_803A62A0"); v.arg_i(a0 as i64); v.arg_s(a1 as *const u8); v.arg_s(a2 as *const u8); v.call_end();    }
 unsafe extern "C" fn s_HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut melee_types::HSD_Text { let v = vv(); v.call_begin("HSD_SisLib_803A5ACC"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.arg_f32(a2.to_bits()); v.arg_f32(a3.to_bits()); v.arg_f32(a4.to_bits()); v.arg_f32(a5.to_bits()); v.arg_f32(a6.to_bits()); v.call_end();   v.ret_ptr("HSD_SisLib_803A5ACC") as _ }
 unsafe extern "C" fn s_HSD_JObjLoadJoint(a0: *mut melee_types::HSD_Joint) -> *mut melee_types::HSD_JObj { let v = vv(); v.call_begin("HSD_JObjLoadJoint"); v.arg_p(a0 as usize); v.call_end();   v.ret_ptr("HSD_JObjLoadJoint") as _ }
-unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();    }
-unsafe extern "C" fn s_HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("HSD_GObj_JObjCallback"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
+unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();    }
+unsafe extern "C" fn s_HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: isize) { let v = vv(); v.call_begin("HSD_GObj_JObjCallback"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();    }
 unsafe extern "C" fn s_gm_8016895C(a0: *mut melee_types::HSD_JObj, a1: *mut melee_types::DynamicModelDesc, a2: i32) { let v = vv(); v.call_begin("gm_8016895C"); v.arg_p(a0 as usize); v.arg_p(a1 as usize); v.arg_i(a2 as i64); v.call_end();    }
 pub fn glue() -> Glue {
     Glue {

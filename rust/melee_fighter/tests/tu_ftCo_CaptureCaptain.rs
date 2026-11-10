@@ -34,8 +34,8 @@ fn ftCo_CaptureCaptain_matches_c() {
         for k in 0..1000u32 {
             case(op, k);
             let fr = f();
-            fr.anon_221b.set_x221B_b5((rnd() & 1) as u8);
-            fr.anon_221b.set_x221B_b7((rnd() & 1) as u8);
+            fr.x221B.set_x221B_b5((rnd() & 1) as u8);
+            fr.x221B.set_x221B_b7((rnd() & 1) as u8);
             fr.set_x2226_b2((rnd() & 1) as u8);
             fr.ground_or_air = (rnd() & 1) as _;
             fr.facing_dir = rg();
@@ -52,8 +52,8 @@ fn ftCo_CaptureCaptain_matches_c() {
             let mut h = Hs::new();
             h.m((fr.victim_gobj == go2()) as u32);
             h.m((fr.x1A5C == go2()) as u32);
-            h.m(fr.anon_221b.x221B_b5() as u32);
-            h.m(fr.anon_221b.x221B_b7() as u32);
+            h.m(fr.x221B.x221B_b5() as u32);
+            h.m(fr.x221B.x221B_b7() as u32);
             h.m(b(fr.facing_dir));
             h.m((fr.accessory1_cb.map(|p| p as usize) == Some(db464 as usize)) as u32);
             h.m(fr.accessory1_cb.is_none() as u32);

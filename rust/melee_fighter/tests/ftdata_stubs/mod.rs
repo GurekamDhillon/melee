@@ -5,9 +5,6 @@ use super::{m};
 use melee_fighter::hooks as h;
 use melee_types::*;
 
-pub fn call_GenoGame_DefineApplyRows(a0: i32, a1: *const core::ffi::c_void, a2: *const core::ffi::c_void, a3: i32) { t(1001); t(a0 as u32); t(pi(a1)); t(pi(a2)); t(a3 as u32);  }
-pub fn call_Geno_DefinePlanInt(a0: i32, a1: i32, a2: i32) -> i32 { t(1009); t(a0 as u32); t(a1 as u32); t(a2 as u32); fv() as _ }
-pub fn call_Geno_DefinePlanText(a0: i32, a1: i32, a2: i32) -> *mut core::ffi::c_void { t(1010); t(a0 as u32); t(a1 as u32); t(a2 as u32); core::ptr::null_mut() }
 pub fn call_Geno_OverlayCount(a0: i32) -> i32 { t(1015); t(a0 as u32); fv() as _ }
 pub fn call_Geno_PoolWords() -> i32 { t(1016);  fv() as _ }
 pub fn call_Geno_ProfileForKind(a0: i32) -> i32 { t(1017); t(a0 as u32); fv() as _ }
@@ -483,6 +480,7 @@ pub fn call_strcat(a0: *const core::ffi::c_void, a1: *const core::ffi::c_void) -
 pub fn install() {
     unsafe {
         m::ext::GENO_GAME_CLEAR_PROFILE_STORAGE = Some(|| { t(1000); });
+        m::ext::GENO_DEFINE_APPLY_ROWS = Some(|a0, a1, a2, a3| { t(1001); t(a0 as u32); t(pi(a1)); t(pi(a2)); t(a3 as u32); });
         m::ext::GENO_DEFINE_BASE_KIND = Some(|a0| { t(1002); t(a0 as u32); (fv() % 40) as i32 - 8 });
         m::ext::GENO_DEFINE_CK_AT = Some(|a0| { t(1003); t(a0 as u32); (fv() % 100) as i32 + 1 });
         m::ext::GENO_DEFINE_COSTUME_COUNT = Some(|a0| { t(1004); t(a0 as u32); (fv() % 6) as i32 });
@@ -490,6 +488,8 @@ pub fn install() {
         m::ext::GENO_DEFINE_IDENTITY_WORD = Some(|a0, a1| { t(1006); t(a0 as u32); t(a1 as u32); fv() as _ });
         m::ext::GENO_DEFINE_IS_NONE = Some(|a0| { t(1007); t(a0 as u32); fv() as _ });
         m::ext::GENO_DEFINE_PARTNER_KIND = Some(|a0| { t(1008); t(a0 as u32); fv() as _ });
+        m::ext::GENO_DEFINE_PLAN_INT = Some(|a0, a1, a2| { t(1009); t(a0 as u32); t(a1 as u32); t(a2 as u32); fv() as _ });
+        m::ext::GENO_DEFINE_PLAN_TEXT = Some(|a0, a1, a2| { t(1010); t(a0 as u32); t(a1 as u32); t(a2 as u32); core::ptr::null_mut() });
         m::ext::GENO_DEFINE_STRING = Some(|a0, a1, a2| { t(1011); t(a0 as u32); t(a1 as u32); t(a2 as u32); (*crate::PADB)[40 + (fv() % 8) as usize].as_mut_ptr() as *const core::ffi::c_char });
         m::ext::GENO_DEFINE_TEMPLATE_SKELETON = Some(|a0| { t(1012); t(a0 as u32); fv() as _ });
         m::ext::GENO_DEFINE_THROWN_AS = Some(|a0| { t(1013); t(a0 as u32); if fv() & 1 != 0 { -1 } else { a0 } });

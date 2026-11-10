@@ -106,7 +106,7 @@ pub unsafe extern "C" fn it_802C4580(parent_gobj: *mut Item_GObj, arg1: *mut HSD
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = parent_gobj;
     spawn.x4_parent_gobj2 = arg1;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     let gobj = ext::Item_80268B18(&mut spawn);
     if !gobj.is_null() {

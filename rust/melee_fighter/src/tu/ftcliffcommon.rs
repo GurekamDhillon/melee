@@ -72,15 +72,15 @@ pub fn ftcliffcommon_80081298(g: G) -> bool {
         if og.is_null() {
             // Slippi Ledge Grab Limit: count the grab
             if f.is_sub_fighter() == 0 {
-                melee_core::codes::note_ledge_grab(f.player_id as i32);
+                melee_core::codes::note_ledge_grab(f.player_idx as i32);
             }
-            crate::plbonus::pl_80040048(f.player_id as i32, f.is_sub_fighter() as i32);
+            crate::plbonus::pl_80040048(f.player_idx as i32, f.is_sub_fighter() as i32);
             ftcliffcommon_80081370(g);
             return true;
         }
         let of = fp(og);
         let lid = unsafe { of.mv.co.cliff.ledge_id };
-        crate::plbonus::pl_8003ffdc(of.player_id as i32, of.is_sub_fighter() as i32, f.player_id as i32, f.is_sub_fighter() as i32, lid);
+        crate::plbonus::pl_8003ffdc(of.player_idx as i32, of.is_sub_fighter() as i32, f.player_idx as i32, f.is_sub_fighter() as i32, lid);
         f.x213C = lid;
         return false;
     }

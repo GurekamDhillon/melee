@@ -53,7 +53,7 @@ pub mod ext {
         ftCommon_Fall(fp: &mut Fighter, gravity: f32, terminal: f32) = crate::ftcommon::fall;
         ftCommon_CalcSelfAccel_AccelToVelClamped(fp: &mut Fighter, accel: f32, target: f32, friction: f32) = crate::ftcommon::calc_self_accel_accel_to_vel_clamped;
         Geno_FallSpecialColl(g: G) -> i32 = |_| todo!("TODO(pc) Geno_FallSpecialColl (pc geno)");
-        ft_80083090(g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent) = |g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_coll_ev(a, b, |a, b| crate::tu::ft_081b::ft_80083090(g as _, a, b)); } };
+        ft_80083090(g: G, a: unsafe extern "C" fn(G, isize) -> bool, b: HSD_GObjEvent) = |g: G, a: unsafe extern "C" fn(G, isize) -> bool, b: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_coll_ev(a, b, |a, b| crate::tu::ft_081b::ft_80083090(g as _, a, b)); } };
         mpLineGetFlags(line: i32) -> u32 = |line: i32| -> u32 { unsafe { melee_world::tu::mplib::mpLineGetFlags(line as _) } };
         ftCo_800D0EC8(fp: &Fighter) -> f32 = crate::tu::ftchangeparam::ftco_800d0ec8;
         ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) = |g: G, allow_interrupt: i32, landing_lag: f32| { unsafe { crate::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(g as _, (allow_interrupt != 0 as _), landing_lag as _); } };
@@ -71,7 +71,7 @@ pub fn ftCo_800968C8(g: G) {
 #[allow(clippy::too_many_arguments)]
 pub fn inline0(g: G, arg1: i32, arg2: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32, arg6: f32, unk: bool) {
     melee_core::ct!("inline0");
-    if fp(g).x2224_b2() != 0 {
+    if fp(g).stamina_dead() != 0 {
         ext::ftCo_80090780(g);
         return;
     }
@@ -170,11 +170,11 @@ pub fn ftCo_FallSpecial_Coll(g: G) {
 }
 
 /// Passed as a callback (`bool (*)(Fighter_GObj*, int)`), hence `extern "C"`.
-pub extern "C" fn ftCo_80096CC8(g: G, line_id: i32) -> bool {
+pub extern "C" fn ftCo_80096CC8(g: G, line_id: isize) -> bool {
     melee_core::ct!("ftCo_80096CC8");
     let f = fp(g);
     line_id != -1
-        && (ext::mpLineGetFlags(line_id) & LINE_FLAG_PLATFORM as u32 == 0 || f.input.lstick[0].y > cd().x25C)
+        && (ext::mpLineGetFlags(line_id as i32) & LINE_FLAG_PLATFORM as u32 == 0 || f.input.lstick[0].y > cd().x25C)
 }
 
 /// Passed as a callback (`HSD_GObjEvent`), hence `extern "C"`.

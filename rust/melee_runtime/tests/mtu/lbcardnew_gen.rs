@@ -45,6 +45,8 @@ pub fn install() {
 }
 
 pub fn freg_all() {
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
     freg(m::convertHsdResult as *const () as usize);
     freg(m::convertSdkResult as *const () as usize);
     freg(m::executeNextTask as *const () as usize);

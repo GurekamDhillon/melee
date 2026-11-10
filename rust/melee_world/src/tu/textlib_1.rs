@@ -249,13 +249,13 @@ pub unsafe extern "C" fn un_80302FFC(arg0: *mut un_80304138_objalloc_t) {
         ext::DevText_Print(t, (*x8).x8);
         ext::DevText_SetCursorXY(t, cursor_x, cursor_y);
         match (*x8).x0 {
-            2 => ext::DevText_Print(t, *(*x8).xC.offset(*((*x8).x10 as *mut i32) as isize)),
-            3 => ext::DevText_PrintInt(t, *((*x8).x10 as *mut i32)),
-            4 => ext::DevText_Printf(t, b"%d\0".as_ptr() as *const i8, &[PrintfArg::Int(*((*x8).x10 as *mut i32))]),
-            5 => ext::DevText_Printf(t, b"%02x\0".as_ptr() as *const i8, &[PrintfArg::Int(*((*x8).x10 as *mut u8) as i32)]),
-            6 => ext::DevText_Printf(t, b"%04x\0".as_ptr() as *const i8, &[PrintfArg::Int(*((*x8).x10 as *mut u16) as i32)]),
-            7 => ext::DevText_Printf(t, b"%08x\0".as_ptr() as *const i8, &[PrintfArg::Int(*((*x8).x10 as *mut i32))]),
-            8 => ext::DevText_Printf(t, b"%3.2f\0".as_ptr() as *const i8, &[PrintfArg::Dbl(*((*x8).x10 as *mut f32) as f64)]),
+            2 => ext::DevText_Print(t, *(*x8).xC.offset(*((*x8).x10.i) as isize)),
+            3 => ext::DevText_PrintInt(t, *((*x8).x10.i)),
+            4 => ext::DevText_Printf(t, b"%d\0".as_ptr() as *const i8, &[PrintfArg::Int(*((*x8).x10.i))]),
+            5 => ext::DevText_Printf(t, b"%02x\0".as_ptr() as *const i8, &[PrintfArg::Int(*((*x8).x10.b) as i32)]),
+            6 => ext::DevText_Printf(t, b"%04x\0".as_ptr() as *const i8, &[PrintfArg::Int(*((*x8).x10.h) as i32)]),
+            7 => ext::DevText_Printf(t, b"%08x\0".as_ptr() as *const i8, &[PrintfArg::Int(*((*x8).x10.i))]),
+            8 => ext::DevText_Printf(t, b"%3.2f\0".as_ptr() as *const i8, &[PrintfArg::Dbl(*((*x8).x10.f) as f64)]),
             _ => {}
         }
         x8 = x8.add(1);
@@ -270,7 +270,7 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
     let e = (*arg0).x8.add((*arg0).x0 as usize);
     match (*e).x0 {
         2 => {
-            let q = (*e).x10 as *mut i32;
+            let q = (*e).x10.i;
             if (*q as f32) < (*e).x18 - 1.0 {
                 *q = (*q).wrapping_add(1);
                 ret = true;
@@ -279,7 +279,7 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
             }
         }
         3 => {
-            let q = (*e).x10 as *mut i32;
+            let q = (*e).x10.i;
             if (*q as f32) + (*e).x1C <= (*e).x18 {
                 ret = true;
                 *q = melee_core::ppc::fctiwz_f32((*q as f32) + (*e).x1C);
@@ -288,7 +288,7 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
             }
         }
         5 => {
-            let q = (*e).x10 as *mut u8;
+            let q = (*e).x10.b;
             let idk = melee_core::ppc::fctiwz_f32((*e).x1C);
             if (*q as i32).wrapping_add(idk & 0xFF) <= 0xFF {
                 *q = (*q as i32).wrapping_add(idk) as u8;
@@ -300,7 +300,7 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
             sfxMove();
         }
         6 => {
-            let q = (*e).x10 as *mut u16;
+            let q = (*e).x10.h;
             let idk = melee_core::ppc::fctiwz_f32((*e).x1C);
             if (*q as i32).wrapping_add(idk & 0xFFFF) <= 0xFFFF {
                 *q = (*q as i32).wrapping_add(idk) as u16;
@@ -313,7 +313,7 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
         }
         4 | 7 => {
             // `*q + (idk & 0xFFFFFFFF) <= 0xFFFFFFFF` holds for every unsigned int
-            let q = (*e).x10 as *mut u32;
+            let q = (*e).x10.w;
             let idk = melee_core::ppc::fcvt_u32((*e).x1C);
             *q = (*q).wrapping_add(idk);
             ret = true;
@@ -321,7 +321,7 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
             sfxMove();
         }
         8 => {
-            let q = (*e).x10 as *mut f32;
+            let q = (*e).x10.f;
             if *q + (*e).x1C <= (*e).x18 {
                 *q += (*e).x1C;
                 ret = true;
@@ -341,7 +341,7 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
     let e = (*arg0).x8.add((*arg0).x0 as usize);
     match (*e).x0 {
         2 => {
-            let q = (*e).x10 as *mut i32;
+            let q = (*e).x10.i;
             if (*q as f32) > (*e).x14 {
                 *q = (*q).wrapping_sub(1);
                 ret = true;
@@ -350,7 +350,7 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
             }
         }
         3 => {
-            let q = (*e).x10 as *mut i32;
+            let q = (*e).x10.i;
             if (*q as f32) - (*e).x1C >= (*e).x14 {
                 ret = true;
                 *q = melee_core::ppc::fctiwz_f32((*q as f32) - (*e).x1C);
@@ -359,7 +359,7 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
             }
         }
         5 => {
-            let q = (*e).x10 as *mut u8;
+            let q = (*e).x10.b;
             let idk = melee_core::ppc::fctiwz_f32((*e).x1C);
             if (*q as i32).wrapping_sub(idk & 0xFF) >= 0 {
                 *q = (*q as i32).wrapping_sub(idk) as u8;
@@ -371,7 +371,7 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
             sfxMove();
         }
         6 => {
-            let q = (*e).x10 as *mut u16;
+            let q = (*e).x10.h;
             let idk = melee_core::ppc::fctiwz_f32((*e).x1C);
             if (*q as i32).wrapping_sub(idk & 0xFFFF) >= 0 {
                 *q = (*q as i32).wrapping_sub(idk) as u16;
@@ -384,7 +384,7 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
         }
         4 | 7 => {
             // `*q - (idk & 0xFFFFFFFF) >= 0` holds for every unsigned int
-            let q = (*e).x10 as *mut u32;
+            let q = (*e).x10.w;
             let idk = melee_core::ppc::fcvt_u32((*e).x1C);
             *q = (*q).wrapping_sub(idk);
             ret = true;
@@ -392,7 +392,7 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
             sfxMove();
         }
         8 => {
-            let q = (*e).x10 as *mut f32;
+            let q = (*e).x10.f;
             if *q - (*e).x1C >= (*e).x14 {
                 *q -= (*e).x1C;
                 ret = true;

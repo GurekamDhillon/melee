@@ -614,7 +614,7 @@ impl Engine {
             let fp = &*((*g).user_data as *const melee_types::Fighter);
             let mut js = String::new();
             for i in 0..6 {
-                let j = fp.coll_data.ecb_source.anon_4.anon_0.x10C_joint[i];
+                let j = fp.coll_data.ecb_source.x4.x0.x10C_joint[i];
                 let mut v: melee_types::Vec = core::mem::zeroed();
                 if !j.is_null() {
                     melee_runtime::tu::lb_00B0::lb_8000B1CC(j, core::ptr::null_mut(), &mut v);

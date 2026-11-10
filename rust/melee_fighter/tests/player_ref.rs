@@ -223,9 +223,9 @@ fn init_slot(p: &mut StaticPlayer) {
     p.facing_direction = rf();
     p.costume_id = rnd() as u8;
     p.unk45 = rnd() as u8;
-    p.controller_index = rnd() as i8;
+    p.sub_color = rnd() as i8;
     p.team = (rnd() % 3) as u8;
-    p.player_id = rnd() as u8;
+    p.pad_port = rnd() as u8;
     p.cpu_level = rnd() as u8;
     p.cpu_type = rnd() as u8;
     p.handicap = rnd() as u8;
@@ -288,7 +288,7 @@ fn dump(out: &mut Vec<String>, slot: usize) {
     }
     s += &format!(
         " {:x} {:x} {:x} {:x} {:x} {:x} {:x} {:x} {:x} {:x} {:x} {:x}",
-        b(p.facing_direction), p.costume_id, p.unk45, p.controller_index as i32 as u32, p.team, p.player_id,
+        b(p.facing_direction), p.costume_id, p.unk45, p.sub_color as i32 as u32, p.team, p.pad_port,
         p.cpu_level, p.cpu_type, p.handicap, p.unk4C as i32 as u32, p.unk4D as i32 as u32, p.unk4E as i32 as u32
     );
     s += &format!(" {:x} {:x} {:x} {:x}", b(p.unk50), b(p.attack_ratio), b(p.defense_ratio), b(p.model_scale));

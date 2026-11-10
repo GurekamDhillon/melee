@@ -10,6 +10,7 @@ use oracle_common::*;
 static mut OSTR: [u8; 16] = *b"GrXx.dat\0\0\0\0\0\0\0\0";
 static mut OSD: [UnkStageDat; 4] = unsafe { core::mem::zeroed() };
 static mut OX8: [UnkStageDat_x8_t; 4] = unsafe { core::mem::zeroed() };
+#[repr(C)] #[derive(Clone, Copy)] pub struct UnkStageDatInternal { pub x0_fill: [u8; 4], pub unk4: u32 }
 static mut OSI: [UnkStageDatInternal; 6] = unsafe { core::mem::zeroed() };
 static mut OPI: [*mut UnkStageDatInternal; 6] = [core::ptr::null_mut(); 6];
 // grDatFiles_801C6228's entries are HSD_MObjDescs (the C's UnkStageDatInternal +4 is the 32-bit `rendermode`); the port
@@ -261,8 +262,8 @@ unsafe fn world_fill(fi: usize) {
     {
         let m = rnd() % 4;
         for i in 0..6 { OPI[i] = if rnd() % 3 != 0 { addr_of_mut!(OSI[i]) } else { core::ptr::null_mut() }; }
-        for j in 0..4 { OX8[j].unk0 = if rnd() & 1 != 0 { addr_of_mut!(OGO[j]) as *mut _ } else { core::ptr::null_mut() }; }
-        for i in 0..4 { OSD[i].unk8 = addr_of_mut!(OX8) as *mut UnkStageDat_x8_t; OSD[i].unk28 = addr_of_mut!(OPI) as *mut *mut UnkStageDatInternal; OSD[i].unk2C = (rnd() % 6) as i32; OSD[i].unkC = (rnd() % 5) as i32; }
+        for j in 0..4 { OX8[j].joint = if rnd() & 1 != 0 { addr_of_mut!(OGO[j]) as *mut _ } else { core::ptr::null_mut() }; }
+        for i in 0..4 { OSD[i].unk8 = addr_of_mut!(OX8) as *mut UnkStageDat_x8_t; OSD[i].unk28 = addr_of_mut!(OPI) as *mut *mut _; OSD[i].unk2C = (rnd() % 6) as i32; OSD[i].unkC = (rnd() % 5) as i32; }
         for i in 0..(m as usize) { t::grDatFiles_8049EE10[i].unk0 = addr_of_mut!(OGO[i]) as *mut _; t::grDatFiles_8049EE10[i].unk4 = if rnd() % 4 != 0 { addr_of_mut!(OSD[i]) } else { core::ptr::null_mut() }; }
     }
 }

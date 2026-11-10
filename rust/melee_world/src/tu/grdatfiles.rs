@@ -155,7 +155,7 @@ pub unsafe fn grDatFiles_801C6038(arg0: *mut c_void, arg1: s32, arg2: s32) {
             (*si).coll_data = ext::HSD_ArchiveGetPublicAddress(sp14, cs(b"coll_data\0")) as *mut MapCollData;
             (*si).param = ext::HSD_ArchiveGetPublicAddress(sp14, cs(b"grGroundParam\0")) as *mut GroundParam;
             (*si).itemdata = ext::HSD_ArchiveGetPublicAddress(sp14, cs(b"itemdata\0")) as *mut *mut GroundItemData;
-            (*si).ald_yaku_all = ext::HSD_ArchiveGetPublicAddress(sp14, cs(b"ALDYakuAll\0")) as *mut *mut *mut c_void;
+            (*si).ald_yaku_all = ext::HSD_ArchiveGetPublicAddress(sp14, cs(b"ALDYakuAll\0")) as *mut GroundItemScript;
             (*si).map_ptcl = ext::HSD_ArchiveGetPublicAddress(sp14, cs(b"map_ptcl\0"));
             (*si).map_texg = ext::HSD_ArchiveGetPublicAddress(sp14, cs(b"map_texg\0"));
             (*si).yakumono_param = ext::HSD_ArchiveGetPublicAddress(sp14, cs(b"yakumono_param\0"));
@@ -246,7 +246,7 @@ pub unsafe fn grDatFiles_801C6330(arg0: s32) -> *mut UnkArchiveStruct {
                 let temp_r7 = grDatFiles_8049EE10[i].unk4;
                 if !temp_r7.is_null()
                     && (*temp_r7).unkC > arg0
-                    && !(*(*temp_r7).unk8.offset(arg0 as isize)).unk0.is_null()
+                    && !(*(*temp_r7).unk8.offset(arg0 as isize)).joint.is_null()
                 {
                     return addr_of_mut!(grDatFiles_8049EE10[i]);
                 }
@@ -283,7 +283,7 @@ pub unsafe fn grDatFiles_StageSlotInstall(archive: *mut HSD_Archive) {
     (*si).coll_data = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"coll_data\0")) as *mut MapCollData;
     (*si).param = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"grGroundParam\0")) as *mut GroundParam;
     (*si).itemdata = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"itemdata\0")) as *mut *mut GroundItemData;
-    (*si).ald_yaku_all = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"ALDYakuAll\0")) as *mut *mut *mut c_void;
+    (*si).ald_yaku_all = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"ALDYakuAll\0")) as *mut GroundItemScript;
     (*si).map_ptcl = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"map_ptcl\0"));
     (*si).map_texg = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"map_texg\0"));
     (*si).yakumono_param = ext::HSD_ArchiveGetPublicAddress(archive, cs(b"yakumono_param\0"));

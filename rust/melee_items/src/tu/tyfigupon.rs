@@ -60,8 +60,8 @@ pub mod ext {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
     fn GObj_RemoveUserData(a0: *mut HSD_GObj);
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32);
     fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) => unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(a0, a1) };
     fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void => unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0, a1) };
     fn HSD_CObjEndCurrent() => unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent() };
@@ -79,8 +79,8 @@ pub mod ext {
     fn HSD_GObjProc_RemoveProc(a0: *mut HSD_GObjProc);
     fn HSD_GObj_80390CD4(a0: *mut HSD_GObj);
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
-    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) };
+    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1 as i32) };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjAddChild(a0, a1) };
@@ -132,8 +132,8 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_LObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_LObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     /// Variadic C callees modelled by hand (fixed arity; the format is applied by the caller).
@@ -261,7 +261,7 @@ pub unsafe fn _tyFigupon_80314B54() -> i32 {
 }
 
 /// Scene camera render callback: clear to dark blue and draw the lights pass.
-pub unsafe extern "C" fn _tyFigupon_80314BE4(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn _tyFigupon_80314BE4(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("_tyFigupon_80314BE4");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         ext::HSD_SetEraseColor(0x19, 0x19, 0x33, 0xFF);
@@ -1038,7 +1038,7 @@ pub unsafe fn _tyFigupon_8031753C() {
         (*ef4_l).x00 = ext::GObj_Create(9, 9, 0) as usize;
         let mut jobj = ext::HSD_JObjLoadJoint(panel_joint);
         ext::HSD_GObjObject_80390A70((*ef4_l).x00 as *mut HSD_GObj, ext::HSD_GObj_JObjKind, jobj as *mut c_void);
-        let render_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)> = Some(ext::cb::HSD_GObj_JObjCallback);
+        let render_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)> = Some(ext::cb::HSD_GObj_JObjCallback);
         ext::GObj_SetupGXLink((*ef4_l).x00 as *mut HSD_GObj, render_cb, 0x3C, 1);
         ext::lb_8001204C(jobj, (*ef4_l).jobjs.as_mut_ptr(), _tyFigupon_803FEB88.as_mut_ptr(), 0xD);
         _tyFigupon_80314AA8((*ef4_l).jobjs[0xC], core::ptr::null(), cstr!("ToyFigurePonPanel_zsmash_matanim_joint"), core::ptr::null());

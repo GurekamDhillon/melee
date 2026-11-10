@@ -46,7 +46,6 @@ pub fn freg_all() {
     freg(m::HSD_AObjSetRate as *const () as usize);
     freg(m::HSD_AObjSetRewindFrame as *const () as usize);
     freg(m::HSD_AObjStopAnim as *const () as usize);
-    freg(m::HSD_ForeachAnim as *const () as usize);
     freg(m::_HSD_AObjForgetMemory as *const () as usize);
 }
 
@@ -57,6 +56,7 @@ pub fn fill_HSD_AObj(p: &mut HSD_AObj) { unsafe {
     p.end_frame = rg();
     p.framerate = rg();
     p.fobj = pick_HSD_FObj();
+    p.jobj = pick_HSD_JObj();
 } }
 pub fn hash_HSD_AObj(p: &HSD_AObj) { unsafe {
     if HDBG { println!("B HSD_AObj"); }
@@ -66,7 +66,7 @@ pub fn hash_HSD_AObj(p: &HSD_AObj) { unsafe {
     hm(p.end_frame.to_bits());
     hm(p.framerate.to_bits());
     hm(pi(p.fobj));
-    hm(pi(p.hsd_obj));
+    hm(pi(p.jobj));
 } }
 
 pub fn fill_HSD_FObj(p: &mut HSD_FObj) { unsafe {
@@ -112,14 +112,13 @@ pub fn hash_HSD_FObj(p: &HSD_FObj) { unsafe {
 pub fn fill_HSD_AObjDesc(p: &mut HSD_AObjDesc) { unsafe {
     p.flags = fv() as _;
     p.end_frame = rg();
-    p.obj_id = fv() as _;
 } }
 pub fn hash_HSD_AObjDesc(p: &HSD_AObjDesc) { unsafe {
     if HDBG { println!("B HSD_AObjDesc"); }
     hm(p.flags as u32);
     hm(p.end_frame.to_bits());
     hm(pi(p.fobjdesc));
-    hm(p.obj_id as u32);
+    hm(pi(p.obj_id));
 } }
 
 pub fn fill_HSD_JObj(p: &mut HSD_JObj) { unsafe {
@@ -147,7 +146,7 @@ pub fn fill_HSD_JObj(p: &mut HSD_JObj) { unsafe {
     }
     p.aobj = pick_HSD_AObj();
     p.robj = pick_HSD_RObj();
-    p.id = fv() as _;
+    p.id = fv64() as _;
 } }
 pub fn hash_HSD_JObj(p: &HSD_JObj) { unsafe {
     if HDBG { println!("B HSD_JObj"); }
@@ -178,7 +177,7 @@ pub fn hash_HSD_JObj(p: &HSD_JObj) { unsafe {
     hm(pi(p.envelopemtx));
     hm(pi(p.aobj));
     hm(pi(p.robj));
-    hm(p.id as u32);
+    { let pk_ = pi(p.id as usize as *const u8); if pk_ != 0xFFFF_FFFF { hm(pk_); } else { hm(p.id as u32); hm(((p.id as u64) >> 32) as u32); } }
 } }
 
 pub fn fill_HSD_DObj(p: &mut HSD_DObj) { unsafe {

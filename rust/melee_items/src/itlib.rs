@@ -13,7 +13,7 @@
 #![allow(non_upper_case_globals)]
 
 use crate::layout::{
-    itUnkAttributes, CollData, HSD_GObj, HitCapsule_Disabled, HitCapsule_Unk4, HurtCapsule,
+    itUnkAttributes_legacy, CollData, HSD_GObj, HitCapsule_Disabled, HitCapsule_Unk4, HurtCapsule,
     HurtCapsuleState, Item, ItemCommonData, ItemKind, Vec as GcVec, Collide_FloorHug, Collide_FloorPush,
     Collide_LeftEdge, Collide_LeftWallMask, Collide_RightEdge, Collide_RightWallMask,
     It_Kind_Arwing_Laser, It_Kind_BombHei, It_Kind_Coin, It_Kind_F_Flower, It_Kind_Foods,
@@ -75,8 +75,8 @@ pub fn it_get_grab_range_y(ip: &Item) -> f32 {
     ip.xBD4_grabRange.y
 }
 
-pub(crate) unsafe fn unk_attrs(ip: &Item) -> &itUnkAttributes {
-    &*((*ip.xC4_article_data).x4_specialAttributes as *const itUnkAttributes)
+pub(crate) unsafe fn unk_attrs(ip: &Item) -> &itUnkAttributes_legacy {
+    &*((*ip.xC4_article_data).x4_specialAttributes as *const itUnkAttributes_legacy)
 }
 
 /// `itGetMotionId`.

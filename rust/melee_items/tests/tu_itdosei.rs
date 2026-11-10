@@ -16,7 +16,7 @@ static mut SATTR: [[u32; 6]; 2] = [[0; 6]; 2];
 
 unsafe fn setup_stem() {
     m::ext::it_804D6D28 = &raw mut ICD[0];
-{ for q in 0..2usize { ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut c_void; for w in 0..6usize { if w == 1 || w == 3 || w == 4 || w == 5 { *(&raw mut SATTR[q] as *mut i32).add(w) = (fv() % 6) as i32; } else { *(&raw mut SATTR[q] as *mut f32).add(w) = rw(); } } } } { for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } } { for q in 0..4usize { let v = &mut IT[q].xDD4_itemVar.dosei; v.xDD4 = (fv() % 5) as i32; v.xDD8 = (fv() % 4) as i32; v.xDDC = rw(); v.xDE0 = rw(); v.xDE4.x = rw(); v.xDE4.y = rw(); v.xDE4.z = rw(); v.xDF0 = (fv() % 4) as i32; v.xDF4 = rw(); v.xDF8.x = rw(); v.xDF8.y = rw(); v.xDF8.z = rw(); } }
+{ for q in 0..2usize { ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut _; for w in 0..6usize { if w == 1 || w == 3 || w == 4 || w == 5 { *(&raw mut SATTR[q] as *mut i32).add(w) = (fv() % 6) as i32; } else { *(&raw mut SATTR[q] as *mut f32).add(w) = rw(); } } } } { for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } } { for q in 0..4usize { let v = &mut IT[q].xDD4_itemVar.dosei; v.xDD4 = (fv() % 5) as i32; v.xDD8 = (fv() % 4) as i32; v.xDDC = rw(); v.xDE0 = rw(); v.xDE4.x = rw(); v.xDE4.y = rw(); v.xDE4.z = rw(); v.xDF0 = (fv() % 4) as i32; v.xDF4 = rw(); v.xDF8.x = rw(); v.xDF8.y = rw(); v.xDF8.z = rw(); } }
 }
 
 unsafe fn hash_stem() {

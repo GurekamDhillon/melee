@@ -25,7 +25,7 @@ fn ft_lib_update_logic_off_camera_matches_c() {
         unsafe {
             let f = f();
             f.x890_cameraBox = CB;
-            f.set_x221F_b3((rnd() & 1) as _); f.set_x2229_b3((rnd() & 1) as _); f.set_x2220_b7((rnd() & 1) as _); f.set_x221F_b0((rnd() & 1) as _);
+            f.set_is_sleeping((rnd() & 1) as _); f.set_x2229_b3((rnd() & 1) as _); f.set_x2220_b7((rnd() & 1) as _); f.set_x221F_b0((rnd() & 1) as _);
             f.x2188.x = rnd() as i32; f.x2188.y = rnd() as i32;
             m::ftLib_UpdateLogicOffCamera(go());
             let mut hh: u32 = 0x811C_9DC5;

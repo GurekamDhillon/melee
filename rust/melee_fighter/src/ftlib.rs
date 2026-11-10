@@ -55,7 +55,7 @@ pub fn is_crazy_hand_present() -> bool {
 
 #[inline]
 pub(crate) fn skip_opponent(fp_own: Option<&Fighter>, cur: &Fighter) -> bool {
-    cur.x221F_b3() != 0 || (h::gm_8016b168() && fp_own.is_some_and(|f| cur.team == f.team))
+    cur.is_sleeping() != 0 || (h::gm_8016b168() && fp_own.is_some_and(|f| cur.team == f.team))
 }
 
 pub fn set_scale(g: G, val: f32) {
@@ -69,7 +69,7 @@ pub fn get_item(g: G) -> G { fp(g).item_gobj }
 /// `ftLib_UpdateLogicOffCamera` (TARGET_PC).
 pub fn update_logic_off_camera(g: G) {
     let f = fp(g);
-    if f.x221F_b3() != 0 {
+    if f.is_sleeping() != 0 {
         return;
     }
     if f.x2229_b3() == 0 && f.x2220_b7() == 0 && !h::camera_80030a50().is_null() {
@@ -85,11 +85,11 @@ pub fn get_motion_id(g: G) -> i32 { fp(g).motion_id as i32 }
 #[inline]
 pub(crate) fn rumble_helper(g: G, arg1: i32, arg2: i32, val: i32) {
     let f = fp(g);
-    if !h::player_8003544c(f.player_id as i32, f.is_sub_fighter() as i32) {
+    if !h::player_8003544c(f.player_idx as i32, f.is_sub_fighter() as i32) {
         return;
     }
-    if f.x221F_b3() == 0 && f.x2224_b2() == 0 {
-        h::lb_rumble_start(f.x618_player_id, val, arg1, arg2);
+    if f.is_sleeping() == 0 && f.stamina_dead() == 0 {
+        h::lb_rumble_start(f.pad_port, val, arg1, arg2);
     }
 }
 

@@ -68,7 +68,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -102,6 +102,8 @@ static void hash_world(int ft)
     for (i = 0; i < 16; i++) HM(PI(PLINK[i]));
 }
 
+static int CUR_OP = -1;
+enum { OP_itDKinoko_Logic27_Spawned = 0, OP_it_80293A70 = 1, OP_itDkinoko_UnkMotion0_Anim = 2, OP_itDkinoko_UnkMotion0_Phys = 3, OP_itDkinoko_UnkMotion0_Coll = 4, OP_it_80293BE8 = 5, OP_it_80293C10 = 6, OP_itDkinoko_UnkMotion1_Anim = 7, OP_itDkinoko_UnkMotion1_Phys = 8, OP_itDkinoko_UnkMotion1_Coll = 9, OP_itDKinoko_Logic27_DmgDealt = 10, OP_itDKinoko_Logic27_EvtUnk = 11 };
 static u32 SATTR[2][4];
 
 static void setup_stem(void)
@@ -109,7 +111,7 @@ static void setup_stem(void)
     int i;
     (void) i;
 
-{ int q, w; for (q = 0; q < 2; q++) { ART[q].x4_specialAttributes = SATTR[q]; for (w = 0; w < 4; w++) { ((float*) SATTR[q])[w] = rw(); } } }
+{ int q, w; for (q = 0; q < 2; q++) { ART[q].x4_specialAttributes = (union ItemSpecialAttributes*) SATTR[q]; for (w = 0; w < 4; w++) { ((float*) SATTR[q])[w] = rw(); } } }
 }
 
 static void hash_stem(void)
@@ -150,6 +152,7 @@ preg(SATTR, sizeof SATTR);
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
+            CUR_OP = op;
             setup_stem();
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             switch (op) {

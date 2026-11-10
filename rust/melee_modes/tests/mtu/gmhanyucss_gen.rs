@@ -94,7 +94,7 @@ pub fn fill_CSSData(p: &mut CSSData) {
     p.vs.start.rules.x1C_pad[i0] = fv() as _;
     }
     p.vs.start.rules.x20 = (((fv() as u64) << 32) | fv() as u64) as _;
-    p.vs.start.rules.x28 = fv() as _;
+    p.vs.start.rules.it_kind = fv() as _;
     p.vs.start.rules.x2C = rg();
     p.vs.start.rules.x30 = rg();
     p.vs.start.rules.game_speed = rg();
@@ -213,7 +213,7 @@ pub fn hash_CSSData(p: &CSSData) {
     hm(p.vs.start.rules.x1C_pad[i0] as u32);
     }
     hm(p.vs.start.rules.x20 as u32); hm(((p.vs.start.rules.x20 as u64) >> 32) as u32);
-    hm(p.vs.start.rules.x28 as u32);
+    hm(p.vs.start.rules.it_kind as u32);
     hm(p.vs.start.rules.x2C.to_bits());
     hm(p.vs.start.rules.x30.to_bits());
     hm(p.vs.start.rules.game_speed.to_bits());
@@ -338,7 +338,7 @@ pub fn fill_VsModeData(p: &mut VsModeData) {
     p.start.rules.x1C_pad[i0] = fv() as _;
     }
     p.start.rules.x20 = (((fv() as u64) << 32) | fv() as u64) as _;
-    p.start.rules.x28 = fv() as _;
+    p.start.rules.it_kind = fv() as _;
     p.start.rules.x2C = rg();
     p.start.rules.x30 = rg();
     p.start.rules.game_speed = rg();
@@ -453,7 +453,7 @@ pub fn hash_VsModeData(p: &VsModeData) {
     hm(p.start.rules.x1C_pad[i0] as u32);
     }
     hm(p.start.rules.x20 as u32); hm(((p.start.rules.x20 as u64) >> 32) as u32);
-    hm(p.start.rules.x28 as u32);
+    hm(p.start.rules.it_kind as u32);
     hm(p.start.rules.x2C.to_bits());
     hm(p.start.rules.x30.to_bits());
     hm(p.start.rules.game_speed.to_bits());

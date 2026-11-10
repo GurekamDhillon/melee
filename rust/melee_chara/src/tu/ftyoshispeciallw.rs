@@ -99,7 +99,7 @@ unsafe fn set_vars(gobj: *mut HSD_GObj) {
     let fp = fpp(gobj);
     (*fp).cmd_vars[1] = 0;
     (*fp).cmd_vars[0] = 0;
-    (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+    (*fp).x2210.x0.set_throw_flags_b0(0);
     (*fp).self_vel.y = 0.0;
     (*fp).self_vel.x = 0.0;
     (*fp).x6A4_transNOffset.y = 0.0;

@@ -68,7 +68,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -102,6 +102,8 @@ static void hash_world(int ft)
     for (i = 0; i < 16; i++) HM(PI(PLINK[i]));
 }
 
+static int CUR_OP = -1;
+enum { OP_it_802C8B28 = 0, OP_it_802C8C34 = 1, OP_it_2725_Logic80_PickedUp = 2, OP_itCLinkMilk_NotifyParent = 3, OP_itCLinkMilk_Destroy = 4, OP_itClinkmilk_UnkMotion1_Anim = 5, OP_itClinkmilk_UnkMotion1_Phys = 6, OP_itClinkmilk_UnkMotion1_Coll = 7, OP_itCLinkMilk_Logic80_EvtUnk = 8 };
 
 
 static void setup_stem(void)
@@ -147,6 +149,7 @@ int main(int argc, char** argv)
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
+            CUR_OP = op;
             setup_stem();
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             switch (op) {

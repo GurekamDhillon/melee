@@ -127,7 +127,7 @@ pub fn ftCo_800BDA50(g: G) {
     melee_core::ct!("ftCo_800BDA50");
     let f = fp(g);
     if unsafe { f.u.kb.hat.kind } as i32 != Ft_Kind_Kirby as i32 {
-        unsafe { tk(f).anon_18.anon_0.set_x18_b1(1) };
+        unsafe { tk(f).x18_u.x0.set_x18_b1(1) };
     }
 }
 
@@ -180,8 +180,8 @@ fn inline_b2(g: G, thrower: G, scale: &mut Vec3, msid: i32, vel_func: fn(G, *mut
     ext::ftCommon_8007D5D4(fp(g));
     let f = fp(g);
     unsafe {
-        tk(f).anon_18.anon_0.set_x18_b0(x18_b0 as u8);
-        tk(f).anon_18.anon_0.set_x18_b1(0);
+        tk(f).x18_u.x0.set_x18_b0(x18_b0 as u8);
+        tk(f).x18_u.x0.set_x18_b1(0);
     }
     let acc = ext::ftKb_SpecialN_800F5898(thrower);
     ext::ftCommon_SetAccessory(fp(g), acc);
@@ -298,7 +298,7 @@ pub fn ftCo_800BE494(g: G) {
     fp(g).set_invisible(0);
     ext::ftColl_8007B62C(g, 0);
     let f = fp(g);
-    if unsafe { tk(f).anon_18.anon_0.x18_b0() } == 0 {
+    if unsafe { tk(f).x18_u.x0.x18_b0() } == 0 {
         let mut sv = Vec2 { x: 0.0, y: 0.0 };
         ext::ftKb_SpecialN_800F5874(&mut sv);
         let f = fp(g);
@@ -309,7 +309,7 @@ pub fn ftCo_800BE494(g: G) {
         } else {
             f.self_vel.x = sv.x * if f.self_vel.x < 0.0 { -1.0 } else { 1.0 };
         }
-    } else if is_kirby(f.kind as i32) && unsafe { tk(fp(g)).anon_18.anon_0.x18_b1() } != 0 && unsafe { fp(g).u.kb.hat.x8_b0() } == 0 {
+    } else if is_kirby(f.kind as i32) && unsafe { tk(fp(g)).x18_u.x0.x18_b1() } != 0 && unsafe { fp(g).u.kb.hat.x8_b0() } == 0 {
         let k = unsafe { fp(g).u.kb.hat.kind } as i32;
         ext::ftKb_SpecialN_800F190C(g, k);
         let k = unsafe { fp(g).u.kb.hat.kind } as i32;
@@ -335,7 +335,7 @@ pub fn ftCo_ThrownKirby_Phys(g: G) {
     let d = ext::ftKb_SpecialN_800F5AC0();
     let f = fp(g);
     f.grab_timer -= d;
-    if unsafe { tk(f).anon_18.anon_0.x18_b0() } == 0 {
+    if unsafe { tk(f).x18_u.x0.x18_b0() } == 0 {
         if fp(g).grab_timer <= 0.0 {
             ext::Fighter_UpdateModelScale(g);
             ext::ftCo_Fall_Enter(g);

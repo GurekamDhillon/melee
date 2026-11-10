@@ -25,6 +25,7 @@ static int IA[4];
 static u32 UA[4];
 static float FA[4];
 static unsigned char BUF[256];
+static void* PPA[4];
 static char STRS[4][64] = { "a.dat", "sym", "LbAd.dat", "x" };
 
 static HSD_WObj* pick_HSD_WObj(void) { u32 r = rnd(); return &WO[(r >> 8) % 3]; }
@@ -74,7 +75,7 @@ static void* pick_fn(int kind)
     return 0;
 }
 static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : kind == 4 ? (void*) cbi1 : (void*) cbev1); }
-static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2); }
+static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2);  }
 
 #include "wobj_gen.h"
 
@@ -95,7 +96,7 @@ static void preg_world(void)
     preg(AD, sizeof AD);
     preg(RD, sizeof RD);
     preg(RJ, sizeof RJ);
-    preg(VA, sizeof VA); preg(U8A, sizeof U8A); preg(IA, sizeof IA); preg(UA, sizeof UA); preg(FA, sizeof FA); preg(BUF, sizeof BUF); preg(STRS, sizeof STRS);
+    preg(VA, sizeof VA); preg(U8A, sizeof U8A); preg(IA, sizeof IA); preg(UA, sizeof UA); preg(FA, sizeof FA); preg(BUF, sizeof BUF); preg(STRS, sizeof STRS); preg(PPA, sizeof PPA);
 }
 
 static void setup_world(void)
@@ -119,6 +120,7 @@ static void setup_world(void)
     for (i = 0; i < 4; i++) { IA[i] = (int) fv(); UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }
     for (i = 0; i < 256; i++) BUF[i] = (unsigned char) rnd();
     BUF[255] = 0;
+    for (i = 0; i < 4; i++) PPA[i] = 0;
     for (i = 0; i < 3; i++) fill_HSD_WObj(&WO[i]);
     for (i = 0; i < 3; i++) fill_HSD_AObj(&AO[i]);
     for (i = 0; i < 2; i++) fill_HSD_RObj(&RO[i]);
@@ -156,6 +158,7 @@ static void hash_world(void)
     for (i = 0; i < 4; i++) { HM(B(VA[i].x)); HM(B(VA[i].y)); HM(B(VA[i].z)); HM(B(FA[i])); HM((u32) IA[i]); HM(UA[i]); }
     for (i = 0; i < 16; i++) HM(U8A[i]);
     for (i = 0; i < 256; i++) HM(BUF[i]);
+    for (i = 0; i < 4; i++) HM(PI(PPA[i]));
     hashg_all();
     hasho_all();
 }
@@ -198,7 +201,7 @@ int main(int argc, char** argv)
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
-{ int q; for (q = 0; q < 2; q++) WI[q].load = WObjLoad; for (q = 0; q < 3; q++) { WO[q].parent.parent.class_info = (HSD_ClassInfo*) &WI[q & 1]; WO[q].aobj = (fv() & 3) ? &AO[fv() % 3] : 0; WO[q].robj = (fv() & 3) ? &RO[fv() & 1] : 0; } for (q = 0; q < 3; q++) AO[q].hsd_obj = (HSD_Obj*) &JO[q & 1]; for (q = 0; q < 2; q++) JO[q].u.spline = (fv() & 3) ? &SPL[0] : 0; hsdWObj.parent.parent.head.parent = &CI[0]; CI[0].release = (void*) cbev1; CI[0].amnesia = (void*) cbev1; default_class = (fv() & 1) ? &CI[1] : 0; }
+{ int q; for (q = 0; q < 2; q++) WI[q].load = WObjLoad; for (q = 0; q < 3; q++) { WO[q].parent.parent.class_info = (HSD_ClassInfo*) &WI[q & 1]; WO[q].aobj = (fv() & 3) ? &AO[fv() % 3] : 0; WO[q].robj = (fv() & 3) ? &RO[fv() & 1] : 0; } for (q = 0; q < 3; q++) AO[q].jobj = &JO[q & 1]; for (q = 0; q < 2; q++) JO[q].u.spline = (fv() & 3) ? &SPL[0] : 0; hsdWObj.parent.parent.head.parent = &CI[0]; CI[0].release = (void*) cbev1; CI[0].amnesia = (void*) cbev1; default_class = (fv() & 1) ? &CI[1] : 0; }
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             ARMED = 1;
             if (MTU_SETJMP()) { ARMED = 0; printf("%d %d ABORT\n", op, k); continue; }

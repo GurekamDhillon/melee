@@ -16,11 +16,11 @@ pub mod ext {
     use melee_types::*;
     hook_or!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32), |gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(gobj as _, render_cb as _, gx_link as _, priority as _); } });
     /// Hook behind [`grDisplay_801C5DB0`] for the TUs that call it directly (grizumi's render callbacks).
-    pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, i32)> = None;
+    pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, isize)> = None;
     /// `grDisplay_801C5DB0`: an `extern "C"` function so it can be stored in `GObj_RenderFunc`
     /// (most TUs only pass it as a render callback); a direct call goes to the hook above.
     #[allow(non_snake_case)]
-    pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) {
+    pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) {
         match GRDISPLAY_801C5DB0 {
             Some(f) => f(a0, a1),
             None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },

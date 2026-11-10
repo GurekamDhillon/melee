@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -92,9 +92,9 @@ int main(void)
             case 3: {  it_802BDB94(&GO[0]); } break; /* it_802BDB94 */
             case 4: {  it_802BDBF8(&GO[0]); } break; /* it_802BDBF8 */
             case 5: {  it_802BDC18(&GO[0]); } break; /* it_802BDC18 */
-            case 6: {  ret = (u32) it_802BDC38(&GO[0]); } break; /* it_802BDC38 */
+            case 6: {  ret = (u32) ((it_802BDC38(&GO[0])) != 0); } break; /* it_802BDC38 */
             case 7: {  itPeachParasol_Logic60_PickedUp(&GO[0]); } break; /* itPeachParasol_Logic60_PickedUp */
-            case 8: {  ret = (u32) itPeachparasol_UnkMotion2_Anim(&GO[0]); } break; /* itPeachparasol_UnkMotion2_Anim */
+            case 8: {  ret = (u32) ((itPeachparasol_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itPeachparasol_UnkMotion2_Anim */
             case 9: {  it_802BDD3C(&GO[0]); } break; /* it_802BDD3C */
             case 10: { f32 v1 = (f32) (rw()); it_802BDD40(&GO[0], v1); } break; /* it_802BDD40 */
             case 11: { f32 v1 = (f32) (rw()); it_802BDDB4(&GO[0], v1); } break; /* it_802BDDB4 */

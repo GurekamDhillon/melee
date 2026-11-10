@@ -98,9 +98,9 @@ pub mod ext {
         fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 => unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0) as _ };
         fn HSD_FogLoadDesc(a0: *mut HSD_FogDesc) -> *mut HSD_Fog;
         fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u8);
-        fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0, a1) };
-        fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
-        fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
+        fn HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0, a1 as i32) };
+        fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) };
+        fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1 as i32) };
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
         fn HSD_GObjFree(a0: *mut HSD_GObj);
         fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
@@ -211,7 +211,7 @@ pub unsafe extern "C" fn fn_8031FAA8(gobj: *mut HSD_GObj) {
     ext::lbAudioAx_800237A8(0x61, 0x7F, 0x40);
 }
 
-pub unsafe extern "C" fn fn_8031FB90(gobj: *mut HSD_GObj, unused: i32) {
+pub unsafe extern "C" fn fn_8031FB90(gobj: *mut HSD_GObj, unused: isize) {
     melee_core::ct!("fn_8031FB90");
     if !un_804D7000.is_null() {
         ext::lbShadow_8000F38C(0);

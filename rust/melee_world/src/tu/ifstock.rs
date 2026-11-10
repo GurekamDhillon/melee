@@ -33,7 +33,7 @@ pub mod ext {
     }
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn Geno_DefineArtBaseCK(a0: i32) -> i32;
     fn Geno_DefineArtOpen(a0: i32, a1: i32, a2: i32) -> i32;
     fn Geno_DefineBaseCK(a0: i32) -> i32;
@@ -50,7 +50,7 @@ pub mod ext {
     fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
     fn HSD_GObj_80390CAC(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_80390CAC(a0 as _); } };
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
@@ -162,6 +162,9 @@ pub struct IfStockGenoBinding {
 
 /// 4A1378
 pub static mut ifStock_804A1378: ifStock_804A1378 = unsafe { core::mem::zeroed() };
+/// `static struct IfStockUserData ifStock_804A157C[6]`: the per-player steal animation state (upstream #3583 split it
+/// out of ifStock_804A1378's tail, where the port kept it as `x204`; same bytes).
+pub static mut ifStock_804A157C: [IfStockUserData; 6] = unsafe { core::mem::zeroed() };
 /// 4A1774
 pub static mut ifStock_804A1774: ifStock_804A1774 = unsafe { core::mem::zeroed() };
 /// 4A1A8C
@@ -529,8 +532,8 @@ pub unsafe fn ifStock_802F7EFC(arg0: i32, arg1: i32) -> i32 {
     melee_core::ct!("ifStock_802F7EFC");
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let stock = &raw mut ifStock_804A1378;
-    let arg0_data = (&raw mut (*stock).x204[arg0 as usize]) as *mut IfStockData;
-    let arg1_data = (&raw mut (*stock).x204[arg1 as usize]) as *mut IfStockData;
+    let arg0_data = &raw mut ifStock_804A157C[arg0 as usize];
+    let arg1_data = &raw mut ifStock_804A157C[arg1 as usize];
     let slot: i32;
     if ext::Player_GetStocks(arg1) == 0 {
         return 1;
@@ -539,21 +542,21 @@ pub unsafe fn ifStock_802F7EFC(arg0: i32, arg1: i32) -> i32 {
     if (*stock).player[arg1 as usize].stocks < 0 {
         (*stock).player[arg1 as usize].stocks = 1;
     }
-    if (*arg1_data).x0[10] == 0 {
+    if (*arg1_data).anim[5] == 0 {
         slot = 5;
-    } else if (*arg1_data).x0[11] == 0 {
+    } else if (*arg1_data).anim[6] == 0 {
         slot = 6;
     } else {
         return 2;
     }
-    (*arg1_data).x0[(slot + 5) as usize] = 1;
-    (*arg0_data).x0[2] = 0;
-    (*arg1_data).x0[(slot - 2) as usize] = arg0 as u8;
+    (*arg1_data).anim[slot as usize] = 1;
+    (*arg0_data).flag = 0;
+    (*arg1_data).x3[(slot - 5) as usize] = arg0 as u8;
     let j: i32;
     {
         let stocks = (*stock).player[arg1 as usize].stocks;
         if stocks <= 5 && stocks > 0 {
-            (*arg1_data).x0[(stocks + 4) as usize] = 10;
+            (*arg1_data).anim[(stocks - 1) as usize] = 10;
         }
         let i = if stocks <= 5 && stocks > 0 { 1 } else { 0 };
         j = if i != 0 { stocks } else { 1 };
@@ -562,7 +565,7 @@ pub unsafe fn ifStock_802F7EFC(arg0: i32, arg1: i32) -> i32 {
     HSD_JObjGetTranslation(x4(pp1, 0), &mut pos);
     ext::HSD_JObjReqAnimAll(x4(pp1, j as usize), 0.0);
     ext::HSD_JObjAnimAll(x4(pp1, j as usize));
-    let an = &raw mut (*arg1_data).anim[(slot - 5) as usize];
+    let an = &raw mut (*arg1_data).steal[(slot - 5) as usize];
     HSD_JObjGetTranslation(x4(pp1, j as usize), &raw mut (*an).start);
     (*an).start.x += pos.x;
     (*an).start.y += pos.y;
@@ -624,7 +627,7 @@ pub unsafe extern "C" fn ifStock_802F8298(gobj: *mut HSD_GObj) {
     let player = (*user_data).player;
     let pl = &raw mut (*stock).player[player as usize];
     // ifStock_802F8298_data: the per-player animation element
-    let data = &raw mut (*stock).x204[player as usize];
+    let data = &raw mut ifStock_804A157C[player as usize];
     let mut vec_a = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut vec_b = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut vec_c = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -710,7 +713,7 @@ pub unsafe extern "C" fn ifStock_802F8298(gobj: *mut HSD_GObj) {
                 (*data).anim[i] = (*data).anim[i].wrapping_add(1);
             } else {
                 *p = 0;
-                let other = &raw mut (*stock).x204[(*data).x3[i - 5] as usize];
+                let other = &raw mut ifStock_804A157C[(*data).x3[i - 5] as usize];
                 (*other).flag = 1;
             }
         }
@@ -910,7 +913,7 @@ pub unsafe extern "C" fn fn_802F9410(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn fn_802F94E0(gobj: *mut HSD_GObj, renderpass: i32) {
+pub unsafe extern "C" fn fn_802F94E0(gobj: *mut HSD_GObj, renderpass: isize) {
     melee_core::ct!("fn_802F94E0");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
@@ -922,7 +925,7 @@ pub unsafe extern "C" fn fn_802F94E0(gobj: *mut HSD_GObj, renderpass: i32) {
     }
 }
 
-pub unsafe extern "C" fn fn_802F9548(gobj: *mut HSD_GObj, renderpass: i32) {
+pub unsafe extern "C" fn fn_802F9548(gobj: *mut HSD_GObj, renderpass: isize) {
     melee_core::ct!("fn_802F9548");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
@@ -933,7 +936,7 @@ pub unsafe extern "C" fn fn_802F9548(gobj: *mut HSD_GObj, renderpass: i32) {
     }
 }
 
-pub unsafe extern "C" fn fn_802F9598(gobj: *mut HSD_GObj, renderpass: i32) {
+pub unsafe extern "C" fn fn_802F9598(gobj: *mut HSD_GObj, renderpass: isize) {
     melee_core::ct!("fn_802F9598");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
@@ -944,7 +947,7 @@ pub unsafe extern "C" fn fn_802F9598(gobj: *mut HSD_GObj, renderpass: i32) {
     }
 }
 
-pub unsafe extern "C" fn fn_802F95E8(gobj: *mut HSD_GObj, renderpass: i32) {
+pub unsafe extern "C" fn fn_802F95E8(gobj: *mut HSD_GObj, renderpass: isize) {
     melee_core::ct!("fn_802F95E8");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
@@ -962,7 +965,7 @@ pub unsafe extern "C" fn fn_802F95E8(gobj: *mut HSD_GObj, renderpass: i32) {
     }
 }
 
-pub unsafe extern "C" fn fn_802F9680(gobj: *mut HSD_GObj, renderpass: i32) {
+pub unsafe extern "C" fn fn_802F9680(gobj: *mut HSD_GObj, renderpass: isize) {
     melee_core::ct!("fn_802F9680");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_STOCK) != 0 {
         return;
@@ -1023,7 +1026,7 @@ pub unsafe fn ifStock_802F96D0(a: i32, b: i32, x: f32, y: f32) -> *mut HSD_GObj 
 #[inline]
 pub unsafe fn ifStock_802F98E8_get_match_info(data: *mut VsSceneState, player: i32) -> *mut lbl_8046B6A0_FighterMatchInfoFlags {
     melee_core::ct!("ifStock_802F98E8_get_match_info");
-    &raw mut (*data).fighters[player as usize].anon_4.flags
+    &raw mut (*data).fighters[player as usize].x4.flags
 }
 
 const ifStock_802F98E8_color1: GXColor = GXColor { r: 0x08, g: 0x08, b: 0x08, a: 0x80 };
@@ -1034,11 +1037,11 @@ pub unsafe extern "C" fn ifStock_802F98E8(player: u8, b: u8) {
     let stock = &raw mut ifStock_804A1378;
     let pn = player as usize;
     if !(*stock).x0.is_null() {
-        let data = &raw mut (*stock).x204[pn];
+        let data = &raw mut ifStock_804A157C[pn];
         // ifStock_802F98E8_get_data(stock, player)[0] = player;
         (*data).player = player;
-        (*stock).x204[pn].mode = b;
-        (*stock).x204[pn].flag = 1;
+        ifStock_804A157C[pn].mode = b;
+        ifStock_804A157C[pn].flag = 1;
         if !(*stock).player[pn].x0.is_null() {
             ext::HSD_GObjFree((*stock).player[pn].x0);
         }
@@ -1442,7 +1445,7 @@ pub unsafe fn ifStock_802FAEC4() {
     ifStock_GenoReset();
     ext::memzero(
         stock.cast(),
-        (core::mem::size_of::<ifStock_804A1378>() - core::mem::size_of_val(&(*stock).x204)) as i32,
+        core::mem::size_of::<ifStock_804A1378>() as i32,
     );
     ext::memzero((&raw mut ifStock_804A1ACC).cast(), core::mem::size_of::<ifStock_804A1ACC>() as i32);
     ext::memzero((&raw mut ifStock_804A1A8C).cast(), core::mem::size_of::<[*mut HSD_GObj; 16]>() as i32);

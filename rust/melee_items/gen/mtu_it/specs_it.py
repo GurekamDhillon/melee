@@ -20,8 +20,8 @@ COMMON_RET = {
 
 
 def flags(p):
-    c = " | ".join(f"((u32) {p}.b{i} << {i})" for i in range(8))
-    r = " | ".join(f"(({p}.anon_0.b{i}() as u32) << {i})" for i in range(8))
+    c = " | ".join(f"((u32) {p}.x0.b{i} << {i})" for i in range(8))
+    r = " | ".join(f"(({p}.x0.b{i}() as u32) << {i})" for i in range(8))
     return c, r
 
 
@@ -100,7 +100,7 @@ spec("itflipper", ["itFlipper_DatAttrs"], skip_stubs=["__frsqrte"], skip_data=IT
 # ---- shard 713-720 (it/kinds: itkirby*, itkireihana, itklap, itkoopaflame, itkusudama, itkyasarin)
 # efAsync_Spawn is variadic in C (extra args after the jobj); the TUs here call it with exactly five.
 EFASYNC5 = {"efAsync_Spawn": dict(
-    c="void efAsync_Spawn(HSD_GObj* a0, void* a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); }",
+    c="void efAsync_Spawn(HSD_GObj* a0, EF_QueuedEffect** a1, u32 a2, u32 a3, HSD_JObj* a4, ...) { T(@ID@); T(PI(a0)); T(PI(a1)); T(a2); T(a3); T(PI(a4)); }",
     ext="fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);",
     hook="|a0, a1, a2, a3, a4| { t(@ID@); t(pi(a0)); t(pi(a1)); t(a2); t(a3); t(pi(a4)); }")}
 

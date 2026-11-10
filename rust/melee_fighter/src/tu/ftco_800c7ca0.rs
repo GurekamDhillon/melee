@@ -107,7 +107,7 @@ pub fn fn_800c7dc4(g: G, motion_state: i32, normal: &Vec3, offset: &Vec3) {
         z: f.cur_pos.z + offset.z,
     };
     let angle = (ext::atan2f((-normal.x) as f32, (normal.y) as f32) as ::core::ffi::c_float);
-    ext::efAsync_Spawn(g, &mut fp(g).x60C, 5, 0x406, core::ptr::null_mut(), &spawn, &angle);
+    ext::efAsync_Spawn(g, (&raw mut fp(g).x60C) as *mut *mut ::core::ffi::c_void, 5, 0x406, core::ptr::null_mut(), &spawn, &angle);
     ext::Camera_RequestQuake(QuakeKind_Small, &spawn);
     let f = fp(g);
     let mag = f.xF0_ground_kb_vel;
@@ -188,7 +188,7 @@ pub fn ft_800c80a4(f: &mut Fighter) {
     let n = unsafe { (*tbl).parts_num } as usize;
     for i in 0..n {
         let bone = unsafe { &mut *f.parts.add(i) };
-        if unsafe { bone.anon_8.anon_0.flags_b1() } != 0 {
+        if unsafe { bone.x8.x0.flags_b1() } != 0 {
             ext::ft_800C80A4_bone(bone.joint);
         }
     }

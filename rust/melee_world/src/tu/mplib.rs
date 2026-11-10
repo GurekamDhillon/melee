@@ -455,7 +455,7 @@ pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
             (*joint).bounding_min.y = f31 * (*(*coll_data).joints.offset(i as isize)).bottom_bound;
             (*joint).bounding_max.x = f31 * (*(*coll_data).joints.offset(i as isize)).right_bound;
             (*joint).bounding_max.y = f31 * (*(*coll_data).joints.offset(i as isize)).top_bound;
-            (*joint).x20 = null_mut();
+            (*joint).jobj = null_mut();
             (*joint).cb_data_0 = null_mut();
             (*joint).cb_0 = None;
             (*joint).cb_data_1 = null_mut();
@@ -477,7 +477,7 @@ pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
     floor_start = (*coll_data).ranges[(MapLineGroup_Floor as i32) as usize].start as i32;
     'l175: while floor_count > 0 {
         (*groundCollLine.offset(floor_start as isize)).flags = (((*(*coll_data).lines.offset(floor_start as isize)).hi_flags as i32) | (1 << 16)) as u32;
-        (*groundCollLine.offset(floor_start as isize)).x0 = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(floor_start as isize)) as *mut MapLine;
+        (*groundCollLine.offset(floor_start as isize)).inner = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(floor_start as isize)) as *mut MapLine;
         floor_start = floor_start + 1;
         floor_count = floor_count - 1;
     }
@@ -485,7 +485,7 @@ pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
     ceiling_start = (*coll_data).ranges[(MapLineGroup_Ceiling as i32) as usize].start as i32;
     'l176: while ceiling_count > 0 {
         (*groundCollLine.offset(ceiling_start as isize)).flags = (((*(*coll_data).lines.offset(ceiling_start as isize)).hi_flags as i32) | (1 << 16)) as u32;
-        (*groundCollLine.offset(ceiling_start as isize)).x0 = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(ceiling_start as isize)) as *mut MapLine;
+        (*groundCollLine.offset(ceiling_start as isize)).inner = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(ceiling_start as isize)) as *mut MapLine;
         ceiling_start = ceiling_start + 1;
         ceiling_count = ceiling_count - 1;
     }
@@ -493,7 +493,7 @@ pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
     right_wall_start = (*coll_data).ranges[(MapLineGroup_RightWall as i32) as usize].start as i32;
     'l177: while right_wall_count > 0 {
         (*groundCollLine.offset(right_wall_start as isize)).flags = (((*(*coll_data).lines.offset(right_wall_start as isize)).hi_flags as i32) | (1 << 16)) as u32;
-        (*groundCollLine.offset(right_wall_start as isize)).x0 = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(right_wall_start as isize)) as *mut MapLine;
+        (*groundCollLine.offset(right_wall_start as isize)).inner = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(right_wall_start as isize)) as *mut MapLine;
         right_wall_start = right_wall_start + 1;
         right_wall_count = right_wall_count - 1;
     }
@@ -501,7 +501,7 @@ pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
     left_wall_start = (*coll_data).ranges[(MapLineGroup_LeftWall as i32) as usize].start as i32;
     'l178: while left_wall_count > 0 {
         (*groundCollLine.offset(left_wall_start as isize)).flags = (((*(*coll_data).lines.offset(left_wall_start as isize)).hi_flags as i32) | (1 << 16)) as u32;
-        (*groundCollLine.offset(left_wall_start as isize)).x0 = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(left_wall_start as isize)) as *mut MapLine;
+        (*groundCollLine.offset(left_wall_start as isize)).inner = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(left_wall_start as isize)) as *mut MapLine;
         left_wall_start = left_wall_start + 1;
         left_wall_count = left_wall_count - 1;
     }
@@ -509,7 +509,7 @@ pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
     dynamic_start = (*coll_data).ranges[(MapLineGroup_Dynamic as i32) as usize].start as i32;
     'l179: while dynamic_count > 0 {
         (*groundCollLine.offset(dynamic_start as isize)).flags = (((*(*coll_data).lines.offset(dynamic_start as isize)).hi_flags as i32) | (1 << 16)) as u32;
-        (*groundCollLine.offset(dynamic_start as isize)).x0 = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(dynamic_start as isize)) as *mut MapLine;
+        (*groundCollLine.offset(dynamic_start as isize)).inner = core::ptr::addr_of_mut!(*(*coll_data).lines.offset(dynamic_start as isize)) as *mut MapLine;
         dynamic_start = dynamic_start + 1;
         dynamic_count = dynamic_count - 1;
     }
@@ -517,14 +517,14 @@ pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
     'l180: while i < (*coll_data).vert_count {
         f0 = (*(*coll_data).verts.offset(i as isize)).x;
         f2 = f31 * f0;
-        (*groundCollVtx.offset(i as isize)).x0 = f0;
+        (*groundCollVtx.offset(i as isize)).base_pos.x = f0;
         (*groundCollVtx.offset(i as isize)).pos.x = f2;
-        (*groundCollVtx.offset(i as isize)).x10 = f2;
+        (*groundCollVtx.offset(i as isize)).prev_pos.x = f2;
         f0 = (*(*coll_data).verts.offset(i as isize)).y;
         f1 = f31 * f0;
-        (*groundCollVtx.offset(i as isize)).x4 = f0;
+        (*groundCollVtx.offset(i as isize)).base_pos.y = f0;
         (*groundCollVtx.offset(i as isize)).pos.y = f1;
-        (*groundCollVtx.offset(i as isize)).x14 = f1;
+        (*groundCollVtx.offset(i as isize)).prev_pos.y = f1;
         if mpLib_80458868[0 as usize].top < f1 {
             mpLib_80458868[0 as usize].top = f1;
         }
@@ -551,7 +551,7 @@ pub unsafe fn mpLibLoad(mut coll_data: *mut MapCollData) {
 /// `mpLineGetNext`
 pub unsafe fn mpLineGetNext(mut line_id: i32) -> i32 {
     melee_core::ct!("mpLineGetNext");
-    let mut result: i16 = (*(*groundCollLine.offset(line_id as isize)).x0).next_id1;
+    let mut result: i16 = (*(*groundCollLine.offset(line_id as isize)).inner).next_id1;
     let mut ret: i32 = result as i32;
     if !(ext::ScriptGame_StageLineActive(line_id) != 0) {
         return (-1_i32);
@@ -559,20 +559,20 @@ pub unsafe fn mpLineGetNext(mut line_id: i32) -> i32 {
     if (result as i32) != (-1_i32) {
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
-            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)) as *mut CollVtx;
-            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
+            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v1_idx as isize)) as *mut CollVtx;
+            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v0_idx as isize)) as *mut CollVtx;
             if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return ret;
             }
         }
     }
-    return (*(*groundCollLine.offset(line_id as isize)).x0).next_id0 as i32;
+    return (*(*groundCollLine.offset(line_id as isize)).inner).next_id0 as i32;
 }
 
 /// `mpLineGetPrev`
 pub unsafe fn mpLineGetPrev(mut line_id: i32) -> i32 {
     melee_core::ct!("mpLineGetPrev");
-    let mut result: i16 = (*(*groundCollLine.offset(line_id as isize)).x0).prev_id1;
+    let mut result: i16 = (*(*groundCollLine.offset(line_id as isize)).inner).prev_id1;
     let mut ret: i32 = result as i32;
     if !(ext::ScriptGame_StageLineActive(line_id) != 0) {
         return (-1_i32);
@@ -580,14 +580,14 @@ pub unsafe fn mpLineGetPrev(mut line_id: i32) -> i32 {
     if (result as i32) != (-1_i32) {
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
-            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize)) as *mut CollVtx;
-            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
+            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v0_idx as isize)) as *mut CollVtx;
+            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v1_idx as isize)) as *mut CollVtx;
             if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return ret;
             }
         }
     }
-    return (*(*groundCollLine.offset(line_id as isize)).x0).prev_id0 as i32;
+    return (*(*groundCollLine.offset(line_id as isize)).inner).prev_id0 as i32;
 }
 
 /// `mpRemap2d`
@@ -634,8 +634,8 @@ pub unsafe fn mpLib_8004DD90_Floor(mut line_id: i32, mut vec: *mut Vec, mut y_ou
     }
     'l181: while 1 != 0 {
         let mut line: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
-        x0 = (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).pos.x;
-        x1 = (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).pos.x;
+        x0 = (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).pos.x;
+        x1 = (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).pos.x;
         x = (*vec).x;
         y = (*vec).y;
         if x < x0 {
@@ -674,10 +674,10 @@ pub unsafe fn mpLib_8004DD90_Floor(mut line_id: i32, mut vec: *mut Vec, mut y_ou
         }
     }
     if !flags_out.is_null() {
-        *flags_out = (*(*groundCollLine.offset(line_id as isize)).x0).lo_flags as u32;
+        *flags_out = (*(*groundCollLine.offset(line_id as isize)).inner).lo_flags as u32;
     }
-    y0 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize)).pos.y;
-    y1 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)).pos.y;
+    y0 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v0_idx as isize)).pos.y;
+    y1 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v1_idx as isize)).pos.y;
     if !y_out.is_null() {
         *y_out = (((((((y1 - y0) * (x - x0)) / (x1 - x0)) + y0) - y) as f64) + 0.0001f64) as f32;
     }
@@ -708,8 +708,8 @@ pub unsafe fn mpLib_8004E090_Ceiling(mut line_id: i32, mut vec: *mut Vec, mut y_
     'l182: while 1 != 0 {
         'c182: {
             let mut line_r4: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
-            x0 = (*groundCollVtx.offset((*(*line_r4).x0).v0_idx as isize)).pos.x;
-            x1 = (*groundCollVtx.offset((*(*line_r4).x0).v1_idx as isize)).pos.x;
+            x0 = (*groundCollVtx.offset((*(*line_r4).inner).v0_idx as isize)).pos.x;
+            x1 = (*groundCollVtx.offset((*(*line_r4).inner).v1_idx as isize)).pos.x;
             if (*vec).x < x1 {
                 if dir != 1 {
                     let mut new_id: i32 = mpLineGetNext(line_id);
@@ -745,10 +745,10 @@ pub unsafe fn mpLib_8004E090_Ceiling(mut line_id: i32, mut vec: *mut Vec, mut y_
         }
     }
     if !flags_out.is_null() {
-        *flags_out = (*(*groundCollLine.offset(line_id as isize)).x0).lo_flags as u32;
+        *flags_out = (*(*groundCollLine.offset(line_id as isize)).inner).lo_flags as u32;
     }
-    y0 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize)).pos.y;
-    y1 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)).pos.y;
+    y0 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v0_idx as isize)).pos.y;
+    y1 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v1_idx as isize)).pos.y;
     if !y_out.is_null() {
         *y_out = (((((((y1 - y0) * (x - x0)) / (x1 - x0)) + y0) - (*vec).y) as f64) - 0.0001f64) as f32;
     }
@@ -779,8 +779,8 @@ pub unsafe fn mpLib_8004E398_LeftWall(mut line_id: i32, mut vec: *mut Vec, mut x
     'l183: while 1 != 0 {
         'c183: {
             let mut line_r4: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
-            y0 = (*groundCollVtx.offset((*(*line_r4).x0).v0_idx as isize)).pos.y;
-            y1 = (*groundCollVtx.offset((*(*line_r4).x0).v1_idx as isize)).pos.y;
+            y0 = (*groundCollVtx.offset((*(*line_r4).inner).v0_idx as isize)).pos.y;
+            y1 = (*groundCollVtx.offset((*(*line_r4).inner).v1_idx as isize)).pos.y;
             if (*vec).y < y0 {
                 if dir != 1 {
                     let mut new_id: i32 = mpLineGetPrev(line_id);
@@ -814,10 +814,10 @@ pub unsafe fn mpLib_8004E398_LeftWall(mut line_id: i32, mut vec: *mut Vec, mut x
         }
     }
     if !flags_out.is_null() {
-        *flags_out = (*(*groundCollLine.offset(line_id as isize)).x0).lo_flags as u32;
+        *flags_out = (*(*groundCollLine.offset(line_id as isize)).inner).lo_flags as u32;
     }
-    x0 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize)).pos.x;
-    x1 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)).pos.x;
+    x0 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v0_idx as isize)).pos.x;
+    x1 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v1_idx as isize)).pos.x;
     if !x_out.is_null() {
         *x_out = (x0 + (((x1 - x0) * (y - y0)) / (y1 - y0))) - (*vec).x;
     }
@@ -848,8 +848,8 @@ pub unsafe fn mpLib_8004E684_RightWall(mut line_id: i32, mut vec: *mut Vec, mut 
     'l184: while 1 != 0 {
         'c184: {
             let mut line_r4: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
-            y0 = (*groundCollVtx.offset((*(*line_r4).x0).v0_idx as isize)).pos.y;
-            y1 = (*groundCollVtx.offset((*(*line_r4).x0).v1_idx as isize)).pos.y;
+            y0 = (*groundCollVtx.offset((*(*line_r4).inner).v0_idx as isize)).pos.y;
+            y1 = (*groundCollVtx.offset((*(*line_r4).inner).v1_idx as isize)).pos.y;
             if (*vec).y > y0 {
                 if dir != (-1_i32) {
                     let mut new_id_r8: i32 = mpLineGetPrev(line_id);
@@ -885,10 +885,10 @@ pub unsafe fn mpLib_8004E684_RightWall(mut line_id: i32, mut vec: *mut Vec, mut 
         }
     }
     if !flags_out.is_null() {
-        *flags_out = (*(*groundCollLine.offset(line_id as isize)).x0).lo_flags as u32;
+        *flags_out = (*(*groundCollLine.offset(line_id as isize)).inner).lo_flags as u32;
     }
-    x0 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize)).pos.x;
-    x1 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)).pos.x;
+    x0 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v0_idx as isize)).pos.x;
+    x1 = (*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v1_idx as isize)).pos.x;
     if !x_out.is_null() {
         *x_out = (x0 + (((x1 - x0) * (y - y0)) / (y1 - y0))) - (*vec).x;
     }
@@ -1061,10 +1061,10 @@ pub unsafe fn mpLib_8004ED5C(mut line_id: i32, mut x0_out: *mut f32, mut y0_out:
     let mut x1_f2: f32 = 0.0;
     let mut y1_f3: f32 = 0.0;
     let mut distance: f32 = 0.0;
-    i0 = (*(*line).x0).v0_idx as i32;
+    i0 = (*(*line).inner).v0_idx as i32;
     x0_f0 = (*groundCollVtx.offset(i0 as isize)).pos.x;
     y0_f1 = (*groundCollVtx.offset(i0 as isize)).pos.y;
-    i1 = (*(*line).x0).v1_idx as i32;
+    i1 = (*(*line).inner).v1_idx as i32;
     x1_f2 = (*groundCollVtx.offset(i1 as isize)).pos.x;
     y1_f3 = (*groundCollVtx.offset(i1 as isize)).pos.y;
     if mpLineGetPrev(line_id) != (-1_i32) {
@@ -1091,7 +1091,7 @@ pub unsafe fn mpLib_8004ED5C(mut line_id: i32, mut x0_out: *mut f32, mut y0_out:
 }
 
 /// `mpCheckFloor`
-pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut y_offset: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut line_id_skip: i32, mut joint_id_skip: i32, mut joint_id_only: i32, mut cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
+pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut y_offset: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut line_id_skip: i32, mut joint_id_skip: i32, mut joint_id_only: i32, mut cb: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
     melee_core::ct!("mpCheckFloor");
     let mut min_dist2_f30: f32 = 0.0;
     let mut joint: *mut CollJoint = null_mut();
@@ -1139,7 +1139,7 @@ pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, m
                                 let mut y1_sp3C: f32 = 0.0;
                                 let mut dist2: f32 = 0.0;
                                 let mut line_offset: i32 = 0;
-                                if (cb.is_some()) && (!(cb_bool(cb.unwrap()(gobj, (line_r26.offset_from(groundCollLine) as i64) as i32)))) {
+                                if (cb.is_some()) && (!(cb_bool(cb.unwrap()(gobj, (line_r26.offset_from(groundCollLine) as i64) as isize)))) {
                                     break 'c188;
                                 }
                                 if line_id_skip == melee_runtime::cabi::sdiv({ line_offset = ((line_r26 as usize as i64) - (groundCollLine as usize as i64)) as i32; line_offset }, 16_u64 as i32) {
@@ -1165,7 +1165,7 @@ pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, m
                                                 *line_id_out = (line_r26.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line_r26).x0).lo_flags as u32;
+                                                *flags_out = (*(*line_r26).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = -(y1_sp3C - y0_sp44);
@@ -1190,7 +1190,7 @@ pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, m
                                                 *line_id_out = (line_r26.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line_r26).x0).lo_flags as u32;
+                                                *flags_out = (*(*line_r26).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = 0.0f32;
@@ -1225,7 +1225,7 @@ pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, m
 }
 
 /// `mpCheckFloorRemap`
-pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut y_offset: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut line_id_skip: i32, mut joint_id_skip: i32, mut joint_id_only: i32, mut cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
+pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, mut y_offset: f32, mut vec_out: *mut Vec, mut line_id_out: *mut i32, mut flags_out: *mut u32, mut normal_out: *mut Vec, mut line_id_skip: i32, mut joint_id_skip: i32, mut joint_id_only: i32, mut cb: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
     melee_core::ct!("mpCheckFloorRemap");
     let mut min_dist2: f32 = f32::MAX;
     let mut old_x: f32 = ax;
@@ -1262,7 +1262,7 @@ pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f
                     'p190: loop {
                         'l191: while i < count {
                             'c191: {
-                                if (cb.is_some()) && (!(cb_bool(cb.unwrap()(gobj, (line.offset_from(groundCollLine) as i64) as i32)))) {
+                                if (cb.is_some()) && (!(cb_bool(cb.unwrap()(gobj, (line.offset_from(groundCollLine) as i64) as isize)))) {
                                     break 'c191;
                                 }
                                 if (line_id_skip as i64) == (line.offset_from(groundCollLine) as i64) {
@@ -1272,12 +1272,12 @@ pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f
                                     break 'c191;
                                 }
                                 {
-                                    let mut v0_r5: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).x0).v0_idx as isize)) as *mut CollVtx;
-                                    let mut v1_r6: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).x0).v1_idx as isize)) as *mut CollVtx;
-                                    let mut x0: f32 = (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).pos.x;
-                                    let mut y0: f32 = y_offset + (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).pos.y;
-                                    let mut x1: f32 = (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).pos.x;
-                                    let mut y1: f32 = y_offset + (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).pos.y;
+                                    let mut v0_r5: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).inner).v0_idx as isize)) as *mut CollVtx;
+                                    let mut v1_r6: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).inner).v1_idx as isize)) as *mut CollVtx;
+                                    let mut x0: f32 = (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).pos.x;
+                                    let mut y0: f32 = y_offset + (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).pos.y;
+                                    let mut x1: f32 = (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).pos.x;
+                                    let mut y1: f32 = y_offset + (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).pos.y;
                                     let mut dx: f32 = 0.0;
                                     let mut dy: f32 = 0.0;
                                     let mut dx2: f32 = 0.0;
@@ -1286,7 +1286,7 @@ pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f
                                     let mut int_x: f32 = 0.0;
                                     let mut int_y: f32 = 0.0;
                                     if ((*joint).flags & ((((CollJoint_B10 as i32) | (CollJoint_B9 as i32)) | (CollJoint_B8 as i32)) as u32)) != 0 {
-                                        mpRemap2d(core::ptr::addr_of_mut!(ax) as *mut f32, core::ptr::addr_of_mut!(ay) as *mut f32, (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).x10, (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).x14, (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).x10, (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).x14, x0, y0, x1, y1, old_x, old_y);
+                                        mpRemap2d(core::ptr::addr_of_mut!(ax) as *mut f32, core::ptr::addr_of_mut!(ay) as *mut f32, (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).prev_pos.x, (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).prev_pos.y, (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).prev_pos.x, (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).prev_pos.y, x0, y0, x1, y1, old_x, old_y);
                                     } else {
                                         ax = old_x;
                                         ay = old_y;
@@ -1312,7 +1312,7 @@ pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f
                                                     *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                                 }
                                                 if !flags_out.is_null() {
-                                                    *flags_out = (*(*line).x0).lo_flags as u32;
+                                                    *flags_out = (*(*line).inner).lo_flags as u32;
                                                 }
                                                 if !normal_out.is_null() {
                                                     (*normal_out).x = -(y1 - y0);
@@ -1341,7 +1341,7 @@ pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f
                                                 *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line).x0).lo_flags as u32;
+                                                *flags_out = (*(*line).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = 0.0f32;
@@ -1439,7 +1439,7 @@ pub unsafe fn mpCheckCeiling(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32,
                                                 *line_id_out = (line_r26.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line_r26).x0).lo_flags as u32;
+                                                *flags_out = (*(*line_r26).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = -(y1 - y0);
@@ -1464,7 +1464,7 @@ pub unsafe fn mpCheckCeiling(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32,
                                                 *line_id_out = (line_r26.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line_r26).x0).lo_flags as u32;
+                                                *flags_out = (*(*line_r26).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = 0.0f32;
@@ -1549,10 +1549,10 @@ pub unsafe fn mpCheckCeilingRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by:
                                 let mut sp38: f32 = 0.0;
                                 mpLib_8004ED5C((r26.offset_from(groundCollLine) as i64) as i32, core::ptr::addr_of_mut!(sp44) as *mut f32, core::ptr::addr_of_mut!(sp40) as *mut f32, core::ptr::addr_of_mut!(sp3C) as *mut f32, core::ptr::addr_of_mut!(sp38) as *mut f32);
                                 if ((*joint).flags & ((((CollJoint_B10 as i32) | (CollJoint_B9 as i32)) | (CollJoint_B8 as i32)) as u32)) != 0 {
-                                    let mut line_r3: *mut MapLine = (*r26).x0;
+                                    let mut line_r3: *mut MapLine = (*r26).inner;
                                     let mut v1_r6: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line_r3).v1_idx as isize)) as *mut CollVtx;
                                     let mut v0_r5: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line_r3).v0_idx as isize)) as *mut CollVtx;
-                                    mpRemap2d(core::ptr::addr_of_mut!(ax) as *mut f32, core::ptr::addr_of_mut!(ay) as *mut f32, (*v0_r5).x10, (*v0_r5).x14, (*v1_r6).x10, (*v1_r6).x14, sp44, sp40, sp3C, sp38, f29, f28);
+                                    mpRemap2d(core::ptr::addr_of_mut!(ax) as *mut f32, core::ptr::addr_of_mut!(ay) as *mut f32, (*v0_r5).prev_pos.x, (*v0_r5).prev_pos.y, (*v1_r6).prev_pos.x, (*v1_r6).prev_pos.y, sp44, sp40, sp3C, sp38, f29, f28);
                                 } else {
                                     ax = f29;
                                     ay = f28;
@@ -1578,7 +1578,7 @@ pub unsafe fn mpCheckCeilingRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by:
                                                 *line_id_out = (r26.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*r26).x0).lo_flags as u32;
+                                                *flags_out = (*(*r26).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = -(sp38 - sp40);
@@ -1608,7 +1608,7 @@ pub unsafe fn mpCheckCeilingRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by:
                                                 *line_id_out = (r26.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*r26).x0).lo_flags as u32;
+                                                *flags_out = (*(*r26).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = 0.0f32;
@@ -1735,7 +1735,7 @@ pub unsafe fn mpCheckLeftWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32
                     'p199: loop {
                         'l200: while i < count {
                             if ((((*line).flags & ((CollLine_LeftWall as i32) as u32)) != 0) && (((*line).flags & ((1 << 16) as u32)) != 0)) && (!(((*line).flags & ((1 << 7) as u32)) != 0)) {
-                                let mut inner: *mut MapLine = (*line).x0;
+                                let mut inner: *mut MapLine = (*line).inner;
                                 let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*inner).v0_idx as isize)) as *mut CollVtx;
                                 let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*inner).v1_idx as isize)) as *mut CollVtx;
                                 let mut x0: f32 = (*v0).pos.x;
@@ -1763,7 +1763,7 @@ pub unsafe fn mpCheckLeftWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32
                                                 *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line).x0).lo_flags as u32;
+                                                *flags_out = (*(*line).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = -(y1 - y0);
@@ -1790,7 +1790,7 @@ pub unsafe fn mpCheckLeftWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32
                                                 *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line).x0).lo_flags as u32;
+                                                *flags_out = (*(*line).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = -1.0f32;
@@ -1866,10 +1866,10 @@ pub unsafe fn mpCheckLeftWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by
                     'p202: loop {
                         'l203: while i < count {
                             if ((((*line).flags & ((CollLine_LeftWall as i32) as u32)) != 0) && (((*line).flags & ((1 << 16) as u32)) != 0)) && (!(((*line).flags & ((1 << 7) as u32)) != 0)) {
-                                let mut x0: f32 = (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).pos.x;
-                                let mut y0: f32 = (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).pos.y;
-                                let mut x1: f32 = (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).pos.x;
-                                let mut y1: f32 = (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).pos.y;
+                                let mut x0: f32 = (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).pos.x;
+                                let mut y0: f32 = (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).pos.y;
+                                let mut x1: f32 = (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).pos.x;
+                                let mut y1: f32 = (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).pos.y;
                                 let mut dx: f32 = 0.0;
                                 let mut dy: f32 = 0.0;
                                 let mut dx2: f32 = 0.0;
@@ -1878,7 +1878,7 @@ pub unsafe fn mpCheckLeftWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by
                                 let mut int_x: f32 = 0.0;
                                 let mut int_y: f32 = 0.0;
                                 if ((*joint).flags & ((((CollJoint_B10 as i32) | (CollJoint_B9 as i32)) | (CollJoint_B8 as i32)) as u32)) != 0 {
-                                    mpRemap2d(core::ptr::addr_of_mut!(ax) as *mut f32, core::ptr::addr_of_mut!(ay) as *mut f32, (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).x10, (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).x14, (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).x10, (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).x14, x0, y0, x1, y1, old_x, old_y);
+                                    mpRemap2d(core::ptr::addr_of_mut!(ax) as *mut f32, core::ptr::addr_of_mut!(ay) as *mut f32, (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).prev_pos.x, (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).prev_pos.y, (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).prev_pos.x, (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).prev_pos.y, x0, y0, x1, y1, old_x, old_y);
                                 } else {
                                     ax = old_x;
                                     ay = old_y;
@@ -1904,7 +1904,7 @@ pub unsafe fn mpCheckLeftWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by
                                                 *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line).x0).lo_flags as u32;
+                                                *flags_out = (*(*line).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = -(y1 - y0);
@@ -1934,7 +1934,7 @@ pub unsafe fn mpCheckLeftWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by
                                                 *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line).x0).lo_flags as u32;
+                                                *flags_out = (*(*line).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = -1.0f32;
@@ -2008,7 +2008,7 @@ pub unsafe fn mpCheckRightWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f3
                     'p205: loop {
                         'l206: while i < count {
                             if ((((*line).flags & ((CollLine_RightWall as i32) as u32)) != 0) && (((*line).flags & ((1 << 16) as u32)) != 0)) && (!(((*line).flags & ((1 << 7) as u32)) != 0)) {
-                                let mut inner: *mut MapLine = (*line).x0;
+                                let mut inner: *mut MapLine = (*line).inner;
                                 let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*inner).v0_idx as isize)) as *mut CollVtx;
                                 let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*inner).v1_idx as isize)) as *mut CollVtx;
                                 let mut x0: f32 = (*v0).pos.x;
@@ -2036,7 +2036,7 @@ pub unsafe fn mpCheckRightWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f3
                                                 *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line).x0).lo_flags as u32;
+                                                *flags_out = (*(*line).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = -(y1 - y0);
@@ -2063,7 +2063,7 @@ pub unsafe fn mpCheckRightWall(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f3
                                                 *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line).x0).lo_flags as u32;
+                                                *flags_out = (*(*line).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = 1.0f32;
@@ -2139,10 +2139,10 @@ pub unsafe fn mpCheckRightWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut b
                     'p208: loop {
                         'l209: while i < count {
                             if ((((*line).flags & ((CollLine_RightWall as i32) as u32)) != 0) && (((*line).flags & ((1 << 16) as u32)) != 0)) && (!(((*line).flags & ((1 << 7) as u32)) != 0)) {
-                                let mut x0: f32 = (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).pos.x;
-                                let mut y0: f32 = (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).pos.y;
-                                let mut x1: f32 = (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).pos.x;
-                                let mut y1: f32 = (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).pos.y;
+                                let mut x0: f32 = (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).pos.x;
+                                let mut y0: f32 = (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).pos.y;
+                                let mut x1: f32 = (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).pos.x;
+                                let mut y1: f32 = (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).pos.y;
                                 let mut dx: f32 = 0.0;
                                 let mut dy: f32 = 0.0;
                                 let mut dx2: f32 = 0.0;
@@ -2151,7 +2151,7 @@ pub unsafe fn mpCheckRightWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut b
                                 let mut int_x: f32 = 0.0;
                                 let mut int_y: f32 = 0.0;
                                 if ((*joint).flags & ((((CollJoint_B10 as i32) | (CollJoint_B9 as i32)) | (CollJoint_B8 as i32)) as u32)) != 0 {
-                                    mpRemap2d(core::ptr::addr_of_mut!(ax) as *mut f32, core::ptr::addr_of_mut!(ay) as *mut f32, (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).x10, (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).x14, (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).x10, (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).x14, x0, y0, x1, y1, old_x, old_y);
+                                    mpRemap2d(core::ptr::addr_of_mut!(ax) as *mut f32, core::ptr::addr_of_mut!(ay) as *mut f32, (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).prev_pos.x, (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).prev_pos.y, (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).prev_pos.x, (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).prev_pos.y, x0, y0, x1, y1, old_x, old_y);
                                 } else {
                                     ax = old_x;
                                     ay = old_y;
@@ -2177,7 +2177,7 @@ pub unsafe fn mpCheckRightWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut b
                                                 *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line).x0).lo_flags as u32;
+                                                *flags_out = (*(*line).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = -(y1 - y0);
@@ -2207,7 +2207,7 @@ pub unsafe fn mpCheckRightWallRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut b
                                                 *line_id_out = (line.offset_from(groundCollLine) as i64) as i32;
                                             }
                                             if !flags_out.is_null() {
-                                                *flags_out = (*(*line).x0).lo_flags as u32;
+                                                *flags_out = (*(*line).inner).lo_flags as u32;
                                             }
                                             if !normal_out.is_null() {
                                                 (*normal_out).x = 1.0f32;
@@ -2294,11 +2294,11 @@ pub unsafe fn mpLib_800511A4_RightWall(mut ax: f32, mut ay: f32, mut bx: f32, mu
                                 let mut vdy: f32 = 0.0;
                                 let mut dist2: f32 = 0.0;
                                 {
-                                    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).x0).v0_idx as isize)) as *mut CollVtx;
+                                    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).inner).v0_idx as isize)) as *mut CollVtx;
                                     x0 = (*vtx).pos.x;
                                     y0 = (*vtx).pos.y;
-                                    x1 = (*vtx).x10;
-                                    y1 = (*vtx).x14;
+                                    x1 = (*vtx).prev_pos.x;
+                                    y1 = (*vtx).prev_pos.y;
                                     mpRemap2d(core::ptr::addr_of_mut!(x) as *mut f32, core::ptr::addr_of_mut!(y) as *mut f32, ax, ay, bx, by, cx, cy, dx, dy, x1, y1);
                                     vdx = x0 - x;
                                     vdy = y0 - y;
@@ -2319,11 +2319,11 @@ pub unsafe fn mpLib_800511A4_RightWall(mut ax: f32, mut ay: f32, mut bx: f32, mu
                                     }
                                 }
                                 {
-                                    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).x0).v1_idx as isize)) as *mut CollVtx;
+                                    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).inner).v1_idx as isize)) as *mut CollVtx;
                                     x0 = (*vtx).pos.x;
                                     y0 = (*vtx).pos.y;
-                                    x1 = (*vtx).x10;
-                                    y1 = (*vtx).x14;
+                                    x1 = (*vtx).prev_pos.x;
+                                    y1 = (*vtx).prev_pos.y;
                                     mpRemap2d(core::ptr::addr_of_mut!(x) as *mut f32, core::ptr::addr_of_mut!(y) as *mut f32, ax, ay, bx, by, cx, cy, dx, dy, x1, y1);
                                     vdx = x0 - x;
                                     vdy = y0 - y;
@@ -2419,11 +2419,11 @@ pub unsafe fn mpLib_800515A0_LeftWall(mut a0x: f32, mut a0y: f32, mut a1x: f32, 
                                 let mut vdy: f32 = 0.0;
                                 let mut dist2: f32 = 0.0;
                                 {
-                                    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).x0).v0_idx as isize)) as *mut CollVtx;
+                                    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).inner).v0_idx as isize)) as *mut CollVtx;
                                     x0 = (*vtx).pos.x;
                                     y0 = (*vtx).pos.y;
-                                    x1 = (*vtx).x10;
-                                    y1 = (*vtx).x14;
+                                    x1 = (*vtx).prev_pos.x;
+                                    y1 = (*vtx).prev_pos.y;
                                     mpRemap2d(core::ptr::addr_of_mut!(x) as *mut f32, core::ptr::addr_of_mut!(y) as *mut f32, a0x, a0y, a1x, a1y, b0x, b0y, b1x, b1y, x1, y1);
                                     vdx = x0 - x;
                                     vdy = y0 - y;
@@ -2444,11 +2444,11 @@ pub unsafe fn mpLib_800515A0_LeftWall(mut a0x: f32, mut a0y: f32, mut a1x: f32, 
                                     }
                                 }
                                 {
-                                    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).x0).v1_idx as isize)) as *mut CollVtx;
+                                    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).inner).v1_idx as isize)) as *mut CollVtx;
                                     x0 = (*vtx).pos.x;
                                     y0 = (*vtx).pos.y;
-                                    x1 = (*vtx).x10;
-                                    y1 = (*vtx).x14;
+                                    x1 = (*vtx).prev_pos.x;
+                                    y1 = (*vtx).prev_pos.y;
                                     mpRemap2d(core::ptr::addr_of_mut!(x) as *mut f32, core::ptr::addr_of_mut!(y) as *mut f32, a0x, a0y, a1x, a1y, b0x, b0y, b1x, b1y, x1, y1);
                                     vdx = x0 - x;
                                     vdy = y0 - y;
@@ -2527,10 +2527,10 @@ pub unsafe fn mpLib_8005199C_Floor(mut vec: *mut Vec, mut joint_id_skip: i32, mu
                             'p218: loop {
                                 'l219: while i < count {
                                     if ((((*line).flags & ((CollLine_Floor as i32) as u32)) != 0) && (((*line).flags & ((1 << 16) as u32)) != 0)) && (!(((*line).flags & ((1 << 7) as u32)) != 0)) {
-                                        let mut x0: f32 = (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).pos.x;
-                                        let mut y0: f32 = (*groundCollVtx.offset((*(*line).x0).v0_idx as isize)).pos.y;
-                                        let mut x1: f32 = (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).pos.x;
-                                        let mut y1: f32 = (*groundCollVtx.offset((*(*line).x0).v1_idx as isize)).pos.y;
+                                        let mut x0: f32 = (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).pos.x;
+                                        let mut y0: f32 = (*groundCollVtx.offset((*(*line).inner).v0_idx as isize)).pos.y;
+                                        let mut x1: f32 = (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).pos.x;
+                                        let mut y1: f32 = (*groundCollVtx.offset((*(*line).inner).v1_idx as isize)).pos.y;
                                         if (x >= x0) && (x <= x1) {
                                             if (y >= y0) && (y >= y1) {
                                                 line_id = (line.offset_from(groundCollLine) as i64) as i32;
@@ -2619,7 +2619,7 @@ pub unsafe fn mpLib_80051BA8_Floor(mut out_vec: *mut Vec, mut line_id_skip: i32,
                                         break 'c222;
                                     }
                                     if ((((*line).flags & ((CollLine_Floor as i32) as u32)) != 0) && (((*line).flags & ((1 << 16) as u32)) != 0)) && (!(((*line).flags & ((1 << 7) as u32)) != 0)) {
-                                        let mut inner: *mut MapLine = (*line).x0;
+                                        let mut inner: *mut MapLine = (*line).inner;
                                         if (((*inner).lo_flags as i32) & (1 << 9)) != 0 {
                                             let mut x0: f32 = (*groundCollVtx.offset((*inner).v0_idx as isize)).pos.x;
                                             let mut y0: f32 = (*groundCollVtx.offset((*inner).v0_idx as isize)).pos.y;
@@ -2851,7 +2851,7 @@ unsafe fn mpLineGetNextCheckInline(mut line: *mut MapLine, mut result: i16) -> i
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
-            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
+            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v0_idx as isize)) as *mut CollVtx;
             if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result as i32;
             }
@@ -2866,7 +2866,7 @@ unsafe fn mpLineGetPrevCheckInline(mut line: *mut MapLine, mut result: i16) -> i
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
-            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
+            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v1_idx as isize)) as *mut CollVtx;
             if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result as i32;
             }
@@ -2881,7 +2881,7 @@ unsafe fn mpLineGetPrevCheckInlineVtx(mut line: *mut MapLine, mut result: i16, m
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
-            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
+            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*(*groundCollLine.offset(result as isize)).inner).v1_idx as isize)) as *mut CollVtx;
             if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result as i32;
             }
@@ -2897,7 +2897,7 @@ unsafe fn mpLineGetNextCheckInlineVtx(mut line: *mut MapLine, mut result: i16, m
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result as i32) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
-            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
+            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*vtx.offset((*(*groundCollLine.offset(result as isize)).inner).v0_idx as isize)) as *mut CollVtx;
             if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result as i32;
             }
@@ -2930,10 +2930,10 @@ pub unsafe fn mpLineNextNonFloor(mut line_id: i32) -> i32 {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4139, line_id)); panic!("mpLineNextNonFloor: assertion failed"); }
         }
     }
-    first_line = (*groundCollLine.offset(line_id as isize)).x0;
+    first_line = (*groundCollLine.offset(line_id as isize)).inner;
     new_id = mpLineGetNextCheckInline(first_line, (*first_line).next_id1);
     'l223: while ((new_id != (-1_i32)) && (new_id != line_id)) && (((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_Floor as i32) as u32)) != 0) {
-        line = (*groundCollLine.offset(new_id as isize)).x0;
+        line = (*groundCollLine.offset(new_id as isize)).inner;
         new_id = (*line).next_id1 as i32;
         new_id = mpLineGetNextCheckInlineVtx(line, new_id as i16, groundCollVtx);
     }
@@ -2951,10 +2951,10 @@ pub unsafe fn mpLinePrevNonFloor(mut line_id: i32) -> i32 {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4148, line_id)); panic!("mpLinePrevNonFloor: assertion failed"); }
         }
     }
-    first_line = (*groundCollLine.offset(line_id as isize)).x0;
+    first_line = (*groundCollLine.offset(line_id as isize)).inner;
     new_id = mpLineGetPrevCheckInline(first_line, (*first_line).prev_id1);
     'l224: while ((new_id != (-1_i32)) && (new_id != line_id)) && (((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_Floor as i32) as u32)) != 0) {
-        line = (*groundCollLine.offset(new_id as isize)).x0;
+        line = (*groundCollLine.offset(new_id as isize)).inner;
         new_id = (*line).prev_id1 as i32;
         new_id = mpLineGetPrevCheckInlineVtx(line, new_id as i16, groundCollVtx);
     }
@@ -2972,10 +2972,10 @@ pub unsafe fn mpLinePrevNonCeiling(mut line_id: i32) -> i32 {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4157, line_id)); panic!("mpLinePrevNonCeiling: assertion failed"); }
         }
     }
-    first_line = (*groundCollLine.offset(line_id as isize)).x0;
+    first_line = (*groundCollLine.offset(line_id as isize)).inner;
     new_id = mpLineGetPrevCheckInline(first_line, (*first_line).prev_id1);
     'l225: while ((new_id != (-1_i32)) && (new_id != line_id)) && (((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_Ceiling as i32) as u32)) != 0) {
-        line = (*groundCollLine.offset(new_id as isize)).x0;
+        line = (*groundCollLine.offset(new_id as isize)).inner;
         new_id = (*line).prev_id1 as i32;
         new_id = mpLineGetPrevCheckInlineVtx(line, new_id as i16, groundCollVtx);
     }
@@ -2993,10 +2993,10 @@ pub unsafe fn mpLineNextNonCeiling(mut line_id: i32) -> i32 {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4166, line_id)); panic!("mpLineNextNonCeiling: assertion failed"); }
         }
     }
-    first_line = (*groundCollLine.offset(line_id as isize)).x0;
+    first_line = (*groundCollLine.offset(line_id as isize)).inner;
     new_id = mpLineGetNextCheckInline(first_line, (*first_line).next_id1);
     'l226: while ((new_id != (-1_i32)) && (new_id != line_id)) && (((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_Ceiling as i32) as u32)) != 0) {
-        line = (*groundCollLine.offset(new_id as isize)).x0;
+        line = (*groundCollLine.offset(new_id as isize)).inner;
         new_id = (*line).next_id1 as i32;
         new_id = mpLineGetNextCheckInlineVtx(line, new_id as i16, groundCollVtx);
     }
@@ -3014,10 +3014,10 @@ pub unsafe fn mpLineNextNonLeftWall(mut line_id: i32) -> i32 {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4175, line_id)); panic!("mpLineNextNonLeftWall: assertion failed"); }
         }
     }
-    first_line = (*groundCollLine.offset(line_id as isize)).x0;
+    first_line = (*groundCollLine.offset(line_id as isize)).inner;
     new_id = mpLineGetNextCheckInline(first_line, (*first_line).next_id1);
     'l227: while ((new_id != (-1_i32)) && (new_id != line_id)) && (((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_LeftWall as i32) as u32)) != 0) {
-        line = (*groundCollLine.offset(new_id as isize)).x0;
+        line = (*groundCollLine.offset(new_id as isize)).inner;
         new_id = (*line).next_id1 as i32;
         new_id = mpLineGetNextCheckInlineVtx(line, new_id as i16, groundCollVtx);
     }
@@ -3035,10 +3035,10 @@ pub unsafe fn mpLinePrevNonLeftWall(mut line_id: i32) -> i32 {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4184, line_id)); panic!("mpLinePrevNonLeftWall: assertion failed"); }
         }
     }
-    first_line = (*groundCollLine.offset(line_id as isize)).x0;
+    first_line = (*groundCollLine.offset(line_id as isize)).inner;
     new_id = mpLineGetPrevCheckInline(first_line, (*first_line).prev_id1);
     'l228: while ((new_id != (-1_i32)) && (new_id != line_id)) && (((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_LeftWall as i32) as u32)) != 0) {
-        line = (*groundCollLine.offset(new_id as isize)).x0;
+        line = (*groundCollLine.offset(new_id as isize)).inner;
         new_id = (*line).prev_id1 as i32;
         new_id = mpLineGetPrevCheckInlineVtx(line, new_id as i16, groundCollVtx);
     }
@@ -3056,10 +3056,10 @@ pub unsafe fn mpLinePrevNonRightWall(mut line_id: i32) -> i32 {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4193, line_id)); panic!("mpLinePrevNonRightWall: assertion failed"); }
         }
     }
-    first_line = (*groundCollLine.offset(line_id as isize)).x0;
+    first_line = (*groundCollLine.offset(line_id as isize)).inner;
     new_id = mpLineGetPrevCheckInline(first_line, (*first_line).prev_id1);
     'l229: while ((new_id != (-1_i32)) && (new_id != line_id)) && (((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_RightWall as i32) as u32)) != 0) {
-        line = (*groundCollLine.offset(new_id as isize)).x0;
+        line = (*groundCollLine.offset(new_id as isize)).inner;
         new_id = (*line).prev_id1 as i32;
         new_id = mpLineGetPrevCheckInlineVtx(line, new_id as i16, groundCollVtx);
     }
@@ -3077,10 +3077,10 @@ pub unsafe fn mpLineNextNonRightWall(mut line_id: i32) -> i32 {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4202, line_id)); panic!("mpLineNextNonRightWall: assertion failed"); }
         }
     }
-    first_line = (*groundCollLine.offset(line_id as isize)).x0;
+    first_line = (*groundCollLine.offset(line_id as isize)).inner;
     new_id = mpLineGetNextCheckInline(first_line, (*first_line).next_id1);
     'l230: while ((new_id != (-1_i32)) && (new_id != line_id)) && (((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_RightWall as i32) as u32)) != 0) {
-        line = (*groundCollLine.offset(new_id as isize)).x0;
+        line = (*groundCollLine.offset(new_id as isize)).inner;
         new_id = (*line).next_id1 as i32;
         new_id = mpLineGetNextCheckInlineVtx(line, new_id as i16, groundCollVtx);
     }
@@ -3091,14 +3091,14 @@ pub unsafe fn mpLineNextNonRightWall(mut line_id: i32) -> i32 {
 unsafe fn mpLineWalkNon(mut line_id: i32, mut kind: i32, mut next: i32) -> i32 {
     let mut new_id: i32 = 0;
     if next != 0 {
-        new_id = (*(*groundCollLine.offset(line_id as isize)).x0).next_id0 as i32;
+        new_id = (*(*groundCollLine.offset(line_id as isize)).inner).next_id0 as i32;
         'l231: while (new_id != (-1_i32)) && (((*groundCollLine.offset(new_id as isize)).flags & (kind as u32)) != 0) {
-            new_id = (*(*groundCollLine.offset(new_id as isize)).x0).next_id0 as i32;
+            new_id = (*(*groundCollLine.offset(new_id as isize)).inner).next_id0 as i32;
         }
     } else {
-        new_id = (*(*groundCollLine.offset(line_id as isize)).x0).prev_id0 as i32;
+        new_id = (*(*groundCollLine.offset(line_id as isize)).inner).prev_id0 as i32;
         'l232: while (new_id != (-1_i32)) && (((*groundCollLine.offset(new_id as isize)).flags & (kind as u32)) != 0) {
-            new_id = (*(*groundCollLine.offset(new_id as isize)).x0).prev_id0 as i32;
+            new_id = (*(*groundCollLine.offset(new_id as isize)).inner).prev_id0 as i32;
         }
     }
     if new_id != (-1_i32) {
@@ -3131,29 +3131,29 @@ pub unsafe fn mpLib_80053448_Floor(mut line_id: i32) -> i32 {
 
 /// `mpLineGetNextInline`
 unsafe fn mpLineGetNextInline(mut line_id: i32) -> i32 {
-    let mut result: i32 = (*(*groundCollLine.offset(line_id as isize)).x0).next_id1 as i32;
+    let mut result: i32 = (*(*groundCollLine.offset(line_id as isize)).inner).next_id1 as i32;
     if result != (-1_i32) {
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
-            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)) as *mut CollVtx;
-            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
+            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v1_idx as isize)) as *mut CollVtx;
+            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v0_idx as isize)) as *mut CollVtx;
             if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
         }
     }
-    return (*(*groundCollLine.offset(line_id as isize)).x0).next_id0 as i32;
+    return (*(*groundCollLine.offset(line_id as isize)).inner).next_id0 as i32;
 }
 
 /// `mpLineGetNextCachedInline`
 unsafe fn mpLineGetNextCachedInline(mut line_id: i32) -> i32 {
     let mut line: *mut MapLine = null_mut();
-    let mut result: i32 = (*{ line = (*groundCollLine.offset(line_id as isize)).x0; line }).next_id1 as i32;
+    let mut result: i32 = (*{ line = (*groundCollLine.offset(line_id as isize)).inner; line }).next_id1 as i32;
     if result != (-1_i32) {
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
-            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
+            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v0_idx as isize)) as *mut CollVtx;
             if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
@@ -3168,7 +3168,7 @@ unsafe fn mpLineGetNextCheckResultFirst(mut result: i32, mut line: *mut MapLine)
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
-            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
+            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v0_idx as isize)) as *mut CollVtx;
             if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
@@ -3193,9 +3193,9 @@ pub unsafe fn mpLib_800534FC_Floor(mut line_id: i32) -> i32 {
         'c233: {
             if !(((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_Floor as i32) as u32)) != 0) {
                 new_id = (-1_i32);
-            } else if new_id != ((*(*groundCollLine.offset(line_id as isize)).x0).next_id1 as i32) {
+            } else if new_id != ((*(*groundCollLine.offset(line_id as isize)).inner).next_id1 as i32) {
                 line_id = new_id;
-                line = (*groundCollLine.offset(new_id as isize)).x0;
+                line = (*groundCollLine.offset(new_id as isize)).inner;
                 new_id = mpLineGetNextCheckResultFirst((*line).next_id1 as i32, line);
                 break 'c233;
             }
@@ -3213,12 +3213,12 @@ pub unsafe fn mpLib_800534FC_Floor(mut line_id: i32) -> i32 {
 /// `mpLineGetPrevInline`
 unsafe fn mpLineGetPrevInline(mut line_id: i32) -> i32 {
     let mut line: *mut MapLine = null_mut();
-    let mut result: i32 = (*{ line = (*groundCollLine.offset(line_id as isize)).x0; line }).prev_id1 as i32;
+    let mut result: i32 = (*{ line = (*groundCollLine.offset(line_id as isize)).inner; line }).prev_id1 as i32;
     if result != (-1_i32) {
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
-            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
+            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v1_idx as isize)) as *mut CollVtx;
             if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
@@ -3233,7 +3233,7 @@ unsafe fn mpLineGetPrevCheckResultFirst(mut result: i32, mut line: *mut MapLine)
         let mut flags: u32 = (*groundCollLine.offset(result as isize)).flags;
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
-            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
+            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v1_idx as isize)) as *mut CollVtx;
             if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
@@ -3258,9 +3258,9 @@ pub unsafe fn mpLib_800536CC_Floor(mut line_id: i32) -> i32 {
         'c234: {
             if !(((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_Floor as i32) as u32)) != 0) {
                 new_id = (-1_i32);
-            } else if new_id != ((*(*groundCollLine.offset(line_id as isize)).x0).prev_id1 as i32) {
+            } else if new_id != ((*(*groundCollLine.offset(line_id as isize)).inner).prev_id1 as i32) {
                 line_id = new_id;
-                line = (*groundCollLine.offset(new_id as isize)).x0;
+                line = (*groundCollLine.offset(new_id as isize)).inner;
                 new_id = mpLineGetPrevCheckResultFirst((*line).prev_id1 as i32, line);
                 break 'c234;
             }
@@ -3313,9 +3313,9 @@ pub unsafe fn mpLib_80053A04_Ceiling(mut line_id: i32) -> i32 {
         'c235: {
             if !(((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_Ceiling as i32) as u32)) != 0) {
                 new_id = (-1_i32);
-            } else if new_id != ((*(*groundCollLine.offset(line_id as isize)).x0).prev_id1 as i32) {
+            } else if new_id != ((*(*groundCollLine.offset(line_id as isize)).inner).prev_id1 as i32) {
                 line_id = new_id;
-                line = (*groundCollLine.offset(new_id as isize)).x0;
+                line = (*groundCollLine.offset(new_id as isize)).inner;
                 new_id = mpLineGetPrevCheckResultFirst((*line).prev_id1 as i32, line);
                 break 'c235;
             }
@@ -3345,7 +3345,7 @@ pub unsafe fn mpLib_80053BD4_Ceiling(mut line_id: i32) -> i32 {
         'c236: {
             if !(((*groundCollLine.offset(new_id as isize)).flags & ((CollLine_Ceiling as i32) as u32)) != 0) {
                 new_id = (-1_i32);
-            } else if new_id != ((*(*groundCollLine.offset(line_id as isize)).x0).next_id1 as i32) {
+            } else if new_id != ((*(*groundCollLine.offset(line_id as isize)).inner).next_id1 as i32) {
                 line_id = new_id;
                 new_id = mpLineGetNextInline(new_id);
                 break 'c236;
@@ -3368,7 +3368,7 @@ pub unsafe fn mpLib_80053DA4_Floor(mut line_id: i32, mut pos_out: *mut Vec3) {
 
     // `goto skip; loop: line_id = next_id; skip: next_id = ...; if (...) goto loop;`
     loop {
-        let next_id: i16 = (*(*groundCollLine.offset(line_id as isize)).x0).next_id0;
+        let next_id: i16 = (*(*groundCollLine.offset(line_id as isize)).inner).next_id0;
         if next_id != -1 && ((*groundCollLine.offset(next_id as isize)).flags & (CollLine_Floor as u32)) != 0 {
             line_id = next_id as i32;
             continue;
@@ -3378,7 +3378,7 @@ pub unsafe fn mpLib_80053DA4_Floor(mut line_id: i32, mut pos_out: *mut Vec3) {
 
     lineid_check(4433, line_id);
 
-    let vtx: *mut CollVtx = groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize);
+    let vtx: *mut CollVtx = groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v1_idx as isize);
     (*pos_out).x = (*vtx).pos.x;
     (*pos_out).y = (*vtx).pos.y;
     (*pos_out).z = 0.0f32;
@@ -3391,7 +3391,7 @@ pub unsafe fn mpLib_80053ECC_Floor(mut line_id: i32, mut vec: *mut Vec) {
 
     // `goto skip; loop: line_id = prev_id; skip: prev_id = ...; if (...) goto loop;`
     loop {
-        let prev_id: i16 = (*(*groundCollLine.offset(line_id as isize)).x0).prev_id0;
+        let prev_id: i16 = (*(*groundCollLine.offset(line_id as isize)).inner).prev_id0;
         if prev_id != -1 && ((*groundCollLine.offset(prev_id as isize)).flags & (CollLine_Floor as u32)) != 0 {
             line_id = prev_id as i32;
             continue;
@@ -3401,7 +3401,7 @@ pub unsafe fn mpLib_80053ECC_Floor(mut line_id: i32, mut vec: *mut Vec) {
 
     lineid_check(4453, line_id);
 
-    let vtx: *mut CollVtx = groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize);
+    let vtx: *mut CollVtx = groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v0_idx as isize);
     (*vec).x = (*vtx).pos.x;
     (*vec).y = (*vtx).pos.y;
     (*vec).z = 0.0f32;
@@ -3430,7 +3430,7 @@ pub unsafe fn mpFloorGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
         {
             let mut line: *mut MapLine = null_mut();
             let mut next: i32 = 0;
-            line = (*groundCollLine.offset((w.id as u32) as isize)).x0;
+            line = (*groundCollLine.offset((w.id as u32) as isize)).inner;
             line_offset = ((w.id as u64) * 16_u64) as i32;
             next = (*line).next_id1 as i32;
             w.id = mpLineGetNextCheckInline(line, next as i16);
@@ -3445,7 +3445,7 @@ pub unsafe fn mpFloorGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
         break;
     }
     {
-        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).x0).v1_idx as isize)) as *mut CollVtx;
+        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).inner).v1_idx as isize)) as *mut CollVtx;
         (*pos_out).x = (*vtx).pos.x;
         (*pos_out).y = (*vtx).pos.y;
         (*pos_out).z = 0.0f32;
@@ -3470,7 +3470,7 @@ pub unsafe fn mpFloorGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
         {
             let mut line: *mut MapLine = null_mut();
             let mut next: i32 = 0;
-            line = (*groundCollLine.offset((w.id as u32) as isize)).x0;
+            line = (*groundCollLine.offset((w.id as u32) as isize)).inner;
             line_offset = ((w.id as u64) * 16_u64) as i32;
             next = (*line).prev_id1 as i32;
             w.id = mpLineGetPrevCheckInline(line, next as i16);
@@ -3485,7 +3485,7 @@ pub unsafe fn mpFloorGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
         break;
     }
     {
-        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).x0).v0_idx as isize)) as *mut CollVtx;
+        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).inner).v0_idx as isize)) as *mut CollVtx;
         (*pos_out).x = (*vtx).pos.x;
         (*pos_out).y = (*vtx).pos.y;
         (*pos_out).z = 0.0f32;
@@ -3512,7 +3512,7 @@ pub unsafe fn mpCeilingGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
         {
             let mut line: *mut MapLine = null_mut();
             let mut next: i32 = 0;
-            line = (*groundCollLine.offset((w.id as u32) as isize)).x0;
+            line = (*groundCollLine.offset((w.id as u32) as isize)).inner;
             line_offset = ((w.id as u64) * 16_u64) as i32;
             next = (*line).prev_id1 as i32;
             w.id = mpLineGetPrevCheckInline(line, next as i16);
@@ -3527,7 +3527,7 @@ pub unsafe fn mpCeilingGetRight(mut line_id: i32, mut pos_out: *mut Vec) {
         break;
     }
     {
-        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).x0).v0_idx as isize)) as *mut CollVtx;
+        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).inner).v0_idx as isize)) as *mut CollVtx;
         (*pos_out).x = (*vtx).pos.x;
         (*pos_out).y = (*vtx).pos.y;
         (*pos_out).z = 0.0f32;
@@ -3554,7 +3554,7 @@ pub unsafe fn mpCeilingGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
         {
             let mut line: *mut MapLine = null_mut();
             let mut next: i32 = 0;
-            line = (*groundCollLine.offset((w.id as u32) as isize)).x0;
+            line = (*groundCollLine.offset((w.id as u32) as isize)).inner;
             line_offset = ((w.id as u64) * 16_u64) as i32;
             next = (*line).next_id1 as i32;
             w.id = mpLineGetNextCheckInline(line, next as i16);
@@ -3569,7 +3569,7 @@ pub unsafe fn mpCeilingGetLeft(mut line_id: i32, mut pos_out: *mut Vec) {
         break;
     }
     {
-        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).x0).v1_idx as isize)) as *mut CollVtx;
+        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).inner).v1_idx as isize)) as *mut CollVtx;
         (*pos_out).x = (*vtx).pos.x;
         (*pos_out).y = (*vtx).pos.y;
         (*pos_out).z = 0.0f32;
@@ -3596,7 +3596,7 @@ pub unsafe fn mpLeftWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
         {
             let mut line: *mut MapLine = null_mut();
             let mut next: i32 = 0;
-            line = (*groundCollLine.offset((w.id as u32) as isize)).x0;
+            line = (*groundCollLine.offset((w.id as u32) as isize)).inner;
             line_offset = ((w.id as u64) * 16_u64) as i32;
             next = (*line).next_id1 as i32;
             w.id = mpLineGetNextCheckInline(line, next as i16);
@@ -3611,7 +3611,7 @@ pub unsafe fn mpLeftWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
         break;
     }
     {
-        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).x0).v1_idx as isize)) as *mut CollVtx;
+        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).inner).v1_idx as isize)) as *mut CollVtx;
         (*pos_out).x = (*vtx).pos.x;
         (*pos_out).y = (*vtx).pos.y;
         (*pos_out).z = 0.0f32;
@@ -3638,7 +3638,7 @@ pub unsafe fn mpLeftWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
         {
             let mut line: *mut MapLine = null_mut();
             let mut next: i32 = 0;
-            line = (*groundCollLine.offset((w.id as u32) as isize)).x0;
+            line = (*groundCollLine.offset((w.id as u32) as isize)).inner;
             line_offset = ((w.id as u64) * 16_u64) as i32;
             next = (*line).prev_id1 as i32;
             w.id = mpLineGetPrevCheckInline(line, next as i16);
@@ -3653,7 +3653,7 @@ pub unsafe fn mpLeftWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
         break;
     }
     {
-        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).x0).v0_idx as isize)) as *mut CollVtx;
+        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).inner).v0_idx as isize)) as *mut CollVtx;
         (*pos_out).x = (*vtx).pos.x;
         (*pos_out).y = (*vtx).pos.y;
         (*pos_out).z = 0.0f32;
@@ -3680,7 +3680,7 @@ pub unsafe fn mpRightWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
         {
             let mut line: *mut MapLine = null_mut();
             let mut next: i32 = 0;
-            line = (*groundCollLine.offset((w.id as u32) as isize)).x0;
+            line = (*groundCollLine.offset((w.id as u32) as isize)).inner;
             line_offset = ((w.id as u64) * 16_u64) as i32;
             next = (*line).prev_id1 as i32;
             w.id = mpLineGetPrevCheckInline(line, next as i16);
@@ -3695,7 +3695,7 @@ pub unsafe fn mpRightWallGetTop(mut line_id: i32, mut pos_out: *mut Vec) {
         break;
     }
     {
-        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).x0).v0_idx as isize)) as *mut CollVtx;
+        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).inner).v0_idx as isize)) as *mut CollVtx;
         (*pos_out).x = (*vtx).pos.x;
         (*pos_out).y = (*vtx).pos.y;
         (*pos_out).z = 0.0f32;
@@ -3722,7 +3722,7 @@ pub unsafe fn mpRightWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
         {
             let mut line: *mut MapLine = null_mut();
             let mut next: i32 = 0;
-            line = (*groundCollLine.offset((w.id as u32) as isize)).x0;
+            line = (*groundCollLine.offset((w.id as u32) as isize)).inner;
             line_offset = ((w.id as u64) * 16_u64) as i32;
             next = (*line).next_id1 as i32;
             w.id = mpLineGetNextCheckInline(line, next as i16);
@@ -3737,7 +3737,7 @@ pub unsafe fn mpRightWallGetBottom(mut line_id: i32, mut pos_out: *mut Vec) {
         break;
     }
     {
-        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).x0).v1_idx as isize)) as *mut CollVtx;
+        let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*((groundCollLine as *mut u8).offset(line_offset as isize) as *mut CollLine)).inner).v1_idx as isize)) as *mut CollVtx;
         (*pos_out).x = (*vtx).pos.x;
         (*pos_out).y = (*vtx).pos.y;
         (*pos_out).z = 0.0f32;
@@ -3753,7 +3753,7 @@ pub unsafe fn mpLineGetV1Pos(mut line_id: i32, mut pos_out: *mut Vec) {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4540, line_id)); panic!("mpLineGetV1Pos: assertion failed"); }
         }
     }
-    v1 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)) as *mut CollVtx;
+    v1 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v1_idx as isize)) as *mut CollVtx;
     (*pos_out).x = (*v1).pos.x;
     (*pos_out).y = (*v1).pos.y;
     (*pos_out).z = 0.0f32;
@@ -3768,7 +3768,7 @@ pub unsafe fn mpLineGetV0Pos(mut line_id: i32, mut pos_out: *mut Vec) {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4555, line_id)); panic!("mpLineGetV0Pos: assertion failed"); }
         }
     }
-    v0 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize)) as *mut CollVtx;
+    v0 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v0_idx as isize)) as *mut CollVtx;
     (*pos_out).x = (*v0).pos.x;
     (*pos_out).y = (*v0).pos.y;
     (*pos_out).z = 0.0f32;
@@ -3793,7 +3793,7 @@ pub unsafe fn mpLineGetFlags(mut line_id: i32) -> u32 {
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4583, line_id)); panic!("mpLineGetFlags: assertion failed"); }
         }
     }
-    return (*(*groundCollLine.offset(line_id as isize)).x0).lo_flags as u32;
+    return (*(*groundCollLine.offset(line_id as isize)).inner).lo_flags as u32;
 }
 
 /// `mpLib_80054D68`
@@ -3805,7 +3805,7 @@ pub unsafe fn mpLib_80054D68(mut line_id: i32, mut flags: u32) {
         }
     }
     {
-        let mut line: *mut MapLine = (*groundCollLine.offset(line_id as isize)).x0;
+        let mut line: *mut MapLine = (*groundCollLine.offset(line_id as isize)).inner;
         let mut old_flags: *mut u16 = core::ptr::addr_of_mut!((*line).lo_flags) as *mut u16;
         *old_flags = (((((*old_flags) as i32) & (!255)) as u32) | flags) as u16;
     }
@@ -3820,7 +3820,7 @@ pub unsafe fn mpLineGetNormal(mut line_id: i32, mut normal_out: *mut Vec) -> *mu
             if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 4609, line_id)); panic!("mpLineGetNormal: assertion failed"); }
         }
     }
-    line = (*groundCollLine.offset(line_id as isize)).x0;
+    line = (*groundCollLine.offset(line_id as isize)).inner;
     {
         let mut y0: f32 = (*groundCollVtx.offset((*line).v0_idx as isize)).pos.y;
         let mut y1: f32 = (*groundCollVtx.offset((*line).v1_idx as isize)).pos.y;
@@ -3861,7 +3861,7 @@ unsafe fn mpLineGetNextFrom(mut line: *mut MapLine, mut flags_base: *const u32) 
         let mut flags: u32 = *flags_base.offset((result * (core::mem::size_of::<CollLine>() / 4) as i32) as isize);
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v1_idx as isize)) as *mut CollVtx;
-            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v0_idx as isize)) as *mut CollVtx;
+            let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v0_idx as isize)) as *mut CollVtx;
             if ((((*v1).pos.x - (*v0).pos.x) * ((*v1).pos.x - (*v0).pos.x) + ((*v1).pos.y - (*v0).pos.y) * ((*v1).pos.y - (*v0).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
@@ -3877,7 +3877,7 @@ unsafe fn mpLineGetPrevFrom(mut line: *mut MapLine, mut flags_base: *const u32) 
         let mut flags: u32 = *flags_base.offset((result * (core::mem::size_of::<CollLine>() / 4) as i32) as isize);
         if (((flags & ((1 << 16) as u32)) != 0) && (!((flags & ((1 << 18) as u32)) != 0))) && (ext::ScriptGame_StageLineActive(result) != 0) {
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*line).v0_idx as isize)) as *mut CollVtx;
-            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).x0).v1_idx as isize)) as *mut CollVtx;
+            let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(result as isize)).inner).v1_idx as isize)) as *mut CollVtx;
             if ((((*v0).pos.x - (*v1).pos.x) * ((*v0).pos.x - (*v1).pos.x) + ((*v0).pos.y - (*v1).pos.y) * ((*v0).pos.y - (*v1).pos.y)) as f64) < 4.0f64 {
                 return result;
             }
@@ -3906,7 +3906,7 @@ pub unsafe fn mpLinesConnected(mut start_id: i32, mut target_id: i32) -> i32 {
     if start_id == target_id {
         return 1;
     }
-    start_line = (*groundCollLine.offset(start_id as isize)).x0;
+    start_line = (*groundCollLine.offset(start_id as isize)).inner;
     flags_base = core::ptr::addr_of_mut!((*groundCollLine).flags) as *mut u32;
     kind = (*flags_base.offset((start_id * (core::mem::size_of::<CollLine>() / 4) as i32) as isize)) & (15 as u32);
     line_id = mpLineGetNextFrom(start_line, flags_base as *const u32);
@@ -3966,7 +3966,7 @@ pub unsafe fn mpLib_800552B0(mut joint_id: i32, mut jobj: *mut HSD_JObj, mut z: 
     }
     if !r7.is_null() {
         let mut joint: *mut CollJoint = core::ptr::addr_of_mut!(*groundCollJoint.offset(joint_id as isize)) as *mut CollJoint;
-        (*joint).x20 = r7;
+        (*joint).jobj = r7;
     }
 }
 
@@ -4054,8 +4054,8 @@ pub unsafe fn mpJointUnhide(mut joint_id: i32) {
     {
         i = (*(*joint).inner).vtx_count as i32;
         'l270: while i > 0 {
-            (*vtx).x10 = (*vtx).pos.x;
-            (*vtx).x14 = (*vtx).pos.y;
+            (*vtx).prev_pos.x = (*vtx).pos.x;
+            (*vtx).prev_pos.y = (*vtx).pos.y;
             i = i - 1; vtx = vtx.offset(1);
         }
     }
@@ -4075,7 +4075,7 @@ pub unsafe fn mpJointUpdateDynamics(mut joint_id: i32) {
     {
         i = 0;
         'l271: while i < (count as i32) {
-            let mut temp: *mut MapLine = (*line).x0;
+            let mut temp: *mut MapLine = (*line).inner;
             let mut v1: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*temp).v1_idx as isize)) as *mut CollVtx;
             let mut v0: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*temp).v0_idx as isize)) as *mut CollVtx;
             let mut dx: f32 = (*v1).pos.x - (*v0).pos.x;
@@ -4104,10 +4104,10 @@ pub unsafe fn mpJointUpdateDynamics(mut joint_id: i32) {
                 if 0 != 0 { (); } else { panic!("mpJointUpdateDynamics: assertion failed"); }
             }
             (*line).flags = ((*line).flags & ((!15) as u32)) | kind;
-            if (((*joint).flags & ((CollJoint_Enabled as i32) as u32)) != 0) && ((((*(*line).x0).lo_flags as i32) & 1024) != 0) {
+            if (((*joint).flags & ((CollJoint_Enabled as i32) as u32)) != 0) && ((((*(*line).inner).lo_flags as i32) & 1024) != 0) {
                 if (kind & ((CollLine_Floor as i32) as u32)) != 0 {
                     (*line).flags = (*line).flags | (((1 << 16) | (1 << 8)) as u32);
-                    (*(*line).x0).lo_flags = (((*(*line).x0).lo_flags as i32) | (1 << 8)) as u16;
+                    (*(*line).inner).lo_flags = (((*(*line).inner).lo_flags as i32) | (1 << 8)) as u16;
                 } else {
                     (*line).flags = (*line).flags & ((!(1 << 16)) as u32);
                 }
@@ -4164,12 +4164,12 @@ pub unsafe fn mpLib_80055E9C(mut joint_id: i32) {
     {
         i = 0;
         'l272: while i < vtx_count {
-            (*v_r4).x10 = (*v_r4).pos.x;
-            (*v_r4).x14 = (*v_r4).pos.y;
+            (*v_r4).prev_pos.x = (*v_r4).pos.x;
+            (*v_r4).prev_pos.y = (*v_r4).pos.y;
             i = i + 1; v_r4 = v_r4.offset(1);
         }
     }
-    jobj = (*joint).x20;
+    jobj = (*joint).jobj;
     if jobj.is_null() {
         return;
     }
@@ -4198,8 +4198,8 @@ pub unsafe fn mpLib_80055E9C(mut joint_id: i32) {
                 {
                     i = 0;
                     'l275: while i < vtx_count {
-                        (*v_r4).pos.x = fmadds((*v_r4).x0, m0_0, m0_3);
-                        (*v_r4).pos.y = fmadds((*v_r4).x4, m0_0, m1_3);
+                        (*v_r4).pos.x = fmadds((*v_r4).base_pos.x, m0_0, m0_3);
+                        (*v_r4).pos.y = fmadds((*v_r4).base_pos.y, m0_0, m1_3);
                         i = i + 1; v_r4 = v_r4.offset(1);
                     }
                 }
@@ -4214,13 +4214,13 @@ pub unsafe fn mpLib_80055E9C(mut joint_id: i32) {
             v_r26 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*joint).inner).vtx_start as isize)) as *mut CollVtx;
             f31 = 0.0f32;
             'l276: while i < vtx_count {
-                sp28.x = (*v_r26).x0;
-                sp28.y = (*v_r26).x4;
+                sp28.x = (*v_r26).base_pos.x;
+                sp28.y = (*v_r26).base_pos.y;
                 sp28.z = f31;
                 PSMTXMultVec((*jobj).mtx.as_mut_ptr(), core::ptr::addr_of_mut!(sp28) as *mut Vec, core::ptr::addr_of_mut!(sp28) as *mut Vec);
                 (*v_r26).pos.x = sp28.x;
                 (*v_r26).pos.y = sp28.y;
-                if (((mpLib_804D64CC == 0) || ((*v_r26).pos.x != (*v_r26).x10)) || ((*v_r26).pos.y != (*v_r26).x14)) || ({ var_r25 = var_r25 + 1; var_r25 } <= 1) {
+                if (((mpLib_804D64CC == 0) || ((*v_r26).pos.x != (*v_r26).prev_pos.x)) || ((*v_r26).pos.y != (*v_r26).prev_pos.y)) || ({ var_r25 = var_r25 + 1; var_r25 } <= 1) {
                     i = i + 1;
                     v_r26 = v_r26.offset(1 as isize);
                 } else {
@@ -4379,20 +4379,20 @@ pub unsafe fn mpVtxSetPos(mut vtx_id: i32, mut x: f32, mut y: f32) {
 pub unsafe fn mpLineSetPos(mut line_id: i32, mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32) {
     melee_core::ct!("mpLineSetPos");
     let mut line: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
-    mpVtxSetPos((*(*line).x0).v0_idx as i32, x0, y0);
-    mpVtxSetPos((*(*line).x0).v1_idx as i32, x1, y1);
+    mpVtxSetPos((*(*line).inner).v0_idx as i32, x0, y0);
+    mpVtxSetPos((*(*line).inner).v1_idx as i32, x1, y1);
 }
 
 /// `mpLib_80056758`
 pub unsafe fn mpLib_80056758(mut line_id: i32, mut x0: f32, mut y0: f32, mut x1: f32, mut y1: f32) {
     melee_core::ct!("mpLib_80056758");
     let mut line: *mut CollLine = core::ptr::addr_of_mut!(*groundCollLine.offset(line_id as isize)) as *mut CollLine;
-    let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).x0).v0_idx as isize)) as *mut CollVtx;
-    (*vtx).pos.x = (*vtx).x0 + x0;
-    (*vtx).pos.y = (*vtx).x4 + y0;
-    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).x0).v1_idx as isize)) as *mut CollVtx;
-    (*vtx).pos.x = (*vtx).x0 + x1;
-    (*vtx).pos.y = (*vtx).x4 + y1;
+    let mut vtx: *mut CollVtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).inner).v0_idx as isize)) as *mut CollVtx;
+    (*vtx).pos.x = (*vtx).base_pos.x + x0;
+    (*vtx).pos.y = (*vtx).base_pos.y + y0;
+    vtx = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line).inner).v1_idx as isize)) as *mut CollVtx;
+    (*vtx).pos.x = (*vtx).base_pos.x + x1;
+    (*vtx).pos.y = (*vtx).base_pos.y + y1;
 }
 
 /// `mpGetSpeed`
@@ -4405,9 +4405,9 @@ pub unsafe fn mpGetSpeed(mut line_id: i32, mut pos: *mut Vec, mut speed: *mut Ve
     if !(mpLib_80054ED8(line_id) != 0) {
         return 0;
     }
-    v0_r5 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as isize)) as *mut CollVtx;
-    v1_r6 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).x0).v1_idx as isize)) as *mut CollVtx;
-    mpRemap2d(core::ptr::addr_of_mut!(new_x) as *mut f32, core::ptr::addr_of_mut!(new_y) as *mut f32, (*v0_r5).x10, (*v0_r5).x14, (*v1_r6).x10, (*v1_r6).x14, (*v0_r5).pos.x, (*v0_r5).pos.y, (*v1_r6).pos.x, (*v1_r6).pos.y, (*pos).x, (*pos).y);
+    v0_r5 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v0_idx as isize)) as *mut CollVtx;
+    v1_r6 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*groundCollLine.offset(line_id as isize)).inner).v1_idx as isize)) as *mut CollVtx;
+    mpRemap2d(core::ptr::addr_of_mut!(new_x) as *mut f32, core::ptr::addr_of_mut!(new_y) as *mut f32, (*v0_r5).prev_pos.x, (*v0_r5).prev_pos.y, (*v1_r6).prev_pos.x, (*v1_r6).prev_pos.y, (*v0_r5).pos.x, (*v0_r5).pos.y, (*v1_r6).pos.x, (*v1_r6).pos.y, (*pos).x, (*pos).y);
     (*speed).x = new_x - (*pos).x;
     (*speed).y = new_y - (*pos).y;
     (*speed).z = 0.0f32;
@@ -4529,7 +4529,7 @@ pub unsafe fn mpJointFromLine(mut line_id: i32) -> i32 {
                 if 0 != 0 { (); } else { ext::OSReport(&format!("{}:{}:not found lineID={}\n", core::ffi::CStr::from_ptr((c"src/melee/mp/mplib.c".as_ptr() as *mut i8) as *const core::ffi::c_char).to_string_lossy(), 5459, line_id)); panic!("mpJointFromLine: assertion failed"); }
             }
         }
-        v0_idx = (*(*groundCollLine.offset(line_id as isize)).x0).v0_idx as i32;
+        v0_idx = (*(*groundCollLine.offset(line_id as isize)).inner).v0_idx as i32;
         count = (*mpLib_804D64B4).joint_count;
         joint = groundCollJoint;
         {
@@ -4686,8 +4686,8 @@ pub unsafe fn mpLib_80057424(mut joint_id: i32) {
     {
         joint_id = 0;
         'l279: while joint_id < { new_var = count as i32; new_var } {
-            (*vtx).x10 = (*vtx).pos.x;
-            (*vtx).x14 = (*vtx).pos.y;
+            (*vtx).prev_pos.x = (*vtx).pos.x;
+            (*vtx).prev_pos.y = (*vtx).pos.y;
             vtx = vtx.offset(1);
             joint_id = joint_id + 1;
         }
@@ -4998,18 +4998,18 @@ pub unsafe fn mpLib_800581DC(mut joint_id0: i32, mut joint_id1: i32) {
                 {
                     j = 0;
                     'l297: while j < count {
-                        temp = (*(*ln.p.offset(j as isize)).x0).prev_id1 as i32;
+                        temp = (*(*ln.p.offset(j as isize)).inner).prev_id1 as i32;
                         if temp != (-1_i32) {
-                            temp = (*(*line_base.offset(temp as isize)).x0).next_id1 as i32;
+                            temp = (*(*line_base.offset(temp as isize)).inner).next_id1 as i32;
                             if (temp != (-1_i32)) && (idx != temp) {
-                                (*(*ln.p.offset(j as isize)).x0).prev_id1 = (-1_i32) as i16;
+                                (*(*ln.p.offset(j as isize)).inner).prev_id1 = (-1_i32) as i16;
                             }
                         }
-                        temp = (*(*ln.p.offset(j as isize)).x0).next_id1 as i32;
+                        temp = (*(*ln.p.offset(j as isize)).inner).next_id1 as i32;
                         if temp != (-1_i32) {
-                            temp = (*(*line_base.offset(temp as isize)).x0).prev_id1 as i32;
+                            temp = (*(*line_base.offset(temp as isize)).inner).prev_id1 as i32;
                             if (temp != (-1_i32)) && (idx != temp) {
-                                (*(*ln.p.offset(j as isize)).x0).next_id1 = (-1_i32) as i16;
+                                (*(*ln.p.offset(j as isize)).inner).next_id1 = (-1_i32) as i16;
                             }
                         }
                         j = j + 1; idx = idx + 1;
@@ -5026,18 +5026,18 @@ pub unsafe fn mpLib_800581DC(mut joint_id0: i32, mut joint_id1: i32) {
                 {
                     j = 0;
                     'l298: while j < count {
-                        temp = (*(*ln.p.offset(j as isize)).x0).prev_id1 as i32;
+                        temp = (*(*ln.p.offset(j as isize)).inner).prev_id1 as i32;
                         if temp != (-1_i32) {
-                            temp = (*(*line_base.offset(temp as isize)).x0).next_id1 as i32;
+                            temp = (*(*line_base.offset(temp as isize)).inner).next_id1 as i32;
                             if (temp != (-1_i32)) && (idx != temp) {
-                                (*(*ln.p.offset(j as isize)).x0).prev_id1 = (-1_i32) as i16;
+                                (*(*ln.p.offset(j as isize)).inner).prev_id1 = (-1_i32) as i16;
                             }
                         }
-                        temp = (*(*ln.p.offset(j as isize)).x0).next_id1 as i32;
+                        temp = (*(*ln.p.offset(j as isize)).inner).next_id1 as i32;
                         if temp != (-1_i32) {
-                            temp = (*(*line_base.offset(temp as isize)).x0).prev_id1 as i32;
+                            temp = (*(*line_base.offset(temp as isize)).inner).prev_id1 as i32;
                             if (temp != (-1_i32)) && (idx != temp) {
-                                (*(*ln.p.offset(j as isize)).x0).next_id1 = (-1_i32) as i16;
+                                (*(*ln.p.offset(j as isize)).inner).next_id1 = (-1_i32) as i16;
                             }
                         }
                         j = j + 1; idx = idx + 1;
@@ -5078,7 +5078,7 @@ pub unsafe fn mpLib_800581DC(mut joint_id0: i32, mut joint_id1: i32) {
                                 {
                                     i_r23 = 0;
                                     'l302: while i_r23 < lcount_r22 {
-                                        if vstart0 == ((*(*line_base.offset(lstart_r24 as isize)).x0).v0_idx as i32) {
+                                        if vstart0 == ((*(*line_base.offset(lstart_r24 as isize)).inner).v0_idx as i32) {
                                             let mut j: i32 = 0;
                                             let mut lstart_r20: i32 = 0;
                                             let mut lcount_r17: i16 = 0;
@@ -5091,9 +5091,9 @@ pub unsafe fn mpLib_800581DC(mut joint_id0: i32, mut joint_id1: i32) {
                                                     {
                                                         k = 0;
                                                         'l304: while k < (lcount_r17 as i32) {
-                                                            if vid_r26 == ((*(*line_base.offset(lstart_r20 as isize)).x0).v1_idx as i32) {
-                                                                (*(*line_base.offset(lstart_r24 as isize)).x0).prev_id1 = lstart_r20 as i16;
-                                                                (*(*line_base.offset(lstart_r20 as isize)).x0).next_id1 = lstart_r24 as i16;
+                                                            if vid_r26 == ((*(*line_base.offset(lstart_r20 as isize)).inner).v1_idx as i32) {
+                                                                (*(*line_base.offset(lstart_r24 as isize)).inner).prev_id1 = lstart_r20 as i16;
+                                                                (*(*line_base.offset(lstart_r20 as isize)).inner).next_id1 = lstart_r24 as i16;
                                                             }
                                                             k = k + 1; lstart_r20 = lstart_r20 + 1;
                                                         }
@@ -5101,7 +5101,7 @@ pub unsafe fn mpLib_800581DC(mut joint_id0: i32, mut joint_id1: i32) {
                                                     j = j + 1;
                                                 }
                                             }
-                                        } else if vstart0 == ((*(*line_base.offset(lstart_r24 as isize)).x0).v1_idx as i32) {
+                                        } else if vstart0 == ((*(*line_base.offset(lstart_r24 as isize)).inner).v1_idx as i32) {
                                             let mut j: i32 = 0;
                                             let mut lstart_r20: i32 = 0;
                                             let mut lcount_r17: i16 = 0;
@@ -5114,9 +5114,9 @@ pub unsafe fn mpLib_800581DC(mut joint_id0: i32, mut joint_id1: i32) {
                                                     {
                                                         k = 0;
                                                         'l306: while k < (lcount_r17 as i32) {
-                                                            if vid_r26 == ((*(*line_base.offset(lstart_r20 as isize)).x0).v0_idx as i32) {
-                                                                (*(*line_base.offset(lstart_r24 as isize)).x0).next_id1 = lstart_r20 as i16;
-                                                                (*(*line_base.offset(lstart_r20 as isize)).x0).prev_id1 = lstart_r24 as i16;
+                                                            if vid_r26 == ((*(*line_base.offset(lstart_r20 as isize)).inner).v0_idx as i32) {
+                                                                (*(*line_base.offset(lstart_r24 as isize)).inner).next_id1 = lstart_r20 as i16;
+                                                                (*(*line_base.offset(lstart_r20 as isize)).inner).prev_id1 = lstart_r24 as i16;
                                                             }
                                                             k = k + 1; lstart_r20 = lstart_r20 + 1;
                                                         }
@@ -5240,8 +5240,8 @@ pub unsafe fn mpLib_80058614_Floor() {
                                     if (!(((*line_r31).flags & ((CollLine_Floor as i32) as u32)) != 0)) || (!(((*line_r31).flags & ((1 << 16) as u32)) != 0)) {
                                         break 'c316;
                                     }
-                                    v0 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line_r31).x0).v0_idx as isize)) as *mut CollVtx;
-                                    v1 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line_r31).x0).v1_idx as isize)) as *mut CollVtx;
+                                    v0 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line_r31).inner).v0_idx as isize)) as *mut CollVtx;
+                                    v1 = core::ptr::addr_of_mut!(*groundCollVtx.offset((*(*line_r31).inner).v1_idx as isize)) as *mut CollVtx;
                                     x0 = (*v0).pos.x;
                                     y0 = (*v0).pos.y;
                                     x1 = (*v1).pos.x;
@@ -5617,7 +5617,7 @@ unsafe fn mpLib_DrawMatchingLines(mut value: i32, mut flag: i32, mut color: *con
     {
         i = 0;
         'l321: while i < total_r27 {
-            if ((((*line_r6).flags & ((1 << 16) as u32)) != 0) && (!(((*line_r6).flags & ((1 << 18) as u32)) != 0))) && (value == (((*(*line_r6).x0).lo_flags as i32) & flag)) {
+            if ((((*line_r6).flags & ((1 << 16) as u32)) != 0) && (!(((*line_r6).flags & ((1 << 18) as u32)) != 0))) && (value == (((*(*line_r6).inner).lo_flags as i32) & flag)) {
                 count_r28 = count_r28 + 1;
             }
             line_r6 = line_r6.offset(1 as isize);
@@ -5634,11 +5634,11 @@ unsafe fn mpLib_DrawMatchingLines(mut value: i32, mut flag: i32, mut color: *con
         i = 0;
         'l322: while i < total_r27 {
             if (((*line_r31).flags & ((1 << 16) as u32)) != 0) && (!(((*line_r31).flags & ((1 << 18) as u32)) != 0)) {
-                if value == (((*(*line_r31).x0).lo_flags as i32) & flag) {
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r31).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r31).x0).v0_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r31).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r31).x0).v1_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r31).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r31).x0).v1_idx as isize)).pos.y, -25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r31).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r31).x0).v0_idx as isize)).pos.y, -25.0f32);
+                if value == (((*(*line_r31).inner).lo_flags as i32) & flag) {
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r31).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r31).inner).v0_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r31).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r31).inner).v1_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r31).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r31).inner).v1_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r31).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r31).inner).v0_idx as isize)).pos.y, -25.0f32);
                 }
             }
             line_r31 = line_r31.offset(1 as isize);
@@ -5686,10 +5686,10 @@ pub unsafe fn mpLib_80059554() {
             i = 0;
             'l324: while i < count_r30 {
                 if (((*line_r7).flags & ((1 << 16) as u32)) != 0) && (!(((*line_r7).flags & ((1 << 18) as u32)) != 0)) {
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, -25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, -25.0f32);
                 }
                 line_r7 = line_r7.offset(1);
                 i = i + 1;
@@ -5718,10 +5718,10 @@ pub unsafe fn mpLib_80059554() {
             i = 0;
             'l326: while i < count_r30 {
                 if (((*line_r7).flags & ((1 << 16) as u32)) != 0) && (!(((*line_r7).flags & ((1 << 18) as u32)) != 0)) {
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, -25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, -25.0f32);
                 }
                 line_r7 = line_r7.offset(1);
                 i = i + 1;
@@ -5750,10 +5750,10 @@ pub unsafe fn mpLib_80059554() {
             i = 0;
             'l328: while i < count_r30 {
                 if (((*line_r7).flags & ((1 << 16) as u32)) != 0) && (!(((*line_r7).flags & ((1 << 18) as u32)) != 0)) {
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, -25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, -25.0f32);
                 }
                 line_r7 = line_r7.offset(1);
                 i = i + 1;
@@ -5782,10 +5782,10 @@ pub unsafe fn mpLib_80059554() {
             i = 0;
             'l330: while i < count_r30 {
                 if (((*line_r7).flags & ((1 << 16) as u32)) != 0) && (!(((*line_r7).flags & ((1 << 18) as u32)) != 0)) {
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, -25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, -25.0f32);
                 }
                 line_r7 = line_r7.offset(1);
                 i = i + 1;
@@ -5818,10 +5818,10 @@ pub unsafe fn mpLib_80059554() {
             i = 0;
             'l332: while i < count_r30 {
                 if ((((*line_r7).flags & ((1 << 16) as u32)) != 0) && (((*line_r7).flags & ((CollLine_Floor as i32) as u32)) != 0)) && (!(((*line_r7).flags & ((1 << 18) as u32)) != 0)) {
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, -25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, -25.0f32);
                 }
                 line_r7 = line_r7.offset(1);
                 i = i + 1;
@@ -5849,10 +5849,10 @@ pub unsafe fn mpLib_80059554() {
             i = 0;
             'l334: while i < count_r30 {
                 if ((((*line_r7).flags & ((1 << 16) as u32)) != 0) && (((*line_r7).flags & ((CollLine_Ceiling as i32) as u32)) != 0)) && (!(((*line_r7).flags & ((1 << 18) as u32)) != 0)) {
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, -25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, -25.0f32);
                 }
                 line_r7 = line_r7.offset(1);
                 i = i + 1;
@@ -5880,10 +5880,10 @@ pub unsafe fn mpLib_80059554() {
             i = 0;
             'l336: while i < count_r30 {
                 if ((((*line_r7).flags & ((1 << 16) as u32)) != 0) && (((*line_r7).flags & ((CollLine_RightWall as i32) as u32)) != 0)) && (!(((*line_r7).flags & ((1 << 18) as u32)) != 0)) {
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, -25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, -25.0f32);
                 }
                 line_r7 = line_r7.offset(1);
                 i = i + 1;
@@ -5911,10 +5911,10 @@ pub unsafe fn mpLib_80059554() {
             i = 0;
             'l338: while i < count_r30 {
                 if ((((*line_r7).flags & ((1 << 16) as u32)) != 0) && (((*line_r7).flags & ((CollLine_LeftWall as i32) as u32)) != 0)) && (!(((*line_r7).flags & ((1 << 18) as u32)) != 0)) {
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, 25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v1_idx as isize)).pos.y, -25.0f32);
-                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).x0).v0_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, 25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v1_idx as isize)).pos.y, -25.0f32);
+                    ext::GXPosition3f32((*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.x, (*groundCollVtx.offset((*(*line_r7).inner).v0_idx as isize)).pos.y, -25.0f32);
                 }
                 line_r7 = line_r7.offset(1);
                 i = i + 1;
@@ -5942,7 +5942,7 @@ pub unsafe fn mpLib_80059E60() {
         let mut line_color: *mut _GXColor = null_mut();
         let mut entry: *mut mpIsland_PaletteEntry = null_mut();
         sp28.palette = super::mpisland::mpIsland_TerrainPalette;
-        entry = sp28.palette.x0.as_mut_ptr();
+        entry = sp28.palette.entries.as_mut_ptr();
         line_color = core::ptr::addr_of_mut!(sp28.line_color) as *mut _GXColor;
         'l339: while (*entry).kind != ((-1_i32) as u32) {
             *line_color = (*entry).color;

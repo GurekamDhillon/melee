@@ -89,9 +89,9 @@ pub mod ext {
         ftCo_800C5A98(g: G) = |g: G| { unsafe { crate::tu::ftCo_HammerJump::ftCo_800C5A98(g as _); } };
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
         ft_80084EEC(g: G) = crate::ft084e::ft_80084eec;
-        ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
+        ftCo_80096CC8(g: G, line: isize) -> bool = |g: G, line: isize| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
         ft_80082B1C(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80082b1c(g as _); } };
-        ft_800831CC(g: G, cb1: fn(G, i32) -> bool, cb2: fn(G)) = |g: G, cb1: fn(G, i32) -> bool, cb2: fn(G)| { unsafe { crate::tu::ft_081b::ft_800831cc(g as _, cb1 as _, cb2 as _); } };
+        ft_800831CC(g: G, cb1: fn(G, isize) -> bool, cb2: fn(G)) = |g: G, cb1: fn(G, isize) -> bool, cb2: fn(G)| { unsafe { crate::tu::ft_081b::ft_800831cc(g as _, cb1 as _, cb2 as _); } };
     }
 }
 
@@ -127,7 +127,7 @@ fn fpj(f: &mut Fighter, part: Fighter_Part) -> *mut HSD_JObj {
 }
 
 fn queue(g: G) -> *mut core::ffi::c_void {
-    &mut fp(g).x60C as *mut *mut core::ffi::c_void as *mut core::ffi::c_void
+    (&raw mut fp(g).x60C) as *mut *mut core::ffi::c_void as *mut core::ffi::c_void
 }
 
 pub fn ftCo_80090984(g: G) {
@@ -320,7 +320,7 @@ pub fn ftCo_DamageIce_Anim(g: G) {
         melee_types::inline::HSD_JObjAddRotationX(unsafe { &mut *jobj }, rot_x, &mut Dirty);
     }
     let f = fp(g);
-    if f.x2224_b2() == 0 {
+    if f.stamina_dead() == 0 {
         f.grab_timer -= cd().x794_damageice_unk;
     }
     ext::ftCommon_GrabMash(fp(g), cd().x798_damageice_unk);

@@ -112,8 +112,8 @@ pub fn ftDr_Init_OnLoad(gobj: *mut HSD_GObj) {
         let items = (*(*fp).ft_data).x48_items;
         ext::ftMr_Init_OnLoadForDrMario(fp);
         let sa = (*fp).dat_attrs as *mut ftDrMarioAttributes;
-        ext::it_8026B3F8(*items.add(1), It_Kind_DrMario_Vitamin as i32);
-        ext::it_8026B3F8(*items.add(3), (*sa).x14 as i32);
+        ext::it_8026B3F8((*items.add(1)).article as *mut ::core::ffi::c_void, It_Kind_DrMario_Vitamin as i32);
+        ext::it_8026B3F8((*items.add(3)).article as *mut ::core::ffi::c_void, (*sa).cape_kind as i32);
     }
 }
 

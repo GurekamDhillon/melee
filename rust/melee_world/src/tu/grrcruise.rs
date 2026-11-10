@@ -1040,12 +1040,12 @@ pub unsafe extern "C" fn grRCruise_80201B60(jobj: *mut HSD_JObj, clear: i32) {
     }
 }
 
-pub unsafe extern "C" fn fn_80201BE0(gobj: *mut HSD_GObj, pass: i32) {
+pub unsafe extern "C" fn fn_80201BE0(gobj: *mut HSD_GObj, pass: isize) {
     melee_core::ct!("fn_80201BE0");
     if ext::gm_GetDbPauseFlag(1) != 0 || ext::gm_GetDbPauseFlag(2) != 0 || ext::Camera_8003010C() != 0 {
         return;
     }
-    ext::grDisplay_801C5DB0(gobj, pass);
+    ext::grDisplay_801C5DB0(gobj, pass as isize);
 }
 
 pub static mut grRc_StageCallbacks: [StageCallbacks; 7] = [
@@ -1054,49 +1054,49 @@ pub static mut grRc_StageCallbacks: [StageCallbacks; 7] = [
         callback1: Some(grRCruise_801FF3E0),
         gobj_proc: Some(grRCruise_801FF3E8),
         callback3: Some(grRCruise_801FF3EC),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grRCruise_801FF5B4),
         callback1: Some(grRCruise_801FF6CC),
         gobj_proc: Some(grRCruise_801FF6D4),
         callback3: Some(grRCruise_801FF738),
-        anon_10: StageCallbacks_anon_135 { flags: u32::to_be(0xC0000000) },
+        x10: StageCallbacks_x10 { flags: u32::to_be(0xC0000000) },
     },
     StageCallbacks {
         on_init: Some(grRCruise_801FF3F0),
         callback1: Some(grRCruise_801FF434),
         gobj_proc: Some(grRCruise_801FF43C),
         callback3: Some(grRCruise_801FF440),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grRCruise_801FF924),
         callback1: Some(grRCruise_801FFAD4),
         gobj_proc: Some(grRCruise_801FFADC),
         callback3: Some(grRCruise_80200070),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grRCruise_80200074),
         callback1: Some(grRCruise_8020014C),
         gobj_proc: Some(grRCruise_80200154),
         callback3: Some(grRCruise_8020045C),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grRCruise_801FF73C),
         callback1: Some(grRCruise_801FF794),
         gobj_proc: Some(grRCruise_801FF79C),
         callback3: Some(grRCruise_801FF7A0),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grRCruise_801FF7A4),
         callback1: Some(grRCruise_801FF8DC),
         gobj_proc: Some(grRCruise_801FF8E4),
         callback3: Some(grRCruise_801FF920),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
 ];
 
@@ -1146,7 +1146,7 @@ pub static mut grRc_StageData: StageData = StageData {
     pub extern "C" fn grRCruise_8020014C(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grRCruise_80201C50 (gr/grrcruise.c:1185)
-    pub extern "C" fn grRCruise_80201C50(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grRCruise_80201C50(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grRCruise_80201C58 (gr/grrcruise.c:1190)
     pub extern "C" fn grRCruise_80201C58(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

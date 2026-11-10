@@ -113,10 +113,10 @@ unsafe extern "C" fn cb_addproc(g: *mut HSD_GObj) {
     tr(5000 + (gid(g) + 2) as u32);
     HSD_GObj_SetupProc(g, Some(cb_nop), 1);
 }
-unsafe extern "C" fn render_a(g: *mut HSD_GObj, pass: i32) {
+unsafe extern "C" fn render_a(g: *mut HSD_GObj, pass: isize) {
     tr(6000 + (gid(g) + 2) as u32 * 8 + pass as u32);
 }
-unsafe extern "C" fn render_b(g: *mut HSD_GObj, pass: i32) {
+unsafe extern "C" fn render_b(g: *mut HSD_GObj, pass: isize) {
     tr(7000 + (gid(g) + 2) as u32 * 8 + pass as u32);
 }
 unsafe extern "C" fn ud_remove(d: *mut c_void) {
@@ -194,9 +194,9 @@ unsafe fn state() {
         hw(gid((*g).prev_gx) as u32);
         hw(pid((*g).proc) as u32);
         let rc = (*g).render_cb;
-        hw(if rc == Some(render_a as unsafe extern "C" fn(*mut HSD_GObj, i32)) {
+        hw(if rc == Some(render_a as unsafe extern "C" fn(*mut HSD_GObj, isize)) {
             1
-        } else if rc == Some(render_b as unsafe extern "C" fn(*mut HSD_GObj, i32)) {
+        } else if rc == Some(render_b as unsafe extern "C" fn(*mut HSD_GObj, isize)) {
             2
         } else if rc.is_some() {
             3

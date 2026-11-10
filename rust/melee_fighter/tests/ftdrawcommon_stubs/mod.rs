@@ -7,6 +7,7 @@ use melee_types::*;
 
 pub fn call_Mex_Enabled(a0: *const core::ffi::c_void) -> i32 { t(1010); t(pi(a0)); fv() as _ }
 pub fn call_Mex_OnModelRenderDispatch(a0: i32, a1: *const core::ffi::c_void, a2: *const core::ffi::c_void, a3: *const core::ffi::c_void, a4: *const core::ffi::c_void) { t(1011); t(a0 as u32); t(pi(a1)); t(pi(a2)); t(pi(a3)); t(pi(a4));  }
+pub fn call___fres(a0: f64) -> f64 { t(1020); t64(a0); rg() as f64 }
 pub fn install() {
     unsafe {
         m::ext::CAMERA_80031060 = Some(|| { t(1000); fv() as _ });
@@ -22,31 +23,32 @@ pub fn install() {
         m::ext::MOTION_FIGHTER_BEGIN = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| { t(1012); t(a0 as u32); t(a1 as u32); t(a5 as u32); t(a6 as u32); t(a7 as u32); t(a8 as u32); t(a9 as u32); fv() as _ });
         m::ext::MOTION_FIGHTER_END = Some(|| { t(1013); });
         m::ext::PLAYER_GET_FALLS = Some(|a0| { t(1014); t(a0 as u32); fv() as _ });
-        m::ext::SURFACE_BEGIN = Some(|a0| { t(1015); t(a0 as u32); });
-        m::ext::SURFACE_END = Some(|| { t(1016); });
-        m::ext::WB_RENDER_ACTIVE = Some(|| { t(1017); fv() as _ });
-        m::ext::WB_RENDER_OPTION = Some(|a0, a1| { t(1018); t(a0 as u32); t(a1 as u32); fv() as _ });
-        m::ext::FTCO_8009F5AC = Some(|a0| { t(1019); t(pi(a0)); });
-        m::ext::FTCO_8009F7F8 = Some(|a0| { t(1020); t(pi(a0)); });
-        m::ext::FTCO_800B395C = Some(|a0, a1| { t(1021); t(pi(a0)); t(a1 as u32); fv() as _ });
-        m::ext::FTCO_800C2600 = Some(|a0, a1| { t(1022); t(pi(a0)); t(a1 as u32); });
-        m::ext::FTCO_800C8AF0 = Some(|a0| { t(1023); t(pi(a0)); });
-        m::ext::FTCOMMON_8007F804 = Some(|a0| { t(1024); t(pi(a0)); (*crate::FT)[1].x44_mtx.as_mut_ptr() });
-        m::ext::FTLIB_COUNTFIGHTERS = Some(|| { t(1025); fv() as _ });
-        m::ext::FTLIB_UPDATESCREENVISIBILITY = Some(|a0| { t(1026); t(pi(a0)); fv() as _ });
-        m::ext::FTLIB_GETSHAKEOFFSET = Some(|a0, a1| { t(1027); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } fv() as _ });
-        m::ext::FTPARTS_800750C8 = Some(|a0, a1, a2| { t(1028); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
-        m::ext::LBCOLL_80009F54 = Some(|a0, a1, a2| { t(1029); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); fv() as _ });
-        m::ext::LBCOLL_8000A044 = Some(|a0, a1, a2| { t(1030); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); fv() as _ });
-        m::ext::LBCOLL_8000A1A8 = Some(|a0, a1, a2| { t(1031); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); fv() as _ });
-        m::ext::LBCOLL_8000A244 = Some(|a0, a1, a2, a3| { t(1032); t(pi(a0)); t(a1 as u32); t(pi(a2)); t(a3.to_bits()); fv() as _ });
-        m::ext::LBCOLL_8000A460 = Some(|a0, a1| { t(1033); t(pi(a0)); t(a1 as u32); fv() as _ });
-        m::ext::LBCOLL_8000A584 = Some(|a0, a1, a2, a3, a4| { t(1034); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(pi(a3)); t(a4.to_bits()); fv() as _ });
-        m::ext::LBCOLL_8000A78C = Some(|a0, a1, a2, a3| { t(1035); t(pi(a0)); t(a1 as u32); t(pi(a2)); t(a3.to_bits()); fv() as _ });
-        m::ext::LBCOLL_8000A95C = Some(|a0, a1, a2, a3| { t(1036); t(pi(a0)); t(a1 as u32); t(pi(a2)); t(a3.to_bits()); fv() as _ });
-        m::ext::LBCOLL_8000AB2C = Some(|a0, a1, a2, a3| { t(1037); t(pi(a0)); t(a1 as u32); t(pi(a2)); t(a3.to_bits()); fv() as _ });
-        m::ext::LBGX_8001E2F8 = Some(|a0, a1, a2, a3, a4| { t(1038); t(pi(a0)); t(pi(a1)); t(pi(a2)); t(a3 as u32); t(a4.to_bits()); fv() as _ });
-        m::ext::LB_800117F4 = Some(|a0, a1, a2, a3, a4| { t(1039); t(pi(a0)); t(pi(a1)); t(pi(a2)); t(a3 as u32); t(a4 as u32); fv() as _ });
-        m::ext::LB_80014770 = Some(|a0, a1| { t(1040); t(pi(a0)); t(a1 as u32); fv() as _ });
+        h::SLIPPI_CODES = Some(|| { t(1015); fv() as _ });
+        m::ext::SURFACE_BEGIN = Some(|a0| { t(1016); t(a0 as u32); });
+        m::ext::SURFACE_END = Some(|| { t(1017); });
+        m::ext::WB_RENDER_ACTIVE = Some(|| { t(1018); fv() as _ });
+        m::ext::WB_RENDER_OPTION = Some(|a0, a1| { t(1019); t(a0 as u32); t(a1 as u32); fv() as _ });
+        m::ext::FTCO_8009F5AC = Some(|a0| { t(1021); t(pi(a0)); });
+        m::ext::FTCO_8009F7F8 = Some(|a0| { t(1022); t(pi(a0)); });
+        m::ext::FTCO_800B395C = Some(|a0, a1| { t(1023); t(pi(a0)); t(a1 as u32); fv() as _ });
+        m::ext::FTCO_800C2600 = Some(|a0, a1| { t(1024); t(pi(a0)); t(a1 as u32); });
+        m::ext::FTCO_800C8AF0 = Some(|a0| { t(1025); t(pi(a0)); });
+        m::ext::FTCOMMON_8007F804 = Some(|a0| { t(1026); t(pi(a0)); (*crate::FT)[1].x44_mtx.as_mut_ptr() });
+        m::ext::FTLIB_COUNTFIGHTERS = Some(|| { t(1027); fv() as _ });
+        m::ext::FTLIB_GETSHAKEOFFSET = Some(|a0, a1| { t(1028); t(pi(a0)); t(pi(a1)); if !a1.is_null() { (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); } fv() as _ });
+        m::ext::FTLIB_UPDATESCREENVISIBILITY = Some(|a0| { t(1029); t(pi(a0)); fv() as _ });
+        m::ext::FTPARTS_800750C8 = Some(|a0, a1, a2| { t(1030); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
+        m::ext::LBCOLL_80009F54 = Some(|a0, a1, a2| { t(1031); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); fv() as _ });
+        m::ext::LBCOLL_8000A044 = Some(|a0, a1, a2| { t(1032); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); fv() as _ });
+        m::ext::LBCOLL_8000A1A8 = Some(|a0, a1, a2| { t(1033); t(pi(a0)); t(a1 as u32); t(a2.to_bits()); fv() as _ });
+        m::ext::LBCOLL_8000A244 = Some(|a0, a1, a2, a3| { t(1034); t(pi(a0)); t(a1 as u32); t(pi(a2)); t(a3.to_bits()); fv() as _ });
+        m::ext::LBCOLL_8000A460 = Some(|a0, a1| { t(1035); t(pi(a0)); t(a1 as u32); fv() as _ });
+        m::ext::LBCOLL_8000A584 = Some(|a0, a1, a2, a3, a4| { t(1036); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(pi(a3)); t(a4.to_bits()); fv() as _ });
+        m::ext::LBCOLL_8000A78C = Some(|a0, a1, a2, a3| { t(1037); t(pi(a0)); t(a1 as u32); t(pi(a2)); t(a3.to_bits()); fv() as _ });
+        m::ext::LBCOLL_8000A95C = Some(|a0, a1, a2, a3| { t(1038); t(pi(a0)); t(a1 as u32); t(pi(a2)); t(a3.to_bits()); fv() as _ });
+        m::ext::LBCOLL_8000AB2C = Some(|a0, a1, a2, a3| { t(1039); t(pi(a0)); t(a1 as u32); t(pi(a2)); t(a3.to_bits()); fv() as _ });
+        m::ext::LBGX_8001E2F8 = Some(|a0, a1, a2, a3, a4| { t(1040); t(pi(a0)); t(pi(a1)); t(pi(a2)); t(a3 as u32); t(a4.to_bits()); fv() as _ });
+        m::ext::LB_800117F4 = Some(|a0, a1, a2, a3, a4| { t(1041); t(pi(a0)); t(pi(a1)); t(pi(a2)); t(a3 as u32); t(a4 as u32); fv() as _ });
+        m::ext::LB_80014770 = Some(|a0, a1| { t(1042); t(pi(a0)); t(a1 as u32); fv() as _ });
     }
 }

@@ -60,7 +60,7 @@ pub fn ft_800C8170(f: &mut Fighter) {
     melee_core::ct!("ft_800C8170");
     for i in 0..parts_num(f) {
         let b = bone(f, i);
-        let bits = unsafe { b.anon_8.anon_0 };
+        let bits = unsafe { b.x8.x0 };
         if bits.flags_b1() == 0 {
             continue;
         }
@@ -94,7 +94,7 @@ pub fn ft_800C8170(f: &mut Fighter) {
 fn enable_metal(f: &mut Fighter) {
     for i in 0..parts_num(f) {
         let b = bone(f, i);
-        if unsafe { b.anon_8.anon_0.flags_b1() } == 0 {
+        if unsafe { b.x8.x0.flags_b1() } == 0 {
             continue;
         }
         let jobj = b.joint;
@@ -186,7 +186,7 @@ pub fn ft_800C85B8(gobj: *mut HSD_GObj) {
         let mut dobj = ext::HSD_DObjLoadDesc(desc);
         if !dobj.is_null() {
             let mut it = ext::HSD_JObjGetDObj(part_jobj);
-            unsafe { bone(f, part_idx).anon_8.anon_0.set_flags2_b5(1) };
+            unsafe { bone(f, part_idx).x8.x0.set_flags2_b5(1) };
             ext::HSD_DObjResolveRefsAll(dobj, desc);
             if it.is_null() {
                 ext::HSD_JObjAddDObj(part_jobj, dobj);
@@ -209,8 +209,8 @@ pub fn ft_800C85B8(gobj: *mut HSD_GObj) {
             }
             assert!(i < 0x80, "fighter dobj num over!");
             unsafe {
-                bone(f, part_idx).anon_c.anon_0.set_xD((dobj_count - 1) as u8);
-                bone(f, part_idx).anon_8.anon_0.set_flags2_b6(1);
+                bone(f, part_idx).xC_u.x0.set_xD((dobj_count - 1) as u8);
+                bone(f, part_idx).x8.x0.set_flags2_b6(1);
             }
         }
         part_idx += 1;

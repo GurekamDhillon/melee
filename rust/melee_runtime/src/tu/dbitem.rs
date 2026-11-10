@@ -233,7 +233,7 @@ impl DbItem {
     pub unsafe fn fn_EnableShowCoinPickupRange<H: DbItemHost + ?Sized>(&mut self, h: &mut H) {
         for_items(h, |_, it| {
             if it.kind == It_Kind_Unk4 {
-                it.anon_daa.xDAA_flag.anon_0.set_b0(1);
+                it.xDAA.xDAA_flag.x0.set_b0(1);
             }
         });
         self.menu.show_coin_pickup_range = true;
@@ -245,7 +245,7 @@ impl DbItem {
     pub unsafe fn fn_DisableShowCoinPickupRange<H: DbItemHost + ?Sized>(&mut self, h: &mut H) {
         for_items(h, |_, it| {
             if it.kind == It_Kind_Unk4 {
-                it.anon_daa.xDAA_flag.anon_0.set_b0(0);
+                it.xDAA.xDAA_flag.x0.set_b0(0);
             }
         });
         self.menu.show_coin_pickup_range = false;
@@ -256,8 +256,8 @@ impl DbItem {
     /// See [`for_items`].
     pub unsafe fn fn_EnableShowEnemyStompRange<H: DbItemHost + ?Sized>(&mut self, h: &mut H) {
         for_items(h, |_, it| {
-            if it.xDD0_flag.anon_0.b0() != 0 {
-                it.anon_daa.xDAA_flag.anon_0.set_b3(1);
+            if it.xDD0_flag.x0.b0() != 0 {
+                it.xDAA.xDAA_flag.x0.set_b3(1);
             }
         });
         self.menu.show_enemy_stomp_range = true;
@@ -267,7 +267,7 @@ impl DbItem {
     /// # Safety
     /// See [`for_items`].
     pub unsafe fn fn_DisableShowEnemyStompRange<H: DbItemHost + ?Sized>(&mut self, h: &mut H) {
-        for_items(h, |_, it| it.anon_daa.xDAA_flag.anon_0.set_b3(0));
+        for_items(h, |_, it| it.xDAA.xDAA_flag.x0.set_b3(0));
         self.menu.show_enemy_stomp_range = false;
     }
     /// `fn_EnableShowItemPickupRange` (0x80225C8C).
@@ -275,7 +275,7 @@ impl DbItem {
     /// # Safety
     /// See [`for_items`].
     pub unsafe fn fn_EnableShowItemPickupRange<H: DbItemHost + ?Sized>(&mut self, h: &mut H) {
-        for_items(h, |_, it| it.anon_daa.xDAA_flag.anon_0.set_b4(1));
+        for_items(h, |_, it| it.xDAA.xDAA_flag.x0.set_b4(1));
         self.menu.show_item_pickup_range = true;
     }
     /// `fn_DisableShowItemPickupRange` (0x80225CD4).
@@ -283,7 +283,7 @@ impl DbItem {
     /// # Safety
     /// See [`for_items`].
     pub unsafe fn fn_DisableShowItemPickupRange<H: DbItemHost + ?Sized>(&mut self, h: &mut H) {
-        for_items(h, |_, it| it.anon_daa.xDAA_flag.anon_0.set_b4(0));
+        for_items(h, |_, it| it.xDAA.xDAA_flag.x0.set_b4(0));
         self.menu.show_item_pickup_range = false;
     }
 
@@ -310,7 +310,7 @@ impl DbItem {
     /// `item` is a live item GObj.
     pub unsafe fn db_80225D64(&self, item: *mut HSD_GObj, _owner: *mut HSD_GObj) {
         let it = &mut *((*item).user_data as *mut Item);
-        it.anon_daa.xDAA_byte |= self.show_item_collision_bubbles as u8;
+        it.xDAA.xDAA_byte |= self.show_item_collision_bubbles as u8;
     }
 
     /// `fn_ToggleItemCollisionBubbles` (0x80225D7C).
@@ -324,8 +324,8 @@ impl DbItem {
         }
         let v = self.show_item_collision_bubbles as u8;
         for_items(h, |_, it| {
-            it.anon_daa.xDAA_byte &= 0xFC;
-            it.anon_daa.xDAA_byte |= v;
+            it.xDAA.xDAA_byte &= 0xFC;
+            it.xDAA.xDAA_byte |= v;
         });
     }
 
@@ -336,12 +336,12 @@ impl DbItem {
     pub unsafe fn db_80225DD8<H: DbItemHost + ?Sized>(&self, h: &mut H, item: *mut HSD_GObj, owner: *mut HSD_GObj) {
         let it = (*item).user_data as *mut Item;
         if h.ftLib_IsFighter(owner) == 0 {
-            (*it).anon_daa.xDAA_byte |= self.show_item_collision_bubbles as u8;
+            (*it).xDAA.xDAA_byte |= self.show_item_collision_bubbles as u8;
         } else {
-            (*it).anon_daa.xDAA_byte &= 0xFC;
+            (*it).xDAA.xDAA_byte &= 0xFC;
             let x = h.fn_8022697C(owner) as i32;
             if x != 0 {
-                (*it).anon_daa.xDAA_byte |= (x & 3) as u8;
+                (*it).xDAA.xDAA_byte |= (x & 3) as u8;
             }
         }
     }
@@ -492,7 +492,7 @@ impl DbItem {
         si.vel.z = 0.0;
         si.x0_parent_gobj = core::ptr::null_mut();
         si.x4_parent_gobj2 = si.x0_parent_gobj;
-        si.x44_flag.anon_0.set_b0(1);
+        si.x44_flag.x0.set_b0(1);
         si.x40 = 0;
         let alloc = &*h.Item_804A0C64();
         let common = &*h.it_804D6D28();
@@ -512,7 +512,7 @@ impl DbItem {
             let gobj = h.Item_80268B18(&mut si);
             if !gobj.is_null() {
                 let it = (*gobj).user_data as *mut Item;
-                (*it).anon_daa.xDAA_flag.byte |= self.show_item_collision_bubbles as u8;
+                (*it).xDAA.xDAA_flag.byte |= self.show_item_collision_bubbles as u8;
                 h.efSync_Spawn(0x420, gobj, &mut si.prev_pos);
             }
         }

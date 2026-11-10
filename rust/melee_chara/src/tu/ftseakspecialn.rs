@@ -144,7 +144,7 @@ fn doEnter(gobj: *mut HSD_GObj, msid: i32) {
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, msid, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
-        (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+        (*fp).x2210.x0.set_throw_flags_b0(0);
         st::Fighter_ClearCmdVars(&mut *fp);
         (*fp).mv.sk.specialn.x0 = 0;
         if (*fp).u.sk.x0 == 0 {

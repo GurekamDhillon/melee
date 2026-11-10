@@ -78,8 +78,8 @@ pub fn ftZd_Init_OnLoad(gobj: *mut HSD_GObj) {
         let fp = (*gobj).user_data as *mut Fighter;
         let item_list = (*(*fp).ft_data).x48_items;
         ftinl::push_attrs::<ftZelda_DatAttrs>(fp);
-        ext::it_8026B3F8(*item_list.add(0), It_Kind_Zelda_DinFire as i32);
-        ext::it_8026B3F8(*item_list.add(1), It_Kind_Zelda_DinFire_Explode as i32);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Zelda_DinFire as i32);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, It_Kind_Zelda_DinFire_Explode as i32);
     }
 }
 

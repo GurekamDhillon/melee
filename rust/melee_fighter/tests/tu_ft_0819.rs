@@ -94,7 +94,7 @@ fn ft_0819_matches_c() {
             fp.dmg.x1930.xC.z = r.rf();
             fp.set_x2219_b1((r.rnd() % 4 == 0) as u8);
             fp.set_x2223_b4((r.rnd() % 4 == 0) as u8);
-            fp.player_id = (r.rnd() % 6) as u8;
+            fp.player_idx = (r.rnd() % 6) as u8;
             fp.dmg.x1950 = (r.rnd() % 8 == 0) as i32;
             let n = (r.rnd() % 5) as usize;
             let igp = igo.as_mut_ptr();

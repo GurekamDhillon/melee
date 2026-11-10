@@ -50,7 +50,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -101,32 +101,32 @@ int main(void)
             switch (op) {
             case 0: {  it_802E05A0(&GO[0]); } break; /* it_802E05A0 */
             case 1: {  it_802E0678(&GO[0]); } break; /* it_802E0678 */
-            case 2: {  ret = (u32) itPatapata_UnkMotion1_Anim(&GO[0]); } break; /* itPatapata_UnkMotion1_Anim */
+            case 2: {  ret = (u32) ((itPatapata_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itPatapata_UnkMotion1_Anim */
             case 3: {  itPatapata_UnkMotion1_Phys(&GO[0]); } break; /* itPatapata_UnkMotion1_Phys */
-            case 4: {  ret = (u32) itPatapata_UnkMotion1_Coll(&GO[0]); } break; /* itPatapata_UnkMotion1_Coll */
+            case 4: {  ret = (u32) ((itPatapata_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itPatapata_UnkMotion1_Coll */
             case 5: {  it_802E0734(&GO[0]); } break; /* it_802E0734 */
-            case 6: {  ret = (u32) itPatapata_UnkMotion2_Anim(&GO[0]); } break; /* itPatapata_UnkMotion2_Anim */
+            case 6: {  ret = (u32) ((itPatapata_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itPatapata_UnkMotion2_Anim */
             case 7: {  itPatapata_UnkMotion3_Phys(&GO[0]); } break; /* itPatapata_UnkMotion3_Phys */
-            case 8: {  ret = (u32) itPatapata_UnkMotion3_Coll(&GO[0]); } break; /* itPatapata_UnkMotion3_Coll */
+            case 8: {  ret = (u32) ((itPatapata_UnkMotion3_Coll(&GO[0])) != 0); } break; /* itPatapata_UnkMotion3_Coll */
             case 9: {  it_802E0D9C(&GO[0]); } break; /* it_802E0D9C */
-            case 10: {  ret = (u32) itPatapata_UnkMotion3_Anim(&GO[0]); } break; /* itPatapata_UnkMotion3_Anim */
-            case 11: {  ret = (u32) it_2725_Logic4_DmgReceived(&GO[0]); } break; /* it_2725_Logic4_DmgReceived */
-            case 12: {  ret = (u32) it_802E0F1C(&GO[0]); } break; /* it_802E0F1C */
+            case 10: {  ret = (u32) ((itPatapata_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itPatapata_UnkMotion3_Anim */
+            case 11: {  ret = (u32) ((it_2725_Logic4_DmgReceived(&GO[0])) != 0); } break; /* it_2725_Logic4_DmgReceived */
+            case 12: {  ret = (u32) ((it_802E0F1C(&GO[0])) != 0); } break; /* it_802E0F1C */
             case 13: {  itPatapata_Logic4_PickedUp(&GO[0]); } break; /* itPatapata_Logic4_PickedUp */
-            case 14: {  ret = (u32) itPatapata_UnkMotion5_Anim(&GO[0]); } break; /* itPatapata_UnkMotion5_Anim */
+            case 14: {  ret = (u32) ((itPatapata_UnkMotion5_Anim(&GO[0])) != 0); } break; /* itPatapata_UnkMotion5_Anim */
             case 15: {  itPatapata_UnkMotion5_Phys(&GO[0]); } break; /* itPatapata_UnkMotion5_Phys */
             case 16: {  it_2725_Logic4_Dropped(&GO[0]); } break; /* it_2725_Logic4_Dropped */
-            case 17: {  ret = (u32) itPatapata_UnkMotion7_Anim(&GO[0]); } break; /* itPatapata_UnkMotion7_Anim */
+            case 17: {  ret = (u32) ((itPatapata_UnkMotion7_Anim(&GO[0])) != 0); } break; /* itPatapata_UnkMotion7_Anim */
             case 18: {  itPatapata_UnkMotion7_Phys(&GO[0]); } break; /* itPatapata_UnkMotion7_Phys */
-            case 19: {  ret = (u32) itPatapata_UnkMotion7_Coll(&GO[0]); } break; /* itPatapata_UnkMotion7_Coll */
+            case 19: {  ret = (u32) ((itPatapata_UnkMotion7_Coll(&GO[0])) != 0); } break; /* itPatapata_UnkMotion7_Coll */
             case 20: {  it_2725_Logic4_Thrown(&GO[0]); } break; /* it_2725_Logic4_Thrown */
-            case 21: {  ret = (u32) itPatapata_UnkMotion6_Anim(&GO[0]); } break; /* itPatapata_UnkMotion6_Anim */
+            case 21: {  ret = (u32) ((itPatapata_UnkMotion6_Anim(&GO[0])) != 0); } break; /* itPatapata_UnkMotion6_Anim */
             case 22: {  itPatapata_UnkMotion6_Phys(&GO[0]); } break; /* itPatapata_UnkMotion6_Phys */
-            case 23: {  ret = (u32) itPatapata_UnkMotion6_Coll(&GO[0]); } break; /* itPatapata_UnkMotion6_Coll */
+            case 23: {  ret = (u32) ((itPatapata_UnkMotion6_Coll(&GO[0])) != 0); } break; /* itPatapata_UnkMotion6_Coll */
             case 24: {  it_802E11E0(&GO[0]); } break; /* it_802E11E0 */
-            case 25: {  ret = (u32) itPatapata_UnkMotion4_Anim(&GO[0]); } break; /* itPatapata_UnkMotion4_Anim */
+            case 25: {  ret = (u32) ((itPatapata_UnkMotion4_Anim(&GO[0])) != 0); } break; /* itPatapata_UnkMotion4_Anim */
             case 26: {  itPatapata_UnkMotion4_Phys(&GO[0]); } break; /* itPatapata_UnkMotion4_Phys */
-            case 27: {  ret = (u32) itPatapata_UnkMotion4_Coll(&GO[0]); } break; /* itPatapata_UnkMotion4_Coll */
+            case 27: {  ret = (u32) ((itPatapata_UnkMotion4_Coll(&GO[0])) != 0); } break; /* itPatapata_UnkMotion4_Coll */
             case 28: {  it_802E15B0(&GO[0]); } break; /* it_802E15B0 */
             case 29: { int v1 = (int) ((int) fv()); int v2 = (int) ((int) fv()); it_802E1648(&GO[0], v1, v2); } break; /* it_802E1648 */
             case 30: {  it_802E1694(&GO[0]); } break; /* it_802E1694 */

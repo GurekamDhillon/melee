@@ -14,7 +14,7 @@ mod gen_stubs {
     fn t_HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc { unsafe { out("HSD_GObj_SetupProc"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); tri(a2 as i64); out("\n"); az(core::mem::size_of::<HSD_GObjProc>()) as *mut HSD_GObjProc } }
     fn t_Mex_GrBind(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void { unsafe { out("Mex_GrBind"); trp(a0 as *const u8); out("\n"); (a0) as *mut core::ffi::c_void } }
     fn t_grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("grAnime_801C8138"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
-    fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
     fn t_grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj { unsafe { out("grZakoGenerator_801CAE04"); trp(a0 as *const u8); out("\n"); az(core::mem::size_of::<HSD_GObj>()) as *mut HSD_GObj } }
     fn t_lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3) { unsafe { out("lb_8000B1CC"); trp(a0 as *const u8); trp(a1 as *const u8); trp(a2 as *const u8); out("\n"); if !a1.is_null() { (*a1).x = rf(); (*a1).y = rf(); (*a1).z = rf(); } if !a2.is_null() { (*a2).x = rf(); (*a2).y = rf(); (*a2).z = rf(); }  } }
     fn t_lb_800115F4() { unsafe { out("lb_800115F4"); out("\n");  } }

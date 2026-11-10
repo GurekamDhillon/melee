@@ -64,7 +64,7 @@ pub fn ftCo_8009F0F0(g: G) -> bool {
         || m == ftCo_MS_DownBoundD
         || m == ftCo_MS_DownWaitD
         || m == ftCo_MS_DownDamageD)
-        && (f.x2224_b2() != 0 || f.dmg.x1838_percentTemp < cd().x428 as f32)
+        && (f.stamina_dead() != 0 || f.dmg.x1838_percentTemp < cd().x428 as f32)
     {
         ftCo_8009F184(g);
         return true;
@@ -84,7 +84,7 @@ pub fn ftCo_8009F184(g: G) {
 pub fn ftCo_DownDamage_Anim(g: G) {
     melee_core::ct!("ftCo_DownDamage_Anim");
     let f = fp(g);
-    if f.x2224_b2() == 0 {
+    if f.stamina_dead() == 0 {
         unsafe { f.mv.co.downdamage.x0 -= 1.0 };
     }
     if ext::ftAnim_IsFramesRemaining(g) {
@@ -92,7 +92,7 @@ pub fn ftCo_DownDamage_Anim(g: G) {
     }
     let f = fp(g);
     if f.ground_or_air == GA_Air {
-        if f.x2224_b2() != 0 {
+        if f.stamina_dead() != 0 {
             ext::ftCo_80090780(g);
         } else {
             ext::ftCo_Fall_Enter(g);

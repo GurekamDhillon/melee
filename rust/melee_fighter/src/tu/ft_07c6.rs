@@ -48,12 +48,12 @@ pub fn ft_8007c630(g: G) {
     for i in 0..2usize {
         let f = fp(g);
         let d = unsafe { &mut *(*f.ft_data).x38.add(i) };
-        let joint = unsafe { (*f.parts.add(d.x0 as usize)).joint };
+        let joint = unsafe { (*f.parts.add(d.x0_bone_id as usize)).joint };
         let t = &mut f.x1614[i] as *mut Fighter_x1614_t;
         unsafe {
             (*t).x4 = joint;
-            (*t).x0 = d.x10;
-            ext::lb_8000B1CC((*t).x4, &mut d.x4, &mut (*t).x8);
+            (*t).x0 = d.x10_size;
+            ext::lb_8000B1CC((*t).x4, &mut d.x4_offset, &mut (*t).x8);
             (*t).x8.z = 0.0;
             (*t).x14 = (*t).x8;
         }
@@ -70,7 +70,7 @@ pub fn ft_8007c6dc(g: G) {
             let t = &mut f.x1614[i] as *mut Fighter_x1614_t;
             unsafe {
                 (*t).x14 = (*t).x8;
-                ext::lb_8000B1CC((*t).x4, &mut d.x4, &mut (*t).x8);
+                ext::lb_8000B1CC((*t).x4, &mut d.x4_offset, &mut (*t).x8);
                 (*t).x8.z = 0.0;
             }
         }
@@ -85,7 +85,7 @@ pub fn ft_8007c77c(g: G) {
     }
     let a = ext::gm_801A4BB8() & 1;
     let f = fp(g);
-    let b = (f.player_id as u32) & 1;
+    let b = (f.player_idx as u32) & 1;
     f.set_x2229_b4(if a == b { 0 } else { 1 });
     if f.x2229_b4() != 0 {
         return;
@@ -111,7 +111,7 @@ pub fn ft_8007c77c(g: G) {
                     let tmp = &mut f.x1614[i] as *mut Fighter_x1614_t;
                     if ext::lbColl_80007B78(t26, tmp, ip.scl, f.x34_scale.y) {
                         let n = ext::it_802E5EF4(ip.entity);
-                        let pid = fp(g).player_id as i32;
+                        let pid = fp(g).player_idx as i32;
                         crate::player::set_coins(pid, n.wrapping_add(crate::player::get_coins(pid)));
                         crate::player::set_total_coins(pid, n.wrapping_add(crate::player::get_total_coins(pid)));
                         ext::lbAudioAx_80023870(0x93, 0x7F, 0x40, 0x1A);

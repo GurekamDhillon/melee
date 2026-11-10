@@ -65,9 +65,9 @@ pub fn install() {
         HSD_GObjProc_RemoveProc = Some(|a0| { t(1053); t(pi(a0)); });
         HSD_GObj_80390CD4 = Some(|a0| { t(1054); t(pi(a0)); });
         HSD_GObj_80390ED0 = Some(|a0, a1| { t(1055); t(pi(a0)); t(a1 as u32); });
-        HSD_GObj_803910D8 = Some(|a0, a1| { t(1056); t(pi(a0)); t(a1 as u32); });
-        HSD_GObj_JObjCallback = Some(|a0, a1| { t(1057); t(pi(a0)); t(a1 as u32); });
-        HSD_GObj_LObjCallback = Some(|a0, a1| { t(1058); t(pi(a0)); t(a1 as u32); });
+        HSD_GObj_803910D8 = Some(|a0, a1| { t(1056); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
+        HSD_GObj_JObjCallback = Some(|a0, a1| { t(1057); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
+        HSD_GObj_LObjCallback = Some(|a0, a1| { t(1058); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
         HSD_GObj_SetupProc = Some(|a0, a1, a2| { t(1059); t(pi(a0)); t(fi(a1)); t(a2 as u32); core::ptr::null_mut() });
         HSD_JObjAddAnimAll = Some(|a0, a1, a2, a3| { t(1060); t(pi(a0)); t(pi(a1)); t(pi(a2)); t(pi(a3)); });
         HSD_JObjAddChild = Some(|a0, a1| { t(1061); t(pi(a0)); t(pi(a1)); });
@@ -94,7 +94,7 @@ pub fn install() {
         HSD_Randf = Some(|| { t(1082); rg() });
         HSD_Randi = Some(|a0| { t(1083); t(a0 as u32); if a0 > 0 { (rnd() % a0 as u32) as i32 } else { 0 } });
         HSD_SObjLib_803A477C = Some(|a0, a1, a2, a3, a4, a5| { t(1084); t(pi(a0)); t(pi(a1)); t(a2 as u32); t(a3 as u32); t(a4 as u32); t(a5 as u32); core::ptr::null_mut() });
-        HSD_SObjLib_803A49E0 = Some(|a0, a1| { t(1085); t(pi(a0)); t(a1 as u32); });
+        HSD_SObjLib_803A49E0 = Some(|a0, a1| { t(1085); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
         HSD_SObjLib_803A55DC = Some(|a0, a1, a2, a3| { t(1086); t(pi(a0)); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
         HSD_SetEraseColor = Some(|a0, a1, a2, a3| { t(1087); t(a0 as u32); t(a1 as u32); t(a2 as u32); t(a3 as u32); });
         HSD_SetupRenderMode = Some(|a0| { t(1088); t(a0 as u32); });

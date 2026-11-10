@@ -18,7 +18,7 @@ __typeof__(int) (ftCo_8009E714)(__typeof__(struct HSD_GObj *) a0, __typeof__(enu
 // stub ftCo_8009E714 = 1007
 void (ftCo_8009F834)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(enum Fighter_Part) a2, __typeof__(int) a3, __typeof__(int) a4, __typeof__(Vec *) a5, __typeof__(Vec *) a6, __typeof__(float) a7) { T(1008); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); T((u32) a4); T(PI((const void*) a5)); T(PI((const void*) a6)); T(B(a7)); }
 // stub ftCo_8009F834 = 1008
-__typeof__(int) (ftCo_800BFFD0)(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1009); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
+__typeof__(int) (ftCo_800BFFD0)(__typeof__(struct Fighter *) a0, __typeof__(enum FtColAnim) a1, __typeof__(int) a2) { T(1009); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
 // stub ftCo_800BFFD0 = 1009
 void (ftCo_800C0200)(__typeof__(struct Fighter *) a0, __typeof__(int) a1) { T(1010); T(PI((const void*) a0)); T((u32) a1); }
 // stub ftCo_800C0200 = 1010

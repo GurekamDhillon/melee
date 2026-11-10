@@ -30,7 +30,7 @@ pub(crate) const PAD_ABXYLR: u32 = (1 << 8) | (1 << 9) | (1 << 10) | (1 << 11) |
 
 #[inline(always)]
 pub(crate) fn ids(fp: &Fighter) -> (i32, i32) {
-    (fp.player_id as i32, fp.is_sub_fighter() as i32)
+    (fp.player_idx as i32, fp.is_sub_fighter() as i32)
 }
 
 /// `ftCommon_SandbagGetKnockbackDeaccelX`: `((float*) fp->dat_attrs)[0]`.

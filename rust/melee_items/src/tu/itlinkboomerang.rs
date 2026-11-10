@@ -274,7 +274,7 @@ pub mod ext {
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_8026BB68(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB68(a0, a1 as _) };
     fn it_8026E0F4(a0: *mut HSD_GObj) => unsafe { crate::tu::itgroundcoll::it_8026E0F4(a0) };
-    fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
+    fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
     fn it_80272A18(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A18(a0) };
     fn it_80272A3C(a0: *mut HSD_JObj) => unsafe { crate::tu::it_2725::it_80272A3C(a0) };
     fn it_8027429C(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_2725::it_8027429C(a0, a1 as _) };
@@ -376,7 +376,7 @@ pub unsafe fn it_8029FDBC(gobj: *mut Item_GObj) -> i32 {
 pub unsafe fn it_8029FDDC(gobj: *mut Item_GObj, arg1: i32) {
     melee_core::ct!("it_8029FDDC");
     let ip = GET_ITEM(gobj);
-    ext::it_8026EECC(gobj, arg1);
+    ext::it_8026EECC(gobj, arg1 as isize);
     for i in 0..2 {
         let jobj = (*ip).xDD4_itemVar.linkboomerang.xF90[i];
         if !jobj.is_null() {

@@ -66,7 +66,7 @@ pub fn Player_GetPlayerCharacter_fp(slot: i32) -> CharacterKind {
 /// `Player_GetPlayerId_fp`.
 pub fn Player_GetPlayerId_fp(slot: i32) -> i32 {
     melee_core::ct!("Player_GetPlayerId_fp");
-    sp(slot).player_id as i32
+    sp(slot).pad_port as i32
 }
 
 /// `Player_GetNametagSlotID_fp`.

@@ -50,7 +50,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
     it_804D6D28 = &ICD;
@@ -71,7 +71,7 @@ static void setup(int prof)
         IT[k].xDD4_itemVar.rshell.xDEC = (int) (rnd() % 4);
         IT[k].xDD4_itemVar.rshell.xDF0 = (int) (rnd() & 1);
         IT[k].xDD4_itemVar.rshell.xDF4_b0 = rnd() & 1;
-        IT[k].xDCD_flag.b5 = rnd() & 1;
+        IT[k].xDCD_flag.x0.b5 = rnd() & 1;
         if (rnd() & 1) IT[k].x40_vel.x = (float) ((int) (rnd() % 5) - 2) / 2.0f;
     }
 }
@@ -80,7 +80,7 @@ static void hash_all(void)
 {
     int i, k;
     (void) i; (void) k;
-    for (k = 0; k < 3; k++) { HM(IT[k].xDD4_itemVar.rshell.xDF4_b0); zero(&IT[k].xDD4_itemVar.rshell, sizeof IT[k].xDD4_itemVar.rshell); HM(IT[k].xDCD_flag.b5); *(unsigned char*) &IT[k].xDCD_flag = 0; }
+    for (k = 0; k < 3; k++) { HM(IT[k].xDD4_itemVar.rshell.xDF4_b0); zero(&IT[k].xDD4_itemVar.rshell, sizeof IT[k].xDD4_itemVar.rshell); HM(IT[k].xDCD_flag.x0.b5); *(unsigned char*) &IT[k].xDCD_flag = 0; }
     for (k = 0; k < 3; k++) { hash_HSD_GObj(&GO[k]); hash_Item(&IT[k]); hash_ItemAttr(&ATTR[k]); }
     for (i = 0; i < 48; i++) hash_HSD_JObj(&JO[i]);
     for (i = 0; i < 4; i++) { HM(B(VA[i].x)); HM(B(VA[i].y)); HM(B(VA[i].z)); }
@@ -113,43 +113,43 @@ int main(void)
             case 8: { f32 v1 = (f32) (rw()); f32 v2 = (f32) (rw()); ret = B(it_8028D56C(&GO[0], v1, v2)); } break; /* it_8028D56C */
             case 9: {  it_3F14_Logic15_Spawned(&GO[0]); } break; /* it_3F14_Logic15_Spawned */
             case 10: {  it_8028D62C(&GO[0]); } break; /* it_8028D62C */
-            case 11: {  ret = (u32) itRshell_UnkMotion0_Anim(&GO[0]); } break; /* itRshell_UnkMotion0_Anim */
+            case 11: {  ret = (u32) ((itRshell_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itRshell_UnkMotion0_Anim */
             case 12: {  itRshell_UnkMotion0_Phys(&GO[0]); } break; /* itRshell_UnkMotion0_Phys */
-            case 13: {  ret = (u32) itRshell_UnkMotion0_Coll(&GO[0]); } break; /* itRshell_UnkMotion0_Coll */
+            case 13: {  ret = (u32) ((itRshell_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itRshell_UnkMotion0_Coll */
             case 14: {  it_8028D7F0(&GO[0]); } break; /* it_8028D7F0 */
-            case 15: {  ret = (u32) itRshell_UnkMotion1_Anim(&GO[0]); } break; /* itRshell_UnkMotion1_Anim */
+            case 15: {  ret = (u32) ((itRshell_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itRshell_UnkMotion1_Anim */
             case 16: {  itRshell_UnkMotion1_Phys(&GO[0]); } break; /* itRshell_UnkMotion1_Phys */
-            case 17: {  ret = (u32) itRshell_UnkMotion1_Coll(&GO[0]); } break; /* itRshell_UnkMotion1_Coll */
+            case 17: {  ret = (u32) ((itRshell_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itRshell_UnkMotion1_Coll */
             case 18: {  itRShell_Logic15_PickedUp(&GO[0]); } break; /* itRShell_Logic15_PickedUp */
-            case 19: {  ret = (u32) itRshell_UnkMotion2_Anim(&GO[0]); } break; /* itRshell_UnkMotion2_Anim */
+            case 19: {  ret = (u32) ((itRshell_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itRshell_UnkMotion2_Anim */
             case 20: {  itRshell_UnkMotion2_Phys(&GO[0]); } break; /* itRshell_UnkMotion2_Phys */
             case 21: {  it_3F14_Logic15_Thrown(&GO[0]); } break; /* it_3F14_Logic15_Thrown */
-            case 22: {  ret = (u32) itRshell_UnkMotion3_Anim(&GO[0]); } break; /* itRshell_UnkMotion3_Anim */
+            case 22: {  ret = (u32) ((itRshell_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itRshell_UnkMotion3_Anim */
             case 23: {  itRshell_UnkMotion3_Phys(&GO[0]); } break; /* itRshell_UnkMotion3_Phys */
-            case 24: {  ret = (u32) itRshell_UnkMotion3_Coll(&GO[0]); } break; /* itRshell_UnkMotion3_Coll */
+            case 24: {  ret = (u32) ((itRshell_UnkMotion3_Coll(&GO[0])) != 0); } break; /* itRshell_UnkMotion3_Coll */
             case 25: {  it_3F14_Logic15_Dropped(&GO[0]); } break; /* it_3F14_Logic15_Dropped */
-            case 26: {  ret = (u32) itRshell_UnkMotion4_Anim(&GO[0]); } break; /* itRshell_UnkMotion4_Anim */
+            case 26: {  ret = (u32) ((itRshell_UnkMotion4_Anim(&GO[0])) != 0); } break; /* itRshell_UnkMotion4_Anim */
             case 27: {  itRshell_UnkMotion4_Phys(&GO[0]); } break; /* itRshell_UnkMotion4_Phys */
-            case 28: {  ret = (u32) itRshell_UnkMotion4_Coll(&GO[0]); } break; /* itRshell_UnkMotion4_Coll */
+            case 28: {  ret = (u32) ((itRshell_UnkMotion4_Coll(&GO[0])) != 0); } break; /* itRshell_UnkMotion4_Coll */
             case 29: {  it_8028DAE4(&GO[0]); } break; /* it_8028DAE4 */
-            case 30: {  ret = (u32) itRshell_UnkMotion5_Anim(&GO[0]); } break; /* itRshell_UnkMotion5_Anim */
+            case 30: {  ret = (u32) ((itRshell_UnkMotion5_Anim(&GO[0])) != 0); } break; /* itRshell_UnkMotion5_Anim */
             case 31: {  itRshell_UnkMotion5_Phys(&GO[0]); } break; /* itRshell_UnkMotion5_Phys */
-            case 32: {  ret = (u32) itRshell_UnkMotion5_Coll(&GO[0]); } break; /* itRshell_UnkMotion5_Coll */
+            case 32: {  ret = (u32) ((itRshell_UnkMotion5_Coll(&GO[0])) != 0); } break; /* itRshell_UnkMotion5_Coll */
             case 33: {  it_8028E170(&GO[0]); } break; /* it_8028E170 */
-            case 34: {  ret = (u32) itRshell_UnkMotion6_Anim(&GO[0]); } break; /* itRshell_UnkMotion6_Anim */
+            case 34: {  ret = (u32) ((itRshell_UnkMotion6_Anim(&GO[0])) != 0); } break; /* itRshell_UnkMotion6_Anim */
             case 35: {  itRshell_UnkMotion6_Phys(&GO[0]); } break; /* itRshell_UnkMotion6_Phys */
-            case 36: {  ret = (u32) itRshell_UnkMotion6_Coll(&GO[0]); } break; /* itRshell_UnkMotion6_Coll */
+            case 36: {  ret = (u32) ((itRshell_UnkMotion6_Coll(&GO[0])) != 0); } break; /* itRshell_UnkMotion6_Coll */
             case 37: {  it_3F14_Logic15_EnteredAir(&GO[0]); } break; /* it_3F14_Logic15_EnteredAir */
-            case 38: {  ret = (u32) itRshell_UnkMotion7_Anim(&GO[0]); } break; /* itRshell_UnkMotion7_Anim */
+            case 38: {  ret = (u32) ((itRshell_UnkMotion7_Anim(&GO[0])) != 0); } break; /* itRshell_UnkMotion7_Anim */
             case 39: {  itRshell_UnkMotion7_Phys(&GO[0]); } break; /* itRshell_UnkMotion7_Phys */
-            case 40: {  ret = (u32) itRshell_UnkMotion7_Coll(&GO[0]); } break; /* itRshell_UnkMotion7_Coll */
-            case 41: {  ret = (u32) it_3F14_Logic15_DmgDealt(&GO[0]); } break; /* it_3F14_Logic15_DmgDealt */
-            case 42: {  ret = (u32) it_3F14_Logic15_DmgReceived(&GO[0]); } break; /* it_3F14_Logic15_DmgReceived */
-            case 43: {  ret = (u32) itRShell_Logic15_Reflected(&GO[0]); } break; /* itRShell_Logic15_Reflected */
-            case 44: {  ret = (u32) itRShell_Logic15_Clanked(&GO[0]); } break; /* itRShell_Logic15_Clanked */
-            case 45: {  ret = (u32) it_3F14_Logic15_HitShield(&GO[0]); } break; /* it_3F14_Logic15_HitShield */
-            case 46: {  ret = (u32) itRShell_Logic15_ShieldBounced(&GO[0]); } break; /* itRShell_Logic15_ShieldBounced */
-            case 47: {  ret = (u32) it_8028E6C0(&GO[0]); } break; /* it_8028E6C0 */
+            case 40: {  ret = (u32) ((itRshell_UnkMotion7_Coll(&GO[0])) != 0); } break; /* itRshell_UnkMotion7_Coll */
+            case 41: {  ret = (u32) ((it_3F14_Logic15_DmgDealt(&GO[0])) != 0); } break; /* it_3F14_Logic15_DmgDealt */
+            case 42: {  ret = (u32) ((it_3F14_Logic15_DmgReceived(&GO[0])) != 0); } break; /* it_3F14_Logic15_DmgReceived */
+            case 43: {  ret = (u32) ((itRShell_Logic15_Reflected(&GO[0])) != 0); } break; /* itRShell_Logic15_Reflected */
+            case 44: {  ret = (u32) ((itRShell_Logic15_Clanked(&GO[0])) != 0); } break; /* itRShell_Logic15_Clanked */
+            case 45: {  ret = (u32) ((it_3F14_Logic15_HitShield(&GO[0])) != 0); } break; /* it_3F14_Logic15_HitShield */
+            case 46: {  ret = (u32) ((itRShell_Logic15_ShieldBounced(&GO[0])) != 0); } break; /* itRShell_Logic15_ShieldBounced */
+            case 47: {  ret = (u32) ((it_8028E6C0(&GO[0])) != 0); } break; /* it_8028E6C0 */
             case 48: {  itRShell_Logic15_EvtUnk(&GO[0], &GO[1]); } break; /* itRShell_Logic15_EvtUnk */
             case 49: { { int j; for (j = 0; j < 8; j++) { HM((u32) it_803F5C48[j].anim_id); HM(FI((const void*) it_803F5C48[j].animated)); HM(FI((const void*) it_803F5C48[j].physics_updated)); HM(FI((const void*) it_803F5C48[j].collided)); } } } break; /* state tables */
             }

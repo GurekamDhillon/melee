@@ -205,8 +205,8 @@ pub fn ftAction_8007121C(g: G, cmd: &mut CommandInfo) {
     melee_core::ct!("ftAction_8007121C");
     unsafe {
         let fp = fpm(g);
-        let skip = &*(cmd.anon_8.u as *const spawn_hitbox_skip);
-        if skip.xF_b4() != 0 && fp.x1064_thrownHitbox.anon_134.owner.is_null() {
+        // `cmd->x8.u[3].create_hitbox_3.ignore_thrown_fighters` (upstream dropped the spawn_hitbox_skip byte view)
+        if (*cmd.anon_8.u.add(3)).create_hitbox_3.ignore_thrown_fighters() != 0 && fp.x1064_thrownHitbox.x134.owner.is_null() {
             ftAction_800715EC(g, cmd);
         } else {
             let w0 = &u(cmd).create_hitbox_0;
@@ -263,7 +263,7 @@ pub fn ftAction_8007121C(g: G, cmd: &mut CommandInfo) {
             h.set_x42_b0(0);
             h.set_x42_b4(0);
             h.set_x41_b7(0);
-            h.anon_134.set_hit_grabbed_victim_only(u(cmd).create_hitbox_5.x1_b4() as u8);
+            h.x134.set_hit_grabbed_victim_only(u(cmd).create_hitbox_5.x1_b4() as u8);
             h.set_x42_b1(1);
             h.set_x42_b2(0);
             h.set_x43_b2(0);
@@ -353,10 +353,10 @@ pub fn ftAction_800718A4(g: G, cmd: &mut CommandInfo) {
         let fp = fpm(g);
         match u(cmd).set_throw_flags.hit_idx() {
             0 => {
-                fp.anon_2210.anon_0.set_throw_flags_b3(1);
+                fp.x2210.x0.set_throw_flags_b3(1);
                 fp.cmd_timer = cmd.timer;
             }
-            1 => fp.anon_2210.anon_0.set_throw_flags_b4(1),
+            1 => fp.x2210.x0.set_throw_flags_b4(1),
             _ => {}
         }
     }
@@ -588,7 +588,7 @@ pub fn ftAction_80072320(g: G, cmd: &mut CommandInfo) {
         let p0 = u(cmd).stage_sfx_3.x2_b0_7() as i32;
         let p1 = u(cmd).stage_sfx_3.x3_b0_7() as i32;
         next(cmd);
-        let slot = fp.player_id as i32 + fp.is_sub_fighter() as i32;
+        let slot = fp.player_idx as i32 + fp.is_sub_fighter() as i32;
         let play = |s8: i32| ext::lbAudioAx_800264E4(ext::lbAudioAx_800263E8(dir, g, behavior, sfx, 127, 127, p0, p1, p2, s8, -1));
         let gw_or_samus = fp.kind == Ft_Kind_GameWatch || fp.kind == Ft_Kind_Samus;
         match base {
@@ -940,7 +940,7 @@ pub fn ftAction_80073354(g: G) {
         let fp = fpm(g);
         let speed = fp.frame_speed_mul;
         fp.x3E4_fighterCmdScript.frame_count = fp.cur_anim_frame + fp.x898_unk;
-        fp.anon_2210.throw_flags = 0;
+        fp.x2210.throw_flags = 0;
         let cmd = &mut *(&mut fp.x3E4_fighterCmdScript as *mut CommandInfo);
         if cmd.anon_8.u.is_null() {
             return;
@@ -962,7 +962,7 @@ pub fn ftAction_80073354(g: G) {
                 }
             }
             if cmd.timer != timer && cmd.timer <= 0.0 {
-                fpm(g).anon_2210.throw_flags = 0;
+                fpm(g).x2210.throw_flags = 0;
             }
             if cmd.timer == F32_MAX {
                 break;

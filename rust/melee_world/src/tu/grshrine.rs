@@ -109,21 +109,21 @@ pub static mut grSh_StageCallbacks: [StageCallbacks; 3] = [
         callback1: Some(grShrine_80201E34),
         gobj_proc: Some(grShrine_80201E3C),
         callback3: Some(grShrine_80201E40),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grShrine_80201E44),
         callback1: Some(grShrine_80201E88),
         gobj_proc: Some(grShrine_80201E90),
         callback3: Some(grShrine_80201E94),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grShrine_80201E9C),
         callback1: Some(grShrine_80201F14),
         gobj_proc: Some(grShrine_80201F1C),
         callback3: Some(grShrine_80201F40),
-        anon_10: StageCallbacks_anon_135 { flags: u32::to_be((1 << 30) | (1 << 31)) },
+        x10: StageCallbacks_x10 { flags: u32::to_be((1 << 30) | (1 << 31)) },
     },
 ];
 
@@ -161,4 +161,4 @@ pub static mut grSh_StageData: StageData = StageData {
     pub extern "C" fn grShrine_80201F14(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grShrine_80201F44 (gr/grshrine.c:175)
-    pub extern "C" fn grShrine_80201F44(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grShrine_80201F44(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

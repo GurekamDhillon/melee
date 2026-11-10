@@ -1,8 +1,8 @@
-hdr 11560 2072 10908 148 11384 2136 1928
-ftBo_Init_OnDeath 539e542cc5d940ca
-ftBo_Init_OnItemInvisible 071ac82b49608e0b
-ftBo_Init_OnItemVisible 48df163acd35a1df
-ftBo_Init_OnItemPickup 8535abc75b0770e1
-ftBo_Init_OnItemDrop ac0cddad0ad10646
-ftBo_Init_OnLoad 5f26d7ee793753cf
-ftBo_Init_LoadSpecialAttrs e301924a63970a0c
+hdr 11576 2072 10924 148 11400 2136 1928
+ftBo_Init_OnDeath ecddbe8644cc1f3c
+ftBo_Init_OnItemInvisible 5d5b665062dc02d8
+ftBo_Init_OnItemVisible 1ee299028a940cd7
+ftBo_Init_OnItemPickup cf003f72f84a13a9
+ftBo_Init_OnItemDrop 7ed89bbbce639930
+ftBo_Init_OnLoad 09302980e72465a4
+ftBo_Init_LoadSpecialAttrs 5eb31a4d1dbfb139

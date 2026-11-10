@@ -64,7 +64,7 @@ pub static mut it_803F62C0: [ItemStateTable; 5] = [
 pub unsafe extern "C" fn itMetalB_Logic32_Spawned(gobj: *mut Item_GObj) {
     melee_core::ct!("itMetalB_Logic32_Spawned");
     let it = GET_ITEM(gobj);
-    (*it).xDCE_flag.anon_0.set_b7(0);
+    (*it).xDCE_flag.x0.set_b7(0);
     it_80295498(gobj);
 }
 
@@ -150,7 +150,7 @@ pub unsafe extern "C" fn itMetalB_Logic32_DmgReceived(gobj: *mut Item_GObj) -> b
     let go = ext::it_8027236C(gobj);
 
     if !go.is_null() {
-        if (*go).classifier as i32 == HSD_GOBJ_CLASS_FIGHTER && (*it).xDCF_flag.anon_0.b6() != 0 {
+        if (*go).classifier as i32 == HSD_GOBJ_CLASS_FIGHTER && (*it).xDCF_flag.x0.b6() != 0 {
             ext::ftLib_ApplyMetalBox(go, gobj);
             ext::pl_8003E17C((ext::ftLib_GetPlayerIndex(go) & 0xFF) as i32, ext::ftLib_IsSubFighter(go), gobj);
             return true;

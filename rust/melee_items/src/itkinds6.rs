@@ -28,7 +28,7 @@ use crate::itkinds::itGShell_Attrs;
 use crate::layout::{
     ftCollisionBox, itLinkHookshotAttributes, itMarilAttributes, itSScopeAttributes,
     itSword_UnkArticle1, itTaruAttributes, itTaruCann_DatAttrs, itToolsAttributes,
-    itUnkAttributes, itWstarAttributes, Collide_LeftWallMask, Collide_RightWallMask, HSD_GObj,
+    itUnkAttributes_legacy, itWstarAttributes, Collide_LeftWallMask, Collide_RightWallMask, HSD_GObj,
     HurtCapsule, Item, ItemCommonData, ItemLink, Vec as GcVec, It_Kind_L_Gun_Ray,
 };
 
@@ -126,7 +126,7 @@ pub fn it_fox_blaster_clear_shot(ip: &mut Item, index: i32) {
     unsafe {
         let fb = &mut ip.xDD4_itemVar.foxblaster;
         let i = index as usize;
-        fb.xDE4[i] = 0;
+        fb.xDE4[i] = core::ptr::null_mut();
         fb.xDFC[i] = 0;
         fb.xE14[i].z = 0.0;
         fb.xE14[i].y = 0.0;
@@ -213,11 +213,11 @@ pub unsafe fn it_hassam_unk_motion1_phys(ip: &mut Item) {
 /// The special attributes must be a valid `itMarilAttributes`.
 pub unsafe fn it_maril_unk_motion1_coll_inline(ip: &mut Item) {
     let attr = sa::<itMarilAttributes>(ip);
-    if ip.xDD4_itemVar.maril.x60.anon_0.x0() == 0 {
+    if ip.xDD4_itemVar.maril.x60.x0_s.x0() == 0 {
         let m = &mut ip.xDD4_itemVar.maril;
         m.x6C.y = attr.x8;
         m.x6C.x = ((M_PI * -ip.facing_dir as f64) / attr.x8 as f64) as f32;
-        m.x60.anon_0.set_x0(1);
+        m.x60.x0_s.set_x0(1);
         ip.facing_dir = -ip.facing_dir;
         ip.xDC8_word.flags.set_x19(0);
         let m = &mut ip.xDD4_itemVar.maril;

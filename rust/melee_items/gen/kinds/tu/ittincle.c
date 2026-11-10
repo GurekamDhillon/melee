@@ -31,7 +31,6 @@ static void spec_fill(int prof)
         a->x30 = (int) (rnd() % 3) + 1;
         a->x3C = (int) (rnd() % 8) + 0;
         a->x40 = (int) (rnd() % 6) + 0;
-        a->x0 = rw();
         a->xC = rw();
         a->x10 = rw();
         a->x14 = rw();
@@ -68,7 +67,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -127,57 +126,57 @@ int main(void)
             setup(prof);
             switch (op) {
             case 0: {  it_802EB5C8(&GO[0]); } break; /* it_802EB5C8 */
-            case 1: {  ret = (u32) itTincle_Logic13_DmgReceived(&GO[0]); } break; /* itTincle_Logic13_DmgReceived */
-            case 2: {  ret = (u32) itTincle_Logic13_DmgDealt(&GO[0]); } break; /* itTincle_Logic13_DmgDealt */
+            case 1: {  ret = (u32) ((itTincle_Logic13_DmgReceived(&GO[0])) != 0); } break; /* itTincle_Logic13_DmgReceived */
+            case 2: {  ret = (u32) ((itTincle_Logic13_DmgDealt(&GO[0])) != 0); } break; /* itTincle_Logic13_DmgDealt */
             case 3: {  it_802EB6DC(&GO[0]); } break; /* it_802EB6DC */
-            case 4: {  ret = (u32) itTincle_UnkMotion0_Anim(&GO[0]); } break; /* itTincle_UnkMotion0_Anim */
+            case 4: {  ret = (u32) ((itTincle_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion0_Anim */
             case 5: {  itTincle_UnkMotion0_Phys(&GO[0]); } break; /* itTincle_UnkMotion0_Phys */
-            case 6: {  ret = (u32) itTincle_UnkMotion0_Coll(&GO[0]); } break; /* itTincle_UnkMotion0_Coll */
+            case 6: {  ret = (u32) ((itTincle_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion0_Coll */
             case 7: {  it_802EB870(&GO[0]); } break; /* it_802EB870 */
-            case 8: {  ret = (u32) itTincle_UnkMotion1_Anim(&GO[0]); } break; /* itTincle_UnkMotion1_Anim */
+            case 8: {  ret = (u32) ((itTincle_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion1_Anim */
             case 9: {  itTincle_UnkMotion1_Phys(&GO[0]); } break; /* itTincle_UnkMotion1_Phys */
-            case 10: {  ret = (u32) itTincle_UnkMotion1_Coll(&GO[0]); } break; /* itTincle_UnkMotion1_Coll */
+            case 10: {  ret = (u32) ((itTincle_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion1_Coll */
             case 11: {  it_802EBA00(&GO[0]); } break; /* it_802EBA00 */
-            case 12: {  ret = (u32) itTincle_UnkMotion2_Anim(&GO[0]); } break; /* itTincle_UnkMotion2_Anim */
+            case 12: {  ret = (u32) ((itTincle_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion2_Anim */
             case 13: {  itTincle_UnkMotion2_Phys(&GO[0]); } break; /* itTincle_UnkMotion2_Phys */
-            case 14: {  ret = (u32) itTincle_UnkMotion2_Coll(&GO[0]); } break; /* itTincle_UnkMotion2_Coll */
+            case 14: {  ret = (u32) ((itTincle_UnkMotion2_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion2_Coll */
             case 15: {  it_802EBD14(&GO[0]); } break; /* it_802EBD14 */
-            case 16: {  ret = (u32) itTincle_UnkMotion3_Anim(&GO[0]); } break; /* itTincle_UnkMotion3_Anim */
+            case 16: {  ret = (u32) ((itTincle_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion3_Anim */
             case 17: {  itTincle_UnkMotion3_Phys(&GO[0]); } break; /* itTincle_UnkMotion3_Phys */
-            case 18: {  ret = (u32) itTincle_UnkMotion3_Coll(&GO[0]); } break; /* itTincle_UnkMotion3_Coll */
+            case 18: {  ret = (u32) ((itTincle_UnkMotion3_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion3_Coll */
             case 19: {  it_802EBE5C(&GO[0]); } break; /* it_802EBE5C */
-            case 20: {  ret = (u32) itTincle_UnkMotion4_Anim(&GO[0]); } break; /* itTincle_UnkMotion4_Anim */
+            case 20: {  ret = (u32) ((itTincle_UnkMotion4_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion4_Anim */
             case 21: {  itTincle_UnkMotion4_Phys(&GO[0]); } break; /* itTincle_UnkMotion4_Phys */
-            case 22: {  ret = (u32) itTincle_UnkMotion4_Coll(&GO[0]); } break; /* itTincle_UnkMotion4_Coll */
+            case 22: {  ret = (u32) ((itTincle_UnkMotion4_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion4_Coll */
             case 23: {  it_802EBFAC(&GO[0]); } break; /* it_802EBFAC */
-            case 24: {  ret = (u32) itTincle_UnkMotion5_Anim(&GO[0]); } break; /* itTincle_UnkMotion5_Anim */
+            case 24: {  ret = (u32) ((itTincle_UnkMotion5_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion5_Anim */
             case 25: {  itTincle_UnkMotion5_Phys(&GO[0]); } break; /* itTincle_UnkMotion5_Phys */
-            case 26: {  ret = (u32) itTincle_UnkMotion5_Coll(&GO[0]); } break; /* itTincle_UnkMotion5_Coll */
+            case 26: {  ret = (u32) ((itTincle_UnkMotion5_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion5_Coll */
             case 27: {  it_802EC18C(&GO[0]); } break; /* it_802EC18C */
             case 28: {  it_802EC1F4(&GO[0]); } break; /* it_802EC1F4 */
-            case 29: {  ret = (u32) itTincle_UnkMotion7_Anim(&GO[0]); } break; /* itTincle_UnkMotion7_Anim */
+            case 29: {  ret = (u32) ((itTincle_UnkMotion7_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion7_Anim */
             case 30: {  itTincle_UnkMotion7_Phys(&GO[0]); } break; /* itTincle_UnkMotion7_Phys */
-            case 31: {  ret = (u32) itTincle_UnkMotion7_Coll(&GO[0]); } break; /* itTincle_UnkMotion7_Coll */
+            case 31: {  ret = (u32) ((itTincle_UnkMotion7_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion7_Coll */
             case 32: {  it_802EC35C(&GO[0]); } break; /* it_802EC35C */
-            case 33: {  ret = (u32) itTincle_UnkMotion8_Anim(&GO[0]); } break; /* itTincle_UnkMotion8_Anim */
+            case 33: {  ret = (u32) ((itTincle_UnkMotion8_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion8_Anim */
             case 34: {  itTincle_UnkMotion8_Phys(&GO[0]); } break; /* itTincle_UnkMotion8_Phys */
-            case 35: {  ret = (u32) itTincle_UnkMotion8_Coll(&GO[0]); } break; /* itTincle_UnkMotion8_Coll */
+            case 35: {  ret = (u32) ((itTincle_UnkMotion8_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion8_Coll */
             case 36: {  it_802EC3F4(&GO[0]); } break; /* it_802EC3F4 */
-            case 37: {  ret = (u32) itTincle_UnkMotion9_Anim(&GO[0]); } break; /* itTincle_UnkMotion9_Anim */
+            case 37: {  ret = (u32) ((itTincle_UnkMotion9_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion9_Anim */
             case 38: {  itTincle_UnkMotion9_Phys(&GO[0]); } break; /* itTincle_UnkMotion9_Phys */
-            case 39: {  ret = (u32) itTincle_UnkMotion9_Coll(&GO[0]); } break; /* itTincle_UnkMotion9_Coll */
+            case 39: {  ret = (u32) ((itTincle_UnkMotion9_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion9_Coll */
             case 40: {  it_802EC4D0(&GO[0]); } break; /* it_802EC4D0 */
-            case 41: {  ret = (u32) itTincle_UnkMotion10_Anim(&GO[0]); } break; /* itTincle_UnkMotion10_Anim */
+            case 41: {  ret = (u32) ((itTincle_UnkMotion10_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion10_Anim */
             case 42: {  itTincle_UnkMotion10_Phys(&GO[0]); } break; /* itTincle_UnkMotion10_Phys */
-            case 43: {  ret = (u32) itTincle_UnkMotion10_Coll(&GO[0]); } break; /* itTincle_UnkMotion10_Coll */
+            case 43: {  ret = (u32) ((itTincle_UnkMotion10_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion10_Coll */
             case 44: {  it_802EC604(&GO[0]); } break; /* it_802EC604 */
-            case 45: {  ret = (u32) itTincle_UnkMotion11_Anim(&GO[0]); } break; /* itTincle_UnkMotion11_Anim */
+            case 45: {  ret = (u32) ((itTincle_UnkMotion11_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion11_Anim */
             case 46: {  itTincle_UnkMotion11_Phys(&GO[0]); } break; /* itTincle_UnkMotion11_Phys */
-            case 47: {  ret = (u32) itTincle_UnkMotion11_Coll(&GO[0]); } break; /* itTincle_UnkMotion11_Coll */
+            case 47: {  ret = (u32) ((itTincle_UnkMotion11_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion11_Coll */
             case 48: {  it_802EC69C(&GO[0]); } break; /* it_802EC69C */
-            case 49: {  ret = (u32) itTincle_UnkMotion12_Anim(&GO[0]); } break; /* itTincle_UnkMotion12_Anim */
+            case 49: {  ret = (u32) ((itTincle_UnkMotion12_Anim(&GO[0])) != 0); } break; /* itTincle_UnkMotion12_Anim */
             case 50: {  itTincle_UnkMotion12_Phys(&GO[0]); } break; /* itTincle_UnkMotion12_Phys */
-            case 51: {  ret = (u32) itTincle_UnkMotion12_Coll(&GO[0]); } break; /* itTincle_UnkMotion12_Coll */
+            case 51: {  ret = (u32) ((itTincle_UnkMotion12_Coll(&GO[0])) != 0); } break; /* itTincle_UnkMotion12_Coll */
             case 52: {  it_802EC830(&GO[0]); } break; /* it_802EC830 */
             case 53: {  it_802EC850(&GO[0], &GO[1]); } break; /* it_802EC850 */
             case 54: { int v1 = (int) ((int) (rnd() % 2)); it_802EC870(&GO[0], v1); } break; /* it_802EC870 */

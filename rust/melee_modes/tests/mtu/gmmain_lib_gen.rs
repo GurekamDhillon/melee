@@ -167,7 +167,7 @@ pub fn fill_gmm_x0(p: &mut gmm_x0) {
     p.modes.table[i0].start.rules.x1C_pad[i1] = fv() as _;
     }
     p.modes.table[i0].start.rules.x20 = (((fv() as u64) << 32) | fv() as u64) as _;
-    p.modes.table[i0].start.rules.x28 = fv() as _;
+    p.modes.table[i0].start.rules.it_kind = fv() as _;
     p.modes.table[i0].start.rules.x2C = rg();
     p.modes.table[i0].start.rules.x30 = rg();
     p.modes.table[i0].start.rules.game_speed = rg();
@@ -598,7 +598,7 @@ pub fn hash_gmm_x0(p: &gmm_x0) {
     hm(p.modes.table[i0].start.rules.x1C_pad[i1] as u32);
     }
     hm(p.modes.table[i0].start.rules.x20 as u32); hm(((p.modes.table[i0].start.rules.x20 as u64) >> 32) as u32);
-    hm(p.modes.table[i0].start.rules.x28 as u32);
+    hm(p.modes.table[i0].start.rules.it_kind as u32);
     hm(p.modes.table[i0].start.rules.x2C.to_bits());
     hm(p.modes.table[i0].start.rules.x30.to_bits());
     hm(p.modes.table[i0].start.rules.game_speed.to_bits());

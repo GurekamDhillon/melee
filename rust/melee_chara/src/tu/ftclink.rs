@@ -173,14 +173,14 @@ pub fn ftCl_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*ea).attackairlw_hit_anim_frame_end = ext::lbAnim_8001E8F8(ext::ftData_80085E50(fp, 72));
         ext::ftLk_Init_OnLoadForCLink(fp);
         ea = (*fp).dat_attrs as *mut ftLk_DatAttrs;
-        ext::it_8026B3F8(*items.add(0), (*ea).x48);
-        ext::it_8026B3F8(*items.add(1), (*ea).x2C);
-        ext::it_8026B3F8(*items.add(2), (*ea).xBC);
-        ext::it_8026B3F8(*items.add(3), (*ea).xC);
-        ext::it_8026B3F8(*items.add(4), (*ea).x10);
-        ext::it_8026B3F8(*items.add(5), It_Kind_CLink_Milk as i32);
+        ext::it_8026B3F8((*items.add(0)).article as *mut ::core::ffi::c_void, (*ea).x48);
+        ext::it_8026B3F8((*items.add(1)).article as *mut ::core::ffi::c_void, (*ea).x2C);
+        ext::it_8026B3F8((*items.add(2)).article as *mut ::core::ffi::c_void, (*ea).xBC);
+        ext::it_8026B3F8((*items.add(3)).article as *mut ::core::ffi::c_void, (*ea).xC);
+        ext::it_8026B3F8((*items.add(4)).article as *mut ::core::ffi::c_void, (*ea).x10);
+        ext::it_8026B3F8((*items.add(5)).article as *mut ::core::ffi::c_void, It_Kind_CLink_Milk as i32);
         let t = *fh::fighter_804d6540().add((*fp).kind as usize);
-        ext::ftParts_800753D4(fp, (*t).x0, *items.add(6));
+        ext::ftParts_800753D4(fp, (*t).x0, (*items.add(6)).joint as *mut ::core::ffi::c_void);
     }
 }
 
@@ -254,9 +254,9 @@ pub fn ftCl_Init_8014919C(gobj: *mut HSD_GObj) {
         if (*fp).x5F4_arr[2].prev == 0 {
             let da = (*fp).dat_attrs as *mut ftLk_DatAttrs;
             ext::ftColl_8007B1B8(gobj, &mut (*da).xC4 as *mut AbsorbDesc as *mut _, Some(cb_ftCl_Init_80149114));
-            (*fp).anon_221b.set_x221B_b3(1);
-            (*fp).anon_221b.set_x221B_b4(1);
-            (*fp).anon_221b.set_x221B_b2(1);
+            (*fp).x221B.set_x221B_b3(1);
+            (*fp).x221B.set_x221B_b4(1);
+            (*fp).x221B.set_x221B_b2(1);
         }
     }
 }

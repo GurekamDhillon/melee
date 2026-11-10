@@ -30,7 +30,7 @@ pub mod ext {
         pub static mut HSD_JObjSetupMatrixSub: Option<fn(*mut HSD_JObj)> = None;
         pub static mut HSD_JObjWalkTree: Option<fn(*mut HSD_JObj, Option<unsafe extern "C" fn(*mut HSD_JObj, *mut *mut f32, i32)>, *mut *mut f32)> = None;
         pub static mut HSD_LObjGetFlags: Option<fn(*mut HSD_LObj) -> u32> = None;
-        pub static mut HSD_QuatLib_8037EF28: Option<fn(*mut Quaternion, *mut Quaternion, *mut Quaternion, f32) -> i32> = None;
+        pub static mut QuatSlerp: Option<fn(*mut Quaternion, *mut Quaternion, *mut Quaternion, f32) -> i32> = None;
         pub static mut HSD_RObjAlloc: Option<fn() -> *mut HSD_RObj> = None;
         pub static mut HSD_RObjGetByType: Option<fn(*mut HSD_RObj, u32, u32) -> *mut HSD_RObj> = None;
         pub static mut HSD_RObjRemove: Option<fn(*mut HSD_RObj)> = None;
@@ -77,8 +77,8 @@ pub mod ext {
     pub fn HSD_LObjGetFlags(a0: *mut HSD_LObj) -> u32 {
         match unsafe { hook::HSD_LObjGetFlags } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_LObjGetFlags is not ported") } }
     }
-    pub fn HSD_QuatLib_8037EF28(a0: *mut Quaternion, a1: *mut Quaternion, a2: *mut Quaternion, a3: f32) -> i32 {
-        match unsafe { hook::HSD_QuatLib_8037EF28 } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: HSD_QuatLib_8037EF28 is not ported") } }
+    pub fn QuatSlerp(a0: *mut Quaternion, a1: *mut Quaternion, a2: *mut Quaternion, a3: f32) -> i32 {
+        match unsafe { hook::QuatSlerp } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: QuatSlerp is not ported") } }
     }
     pub fn HSD_RObjAlloc() -> *mut HSD_RObj {
         match unsafe { hook::HSD_RObjAlloc } { Some(f) => f(), None => { melee_core::unported!("TODO: HSD_RObjAlloc is not ported") } }
@@ -653,7 +653,7 @@ pub unsafe fn lb_8000C490(jobj1: *mut HSD_JObj, jobj2: *mut HSD_JObj, arg2: *mut
         quat2.z = -quat2.z;
         quat2.w = -quat2.w;
     }
-    ext::HSD_QuatLib_8037EF28(&mut quat1, &mut quat2, &mut a2.rotate, arg9);
+    ext::QuatSlerp(&mut quat1, &mut quat2, &mut a2.rotate, arg9);
     ext::HSD_JObjSetFlags(arg2, 0x20000);
     ext::HSD_JObjSetFlags(arg2, 0x40);
 }
@@ -729,7 +729,7 @@ pub unsafe fn lb_8000C868(arg0: *mut HSD_Joint, arg1: *mut HSD_JObj, arg2: *mut 
         sp94.z = -sp94.z;
         sp94.w = -sp94.w;
     }
-    ext::HSD_QuatLib_8037EF28(&mut sp_a4, &mut sp94, &mut j2.rotate, arg9);
+    ext::QuatSlerp(&mut sp_a4, &mut sp94, &mut j2.rotate, arg9);
     ext::HSD_JObjSetFlags(arg2, 0x20000);
     ext::HSD_JObjSetFlags(arg2, 0x40);
 }

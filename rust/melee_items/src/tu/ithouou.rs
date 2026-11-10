@@ -406,7 +406,7 @@ pub unsafe extern "C" fn it_802D2C78(gobj: *mut Item_GObj) {
         let ip2 = ip_of(gobj);
         ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as u32);
         set_effect_hitlag_callbacks(ip2);
-        (*ip).xDD1_flag.anon_0.set_b1(1);
+        (*ip).xDD1_flag.x0.set_b1(1);
     }
 }
 
@@ -460,7 +460,7 @@ pub unsafe extern "C" fn it_802D2D2C(gobj: *mut Item_GObj) {
         spawn.kind = It_Kind_Houou_SacredFire;
         spawn.x0_parent_gobj = (*ip).owner;
         spawn.x4_parent_gobj2 = gobj;
-        spawn.x44_flag.anon_0.set_b0(1);
+        spawn.x44_flag.x0.set_b0(1);
         spawn.x40 = 0;
         let new_gobj = ext::Item_80268B18(&mut spawn);
         (*ip_of(new_gobj)).xDD4_itemVar.houou.timer = line_id;

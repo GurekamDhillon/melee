@@ -72,8 +72,8 @@ pub mod ext {
         FTCO_800A5A90 ftCo_800A5A90(fp: *mut Fighter) -> i32;
         FTCO_IS_GRABBING ftCo_IsGrabbing(fp: *mut Fighter) -> i32;
         FTCO_IS_ALLY ftCo_IsAlly(a: *mut Fighter, b: *mut Fighter) -> i32;
-        MPISLAND_8005AC14 mpIsland_8005AC14(pos: *mut Vec3, f: f32) -> *mut mp_UnkStruct0;
-        MPISLAND_8005ACE8 mpIsland_8005ACE8(isl: *mut mp_UnkStruct0, a: *mut Vec3, b: *mut Vec3);
+        MPISLAND_8005AC14 mpIsland_8005AC14(pos: *mut Vec3, f: f32) -> *mut mpIsland;
+        MPISLAND_8005ACE8 mpIsland_8005ACE8(isl: *mut mpIsland, a: *mut Vec3, b: *mut Vec3);
         MP_CHECK_CEILING mpCheckCeiling(x0: f32, y0: f32, x1: f32, y1: f32, p: *mut Vec3, line: *mut i32, flags: *mut u32, n: *mut Vec3, a: i32, b: i32) -> i32;
         MP_CHECK_ALL mpCheckAll(p: *mut Vec3, line: *mut i32, flags: *mut u32, n: *mut Vec3, a: i32, b: i32, x0: f32, y0: f32, x1: f32, y1: f32) -> i32;
         IT_8026B960 it_8026B960(g: *mut HSD_GObj) -> f32;
@@ -1091,7 +1091,7 @@ pub fn ftCo_800B8A9C(fp: *mut Fighter) -> bool {
     };
     if f.ground_or_air == GA_Air {
         if ftCo_800B89CC(fp) {
-            let r = ftCo_800B4AB0(fp, target, table_list(tb.x8, k));
+            let r = ftCo_800B4AB0(fp, target, table_list(tb.x8 as *mut *mut ::core::ffi::c_void, k));
             if done(f, r) {
                 return true;
             }
@@ -1102,7 +1102,7 @@ pub fn ftCo_800B8A9C(fp: *mut Fighter) -> bool {
     if ext::ftCo_800A3134(target) != 0 || ext::ftCo_800A3200(target) != 0 {
         push_a8(f, 0xA);
         push_a8(f, 0xE);
-        let r = ftCo_800B4AB0(fp, target, table_list(tb.x4, k));
+        let r = ftCo_800B4AB0(fp, target, table_list(tb.x4 as *mut *mut ::core::ffi::c_void, k));
         if done(f, r) {
             return true;
         }
@@ -1112,13 +1112,13 @@ pub fn ftCo_800B8A9C(fp: *mut Fighter) -> bool {
     if !f.item_gobj.is_null() && ext::ftCo_800A59E4(unsafe { (*f.item_gobj).user_data } as *mut Item) != 0 {
         let item = unsafe { (*f.item_gobj).user_data } as *mut Item;
         let reach = weapon_reach(item);
-        let r = ftCo_800B52AC(fp, target, table_list(tb.x18, k), reach);
+        let r = ftCo_800B52AC(fp, target, table_list(tb.x18 as *mut *mut ::core::ffi::c_void, k), reach);
         if done(f, r) {
             return true;
         }
     }
     if f.cpu.level > 5 && ftCo_800B9F6C(target) {
-        let r = ftCo_800B4AB0(fp, target, table_list(tb.x10, k));
+        let r = ftCo_800B4AB0(fp, target, table_list(tb.x10 as *mut *mut ::core::ffi::c_void, k));
         if done(f, r) {
             return true;
         }
@@ -1132,20 +1132,20 @@ pub fn ftCo_800B8A9C(fp: *mut Fighter) -> bool {
         no_floor_below(&mut c, t.cur_pos.x, t.cur_pos.y)
     };
     if open_floor {
-        let r = ftCo_800B4AB0(fp, target, table_list(tb.x1C, k));
+        let r = ftCo_800B4AB0(fp, target, table_list(tb.x1C as *mut *mut ::core::ffi::c_void, k));
         if r != 0 {
             f.cpu.xA4 = r;
             f.cpu.set_xF8_b7(1);
             return true;
         }
     }
-    let r = ftCo_800B4AB0(fp, target, table_list(tb.x4, k));
+    let r = ftCo_800B4AB0(fp, target, table_list(tb.x4 as *mut *mut ::core::ffi::c_void, k));
     if done(f, r) {
         return true;
     }
-    if f.cpu.x50 != 0 {
+    if !f.cpu.x50.is_null() {
         let item = f.cpu.x50 as usize as *mut Item;
-        let r = ftCo_800B5AB0(fp, item, table_list(tb.x14, k));
+        let r = ftCo_800B5AB0(fp, item, table_list(tb.x14 as *mut *mut ::core::ffi::c_void, k));
         if done(f, r) {
             return true;
         }
@@ -1252,11 +1252,11 @@ pub fn ftCo_800B9340(fp: *mut Fighter) {
         cmd0(f, CpuCmd_ReleaseB as u8);
         cmd1(f, CpuCmd_WaitFor as u8, 1);
         cmd0(f, CpuCmd_Done as u8);
-    } else if (abs_c(unsafe { (*isl).x14.x } - f.cur_pos.x) as f64) < 10.0 {
+    } else if (abs_c(unsafe { (*isl).pos1.x } - f.cur_pos.x) as f64) < 10.0 {
         cmd1(f, CpuCmd_SetLstickY as u8, 0);
         cmd1(f, CpuCmd_SetLstickX as u8, (-0x7Fi8) as u8);
         cmd0(f, CpuCmd_Done as u8);
-    } else if (abs_c(unsafe { (*isl).x8.x } - f.cur_pos.x) as f64) < 10.0 {
+    } else if (abs_c(unsafe { (*isl).pos0.x } - f.cur_pos.x) as f64) < 10.0 {
         cmd1(f, CpuCmd_SetLstickY as u8, 0);
         cmd1(f, CpuCmd_SetLstickX as u8, 0x7F);
         cmd0(f, CpuCmd_Done as u8);
@@ -1475,7 +1475,7 @@ pub fn ftCo_800B9CBC(fp: *mut Fighter) -> bool {
         return false;
     }
     if (ang as f64) < PI_DEG5 && ang as f64 > -PI_DEG5 {
-        f.cpu.xA4 = ftCo_800B6208(table_list(tables().xC, k));
+        f.cpu.xA4 = ftCo_800B6208(table_list(tables().xC as *mut *mut ::core::ffi::c_void, k));
         return f.cpu.xA4 != 0;
     }
     false

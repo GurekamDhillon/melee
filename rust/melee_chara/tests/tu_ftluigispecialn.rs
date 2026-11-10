@@ -42,9 +42,9 @@ fn iasa_and_fire_spawn() {
     t::ftLg_SpecialAirN_IASA(gp);
     // No spawn flag: nothing; flag set: one fireball + effect, and the flag is consumed.
     t::ftLg_SpecialN_FireSpawn(gp);
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(1) };
     t::ftLg_SpecialN_FireSpawn(gp);
-    assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b0() }, 0);
+    assert_eq!(unsafe { f.x2210.x0.throw_flags_b0() }, 0);
     t::ftLg_SpecialN_FireSpawn(gp);
     assert_eq!(unsafe { LOG.join(",") }, "wait,fall,fire 4 6 105 -1,ef 1287 2");
 }

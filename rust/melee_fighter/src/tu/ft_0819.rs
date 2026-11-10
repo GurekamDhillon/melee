@@ -78,7 +78,7 @@ fn inline_a0(g: G) {
             if ext::lb_80014638(&f.dmg.x1930, &ip.xB54) {
                 ip.xCD0 = if ip.pos.x > f.cur_pos.x { -1.0 } else { 1.0 };
                 ip.xCFC = g;
-                ip.xCB0_source_ply = f.player_id as i32;
+                ip.xCB0_source_ply = f.player_idx as i32;
                 f.dmg.x1950 = 1;
             }
         }

@@ -74,7 +74,7 @@ void (Script_GameEvent)(__typeof__(int) a0, __typeof__(int) a1, __typeof__(int) 
 // stub Script_GameEvent = 1030
 void (ftCo_80094138)(__typeof__(struct Fighter *) a0) { T(1031); T(PI((const void*) a0)); }
 // stub ftCo_80094138 = 1031
-__typeof__(int) (ftCo_800BFFD0)(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1032); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
+__typeof__(int) (ftCo_800BFFD0)(__typeof__(struct Fighter *) a0, __typeof__(enum FtColAnim) a1, __typeof__(int) a2) { T(1032); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
 // stub ftCo_800BFFD0 = 1032
 void (ftCo_800C0200)(__typeof__(struct Fighter *) a0, __typeof__(int) a1) { T(1033); T(PI((const void*) a0)); T((u32) a1); }
 // stub ftCo_800C0200 = 1033
@@ -82,7 +82,7 @@ __typeof__(int) (ftCo_800C0694)(__typeof__(struct Fighter *) a0) { T(1034); T(PI
 // stub ftCo_800C0694 = 1034
 void (ftCo_800C0874)(__typeof__(struct HSD_GObj *) a0, __typeof__(void *) a1, __typeof__(enum ftCommon_BuryType) a2) { T(1035); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); }
 // stub ftCo_800C0874 = 1035
-void (ftCo_800C08A0)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(struct DynamicsDesc *) a2, __typeof__(enum ftCommon_BuryType) a3) { T(1036); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T((u32) a3); }
+void (ftCo_800C08A0)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1, __typeof__(struct lbColl_80008D30_arg1 *) a2, __typeof__(enum ftCommon_BuryType) a3) { T(1036); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T((u32) a3); }
 // stub ftCo_800C08A0 = 1036
 __typeof__(int) (ftCo_800C0A28)(__typeof__(struct HSD_GObj *) a0, __typeof__(void *) a1, __typeof__(enum ftCommon_BuryType) a2) { T(1037); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); return (__typeof__(int)) (fv()); }
 // stub ftCo_800C0A28 = 1037
@@ -92,34 +92,34 @@ __typeof__(float) (ftCo_800DEEB8)(__typeof__(struct Fighter *) a0, __typeof__(fl
 // stub ftCo_800DEEB8 = 1039
 __typeof__(float) (ftCo_CalcYScaledKnockback)(__typeof__(float) a0, __typeof__(float) a1, __typeof__(float) a2) { T(1040); T(B(a0)); T(B(a1)); T(B(a2)); return (__typeof__(float)) (rg()); }
 // stub ftCo_CalcYScaledKnockback = 1040
-void (ftCommon_8007EBAC)(__typeof__(struct Fighter *) a0, __typeof__(unsigned int) a1, __typeof__(unsigned int) a2) { T(1041); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
-// stub ftCommon_8007EBAC = 1041
-__typeof__(float (*)[4]) (ftCommon_8007F804)(__typeof__(struct Fighter *) a0) { T(1042); T(PI((const void*) a0)); return (__typeof__(float (*)[4])) (0); }
-// stub ftCommon_8007F804 = 1042
-__typeof__(int) (ftLib_IsFighter)(__typeof__(struct HSD_GObj *) a0) { T(1043); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub ftLib_IsFighter = 1043
-__typeof__(int) (ftLib_IsSamePlayer)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1044); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
-// stub ftLib_IsSamePlayer = 1044
-__typeof__(int) (ft_80084CE4)(__typeof__(struct Fighter *) a0, __typeof__(struct Fighter *) a1) { T(1045); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
-// stub ft_80084CE4 = 1045
-void (ft_80088080)(__typeof__(struct Fighter *) a0) { T(1046); T(PI((const void*) a0)); }
-// stub ft_80088080 = 1046
-__typeof__(float) (ft_80089228)(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(float) a3) { T(1047); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T(B(a3)); return (__typeof__(float)) (rg()); }
-// stub ft_80089228 = 1047
-void (ft_PlaySFX)(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1048); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
-// stub ft_PlaySFX = 1048
-__typeof__(int) (gm_8016B0D4)(void) { T(1049); return (__typeof__(int)) (fv()); }
-// stub gm_8016B0D4 = 1049
-__typeof__(int) (gm_8016B168)(void) { T(1050); return (__typeof__(int)) (fv()); }
-// stub gm_8016B168 = 1050
-__typeof__(int) (gm_8016B1C4)(void) { T(1051); return (__typeof__(int)) (fv()); }
-// stub gm_8016B1C4 = 1051
-__typeof__(float) (gm_8016B248)(void) { T(1052); return (__typeof__(float)) (rg()); }
-// stub gm_8016B248 = 1052
-__typeof__(int) (itGetAttackId)(__typeof__(struct HSD_GObj *) a0) { T(1053); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-// stub itGetAttackId = 1053
-__typeof__(struct HSD_GObj *) (itGetOwner)(__typeof__(struct HSD_GObj *) a0) { T(1054); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (0); }
-// stub itGetOwner = 1054
+void (ftColl_80076444)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1041); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+// stub ftColl_80076444 = 1041
+void (ftColl_8007646C)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1042); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+// stub ftColl_8007646C = 1042
+void (ftCommon_8007EBAC)(__typeof__(struct Fighter *) a0, __typeof__(unsigned int) a1, __typeof__(unsigned int) a2) { T(1043); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
+// stub ftCommon_8007EBAC = 1043
+__typeof__(float (*)[4]) (ftCommon_8007F804)(__typeof__(struct Fighter *) a0) { T(1044); T(PI((const void*) a0)); return (__typeof__(float (*)[4])) (0); }
+// stub ftCommon_8007F804 = 1044
+__typeof__(int) (ftLib_IsFighter)(__typeof__(struct HSD_GObj *) a0) { T(1045); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+// stub ftLib_IsFighter = 1045
+__typeof__(int) (ftLib_IsSamePlayer)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_GObj *) a1) { T(1046); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
+// stub ftLib_IsSamePlayer = 1046
+__typeof__(int) (ft_80084CE4)(__typeof__(struct Fighter *) a0, __typeof__(struct Fighter *) a1) { T(1047); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(int)) (fv()); }
+// stub ft_80084CE4 = 1047
+void (ft_80088080)(__typeof__(struct Fighter *) a0) { T(1048); T(PI((const void*) a0)); }
+// stub ft_80088080 = 1048
+__typeof__(float) (ft_80089228)(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(float) a3) { T(1049); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T(B(a3)); return (__typeof__(float)) (rg()); }
+// stub ft_80089228 = 1049
+void (ft_PlaySFX)(__typeof__(struct Fighter *) a0, __typeof__(int) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1050); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
+// stub ft_PlaySFX = 1050
+__typeof__(int) (gm_8016B0D4)(void) { T(1051); return (__typeof__(int)) (fv()); }
+// stub gm_8016B0D4 = 1051
+__typeof__(int) (gm_8016B168)(void) { T(1052); return (__typeof__(int)) (fv()); }
+// stub gm_8016B168 = 1052
+__typeof__(int) (gm_8016B1C4)(void) { T(1053); return (__typeof__(int)) (fv()); }
+// stub gm_8016B1C4 = 1053
+__typeof__(float) (gm_8016B248)(void) { T(1054); return (__typeof__(float)) (rg()); }
+// stub gm_8016B248 = 1054
 __typeof__(float) (it_8026B1D4)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HitCapsule *) a1) { T(1055); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(float)) (rg()); }
 // stub it_8026B1D4 = 1055
 __typeof__(int) (it_8026B588)(void) { T(1056); return (__typeof__(int)) (fv()); }

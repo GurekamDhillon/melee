@@ -11,7 +11,7 @@ SPEC = dict(
 void __assert(const char* f, u32 l, const char* c) { (void) f; (void) l; (void) c; for (;;) {} }
 """,
     outs={"lb_8000B1CC": [2]},
-    bitfields=[("throw_flags_b0", "anon_2210.anon_0.throw_flags_b0"), ("x2219_b0", "x2219_b0")],
+    bitfields=[("x2210.x0.throw_flags_b0", "x2210.x0.throw_flags_b0"), ("x2219_b0", "x2219_b0")],
     motions=[349, 351, 350, 352],
     fnvals={
         "efLib_PauseAll": CB + "ext__efLib_PauseAll",
@@ -19,6 +19,6 @@ void __assert(const char* f, u32 l, const char* c) { (void) f; (void) l; (void) 
     },
     funcs=[
         "ftSs_SpecialN_80129258",
-        dict(name="ftSs_SpecialS_8012A074", bf=["throw_flags_b0", "x2219_b0"]),
+        dict(name="ftSs_SpecialS_8012A074", bf=["x2210.x0.throw_flags_b0", "x2219_b0"]),
     ],
 )

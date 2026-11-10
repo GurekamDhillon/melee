@@ -82,8 +82,26 @@ unsafe fn install_hooks() {
     m::ext::LBFILE_800168A0 = Some(|a0, a1, a2, a3| { t(9001); t(a0 as u32); t(pi(a1)); *a2 = if fv() & 3 != 0 { (*PADB)[(fv() % 96) as usize].as_mut_ptr() as *mut c_void } else { null_mut() }; *a3 = fv() as usize; });
     m::ext::HSD_OBJ_ALLOC_X59C = Some(|| { t(9002); t(0xFFFF_FFFF); null_mut() });
     m::ext::OS_REPORT = Some(|_| {});
-    m::ext::GC_ADDR32 = Some(|p| p as usize as u32);
-    m::ext::GC_PTR = Some(|a| a as usize as *mut c_void);
+    // guest addresses: the C keeps native pointers (Fighter.x5A8, the anim rows' x14) and hashes them by region, so the
+    // port's gc_addr32 / gc_ptr must round-trip a 64-bit pointer and keep base + offset arithmetic: 256 MB segments,
+    // token = (segment + 1) << 28 | low 28 bits
+    static mut GC_SEG: [usize; 15] = [0; 15];
+    fn gc_tok(p: *const c_void) -> u32 {
+        if (p as usize) < 0x1000_0000 { return p as usize as u32; } // null and the small ARAM-style offsets stay as they are
+        let (hi, lo) = ((p as usize) & !0x0FFF_FFFF, (p as usize) & 0x0FFF_FFFF);
+        unsafe {
+            for i in 0..15 { if GC_SEG[i] == hi { return ((i as u32 + 1) << 28) | lo as u32; } }
+            for i in 0..15 { if GC_SEG[i] == 0 { GC_SEG[i] = hi; return ((i as u32 + 1) << 28) | lo as u32; } }
+        }
+        panic!("gc_tok: more than 15 segments")
+    }
+    fn gc_back(a: u32) -> *mut c_void {
+        let s = (a >> 28) as usize;
+        if s == 0 { return a as usize as *mut c_void; }
+        unsafe { (GC_SEG[s - 1] | (a & 0x0FFF_FFFF) as usize) as *mut c_void }
+    }
+    m::ext::GC_ADDR32 = Some(|p| gc_tok(p));
+    m::ext::GC_PTR = Some(|a| gc_back(a));
 
 }
 
@@ -104,8 +122,8 @@ unsafe fn world() {
         (*FT)[i].gobj = &raw mut (*GO)[i];
         (*FT)[i].ft_data = &raw mut (*FDATA)[i];
         (*FT)[i].grab_cb = Some(cbev1); (*FT)[i].grabbed_cb = Some(cbev3);
-        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_id %= 4; (*FT)[i].x618_player_id %= 4;
-        for b in 0..64 { if b < NP { fill_FighterBone(&mut (*PARTS)[i][b]); } else { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].anon_8.anon_0.set_flags_b1(1); } (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
+        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_idx %= 4; (*FT)[i].pad_port %= 4;
+        for b in 0..64 { if b < NP { fill_FighterBone(&mut (*PARTS)[i][b]); } else { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].x8.x0.set_flags_b1(1); } (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
         (*FT)[i].parts = (*PARTS)[i].as_mut_ptr();
 // the ftData pointer words: one pad block each (the C driver's order)
         { let mut pk = i * 24; macro_rules! nx { () => {{ pk += 1; (*PADB)[pk - 1].as_mut_ptr() as *mut _ }}; }
@@ -245,14 +263,14 @@ unsafe fn world() {
         for k_ in 0..KM { ts.prepared[k_] = fv() as u8; } }
       for k_ in 0..KM { fdm::GenoDefine_ContentIdentity[k_][0] = fv(); fdm::GenoDefine_ContentIdentity[k_][1] = fv(); fdm::GenoDefine_InterpreterAttempts[k_] = fv(); }
       for q_ in 0..NG {
-        (*FT)[q_].kind = ((*FT)[q_].kind as u32 % 27) as _; (*FT)[q_].x619_costume_id %= 4;
+        (*FT)[q_].kind = ((*FT)[q_].kind as u32 % 27) as _; (*FT)[q_].costume_id %= 4;
         (*FT)[q_].x24 = (*PADB)[70 + q_].as_mut_ptr() as *mut Fighter_WaitAnimData; (*FT)[q_].x59C = (*PADB)[80 + q_].as_mut_ptr() as *mut _;
-        (*FT)[q_].x5A4 = (fv() % 8) as usize as *mut c_void; (*FT)[q_].x5A8 = pw() as *mut c_void; (*FT)[q_].x58C = fv() % 70;
+        (*FT)[q_].x5A4 = (fv() % 8) as usize; (*FT)[q_].x5A8 = pw() as usize; (*FT)[q_].x58C = fv() % 70;
         for j_ in 0..64usize {
           let r_ = (*PADB)[70 + q_].as_mut_ptr().cast::<Fighter_WaitAnimData>().add(j_);
-          (*r_).x0 = pw() as *mut _; (*r_).x4 = (fv() % 256) as i32; (*r_).x8 = (fv() % 1024) as i32; (*r_).xC = pw() as *mut _; (*r_).x10_animCurrFlags = fv() as i32; (*r_).x14 = fv() % 8;
+          (*r_).x0 = pw() as *mut _; (*r_).x4 = (fv() % 256) as i32; (*r_).x8 = (fv() % 1024) as i32; (*r_).xC = pw() as *mut _; (*r_).x10_animCurrFlags = fv() as i32; (*r_).x14 = ((fv() % 8) as usize);
           let r_ = (*PADB)[3 + q_ * 24].as_mut_ptr().cast::<Fighter_WaitAnimData>().add(j_);
-          (*r_).x0 = pw() as *mut _; (*r_).x4 = (fv() % 256) as i32; (*r_).x8 = (fv() % 1024) as i32; (*r_).xC = pw() as *mut _; (*r_).x10_animCurrFlags = fv() as i32; (*r_).x14 = fv() % 8;
+          (*r_).x0 = pw() as *mut _; (*r_).x4 = (fv() % 256) as i32; (*r_).x8 = (fv() % 1024) as i32; (*r_).xC = pw() as *mut _; (*r_).x10_animCurrFlags = fv() as i32; (*r_).x14 = ((fv() % 8) as usize);
         }
       }
     }
@@ -327,7 +345,7 @@ unsafe fn hworld() {
       { let ts = fdm::throw_state();
         for q_ in 0..6 { hm(ts.banks[q_].kind as u32); hm(pi(ts.banks[q_].buf as *const u8)); hm(ts.banks[q_].cap as u32); hm(ts.banks[q_].sz as u32); }
         hm(ts.loads); hm(ts.evicts); hm(pi(ts.region_cur as *const u8)); }
-      for k_ in 0..(16384 / core::mem::size_of::<Fighter_WaitAnimData>()) { let r_ = (*MEMBUF2).as_ptr().cast::<Fighter_WaitAnimData>().add(k_); hm(pi((*r_).x0 as *const u8)); hm((*r_).x4 as u32); hm((*r_).x8 as u32); hm(pi((*r_).xC as *const u8)); hm((*r_).x10_animCurrFlags as u32); hm((*r_).x14); }
+      for k_ in 0..(16384 / 8) { let w_ = *(*MEMBUF2).as_ptr().cast::<u64>().add(k_); if w_ >> 32 != 0 { hm(pi(w_ as usize as *const u8)); } else { hm(w_ as u32); } }
     }
 
 }

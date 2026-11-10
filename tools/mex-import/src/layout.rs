@@ -247,7 +247,7 @@ mod tests {
         let m = r.resolve(ft, 0x10C, 4).unwrap();
         assert_eq!(m.leaf_ptr, r.find("ftData"));
         let m = r.resolve(ft, 0x594, 4).unwrap();
-        assert!(m.native_path.starts_with("Fighter.anon_594"), "{}", m.native_path);
+        assert!(m.native_path.starts_with("Fighter.x594"), "{}", m.native_path); // the union is named x594 upstream
         // an array of records: HitCapsule[4] at 0x914, element 2
         let hc = r.size(r.find("HitCapsule").unwrap());
         let m = r.resolve(ft, 0x914 + 2 * hc, 4).unwrap();

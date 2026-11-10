@@ -26,7 +26,7 @@ pub fn pi<T>(p: *const T) -> u32 {
     if p == &fr2.xDF4[1] as *const HitCapsule as usize { return 21; }
     if p == &fr.dmg.facing_dir_1 as *const f32 as usize { return 22; }
     if p == &fr2.dmg.facing_dir_1 as *const f32 as usize { return 23; }
-    if p == &fr.x60C as *const *mut core::ffi::c_void as usize { return 24; }
+    if p == &fr.x60C as *const *mut EF_QueuedEffect as usize { return 24; }
     9
 }
 

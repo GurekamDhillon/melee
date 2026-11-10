@@ -38,6 +38,7 @@ pub static mut IA: [i32; 4] = [0; 4];
 pub static mut UA: [u32; 4] = [0; 4];
 pub static mut FA: [f32; 4] = [0.0; 4];
 pub static mut BUF: [u8; 256] = [0; 256];
+pub static mut PPA: [*mut c_void; 4] = [core::ptr::null_mut(); 4];
 pub static mut STRS: [[u8; 64]; 4] = [[0; 64]; 4];
 pub static mut WO: [HSD_WObj; 3] = unsafe { core::mem::zeroed() };
 pub static mut AO: [HSD_AObj; 3] = unsafe { core::mem::zeroed() };
@@ -97,7 +98,7 @@ pub fn pick_fn(kind: i32) -> usize {
     }
 }
 pub fn pick_cb(kind: i32) -> usize { let f = pick_fn(kind); if f != 0 { f } else if kind == 2 { cbp1 as usize } else if kind == 3 { cbev3 as usize } else if kind == 4 { cbi1 as usize } else { cbev1 as usize } }
-pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); freg(cbi1 as usize); freg(cbi2 as usize); }
+pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); freg(cbi1 as usize); freg(cbi2 as usize);  }
 pub fn preg_world() {
     unsafe {
         preg(&raw const WO, core::mem::size_of_val(&WO));
@@ -114,12 +115,11 @@ pub fn preg_world() {
         preg(&raw const RD, core::mem::size_of_val(&RD));
         preg(&raw const RJ, core::mem::size_of_val(&RJ));
         preg(&raw const VA, core::mem::size_of_val(&VA)); preg(&raw const U8A, 16); preg(&raw const IA, 16); preg(&raw const UA, 16); preg(&raw const FA, 16);
-        preg(&raw const BUF, 256); preg(&raw const STRS, core::mem::size_of_val(&STRS));
+        preg(&raw const BUF, 256); preg(&raw const STRS, core::mem::size_of_val(&STRS)); preg(&raw const PPA, core::mem::size_of_val(&PPA));
     }
 }
 
 pub unsafe fn setup_world() {
-    melee_runtime::tu::wobj::ext::use_ext_data = true;
     WO = core::mem::zeroed();
     AO = core::mem::zeroed();
     RO = core::mem::zeroed();
@@ -138,6 +138,7 @@ pub unsafe fn setup_world() {
     for i in 0..4 { IA[i] = fv() as i32; UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }
     for i in 0..256 { BUF[i] = rnd() as u8; }
     BUF[255] = 0;
+    for i in 0..4 { PPA[i] = core::ptr::null_mut(); }
     for i in 0..3 { g::fill_HSD_WObj(&mut WO[i]); }
     for i in 0..3 { g::fill_HSD_AObj(&mut AO[i]); }
     for i in 0..2 { g::fill_HSD_RObj(&mut RO[i]); }
@@ -172,6 +173,7 @@ pub unsafe fn hash_world() {
     for i in 0..4 { hm(VA[i].x.to_bits()); hm(VA[i].y.to_bits()); hm(VA[i].z.to_bits()); hm(FA[i].to_bits()); hm(IA[i] as u32); hm(UA[i]); }
     for i in 0..16 { hm(U8A[i] as u32); }
     for i in 0..256 { hm(BUF[i] as u32); }
+    for i in 0..4 { hm(pi(PPA[i])); }
     g::hashg_all();
     g::hasho_all();
 }
@@ -216,7 +218,7 @@ fn wobj_matches_c() {
             for k in 0..n {
                 case(op, k);
                 setup_world();
-{ for q in 0..2usize { WI[q].load = Some(m::WObjLoad); } for q in 0..3usize { WO[q].parent.parent.class_info = (&raw mut WI[q & 1]) as *mut HSD_ClassInfo; WO[q].aobj = if fv() & 3 != 0 { &raw mut AO[(fv() % 3) as usize] } else { null_mut() }; WO[q].robj = if fv() & 3 != 0 { &raw mut RO[(fv() & 1) as usize] } else { null_mut() }; } for q in 0..3usize { AO[q].hsd_obj = (&raw mut JO[q & 1]) as *mut HSD_Obj; } for q in 0..2usize { JO[q].u.spline = if fv() & 3 != 0 { &raw mut SPL[0] } else { null_mut() }; } m::hsdWObj.parent.parent.head.parent = &raw mut CI[0]; CI[0].release = Some(core::mem::transmute::<usize, unsafe extern "C" fn(*mut HSD_Class)>(cbev1 as usize)); CI[0].amnesia = Some(core::mem::transmute::<usize, unsafe extern "C" fn(*mut HSD_ClassInfo)>(cbev1 as usize)); m::default_class = if fv() & 1 != 0 { &raw mut CI[1] } else { null_mut() }; }
+{ for q in 0..2usize { WI[q].load = Some(m::WObjLoad); } for q in 0..3usize { WO[q].parent.parent.class_info = (&raw mut WI[q & 1]) as *mut HSD_ClassInfo; WO[q].aobj = if fv() & 3 != 0 { &raw mut AO[(fv() % 3) as usize] } else { null_mut() }; WO[q].robj = if fv() & 3 != 0 { &raw mut RO[(fv() & 1) as usize] } else { null_mut() }; } for q in 0..3usize { AO[q].jobj = &raw mut JO[q & 1]; } for q in 0..2usize { JO[q].u.spline = if fv() & 3 != 0 { &raw mut SPL[0] } else { null_mut() }; } m::hsdWObj.parent.parent.head.parent = &raw mut CI[0]; CI[0].release = Some(core::mem::transmute::<usize, unsafe extern "C" fn(*mut HSD_Class)>(cbev1 as usize)); CI[0].amnesia = Some(core::mem::transmute::<usize, unsafe extern "C" fn(*mut HSD_ClassInfo)>(cbev1 as usize)); m::default_class = if fv() & 1 != 0 { &raw mut CI[1] } else { null_mut() }; }
                 let mut ret = 0u32;
                 let aborted = run_case(|| unsafe { match op {
                     0 => { 

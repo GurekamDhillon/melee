@@ -63,7 +63,7 @@ use crate::layout::It_PKind_Terminate;
 #[allow(unused_imports)]
 use std::ptr::null_mut as null_mut_itlib3;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::CollData;
 #[allow(unused_imports)]
@@ -541,7 +541,7 @@ pub unsafe extern "C" fn it_80272560(item_gobj: *mut HSD_GObj, idx: i32) {
     melee_core::ct!("it_80272560");
     let item = item_of(item_gobj);
     ext::lbColl_80008428(&raw mut (*item).x5D4_hitboxes[idx as usize].hit);
-    (*item).anon_daa.xDAA_flag.anon_0.set_b2(0);
+    (*item).xDAA.xDAA_flag.x0.set_b2(0);
     it_8027129C_by_4(item_gobj);
 }
 
@@ -556,7 +556,7 @@ pub unsafe extern "C" fn it_802725D4(item_gobj: *mut HSD_GObj) {
         ext::it_8027129C(item_gobj, i as i32);
     }
     (*item).xDC8_word.flags.set_x16(0);
-    (*item).anon_daa.xDAA_flag.anon_0.set_b2(0);
+    (*item).xDAA.xDAA_flag.x0.set_b2(0);
 }
 
 /// `it_80272674`: advances hitbox `idx`'s position history (the enabled/unk2/unk3 states).
@@ -574,7 +574,7 @@ pub unsafe extern "C" fn it_80272674(item_gobj: *mut HSD_GObj, idx: i32) {
             ext::lb_8000B1CC((*hitbox).jobj, &raw mut (*hitbox).b_offset, &raw mut (*hitbox).x4C);
             (*hitbox).x58 = (*hitbox).x4C;
             (*hitbox).state = HitCapsule_Unk2;
-            (*item).anon_daa.xDAA_flag.anon_0.set_b2(1);
+            (*item).xDAA.xDAA_flag.x0.set_b2(1);
         }
         HitCapsule_Unk2 => {
             (*hitbox).state = HitCapsule_Unk3;
@@ -684,7 +684,7 @@ pub unsafe extern "C" fn it_80273130(item_gobj: *mut HSD_GObj) -> bool {
 pub unsafe extern "C" fn it_80273168(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80273168");
     let item = item_of(item_gobj);
-    if (*item).xDCD_flag.anon_0.b2() == 0 {
+    if (*item).xDCD_flag.x0.b2() == 0 {
         ext::Item_8026AE84(item, (*item).xD70, 0x7F, 0x40);
     }
 }
@@ -693,7 +693,7 @@ pub unsafe extern "C" fn it_80273168(item_gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_802731A4(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_802731A4");
     let item = item_of(item_gobj);
-    if (*item).xDCD_flag.anon_0.b2() == 0 {
+    if (*item).xDCD_flag.x0.b2() == 0 {
         ext::Item_8026AE84(item, (*item).xD78, 0x7F, 0x40);
     }
 }
@@ -702,7 +702,7 @@ pub unsafe extern "C" fn it_802731A4(item_gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_802731E0(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_802731E0");
     let item = item_of(item_gobj);
-    if (*item).xDCD_flag.anon_0.b2() == 0 {
+    if (*item).xDCD_flag.x0.b2() == 0 {
         ext::Item_8026AE84(item, (*item).xD74, 0x7F, 0x40);
     }
 }
@@ -711,7 +711,7 @@ pub unsafe extern "C" fn it_802731E0(item_gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_8027321C(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8027321C");
     let item = item_of(item_gobj);
-    if (*item).xDCD_flag.anon_0.b2() == 0 {
+    if (*item).xDCD_flag.x0.b2() == 0 {
         if (*item).kind == It_Kind_Unk4 {
             ext::lbAudioAx_80023870((*item).xD84, 0x7F, 0x40, 0x9A);
             return;
@@ -727,7 +727,7 @@ pub unsafe extern "C" fn it_8027327C(item_gobj: *mut HSD_GObj, id1: i32, id2: i3
     if id1 != -1 {
         ext::it_802787B4(item_gobj, id1);
     }
-    if (*item).xDCD_flag.anon_0.b2() == 0 {
+    if (*item).xDCD_flag.x0.b2() == 0 {
         it_802732E4(item, id2);
         if id2 == 0x12F {
             ext::lbAudioAx_80024DC4(id2);
@@ -738,7 +738,7 @@ pub unsafe extern "C" fn it_8027327C(item_gobj: *mut HSD_GObj, id1: i32, id2: i3
 /// `it_802732E4`: plays sound `arg1` unless flag `xDCD` bit 2 is set.
 pub unsafe extern "C" fn it_802732E4(item: *mut Item, arg1: i32) {
     melee_core::ct!("it_802732E4");
-    if (*item).xDCD_flag.anon_0.b2() == 0 {
+    if (*item).xDCD_flag.x0.b2() == 0 {
         ext::Item_8026AE84(item, arg1, 0x7F, 0x40);
     }
 }
@@ -1123,8 +1123,8 @@ pub unsafe extern "C" fn it_802742F4(item_gobj: *mut HSD_GObj, gobj: *mut HSD_GO
         ext::it_8026B3A8(item_gobj);
         ext::db_80225DD8(item_gobj, gobj);
     }
-    if (*item).xDD0_flag.anon_0.b6() != 0 {
-        (*item).xDD0_flag.anon_0.set_b6(0);
+    if (*item).xDD0_flag.x0.b6() != 0 {
+        (*item).xDD0_flag.x0.set_b6(0);
         (*item).xD40 = 0.0;
         ext::it_80279BBC(item);
     }
@@ -1249,17 +1249,17 @@ pub unsafe extern "C" fn it_80274C78(item_gobj: *mut HSD_GObj) -> i32 {
 pub unsafe extern "C" fn it_80274C88(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80274C88");
     let item = item_of(item_gobj);
-    (*item).xDD0_flag.anon_0.set_b0(0);
-    (*item).anon_daa.xDAA_flag.anon_0.set_b3(0);
+    (*item).xDD0_flag.x0.set_b0(0);
+    (*item).xDAA.xDAA_flag.x0.set_b3(0);
 }
 
 /// `it_80274CAC`: sets `xDD0` bit 0, and `xDAA` bit 3 when the stomp-range debug view is on.
 pub unsafe extern "C" fn it_80274CAC(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80274CAC");
     let item = item_of(item_gobj);
-    (*item).xDD0_flag.anon_0.set_b0(1);
+    (*item).xDD0_flag.x0.set_b0(1);
     if ext::db_ShowEnemyStompRange() != 0 {
-        (*item).anon_daa.xDAA_flag.anon_0.set_b3(1);
+        (*item).xDAA.xDAA_flag.x0.set_b3(1);
     }
 }
 
@@ -1361,7 +1361,7 @@ pub unsafe extern "C" fn it_80274F10(item_gobj: *mut HSD_GObj) {
 /// `it_80274F28`: records the grab callbacks and the victim-hold `arg1` on the item.
 pub unsafe extern "C" fn it_80274F28(item: *mut Item, arg1: i8, arg2: HSD_GObjEvent, arg3: HSD_GObjInteraction) {
     melee_core::ct!("it_80274F28");
-    (*item).xDD0_flag.anon_0.set_b5(1);
+    (*item).xDD0_flag.x0.set_b5(1);
     (*item).xD08 = arg1 as _;
     (*item).grab_dealt = arg2;
     (*item).grabbed_for_victim = arg3;
@@ -1579,8 +1579,8 @@ pub unsafe extern "C" fn it_8027518C(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_8027518C");
     let item = item_of(item_gobj);
     (*item).xD44_lifeTimer = (*ext::it_804D6D28).xF8 as f32;
-    (*item).xDCF_flag.anon_0.set_b2(1);
-    (*item).xDD1_flag.anon_0.set_b0(1);
+    (*item).xDCF_flag.x0.set_b2(1);
+    (*item).xDD1_flag.x0.set_b0(1);
     ext::it_8026BDB4(item_gobj);
 }
 
@@ -1731,13 +1731,13 @@ pub unsafe extern "C" fn it_80275240(item_gobj: *mut HSD_GObj) {
 /// `it_80275258`: `xDD0.b4 = 0`.
 pub unsafe extern "C" fn it_80275258(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80275258");
-    (*item_of(item_gobj)).xDD0_flag.anon_0.set_b4(0);
+    (*item_of(item_gobj)).xDD0_flag.x0.set_b4(0);
 }
 
 /// `it_80275270`: `xDD0.b4 = 1`.
 pub unsafe extern "C" fn it_80275270(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80275270");
-    (*item_of(item_gobj)).xDD0_flag.anon_0.set_b4(1);
+    (*item_of(item_gobj)).xDD0_flag.x0.set_b4(1);
 }
 
 /// `it_80275328`: initialises an item link record for `gobj`.
@@ -1784,7 +1784,7 @@ pub fn it_80274f28(ip: &mut Item, arg1: i8, arg2: Option<unsafe extern "C" fn(*m
     arg3: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut HSD_GObj)>) {
     melee_core::ct!("it_80274f28");
     // SAFETY: UnkFlagStruct is a union of a byte and its bit view; both are plain bits.
-    unsafe { ip.xDD0_flag.anon_0.set_b5(1) };
+    unsafe { ip.xDD0_flag.x0.set_b5(1) };
     ip.xD08 = arg1 as u8;
     ip.grab_dealt = arg2;
     ip.grabbed_for_victim = arg3;
@@ -1880,7 +1880,7 @@ pub fn it_80274ee8(it_804d6d08: &mut i32) {
 pub fn it_80274f28_fp(ip: &mut Item, arg1: i8, arg2: HSD_GObjEvent, arg3: HSD_GObjInteraction) {
     melee_core::ct!("it_80274f28_fp");
     // SAFETY: the flag union is a plain byte.
-    unsafe { ip.xDD0_flag.anon_0.set_b5(1) };
+    unsafe { ip.xDD0_flag.x0.set_b5(1) };
     ip.xD08 = arg1 as u8;
     ip.grab_dealt = arg2;
     ip.grabbed_for_victim = arg3;
@@ -1976,8 +1976,8 @@ pub fn it_80274c78(ip: &Item) -> bool {
 pub fn it_80274c88(ip: &mut Item) {
     melee_core::ct!("it_80274c88");
     unsafe {
-        ip.xDD0_flag.anon_0.set_b0(0);
-        ip.anon_daa.xDAA_flag.anon_0.set_b3(0);
+        ip.xDD0_flag.x0.set_b0(0);
+        ip.xDAA.xDAA_flag.x0.set_b3(0);
     }
 }
 
@@ -2075,13 +2075,13 @@ pub fn it_80275240_fp(ip: &mut Item) {
 /// `it_80275258_fp`: `xDD0_flag.b4 = 0`.
 pub fn it_80275258_fp(ip: &mut Item) {
     melee_core::ct!("it_80275258_fp");
-    unsafe { ip.xDD0_flag.anon_0.set_b4(0) }
+    unsafe { ip.xDD0_flag.x0.set_b4(0) }
 }
 
 /// `it_80275270_fp`: `xDD0_flag.b4 = 1`.
 pub fn it_80275270_fp(ip: &mut Item) {
     melee_core::ct!("it_80275270_fp");
-    unsafe { ip.xDD0_flag.anon_0.set_b4(1) }
+    unsafe { ip.xDD0_flag.x0.set_b4(1) }
 }
 
 /// `it_802753BC`: reset the damage counters, `xC9C = arg1`.

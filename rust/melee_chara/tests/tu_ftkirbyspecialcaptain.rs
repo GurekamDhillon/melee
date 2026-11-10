@@ -86,18 +86,18 @@ fn smoke_callbacks() {
     }
     // Entries pick the Warlock Punch ids for a non-Captain hat and clear the script variables.
     f.cmd_vars = [7, 7, 7, 7];
-    f.anon_2210.throw_flags = 0xFFFF;
+    f.x2210.throw_flags = 0xFFFF;
     t::ftKb_SpecialNCa_800F99BC(gp);
     assert_eq!(f.cmd_vars[..2], [0, 0]);
-    assert_eq!(unsafe { f.anon_2210.throw_flags }, 0);
+    assert_eq!(unsafe { f.x2210.throw_flags }, 0);
     assert!(f.pre_hitlag_cb.is_some() && f.post_hitlag_cb.is_some());
     f.u.kb.hat.kind = Ft_Kind_Captain;
     t::ftKb_SpecialNCa_800F9A54(gp);
     // Phys: first throw_flags_b1 pulse spawns the hat's effect (Falcon: 1195) and sets x2219_b0.
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b1(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b1(1) };
     t::ftKb_CaSpecialN_Phys(gp);
     assert_eq!(f.x2219_b0(), 1);
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b1(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b1(1) };
     t::ftKb_CaSpecialN_Phys(gp);
     // Air Phys: cmd_vars[1] 0 / 1 / 2 pick ft_80084EEC / scale self_vel / ft_80084DB0.
     da.specialn_ca_additional_vertical_momentum = 0.5;

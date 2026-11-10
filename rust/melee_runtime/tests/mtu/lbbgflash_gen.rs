@@ -21,7 +21,7 @@ pub fn install() {
         HSD_CObjGetCurrent = Some(|| { t(1007); if fv() & 1 != 0 { (&raw mut BUF) as *mut HSD_CObj } else { null_mut() } });
         HSD_CObjLoadDesc = Some(|a0| { t(1008); t(pi(a0)); core::ptr::null_mut() });
         HSD_GObjObject_80390A70 = Some(|a0, a1, a2| { t(1009); t(pi(a0)); t(a1 as u32); t(pi(a2)); });
-        HSD_GObj_803910D8 = Some(|a0, a1| { t(1010); t(pi(a0)); t(a1 as u32); });
+        HSD_GObj_803910D8 = Some(|a0, a1| { t(1010); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
         HSD_GObj_SetupProc = Some(|a0, a1, a2| { t(1011); t(pi(a0)); t(fi(a1)); t(a2 as u32); core::ptr::null_mut() });
         hsd_80391A04 = Some(|a0, a1, a2| { t(1012); t(a0.to_bits()); t(a1.to_bits()); t(a2 as u32); });
     }

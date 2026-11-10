@@ -1183,7 +1183,7 @@ pub fn it_zelda_din_fire_get_owner(ip: &Item) -> *mut HSD_GObj {
 pub fn it_rshell_unk_motion3_anim(ip: &mut Item) -> bool {
     unsafe {
         if ip.xDD4_itemVar.rshell.xDD8 <= 0.0 {
-            if ip.xDCD_flag.anon_0.b5() == 0 {
+            if ip.xDCD_flag.x0.b5() == 0 {
                 it_80275444(ip);
             }
         } else {
@@ -1763,7 +1763,7 @@ pub unsafe fn it_kamex_unk_motion1_phys(ip: &mut Item) {
 pub unsafe fn it_linkbomb_unk_motion4_phys(ip: &mut Item) {
     let sa = sa::<itLinkBombAttributes>(ip);
     let zero = 0.0f32;
-    if ip.xDD4_itemVar.linkbomb.x0.anon_0.b1() != 0 {
+    if ip.xDD4_itemVar.linkbomb.x0.x0.b1() != 0 {
         let temp_f2 = ip.x40_vel.x;
         if temp_f2 != zero {
             ip.x40_vel.x = fmadds(sa.x2C, ip.xDD4_itemVar.linkbomb.x4, temp_f2);

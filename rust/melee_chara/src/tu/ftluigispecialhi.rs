@@ -32,14 +32,14 @@ pub mod ext {
     }
     hook_or!(FT_80083B68, ft_80083B68, melee_fighter::tu::ft_081b::ft_80083b68, (gobj: *mut HSD_GObj));
     hook_or!(FT_800831CC, ft_800831CC, melee_fighter::tu::ft_081b::ft_800831cc,
-        (gobj: *mut HSD_GObj, coll: fn(*mut HSD_GObj, i32) -> bool, cb: fn(*mut HSD_GObj)));
+        (gobj: *mut HSD_GObj, coll: fn(*mut HSD_GObj, isize) -> bool, cb: fn(*mut HSD_GObj)));
     // Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.
     hook_or!(FTPARTSETROTY, ftPartSetRotY, ftpartsetroty_port, (fp: *mut Fighter, part: i32, v: f32));
     fn ftpartsetroty_port(fp: *mut Fighter, part: i32, v: f32) {
         melee_fighter::tu::ftparts::ftPartSetRotY(unsafe { &*fp }, part, v)
     }
     /// `ftCo_80096CC8` (ftCo_FallSpecial.c) with the Rust ABI the collision helper takes.
-    pub fn ftCo_80096CC8(gobj: *mut HSD_GObj, line_id: i32) -> bool {
+    pub fn ftCo_80096CC8(gobj: *mut HSD_GObj, line_id: isize) -> bool {
         unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8(gobj, line_id) }
     }
 }
@@ -66,7 +66,7 @@ pub fn ftLg_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
         (*fp).cmd_vars[0] = 0;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).self_vel.y = 0.0;
         (*fp).self_vel.x *= (*attrs).x64_LUIGI_SUPERJUMP_VEL_X;
         st::Fighter_ChangeMotionState(gobj, ftLg_MS_SpecialAirHi as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -133,8 +133,8 @@ pub fn ftLg_SpecialHi_IASA(gobj: *mut HSD_GObj) {
         let luigi_attrs = (*fp).dat_attrs as *const ftLuigiAttributes;
         special_hi_iasa_lstick(&mut *fp);
         // ftCheckThrowB3
-        if (*fp).anon_2210.anon_0.throw_flags_b3() != 0 {
-            (*fp).anon_2210.anon_0.set_throw_flags_b3(0);
+        if (*fp).x2210.x0.throw_flags_b3() != 0 {
+            (*fp).x2210.x0.set_throw_flags_b3(0);
             let mut control = (*fp).input.lstick[0].x;
             if control < 0.0 {
                 control = -control;
@@ -237,7 +237,7 @@ pub fn ftLg_SpecialHi_Enter(gobj: *mut HSD_GObj) {
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 355 /* ftLg_MS_SpecialHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
     }

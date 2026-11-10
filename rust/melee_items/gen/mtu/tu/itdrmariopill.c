@@ -68,7 +68,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -102,6 +102,8 @@ static void hash_world(int ft)
     for (i = 0; i < 16; i++) HM(PI(PLINK[i]));
 }
 
+static int CUR_OP = -1;
+enum { OP_my_sqrtf = 0, OP_itDrMarioPill_Spawn = 1, OP_itDrMarioPill_802C061C = 2, OP_itDrMarioPill_Appeal_Spawn = 3, OP_itDrMarioPill_802C09C4 = 4, OP_itDrMarioPill_802C0B5C = 5, OP_itDrMarioPill_UnkMotion0_Anim = 6, OP_itDrMarioPill_UnkMotion0_Phys = 7, OP_itDrmariopill_UnkMotion0_Coll = 8, OP_itDrMarioPill_802C0DBC = 9, OP_itDrMarioPill_802C0DF8 = 10, OP_itDrMarioPill_Motion2_Anim_sub = 11, OP_itDrMarioPill_Motion2_Anim_flags = 12, OP_itDrMarioPill_Motion2_Anim = 13, OP_itDrMarioPill_Motion2_Phys = 14, OP_itDrMariopill_Motion2_Coll = 15, OP_itDrMarioPill_802C1180 = 16, OP_itDrMarioPill_PickedUp = 17, OP_itDrMarioPill_Motion6_Anim = 18, OP_itDrMarioPill_Motion6_Phys = 19, OP_itDrMarioPill_Motion6_Coll = 20, OP_itDrMarioPill_DmgDealt = 21, OP_itDrMarioPill_Reflected = 22, OP_itDrMarioPill_Clanked = 23, OP_itDrMarioPill_HitShield = 24, OP_itDrMarioPill_Absorbed = 25, OP_itDrMarioPill_ShieldBounced = 26, OP_itDrMarioPill_EvtUnk = 27 };
 static u32 SATTR[2][6];
 
 static void setup_stem(void)
@@ -109,7 +111,7 @@ static void setup_stem(void)
     int i;
     (void) i;
     it_804D6D28 = &ICD[0];
-{ int q, w; for (q = 0; q < 2; q++) { ART[q].x4_specialAttributes = SATTR[q]; for (w = 0; w < 6; w++) { ((float*) SATTR[q])[w] = rw(); } } } { int q; for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; } { int q; for (q = 0; q < 4; q++) { u32 r = rnd(); HSD_GObj* p = (r & 3) == 0 ? (HSD_GObj*) 0 : &GO[4 + (r >> 8) % 3]; IT[q].xDD4_itemVar.drmariopill.x4 = p; IT[q].owner = (r & 16) ? p : pick_fgo(); } }
+{ int q, w; for (q = 0; q < 2; q++) { ART[q].x4_specialAttributes = (union ItemSpecialAttributes*) SATTR[q]; for (w = 0; w < 6; w++) { ((float*) SATTR[q])[w] = rw(); } } } { int q; for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; } { int q; for (q = 0; q < 4; q++) { u32 r = rnd(); HSD_GObj* p = (r & 3) == 0 ? (HSD_GObj*) 0 : &GO[4 + (r >> 8) % 3]; IT[q].xDD4_itemVar.drmariopill.x4 = p; IT[q].owner = (r & 16) ? p : pick_fgo(); } }
 }
 
 static void hash_stem(void)
@@ -166,6 +168,7 @@ preg(SATTR, sizeof SATTR);
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
+            CUR_OP = op;
             setup_stem();
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             switch (op) {

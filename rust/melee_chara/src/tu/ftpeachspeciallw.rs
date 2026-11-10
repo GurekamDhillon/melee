@@ -83,11 +83,11 @@ pub mod ext {
                     None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; },
                 }
             }
-    pub static mut FTCO_800957F4: Option<fn(*mut HSD_GObj, i32) > = None;
+    pub static mut FTCO_800957F4: Option<fn(*mut HSD_GObj, isize) > = None;
             #[allow(non_snake_case)]
             pub fn ftCo_800957F4(gobj: *mut HSD_GObj, msid: i32)  {
                 match unsafe { FTCO_800957F4 } {
-                    Some(f) => f(gobj, msid),
+                    Some(f) => f(gobj, msid as isize),
                     None => { unsafe { melee_fighter::tu::ftCo_ItemThrow::ftCo_800957F4(gobj as _, msid as _); } return; },
                 }
             }
@@ -101,8 +101,8 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 
 /// `ftCheckThrowB0(fp)` (ft/inlines.h): test and clear `throw_flags_b0`.
 unsafe fn ftCheckThrowB0(fp: *mut Fighter) -> bool {
-    if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+    if (*fp).x2210.x0.throw_flags_b0() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b0(0);
         true
     } else {
         false
@@ -229,7 +229,7 @@ pub fn ftPe_SpecialLw_Enter(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         if !throwVegIfHeld(gobj, ftCo_MS_LightThrowF4 as i32) {
-            (*fp).anon_2210.throw_flags = 0;
+            (*fp).x2210.throw_flags = 0;
             st::Fighter_ChangeMotionState(gobj, ftPe_MS_SpecialLw as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
             st::ftAnim_8006EBA4(gobj);
             (*fp).accessory4_cb = Some(cb_spawnVeg);

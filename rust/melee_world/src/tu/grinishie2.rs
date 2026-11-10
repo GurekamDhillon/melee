@@ -44,10 +44,10 @@ pub mod ext {
     pub fn Ground_801C3BB4() {
         match unsafe { GROUND_801C3BB4 } { Some(f) => f(), None => { unsafe { crate::tu::ground::Ground_801C3BB4(); } return; } }
     }
-    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
-        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
     }
     pub static mut GROUND_801C4A08: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
@@ -159,7 +159,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
+            x10: StageCallbacks_x10 { flags: u32::to_be($flags) },
         }
     };
 }
@@ -169,7 +169,7 @@ const NO_CB: StageCallbacks = StageCallbacks {
     callback1: None,
     gobj_proc: None,
     callback3: None,
-    anon_10: StageCallbacks_anon_135 { flags: 0 },
+    x10: StageCallbacks_x10 { flags: 0 },
 };
 
 /// `StageCallbacks grI2_StageCallbacks[]` (16 entries; 5..14 are empty).
@@ -770,7 +770,7 @@ pub unsafe extern "C" fn grInishie2_801FDFE4(_gobj: *mut HSD_GObj) { melee_core:
     pub extern "C" fn grInishie2_801FDED0(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grInishie2_801FDFE8 (gr/grinishie2.c:782)
-    pub extern "C" fn grInishie2_801FDFE8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grInishie2_801FDFE8(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grInishie2_801FDFF0 (gr/grinishie2.c:787)
     pub extern "C" fn grInishie2_801FDFF0(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

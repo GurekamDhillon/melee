@@ -402,7 +402,7 @@ pub fn hashg_all() {
         hm(pi(m::ext::hsd_804D0908[i0]));
         }
         for i0 in 0..65 {
-        hm(pi(m::ext::psNumCmdList[i0]));
+        hm(pi(unsafe { melee_runtime::tu::particle::psCmdListArray[i0] } as usize as *const u8));
         }
         for i0 in 0..65 {
         hm(pi(m::ext::psTexGroupArray[i0]));

@@ -147,7 +147,7 @@ pub unsafe extern "C" fn it_802AC43C(gobj: *mut Fighter_GObj, ball: *mut Item_GO
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = gobj;
     spawn.x4_parent_gobj2 = ball;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = arg4;
 
     let trail = ext::Item_80268B18(&mut spawn);

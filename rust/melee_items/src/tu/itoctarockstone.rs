@@ -215,7 +215,7 @@ pub unsafe extern "C" fn it_802E8ADC(gobj: *mut Item_GObj, pos: *mut Vec3, dir: 
     spawn.x3C_damage = 0;
     spawn.x0_parent_gobj = null_mut();
     spawn.x4_parent_gobj2 = gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     let stone_gobj = ext::Item_80268B18(&mut spawn);
     if !stone_gobj.is_null() {

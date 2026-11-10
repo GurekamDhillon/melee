@@ -136,7 +136,7 @@ pub unsafe fn setup_world() {
         IT[i].xBBC_dynamicBoneTable = &raw mut DBT[i];
         IT[i].xBC_itemStateContainer = &raw mut STT[0];
         IT[i].xD0_itemStateDesc = &raw mut SDS[i % 3];
-        IT[i].xBC0 = &raw mut BOGUS as *mut c_void;
+        IT[i].xBC0 = &raw mut BOGUS as *mut _;
         IT[i].x378_itemColl.x0_gobj = &raw mut GO[i];
     }
     for i in 0..3usize { FT[i].gobj = &raw mut GO[4 + i]; }

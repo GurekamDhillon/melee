@@ -47,7 +47,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -94,15 +94,15 @@ int main(void)
             case 2: { f32 v2 = (f32) (rw()); ret = PI(itMewtwoDisable_Logic67_SpawnMewtwoDisable(&GO[0], &VA[0], v2)); } break; /* itMewtwoDisable_Logic67_SpawnMewtwoDisable */
             case 3: {  it_802C4B38(&GO[0]); } break; /* it_802C4B38 */
             case 4: {  it_802C4BB8(&GO[0]); } break; /* it_802C4BB8 */
-            case 5: {  ret = (u32) itMewtwodisable_UnkMotion0_Anim(&GO[0]); } break; /* itMewtwodisable_UnkMotion0_Anim */
+            case 5: {  ret = (u32) ((itMewtwodisable_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itMewtwodisable_UnkMotion0_Anim */
             case 6: {  itMewtwodisable_UnkMotion0_Phys(&GO[0]); } break; /* itMewtwodisable_UnkMotion0_Phys */
             case 7: {  ret = (u32) itMewtwodisable_UnkMotion0_Coll(&GO[0]); } break; /* itMewtwodisable_UnkMotion0_Coll */
-            case 8: {  ret = (u32) itMewtwoDisable_Logic67_DmgDealt(&GO[0]); } break; /* itMewtwoDisable_Logic67_DmgDealt */
-            case 9: {  ret = (u32) itMewtwoDisable_Logic67_Reflected(&GO[0]); } break; /* itMewtwoDisable_Logic67_Reflected */
-            case 10: {  ret = (u32) itMewtwoDisable_Logic67_Clanked(&GO[0]); } break; /* itMewtwoDisable_Logic67_Clanked */
-            case 11: {  ret = (u32) itMewtwoDisable_Logic67_HitShield(&GO[0]); } break; /* itMewtwoDisable_Logic67_HitShield */
-            case 12: {  ret = (u32) itMewtwoDisable_Logic67_Absorbed(&GO[0]); } break; /* itMewtwoDisable_Logic67_Absorbed */
-            case 13: {  ret = (u32) itMewtwoDisable_Logic67_ShieldBounced(&GO[0]); } break; /* itMewtwoDisable_Logic67_ShieldBounced */
+            case 8: {  ret = (u32) ((itMewtwoDisable_Logic67_DmgDealt(&GO[0])) != 0); } break; /* itMewtwoDisable_Logic67_DmgDealt */
+            case 9: {  ret = (u32) ((itMewtwoDisable_Logic67_Reflected(&GO[0])) != 0); } break; /* itMewtwoDisable_Logic67_Reflected */
+            case 10: {  ret = (u32) ((itMewtwoDisable_Logic67_Clanked(&GO[0])) != 0); } break; /* itMewtwoDisable_Logic67_Clanked */
+            case 11: {  ret = (u32) ((itMewtwoDisable_Logic67_HitShield(&GO[0])) != 0); } break; /* itMewtwoDisable_Logic67_HitShield */
+            case 12: {  ret = (u32) ((itMewtwoDisable_Logic67_Absorbed(&GO[0])) != 0); } break; /* itMewtwoDisable_Logic67_Absorbed */
+            case 13: {  ret = (u32) ((itMewtwoDisable_Logic67_ShieldBounced(&GO[0])) != 0); } break; /* itMewtwoDisable_Logic67_ShieldBounced */
             case 14: {  itMewtwoDisable_Logic67_EvtUnk(&GO[0], &GO[1]); } break; /* itMewtwoDisable_Logic67_EvtUnk */
             case 15: { { int j; for (j = 0; j < 1; j++) { HM((u32) it_803F7750[j].anim_id); HM(FI((const void*) it_803F7750[j].animated)); HM(FI((const void*) it_803F7750[j].physics_updated)); HM(FI((const void*) it_803F7750[j].collided)); } } } break; /* state tables */
             }

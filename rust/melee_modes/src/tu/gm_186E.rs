@@ -180,7 +180,7 @@ pub unsafe fn fn_801873F0() -> *mut HSD_GObjProc {
     ext::HSD_GObj_SetupProc(ext::Player_GetEntity(0), Some(fn_80186F6C), 0x16)
 }
 
-pub unsafe extern "C" fn fn_80187494(gobj: *mut HSD_GObj, _arg1: i32) {
+pub unsafe extern "C" fn fn_80187494(gobj: *mut HSD_GObj, _arg1: isize) {
     melee_core::ct!("fn_80187494");
     let temp_ret = ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj);
     if temp_ret != 0 {

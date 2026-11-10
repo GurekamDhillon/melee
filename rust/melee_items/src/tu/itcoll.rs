@@ -66,7 +66,7 @@ use crate::layout::It_PKind_Terminate;
 #[allow(unused_imports)]
 use std::ptr::null_mut as null_mut_itlib3;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::CollData;
 #[allow(unused_imports)]
@@ -548,8 +548,8 @@ pub unsafe extern "C" fn it_802701BC(gobj: *mut HSD_GObj) {
     let mut fighter_gobj = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     while !fighter_gobj.is_null() {
         let fp = (*fighter_gobj).user_data as *mut Fighter;
-        if (ext::ftLib_IsSamePlayer(fighter_gobj, (*ip).owner) == 0 || (*ip).xDCD_flag.anon_0.b5() != 0)
-            && (ext::gm_8016B168() == 0 || ext::gm_8016B0D4() != 0 || (*ip).xDCD_flag.anon_0.b6() != 0 || (*ip).x20_team_id != (*fp).team)
+        if (ext::ftLib_IsSamePlayer(fighter_gobj, (*ip).owner) == 0 || (*ip).xDCD_flag.x0.b5() != 0)
+            && (ext::gm_8016B168() == 0 || ext::gm_8016B0D4() != 0 || (*ip).xDCD_flag.x0.b6() != 0 || (*ip).x20_team_id != (*fp).team)
             && (*fp).x2219_b1() == 0
             && (*fp).x222A_b0() == 0
             && (*fp).x1988 == 0
@@ -582,7 +582,7 @@ pub unsafe extern "C" fn it_802701BC(gobj: *mut HSD_GObj) {
                             if pos_x < (*ip).xD10 {
                                 (*ip).atk_victim = (*fp).gobj;
                                 (*ip).grab_victim = (*ip).atk_victim;
-                                (*ip).xDD0_flag.anon_0.set_b1(1);
+                                (*ip).xDD0_flag.x0.set_b1(1);
                                 (*ip).xD10 = pos_x;
                             }
                             return;
@@ -612,22 +612,22 @@ pub unsafe extern "C" fn it_802703E8(arg_item_gobj: *mut HSD_GObj) {
     let mut fighter_gobj = *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_FIGHTER as usize);
     while !fighter_gobj.is_null() {
         'next: {
-            if (*arg_item).owner == fighter_gobj && (*arg_item).xDCE_flag.anon_0.b0() == 0 {
+            if (*arg_item).owner == fighter_gobj && (*arg_item).xDCE_flag.x0.b0() == 0 {
                 break 'next;
             }
             let fighter = (*fighter_gobj).user_data as *mut Fighter;
-            if !((*fighter).x1064_thrownHitbox.anon_134.owner.is_null()
-                || (*fighter).x1064_thrownHitbox.anon_134.owner != (*arg_item).owner
-                || (*arg_item).xDCE_flag.anon_0.b0() != 0)
+            if !((*fighter).x1064_thrownHitbox.x134.owner.is_null()
+                || (*fighter).x1064_thrownHitbox.x134.owner != (*arg_item).owner
+                || (*arg_item).xDCE_flag.x0.b0() != 0)
             {
                 break 'next;
             }
-            let ft_team: u32 = if !(*fighter).x1064_thrownHitbox.anon_134.owner.is_null() {
-                (ext::ftLib_GetTeam((*fighter).x1064_thrownHitbox.anon_134.owner) as u32) & 0xFF
+            let ft_team: u32 = if !(*fighter).x1064_thrownHitbox.x134.owner.is_null() {
+                (ext::ftLib_GetTeam((*fighter).x1064_thrownHitbox.x134.owner) as u32) & 0xFF
             } else {
                 (*fighter).team as u32
             };
-            if ext::gm_8016B168() != 0 && ext::gm_8016B0D4() == 0 && (*arg_item).xDCE_flag.anon_0.b1() == 0 && ft_team == (*arg_item).x20_team_id as u32 {
+            if ext::gm_8016B168() != 0 && ext::gm_8016B0D4() == 0 && (*arg_item).xDCE_flag.x0.b1() == 0 && ft_team == (*arg_item).x20_team_id as u32 {
                 break 'next;
             }
             for hit_index in 0..4usize {
@@ -727,21 +727,21 @@ pub unsafe extern "C" fn it_802706D0(arg_item_gobj: *mut HSD_GObj) {
             if arg_item_gobj == item_gobj {
                 chk = true;
                 break 'next;
-            } else if (((*arg_item).owner.is_null() && (*it).owner.is_null() && (*it).xDCD_flag.anon_0.b7() == 0 && (*arg_item).xDCE_flag.anon_0.b2() == 0)
+            } else if (((*arg_item).owner.is_null() && (*it).owner.is_null() && (*it).xDCD_flag.x0.b7() == 0 && (*arg_item).xDCE_flag.x0.b2() == 0)
                 || (ext::ftLib_IsFighter((*it).owner) != 0
                     && ext::ftLib_IsFighter((*arg_item).owner) != 0
                     && ext::ftLib_IsSamePlayer((*arg_item).owner, (*it).owner) != 0
-                    && (*it).xDCD_flag.anon_0.b7() == 0
-                    && (*arg_item).xDCE_flag.anon_0.b2() == 0)
+                    && (*it).xDCD_flag.x0.b7() == 0
+                    && (*arg_item).xDCE_flag.x0.b2() == 0)
                 || (ext::gm_8016B168() != 0
                     && ext::gm_8016B0D4() == 0
-                    && (*it).xDCD_flag.anon_0.b6() == 0
-                    && (*arg_item).xDCE_flag.anon_0.b1() == 0
+                    && (*it).xDCD_flag.x0.b6() == 0
+                    && (*arg_item).xDCE_flag.x0.b1() == 0
                     && (*it).x20_team_id == (*arg_item).x20_team_id))
             {
                 break 'next;
             }
-            if chk && (*arg_item).xDD0_flag.anon_0.b1() == 0 {
+            if chk && (*arg_item).xDD0_flag.x0.b1() == 0 {
                 count = 0;
                 for hit_index in 0..4usize {
                     let arg_hit = &raw mut (*arg_item).x5D4_hitboxes[hit_index].hit;
@@ -766,7 +766,7 @@ pub unsafe extern "C" fn it_802706D0(arg_item_gobj: *mut HSD_GObj) {
                 {
                     continue;
                 }
-                if chk && (*arg_item).xDD0_flag.anon_0.b1() == 0 && count != 0 {
+                if chk && (*arg_item).xDD0_flag.x0.b1() == 0 && count != 0 {
                     let mut chk2 = false;
                     for i in 0..4usize {
                         if ext::it_804D6D1C[i] != 0 {
@@ -774,10 +774,10 @@ pub unsafe extern "C" fn it_802706D0(arg_item_gobj: *mut HSD_GObj) {
                             if (*hit).element == HitElement_Inert as u32 || (*arg_hit).element == HitElement_Inert as u32 {
                                 if (*hit).element != (*arg_hit).element && ext::lbColl_80007AFC(hit, arg_hit, (*it).scl, (*arg_item).scl) != 0 {
                                     if (*hit).element == HitElement_Inert as u32 {
-                                        (*it).xDCE_flag.anon_0.set_b6(1);
+                                        (*it).xDCE_flag.x0.set_b6(1);
                                         (*it).toucher = arg_item_gobj;
                                     } else {
-                                        (*arg_item).xDCE_flag.anon_0.set_b6(1);
+                                        (*arg_item).xDCE_flag.x0.set_b6(1);
                                         (*arg_item).toucher = (*it).entity;
                                     }
                                     chk2 = true;
@@ -800,7 +800,7 @@ pub unsafe extern "C" fn it_802706D0(arg_item_gobj: *mut HSD_GObj) {
                 if (*hit).element == HitElement_Inert as u32 {
                     for i in 0..(*arg_item).xAC8_hurtboxNum as usize {
                         if ext::lbColl_80008248(hit, &raw mut (*arg_item).xACC_itemHurtbox[i], null_mut(), (*it).scl, (*arg_item).scl, 0.0) != 0 {
-                            (*it).xDCE_flag.anon_0.set_b6(1);
+                            (*it).xDCE_flag.x0.set_b6(1);
                             (*it).toucher = arg_item_gobj;
                         }
                     }
@@ -873,7 +873,7 @@ pub unsafe extern "C" fn it_80270E30(arg_item_gobj: *mut HSD_GObj) {
             if knockback >= knockback_cap {
                 knockback = knockback_cap;
             }
-            if (*arg_item).xDCF_flag.anon_0.b1() == 0 {
+            if (*arg_item).xDCF_flag.x0.b1() == 0 {
                 if (*arg_item).hold_kind == 4 || (*arg_item).hold_kind == 6 {
                     let mut sp18 = (*hit).damage;
                     let hit2 = (*dl).x8;
@@ -916,7 +916,7 @@ pub unsafe extern "C" fn it_80270E30(arg_item_gobj: *mut HSD_GObj) {
     match (*temp_r29).x0 {
         1 => {
             let fighter = (*temp_r29).x4 as *mut Fighter;
-            (*arg_item).xCB0_source_ply = (*fighter).player_id as i32;
+            (*arg_item).xCB0_source_ply = (*fighter).player_idx as i32;
             (*arg_item).xCEC_fighterGObj = (*fighter).gobj;
             (*arg_item).xCF0_itemGObj = null_mut();
             let dir = if (*arg_item).pos.x > (*fighter).cur_pos.x { -1.0 } else { 1.0 };
@@ -927,7 +927,7 @@ pub unsafe extern "C" fn it_80270E30(arg_item_gobj: *mut HSD_GObj) {
             let it = (*temp_r29).x4 as *mut Item;
             let item_owner_gobj = (*it).owner;
             if !item_owner_gobj.is_null() && ext::ftLib_IsFighter(item_owner_gobj) != 0 {
-                (*arg_item).xCB0_source_ply = (*((*item_owner_gobj).user_data as *mut Fighter)).player_id as i32;
+                (*arg_item).xCB0_source_ply = (*((*item_owner_gobj).user_data as *mut Fighter)).player_idx as i32;
                 (*arg_item).xCEC_fighterGObj = null_mut();
                 (*arg_item).xCF0_itemGObj = item_owner_gobj;
             } else {
@@ -953,7 +953,7 @@ pub unsafe extern "C" fn it_80270E30(arg_item_gobj: *mut HSD_GObj) {
     (*arg_item).xCAC_angle = (*(*temp_r29).x8).kb_angle;
     (*arg_item).xCC8_knockback = max_knockback;
     (*arg_item).xCC4 = (*(*temp_r29).x8).element as i32;
-    (*arg_item).xDCF_flag.anon_0.set_b6((*(*temp_r29).x8).x43_b0());
+    (*arg_item).xDCF_flag.x0.set_b6((*(*temp_r29).x8).x43_b0());
 }
 
 pub unsafe extern "C" fn it_8027129C(arg_item_gobj: *mut HSD_GObj, index: i32) {
@@ -966,7 +966,7 @@ pub unsafe extern "C" fn it_8027129C(arg_item_gobj: *mut HSD_GObj, index: i32) {
             ext::lb_8000B1CC((*hit).jobj, &raw mut (*hit).b_offset, &raw mut (*hit).x4C);
             (*hit).x58 = (*hit).x4C;
             (*hit).state = HitCapsule_Unk2;
-            (*it).anon_daa.xDAA_flag.anon_0.set_b2(1);
+            (*it).xDAA.xDAA_flag.x0.set_b2(1);
         }
         HitCapsule_Unk2 => {
             (*hit).state = HitCapsule_Unk3;
@@ -992,7 +992,7 @@ pub unsafe extern "C" fn it_8027137C(arg_item_gobj: *mut HSD_GObj) {
                 ext::lb_8000B1CC((*hit).jobj, &raw mut (*hit).b_offset, &raw mut (*hit).x4C);
                 (*hit).x58 = (*hit).x4C;
                 (*hit).state = HitCapsule_Unk2;
-                (*arg_item).anon_daa.xDAA_flag.anon_0.set_b2(1);
+                (*arg_item).xDAA.xDAA_flag.x0.set_b2(1);
             }
             HitCapsule_Unk2 => {
                 (*hit).state = HitCapsule_Unk3;
@@ -1025,7 +1025,7 @@ pub unsafe extern "C" fn it_802714C0(item_gobj: *mut HSD_GObj) {
         (*it).xACC_itemHurtbox[index].set_skip_update_pos(0);
         index += 1;
     }
-    (*it).anon_daa.xDAA_flag.anon_0.set_b1(1);
+    (*it).xDAA.xDAA_flag.x0.set_b1(1);
 }
 
 pub unsafe extern "C" fn it_80271508(item_gobj: *mut HSD_GObj, state: HurtCapsuleState) {
@@ -1191,7 +1191,7 @@ pub unsafe extern "C" fn it_80271B60(item_gobj: *mut HSD_GObj) {
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     let it = item(item_gobj);
     let mut sp24 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    if ext::Item_804A0CCC.x154.anon_0.b0() != 1 {
+    if ext::Item_804A0CCC.x154.x0.b0() != 1 {
         HSD_JObjGetTranslation(item_jobj, &raw mut sp24);
         let mut cnt = 0usize;
         while cnt < ext::Item_804A0CCC.count {
@@ -1229,7 +1229,7 @@ pub unsafe extern "C" fn it_80271D2C(arg_item_gobj: *mut HSD_GObj) {
         if arg_item_gobj != item_gobj
             && (*it).xDC8_word.flags.x13() == 0
             && (*it).ground_or_air == GA_Ground
-            && (*it).xDD1_flag.anon_0.b0() == 0
+            && (*it).xDD1_flag.x0.b0() == 0
             && ((*it).hold_kind != 3 || ((*it).hold_kind == 3 && (*arg_item).xDC8_word.flags.x1E() != 0))
         {
             HSD_JObjGetTranslation(item_jobj, &raw mut sp28);
@@ -1270,7 +1270,7 @@ pub unsafe extern "C" fn it_80271F78(gobj: *mut HSD_GObj) {
         if gobj != item_gobj
             && (*it).xDC8_word.flags.x13() == 0
             && (*it).ground_or_air == GA_Ground
-            && (*it).xDD1_flag.anon_0.b0() == 0
+            && (*it).xDD1_flag.x0.b0() == 0
             && ext::itIsHeavy(item_gobj) == 1
         {
             HSD_JObjGetTranslation(item_jobj, &raw mut sp28);
@@ -1333,7 +1333,7 @@ pub unsafe extern "C" fn it_802722B0(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_802722B0");
     if item_gobj == *ext::HSD_GObjPLinkHead.add(HSD_GOBJ_PLINK_ITEM as usize) {
         ext::ftCo_80098634(&raw mut ext::Item_804A0CCC);
-        ext::Item_804A0CCC.x154.anon_0.set_b0(0);
+        ext::Item_804A0CCC.x154.x0.set_b0(0);
     }
 }
 
@@ -1449,7 +1449,7 @@ pub unsafe fn it_80271b60(
     melee_core::ct!("it_80271b60");
     let jobj = jobj_of(gobj);
     let ip = item_itkinds11(gobj);
-    if track.x154.anon_0.b0() != 1 {
+    if track.x154.x0.b0() != 1 {
         let sp24: GcVec = (*jobj).translate;
         let mut cnt: u32 = 0;
         while (cnt as usize) < track.count {
@@ -1494,7 +1494,7 @@ pub unsafe fn it_80271f78(
         if gobj != item_gobj
             && (*it).xDC8_word.flags.x13() == 0
             && (*it).ground_or_air == GA_Ground
-            && (*it).xDD1_flag.anon_0.b0() == 0
+            && (*it).xDD1_flag.x0.b0() == 0
             && it_is_heavy(&*it)
         {
             let sp28: GcVec = (*item_jobj).translate;
@@ -1540,7 +1540,7 @@ pub fn it_802714c0(ip: &mut Item) {
     for k in 0..ip.xAC8_hurtboxNum as usize {
         ip.xACC_itemHurtbox[k].set_skip_update_pos(0);
     }
-    unsafe { ip.anon_daa.xDAA_flag.anon_0.set_b1(1) };
+    unsafe { ip.xDAA.xDAA_flag.x0.set_b1(1) };
 }
 
 /// `it_80271508_fp`: set the state of the item's hurtboxes.

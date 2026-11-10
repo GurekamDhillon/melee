@@ -133,7 +133,7 @@ fn push_stale(t: &mut StaleMoveTable, attack_id: i32, instance: u16) {
 pub fn update_stale_moves_from_fighter(ft: &Fighter, same_gobj: bool) {
     if !same_gobj {
         let (instance, attack_id) = (ft.x206C_attack_instance, ft.x2068_attackID);
-        push_stale(stale_table(ft.player_id as i32), attack_id, instance);
+        push_stale(stale_table(ft.player_idx as i32), attack_id, instance);
     }
 }
 
@@ -142,7 +142,7 @@ pub fn update_stale_moves_from_fighter(ft: &Fighter, same_gobj: bool) {
 /// fighter) and `owner != gobj_2`, else None.
 pub fn update_stale_moves_from_item(owner: Option<&Fighter>, attack_id: i32, instance: u16) {
     if let Some(o) = owner {
-        push_stale(stale_table(o.player_id as i32), attack_id, instance);
+        push_stale(stale_table(o.player_idx as i32), attack_id, instance);
     }
 }
 
@@ -171,7 +171,7 @@ pub fn reset_action_stats(slot: u32) {
     let st = action_stats(slot as i32);
     clear_attack_stats(&mut st.attacks);
     clear_attack_stats(&mut st.hits);
-    clear_attack_stats(unsafe { &mut st.anon_358.x358_hits });
+    clear_attack_stats(unsafe { &mut st.x358.x358_hits });
     for v in st.x504.iter_mut().take(StatsAttack_Count as usize) {
         *v = 0;
     }
@@ -268,7 +268,7 @@ pub fn apply_staling(fp: &Fighter, attack_id: i32, _arg2: i32, damage: f32) -> f
         core::slice::from_raw_parts(p, 9)
     };
     let mut d = damage;
-    let m = stale_multiplier(stale_table(fp.player_id as i32), attack_id, dec);
+    let m = stale_multiplier(stale_table(fp.player_idx as i32), attack_id, dec);
     if m != 1.0 {
         d *= m;
     }

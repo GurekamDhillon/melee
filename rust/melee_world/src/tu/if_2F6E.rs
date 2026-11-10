@@ -32,10 +32,10 @@ pub mod ext {
     }
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
@@ -52,7 +52,7 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
         pub unsafe extern "C" fn if_802F73C4(a0: *mut HSD_GObj) { super::if_802F73C4(a0) }
         pub unsafe extern "C" fn if_802F74D0(a0: *mut HSD_GObj) { super::if_802F74D0(a0) }
     }
@@ -79,7 +79,7 @@ const fn elem(x8: unsafe extern "C" fn(*mut HSD_GObj), xc: u32, x10: u8) -> Elem
         x0: null_mut(),
         x4: 0,
         x8: Some(x8),
-        xC: xc,
+        xC: xc as i32,
         x10,
         x11: 0,
         x12: Element_803F9628_x12 { bf_0: [0] },
@@ -110,8 +110,8 @@ pub unsafe extern "C" fn ifStatus_802F6EA4(arg0: i32, arg1: i32, arg2: i32, arg3
         }
     } else {
         let e: *mut Element_803F9628 = &raw mut ifStatus_803F9628[arg0 as usize];
-        (*e).x20 = arg1 as u32;
-        (*e).x24 = arg2 as u32;
+        (*e).x20 = arg1 as i32;
+        (*e).x24 = arg2 as i32;
         (*e).x11 = arg3 as u8;
         if !(*e).x0.is_null() {
             ext::HSD_GObjFree((*e).x0);

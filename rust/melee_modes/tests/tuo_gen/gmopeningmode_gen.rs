@@ -9,8 +9,8 @@ fn vis_StartMeleeData(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut m
 vis_StartMeleeRules(v, &format!("{}.rules", path), &mut (*p).rules as *mut _ as *mut u8);
 }
 {
-for _i5 in 0..6usize {
-vis_struct_PlayerInitData(v, &format!("{}[{}]", format!("{}.players", path), _i5), &mut (*p).players[_i5] as *mut _ as *mut u8);
+for _i4 in 0..6usize {
+vis_struct_PlayerInitData(v, &format!("{}[{}]", format!("{}.players", path), _i4), &mut (*p).players[_i4] as *mut _ as *mut u8);
 }
 }
 } }
@@ -201,15 +201,15 @@ if v.set() { (*p).modes.table[14].start.rules.x14 = v.leaf_int(&format!("{}.x14"
 if v.set() { (*p).modes.table[14].start.rules.x18 = v.leaf_int(&format!("{}.x18", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), 32, 0) as _; } else { v.dump_u(&format!("{}.x18", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), (((*p).modes.table[14].start.rules.x18) as u32) as u64); }
 }
 {
-for _i7 in 0..1usize {
-if v.set() { (*p).modes.table[14].start.rules.x1C_pad[_i7] = v.leaf_int(&format!("{}[{}]", format!("{}.x1C_pad", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), _i7), 32, 0) as _; } else { v.dump_u(&format!("{}[{}]", format!("{}.x1C_pad", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), _i7), (((*p).modes.table[14].start.rules.x1C_pad[_i7]) as u32) as u64); }
+for _i6 in 0..1usize {
+if v.set() { (*p).modes.table[14].start.rules.x1C_pad[_i6] = v.leaf_int(&format!("{}[{}]", format!("{}.x1C_pad", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), _i6), 32, 0) as _; } else { v.dump_u(&format!("{}[{}]", format!("{}.x1C_pad", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), _i6), (((*p).modes.table[14].start.rules.x1C_pad[_i6]) as u32) as u64); }
 }
 }
 {
 if v.set() { (*p).modes.table[14].start.rules.x20 = v.leaf_int(&format!("{}.x20", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), 64, 0) as _; } else { v.dump_u(&format!("{}.x20", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), (((*p).modes.table[14].start.rules.x20) as u64) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.rules.x28 = v.leaf_int(&format!("{}.x28", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), 32, 1) as _; } else { v.dump_i(&format!("{}.x28", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), (((*p).modes.table[14].start.rules.x28) as i32) as i64); }
+if v.set() { (*p).modes.table[14].start.rules.it_kind = v.leaf_int(&format!("{}.it_kind", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), 32, 1) as _; } else { v.dump_i(&format!("{}.it_kind", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), (((*p).modes.table[14].start.rules.it_kind) as i32) as i64); }
 }
 {
 if v.set() { (*p).modes.table[14].start.rules.x2C = f32::from_bits(v.leaf_f32(&format!("{}.x2C", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))))); } else { v.dump_f32(&format!("{}.x2C", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14)))), ((*p).modes.table[14].start.rules.x2C).to_bits()); }
@@ -252,82 +252,82 @@ v.bytes(&format!("{}.pad_x5C", format!("{}.rules", format!("{}.start", format!("
 }
 }
 {
-for _i8 in 0..6usize {
+for _i7 in 0..6usize {
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].ckind = v.leaf_int(&format!("{}.ckind", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 1) as _; } else { v.dump_i(&format!("{}.ckind", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].ckind) as i8) as i64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].ckind = v.leaf_int(&format!("{}.ckind", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 1) as _; } else { v.dump_i(&format!("{}.ckind", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].ckind) as i8) as i64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].slot_type = v.leaf_int(&format!("{}.slot_type", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 0) as _; } else { v.dump_u(&format!("{}.slot_type", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].slot_type) as u8) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].slot_type = v.leaf_int(&format!("{}.slot_type", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 0) as _; } else { v.dump_u(&format!("{}.slot_type", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].slot_type) as u8) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].stocks = v.leaf_int(&format!("{}.stocks", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 1) as _; } else { v.dump_i(&format!("{}.stocks", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].stocks) as i8) as i64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].stocks = v.leaf_int(&format!("{}.stocks", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 1) as _; } else { v.dump_i(&format!("{}.stocks", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].stocks) as i8) as i64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].color = v.leaf_int(&format!("{}.color", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 0) as _; } else { v.dump_u(&format!("{}.color", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].color) as u8) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].color = v.leaf_int(&format!("{}.color", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 0) as _; } else { v.dump_u(&format!("{}.color", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].color) as u8) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].slot = v.leaf_int(&format!("{}.slot", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 0) as _; } else { v.dump_u(&format!("{}.slot", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].slot) as u8) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].slot = v.leaf_int(&format!("{}.slot", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 0) as _; } else { v.dump_u(&format!("{}.slot", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].slot) as u8) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].spawn_pos = v.leaf_int(&format!("{}.spawn_pos", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 1) as _; } else { v.dump_i(&format!("{}.spawn_pos", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].spawn_pos) as i8) as i64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].spawn_pos = v.leaf_int(&format!("{}.spawn_pos", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 1) as _; } else { v.dump_i(&format!("{}.spawn_pos", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].spawn_pos) as i8) as i64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].spawn_dir = v.leaf_int(&format!("{}.spawn_dir", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 1) as _; } else { v.dump_i(&format!("{}.spawn_dir", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].spawn_dir) as i8) as i64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].spawn_dir = v.leaf_int(&format!("{}.spawn_dir", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 1) as _; } else { v.dump_i(&format!("{}.spawn_dir", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].spawn_dir) as i8) as i64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].sub_color = v.leaf_int(&format!("{}.sub_color", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 0) as _; } else { v.dump_u(&format!("{}.sub_color", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].sub_color) as u8) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].sub_color = v.leaf_int(&format!("{}.sub_color", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 0) as _; } else { v.dump_u(&format!("{}.sub_color", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].sub_color) as u8) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].handicap = v.leaf_int(&format!("{}.handicap", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 1) as _; } else { v.dump_i(&format!("{}.handicap", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].handicap) as i8) as i64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].handicap = v.leaf_int(&format!("{}.handicap", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 1) as _; } else { v.dump_i(&format!("{}.handicap", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].handicap) as i8) as i64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].team = v.leaf_int(&format!("{}.team", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 0) as _; } else { v.dump_u(&format!("{}.team", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].team) as u8) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].team = v.leaf_int(&format!("{}.team", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 0) as _; } else { v.dump_u(&format!("{}.team", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].team) as u8) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].nametag = v.leaf_int(&format!("{}.nametag", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 0) as _; } else { v.dump_u(&format!("{}.nametag", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].nametag) as u8) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].nametag = v.leaf_int(&format!("{}.nametag", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 0) as _; } else { v.dump_u(&format!("{}.nametag", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].nametag) as u8) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].xB = v.leaf_int(&format!("{}.xB", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 0) as _; } else { v.dump_u(&format!("{}.xB", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].xB) as u8) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].xB = v.leaf_int(&format!("{}.xB", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 0) as _; } else { v.dump_u(&format!("{}.xB", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].xB) as u8) as u64); }
 }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_rumble_enabled(v.leaf_int(&format!("{}.rumble_enabled", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.rumble_enabled", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].rumble_enabled()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xC_b1(v.leaf_int(&format!("{}.xC_b1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xC_b1()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_vs_metal(v.leaf_int(&format!("{}.vs_metal", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.vs_metal", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].vs_metal()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xC_b3(v.leaf_int(&format!("{}.xC_b3", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b3", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xC_b3()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_vs_invisible(v.leaf_int(&format!("{}.vs_invisible", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.vs_invisible", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].vs_invisible()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xC_b5(v.leaf_int(&format!("{}.xC_b5", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b5", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xC_b5()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xC_b6(v.leaf_int(&format!("{}.xC_b6", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b6", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xC_b6()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xC_b7(v.leaf_int(&format!("{}.xC_b7", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b7", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xC_b7()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xD_b0(v.leaf_int(&format!("{}.xD_b0", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b0", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xD_b0()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xD_b1(v.leaf_int(&format!("{}.xD_b1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xD_b1()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xD_b2(v.leaf_int(&format!("{}.xD_b2", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b2", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xD_b2()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xD_b3(v.leaf_int(&format!("{}.xD_b3", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b3", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xD_b3()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xD_b4(v.leaf_int(&format!("{}.xD_b4", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b4", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xD_b4()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xD_b5(v.leaf_int(&format!("{}.xD_b5", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b5", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xD_b5()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xD_b6(v.leaf_int(&format!("{}.xD_b6", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b6", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xD_b6()) as u64); }
-if v.set() { (*p).modes.table[14].start.players[_i8].set_xD_b7(v.leaf_int(&format!("{}.xD_b7", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b7", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].xD_b7()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_rumble_enabled(v.leaf_int(&format!("{}.rumble_enabled", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.rumble_enabled", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].rumble_enabled()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xC_b1(v.leaf_int(&format!("{}.xC_b1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xC_b1()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_vs_metal(v.leaf_int(&format!("{}.vs_metal", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.vs_metal", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].vs_metal()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xC_b3(v.leaf_int(&format!("{}.xC_b3", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b3", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xC_b3()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_vs_invisible(v.leaf_int(&format!("{}.vs_invisible", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.vs_invisible", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].vs_invisible()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xC_b5(v.leaf_int(&format!("{}.xC_b5", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b5", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xC_b5()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xC_b6(v.leaf_int(&format!("{}.xC_b6", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b6", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xC_b6()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xC_b7(v.leaf_int(&format!("{}.xC_b7", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xC_b7", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xC_b7()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xD_b0(v.leaf_int(&format!("{}.xD_b0", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b0", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xD_b0()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xD_b1(v.leaf_int(&format!("{}.xD_b1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xD_b1()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xD_b2(v.leaf_int(&format!("{}.xD_b2", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b2", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xD_b2()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xD_b3(v.leaf_int(&format!("{}.xD_b3", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b3", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xD_b3()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xD_b4(v.leaf_int(&format!("{}.xD_b4", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b4", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xD_b4()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xD_b5(v.leaf_int(&format!("{}.xD_b5", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b5", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xD_b5()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xD_b6(v.leaf_int(&format!("{}.xD_b6", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b6", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xD_b6()) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].set_xD_b7(v.leaf_int(&format!("{}.xD_b7", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 1, 0) as _); } else { v.dump_u(&format!("{}.xD_b7", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].xD_b7()) as u64); }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].cpu_kind = v.leaf_int(&format!("{}.cpu_kind", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 0) as _; } else { v.dump_u(&format!("{}.cpu_kind", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].cpu_kind) as u8) as u64); }
-}
-{
-if v.set() { (*p).modes.table[14].start.players[_i8].cpu_level = v.leaf_int(&format!("{}.cpu_level", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 8, 0) as _; } else { v.dump_u(&format!("{}.cpu_level", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].cpu_level) as u8) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].cpu_kind = v.leaf_int(&format!("{}.cpu_kind", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 0) as _; } else { v.dump_u(&format!("{}.cpu_kind", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].cpu_kind) as u8) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].damage = v.leaf_int(&format!("{}.damage", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 16, 0) as _; } else { v.dump_u(&format!("{}.damage", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].damage) as u16) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].cpu_level = v.leaf_int(&format!("{}.cpu_level", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 8, 0) as _; } else { v.dump_u(&format!("{}.cpu_level", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].cpu_level) as u8) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].damage1 = v.leaf_int(&format!("{}.damage1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 16, 0) as _; } else { v.dump_u(&format!("{}.damage1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].damage1) as u16) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].damage = v.leaf_int(&format!("{}.damage", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 16, 0) as _; } else { v.dump_u(&format!("{}.damage", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].damage) as u16) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].hp = v.leaf_int(&format!("{}.hp", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), 16, 0) as _; } else { v.dump_u(&format!("{}.hp", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), (((*p).modes.table[14].start.players[_i8].hp) as u16) as u64); }
+if v.set() { (*p).modes.table[14].start.players[_i7].damage1 = v.leaf_int(&format!("{}.damage1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 16, 0) as _; } else { v.dump_u(&format!("{}.damage1", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].damage1) as u16) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].attack_ratio = f32::from_bits(v.leaf_f32(&format!("{}.attack_ratio", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)))); } else { v.dump_f32(&format!("{}.attack_ratio", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].attack_ratio).to_bits()); }
+if v.set() { (*p).modes.table[14].start.players[_i7].hp = v.leaf_int(&format!("{}.hp", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), 16, 0) as _; } else { v.dump_u(&format!("{}.hp", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), (((*p).modes.table[14].start.players[_i7].hp) as u16) as u64); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].defense_ratio = f32::from_bits(v.leaf_f32(&format!("{}.defense_ratio", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)))); } else { v.dump_f32(&format!("{}.defense_ratio", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].defense_ratio).to_bits()); }
+if v.set() { (*p).modes.table[14].start.players[_i7].attack_ratio = f32::from_bits(v.leaf_f32(&format!("{}.attack_ratio", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)))); } else { v.dump_f32(&format!("{}.attack_ratio", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].attack_ratio).to_bits()); }
 }
 {
-if v.set() { (*p).modes.table[14].start.players[_i8].model_scale = f32::from_bits(v.leaf_f32(&format!("{}.model_scale", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)))); } else { v.dump_f32(&format!("{}.model_scale", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i8)), ((*p).modes.table[14].start.players[_i8].model_scale).to_bits()); }
+if v.set() { (*p).modes.table[14].start.players[_i7].defense_ratio = f32::from_bits(v.leaf_f32(&format!("{}.defense_ratio", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)))); } else { v.dump_f32(&format!("{}.defense_ratio", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].defense_ratio).to_bits()); }
+}
+{
+if v.set() { (*p).modes.table[14].start.players[_i7].model_scale = f32::from_bits(v.leaf_f32(&format!("{}.model_scale", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)))); } else { v.dump_f32(&format!("{}.model_scale", format!("{}[{}]", format!("{}.players", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 14))), _i7)), ((*p).modes.table[14].start.players[_i7].model_scale).to_bits()); }
 }
 }
 }
@@ -339,8 +339,8 @@ if v.set() { (*p).modes.table[14].start.players[_i8].model_scale = f32::from_bit
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_PreloadedGameModeState(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::PreloadedGameModeState; unsafe {
 {
-for _i9 in 0..2usize {
-if v.set() { (*p).is_heap_persistent[_i9] = v.leaf_int(&format!("{}[{}]", format!("{}.is_heap_persistent", path), _i9), 32, 1) as _; } else { v.dump_i(&format!("{}[{}]", format!("{}.is_heap_persistent", path), _i9), (((*p).is_heap_persistent[_i9]) as i32) as i64); }
+for _i8 in 0..2usize {
+if v.set() { (*p).is_heap_persistent[_i8] = v.leaf_int(&format!("{}[{}]", format!("{}.is_heap_persistent", path), _i8), 32, 1) as _; } else { v.dump_i(&format!("{}[{}]", format!("{}.is_heap_persistent", path), _i8), (((*p).is_heap_persistent[_i8]) as i32) as i64); }
 }
 }
 {
@@ -454,15 +454,15 @@ if v.set() { (*p).x14 = v.leaf_int(&format!("{}.x14", path), 8, 0) as _; } else 
 if v.set() { (*p).x18 = v.leaf_int(&format!("{}.x18", path), 32, 0) as _; } else { v.dump_u(&format!("{}.x18", path), (((*p).x18) as u32) as u64); }
 }
 {
-for _i10 in 0..1usize {
-if v.set() { (*p).x1C_pad[_i10] = v.leaf_int(&format!("{}[{}]", format!("{}.x1C_pad", path), _i10), 32, 0) as _; } else { v.dump_u(&format!("{}[{}]", format!("{}.x1C_pad", path), _i10), (((*p).x1C_pad[_i10]) as u32) as u64); }
+for _i9 in 0..1usize {
+if v.set() { (*p).x1C_pad[_i9] = v.leaf_int(&format!("{}[{}]", format!("{}.x1C_pad", path), _i9), 32, 0) as _; } else { v.dump_u(&format!("{}[{}]", format!("{}.x1C_pad", path), _i9), (((*p).x1C_pad[_i9]) as u32) as u64); }
 }
 }
 {
 if v.set() { (*p).x20 = v.leaf_int(&format!("{}.x20", path), 64, 0) as _; } else { v.dump_u(&format!("{}.x20", path), (((*p).x20) as u64) as u64); }
 }
 {
-if v.set() { (*p).x28 = v.leaf_int(&format!("{}.x28", path), 32, 1) as _; } else { v.dump_i(&format!("{}.x28", path), (((*p).x28) as i32) as i64); }
+if v.set() { (*p).it_kind = v.leaf_int(&format!("{}.it_kind", path), 32, 1) as _; } else { v.dump_i(&format!("{}.it_kind", path), (((*p).it_kind) as i32) as i64); }
 }
 {
 if v.set() { (*p).x2C = f32::from_bits(v.leaf_f32(&format!("{}.x2C", path))); } else { v.dump_f32(&format!("{}.x2C", path), ((*p).x2C).to_bits()); }
@@ -622,21 +622,21 @@ v.bytes(&format!("{}.winners", path), &mut (*p).winners as *mut _ as *mut u8, co
 v.bytes(&format!("{}.team_winners", path), &mut (*p).team_winners as *mut _ as *mut u8, core::mem::size_of_val(&(*p).team_winners));
 }
 {
-for _i11 in 0..5usize {
-vis_struct_MatchTeamData(v, &format!("{}[{}]", format!("{}.team_standings", path), _i11), &mut (*p).team_standings[_i11] as *mut _ as *mut u8);
+for _i10 in 0..5usize {
+vis_struct_MatchTeamData(v, &format!("{}[{}]", format!("{}.team_standings", path), _i10), &mut (*p).team_standings[_i10] as *mut _ as *mut u8);
 }
 }
 {
-for _i12 in 0..6usize {
-vis_struct_MatchPlayerData(v, &format!("{}[{}]", format!("{}.player_standings", path), _i12), &mut (*p).player_standings[_i12] as *mut _ as *mut u8);
+for _i11 in 0..6usize {
+vis_struct_MatchPlayerData(v, &format!("{}[{}]", format!("{}.player_standings", path), _i11), &mut (*p).player_standings[_i11] as *mut _ as *mut u8);
 }
 }
 {
 v.bytes(&format!("{}._x448", path), &mut (*p)._x448 as *mut _ as *mut u8, core::mem::size_of_val(&(*p)._x448));
 }
 {
-for _i13 in 0..6usize {
-vis_struct_UnkResultPlayerData(v, &format!("{}[{}]", format!("{}.x44C", path), _i13), &mut (*p).x44C[_i13] as *mut _ as *mut u8);
+for _i12 in 0..6usize {
+vis_struct_UnkResultPlayerData(v, &format!("{}[{}]", format!("{}.x44C", path), _i12), &mut (*p).x44C[_i12] as *mut _ as *mut u8);
 }
 }
 } }
@@ -670,8 +670,8 @@ if v.set() { (*p).x3 = v.leaf_int(&format!("{}.x3", path), 8, 0) as _; } else { 
 if v.set() { (*p).stkind = v.leaf_int(&format!("{}.stkind", path), 32, 0) as _; } else { v.dump_u(&format!("{}.stkind", path), (((*p).stkind) as u32) as u64); }
 }
 {
-for _i14 in 0..8usize {
-vis_struct_PreloadCacheSceneEntry(v, &format!("{}[{}]", format!("{}.entries", path), _i14), &mut (*p).entries[_i14] as *mut _ as *mut u8);
+for _i13 in 0..8usize {
+vis_struct_PreloadCacheSceneEntry(v, &format!("{}[{}]", format!("{}.entries", path), _i13), &mut (*p).entries[_i13] as *mut _ as *mut u8);
 }
 }
 } }
@@ -704,7 +704,9 @@ if v.set() { (*p).ckind = v.leaf_int(&format!("{}.ckind", path), 8, 1) as _; } e
 {
 if v.set() { (*p).ftkind = v.leaf_int(&format!("{}.ftkind", path), 8, 1) as _; } else { v.dump_i(&format!("{}.ftkind", path), (((*p).ftkind) as i8) as i64); }
 }
-v.bytes(&format!("{}.anon_3", path), &mut (*p).anon_3 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_3));
+{
+v.bytes(&format!("{}.x3_u", path), &mut (*p).x3_u as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x3_u));
+}
 {
 if v.set() { (*p).x4 = v.leaf_int(&format!("{}.x4", path), 8, 0) as _; } else { v.dump_u(&format!("{}.x4", path), (((*p).x4) as u8) as u64); }
 }
@@ -733,12 +735,9 @@ if v.set() { (*p).percent = v.leaf_int(&format!("{}.percent", path), 16, 0) as _
 if v.set() { (*p).xE = v.leaf_int(&format!("{}.xE", path), 16, 0) as _; } else { v.dump_u(&format!("{}.xE", path), (((*p).xE) as u16) as u64); }
 }
 {
-for _i15 in 0..4usize {
-if v.set() { (*p).kills[_i15] = v.leaf_int(&format!("{}[{}]", format!("{}.kills", path), _i15), 16, 0) as _; } else { v.dump_u(&format!("{}[{}]", format!("{}.kills", path), _i15), (((*p).kills[_i15]) as u16) as u64); }
+for _i14 in 0..6usize {
+if v.set() { (*p).kills[_i14] = v.leaf_int(&format!("{}[{}]", format!("{}.kills", path), _i14), 16, 0) as _; } else { v.dump_u(&format!("{}[{}]", format!("{}.kills", path), _i14), (((*p).kills[_i14]) as u16) as u64); }
 }
-}
-{
-if v.set() { (*p).x18 = v.leaf_int(&format!("{}.x18", path), 16, 0) as _; } else { v.dump_u(&format!("{}.x18", path), (((*p).x18) as u16) as u64); }
 }
 {
 if v.set() { (*p).x1C = v.leaf_int(&format!("{}.x1C", path), 32, 1) as _; } else { v.dump_i(&format!("{}.x1C", path), (((*p).x1C) as i32) as i64); }
@@ -855,8 +854,8 @@ fn vis_struct_UnkResultPlayerData(v: &mut V, path: &str, vp: *mut u8) { let p = 
 v.bytes(&format!("{}.x0", path), &mut (*p).x0 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x0));
 }
 {
-for _i16 in 0..257usize {
-if v.set() { (*p).x104[_i16] = v.leaf_int(&format!("{}[{}]", format!("{}.x104", path), _i16), 32, 1) as _; } else { v.dump_i(&format!("{}[{}]", format!("{}.x104", path), _i16), (((*p).x104[_i16]) as i32) as i64); }
+for _i15 in 0..257usize {
+if v.set() { (*p).x104[_i15] = v.leaf_int(&format!("{}[{}]", format!("{}.x104", path), _i15), 32, 1) as _; } else { v.dump_i(&format!("{}[{}]", format!("{}.x104", path), _i15), (((*p).x104[_i15]) as i32) as i64); }
 }
 }
 } }
@@ -923,10 +922,8 @@ fn gv_un_804D6F84(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut [u8; 
 v.bytes(path, &mut (*p) as *mut _ as *mut u8, core::mem::size_of_val(&(*p)));
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
-fn gv_un_804D6FA8(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut [*mut melee_types::ViCharaDesc; 2]; unsafe {
-for _i4 in 0..2usize {
-if v.set() { (*p)[_i4] = v.leaf_ptr(&format!("{}[{}]", path, _i4)) as _; } else { v.dump_p(&format!("{}[{}]", path, _i4), ((*p)[_i4]) as usize); }
-}
+fn gv_un_804D6FA8(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut [u8; 8]; unsafe {
+v.bytes(path, &mut (*p) as *mut _ as *mut u8, core::mem::size_of_val(&(*p)));
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn gv_un_804D6FD8(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut [u8; 8]; unsafe {
@@ -962,6 +959,7 @@ unsafe extern "C" fn s_lbAudioAx_80026F2C(a0: u32) { let v = vv(); v.call_begin(
 unsafe extern "C" fn s_lbAudioAx_8002702C(a0: u32, a1: u64) { let v = vv(); v.call_begin("lbAudioAx_8002702C"); v.arg_u(a0 as u64); v.arg_u(a1 as u64); v.call_end();    }
 unsafe extern "C" fn s_lbAudioAx_80027168() { let v = vv(); v.call_begin("lbAudioAx_80027168");  v.call_end();    }
 unsafe extern "C" fn s_gm_GetGameModeStateExitData(a0: *mut melee_types::GameModeState) -> *mut core::ffi::c_void { let v = vv(); v.call_begin("gm_GetGameModeStateExitData"); v.arg_p(a0 as usize); v.call_end();   v.ret_ptr("gm_GetGameModeStateExitData") as _ }
+// removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
 unsafe extern "C" fn s_gm_SetPendingGameMode(a0: u8) { let v = vv(); v.call_begin("gm_SetPendingGameMode"); v.arg_u(a0 as u64); v.call_end();    }
 unsafe extern "C" fn s_gm_SetNewGameModePending() { let v = vv(); v.call_begin("gm_SetNewGameModePending");  v.call_end();    }
 unsafe extern "C" fn s_gm_80173EEC() { let v = vv(); v.call_begin("gm_80173EEC");  v.call_end();    }
@@ -1061,6 +1059,7 @@ pub fn glue() -> Glue {
             ("lbAudioAx_8002702C", tu::ext::lbAudioAx_8002702C as *const () as usize),
             ("lbAudioAx_80027168", tu::ext::lbAudioAx_80027168 as *const () as usize),
             ("gm_GetGameModeStateExitData", tu::ext::gm_GetGameModeStateExitData as *const () as usize),
+            // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
             ("gm_SetPendingGameMode", tu::ext::gm_SetPendingGameMode as *const () as usize),
             ("gm_SetNewGameModePending", tu::ext::gm_SetNewGameModePending as *const () as usize),
             ("gm_80173EEC", tu::ext::gm_80173EEC as *const () as usize),
@@ -1099,6 +1098,7 @@ pub fn glue() -> Glue {
         tu::ext::H_lbAudioAx_8002702C = Some(s_lbAudioAx_8002702C);
         tu::ext::H_lbAudioAx_80027168 = Some(s_lbAudioAx_80027168);
         tu::ext::H_gm_GetGameModeStateExitData = Some(s_gm_GetGameModeStateExitData);
+        // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
         tu::ext::H_gm_SetPendingGameMode = Some(s_gm_SetPendingGameMode);
         tu::ext::H_gm_SetNewGameModePending = Some(s_gm_SetNewGameModePending);
         tu::ext::H_gm_80173EEC = Some(s_gm_80173EEC);

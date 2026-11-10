@@ -73,7 +73,7 @@ pub fn ftPp_SpecialAirN_Enter(gobj: G) {
         let fp = fpp(gobj);
         let icattr = (*fp).dat_attrs as *const ftIceClimberAttributes;
 
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         (*fp).u.nn.x222C = core::ptr::null_mut();
 
@@ -219,7 +219,7 @@ pub fn ftPp_SpecialN_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftPp_SpecialN_Enter");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         (*fp).cmd_vars[0] = 0_u32;
         (*fp).u.nn.x222C = core::mem::zeroed(); /* NULL */
         st::Fighter_ChangeMotionState(gobj, 341, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());

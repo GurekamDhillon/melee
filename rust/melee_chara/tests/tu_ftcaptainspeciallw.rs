@@ -65,14 +65,14 @@ fn smoke() {
     let mut tbls: std::vec::Vec<*mut FighterPartsTable> = vec![&mut tbl; 40];
     unsafe {
         melee_fighter::hooks::FT_PARTS_TABLE = tbls.as_mut_ptr();
-        f.anon_2210.anon_0.set_throw_flags_b1(1);
+        f.x2210.x0.set_throw_flags_b1(1);
         t::ext::EFASYNC_SPAWN = Some(|_, _, k, gfx, _, a| log(format!("ef {k} {gfx:x} {:08x}", (*a).to_bits())));
         melee_fighter::hooks::FTLIB_GET_KIND = Some(|_| Ft_Kind_Captain);
     }
     t::ftCa_SpecialAirLw_Phys(gp);
     assert_eq!(take(), ["85134".to_string(), format!("ef 3 490 {:08x}", (0.017453292f32 * 90.0).to_bits())]);
     assert_eq!(f.x2219_b0(), 1);
-    assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b1() }, 0);
+    assert_eq!(unsafe { f.x2210.x0.throw_flags_b1() }, 0);
 
     // Air collision reports landing -> SpecialAirLwEnd at the landing-lag rate.
     da.speciallw_landing_lag_mul = 2.0;

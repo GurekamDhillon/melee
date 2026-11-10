@@ -4,7 +4,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -12,7 +12,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -20,12 +20,12 @@ pub mod ext {
     ext_fns! {
     fn CARDProbe(a0: i32) -> i32;
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i64)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i64)>, a2: u32);
     fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj;
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
-    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32);
+    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i64);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i64);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj;
@@ -55,7 +55,7 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i64) { super::HSD_GObj_JObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).

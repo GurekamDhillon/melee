@@ -25,7 +25,7 @@ fn smoke() {
     f.x1A5C = vp;
     v.victim_gobj = gp;
     v.x1A5C = gp;
-    v.anon_221b.set_x221B_b5(1);
+    v.x221B.set_x221B_b5(1);
     f.facing_dir = 1.0;
     f.ground_or_air = GA_Ground;
     unsafe {
@@ -40,7 +40,7 @@ fn smoke() {
     assert_eq!(f.gr_vel, -1.25);
     assert!(f.victim_gobj.is_null() && f.x1A5C.is_null());
     assert!(v.victim_gobj.is_null() && v.x1A5C.is_null());
-    assert_eq!(v.anon_221b.x221B_b5(), 0);
+    assert_eq!(v.x221B.x221B_b5(), 0);
     assert_eq!(unsafe { LOG.clone() }, ["flag".to_string(), "flag".into(), format!("cms {}", ftCo_MS_CaptureCut as i32)]);
     // NULL partner: guarded out
     unsafe { LOG.clear() };

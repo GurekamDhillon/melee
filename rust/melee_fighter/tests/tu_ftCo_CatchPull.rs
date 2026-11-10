@@ -89,8 +89,8 @@ fn ftCo_CatchPull_matches_c() {
             fr.u.ss.x223C = if rnd() & 1 != 0 || op == 0 { igo() } else { core::ptr::null_mut() };
             it.xDD4_itemVar.linkhookshot.xC = jb(60);
             it.xDD4_itemVar.linkhookshot.x14 = (rnd() & 1) as u8;
-            unsafe { fr.anon_2210.anon_0.set_throw_flags_b3((rnd() & 1) as u8); }
-            fr.anon_221b.set_x221B_b7((rnd() & 1) as u8);
+            unsafe { fr.x2210.x0.set_throw_flags_b3((rnd() & 1) as u8); }
+            fr.x221B.set_x221B_b7((rnd() & 1) as u8);
             fr.gr_vel = rg();
             fr.facing_dir = rg();
             fr.x2170 = rw();
@@ -118,8 +118,8 @@ fn ftCo_CatchPull_matches_c() {
             let fr = f();
             let mut h = Hs::new();
             h.m(b(fr.gr_vel));
-            unsafe { h.m(fr.anon_2210.anon_0.throw_flags_b3() as u32); h.m((fr.anon_2210.throw_flags == 0) as u32); }
-            h.m(fr.anon_221b.x221B_b7() as u32);
+            unsafe { h.m(fr.x2210.x0.throw_flags_b3() as u32); h.m((fr.x2210.throw_flags == 0) as u32); }
+            h.m(fr.x221B.x221B_b7() as u32);
             h.m((fr.accessory1_cb.map(|p| p as usize) == Some(m::fn_800DA190_cb as usize)) as u32);
             h.m(jb_off(unsafe { fr.mv.co.capturedamage.x18 }));
             c.line(op, k, 0, h.0);

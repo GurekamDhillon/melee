@@ -7,7 +7,7 @@ u8 HSD_GObj_JObjKind;
 s8 HSD_GObj_LightKind;
 struct HSD_PadStatus HSD_PadCopyStatus[4];
 void (DevText_80302AC0)(__typeof__(struct DevText *) a0) { T(1000); T(PI((const void*) a0)); }
-__typeof__(struct DevText *) (DevText_Create)(__typeof__(char) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(int) a3, __typeof__(int) a4, __typeof__(char *) a5) { T(1001); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); T((u32) a4); T(PI((const void*) a5)); return (__typeof__(struct DevText *)) (0); }
+__typeof__(struct DevText *) (DevText_Create)(__typeof__(char) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(int) a3, __typeof__(int) a4, __typeof__(void *) a5) { T(1001); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); T((u32) a4); T(PI((const void*) a5)); return (__typeof__(struct DevText *)) (0); }
 void (DevText_Erase)(__typeof__(struct DevText *) a0) { T(1002); T(PI((const void*) a0)); }
 __typeof__(struct HSD_GObj *) (DevText_GetGObj)(void) { T(1003); return (__typeof__(struct HSD_GObj *)) (0); }
 void (DevText_HideBackground)(__typeof__(struct DevText *) a0) { T(1004); T(PI((const void*) a0)); }
@@ -23,8 +23,8 @@ void (DevText_SetXY)(__typeof__(struct DevText *) a0, __typeof__(int) a1, __type
 void (DevText_Show)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct DevText *) a1) { T(1015); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 __typeof__(unsigned char) (DevText_StoreColorIndex)(__typeof__(struct DevText *) a0, __typeof__(unsigned char) a1) { T(1016); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(unsigned char)) (fv()); }
 __typeof__(struct HSD_GObj *) (GObj_Create)(__typeof__(unsigned short) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2) { T(1017); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_GObj *)) (0); }
-void (GObj_SetupGXLink)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1018); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
-void (GObj_SetupGXLinkMax)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned int) a2) { T(1019); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); }
+void (GObj_SetupGXLink)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1018); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
+void (GObj_SetupGXLinkMax)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned int) a2) { T(1019); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); }
 void (GXBegin)(__typeof__(enum _GXPrimitive) a0, __typeof__(enum _GXVtxFmt) a1, __typeof__(unsigned short) a2) { T(1020); T((u32) a0); T((u32) a1); T((u32) a2); }
 void (GXColor4u8)(__typeof__(unsigned char) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1021); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); }
 void (GXLoadPosMtxImm)(__typeof__(float (*)[4]) a0, __typeof__(unsigned int) a1) { T(1022); T(PI((const void*) a0)); T((u32) a1); }
@@ -61,9 +61,9 @@ void (HSD_GObjProc_RemoveAllProcs)(__typeof__(struct HSD_GObj *) a0) { T(1052); 
 void (HSD_GObjProc_RemoveProc)(__typeof__(struct HSD_GObjProc *) a0) { T(1053); T(PI((const void*) a0)); }
 void (HSD_GObj_80390CD4)(__typeof__(struct HSD_GObj *) a0) { T(1054); T(PI((const void*) a0)); }
 void (HSD_GObj_80390ED0)(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned int) a1) { T(1055); T(PI((const void*) a0)); T((u32) a1); }
-void (HSD_GObj_803910D8)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1056); T(PI((const void*) a0)); T((u32) a1); }
-void (HSD_GObj_JObjCallback)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1057); T(PI((const void*) a0)); T((u32) a1); }
-void (HSD_GObj_LObjCallback)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1058); T(PI((const void*) a0)); T((u32) a1); }
+void (HSD_GObj_803910D8)(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1056); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
+void (HSD_GObj_JObjCallback)(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1057); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
+void (HSD_GObj_LObjCallback)(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1058); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
 __typeof__(struct HSD_GObjProc *) (HSD_GObj_SetupProc)(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1, __typeof__(unsigned char) a2) { T(1059); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); return (__typeof__(struct HSD_GObjProc *)) (0); }
 void (HSD_JObjAddAnimAll)(__typeof__(struct HSD_JObj *) a0, __typeof__(struct HSD_AnimJoint *) a1, __typeof__(struct HSD_MatAnimJoint *) a2, __typeof__(struct HSD_ShapeAnimJoint *) a3) { T(1060); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(PI((const void*) a3)); }
 void (HSD_JObjAddChild)(__typeof__(struct HSD_JObj *) a0, __typeof__(struct HSD_JObj *) a1) { T(1061); T(PI((const void*) a0)); T(PI((const void*) a1)); }
@@ -90,7 +90,7 @@ void (HSD_PadRenewStatus)(void) { T(1081); }
 __typeof__(float) (HSD_Randf)(void) { T(1082); return (__typeof__(float)) (rg()); }
 __typeof__(int) (HSD_Randi)(__typeof__(int) a0) { T(1083); T((u32) a0); return (__typeof__(int)) ((a0 > 0 ? (int) (rnd() % (u32) a0) : 0)); }
 __typeof__(struct HSD_SObj *) (HSD_SObjLib_803A477C)(__typeof__(struct HSD_GObj *) a0, __typeof__(struct HSD_SObjDesc *) a1, __typeof__(enum _GXTexWrapMode) a2, __typeof__(enum _GXTexWrapMode) a3, __typeof__(unsigned char) a4, __typeof__(unsigned char) a5) { T(1084); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); T((u32) a3); T((u32) a4); T((u32) a5); return (__typeof__(struct HSD_SObj *)) (0); }
-void (HSD_SObjLib_803A49E0)(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1085); T(PI((const void*) a0)); T((u32) a1); }
+void (HSD_SObjLib_803A49E0)(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1085); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
 void (HSD_SObjLib_803A55DC)(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned short) a1, __typeof__(unsigned short) a2, __typeof__(int) a3) { T(1086); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); T((u32) a3); }
 void (HSD_SetEraseColor)(__typeof__(unsigned char) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2, __typeof__(unsigned char) a3) { T(1087); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); }
 void (HSD_SetupRenderMode)(__typeof__(unsigned int) a0) { T(1088); T((u32) a0); }

@@ -70,9 +70,8 @@ pub fn install() {
         PSVECDotProduct = Some(|a0, a1| { t(1056); t(pi(a0)); t(pi(a1)); rg() });
         PSVECMag = Some(|a0| { t(1057); t(pi(a0)); rg() });
         PSVECNormalize = Some(|a0, a1| { t(1058); t(pi(a0)); t(pi(a1)); });
-        PSVECScale = Some(|a0, a1, a2| { t(1059); t(pi(a0)); t(pi(a1)); t(a2.to_bits()); });
-        PSVECSubtract = Some(|a0, a1, a2| { t(1060); t(pi(a0)); t(pi(a1)); t(pi(a2)); });
-        atan2f = Some(|a0, a1| { t(1061); t(a0.to_bits()); t(a1.to_bits()); rg() });
+        PSVECSubtract = Some(|a0, a1, a2| { t(1059); t(pi(a0)); t(pi(a1)); t(pi(a2)); });
+        atan2f = Some(|a0, a1| { t(1060); t(a0.to_bits()); t(a1.to_bits()); rg() });
     }
 }
 

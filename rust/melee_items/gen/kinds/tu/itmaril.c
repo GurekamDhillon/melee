@@ -52,7 +52,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -64,7 +64,7 @@ static void setup(int prof)
     spec_fill(prof);
     for (k = 0; k < 3; k++) {
         IT[k].xDD4_itemVar.maril.x60.flags = 0;
-        IT[k].xDD4_itemVar.maril.x60.x0 = rnd() & 1;
+        IT[k].xDD4_itemVar.maril.x60.x0_s.x0 = rnd() & 1;
         IT[k].xC9C = (int) (rnd() % 60);
     }
 }
@@ -73,7 +73,7 @@ static void hash_all(void)
 {
     int i, k;
     (void) i; (void) k;
-    for (k = 0; k < 3; k++) { HM(IT[k].xDD4_itemVar.maril.x60.x0); IT[k].xDD4_itemVar.maril.x60.flags = 0; }
+    for (k = 0; k < 3; k++) { HM(IT[k].xDD4_itemVar.maril.x60.x0_s.x0); IT[k].xDD4_itemVar.maril.x60.flags = 0; }
     for (k = 0; k < 3; k++) { hash_HSD_GObj(&GO[k]); hash_Item(&IT[k]); hash_ItemAttr(&ATTR[k]); }
     for (i = 0; i < 48; i++) hash_HSD_JObj(&JO[i]);
     for (i = 0; i < 4; i++) { HM(B(VA[i].x)); HM(B(VA[i].y)); HM(B(VA[i].z)); }
@@ -95,35 +95,35 @@ int main(void)
             prof = PROFTAB[op];
             setup(prof);
             switch (op) {
-            case 0: {  ret = (u32) itMaril_UnkMotion2_Anim_inline(&GO[0]); } break; /* itMaril_UnkMotion2_Anim_inline */
-            case 1: {  ret = (u32) it_802D66F8(&GO[0]); } break; /* it_802D66F8 */
+            case 0: {  ret = (u32) ((itMaril_UnkMotion2_Anim_inline(&GO[0])) != 0); } break; /* itMaril_UnkMotion2_Anim_inline */
+            case 1: {  ret = (u32) ((it_802D66F8(&GO[0])) != 0); } break; /* it_802D66F8 */
             case 2: {  it_802D6740(&GO[0]); } break; /* it_802D6740 */
-            case 3: {  ret = (u32) it_802D6798(&GO[0]); } break; /* it_802D6798 */
-            case 4: {  ret = (u32) it_802D6808(&GO[0]); } break; /* it_802D6808 */
-            case 5: {  ret = (u32) it_802D6810(&GO[0]); } break; /* it_802D6810 */
-            case 6: {  ret = (u32) it_802D6830(&GO[0]); } break; /* it_802D6830 */
-            case 7: {  ret = (u32) it_802D6838(&GO[0]); } break; /* it_802D6838 */
-            case 8: {  ret = (u32) it_802D6840(&GO[0]); } break; /* it_802D6840 */
-            case 9: {  ret = (u32) it_802D6848(&GO[0]); } break; /* it_802D6848 */
+            case 3: {  ret = (u32) ((it_802D6798(&GO[0])) != 0); } break; /* it_802D6798 */
+            case 4: {  ret = (u32) ((it_802D6808(&GO[0])) != 0); } break; /* it_802D6808 */
+            case 5: {  ret = (u32) ((it_802D6810(&GO[0])) != 0); } break; /* it_802D6810 */
+            case 6: {  ret = (u32) ((it_802D6830(&GO[0])) != 0); } break; /* it_802D6830 */
+            case 7: {  ret = (u32) ((it_802D6838(&GO[0])) != 0); } break; /* it_802D6838 */
+            case 8: {  ret = (u32) ((it_802D6840(&GO[0])) != 0); } break; /* it_802D6840 */
+            case 9: {  ret = (u32) ((it_802D6848(&GO[0])) != 0); } break; /* it_802D6848 */
             case 10: {  it_802D6850(&GO[0], &GO[1]); } break; /* it_802D6850 */
             case 11: {  itMaril_Logic28_Spawned(&GO[0]); } break; /* itMaril_Logic28_Spawned */
             case 12: {  it_802D68FC(&GO[0]); } break; /* it_802D68FC */
             case 13: {  itMaril_UnkMotion1_Coll_inline(&GO[0]); } break; /* itMaril_UnkMotion1_Coll_inline */
-            case 14: {  ret = (u32) itMaril_UnkMotion0_Anim(&GO[0]); } break; /* itMaril_UnkMotion0_Anim */
+            case 14: {  ret = (u32) ((itMaril_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itMaril_UnkMotion0_Anim */
             case 15: {  itMaril_UnkMotion0_Phys(&GO[0]); } break; /* itMaril_UnkMotion0_Phys */
-            case 16: {  ret = (u32) itMaril_UnkMotion0_Coll(&GO[0]); } break; /* itMaril_UnkMotion0_Coll */
+            case 16: {  ret = (u32) ((itMaril_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itMaril_UnkMotion0_Coll */
             case 17: {  it_802D69E4(&GO[0]); } break; /* it_802D69E4 */
             case 18: {  it_802D6A54(&GO[0]); } break; /* it_802D6A54 */
-            case 19: {  ret = (u32) itMaril_UnkMotion1_Anim(&GO[0]); } break; /* itMaril_UnkMotion1_Anim */
+            case 19: {  ret = (u32) ((itMaril_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itMaril_UnkMotion1_Anim */
             case 20: {  itMaril_UnkMotion1_Phys(&GO[0]); } break; /* itMaril_UnkMotion1_Phys */
-            case 21: {  ret = (u32) itMaril_UnkMotion1_Coll(&GO[0]); } break; /* itMaril_UnkMotion1_Coll */
+            case 21: {  ret = (u32) ((itMaril_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itMaril_UnkMotion1_Coll */
             case 22: {  it_802D6DDC(&GO[0]); } break; /* it_802D6DDC */
-            case 23: {  ret = (u32) itMaril_UnkMotion2_Anim(&GO[0]); } break; /* itMaril_UnkMotion2_Anim */
+            case 23: {  ret = (u32) ((itMaril_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itMaril_UnkMotion2_Anim */
             case 24: {  itMaril_UnkMotion2_Phys(&GO[0]); } break; /* itMaril_UnkMotion2_Phys */
-            case 25: {  ret = (u32) itMaril_UnkMotion2_Coll(&GO[0]); } break; /* itMaril_UnkMotion2_Coll */
-            case 26: {  ret = (u32) itMaril_UnkMotion3_Anim(&GO[0]); } break; /* itMaril_UnkMotion3_Anim */
+            case 25: {  ret = (u32) ((itMaril_UnkMotion2_Coll(&GO[0])) != 0); } break; /* itMaril_UnkMotion2_Coll */
+            case 26: {  ret = (u32) ((itMaril_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itMaril_UnkMotion3_Anim */
             case 27: {  itMaril_UnkMotion3_Phys(&GO[0]); } break; /* itMaril_UnkMotion3_Phys */
-            case 28: {  ret = (u32) it_802D6F00(&GO[0]); } break; /* it_802D6F00 */
+            case 28: {  ret = (u32) ((it_802D6F00(&GO[0])) != 0); } break; /* it_802D6F00 */
             case 29: {  it_802D6FB0(&GO[0], &GO[1]); } break; /* it_802D6FB0 */
             case 30: { { int j; for (j = 0; j < 4; j++) { HM((u32) it_803F82B0[j].anim_id); HM(FI((const void*) it_803F82B0[j].animated)); HM(FI((const void*) it_803F82B0[j].physics_updated)); HM(FI((const void*) it_803F82B0[j].collided)); } } } break; /* state tables */
             }

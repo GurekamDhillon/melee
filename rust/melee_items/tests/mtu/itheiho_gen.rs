@@ -306,11 +306,11 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     }
     }
     if UV_ECBSource_anon_4 == 1 {
-    p.x378_itemColl.ecb_source.anon_4.anon_0_0.up = rg();
-    p.x378_itemColl.ecb_source.anon_4.anon_0_0.down = rg();
-    p.x378_itemColl.ecb_source.anon_4.anon_0_0.front = rg();
-    p.x378_itemColl.ecb_source.anon_4.anon_0_0.back = rg();
-    p.x378_itemColl.ecb_source.anon_4.anon_0_0.angle = rg();
+    p.x378_itemColl.ecb_source.x4.x0_1.up = rg();
+    p.x378_itemColl.ecb_source.x4.x0_1.down = rg();
+    p.x378_itemColl.ecb_source.x4.x0_1.front = rg();
+    p.x378_itemColl.ecb_source.x4.x0_1.back = rg();
+    p.x378_itemColl.ecb_source.x4.x0_1.angle = rg();
     }
     p.x378_itemColl.ecb_source.x124 = rg();
     p.x378_itemColl.ecb_source.x128 = rg();
@@ -474,7 +474,7 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     if UV_HitCapsule_anon_134 == 0 {
     }
     if UV_HitCapsule_anon_134 == 1 {
-    p.x5D4_hitboxes[i0].hit.anon_134.set_hit_grabbed_victim_only(fv() as _);
+    p.x5D4_hitboxes[i0].hit.x134.set_hit_grabbed_victim_only(fv() as _);
     }
     p.x5D4_hitboxes[i0].set_x138(fv() as _);
     p.x5D4_hitboxes[i0].set_x138_b1_7(fv() as _);
@@ -580,8 +580,8 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.xC6C = rg();
     p.xC70 = rg();
     p.xC74 = fv() as _;
-    p.xC78.x = rg();
-    p.xC78.y = rg();
+    p.xC78.x = (rg()).to_bits().cast_signed();
+    p.xC78.y = (rg()).to_bits().cast_signed();
     p.xC80.x = fv() as _;
     p.xC80.y = fv() as _;
     p.xC88 = fv() as _;
@@ -637,85 +637,85 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.xD8C_attack_instance = fv() as _;
     p.xD8E = fv() as _;
     if UV_Item_xD90 == 0 {
-    p.xD90.anon_0.x2070 = fv() as _;
-    p.xD90.anon_0.set_x2071_b0_3(fv() as _);
-    p.xD90.anon_0.set_x2071_b4(fv() as _);
-    p.xD90.anon_0.set_x2071_b5(fv() as _);
-    p.xD90.anon_0.set_x2071_b6(fv() as _);
-    p.xD90.anon_0.set_x2071_b7(fv() as _);
-    p.xD90.anon_0.set_x2072_b0(fv() as _);
-    p.xD90.anon_0.set_x2072_b1(fv() as _);
-    p.xD90.anon_0.set_x2072_b2(fv() as _);
-    p.xD90.anon_0.set_count_x1A4(fv() as _);
-    p.xD90.anon_0.set_count_thrown_items(fv() as _);
-    p.xD90.anon_0.set_count_aerials(fv() as _);
-    p.xD90.anon_0.set_count_x1A0(fv() as _);
-    p.xD90.anon_0.set_count_specials(fv() as _);
-    p.xD90.anon_0.x2073 = fv() as _;
+    p.xD90.x0.x2070 = fv() as _;
+    p.xD90.x0.set_x2071_b0_3(fv() as _);
+    p.xD90.x0.set_x2071_b4(fv() as _);
+    p.xD90.x0.set_x2071_b5(fv() as _);
+    p.xD90.x0.set_x2071_b6(fv() as _);
+    p.xD90.x0.set_x2071_b7(fv() as _);
+    p.xD90.x0.set_x2072_b0(fv() as _);
+    p.xD90.x0.set_x2072_b1(fv() as _);
+    p.xD90.x0.set_x2072_b2(fv() as _);
+    p.xD90.x0.set_count_x1A4(fv() as _);
+    p.xD90.x0.set_count_thrown_items(fv() as _);
+    p.xD90.x0.set_count_aerials(fv() as _);
+    p.xD90.x0.set_count_x1A0(fv() as _);
+    p.xD90.x0.set_count_specials(fv() as _);
+    p.xD90.x0.x2073 = fv() as _;
     }
     if UV_Item_xD90 == 1 {
     p.xD90.x2070_int = fv() as _;
     }
-    p.xD94.x = rg();
-    p.xD94.y = rg();
+    p.xD94.x = (rg()).to_bits().cast_signed();
+    p.xD94.y = (rg()).to_bits().cast_signed();
     p.xD9C.x = fv() as _;
     p.xD9C.y = fv() as _;
     p.xDA4_word = fv() as _;
     p.xDA8_short = fv() as _;
     if UV_Item_anon_daa == 0 {
     if UV_Item_anon_477_xDAA_flag == 0 {
-    p.anon_daa.xDAA_flag.byte = fv() as _;
+    p.xDAA.xDAA_flag.byte = fv() as _;
     }
     if UV_Item_anon_477_xDAA_flag == 1 {
-    p.anon_daa.xDAA_flag.anon_0.set_b0(fv() as _);
-    p.anon_daa.xDAA_flag.anon_0.set_b1(fv() as _);
-    p.anon_daa.xDAA_flag.anon_0.set_b2(fv() as _);
-    p.anon_daa.xDAA_flag.anon_0.set_b3(fv() as _);
-    p.anon_daa.xDAA_flag.anon_0.set_b4(fv() as _);
-    p.anon_daa.xDAA_flag.anon_0.set_b5(fv() as _);
-    p.anon_daa.xDAA_flag.anon_0.set_b6(fv() as _);
-    p.anon_daa.xDAA_flag.anon_0.set_b7(fv() as _);
+    p.xDAA.xDAA_flag.x0.set_b0(fv() as _);
+    p.xDAA.xDAA_flag.x0.set_b1(fv() as _);
+    p.xDAA.xDAA_flag.x0.set_b2(fv() as _);
+    p.xDAA.xDAA_flag.x0.set_b3(fv() as _);
+    p.xDAA.xDAA_flag.x0.set_b4(fv() as _);
+    p.xDAA.xDAA_flag.x0.set_b5(fv() as _);
+    p.xDAA.xDAA_flag.x0.set_b6(fv() as _);
+    p.xDAA.xDAA_flag.x0.set_b7(fv() as _);
     }
     }
     if UV_Item_anon_daa == 1 {
-    p.anon_daa.xDAA_byte = fv() as _;
+    p.xDAA.xDAA_byte = fv() as _;
     }
     p.xDAC_itcmd_var0 = fv() as _;
     p.xDB0_itcmd_var1 = fv() as _;
     p.xDB4_itcmd_var2 = fv() as _;
     p.xDB8_itcmd_var3 = fv() as _;
     if UV_Item_anon_dbc == 0 {
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x0(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x1(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x2(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x3(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x4(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x5(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x6(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x7(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x8(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x9(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_xA(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_xB(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_xC(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_xD(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_xE(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_xF(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x13(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x14(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x15(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x16(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x17(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x19(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x1A(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x1B(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x1C(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x1D(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x1E(fv() as _);
-    p.anon_dbc.xDBC_itcmd_var4.flags.set_x1F(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x0(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x1(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x2(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x3(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x4(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x5(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x6(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x7(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x8(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x9(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_xA(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_xB(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_xC(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_xD(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_xE(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_xF(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x13(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x14(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x15(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x16(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x17(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x19(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x1A(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x1B(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x1C(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x1D(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x1E(fv() as _);
+    p.xDBC.xDBC_itcmd_var4.flags.set_x1F(fv() as _);
     }
     if UV_Item_anon_dbc == 1 {
-    p.anon_dbc.xDBC_itcmd_var4_word = fv() as _;
+    p.xDBC.xDBC_itcmd_var4_word = fv() as _;
     }
     p.xDC0 = fv() as _;
     p.xDC4 = fv() as _;
@@ -752,90 +752,90 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.xDCC_flag.set_b2(fv() as _);
     p.xDCC_flag.set_b3(fv() as _);
     p.xDCC_flag.set_b4567(fv() as _);
-    p.xDCD_flag.anon_0.set_b01(fv() as _);
-    p.xDCD_flag.anon_0.set_b2(fv() as _);
-    p.xDCD_flag.anon_0.set_b3(fv() as _);
-    p.xDCD_flag.anon_0.set_b4(fv() as _);
-    p.xDCD_flag.anon_0.set_b5(fv() as _);
-    p.xDCD_flag.anon_0.set_b6(fv() as _);
-    p.xDCD_flag.anon_0.set_b7(fv() as _);
+    p.xDCD_flag.x0.set_b01(fv() as _);
+    p.xDCD_flag.x0.set_b2(fv() as _);
+    p.xDCD_flag.x0.set_b3(fv() as _);
+    p.xDCD_flag.x0.set_b4(fv() as _);
+    p.xDCD_flag.x0.set_b5(fv() as _);
+    p.xDCD_flag.x0.set_b6(fv() as _);
+    p.xDCD_flag.x0.set_b7(fv() as _);
     if UV_Item_xDCE_flag == 0 {
     p.xDCE_flag.byte = fv() as _;
     }
     if UV_Item_xDCE_flag == 1 {
-    p.xDCE_flag.anon_0.set_b0(fv() as _);
-    p.xDCE_flag.anon_0.set_b1(fv() as _);
-    p.xDCE_flag.anon_0.set_b2(fv() as _);
-    p.xDCE_flag.anon_0.set_b3(fv() as _);
-    p.xDCE_flag.anon_0.set_b4(fv() as _);
-    p.xDCE_flag.anon_0.set_b5(fv() as _);
-    p.xDCE_flag.anon_0.set_b6(fv() as _);
-    p.xDCE_flag.anon_0.set_b7(fv() as _);
+    p.xDCE_flag.x0.set_b0(fv() as _);
+    p.xDCE_flag.x0.set_b1(fv() as _);
+    p.xDCE_flag.x0.set_b2(fv() as _);
+    p.xDCE_flag.x0.set_b3(fv() as _);
+    p.xDCE_flag.x0.set_b4(fv() as _);
+    p.xDCE_flag.x0.set_b5(fv() as _);
+    p.xDCE_flag.x0.set_b6(fv() as _);
+    p.xDCE_flag.x0.set_b7(fv() as _);
     }
     if UV_Item_xDCF_flag == 0 {
     p.xDCF_flag.byte = fv() as _;
     }
     if UV_Item_xDCF_flag == 1 {
-    p.xDCF_flag.anon_0.set_b0(fv() as _);
-    p.xDCF_flag.anon_0.set_b1(fv() as _);
-    p.xDCF_flag.anon_0.set_b2(fv() as _);
-    p.xDCF_flag.anon_0.set_b3(fv() as _);
-    p.xDCF_flag.anon_0.set_b4(fv() as _);
-    p.xDCF_flag.anon_0.set_b5(fv() as _);
-    p.xDCF_flag.anon_0.set_b6(fv() as _);
-    p.xDCF_flag.anon_0.set_b7(fv() as _);
+    p.xDCF_flag.x0.set_b0(fv() as _);
+    p.xDCF_flag.x0.set_b1(fv() as _);
+    p.xDCF_flag.x0.set_b2(fv() as _);
+    p.xDCF_flag.x0.set_b3(fv() as _);
+    p.xDCF_flag.x0.set_b4(fv() as _);
+    p.xDCF_flag.x0.set_b5(fv() as _);
+    p.xDCF_flag.x0.set_b6(fv() as _);
+    p.xDCF_flag.x0.set_b7(fv() as _);
     }
     if UV_Item_xDD0_flag == 0 {
     p.xDD0_flag.byte = fv() as _;
     }
     if UV_Item_xDD0_flag == 1 {
-    p.xDD0_flag.anon_0.set_b0(fv() as _);
-    p.xDD0_flag.anon_0.set_b1(fv() as _);
-    p.xDD0_flag.anon_0.set_b2(fv() as _);
-    p.xDD0_flag.anon_0.set_b3(fv() as _);
-    p.xDD0_flag.anon_0.set_b4(fv() as _);
-    p.xDD0_flag.anon_0.set_b5(fv() as _);
-    p.xDD0_flag.anon_0.set_b6(fv() as _);
-    p.xDD0_flag.anon_0.set_b7(fv() as _);
+    p.xDD0_flag.x0.set_b0(fv() as _);
+    p.xDD0_flag.x0.set_b1(fv() as _);
+    p.xDD0_flag.x0.set_b2(fv() as _);
+    p.xDD0_flag.x0.set_b3(fv() as _);
+    p.xDD0_flag.x0.set_b4(fv() as _);
+    p.xDD0_flag.x0.set_b5(fv() as _);
+    p.xDD0_flag.x0.set_b6(fv() as _);
+    p.xDD0_flag.x0.set_b7(fv() as _);
     }
     if UV_Item_xDD1_flag == 0 {
     p.xDD1_flag.byte = fv() as _;
     }
     if UV_Item_xDD1_flag == 1 {
-    p.xDD1_flag.anon_0.set_b0(fv() as _);
-    p.xDD1_flag.anon_0.set_b1(fv() as _);
-    p.xDD1_flag.anon_0.set_b2(fv() as _);
-    p.xDD1_flag.anon_0.set_b3(fv() as _);
-    p.xDD1_flag.anon_0.set_b4(fv() as _);
-    p.xDD1_flag.anon_0.set_b5(fv() as _);
-    p.xDD1_flag.anon_0.set_b6(fv() as _);
-    p.xDD1_flag.anon_0.set_b7(fv() as _);
+    p.xDD1_flag.x0.set_b0(fv() as _);
+    p.xDD1_flag.x0.set_b1(fv() as _);
+    p.xDD1_flag.x0.set_b2(fv() as _);
+    p.xDD1_flag.x0.set_b3(fv() as _);
+    p.xDD1_flag.x0.set_b4(fv() as _);
+    p.xDD1_flag.x0.set_b5(fv() as _);
+    p.xDD1_flag.x0.set_b6(fv() as _);
+    p.xDD1_flag.x0.set_b7(fv() as _);
     }
     if UV_Item_xDD2_flag == 0 {
     p.xDD2_flag.byte = fv() as _;
     }
     if UV_Item_xDD2_flag == 1 {
-    p.xDD2_flag.anon_0.set_b0(fv() as _);
-    p.xDD2_flag.anon_0.set_b1(fv() as _);
-    p.xDD2_flag.anon_0.set_b2(fv() as _);
-    p.xDD2_flag.anon_0.set_b3(fv() as _);
-    p.xDD2_flag.anon_0.set_b4(fv() as _);
-    p.xDD2_flag.anon_0.set_b5(fv() as _);
-    p.xDD2_flag.anon_0.set_b6(fv() as _);
-    p.xDD2_flag.anon_0.set_b7(fv() as _);
+    p.xDD2_flag.x0.set_b0(fv() as _);
+    p.xDD2_flag.x0.set_b1(fv() as _);
+    p.xDD2_flag.x0.set_b2(fv() as _);
+    p.xDD2_flag.x0.set_b3(fv() as _);
+    p.xDD2_flag.x0.set_b4(fv() as _);
+    p.xDD2_flag.x0.set_b5(fv() as _);
+    p.xDD2_flag.x0.set_b6(fv() as _);
+    p.xDD2_flag.x0.set_b7(fv() as _);
     }
     if UV_Item_xDD3_flag == 0 {
     p.xDD3_flag.byte = fv() as _;
     }
     if UV_Item_xDD3_flag == 1 {
-    p.xDD3_flag.anon_0.set_b0(fv() as _);
-    p.xDD3_flag.anon_0.set_b1(fv() as _);
-    p.xDD3_flag.anon_0.set_b2(fv() as _);
-    p.xDD3_flag.anon_0.set_b3(fv() as _);
-    p.xDD3_flag.anon_0.set_b4(fv() as _);
-    p.xDD3_flag.anon_0.set_b5(fv() as _);
-    p.xDD3_flag.anon_0.set_b6(fv() as _);
-    p.xDD3_flag.anon_0.set_b7(fv() as _);
+    p.xDD3_flag.x0.set_b0(fv() as _);
+    p.xDD3_flag.x0.set_b1(fv() as _);
+    p.xDD3_flag.x0.set_b2(fv() as _);
+    p.xDD3_flag.x0.set_b3(fv() as _);
+    p.xDD3_flag.x0.set_b4(fv() as _);
+    p.xDD3_flag.x0.set_b5(fv() as _);
+    p.xDD3_flag.x0.set_b6(fv() as _);
+    p.xDD3_flag.x0.set_b7(fv() as _);
     }
     if UV_Item_xDD4_itemVar == 35 {
     p.xDD4_itemVar.heiho.x0 = rg();
@@ -844,14 +844,14 @@ pub fn fill_Item(p: &mut Item) { unsafe {
     p.xDD4_itemVar.heiho.x8.byte = fv() as _;
     }
     if UV_itHeiho_ItemVars_x8 == 1 {
-    p.xDD4_itemVar.heiho.x8.anon_0.set_b0(fv() as _);
-    p.xDD4_itemVar.heiho.x8.anon_0.set_b1(fv() as _);
-    p.xDD4_itemVar.heiho.x8.anon_0.set_b2(fv() as _);
-    p.xDD4_itemVar.heiho.x8.anon_0.set_b3(fv() as _);
-    p.xDD4_itemVar.heiho.x8.anon_0.set_b4(fv() as _);
-    p.xDD4_itemVar.heiho.x8.anon_0.set_b5(fv() as _);
-    p.xDD4_itemVar.heiho.x8.anon_0.set_b6(fv() as _);
-    p.xDD4_itemVar.heiho.x8.anon_0.set_b7(fv() as _);
+    p.xDD4_itemVar.heiho.x8.x0.set_b0(fv() as _);
+    p.xDD4_itemVar.heiho.x8.x0.set_b1(fv() as _);
+    p.xDD4_itemVar.heiho.x8.x0.set_b2(fv() as _);
+    p.xDD4_itemVar.heiho.x8.x0.set_b3(fv() as _);
+    p.xDD4_itemVar.heiho.x8.x0.set_b4(fv() as _);
+    p.xDD4_itemVar.heiho.x8.x0.set_b5(fv() as _);
+    p.xDD4_itemVar.heiho.x8.x0.set_b6(fv() as _);
+    p.xDD4_itemVar.heiho.x8.x0.set_b7(fv() as _);
     }
     p.xDD4_itemVar.heiho.xC = rg();
     p.xDD4_itemVar.heiho.x10 = rg();
@@ -1032,17 +1032,17 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.x378_itemColl.xE4_ecb.left.y.to_bits());
     hm(p.x378_itemColl.ecb_source.kind as u32);
     if UV_ECBSource_anon_4 == 0 {
-    hm(pi(p.x378_itemColl.ecb_source.anon_4.anon_0.x108_joint));
+    hm(pi(p.x378_itemColl.ecb_source.x4.x0.x108_joint));
     for i1 in 0..6 {
-    hm(pi(p.x378_itemColl.ecb_source.anon_4.anon_0.x10C_joint[i1]));
+    hm(pi(p.x378_itemColl.ecb_source.x4.x0.x10C_joint[i1]));
     }
     }
     if UV_ECBSource_anon_4 == 1 {
-    hm(p.x378_itemColl.ecb_source.anon_4.anon_0_0.up.to_bits());
-    hm(p.x378_itemColl.ecb_source.anon_4.anon_0_0.down.to_bits());
-    hm(p.x378_itemColl.ecb_source.anon_4.anon_0_0.front.to_bits());
-    hm(p.x378_itemColl.ecb_source.anon_4.anon_0_0.back.to_bits());
-    hm(p.x378_itemColl.ecb_source.anon_4.anon_0_0.angle.to_bits());
+    hm(p.x378_itemColl.ecb_source.x4.x0_1.up.to_bits());
+    hm(p.x378_itemColl.ecb_source.x4.x0_1.down.to_bits());
+    hm(p.x378_itemColl.ecb_source.x4.x0_1.front.to_bits());
+    hm(p.x378_itemColl.ecb_source.x4.x0_1.back.to_bits());
+    hm(p.x378_itemColl.ecb_source.x4.x0_1.angle.to_bits());
     }
     hm(p.x378_itemColl.ecb_source.x124.to_bits());
     hm(p.x378_itemColl.ecb_source.x128.to_bits());
@@ -1217,10 +1217,10 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.x5D4_hitboxes[i0].hit.victims_2[i1].x4 as u32);
     }
     if UV_HitCapsule_anon_134 == 0 {
-    hm(pi(p.x5D4_hitboxes[i0].hit.anon_134.owner));
+    hm(pi(p.x5D4_hitboxes[i0].hit.x134.owner));
     }
     if UV_HitCapsule_anon_134 == 1 {
-    hm(p.x5D4_hitboxes[i0].hit.anon_134.hit_grabbed_victim_only() as u32);
+    hm(p.x5D4_hitboxes[i0].hit.x134.hit_grabbed_victim_only() as u32);
     }
     hm(p.x5D4_hitboxes[i0].x138() as u32);
     hm(p.x5D4_hitboxes[i0].x138_b1_7() as u32);
@@ -1330,8 +1330,8 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.xC6C.to_bits());
     hm(p.xC70.to_bits());
     hm(p.xC74 as u32);
-    hm(p.xC78.x.to_bits());
-    hm(p.xC78.y.to_bits());
+    hm(p.xC78.x.cast_unsigned());
+    hm(p.xC78.y.cast_unsigned());
     hm(p.xC80.x as u32);
     hm(p.xC80.y as u32);
     hm(p.xC88 as u32);
@@ -1405,85 +1405,85 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.xD8C_attack_instance as u32);
     hm(p.xD8E as u32);
     if UV_Item_xD90 == 0 {
-    hm(p.xD90.anon_0.x2070 as u32);
-    hm(p.xD90.anon_0.x2071_b0_3() as u32);
-    hm(p.xD90.anon_0.x2071_b4() as u32);
-    hm(p.xD90.anon_0.x2071_b5() as u32);
-    hm(p.xD90.anon_0.x2071_b6() as u32);
-    hm(p.xD90.anon_0.x2071_b7() as u32);
-    hm(p.xD90.anon_0.x2072_b0() as u32);
-    hm(p.xD90.anon_0.x2072_b1() as u32);
-    hm(p.xD90.anon_0.x2072_b2() as u32);
-    hm(p.xD90.anon_0.count_x1A4() as u32);
-    hm(p.xD90.anon_0.count_thrown_items() as u32);
-    hm(p.xD90.anon_0.count_aerials() as u32);
-    hm(p.xD90.anon_0.count_x1A0() as u32);
-    hm(p.xD90.anon_0.count_specials() as u32);
-    hm(p.xD90.anon_0.x2073 as u32);
+    hm(p.xD90.x0.x2070 as u32);
+    hm(p.xD90.x0.x2071_b0_3() as u32);
+    hm(p.xD90.x0.x2071_b4() as u32);
+    hm(p.xD90.x0.x2071_b5() as u32);
+    hm(p.xD90.x0.x2071_b6() as u32);
+    hm(p.xD90.x0.x2071_b7() as u32);
+    hm(p.xD90.x0.x2072_b0() as u32);
+    hm(p.xD90.x0.x2072_b1() as u32);
+    hm(p.xD90.x0.x2072_b2() as u32);
+    hm(p.xD90.x0.count_x1A4() as u32);
+    hm(p.xD90.x0.count_thrown_items() as u32);
+    hm(p.xD90.x0.count_aerials() as u32);
+    hm(p.xD90.x0.count_x1A0() as u32);
+    hm(p.xD90.x0.count_specials() as u32);
+    hm(p.xD90.x0.x2073 as u32);
     }
     if UV_Item_xD90 == 1 {
     hm(p.xD90.x2070_int as u32);
     }
-    hm(p.xD94.x.to_bits());
-    hm(p.xD94.y.to_bits());
+    hm(p.xD94.x.cast_unsigned());
+    hm(p.xD94.y.cast_unsigned());
     hm(p.xD9C.x as u32);
     hm(p.xD9C.y as u32);
     hm(p.xDA4_word as u32);
     hm(p.xDA8_short as u32);
     if UV_Item_anon_daa == 0 {
     if UV_Item_anon_477_xDAA_flag == 0 {
-    hm(p.anon_daa.xDAA_flag.byte as u32);
+    hm(p.xDAA.xDAA_flag.byte as u32);
     }
     if UV_Item_anon_477_xDAA_flag == 1 {
-    hm(p.anon_daa.xDAA_flag.anon_0.b0() as u32);
-    hm(p.anon_daa.xDAA_flag.anon_0.b1() as u32);
-    hm(p.anon_daa.xDAA_flag.anon_0.b2() as u32);
-    hm(p.anon_daa.xDAA_flag.anon_0.b3() as u32);
-    hm(p.anon_daa.xDAA_flag.anon_0.b4() as u32);
-    hm(p.anon_daa.xDAA_flag.anon_0.b5() as u32);
-    hm(p.anon_daa.xDAA_flag.anon_0.b6() as u32);
-    hm(p.anon_daa.xDAA_flag.anon_0.b7() as u32);
+    hm(p.xDAA.xDAA_flag.x0.b0() as u32);
+    hm(p.xDAA.xDAA_flag.x0.b1() as u32);
+    hm(p.xDAA.xDAA_flag.x0.b2() as u32);
+    hm(p.xDAA.xDAA_flag.x0.b3() as u32);
+    hm(p.xDAA.xDAA_flag.x0.b4() as u32);
+    hm(p.xDAA.xDAA_flag.x0.b5() as u32);
+    hm(p.xDAA.xDAA_flag.x0.b6() as u32);
+    hm(p.xDAA.xDAA_flag.x0.b7() as u32);
     }
     }
     if UV_Item_anon_daa == 1 {
-    hm(p.anon_daa.xDAA_byte as u32);
+    hm(p.xDAA.xDAA_byte as u32);
     }
     hm(p.xDAC_itcmd_var0 as u32);
     hm(p.xDB0_itcmd_var1 as u32);
     hm(p.xDB4_itcmd_var2 as u32);
     hm(p.xDB8_itcmd_var3 as u32);
     if UV_Item_anon_dbc == 0 {
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x0() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x1() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x2() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x3() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x4() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x5() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x6() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x7() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x8() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x9() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.xA() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.xB() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.xC() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.xD() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.xE() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.xF() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x13() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x14() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x15() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x16() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x17() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x19() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x1A() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x1B() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x1C() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x1D() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x1E() as u32);
-    hm(p.anon_dbc.xDBC_itcmd_var4.flags.x1F() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x0() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x1() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x2() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x3() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x4() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x5() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x6() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x7() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x8() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x9() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.xA() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.xB() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.xC() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.xD() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.xE() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.xF() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x13() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x14() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x15() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x16() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x17() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x19() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x1A() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x1B() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x1C() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x1D() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x1E() as u32);
+    hm(p.xDBC.xDBC_itcmd_var4.flags.x1F() as u32);
     }
     if UV_Item_anon_dbc == 1 {
-    hm(p.anon_dbc.xDBC_itcmd_var4_word as u32);
+    hm(p.xDBC.xDBC_itcmd_var4_word as u32);
     }
     hm(p.xDC0 as u32);
     hm(p.xDC4 as u32);
@@ -1520,90 +1520,90 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.xDCC_flag.b2() as u32);
     hm(p.xDCC_flag.b3() as u32);
     hm(p.xDCC_flag.b4567() as u32);
-    hm(p.xDCD_flag.anon_0.b01() as u32);
-    hm(p.xDCD_flag.anon_0.b2() as u32);
-    hm(p.xDCD_flag.anon_0.b3() as u32);
-    hm(p.xDCD_flag.anon_0.b4() as u32);
-    hm(p.xDCD_flag.anon_0.b5() as u32);
-    hm(p.xDCD_flag.anon_0.b6() as u32);
-    hm(p.xDCD_flag.anon_0.b7() as u32);
+    hm(p.xDCD_flag.x0.b01() as u32);
+    hm(p.xDCD_flag.x0.b2() as u32);
+    hm(p.xDCD_flag.x0.b3() as u32);
+    hm(p.xDCD_flag.x0.b4() as u32);
+    hm(p.xDCD_flag.x0.b5() as u32);
+    hm(p.xDCD_flag.x0.b6() as u32);
+    hm(p.xDCD_flag.x0.b7() as u32);
     if UV_Item_xDCE_flag == 0 {
     hm(p.xDCE_flag.byte as u32);
     }
     if UV_Item_xDCE_flag == 1 {
-    hm(p.xDCE_flag.anon_0.b0() as u32);
-    hm(p.xDCE_flag.anon_0.b1() as u32);
-    hm(p.xDCE_flag.anon_0.b2() as u32);
-    hm(p.xDCE_flag.anon_0.b3() as u32);
-    hm(p.xDCE_flag.anon_0.b4() as u32);
-    hm(p.xDCE_flag.anon_0.b5() as u32);
-    hm(p.xDCE_flag.anon_0.b6() as u32);
-    hm(p.xDCE_flag.anon_0.b7() as u32);
+    hm(p.xDCE_flag.x0.b0() as u32);
+    hm(p.xDCE_flag.x0.b1() as u32);
+    hm(p.xDCE_flag.x0.b2() as u32);
+    hm(p.xDCE_flag.x0.b3() as u32);
+    hm(p.xDCE_flag.x0.b4() as u32);
+    hm(p.xDCE_flag.x0.b5() as u32);
+    hm(p.xDCE_flag.x0.b6() as u32);
+    hm(p.xDCE_flag.x0.b7() as u32);
     }
     if UV_Item_xDCF_flag == 0 {
     hm(p.xDCF_flag.byte as u32);
     }
     if UV_Item_xDCF_flag == 1 {
-    hm(p.xDCF_flag.anon_0.b0() as u32);
-    hm(p.xDCF_flag.anon_0.b1() as u32);
-    hm(p.xDCF_flag.anon_0.b2() as u32);
-    hm(p.xDCF_flag.anon_0.b3() as u32);
-    hm(p.xDCF_flag.anon_0.b4() as u32);
-    hm(p.xDCF_flag.anon_0.b5() as u32);
-    hm(p.xDCF_flag.anon_0.b6() as u32);
-    hm(p.xDCF_flag.anon_0.b7() as u32);
+    hm(p.xDCF_flag.x0.b0() as u32);
+    hm(p.xDCF_flag.x0.b1() as u32);
+    hm(p.xDCF_flag.x0.b2() as u32);
+    hm(p.xDCF_flag.x0.b3() as u32);
+    hm(p.xDCF_flag.x0.b4() as u32);
+    hm(p.xDCF_flag.x0.b5() as u32);
+    hm(p.xDCF_flag.x0.b6() as u32);
+    hm(p.xDCF_flag.x0.b7() as u32);
     }
     if UV_Item_xDD0_flag == 0 {
     hm(p.xDD0_flag.byte as u32);
     }
     if UV_Item_xDD0_flag == 1 {
-    hm(p.xDD0_flag.anon_0.b0() as u32);
-    hm(p.xDD0_flag.anon_0.b1() as u32);
-    hm(p.xDD0_flag.anon_0.b2() as u32);
-    hm(p.xDD0_flag.anon_0.b3() as u32);
-    hm(p.xDD0_flag.anon_0.b4() as u32);
-    hm(p.xDD0_flag.anon_0.b5() as u32);
-    hm(p.xDD0_flag.anon_0.b6() as u32);
-    hm(p.xDD0_flag.anon_0.b7() as u32);
+    hm(p.xDD0_flag.x0.b0() as u32);
+    hm(p.xDD0_flag.x0.b1() as u32);
+    hm(p.xDD0_flag.x0.b2() as u32);
+    hm(p.xDD0_flag.x0.b3() as u32);
+    hm(p.xDD0_flag.x0.b4() as u32);
+    hm(p.xDD0_flag.x0.b5() as u32);
+    hm(p.xDD0_flag.x0.b6() as u32);
+    hm(p.xDD0_flag.x0.b7() as u32);
     }
     if UV_Item_xDD1_flag == 0 {
     hm(p.xDD1_flag.byte as u32);
     }
     if UV_Item_xDD1_flag == 1 {
-    hm(p.xDD1_flag.anon_0.b0() as u32);
-    hm(p.xDD1_flag.anon_0.b1() as u32);
-    hm(p.xDD1_flag.anon_0.b2() as u32);
-    hm(p.xDD1_flag.anon_0.b3() as u32);
-    hm(p.xDD1_flag.anon_0.b4() as u32);
-    hm(p.xDD1_flag.anon_0.b5() as u32);
-    hm(p.xDD1_flag.anon_0.b6() as u32);
-    hm(p.xDD1_flag.anon_0.b7() as u32);
+    hm(p.xDD1_flag.x0.b0() as u32);
+    hm(p.xDD1_flag.x0.b1() as u32);
+    hm(p.xDD1_flag.x0.b2() as u32);
+    hm(p.xDD1_flag.x0.b3() as u32);
+    hm(p.xDD1_flag.x0.b4() as u32);
+    hm(p.xDD1_flag.x0.b5() as u32);
+    hm(p.xDD1_flag.x0.b6() as u32);
+    hm(p.xDD1_flag.x0.b7() as u32);
     }
     if UV_Item_xDD2_flag == 0 {
     hm(p.xDD2_flag.byte as u32);
     }
     if UV_Item_xDD2_flag == 1 {
-    hm(p.xDD2_flag.anon_0.b0() as u32);
-    hm(p.xDD2_flag.anon_0.b1() as u32);
-    hm(p.xDD2_flag.anon_0.b2() as u32);
-    hm(p.xDD2_flag.anon_0.b3() as u32);
-    hm(p.xDD2_flag.anon_0.b4() as u32);
-    hm(p.xDD2_flag.anon_0.b5() as u32);
-    hm(p.xDD2_flag.anon_0.b6() as u32);
-    hm(p.xDD2_flag.anon_0.b7() as u32);
+    hm(p.xDD2_flag.x0.b0() as u32);
+    hm(p.xDD2_flag.x0.b1() as u32);
+    hm(p.xDD2_flag.x0.b2() as u32);
+    hm(p.xDD2_flag.x0.b3() as u32);
+    hm(p.xDD2_flag.x0.b4() as u32);
+    hm(p.xDD2_flag.x0.b5() as u32);
+    hm(p.xDD2_flag.x0.b6() as u32);
+    hm(p.xDD2_flag.x0.b7() as u32);
     }
     if UV_Item_xDD3_flag == 0 {
     hm(p.xDD3_flag.byte as u32);
     }
     if UV_Item_xDD3_flag == 1 {
-    hm(p.xDD3_flag.anon_0.b0() as u32);
-    hm(p.xDD3_flag.anon_0.b1() as u32);
-    hm(p.xDD3_flag.anon_0.b2() as u32);
-    hm(p.xDD3_flag.anon_0.b3() as u32);
-    hm(p.xDD3_flag.anon_0.b4() as u32);
-    hm(p.xDD3_flag.anon_0.b5() as u32);
-    hm(p.xDD3_flag.anon_0.b6() as u32);
-    hm(p.xDD3_flag.anon_0.b7() as u32);
+    hm(p.xDD3_flag.x0.b0() as u32);
+    hm(p.xDD3_flag.x0.b1() as u32);
+    hm(p.xDD3_flag.x0.b2() as u32);
+    hm(p.xDD3_flag.x0.b3() as u32);
+    hm(p.xDD3_flag.x0.b4() as u32);
+    hm(p.xDD3_flag.x0.b5() as u32);
+    hm(p.xDD3_flag.x0.b6() as u32);
+    hm(p.xDD3_flag.x0.b7() as u32);
     }
     if UV_Item_xDD4_itemVar == 35 {
     hm(p.xDD4_itemVar.heiho.x0.to_bits());
@@ -1612,14 +1612,14 @@ pub fn hash_Item(p: &Item) { unsafe {
     hm(p.xDD4_itemVar.heiho.x8.byte as u32);
     }
     if UV_itHeiho_ItemVars_x8 == 1 {
-    hm(p.xDD4_itemVar.heiho.x8.anon_0.b0() as u32);
-    hm(p.xDD4_itemVar.heiho.x8.anon_0.b1() as u32);
-    hm(p.xDD4_itemVar.heiho.x8.anon_0.b2() as u32);
-    hm(p.xDD4_itemVar.heiho.x8.anon_0.b3() as u32);
-    hm(p.xDD4_itemVar.heiho.x8.anon_0.b4() as u32);
-    hm(p.xDD4_itemVar.heiho.x8.anon_0.b5() as u32);
-    hm(p.xDD4_itemVar.heiho.x8.anon_0.b6() as u32);
-    hm(p.xDD4_itemVar.heiho.x8.anon_0.b7() as u32);
+    hm(p.xDD4_itemVar.heiho.x8.x0.b0() as u32);
+    hm(p.xDD4_itemVar.heiho.x8.x0.b1() as u32);
+    hm(p.xDD4_itemVar.heiho.x8.x0.b2() as u32);
+    hm(p.xDD4_itemVar.heiho.x8.x0.b3() as u32);
+    hm(p.xDD4_itemVar.heiho.x8.x0.b4() as u32);
+    hm(p.xDD4_itemVar.heiho.x8.x0.b5() as u32);
+    hm(p.xDD4_itemVar.heiho.x8.x0.b6() as u32);
+    hm(p.xDD4_itemVar.heiho.x8.x0.b7() as u32);
     }
     hm(p.xDD4_itemVar.heiho.xC.to_bits());
     hm(p.xDD4_itemVar.heiho.x10.to_bits());
@@ -1902,7 +1902,7 @@ pub fn hash_HSD_AObj(p: &HSD_AObj) { unsafe {
     hm(p.end_frame.to_bits());
     hm(p.framerate.to_bits());
     hm(pi(p.fobj));
-    hm(pi(p.hsd_obj));
+    hm(pi(p.jobj));
 } }
 
 pub static mut UV_ECBSource_anon_4: i32 = 0;

@@ -113,9 +113,9 @@ fn ftcommon_field_logic_matches_c() {
             }
             let mut r = Rng(0x2468Bu32.wrapping_add(op.wrapping_mul(7919)).wrapping_add(k.wrapping_mul(104729)));
             fp.kind = r.rnd() % 34;
-            fp.player_id = (r.rnd() % 6) as u8;
-            fp.x618_player_id = (r.rnd() % 4) as u8;
-            fp.x619_costume_id = (r.rnd() % 6) as u8;
+            fp.player_idx = (r.rnd() % 6) as u8;
+            fp.pad_port = (r.rnd() % 4) as u8;
+            fp.costume_id = (r.rnd() % 6) as u8;
             fp.x8_spawnNum = (r.rnd() % 8) as i32;
             fp.facing_dir = r.rf();
             fp.gr_vel = r.rf();
@@ -176,11 +176,11 @@ fn ftcommon_field_logic_matches_c() {
             let v = r.rnd() & 1;
             fp.set_x2219_b0(v as u8);
             let v = r.rnd() & 1;
-            fp.set_x221F_b3(v as u8);
+            fp.set_is_sleeping(v as u8);
             let v = r.rnd() & 1;
             fp.set_is_sub_fighter(v as u8);
             let v = r.rnd() & 1;
-            fp.set_x2224_b2(v as u8);
+            fp.set_stamina_dead(v as u8);
             let v = r.rnd() & 1;
             fp.set_x2224_b5(v as u8);
             let v = r.rnd() & 1;

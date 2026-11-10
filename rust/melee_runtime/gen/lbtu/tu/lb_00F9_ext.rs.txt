@@ -5,6 +5,7 @@ pub mod ext {
     use core::ffi::c_void;
     pub mod hook {
         use super::*;
+        pub static mut AngleAxisToQuat: Option<fn(*mut Vec, *mut Quaternion, f32) -> i32> = None;
         pub static mut EulerToQuat: Option<fn(*mut Vec, *mut Quaternion) -> i32> = None;
         pub static mut GXBegin: Option<fn(u32, u32, u16)> = None;
         pub static mut GXColor4u8: Option<fn(u8, u8, u8, u8)> = None;
@@ -18,10 +19,8 @@ pub mod ext {
         pub static mut HSD_JObjSetMtxDirtySub: Option<fn(*mut HSD_JObj)> = None;
         pub static mut HSD_JObjSetupMatrixSub: Option<fn(*mut HSD_JObj)> = None;
         pub static mut HSD_MemAlloc: Option<fn(i32) -> *mut c_void> = None;
-        pub static mut HSD_QuatLib_8037EB28: Option<fn(*mut [f32; 4], *mut Vec) -> i32> = None;
-        pub static mut HSD_QuatLib_8037EC4C: Option<fn(*mut Quaternion, *mut Quaternion, *mut Quaternion) -> i32> = None;
-        pub static mut HSD_QuatLib_8037ECE0: Option<fn(*mut Vec, *mut Quaternion, f32) -> i32> = None;
         pub static mut HSD_StateInitDirect: Option<fn(i32, u32)> = None;
+        pub static mut MatToEuler: Option<fn(*mut [f32; 4], *mut Vec) -> i32> = None;
         pub static mut PSMTXConcat: Option<fn(*mut [f32; 4], *mut [f32; 4], *mut [f32; 4])> = None;
         pub static mut PSMTXCopy: Option<fn(*mut [f32; 4], *mut [f32; 4])> = None;
         pub static mut PSMTXIdentity: Option<fn(*mut [f32; 4])> = None;
@@ -31,6 +30,7 @@ pub mod ext {
         pub static mut PSMTXTrans: Option<fn(*mut [f32; 4], f32, f32, f32)> = None;
         pub static mut PSMTXTranspose: Option<fn(*mut [f32; 4], *mut [f32; 4])> = None;
         pub static mut PSVECCrossProduct: Option<fn(*mut Vec, *mut Vec, *mut Vec)> = None;
+        pub static mut QuatMul: Option<fn(*mut Quaternion, *mut Quaternion, *mut Quaternion) -> i32> = None;
         pub static mut __frsqrte: Option<fn(f64) -> f64> = None;
         pub static mut atan2f: Option<fn(f32, f32) -> f32> = None;
         pub static mut cosf: Option<fn(f32) -> f32> = None;
@@ -43,6 +43,9 @@ pub mod ext {
         pub static mut lb_80011C18: Option<fn(*mut HSD_JObj, u32)> = None;
         pub static mut mpCheckFloor: Option<fn(f32, f32, f32, f32, f32, *mut Vec, *mut i32, *mut u32, *mut Vec, i32, i32, i32, Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, *mut HSD_GObj) -> i32> = None;
         pub static mut sinf: Option<fn(f32) -> f32> = None;
+    }
+    pub fn AngleAxisToQuat(a0: *mut Vec, a1: *mut Quaternion, a2: f32) -> i32 {
+        match unsafe { hook::AngleAxisToQuat } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: AngleAxisToQuat is not ported") } }
     }
     pub fn EulerToQuat(a0: *mut Vec, a1: *mut Quaternion) -> i32 {
         match unsafe { hook::EulerToQuat } { Some(f) => f(a0, a1), None => { panic!("TODO: EulerToQuat is not ported") } }
@@ -83,17 +86,11 @@ pub mod ext {
     pub fn HSD_MemAlloc(a0: i32) -> *mut c_void {
         match unsafe { hook::HSD_MemAlloc } { Some(f) => f(a0), None => { panic!("TODO: HSD_MemAlloc is not ported") } }
     }
-    pub fn HSD_QuatLib_8037EB28(a0: *mut [f32; 4], a1: *mut Vec) -> i32 {
-        match unsafe { hook::HSD_QuatLib_8037EB28 } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_QuatLib_8037EB28 is not ported") } }
-    }
-    pub fn HSD_QuatLib_8037EC4C(a0: *mut Quaternion, a1: *mut Quaternion, a2: *mut Quaternion) -> i32 {
-        match unsafe { hook::HSD_QuatLib_8037EC4C } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_QuatLib_8037EC4C is not ported") } }
-    }
-    pub fn HSD_QuatLib_8037ECE0(a0: *mut Vec, a1: *mut Quaternion, a2: f32) -> i32 {
-        match unsafe { hook::HSD_QuatLib_8037ECE0 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_QuatLib_8037ECE0 is not ported") } }
-    }
     pub fn HSD_StateInitDirect(a0: i32, a1: u32) {
         match unsafe { hook::HSD_StateInitDirect } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_StateInitDirect is not ported") } }
+    }
+    pub fn MatToEuler(a0: *mut [f32; 4], a1: *mut Vec) -> i32 {
+        match unsafe { hook::MatToEuler } { Some(f) => f(a0, a1), None => { panic!("TODO: MatToEuler is not ported") } }
     }
     pub fn PSMTXConcat(a0: *mut [f32; 4], a1: *mut [f32; 4], a2: *mut [f32; 4]) {
         match unsafe { hook::PSMTXConcat } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSMTXConcat is not ported") } }
@@ -121,6 +118,9 @@ pub mod ext {
     }
     pub fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) {
         match unsafe { hook::PSVECCrossProduct } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSVECCrossProduct is not ported") } }
+    }
+    pub fn QuatMul(a0: *mut Quaternion, a1: *mut Quaternion, a2: *mut Quaternion) -> i32 {
+        match unsafe { hook::QuatMul } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: QuatMul is not ported") } }
     }
     pub fn __frsqrte(a0: f64) -> f64 {
         match unsafe { hook::__frsqrte } { Some(f) => f(a0), None => { panic!("TODO: __frsqrte is not ported") } }

@@ -27,7 +27,8 @@ RAW_STREAM_TYPES = {"CmdUnion"}
 # Raw words kept in pointer-typed slots (the decoder reads an unrelocated non-zero word as null): KirbyHatStruct.hat_dynamics[1]
 # [2] is the second part model (an HSD_Joint tree), and when GC +0 is not a pointer it is the model_num of a FtPartsDesc at +0 (LOAD_HAT passes `(FtPartsDesc*) hat`; hats with a real hat_joint pointer keep the struct):
 # decoded by the hand-written FtPartsDesc rule and written over native +0..16 (the decomp labels them hat_joint/desc.model_num). [1] is a bit mask of fighter bones (ftKb_SpecialN_800EF040: `(u32) hat->hat_dynamics[1]`).
-POST_DECODE = {"ftDynamics": ["        // ftCo_8009E4A8 hands these `FigaTree*` words to ftCo_8009CB40, which reads them as a node count (`(s32) arg3`):", "        // an unrelocated word is that count (1, 2, 0x100), kept as the value (the pointer decode would make it null)", "        if !v.x10.is_null() { if let Some(t) = d.target(at + 0x10) { let rows = (d.extent(t) / 4).max(1); for r in 0..rows { if let Some(e) = d.target(t + 4 * r) { let a = unsafe { *v.x10.add(r as usize) }; if !a.is_null() { for i in 0..10u32 { if !d.is_reloc(e + 4 * i) { let w = d.u32_at(e + 4 * i); unsafe { *a.add(i as usize) = w as usize as *mut FigaTree; } } } } } } } }"], "KirbyHatStruct": ["        if !d.is_reloc(at + 0x10) { v.hat_dynamics[1] = d.u32_at(at + 0x10) as usize as *mut ftDynamics; }", "        if !d.is_reloc(at) { let fd = <FtPartsDesc as GcDecode>::gc_decode(d, at); unsafe { core::ptr::write(&mut v as *mut Self as *mut FtPartsDesc, fd); } }"]}
+# (ftDynamics.x10 needed a post-decode while it was typed FigaTree***: the bone-set words are s32 counts, typed so upstream now)
+POST_DECODE = {"KirbyHatStruct": ["        if !d.is_reloc(at + 0x10) { v.hat_dynamics[1] = d.u32_at(at + 0x10) as usize as *mut ftDynamics; }", "        if !d.is_reloc(at) { let fd = <FtPartsDesc as GcDecode>::gc_decode(d, at); unsafe { core::ptr::write(&mut v as *mut Self as *mut FtPartsDesc, fd); } }"]}
 LLVM = Path(os.environ.get("LLVM_DIR", r"C:\Program Files\LLVM"))
 ci.Config.set_library_file(str(LLVM / "bin" / "libclang.dll"))
 import ctypes
@@ -85,16 +86,28 @@ ARRAY_FIELDS = load_array_fields()
 POINTER_KEY_FIELDS = {"HSD_AObjDesc.obj_id": "HSD_Joint"}
 # `void*` fields that hold a pointer to a known record (the C casts at the use): decode the pointee so pointer identity
 # with the typed views of the same object holds.
-VOID_TYPED_FIELDS = {"UnkStageDat_x0_entry.joint": "HSD_Joint", "UnkStageDat_x8_t.x10": "HSD_CObjDesc"}
+VOID_TYPED_FIELDS = {"UnkStageDat_x8_t.x10": "HSD_CObjDesc"}
+# Pointers upstream typed (doldecomp #3583 ff.) that the port still reads as the raw GameCube bytes in place (the `void*`
+# rule: GcPointee for c_void hands out the image address): item state scripts and attribute blocks (the engine's
+# dat_custom.rs builds the typed ones), vertex / TLUT / texture data, effect data, the rumble and tournament tables.
+# Decoding them as the header's record would materialise one native record where the port expects the block.
+OPAQUE_FIELDS = {"Article.x4_specialAttributes", "ItemStateDesc.xC_script", "HSD_VtxDescList.vertex", "_HSD_TlutDesc.lut",
+                 "HSD_ImageDesc.image_ptr", "EF_DAT_Entry.data", "Fighter_804D653C_t.unk",
+                 "TmBoxArrays.box2", "TmBoxArrays.box3", "TmBoxArrays.box4"}
 
 # TU-local records needed by native ports. Parse the original declarations on both
 # targets rather than copying their fields into Rust or a second layout generator.
 # Selector is a record/typedef name, or a variable whose element type is the record.
 TU_RECORDS = {
     "src/melee/gr/ground.c": {"LightOverrideEntry": "LightOverrideEntry"},
-    "src/melee/lb/lbdvd.c": {"lbDvd_803B72C0_t": "lbDvd_803B72C0_t"},
+    "src/melee/lb/lbdvd.c": {"PreloadFile": "lbDvd_803B72C0_t"},  # upstream #3548 named it PreloadFile; the port keeps its name
     "src/melee/lb/lbcollision.c": {"lbColl_803B9928": "LbCollColorPair"},
     "src/sysdolphin/baselib/pobj.c": {"GenoPalPObj": "GenoPalPObj"},
+    # upstream #3583 moved the baselib .static.h records into their TUs
+    "src/sysdolphin/baselib/devcom.c": {"HSD_DevCom": "HSD_DevCom"},
+    # grzebes.c's acid state view over the zebes4/zebes5 ground vars (the port's fn_801DA9D8 / fn_801DA9F0 use it)
+    "src/melee/gr/grzebes.c": {"grZe_AcidState": "grZe_AcidState"},
+
     "src/melee/lb/lbaudio_ax.c": {
         "lbAudioAx_UserData": "lbAudioAx_UserData", "SoundParams": "SoundParams",
         "lbl_804D6454": "LbAudioAxHeapData", "lbl_803BB3C0": "LbAudioAxBankMask",
@@ -131,8 +144,8 @@ def local_records(args):
 # C-local records needed by native TU ports. Their declarations are harvested verbatim,
 # then parsed by the same PPC/native passes as the headers; no second type generator.
 LOCAL_RECORDS = {
-    "src/melee/lb/lbsnap.c": ["Unk80433380_48", "Unk80433380_0",
-                              "LbMcSnapMemSnapIconData", "Unk80433380", "Unk803BACC8"],
+    # LbMcSnapMemSnapIconData (a union read only through .ptr) became a plain `u8**` field upstream (#3643)
+    "src/melee/lb/lbsnap.c": ["Unk80433380_48", "Unk80433380_0", "Unk80433380", "Unk803BACC8"],
     "src/melee/lb/lb_00F9.c": ["lb_Collider"],
     "src/melee/vi/vi0502.c": ["Vi0502Data"],
 }
@@ -175,8 +188,8 @@ TU_PRIVATE_RECORDS = {
     "src/melee/lb/lb_0195.c": ["UnkArrElem", "lb_804329F0_t"],
     "src/melee/lb/lb_01F8.c": ["lbl_804335B8_t"],
     "src/melee/lb/lb_0219.c": ["BgFlashUserData"],
-    "src/melee/mn/mncharsel.c": ["MnSelectChrModels", "MnSelectChrDataTable", "MexSelectChr",
-                                "CSSCursorData", "CSSCharModel"],
+    # MnSelectChrModels / MnSelectChrDataTable are in mncharsel.h since upstream #3594 (included below)
+    "src/melee/mn/mncharsel.c": ["MexSelectChr", "CSSCursorData", "CSSCharModel"],
 }
 
 
@@ -233,7 +246,7 @@ NATIVE_FIELD_NAMES = {
 }
 
 TY_TU_RECORDS = {
-    "src/melee/ty/toy.c": ["ToyUnkJObjData", "TySortRow", "ModelNamesDesc", "ToyPanelLabelData"],
+    "src/melee/ty/toy.c": ["ToyUnkJObjData", "TySortRow", "ModelNamesDesc"],  # ToyPanelLabelData: gone upstream (#3585), no port use
     "src/melee/ty/tyfigupon.c": ["TyFiguponDigitInit"],
     "src/melee/ty/tydisplay.c": ["TySortElemInt"],
 }
@@ -289,23 +302,33 @@ def write_probe():
     ft = g("src/melee/ft/*.h") + g("src/melee/ft/kinds/**/*.h") + g("src/melee/pl/*.h")
     it = g("src/melee/it/**/*.h") + g("src/melee/ty/**/*.h") + g("src/melee/vi/**/*.h")
     # Single headers whose records other groups' TU ports need (appended, never removed).
-    extra = ["melee/lb/lbanim.h", "melee/lb/lbcardnew.h", "melee/gm/gmresultplayer.static.h", "melee/gm/gmfrontend_items.h", "melee/gm/gmtoulib.static.h", "melee/lb/lbmemory.h", "melee/lb/lbheap.static.h", "dolphin/thp/thp.h"]
+    extra = ["melee/lb/lbanim.h", "melee/lb/lbcardnew.h", "melee/gm/gmresultplayer.h", "melee/gm/gmfrontend_items.h", "melee/gm/gmtoulib.h", "melee/lb/lbmemory.h", "melee/lb/lbheap.h", "dolphin/thp/thp.h"]
     # shard 857-864 (mn/ menus): records of the mn headers the TU ports use
-    extra += ["melee/mn/mnmain.h", "melee/mn/mncount.h", "melee/mn/mndatadel.static.h", "melee/mn/mndiagram2.h",
-              "melee/mn/mndiagram3.static.h", "melee/mn/mnevent.h", "melee/mn/mnmainrule.h",
-              "melee/mn/inlines.h", "melee/mn/mnruleplus.h", "melee/mn/mnstagesel.static.h"]
+    extra += ["melee/mn/mnmain.h", "melee/mn/mncount.h", "melee/mn/mndatadel.h", "melee/mn/mndiagram2.h",
+              "melee/mn/mndiagram3.h", "melee/mn/mnevent.h", "melee/mn/mnmainrule.h",
+              "melee/mn/inlines.h", "melee/mn/mnruleplus.h", "melee/mn/mnstagesel.h"]
     extra += ["melee/sfx/crowdsfx.h"]
+    extra += ["melee/mn/mncharsel.h"]  # upstream #3594 hoisted the CSS dat records here from mncharsel.c
+    extra += ["dolphin/ax.h"]  # AXPB* types of the synth.c voice entry (came through the removed axdriver.static.h)
+    extra += ["dolphin/axfx.h"]  # AXFX_* effect records of axdriver.c (same)
     seen, lines = set(), []
     for h in base + fwd + tys + ft + it + extra:
         if h not in seen:
             seen.add(h); lines.append(f"#include <{h}>")
+    lines.append('#include "port_legacy.h"  /* records upstream dropped that the port still relies on */')
     # TU-local records still belong to the one type generator. Extract their declarations
     # verbatim, preserving source locations, instead of maintaining a second layout by hand.
     tu_records = {
         "src/melee/mn/mngallery.c": {"mnGallery_804D6C88_userdata", "mnGallery_child_userdata"},
-        "src/melee/mn/mndiagram.c": {"mnDiagram_Assets", "mnDiagram_CleanupData", "mnDiagram_AnimData",
-                                    "mnDiagram_PopupAnimTableHead", "mnDiagram_AnimTable", "RankEntry",
-                                    "mnDiagram_PopupData", "mnDiagram_MainOverlay"},
+        # upstream #3562 removed mnDiagram_CleanupData / _AnimData / _MainOverlay (no port use)
+        "src/melee/mn/mndiagram.c": {"mnDiagram_Assets", "mnDiagram_PopupAnimTableHead", "mnDiagram_AnimTable",
+                                    "RankEntry", "mnDiagram_PopupData"},
+        # upstream #3583: the mn/gm .static.h records live in their TUs now
+        "src/melee/mn/mndiagram3.c": {"mnDiagram3_PosTable", "mnDiagram3_StatTable", "mnDiagram3_DataTable"},
+        "src/melee/mn/mndatadel.c": {"MnDataDelData", "MnDataDelGObjUserData", "WarnCommonJoints"},
+        "src/melee/gm/gmtoulib.c": {"lbl_803D9DAC_t", "lbl_803D9DD0_t"},
+        # StageListInfo closes inside its `#if defined(TARGET_PC)` branch (no verbatim extent): port_legacy.h declares it
+        "src/melee/mn/mnstagesel.c": {"StageSelUserData"},
     }
     for src, names in tu_records.items():
         source = (ROOT / src).read_bytes()
@@ -313,7 +336,7 @@ def write_probe():
         declarations = []
         for cur in tu.cursor.get_children():
             if (cur.spelling in names and cur.location.file and Path(cur.location.file.name).resolve() == ROOT / src
-                    and cur.kind in (K.STRUCT_DECL, K.UNION_DECL, K.TYPEDEF_DECL)):
+                    and cur.kind in (K.STRUCT_DECL, K.UNION_DECL, K.TYPEDEF_DECL, K.ENUM_DECL)):
                 declarations.append(cur)
         # A typedef struct appears twice in clang's cursor list; keep the containing typedef.
         declarations = [c for c in declarations if not any(
@@ -347,8 +370,11 @@ def write_probe():
            " * characters, items/trophies/vi headers, so every record they define gets laid out. */" + nl)
     # TU-private records are taken from the C source, never duplicated in a Rust port.
     # Keep extraction anchors checked so an upstream layout edit regenerates metadata.
-    synth_local = []
+    # synth.c's records (in synth.static.h before upstream #3583; the nested user_vol record needs the TU's USERVOL_NUM)
+    synth_local = ["#define USERVOL_NUM 2"]
     for source, tag, alias in [
+        ("src/sysdolphin/baselib/synth.c", "HSD_SynthSFXGroup", "HSD_SynthSFXGroup"),
+        ("src/sysdolphin/baselib/synth.c", "HSD_SynthSFXNode", "HSD_SynthSFXNode"),
         ("src/sysdolphin/baselib/synth.c", "SfxLoadStreamNode", "SfxLoadStreamNode"),
         ("src/sysdolphin/baselib/synth.c", "foo", "HSD_SynthVoiceEntry"),
     ]:
@@ -358,21 +384,21 @@ def write_probe():
             raise RuntimeError(f"missing TU-private record {source}:{tag}")
         declaration = re.sub(r"\b" + re.escape(tag) + r"\b", alias, match.group())
         synth_local.append(f"/* Extracted from {source}:{body.count(chr(10), 0, match.start()) + 1}. */\n" + declaration)
+    # `static struct <tag> {...} <var>[n];` tables of synth.c: the record keeps its C tag as the Rust name
+    body = (ROOT / "src/sysdolphin/baselib/synth.c").read_text(encoding="utf-8")
+    for var in ["HSD_Synth_804C2A60", "voicelist_1784", "pstHakoHeader"]:
+        match = re.search(r"^static struct (\w+) \{[^{}]*^\} " + re.escape(var) + r"(?:\[[^\]]*\])?;", body, re.M | re.S)
+        if match is None:
+            raise RuntimeError(f"missing synth.c record {var}")
+        synth_local.append(f"/* Extracted from src/sysdolphin/baselib/synth.c:{body.count(chr(10), 0, match.start()) + 1}. */" + chr(10)
+                           + re.sub(r"^\} " + re.escape(var) + r"(?:\[[^\]]*\])?;$", "};", match.group().replace("static struct", "struct", 1), flags=re.M))
     body = (ROOT / "src/sysdolphin/baselib/state.c").read_text(encoding="utf-8")
-    match = re.search(r"^static struct \{.*?^\} matstate;", body, re.M | re.S)
+    # upstream #3583 named the record (`static struct matstate_t {`); the port keeps HSD_MaterialState
+    match = re.search(r"^static struct (?:\w+ )?\{.*?^\} matstate;", body, re.M | re.S)
     if match is None:
         raise RuntimeError("missing state.c matstate record")
-    synth_local.append(match.group().replace("static struct {", "struct HSD_MaterialState {", 1).replace("} matstate;", "};"))
-    # ground.c Ground_801C34AC: the anonymous per-joint record `UnkStageDat.unk0` (a `void*`) points at, named here
-    # for the native stage-DAT decode (arrays.tsv). Ground_801C5940 reads the same bytes as {pad, {s16 a,b}*, count}.
-    body = (ROOT / "src/melee/gr/ground.c").read_text(encoding="utf-8")
-    k = body.find("void* joint;")
-    s0 = body.rfind("struct {", 0, k)
-    e0 = body.find("}* entry;", k)
-    if k < 0 or s0 < 0 or e0 < 0:
-        raise RuntimeError("missing ground.c Ground_801C34AC entry record")
-    synth_local.append("/* Extracted from src/melee/gr/ground.c (Ground_801C34AC). */" + chr(10) +
-                       body[s0:e0 + 1].replace("struct {", "struct UnkStageDat_x0_entry {", 1) + ";")
+    synth_local.append(re.sub(r"^static struct (?:\w+ )?\{", "struct HSD_MaterialState {", match.group(), count=1).replace("} matstate;", "};"))
+    # (the Ground_801C34AC per-joint entry record is `struct Ground_801C34AC_entry` in gr/types.h since upstream #3583)
     from local_records import source_records
     # A few TUs keep their records private rather than in a header. Pull the actual
     # declarations into this same dual-target probe: there must still be only one
@@ -386,8 +412,9 @@ def write_probe():
             "JpegWorkData", "JpegState", "JpegQuantTables", "JpegOutput",
         },
         "src/sysdolphin/baselib/leak.c": {"HSD_LeakChecker"},
+        # psdisp_Tlut went away upstream (#3627: a stack HSD_TlutDesc); the port's psdisp.rs keeps its own local copy
         "src/sysdolphin/baselib/psdisp.c": {
-            "psdisp_ParticleSortBucket", "psdisp_Tlut", "psdisp_Mtx",
+            "psdisp_ParticleSortBucket", "psdisp_Mtx",
         },
     }
     for source, wanted in private_records.items():
@@ -989,13 +1016,16 @@ class Gen:
             e("    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {")
         e("        let mut v = Self::zeroed();")
         for fn_, off, ty in live:
+            if f"{nm}.{fn_}" in OPAQUE_FIELDS:
+                e(f"        v.{fn_} = d.ptr::<c_void>(at + 0x{off:X}) as {ty};")
+                continue
             vt = VOID_TYPED_FIELDS.get(f"{nm}.{fn_}")
             if vt is not None:
                 e(f"        v.{fn_} = d.ptr::<{vt}>(at + 0x{off:X}) as {ty};")
                 continue
             pk = POINTER_KEY_FIELDS.get(f"{nm}.{fn_}")
             if pk is not None:
-                e(f"        v.{fn_} = if d.is_reloc(at + 0x{off:X}) {{ d.ptr::<{pk}>(at + 0x{off:X}) as usize }} else {{ <{ty} as GcDecode>::gc_decode(d, at + 0x{off:X}) }};")
+                e(f"        v.{fn_} = if d.is_reloc(at + 0x{off:X}) {{ d.ptr::<{pk}>(at + 0x{off:X}) as usize as {ty} }} else {{ <{ty} as GcDecode>::gc_decode(d, at + 0x{off:X}) }};")
                 continue
             cnt, over = ARRAY_FIELDS.get(f"{nm}.{fn_}", (None, None))
             if cnt is not None and (ty.startswith("*mut ") or ty.startswith("*const ")):
@@ -1164,6 +1194,17 @@ def dump_check(records):
     return len(sizes), len(missing)
 
 
+def check_field_rules(txt):
+    """arrays.tsv / VOID_TYPED_FIELDS / POINTER_KEY_FIELDS name `Record.field`s of the generated code: a key an upstream
+    rename orphaned would silently drop its decode rule (the stage anim tables did on the 363720e12 sync)."""
+    recs = {m.group(1): set(re.findall(r"^\s*pub (?:r#)?(\w+):", m.group(2), re.M))
+            for m in re.finditer(r"^pub (?:struct|union) (\w+) \{" + chr(10) + r"(.*?)^\}", txt, re.M | re.S)}
+    bad = [k for k in [*ARRAY_FIELDS, *VOID_TYPED_FIELDS, *POINTER_KEY_FIELDS, *OPAQUE_FIELDS]
+           if k.split(".", 1)[0] not in recs or k.split(".", 1)[1] not in recs[k.split(".", 1)[0]]]
+    if bad:
+        raise SystemExit("gen_types: field rules name members the headers no longer have: " + ", ".join(bad))
+
+
 def main():
     nprobe = write_probe()
     nat = native_sizes([parse(NAT, src) for src in EXTRA_SOURCES])
@@ -1172,6 +1213,7 @@ def main():
     tu = parse(PPC)
     g = Gen(tu, nat, local_records(PPC), [parse(PPC, src) for src in EXTRA_SOURCES])
     txt = g.gen()
+    check_field_rules(txt)
     n_dump, miss = dump_check(g.records)
     helpers = (
         "\n/// Read `w` bits of a GameCube big-endian bitfield byte run, `shift` bits up from its LSB.\n"

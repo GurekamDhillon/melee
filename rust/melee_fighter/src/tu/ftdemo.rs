@@ -77,7 +77,7 @@ pub fn init_fighter(g: G, a: &plAllocInfo2) {
     let mut t = plAllocInfo::zeroed();
     t.internal_id = a.internal_id;
     t.slot = a.slot;
-    t.anon_6.set_b0(a.anon_c.has_transformation());
+    t.x6.set_b0(a.xC.has_transformation());
     ext::Fighter_UnkInitLoad_80068914(g, &t);
 }
 
@@ -123,10 +123,10 @@ pub fn ftdemo_create_fighter(a: &plAllocInfo2) -> G {
         f.x28 = (*f.ft_data).x18 as _;
     }
     ext::efAsync_LoadSync(ext::ftData_UnkBytePerCharacter(f.kind as i32));
-    if a.anon_c.b0() == 0 {
-        ext::ftData_80085820(f.kind as i32, f.x619_costume_id);
+    if a.xC.b0() == 0 {
+        ext::ftData_80085820(f.kind as i32, f.costume_id);
     } else {
-        ext::ftData_800858E4(f.kind as i32, f.x619_costume_id);
+        ext::ftData_800858E4(f.kind as i32, f.costume_id);
     }
     ext::Fighter_UnkUpdateCostumeJoint_800686E4(g);
     let (pa, pb) = demo_anim_pair(fp(g).kind as i32, a.unk8 as i32);

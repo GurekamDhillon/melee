@@ -128,9 +128,9 @@ pub fn ftFx_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*fp).set_can_walljump(1);
         push_attrs::<ftFox_DatAttrs>(fp);
         let fox_attr = (*fp).dat_attrs as *mut ftFox_DatAttrs;
-        ext::it_8026B3F8(*item_list.add(0), (*fox_attr).x1C_FOX_BLASTER_SHOT_ITKIND as i32);
-        ext::it_8026B3F8(*item_list.add(1), (*fox_attr).x20_FOX_BLASTER_GUN_ITKIND as i32);
-        ext::it_8026B3F8(*item_list.add(2), It_Kind_Fox_Illusion as i32);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, (*fox_attr).x1C_FOX_BLASTER_SHOT_ITKIND as i32);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, (*fox_attr).x20_FOX_BLASTER_GUN_ITKIND as i32);
+        ext::it_8026B3F8((*item_list.add(2)).article as *mut ::core::ffi::c_void, It_Kind_Fox_Illusion as i32);
     }
 }
 

@@ -87,7 +87,7 @@ pub mod extg {
 pub unsafe extern "C" fn ftSs_Init_OnLoad(mut gobj: *mut HSD_GObj) {
     melee_core::ct!("ftSs_Init_OnLoad");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
-    let mut item_list: *mut *mut c_void = (*(*fp).ft_data).x48_items;
+    let mut item_list: *mut *mut c_void = (*(*fp).ft_data).x48_items as *mut *mut c_void; // ftData_Item is a one-word union
     (*fp).set_can_walljump((1 as u8) as u8);
     {
         // PUSH_ATTRS(fp, ftSs_DatAttrs) (ft/inlines.h)
@@ -170,7 +170,7 @@ pub unsafe extern "C" fn ftSs_Init_CreateThrowGrappleBeam(mut gobj: *mut HSD_GOb
     let mut fighter_copy: *mut Fighter = null_mut();
     let mut scale: Vec3 = unsafe { core::mem::zeroed() };
     let mut fp: *mut Fighter = getFighter(gobj);
-    let mut item_list: *mut *mut c_void = (*(*fp).ft_data).x48_items;
+    let mut item_list: *mut *mut c_void = (*(*fp).ft_data).x48_items as *mut *mut c_void; // ftData_Item is a one-word union
     let mut beam: *mut UNK_SAMUS_S1 = (*item_list.offset(4 as isize)) as *mut UNK_SAMUS_S1;
     extg::ftCommon_SetAccessory(fp, (*beam).x0_joint);
     scale.x = { scale.y = { scale.z = (*fp).x34_scale.y; scale.z }; scale.y };

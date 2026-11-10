@@ -253,7 +253,7 @@ static void hash_HSD_AObj(const HSD_AObj* p)
     HM(B(p->end_frame));
     HM(B(p->framerate));
     HM(PI((const void*) p->fobj));
-    HM(PI((const void*) p->hsd_obj));
+    HM(PI((const void*) p->jobj));
 }
 
 static void fill_HSD_MatAnim(HSD_MatAnim* p)

@@ -260,7 +260,7 @@ pub fn ftYs_GuardHold_Anim(gobj: *mut HSD_GObj) {
         g::ftCo_80092BCC(gobj);
         if g::ftCo_800925A4(gobj) {
             spawnEffect(gobj);
-        } else if (*fp).mv.ys.guard.xC != 0 || ((*fp).anon_221b.x221B_b0() == 0 && (*fp).reflecting() == 0) {
+        } else if (*fp).mv.ys.guard.xC != 0 || ((*fp).x221B.x221B_b0() == 0 && (*fp).reflecting() == 0) {
             g::ftCo_80092BE8(gobj);
         } else {
             ftYs_Init_8012B8A4(gobj);
@@ -397,7 +397,7 @@ pub fn ftYs_Shield_8012C850(gobj: *mut HSD_GObj) {
         st::Fighter_ChangeMotionState(gobj, ftYs_MS_GuardOn_1 as i32, 16, (*fp).cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
         (*fp).active_timer.trigger = 254;
         (*fp).set_x221A_b7(0);
-        (*fp).anon_221b.set_x221B_b0(0);
+        (*fp).x221B.set_x221B_b0(0);
         (*fp).set_x221C_b3(1);
         (*fp).set_x221C_b1(1);
         (*fp).set_x221C_b2(1);

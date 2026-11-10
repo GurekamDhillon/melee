@@ -106,7 +106,7 @@ pub fn ftCo_800992A8(g: G, msid: i32, arg2: i32) {
 /// static `ftCo_80099314`.
 pub fn ftCo_80099314(g: G, msid: i32, arg2: i32) {
     melee_core::ct!("ftCo_80099314");
-    fp(g).anon_2210.throw_flags = 0;
+    fp(g).x2210.throw_flags = 0;
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
     let f = fp(g);
@@ -138,8 +138,8 @@ pub fn ftCo_80099438(g: G, msid: i32, arg2: i32) {
 /// inlines.h `ftCheckThrowB3`.
 fn ftCheckThrowB3(f: &mut Fighter) -> bool {
     unsafe {
-        if f.anon_2210.anon_0.throw_flags_b3() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b3(0);
+        if f.x2210.x0.throw_flags_b3() != 0 {
+            f.x2210.x0.set_throw_flags_b3(0);
             true
         } else {
             false
@@ -236,7 +236,7 @@ pub fn ftCo_Ucf073RimAxis(v: f32) -> f32 {
 /// TARGET_PC static `ftCo_Ucf073BlocksSpotdodge`.
 pub fn ftCo_Ucf073BlocksSpotdodge(f: &Fighter) -> bool {
     melee_core::ct!("ftCo_Ucf073BlocksSpotdodge");
-    if ext::Replay_UcfVersion(f.x618_player_id as i32) != 73 {
+    if ext::Replay_UcfVersion(f.pad_port as i32) != 73 {
         return false;
     }
     let c = cd();
@@ -268,7 +268,7 @@ pub fn ftCo_Ucf084RimUnits(v: f32) -> i32 {
 /// TARGET_PC static `ftCo_Ucf084BlocksSpotdodge`.
 pub fn ftCo_Ucf084BlocksSpotdodge(f: &Fighter) -> bool {
     melee_core::ct!("ftCo_Ucf084BlocksSpotdodge");
-    if ext::Replay_UcfVersion(f.x618_player_id as i32) != 84 {
+    if ext::Replay_UcfVersion(f.pad_port as i32) != 84 {
         return false;
     }
     let c = cd();

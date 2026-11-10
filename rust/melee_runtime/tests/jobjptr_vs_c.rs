@@ -171,7 +171,7 @@ fn jobjptr_matches_c() {
                 }
                 {
                     let hi = (rg.rnd() % 6) as usize;
-                    (*aop).hsd_obj = jb.add(hi).cast();
+                    (*aop).jobj = jb.add(hi).cast();
                     (*jb.add(hi)).u.spline = splp;
                     ut[hi] = 2;
                     (*jb.add(hi)).flags |= 0x4000;

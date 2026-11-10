@@ -85,8 +85,8 @@ pub fn ftCo_80099F9C(g: G) -> bool {
 fn ftCo_8009A080_Check(g: G) -> bool {
     let f = fp(g);
     let mut down = f.input.lstick[0].y <= -cd().x464;
-    if !down && ext::Replay_UcfVersion(f.x618_player_id as i32) == 84 {
-        down = ext::ftUcf_FlickCounter(fp(g).x618_player_id as i32) > 1;
+    if !down && ext::Replay_UcfVersion(f.pad_port as i32) == 84 {
+        down = ext::ftUcf_FlickCounter(fp(g).pad_port as i32) > 1;
     }
     down && (fp(g).active_timer.lstick.y as f32) < cd().x468 && ext::mpColl_IsOnPlatform(&mut fp(g).coll_data)
 }

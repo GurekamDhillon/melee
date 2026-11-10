@@ -45,7 +45,7 @@ unsafe fn body() {
     f.x5F4_arr[2].prev = 0;
     t::ftLk_AttackAir_800EB3BC(gp);
     assert_eq!(take_log(), "shield true true");
-    assert_eq!((f.anon_221b.x221B_b2(), f.anon_221b.x221B_b3(), f.anon_221b.x221B_b4()), (1, 1, 1));
+    assert_eq!((f.x221B.x221B_b2(), f.x221B.x221B_b3(), f.x221B.x221B_b4()), (1, 1, 1));
 
     // lwOnHit: bounce, restart the drill when the animation is past frame_len (= end - start).
     t::ext::FTCOLL_8007AFF8 = Some(|_| log("8007AFF8".into()));

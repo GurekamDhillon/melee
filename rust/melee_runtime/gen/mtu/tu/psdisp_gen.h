@@ -8,7 +8,7 @@ static void hash_GXColor(const GXColor* p);
 static void fill_HSD_psAppSRT(HSD_psAppSRT* p);
 static void hash_HSD_psAppSRT(const HSD_psAppSRT* p);
 struct HSD_Particle * hsd_804D0908[16];
-struct _HSD_PSFormGroup ** psNumCmdList[65];
+struct _HSD_PSFormGroup ** psCmdListArray[65];
 struct _HSD_PSTexGroup ** psTexGroupArray[65];
 void GXBegin(__typeof__(enum _GXPrimitive) a0, __typeof__(enum _GXVtxFmt) a1, __typeof__(unsigned short) a2) { T(1000); T((u32) a0); T((u32) a1); T((u32) a2); }
 void GXClearVtxDesc(void) { T(1001); }
@@ -403,7 +403,7 @@ static void hashg_all(void)
     HM(PI((const void*) hsd_804D0908[i0]));
     }
     for (i0 = 0; i0 < 65; i0++) {
-    HM(PI((const void*) psNumCmdList[i0]));
+    HM(PI((const void*) psCmdListArray[i0]));
     }
     for (i0 = 0; i0 < 65; i0++) {
     HM(PI((const void*) psTexGroupArray[i0]));

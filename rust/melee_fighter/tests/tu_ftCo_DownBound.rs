@@ -86,7 +86,7 @@ fn ftCo_DownBound_matches_c() {
             d.x1F0 = rw(); d.x1F4 = rw(); d.x424 = rw();
             let fr = f();
             fr.parts = unsafe { PARTS };
-            fr.set_x2226_b0((rnd() & 1) as u8); fr.set_x2226_b1((rnd() & 1) as u8); fr.set_x2224_b2((rnd() & 1) as u8);
+            fr.set_x2226_b0((rnd() & 1) as u8); fr.set_x2226_b1((rnd() & 1) as u8); fr.set_stamina_dead((rnd() & 1) as u8);
             fr.set_is_sandbag((rnd() & 1) as u8);
             fr.ground_or_air = (rnd() & 1) as _;
             fr.motion_id = ms[(rnd() % 6) as usize] as _;

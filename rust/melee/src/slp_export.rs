@@ -92,7 +92,7 @@ pub fn game_info(sm: &melee_types::StartMeleeData) -> Vec<u8> {
     g[0x14] = r.x14;
     put32(&mut g, 0x18, r.x18);
     g[0x20..0x28].copy_from_slice(&r.x20.to_be_bytes()); // Item Spawn Bitfields 1-5 are bytes 0x23..0x27
-    put32(&mut g, 0x28, r.x28 as u32);
+    put32(&mut g, 0x28, r.it_kind as u32);
     putf(&mut g, 0x2C, r.x2C);
     putf(&mut g, 0x30, r.x30);
     putf(&mut g, 0x34, r.game_speed);

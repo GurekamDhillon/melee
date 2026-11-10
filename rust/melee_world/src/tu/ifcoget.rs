@@ -63,10 +63,10 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ }; },
                 }
             }
-    pub static mut H_GObj_SetupGXLinkMax: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, u32)> = None;
-    pub unsafe extern "C" fn GObj_SetupGXLinkMax(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u32) { match H_GObj_SetupGXLinkMax { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } } }
-    pub static mut H_HSD_GObj_803910D8: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)> = None;
-    pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut melee_types::HSD_GObj, a1: i32) { match H_HSD_GObj_803910D8 { Some(f) => f(a0, a1), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObj_803910D8(a0 as _, a1 as _); } } }
+    pub static mut H_GObj_SetupGXLinkMax: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, u32)> = None;
+    pub unsafe extern "C" fn GObj_SetupGXLinkMax(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u32) { match H_GObj_SetupGXLinkMax { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } } }
+    pub static mut H_HSD_GObj_803910D8: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)> = None;
+    pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut melee_types::HSD_GObj, a1: isize) { match H_HSD_GObj_803910D8 { Some(f) => f(a0, a1), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObj_803910D8(a0 as _, a1 as _); } } }
     pub static mut H_lb_80011AC4: Option<unsafe extern "C" fn(*mut *mut melee_types::LightList) -> *mut melee_types::HSD_LObj> = None;
             pub unsafe extern "C" fn lb_80011AC4(a0: *mut *mut melee_types::LightList) -> *mut melee_types::HSD_LObj {
                 match H_lb_80011AC4 {
@@ -74,10 +74,10 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011AC4(a0 as _) as _ }; },
                 }
             }
-    pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, u8, u32)> = None;
-    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
-    pub static mut H_HSD_GObj_LObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
-            pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+    pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, u8, u32)> = None;
+    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
+    pub static mut H_HSD_GObj_LObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut melee_types::HSD_GObj, a1: isize)  {
                 match H_HSD_GObj_LObjCallback {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0 as _, a1 as _); } return; },
@@ -105,8 +105,8 @@ pub mod ext {
     pub static mut H_HSD_JObjSetMtxDirtySub: Option<unsafe extern "C" fn(*mut melee_types::HSD_JObj)> = None;
     pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut melee_types::HSD_JObj) { match H_HSD_JObjSetMtxDirtySub { Some(f) => f(a0), None => unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } } }
     hook!(H_Ui_RetailHidden, Ui_RetailHidden, (a0: i32) -> i32);
-    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
-            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+    pub static mut H_HSD_GObj_JObjCallback: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut melee_types::HSD_GObj, a1: isize)  {
                 match H_HSD_GObj_JObjCallback {
                     Some(f) => f(a0, a1),
                     None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
@@ -170,12 +170,12 @@ pub static mut un_804D6DA0: *mut core::ffi::c_void = null_mut();
 pub static mut un_804D6DA4: *mut SceneDesc = null_mut();
 
 /// The coin-get counter: the Atlas retail mask hides this element's render only (never its proc).
-pub unsafe extern "C" fn ifCoget_RenderGuarded(gobj: *mut HSD_GObj, pass: i32) {
+pub unsafe extern "C" fn ifCoget_RenderGuarded(gobj: *mut HSD_GObj, pass: isize) {
     melee_core::ct!("ifCoget_RenderGuarded");
     if ext::Ui_RetailHidden(AT_RE_HUD_COIN) != 0 {
         return;
     }
-    ext::HSD_GObj_JObjCallback(gobj, pass);
+    ext::HSD_GObj_JObjCallback(gobj, pass as isize);
 }
 
 pub unsafe extern "C" fn fn_802FED14(gobj: *mut HSD_GObj) {

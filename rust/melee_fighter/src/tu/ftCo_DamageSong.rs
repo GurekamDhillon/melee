@@ -59,9 +59,9 @@ fn ftCo_ReleaseItemAndVictim(g: G) {
 pub fn inlineA0(f: &Fighter, arg1: bool) -> f32 {
     melee_core::ct!("inlineA0");
     let c = cd();
-    let hc = ext::Player_GetHandicap(f.player_id as i32);
+    let hc = ext::Player_GetHandicap(f.player_idx as i32);
     let t0 = fmadds(c.x628, c.x62C - hc as f32, c.x624);
-    let bb = ext::Player_80033BB8(f.player_id as i32);
+    let bb = ext::Player_80033BB8(f.player_idx as i32);
     let t1 = fmadds(c.x630, c.x634 - (bb.wrapping_add(1)) as f32, t0);
     let mut result = fmadds(f.dmg.x1830_percent, c.x638, t1);
     if arg1 {
@@ -165,7 +165,7 @@ pub fn ftCo_800C3538(g: G) -> bool {
     if f.x2222_b2() != 0 {
         return false;
     }
-    match unsafe { f.x2070.anon_0.x2071_b0_3() } {
+    match unsafe { f.x2070.x0.x2071_b0_3() } {
         9 | 10 | 11 => false,
         _ => {
             ext::ftCo_800C3598(g);

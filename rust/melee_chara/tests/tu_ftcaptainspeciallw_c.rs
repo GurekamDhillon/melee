@@ -119,9 +119,9 @@ fn matches_c() {
         f.ground_or_air = if r.rnd() & 1 != 0 { GA_Ground as _ } else { GA_Air as _ };
         let tf = r.rnd();
         unsafe {
-            f.anon_2210.throw_flags = tf as _;
+            f.x2210.throw_flags = tf as _;
             let b1 = r.rnd() & 1;
-            f.anon_2210.anon_0.set_throw_flags_b1(b1 as _);
+            f.x2210.x0.set_throw_flags_b1(b1 as _);
         }
         let b0 = r.rnd() & 1;
         f.set_x2219_b0(b0 as _);
@@ -189,8 +189,8 @@ fn matches_c() {
                 f.cmd_vars[1],
                 f.cmd_vars[2],
                 f.cmd_vars[3],
-                (f.anon_2210.throw_flags == 0) as i32,
-                f.anon_2210.anon_0.throw_flags_b1(),
+                (f.x2210.throw_flags == 0) as i32,
+                f.x2210.x0.throw_flags_b1(),
                 f.x2219_b0(),
                 f.self_vel.x.to_bits(),
                 f.self_vel.y.to_bits(),

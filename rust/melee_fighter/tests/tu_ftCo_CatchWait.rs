@@ -66,7 +66,7 @@ fn ftCo_CatchWait_matches_c() {
             cd().x64 = rg();
             fr.co_attrs.ground_friction = rg();
             fr.take_dmg_cb = if rnd() & 1 != 0 { Some(dummy) } else { None };
-            fr.anon_221b.set_x221B_b7((rnd() & 1) as u8);
+            fr.x221B.set_x221B_b7((rnd() & 1) as u8);
             let g = go();
             let ret = match op {
                 0 => { m::fn_800DA1D8(g); 0 }
@@ -86,7 +86,7 @@ fn ftCo_CatchWait_matches_c() {
             h.m(is_cb(fr.accessory1_cb, m::fn_800DA4A0_cb));
             h.m(is_cb(fr.take_dmg_cb, m::fn_800DA490_cb));
             h.m(fr.take_dmg_cb.is_none() as u32);
-            h.m(fr.anon_221b.x221B_b7() as u32);
+            h.m(fr.x221B.x221B_b7() as u32);
             h.m(jb_off(unsafe { fr.mv.co.capturedamage.x18 }));
             c.line(op, k, ret, h.0);
         }

@@ -54,8 +54,8 @@ pub mod ext {
     fn Camera_80030A50() -> *mut HSD_GObj = || unsafe { crate::tu::camera::Camera_80030A50() as _ };
     fn Camera_GetTransformInterest(a0: *mut Vec) = |a0: *mut Vec| { unsafe { crate::tu::camera::Camera_GetTransformInterest(a0); } };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
     fn Ground_801C0498() -> f32 = || unsafe { crate::tu::ground::Ground_801C0498() as _ };
     fn Ground_801C2CF4(a0: i32) -> *mut HSD_JObj = |a0: i32| unsafe { crate::tu::ground::Ground_801C2CF4(a0 as _) as _ };
     fn Ground_801C38AC(a0: f32) = |a0: f32| { unsafe { crate::tu::ground::Ground_801C38AC(a0 as _); } };
@@ -108,7 +108,7 @@ pub mod ext {
     fn gm_80180AF4() -> *mut HSD_GObj;
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct = || unsafe { crate::tu::grdatfiles::grDatFiles_GetArchive() as _ };
-    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
+    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
     fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj = |a0: *mut grZakoGenerator_SpawnDesc| unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(a0 as _) as _ };
     fn it_8026BE84(a0: *mut BobOmbRain) -> *mut HSD_GObj;
     fn lbLang_IsSavedLanguageJP() -> i32 = || unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageJP() as _ };
@@ -125,7 +125,7 @@ pub mod ext {
         use super::*;
         pub unsafe extern "C" fn Ground_801C0498() -> f32 { super::Ground_801C0498() }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { super::grDisplay_801C5DB0(a0, a1) }
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
@@ -197,7 +197,7 @@ const fn cbs(on_init: HSD_GObjEvent, callback1: HSD_GObjPredicate, gobj_proc: HS
     c.callback1 = callback1;
     c.gobj_proc = gobj_proc;
     c.callback3 = callback3;
-    c.anon_10 = StageCallbacks_anon_135 { flags: u32::to_be(flags) };
+    c.x10 = StageCallbacks_x10 { flags: u32::to_be(flags) };
     c
 }
 
@@ -456,11 +456,11 @@ unsafe fn ptr_slot_put(gp: *mut Ground, field: u32, p: *mut c_void) -> i32 {
     let w = p as isize as i32;
     PTR_SLOTS.retain(|e| !(e.0 == gp as usize && e.1 == field));
     if w as isize as *mut c_void == p {
-        return w;
+        return w as i32;
     }
     let w = if w == 0 { 1 } else { w };
     PTR_SLOTS.push((gp as usize, field, p));
-    w
+    w as i32
 }
 
 unsafe fn ptr_slot_get(gp: *mut Ground, field: u32, w: i32) -> *mut c_void {
@@ -848,7 +848,7 @@ pub unsafe extern "C" fn grHomeRun_8021EAF8() {
 }
 
 /// 21EB10 (`fn_8021EB10`): copies the main camera into a target camera
-pub unsafe extern "C" fn fn_8021EB10(target_cam_gobj: *mut HSD_GObj, _code: i32) {
+pub unsafe extern "C" fn fn_8021EB10(target_cam_gobj: *mut HSD_GObj, _code: isize) {
     melee_core::ct!("fn_8021EB10");
     let mut fov: f32 = 0.0;
     let mut aspect: f32 = 0.0;
@@ -923,7 +923,7 @@ pub unsafe extern "C" fn grHomeRun_8021ED74() {
     bobomb_rain.x4 = null_mut();
     bobomb_rain.x14 = 0xB;
     bobomb_rain.x18 = 0;
-    bobomb_rain.x1C.anon_0.set_b0(1);
+    bobomb_rain.x1C.x0.set_b0(1);
     ext::lb_8000B1CC(jobj, null_mut(), &mut bobomb_rain.x8_vec);
     ext::it_8026BE84(&mut bobomb_rain);
 }
@@ -1016,4 +1016,4 @@ pub unsafe extern "C" fn grHomeRun_8021EF10() -> f32 {
     pub extern "C" fn grHomeRun_8021E4F0(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grHomeRun_8021EEB4 (gr/grhomerun.c:961)
-    pub extern "C" fn grHomeRun_8021EEB4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grHomeRun_8021EEB4(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

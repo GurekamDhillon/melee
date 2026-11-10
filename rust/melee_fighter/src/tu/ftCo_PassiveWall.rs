@@ -57,15 +57,15 @@ pub mod ext {
         ftCommon_FallFast(fp: &mut Fighter) = crate::ftcommon::fall_fast;
         ftCommon_Fall(fp: &mut Fighter, grav: f32, term: f32) = |a0, a1, a2| crate::tu::ftcommon::ftCommon_Fall_fp(a0, a1, a2);
         ftCommon_CalcSelfAccel_AccelToVelClamped(fp: &mut Fighter, a: f32, b: f32, c: f32) = |a0, a1, a2, a3| crate::tu::ftcommon::ftCommon_CalcSelfAccel_AccelToVelClamped(a0, a1, a2, a3);
-        ft_80083318(g: G, a: fn(G, i32) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_80083318;
-        ft_800831CC(g: G, a: fn(G, i32) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_800831cc;
-        ftCo_80096CC8(g: G, line_id: i32) -> bool = |g: G, line_id: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line_id as _) as _ } };
+        ft_80083318(g: G, a: fn(G, isize) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_80083318;
+        ft_800831CC(g: G, a: fn(G, isize) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_800831cc;
+        ftCo_80096CC8(g: G, line_id: isize) -> bool = |g: G, line_id: isize| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line_id as _) as _ } };
         ft_80082B1C(g: G) = crate::tu::ft_081b::ft_80082b1c;
     }
 }
 
-fn cb_80096CC8(g: G, line_id: i32) -> bool {
-    ext::ftCo_80096CC8(g, line_id)
+fn cb_80096CC8(g: G, line_id: isize) -> bool {
+    ext::ftCo_80096CC8(g, line_id as isize)
 }
 fn cb_80082B1C(g: G) {
     ext::ft_80082B1C(g)

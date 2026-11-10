@@ -347,7 +347,7 @@ fn grpura_matches_c() {
                         if TRACEON { let hs = H; hn("PRE"); hash_world(); H = hs; }
                         let a0: *mut HSD_GObj = &raw mut GO[(fv() & 3) as usize];
                         let a1: i32 = (fv() % 8) as i32;
-                        m::fn_802130D0(a0, a1);
+                        m::fn_802130D0(a0, a1 as isize);
                     }
                     36 => { // grPura_80213128
                         USEL = 0; USELH = 0;

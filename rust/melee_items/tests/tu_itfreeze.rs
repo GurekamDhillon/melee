@@ -85,9 +85,9 @@ unsafe fn setup() {
     REFITEM.xC4_article_data = &raw mut ART; REFITEM.xCC_item_attr = &raw mut IATTR; REFITEM.xBBC_dynamicBoneTable = &raw mut DBT;
     ITEM.entity = &raw mut G; REFITEM.entity = &raw mut REFG; NEWITEM.entity = &raw mut NEWG;
     for i in 0..64usize { *attr_ptr().add(i) = rw(); }
-    fill_itUnkAttributes(&mut *(attr_ptr() as *mut itUnkAttributes));
+    fill_itUnkAttributes(&mut *(attr_ptr() as *mut itUnkAttributes_legacy));
     fill_ItemAttr(&mut *(&raw mut IATTR)); fill_ItemCommonData(&mut *(&raw mut ICD));
-    ART.x0_common_attr = &raw mut IATTR; ART.x4_specialAttributes = attr_ptr() as *mut c_void; ART.x10_modelDesc = &raw mut MD;
+    ART.x0_common_attr = &raw mut IATTR; ART.x4_specialAttributes = attr_ptr() as *mut _; ART.x10_modelDesc = &raw mut MD;
     MD.x0_joint = if rnd() % 3u32 == 0 { null_mut() } else { &raw mut JNT };
     MD.x4_bone_count = fv(); MD.x8_bone_attach_id = fv() as i32;
     match rnd() % 4u32 { 0 => ITEM.owner = null_mut(), 1 => ITEM.owner = &raw mut OWN, _ => ITEM.owner = &raw mut OWN }

@@ -30,9 +30,9 @@ fn with_ev<R>(cb: HSD_GObjEvent, f: impl FnOnce(fn(G)) -> R) -> R {
     }
 }
 
-type LineCb = Option<unsafe extern "C" fn(G, i32) -> bool>;
+type LineCb = Option<unsafe extern "C" fn(G, isize) -> bool>;
 static mut LINE_SLOT: LineCb = None;
-fn line_tramp(g: G, i: i32) -> bool {
+fn line_tramp(g: G, i: isize) -> bool {
     unsafe {
         match LINE_SLOT {
             Some(f) => f(g, i),

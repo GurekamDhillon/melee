@@ -1,0 +1,68 @@
+// BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
+pub mod ext {
+    #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
+    use super::*;
+    use core::ffi::c_void;
+    macro_rules! ext_fns {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+            pub mod hook {
+                use super::*;
+                $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+            }
+            $( pub fn $name($($a: $t),*) $(-> $r)? {
+                match unsafe { hook::$name } {
+                    Some(f) => f($($a),*),
+                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            } )*
+        };
+    }
+    ext_fns! {
+    fn Camera_80029020() -> *mut CmSubject;
+    fn Camera_800290D4(a0: *mut CmSubject);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i64)>, a2: u8, a3: u32);
+    fn Ground_801C39C0();
+    fn Ground_801C3BB4();
+    fn Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj;
+    fn Ground_801C4E70(a0: *mut HSD_JObj, a1: *mut HSD_JObj, a2: *mut HSD_JObj, a3: *mut HSD_JObj, a4: *mut HSD_JObj, a5: *mut HSD_JObj);
+    fn Ground_801C53EC(a0: u32);
+    fn Ground_GetMapGObj(a0: i32) -> *mut HSD_GObj;
+    fn Ground_GetStageGObj(a0: i32) -> *mut HSD_GObj;
+    fn Ground_GetYakumonoParam() -> *mut c_void;
+    fn Ground_InitMapColl(a0: *mut HSD_JObj, a1: i32) -> i32;
+    fn Ground_UpdateMapColl(a0: *mut HSD_GObj) -> i32;
+    fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
+    fn HSD_CObjGetEyeVector(a0: *mut HSD_CObj, a1: *mut Vec) -> i32;
+    fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
+    fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetFlagsAll(a0: *mut HSD_JObj, a1: u32);
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
+    fn HSD_Randi(a0: i32) -> i32;
+    fn Mex_GrBind(a0: *mut c_void) -> *mut c_void;
+    fn Stage_GetCamBoundsTopOffset() -> f32;
+    fn atan2f(a0: f32, a1: f32) -> f32;
+    fn grAnime_801C7A04(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32);
+    fn grAnime_801C7B24(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32);
+    fn grAnime_801C7FF8(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32);
+    fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32);
+    fn grAnime_801C83D0(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32;
+    fn grAnime_801C84A4(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32;
+    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i64);
+    fn grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj;
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec);
+    fn lb_800115F4();
+    fn mpJointListAdd(a0: i32);
+    fn mpJointSetCb1(a0: i32, a1: *mut c_void, a2: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>);
+    fn mpLib_80055E9C(a0: i32);
+    fn mpLib_80057424(a0: i32);
+    fn mpLib_80057BC0(a0: i32);
+    }
+    /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
+    pub mod cb {
+        use super::*;
+        pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
+    }
+    // Data defined in other TUs (the tests set them).
+    pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+}
+// END GENERATED EXT

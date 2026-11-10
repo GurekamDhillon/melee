@@ -23,13 +23,13 @@ pub fn install() {
         HSD_JObjSetupMatrixSub = Some(|a0| { t(1010); t(pi(a0)); (*a0).flags &= !0x40u32; for i in 0..3 { for j in 0..4 { (*a0).mtx[i][j] = rf(); } } });
         HSD_JObjWalkTree = Some(|a0, a1, a2| { t(1011); t(pi(a0)); t(fi(a1)); t(pi(a2)); t((**a2).to_bits()); if let Some(f) = a1 { f(a0, a2, fv() as i32); } });
         HSD_LObjGetFlags = Some(|a0| { t(1012); t(pi(a0)); if a0 == &raw mut crate::LO[2] { 0 } else { fv() & 0x20 } });
-        HSD_QuatLib_8037EF28 = Some(|a0, a1, a2, a3| { t(1013); t(pi(a0)); t(pi(a1)); t(pi(a2)); t(a3.to_bits()); if !a2.is_null() { (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); (*a2).w = rw(); } fv() as _ });
-        HSD_RObjAlloc = Some(|| { t(1014); if fv() & 3 != 0 { &raw mut crate::RO[0] } else { core::ptr::null_mut() } });
-        HSD_RObjGetByType = Some(|a0, a1, a2| { t(1015); t(pi(a0)); t(a1 as u32); t(a2 as u32); if fv() % 3 == 0 { core::ptr::null_mut() } else { &raw mut crate::RO[(fv() % 3) as usize] } });
-        HSD_RObjRemove = Some(|a0| { t(1016); t(pi(a0)); });
-        HSD_RObjSetConstraintObj = Some(|a0, a1| { t(1017); t(pi(a0)); t(pi(a1)); });
-        HSD_RObjSetFlags = Some(|a0, a1| { t(1018); t(pi(a0)); t(a1 as u32); });
-        PSMTXMultVec = Some(|a0, a1, a2| { t(1019); t(pi(a0)); t(pi(a1)); tvec(a1); t(pi(a2)); tvec(a2); if !a2.is_null() { (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); } });
+        HSD_RObjAlloc = Some(|| { t(1013); if fv() & 3 != 0 { &raw mut crate::RO[0] } else { core::ptr::null_mut() } });
+        HSD_RObjGetByType = Some(|a0, a1, a2| { t(1014); t(pi(a0)); t(a1 as u32); t(a2 as u32); if fv() % 3 == 0 { core::ptr::null_mut() } else { &raw mut crate::RO[(fv() % 3) as usize] } });
+        HSD_RObjRemove = Some(|a0| { t(1015); t(pi(a0)); });
+        HSD_RObjSetConstraintObj = Some(|a0, a1| { t(1016); t(pi(a0)); t(pi(a1)); });
+        HSD_RObjSetFlags = Some(|a0, a1| { t(1017); t(pi(a0)); t(a1 as u32); });
+        PSMTXMultVec = Some(|a0, a1, a2| { t(1018); t(pi(a0)); t(pi(a1)); tvec(a1); t(pi(a2)); tvec(a2); if !a2.is_null() { (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); } });
+        QuatSlerp = Some(|a0, a1, a2, a3| { t(1019); t(pi(a0)); t(pi(a1)); t(pi(a2)); t(a3.to_bits()); if !a2.is_null() { (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); (*a2).w = rw(); } fv() as _ });
     }
 }
 
@@ -187,7 +187,7 @@ pub fn hash_HSD_AObj(p: &HSD_AObj) {
     hm(p.end_frame.to_bits());
     hm(p.framerate.to_bits());
     hm(pi(p.fobj));
-    hm(pi(p.hsd_obj));
+    hm(pi(p.jobj));
     }
 }
 
@@ -385,7 +385,6 @@ pub fn fill_HSD_AObjDesc(p: &mut HSD_AObjDesc) {
     unsafe {
     p.flags = fv() as _;
     p.end_frame = rf();
-    p.obj_id = fv() as _;
     }
 }
 pub fn hash_HSD_AObjDesc(p: &HSD_AObjDesc) {
@@ -394,7 +393,7 @@ pub fn hash_HSD_AObjDesc(p: &HSD_AObjDesc) {
     hm(p.flags as u32);
     hm(p.end_frame.to_bits());
     hm(pi(p.fobjdesc));
-    hm(p.obj_id as u32);
+    hm(pi(p.obj_id));
     }
 }
 

@@ -171,16 +171,16 @@ pub fn ftParts_80074E58(f: &mut Fighter) {
     let n = unsafe { (**crate::hooks::ft_parts_table().add(f.kind as usize)).parts_num };
     for i in 0..n as i32 {
         let b = bone(f, i);
-        b.anon_8.flags8 = 0;
-        b.anon_c.flagsC = 0;
+        b.x8.flags8 = 0;
+        b.xC_u.flagsC = 0;
     }
     unsafe {
-        bone(f, 0).anon_8.anon_0.set_flags_b3(1);
+        bone(f, 0).x8.x0.set_flags_b3(1);
         for p in [FtPart_TransN, FtPart_XRotN, FtPart_YRotN, FtPart_HipN, FtPart_TransN2] {
-            bone(f, ftparts_get_bone_index(f, p as i32)).anon_8.anon_0.set_flags_b3(1);
+            bone(f, ftparts_get_bone_index(f, p as i32)).x8.x0.set_flags_b3(1);
         }
-        bone(f, ftparts_get_bone_index(f, FtPart_TransN as i32)).anon_8.anon_0.set_flags_b4(1);
-        bone(f, ftparts_get_bone_index(f, 0x35)).anon_8.anon_0.set_flags_b4(1);
+        bone(f, ftparts_get_bone_index(f, FtPart_TransN as i32)).x8.x0.set_flags_b4(1);
+        bone(f, ftparts_get_bone_index(f, 0x35)).x8.x0.set_flags_b4(1);
     }
 }
 
@@ -237,7 +237,7 @@ pub unsafe fn ftParts_SetupParts(fighter_obj: *mut HSD_GObj) {
     let parts_num = (**crate::hooks::ft_parts_table().add((*fp).kind as usize)).parts_num;
 
     if parts_num as i32 > MAX_FT_PARTS {
-        panic!("fighter parts num over! player {}\n", (*fp).player_id);
+        panic!("fighter parts num over! player {}\n", (*fp).player_idx);
     }
     while !jobj.is_null() {
         if crate::ftdmgfall::ftparts_8007506c((*fp).kind as i32, part as i32) != 0 {
@@ -275,7 +275,7 @@ pub unsafe fn ftParts_SetupParts(fighter_obj: *mut HSD_GObj) {
     }
     (*fp).dobj_list.count = dobj_count as u32;
     if part != parts_num {
-        panic!("fighter parts num not match! player {}\n", (*fp).player_id);
+        panic!("fighter parts num not match! player {}\n", (*fp).player_idx);
     }
 }
 
@@ -314,7 +314,7 @@ pub unsafe fn ftParts_8007462C(gobj: *mut HSD_GObj) {
         }
     }
     if i != (**crate::hooks::ft_parts_table().add((*fp).kind as usize)).parts_num {
-        panic!("fighter parts num not match! player {}\n", (*fp).player_id);
+        panic!("fighter parts num not match! player {}\n", (*fp).player_idx);
     }
 }
 
@@ -326,7 +326,7 @@ pub unsafe fn ftParts_800749CC(gobj: *mut HSD_GObj) {
     crate::tu::ftparts_render::ftParts_8007487C(
         &mut (*(*(*fp).ft_data).x8).x0,
         &mut (*fp).x5AC,
-        ext::Mex_CostumeVisIdx((*fp).kind as i32, (*fp).x619_costume_id as i32) as u32,
+        ext::Mex_CostumeVisIdx((*fp).kind as i32, (*fp).costume_id as i32) as u32,
         &mut (*fp).dobj_list,
         &mut (*fp).x203C,
     );
@@ -753,7 +753,7 @@ pub unsafe fn ftParts_80074194(fighter: *mut Fighter, bone: *mut FighterBone, jo
     let jobj_flags = (*jobj).flags;
     let mut dobj_count = 0;
     (*bone).joint = jobj;
-    let mut b = (*bone).anon_8.anon_0;
+    let mut b = (*bone).x8.x0;
     b.set_flags_b1(1);
     b.set_flags_b7((jobj_flags & JOBJ_LIGHTING as u32 != 0) as u8);
     b.set_flags2_b0((jobj_flags & JOBJ_TEXGEN as u32 != 0) as u8);
@@ -761,11 +761,11 @@ pub unsafe fn ftParts_80074194(fighter: *mut Fighter, bone: *mut FighterBone, jo
     b.set_flags2_b2((jobj_flags & JOBJ_UNK_B18 as u32 != 0) as u8);
     b.set_flags2_b3((jobj_flags & JOBJ_UNK_B20 as u32 != 0) as u8);
     b.set_flags2_b4((jobj_flags & JOBJ_UNK_B19 as u32 != 0) as u8);
-    let mut c = (*bone).anon_c.anon_0;
+    let mut c = (*bone).xC_u.x0;
     c.xC = tree_depth as u8;
     while !dobj.is_null() {
         if *dobj_index >= 124 {
-            panic!("ftparts.c:466 fighter parts model dobj num over! player {}", (*fighter).player_id);
+            panic!("ftparts.c:466 fighter parts model dobj num over! player {}", (*fighter).player_idx);
         }
         *(*fighter).dobj_list.data.add(*dobj_index as usize) = dobj;
         let mobj = (*dobj).mobj;
@@ -777,12 +777,12 @@ pub unsafe fn ftParts_80074194(fighter: *mut Fighter, bone: *mut FighterBone, jo
         *dobj_index += 1;
     }
     if dobj_count >= 128 {
-        panic!("ftparts.c:480 fighter dobj num over! player {}", (*fighter).player_id);
+        panic!("ftparts.c:480 fighter dobj num over! player {}", (*fighter).player_idx);
     }
     c.set_xD(if *dobj_index != 0 { (*dobj_index - 1) as u8 } else { 0 });
-    (*bone).anon_c.anon_0 = c;
+    (*bone).xC_u.x0 = c;
     b.set_flags2_b6((dobj_count != 0) as u8);
-    (*bone).anon_8.anon_0 = b;
+    (*bone).x8.x0 = b;
 }
 
 /// `ftParts_8007487C(desc, vis, costume_id, arg3, arg4)`: set up a part-visibility table.
@@ -828,16 +828,16 @@ pub unsafe fn ftParts_800753D4(fp: *mut Fighter, arg1: *mut Fighter_804D6540_x0_
     let temp_r31 = ftParts_8007482C(&mut sp2c);
     ftParts_80075304((*arg1).x2, (*(*fp).parts.add((*arg1).x1 as usize)).joint, temp_r30);
     ftParts_80075304((*arg1).x2, (*(*fp).parts.add((*arg1).x1 as usize)).x4_jobj2, temp_r31);
-    let mut tree_depth = (*(*fp).parts.add((*arg1).x1 as usize)).anon_c.anon_0.xC as u32;
+    let mut tree_depth = (*(*fp).parts.add((*arg1).x1 as usize)).xC_u.x0.xC as u32;
     if (*arg1).x2 == 0 || (*arg1).x2 == 1 {
         tree_depth += 1;
     }
     let mut dobj_index = 0i32;
     ftParts_80074194(fp, (*fp).parts.add((*arg1).x0 as usize), temp_r30, &mut dobj_index, tree_depth);
     (*(*fp).parts.add((*arg1).x0 as usize)).x4_jobj2 = temp_r31;
-    let mut b = (*(*fp).parts.add((*arg1).x0 as usize)).anon_8.anon_0;
+    let mut b = (*(*fp).parts.add((*arg1).x0 as usize)).x8.x0;
     b.set_flags_b2(1);
-    (*(*fp).parts.add((*arg1).x0 as usize)).anon_8.anon_0 = b;
+    (*(*fp).parts.add((*arg1).x0 as usize)).x8.x0 = b;
 }
 
 /// `ftParts_800755E8(fp, desc)`: remove a bone's model.
@@ -848,10 +848,10 @@ pub unsafe fn ftParts_800755E8(fp: *mut Fighter, arg1: *mut Fighter_804D6540_x0_
     melee_runtime::tu::jobj::HSD_JObjRemove_ptr((*bone).x4_jobj2);
     (*bone).joint = null_mut_ftparts_render();
     (*bone).x4_jobj2 = null_mut_ftparts_render();
-    let mut b = (*bone).anon_8.anon_0;
+    let mut b = (*bone).x8.x0;
     b.set_flags_b1(0);
     b.set_flags_b2(0);
-    (*bone).anon_8.anon_0 = b;
+    (*bone).x8.x0 = b;
 }
 
 /// `ftParts_80075650(gobj, jobj, list)`: collect every DObj of a JObj tree into `list` (making

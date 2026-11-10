@@ -30,7 +30,7 @@ fn smoke() {
     assert_eq!(take(), "");
     assert_eq!(r.f.x1A5C, unsafe { MASTER });
     // Master Hand reports the x221F_b3 flag -> leave the squeeze.
-    mf.set_x221F_b3(1);
+    mf.set_is_sleeping(1);
     t::ftCh_Squeezing1_Anim(gp);
     assert!(r.f.x1A5C.is_null());
     assert_eq!(take(), "setflag,cms 0x184 0 0 1 0");

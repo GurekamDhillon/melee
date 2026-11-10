@@ -47,7 +47,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -94,15 +94,15 @@ int main(void)
             case 0: { f32 v2 = (f32) (rw()); ret = PI(itClimbersBlizzard_Spawn(&GO[0], &VA[0], v2)); } break; /* itClimbersBlizzard_Spawn */
             case 1: {  itClimbersBlizzard_802C2248(&GO[0]); } break; /* itClimbersBlizzard_802C2248 */
             case 2: {  itClimbersBlizzard_802C2358(&GO[0]); } break; /* itClimbersBlizzard_802C2358 */
-            case 3: {  ret = (u32) itClimbersBlizzard_UnkMotion0_Anim(&GO[0]); } break; /* itClimbersBlizzard_UnkMotion0_Anim */
+            case 3: {  ret = (u32) ((itClimbersBlizzard_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itClimbersBlizzard_UnkMotion0_Anim */
             case 4: {  itClimbersBlizzard_UnkMotion0_Phys(&GO[0]); } break; /* itClimbersBlizzard_UnkMotion0_Phys */
-            case 5: {  ret = (u32) itClimbersBlizzard_UnkMotion0_Coll(&GO[0]); } break; /* itClimbersBlizzard_UnkMotion0_Coll */
-            case 6: {  ret = (u32) itClimbersBlizzard_DmgDealt(&GO[0]); } break; /* itClimbersBlizzard_DmgDealt */
-            case 7: {  ret = (u32) itClimbersBlizzard_Reflected(&GO[0]); } break; /* itClimbersBlizzard_Reflected */
-            case 8: {  ret = (u32) itClimbersBlizzard_Clanked(&GO[0]); } break; /* itClimbersBlizzard_Clanked */
-            case 9: {  ret = (u32) itClimbersBlizzard_HitShield(&GO[0]); } break; /* itClimbersBlizzard_HitShield */
-            case 10: {  ret = (u32) itClimbersBlizzard_Absorbed(&GO[0]); } break; /* itClimbersBlizzard_Absorbed */
-            case 11: {  ret = (u32) itClimbersBlizzard_ShieldBounced(&GO[0]); } break; /* itClimbersBlizzard_ShieldBounced */
+            case 5: {  ret = (u32) ((itClimbersBlizzard_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itClimbersBlizzard_UnkMotion0_Coll */
+            case 6: {  ret = (u32) ((itClimbersBlizzard_DmgDealt(&GO[0])) != 0); } break; /* itClimbersBlizzard_DmgDealt */
+            case 7: {  ret = (u32) ((itClimbersBlizzard_Reflected(&GO[0])) != 0); } break; /* itClimbersBlizzard_Reflected */
+            case 8: {  ret = (u32) ((itClimbersBlizzard_Clanked(&GO[0])) != 0); } break; /* itClimbersBlizzard_Clanked */
+            case 9: {  ret = (u32) ((itClimbersBlizzard_HitShield(&GO[0])) != 0); } break; /* itClimbersBlizzard_HitShield */
+            case 10: {  ret = (u32) ((itClimbersBlizzard_Absorbed(&GO[0])) != 0); } break; /* itClimbersBlizzard_Absorbed */
+            case 11: {  ret = (u32) ((itClimbersBlizzard_ShieldBounced(&GO[0])) != 0); } break; /* itClimbersBlizzard_ShieldBounced */
             case 12: {  itClimbersBlizzard_EvtUnk(&GO[0], &GO[1]); } break; /* itClimbersBlizzard_EvtUnk */
             case 13: { { int j; for (j = 0; j < 1; j++) { HM((u32) it_803F76A8[j].anim_id); HM(FI((const void*) it_803F76A8[j].animated)); HM(FI((const void*) it_803F76A8[j].physics_updated)); HM(FI((const void*) it_803F76A8[j].collided)); } } } break; /* state tables */
             }

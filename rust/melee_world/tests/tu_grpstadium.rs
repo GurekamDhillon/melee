@@ -558,7 +558,7 @@ fn grpstadium_matches_c() {
                         if TRACEON { let hs = H; hn("PRE"); hash_world(); H = hs; }
                         let a0: *mut HSD_GObj = &raw mut IG[(fv() & 3) as usize];
                         let a1: i32 = fv() as i32;
-                        m::fn_801D2ED0(a0, a1);
+                        m::fn_801D2ED0(a0, a1 as isize);
                     }
                     54 => { // grStadium_801D2FD0
                         USEL = 0; USELH = 0;
@@ -566,7 +566,7 @@ fn grpstadium_matches_c() {
                         if TRACEON { let hs = H; hn("PRE"); hash_world(); H = hs; }
                         let a0: *mut HSD_GObj = &raw mut IG[(fv() & 3) as usize];
                         let a1: i32 = fv() as i32;
-                        m::grStadium_801D2FD0(a0, a1);
+                        m::grStadium_801D2FD0(a0, a1 as isize);
                     }
                     55 => { // grStadium_801D3084
                         USEL = 0; USELH = 0;
@@ -574,7 +574,7 @@ fn grpstadium_matches_c() {
                         if TRACEON { let hs = H; hn("PRE"); hash_world(); H = hs; }
                         let a0: *mut HSD_GObj = &raw mut IG[(fv() & 3) as usize];
                         let a1: i32 = fv() as i32;
-                        m::grStadium_801D3084(a0, a1);
+                        m::grStadium_801D3084(a0, a1 as isize);
                     }
                     56 => { // grStadium_801D3138
                         USEL = 0; USELH = 0;
@@ -765,7 +765,7 @@ fn grpstadium_matches_c() {
                         for i in 0..4usize { disp_init(&raw mut GR[i]); }
                         let a0: *mut HSD_GObj = &raw mut GO[(fv() & 3) as usize];
                         let a1: i32 = (fv() % 8) as i32;
-                        m::fn_801D5074(a0, a1);
+                        m::fn_801D5074(a0, a1 as isize);
                     }
                     79 => { // grStadium_OnTouchLine
                         USEL = 0; USELH = 0;

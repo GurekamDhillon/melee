@@ -53,7 +53,7 @@ unsafe fn setup_extra() {
     let mut i: usize;
     for n in 0..6usize { g::P_HSD_JObj[n].flags &= !(1u32 << 17); }
     for n in 0..8usize { g::P_DynamicBoneTable[0].bones[n] = &raw mut g::P_HSD_JObj[(rnd() % 6) as usize]; }
-    for n in 0..3usize { FG[n].next = if n < 2 { &raw mut FG[n + 1] } else { null_mut() }; FG[n].user_data = &raw mut FT[n] as *mut c_void; FT[n].set_x221F_b3((rnd() & 1) as _); FT[n].team = (rnd() % 3) as _; }
+    for n in 0..3usize { FG[n].next = if n < 2 { &raw mut FG[n + 1] } else { null_mut() }; FG[n].user_data = &raw mut FT[n] as *mut c_void; FT[n].set_is_sleeping((rnd() & 1) as _); FT[n].team = (rnd() % 3) as _; }
     PLH[HSD_GOBJ_PLINK_FIGHTER as usize] = &raw mut FG[0]; m::ext::HSD_GObjPLinkHead = &raw mut PLH as *mut *mut HSD_GObj;
 }
 

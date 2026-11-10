@@ -14,8 +14,8 @@ pub fn fn_8015B548(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
         melee_fighter::tu::ftCo_Barrel::ftCo_ReleaseItemAndVictim(gobj);
         (*fp).x1A5C = gobj2;
         (*fp).victim_gobj = gobj2;
-        (*fp).anon_221b.set_x221B_b5(0);
-        (*fp).anon_221b.set_x221B_b7(0);
+        (*fp).x221B.set_x221B_b5(0);
+        (*fp).x221B.set_x221B_b7(0);
         (*fp).facing_dir = (*fp2).facing_dir;
         let t = melee_fighter::tu::ftCo_CapturePulled::ftCo_800DA824(&mut *fp2);
         melee_fighter::ftcommon2::init_grab(&mut *fp, 0, t);

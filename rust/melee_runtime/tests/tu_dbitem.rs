@@ -89,12 +89,12 @@ fn menu_cursor_wraps_through_the_ranges_and_spawns() {
     assert_eq!((s.menu.display_status, s.menu.player, s.menu.display_fade_timer), (1, 1, 0x78));
     // bubbles 1 -> 2 on both items, low two bits only
     unsafe {
-        items[0].anon_daa.xDAA_byte = 0xF1;
+        items[0].xDAA.xDAA_byte = 0xF1;
         s.fn_ToggleItemCollisionBubbles(&mut h);
-        assert_eq!(items[0].anon_daa.xDAA_byte, 0xF2);
-        assert_eq!(items[1].anon_daa.xDAA_byte, 0x02);
+        assert_eq!(items[0].xDAA.xDAA_byte, 0xF2);
+        assert_eq!(items[1].xDAA.xDAA_byte, 0x02);
         s.fn_EnableShowItemPickupRange(&mut h);
-        assert_eq!(items[1].anon_daa.xDAA_flag.anon_0.b4(), 1);
+        assert_eq!(items[1].xDAA.xDAA_flag.x0.b4(), 1);
         assert_eq!(s.db_ShowItemPickupRange(), 1);
     }
     // spawn: d-down alone, selected item a common one (Capsule) under the limit

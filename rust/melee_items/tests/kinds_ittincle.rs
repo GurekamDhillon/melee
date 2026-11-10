@@ -36,7 +36,6 @@ unsafe fn spec_fill(prof: i32) {
             (*a).x30 = (rnd() % 3) as i32 + 1;
             (*a).x3C = (rnd() % 8) as i32 + 0;
             (*a).x40 = (rnd() % 6) as i32 + 0;
-            (*a).x0 = rw();
             (*a).xC = rw();
             (*a).x10 = rw();
             (*a).x14 = rw();

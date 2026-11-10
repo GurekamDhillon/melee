@@ -57,24 +57,24 @@ pub mod ext {
 fn inline_ko(g: G) {
     let f = fp(g);
     let sfx = unsafe { (*f.ft_data).x4C_sfx };
-    f.set_x2224_b2(1);
+    f.set_stamina_dead(1);
     ext::Fighter_ResetInputData_80068854(g);
     h::ftco_800bffd0(fp(g), 0x7A, 0);
     fn_800c8e40(fp(g), sfx);
     fp(g).set_x2225_b6(1);
     ext::lbBgFlash_80021C48(0xE, 0);
     let f = fp(g);
-    ext::gm_80167470(f.player_id as i32, f.is_sub_fighter() as i32);
+    ext::gm_80167470(f.player_idx as i32, f.is_sub_fighter() as i32);
 }
 
 /// `ftCo_800C8C84`: start the stamina KO when HP reached 0.
 pub fn ftco_800c8c84(g: G) -> bool {
     melee_core::ct!("ftco_800c8c84");
     let f = fp(g);
-    if f.x2224_b2() == 0
+    if f.stamina_dead() == 0
         && f.x2225_b7() != 0
         && f.dmg.x18F0 == 0
-        && ext::Player_GetRemainingHPByIndex((f.player_id as i32) as i32, (f.is_sub_fighter() as i32) as i32) == 0
+        && ext::Player_GetRemainingHPByIndex((f.player_idx as i32) as i32, (f.is_sub_fighter() as i32) as i32) == 0
     {
         fn_800c8e74(g);
         return true;
@@ -88,14 +88,14 @@ pub fn ftco_800c8d00(g: G) {
     if fp(g).x2224_b3() == 0 {
         return;
     }
-    if fp(g).x2224_b2() == 0 {
+    if fp(g).stamina_dead() == 0 {
         inline_ko(g);
     }
     ext::ftCommon_8007DB58(crate::mtu_ptr::ptr(&(g)));
     ext::ftCo_8009750C(g);
     let victim = fp(g).victim_gobj;
     if !victim.is_null() {
-        if fp(g).anon_221b.x221B_b5() != 0 {
+        if fp(g).x221B.x221B_b5() != 0 {
             ext::ftCo_CaptureCut_Enter(victim);
         } else {
             ext::ftCo_CaptureCut_Enter(g);
@@ -129,7 +129,7 @@ pub fn fn_800c8e74(g: G) {
             ext::ftCh_GrabUnk1_8015ADD0(g);
         }
         let f = fp(g);
-        ext::gm_80167470(f.player_id as i32, f.is_sub_fighter() as i32);
+        ext::gm_80167470(f.player_idx as i32, f.is_sub_fighter() as i32);
         return;
     }
     f.set_x2224_b3(1);
@@ -156,7 +156,7 @@ pub fn ftco_800c8f6c() {
 pub fn ftco_800c8fc4(g: G) {
     melee_core::ct!("ftco_800c8fc4");
     let f = fp(g);
-    if (ext::Player_GetMoreFlagsBit0((f.player_id as i32) as i32) as u8) != 0 {
+    if (ext::Player_GetMoreFlagsBit0((f.player_idx as i32) as i32) as u8) != 0 {
         let cd = h::common_data();
         f.x2034 = cd.x7DC;
         f.x2038 = cd.x7E0;

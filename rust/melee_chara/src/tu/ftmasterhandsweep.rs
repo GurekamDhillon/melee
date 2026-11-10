@@ -113,7 +113,7 @@ pub fn ftMh_Damage_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_Damage_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0) {
             st::ftBossLib_8015BD20(gobj);
         }
     }
@@ -124,7 +124,7 @@ pub fn ftMh_WaitSweep_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_WaitSweep_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0) {
             st::ftBossLib_8015BD20(gobj);
         }
     }
@@ -135,7 +135,7 @@ pub fn ftMh_SweepLoop_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_SweepLoop_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0) {
             st::ftBossLib_8015BD20(gobj);
         }
     }

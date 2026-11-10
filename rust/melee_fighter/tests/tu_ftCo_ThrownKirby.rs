@@ -112,8 +112,8 @@ fn ftCo_ThrownKirby_matches_c() {
                 let tk = &mut fr.mv.co.thrownkirby;
                 tk.x4 = rw(); tk.xC = rg();
                 tk.x10 = if rnd() & 7 != 0 { rw() } else { 0.0 };
-                tk.anon_18.anon_0.set_x18_b0((rnd() & 1) as u8);
-                tk.anon_18.anon_0.set_x18_b1((rnd() & 1) as u8);
+                tk.x18_u.x0.set_x18_b0((rnd() & 1) as u8);
+                tk.x18_u.x0.set_x18_b1((rnd() & 1) as u8);
                 tk.scale.x = rw(); tk.scale.y = rw(); tk.scale.z = rw();
                 fr.mv.ca.specialhi.vel.x = rw();
                 fr.mv.ca.specialhi.vel.y = if rnd() & 1 != 0 { rw() } else { 0.0 };
@@ -156,14 +156,14 @@ fn ftCo_ThrownKirby_matches_c() {
                 let tk = &fr.mv.co.thrownkirby;
                 h.m(pi(tk.thrower_gobj)); h.m(b(tk.x4)); h.m(b(tk.x8));
                 h.m(b(tk.xC)); h.m(b(tk.x10)); h.m(tk.x14 as u32);
-                h.m(tk.anon_18.anon_0.x18_b0() as u32); h.m(tk.anon_18.anon_0.x18_b1() as u32);
+                h.m(tk.x18_u.x0.x18_b0() as u32); h.m(tk.x18_u.x0.x18_b1() as u32);
                 h.m(b(tk.scale.x)); h.m(b(tk.scale.y)); h.m(b(tk.scale.z));
             }
             h.m(fr.take_dmg_cb.is_some() as u32); h.m(fr.take_dmg_2_cb.is_some() as u32);
             h.m(fr.accessory4_cb.is_some() as u32); h.m(fr.invisible() as u32);
             unsafe {
                 h.m(fr.u.kb.hat.kind as u32); h.m(f2().u.kb.hat.kind as u32);
-                h.m(f2().mv.co.thrownkirby.anon_18.anon_0.x18_b1() as u32);
+                h.m(f2().mv.co.thrownkirby.x18_u.x0.x18_b1() as u32);
                 h.m(b((*JO).scale.x)); h.m(b((*JO).scale.y)); h.m(b((*JO).scale.z));
                 h.m(b((*JO2).scale.x)); h.m(b((*JO2).scale.y)); h.m(b((*JO2).scale.z));
             }

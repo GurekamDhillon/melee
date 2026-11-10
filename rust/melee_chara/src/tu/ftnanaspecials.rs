@@ -141,9 +141,9 @@ pub fn ftNn_Init_80123954(nana_gobj: *mut HSD_GObj, pp_ga: GroundOrAir) -> bool 
             return true;
         }
         let nana_fp = fpp(nana_gobj);
-        let popo_fp = fpp(ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0));
+        let popo_fp = fpp(ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0));
         let attrs = (*nana_fp).dat_attrs as *const ftIceClimberAttributes;
-        match (*nana_fp).x2070.anon_0.x2071_b0_3() {
+        match (*nana_fp).x2070.x0.x2071_b0_3() {
             1..=13 => {
                 // TARGET_PC: Slippi's FreezeGlitchFix (@ 0x801239A8) removes this store in the
                 // online codeset and in console codesets from 2020-07.
@@ -180,7 +180,7 @@ pub fn ftNn_Init_80123954(nana_gobj: *mut HSD_GObj, pp_ga: GroundOrAir) -> bool 
                     (*nana_fp).gr_vel = (*popo_fp).gr_vel;
                     (*nana_fp).facing_dir = (*popo_fp).facing_dir;
                     ext::ftPartSetRotY(nana_fp, 0, pi_2_facing((*nana_fp).facing_dir));
-                    (*nana_fp).x1A5C = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+                    (*nana_fp).x1A5C = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
                     false
                 } else {
                     (*nana_fp).x1A5C = core::ptr::null_mut();
@@ -217,7 +217,7 @@ pub fn ftPp_SpecialS_0_Anim(nana_gobj: *mut HSD_GObj) {
     melee_core::ct!("ftPp_SpecialS_0_Anim");
     unsafe {
         let nana_fp = fpp(nana_gobj);
-        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
         let popo_fp = fpp(popo_gobj);
         if !ext::ftPp_SpecialS_8011F964(popo_gobj) {
             (*nana_fp).cur_anim_frame = (*popo_fp).cur_anim_frame;
@@ -234,7 +234,7 @@ pub fn ftPp_SpecialS_1_Anim(nana_gobj: *mut HSD_GObj) {
     unsafe {
         let nana_fp = fpp(nana_gobj);
         let attrs = (*nana_fp).dat_attrs as *const ftIceClimberAttributes;
-        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
         let popo_fp = fpp(popo_gobj);
         if !ext::ftPp_SpecialS_8011F964(popo_gobj) {
             (*nana_fp).cur_anim_frame = (*popo_fp).cur_anim_frame;
@@ -257,7 +257,7 @@ pub fn ftPp_SpecialS_1_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftPp_Specia
 /// Shared body of `ftPp_SpecialS_0_Phys` / `ftPp_SpecialS_1_Phys`: mirror Popo's momentum.
 unsafe fn copy_popo_phys(nana_gobj: *mut HSD_GObj) {
     let nana_fp = fpp(nana_gobj);
-    let popo_fp = fpp(ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0));
+    let popo_fp = fpp(ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0));
     (*nana_fp).self_vel = (*popo_fp).self_vel;
     (*nana_fp).x74_self_accel = (*popo_fp).x74_self_accel;
     (*nana_fp).gr_vel = (*popo_fp).gr_vel;
@@ -280,7 +280,7 @@ pub fn ftPp_SpecialS_1_Phys(nana_gobj: *mut HSD_GObj) {
 fn ftPp_SpecialS_0_Coll_inline(nana_gobj: *mut HSD_GObj) {
     unsafe {
         let nana_fp = fpp(nana_gobj);
-        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
         let popo_fp = fpp(popo_gobj);
         let rot = ext::ftPartGetRotX(popo_fp, 0);
         ext::ftPartSetRotX(nana_fp, 0, rot);
@@ -367,7 +367,7 @@ pub fn ftPp_SpecialS_0_Coll(nana_gobj: *mut HSD_GObj) {
     melee_core::ct!("ftPp_SpecialS_0_Coll");
     unsafe {
         let nana_fp = fpp(nana_gobj);
-        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
         let popo_fp = fpp(popo_gobj);
         // inline4: switch when the stage test (`ft_80082888`) fails.
         let switch = coll_follow(nana_gobj, popo_fp, nana_fp, popo_gobj, 360, |g| unsafe {
@@ -385,7 +385,7 @@ pub fn ftPp_SpecialS_1_Coll(nana_gobj: *mut HSD_GObj) {
     melee_core::ct!("ftPp_SpecialS_1_Coll");
     unsafe {
         let nana_fp = fpp(nana_gobj);
-        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_id as i32, 0);
+        let popo_gobj = ext::Player_GetEntityAtIndex((*nana_fp).player_idx as i32, 0);
         let popo_fp = fpp(popo_gobj);
         // inline4: switch when the stage test (`ft_800824A0`) passes.
         let switch = coll_follow(nana_gobj, popo_fp, nana_fp, popo_gobj, 359, |g| unsafe {

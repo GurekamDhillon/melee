@@ -48,7 +48,7 @@ fn iftime_matches_c() {
                     4 => {   m::ifTime_ShowTimers(); }
                     5 => {   ret = m::ifTime_GetCountdownSeconds() as u32; }
                     6 => {   ret = m::ifTime_GetCountdownSeconds_dontinline() as u32; }
-                    7 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::ifTime_RenderGuarded(a0, a1); }
+                    7 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::ifTime_RenderGuarded(a0, a1 as isize); }
                     8 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; m::ifTime_UpdateCountdown(a0); }
                     9 => {   m::ifTime_FreeCountdown(); }
                     10 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; m::ifTime_UpdateTimers(a0); }

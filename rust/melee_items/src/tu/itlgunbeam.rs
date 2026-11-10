@@ -194,7 +194,7 @@ pub unsafe extern "C" fn it_802996D0(owner_gobj: *mut HSD_GObj, pos: *mut Vec3, 
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = owner_gobj;
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = arg2 as _;
 
     let gobj = ext::Item_80268B18(&mut spawn);
@@ -292,10 +292,10 @@ pub unsafe extern "C" fn itLgunbeam_UnkMotion0_Coll(gobj: *mut HSD_GObj) -> bool
     let ip = GET_ITEM(gobj);
     Item_ClampAngle(&mut (*ip).xDD4_itemVar.lgunbeam.angle0);
     let mut flags: i32 = 0;
-    (*ip).x378_itemColl.ecb_source.anon_4.anon_0_0.up = 3.0;
-    (*ip).x378_itemColl.ecb_source.anon_4.anon_0_0.down = 3.0;
-    (*ip).x378_itemColl.ecb_source.anon_4.anon_0_0.front = 3.0;
-    (*ip).x378_itemColl.ecb_source.anon_4.anon_0_0.back = 3.0;
+    (*ip).x378_itemColl.ecb_source.x4.x0_1.up = 3.0;
+    (*ip).x378_itemColl.ecb_source.x4.x0_1.down = 3.0;
+    (*ip).x378_itemColl.ecb_source.x4.x0_1.front = 3.0;
+    (*ip).x378_itemColl.ecb_source.x4.x0_1.back = 3.0;
     ext::it_8026D9A0(gobj);
 
     if (*ip).x378_itemColl.env_flags & Collide_FloorMask != 0 {

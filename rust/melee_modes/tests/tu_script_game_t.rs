@@ -235,7 +235,7 @@ unsafe fn h_Fighter_ChangeMotionState(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_Fighter_procCollResolve(a: &[u64]) -> u64 {
+unsafe fn h_Fighter_ResetInputData_80068854(a: &[u64]) -> u64 {
     rt::t_begin(20);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -281,7 +281,7 @@ unsafe fn h_Fighter_procCollResolve(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_Fighter_ResetInputData_80068854(a: &[u64]) -> u64 {
+unsafe fn h_Fighter_Spawn(a: &[u64]) -> u64 {
     rt::t_begin(21);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -327,7 +327,7 @@ unsafe fn h_Fighter_ResetInputData_80068854(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_Fighter_Spawn(a: &[u64]) -> u64 {
+unsafe fn h_Fighter_procCollResolve(a: &[u64]) -> u64 {
     rt::t_begin(22);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -662,7 +662,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -857,6 +857,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -1001,21 +1002,12 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -1042,9 +1034,9 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -1196,10 +1188,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -1313,7 +1302,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -1381,7 +1370,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -1448,7 +1437,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -1537,7 +1526,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -1553,17 +1542,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -1716,7 +1695,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -1841,11 +1820,11 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -1951,21 +1930,14 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -1991,14 +1963,14 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -2008,8 +1980,8 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -2024,7 +1996,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -2061,7 +2033,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -2129,7 +2101,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -2324,6 +2296,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -2468,21 +2441,12 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -2509,9 +2473,9 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -2663,10 +2627,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -2780,7 +2741,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -2848,7 +2809,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -2915,7 +2876,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -3004,7 +2965,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -3020,17 +2981,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -3183,7 +3134,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -3308,11 +3259,11 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -3418,21 +3369,14 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3458,14 +3402,14 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3475,8 +3419,8 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3491,7 +3435,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3528,7 +3472,7 @@ unsafe fn h_Geno_GiveStunBonus(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -3604,7 +3548,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -3799,6 +3743,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -3943,21 +3888,12 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -3984,9 +3920,9 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -4138,10 +4074,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -4255,7 +4188,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -4323,7 +4256,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -4390,7 +4323,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -4479,7 +4412,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -4495,17 +4428,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -4658,7 +4581,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -4783,11 +4706,11 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -4893,21 +4816,14 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -4933,14 +4849,14 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -4950,8 +4866,8 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -4966,7 +4882,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -5003,7 +4919,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -5071,7 +4987,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -5266,6 +5182,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -5410,21 +5327,12 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -5451,9 +5359,9 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -5605,10 +5513,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -5722,7 +5627,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -5790,7 +5695,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -5857,7 +5762,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -5946,7 +5851,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -5962,17 +5867,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -6125,7 +6020,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -6250,11 +6145,11 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -6360,21 +6255,14 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -6400,14 +6288,14 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -6417,8 +6305,8 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -6433,7 +6321,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -6470,7 +6358,7 @@ unsafe fn h_Geno_LabEnterState(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -6541,7 +6429,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -6736,6 +6624,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -6880,21 +6769,12 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -6921,9 +6801,9 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -7075,10 +6955,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -7192,7 +7069,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -7260,7 +7137,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -7327,7 +7204,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -7416,7 +7293,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -7432,17 +7309,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -7595,7 +7462,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -7720,11 +7587,11 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -7830,21 +7697,14 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -7870,14 +7730,14 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -7887,8 +7747,8 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -7903,7 +7763,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -7940,7 +7800,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -8008,7 +7868,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -8203,6 +8063,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -8347,21 +8208,12 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -8388,9 +8240,9 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -8542,10 +8394,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -8659,7 +8508,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -8727,7 +8576,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -8794,7 +8643,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -8883,7 +8732,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -8899,17 +8748,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -9062,7 +8901,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -9187,11 +9026,11 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -9297,21 +9136,14 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -9337,14 +9169,14 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -9354,8 +9186,8 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -9370,7 +9202,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -9407,7 +9239,7 @@ unsafe fn h_Geno_MotionRowIfAny(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -11370,7 +11202,7 @@ unsafe fn h_Item_80268B18(a: &[u64]) -> u64 {
         rt::h_p((*p).x0_parent_gobj as *const u8);
         rt::h_p((*p).x4_parent_gobj2 as *const u8);
         rt::h_i((*p).kind as i64);
-        rt::h_i((*p).hold_kind as i64);
+        rt::h_u((*p).hold_kind as u64);
         rt::h_i((*p).x10 as i64);
         rt::h_f32((*p).pos.x);
         rt::h_f32((*p).pos.y);
@@ -11385,38 +11217,10 @@ unsafe fn h_Item_80268B18(a: &[u64]) -> u64 {
         rt::h_i((*p).x3C_damage as i64);
         rt::h_i((*p).x3E as i64);
         rt::h_i((*p).x40 as i64);
-        rt::h_u((*p).x44_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x44_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x44_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x44_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x44_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x44_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x44_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x44_flag.anon_0.b7() as u64);
-        rt::h_u((*p).x45_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x45_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x45_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x45_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x45_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x45_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x45_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x45_flag.anon_0.b7() as u64);
-        rt::h_u((*p).x46_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x46_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x46_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x46_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x46_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x46_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x46_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x46_flag.anon_0.b7() as u64);
-        rt::h_u((*p).x47_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x47_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x47_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x47_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x47_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x47_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x47_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x47_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x44_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).x45_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).x46_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).x47_flag as *const _ as *const u8, 1);
         rt::h_u((*p).x48_ground_or_air as u64);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     let p0 = a[0] as usize as *mut Q::SpawnItem;
@@ -11439,38 +11243,10 @@ unsafe fn h_Item_80268B18(a: &[u64]) -> u64 {
         (*p0).x3C_damage = rt::draw_int(&mut rt::MST) as _;
         (*p0).x3E = rt::draw_int(&mut rt::MST) as _;
         (*p0).x40 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x44_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x44_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x44_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x44_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x44_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x44_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x44_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x44_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x45_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x45_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x45_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x45_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x45_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x45_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x45_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x45_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x46_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x46_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x46_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x46_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x46_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x46_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x46_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x46_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x47_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x47_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x47_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x47_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x47_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x47_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x47_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x47_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x44_flag), 1); for i1 in 0..1 { *(&mut (*p0).x44_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).x45_flag), 1); for i1 in 0..1 { *(&mut (*p0).x45_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).x46_flag), 1); for i1 in 0..1 { *(&mut (*p0).x46_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).x47_flag), 1); for i1 in 0..1 { *(&mut (*p0).x47_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x48_ground_or_air = rt::draw_int(&mut rt::MST) as _;
     }
     core::ptr::addr_of_mut!(MO_Item_80268B18) as usize as u64
@@ -11484,7 +11260,7 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         rt::h_i((*p).x8 as i64);
         rt::h_i((*p).spawn_kind as i64);
         rt::h_i((*p).kind as i64);
-        rt::h_i((*p).hold_kind as i64);
+        rt::h_u((*p).hold_kind as u64);
         rt::h_i((*p).x18 as i64);
         rt::h_i((*p).x1C as i64);
         rt::h_u((*p).x20_team_id as u64);
@@ -11621,10 +11397,7 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         rt::h_f32((*p).x378_itemColl.xE4_ecb.left.x);
         rt::h_f32((*p).x378_itemColl.xE4_ecb.left.y);
         rt::h_u((*p).x378_itemColl.ecb_source.kind as u64);
-        rt::h_p((*p).x378_itemColl.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).x378_itemColl.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).x378_itemColl.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).x378_itemColl.ecb_source.x124);
         rt::h_f32((*p).x378_itemColl.ecb_source.x128);
         rt::h_f32((*p).x378_itemColl.ecb_source.x12C);
@@ -11664,6 +11437,7 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x524_cmd.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x524_cmd.anon_8.u as *const u8);
         rt::h_u((*p).x524_cmd.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x524_cmd.event_return[i0] as *const u8);
@@ -11787,7 +11561,7 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
                 rt::h_p((*p).x5D4_hitboxes[i0].hit.victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x5D4_hitboxes[i0].hit.victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x5D4_hitboxes[i0].hit.anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x5D4_hitboxes[i0].hit.x134 as *const _ as *const u8, 8);
             rt::h_u((*p).x5D4_hitboxes[i0].x138() as u64);
             rt::h_u((*p).x5D4_hitboxes[i0].x138_b1_7() as u64);
             for i1 in 0..3 {
@@ -11896,9 +11670,9 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         rt::h_f32((*p).xC6C);
         rt::h_f32((*p).xC70);
         rt::h_i((*p).xC74 as i64);
-        rt::h_f32((*p).xC78.x);
-        rt::h_f32((*p).xC78.y);
-        rt::h_i((*p).xC80.x as i64);
+        rt::h_i((*p).xC78.x as i64);
+        rt::h_i((*p).xC78.y as i64);
+        rt::h_f32((*p).xC80.x);
         rt::h_i((*p).xC80.y as i64);
         rt::h_i((*p).xC88 as i64);
         rt::h_u((*p).xC8C as u64);
@@ -11971,52 +11745,18 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         rt::h_u((*p).xD8C_attack_instance as u64);
         rt::h_i((*p).xD8E as i64);
         rt::h_bytes(&(*p).xD90 as *const _ as *const u8, 4);
-        rt::h_f32((*p).xD94.x);
-        rt::h_f32((*p).xD94.y);
-        rt::h_i((*p).xD9C.x as i64);
+        rt::h_i((*p).xD94.x as i64);
+        rt::h_i((*p).xD94.y as i64);
+        rt::h_f32((*p).xD9C.x);
         rt::h_i((*p).xD9C.y as i64);
         rt::h_u((*p).xDA4_word as u64);
         rt::h_u((*p).xDA8_short as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b0() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b1() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b2() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b3() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b4() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b5() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b6() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).xDAA as *const _ as *const u8, 1);
         rt::h_u((*p).xDAC_itcmd_var0 as u64);
         rt::h_u((*p).xDB0_itcmd_var1 as u64);
         rt::h_u((*p).xDB4_itcmd_var2 as u64);
         rt::h_u((*p).xDB8_itcmd_var3 as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x0() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x2() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x3() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x4() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x5() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x6() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x7() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x8() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x9() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xA() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xB() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xC() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xD() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xE() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xF() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x13() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x14() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x15() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x16() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x17() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x19() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1A() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1B() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1C() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1D() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1E() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1F() as u64);
+        rt::h_bytes(&(*p).xDBC as *const _ as *const u8, 4);
         rt::h_u((*p).xDC0 as u64);
         rt::h_u((*p).xDC4 as u64);
         rt::h_u((*p).xDC8_word.flags.x0() as u64);
@@ -12052,61 +11792,19 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         rt::h_u((*p).xDCC_flag.b2() as u64);
         rt::h_u((*p).xDCC_flag.b3() as u64);
         rt::h_u((*p).xDCC_flag.b4567() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b01() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b7() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b01() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b2() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b3() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b4() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b5() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b6() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b7() as u64);
+        rt::h_bytes(&(*p).xDCE_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDCF_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD0_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD1_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD2_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD3_flag as *const _ as *const u8, 1);
         rt::h_bytes(&(*p).xDD4_itemVar as *const _ as *const u8, 504);
         rt::h_p((*p).mex_original_owner as *const u8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
@@ -12255,10 +11953,7 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         (*p0).x378_itemColl.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).x378_itemColl.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).x378_itemColl.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x378_itemColl.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).x378_itemColl.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).x378_itemColl.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).x378_itemColl.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x378_itemColl.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).x378_itemColl.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).x378_itemColl.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -12298,6 +11993,7 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x524_cmd.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x524_cmd.anon_8.u = 0usize as _;
         (*p0).x524_cmd.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x524_cmd.event_return[i1] = 0usize as _;
@@ -12421,7 +12117,7 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
                 (*p0).x5D4_hitboxes[i1].hit.victims_2[i2].victim = 0usize as _;
                 (*p0).x5D4_hitboxes[i1].hit.victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x5D4_hitboxes[i1].hit.anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x5D4_hitboxes[i1].hit.x134), 8); for i2 in 0..8 { *(&mut (*p0).x5D4_hitboxes[i1].hit.x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
             (*p0).x5D4_hitboxes[i1].set_x138((rt::draw_int(&mut rt::MST) & 0x1) as _);
             (*p0).x5D4_hitboxes[i1].set_x138_b1_7((rt::draw_int(&mut rt::MST) & 0x7F) as _);
             for i2 in 0..3 {
@@ -12530,9 +12226,9 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         (*p0).xC6C = rt::draw_f32(&mut rt::MST);
         (*p0).xC70 = rt::draw_f32(&mut rt::MST);
         (*p0).xC74 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).xC78.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xC78.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xC80.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xC78.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xC78.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xC80.x = rt::draw_f32(&mut rt::MST);
         (*p0).xC80.y = rt::draw_int(&mut rt::MST) as _;
         (*p0).xC88 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xC8C = rt::draw_int(&mut rt::MST) as _;
@@ -12605,52 +12301,18 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         (*p0).xD8C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).xD8E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).xD90), 4); for i1 in 0..4 { *(&mut (*p0).xD90 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).xD94.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xD94.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xD9C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xD94.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xD94.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xD9C.x = rt::draw_f32(&mut rt::MST);
         (*p0).xD9C.y = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDA4_word = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDA8_short = rt::draw_int(&mut rt::MST) as _;
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDAA), 1); for i1 in 0..1 { *(&mut (*p0).xDAA as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).xDAC_itcmd_var0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDB0_itcmd_var1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDB4_itcmd_var2 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDB8_itcmd_var3 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x9((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xA((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xB((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xC((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xD((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xE((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xF((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x13((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x14((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x15((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x16((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x17((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x19((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1A((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1B((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1C((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1D((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1E((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1F((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDBC), 4); for i1 in 0..4 { *(&mut (*p0).xDBC as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).xDC0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDC4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDC8_word.flags.set_x0((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -12686,61 +12348,19 @@ unsafe fn h_Item_80269CA0(a: &[u64]) -> u64 {
         (*p0).xDCC_flag.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).xDCC_flag.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).xDCC_flag.set_b4567((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).xDCD_flag.anon_0.set_b01((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).xDCD_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b01((rt::draw_int(&mut rt::MST) & 0x3) as _);
+        (*p0).xDCD_flag.x0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDCE_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDCE_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDCF_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDCF_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDD0_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDD0_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDD1_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDD1_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDD2_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDD2_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDD3_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDD3_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         { assert_eq!(core::mem::size_of_val(&(*p0).xDD4_itemVar), 504); for i1 in 0..504 { *(&mut (*p0).xDD4_itemVar as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).mex_original_owner = 0usize as _;
     }
@@ -13526,7 +13146,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -13721,6 +13341,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -13865,21 +13486,12 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -13906,9 +13518,9 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -14060,10 +13672,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -14177,7 +13786,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -14245,7 +13854,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -14312,7 +13921,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -14401,7 +14010,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -14417,17 +14026,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -14580,7 +14179,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -14705,11 +14304,11 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -14815,21 +14414,14 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -14855,14 +14447,14 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -14872,8 +14464,8 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -14888,7 +14480,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -14925,7 +14517,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -14992,7 +14584,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -15187,6 +14779,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -15331,21 +14924,12 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -15372,9 +14956,9 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -15526,10 +15110,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -15643,7 +15224,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -15711,7 +15292,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -15778,7 +15359,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -15867,7 +15448,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -15883,17 +15464,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -16046,7 +15617,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -16171,11 +15742,11 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -16281,21 +15852,14 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -16321,14 +15885,14 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -16338,8 +15902,8 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -16354,7 +15918,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -16391,7 +15955,7 @@ unsafe fn h_ftCamera_80076064(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -16605,7 +16169,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -16800,6 +16364,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -16944,21 +16509,12 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -16985,9 +16541,9 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -17139,10 +16695,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -17256,7 +16809,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -17324,7 +16877,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -17391,7 +16944,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -17480,7 +17033,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -17496,17 +17049,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -17659,7 +17202,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -17784,11 +17327,11 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -17894,21 +17437,14 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -17934,14 +17470,14 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -17951,8 +17487,8 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -17967,7 +17503,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -18004,7 +17540,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -18074,7 +17610,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -18269,6 +17805,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -18413,21 +17950,12 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -18454,9 +17982,9 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -18608,10 +18136,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -18725,7 +18250,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -18793,7 +18318,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -18860,7 +18385,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -18949,7 +18474,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -18965,17 +18490,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -19128,7 +18643,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -19253,11 +18768,11 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -19363,21 +18878,14 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -19403,14 +18911,14 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -19420,8 +18928,8 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -19436,7 +18944,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -19473,7 +18981,7 @@ unsafe fn h_ftCo_800A101C(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -19544,7 +19052,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -19739,6 +19247,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -19883,21 +19392,12 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -19924,9 +19424,9 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -20078,10 +19578,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -20195,7 +19692,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -20263,7 +19760,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -20330,7 +19827,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -20419,7 +19916,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -20435,17 +19932,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -20598,7 +20085,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -20723,11 +20210,11 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -20833,21 +20320,14 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -20873,14 +20353,14 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -20890,8 +20370,8 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -20906,7 +20386,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -20943,7 +20423,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -21010,7 +20490,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -21205,6 +20685,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -21349,21 +20830,12 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -21390,9 +20862,9 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -21544,10 +21016,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -21661,7 +21130,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -21729,7 +21198,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -21796,7 +21265,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -21885,7 +21354,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -21901,17 +21370,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -22064,7 +21523,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -22189,11 +21648,11 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -22299,21 +21758,14 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -22339,14 +21791,14 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -22356,8 +21808,8 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -22372,7 +21824,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -22409,7 +21861,7 @@ unsafe fn h_ftCo_800B3E04(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -22480,7 +21932,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -22675,6 +22127,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -22819,21 +22272,12 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -22860,9 +22304,9 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -23014,10 +22458,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -23131,7 +22572,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -23199,7 +22640,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -23266,7 +22707,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -23355,7 +22796,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -23371,17 +22812,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -23534,7 +22965,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -23659,11 +23090,11 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -23769,21 +23200,14 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -23809,14 +23233,14 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -23826,8 +23250,8 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -23842,7 +23266,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -23879,7 +23303,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -23946,7 +23370,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -24141,6 +23565,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -24285,21 +23710,12 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -24326,9 +23742,9 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -24480,10 +23896,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -24597,7 +24010,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -24665,7 +24078,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -24732,7 +24145,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -24821,7 +24234,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -24837,17 +24250,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -25000,7 +24403,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -25125,11 +24528,11 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -25235,21 +24638,14 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -25275,14 +24671,14 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -25292,8 +24688,8 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -25308,7 +24704,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -25345,7 +24741,7 @@ unsafe fn h_ftCo_800B49F4(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -25416,7 +24812,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -25611,6 +25007,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -25755,21 +25152,12 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -25796,9 +25184,9 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -25950,10 +25338,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -26067,7 +25452,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -26135,7 +25520,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -26202,7 +25587,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -26291,7 +25676,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -26307,17 +25692,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -26470,7 +25845,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -26595,11 +25970,11 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -26705,21 +26080,14 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -26745,14 +26113,14 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -26762,8 +26130,8 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -26778,7 +26146,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -26815,7 +26183,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -26882,7 +26250,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -27077,6 +26445,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -27221,21 +26590,12 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -27262,9 +26622,9 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -27416,10 +26776,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -27533,7 +26890,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -27601,7 +26958,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -27668,7 +27025,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -27757,7 +27114,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -27773,17 +27130,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -27936,7 +27283,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -28061,11 +27408,11 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -28171,21 +27518,14 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -28211,14 +27551,14 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -28228,8 +27568,8 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -28244,7 +27584,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -28281,7 +27621,7 @@ unsafe fn h_ftCo_800B4A78(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -28352,7 +27692,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -28547,6 +27887,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -28691,21 +28032,12 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -28732,9 +28064,9 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -28886,10 +28218,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -29003,7 +28332,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -29071,7 +28400,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -29138,7 +28467,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -29227,7 +28556,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -29243,17 +28572,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -29406,7 +28725,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -29531,11 +28850,11 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -29641,21 +28960,14 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -29681,14 +28993,14 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -29698,8 +29010,8 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -29714,7 +29026,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -29751,7 +29063,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -29820,7 +29132,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -30015,6 +29327,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -30159,21 +29472,12 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -30200,9 +29504,9 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -30354,10 +29658,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -30471,7 +29772,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -30539,7 +29840,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -30606,7 +29907,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -30695,7 +29996,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -30711,17 +30012,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -30874,7 +30165,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -30999,11 +30290,11 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -31109,21 +30400,14 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -31149,14 +30433,14 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -31166,8 +30450,8 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -31182,7 +30466,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -31219,7 +30503,7 @@ unsafe fn h_ftCo_800BFFD0(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -31290,7 +30574,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -31485,6 +30769,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -31629,21 +30914,12 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -31670,9 +30946,9 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -31824,10 +31100,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -31941,7 +31214,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -32009,7 +31282,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -32076,7 +31349,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -32165,7 +31438,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -32181,17 +31454,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -32344,7 +31607,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -32469,11 +31732,11 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -32579,21 +31842,14 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -32619,14 +31875,14 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -32636,8 +31892,8 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -32652,7 +31908,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -32689,7 +31945,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -32756,7 +32012,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -32951,6 +32207,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -33095,21 +32352,12 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -33136,9 +32384,9 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -33290,10 +32538,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -33407,7 +32652,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -33475,7 +32720,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -33542,7 +32787,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -33631,7 +32876,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -33647,17 +32892,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -33810,7 +33045,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -33935,11 +33170,11 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -34045,21 +33280,14 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -34085,14 +33313,14 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -34102,8 +33330,8 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -34118,7 +33346,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -34155,7 +33383,7 @@ unsafe fn h_ftCo_800C0074(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -34226,7 +33454,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -34421,6 +33649,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -34565,21 +33794,12 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -34606,9 +33826,9 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -34760,10 +33980,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -34877,7 +34094,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -34945,7 +34162,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -35012,7 +34229,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -35101,7 +34318,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -35117,17 +34334,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -35280,7 +34487,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -35405,11 +34612,11 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -35515,21 +34722,14 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -35555,14 +34755,14 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -35572,8 +34772,8 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -35588,7 +34788,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -35625,7 +34825,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -35693,7 +34893,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -35888,6 +35088,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -36032,21 +35233,12 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -36073,9 +35265,9 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -36227,10 +35419,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -36344,7 +35533,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -36412,7 +35601,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -36479,7 +35668,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -36568,7 +35757,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -36584,17 +35773,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -36747,7 +35926,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -36872,11 +36051,11 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -36982,21 +36161,14 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -37022,14 +36194,14 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -37039,8 +36211,8 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -37055,7 +36227,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -37092,7 +36264,7 @@ unsafe fn h_ftCo_800C0200(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -37621,7 +36793,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -37816,6 +36988,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -37960,21 +37133,12 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -38001,9 +37165,9 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -38155,10 +37319,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -38272,7 +37433,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -38340,7 +37501,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -38407,7 +37568,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -38496,7 +37657,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -38512,17 +37673,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -38675,7 +37826,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -38800,11 +37951,11 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -38910,21 +38061,14 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -38950,14 +38094,14 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -38967,8 +38111,8 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -38983,7 +38127,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -39020,7 +38164,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -39087,7 +38231,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -39282,6 +38426,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -39426,21 +38571,12 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -39467,9 +38603,9 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -39621,10 +38757,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -39738,7 +38871,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -39806,7 +38939,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -39873,7 +39006,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -39962,7 +39095,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -39978,17 +39111,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -40141,7 +39264,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -40266,11 +39389,11 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -40376,21 +39499,14 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -40416,14 +39532,14 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -40433,8 +39549,8 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -40449,7 +39565,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -40486,7 +39602,7 @@ unsafe fn h_ftCo_800DF1C8(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -40557,7 +39673,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -40752,6 +39868,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -40896,21 +40013,12 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -40937,9 +40045,9 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -41091,10 +40199,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -41208,7 +40313,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -41276,7 +40381,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -41343,7 +40448,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -41432,7 +40537,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -41448,17 +40553,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -41611,7 +40706,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -41736,11 +40831,11 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -41846,21 +40941,14 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -41886,14 +40974,14 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -41903,8 +40991,8 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -41919,7 +41007,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -41956,7 +41044,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -42023,7 +41111,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -42218,6 +41306,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -42362,21 +41451,12 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -42403,9 +41483,9 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -42557,10 +41637,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -42674,7 +41751,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -42742,7 +41819,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -42809,7 +41886,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -42898,7 +41975,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -42914,17 +41991,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -43077,7 +42144,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -43202,11 +42269,11 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -43312,21 +42379,14 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -43352,14 +42412,14 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -43369,8 +42429,8 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -43385,7 +42445,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -43422,7 +42482,7 @@ unsafe fn h_ftCo_800DF2D8(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -43493,7 +42553,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -43688,6 +42748,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -43832,21 +42893,12 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -43873,9 +42925,9 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -44027,10 +43079,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -44144,7 +43193,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -44212,7 +43261,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -44279,7 +43328,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -44368,7 +43417,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -44384,17 +43433,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -44547,7 +43586,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -44672,11 +43711,11 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -44782,21 +43821,14 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -44822,14 +43854,14 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -44839,8 +43871,8 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -44855,7 +43887,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -44892,7 +43924,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -44959,7 +43991,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -45154,6 +44186,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -45298,21 +44331,12 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -45339,9 +44363,9 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -45493,10 +44517,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -45610,7 +44631,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -45678,7 +44699,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -45745,7 +44766,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -45834,7 +44855,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -45850,17 +44871,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -46013,7 +45024,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -46138,11 +45149,11 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -46248,21 +45259,14 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -46288,14 +45292,14 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -46305,8 +45309,8 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -46321,7 +45325,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -46358,7 +45362,7 @@ unsafe fn h_ftCo_800DF3A8(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -46567,7 +45571,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -46762,6 +45766,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -46906,21 +45911,12 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -46947,9 +45943,9 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -47101,10 +46097,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -47218,7 +46211,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -47286,7 +46279,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -47353,7 +46346,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -47442,7 +46435,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -47458,17 +46451,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -47621,7 +46604,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -47746,11 +46729,11 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -47856,21 +46839,14 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -47896,14 +46872,14 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -47913,8 +46889,8 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -47929,7 +46905,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -47966,7 +46942,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -48033,7 +47009,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -48228,6 +47204,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -48372,21 +47349,12 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -48413,9 +47381,9 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -48567,10 +47535,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -48684,7 +47649,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -48752,7 +47717,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -48819,7 +47784,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -48908,7 +47873,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -48924,17 +47889,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -49087,7 +48042,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -49212,11 +48167,11 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -49322,21 +48277,14 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -49362,14 +48310,14 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -49379,8 +48327,8 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -49395,7 +48343,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -49432,7 +48380,7 @@ unsafe fn h_ftCo_AttackAir_GetMsidFromCStick(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -49825,7 +48773,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -50020,6 +48968,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -50164,21 +49113,12 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -50205,9 +49145,9 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -50359,10 +49299,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -50476,7 +49413,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -50544,7 +49481,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -50611,7 +49548,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -50700,7 +49637,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -50716,17 +49653,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -50879,7 +49806,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -51004,11 +49931,11 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -51114,21 +50041,14 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -51154,14 +50074,14 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -51171,8 +50091,8 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -51187,7 +50107,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -51224,7 +50144,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -51291,7 +50211,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -51486,6 +50406,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -51630,21 +50551,12 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -51671,9 +50583,9 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -51825,10 +50737,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -51942,7 +50851,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -52010,7 +50919,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -52077,7 +50986,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -52166,7 +51075,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -52182,17 +51091,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -52345,7 +51244,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -52470,11 +51369,11 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -52580,21 +51479,14 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -52620,14 +51512,14 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -52637,8 +51529,8 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -52653,7 +51545,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -52690,7 +51582,7 @@ unsafe fn h_ftCo_Damage_CalcKnockback(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -52853,7 +51745,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -53048,6 +51940,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -53192,21 +52085,12 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -53233,9 +52117,9 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -53387,10 +52271,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -53504,7 +52385,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -53572,7 +52453,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -53639,7 +52520,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -53728,7 +52609,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -53744,17 +52625,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -53907,7 +52778,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -54032,11 +52903,11 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -54142,21 +53013,14 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -54182,14 +53046,14 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -54199,8 +53063,8 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -54215,7 +53079,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -54252,7 +53116,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -54319,7 +53183,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -54514,6 +53378,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -54658,21 +53523,12 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -54699,9 +53555,9 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -54853,10 +53709,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -54970,7 +53823,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -55038,7 +53891,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -55105,7 +53958,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -55194,7 +54047,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -55210,17 +54063,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -55373,7 +54216,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -55498,11 +54341,11 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -55608,21 +54451,14 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -55648,14 +54484,14 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -55665,8 +54501,8 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -55681,7 +54517,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -55718,7 +54554,7 @@ unsafe fn h_ftCo_GetLStickAngle(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -56019,7 +54855,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -56214,6 +55050,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -56358,21 +55195,12 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -56399,9 +55227,9 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -56553,10 +55381,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -56670,7 +55495,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -56738,7 +55563,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -56805,7 +55630,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -56894,7 +55719,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -56910,17 +55735,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -57073,7 +55888,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -57198,11 +56013,11 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -57308,21 +56123,14 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -57348,14 +56156,14 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -57365,8 +56173,8 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -57381,7 +56189,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -57418,7 +56226,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -57486,7 +56294,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -57681,6 +56489,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -57825,21 +56634,12 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -57866,9 +56666,9 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -58020,10 +56820,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -58137,7 +56934,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -58205,7 +57002,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -58272,7 +57069,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -58361,7 +57158,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -58377,17 +57174,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -58540,7 +57327,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -58665,11 +57452,11 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -58775,21 +57562,14 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -58815,14 +57595,14 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -58832,8 +57612,8 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -58848,7 +57628,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -58885,7 +57665,7 @@ unsafe fn h_ftColl_80076640(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -59045,7 +57825,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -59240,6 +58020,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -59384,21 +58165,12 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -59425,9 +58197,9 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -59579,10 +58351,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -59696,7 +58465,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -59764,7 +58533,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -59831,7 +58600,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -59920,7 +58689,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -59936,17 +58705,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -60099,7 +58858,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -60224,11 +58983,11 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -60334,21 +59093,14 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -60374,14 +59126,14 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -60391,8 +59143,8 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -60407,7 +59159,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -60444,7 +59196,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -60573,7 +59325,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
             rt::h_p((*p).victims_2[i0].victim as *const u8);
             rt::h_u((*p).victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x134 as *const _ as *const u8, 8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     rt::t_i(a[2] as i64);
     rt::t_f32(f32::from_bits(a[3] as u32));
@@ -60585,7 +59337,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -60780,6 +59532,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -60924,21 +59677,12 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -60965,9 +59709,9 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -61119,10 +59863,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -61236,7 +59977,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -61304,7 +60045,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -61371,7 +60112,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -61460,7 +60201,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -61476,17 +60217,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -61639,7 +60370,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -61764,11 +60495,11 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -61874,21 +60605,14 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -61914,14 +60638,14 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -61931,8 +60655,8 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -61947,7 +60671,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -61984,7 +60708,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -62113,7 +60837,7 @@ unsafe fn h_ftColl_80079AB0(a: &[u64]) -> u64 {
             (*p1).victims_2[i1].victim = 0usize as _;
             (*p1).victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p1).anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p1).x134), 8); for i1 in 0..8 { *(&mut (*p1).x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
     }
     rt::draw_f32(&mut rt::MST).to_bits() as u64
 }
@@ -62268,7 +60992,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -62463,6 +61187,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -62607,21 +61332,12 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -62648,9 +61364,9 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -62802,10 +61518,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -62919,7 +61632,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -62987,7 +61700,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -63054,7 +61767,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -63143,7 +61856,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -63159,17 +61872,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -63322,7 +62025,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -63447,11 +62150,11 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -63557,21 +62260,14 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -63597,14 +62293,14 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -63614,8 +62310,8 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -63630,7 +62326,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -63667,7 +62363,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -63734,7 +62430,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -63929,6 +62625,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -64073,21 +62770,12 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -64114,9 +62802,9 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -64268,10 +62956,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -64385,7 +63070,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -64453,7 +63138,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -64520,7 +63205,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -64609,7 +63294,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -64625,17 +63310,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -64788,7 +63463,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -64913,11 +63588,11 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -65023,21 +63698,14 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -65063,14 +63731,14 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -65080,8 +63748,8 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -65096,7 +63764,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -65133,7 +63801,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -65204,7 +63872,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -65399,6 +64067,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -65543,21 +64212,12 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -65584,9 +64244,9 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -65738,10 +64398,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -65855,7 +64512,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -65923,7 +64580,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -65990,7 +64647,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -66079,7 +64736,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -66095,17 +64752,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -66258,7 +64905,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -66383,11 +65030,11 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -66493,21 +65140,14 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -66533,14 +65173,14 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -66550,8 +65190,8 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -66566,7 +65206,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -66603,7 +65243,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -66670,7 +65310,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -66865,6 +65505,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -67009,21 +65650,12 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -67050,9 +65682,9 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -67204,10 +65836,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -67321,7 +65950,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -67389,7 +66018,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -67456,7 +66085,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -67545,7 +66174,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -67561,17 +66190,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -67724,7 +66343,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -67849,11 +66468,11 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -67959,21 +66578,14 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -67999,14 +66611,14 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -68016,8 +66628,8 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -68032,7 +66644,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -68069,7 +66681,7 @@ unsafe fn h_ftCommon_8007D6A4(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -68140,7 +66752,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -68335,6 +66947,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -68479,21 +67092,12 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -68520,9 +67124,9 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -68674,10 +67278,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -68791,7 +67392,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -68859,7 +67460,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -68926,7 +67527,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -69015,7 +67616,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -69031,17 +67632,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -69194,7 +67785,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -69319,11 +67910,11 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -69429,21 +68020,14 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -69469,14 +68053,14 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -69486,8 +68070,8 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -69502,7 +68086,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -69539,7 +68123,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -69606,7 +68190,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -69801,6 +68385,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -69945,21 +68530,12 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -69986,9 +68562,9 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -70140,10 +68716,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -70257,7 +68830,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -70325,7 +68898,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -70392,7 +68965,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -70481,7 +69054,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -70497,17 +69070,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -70660,7 +69223,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -70785,11 +69348,11 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -70895,21 +69458,14 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -70935,14 +69491,14 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -70952,8 +69508,8 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -70968,7 +69524,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -71005,7 +69561,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -71168,7 +69724,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -71363,6 +69919,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -71507,21 +70064,12 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -71548,9 +70096,9 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -71702,10 +70250,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -71819,7 +70364,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -71887,7 +70432,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -71954,7 +70499,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -72043,7 +70588,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -72059,17 +70604,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -72222,7 +70757,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -72347,11 +70882,11 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -72457,21 +70992,14 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -72497,14 +71025,14 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -72514,8 +71042,8 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -72530,7 +71058,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -72567,7 +71095,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -72634,7 +71162,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -72829,6 +71357,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -72973,21 +71502,12 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -73014,9 +71534,9 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -73168,10 +71688,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -73285,7 +71802,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -73353,7 +71870,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -73420,7 +71937,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -73509,7 +72026,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -73525,17 +72042,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -73688,7 +72195,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -73813,11 +72320,11 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -73923,21 +72430,14 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -73963,14 +72463,14 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -73980,8 +72480,8 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -73996,7 +72496,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -74033,7 +72533,7 @@ unsafe fn h_ftCommon_8007F804(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -74111,7 +72611,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -74306,6 +72806,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -74450,21 +72951,12 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -74491,9 +72983,9 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -74645,10 +73137,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -74762,7 +73251,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -74830,7 +73319,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -74897,7 +73386,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -74986,7 +73475,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -75002,17 +73491,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -75165,7 +73644,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -75290,11 +73769,11 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -75400,21 +73879,14 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -75440,14 +73912,14 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -75457,8 +73929,8 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -75473,7 +73945,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -75510,7 +73982,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -75577,7 +74049,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -75772,6 +74244,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -75916,21 +74389,12 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -75957,9 +74421,9 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -76111,10 +74575,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -76228,7 +74689,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -76296,7 +74757,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -76363,7 +74824,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -76452,7 +74913,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -76468,17 +74929,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -76631,7 +75082,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -76756,11 +75207,11 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -76866,21 +75317,14 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -76906,14 +75350,14 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -76923,8 +75367,8 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -76939,7 +75383,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -76976,7 +75420,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelQuickAir(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -77047,7 +75491,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -77242,6 +75686,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -77386,21 +75831,12 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -77427,9 +75863,9 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -77581,10 +76017,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -77698,7 +76131,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -77766,7 +76199,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -77833,7 +76266,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -77922,7 +76355,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -77938,17 +76371,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -78101,7 +76524,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -78226,11 +76649,11 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -78336,21 +76759,14 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -78376,14 +76792,14 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -78393,8 +76809,8 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -78409,7 +76825,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -78446,7 +76862,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -78513,7 +76929,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -78708,6 +77124,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -78852,21 +77269,12 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -78893,9 +77301,9 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -79047,10 +77455,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -79164,7 +77569,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -79232,7 +77637,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -79299,7 +77704,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -79388,7 +77793,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -79404,17 +77809,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -79567,7 +77962,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -79692,11 +78087,11 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -79802,21 +78197,14 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -79842,14 +78230,14 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -79859,8 +78247,8 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -79875,7 +78263,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -79912,7 +78300,7 @@ unsafe fn h_ftCommon_UnlockECB(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -80081,7 +78469,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_p((*p).gobj as *const u8);
         rt::h_u((*p).kind as u64);
         rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
+        rt::h_u((*p).player_idx as u64);
         rt::h_i((*p).motion_id as i64);
         rt::h_i((*p).anim_id as i64);
         rt::h_i((*p).x18 as i64);
@@ -80276,6 +78664,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x3E4_fighterCmdScript.anon_8.u as *const u8);
         rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
@@ -80420,21 +78809,12 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_p((*p).x588 as *const u8);
         rt::h_u((*p).x58C as u64);
         rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
+        rt::h_bytes(&(*p).x594 as *const _ as *const u8, 4);
         rt::h_p((*p).x598 as *const u8);
         rt::h_p((*p).x59C as *const u8);
         rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
+        rt::h_u(((*p).x5A4 as u32) as u64);
+        rt::h_u(((*p).x5A8 as u32) as u64);
         rt::h_u((*p).x5AC.model_num as u64);
         for i0 in 0..5 {
             rt::h_u((*p).x5AC.cleared[i0] as u64);
@@ -80461,9 +78841,9 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
             rt::h_u((*p).x610_color_rgba[i0].b as u64);
             rt::h_u((*p).x610_color_rgba[i0].a as u64);
         }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
+        rt::h_u((*p).pad_port as u64);
+        rt::h_u((*p).costume_id as u64);
+        rt::h_u((*p).sub_color as u64);
         rt::h_u((*p).team as u64);
         rt::h_i((*p).x61C as i64);
         rt::h_u((*p).x61D as u64);
@@ -80615,10 +78995,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_f32((*p).coll_data.xE4_ecb.left.x);
         rt::h_f32((*p).coll_data.xE4_ecb.left.y);
         rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).coll_data.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).coll_data.ecb_source.x124);
         rt::h_f32((*p).coll_data.ecb_source.x128);
         rt::h_f32((*p).coll_data.ecb_source.x12C);
@@ -80732,7 +79109,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
                 rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x914[i0].x134 as *const _ as *const u8, 8);
         }
         for i0 in 0..2 {
             rt::h_u((*p).xDF4[i0].state as u64);
@@ -80800,7 +79177,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
                 rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
                 rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).xDF4[i0].x134 as *const _ as *const u8, 8);
         }
         rt::h_u((*p).x1064_thrownHitbox.state as u64);
         rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
@@ -80867,7 +79244,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
             rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
             rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x1064_thrownHitbox.x134 as *const _ as *const u8, 8);
         rt::h_u((*p).x119C_teamUnk as u64);
         rt::h_u((*p).grabber_unk1 as u64);
         rt::h_u((*p).hurt_capsules_len as u64);
@@ -80956,7 +79333,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_f32((*p).dmg.x1880.z);
         rt::h_i((*p).dmg.x188c as i64);
         rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
+        rt::h_p((*p).dmg.x1894 as *const u8);
         rt::h_f32((*p).dmg.x1898);
         rt::h_f32((*p).dmg.x189C_unk_num_frames);
         rt::h_f32((*p).dmg.x18a0);
@@ -80972,17 +79349,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_i((*p).dmg.x18C8 as i64);
         rt::h_i((*p).dmg.x18CC as i64);
         rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
+        rt::h_bytes(&(*p).dmg.x18d4 as *const _ as *const u8, 4);
         rt::h_i((*p).dmg.x18d8.x0 as i64);
         rt::h_i((*p).dmg.x18d8.x4 as i64);
         rt::h_f32((*p).dmg.x18d8.kb_applied1);
@@ -81135,7 +79502,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_p((*p).cpu.x44 as *const u8);
         rt::h_p((*p).cpu.x48 as *const u8);
         rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
+        rt::h_p((*p).cpu.x50 as *const u8);
         rt::h_f32((*p).cpu.x54.x);
         rt::h_f32((*p).cpu.x54.y);
         rt::h_f32((*p).cpu.x5C);
@@ -81260,11 +79627,11 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_u((*p).x206C_attack_instance as u64);
         rt::h_i((*p).x206E as i64);
         rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.x as i64);
+        rt::h_i((*p).x2074.x2074_vec.y as i64);
+        rt::h_f32((*p).x2074.x207C.x);
         rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
+        rt::h_bytes(&(*p).x2074.x10 as *const _ as *const u8, 4);
         rt::h_u((*p).x2074.x2088 as u64);
         rt::h_i((*p).x208C as i64);
         rt::h_u((*p).x2090 as u64);
@@ -81370,21 +79737,14 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
         rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).x21FC_flag as *const _ as *const u8, 1);
         for i0 in 0..3 {
             rt::h_u((*p).filler_x21FC[i0] as u64);
         }
         for i0 in 0..4 {
             rt::h_u((*p).cmd_vars[i0] as u64);
         }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
+        rt::h_bytes(&(*p).x2210 as *const _ as *const u8, 4);
         rt::h_f32((*p).cmd_timer);
         rt::h_u((*p).allow_interrupt() as u64);
         rt::h_u((*p).x2218_b1() as u64);
@@ -81410,14 +79770,14 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_u((*p).x221A_b5() as u64);
         rt::h_u((*p).x221A_b6() as u64);
         rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
+        rt::h_u((*p).x221B.x221B_b0() as u64);
+        rt::h_u((*p).x221B.x221B_b1() as u64);
+        rt::h_u((*p).x221B.x221B_b2() as u64);
+        rt::h_u((*p).x221B.x221B_b3() as u64);
+        rt::h_u((*p).x221B.x221B_b4() as u64);
+        rt::h_u((*p).x221B.x221B_b5() as u64);
+        rt::h_u((*p).x221B.x221B_b6() as u64);
+        rt::h_u((*p).x221B.x221B_b7() as u64);
         rt::h_u((*p).x221C_b0() as u64);
         rt::h_u((*p).x221C_b1() as u64);
         rt::h_u((*p).x221C_b2() as u64);
@@ -81427,8 +79787,8 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_u((*p).x221C_b6() as u64);
         rt::h_u((*p).x221C_u16_y() as u64);
         rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
+        rt::h_u((*p).has_prev_input() as u64);
+        rt::h_u((*p).input_disabled() as u64);
         rt::h_u((*p).x221D_b5() as u64);
         rt::h_u((*p).x221D_b6() as u64);
         rt::h_u((*p).x221D_b7() as u64);
@@ -81443,7 +79803,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_u((*p).x221F_b0() as u64);
         rt::h_u((*p).x221F_b1() as u64);
         rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
+        rt::h_u((*p).is_sleeping() as u64);
         rt::h_u((*p).is_sub_fighter() as u64);
         rt::h_u((*p).x221F_b5() as u64);
         rt::h_u((*p).x221F_b6() as u64);
@@ -81480,7 +79840,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         rt::h_u((*p).is_metal() as u64);
         rt::h_u((*p).x2224_b0() as u64);
         rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
+        rt::h_u((*p).stamina_dead() as u64);
         rt::h_u((*p).x2224_b3() as u64);
         rt::h_u((*p).x2224_b4() as u64);
         rt::h_u((*p).x2224_b5() as u64);
@@ -81548,7 +79908,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).gobj = 0usize as _;
         (*p0).kind = rt::draw_int(&mut rt::MST) as _;
         (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).player_idx = rt::draw_int(&mut rt::MST) as _;
         (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
         (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
@@ -81743,6 +80103,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x3E4_fighterCmdScript.anon_8.u = 0usize as _;
         (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
@@ -81887,21 +80248,12 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).x588 = 0usize as _;
         (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x594), 4); for i1 in 0..4 { *(&mut (*p0).x594 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x598 = 0usize as _;
         (*p0).x59C = 0usize as _;
         (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
+        (*p0).x5A4 = (rt::draw_int(&mut rt::MST) as u32) as _;
+        (*p0).x5A8 = (rt::draw_int(&mut rt::MST) as u32) as _;
         (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..5 {
             (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
@@ -81928,9 +80280,9 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
             (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
             (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pad_port = rt::draw_int(&mut rt::MST) as _;
+        (*p0).costume_id = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sub_color = rt::draw_int(&mut rt::MST) as _;
         (*p0).team = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
@@ -82082,10 +80434,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).coll_data.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).coll_data.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -82199,7 +80548,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
                 (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x914[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).x914[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         for i1 in 0..2 {
             (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
@@ -82267,7 +80616,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
                 (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
                 (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).xDF4[i1].x134), 8); for i2 in 0..8 { *(&mut (*p0).xDF4[i1].x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
         }
         (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
         (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
@@ -82334,7 +80683,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
             (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
             (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x1064_thrownHitbox.x134), 8); for i1 in 0..8 { *(&mut (*p0).x1064_thrownHitbox.x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
         (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
@@ -82423,7 +80772,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).dmg.x1894 = 0usize as _;
         (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
         (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
@@ -82439,17 +80788,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).dmg.x18d4), 4); for i1 in 0..4 { *(&mut (*p0).dmg.x18d4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
@@ -82602,7 +80941,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).cpu.x44 = 0usize as _;
         (*p0).cpu.x48 = 0usize as _;
         (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cpu.x50 = 0usize as _;
         (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
         (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
@@ -82727,11 +81066,11 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x2074_vec.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x2074.x207C.x = rt::draw_f32(&mut rt::MST);
         (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2074.x10), 4); for i1 in 0..4 { *(&mut (*p0).x2074.x10 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
         (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
         (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
@@ -82837,21 +81176,14 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
         { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb7) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).x21FC_flag), 1); for i1 in 0..1 { *(&mut (*p0).x21FC_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         for i1 in 0..3 {
             (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
         }
         for i1 in 0..4 {
             (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x2210), 4); for i1 in 0..4 { *(&mut (*p0).x2210 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
         (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -82877,14 +81209,14 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x221B.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -82894,8 +81226,8 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
         (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_has_prev_input((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_input_disabled((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -82910,7 +81242,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_is_sleeping((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -82947,7 +81279,7 @@ unsafe fn h_ftParts_GetBoneIndex(a: &[u64]) -> u64 {
         (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).set_stamina_dead((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -83605,13 +81937,8 @@ unsafe fn h_grZakoGenerator_StageSlotRelease(a: &[u64]) -> u64 {
     rt::t_begin(312);
     0
 }
-unsafe fn h_psClearPointJObj(a: &[u64]) -> u64 {
-    rt::t_begin(313);
-    rt::t_p(a[0] as usize as *const u8);
-    0
-}
 unsafe fn h_hsd_8039D3AC(a: &[u64]) -> u64 {
-    rt::t_begin(314);
+    rt::t_begin(313);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_Generator; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).next as *const u8);
@@ -83747,7 +82074,7 @@ unsafe fn h_hsd_8039D3AC(a: &[u64]) -> u64 {
     core::ptr::addr_of_mut!(MO_hsd_8039D3AC) as usize as u64
 }
 unsafe fn h_it_8026B40C(a: &[u64]) -> u64 {
-    rt::t_begin(315);
+    rt::t_begin(314);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Article; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0_common_attr as *const u8);
@@ -83770,12 +82097,12 @@ unsafe fn h_it_8026B40C(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_8026D324(a: &[u64]) -> u64 {
-    rt::t_begin(316);
+    rt::t_begin(315);
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
-    rt::t_begin(317);
+    rt::t_begin(316);
     rt::t_i(a[0] as i64);
     rt::t_p(a[1] as usize as *const u8);
     rt::t_p(a[2] as usize as *const u8);
@@ -83845,7 +82172,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
             rt::h_p((*p).victims_2[i0].victim as *const u8);
             rt::h_u((*p).victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x134 as *const _ as *const u8, 8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     rt::t_p(a[3] as usize as *const u8);
     if a[3] != 0 { let p = a[3] as usize as *const Q::Item; let sv = rt::H; rt::H = rt::FNV0;
@@ -83854,7 +82181,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         rt::h_i((*p).x8 as i64);
         rt::h_i((*p).spawn_kind as i64);
         rt::h_i((*p).kind as i64);
-        rt::h_i((*p).hold_kind as i64);
+        rt::h_u((*p).hold_kind as u64);
         rt::h_i((*p).x18 as i64);
         rt::h_i((*p).x1C as i64);
         rt::h_u((*p).x20_team_id as u64);
@@ -83991,10 +82318,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         rt::h_f32((*p).x378_itemColl.xE4_ecb.left.x);
         rt::h_f32((*p).x378_itemColl.xE4_ecb.left.y);
         rt::h_u((*p).x378_itemColl.ecb_source.kind as u64);
-        rt::h_p((*p).x378_itemColl.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).x378_itemColl.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).x378_itemColl.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).x378_itemColl.ecb_source.x124);
         rt::h_f32((*p).x378_itemColl.ecb_source.x128);
         rt::h_f32((*p).x378_itemColl.ecb_source.x12C);
@@ -84034,6 +82358,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x524_cmd.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x524_cmd.anon_8.u as *const u8);
         rt::h_u((*p).x524_cmd.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x524_cmd.event_return[i0] as *const u8);
@@ -84157,7 +82482,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
                 rt::h_p((*p).x5D4_hitboxes[i0].hit.victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x5D4_hitboxes[i0].hit.victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x5D4_hitboxes[i0].hit.anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x5D4_hitboxes[i0].hit.x134 as *const _ as *const u8, 8);
             rt::h_u((*p).x5D4_hitboxes[i0].x138() as u64);
             rt::h_u((*p).x5D4_hitboxes[i0].x138_b1_7() as u64);
             for i1 in 0..3 {
@@ -84266,9 +82591,9 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         rt::h_f32((*p).xC6C);
         rt::h_f32((*p).xC70);
         rt::h_i((*p).xC74 as i64);
-        rt::h_f32((*p).xC78.x);
-        rt::h_f32((*p).xC78.y);
-        rt::h_i((*p).xC80.x as i64);
+        rt::h_i((*p).xC78.x as i64);
+        rt::h_i((*p).xC78.y as i64);
+        rt::h_f32((*p).xC80.x);
         rt::h_i((*p).xC80.y as i64);
         rt::h_i((*p).xC88 as i64);
         rt::h_u((*p).xC8C as u64);
@@ -84341,52 +82666,18 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         rt::h_u((*p).xD8C_attack_instance as u64);
         rt::h_i((*p).xD8E as i64);
         rt::h_bytes(&(*p).xD90 as *const _ as *const u8, 4);
-        rt::h_f32((*p).xD94.x);
-        rt::h_f32((*p).xD94.y);
-        rt::h_i((*p).xD9C.x as i64);
+        rt::h_i((*p).xD94.x as i64);
+        rt::h_i((*p).xD94.y as i64);
+        rt::h_f32((*p).xD9C.x);
         rt::h_i((*p).xD9C.y as i64);
         rt::h_u((*p).xDA4_word as u64);
         rt::h_u((*p).xDA8_short as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b0() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b1() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b2() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b3() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b4() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b5() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b6() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).xDAA as *const _ as *const u8, 1);
         rt::h_u((*p).xDAC_itcmd_var0 as u64);
         rt::h_u((*p).xDB0_itcmd_var1 as u64);
         rt::h_u((*p).xDB4_itcmd_var2 as u64);
         rt::h_u((*p).xDB8_itcmd_var3 as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x0() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x2() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x3() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x4() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x5() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x6() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x7() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x8() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x9() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xA() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xB() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xC() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xD() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xE() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xF() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x13() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x14() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x15() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x16() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x17() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x19() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1A() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1B() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1C() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1D() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1E() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1F() as u64);
+        rt::h_bytes(&(*p).xDBC as *const _ as *const u8, 4);
         rt::h_u((*p).xDC0 as u64);
         rt::h_u((*p).xDC4 as u64);
         rt::h_u((*p).xDC8_word.flags.x0() as u64);
@@ -84422,61 +82713,19 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         rt::h_u((*p).xDCC_flag.b2() as u64);
         rt::h_u((*p).xDCC_flag.b3() as u64);
         rt::h_u((*p).xDCC_flag.b4567() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b01() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b7() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b01() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b2() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b3() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b4() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b5() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b6() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b7() as u64);
+        rt::h_bytes(&(*p).xDCE_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDCF_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD0_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD1_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD2_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD3_flag as *const _ as *const u8, 1);
         rt::h_bytes(&(*p).xDD4_itemVar as *const _ as *const u8, 504);
         rt::h_p((*p).mex_original_owner as *const u8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
@@ -84574,7 +82823,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
             (*p2).victims_2[i1].victim = 0usize as _;
             (*p2).victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p2).anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p2).x134), 8); for i1 in 0..8 { *(&mut (*p2).x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
     }
     let p3 = a[3] as usize as *mut Q::Item;
     if !p3.is_null() {
@@ -84720,10 +82969,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         (*p3).x378_itemColl.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p3).x378_itemColl.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p3).x378_itemColl.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p3).x378_itemColl.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p3).x378_itemColl.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p3).x378_itemColl.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p3).x378_itemColl.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p3).x378_itemColl.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p3).x378_itemColl.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p3).x378_itemColl.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -84763,6 +83009,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p3).x524_cmd.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p3).x524_cmd.anon_8.u = 0usize as _;
         (*p3).x524_cmd.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p3).x524_cmd.event_return[i1] = 0usize as _;
@@ -84886,7 +83133,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
                 (*p3).x5D4_hitboxes[i1].hit.victims_2[i2].victim = 0usize as _;
                 (*p3).x5D4_hitboxes[i1].hit.victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p3).x5D4_hitboxes[i1].hit.anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p3).x5D4_hitboxes[i1].hit.x134), 8); for i2 in 0..8 { *(&mut (*p3).x5D4_hitboxes[i1].hit.x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
             (*p3).x5D4_hitboxes[i1].set_x138((rt::draw_int(&mut rt::MST) & 0x1) as _);
             (*p3).x5D4_hitboxes[i1].set_x138_b1_7((rt::draw_int(&mut rt::MST) & 0x7F) as _);
             for i2 in 0..3 {
@@ -84995,9 +83242,9 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         (*p3).xC6C = rt::draw_f32(&mut rt::MST);
         (*p3).xC70 = rt::draw_f32(&mut rt::MST);
         (*p3).xC74 = rt::draw_int(&mut rt::MST) as _;
-        (*p3).xC78.x = rt::draw_f32(&mut rt::MST);
-        (*p3).xC78.y = rt::draw_f32(&mut rt::MST);
-        (*p3).xC80.x = rt::draw_int(&mut rt::MST) as _;
+        (*p3).xC78.x = rt::draw_int(&mut rt::MST) as _;
+        (*p3).xC78.y = rt::draw_int(&mut rt::MST) as _;
+        (*p3).xC80.x = rt::draw_f32(&mut rt::MST);
         (*p3).xC80.y = rt::draw_int(&mut rt::MST) as _;
         (*p3).xC88 = rt::draw_int(&mut rt::MST) as _;
         (*p3).xC8C = rt::draw_int(&mut rt::MST) as _;
@@ -85070,52 +83317,18 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         (*p3).xD8C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p3).xD8E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p3).xD90), 4); for i1 in 0..4 { *(&mut (*p3).xD90 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p3).xD94.x = rt::draw_f32(&mut rt::MST);
-        (*p3).xD94.y = rt::draw_f32(&mut rt::MST);
-        (*p3).xD9C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p3).xD94.x = rt::draw_int(&mut rt::MST) as _;
+        (*p3).xD94.y = rt::draw_int(&mut rt::MST) as _;
+        (*p3).xD9C.x = rt::draw_f32(&mut rt::MST);
         (*p3).xD9C.y = rt::draw_int(&mut rt::MST) as _;
         (*p3).xDA4_word = rt::draw_int(&mut rt::MST) as _;
         (*p3).xDA8_short = rt::draw_int(&mut rt::MST) as _;
-        (*p3).anon_daa.xDAA_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_daa.xDAA_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_daa.xDAA_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_daa.xDAA_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_daa.xDAA_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_daa.xDAA_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_daa.xDAA_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_daa.xDAA_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p3).xDAA), 1); for i1 in 0..1 { *(&mut (*p3).xDAA as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p3).xDAC_itcmd_var0 = rt::draw_int(&mut rt::MST) as _;
         (*p3).xDB0_itcmd_var1 = rt::draw_int(&mut rt::MST) as _;
         (*p3).xDB4_itcmd_var2 = rt::draw_int(&mut rt::MST) as _;
         (*p3).xDB8_itcmd_var3 = rt::draw_int(&mut rt::MST) as _;
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x9((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_xA((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_xB((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_xC((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_xD((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_xE((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_xF((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x13((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x14((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x15((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x16((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x17((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x19((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x1A((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x1B((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x1C((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x1D((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x1E((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).anon_dbc.xDBC_itcmd_var4.flags.set_x1F((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p3).xDBC), 4); for i1 in 0..4 { *(&mut (*p3).xDBC as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p3).xDC0 = rt::draw_int(&mut rt::MST) as _;
         (*p3).xDC4 = rt::draw_int(&mut rt::MST) as _;
         (*p3).xDC8_word.flags.set_x0((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -85151,61 +83364,19 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
         (*p3).xDCC_flag.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p3).xDCC_flag.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p3).xDCC_flag.set_b4567((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p3).xDCD_flag.anon_0.set_b01((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p3).xDCD_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCD_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCD_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCD_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCD_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCD_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCE_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCE_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCE_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCE_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCE_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCE_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCE_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCE_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCF_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCF_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCF_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCF_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCF_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCF_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCF_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDCF_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD0_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD0_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD0_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD0_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD0_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD0_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD0_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD0_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD1_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD1_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD1_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD1_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD1_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD1_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD1_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD1_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD2_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD2_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD2_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD2_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD2_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD2_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD2_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD2_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD3_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD3_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD3_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD3_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD3_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD3_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD3_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p3).xDD3_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p3).xDCD_flag.x0.set_b01((rt::draw_int(&mut rt::MST) & 0x3) as _);
+        (*p3).xDCD_flag.x0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p3).xDCD_flag.x0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p3).xDCD_flag.x0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p3).xDCD_flag.x0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p3).xDCD_flag.x0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p3).xDCD_flag.x0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p3).xDCE_flag), 1); for i1 in 0..1 { *(&mut (*p3).xDCE_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p3).xDCF_flag), 1); for i1 in 0..1 { *(&mut (*p3).xDCF_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p3).xDD0_flag), 1); for i1 in 0..1 { *(&mut (*p3).xDD0_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p3).xDD1_flag), 1); for i1 in 0..1 { *(&mut (*p3).xDD1_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p3).xDD2_flag), 1); for i1 in 0..1 { *(&mut (*p3).xDD2_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p3).xDD3_flag), 1); for i1 in 0..1 { *(&mut (*p3).xDD3_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         { assert_eq!(core::mem::size_of_val(&(*p3).xDD4_itemVar), 504); for i1 in 0..504 { *(&mut (*p3).xDD4_itemVar as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p3).mex_original_owner = 0usize as _;
     }
@@ -85239,7 +83410,7 @@ unsafe fn h_it_8026F9AC(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
-    rt::t_begin(318);
+    rt::t_begin(317);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Item; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0 as *const u8);
@@ -85247,7 +83418,7 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         rt::h_i((*p).x8 as i64);
         rt::h_i((*p).spawn_kind as i64);
         rt::h_i((*p).kind as i64);
-        rt::h_i((*p).hold_kind as i64);
+        rt::h_u((*p).hold_kind as u64);
         rt::h_i((*p).x18 as i64);
         rt::h_i((*p).x1C as i64);
         rt::h_u((*p).x20_team_id as u64);
@@ -85384,10 +83555,7 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         rt::h_f32((*p).x378_itemColl.xE4_ecb.left.x);
         rt::h_f32((*p).x378_itemColl.xE4_ecb.left.y);
         rt::h_u((*p).x378_itemColl.ecb_source.kind as u64);
-        rt::h_p((*p).x378_itemColl.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).x378_itemColl.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).x378_itemColl.ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).x378_itemColl.ecb_source.x124);
         rt::h_f32((*p).x378_itemColl.ecb_source.x128);
         rt::h_f32((*p).x378_itemColl.ecb_source.x12C);
@@ -85427,6 +83595,7 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         for i0 in 0..1 {
             rt::h_p((*p).x524_cmd.anon_8.ptr[i0] as *const u8);
         }
+        rt::h_p((*p).x524_cmd.anon_8.u as *const u8);
         rt::h_u((*p).x524_cmd.loop_count as u64);
         for i0 in 0..3 {
             rt::h_p((*p).x524_cmd.event_return[i0] as *const u8);
@@ -85550,7 +83719,7 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
                 rt::h_p((*p).x5D4_hitboxes[i0].hit.victims_2[i1].victim as *const u8);
                 rt::h_u((*p).x5D4_hitboxes[i0].hit.victims_2[i1].x4 as u64);
             }
-            rt::h_p((*p).x5D4_hitboxes[i0].hit.anon_134.owner as *const u8);
+            rt::h_bytes(&(*p).x5D4_hitboxes[i0].hit.x134 as *const _ as *const u8, 8);
             rt::h_u((*p).x5D4_hitboxes[i0].x138() as u64);
             rt::h_u((*p).x5D4_hitboxes[i0].x138_b1_7() as u64);
             for i1 in 0..3 {
@@ -85659,9 +83828,9 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         rt::h_f32((*p).xC6C);
         rt::h_f32((*p).xC70);
         rt::h_i((*p).xC74 as i64);
-        rt::h_f32((*p).xC78.x);
-        rt::h_f32((*p).xC78.y);
-        rt::h_i((*p).xC80.x as i64);
+        rt::h_i((*p).xC78.x as i64);
+        rt::h_i((*p).xC78.y as i64);
+        rt::h_f32((*p).xC80.x);
         rt::h_i((*p).xC80.y as i64);
         rt::h_i((*p).xC88 as i64);
         rt::h_u((*p).xC8C as u64);
@@ -85734,52 +83903,18 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         rt::h_u((*p).xD8C_attack_instance as u64);
         rt::h_i((*p).xD8E as i64);
         rt::h_bytes(&(*p).xD90 as *const _ as *const u8, 4);
-        rt::h_f32((*p).xD94.x);
-        rt::h_f32((*p).xD94.y);
-        rt::h_i((*p).xD9C.x as i64);
+        rt::h_i((*p).xD94.x as i64);
+        rt::h_i((*p).xD94.y as i64);
+        rt::h_f32((*p).xD9C.x);
         rt::h_i((*p).xD9C.y as i64);
         rt::h_u((*p).xDA4_word as u64);
         rt::h_u((*p).xDA8_short as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b0() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b1() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b2() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b3() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b4() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b5() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b6() as u64);
-        rt::h_u((*p).anon_daa.xDAA_flag.anon_0.b7() as u64);
+        rt::h_bytes(&(*p).xDAA as *const _ as *const u8, 1);
         rt::h_u((*p).xDAC_itcmd_var0 as u64);
         rt::h_u((*p).xDB0_itcmd_var1 as u64);
         rt::h_u((*p).xDB4_itcmd_var2 as u64);
         rt::h_u((*p).xDB8_itcmd_var3 as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x0() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x2() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x3() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x4() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x5() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x6() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x7() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x8() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x9() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xA() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xB() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xC() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xD() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xE() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.xF() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x13() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x14() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x15() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x16() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x17() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x19() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1A() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1B() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1C() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1D() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1E() as u64);
-        rt::h_u((*p).anon_dbc.xDBC_itcmd_var4.flags.x1F() as u64);
+        rt::h_bytes(&(*p).xDBC as *const _ as *const u8, 4);
         rt::h_u((*p).xDC0 as u64);
         rt::h_u((*p).xDC4 as u64);
         rt::h_u((*p).xDC8_word.flags.x0() as u64);
@@ -85815,61 +83950,19 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         rt::h_u((*p).xDCC_flag.b2() as u64);
         rt::h_u((*p).xDCC_flag.b3() as u64);
         rt::h_u((*p).xDCC_flag.b4567() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b01() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDCD_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDCE_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDCF_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD0_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD1_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD2_flag.anon_0.b7() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b0() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b1() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b2() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b3() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b4() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b5() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b6() as u64);
-        rt::h_u((*p).xDD3_flag.anon_0.b7() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b01() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b2() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b3() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b4() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b5() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b6() as u64);
+        rt::h_u((*p).xDCD_flag.x0.b7() as u64);
+        rt::h_bytes(&(*p).xDCE_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDCF_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD0_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD1_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD2_flag as *const _ as *const u8, 1);
+        rt::h_bytes(&(*p).xDD3_flag as *const _ as *const u8, 1);
         rt::h_bytes(&(*p).xDD4_itemVar as *const _ as *const u8, 504);
         rt::h_p((*p).mex_original_owner as *const u8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
@@ -85940,7 +84033,7 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
             rt::h_p((*p).victims_2[i0].victim as *const u8);
             rt::h_u((*p).victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x134 as *const _ as *const u8, 8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     let p0 = a[0] as usize as *mut Q::Item;
     if !p0.is_null() {
@@ -86086,10 +84179,7 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         (*p0).x378_itemColl.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).x378_itemColl.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).x378_itemColl.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x378_itemColl.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).x378_itemColl.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).x378_itemColl.ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).x378_itemColl.ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).x378_itemColl.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).x378_itemColl.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).x378_itemColl.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -86129,6 +84219,7 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         for i1 in 0..1 {
             (*p0).x524_cmd.anon_8.ptr[i1] = 0usize as _;
         }
+        (*p0).x524_cmd.anon_8.u = 0usize as _;
         (*p0).x524_cmd.loop_count = rt::draw_int(&mut rt::MST) as _;
         for i1 in 0..3 {
             (*p0).x524_cmd.event_return[i1] = 0usize as _;
@@ -86252,7 +84343,7 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
                 (*p0).x5D4_hitboxes[i1].hit.victims_2[i2].victim = 0usize as _;
                 (*p0).x5D4_hitboxes[i1].hit.victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
             }
-            (*p0).x5D4_hitboxes[i1].hit.anon_134.owner = 0usize as _;
+            { assert_eq!(core::mem::size_of_val(&(*p0).x5D4_hitboxes[i1].hit.x134), 8); for i2 in 0..8 { *(&mut (*p0).x5D4_hitboxes[i1].hit.x134 as *mut _ as *mut u8).add(i2) = rt::draw_int(&mut rt::MST) as u8; } }
             (*p0).x5D4_hitboxes[i1].set_x138((rt::draw_int(&mut rt::MST) & 0x1) as _);
             (*p0).x5D4_hitboxes[i1].set_x138_b1_7((rt::draw_int(&mut rt::MST) & 0x7F) as _);
             for i2 in 0..3 {
@@ -86361,9 +84452,9 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         (*p0).xC6C = rt::draw_f32(&mut rt::MST);
         (*p0).xC70 = rt::draw_f32(&mut rt::MST);
         (*p0).xC74 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).xC78.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xC78.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xC80.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xC78.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xC78.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xC80.x = rt::draw_f32(&mut rt::MST);
         (*p0).xC80.y = rt::draw_int(&mut rt::MST) as _;
         (*p0).xC88 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xC8C = rt::draw_int(&mut rt::MST) as _;
@@ -86436,52 +84527,18 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         (*p0).xD8C_attack_instance = rt::draw_int(&mut rt::MST) as _;
         (*p0).xD8E = rt::draw_int(&mut rt::MST) as _;
         { assert_eq!(core::mem::size_of_val(&(*p0).xD90), 4); for i1 in 0..4 { *(&mut (*p0).xD90 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).xD94.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xD94.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xD9C.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xD94.x = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xD94.y = rt::draw_int(&mut rt::MST) as _;
+        (*p0).xD9C.x = rt::draw_f32(&mut rt::MST);
         (*p0).xD9C.y = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDA4_word = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDA8_short = rt::draw_int(&mut rt::MST) as _;
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_daa.xDAA_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDAA), 1); for i1 in 0..1 { *(&mut (*p0).xDAA as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).xDAC_itcmd_var0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDB0_itcmd_var1 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDB4_itcmd_var2 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDB8_itcmd_var3 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x9((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xA((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xB((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xC((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xD((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xE((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_xF((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x13((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x14((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x15((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x16((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x17((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x19((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1A((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1B((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1C((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1D((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1E((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_dbc.xDBC_itcmd_var4.flags.set_x1F((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDBC), 4); for i1 in 0..4 { *(&mut (*p0).xDBC as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).xDC0 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDC4 = rt::draw_int(&mut rt::MST) as _;
         (*p0).xDC8_word.flags.set_x0((rt::draw_int(&mut rt::MST) & 0x1) as _);
@@ -86517,61 +84574,19 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
         (*p0).xDCC_flag.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).xDCC_flag.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
         (*p0).xDCC_flag.set_b4567((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).xDCD_flag.anon_0.set_b01((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).xDCD_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCD_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCE_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDCF_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD0_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD1_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD2_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).xDD3_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b01((rt::draw_int(&mut rt::MST) & 0x3) as _);
+        (*p0).xDCD_flag.x0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).xDCD_flag.x0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDCE_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDCE_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDCF_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDCF_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDD0_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDD0_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDD1_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDD1_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDD2_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDD2_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        { assert_eq!(core::mem::size_of_val(&(*p0).xDD3_flag), 1); for i1 in 0..1 { *(&mut (*p0).xDD3_flag as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         { assert_eq!(core::mem::size_of_val(&(*p0).xDD4_itemVar), 504); for i1 in 0..504 { *(&mut (*p0).xDD4_itemVar as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).mex_original_owner = 0usize as _;
     }
@@ -86642,12 +84657,12 @@ unsafe fn h_it_80270CD8(a: &[u64]) -> u64 {
             (*p1).victims_2[i1].victim = 0usize as _;
             (*p1).victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p1).anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p1).x134), 8); for i1 in 0..8 { *(&mut (*p1).x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
     }
     rt::draw_f32(&mut rt::MST).to_bits() as u64
 }
 unsafe fn h_it_80270E30(a: &[u64]) -> u64 {
-    rt::t_begin(319);
+    rt::t_begin(318);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -86693,7 +84708,7 @@ unsafe fn h_it_80270E30(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_8027B5B0(a: &[u64]) -> u64 {
-    rt::t_begin(320);
+    rt::t_begin(319);
     rt::t_i(a[0] as i64);
     rt::t_p(a[1] as usize as *const u8);
     if a[1] != 0 { let p = a[1] as usize as *const Q::Vec; let sv = rt::H; rt::H = rt::FNV0;
@@ -86785,7 +84800,7 @@ unsafe fn h_it_8027B5B0(a: &[u64]) -> u64 {
     core::ptr::addr_of_mut!(MO_it_8027B5B0) as usize as u64
 }
 unsafe fn h_it_8027C56C(a: &[u64]) -> u64 {
-    rt::t_begin(321);
+    rt::t_begin(320);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -86832,7 +84847,7 @@ unsafe fn h_it_8027C56C(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_802DC4BC(a: &[u64]) -> u64 {
-    rt::t_begin(322);
+    rt::t_begin(321);
     rt::t_i(a[0] as i64);
     rt::t_p(a[1] as usize as *const u8);
     if a[1] != 0 { let p = a[1] as usize as *const Q::Vec; let sv = rt::H; rt::H = rt::FNV0;
@@ -86850,7 +84865,7 @@ unsafe fn h_it_802DC4BC(a: &[u64]) -> u64 {
     core::ptr::addr_of_mut!(MO_it_802DC4BC) as usize as u64
 }
 unsafe fn h_it_802DD7F0(a: &[u64]) -> u64 {
-    rt::t_begin(323);
+    rt::t_begin(322);
     rt::t_i(a[0] as i64);
     rt::t_p(a[1] as usize as *const u8);
     if a[1] != 0 { let p = a[1] as usize as *const Q::Vec; let sv = rt::H; rt::H = rt::FNV0;
@@ -86880,7 +84895,7 @@ unsafe fn h_it_802DD7F0(a: &[u64]) -> u64 {
     core::ptr::addr_of_mut!(MO_it_802DD7F0) as usize as u64
 }
 unsafe fn h_it_802EA9FC(a: &[u64]) -> u64 {
-    rt::t_begin(324);
+    rt::t_begin(323);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Vec; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_f32((*p).x);
@@ -86897,7 +84912,7 @@ unsafe fn h_it_802EA9FC(a: &[u64]) -> u64 {
     core::ptr::addr_of_mut!(MO_it_802EA9FC) as usize as u64
 }
 unsafe fn h_lbArchive_800171CC(a: &[u64]) -> u64 {
-    rt::t_begin(325);
+    rt::t_begin(324);
     rt::t_p(a[0] as usize as *const u8);
     rt::t_p(a[1] as usize as *const u8);
     rt::t_s(a[1] as usize as *const u8);
@@ -86905,29 +84920,29 @@ unsafe fn h_lbArchive_800171CC(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbAudioAx_800237A8(a: &[u64]) -> u64 {
-    rt::t_begin(326);
+    rt::t_begin(325);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     rt::t_i(a[2] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbAudioAx_80023F28(a: &[u64]) -> u64 {
-    rt::t_begin(327);
+    rt::t_begin(326);
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbAudioAx_80024B94(a: &[u64]) -> u64 {
-    rt::t_begin(328);
+    rt::t_begin(327);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbAudioAx_StageSlotMusic(a: &[u64]) -> u64 {
-    rt::t_begin(329);
+    rt::t_begin(328);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbColl_80008688(a: &[u64]) -> u64 {
-    rt::t_begin(330);
+    rt::t_begin(329);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HitCapsule; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).state as u64);
@@ -86995,7 +85010,7 @@ unsafe fn h_lbColl_80008688(a: &[u64]) -> u64 {
             rt::h_p((*p).victims_2[i0].victim as *const u8);
             rt::h_u((*p).victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x134 as *const _ as *const u8, 8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     rt::t_i(a[1] as i64);
     rt::t_p(a[2] as usize as *const u8);
@@ -87066,12 +85081,12 @@ unsafe fn h_lbColl_80008688(a: &[u64]) -> u64 {
             (*p0).victims_2[i1].victim = 0usize as _;
             (*p0).victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x134), 8); for i1 in 0..8 { *(&mut (*p0).x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
     }
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbColl_80009F54(a: &[u64]) -> u64 {
-    rt::t_begin(331);
+    rt::t_begin(330);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HitCapsule; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).state as u64);
@@ -87139,7 +85154,7 @@ unsafe fn h_lbColl_80009F54(a: &[u64]) -> u64 {
             rt::h_p((*p).victims_2[i0].victim as *const u8);
             rt::h_u((*p).victims_2[i0].x4 as u64);
         }
-        rt::h_p((*p).anon_134.owner as *const u8);
+        rt::h_bytes(&(*p).x134 as *const _ as *const u8, 8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
     rt::t_i(a[1] as i64);
     rt::t_f32(f32::from_bits(a[2] as u32));
@@ -87210,12 +85225,12 @@ unsafe fn h_lbColl_80009F54(a: &[u64]) -> u64 {
             (*p0).victims_2[i1].victim = 0usize as _;
             (*p0).victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
         }
-        (*p0).anon_134.owner = 0usize as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).x134), 8); for i1 in 0..8 { *(&mut (*p0).x134 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
     }
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbColl_8000A244(a: &[u64]) -> u64 {
-    rt::t_begin(332);
+    rt::t_begin(331);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HurtCapsule; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).state as u64);
@@ -87276,7 +85291,7 @@ unsafe fn h_lbColl_8000A244(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbColl_8000A584(a: &[u64]) -> u64 {
-    rt::t_begin(333);
+    rt::t_begin(332);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HurtCapsule; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).state as u64);
@@ -87338,12 +85353,12 @@ unsafe fn h_lbColl_8000A584(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbFile_8001634C(a: &[u64]) -> u64 {
-    rt::t_begin(334);
+    rt::t_begin(333);
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbFile_8001668C(a: &[u64]) -> u64 {
-    rt::t_begin(335);
+    rt::t_begin(334);
     rt::t_p(a[0] as usize as *const u8);
     rt::t_s(a[0] as usize as *const u8);
     rt::t_p(a[1] as usize as *const u8);
@@ -87351,39 +85366,39 @@ unsafe fn h_lbFile_8001668C(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_lbHeap_80015BD0(a: &[u64]) -> u64 {
-    rt::t_begin(336);
+    rt::t_begin(335);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     core::ptr::addr_of_mut!(MO_lbHeap_80015BD0) as *mut u8 as usize as u64
 }
 unsafe fn h_lbHeap_80015CA8(a: &[u64]) -> u64 {
-    rt::t_begin(337);
+    rt::t_begin(336);
     rt::t_i(a[0] as i64);
     rt::t_p(a[1] as usize as *const u8);
     0
 }
 unsafe fn h_lbHeap_Capacity(a: &[u64]) -> u64 {
-    rt::t_begin(338);
+    rt::t_begin(337);
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbHeap_Free(a: &[u64]) -> u64 {
-    rt::t_begin(339);
+    rt::t_begin(338);
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_lbHeap_StageSlotDump(a: &[u64]) -> u64 {
-    rt::t_begin(340);
+    rt::t_begin(339);
     rt::t_i(a[0] as i64);
     0
 }
 unsafe fn h_lbHeap_StageSlotTryAlloc(a: &[u64]) -> u64 {
-    rt::t_begin(341);
+    rt::t_begin(340);
     rt::t_i(a[0] as i64);
     core::ptr::addr_of_mut!(MO_lbHeap_StageSlotTryAlloc) as *mut u8 as usize as u64
 }
 unsafe fn h_lb_8000B1CC(a: &[u64]) -> u64 {
-    rt::t_begin(342);
+    rt::t_begin(341);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_JObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).object.parent.class_info as *const u8);
@@ -87473,14 +85488,14 @@ unsafe fn h_lb_8000B1CC(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_memcmp(a: &[u64]) -> u64 {
-    rt::t_begin(343);
+    rt::t_begin(342);
     rt::t_p(a[0] as usize as *const u8);
     rt::t_p(a[1] as usize as *const u8);
     rt::t_i(a[2] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpCheckFloor(a: &[u64]) -> u64 {
-    rt::t_begin(344);
+    rt::t_begin(343);
     rt::t_f32(f32::from_bits(a[0] as u32));
     rt::t_f32(f32::from_bits(a[1] as u32));
     rt::t_f32(f32::from_bits(a[2] as u32));
@@ -87561,6 +85576,231 @@ unsafe fn h_mpCheckFloor(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpCollSetFacingDir(a: &[u64]) -> u64 {
+    rt::t_begin(344);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::CollData; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_p((*p).x0_gobj as *const u8);
+        rt::h_f32((*p).cur_pos.x);
+        rt::h_f32((*p).cur_pos.y);
+        rt::h_f32((*p).cur_pos.z);
+        rt::h_f32((*p).prev_pos.x);
+        rt::h_f32((*p).prev_pos.y);
+        rt::h_f32((*p).prev_pos.z);
+        rt::h_f32((*p).last_pos.x);
+        rt::h_f32((*p).last_pos.y);
+        rt::h_f32((*p).last_pos.z);
+        rt::h_f32((*p).x28_vec.x);
+        rt::h_f32((*p).x28_vec.y);
+        rt::h_f32((*p).x28_vec.z);
+        rt::h_u((*p).x34_flags.b0() as u64);
+        rt::h_u((*p).x34_flags.b1234() as u64);
+        rt::h_u((*p).x34_flags.b5() as u64);
+        rt::h_u((*p).x34_flags.b6() as u64);
+        rt::h_u((*p).x34_flags.b7() as u64);
+        rt::h_u((*p).x35_flags.b0() as u64);
+        rt::h_u((*p).x35_flags.b1234() as u64);
+        rt::h_u((*p).x35_flags.b5() as u64);
+        rt::h_u((*p).x35_flags.b6() as u64);
+        rt::h_u((*p).x35_flags.b7() as u64);
+        rt::h_i((*p).facing_dir as i64);
+        rt::h_i((*p).x38 as i64);
+        rt::h_i((*p).floor_skip as i64);
+        rt::h_i((*p).ledge_id_right as i64);
+        rt::h_i((*p).ledge_id_left as i64);
+        rt::h_i((*p).joint_id_skip as i64);
+        rt::h_i((*p).joint_id_only as i64);
+        rt::h_f32((*p).x50);
+        rt::h_f32((*p).ledge_snap_x);
+        rt::h_f32((*p).ledge_snap_y);
+        rt::h_f32((*p).ledge_snap_height);
+        rt::h_f32((*p).lstick_x);
+        rt::h_f32((*p).x64_ecb.top.x);
+        rt::h_f32((*p).x64_ecb.top.y);
+        rt::h_f32((*p).x64_ecb.bottom.x);
+        rt::h_f32((*p).x64_ecb.bottom.y);
+        rt::h_f32((*p).x64_ecb.right.x);
+        rt::h_f32((*p).x64_ecb.right.y);
+        rt::h_f32((*p).x64_ecb.left.x);
+        rt::h_f32((*p).x64_ecb.left.y);
+        rt::h_f32((*p).desired_ecb.top.x);
+        rt::h_f32((*p).desired_ecb.top.y);
+        rt::h_f32((*p).desired_ecb.bottom.x);
+        rt::h_f32((*p).desired_ecb.bottom.y);
+        rt::h_f32((*p).desired_ecb.right.x);
+        rt::h_f32((*p).desired_ecb.right.y);
+        rt::h_f32((*p).desired_ecb.left.x);
+        rt::h_f32((*p).desired_ecb.left.y);
+        rt::h_f32((*p).ecb.top.x);
+        rt::h_f32((*p).ecb.top.y);
+        rt::h_f32((*p).ecb.bottom.x);
+        rt::h_f32((*p).ecb.bottom.y);
+        rt::h_f32((*p).ecb.right.x);
+        rt::h_f32((*p).ecb.right.y);
+        rt::h_f32((*p).ecb.left.x);
+        rt::h_f32((*p).ecb.left.y);
+        rt::h_f32((*p).prev_ecb.top.x);
+        rt::h_f32((*p).prev_ecb.top.y);
+        rt::h_f32((*p).prev_ecb.bottom.x);
+        rt::h_f32((*p).prev_ecb.bottom.y);
+        rt::h_f32((*p).prev_ecb.right.x);
+        rt::h_f32((*p).prev_ecb.right.y);
+        rt::h_f32((*p).prev_ecb.left.x);
+        rt::h_f32((*p).prev_ecb.left.y);
+        rt::h_f32((*p).xE4_ecb.top.x);
+        rt::h_f32((*p).xE4_ecb.top.y);
+        rt::h_f32((*p).xE4_ecb.bottom.x);
+        rt::h_f32((*p).xE4_ecb.bottom.y);
+        rt::h_f32((*p).xE4_ecb.right.x);
+        rt::h_f32((*p).xE4_ecb.right.y);
+        rt::h_f32((*p).xE4_ecb.left.x);
+        rt::h_f32((*p).xE4_ecb.left.y);
+        rt::h_u((*p).ecb_source.kind as u64);
+        rt::h_bytes(&(*p).ecb_source.x4 as *const _ as *const u8, 56);
+        rt::h_f32((*p).ecb_source.x124);
+        rt::h_f32((*p).ecb_source.x128);
+        rt::h_f32((*p).ecb_source.x12C);
+        rt::h_u((*p).x130_flags as u64);
+        rt::h_i((*p).env_flags as i64);
+        rt::h_i((*p).prev_env_flags as i64);
+        rt::h_i((*p).x13C as i64);
+        rt::h_f32((*p).contact.x);
+        rt::h_f32((*p).contact.y);
+        rt::h_f32((*p).contact.z);
+        rt::h_i((*p).floor.index as i64);
+        rt::h_u((*p).floor.flags as u64);
+        rt::h_f32((*p).floor.normal.x);
+        rt::h_f32((*p).floor.normal.y);
+        rt::h_f32((*p).floor.normal.z);
+        rt::h_i((*p).left_facing_wall.index as i64);
+        rt::h_u((*p).left_facing_wall.flags as u64);
+        rt::h_f32((*p).left_facing_wall.normal.x);
+        rt::h_f32((*p).left_facing_wall.normal.y);
+        rt::h_f32((*p).left_facing_wall.normal.z);
+        rt::h_i((*p).right_facing_wall.index as i64);
+        rt::h_u((*p).right_facing_wall.flags as u64);
+        rt::h_f32((*p).right_facing_wall.normal.x);
+        rt::h_f32((*p).right_facing_wall.normal.y);
+        rt::h_f32((*p).right_facing_wall.normal.z);
+        rt::h_i((*p).ceiling.index as i64);
+        rt::h_u((*p).ceiling.flags as u64);
+        rt::h_f32((*p).ceiling.normal.x);
+        rt::h_f32((*p).ceiling.normal.y);
+        rt::h_f32((*p).ceiling.normal.z);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    rt::t_i(a[1] as i64);
+    let p0 = a[0] as usize as *mut Q::CollData;
+    if !p0.is_null() {
+        (*p0).x0_gobj = 0usize as _;
+        (*p0).cur_pos.x = rt::draw_f32(&mut rt::MST);
+        (*p0).cur_pos.y = rt::draw_f32(&mut rt::MST);
+        (*p0).cur_pos.z = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_pos.x = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_pos.y = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_pos.z = rt::draw_f32(&mut rt::MST);
+        (*p0).last_pos.x = rt::draw_f32(&mut rt::MST);
+        (*p0).last_pos.y = rt::draw_f32(&mut rt::MST);
+        (*p0).last_pos.z = rt::draw_f32(&mut rt::MST);
+        (*p0).x28_vec.x = rt::draw_f32(&mut rt::MST);
+        (*p0).x28_vec.y = rt::draw_f32(&mut rt::MST);
+        (*p0).x28_vec.z = rt::draw_f32(&mut rt::MST);
+        (*p0).x34_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x34_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
+        (*p0).x34_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x34_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x34_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x35_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x35_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
+        (*p0).x35_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x35_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).x35_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
+        (*p0).facing_dir = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x38 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).floor_skip = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ledge_id_right = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ledge_id_left = rt::draw_int(&mut rt::MST) as _;
+        (*p0).joint_id_skip = rt::draw_int(&mut rt::MST) as _;
+        (*p0).joint_id_only = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x50 = rt::draw_f32(&mut rt::MST);
+        (*p0).ledge_snap_x = rt::draw_f32(&mut rt::MST);
+        (*p0).ledge_snap_y = rt::draw_f32(&mut rt::MST);
+        (*p0).ledge_snap_height = rt::draw_f32(&mut rt::MST);
+        (*p0).lstick_x = rt::draw_f32(&mut rt::MST);
+        (*p0).x64_ecb.top.x = rt::draw_f32(&mut rt::MST);
+        (*p0).x64_ecb.top.y = rt::draw_f32(&mut rt::MST);
+        (*p0).x64_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
+        (*p0).x64_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
+        (*p0).x64_ecb.right.x = rt::draw_f32(&mut rt::MST);
+        (*p0).x64_ecb.right.y = rt::draw_f32(&mut rt::MST);
+        (*p0).x64_ecb.left.x = rt::draw_f32(&mut rt::MST);
+        (*p0).x64_ecb.left.y = rt::draw_f32(&mut rt::MST);
+        (*p0).desired_ecb.top.x = rt::draw_f32(&mut rt::MST);
+        (*p0).desired_ecb.top.y = rt::draw_f32(&mut rt::MST);
+        (*p0).desired_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
+        (*p0).desired_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
+        (*p0).desired_ecb.right.x = rt::draw_f32(&mut rt::MST);
+        (*p0).desired_ecb.right.y = rt::draw_f32(&mut rt::MST);
+        (*p0).desired_ecb.left.x = rt::draw_f32(&mut rt::MST);
+        (*p0).desired_ecb.left.y = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb.top.x = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb.top.y = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb.bottom.x = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb.bottom.y = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb.right.x = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb.right.y = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb.left.x = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb.left.y = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_ecb.top.x = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_ecb.top.y = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_ecb.right.x = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_ecb.right.y = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_ecb.left.x = rt::draw_f32(&mut rt::MST);
+        (*p0).prev_ecb.left.y = rt::draw_f32(&mut rt::MST);
+        (*p0).xE4_ecb.top.x = rt::draw_f32(&mut rt::MST);
+        (*p0).xE4_ecb.top.y = rt::draw_f32(&mut rt::MST);
+        (*p0).xE4_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
+        (*p0).xE4_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
+        (*p0).xE4_ecb.right.x = rt::draw_f32(&mut rt::MST);
+        (*p0).xE4_ecb.right.y = rt::draw_f32(&mut rt::MST);
+        (*p0).xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
+        (*p0).xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
+        { assert_eq!(core::mem::size_of_val(&(*p0).ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        (*p0).ecb_source.x124 = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb_source.x128 = rt::draw_f32(&mut rt::MST);
+        (*p0).ecb_source.x12C = rt::draw_f32(&mut rt::MST);
+        (*p0).x130_flags = rt::draw_int(&mut rt::MST) as _;
+        (*p0).env_flags = rt::draw_int(&mut rt::MST) as _;
+        (*p0).prev_env_flags = rt::draw_int(&mut rt::MST) as _;
+        (*p0).x13C = rt::draw_int(&mut rt::MST) as _;
+        (*p0).contact.x = rt::draw_f32(&mut rt::MST);
+        (*p0).contact.y = rt::draw_f32(&mut rt::MST);
+        (*p0).contact.z = rt::draw_f32(&mut rt::MST);
+        (*p0).floor.index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).floor.flags = rt::draw_int(&mut rt::MST) as _;
+        (*p0).floor.normal.x = rt::draw_f32(&mut rt::MST);
+        (*p0).floor.normal.y = rt::draw_f32(&mut rt::MST);
+        (*p0).floor.normal.z = rt::draw_f32(&mut rt::MST);
+        (*p0).left_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).left_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
+        (*p0).left_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
+        (*p0).left_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
+        (*p0).left_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
+        (*p0).right_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).right_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
+        (*p0).right_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
+        (*p0).right_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
+        (*p0).right_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
+        (*p0).ceiling.index = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ceiling.flags = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ceiling.normal.x = rt::draw_f32(&mut rt::MST);
+        (*p0).ceiling.normal.y = rt::draw_f32(&mut rt::MST);
+        (*p0).ceiling.normal.z = rt::draw_f32(&mut rt::MST);
+    }
+    0
+}
+unsafe fn h_mpColl_80043680(a: &[u64]) -> u64 {
     rt::t_begin(345);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::CollData; let sv = rt::H; rt::H = rt::FNV0;
@@ -87640,241 +85880,7 @@ unsafe fn h_mpCollSetFacingDir(a: &[u64]) -> u64 {
         rt::h_f32((*p).xE4_ecb.left.x);
         rt::h_f32((*p).xE4_ecb.left.y);
         rt::h_u((*p).ecb_source.kind as u64);
-        rt::h_p((*p).ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
-        rt::h_f32((*p).ecb_source.x124);
-        rt::h_f32((*p).ecb_source.x128);
-        rt::h_f32((*p).ecb_source.x12C);
-        rt::h_u((*p).x130_flags as u64);
-        rt::h_i((*p).env_flags as i64);
-        rt::h_i((*p).prev_env_flags as i64);
-        rt::h_i((*p).x13C as i64);
-        rt::h_f32((*p).contact.x);
-        rt::h_f32((*p).contact.y);
-        rt::h_f32((*p).contact.z);
-        rt::h_i((*p).floor.index as i64);
-        rt::h_u((*p).floor.flags as u64);
-        rt::h_f32((*p).floor.normal.x);
-        rt::h_f32((*p).floor.normal.y);
-        rt::h_f32((*p).floor.normal.z);
-        rt::h_i((*p).left_facing_wall.index as i64);
-        rt::h_u((*p).left_facing_wall.flags as u64);
-        rt::h_f32((*p).left_facing_wall.normal.x);
-        rt::h_f32((*p).left_facing_wall.normal.y);
-        rt::h_f32((*p).left_facing_wall.normal.z);
-        rt::h_i((*p).right_facing_wall.index as i64);
-        rt::h_u((*p).right_facing_wall.flags as u64);
-        rt::h_f32((*p).right_facing_wall.normal.x);
-        rt::h_f32((*p).right_facing_wall.normal.y);
-        rt::h_f32((*p).right_facing_wall.normal.z);
-        rt::h_i((*p).ceiling.index as i64);
-        rt::h_u((*p).ceiling.flags as u64);
-        rt::h_f32((*p).ceiling.normal.x);
-        rt::h_f32((*p).ceiling.normal.y);
-        rt::h_f32((*p).ceiling.normal.z);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    rt::t_i(a[1] as i64);
-    let p0 = a[0] as usize as *mut Q::CollData;
-    if !p0.is_null() {
-        (*p0).x0_gobj = 0usize as _;
-        (*p0).cur_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).last_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).last_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).last_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x28_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x28_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x28_vec.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x34_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).x34_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x34_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x34_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x35_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x35_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).x35_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x35_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x35_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).facing_dir = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x38 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).floor_skip = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ledge_id_right = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ledge_id_left = rt::draw_int(&mut rt::MST) as _;
-        (*p0).joint_id_skip = rt::draw_int(&mut rt::MST) as _;
-        (*p0).joint_id_only = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x50 = rt::draw_f32(&mut rt::MST);
-        (*p0).ledge_snap_x = rt::draw_f32(&mut rt::MST);
-        (*p0).ledge_snap_y = rt::draw_f32(&mut rt::MST);
-        (*p0).ledge_snap_height = rt::draw_f32(&mut rt::MST);
-        (*p0).lstick_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x64_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x64_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x64_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x64_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x64_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x64_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x64_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x64_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).desired_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).desired_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).desired_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).desired_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).desired_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).desired_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).desired_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).desired_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xE4_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xE4_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xE4_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xE4_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xE4_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xE4_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
-        (*p0).ecb_source.x124 = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb_source.x128 = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb_source.x12C = rt::draw_f32(&mut rt::MST);
-        (*p0).x130_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).env_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).prev_env_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x13C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).contact.x = rt::draw_f32(&mut rt::MST);
-        (*p0).contact.y = rt::draw_f32(&mut rt::MST);
-        (*p0).contact.z = rt::draw_f32(&mut rt::MST);
-        (*p0).floor.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).floor.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).floor.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).floor.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).floor.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).left_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).left_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).left_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).left_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).left_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).right_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).right_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).right_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).right_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).right_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).ceiling.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ceiling.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ceiling.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).ceiling.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).ceiling.normal.z = rt::draw_f32(&mut rt::MST);
-    }
-    0
-}
-unsafe fn h_mpColl_80043680(a: &[u64]) -> u64 {
-    rt::t_begin(346);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::CollData; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_p((*p).x0_gobj as *const u8);
-        rt::h_f32((*p).cur_pos.x);
-        rt::h_f32((*p).cur_pos.y);
-        rt::h_f32((*p).cur_pos.z);
-        rt::h_f32((*p).prev_pos.x);
-        rt::h_f32((*p).prev_pos.y);
-        rt::h_f32((*p).prev_pos.z);
-        rt::h_f32((*p).last_pos.x);
-        rt::h_f32((*p).last_pos.y);
-        rt::h_f32((*p).last_pos.z);
-        rt::h_f32((*p).x28_vec.x);
-        rt::h_f32((*p).x28_vec.y);
-        rt::h_f32((*p).x28_vec.z);
-        rt::h_u((*p).x34_flags.b0() as u64);
-        rt::h_u((*p).x34_flags.b1234() as u64);
-        rt::h_u((*p).x34_flags.b5() as u64);
-        rt::h_u((*p).x34_flags.b6() as u64);
-        rt::h_u((*p).x34_flags.b7() as u64);
-        rt::h_u((*p).x35_flags.b0() as u64);
-        rt::h_u((*p).x35_flags.b1234() as u64);
-        rt::h_u((*p).x35_flags.b5() as u64);
-        rt::h_u((*p).x35_flags.b6() as u64);
-        rt::h_u((*p).x35_flags.b7() as u64);
-        rt::h_i((*p).facing_dir as i64);
-        rt::h_i((*p).x38 as i64);
-        rt::h_i((*p).floor_skip as i64);
-        rt::h_i((*p).ledge_id_right as i64);
-        rt::h_i((*p).ledge_id_left as i64);
-        rt::h_i((*p).joint_id_skip as i64);
-        rt::h_i((*p).joint_id_only as i64);
-        rt::h_f32((*p).x50);
-        rt::h_f32((*p).ledge_snap_x);
-        rt::h_f32((*p).ledge_snap_y);
-        rt::h_f32((*p).ledge_snap_height);
-        rt::h_f32((*p).lstick_x);
-        rt::h_f32((*p).x64_ecb.top.x);
-        rt::h_f32((*p).x64_ecb.top.y);
-        rt::h_f32((*p).x64_ecb.bottom.x);
-        rt::h_f32((*p).x64_ecb.bottom.y);
-        rt::h_f32((*p).x64_ecb.right.x);
-        rt::h_f32((*p).x64_ecb.right.y);
-        rt::h_f32((*p).x64_ecb.left.x);
-        rt::h_f32((*p).x64_ecb.left.y);
-        rt::h_f32((*p).desired_ecb.top.x);
-        rt::h_f32((*p).desired_ecb.top.y);
-        rt::h_f32((*p).desired_ecb.bottom.x);
-        rt::h_f32((*p).desired_ecb.bottom.y);
-        rt::h_f32((*p).desired_ecb.right.x);
-        rt::h_f32((*p).desired_ecb.right.y);
-        rt::h_f32((*p).desired_ecb.left.x);
-        rt::h_f32((*p).desired_ecb.left.y);
-        rt::h_f32((*p).ecb.top.x);
-        rt::h_f32((*p).ecb.top.y);
-        rt::h_f32((*p).ecb.bottom.x);
-        rt::h_f32((*p).ecb.bottom.y);
-        rt::h_f32((*p).ecb.right.x);
-        rt::h_f32((*p).ecb.right.y);
-        rt::h_f32((*p).ecb.left.x);
-        rt::h_f32((*p).ecb.left.y);
-        rt::h_f32((*p).prev_ecb.top.x);
-        rt::h_f32((*p).prev_ecb.top.y);
-        rt::h_f32((*p).prev_ecb.bottom.x);
-        rt::h_f32((*p).prev_ecb.bottom.y);
-        rt::h_f32((*p).prev_ecb.right.x);
-        rt::h_f32((*p).prev_ecb.right.y);
-        rt::h_f32((*p).prev_ecb.left.x);
-        rt::h_f32((*p).prev_ecb.left.y);
-        rt::h_f32((*p).xE4_ecb.top.x);
-        rt::h_f32((*p).xE4_ecb.top.y);
-        rt::h_f32((*p).xE4_ecb.bottom.x);
-        rt::h_f32((*p).xE4_ecb.bottom.y);
-        rt::h_f32((*p).xE4_ecb.right.x);
-        rt::h_f32((*p).xE4_ecb.right.y);
-        rt::h_f32((*p).xE4_ecb.left.x);
-        rt::h_f32((*p).xE4_ecb.left.y);
-        rt::h_u((*p).ecb_source.kind as u64);
-        rt::h_p((*p).ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
+        rt::h_bytes(&(*p).ecb_source.x4 as *const _ as *const u8, 56);
         rt::h_f32((*p).ecb_source.x124);
         rt::h_f32((*p).ecb_source.x128);
         rt::h_f32((*p).ecb_source.x12C);
@@ -87990,10 +85996,7 @@ unsafe fn h_mpColl_80043680(a: &[u64]) -> u64 {
         (*p0).xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
         (*p0).xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
         (*p0).ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
+        { assert_eq!(core::mem::size_of_val(&(*p0).ecb_source.x4), 56); for i1 in 0..56 { *(&mut (*p0).ecb_source.x4 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
         (*p0).ecb_source.x124 = rt::draw_f32(&mut rt::MST);
         (*p0).ecb_source.x128 = rt::draw_f32(&mut rt::MST);
         (*p0).ecb_source.x12C = rt::draw_f32(&mut rt::MST);
@@ -88034,28 +86037,28 @@ unsafe fn h_mpColl_80043680(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_mpGetGroundCollJoint(a: &[u64]) -> u64 {
-    rt::t_begin(347);
+    rt::t_begin(346);
     core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint) as usize as u64
 }
 unsafe fn h_mpGetGroundCollLine(a: &[u64]) -> u64 {
-    rt::t_begin(348);
+    rt::t_begin(347);
     core::ptr::addr_of_mut!(MO_mpGetGroundCollLine) as usize as u64
 }
 unsafe fn h_mpGetGroundCollVtx(a: &[u64]) -> u64 {
-    rt::t_begin(349);
+    rt::t_begin(348);
     core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx) as usize as u64
 }
 unsafe fn h_mpIsland_StageSlotFree(a: &[u64]) -> u64 {
-    rt::t_begin(350);
+    rt::t_begin(349);
     0
 }
 unsafe fn h_mpJointListAdd(a: &[u64]) -> u64 {
-    rt::t_begin(351);
+    rt::t_begin(350);
     rt::t_i(a[0] as i64);
     0
 }
 unsafe fn h_mpLibLoad(a: &[u64]) -> u64 {
-    rt::t_begin(352);
+    rt::t_begin(351);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::MapCollData; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).verts as *const u8);
@@ -88087,41 +86090,41 @@ unsafe fn h_mpLibLoad(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_mpLib_8004D164(a: &[u64]) -> u64 {
-    rt::t_begin(353);
+    rt::t_begin(352);
     core::ptr::addr_of_mut!(MO_mpLib_8004D164) as usize as u64
 }
 unsafe fn h_mpLib_80055E9C(a: &[u64]) -> u64 {
-    rt::t_begin(354);
+    rt::t_begin(353);
     rt::t_i(a[0] as i64);
     0
 }
 unsafe fn h_mpLib_8005667C(a: &[u64]) -> u64 {
-    rt::t_begin(355);
+    rt::t_begin(354);
     rt::t_i(a[0] as i64);
     0
 }
 unsafe fn h_mpLib_80057424(a: &[u64]) -> u64 {
-    rt::t_begin(356);
+    rt::t_begin(355);
     rt::t_i(a[0] as i64);
     0
 }
 unsafe fn h_mpLib_80057528(a: &[u64]) -> u64 {
-    rt::t_begin(357);
+    rt::t_begin(356);
     rt::t_i(a[0] as i64);
     0
 }
 unsafe fn h_mpLib_800575B0(a: &[u64]) -> u64 {
-    rt::t_begin(358);
+    rt::t_begin(357);
     rt::t_i(a[0] as i64);
     0
 }
 unsafe fn h_mpLib_80057BC0(a: &[u64]) -> u64 {
-    rt::t_begin(359);
+    rt::t_begin(358);
     rt::t_i(a[0] as i64);
     0
 }
 unsafe fn h_mpLineGetV0Pos(a: &[u64]) -> u64 {
-    rt::t_begin(360);
+    rt::t_begin(359);
     rt::t_i(a[0] as i64);
     rt::t_p(a[1] as usize as *const u8);
     if a[1] != 0 { let p = a[1] as usize as *const Q::Vec; let sv = rt::H; rt::H = rt::FNV0;
@@ -88138,7 +86141,7 @@ unsafe fn h_mpLineGetV0Pos(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_mpLineGetV1Pos(a: &[u64]) -> u64 {
-    rt::t_begin(361);
+    rt::t_begin(360);
     rt::t_i(a[0] as i64);
     rt::t_p(a[1] as usize as *const u8);
     if a[1] != 0 { let p = a[1] as usize as *const Q::Vec; let sv = rt::H; rt::H = rt::FNV0;
@@ -88155,35 +86158,193 @@ unsafe fn h_mpLineGetV1Pos(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_mpScriptBatchBegin(a: &[u64]) -> u64 {
-    rt::t_begin(362);
+    rt::t_begin(361);
     0
 }
 unsafe fn h_mpScriptBatchEnd(a: &[u64]) -> u64 {
-    rt::t_begin(363);
+    rt::t_begin(362);
     0
 }
 unsafe fn h_mpScriptInvalidateBounding(a: &[u64]) -> u64 {
-    rt::t_begin(364);
+    rt::t_begin(363);
     0
 }
 unsafe fn h_mpScriptStageIsolationActive(a: &[u64]) -> u64 {
-    rt::t_begin(365);
+    rt::t_begin(364);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpScriptStageIsolationSet(a: &[u64]) -> u64 {
-    rt::t_begin(366);
+    rt::t_begin(365);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     rt::t_i(a[2] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpUncheckBounding(a: &[u64]) -> u64 {
-    rt::t_begin(367);
+    rt::t_begin(366);
     0
 }
 unsafe fn h_plStale_IncrementAttackInstance(a: &[u64]) -> u64 {
-    rt::t_begin(368);
+    rt::t_begin(367);
     rt::draw_int(&mut rt::MST) as u64
+}
+unsafe fn h_psClearPointJObj(a: &[u64]) -> u64 {
+    rt::t_begin(368);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_Particle; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_p((*p).next as *const u8);
+        rt::h_u((*p).kind as u64);
+        rt::h_u((*p).bank as u64);
+        rt::h_u((*p).texGroup as u64);
+        rt::h_u((*p).poseNum as u64);
+        rt::h_u((*p).palNum as u64);
+        rt::h_u((*p).sizeCount as u64);
+        rt::h_u((*p).primColCount as u64);
+        rt::h_u((*p).envColCount as u64);
+        rt::h_u((*p).primCol.r as u64);
+        rt::h_u((*p).primCol.g as u64);
+        rt::h_u((*p).primCol.b as u64);
+        rt::h_u((*p).primCol.a as u64);
+        rt::h_u((*p).envCol.r as u64);
+        rt::h_u((*p).envCol.g as u64);
+        rt::h_u((*p).envCol.b as u64);
+        rt::h_u((*p).envCol.a as u64);
+        rt::h_u((*p).cmdWait as u64);
+        rt::h_u((*p).loopCount as u64);
+        rt::h_u((*p).linkNo as u64);
+        rt::h_u((*p).idnum as u64);
+        rt::h_p((*p).cmdList as *const u8);
+        rt::h_u((*p).cmdPtr as u64);
+        rt::h_u((*p).cmdMarkPtr as u64);
+        rt::h_u((*p).cmdLoopPtr as u64);
+        rt::h_u((*p).life as u64);
+        rt::h_f32((*p).vel.x);
+        rt::h_f32((*p).vel.y);
+        rt::h_f32((*p).vel.z);
+        rt::h_f32((*p).grav);
+        rt::h_f32((*p).fric);
+        rt::h_f32((*p).pos.x);
+        rt::h_f32((*p).pos.y);
+        rt::h_f32((*p).pos.z);
+        rt::h_f32((*p).size);
+        rt::h_f32((*p).rotate);
+        rt::h_u((*p).aCmpCount as u64);
+        rt::h_u((*p).aCmpMode as u64);
+        rt::h_u((*p).aCmpParam1 as u64);
+        rt::h_u((*p).aCmpParam2 as u64);
+        rt::h_u((*p).pJObjOfs as u64);
+        rt::h_u((*p).matColCount as u64);
+        rt::h_u((*p).ambColCount as u64);
+        rt::h_u((*p).rotateCount as u64);
+        rt::h_f32((*p).sizeTarget);
+        rt::h_f32((*p).rotateTarget);
+        rt::h_u((*p).primColRemain as u64);
+        rt::h_u((*p).envColRemain as u64);
+        rt::h_u((*p).primColTarget.r as u64);
+        rt::h_u((*p).primColTarget.g as u64);
+        rt::h_u((*p).primColTarget.b as u64);
+        rt::h_u((*p).primColTarget.a as u64);
+        rt::h_u((*p).envColTarget.r as u64);
+        rt::h_u((*p).envColTarget.g as u64);
+        rt::h_u((*p).envColTarget.b as u64);
+        rt::h_u((*p).envColTarget.a as u64);
+        rt::h_u((*p).matColRemain as u64);
+        rt::h_u((*p).ambColRemain as u64);
+        rt::h_u((*p).aCmpRemain as u64);
+        rt::h_u((*p).aCmpParam1Target as u64);
+        rt::h_u((*p).aCmpParam2Target as u64);
+        rt::h_u((*p).matRGB as u64);
+        rt::h_u((*p).matA as u64);
+        rt::h_u((*p).ambRGB as u64);
+        rt::h_u((*p).ambA as u64);
+        rt::h_u((*p).matRGBTarget as u64);
+        rt::h_u((*p).matATarget as u64);
+        rt::h_u((*p).ambRGBTarget as u64);
+        rt::h_u((*p).ambATarget as u64);
+        rt::h_f32((*p).trail);
+        rt::h_p((*p).r#gen as *const u8);
+        rt::h_p((*p).appsrt as *const u8);
+        rt::h_p((*p).userdata as *const u8);
+        rt::h_fn((*p).callback.map_or(0usize, |f| f as usize));
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_Particle;
+    if !p0.is_null() {
+        (*p0).next = 0usize as _;
+        (*p0).kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).bank = rt::draw_int(&mut rt::MST) as _;
+        (*p0).texGroup = rt::draw_int(&mut rt::MST) as _;
+        (*p0).poseNum = rt::draw_int(&mut rt::MST) as _;
+        (*p0).palNum = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sizeCount = rt::draw_int(&mut rt::MST) as _;
+        (*p0).primColCount = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envColCount = rt::draw_int(&mut rt::MST) as _;
+        (*p0).primCol.r = rt::draw_int(&mut rt::MST) as _;
+        (*p0).primCol.g = rt::draw_int(&mut rt::MST) as _;
+        (*p0).primCol.b = rt::draw_int(&mut rt::MST) as _;
+        (*p0).primCol.a = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envCol.r = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envCol.g = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envCol.b = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envCol.a = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cmdWait = rt::draw_int(&mut rt::MST) as _;
+        (*p0).loopCount = rt::draw_int(&mut rt::MST) as _;
+        (*p0).linkNo = rt::draw_int(&mut rt::MST) as _;
+        (*p0).idnum = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cmdList = 0usize as _;
+        (*p0).cmdPtr = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cmdMarkPtr = rt::draw_int(&mut rt::MST) as _;
+        (*p0).cmdLoopPtr = rt::draw_int(&mut rt::MST) as _;
+        (*p0).life = rt::draw_int(&mut rt::MST) as _;
+        (*p0).vel.x = rt::draw_f32(&mut rt::MST);
+        (*p0).vel.y = rt::draw_f32(&mut rt::MST);
+        (*p0).vel.z = rt::draw_f32(&mut rt::MST);
+        (*p0).grav = rt::draw_f32(&mut rt::MST);
+        (*p0).fric = rt::draw_f32(&mut rt::MST);
+        (*p0).pos.x = rt::draw_f32(&mut rt::MST);
+        (*p0).pos.y = rt::draw_f32(&mut rt::MST);
+        (*p0).pos.z = rt::draw_f32(&mut rt::MST);
+        (*p0).size = rt::draw_f32(&mut rt::MST);
+        (*p0).rotate = rt::draw_f32(&mut rt::MST);
+        (*p0).aCmpCount = rt::draw_int(&mut rt::MST) as _;
+        (*p0).aCmpMode = rt::draw_int(&mut rt::MST) as _;
+        (*p0).aCmpParam1 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).aCmpParam2 = rt::draw_int(&mut rt::MST) as _;
+        (*p0).pJObjOfs = rt::draw_int(&mut rt::MST) as _;
+        (*p0).matColCount = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ambColCount = rt::draw_int(&mut rt::MST) as _;
+        (*p0).rotateCount = rt::draw_int(&mut rt::MST) as _;
+        (*p0).sizeTarget = rt::draw_f32(&mut rt::MST);
+        (*p0).rotateTarget = rt::draw_f32(&mut rt::MST);
+        (*p0).primColRemain = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envColRemain = rt::draw_int(&mut rt::MST) as _;
+        (*p0).primColTarget.r = rt::draw_int(&mut rt::MST) as _;
+        (*p0).primColTarget.g = rt::draw_int(&mut rt::MST) as _;
+        (*p0).primColTarget.b = rt::draw_int(&mut rt::MST) as _;
+        (*p0).primColTarget.a = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envColTarget.r = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envColTarget.g = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envColTarget.b = rt::draw_int(&mut rt::MST) as _;
+        (*p0).envColTarget.a = rt::draw_int(&mut rt::MST) as _;
+        (*p0).matColRemain = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ambColRemain = rt::draw_int(&mut rt::MST) as _;
+        (*p0).aCmpRemain = rt::draw_int(&mut rt::MST) as _;
+        (*p0).aCmpParam1Target = rt::draw_int(&mut rt::MST) as _;
+        (*p0).aCmpParam2Target = rt::draw_int(&mut rt::MST) as _;
+        (*p0).matRGB = rt::draw_int(&mut rt::MST) as _;
+        (*p0).matA = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ambRGB = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ambA = rt::draw_int(&mut rt::MST) as _;
+        (*p0).matRGBTarget = rt::draw_int(&mut rt::MST) as _;
+        (*p0).matATarget = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ambRGBTarget = rt::draw_int(&mut rt::MST) as _;
+        (*p0).ambATarget = rt::draw_int(&mut rt::MST) as _;
+        (*p0).trail = rt::draw_f32(&mut rt::MST);
+        (*p0).r#gen = 0usize as _;
+        (*p0).appsrt = 0usize as _;
+        (*p0).userdata = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).callback = if d & 1 != 0 { Some(cb12) } else { None }; }
+    }
+    0
 }
 unsafe fn h_psRemoveParticleAppSRT(a: &[u64]) -> u64 {
     rt::t_begin(369);
@@ -88378,9 +86539,9 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "Camera_StageSlotClipGet" => h_Camera_StageSlotClipGet(a),
         "DVDConvertPathToEntrynum" => h_DVDConvertPathToEntrynum(a),
         "Fighter_ChangeMotionState" => h_Fighter_ChangeMotionState(a),
-        "Fighter_procCollResolve" => h_Fighter_procCollResolve(a),
         "Fighter_ResetInputData_80068854" => h_Fighter_ResetInputData_80068854(a),
         "Fighter_Spawn" => h_Fighter_Spawn(a),
+        "Fighter_procCollResolve" => h_Fighter_procCollResolve(a),
         "GObj_Create" => h_GObj_Create(a),
         "GObj_InitUserData" => h_GObj_InitUserData(a),
         "GObj_SetupGXLink" => h_GObj_SetupGXLink(a),
@@ -88671,7 +86832,6 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "grStory_801E36D8" => h_grStory_801E36D8(a),
         "grStory_StageSlotParamSwap" => h_grStory_StageSlotParamSwap(a),
         "grZakoGenerator_StageSlotRelease" => h_grZakoGenerator_StageSlotRelease(a),
-        "psClearPointJObj" => h_psClearPointJObj(a),
         "hsd_8039D3AC" => h_hsd_8039D3AC(a),
         "it_8026B40C" => h_it_8026B40C(a),
         "it_8026D324" => h_it_8026D324(a),
@@ -88727,6 +86887,7 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "mpScriptStageIsolationSet" => h_mpScriptStageIsolationSet(a),
         "mpUncheckBounding" => h_mpUncheckBounding(a),
         "plStale_IncrementAttackInstance" => h_plStale_IncrementAttackInstance(a),
+        "psClearPointJObj" => h_psClearPointJObj(a),
         "psRemoveParticleAppSRT" => h_psRemoveParticleAppSRT(a),
         "sinf" => h_sinf(a),
         "strchr" => h_strchr(a),
@@ -88905,10 +87066,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).xE4_ecb.left.x = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).xE4_ecb.left.y = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.kind = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-    for i0 in 0..6 {
-        (*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.anon_4.anon_0.x10C_joint[i0] = 0usize as _;
-    }
+    { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.x4), 56); for i0 in 0..56 { *(&mut (*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.x4 as *mut _ as *mut u8).add(i0) = rt::draw_int(&mut rt::ST) as u8; } }
     (*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.x124 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.x128 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.x12C = rt::draw_f32(&mut rt::ST);
@@ -89019,7 +87177,7 @@ unsafe fn fill_all() {
             (*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x44 = 0usize as _;
             (*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x48 = 0usize as _;
             (*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x4C = 0usize as _;
-            (*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x50 = rt::draw_int(&mut rt::ST) as _;
+            (*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x50 = 0usize as _;
             (*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x54.x = rt::draw_f32(&mut rt::ST);
             (*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x54.y = rt::draw_f32(&mut rt::ST);
             (*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x5C = rt::draw_f32(&mut rt::ST);
@@ -89369,7 +87527,7 @@ unsafe fn fill_all() {
                     (*core::ptr::addr_of_mut!(m::script_echo)).history.ring[i0].record[i1].hit[i2].victims_2[i3].victim = 0usize as _;
                     (*core::ptr::addr_of_mut!(m::script_echo)).history.ring[i0].record[i1].hit[i2].victims_2[i3].x4 = rt::draw_int(&mut rt::ST) as _;
                 }
-                (*core::ptr::addr_of_mut!(m::script_echo)).history.ring[i0].record[i1].hit[i2].anon_134.owner = 0usize as _;
+                { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::script_echo)).history.ring[i0].record[i1].hit[i2].x134), 8); for i3 in 0..8 { *(&mut (*core::ptr::addr_of_mut!(m::script_echo)).history.ring[i0].record[i1].hit[i2].x134 as *mut _ as *mut u8).add(i3) = rt::draw_int(&mut rt::ST) as u8; } }
             }
         }
     }
@@ -89461,7 +87619,7 @@ unsafe fn fill_all() {
                     (*core::ptr::addr_of_mut!(m::script_echo)).rule[i0][i1].capsule[i2].victims_2[i3].victim = 0usize as _;
                     (*core::ptr::addr_of_mut!(m::script_echo)).rule[i0][i1].capsule[i2].victims_2[i3].x4 = rt::draw_int(&mut rt::ST) as _;
                 }
-                (*core::ptr::addr_of_mut!(m::script_echo)).rule[i0][i1].capsule[i2].anon_134.owner = 0usize as _;
+                { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::script_echo)).rule[i0][i1].capsule[i2].x134), 8); for i3 in 0..8 { *(&mut (*core::ptr::addr_of_mut!(m::script_echo)).rule[i0][i1].capsule[i2].x134 as *mut _ as *mut u8).add(i3) = rt::draw_int(&mut rt::ST) as u8; } }
             }
         }
     }
@@ -90504,7 +88662,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::script_target_attr)).set_x1_8((rt::draw_int(&mut rt::ST) & 0x1) as _);
     (*core::ptr::addr_of_mut!(m::script_target_attr)).x3 = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::script_target_attr)).x4_throw_speed_mul = rt::draw_f32(&mut rt::ST);
-    (*core::ptr::addr_of_mut!(m::script_target_attr)).x8 = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(m::script_target_attr)).x8 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::script_target_attr)).xC_spin_speed = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::script_target_attr)).x10_fall_speed = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::script_target_attr)).x14_fall_speed_max = rt::draw_f32(&mut rt::ST);
@@ -90749,7 +88907,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::ext::gobjproc_alloc_data)).align = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::gobjproc_alloc_data)).next = 0usize as _;
     for i0 in 0..13 {
-        (*core::ptr::addr_of_mut!(m::ext::grPushOn_803E7CCC))[i0] = rt::draw_f32(&mut rt::ST);
+        let _ = rt::draw_f32(&mut rt::ST); // grPushOn_803E7CCC is an immutable table in the port: not randomised
     }
     (*core::ptr::addr_of_mut!(m::ext::gx_suppress_draws)) = rt::draw_int(&mut rt::ST) as _;
     for i0 in 0..16 {
@@ -90771,7 +88929,6 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60)).alloc_data.align = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60)).alloc_data.next = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60)).pad = 0usize as _;
-    (*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2)) = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4)) = (rt::draw_int(&mut rt::ST) as u32) as usize as _;
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D78FC)) = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::it_804A0E30)).x0 = rt::draw_int(&mut rt::ST) as _;
@@ -90805,15 +88962,16 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760)).joints = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760)).joint_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760)).x2C = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2)) = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::p_ftCommonData)) = 0usize as _;
     for i0 in 0..65 {
-        (*core::ptr::addr_of_mut!(m::ext::psCmdListArray))[i0] = rt::draw_int(&mut rt::ST) as _;
+        (*core::ptr::addr_of_mut!(m::ext::psCmdListArray))[i0] = 0usize as _;
     }
     for i0 in 0..65 {
-        (*core::ptr::addr_of_mut!(m::ext::psFormGroupArray))[i0] = 0usize as _;
+        (*core::ptr::addr_of_mut!(m::ext::psFormGroupArray))[i0] = rt::draw_int(&mut rt::ST) as _;
     }
     for i0 in 0..65 {
-        (*core::ptr::addr_of_mut!(m::ext::psNumCmdList))[i0] = 0usize as _;
+        (*core::ptr::addr_of_mut!(m::ext::psNumCmdList))[i0] = rt::draw_int(&mut rt::ST) as _;
     }
     for i0 in 0..65 {
         (*core::ptr::addr_of_mut!(m::ext::psTexGroupArray))[i0] = 0usize as _;
@@ -91012,7 +89170,7 @@ unsafe fn fill_all() {
     for i in 0..256 { MO_Geno_ItemDesc[i] = rt::draw_int(&mut rt::ST) as u8; }
     (*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).anim_id = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).x4_flags = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).anon_8._x0 = rt::draw_int(&mut rt::ST) as _;
+    { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).x8), 4); for i0 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).x8 as *mut _ as *mut u8).add(i0) = rt::draw_int(&mut rt::ST) as u8; } }
     { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).anim_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
     { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).input_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
     { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).phys_cb = if d & 1 != 0 { Some(cb7) } else { None }; }
@@ -91072,7 +89230,7 @@ unsafe fn fill_all() {
     { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).callback1 = if d & 1 != 0 { Some(cb8) } else { None }; }
     { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).gobj_proc = if d & 1 != 0 { Some(cb7) } else { None }; }
     { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).callback3 = if d & 1 != 0 { Some(cb7) } else { None }; }
-    (*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).anon_10.flags = rt::draw_int(&mut rt::ST) as _;
+    { assert_eq!(core::mem::size_of_val(&(*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).x10), 4); for i0 in 0..4 { *(&mut (*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).x10 as *mut _ as *mut u8).add(i0) = rt::draw_int(&mut rt::ST) as u8; } }
     (*core::ptr::addr_of_mut!(MO_HSD_ArchiveGetExtern)) = rt::draw_int(&mut rt::ST) as _;
     for i in 0..256 { MO_HSD_ArchiveGetPublicAddress[i] = rt::draw_int(&mut rt::ST) as u8; }
     (*core::ptr::addr_of_mut!(MO_HSD_CObjGetCurrent)).parent.parent.class_info = 0usize as _;
@@ -91338,19 +89496,19 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).bounding_min.y = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).bounding_max.x = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).bounding_max.y = rt::draw_f32(&mut rt::ST);
-    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).x20 = 0usize as _;
+    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).jobj = 0usize as _;
     { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).cb_0 = if d & 1 != 0 { Some(cb10) } else { None }; }
     (*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).cb_data_0 = 0usize as _;
     { let d = rt::next(&mut rt::ST); (*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).cb_1 = if d & 1 != 0 { Some(cb10) } else { None }; }
     (*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).cb_data_1 = 0usize as _;
-    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollLine)).x0 = 0usize as _;
+    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollLine)).inner = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_mpGetGroundCollLine)).flags = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).x0 = rt::draw_f32(&mut rt::ST);
-    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).x4 = rt::draw_f32(&mut rt::ST);
+    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).base_pos.x = rt::draw_f32(&mut rt::ST);
+    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).base_pos.y = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).pos.x = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).pos.y = rt::draw_f32(&mut rt::ST);
-    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).x10 = rt::draw_f32(&mut rt::ST);
-    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).x14 = rt::draw_f32(&mut rt::ST);
+    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).prev_pos.x = rt::draw_f32(&mut rt::ST);
+    (*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).prev_pos.y = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_mpLib_8004D164)).verts = 0usize as _;
     (*core::ptr::addr_of_mut!(MO_mpLib_8004D164)).vert_count = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_mpLib_8004D164)).lines = 0usize as _;
@@ -91712,10 +89870,7 @@ unsafe fn hash_objs() {
     rt::h_f32((*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).xE4_ecb.left.x);
     rt::h_f32((*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).xE4_ecb.left.y);
     rt::h_u((*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.kind as u64);
-    rt::h_p((*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.anon_4.anon_0.x108_joint as *const u8);
-    for i0 in 0..6 {
-        rt::h_p((*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-    }
+    rt::h_bytes(&(*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.x4 as *const _ as *const u8, 56);
     rt::h_f32((*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.x124);
     rt::h_f32((*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.x128);
     rt::h_f32((*core::ptr::addr_of_mut!(m::lab_wb_home_coll)).ecb_source.x12C);
@@ -91836,7 +89991,7 @@ unsafe fn hash_objs() {
             rt::h_p((*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x44 as *const u8);
             rt::h_p((*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x48 as *const u8);
             rt::h_p((*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x4C as *const u8);
-            rt::h_u((*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x50 as u64);
+            rt::h_p((*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x50 as *const u8);
             rt::h_f32((*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x54.x);
             rt::h_f32((*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x54.y);
             rt::h_f32((*core::ptr::addr_of_mut!(m::script_bench))[i0].entity[i1].cpu.x5C);
@@ -92244,7 +90399,7 @@ unsafe fn hash_objs() {
                     rt::h_p((*core::ptr::addr_of_mut!(m::script_echo)).history.ring[i0].record[i1].hit[i2].victims_2[i3].victim as *const u8);
                     rt::h_u((*core::ptr::addr_of_mut!(m::script_echo)).history.ring[i0].record[i1].hit[i2].victims_2[i3].x4 as u64);
                 }
-                rt::h_p((*core::ptr::addr_of_mut!(m::script_echo)).history.ring[i0].record[i1].hit[i2].anon_134.owner as *const u8);
+                rt::h_bytes(&(*core::ptr::addr_of_mut!(m::script_echo)).history.ring[i0].record[i1].hit[i2].x134 as *const _ as *const u8, 8);
             }
         }
     }
@@ -92336,7 +90491,7 @@ unsafe fn hash_objs() {
                     rt::h_p((*core::ptr::addr_of_mut!(m::script_echo)).rule[i0][i1].capsule[i2].victims_2[i3].victim as *const u8);
                     rt::h_u((*core::ptr::addr_of_mut!(m::script_echo)).rule[i0][i1].capsule[i2].victims_2[i3].x4 as u64);
                 }
-                rt::h_p((*core::ptr::addr_of_mut!(m::script_echo)).rule[i0][i1].capsule[i2].anon_134.owner as *const u8);
+                rt::h_bytes(&(*core::ptr::addr_of_mut!(m::script_echo)).rule[i0][i1].capsule[i2].x134 as *const _ as *const u8, 8);
             }
         }
     }
@@ -93534,7 +91689,7 @@ unsafe fn hash_objs() {
     rt::h_u((*core::ptr::addr_of_mut!(m::script_target_attr)).x1_8() as u64);
     rt::h_u((*core::ptr::addr_of_mut!(m::script_target_attr)).x3 as u64);
     rt::h_f32((*core::ptr::addr_of_mut!(m::script_target_attr)).x4_throw_speed_mul);
-    rt::h_i((*core::ptr::addr_of_mut!(m::script_target_attr)).x8 as i64);
+    rt::h_f32((*core::ptr::addr_of_mut!(m::script_target_attr)).x8);
     rt::h_f32((*core::ptr::addr_of_mut!(m::script_target_attr)).xC_spin_speed);
     rt::h_f32((*core::ptr::addr_of_mut!(m::script_target_attr)).x10_fall_speed);
     rt::h_f32((*core::ptr::addr_of_mut!(m::script_target_attr)).x14_fall_speed_max);
@@ -93837,7 +91992,7 @@ unsafe fn hash_objs() {
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..13 {
-        rt::h_f32((*core::ptr::addr_of_mut!(m::ext::grPushOn_803E7CCC))[i0]);
+        rt::h_f32((*core::ptr::addr_of!(m::ext::grPushOn_803E7CCC))[i0]);
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
@@ -93867,9 +92022,6 @@ unsafe fn hash_objs() {
     rt::h_u((*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60)).alloc_data.align as u64);
     rt::h_p((*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60)).alloc_data.next as *const u8);
     rt::h_p((*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60)).pad as *const u8);
-    rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
-    rt::H = rt::FNV0;
-    rt::h_u((*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2)) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_u(((*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4)) as usize as u32) as u64);
@@ -93925,21 +92077,24 @@ unsafe fn hash_objs() {
     rt::h_i((*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760)).x2C as i64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
+    rt::h_u((*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2)) as u64);
+    rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
+    rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(m::ext::p_ftCommonData)) as *const u8);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..65 {
-        rt::h_i((*core::ptr::addr_of_mut!(m::ext::psCmdListArray))[i0] as i64);
+        rt::h_p((*core::ptr::addr_of_mut!(m::ext::psCmdListArray))[i0] as *const u8);
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..65 {
-        rt::h_p((*core::ptr::addr_of_mut!(m::ext::psFormGroupArray))[i0] as *const u8);
+        rt::h_i((*core::ptr::addr_of_mut!(m::ext::psFormGroupArray))[i0] as i64);
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     for i0 in 0..65 {
-        rt::h_p((*core::ptr::addr_of_mut!(m::ext::psNumCmdList))[i0] as *const u8);
+        rt::h_i((*core::ptr::addr_of_mut!(m::ext::psNumCmdList))[i0] as i64);
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
@@ -94154,7 +92309,7 @@ unsafe fn hash_objs() {
     rt::H = rt::FNV0;
     rt::h_i((*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).anim_id as i64);
     rt::h_i((*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).x4_flags as i64);
-    rt::h_u((*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).anon_8._x0 as u64);
+    rt::h_bytes(&(*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).x8 as *const _ as *const u8, 4);
     rt::h_fn((*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).anim_cb.map_or(0usize, |f| f as usize));
     rt::h_fn((*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).input_cb.map_or(0usize, |f| f as usize));
     rt::h_fn((*core::ptr::addr_of_mut!(MO_Geno_MotionRowIfAny)).phys_cb.map_or(0usize, |f| f as usize));
@@ -94224,7 +92379,7 @@ unsafe fn hash_objs() {
     rt::h_fn((*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).callback1.map_or(0usize, |f| f as usize));
     rt::h_fn((*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).gobj_proc.map_or(0usize, |f| f as usize));
     rt::h_fn((*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).callback3.map_or(0usize, |f| f as usize));
-    rt::h_u((*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).anon_10.flags as u64);
+    rt::h_bytes(&(*core::ptr::addr_of_mut!(MO_Ground_StageSlotProofCallbacks)).x10 as *const _ as *const u8, 4);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_i((*core::ptr::addr_of_mut!(MO_HSD_ArchiveGetExtern)) as i64);
@@ -94536,23 +92691,23 @@ unsafe fn hash_objs() {
     rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).bounding_min.y);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).bounding_max.x);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).bounding_max.y);
-    rt::h_p((*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).x20 as *const u8);
+    rt::h_p((*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).jobj as *const u8);
     rt::h_fn((*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).cb_0.map_or(0usize, |f| f as usize));
     rt::h_p((*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).cb_data_0 as *const u8);
     rt::h_fn((*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).cb_1.map_or(0usize, |f| f as usize));
     rt::h_p((*core::ptr::addr_of_mut!(MO_mpGetGroundCollJoint)).cb_data_1 as *const u8);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
-    rt::h_p((*core::ptr::addr_of_mut!(MO_mpGetGroundCollLine)).x0 as *const u8);
+    rt::h_p((*core::ptr::addr_of_mut!(MO_mpGetGroundCollLine)).inner as *const u8);
     rt::h_u((*core::ptr::addr_of_mut!(MO_mpGetGroundCollLine)).flags as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
-    rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).x0);
-    rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).x4);
+    rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).base_pos.x);
+    rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).base_pos.y);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).pos.x);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).pos.y);
-    rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).x10);
-    rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).x14);
+    rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).prev_pos.x);
+    rt::h_f32((*core::ptr::addr_of_mut!(MO_mpGetGroundCollVtx)).prev_pos.y);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(MO_mpLib_8004D164)).verts as *const u8);
@@ -94858,12 +93013,11 @@ unsafe fn init() {
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::gm_804D6720))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::gm_804D6720))), "gm_804D6720");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::gobj_alloc_data))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::gobj_alloc_data))), "gobj_alloc_data");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::gobjproc_alloc_data))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::gobjproc_alloc_data))), "gobjproc_alloc_data");
-    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::grPushOn_803E7CCC))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::grPushOn_803E7CCC))), "grPushOn_803E7CCC");
+    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of!(m::ext::grPushOn_803E7CCC))), core::mem::size_of_val(&(*core::ptr::addr_of!(m::ext::grPushOn_803E7CCC))), "grPushOn_803E7CCC");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::gx_suppress_draws))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::gx_suppress_draws))), "gx_suppress_draws");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D0908))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D0908))), "hsd_804D0908");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D0948))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D0948))), "hsd_804D0948");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60))), "hsd_804D0F60");
-    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2))), "hsd_804D78E2");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4))) as *const u8, 4, "hsd_804D78F4");  // the C u32 (little-endian low half)
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D78FC))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D78FC))), "hsd_804D78FC");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::it_804A0E30))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::it_804A0E30))), "it_804A0E30");
@@ -94874,6 +93028,7 @@ unsafe fn init() {
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::it_804D6D30))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::it_804D6D30))), "it_804D6D30");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::it_804D6D38))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::it_804D6D38))), "it_804D6D38");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::mpLib_803BF760))), "mpLib_803BF760");
+    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2))), "hsd_804D78E2");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::p_ftCommonData))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::p_ftCommonData))), "p_ftCommonData");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::psCmdListArray))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::psCmdListArray))), "psCmdListArray");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::psFormGroupArray))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::psFormGroupArray))), "psFormGroupArray");
@@ -95614,9 +93769,9 @@ unsafe fn init() {
     rt::fn_add(m::ext::Camera_StageSlotClipGet as usize);
     rt::fn_add(m::ext::DVDConvertPathToEntrynum as usize);
     rt::fn_add(m::ext::Fighter_ChangeMotionState as usize);
-    rt::fn_add(m::ext::Fighter_procCollResolve as usize);
     rt::fn_add(m::ext::Fighter_ResetInputData_80068854 as usize);
     rt::fn_add(m::ext::Fighter_Spawn as usize);
+    rt::fn_add(m::ext::Fighter_procCollResolve as usize);
     rt::fn_add(m::ext::GObj_Create as usize);
     rt::fn_add(m::ext::GObj_InitUserData as usize);
     rt::fn_add(m::ext::GObj_SetupGXLink as usize);
@@ -95907,7 +94062,6 @@ unsafe fn init() {
     rt::fn_add(m::ext::grStory_801E36D8 as usize);
     rt::fn_add(m::ext::grStory_StageSlotParamSwap as usize);
     rt::fn_add(m::ext::grZakoGenerator_StageSlotRelease as usize);
-    rt::fn_add(m::ext::psClearPointJObj as usize);
     rt::fn_add(m::ext::hsd_8039D3AC as usize);
     rt::fn_add(m::ext::it_8026B40C as usize);
     rt::fn_add(m::ext::it_8026D324 as usize);
@@ -95963,6 +94117,7 @@ unsafe fn init() {
     rt::fn_add(m::ext::mpScriptStageIsolationSet as usize);
     rt::fn_add(m::ext::mpUncheckBounding as usize);
     rt::fn_add(m::ext::plStale_IncrementAttackInstance as usize);
+    rt::fn_add(m::ext::psClearPointJObj as usize);
     rt::fn_add(m::ext::psRemoveParticleAppSRT as usize);
     rt::fn_add(m::ext::sinf as usize);
     rt::fn_add(m::ext::strchr as usize);
@@ -96103,7 +94258,7 @@ unsafe extern "C" fn cb0(a0: *mut Q::Vec, a1: i32, a2: *mut Q::HSD_JObj) -> i32 
     rt::t_p(a2 as *const u8);
     rt::draw_int(&mut rt::MST) as _
 }
-unsafe extern "C" fn cb1(a0: i32) -> *mut Q::DynamicsDesc {
+unsafe extern "C" fn cb1(a0: i32) -> *mut Q::lbColl_80008D30_arg1 {
     rt::t_begin(1001);
     rt::t_i(a0 as i64);
     0 as _
@@ -96127,7 +94282,7 @@ unsafe extern "C" fn cb4(a0: *mut Q::HSD_GObj, a1: *mut Q::HSD_GObj, a2: *mut Q:
     rt::t_p(a2 as *const u8);
     rt::draw_int(&mut rt::MST) as _
 }
-unsafe extern "C" fn cb5(a0: *mut Q::HSD_GObj, a1: i32) {
+unsafe extern "C" fn cb5(a0: *mut Q::HSD_GObj, a1: isize) {
     rt::t_begin(1005);
     rt::t_p(a0 as *const u8);
     rt::t_i(a1 as i64);

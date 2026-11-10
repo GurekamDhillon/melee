@@ -122,8 +122,8 @@ fn enter(g: G, vg: G, cb: fn(G)) {
     ext::ftCo_ReleaseItemAndVictim(g);
     f.x1A5C = vg;
     f.victim_gobj = vg;
-    f.anon_221b.set_x221B_b5(0);
-    f.anon_221b.set_x221B_b7(0);
+    f.x221B.set_x221B_b5(0);
+    f.x221B.set_x221B_b7(0);
     f.facing_dir = vf.facing_dir;
     let t = ext::ftKp_SpecialS_80132DC0(f.victim_gobj);
     ext::ftCommon_InitGrab(f, 0, t);

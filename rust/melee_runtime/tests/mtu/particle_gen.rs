@@ -24,10 +24,10 @@ pub fn install() {
         ScriptGame_StageSlotParticleBegin = Some(|a0| { t(1010); t(a0 as u32); fv() as _ });
         ScriptGame_StageSlotProcEnd = Some(|| { t(1011); });
         atan2f = Some(|a0, a1| { t(1012); t(a0.to_bits()); t(a1.to_bits()); rw() });
-        psGetNewIDNum = Some(|| { t(1013); (fv() % 3) as u16 });
-        hsd_8039F05C = Some(|a0, a1, a2| { t(1014); t(a0 as u32); t(a1 as u32); t(a2 as u32); core::ptr::null_mut() });
-        psAttachGeneratorAppSRT = Some(|a0, a1| { t(1015); t(pi(a0)); t(pi(a1)); fv() as _ });
-        psAttachParticleAppSRT = Some(|a0, a1| { t(1016); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });
+        hsd_8039F05C = Some(|a0, a1, a2| { t(1013); t(a0 as u32); t(a1 as u32); t(a2 as u32); core::ptr::null_mut() });
+        psAttachGeneratorAppSRT = Some(|a0, a1| { t(1014); t(pi(a0)); t(pi(a1)); fv() as _ });
+        psAttachParticleAppSRT = Some(|a0, a1| { t(1015); t(pi(a0)); t(pi(a1)); (fv() & 1) as i32 });
+        psGetNewIDNum = Some(|| { t(1016); (fv() % 3) as u16 });
         psRemoveParticleAppSRT = Some(|a0| { t(1017); t(pi(a0)); (fv() & 1) as i32 });
     }
 }
@@ -428,7 +428,7 @@ pub fn hasho_all() {
         hm(m::hsd_804D78E2 as u32);
         hm(m::numPeakParticles as u32);
         for i0 in 0..8 {
-        hm(pi(m::hsd_804D08E8[i0]));
+        hm(pi(m::psPointJObj[i0]));
         }
         for i0 in 0..16 {
         hm(pi(m::hsd_804D0908[i0]));
@@ -455,7 +455,7 @@ pub fn preg_own() {
         preg(&raw const m::numPeakParticles, core::mem::size_of_val(&m::numPeakParticles));
         preg(&raw const m::hsd_804D78E2, core::mem::size_of_val(&m::hsd_804D78E2));
         preg(&raw const m::numPeakParticles, core::mem::size_of_val(&m::numPeakParticles));
-        preg(&raw const m::hsd_804D08E8, core::mem::size_of_val(&m::hsd_804D08E8));
+        preg(&raw const m::psPointJObj, core::mem::size_of_val(&m::psPointJObj));
         preg(&raw const m::hsd_804D0908, core::mem::size_of_val(&m::hsd_804D0908));
         preg(&raw const m::hsd_804D0F60, core::mem::size_of_val(&m::hsd_804D0F60));
     }

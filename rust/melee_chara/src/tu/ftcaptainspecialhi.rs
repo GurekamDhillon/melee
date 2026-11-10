@@ -259,10 +259,10 @@ pub fn ftCa_SpecialLw_800E5128(gobj: *mut HSD_GObj) {
         st::ftCommon_8007E2F4(&mut *fp, 511);
         st::ftCommon_8007E2FC(gobj);
         if (*vic_fp).ground_or_air == GA_Air {
-            (*fp).anon_221b.set_x221B_b7(0);
+            (*fp).x221B.set_x221B_b7(0);
         } else {
             ext::ftCo_800DB368(vic_fp, fp);
-            (*fp).anon_221b.set_x221B_b7(1);
+            (*fp).x221B.set_x221B_b7(1);
             (*fp).accessory4_cb = Some(cb_ftCa_SpecialLw_800E550C);
         }
     }
@@ -281,7 +281,7 @@ pub fn ftCa_SpecialHiCatch_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCa_Sp
 pub fn ftCa_SpecialHiCatch_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftCa_SpecialHiCatch_Coll");
     unsafe {
-        if (*fpp(gobj)).anon_221b.x221B_b7() == 0 {
+        if (*fpp(gobj)).x221B.x221B_b7() == 0 {
             ext::ft_80083B68(gobj);
         }
     }

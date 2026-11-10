@@ -51,14 +51,14 @@ pub mod ext {
         fn gm_80168B34(ck: CharacterKind, fk: i32, costume: i32) -> f32 = crate::tu::adapt::gm_80168B34__ad8428;
         fn fn_80168E54(ckind: i8, ftkind: i8, team: u8, is_teams: u8) -> () = crate::tu::adapt::fn_80168E54__246570;
         fn fn_80179854() -> () = crate::tu::adapt::fn_80179854__dccf02;
-        fn fn_80179D3C(g: *mut HSD_GObj, a: i32) -> () = crate::tu::adapt::fn_80179D3C__70302b;
-        fn fn_80179D60(g: *mut HSD_GObj, a: i32) -> () = crate::tu::adapt::fn_80179D60__4ab2eb;
-        fn fn_80179D84(g: *mut HSD_GObj, a: i32) -> () = crate::tu::adapt::fn_80179D84__7d94c0;
-        fn fn_80179DA8(g: *mut HSD_GObj, a: i32) -> () = crate::tu::adapt::fn_80179DA8__94304a;
-        fn fn_80179DCC(g: *mut HSD_GObj, a: i32) -> () = crate::tu::adapt::fn_80179DCC__bd00a6;
-        fn fn_80179E34(g: *mut HSD_GObj, a: i32) -> () = crate::tu::adapt::fn_80179E34__ecefd5;
-        fn fn_80179E9C(g: *mut HSD_GObj, a: i32) -> () = crate::tu::adapt::fn_80179E9C__2d3024;
-        fn fn_80179F04(g: *mut HSD_GObj, a: i32) -> () = crate::tu::adapt::fn_80179F04__e82117;
+        fn fn_80179D3C(g: *mut HSD_GObj, a: isize) -> () = crate::tu::adapt::fn_80179D3C__70302b;
+        fn fn_80179D60(g: *mut HSD_GObj, a: isize) -> () = crate::tu::adapt::fn_80179D60__4ab2eb;
+        fn fn_80179D84(g: *mut HSD_GObj, a: isize) -> () = crate::tu::adapt::fn_80179D84__7d94c0;
+        fn fn_80179DA8(g: *mut HSD_GObj, a: isize) -> () = crate::tu::adapt::fn_80179DA8__94304a;
+        fn fn_80179DCC(g: *mut HSD_GObj, a: isize) -> () = crate::tu::adapt::fn_80179DCC__bd00a6;
+        fn fn_80179E34(g: *mut HSD_GObj, a: isize) -> () = crate::tu::adapt::fn_80179E34__ecefd5;
+        fn fn_80179E9C(g: *mut HSD_GObj, a: isize) -> () = crate::tu::adapt::fn_80179E9C__2d3024;
+        fn fn_80179F04(g: *mut HSD_GObj, a: isize) -> () = crate::tu::adapt::fn_80179F04__e82117;
         fn gm_SetDbPauseFlag(bit: i32) -> () = crate::tu::adapt::gm_SetDbPauseFlag__fad6e4;
         fn gm_801A4B60() -> () = crate::tu::adapt::gm_801A4B60__d469d9;
         /// gmresult.c (ported: forwarded)
@@ -852,7 +852,7 @@ pub unsafe fn gmRst_GenoRetailPortrait(tobj: *mut HSD_TObj, base: i32, costume: 
         if palette.is_null() || (*palette).lut.is_null() {
             return false;
         }
-        desc.lut = (*palette).lut;
+        desc.lut = (*palette).lut as *mut u16;
         desc.fmt = (*palette).fmt;
         desc.tlut_name = (*palette).tlut_name;
         desc.n_entries = (*palette).n_entries;
@@ -921,7 +921,7 @@ pub unsafe fn fn_80177748() {
             let jobjs = addr_of_mut!((*d).player_data[i].jobjs);
             let j0 = (*jobjs)[0];
             ext::HSD_JObjClearFlagsAll(j0, JOBJ_HIDDEN as u32);
-            if gmRst_GenoCard(j0, ckind, (*ps).anon_3.anon_0.x3_b0() as i32) {
+            if gmRst_GenoCard(j0, ckind, (*ps).x3_u.x0.x3_b0() as i32) {
                 // Geno handled package art, retail fallback or initials.
             } else if gmRst_IsMex(ckind) {
                 // m-ex: IfAll's emblem atlas at insignia[external id]; no emblem at all rather
@@ -1422,7 +1422,7 @@ pub unsafe fn fn_80178BB4_init_players(d: *mut ResultsData, match_end: *mut Matc
             }
 
             if (*match_end).match_kind != 3 {
-                let mut taunt_frame = ext::gm_80168B34((*ps).ckind as CharacterKind, (*ps).ftkind as i32, (*ps).anon_3.anon_0.x3_b0() as i32);
+                let mut taunt_frame = ext::gm_80168B34((*ps).ckind as CharacterKind, (*ps).ftkind as i32, (*ps).x3_u.x0.x3_b0() as i32);
                 let taunt_jobj = (*pd).jobjs[7];
                 // m-ex: the stock icon from IfAll's Stc_icns (the second DObj, as m-ex attaches
                 // it); none rather than another fighter's without one.
@@ -1432,12 +1432,12 @@ pub unsafe fn fn_80178BB4_init_players(d: *mut ResultsData, match_end: *mut Matc
                 if geno_stock {
                     // Establish the retail fallback before trying a package.
                     taunt_frame = if geno_base >= 0 {
-                        ext::gm_80168B34(geno_base as CharacterKind, 0, (*ps).anon_3.anon_0.x3_b0() as i32)
+                        ext::gm_80168B34(geno_base as CharacterKind, 0, (*ps).x3_u.x0.x3_b0() as i32)
                     } else {
                         0.0f32
                     };
                 } else if gmRst_IsMex(ckind) {
-                    let mex = ext::gm_MexStockFrame((*ps).ftkind as i32, (*ps).anon_3.anon_0.x3_b0() as i32);
+                    let mex = ext::gm_MexStockFrame((*ps).ftkind as i32, (*ps).x3_u.x0.x3_b0() as i32);
                     if mex >= 0.0f32 && gmRst_MexAttach(taunt_jobj, 1, true) {
                         taunt_frame = mex;
                     } else {
@@ -1449,7 +1449,7 @@ pub unsafe fn fn_80178BB4_init_players(d: *mut ResultsData, match_end: *mut Matc
                 ext::HSD_JObjAnimAll(taunt_jobj);
                 ext::HSD_AObjSetRate((*(*pd).jobjs[7]).aobj, 1.0f32);
                 ext::HSD_AObjSetCurrentFrame((*(*pd).jobjs[7]).aobj, 0.0f32);
-                if geno_stock && !gmRst_GenoApplyArt(gmRst_GenoTObjAt(taunt_jobj, 1), ckind, 2, (*ps).anon_3.anon_0.x3_b0() as i32) {
+                if geno_stock && !gmRst_GenoApplyArt(gmRst_GenoTObjAt(taunt_jobj, 1), ckind, 2, (*ps).x3_u.x0.x3_b0() as i32) {
                     if geno_base >= 0 {
                         ext::OSReport(c"geno: results stock of ck %d: retail ck %d\n".as_ptr(), &[Va::I32(ckind), Va::I32(geno_base)]);
                     } else {

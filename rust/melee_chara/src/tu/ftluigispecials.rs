@@ -155,7 +155,7 @@ pub fn ftLg_SpecialS_SetVars(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[0] = 0;
         if ((*fp).active_sticky.lstick.x as f32) < (*sa).x4_LUIGI_GREENMISSILE_SMASH {
             (*fp).mv.lg.SpecialS.chargeFrames = melee_core::ppc::fctiwz_f32((*sa).x8_LUIGI_GREENMISSILE_CHARGE_RATE);
-            (*fp).x2070.anon_0.set_count_thrown_items(1);
+            (*fp).x2070.x0.set_count_thrown_items(1);
         } else {
             (*fp).mv.lg.SpecialS.chargeFrames = 0;
         }

@@ -172,7 +172,7 @@ pub fn ftKb_SpecialNSk_8010603C(gobj: *mut HSD_GObj) {
 
 /// Shared start of the two Enters after the motion change.
 unsafe fn enter_tail(gobj: *mut HSD_GObj, fp: *mut Fighter) {
-    (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+    (*fp).x2210.x0.set_throw_flags_b0(0);
     (*fp).cmd_vars = [0; 4];
     (*fp).mv.kb.specialhi.x0 = 0;
     if (*fp).u.kb.xB4 == 0 {

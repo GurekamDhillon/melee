@@ -45,9 +45,9 @@ pub mod ext {
         fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32) -> () = crate::tu::adapt::HSD_AObjSetRate__1c2c90;
         fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj = crate::tu::adapt::HSD_CObjLoadDesc__66a547;
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void) -> ();
-        fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) -> ();
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
-        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: i32) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
+        fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) -> ();
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: isize) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc;
         fn HSD_JObjAnimAll(a0: *mut HSD_JObj) -> ();
         fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, flags: u32) -> ();

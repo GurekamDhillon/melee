@@ -50,7 +50,7 @@ pub mod ext {
 /// `ftCo_SpawnEf` (ftCommon/inlines.h).
 fn spawn_ef(g: G, joint: *mut HSD_JObj, arg2: u32, arg3: u32) {
     let f = fp(g);
-    ext::efAsync_Spawn(g, &mut f.x60C as *mut *mut core::ffi::c_void as *mut core::ffi::c_void, arg2, arg3, joint);
+    ext::efAsync_Spawn(g, (&raw mut f.x60C) as *mut *mut core::ffi::c_void as *mut core::ffi::c_void, arg2, arg3, joint);
 }
 
 pub fn ftCo_80098B20(g: G) {

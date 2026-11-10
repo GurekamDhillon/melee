@@ -137,7 +137,7 @@ fn fill_fighter(p: &mut Fighter, own: *mut HSD_GObj) {
         p.hitlag_cb = None;
         p.pre_hitlag_cb = None;
         p.post_hitlag_cb = None;
-        p.x1064_thrownHitbox.anon_134.owner = core::ptr::null_mut();
+        p.x1064_thrownHitbox.x134.owner = core::ptr::null_mut();
         p.dmg.x190C = core::ptr::null_mut();
     }
     p.motion_id = if rnd() % 4 == 0 { (rnd() % 400) as _ } else { MSL[(rnd() % 25) as usize] as _ };
@@ -156,8 +156,8 @@ fn fill_fighter(p: &mut Fighter, own: *mut HSD_GObj) {
     } else {
         -1.0
     };
-    p.x618_player_id = (rnd() % 4) as _;
-    p.player_id = (rnd() % 4) as _;
+    p.pad_port = (rnd() % 4) as _;
+    p.player_idx = (rnd() % 4) as _;
     p.active_timer.lstick.x = (rnd() % 8) as _;
     p.active_timer.lstick.y = (rnd() % 8) as _;
     p.active_sticky.lstick.x = (rnd() % 4) as _;
@@ -175,7 +175,7 @@ fn fill_fighter(p: &mut Fighter, own: *mut HSD_GObj) {
     p.set_is_sub_fighter((rnd() & 1) as _);
     p.set_x2219_b5((rnd() & 1) as _);
     p.set_x221A_b3((rnd() & 1) as _);
-    p.anon_221b.set_x221B_b5((rnd() & 1) as _);
+    p.x221B.set_x221B_b5((rnd() & 1) as _);
     p.set_x221C_b0((rnd() & 1) as _);
     p.set_x221C_b6((rnd() & 1) as _);
     p.set_x221D_b7((rnd() & 1) as _);
@@ -183,7 +183,7 @@ fn fill_fighter(p: &mut Fighter, own: *mut HSD_GObj) {
     p.set_x2220_b4((rnd() % 4 == 0) as u32 as _);
     p.set_x2221_b1((rnd() & 1) as _);
     p.set_x2222_b0((rnd() & 1) as _);
-    p.set_x2224_b2((rnd() & 1) as _);
+    p.set_stamina_dead((rnd() & 1) as _);
     p.set_x2227_b4((rnd() & 1) as _);
 }
 
@@ -214,7 +214,7 @@ fn hash_fighter(h: &mut Hs, p: &Fighter) {
         tmp.hitlag_cb = None;
         tmp.pre_hitlag_cb = None;
         tmp.post_hitlag_cb = None;
-        tmp.x1064_thrownHitbox.anon_134.owner = core::ptr::null_mut();
+        tmp.x1064_thrownHitbox.x134.owner = core::ptr::null_mut();
         tmp.dmg.x190C = core::ptr::null_mut();
         let bf = core::mem::offset_of!(Fighter, bf_2218);
         core::ptr::write_bytes((&mut *tmp as *mut Fighter as *mut u8).add(bf), 0, 19);
@@ -225,7 +225,7 @@ fn hash_fighter(h: &mut Hs, p: &Fighter) {
     h.m(p.is_sub_fighter() as u32);
     h.m(p.x2219_b5() as u32);
     h.m(p.x221A_b3() as u32);
-    h.m(p.anon_221b.x221B_b5() as u32);
+    h.m(p.x221B.x221B_b5() as u32);
     h.m(p.x221C_b0() as u32);
     h.m(p.x221C_b6() as u32);
     h.m(p.x221D_b7() as u32);
@@ -233,7 +233,7 @@ fn hash_fighter(h: &mut Hs, p: &Fighter) {
     h.m(p.x2220_b4() as u32);
     h.m(p.x2221_b1() as u32);
     h.m(p.x2222_b0() as u32);
-    h.m(p.x2224_b2() as u32);
+    h.m(p.stamina_dead() as u32);
     h.m(p.x2227_b4() as u32);
     let w = unsafe {
         core::slice::from_raw_parts(&*tmp as *const Fighter as *const u32, core::mem::size_of::<Fighter>() / 4)
@@ -574,7 +574,7 @@ fn ftCo_Damage_matches_c() {
                 f().item_gobj = igo() as *mut _;
             }
             if rnd() & 1 != 0 {
-                f().x1064_thrownHitbox.anon_134.owner = go2();
+                f().x1064_thrownHitbox.x134.owner = go2();
             }
             if rnd() & 1 != 0 {
                 f2().pre_hitlag_cb = Some(pre_cb);

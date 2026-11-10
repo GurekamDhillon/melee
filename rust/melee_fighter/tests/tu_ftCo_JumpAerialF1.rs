@@ -49,7 +49,7 @@ fn ftCo_JumpAerialF1_matches_c() {
             x2d0.x30 = (rnd() % 400) as i32;
             let fr = f();
             fr.x2D0 = x2d0 as *mut _;
-            fr.player_id = (rnd() % 6) as u8;
+            fr.player_idx = (rnd() % 6) as u8;
             fr.x1968_jumpsUsed = (rnd() % 7) as u8;
             fr.motion_id = if rnd() & 3 == 0 { 0x9B } else { (rnd() % 400) as i32 };
             fr.input.lstick[0].x = rg();

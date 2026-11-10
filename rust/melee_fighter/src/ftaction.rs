@@ -57,12 +57,12 @@ skips! {
 
 /// `ftAction_80071908`: `throw_flags_b1 = true`.
 pub fn ftaction_80071908(g: G, cmd: &mut CommandInfo) {
-    unsafe { fp(g).anon_2210.anon_0.set_throw_flags_b1(1) };
+    unsafe { fp(g).x2210.x0.set_throw_flags_b1(1) };
     skip_cmd(cmd, 1);
 }
 /// `ftAction_8007192C`: `throw_flags_b2 = true`.
 pub fn ftaction_8007192c(g: G, cmd: &mut CommandInfo) {
-    unsafe { fp(g).anon_2210.anon_0.set_throw_flags_b2(1) };
+    unsafe { fp(g).x2210.x0.set_throw_flags_b2(1) };
     skip_cmd(cmd, 1);
 }
 /// `ftAction_80071950`: `allow_interrupt = true`.
@@ -72,6 +72,6 @@ pub fn ftaction_80071950(g: G, cmd: &mut CommandInfo) {
 }
 /// `ftAction_80071974`: `throw_flags_b0 = true`.
 pub fn ftaction_80071974(g: G, cmd: &mut CommandInfo) {
-    unsafe { fp(g).anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { fp(g).x2210.x0.set_throw_flags_b0(1) };
     skip_cmd(cmd, 1);
 }

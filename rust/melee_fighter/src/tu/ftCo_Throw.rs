@@ -68,7 +68,7 @@ pub mod ext {
         ft_80085134(g: G) = crate::ft084e::ft_80085134;
         ft_80085004(g: G) = crate::ft084e::ft_80085004;
         ft_80083C00(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083c00(g as _, ev)); } };
-        ft_80083CE4(g: G, line_cb: unsafe extern "C" fn(G, i32) -> bool, cb: HSD_GObjEvent) = |g: G, line_cb: unsafe extern "C" fn(G, i32) -> bool, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_coll_ev(line_cb, cb, |a, b| crate::tu::ft_081b::ft_80083ce4(g as _, a, b)); } };
+        ft_80083CE4(g: G, line_cb: unsafe extern "C" fn(G, isize) -> bool, cb: HSD_GObjEvent) = |g: G, line_cb: unsafe extern "C" fn(G, isize) -> bool, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_coll_ev(line_cb, cb, |a, b| crate::tu::ft_081b::ft_80083ce4(g as _, a, b)); } };
         ft_80083B68(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80083b68(g as _); } };
         ft_800841B8(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_800841b8(g as _, ev)); } };
         ftFx_Throw_Anim(g: G) = |_| todo!("TODO(port) ftFx_Throw_Anim (ftfoxspecialn.c)");
@@ -157,9 +157,9 @@ pub unsafe extern "C" fn fn_800DD684_cb(g: G) {
     melee_core::ct!("fn_800DD684_cb");
     fn_800DD684(g)
 }
-pub unsafe extern "C" fn fn_800DD6E4_cb(g: G, arg: i32) -> bool {
+pub unsafe extern "C" fn fn_800DD6E4_cb(g: G, arg: isize) -> bool {
     melee_core::ct!("fn_800DD6E4_cb");
-    fn_800DD6E4(g, arg)
+    fn_800DD6E4(g, arg as i32)
 }
 
 pub fn ftCo_800DD100(g: G) {
@@ -167,7 +167,7 @@ pub fn ftCo_800DD100(g: G) {
     let f = fp(g);
     let victim = f.victim_gobj;
     if !victim.is_null() {
-        if f.anon_221b.x221B_b5() != 0 {
+        if f.x221B.x221B_b5() != 0 {
             ext::ftCo_800DC920(g, victim);
         } else {
             ext::ftCo_800DC920(victim, g);
@@ -181,7 +181,7 @@ pub fn ftCo_800DD168(g: G) {
     let f = fp(g);
     let victim = f.victim_gobj;
     if !victim.is_null() {
-        if f.anon_221b.x221B_b5() != 0 {
+        if f.x221B.x221B_b5() != 0 {
             ext::ftCo_800DCFD4(victim);
             ext::ftCo_800DC920(g, victim);
         } else {
@@ -228,7 +228,7 @@ pub fn ftCo_800DD398(g: G, msid: i32, victim_msid: i32, anim_speed: f32) {
     unsafe {
         let f = fp(g);
         f.cmd_vars[0] = 0;
-        f.anon_2210.throw_flags = 0;
+        f.x2210.throw_flags = 0;
         f.mv.co.fighterthrow.x4 = 0;
         f.mv.co.fighterthrow.x8 = 0;
         ext::Fighter_ChangeMotionState(g, msid, 0, 0.0, anim_speed, 0.0, core::ptr::null_mut());
@@ -309,7 +309,7 @@ pub fn fn_800DD5EC(g: G) {
             let f = fp(g);
             ext::OSReport(&format!(
                 "throw: P{} kind {} motion {} never set cmd_var 0 (the release); landing without it\n",
-                f.player_id as i32 + 1,
+                f.player_idx as i32 + 1,
                 f.kind as i32,
                 f.motion_id
             ));
@@ -348,8 +348,8 @@ pub fn ftCo_800DD724(g: G) {
     unsafe {
         let f = fp(g);
         let b4 = unsafe {
-            if f.anon_2210.anon_0.throw_flags_b4() != 0 {
-                f.anon_2210.anon_0.set_throw_flags_b4(0);
+            if f.x2210.x0.throw_flags_b4() != 0 {
+                f.x2210.x0.set_throw_flags_b4(0);
                 true
             } else {
                 false
@@ -359,8 +359,8 @@ pub fn ftCo_800DD724(g: G) {
             f.facing_dir = -f.facing_dir;
         }
         let b3 = unsafe {
-            if f.anon_2210.anon_0.throw_flags_b3() != 0 {
-                f.anon_2210.anon_0.set_throw_flags_b3(0);
+            if f.x2210.x0.throw_flags_b3() != 0 {
+                f.x2210.x0.set_throw_flags_b3(0);
                 true
             } else {
                 false
@@ -371,7 +371,7 @@ pub fn ftCo_800DD724(g: G) {
             ext::ftCommon_8007E2F4(f, 0);
             if !victim.is_null() {
                 let f = fp(g);
-                ext::pl_80040614(f.player_id as i32, f.is_sub_fighter() != 0, fp(victim).grab_timer);
+                ext::pl_80040614(f.player_idx as i32, f.is_sub_fighter() != 0, fp(victim).grab_timer);
                 ftCo_800DE2A8(g, victim);
                 let up = fp(g).motion_id == 222;
                 ext::ftCo_800DE7C0(victim, g, up);
@@ -542,11 +542,11 @@ pub fn ftCo_800DDDE4(g: G, g2: G, arg: bool) {
         let f = &mut *fpp;
         let hit: *mut HitCapsule = f.xDF4.as_mut_ptr();
         let (fp3, fp4): (*mut Fighter, *mut Fighter) =
-            if f.anon_221b.x221B_b7() != 0 { (fp2p, fpp) } else { (fpp, fp2p) };
+            if f.x221B.x221B_b7() != 0 { (fp2p, fpp) } else { (fpp, fp2p) };
         f.x1A5C = core::ptr::null_mut();
         f.victim_gobj = core::ptr::null_mut();
-        f.anon_221b.set_x221B_b5(0);
-        f.anon_221b.set_x221B_b7(0);
+        f.x221B.set_x221B_b5(0);
+        f.x221B.set_x221B_b7(0);
         ext::ftColl_8007891C(g, g2, (*hit).damage);
         if (*fp2p).x1988 != 0 {
             ext::ftColl_8007B62C(g2, 0);
@@ -564,8 +564,8 @@ pub fn ftCo_800DDDE4(g: G, g2: G, arg: bool) {
         }
         // Argument order of the oracle build (x86-64 clang evaluates call args right to left);
         // the three getters are pure, so the order is not observable in the game.
-        let c = ext::Player_GetDefenseRatio((*fp2p).player_id as i32);
-        let b = ext::Player_GetAttackRatio((*fpp).player_id as i32);
+        let c = ext::Player_GetDefenseRatio((*fp2p).player_idx as i32);
+        let b = ext::Player_GetAttackRatio((*fpp).player_idx as i32);
         let a = ext::gm_8016B248();
         (*fp2p).dmg.kb_applied = ext::ftColl_80079AB0(fp2p, hit, (*hit).unk_count, a, b, c, cd().x10C);
         (*fp2p).dmg.kb_applied = ext::ScriptGame_HitRuleContact(hit, fp2p, (*fp2p).dmg.kb_applied, 1);
@@ -613,7 +613,7 @@ pub fn ftCo_800DDDE4(g: G, g2: G, arg: bool) {
         let f2 = &mut *fp2p;
         f2.x1A5C = core::ptr::null_mut();
         f2.victim_gobj = core::ptr::null_mut();
-        f2.anon_221b.set_x221B_b7(0);
+        f2.x221B.set_x221B_b7(0);
     }
 }
 
@@ -637,8 +637,8 @@ pub fn ftCo_800DE2F0(g: G) {
     let f: *mut Fighter = fp(g);
     unsafe {
         // Oracle argument order (right to left); the getters are pure.
-        let d = ext::ScriptGame_ModValue((*f).player_id as i32, 9, (*f).co_attrs.weight);
-        let c = ext::Player_GetDefenseRatio((*f).player_id as i32);
+        let d = ext::ScriptGame_ModValue((*f).player_idx as i32, 9, (*f).co_attrs.weight);
+        let c = ext::Player_GetDefenseRatio((*f).player_idx as i32);
         let a = ext::gm_8016B248();
         (*f).dmg.kb_applied = ext::ftColl_80079AB0(f, &mut hit, hit.unk_count, a, 1.0, c, d);
         let f = &mut *f;

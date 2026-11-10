@@ -139,12 +139,12 @@ pub mod ext {
                     None => { return unsafe { crate::tu::ground::Ground_GetStageGObj(a0 as _) as _ }; },
                 }
             }
-    pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, u8, u32)> = None;
-    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
-    pub static mut H_grDisplay_801C5DB0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
-            pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+    pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, u8, u32)> = None;
+    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
+    pub static mut H_grDisplay_801C5DB0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: isize)  {
                 match H_grDisplay_801C5DB0 {
-                    Some(f) => f(a0, a1),
+                    Some(f) => f(a0, a1 as isize),
                     None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },
                 }
             }
@@ -152,10 +152,10 @@ pub mod ext {
     pub unsafe extern "C" fn HSD_GObj_SetupProc(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc { match H_HSD_GObj_SetupProc { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ } } }
     pub static mut H_OSReport: Option<unsafe fn(*const i8, &[u64])> = None;
     pub unsafe fn OSReport(f: *const i8, a: &[u64]) { match H_OSReport { Some(h) => h(f, a), None => unsafe { melee_runtime::tu::os_error::OSReport(f, &a.iter().map(|x| *x as usize).collect::<std::vec::Vec<usize>>()) } } }
-    pub static mut H_Ground_801C3FA4: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) -> *mut melee_types::HSD_JObj> = None;
+    pub static mut H_Ground_801C3FA4: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) -> *mut melee_types::HSD_JObj> = None;
             pub unsafe extern "C" fn Ground_801C3FA4(a0: *mut melee_types::HSD_GObj, a1: i32) -> *mut melee_types::HSD_JObj {
                 match H_Ground_801C3FA4 {
-                    Some(f) => f(a0, a1),
+                    Some(f) => f(a0, a1 as isize),
                     None => { return unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ }; },
                 }
             }
@@ -555,7 +555,7 @@ const fn cb(
     callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>,
     flags: u32,
 ) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, x10: StageCallbacks_x10 { flags: u32::to_be(flags) } }
 }
 
 pub static mut grVe_StageCallbacks: [StageCallbacks; 16] = [
@@ -834,10 +834,10 @@ pub unsafe extern "C" fn grVenom_8020362C() {
             if grVe_804D6A38 <= 0 {
                 let gp = (*ext::Ground_GetMapGObj(7)).user_data as *mut Ground;
                 let st = &raw mut (*gp).u.venom2.xE0_state;
-                let mut group_a: i32 = ((*st).anon_0.b3() | (*st).anon_0.b4()) as i32;
-                let mut group_b: i32 = ((*st).anon_0.b0() | (*st).anon_0.b1()) as i32;
-                group_b |= (*st).anon_0.b2() as i32;
-                group_a |= (*st).anon_0.b5() as i32;
+                let mut group_a: i32 = ((*st).x0.b3() | (*st).x0.b4()) as i32;
+                let mut group_b: i32 = ((*st).x0.b0() | (*st).x0.b1()) as i32;
+                group_b |= (*st).x0.b2() as i32;
+                group_a |= (*st).x0.b5() as i32;
                 group_a = if group_a != 0 { 2 } else { 0 };
                 group_b = if group_b != 0 { 1 } else { 0 };
                 let combined = group_b | group_a;
@@ -930,10 +930,10 @@ pub unsafe extern "C" fn grVenom_8020362C() {
                 } else {
                     let gp = (*ext::Ground_GetMapGObj(7)).user_data as *mut Ground;
                     let st = &raw mut (*gp).u.venom2.xE0_state;
-                    let mut group_a: i32 = ((*st).anon_0.b3() | (*st).anon_0.b4()) as i32;
-                    let mut group_b: i32 = ((*st).anon_0.b0() | (*st).anon_0.b1()) as i32;
-                    group_b |= (*st).anon_0.b2() as i32;
-                    group_a |= (*st).anon_0.b5() as i32;
+                    let mut group_a: i32 = ((*st).x0.b3() | (*st).x0.b4()) as i32;
+                    let mut group_b: i32 = ((*st).x0.b0() | (*st).x0.b1()) as i32;
+                    group_b |= (*st).x0.b2() as i32;
+                    group_a |= (*st).x0.b5() as i32;
                     group_a = if group_a != 0 { 2 } else { 0 };
                     group_b = if group_b != 0 { 1 } else { 0 };
                     if (group_b | group_a) == 0 {
@@ -1207,7 +1207,7 @@ pub unsafe extern "C" fn grVenom_80204284(gobj: *mut Ground_GObj) {
                 if !other_gobj.is_null() {
                     let other_gp = GET_GROUND(other_gobj);
                     // `&other_gp->u.venom.xC4` viewed as a `grSmashTaunt_GroundVars*`
-                    ext::grCorneria_801E25C4(other_gobj, &raw mut (*other_gp).u.venom.anon_0 as *mut grSmashTaunt_GroundVars, 4, 6, 0x6B6CC);
+                    ext::grCorneria_801E25C4(other_gobj, &raw mut (*other_gp).u.venom.x0 as *mut grSmashTaunt_GroundVars, 4, 6, 0x6B6CC);
                 }
             } else {
                 ext::ifStatus_802F6898();
@@ -1249,13 +1249,13 @@ pub unsafe extern "C" fn grVenom_80204428(gobj: *mut Ground_GObj) {
     (*gp).u.venom2.xDC = ext::Ground_801C3FA4(gobj, 0x15);
 
     let st = &raw mut (*gp).u.venom2.xE0_state;
-    (*st).anon_0.set_b0(0);
-    (*st).anon_0.set_b1(0);
-    (*st).anon_0.set_b2(0);
-    (*st).anon_0.set_b3(0);
-    (*st).anon_0.set_b4(0);
-    (*st).anon_0.set_b5(0);
-    (*st).anon_0.set_b6(0);
+    (*st).x0.set_b0(0);
+    (*st).x0.set_b1(0);
+    (*st).x0.set_b2(0);
+    (*st).x0.set_b3(0);
+    (*st).x0.set_b4(0);
+    (*st).x0.set_b5(0);
+    (*st).x0.set_b6(0);
 
     *venom2_xe4(gp) = 0.0f32;
 
@@ -1344,7 +1344,7 @@ pub unsafe extern "C" fn grVenom_8020454C(gobj: *mut Ground_GObj) {
                 ext::Ground_801C53EC(0x6B6C6);
             }
             if (xe4 < 2460.0f32 && 2460.0f32 <= frame) || (xe4 < 6440.0f32 && 6440.0f32 <= frame) || (xe4 < 9330.0f32 && 9330.0f32 <= frame) {
-                (*st).anon_0.set_b6(1);
+                (*st).x0.set_b6(1);
             }
             if (xe4 < 2460.0f32 && 2460.0f32 <= frame)
                 || (xe4 < 2747.0f32 && 2747.0f32 <= frame)
@@ -1360,45 +1360,45 @@ pub unsafe extern "C" fn grVenom_8020454C(gobj: *mut Ground_GObj) {
                 ext::Ground_801C53EC(0x6B6C7);
             }
             if (xe4 < 4070.0f32 && 4070.0f32 <= frame) || (xe4 < 7220.0f32 && 7220.0f32 <= frame) || (xe4 > frame) {
-                (*st).anon_0.set_b6(0);
+                (*st).x0.set_b6(0);
             }
             if xe4 < 4200.0f32 && 4200.0f32 <= frame {
-                (*st).anon_0.set_b0(1);
+                (*st).x0.set_b0(1);
             }
             if xe4 < 3800.0f32 && 3800.0f32 <= frame {
-                (*st).anon_0.set_b1(1);
+                (*st).x0.set_b1(1);
             }
             if xe4 < 4400.0f32 && 4400.0f32 <= frame {
                 ext::Ground_801C5440(gp, 0, 0x6B6C4);
-                (*st).anon_0.set_b2(1);
+                (*st).x0.set_b2(1);
                 ext::mpJointListAdd(2);
             }
             if xe4 < 6100.0f32 && 6100.0f32 <= frame {
                 ext::Ground_801C5440(gp, 0, 0x6B6C3);
-                (*st).anon_0.set_b0(0);
-                (*st).anon_0.set_b1(0);
-                (*st).anon_0.set_b2(0);
+                (*st).x0.set_b0(0);
+                (*st).x0.set_b1(0);
+                (*st).x0.set_b2(0);
                 ext::mpLib_80057BC0(2);
             }
             if xe4 < 7210.0f32 && 7210.0f32 <= frame {
-                (*st).anon_0.set_b3(1);
+                (*st).x0.set_b3(1);
             }
             if xe4 < 6810.0f32 && 6810.0f32 <= frame {
-                (*st).anon_0.set_b4(1);
+                (*st).x0.set_b4(1);
             }
             if xe4 < 7410.0f32 && 7410.0f32 <= frame {
-                (*st).anon_0.set_b5(1);
+                (*st).x0.set_b5(1);
             }
             if xe4 < 9200.0f32 && 9200.0f32 <= frame {
-                (*st).anon_0.set_b3(0);
-                (*st).anon_0.set_b4(0);
-                (*st).anon_0.set_b5(0);
+                (*st).x0.set_b3(0);
+                (*st).x0.set_b4(0);
+                (*st).x0.set_b5(0);
             }
             *venom2_xe4(gp) = frame;
         }
     }
 
-    ext::lbAudioAx_80024D78(if (*gp).u.venom2.xE0_state.anon_0.b2() == 0 { 1 } else { 2 });
+    ext::lbAudioAx_80024D78(if (*gp).u.venom2.xE0_state.x0.b2() == 0 { 1 } else { 2 });
     grVenom_80204B88(gobj);
 }
 
@@ -1409,7 +1409,7 @@ pub unsafe extern "C" fn grVenom_80204B88(gobj: *mut Ground_GObj) {
     melee_core::ct!("grVenom_80204B88");
     let gp = GET_GROUND(gobj);
     // `*(u8*) &xE0_state.xE0_state_pad`: the first byte of the flag bits in GameCube bit order.
-    let env_flags: u8 = (*gp).u.venom2.xE0_state.anon_0.bf_0[0];
+    let env_flags: u8 = (*gp).u.venom2.xE0_state.x0.bf_0[0];
 
     if (env_flags >> 5) & 1 != 0 {
         if (*gp).u.venom2.xE0_state.xE0_state_pad.state() != 1 {
@@ -1652,10 +1652,10 @@ pub unsafe extern "C" fn grVenom_802056B0(gobj: *mut Ground_GObj) {
     ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
     (*gp).u.venom.xC8 = grVe_804D6A34;
     (*gp).u.venom.xD0 = 0;
-    (*gp).u.venom.anon_18.xDC = 0.0f32;
-    (*gp).u.venom.anon_24.xE8 = 0.0f32;
-    (*gp).u.venom.anon_20.xE4 = 0.0f32;
-    (*gp).u.venom.anon_1c.xE0 = 0.0f32;
+    (*gp).u.venom.x18.xDC = 0.0f32;
+    (*gp).u.venom.x24.xE8 = 0.0f32;
+    (*gp).u.venom.x20.xE4 = 0.0f32;
+    (*gp).u.venom.x1C.xE0 = 0.0f32;
     let joint_offset = grVe_803E5380[(*gp).u.venom.xC8 as usize];
     let joint_id = grVe_803E5680[joint_offset as usize];
     ext::mpJointListAdd(joint_id);
@@ -1828,8 +1828,8 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
                     let j = ext::Ground_801C3FA4(gobj, anim_id);
                     ext::lb_8000B1CC(j, null_mut(), &mut sp94);
                 }
-                if !(*gp).u.venom.anon_18.linked_gobj.is_null() {
-                    let sub = (*(*gp).u.venom.anon_18.linked_gobj).user_data as *mut Ground;
+                if !(*gp).u.venom.x18.linked_gobj.is_null() {
+                    let sub = (*(*gp).u.venom.x18.linked_gobj).user_data as *mut Ground;
                     if !sub.is_null() {
                         (*sub).u.arwing.xE0 = sp94;
                     }
@@ -1840,10 +1840,10 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
                     let anim_id = grVe_803E56A0[idx0 as usize];
                     let helper = ext::Ground_801C3FA4(gobj, anim_id);
                     let rot_z = HSD_JObjGetRotationZ(helper);
-                    if !(*gp).u.venom.anon_18.linked_gobj.is_null() {
-                        let sub = (*(*gp).u.venom.anon_18.linked_gobj).user_data as *mut Ground;
+                    if !(*gp).u.venom.x18.linked_gobj.is_null() {
+                        let sub = (*(*gp).u.venom.x18.linked_gobj).user_data as *mut Ground;
                         if !sub.is_null() {
-                            (*sub).u.venom.anon_18.xDC = rot_z;
+                            (*sub).u.venom.x18.xDC = rot_z;
                         }
                     }
                 }
@@ -2044,7 +2044,7 @@ pub unsafe extern "C" fn grVenom_80206BF0(arg0: i32) -> i32 {
     let gp = (*wgobj).user_data as *mut Ground;
     (*gp).u.venom.xCC = 10;
     (*gp).u.venom.xC8 = 0;
-    (*gp).u.venom.anon_0.xC4 = var_r30 as u32;
+    (*gp).u.venom.x0.xC4 = var_r30 as u32;
     1
 }
 
@@ -2079,7 +2079,7 @@ pub unsafe extern "C" fn grVenom_80206D10(arg0: i32) -> i32 {
     0
 }
 
-pub unsafe extern "C" fn grVenom_80206D74(_arg: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn grVenom_80206D74(_arg: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("grVenom_80206D74");
     null_mut()
 }
@@ -2148,4 +2148,4 @@ pub unsafe extern "C" fn grVenom_80206D7C(pos: *mut Vec3, _arg1: i32, arg2: *mut
     pub extern "C" fn grVenom_80206BBC_fp(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grVenom_80206D74_fp (gr/grvenom.c:1921)
-    pub extern "C" fn grVenom_80206D74_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grVenom_80206D74_fp(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

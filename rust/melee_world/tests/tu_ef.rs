@@ -200,7 +200,7 @@ unsafe fn setup() {
     }
     for i in 0..65 {
         ea::efAsync_DatEntries[i] = core::ptr::read(&raw const DEINIT[i]);
-        ea::efAsync_DatEntries[i].data = if rnd() % 8 != 0 { DESC.as_mut_ptr() as *mut c_void } else { null_mut() };
+        ea::efAsync_DatEntries[i].data = if rnd() % 8 != 0 { DESC.as_mut_ptr() as *mut _ } else { null_mut() };
         ea::efAsync_MexBhv[i] = if rnd() & 1 != 0 { &raw mut BHV } else { null_mut() };
     }
     ea::efAsync_MexReady = (rnd() & 1) as i32;
@@ -214,7 +214,7 @@ unsafe fn setup() {
     for i in 0..ed::efLib_AnimCount as usize { *(el::efLib_AnimQueue.as_mut_ptr() as *mut *mut HSD_JObj).add(i) = &raw mut JO[(rnd() % 16) as usize]; }
     for i in 0..8 {
         g::fill_EF_ParamEntry(&mut el::efLib_ParamTable[i]);
-        el::efLib_ParamTable[i].gobj = if rnd() & 3 != 0 { &raw mut GO[(rnd() % 8) as usize] as *mut c_void } else { null_mut() };
+        el::efLib_ParamTable[i].gobj = if rnd() & 3 != 0 { &raw mut GO[(rnd() % 8) as usize] as *mut _ } else { null_mut() };
         let j = rnd() % 4;
         if j == 0 { el::efLib_ParamTable[i].gfx_id = 0x417; } else if j == 1 { el::efLib_ParamTable[i].gfx_id = 0x419; }
     }
@@ -308,7 +308,7 @@ fn ef_matches_c() {
                     13 => { { let g = gfx() as u32; let p = &raw mut GO[6 + (rnd() & 1) as usize]; let j = &raw mut JO[8 + (rnd() % 8) as usize]; ret = pi(el::efLib_Create_AttachChild_Scale(g, p, j)); } }
                     14 => { { let g = gfx() as u32; let p = &raw mut GO[6 + (rnd() & 1) as usize]; let j = &raw mut JO[8 + (rnd() % 8) as usize]; ret = pi(el::efLib_Create_Attach_Scale_FacingDir(g, p, j)); } }
                     15 => { { let g = gfx() as u32; let p = &raw mut GO[6 + (rnd() & 1) as usize]; ret = pi(el::efLib_Create_Attach_Pos(g, p, &raw mut V3[0])); } }
-                    16 => { el::efLib_render_callback(&raw mut GO[(rnd() % 8) as usize], (rnd() % 5) as i32 - 1); }
+                    16 => { el::efLib_render_callback(&raw mut GO[(rnd() % 8) as usize], (((rnd() % 5) as i32 - 1) as isize)); }
                     17 => { el::efLib_particles_proc_main(&raw mut GO[0]); }
                     18 => { el::efLib_particles_proc_aux(&raw mut GO[0]); }
                     19 => { { let g = gg(); ret = pi(el::efLib_CreateGenerator(g, &raw mut V3[0])); } }

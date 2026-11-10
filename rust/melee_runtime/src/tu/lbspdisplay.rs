@@ -460,7 +460,7 @@ pub unsafe fn lb_8001204C(root: *mut HSD_JObj, result: *mut *mut HSD_JObj, indic
 
 unsafe fn setImageFromPreloadedArchive(image_desc: *mut HSD_ImageDesc, entry_num: i16) -> *mut c_void {
     let image_ptr = ext::lbDvd_GetPreloadedArchive(entry_num as i32);
-    (*image_desc).image_ptr = image_ptr;
+    (*image_desc).image_ptr = image_ptr as *mut u8;
     image_ptr
 }
 
@@ -475,7 +475,7 @@ pub unsafe fn lb_800121FC(image_desc: *mut HSD_ImageDesc, width: i32, height: i3
     hsd_assert((*image_desc).image_ptr.is_null(), "lbspdisplay.c:41 !image_desc->image_ptr");
     let buffer_size = ext::GXGetTexBufferSize((*image_desc).width, (*image_desc).height, (*image_desc).format, 0, 0);
     if entry_num == 0 || setImageFromPreloadedArchive(image_desc, entry_num).is_null() {
-        (*image_desc).image_ptr = ext::HSD_MemAlloc(((buffer_size.wrapping_add(0x1F)) & !0x1F) as i32);
+        (*image_desc).image_ptr = ext::HSD_MemAlloc(((buffer_size.wrapping_add(0x1F)) & !0x1F) as i32) as *mut u8;
     }
     image_desc
 }
@@ -510,7 +510,7 @@ pub unsafe fn lb_800122F0(img: *mut HSD_ImageDesc, tex: *mut _GXTexObj, factor: 
         a: 0,
     };
 
-    ext::GXInitTexObj(tex, (*img).image_ptr, (*img).width, (*img).height, (*img).format, GX_CLAMP, GX_CLAMP, (*img).mipmap as u8);
+    ext::GXInitTexObj(tex, (*img).image_ptr as *mut c_void, (*img).width, (*img).height, (*img).format, GX_CLAMP, GX_CLAMP, (*img).mipmap as u8);
     ext::GXClearVtxDesc();
     ext::GXSetCullMode(GX_CULL_BACK);
     ext::GXSetNumTexGens(1);
@@ -584,7 +584,7 @@ pub unsafe fn lb_8001271C(arg0: *mut _GXTexObj, x0: f32, arg2: f32, tex_width: f
 
 pub unsafe fn lb_8001285C(image_desc: *mut HSD_ImageDesc, tex_obj: *mut _GXTexObj) {
     melee_core::ct!("lb_8001285C");
-    ext::GXInitTexObj(tex_obj, (*image_desc).image_ptr, (*image_desc).width, (*image_desc).height,
+    ext::GXInitTexObj(tex_obj, (*image_desc).image_ptr as *mut c_void, (*image_desc).width, (*image_desc).height,
                       (*image_desc).format, GX_CLAMP, GX_CLAMP, (*image_desc).mipmap as u8);
     ext::GXGetTexObjFmt(tex_obj);
     ext::GXClearVtxDesc();

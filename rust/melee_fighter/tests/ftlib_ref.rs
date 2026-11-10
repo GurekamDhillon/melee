@@ -121,7 +121,7 @@ fn install_hooks() {
         });
         h::FTPARTS_GET_BONE_INDEX = Some(|fp, i| {
             t(0x170u32.wrapping_add(i as u32));
-            (fp.player_id % 8) as i32
+            (fp.player_idx % 8) as i32
         });
         h::FIGHTER_UPDATE_MODEL_SCALE = Some(|g| t(0x180 + e(g)));
         h::LB_8000B1CC = Some(|j, off, out| {
@@ -288,10 +288,10 @@ fn ftlib_matches_c() {
                 f.x890_cameraBox = csp;
                 f.kind = KINDS[(rg.rnd() % 13) as usize];
                 f.x8_spawnNum = (rg.rnd() % 8) as i32;
-                f.player_id = (rg.rnd() % 4) as u8;
-                f.x618_player_id = (rg.rnd() % 4) as u8;
-                f.x619_costume_id = (rg.rnd() % 4) as u8;
-                f.x61A_controller_index = (rg.rnd() % 4) as u8;
+                f.player_idx = (rg.rnd() % 4) as u8;
+                f.pad_port = (rg.rnd() % 4) as u8;
+                f.costume_id = (rg.rnd() % 4) as u8;
+                f.sub_color = (rg.rnd() % 4) as u8;
                 f.team = (rg.rnd() % 3) as u8;
                 f.motion_id = (rg.rnd() % 340) as i32;
                 f.facing_dir = rg.rf();
@@ -352,7 +352,7 @@ fn ftlib_matches_c() {
                 f.set_is_sandbag((rg.rnd() & 1) as _);
                 f.set_is_sub_fighter((rg.rnd() & 1) as _);
                 f.set_x221C_b6((rg.rnd() & 1) as _);
-                f.set_x221D_b4((rg.rnd() & 1) as _);
+                f.set_input_disabled((rg.rnd() & 1) as _);
                 f.set_x221E_b1((rg.rnd() & 1) as _);
                 f.set_x221E_b2((rg.rnd() & 1) as _);
                 f.set_x221E_b3((rg.rnd() & 1) as _);
@@ -361,10 +361,10 @@ fn ftlib_matches_c() {
                 f.set_x221F_b0((rg.rnd() & 1) as _);
                 f.set_x221F_b1((rg.rnd() & 1) as _);
                 f.set_x221F_b2((rg.rnd() & 1) as _);
-                f.set_x221F_b3((rg.rnd() % 4 == 0) as _);
+                f.set_is_sleeping((rg.rnd() % 4 == 0) as _);
                 f.set_x221F_b5((rg.rnd() & 1) as _);
                 f.set_x2220_b7((rg.rnd() % 4 == 0) as _);
-                f.set_x2224_b2((rg.rnd() & 1) as _);
+                f.set_stamina_dead((rg.rnd() & 1) as _);
                 f.set_x2226_b4((rg.rnd() & 1) as _);
                 f.set_x2229_b3((rg.rnd() % 4 == 0) as _);
                 w.da[i].name_tag_height = nth;
@@ -378,13 +378,13 @@ fn ftlib_matches_c() {
             w.cd.x70C = rg.rf();
             w.cd.x710 = rg.rf();
             for i in 0..4 {
-                let c = &mut w.cd.x6DC_colorsByPlayer[i];
+                let c = &mut w.cd.sub_colors[i];
                 c.r = rg.rnd() as u8;
                 c.g = rg.rnd() as u8;
                 c.b = rg.rnd() as u8;
                 c.a = rg.rnd() as u8;
             }
-            w.cd.x6D8[0] = rg.rnd() as i32;
+            w.cd.x6D8 = rg.rnd() as i32;
             let n = rg.rnd() % (NF as u32 + 1);
             let mut used = 0u32;
             let mut prev: G = core::ptr::null_mut();
@@ -543,7 +543,7 @@ fn ftlib_matches_c() {
                 t_h = t_h.wrapping_mul(31).wrapping_add(x as i32);
                 let x = b(f.x34_scale.y) ^ b(f.dmg.x1958).wrapping_mul(5) ^ b(f.dmg.x1830_percent).wrapping_mul(11);
                 t_h = t_h.wrapping_mul(31).wrapping_add(x as i32);
-                let x = (f.x221D_b4() as i32 | (f.x221F_b0() as i32) << 1).wrapping_add(f.x2188.x);
+                let x = (f.input_disabled() as i32 | (f.x221F_b0() as i32) << 1).wrapping_add(f.x2188.x);
                 t_h = t_h.wrapping_mul(31).wrapping_add(x);
             }
             let got = format!(

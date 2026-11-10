@@ -50,7 +50,7 @@ pub mod ext {
     use crate::ext_fns;
     ext_fns! {
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn HSD_GObj_80390CD4(gobj: *mut HSD_GObj);
         fn mn_80229860(a0: i8) = crate::tu::adapt::mn_80229860__033db5;
         fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32 = crate::tu::adapt::mn_8022ED6C__f73cae;

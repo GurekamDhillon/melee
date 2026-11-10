@@ -741,11 +741,11 @@ pub unsafe extern "C" fn HSD_TObjSetup(mut p:*mut HSD_TObj){
                         (*tl).tlut_name=if (*tl).n_entries>=256{let n=big;big+=1;n}else{let n=small;small+=1;n};
                         ext::GXInitTlutObj(&mut tlutobj,(*tl).lut,(*tl).fmt,(*tl).n_entries);ext::GXLoadTlut(&mut tlutobj,(*tl).tlut_name);tluts[count]=tl;count+=1;
                     }else{(*tl).tlut_name=GX_TLUT0;}
-                    ext::GXInitTexObjCI(&mut texobj,im.image_ptr,im.width,im.height,im.format,(*p).wrap_s,(*p).wrap_t,(im.mipmap!=0) as u8,(*tl).tlut_name);
+                    ext::GXInitTexObjCI(&mut texobj,im.image_ptr as *mut c_void,im.width,im.height,im.format,(*p).wrap_s,(*p).wrap_t,(im.mipmap!=0) as u8,(*tl).tlut_name);
                     if min==GX_LIN_MIP_LIN{min=GX_LIN_MIP_NEAR;}
                 }
                 GX_TF_I4|GX_TF_I8|GX_TF_IA4|GX_TF_IA8|GX_TF_RGB565|GX_TF_RGB5A3|GX_TF_RGBA8|GX_TF_CMPR=>
-                    ext::GXInitTexObj(&mut texobj,im.image_ptr,im.width,im.height,im.format,(*p).wrap_s,(*p).wrap_t,(im.mipmap!=0) as u8),
+                    ext::GXInitTexObj(&mut texobj,im.image_ptr as *mut c_void,im.width,im.height,im.format,(*p).wrap_s,(*p).wrap_t,(im.mipmap!=0) as u8),
                 _=>panic!("tobj.c:1655 format"),
             }
             if im.mipmap==0{min&=1;}
@@ -777,7 +777,7 @@ pub unsafe extern "C" fn HSD_ImageDescFree(p:*mut HSD_ImageDesc){ melee_core::ct
 pub unsafe extern "C" fn HSD_ImageDescCopyFromEFB(p:*mut HSD_ImageDesc,x:u16,y:u16,clear:u8,sync:i32){
     melee_core::ct!("HSD_ImageDescCopyFromEFB");
     if p.is_null(){return;}ext::GXSetTexCopySrc(x,y,(*p).width,(*p).height);ext::GXSetTexCopyDst((*p).width,(*p).height,(*p).format,((*p).mipmap!=0) as u8);
-    if clear!=0{ext::HSD_StateSetZMode(1,GX_LEQUAL as i32,1);}ext::GXCopyTex((*p).image_ptr,clear);if sync!=0{ext::GXPixModeSync();ext::GXInvalidateTexAll();}
+    if clear!=0{ext::HSD_StateSetZMode(1,GX_LEQUAL as i32,1);}ext::GXCopyTex((*p).image_ptr as *mut c_void,clear);if sync!=0{ext::GXPixModeSync();ext::GXInvalidateTexAll();}
 }
 pub unsafe extern "C" fn TObjRelease(o:*mut HSD_Class){
     melee_core::ct!("TObjRelease");

@@ -64,7 +64,7 @@ static void setup(void)
     ITEM.entity = &G; REFITEM.entity = &REFG; NEWITEM.entity = &NEWG;
     for (i = 0; i < 64; i++) ATTR[i] = rw();
     fill_ItemAttr(&IATTR); fill_ItemCommonData(&ICD);
-    ART.x0_common_attr = &IATTR; ART.x4_specialAttributes = ATTR; ART.x10_modelDesc = &MD;
+    ART.x0_common_attr = &IATTR; ART.x4_specialAttributes = (union ItemSpecialAttributes*) ATTR; ART.x10_modelDesc = &MD;
     MD.x0_joint = (rnd() % 3u == 0) ? 0 : &JNT;
     MD.x4_bone_count = fv(); MD.x8_bone_attach_id = (int) fv();
     switch (rnd() % 4u) { case 0: ITEM.owner = 0; break; case 1: ITEM.owner = &OWN; break; default: ITEM.owner = &OWN; break; }

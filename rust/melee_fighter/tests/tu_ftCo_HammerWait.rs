@@ -62,7 +62,7 @@ fn ftCo_HammerWait_matches_c() {
             fr.cur_anim_frame = rg(); fr.frame_speed_mul = rg();
             fr.item_gobj = if rnd() & 1 != 0 { igo() as *mut Item_GObj } else { core::ptr::null_mut() };
             fr.ground_or_air = (rnd() & 1) as _;
-            fr.player_id = (rnd() % 6) as _; fr.set_is_sub_fighter((rnd() & 1) as _);
+            fr.player_idx = (rnd() % 6) as _; fr.set_is_sub_fighter((rnd() & 1) as _);
             fr.set_x2219_b4((rnd() & 1) as u8);
             cd().x6AC = (rnd() % 1000) as i32 - 5; cd().x6B8 = (rnd() % 1000) as i32 - 5;
             let g = go();

@@ -70,7 +70,7 @@ unsafe fn setup() {
         g::fill_DevText(&mut DT[i]);
         DT[i].prev = null_mut();
         DT[i].next = null_mut();
-        DT[i].buf = MEM.as_mut_ptr();
+        DT[i].buf = (MEM.as_mut_ptr()) as *mut _;
     }
     for i in 0..4 {
         g::fill_un_80304138_objalloc_t(&mut OBJS[i]);
@@ -109,14 +109,14 @@ unsafe fn setup() {
             e.x1C = rg() * 10.0;
             INTV[mi][i] = fv() as i32;
             VALS[mi][i] = fv64();
-            e.x10 = &raw mut VALS[mi][i] as *mut c_void;
+            e.x10 = un_80304138_objalloc_t_x8_x10 { any: &raw mut VALS[mi][i] as *mut c_void };
             if e.x0 == 2 {
                 e.x14 = 0.0;
                 e.x18 = (1 + rnd() % 3) as f32;
                 INTV[mi][i] = (rnd() % e.x18 as u32) as i32;
-                e.x10 = &raw mut INTV[mi][i] as *mut c_void;
+                e.x10 = un_80304138_objalloc_t_x8_x10 { any: &raw mut INTV[mi][i] as *mut c_void };
             } else if e.x0 == 3 {
-                e.x10 = &raw mut INTV[mi][i] as *mut c_void;
+                e.x10 = un_80304138_objalloc_t_x8_x10 { any: &raw mut INTV[mi][i] as *mut c_void };
             }
         }
         g::fill_un_80304138_objalloc_t(&mut MENU[mi]);

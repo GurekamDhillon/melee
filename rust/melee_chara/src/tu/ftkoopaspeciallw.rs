@@ -161,7 +161,7 @@ pub fn ftKp_SpecialLw_Enter_inline(fp: &mut Fighter) {
     melee_core::ct!("ftKp_SpecialLw_Enter_inline");
     fp.cmd_vars[1] = 0;
     fp.cmd_vars[0] = 0;
-    unsafe { fp.anon_2210.anon_0.set_throw_flags_b0(0) };
+    unsafe { fp.x2210.x0.set_throw_flags_b0(0) };
     fp.x6A4_transNOffset.y = 0.0;
     fp.set_x2223_b4(1);
 }

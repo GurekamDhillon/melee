@@ -36,10 +36,10 @@ mod gen_stubs {
     fn t_HSD_GObjGXLink_8039084C(a0: *mut HSD_GObj) { unsafe { out("HSD_GObjGXLink_8039084C"); trp(a0 as *const u8); out("\n");  } }
     fn t_HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { unsafe { out("HSD_GObjObject_80390A70"); trp(a0 as *const u8); tri(a1 as i64); trp(a2 as *const u8); out("\n"); (*a0).hsd_obj = a2;  } }
     fn t_HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) { unsafe { out("HSD_GObj_80390ED0"); trp(a0 as *const u8); tru(a1 as u64); out("\n");  } }
-    fn t_HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_803910D8"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
-    fn t_HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_FogCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
-    fn t_HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_JObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
-    fn t_HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_LObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_803910D8"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_FogCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_JObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_LObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
     fn t_HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc { unsafe { out("HSD_GObj_SetupProc"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); tri(a2 as i64); out("\n"); (core::ptr::addr_of_mut!(G_PROC)) as *mut HSD_GObjProc } }
     fn t_HSD_ImageDescCopyFromEFB(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: u8, a4: i32) { unsafe { out("HSD_ImageDescCopyFromEFB"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); tri(a3 as i64); tri(a4 as i64); out("\n");  } }
     fn t_HSD_JObjAnimAll(a0: *mut HSD_JObj) { unsafe { out("HSD_JObjAnimAll"); trp(a0 as *const u8); out("\n");  } }
@@ -48,8 +48,8 @@ mod gen_stubs {
     fn t_HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { unsafe { out("HSD_JObjSetMtxDirtySub"); trp(a0 as *const u8); out("\n");  } }
     fn t_HSD_Randf() -> f32 { unsafe { out("HSD_Randf"); out("\n"); (((rnd() % 1000) as f32) / 1000.0) as f32 } }
     fn t_HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: i32, a3: i32, a4: u8, a5: u8) -> *mut HSD_SObj { unsafe { out("HSD_SObjLib_803A477C"); trp(a0 as *const u8); trp(a1 as *const u8); tri(a2 as i64); tri(a3 as i64); tri(a4 as i64); tri(a5 as i64); out("\n"); trp((*a1).image as *const u8); trp((*a1).tlut as *const u8); trp((*(a1 as *mut HSD_SObjDesc2)).image2 as *const u8); out("\n"); az(core::mem::size_of::<HSD_SObj>()) as *mut HSD_SObj } }
-    fn t_HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_SObjLib_803A49E0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
-    fn t_HSD_SObjLib_803A54EC(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_SObjLib_803A54EC"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_SObjLib_803A49E0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_SObjLib_803A54EC(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_SObjLib_803A54EC"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
     fn t_HSD_SObjLib_803A55DC(a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32) { unsafe { out("HSD_SObjLib_803A55DC"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); tri(a3 as i64); out("\n");  } }
     fn t_HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text { unsafe { out("HSD_SisLib_803A5ACC"); tri(a0 as i64); tri(a1 as i64); trf(a2); trf(a3); trf(a4); trf(a5); trf(a6); out("\n"); az(core::mem::size_of::<HSD_Text>()) as *mut HSD_Text } }
     fn t_HSD_SisLib_803A611C(a0: i32, a1: *mut HSD_GObj, a2: u16, a3: u8, a4: u8, a5: u8, a6: u8, a7: u32) -> i32 { unsafe { out("HSD_SisLib_803A611C"); tri(a0 as i64); trp(a1 as *const u8); tri(a2 as i64); tri(a3 as i64); tri(a4 as i64); tri(a5 as i64); tri(a6 as i64); tru(a7 as u64); out("\n"); (rnd() % 3) as i32 } }

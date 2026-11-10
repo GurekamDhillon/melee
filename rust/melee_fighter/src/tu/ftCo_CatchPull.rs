@@ -101,19 +101,19 @@ pub fn fn_800D9CE8(g: G) {
     }
 
     let f = fp(g);
-    f.anon_2210.throw_flags = 0;
+    f.x2210.throw_flags = 0;
     // TARGET_PC: a fighter with a pull-in clip of its own plays it from its first frame.
     if ext::Geno_MotionAnimRow(f, next_motion) >= 0 {
         ext::Fighter_ChangeMotionState(g, next_motion, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         let f = fp(g);
         f.accessory1_cb = Some(fn_800DA190_cb);
-        f.anon_221b.set_x221B_b7(0);
+        f.x221B.set_x221B_b7(0);
         return;
     }
     ext::Fighter_ChangeMotionState(g, next_motion, 0x4000, start_frame, 1.0, 0.0, core::ptr::null_mut());
     let f = fp(g);
     f.accessory1_cb = Some(fn_800DA190_cb);
-    f.anon_221b.set_x221B_b7(0);
+    f.x221B.set_x221B_b7(0);
 }
 
 pub fn ftCo_CatchPull_Anim(g: G) {
@@ -137,8 +137,8 @@ pub fn ftCo_CatchPull_Anim(g: G) {
             let mut go = true;
             if ext::ftAnim_IsFramesRemaining(g) {
                 let f = fp(g);
-                let result = if unsafe { f.anon_2210.anon_0.throw_flags_b3() } != 0 {
-                    unsafe { f.anon_2210.anon_0.set_throw_flags_b3(0) };
+                let result = if unsafe { f.x2210.x0.throw_flags_b3() } != 0 {
+                    unsafe { f.x2210.x0.set_throw_flags_b3(0) };
                     true
                 } else {
                     false

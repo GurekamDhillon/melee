@@ -171,7 +171,7 @@ unsafe fn joint(b: &mut Builder, j: *mut HSD_JObj) -> u32 {
     let quat = [(*j).rotate.x, (*j).rotate.y, (*j).rotate.z, (*j).rotate.w];
     let pscl = if par.is_null() || (*par).scl.is_null() { None } else { Some(v3(&*(*par).scl)) };
     let world = m(&(*j).mtx);
-    let targeted = !(*j).aobj.is_null() && !(*(*j).aobj).hsd_obj.is_null();
+    let targeted = !(*j).aobj.is_null() && !(*(*j).aobj).jobj.is_null();
     let mut kind = if fl & MTX_FLAGS_OPAQUE != 0 || !(*j).robj.is_null() || targeted {
         JointKind::Opaque
     } else if fl & crate::jobj::JOBJ_USE_QUATERNION != 0 {

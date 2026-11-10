@@ -535,7 +535,7 @@ pub fn ftKb_SpecialN_800F5EA8(gobj: G) {
 unsafe fn inhale_enter(gobj: G, ms: i32, capture_cb: unsafe extern "C" fn(G), release_cb: unsafe extern "C" fn(G)) {
     let fp = fpp(gobj);
     let da = &*da_of(fp);
-    (*fp).anon_2210.throw_flags = 0;
+    (*fp).x2210.throw_flags = 0;
     (*fp).cmd_vars[1] = 0;
     (*fp).cmd_vars[0] = 0;
     (*fp).u.kb.xE0 = 4;
@@ -719,7 +719,7 @@ unsafe fn inhale_anim(gobj: G, ms: i32, capture_cb: unsafe extern "C" fn(G), rel
     let fp = fpp(gobj);
     let joint = (*(*fp).parts.add(FtPart_YRotN as usize)).joint as *mut core::ffi::c_void;
     if (*fp).cmd_vars[0] != 0 {
-        let q = &mut (*fp).x60C as *mut *mut core::ffi::c_void as *mut core::ffi::c_void;
+        let q = (&raw mut (*fp).x60C) as *mut *mut core::ffi::c_void as *mut core::ffi::c_void;
         let facing = &mut (*fp).facing_dir as *mut f32 as *mut core::ffi::c_void;
         ext::efAsync_Spawn(gobj, q, 3, 0x49A, &[joint, facing]);
         (*fp).set_x2219_b0(1);

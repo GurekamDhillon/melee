@@ -41,8 +41,8 @@ pub fn ftMh_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*fp).dat_attrs = backup;
 
         ext::ftBossLib_ReportGObjSlotType(gobj);
-        ext::it_8026B3F8(*items.add(0), It_Kind_MasterHand_Laser as i32);
-        ext::it_8026B3F8(*items.add(1), It_Kind_MasterHand_Bullet as i32);
+        ext::it_8026B3F8((*items.add(0)).article as *mut ::core::ffi::c_void, It_Kind_MasterHand_Laser as i32);
+        ext::it_8026B3F8((*items.add(1)).article as *mut ::core::ffi::c_void, It_Kind_MasterHand_Bullet as i32);
         (*fp).set_no_normal_motion(1);
         (*fp).set_x2229_b6(1);
         (*fp).set_no_kb(1);

@@ -12,9 +12,9 @@ ITEM_RULES = {
     "Item.xCC_item_attr": ("ptr", "ItemAttr", False),
 }
 # C-side bit-view of every UnkFlagStruct / flag32 union the item code reads as bitfields
-FLAG_UV = {f"Item_x{n}_flag": "anon0" for n in ("DCE", "DCF", "DD0", "DD1", "DD2", "DD3")}
-FLAG_UV.update({f"SpawnItem_x{n}_flag": "anon0" for n in (44, 45, 46, 47)})
-FLAG_UV.update({"Item_anon_477_xDAA_flag": "anon0", "Item_xD90": "anon0"})
+FLAG_UV = {f"Item_x{n}_flag": "x0" for n in ("DCE", "DCF", "DD0", "DD1", "DD2", "DD3")}
+FLAG_UV.update({f"SpawnItem_x{n}_flag": "x0" for n in (44, 45, 46, 47)})
+FLAG_UV.update({"Item_anon_477_xDAA_flag": "x0", "Item_xD90": "x0"})
 JOBJ_SETUP_C = "    for (n = 0; n < 6; n++) P_HSD_JObj[n].flags &= ~(1u << 17);"
 JOBJ_SETUP_RS = "    for n in 0..6usize { g::P_HSD_JObj[n].flags &= !(1u32 << 17); }"
 
@@ -64,7 +64,8 @@ SPECS["itgreatfoxlaser"] = dict(
     effects={**SPAWN_HASH, "lb_8000B1CC": LB_B1CC,
              "ftLib_GetPos": ("{ a1->x = rg(); a1->y = rg(); a1->z = rg(); }", "{ (*a1).x = rg(); (*a1).y = rg(); (*a1).z = rg(); }")},
     setup_c=JOBJ_SETUP_C + "\n" + BONES_C, setup_rs=JOBJ_SETUP_RS + "\n" + BONES_RS,
-    ops=[dict(name="it_802EAF28", uv={"Item_xDD4_itemVar": "likelike"}),
+    # it_802EAF28 retired here: upstream moved it to itleadead.c (55a188dd9 / #3568), compared by kinds_itleadead
+    ops=[
          dict(name="it_802EAF34", args=["p:HSD_GObj", "p:Vec3", "r:0:1"]),
          "it_802EB1EC", "it_802EB268", "itGreatfoxlaser_UnkMotion1_Anim", "itGreatfoxlaser_UnkMotion1_Phys",
          "itGreatFoxLaser_Logic27_DmgDealt", "itGreatFoxLaser_Logic27_Clanked", "itGreatFoxLaser_Logic27_Absorbed",

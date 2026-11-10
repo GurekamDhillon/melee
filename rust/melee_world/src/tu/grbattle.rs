@@ -132,7 +132,7 @@ pub mod ext {
     }
     pub use crate::tu::grinl::ext::stage_info;
     /// `grDisplay_801C5DB0` is only ever passed as a render callback (its address is the argument).
-    pub unsafe extern "C" fn grDisplay_801C5DB0(_gobj: *mut HSD_GObj, _pass: i32) {
+    pub unsafe extern "C" fn grDisplay_801C5DB0(_gobj: *mut HSD_GObj, _pass: isize) {
         { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(_gobj as _, _pass as _); } return; }
     }
 }
@@ -161,7 +161,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
+            x10: StageCallbacks_x10 { flags: u32::to_be($flags) },
         }
     };
 }
@@ -459,7 +459,7 @@ pub unsafe extern "C" fn grBattle_BG_Callback3(_gobj: *mut Ground_GObj) { melee_
     pub extern "C" fn grBattle_BG_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grBattle_OnTouchLine (gr/grbattle.c:428)
-    pub extern "C" fn grBattle_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grBattle_OnTouchLine(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grBattle_OnCheckShadowRender (gr/grbattle.c:433)
     pub extern "C" fn grBattle_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

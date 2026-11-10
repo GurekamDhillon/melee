@@ -189,7 +189,7 @@ pub fn ftYs_SpecialN_8012CDD4(gobj: *mut HSD_GObj) -> *mut HSD_Joint {
     unsafe {
         let fp = fpp(gobj);
         let ca = (*fp).ft_data;
-        *(*ca).x48_items.add(3) as *mut HSD_Joint
+        (*(*ca).x48_items.add(3)).joint
     }
 }
 

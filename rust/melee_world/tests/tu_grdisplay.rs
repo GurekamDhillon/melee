@@ -169,11 +169,11 @@ fn grdisplay_matches_c() {
                     }
                     2 => {
                         let code = fv() as i32;
-                        m::grDisplay_801C5DB0(&raw mut GOBJ, code);
+                        m::grDisplay_801C5DB0(&raw mut GOBJ, code as isize);
                     }
                     _ => {
                         let code = fv() as i32;
-                        m::grDisplay_801C5F60(&raw mut CAMG, code);
+                        m::grDisplay_801C5F60(&raw mut CAMG, code as isize);
                     }
                 }
                 hash_all();

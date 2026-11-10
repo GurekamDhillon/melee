@@ -156,7 +156,7 @@ pub fn ftCo_800978D4_inline(g: G, param: &mut f32) {
 
 fn spawn_406(g: G, param: &mut f32) {
     let f = fp(g);
-    let q: *mut *mut core::ffi::c_void = &mut f.x60C;
+    let q: *mut *mut core::ffi::c_void = (&raw mut f.x60C) as *mut *mut core::ffi::c_void;
     let top = unsafe { (*f.parts.offset(FtPart_TopN as isize)).joint };
     ext::efAsync_Spawn(g, q as *mut core::ffi::c_void, 4, 0x406, top, param);
 }
@@ -312,7 +312,7 @@ pub fn ftCo_80097F38(g: G) {
 pub fn ftCo_DownWait_Anim(g: G) {
     melee_core::ct!("ftCo_DownWait_Anim");
     let f = fp(g);
-    if f.x2224_b2() == 0 {
+    if f.stamina_dead() == 0 {
         unsafe { f.mv.co.downwait.x0 -= 1.0 };
     }
     if unsafe { f.mv.co.downwait.x0 } <= 0.0 {

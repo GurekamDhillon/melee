@@ -50,7 +50,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -63,7 +63,7 @@ static void setup(int prof)
     zero(ARTP, sizeof ARTP); ARTP[117] = &ART[0]; it_804D6D38 = ARTP;
     for (k = 0; k < 3; k++) {
         IT[k].xDD4_itemVar.yaku.x2 = (s16) (1 + (rnd() & 1));
-        if (IT[k].xDD4_itemVar.yaku.x2 == 1) { IT[k].xDD4_itemVar.yaku.x4 = &JO[3 + (rnd() % 3)]; } else { IT[k].xDD4_itemVar.yaku.x4_vec.x = rw(); IT[k].xDD4_itemVar.yaku.x4_vec.y = rw(); IT[k].xDD4_itemVar.yaku.x4_vec.z = rw(); }
+        if (IT[k].xDD4_itemVar.yaku.x2 == 1) { IT[k].xDD4_itemVar.yaku.x4_u.x4 = &JO[3 + (rnd() % 3)]; } else { IT[k].xDD4_itemVar.yaku.x4_u.x4_vec.x = rw(); IT[k].xDD4_itemVar.yaku.x4_u.x4_vec.y = rw(); IT[k].xDD4_itemVar.yaku.x4_u.x4_vec.z = rw(); }
         IT[k].xDD4_itemVar.yaku.x10 = (rnd() & 1) ? (Ground*) GRD : 0;
         IT[k].xDD4_itemVar.yaku.x14 = (rnd() & 1) ? CB6 : 0;
         IT[k].xDD4_itemVar.yaku.x18 = (rnd() & 1) ? CB7 : 0;
@@ -80,9 +80,9 @@ static void hash_all(void)
     HM(PI(ART[0].x0_common_attr));
     for (k = 0; k < 3; k++) {
         HM((u32) IT[k].xDD4_itemVar.yaku.x2);
-        if (IT[k].xDD4_itemVar.yaku.x2 == 1) HM(PI(IT[k].xDD4_itemVar.yaku.x4)); else { HM(B(IT[k].xDD4_itemVar.yaku.x4_vec.x)); HM(B(IT[k].xDD4_itemVar.yaku.x4_vec.y)); HM(B(IT[k].xDD4_itemVar.yaku.x4_vec.z)); }
+        if (IT[k].xDD4_itemVar.yaku.x2 == 1) HM(PI(IT[k].xDD4_itemVar.yaku.x4_u.x4)); else { HM(B(IT[k].xDD4_itemVar.yaku.x4_u.x4_vec.x)); HM(B(IT[k].xDD4_itemVar.yaku.x4_u.x4_vec.y)); HM(B(IT[k].xDD4_itemVar.yaku.x4_u.x4_vec.z)); }
         HM(PI(IT[k].xDD4_itemVar.yaku.x10)); HM(FI((const void*) IT[k].xDD4_itemVar.yaku.x14)); HM(FI((const void*) IT[k].xDD4_itemVar.yaku.x18)); HM(FI((const void*) IT[k].xDD4_itemVar.yaku.x1C));
-        IT[k].xDD4_itemVar.yaku.x4 = 0; IT[k].xDD4_itemVar.yaku.x4_vec.x = 0; IT[k].xDD4_itemVar.yaku.x4_vec.y = 0; IT[k].xDD4_itemVar.yaku.x4_vec.z = 0;
+        IT[k].xDD4_itemVar.yaku.x4_u.x4 = 0; IT[k].xDD4_itemVar.yaku.x4_u.x4_vec.x = 0; IT[k].xDD4_itemVar.yaku.x4_u.x4_vec.y = 0; IT[k].xDD4_itemVar.yaku.x4_u.x4_vec.z = 0;
         IT[k].xDD4_itemVar.yaku.x10 = 0; IT[k].xDD4_itemVar.yaku.x14 = 0; IT[k].xDD4_itemVar.yaku.x18 = 0; IT[k].xDD4_itemVar.yaku.x1C = 0;
     }
     for (k = 0; k < 3; k++) { hash_HSD_GObj(&GO[k]); hash_Item(&IT[k]); hash_ItemAttr(&ATTR[k]); }
@@ -110,9 +110,9 @@ int main(void)
             switch (op) {
             case 0: { Ground* a0 = (Ground*) GRD; int a1 = (int) fv(); int a2 = (int) (fv() % 20); HSD_JObj* a3 = (fv() & 1) ? &JO[3 + (fv() % 3)] : 0; Vec3* a4 = (fv() & 1) ? &VA[0] : 0; int a5 = (int) (fv() & 1); void (*a6)(Item_GObj*, Ground*) = (fv() & 1) ? CB6 : 0; void (*a7)(Item_GObj*, Ground*, Vec3*, HSD_GObj*, f32) = (fv() & 1) ? CB7 : 0; void (*a8)(Item_GObj*, Ground*, HSD_GObj*) = (fv() & 1) ? CB8 : 0; ret = PI(it_802E6AEC(a0, a1, a2, a3, a4, a5, a6, a7, a8)); } break; /* it_802E6AEC */
             case 1: {  it_2E6A_UnkMotion19_Phys(&GO[0]); } break; /* it_2E6A_UnkMotion19_Phys */
-            case 2: {  ret = (u32) it_2E6A_Logic117_DmgDealt(&GO[0]); } break; /* it_2E6A_Logic117_DmgDealt */
-            case 3: {  ret = (u32) it_2E6A_Logic117_DmgReceived(&GO[0]); } break; /* it_2E6A_Logic117_DmgReceived */
-            case 4: {  ret = (u32) it_802E7054(&GO[0]); } break; /* it_802E7054 */
+            case 2: {  ret = (u32) ((it_2E6A_Logic117_DmgDealt(&GO[0])) != 0); } break; /* it_2E6A_Logic117_DmgDealt */
+            case 3: {  ret = (u32) ((it_2E6A_Logic117_DmgReceived(&GO[0])) != 0); } break; /* it_2E6A_Logic117_DmgReceived */
+            case 4: {  ret = (u32) ((it_802E7054(&GO[0])) != 0); } break; /* it_802E7054 */
             case 5: {  it_2E6A_Logic117_EvtUnk(&GO[0], &GO[1]); } break; /* it_2E6A_Logic117_EvtUnk */
             case 6: { { int j; for (j = 0; j < 20; j++) { HM((u32) it_803F8C8C[j].anim_id); HM(FI((const void*) it_803F8C8C[j].animated)); HM(FI((const void*) it_803F8C8C[j].physics_updated)); HM(FI((const void*) it_803F8C8C[j].collided)); } } } break; /* state tables */
             }

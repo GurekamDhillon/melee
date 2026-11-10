@@ -9,9 +9,9 @@ UnkStageDat.unk10	unk14
 UnkStageDat.unk20	unk24
 UnkStageDat.unk28	unk2C	*mut HSD_MObjDesc
 # UnkStageDat_x8_t: per-model tables (stage .dat model set), NULL terminated `T**`; unk20 runs unk24 entries
-UnkStageDat_x8_t.unk4	null[]
-UnkStageDat_x8_t.unk8	null[]
-UnkStageDat_x8_t.unkC	null[]
+UnkStageDat_x8_t.anims	null[]
+UnkStageDat_x8_t.matanims	null[]
+UnkStageDat_x8_t.shapeanims	null[]
 UnkStageDat_x8_t.x18	null
 UnkStageDat_x8_t.unk20	unk24
 UnkStageDat.unk18	unk1C	LightOverrideEntry
@@ -19,8 +19,9 @@ UnkStageDat.unk18	unk1C	LightOverrideEntry
 HSD_Spline.cv	numcv.max(1)*3+4
 HSD_Spline.segLength	numcv.max(1)+1
 HSD_Spline.segPoly	numcv.max(1)+1
-UnkStageDat.unk0	unk4	UnkStageDat_x0_entry
-UnkStageDat_x0_entry.pairs	pair_count*2
+# gr/types.h (upstream #3583): unk0 is a typed `Ground_801C34AC_entry*` of `count` rows; each row's pairs are pair_count GroundJointPair {s16,s16}
+UnkStageDat.unk0	count
+Ground_801C34AC_entry.pairs	pair_count
 # pobj.c: the vertex descriptor lists end with attr == GX_VA_NULL (0xFF); the shape set's index tables have nb_shape entries
 HSD_PObjDesc.verts	until=0xFF
 HSD_ShapeSetDesc.vertex_desc	until=0xFF
@@ -41,6 +42,10 @@ FigaTree.tracks	extent
 # ft/ftcoll.c ftColl_8007B320: the hurtbox init list has `count` entries, the dynamics hit list `x4` entries
 ftData_x30.inits	count
 ftDynamics.x8	x4
+# ftdynamics.c: ftDynamicBones is one BoneDynamicsTemplate per dynamics bone (it was a pointer to a fixed [10] record before upstream
+# typed it `BoneDynamicsTemplate* DAT_COUNT(dynamicsNum)`; one decoded record and `tbl[i]` ran off it: the Marth / Peach goldens crashed).
+# The table runs to the next object, not to dynamicsNum: ftCo_8009DC54 reads Jigglypuff's rows 1..4 with dynamicsNum 3 (replays crashed)
+ftDynamics_x0.ftDynamicBones	extent
 ftData.x38	2
 # ftanim.c ftAnim_80070200: one u16[x8] texture-anim row per costume visibility row (null rows fall back to row 0)
 ftData_x8_x8.xC	tab[x8]
@@ -56,10 +61,9 @@ SIS.textures	extent
 # tobj.c HSD_TObjAddAnim: the texture animation tables hold n_imagetbl / n_tluttbl descriptors
 _HSD_TexAnim.imagetbl	n_imagetbl
 _HSD_TexAnim.tluttbl	n_tluttbl
-# ftCo_Guard.c GUARD_POSE_TREE: ft_data->x20->x0[2] (entries 0 and 1 may be NULL: a count, not a NULL-terminated table)
-ftData_x20.x0	3
-# ftdynamics.c ftCo_8009E7B4: x10[blend slot][bone] is a FigaTree*; the slot count is not stated, the table runs to the next object, each entry has one tree per dynamics bone
-ftDynamics.x10	tab[10]
+# ftdynamics.c ftCo_8009E4A8: x10[blend slot][bone] is an s32 word (ftDynamicsBoneSet, upstream types it `s32*`: a count 1, 2 or 0x100 handed to ftCo_8009CB40's `s32 arg3`);
+# the slot count is not stated, the table runs to the next object, each entry has one word per dynamics bone (10 covers every fighter)
+ftDynamics.x10	tab[10]	*mut s32
 HSD_ExpDesc.rvalue	until=0
 HSD_ByteCodeExpDesc.rvalue	until=0
 UNK_SAMUS_S1.x4_anim_joints	4

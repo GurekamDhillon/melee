@@ -115,7 +115,7 @@ pub fn ftPp_SpecialHi_80122898(gobj: G) {
 
 unsafe fn enter(gobj: G, msid: u32) {
     let fp = fpp(gobj);
-    (*fp).anon_2210.throw_flags = 0;
+    (*fp).x2210.throw_flags = 0;
     (*fp).cmd_vars[0] = 0;
     (*fp).cmd_vars[3] = 0;
     (*fp).mv.pp.speciallw.x0 = 0;

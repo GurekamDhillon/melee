@@ -95,8 +95,8 @@ unsafe fn da(fp: *mut Fighter) -> *mut ftPikachuAttributes {
 /// `ftCheckThrowB0` (ft/inlines.h): test and clear `throw_flags_b0`.
 #[inline(always)]
 unsafe fn ftCheckThrowB0(fp: *mut Fighter) -> bool {
-    if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+    if (*fp).x2210.x0.throw_flags_b0() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b0(0);
         true
     } else {
         false
@@ -122,7 +122,7 @@ pub fn ftPk_SpecialLw_CheckProperty(gobj: G) -> bool {
     melee_core::ct!("ftPk_SpecialLw_CheckProperty");
     unsafe {
         let fp = fpp(gobj);
-        let value = (*fp).x2070.anon_0.x2071_b0_3() as i32;
+        let value = (*fp).x2070.x0.x2071_b0_3() as i32;
         matches!(value, 1 | 2 | 4..=13)
     }
 }
@@ -206,7 +206,7 @@ unsafe fn start_anim(gobj: G, msid: i32) {
         let fp = fpp(gobj);
         st::Fighter_ChangeMotionState(gobj, msid, 2048, 0.0, 1.0, 0.0, core::ptr::null_mut());
         let fighter_copy = fpp(gobj);
-        (*fighter_copy).anon_2210.throw_flags = 0;
+        (*fighter_copy).x2210.throw_flags = 0;
         (*fighter_copy).take_dmg_cb = Some(crate::chars::cb::ftpikachuspeciallw__ftPk_SpecialLw_SetState_Unk1);
         (*fp).accessory4_cb = Some(cb_ftPk_SpecialLw_SpawnEffect);
     }
@@ -503,7 +503,7 @@ pub fn ftPk_SpecialLw_Enter(gobj: *mut HSD_GObj) {
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         (*fp).mv.pk.specialhi.x4 = 1_i32;
         (*fp).mv.pk.specialhi.x0 = 0_i32;
         // the C writes the SpecialLw vars through the SpecialHi view (`x0` a 4-byte GObj pointer, `x4` the next word); natively `x0` is
@@ -521,7 +521,7 @@ pub fn ftPk_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         (*fp).mv.pk.specialhi.x4 = 1_i32;
         (*fp).mv.pk.specialhi.x0 = 0_i32;
         // the C writes the SpecialLw vars through the SpecialHi view (`x0` a 4-byte GObj pointer, `x4` the next word); natively `x0` is

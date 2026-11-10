@@ -13,7 +13,7 @@ mod g;
 
 static mut SNAP: [m::Unk80433380_0; 1] = unsafe { core::mem::zeroed() };
 static mut SLOT: [m::Unk80433380_48; 2] = unsafe { core::mem::zeroed() };
-static mut ICON: [m::LbMcSnapMemSnapIconData; 2] = unsafe { core::mem::zeroed() };
+static mut ICON: [*mut u8; 2] = unsafe { core::mem::zeroed() };
 static mut BANNER: [u8; 6208] = unsafe { core::mem::zeroed() };
 static mut ICNB: [u8; 1024] = unsafe { core::mem::zeroed() };
 static mut SRC: [u8; 458752] = unsafe { core::mem::zeroed() };
@@ -44,7 +44,7 @@ unsafe fn setup() {
     m::lbSnap_80433380.snap = &raw mut SNAP[0];
     m::lbSnap_80433380.slot = &raw mut SLOT[0];
     m::lbSnap_80433380.icon_data = &raw mut ICON[0];
-    ICON[0].ptr = BANNER.as_mut_ptr(); ICON[1].ptr = ICNB.as_mut_ptr();
+    ICON[0] = BANNER.as_mut_ptr(); ICON[1] = ICNB.as_mut_ptr();
     for k in 0..0x40usize { TXT[k] = (rnd() | 1) as i8; }
     for k in 0..0x1800 + 64usize { BANNER[k] = rnd() as u8; }
     for k in 0..0x400usize { ICNB[k] = rnd() as u8; }
@@ -52,7 +52,7 @@ unsafe fn setup() {
 unsafe fn hash_all() {
     g::hash_Unk80433380(&m::lbSnap_80433380);
     g::hash_Unk803BACC8(&m::lbSnap_803BACC8);
-    hm(pib(ICON[0].ptr)); hm(pib(ICON[1].ptr));
+    hm(pib(ICON[0])); hm(pib(ICON[1]));
     g::hash_Unk80433380_0(&SNAP[0]);
     for k in 0..2usize { g::hash_Unk80433380_48(&SLOT[k]); }
     for i in 0..1 { g::hash_Unk80433380_0(&SNAP[i]); }

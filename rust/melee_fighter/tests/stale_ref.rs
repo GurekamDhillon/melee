@@ -44,7 +44,7 @@ fn staling_matches_c() {
             let slot = (r.rnd() % 6) as i32;
             let op = r.rnd() % 11;
             let mut ret: u32 = 0;
-            fp.player_id = slot as u8;
+            fp.player_idx = slot as u8;
             match op {
                 0 => st::init_attack_instance(),
                 1 => st::reset_stale_move_table(slot),
@@ -82,7 +82,7 @@ fn staling_matches_c() {
                         .attacks
                         .total
                         .wrapping_add(s.hits.by_attack_counts[5])
-                        .wrapping_add(unsafe { s.anon_358.x358_hits.thrown_item_count })
+                        .wrapping_add(unsafe { s.x358.x358_hits.thrown_item_count })
                         .wrapping_add(s.x504[3] as u32)
                         .wrapping_add(s.x598[7])
                         .wrapping_add(s.x5B8[1] as u32)

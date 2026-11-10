@@ -64,7 +64,7 @@ use crate::layout::itTaruCann_DatAttrs;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -230,7 +230,7 @@ pub unsafe extern "C" fn it_8026F5C8(item_gobj: *mut HSD_GObj, kind: ItemKind, p
     spawn.vel.y = zero_init[0];
     spawn.vel.x = zero_init[0];
     spawn.x3C_damage = 0;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.prev_pos = *pos;
     spawn.prev_pos.z = zero_init[0];
     spawn.x40 = 0;

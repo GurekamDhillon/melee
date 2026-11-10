@@ -29,7 +29,7 @@ pub fn inline_b1(hit0: &HitCapsule) -> bool {
 
 /// `getUnkVal` (static inline).
 pub fn get_unk_val(f: &Fighter, i: i32) -> i32 {
-    i.wrapping_add((f.player_id as i32) * 2).wrapping_add(f.is_sub_fighter() as i32)
+    i.wrapping_add((f.player_idx as i32) * 2).wrapping_add(f.is_sub_fighter() as i32)
 }
 
 pub use crate::tu::ftcoll::ftcoll_800765e0;

@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -97,15 +97,15 @@ int main(void)
             case 3: { s32 v3 = (s32) ((int) fv()); f32 v4 = (f32) (rw()); ret = PI(it_802B4224(&GO[0], &GO[1], &VA[0], v3, v4)); } break; /* it_802B4224 */
             case 4: {  it_802B43B0(&GO[0]); } break; /* it_802B43B0 */
             case 5: {  it_802B43D0(&GO[0], &GO[1]); } break; /* it_802B43D0 */
-            case 6: {  ret = (u32) itPikachutjoltair_UnkMotion0_Anim(&GO[0]); } break; /* itPikachutjoltair_UnkMotion0_Anim */
+            case 6: {  ret = (u32) ((itPikachutjoltair_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itPikachutjoltair_UnkMotion0_Anim */
             case 7: {  itPikachutjoltair_UnkMotion0_Phys(&GO[0]); } break; /* itPikachutjoltair_UnkMotion0_Phys */
-            case 8: {  ret = (u32) itPikachutjoltair_UnkMotion0_Coll(&GO[0]); } break; /* itPikachutjoltair_UnkMotion0_Coll */
-            case 9: {  ret = (u32) it_2725_Logic107_DmgDealt(&GO[0]); } break; /* it_2725_Logic107_DmgDealt */
-            case 10: {  ret = (u32) it_2725_Logic107_Clanked(&GO[0]); } break; /* it_2725_Logic107_Clanked */
-            case 11: {  ret = (u32) it_2725_Logic107_Absorbed(&GO[0]); } break; /* it_2725_Logic107_Absorbed */
-            case 12: {  ret = (u32) it_2725_Logic107_Reflected(&GO[0]); } break; /* it_2725_Logic107_Reflected */
-            case 13: {  ret = (u32) it_2725_Logic107_HitShield(&GO[0]); } break; /* it_2725_Logic107_HitShield */
-            case 14: {  ret = (u32) it_2725_Logic107_ShieldBounced(&GO[0]); } break; /* it_2725_Logic107_ShieldBounced */
+            case 8: {  ret = (u32) ((itPikachutjoltair_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itPikachutjoltair_UnkMotion0_Coll */
+            case 9: {  ret = (u32) ((it_2725_Logic107_DmgDealt(&GO[0])) != 0); } break; /* it_2725_Logic107_DmgDealt */
+            case 10: {  ret = (u32) ((it_2725_Logic107_Clanked(&GO[0])) != 0); } break; /* it_2725_Logic107_Clanked */
+            case 11: {  ret = (u32) ((it_2725_Logic107_Absorbed(&GO[0])) != 0); } break; /* it_2725_Logic107_Absorbed */
+            case 12: {  ret = (u32) ((it_2725_Logic107_Reflected(&GO[0])) != 0); } break; /* it_2725_Logic107_Reflected */
+            case 13: {  ret = (u32) ((it_2725_Logic107_HitShield(&GO[0])) != 0); } break; /* it_2725_Logic107_HitShield */
+            case 14: {  ret = (u32) ((it_2725_Logic107_ShieldBounced(&GO[0])) != 0); } break; /* it_2725_Logic107_ShieldBounced */
             case 15: {  itPikachuTJoltAir_Logic107_EvtUnk(&GO[0], &GO[1]); } break; /* itPikachuTJoltAir_Logic107_EvtUnk */
             case 16: { { int j; for (j = 0; j < 1; j++) { HM((u32) it_803F71D8[j].anim_id); HM(FI((const void*) it_803F71D8[j].animated)); HM(FI((const void*) it_803F71D8[j].physics_updated)); HM(FI((const void*) it_803F71D8[j].collided)); } } } break; /* state tables */
             }

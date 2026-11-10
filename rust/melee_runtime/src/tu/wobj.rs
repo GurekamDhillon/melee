@@ -97,8 +97,8 @@ unsafe fn jobj_setup_matrix(j: *mut HSD_JObj) {
 /// The `if (flags & 1) { ... }` prologue shared by the position setters/getter.
 unsafe fn resolve_world_pos(w: *mut HSD_WObj) {
     if (*w).flags & 1 != 0 {
-        if !(*w).aobj.is_null() && !(*(*w).aobj).hsd_obj.is_null() {
-            let jp = (*(*w).aobj).hsd_obj as *mut HSD_JObj;
+        if !(*w).aobj.is_null() && !(*(*w).aobj).jobj.is_null() {
+            let jp = (*(*w).aobj).jobj as *mut HSD_JObj;
             jobj_setup_matrix(jp);
             let pos = addr_of_mut!((*w).pos);
             ext::PSMTXMultVec((*jp).mtx.as_mut_ptr().cast(), pos, pos);
@@ -150,7 +150,7 @@ pub unsafe extern "C" fn WObjUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD
                 (*val).fv = 1.0;
             }
             assert!(!(*wobj).aobj.is_null(), "wobj.c:148 wobj->aobj");
-            let jp = (*(*wobj).aobj).hsd_obj as *mut HSD_JObj;
+            let jp = (*(*wobj).aobj).jobj as *mut HSD_JObj;
             assert!(!jp.is_null(), "wobj.c:150 jp");
             assert!(!(*jp).u.spline.is_null(), "wobj.c:151 jp->u.spline");
             let mut p = Vec3 { x: 0.0, y: 0.0, z: 0.0 };

@@ -100,8 +100,8 @@ unsafe extern "C" fn cb_ftCo_800BC8D4(g: *mut HSD_GObj, vg: *mut HSD_GObj) {
 #[inline(always)]
 fn ftCheckThrowB4(fp: &mut Fighter) -> bool {
     unsafe {
-        if fp.anon_2210.anon_0.throw_flags_b4() != 0 {
-            fp.anon_2210.anon_0.set_throw_flags_b4(0);
+        if fp.x2210.x0.throw_flags_b4() != 0 {
+            fp.x2210.x0.set_throw_flags_b4(0);
             true
         } else {
             false
@@ -141,7 +141,7 @@ pub fn ftKp_SpecialS_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftKp_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         (*fp).mv.kp.specials.x4 = 0;
         (*fp).mv.kp.specials.xC = 0;
@@ -156,7 +156,7 @@ pub fn ftKp_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftKp_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         (*fp).mv.kp.specials.x4 = 0;
         (*fp).mv.kp.specials.xC = 0;
@@ -453,7 +453,7 @@ pub fn ftKp_SpecialAirSEndB_Anim(gobj: *mut HSD_GObj) {
 fn ftKoopa_SpecialS_ChangeAction(gobj: *mut HSD_GObj, kp_msid_f: i32, victim_msid_f: i32, kp_msid_b: i32, victim_msid_b: i32) {
     unsafe {
         let fp = fpp(gobj);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         if (*fp).mv.kp.specials.facing_dir == 1 {
             st::Fighter_ChangeMotionState(gobj, kp_msid_f, Ft_MF_Unk19 as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());

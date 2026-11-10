@@ -28,7 +28,7 @@ fn ftCo_0A01_matches_c() {
             fr.cpu.ltrigger = rnd() as u8; fr.cpu.rtrigger = rnd() as u8;
             fr.cpu.buttons = rnd() as _;
             fr.cpu.kind = (rnd() % 12) as _;
-            fr.player_id = (rnd() % 6) as _;
+            fr.player_idx = (rnd() % 6) as _;
             fr.set_is_sub_fighter((rnd() & 1) as _);
             fr.hurt_capsules_len = (rnd() % 16) as _;
             fr.cur_pos.x = rw(); fr.cur_pos.y = rw();

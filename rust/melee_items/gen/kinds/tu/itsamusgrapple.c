@@ -59,7 +59,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -87,14 +87,14 @@ static void setup(int prof)
             LK[j].jobj = &JO[3 + (int) (rnd() % 3)];
             LGO[j].hsd_obj = &JO[24 + j];
         }
-        for (j = 0; j < 3; j++) ART[j].x4_specialAttributes = &AG[j];
-        for (j = 0; j < 4; j++) FT[0].x914[j].owner = 0;
+        for (j = 0; j < 3; j++) ART[j].x4_specialAttributes = (union ItemSpecialAttributes*) &AG[j];
+        for (j = 0; j < 4; j++) FT[0].x914[j].x134.owner = 0;
         IT[0].owner = &GO[1];
         GO[1].user_data = &FT[0];
         FT[0].gobj = &GO[1];
-        FT[0].ft_data = &FD; FD.ext_attr = &DA; FT[0].dat_attrs = &DA; FT[0].parts = FB;
+        FT[0].ft_data = &FD; FD.ext_attr = (union ftData_ExtAttr*) &DA; FT[0].dat_attrs = &DA; FT[0].parts = FB;
         DA.xA0 = (int) (rnd() % 4); DA.xB0 = (int) (rnd() % 4); DA.xC0 = (int) (rnd() % 4);
-        DA.xD0 = (void*) (unsigned long long) (rnd() % 40);
+        DA.xD0 = (int) (rnd() % 40);
         FT[0].u.ss.x223C = (prof == 1 && (rnd() & 3) == 0) ? 0 : &GO[0];
         FT[0].u.ss.x2240 = (u8) (rnd() % 6);
         {
@@ -151,7 +151,7 @@ static void hash_all(void)
     {
         int j;
         HM(PI(FT[0].u.ss.x223C)); HM(FT[0].u.ss.x2240); zero(&FT[0].u, sizeof FT[0].u);
-        for (j = 0; j < 4; j++) { HM(FT[0].x914[j].hit_grabbed_victim_only); FT[0].x914[j].owner = 0; }
+        for (j = 0; j < 4; j++) { HM(FT[0].x914[j].x134.hit_grabbed_victim_only); FT[0].x914[j].x134.owner = 0; }
         for (j = 0; j < 2; j++) hash_Fighter(&FT[j]);
         for (j = 0; j < 24; j++) { hash_ItemLink(&LK[j]); hash_HSD_GObj(&LGO[j]); }
         for (j = 0; j < 256; j++) hash_FighterBone(&FB[j]);
@@ -216,12 +216,12 @@ int main(void)
             case 26: { ItemLink* v0 = &LK[rnd() % NL]; ret = (u32) it_802B9328(v0, &VA[0], &AG[0], &FT[0]); } break; /* it_802B9328 */
             case 27: { ItemLink* v0 = &LK[rnd() % NL]; ret = (u32) it_802B99A0(v0, &VA[0], &AG[0], &FT[0]); } break; /* it_802B99A0 */
             case 28: { ItemLink* v0 = &LK[rnd() % NL]; it_802B9CE8(v0, &VA[0], &AG[0], &FT[0]); } break; /* it_802B9CE8 */
-            case 29: { ItemLink* v0 = &LK[rnd() % NL]; ret = (u32) it_802B9FD4(v0, &VA[0], &AG[0]); } break; /* it_802B9FD4 */
-            case 30: { ItemLink* v0 = &LK[rnd() % NL]; f32 v3 = (f32) ((float) (rnd() % 40) / 4.0f); ret = (u32) it_802BA194(v0, &VA[0], &AG[0], v3); } break; /* it_802BA194 */
-            case 31: { ItemLink* v0 = &LK[rnd() % NL]; f32 v3 = (f32) ((float) (rnd() % 40) / 4.0f); ret = (u32) it_802BA2D8(v0, &VA[0], &AG[0], v3); } break; /* it_802BA2D8 */
-            case 32: { f32 v4 = (f32) ((float) (rnd() % 40) / 4.0f); ret = (u32) it_802BA3BC(&LK[0], &LK[NL - 1], &VA[0], &AG[0], v4); } break; /* it_802BA3BC */
+            case 29: { ItemLink* v0 = &LK[rnd() % NL]; ret = (u32) ((it_802B9FD4(v0, &VA[0], &AG[0])) != 0); } break; /* it_802B9FD4 */
+            case 30: { ItemLink* v0 = &LK[rnd() % NL]; f32 v3 = (f32) ((float) (rnd() % 40) / 4.0f); ret = (u32) ((it_802BA194(v0, &VA[0], &AG[0], v3)) != 0); } break; /* it_802BA194 */
+            case 31: { ItemLink* v0 = &LK[rnd() % NL]; f32 v3 = (f32) ((float) (rnd() % 40) / 4.0f); ret = (u32) ((it_802BA2D8(v0, &VA[0], &AG[0], v3)) != 0); } break; /* it_802BA2D8 */
+            case 32: { f32 v4 = (f32) ((float) (rnd() % 40) / 4.0f); ret = (u32) ((it_802BA3BC(&LK[0], &LK[NL - 1], &VA[0], &AG[0], v4)) != 0); } break; /* it_802BA3BC */
             case 33: {  it_802BA5DC(&LK[0], &LK[NL - 1], &VA[0], &AG[0]); } break; /* it_802BA5DC */
-            case 34: { ItemLink* v0 = &LK[rnd() % NL]; ret = (u32) it_802BA760(v0, &VA[0], &AG[0], &FT[0]); } break; /* it_802BA760 */
+            case 34: { ItemLink* v0 = &LK[rnd() % NL]; ret = (u32) ((it_802BA760(v0, &VA[0], &AG[0], &FT[0])) != 0); } break; /* it_802BA760 */
             case 35: {  itSamusGrapple_Logic53_PickedUp(&GO[0]); } break; /* itSamusGrapple_Logic53_PickedUp */
             case 36: {  it_802BA9B8(&GO[0]); } break; /* it_802BA9B8 */
             case 37: {  it_802BAA08(&GO[0]); } break; /* it_802BAA08 */

@@ -114,8 +114,8 @@ unsafe fn world() {
         (*FT)[i].gobj = &raw mut (*GO)[i];
         (*FT)[i].ft_data = &raw mut (*FDATA)[i];
         (*FT)[i].grab_cb = Some(cbev1); (*FT)[i].grabbed_cb = Some(cbev3);
-        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_id %= 4; (*FT)[i].x618_player_id %= 4;
-        for b in 0..64 { if b < NP { fill_FighterBone(&mut (*PARTS)[i][b]); } else { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].anon_8.anon_0.set_flags_b1(1); } (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
+        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].player_idx %= 4; (*FT)[i].pad_port %= 4;
+        for b in 0..64 { if b < NP { fill_FighterBone(&mut (*PARTS)[i][b]); } else { (*PARTS)[i][b] = core::mem::zeroed(); (*PARTS)[i][b].x8.x0.set_flags_b1(1); } (*PARTS)[i][b].joint = &raw mut (*JO)[(i * 5 + b * 3) % NJ]; }
         (*FT)[i].parts = (*PARTS)[i].as_mut_ptr();
 // the ftData pointer words: one pad block each (the C driver's order)
         { let mut pk = i * 24; macro_rules! nx { () => {{ pk += 1; (*PADB)[pk - 1].as_mut_ptr() as *mut _ }}; }
@@ -133,7 +133,7 @@ unsafe fn world() {
     for i in 0..16 { PLINKV[i] = null_mut(); }
     PLINKV[HSD_GOBJ_PLINK_FIGHTER as usize] = &raw mut (*GO)[0];
     h::PLINK_HEAD = Some(|link| PLINKV[link as usize]);
-    for i in 0..NG { (*FT)[i].x61A_controller_index %= 6; }
+    for i in 0..NG { (*FT)[i].sub_color %= 6; }
     {
         if !REGD { REGD = true; preg(MO, size_of_val(&*MO)); preg(TOBJ, size_of_val(&*TOBJ)); preg(SHAD, size_of_val(&*SHAD)); preg(TOON, size_of_val(&*TOON)); preg(PE, size_of_val(&*PE)); preg(MAT, size_of_val(&*MAT)); preg(TXP, size_of_val(&*TXP)); }
         *MO = core::mem::zeroed(); *MAT = core::mem::zeroed(); *TOBJ = core::mem::zeroed(); *SHAD = core::mem::zeroed(); *TOON = core::mem::zeroed(); *PE = core::mem::zeroed();

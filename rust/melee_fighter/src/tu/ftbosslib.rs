@@ -60,7 +60,7 @@ pub fn ftBossLib_8015BD24(arg0: i32, arg1: &mut f32, arg2: f32, arg3: i32, arg4:
 /// `ftBossLib_ReportGObjSlotType`.
 pub fn ftBossLib_ReportGObjSlotType(g: G) {
     melee_core::ct!("ftBossLib_ReportGObjSlotType");
-    let kind = ext::Player_GetPlayerSlotType(fp(g).player_id as i32);
+    let kind = ext::Player_GetPlayerSlotType(fp(g).player_idx as i32);
     assert_report(103, kind == Gm_PKind_Human || kind == Gm_PKind_Boss || kind == Gm_PKind_Cpu,
                   "boss is human or boss!\n");
 }
@@ -197,12 +197,12 @@ pub fn ftBossLib_8015C31C() -> bool {
 pub fn ftBossLib_8015C358() -> bool {
     melee_core::ct!("ftBossLib_8015C358");
     let g = ftBossLib_GetFighterGObj(Ft_Kind_MasterH);
-    !g.is_null() && fp(g).x221F_b3() != 0
+    !g.is_null() && fp(g).is_sleeping() != 0
 }
 pub fn ftBossLib_8015C3A0() -> bool {
     melee_core::ct!("ftBossLib_8015C3A0");
     let g = ftBossLib_GetFighterGObj(Ft_Kind_CrezyH);
-    !g.is_null() && fp(g).x221F_b3() != 0
+    !g.is_null() && fp(g).is_sleeping() != 0
 }
 
 /// `ftBossLib_GetFighterGObj`: first fighter of `kind` on the fighter p-link.

@@ -44,8 +44,8 @@ unsafe fn fpg(g: G) -> *mut Fighter {
 /// `ftCheckThrowB0` (ft/inlines.h): test and clear throw_flags_b0.
 pub(crate) unsafe fn ftCheckThrowB0(fp: *mut Fighter) -> bool {
     melee_core::ct!("ftCheckThrowB0");
-    if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+    if (*fp).x2210.x0.throw_flags_b0() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b0(0);
         true
     } else {
         false

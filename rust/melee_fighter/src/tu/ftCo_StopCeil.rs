@@ -32,17 +32,17 @@ pub mod ext {
         ft_80082D40(g: G, y: f32) = |g: G, y: f32| { unsafe { crate::tu::ft_081b::ft_80082d40(g as _, y as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
-        ft_80083464(g: G, line_cb: unsafe extern "C" fn(G, i32) -> bool, cb: unsafe extern "C" fn(G)) = |g: G, line_cb: unsafe extern "C" fn(G, i32) -> bool, cb: unsafe extern "C" fn(G)| { unsafe { let _ = crate::bridge::with_coll_ev(line_cb, Some(cb), |a, b| crate::tu::ft_081b::ft_80083464(g as _, a, b)); } };
+        ft_80083464(g: G, line_cb: unsafe extern "C" fn(G, isize) -> bool, cb: unsafe extern "C" fn(G)) = |g: G, line_cb: unsafe extern "C" fn(G, isize) -> bool, cb: unsafe extern "C" fn(G)| { unsafe { let _ = crate::bridge::with_coll_ev(line_cb, Some(cb), |a, b| crate::tu::ft_081b::ft_80083464(g as _, a, b)); } };
         // Address-taken only (passed to `ft_80083464`).
-        ftCo_80096CC8(g: G, line_id: i32) -> bool = |g: G, line_id: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line_id as _) as _ } };
+        ftCo_80096CC8(g: G, line_id: isize) -> bool = |g: G, line_id: isize| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line_id as _) as _ } };
         ft_80082B1C(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
 
 /// `ftCo_80096CC8` as a callback value.
-pub unsafe extern "C" fn ftCo_80096CC8_cb(g: G, line_id: i32) -> bool {
+pub unsafe extern "C" fn ftCo_80096CC8_cb(g: G, line_id: isize) -> bool {
     melee_core::ct!("ftCo_80096CC8_cb");
-    ext::ftCo_80096CC8(g, line_id)
+    ext::ftCo_80096CC8(g, line_id as isize)
 }
 /// `ft_80082B1C` as a callback value.
 pub unsafe extern "C" fn ft_80082B1C_cb(g: G) {
@@ -63,7 +63,7 @@ pub fn ftCo_8009EF68(g: G) -> bool {
 pub fn ftCo_8009EFA4(g: G) {
     melee_core::ct!("ftCo_8009EFA4");
     let f = fp(g);
-    f.anon_2210.throw_flags = 0;
+    f.x2210.throw_flags = 0;
     let mut vec = Vec3 { x: 0.0, y: f.coll_data.ecb.top.y, z: 0.0 };
     ext::ftKb_SpecialN_800F1F1C(g, &mut vec);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_StopCeil as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -82,8 +82,8 @@ pub fn ftCo_StopCeil_Anim(g: G) {
     let f = fp(g);
     // ftCheckThrowB3
     let b3 = unsafe {
-        if f.anon_2210.anon_0.throw_flags_b3() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b3(0);
+        if f.x2210.x0.throw_flags_b3() != 0 {
+            f.x2210.x0.set_throw_flags_b3(0);
             true
         } else {
             false

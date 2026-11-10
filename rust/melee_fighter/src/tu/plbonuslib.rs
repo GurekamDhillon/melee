@@ -68,7 +68,7 @@ pub mod ext {
     fn ft_80087AEC(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087aec(a0 as _) };
     fn ft_80087B34(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ft0877::ft_80087b34(a0 as _) };
     fn ft_80089884(a0: *mut HSD_GObj) -> *mut Struct2070 => unsafe { crate::ft0892::ft_80089884(a0 as _) as _ };
-    fn ft_80089890(a0: *mut HSD_GObj) -> *mut UnkPlBonusBits => unsafe { crate::ft0892::ft_80089890(a0 as _) as _ };
+    fn ft_80089890(a0: *mut HSD_GObj) -> *mut Struct2070 => unsafe { crate::ft0892::ft_80089890(a0 as _) as _ };
     fn ft_8008989C(a0: *mut HSD_GObj) -> u16 => unsafe { crate::ft0892::ft_8008989c(a0 as _) };
     fn ft_800898A8(a0: *mut HSD_GObj) -> *mut Struct2074 => unsafe { crate::ft0892::ft_800898a8(a0 as _) as _ };
     fn ft_800898B4(a0: *mut HSD_GObj) -> *mut ft_800898B4_t => unsafe { crate::ft0892::ft_800898b4(a0 as _) as _ };
@@ -203,10 +203,10 @@ fn plBonusLib_8003D514(arg0: i32) {
         ext::ftLib_GetPos(temp_r30, &mut sp_c);
         let temp_f1 = ext::ftLib_GetFacingDir(temp_r30);
         unsafe {
-            (*temp_r31_2).xDD1.anon_0.set_bit6(1);
+            (*temp_r31_2).xDD1.x0.set_bit6(1);
 
             if (temp_f1 * sp18.x) > (temp_f1 * sp_c.x) {
-                (*temp_r31_2).xDD1.anon_0.set_bit7(1);
+                (*temp_r31_2).xDD1.x0.set_bit7(1);
             }
         }
     }
@@ -225,7 +225,7 @@ pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
         let temp_r27: i32 = ext::ftLib_GetMotionId(temp_r3);
         let temp_r28: i32 = ext::ftLib_GetLastHitSourceType(temp_r3);
         let temp_r29: i32 = ext::ftLib_GetLastHitSourceKind(temp_r3);
-        let temp_r30: *mut UnkPlBonusBits = ext::ft_80089890(temp_r3);
+        let temp_r30: *mut Struct2070 = ext::ft_80089890(temp_r3);
         let temp_r24: u16 = ext::ft_8008989C(temp_r3);
         let temp_r31: *mut ft_800898B4_t = ext::ft_800898B4(temp_r3);
         let temp_r23: i32 = ext::ftLib_GetLastAttackerSlot(temp_r3);
@@ -245,16 +245,16 @@ pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
                 (*temp_r26).x0_staleMoveTable.xC94 = (*temp_r26).x0_staleMoveTable.xC94.wrapping_add(1);
             }
             if ext::ftLib_IsDeadUp(temp_r3) {
-                (*temp_r26).xDD1.anon_0.set_bit2(1);
+                (*temp_r26).xDD1.x0.set_bit2(1);
             }
             if temp_r27 == 0 {
-                (*temp_r26).xDD1.anon_0.set_bit3(1);
+                (*temp_r26).xDD1.x0.set_bit3(1);
             }
             if temp_r27 == 2 {
-                (*temp_r26).xDD1.anon_0.set_bit0(1);
+                (*temp_r26).xDD1.x0.set_bit0(1);
             }
             if temp_r27 == 1 {
-                (*temp_r26).xDD1.anon_0.set_bit1(1);
+                (*temp_r26).xDD1.x0.set_bit1(1);
             }
             if ext::ft_80087858(temp_r3) {
                 pl_80038788(arg0, 0x83, 1);
@@ -331,7 +331,7 @@ pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
 
                 match temp_r28 {
                     1 | 2 => {
-                        let x3 = (*temp_r30).x3;
+                        let x3 = (*temp_r30).x0.x2073;
                         if x3 >= 1 && x3 <= 3 {
                             pl_80038824(temp_r23, 0x6E);
                         }
@@ -350,10 +350,10 @@ pub fn pl_8003D644(arg0: i32, arg1: i32, arg2: i32, arg3: i32) {
                         if x3 == 0x61 {
                             pl_80038824(temp_r23, 0xC6);
                         }
-                        if (*temp_r30).x2_b7() != 0 {
+                        if (*temp_r30).x0.count_specials() != 0 {
                             pl_80038824(temp_r23, 0x6F);
                         }
-                        if temp_r28 == 2 && (*temp_r30).x2_b3() != 0 {
+                        if temp_r28 == 2 && (*temp_r30).x0.count_x1A4() != 0 {
                             pl_80038824(temp_r23, 0x72);
                         }
                         if (*temp_r31).x11_b0() != 0 {
@@ -834,8 +834,8 @@ pub fn fn_8003EE2C(arg0: i32, arg1: i32) {
         } else {
             (*temp_r31).xD24 = (*temp_r31).xD24.wrapping_add(1);
         }
-        let temp_r28: i32 = (*ext::ft_80089884(temp_r30)).anon_0.x2073 as i32;
-        if (*ext::ft_80089884(temp_r30)).anon_0.x2072_b1() != 0 {
+        let temp_r28: i32 = (*ext::ft_80089884(temp_r30)).x0.x2073 as i32;
+        if (*ext::ft_80089884(temp_r30)).x0.x2072_b1() != 0 {
             (*temp_r31).xD18 = (*temp_r31).xD18.wrapping_add(1);
             if ((*temp_r31).xD18 as f32) >= pl.x64 {
                 (*temp_r31).xD14 = (*temp_r31).xD14.wrapping_add(1);
@@ -862,15 +862,15 @@ pub fn fn_8003EE2C(arg0: i32, arg1: i32) {
         let temp_r3_3: i32 = ext::ifMagnify_802FB6E8(arg0);
         if temp_r3_3 != 0 {
             (*temp_r31).xD30 = (*temp_r31).xD30.wrapping_add(1);
-            (*temp_r31).xDD0.anon_0.set_bit7(1);
+            (*temp_r31).xDD0.x0.set_bit7(1);
         } else {
-            (*temp_r31).xDD0.anon_0.set_bit7(0);
+            (*temp_r31).xDD0.x0.set_bit7(0);
         }
         match temp_r3_3 {
-            1 => (*temp_r31).xDD0.anon_0.set_bit5(1),
-            2 => (*temp_r31).xDD0.anon_0.set_bit4(1),
-            3 => (*temp_r31).xDD0.anon_0.set_bit6(1),
-            4 => (*temp_r31).xDD0.anon_0.set_bit3(1),
+            1 => (*temp_r31).xDD0.x0.set_bit5(1),
+            2 => (*temp_r31).xDD0.x0.set_bit4(1),
+            3 => (*temp_r31).xDD0.x0.set_bit6(1),
+            4 => (*temp_r31).xDD0.x0.set_bit3(1),
             _ => {}
         }
         if ext::ft_800878BC(temp_r30) {
@@ -994,10 +994,10 @@ pub fn fn_8003F294(slot: i32, index: i32) {
             let xb8: u32 = pl.xB8;
             if xb8 == v {
                 if (*table).xD5C <= xb8 {
-                    (*table).xDD1.anon_0.set_bit5(1);
+                    (*table).xDD1.x0.set_bit5(1);
                 }
-            } else if (*table).xDD1.anon_0.bit5() != 0 && (*table).xD5C > xb8 {
-                (*table).xDD1.anon_0.set_bit5(0);
+            } else if (*table).xDD1.x0.bit5() != 0 && (*table).xD5C > xb8 {
+                (*table).xDD1.x0.set_bit5(0);
             }
             (*table).xD5C = u32::MAX;
         }
@@ -1012,10 +1012,10 @@ pub fn fn_8003F53C(arg0: i32, arg1: i32) {
 
         if arg1 != 1 && !ext::ftLib_IsInputDisabled(temp_r30) {
             if !ext::ft_800877F8(temp_r30, 0x100) && !ext::ft_800877F8(temp_r30, 0x200) {
-                (*temp_r31).xDD0.anon_0.set_bit1(1);
+                (*temp_r31).xDD0.x0.set_bit1(1);
             }
             if ext::ft_800877F8(temp_r30, 0x80000000u32 as i32) {
-                (*temp_r31).xDD0.anon_0.set_bit2(1);
+                (*temp_r31).xDD0.x0.set_bit2(1);
             }
             if ext::ft_80087818(temp_r30, 0x100) || ext::ft_80087818(temp_r30, 0x200) {
                 (*temp_r31).xCF4 = (*temp_r31).xCF4.wrapping_add(1);
@@ -1162,7 +1162,7 @@ pub fn pl_8003FC44(slot: i32, arg1: i32) {
     if arg1 != 0 {
         return;
     }
-    unsafe { (*temp_r3).xDD0.anon_0.set_bit0(1) };
+    unsafe { (*temp_r3).xDD0.x0.set_bit0(1) };
 }
 
 pub fn pl_8003FC88(arg0: i32, arg1: i32, arg2: i32) {
@@ -1277,7 +1277,7 @@ pub fn pl_8003FF44(arg0: i32, arg1: i32, arg2: i32) {
     let temp_r31 = tbl(arg0);
     let temp_r3 = Player_GetEntityAtIndex(arg0, arg1);
     if arg1 == 0 && arg2 >= 1 && arg2 <= 0x10 && ext::ft_80087A8C(temp_r3) > c().x38 {
-        unsafe { (*temp_r31).xDD1.anon_0.set_bit4(1) };
+        unsafe { (*temp_r31).xDD1.x0.set_bit4(1) };
     }
 }
 
@@ -1485,11 +1485,11 @@ pub fn pl_80040688(arg0: i32, arg1: i32, arg2: i32) {
             let temp_r3 = tbl(arg1);
 
             let temp_r0: i32 = (*temp_r3).x0_staleMoveTable.xCB8;
-            let bits = &mut (*temp_r3).x0_staleMoveTable.xCBC as *mut UnkPlBonusBits;
+            let bits = &mut (*temp_r3).x0_staleMoveTable.xCBC as *mut Struct2070;
             let xcc0 = &mut (*temp_r3).x0_staleMoveTable.xCC0 as *mut ft_800898B4_t;
 
             if !unk_cond(arg1, temp_r0) {
-                let temp_r0_2: u8 = (*bits).x3;
+                let temp_r0_2: u8 = (*bits).x0.x2073;
                 if temp_r0_2 >= 0x33 && temp_r0_2 <= 0x3D {
                     pl_80038788(temp_r0, 0x2A, 1);
                 }
@@ -1538,7 +1538,7 @@ pub fn pl_800408DC(arg0: i32) -> i32 {
 
 pub fn pl_80040900(arg0: i32) -> i32 {
     melee_core::ct!("pl_80040900");
-    unsafe { (*Player_GetActionStats(arg0)).anon_358.x358_hits.total as i32 }
+    unsafe { (*Player_GetActionStats(arg0)).x358.x358_hits.total as i32 }
 }
 
 pub fn pl_80040924(arg0: i32) -> i32 {
@@ -1550,7 +1550,7 @@ pub fn pl_80040948(arg0: i32) -> f32 {
     melee_core::ct!("pl_80040948");
     unsafe {
         let total: u32 = (*Player_GetActionStats(arg0)).attacks.total;
-        let temp_r30: u32 = (*Player_GetActionStats(arg0)).anon_358.x358_hits.total;
+        let temp_r30: u32 = (*Player_GetActionStats(arg0)).x358.x358_hits.total;
         if total != 0 {
             return pl_CalculateAverage(temp_r30 as f32, total as f32);
         }
@@ -1732,7 +1732,7 @@ pub fn pl_8003fc44(slot: i32, arg1: i32) {
     if arg1 != 0 {
         return;
     }
-    unsafe { t.xDD0.anon_0.set_bit0(1) };
+    unsafe { t.xDD0.x0.set_bit0(1) };
 }
 
 /// `pl_8003FC88`.
@@ -1818,7 +1818,7 @@ pub fn pl_8003ff44(arg0: i32, arg1: i32, arg2: i32) {
     let t = ext(arg0);
     let g = get_entity_at_index(arg0, arg1);
     if arg1 == 0 && (1..=0x10).contains(&arg2) && h::ft_80087a8c(g) > k().x38 {
-        unsafe { t.xDD1.anon_0.set_bit4(1) };
+        unsafe { t.xDD1.x0.set_bit4(1) };
     }
 }
 
@@ -2007,7 +2007,7 @@ pub fn pl_80040688_fp(arg0: i32, arg1: i32, arg2: i32) {
     if arg2 != 0 && arg1 != 6 {
         let s = &ext(arg1).x0_staleMoveTable;
         let r0 = s.xCB8;
-        let x3 = s.xCBC.x3;
+        let x3 = unsafe { s.xCBC.x0.x2073 };
         let b0 = s.xCC0.x10_b0();
         if !unk_cond_fp(arg1, r0) {
             if (0x33..=0x3D).contains(&x3) {
@@ -2060,7 +2060,7 @@ pub fn pl_800408dc(a: i32) -> i32 {
 /// `pl_80040900_fp`.
 pub fn pl_80040900_fp(a: i32) -> i32 {
     melee_core::ct!("pl_80040900_fp");
-    unsafe { action_stats(a).anon_358.x358_hits.total as i32 }
+    unsafe { action_stats(a).x358.x358_hits.total as i32 }
 }
 
 /// `pl_80040924_fp`.
@@ -2073,7 +2073,7 @@ pub fn pl_80040924_fp(a: i32) -> i32 {
 pub fn pl_80040948_fp(a: i32) -> f32 {
     melee_core::ct!("pl_80040948_fp");
     let total = action_stats(a).attacks.total;
-    let r30 = unsafe { action_stats(a).anon_358.x358_hits.total };
+    let r30 = unsafe { action_stats(a).x358.x358_hits.total };
     if total != 0 {
         return calculate_average(r30 as f32, total as f32);
     }

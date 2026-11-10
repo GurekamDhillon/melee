@@ -68,7 +68,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -102,6 +102,8 @@ static void hash_world(int ft)
     for (i = 0; i < 16; i++) HM(PI(PLINK[i]));
 }
 
+static int CUR_OP = -1;
+enum { OP_it_8026EB18 = 0, OP_it_8026EBC8 = 1, OP_it_8026EC54 = 2, OP_it_8026ECE0 = 3, OP_it_8026EECC_inline_1 = 4, OP_it_8026EECC_inline_2 = 5, OP_it_8026EECC_inline_3 = 6, OP_it_8026EECC_inline_0 = 7, OP_it_8026EECC_inline_sw = 8, OP_it_8026EECC = 9 };
 static HSD_CObj COB; static u8 IDXA[16]; static it_266F_ItemVars IV[2];
 
 static void setup_stem(void)
@@ -148,6 +150,7 @@ preg(&COB, sizeof COB); preg(IDXA, sizeof IDXA); preg(IV, sizeof IV);
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
+            CUR_OP = op;
             setup_stem();
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             switch (op) {
@@ -160,7 +163,7 @@ preg(&COB, sizeof COB); preg(IDXA, sizeof IDXA); preg(IV, sizeof IV);
             case 6: { HSD_GObj * a0 = &GO[rnd() % 4]; s32 a1 = fv(); Vec3 * a2 = &VA[rnd() % 4]; it_8026EECC_inline_3(a0, a1, a2); { int q; for (q = 0; q < 4; q++) *(void**) &IT[q].xDD4_itemVar = 0; } } break;
             case 7: { HSD_GObj * a0 = &GO[rnd() % 4]; Vec3 * a1 = &VA[rnd() % 4]; ret = PI(it_8026EECC_inline_0(a0, a1)); { int q; for (q = 0; q < 4; q++) *(void**) &IT[q].xDD4_itemVar = 0; } } break;
             case 8: { HSD_GObj * a0 = &GO[rnd() % 4]; s32 a1 = fv(); Vec3 * a2 = &VA[rnd() % 4]; it_8026EECC_inline_sw(a0, a1, a2); { int q; for (q = 0; q < 4; q++) *(void**) &IT[q].xDD4_itemVar = 0; } } break;
-            case 9: { HSD_GObj * a0 = &GO[rnd() % 4]; int a1 = fv(); it_8026EECC(a0, a1); { int q; for (q = 0; q < 4; q++) *(void**) &IT[q].xDD4_itemVar = 0; } } break;
+            case 9: { HSD_GObj * a0 = &GO[rnd() % 4]; intptr_t a1 = fv(); it_8026EECC(a0, a1); { int q; for (q = 0; q < 4; q++) *(void**) &IT[q].xDD4_itemVar = 0; } } break;
             }
             hash_world(ft);
             hash_stem();

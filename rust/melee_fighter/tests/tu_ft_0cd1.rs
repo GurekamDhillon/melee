@@ -19,8 +19,8 @@ fn swing_helpers() {
     f.input.held_buttons[0] = 0 as _;
     t::ftco_800cd204(gp);
     assert_eq!(unsafe { f.mv.co.swing.x0 }, 0);
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(1) };
     assert!(t::ft_check_throw_b0(&mut f) && !t::ft_check_throw_b0(&mut f));
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b4(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b4(1) };
     assert!(t::ft_check_throw_b4(&mut f) && !t::ft_check_throw_b4(&mut f));
 }

@@ -137,7 +137,7 @@ pub fn ftKb_SpecialNIc_80108D64(gobj: G) {
     melee_core::ct!("ftKb_SpecialNIc_80108D64");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         (*fp).u.kb.xC0 = core::ptr::null_mut();
         st::Fighter_ChangeMotionState(gobj, ftKb_MS_PpSpecialN as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -152,7 +152,7 @@ pub fn ftKb_SpecialNIc_80108E14(gobj: G) {
     unsafe {
         let fp = fpp(gobj);
         let da = (*fp).dat_attrs as *const ftKb_DatAttrs;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         (*fp).u.kb.xC0 = core::ptr::null_mut();
         if (*fp).u.kb.xC4 == 0 {

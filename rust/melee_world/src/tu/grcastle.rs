@@ -58,10 +58,10 @@ pub mod ext {
     pub fn Ground_801C3BB4() {
         match unsafe { GROUND_801C3BB4 } { Some(f) => f(), None => { unsafe { crate::tu::ground::Ground_801C3BB4(); } return; } }
     }
-    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
-        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
     }
     pub static mut GROUND_801C4A08: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
@@ -282,9 +282,9 @@ pub mod ext {
     /// The head of the ground gobj link (`HSD_GObjPLinkHead[HSD_GOBJ_PLINK_GROUND]`, a global of gobj.c).
     hook_or!(HSD_GOBJPLINKHEAD, HSD_GObjPLinkHead, (link: i32) -> *mut HSD_GObj, |link: i32| unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(link as usize) });
     /// `grDisplay_801C5DB0` is only ever passed as a render callback (its address is the argument).
-    pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, i32)> = None;
+    pub static mut GRDISPLAY_801C5DB0: Option<fn(*mut HSD_GObj, isize)> = None;
     /// Called by `grCastle_801D0520` and passed as a render callback (its address is the argument).
-    pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, pass: i32) {
+    pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, pass: isize) {
         match GRDISPLAY_801C5DB0 {
             Some(f) => f(gobj, pass),
             None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(gobj as _, pass as _); } return; },
@@ -364,7 +364,7 @@ pub static mut grCs_803E0FE8: [GrJoint; 2] = [GrJoint { x: 4, y: 6, z: 1 }, GrJo
 
 macro_rules! cbs {
     () => {
-        StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, anon_10: StageCallbacks_anon_135 { flags: 0 } }
+        StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, x10: StageCallbacks_x10 { flags: 0 } }
     };
     ($a:ident, $b:ident, $c:ident, $d:ident, $flags:expr) => {
         StageCallbacks {
@@ -372,7 +372,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
+            x10: StageCallbacks_x10 { flags: u32::to_be($flags) },
         }
     };
 }
@@ -562,7 +562,7 @@ pub unsafe extern "C" fn grCastle_801CD658(gobj: *mut Ground_GObj) {
     ext::grLib_801C96F8(0x7536, 0x1E, &mut pos);
 
     for i in 0..12usize {
-        (*gp).u.castle9.dynamics[i].data = null_mut();
+        (*gp).u.castle3.dynamics[i].data = null_mut();
     }
 
     let archive = ext::grDatFiles_GetArchive();
@@ -579,16 +579,16 @@ pub unsafe extern "C" fn grCastle_801CD658(gobj: *mut Ground_GObj) {
                         let jobj = ext::Ground_801C3FA4(gobj, entries_s[i][0] as i32);
                         if !jobj.is_null() {
                             if entries_s[i][1] == 3 {
-                                ext::grLib_801C9B20(jobj, flag3, &mut (*gp).u.castle9.dynamics[i]);
+                                ext::grLib_801C9B20(jobj, flag3, &mut (*gp).u.castle3.dynamics[i]);
                             } else if entries_s[i][1] == 4 {
-                                ext::grLib_801C9B20(jobj, flag4, &mut (*gp).u.castle9.dynamics[i]);
+                                ext::grLib_801C9B20(jobj, flag4, &mut (*gp).u.castle3.dynamics[i]);
                             } else if entries_s[i][1] == 6 {
-                                ext::grLib_801C9B20(jobj, flag6, &mut (*gp).u.castle9.dynamics[i]);
+                                ext::grLib_801C9B20(jobj, flag6, &mut (*gp).u.castle3.dynamics[i]);
                             } else {
-                                (*gp).u.castle9.dynamics[i].data = null_mut();
+                                (*gp).u.castle3.dynamics[i].data = null_mut();
                             }
                         } else {
-                            (*gp).u.castle9.dynamics[i].data = null_mut();
+                            (*gp).u.castle3.dynamics[i].data = null_mut();
                         }
                     }
                 }
@@ -598,10 +598,10 @@ pub unsafe extern "C" fn grCastle_801CD658(gobj: *mut Ground_GObj) {
 
     (*gobj).render_cb = Some(fn_801D0924);
     ext::Ground_801C10B8(gobj, Some(grCastle_801CD610));
-    (*gp).u.castle9.xC4 = 0;
-    (*gp).u.castle9.xC8 = 0;
-    (*gp).u.castle9.xCC = 0;
-    (*gp).u.castle9.set_xDE_b0(0);
+    (*gp).u.castle3.xC4[0] = null_mut();
+    (*gp).u.castle3.xC4[1] = null_mut();
+    (*gp).u.castle3.xC4[2] = null_mut();
+    (*gp).u.castle3.set_xDE_b0(0);
     (*gp).x10_flags.set_b5(1);
 }
 
@@ -620,13 +620,13 @@ pub unsafe extern "C" fn grCastle_801CD8A8(gobj: *mut Ground_GObj) {
     ext::lb_800115F4();
     grCastle_801D0BBC();
     for i in 0..12usize {
-        if !(*gp).u.castle3.x1C[i].data.is_null() {
-            grCastle_801D0D84((*(*(*gp).u.castle3.x1C[i].data).desc.lb_unk0.jobj).parent);
+        if !(*gp).u.castle3.dynamics[i].data.is_null() {
+            grCastle_801D0D84((*(*(*gp).u.castle3.dynamics[i].data).desc.lb_unk0.jobj).parent);
         }
     }
     for i in 0..12usize {
-        if !(*gp).u.castle3.x1C[i].data.is_null() {
-            ext::grLib_801C9B8C(&mut (*gp).u.castle3.x1C[i] as *mut DynamicsDesc as *mut c_void);
+        if !(*gp).u.castle3.dynamics[i].data.is_null() {
+            ext::grLib_801C9B8C(&mut (*gp).u.castle3.dynamics[i] as *mut DynamicsDesc as *mut c_void);
             grCastle_801D0D24();
         }
     }
@@ -636,7 +636,7 @@ pub unsafe extern "C" fn grCastle_801CD960(gobj: *mut Ground_GObj) {
     melee_core::ct!("grCastle_801CD960");
     let gp = (*gobj).user_data as *mut Ground;
     for i in 0..12usize {
-        ext::grLib_801C9B6C(&mut (*gp).u.castle3.x1C[i] as *mut DynamicsDesc as *mut c_void);
+        ext::grLib_801C9B6C(&mut (*gp).u.castle3.dynamics[i] as *mut DynamicsDesc as *mut c_void);
     }
 }
 
@@ -801,16 +801,16 @@ pub unsafe fn grCastle_801CDFD8(gobj: *mut Ground_GObj) {
     melee_core::ct!("grCastle_801CDFD8");
     let gp = GET_GROUND(gobj);
 
-    (*gp).u.castle9.set_xDE_b0(1);
+    (*gp).u.castle3.set_xDE_b0(1);
 
     let range = yp().xA as i32;
     let rand_result = if range != 0 { ext::HSD_Randi(range) } else { 0 };
 
-    (*gp).u.castle9.xD4 = (yp().x8 as i32 + rand_result) as i16;
-    (*gp).u.castle9.xDC = -1;
-    (*gp).u.castle9.xDA = -1;
-    (*gp).u.castle9.xD8 = -1;
-    (*gp).u.castle9.xD6 = 0;
+    (*gp).u.castle3.xD4 = (yp().x8 as i32 + rand_result) as i16;
+    (*gp).u.castle3.xDC = -1;
+    (*gp).u.castle3.xDA = -1;
+    (*gp).u.castle3.xD8 = -1;
+    (*gp).u.castle3.xD6 = 0;
 }
 
 pub unsafe fn grCastle_801CE054(gobj: *mut Ground_GObj) -> s32 {
@@ -822,7 +822,7 @@ pub unsafe fn grCastle_801CE054(gobj: *mut Ground_GObj) -> s32 {
     let gp = (*gobj).user_data as *mut Ground;
     for _ctr in 0..3 {
         for _i in 0..3 {
-            if val != (*gp).u.castle4.xD8 as s32 && val != (*gp).u.castle4.xDA as s32 && val != (*gp).u.castle4.xDC as s32 {
+            if val != (*gp).u.castle3.xD8 as s32 && val != (*gp).u.castle3.xDA as s32 && val != (*gp).u.castle3.xDC as s32 {
                 arr[ptr] = val as i16;
                 ptr += 1;
                 count += 1;
@@ -835,16 +835,16 @@ pub unsafe fn grCastle_801CE054(gobj: *mut Ground_GObj) -> s32 {
 
     let picked = arr[idx as usize] as u32;
     // (&gp->u.castle4.xD8)[xD6] = picked: the three shorts xD8, xDA, xDC
-    let base = addr_of_mut!((*gp).u.castle4.xD8);
-    *base.offset((*gp).u.castle4.xD6 as isize) = picked as i16;
+    let base = addr_of_mut!((*gp).u.castle3.xD8);
+    *base.offset((*gp).u.castle3.xD6 as isize) = picked as i16;
 
-    let mut d6 = (*gp).u.castle4.xD6 as s32;
+    let mut d6 = (*gp).u.castle3.xD6 as s32;
     if 2 == d6 {
         d6 = 0;
     } else {
         d6 += 1;
     }
-    (*gp).u.castle4.xD6 = d6 as i16;
+    (*gp).u.castle3.xD6 = d6 as i16;
 
     picked as s32
 }
@@ -852,12 +852,12 @@ pub unsafe fn grCastle_801CE054(gobj: *mut Ground_GObj) -> s32 {
 pub unsafe fn grCastle_801CE19C(gobj: *mut Ground_GObj) {
     melee_core::ct!("grCastle_801CE19C");
     let gp = GET_GROUND(gobj);
-    if (*gp).u.castle9.xDE_b0() != 0 {
-        let timer = (*gp).u.castle9.xD4;
-        (*gp).u.castle9.xD4 = timer.wrapping_sub(1);
+    if (*gp).u.castle3.xDE_b0() != 0 {
+        let timer = (*gp).u.castle3.xD4;
+        (*gp).u.castle3.xD4 = timer.wrapping_sub(1);
         if timer < 0 {
             let new_gobj = grCastle_801CD4D0(grCastle_801CE054(gobj) + 8);
-            (*gp).u.castle9.set_xDE_b0(0);
+            (*gp).u.castle3.set_xDE_b0(0);
             if !new_gobj.is_null() {
                 let new_gp = (*new_gobj).user_data as *mut Ground;
                 ext::Ground_801C5440(gp, 0, 0x53021);
@@ -1007,11 +1007,11 @@ pub unsafe extern "C" fn grCastle_801CE578(gobj: *mut Ground_GObj) {
             {
                 let sat = (*u32_ptr::<HSD_GObj>((*gp).u.castle11.xD4)).user_data as *mut Ground;
 
-                (*sat).u.castle9.set_xDE_b0(1);
+                (*sat).u.castle3.set_xDE_b0(1);
 
                 let range = yp().xE as s32;
                 let rand = if range != 0 { ext::HSD_Randi(range) } else { 0 };
-                (*sat).u.castle9.xD4 = (yp().xC as s32 + rand) as i16;
+                (*sat).u.castle3.xD4 = (yp().xC as s32 + rand) as i16;
             }
 
             gp = (*gobj).user_data as *mut Ground;
@@ -1452,14 +1452,14 @@ pub unsafe fn grCastle_801CF7B0(gobj: *mut Ground_GObj) {
     let gp = GET_GROUND(gobj);
 
     // castle2.xC4 / xC8 / xCC / xD0 / xD2 on the PPC are castle12.xC4[0..3] / xD0 / xD2 here
-    (*gp).u.castle12.xC4[0] = ptr_u32(grCastle_801CD4D0(20));
-    (*gp).u.castle12.xC4[1] = ptr_u32(grCastle_801CD4D0(19));
-    (*gp).u.castle12.xC4[2] = ptr_u32(grCastle_801CD4D0(18));
-    (*gp).u.castle12.xD0 = -1;
+    (*gp).u.castle3.xC4[0] = grCastle_801CD4D0(20);
+    (*gp).u.castle3.xC4[1] = grCastle_801CD4D0(19);
+    (*gp).u.castle3.xC4[2] = grCastle_801CD4D0(18);
+    (*gp).u.castle3.xD0 = -1;
 
     let x2 = yp().x2 as s32;
     let x0 = yp().x0 as s32;
-    (*gp).u.castle12.xD2 = (if x2 > x0 {
+    (*gp).u.castle3.xD2 = (if x2 > x0 {
         x0 + if x2 - x0 != 0 { ext::HSD_Randi(x2 - x0) } else { 0 }
     } else if x2 < x0 {
         x2 + if x0 - x2 != 0 { ext::HSD_Randi(x0 - x2) } else { 0 }
@@ -1481,7 +1481,7 @@ pub unsafe fn grCastle_ResetSatelliteTimer(gp: *mut Ground) {
         let diff = range_end - base;
         base += if diff != 0 { ext::HSD_Randi(diff) } else { 0 };
     }
-    (*gp).u.castle12.xD2 = base as i16;
+    (*gp).u.castle3.xD2 = base as i16;
 }
 
 /// `static inline grCastle_PickSatellite`.
@@ -1502,9 +1502,9 @@ pub unsafe fn grCastle_PickSatellite(gp: *mut Ground, wp: *mut s32) {
     if slot == 3 {
         slot = 0;
     }
-    (*gp).u.castle12.xD0 = slot as i16;
+    (*gp).u.castle3.xD0 = slot as i16;
 
-    let sat_gp = (*u32_ptr::<HSD_GObj>((*gp).u.castle12.xC4[(*gp).u.castle12.xD0 as usize])).user_data as *mut Ground;
+    let sat_gp = (*(*gp).u.castle3.xC4[(*gp).u.castle3.xD0 as usize]).user_data as *mut Ground;
 
     let targets = grCs_803B7EFC;
     let idx = ext::HSD_Randi(11) as usize;
@@ -1527,17 +1527,17 @@ pub unsafe extern "C" fn grCastle_801CF868(gobj: *mut Ground_GObj) {
     melee_core::ct!("grCastle_801CF868");
     let gp = GET_GROUND(gobj);
 
-    if ((*gp).u.castle12.xC4[0] != 0 || (*gp).u.castle12.xC4[1] != 0 || (*gp).u.castle12.xC4[2] != 0)
-        && ((*gp).u.castle12.xD0 == -1 || {
-            let sat: *mut HSD_GObj = u32_ptr((*gp).u.castle12.xC4[(*gp).u.castle12.xD0 as usize]);
-            !sat.is_null() && !(*sat).user_data.is_null() && *(addr_of_mut!((*((*sat).user_data as *mut Ground)).u.castle2.xC4) as *mut i16) == 0
+    if (!(*gp).u.castle3.xC4[0].is_null() || !(*gp).u.castle3.xC4[1].is_null() || !(*gp).u.castle3.xC4[2].is_null())
+        && ((*gp).u.castle3.xD0 == -1 || {
+            let sat: *mut HSD_GObj = (*gp).u.castle3.xC4[(*gp).u.castle3.xD0 as usize];
+            !sat.is_null() && !(*sat).user_data.is_null() && *(addr_of_mut!((*((*sat).user_data as *mut Ground)).u.castle3.xC4) as *mut i16) == 0
         })
     {
-        (*gp).u.castle12.xD2 = (*gp).u.castle12.xD2.wrapping_sub(1);
-        if (*gp).u.castle12.xD2 < 0 {
+        (*gp).u.castle3.xD2 = (*gp).u.castle3.xD2.wrapping_sub(1);
+        if (*gp).u.castle3.xD2 < 0 {
             grCastle_ResetSatelliteTimer(gp);
             let mut weights = grCs_803B7EF0;
-            let cur_slot = (*gp).u.castle12.xD0;
+            let cur_slot = (*gp).u.castle3.xD0;
             if cur_slot != -1 {
                 weights[cur_slot as usize] /= yp().x6 as s32;
             }
@@ -1549,7 +1549,7 @@ pub unsafe extern "C" fn grCastle_801CF868(gobj: *mut Ground_GObj) {
 
 pub unsafe extern "C" fn fn_801CFAFC(_item: *mut Item_GObj, gp: *mut Ground, _pos: *mut Vec3, gobj: *mut HSD_GObj) {
     melee_core::ct!("fn_801CFAFC");
-    *(addr_of_mut!((*gp).u.castle2.xC4) as *mut i16) = 4;
+    *(addr_of_mut!((*gp).u.castle3.xC4) as *mut i16) = 4;
     if ext::ftLib_IsFighter(gobj) != 0 {
         ext::ftLib_80086A4C(gobj, yp().x4 as f32);
     }
@@ -1738,11 +1738,11 @@ pub unsafe fn grCastle_801D02B8(gobj: *mut Ground_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grCastle_801D0520(gobj: *mut Ground_GObj, renderpass: i32) {
+pub unsafe extern "C" fn grCastle_801D0520(gobj: *mut Ground_GObj, renderpass: isize) {
     melee_core::ct!("grCastle_801D0520");
     let gp = GET_GROUND(gobj);
     if (*gp).u.castle.xC8 == 0 {
-        ext::grDisplay_801C5DB0(gobj, renderpass);
+        ext::grDisplay_801C5DB0(gobj, renderpass as isize);
     }
 }
 
@@ -1806,19 +1806,19 @@ pub unsafe extern "C" fn grCastle_801D08AC(_arg0: *mut c_void, arg1: *mut Ground
     grCastle_801D06CC_sub(arg1, gobj, 4);
 }
 
-pub unsafe extern "C" fn fn_801D0924(gobj: *mut HSD_GObj, renderpass: i32) {
+pub unsafe extern "C" fn fn_801D0924(gobj: *mut HSD_GObj, renderpass: isize) {
     melee_core::ct!("fn_801D0924");
     let gp = (*gobj).user_data as *mut Ground;
 
-    ext::grDisplay_801C5DB0(gobj, renderpass);
+    ext::grDisplay_801C5DB0(gobj, renderpass as isize);
 
     if (*gp).x10_flags.b7() != 0 {
         let mut color1 = _GXColor { r: 0xFF, g: 0xFF, b: 0xFF, a: 0xFE };
         let mut color2 = _GXColor { r: 0xFF, g: 0xFF, b: 0xFF, a: 0xFF };
 
         for i in 0..12usize {
-            if !(*gp).u.castle3.x1C[i].data.is_null() {
-                ext::lb_800117F4(&mut (*gp).u.castle3.x1C[i], &mut color1, &mut color2, 999, renderpass as u32);
+            if !(*gp).u.castle3.dynamics[i].data.is_null() {
+                ext::lb_800117F4(&mut (*gp).u.castle3.dynamics[i], &mut color1, &mut color2, 999, renderpass as u32);
             }
         }
     }
@@ -1865,7 +1865,7 @@ pub unsafe fn grCastle_801D0A9C(arg0: *mut Vec3, arg8: f32) {
     }
 }
 
-pub unsafe extern "C" fn grCastle_801D0B04(_arg: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn grCastle_801D0B04(_arg: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("grCastle_801D0B04");
     null_mut()
 }
@@ -2016,4 +2016,4 @@ pub unsafe fn grCastle_801D0FF0() -> f32 {
     pub extern "C" fn grCastle_801CF300_fp(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grCastle_801D0B04_fp (gr/grcastle.c:1897)
-    pub extern "C" fn grCastle_801D0B04_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grCastle_801D0B04_fp(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

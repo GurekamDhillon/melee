@@ -43,7 +43,7 @@ pub mod ext {
     ext_fns! {
     fn Camera_80029020() -> *mut CmSubject;
     fn Camera_LogicBounds(a0: *mut f32, a1: *mut f32, a2: *mut f32) -> i32;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn Ground_801C10B8(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>| { unsafe { crate::tu::ground::Ground_801C10B8(a0 as _, a1 as _); } };
     fn Ground_801C39C0() = || { unsafe { crate::tu::ground::Ground_801C39C0(); } };
     fn Ground_801C3BB4() = || { unsafe { crate::tu::ground::Ground_801C3BB4(); } };
@@ -72,7 +72,7 @@ pub mod ext {
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grAnime_801C83D0(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32 = |a0: *mut HSD_GObj, a1: i32, a2: i32| unsafe { crate::tu::granime::grAnime_801C83D0(a0 as _, a1 as _, a2 as _) as _ };
     fn grDatFiles_801C6330(a0: i32) -> *mut UnkArchiveStruct = |a0: i32| unsafe { crate::tu::grdatfiles::grDatFiles_801C6330(a0 as _) as _ };
-    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
+    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
     fn grLib_801C96F8(a0: i32, a1: i32, a2: *mut Vec) -> *mut HSD_Generator = |a0: i32, a1: i32, a2: *mut Vec| unsafe { crate::tu::grlib::grLib_801C96F8(a0 as _, a1 as _, a2 as _) as _ };
     fn grLib_801C9808(a0: i32, a1: i32, a2: *mut HSD_JObj) -> *mut HSD_Generator = |a0: i32, a1: i32, a2: *mut HSD_JObj| unsafe { crate::tu::grlib::grLib_801C9808(a0 as _, a1 as _, a2 as _) as _ };
     fn grLib_801C9834(a0: *mut HSD_Generator) = |a0: *mut HSD_Generator| { unsafe { crate::tu::grlib::grLib_801C9834(a0 as _); } };
@@ -94,7 +94,7 @@ pub mod ext {
         use super::*;
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
         pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { super::grDisplay_801C5DB0(a0, a1) }
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
@@ -200,7 +200,7 @@ pub static mut yakumono_param: *mut grOnett_StageParam = null_mut();
 pub static mut grOt_804D69C4: i32 = 0;
 
 const fn cb(on_init: HSD_GObjEvent, callback1: HSD_GObjPredicate, gobj_proc: HSD_GObjEvent, callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>, flags: u32) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, x10: StageCallbacks_x10 { flags: u32::to_be(flags) } }
 }
 
 /// `grOt_803E27E0` (3E27E0)
@@ -1000,7 +1000,7 @@ pub unsafe extern "C" fn grOnett_801E56FC() -> *mut DynamicModelDesc {
     null_mut()
 }
 
-pub unsafe extern "C" fn grOnett_801E5760(_arg: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn grOnett_801E5760(_arg: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("grOnett_801E5760");
     null_mut()
 }
@@ -1037,4 +1037,4 @@ pub unsafe extern "C" fn grOnett_801E5768(a: *mut Vec3, _b: i32, jobj: *mut HSD_
     pub extern "C" fn grOnett_801E43D8_fp(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grOnett_801E5760_fp (gr/gronett.c:950)
-    pub extern "C" fn grOnett_801E5760_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grOnett_801E5760_fp(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

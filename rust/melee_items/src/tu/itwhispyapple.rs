@@ -183,7 +183,7 @@ pub unsafe extern "C" fn it_802EE200(parent: *mut HSD_GObj, pos: *mut Vec3, thre
     spawn.vel.y = 0.0;
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = null_mut();
-    spawn.x44_flag.anon_0.set_b0(0);
+    spawn.x44_flag.x0.set_b0(0);
     spawn.x40 = 0;
     if ext::it_8026D3CC() == 0 {
         rand -= threshold2;

@@ -106,9 +106,9 @@ pub unsafe fn HSD_SisLib_803A6754(font_idx: i32, context_id: i32) -> *mut HSD_Te
     melee_core::ct!("HSD_SisLib_803A6754");
     let text = ext::HSD_SisLib_803A5ACC(font_idx, context_id, 0.0, 0.0, 0.0, 640.0, 480.0);
     let alloc = ext::HSD_SisLib_Alloc(core::mem::size_of::<SisBlock>() as i32) as *mut SisBlock;
-    (*text).alloc_data = alloc;
+    (*text).alloc_data = alloc as *mut SisBuffer;
     let buffer = ext::HSD_SisLib_Alloc(0x80) as *mut HSD_Text;
-    (*alloc).data = buffer;
+    (*alloc).data = buffer as *mut c_void;
     (*alloc).next = buffer as *mut SisBlock;
     (*alloc).size = 0x80;
     // `*(u8*)&alloc->next->next = 0`: the first byte of the new buffer.
@@ -116,7 +116,7 @@ pub unsafe fn HSD_SisLib_803A6754(font_idx: i32, context_id: i32) -> *mut HSD_Te
     // `*(&alloc->size + 1) = 0`: the counter word after `size` (`sisLib_803A7664_t.xC`).
     (*(alloc as *mut sisLib_803A7664_t)).xC = 0;
     ext::HSD_SisLib_803A6368(text, 0);
-    (*text).sis_buffer = (*alloc).data as *mut SIS;
+    (*text).sis_buffer = (*alloc).data as *mut u8;
     text
 }
 
@@ -288,8 +288,8 @@ unsafe fn sis_grow(text: *mut HSD_Text, alloc: *mut SisBlock, old_buf: *mut u8) 
         *new_buf.offset(copy_idx as isize) = *copy_src.offset(copy_idx as isize);
         copy_idx += 1;
     }
-    (*alloc).data = new_buf as *mut HSD_Text;
-    (*text).sis_buffer = new_buf as *mut SIS;
+    (*alloc).data = new_buf as *mut c_void;
+    (*text).sis_buffer = new_buf as *mut u8;
     (*alloc).next = new_buf.offset(((*alloc).next as *mut u8).offset_from(old_buf)) as *mut SisBlock;
     ext::HSD_SisLib_Free(old_buf as *mut c_void);
 }
@@ -306,7 +306,7 @@ pub unsafe fn HSD_SisLib_803A6B98_bytes(text: *mut HSD_Text, x: f32, y: f32, fmt
     melee_core::ct!("HSD_SisLib_803A6B98");
     let mut encoded = [0u8; 128];
     let mut encoded_len: i32 = 0;
-    let alloc = (*text).alloc_data;
+    let alloc = (*text).alloc_data as *mut SisBlock;
     encoded[0] = 0;
     if let Some(f) = fmt {
         let buffer = format_buffer(f);
@@ -416,7 +416,7 @@ pub unsafe fn HSD_SisLib_803A70A0_bytes(text: *mut HSD_Text, entry_idx: i32, fmt
 
     let entry = fn_803A6FEC((*text).sis_buffer as *mut u8, entry_idx, Some(&mut old_size));
     if !entry.is_null() {
-        let alloc = (*text).alloc_data;
+        let alloc = (*text).alloc_data as *mut SisBlock;
         let mut playhead = entry.add(0xE);
         let new_size: i32;
         if let Some(f) = fmt {

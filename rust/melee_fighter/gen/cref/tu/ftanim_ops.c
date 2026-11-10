@@ -91,7 +91,7 @@ static void world(void)
     for (i = 0; i < NG; i++) fill_Fighter(&FT[i]);
     /* the x594 union: only the flag bits are filled; x594_bits / x597_bits do not overlap them in either bit order, so they get their own
        values (the generated fill leaves them to whatever the flag fill's layout puts there) */
-    for (i = 0; i < NG; i++) { FT[i].x594_bits = fv(); FT[i].x597_bits = fv(); }
+    for (i = 0; i < NG; i++) { FT[i].x594.x0_1.x594_bits = fv(); FT[i].x594.x0_1.x597_bits = fv(); }
     for (i = 0; i < NJ; i++) fill_HSD_JObj(&JO[i]);
     for (i = 0; i < NG; i++) fill_HSD_GObj(&GO[i]);
     for (i = 0; i < NG; i++) {
@@ -101,9 +101,9 @@ static void world(void)
         FT[i].gobj = &GO[i];
         FT[i].ft_data = &FDATA[i];
         FT[i].grab_cb = cbev1; FT[i].grabbed_cb = cbev3;
-        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_id %= 4; FT[i].x618_player_id %= 4;
-        for (b = 0; b < 64; b++) { if (b < NP) fill_FighterBone(&PARTS[i][b]); else { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].flags_b1 = 1; } PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
-        PARTS[i][0].flags_b1 = 1; PARTS[i][0].flags_b0 = 0; PARTS[i][0].flags_b5 = 0;   /* ftAnim_8006F3DC falls off its end (undefined) without one live part */
+        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_idx %= 4; FT[i].pad_port %= 4;
+        for (b = 0; b < 64; b++) { if (b < NP) fill_FighterBone(&PARTS[i][b]); else { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].x8.x0.flags_b1 = 1; } PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
+        PARTS[i][0].x8.x0.flags_b1 = 1; PARTS[i][0].x8.x0.flags_b0 = 0; PARTS[i][0].x8.x0.flags_b5 = 0;   /* ftAnim_8006F3DC falls off its end (undefined) without one live part */
         FT[i].parts = PARTS[i];
         FT[i].x108_costume_joint = &JNT[0];
         { int n_ = (int) (rnd() % 5), q_; for (q_ = 0; q_ < n_; q_++) FNODES[i][q_] = (s8) (1 + rnd() % 4); for (; q_ < 40; q_++) FNODES[i][q_] = -1;

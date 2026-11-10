@@ -27,11 +27,11 @@ pub mod ext {
             }
         };
     }
-    pub static mut FTCH_GRABUNK1_8015B850: Option<fn(*mut HSD_GObj, i32) > = None;
+    pub static mut FTCH_GRABUNK1_8015B850: Option<fn(*mut HSD_GObj, isize) > = None;
             #[allow(non_snake_case)]
             pub fn ftCh_GrabUnk1_8015B850(gobj: *mut HSD_GObj, msid: i32)  {
                 match unsafe { FTCH_GRABUNK1_8015B850 } {
-                    Some(f) => f(gobj, msid),
+                    Some(f) => f(gobj, msid as isize),
                     None => { unsafe { crate::tu::ftcrazyhandthrowncrazyhand::ftCh_GrabUnk1_8015B850(gobj as _, msid as _); } return; },
                 }
             }
@@ -99,7 +99,7 @@ pub fn ftCh_BackAirplane2_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftCh_BackAirplane2_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0 /* Gm_PKind_Human */) {
             st::ftBossLib_8015BD20(gobj);
         }
     }

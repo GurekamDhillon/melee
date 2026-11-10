@@ -213,27 +213,27 @@ pub unsafe extern "C" fn grStory_801E36D8(a: *mut Vec3, _unused: i32, jobj: *mut
 }
 
 pub static mut grSt_StageCallbacks: [StageCallbacks; 4] = [
-    StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, anon_10: StageCallbacks_anon_135 { flags: 0 } },
+    StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, x10: StageCallbacks_x10 { flags: 0 } },
     StageCallbacks {
         on_init: Some(grStory_801E31C0),
         callback1: Some(grStory_801E3224),
         gobj_proc: Some(grStory_801E322C),
         callback3: Some(grStory_801E3230),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grStory_801E3370),
         callback1: Some(grStory_801E33D8),
         gobj_proc: Some(grStory_801E33E0),
         callback3: Some(grStory_801E3414),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grStory_801E3234),
         callback1: Some(grStory_801E332C),
         gobj_proc: Some(grStory_801E3334),
         callback3: Some(grStory_801E336C),
-        anon_10: StageCallbacks_anon_135 { flags: u32::to_be((1 << 30) | (1 << 31)) },
+        x10: StageCallbacks_x10 { flags: u32::to_be((1 << 30) | (1 << 31)) },
     },
 ];
 
@@ -271,4 +271,4 @@ pub static mut grSt_StageData: StageData = StageData {
     pub extern "C" fn grStory_801E33D8(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grStory_801E36D0 (gr/grstory.c:313)
-    pub extern "C" fn grStory_801E36D0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grStory_801E36D0(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

@@ -69,7 +69,7 @@ fn matches_c() {
         let v = t::ftMr_SpecialN_VitaminRandom(gp);
         let got = unsafe { format!("V {} {} {} {} {}", i, v, f.u.mr.x222C_vitaminCurr, f.u.mr.x2230_vitaminPrev, RANDI_N) };
         assert_eq!(got, lines.next().unwrap(), "case {i} V");
-        unsafe { f.anon_2210.anon_0.set_throw_flags_b0((r.rnd() & 1) as u8) };
+        unsafe { f.x2210.x0.set_throw_flags_b0((r.rnd() & 1) as u8) };
         f.kind = if r.rnd() % 3 == 0 {
             Ft_Kind_Mario
         } else if r.rnd() & 1 != 0 {
@@ -80,7 +80,7 @@ fn matches_c() {
         f.facing_dir = if r.rnd() & 1 != 0 { 1.0 } else { -1.0 };
         unsafe { LOGB.clear() };
         t::ftMr_SpecialN_ItemFireSpawn(gp);
-        let got = unsafe { format!("F {} {} {}", i, f.anon_2210.anon_0.throw_flags_b0(), LOGB) };
+        let got = unsafe { format!("F {} {} {}", i, f.x2210.x0.throw_flags_b0(), LOGB) };
         assert_eq!(got.trim_end(), lines.next().unwrap().trim_end(), "case {i} F");
     }
     assert!(lines.next().is_none());

@@ -69,7 +69,7 @@ pub fn install() {
         grDatFiles_GetArchive = Some(|| { t(1056); &raw mut super::ARCH });
         grDisplay_801C5DB0 = Some(|a0, a1| { t(1057); t(pi(a0)); t(a1 as u32); });
         grZakoGenerator_801CAE04 = Some(|a0| { t(1058); t(pi(a0)); core::ptr::null_mut() });
-        it_8026BE84 = Some(|a0| { t(1059); t(pi(a0)); hm(pi((*a0).x0)); hm(pi((*a0).x4)); hm((*a0).x8_vec.x.to_bits()); hm((*a0).x8_vec.y.to_bits()); hm((*a0).x8_vec.z.to_bits()); hm((*a0).x14 as u32); hm((*a0).x18 as u32); hm((*a0).x1C.anon_0.b0() as u32); core::ptr::null_mut() });
+        it_8026BE84 = Some(|a0| { t(1059); t(pi(a0)); hm(pi((*a0).x0)); hm(pi((*a0).x4)); hm((*a0).x8_vec.x.to_bits()); hm((*a0).x8_vec.y.to_bits()); hm((*a0).x8_vec.z.to_bits()); hm((*a0).x14 as u32); hm((*a0).x18 as u32); hm((*a0).x1C.x0.b0() as u32); core::ptr::null_mut() });
         lbLang_IsSavedLanguageJP = Some(|| { t(1060); fv() as _ });
         lbLang_IsSavedLanguageUS = Some(|| { t(1061); fv() as _ });
         lb_8000B1CC = Some(|a0, a1, a2| { t(1062); t(pi(a0)); t(pi(a1)); t(pi(a2)); (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); });
@@ -962,8 +962,8 @@ pub fn fill_HSD_Text(p: &mut HSD_Text) {
     p.hidden = fv() as _;
     p.x4E = fv() as _;
     p.font_idx = fv() as _;
-    p.x6C = fv() as _;
-    p.x6E = fv() as _;
+    p.state_stack_used = fv() as _;
+    p.state_stack_capacity = fv() as _;
     p.current_width = rg();
     p.current_height = rg();
     p.x78.x = rg();
@@ -1064,11 +1064,11 @@ pub fn hash_HSD_Text(p: &HSD_Text) {
     hn("p->alloc_data");
     hm(pi(p.alloc_data));
     hn("p->string_buffer");
-    hm(pi(p.string_buffer));
+    hm(pi(p.state_stack));
     hn("p->x6C");
-    hm(p.x6C as u32);
+    hm(p.state_stack_used as u32);
     hn("p->x6E");
-    hm(p.x6E as u32);
+    hm(p.state_stack_capacity as u32);
     hn("p->current_width");
     hm(p.current_width.to_bits());
     hn("p->current_height");

@@ -84,7 +84,7 @@ pub fn it_arwinglaser_get_coll_arg(ip: &Item) -> i32 {
 /// # Safety
 /// `article.x4_specialAttributes` must point to an `itFoodsAttributes`.
 pub unsafe fn get_rand_max(article: &Article) -> u32 {
-    (*(article.x4_specialAttributes as *const itFoodsAttributes)).x0 as u32
+    (*(article.x4_specialAttributes as *const itFoodsAttributes)).count as u32
 }
 
 pub use crate::tu::itlinkhookshot::it_802a3c98;

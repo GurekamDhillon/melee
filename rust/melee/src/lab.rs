@@ -1520,10 +1520,10 @@ unsafe fn stage_lines(ui: &mut crate::ui::Ui, cam: &Camera, bits: u32, c_line: c
     let n = (*cd).line_count.clamp(0, 4096);
     for i in 0..n {
         let l = &*groundCollLine.offset(i as isize);
-        if l.x0.is_null() {
+        if l.inner.is_null() {
             continue;
         }
-        let ml = &*l.x0;
+        let ml = &*l.inner;
         let v0 = &(*groundCollVtx.offset(ml.v0_idx as isize)).pos;
         let v1 = &(*groundCollVtx.offset(ml.v1_idx as isize)).pos;
         let (Some(p), Some(q)) = (cam.project(v0.x, v0.y, 0.0), cam.project(v1.x, v1.y, 0.0)) else { continue };

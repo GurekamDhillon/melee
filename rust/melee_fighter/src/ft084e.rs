@@ -28,7 +28,7 @@ pub(crate) fn fp<'a>(g: G) -> &'a mut Fighter {
 
 #[inline(always)]
 pub(crate) fn x594_b0(f: &Fighter) -> u8 {
-    unsafe { f.anon_594.anon_0.x594_b0() }
+    unsafe { f.x594.x0.x594_b0() }
 }
 
 /// fall-fast check, then fast fall or `ftCommon_Fall(gravity, terminal_velocity)`.

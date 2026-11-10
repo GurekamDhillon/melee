@@ -222,14 +222,14 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x1 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].slot_type = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].spawn_point = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.set_x4_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.set_x4_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.set_x4_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.set_x4_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.set_x4_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.set_x4_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.set_x4_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.set_x4_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.set_x4_b0((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.set_x4_b1((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.set_x4_b2((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.set_x4_b3((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.set_x4_b4((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.set_x4_b5((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.set_x4_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.set_x4_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x5 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x6 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x8 = rt::draw_int(&mut rt::ST) as _;
@@ -268,9 +268,9 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].pkind = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].ckind = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].ftkind = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].anon_3.anon_0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].anon_3.anon_0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].anon_3.anon_0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x3_u.x0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x3_u.x0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x3_u.x0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x4 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].is_big_loser = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].is_small_loser = rt::draw_int(&mut rt::ST) as _;
@@ -283,7 +283,7 @@ unsafe fn fill_all() {
         for i1 in 0..4 {
             (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].kills[i1] = rt::draw_int(&mut rt::ST) as _;
         }
-        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x18 = rt::draw_int(&mut rt::ST) as _;
+        (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].kills[4] = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x1C = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x20 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x24 = rt::draw_int(&mut rt::ST) as _;
@@ -394,7 +394,7 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x1C_pad[i0] = rt::draw_int(&mut rt::ST) as _;
     }
     (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x20 = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x28 = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.it_kind = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x2C = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x30 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.game_speed = rt::draw_f32(&mut rt::ST);
@@ -470,7 +470,7 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x1C_pad[i0] = rt::draw_int(&mut rt::ST) as _;
     }
     (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x20 = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x28 = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).it_kind = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x2C = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x30 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).game_speed = rt::draw_f32(&mut rt::ST);
@@ -629,14 +629,14 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x1 as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].slot_type as u64);
         rt::h_i((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].spawn_point as i64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.x4_b0() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.x4_b1() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.x4_b2() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.x4_b3() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.x4_b4() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.x4_b5() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.x4_b6() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].anon_4.anon_0.x4_b7() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.x4_b0() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.x4_b1() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.x4_b2() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.x4_b3() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.x4_b4() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.x4_b5() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.x4_b6() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x4.x0.x4_b7() as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x5 as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x6 as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.fighters[i0].x8 as u64);
@@ -675,9 +675,9 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].pkind as u64);
         rt::h_i((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].ckind as i64);
         rt::h_i((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].ftkind as i64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].anon_3.anon_0.x3_b0() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].anon_3.anon_0.x3_b6() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].anon_3.anon_0.x3_b7() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x3_u.x0.x3_b0() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x3_u.x0.x3_b6() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x3_u.x0.x3_b7() as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x4 as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].is_big_loser as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].is_small_loser as u64);
@@ -690,7 +690,7 @@ unsafe fn hash_objs() {
         for i1 in 0..4 {
             rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].kills[i1] as u64);
         }
-        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x18 as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].kills[4] as u64);
         rt::h_i((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x1C as i64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x20 as u64);
         rt::h_i((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).state.x24C.player_standings[i0].x24 as i64);
@@ -801,7 +801,7 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x1C_pad[i0] as u64);
     }
     rt::h_u((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x20 as u64);
-    rt::h_i((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x28 as i64);
+    rt::h_i((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.it_kind as i64);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x2C);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.x30);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_gmVs_GetSceneController)).start.game_speed);
@@ -879,7 +879,7 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x1C_pad[i0] as u64);
     }
     rt::h_u((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x20 as u64);
-    rt::h_i((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x28 as i64);
+    rt::h_i((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).it_kind as i64);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x2C);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x30);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).game_speed);
@@ -983,9 +983,9 @@ unsafe fn run_fn_8017E8A4_ptr(seed: u64) -> [u64; 3] {
             AB_fn_8017E8A4_ptr_0[e].player_standings[i2].pkind = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017E8A4_ptr_0[e].player_standings[i2].ckind = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017E8A4_ptr_0[e].player_standings[i2].ftkind = rt::draw_int(&mut rt::ST) as _;
-            AB_fn_8017E8A4_ptr_0[e].player_standings[i2].anon_3.anon_0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
-            AB_fn_8017E8A4_ptr_0[e].player_standings[i2].anon_3.anon_0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_fn_8017E8A4_ptr_0[e].player_standings[i2].anon_3.anon_0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
+            AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x3_u.x0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
+            AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x3_u.x0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
+            AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x3_u.x0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
             AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x4 = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017E8A4_ptr_0[e].player_standings[i2].is_big_loser = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017E8A4_ptr_0[e].player_standings[i2].is_small_loser = rt::draw_int(&mut rt::ST) as _;
@@ -998,7 +998,7 @@ unsafe fn run_fn_8017E8A4_ptr(seed: u64) -> [u64; 3] {
             for i3 in 0..4 {
                 AB_fn_8017E8A4_ptr_0[e].player_standings[i2].kills[i3] = rt::draw_int(&mut rt::ST) as _;
             }
-            AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x18 = rt::draw_int(&mut rt::ST) as _;
+            AB_fn_8017E8A4_ptr_0[e].player_standings[i2].kills[4] = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x1C = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x20 = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x24 = rt::draw_int(&mut rt::ST) as _;
@@ -1086,9 +1086,9 @@ unsafe fn run_fn_8017E8A4_ptr(seed: u64) -> [u64; 3] {
             rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].pkind as u64);
             rt::h_i(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].ckind as i64);
             rt::h_i(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].ftkind as i64);
-            rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].anon_3.anon_0.x3_b0() as u64);
-            rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].anon_3.anon_0.x3_b6() as u64);
-            rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].anon_3.anon_0.x3_b7() as u64);
+            rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x3_u.x0.x3_b0() as u64);
+            rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x3_u.x0.x3_b6() as u64);
+            rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x3_u.x0.x3_b7() as u64);
             rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x4 as u64);
             rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].is_big_loser as u64);
             rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].is_small_loser as u64);
@@ -1101,7 +1101,7 @@ unsafe fn run_fn_8017E8A4_ptr(seed: u64) -> [u64; 3] {
             for i3 in 0..4 {
                 rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].kills[i3] as u64);
             }
-            rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x18 as u64);
+            rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].kills[4] as u64);
             rt::h_i(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x1C as i64);
             rt::h_u(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x20 as u64);
             rt::h_i(AB_fn_8017E8A4_ptr_0[e].player_standings[i2].x24 as i64);

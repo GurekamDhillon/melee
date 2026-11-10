@@ -25,7 +25,7 @@ fn smoke() {
     }
     f.u.pe.x4 = 2.0;
     f.facing_dir = 1.0;
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b3(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b3(1) };
     f.mv.pe.floatattack.x0 = 1;
     t::ftPe_FloatAttackAir_Anim(gp);
     assert_eq!(unsafe { f.u.pe.x4 }, 1.0);

@@ -126,7 +126,7 @@ pub unsafe extern "C" fn ftSamus_SpecialLw_StartAction_inner(mut gobj: *mut HSD_
     (*fp).cmd_vars[2 as usize] = 0 as u32;
     (*fp).cmd_vars[1 as usize] = 0 as u32;
     (*fp).cmd_vars[0 as usize] = 0 as u32;
-    (*fp).anon_2210.anon_0.set_throw_flags_b0((0 as u8) as u8);
+    (*fp).x2210.x0.set_throw_flags_b0((0 as u8) as u8);
     (*fp).mv.ss.unk6.x0 = 0;
     if (*fp).cur_anim_frame == 3.0f32 {
         (*fp).cmd_vars[1 as usize] = 1 as u32;
@@ -298,8 +298,8 @@ pub unsafe extern "C" fn HSD_GObjGetUserData(mut gobj: *mut HSD_GObj) -> *mut c_
 /// `ftCheckThrowB0`
 pub unsafe extern "C" fn ftCheckThrowB0(mut fp: *mut Fighter) -> i32 {
     melee_core::ct!("ftCheckThrowB0");
-    if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b0((0 as u8) as u8);
+    if (*fp).x2210.x0.throw_flags_b0() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b0((0 as u8) as u8);
         return 1;
     } else {
         return 0;

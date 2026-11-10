@@ -34,7 +34,7 @@ fn ftCo_DownSpot_matches_c() {
         for k in 0..2000u32 {
             case(op, k);
             df_fill();
-            unsafe { (*DR).x14 = SRV[4] & 1 };
+            unsafe { (*DR).x14 = ((SRV[4] & 1) as usize) };
             let g = go();
             match op {
                 0 => m::ftCo_DownSpot_Enter(g),

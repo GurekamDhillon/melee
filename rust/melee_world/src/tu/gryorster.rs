@@ -128,10 +128,10 @@ pub mod ext {
                     None => { unsafe { crate::tu::ground::Ground_801C10B8(a0 as _, a1 as _); } return; },
                 }
             }
-    pub static mut H_Ground_801C3FA4: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) -> *mut melee_types::HSD_JObj> = None;
+    pub static mut H_Ground_801C3FA4: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) -> *mut melee_types::HSD_JObj> = None;
             pub unsafe extern "C" fn Ground_801C3FA4(a0: *mut melee_types::HSD_GObj, a1: i32) -> *mut melee_types::HSD_JObj {
                 match H_Ground_801C3FA4 {
-                    Some(f) => f(a0, a1),
+                    Some(f) => f(a0, a1 as isize),
                     None => { return unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ }; },
                 }
             }
@@ -237,12 +237,12 @@ pub mod ext {
                     None => { return unsafe { crate::tu::granime::grAnime_801C84A4(a0 as _, a1 as _, a2 as _) as _ }; },
                 }
             }
-    pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, u8, u32)> = None;
-    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
-    pub static mut H_grDisplay_801C5DB0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
-            pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+    pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, u8, u32)> = None;
+    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
+    pub static mut H_grDisplay_801C5DB0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: isize)  {
                 match H_grDisplay_801C5DB0 {
-                    Some(f) => f(a0, a1),
+                    Some(f) => f(a0, a1 as isize),
                     None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },
                 }
             }
@@ -322,7 +322,7 @@ const fn cb(
     callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>,
     flags: u32,
 ) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, x10: StageCallbacks_x10 { flags: u32::to_be(flags) } }
 }
 
 pub static mut grYt_StageCallbacks: [StageCallbacks; 2] = [
@@ -689,7 +689,7 @@ pub unsafe extern "C" fn grYorster_8020266C(gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grYorster_80202B5C(_unused: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn grYorster_80202B5C(_unused: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("grYorster_80202B5C");
     null_mut()
 }
@@ -726,7 +726,7 @@ pub unsafe extern "C" fn grYorster_80202B64(_a: *mut Vec3, _unused: i32, _joint:
     pub extern "C" fn grYorster_8020224C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grYorster_80202B5C_fp (gr/gryorster.c:426)
-    pub extern "C" fn grYorster_80202B5C_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grYorster_80202B5C_fp(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grYorster_80202B64_fp (gr/gryorster.c:431)
     pub extern "C" fn grYorster_80202B64_fp(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

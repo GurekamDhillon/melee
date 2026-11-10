@@ -90,7 +90,7 @@ pub fn ftKb_SpecialNSs_800FCC6C(gobj: G) -> bool {
         if !gobj.is_null() {
             let fp = fpp(gobj);
             return match (*fp).motion_id as i32 {
-                0x197..=0x19C => (*fp).x2070.anon_0.x2071_b6() != 0,
+                0x197..=0x19C => (*fp).x2070.x0.x2071_b6() != 0,
                 _ => true,
             };
         }

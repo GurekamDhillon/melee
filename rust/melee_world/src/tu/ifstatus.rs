@@ -32,13 +32,13 @@ pub mod ext {
     }
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } };
     fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void = |a0: *mut HSD_Archive, a1: *const i8| unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0 as _, a1 as _) as _ };
     fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
     fn HSD_GObj_80390CAC(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_80390CAC(a0 as _); } };
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
@@ -564,7 +564,7 @@ pub unsafe extern "C" fn ifStatus_802F5B48(gobj: *mut HSD_GObj) {
             (*p).flags.set_unk10(0);
         }
         if (*p).old_damage == 0 {
-            if (*ext::gmVs_GetSceneState()).fighters[(*p).player_slot as i8 as usize].anon_4.anon_0.x4_b5() != 0 {
+            if (*ext::gmVs_GetSceneState()).fighters[(*p).player_slot as i8 as usize].x4.x0.x4_b5() != 0 {
                 ifStatus_802F6948((*p).player_slot as i8 as i32);
             }
         }
@@ -603,7 +603,7 @@ pub unsafe fn getPlayerByHUDParent(parent: *mut HSD_GObj) -> *mut IfDamageState 
     null_mut()
 }
 
-pub unsafe extern "C" fn ifStatus_802F5DE0(player: *mut HSD_GObj, arg1: i32) {
+pub unsafe extern "C" fn ifStatus_802F5DE0(player: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("ifStatus_802F5DE0");
     // TARGET_PC: the script's HUD switch and the Atlas retail mask
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_DAMAGE) != 0 {
@@ -624,7 +624,7 @@ pub unsafe fn getPlayerByNext(gobj: *mut HSD_GObj) -> *mut IfDamageState {
     null_mut()
 }
 
-pub unsafe extern "C" fn ifStatus_802F5E50(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe extern "C" fn ifStatus_802F5E50(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("ifStatus_802F5E50");
     if ext::Script_StatusHUDVisible() == 0 || ext::Ui_RetailHidden(AT_RE_HUD_DAMAGE) != 0 {
         return;

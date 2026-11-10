@@ -100,8 +100,8 @@ pub fn fn_800F98F4(gobj: G) {
     unsafe {
         let fp = fpp(gobj);
         // `ftCheckThrowB0`: test and clear.
-        if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-            (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+        if (*fp).x2210.x0.throw_flags_b0() != 0 {
+            (*fp).x2210.x0.set_throw_flags_b0(0);
             let mut pos: Vec3 = core::mem::zeroed();
             let bone = melee_fighter::hooks::ftparts_get_bone_index(&*fp, FtPart_LHandN as i32);
             ext::lb_8000B1CC((*(*fp).parts.add(bone as usize)).joint, core::ptr::null(), &mut pos);
@@ -183,7 +183,7 @@ pub fn ftKb_SpecialNLg_800F9614(gobj: *mut HSD_GObj) {
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 431 /* ftKb_MS_LgSpecialN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
         (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialluigi__fn_800F98F4);
@@ -196,7 +196,7 @@ pub fn ftKb_SpecialNLg_800F9684(gobj: *mut HSD_GObj) {
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 432 /* ftKb_MS_LgSpecialAirN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
         (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialluigi__fn_800F98F4);

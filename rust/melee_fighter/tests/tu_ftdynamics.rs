@@ -34,11 +34,11 @@ fn toggle_bones() {
             (*ddp.add(i)).next = if i < 2 { ddp.add(i + 1) } else { core::ptr::null_mut() };
         }
     }
-    let mut bones = ArticleDynamicBones::zeroed();
-    bones.array[0].bone_id = 4;
+    let mut bones = [BoneDynamicsTemplate::zeroed(); Ft_Dynamics_NumMax as usize];
+    bones[0].bone_id = 4;
     let mut dy = ftDynamics::zeroed();
-    dy.anon_0.dynamicsNum = 1;
-    dy.anon_0.ftDynamicBones = &mut bones;
+    dy.x0.dynamicsNum = 1;
+    dy.x0.ftDynamicBones = bones.as_mut_ptr();
     let mut data = ftData::zeroed();
     data.x2C = &mut dy;
     let mut f: Box<Fighter> = Box::new(Fighter::zeroed());
@@ -49,9 +49,9 @@ fn toggle_bones() {
     f.dynamic_bone_sets[0].dyn_desc.data = ddp;
 
     // arg2=1 with a count of 2: first two bones inverse (0), third flag (1).
-    d::ftCo_8009CB40(&mut f, 0, 1, 2 as *mut FigaTree);
+    d::ftCo_8009CB40(&mut f, 0, 1, 2);
     assert_eq!(f.dynamic_bone_sets[0].bone_id, 2);
-    let fl = |p: &FighterBone| unsafe { p.anon_8.anon_0.flags_b0() };
+    let fl = |p: &FighterBone| unsafe { p.x8.x0.flags_b0() };
     assert_eq!((fl(&parts[4]), fl(&parts[5]), fl(&parts[6])), (0, 0, 1));
     assert_eq!(unsafe { CLEARS }, 1);
     // arg2=0: all bones flag 0 -> inverse 1 for k < 0? limit 0 so all take flag 0.

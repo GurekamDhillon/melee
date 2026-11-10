@@ -95,7 +95,7 @@ unsafe fn setup(prof: i32) {
         IT[k].kind = KK[(rnd() % 6) as usize];
         let pt = &mut IT[k].xDD4_itemVar.peachturnip;
         pt.xDD8 = (rnd() % 10) as i32 - 1;
-        pt.xDD4.anon_0.set_b0((rnd() & 1) as u8);
+        pt.xDD4.x0.set_b0((rnd() & 1) as u8);
         pt.xDDC_damage = (rnd() % 30) as i32;
         pt.xDE0_scl = rw();
         pt.xDE4_owner = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
@@ -108,7 +108,7 @@ unsafe fn hash_all() {
     for k in 0..3 {
         let pt = &mut IT[k].xDD4_itemVar.peachturnip;
         hm(pi(pt.xDE4_owner)); pt.xDE4_owner = null_mut();
-        hm(pt.xDD4.anon_0.b0() as u32);
+        hm(pt.xDD4.x0.b0() as u32);
         core::ptr::write_bytes(&raw mut pt.xDD4 as *mut u8, 0, core::mem::size_of_val(&pt.xDD4));
     }
     for k in 0..3 {

@@ -224,20 +224,19 @@ pub fn hash_HSD_AObj(p: &HSD_AObj) { unsafe {
     hm(p.end_frame.to_bits());
     hm(p.framerate.to_bits());
     hm(pi(p.fobj));
-    hm(pi(p.hsd_obj));
+    hm(pi(p.jobj));
 } }
 
 pub fn fill_HSD_AObjDesc(p: &mut HSD_AObjDesc) { unsafe {
     p.flags = fv() as _;
     p.end_frame = rg();
-    p.obj_id = fv() as _;
 } }
 pub fn hash_HSD_AObjDesc(p: &HSD_AObjDesc) { unsafe {
     if HDBG { println!("B HSD_AObjDesc"); }
     hm(p.flags as u32);
     hm(p.end_frame.to_bits());
     hm(pi(p.fobjdesc));
-    hm(p.obj_id as u32);
+    hm(pi(p.obj_id));
 } }
 
 pub fn fill_HSD_ImageDesc(p: &mut HSD_ImageDesc) { unsafe {

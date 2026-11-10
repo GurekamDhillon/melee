@@ -312,7 +312,7 @@ unsafe fn snapshot(roots:&[*mut HSD_JObj])->(NativeTree,NativeHost){
         // link order is part of the id assignment: parent, child, next, aobj owner, then the joint-valued robjs
         let mut add=|link:*mut HSD_JObj,p:&mut std::vec::Vec<*mut HSD_JObj>|{if !link.is_null()&&ix.find(p,link).is_none(){p.push(link);ix.grew(p);}};
         add((*j).parent,&mut p);add((*j).child,&mut p);add((*j).next,&mut p);
-        if !(*j).aobj.is_null(){add((*(*j).aobj).hsd_obj.cast(),&mut p);}
+        if !(*j).aobj.is_null(){add((*(*j).aobj).jobj.cast(),&mut p);}
         let mut r=(*j).robj;
         while !r.is_null(){if (*r).flags&0x70000000==0x10000000{add((*r).u.jobj,&mut p);}r=(*r).next;}
         k+=1;
@@ -325,7 +325,7 @@ unsafe fn snapshot(roots:&[*mut HSD_JObj])->(NativeTree,NativeHost){
         o.scale=vid((*j).scale);o.translate=vid((*j).translate);
         o.rotate=crate::mtx::Quaternion{x:(*j).rotate.x,y:(*j).rotate.y,z:(*j).rotate.z,w:(*j).rotate.w};o.mtx=(*j).mtx;
         o.scl=(*j).scl.as_ref().map(|s|vid(*s));
-        if !(*j).aobj.is_null(){let mut a=crate::aobj::HsdAObj::alloc();a.hsd_obj=id((*(*j).aobj).hsd_obj.cast());o.aobj=Some(a);}
+        if !(*j).aobj.is_null(){let mut a=crate::aobj::HsdAObj::alloc();a.hsd_obj=id((*(*j).aobj).jobj.cast());o.aobj=Some(a);}
         if dobj_union(j){let mut d=(*j).u.dobj;while !d.is_null(){o.dobj.push(d);d=(*d).next;}}
         let mut r=(*j).robj;while !r.is_null(){o.robj.push(r);r=(*r).next;}
     }
@@ -340,7 +340,7 @@ unsafe fn raw_dirty(j:*mut HSD_JObj)->bool{(*j).flags&crate::jobj::JOBJ_USER_DEF
 /// Returns false (nothing done) when the joint needs the general path.
 unsafe fn fast_matrix(j:*mut HSD_JObj,clear_dirty:bool)->bool{
     use crate::jobj::{JOBJ_JOINT,JOBJ_USER_DEF_MTX};
-    if !(*j).robj.is_null()||(!(*j).aobj.is_null()&&!(*(*j).aobj).hsd_obj.is_null())||(*j).flags&(JOBJ_JOINT|JOBJ_USER_DEF_MTX)!=0{return false;}
+    if !(*j).robj.is_null()||(!(*j).aobj.is_null()&&!(*(*j).aobj).jobj.is_null())||(*j).flags&(JOBJ_JOINT|JOBJ_USER_DEF_MTX)!=0{return false;}
     let par=(*j).parent;
     // A dirty parent is set up first, as make_matrix's setup_matrix(parent) does at the same point; it then reads
     // clean, so this joint still takes the two-node path instead of snapshotting its whole skeleton (most of a Temple tick).

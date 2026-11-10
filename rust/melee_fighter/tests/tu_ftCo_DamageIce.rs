@@ -154,7 +154,7 @@ fn ftCo_DamageIce_matches_c() {
             fr.dmg.x1838_percentTemp = rw();
             fr.dmg.x1860_element = if rnd() & 1 != 0 { HitElement_Fire as u32 } else { rnd() % 16 };
             fr.grab_timer = rw();
-            fr.set_x2224_b2((rnd() & 1) as u8);
+            fr.set_stamina_dead((rnd() & 1) as u8);
             unsafe {
                 fr.mv.co.damageice.rot_speed = rw();
                 fr.mv.co.damageice.wall_hit_dir = (rnd() % 4) as u8;

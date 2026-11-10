@@ -149,11 +149,11 @@ pub fn Ground_801C3DB4(a0: *mut core::ffi::c_void, a1: f32, a2: f32) -> i32 {
     match unsafe { HOOK_Ground_801C3DB4 } { Some(f) => f(a0, a1, a2), None => { return unsafe { crate::tu::ground::Ground_801C3DB4(a0 as _, a1 as _, a2 as _) as _ }; } }
 }
 
-pub static mut HOOK_Ground_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+pub static mut HOOK_Ground_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
 
 /// C `Ground_801C3FA4` (melee/gr/ground.h).
 pub fn Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj {
-    match unsafe { HOOK_Ground_801C3FA4 } { Some(f) => f(a0, a1), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ }; } }
+    match unsafe { HOOK_Ground_801C3FA4 } { Some(f) => f(a0, a1 as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ }; } }
 }
 
 pub static mut HOOK_Ground_801C4210: Option<fn() -> i32> = None;
@@ -639,10 +639,10 @@ pub fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct {
     match unsafe { HOOK_grDatFiles_GetArchive } { Some(f) => f(), None => { return unsafe { crate::tu::grdatfiles::grDatFiles_GetArchive() as _ }; } }
 }
 
-pub static mut HOOK_grDisplay_801C5DB0: Option<fn(*mut HSD_GObj, i32)> = None;
+pub static mut HOOK_grDisplay_801C5DB0: Option<fn(*mut HSD_GObj, isize)> = None;
 
 /// C `grDisplay_801C5DB0` (melee/gr/grdisplay.h); referenced as a function value, so it is `extern "C"`.
-pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) {
+pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) {
     match HOOK_grDisplay_801C5DB0 { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; } }
 }
 

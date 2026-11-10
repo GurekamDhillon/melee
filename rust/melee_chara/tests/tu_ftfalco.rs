@@ -26,8 +26,8 @@ fn smoke() {
     ext_attr.x20_FOX_BLASTER_GUN_ITKIND = 22;
     let mut items: [*mut c_void; 4] =
         [1000 as *mut c_void, 1001 as *mut c_void, 1002 as *mut c_void, 1003 as *mut c_void];
-    fd.x48_items = items.as_mut_ptr();
-    fd.ext_attr = ext_attr as *mut _ as *mut c_void;
+    fd.x48_items = (items.as_mut_ptr()) as *mut _;
+    fd.ext_attr = ext_attr as *mut _ as *mut _;
     f.ft_data = fd;
     f.dat_attrs_backup = backup as *mut _ as *mut c_void;
     g.user_data = &mut *f as *mut Fighter as *mut _;

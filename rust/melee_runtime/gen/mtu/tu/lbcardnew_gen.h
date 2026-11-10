@@ -338,6 +338,8 @@ static void preg_own(void)
 }
 static void freg_all(void)
 {
+    freg((const void*) addTask);
+    freg((const void*) addTaskEntries);
     freg((const void*) convertHsdResult);
     freg((const void*) convertSdkResult);
     freg((const void*) executeNextTask);

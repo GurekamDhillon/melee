@@ -89,8 +89,8 @@ fn matches_c() {
                 _ => r.n() % 400,
             } as _;
             unsafe {
-                f.x2070.anon_0.set_x2071_b0_3((r.n() & 15) as u8);
-                f.x2070.anon_0.set_x2071_b4((r.n() & 1) as u8);
+                f.x2070.x0.set_x2071_b0_3((r.n() & 15) as u8);
+                f.x2070.x0.set_x2071_b4((r.n() & 1) as u8);
                 AFLAGS = if r.n() & 0x4000_0000 != 0 { 0x4000_0000 } else { r.n() & 0x3FFF_FFFF };
                 (*jo.aobj).flags = AFLAGS;
             }
@@ -177,7 +177,7 @@ fn smoke_stateful() {
     melee_fighter::tu::ft_0cd3::ft_800cd65c(gp);
     melee_fighter::tu::ft_0ce3::ftco_fireflowershoot_anim(gp);
     // throw-flag inline helpers test-and-clear
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b3(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b3(1) };
     assert!(ft_0cd1::ft_check_throw_b3(&mut f));
     assert!(!ft_0cd1::ft_check_throw_b3(&mut f));
 }

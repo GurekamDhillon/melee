@@ -1,6 +1,7 @@
 #!/bin/bash
 # Two `melee play --netplay` instances on loopback (127.0.0.1), scripted pads (no OS input), a 60 s match.
 #   bash tools/rust-port/netplay/play_pair.sh NAME LAG_MS LOSS_PCT [--headless] [extra play args]
+# NP_TIME_SECS / NP_MAX_FRAMES: match length (default 60 s) and frame cap (9000).
 # NP_MATCH_HOST / NP_MATCH_GUEST: the peers' --match (default falcon,32 / fox; e.g. geno:<key>,32 with --mods DIR)
 # NP_HOST_ENV / NP_GUEST_ENV: extra NAME=VALUE words for one peer only (e.g. its own MELEE_CONTROLS_CFG); the replay of
 # the host's recording runs with NP_HOST_ENV (a sim mod the match ran with, MELEE_WASM_MODS, must be there to replay it).
@@ -21,7 +22,7 @@ bind="${NP_BIND:-127.0.0.1}"; case "$bind" in *:*) dial="[$bind]:$port";; *) dia
 # NP_SERVER=HOST:PORT: connect by match code through a rendezvous server (rust/melee_relay) instead of the address
 srv=(); [ -n "${NP_SERVER:-}" ] && { srv=(--np-server "$NP_SERVER"); case "$bind" in *:*) ;; *) srv+=(--np-lan "$bind");; esac; }
 export MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_SHOW_FPS=1
-common=(play --iso "$GW_ISO_VANILLA" --time-secs 60 --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames 9000 "$@")
+common=(play --iso "$GW_ISO_VANILLA" --time-secs "${NP_TIME_SECS:-60}" --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames "${NP_MAX_FRAMES:-9000}" "$@")
 eval "host_env=(${NP_HOST_ENV:-})"; eval "guest_env=(${NP_GUEST_ENV:-})"
 env "${host_env[@]}" MELEE_WINDOW_TITLE="netplay: $name host" MELEE_PAD_SCRIPT="${NP_HOST_SCRIPT:-$here/np_fight.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
   --netplay host --np-bind "$bind" "${srv[@]}" --np-port $port --match "${NP_MATCH_HOST:-falcon,32}" --np-seed 4242 --np-hash-out "$out/$name-host.csv" --record "$out/$name-host.mrpl" >"$out/$name-host.log" 2>&1 &

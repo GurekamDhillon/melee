@@ -311,6 +311,8 @@ unsafe fn swap_inplace(slot: i32) {
     pl::Player_SetHPByIndex(slot, f.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(own));
     let t2 = std::time::Instant::now();
     pl::tag_inplace_free(slot, out_idx);
+    // a fighter created mid-match starts with its input off (retail enables every entity at GO: Player_80031848)
+    pl::Player_80031848(slot);
     let t3 = std::time::Instant::now();
     p.ckind = ck_in as CharacterKind;
     pl::TAG_BENCH_CK[s] = ck_out as i8;

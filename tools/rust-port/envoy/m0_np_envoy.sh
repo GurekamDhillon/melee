@@ -22,7 +22,7 @@ envs="MELEE_WASM_MODS=$(printf %q "$mods") MELEE_TAG_PARTNER=marth,peach MELEE_T
 export NP_HOST_ENV="$envs" NP_GUEST_ENV="$envs"
 export NP_HOST_SCRIPT="$here/np_envoy_host.txt" NP_GUEST_SCRIPT="$here/np_envoy_guest.txt"
 export NP_MATCH_HOST="falcon,32" NP_MATCH_GUEST="fox"
-bash tools/rust-port/netplay/play_pair.sh "$name" "$lag" "$loss" --headless --cpu falco/9,samus/9 --time-secs "$time" --max-frames $(( time * 60 + 3000 )) \
+NP_TIME_SECS="$time" NP_MAX_FRAMES=$(( time * 60 + 3000 )) bash tools/rust-port/netplay/play_pair.sh "$name" "$lag" "$loss" --headless --cpu falco/9,samus/9 \
   >"$NP_SCRATCH/$name.out" 2>&1
 rc=$?
 cat "$NP_SCRATCH/$name.out"

@@ -76,9 +76,8 @@ void PSVECCrossProduct(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Ve
 __typeof__(float) PSVECDotProduct(__typeof__(Vec *) a0, __typeof__(Vec *) a1) { T(1056); T(PI((const void*) a0)); T(PI((const void*) a1)); return (__typeof__(float)) (rg()); }
 __typeof__(float) PSVECMag(__typeof__(Vec *) a0) { T(1057); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
 void PSVECNormalize(__typeof__(Vec *) a0, __typeof__(Vec *) a1) { T(1058); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-void PSVECScale(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(float) a2) { T(1059); T(PI((const void*) a0)); T(PI((const void*) a1)); T(B(a2)); }
-void PSVECSubtract(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1060); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); }
-__typeof__(float) atan2f(__typeof__(float) a0, __typeof__(float) a1) { T(1061); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rg()); }
+void PSVECSubtract(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1059); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); }
+__typeof__(float) atan2f(__typeof__(float) a0, __typeof__(float) a1) { T(1060); T(B(a0)); T(B(a1)); return (__typeof__(float)) (rg()); }
 static void fill_HSD_Shadow(HSD_Shadow* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
@@ -564,6 +563,5 @@ static void freg_all(void)
 // stub PSVECDotProduct = 1056
 // stub PSVECMag = 1057
 // stub PSVECNormalize = 1058
-// stub PSVECScale = 1059
-// stub PSVECSubtract = 1060
-// stub atan2f = 1061
+// stub PSVECSubtract = 1059
+// stub atan2f = 1060

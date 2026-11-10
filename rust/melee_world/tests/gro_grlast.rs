@@ -349,16 +349,16 @@ unsafe fn world_reg() {
     oreg(addr_of!(t::grNLa_StageData), core::mem::size_of_val(&*addr_of!(t::grNLa_StageData)));
     oreg(addr_of!(t::ext::HSD_RandSeedPtr), core::mem::size_of_val(&*addr_of!(t::ext::HSD_RandSeedPtr)));
     oreg(addr_of!(SEED), core::mem::size_of_val(&*addr_of!(SEED)));
-    oreg(addr_of!(t::grLast_StageCallbacks[0].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[0].anon_10.flags)));
-    oreg(addr_of!(t::grLast_StageCallbacks[1].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[1].anon_10.flags)));
-    oreg(addr_of!(t::grLast_StageCallbacks[2].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[2].anon_10.flags)));
-    oreg(addr_of!(t::grLast_StageCallbacks[3].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[3].anon_10.flags)));
-    oreg(addr_of!(t::grLast_StageCallbacks[4].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[4].anon_10.flags)));
-    oreg(addr_of!(t::grLast_StageCallbacks[5].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[5].anon_10.flags)));
-    oreg(addr_of!(t::grLast_StageCallbacks[6].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[6].anon_10.flags)));
-    oreg(addr_of!(t::grLast_StageCallbacks[7].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[7].anon_10.flags)));
-    oreg(addr_of!(t::grLast_StageCallbacks[8].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[8].anon_10.flags)));
-    oreg(addr_of!(t::grLast_StageCallbacks[9].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[9].anon_10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[0].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[0].x10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[1].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[1].x10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[2].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[2].x10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[3].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[3].x10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[4].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[4].x10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[5].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[5].x10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[6].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[6].x10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[7].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[7].x10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[8].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[8].x10.flags)));
+    oreg(addr_of!(t::grLast_StageCallbacks[9].x10.flags), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[9].x10.flags)));
     oreg(addr_of!(OSCR), core::mem::size_of_val(&*addr_of!(OSCR)));
 }
 unsafe fn world_reg_fns() {
@@ -426,16 +426,16 @@ unsafe fn world_fill(fi: usize) {
     core::ptr::write_bytes(addr_of_mut!(t::grNLa_StageData) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grNLa_StageData)));
     core::ptr::write_bytes(addr_of_mut!(t::ext::HSD_RandSeedPtr) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::ext::HSD_RandSeedPtr)));
     core::ptr::write_bytes(addr_of_mut!(SEED) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(SEED)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[0].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[0].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[1].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[1].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[2].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[2].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[3].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[3].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[4].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[4].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[5].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[5].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[6].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[6].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[7].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[7].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[8].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[8].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[9].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[9].anon_10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[0].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[0].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[1].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[1].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[2].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[2].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[3].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[3].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[4].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[4].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[5].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[5].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[6].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[6].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[7].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[7].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[8].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[8].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grLast_StageCallbacks[9].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[9].x10.flags)));
     OSCR = [[0; 64]; 4];
     for i in 0..NGO { ofill(addr_of_mut!(OGO[i]) as *mut u8, F_HSD_GObj);  }
     for i in 0..NGO {
@@ -625,7 +625,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grlast::ext::GROUND_801C205C = Some(|a0: *mut GXColor| { lg_s("Ground_801C205C("); lg_ps(a0 as *const u8, core::mem::size_of::<GXColor>(), D__GXColor); lg_s(")"); lg_c(';'); });
         melee_world::tu::grlast::ext::GROUND_801C39C0 = Some(|| { lg_s("Ground_801C39C0("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grlast::ext::GROUND_801C3BB4 = Some(|| { lg_s("Ground_801C3BB4("); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grlast::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: i32| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grlast::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: isize| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grlast::ext::GROUND_801C4A08 = Some(|a0: *mut HSD_GObj| { lg_s("Ground_801C4A08("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grlast::ext::GROUND_GETMAPGOBJ = Some(|a0: i32| -> *mut HSD_GObj { lg_s("Ground_GetMapGObj("); lg_int(a0 as u32); lg_s(")"); { let r = (if a0 == 1 || a0 == 3 || NM != 0 || rnd() % 4 != 0 { addr_of_mut!(OGO[(a0 as u32 % NGO as u32) as usize]) as *mut _ } else { core::ptr::null_mut() }) as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grlast::ext::GROUND_GETSTAGEGOBJ = Some(|a0: i32| -> *mut HSD_GObj { lg_s("Ground_GetStageGObj("); lg_int(a0 as u32); lg_s(")"); { let r = (if NN != 0 || rnd() % 4 != 0 { addr_of_mut!(OGO[(a0 as u32 % NGO as u32) as usize]) as *mut _ } else { core::ptr::null_mut() }) as *mut HSD_GObj; lg_retp(r as usize); lg_c(';'); r } });
@@ -731,16 +731,16 @@ unsafe fn world_hash(fi: usize) -> u64 {
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grNLa_StageData) as *const u8, core::mem::size_of_val(&*addr_of!(t::grNLa_StageData))), D_st3);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::ext::HSD_RandSeedPtr) as *const u8, core::mem::size_of_val(&*addr_of!(t::ext::HSD_RandSeedPtr))), D_st4);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(SEED) as *const u8, core::mem::size_of_val(&*addr_of!(SEED))), D_st5);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[0].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[0].anon_10.flags))), D_st6);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[1].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[1].anon_10.flags))), D_st7);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[2].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[2].anon_10.flags))), D_st8);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[3].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[3].anon_10.flags))), D_st9);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[4].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[4].anon_10.flags))), D_st10);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[5].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[5].anon_10.flags))), D_st11);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[6].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[6].anon_10.flags))), D_st12);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[7].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[7].anon_10.flags))), D_st13);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[8].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[8].anon_10.flags))), D_st14);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[9].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[9].anon_10.flags))), D_st15);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[0].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[0].x10.flags))), D_st6);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[1].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[1].x10.flags))), D_st7);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[2].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[2].x10.flags))), D_st8);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[3].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[3].x10.flags))), D_st9);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[4].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[4].x10.flags))), D_st10);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[5].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[5].x10.flags))), D_st11);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[6].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[6].x10.flags))), D_st12);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[7].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[7].x10.flags))), D_st13);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[8].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[8].x10.flags))), D_st14);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grLast_StageCallbacks[9].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[9].x10.flags))), D_st15);
     h = word_hash(h, core::slice::from_raw_parts(addr_of!(OSCR) as *const u8, core::mem::size_of_val(&*addr_of!(OSCR))));
     h
 }
@@ -751,7 +751,7 @@ fn state_matches_c() {
         let mut lines = want.lines();
         let verbose = std::env::var("ORACLE_VERBOSE").ok();
         let hdr: std::vec::Vec<usize> = lines.next().unwrap().split_whitespace().skip(1).map(|s| s.parse().unwrap()).collect();
-        let sizes: std::vec::Vec<usize> = std::vec![core::mem::size_of::<Ground>(), core::mem::size_of::<HSD_GObj>(), core::mem::size_of::<HSD_JObj>(), core::mem::size_of::<StageInfo>(), core::mem::size_of_val(&*addr_of!(t::yakumono_param)), core::mem::size_of_val(&*addr_of!(t::grLast_804D4968)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks)), core::mem::size_of_val(&*addr_of!(t::grNLa_StageData)), core::mem::size_of_val(&*addr_of!(t::ext::HSD_RandSeedPtr)), core::mem::size_of_val(&*addr_of!(SEED)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[0].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[1].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[2].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[3].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[4].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[5].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[6].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[7].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[8].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[9].anon_10.flags))];
+        let sizes: std::vec::Vec<usize> = std::vec![core::mem::size_of::<Ground>(), core::mem::size_of::<HSD_GObj>(), core::mem::size_of::<HSD_JObj>(), core::mem::size_of::<StageInfo>(), core::mem::size_of_val(&*addr_of!(t::yakumono_param)), core::mem::size_of_val(&*addr_of!(t::grLast_804D4968)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks)), core::mem::size_of_val(&*addr_of!(t::grNLa_StageData)), core::mem::size_of_val(&*addr_of!(t::ext::HSD_RandSeedPtr)), core::mem::size_of_val(&*addr_of!(SEED)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[0].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[1].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[2].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[3].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[4].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[5].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[6].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[7].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[8].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grLast_StageCallbacks[9].x10.flags))];
         assert_eq!(hdr, sizes, "struct sizes (C native layout vs the Rust port)");
         install_hooks();
         world_reg();

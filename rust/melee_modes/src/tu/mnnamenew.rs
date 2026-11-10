@@ -88,7 +88,7 @@ pub mod ext {
     use crate::ext_fns;
     ext_fns! {
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn lbAudioAx_80023F28(a0: i32) -> i32 = crate::tu::adapt::lbAudioAx_80023F28__582fc2;
         fn mn_802295AC() -> u8 = crate::tu::adapt::mn_802295AC__671d2a;
         fn mn_80229B2C() -> *mut HSD_GObj = crate::tu::adapt::mn_80229B2C__cb2183;
@@ -1352,7 +1352,7 @@ pub unsafe extern "C" fn mnNameNew_8023B314(mut arg0: *mut NameNewEntry, mut arg
         - 0x32 as i32) as usize];
     if !text.is_null() {
         if (*text).sis_buffer
-            == *(HSD_SisLib_804D1124[0 as i32 as usize] as *mut *mut SIS)
+            == *(HSD_SisLib_804D1124[0 as i32 as usize] as *mut *mut u8)
                 .offset(idx as isize)
         {
             return;

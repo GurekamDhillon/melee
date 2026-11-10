@@ -167,7 +167,7 @@ def setup_c():
           "        IT[i].xBBC_dynamicBoneTable = &DBT[i];",
           "        IT[i].xBC_itemStateContainer = &STT[0];",
           "        IT[i].xD0_itemStateDesc = &SDS[i % 3];",
-          "        IT[i].xBC0 = BOGUS;",
+          "        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;",
           "        IT[i].x378_itemColl.x0_gobj = &GO[i];",
           "    }",
           "    for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];",

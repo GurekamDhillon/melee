@@ -24,7 +24,7 @@ use melee_core::fp::fmadds;
 
 pub type G = *mut HSD_GObj;
 /// `bool (*)(Fighter_GObj*, int)` passed through to mpColl.
-pub type CollCb = fn(G, i32) -> bool;
+pub type CollCb = fn(G, isize) -> bool;
 /// `HSD_GObjEvent`.
 pub type Ev = fn(G);
 
@@ -220,7 +220,7 @@ fn air_coll(g: G, sdi: fn(*mut CollData) -> bool, cool: fn(*mut CollData) -> boo
     let c = begin(f);
     let r = if f.allow_sdi() != 0 {
         sdi(c)
-    } else if f.x2064_ledgeCooldown != 0 || f.x2224_b2() != 0 {
+    } else if f.x2064_ledgeCooldown != 0 || f.stamina_dead() != 0 {
         cool(c)
     } else {
         let t = x44(f);
@@ -280,7 +280,7 @@ pub fn ft_800821dc(g: G) -> bool {
 pub fn ft_check_ground_and_ledge(g: G, dir: i32) -> bool {
     melee_core::ct!("ft_check_ground_and_ledge");
     let f = fp(g);
-    let cool = f.x2064_ledgeCooldown != 0 || f.x2224_b2() != 0;
+    let cool = f.x2064_ledgeCooldown != 0 || f.stamina_dead() != 0;
     simple(g, |c| {
         if cool {
             ext::mpColl_800471F8(c)
@@ -297,7 +297,7 @@ pub fn ft_8008239c(g: G, dir: i32, height_attributes: *mut ftCollisionBox) -> bo
     let f = fp(g);
     let mut bx = ftCollisionBox::zeroed();
     let fd = f.facing_dir;
-    let cool = f.x2064_ledgeCooldown != 0 || f.x2224_b2() != 0;
+    let cool = f.x2064_ledgeCooldown != 0 || f.stamina_dead() != 0;
     simple(g, |c| {
         let cb = ft_80082838(&mut bx, height_attributes, fd);
         if cool {
@@ -512,7 +512,7 @@ pub fn ft_80082f28(g: G) {
 fn cb_coll(g: G, arg1: CollCb, cool: fn(*mut CollData, CollCb, G) -> bool, snap: fn(*mut CollData, CollCb, G) -> bool) -> bool {
     let f = fp(g);
     let dir = dir_int(f);
-    let cd = f.x2064_ledgeCooldown != 0 || f.x2224_b2() != 0;
+    let cd = f.x2064_ledgeCooldown != 0 || f.stamina_dead() != 0;
     simple(g, |c| {
         if cd {
             cool(c, arg1, g)
@@ -586,7 +586,7 @@ pub fn ft_800835b0(g: G, arg1: CollCb, cb: Ev) {
 fn dir_coll(g: G, cool: fn(*mut CollData) -> bool, snap: fn(*mut CollData) -> bool) -> bool {
     let f = fp(g);
     let dir = dir_int(f);
-    let cd = f.x2064_ledgeCooldown != 0 || f.x2224_b2() != 0;
+    let cd = f.x2064_ledgeCooldown != 0 || f.stamina_dead() != 0;
     simple(g, |c| {
         if cd {
             cool(c)

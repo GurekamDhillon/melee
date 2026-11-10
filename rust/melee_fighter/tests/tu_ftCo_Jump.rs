@@ -55,7 +55,7 @@ fn ftCo_Jump_matches_c() {
             let fr = f();
             fr.ft_data = fd as *mut _;
             fr.x197C = if rnd() & 1 != 0 { x197c } else { core::ptr::null_mut() };
-            fr.player_id = (rnd() % 6) as u8;
+            fr.player_idx = (rnd() % 6) as u8;
             fr.input.lstick[0].x = rg();
             fr.input.lstick[0].y = rg();
             fr.active_timer.lstick.y = (rnd() % 12) as u8;

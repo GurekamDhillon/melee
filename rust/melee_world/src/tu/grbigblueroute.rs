@@ -73,10 +73,10 @@ pub mod ext {
     pub fn Ground_801C3D44(a0: *mut c_void, a1: f32, a2: f32) -> s32 {
         match unsafe { GROUND_801C3D44 } { Some(f) => f(a0, a1, a2), None => { return unsafe { crate::tu::ground::Ground_801C3D44(a0 as _, a1 as _, a2 as _) as _ }; } }
     }
-    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
-        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
     }
     pub static mut GROUND_801C4A08: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
@@ -256,7 +256,7 @@ pub mod ext {
         match unsafe { UN_802FD8E8 } { Some(f) => f(a0), None => { unsafe { crate::tu::ifhazard::un_802FD8E8(a0 as _); } return; } }
     }
     /// `grDisplay_801C5DB0` is only ever passed as a render callback (its address is the argument).
-    pub unsafe extern "C" fn grDisplay_801C5DB0(_gobj: *mut HSD_GObj, _pass: i32) {
+    pub unsafe extern "C" fn grDisplay_801C5DB0(_gobj: *mut HSD_GObj, _pass: isize) {
         { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(_gobj as _, _pass as _); } return; }
     }
 }
@@ -290,7 +290,7 @@ pub static mut yakumono_param: *mut grBigBlueRoute_YakumonoParam = null_mut();
 
 macro_rules! cbs {
     () => {
-        StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, anon_10: StageCallbacks_anon_135 { flags: 0 } }
+        StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, x10: StageCallbacks_x10 { flags: 0 } }
     };
     ($a:ident, $b:ident, $c:ident, $d:ident, $flags:expr) => {
         StageCallbacks {
@@ -298,7 +298,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
+            x10: StageCallbacks_x10 { flags: u32::to_be($flags) },
         }
     };
 }
@@ -560,7 +560,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020C140(gobj: *mut Ground_GObj) {
     (*gp).u.car.xD4 = ext::Ground_801C247C(33, 2);
     grBigBlueRoute_8020C238(gobj);
     // ((UnkFlagStruct*) &gp->u.car.xC4)->b0 = 0
-    (*(addr_of_mut!((*gp).u.car.xC4) as *mut UnkFlagStruct)).anon_0.set_b0(0);
+    (*(addr_of_mut!((*gp).u.car.xC4) as *mut UnkFlagStruct)).x0.set_b0(0);
 }
 
 pub unsafe extern "C" fn grBigBlueRoute_8020C1DC(gobj: *mut Ground_GObj) {
@@ -927,7 +927,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020CD20(gobj: *mut Ground_GObj) {
                         (*re).x24 = (*re).x14;
                         (*re).flags.set_b6(0);
                         if (*re).flags.b1() != 0 {
-                            (*(addr_of_mut!((*gp).u.bigblue) as *mut UnkFlagStruct)).anon_0.set_b1(0);
+                            (*(addr_of_mut!((*gp).u.bigblue) as *mut UnkFlagStruct)).x0.set_b1(0);
                         }
                     }
                 }
@@ -1050,8 +1050,8 @@ pub unsafe extern "C" fn grBigBlueRoute_8020CD20(gobj: *mut Ground_GObj) {
                 && fighter_pos.z < 260.0 + pos.z
                 && (*re).flags.b1() == 0
             {
-                if (*flag_view).anon_0.b1() == 0 {
-                    (*flag_view).anon_0.set_b1(1);
+                if (*flag_view).x0.b1() == 0 {
+                    (*flag_view).x0.set_b1(1);
                     ext::Ground_801C53EC(0x77A16);
                 }
             }
@@ -1062,10 +1062,10 @@ pub unsafe extern "C" fn grBigBlueRoute_8020CD20(gobj: *mut Ground_GObj) {
                 && fighter_pos.z < 100.0 + pos.z
             {
                 if (*re).flags.b1() != 0 {
-                    if (*flag_view).anon_0.b0() == 0 {
+                    if (*flag_view).x0.b0() == 0 {
                         ext::un_802FD604(melee_core::ppc::fctiwz_f32((*yakumono_param).x4C));
                         ext::Ground_801C53EC(0x77A11);
-                        (*flag_view).anon_0.set_b0(1);
+                        (*flag_view).x0.set_b0(1);
                     }
                 } else {
                     ext::Camera_RequestQuake(QuakeKind_Loop, null_mut());
@@ -1082,8 +1082,8 @@ pub unsafe extern "C" fn grBigBlueRoute_8020CD20(gobj: *mut Ground_GObj) {
                     }
                 }
             } else if (*re).flags.b1() != 0 {
-                if (*flag_view).anon_0.b0() != 0 {
-                    (*flag_view).anon_0.set_b0(0);
+                if (*flag_view).x0.b0() != 0 {
+                    (*flag_view).x0.set_b0(0);
                 }
             }
         }
@@ -1260,4 +1260,4 @@ pub unsafe extern "C" fn grBigBlueRoute_8020DF80(a: *mut Vec3, _arg: i32, joint:
     pub extern "C" fn grBigBlueRoute_8020C1D4(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grBigBlueRoute_8020DF78 (gr/grbigblueroute.c:1183)
-    pub extern "C" fn grBigBlueRoute_8020DF78(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grBigBlueRoute_8020DF78(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

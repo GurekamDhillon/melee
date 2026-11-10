@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -86,20 +86,20 @@ int main(void)
             setup(prof);
             switch (op) {
             case 0: {  itOctarockstone_802E878C(&GO[0]); } break; /* itOctarockstone_802E878C */
-            case 1: {  ret = (u32) itOctarockstone_Logic4_DmgDealt(&GO[0]); } break; /* itOctarockstone_Logic4_DmgDealt */
-            case 2: {  ret = (u32) itOctarockstone_Logic4_Clanked(&GO[0]); } break; /* itOctarockstone_Logic4_Clanked */
-            case 3: {  ret = (u32) itOctarockstone_Logic4_HitShield(&GO[0]); } break; /* itOctarockstone_Logic4_HitShield */
-            case 4: {  ret = (u32) itOctarockstone_Logic4_Absorbed(&GO[0]); } break; /* itOctarockstone_Logic4_Absorbed */
-            case 5: {  ret = (u32) itOctarockstone_Logic4_Reflected(&GO[0]); } break; /* itOctarockstone_Logic4_Reflected */
-            case 6: {  ret = (u32) itOctarockstone_Logic4_ShieldBounced(&GO[0]); } break; /* itOctarockstone_Logic4_ShieldBounced */
+            case 1: {  ret = (u32) ((itOctarockstone_Logic4_DmgDealt(&GO[0])) != 0); } break; /* itOctarockstone_Logic4_DmgDealt */
+            case 2: {  ret = (u32) ((itOctarockstone_Logic4_Clanked(&GO[0])) != 0); } break; /* itOctarockstone_Logic4_Clanked */
+            case 3: {  ret = (u32) ((itOctarockstone_Logic4_HitShield(&GO[0])) != 0); } break; /* itOctarockstone_Logic4_HitShield */
+            case 4: {  ret = (u32) ((itOctarockstone_Logic4_Absorbed(&GO[0])) != 0); } break; /* itOctarockstone_Logic4_Absorbed */
+            case 5: {  ret = (u32) ((itOctarockstone_Logic4_Reflected(&GO[0])) != 0); } break; /* itOctarockstone_Logic4_Reflected */
+            case 6: {  ret = (u32) ((itOctarockstone_Logic4_ShieldBounced(&GO[0])) != 0); } break; /* itOctarockstone_Logic4_ShieldBounced */
             case 7: {  itOctarockstone_802E883C(&GO[0]); } break; /* itOctarockstone_802E883C */
-            case 8: {  ret = (u32) itOctarockstone_UnkMotion0_Anim(&GO[0]); } break; /* itOctarockstone_UnkMotion0_Anim */
+            case 8: {  ret = (u32) ((itOctarockstone_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itOctarockstone_UnkMotion0_Anim */
             case 9: {  itOctarockstone_UnkMotion0_Phys(&GO[0]); } break; /* itOctarockstone_UnkMotion0_Phys */
-            case 10: {  ret = (u32) itOctarockstone_UnkMotion0_Coll(&GO[0]); } break; /* itOctarockstone_UnkMotion0_Coll */
+            case 10: {  ret = (u32) ((itOctarockstone_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itOctarockstone_UnkMotion0_Coll */
             case 11: {  itOctarockstone_802E890C(&GO[0]); } break; /* itOctarockstone_802E890C */
-            case 12: {  ret = (u32) itOctarockstone_UnkMotion1_Anim(&GO[0]); } break; /* itOctarockstone_UnkMotion1_Anim */
+            case 12: {  ret = (u32) ((itOctarockstone_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itOctarockstone_UnkMotion1_Anim */
             case 13: {  itOctarockstone_UnkMotion1_Phys(&GO[0]); } break; /* itOctarockstone_UnkMotion1_Phys */
-            case 14: {  ret = (u32) itOctarockstone_UnkMotion1_Coll(&GO[0]); } break; /* itOctarockstone_UnkMotion1_Coll */
+            case 14: {  ret = (u32) ((itOctarockstone_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itOctarockstone_UnkMotion1_Coll */
             case 15: {  itOctarockstone_802E89B0(&GO[0], &GO[1]); } break; /* itOctarockstone_802E89B0 */
             case 16: { f32 v1 = (f32) (rw()); f32 v2 = (f32) (rw()); f32 v3 = (f32) (rw()); it_802E89D0(&GO[0], v1, v2, v3); } break; /* it_802E89D0 */
             case 17: { s32 v2 = (s32) ((rnd() & 1) ? 1 : -1); f32 v3 = (f32) (rw()); f32 v4 = (f32) (rw()); f32 v5 = (f32) (rw()); it_802E8ADC(&GO[0], &VA[0], v2, v3, v4, v5); } break; /* it_802E8ADC */

@@ -61,9 +61,9 @@ pub fn ftFc_Init_OnLoad(gobj: *mut HSD_GObj) {
         crate::tu::ftfox::ftFx_Init_OnLoadForFalco(fp);
         // `s32* sa2 = fp->dat_attrs`: the two item kinds at +0x1C / +0x20 of the Fox block.
         let sa2 = (*fp).dat_attrs as *const i32;
-        ext::it_8026B3F8(*items.add(0), *sa2.add(7));
-        ext::it_8026B3F8(*items.add(1), *sa2.add(8));
-        ext::it_8026B3F8(*items.add(3), It_Kind_Falco_Phantasm as i32);
+        ext::it_8026B3F8((*items.add(0)).article as *mut ::core::ffi::c_void, *sa2.add(7));
+        ext::it_8026B3F8((*items.add(1)).article as *mut ::core::ffi::c_void, *sa2.add(8));
+        ext::it_8026B3F8((*items.add(3)).article as *mut ::core::ffi::c_void, It_Kind_Falco_Phantasm as i32);
     }
 }
 

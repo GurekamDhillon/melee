@@ -88,7 +88,7 @@ pub struct Ext {
     sa: [u32; 256],
     attr: ItemAttr,
     art: Article,
-    unk: itUnkAttributes,
+    unk: itUnkAttributes_legacy,
     common: ItemCommonData,
 }
 
@@ -101,7 +101,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
     let mut ext = Box::new(Ext {
         attr: ItemAttr::zeroed(),
         art: Article::zeroed(),
-        unk: itUnkAttributes::zeroed(),
+        unk: itUnkAttributes_legacy::zeroed(),
         common: ItemCommonData::zeroed(),
         sa: [0; 256],
     });
@@ -116,7 +116,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         let x = &mut *ext;
         x.attr = ItemAttr::zeroed();
         x.art = Article::zeroed();
-        x.unk = itUnkAttributes::zeroed();
+        x.unk = itUnkAttributes_legacy::zeroed();
         x.common = ItemCommonData::zeroed();
         x.attr.set_x0_is_heavy(g.r() as u8);
         x.attr.set_x0_78(g.r() as u8);
@@ -124,7 +124,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         x.attr.x1C_damage_mul = g.rf();
         x.unk.x0_float = g.rf();
         x.unk.x4_float = g.rf();
-        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes as *mut _;
+        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes_legacy as *mut _;
         x.art.x8_hurtbones = if g.r() & 1 != 0 { g.ga as *mut _ } else { null_mut() };
         x.common.xB8 = g.rf();
         x.common.xBC = g.rf();
@@ -373,7 +373,7 @@ fn r11_list(w: &mut World, ip: &mut Item, g: &mut Gen) -> *mut HSD_GObj {
         let li = &mut w.li[k];
         li.xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         li.ground_or_air = if g.r() & 3 != 0 { GA_Ground } else { GA_Air };
-        unsafe { li.xDD1_flag.anon_0.set_b0((g.r() & 3 == 0) as u8) };
+        unsafe { li.xDD1_flag.x0.set_b0((g.r() & 3 == 0) as u8) };
         w.la[k].set_x0_is_heavy((g.r() & 3 != 0) as u8);
         li.xCC_item_attr = &mut w.la[k];
         li.x70_nudge.x = r7_c(g);
@@ -399,7 +399,7 @@ fn r11_list(w: &mut World, ip: &mut Item, g: &mut Gen) -> *mut HSD_GObj {
             w.li[0].xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         }
         w.li[0].ground_or_air = GA_Ground;
-        unsafe { w.li[0].xDD1_flag.anon_0.set_b0(0) };
+        unsafe { w.li[0].xDD1_flag.x0.set_b0(0) };
         w.la[0].set_x0_is_heavy(1);
     }
     w.gl[0] = unsafe { core::ptr::read(&*w.g) };
@@ -424,7 +424,7 @@ fn r11_trk(w: &mut World, ip: &mut Item, g: &mut Gen) {
     let t = &mut *w.track;
     *t = Item_FtTrack::zeroed();
     t.count = ((g.r() >> 16) % 12) as usize;
-    unsafe { t.x154.anon_0.set_b0((g.r() & 3 == 0) as u8) };
+    unsafe { t.x154.x0.set_b0((g.r() & 3 == 0) as u8) };
     for k in 0..11 {
         r11_ecb(&mut t.ecb_offset_arr[k], g);
         t.ft_pos_arr[k].x = g.rm() / 4.0;

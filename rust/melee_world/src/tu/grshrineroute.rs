@@ -101,7 +101,7 @@ const fn cb(
         callback1: Some(callback1),
         gobj_proc: Some(gobj_proc),
         callback3: Some(callback3),
-        anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) },
+        x10: StageCallbacks_x10 { flags: u32::to_be(flags) },
     }
 }
 
@@ -1240,4 +1240,4 @@ pub unsafe extern "C" fn grShrineRoute_ScriptQuery(field: i32, idx: i32) -> i32 
     pub extern "C" fn grShrineRoute_8020A894(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grShrineRoute_OnTouchLine (gr/grshrineroute.c:1564)
-    pub extern "C" fn grShrineRoute_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grShrineRoute_OnTouchLine(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

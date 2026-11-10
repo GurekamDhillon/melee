@@ -22,7 +22,7 @@ static void hash_GrJoint(const GrJoint* p);
 StageInfo stage_info;
 __typeof__(struct CmSubject *) Camera_80029020(void) { T(1000); return (__typeof__(struct CmSubject *)) (((fv() & 1) ? &CMS : 0)); }
 void Camera_800290D4(__typeof__(struct CmSubject *) a0) { T(1001); T(PI((const void*) a0)); }
-void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
+void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
 void Ground_801C39C0(void) { T(1003); }
 void Ground_801C3BB4(void) { T(1004); }
 __typeof__(struct HSD_JObj *) Ground_801C3FA4(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1005); T(PI((const void*) a0)); T((u32) a1); return (__typeof__(struct HSD_JObj *)) (&FJ[a1 % 10]); }
@@ -49,7 +49,7 @@ void grAnime_801C7FF8(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __ty
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1026); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 __typeof__(int) grAnime_801C83D0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1027); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
 __typeof__(int) grAnime_801C84A4(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1028); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
-void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1029); T(PI((const void*) a0)); T((u32) a1); }
+void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1029); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
 __typeof__(struct HSD_GObj *) grZakoGenerator_801CAE04(__typeof__(struct grZakoGenerator_SpawnDesc *) a0) { T(1030); T(PI((const void*) a0)); return (__typeof__(struct HSD_GObj *)) (0); }
 void lb_8000B1CC(__typeof__(struct HSD_JObj *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1031); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); a2->x = rw(); a2->y = rw(); a2->z = rw(); }
 void lb_800115F4(void) { T(1032); }
@@ -479,7 +479,7 @@ static void hash_StageInfo(const StageInfo* p)
 static void fill_StageCallbacks(StageCallbacks* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &(*p))[32 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x10)[i0] = (unsigned char) rnd();
 }
 static void hash_StageCallbacks(const StageCallbacks* p)
 {
@@ -489,7 +489,7 @@ static void hash_StageCallbacks(const StageCallbacks* p)
     HM(FI((const void*) p->callback1));
     HM(FI((const void*) p->gobj_proc));
     HM(FI((const void*) p->callback3));
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &(*p))[32 + j0]);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x10)[i0]);
 }
 
 static void fill_StageData(StageData* p)
@@ -772,7 +772,7 @@ static void fill_CollData(CollData* p)
     p->xE4_ecb.left.x = rg();
     p->xE4_ecb.left.y = rg();
     p->ecb_source.kind = fv();
-    for (j0 = 0; j0 < 56; j0++) ((unsigned char*) &p->ecb_source)[8 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 56; i0++) ((unsigned char*) &p->ecb_source.x4)[i0] = (unsigned char) rnd();
     p->ecb_source.x124 = rg();
     p->ecb_source.x128 = rg();
     p->ecb_source.x12C = rg();
@@ -884,7 +884,7 @@ static void hash_CollData(const CollData* p)
     HM(B(p->xE4_ecb.left.x));
     HM(B(p->xE4_ecb.left.y));
     HM((u32) p->ecb_source.kind);
-    for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->ecb_source)[8 + j0]);
+    for (i0 = 0; i0 < 56; i0++) HM(((const unsigned char*) &p->ecb_source.x4)[i0]);
     HM(B(p->ecb_source.x124));
     HM(B(p->ecb_source.x128));
     HM(B(p->ecb_source.x12C));

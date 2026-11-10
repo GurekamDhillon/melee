@@ -50,10 +50,10 @@ fn init_callbacks() {
     let mut items: std::vec::Vec<*mut core::ffi::c_void> = (0..11).map(|i| (0x1000 + i * 0x10) as *mut core::ffi::c_void).collect();
     let mut fd: Box<ftData> = Box::new(unsafe { core::mem::zeroed() });
     fd.ext_attr = &mut src as *mut _ as *mut _;
-    fd.x48_items = items.as_mut_ptr();
+    fd.x48_items = (items.as_mut_ptr()) as *mut _;
     w.f.ft_data = &mut *fd;
     w.f.dat_attrs_backup = backup as *mut _ as *mut _;
-    w.f.x619_costume_id = 2;
+    w.f.costume_id = 2;
     w.f.kind = Ft_Kind_GameWatch;
     w.f.set_x2222_b6(1);
     t::ftGw_Init_OnLoad(gp);

@@ -59,9 +59,9 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].pkind = rt::draw_range(&mut rt::ST, 0, 3) as _;
         (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].ckind = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].ftkind = rt::draw_int(&mut rt::ST) as _;
-        (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].anon_3.anon_0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
-        (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].anon_3.anon_0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-        (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].anon_3.anon_0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x3_u.x0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
+        (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x3_u.x0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
+        (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x3_u.x0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
         (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x4 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].is_big_loser = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].is_small_loser = rt::draw_int(&mut rt::ST) as _;
@@ -74,7 +74,7 @@ unsafe fn fill_all() {
         for i1 in 0..4 {
             (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].kills[i1] = rt::draw_int(&mut rt::ST) as _;
         }
-        (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x18 = rt::draw_int(&mut rt::ST) as _;
+        (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].kills[4] = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x1C = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x20 = rt::draw_int(&mut rt::ST) as _;
         (*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x24 = rt::draw_int(&mut rt::ST) as _;
@@ -157,9 +157,9 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].pkind as u64);
         rt::h_i((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].ckind as i64);
         rt::h_i((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].ftkind as i64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].anon_3.anon_0.x3_b0() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].anon_3.anon_0.x3_b6() as u64);
-        rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].anon_3.anon_0.x3_b7() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x3_u.x0.x3_b0() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x3_u.x0.x3_b6() as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x3_u.x0.x3_b7() as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x4 as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].is_big_loser as u64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].is_small_loser as u64);
@@ -172,7 +172,7 @@ unsafe fn hash_objs() {
         for i1 in 0..4 {
             rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].kills[i1] as u64);
         }
-        rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x18 as u64);
+        rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].kills[4] as u64);
         rt::h_i((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x1C as i64);
         rt::h_u((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x20 as u64);
         rt::h_i((*core::ptr::addr_of_mut!(MO_fn_80174274)).player_standings[i0].x24 as i64);

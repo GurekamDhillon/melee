@@ -51,7 +51,7 @@ pub mod ext {
     }
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
     fn GenoFly_Any() -> i32;
     fn GenoFly_CameraSubject(a0: *mut c_void) -> i32;
     fn Ground_801C4368(a0: *mut f32, a1: *mut f32);
@@ -2908,21 +2908,21 @@ pub unsafe fn Camera_8002E234() -> i32 {
             }
             2 => {
                 ret = 1;
-                if game_camera.x35C.bits.b1() != 0 {
-                    ret = ret & Camera_8002E158(core::ptr::addr_of_mut!(sp10) as *mut f32, game_camera.x368.y, game_camera.x35C.vec.y);
+                if game_camera.x35C.orbit.b1() != 0 {
+                    ret = ret & Camera_8002E158(core::ptr::addr_of_mut!(sp10) as *mut f32, game_camera.x368.vec.y, game_camera.x35C.vec.y);
                 }
-                if game_camera.x35C.bits.b2() != 0 {
-                    ret = ret & Camera_8002E158(core::ptr::addr_of_mut!(spC) as *mut f32, game_camera.x368.z, game_camera.x35C.vec.z);
+                if game_camera.x35C.orbit.b2() != 0 {
+                    ret = ret & Camera_8002E158(core::ptr::addr_of_mut!(spC) as *mut f32, game_camera.x368.vec.z, game_camera.x35C.vec.z);
                 }
-                if game_camera.x35C.bits.b0() != 0 {
-                    ret = ret & Camera_8002E158(core::ptr::addr_of_mut!(sp8) as *mut f32, (*((core::ptr::addr_of_mut!(game_camera.x368) as *mut Vec) as *mut i16)) as f32, game_camera.x35C.bits.x2 as f32);
+                if game_camera.x35C.orbit.b0() != 0 {
+                    ret = ret & Camera_8002E158(core::ptr::addr_of_mut!(sp8) as *mut f32, (*((core::ptr::addr_of_mut!(game_camera.x368) as *mut Vec) as *mut i16)) as f32, game_camera.x35C.orbit.distance as f32);
                 }
                 sp14.y = 0.0f32;
                 sp14.x = 0.0f32;
                 sp14.z = 1.0f32;
                 ext::lbVector_Rotate(core::ptr::addr_of_mut!(sp14) as *mut Vec, 1, -game_camera.x35C.vec.y);
                 ext::lbVector_Rotate(core::ptr::addr_of_mut!(sp14) as *mut Vec, 2, game_camera.x35C.vec.z);
-                temp_f31 = game_camera.x35C.bits.x2 as f32;
+                temp_f31 = game_camera.x35C.orbit.distance as f32;
                 let _ = ext::lbVector_Normalize(core::ptr::addr_of_mut!(sp14) as *mut Vec);
                 sp14.x = sp14.x * temp_f31;
                 sp14.y = sp14.y * temp_f31;
@@ -3167,11 +3167,11 @@ pub unsafe fn Camera_8002EB5C(mut arg0: f32) {
     }
     if (game_camera.x341_b3_b4() as i32) != 2 {
         game_camera.set_x341_b3_b4((2 as u8) as u8);
-        game_camera.x35C.bits.set_b0((0 as u8) as u8);
-        game_camera.x35C.bits.set_b2((0 as u8) as u8);
+        game_camera.x35C.orbit.set_b0((0 as u8) as u8);
+        game_camera.x35C.orbit.set_b2((0 as u8) as u8);
     }
     game_camera.x35C.vec.y = arg0;
-    game_camera.x35C.bits.set_b1((1 as u8) as u8);
+    game_camera.x35C.orbit.set_b1((1 as u8) as u8);
     's68: {
         match game_camera.x341_b3_b4() as i32 {
             1 => {
@@ -3197,11 +3197,11 @@ pub unsafe fn Camera_8002EC7C(mut arg0: f32) {
     }
     if (game_camera.x341_b3_b4() as i32) != 2 {
         game_camera.set_x341_b3_b4((2 as u8) as u8);
-        game_camera.x35C.bits.set_b0((0 as u8) as u8);
-        game_camera.x35C.bits.set_b1((0 as u8) as u8);
+        game_camera.x35C.orbit.set_b0((0 as u8) as u8);
+        game_camera.x35C.orbit.set_b1((0 as u8) as u8);
     }
     game_camera.x35C.vec.z = arg0;
-    game_camera.x35C.bits.set_b2((1 as u8) as u8);
+    game_camera.x35C.orbit.set_b2((1 as u8) as u8);
     's69: {
         match game_camera.x341_b3_b4() as i32 {
             1 => {
@@ -3227,11 +3227,11 @@ pub unsafe fn Camera_8002ED9C(mut arg0: f32) {
     }
     if (game_camera.x341_b3_b4() as i32) != 2 {
         game_camera.set_x341_b3_b4((2 as u8) as u8);
-        game_camera.x35C.bits.set_b1((0 as u8) as u8);
-        game_camera.x35C.bits.set_b2((0 as u8) as u8);
+        game_camera.x35C.orbit.set_b1((0 as u8) as u8);
+        game_camera.x35C.orbit.set_b2((0 as u8) as u8);
     }
-    game_camera.x35C.bits.x2 = melee_runtime::cabi::f2i16(arg0 as f64);
-    game_camera.x35C.bits.set_b0((1 as u8) as u8);
+    game_camera.x35C.orbit.distance = melee_runtime::cabi::f2i16(arg0 as f64);
+    game_camera.x35C.orbit.set_b0((1 as u8) as u8);
     's70: {
         match game_camera.x341_b3_b4() as i32 {
             1 => {
@@ -3345,7 +3345,7 @@ pub unsafe fn Camera_8002F0E4(mut arg0: i32) {
     's75: {
         match game_camera.x341_b3_b4() as i32 {
             0 | 1 | 3 => {
-                game_camera.x368 = game_camera.transform.position;
+                game_camera.x368.vec = game_camera.transform.position;
             }
             2 => {
                 {
@@ -3353,8 +3353,8 @@ pub unsafe fn Camera_8002F0E4(mut arg0: i32) {
                     temp_f30 = ext::atan2f(spC.y, melee_runtime::gekko::sqrtf(spC.x * spC.x + spC.z * spC.z));
                     temp_f31 = ext::atan2f(spC.x, spC.z);
                     *((core::ptr::addr_of_mut!(game_camera.x368) as *mut Vec) as *mut i16) = melee_runtime::cabi::f2i16(melee_runtime::gekko::sqrtf(spC.z * spC.z + (spC.x * spC.x + spC.y * spC.y)) as f64);
-                    game_camera.x368.y = temp_f30;
-                    game_camera.x368.z = temp_f31;
+                    game_camera.x368.vec.y = temp_f30;
+                    game_camera.x368.vec.z = temp_f31;
                     break 's75;
                 }
             }
@@ -3738,8 +3738,8 @@ pub unsafe fn Camera_8002FE38() {
     game_camera.set_x341_b7((0 as u8) as u8);
     game_camera.x350 = game_camera.transform.interest;
     game_camera.transform.target_interest = game_camera.x350;
-    game_camera.x368 = game_camera.transform.position;
-    game_camera.transform.target_position = game_camera.x368;
+    game_camera.x368.vec = game_camera.transform.position;
+    game_camera.transform.target_position = game_camera.x368.vec;
     game_camera.transform.target_fov = { game_camera.x374 = game_camera.transform.fov; game_camera.x374 };
 }
 
@@ -3904,7 +3904,7 @@ pub unsafe fn render_gxlink_pass(mut gobj: *mut HSD_GObj, mut pass: i32, mut gxl
 }
 
 /// `fn_800301D0`
-pub unsafe extern "C" fn fn_800301D0(mut gobj: *mut HSD_GObj, mut arg1: i32) {
+pub unsafe extern "C" fn fn_800301D0(mut gobj: *mut HSD_GObj, mut arg1: isize) {
     melee_core::ct!("fn_800301D0");
     let mut prio8_a: i64 = 0;
     let mut prio1_a: i64 = 0;

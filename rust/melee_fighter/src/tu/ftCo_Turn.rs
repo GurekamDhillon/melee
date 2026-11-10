@@ -132,8 +132,8 @@ pub fn ftCo_Turn_Anim(g: G) {
 /// TARGET_PC `ftCo_Turn_Ucf073Dashback` (UCF 0.73 dashback for MELEE_SLP playback).
 pub fn ftCo_Turn_Ucf073Dashback(f: &mut Fighter) {
     melee_core::ct!("ftCo_Turn_Ucf073Dashback");
-    let port = f.player_id as i32;
-    if ext::Replay_UcfVersion(f.x618_player_id as i32) != 73 {
+    let port = f.player_idx as i32;
+    if ext::Replay_UcfVersion(f.pad_port as i32) != 73 {
         return;
     }
     if (f.x3E4_fighterCmdScript.frame_count.to_bits() >> 16) != 0x4000 {
@@ -163,7 +163,7 @@ pub fn ftCo_Turn_Ucf073Dashback(f: &mut Fighter) {
 /// input queue that her CPU last stored from this fighter (`cpu.x444`, fp+0x1ECC) with the new facing and a full
 /// stick toward it (0x7F right, 0x80 left), so Nana dashes back too.
 fn ucf_dashback_nana_entry(f: &Fighter, facing: f32) {
-    let g = ext::Player_GetEntityAtIndex(f.player_id as i32, 1);
+    let g = ext::Player_GetEntityAtIndex(f.player_idx as i32, 1);
     if g.is_null() {
         return;
     }
@@ -181,7 +181,7 @@ fn ucf_dashback_nana_entry(f: &Fighter, facing: f32) {
 /// TARGET_PC `ftCo_Turn_Ucf084Dashback` (UCF 0.84 dashback).
 pub fn ftCo_Turn_Ucf084Dashback(f: &mut Fighter) {
     melee_core::ct!("ftCo_Turn_Ucf084Dashback");
-    let port = f.x618_player_id as i32;
+    let port = f.pad_port as i32;
     if ext::Replay_UcfVersion(port) != 84 || f.is_sub_fighter() != 0 {
         return;
     }

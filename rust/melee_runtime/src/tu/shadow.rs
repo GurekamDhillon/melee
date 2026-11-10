@@ -193,7 +193,7 @@ pub unsafe fn HSD_ShadowRemove(s: *mut HSD_Shadow) {
     }
     let d = (*t).imagedesc;
     if !(*d).image_ptr.is_null() {
-        ext::HSD_Free((*d).image_ptr);
+        ext::HSD_Free((*d).image_ptr as *mut c_void);
     }
     ext::HSD_ImageDescFree(d);
     ext::HSD_TObjFree(t);
@@ -212,11 +212,11 @@ pub unsafe fn HSD_ShadowSetSize(s: *mut HSD_Shadow, w: u16, h: u16) {
     let d = (*(*s).texture).imagedesc;
     if (*d).image_ptr.is_null() || (*d).width != w || (*d).height != h {
         if !(*d).image_ptr.is_null() {
-            ext::HSD_Free((*d).image_ptr);
+            ext::HSD_Free((*d).image_ptr as *mut c_void);
         }
         let size = ext::GXGetTexBufferSize(w, h, 0, 0, 0);
         assert!(size > 0);
-        (*d).image_ptr = ext::HSD_MemAlloc(size as i32);
+        (*d).image_ptr = ext::HSD_MemAlloc(size as i32) as *mut u8;
         (*d).width = w;
         (*d).height = h;
         ext::HSD_CObjSetViewportfx4((*s).camera, 0.0, w as f32, 0.0, h as f32);
@@ -317,7 +317,7 @@ pub unsafe fn HSD_ShadowEndRender(s: *mut HSD_Shadow) {
     if (*d).image_ptr.is_null() {
         HSD_ShadowSetSize(s, (*d).width, (*d).height);
     }
-    ext::GXCopyTex((*d).image_ptr, 1);
+    ext::GXCopyTex((*d).image_ptr as *mut c_void, 1);
     ext::GXPixModeSync();
     ext::GXInvalidateTexAll();
     makeMatrix(s);

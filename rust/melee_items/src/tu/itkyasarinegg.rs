@@ -136,11 +136,11 @@ pub unsafe extern "C" fn it_802EFA44(catherine: *mut Item_GObj, pos: *mut Vec3, 
             (*eggData).facing_dir = dir;
             let direction = if (*eggData).facing_dir == -1.0 { -1 } else { 1 };
             ext::mpCollSetFacingDir(&mut (*eggData).x378_itemColl, direction);
-            (*eggData).xDD0_flag.anon_0.set_b6(0);
+            (*eggData).xDD0_flag.x0.set_b6(0);
             (*eggData).xD40 = 0.0;
             (*eggData).xDD4_itemVar.kyasarinEgg.x20 = 0;
             ext::it_80279BBC(eggData);
-            if (*eggData).xDD0_flag.anon_0.b7() == 0 {
+            if (*eggData).xDD0_flag.x0.b7() == 0 {
                 ext::it_802756E0(egg);
             }
             it_802EFB0C(egg);

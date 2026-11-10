@@ -317,10 +317,10 @@ fn fighter_handle_of_gobj(g: *mut HSD_GObj) -> u32 {
             return 0;
         }
         let fp = &*((*g).user_data as *const Fighter);
-        if fp.is_sub_fighter() != 0 || !(0..4).contains(&(fp.player_id as i32)) {
+        if fp.is_sub_fighter() != 0 || !(0..4).contains(&(fp.player_idx as i32)) {
             return 0;
         }
-        handle_of(fp.player_id as i32)
+        handle_of(fp.player_idx as i32)
     }
 }
 
@@ -484,7 +484,7 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         let g = with_fighter(&mut c, h, core::ptr::null_mut(), |f| f.gobj);
         gobj_handle(c.data_mut(), g)
     });
-    w!("gd_fighter_slot", |mut c: Caller<'_, HostData>, h: u32| -> i32 { with_fighter(&mut c, h, -1, |f| f.player_id as i32) });
+    w!("gd_fighter_slot", |mut c: Caller<'_, HostData>, h: u32| -> i32 { with_fighter(&mut c, h, -1, |f| f.player_idx as i32) });
     w!("gd_fighter_kind", |mut c: Caller<'_, HostData>, h: u32| -> i32 { with_fighter(&mut c, h, -1, |f| f.kind as i32) });
     w!("gd_fighter_get_action_state", |mut c: Caller<'_, HostData>, h: u32| -> i32 { with_fighter(&mut c, h, -1, |f| f.motion_id as i32) });
     w!("gd_fighter_request_action_state", |mut c: Caller<'_, HostData>, h: u32, state: i32| -> i32 {
@@ -530,7 +530,7 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
             for (i, x) in fl.iter().enumerate() { v[i] = canon(*x).to_bits(); }
             v[11] = f.motion_id as u32;
             v[12] = f.kind as u32;
-            v[13] = f.player_id as u32;
+            v[13] = f.player_idx as u32;
         });
         write_words(&mut c, out, &v);
     });
@@ -1121,7 +1121,7 @@ fn frame_hook(post: bool) {
 
 /// The damage row through the generic dispatcher (the site keeps its own pointer: it hands a `&mut Fighter`).
 fn damage_hook(fp: &mut Fighter, d: f32, orig: &mut dyn FnMut() -> Ret) {
-    if std::env::var_os("MELEE_MODHOST_TRACE").is_some() { eprintln!("modhost: damage slot {} {d}", fp.player_id); }
+    if std::env::var_os("MELEE_MODHOST_TRACE").is_some() { eprintln!("modhost: damage slot {} {d}", fp.player_idx); }
     dispatch(ADDR_DAMAGE, &[Arg::Fighter(fp.gobj as _), Arg::F32(d)], orig);
 }
 

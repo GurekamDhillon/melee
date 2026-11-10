@@ -18,11 +18,11 @@ use melee_types::*;
 /// Calls into TUs that are not ported yet (settable hooks; unset they panic).
 pub mod ext {
     use melee_types::*;
-    pub static mut FTMH_CAPTUREWAITMASTERHAND_80155D6C: Option<fn(*mut HSD_GObj, i32)> = None;
+    pub static mut FTMH_CAPTUREWAITMASTERHAND_80155D6C: Option<fn(*mut HSD_GObj, isize)> = None;
     #[allow(non_snake_case)]
     pub fn ftMh_CaptureWaitMasterHand_80155D6C(gobj: *mut HSD_GObj, msid: i32) {
         match unsafe { FTMH_CAPTUREWAITMASTERHAND_80155D6C } {
-            Some(f) => f(gobj, msid),
+            Some(f) => f(gobj, msid as isize),
             None => { unsafe { crate::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D6C(gobj as _, msid as _); } },
         }
     }
@@ -95,7 +95,7 @@ pub fn ftMh_Squeezing_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_Squeezing_IASA");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+        if (st::Player_GetPlayerSlotType(((*fp).player_idx as i32)) == 0) {
             st::ftBossLib_8015BD20(gobj);
         }
     }

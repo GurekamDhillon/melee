@@ -257,7 +257,7 @@ pub unsafe extern "C" fn JObjUpdateFunc(obj: *mut c_void, ty: i32, val: *mut HSD
                 (*val).fv = 1.0;
             }
             assert!(!(*jobj).aobj.is_null(), "jobj.c:0x24B jobj->aobj");
-            let jp = (*(*jobj).aobj).hsd_obj as *mut HSD_JObj;
+            let jp = (*(*jobj).aobj).jobj as *mut HSD_JObj;
             assert!(!jp.is_null(), "jobj.c:0x24D jp");
             assert!(!(*jp).u.spline.is_null(), "jobj.c:0x24E jp->u.spline");
             let mut p: Vec = core::mem::zeroed();

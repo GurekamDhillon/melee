@@ -260,7 +260,7 @@ pub fn ftCo_800C4C60(g: G) {
     vec.y += f.cur_pos.y;
     vec.z += f.cur_pos.z;
     let mut param = ext::atan2f(-f.coll_data.floor.normal.x, f.coll_data.floor.normal.y);
-    let q = &mut fp(g).x60C as *mut *mut core::ffi::c_void as *mut core::ffi::c_void;
+    let q = (&raw mut fp(g).x60C) as *mut *mut core::ffi::c_void as *mut core::ffi::c_void;
     ext::efAsync_Spawn(g, q, 5, 1030, core::ptr::null_mut(), &mut vec, &mut param);
     ext::Camera_RequestQuake(QuakeKind_Large as i32, &mut vec);
     ext::ftCommon_8007EBAC(fp(g), 14, 0);

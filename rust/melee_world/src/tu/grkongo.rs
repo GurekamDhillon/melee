@@ -71,10 +71,10 @@ pub mod ext {
     pub fn Ground_801C3BB4() {
         match unsafe { GROUND_801C3BB4 } { Some(f) => f(), None => { unsafe { crate::tu::ground::Ground_801C3BB4(); } return; } }
     }
-    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
-        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
     }
     pub static mut GROUND_801C4A08: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
@@ -367,7 +367,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
+            x10: StageCallbacks_x10 { flags: u32::to_be($flags) },
         }
     };
 }
@@ -379,7 +379,7 @@ pub static mut grKg_StageCallbacks: [StageCallbacks; 12] = [
         callback1: None,
         gobj_proc: None,
         callback3: None,
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     cbs!(grKongo_801D6074, grKongo_801D6190, grKongo_801D6198, grKongo_801D6378, 0),
     cbs!(grKongo_801D6074, grKongo_801D6190, grKongo_801D6198, grKongo_801D6378, 0),
@@ -1569,4 +1569,4 @@ pub unsafe fn grkongo_801d8270(gobj: *mut HSD_GObj_leaves) {
     pub extern "C" fn grKongo_801D6660(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grKongo_801D8444 (gr/grkongo.c:1508)
-    pub extern "C" fn grKongo_801D8444(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grKongo_801D8444(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

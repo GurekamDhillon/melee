@@ -73,8 +73,8 @@ pub fn ftMr_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*fp).set_can_walljump(1);
         ftMr_Init_OnLoadForDrMario(fp);
         let sa = (*fp).dat_attrs as *const ftMario_DatAttrs;
-        ext::it_8026B3F8(*items.add(0), It_Kind_Mario_Fire);
-        ext::it_8026B3F8(*items.add(2), (*sa).specials.cape_kind);
+        ext::it_8026B3F8((*items.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Mario_Fire);
+        ext::it_8026B3F8((*items.add(2)).article as *mut ::core::ffi::c_void, (*sa).specials.cape_kind);
     }
 }
 

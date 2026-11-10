@@ -174,7 +174,7 @@ pub unsafe extern "C" fn fn_80187AB4(gobj: *mut HSD_GObj) {
     ext::HSD_JObjAnimAll((*gobj).hsd_obj as *mut HSD_JObj);
 }
 
-pub unsafe extern "C" fn fn_80187C9C(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe extern "C" fn fn_80187C9C(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("fn_80187C9C");
     ext::GXSetZMode(0, GX_NEVER as i32, 0);
     ext::HSD_GObj_JObjCallback(gobj, arg1);
@@ -316,7 +316,7 @@ pub unsafe fn gm_Scene_IntroNormal_OnEnter(arg0: *mut c_void) {
     let cobj = ext::HSD_CObjLoadDesc((*data.x4).desc);
     ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_CameraKind, cobj as *mut c_void);
     // `(GObj_RenderFunc) (Event) Camera_800304E0`: the C calls it with a surplus argument
-    let render: unsafe extern "C" fn(*mut HSD_GObj, i32) = core::mem::transmute(ext::Camera_800304E0 as unsafe extern "C" fn(*mut HSD_GObj));
+    let render: unsafe extern "C" fn(*mut HSD_GObj, isize) = core::mem::transmute(ext::Camera_800304E0 as unsafe extern "C" fn(*mut HSD_GObj));
     ext::GObj_SetupGXLinkMax(gobj, Some(render), 8);
     ext::HSD_GObj_SetupProc(gobj, Some(fn_80187910), 0);
     ext::HSD_CObjAddAnim(cobj, *(*data.x4).anims);

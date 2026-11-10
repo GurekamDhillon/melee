@@ -207,7 +207,7 @@ pub unsafe extern "C" fn it_802BD4AC(item_gobj: *mut Item_GObj, pos: *mut Vec3, 
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = item_gobj;
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
 
     let spawn_gobj = ext::Item_80268B18(&mut spawn);
@@ -218,7 +218,7 @@ pub unsafe extern "C" fn it_802BD4AC(item_gobj: *mut Item_GObj, pos: *mut Vec3, 
             ext::it_80275158(spawn_gobj, (*attr).x0_lifetime);
             (*item).xDD4_itemVar.peachturnip.xDD8 = it_802BD32C(spawn_gobj);
             (*item).xDD4_itemVar.peachturnip.xDDC_damage = damage(attr, (*item).xDD4_itemVar.peachturnip.xDD8 as isize);
-            (*item).xDD4_itemVar.peachturnip.xDD4.anon_0.set_b0(0);
+            (*item).xDD4_itemVar.peachturnip.xDD4.x0.set_b0(0);
             (*item).xDD4_itemVar.peachturnip.xDE4_owner = (*item).owner;
             ext::it_8026BD0C(spawn_gobj);
         }
@@ -250,13 +250,13 @@ pub unsafe extern "C" fn itPeachTurnip_Logic56_PickedUp(item_gobj: *mut Item_GOb
     let item = GET_ITEM(item_gobj);
 
     ext::it_80273670(item_gobj, 0, (*item).xDD4_itemVar.peachturnip.xDD8 as f32);
-    if (*item).xDD4_itemVar.peachturnip.xDD4.anon_0.b0() != 0 {
+    if (*item).xDD4_itemVar.peachturnip.xDD4.x0.b0() != 0 {
         ext::Item_80268E5C(item_gobj, 4, ITEM_ANIM_UPDATE);
     } else {
         ext::Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
         ext::it_8026BCF4(item_gobj);
     }
-    (*item).xDD4_itemVar.peachturnip.xDD4.anon_0.set_b0(1);
+    (*item).xDD4_itemVar.peachturnip.xDD4.x0.set_b0(1);
     ext::Item_802694CC(item_gobj);
 }
 

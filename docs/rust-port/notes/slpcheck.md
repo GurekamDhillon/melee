@@ -246,3 +246,52 @@ What is left in this class (first divergence, from `SLPCHECK_DUMP`; counts on b3
   Fountain, Yoshi's, Final Destination, Dream Land. Not a contraction site in mpcoll/mplib/ftcoll/fighter (all tested). Next: dump the
   collision push and the ECB for one such frame.
 - action 38 vs 358, 41 vs 40, 29 vs 90 and one hitlag 5 vs 8: unchanged, not followed by a 1-ULP drift.
+
+## slpfuzz pilot (2026-11-09, port/slpfuzz): low-tier characters from Lunar Melee
+
+Corpus: `tools/rust-port/slp/lunar_fetch.py` (Lunar Melee public API: one search per character, then ONE bulk-download
+job by replay id; no single-file loop, 429/503 back-off). 351 tournament replays, ~30 each of Pichu, Kirby, Bowser,
+Mewtwo, Ness, Zelda, Game & Watch, Roy, Young Link, Link, Yoshi, DK (3.17.0 and 3.19.1). Files live only in the
+git-ignored workspace `_build/slp/<char>/<replay id>.slp`; `char_report.py` summarises `run_all.sh` output per character.
+
+Result at rust-port e0e53381c: 336 of 351 frame-exact. With this branch: 337 (95.2% of replay frames matched before the
+first divergence). Kirby, Ness, Roy, Yoshi, Young Link, Zelda: all frame-exact.
+
+Fix (slpcheck only): 13 files (two 3.17 events, Gecko lists of 66/86 codes) carry the UCF 0.7x set although they are
+3.x and their dashback word is 1: no 1.0 cardinals (C2 8006B460), UCF SDI, shield SDI, extended shield drop, DBOOC fix.
+The sim ran them as 0.84, so a 0.9875 dash was taken as 1.0 (+0.0175 x on the first dash frame). slpcheck now runs such
+files as UCF 0.73 (`Replay::ucf_073_list`, `slp::gecko_has`), and arms the DBOOC fix only when C2 800D65EC is listed.
+`SLPCHECK_UCF07=off|card` keeps the old behaviour / drops only the cardinals. On those 13: off 4 match, card 0, 0.73 5.
+
+Open: Bowser Koopa Klaw release x (2 files, 20-41 units on the frame 287 -> 282), Rainbow Cruise platform landing (GnW
+dair), Mewtwo action 342 state frame 7.0 vs 7.0009766, 0.7x-list damage exit on a fast stick (38/90 vs 29, 7 files:
+the sim's 0.73 is not exactly these lists), 1-ULP x (FMA class, 3 files).
+
+## slpfuzz round 2 (2026-11-09, port/slpfuzz): all 26 characters, 7800 Lunar tournament replays
+
+Corpus: 300 tournament replays per character (`lunar_fetch.py search` then `fetch` per batch of 3 characters, one bulk
+job per batch, jobs spaced >= 13 min). Frame-exact files were deleted after the check; only divergent files and a
+manifest of replay id / character / status are kept (git-ignored workspace, no player names).
+
+Result: **7705 / 7800 frame-exact (98.8%)**, 90 diverged, 5 refused (stage id 55, not a VS stage).
+
+| char | match | char | match | char | match | char | match |
+|---|---|---|---|---|---|---|---|
+| Falcon | 299 | DK | 300 | Fox | 295 | G&W | 300 |
+| Kirby | 295 | Bowser | 298 | Link | 290 | Luigi | 300 |
+| Mario | 299 | Marth | 294 | Mewtwo | 295 | Ness | 295 |
+| Peach | 299 | Pikachu | 300 | ICs | 290 | Puff | 300 |
+| Samus | 299 | Yoshi | 300 | Zelda | 294 (5 refused) | Sheik | 299 |
+| Falco | 300 | Young Link | 297 | Doc | 300 | Roy | 298 |
+| Pichu | 272 | Ganon | 297 | | | | |
+
+Port fixes this round: Koopa Klaw release reads `specials.xC` (native State1Vars layout put it at +0x18); stage anim
+callbacks go through the four-argument `HSD_AObjSetFlags_cb` (AOBJ_LOOP was never set, Rainbow Cruise scroll stopped at
+7200). slpcheck setup: UCF 0.7x lists with C2 800908F4 use the 0.84 pad-queue tumble rule; engine pads fed from the
+replay (stock steal); pausing off (a console pause records no frames); Game Start attack/defense ratios applied
+(`SceneLaunch_PlayerRatio`); fixtures with an out-of-range stage or team are refused instead of panicking.
+
+Open groups: Pichu (28 files; a fighter hit by Pichu is off by 0.0375 = 3 x 1/80 in x or y on the hitlag-exit frame, or
+percent 1.0 / hitlag 6 vs 0; independent of the pad feed); Link hookshot tether pull (AirCatchHit 361, 1-ULP); Great Bay
+Tingle RNG draw order on frame 4185 (console draws Tingle's Randi first); Ice Climbers (10, mostly action on stages 3/32);
+singles on Pokemon Stadium (frozen) and other stages. One pilot Mewtwo file is a corrupt record (bit flips), not a bug.

@@ -46,7 +46,7 @@ use crate::layout::itTaruCann_DatAttrs;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -277,7 +277,7 @@ pub static mut it_803F8468: [ItemStateTable; 22] = [
 unsafe fn itSwapVelocity(ip: *mut Item) {
     let attr = GET_ATTRS(ip);
     (*ip).facing_dir = -(*ip).facing_dir;
-    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0.x0_f32).y;
+    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0).x4;
 }
 
 /// `static inline swapVelocity`
@@ -364,7 +364,7 @@ pub unsafe extern "C" fn it_2725_Logic5_DmgReceived(gobj: *mut Item_GObj) -> boo
     it_802DBAF0(gobj, 0, 1);
     (*ip).init_facing_dir = (*ip).facing_dir;
     (*ip).xC9C = melee_core::ppc::fctiwz_f32((*ip).xC9C as f32 + ext::it_8027CBFC(gobj));
-    if (*ip).xC9C > (*(*attr).x0.x0_s32).x || (*ip).msid == 0x13 {
+    if (*ip).xC9C > (*(*attr).x0).x0 || (*ip).msid == 0x13 {
         Item_ZakoDefeat(gobj, ip);
         if ext::HSD_Randf() < (*ext::it_804D6D40).x8 {
             it_802DC3DC(gobj);
@@ -478,7 +478,7 @@ pub unsafe extern "C" fn it_802DA104(gobj: *mut Item_GObj) {
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
 
-    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0.x0_f32).y;
+    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0).x4;
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.y = 0.0;
     ext::it_802756E0(gobj);
@@ -544,8 +544,8 @@ pub unsafe extern "C" fn itLikelike_UnkMotion1_Phys(gobj: *mut Item_GObj) {
 /// `static inline likelikeVelocity`
 #[inline]
 unsafe fn likelikeVelocity(gobj: *mut HSD_GObj, ip: *mut Item, attrs: *mut itLikelikeAttributes, multiplier: f32) {
-    if abs_c((*ip).xDD4_itemVar.likelike.x20.x - (*ip).pos.x) < (*(*attrs).x0.x0_f32).y * multiplier
-        && abs_c((*ip).xDD4_itemVar.likelike.x20.y - (*ip).pos.y) < (*(*attrs).x0.x0_f32).y * multiplier
+    if abs_c((*ip).xDD4_itemVar.likelike.x20.x - (*ip).pos.x) < (*(*attrs).x0).x4 * multiplier
+        && abs_c((*ip).xDD4_itemVar.likelike.x20.y - (*ip).pos.y) < (*(*attrs).x0).x4 * multiplier
     {
         if (*ip).xDD4_itemVar.likelike.x48 >= 4 {
             swapVelocity(gobj);
@@ -583,7 +583,7 @@ pub unsafe extern "C" fn it_802DA4C0(gobj: *mut Item_GObj) {
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
 
-    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0.x0_f32).y;
+    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0).x4;
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.z = 0.0;
     ext::it_802756E0(gobj);
@@ -633,7 +633,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion2_Phys(gobj: *mut Item_GObj) {
     } else {
         (*ip).xDD4_itemVar.likelike.x4C = (*ip).xDD4_itemVar.likelike.x4C.wrapping_sub(1);
     }
-    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0.x0_f32).y;
+    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0).x4;
     let temp_f2 = (*ip).facing_dir;
     if (temp_f2 > 0.0 && (*ip).x70_nudge.x < 0.0) || (temp_f2 < 0.0 && (*ip).x70_nudge.x > 0.0) {
         (*ip).facing_dir = -temp_f2;
@@ -663,13 +663,13 @@ pub unsafe extern "C" fn itLikelike_UnkMotion2_Coll(gobj: *mut Item_GObj) -> i32
         (*ip).x40_vel.x *= -1.0;
     } else {
         let half: f32 = 0.5;
-        if abs_c((*ip).xDD4_itemVar.likelike.x20.x - (*ip).pos.x) < (*(*attr).x0.x0_f32).y * half
-            && abs_c((*ip).xDD4_itemVar.likelike.x20.y - (*ip).pos.y) < (*(*attr).x0.x0_f32).y * half
+        if abs_c((*ip).xDD4_itemVar.likelike.x20.x - (*ip).pos.x) < (*(*attr).x0).x4 * half
+            && abs_c((*ip).xDD4_itemVar.likelike.x20.y - (*ip).pos.y) < (*(*attr).x0).x4 * half
         {
             let temp_r3 = (*ip).xDD4_itemVar.likelike.x48;
             if temp_r3 >= 4 {
                 (*ip).facing_dir = -(*ip).facing_dir;
-                (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0.x0_f32).y;
+                (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0).x4;
                 (*ip).xDD4_itemVar.likelike.x48 = 0;
             } else {
                 (*ip).xDD4_itemVar.likelike.x48 = temp_r3.wrapping_add(1);
@@ -821,7 +821,7 @@ pub unsafe extern "C" fn it_802DAD18(gobj: *mut HSD_GObj) {
     let ip = GET_ITEM(gobj);
 
     HSD_JObjSetRotationZ(GET_JOBJ(gobj), M_PI as f32);
-    (*ip).xDCE_flag.anon_0.set_b7(1);
+    (*ip).xDCE_flag.x0.set_b7(1);
     ext::Item_80268E5C(gobj, 3, 2);
 }
 
@@ -858,7 +858,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion16_Anim(gobj: *mut Item_GObj) -> bo
         if (*ip).xDD4_itemVar.likelike.x38 == 0 {
             let ip2 = GET_ITEM(gobj);
             let attr2 = GET_ATTRS(ip2);
-            (*ip2).x40_vel.x = (*ip2).facing_dir * (*(*attr2).x0.x0_f32).y;
+            (*ip2).x40_vel.x = (*ip2).facing_dir * (*(*attr2).x0).x4;
             (*ip2).x40_vel.z = 0.0;
             (*ip2).x40_vel.y = 0.0;
             ext::it_802756E0(gobj);
@@ -869,7 +869,7 @@ pub unsafe extern "C" fn itLikelike_UnkMotion16_Anim(gobj: *mut Item_GObj) -> bo
         } else {
             let ip3 = GET_ITEM(gobj);
             let attr = GET_ATTRS(ip3);
-            (*ip3).x40_vel.x = (*ip3).facing_dir * (*(*attr).x0.x0_f32).y;
+            (*ip3).x40_vel.x = (*ip3).facing_dir * (*(*attr).x0).x4;
             (*ip3).x40_vel.y = 0.0;
             (*ip3).x40_vel.z = 0.0;
             ext::it_802756E0(gobj);
@@ -902,7 +902,7 @@ pub unsafe extern "C" fn it_802DB074(gobj: *mut HSD_GObj) {
     let ip = GET_ITEM(gobj);
     let attr = GET_ATTRS(ip);
     (*ip).facing_dir = (*ip).xDD4_itemVar.likelike.x3C as f32;
-    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0.x0_f32).y * 2.0;
+    (*ip).x40_vel.x = (*ip).facing_dir * (*(*attr).x0).x4 * 2.0;
     (*ip).xDD4_itemVar.likelike.x4C = 0x1E;
     ext::Item_80268E5C(gobj, 8, 2);
 }
@@ -966,7 +966,7 @@ pub unsafe extern "C" fn it_802DB358(gobj: *mut Item_GObj) {
     melee_core::ct!("it_802DB358");
     let ip = (*gobj).user_data as *mut Item;
     (*ip).xDD4_itemVar.likelike.x50 = (*ip).grab_victim;
-    (*ip).xDD0_flag.anon_0.set_b5(0);
+    (*ip).xDD0_flag.x0.set_b5(0);
     ext::it_80274ECC(gobj, 1);
 }
 
@@ -1465,7 +1465,7 @@ pub fn it_802db358(ip: &mut Item) {
     // SAFETY: item-var union fields are plain data.
     unsafe {
         ip.xDD4_itemVar.likelike.x50 = ip.grab_victim;
-        ip.xDD0_flag.anon_0.set_b5(0);
+        ip.xDD0_flag.x0.set_b5(0);
         it_80274ecc(ip, 1);
     }
 }

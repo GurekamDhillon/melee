@@ -38,7 +38,7 @@ use crate::layout::itTaruAttributes;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -243,7 +243,7 @@ pub unsafe extern "C" fn it_80295ED4(gobj: *mut Item_GObj) {
         let ip = (*gobj).user_data as *mut Item;
         if !ip.is_null() {
             (*ip).xDD4_itemVar.tarucann.x20 = (*ip).grab_victim;
-            (*ip).xDD0_flag.anon_0.set_b5(0);
+            (*ip).xDD0_flag.x0.set_b5(0);
             ext::it_80274ECC(gobj, 1);
             it_80297790(gobj);
         }
@@ -318,7 +318,7 @@ pub unsafe extern "C" fn it_3F14_Logic5_Spawned(gobj: *mut Item_GObj) {
     let da = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itTaruCann_DatAttrs;
     (*ip).facing_dir = -1.0;
     (*ip).xD5C = 0;
-    (*ip).xDCE_flag.anon_0.set_b7(0);
+    (*ip).xDCE_flag.x0.set_b7(0);
     (*ip).xDAC_itcmd_var0 = 0;
     (*ip).xDB0_itcmd_var1 = 0;
     (*ip).xDD4_itemVar.tarucann.x0 = 0;

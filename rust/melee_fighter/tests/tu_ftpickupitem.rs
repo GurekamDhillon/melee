@@ -72,7 +72,7 @@ fn ftpickupitem_matches_c() {
         });
         hk::ftAnim_8006EBA4 = Some(|g| {
             t(22); t(iid(g));
-            if rnd() % 3 == 0 { f().anon_2210.anon_0.set_throw_flags_b3(1); }
+            if rnd() % 3 == 0 { f().x2210.x0.set_throw_flags_b3(1); }
         });
         hk::ftCo_800974C4 = Some(|_| t(23));
         hk::pl_8003E17C = Some(|s, sub, i| { t(24); t(s as u32); t(sub as u32); t(iid(i)) });
@@ -110,7 +110,7 @@ fn ftpickupitem_matches_c() {
             cd().x7CC = (rnd() % 100) as i32;
             let fr = f();
             fr.kind = (rnd() % 4) as _;
-            fr.player_id = (rnd() % 4) as u8;
+            fr.player_idx = (rnd() % 4) as u8;
             fr.set_is_sub_fighter((rnd() & 1) as u8);
             fr.item_gobj = if rnd() & 1 != 0 { ig(1) } else { core::ptr::null_mut() };
             fr.x1978 = if rnd() & 1 != 0 { ig(2) } else { core::ptr::null_mut() };
@@ -125,7 +125,7 @@ fn ftpickupitem_matches_c() {
             fr.mv.co.itemget.x0 = (rnd() & 1) as _;
             let tf = (rnd() & 0xFF) as u8;
             {
-                let a = &mut fr.anon_2210.anon_0;
+                let a = &mut fr.x2210.x0;
                 a.set_throw_flags_b0(tf & 1); a.set_throw_flags_b1((tf >> 1) & 1);
                 a.set_throw_flags_b2((tf >> 2) & 1); a.set_throw_flags_b3((tf >> 3) & 1);
                 a.set_throw_flags_b4((tf >> 4) & 1); a.set_throw_flags_b5((tf >> 5) & 1);
@@ -154,7 +154,7 @@ fn ftpickupitem_matches_c() {
                 _ => m::geno_consumable_collect(ig(0), (rnd() % 4) as i32),
             }
             let fr = f();
-            let a = &fr.anon_2210.anon_0;
+            let a = &fr.x2210.x0;
             let mut h = Hs::new();
             h.m(iid(fr.item_gobj)); h.m(iid(fr.x1978));
             h.m(a.throw_flags_b0() as u32); h.m(a.throw_flags_b1() as u32); h.m(a.throw_flags_b2() as u32); h.m(a.throw_flags_b3() as u32);

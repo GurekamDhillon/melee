@@ -28,6 +28,10 @@ name = "tu_lbshadow"
 harness = false
 
 [[test]]
+name = "tu_lbarq"
+harness = false
+
+[[test]]
 name = "tu_perf"
 harness = false
 

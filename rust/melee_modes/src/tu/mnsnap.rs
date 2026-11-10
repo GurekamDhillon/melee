@@ -195,7 +195,7 @@ pub mod ext {
     use crate::ext_fns;
     ext_fns! {
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn mn_80229894(a0: i32, a1: u16, a2: i32) = crate::tu::adapt::mn_80229894__f7df64;
         fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) = crate::tu::adapt::HSD_AObjSetFlags__2e5e0e;
         fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
@@ -360,7 +360,7 @@ unsafe extern "C" fn mnSnap_8025329C() {
                 __assert("src/melee/mn/mnsnap.c", 220, "jobj->u.dobj->next->next->mobj->tobj->imagedesc");
             };
             let ref mut fresh0 = (*mnSnap_GetImageDesc(jobj)).image_ptr;
-            *fresh0 = img;
+            *fresh0 = img as *mut u8;
             (*(*(*(*(*(*(*jobj).u.dobj).next).next).mobj).tobj).imagedesc).width = 0x280
                 as u16;
             (*(*(*(*(*(*mnSnap_GetDObj(jobj)).next).next).mobj).tobj).imagedesc)
@@ -505,7 +505,7 @@ pub unsafe extern "C" fn mnSnap_80253640(mut page: i32) {
             __assert("src/melee/mn/mnsnap.c", 340, "jobj->u.dobj->next->next->mobj->tobj->imagedesc");
         };
         i += 1;
-        (*(*(*(*(*(*(*jobj).u.dobj).next).next).mobj).tobj).imagedesc).image_ptr = img;
+        (*(*(*(*(*(*(*jobj).u.dobj).next).next).mobj).tobj).imagedesc).image_ptr = img as *mut u8;
         (*(*(*(*(*(*(*jobj).u.dobj).next).next).mobj).tobj).imagedesc).width = 0x40
             as u16;
         (*(*(*(*(*(*(*jobj).u.dobj).next).next).mobj).tobj).imagedesc).height = 0x30
@@ -681,32 +681,32 @@ pub unsafe extern "C" fn mnSnap_80253BE0(
     }
     return 2 as i32;
 }
-pub unsafe extern "C" fn fn_80253DB4(mut gobj: *mut HSD_GObj, mut rendermode: i32) {
+pub unsafe extern "C" fn fn_80253DB4(mut gobj: *mut HSD_GObj, mut rendermode: isize) {
     melee_core::ct!("fn_80253DB4");
     if mnSnap_804A0A10.state >= 4 {
-        HSD_GObj_JObjCallback(gobj, rendermode as i32);
+        HSD_GObj_JObjCallback(gobj, rendermode as isize);
     }
 }
-pub unsafe extern "C" fn fn_80253DE8(mut gobj: *mut HSD_GObj, mut rendermode: i32) {
+pub unsafe extern "C" fn fn_80253DE8(mut gobj: *mut HSD_GObj, mut rendermode: isize) {
     melee_core::ct!("fn_80253DE8");
     if mnSnap_804A0A10.state == 2 {
-        HSD_GObj_JObjCallback(gobj, rendermode as i32);
+        HSD_GObj_JObjCallback(gobj, rendermode as isize);
     }
 }
-pub unsafe extern "C" fn fn_80253E1C(mut gobj: *mut HSD_GObj, mut rendermode: i32) {
+pub unsafe extern "C" fn fn_80253E1C(mut gobj: *mut HSD_GObj, mut rendermode: isize) {
     melee_core::ct!("fn_80253E1C");
     let mut state: i32 = mnSnap_804A0A10.state;
     if state == 6
         || (state as i32 - 10 as i32) as u32
             <= 1
     {
-        HSD_GObj_JObjCallback(gobj, rendermode as i32);
+        HSD_GObj_JObjCallback(gobj, rendermode as isize);
     }
 }
-pub unsafe extern "C" fn fn_80253E5C(mut gobj: *mut HSD_GObj, mut rendermode: i32) {
+pub unsafe extern "C" fn fn_80253E5C(mut gobj: *mut HSD_GObj, mut rendermode: isize) {
     melee_core::ct!("fn_80253E5C");
     if mnSnap_804A0A10.dlg_active == 1 {
-        HSD_GObj_JObjCallback(gobj, rendermode as i32);
+        HSD_GObj_JObjCallback(gobj, rendermode as isize);
     }
 }
 pub unsafe extern "C" fn mnSnap_80253E90(mut idx: i32) {
@@ -1791,7 +1791,7 @@ pub unsafe extern "C" fn fn_802545C4() {
                     if (*(*(*(*jobj).u.dobj).mobj).tobj).imagedesc.is_null() {
                         __assert("src/melee/mn/mnsnap.c", 1541, "jobj->u.dobj->mobj->tobj->imagedesc");
                     };
-                    (*(*(*(*(*jobj).u.dobj).mobj).tobj).imagedesc).image_ptr = thumb_img;
+                    (*(*(*(*(*jobj).u.dobj).mobj).tobj).imagedesc).image_ptr = thumb_img as *mut u8;
                     (*(*(*(*(*jobj).u.dobj).mobj).tobj).imagedesc).width = 640;
                     (*(*(*(*(*jobj).u.dobj).mobj).tobj).imagedesc).height = 480;
                 } else if mnSnap_804A0A10.menu_sel == 1 {
@@ -3024,7 +3024,7 @@ pub unsafe extern "C" fn mnSnap_80257F24() {
     GObj_SetupGXLink(
         gobj,
         core::mem::transmute::<
-            Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> ()>,
+            Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> ()>,
             GObj_RenderFunc,
         >(Some(fn_80253DB4)),
         4,
@@ -3042,7 +3042,7 @@ pub unsafe extern "C" fn mnSnap_80257F24() {
     slot_jobj_ptr = (&raw mut (*snap).slot_jobjs as *mut *mut HSD_JObj)
         .offset(0 as i32 as isize) as *mut *mut HSD_JObj;
     jobj2 = *slot_jobj_ptr;
-    (*snap).blank_img = (*(*(*(*(*jobj2).u.dobj).mobj).tobj).imagedesc).image_ptr;
+    (*snap).blank_img = (*(*(*(*(*jobj2).u.dobj).mobj).tobj).imagedesc).image_ptr as *mut c_void;
     if (*snap).photo_count[(*snap).active_slot as usize] <= 4 {
         HSD_JObjSetFlagsAll((*snap).arrow_jobj, JOBJ_HIDDEN as u32);
     } else {
@@ -3074,7 +3074,7 @@ pub unsafe extern "C" fn mnSnap_80257F24() {
     GObj_SetupGXLink(
         gobj,
         core::mem::transmute::<
-            Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> ()>,
+            Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> ()>,
             GObj_RenderFunc,
         >(Some(fn_80253DE8)),
         4,
@@ -3096,7 +3096,7 @@ pub unsafe extern "C" fn mnSnap_80257F24() {
     GObj_SetupGXLink(
         gobj,
         core::mem::transmute::<
-            Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> ()>,
+            Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> ()>,
             GObj_RenderFunc,
         >(Some(fn_80253E1C)),
         6,
@@ -3203,7 +3203,7 @@ pub unsafe extern "C" fn mnSnap_80257F24() {
     GObj_SetupGXLink(
         gobj,
         core::mem::transmute::<
-            Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> ()>,
+            Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> ()>,
             GObj_RenderFunc,
         >(Some(fn_80253E5C)),
         6,

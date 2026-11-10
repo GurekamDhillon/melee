@@ -87,7 +87,7 @@ pub fn ftco_800bfd04(g: G) {
     fp.set_x221E_b2(1);
     fp.set_x2219_b1(1);
     unsafe { (*fp.x890_cameraBox).state = CmSubjectState_Inactive as _ };
-    fp.set_x221F_b3(1);
+    fp.set_is_sleeping(1);
     fp.set_x221F_b1(1);
 }
 
@@ -97,13 +97,13 @@ pub fn ftco_800bfd9c(g: G) {
     ftco_800bfd04(g);
     let fp = fpg(g);
     if fp.x2222_b5() != 0 {
-        let pl = ext::Player_GetEntityAtIndex(fp.player_id as i32, 1);
+        let pl = ext::Player_GetEntityAtIndex(fp.player_idx as i32, 1);
         if !pl.is_null() {
             ext::ftCo_800D4F24(pl, 1);
         }
     }
     let fp = fpg(g);
-    ext::gm_80167320(fp.player_id as i32, fp.is_sub_fighter() as i32);
+    ext::gm_80167320(fp.player_idx as i32, fp.is_sub_fighter() as i32);
 }
 
 /// `ftCo_Sleep_Anim`: empty.
@@ -184,7 +184,7 @@ pub fn ftco_800c0134(fp: &mut Fighter) {
 }
 
 fn reapply_x408(fp: &mut Fighter) {
-    if fp.x2224_b2() != 0 {
+    if fp.stamina_dead() != 0 {
         ftco_800bffd0(fp, 0x7A, 0);
     }
     if fp.dmg.x18F0 != 0 {

@@ -364,13 +364,13 @@ pub unsafe fn lbRefract_800222A4() {
         tobjdesc1.imagedesc = lbl_804336D0.imagedesc.add(i);
         *lbl_804336D0.tobj_list.add(i) = ext::HSD_TObjLoadDesc(addr_of_mut!(tobjdesc1));
 
-        imagedesc0.image_ptr = lbl_804336D0.image_ptr;
+        imagedesc0.image_ptr = lbl_804336D0.image_ptr as *mut u8;
         imagedesc0.format = GX_TF_RGB565;
         imagedesc0.width = IMAGE_WIDTH as u16;
         imagedesc0.height = IMAGE_HEIGHT as u16;
 
         let d = &mut *lbl_804336D0.imagedesc.add(i);
-        d.image_ptr = buf;
+        d.image_ptr = buf as *mut u8;
         d.format = GX_TF_IA8;
         d.width = 32;
         d.height = 32;

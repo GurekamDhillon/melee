@@ -8,9 +8,9 @@ mod gen_stubs {
     fn t_GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u32) { unsafe { out("GObj_SetupGXLinkMax"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); tru(a2 as u64); out("\n");  } }
     fn t_HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj { unsafe { out("HSD_CObjLoadDesc"); trp(a0 as *const u8); out("\n"); az(core::mem::size_of::<HSD_CObj>()) as *mut HSD_CObj } }
     fn t_HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { unsafe { out("HSD_GObjObject_80390A70"); trp(a0 as *const u8); tri(a1 as i64); trp(a2 as *const u8); out("\n"); (*a0).hsd_obj = a2;  } }
-    fn t_HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_803910D8"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
-    fn t_HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_JObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
-    fn t_HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_LObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_803910D8"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_JObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_LObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
     fn t_HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc { unsafe { out("HSD_GObj_SetupProc"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); tri(a2 as i64); out("\n"); az(core::mem::size_of::<HSD_GObjProc>()) as *mut HSD_GObjProc } }
     fn t_HSD_JObjAnimAll(a0: *mut HSD_JObj) { unsafe { out("HSD_JObjAnimAll"); trp(a0 as *const u8); out("\n");  } }
     fn t_HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32) { unsafe { out("HSD_JObjClearFlags"); trp(a0 as *const u8); tru(a1 as u64); out("\n");  } }

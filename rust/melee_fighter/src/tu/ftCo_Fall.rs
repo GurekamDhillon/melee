@@ -62,7 +62,7 @@ pub mod ext {
         ftCo_800CB870(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_JumpAerial::ftCo_800CB870(g as _) as _ } };
         ftPe_8011BAD8(g: G) -> bool = |_| todo!("TODO(port) ftPe_8011BAD8 (ftpeachfloat.c)");
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ft_800831CC(g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent) = |g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_coll_ev(a, b, |a, b| crate::tu::ft_081b::ft_800831cc(g as _, a, b)); } };
+        ft_800831CC(g: G, a: unsafe extern "C" fn(G, isize) -> bool, b: HSD_GObjEvent) = |g: G, a: unsafe extern "C" fn(G, isize) -> bool, b: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_coll_ev(a, b, |a, b| crate::tu::ft_081b::ft_800831cc(g as _, a, b)); } };
     }
     /// Address-taken only (passed to `ft_800831CC`); not called from this TU.
     pub extern "C" fn ft_80082B1C(_g: G) {
@@ -73,7 +73,7 @@ pub mod ext {
 /// static inline `ftCo_Fall_inline`.
 pub fn ftCo_Fall_inline(g: G) -> bool {
     melee_core::ct!("ftCo_Fall_inline");
-    if fp(g).x2224_b2() != 0 {
+    if fp(g).stamina_dead() != 0 {
         ext::ftCo_80090780(g);
         return true;
     }

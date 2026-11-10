@@ -135,9 +135,13 @@ static void freg_all(void)
     freg((const void*) HSD_MtxAlloc);
     freg((const void*) HSD_MtxFree);
     freg((const void*) HSD_MtxGetAllocData);
+    freg((const void*) HSD_MtxGetRotation);
     freg((const void*) HSD_MtxGetTranslate);
     freg((const void*) HSD_MtxInitAllocData);
+    freg((const void*) HSD_MtxInverse);
     freg((const void*) HSD_MtxInverseTranspose);
+    freg((const void*) HSD_MtxQuat);
+    freg((const void*) HSD_MtxSRT);
     freg((const void*) HSD_MtxSRTQuat);
     freg((const void*) HSD_MtxScaledAdd);
     freg((const void*) HSD_VecAlloc);

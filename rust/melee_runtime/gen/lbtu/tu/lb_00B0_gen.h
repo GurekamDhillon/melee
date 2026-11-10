@@ -46,13 +46,13 @@ void (HSD_JObjSetMtxDirtySub)(__typeof__(struct HSD_JObj *) a0) { T(1009); T(PI(
 void (HSD_JObjSetupMatrixSub)(__typeof__(struct HSD_JObj *) a0) { T(1010); T(PI((const void*) a0)); { int i, j; a0->flags &= ~0x40u; for (i = 0; i < 3; i++) for (j = 0; j < 4; j++) a0->mtx[i][j] = rf(); } }
 void (HSD_JObjWalkTree)(__typeof__(struct HSD_JObj *) a0, __typeof__(void (*)(struct HSD_JObj *, float **, int)) a1, __typeof__(float **) a2) { T(1011); T(PI((const void*) a0)); T(FI((const void*) a1)); T(PI((const void*) a2)); T(B(**a2)); if (a1) { a1(a0, a2, (int) fv()); } }
 __typeof__(unsigned int) (HSD_LObjGetFlags)(__typeof__(struct HSD_LObj *) a0) { T(1012); T(PI((const void*) a0)); return (__typeof__(unsigned int)) ((a0 == &LO[2] ? 0 : (fv() & 0x20))); }
-__typeof__(int) (HSD_QuatLib_8037EF28)(__typeof__(Quaternion *) a0, __typeof__(Quaternion *) a1, __typeof__(Quaternion *) a2, __typeof__(float) a3) { T(1013); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(B(a3)); if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); a2->w = rw(); } return (__typeof__(int)) (fv()); }
-__typeof__(struct HSD_RObj *) (HSD_RObjAlloc)(void) { T(1014); return (__typeof__(struct HSD_RObj *)) (((fv() & 3) ? &RO[0] : 0)); }
-__typeof__(struct HSD_RObj *) (HSD_RObjGetByType)(__typeof__(struct HSD_RObj *) a0, __typeof__(unsigned int) a1, __typeof__(unsigned int) a2) { T(1015); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_RObj *)) (((fv() % 3) == 0 ? 0 : &RO[fv() % 3])); }
-void (HSD_RObjRemove)(__typeof__(struct HSD_RObj *) a0) { T(1016); T(PI((const void*) a0)); }
-void (HSD_RObjSetConstraintObj)(__typeof__(struct HSD_RObj *) a0, __typeof__(void *) a1) { T(1017); T(PI((const void*) a0)); T(PI((const void*) a1)); }
-void (HSD_RObjSetFlags)(__typeof__(struct HSD_RObj *) a0, __typeof__(unsigned int) a1) { T(1018); T(PI((const void*) a0)); T((u32) a1); }
-void (PSMTXMultVec)(__typeof__(float (*)[4]) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1019); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const void*) a1); T(PI((const void*) a2)); TVEC((const void*) a2); if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); } }
+__typeof__(struct HSD_RObj *) (HSD_RObjAlloc)(void) { T(1013); return (__typeof__(struct HSD_RObj *)) (((fv() & 3) ? &RO[0] : 0)); }
+__typeof__(struct HSD_RObj *) (HSD_RObjGetByType)(__typeof__(struct HSD_RObj *) a0, __typeof__(unsigned int) a1, __typeof__(unsigned int) a2) { T(1014); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_RObj *)) (((fv() % 3) == 0 ? 0 : &RO[fv() % 3])); }
+void (HSD_RObjRemove)(__typeof__(struct HSD_RObj *) a0) { T(1015); T(PI((const void*) a0)); }
+void (HSD_RObjSetConstraintObj)(__typeof__(struct HSD_RObj *) a0, __typeof__(void *) a1) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+void (HSD_RObjSetFlags)(__typeof__(struct HSD_RObj *) a0, __typeof__(unsigned int) a1) { T(1017); T(PI((const void*) a0)); T((u32) a1); }
+void (PSMTXMultVec)(__typeof__(float (*)[4]) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1018); T(PI((const void*) a0)); T(PI((const void*) a1)); TVEC((const void*) a1); T(PI((const void*) a2)); TVEC((const void*) a2); if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); } }
+__typeof__(int) (QuatSlerp)(__typeof__(Quaternion *) a0, __typeof__(Quaternion *) a1, __typeof__(Quaternion *) a2, __typeof__(float) a3) { T(1019); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); T(B(a3)); if (a2) { a2->x = rw(); a2->y = rw(); a2->z = rw(); a2->w = rw(); } return (__typeof__(int)) (fv()); }
 static void fill_HSD_JObj(HSD_JObj* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
@@ -167,7 +167,7 @@ static void hash_HSD_AObj(const HSD_AObj* p)
     HM(B(p->end_frame));
     HM(B(p->framerate));
     HM(PI((const void*) p->fobj));
-    HM(PI((const void*) p->hsd_obj));
+    HM(PI((const void*) p->jobj));
 }
 
 static void fill_HSD_DObj(HSD_DObj* p)
@@ -365,7 +365,6 @@ static void fill_HSD_AObjDesc(HSD_AObjDesc* p)
     int i0, i1, i2, j0, j1, j2, j3;
     p->flags = fv();
     p->end_frame = rf();
-    p->obj_id = fv();
 }
 static void hash_HSD_AObjDesc(const HSD_AObjDesc* p)
 {
@@ -374,7 +373,7 @@ static void hash_HSD_AObjDesc(const HSD_AObjDesc* p)
     HM((u32) p->flags);
     HM(B(p->end_frame));
     HM(PI((const void*) p->fobjdesc));
-    HM((u32) p->obj_id);
+    HM(PI((const void*) p->obj_id));
 }
 
 static void fill_HSD_TevDesc(HSD_TevDesc* p)
@@ -667,10 +666,10 @@ static void freg_all(void)
 // stub HSD_JObjSetupMatrixSub = 1010
 // stub HSD_JObjWalkTree = 1011
 // stub HSD_LObjGetFlags = 1012
-// stub HSD_QuatLib_8037EF28 = 1013
-// stub HSD_RObjAlloc = 1014
-// stub HSD_RObjGetByType = 1015
-// stub HSD_RObjRemove = 1016
-// stub HSD_RObjSetConstraintObj = 1017
-// stub HSD_RObjSetFlags = 1018
-// stub PSMTXMultVec = 1019
+// stub HSD_RObjAlloc = 1013
+// stub HSD_RObjGetByType = 1014
+// stub HSD_RObjRemove = 1015
+// stub HSD_RObjSetConstraintObj = 1016
+// stub HSD_RObjSetFlags = 1017
+// stub PSMTXMultVec = 1018
+// stub QuatSlerp = 1019

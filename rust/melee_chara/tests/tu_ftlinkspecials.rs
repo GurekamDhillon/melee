@@ -102,7 +102,7 @@ unsafe fn body() {
     assert_eq!(f.cmd_vars[1], 0);
     // 2071b0 ranges.
     for v in 0..16u8 {
-        unsafe { f.x2070.anon_0.set_x2071_b0_3(v) };
+        unsafe { f.x2070.x0.set_x2071_b0_3(v) };
         assert_eq!(t::ftLk_SpecialS_Is2071b0_5to13(gp), (5..=13).contains(&v), "{v}");
         assert_eq!(t::ftLk_SpecialS_Is2071b0_1to13(gp), (1..=13).contains(&v), "{v}");
     }
@@ -125,11 +125,11 @@ unsafe fn body() {
         assert!(off.is_none());
         *out = Vec3 { x: 1.0, y: 2.0, z: 3.0 };
     });
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(1) };
     da.x2C = 77;
     t::onAccessory4(gp);
     assert_eq!(take_log(), "spawn 31 77");
-    assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b0() }, 0);
+    assert_eq!(unsafe { f.x2210.x0.throw_flags_b0() }, 0);
     assert!(f.u.lk.boomerang_gobj.is_null());
     // on21EC: the dash-smash window decides x4.
     unsafe { melee_fighter::hooks::P_FT_COMMON_DATA = Box::leak(Box::new(ftCommonData::zeroed())) };
@@ -141,7 +141,7 @@ unsafe fn body() {
     f.active_sticky.lstick.x = 4;
     t::on21EC(gp);
     assert_eq!(f.u.lk.x4, 1);
-    assert_eq!(unsafe { f.x2070.anon_0.count_thrown_items() }, 1);
+    assert_eq!(unsafe { f.x2070.x0.count_thrown_items() }, 1);
     f.active_sticky.lstick.x = 5;
     t::on21EC(gp);
     assert_eq!(f.u.lk.x4, 0);

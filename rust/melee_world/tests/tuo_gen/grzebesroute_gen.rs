@@ -59,7 +59,9 @@ if v.set() { (*p).gobj_proc = unsafe { core::mem::transmute::<usize, _>(v.leaf_p
 {
 if v.set() { (*p).callback3 = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(&format!("{}.callback3", path))) }; } else { v.dump_p(&format!("{}.callback3", path), unsafe { core::mem::transmute_copy::<_, usize>(&(*p).callback3) }); }
 }
-v.bytes_be32(&format!("{}.anon_10", path), &mut (*p).anon_10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_10));
+{
+v.bytes(&format!("{}.x10", path), &mut (*p).x10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x10));
+}
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_StageInfo(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::StageInfo; unsafe {
@@ -76,14 +78,7 @@ if v.set() { (*p).flags = v.leaf_int(&format!("{}.flags", path), 32, 0) as _; } 
 if v.set() { (*p).grkind = v.leaf_int(&format!("{}.grkind", path), 32, 0) as _; } else { v.dump_u(&format!("{}.grkind", path), (((*p).grkind) as u32) as u64); }
 }
 {
-if v.set() { (*p).unk8C.set_b0(v.leaf_int(&format!("{}.b0", format!("{}.unk8C", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b0", format!("{}.unk8C", path)), ((*p).unk8C.b0()) as u64); }
-if v.set() { (*p).unk8C.set_b1(v.leaf_int(&format!("{}.b1", format!("{}.unk8C", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b1", format!("{}.unk8C", path)), ((*p).unk8C.b1()) as u64); }
-if v.set() { (*p).unk8C.set_b2(v.leaf_int(&format!("{}.b2", format!("{}.unk8C", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b2", format!("{}.unk8C", path)), ((*p).unk8C.b2()) as u64); }
-if v.set() { (*p).unk8C.set_b3(v.leaf_int(&format!("{}.b3", format!("{}.unk8C", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b3", format!("{}.unk8C", path)), ((*p).unk8C.b3()) as u64); }
-if v.set() { (*p).unk8C.set_b4(v.leaf_int(&format!("{}.b4", format!("{}.unk8C", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b4", format!("{}.unk8C", path)), ((*p).unk8C.b4()) as u64); }
-if v.set() { (*p).unk8C.set_b5(v.leaf_int(&format!("{}.b5", format!("{}.unk8C", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b5", format!("{}.unk8C", path)), ((*p).unk8C.b5()) as u64); }
-if v.set() { (*p).unk8C.set_b6(v.leaf_int(&format!("{}.b6", format!("{}.unk8C", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b6", format!("{}.unk8C", path)), ((*p).unk8C.b6()) as u64); }
-if v.set() { (*p).unk8C.set_b7(v.leaf_int(&format!("{}.b7", format!("{}.unk8C", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b7", format!("{}.unk8C", path)), ((*p).unk8C.b7()) as u64); }
+vis_struct_StageInfo_unk8C(v, &format!("{}.unk8C", path), &mut (*p).unk8C as *mut _ as *mut u8);
 }
 {
 if v.set() { (*p).x90 = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(&format!("{}.x90", path))) }; } else { v.dump_p(&format!("{}.x90", path), unsafe { core::mem::transmute_copy::<_, usize>(&(*p).x90) }); }
@@ -359,22 +354,10 @@ if v.set() { (*p).x8_callback = unsafe { core::mem::transmute::<usize, _>(v.leaf
 if v.set() { (*p).xC_callback = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(&format!("{}.xC_callback", path))) }; } else { v.dump_p(&format!("{}.xC_callback", path), unsafe { core::mem::transmute_copy::<_, usize>(&(*p).xC_callback) }); }
 }
 {
-if v.set() { (*p).x10_flags.set_b0(v.leaf_int(&format!("{}.b0", format!("{}.x10_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b0", format!("{}.x10_flags", path)), ((*p).x10_flags.b0()) as u64); }
-if v.set() { (*p).x10_flags.set_b1(v.leaf_int(&format!("{}.b1", format!("{}.x10_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b1", format!("{}.x10_flags", path)), ((*p).x10_flags.b1()) as u64); }
-if v.set() { (*p).x10_flags.set_b2(v.leaf_int(&format!("{}.b2", format!("{}.x10_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b2", format!("{}.x10_flags", path)), ((*p).x10_flags.b2()) as u64); }
-if v.set() { (*p).x10_flags.set_b3(v.leaf_int(&format!("{}.b3", format!("{}.x10_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b3", format!("{}.x10_flags", path)), ((*p).x10_flags.b3()) as u64); }
-if v.set() { (*p).x10_flags.set_b4(v.leaf_int(&format!("{}.b4", format!("{}.x10_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b4", format!("{}.x10_flags", path)), ((*p).x10_flags.b4()) as u64); }
-if v.set() { (*p).x10_flags.set_b5(v.leaf_int(&format!("{}.b5", format!("{}.x10_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b5", format!("{}.x10_flags", path)), ((*p).x10_flags.b5()) as u64); }
-if v.set() { (*p).x10_flags.set_b6(v.leaf_int(&format!("{}.b6", format!("{}.x10_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b6", format!("{}.x10_flags", path)), ((*p).x10_flags.b6()) as u64); }
-if v.set() { (*p).x10_flags.set_b7(v.leaf_int(&format!("{}.b7", format!("{}.x10_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b7", format!("{}.x10_flags", path)), ((*p).x10_flags.b7()) as u64); }
+vis_struct_Ground_x10_flags(v, &format!("{}.x10_flags", path), &mut (*p).x10_flags as *mut _ as *mut u8);
 }
 {
-if v.set() { (*p).x11_flags.set_b012(v.leaf_int(&format!("{}.b012", format!("{}.x11_flags", path)), 3, 0) as _); } else { v.dump_u(&format!("{}.b012", format!("{}.x11_flags", path)), ((*p).x11_flags.b012()) as u64); }
-if v.set() { (*p).x11_flags.set_b3(v.leaf_int(&format!("{}.b3", format!("{}.x11_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b3", format!("{}.x11_flags", path)), ((*p).x11_flags.b3()) as u64); }
-if v.set() { (*p).x11_flags.set_b4(v.leaf_int(&format!("{}.b4", format!("{}.x11_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b4", format!("{}.x11_flags", path)), ((*p).x11_flags.b4()) as u64); }
-if v.set() { (*p).x11_flags.set_b5(v.leaf_int(&format!("{}.b5", format!("{}.x11_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b5", format!("{}.x11_flags", path)), ((*p).x11_flags.b5()) as u64); }
-if v.set() { (*p).x11_flags.set_b6(v.leaf_int(&format!("{}.b6", format!("{}.x11_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b6", format!("{}.x11_flags", path)), ((*p).x11_flags.b6()) as u64); }
-if v.set() { (*p).x11_flags.set_b7(v.leaf_int(&format!("{}.b7", format!("{}.x11_flags", path)), 1, 0) as _); } else { v.dump_u(&format!("{}.b7", format!("{}.x11_flags", path)), ((*p).x11_flags.b7()) as u64); }
+vis_struct_Ground_x11_flags(v, &format!("{}.x11_flags", path), &mut (*p).x11_flags as *mut _ as *mut u8);
 }
 {
 if v.set() { (*p).map_id = v.leaf_int(&format!("{}.map_id", path), 32, 0) as _; } else { v.dump_u(&format!("{}.map_id", path), (((*p).map_id) as u32) as u64); }
@@ -618,6 +601,37 @@ if v.set() { (*p).bottom = f32::from_bits(v.leaf_f32(&format!("{}.bottom", path)
 }
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
+fn vis_struct_StageInfo_unk8C(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::StageInfo_unk8C; unsafe {
+if v.set() { (*p).set_b0(v.leaf_int(&format!("{}.b0", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b0", path), ((*p).b0()) as u64); }
+if v.set() { (*p).set_b1(v.leaf_int(&format!("{}.b1", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b1", path), ((*p).b1()) as u64); }
+if v.set() { (*p).set_b2(v.leaf_int(&format!("{}.b2", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b2", path), ((*p).b2()) as u64); }
+if v.set() { (*p).set_b3(v.leaf_int(&format!("{}.b3", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b3", path), ((*p).b3()) as u64); }
+if v.set() { (*p).set_b4(v.leaf_int(&format!("{}.b4", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b4", path), ((*p).b4()) as u64); }
+if v.set() { (*p).set_b5(v.leaf_int(&format!("{}.b5", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b5", path), ((*p).b5()) as u64); }
+if v.set() { (*p).set_b6(v.leaf_int(&format!("{}.b6", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b6", path), ((*p).b6()) as u64); }
+if v.set() { (*p).set_b7(v.leaf_int(&format!("{}.b7", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b7", path), ((*p).b7()) as u64); }
+} }
+#[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
+fn vis_struct_Ground_x10_flags(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::Ground_x10_flags; unsafe {
+if v.set() { (*p).set_b0(v.leaf_int(&format!("{}.b0", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b0", path), ((*p).b0()) as u64); }
+if v.set() { (*p).set_b1(v.leaf_int(&format!("{}.b1", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b1", path), ((*p).b1()) as u64); }
+if v.set() { (*p).set_b2(v.leaf_int(&format!("{}.b2", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b2", path), ((*p).b2()) as u64); }
+if v.set() { (*p).set_b3(v.leaf_int(&format!("{}.b3", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b3", path), ((*p).b3()) as u64); }
+if v.set() { (*p).set_b4(v.leaf_int(&format!("{}.b4", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b4", path), ((*p).b4()) as u64); }
+if v.set() { (*p).set_b5(v.leaf_int(&format!("{}.b5", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b5", path), ((*p).b5()) as u64); }
+if v.set() { (*p).set_b6(v.leaf_int(&format!("{}.b6", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b6", path), ((*p).b6()) as u64); }
+if v.set() { (*p).set_b7(v.leaf_int(&format!("{}.b7", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b7", path), ((*p).b7()) as u64); }
+} }
+#[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
+fn vis_struct_Ground_x11_flags(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::Ground_x11_flags; unsafe {
+if v.set() { (*p).set_b012(v.leaf_int(&format!("{}.b012", path), 3, 0) as _); } else { v.dump_u(&format!("{}.b012", path), ((*p).b012()) as u64); }
+if v.set() { (*p).set_b3(v.leaf_int(&format!("{}.b3", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b3", path), ((*p).b3()) as u64); }
+if v.set() { (*p).set_b4(v.leaf_int(&format!("{}.b4", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b4", path), ((*p).b4()) as u64); }
+if v.set() { (*p).set_b5(v.leaf_int(&format!("{}.b5", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b5", path), ((*p).b5()) as u64); }
+if v.set() { (*p).set_b6(v.leaf_int(&format!("{}.b6", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b6", path), ((*p).b6()) as u64); }
+if v.set() { (*p).set_b7(v.leaf_int(&format!("{}.b7", path), 1, 0) as _); } else { v.dump_u(&format!("{}.b7", path), ((*p).b7()) as u64); }
+} }
+#[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_ColorOverlay(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::ColorOverlay; unsafe {
 {
 if v.set() { (*p).x0_timer = v.leaf_int(&format!("{}.x0_timer", path), 32, 1) as _; } else { v.dump_i(&format!("{}.x0_timer", path), (((*p).x0_timer) as i32) as i64); }
@@ -804,9 +818,9 @@ unsafe extern "C" fn s_Ground_801C39C0() { let v = vv(); v.call_begin("Ground_80
 unsafe extern "C" fn s_Ground_801C3BB4() { let v = vv(); v.call_begin("Ground_801C3BB4");  v.call_end();     }
 unsafe extern "C" fn s_grZakoGenerator_801CAE04(a0: *mut melee_types::grZakoGenerator_SpawnDesc) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("grZakoGenerator_801CAE04"); v.arg_p(a0 as usize); v.call_end();    v.ret_ptr("grZakoGenerator_801CAE04") as _ }
 unsafe extern "C" fn s_HSD_Randi(a0: i32) -> i32 { let v = vv(); v.call_begin("HSD_Randi"); v.arg_i(a0 as i64); v.call_end();    v.ret_int("HSD_Randi", 32, 1) as _ }
-unsafe extern "C" fn s_grZakoGenerator_801CAEB0(a0: i32, a1: i32) { let v = vv(); v.call_begin("grZakoGenerator_801CAEB0"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.call_end();     }
-unsafe extern "C" fn s_Ground_801C5840() -> i32 { let v = vv(); v.call_begin("Ground_801C5840");  v.call_end();    v.ret_int("Ground_801C5840", 32, 1) as _ }
 unsafe extern "C" fn s_Ground_801C5940() -> i32 { let v = vv(); v.call_begin("Ground_801C5940");  v.call_end();    v.ret_int("Ground_801C5940", 32, 1) as _ }
+unsafe extern "C" fn s_Ground_801C5840() -> i32 { let v = vv(); v.call_begin("Ground_801C5840");  v.call_end();    v.ret_int("Ground_801C5840", 32, 1) as _ }
+unsafe extern "C" fn s_grZakoGenerator_801CAEB0(a0: i32, a1: i32) { let v = vv(); v.call_begin("grZakoGenerator_801CAEB0"); v.arg_i(a0 as i64); v.arg_i(a1 as i64); v.call_end();     }
 unsafe extern "C" fn s_grAnime_801C8138(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32) { let v = vv(); v.call_begin("grAnime_801C8138"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.arg_i(a2 as i64); v.call_end();     }
 unsafe extern "C" fn s_mpJointSetCb1(a0: i32, a1: *mut core::ffi::c_void, a2: Option<unsafe extern "C" fn(*mut core::ffi::c_void, i32, *mut melee_types::CollData, i32, u32, f32)>) { let v = vv(); v.call_begin("mpJointSetCb1"); v.arg_i(a0 as i64); v.arg_p(a1 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a2) }); v.call_end();     }
 unsafe extern "C" fn s_Ground_GetP1Fighter() -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("Ground_GetP1Fighter");  v.call_end();    v.ret_ptr("Ground_GetP1Fighter") as _ }
@@ -824,8 +838,8 @@ unsafe extern "C" fn s_HSD_LObjSetSpot(a0: *mut melee_types::HSD_LObj, a1: f32, 
 unsafe extern "C" fn s_HSD_LObjSetDistAttn(a0: *mut melee_types::HSD_LObj, a1: f32, a2: f32, a3: i32) { let v = vv(); v.call_begin("HSD_LObjSetDistAttn"); v.arg_p(a0 as usize); v.arg_f32(a1.to_bits()); v.arg_f32(a2.to_bits()); v.arg_i(a3 as i64); v.call_end();     }
 unsafe extern "C" fn s_Ground_GetStageGObj(a0: i32) -> *mut melee_types::HSD_GObj { let v = vv(); v.call_begin("Ground_GetStageGObj"); v.arg_i(a0 as i64); v.call_end();    v.ret_ptr("Ground_GetStageGObj") as _ }
 unsafe fn s_OSReport(f: *const i8, a: &[u64]) { let v = vv(); v.call_begin("OSReport"); v.arg_s(f as *const u8);  let fs = core::ffi::CStr::from_ptr(f).to_bytes(); let mut k = 0usize; let mut i = 0usize;  while i < fs.len() { if fs[i] == b'%' { i += 1; while i < fs.len() && !b"diuxXcspf%".contains(&fs[i]) { i += 1; } if i >= fs.len() { break; }   match fs[i] { b'd' | b'i' => { v.arg_i(a[k] as i32 as i64); k += 1; }    b'u' | b'x' | b'X' | b'c' => { v.arg_u(a[k] as u32 as u64); k += 1; }    b's' | b'p' => { v.arg_p(a[k] as usize); k += 1; }    b'f' => { v.arg_f64(a[k]); k += 1; } _ => {} } } i += 1; } v.call_end(); }
-unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();     }
-unsafe extern "C" fn s_grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: i32) { let v = vv(); v.call_begin("grDisplay_801C5DB0"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();     }
+unsafe extern "C" fn s_GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32) { let v = vv(); v.call_begin("GObj_SetupGXLink"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.arg_u(a3 as u64); v.call_end();     }
+unsafe extern "C" fn s_grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: isize) { let v = vv(); v.call_begin("grDisplay_801C5DB0"); v.arg_p(a0 as usize); v.arg_i(a1 as i64); v.call_end();     }
 unsafe extern "C" fn s_Mex_GrBind(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void { let v = vv(); v.call_begin("Mex_GrBind"); v.arg_p(a0 as usize); v.call_end(); a0 }
 unsafe extern "C" fn s_HSD_GObj_SetupProc(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc { let v = vv(); v.call_begin("HSD_GObj_SetupProc"); v.arg_p(a0 as usize); v.arg_p(unsafe { core::mem::transmute_copy::<_, usize>(&a1) }); v.arg_u(a2 as u64); v.call_end();    v.ret_ptr("HSD_GObj_SetupProc") as _ }
 pub fn glue() -> Glue {
@@ -844,6 +858,9 @@ pub fn glue() -> Glue {
             TypeInfo { name: "HSD_JObj", size: core::mem::size_of::<melee_types::HSD_JObj>(), align: core::mem::align_of::<melee_types::HSD_JObj>(), vis: vis_HSD_JObj },
             TypeInfo { name: "StageCameraInfo", size: core::mem::size_of::<melee_types::StageCameraInfo>(), align: core::mem::align_of::<melee_types::StageCameraInfo>(), vis: vis_StageCameraInfo },
             TypeInfo { name: "StageBlastZone", size: core::mem::size_of::<melee_types::StageBlastZone>(), align: core::mem::align_of::<melee_types::StageBlastZone>(), vis: vis_StageBlastZone },
+            TypeInfo { name: "struct~StageInfo_unk8C", size: core::mem::size_of::<melee_types::StageInfo_unk8C>(), align: core::mem::align_of::<melee_types::StageInfo_unk8C>(), vis: vis_struct_StageInfo_unk8C },
+            TypeInfo { name: "struct~Ground_x10_flags", size: core::mem::size_of::<melee_types::Ground_x10_flags>(), align: core::mem::align_of::<melee_types::Ground_x10_flags>(), vis: vis_struct_Ground_x10_flags },
+            TypeInfo { name: "struct~Ground_x11_flags", size: core::mem::size_of::<melee_types::Ground_x11_flags>(), align: core::mem::align_of::<melee_types::Ground_x11_flags>(), vis: vis_struct_Ground_x11_flags },
             TypeInfo { name: "ColorOverlay", size: core::mem::size_of::<melee_types::ColorOverlay>(), align: core::mem::align_of::<melee_types::ColorOverlay>(), vis: vis_ColorOverlay },
             TypeInfo { name: "HSD_Obj", size: core::mem::size_of::<melee_types::HSD_Obj>(), align: core::mem::align_of::<melee_types::HSD_Obj>(), vis: vis_HSD_Obj },
             TypeInfo { name: "GXColor", size: core::mem::size_of::<melee_types::GXColor>(), align: core::mem::align_of::<melee_types::GXColor>(), vis: vis_GXColor },
@@ -886,9 +903,9 @@ pub fn glue() -> Glue {
             ("Ground_801C3BB4", tu::ext::Ground_801C3BB4 as *const () as usize),
             ("grZakoGenerator_801CAE04", tu::ext::grZakoGenerator_801CAE04 as *const () as usize),
             ("HSD_Randi", tu::ext::HSD_Randi as *const () as usize),
-            ("grZakoGenerator_801CAEB0", tu::ext::grZakoGenerator_801CAEB0 as *const () as usize),
-            ("Ground_801C5840", tu::ext::Ground_801C5840 as *const () as usize),
             ("Ground_801C5940", tu::ext::Ground_801C5940 as *const () as usize),
+            ("Ground_801C5840", tu::ext::Ground_801C5840 as *const () as usize),
+            ("grZakoGenerator_801CAEB0", tu::ext::grZakoGenerator_801CAEB0 as *const () as usize),
             ("grAnime_801C8138", tu::ext::grAnime_801C8138 as *const () as usize),
             ("mpJointSetCb1", tu::ext::mpJointSetCb1 as *const () as usize),
             ("Ground_GetP1Fighter", tu::ext::Ground_GetP1Fighter as *const () as usize),
@@ -918,9 +935,9 @@ pub fn glue() -> Glue {
         tu::ext::H_Ground_801C3BB4 = Some(s_Ground_801C3BB4);
         tu::ext::H_grZakoGenerator_801CAE04 = Some(s_grZakoGenerator_801CAE04);
         tu::ext::H_HSD_Randi = Some(s_HSD_Randi);
-        tu::ext::H_grZakoGenerator_801CAEB0 = Some(s_grZakoGenerator_801CAEB0);
-        tu::ext::H_Ground_801C5840 = Some(s_Ground_801C5840);
         tu::ext::H_Ground_801C5940 = Some(s_Ground_801C5940);
+        tu::ext::H_Ground_801C5840 = Some(s_Ground_801C5840);
+        tu::ext::H_grZakoGenerator_801CAEB0 = Some(s_grZakoGenerator_801CAEB0);
         tu::ext::H_grAnime_801C8138 = Some(s_grAnime_801C8138);
         tu::ext::H_mpJointSetCb1 = Some(s_mpJointSetCb1);
         tu::ext::H_Ground_GetP1Fighter = Some(s_Ground_GetP1Fighter);

@@ -44,10 +44,10 @@ fn ftCo_DamageSong_matches_c() {
             d.x638 = rw(); d.x63C = rw(); d.x640 = rg(); d.x644 = rw();
             let fr = f();
             fr.dmg.x1830_percent = rw();
-            fr.player_id = (rnd() % 6) as _;
+            fr.player_idx = (rnd() % 6) as _;
             fr.grab_timer = rw();
             fr.set_x2222_b2((rnd() & 1) as u8);
-            unsafe { fr.x2070.anon_0.set_x2071_b0_3((rnd() & 15) as u8) };
+            unsafe { fr.x2070.x0.set_x2071_b0_3((rnd() & 15) as u8) };
             let g = go();
             let ret = match op {
                 0 => { m::ftCo_800C318C(g, rnd() & 1 != 0); 0 }

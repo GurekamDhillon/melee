@@ -72,7 +72,7 @@ pub unsafe extern "C" fn it_802F2D98(gobj: *mut Item_GObj, owner_gobj: *mut Figh
     (*item).atk_victim = owner_gobj;
     (*item).grab_victim = owner_gobj;
     ext::it_8026C220(gobj, owner_gobj);
-    (*item).xDD0_flag.anon_0.set_b1(0);
+    (*item).xDD0_flag.x0.set_b1(0);
     (*item).xBC_itemStateContainer = it_803F9490.as_mut_ptr();
     ext::it_80274F48(gobj, (*(*(*item).xC4_article_data).x10_modelDesc).x8_bone_attach_id, owner_gobj, ext::ftKb_SpecialNYs_80109238(owner_gobj));
     ext::Item_80268E5C(gobj, 0, 0);

@@ -15,7 +15,9 @@ def fnv(name):
     return h
 
 
-def sections_stub(fname, a0, table, ret=None, a1ty="void**"):
+def sections_stub(fname, a0, table, ret=None, a1ty=None):
+    if a1ty is None:  # upstream (363720e12) declares the symbols slot `void*`
+        a1ty = "void*"
     """A variadic `(a0, void* symbols, name, [dst, name]..., 0)` loader stub (lbArchive_LoadSections,
     lbArchive_80016DBC): traces a0, each destination slot and name hash, stores table[name] there.
     a0 = (C param decl, C trace stmt, Rust param type, Rust trace stmt); ret = (C type, C expr, Rust type, Rust expr).
@@ -267,7 +269,7 @@ SPECS["ifnametag"] = dict(
          dict(name="NameTag_RenderCallback", args=["pn:HSD_GObj", "v"]),
          dict(name="fn_802FCAC4", args=["p:HSD_GObj", "v"]),
          "un_802FCBA0", dict(name="has_nametag", args=["i:6"]),
-         dict(name="fn_802FCC44", args=[G0]), dict(name="inlineA1", args=["w"]),
+         dict(name="fn_802FCC44", args=[G0]), dict(name="getNametagColorFrame", args=["w"]),
          dict(name="NameTag_Create", args=["i:6"]), dict(name="un_802FD28C", args=["i:6"]),
          "un_802FD404", "un_802FD428", "un_802FD450", "un_802FD45C",
          dict(name="un_802FD468", pre_c="{ int q; for (q = 0; q < 6; q++) if (rnd() & 1) un_804A1EE0[q] = 0; }",
@@ -912,8 +914,6 @@ SPECS["ifstock"] = dict(
     skip_stubs=["memset"],
     setup_c="int k;\n    for (k = 0; k < 6; k++) P_HSD_GObj[k].user_data = &ifStock_804A1378.x204[rnd() % 6u];",
     setup_rs="for k in 0..6usize { g::P_HSD_GObj[k].user_data = &raw mut m::ifStock_804A1378.x204[(rnd() % 6) as usize] as *mut _; }",
-    setup_c="int k;\n    if (HDBG) printf(\"PAD %02X %02X %02X %02X rs=%08X\\n\", (u8)ifStock_804A1378.pad1F0[0], (u8)ifStock_804A1378.pad1F0[1], (u8)ifStock_804A1378.pad1F0[2], (u8)ifStock_804A1378.pad1F0[3], rs);\n    for (k = 0; k < 6; k++) P_HSD_GObj[k].user_data = &ifStock_804A1378.x204[rnd() % 6u];",
-    setup_rs="if HDBG { let pd = m::ifStock_804A1378.pad1F0; println!(\"PAD {:02X} {:02X} {:02X} {:02X} rs={:08X}\", pd[0] as u8, pd[1] as u8, pd[2] as u8, pd[3] as u8, RS); } for k in 0..6usize { g::P_HSD_GObj[k].user_data = &raw mut m::ifStock_804A1378.x204[(rnd() % 6) as usize] as *mut _; }",
     ret={"GObj_Create": ("pick_HSD_GObj(0)", "pick_HSD_GObj(0)"),
          "HSD_JObjLoadJoint": ("((NULLJ && (fv() & 1)) ? 0 : pick_HSD_JObj(0))",
                                "if super::NULLJ != 0 && fv() & 1 != 0 { null_mut() } else { pick_HSD_JObj(0) }"),

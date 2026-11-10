@@ -129,7 +129,7 @@ pub fn ftCo_800C08A0(g: G, arg1: G, arg2: *mut DynamicsDesc, arg3: i32) {
         ext::ftColl_80078384(fp(g), hurt, hp);
     }
     let f = fp(g);
-    ext::pl_8003EC30(f.player_id as i32, f.is_sub_fighter() as i32, arg3, v);
+    ext::pl_8003EC30(f.player_idx as i32, f.is_sub_fighter() as i32, arg3, v);
 }
 
 fn bury_stage(k: i32) -> bool {
@@ -153,7 +153,7 @@ pub fn ftCo_800C0A28(g: G, _arg1: *mut core::ffi::c_void, arg2: i32) -> bool {
     let f = fp(g);
     if arg2 == BuryType_Unk2 as i32 {
         if f.bury_timer_2 != 0 || f.motion_id as i32 == ftCo_MS_BarrelWait as i32 || f.x1A6A & 0x20 != 0
-            || f.x2224_b2() != 0
+            || f.stamina_dead() != 0
         {
             return false;
         }
@@ -209,7 +209,7 @@ pub fn ftCo_800C0B20(g: G) {
             ext::ftColl_80078384(fp(g), hurt, &mut hit);
         }
         let f = fp(g);
-        ext::pl_8003EC30(f.player_id as i32, f.is_sub_fighter() as i32, 1, v);
+        ext::pl_8003EC30(f.player_idx as i32, f.is_sub_fighter() as i32, 1, v);
     }
 }
 
@@ -242,7 +242,7 @@ pub fn ftCo_800C0D0C(g: G) {
     ext::ftCommon_8007E2FC(g);
     {
         let c = cd();
-        let pid = fp(g).player_id as i32;
+        let pid = fp(g).player_idx as i32;
         let hc = ext::Player_GetHandicap(pid);
         let tmp2 = fmadds(c.x5FC, c.x600 - hc as f32, c.x5F8);
         let p = ext::Player_80033BB8(pid);

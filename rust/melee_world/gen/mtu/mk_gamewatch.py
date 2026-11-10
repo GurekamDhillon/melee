@@ -133,7 +133,7 @@ static void setup(void)
     G.user_data = &ITEM; G.hsd_obj = &JT[0];
     NEWG.user_data = &NEWITEM; NEWG.hsd_obj = &JT[0];
     ATTRS[0] = &ATTR0[0];
-    ART.x4_specialAttributes = ATTRS;
+    ART.x4_specialAttributes = (union ItemSpecialAttributes*) ATTRS;
     ITEM.xC4_article_data = &ART; NEWITEM.xC4_article_data = &ART;
     ITEM.owner = pickg(); NEWITEM.owner = pickg();
     ITEM.xDD4_itemVar.gamewatchrescue.xDD8 = pickg();
@@ -266,7 +266,7 @@ unsafe fn setup() {{
     NEWG.user_data = &raw mut NEWITEM as *mut c_void;
     NEWG.hsd_obj = &raw mut JT[0] as *mut c_void;
     ATTRS[0] = &raw mut ATTR0[0] as *mut c_void;
-    ART.x4_specialAttributes = &raw mut ATTRS as *mut c_void;
+    ART.x4_specialAttributes = &raw mut ATTRS as *mut ItemSpecialAttributes;
     ITEM.xC4_article_data = &raw mut ART;
     NEWITEM.xC4_article_data = &raw mut ART;
     ITEM.owner = pickg();

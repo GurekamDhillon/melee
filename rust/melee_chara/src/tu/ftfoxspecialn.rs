@@ -96,11 +96,11 @@ pub mod ext {
                     None => { unsafe { melee_items::tu::it_26B1::it_8026BAE8(item as _, scale_mul as _); } return; },
                 }
             }
-    pub static mut IT_802ADDD0: Option<fn(*mut HSD_GObj, i32) > = None;
+    pub static mut IT_802ADDD0: Option<fn(*mut HSD_GObj, isize) > = None;
             #[allow(non_snake_case)]
             pub fn it_802ADDD0(item: *mut HSD_GObj, visibility: i32)  {
                 match unsafe { IT_802ADDD0 } {
-                    Some(f) => f(item, visibility),
+                    Some(f) => f(item, visibility as isize),
                     None => { unsafe { melee_items::tu::itfoxblaster::it_802ADDD0(item as _, visibility as _); } return; },
                 }
             }
@@ -181,8 +181,8 @@ fn ftGetTemplateKind(fp: &Fighter) -> i32 {
 
 /// `ftCheckThrowB0` (ft/inlines.h): test and clear throw_flags_b0.
 unsafe fn ftCheckThrowB0(fp: *mut Fighter) -> bool {
-    if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
+    if (*fp).x2210.x0.throw_flags_b0() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b0(0);
         true
     } else {
         false
@@ -274,7 +274,7 @@ pub fn ftFx_SpecialN_CheckBlasterAction(gobj: *mut HSD_GObj) -> bool {
                 || cur == ftCo_MS_ThrowHi as i32
                 || cur == ftCo_MS_ThrowLw as i32
             {
-                return (*fp).x2070.anon_0.x2071_b6() != 0;
+                return (*fp).x2070.x0.x2071_b6() != 0;
             }
         }
         true

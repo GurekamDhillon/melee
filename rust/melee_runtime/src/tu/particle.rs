@@ -26,7 +26,7 @@ pub static mut hsd_804D78EC: Option<unsafe extern "C" fn(*mut HSD_Generator)> = 
 pub static mut psCamera: *mut HSD_CObj = ::core::ptr::null::<HSD_CObj>()
     as *mut HSD_CObj;
 pub static mut hsd_804D78F4: *mut HSD_SList = ::core::ptr::null_mut();
-pub static mut hsd_804D08E8: [*mut HSD_JObj; 8] = [::core::ptr::null::<HSD_JObj>()
+pub static mut psPointJObj: [*mut HSD_JObj; 8] = [::core::ptr::null::<HSD_JObj>()
     as *mut HSD_JObj; 8];
 pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = [::core::ptr::null::<
     HSD_Particle,
@@ -262,14 +262,14 @@ pub unsafe extern "C" fn hsd_80398A08(mut unused: u32) {
     psCallback = ::core::ptr::null_mut::<
         Option<unsafe extern "C" fn(*mut HSD_Particle) -> ::core::ffi::c_int>,
     >();
-    hsd_804D08E8[0 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
-    hsd_804D08E8[1 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
-    hsd_804D08E8[2 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
-    hsd_804D08E8[3 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
-    hsd_804D08E8[4 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
-    hsd_804D08E8[5 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
-    hsd_804D08E8[6 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
-    hsd_804D08E8[7 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+    psPointJObj[0 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+    psPointJObj[1 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+    psPointJObj[2 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+    psPointJObj[3 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+    psPointJObj[4 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+    psPointJObj[5 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+    psPointJObj[6 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+    psPointJObj[7 as ::core::ffi::c_int as usize] = ::core::ptr::null_mut::<HSD_JObj>();
 }
 
 pub unsafe extern "C" fn psGenerateParticle0(
@@ -600,7 +600,7 @@ pub unsafe extern "C" fn psSetPointJObj(mut index: i32, mut jobj: *mut HSD_JObj)
         return;
     }
     if index != 0 as ::core::ffi::c_int {
-        let mut p: *mut *mut HSD_JObj = &raw mut hsd_804D08E8 as *mut *mut HSD_JObj;
+        let mut p: *mut *mut HSD_JObj = &raw mut psPointJObj as *mut *mut HSD_JObj;
         let mut old: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
         p = p.offset(index as isize);
         p = p.offset(-1);
@@ -616,9 +616,9 @@ pub unsafe extern "C" fn psSetPointJObj(mut index: i32, mut jobj: *mut HSD_JObj)
         let mut i: i32 = 0;
         i = 0 as ::core::ffi::c_int as i32;
         while i < 8 as ::core::ffi::c_int {
-            if hsd_804D08E8[i as usize] == jobj {
-                HSD_JObjUnref(hsd_804D08E8[i as usize]);
-                hsd_804D08E8[i as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+            if psPointJObj[i as usize] == jobj {
+                HSD_JObjUnref(psPointJObj[i as usize]);
+                psPointJObj[i as usize] = ::core::ptr::null_mut::<HSD_JObj>();
             }
             i += 1;
         }
@@ -629,7 +629,7 @@ pub unsafe extern "C" fn psClearPointJObj(mut particle: *mut ::core::ffi::c_void
     melee_core::ct!("psClearPointJObj");
     let mut flags: u32 = (*(particle as *mut HSD_Particle)).kind;
     if flags & 0x8000 as u32 != 0 {
-        let mut p: *mut *mut HSD_JObj = (&raw mut hsd_804D08E8 as *mut *mut HSD_JObj)
+        let mut p: *mut *mut HSD_JObj = (&raw mut psPointJObj as *mut *mut HSD_JObj)
             .offset((flags >> 12 as ::core::ffi::c_int & 7 as u32) as isize)
             as *mut *mut HSD_JObj;
         if !(*p).is_null() {
@@ -703,9 +703,9 @@ pub unsafe extern "C" fn hsd_8039D0A0(mut gen: *mut HSD_Generator) {
             if (*prt).kind & 0x8000 as u32 != 0 {
                 let mut jidx: i32 = ((*prt).kind >> 12 as ::core::ffi::c_int
                     & 7 as u32) as i32;
-                if !hsd_804D08E8[jidx as usize].is_null() {
-                    HSD_JObjUnref(hsd_804D08E8[jidx as usize]);
-                    hsd_804D08E8[jidx as usize] = ::core::ptr::null_mut::<HSD_JObj>();
+                if !psPointJObj[jidx as usize].is_null() {
+                    HSD_JObjUnref(psPointJObj[jidx as usize]);
+                    psPointJObj[jidx as usize] = ::core::ptr::null_mut::<HSD_JObj>();
                 }
             }
             HSD_ObjFree(
@@ -910,13 +910,13 @@ pub unsafe fn interpret(p: *mut HSD_Particle, prev: *mut HSD_Particle) -> *mut H
 
         if (&*p).kind & 0x8000 != 0 {
             let slot = (((&*p).kind & 0x7000) >> 12) as usize;
-            if hsd_804D08E8[slot].is_null() {
+            if psPointJObj[slot].is_null() {
                 if let Some(j) = ptr_option(ext::HSD_JObjAlloc()) {
                     psSetPointJObj(slot as i32 + 1, j);
                     ext::HSD_JObjUnref(j);
                 }
             }
-            if let Some(j) = ptr_option(hsd_804D08E8[slot]) {
+            if let Some(j) = ptr_option(psPointJObj[slot]) {
                 let m = { HSD_JObjSetupMatrix(j); (*j).mtx };
                 let pos = (&*p).pos;
                 { HSD_JObjAddTranslationX(j, pos.x-m[0][3]); HSD_JObjAddTranslationY(j, pos.y-m[1][3]); HSD_JObjAddTranslationZ(j, pos.z-m[2][3]); };
@@ -1229,7 +1229,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                     0xB7 => {
                         // TARGET_PC masks the slot index to 3 bits.
                         let slot = ((rd!() as u32 + (&*p).pJObjOfs as u32) & 7) as usize;
-                        if let Some(j) = ptr_option(hsd_804D08E8[slot]) {
+                        if let Some(j) = ptr_option(psPointJObj[slot]) {
                             let m = { HSD_JObjSetupMatrix(j); (*j).mtx };
                             let pp = pp!();
                             // 1602: vx*vx + vy*vy fused.
@@ -1260,7 +1260,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         let idx = rd!() as u32 + (&*p).pJObjOfs as u32;
                         let force = rdf!();
                         let range = rdf!();
-                        let j = hsd_804D08E8[(idx & 7) as usize];
+                        let j = psPointJObj[(idx & 7) as usize];
                         if applyForceJObj(p.cast(), j, force, range) != 0 {
                             pp!().life = 1;
                             break 'outer;

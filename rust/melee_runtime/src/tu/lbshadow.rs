@@ -445,7 +445,7 @@ pub unsafe fn lbShadow_8000F38C(arg0: i32) {
         if !(*fp).x20A4.shadow.is_null() {
             let mut added = false;
             ext::HSD_ShadowDeleteObject((*fp).x20A4.shadow, null_mut());
-            if (*fp).x21FC_flag.anon_0.b7() != 0 {
+            if (*fp).x21FC_flag.x0.b7() != 0 {
                 if (*fp).invisible() == 0
                     && (*fp).x221E_b5() == 0
                     && (!(*fp).x5AC.xC[1].is_null() || (*fp).kind > Ft_Kind_Sandbag)

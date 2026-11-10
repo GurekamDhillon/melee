@@ -35,6 +35,7 @@ pub mod ext {
         SceneLaunch_PlayerCpuKind(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerCpuLevel(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerHandicap(a0: i32) -> i32 = |_| -1;
+        SceneLaunch_PlayerRatio(a0: i32, a1: i32) -> f32 = |_, _| -1.0;
         SceneLaunch_PlayerSubColor(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerSpawnPos(a0: i32) -> i32 = |_| -1;
         SceneLaunch_PlayerNametag(a0: i32) -> i32 = |_| -1;
@@ -160,6 +161,15 @@ pub unsafe fn SceneLaunch_SeedPlayers(vs: *mut VsModeData, dummy_fallback: i32) 
         v = ext::SceneLaunch_PlayerHandicap(i as i32);
         if v >= 0 {
             players[i].handicap = v as i8;
+        }
+        // PlayerInitData.attack_ratio / defense_ratio (a replay's Game Start records the console's; -1 = keep)
+        let r = ext::SceneLaunch_PlayerRatio(i as i32, 0);
+        if r >= 0.0 {
+            players[i].attack_ratio = r;
+        }
+        let r = ext::SceneLaunch_PlayerRatio(i as i32, 1);
+        if r >= 0.0 {
+            players[i].defense_ratio = r;
         }
         // the costume shade (PlayerInitData.sub_color): the CSS gives a second fighter in the same costume shade 1;
         // Slippi's online match block sets it for a mirror match
@@ -290,6 +300,8 @@ pub unsafe fn SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: i32) -> i3
         }
         if ext::SceneLaunch_RulePause() >= 0 {
             (*gr).pause = ext::SceneLaunch_RulePause() as u8;
+            // the match rules' copy (gm_1601: disable_pausing = !rules->pause), as for Team Attack below
+            (*vs).start.rules.set_disable_pausing((ext::SceneLaunch_RulePause() == 0) as u32);
         }
         // Team Attack: the match rules take GameRules.friendly_fire when the match starts (gm_1601's
         // `set_friendly_fire((*rules).friendly_fire & 1)`); a replay's Game Start carries the console's bit

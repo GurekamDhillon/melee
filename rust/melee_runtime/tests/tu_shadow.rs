@@ -186,7 +186,7 @@ freg(cb_rel as usize); freg(cb_dest as usize); m::use_ext_data = true; melee_run
             for k in 0..n {
                 case(op, k);
                 setup_world();
-{ CI[0].release = Some(cb_rel); CI[0].destroy = Some(cb_dest); for q in 0..2usize { CO[q].parent.parent.class_info = &raw mut CI[0]; } for q in 0..3usize { SL[q].next = if q < 2 && fv() & 1 != 0 { &raw mut SL[q + 1] } else { null_mut() }; SL[q].data = (&raw mut P1[(fv() & 1) as usize]) as *mut c_void; } for q in 0..2usize { P0[q].camera = &raw mut CO[q]; P0[q].texture = &raw mut TO[q]; TO[q].imagedesc = &raw mut IM[q]; P0[q].objects = if fv() & 1 != 0 { &raw mut SL[(fv() % 3) as usize] } else { null_mut() }; IM[q].image_ptr = if fv() & 1 != 0 { (&raw mut BUF) as *mut c_void } else { null_mut() }; IM[q].width = (fv() % 300) as u16; IM[q].height = (fv() % 300) as u16; } }
+{ CI[0].release = Some(cb_rel); CI[0].destroy = Some(cb_dest); for q in 0..2usize { CO[q].parent.parent.class_info = &raw mut CI[0]; } for q in 0..3usize { SL[q].next = if q < 2 && fv() & 1 != 0 { &raw mut SL[q + 1] } else { null_mut() }; SL[q].data = (&raw mut P1[(fv() & 1) as usize]) as *mut c_void; } for q in 0..2usize { P0[q].camera = &raw mut CO[q]; P0[q].texture = &raw mut TO[q]; TO[q].imagedesc = &raw mut IM[q]; P0[q].objects = if fv() & 1 != 0 { &raw mut SL[(fv() % 3) as usize] } else { null_mut() }; IM[q].image_ptr = if fv() & 1 != 0 { (&raw mut BUF) as *mut _ } else { null_mut() }; IM[q].width = (fv() % 300) as u16; IM[q].height = (fv() % 300) as u16; } }
                 let mut ret = 0u32;
                 let aborted = run_case(|| unsafe { match op {
                     0 => { 

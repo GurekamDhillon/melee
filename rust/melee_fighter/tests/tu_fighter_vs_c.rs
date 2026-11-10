@@ -93,7 +93,7 @@ unsafe fn world() {
         (*FT)[i].gobj = &raw mut (*GO)[i];
         (*FT)[i].ft_data = &raw mut (*FDATA)[i];
         (*FT)[i].grab_cb = Some(cbev1); (*FT)[i].grabbed_cb = Some(cbev3);
-        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].x200C &= 3; (*FT)[i].x2010 &= 3; (*FT)[i].player_id %= 4; (*FT)[i].x618_player_id %= 4; (*FT)[i].x61A_controller_index %= 4;
+        (*FT)[i].kind = ((*FT)[i].kind as u32 % 27) as _; (*FT)[i].x200C &= 3; (*FT)[i].x2010 &= 3; (*FT)[i].player_idx %= 4; (*FT)[i].pad_port %= 4; (*FT)[i].sub_color %= 4;
         { let mut pk = i * 24; (*FDATA)[i].x0 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].ext_attr = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x8 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].xC = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x10 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x14 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x18 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x1C = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x20 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x24 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x28 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x2C = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x30 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x34 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x38 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x3C = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x40 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x44 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x48_items = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x4C_sfx = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x50 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x54 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x58 = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; (*FDATA)[i].x5C = (*PADB)[{ pk += 1; pk - 1 }].as_mut_ptr() as *mut _; }
     }
     for i in 0..NJ {
@@ -120,7 +120,7 @@ unsafe fn world() {
             fd::ftData_OnUserDataRemove[i] = None; fd::ftData_UnkMotionStates3[i] = None;
         }
     }
-    for i in 0..4 { let c = &mut (*CDATA).x6DC_colorsByPlayer[i]; c.r = fv() as u8; c.g = fv() as u8; c.b = fv() as u8; c.a = fv() as u8; }
+    for i in 0..4 { let c = &mut (*CDATA).sub_colors[i]; c.r = fv() as u8; c.g = fv() as u8; c.b = fv() as u8; c.a = fv() as u8; }
     (*CDATA).x7E4_scaleZ = rg();
     fill_plAllocInfo(&mut *PAI);
     (*PAI).internal_id = ((*PAI).internal_id as u32 % 27) as _; (*PAI).slot %= 4;

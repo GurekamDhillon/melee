@@ -98,7 +98,7 @@ pub unsafe fn ftCo_8009F4A4() {
 }
 
 /// `ftCo_8009F54C`: the GObj render hook.
-pub unsafe extern "C" fn ftCo_8009F54C(gobj: *mut HSD_GObj, _code: i32) {
+pub unsafe extern "C" fn ftCo_8009F54C(gobj: *mut HSD_GObj, _code: isize) {
     melee_core::ct!("ftCo_8009F54C");
     ext::HSD_LObj_803668EC((*gobj).hsd_obj as *mut HSD_LObj);
     ext::HSD_LObjSetupInit(ext::HSD_CObjGetCurrent());

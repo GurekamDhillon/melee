@@ -190,7 +190,7 @@ fn cm_matches_c() {
                     20 => { cm::Camera_UpdateQuakes(&raw mut BND[0]); }
                     21 => { cm::cm_script_update(); }
                     22 => { cm::fn_8002F360(&raw mut GO[0]); }
-                    23 => { cm::fn_800301D0(&raw mut GO[0], fv() as i32); }
+                    23 => { cm::fn_800301D0(&raw mut GO[0], fv() as isize); }
                     24 => { cm::update_bounds(&raw mut BND[0], &raw mut BND[1]); }
                     25 => { { let ts = (if rnd() & 1 != 0 { &raw mut cm::game_camera.transform } else { &raw mut cm::game_camera.transform_copy }); cm::update_transform(&raw mut BND[0], ts); } }
                     26 => { { let x = rw(); let y = rw(); cm::Camera_SetQuakeOffset(x, y); } }

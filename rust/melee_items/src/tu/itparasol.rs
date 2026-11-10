@@ -148,7 +148,7 @@ pub unsafe extern "C" fn it_8028B08C(_item_gobj: *mut Item_GObj, statenum: i32) 
 pub unsafe extern "C" fn itParasol_Logic13_Spawned(item_gobj: *mut Item_GObj) {
     melee_core::ct!("itParasol_Logic13_Spawned");
     let item = GET_ITEM(item_gobj);
-    (*item).xDCE_flag.anon_0.set_b7(0);
+    (*item).xDCE_flag.x0.set_b7(0);
     it_8028B17C(item_gobj);
 }
 

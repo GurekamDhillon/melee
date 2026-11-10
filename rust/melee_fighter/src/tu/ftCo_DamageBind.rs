@@ -53,7 +53,7 @@ pub fn ftCo_800C44CC(g: G) -> bool {
     melee_core::ct!("ftCo_800C44CC");
     let f = fp(g);
     if f.dmg.x1860_element == HitElement_Disable as u32 && f.is_sandbag() == 0 {
-        match unsafe { f.x2070.anon_0.x2071_b0_3() } {
+        match unsafe { f.x2070.x0.x2071_b0_3() } {
             5 | 9 | 11 | 12 => return false,
             _ => {
                 ftCo_800C4550(g);
@@ -68,8 +68,8 @@ pub fn ftCo_800C44CC(g: G) -> bool {
 pub fn commonCall(f: &mut Fighter) {
     melee_core::ct!("commonCall");
     let c = cd();
-    let hcap = ext::Player_GetHandicap(f.player_id as i32) as f32;
-    let n = (ext::Player_80033BB8(f.player_id as i32) + 1) as f32;
+    let hcap = ext::Player_GetHandicap(f.player_idx as i32) as f32;
+    let n = (ext::Player_80033BB8(f.player_idx as i32) + 1) as f32;
     let inner = fmadds(c.x65C, c.x660 - hcap, c.x658);
     let inner = fmadds(c.x664, c.pressed_inputs - n, inner);
     let timer = fmadds(f.dmg.x1830_percent, c.released_inputs, inner);

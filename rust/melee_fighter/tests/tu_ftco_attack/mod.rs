@@ -72,10 +72,10 @@ pub fn af_fill() {
     fr.unk_msid = 43 + (rnd() % 4) as i32;
     fr.cmd_vars[0] = rnd() & 1;
     fr.mv.co.attack100.x0 = (rnd() & 1) as i32; fr.mv.co.attack100.x4 = (rnd() & 1) as i32;
-    fr.anon_2210.throw_flags = (rnd() & 0xFF) << 8;
+    fr.x2210.throw_flags = (rnd() & 0xFF) << 8;
     unsafe {
-        fr.anon_2210.anon_0.set_throw_flags_b3((rnd() & 1) as u8);
-        fr.anon_2210.anon_0.set_throw_flags_b0((rnd() & 1) as u8);
+        fr.x2210.x0.set_throw_flags_b3((rnd() & 1) as u8);
+        fr.x2210.x0.set_throw_flags_b0((rnd() & 1) as u8);
     }
     fr.x1A54 = (rnd() % 6) as i32; fr.co_attrs.rapid_jab_window = (rnd() % 6) as i32;
     fr.co_attrs.jab_2_input_window = rw(); fr.co_attrs.jab_3_input_window = rw();
@@ -85,7 +85,7 @@ pub fn af_fill() {
     fr.cur_anim_frame = rg(); fr.frame_speed_mul = rg();
     fr.facing_dir = if rnd() % 3 == 0 { rg() } else if rnd() & 1 != 0 { 1.0 } else { -1.0 };
     fr.co_attrs.ground_friction = rw();
-    fr.player_id = (rnd() % 4) as u8; fr.set_is_sub_fighter((rnd() & 1) as u8);
+    fr.player_idx = (rnd() % 4) as u8; fr.set_is_sub_fighter((rnd() & 1) as u8);
     fr.x18 = if rnd() & 1 != 0 { 200 } else { 300 };
     unsafe {
         fr.x1C_actionStateList = MS1; fr.x20_actionStateList = MS2;
@@ -102,8 +102,8 @@ pub fn af_hash() -> u32 {
     h.m(b(fr.hitlag_mul)); h.m(fr.unk_msid as u32); h.m(fr.cmd_vars[0]);
     unsafe {
         h.m(fr.mv.co.attack100.x0 as u32); h.m(fr.mv.co.attack100.x4 as u32);
-        h.m(fr.anon_2210.throw_flags >> 8);
-        let t = &fr.anon_2210.anon_0;
+        h.m(fr.x2210.throw_flags >> 8);
+        let t = &fr.x2210.x0;
         h.m(t.throw_flags_b0() as u32); h.m(t.throw_flags_b1() as u32); h.m(t.throw_flags_b2() as u32); h.m(t.throw_flags_b3() as u32);
         h.m(t.throw_flags_b4() as u32); h.m(t.throw_flags_b5() as u32); h.m(t.throw_flags_b6() as u32); h.m(t.throw_flags_b7() as u32);
     }

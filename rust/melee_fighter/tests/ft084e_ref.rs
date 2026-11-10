@@ -80,7 +80,7 @@ fn ft084e_matches_c() {
             fp.active_timer.lstick.y = r.rnd() as u8;
             fp.facing_dir = r.rf();
             fp.facing_dir1 = r.rf();
-            unsafe { fp.anon_594.anon_0.set_x594_b0((r.rnd() & 1) as u8) };
+            unsafe { fp.x594.x0.set_x594_b0((r.rnd() & 1) as u8) };
             fp.x6A4_transNOffset.y = r.rf();
             fp.x6A4_transNOffset.z = r.rf();
             fp.lstick_angle = r.rf();

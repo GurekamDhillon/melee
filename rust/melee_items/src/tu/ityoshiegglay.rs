@@ -77,7 +77,7 @@ pub unsafe extern "C" fn it_802F2F34(gobj: *mut HSD_GObj, attr: *mut itYoshiEggL
     spawn.vel = (*attr).vel;
     spawn.x0_parent_gobj = null_mut();
     spawn.x4_parent_gobj2 = null_mut();
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     let item_gobj = ext::Item_80268B18(&mut spawn);
     if !item_gobj.is_null() {
@@ -94,7 +94,7 @@ pub unsafe extern "C" fn it_802F3020(item_gobj: *mut HSD_GObj) {
     let item = GET_ITEM(item_gobj);
     ext::it_8026B3A8(item_gobj);
     ext::Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
-    (*item).xDCE_flag.anon_0.set_b7(0);
+    (*item).xDCE_flag.x0.set_b7(0);
 }
 
 pub unsafe extern "C" fn it_27CF_UnkMotion1_Anim(gobj: *mut HSD_GObj) -> bool {

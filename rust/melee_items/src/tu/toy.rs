@@ -77,8 +77,8 @@ pub mod ext {
     fn DevText_Show(a0: *mut HSD_GObj, a1: *mut DevText) => unsafe { melee_world::tu::textdraw::DevText_Show(a0, a1) };
     fn DevText_StoreColorIndex(a0: *mut DevText, a1: u8) -> u8 => unsafe { melee_world::tu::textlib::DevText_StoreColorIndex(a0, a1) };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32);
     fn GXBegin(a0: u32, a1: u32, a2: u16);
     fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8);
     fn GXLoadPosMtxImm(a0: *mut c_void, a1: u32);
@@ -115,9 +115,9 @@ pub mod ext {
     fn HSD_GObjProc_RemoveProc(a0: *mut HSD_GObjProc);
     fn HSD_GObj_80390CD4(a0: *mut HSD_GObj);
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
-    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
-    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
+    fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize);
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) };
+    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1 as i32) };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
     fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjAddChild(a0, a1) };
@@ -144,7 +144,7 @@ pub mod ext {
     fn HSD_Randf() -> f32 => unsafe { melee_runtime::tu::random::global::HSD_Randf() };
     fn HSD_Randi(a0: i32) -> i32 => unsafe { melee_runtime::tu::random::global::HSD_Randi(a0) };
     fn HSD_SObjLib_803A477C(a0: *mut HSD_GObj, a1: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj => unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A477C(a0, a1, a2, a3, a4, a5) };
-    fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0, a1) };
+    fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0, a1 as i32) };
     fn HSD_SObjLib_803A55DC(a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32) => unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A55DC(a0, a1, a2, a3) };
     fn HSD_SetEraseColor(a0: u8, a1: u8, a2: u8, a3: u8);
     fn HSD_SetupRenderMode(a0: u32);
@@ -198,11 +198,11 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_803910D8(a0, a1) }
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_LObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_803910D8(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_LObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) { super::HSD_SObjLib_803A49E0(a0, a1) }
+        pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: isize) { super::HSD_SObjLib_803A49E0(a0, a1) }
     }
     /// `OSReport` (variadic in C): the text is formatted by the caller. Output only; unset = discard.
     pub static mut OSReport_hook: Option<fn(&str)> = None;
@@ -1472,7 +1472,7 @@ pub unsafe fn Toy_803067BC(arg0: i32, arg1: i32) {
 // Scene render callbacks and anim helpers
 // ---------------------------------------------------------------------------------------------
 
-pub unsafe extern "C" fn Toy_803068E0(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn Toy_803068E0(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("Toy_803068E0");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         ext::HSD_GObj_80390ED0(gobj, 7);
@@ -1481,12 +1481,12 @@ pub unsafe extern "C" fn Toy_803068E0(gobj: *mut HSD_GObj, _unused: i32) {
     }
 }
 
-pub unsafe extern "C" fn Toy_80306930(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn Toy_80306930(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("Toy_80306930");
     ext::HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
 }
 
-pub unsafe extern "C" fn Toy_80306954(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn Toy_80306954(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("Toy_80306954");
     let state = Toy_sbss_804D6ED4;
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
@@ -1504,7 +1504,7 @@ pub unsafe extern "C" fn Toy_80306954(gobj: *mut HSD_GObj, _unused: i32) {
     }
 }
 
-pub unsafe extern "C" fn _Toy_80306A0C(arg0: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn _Toy_80306A0C(arg0: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("_Toy_80306A0C");
     let fog = (*arg0).hsd_obj as *mut HSD_Fog;
     if _Toy_sbss_804D6E54 == 0 {
@@ -1794,16 +1794,16 @@ unsafe fn Toy_AddPanelAnims(
 }
 
 /// `Toy_RenderPanelGuarded` (TARGET_PC): the Atlas retail mask hides the Gallery panel.
-pub unsafe extern "C" fn Toy_RenderPanelGuarded(gobj: *mut HSD_GObj, pass: i32) {
+pub unsafe extern "C" fn Toy_RenderPanelGuarded(gobj: *mut HSD_GObj, pass: isize) {
     melee_core::ct!("Toy_RenderPanelGuarded");
     if ext::tyList_PcActive() == 0 && ext::Ui_RetailHidden(AT_RE_TOY_PANEL) != 0 {
         return;
     }
-    ext::HSD_GObj_JObjCallback(gobj, pass);
+    ext::HSD_GObj_JObjCallback(gobj, pass as isize);
 }
 
 /// `Toy_RenderInfoGuarded` (TARGET_PC): the Atlas retail mask hides the Gallery info frame.
-pub unsafe extern "C" fn Toy_RenderInfoGuarded(gobj: *mut HSD_GObj, pass: i32) {
+pub unsafe extern "C" fn Toy_RenderInfoGuarded(gobj: *mut HSD_GObj, pass: isize) {
     melee_core::ct!("Toy_RenderInfoGuarded");
     if ext::tyList_PcActive() == 0 && ext::Ui_RetailHidden(AT_RE_TOY_INFO) != 0 {
         return;
@@ -4651,7 +4651,7 @@ pub unsafe fn Toy_Scene_OnFrame() {
 }
 
 /// Axis gizmo render callback (red/green/blue lines through the camera interest).
-pub unsafe extern "C" fn _Toy_80312050(_gobj: *mut HSD_GObj, _code: i32) {
+pub unsafe extern "C" fn _Toy_80312050(_gobj: *mut HSD_GObj, _code: isize) {
     melee_core::ct!("_Toy_80312050");
     let data = _Toy_sbss_804D6E6C;
     let cobj = ext::HSD_CObjGetCurrent();

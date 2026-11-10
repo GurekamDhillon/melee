@@ -71,8 +71,8 @@ fn ftcommon_8007efc8_smoke() {
     fd.x50 = x50.as_mut_ptr() as *mut _;
     dst.ft_data = &mut *fd;
     dst.x34_scale.y = 1.0;
-    src.player_id = 2;
-    dst.player_id = 2;
+    src.player_idx = 2;
+    dst.player_idx = 2;
     src.set_is_sub_fighter(0);
     dst.set_is_sub_fighter(1);
     src.cur_pos = Vec3 { x: 12.5, y: -3.0, z: 0.0 };

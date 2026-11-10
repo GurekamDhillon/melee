@@ -52,12 +52,12 @@ unsafe fn body() {
     t::ext::FTKP_SPECIALS_80132E30 = Some(|_| log("80132E30".into()));
 
     // Enter: the grab callbacks are armed, state 347 / 353.
-    f.anon_2210.throw_flags = 7;
+    f.x2210.throw_flags = 7;
     f.cmd_vars[0] = 5;
     t::ftKp_SpecialS_Enter(gp);
     assert_eq!(take_log(), "ms 347 0 0");
     assert!(f.grab_cb.is_some() && f.grabbed_cb.is_some() && f.x2194.is_none());
-    assert_eq!((f.x1A68, f.anon_2210.throw_flags, f.cmd_vars[0]), (8, 0, 5 * 0));
+    assert_eq!((f.x1A68, f.x2210.throw_flags, f.cmd_vars[0]), (8, 0, 5 * 0));
     f.mv.kp.specials.b_held = 1;
     t::ftKp_SpecialAirS_Enter(gp);
     assert_eq!(take_log(), "ms 353 0 0");
@@ -159,7 +159,7 @@ unsafe fn body() {
 
     // End anims: B4 pulse flips the facing and marks xC; End-B follows the victim position.
     f.victim_gobj = core::ptr::null_mut();
-    f.anon_2210.anon_0.set_throw_flags_b4(1);
+    f.x2210.x0.set_throw_flags_b4(1);
     f.facing_dir = 1.0;
     t::ftKp_SpecialSEndF_Anim(gp);
     assert_eq!((f.facing_dir, f.mv.kp.specials.xC), (-1.0, 1));

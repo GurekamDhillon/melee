@@ -245,7 +245,7 @@ fn init_slot(slot: usize) {
     s.xCB0 = rnd() as i32;
     s.xCB4 = rnd() as i32;
     s.xCB8 = (rnd() % 7) as i32;
-    s.xCBC.x3 = (0x30 + rnd() % 16) as u8;
+    s.xCBC.x0.x2073 = (0x30 + rnd() % 16) as u8;
     s.xCC0.set_x10_b0((rnd() & 1) as u8);
     s.xCDC = rf();
     s.xCE0 = rf();
@@ -275,10 +275,10 @@ fn init_slot(slot: usize) {
     x.xD84 = rf();
     x.xD88 = rf();
     unsafe {
-        x.xDD0.anon_0.set_bit0((rnd() & 1) as u8);
-        x.xDD0.anon_0.set_bit5((rnd() & 1) as u8);
-        x.xDD1.anon_0.set_bit4((rnd() & 1) as u8);
-        x.xDD1.anon_0.set_bit6((rnd() & 1) as u8);
+        x.xDD0.x0.set_bit0((rnd() & 1) as u8);
+        x.xDD0.x0.set_bit5((rnd() & 1) as u8);
+        x.xDD1.x0.set_bit4((rnd() & 1) as u8);
+        x.xDD1.x0.set_bit6((rnd() & 1) as u8);
     }
     let a = &mut x.x0_staleMoveTable.total_attack_count_struct;
     a.attacks.total = z();
@@ -288,7 +288,7 @@ fn init_slot(slot: usize) {
     for i in 30..70 {
         a.attacks.by_attack_counts[i] = rnd();
     }
-    a.anon_358.x358_hits.total = rnd();
+    a.x358.x358_hits.total = rnd();
     let s = &mut x.x0_staleMoveTable;
     for i in 0..39 {
         s.x674[i] = rnd() % 4;
@@ -348,10 +348,10 @@ fn hash_slot(slot: i32) {
         hh(v);
     }
     unsafe {
-        hh(x.xDD0.anon_0.bit0() as u32);
-        hh(x.xDD0.anon_0.bit5() as u32);
-        hh(x.xDD1.anon_0.bit4() as u32);
-        hh(x.xDD1.anon_0.bit6() as u32);
+        hh(x.xDD0.x0.bit0() as u32);
+        hh(x.xDD0.x0.bit5() as u32);
+        hh(x.xDD1.x0.bit4() as u32);
+        hh(x.xDD1.x0.bit6() as u32);
     }
     for i in 0..39 {
         hh(s.x674[i]);

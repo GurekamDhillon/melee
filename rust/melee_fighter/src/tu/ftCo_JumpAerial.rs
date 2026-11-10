@@ -64,8 +64,8 @@ pub mod ext {
         ftCommon_CalcSelfAccel_DriftFrom(fp: &mut Fighter, v: f32) = |a0, a1| crate::tu::ftcommon::ftCommon_CalcSelfAccel_DriftFrom(a0, a1);
         ftCommon_CalcSelfAccel_Drift(fp: &mut Fighter) = |a0| crate::tu::ftcommon::ftCommon_CalcSelfAccel_Drift_fp(a0);
         ft_800851D0(g: G) = crate::ft084e::ft_800851d0;
-        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
-        ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
+        ft_800835B0(g: G, a: fn(G, isize) -> bool, b: fn(G)) = |g: G, a: fn(G, isize) -> bool, b: fn(G)| { unsafe { crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
+        ftCo_80096CC8(g: G, line: isize) -> bool = |g: G, line: isize| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
         ft_80082B1C(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
@@ -86,7 +86,7 @@ impl ji::JObjDirty for Dirty {
 #[inline(always)]
 pub(crate) fn tap_jump_ok(f: &Fighter) -> bool {
     melee_core::ct!("tap_jump_ok");
-    ext::FighterControls_TapJumpOff(f.player_id as i32) == 0
+    ext::FighterControls_TapJumpOff(f.player_idx as i32) == 0
 }
 #[inline(always)]
 pub(crate) fn caps_max_jumps(f: &Fighter) -> i32 {
@@ -154,7 +154,7 @@ pub fn ftCo_JumpAerial_CheckInput(g: G, arg1: bool) -> bool {
             let f = fp(g);
             let x = f.input.lstick[0].x * f.co_attrs.air_jump_h_multiplier;
             let y = f.co_attrs.jump_v_initial_velocity
-                * ext::ScriptGame_ModJump(f.player_id as i32, 6, f.co_attrs.air_jump_v_multiplier);
+                * ext::ScriptGame_ModJump(f.player_idx as i32, 6, f.co_attrs.air_jump_v_multiplier);
             let mut v = Vec3 { x, y, z: 0.0 };
             ext::ft_800D2E7C(g, &mut v);
             return true;
@@ -239,7 +239,7 @@ pub fn ftCo_JumpAerial_Enter_Basic(g: G) {
     let msid = fwd_msid(f);
     let x = f.input.lstick[0].x * f.co_attrs.air_jump_h_multiplier;
     let y = f.co_attrs.jump_v_initial_velocity
-        * ext::ScriptGame_ModJump(f.player_id as i32, 6, f.co_attrs.air_jump_v_multiplier);
+        * ext::ScriptGame_ModJump(f.player_idx as i32, 6, f.co_attrs.air_jump_v_multiplier);
     let v = Vec3 { x, y, z: 0.0 };
     ftCo_800CBAC4(g, msid, &v, true);
 }
@@ -358,7 +358,7 @@ pub fn ftNs_JumpAerial_Phys_Cb(g: G) {
     }
     ext::ft_800851D0(g);
     let f = fp(g);
-    f.self_vel.y = ext::ScriptGame_ModValue(f.player_id as i32, 6, f.self_vel.y);
+    f.self_vel.y = ext::ScriptGame_ModValue(f.player_idx as i32, 6, f.self_vel.y);
 }
 pub unsafe extern "C" fn ftNs_JumpAerial_Phys_Cb_c(g: G) {
     melee_core::ct!("ftNs_JumpAerial_Phys_Cb_c");
@@ -370,7 +370,7 @@ pub fn ftCo_JumpAerial_Phys_Cb(g: G) {
     ext::ftCommon_CalcSelfAccel_Drift(fp(g));
     ext::ft_800851D0(g);
     let f = fp(g);
-    f.self_vel.y = ext::ScriptGame_ModValue(f.player_id as i32, 6, f.self_vel.y);
+    f.self_vel.y = ext::ScriptGame_ModValue(f.player_idx as i32, 6, f.self_vel.y);
 }
 pub unsafe extern "C" fn ftCo_JumpAerial_Phys_Cb_c(g: G) {
     melee_core::ct!("ftCo_JumpAerial_Phys_Cb_c");

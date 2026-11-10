@@ -3,7 +3,6 @@
 use crate::mtu_harness::*;
 use super::m;
 use melee_types::*;
-use super::m::{grFlatzone_YakumonoParam};
 use super::m::*;
 use core::ffi::c_void;
 
@@ -34,7 +33,7 @@ pub fn install() {
         Stage_GetBlastZoneTopOffset = Some(|| { t(1020); rg() });
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1021); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grAnime_801C83D0 = Some(|a0, a1, a2| { t(1022); t(pi(a0)); t(a1 as u32); t(a2 as u32); fv() as _ });
-        grDisplay_801C5DB0 = Some(|a0, a1| { t(1023); t(pi(a0)); t(a1 as u32); });
+        grDisplay_801C5DB0 = Some(|a0, a1| { t(1023); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
         grDynamicAttr_801CA0F8 = Some(|a0, a1, a2, a3, a4| { t(1024); t(a0 as u32); t(pi(a1)); t(a2 as u32); t(a3.to_bits()); t(a4 as u32); if fv() & 1 != 0 { &raw mut super::DYN[0] } else { core::ptr::null_mut() } });
         grDynamicAttr_801CA1C0 = Some(|a0| { t(1025); t(pi(a0)); });
         grMaterial_801C8858 = Some(|a0, a1| { t(1026); t(pi(a0)); t(a1 as u32); });
@@ -106,6 +105,7 @@ pub fn freg_all() {
 }
 
 pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
+    unsafe {
     p.classifier = fv() as _;
     p.p_link = fv() as _;
     p.gx_link = fv() as _;
@@ -114,9 +114,11 @@ pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
     p.obj_kind = fv() as _;
     p.user_data_kind = fv() as _;
     p.gxlink_prios = fv64() as _;
+    }
 }
 pub fn hash_HSD_GObj(p: &HSD_GObj) {
-    unsafe { if HDBG { println!("B HSD_GObj"); } }
+    unsafe {
+    if HDBG { println!("B HSD_GObj"); }
     hm(p.classifier as u32);
     hm(p.p_link as u32);
     hm(p.gx_link as u32);
@@ -135,9 +137,11 @@ pub fn hash_HSD_GObj(p: &HSD_GObj) {
     hm(pi(p.user_data));
     hm(fi(p.user_data_remove_func));
     hm(pi(p.x34_unk));
+    }
 }
 
 pub fn fill_Ground(p: &mut Ground) {
+    unsafe {
     p.x0 = fv() as _;
     p.x10_flags.set_b0(fv() as _);
     p.x10_flags.set_b1(fv() as _);
@@ -201,9 +205,11 @@ pub fn fill_Ground(p: &mut Ground) {
     p.color_overlay.set_x7C_flag8(fv() as _);
     p.xC0 = rg();
     for i0 in 0..400 { unsafe { *(&mut p.u as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    }
 }
 pub fn hash_Ground(p: &Ground) {
-    unsafe { if HDBG { println!("B Ground"); } }
+    unsafe {
+    if HDBG { println!("B Ground"); }
     hm(p.x0 as u32);
     hm(pi(p.gobj));
     hm(fi(p.x8_callback));
@@ -275,9 +281,11 @@ pub fn hash_Ground(p: &Ground) {
     hm(p.color_overlay.x7C_flag8() as u32);
     hm(p.xC0.to_bits());
     for i0 in 0..400 { unsafe { hm(*(&p.u as *const _ as *const u8).add(i0) as u32); } }
+    }
 }
 
 pub fn fill_StageInfo(p: &mut StageInfo) {
+    unsafe {
     p.cam_info.cam_bounds.left = rg();
     p.cam_info.cam_bounds.right = rg();
     p.cam_info.cam_bounds.top = rg();
@@ -382,9 +390,11 @@ pub fn fill_StageInfo(p: &mut StageInfo) {
     for i0 in 0..4 {
     p.x744_pad[i0] = fv() as _;
     }
+    }
 }
 pub fn hash_StageInfo(p: &StageInfo) {
-    unsafe { if HDBG { println!("B StageInfo"); } }
+    unsafe {
+    if HDBG { println!("B StageInfo"); }
     hm(p.cam_info.cam_bounds.left.to_bits());
     hm(p.cam_info.cam_bounds.right.to_bits());
     hm(p.cam_info.cam_bounds.top.to_bits());
@@ -509,27 +519,35 @@ pub fn hash_StageInfo(p: &StageInfo) {
     for i0 in 0..4 {
     hm(p.x744_pad[i0] as u32);
     }
+    }
 }
 
 pub fn fill_StageCallbacks(p: &mut StageCallbacks) {
-    for j0 in 0..4 { unsafe { *(base(p) as *mut u8).add(32 + j0) = rnd() as u8; } }
+    unsafe {
+    for i0 in 0..4 { unsafe { *(&mut p.x10 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
+    }
 }
 pub fn hash_StageCallbacks(p: &StageCallbacks) {
-    unsafe { if HDBG { println!("B StageCallbacks"); } }
+    unsafe {
+    if HDBG { println!("B StageCallbacks"); }
     hm(fi(p.on_init));
     hm(fi(p.callback1));
     hm(fi(p.gobj_proc));
     hm(fi(p.callback3));
-    for j0 in 0..4 { unsafe { hm(*base(p).add(32 + j0) as u32); } }
+    for i0 in 0..4 { unsafe { hm(*(&p.x10 as *const _ as *const u8).add(i0) as u32); } }
+    }
 }
 
 pub fn fill_StageData(p: &mut StageData) {
+    unsafe {
     p.grkind = fv() as _;
     p.flags2 = fv() as _;
     p.joint_count = fv() as _;
+    }
 }
 pub fn hash_StageData(p: &StageData) {
-    unsafe { if HDBG { println!("B StageData"); } }
+    unsafe {
+    if HDBG { println!("B StageData"); }
     hm(p.grkind as u32);
     hm(pi(p.callbacks));
     hm(pi(p.data1));
@@ -543,9 +561,11 @@ pub fn hash_StageData(p: &StageData) {
     hm(p.flags2 as u32);
     hm(pi(p.joints));
     hm(p.joint_count as u32);
+    }
 }
 
 pub fn fill_grFlatzone_YakumonoParam(p: &mut grFlatzone_YakumonoParam) {
+    unsafe {
     p.unk0 = fv() as _;
     p.unk4 = fv() as _;
     p.unk8 = fv() as _;
@@ -562,9 +582,11 @@ pub fn fill_grFlatzone_YakumonoParam(p: &mut grFlatzone_YakumonoParam) {
     p.unk34 = fv() as _;
     p.unk38 = rg();
     p.unk3C = fv() as _;
+    }
 }
 pub fn hash_grFlatzone_YakumonoParam(p: &grFlatzone_YakumonoParam) {
-    unsafe { if HDBG { println!("B grFlatzone_YakumonoParam"); } }
+    unsafe {
+    if HDBG { println!("B grFlatzone_YakumonoParam"); }
     hm(p.unk0 as u32);
     hm(p.unk4 as u32);
     hm(p.unk8 as u32);
@@ -581,9 +603,11 @@ pub fn hash_grFlatzone_YakumonoParam(p: &grFlatzone_YakumonoParam) {
     hm(p.unk34 as u32);
     hm(p.unk38.to_bits());
     hm(p.unk3C as u32);
+    }
 }
 
 pub fn fill_HSD_JObj(p: &mut HSD_JObj) {
+    unsafe {
     p.object.ref_count = fv() as _;
     p.object.ref_count_individual = fv() as _;
     p.flags = fv() as _;
@@ -604,9 +628,11 @@ pub fn fill_HSD_JObj(p: &mut HSD_JObj) {
     }
     }
     p.id = fv() as _;
+    }
 }
 pub fn hash_HSD_JObj(p: &HSD_JObj) {
-    unsafe { if HDBG { println!("B HSD_JObj"); } }
+    unsafe {
+    if HDBG { println!("B HSD_JObj"); }
     hm(pi(p.object.parent.class_info));
     hm(p.object.ref_count as u32);
     hm(p.object.ref_count_individual as u32);
@@ -635,9 +661,11 @@ pub fn hash_HSD_JObj(p: &HSD_JObj) {
     hm(pi(p.aobj));
     hm(pi(p.robj));
     hm(p.id as u32);
+    }
 }
 
 pub fn fill_grDynamicAttr_UnkStruct(p: &mut grDynamicAttr_UnkStruct) {
+    unsafe {
     p.unk4 = fv() as _;
     p.unk8.x = rg();
     p.unk8.y = rg();
@@ -648,9 +676,11 @@ pub fn fill_grDynamicAttr_UnkStruct(p: &mut grDynamicAttr_UnkStruct) {
     for i0 in 0..4 {
     p.x0_fill[i0] = fv() as _;
     }
+    }
 }
 pub fn hash_grDynamicAttr_UnkStruct(p: &grDynamicAttr_UnkStruct) {
-    unsafe { if HDBG { println!("B grDynamicAttr_UnkStruct"); } }
+    unsafe {
+    if HDBG { println!("B grDynamicAttr_UnkStruct"); }
     hm(pi(p.next));
     hm(p.unk4 as u32);
     hm(p.unk8.x.to_bits());
@@ -662,9 +692,11 @@ pub fn hash_grDynamicAttr_UnkStruct(p: &grDynamicAttr_UnkStruct) {
     for i0 in 0..4 {
     hm(p.x0_fill[i0] as u32);
     }
+    }
 }
 
 pub fn fill_CollData(p: &mut CollData) {
+    unsafe {
     p.cur_pos.x = rg();
     p.cur_pos.y = rg();
     p.cur_pos.z = rg();
@@ -740,7 +772,7 @@ pub fn fill_CollData(p: &mut CollData) {
     p.xE4_ecb.left.x = rg();
     p.xE4_ecb.left.y = rg();
     p.ecb_source.kind = fv() as _;
-    for j0 in 0..56 { unsafe { *(base(&p.ecb_source) as *mut u8).add(8 + j0) = rnd() as u8; } }
+    for i0 in 0..56 { unsafe { *(&mut p.ecb_source.x4 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     p.ecb_source.x124 = rg();
     p.ecb_source.x128 = rg();
     p.ecb_source.x12C = rg();
@@ -771,9 +803,11 @@ pub fn fill_CollData(p: &mut CollData) {
     p.ceiling.normal.x = rg();
     p.ceiling.normal.y = rg();
     p.ceiling.normal.z = rg();
+    }
 }
 pub fn hash_CollData(p: &CollData) {
-    unsafe { if HDBG { println!("B CollData"); } }
+    unsafe {
+    if HDBG { println!("B CollData"); }
     hm(pi(p.x0_gobj));
     hm(p.cur_pos.x.to_bits());
     hm(p.cur_pos.y.to_bits());
@@ -850,7 +884,7 @@ pub fn hash_CollData(p: &CollData) {
     hm(p.xE4_ecb.left.x.to_bits());
     hm(p.xE4_ecb.left.y.to_bits());
     hm(p.ecb_source.kind as u32);
-    for j0 in 0..56 { unsafe { hm(*base(&p.ecb_source).add(8 + j0) as u32); } }
+    for i0 in 0..56 { unsafe { hm(*(&p.ecb_source.x4 as *const _ as *const u8).add(i0) as u32); } }
     hm(p.ecb_source.x124.to_bits());
     hm(p.ecb_source.x128.to_bits());
     hm(p.ecb_source.x12C.to_bits());
@@ -881,4 +915,5 @@ pub fn hash_CollData(p: &CollData) {
     hm(p.ceiling.normal.x.to_bits());
     hm(p.ceiling.normal.y.to_bits());
     hm(p.ceiling.normal.z.to_bits());
+    }
 }

@@ -46,8 +46,8 @@ fn ftCo_Turn_matches_c() {
             fr.input.pressed_buttons = rnd() & 0x3FF;
             fr.facing_dir = rg();
             fr.active_timer.lstick.x = (rnd() % 4) as u8;
-            fr.player_id = (rnd() % 6) as u8;
-            fr.x618_player_id = (rnd() % 6) as u8;
+            fr.player_idx = (rnd() % 6) as u8;
+            fr.pad_port = (rnd() % 6) as u8;
             fr.set_is_sub_fighter((rnd() & 1) as _);
             fr.x3E4_fighterCmdScript.frame_count = if rnd() & 1 != 0 { 2.0 } else { rg() };
             fr.co_attrs.standing_turn_frames = rw();

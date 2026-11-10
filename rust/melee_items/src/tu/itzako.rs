@@ -359,7 +359,7 @@ pub unsafe extern "C" fn it_8027B5B0(kind: ItemKind, pos: *mut Vec3, jobj: *mut 
     spawn.pos = spawn.prev_pos;
     spawn.facing_dir = ext::it_8026B684(&raw mut spawn.prev_pos);
     spawn.x3C_damage = 0;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     if !vel.is_null() {
         spawn.vel = *vel;
     } else {
@@ -951,7 +951,7 @@ pub unsafe extern "C" fn it_8027CE64(item_gobj: *mut HSD_GObj, fighter_gobj: *mu
     melee_core::ct!("it_8027CE64");
     let item = item_of(item_gobj);
     let mut sp18: GXColor = core::mem::zeroed();
-    (*item).xDCF_flag.anon_0.set_b3(1);
+    (*item).xDCF_flag.x0.set_b3(1);
     ext::ftLib_GetGameWatchColor(fighter_gobj, &raw mut sp18 as *mut c_void);
     ext::it_80278574(item_gobj, &raw mut sp18);
     ext::ftLib_GetGameWatchOutlineColor(fighter_gobj, &raw mut (*item).xBC8 as *mut c_void);

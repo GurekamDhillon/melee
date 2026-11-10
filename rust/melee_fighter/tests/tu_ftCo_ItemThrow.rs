@@ -87,12 +87,12 @@ fn ftCo_ItemThrow_matches_c() {
             fr.active_sticky.lstick.y = (rnd() % 16) as u8;
             fr.facing_dir = rg(); fr.facing_dir1 = rg();
             fr.motion_id = if rnd() % 8 == 0 { ftCo_MS_EscapeF as i32 } else { (94 + rnd() % 30) as i32 };
-            fr.player_id = (rnd() % 6) as u8;
+            fr.player_idx = (rnd() % 6) as u8;
             fr.set_is_sub_fighter((rnd() & 1) as u8);
             fr.set_x2222_b0((rnd() & 1) as u8);
             unsafe {
-                fr.anon_2210.anon_0.set_throw_flags_b3((rnd() & 1) as u8);
-                fr.anon_2210.anon_0.set_throw_flags_b4((rnd() & 1) as u8);
+                fr.x2210.x0.set_throw_flags_b3((rnd() & 1) as u8);
+                fr.x2210.x0.set_throw_flags_b4((rnd() & 1) as u8);
             }
             fr.ground_or_air = rnd() & 1;
             fr.cur_anim_frame = rw(); fr.frame_speed_mul = rw(); fr.cmd_timer = rw();
@@ -147,7 +147,7 @@ fn ftCo_ItemThrow_matches_c() {
             let mut h = Hs::new();
             h.m(cbid(fr.accessory4_cb)); h.m(cbid(fr.take_dmg_cb)); h.m(cbid(fr.phys_cb)); h.m(cbid(fr.coll_cb));
             h.m(fr.cmd_vars[0]); h.m(fr.cmd_vars[1]);
-            unsafe { h.m(fr.anon_2210.anon_0.throw_flags_b3() as u32); h.m(fr.anon_2210.anon_0.throw_flags_b4() as u32); }
+            unsafe { h.m(fr.x2210.x0.throw_flags_b3() as u32); h.m(fr.x2210.x0.throw_flags_b4() as u32); }
             h.m(b(fr.facing_dir)); h.m(fr.x2224_b1() as u32); h.m(unsafe { *pv } as u32);
             unsafe {
                 h.m(b(fr.mv.co.itemthrow4.x8.x)); h.m(b(fr.mv.co.itemthrow4.x8.y)); h.m(b(fr.mv.co.itemthrow4.x8.z));

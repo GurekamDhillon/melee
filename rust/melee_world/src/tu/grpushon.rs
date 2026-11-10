@@ -246,7 +246,7 @@ pub unsafe extern "C" fn grPushOn_802185A0(gobj: *mut HSD_GObj) {
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     ext::ftCo_800C07F8(gobj, 3, fn_802192A4 as *mut c_void);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
-    ext::grAnime_801C752C(jobj, 1, 0x77A4, ext::HSD_AObjSetFlags as *mut c_void, 3, 0x20000000);
+    ext::grAnime_801C752C(jobj, 1, 0x77A4, crate::tu::granime::ext::HSD_AObjSetFlags_cb as *mut c_void, 3, 0x20000000);
     (*gp).u.map.set_xC4_b0(0);
     ext::mpJointSetCb1(3, gp as *mut c_void, Some(fn_802190A0));
     ext::mpJointSetCb1(4, gp as *mut c_void, Some(fn_802190A0));
@@ -636,28 +636,28 @@ pub unsafe extern "C" fn fn_802192A4(_arg0: *mut c_void, gobj: *mut HSD_GObj, re
     0
 }
 
-pub unsafe extern "C" fn grPushOn_80219458(arg0: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn grPushOn_80219458(arg0: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("grPushOn_80219458");
     if arg0 != -1 {
         let joint = ext::mpJointFromLine(arg0);
         if joint != -1 {
             if joint == 1 {
                 ext::mpLineGetKind(arg0);
-                return (*yakumono_param).x4;
+                return (*yakumono_param).x4 as *mut lbColl_80008D30_arg1;
             }
             if joint == 2 {
                 let kind = ext::mpLineGetKind(arg0);
                 if kind == CollLine_Floor as i32 {
-                    return (*yakumono_param).x8;
+                    return (*yakumono_param).x8 as *mut melee_types::lbColl_80008D30_arg1;
                 }
                 if kind == CollLine_Ceiling as i32 {
-                    return (*yakumono_param).xC;
+                    return (*yakumono_param).xC as *mut melee_types::lbColl_80008D30_arg1;
                 }
                 if kind == CollLine_RightWall as i32 {
-                    return (*yakumono_param).x10;
+                    return (*yakumono_param).x10 as *mut melee_types::lbColl_80008D30_arg1;
                 }
                 if kind == CollLine_LeftWall as i32 {
-                    return (*yakumono_param).x14;
+                    return (*yakumono_param).x14 as *mut melee_types::lbColl_80008D30_arg1;
                 }
                 return core::ptr::null_mut();
             }
@@ -673,21 +673,21 @@ pub static mut grPushOn_StageCallbacks: [StageCallbacks; 3] = [
         callback1: Some(grPushOn_80218590),
         gobj_proc: Some(grPushOn_80218598),
         callback3: Some(grPushOn_8021859C),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
     StageCallbacks {
         on_init: Some(grPushOn_802185A0),
         callback1: Some(grPushOn_80218670),
         gobj_proc: Some(grPushOn_802186C8),
         callback3: Some(grPushOn_802187A4),
-        anon_10: StageCallbacks_anon_135 { flags: u32::to_be((1 << 30) | (1 << 31)) },
+        x10: StageCallbacks_x10 { flags: u32::to_be((1 << 30) | (1 << 31)) },
     },
     StageCallbacks {
         on_init: Some(grPushOn_802187A8),
         callback1: Some(grPushOn_80218880),
         gobj_proc: Some(grPushOn_80218888),
         callback3: Some(grPushOn_80218ED0),
-        anon_10: StageCallbacks_anon_135 { flags: 0 },
+        x10: StageCallbacks_x10 { flags: 0 },
     },
 ];
 

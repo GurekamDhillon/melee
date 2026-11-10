@@ -455,7 +455,7 @@ pub unsafe fn it_802D5710_inline(gobj: *mut Item_GObj, pos: *mut Vec3, vel: *mut
     spawn.vel = *vel;
     spawn.x0_parent_gobj = (*ip).owner;
     spawn.x4_parent_gobj2 = gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     ext::Item_80268B18(&mut spawn)
 }

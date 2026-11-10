@@ -22,7 +22,7 @@ fn smoke() {
     let ext_attr: &'static mut [u32; 2] = Box::leak(Box::new([7u32, 9u32]));
     let backup: &'static mut [u32; 2] = Box::leak(Box::new([0u32; 2]));
     let live: &'static mut [u32; 2] = Box::leak(Box::new([0u32; 2]));
-    fd.ext_attr = ext_attr.as_mut_ptr() as *mut core::ffi::c_void;
+    fd.ext_attr = (ext_attr.as_mut_ptr() as *mut core::ffi::c_void) as *mut _;
     f.ft_data = fd;
     f.dat_attrs_backup = backup.as_mut_ptr() as *mut core::ffi::c_void;
     // Fake joints: each part gets two distinct non-null pointers (value = part * 16 + {1, 2}).

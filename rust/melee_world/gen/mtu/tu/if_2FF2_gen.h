@@ -7,13 +7,13 @@ u8 HSD_GObj_CameraKind;
 s8 HSD_GObj_LightKind;
 __typeof__(struct HSD_GObj *) DevText_Setup(__typeof__(int) a0, __typeof__(int) a1, __typeof__(int) a2, __typeof__(int) a3, __typeof__(int) a4, __typeof__(unsigned char) a5) { T(1000); T((u32) a0); T((u32) a1); T((u32) a2); T((u32) a3); T((u32) a4); T((u32) a5); return (__typeof__(struct HSD_GObj *)) (((fv() & 1) ? &HG : 0)); }
 __typeof__(struct HSD_GObj *) GObj_Create(__typeof__(unsigned short) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2) { T(1001); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_GObj *)) ((((fv() & 3) == 0) ? 0 : &NG[fv() % 4])); }
-void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
-void GObj_SetupGXLinkMax(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned int) a2) { T(1003); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); }
+void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
+void GObj_SetupGXLinkMax(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned int) a2) { T(1003); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); }
 __typeof__(struct HSD_CObj *) HSD_CObjLoadDesc(__typeof__(union HSD_CObjDesc *) a0) { T(1004); T(PI((const void*) a0)); { HSD_CameraDescPerspective* d = (HSD_CameraDescPerspective*) a0; T(B(d->nnear)); T(B(d->ffar)); T(B(d->fov)); T(B(d->aspect)); T(B(d->roll)); T(d->flags); T(d->projection_type); T(RH(&d->viewport, 8)); T(RH(&d->scissor, 8)); T(PI(d->up_vector)); T(PI(d->class_name)); T(B(d->eyepos->pos.x)); T(B(d->eyepos->pos.y)); T(B(d->eyepos->pos.z)); T(B(d->interest->pos.x)); T(B(d->interest->pos.y)); T(B(d->interest->pos.z)); T(PI(d->eyepos->robjdesc)); T(PI(d->eyepos->class_name)); } return (__typeof__(struct HSD_CObj *)) (((fv() & 1) ? &CO : 0)); }
 void HSD_GObjFree(__typeof__(struct HSD_GObj *) a0) { T(1005); T(PI((const void*) a0)); }
 void HSD_GObjObject_80390A70(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned char) a1, __typeof__(void *) a2) { T(1006); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
-void HSD_GObj_803910D8(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1007); T(PI((const void*) a0)); T((u32) a1); }
-void HSD_GObj_LObjCallback(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1008); T(PI((const void*) a0)); T((u32) a1); }
+void HSD_GObj_803910D8(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1007); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
+void HSD_GObj_LObjCallback(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1008); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
 __typeof__(struct HSD_GObjProc *) HSD_GObj_SetupProc(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1, __typeof__(unsigned char) a2) { T(1009); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); return (__typeof__(struct HSD_GObjProc *)) (&PROC0); }
 __typeof__(struct HSD_LObj *) HSD_LObjLoadDesc(__typeof__(struct HSD_LightDesc *) a0) { T(1010); T(PI((const void*) a0)); { HSD_LightDesc* d; for (d = a0; d; d = d->next) { T(d->flags); T(d->attnflags); T(RH(&d->color, 4)); T(PI(d->class_name)); if (d->position) { T(B(d->position->pos.x)); T(B(d->position->pos.y)); T(B(d->position->pos.z)); } else T(0xAAAA); T(PI(d->interest)); if (d->u.point) { T(B(d->u.point->ref_br)); T(B(d->u.point->ref_dist)); T(d->u.point->dist_func); } else T(0xBBBB); } } return (__typeof__(struct HSD_LObj *)) (&LO); }
 void HSD_SisLib_803A5CC4(__typeof__(struct HSD_Text *) a0) { T(1011); T(PI((const void*) a0)); }
@@ -99,8 +99,8 @@ static void fill_HSD_Text(HSD_Text* p)
     p->hidden = fv();
     p->x4E = fv();
     p->font_idx = fv();
-    p->x6C = fv();
-    p->x6E = fv();
+    p->state_stack_used = fv();
+    p->state_stack_capacity = fv();
     p->current_width = rg();
     p->current_height = rg();
     p->x78.x = rg();
@@ -164,9 +164,9 @@ static void hash_HSD_Text(const HSD_Text* p)
     HM(PI((const void*) p->sis_buffer));
     HM(PI((const void*) p->x60));
     HM(PI((const void*) p->alloc_data));
-    HM(PI((const void*) p->string_buffer));
-    HM((u32) p->x6C);
-    HM((u32) p->x6E);
+    HM(PI((const void*) p->state_stack));
+    HM((u32) p->state_stack_used);
+    HM((u32) p->state_stack_capacity);
     HM(B(p->current_width));
     HM(B(p->current_height));
     HM(B(p->x78.x));
@@ -192,9 +192,12 @@ static void freg_all(void)
 {
     freg((const void*) HSD_GObj_803910D8);
     freg((const void*) HSD_GObj_LObjCallback);
+    freg((const void*) findSlot);
     freg((const void*) fn_802FF218);
-    freg((const void*) fn_802FF218_inline);
     freg((const void*) fn_802FF360);
+    freg((const void*) freeEntry);
+    freg((const void*) getEntry);
+    freg((const void*) getScore);
     freg((const void*) un_802FF364);
     freg((const void*) un_802FF498);
     freg((const void*) un_802FF4FC);

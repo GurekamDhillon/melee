@@ -80,7 +80,7 @@ pub fn ft_8008A324(g: G) {
 pub fn ft_8008A348(g: G, anim_blend: f32) {
     melee_core::ct!("ft_8008A348");
     let f = fp(g);
-    if f.x2224_b2() != 0 {
+    if f.stamina_dead() != 0 {
         ext::ftCo_DownSpot_Enter(g);
         return;
     }

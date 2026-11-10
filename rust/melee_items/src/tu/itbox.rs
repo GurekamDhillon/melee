@@ -216,7 +216,7 @@ pub unsafe extern "C" fn it_80286088(parent_gobj: *mut Item_GObj) -> *mut Item_G
         spawn.vel.x = 0.0;
         spawn.x0_parent_gobj = null_mut();
         spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-        spawn.x44_flag.anon_0.set_b0(0);
+        spawn.x44_flag.x0.set_b0(0);
         spawn.x40 = 0;
 
         result = ext::Item_80268B18(&mut spawn);
@@ -242,7 +242,7 @@ pub unsafe extern "C" fn it_80286088(parent_gobj: *mut Item_GObj) -> *mut Item_G
 pub unsafe extern "C" fn itBox_Logic1_Spawned(gobj: *mut Item_GObj) {
     melee_core::ct!("itBox_Logic1_Spawned");
     let ip = GET_ITEM(gobj);
-    (*ip).xDCE_flag.anon_0.set_b7(0);
+    (*ip).xDCE_flag.x0.set_b7(0);
     (*ip).xDD4_itemVar.r#box.opened = 0;
     (*ip).xDD4_itemVar.r#box.spawned_gobj = null_mut();
     it_8028655C(gobj);
@@ -519,7 +519,7 @@ pub unsafe extern "C" fn it_80286AA4(gobj: *mut Item_GObj) {
 
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
-    (*ip).xDCF_flag.anon_0.set_b2(1);
+    (*ip).xDCF_flag.x0.set_b2(1);
     (*ip).xDD4_itemVar.r#box.opened = 1;
     (*ip).xDD4_itemVar.r#box.despawn_timer = 40;
 
@@ -558,7 +558,7 @@ pub unsafe extern "C" fn it_80286BA0(gobj: *mut Item_GObj) {
 
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
-    (*ip).xDCF_flag.anon_0.set_b2(1);
+    (*ip).xDCF_flag.x0.set_b2(1);
     (*ip).xDD4_itemVar.r#box.opened = 1;
     (*ip).xDD4_itemVar.r#box.despawn_timer = 40;
 

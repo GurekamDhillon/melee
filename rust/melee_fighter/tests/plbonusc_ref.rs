@@ -46,7 +46,7 @@ fn init_slot(slot: i32) {
         x.x0_staleMoveTable.x904[i] = if rnd() % 2 != 0 { rnd() % 3 } else { rnd() };
     }
     for i in 0..65 {
-        unsafe { x.x0_staleMoveTable.total_attack_count_struct.anon_358.anon_0.by_attack_hi[i] = rnd() };
+        unsafe { x.x0_staleMoveTable.total_attack_count_struct.x358.x0.by_attack_hi[i] = rnd() };
     }
     x.x0_staleMoveTable.xCAC = rnd() % 8;
     x.xD50 = rnd();

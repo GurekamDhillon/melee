@@ -11,7 +11,7 @@ use mtu_harness::*;
 #[path = "mtu/itkirbygamewatchchefpan_gen.rs"]
 mod g;
 pub static mut VIEWPUN: bool = false;
-fn flg(f: &UnkFlagStruct) -> u32 { unsafe { (f.anon_0.b0() as u32) | (f.anon_0.b1() as u32) << 1 | (f.anon_0.b2() as u32) << 2 | (f.anon_0.b3() as u32) << 3 | (f.anon_0.b4() as u32) << 4 | (f.anon_0.b5() as u32) << 5 | (f.anon_0.b6() as u32) << 6 | (f.anon_0.b7() as u32) << 7 } }
+fn flg(f: &UnkFlagStruct) -> u32 { unsafe { (f.x0.b0() as u32) | (f.x0.b1() as u32) << 1 | (f.x0.b2() as u32) << 2 | (f.x0.b3() as u32) << 3 | (f.x0.b4() as u32) << 4 | (f.x0.b5() as u32) << 5 | (f.x0.b6() as u32) << 6 | (f.x0.b7() as u32) << 7 } }
 static mut G: HSD_GObj = unsafe { core::mem::zeroed() };
 static mut REFG: HSD_GObj = unsafe { core::mem::zeroed() };
 static mut OWNG: HSD_GObj = unsafe { core::mem::zeroed() };
@@ -49,7 +49,7 @@ unsafe fn setup() {
     ITEM.xBBC_dynamicBoneTable = &raw mut DBT; SITEM.xBBC_dynamicBoneTable = &raw mut SDBT;
     for i in 0..100usize { DBT.bones[i] = &raw mut BONES[i % 24]; SDBT.bones[i] = &raw mut BONES[(i + 5) % 24]; }
     ITEM.owner = if rnd() & 1 != 0 { &raw mut OWNG } else { null_mut() }; SITEM.owner = if rnd() & 1 != 0 { &raw mut OWNG } else { null_mut() };
-    ART.x4_specialAttributes = &raw mut ATTRP as *mut c_void; SART.x4_specialAttributes = &raw mut SATTRP as *mut c_void;
+    ART.x4_specialAttributes = &raw mut ATTRP as *mut _; SART.x4_specialAttributes = &raw mut SATTRP as *mut _;
     SATTRP[0] = if rnd() & 1 != 0 { &raw mut SATTRP[1] as *mut c_void } else { null_mut() }; SATTRP[1] = null_mut();
     ATTRP = [null_mut(); 2];
 }

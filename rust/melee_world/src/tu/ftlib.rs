@@ -46,7 +46,7 @@ pub unsafe fn ftLib_GetPosDelta_fp(gobj: *mut HSD_GObj, v: *mut Vec) {
 /// `ftLib_GetPlayerIndex_fp`: the player id.
 pub unsafe fn ftLib_GetPlayerIndex_fp(gobj: *mut HSD_GObj) -> u8 {
     melee_core::ct!("ftLib_GetPlayerIndex_fp");
-    fp(gobj).player_id
+    fp(gobj).player_idx
 }
 
 /// `ftLib_IsInHitstun_fp`.
@@ -82,7 +82,7 @@ pub unsafe fn ftLib_IsOffscreen_fp(gobj: *mut HSD_GObj) -> bool {
 /// `ftLib_IsSleeping_fp`.
 pub unsafe fn ftLib_IsSleeping_fp(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftLib_IsSleeping_fp");
-    fp(gobj).x221F_b3() != 0
+    fp(gobj).is_sleeping() != 0
 }
 
 /// `ftLib_IsSleeping_8008731C`.

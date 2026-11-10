@@ -78,7 +78,7 @@ pub fn ftKb_SpecialNCa_800F99BC(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         (*fp).cmd_vars[1] = 0;
         (*fp).cmd_vars[0] = 0;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         if (*fp).u.kb.hat.kind != Ft_Kind_Captain {
             msid = ftKb_MS_GnSpecialN;
         }
@@ -96,7 +96,7 @@ pub fn ftKb_SpecialNCa_800F9A54(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         (*fp).cmd_vars[1] = 0;
         (*fp).cmd_vars[0] = 0;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         if (*fp).u.kb.hat.kind != Ft_Kind_Captain {
             msid = ftKb_MS_GnSpecialAirN;
         }
@@ -143,8 +143,8 @@ pub fn ca_special_air_n_iasa(fp: &mut Fighter) {
 /// The throw_flags_b1 pulse shared by both Phys callbacks: first pulse spawns the punch effect
 /// (id by hat kind) and sets x2219_b0, later ones call ftCommon_8007DB24.
 unsafe fn punch_pulse(gobj: *mut HSD_GObj, fp: *mut Fighter) {
-    let throw_b1 = if (*fp).anon_2210.anon_0.throw_flags_b1() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b1(0);
+    let throw_b1 = if (*fp).x2210.x0.throw_flags_b1() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b1(0);
         true
     } else {
         false

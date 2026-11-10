@@ -158,7 +158,7 @@ fn install_hooks() {
         });
         h::FTPARTS_GET_BONE_INDEX = Some(|fp, i| {
             t(0x1C0u32.wrapping_add(i as u32));
-            (fp.player_id % 8) as i32
+            (fp.player_idx % 8) as i32
         });
         h::HSD_JOBJ_GET_TRANSLATION = Some(|j, v| {
             t(0x1D0 + e(j));
@@ -291,7 +291,7 @@ fn install_hooks() {
         h::FTLIB_ISSAMEPLAYER = Some(|a, bb| {
             t(0x3E0 + e(a));
             t(e(bb));
-            a == bb || (*((*a).user_data as *const Fighter)).player_id == (*((*bb).user_data as *const Fighter)).player_id
+            a == bb || (*((*a).user_data as *const Fighter)).player_idx == (*((*bb).user_data as *const Fighter)).player_idx
         });
         h::PLAYER_8003544C = Some(|s, u| (s as u32).wrapping_add(u as u32) & 1 != 0);
         h::LB_RUMBLE_START = Some(|p, id, a, bb| {
@@ -437,8 +437,8 @@ fn ftcommon3_matches_c() {
                 f.parts = pb;
                 f.kind = KINDS[(r.rnd() % 13) as usize] as _;
                 f.x8_spawnNum = (r.rnd() % 8) as i32;
-                f.player_id = (r.rnd() % 4) as u8;
-                f.x618_player_id = (r.rnd() % 4) as u8;
+                f.player_idx = (r.rnd() % 4) as u8;
+                f.pad_port = (r.rnd() % 4) as u8;
                 f.motion_id = (r.rnd() % 340) as _;
                 f.facing_dir = r.rf();
                 f.gr_vel = r.rf();
@@ -508,7 +508,7 @@ fn ftcommon3_matches_c() {
                 f.take_dmg_cb = if r.rnd() & 1 != 0 { Some(cb_dmg) } else { None };
                 f.death1_cb = if r.rnd() & 1 != 0 { Some(cb_death) } else { None };
                 let v = r.rnd() & 1;
-                unsafe { f.anon_594.anon_0.set_x594_b0(v as u8) };
+                unsafe { f.x594.x0.set_x594_b0(v as u8) };
                 let v = r.rnd() & 1;
                 f.set_is_sub_fighter(v as u8);
                 let v = r.rnd() & 1;
@@ -522,9 +522,9 @@ fn ftcommon3_matches_c() {
                 let v = r.rnd() & 1;
                 f.set_x221E_b3(v as u8);
                 let v = (r.rnd() % 4 == 0) as _;
-                f.set_x221F_b3(v);
+                f.set_is_sleeping(v);
                 let v = r.rnd() & 1;
-                f.set_x2224_b2(v as _);
+                f.set_stamina_dead(v as _);
                 let v = r.rnd() & 1;
                 f.set_x2227_b0(v as _);
             }

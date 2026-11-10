@@ -192,8 +192,8 @@ pub fn getAccelAndTarget(f: &mut Fighter) -> (f32, f32) {
     let mut accel = lsx * f.co_attrs.dash_accel_mul;
     accel += if lsx > 0.0 { f.co_attrs.dash_accel_base } else { -f.co_attrs.dash_accel_base };
     let mut target_vel = lsx * f.co_attrs.dash_max_velocity;
-    accel = ext::ScriptGame_ModValue(f.player_id as i32, 2, accel);
-    target_vel = ext::ScriptGame_ModValue(f.player_id as i32, 2, target_vel);
+    accel = ext::ScriptGame_ModValue(f.player_idx as i32, 2, accel);
+    target_vel = ext::ScriptGame_ModValue(f.player_idx as i32, 2, target_vel);
     (accel, target_vel)
 }
 

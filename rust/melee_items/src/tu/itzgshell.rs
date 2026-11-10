@@ -39,7 +39,7 @@ use crate::layout::itTaruAttributes;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -540,7 +540,7 @@ pub unsafe extern "C" fn it_802DE320(gobj: *mut Item_GObj) {
 pub unsafe extern "C" fn itZrshell_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool {
     melee_core::ct!("itZrshell_UnkMotion1_Anim");
     let ip = (*gobj).user_data as *mut Item;
-    if (*ip).xDD4_itemVar.zgshell.xE1C_b0() != 0 && (*ip).xDD0_flag.anon_0.b0() != 1 {
+    if (*ip).xDD4_itemVar.zgshell.xE1C_b0() != 0 && (*ip).xDD0_flag.x0.b0() != 1 {
         if (*ip).xDD4_itemVar.zgshell.xE04 <= 0.0 {
             ext::it_80274CAC(gobj);
             (*ip).jumped_on = pred_b!(fn_802DFE7C);
@@ -705,7 +705,7 @@ pub unsafe extern "C" fn itZrshell_UnkMotion6_Anim(gobj: *mut Item_GObj) -> bool
     let ip = (*gobj).user_data as *mut Item;
     let mut v: Vec3 = core::mem::zeroed();
     if (*ip).xDD4_itemVar.zgshell.xDF4 <= 0.0 {
-        if (*ip).xDCD_flag.anon_0.b5() == 0 {
+        if (*ip).xDCD_flag.x0.b5() == 0 {
             ext::it_80275444(gobj);
         }
     } else {
@@ -803,7 +803,7 @@ pub unsafe extern "C" fn itZrshell_UnkMotion8_Anim(gobj: *mut Item_GObj) -> bool
     melee_core::ct!("itZrshell_UnkMotion8_Anim");
     let ip = (*gobj).user_data as *mut Item;
     if (*ip).xDD4_itemVar.zgshell.xDF4 <= 0.0 {
-        if (*ip).xDCD_flag.anon_0.b5() == 0 {
+        if (*ip).xDCD_flag.x0.b5() == 0 {
             ext::it_80275444(gobj);
         }
     } else {

@@ -73,7 +73,7 @@ use crate::layout::itTaruCann_DatAttrs;
 #[allow(unused_imports)]
 use crate::layout::itToolsAttributes;
 #[allow(unused_imports)]
-use crate::layout::itUnkAttributes;
+use crate::layout::itUnkAttributes_legacy;
 #[allow(unused_imports)]
 use crate::layout::itWstarAttributes;
 #[allow(unused_imports)]
@@ -125,7 +125,7 @@ pub mod ext {
     ext_fns! {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void);
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32);
     fn HSD_GObjFree(a0: *mut HSD_GObj);
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint);
@@ -163,7 +163,7 @@ pub mod ext {
     fn it_8026B894(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::itlib::it_8026b894(&mut *((*a0).user_data as *mut Item), a1) as _ };
     fn it_802A2428(a0: *mut HSD_GObj) => unsafe { crate::tu::itlinkhookshot::it_802A2428(a0) };
     fn it_802A2474(a0: *mut c_void) => unsafe { crate::tu::itlinkhookshot::it_802A2474(a0) };
-    fn it_802A24A0(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itlinkhookshot::it_802A24A0(a0, a1) };
+    fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) => unsafe { crate::tu::itlinkhookshot::it_802A24A0(a0, a1) };
     fn it_802A3C98(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> f32 => unsafe { crate::tu::itlinkhookshot::it_802A3C98(a0 as _, a1 as _, a2 as _) };
     fn it_802A3D90(a0: *mut ItemLink) -> i32 => unsafe { crate::tu::itlinkhookshot::it_802A3D90(a0) };
     fn it_802A43B8(a0: *mut ItemLink) => unsafe { crate::itkinds6::it_802a43b8(&mut *a0) };
@@ -181,7 +181,7 @@ pub mod ext {
     pub mod cb {
         use super::*;
         pub unsafe extern "C" fn it_802A2474(a0: *mut c_void) { super::it_802A2474(a0) }
-        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: i32) { super::it_802A24A0(a0, a1) }
+        pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: isize) { super::it_802A24A0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
@@ -421,7 +421,7 @@ pub unsafe extern "C" fn it_802B7160(gobj: *mut Fighter_GObj, data: *mut itSamus
     (*hitbox).set_x42_b0(0);
     (*hitbox).set_x42_b4(0);
     (*hitbox).set_x41_b7(0);
-    (*hitbox).anon_134.set_hit_grabbed_victim_only((*data).x134_4() as _);
+    (*hitbox).x134.set_hit_grabbed_victim_only((*data).x134_4() as _);
     (*hitbox).set_x42_b1(1);
     (*hitbox).set_x42_b2(0);
     (*hitbox).set_x43_b2(0);
@@ -623,7 +623,7 @@ pub unsafe extern "C" fn it_802B7C18(owner: *mut Fighter_GObj, pos: *mut Vec3, f
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = owner;
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
 
     let item_gobj = ext::Item_80268B18(&mut spawn);
     if !item_gobj.is_null() {

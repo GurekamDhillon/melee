@@ -44,8 +44,8 @@ pub mod ext {
     ext_fns! {
     fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const i8, a4: i32) -> i32;
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj;
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32);
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32);
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32);
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32);
     fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) => unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(a0, a1) };
     fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void => unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0, a1) };
     fn HSD_CObjEndCurrent() => unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent() };
@@ -62,8 +62,8 @@ pub mod ext {
     fn HSD_GObjProc_RemoveProc(a0: *mut HSD_GObjProc);
     fn HSD_GObj_80390CD4(a0: *mut HSD_GObj);
     fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32);
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) };
-    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) };
+    fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) => unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1 as i32) };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc => unsafe { melee_world::tu_ext::HSD_GObj_SetupProc(a0, a1, a2) };
     fn HSD_JObjAddChild(a0: *mut HSD_JObj, a1: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjAddChild(a0, a1) };
     fn HSD_JObjAnim(a0: *mut HSD_JObj);
@@ -90,7 +90,7 @@ pub mod ext {
     fn Toy_80305DB0() -> f32 => unsafe { crate::tu::toy::Toy_80305DB0() };
     fn Toy_803062BC(a0: i32) -> i16 => unsafe { crate::tu::toy::Toy_803062BC(a0) };
     fn Toy_803067BC(a0: i32, a1: i32) => unsafe { crate::tu::toy::Toy_803067BC(a0, a1) };
-    fn Toy_80306954(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::toy::Toy_80306954(a0, a1) };
+    fn Toy_80306954(a0: *mut HSD_GObj, a1: isize) => unsafe { crate::tu::toy::Toy_80306954(a0, a1) };
     fn Toy_80306A48(a0: *mut HSD_JObj, a1: *mut i8, a2: *mut i8, a3: *mut i8, a4: *mut HSD_Archive, a5: i32) => unsafe { crate::tu::toy::Toy_80306A48(a0, a1 as _, a2 as _, a3 as _, a4, a5) };
     fn Toy_80307470(a0: i32) => unsafe { crate::tu::toy::Toy_80307470(a0) };
     fn Toy_803082F8(a0: i16) -> i32 => unsafe { crate::tu::toy::Toy_803082F8(a0) };
@@ -109,10 +109,10 @@ pub mod ext {
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {
         use super::*;
-        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
-        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_LObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_JObjCallback(a0, a1) }
+        pub unsafe extern "C" fn HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { super::HSD_GObj_LObjCallback(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn Toy_80306954(a0: *mut HSD_GObj, a1: i32) { super::Toy_80306954(a0, a1) }
+        pub unsafe extern "C" fn Toy_80306954(a0: *mut HSD_GObj, a1: isize) { super::Toy_80306954(a0, a1) }
     }
     /// Variadic C callees modelled by hand (fixed arity; the format is applied by the caller).
     pub static mut OSReport_hook: Option<fn(&str)> = None;
@@ -1043,7 +1043,7 @@ pub unsafe extern "C" fn _tyList_8031438C(gobj: *mut HSD_GObj) {
 }
 
 /// `static void _tyList_80314504(HSD_GObj*, int)`
-pub unsafe extern "C" fn _tyList_80314504(gobj: *mut HSD_GObj, unused: i32) {
+pub unsafe extern "C" fn _tyList_80314504(gobj: *mut HSD_GObj, unused: isize) {
     melee_core::ct!("_tyList_80314504");
     // `TyListData* data = (TyListData*) gobj;` (`cobj` at +0x28 is `hsd_obj`)
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;

@@ -13,7 +13,7 @@ mod gen_stubs {
     fn t_Ground_801C39C0() { unsafe { out("Ground_801C39C0"); out("\n");  } }
     fn t_Ground_801C3BB4() { unsafe { out("Ground_801C3BB4"); out("\n");  } }
     fn t_Ground_801C3DB4(a0: *mut core::ffi::c_void, a1: f32, a2: f32) -> i32 { unsafe { out("Ground_801C3DB4"); trp(a0 as *const u8); trf(a1); trf(a2); out("\n"); (if rnd() % 4 == 0 { -1 } else { (0xBD + rnd() % 6) as i32 }) as i32 } }
-    fn t_Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj { unsafe { out("Ground_801C3FA4"); trp(a0 as *const u8); tri(a1 as i64); out("\n"); (if JNULL && rnd() % 5 == 0 { core::ptr::null_mut() } else { mkjobj2() }) as *mut HSD_JObj } }
+    fn t_Ground_801C3FA4(a0: *mut HSD_GObj, a1: isize) -> *mut HSD_JObj { unsafe { out("Ground_801C3FA4"); trp(a0 as *const u8); tri(a1 as i64); out("\n"); (if JNULL && rnd() % 5 == 0 { core::ptr::null_mut() } else { mkjobj2() }) as *mut HSD_JObj } }
     fn t_Ground_801C4A08(a0: *mut HSD_GObj) { unsafe { out("Ground_801C4A08"); trp(a0 as *const u8); out("\n");  } }
     fn t_Ground_801C5740(a0: i32) { unsafe { out("Ground_801C5740"); tri(a0 as i64); out("\n");  } }
     fn t_Ground_801C5750() { unsafe { out("Ground_801C5750"); out("\n");  } }
@@ -58,7 +58,7 @@ mod gen_stubs {
     fn t_gm_801674C4(a0: i8, a1: u8, a2: i8, a3: i8, a4: GmRouteCallback) { unsafe { out("gm_801674C4"); tri(a0 as i64); tri(a1 as i64); tri(a2 as i64); tri(a3 as i64); trp(match a4 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); out("\n");  } }
     fn t_grAnime_801C7A04(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32) { unsafe { out("grAnime_801C7A04"); trp(a0 as *const u8); tri(a1 as i64); tru(a2 as u64); trf(a3); out("\n");  } }
     fn t_grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("grAnime_801C8138"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
-    fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
     fn t_grLib_801C96E8(a0: *mut HSD_GObj) -> i32 { unsafe { out("grLib_801C96E8"); trp(a0 as *const u8); out("\n"); (rnd() % 2) as i32 } }
     fn t_grLib_801C9908(a0: *mut HSD_JObj) { unsafe { out("grLib_801C9908"); trp(a0 as *const u8); out("\n");  } }
     fn t_grMaterial_801C94D8(a0: *mut core::ffi::c_void) { unsafe { out("grMaterial_801C94D8"); trp(a0 as *const u8); out("\n");  } }

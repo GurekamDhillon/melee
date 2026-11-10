@@ -1577,7 +1577,7 @@ pub mod build {
                 (*fogs).desc = self.buf(0x20).cast();
                 let fa = self.zbuf(16) as *mut *mut HSD_CameraAnim;
                 *fa = self.buf(0x30).cast();
-                (*fogs).anims = fa;
+                (*fogs).anims = fa as *mut *mut SceneFogAnim;
                 (*sd).fogs = fogs;
             }
             sd
@@ -1589,7 +1589,7 @@ pub mod build {
                 (*a).curr_frame = self.rng.range(0, 40) as f32;
                 (*a).end_frame = self.rng.range(0, 40) as f32;
                 (*a).fobj = null_mut();
-                (*a).hsd_obj = null_mut();
+                (*a).jobj = null_mut();
             }
             a
         }

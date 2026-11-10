@@ -44,7 +44,7 @@ pub mod ext {
     use crate::ext_fns;
     ext_fns! {
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn lbAudioAx_80023090(a0: i32) -> i32 = crate::tu::adapt::lbAudioAx_80023090__11c684;
         fn lbAudioAx_80023694() -> i32 = crate::tu::adapt::lbAudioAx_80023694__e3b7af;
         fn lbAudioAx_800236DC() -> i32 = crate::tu::adapt::lbAudioAx_800236DC__5d9f3e;

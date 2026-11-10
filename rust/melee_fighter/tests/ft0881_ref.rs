@@ -245,8 +245,8 @@ fn ft0881_matches_c() {
                 let f = &mut w.f[i];
                 f.gobj = gp;
                 f.kind = KINDS[(rg.rnd() % 8) as usize];
-                f.x619_costume_id = (rg.rnd() % 4) as u8;
-                f.player_id = (rg.rnd() % 6) as u8;
+                f.costume_id = (rg.rnd() % 4) as u8;
+                f.player_idx = (rg.rnd() % 6) as u8;
                 f.set_is_sub_fighter((rg.rnd() & 1) as u8);
                 f.set_x2225_b6((rg.rnd() & 1) as u8);
                 f.set_is_metal((rg.rnd() & 1) as u8);

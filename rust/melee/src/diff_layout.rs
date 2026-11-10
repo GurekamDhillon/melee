@@ -5,13 +5,119 @@ use melee_types::*;
 use core::ffi::c_void;
 use crate::diff::{F, Kind};
 
+pub static T_StageInfo: &[F] = &[
+    F { name: "cam_info", gc: 0x0, nat: ::core::mem::offset_of!(StageInfo, cam_info), size: ::core::mem::size_of::<StageCameraInfo>(), kind: Kind::Struct("StageCameraInfo", &T_StageCameraInfo) },
+    F { name: "blast_zone", gc: 0x74, nat: ::core::mem::offset_of!(StageInfo, blast_zone), size: ::core::mem::size_of::<StageBlastZone>(), kind: Kind::Struct("StageBlastZone", &T_StageBlastZone) },
+    F { name: "flags", gc: 0x84, nat: ::core::mem::offset_of!(StageInfo, flags), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
+    F { name: "grkind", gc: 0x88, nat: ::core::mem::offset_of!(StageInfo, grkind), size: ::core::mem::size_of::<GrKind>(), kind: Kind::Int(false) },
+    F { name: "unk8C", gc: 0x8c, nat: ::core::mem::offset_of!(StageInfo, unk8C), size: ::core::mem::size_of::<StageInfo_unk8C>(), kind: Kind::Struct("StageInfo_unk8C", &T_StageInfo_unk8C) },
+    F { name: "x98", gc: 0x98, nat: ::core::mem::offset_of!(StageInfo, x98), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
+    F { name: "x9C", gc: 0x9c, nat: ::core::mem::offset_of!(StageInfo, x9C), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
+    F { name: "xA0", gc: 0xa0, nat: ::core::mem::offset_of!(StageInfo, xA0), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
+    F { name: "xA4_pad", gc: 0xa4, nat: ::core::mem::offset_of!(StageInfo, xA4_pad), size: ::core::mem::size_of::<[u8; 136]>(), kind: Kind::Blob },
+    F { name: "x12C", gc: 0x12c, nat: ::core::mem::offset_of!(StageInfo, x12C), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
+    F { name: "x130", gc: 0x130, nat: ::core::mem::offset_of!(StageInfo, x130), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x13C", gc: 0x13c, nat: ::core::mem::offset_of!(StageInfo, x13C), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x148", gc: 0x148, nat: ::core::mem::offset_of!(StageInfo, x148), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x154", gc: 0x154, nat: ::core::mem::offset_of!(StageInfo, x154), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x160", gc: 0x160, nat: ::core::mem::offset_of!(StageInfo, x160), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x16C", gc: 0x16c, nat: ::core::mem::offset_of!(StageInfo, x16C), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "map_gobjs", gc: 0x180, nat: ::core::mem::offset_of!(StageInfo, map_gobjs), size: ::core::mem::size_of::<[*mut Ground_GObj; 64]>(), kind: Kind::Blob },
+    F { name: "x280", gc: 0x280, nat: ::core::mem::offset_of!(StageInfo, x280), size: ::core::mem::size_of::<[*mut HSD_JObj; 261]>(), kind: Kind::Blob },
+    F { name: "x694", gc: 0x694, nat: ::core::mem::offset_of!(StageInfo, x694), size: ::core::mem::size_of::<[*mut c_void; 4]>(), kind: Kind::Blob },
+    F { name: "x6A4", gc: 0x6a4, nat: ::core::mem::offset_of!(StageInfo, x6A4), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
+    F { name: "itemdata", gc: 0x6a8, nat: ::core::mem::offset_of!(StageInfo, itemdata), size: ::core::mem::size_of::<*mut *mut GroundItemData>(), kind: Kind::Ptr },
+    F { name: "coll_data", gc: 0x6ac, nat: ::core::mem::offset_of!(StageInfo, coll_data), size: ::core::mem::size_of::<*mut MapCollData>(), kind: Kind::Ptr },
+    F { name: "param", gc: 0x6b0, nat: ::core::mem::offset_of!(StageInfo, param), size: ::core::mem::size_of::<*mut GroundParam>(), kind: Kind::Ptr },
+    F { name: "ald_yaku_all", gc: 0x6b4, nat: ::core::mem::offset_of!(StageInfo, ald_yaku_all), size: ::core::mem::size_of::<*mut GroundItemScript>(), kind: Kind::Ptr },
+    F { name: "map_ptcl", gc: 0x6b8, nat: ::core::mem::offset_of!(StageInfo, map_ptcl), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
+    F { name: "map_texg", gc: 0x6bc, nat: ::core::mem::offset_of!(StageInfo, map_texg), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
+    F { name: "yakumono_param", gc: 0x6c0, nat: ::core::mem::offset_of!(StageInfo, yakumono_param), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
+    F { name: "map_plit", gc: 0x6c4, nat: ::core::mem::offset_of!(StageInfo, map_plit), size: ::core::mem::size_of::<*mut *mut LightList>(), kind: Kind::Ptr },
+    F { name: "x6C8", gc: 0x6c8, nat: ::core::mem::offset_of!(StageInfo, x6C8), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
+    F { name: "quake_model_set", gc: 0x6cc, nat: ::core::mem::offset_of!(StageInfo, quake_model_set), size: ::core::mem::size_of::<*mut DynamicModelDesc>(), kind: Kind::Ptr },
+    F { name: "x6D0", gc: 0x6d0, nat: ::core::mem::offset_of!(StageInfo, x6D0), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
+    F { name: "x6D2", gc: 0x6d2, nat: ::core::mem::offset_of!(StageInfo, x6D2), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
+    F { name: "x6D4", gc: 0x6d4, nat: ::core::mem::offset_of!(StageInfo, x6D4), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
+    F { name: "x6D6", gc: 0x6d6, nat: ::core::mem::offset_of!(StageInfo, x6D6), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
+    F { name: "x6D8", gc: 0x6d8, nat: ::core::mem::offset_of!(StageInfo, x6D8), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
+    F { name: "x6DC", gc: 0x6dc, nat: ::core::mem::offset_of!(StageInfo, x6DC), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
+    F { name: "x6DE", gc: 0x6de, nat: ::core::mem::offset_of!(StageInfo, x6DE), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
+    F { name: "x6E0", gc: 0x6e0, nat: ::core::mem::offset_of!(StageInfo, x6E0), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x6E4", gc: 0x6e4, nat: ::core::mem::offset_of!(StageInfo, x6E4), size: ::core::mem::size_of::<[i32; 2]>(), kind: Kind::Arr(2, 4, ::core::mem::size_of::<i32>(), &Kind::Int(true)) },
+    F { name: "x6EC_pad", gc: 0x6ec, nat: ::core::mem::offset_of!(StageInfo, x6EC_pad), size: ::core::mem::size_of::<[u8; 28]>(), kind: Kind::Blob },
+    F { name: "x708", gc: 0x708, nat: ::core::mem::offset_of!(StageInfo, x708), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
+    F { name: "x70C", gc: 0x70c, nat: ::core::mem::offset_of!(StageInfo, x70C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x710", gc: 0x710, nat: ::core::mem::offset_of!(StageInfo, x710), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x714", gc: 0x714, nat: ::core::mem::offset_of!(StageInfo, x714), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
+    F { name: "x718", gc: 0x718, nat: ::core::mem::offset_of!(StageInfo, x718), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x71C", gc: 0x71c, nat: ::core::mem::offset_of!(StageInfo, x71C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x720", gc: 0x720, nat: ::core::mem::offset_of!(StageInfo, x720), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
+    F { name: "x724", gc: 0x724, nat: ::core::mem::offset_of!(StageInfo, x724), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x728", gc: 0x728, nat: ::core::mem::offset_of!(StageInfo, x728), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x72C", gc: 0x72c, nat: ::core::mem::offset_of!(StageInfo, x72C), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
+    F { name: "x730", gc: 0x730, nat: ::core::mem::offset_of!(StageInfo, x730), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x73C", gc: 0x73c, nat: ::core::mem::offset_of!(StageInfo, x73C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x740", gc: 0x740, nat: ::core::mem::offset_of!(StageInfo, x740), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
+    F { name: "x744_pad", gc: 0x744, nat: ::core::mem::offset_of!(StageInfo, x744_pad), size: ::core::mem::size_of::<[u8; 4]>(), kind: Kind::Blob },
+];
+pub static B_StageInfo: &[(&str, u32, u32, u32)] = &[];
+
+pub static T_Vec: &[F] = &[
+    F { name: "x", gc: 0x0, nat: ::core::mem::offset_of!(Vec, x), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "y", gc: 0x4, nat: ::core::mem::offset_of!(Vec, y), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "z", gc: 0x8, nat: ::core::mem::offset_of!(Vec, z), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+];
+pub static B_Vec: &[(&str, u32, u32, u32)] = &[];
+
+pub static T_StageInfo_unk8C: &[F] = &[
+    F { name: "bf_0", gc: 0x0, nat: ::core::mem::offset_of!(StageInfo_unk8C, bf_0), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
+];
+pub static B_StageInfo_unk8C: &[(&str, u32, u32, u32)] = &[("b0", 0x0, 0, 1), ("b1", 0x0, 1, 1), ("b2", 0x0, 2, 1), ("b3", 0x0, 3, 1), ("b4", 0x0, 4, 1), ("b5", 0x0, 5, 1), ("b6", 0x0, 6, 1), ("b7", 0x0, 7, 1)];
+
+pub static T_StageCameraInfo: &[F] = &[
+    F { name: "cam_bounds", gc: 0x0, nat: ::core::mem::offset_of!(StageCameraInfo, cam_bounds), size: ::core::mem::size_of::<StageBlastZone>(), kind: Kind::Struct("StageBlastZone", &T_StageBlastZone) },
+    F { name: "cam_x_offset", gc: 0x10, nat: ::core::mem::offset_of!(StageCameraInfo, cam_x_offset), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_y_offset", gc: 0x14, nat: ::core::mem::offset_of!(StageCameraInfo, cam_y_offset), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_vertical_tilt", gc: 0x18, nat: ::core::mem::offset_of!(StageCameraInfo, cam_vertical_tilt), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_pan_degrees", gc: 0x1c, nat: ::core::mem::offset_of!(StageCameraInfo, cam_pan_degrees), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x20", gc: 0x20, nat: ::core::mem::offset_of!(StageCameraInfo, x20), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x24", gc: 0x24, nat: ::core::mem::offset_of!(StageCameraInfo, x24), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_track_ratio", gc: 0x28, nat: ::core::mem::offset_of!(StageCameraInfo, cam_track_ratio), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_fixed_zoom", gc: 0x2c, nat: ::core::mem::offset_of!(StageCameraInfo, cam_fixed_zoom), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_track_smooth", gc: 0x30, nat: ::core::mem::offset_of!(StageCameraInfo, cam_track_smooth), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_zoom_rate", gc: 0x34, nat: ::core::mem::offset_of!(StageCameraInfo, cam_zoom_rate), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_max_depth", gc: 0x38, nat: ::core::mem::offset_of!(StageCameraInfo, cam_max_depth), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x3C", gc: 0x3c, nat: ::core::mem::offset_of!(StageCameraInfo, x3C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "pausecam_zpos_min", gc: 0x40, nat: ::core::mem::offset_of!(StageCameraInfo, pausecam_zpos_min), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "pausecam_zpos_init", gc: 0x44, nat: ::core::mem::offset_of!(StageCameraInfo, pausecam_zpos_init), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "pausecam_zpos_max", gc: 0x48, nat: ::core::mem::offset_of!(StageCameraInfo, pausecam_zpos_max), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_angle_up", gc: 0x4c, nat: ::core::mem::offset_of!(StageCameraInfo, cam_angle_up), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_angle_down", gc: 0x50, nat: ::core::mem::offset_of!(StageCameraInfo, cam_angle_down), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_angle_left", gc: 0x54, nat: ::core::mem::offset_of!(StageCameraInfo, cam_angle_left), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "cam_angle_right", gc: 0x58, nat: ::core::mem::offset_of!(StageCameraInfo, cam_angle_right), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "fixed_cam_pos", gc: 0x5c, nat: ::core::mem::offset_of!(StageCameraInfo, fixed_cam_pos), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "fixed_cam_fov", gc: 0x68, nat: ::core::mem::offset_of!(StageCameraInfo, fixed_cam_fov), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "fixed_cam_vert_angle", gc: 0x6c, nat: ::core::mem::offset_of!(StageCameraInfo, fixed_cam_vert_angle), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "fixed_cam_horz_angle", gc: 0x70, nat: ::core::mem::offset_of!(StageCameraInfo, fixed_cam_horz_angle), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+];
+pub static B_StageCameraInfo: &[(&str, u32, u32, u32)] = &[];
+
+pub static T_StageBlastZone: &[F] = &[
+    F { name: "left", gc: 0x0, nat: ::core::mem::offset_of!(StageBlastZone, left), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "right", gc: 0x4, nat: ::core::mem::offset_of!(StageBlastZone, right), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "top", gc: 0x8, nat: ::core::mem::offset_of!(StageBlastZone, top), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "bottom", gc: 0xc, nat: ::core::mem::offset_of!(StageBlastZone, bottom), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+];
+pub static B_StageBlastZone: &[(&str, u32, u32, u32)] = &[];
+
 pub static T_Item: &[F] = &[
     F { name: "x0", gc: 0x0, nat: ::core::mem::offset_of!(Item, x0), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
     F { name: "entity", gc: 0x4, nat: ::core::mem::offset_of!(Item, entity), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
     F { name: "x8", gc: 0x8, nat: ::core::mem::offset_of!(Item, x8), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
     F { name: "spawn_kind", gc: 0xc, nat: ::core::mem::offset_of!(Item, spawn_kind), size: ::core::mem::size_of::<enum_t>(), kind: Kind::Int(true) },
     F { name: "kind", gc: 0x10, nat: ::core::mem::offset_of!(Item, kind), size: ::core::mem::size_of::<ItemKind>(), kind: Kind::Int(true) },
-    F { name: "hold_kind", gc: 0x14, nat: ::core::mem::offset_of!(Item, hold_kind), size: ::core::mem::size_of::<enum_t>(), kind: Kind::Int(true) },
+    F { name: "hold_kind", gc: 0x14, nat: ::core::mem::offset_of!(Item, hold_kind), size: ::core::mem::size_of::<Item_HoldKinds>(), kind: Kind::Int(false) },
     F { name: "x18", gc: 0x18, nat: ::core::mem::offset_of!(Item, x18), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
     F { name: "x1C", gc: 0x1c, nat: ::core::mem::offset_of!(Item, x1C), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
     F { name: "x20_team_id", gc: 0x20, nat: ::core::mem::offset_of!(Item, x20_team_id), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
@@ -68,7 +174,7 @@ pub static T_Item: &[F] = &[
     F { name: "xB6B", gc: 0xb6b, nat: ::core::mem::offset_of!(Item, xB6B), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
     F { name: "xB6C_vars", gc: 0xb6c, nat: ::core::mem::offset_of!(Item, xB6C_vars), size: ::core::mem::size_of::<[xB6C_t; 2]>(), kind: Kind::Arr(2, 40, ::core::mem::size_of::<xB6C_t>(), &Kind::Struct("xB6C_t", &T_xB6C_t)) },
     F { name: "xBBC_dynamicBoneTable", gc: 0xbbc, nat: ::core::mem::offset_of!(Item, xBBC_dynamicBoneTable), size: ::core::mem::size_of::<*mut DynamicBoneTable>(), kind: Kind::Ptr },
-    F { name: "xBC0", gc: 0xbc0, nat: ::core::mem::offset_of!(Item, xBC0), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
+    F { name: "xBC0", gc: 0xbc0, nat: ::core::mem::offset_of!(Item, xBC0), size: ::core::mem::size_of::<*mut EF_QueuedEffect>(), kind: Kind::Ptr },
     F { name: "xBC4", gc: 0xbc4, nat: ::core::mem::offset_of!(Item, xBC4), size: ::core::mem::size_of::<_GXColor>(), kind: Kind::Struct("_GXColor", &T__GXColor) },
     F { name: "xBC8", gc: 0xbc8, nat: ::core::mem::offset_of!(Item, xBC8), size: ::core::mem::size_of::<ItemModStruct>(), kind: Kind::Struct("ItemModStruct", &T_ItemModStruct) },
     F { name: "xBCC_unk", gc: 0xbcc, nat: ::core::mem::offset_of!(Item, xBCC_unk), size: ::core::mem::size_of::<Vec2>(), kind: Kind::Struct("Vec2", &T_Vec2) },
@@ -95,8 +201,8 @@ pub static T_Item: &[F] = &[
     F { name: "xC6C", gc: 0xc6c, nat: ::core::mem::offset_of!(Item, xC6C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "xC70", gc: 0xc70, nat: ::core::mem::offset_of!(Item, xC70), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "xC74", gc: 0xc74, nat: ::core::mem::offset_of!(Item, xC74), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "xC78", gc: 0xc78, nat: ::core::mem::offset_of!(Item, xC78), size: ::core::mem::size_of::<Vec2>(), kind: Kind::Struct("Vec2", &T_Vec2) },
-    F { name: "xC80", gc: 0xc80, nat: ::core::mem::offset_of!(Item, xC80), size: ::core::mem::size_of::<S32Vec2>(), kind: Kind::Struct("S32Vec2", &T_S32Vec2) },
+    F { name: "xC78", gc: 0xc78, nat: ::core::mem::offset_of!(Item, xC78), size: ::core::mem::size_of::<S32Vec2>(), kind: Kind::Struct("S32Vec2", &T_S32Vec2) },
+    F { name: "xC80", gc: 0xc80, nat: ::core::mem::offset_of!(Item, xC80), size: ::core::mem::size_of::<Struct207C>(), kind: Kind::Struct("Struct207C", &T_Struct207C) },
     F { name: "xC88", gc: 0xc88, nat: ::core::mem::offset_of!(Item, xC88), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
     F { name: "xC8C", gc: 0xc8c, nat: ::core::mem::offset_of!(Item, xC8C), size: ::core::mem::size_of::<u16>(), kind: Kind::Int(false) },
     F { name: "xC90_absorbGObj", gc: 0xc90, nat: ::core::mem::offset_of!(Item, xC90_absorbGObj), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
@@ -164,16 +270,16 @@ pub static T_Item: &[F] = &[
     F { name: "xD8C_attack_instance", gc: 0xd8c, nat: ::core::mem::offset_of!(Item, xD8C_attack_instance), size: ::core::mem::size_of::<u16>(), kind: Kind::Int(false) },
     F { name: "xD8E", gc: 0xd8e, nat: ::core::mem::offset_of!(Item, xD8E), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
     F { name: "xD90", gc: 0xd90, nat: ::core::mem::offset_of!(Item, xD90), size: ::core::mem::size_of::<Struct2070>(), kind: Kind::Union },
-    F { name: "xD94", gc: 0xd94, nat: ::core::mem::offset_of!(Item, xD94), size: ::core::mem::size_of::<Vec2>(), kind: Kind::Struct("Vec2", &T_Vec2) },
-    F { name: "xD9C", gc: 0xd9c, nat: ::core::mem::offset_of!(Item, xD9C), size: ::core::mem::size_of::<S32Vec2>(), kind: Kind::Struct("S32Vec2", &T_S32Vec2) },
+    F { name: "xD94", gc: 0xd94, nat: ::core::mem::offset_of!(Item, xD94), size: ::core::mem::size_of::<S32Vec2>(), kind: Kind::Struct("S32Vec2", &T_S32Vec2) },
+    F { name: "xD9C", gc: 0xd9c, nat: ::core::mem::offset_of!(Item, xD9C), size: ::core::mem::size_of::<Struct207C>(), kind: Kind::Struct("Struct207C", &T_Struct207C) },
     F { name: "xDA4_word", gc: 0xda4, nat: ::core::mem::offset_of!(Item, xDA4_word), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
     F { name: "xDA8_short", gc: 0xda8, nat: ::core::mem::offset_of!(Item, xDA8_short), size: ::core::mem::size_of::<u16>(), kind: Kind::Int(false) },
-    F { name: "anon_daa", gc: 0xdaa, nat: ::core::mem::offset_of!(Item, anon_daa), size: ::core::mem::size_of::<Item_anon_477>(), kind: Kind::Union },
+    F { name: "xDAA", gc: 0xdaa, nat: ::core::mem::offset_of!(Item, xDAA), size: ::core::mem::size_of::<Item_xDAA>(), kind: Kind::Union },
     F { name: "xDAC_itcmd_var0", gc: 0xdac, nat: ::core::mem::offset_of!(Item, xDAC_itcmd_var0), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
     F { name: "xDB0_itcmd_var1", gc: 0xdb0, nat: ::core::mem::offset_of!(Item, xDB0_itcmd_var1), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
     F { name: "xDB4_itcmd_var2", gc: 0xdb4, nat: ::core::mem::offset_of!(Item, xDB4_itcmd_var2), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
     F { name: "xDB8_itcmd_var3", gc: 0xdb8, nat: ::core::mem::offset_of!(Item, xDB8_itcmd_var3), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
-    F { name: "anon_dbc", gc: 0xdbc, nat: ::core::mem::offset_of!(Item, anon_dbc), size: ::core::mem::size_of::<Item_anon_485>(), kind: Kind::Union },
+    F { name: "xDBC", gc: 0xdbc, nat: ::core::mem::offset_of!(Item, xDBC), size: ::core::mem::size_of::<Item_xDBC>(), kind: Kind::Union },
     F { name: "xDC0", gc: 0xdc0, nat: ::core::mem::offset_of!(Item, xDC0), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
     F { name: "xDC4", gc: 0xdc4, nat: ::core::mem::offset_of!(Item, xDC4), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
     F { name: "xDC8_word", gc: 0xdc8, nat: ::core::mem::offset_of!(Item, xDC8_word), size: ::core::mem::size_of::<flag32>(), kind: Kind::Struct("flag32", &T_flag32) },
@@ -199,13 +305,6 @@ pub static T_xB6C_t: &[F] = &[
     F { name: "xB90", gc: 0x24, nat: ::core::mem::offset_of!(xB6C_t, xB90), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
 ];
 pub static B_xB6C_t: &[(&str, u32, u32, u32)] = &[];
-
-pub static T_Vec: &[F] = &[
-    F { name: "x", gc: 0x0, nat: ::core::mem::offset_of!(Vec, x), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "y", gc: 0x4, nat: ::core::mem::offset_of!(Vec, y), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "z", gc: 0x8, nat: ::core::mem::offset_of!(Vec, z), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-];
-pub static B_Vec: &[(&str, u32, u32, u32)] = &[];
 
 pub static T_lb_80014638_arg1_t: &[F] = &[
     F { name: "unk_x", gc: 0x0, nat: ::core::mem::offset_of!(lb_80014638_arg1_t, unk_x), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
@@ -245,6 +344,12 @@ pub static T_Vec2: &[F] = &[
     F { name: "y", gc: 0x4, nat: ::core::mem::offset_of!(Vec2, y), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
 ];
 pub static B_Vec2: &[(&str, u32, u32, u32)] = &[];
+
+pub static T_Struct207C: &[F] = &[
+    F { name: "x", gc: 0x0, nat: ::core::mem::offset_of!(Struct207C, x), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "y", gc: 0x4, nat: ::core::mem::offset_of!(Struct207C, y), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
+];
+pub static B_Struct207C: &[(&str, u32, u32, u32)] = &[];
 
 pub static T_S32Vec2: &[F] = &[
     F { name: "x", gc: 0x0, nat: ::core::mem::offset_of!(S32Vec2, x), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
@@ -309,9 +414,9 @@ pub static T_HitCapsule: &[F] = &[
     F { name: "coll_distance", gc: 0x70, nat: ::core::mem::offset_of!(HitCapsule, coll_distance), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "victims_1", gc: 0x74, nat: ::core::mem::offset_of!(HitCapsule, victims_1), size: ::core::mem::size_of::<[HitVictim; 12]>(), kind: Kind::Arr(12, 8, ::core::mem::size_of::<HitVictim>(), &Kind::Struct("HitVictim", &T_HitVictim)) },
     F { name: "victims_2", gc: 0xd4, nat: ::core::mem::offset_of!(HitCapsule, victims_2), size: ::core::mem::size_of::<[HitVictim; 12]>(), kind: Kind::Arr(12, 8, ::core::mem::size_of::<HitVictim>(), &Kind::Struct("HitVictim", &T_HitVictim)) },
-    F { name: "anon_134", gc: 0x134, nat: ::core::mem::offset_of!(HitCapsule, anon_134), size: ::core::mem::size_of::<HitCapsule_anon_83>(), kind: Kind::Union },
+    F { name: "x134", gc: 0x134, nat: ::core::mem::offset_of!(HitCapsule, x134), size: ::core::mem::size_of::<HitCapsule_x134>(), kind: Kind::Union },
 ];
-pub static B_HitCapsule: &[(&str, u32, u32, u32)] = &[("x40_b0", 0x40, 0, 1), ("x40_b1", 0x40, 1, 1), ("x40_b2", 0x40, 2, 1), ("x40_b3", 0x40, 3, 1), ("x40_b4", 0x40, 4, 8), ("x41_b4", 0x40, 12, 1), ("x41_b5", 0x40, 13, 1), ("x41_b6", 0x40, 14, 1), ("x41_b7", 0x40, 15, 1), ("x42_b0", 0x42, 0, 1), ("x42_b1", 0x42, 1, 1), ("x42_b2", 0x42, 2, 1), ("x42_b3", 0x42, 3, 1), ("x42_b4", 0x42, 4, 1), ("x42_b5", 0x42, 5, 1), ("x42_b6", 0x42, 6, 1), ("x42_b7", 0x42, 7, 1), ("x43_b0", 0x43, 0, 1), ("x43_b1", 0x43, 1, 1), ("x43_b2", 0x43, 2, 1), ("x43_b3", 0x43, 3, 1), ("x43_b4", 0x43, 4, 1), ("x43_b5", 0x43, 5, 1), ("x43_b6", 0x43, 6, 1), ("x43_b7", 0x43, 7, 1), ("hit_grabbed_victim_only", 0x134, 0, 1)];
+pub static B_HitCapsule: &[(&str, u32, u32, u32)] = &[("x40_b0", 0x40, 0, 1), ("x40_b1", 0x40, 1, 1), ("x40_b2", 0x40, 2, 1), ("x40_b3", 0x40, 3, 1), ("x40_b4", 0x40, 4, 8), ("x41_b4", 0x40, 12, 1), ("x41_b5", 0x40, 13, 1), ("x41_b6", 0x40, 14, 1), ("x41_b7", 0x40, 15, 1), ("x42_b0", 0x42, 0, 1), ("x42_b1", 0x42, 1, 1), ("x42_b2", 0x42, 2, 1), ("x42_b3", 0x42, 3, 1), ("x42_b4", 0x42, 4, 1), ("x42_b5", 0x42, 5, 1), ("x42_b6", 0x42, 6, 1), ("x42_b7", 0x42, 7, 1), ("x43_b0", 0x43, 0, 1), ("x43_b1", 0x43, 1, 1), ("x43_b2", 0x43, 2, 1), ("x43_b3", 0x43, 3, 1), ("x43_b4", 0x43, 4, 1), ("x43_b5", 0x43, 5, 1), ("x43_b6", 0x43, 6, 1), ("x43_b7", 0x43, 7, 1)];
 
 pub static T_HitVictim: &[F] = &[
     F { name: "victim", gc: 0x0, nat: ::core::mem::offset_of!(HitVictim, victim), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
@@ -335,7 +440,7 @@ pub static B_HurtCapsule: &[(&str, u32, u32, u32)] = &[("skip_update_pos", 0x24,
 pub static T_CommandInfo: &[F] = &[
     F { name: "timer", gc: 0x0, nat: ::core::mem::offset_of!(CommandInfo, timer), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "frame_count", gc: 0x4, nat: ::core::mem::offset_of!(CommandInfo, frame_count), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "anon_8", gc: 0x8, nat: ::core::mem::offset_of!(CommandInfo, anon_8), size: ::core::mem::size_of::<CommandInfo_anon_1008>(), kind: Kind::Union },
+    F { name: "anon_8", gc: 0x8, nat: ::core::mem::offset_of!(CommandInfo, anon_8), size: ::core::mem::size_of::<CommandInfo_anon_1020>(), kind: Kind::Union },
     F { name: "loop_count", gc: 0xc, nat: ::core::mem::offset_of!(CommandInfo, loop_count), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
     F { name: "event_return", gc: 0x10, nat: ::core::mem::offset_of!(CommandInfo, event_return), size: ::core::mem::size_of::<[*mut CmdUnion; 3]>(), kind: Kind::Blob },
     F { name: "loop_count_dup", gc: 0x1c, nat: ::core::mem::offset_of!(CommandInfo, loop_count_dup), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
@@ -439,7 +544,7 @@ pub static B_SurfaceData: &[(&str, u32, u32, u32)] = &[];
 
 pub static T_ECBSource: &[F] = &[
     F { name: "kind", gc: 0x0, nat: ::core::mem::offset_of!(ECBSource, kind), size: ::core::mem::size_of::<ECBSourceKind>(), kind: Kind::Int(false) },
-    F { name: "anon_4", gc: 0x4, nat: ::core::mem::offset_of!(ECBSource, anon_4), size: ::core::mem::size_of::<ECBSource_anon_186>(), kind: Kind::Union },
+    F { name: "x4", gc: 0x4, nat: ::core::mem::offset_of!(ECBSource, x4), size: ::core::mem::size_of::<ECBSource_x4>(), kind: Kind::Union },
     F { name: "x124", gc: 0x20, nat: ::core::mem::offset_of!(ECBSource, x124), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "x128", gc: 0x24, nat: ::core::mem::offset_of!(ECBSource, x128), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "x12C", gc: 0x28, nat: ::core::mem::offset_of!(ECBSource, x12C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
@@ -447,20 +552,104 @@ pub static T_ECBSource: &[F] = &[
 pub static B_ECBSource: &[(&str, u32, u32, u32)] = &[];
 
 pub static T_CameraBoxFlags: &[F] = &[
-    F { name: "anon_0", gc: 0x0, nat: ::core::mem::offset_of!(CameraBoxFlags, anon_0), size: ::core::mem::size_of::<CameraBoxFlags_anon_30>(), kind: Kind::Struct("CameraBoxFlags_anon_30", &T_CameraBoxFlags_anon_30) },
+    F { name: "x0", gc: 0x0, nat: ::core::mem::offset_of!(CameraBoxFlags, x0), size: ::core::mem::size_of::<CameraBoxFlags_x0>(), kind: Kind::Struct("CameraBoxFlags_x0", &T_CameraBoxFlags_x0) },
 ];
-pub static B_CameraBoxFlags: &[(&str, u32, u32, u32)] = &[("b01", 0x0, 0, 2), ("b2", 0x0, 2, 1), ("b3", 0x0, 3, 1), ("b4", 0x0, 4, 1), ("b5", 0x0, 5, 1), ("b6", 0x0, 6, 1), ("b7", 0x0, 7, 1)];
+pub static B_CameraBoxFlags: &[(&str, u32, u32, u32)] = &[];
 
-pub static T_CameraBoxFlags_anon_30: &[F] = &[
-    F { name: "bf_0", gc: 0x0, nat: ::core::mem::offset_of!(CameraBoxFlags_anon_30, bf_0), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
+pub static T_CameraBoxFlags_x0: &[F] = &[
+    F { name: "bf_0", gc: 0x0, nat: ::core::mem::offset_of!(CameraBoxFlags_x0, bf_0), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
 ];
-pub static B_CameraBoxFlags_anon_30: &[(&str, u32, u32, u32)] = &[("b01", 0x0, 0, 2), ("b2", 0x0, 2, 1), ("b3", 0x0, 3, 1), ("b4", 0x0, 4, 1), ("b5", 0x0, 5, 1), ("b6", 0x0, 6, 1), ("b7", 0x0, 7, 1)];
+pub static B_CameraBoxFlags_x0: &[(&str, u32, u32, u32)] = &[("b01", 0x0, 0, 2), ("b2", 0x0, 2, 1), ("b3", 0x0, 3, 1), ("b4", 0x0, 4, 1), ("b5", 0x0, 5, 1), ("b6", 0x0, 6, 1), ("b7", 0x0, 7, 1)];
+
+pub static T_Camera: &[F] = &[
+    F { name: "gobj", gc: 0x0, nat: ::core::mem::offset_of!(Camera, gobj), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
+    F { name: "mode", gc: 0x4, nat: ::core::mem::offset_of!(Camera, mode), size: ::core::mem::size_of::<CameraType>(), kind: Kind::Int(false) },
+    F { name: "background_color", gc: 0x8, nat: ::core::mem::offset_of!(Camera, background_color), size: ::core::mem::size_of::<_GXColor>(), kind: Kind::Struct("_GXColor", &T__GXColor) },
+    F { name: "nearz", gc: 0xc, nat: ::core::mem::offset_of!(Camera, nearz), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "farz", gc: 0x10, nat: ::core::mem::offset_of!(Camera, farz), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "transform", gc: 0x14, nat: ::core::mem::offset_of!(Camera, transform), size: ::core::mem::size_of::<CameraTransformState>(), kind: Kind::Struct("CameraTransformState", &T_CameraTransformState) },
+    F { name: "transform_copy", gc: 0x4c, nat: ::core::mem::offset_of!(Camera, transform_copy), size: ::core::mem::size_of::<CameraTransformState>(), kind: Kind::Struct("CameraTransformState", &T_CameraTransformState) },
+    F { name: "translation", gc: 0x84, nat: ::core::mem::offset_of!(Camera, translation), size: ::core::mem::size_of::<Vec2>(), kind: Kind::Struct("Vec2", &T_Vec2) },
+    F { name: "quake_frames_left", gc: 0x8c, nat: ::core::mem::offset_of!(Camera, quake_frames_left), size: ::core::mem::size_of::<[i32; 5]>(), kind: Kind::Arr(5, 4, ::core::mem::size_of::<i32>(), &Kind::Int(true)) },
+    F { name: "quake_gobj", gc: 0xa0, nat: ::core::mem::offset_of!(Camera, quake_gobj), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
+    F { name: "quake_offset", gc: 0xa4, nat: ::core::mem::offset_of!(Camera, quake_offset), size: ::core::mem::size_of::<Vec2>(), kind: Kind::Struct("Vec2", &T_Vec2) },
+    F { name: "quake_scale", gc: 0xac, nat: ::core::mem::offset_of!(Camera, quake_scale), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "quakes", gc: 0xb0, nat: ::core::mem::offset_of!(Camera, quakes), size: ::core::mem::size_of::<[[CameraQuake; 16]; 2]>(), kind: Kind::Arr(2, 256, ::core::mem::size_of::<[CameraQuake; 16]>(), &Kind::Arr(16, 16, ::core::mem::size_of::<CameraQuake>(), &Kind::Struct("CameraQuake", &T_CameraQuake))) },
+    F { name: "x2B0", gc: 0x2b0, nat: ::core::mem::offset_of!(Camera, x2B0), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x2B4", gc: 0x2b4, nat: ::core::mem::offset_of!(Camera, x2B4), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x2B8", gc: 0x2b8, nat: ::core::mem::offset_of!(Camera, x2B8), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
+    F { name: "x2BA", gc: 0x2ba, nat: ::core::mem::offset_of!(Camera, x2BA), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
+    F { name: "x2BC", gc: 0x2bc, nat: ::core::mem::offset_of!(Camera, x2BC), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x2C0", gc: 0x2c0, nat: ::core::mem::offset_of!(Camera, x2C0), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x2C4", gc: 0x2c4, nat: ::core::mem::offset_of!(Camera, x2C4), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
+    F { name: "x2C5", gc: 0x2c5, nat: ::core::mem::offset_of!(Camera, x2C5), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
+    F { name: "pad_2C6", gc: 0x2c6, nat: ::core::mem::offset_of!(Camera, pad_2C6), size: ::core::mem::size_of::<[i8; 2]>(), kind: Kind::Blob },
+    F { name: "pitch_offset", gc: 0x2c8, nat: ::core::mem::offset_of!(Camera, pitch_offset), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "yaw_offset", gc: 0x2cc, nat: ::core::mem::offset_of!(Camera, yaw_offset), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x2D0", gc: 0x2d0, nat: ::core::mem::offset_of!(Camera, x2D0), size: ::core::mem::size_of::<Camera_x2D0>(), kind: Kind::Struct("Camera_x2D0", &T_Camera_x2D0) },
+    F { name: "x304", gc: 0x304, nat: ::core::mem::offset_of!(Camera, x304), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
+    F { name: "x305", gc: 0x305, nat: ::core::mem::offset_of!(Camera, x305), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
+    F { name: "x306", gc: 0x306, nat: ::core::mem::offset_of!(Camera, x306), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
+    F { name: "x307", gc: 0x307, nat: ::core::mem::offset_of!(Camera, x307), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
+    F { name: "x308", gc: 0x308, nat: ::core::mem::offset_of!(Camera, x308), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x314", gc: 0x314, nat: ::core::mem::offset_of!(Camera, x314), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "pause_eye_offset", gc: 0x320, nat: ::core::mem::offset_of!(Camera, pause_eye_offset), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x32C", gc: 0x32c, nat: ::core::mem::offset_of!(Camera, x32C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "pause_eye_distance", gc: 0x330, nat: ::core::mem::offset_of!(Camera, pause_eye_distance), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "pause_up", gc: 0x334, nat: ::core::mem::offset_of!(Camera, pause_up), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x340", gc: 0x340, nat: ::core::mem::offset_of!(Camera, x340), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
+    F { name: "bf_341", gc: 0x341, nat: ::core::mem::offset_of!(Camera, bf_341), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
+    F { name: "x342_pad", gc: 0x342, nat: ::core::mem::offset_of!(Camera, x342_pad), size: ::core::mem::size_of::<[i8; 2]>(), kind: Kind::Blob },
+    F { name: "x344", gc: 0x344, nat: ::core::mem::offset_of!(Camera, x344), size: ::core::mem::size_of::<Camera_x344>(), kind: Kind::Union },
+    F { name: "x350", gc: 0x350, nat: ::core::mem::offset_of!(Camera, x350), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "x35C", gc: 0x35c, nat: ::core::mem::offset_of!(Camera, x35C), size: ::core::mem::size_of::<Camera_x35C>(), kind: Kind::Union },
+    F { name: "x368", gc: 0x368, nat: ::core::mem::offset_of!(Camera, x368), size: ::core::mem::size_of::<Camera_x368>(), kind: Kind::Union },
+    F { name: "x374", gc: 0x374, nat: ::core::mem::offset_of!(Camera, x374), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x378", gc: 0x378, nat: ::core::mem::offset_of!(Camera, x378), size: ::core::mem::size_of::<Camera_x378>(), kind: Kind::Union },
+    F { name: "x37C", gc: 0x37c, nat: ::core::mem::offset_of!(Camera, x37C), size: ::core::mem::size_of::<Camera_x37C>(), kind: Kind::Union },
+    F { name: "x380", gc: 0x380, nat: ::core::mem::offset_of!(Camera, x380), size: ::core::mem::size_of::<[u8; 24]>(), kind: Kind::Blob },
+    F { name: "bf_398", gc: 0x398, nat: ::core::mem::offset_of!(Camera, bf_398), size: ::core::mem::size_of::<[u8; 3]>(), kind: Kind::Blob },
+    F { name: "pad_39B", gc: 0x39b, nat: ::core::mem::offset_of!(Camera, pad_39B), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
+];
+pub static B_Camera: &[(&str, u32, u32, u32)] = &[("x341_b0", 0x341, 0, 1), ("x341_b1_b2", 0x341, 1, 2), ("x341_b3_b4", 0x341, 3, 2), ("x341_b5_b6", 0x341, 5, 2), ("x341_b7", 0x341, 7, 1), ("x398_b0", 0x398, 0, 1), ("x398_b1", 0x398, 1, 1), ("x398_b2", 0x398, 2, 1), ("x398_b3", 0x398, 3, 1), ("x398_b4", 0x398, 4, 1), ("x398_b5", 0x398, 5, 1), ("x398_b6_b7", 0x398, 6, 2), ("x399_b0_b1", 0x399, 0, 2), ("x399_b2", 0x399, 2, 1), ("x399_b3", 0x399, 3, 1), ("x399_b4", 0x399, 4, 1), ("x399_b5", 0x399, 5, 1), ("x399_b6", 0x399, 6, 1), ("x399_b7", 0x399, 7, 1), ("x39A_b0", 0x39a, 0, 1), ("x39A_b1", 0x39a, 1, 1), ("x39A_b2", 0x39a, 2, 1), ("x39A_b3", 0x39a, 3, 1), ("x39A_b4", 0x39a, 4, 1), ("x39A_b5", 0x39a, 5, 1), ("x39A_b6", 0x39a, 6, 1), ("x39A_b7", 0x39a, 7, 1)];
+
+pub static T_Camera_x2D0: &[F] = &[
+    F { name: "y_max", gc: 0x0, nat: ::core::mem::offset_of!(Camera_x2D0, y_max), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "y_min", gc: 0x4, nat: ::core::mem::offset_of!(Camera_x2D0, y_min), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x_min", gc: 0x8, nat: ::core::mem::offset_of!(Camera_x2D0, x_min), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "x_max", gc: 0xc, nat: ::core::mem::offset_of!(Camera_x2D0, x_max), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "z_max", gc: 0x10, nat: ::core::mem::offset_of!(Camera_x2D0, z_max), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "z_min", gc: 0x14, nat: ::core::mem::offset_of!(Camera_x2D0, z_min), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "angle_up", gc: 0x18, nat: ::core::mem::offset_of!(Camera_x2D0, angle_up), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "angle_down", gc: 0x1c, nat: ::core::mem::offset_of!(Camera_x2D0, angle_down), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "angle_right", gc: 0x20, nat: ::core::mem::offset_of!(Camera_x2D0, angle_right), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "angle_left", gc: 0x24, nat: ::core::mem::offset_of!(Camera_x2D0, angle_left), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "unk28", gc: 0x28, nat: ::core::mem::offset_of!(Camera_x2D0, unk28), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "unk2C", gc: 0x2c, nat: ::core::mem::offset_of!(Camera_x2D0, unk2C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+];
+pub static B_Camera_x2D0: &[(&str, u32, u32, u32)] = &[];
+
+pub static T_CameraTransformState: &[F] = &[
+    F { name: "interest", gc: 0x0, nat: ::core::mem::offset_of!(CameraTransformState, interest), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "target_interest", gc: 0xc, nat: ::core::mem::offset_of!(CameraTransformState, target_interest), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "position", gc: 0x18, nat: ::core::mem::offset_of!(CameraTransformState, position), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "target_position", gc: 0x24, nat: ::core::mem::offset_of!(CameraTransformState, target_position), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "fov", gc: 0x30, nat: ::core::mem::offset_of!(CameraTransformState, fov), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+    F { name: "target_fov", gc: 0x34, nat: ::core::mem::offset_of!(CameraTransformState, target_fov), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
+];
+pub static B_CameraTransformState: &[(&str, u32, u32, u32)] = &[];
+
+pub static T_CameraQuake: &[F] = &[
+    F { name: "epicenter", gc: 0x0, nat: ::core::mem::offset_of!(CameraQuake, epicenter), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
+    F { name: "kind", gc: 0xc, nat: ::core::mem::offset_of!(CameraQuake, kind), size: ::core::mem::size_of::<CmQuakeKind>(), kind: Kind::Int(false) },
+];
+pub static B_CameraQuake: &[(&str, u32, u32, u32)] = &[];
 
 pub static T_Fighter: &[F] = &[
     F { name: "gobj", gc: 0x0, nat: ::core::mem::offset_of!(Fighter, gobj), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
     F { name: "kind", gc: 0x4, nat: ::core::mem::offset_of!(Fighter, kind), size: ::core::mem::size_of::<FighterKind>(), kind: Kind::Int(false) },
     F { name: "x8_spawnNum", gc: 0x8, nat: ::core::mem::offset_of!(Fighter, x8_spawnNum), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "player_id", gc: 0xc, nat: ::core::mem::offset_of!(Fighter, player_id), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
+    F { name: "player_idx", gc: 0xc, nat: ::core::mem::offset_of!(Fighter, player_idx), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
     F { name: "motion_id", gc: 0x10, nat: ::core::mem::offset_of!(Fighter, motion_id), size: ::core::mem::size_of::<FtMotionId>(), kind: Kind::Int(true) },
     F { name: "anim_id", gc: 0x14, nat: ::core::mem::offset_of!(Fighter, anim_id), size: ::core::mem::size_of::<enum_t>(), kind: Kind::Int(true) },
     F { name: "x18", gc: 0x18, nat: ::core::mem::offset_of!(Fighter, x18), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
@@ -517,22 +706,22 @@ pub static T_Fighter: &[F] = &[
     F { name: "x588", gc: 0x588, nat: ::core::mem::offset_of!(Fighter, x588), size: ::core::mem::size_of::<*mut HSD_LObj>(), kind: Kind::Ptr },
     F { name: "x58C", gc: 0x58c, nat: ::core::mem::offset_of!(Fighter, x58C), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
     F { name: "x590", gc: 0x590, nat: ::core::mem::offset_of!(Fighter, x590), size: ::core::mem::size_of::<*mut FigaTree>(), kind: Kind::Ptr },
-    F { name: "anon_594", gc: 0x594, nat: ::core::mem::offset_of!(Fighter, anon_594), size: ::core::mem::size_of::<Fighter_anon_1364>(), kind: Kind::Union },
+    F { name: "x594", gc: 0x594, nat: ::core::mem::offset_of!(Fighter, x594), size: ::core::mem::size_of::<Fighter_x594>(), kind: Kind::Union },
     F { name: "x598", gc: 0x598, nat: ::core::mem::offset_of!(Fighter, x598), size: ::core::mem::size_of::<*mut FigaTree>(), kind: Kind::Ptr },
     F { name: "x59C", gc: 0x59c, nat: ::core::mem::offset_of!(Fighter, x59C), size: ::core::mem::size_of::<*mut Fighter_x59C_t>(), kind: Kind::Ptr },
     F { name: "x5A0", gc: 0x5a0, nat: ::core::mem::offset_of!(Fighter, x5A0), size: ::core::mem::size_of::<*mut Fighter_x59C_t>(), kind: Kind::Ptr },
-    F { name: "x5A4", gc: 0x5a4, nat: ::core::mem::offset_of!(Fighter, x5A4), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
-    F { name: "x5A8", gc: 0x5a8, nat: ::core::mem::offset_of!(Fighter, x5A8), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
+    F { name: "x5A4", gc: 0x5a4, nat: ::core::mem::offset_of!(Fighter, x5A4), size: ::core::mem::size_of::<usize>(), kind: Kind::Blob },
+    F { name: "x5A8", gc: 0x5a8, nat: ::core::mem::offset_of!(Fighter, x5A8), size: ::core::mem::size_of::<usize>(), kind: Kind::Blob },
     F { name: "x5AC", gc: 0x5ac, nat: ::core::mem::offset_of!(Fighter, x5AC), size: ::core::mem::size_of::<FtPartsVis>(), kind: Kind::Struct("FtPartsVis", &T_FtPartsVis) },
     F { name: "tobj_list", gc: 0x5cc, nat: ::core::mem::offset_of!(Fighter, tobj_list), size: ::core::mem::size_of::<CostumeTObjList>(), kind: Kind::Struct("CostumeTObjList", &T_CostumeTObjList) },
     F { name: "parts", gc: 0x5e8, nat: ::core::mem::offset_of!(Fighter, parts), size: ::core::mem::size_of::<*mut FighterBone>(), kind: Kind::Ptr },
     F { name: "dobj_list", gc: 0x5ec, nat: ::core::mem::offset_of!(Fighter, dobj_list), size: ::core::mem::size_of::<DObjList>(), kind: Kind::Struct("DObjList", &T_DObjList) },
     F { name: "x5F4_arr", gc: 0x5f4, nat: ::core::mem::offset_of!(Fighter, x5F4_arr), size: ::core::mem::size_of::<[Fighter_x5F4_arr; 12]>(), kind: Kind::Arr(12, 2, ::core::mem::size_of::<Fighter_x5F4_arr>(), &Kind::Struct("Fighter_x5F4_arr", &T_Fighter_x5F4_arr)) },
-    F { name: "x60C", gc: 0x60c, nat: ::core::mem::offset_of!(Fighter, x60C), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
+    F { name: "x60C", gc: 0x60c, nat: ::core::mem::offset_of!(Fighter, x60C), size: ::core::mem::size_of::<*mut EF_QueuedEffect>(), kind: Kind::Ptr },
     F { name: "x610_color_rgba", gc: 0x610, nat: ::core::mem::offset_of!(Fighter, x610_color_rgba), size: ::core::mem::size_of::<[_GXColor; 2]>(), kind: Kind::Arr(2, 4, ::core::mem::size_of::<_GXColor>(), &Kind::Struct("_GXColor", &T__GXColor)) },
-    F { name: "x618_player_id", gc: 0x618, nat: ::core::mem::offset_of!(Fighter, x618_player_id), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
-    F { name: "x619_costume_id", gc: 0x619, nat: ::core::mem::offset_of!(Fighter, x619_costume_id), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
-    F { name: "x61A_controller_index", gc: 0x61a, nat: ::core::mem::offset_of!(Fighter, x61A_controller_index), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
+    F { name: "pad_port", gc: 0x618, nat: ::core::mem::offset_of!(Fighter, pad_port), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
+    F { name: "costume_id", gc: 0x619, nat: ::core::mem::offset_of!(Fighter, costume_id), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
+    F { name: "sub_color", gc: 0x61a, nat: ::core::mem::offset_of!(Fighter, sub_color), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
     F { name: "team", gc: 0x61b, nat: ::core::mem::offset_of!(Fighter, team), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
     F { name: "x61C", gc: 0x61c, nat: ::core::mem::offset_of!(Fighter, x61C), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
     F { name: "x61D", gc: 0x61d, nat: ::core::mem::offset_of!(Fighter, x61D), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
@@ -733,10 +922,10 @@ pub static T_Fighter: &[F] = &[
     F { name: "x21FC_flag", gc: 0x21fc, nat: ::core::mem::offset_of!(Fighter, x21FC_flag), size: ::core::mem::size_of::<UnkFlagStruct>(), kind: Kind::Union },
     F { name: "filler_x21FC", gc: 0x21fd, nat: ::core::mem::offset_of!(Fighter, filler_x21FC), size: ::core::mem::size_of::<[u8; 3]>(), kind: Kind::Blob },
     F { name: "cmd_vars", gc: 0x2200, nat: ::core::mem::offset_of!(Fighter, cmd_vars), size: ::core::mem::size_of::<[u32; 4]>(), kind: Kind::Arr(4, 4, ::core::mem::size_of::<u32>(), &Kind::Int(false)) },
-    F { name: "anon_2210", gc: 0x2210, nat: ::core::mem::offset_of!(Fighter, anon_2210), size: ::core::mem::size_of::<Fighter_anon_1705>(), kind: Kind::Union },
+    F { name: "x2210", gc: 0x2210, nat: ::core::mem::offset_of!(Fighter, x2210), size: ::core::mem::size_of::<Fighter_x2210>(), kind: Kind::Union },
     F { name: "cmd_timer", gc: 0x2214, nat: ::core::mem::offset_of!(Fighter, cmd_timer), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "bf_2218", gc: 0x2218, nat: ::core::mem::offset_of!(Fighter, bf_2218), size: ::core::mem::size_of::<[u8; 3]>(), kind: Kind::Blob },
-    F { name: "anon_221b", gc: 0x221b, nat: ::core::mem::offset_of!(Fighter, anon_221b), size: ::core::mem::size_of::<Fighter_anon_1746>(), kind: Kind::Struct("Fighter_anon_1746", &T_Fighter_anon_1746) },
+    F { name: "x221B", gc: 0x221b, nat: ::core::mem::offset_of!(Fighter, x221B), size: ::core::mem::size_of::<Fighter_x221B>(), kind: Kind::Struct("Fighter_x221B", &T_Fighter_x221B) },
     F { name: "bf_221c", gc: 0x221c, nat: ::core::mem::offset_of!(Fighter, bf_221c), size: ::core::mem::size_of::<[u8; 15]>(), kind: Kind::Blob },
     F { name: "u", gc: 0x222c, nat: ::core::mem::offset_of!(Fighter, u), size: ::core::mem::size_of::<Fighter_FighterVars>(), kind: Kind::Union },
     F { name: "bury_grkind", gc: 0x2324, nat: ::core::mem::offset_of!(Fighter, bury_grkind), size: ::core::mem::size_of::<GrKind>(), kind: Kind::Int(false) },
@@ -746,7 +935,7 @@ pub static T_Fighter: &[F] = &[
     F { name: "x2338", gc: 0x2338, nat: ::core::mem::offset_of!(Fighter, x2338), size: ::core::mem::size_of::<IntVec2>(), kind: Kind::Struct("IntVec2", &T_IntVec2) },
     F { name: "mv", gc: 0x2340, nat: ::core::mem::offset_of!(Fighter, mv), size: ::core::mem::size_of::<Fighter_MotionVars>(), kind: Kind::Union },
 ];
-pub static B_Fighter: &[(&str, u32, u32, u32)] = &[("x594_b0", 0x594, 0, 1), ("x594_b1_loop", 0x594, 1, 1), ("x594_b2", 0x594, 2, 1), ("x594_b3", 0x594, 3, 1), ("x594_b4", 0x594, 4, 1), ("x594_b5", 0x594, 5, 1), ("x594_b6", 0x594, 6, 1), ("x594_b7", 0x594, 7, 1), ("x594_pad", 0x594, 0, 10), ("x594_bits", 0x594, 10, 13), ("x594_pad2", 0x594, 23, 3), ("x597_bits", 0x594, 26, 6), ("x2101_bits_0to6", 0x2101, 0, 7), ("x2101_bits_8", 0x2101, 7, 1), ("throw_flags_b0", 0x2210, 0, 1), ("throw_flags_b1", 0x2210, 1, 1), ("throw_flags_b2", 0x2210, 2, 1), ("throw_flags_b3", 0x2210, 3, 1), ("throw_flags_b4", 0x2210, 4, 1), ("throw_flags_b5", 0x2210, 5, 1), ("throw_flags_b6", 0x2210, 6, 1), ("throw_flags_b7", 0x2210, 7, 1), ("allow_interrupt", 0x2218, 0, 1), ("x2218_b1", 0x2218, 1, 1), ("x2218_b2", 0x2218, 2, 1), ("reflecting", 0x2218, 3, 1), ("x2218_b4", 0x2218, 4, 1), ("x2218_b5", 0x2218, 5, 1), ("x2218_b6", 0x2218, 6, 1), ("x2218_b7", 0x2218, 7, 1), ("x2219_b0", 0x2219, 0, 1), ("x2219_b1", 0x2219, 1, 1), ("x2219_b2", 0x2219, 2, 1), ("x2219_b3", 0x2219, 3, 1), ("x2219_b4", 0x2219, 4, 1), ("x2219_b5", 0x2219, 5, 1), ("x2219_b6", 0x2219, 6, 1), ("x2219_b7", 0x2219, 7, 1), ("x221A_b0", 0x221a, 0, 1), ("x221A_b1", 0x221a, 1, 1), ("allow_sdi", 0x221a, 2, 1), ("x221A_b3", 0x221a, 3, 1), ("fall_fast", 0x221a, 4, 1), ("x221A_b5", 0x221a, 5, 1), ("x221A_b6", 0x221a, 6, 1), ("x221A_b7", 0x221a, 7, 1), ("x221B_b0", 0x221b, 0, 1), ("x221B_b1", 0x221b, 1, 1), ("x221B_b2", 0x221b, 2, 1), ("x221B_b3", 0x221b, 3, 1), ("x221B_b4", 0x221b, 4, 1), ("x221B_b5", 0x221b, 5, 1), ("x221B_b6", 0x221b, 6, 1), ("x221B_b7", 0x221b, 7, 1), ("x221C_b0", 0x221c, 0, 1), ("x221C_b1", 0x221c, 1, 1), ("x221C_b2", 0x221c, 2, 1), ("x221C_b3", 0x221c, 3, 1), ("x221C_b4", 0x221c, 4, 1), ("x221C_b5", 0x221c, 5, 1), ("x221C_b6", 0x221c, 6, 1), ("x221C_u16_y", 0x221c, 7, 3), ("x221D_b2", 0x221c, 10, 1), ("x221D_b3", 0x221c, 11, 1), ("x221D_b4", 0x221c, 12, 1), ("x221D_b5", 0x221c, 13, 1), ("x221D_b6", 0x221c, 14, 1), ("x221D_b7", 0x221c, 15, 1), ("invisible", 0x221e, 0, 1), ("x221E_b1", 0x221e, 1, 1), ("x221E_b2", 0x221e, 2, 1), ("x221E_b3", 0x221e, 3, 1), ("x221E_b4", 0x221e, 4, 1), ("x221E_b5", 0x221e, 5, 1), ("x221E_b6", 0x221e, 6, 1), ("x221E_b7", 0x221e, 7, 1), ("x221F_b0", 0x221f, 0, 1), ("x221F_b1", 0x221f, 1, 1), ("x221F_b2", 0x221f, 2, 1), ("x221F_b3", 0x221f, 3, 1), ("is_sub_fighter", 0x221f, 4, 1), ("x221F_b5", 0x221f, 5, 1), ("x221F_b6", 0x221f, 6, 1), ("x221F_b7", 0x221f, 7, 1), ("x2220_b0", 0x2220, 0, 3), ("x2220_b3", 0x2220, 3, 1), ("x2220_b4", 0x2220, 4, 1), ("x2220_b5", 0x2220, 5, 1), ("x2220_b6", 0x2220, 6, 1), ("x2220_b7", 0x2220, 7, 1), ("x2221_b0", 0x2221, 0, 1), ("x2221_b1", 0x2221, 1, 1), ("x2221_b2", 0x2221, 2, 1), ("x2221_b3", 0x2221, 3, 1), ("x2221_b4", 0x2221, 4, 1), ("x2221_b5", 0x2221, 5, 1), ("x2221_b6", 0x2221, 6, 1), ("x2221_b7", 0x2221, 7, 1), ("x2222_b0", 0x2222, 0, 1), ("can_multijump", 0x2222, 1, 1), ("x2222_b2", 0x2222, 2, 1), ("x2222_b3", 0x2222, 3, 1), ("x2222_b4", 0x2222, 4, 1), ("x2222_b5", 0x2222, 5, 1), ("x2222_b6", 0x2222, 6, 1), ("x2222_b7", 0x2222, 7, 1), ("x2223_b0", 0x2223, 0, 1), ("x2223_b1", 0x2223, 1, 1), ("x2223_b2", 0x2223, 2, 1), ("x2223_b3", 0x2223, 3, 1), ("x2223_b4", 0x2223, 4, 1), ("x2223_b5", 0x2223, 5, 1), ("is_always_metal", 0x2223, 6, 1), ("is_metal", 0x2223, 7, 1), ("x2224_b0", 0x2224, 0, 1), ("x2224_b1", 0x2224, 1, 1), ("x2224_b2", 0x2224, 2, 1), ("x2224_b3", 0x2224, 3, 1), ("x2224_b4", 0x2224, 4, 1), ("x2224_b5", 0x2224, 5, 1), ("x2224_b6", 0x2224, 6, 1), ("can_walljump", 0x2224, 7, 1), ("x2225_b0", 0x2225, 0, 1), ("x2225_b1", 0x2225, 1, 1), ("x2225_b2", 0x2225, 2, 1), ("x2225_b3", 0x2225, 3, 1), ("x2225_b4", 0x2225, 4, 1), ("x2225_b5", 0x2225, 5, 1), ("x2225_b6", 0x2225, 6, 1), ("x2225_b7", 0x2225, 7, 1), ("x2226_b0", 0x2226, 0, 1), ("x2226_b1", 0x2226, 1, 1), ("x2226_b2", 0x2226, 2, 1), ("x2226_b3", 0x2226, 3, 1), ("x2226_b4", 0x2226, 4, 1), ("x2226_b5", 0x2226, 5, 1), ("x2226_b6", 0x2226, 6, 1), ("x2226_b7", 0x2226, 7, 1), ("x2227_b0", 0x2227, 0, 1), ("x2227_b1", 0x2227, 1, 1), ("x2227_b2", 0x2227, 2, 1), ("x2227_b3", 0x2227, 3, 1), ("x2227_b4", 0x2227, 4, 1), ("x2227_b5", 0x2227, 5, 1), ("x2227_b6", 0x2227, 6, 1), ("x2227_b7", 0x2227, 7, 1), ("x2228_b0", 0x2228, 0, 1), ("x2228_b1", 0x2228, 1, 1), ("is_sandbag", 0x2228, 2, 1), ("x2228_b3", 0x2228, 3, 2), ("x2228_b5", 0x2228, 5, 1), ("used_tether", 0x2228, 6, 1), ("x2228_b7", 0x2228, 7, 1), ("x2229_b0", 0x2229, 0, 1), ("x2229_b1", 0x2229, 1, 1), ("x2229_b2", 0x2229, 2, 1), ("x2229_b3", 0x2229, 3, 1), ("x2229_b4", 0x2229, 4, 1), ("no_normal_motion", 0x2229, 5, 1), ("x2229_b6", 0x2229, 6, 1), ("no_kb", 0x2229, 7, 1), ("x222A_b0", 0x222a, 0, 1), ("x222A_b1", 0x222a, 1, 1), ("x222A_b2", 0x222a, 2, 1), ("x222A_b3", 0x222a, 3, 2), ("x222A_b5", 0x222a, 5, 1), ("x222A_b6", 0x222a, 6, 1), ("x222A_b7", 0x222a, 7, 1)];
+pub static B_Fighter: &[(&str, u32, u32, u32)] = &[("x2101_bits_0to6", 0x2101, 0, 7), ("x2101_bits_8", 0x2101, 7, 1), ("allow_interrupt", 0x2218, 0, 1), ("x2218_b1", 0x2218, 1, 1), ("x2218_b2", 0x2218, 2, 1), ("reflecting", 0x2218, 3, 1), ("x2218_b4", 0x2218, 4, 1), ("x2218_b5", 0x2218, 5, 1), ("x2218_b6", 0x2218, 6, 1), ("x2218_b7", 0x2218, 7, 1), ("x2219_b0", 0x2219, 0, 1), ("x2219_b1", 0x2219, 1, 1), ("x2219_b2", 0x2219, 2, 1), ("x2219_b3", 0x2219, 3, 1), ("x2219_b4", 0x2219, 4, 1), ("x2219_b5", 0x2219, 5, 1), ("x2219_b6", 0x2219, 6, 1), ("x2219_b7", 0x2219, 7, 1), ("x221A_b0", 0x221a, 0, 1), ("x221A_b1", 0x221a, 1, 1), ("allow_sdi", 0x221a, 2, 1), ("x221A_b3", 0x221a, 3, 1), ("fall_fast", 0x221a, 4, 1), ("x221A_b5", 0x221a, 5, 1), ("x221A_b6", 0x221a, 6, 1), ("x221A_b7", 0x221a, 7, 1), ("x221C_b0", 0x221c, 0, 1), ("x221C_b1", 0x221c, 1, 1), ("x221C_b2", 0x221c, 2, 1), ("x221C_b3", 0x221c, 3, 1), ("x221C_b4", 0x221c, 4, 1), ("x221C_b5", 0x221c, 5, 1), ("x221C_b6", 0x221c, 6, 1), ("x221C_u16_y", 0x221c, 7, 3), ("x221D_b2", 0x221c, 10, 1), ("has_prev_input", 0x221c, 11, 1), ("input_disabled", 0x221c, 12, 1), ("x221D_b5", 0x221c, 13, 1), ("x221D_b6", 0x221c, 14, 1), ("x221D_b7", 0x221c, 15, 1), ("invisible", 0x221e, 0, 1), ("x221E_b1", 0x221e, 1, 1), ("x221E_b2", 0x221e, 2, 1), ("x221E_b3", 0x221e, 3, 1), ("x221E_b4", 0x221e, 4, 1), ("x221E_b5", 0x221e, 5, 1), ("x221E_b6", 0x221e, 6, 1), ("x221E_b7", 0x221e, 7, 1), ("x221F_b0", 0x221f, 0, 1), ("x221F_b1", 0x221f, 1, 1), ("x221F_b2", 0x221f, 2, 1), ("is_sleeping", 0x221f, 3, 1), ("is_sub_fighter", 0x221f, 4, 1), ("x221F_b5", 0x221f, 5, 1), ("x221F_b6", 0x221f, 6, 1), ("x221F_b7", 0x221f, 7, 1), ("x2220_b0", 0x2220, 0, 3), ("x2220_b3", 0x2220, 3, 1), ("x2220_b4", 0x2220, 4, 1), ("x2220_b5", 0x2220, 5, 1), ("x2220_b6", 0x2220, 6, 1), ("x2220_b7", 0x2220, 7, 1), ("x2221_b0", 0x2221, 0, 1), ("x2221_b1", 0x2221, 1, 1), ("x2221_b2", 0x2221, 2, 1), ("x2221_b3", 0x2221, 3, 1), ("x2221_b4", 0x2221, 4, 1), ("x2221_b5", 0x2221, 5, 1), ("x2221_b6", 0x2221, 6, 1), ("x2221_b7", 0x2221, 7, 1), ("x2222_b0", 0x2222, 0, 1), ("can_multijump", 0x2222, 1, 1), ("x2222_b2", 0x2222, 2, 1), ("x2222_b3", 0x2222, 3, 1), ("x2222_b4", 0x2222, 4, 1), ("x2222_b5", 0x2222, 5, 1), ("x2222_b6", 0x2222, 6, 1), ("x2222_b7", 0x2222, 7, 1), ("x2223_b0", 0x2223, 0, 1), ("x2223_b1", 0x2223, 1, 1), ("x2223_b2", 0x2223, 2, 1), ("x2223_b3", 0x2223, 3, 1), ("x2223_b4", 0x2223, 4, 1), ("x2223_b5", 0x2223, 5, 1), ("is_always_metal", 0x2223, 6, 1), ("is_metal", 0x2223, 7, 1), ("x2224_b0", 0x2224, 0, 1), ("x2224_b1", 0x2224, 1, 1), ("stamina_dead", 0x2224, 2, 1), ("x2224_b3", 0x2224, 3, 1), ("x2224_b4", 0x2224, 4, 1), ("x2224_b5", 0x2224, 5, 1), ("x2224_b6", 0x2224, 6, 1), ("can_walljump", 0x2224, 7, 1), ("x2225_b0", 0x2225, 0, 1), ("x2225_b1", 0x2225, 1, 1), ("x2225_b2", 0x2225, 2, 1), ("x2225_b3", 0x2225, 3, 1), ("x2225_b4", 0x2225, 4, 1), ("x2225_b5", 0x2225, 5, 1), ("x2225_b6", 0x2225, 6, 1), ("x2225_b7", 0x2225, 7, 1), ("x2226_b0", 0x2226, 0, 1), ("x2226_b1", 0x2226, 1, 1), ("x2226_b2", 0x2226, 2, 1), ("x2226_b3", 0x2226, 3, 1), ("x2226_b4", 0x2226, 4, 1), ("x2226_b5", 0x2226, 5, 1), ("x2226_b6", 0x2226, 6, 1), ("x2226_b7", 0x2226, 7, 1), ("x2227_b0", 0x2227, 0, 1), ("x2227_b1", 0x2227, 1, 1), ("x2227_b2", 0x2227, 2, 1), ("x2227_b3", 0x2227, 3, 1), ("x2227_b4", 0x2227, 4, 1), ("x2227_b5", 0x2227, 5, 1), ("x2227_b6", 0x2227, 6, 1), ("x2227_b7", 0x2227, 7, 1), ("x2228_b0", 0x2228, 0, 1), ("x2228_b1", 0x2228, 1, 1), ("is_sandbag", 0x2228, 2, 1), ("x2228_b3", 0x2228, 3, 2), ("x2228_b5", 0x2228, 5, 1), ("used_tether", 0x2228, 6, 1), ("x2228_b7", 0x2228, 7, 1), ("x2229_b0", 0x2229, 0, 1), ("x2229_b1", 0x2229, 1, 1), ("x2229_b2", 0x2229, 2, 1), ("x2229_b3", 0x2229, 3, 1), ("x2229_b4", 0x2229, 4, 1), ("no_normal_motion", 0x2229, 5, 1), ("x2229_b6", 0x2229, 6, 1), ("no_kb", 0x2229, 7, 1), ("x222A_b0", 0x222a, 0, 1), ("x222A_b1", 0x222a, 1, 1), ("x222A_b2", 0x222a, 2, 1), ("x222A_b3", 0x222a, 3, 2), ("x222A_b5", 0x222a, 5, 1), ("x222A_b6", 0x222a, 6, 1), ("x222A_b7", 0x222a, 7, 1)];
 
 pub static T_itPickup: &[F] = &[
     F { name: "gr_light_offset", gc: 0x0, nat: ::core::mem::offset_of!(itPickup, gr_light_offset), size: ::core::mem::size_of::<Quaternion>(), kind: Kind::Struct("Quaternion", &T_Quaternion) },
@@ -880,7 +1069,7 @@ pub static T_dmg: &[F] = &[
     F { name: "x1880", gc: 0x54, nat: ::core::mem::offset_of!(dmg, x1880), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
     F { name: "x188c", gc: 0x60, nat: ::core::mem::offset_of!(dmg, x188c), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
     F { name: "x1890", gc: 0x64, nat: ::core::mem::offset_of!(dmg, x1890), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "x1894", gc: 0x68, nat: ::core::mem::offset_of!(dmg, x1894), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
+    F { name: "x1894", gc: 0x68, nat: ::core::mem::offset_of!(dmg, x1894), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
     F { name: "x1898", gc: 0x6c, nat: ::core::mem::offset_of!(dmg, x1898), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "x189C_unk_num_frames", gc: 0x70, nat: ::core::mem::offset_of!(dmg, x189C_unk_num_frames), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "x18a0", gc: 0x74, nat: ::core::mem::offset_of!(dmg, x18a0), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
@@ -896,7 +1085,7 @@ pub static T_dmg: &[F] = &[
     F { name: "x18C8", gc: 0x9c, nat: ::core::mem::offset_of!(dmg, x18C8), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
     F { name: "x18CC", gc: 0xa0, nat: ::core::mem::offset_of!(dmg, x18CC), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
     F { name: "x18D0", gc: 0xa4, nat: ::core::mem::offset_of!(dmg, x18D0), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "x18d4", gc: 0xa8, nat: ::core::mem::offset_of!(dmg, x18d4), size: ::core::mem::size_of::<UnkPlBonusBits>(), kind: Kind::Struct("UnkPlBonusBits", &T_UnkPlBonusBits) },
+    F { name: "x18d4", gc: 0xa8, nat: ::core::mem::offset_of!(dmg, x18d4), size: ::core::mem::size_of::<Struct2070>(), kind: Kind::Union },
     F { name: "x18d8", gc: 0xac, nat: ::core::mem::offset_of!(dmg, x18d8), size: ::core::mem::size_of::<ft_800898B4_t>(), kind: Kind::Struct("ft_800898B4_t", &T_ft_800898B4_t) },
     F { name: "x18ec_instancehitby", gc: 0xc0, nat: ::core::mem::offset_of!(dmg, x18ec_instancehitby), size: ::core::mem::size_of::<u16>(), kind: Kind::Int(false) },
     F { name: "x18F0", gc: 0xc4, nat: ::core::mem::offset_of!(dmg, x18F0), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
@@ -943,14 +1132,6 @@ pub static T_ft_800898B4_t: &[F] = &[
 ];
 pub static B_ft_800898B4_t: &[(&str, u32, u32, u32)] = &[("x10_b0", 0x10, 0, 1), ("x10_b1", 0x10, 1, 1), ("x10_b2", 0x10, 2, 1), ("x10_b3", 0x10, 3, 1), ("x10_b4", 0x10, 4, 1), ("x10_b5", 0x10, 5, 1), ("x10_b6", 0x10, 6, 1), ("x10_b7", 0x10, 7, 1), ("x11_b0", 0x11, 0, 1), ("x11_b1", 0x11, 1, 1), ("x11_b2", 0x11, 2, 1), ("x11_b3", 0x11, 3, 1), ("x11_b4", 0x11, 4, 1)];
 
-pub static T_UnkPlBonusBits: &[F] = &[
-    F { name: "x0", gc: 0x0, nat: ::core::mem::offset_of!(UnkPlBonusBits, x0), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
-    F { name: "x1", gc: 0x1, nat: ::core::mem::offset_of!(UnkPlBonusBits, x1), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
-    F { name: "bf_2", gc: 0x2, nat: ::core::mem::offset_of!(UnkPlBonusBits, bf_2), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
-    F { name: "x3", gc: 0x3, nat: ::core::mem::offset_of!(UnkPlBonusBits, x3), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
-];
-pub static B_UnkPlBonusBits: &[(&str, u32, u32, u32)] = &[("x2_b0", 0x2, 0, 1), ("x2_b1", 0x2, 1, 1), ("x2_b2", 0x2, 2, 1), ("x2_b3", 0x2, 3, 1), ("x2_b4", 0x2, 4, 1), ("x2_b5", 0x2, 5, 1), ("x2_b6", 0x2, 6, 1), ("x2_b7", 0x2, 7, 1)];
-
 pub static T__SmashAttr: &[F] = &[
     F { name: "state", gc: 0x0, nat: ::core::mem::offset_of!(_SmashAttr, state), size: ::core::mem::size_of::<SmashState>(), kind: Kind::Int(false) },
     F { name: "x2118_frames", gc: 0x4, nat: ::core::mem::offset_of!(_SmashAttr, x2118_frames), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
@@ -972,12 +1153,12 @@ pub static T__SmashAttr: &[F] = &[
 pub static B__SmashAttr: &[(&str, u32, u32, u32)] = &[];
 
 pub static T_Struct2074: &[F] = &[
-    F { name: "x2074_vec", gc: 0x0, nat: ::core::mem::offset_of!(Struct2074, x2074_vec), size: ::core::mem::size_of::<Vec2>(), kind: Kind::Struct("Vec2", &T_Vec2) },
-    F { name: "x207C", gc: 0x8, nat: ::core::mem::offset_of!(Struct2074, x207C), size: ::core::mem::size_of::<S32Vec2>(), kind: Kind::Struct("S32Vec2", &T_S32Vec2) },
-    F { name: "anon_10", gc: 0x10, nat: ::core::mem::offset_of!(Struct2074, anon_10), size: ::core::mem::size_of::<Struct2074_anon_1061>(), kind: Kind::Union },
+    F { name: "x2074_vec", gc: 0x0, nat: ::core::mem::offset_of!(Struct2074, x2074_vec), size: ::core::mem::size_of::<S32Vec2>(), kind: Kind::Struct("S32Vec2", &T_S32Vec2) },
+    F { name: "x207C", gc: 0x8, nat: ::core::mem::offset_of!(Struct2074, x207C), size: ::core::mem::size_of::<Struct207C>(), kind: Kind::Struct("Struct207C", &T_Struct207C) },
+    F { name: "x10", gc: 0x10, nat: ::core::mem::offset_of!(Struct2074, x10), size: ::core::mem::size_of::<Struct2074_x10>(), kind: Kind::Union },
     F { name: "x2088", gc: 0x14, nat: ::core::mem::offset_of!(Struct2074, x2088), size: ::core::mem::size_of::<u16>(), kind: Kind::Int(false) },
 ];
-pub static B_Struct2074: &[(&str, u32, u32, u32)] = &[("x2084_b0", 0x10, 0, 1), ("x2084_b1", 0x10, 1, 1), ("x2084_b2", 0x10, 2, 1), ("x2084_b3", 0x10, 3, 1), ("x2084_b4", 0x10, 4, 1), ("x2084_b5", 0x10, 5, 1), ("x2084_b6", 0x10, 6, 1), ("x2084_b7", 0x10, 7, 1), ("x2085_b0", 0x11, 0, 1), ("x2085_b1", 0x11, 1, 1), ("x2085_b2", 0x11, 2, 1), ("x2085_b3", 0x11, 3, 1), ("x2085_b4", 0x11, 4, 1), ("x2085_b5", 0x11, 5, 1), ("x2085_b6", 0x11, 6, 1), ("x2085_b7", 0x11, 7, 1)];
+pub static B_Struct2074: &[(&str, u32, u32, u32)] = &[];
 
 pub static T_LbShadow: &[F] = &[
     F { name: "bf_0", gc: 0x0, nat: ::core::mem::offset_of!(LbShadow, bf_0), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
@@ -1035,6 +1216,11 @@ pub static T_Fighter_x5F4_arr: &[F] = &[
 ];
 pub static B_Fighter_x5F4_arr: &[(&str, u32, u32, u32)] = &[];
 
+pub static T_Fighter_x221B: &[F] = &[
+    F { name: "bf_0", gc: 0x0, nat: ::core::mem::offset_of!(Fighter_x221B, bf_0), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
+];
+pub static B_Fighter_x221B: &[(&str, u32, u32, u32)] = &[("x221B_b0", 0x0, 0, 1), ("x221B_b1", 0x0, 1, 1), ("x221B_b2", 0x0, 2, 1), ("x221B_b3", 0x0, 3, 1), ("x221B_b4", 0x0, 4, 1), ("x221B_b5", 0x0, 5, 1), ("x221B_b6", 0x0, 6, 1), ("x221B_b7", 0x0, 7, 1)];
+
 pub static T_Fighter_x20B0_t: &[F] = &[
     F { name: "x0", gc: 0x0, nat: ::core::mem::offset_of!(Fighter_x20B0_t, x0), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
     F { name: "xC", gc: 0xc, nat: ::core::mem::offset_of!(Fighter_x20B0_t, xC), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
@@ -1069,11 +1255,6 @@ pub static T_Fighter_input: &[F] = &[
     F { name: "released_buttons", gc: 0x4c, nat: ::core::mem::offset_of!(Fighter_input, released_buttons), size: ::core::mem::size_of::<HSD_Pad>(), kind: Kind::Int(false) },
 ];
 pub static B_Fighter_input: &[(&str, u32, u32, u32)] = &[];
-
-pub static T_Fighter_anon_1746: &[F] = &[
-    F { name: "bf_0", gc: 0x0, nat: ::core::mem::offset_of!(Fighter_anon_1746, bf_0), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
-];
-pub static B_Fighter_anon_1746: &[(&str, u32, u32, u32)] = &[("x221B_b0", 0x0, 0, 1), ("x221B_b1", 0x0, 1, 1), ("x221B_b2", 0x0, 2, 1), ("x221B_b3", 0x0, 3, 1), ("x221B_b4", 0x0, 4, 1), ("x221B_b5", 0x0, 5, 1), ("x221B_b6", 0x0, 6, 1), ("x221B_b7", 0x0, 7, 1)];
 
 pub static T_Fighter_ReflectAttr: &[F] = &[
     F { name: "x1A2C_reflectHitDirection", gc: 0x0, nat: ::core::mem::offset_of!(Fighter_ReflectAttr, x1A2C_reflectHitDirection), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
@@ -1127,7 +1308,7 @@ pub static T_CpuFighter: &[F] = &[
     F { name: "x44", gc: 0x44, nat: ::core::mem::offset_of!(CpuFighter, x44), size: ::core::mem::size_of::<*mut Fighter>(), kind: Kind::Ptr },
     F { name: "x48", gc: 0x48, nat: ::core::mem::offset_of!(CpuFighter, x48), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
     F { name: "x4C", gc: 0x4c, nat: ::core::mem::offset_of!(CpuFighter, x4C), size: ::core::mem::size_of::<*mut Item>(), kind: Kind::Ptr },
-    F { name: "x50", gc: 0x50, nat: ::core::mem::offset_of!(CpuFighter, x50), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
+    F { name: "x50", gc: 0x50, nat: ::core::mem::offset_of!(CpuFighter, x50), size: ::core::mem::size_of::<*mut Item>(), kind: Kind::Ptr },
     F { name: "x54", gc: 0x54, nat: ::core::mem::offset_of!(CpuFighter, x54), size: ::core::mem::size_of::<Vec2>(), kind: Kind::Struct("Vec2", &T_Vec2) },
     F { name: "x5C", gc: 0x5c, nat: ::core::mem::offset_of!(CpuFighter, x5C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
     F { name: "x60", gc: 0x60, nat: ::core::mem::offset_of!(CpuFighter, x60), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
@@ -1203,195 +1384,12 @@ pub static T_BoneDynamicsDesc: &[F] = &[
 ];
 pub static B_BoneDynamicsDesc: &[(&str, u32, u32, u32)] = &[];
 
-pub static T_Camera: &[F] = &[
-    F { name: "gobj", gc: 0x0, nat: ::core::mem::offset_of!(Camera, gobj), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
-    F { name: "mode", gc: 0x4, nat: ::core::mem::offset_of!(Camera, mode), size: ::core::mem::size_of::<CameraType>(), kind: Kind::Int(false) },
-    F { name: "background_color", gc: 0x8, nat: ::core::mem::offset_of!(Camera, background_color), size: ::core::mem::size_of::<_GXColor>(), kind: Kind::Struct("_GXColor", &T__GXColor) },
-    F { name: "nearz", gc: 0xc, nat: ::core::mem::offset_of!(Camera, nearz), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "farz", gc: 0x10, nat: ::core::mem::offset_of!(Camera, farz), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "transform", gc: 0x14, nat: ::core::mem::offset_of!(Camera, transform), size: ::core::mem::size_of::<CameraTransformState>(), kind: Kind::Struct("CameraTransformState", &T_CameraTransformState) },
-    F { name: "transform_copy", gc: 0x4c, nat: ::core::mem::offset_of!(Camera, transform_copy), size: ::core::mem::size_of::<CameraTransformState>(), kind: Kind::Struct("CameraTransformState", &T_CameraTransformState) },
-    F { name: "translation", gc: 0x84, nat: ::core::mem::offset_of!(Camera, translation), size: ::core::mem::size_of::<Vec2>(), kind: Kind::Struct("Vec2", &T_Vec2) },
-    F { name: "quake_frames_left", gc: 0x8c, nat: ::core::mem::offset_of!(Camera, quake_frames_left), size: ::core::mem::size_of::<[i32; 5]>(), kind: Kind::Arr(5, 4, ::core::mem::size_of::<i32>(), &Kind::Int(true)) },
-    F { name: "quake_gobj", gc: 0xa0, nat: ::core::mem::offset_of!(Camera, quake_gobj), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
-    F { name: "quake_offset", gc: 0xa4, nat: ::core::mem::offset_of!(Camera, quake_offset), size: ::core::mem::size_of::<Vec2>(), kind: Kind::Struct("Vec2", &T_Vec2) },
-    F { name: "quake_scale", gc: 0xac, nat: ::core::mem::offset_of!(Camera, quake_scale), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "quakes", gc: 0xb0, nat: ::core::mem::offset_of!(Camera, quakes), size: ::core::mem::size_of::<[[CameraQuake; 16]; 2]>(), kind: Kind::Arr(2, 256, ::core::mem::size_of::<[CameraQuake; 16]>(), &Kind::Arr(16, 16, ::core::mem::size_of::<CameraQuake>(), &Kind::Struct("CameraQuake", &T_CameraQuake))) },
-    F { name: "x2B0", gc: 0x2b0, nat: ::core::mem::offset_of!(Camera, x2B0), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x2B4", gc: 0x2b4, nat: ::core::mem::offset_of!(Camera, x2B4), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x2B8", gc: 0x2b8, nat: ::core::mem::offset_of!(Camera, x2B8), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
-    F { name: "x2BA", gc: 0x2ba, nat: ::core::mem::offset_of!(Camera, x2BA), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
-    F { name: "x2BC", gc: 0x2bc, nat: ::core::mem::offset_of!(Camera, x2BC), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x2C0", gc: 0x2c0, nat: ::core::mem::offset_of!(Camera, x2C0), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x2C4", gc: 0x2c4, nat: ::core::mem::offset_of!(Camera, x2C4), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
-    F { name: "x2C5", gc: 0x2c5, nat: ::core::mem::offset_of!(Camera, x2C5), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
-    F { name: "pad_2C6", gc: 0x2c6, nat: ::core::mem::offset_of!(Camera, pad_2C6), size: ::core::mem::size_of::<[i8; 2]>(), kind: Kind::Blob },
-    F { name: "pitch_offset", gc: 0x2c8, nat: ::core::mem::offset_of!(Camera, pitch_offset), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "yaw_offset", gc: 0x2cc, nat: ::core::mem::offset_of!(Camera, yaw_offset), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x2D0", gc: 0x2d0, nat: ::core::mem::offset_of!(Camera, x2D0), size: ::core::mem::size_of::<Camera_x2D0>(), kind: Kind::Struct("Camera_x2D0", &T_Camera_x2D0) },
-    F { name: "x304", gc: 0x304, nat: ::core::mem::offset_of!(Camera, x304), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
-    F { name: "x305", gc: 0x305, nat: ::core::mem::offset_of!(Camera, x305), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
-    F { name: "x306", gc: 0x306, nat: ::core::mem::offset_of!(Camera, x306), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
-    F { name: "x307", gc: 0x307, nat: ::core::mem::offset_of!(Camera, x307), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
-    F { name: "x308", gc: 0x308, nat: ::core::mem::offset_of!(Camera, x308), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x314", gc: 0x314, nat: ::core::mem::offset_of!(Camera, x314), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "pause_eye_offset", gc: 0x320, nat: ::core::mem::offset_of!(Camera, pause_eye_offset), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x32C", gc: 0x32c, nat: ::core::mem::offset_of!(Camera, x32C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "pause_eye_distance", gc: 0x330, nat: ::core::mem::offset_of!(Camera, pause_eye_distance), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "pause_up", gc: 0x334, nat: ::core::mem::offset_of!(Camera, pause_up), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x340", gc: 0x340, nat: ::core::mem::offset_of!(Camera, x340), size: ::core::mem::size_of::<u8>(), kind: Kind::Int(false) },
-    F { name: "bf_341", gc: 0x341, nat: ::core::mem::offset_of!(Camera, bf_341), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
-    F { name: "x342_pad", gc: 0x342, nat: ::core::mem::offset_of!(Camera, x342_pad), size: ::core::mem::size_of::<[i8; 2]>(), kind: Kind::Blob },
-    F { name: "x344", gc: 0x344, nat: ::core::mem::offset_of!(Camera, x344), size: ::core::mem::size_of::<Camera_x344>(), kind: Kind::Union },
-    F { name: "x350", gc: 0x350, nat: ::core::mem::offset_of!(Camera, x350), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x35C", gc: 0x35c, nat: ::core::mem::offset_of!(Camera, x35C), size: ::core::mem::size_of::<Camera_x35C>(), kind: Kind::Union },
-    F { name: "x368", gc: 0x368, nat: ::core::mem::offset_of!(Camera, x368), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x374", gc: 0x374, nat: ::core::mem::offset_of!(Camera, x374), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x378", gc: 0x378, nat: ::core::mem::offset_of!(Camera, x378), size: ::core::mem::size_of::<Camera_x378>(), kind: Kind::Union },
-    F { name: "x37C", gc: 0x37c, nat: ::core::mem::offset_of!(Camera, x37C), size: ::core::mem::size_of::<Camera_x37C>(), kind: Kind::Union },
-    F { name: "x380", gc: 0x380, nat: ::core::mem::offset_of!(Camera, x380), size: ::core::mem::size_of::<[u8; 24]>(), kind: Kind::Blob },
-    F { name: "bf_398", gc: 0x398, nat: ::core::mem::offset_of!(Camera, bf_398), size: ::core::mem::size_of::<[u8; 3]>(), kind: Kind::Blob },
-    F { name: "pad_39B", gc: 0x39b, nat: ::core::mem::offset_of!(Camera, pad_39B), size: ::core::mem::size_of::<i8>(), kind: Kind::Int(true) },
-];
-pub static B_Camera: &[(&str, u32, u32, u32)] = &[("x341_b0", 0x341, 0, 1), ("x341_b1_b2", 0x341, 1, 2), ("x341_b3_b4", 0x341, 3, 2), ("x341_b5_b6", 0x341, 5, 2), ("x341_b7", 0x341, 7, 1), ("x398_b0", 0x398, 0, 1), ("x398_b1", 0x398, 1, 1), ("x398_b2", 0x398, 2, 1), ("x398_b3", 0x398, 3, 1), ("x398_b4", 0x398, 4, 1), ("x398_b5", 0x398, 5, 1), ("x398_b6_b7", 0x398, 6, 2), ("x399_b0_b1", 0x399, 0, 2), ("x399_b2", 0x399, 2, 1), ("x399_b3", 0x399, 3, 1), ("x399_b4", 0x399, 4, 1), ("x399_b5", 0x399, 5, 1), ("x399_b6", 0x399, 6, 1), ("x399_b7", 0x399, 7, 1), ("x39A_b0", 0x39a, 0, 1), ("x39A_b1", 0x39a, 1, 1), ("x39A_b2", 0x39a, 2, 1), ("x39A_b3", 0x39a, 3, 1), ("x39A_b4", 0x39a, 4, 1), ("x39A_b5", 0x39a, 5, 1), ("x39A_b6", 0x39a, 6, 1), ("x39A_b7", 0x39a, 7, 1)];
-
-pub static T_Camera_x2D0: &[F] = &[
-    F { name: "y_max", gc: 0x0, nat: ::core::mem::offset_of!(Camera_x2D0, y_max), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "y_min", gc: 0x4, nat: ::core::mem::offset_of!(Camera_x2D0, y_min), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x_min", gc: 0x8, nat: ::core::mem::offset_of!(Camera_x2D0, x_min), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x_max", gc: 0xc, nat: ::core::mem::offset_of!(Camera_x2D0, x_max), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "z_max", gc: 0x10, nat: ::core::mem::offset_of!(Camera_x2D0, z_max), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "z_min", gc: 0x14, nat: ::core::mem::offset_of!(Camera_x2D0, z_min), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "angle_up", gc: 0x18, nat: ::core::mem::offset_of!(Camera_x2D0, angle_up), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "angle_down", gc: 0x1c, nat: ::core::mem::offset_of!(Camera_x2D0, angle_down), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "angle_right", gc: 0x20, nat: ::core::mem::offset_of!(Camera_x2D0, angle_right), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "angle_left", gc: 0x24, nat: ::core::mem::offset_of!(Camera_x2D0, angle_left), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "unk28", gc: 0x28, nat: ::core::mem::offset_of!(Camera_x2D0, unk28), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "unk2C", gc: 0x2c, nat: ::core::mem::offset_of!(Camera_x2D0, unk2C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-];
-pub static B_Camera_x2D0: &[(&str, u32, u32, u32)] = &[];
-
-pub static T_CameraTransformState: &[F] = &[
-    F { name: "interest", gc: 0x0, nat: ::core::mem::offset_of!(CameraTransformState, interest), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "target_interest", gc: 0xc, nat: ::core::mem::offset_of!(CameraTransformState, target_interest), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "position", gc: 0x18, nat: ::core::mem::offset_of!(CameraTransformState, position), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "target_position", gc: 0x24, nat: ::core::mem::offset_of!(CameraTransformState, target_position), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "fov", gc: 0x30, nat: ::core::mem::offset_of!(CameraTransformState, fov), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "target_fov", gc: 0x34, nat: ::core::mem::offset_of!(CameraTransformState, target_fov), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-];
-pub static B_CameraTransformState: &[(&str, u32, u32, u32)] = &[];
-
-pub static T_CameraQuake: &[F] = &[
-    F { name: "epicenter", gc: 0x0, nat: ::core::mem::offset_of!(CameraQuake, epicenter), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "kind", gc: 0xc, nat: ::core::mem::offset_of!(CameraQuake, kind), size: ::core::mem::size_of::<CmQuakeKind>(), kind: Kind::Int(false) },
-];
-pub static B_CameraQuake: &[(&str, u32, u32, u32)] = &[];
-
-pub static T_StageInfo: &[F] = &[
-    F { name: "cam_info", gc: 0x0, nat: ::core::mem::offset_of!(StageInfo, cam_info), size: ::core::mem::size_of::<StageCameraInfo>(), kind: Kind::Struct("StageCameraInfo", &T_StageCameraInfo) },
-    F { name: "blast_zone", gc: 0x74, nat: ::core::mem::offset_of!(StageInfo, blast_zone), size: ::core::mem::size_of::<StageBlastZone>(), kind: Kind::Struct("StageBlastZone", &T_StageBlastZone) },
-    F { name: "flags", gc: 0x84, nat: ::core::mem::offset_of!(StageInfo, flags), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
-    F { name: "grkind", gc: 0x88, nat: ::core::mem::offset_of!(StageInfo, grkind), size: ::core::mem::size_of::<GrKind>(), kind: Kind::Int(false) },
-    F { name: "unk8C", gc: 0x8c, nat: ::core::mem::offset_of!(StageInfo, unk8C), size: ::core::mem::size_of::<StageInfo_unk8C>(), kind: Kind::Struct("StageInfo_unk8C", &T_StageInfo_unk8C) },
-    F { name: "x98", gc: 0x98, nat: ::core::mem::offset_of!(StageInfo, x98), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "x9C", gc: 0x9c, nat: ::core::mem::offset_of!(StageInfo, x9C), size: ::core::mem::size_of::<u32>(), kind: Kind::Int(false) },
-    F { name: "xA0", gc: 0xa0, nat: ::core::mem::offset_of!(StageInfo, xA0), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "xA4_pad", gc: 0xa4, nat: ::core::mem::offset_of!(StageInfo, xA4_pad), size: ::core::mem::size_of::<[u8; 136]>(), kind: Kind::Blob },
-    F { name: "x12C", gc: 0x12c, nat: ::core::mem::offset_of!(StageInfo, x12C), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
-    F { name: "x130", gc: 0x130, nat: ::core::mem::offset_of!(StageInfo, x130), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x13C", gc: 0x13c, nat: ::core::mem::offset_of!(StageInfo, x13C), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x148", gc: 0x148, nat: ::core::mem::offset_of!(StageInfo, x148), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x154", gc: 0x154, nat: ::core::mem::offset_of!(StageInfo, x154), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x160", gc: 0x160, nat: ::core::mem::offset_of!(StageInfo, x160), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x16C", gc: 0x16c, nat: ::core::mem::offset_of!(StageInfo, x16C), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "map_gobjs", gc: 0x180, nat: ::core::mem::offset_of!(StageInfo, map_gobjs), size: ::core::mem::size_of::<[*mut Ground_GObj; 64]>(), kind: Kind::Blob },
-    F { name: "x280", gc: 0x280, nat: ::core::mem::offset_of!(StageInfo, x280), size: ::core::mem::size_of::<[*mut HSD_JObj; 261]>(), kind: Kind::Blob },
-    F { name: "x694", gc: 0x694, nat: ::core::mem::offset_of!(StageInfo, x694), size: ::core::mem::size_of::<[*mut c_void; 4]>(), kind: Kind::Blob },
-    F { name: "x6A4", gc: 0x6a4, nat: ::core::mem::offset_of!(StageInfo, x6A4), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
-    F { name: "itemdata", gc: 0x6a8, nat: ::core::mem::offset_of!(StageInfo, itemdata), size: ::core::mem::size_of::<*mut *mut GroundItemData>(), kind: Kind::Ptr },
-    F { name: "coll_data", gc: 0x6ac, nat: ::core::mem::offset_of!(StageInfo, coll_data), size: ::core::mem::size_of::<*mut MapCollData>(), kind: Kind::Ptr },
-    F { name: "param", gc: 0x6b0, nat: ::core::mem::offset_of!(StageInfo, param), size: ::core::mem::size_of::<*mut GroundParam>(), kind: Kind::Ptr },
-    F { name: "ald_yaku_all", gc: 0x6b4, nat: ::core::mem::offset_of!(StageInfo, ald_yaku_all), size: ::core::mem::size_of::<*mut *mut *mut c_void>(), kind: Kind::Ptr },
-    F { name: "map_ptcl", gc: 0x6b8, nat: ::core::mem::offset_of!(StageInfo, map_ptcl), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
-    F { name: "map_texg", gc: 0x6bc, nat: ::core::mem::offset_of!(StageInfo, map_texg), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
-    F { name: "yakumono_param", gc: 0x6c0, nat: ::core::mem::offset_of!(StageInfo, yakumono_param), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
-    F { name: "map_plit", gc: 0x6c4, nat: ::core::mem::offset_of!(StageInfo, map_plit), size: ::core::mem::size_of::<*mut *mut LightList>(), kind: Kind::Ptr },
-    F { name: "x6C8", gc: 0x6c8, nat: ::core::mem::offset_of!(StageInfo, x6C8), size: ::core::mem::size_of::<*mut c_void>(), kind: Kind::Ptr },
-    F { name: "quake_model_set", gc: 0x6cc, nat: ::core::mem::offset_of!(StageInfo, quake_model_set), size: ::core::mem::size_of::<*mut DynamicModelDesc>(), kind: Kind::Ptr },
-    F { name: "x6D0", gc: 0x6d0, nat: ::core::mem::offset_of!(StageInfo, x6D0), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
-    F { name: "x6D2", gc: 0x6d2, nat: ::core::mem::offset_of!(StageInfo, x6D2), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
-    F { name: "x6D4", gc: 0x6d4, nat: ::core::mem::offset_of!(StageInfo, x6D4), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
-    F { name: "x6D6", gc: 0x6d6, nat: ::core::mem::offset_of!(StageInfo, x6D6), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
-    F { name: "x6D8", gc: 0x6d8, nat: ::core::mem::offset_of!(StageInfo, x6D8), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "x6DC", gc: 0x6dc, nat: ::core::mem::offset_of!(StageInfo, x6DC), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
-    F { name: "x6DE", gc: 0x6de, nat: ::core::mem::offset_of!(StageInfo, x6DE), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
-    F { name: "x6E0", gc: 0x6e0, nat: ::core::mem::offset_of!(StageInfo, x6E0), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x6E4", gc: 0x6e4, nat: ::core::mem::offset_of!(StageInfo, x6E4), size: ::core::mem::size_of::<[i32; 2]>(), kind: Kind::Arr(2, 4, ::core::mem::size_of::<i32>(), &Kind::Int(true)) },
-    F { name: "x6EC_pad", gc: 0x6ec, nat: ::core::mem::offset_of!(StageInfo, x6EC_pad), size: ::core::mem::size_of::<[u8; 28]>(), kind: Kind::Blob },
-    F { name: "x708", gc: 0x708, nat: ::core::mem::offset_of!(StageInfo, x708), size: ::core::mem::size_of::<i16>(), kind: Kind::Int(true) },
-    F { name: "x70C", gc: 0x70c, nat: ::core::mem::offset_of!(StageInfo, x70C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x710", gc: 0x710, nat: ::core::mem::offset_of!(StageInfo, x710), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x714", gc: 0x714, nat: ::core::mem::offset_of!(StageInfo, x714), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "x718", gc: 0x718, nat: ::core::mem::offset_of!(StageInfo, x718), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x71C", gc: 0x71c, nat: ::core::mem::offset_of!(StageInfo, x71C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x720", gc: 0x720, nat: ::core::mem::offset_of!(StageInfo, x720), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "x724", gc: 0x724, nat: ::core::mem::offset_of!(StageInfo, x724), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x728", gc: 0x728, nat: ::core::mem::offset_of!(StageInfo, x728), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x72C", gc: 0x72c, nat: ::core::mem::offset_of!(StageInfo, x72C), size: ::core::mem::size_of::<*mut HSD_GObj>(), kind: Kind::Ptr },
-    F { name: "x730", gc: 0x730, nat: ::core::mem::offset_of!(StageInfo, x730), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "x73C", gc: 0x73c, nat: ::core::mem::offset_of!(StageInfo, x73C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x740", gc: 0x740, nat: ::core::mem::offset_of!(StageInfo, x740), size: ::core::mem::size_of::<i32>(), kind: Kind::Int(true) },
-    F { name: "x744_pad", gc: 0x744, nat: ::core::mem::offset_of!(StageInfo, x744_pad), size: ::core::mem::size_of::<[u8; 4]>(), kind: Kind::Blob },
-];
-pub static B_StageInfo: &[(&str, u32, u32, u32)] = &[];
-
-pub static T_StageInfo_unk8C: &[F] = &[
-    F { name: "bf_0", gc: 0x0, nat: ::core::mem::offset_of!(StageInfo_unk8C, bf_0), size: ::core::mem::size_of::<[u8; 1]>(), kind: Kind::Blob },
-];
-pub static B_StageInfo_unk8C: &[(&str, u32, u32, u32)] = &[("b0", 0x0, 0, 1), ("b1", 0x0, 1, 1), ("b2", 0x0, 2, 1), ("b3", 0x0, 3, 1), ("b4", 0x0, 4, 1), ("b5", 0x0, 5, 1), ("b6", 0x0, 6, 1), ("b7", 0x0, 7, 1)];
-
-pub static T_StageCameraInfo: &[F] = &[
-    F { name: "cam_bounds", gc: 0x0, nat: ::core::mem::offset_of!(StageCameraInfo, cam_bounds), size: ::core::mem::size_of::<StageBlastZone>(), kind: Kind::Struct("StageBlastZone", &T_StageBlastZone) },
-    F { name: "cam_x_offset", gc: 0x10, nat: ::core::mem::offset_of!(StageCameraInfo, cam_x_offset), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_y_offset", gc: 0x14, nat: ::core::mem::offset_of!(StageCameraInfo, cam_y_offset), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_vertical_tilt", gc: 0x18, nat: ::core::mem::offset_of!(StageCameraInfo, cam_vertical_tilt), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_pan_degrees", gc: 0x1c, nat: ::core::mem::offset_of!(StageCameraInfo, cam_pan_degrees), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x20", gc: 0x20, nat: ::core::mem::offset_of!(StageCameraInfo, x20), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x24", gc: 0x24, nat: ::core::mem::offset_of!(StageCameraInfo, x24), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_track_ratio", gc: 0x28, nat: ::core::mem::offset_of!(StageCameraInfo, cam_track_ratio), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_fixed_zoom", gc: 0x2c, nat: ::core::mem::offset_of!(StageCameraInfo, cam_fixed_zoom), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_track_smooth", gc: 0x30, nat: ::core::mem::offset_of!(StageCameraInfo, cam_track_smooth), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_zoom_rate", gc: 0x34, nat: ::core::mem::offset_of!(StageCameraInfo, cam_zoom_rate), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_max_depth", gc: 0x38, nat: ::core::mem::offset_of!(StageCameraInfo, cam_max_depth), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "x3C", gc: 0x3c, nat: ::core::mem::offset_of!(StageCameraInfo, x3C), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "pausecam_zpos_min", gc: 0x40, nat: ::core::mem::offset_of!(StageCameraInfo, pausecam_zpos_min), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "pausecam_zpos_init", gc: 0x44, nat: ::core::mem::offset_of!(StageCameraInfo, pausecam_zpos_init), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "pausecam_zpos_max", gc: 0x48, nat: ::core::mem::offset_of!(StageCameraInfo, pausecam_zpos_max), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_angle_up", gc: 0x4c, nat: ::core::mem::offset_of!(StageCameraInfo, cam_angle_up), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_angle_down", gc: 0x50, nat: ::core::mem::offset_of!(StageCameraInfo, cam_angle_down), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_angle_left", gc: 0x54, nat: ::core::mem::offset_of!(StageCameraInfo, cam_angle_left), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "cam_angle_right", gc: 0x58, nat: ::core::mem::offset_of!(StageCameraInfo, cam_angle_right), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "fixed_cam_pos", gc: 0x5c, nat: ::core::mem::offset_of!(StageCameraInfo, fixed_cam_pos), size: ::core::mem::size_of::<Vec>(), kind: Kind::Struct("Vec", &T_Vec) },
-    F { name: "fixed_cam_fov", gc: 0x68, nat: ::core::mem::offset_of!(StageCameraInfo, fixed_cam_fov), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "fixed_cam_vert_angle", gc: 0x6c, nat: ::core::mem::offset_of!(StageCameraInfo, fixed_cam_vert_angle), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "fixed_cam_horz_angle", gc: 0x70, nat: ::core::mem::offset_of!(StageCameraInfo, fixed_cam_horz_angle), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-];
-pub static B_StageCameraInfo: &[(&str, u32, u32, u32)] = &[];
-
-pub static T_StageBlastZone: &[F] = &[
-    F { name: "left", gc: 0x0, nat: ::core::mem::offset_of!(StageBlastZone, left), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "right", gc: 0x4, nat: ::core::mem::offset_of!(StageBlastZone, right), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "top", gc: 0x8, nat: ::core::mem::offset_of!(StageBlastZone, top), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-    F { name: "bottom", gc: 0xc, nat: ::core::mem::offset_of!(StageBlastZone, bottom), size: ::core::mem::size_of::<f32>(), kind: Kind::F32 },
-];
-pub static B_StageBlastZone: &[(&str, u32, u32, u32)] = &[];
-
 pub fn bitfields(ty: &str) -> &'static [(&'static str, u32, u32, u32)] {
     match ty {
         "BoneDynamicsDesc" => B_BoneDynamicsDesc,
         "Camera" => B_Camera,
         "CameraBoxFlags" => B_CameraBoxFlags,
-        "CameraBoxFlags_anon_30" => B_CameraBoxFlags_anon_30,
+        "CameraBoxFlags_x0" => B_CameraBoxFlags_x0,
         "CameraQuake" => B_CameraQuake,
         "CameraTransformState" => B_CameraTransformState,
         "Camera_x2D0" => B_Camera_x2D0,
@@ -1407,12 +1405,12 @@ pub fn bitfields(ty: &str) -> &'static [(&'static str, u32, u32, u32)] {
         "FighterHurtCapsule" => B_FighterHurtCapsule,
         "Fighter_AbsorbAttr" => B_Fighter_AbsorbAttr,
         "Fighter_ReflectAttr" => B_Fighter_ReflectAttr,
-        "Fighter_anon_1746" => B_Fighter_anon_1746,
         "Fighter_input" => B_Fighter_input,
         "Fighter_x1614_t" => B_Fighter_x1614_t,
         "Fighter_x1670_t" => B_Fighter_x1670_t,
         "Fighter_x1A88_xFC_t" => B_Fighter_x1A88_xFC_t,
         "Fighter_x20B0_t" => B_Fighter_x20B0_t,
+        "Fighter_x221B" => B_Fighter_x221B,
         "Fighter_x5F4_arr" => B_Fighter_x5F4_arr,
         "Fighter_x8B0_t" => B_Fighter_x8B0_t,
         "FtInputTimers" => B_FtInputTimers,
@@ -1436,9 +1434,9 @@ pub fn bitfields(ty: &str) -> &'static [(&'static str, u32, u32, u32)] {
         "StageInfo" => B_StageInfo,
         "StageInfo_unk8C" => B_StageInfo_unk8C,
         "Struct2074" => B_Struct2074,
+        "Struct207C" => B_Struct207C,
         "SurfaceData" => B_SurfaceData,
         "U8Vec2" => B_U8Vec2,
-        "UnkPlBonusBits" => B_UnkPlBonusBits,
         "Vec" => B_Vec,
         "Vec2" => B_Vec2,
         "_ECBFlagStruct" => B__ECBFlagStruct,

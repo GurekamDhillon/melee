@@ -93,7 +93,7 @@ unsafe fn smoke_inner() {
     f.u.kb.hat.kind = Ft_Kind_Link;
     f.motion_id = ftKb_MS_LkSpecialNLoop as i32;
     assert!(!t::ftKb_SpecialNLk800FB470(gp));
-    unsafe { f.x2070.anon_0.set_x2071_b6(1) };
+    unsafe { f.x2070.x0.set_x2071_b6(1) };
     assert!(t::ftKb_SpecialNLk800FB470(gp));
     assert!(t::ftKb_SpecialNLk800FB470(core::ptr::null_mut()));
 

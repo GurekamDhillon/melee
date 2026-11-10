@@ -82,11 +82,11 @@ pub mod ext {
                     None => { unsafe { melee_items::tu::itkirbyyoshispecialn::it_802F2D98(item as _, gobj as _); } return; },
                 }
             }
-    pub static mut IT_802F2E7C: Option<fn(*mut HSD_GObj, i32) > = None;
+    pub static mut IT_802F2E7C: Option<fn(*mut HSD_GObj, isize) > = None;
             #[allow(non_snake_case)]
             pub fn it_802F2E7C(item: *mut HSD_GObj, destroy_type: i32)  {
                 match unsafe { IT_802F2E7C } {
-                    Some(f) => f(item, destroy_type),
+                    Some(f) => f(item, destroy_type as isize),
                     None => { unsafe { melee_items::tu::itkirbyyoshispecialn::it_802F2E7C(item as _, destroy_type as _); } return; },
                 }
             }

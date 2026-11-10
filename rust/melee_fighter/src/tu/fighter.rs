@@ -31,7 +31,7 @@ type F = *mut Fighter;
 fn van(t: &[HSD_GObjEvent], kind: i32) -> usize { match t.get(kind as usize).copied().flatten() { Some(f) => f as usize, None => 0 } }
 
 /// `FT_SCRIPT_VALUE(fp, field, base)`: `ScriptGame_ModValue((fp)->player_id, field, base)`.
-fn script_value(fp: &Fighter, field: i32, base: f32) -> f32 { ext::ScriptGame_ModValue(fp.player_id as i32, field, base) }
+fn script_value(fp: &Fighter, field: i32, base: f32) -> f32 { ext::ScriptGame_ModValue(fp.player_idx as i32, field, base) }
 
 /// `ftUcf_FlickCounter(port)`: the UCF flick counter (src/fighter.rs).
 pub fn ftUcf_FlickCounter(port: i32) -> i32 { melee_core::ct!("ftUcf_FlickCounter"); crate::fighter::ftucf_flick_counter(port) }
@@ -681,7 +681,7 @@ pub unsafe fn Fighter_UnkInitReset_80067C98(fp: &mut Fighter) {
     melee_core::ct!("Fighter_UnkInitReset_80067C98");
     fp.x8_spawnNum = Fighter_NewSpawn_80068E40() as i32;
     let mut c = v0();
-    let slot = fp.player_id as i32;
+    let slot = fp.player_idx as i32;
     ext::Player_LoadPlayerCoords(slot, &mut c);
     fp.facing_dir = ext::Player_GetFacingDirection(slot);
     c.x = fmadds(fp.facing_dir, ext::ftCommon_800804EC(fp), c.x); // fused
@@ -758,7 +758,7 @@ pub unsafe fn Fighter_UnkInitReset_80067C98(fp: &mut Fighter) {
     fp.x100 = -1.0;
     bits!(fp, 0; set_x2222_b7, set_x2223_b0, set_fall_fast, set_x2219_b0);
     fp.x20A0_accessory = core::ptr::null_mut();
-    fp.anon_2210.throw_flags = 0;
+    fp.x2210.throw_flags = 0;
     fp.cmd_timer = 0.0;
     fp.item_gobj = core::ptr::null_mut();
     fp.x1978 = core::ptr::null_mut();
@@ -769,14 +769,14 @@ pub unsafe fn Fighter_UnkInitReset_80067C98(fp: &mut Fighter) {
     fp.set_x2221_b0(0);
     fp.x1990 = 0;
     fp.x1994 = 0;
-    bits!(fp, 0; set_x221D_b6, anon_221b.set_x221B_b5);
+    bits!(fp, 0; set_x221D_b6, x221B.set_x221B_b5);
     fp.victim_gobj = core::ptr::null_mut();
     fp.x1A5C = core::ptr::null_mut();
-    fp.anon_221b.set_x221B_b6(0);
+    fp.x221B.set_x221B_b6(0);
     fp.target_item_gobj = core::ptr::null_mut();
     fp.x1A64 = core::ptr::null_mut();
-    bits!(fp, 0; anon_221b.set_x221B_b7, set_x221C_b0);
-    fp.x1064_thrownHitbox.anon_134.owner = core::ptr::null_mut();
+    bits!(fp, 0; x221B.set_x221B_b7, set_x221C_b0);
+    fp.x1064_thrownHitbox.x134.owner = core::ptr::null_mut();
     fp.set_x221C_u16_y(0);
     fp.unk_gobj = core::ptr::null_mut();
     fp.set_x221C_b5(0);
@@ -796,7 +796,7 @@ pub unsafe fn Fighter_UnkInitReset_80067C98(fp: &mut Fighter) {
     fp.x2092 = 0;
     fp.x2094 = core::ptr::null_mut();
     fp.shield_health = script_value(fp, 4, cd().x260_startShieldHealth);
-    bits!(fp, 0; set_x221A_b7, anon_221b.set_x221B_b0, anon_221b.set_x221B_b1, anon_221b.set_x221B_b3, anon_221b.set_x221B_b4, set_x221C_b3, set_x221C_b1, set_x221C_b2);
+    bits!(fp, 0; set_x221A_b7, x221B.set_x221B_b0, x221B.set_x221B_b1, x221B.set_x221B_b3, x221B.set_x221B_b4, set_x221C_b3, set_x221C_b1, set_x221C_b2);
     fp.x19A0_shieldDamageTaken = 0;
     fp.x19A4 = 0;
     fp.lightshield_amount = 0.0;
@@ -835,7 +835,7 @@ pub unsafe fn Fighter_UnkInitReset_80067C98(fp: &mut Fighter) {
     fp.x2034 = 0;
     fp.x2038 = 0;
     fp.x1980 = core::ptr::null_mut();
-    bits!(fp, 0; set_x2224_b2, set_x2224_b3, set_x2224_b4);
+    bits!(fp, 0; set_stamina_dead, set_x2224_b3, set_x2224_b4);
     fp.capture_timer = 0;
     fp.set_x2224_b5(0);
     fp.x1A53 = 0;
@@ -896,9 +896,9 @@ pub unsafe fn Fighter_Spawn(g: G) {
     ext::ftColl_8007AFF8(g);
     ext::ftColl_8007B0C0(g, HurtCapsule_Enabled as i32);
     ext::Mex_OnDeathDispatch(fp.kind as i32, g, van(&crate::tu::ftdata::ftData_OnDeath, fp.kind as i32));
-    let slot = fp.player_id as i32;
+    let slot = fp.player_idx as i32;
     { let lv = ext::Player_GetCpuLevel(slot); let ty = ext::Player_GetCpuType(slot); ext::ftCo_800A101C(fp, ty, lv, 0); } // C argument order: last first
-    ext::efAsync_QueueClear(&mut fp.x60C);
+    ext::efAsync_QueueClear((&raw mut fp.x60C) as *mut *mut ::core::ffi::c_void);
     ext::ft_8007C17C(g);
     ext::ft_8007C630(g);
 }
@@ -929,7 +929,7 @@ pub unsafe fn gw_toon_unlit_tree(mut j: J) -> i32 {
 pub unsafe fn Fighter_UnkUpdateCostumeJoint_800686E4(g: G) {
     melee_core::ct!("Fighter_UnkUpdateCostumeJoint_800686E4");
     let fp = fpm(g);
-    fp.x108_costume_joint = ext::costume_joint(fp.kind as i32, fp.x619_costume_id);
+    fp.x108_costume_joint = ext::costume_joint(fp.kind as i32, fp.costume_id);
     ext::ftPartsPObjSetDefaultClass();
     let j = ext::HSD_JObjLoadJoint(fp.x108_costume_joint);
     ext::ftPartsPObjClearDefaultClass();
@@ -1005,14 +1005,14 @@ pub unsafe fn Fighter_UnkInitLoad_80068914(g: G, arg: &plAllocInfo) {
     melee_core::ct!("Fighter_UnkInitLoad_80068914");
     let fp = fpm(g);
     fp.kind = arg.internal_id;
-    fp.player_id = arg.slot;
-    fp.set_is_sub_fighter(arg.anon_6.b0());
-    let slot = fp.player_id as i32;
+    fp.player_idx = arg.slot;
+    fp.set_is_sub_fighter(arg.x6.b0());
+    let slot = fp.player_idx as i32;
     fp.x34_scale.x = ext::Player_GetModelScale(slot);
     fp.x34_scale.x *= ext::Geno_FighterScale(fp);
     fp.x61C = arg.x5;
-    fp.x618_player_id = ext::Player_GetPlayerId(slot);
-    fp.x61A_controller_index = ext::Player_GetControllerIndex(slot);
+    fp.pad_port = ext::Player_GetPlayerId(slot);
+    fp.sub_color = ext::Player_GetControllerIndex(slot);
     fp.set_is_always_metal(ext::Player_GetFlagsBit5(slot));
     fp.set_x2226_b3(ext::Player_GetFlagsBit6(slot));
     fp.set_x2226_b6(ext::Player_GetFlagsBit7(slot));
@@ -1020,11 +1020,11 @@ pub unsafe fn Fighter_UnkInitLoad_80068914(g: G, arg: &plAllocInfo) {
     fp.set_x2225_b7(ext::Player_GetMoreFlagsBit2(slot));
     fp.set_x2228_b3(ext::Player_GetMoreFlagsBit6(slot));
     fp.set_x2229_b1(ext::Player_GetFlagsAEBit0(slot));
-    if fp.x61A_controller_index > 4 {
+    if fp.sub_color > 4 {
         panic!("fighter.c:828: fighter sub color num over!");
     }
-    if fp.x61A_controller_index != 0 {
-        let c = cd().x6DC_colorsByPlayer[fp.x61A_controller_index as usize - 1];
+    if fp.sub_color != 0 {
+        let c = cd().sub_colors[fp.sub_color as usize - 1];
         let o = &mut fp.x610_color_rgba[0];
         o.r = ((c.r as i32 * c.a as i32) / 255) as u8;
         o.g = ((c.g as i32 * c.a as i32) / 255) as u8;
@@ -1035,7 +1035,7 @@ pub unsafe fn Fighter_UnkInitLoad_80068914(g: G, arg: &plAllocInfo) {
     if costume >= ext::costume_count(fp.kind as i32) {
         costume = 0;
     }
-    fp.x619_costume_id = costume as u8;
+    fp.costume_id = costume as u8;
     fp.team = ext::Player_GetTeam(slot);
     fp.gobj = g;
     fp.ft_data = ext::gFtDataList(fp.kind as i32);
@@ -1055,13 +1055,13 @@ pub unsafe fn Fighter_UnkInitLoad_80068914(g: G, arg: &plAllocInfo) {
     fp.input.triggers[2] = 0.0;
     fp.input.held_buttons[2] = 0;
     Fighter_UnkInitLoad_80068914_Inner1(g);
-    fp.anon_594.x594_s32 = 0;
+    fp.x594.x594_s32 = 0;
     fp.x21FC_flag.byte = 1;
     bits!(fp, 0; set_invisible, set_x221E_b1, set_x221E_b2, set_x221F_b1, set_x221F_b2);
     fp.x209A = 0;
     bits!(fp, 0; set_x221E_b5, set_x221F_b0);
     fp.x21EC = None;
-    bits!(fp, 0; set_x221D_b3, set_x221D_b4, set_x221F_b3, set_x2220_b0, set_x2221_b2, set_no_normal_motion, set_x2229_b6,
+    bits!(fp, 0; set_has_prev_input, set_input_disabled, set_is_sleeping, set_x2220_b0, set_x2221_b2, set_no_normal_motion, set_x2229_b6,
         set_no_kb, set_x222A_b0, set_x222A_b1, set_x2228_b5, set_used_tether, set_x2221_b3, set_x2222_b0, set_can_multijump,
         set_x2222_b4, set_x2222_b5, set_x2222_b6, set_x2223_b1);
     fp.x40 = 0.0;
@@ -1140,7 +1140,7 @@ pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     Fighter_UnkInitLoad_80068914(g, input);
     let fp = &mut *fp;
     ext::efAsync_LoadSync(ext::ftData_UnkBytePerCharacter(fp.kind as i32));
-    ext::ftData_80085820(fp.kind as i32, fp.x619_costume_id);
+    ext::ftData_80085820(fp.kind as i32, fp.costume_id);
     Fighter_UnkUpdateCostumeJoint_800686E4(g);
     ext::ftData_80085B10(fp);
     ext::ftParts_80074E58(fp);
@@ -1172,9 +1172,9 @@ pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
         ext::ftMh_MS_341_8014FE10(g);
     } else if fp.kind == Ft_Kind_CrezyH {
         ext::ftCh_Init_80155FCC(g);
-    } else if input.anon_6.has_transformation() != 0 {
+    } else if input.x6.has_transformation() != 0 {
         ext::ftCo_800BFD04(g);
-    } else if ext::Player_GetFlagsBit3(fp.player_id as i32) != 0 {
+    } else if ext::Player_GetFlagsBit3(fp.player_idx as i32) != 0 {
         ext::ftCo_800C61B0(g);
     } else if fp.no_normal_motion() == 0 {
         ext::ftCommon_8007D92C(g);
@@ -1237,12 +1237,12 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         }
     }
     ft_PcTraceMotion(g, msid);
-    e::Script_GameEvent(1, fp.player_id as i32, fp.motion_id as i32, msid, fp.is_sub_fighter() as i32);
+    e::Script_GameEvent(1, fp.player_idx as i32, fp.motion_id as i32, msid, fp.is_sub_fighter() as i32);
     fp.motion_id = msid as _;
     e::Geno_OnActionChange(g);
     fp.facing_dir1 = fp.facing_dir;
     set_translate(jobj, &fp.cur_pos);
-    ext::efAsync_QueueFlush(g, &mut fp.x60C);
+    ext::efAsync_QueueFlush(g, (&raw mut fp.x60C) as *mut *mut ::core::ffi::c_void);
     if !mf(flags, Ft_MF_SkipHit) {
         if fp.x2219_b3() != 0 {
             ext::ftColl_8007AFF8(g);
@@ -1252,7 +1252,7 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         }
     }
     if !mf(flags, Ft_MF_SkipThrowException) {
-        fp.x1064_thrownHitbox.anon_134.owner = core::ptr::null_mut();
+        fp.x1064_thrownHitbox.x134.owner = core::ptr::null_mut();
     }
     if !mf(flags, Ft_MF_KeepColAnimHitStatus) {
         if fp.x1988 != 0 {
@@ -1309,13 +1309,13 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         fp.set_x221C_b6(0);
         fp.x2098 = cd().x4CC as _;
     }
-    bits!(fp, 0; set_x221F_b3, set_x2219_b1, set_x2219_b2);
+    bits!(fp, 0; set_is_sleeping, set_x2219_b1, set_x2219_b2);
     fp.dmg.x182c_behavior = 1.0;
     fp.dmg.kb_applied = 0.0;
     fp.dmg.x18A8 = 0.0;
     fp.dmg.armor1 = 0.0;
     fp.dmg.x18a0 = 0.0;
-    bits!(fp, 0; set_x221A_b7, anon_221b.set_x221B_b0, set_x221C_b3);
+    bits!(fp, 0; set_x221A_b7, x221B.set_x221B_b0, set_x221C_b3);
     fp.shield_unk0 = 0.0;
     fp.shield_unk1 = 0.0;
     bits!(fp, 0; set_x221D_b5, set_reflecting, set_x2218_b6, set_x221C_b4);
@@ -1364,11 +1364,11 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         fp.set_x2227_b1(0);
         fp.x213C = -1;
         if fp.x2227_b4() != 0 {
-            e::pl_8003FE1C(fp.player_id as i32, fp.is_sub_fighter() as i32);
+            e::pl_8003FE1C(fp.player_idx as i32, fp.is_sub_fighter() as i32);
             fp.set_x2227_b4(0);
         }
         fp.set_x2227_b5(0);
-        e::pl_80040330(fp.player_id as i32, fp.is_sub_fighter() as i32, fp.x2140);
+        e::pl_80040330(fp.player_idx as i32, fp.is_sub_fighter() as i32, fp.x2140);
         fp.x2140 = 0.0;
         fp.set_used_tether(0);
         fp.x2180 = 6;
@@ -1405,18 +1405,18 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         fp.x1C_actionStateList.offset(msid as isize)
     };
     let ms = &*ms;
-    if fp.ground_or_air == GA_Ground && flags & 0x40 == 0 && ms.anon_8.anon_0.anon_1.x9_b1() != 0 && fp.dmg.x18C8 == -1 {
+    if fp.ground_or_air == GA_Ground && flags & 0x40 == 0 && ms.x8.x0.x1.x9_b1() != 0 && fp.dmg.x18C8 == -1 {
         fp.dmg.x18C8 = if cd().x814 > 0 { cd().x814 } else { 1 };
     }
     let x2070 = fp.x2070;
-    e::ft_800890D0(fp, ms.anon_8.anon_0.move_id() as i32);
+    e::ft_800890D0(fp, ms.x8.x0.move_id() as i32);
     e::ft_800895E0(fp, ms.x4_flags as i32);
-    fp.set_x2225_b3(ms.anon_8.anon_0.anon_1.x9_b0());
+    fp.set_x2225_b3(ms.x8.x0.x1.x9_b0());
     if fp.x2226_b4() != 0 {
-        if fp.x2070.anon_0.x2071_b5() != 0 {
+        if fp.x2070.x0.x2071_b5() != 0 {
             e::ftCo_800C8B2C(fp, 0x7E, 0);
         }
-        if fp.x2070.anon_0.x2071_b6() != 0 {
+        if fp.x2070.x0.x2071_b6() != 0 {
             e::ftCo_800C8B2C(fp, 0x7F, 0);
         }
     }
@@ -1441,10 +1441,10 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
     fp.x8A0_unk = anim_speed;
     fp.cur_anim_frame = anim_start - fp.frame_speed_mul;
     fp.x898_unk = 0.0;
-    let x594 = &fp.anon_594.anon_0;
+    let x594 = &fp.x594.x0;
     let animflags = x594.x594_b0() != 0 || x594.x594_b5() != 0;
     if fp.anim_id != -1 {
-        let bone_index = fp.anon_594.anon_0.x596_bits.x7() as i32;
+        let bone_index = fp.x594.x0.x596_bits.x7() as i32;
         if mf(flags, Ft_MF_FreezeState) {
             fp.set_x2223_b0(1);
             fp.x104 = 0x14;
@@ -1459,7 +1459,7 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
             bytes = fp.x28.offset(lab_pose_row as isize);
         }
         // whole s32 over the bitfield word: the bitfield bytes are kept in GC (big-endian) order
-        fp.anon_594.anon_0_0.bf_0 = ((*wait).x10_animCurrFlags as u32).to_be_bytes();
+        fp.x594.x0_1.bf_0 = ((*wait).x10_animCurrFlags as u32).to_be_bytes();
         e::ftCo_8009E7B4(fp, bytes);
         if !mf(flags, Ft_MF_SkipAnim) {
             if !arg3.is_null() {
@@ -1476,12 +1476,12 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
                     ext::ftAnim_8006EBE8(g, anim_start - anim_speed, anim_speed, blend_arg(anim_blend, row0));
                 }
                 ext::ftAnim_8006E9B4(g);
-                if fp.anon_594.anon_0.x594_b0() != 0 {
+                if fp.x594.x0.x594_b0() != 0 {
                     fp.x6B0 = v0();
                     fp.x6A4_transNOffset = v0();
                     fp.x698 = fp.x68C_transNPos;
                 }
-                if fp.anon_594.anon_0.x594_b5() != 0 {
+                if fp.x594.x0.x594_b5() != 0 {
                     fp.x6E4 = v0();
                     fp.x6D8 = v0();
                     fp.x6CC = fp.x6C0;
@@ -1504,7 +1504,7 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
                 e::ftParts_JObjSetRotation(b.joint, &q);
             }
             let ground_vel = !mf(flags, Ft_MF_SkipAnimVel) && fp.ground_or_air == GA_Ground;
-            if fp.anon_594.anon_0.x594_b0() != 0 {
+            if fp.x594.x0.x594_b0() != 0 {
                 if anim_start == 0.0 {
                     fp.x6B0 = v0();
                     fp.x6A4_transNOffset = v0();
@@ -1515,7 +1515,7 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
                     fp.gr_vel = v;
                 }
             }
-            if fp.anon_594.anon_0.x594_b5() != 0 {
+            if fp.x594.x0.x594_b5() != 0 {
                 if anim_start == 0.0 {
                     fp.x6E4 = v0();
                     fp.x6D8 = v0();
@@ -1539,14 +1539,14 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
         }
     }
     if fp.anim_id == -1 {
-        fp.anon_594.x594_s32 = 0;
+        fp.x594.x594_s32 = 0;
         ext::ftAnim_80070758(jobj);
         ext::ftAnim_80070758(fp.x8AC_animSkeleton);
         fp.x3E4_fighterCmdScript.anon_8.u = core::ptr::null_mut();
         fp.x8A4_animBlendFrames = 0.0;
         fp.x8A8_anim_frame = 0.0;
     }
-    if animflags && fp.anon_594.anon_0.x594_b0() == 0 {
+    if animflags && fp.x594.x0.x594_b0() == 0 {
         e::ftCommon_ClampGroundVel(fp, script_value(fp, 2, fp.co_attrs.dash_max_velocity));
     }
     fp.anim_cb = ms.anim_cb;
@@ -1581,7 +1581,7 @@ pub unsafe fn Fighter_procHitlag(g: G) {
 unsafe fn Fighter_procHitlag__orig(g: G) {
     use ext as e;
     let fp = fpm(g);
-    if fp.x221F_b3() != 0 {
+    if fp.is_sleeping() != 0 {
         return;
     }
     if fp.dmg.x1954 > 0.0 {
@@ -1630,7 +1630,7 @@ pub unsafe fn ftSlippi_IsOffscreen(fp: &Fighter) -> bool {
     melee_core::ct!("ftSlippi_IsOffscreen");
     use ext as e;
     if e::Slippi_Codes() != 2 && e::Camera_ScriptState() == 0 {
-        return e::ifMagnify_802FC998(fp.player_id as i32);
+        return e::ifMagnify_802FC998(fp.player_idx as i32);
     }
     if e::gm_GetCurrentGameMode() == GM_HOME_RUN_CONTEST as i32 || fp.x221F_b1() != 0 || fp.motion_id == 4 || fp.motion_id == 6 {
         return false;
@@ -1652,7 +1652,7 @@ pub unsafe fn Fighter_procAnim(g: G) {
 unsafe fn Fighter_procAnim__orig(g: G) {
     use ext as e;
     let fp = fpm(g);
-    if fp.x221F_b3() != 0 {
+    if fp.is_sleeping() != 0 {
         return;
     }
     fp.pos_delta.x = fp.cur_pos.x - fp.prev_pos.x;
@@ -1766,7 +1766,7 @@ unsafe fn Fighter_procAnim__orig(g: G) {
         }
     }
     if fp.is_sub_fighter() == 0 && e::Camera_80031144() == 1.0 && fp.dmg.x1830_percent < cd().x7B0 as f32 {
-        if ftSlippi_IsOffscreen(fp) && ext::Player_GetMoreFlagsBit3(fp.player_id as i32) != 0 {
+        if ftSlippi_IsOffscreen(fp) && ext::Player_GetMoreFlagsBit3(fp.player_idx as i32) != 0 {
             fp.dmg.x1910 += 1;
         } else {
             fp.dmg.x1910 = 0;
@@ -1781,8 +1781,8 @@ unsafe fn Fighter_procAnim__orig(g: G) {
         if fp.dmg.x1830_percent > 0.0 {
             fp.dmg.x1830_percent -= 1.0;
             e::ft_80088640(fp, 0x7D, 0x7F, 0x40);
-            ext::Player_SetHPByIndex(fp.player_id as i32, fp.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(fp.dmg.x1830_percent));
-            e::pl_80040B8C(fp.player_id as i32, fp.is_sub_fighter() as i32, 1);
+            ext::Player_SetHPByIndex(fp.player_idx as i32, fp.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(fp.dmg.x1830_percent));
+            e::pl_80040B8C(fp.player_idx as i32, fp.is_sub_fighter() as i32, 1);
         }
         if fp.dmg.x1830_percent <= 0.0 {
             fp.dmg.x1830_percent = 0.0;
@@ -1811,7 +1811,7 @@ unsafe fn Fighter_procAnim__orig(g: G) {
         cb(g);
     }
     if fp.x2219_b5() == 0 {
-        if fp.x209A > 1 && fp.x221D_b4() == 0 {
+        if fp.x209A > 1 && fp.input_disabled() == 0 {
             fp.x209A -= 1;
         }
         if fp.x2223_b0() != 0 {
@@ -1840,7 +1840,7 @@ unsafe fn Fighter_procAnim__orig(g: G) {
             fp.x198C = 2;
         }
         if fp.x221C_b6() == 0 {
-            e::pl_800411C4(fp.player_id as i32, fp.is_sub_fighter() as i32);
+            e::pl_800411C4(fp.player_idx as i32, fp.is_sub_fighter() as i32);
         }
         e::ftCo_800DEF38(g);
         if e::Geno_PreAnim(g) == 0 {
@@ -1862,7 +1862,7 @@ pub unsafe fn Fighter_procCpu(g: G) {
     if e::ScriptGame_VirtualPadApply(fp) != 0 {
         return;
     }
-    if fp.x221F_b3() == 0 && e::ftCo_IsCpuControlled(fp) {
+    if fp.is_sleeping() == 0 && e::ftCo_IsCpuControlled(fp) {
         e::ftCo_800B3900(g);
     }
     e::ScriptGame_VirtualPadObserve(fp);
@@ -1989,18 +1989,18 @@ pub unsafe fn Fighter_procInput(g: G) {
     melee_core::ct!("Fighter_procInput");
     use ext as e;
     let fp = fpm(g);
-    if fp.x221F_b3() != 0 {
+    if fp.is_sleeping() != 0 {
         return;
     }
     let c = cd();
-    if fp.x2224_b2() == 0 {
-        let src = if fp.x221D_b3() == 0 { 2 } else { 0 };
+    if fp.stamina_dead() == 0 {
+        let src = if fp.has_prev_input() == 0 { 2 } else { 0 };
         fp.input.lstick[1] = fp.input.lstick[src];
         fp.input.cstick[1] = fp.input.cstick[src];
         fp.input.triggers[1] = fp.input.triggers[src];
         fp.input.held_buttons[1] = fp.input.held_buttons[src];
         if src == 2 {
-            fp.set_x221D_b3(1);
+            fp.set_has_prev_input(1);
         }
         let cpu = e::ftCo_IsCpuControlled(fp);
         if cpu {
@@ -2019,7 +2019,7 @@ pub unsafe fn Fighter_procInput(g: G) {
             let r = e::ftCo_GetCpuRTrigger(fp);
             fp.input.triggers[0] = if l > r { l } else { r };
         } else {
-            let p = e::pad_nml(fp.x618_player_id);
+            let p = e::pad_nml(fp.pad_port);
             fp.input.lstick[0].x = p[0];
             fp.input.lstick[0].y = p[1];
             let t = &mut *e::gm_CStickSmashTargetTest();
@@ -2055,7 +2055,7 @@ pub unsafe fn Fighter_procInput(g: G) {
         if fp.input.triggers[0] <= c.analog_shoulder_deadzone {
             fp.input.triggers[0] = 0.0;
         }
-        fp.input.held_buttons[0] = if e::ftCo_IsCpuControlled(fp) { e::ftCo_GetCpuButtons(fp) } else { e::pad_button(fp.x618_player_id) };
+        fp.input.held_buttons[0] = if e::ftCo_IsCpuControlled(fp) { e::ftCo_GetCpuButtons(fp) } else { e::pad_button(fp.pad_port) };
         if e::ftCo_IsCpuControlled(fp) && e::ScriptGame_CpuStanding(fp) == 0 {
             technical_ai_overlay(fp);
             cpu_assist_overlay(fp);
@@ -2080,7 +2080,7 @@ pub unsafe fn Fighter_procInput(g: G) {
             }
         }
         // TARGET_PC: SyncTest input hook, MELEE_SLP playback and recording.
-        let port = fp.player_id as i32;
+        let port = fp.player_idx as i32;
         let fol = fp.is_sub_fighter() as i32;
         let mut iv = [fp.input.lstick[0].x, fp.input.lstick[0].y, fp.input.cstick[0].x, fp.input.cstick[0].y, fp.input.triggers[0]];
         let mut ib = fp.input.held_buttons[0];
@@ -2104,7 +2104,7 @@ pub unsafe fn Fighter_procInput(g: G) {
             fp.input.triggers[0], fp.input.held_buttons[0], fp.motion_id as i32, fp.cur_pos.x, fp.cur_pos.y, fp.facing_dir,
             fp.dmg.x1830_percent);
         Fighter_procInput_Inner1(fp);
-        if fp.x618_player_id == 0 && e::gm_IsCurrently1PMode_inline() != 0 {
+        if fp.pad_port == 0 && e::gm_IsCurrently1PMode_inline() != 0 {
             let mask = (HSD_PAD_L | HSD_PAD_R | HSD_PAD_START) as u32;
             let combo = fp.input.held_buttons[0] & mask == mask;
             if combo && !CSTICK_COMBO_WAS_HELD {
@@ -2133,7 +2133,7 @@ pub unsafe fn Fighter_procInput(g: G) {
             fp.activity_timer.lstick.y = 0;
             fp.activity_timer.lstick.x = 0;
         }
-        let uport = fp.x618_player_id as i32;
+        let uport = fp.pad_port as i32;
         if !e::ftCo_IsCpuControlled(fp) && e::Replay_UcfCardinals(uport) != 0 {
             { let y = e::Replay_RawStick(uport, 1); let x = e::Replay_RawStick(uport, 0); ftUcf_PadBufferPush(uport, x, y); } // C argument order: last first
             if !(fp.kind == 0x13 && fp.motion_id == 0x15D) {
@@ -2180,12 +2180,12 @@ pub unsafe fn Fighter_procInput(g: G) {
             fp.x680 += 1;
         }
     }
-    if fp.x221D_b4() != 0 || fp.x2224_b2() != 0 || e::gm_GetDbPauseFlag(2) {
+    if fp.input_disabled() != 0 || fp.stamina_dead() != 0 || e::gm_GetDbPauseFlag(2) {
         fp.input.lstick[2] = fp.input.lstick[0];
         fp.input.cstick[2] = fp.input.cstick[0];
         fp.input.triggers[2] = fp.input.triggers[0];
         fp.input.held_buttons[2] = fp.input.held_buttons[0];
-        fp.set_x221D_b3(0);
+        fp.set_has_prev_input(0);
         Fighter_UnkInitLoad_80068914_Inner1(g);
     }
     e::Geno_ComboInput(g);
@@ -2220,7 +2220,7 @@ unsafe fn Fighter_procUpdate__orig(g: G) {
     use melee_runtime::lbtrigf::atan2f;
     let fp = fpm(g);
     ext::ScriptGame_FighterBenchTick(fp);
-    if fp.x221F_b3() != 0 {
+    if fp.is_sleeping() != 0 {
         return;
     }
     let c = cd();
@@ -2317,13 +2317,13 @@ unsafe fn Fighter_procUpdate__orig(g: G) {
             fp.xD4_unk_vel.x += fp.x8c_kb_vel.x;
             fp.xD4_unk_vel.y += fp.x8c_kb_vel.y;
             fp.xD4_unk_vel.z += 0.0;
-            let bit = if fp.anon_2210.anon_0.throw_flags_b2() != 0 {
-                fp.anon_2210.anon_0.set_throw_flags_b2(0);
+            let bit = if fp.x2210.x0.throw_flags_b2() != 0 {
+                fp.x2210.x0.set_throw_flags_b2(0);
                 true
             } else {
                 false
             };
-            if bit || ext::ftAnim_80070FD0(fp as *mut Fighter) || fp.anon_594.anon_0.x594_b7() != 0 {
+            if bit || ext::ftAnim_80070FD0(fp as *mut Fighter) || fp.x594.x0.x594_b7() != 0 {
                 ext::PSVECAdd(&raw const fp.cur_pos, &raw const fp.xD4_unk_vel, &raw mut fp.cur_pos);
                 fp.xD4_unk_vel = v0();
             }
@@ -2400,8 +2400,8 @@ pub unsafe fn ftReplay_TraceFighter(fp: &Fighter) {
     melee_core::ct!("ftReplay_TraceFighter");
     use ext as e;
     if e::Replay_Tracing() != 0 {
-        e::Replay_TraceFighter(fp.player_id as i32, fp.is_sub_fighter() as i32, fp.kind as i32, fp.motion_id as i32,
-            fp.cur_pos.x, fp.cur_pos.y, fp.facing_dir, fp.dmg.x1830_percent, e::Player_GetStocks(fp.player_id as i32),
+        e::Replay_TraceFighter(fp.player_idx as i32, fp.is_sub_fighter() as i32, fp.kind as i32, fp.motion_id as i32,
+            fp.cur_pos.x, fp.cur_pos.y, fp.facing_dir, fp.dmg.x1830_percent, e::Player_GetStocks(fp.player_idx as i32),
             fp.self_vel.x, fp.self_vel.y, fp.x8c_kb_vel.x, fp.x8c_kb_vel.y, fp.gr_vel);
     }
 }
@@ -2420,7 +2420,7 @@ unsafe fn Fighter_procMap__orig(g: G) {
     if fp.motion_id == ftCo_MS_Wait as _ && ext::ScriptGame_LabPreviewRow(fp, ftCo_MS_Wait as i32) >= 0 {
         return;
     }
-    if fp.x221F_b3() == 0 {
+    if fp.is_sleeping() == 0 {
         if fp.ecb_lock != 0 {
             fp.ecb_lock -= 1;
             if fp.ecb_lock == 0 {
@@ -2436,7 +2436,7 @@ unsafe fn Fighter_procMap__orig(g: G) {
             e::Geno_CollEnd(g);
         }
         if fp.ground_or_air == GA_Ground {
-            e::pl_80041280(fp.player_id as i32, fp.is_sub_fighter() as i32);
+            e::pl_80041280(fp.player_idx as i32, fp.is_sub_fighter() as i32);
         }
         if e::DbLevel_at_least_DebugRom() && (fp.cur_pos.x.is_nan() || fp.cur_pos.y.is_nan() || fp.cur_pos.z.is_nan()) {
             panic!("fighter.c:2590: fighter procMap pos error");
@@ -2454,8 +2454,8 @@ unsafe fn Fighter_procMap__orig(g: G) {
             e::Snap_CuratedMix(&bw, 1);
         }
         let sub6 = if fp.is_sub_fighter() != 0 { 6 } else { 0 };
-        e::Snap_CuratedRegion(fp.player_id as i32 + 1 + sub6, fp as *mut Fighter as usize, core::mem::size_of::<Fighter>() as u32);
-        e::Snap_CuratedRegion(100 + fp.player_id as i32 + sub6, fp.gobj as usize, 0x40);
+        e::Snap_CuratedRegion(fp.player_idx as i32 + 1 + sub6, fp as *mut Fighter as usize, core::mem::size_of::<Fighter>() as u32);
+        e::Snap_CuratedRegion(100 + fp.player_idx as i32 + sub6, fp.gobj as usize, 0x40);
         let mut st: [J; 64] = [core::ptr::null_mut(); 64];
         let mut sp = 0usize;
         let mut n = 0;
@@ -2466,7 +2466,7 @@ unsafe fn Fighter_procMap__orig(g: G) {
         while sp > 0 && n < 250 {
             sp -= 1;
             let j = st[sp];
-            e::Snap_CuratedRegion(1000 + fp.player_id as i32 * 256 + n, j as usize, 0x88);
+            e::Snap_CuratedRegion(1000 + fp.player_idx as i32 * 256 + n, j as usize, 0x88);
             n += 1;
             if !(*j).next.is_null() && sp < 63 {
                 st[sp] = (*j).next;
@@ -2484,12 +2484,12 @@ unsafe fn Fighter_procMap__orig(g: G) {
 pub unsafe fn curated_words(fp: &Fighter) -> std::vec::Vec<u32> {
     melee_core::ct!("curated_words");
     let mut w = vec![
-        fp.player_id as u32,
+        fp.player_idx as u32,
         fp.is_sub_fighter() as u32,
         fp.kind as u32,
         fp.motion_id as u32,
         fp.ground_or_air as u32,
-        ext::Player_GetStocks(fp.player_id as i32) as u32,
+        ext::Player_GetStocks(fp.player_idx as i32) as u32,
         fp.input.held_buttons[0],
     ];
     for f in [fp.cur_pos.x, fp.cur_pos.y, fp.cur_pos.z, fp.facing_dir, fp.dmg.x1830_percent, fp.self_vel.x, fp.self_vel.y,
@@ -2502,14 +2502,14 @@ pub unsafe fn curated_words(fp: &Fighter) -> std::vec::Vec<u32> {
     w.push(fp.x1968_jumpsUsed as u32);
     w.push(fp.x67F as u32);
     w.push(fp.x680 as u32);
-    w.push(ext::ScriptGame_IntrWinHashWord(fp.player_id as i32 + 1 + if fp.is_sub_fighter() != 0 { 6 } else { 0 }));
+    w.push(ext::ScriptGame_IntrWinHashWord(fp.player_idx as i32 + 1 + if fp.is_sub_fighter() != 0 { 6 } else { 0 }));
     w
 }
 
 /// `Fighter_procIK` (proc 7).
 pub unsafe fn Fighter_procIK(g: G) {
     melee_core::ct!("Fighter_procIK");
-    if fpm(g).x221F_b3() == 0 {
+    if fpm(g).is_sleeping() == 0 {
         ext::ft_80089B08(g);
     }
 }
@@ -2518,7 +2518,7 @@ pub unsafe fn Fighter_procIK(g: G) {
 pub unsafe fn Fighter_procAccessory(g: G) {
     melee_core::ct!("Fighter_procAccessory");
     let fp = fpm(g);
-    if fp.x221F_b3() != 0 {
+    if fp.is_sleeping() != 0 {
         return;
     }
     if fp.x2219_b5() != 0 {
@@ -2542,10 +2542,10 @@ pub unsafe fn Fighter_procCollPos(g: G) {
     melee_core::ct!("Fighter_procCollPos");
     use ext as e;
     let fp = fpm(g);
-    if fp.x221F_b3() != 0 {
+    if fp.is_sleeping() != 0 {
         return;
     }
-    ext::efAsync_QueueFlush(g, &mut fp.x60C);
+    ext::efAsync_QueueFlush(g, (&raw mut fp.x60C) as *mut *mut ::core::ffi::c_void);
     Fighter_UnkApplyTransformation_8006C0F0(g);
     if fp.x2219_b5() == 0 {
         e::Mex_FighterCallbackDispatch(g, fp.accessory4_cb);
@@ -2556,7 +2556,7 @@ pub unsafe fn Fighter_procCollPos(g: G) {
     if !fp.x20A0_accessory.is_null() {
         e::HSD_JObjAnimAll(fp.x20A0_accessory);
     }
-    if fp.ground_or_air == GA_Air && fp.cur_pos.y < ext::Stage_GetCamBoundsBottomOffset() && e::ifMagnify_802FB6E8(fp.player_id as i32) == 3 {
+    if fp.ground_or_air == GA_Air && fp.cur_pos.y < ext::Stage_GetCamBoundsBottomOffset() && e::ifMagnify_802FB6E8(fp.player_idx as i32) == 3 {
         let mut o = v0();
         e::Stage_UnkSetVec3TCam_Offset(&mut o);
         if fp.cur_pos.y + o.y < fp.x2140 {
@@ -2570,7 +2570,7 @@ pub unsafe fn Fighter_procGrabColl(g: G) {
     melee_core::ct!("Fighter_procGrabColl");
     use ext as e;
     let fp = fpm(g);
-    if fp.x221F_b3() != 0 || e::gm_8016B1C4() {
+    if fp.is_sleeping() != 0 || e::gm_8016B1C4() {
         return;
     }
     e::ftColl_8007BA0C(g);
@@ -2605,7 +2605,7 @@ pub unsafe fn Fighter_procAttackColl(g: G) {
     melee_core::ct!("Fighter_procAttackColl");
     use ext as e;
     let fp = fpm(g);
-    if fp.x221F_b3() == 0 && fp.x2219_b1() == 0 {
+    if fp.is_sleeping() == 0 && fp.x2219_b1() == 0 {
         e::ftColl_800765E0();
         e::ftColl_80078C70(g);
         e::ft_8007C77C(g);
@@ -2643,7 +2643,7 @@ pub unsafe fn Fighter_TakeDamage_8006CC7C(fp: &mut Fighter, d: f32) {
 
 unsafe fn fighter_take_damage_orig(fp: &mut Fighter, mut d: f32) {
     use ext as e;
-    d = e::ScriptGame_ModDamage(fp.player_id as i32, 1, d);
+    d = e::ScriptGame_ModDamage(fp.player_idx as i32, 1, d);
     if fp.x2226_b4() == 0 || fp.x2226_b3() != 0 {
         fp.dmg.x1830_percent += d;
         if fp.metal_timer != 0 {
@@ -2655,8 +2655,8 @@ unsafe fn fighter_take_damage_orig(fp: &mut Fighter, mut d: f32) {
         if fp.dmg.x1830_percent > 999.0 {
             fp.dmg.x1830_percent = 999.0;
         }
-        ext::Player_SetHPByIndex(fp.player_id as i32, fp.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(fp.dmg.x1830_percent));
-        e::pl_8003EC9C(fp.player_id as i32, fp.is_sub_fighter() as i32, fp.dmg.x1830_percent, d);
+        ext::Player_SetHPByIndex(fp.player_idx as i32, fp.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(fp.dmg.x1830_percent));
+        e::pl_8003EC9C(fp.player_idx as i32, fp.is_sub_fighter() as i32, fp.dmg.x1830_percent, d);
         e::ftCo_800C8C84(fp.gobj);
     }
 }
@@ -2690,7 +2690,7 @@ pub unsafe fn Fighter_8006CDA4(fp: &mut Fighter, arg1: i32) {
 /// `Fighter_8006CF5C`: queue a percent heal.
 pub unsafe fn Fighter_8006CF5C(fp: &mut Fighter, arg1: i32) {
     melee_core::ct!("Fighter_8006CF5C");
-    if fp.x2224_b2() == 0 {
+    if fp.stamina_dead() == 0 {
         fp.dmg.x18F0 += arg1;
         ext::ftCo_800BFFD0(fp, 8, 0);
         ext::ftCommon_8007EBAC(fp, 2, 0);
@@ -2717,7 +2717,7 @@ pub unsafe fn Fighter_UnkRecursiveFunc_8006D044(g: G) {
         cb(g);
     }
     if fp.x2219_b5() == 0 {
-        ext::Script_GameEvent(3, fp.player_id as i32, 1, fp.is_sub_fighter() as i32, 0);
+        ext::Script_GameEvent(3, fp.player_idx as i32, 1, fp.is_sub_fighter() as i32, 0);
     }
     fp.set_x2219_b5(1);
     if !fp.x1A5C.is_null() && fp.x2219_b7() == 0 {
@@ -2746,7 +2746,7 @@ pub unsafe fn Fighter_8006D10C_Inline1(g: G) {
                 cb(g);
             }
             if fp.x2219_b5() != 0 {
-                ext::Script_GameEvent(3, fp.player_id as i32, 0, fp.is_sub_fighter() as i32, 0);
+                ext::Script_GameEvent(3, fp.player_idx as i32, 0, fp.is_sub_fighter() as i32, 0);
             }
             fp.set_x2219_b5(0);
             Fighter_8006D10C_Inline2(fp);
@@ -2763,7 +2763,7 @@ pub unsafe fn Fighter_8006D10C(g: G) {
         cb(g);
     }
     if fp.x2219_b5() != 0 {
-        ext::Script_GameEvent(3, fp.player_id as i32, 0, fp.is_sub_fighter() as i32, 0);
+        ext::Script_GameEvent(3, fp.player_idx as i32, 0, fp.is_sub_fighter() as i32, 0);
     }
     fp.set_x2219_b5(0);
     if !fp.x1A5C.is_null() && fp.x2219_b7() == 0 {
@@ -2784,7 +2784,7 @@ pub unsafe fn Fighter_procCollResolve(g: G) {
     use ext as e;
     let fp = fpm(g);
     let msid = fp.motion_id as i32;
-    if fp.x221F_b3() != 0 {
+    if fp.is_sleeping() != 0 {
         return;
     }
     let c = cd();
@@ -2804,7 +2804,7 @@ pub unsafe fn Fighter_procCollResolve(g: G) {
         if fp.shield_health < 0.0 {
             b3 = true;
             fp.shield_health = c.x280_unkShieldHealth;
-            e::pl_8003E058(fp.x19BC_shieldDamageTaken3 as i32, fp.x221F_b6() as i32, fp.player_id as i32, fp.is_sub_fighter() as i32);
+            e::pl_8003E058(fp.x19BC_shieldDamageTaken3 as i32, fp.x221F_b6() as i32, fp.player_idx as i32, fp.is_sub_fighter() as i32);
         }
     }
     if fp.dmg.x189C_unk_num_frames > 0.0 {
@@ -2879,7 +2879,7 @@ pub unsafe fn Fighter_procCollResolve(g: G) {
             cb(g);
         }
         b1 = fp.dmg.x1914 as i32;
-        if fp.x2070.anon_0.x2073 == 0x46 {
+        if fp.x2070.x0.x2073 == 0x46 {
             e::ftCommon_8007EBAC(fp, 0xE, 0);
         } else {
             e::ftCommon_8007EE0C(fp, fp.dmg.x1914 as i32);
@@ -2988,7 +2988,7 @@ pub unsafe fn Fighter_procCollResolve(g: G) {
 pub unsafe fn Fighter_procDynamics(g: G) {
     melee_core::ct!("Fighter_procDynamics");
     let fp = fpm(g);
-    if fp.x221F_b3() != 0 || fp.x2219_b5() != 0 {
+    if fp.is_sleeping() != 0 || fp.x2219_b5() != 0 {
         return;
     }
     ext::ftCo_8009E0A8(g);
@@ -2998,7 +2998,7 @@ pub unsafe fn Fighter_procDynamics(g: G) {
 pub unsafe fn Fighter_procCamera(g: G) {
     melee_core::ct!("Fighter_procCamera");
     let fp = fpm(g);
-    if fp.x221F_b3() == 0 {
+    if fp.is_sleeping() == 0 {
         ext::ftCommon_8008021C(g);
         if let Some(cb) = fp.cam_cb {
             cb(g);
@@ -3014,8 +3014,8 @@ pub unsafe fn Fighter_procPlayer(g: G) {
     melee_core::ct!("Fighter_procPlayer");
     use ext as e;
     let fp = fpm(g);
-    if fp.x221F_b3() == 0 {
-        let (s, sub) = (fp.player_id as i32, fp.is_sub_fighter() as i32);
+    if fp.is_sleeping() == 0 {
+        let (s, sub) = (fp.player_idx as i32, fp.is_sub_fighter() as i32);
         e::Player_80032828(s, sub, &fp.cur_pos);
         e::Player_SetFacingDirectionConditional(s, sub, fp.facing_dir);
         e::pl_8003FAA8(s, sub, &fp.cur_pos, &fp.prev_pos);
@@ -3030,7 +3030,7 @@ pub unsafe fn Fighter_Unload_8006DABC(user_data: *mut core::ffi::c_void) {
     let kind = fp.kind as i32;
     e::Mex_OnDestroyDispatch(kind, fp.gobj, van(&crate::tu::ftdata::ftData_OnUserDataRemove, kind));
     e::ftColl_8007B8E8(fp.gobj);
-    ext::efAsync_QueueClear(&mut fp.x60C);
+    ext::efAsync_QueueClear((&raw mut fp.x60C) as *mut *mut ::core::ffi::c_void);
     e::it_8026B7F8(fp.gobj);
     e::Camera_800290D4(fp.x890_cameraBox as _);
     e::ftCo_UnloadDynamicBones(fp);
@@ -3044,7 +3044,7 @@ pub unsafe fn Fighter_Unload_8006DABC(user_data: *mut core::ffi::c_void) {
     e::HSD_JObjUnref(fp.x2184 as _);
     e::ftData_800859A8(fp);
     e::HSD_LObjRemoveAll(fp.x588 as _);
-    e::Player_80031FB0(fp.player_id as i32, fp.is_sub_fighter() as i32);
+    e::Player_80031FB0(fp.player_idx as i32, fp.is_sub_fighter() as i32);
     ext::HSD_ObjFree(&mut fighter_x59C_alloc_data, fp.x59C as _);
     ext::HSD_ObjFree(&mut fighter_x59C_alloc_data, fp.x5A0 as _);
     ext::HSD_ObjFree(&mut fighter_parts_alloc_data, fp.parts as _);
@@ -3111,7 +3111,7 @@ pub unsafe fn RB_FighterHash(h: u32, fp: &mut Fighter, slot: i32) -> u32 {
     let intr = ext::ScriptGame_IntrWinHashWord(if slot < 12 { (slot >> 1) + 1 + 6 * (slot & 1) } else { 0 });
     let gw = ftRb_GenoDefineWord(fp);
     let legacy = ftRb_HashLegacy();
-    let stocks = if legacy { 0 } else { ext::Player_GetStocks(fp.player_id as i32) };
+    let stocks = if legacy { 0 } else { ext::Player_GetStocks(fp.player_idx as i32) };
     let cpu = if legacy { false } else { ext::ftCo_IsCpuControlled(fp) };
     rb_fighter_hash_core(h, fp, slot, intr, gw, legacy, stocks, cpu)
 }
@@ -3305,7 +3305,7 @@ pub unsafe fn RB_NeutralHash() -> u32 {
             let fg = ext::Player_GetEntityAtIndex(i, j);
             if fg.is_null() || (*fg).user_data.is_null() { continue; }
             let fp = &mut *((*fg).user_data as F);
-            let stocks = ext::Player_GetStocks(fp.player_id as i32);
+            let stocks = ext::Player_GetStocks(fp.player_idx as i32);
             let cpu = ext::ftCo_IsCpuControlled(fp);
             let w = nh_fighter(fp, i * 2 + j, stocks, cpu);
             if let Ok(v) = std::env::var("MELEE_NH_DUMP") { if v.parse::<i32>().ok() == Some(i * 2 + j) { eprintln!("NHD {}", melee_types::neutral_hash::nh_dump(fp, i * 2 + j, stocks)); } }
@@ -3355,7 +3355,7 @@ pub unsafe fn RB_Perturb(code: i32) {
                 8 => fp.x3E4_fighterCmdScript.frame_count += 1.0,
                 9 => { let b = fp.x2219_b5(); fp.set_x2219_b5((b == 0) as _); }
                 10 => fp.cur_pos.x += 0.01,
-                12 => { let p = fp.player_id as i32; ext::Player_SetStocks(p, ext::Player_GetStocks(p) + 1); }
+                12 => { let p = fp.player_idx as i32; ext::Player_SetStocks(p, ext::Player_GetStocks(p) + 1); }
                 13 => {
                     if ext::ftCo_IsCpuControlled(fp) {
                         fp.cpu.command_duration = fp.cpu.command_duration.wrapping_add(1);
@@ -3527,7 +3527,7 @@ unsafe fn technical_ai_live(gobj: G) -> bool {
 unsafe fn technical_ai_supported(fp: *mut Fighter) -> bool {
     !fp.is_null() && (*fp).is_sub_fighter() == 0 &&
         ((*fp).kind == Ft_Kind_Fox as _ || (*fp).kind == Ft_Kind_Falco as _) &&
-        ext::Player_GetPlayerSlotType((*fp).player_id as i32) == Gm_PKind_Cpu as i32 &&
+        ext::Player_GetPlayerSlotType((*fp).player_idx as i32) == Gm_PKind_Cpu as i32 &&
         ext::ftCo_IsCpuControlled(fp) && (*fp).cpu.kind == CpuKind_4 as _
 }
 
@@ -3595,8 +3595,8 @@ pub unsafe fn technical_ai_overlay(fp: &mut Fighter) {
     melee_core::ct!("technical_ai_overlay");
     let mut o = TechAiObservation::default();
     let mut floor = v0();
-    if fp.player_id >= 6 || fp.is_sub_fighter() != 0 { return; }
-    let slot = &mut technical_ai_slots[fp.player_id as usize];
+    if fp.player_idx >= 6 || fp.is_sub_fighter() != 0 { return; }
+    let slot = &mut technical_ai_slots[fp.player_idx as usize];
     if slot.owner == 0 { return; }
     if slot.fighter != fp as *mut Fighter || slot.spawn != fp.x8_spawnNum {
         *slot = core::mem::zeroed();
@@ -3731,7 +3731,7 @@ static mut cpu_assist_last_threat: LastThreat = LastThreat { foe: 0, hb: 0, hc: 
 unsafe fn ca_log(s: &mut CpuAssistSlot, fp: &Fighter, what: &str) {
     if s.logged < 300 {
         s.logged += 1;
-        ext::OSReport(&format!("CPU-ASSIST: P{} {} frame={} motion={}\n", fp.player_id as i32 + 1, what, s.frames, fp.motion_id as i32));
+        ext::OSReport(&format!("CPU-ASSIST: P{} {} frame={} motion={}\n", fp.player_idx as i32 + 1, what, s.frames, fp.motion_id as i32));
     }
 }
 
@@ -3758,8 +3758,8 @@ pub fn cpu_assist_decide(s: &mut CpuAssistSlot, t: usize, sub: Option<&mut i32>)
 }
 
 unsafe fn cpu_assist_supported(fp: *mut Fighter) -> bool {
-    !fp.is_null() && (*fp).is_sub_fighter() == 0 && (*fp).player_id < 6 &&
-        ext::Player_GetPlayerSlotType((*fp).player_id as i32) == Gm_PKind_Cpu as i32 && ext::ftCo_IsCpuControlled(fp)
+    !fp.is_null() && (*fp).is_sub_fighter() == 0 && (*fp).player_idx < 6 &&
+        ext::Player_GetPlayerSlotType((*fp).player_idx as i32) == Gm_PKind_Cpu as i32 && ext::ftCo_IsCpuControlled(fp)
 }
 
 /// `cpu_assist_config_ok`.
@@ -3837,7 +3837,7 @@ unsafe fn cpu_assist_nearest_foe(fp: &Fighter) -> *mut Fighter {
     let mut best: *mut Fighter = core::ptr::null_mut();
     let mut bd = 1e30f32;
     for i in 0..6 {
-        if i == fp.player_id as i32 { continue; }
+        if i == fp.player_idx as i32 { continue; }
         let g = ext::Player_GetEntity(i);
         if !technical_ai_live(g) { continue; }
         let o = (*g).user_data as F;
@@ -3873,7 +3873,7 @@ pub fn cpu_assist_seg_dist2(q: &Vec3, a: &Vec3, b: &Vec3) -> f32 {
 /// A foe's hitbox moved one more frame along its own sweep overlaps one of this fighter's enabled hurtbox capsules.
 unsafe fn cpu_assist_threat(fp: &Fighter) -> bool {
     for i in 0..6 {
-        if i == fp.player_id as i32 { continue; }
+        if i == fp.player_idx as i32 { continue; }
         let g = ext::Player_GetEntity(i);
         if !technical_ai_live(g) { continue; }
         let o = (*g).user_data as F;
@@ -3914,7 +3914,7 @@ unsafe fn cpu_assist_threat(fp: &Fighter) -> bool {
 /// `cpu_assist_dump_hits`: PS diagnostics log.
 unsafe fn cpu_assist_dump_hits(fp: &Fighter) {
     for i in 0..6 {
-        if i == fp.player_id as i32 { continue; }
+        if i == fp.player_idx as i32 { continue; }
         let g = ext::Player_GetEntity(i);
         if !technical_ai_live(g) { continue; }
         let o = (*g).user_data as F;
@@ -3951,8 +3951,8 @@ fn cpu_assist_air_actionable(m: i32) -> bool {
 /// `cpu_assist_overlay`: the per-entity technique assist applied on top of the AI's virtual pad.
 pub unsafe fn cpu_assist_overlay(fp: &mut Fighter) {
     melee_core::ct!("cpu_assist_overlay");
-    if fp.player_id >= 6 || fp.is_sub_fighter() != 0 { return; }
-    let s = &mut cpu_assist_slots[fp.player_id as usize];
+    if fp.player_idx >= 6 || fp.is_sub_fighter() != 0 { return; }
+    let s = &mut cpu_assist_slots[fp.player_idx as usize];
     if s.owner == 0 { return; }
     if ext::Netplay_Enabled() != 0 || ext::RB_Enabled() != 0 || ext::Replay_Active() != 0 || !cpu_assist_supported(fp) {
         *s = core::mem::zeroed();
@@ -4029,7 +4029,7 @@ pub unsafe fn cpu_assist_overlay(fp: &mut Fighter) {
     // ---- perfect shield ----
     if s.ps_log > 0 {
         s.ps_log -= 1;
-        ext::OSReport(&format!("CPU-ASSIST: P{} ps+{} motion={} kb={:.6} ps_window={} guard={:.6}\n", fp.player_id as i32 + 1, 3 - s.ps_log, m,
+        ext::OSReport(&format!("CPU-ASSIST: P{} ps+{} motion={} kb={:.6} ps_window={} guard={:.6}\n", fp.player_idx as i32 + 1, 3 - s.ps_log, m,
             fp.dmg.kb_applied as f64, fp.x221C_b2() as i32, fp.mv.co.guard.x18 as f64));
         cpu_assist_dump_hits(fp);
     }

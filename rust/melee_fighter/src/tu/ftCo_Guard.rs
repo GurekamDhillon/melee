@@ -284,7 +284,7 @@ fn inlineB0(f: &Fighter) -> f32 {
     if f.kind as i32 == Ft_Kind_Yoshi as i32 {
         f.co_attrs.initial_shield_size
     } else {
-        let start = ext::ScriptGame_ModValue(f.player_id as i32, 4, c.x260_startShieldHealth);
+        let start = ext::ScriptGame_ModValue(f.player_idx as i32, 4, c.x260_startShieldHealth);
         let n1 = (f.shield_health / start) * fmadds(f.lightshield_amount, c.x2D8 - c.x2D4, c.x2D4);
         let n2 = 1.0 - c.x264;
         let n3 = fmadds(n2, n1, c.x264);
@@ -356,7 +356,8 @@ fn ftCo_GuardPoseTree(f: &mut Fighter, pose: *mut HSD_Joint, row: &mut i32) -> *
     let mut index = FtPart_TransN as i32;
     unsafe {
         if own.is_null() {
-            return *(*(*f.ft_data).x20).x0.add(2);
+            // `fp->ft_data->x20->x0->child` (the shield model is one joint upstream now; its child is the third word the old `x0[2]` read)
+            return (*(*(*f.ft_data).x20).x0).child;
         }
         *row = ext::Geno_MotionAnimRow(f, ftCo_MS_Guard as i32);
         if *row < 0 {
@@ -382,7 +383,7 @@ fn ftCo_GuardPoseTree(f: &mut Fighter, pose: *mut HSD_Joint, row: &mut i32) -> *
 pub fn ftCo_80091E78(g: G, arg1: f32) {
     melee_core::ct!("ftCo_80091E78");
     let f = fp(g);
-    if f.reflecting() == 0 && f.anon_221b.x221B_b0() == 0 {
+    if f.reflecting() == 0 && f.x221B.x221B_b0() == 0 {
         return;
     }
     let mut own_pose: std::vec::Vec<HSD_Joint> = (0..MAX_FT_PARTS).map(|_| HSD_Joint::zeroed()).collect();
@@ -419,7 +420,7 @@ pub fn ftCo_80091E78(g: G, arg1: f32) {
 
 /// static inline `ftCo_80092158_inline`: the shield effect in the player's colour.
 fn ftCo_80092158_inline(g: G, arg1: i32, arg2: *mut HSD_JObj) {
-    let offset = ext::Player_GetUnk45(fp(g).player_id as i32) << 2;
+    let offset = ext::Player_GetUnk45(fp(g).player_idx as i32) << 2;
     let color = unsafe { ext::Fighter_804D650C().add(offset as usize) };
     let rgb = unsafe { ((*color as i32) << 16) | ((*color.add(1) as i32) << 8) | *color.add(2) as i32 };
     ext::efSync_Spawn(arg1, g, arg2, rgb);
@@ -506,7 +507,7 @@ pub fn ftCo_800925A4(g: G) -> bool {
     melee_core::ct!("ftCo_800925A4");
     let f = fp(g);
     let c = cd();
-    if f.anon_221b.x221B_b0() != 0 {
+    if f.x221B.x221B_b0() != 0 {
         guard(f).x2C = f.lightshield_amount;
         let v = (f.input.triggers[0] - c.analog_shoulder_deadzone) / (1.0 - c.analog_shoulder_deadzone);
         f.lightshield_amount = if v < 0.0 { guard(f).x2C } else { v };
@@ -516,8 +517,8 @@ pub fn ftCo_800925A4(g: G) -> bool {
         if f.shield_health < 0.0 {
             f.shield_health = 0.0;
             f.set_x221A_b7(0);
-            f.anon_221b.set_x221B_b0(0);
-            ext::pl_8003E0E8(f.player_id as i32, f.is_sub_fighter() as i32);
+            f.x221B.set_x221B_b0(0);
+            ext::pl_8003E0E8(f.player_idx as i32, f.is_sub_fighter() as i32);
             ext::ftCo_80098B20(g);
             ext::ft_PlaySFX(fp(g), 129, 127, 64);
             return true;
@@ -551,7 +552,7 @@ fn inlineC0(g: G) -> bool {
     ftCo_80092BCC(g);
     let f = fp(g);
     let gv = guard(f);
-    if (gv.xC != 0 && gv.x10 == 0.0) || (f.anon_221b.x221B_b0() == 0 && f.reflecting() == 0) {
+    if (gv.xC != 0 && gv.x10 == 0.0) || (f.x221B.x221B_b0() == 0 && f.reflecting() == 0) {
         unsafe { ftCo_80092BE8(g) };
         return true;
     }
@@ -649,7 +650,7 @@ pub fn ftCo_80092BCC(g: G) {
 pub unsafe extern "C" fn ftCo_80092BE8(g: G) {
     melee_core::ct!("ftCo_80092BE8");
     let f = fp(g);
-    ext::pl_8003E114(f.player_id as i32, f.is_sub_fighter() as i32, f.shield_health);
+    ext::pl_8003E114(f.player_idx as i32, f.is_sub_fighter() as i32, f.shield_health);
     if ftGetTemplateKind(fp(g)) == Ft_Kind_Yoshi as i32 {
         ext::ftYs_Shield_8012C49C(g);
     } else {
@@ -763,7 +764,7 @@ pub fn ftCo_80092F2C(g: G, arg1: bool) {
 
 /// static `ftCo_Ucf084ShieldSdi` (TARGET_PC): UCF 0.84 shield SDI past the stick window.
 fn ftCo_Ucf084ShieldSdi(f: &Fighter) -> bool {
-    let port = f.x618_player_id as i32;
+    let port = f.pad_port as i32;
     let prev = f.input.lstick[1].x;
     if ext::Replay_UcfVersion(port) != 84 {
         return false;
@@ -899,7 +900,7 @@ pub fn ftCo_8009388C(g: G) {
     let c = cd();
     f.active_timer.trigger = 0xFE;
     f.set_x221A_b7(0);
-    f.anon_221b.set_x221B_b0(0);
+    f.x221B.set_x221B_b0(0);
     f.set_x221C_b3(1);
     f.set_x221C_b1(1);
     f.set_x221C_b2(1);

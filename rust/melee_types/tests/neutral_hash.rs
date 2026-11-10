@@ -15,7 +15,7 @@ fn zeroed<T>() -> Box<T> {
 fn fill(f: &mut Fighter, it: &mut Item, k: i32) {
     let kf = k as f32;
     let mut pat: u32 = 0xA5C3_0F96 ^ (k as u32).wrapping_mul(0x0101_0101);
-    f.player_id = (k % 4) as u8;
+    f.player_idx = (k % 4) as u8;
     f.motion_id = (0x10 + k * 7) as _;
     f.cur_pos.x = kf * 1.5;
     f.cur_pos.y = -kf * 0.25;
@@ -89,7 +89,7 @@ fn words_match_c_oracle() {
         let hx = |s: &str| u32::from_str_radix(s, 16).unwrap();
         fill(&mut f, &mut it, k);
         assert_eq!(nh_cpu_flags(&f.cpu), hx(v[2]), "nh_CpuFlags k={k}");
-        assert_eq!(nh_fighter(&f, k, 3 + f.player_id as i32, cpu), hx(v[3]), "nh_Fighter k={k}");
+        assert_eq!(nh_fighter(&f, k, 3 + f.player_idx as i32, cpu), hx(v[3]), "nh_Fighter k={k}");
         assert_eq!(nh_item(&it), hx(v[4]), "nh_Item k={k}");
         n += 1;
     }

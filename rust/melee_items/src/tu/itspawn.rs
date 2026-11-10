@@ -382,7 +382,7 @@ unsafe fn it_8026C88C_inline(alloc: *mut RandomItemSpawner) {
                     spawn.vel.z = 0.0;
                     spawn.x0_parent_gobj = null_mut();
                     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-                    spawn.x44_flag.anon_0.set_b0(1);
+                    spawn.x44_flag.x0.set_b0(1);
                     spawn.x40 = 0;
                 } else {
                     chk = false;
@@ -662,7 +662,7 @@ pub unsafe extern "C" fn it_8026D258(pos: *mut Vec3, kind: ItemKind) -> bool {
         spawn.vel.x = 0.0;
         spawn.x0_parent_gobj = null_mut();
         spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-        spawn.x44_flag.anon_0.set_b0(1);
+        spawn.x44_flag.x0.set_b0(1);
         spawn.x40 = 0;
         ext::Item_80268B9C(&raw mut spawn);
         item_spawn_chk = true;

@@ -90,7 +90,7 @@ pub struct Ext {
     sa: [u32; 256],
     attr: ItemAttr,
     art: Article,
-    unk: itUnkAttributes,
+    unk: itUnkAttributes_legacy,
     common: ItemCommonData,
 }
 
@@ -103,7 +103,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
     let mut ext = Box::new(Ext {
         attr: ItemAttr::zeroed(),
         art: Article::zeroed(),
-        unk: itUnkAttributes::zeroed(),
+        unk: itUnkAttributes_legacy::zeroed(),
         common: ItemCommonData::zeroed(),
         sa: [0; 256],
     });
@@ -118,7 +118,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         let x = &mut *ext;
         x.attr = ItemAttr::zeroed();
         x.art = Article::zeroed();
-        x.unk = itUnkAttributes::zeroed();
+        x.unk = itUnkAttributes_legacy::zeroed();
         x.common = ItemCommonData::zeroed();
         x.attr.set_x0_is_heavy(g.r() as u8);
         x.attr.set_x0_78(g.r() as u8);
@@ -126,7 +126,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         x.attr.x1C_damage_mul = g.rf();
         x.unk.x0_float = g.rf();
         x.unk.x4_float = g.rf();
-        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes as *mut _;
+        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes_legacy as *mut _;
         x.art.x8_hurtbones = if g.r() & 1 != 0 { g.ga as *mut _ } else { null_mut() };
         x.common.xB8 = g.rf();
         x.common.xBC = g.rf();

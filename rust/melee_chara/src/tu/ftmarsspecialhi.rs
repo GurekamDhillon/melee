@@ -27,14 +27,14 @@ pub mod ext {
         }
     }
     /// `ft_800831CC(gobj, &ftCo_80096CC8, cb)`: the line-id callback is always `ftCo_80096CC8`.
-    pub static mut FT_800831CC: Option<fn(G, fn(G, i32) -> bool, fn(G))> = None;
-    pub fn ft_800831CC(g: G, line_cb: fn(G, i32) -> bool, cb: fn(G)) {
+    pub static mut FT_800831CC: Option<fn(G, fn(G, isize) -> bool, fn(G))> = None;
+    pub fn ft_800831CC(g: G, line_cb: fn(G, isize) -> bool, cb: fn(G)) {
         match unsafe { FT_800831CC } {
             Some(f) => f(g, line_cb, cb),
             None => melee_fighter::tu::ft_081b::ft_800831cc(g, line_cb, cb),
         }
     }
-    pub fn ftCo_80096CC8(g: G, line_id: i32) -> bool {
+    pub fn ftCo_80096CC8(g: G, line_id: isize) -> bool {
         melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8(g, line_id)
     }
     pub static mut FTPARTSETROTY: Option<fn(*mut Fighter, i32, f32)> = None;
@@ -73,7 +73,7 @@ pub fn ftMs_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[2] = 0;
         (*fp).cmd_vars[1] = 0;
         (*fp).cmd_vars[0] = 0;
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).self_vel.y = 0.0;
         (*fp).self_vel.x *= (*da).x3C;
         st::Fighter_ChangeMotionState(gobj, 0x170, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -98,8 +98,8 @@ unsafe fn iasa(gobj: *mut HSD_GObj) {
         }
     }
     // ftCheckThrowB3: test and clear
-    if (*fp).anon_2210.anon_0.throw_flags_b3() != 0 {
-        (*fp).anon_2210.anon_0.set_throw_flags_b3(0);
+    if (*fp).x2210.x0.throw_flags_b3() != 0 {
+        (*fp).x2210.x0.set_throw_flags_b3(0);
         if cabs((*fp).input.lstick[0].x) > (*da).x30 {
             st::ftCommon_UpdateFacing(&mut *fp);
             ext::ftPartSetRotY(fp, 0, (1.5707963267948966f64 * (*fp).facing_dir as f64) as f32);
@@ -220,7 +220,7 @@ pub fn ftMs_SpecialHi_Enter(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[2] = 0_u32;
         (*fp).cmd_vars[1] = 0_u32;
         (*fp).cmd_vars[0] = 0_u32;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         st::Fighter_ChangeMotionState(gobj, 367 /* 0x16F */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
     }

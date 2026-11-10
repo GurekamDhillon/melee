@@ -58,7 +58,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -136,8 +136,8 @@ int main(void)
             case 8: {  fn_802BB574(&GO[0]); } break; /* fn_802BB574 */
             case 9: {  fn_802BB694(&GO[0]); } break; /* fn_802BB694 */
             case 10: {  fn_802BB784(&GO[0]); } break; /* fn_802BB784 */
-            case 11: {  ret = (u32) notInSpecialS(&GO[0]); } break; /* notInSpecialS */
-            case 12: {  ret = (u32) itSeakchain_UnkMotion4_Anim(&GO[0]); } break; /* itSeakchain_UnkMotion4_Anim */
+            case 11: {  ret = (u32) ((notInSpecialS(&GO[0])) != 0); } break; /* notInSpecialS */
+            case 12: {  ret = (u32) ((itSeakchain_UnkMotion4_Anim(&GO[0])) != 0); } break; /* itSeakchain_UnkMotion4_Anim */
             case 13: { int v1 = (int) ((int) fv()); float v2 = (float) (rw()); ret = (u32) it_802BB938(&LK[rnd() % NL], v1, v2); } break; /* it_802BB938 */
             case 14: { s32 v1 = (s32) ((int) fv()); f32 v2 = (f32) (rw()); ret = (u32) it_802BBAEC(&LK[rnd() % NL], v1, v2); } break; /* it_802BBAEC */
             case 15: { float v3 = (float) (rw()); it_802BBB0C(&LK[rnd() % NL], &VA[0], (itSeakChain_Attrs*) SPEC[0], v3); } break; /* it_802BBB0C */
@@ -145,7 +145,7 @@ int main(void)
             case 17: {  ret = (u32) it_802BBD64(&LK[rnd() % NL], &VA[0], (itSeakChain_Attrs*) SPEC[0]); } break; /* it_802BBD64 */
             case 18: {  ret = (u32) it_802BBED0(&LK[rnd() % NL], &VA[0], (itSeakChain_Attrs*) SPEC[0]); } break; /* it_802BBED0 */
             case 19: {  it_802BC080(&LK[rnd() % NL], &VA[0], &IT[0]); } break; /* it_802BC080 */
-            case 20: { f32 v3 = (f32) (rw()); ret = (u32) it_802BC94C(&LK[rnd() % NL], &VA[0], (itSeakChain_Attrs*) SPEC[0], v3); } break; /* it_802BC94C */
+            case 20: { f32 v3 = (f32) (rw()); ret = (u32) ((it_802BC94C(&LK[rnd() % NL], &VA[0], (itSeakChain_Attrs*) SPEC[0], v3)) != 0); } break; /* it_802BC94C */
             case 21: {  it_802BCA30(&IT[0]); } break; /* it_802BCA30 */
             case 22: {  it_802BCB88(&IT[0], &VA[0]); } break; /* it_802BCB88 */
             case 23: {  it_2725_Logic54_PickedUp(&GO[0]); } break; /* it_2725_Logic54_PickedUp */

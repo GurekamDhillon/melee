@@ -338,9 +338,9 @@ pub fn ftSk_SpecialS_80110610(gobj: *mut HSD_GObj, arg1: i32, arg2: f32) {
         let items = (*(*fp).ft_data).x48_items;
 
         let item: *mut *mut HSD_Joint = if arg1 == 305 {
-            *items.add(4) as *mut *mut HSD_Joint
+            (*items.add(4)).joint as *mut *mut HSD_Joint
         } else {
-            *items.add(5) as *mut *mut HSD_Joint
+            (*items.add(5)).joint as *mut *mut HSD_Joint
         };
 
         ftSk_SpecialS_80110490(fp);

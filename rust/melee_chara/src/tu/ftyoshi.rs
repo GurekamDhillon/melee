@@ -252,9 +252,9 @@ pub fn ftYs_Init_OnLoad(gobj: *mut HSD_GObj) {
         ftYs_Init_8012B6E8(fp, temp_r27);
         ftYs_Init_8012B6E8(fp, temp_r28);
         crate::tu::ftfox::push_attrs::<ftYoshiAttributes>(fp);
-        ext::it_8026B3F8(*item_list.add(0), It_Kind_Yoshi_EggThrow as i32);
-        ext::it_8026B3F8(*item_list.add(1), It_Kind_Yoshi_Star as i32);
-        ext::it_8026B3F8(*item_list.add(2), It_Kind_Yoshi_EggLay as i32);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Yoshi_EggThrow as i32);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, It_Kind_Yoshi_Star as i32);
+        ext::it_8026B3F8((*item_list.add(2)).article as *mut ::core::ffi::c_void, It_Kind_Yoshi_EggLay as i32);
         (*fp).set_x2226_b1(1);
     }
 }

@@ -1,6 +1,7 @@
 //! Written by gen/mtu/mk_lb.py from the same description as gen/mtu/tu/lbcardgame.c.
 //! src/tu/lbcardgame.rs vs the C (the whole TU, shipping contraction; regenerate the expected file
 //! with `python rust/melee_runtime/gen/mtu/run_tu.py lbcardgame`).
+//! C functions of the TU this test covers (the private ones through their public callers): dont_inline_helper, fn_8001CC30, getCurrentIcon, gobj0_RenderFunc, gobj1_Proc, lbCardGame_DecideGameMode, lbCardGame_Init, lbCardGame_InitScene, lbCardGame_LoadArchive, lbCardGame_Reset, lbCardGame_SaveChanges, lbCardGame_SetCardStatus, lb_8001C600, lb_8001C658, lb_8001C87C, lb_8001C8BC, lb_8001CBBC, lb_8001CC4C, lb_8001CC84, lb_8001CDB4, updateCardStatus.
 #![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe, dead_code)]
 const OP_lb_8001C600: u32 = 0;
 const OP_lb_8001C658: u32 = 1;
@@ -32,7 +33,7 @@ use mtu_harness::*;
 #[path = "mtu/lbcardgame_gen.rs"]
 mod g;
 
-static mut ICN: [*mut c_void; 4] = [null_mut(); 4]; static mut DMP: [*mut DynamicModelDesc; 2] = [null_mut(); 2]; static mut NTB: [u8; 7 * 0x1F2C + 16] = [0; 7 * 0x1F2C + 16];
+static mut ICN: [*mut u8; 4] = [null_mut(); 4]; static mut DMP: [*mut DynamicModelDesc; 2] = [null_mut(); 2]; static mut NTB: [u8; 7 * 0x1F2C + 16] = [0; 7 * 0x1F2C + 16];
 
 pub static mut VA: [Vec3; 4] = unsafe { core::mem::zeroed() };
 pub static mut U8A: [u8; 16] = [0; 16];
@@ -40,6 +41,7 @@ pub static mut IA: [i32; 4] = [0; 4];
 pub static mut UA: [u32; 4] = [0; 4];
 pub static mut FA: [f32; 4] = [0.0; 4];
 pub static mut BUF: [u8; 256] = [0; 256];
+pub static mut PPA: [*mut c_void; 4] = [core::ptr::null_mut(); 4];
 pub static mut STRS: [[u8; 64]; 4] = [[0; 64]; 4];
 pub static mut GO: [HSD_GObj; 4] = unsafe { core::mem::zeroed() };
 pub static mut SD: [SceneDesc; 2] = unsafe { core::mem::zeroed() };
@@ -75,7 +77,7 @@ pub fn pick_fn(kind: i32) -> usize {
     }
 }
 pub fn pick_cb(kind: i32) -> usize { let f = pick_fn(kind); if f != 0 { f } else if kind == 2 { cbp1 as usize } else if kind == 3 { cbev3 as usize } else if kind == 4 { cbi1 as usize } else { cbev1 as usize } }
-pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); freg(cbi1 as usize); freg(cbi2 as usize); }
+pub fn freg_world() { freg(cbev1 as usize); freg(cbev2 as usize); freg(cbp1 as usize); freg(cbp2 as usize); freg(cbev3 as usize); freg(cbi1 as usize); freg(cbi2 as usize);  }
 pub fn preg_world() {
     unsafe {
         preg(&raw const GO, core::mem::size_of_val(&GO));
@@ -84,7 +86,7 @@ pub fn preg_world() {
         preg(&raw const SC, core::mem::size_of_val(&SC));
         preg(&raw const JO, core::mem::size_of_val(&JO));
         preg(&raw const VA, core::mem::size_of_val(&VA)); preg(&raw const U8A, 16); preg(&raw const IA, 16); preg(&raw const UA, 16); preg(&raw const FA, 16);
-        preg(&raw const BUF, 256); preg(&raw const STRS, core::mem::size_of_val(&STRS));
+        preg(&raw const BUF, 256); preg(&raw const STRS, core::mem::size_of_val(&STRS)); preg(&raw const PPA, core::mem::size_of_val(&PPA));
     }
 }
 
@@ -99,6 +101,7 @@ pub unsafe fn setup_world() {
     for i in 0..4 { IA[i] = fv() as i32; UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }
     for i in 0..256 { BUF[i] = rnd() as u8; }
     BUF[255] = 0;
+    for i in 0..4 { PPA[i] = core::ptr::null_mut(); }
     for i in 0..4 { g::fill_HSD_GObj(&mut GO[i]); }
     for i in 0..2 { g::fill_SceneDesc(&mut SD[i]); }
     for i in 0..2 { g::fill_DynamicModelDesc(&mut DM[i]); }
@@ -117,11 +120,15 @@ pub unsafe fn hash_world() {
     for i in 0..4 { hm(VA[i].x.to_bits()); hm(VA[i].y.to_bits()); hm(VA[i].z.to_bits()); hm(FA[i].to_bits()); hm(IA[i] as u32); hm(UA[i]); }
     for i in 0..16 { hm(U8A[i] as u32); }
     for i in 0..256 { hm(BUF[i] as u32); }
+    for i in 0..4 { hm(pi(PPA[i])); }
     g::hashg_all();
     g::hasho_all();
 }
 
-#[test]
+// harness = false (Cargo.toml): a case that ends in a panic is cut off inside the hook (see mtu_harness::run_case),
+// which a libtest main thread cannot survive at exit.
+fn main() { lbcardgame_matches_c(); println!("tu_lbcardgame: ok"); }
+
 fn lbcardgame_matches_c() {
     unsafe {
         g::install();
@@ -130,6 +137,7 @@ fn lbcardgame_matches_c() {
         g::freg_all();
         freg_world();
 preg(&raw const ICN, core::mem::size_of_val(&ICN)); preg(&raw const DMP, core::mem::size_of_val(&DMP)); preg(&raw const NTB, core::mem::size_of_val(&NTB));
+        install_abort_hook();
         let mut c = Check::new(include_str!("data/mtu_lbcardgame.txt"));
         let mut total = 0u32;
         for op in 0..21u32 {
@@ -160,9 +168,9 @@ preg(&raw const ICN, core::mem::size_of_val(&ICN)); preg(&raw const DMP, core::m
             for k in 0..n {
                 case(op, k);
                 setup_world();
-{ for q in 0..4usize { ICN[q] = if fv() & 7 != 0 { (&raw mut BUF as *mut u8).add(8 * q) as *mut c_void } else { null_mut() }; } m::state.icon_data = if op == OP_lbCardGame_LoadArchive && fv() & 1 != 0 { null_mut() } else { (&raw mut ICN) as *mut *mut c_void }; DMP[0] = &raw mut DM[0]; DMP[1] = &raw mut DM[1]; SD[0].models = (&raw mut DMP) as *mut *mut DynamicModelDesc; SD[0].cameras = &raw mut SC[0]; SD[1].models = (&raw mut DMP as *mut *mut DynamicModelDesc).add(1); SD[1].cameras = &raw mut SC[1]; m::state.scene_data = if fv() & 7 != 0 { &raw mut SD[(fv() & 1) as usize] } else { null_mut() }; m::state.jobj_translate_idx = 0; m::state.enable = ((fv() & 7 != 0) || op == OP_lb_8001C8BC || op == OP_lbCardGame_SaveChanges) as i32; m::state.x10 = fv() & 1; m::ext::OS_BusClock = if fv() & 1 != 0 { 162000000u32 } else { 4u32 + fv() % 100000u32 }; }
+{ for q in 0..4usize { ICN[q] = if fv() & 7 != 0 { (&raw mut BUF as *mut u8).add(8 * q) } else { null_mut() }; } m::state.icon_data = if op == OP_lbCardGame_LoadArchive && fv() & 1 != 0 { null_mut() } else { (&raw mut ICN) as *mut *mut c_void }; DMP[0] = &raw mut DM[0]; DMP[1] = &raw mut DM[1]; SD[0].models = (&raw mut DMP) as *mut *mut DynamicModelDesc; SD[0].cameras = &raw mut SC[0]; SD[1].models = (&raw mut DMP as *mut *mut DynamicModelDesc).add(1); SD[1].cameras = &raw mut SC[1]; m::state.scene_data = if fv() & 7 != 0 { &raw mut SD[(fv() & 1) as usize] } else { null_mut() }; m::state.jobj_translate_idx = 0; m::state.enable = ((fv() & 7 != 0) || op == OP_lb_8001C8BC || op == OP_lbCardGame_SaveChanges) as i32; m::state.x10 = fv() & 1; m::ext::OS_BusClock = if fv() & 1 != 0 { 162000000u32 } else { 4u32 + fv() % 100000u32 }; }
                 let mut ret = 0u32;
-                match op {
+                let aborted = run_case(|| unsafe { match op {
                     0 => { 
 
 m::lb_8001C600();
@@ -229,7 +237,7 @@ m::gobj1_Proc(a0);
  }
                     16 => { 
 let a0 = pick_HSD_GObj();
-let a1 = fv() as _;
+let a1 = fv64() as _;
 m::gobj0_RenderFunc(a0, a1);
  }
                     17 => { 
@@ -249,7 +257,8 @@ m::lbCardGame_Reset();
 m::lbCardGame_Init();
  }
                     _ => unreachable!(),
-                }
+                } });
+                if aborted { c.abort(op, k); total += 1; continue; }
                 hash_world();
 
                 c.line(op, k, ret);

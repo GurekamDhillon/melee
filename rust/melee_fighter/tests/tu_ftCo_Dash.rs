@@ -69,7 +69,7 @@ fn ftCo_Dash_matches_c() {
             fr.co_attrs.dash_accel_base = rg(); if fr.co_attrs.dash_accel_base.is_nan() { fr.co_attrs.dash_accel_base = 0.5; } /* NaN+NaN picks an operand by codegen order */ fr.co_attrs.dash_max_velocity = rw();
             fr.co_attrs.ground_friction = rg();
             fr.gr_vel = rw();
-            fr.player_id = (rnd() % 6) as _;
+            fr.player_idx = (rnd() % 6) as _;
             fr.x197C = if rnd() & 1 != 0 { go2() } else { core::ptr::null_mut() };
             fr.item_gobj = if rnd() & 1 != 0 { igo() as *mut Item_GObj } else { core::ptr::null_mut() };
             fr.cmd_vars[0] = rnd() & 1;

@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -86,9 +86,9 @@ int main(void)
             setup(prof);
             switch (op) {
             case 0: { bool v2 = (bool) ((int) fv()); float v3 = (float) (rw()); ret = PI(it_802BD158(&GO[0], &VA[0], v2, v3)); } break; /* it_802BD158 */
-            case 1: {  ret = (u32) itPeachExplode_Logic55_DmgDealt(&GO[0]); } break; /* itPeachExplode_Logic55_DmgDealt */
+            case 1: {  ret = (u32) ((itPeachExplode_Logic55_DmgDealt(&GO[0])) != 0); } break; /* itPeachExplode_Logic55_DmgDealt */
             case 2: { bool v2 = (bool) ((int) fv()); it_802BD248(&GO[0], &GO[1], v2); } break; /* it_802BD248 */
-            case 3: {  ret = (u32) itPeachexplode_UnkMotion1_Anim(&GO[0]); } break; /* itPeachexplode_UnkMotion1_Anim */
+            case 3: {  ret = (u32) ((itPeachexplode_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itPeachexplode_UnkMotion1_Anim */
             case 4: {  itPeachExplode_Logic55_EvtUnk(&GO[0], &GO[1]); } break; /* itPeachExplode_Logic55_EvtUnk */
             case 5: { { int j; for (j = 0; j < 2; j++) { HM((u32) it_803F7488[j].anim_id); HM(FI((const void*) it_803F7488[j].animated)); HM(FI((const void*) it_803F7488[j].physics_updated)); HM(FI((const void*) it_803F7488[j].collided)); } } } break; /* state tables */
             }

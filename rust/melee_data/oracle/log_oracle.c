@@ -38,6 +38,9 @@ int gw_Settings_Str(const char *key, char *out, int cap, const char *dflt) {
 }
 #include "../../../pc/platform/gw_disc_privacy.h"
 static void gl_emit(const char *s);
+/* a fixed user name, not the recording machine's (tests/log_oracle.rs uses the same one) */
+static BOOL oracle_GetUserNameA(LPSTR b, LPDWORD n) { strncpy(b, "Testy", *n); *n = 6; return TRUE; }
+#define GetUserNameA oracle_GetUserNameA
 
 #include "log_cut.inc"
 #include "log_cut2.inc"

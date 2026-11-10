@@ -52,16 +52,16 @@ pub mod ext {
         fn HSD_GObjGXLink_8039084C(gobj: *mut HSD_GObj) -> ();
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void) -> ();
         fn HSD_GObj_80390ED0(gobj: *mut HSD_GObj, a1: u32) -> ();
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, pass: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
-        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, pass: i32) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, pass: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, pass: isize) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
         fn HSD_GObj_SetupProc(gobj: *mut HSD_GObj, cb: HSD_GObjEvent, priority: u8) -> *mut HSD_GObjProc;
         fn HSD_ImageDescCopyFromEFB(img: *mut HSD_ImageDesc, x: u16, y: u16, clear: u8, mipmap: i32) -> () = crate::tu::adapt::HSD_ImageDescCopyFromEFB__a5dfa4;
         fn HSD_JObjAnimAll(jobj: *mut HSD_JObj) -> ();
         fn HSD_JObjLoadJoint(joint: *mut HSD_Joint) -> *mut HSD_JObj = crate::tu::adapt::HSD_JObjLoadJoint__3efee1;
         fn HSD_SObjLib_803A4740(sobj: *mut HSD_SObj) -> () = crate::tu::adapt::HSD_SObjLib_803A4740__344956;
         fn HSD_SObjLib_803A477C(gobj: *mut HSD_GObj, desc: *mut HSD_SObjDesc, a2: u32, a3: u32, a4: u8, a5: u8) -> *mut HSD_SObj = crate::tu::adapt::HSD_SObjLib_803A477C__a0c4ae;
-        fn HSD_SObjLib_803A49E0(gobj: *mut HSD_GObj, pass: i32) -> () = crate::tu::adapt::HSD_SObjLib_803A49E0__00f645;
-        fn HSD_SObjLib_803A54EC(gobj: *mut HSD_GObj, pass: i32) -> () = crate::tu::adapt::HSD_SObjLib_803A54EC__11e875;
+        fn HSD_SObjLib_803A49E0(gobj: *mut HSD_GObj, pass: isize) -> () = crate::tu::adapt::HSD_SObjLib_803A49E0__00f645;
+        fn HSD_SObjLib_803A54EC(gobj: *mut HSD_GObj, pass: isize) -> () = crate::tu::adapt::HSD_SObjLib_803A54EC__11e875;
         fn HSD_SObjLib_803A55DC(gobj: *mut HSD_GObj, w: u16, h: u16, a3: i32) -> () = crate::tu::adapt::HSD_SObjLib_803A55DC__ba9596;
         // ---- item / stage / ef / ft
         fn Item_80266FA8() -> () = crate::tu::adapt::Item_80266FA8__f7386b;
@@ -85,7 +85,7 @@ pub mod ext {
         fn Player_SetCostumeId(slot: i32, id: i32) -> () = crate::tu::adapt::Player_SetCostumeId__920e80;
         fn Player_SetFacingDirection(slot: i32, dir: f32) -> () = crate::tu::adapt::Player_SetFacingDirection__e0fc0a;
         fn Player_SetPlayerCharacter(slot: i32, ckind: CharacterKind) -> () = crate::tu::adapt::Player_SetPlayerCharacter__d99f81;
-        fn Player_SetPlayerId(slot: i32, id: i32) -> () = crate::tu::adapt::Player_SetPlayerId__dba656;
+        fn Player_SetPadPort(slot: i32, id: i32) -> () = crate::tu::adapt::Player_SetPlayerId__dba656;
         fn Player_SetScale(slot: i32, scale: f32) -> () = crate::tu::adapt::Player_SetScale__3c042c;
         fn Player_SetSlottype(slot: i32, kind: u32) -> () = crate::tu::adapt::Player_SetSlottype__6536f1;
         // ---- lb / mn / ty / sfx
@@ -220,9 +220,9 @@ pub unsafe extern "C" fn fn_801A6664(arg0: *mut HSD_GObj) {
             }
         }
         if gm_804D6750 > 0xFF {
-            (*temp_r3).anon_3c.anon_0.x3F = 0xFF;
+            (*temp_r3).x3C_u.x0.x3F = 0xFF;
         } else {
-            (*temp_r3).anon_3c.anon_0.x3F = gm_804D6750 as u8;
+            (*temp_r3).x3C_u.x0.x3F = gm_804D6750 as u8;
         }
     }
     if gm_804D6780 != 0 {
@@ -237,16 +237,16 @@ pub unsafe extern "C" fn fn_801A6664(arg0: *mut HSD_GObj) {
         let temp_r3_2 = ext::HSD_SObjLib_803A477C(gm_804D677C, addr_of_mut!(gm_804D6788), 0, 0, 0x80, 0);
         (*temp_r3_2).x10 = 60.0;
         (*temp_r3_2).x14 = 0.0;
-        (*temp_r3_2).anon_3c.anon_0.x3C = gm_804D4278[0];
-        (*temp_r3_2).anon_3c.anon_0.x3D = gm_804D4278[1];
-        (*temp_r3_2).anon_3c.anon_0.x3E = gm_804D4278[2];
+        (*temp_r3_2).x3C_u.x0.x3C = gm_804D4278[0];
+        (*temp_r3_2).x3C_u.x0.x3D = gm_804D4278[1];
+        (*temp_r3_2).x3C_u.x0.x3E = gm_804D4278[2];
         if gm_804D6794 < 0xBE {
             gm_804D6794 += 0xA;
             if gm_804D6794 > 0xBE {
                 gm_804D6794 = 0xBE;
             }
         }
-        (*temp_r3_2).anon_3c.anon_0.x3F = gm_804D6794 as u8;
+        (*temp_r3_2).x3C_u.x0.x3F = gm_804D6794 as u8;
         gm_804D6784 = (gm_804D6784 == 0) as i32;
     }
 }
@@ -283,7 +283,7 @@ pub unsafe fn gm_801A68D8() {
     ext::Player_80036CF0(0);
     ext::Player_SetPlayerCharacter(0, ext::gm_801BEFB0());
     ext::Player_SetCostumeId(0, ext::gm_801BEFD0());
-    ext::Player_SetPlayerId(0, 0);
+    ext::Player_SetPadPort(0, 0);
     ext::Player_SetSlottype(0, melee_types::Gm_PKind_Demo);
     ext::Player_SetFacingDirection(0, 1.0f32);
     ext::Player_80032768(0, addr_of!(gm_803DB2C8) as *mut Vec3);
@@ -305,7 +305,7 @@ pub unsafe fn gm_801A68D8() {
 }
 
 /// fn_801A6A48: capture the screen into gm_804809D0[gm_804D6784].
-pub unsafe extern "C" fn fn_801A6A48(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe extern "C" fn fn_801A6A48(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("fn_801A6A48");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj.cast()) != 0 {
         ext::HSD_SObjLib_803A54EC(gobj, arg1);
@@ -316,7 +316,7 @@ pub unsafe extern "C" fn fn_801A6A48(gobj: *mut HSD_GObj, arg1: i32) {
 }
 
 /// fn_801A6ACC: capture colour and depth into gm_804808F8.x0[gm_804D675C].
-pub unsafe extern "C" fn fn_801A6ACC(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn fn_801A6ACC(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("fn_801A6ACC");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj.cast()) != 0 {
         ext::Camera_800313E0(gobj, 1);
@@ -341,10 +341,10 @@ pub unsafe extern "C" fn fn_801A6B6C(gobj: *mut HSD_GObj) {
         ext::HSD_GObjFree(gm_804D676C);
         ext::HSD_GObjFree(gm_804D677C);
         ext::mn_8022F0F0(3);
-        ext::HSD_Free(gm_80480964.x0[0][0].image_ptr);
-        ext::HSD_Free(gm_80480964.x0[0][1].image_ptr);
-        ext::HSD_Free(gm_80480964.x0[1][0].image_ptr);
-        ext::HSD_Free(gm_80480964.x0[1][1].image_ptr);
+        ext::HSD_Free(gm_80480964.x0[0][0].image_ptr as *mut c_void);
+        ext::HSD_Free(gm_80480964.x0[0][1].image_ptr as *mut c_void);
+        ext::HSD_Free(gm_80480964.x0[1][0].image_ptr as *mut c_void);
+        ext::HSD_Free(gm_80480964.x0[1][1].image_ptr as *mut c_void);
         ext::gm_801A7B00();
         ext::HSD_GObjFree(gobj);
     }
@@ -378,7 +378,7 @@ pub unsafe fn gm_801A6C54() {
 }
 
 /// fn_801A6D78: render pass of the second capture camera.
-pub unsafe extern "C" fn fn_801A6D78(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn fn_801A6D78(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("fn_801A6D78");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj.cast()) != 0 {
         ext::HSD_GObj_80390ED0(gobj, 7);

@@ -67,10 +67,10 @@ pub mod ext {
     pub fn Ground_801C3BB4() {
         match unsafe { GROUND_801C3BB4 } { Some(f) => f(), None => { unsafe { crate::tu::ground::Ground_801C3BB4(); } return; } }
     }
-    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
+    pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, isize) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3FA4(gobj: *mut HSD_GObj, depth: i32) -> *mut HSD_JObj {
-        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
+        match unsafe { GROUND_801C3FA4 } { Some(f) => f(gobj, depth as isize), None => { return unsafe { crate::tu::ground::Ground_801C3FA4(gobj as _, depth as _) as _ }; } }
     }
     pub static mut GROUND_GETSTAGEGOBJ: Option<fn(i32) -> *mut HSD_GObj> = None;
     #[allow(non_snake_case)]
@@ -310,7 +310,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
+            x10: StageCallbacks_x10 { flags: u32::to_be($flags) },
         }
     };
 }
@@ -739,10 +739,10 @@ pub unsafe fn grIzumi_801CCB18(_gobj: *mut HSD_GObj) {
     }
 }
 
-pub unsafe extern "C" fn grIzumi_801CCB90(gobj: *mut HSD_GObj, renderpass: i32) {
+pub unsafe extern "C" fn grIzumi_801CCB90(gobj: *mut HSD_GObj, renderpass: isize) {
     melee_core::ct!("grIzumi_801CCB90");
     ext::HSD_StateSetPointSize(18, 0);
-    ext::grDisplay_801C5DB0(gobj, renderpass);
+    ext::grDisplay_801C5DB0(gobj, renderpass as isize);
 }
 
 pub unsafe fn grIzumi_801CCBDC(height: f32, a: *mut Vec3, b: i32, jobj: *mut HSD_JObj) -> *mut HSD_GObj {
@@ -790,7 +790,7 @@ unsafe fn grIzumi_StageSlotReflection(image: *mut HSD_ImageDesc) {
     let private_visit = ext::ScriptGame_StageSlotRetailLoading();
     ext::lb_800121FC(image, 80, 60, 4, if private_visit != 0 { 0 } else { 2001 });
     if private_visit != 0 {
-        ext::ScriptGame_StageSlotRetailBuffer((*image).image_ptr);
+        ext::ScriptGame_StageSlotRetailBuffer((*image).image_ptr as *mut c_void);
     }
 }
 
@@ -816,7 +816,7 @@ pub unsafe fn grIzumi_801CCD98() -> *mut HSD_GObj {
     gobj
 }
 
-pub unsafe extern "C" fn grIzumi_801CCEA0(gobj: *mut HSD_GObj, _renderpass: i32) {
+pub unsafe extern "C" fn grIzumi_801CCEA0(gobj: *mut HSD_GObj, _renderpass: isize) {
     melee_core::ct!("grIzumi_801CCEA0");
     let mut mtx: Mtx = [[0.0; 4]; 3];
     let mut vec = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -923,7 +923,7 @@ pub unsafe fn grIzumi_801CD090(gobj: *mut HSD_GObj, image: *mut HSD_ImageDesc) -
     null_mut()
 }
 
-pub unsafe extern "C" fn grIzumi_801CD220(gobj: *mut HSD_GObj, renderpass: i32) {
+pub unsafe extern "C" fn grIzumi_801CD220(gobj: *mut HSD_GObj, renderpass: isize) {
     melee_core::ct!("grIzumi_801CD220");
     let gp = GET_GROUND(gobj);
     let refl = (*(*gp).u.izumi.xC8).user_data as *mut IzumiReflection;
@@ -932,7 +932,7 @@ pub unsafe extern "C" fn grIzumi_801CD220(gobj: *mut HSD_GObj, renderpass: i32) 
     if !tobj.is_null() {
         ext::PSMTXCopy((*refl).texture_matrix.as_mut_ptr(), (*tobj).mtx.as_mut_ptr());
     }
-    ext::grDisplay_801C5DB0(gobj, renderpass);
+    ext::grDisplay_801C5DB0(gobj, renderpass as isize);
 }
 
 pub unsafe extern "C" fn grIzumi_801CD280(a: *mut Vec3, _b: i32, jobj: *mut HSD_JObj) -> i32 {
@@ -1012,4 +1012,4 @@ pub unsafe fn grIzumi_801CD2D4() {
     pub extern "C" fn grIzumi_801CCB14(a0: *mut HSD_GObj) {  }
 
 /// grIzumi_801CD278 (gr/grizumi.c:906)
-    pub extern "C" fn grIzumi_801CD278(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grIzumi_801CD278(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }

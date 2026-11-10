@@ -43,7 +43,7 @@ CFG["itbat"] = dict(
 _aw = "IT[k].xDD4_itemVar.arwinglaser"
 CFG["itarwinglaser"] = dict(
     spec=[("""        ArwingLaserAttr* a = (ArwingLaserAttr*) SPEC[0];
-        a->x0 = &ATTR[0]; a->x4 = rw(); a->x8 = rw();""",
+        a->x0 = (itSpecialAttrsHead*) &ATTR[0]; a->x4 = rw(); a->x8 = rw();""",
            """            let a = SPECB.0[0].as_mut_ptr() as *mut m::ArwingLaserAttr;
             (*a).x0 = &raw mut ATTR[0]; (*a).x4 = rw(); (*a).x8 = rw();""")],
     tweak=per_item(
@@ -293,7 +293,7 @@ CFG["itpeachturnip"] = dict(
     tweak=per_item(
         f"""        IT[k].kind = KK[rnd() % 6];
         {_pt}.xDD8 = (int) (rnd() % 10) - 1;
-        {_pt}.xDD4.b0 = (int) (rnd() & 1);
+        {_pt}.xDD4.x0.b0 = (int) (rnd() & 1);
         {_pt}.xDDC_damage = (int) (rnd() % 30);
         {_pt}.xDE0_scl = rw();
         {_pt}.xDE4_owner = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
@@ -302,17 +302,17 @@ CFG["itpeachturnip"] = dict(
         """        IT[k].kind = KK[(rnd() % 6) as usize];
         let pt = &mut IT[k].xDD4_itemVar.peachturnip;
         pt.xDD8 = (rnd() % 10) as i32 - 1;
-        pt.xDD4.anon_0.set_b0((rnd() & 1) as u8);
+        pt.xDD4.x0.set_b0((rnd() & 1) as u8);
         pt.xDDC_damage = (rnd() % 30) as i32;
         pt.xDE0_scl = rw();
         pt.xDE4_owner = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
         pt.xDE8_scl = rw();
         IT[k].xD44_lifeTimer = if rnd() & 1 != 0 { 1.0 } else { rw() };"""),
-    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.xDE4_owner)); %s.xDE4_owner = 0; HM(%s.xDD4.b0); zero(&%s.xDD4, sizeof %s.xDD4); }""" % ((_pt,) * 5),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(PI(%s.xDE4_owner)); %s.xDE4_owner = 0; HM(%s.xDD4.x0.b0); zero(&%s.xDD4, sizeof %s.xDD4); }""" % ((_pt,) * 5),
           """    for k in 0..3 {
         let pt = &mut IT[k].xDD4_itemVar.peachturnip;
         hm(pi(pt.xDE4_owner)); pt.xDE4_owner = null_mut();
-        hm(pt.xDD4.anon_0.b0() as u32);
+        hm(pt.xDD4.x0.b0() as u32);
         core::ptr::write_bytes(&raw mut pt.xDD4 as *mut u8, 0, core::mem::size_of_val(&pt.xDD4));
     }"""),
     hints={"kind": ("KK[rnd() % 6]", "KK[(rnd() % 6) as usize]")},
@@ -502,8 +502,8 @@ CFG["itlgunbeam"] = dict(
 
 # ---------------------------------------------------------------------------------------- itleadead
 CFG["itleadead"] = dict(
-    c_decl="static itLeadeadAttr_x0 LDX[3]; static it_804D6D40_t D40;",
-    rs_decl="static mut LDX: [itLeadeadAttr_x0; 3] = unsafe { core::mem::zeroed() }; static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() };",
+    c_decl="static itSpecialAttrsHead LDX[3]; static it_804D6D40_t D40;",
+    rs_decl="static mut LDX: [itSpecialAttrsHead; 3] = unsafe { core::mem::zeroed() }; static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() };",
     spec=[all3("""        itLeadeadAttributes* a = (itLeadeadAttributes*) SPEC[0];
         LDX[q].x0 = (int) (rnd() % 60); LDX[q].x4 = rw();
         a->x0 = &LDX[q]; a->x4 = (int) (rnd() % 30); a->x8 = (float) (rnd() % 4); a->xC = rw(); a->x10 = rw(); a->x14 = rw();
@@ -544,13 +544,13 @@ CFG["itlikelike"] = dict(
     rs_decl="static mut LLX: [Vec3; 3] = unsafe { core::mem::zeroed() }; static mut D40: it_804D6D40_t = unsafe { core::mem::zeroed() };",
     spec=[all3("""        itLikelikeAttributes* a = (itLikelikeAttributes*) SPEC[0];
         *(int*) &LLX[q].x = (int) (rnd() % 40); LLX[q].y = rw(); LLX[q].z = rw();
-        a->x0.x0_f32 = &LLX[q]; a->x4 = (int) (rnd() % 20); a->x8 = (int) (rnd() % 10); a->xC = (int) (rnd() % 14) + 1;
+        a->x0 = (itSpecialAttrsHead*) &LLX[q]; a->x4 = (int) (rnd() % 20); a->x8 = (int) (rnd() % 10); a->xC = (int) (rnd() % 14) + 1;
         a->x18 = (int) (rnd() % 4); a->x1C = (float) (rnd() % 30); a->x20 = (float) (rnd() % 30); a->x24 = (float) (rnd() % 30);
         a->x28 = (float) (rnd() % 30); a->x2C = (float) (rnd() % 30); a->x30 = rw(); a->x34 = rw(); a->x38 = (float) (rnd() % 45);
         a->x3C = (s8) (rnd() % 3); a->x3D = (s8) (rnd() % 4); a->x3E = (s8) (rnd() % 4);""",
            """            let a = SPECB.0[0].as_mut_ptr() as *mut itLikelikeAttributes;
             *(&raw mut LLX[q].x as *mut i32) = (rnd() % 40) as i32; LLX[q].y = rw(); LLX[q].z = rw();
-            (*a).x0.x0_f32 = &raw mut LLX[q]; (*a).x4 = (rnd() % 20) as i32; (*a).x8 = (rnd() % 10) as i32; (*a).xC = (rnd() % 14) as i32 + 1;
+            (*a).x0 = &raw mut LLX[q] as *mut itSpecialAttrsHead; (*a).x4 = (rnd() % 20) as i32; (*a).x8 = (rnd() % 10) as i32; (*a).xC = (rnd() % 14) as i32 + 1;
             (*a).x18 = (rnd() % 4) as i32; (*a).x1C = (rnd() % 30) as f32; (*a).x20 = (rnd() % 30) as f32; (*a).x24 = (rnd() % 30) as f32;
             (*a).x28 = (rnd() % 30) as f32; (*a).x2C = (rnd() % 30) as f32; (*a).x30 = rw(); (*a).x34 = rw(); (*a).x38 = (rnd() % 45) as f32;
             (*a).x3C = (rnd() % 3) as i8; (*a).x3D = (rnd() % 4) as i8; (*a).x3E = (rnd() % 4) as i8;""")],
@@ -690,7 +690,7 @@ CFG["itlinkbomb"] = dict(
             (*a).x14 = rw(); (*a).x18 = rw(); (*a).x1C = rw(); (*a).x20 = rw(); (*a).x24 = rw(); (*a).x28 = rw(); (*a).x2C = rw(); (*a).x30 = rw();""")],
     tweak=per_item(
         f"""        ART[k].xC_itemStates = &ISA[k]; IT[k].xD0_itemStateDesc = 0;
-        zero(&{_lb}.x0, sizeof {_lb}.x0); {_lb}.x0.b0 = rnd() & 1; {_lb}.x0.b1 = rnd() & 1; {_lb}.x0.b2 = rnd() & 1;
+        zero(&{_lb}.x0, sizeof {_lb}.x0); {_lb}.x0.x0.b0 = rnd() & 1; {_lb}.x0.x0.b1 = rnd() & 1; {_lb}.x0.x0.b2 = rnd() & 1;
         {_lb}.x4 = rw(); {_lb}.x8 = rw(); {_lb}.xC = rw();
         {_lb}.x10 = (rnd() & 1) ? &GO[(k + 1) % 3] : 0;
         IT[k].xD44_lifeTimer = ((rnd() % 3) == 0) ? 0.0f : (float) (rnd() % 80) - 5.0f;
@@ -698,7 +698,7 @@ CFG["itlinkbomb"] = dict(
         IT[k].xCCC_incDamageDirection = (rnd() & 1) ? 1.0f : -1.0f;
         IT[k].owner = (rnd() & 1) ? {_lb}.x10 : (((rnd() & 1) ? &GO[(k + 2) % 3] : 0));""",
         """        ART[k].xC_itemStates = &raw mut ISA[k]; IT[k].xD0_itemStateDesc = null_mut();
-        core::ptr::write_bytes(&raw mut IT[k].xDD4_itemVar.linkbomb.x0 as *mut u8, 0, core::mem::size_of_val(&IT[k].xDD4_itemVar.linkbomb.x0)); IT[k].xDD4_itemVar.linkbomb.x0.anon_0.set_b0((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.anon_0.set_b1((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.anon_0.set_b2((rnd() & 1) as u8);
+        core::ptr::write_bytes(&raw mut IT[k].xDD4_itemVar.linkbomb.x0 as *mut u8, 0, core::mem::size_of_val(&IT[k].xDD4_itemVar.linkbomb.x0)); IT[k].xDD4_itemVar.linkbomb.x0.x0.set_b0((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.x0.set_b1((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.x0.set_b2((rnd() & 1) as u8);
         IT[k].xDD4_itemVar.linkbomb.x4 = rw(); IT[k].xDD4_itemVar.linkbomb.x8 = rw(); IT[k].xDD4_itemVar.linkbomb.xC = rw();
         IT[k].xDD4_itemVar.linkbomb.x10 = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
         IT[k].xD44_lifeTimer = if rnd() % 3 == 0 { 0.0 } else { (rnd() % 80) as f32 - 5.0 };
@@ -707,7 +707,7 @@ CFG["itlinkbomb"] = dict(
         IT[k].owner = if rnd() & 1 != 0 { IT[k].xDD4_itemVar.linkbomb.x10 } else if rnd() & 1 != 0 { &raw mut GO[(k + 2) % 3] } else { null_mut() };"""),
     ptrs=(f"""    for (k = 0; k < 3; k++) {{
         HM(PI({_lb}.x10));
-        HM({_lb}.x0.b0); HM({_lb}.x0.b1); HM({_lb}.x0.b2); HM({_lb}.x0.b3); HM({_lb}.x0.b4); HM({_lb}.x0.b5); HM({_lb}.x0.b6); HM({_lb}.x0.b7);
+        HM({_lb}.x0.x0.b0); HM({_lb}.x0.x0.b1); HM({_lb}.x0.x0.b2); HM({_lb}.x0.x0.b3); HM({_lb}.x0.x0.b4); HM({_lb}.x0.x0.b5); HM({_lb}.x0.x0.b6); HM({_lb}.x0.x0.b7);
         {_lb}.x10 = 0; zero(&{_lb}.x0, sizeof {_lb}.x0);
     }}""", """    for k in 0..3 {
         let lb = &mut IT[k].xDD4_itemVar.linkbomb;
@@ -743,14 +743,14 @@ CFG["itmaril"] = dict(
     spec=[_farr(6, {5: ("(float) (rnd() % 50)", "(rnd() % 50) as f32")})],
     tweak=per_item(
         f"""        {_ml}.x60.flags = 0;
-        {_ml}.x60.x0 = rnd() & 1;
+        {_ml}.x60.x0_s.x0 = rnd() & 1;
         IT[k].xC9C = (int) (rnd() % 60);""",
         """        let ml = &mut IT[k].xDD4_itemVar.maril;
         ml.x60.flags = 0;
-        ml.x60.anon_0.set_x0((rnd() & 1) as u8);
+        ml.x60.x0_s.set_x0((rnd() & 1) as u8);
         IT[k].xC9C = (rnd() % 60) as i32;"""),
-    ptrs=(f"""    for (k = 0; k < 3; k++) {{ HM({_ml}.x60.x0); {_ml}.x60.flags = 0; }}""",
-          """    for k in 0..3 { let ml = &mut IT[k].xDD4_itemVar.maril; hm(ml.x60.anon_0.x0() as u32); ml.x60.flags = 0; }"""),
+    ptrs=(f"""    for (k = 0; k < 3; k++) {{ HM({_ml}.x60.x0_s.x0); {_ml}.x60.flags = 0; }}""",
+          """    for k in 0..3 { let ml = &mut IT[k].xDD4_itemVar.maril; hm(ml.x60.x0_s.x0() as u32); ml.x60.flags = 0; }"""),
 )
 
 _pk = "IT[k].xDD4_itemVar.pokemon"
@@ -869,10 +869,10 @@ CFG["itoctarock"] = dict(
 _ok = "IT[k].xDD4_itemVar.oldkuri"
 CFG["itoldkuri"] = dict(
     spec=[("""        itOldkuriAttributes* a = (itOldkuriAttributes*) SPEC[0];
-        a->x0 = (s32*) (SPEC[0] + 64); *a->x0 = (int) (rnd() % 30); ((float*) a->x0)[1] = rw();
+        a->x0 = (struct itOldkuriAttributes_x0*) (SPEC[0] + 64); a->x0->x0 = (int) (rnd() % 30); a->x0->x4 = rw();
         a->x4 = rw(); a->x8 = rw(); a->xC = (float) (rnd() % 10);""",
            """            let a = SPECB.0[0].as_mut_ptr() as *mut m::itOldkuriAttributes;
-            (*a).x0 = SPECB.0[0].as_mut_ptr().add(64) as *mut i32; *(*a).x0 = (rnd() % 30) as i32; *((*a).x0 as *mut f32).add(1) = rw();
+            (*a).x0 = SPECB.0[0].as_mut_ptr().add(64) as *mut m::itOldkuriAttributes_x0; (*(*a).x0).x0 = (rnd() % 30) as i32; (*(*a).x0).x4 = rw();
             (*a).x4 = rw(); (*a).x8 = rw(); (*a).xC = (rnd() % 10) as f32;""")],
     tweak=(_D40C[0] + "\n" + per_item(f"        {_ok}.xDF8 = (int) (rnd() % 3);\n        {_ok}.xDFC = (int) (rnd() & 1);", "")[0],
            _D40C[1] + "\n" + per_item("", "        IT[k].xDD4_itemVar.oldkuri.xDF8 = (rnd() % 3) as i32;\n        IT[k].xDD4_itemVar.oldkuri.xDFC = (rnd() & 1) as i32;")[1]),
@@ -1271,7 +1271,7 @@ CFG["itrshell"] = dict(
         {_rs}.xDEC = (int) (rnd() % 4);
         {_rs}.xDF0 = (int) (rnd() & 1);
         {_rs}.xDF4_b0 = rnd() & 1;
-        IT[k].xDCD_flag.b5 = rnd() & 1;
+        IT[k].xDCD_flag.x0.b5 = rnd() & 1;
         if (rnd() & 1) IT[k].x40_vel.x = (float) ((int) (rnd() % 5) - 2) / 2.0f;""",
         """        let rs = &mut IT[k].xDD4_itemVar.rshell;
         IT[k].msid = (rnd() % 10) as i32 - 1;
@@ -1284,9 +1284,9 @@ CFG["itrshell"] = dict(
         rs.xDEC = (rnd() % 4) as i32;
         rs.xDF0 = (rnd() & 1) as i32;
         rs.set_xDF4_b0((rnd() & 1) as u8);
-        IT[k].xDCD_flag.anon_0.set_b5((rnd() & 1) as u8);
+        IT[k].xDCD_flag.x0.set_b5((rnd() & 1) as u8);
         if rnd() & 1 != 0 { IT[k].x40_vel.x = ((rnd() % 5) as i32 - 2) as f32 / 2.0; }"""),
-    ptrs=("""    for (k = 0; k < 3; k++) { HM(%s.xDF4_b0); zero(&%s, sizeof %s); HM(IT[k].xDCD_flag.b5); *(unsigned char*) &IT[k].xDCD_flag = 0; }""" % (_rs, _rs, _rs),
+    ptrs=("""    for (k = 0; k < 3; k++) { HM(%s.xDF4_b0); zero(&%s, sizeof %s); HM(IT[k].xDCD_flag.x0.b5); *(unsigned char*) &IT[k].xDCD_flag = 0; }""" % (_rs, _rs, _rs),
           """    for k in 0..3 { let rs = &mut IT[k].xDD4_itemVar.rshell; hm(rs.xDF4_b0() as u32); core::ptr::write_bytes(rs as *mut _ as *mut u8, 0, core::mem::size_of::<itRShell_ItemVars>()); hm(IT[k].xDCD_flag.anon_0.b5() as u32); *(&raw mut IT[k].xDCD_flag as *mut u8) = 0; }"""),
 )
 

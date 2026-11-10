@@ -246,7 +246,7 @@ pub unsafe fn itFreezer_UnkMotion0_Phys_inline1(gobj: *mut Item_GObj) {
     let item = item_of(gobj);
     ext::it_80273454(gobj);
     itFreezer_UnkMotion0_Phys_inline2(gobj);
-    (*item).xDD1_flag.anon_0.set_b1(1);
+    (*item).xDD1_flag.x0.set_b1(1);
 }
 
 /// `void itFreezer_UnkMotion0_Phys(Item_GObj*)`.

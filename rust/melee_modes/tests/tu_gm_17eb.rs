@@ -184,7 +184,7 @@ unsafe fn fill_all() {
         (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x1C_pad[i0] = rt::draw_int(&mut rt::ST) as _;
     }
     (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x20 = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x28 = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).it_kind = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x2C = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x30 = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).game_speed = rt::draw_f32(&mut rt::ST);
@@ -348,7 +348,7 @@ unsafe fn hash_objs() {
         rt::h_u((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x1C_pad[i0] as u64);
     }
     rt::h_u((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x20 as u64);
-    rt::h_i((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x28 as i64);
+    rt::h_i((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).it_kind as i64);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x2C);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).x30);
     rt::h_f32((*core::ptr::addr_of_mut!(MO_gm_GetStartMeleeRules)).game_speed);
@@ -446,9 +446,9 @@ unsafe fn run_fn_8017EE40_ptr(seed: u64) -> [u64; 3] {
             AB_fn_8017EE40_ptr_0[e].player_standings[i2].pkind = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017EE40_ptr_0[e].player_standings[i2].ckind = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017EE40_ptr_0[e].player_standings[i2].ftkind = rt::draw_int(&mut rt::ST) as _;
-            AB_fn_8017EE40_ptr_0[e].player_standings[i2].anon_3.anon_0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
-            AB_fn_8017EE40_ptr_0[e].player_standings[i2].anon_3.anon_0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_fn_8017EE40_ptr_0[e].player_standings[i2].anon_3.anon_0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
+            AB_fn_8017EE40_ptr_0[e].player_standings[i2].x3_u.x0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
+            AB_fn_8017EE40_ptr_0[e].player_standings[i2].x3_u.x0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
+            AB_fn_8017EE40_ptr_0[e].player_standings[i2].x3_u.x0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
             AB_fn_8017EE40_ptr_0[e].player_standings[i2].x4 = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017EE40_ptr_0[e].player_standings[i2].is_big_loser = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017EE40_ptr_0[e].player_standings[i2].is_small_loser = rt::draw_int(&mut rt::ST) as _;
@@ -461,7 +461,7 @@ unsafe fn run_fn_8017EE40_ptr(seed: u64) -> [u64; 3] {
             for i3 in 0..4 {
                 AB_fn_8017EE40_ptr_0[e].player_standings[i2].kills[i3] = rt::draw_int(&mut rt::ST) as _;
             }
-            AB_fn_8017EE40_ptr_0[e].player_standings[i2].x18 = rt::draw_int(&mut rt::ST) as _;
+            AB_fn_8017EE40_ptr_0[e].player_standings[i2].kills[4] = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017EE40_ptr_0[e].player_standings[i2].x1C = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017EE40_ptr_0[e].player_standings[i2].x20 = rt::draw_int(&mut rt::ST) as _;
             AB_fn_8017EE40_ptr_0[e].player_standings[i2].x24 = rt::draw_int(&mut rt::ST) as _;
@@ -549,9 +549,9 @@ unsafe fn run_fn_8017EE40_ptr(seed: u64) -> [u64; 3] {
             rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].pkind as u64);
             rt::h_i(AB_fn_8017EE40_ptr_0[e].player_standings[i2].ckind as i64);
             rt::h_i(AB_fn_8017EE40_ptr_0[e].player_standings[i2].ftkind as i64);
-            rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].anon_3.anon_0.x3_b0() as u64);
-            rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].anon_3.anon_0.x3_b6() as u64);
-            rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].anon_3.anon_0.x3_b7() as u64);
+            rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].x3_u.x0.x3_b0() as u64);
+            rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].x3_u.x0.x3_b6() as u64);
+            rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].x3_u.x0.x3_b7() as u64);
             rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].x4 as u64);
             rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].is_big_loser as u64);
             rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].is_small_loser as u64);
@@ -564,7 +564,7 @@ unsafe fn run_fn_8017EE40_ptr(seed: u64) -> [u64; 3] {
             for i3 in 0..4 {
                 rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].kills[i3] as u64);
             }
-            rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].x18 as u64);
+            rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].kills[4] as u64);
             rt::h_i(AB_fn_8017EE40_ptr_0[e].player_standings[i2].x1C as i64);
             rt::h_u(AB_fn_8017EE40_ptr_0[e].player_standings[i2].x20 as u64);
             rt::h_i(AB_fn_8017EE40_ptr_0[e].player_standings[i2].x24 as i64);

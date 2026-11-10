@@ -106,8 +106,8 @@ pub fn ftNn_Init_8012300C(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftNn_Init_8012300C");
     unsafe {
         let fp = fpp(gobj);
-        if (*fp).x221F_b3() == 0 && (*fp).x2219_b5() == 0 {
-            let ret = match (*fp).x2070.anon_0.x2071_b0_3() {
+        if (*fp).is_sleeping() == 0 && (*fp).x2219_b5() == 0 {
+            let ret = match (*fp).x2070.x0.x2071_b0_3() {
                 1 | 3 | 4 | 5 | 6 | 7 | 8 | 10 | 11 | 12 | 13 => true,
                 _ => false,
             };
@@ -131,7 +131,7 @@ pub static mut ftNn_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { c
 // ---- folded from chars blocks (consolidation step 20) ----
 pub fn ftNn_Init_8012309C_fp(fp: &Fighter) -> bool {
     melee_core::ct!("ftNn_Init_8012309C_fp");
-    if fp.x221F_b3() == 0 {
+    if fp.is_sleeping() == 0 {
         let m = fp.motion_id as i32;
         if (362..=366).contains(&m) {
             return true;

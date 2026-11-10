@@ -51,7 +51,7 @@ static void setup(void)
         P[i].cursor_x = rnd() % P[i].w;
         P[i].cursor_y = rnd() % P[i].h;
         P[i].id = (s8) ((int) (rnd() % 7) - 2);
-        P[i].buf = BUFS[i];
+        P[i].buf = (DevTextGlyph*) BUFS[i];
         for (j = 0; j < 192; j++) BUFS[i][j] = (rnd() % 4 == 0) ? 0 : (char) rnd();
         P[i].prev = 0;
         P[i].next = 0;

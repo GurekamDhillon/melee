@@ -130,8 +130,6 @@ if v.set() { (*p).pos.z = f32::from_bits(v.leaf_f32(&format!("{}.z", format!("{}
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_Item(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::Item; unsafe {
-v.bytes(&format!("{}.anon_daa", path), &mut (*p).anon_daa as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_daa));
-v.bytes(&format!("{}.anon_dbc", path), &mut (*p).anon_dbc as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_dbc));
 {
 if v.view_on("Item_ItemVars", "zako") {
 {

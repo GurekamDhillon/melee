@@ -43,8 +43,8 @@ pub mod ext {
     pub fn ft_80083844(g: *mut HSD_GObj, cb: HSD_GObjEvent) { match unsafe { H_ft_80083844 } { Some(f) => f(g, cb), None => unsafe { crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083844(g as _, ev)) } } }
     pub static mut H_mpColl_80043680: Option<fn(&mut CollData, &Vec3)> = None;
     pub fn mpColl_80043680(c: &mut CollData, v: &Vec3) { match unsafe { H_mpColl_80043680 } { Some(f) => f(c, v), None => unsafe { melee_world::tu::mpcoll::mpColl_80043680(c as *mut _ as *mut _, v as *const _ as *mut _) } } }
-    pub static mut H_ftColl_8007B7A4: Option<fn(*mut HSD_GObj, i32)> = None;
-    pub fn ftColl_8007B7A4(g: *mut HSD_GObj, n: i32) { match unsafe { H_ftColl_8007B7A4 } { Some(f) => f(g, n), None => unsafe { crate::tu::ftcoll::ftcoll_8007b7a4(g as _, n as _) } } }
+    pub static mut H_ftColl_8007B7A4: Option<fn(*mut HSD_GObj, isize)> = None;
+    pub fn ftColl_8007B7A4(g: *mut HSD_GObj, n: i32) { match unsafe { H_ftColl_8007B7A4 } { Some(f) => f(g, n as isize), None => unsafe { crate::tu::ftcoll::ftcoll_8007b7a4(g as _, n as _) } } }
     pub static mut H_ftCo_SpecialAir_CheckInput: Option<fn(*mut HSD_GObj) -> bool> = None;
     pub fn ftCo_SpecialAir_CheckInput(g: *mut HSD_GObj) -> bool { match unsafe { H_ftCo_SpecialAir_CheckInput } { Some(f) => f(g), None => { return unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ }; } } }
     pub static mut H_ftCo_800D7100: Option<fn(*mut HSD_GObj) -> bool> = None;
@@ -139,7 +139,7 @@ pub fn ftCo_DeadUpFall_Cam(g: G) { melee_core::ct!("ftCo_DeadUpFall_Cam"); ext::
 pub fn ftCo_800D4E50(f: &mut Fighter, arg1: &Vec3, arg2: i32, arg8: f32) {
     melee_core::ct!("ftCo_800D4E50");
     if h::gm_8016b0b4() && f.is_sub_fighter() == 0 {
-        let slot = f.player_id as i32;
+        let slot = f.player_idx as i32;
         let coins = ext::Player_GetCoins((slot) as i32);
         let mut n = coins / 2;
         ext::Player_SetCoins((slot) as i32, (coins - n) as i32);
@@ -155,7 +155,7 @@ pub fn ftCo_800D4E50(f: &mut Fighter, arg1: &Vec3, arg2: i32, arg8: f32) {
 pub fn ftCo_800D4F24(g: G, index: i32) {
     melee_core::ct!("ftCo_800D4F24");
     let f = fp(g);
-    if f.x221F_b3() != 0 {
+    if f.is_sleeping() != 0 {
         return;
     }
     if index != 0 {
@@ -179,10 +179,10 @@ pub fn ftCo_800D4FF4(g: G) {
     melee_core::ct!("ftCo_800D4FF4");
     h::fighter_unk_process_death(g);
     let f = fp(g);
-    f.smash_attrs.x2135 = ext::Player_80032F30((f.player_id as i32) as i32) as i8;
+    f.smash_attrs.x2135 = ext::Player_80032F30((f.player_idx as i32) as i32) as i8;
     unsafe {
         if f.smash_attrs.x2135 == -1 {
-            let sp44 = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::Player_GetSpawnPlatformPos((f.player_id as i32) as i32, (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
+            let sp44 = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::Player_GetSpawnPlatformPos((f.player_idx as i32) as i32, (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
             f.mv.co.turn.facing_after = fmadds(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), sp44.x);
             f.mv.co.turn.x8 = sp44.y;
             f.mv.co.walk.middle_anim_frame = 0.0;
@@ -193,7 +193,7 @@ pub fn ftCo_800D4FF4(g: G) {
         } else {
             let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
             ext::Stage_80224E38(&mut sp14, f.smash_attrs.x2135 as i32);
-            let sp20 = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::Player_GetSomePos((f.player_id as i32) as i32, (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
+            let sp20 = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::Player_GetSomePos((f.player_idx as i32) as i32, (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
             f.mv.co.turn.facing_after =
                 fmadds(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), sp14.x + sp20.x);
             f.mv.co.turn.x8 = sp14.y + sp20.y;
@@ -258,7 +258,7 @@ fn rebirth_phys(g: G) {
             if f.smash_attrs.x2135 != -1 {
                 let mut st = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
                 ext::Stage_80224E38(&mut st, f.smash_attrs.x2135 as i32);
-                let pl = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::Player_GetSomePos((f.player_id as i32) as i32, (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
+                let pl = unsafe { let mut o: Vec3 = core::mem::zeroed(); ext::Player_GetSomePos((f.player_idx as i32) as i32, (&mut o as *mut Vec3) as *mut core::ffi::c_void); o };
                 f.mv.co.common.x4.x = fmadds(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), st.x + pl.x);
                 f.mv.co.common.x4.y = st.y + pl.y;
                 f.mv.co.common.x4.z = 0.0;
@@ -269,7 +269,7 @@ fn rebirth_phys(g: G) {
             f.self_vel.y = (f.mv.co.common.x4.y - cur.y) * inv;
         }
     } else {
-        let o = fp((ext::Player_GetEntityAtIndex((f.player_id as i32) as i32, (0) as i32) as *mut HSD_GObj));
+        let o = fp((ext::Player_GetEntityAtIndex((f.player_idx as i32) as i32, (0) as i32) as *mut HSD_GObj));
         let (x, y) = (o.self_vel.x, o.self_vel.y);
         let f = fp(g);
         f.self_vel.x = x;
@@ -290,10 +290,10 @@ pub fn ftCo_Rebirth_Coll(g: G) {
 pub fn fn_800D54A4(g: G) {
     melee_core::ct!("fn_800D54A4");
     let f = fp(g);
-    let other = (ext::Player_GetEntityAtIndex((f.player_id as i32) as i32, (1) as i32) as *mut HSD_GObj);
+    let other = (ext::Player_GetEntityAtIndex((f.player_idx as i32) as i32, (1) as i32) as *mut HSD_GObj);
     if !other.is_null() {
         let o = fp(other);
-        if o.x221F_b3() == 0 {
+        if o.is_sleeping() == 0 {
             let oy = o.cur_pos.y;
             let f = fp(g);
             if oy > f.cur_pos.y {
@@ -314,7 +314,7 @@ pub fn fn_800D54A4(g: G) {
 pub fn fn_800D55B4(g: G) {
     melee_core::ct!("fn_800D55B4");
     let f = fp(g);
-    let o = fp((ext::Player_GetEntityAtIndex((f.player_id as i32) as i32, (0) as i32) as *mut HSD_GObj));
+    let o = fp((ext::Player_GetEntityAtIndex((f.player_idx as i32) as i32, (0) as i32) as *mut HSD_GObj));
     let oy = o.cur_pos.y;
     let f = fp(g);
     if oy > f.cur_pos.y {
@@ -371,10 +371,10 @@ pub fn ftCo_RebirthWait_IASA(g: G) {
     melee_core::ct!("ftCo_RebirthWait_IASA");
     let mut var_r30 = false;
     let f = fp(g);
-    let (slot, sub) = (f.player_id as i32, f.is_sub_fighter() as i32);
+    let (slot, sub) = (f.player_idx as i32, f.is_sub_fighter() as i32);
     if sub == 0 {
         let c = (ext::Player_GetEntityAtIndex((slot) as i32, (1) as i32) as *mut HSD_GObj);
-        if !c.is_null() && fp(c).x221F_b3() == 0 && !h::ftlib_isrebirth(c) {
+        if !c.is_null() && fp(c).is_sleeping() == 0 && !h::ftlib_isrebirth(c) {
             var_r30 = true;
         }
     } else {

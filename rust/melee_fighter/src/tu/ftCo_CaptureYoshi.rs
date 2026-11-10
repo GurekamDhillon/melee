@@ -62,8 +62,8 @@ pub fn ftCo_800BBB8C(g: G, attacker_gobj: G) {
     let f = fp(g);
     f.x1A5C = attacker_gobj;
     f.victim_gobj = attacker_gobj;
-    f.anon_221b.set_x221B_b5(0);
-    f.anon_221b.set_x221B_b7(0);
+    f.x221B.set_x221B_b5(0);
+    f.x221B.set_x221B_b7(0);
     f.facing_dir = -unsafe { (*attacker_fp).facing_dir };
     ext::ftCo_800DB368(attacker_fp, f as *mut Fighter);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureYoshi as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());

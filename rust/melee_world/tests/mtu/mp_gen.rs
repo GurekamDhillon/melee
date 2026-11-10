@@ -291,23 +291,23 @@ pub fn hash_CollData(p: &CollData) {
 
 pub fn fill_CollVtx(p: &mut CollVtx) {
     unsafe {
-    p.x0 = rg();
-    p.x4 = rg();
+    p.base_pos.x = rg();
+    p.base_pos.y = rg();
     p.pos.x = rg();
     p.pos.y = rg();
-    p.x10 = rg();
-    p.x14 = rg();
+    p.prev_pos.x = rg();
+    p.prev_pos.y = rg();
     }
 }
 pub fn hash_CollVtx(p: &CollVtx) {
     unsafe {
     if HDBG { println!("B CollVtx"); }
-    hm(p.x0.to_bits());
-    hm(p.x4.to_bits());
+    hm(p.base_pos.x.to_bits());
+    hm(p.base_pos.y.to_bits());
     hm(p.pos.x.to_bits());
     hm(p.pos.y.to_bits());
-    hm(p.x10.to_bits());
-    hm(p.x14.to_bits());
+    hm(p.prev_pos.x.to_bits());
+    hm(p.prev_pos.y.to_bits());
     }
 }
 
@@ -319,7 +319,7 @@ pub fn fill_CollLine(p: &mut CollLine) {
 pub fn hash_CollLine(p: &CollLine) {
     unsafe {
     if HDBG { println!("B CollLine"); }
-    hm(pi(p.x0));
+    hm(pi(p.inner));
     hm(p.flags as u32);
     }
 }
@@ -347,7 +347,7 @@ pub fn hash_CollJoint(p: &CollJoint) {
     hm(p.bounding_min.y.to_bits());
     hm(p.bounding_max.x.to_bits());
     hm(p.bounding_max.y.to_bits());
-    hm(pi(p.x20));
+    hm(pi(p.jobj));
     hm(fi(p.cb_0));
     hm(pi(p.cb_data_0));
     hm(fi(p.cb_1));
@@ -440,41 +440,41 @@ pub fn hash_MapCollData(p: &MapCollData) {
     }
 }
 
-pub fn fill_mp_UnkStruct0(p: &mut mp_UnkStruct0) {
+pub fn fill_mp_UnkStruct0(p: &mut mpIsland) {
     unsafe {
-    p.x4 = fv() as _;
-    p.x6 = fv() as _;
-    p.x8.x = rg();
-    p.x8.y = rg();
-    p.x8.z = rg();
-    p.x14.x = rg();
-    p.x14.y = rg();
-    p.x14.z = rg();
-    p.x20 = fv() as _;
-    p.x24 = fv() as _;
-    p.x26 = fv() as _;
-    p.x28 = fv() as _;
-    p.x2A = fv() as _;
+    p.vtx0 = fv() as _;
+    p.vtx1 = fv() as _;
+    p.pos0.x = rg();
+    p.pos0.y = rg();
+    p.pos0.z = rg();
+    p.pos1.x = rg();
+    p.pos1.y = rg();
+    p.pos1.z = rg();
+    p.flags = fv() as _;
+    p.line0 = fv() as _;
+    p.line1 = fv() as _;
+    p.joint_id = fv() as _;
+    let _ = fv();
     }
 }
-pub fn hash_mp_UnkStruct0(p: &mp_UnkStruct0) {
+pub fn hash_mp_UnkStruct0(p: &mpIsland) {
     unsafe {
     if HDBG { println!("B mp_UnkStruct0"); }
     hm(pi(p.next));
-    hm(p.x4 as u32);
-    hm(p.x6 as u32);
-    hm(p.x8.x.to_bits());
-    hm(p.x8.y.to_bits());
-    hm(p.x8.z.to_bits());
-    hm(p.x14.x.to_bits());
-    hm(p.x14.y.to_bits());
-    hm(p.x14.z.to_bits());
-    hm(p.x20 as u32);
-    hm(p.x24 as u32);
-    hm(p.x26 as u32);
-    hm(p.x28 as u32);
-    hm(p.x2A as u32);
-    hm(pi(p.ptr));
+    hm(p.vtx0 as u32);
+    hm(p.vtx1 as u32);
+    hm(p.pos0.x.to_bits());
+    hm(p.pos0.y.to_bits());
+    hm(p.pos0.z.to_bits());
+    hm(p.pos1.x.to_bits());
+    hm(p.pos1.y.to_bits());
+    hm(p.pos1.z.to_bits());
+    hm(p.flags as u32);
+    hm(p.line0 as u32);
+    hm(p.line1 as u32);
+    hm(p.joint_id as u32);
+    hm(0);
+    hm(0);
     }
 }
 

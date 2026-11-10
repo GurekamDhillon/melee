@@ -30,7 +30,7 @@ fn ftCo_DamageScrew_matches_c() {
             case(op, k);
             let fr = f();
             fr.dmg.x1860_element = if rnd() & 1 != 0 { HitElement_Scball as u32 } else { rnd() % 16 };
-            unsafe { fr.x2070.anon_0.set_x2071_b0_3((rnd() & 15) as u8) };
+            unsafe { fr.x2070.x0.set_x2071_b0_3((rnd() & 15) as u8) };
             fr.cmd_vars[0] = rnd() & 1;
             fr.ground_or_air = (rnd() & 1) as _;
             fr.co_attrs.screw_attack_launch_velocity = rw();

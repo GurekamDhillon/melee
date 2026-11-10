@@ -48,11 +48,11 @@ pub mod ext {
             }
         };
     }
-    pub static mut EFLIB_SETFLAGS: Option<fn(*mut HSD_GObj, i32)> = None;
+    pub static mut EFLIB_SETFLAGS: Option<fn(*mut HSD_GObj, isize)> = None;
     #[allow(non_snake_case)]
     pub fn efLib_SetFlags(gobj: *mut HSD_GObj, flags: i32) {
         match unsafe { EFLIB_SETFLAGS } {
-            Some(f) => f(gobj, flags),
+            Some(f) => f(gobj, flags as isize),
             None => { unsafe { melee_world::tu::efn::eflib::efLib_SetFlags(gobj as _, flags as _); } },
         }
     }

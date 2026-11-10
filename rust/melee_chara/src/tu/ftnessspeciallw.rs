@@ -148,7 +148,7 @@ pub fn ftNs_SpecialAirLwStart_Enter(gobj: *mut HSD_GObj) {
 unsafe fn magnet_effect(fp: *mut Fighter, gobj: *mut HSD_GObj) {
     if (*fp).x2219_b0() == 0 {
         let joint = (*(*fp).parts.add(FtPart_L1stNb as usize)).joint as *mut HSD_JObj;
-        ext::efAsync_Spawn(gobj, &mut (*fp).x60C as *mut *mut c_void as *mut c_void, 0, 1264, joint);
+        ext::efAsync_Spawn(gobj, (&raw mut (*fp).x60C) as *mut *mut c_void as *mut c_void, 0, 1264, joint);
         (*fp).set_x2219_b0(1);
     }
     melee_fighter::tu::ftCo_AttackS4::Fighter_SetEffectHitlagCallbacks(&mut *fp);
@@ -551,8 +551,8 @@ pub fn ftNs_AbsorbThink_DecideAction(gobj: *mut HSD_GObj) {
             (*fp).dmg.x1830_percent = 0.0;
         }
 
-        ext::Player_SetHPByIndex((*fp).player_id as i32, (*fp).is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32((*fp).dmg.x1830_percent));
-        ext::pl_80040B8C((*fp).player_id as i32, (*fp).is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(heal_amount));
+        ext::Player_SetHPByIndex((*fp).player_idx as i32, (*fp).is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32((*fp).dmg.x1830_percent));
+        ext::pl_80040B8C((*fp).player_idx as i32, (*fp).is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(heal_amount));
 
         (*fp).facing_dir = (*fp).AbsorbAttr.x1A40_absorbHitDirection;
         let msid = (*fp).motion_id as i32;

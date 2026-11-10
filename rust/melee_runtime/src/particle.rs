@@ -577,7 +577,7 @@ pub struct PsSystem {
     /// `hsd_804D78E2` / `numPeakParticles`.
     pub num_parts: u16,
     pub peak_parts: u16,
-    /// `hsd_804D08E8`: particle JObj slots.
+    /// `psPointJObj`: particle JObj slots.
     pub jobj_slots: [Option<JObjRef>; 8],
     srts: Vec<Option<AppSrt>>,
     srt_free: Vec<u32>,

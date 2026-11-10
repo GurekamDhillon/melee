@@ -52,7 +52,7 @@ pub mod ext {
         fn HSD_Free(ptr: *mut c_void) -> () = crate::tu::adapt::HSD_Free__3ee311;
         fn HSD_GObjFree(a0: *mut HSD_GObj) -> ();
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void) -> ();
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc;
         fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint) -> ();
         fn HSD_JObjAnimAll(a0: *mut HSD_JObj) -> ();
@@ -61,7 +61,7 @@ pub mod ext {
         fn HSD_MObjAnim(mobj: *mut HSD_MObj) -> ();
         fn HSD_MObjReqAnim(mobj: *mut HSD_MObj, startframe: f32) -> ();
         fn HSD_MemAlloc(size: i32) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__c2b3bc;
-        fn HSD_SObjLib_803A54EC(a0: *mut HSD_GObj, a1: i32) -> () = crate::tu::adapt::HSD_SObjLib_803A54EC__11e875;
+        fn HSD_SObjLib_803A54EC(a0: *mut HSD_GObj, a1: isize) -> () = crate::tu::adapt::HSD_SObjLib_803A54EC__11e875;
         fn HSD_SetEraseColor(r: u8, g: u8, b: u8, a: u8) -> ();
         fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text = crate::tu::adapt::HSD_SisLib_803A5ACC__27fcb1;
         fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) -> () = crate::tu::adapt::HSD_SisLib_803A5CC4__6c7e38;
@@ -78,7 +78,7 @@ pub mod ext {
         fn lbMthp_8001F578() -> () = crate::tu::adapt::lbMthp_8001F578__cdae63;
         fn lbMthp_8001F604() -> i32 = crate::tu::adapt::lbMthp_8001F604__d79d45;
         fn lbMthp_8001F624(a0: *mut HSD_GObj, a1: i32, a2: i32) -> *mut HSD_SObj = crate::tu::adapt::lbMthp_8001F624__0c09ac;
-        fn lbMthp_8001F67C(a0: *mut HSD_GObj, a1: i32) -> () = crate::tu::adapt::lbMthp_8001F67C__b1c012;
+        fn lbMthp_8001F67C(a0: *mut HSD_GObj, a1: isize) -> () = crate::tu::adapt::lbMthp_8001F67C__b1c012;
         fn lbMthp_8001F800() -> () = crate::tu::adapt::lbMthp_8001F800__fe22a6;
         fn lbAudioAx_80024030(a0: i32) -> () = crate::tu::adapt::lbAudioAx_80024030__36458a;
         fn mn_80229624(a0: u32) -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
@@ -138,7 +138,7 @@ pub unsafe extern "C" fn mnGallery_80258940() {
 }
 
 /// 25896C: render callback of the movie camera.
-pub unsafe extern "C" fn mnGallery_8025896C(gobj: *mut HSD_GObj, render_pass: i32) {
+pub unsafe extern "C" fn mnGallery_8025896C(gobj: *mut HSD_GObj, render_pass: isize) {
     melee_core::ct!("mnGallery_8025896C");
     let data = mnGallery_804D6C88;
     let cobj = (*gobj).hsd_obj as *mut HSD_CObj;

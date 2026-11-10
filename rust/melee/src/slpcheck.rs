@@ -19,12 +19,34 @@ pub struct Converted {
 /// Ports keep the file's player index (the engine's hash/fighter slot is the port). A CPU slot stays a CPU slot fed
 /// its recorded pre-frame inputs (`CPU_MODE`): the inputs are the AI's output, and the CPU think still draws the RNG.
 /// UCF toggle words are only recorded (see [`ucf_summary`]); the vanilla sim stays default.
+/// Per-port attack / defense ratios of the Game Start (`SceneLaunch_PlayerRatio`); -1 = unset.
+static mut SLP_RATIO: [[f32; 2]; 6] = [[-1.0; 2]; 6];
+
 pub fn convert(s: &Slp) -> Result<Converted, String> {
+    unsafe {
+        SLP_RATIO = [[-1.0; 2]; 6];
+        melee_modes::tu::gmscenelaunch::ext::hook::SceneLaunch_PlayerRatio =
+            Some(|i, w| if (0..6).contains(&i) && (0..2).contains(&w) { unsafe { SLP_RATIO[i as usize][w as usize] } } else { -1.0 });
+    }
     let cpu_mode = CPU_MODE.load(std::sync::atomic::Ordering::Relaxed);
     let info: &GameInfo = s.info.as_ref().ok_or("the replay has no Game Start block")?;
     let mut notes = Vec::new();
     let mut scn = Scenario::parse("")?;
     scn.stage = info.stage() as i32;
+    // Up-front domain checks (a malformed or synthetic Game Start must be refused, not reach the sim): the VS stage
+    // range (external ids 2..=32), and per present player the team (0..=2 in a teams match; a real file's spawn point may be 255, unset)
+    if !(2..=32).contains(&info.stage()) {
+        return Err(format!("stage id {} is not a VS stage (2..=32)", info.stage()));
+    }
+    for i in 0..4 {
+        let p = info.player(i);
+        if p.ptype > 1 {
+            continue;
+        }
+        if info.is_teams() && p.team > 2 {
+            return Err(format!("p{}: team {} is outside 0..=2", i + 1, p.team));
+        }
+    }
     let mut max_stocks = 0;
     let akaneia = slp::akaneia_codeset(&s.gecko);
     for i in 0..4 {
@@ -57,8 +79,10 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         } else {
             p.ckind as i32
         };
-        if p.offense != 1.0 || p.defense != 1.0 || p.scale != 1.0 {
-            notes.push(format!("p{} offense/defense/scale {}/{}/{} not applied", i + 1, p.offense, p.defense, p.scale));
+        // the console's attack / defense ratios (PlayerInitData +0x18/+0x1C) go in through SceneLaunch_PlayerRatio
+        unsafe { SLP_RATIO[i] = [p.offense, p.defense] };
+        if p.scale != 1.0 {
+            notes.push(format!("p{} model scale {} not applied", i + 1, p.scale));
         }
         if p.damage_start != 0 || p.damage_spawn != 0 {
             notes.push(format!("p{} start/spawn damage {}/{} not applied", i + 1, p.damage_start, p.damage_spawn));
@@ -115,6 +139,10 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     // Game Bitfield 2 bit 0: StartMeleeRules.friendly_fire (Team Attack). Every 2019 Gang-Steals doubles file has it on;
     // left at the saved default (off) a teammate's hit never landed (201 of 203 teams files diverged at one).
     scn.friendly_fire = (info.bitfield2() & 1) as i32;
+    // Pausing off, whatever the file's rule (Game Bitfield 3 bit 0x08, StartMeleeRules.disable_pausing): a console pause
+    // takes no gameplay frames, so the replay records neither the pause nor the unpause and simply goes on. With the
+    // pads fed, an engine pause (a START press, or the team stock steal's START) would swallow replay frames.
+    scn.pause = 0;
     scn.item_freq = if info.item_spawn() < 0 { -2 } else { info.item_spawn() as i32 };
     if info.item_spawn() >= 0 {
         notes.push(format!("items on (frequency {}), item mask {:02x?}: item spawns are not driven by the file", info.item_spawn(), info.item_bits()));
@@ -421,6 +449,27 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     let seed = file.seed;
     // gw_Replay_ApplyMatch returns r.seed as the match's RNG seed: the Game Start block's Random Seed
     pl.r.seed = seed;
+    // A 3.x file whose Gecko list lacks UCF 0.84's 1.0 cardinals (C2 8006B460, Fighter_procInput+0x750) carries the
+    // 0.7x UCF set (also no SDI/shield SDI/extended shield drop/DBOOC codes): run its UCF ports as 0.73 (slpfuzz pilot:
+    // all 9 such files diverged on a 0.9875 stick dash taken as 1.0)
+    let no_card = !file.gecko.is_empty() && !slp::gecko_has(&file.gecko, 0x8006_B460);
+    // SLPCHECK_UCF07=card: only drop the 1.0 cardinals, keep the rest of 0.84; =off: ignore the list (old behaviour)
+    match std::env::var("SLPCHECK_UCF07").as_deref() {
+        Ok("off") => {}
+        Ok("card") => pl.r.no_ucf_cardinals = no_card,
+        _ => pl.r.ucf_073_list = no_card,
+    }
+    // The 0.7x list's tumble code (C2 800908F4, ftCo_DamageFall_IASA+0xCC, 23 lines) is UCF 0.84's tumble rule (timer 1
+    // counts when |prev x| < x210 and the raw x moved > 75 over two polls) reading the HSD pad queue (804C1F78, entries
+    // qnum-1 and qnum-3) instead of UCF's own history: one poll per frame, so the same raw values. Answer 84 to the
+    // tumble check only (the rest of the 0.7x set stays 0.73).
+    unsafe {
+        use melee_fighter::tu::ftCo_DamageFall::ext::hook as dfh;
+        let on = no_card && slp::gecko_has(&file.gecko, 0x8009_08F4) && std::env::var("SLPCHECK_UCF07").is_err();
+        dfh::Replay_UcfVersion = if on { Some(|p| match unsafe { crate::r_in() }.ucf_version(p) { 73 => 84, v => v }) } else { None };
+        // UCF's own raw history is only pushed with the 1.0 cardinals on: read the pad queue's raw x from the replay
+        dfh::ftUcf_PadRaw = if on { Some(|p, w, b| unsafe { crate::r_in() }.raw_stick_back(p, w, b)) } else { None };
+    }
     // The engine's seam answers 0 for Replay_ApplyMatch (the RNG was zeroed at the match start); answer the file's seed.
     unsafe {
         SLP_SEED = seed;
@@ -448,7 +497,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         // (0.7875, -0.6125) on the first frame of a turn stays SquatWait on the console (Dolphin oracle and Post-Frame).
         // Not Slippi 1.x (2019): that era's UCF was 0.7x, before the 0.8 DBOOC fix; its replays (Gang-Steals 1.7.1) go
         // Squat -> SquatRv where the fix holds SquatWait (action 41 on the console, 40 with the fix).
-        let ucf = file.version[0] >= 2 && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype < 2 && file.dashback[i] == 1));
+        let ucf = file.version[0] >= 2 && (file.gecko.is_empty() || slp::gecko_has(&file.gecko, 0x800D_65EC)) && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype < 2 && file.dashback[i] == 1));
         if ucf && std::env::var_os("MELEE_MEX").is_none() {
             std::env::set_var("MELEE_MEX", "ucf_dbooc_squatrv_fix");
         }
@@ -540,6 +589,27 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
             unsafe { CAP = [None; 4] };
             melee_core::fptrace::set_frame(fr); // the fptrace build's frame filter (notes/semantics.md)
+            // The game's own pad reads (HSD_PadCopyStatus: a team player out of stocks steals one with START, fn_8016B918)
+            // see the recorded controllers too: physical buttons, raw sticks and analog triggers of this frame's Pre-Frame.
+            // The fighters keep reading the replay through the Replay_* seams. SLPCHECK_NO_PADS=1: the old empty pads.
+            if std::env::var_os("SLPCHECK_NO_PADS").is_none() {
+                let mut pads = [melee_types::PADStatus::zeroed(); 4];
+                for (p, st) in pads.iter_mut().enumerate() {
+                    match pl.input(p as i32, false) {
+                        Some(i) if i.present => {
+                            st.button = if i.physical_complete { i.physical_buttons } else { (i.buttons & 0x1F7F) as u16 };
+                            st.stickX = i.raw[0];
+                            st.stickY = i.raw[1];
+                            st.substickX = i.raw[2];
+                            st.substickY = i.raw[3];
+                            st.triggerLeft = (i.physical_l * 255.0) as u8;
+                            st.triggerRight = (i.physical_r * 255.0) as u8;
+                        }
+                        _ => st.err = -1,
+                    }
+                }
+                e.set_pads(Some(pads));
+            }
             if !e.tick() {
                 break;
             }

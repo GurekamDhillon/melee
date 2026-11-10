@@ -17,6 +17,7 @@ static int IA[4];
 static u32 UA[4];
 static float FA[4];
 static unsigned char BUF[256];
+static void* PPA[4];
 static char STRS[4][64] = { "a.dat", "sym", "LbAd.dat", "x" };
 
 static HSD_GObj* pick_HSD_GObj(void) { u32 r = rnd(); return &GO[(r >> 8) % 4]; }
@@ -29,6 +30,7 @@ static SceneCameraDesc* pick_SceneCameraDesc(void) { u32 r = rnd(); return &SC[(
 static SceneCameraDesc* picko_SceneCameraDesc(void) { u32 r = rnd(); return (r % 6) == 0 ? 0 : &SC[(r >> 8) % 2]; }
 static HSD_JObj* pick_HSD_JObj(void) { u32 r = rnd(); return &JO[(r >> 8) % 2]; }
 static HSD_JObj* picko_HSD_JObj(void) { u32 r = rnd(); return (r % 6) == 0 ? 0 : &JO[(r >> 8) % 2]; }
+struct HSD_GObj; typedef struct HSD_GObj HSD_GObj;
 static void cbev1(HSD_GObj* g) { T(7001); T(PI(g)); }
 static void cbev2(HSD_GObj* g) { T(7002); T(PI(g)); }
 static int cbp1(HSD_GObj* g) { T(7003); T(PI(g)); return (int) (fv() & 1); }
@@ -49,8 +51,8 @@ static void* pick_fn(int kind)
     return 0;
 }
 static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind == 2 ? (void*) cbp1 : kind == 3 ? (void*) cbev3 : kind == 4 ? (void*) cbi1 : (void*) cbev1); }
-static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2); }
-static void* ICN[4]; static DynamicModelDesc* DMP[2]; static unsigned char NTB[7 * 0x1F2C + 16];
+static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbev2); freg((const void*) cbp1); freg((const void*) cbp2); freg((const void*) cbev3); freg((const void*) cbi1); freg((const void*) cbi2);  }
+static u8* ICN[4]; static DynamicModelDesc* DMP[2]; static unsigned char NTB[7 * 0x1F2C + 16];
 #include "lbcardgame_gen.h"
 
 
@@ -62,7 +64,7 @@ static void preg_world(void)
     preg(DM, sizeof DM);
     preg(SC, sizeof SC);
     preg(JO, sizeof JO);
-    preg(VA, sizeof VA); preg(U8A, sizeof U8A); preg(IA, sizeof IA); preg(UA, sizeof UA); preg(FA, sizeof FA); preg(BUF, sizeof BUF); preg(STRS, sizeof STRS);
+    preg(VA, sizeof VA); preg(U8A, sizeof U8A); preg(IA, sizeof IA); preg(UA, sizeof UA); preg(FA, sizeof FA); preg(BUF, sizeof BUF); preg(STRS, sizeof STRS); preg(PPA, sizeof PPA);
 }
 
 static void setup_world(void)
@@ -78,6 +80,7 @@ static void setup_world(void)
     for (i = 0; i < 4; i++) { IA[i] = (int) fv(); UA[i] = fv(); FA[i] = rw(); VA[i].x = rw(); VA[i].y = rw(); VA[i].z = rw(); }
     for (i = 0; i < 256; i++) BUF[i] = (unsigned char) rnd();
     BUF[255] = 0;
+    for (i = 0; i < 4; i++) PPA[i] = 0;
     for (i = 0; i < 4; i++) fill_HSD_GObj(&GO[i]);
     for (i = 0; i < 2; i++) fill_SceneDesc(&SD[i]);
     for (i = 0; i < 2; i++) fill_DynamicModelDesc(&DM[i]);
@@ -99,6 +102,7 @@ static void hash_world(void)
     for (i = 0; i < 4; i++) { HM(B(VA[i].x)); HM(B(VA[i].y)); HM(B(VA[i].z)); HM(B(FA[i])); HM((u32) IA[i]); HM(UA[i]); }
     for (i = 0; i < 16; i++) HM(U8A[i]);
     for (i = 0; i < 256; i++) HM(BUF[i]);
+    for (i = 0; i < 4; i++) HM(PI(PPA[i]));
     hashg_all();
     hasho_all();
 }
@@ -144,8 +148,10 @@ preg(ICN, sizeof ICN); preg(DMP, sizeof DMP); preg(NTB, sizeof NTB);
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
-{ int q; for (q = 0; q < 4; q++) ICN[q] = (fv() & 7) ? (void*) (BUF + 8 * q) : 0; state.icon_data = (op == OP_lbCardGame_LoadArchive && (fv() & 1)) ? 0 : ICN; DMP[0] = &DM[0]; DMP[1] = &DM[1]; SD[0].models = DMP; SD[0].cameras = SC; SD[1].models = DMP + 1; SD[1].cameras = SC + 1; state.scene_data = (fv() & 7) ? &SD[fv() & 1] : 0; state.jobj_translate_idx = 0; state.enable = (fv() & 7) != 0 || op == OP_lb_8001C8BC || op == OP_lbCardGame_SaveChanges; state.x10 = fv() & 1; OS_BusClock = (fv() & 1) ? 162000000u : 4u + fv() % 100000u; }
+{ int q; for (q = 0; q < 4; q++) ICN[q] = (fv() & 7) ? (u8*) (BUF + 8 * q) : 0; state.icon_data = (op == OP_lbCardGame_LoadArchive && (fv() & 1)) ? 0 : ICN; DMP[0] = &DM[0]; DMP[1] = &DM[1]; SD[0].models = DMP; SD[0].cameras = SC; SD[1].models = DMP + 1; SD[1].cameras = SC + 1; state.scene_data = (fv() & 7) ? &SD[fv() & 1] : 0; state.jobj_translate_idx = 0; state.enable = (fv() & 7) != 0 || op == OP_lb_8001C8BC || op == OP_lbCardGame_SaveChanges; state.x10 = fv() & 1; OS_BusClock = (fv() & 1) ? 162000000u : 4u + fv() % 100000u; }
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
+            ARMED = 1;
+            if (MTU_SETJMP()) { ARMED = 0; printf("%d %d ABORT\n", op, k); continue; }
             switch (op) {
             case 0: {   lb_8001C600();  } break;
             case 1: {   ret = PI(lb_8001C658());  } break;
@@ -163,12 +169,13 @@ preg(ICN, sizeof ICN); preg(DMP, sizeof DMP); preg(NTB, sizeof NTB);
             case 13: {   lbCardGame_SaveChanges();  } break;
             case 14: {   ret = (u32) lbCardGame_DecideGameMode();  } break;
             case 15: {  HSD_GObj * a0 = pick_HSD_GObj(); gobj1_Proc(a0);  } break;
-            case 16: {  HSD_GObj * a0 = pick_HSD_GObj(); int a1 = fv(); gobj0_RenderFunc(a0, a1);  } break;
+            case 16: {  HSD_GObj * a0 = pick_HSD_GObj(); intptr_t a1 = fv64(); gobj0_RenderFunc(a0, a1);  } break;
             case 17: {   lbCardGame_InitScene();  } break;
             case 18: {  int a0 = fv(); lbCardGame_LoadArchive(a0);  } break;
             case 19: {   lbCardGame_Reset();  } break;
             case 20: {   lbCardGame_Init();  } break;
             }
+            ARMED = 0;
             hash_world();
 
             printf("%d %d %08X %08X %08X\n", op, k, ret, H, TR);

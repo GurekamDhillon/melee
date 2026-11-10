@@ -108,7 +108,7 @@ pub static mut active_requests: CardActiveRequest = CardActiveRequest {
 pub static mut commands: [CardCmd; 128] = [CardCmd {
     r#type: CARD_CMD_NONE,
     state: ::core::ptr::null::<CardState>() as *mut CardState,
-    anon_8: CardCmd_anon_193 {
+    x8: CardCmd_x8 {
         write: CardWriteArgs {
             file_idx: 0,
             phys: 0,
@@ -123,7 +123,7 @@ pub static mut commands: [CardCmd; 128] = [CardCmd {
 pub static mut requests: [CardRequest; 32] = [CardRequest {
     r#type: CARD_REQ_NONE,
     state: ::core::ptr::null::<CardState>() as *mut CardState,
-    anon_8: CardRequest_anon_258 {
+    x8: CardRequest_x8 {
         file: CardFileReqArgs {
             file_idx: 0,
             buf: ::core::ptr::null::<u8>() as *mut u8,
@@ -169,7 +169,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
             if card_result != 0 as i32 {
                 checkOpen(state);
                 ::core::ptr::write_volatile(&mut curr_result as *mut s32, card_result);
-            } else if commands[curr_head as usize].anon_8.read.phys
+            } else if commands[curr_head as usize].x8.read.phys
                 < 0 as i32
             {
                 if checkOpen(state) < 0 as i32 {
@@ -179,14 +179,14 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                     );
                 }
             } else {
-                if commands[curr_head as usize].anon_8.read.phys
+                if commands[curr_head as usize].x8.read.phys
                     == 0 as i32
                 {
                     hdr_offset = (*state)
                         .header_size
                         .wrapping_add(0x30 as u32)
                         .card_rem((*state).sector_size) as s32;
-                    if commands[curr_head as usize].anon_8.read.size
+                    if commands[curr_head as usize].x8.read.size
                         > 0 as i32
                     {
                         if HSD_Decrypt(
@@ -203,17 +203,17 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             current_block_238 = 13475623910364476264;
                         } else {
                             if !commands[curr_head as usize]
-                                .anon_8
+                                .x8
                                 .read
                                 .data
                                 .is_null()
                             {
                                 let mut src: *mut CardBlockHeader = (*state).sector_buf.offset(hdr_offset as isize).cast::<CardBlockHeader>();
                                 memcpy(
-                                    commands[curr_head as usize].anon_8.read.data,
+                                    commands[curr_head as usize].x8.read.data,
                                     &raw mut (*src).data as *mut u8
                                         as *const c_void,
-                                    commands[curr_head as usize].anon_8.read.size
+                                    commands[curr_head as usize].x8.read.size
                                         as usize,
                                 );
                             }
@@ -241,19 +241,19 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                     );
                     current_block_238 = 13475623910364476264;
                 } else {
-                    if commands[curr_head as usize].anon_8.read.size
+                    if commands[curr_head as usize].x8.read.size
                         > 0 as i32
                         && !commands[curr_head as usize]
-                            .anon_8
+                            .x8
                             .read
                             .data
                             .is_null()
                     {
                         memcpy(
-                            commands[curr_head as usize].anon_8.read.data,
+                            commands[curr_head as usize].x8.read.data,
                             &raw mut (*((*state).sector_buf as *mut CardBlockHeader))
                                 .data as *mut u8 as *const c_void,
-                            commands[curr_head as usize].anon_8.read.size
+                            commands[curr_head as usize].x8.read.size
                                 as usize,
                         );
                     }
@@ -298,10 +298,10 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
             if card_result != 0 as i32 {
                 checkOpen(state);
                 ::core::ptr::write_volatile(&mut curr_result as *mut s32, card_result);
-            } else if commands[curr_head as usize].anon_8.verify.block_id
+            } else if commands[curr_head as usize].x8.verify.block_id
                 == 0 as i32
             {
-                if commands[curr_head as usize].anon_8.verify.size
+                if commands[curr_head as usize].x8.verify.size
                     <= 0 as i32
                 {
                     result = checkOpen(state) as s32;
@@ -338,7 +338,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             result = curr_head;
                             block = (*state).sector_buf.offset(hdr_offset as isize);
                             result = commands[result as usize]
-                                .anon_8
+                                .x8
                                 .verify
                                 .block_id;
                             if (*block.offset(0x10 as i32 as isize)
@@ -352,22 +352,22 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                 );
                             } else if *block.offset(0x12 as i32 as isize)
                                 as s32
-                                != commands[curr_head as usize].anon_8.verify.seq
+                                != commands[curr_head as usize].x8.verify.seq
                             {
                                 ::core::ptr::write_volatile(
                                     &mut curr_result as *mut s32,
                                     2 as i32 as s32,
                                 );
                             } else if commands[curr_head as usize]
-                                .anon_8
+                                .x8
                                 .verify
                                 .size > 0 as i32
                                 && {
                                     block = block.offset(0x20 as i32 as isize);
                                     memcmp(
-                                        commands[curr_head as usize].anon_8.verify.data,
+                                        commands[curr_head as usize].x8.verify.data,
                                         block as *const c_void,
-                                        commands[curr_head as usize].anon_8.verify.size
+                                        commands[curr_head as usize].x8.verify.size
                                             as usize,
                                     ) != 0 as i32
                                 }
@@ -409,7 +409,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                         header = (*state).sector_buf as *mut CardBlockHeader;
                         if result
                             != commands[curr_head as usize]
-                                .anon_8
+                                .x8
                                 .verify
                                 .block_id
                         {
@@ -418,19 +418,19 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                 2 as i32 as s32,
                             );
                         } else if (*header).seq as s32
-                            != commands[curr_head as usize].anon_8.verify.seq
+                            != commands[curr_head as usize].x8.verify.seq
                         {
                             ::core::ptr::write_volatile(
                                 &mut curr_result as *mut s32,
                                 2 as i32 as s32,
                             );
-                        } else if commands[curr_head as usize].anon_8.verify.size
+                        } else if commands[curr_head as usize].x8.verify.size
                             > 0 as i32
                             && memcmp(
-                                commands[curr_head as usize].anon_8.verify.data,
+                                commands[curr_head as usize].x8.verify.data,
                                 &raw mut (*header).data as *mut u8
                                     as *const c_void,
-                                commands[curr_head as usize].anon_8.verify.size
+                                commands[curr_head as usize].x8.verify.size
                                     as usize,
                             ) != 0 as i32
                         {
@@ -463,7 +463,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             banner_size = 0 as i32 as s32;
                         }
                     }
-                    if commands[curr_head as usize].anon_8.header.index
+                    if commands[curr_head as usize].x8.header.index
                         == 0 as i32
                     {
                         if memcmp(
@@ -483,7 +483,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                     .sector_buf
                                     .offset(0x40 as i32 as isize)
                                     as *const c_void,
-                                commands[curr_head as usize].anon_8.header.banner,
+                                commands[curr_head as usize].x8.header.banner,
                                 banner_size as usize,
                             ) != 0 as i32
                         {
@@ -498,7 +498,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                 if memcmp(
                                     (*state).sector_buf.offset(icons_start as isize)
                                         as *const c_void,
-                                    commands[curr_head as usize].anon_8.header.icons,
+                                    commands[curr_head as usize].x8.header.icons,
                                     (*state).sector_size.wrapping_sub(icons_start as u32)
                                         as usize,
                                 ) != 0 as i32
@@ -519,7 +519,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                             .offset(
                                                 ((*(&raw mut commands as *mut CardCmd)
                                                     .offset(curr_head as isize))
-                                                    .anon_8
+                                                    .x8
                                                     .header
                                                     .index as i32 * 0x10 as i32)
                                                     as isize,
@@ -529,7 +529,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             } else if memcmp(
                                 (*state).sector_buf.offset(icons_start as isize)
                                     as *const c_void,
-                                commands[curr_head as usize].anon_8.header.icons,
+                                commands[curr_head as usize].x8.header.icons,
                                 (*state).header_size.wrapping_sub(icons_start as u32)
                                     as usize,
                             ) != 0 as i32
@@ -550,7 +550,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                         .offset(
                                             ((*(&raw mut commands as *mut CardCmd)
                                                 .offset(curr_head as isize))
-                                                .anon_8
+                                                .x8
                                                 .header
                                                 .index as i32 * 0x10 as i32)
                                                 as isize,
@@ -577,7 +577,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                         icons_offset = (*state)
                             .sector_size
                             .wrapping_mul(
-                                commands[curr_head as usize].anon_8.header.index
+                                commands[curr_head as usize].x8.header.index
                                     as u32,
                             )
                             .wrapping_sub(0x40 as u32)
@@ -588,14 +588,14 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                 (*state)
                                     .sector_size
                                     .wrapping_mul(
-                                        commands[curr_head as usize].anon_8.header.index
+                                        commands[curr_head as usize].x8.header.index
                                             as u32,
                                     ),
                             ) as s32;
                         if remaining as u32 > (*state).sector_size {
                             if memcmp(
                                 (*state).sector_buf as *const c_void,
-                                (commands[curr_head as usize].anon_8.header.icons
+                                (commands[curr_head as usize].x8.header.icons
                                     as *mut u8)
                                     .offset(icons_offset as isize)
                                     as *const c_void,
@@ -618,7 +618,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                         .offset(
                                             ((*(&raw mut commands as *mut CardCmd)
                                                 .offset(curr_head as isize))
-                                                .anon_8
+                                                .x8
                                                 .header
                                                 .index as i32 * 0x10 as i32)
                                                 as isize,
@@ -627,7 +627,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             }
                         } else if memcmp(
                             (*state).sector_buf as *const c_void,
-                            (commands[curr_head as usize].anon_8.header.icons
+                            (commands[curr_head as usize].x8.header.icons
                                 as *mut u8)
                                 .offset(icons_offset as isize)
                                 as *const c_void,
@@ -649,7 +649,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                     .offset(
                                         ((*(&raw mut commands as *mut CardCmd)
                                             .offset(curr_head as isize))
-                                            .anon_8
+                                            .x8
                                             .header
                                             .index as i32 * 0x10 as i32)
                                             as isize,
@@ -695,18 +695,18 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             banner_size11 = 0 as i32 as s32;
                         }
                     }
-                    if commands[curr_head as usize].anon_8.read_header.index
+                    if commands[curr_head as usize].x8.read_header.index
                         == 0 as i32
                     {
                         if !commands[curr_head as usize]
-                            .anon_8
+                            .x8
                             .read_header
                             .comment
                             .is_null()
                         {
                             memcpy(
                                 commands[curr_head as usize]
-                                    .anon_8
+                                    .x8
                                     .read_header
                                     .comment,
                                 (*state).sector_buf as *const c_void,
@@ -715,14 +715,14 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                         }
                         if banner_size11 > 0 as i32
                             && !commands[curr_head as usize]
-                                .anon_8
+                                .x8
                                 .read_header
                                 .banner
                                 .is_null()
                         {
                             memcpy(
                                 commands[curr_head as usize]
-                                    .anon_8
+                                    .x8
                                     .read_header
                                     .banner,
                                 (*state)
@@ -736,14 +736,14 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             + 0x40 as i32) as s32;
                         if (*state).header_size > (*state).sector_size {
                             if !commands[curr_head as usize]
-                                .anon_8
+                                .x8
                                 .read_header
                                 .icons
                                 .is_null()
                             {
                                 memcpy(
                                     commands[curr_head as usize]
-                                        .anon_8
+                                        .x8
                                         .read_header
                                         .icons,
                                     (*state).sector_buf.offset(icons_start as isize)
@@ -763,7 +763,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                     .offset(
                                         ((*(&raw mut commands as *mut CardCmd)
                                             .offset(curr_head as isize))
-                                            .anon_8
+                                            .x8
                                             .read_header
                                             .index as i32 * 0x10 as i32)
                                             as isize,
@@ -771,14 +771,14 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             );
                         } else {
                             if !commands[curr_head as usize]
-                                .anon_8
+                                .x8
                                 .read_header
                                 .icons
                                 .is_null()
                             {
                                 memcpy(
                                     commands[curr_head as usize]
-                                        .anon_8
+                                        .x8
                                         .read_header
                                         .icons,
                                     (*state).sector_buf.offset(icons_start as isize)
@@ -798,7 +798,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                     .offset(
                                         ((*(&raw mut commands as *mut CardCmd)
                                             .offset(curr_head as isize))
-                                            .anon_8
+                                            .x8
                                             .read_header
                                             .index as i32 * 0x10 as i32)
                                             as isize,
@@ -825,7 +825,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             .sector_size
                             .wrapping_mul(
                                 commands[curr_head as usize]
-                                    .anon_8
+                                    .x8
                                     .read_header
                                     .index as u32,
                             )
@@ -838,21 +838,21 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                     .sector_size
                                     .wrapping_mul(
                                         commands[curr_head as usize]
-                                            .anon_8
+                                            .x8
                                             .read_header
                                             .index as u32,
                                     ),
                             ) as s32;
                         if chan as u32 > (*state).sector_size {
                             if !commands[curr_head as usize]
-                                .anon_8
+                                .x8
                                 .read_header
                                 .icons
                                 .is_null()
                             {
                                 memcpy(
                                     (commands[curr_head as usize]
-                                        .anon_8
+                                        .x8
                                         .read_header
                                         .icons as *mut u8)
                                         .offset(icons_offset as isize) as *mut c_void,
@@ -871,7 +871,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                     .offset(
                                         ((*(&raw mut commands as *mut CardCmd)
                                             .offset(curr_head as isize))
-                                            .anon_8
+                                            .x8
                                             .read_header
                                             .index as i32 * 0x10 as i32)
                                             as isize,
@@ -879,14 +879,14 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                             );
                         } else {
                             if !commands[curr_head as usize]
-                                .anon_8
+                                .x8
                                 .read_header
                                 .icons
                                 .is_null()
                             {
                                 memcpy(
                                     (commands[curr_head as usize]
-                                        .anon_8
+                                        .x8
                                         .read_header
                                         .icons as *mut u8)
                                         .offset(icons_offset as isize) as *mut c_void,
@@ -904,7 +904,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
                                     .offset(
                                         ((*(&raw mut commands as *mut CardCmd)
                                             .offset(curr_head as isize))
-                                            .anon_8
+                                            .x8
                                             .read_header
                                             .index as i32 * 0x10 as i32)
                                             as isize,
@@ -933,38 +933,38 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
         1 => {
             if card_result != 0 as i32 {
                 (*state)
-                    .block_ids[commands[curr_head as usize].anon_8.write.phys
+                    .block_ids[commands[curr_head as usize].x8.write.phys
                     as usize] = -(0x7fff as i32) as s32;
                 (*state)
-                    .block_seqs[commands[curr_head as usize].anon_8.write.phys
+                    .block_seqs[commands[curr_head as usize].x8.write.phys
                     as usize] = 0 as i32 as s32;
                 checkOpen(state);
                 ::core::ptr::write_volatile(&mut curr_result as *mut s32, card_result);
             } else {
-                if commands[curr_head as usize].anon_8.write.block_id
+                if commands[curr_head as usize].x8.write.block_id
                     != 0xffff as i32
                 {
                     (*state)
-                        .block_ids[commands[curr_head as usize].anon_8.write.phys
+                        .block_ids[commands[curr_head as usize].x8.write.phys
                         as usize] = commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .write
                         .block_id;
                     (*state)
                         .block_seqs[commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .write
                         .phys as usize] = commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .write
                         .seq;
                 } else {
                     (*state)
-                        .block_ids[commands[curr_head as usize].anon_8.write.phys
+                        .block_ids[commands[curr_head as usize].x8.write.phys
                         as usize] = -(0x7fff as i32) as s32;
                     (*state)
                         .block_seqs[commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .write
                         .phys as usize] = 0 as i32 as s32;
                 }
@@ -977,42 +977,42 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
         16 => {
             if card_result != 0 as i32 {
                 (*state)
-                    .block_ids[commands[curr_head as usize].anon_8.sector.phys
+                    .block_ids[commands[curr_head as usize].x8.sector.phys
                     as usize] = -(0x7fff as i32) as s32;
                 (*state)
-                    .block_seqs[commands[curr_head as usize].anon_8.sector.phys
+                    .block_seqs[commands[curr_head as usize].x8.sector.phys
                     as usize] = 0 as i32 as s32;
                 checkOpen(state);
                 ::core::ptr::write_volatile(&mut curr_result as *mut s32, card_result);
             } else {
-                if commands[curr_head as usize].anon_8.sector.block_id
+                if commands[curr_head as usize].x8.sector.block_id
                     != 0xffff as i32
                 {
                     (*state)
                         .block_ids[commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .sector
                         .phys as usize] = commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .sector
                         .block_id;
                     (*state)
                         .block_seqs[commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .sector
                         .phys as usize] = commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .sector
                         .seq;
                 } else {
                     (*state)
                         .block_ids[commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .sector
                         .phys as usize] = -(0x7fff as i32) as s32;
                     (*state)
                         .block_seqs[commands[curr_head as usize]
-                        .anon_8
+                        .x8
                         .sector
                         .phys as usize] = 0 as i32 as s32;
                 }
@@ -1065,7 +1065,7 @@ pub unsafe extern "C" fn hsd_803A949C(mut chan: s32, mut card_result: s32) {
             }
         }
         13 => {
-            phys = commands[curr_head as usize].anon_8.read.phys;
+            phys = commands[curr_head as usize].x8.read.phys;
             checkOpen(state);
             if card_result != 0 as i32 {
                 (*state).block_ids[phys as usize] = -(0x7fff as i32)
@@ -1170,8 +1170,8 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
         1 => {
             result = fn_803ADF90(
                 (*entry).state,
-                (*entry).anon_8.file.file_idx,
-                (*entry).anon_8.file.buf,
+                (*entry).x8.file.file_idx,
+                (*entry).x8.file.buf,
                 1 as i32,
                 (*entry).callback,
             ) as s32;
@@ -1181,7 +1181,7 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
                     .expect(
                         "non-null function pointer",
                     )(
-                    (*entry).anon_8.file.file_idx as i32,
+                    (*entry).x8.file.file_idx as i32,
                     result as i32,
                 );
             }
@@ -1189,12 +1189,12 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
             return result as i32;
         }
         2 => {
-            match (*state).file_flags[(*entry).anon_8.file.file_idx as usize] {
+            match (*state).file_flags[(*entry).x8.file.file_idx as usize] {
                 0 => {
                     result = fn_803AE7F8(
                         (*entry).state,
-                        (*entry).anon_8.file.file_idx,
-                        (*entry).anon_8.file.buf,
+                        (*entry).x8.file.file_idx,
+                        (*entry).x8.file.buf,
                         1 as i32,
                         (*entry).callback,
                     ) as s32;
@@ -1202,8 +1202,8 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
                 1 | 2 => {
                     result = fn_803AF3F0(
                         (*entry).state,
-                        (*entry).anon_8.file.file_idx,
-                        (*entry).anon_8.file.buf,
+                        (*entry).x8.file.file_idx,
+                        (*entry).x8.file.buf,
                         1 as i32,
                         (*entry).callback,
                     ) as s32;
@@ -1211,8 +1211,8 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
                 3 => {
                     result = fn_803B0120(
                         (*entry).state,
-                        (*entry).anon_8.file.file_idx,
-                        (*entry).anon_8.file.buf,
+                        (*entry).x8.file.file_idx,
+                        (*entry).x8.file.buf,
                         1 as i32,
                         (*entry).callback,
                     ) as s32;
@@ -1227,7 +1227,7 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
                     .expect(
                         "non-null function pointer",
                     )(
-                    (*entry).anon_8.file.file_idx as i32,
+                    (*entry).x8.file.file_idx as i32,
                     result as i32,
                 );
             }
@@ -1237,9 +1237,9 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
         3 => {
             result = fn_803B1F78(
                 (*entry).state,
-                (*entry).anon_8.create.filename,
-                (*entry).anon_8.create.banner,
-                (*entry).anon_8.create.icons,
+                (*entry).x8.create.filename,
+                (*entry).x8.create.banner,
+                (*entry).x8.create.icons,
                 (*entry).callback,
             ) as s32;
             if result < 0 as i32 && (*entry).callback.is_some() {
@@ -1255,8 +1255,8 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
         4 => {
             result = fn_803B21E8(
                 (*entry).state,
-                (*entry).anon_8.status.banner,
-                (*entry).anon_8.status.icons,
+                (*entry).x8.status.banner,
+                (*entry).x8.status.icons,
                 (*entry).callback,
             ) as s32;
             if result < 0 as i32 && (*entry).callback.is_some() {
@@ -1272,7 +1272,7 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
         5 => {
             result = fn_803ADE4C(
                 state,
-                (*entry).anon_8.open.file_no as i32,
+                (*entry).x8.open.file_no as i32,
                 (*entry).callback,
             ) as s32;
             if result < 0 as i32 && (*entry).callback.is_some() {
@@ -1288,9 +1288,9 @@ pub unsafe extern "C" fn fn_803AA790() -> i32 {
         6 => {
             result = fn_803B26CC(
                 state,
-                (*entry).anon_8.header.comment,
-                (*entry).anon_8.header.banner,
-                (*entry).anon_8.header.icons,
+                (*entry).x8.header.comment,
+                (*entry).x8.header.banner,
+                (*entry).x8.header.icons,
                 (*entry).callback,
             ) as s32;
             if result < 0 as i32 && (*entry).callback.is_some() {
@@ -1532,10 +1532,10 @@ pub unsafe extern "C" fn initHeaderBlockCommand(
     melee_core::ct!("initHeaderBlockCommand");
     (*buf).r#type = CARD_CMD_READ_HEADER;
     (*buf).state = state;
-    (*buf).anon_8.read_header.index = block as s32;
-    (*buf).anon_8.read_header.comment = comment;
-    (*buf).anon_8.read_header.banner = banner;
-    (*buf).anon_8.read_header.icons = icons;
+    (*buf).x8.read_header.index = block as s32;
+    (*buf).x8.read_header.comment = comment;
+    (*buf).x8.read_header.banner = banner;
+    (*buf).x8.read_header.icons = icons;
 }
 #[inline]
 pub unsafe extern "C" fn queueHeaderBlock(
@@ -1549,7 +1549,7 @@ pub unsafe extern "C" fn queueHeaderBlock(
     let mut buf: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -1729,7 +1729,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                             &raw mut (*(*cmd).state).file_info,
                             (*(*cmd).state).sector_buf as *mut c_void,
                             (*(*cmd).state).sector_size as s32,
-                            (*cmd).anon_8.verify.offset,
+                            (*cmd).x8.verify.offset,
                             Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                         );
                         hsd_804D799C = running_async;
@@ -1759,7 +1759,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                     hsd_804D798C = CARDGetXferredBytes(
                         (*(*cmd).state).chan as i32,
                     ) as s32;
-                    if (*cmd).anon_8.read_header.index == 0 as i32
+                    if (*cmd).x8.read_header.index == 0 as i32
                     {
                         memset(
                             &raw mut (*(*cmd).state).digest as *mut u8
@@ -1773,7 +1773,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                         &raw mut (*(*cmd).state).file_info,
                         (*(*cmd).state).sector_buf as *mut c_void,
                         (*(*cmd).state).sector_size as s32,
-                        ((*cmd).anon_8.read_header.index as u32)
+                        ((*cmd).x8.read_header.index as u32)
                             .wrapping_mul((*(*cmd).state).sector_size) as s32,
                         Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                     );
@@ -1814,7 +1814,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                         hsd_804D798C = CARDGetXferredBytes(
                             (*(*cmd).state).chan as i32,
                         ) as s32;
-                        if (*cmd).anon_8.header.index == 0 as i32
+                        if (*cmd).x8.header.index == 0 as i32
                         {
                             memset(
                                 &raw mut (*(*cmd).state).digest as *mut u8
@@ -1828,7 +1828,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                             &raw mut (*(*cmd).state).file_info,
                             (*(*cmd).state).sector_buf as *mut c_void,
                             (*(*cmd).state).sector_size as s32,
-                            ((*cmd).anon_8.header.index as u32)
+                            ((*cmd).x8.header.index as u32)
                                 .wrapping_mul((*(*cmd).state).sector_size) as s32,
                             Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                         );
@@ -1893,7 +1893,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                             &raw mut (*(*cmd).state).file_info,
                             (*(*cmd).state).sector_buf as *mut c_void,
                             (*(*cmd).state).sector_size as s32,
-                            (*cmd).anon_8.read.offset,
+                            (*cmd).x8.read.offset,
                             Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                         );
                         hsd_804D799C = running_async;
@@ -1939,7 +1939,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                             &raw mut (*(*cmd).state).file_info,
                             (*(*cmd).state).sector_buf as *mut c_void,
                             (*(*cmd).state).sector_size as s32,
-                            (*cmd).anon_8.sector.offset,
+                            (*cmd).x8.sector.offset,
                             Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                         );
                         hsd_804D799C = running_async;
@@ -1967,9 +1967,9 @@ pub unsafe extern "C" fn hsd_803AAA48() {
             4 => {
                 if curr_result != 1 as i32 {
                     memset(
-                        (*cmd).anon_8.clear.data,
+                        (*cmd).x8.clear.data,
                         0 as i32,
-                        (*cmd).anon_8.clear.size as usize,
+                        (*cmd).x8.clear.size as usize,
                     );
                 }
                 (*cmd).r#type = CARD_CMD_NONE;
@@ -1995,7 +1995,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                             result,
                         );
                     } else {
-                        if (*cmd).anon_8.write.block_id > 0 as i32
+                        if (*cmd).x8.write.block_id > 0 as i32
                         {
                             hdr_offset = 0 as i32 as s32;
                         } else {
@@ -2004,9 +2004,9 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                 .wrapping_add(0x30 as u32)
                                 .card_rem((*(*cmd).state).sector_size) as s32;
                         }
-                        size = (*cmd).anon_8.write.size as i32;
+                        size = (*cmd).x8.write.size as i32;
                         if size > 0 as i32
-                            && !(*cmd).anon_8.write.data.is_null()
+                            && !(*cmd).x8.write.data.is_null()
                         {
                             memcpy(
                                 (*(*cmd).state)
@@ -2015,7 +2015,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                         (hdr_offset as i32
                                             + 0x20 as i32) as isize,
                                     ) as *mut u8 as *mut c_void,
-                                (*cmd).anon_8.write.data,
+                                (*cmd).x8.write.data,
                                 size as usize,
                             );
                         }
@@ -2047,20 +2047,20 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                             .offset(
                                 (hdr_offset as i32
                                     + 0x10 as i32) as isize,
-                            ) = ((*cmd).anon_8.write.block_id
+                            ) = ((*cmd).x8.write.block_id
                             >> 8 as i32) as u8;
                         *(*(*cmd).state)
                             .sector_buf
                             .offset(
                                 (hdr_offset as i32
                                     + 0x11 as i32) as isize,
-                            ) = (*cmd).anon_8.write.block_id as u8;
+                            ) = (*cmd).x8.write.block_id as u8;
                         *(*(*cmd).state)
                             .sector_buf
                             .offset(
                                 (hdr_offset as i32
                                     + 0x12 as i32) as isize,
-                            ) = (*cmd).anon_8.write.seq as u8;
+                            ) = (*cmd).x8.write.seq as u8;
                         fn_803AC3F8(
                             (*cmd).state,
                             (*(*cmd).state)
@@ -2069,7 +2069,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                     (hdr_offset as i32
                                         + 0x13 as i32) as isize,
                                 ) as *mut u8,
-                            (*cmd).anon_8.write.file_idx,
+                            (*cmd).x8.write.file_idx,
                         );
                         HSD_Encrypt(
                             (*(*cmd).state).sector_buf.offset(hdr_offset as isize),
@@ -2084,7 +2084,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                             &raw mut (*(*cmd).state).file_info,
                             (*(*cmd).state).sector_buf as *mut c_void,
                             (*(*cmd).state).sector_size as s32,
-                            (*cmd).anon_8.write.offset,
+                            (*cmd).x8.write.offset,
                             Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                         );
                         hsd_804D799C = running_async;
@@ -2134,7 +2134,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                             &raw mut (*(*cmd).state).file_info,
                             (*(*cmd).state).sector_buf as *mut c_void,
                             (*(*cmd).state).sector_size as s32,
-                            (*cmd).anon_8.sector.offset,
+                            (*cmd).x8.sector.offset,
                             Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                         );
                         hsd_804D799C = running_async;
@@ -2163,8 +2163,8 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                 intr2 = OSDisableInterrupts();
                 result = retryCardCreateAsync(
                     (*(*cmd).state).chan,
-                    (*cmd).anon_8.create.filename,
-                    (*cmd).anon_8.create.size,
+                    (*cmd).x8.create.filename,
+                    (*cmd).x8.create.size,
                     &raw mut (*(*cmd).state).file_info,
                     Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                 );
@@ -2269,7 +2269,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                 banner_size = 0 as i32 as s32;
                             }
                         }
-                        if (*cmd).anon_8.header.index == 0 as i32
+                        if (*cmd).x8.header.index == 0 as i32
                         {
                             memcpy(
                                 (*(*cmd).state).sector_buf as *mut c_void,
@@ -2284,7 +2284,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                         .sector_buf
                                         .offset(0x40 as i32 as isize)
                                         as *mut c_void,
-                                    (*cmd).anon_8.header.banner,
+                                    (*cmd).x8.header.banner,
                                     banner_size as usize,
                                 );
                                 pos = (banner_size as i32
@@ -2301,7 +2301,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                 memcpy(
                                     (*(*cmd).state).sector_buf.offset(pos as isize) as *mut u8
                                         as *mut c_void,
-                                    (*cmd).anon_8.header.icons,
+                                    (*cmd).x8.header.icons,
                                     (*(*cmd).state).sector_size.wrapping_sub(pos as u32)
                                         as usize,
                                 );
@@ -2310,7 +2310,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                     (*(*cmd).state).sector_size as i32,
                                     (&raw mut (*(*cmd).state).digest as *mut u8)
                                         .offset(
-                                            ((*cmd).anon_8.header.index as i32
+                                            ((*cmd).x8.header.index as i32
                                                 * 0x10 as i32) as isize,
                                         ) as *mut u8 as *mut c_void,
                                 );
@@ -2318,7 +2318,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                 memcpy(
                                     (*(*cmd).state).sector_buf.offset(pos as isize) as *mut u8
                                         as *mut c_void,
-                                    (*cmd).anon_8.header.icons,
+                                    (*cmd).x8.header.icons,
                                     (*(*cmd).state).header_size.wrapping_sub(pos as u32)
                                         as usize,
                                 );
@@ -2327,7 +2327,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                     (*(*cmd).state).header_size as i32,
                                     (&raw mut (*(*cmd).state).digest as *mut u8)
                                         .offset(
-                                            ((*cmd).anon_8.header.index as i32
+                                            ((*cmd).x8.header.index as i32
                                                 * 0x10 as i32) as isize,
                                         ) as *mut u8 as *mut c_void,
                                 );
@@ -2347,17 +2347,17 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                 .wrapping_sub(
                                     (*(*cmd).state)
                                         .sector_size
-                                        .wrapping_mul((*cmd).anon_8.header.index as u32),
+                                        .wrapping_mul((*cmd).x8.header.index as u32),
                                 );
                             let mut icons_offset: s32 = (*(*cmd).state)
                                 .sector_size
-                                .wrapping_mul((*cmd).anon_8.header.index as u32)
+                                .wrapping_mul((*cmd).x8.header.index as u32)
                                 .wrapping_sub(0x40 as u32)
                                 .wrapping_sub(banner_size as u32) as s32;
                             if remaining > (*(*cmd).state).sector_size {
                                 memcpy(
                                     (*(*cmd).state).sector_buf as *mut c_void,
-                                    ((*cmd).anon_8.header.icons as *mut u8)
+                                    ((*cmd).x8.header.icons as *mut u8)
                                         .offset(icons_offset as isize)
                                         as *const c_void,
                                     (*(*cmd).state).sector_size as usize,
@@ -2367,14 +2367,14 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                     (*(*cmd).state).sector_size as i32,
                                     (&raw mut (*(*cmd).state).digest as *mut u8)
                                         .offset(
-                                            ((*cmd).anon_8.header.index as i32
+                                            ((*cmd).x8.header.index as i32
                                                 * 0x10 as i32) as isize,
                                         ) as *mut u8 as *mut c_void,
                                 );
                             } else {
                                 memcpy(
                                     (*(*cmd).state).sector_buf as *mut c_void,
-                                    ((*cmd).anon_8.header.icons as *mut u8)
+                                    ((*cmd).x8.header.icons as *mut u8)
                                         .offset(icons_offset as isize)
                                         as *const c_void,
                                     remaining as usize,
@@ -2384,7 +2384,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                                     remaining as i32,
                                     (&raw mut (*(*cmd).state).digest as *mut u8)
                                         .offset(
-                                            ((*cmd).anon_8.header.index as i32
+                                            ((*cmd).x8.header.index as i32
                                                 * 0x10 as i32) as isize,
                                         ) as *mut u8 as *mut c_void,
                                 );
@@ -2404,7 +2404,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                             (*(*cmd).state).sector_size as s32,
                             (*(*cmd).state)
                                 .sector_size
-                                .wrapping_mul((*cmd).anon_8.header.index as u32)
+                                .wrapping_mul((*cmd).x8.header.index as u32)
                                 as s32,
                             Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                         );
@@ -2451,7 +2451,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                 };
                 let mut i: s32 = 0;
                 let mut file_no: s32 = 0;
-                (*(*cmd).state).file_no = (*cmd).anon_8.get_status.file_no;
+                (*(*cmd).state).file_no = (*cmd).x8.get_status.file_no;
                 file_no = (*(*cmd).state).file_no;
                 chan = (*(*cmd).state).chan;
                 i = 0 as i32 as s32;
@@ -2497,7 +2497,7 @@ pub unsafe extern "C" fn hsd_803AAA48() {
                         &raw mut (*(*cmd).state).file_info,
                         (*(*cmd).state).sector_buf as *mut c_void,
                         (*(*cmd).state).sector_size as s32,
-                        (*cmd).anon_8.read.offset,
+                        (*cmd).x8.read.offset,
                         Some(hsd_803A949C as unsafe extern "C" fn(s32, s32) -> ()),
                     );
                     hsd_804D799C = running_async;
@@ -2622,7 +2622,7 @@ pub unsafe extern "C" fn fn_803AC258(mut state: *mut CardState, mut block_idx: s
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -2637,11 +2637,11 @@ pub unsafe extern "C" fn fn_803AC258(mut state: *mut CardState, mut block_idx: s
     };
     cmd.r#type = CARD_CMD_SCAN_BLOCK;
     cmd.state = state;
-    cmd.anon_8.read.phys = block_idx;
-    cmd.anon_8.read.xC = 0 as i32 as s32;
-    cmd.anon_8.read.data = ::core::ptr::null_mut::<c_void>();
-    cmd.anon_8.read.size = 0 as i32 as s32;
-    cmd.anon_8.read.offset = fn_803ACBE8(state, block_idx);
+    cmd.x8.read.phys = block_idx;
+    cmd.x8.read.xC = 0 as i32 as s32;
+    cmd.x8.read.data = ::core::ptr::null_mut::<c_void>();
+    cmd.x8.read.size = 0 as i32 as s32;
+    cmd.x8.read.offset = fn_803ACBE8(state, block_idx);
     return fn_803AC168(&raw mut cmd) as s32;
 }
 pub unsafe extern "C" fn fn_803AC2A4(mut state: *mut CardState) -> s32 {
@@ -2649,7 +2649,7 @@ pub unsafe extern "C" fn fn_803AC2A4(mut state: *mut CardState) -> s32 {
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -3304,7 +3304,7 @@ pub unsafe extern "C" fn fn_803ACF30(
     let mut buf: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -3328,10 +3328,10 @@ pub unsafe extern "C" fn fn_803ACF30(
     {
         buf.r#type = CARD_CMD_READ_HEADER;
         buf.state = state;
-        buf.anon_8.read_header.index = i as s32;
-        buf.anon_8.read_header.comment = comment;
-        buf.anon_8.read_header.banner = banner;
-        buf.anon_8.read_header.icons = icons;
+        buf.x8.read_header.index = i as s32;
+        buf.x8.read_header.comment = comment;
+        buf.x8.read_header.banner = banner;
+        buf.x8.read_header.icons = icons;
         ret = fn_803AC168(&raw mut buf) as s32;
         if ret < 0 as i32 {
             return ret;
@@ -3524,7 +3524,7 @@ pub unsafe extern "C" fn fn_803AD16C_queue_clear(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -3539,13 +3539,13 @@ pub unsafe extern "C" fn fn_803AD16C_queue_clear(
     };
     cmd.r#type = CARD_CMD_WRITE_BLOCK;
     cmd.state = state;
-    cmd.anon_8.write.phys = phys;
-    cmd.anon_8.write.block_id = 0xffff as i32 as s32;
-    cmd.anon_8.write.seq = 0 as i32 as s32;
-    cmd.anon_8.write.data = ::core::ptr::null_mut::<c_void>();
-    cmd.anon_8.write.size = 0 as i32 as s32;
-    cmd.anon_8.write.offset = offset;
-    cmd.anon_8.write.file_idx = file_idx;
+    cmd.x8.write.phys = phys;
+    cmd.x8.write.block_id = 0xffff as i32 as s32;
+    cmd.x8.write.seq = 0 as i32 as s32;
+    cmd.x8.write.data = ::core::ptr::null_mut::<c_void>();
+    cmd.x8.write.size = 0 as i32 as s32;
+    cmd.x8.write.offset = offset;
+    cmd.x8.write.file_idx = file_idx;
     return fn_803AC168(&raw mut cmd) as s32;
 }
 #[inline]
@@ -3557,7 +3557,7 @@ pub unsafe extern "C" fn fn_803AD16C_queue_read(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -3579,8 +3579,8 @@ pub unsafe extern "C" fn fn_803AD16C_queue_read(
     idx = (phys as u32).wrapping_add(idx);
     cmd.r#type = CARD_CMD_READ_SECTOR;
     cmd.state = state;
-    cmd.anon_8.sector.phys = phys;
-    cmd.anon_8.sector.offset = size.wrapping_mul(idx) as s32;
+    cmd.x8.sector.phys = phys;
+    cmd.x8.sector.offset = size.wrapping_mul(idx) as s32;
     return fn_803AC168(&raw mut cmd) as s32;
 }
 #[inline]
@@ -3594,7 +3594,7 @@ pub unsafe extern "C" fn fn_803AD16C_queue_write(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -3616,10 +3616,10 @@ pub unsafe extern "C" fn fn_803AD16C_queue_write(
     idx = (phys as u32).wrapping_add(idx);
     cmd.r#type = CARD_CMD_WRITE_SECTOR;
     cmd.state = state;
-    cmd.anon_8.sector.phys = phys;
-    cmd.anon_8.sector.block_id = block_id;
-    cmd.anon_8.sector.seq = seq;
-    cmd.anon_8.sector.offset = size.wrapping_mul(idx) as s32;
+    cmd.x8.sector.phys = phys;
+    cmd.x8.sector.block_id = block_id;
+    cmd.x8.sector.seq = seq;
+    cmd.x8.sector.offset = size.wrapping_mul(idx) as s32;
     return fn_803AC168(&raw mut cmd) as s32;
 }
 #[inline]
@@ -3634,7 +3634,7 @@ pub unsafe extern "C" fn fn_803AD16C_queue_write_last(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -3656,10 +3656,10 @@ pub unsafe extern "C" fn fn_803AD16C_queue_write_last(
     idx = (phys as u32).wrapping_add(idx);
     cmd.r#type = CARD_CMD_WRITE_SECTOR;
     cmd.state = state;
-    cmd.anon_8.sector.phys = phys;
-    cmd.anon_8.sector.block_id = block_id;
-    cmd.anon_8.sector.seq = seq;
-    cmd.anon_8.sector.offset = size.wrapping_mul(idx) as s32;
+    cmd.x8.sector.phys = phys;
+    cmd.x8.sector.block_id = block_id;
+    cmd.x8.sector.seq = seq;
+    cmd.x8.sector.offset = size.wrapping_mul(idx) as s32;
     fn_803AD16C_own(&raw mut tail as *mut s32 as *mut c_void);
     return fn_803AC168(&raw mut cmd) as s32;
 }
@@ -3944,7 +3944,7 @@ pub unsafe extern "C" fn fn_803ADE4C(
     let mut cmd_open: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -3960,7 +3960,7 @@ pub unsafe extern "C" fn fn_803ADE4C(
     let mut cmd_scan: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -3981,7 +3981,7 @@ pub unsafe extern "C" fn fn_803ADE4C(
     hsd_804D7998 = curr_tail as i32;
     cmd_open.r#type = CARD_CMD_GET_STATUS;
     cmd_open.state = state;
-    cmd_open.anon_8.get_status.file_no = file_no as s32;
+    cmd_open.x8.get_status.file_no = file_no as s32;
     result = fn_803AC168(&raw mut cmd_open) as s32;
     if result < 0 as i32 {
         snap1 = hsd_804D7998 as s32;
@@ -4031,7 +4031,7 @@ pub unsafe extern "C" fn queueCardReadCommand(
     let mut command: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -4046,11 +4046,11 @@ pub unsafe extern "C" fn queueCardReadCommand(
     };
     command.r#type = CARD_CMD_READ_BLOCK;
     command.state = state;
-    command.anon_8.read.phys = block;
-    command.anon_8.read.xC = 0 as i32 as s32;
-    command.anon_8.read.data = data;
-    command.anon_8.read.size = length;
-    command.anon_8.read.offset = offset;
+    command.x8.read.phys = block;
+    command.x8.read.xC = 0 as i32 as s32;
+    command.x8.read.data = data;
+    command.x8.read.size = length;
+    command.x8.read.offset = offset;
     return fn_803AC168(&raw mut command) as s32;
 }
 #[inline]
@@ -4166,7 +4166,7 @@ pub unsafe extern "C" fn queueCardClearCommand(
     let mut command: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -4181,12 +4181,12 @@ pub unsafe extern "C" fn queueCardClearCommand(
     };
     command.r#type = CARD_CMD_CLEAR_BUF;
     command.state = state;
-    command.anon_8.clear.x8 = 0 as i32 as s32;
-    command.anon_8.clear.xC = 0 as i32 as s32;
-    command.anon_8.clear.data = dst as *mut c_void;
-    command.anon_8.clear.size = size;
-    command.anon_8.clear.x14 = 0 as i32 as s32;
-    command.anon_8.clear.x0 = 0 as i32 as s32;
+    command.x8.clear.x8 = 0 as i32 as s32;
+    command.x8.clear.xC = 0 as i32 as s32;
+    command.x8.clear.data = dst as *mut c_void;
+    command.x8.clear.size = size;
+    command.x8.clear.x14 = 0 as i32 as s32;
+    command.x8.clear.x0 = 0 as i32 as s32;
     return fn_803AC168(&raw mut command) as s32;
 }
 #[inline]
@@ -4588,7 +4588,7 @@ pub unsafe extern "C" fn fn_803AE7F8(
     let mut cmd_done: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -4771,7 +4771,7 @@ pub unsafe extern "C" fn fn_803AE7F8(
                                 let mut cmd: CardCmd = CardCmd {
                                     r#type: CARD_CMD_NONE,
                                     state: ::core::ptr::null::<CardState>() as *mut CardState,
-                                    anon_8: CardCmd_anon_193 {
+                                    x8: CardCmd_x8 {
                                         write: CardWriteArgs {
                                             file_idx: 0,
                                             phys: 0,
@@ -4786,12 +4786,12 @@ pub unsafe extern "C" fn fn_803AE7F8(
                                 };
                                 cmd.r#type = CARD_CMD_VERIFY_BLOCK;
                                 cmd.state = state;
-                                cmd.anon_8.verify.block_id = blocks_before + i;
-                                cmd.anon_8.verify.seq = current_seq;
-                                cmd.anon_8.verify.data = data
+                                cmd.x8.verify.block_id = blocks_before + i;
+                                cmd.x8.verify.seq = current_seq;
+                                cmd.x8.verify.data = data
                                     as *mut c_void;
-                                cmd.anon_8.verify.size = chunk;
-                                cmd.anon_8.verify.offset = ofs;
+                                cmd.x8.verify.size = chunk;
+                                cmd.x8.verify.offset = ofs;
                                 cmd_result = fn_803AC168(&raw mut cmd) as s32;
                             }
                             if cmd_result < 0 as i32 {
@@ -4835,7 +4835,7 @@ pub unsafe extern "C" fn fn_803AE7F8(
                                 let mut cmd_0: CardCmd = CardCmd {
                                     r#type: CARD_CMD_NONE,
                                     state: ::core::ptr::null::<CardState>() as *mut CardState,
-                                    anon_8: CardCmd_anon_193 {
+                                    x8: CardCmd_x8 {
                                         write: CardWriteArgs {
                                             file_idx: 0,
                                             phys: 0,
@@ -4850,12 +4850,12 @@ pub unsafe extern "C" fn fn_803AE7F8(
                                 };
                                 cmd_0.r#type = CARD_CMD_VERIFY_BLOCK;
                                 cmd_0.state = state;
-                                cmd_0.anon_8.verify.block_id = blocks_before + i;
-                                cmd_0.anon_8.verify.seq = current_seq;
-                                cmd_0.anon_8.verify.data = data
+                                cmd_0.x8.verify.block_id = blocks_before + i;
+                                cmd_0.x8.verify.seq = current_seq;
+                                cmd_0.x8.verify.data = data
                                     as *mut c_void;
-                                cmd_0.anon_8.verify.size = remaining;
-                                cmd_0.anon_8.verify.offset = ofs_0;
+                                cmd_0.x8.verify.size = remaining;
+                                cmd_0.x8.verify.offset = ofs_0;
                                 cmd_result_0 = fn_803AC168(&raw mut cmd_0) as s32;
                             }
                             if cmd_result_0 < 0 as i32 {
@@ -4941,7 +4941,7 @@ pub unsafe extern "C" fn fn_803AE7F8(
                         let mut init_cmd: CardCmd = CardCmd {
                             r#type: CARD_CMD_NONE,
                             state: ::core::ptr::null::<CardState>() as *mut CardState,
-                            anon_8: CardCmd_anon_193 {
+                            x8: CardCmd_x8 {
                                 write: CardWriteArgs {
                                     file_idx: 0,
                                     phys: 0,
@@ -4958,7 +4958,7 @@ pub unsafe extern "C" fn fn_803AE7F8(
                         let mut cmd_1: CardCmd = CardCmd {
                             r#type: CARD_CMD_NONE,
                             state: ::core::ptr::null::<CardState>() as *mut CardState,
-                            anon_8: CardCmd_anon_193 {
+                            x8: CardCmd_x8 {
                                 write: CardWriteArgs {
                                     file_idx: 0,
                                     phys: 0,
@@ -4980,12 +4980,12 @@ pub unsafe extern "C" fn fn_803AE7F8(
                             } else {
                                 init_cmd.r#type = CARD_CMD_READ_BLOCK;
                                 init_cmd.state = state;
-                                init_cmd.anon_8.read.phys = zero;
-                                init_cmd.anon_8.read.xC = zero;
-                                init_cmd.anon_8.read.data = zero
+                                init_cmd.x8.read.phys = zero;
+                                init_cmd.x8.read.xC = zero;
+                                init_cmd.x8.read.data = zero
                                     as *mut c_void;
-                                init_cmd.anon_8.read.size = zero;
-                                init_cmd.anon_8.read.offset = ofs_1;
+                                init_cmd.x8.read.size = zero;
+                                init_cmd.x8.read.offset = ofs_1;
                                 fn_803AC168(&raw mut init_cmd);
                                 current_block_174 = 4122836492991094814;
                             }
@@ -4996,14 +4996,14 @@ pub unsafe extern "C" fn fn_803AE7F8(
                             4122836492991094814 => {
                                 cmd_1.r#type = CARD_CMD_WRITE_BLOCK;
                                 cmd_1.state = state;
-                                cmd_1.anon_8.write.phys = phys_0;
-                                cmd_1.anon_8.write.block_id = blocks_before + i;
-                                cmd_1.anon_8.write.seq = current_seq;
-                                cmd_1.anon_8.write.data = data
+                                cmd_1.x8.write.phys = phys_0;
+                                cmd_1.x8.write.block_id = blocks_before + i;
+                                cmd_1.x8.write.seq = current_seq;
+                                cmd_1.x8.write.data = data
                                     as *mut c_void;
-                                cmd_1.anon_8.write.size = chunk_0;
-                                cmd_1.anon_8.write.offset = ofs_1;
-                                cmd_1.anon_8.write.file_idx = file_idx;
+                                cmd_1.x8.write.size = chunk_0;
+                                cmd_1.x8.write.offset = ofs_1;
+                                cmd_1.x8.write.file_idx = file_idx;
                                 cmd_result_2 = fn_803AC168(&raw mut cmd_1) as s32;
                             }
                             _ => {}
@@ -5056,7 +5056,7 @@ pub unsafe extern "C" fn fn_803AE7F8(
                         let mut init_cmd_0: CardCmd = CardCmd {
                             r#type: CARD_CMD_NONE,
                             state: ::core::ptr::null::<CardState>() as *mut CardState,
-                            anon_8: CardCmd_anon_193 {
+                            x8: CardCmd_x8 {
                                 write: CardWriteArgs {
                                     file_idx: 0,
                                     phys: 0,
@@ -5073,7 +5073,7 @@ pub unsafe extern "C" fn fn_803AE7F8(
                         let mut cmd_2: CardCmd = CardCmd {
                             r#type: CARD_CMD_NONE,
                             state: ::core::ptr::null::<CardState>() as *mut CardState,
-                            anon_8: CardCmd_anon_193 {
+                            x8: CardCmd_x8 {
                                 write: CardWriteArgs {
                                     file_idx: 0,
                                     phys: 0,
@@ -5095,12 +5095,12 @@ pub unsafe extern "C" fn fn_803AE7F8(
                             } else {
                                 init_cmd_0.r#type = CARD_CMD_READ_BLOCK;
                                 init_cmd_0.state = state;
-                                init_cmd_0.anon_8.read.phys = zero_0;
-                                init_cmd_0.anon_8.read.xC = zero_0;
-                                init_cmd_0.anon_8.read.data = zero_0
+                                init_cmd_0.x8.read.phys = zero_0;
+                                init_cmd_0.x8.read.xC = zero_0;
+                                init_cmd_0.x8.read.data = zero_0
                                     as *mut c_void;
-                                init_cmd_0.anon_8.read.size = zero_0;
-                                init_cmd_0.anon_8.read.offset = ofs_2;
+                                init_cmd_0.x8.read.size = zero_0;
+                                init_cmd_0.x8.read.offset = ofs_2;
                                 fn_803AC168(&raw mut init_cmd_0);
                                 current_block_217 = 2574664466675447602;
                             }
@@ -5111,14 +5111,14 @@ pub unsafe extern "C" fn fn_803AE7F8(
                             2574664466675447602 => {
                                 cmd_2.r#type = CARD_CMD_WRITE_BLOCK;
                                 cmd_2.state = state;
-                                cmd_2.anon_8.write.phys = phys_0;
-                                cmd_2.anon_8.write.block_id = blocks_before + i;
-                                cmd_2.anon_8.write.seq = current_seq;
-                                cmd_2.anon_8.write.data = data
+                                cmd_2.x8.write.phys = phys_0;
+                                cmd_2.x8.write.block_id = blocks_before + i;
+                                cmd_2.x8.write.seq = current_seq;
+                                cmd_2.x8.write.data = data
                                     as *mut c_void;
-                                cmd_2.anon_8.write.size = remaining_0;
-                                cmd_2.anon_8.write.offset = ofs_2;
-                                cmd_2.anon_8.write.file_idx = file_idx;
+                                cmd_2.x8.write.size = remaining_0;
+                                cmd_2.x8.write.offset = ofs_2;
+                                cmd_2.x8.write.file_idx = file_idx;
                                 cmd_result_3 = fn_803AC168(&raw mut cmd_2) as s32;
                             }
                             _ => {}
@@ -5211,7 +5211,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_verify_first(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -5227,11 +5227,11 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_verify_first(
     let mut ofs: s32 = fn_803ACBE8(state, phys);
     cmd.r#type = CARD_CMD_VERIFY_BLOCK;
     cmd.state = state;
-    cmd.anon_8.verify.block_id = block_id;
-    cmd.anon_8.verify.seq = seq;
-    cmd.anon_8.verify.data = data;
-    cmd.anon_8.verify.size = size;
-    cmd.anon_8.verify.offset = ofs;
+    cmd.x8.verify.block_id = block_id;
+    cmd.x8.verify.seq = seq;
+    cmd.x8.verify.data = data;
+    cmd.x8.verify.size = size;
+    cmd.x8.verify.offset = ofs;
     return fn_803AC168(&raw mut cmd) as s32;
 }
 #[inline]
@@ -5251,7 +5251,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_verify_final(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -5267,11 +5267,11 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_verify_final(
     let mut ofs: s32 = fn_803ACBE8(state, phys);
     cmd.r#type = CARD_CMD_VERIFY_BLOCK;
     cmd.state = state;
-    cmd.anon_8.verify.block_id = block_id;
-    cmd.anon_8.verify.seq = seq;
-    cmd.anon_8.verify.data = data;
-    cmd.anon_8.verify.size = size;
-    cmd.anon_8.verify.offset = ofs;
+    cmd.x8.verify.block_id = block_id;
+    cmd.x8.verify.seq = seq;
+    cmd.x8.verify.data = data;
+    cmd.x8.verify.size = size;
+    cmd.x8.verify.offset = ofs;
     result = fn_803AC168(&raw mut cmd) as s32;
     return result;
 }
@@ -5289,7 +5289,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_write_first(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -5306,7 +5306,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_write_first(
     let mut init_cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -5326,22 +5326,22 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_write_first(
         }
         init_cmd.r#type = CARD_CMD_READ_BLOCK;
         init_cmd.state = state;
-        init_cmd.anon_8.read.phys = zero;
-        init_cmd.anon_8.read.xC = zero;
-        init_cmd.anon_8.read.data = zero as *mut c_void;
-        init_cmd.anon_8.read.size = zero;
-        init_cmd.anon_8.read.offset = ofs;
+        init_cmd.x8.read.phys = zero;
+        init_cmd.x8.read.xC = zero;
+        init_cmd.x8.read.data = zero as *mut c_void;
+        init_cmd.x8.read.size = zero;
+        init_cmd.x8.read.offset = ofs;
         fn_803AC168(&raw mut init_cmd);
     }
     cmd.r#type = CARD_CMD_WRITE_BLOCK;
     cmd.state = state;
-    cmd.anon_8.write.phys = phys;
-    cmd.anon_8.write.block_id = block_id;
-    cmd.anon_8.write.seq = seq;
-    cmd.anon_8.write.data = data;
-    cmd.anon_8.write.size = size;
-    cmd.anon_8.write.offset = ofs;
-    cmd.anon_8.write.file_idx = file_idx;
+    cmd.x8.write.phys = phys;
+    cmd.x8.write.block_id = block_id;
+    cmd.x8.write.seq = seq;
+    cmd.x8.write.data = data;
+    cmd.x8.write.size = size;
+    cmd.x8.write.offset = ofs;
+    cmd.x8.write.file_idx = file_idx;
     return fn_803AC168(&raw mut cmd) as s32;
 }
 #[inline]
@@ -5358,7 +5358,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_write_final(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -5375,7 +5375,7 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_write_final(
     let mut init_cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -5396,22 +5396,22 @@ pub unsafe extern "C" fn fn_803AF3F0_queue_write_final(
         }
         init_cmd.r#type = CARD_CMD_READ_BLOCK;
         init_cmd.state = state;
-        init_cmd.anon_8.read.phys = zero;
-        init_cmd.anon_8.read.xC = zero;
-        init_cmd.anon_8.read.data = zero as *mut c_void;
-        init_cmd.anon_8.read.size = zero;
-        init_cmd.anon_8.read.offset = ofs;
+        init_cmd.x8.read.phys = zero;
+        init_cmd.x8.read.xC = zero;
+        init_cmd.x8.read.data = zero as *mut c_void;
+        init_cmd.x8.read.size = zero;
+        init_cmd.x8.read.offset = ofs;
         fn_803AC168(&raw mut init_cmd);
     }
     cmd.r#type = CARD_CMD_WRITE_BLOCK;
     cmd.state = state;
-    cmd.anon_8.write.phys = phys;
-    cmd.anon_8.write.block_id = block_id;
-    cmd.anon_8.write.seq = seq;
-    cmd.anon_8.write.data = data;
-    cmd.anon_8.write.size = size;
-    cmd.anon_8.write.offset = ofs;
-    cmd.anon_8.write.file_idx = file_idx;
+    cmd.x8.write.phys = phys;
+    cmd.x8.write.block_id = block_id;
+    cmd.x8.write.seq = seq;
+    cmd.x8.write.data = data;
+    cmd.x8.write.size = size;
+    cmd.x8.write.offset = ofs;
+    cmd.x8.write.file_idx = file_idx;
     result = fn_803AC168(&raw mut cmd) as s32;
     return result;
 }
@@ -5718,7 +5718,7 @@ pub unsafe extern "C" fn fn_803AF3F0(
                     let mut cmd: CardCmd = CardCmd {
                         r#type: CARD_CMD_NONE,
                         state: ::core::ptr::null::<CardState>() as *mut CardState,
-                        anon_8: CardCmd_anon_193 {
+                        x8: CardCmd_x8 {
                             write: CardWriteArgs {
                                 file_idx: 0,
                                 phys: 0,
@@ -6057,7 +6057,7 @@ pub unsafe extern "C" fn fn_803B0120_queue_verify(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -6073,11 +6073,11 @@ pub unsafe extern "C" fn fn_803B0120_queue_verify(
     let mut ofs: s32 = fn_803B0120_block_offset(state, phys);
     cmd.r#type = CARD_CMD_VERIFY_BLOCK;
     cmd.state = state;
-    cmd.anon_8.verify.block_id = block_id;
-    cmd.anon_8.verify.seq = seq;
-    cmd.anon_8.verify.data = data;
-    cmd.anon_8.verify.size = size;
-    cmd.anon_8.verify.offset = ofs;
+    cmd.x8.verify.block_id = block_id;
+    cmd.x8.verify.seq = seq;
+    cmd.x8.verify.data = data;
+    cmd.x8.verify.size = size;
+    cmd.x8.verify.offset = ofs;
     result = fn_803AC168(&raw mut cmd) as s32;
     return result;
 }
@@ -6095,7 +6095,7 @@ pub unsafe extern "C" fn fn_803B0120_queue_write(
     let mut cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -6112,7 +6112,7 @@ pub unsafe extern "C" fn fn_803B0120_queue_write(
     let mut init_cmd: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -6133,22 +6133,22 @@ pub unsafe extern "C" fn fn_803B0120_queue_write(
         }
         init_cmd.r#type = CARD_CMD_READ_BLOCK;
         init_cmd.state = state;
-        init_cmd.anon_8.read.phys = zero;
-        init_cmd.anon_8.read.xC = zero;
-        init_cmd.anon_8.read.data = zero as *mut c_void;
-        init_cmd.anon_8.read.size = zero;
-        init_cmd.anon_8.read.offset = ofs;
+        init_cmd.x8.read.phys = zero;
+        init_cmd.x8.read.xC = zero;
+        init_cmd.x8.read.data = zero as *mut c_void;
+        init_cmd.x8.read.size = zero;
+        init_cmd.x8.read.offset = ofs;
         fn_803AC168(&raw mut init_cmd);
     }
     cmd.r#type = CARD_CMD_WRITE_BLOCK;
     cmd.state = state;
-    cmd.anon_8.write.phys = phys;
-    cmd.anon_8.write.block_id = block_id;
-    cmd.anon_8.write.seq = seq;
-    cmd.anon_8.write.data = data;
-    cmd.anon_8.write.size = size;
-    cmd.anon_8.write.offset = ofs;
-    cmd.anon_8.write.file_idx = file_idx;
+    cmd.x8.write.phys = phys;
+    cmd.x8.write.block_id = block_id;
+    cmd.x8.write.seq = seq;
+    cmd.x8.write.data = data;
+    cmd.x8.write.size = size;
+    cmd.x8.write.offset = ofs;
+    cmd.x8.write.file_idx = file_idx;
     result = fn_803AC168(&raw mut cmd) as s32;
     return result;
 }
@@ -6396,7 +6396,7 @@ pub unsafe extern "C" fn fn_803B0120(
                     let mut cmd: CardCmd = CardCmd {
                         r#type: CARD_CMD_NONE,
                         state: ::core::ptr::null::<CardState>() as *mut CardState,
-                        anon_8: CardCmd_anon_193 {
+                        x8: CardCmd_x8 {
                             write: CardWriteArgs {
                                 file_idx: 0,
                                 phys: 0,
@@ -6622,9 +6622,9 @@ pub unsafe extern "C" fn queueVerifyCardHeader(
     {
         (*cmd).r#type = CARD_CMD_VERIFY_HEADER;
         (*cmd).state = state;
-        (*cmd).anon_8.header.banner = banner;
-        (*cmd).anon_8.header.icons = icons;
-        (*cmd).anon_8.header.index = block_idx as s32;
+        (*cmd).x8.header.banner = banner;
+        (*cmd).x8.header.icons = icons;
+        (*cmd).x8.header.index = block_idx as s32;
         result = fn_803AC168(cmd) as s32;
         if result < 0 as i32 {
             return result;
@@ -6722,7 +6722,7 @@ pub unsafe extern "C" fn fn_803B0E9C(
     let mut cmd_done: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -6738,7 +6738,7 @@ pub unsafe extern "C" fn fn_803B0E9C(
     let mut cmd_clear: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -6755,7 +6755,7 @@ pub unsafe extern "C" fn fn_803B0E9C(
     let mut cmd_patch: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -6772,7 +6772,7 @@ pub unsafe extern "C" fn fn_803B0E9C(
     let mut cmd_write_header: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -6789,7 +6789,7 @@ pub unsafe extern "C" fn fn_803B0E9C(
     let mut cmd_verify_header: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -6861,12 +6861,12 @@ pub unsafe extern "C" fn fn_803B0E9C(
                     let mut zero: s32 = 0 as s32;
                     cmd_clear.r#type = CARD_CMD_CLEAR_BUF;
                     cmd_clear.state = state;
-                    cmd_clear.anon_8.clear.x8 = zero;
-                    cmd_clear.anon_8.clear.xC = zero;
-                    cmd_clear.anon_8.clear.data = clear_buf;
-                    cmd_clear.anon_8.clear.size = sector_size as s32;
-                    cmd_clear.anon_8.clear.x14 = zero;
-                    cmd_clear.anon_8.clear.x0 = zero;
+                    cmd_clear.x8.clear.x8 = zero;
+                    cmd_clear.x8.clear.xC = zero;
+                    cmd_clear.x8.clear.data = clear_buf;
+                    cmd_clear.x8.clear.size = sector_size as s32;
+                    cmd_clear.x8.clear.x14 = zero;
+                    cmd_clear.x8.clear.x0 = zero;
                     result = fn_803AC168(&raw mut cmd_clear) as s32;
                 } else {
                     if (*state).file_sizes[0 as i32 as usize]
@@ -6878,14 +6878,14 @@ pub unsafe extern "C" fn fn_803B0E9C(
                     }
                     cmd_patch.r#type = CARD_CMD_READ_BLOCK;
                     cmd_patch.state = state;
-                    cmd_patch.anon_8.read.phys = -(1 as i32)
+                    cmd_patch.x8.read.phys = -(1 as i32)
                         as s32;
-                    cmd_patch.anon_8.read.xC = 0 as i32 as s32;
-                    cmd_patch.anon_8.read.data = ::core::ptr::null_mut::<
+                    cmd_patch.x8.read.xC = 0 as i32 as s32;
+                    cmd_patch.x8.read.data = ::core::ptr::null_mut::<
                         c_void,
                     >();
-                    cmd_patch.anon_8.read.size = has_blocks;
-                    cmd_patch.anon_8.read.offset = (async_0 as u32)
+                    cmd_patch.x8.read.size = has_blocks;
+                    cmd_patch.x8.read.offset = (async_0 as u32)
                         .wrapping_mul(sector_size) as s32;
                     result = fn_803AC168(&raw mut cmd_patch) as s32;
                 }
@@ -6895,9 +6895,9 @@ pub unsafe extern "C" fn fn_803B0E9C(
             }
             cmd_write_header.r#type = CARD_CMD_WRITE_HEADER;
             cmd_write_header.state = state;
-            cmd_write_header.anon_8.header.index = async_0 as s32;
-            cmd_write_header.anon_8.header.banner = banner;
-            cmd_write_header.anon_8.header.icons = icons
+            cmd_write_header.x8.header.index = async_0 as s32;
+            cmd_write_header.x8.header.banner = banner;
+            cmd_write_header.x8.header.icons = icons
                 as *mut c_void;
             result = fn_803AC168(&raw mut cmd_write_header) as s32;
             if result < 0 as i32 {
@@ -7074,24 +7074,24 @@ pub unsafe extern "C" fn fn_803B1338_queue_write(
         }
         (*init_buf).cmd.r#type = CARD_CMD_READ_BLOCK;
         (*init_buf).cmd.state = state;
-        (*init_buf).cmd.anon_8.read.phys = 0 as i32 as s32;
-        (*init_buf).cmd.anon_8.read.xC = 0 as i32 as s32;
-        (*init_buf).cmd.anon_8.read.data = ::core::ptr::null_mut::<
+        (*init_buf).cmd.x8.read.phys = 0 as i32 as s32;
+        (*init_buf).cmd.x8.read.xC = 0 as i32 as s32;
+        (*init_buf).cmd.x8.read.data = ::core::ptr::null_mut::<
             c_void,
         >();
-        (*init_buf).cmd.anon_8.read.size = 0 as i32 as s32;
-        (*init_buf).cmd.anon_8.read.offset = ofs;
+        (*init_buf).cmd.x8.read.size = 0 as i32 as s32;
+        (*init_buf).cmd.x8.read.offset = ofs;
         fn_803AC168(&raw mut (*init_buf).cmd);
     }
     (*buf).cmd.r#type = CARD_CMD_WRITE_BLOCK;
     (*buf).cmd.state = state;
-    (*buf).cmd.anon_8.write.phys = phys;
-    (*buf).cmd.anon_8.write.block_id = block_id;
-    (*buf).cmd.anon_8.write.seq = 0 as i32 as s32;
-    (*buf).cmd.anon_8.write.data = data;
-    (*buf).cmd.anon_8.write.size = size;
-    (*buf).cmd.anon_8.write.offset = ofs;
-    (*buf).cmd.anon_8.write.file_idx = file_idx;
+    (*buf).cmd.x8.write.phys = phys;
+    (*buf).cmd.x8.write.block_id = block_id;
+    (*buf).cmd.x8.write.seq = 0 as i32 as s32;
+    (*buf).cmd.x8.write.data = data;
+    (*buf).cmd.x8.write.size = size;
+    (*buf).cmd.x8.write.offset = ofs;
+    (*buf).cmd.x8.write.file_idx = file_idx;
     result = fn_803AC168(&raw mut (*buf).cmd) as s32;
     return result;
 }
@@ -7130,24 +7130,24 @@ pub unsafe extern "C" fn fn_803B1338_queue_write_data(
         }
         (*init_buf).cmd.r#type = CARD_CMD_READ_BLOCK;
         (*init_buf).cmd.state = state;
-        (*init_buf).cmd.anon_8.read.phys = 0 as i32 as s32;
-        (*init_buf).cmd.anon_8.read.xC = 0 as i32 as s32;
-        (*init_buf).cmd.anon_8.read.data = ::core::ptr::null_mut::<
+        (*init_buf).cmd.x8.read.phys = 0 as i32 as s32;
+        (*init_buf).cmd.x8.read.xC = 0 as i32 as s32;
+        (*init_buf).cmd.x8.read.data = ::core::ptr::null_mut::<
             c_void,
         >();
-        (*init_buf).cmd.anon_8.read.size = 0 as i32 as s32;
-        (*init_buf).cmd.anon_8.read.offset = ofs;
+        (*init_buf).cmd.x8.read.size = 0 as i32 as s32;
+        (*init_buf).cmd.x8.read.offset = ofs;
         fn_803AC168(&raw mut (*init_buf).cmd);
     }
     (*buf).cmd.r#type = CARD_CMD_WRITE_BLOCK;
     (*buf).cmd.state = state;
-    (*buf).cmd.anon_8.write.phys = phys;
-    (*buf).cmd.anon_8.write.block_id = block_id;
-    (*buf).cmd.anon_8.write.seq = 0 as i32 as s32;
-    (*buf).cmd.anon_8.write.data = data as *mut c_void;
-    (*buf).cmd.anon_8.write.size = size;
-    (*buf).cmd.anon_8.write.offset = ofs;
-    (*buf).cmd.anon_8.write.file_idx = file_idx;
+    (*buf).cmd.x8.write.phys = phys;
+    (*buf).cmd.x8.write.block_id = block_id;
+    (*buf).cmd.x8.write.seq = 0 as i32 as s32;
+    (*buf).cmd.x8.write.data = data as *mut c_void;
+    (*buf).cmd.x8.write.size = size;
+    (*buf).cmd.x8.write.offset = ofs;
+    (*buf).cmd.x8.write.file_idx = file_idx;
     result = fn_803AC168(&raw mut (*buf).cmd) as s32;
     return result;
 }
@@ -7160,7 +7160,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7179,7 +7179,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7198,7 +7198,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7217,7 +7217,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7236,7 +7236,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7255,7 +7255,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7274,7 +7274,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7293,7 +7293,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7312,7 +7312,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7331,7 +7331,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7350,7 +7350,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7369,7 +7369,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7388,7 +7388,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7407,7 +7407,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7426,7 +7426,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7445,7 +7445,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7464,7 +7464,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7483,7 +7483,7 @@ pub unsafe extern "C" fn fn_803B1338(
         cmd: CardCmd {
             r#type: CARD_CMD_NONE,
             state: ::core::ptr::null::<CardState>() as *mut CardState,
-            anon_8: CardCmd_anon_193 {
+            x8: CardCmd_x8 {
                 write: CardWriteArgs {
                     file_idx: 0,
                     phys: 0,
@@ -7533,25 +7533,25 @@ pub unsafe extern "C" fn fn_803B1338(
                     ) as s32;
                 cmd0.cmd.r#type = CARD_CMD_READ_BLOCK;
                 cmd0.cmd.state = state;
-                cmd0.cmd.anon_8.read.phys = 0 as i32 as s32;
-                cmd0.cmd.anon_8.read.xC = 0 as i32 as s32;
-                cmd0.cmd.anon_8.read.data = ::core::ptr::null_mut::<
+                cmd0.cmd.x8.read.phys = 0 as i32 as s32;
+                cmd0.cmd.x8.read.xC = 0 as i32 as s32;
+                cmd0.cmd.x8.read.data = ::core::ptr::null_mut::<
                     c_void,
                 >();
-                cmd0.cmd.anon_8.read.size = 0 as i32 as s32;
-                cmd0.cmd.anon_8.read.offset = ofs0;
+                cmd0.cmd.x8.read.size = 0 as i32 as s32;
+                cmd0.cmd.x8.read.offset = ofs0;
                 fn_803AC168(&raw mut cmd0.cmd);
                 cmd1.cmd.r#type = CARD_CMD_WRITE_BLOCK;
                 cmd1.cmd.state = state;
-                cmd1.cmd.anon_8.write.phys = 0 as i32 as s32;
-                cmd1.cmd.anon_8.write.block_id = 0 as i32 as s32;
-                cmd1.cmd.anon_8.write.seq = 0 as i32 as s32;
-                cmd1.cmd.anon_8.write.data = ::core::ptr::null_mut::<
+                cmd1.cmd.x8.write.phys = 0 as i32 as s32;
+                cmd1.cmd.x8.write.block_id = 0 as i32 as s32;
+                cmd1.cmd.x8.write.seq = 0 as i32 as s32;
+                cmd1.cmd.x8.write.data = ::core::ptr::null_mut::<
                     c_void,
                 >();
-                cmd1.cmd.anon_8.write.size = 0 as i32 as s32;
-                cmd1.cmd.anon_8.write.offset = ofs0;
-                cmd1.cmd.anon_8.write.file_idx = 0 as i32 as s32;
+                cmd1.cmd.x8.write.size = 0 as i32 as s32;
+                cmd1.cmd.x8.write.offset = ofs0;
+                cmd1.cmd.x8.write.file_idx = 0 as i32 as s32;
                 result = fn_803AC168(&raw mut cmd1.cmd) as s32;
             } else {
                 let mut ofs0_0: s32 = sector_size
@@ -7564,25 +7564,25 @@ pub unsafe extern "C" fn fn_803B1338(
                     ) as s32;
                 cmd2.cmd.r#type = CARD_CMD_READ_BLOCK;
                 cmd2.cmd.state = state;
-                cmd2.cmd.anon_8.read.phys = 0 as i32 as s32;
-                cmd2.cmd.anon_8.read.xC = 0 as i32 as s32;
-                cmd2.cmd.anon_8.read.data = ::core::ptr::null_mut::<
+                cmd2.cmd.x8.read.phys = 0 as i32 as s32;
+                cmd2.cmd.x8.read.xC = 0 as i32 as s32;
+                cmd2.cmd.x8.read.data = ::core::ptr::null_mut::<
                     c_void,
                 >();
-                cmd2.cmd.anon_8.read.size = 0 as i32 as s32;
-                cmd2.cmd.anon_8.read.offset = ofs0_0;
+                cmd2.cmd.x8.read.size = 0 as i32 as s32;
+                cmd2.cmd.x8.read.offset = ofs0_0;
                 fn_803AC168(&raw mut cmd2.cmd);
                 cmd3.cmd.r#type = CARD_CMD_WRITE_BLOCK;
                 cmd3.cmd.state = state;
-                cmd3.cmd.anon_8.write.phys = 0 as i32 as s32;
-                cmd3.cmd.anon_8.write.block_id = 0 as i32 as s32;
-                cmd3.cmd.anon_8.write.seq = 0 as i32 as s32;
-                cmd3.cmd.anon_8.write.data = fdata as *mut c_void;
-                cmd3.cmd.anon_8.write.size = sector_size
+                cmd3.cmd.x8.write.phys = 0 as i32 as s32;
+                cmd3.cmd.x8.write.block_id = 0 as i32 as s32;
+                cmd3.cmd.x8.write.seq = 0 as i32 as s32;
+                cmd3.cmd.x8.write.data = fdata as *mut c_void;
+                cmd3.cmd.x8.write.size = sector_size
                     .wrapping_sub(hdr_offset as u32)
                     .wrapping_sub(0x20 as u32) as s32;
-                cmd3.cmd.anon_8.write.offset = ofs0_0;
-                cmd3.cmd.anon_8.write.file_idx = 0 as i32 as s32;
+                cmd3.cmd.x8.write.offset = ofs0_0;
+                cmd3.cmd.x8.write.file_idx = 0 as i32 as s32;
                 result = fn_803AC168(&raw mut cmd3.cmd) as s32;
                 offset = (*state)
                     .sector_size
@@ -7953,7 +7953,7 @@ pub unsafe extern "C" fn fn_803B1F78(
     let mut cmd_create: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -7969,7 +7969,7 @@ pub unsafe extern "C" fn fn_803B1F78(
     let mut cmd_set_status: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -7998,8 +7998,8 @@ pub unsafe extern "C" fn fn_803B1F78(
     file_size = (*state).sector_size.wrapping_mul(hsd_803B2674(state) as u32) as s32;
     cmd_create.r#type = CARD_CMD_CREATE_FILE;
     cmd_create.state = state;
-    cmd_create.anon_8.create.filename = filename;
-    cmd_create.anon_8.create.size = file_size;
+    cmd_create.x8.create.filename = filename;
+    cmd_create.x8.create.size = file_size;
     result = fn_803AC168(&raw mut cmd_create) as s32;
     if result < 0 as i32 {
         snap1 = hsd_804D7998 as s32;
@@ -8095,7 +8095,7 @@ pub unsafe extern "C" fn fn_803B21E8(
     let mut cmd_set_status: CardCmd = CardCmd {
         r#type: CARD_CMD_NONE,
         state: ::core::ptr::null::<CardState>() as *mut CardState,
-        anon_8: CardCmd_anon_193 {
+        x8: CardCmd_x8 {
             write: CardWriteArgs {
                 file_idx: 0,
                 phys: 0,
@@ -8269,7 +8269,7 @@ pub unsafe extern "C" fn hsd_803B2550(
     let mut next: s32 = write_idx + 1 as s32;
     requests[write_idx as usize].r#type = CARD_REQ_OPEN_FILE;
     requests[write_idx as usize].state = state;
-    requests[write_idx as usize].anon_8.open.file_no = file_no;
+    requests[write_idx as usize].x8.open.file_no = file_no;
     requests[write_idx as usize].callback = callback;
     hsd_804D7994 = (next as i32 % 32 as i32) as s32;
     return 0 as i32;
@@ -8330,9 +8330,9 @@ pub unsafe extern "C" fn hsd_803B27F4(
     let mut next: s32 = write_idx + 1 as s32;
     requests[write_idx as usize].r#type = CARD_REQ_READ_HEADER;
     requests[write_idx as usize].state = state;
-    requests[write_idx as usize].anon_8.header.comment = comment;
-    requests[write_idx as usize].anon_8.header.banner = banner;
-    requests[write_idx as usize].anon_8.header.icons = icons;
+    requests[write_idx as usize].x8.header.comment = comment;
+    requests[write_idx as usize].x8.header.banner = banner;
+    requests[write_idx as usize].x8.header.icons = icons;
     requests[write_idx as usize].callback = callback;
     hsd_804D7994 = (next as i32 % 32 as i32) as s32;
     return 0 as i32;
@@ -8364,9 +8364,9 @@ pub unsafe extern "C" fn hsd_803B286C(
     }
     requests[write_idx as usize].r#type = CARD_REQ_CREATE_FILE;
     requests[write_idx as usize].state = state;
-    requests[write_idx as usize].anon_8.create.filename = filename;
-    requests[write_idx as usize].anon_8.create.banner = banner;
-    requests[write_idx as usize].anon_8.create.icons = icons;
+    requests[write_idx as usize].x8.create.filename = filename;
+    requests[write_idx as usize].x8.create.banner = banner;
+    requests[write_idx as usize].x8.create.icons = icons;
     requests[write_idx as usize].callback = callback;
     hsd_804D7994 = ((write_idx as i32 + 1 as i32)
         % 32 as i32) as s32;
@@ -8398,8 +8398,8 @@ pub unsafe extern "C" fn hsd_803B2928(
     }
     requests[write_idx as usize].r#type = CARD_REQ_SET_STATUS;
     requests[write_idx as usize].state = state;
-    requests[write_idx as usize].anon_8.status.banner = banner;
-    requests[write_idx as usize].anon_8.status.icons = icons;
+    requests[write_idx as usize].x8.status.banner = banner;
+    requests[write_idx as usize].x8.status.icons = icons;
     requests[write_idx as usize].callback = callback;
     hsd_804D7994 = ((write_idx as i32 + 1 as i32)
         % 32 as i32) as s32;
@@ -8424,8 +8424,8 @@ pub unsafe extern "C" fn hsd_803B29D8(
     let mut next: s32 = write_idx + 1 as s32;
     requests[write_idx as usize].r#type = CARD_REQ_READ_FILE;
     requests[write_idx as usize].state = state;
-    requests[write_idx as usize].anon_8.file.file_idx = file_idx as s32;
-    requests[write_idx as usize].anon_8.file.buf = buf;
+    requests[write_idx as usize].x8.file.file_idx = file_idx as s32;
+    requests[write_idx as usize].x8.file.buf = buf;
     requests[write_idx as usize].callback = callback;
     hsd_804D7994 = (next as i32 % 32 as i32) as s32;
     return 0 as i32;
@@ -8454,8 +8454,8 @@ pub unsafe extern "C" fn hsd_803B2A4C(
     let mut next: s32 = write_idx + 1 as s32;
     requests[write_idx as usize].r#type = CARD_REQ_WRITE_FILE;
     requests[write_idx as usize].state = state;
-    requests[write_idx as usize].anon_8.file.file_idx = file_idx as s32;
-    requests[write_idx as usize].anon_8.file.buf = buf;
+    requests[write_idx as usize].x8.file.file_idx = file_idx as s32;
+    requests[write_idx as usize].x8.file.buf = buf;
     requests[write_idx as usize].callback = callback;
     hsd_804D7994 = (next as i32 % 32 as i32) as s32;
     return 0 as i32;

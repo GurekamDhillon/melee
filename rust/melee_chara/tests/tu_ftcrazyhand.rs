@@ -11,7 +11,7 @@ fn smoke() {
     let mut r = Rig::new();
     let gp = r.gp();
     let mut items = [1usize as *mut core::ffi::c_void, 2usize as *mut _, 3usize as *mut _];
-    r.fd.x48_items = items.as_mut_ptr();
+    r.fd.x48_items = (items.as_mut_ptr()) as *mut _;
     r.ext.x0 = 8;
     r.ext.x4 = 2;
     r.ext.x8 = 6;

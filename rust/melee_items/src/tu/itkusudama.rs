@@ -247,7 +247,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
     (*spawn).vel.x = 0.0;
     (*spawn).x0_parent_gobj = parent;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(initial_collision as u8);
+    (*spawn).x44_flag.x0.set_b0(initial_collision as u8);
     (*spawn).x40 = 0;
 }
 
@@ -280,7 +280,7 @@ pub unsafe extern "C" fn it_802896CC(arg0: *mut Vec3) -> *mut HSD_GObj {
 pub unsafe extern "C" fn itKusudama_Logic4_Spawned(gobj: *mut Item_GObj) {
     melee_core::ct!("itKusudama_Logic4_Spawned");
     let ip = get_item(gobj);
-    (*ip).xDCE_flag.anon_0.set_b7(0);
+    (*ip).xDCE_flag.x0.set_b7(0);
     (*ip).xDAC_itcmd_var0 = 0;
     (*ip).xDB0_itcmd_var1 = 0;
     (*ip).xDB4_itcmd_var2 = 0;
@@ -639,7 +639,7 @@ pub unsafe fn itKusudama_UnkMotion3_inline(gobj: *mut Item_GObj) {
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
     (*ip).xDD4_itemVar.kusudama.x4 = 0x5A;
-    (*ip).xDD1_flag.anon_0.set_b1(1);
+    (*ip).xDD1_flag.x0.set_b1(1);
     ext::it_8026B3A8(gobj);
     let rot_y = HSD_JObjGetRotationY(jobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE as _);
@@ -781,7 +781,7 @@ pub unsafe extern "C" fn it_8028AC74(gobj: *mut Item_GObj) {
     ext::it_8027518C(gobj);
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
-    (*ip).xDCF_flag.anon_0.set_b2(1);
+    (*ip).xDCF_flag.x0.set_b2(1);
     (*ip).xDD4_itemVar.kusudama.x0 = 1;
     (*ip).xDD4_itemVar.kusudama.x4 = 0x28;
     ext::it_80275444(gobj);
@@ -807,7 +807,7 @@ pub unsafe extern "C" fn it_8028AD44(gobj: *mut Item_GObj) {
     ext::it_802756D0(gobj);
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
-    (*ip).xDCF_flag.anon_0.set_b2(1);
+    (*ip).xDCF_flag.x0.set_b2(1);
     (*ip).xDD4_itemVar.kusudama.x0 = 1;
     (*ip).xDD4_itemVar.kusudama.x4 = 0x55;
     ext::it_8026B3A8(gobj);

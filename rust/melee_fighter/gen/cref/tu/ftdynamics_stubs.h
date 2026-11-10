@@ -33,7 +33,7 @@ void (lb_8000FD48)(__typeof__(struct HSD_JObj *) a0, __typeof__(struct DynamicsD
 // stub lb_8000FD48 = 1014
 void (lb_8001044C)(__typeof__(struct DynamicsDesc *) a0, __typeof__(void *) a1, __typeof__(int) a2, __typeof__(float) a3, __typeof__(int) a4, __typeof__(enum Fighter_Part) a5, __typeof__(int) a6, __typeof__(int) a7) { T(1015); T(PI((const void*) a0)); T(PI((const void*) a1)); T((u32) a2); T(B(a3)); T((u32) a4); T((u32) a5); T((u32) a6); T((u32) a7); }
 // stub lb_8001044C = 1015
-void (lb_80011710)(__typeof__(struct DynamicsDesc *) a0, __typeof__(struct DynamicsDesc *) a1) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); }
+void (lb_80011710)(__typeof__(struct DynamicsTemplate *) a0, __typeof__(struct DynamicsDesc *) a1) { T(1016); T(PI((const void*) a0)); T(PI((const void*) a1)); }
 // stub lb_80011710 = 1016
 void (lb_800119DC)(__typeof__(Vec *) a0, __typeof__(int) a1, __typeof__(float) a2, __typeof__(float) a3, __typeof__(float) a4) { T(1017); T(PI((const void*) a0)); T((u32) a1); T(B(a2)); T(B(a3)); T(B(a4)); }
 // stub lb_800119DC = 1017

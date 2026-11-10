@@ -477,7 +477,7 @@ pub unsafe extern "C" fn it_802CED54(gobj: *mut Item_GObj) {
     spawn.kind = It_Kind_Unknown_Swarm;
     spawn.x0_parent_gobj = (*ip).owner;
     spawn.x4_parent_gobj2 = gobj;
-    spawn.x44_flag.anon_0.set_b0(0);
+    spawn.x44_flag.x0.set_b0(0);
     ext::Item_80268B18(&mut spawn);
 }
 

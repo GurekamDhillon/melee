@@ -284,11 +284,11 @@ pub fn doAnim(gobj: G, cb: fn(G)) {
         if (*fp).cmd_vars[cmd_anim_state] == 1 {
             (*fp).cmd_vars[cmd_anim_state] = 2;
             ext::ftColl_8007B1B8(gobj, &raw mut (*da).xAC as *mut _, Some(cb_onUnkHit));
-            (*fp).anon_221b.set_x221B_b3(1);
+            (*fp).x221B.set_x221B_b3(1);
             (*fp).shield_unk0 = (*da).xA8;
             (*fp).shield_unk1 = (*da).xA8;
         } else if (*fp).cmd_vars[cmd_anim_state] == 0 {
-            (*fp).anon_221b.set_x221B_b0(0);
+            (*fp).x221B.set_x221B_b0(0);
         }
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             cb(gobj);
@@ -363,7 +363,7 @@ pub fn setupColl(gobj: G) {
         (*fp).post_hitlag_cb = Some(cb_onExitHitlag);
         if (*fp).cmd_vars[cmd_anim_state] == 2 {
             ext::ftColl_8007B1B8(gobj, &raw mut (*da).xAC as *mut _, Some(cb_onUnkHit));
-            (*fp).anon_221b.set_x221B_b3(1);
+            (*fp).x221B.set_x221B_b3(1);
         }
     }
 }

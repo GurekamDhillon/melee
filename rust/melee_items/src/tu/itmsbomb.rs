@@ -189,7 +189,7 @@ pub unsafe extern "C" fn itMSBomb_Logic19_Thrown(gobj: *mut Item_GObj) {
     ecb = (*attrs).x8;
     (*ip).xBFC = ecb;
     ext::it_80275D5C(gobj, &mut ecb);
-    (*ip).xDCE_flag.anon_0.set_b7(0);
+    (*ip).xDCE_flag.x0.set_b7(0);
 }
 
 pub unsafe extern "C" fn itMsbomb_UnkMotion3_Phys(gobj: *mut Item_GObj) {
@@ -207,7 +207,7 @@ pub unsafe extern "C" fn it_80290238(gobj: *mut Item_GObj) {
     melee_core::ct!("it_80290238");
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMsBomb_Attrs;
-    (*ip).xDCE_flag.anon_0.set_b3(1);
+    (*ip).xDCE_flag.x0.set_b3(1);
     if ext::it_802763B8(gobj) != 1 {
         if ext::it_802763E0(gobj) == 2 {
             (*ip).pos.y = fmadds((*ip).scl, (*attrs).x8.top - (*attrs).x8.bottom, (*ip).pos.y);
@@ -273,7 +273,7 @@ pub unsafe extern "C" fn it_8029047C(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 5, 0x11);
     ext::it_802762BC(ip);
     it_80290314_inline(gobj);
-    (*ip).xDCE_flag.anon_0.set_b3(0);
+    (*ip).xDCE_flag.x0.set_b3(0);
 }
 
 pub unsafe extern "C" fn itMsbomb_UnkMotion5_Phys(gobj: *mut Item_GObj) {

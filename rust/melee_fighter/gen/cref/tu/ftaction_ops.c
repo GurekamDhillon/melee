@@ -83,7 +83,7 @@ static void world(void)
         FT[i].gobj = &GO[i];
         FT[i].ft_data = &FDATA[i];
         FT[i].grab_cb = cbev1; FT[i].grabbed_cb = cbev3;
-        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_id %= 4; FT[i].x618_player_id %= 4;
+        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_idx %= 4; FT[i].pad_port %= 4;
         for (b = 0; b < 256; b++) { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
         FT[i].parts = PARTS[i];
         { int pk = i * 24; FDATA[i].x0 = (void*) PADB[pk++]; FDATA[i].ext_attr = (void*) PADB[pk++]; FDATA[i].x8 = (void*) PADB[pk++]; FDATA[i].xC = (void*) PADB[pk++]; FDATA[i].x10 = (void*) PADB[pk++]; FDATA[i].x14 = (void*) PADB[pk++]; FDATA[i].x18 = (void*) PADB[pk++]; FDATA[i].x1C = (void*) PADB[pk++]; FDATA[i].x20 = (void*) PADB[pk++]; FDATA[i].x24 = (void*) PADB[pk++]; FDATA[i].x28 = (void*) PADB[pk++]; FDATA[i].x2C = (void*) PADB[pk++]; FDATA[i].x30 = (void*) PADB[pk++]; FDATA[i].x34 = (void*) PADB[pk++]; FDATA[i].x38 = (void*) PADB[pk++]; FDATA[i].x3C = (void*) PADB[pk++]; FDATA[i].x40 = (void*) PADB[pk++]; FDATA[i].x44 = (void*) PADB[pk++]; FDATA[i].x48_items = (void*) PADB[pk++]; FDATA[i].x4C_sfx = (void*) PADB[pk++]; FDATA[i].x50 = (void*) PADB[pk++]; FDATA[i].x54 = (void*) PADB[pk++]; FDATA[i].x58 = (void*) PADB[pk++]; FDATA[i].x5C = (void*) PADB[pk++]; }
@@ -140,8 +140,8 @@ int main(void)
                 Fighter_GObj* g = &GO[rnd() % NG];
                 Fighter* fp = &FT[(u32) (g - GO)];
                 switch (op) {
-                case 0: /* 8007121C: hitbox spawn. The skip test reads byte 16 bit 4 from the start of the stream in the C build (the first byte of word 2,
-                       a create_hitbox_2 field: sizeof(CmdUnion) is 8) and GC byte 0xF (padding) in the Rust types, so word 2 stays zero in both */
+                case 0: /* 8007121C: hitbox spawn. The skip test reads word 3's create_hitbox_3.ignore_thrown_fighters (upstream, since the
+                       363720e12 sync), the same field the port reads */
                     fill_spawn_hitbox_0(&W[0].create_hitbox_0); fill_spawn_hitbox_1(&W[1].create_hitbox_1);
                     fill_spawn_hitbox_3(&W[3].create_hitbox_3);
                     fill_spawn_hitbox_4(&W[4].create_hitbox_4); fill_spawn_hitbox_5(&W[5].create_hitbox_5);

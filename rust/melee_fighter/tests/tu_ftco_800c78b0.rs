@@ -149,7 +149,7 @@ fn matches_c() {
         }
         cd.x740 = rw(); cd.x744 = rw(); cd.x748 = rw(); cd.x74C = rw(); cd.x750 = rw(); cd.x754 = rw();
         cd.x758 = rw(); cd.x75C = rw();
-        ftr.player_id = (rnd() % 6) as u8;
+        ftr.player_idx = (rnd() % 6) as u8;
         ftr.dmg.x1830_percent = rw();
         ftr.mv.co.capturelikelike.x0 = unsafe { ITEM };
         ftr.mv.co.capturelikelike.x4 = (rnd() % 2) as i32;

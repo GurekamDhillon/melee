@@ -109,6 +109,7 @@ pub unsafe extern "C" fn gm_801BA588(scene: *mut GameModeState) {
 
 /// Slo-Mo rule: game speed 0.5 (`gm_ptr::fn_801BA5B4`, round 3), in the `extern "C"` form
 /// `gmVsMelee_EnterVs` takes.
+#[inline(never)] // compared by address: keep one copy
 pub unsafe extern "C" fn fn_801BA5B4(data: *mut StartMeleeData, unused: *mut StartMeleeData) {
     melee_core::ct!("fn_801BA5B4");
     crate::gm_ptr::fn_801BA5B4(&mut *data, unused);

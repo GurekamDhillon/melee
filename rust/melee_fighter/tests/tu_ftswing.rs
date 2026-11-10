@@ -46,7 +46,7 @@ fn accessory_cb_without_item_is_noop() {
 #[test]
 fn check_throw_b0_clears() {
     with_fighter(|_, fp| {
-        unsafe { fp.anon_2210.anon_0.set_throw_flags_b0(1) };
+        unsafe { fp.x2210.x0.set_throw_flags_b0(1) };
         assert!(lip::ft_check_throw_b0(fp));
         assert!(!lip::ft_check_throw_b0(fp));
     });

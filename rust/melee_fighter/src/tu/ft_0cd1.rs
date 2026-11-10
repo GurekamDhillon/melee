@@ -19,8 +19,8 @@ pub(crate) fn fp<'a>(g: G) -> &'a mut Fighter {
 pub fn ft_check_throw_b3(f: &mut Fighter) -> bool {
     melee_core::ct!("ft_check_throw_b3");
     unsafe {
-        if f.anon_2210.anon_0.throw_flags_b3() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b3(0);
+        if f.x2210.x0.throw_flags_b3() != 0 {
+            f.x2210.x0.set_throw_flags_b3(0);
             true
         } else {
             false
@@ -31,8 +31,8 @@ pub fn ft_check_throw_b3(f: &mut Fighter) -> bool {
 pub fn ft_check_throw_b0(f: &mut Fighter) -> bool {
     melee_core::ct!("ft_check_throw_b0");
     unsafe {
-        if f.anon_2210.anon_0.throw_flags_b0() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b0(0);
+        if f.x2210.x0.throw_flags_b0() != 0 {
+            f.x2210.x0.set_throw_flags_b0(0);
             true
         } else {
             false
@@ -43,8 +43,8 @@ pub fn ft_check_throw_b0(f: &mut Fighter) -> bool {
 pub fn ft_check_throw_b4(f: &mut Fighter) -> bool {
     melee_core::ct!("ft_check_throw_b4");
     unsafe {
-        if f.anon_2210.anon_0.throw_flags_b4() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b4(0);
+        if f.x2210.x0.throw_flags_b4() != 0 {
+            f.x2210.x0.set_throw_flags_b4(0);
             true
         } else {
             false
@@ -72,7 +72,7 @@ pub mod ext {
 /// `ftCo_800CD140(gobj, msid, flags, kind, anim_speed)`: enter a swing state.
 pub fn ftco_800cd140(g: G, arg1: i32, arg2: i32, arg3: i32, arg4: f32) {
     melee_core::ct!("ftco_800cd140");
-    unsafe { fp(g).anon_2210.throw_flags = 0 };
+    unsafe { fp(g).x2210.throw_flags = 0 };
     ext::Fighter_ChangeMotionState(g, arg1, arg2 as u32, 0.0, arg4, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
     let f = fp(g);

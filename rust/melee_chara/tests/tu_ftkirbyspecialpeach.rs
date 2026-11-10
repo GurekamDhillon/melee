@@ -107,12 +107,12 @@ fn smoke() {
     f.cmd_vars[1] = 1;
     t::ftKb_PeSpecialLw_Anim(gp);
     assert_eq!(f.cmd_vars[1], 2);
-    assert_eq!((f.shield_unk0, f.shield_unk1, f.anon_221b.x221B_b3()), (3.5, 3.5, 1));
+    assert_eq!((f.shield_unk0, f.shield_unk1, f.x221B.x221B_b3()), (3.5, 3.5, 1));
     assert_eq!(take(), "shield true,wait");
     f.cmd_vars[1] = 0;
-    f.anon_221b.set_x221B_b0(1);
+    f.x221B.set_x221B_b0(1);
     t::ftKb_PeSpecialAirLw_Anim(gp);
-    assert_eq!(f.anon_221b.x221B_b0(), 0);
+    assert_eq!(f.x221B.x221B_b0(), 0);
     assert_eq!(take(), "fall");
     // AirLw Phys: cmd 1 -> first use sets the jump momentum; later use zeroes it.
     da.specialn_pe_air_initial_vertical_momentum = 6.0;

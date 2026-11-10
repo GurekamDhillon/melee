@@ -118,7 +118,7 @@ unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
 /// `FT_COSTUME_VIS_IDX(fp)`.
 #[inline(always)]
 unsafe fn costume_vis_idx(fp: *mut Fighter) -> usize {
-    ext::Mex_CostumeVisIdx((*fp).kind as i32, (*fp).x619_costume_id as i32) as usize
+    ext::Mex_CostumeVisIdx((*fp).kind as i32, (*fp).costume_id as i32) as usize
 }
 
 /// `ftGw_Init_OnDamage` as a Fighter callback entry (death2_cb / take_dmg_cb).
@@ -148,18 +148,18 @@ pub fn ftGw_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*fp).x34_scale.z = (*da).x0_GAMEWATCH_WIDTH;
         (*fp).x610_color_rgba[1] = (*da).x14_GAMEWATCH_OUTLINE;
         ext::ftMaterial_800BFB4C(gobj, &(*da).x4_GAMEWATCH_COLOR[costume_vis_idx(fp)]);
-        (*fp).x5AC.xC[4] = *items.add(10) as *mut FtPartsVisLookup;
+        (*fp).x5AC.xC[4] = (*items.add(10)).visibility as *mut FtPartsVisLookup;
 
-        ext::it_8026B3F8(*items.add(0), It_Kind_GameWatch_Greenhouse as i32);
-        ext::it_8026B3F8(*items.add(1), It_Kind_GameWatch_Manhole as i32);
-        ext::it_8026B3F8(*items.add(2), It_Kind_GameWatch_Fire as i32);
-        ext::it_8026B3F8(*items.add(3), It_Kind_GameWatch_Parachute as i32);
-        ext::it_8026B3F8(*items.add(4), It_Kind_GameWatch_Turtle as i32);
-        ext::it_8026B3F8(*items.add(5), It_Kind_GameWatch_Breath as i32);
-        ext::it_8026B3F8(*items.add(6), It_Kind_GameWatch_Judge as i32);
-        ext::it_8026B3F8(*items.add(7), It_Kind_GameWatch_Panic as i32);
-        ext::it_8026B3F8(*items.add(8), It_Kind_GameWatch_Chef as i32);
-        ext::it_8026B3F8(*items.add(9), It_Kind_GameWatch_Rescue as i32);
+        ext::it_8026B3F8((*items.add(0)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Greenhouse as i32);
+        ext::it_8026B3F8((*items.add(1)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Manhole as i32);
+        ext::it_8026B3F8((*items.add(2)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Fire as i32);
+        ext::it_8026B3F8((*items.add(3)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Parachute as i32);
+        ext::it_8026B3F8((*items.add(4)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Turtle as i32);
+        ext::it_8026B3F8((*items.add(5)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Breath as i32);
+        ext::it_8026B3F8((*items.add(6)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Judge as i32);
+        ext::it_8026B3F8((*items.add(7)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Panic as i32);
+        ext::it_8026B3F8((*items.add(8)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Chef as i32);
+        ext::it_8026B3F8((*items.add(9)).article as *mut ::core::ffi::c_void, It_Kind_GameWatch_Rescue as i32);
     }
 }
 

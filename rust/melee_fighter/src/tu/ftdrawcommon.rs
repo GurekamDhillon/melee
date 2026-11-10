@@ -166,7 +166,7 @@ pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
         if f.x2218_b6() != 0 && ext::lbColl_8000AB2C(&mut f.absorb_hit, arg1, ext::ftCommon_8007F804(fpp), f.cur_pos.z) != 0 {
             inv = true;
         }
-        if f.anon_221b.x221B_b0() != 0 && ext::lbColl_8000A78C(&mut f.shield_hit, arg1, ext::ftCommon_8007F804(fpp), f.cur_pos.z) != 0 {
+        if f.x221B.x221B_b0() != 0 && ext::lbColl_8000A78C(&mut f.shield_hit, arg1, ext::ftCommon_8007F804(fpp), f.cur_pos.z) != 0 {
             inv = true;
         }
     }
@@ -330,7 +330,7 @@ fn place_in_view(g: G) {
 
 fn surface_impl(g: G, arg1: i32) {
     let f = fp(g);
-    if f.x221F_b3() == 0 && (ext::Wb_RenderActive() != 0 || ext::ftLib_UpdateScreenVisibility(g) != 0) {
+    if f.is_sleeping() == 0 && (ext::Wb_RenderActive() != 0 || ext::ftLib_UpdateScreenVisibility(g) != 0) {
         match ext::Camera_80031060() {
             1 => {
                 if fp(g).x2220_b7() != 0 {
@@ -365,16 +365,16 @@ pub fn script_motion_draw_begin(g: G) -> i32 {
     }
     // `speed.f = vx*vx + vy*vy`: one fused site (the left product is the fused one).
     let speed = melee_core::fp::fmadds(f.self_vel.x, f.self_vel.x, f.self_vel.y * f.self_vel.y);
-    let falls = ext::Player_GetFalls(f.player_id as i32);
+    let falls = ext::Player_GetFalls(f.player_idx as i32);
     ext::MotionFighterBegin(
-        f.player_id as i32 + 1,
+        f.player_idx as i32 + 1,
         f.is_sub_fighter() as i32,
         g as usize as i32,
         unsafe { &(*camera).view_mtx } as *const _ as usize as i32,
         &f.cur_pos as *const _ as usize as i32,
         f.x2219_b5() as i32,
         (!f.item_gobj.is_null()) as i32,
-        f.x619_costume_id as i32,
+        f.costume_id as i32,
         falls,
         speed.to_bits() as i32,
     )
@@ -384,9 +384,9 @@ pub fn script_motion_draw_begin(g: G) -> i32 {
 pub fn ftDrawCommon_80080E18(g: G, arg1: i32) {
     melee_core::ct!("ftDrawCommon_80080E18");
     let motion = ext::script_motion_draw_begin(g);
-    let (pid, kind) = (fp(g).player_id as i32, fp(g).kind as i32);
+    let (pid, kind) = (fp(g).player_idx as i32, fp(g).kind as i32);
     ext::GenoToonEnsure(pid + 1, kind);
-    ext::SurfaceBegin(fp(g).player_id as i32 + 1);
+    ext::SurfaceBegin(fp(g).player_idx as i32 + 1);
     surface_impl(g, arg1);
     ext::SurfaceEnd();
     if motion != 0 {
@@ -394,8 +394,8 @@ pub fn ftDrawCommon_80080E18(g: G, arg1: i32) {
     }
 }
 
-unsafe extern "C" fn cb_80080E18(g: *mut HSD_GObj, a: i32) { ftDrawCommon_80080E18(g, a) }
-unsafe extern "C" fn cb_80080C28(g: *mut HSD_GObj, a: i32) { ftDrawCommon_80080C28(g, a) }
+unsafe extern "C" fn cb_80080E18(g: *mut HSD_GObj, a: isize) { ftDrawCommon_80080E18(g, a as i32) }
+unsafe extern "C" fn cb_80080C28(g: *mut HSD_GObj, a: isize) { ftDrawCommon_80080C28(g, a as i32) }
 
 fn for_each_fighter(mut f: impl FnMut(G)) {
     let mut g = ext::plink_fighter_head();

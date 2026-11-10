@@ -85,7 +85,7 @@ unsafe fn spawn_item_0z(gobj: *mut Item_GObj, kind: ItemKind, pos: *mut Vec3, fa
     (*spawn).vel.x = 0.0;
     (*spawn).x0_parent_gobj = gobj;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(1);
+    (*spawn).x44_flag.x0.set_b0(1);
     (*spawn).x40 = 0;
     ext::Item_80268B18(spawn)
 }

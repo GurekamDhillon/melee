@@ -40,8 +40,8 @@ pub fn item<'a>(g: *mut Item_GObj) -> &'a Item {
 #[inline]
 pub fn ft_check_throw_b0(f: &mut Fighter) -> bool {
     melee_core::ct!("ft_check_throw_b0");
-    if unsafe { f.anon_2210.anon_0.throw_flags_b0() } != 0 {
-        unsafe { f.anon_2210.anon_0.set_throw_flags_b0(0) };
+    if unsafe { f.x2210.x0.throw_flags_b0() } != 0 {
+        unsafe { f.x2210.x0.set_throw_flags_b0(0) };
         return true;
     }
     false
@@ -94,7 +94,7 @@ pub fn ft_800CDB9C(gobj: *mut HSD_GObj) {
             ext::it_80295770(it, &v2, f.facing_dir, f.cmd_vars[1]);
         } else {
             let z = 0.0f32;
-            let q = &mut f.x60C as *mut *mut c_void as *mut c_void;
+            let q = (&raw mut f.x60C) as *mut *mut c_void as *mut c_void;
             ext::efAsync_Spawn(gobj, q, 5, 1032, core::ptr::null_mut(), &v2, &z);
         }
     }

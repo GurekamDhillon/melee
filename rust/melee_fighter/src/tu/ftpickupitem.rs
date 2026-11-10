@@ -92,8 +92,8 @@ pub unsafe extern "C" fn ftpickupitem_80094DF8_cb(g: G) { melee_core::ct!("ftpic
 /// `ftCheckThrowB3` (ft/inlines.h): test and clear throw_flags_b3.
 fn check_throw_b3(f: &mut Fighter) -> bool {
     unsafe {
-        if f.anon_2210.anon_0.throw_flags_b3() != 0 {
-            f.anon_2210.anon_0.set_throw_flags_b3(0);
+        if f.x2210.x0.throw_flags_b3() != 0 {
+            f.x2210.x0.set_throw_flags_b3(0);
             true
         } else {
             false
@@ -264,7 +264,7 @@ pub fn ftpickupitem_8009447C(g: G, item_gobj: I) -> bool {
     melee_core::ct!("ftpickupitem_8009447C");
     assert!(!item_gobj.is_null(), "ftGetImmItem item_gobj is NULL!!");
     if ext::it_8026B30C(item_gobj) == 5 {
-        geno_consumable_collect(item_gobj, fp(g).player_id as i32);
+        geno_consumable_collect(item_gobj, fp(g).player_idx as i32);
         return use_item(g, item_gobj, |g, _| ext::ftCo_800C4724(g), ext::ftCo_800C52F4);
     }
     false
@@ -280,7 +280,7 @@ pub fn ftpickupitem_80094694(g: G, msid: i32, looping: bool) {
     } else {
         1.0
     };
-    fp(g).anon_2210.throw_flags = 0;
+    fp(g).x2210.throw_flags = 0;
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, anim_spd, 0.0, core::ptr::null_mut());
     if looping {
         while !check_throw_b3(fp(g)) {
@@ -323,13 +323,13 @@ pub fn ftpickupitem_80094818(g: G, arg1: bool) {
     melee_core::ct!("ftpickupitem_80094818");
     let f = fp(g);
     if !f.x1978.is_null() {
-        ext::pl_8003E17C(f.player_id as i32, f.is_sub_fighter() as i32, f.x1978);
+        ext::pl_8003E17C(f.player_idx as i32, f.is_sub_fighter() as i32, f.x1978);
     } else if !f.item_gobj.is_null() {
         if let Some(cb) = ext::ftData_OnItemPickupExt(f.kind as i32) {
             unsafe { cb(g, arg1 as i32) };
         }
         let f = fp(g);
-        ext::pl_8003E17C(f.player_id as i32, f.is_sub_fighter() as i32, f.item_gobj);
+        ext::pl_8003E17C(f.player_idx as i32, f.is_sub_fighter() as i32, f.item_gobj);
     }
 }
 
@@ -354,7 +354,7 @@ pub fn ftpickupitem_800948A8(g: G, item_gobj: I) {
         unsafe { (*(*fp(g).ft_data).x8).x11 as i32 }
     };
     let f = fp(g);
-    ext::pl_8003E854(f.player_id as i32, f.is_sub_fighter() as i32, item_gobj);
+    ext::pl_8003E854(f.player_idx as i32, f.is_sub_fighter() as i32, item_gobj);
     ext::Item_8026AB54(item_gobj, g, ret_part);
     if ext::itIsHeavy(item_gobj) {
         let f = fp(g);
@@ -372,7 +372,7 @@ pub fn ftpickupitem_Anim(g: G) {
         if !item_gobj.is_null() {
             // TARGET_PC: a "press" script item is collected on the grab frame, not held.
             if ext::Geno_ItemPressDist(item_gobj, fp(g)) >= 0.0 {
-                ext::Geno_ItemPressCollect(item_gobj, fp(g).player_id as i32);
+                ext::Geno_ItemPressCollect(item_gobj, fp(g).player_idx as i32);
             } else {
                 ftpickupitem_800948A8(g, item_gobj);
             }
@@ -419,7 +419,7 @@ pub fn ftpickupitem_80094B6C(g: G, item_gobj: I) {
     melee_core::ct!("ftpickupitem_80094B6C");
     assert!(!item_gobj.is_null(), "ftGetImmItem item_gobj is NULL!!");
     if ext::it_8026B30C(item_gobj) == 5 {
-        geno_consumable_collect(item_gobj, fp(g).player_id as i32);
+        geno_consumable_collect(item_gobj, fp(g).player_idx as i32);
         use_item(
             g,
             item_gobj,

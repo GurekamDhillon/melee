@@ -34,7 +34,7 @@ pub fn plAttack_8003759C(slot: u32) {
 
     clearAttackStats(&mut stats.attacks);
     clearAttackStats(&mut stats.hits);
-    clearAttackStats(unsafe { &mut stats.anon_358.x358_hits });
+    clearAttackStats(unsafe { &mut stats.x358.x358_hits });
 
     for i in 0..StatsAttack_Count as usize {
         stats.x504[i] = 0;

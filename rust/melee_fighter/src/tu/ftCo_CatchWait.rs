@@ -46,10 +46,13 @@ pub mod ext {
 }
 
 /// `fn_800DA4A0` as the C `HSD_GObjEvent` stored in `accessory1_cb`.
+#[inline(never)] // compared by address in the tests: keep one copy
 pub unsafe extern "C" fn fn_800DA4A0_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA4A0_cb"); fn_800DA4A0(g) }
 /// `fn_800DA490` as the C `HSD_GObjEvent` stored in `take_dmg_cb`.
+#[inline(never)] // compared by address in the tests: keep one copy
 pub unsafe extern "C" fn fn_800DA490_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA490_cb"); fn_800DA490(g) }
 /// `fn_800DA440` as the C `HSD_GObjEvent` handed to `ft_800841B8`.
+#[inline(never)] // compared by address in the tests: keep one copy
 pub unsafe extern "C" fn fn_800DA440_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA440_cb"); fn_800DA440(g) }
 
 /// `fn_800DA1D8`: pull finished, enter CatchWait holding the victim.
@@ -60,7 +63,7 @@ pub fn fn_800DA1D8(g: G) {
     let f = fp(g);
     f.accessory1_cb = Some(fn_800DA4A0_cb);
     f.take_dmg_cb = Some(fn_800DA490_cb);
-    f.anon_221b.set_x221B_b7(0);
+    f.x221B.set_x221B_b7(0);
     let jobj = unsafe { (*f.parts.offset((*(*f.ft_data).x8).x11 as isize)).joint };
     f.mv.co.capturedamage.x18 = jobj;
     let q = &mut f.x60C as *mut _ as *mut core::ffi::c_void;

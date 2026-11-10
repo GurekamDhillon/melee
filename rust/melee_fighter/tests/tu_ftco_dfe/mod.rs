@@ -36,7 +36,7 @@ pub fn df_fill() {
     }
     let fr = f();
     fr.motion_id = MS[(rnd() % 7) as usize] as _;
-    fr.set_x2224_b2((rnd() & 1) as _);
+    fr.set_stamina_dead((rnd() & 1) as _);
     fr.dmg.x1838_percentTemp = rw();
     fr.facing_dir = if rnd() % 3 == 0 { rg() } else if rnd() & 1 != 0 { 1.0 } else { -1.0 };
     fr.ground_or_air = rnd() & 1;
@@ -54,8 +54,8 @@ pub fn df_fill() {
         1 => Ft_Kind_Yoshi,
         _ => rnd() % 27,
     };
-    fr.anon_2210.throw_flags = (rnd() & 0xFF) << 8;
-    unsafe { fr.anon_2210.anon_0.set_throw_flags_b3((rnd() & 1) as u8) };
+    fr.x2210.throw_flags = (rnd() & 0xFF) << 8;
+    unsafe { fr.x2210.x0.set_throw_flags_b3((rnd() & 1) as u8) };
     fr.cmd_vars[0] = rnd() & 1;
     fr.x5F4_arr[0].idx = (rnd() % 3) as i8;
     fr.dat_attrs = dat();
@@ -68,7 +68,7 @@ pub fn df_fill() {
     fr.x8AC_animSkeleton = skel();
     fr.x8_spawnNum = (rnd() % 6) as i32;
     fr.cur_pos.y = rw(); fr.x2EC = rw();
-    fr.x618_player_id = (rnd() % 4) as u8;
+    fr.pad_port = (rnd() % 4) as u8;
     fr.gr_vel = rw();
     fr.gobj = go();
 }
@@ -79,8 +79,8 @@ pub fn df_hash() -> Hs {
     let fr = f();
     h.m(b(fr.facing_dir));
     unsafe {
-        h.m(fr.anon_2210.throw_flags >> 8);
-        let t = &fr.anon_2210.anon_0;
+        h.m(fr.x2210.throw_flags >> 8);
+        let t = &fr.x2210.x0;
         h.m(t.throw_flags_b0() as u32); h.m(t.throw_flags_b1() as u32); h.m(t.throw_flags_b2() as u32); h.m(t.throw_flags_b3() as u32);
         h.m(t.throw_flags_b4() as u32); h.m(t.throw_flags_b5() as u32); h.m(t.throw_flags_b6() as u32); h.m(t.throw_flags_b7() as u32);
     }

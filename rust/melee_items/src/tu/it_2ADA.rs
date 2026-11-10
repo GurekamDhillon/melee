@@ -108,12 +108,12 @@ pub unsafe extern "C" fn it_802ADA1C(pos: *mut Vec3, vel: *mut Vec3, facing_dir:
     spawnitem.vel = *vel;
     spawnitem.x0_parent_gobj = null_mut();
     spawnitem.x4_parent_gobj2 = null_mut();
-    spawnitem.x44_flag.anon_0.set_b0(1);
+    spawnitem.x44_flag.x0.set_b0(1);
     spawnitem.x40 = 0;
     let gobj = ext::Item_80268B18(&mut spawnitem);
     if !gobj.is_null() {
         let ip = GET_ITEM(gobj);
-        let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes;
+        let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itUnkAttributes_legacy;
         ext::it_80275158(gobj, (*attrs).x0_float);
         it_802ADAF0(gobj);
     }
@@ -125,7 +125,7 @@ pub unsafe extern "C" fn it_802ADAF0(gobj: *mut Item_GObj) {
     let item = GET_ITEM(gobj);
     ext::it_8026B3A8(gobj);
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
-    (*item).xDCE_flag.anon_0.set_b7(0);
+    (*item).xDCE_flag.x0.set_b7(0);
 }
 
 /// `static bool it_2ADA_UnkMotion0_Anim`

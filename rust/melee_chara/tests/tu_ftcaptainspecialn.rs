@@ -90,10 +90,10 @@ fn smoke_callbacks() {
     f.cur_anim_frame = 20.0;
     t::ftCa_SpecialN_Anim(gp);
     // doPhys: first pulse spawns the effect and sets x2219_b0.
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b1(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b1(1) };
     t::ftCa_SpecialN_Phys(gp);
     assert_eq!(f.x2219_b0(), 1);
-    assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b1() }, 0);
+    assert_eq!(unsafe { f.x2210.x0.throw_flags_b1() }, 0);
     // SpecialAirN_Phys: case 0 -> ft_80084EEC, case 1 scales self_vel.
     f.cmd_vars[1] = 0;
     t::ftCa_SpecialAirN_Phys(gp);

@@ -24,7 +24,7 @@ static void spec_fill(int prof)
     switch (prof) {
     case 0: {
         ArwingLaserAttr* a = (ArwingLaserAttr*) SPEC[0];
-        a->x0 = &ATTR[0]; a->x4 = rw(); a->x8 = rw();
+        a->x0 = (itSpecialAttrsHead*) &ATTR[0]; a->x4 = rw(); a->x8 = rw();
     } break;
     }
 }
@@ -47,7 +47,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -110,14 +110,14 @@ int main(void)
             case 6: {  itArwinglaser_UnkMotion3_Anim(&GO[0]); } break; /* itArwinglaser_UnkMotion3_Anim */
             case 7: {  itArwinglaser_UnkMotion2_Phys(&GO[0]); } break; /* itArwinglaser_UnkMotion2_Phys */
             case 8: {  itArwinglaser_UnkMotion3_Phys(&GO[0]); } break; /* itArwinglaser_UnkMotion3_Phys */
-            case 9: {  ret = (u32) itArwinglaser_UnkMotion2_Coll(&GO[0]); } break; /* itArwinglaser_UnkMotion2_Coll */
-            case 10: {  ret = (u32) itArwinglaser_UnkMotion3_Coll(&GO[0]); } break; /* itArwinglaser_UnkMotion3_Coll */
-            case 11: {  ret = (u32) itArwinglaser_UnkMotion5_Coll(&GO[0]); } break; /* itArwinglaser_UnkMotion5_Coll */
-            case 12: {  ret = (u32) it_802E838C(&GO[0]); } break; /* it_802E838C */
-            case 13: {  ret = (u32) it_802E8418(&GO[0]); } break; /* it_802E8418 */
-            case 14: {  ret = (u32) it_802E8420(&GO[0]); } break; /* it_802E8420 */
-            case 15: {  ret = (u32) it_802E85F4(&GO[0]); } break; /* it_802E85F4 */
-            case 16: {  ret = (u32) it_802E8784(&GO[0]); } break; /* it_802E8784 */
+            case 9: {  ret = (u32) ((itArwinglaser_UnkMotion2_Coll(&GO[0])) != 0); } break; /* itArwinglaser_UnkMotion2_Coll */
+            case 10: {  ret = (u32) ((itArwinglaser_UnkMotion3_Coll(&GO[0])) != 0); } break; /* itArwinglaser_UnkMotion3_Coll */
+            case 11: {  ret = (u32) ((itArwinglaser_UnkMotion5_Coll(&GO[0])) != 0); } break; /* itArwinglaser_UnkMotion5_Coll */
+            case 12: {  ret = (u32) ((it_802E838C(&GO[0])) != 0); } break; /* it_802E838C */
+            case 13: {  ret = (u32) ((it_802E8418(&GO[0])) != 0); } break; /* it_802E8418 */
+            case 14: {  ret = (u32) ((it_802E8420(&GO[0])) != 0); } break; /* it_802E8420 */
+            case 15: {  ret = (u32) ((it_802E85F4(&GO[0])) != 0); } break; /* it_802E85F4 */
+            case 16: {  ret = (u32) ((it_802E8784(&GO[0])) != 0); } break; /* it_802E8784 */
             case 17: { { int j; for (j = 0; j < 6; j++) { HM((u32) it_803F8DE8[j].anim_id); HM(FI((const void*) it_803F8DE8[j].animated)); HM(FI((const void*) it_803F8DE8[j].physics_updated)); HM(FI((const void*) it_803F8DE8[j].collided)); } } } break; /* state tables */
             }
             hash_all();

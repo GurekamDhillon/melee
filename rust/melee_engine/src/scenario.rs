@@ -87,6 +87,8 @@ pub struct Scenario {
     /// Team Attack (`StartMeleeRules.friendly_fire`, GameRules.friendly_fire): 0 off, 1 on, -1 = the saved rules.
     /// A replay carries the console's bit (Game Start bitfield 2 bit 0); the 2019 Gang-Steals doubles all ran it on.
     pub friendly_fire: i32,
+    /// GameRules.pause (1 on, 0 off; StartMeleeRules.disable_pausing = !pause); -1 = the saved rules.
+    pub pause: i32,
     /// timer in seconds, 0 = no timer (-1 = leave alone)
     pub time_limit: i32,
     /// rule stock count (-1 = unset)
@@ -105,7 +107,7 @@ pub struct Scenario {
 impl Scenario {
     /// The `record.sh` scene strings: `p1=falcon/human;p2=fox/human;stage=fd;match=time;minutes=0;items=off`.
     pub fn parse(scene: &str) -> Result<Scenario, String> {
-        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1, teams: -1, friendly_fire: -1, time_limit: -1, rule_stocks: -1, onep_mode: -1, onep_step: -1, onep_level: -1, game_mode: -1, entry_state: -1 };
+        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1, teams: -1, friendly_fire: -1, pause: -1, time_limit: -1, rule_stocks: -1, onep_mode: -1, onep_step: -1, onep_level: -1, game_mode: -1, entry_state: -1 };
         for kv in scene.split(';') {
             let Some((k, v)) = kv.split_once('=') else { continue };
             match k {
@@ -120,6 +122,7 @@ impl Scenario {
                 "teams" => s.teams = v.starts_with('1') as i32,
                 // Team Attack (GameRules.friendly_fire); slpcheck sets it from the replay's Game Start
                 "teamattack" => s.friendly_fire = v.starts_with('1') as i32,
+                "pause" => s.pause = v.starts_with('1') as i32,
                 "stocks" => s.rule_stocks = v.parse().map_err(|_| "stocks")?,
                 // gw_sl_modes (pc/platform/gw_runtime.c): the 1P modes a scene launches through their OnLoad (gm_OnePSceneDirect)
                 "at" => s.entry_state = match v { "css" => 0, "sss" => 1, "match" => 2, _ => return Err(format!("at={v}")) },
@@ -359,6 +362,7 @@ pub fn install(mut s: Scenario) {
         h::SceneLaunch_PlayerSpawnPos = Some(|n| p(n).map_or(-1, |x| x.spawn_pos));
         h::SceneLaunch_Teams = Some(|| SCN.as_ref().map_or(-1, |s| s.teams));
         h::SceneLaunch_RuleFriendlyFire = Some(|| SCN.as_ref().map_or(-1, |s| s.friendly_fire));
+        h::SceneLaunch_RulePause = Some(|| SCN.as_ref().map_or(-1, |s| s.pause));
         h::SceneLaunch_TimeLimit = Some(|| SCN.as_ref().map_or(-1, |s| s.time_limit));
         h::SceneLaunch_RuleStocks = Some(|| SCN.as_ref().map_or(-1, |s| s.rule_stocks));
         h::SceneLaunch_ItemFreq = Some(|| SCN.as_ref().map_or(-1, |s| s.item_freq));

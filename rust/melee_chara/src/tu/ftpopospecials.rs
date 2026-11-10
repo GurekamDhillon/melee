@@ -258,14 +258,14 @@ unsafe fn inlineA2(gobj: G) {
     (*fp).mv.pp.specials.x14 = (*da).x68;
     (*fp).mv.pp.specials.x18 = 0;
     (*fp).mv.pp.specials.x1C = 0.0;
-    if ext::ftNn_Init_80123954(ext::Player_GetEntityAtIndex((*fp).player_id as i32, 1), (*fp).ground_or_air)
+    if ext::ftNn_Init_80123954(ext::Player_GetEntityAtIndex((*fp).player_idx as i32, 1), (*fp).ground_or_air)
         == GA_Air
     {
         st::Fighter_ChangeMotionState(gobj, ftPp_MS_SpecialS1 as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
         (*fp).x1A5C = core::ptr::null_mut();
     } else {
         st::Fighter_ChangeMotionState(gobj, ftPp_MS_SpecialS2 as i32, Ft_MF_None, 0.0, 1.0, 0.0, core::ptr::null_mut());
-        (*fp).x1A5C = ext::Player_GetEntityAtIndex((*fp).player_id as i32, 1);
+        (*fp).x1A5C = ext::Player_GetEntityAtIndex((*fp).player_idx as i32, 1);
     }
     (*fp).self_vel.y = 0.0;
     {
@@ -299,7 +299,7 @@ unsafe fn inlineB0(gobj: G) {
     (*fp).mv.pp.specials.x14 = (*da).x68;
     (*fp).mv.pp.specials.x18 = 0;
     (*fp).mv.pp.specials.x1C = 0.0;
-    if ext::ftNn_Init_80123954(ext::Player_GetEntityAtIndex((*fp).player_id as i32, 1), (*fp).ground_or_air)
+    if ext::ftNn_Init_80123954(ext::Player_GetEntityAtIndex((*fp).player_idx as i32, 1), (*fp).ground_or_air)
         == GA_Air
     {
         st::Fighter_ChangeMotionState(gobj, ftPp_MS_SpecialAirS1 as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -307,7 +307,7 @@ unsafe fn inlineB0(gobj: G) {
         (*fp).self_vel.y = (*da).x20;
     } else {
         st::Fighter_ChangeMotionState(gobj, ftPp_MS_SpecialAirS2 as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
-        (*fp).x1A5C = ext::Player_GetEntityAtIndex((*fp).player_id as i32, 1);
+        (*fp).x1A5C = ext::Player_GetEntityAtIndex((*fp).player_idx as i32, 1);
         (*fp).self_vel.y = (*da).x24;
     }
     (*fp).self_vel.x = (*da).x2C * (*fp).facing_dir;
@@ -368,7 +368,7 @@ pub fn ftPp_SpecialS2_Anim(gobj: G) {
     melee_core::ct!("ftPp_SpecialS2_Anim");
     unsafe {
         let fp = fpp(gobj);
-        let nn_gobj = ext::Player_GetEntityAtIndex((*fp).player_id as i32, 1);
+        let nn_gobj = ext::Player_GetEntityAtIndex((*fp).player_idx as i32, 1);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 || ext::ftNn_Init_80123B10(nn_gobj) != 0 {
             inlineC1(gobj);
         }
@@ -415,7 +415,7 @@ pub fn ftPp_SpecialAirS2_Anim(gobj: G) {
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
-        let temp_r30 = ext::Player_GetEntityAtIndex((*fp).player_id as i32, 1);
+        let temp_r30 = ext::Player_GetEntityAtIndex((*fp).player_idx as i32, 1);
         if st::ftAnim_IsFramesRemaining(gobj) == 0 || ext::ftNn_Init_80123B10(temp_r30) != 0 {
             inline1(gobj);
             inline0(gobj);

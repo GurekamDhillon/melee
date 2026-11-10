@@ -19,7 +19,7 @@ fn ftlib_leaf_accessors() {
         f.pos_delta = Vec { x: 4.0, y: 5.0, z: 6.0 };
         f.facing_dir = -1.0;
         f.ground_or_air = 1 as _;
-        f.player_id = 3 as _;
+        f.player_idx = 3 as _;
         f.team = 2 as _;
         f.x34_scale.y = 1.25;
         f.input.lstick[0].x = 0.5;

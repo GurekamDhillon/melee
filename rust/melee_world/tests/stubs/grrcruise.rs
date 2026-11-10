@@ -13,7 +13,7 @@ mod gen_stubs {
     fn t_Ground_801C32D4(a0: i32, a1: i32) -> i32 { unsafe { out("Ground_801C32D4"); tri(a0 as i64); tri(a1 as i64); out("\n"); (rnd() % 50) as i32 } }
     fn t_Ground_801C39C0() { unsafe { out("Ground_801C39C0"); out("\n");  } }
     fn t_Ground_801C3BB4() { unsafe { out("Ground_801C3BB4"); out("\n");  } }
-    fn t_Ground_801C3FA4(a0: *mut HSD_GObj, a1: i32) -> *mut HSD_JObj { unsafe { out("Ground_801C3FA4"); trp(a0 as *const u8); tri(a1 as i64); out("\n"); (if JNULL && rnd() % 5 == 0 { core::ptr::null_mut() } else { mkjtree(0) }) as *mut HSD_JObj } }
+    fn t_Ground_801C3FA4(a0: *mut HSD_GObj, a1: isize) -> *mut HSD_JObj { unsafe { out("Ground_801C3FA4"); trp(a0 as *const u8); tri(a1 as i64); out("\n"); (if JNULL && rnd() % 5 == 0 { core::ptr::null_mut() } else { mkjtree(0) }) as *mut HSD_JObj } }
     fn t_Ground_GetMapGObj(a0: i32) -> *mut Ground_GObj { unsafe { out("Ground_GetMapGObj"); tri(a0 as i64); out("\n"); (if rnd() % 3 == 0 { core::ptr::null_mut() } else { mkgobj() }) as *mut Ground_GObj } }
     fn t_Ground_GetStageGObj(a0: i32) -> *mut Ground_GObj { unsafe { out("Ground_GetStageGObj"); tri(a0 as i64); out("\n"); (if a0 == 3 { if G3.is_null() { G3 = mkgobj(); } G3 } else if GNULL && rnd() % 4 == 0 { core::ptr::null_mut() } else { mkgobj() }) as *mut Ground_GObj } }
     fn t_Ground_GetYakumonoParam() -> *mut core::ffi::c_void { unsafe { out("Ground_GetYakumonoParam"); out("\n"); (mkyp()) as *mut core::ffi::c_void } }
@@ -42,7 +42,7 @@ mod gen_stubs {
     fn t_grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) { unsafe { out("grAnime_801C8138"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n");  } }
     fn t_grAnime_801C83D0(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32 { unsafe { out("grAnime_801C83D0"); trp(a0 as *const u8); tri(a1 as i64); tri(a2 as i64); out("\n"); (rnd() % 2) as i32 } }
     fn t_grDatFiles_GetArchive() -> *mut UnkArchiveStruct { unsafe { out("grDatFiles_GetArchive"); out("\n"); (if rnd() % 3 == 0 { core::ptr::null_mut() } else { az(64) as *mut _ }) as *mut UnkArchiveStruct } }
-    fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { unsafe { out("grDisplay_801C5DB0"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
     fn t_grLib_801C9B20(a0: *mut HSD_JObj, a1: *mut DynamicsDesc, a2: *mut DynamicsDesc) { unsafe { out("grLib_801C9B20"); trp(a0 as *const u8); trp(a1 as *const u8); trp(a2 as *const u8); out("\n");  } }
     fn t_grLib_801C9B8C(a0: *mut core::ffi::c_void) { unsafe { out("grLib_801C9B8C"); trp(a0 as *const u8); out("\n");  } }
     fn t_grZakoGenerator_801CAE04(a0: *mut grZakoGenerator_SpawnDesc) -> *mut HSD_GObj { unsafe { out("grZakoGenerator_801CAE04"); trp(a0 as *const u8); out("\n"); az(core::mem::size_of::<HSD_GObj>()) as *mut HSD_GObj } }

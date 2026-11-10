@@ -224,7 +224,7 @@ fn ft0877_matches_c() {
                 let f = &mut w.f[i];
                 f.gobj = gp;
                 f.kind = KINDS[(rg.rnd() % 12) as usize];
-                f.x619_costume_id = (rg.rnd() % 4) as u8;
+                f.costume_id = (rg.rnd() % 4) as u8;
                 f.input.held_buttons[0] = rg.rnd();
                 f.input.pressed_buttons = rg.rnd();
                 f.x1968_jumpsUsed = (rg.rnd() % 4) as u8;

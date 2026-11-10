@@ -86,7 +86,7 @@ impl GcDecode for HSD_PObjDesc {
     }
 }
 
-/// `FtPartsDesc` (ft/types.h): `vis_table` is `void* (*)[4]`, one row of four pointers per costume visibility
+/// `FtPartsDesc` (ft/types.h): `vis_table` is `FtPartsVisLookupList (*)[4]`, one row of four pointers per costume visibility
 /// row; every pointer addresses `model_num` `FtPartsVisLookup`s (ftparts.c `ftParts_8007487C` / `ftParts_80074B6C`).
 /// The row count is not in the data: the table runs to the next object.
 impl GcDecode for FtPartsDesc {
@@ -100,12 +100,12 @@ impl GcDecode for FtPartsDesc {
         let tab = at + off::<FtPartsDesc>("vis_table");
         if let Some(t) = d.target(tab) {
             let rows = (d.extent(t) / 16).max(1) as usize;
-            let mut table: std::vec::Vec<[*mut core::ffi::c_void; 4]> = std::vec![[core::ptr::null_mut(); 4]; rows];
+            let mut table: std::vec::Vec<[*mut FtPartsVisLookup; 4]> = std::vec![[core::ptr::null_mut(); 4]; rows];
             for (r, row) in table.iter_mut().enumerate() {
                 for (c, slot) in row.iter_mut().enumerate() {
                     let w = t + (r * 16 + c * 4) as u32;
                     if d.is_reloc(w) {
-                        *slot = d.ptr_array::<FtPartsVisLookup>(w, v.model_num as usize) as *mut core::ffi::c_void;
+                        *slot = d.ptr_array::<FtPartsVisLookup>(w, v.model_num as usize);
                     }
                 }
             }
@@ -134,32 +134,4 @@ impl GcDecode for HSD_CObjDesc {
     }
 }
 
-/// The anonymous struct `mnStageSel_80259C40` / `mnStageSel_PcArtLoad` cast the MnSlMap.dat public
-/// `MnSelectStageDataTable` to (src/melee/mn/mnstagesel.c:838, `}* temp_r3`); GameCube size 0xD0, align 4.
-/// Hand-written: the C type has no name for local_records.py to extract.
-#[repr(C, align(8))]
-#[derive(Clone, Copy)]
-pub struct MnSelectStageDataTable {
-    pub unk0: *mut HSD_CObjDesc,
-    pub unk4: *mut HSD_LightDesc,
-    pub unk8: *mut HSD_LightDesc,
-    pub unkC: *mut HSD_FogDesc,
-    pub x10: mnStageSel_804D6C98_t,
-}
-impl MnSelectStageDataTable {
-    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } }
-}
-impl GcDecode for MnSelectStageDataTable {
-    const GC_BYTES: u32 = 0xD0;
-    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
-    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
-        let mut v = Self::zeroed();
-        v.unk0 = <*mut HSD_CObjDesc as GcDecode>::gc_decode(d, at + 0x0);
-        v.unk4 = <*mut HSD_LightDesc as GcDecode>::gc_decode(d, at + 0x4);
-        v.unk8 = <*mut HSD_LightDesc as GcDecode>::gc_decode(d, at + 0x8);
-        v.unkC = <*mut HSD_FogDesc as GcDecode>::gc_decode(d, at + 0xC);
-        v.x10 = <mnStageSel_804D6C98_t as GcDecode>::gc_decode(d, at + 0x10);
-        v
-    }
-}
-impl melee_core::gcdecode::GcPointee for MnSelectStageDataTable { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<MnSelectStageDataTable>(t) } }
+// MnSelectStageDataTable: generated from mn/mnstagesel.h since upstream #3583 named it (it was hand-written here).

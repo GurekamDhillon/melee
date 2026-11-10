@@ -311,7 +311,7 @@ if v.set() { (*p).modes.table[12].start.rules.x1C_pad[_i15] = v.leaf_int(&format
 if v.set() { (*p).modes.table[12].start.rules.x20 = v.leaf_int(&format!("{}.x20", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 12)))), 64, 0) as _; } else { v.dump_u(&format!("{}.x20", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 12)))), (((*p).modes.table[12].start.rules.x20) as u64) as u64); }
 }
 {
-if v.set() { (*p).modes.table[12].start.rules.x28 = v.leaf_int(&format!("{}.x28", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 12)))), 32, 1) as _; } else { v.dump_i(&format!("{}.x28", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 12)))), (((*p).modes.table[12].start.rules.x28) as i32) as i64); }
+if v.set() { (*p).modes.table[12].start.rules.it_kind = v.leaf_int(&format!("{}.it_kind", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 12)))), 32, 1) as _; } else { v.dump_i(&format!("{}.it_kind", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 12)))), (((*p).modes.table[12].start.rules.it_kind) as i32) as i64); }
 }
 {
 if v.set() { (*p).modes.table[12].start.rules.x2C = f32::from_bits(v.leaf_f32(&format!("{}.x2C", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 12)))))); } else { v.dump_f32(&format!("{}.x2C", format!("{}.rules", format!("{}.start", format!("{}[{}]", format!("{}.table", format!("{}.modes", path)), 12)))), ((*p).modes.table[12].start.rules.x2C).to_bits()); }
@@ -639,7 +639,7 @@ if v.set() { (*p).x1C_pad[_i18] = v.leaf_int(&format!("{}[{}]", format!("{}.x1C_
 if v.set() { (*p).x20 = v.leaf_int(&format!("{}.x20", path), 64, 0) as _; } else { v.dump_u(&format!("{}.x20", path), (((*p).x20) as u64) as u64); }
 }
 {
-if v.set() { (*p).x28 = v.leaf_int(&format!("{}.x28", path), 32, 1) as _; } else { v.dump_i(&format!("{}.x28", path), (((*p).x28) as i32) as i64); }
+if v.set() { (*p).it_kind = v.leaf_int(&format!("{}.it_kind", path), 32, 1) as _; } else { v.dump_i(&format!("{}.it_kind", path), (((*p).it_kind) as i32) as i64); }
 }
 {
 if v.set() { (*p).x2C = f32::from_bits(v.leaf_f32(&format!("{}.x2C", path))); } else { v.dump_f32(&format!("{}.x2C", path), ((*p).x2C).to_bits()); }
@@ -881,7 +881,9 @@ if v.set() { (*p).ckind = v.leaf_int(&format!("{}.ckind", path), 8, 1) as _; } e
 {
 if v.set() { (*p).ftkind = v.leaf_int(&format!("{}.ftkind", path), 8, 1) as _; } else { v.dump_i(&format!("{}.ftkind", path), (((*p).ftkind) as i8) as i64); }
 }
-v.bytes(&format!("{}.anon_3", path), &mut (*p).anon_3 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_3));
+{
+v.bytes(&format!("{}.x3_u", path), &mut (*p).x3_u as *mut _ as *mut u8, core::mem::size_of_val(&(*p).x3_u));
+}
 {
 if v.set() { (*p).x4 = v.leaf_int(&format!("{}.x4", path), 8, 0) as _; } else { v.dump_u(&format!("{}.x4", path), (((*p).x4) as u8) as u64); }
 }
@@ -910,12 +912,9 @@ if v.set() { (*p).percent = v.leaf_int(&format!("{}.percent", path), 16, 0) as _
 if v.set() { (*p).xE = v.leaf_int(&format!("{}.xE", path), 16, 0) as _; } else { v.dump_u(&format!("{}.xE", path), (((*p).xE) as u16) as u64); }
 }
 {
-for _i23 in 0..4usize {
+for _i23 in 0..6usize {
 if v.set() { (*p).kills[_i23] = v.leaf_int(&format!("{}[{}]", format!("{}.kills", path), _i23), 16, 0) as _; } else { v.dump_u(&format!("{}[{}]", format!("{}.kills", path), _i23), (((*p).kills[_i23]) as u16) as u64); }
 }
-}
-{
-if v.set() { (*p).x18 = v.leaf_int(&format!("{}.x18", path), 16, 0) as _; } else { v.dump_u(&format!("{}.x18", path), (((*p).x18) as u16) as u64); }
 }
 {
 if v.set() { (*p).x1C = v.leaf_int(&format!("{}.x1C", path), 32, 1) as _; } else { v.dump_i(&format!("{}.x1C", path), (((*p).x1C) as i32) as i64); }

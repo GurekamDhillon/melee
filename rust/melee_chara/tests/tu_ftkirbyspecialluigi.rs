@@ -51,10 +51,10 @@ unsafe fn smoke_inner() {
     f.facing_dir = -1.0;
     t::fn_800F98F4(gp);
     assert!(take().is_empty());
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b0(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b0(1) };
     t::fn_800F98F4(gp);
     assert_eq!(take(), [format!("fire 1 2 {} -1", It_Kind_Kirby_LuigiFire), "efsync 4b1 2".to_string()]);
-    assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b0() }, 0);
+    assert_eq!(unsafe { f.x2210.x0.throw_flags_b0() }, 0);
 
     // Re-exports stay wired to the ported callbacks.
     unsafe {

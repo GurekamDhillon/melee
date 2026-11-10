@@ -199,7 +199,7 @@ static void hash_HSD_AObj(const HSD_AObj* p)
     HM(B(p->end_frame));
     HM(B(p->framerate));
     HM(PI((const void*) p->fobj));
-    HM(PI((const void*) p->hsd_obj));
+    HM(PI((const void*) p->jobj));
 }
 
 static void fill_HSD_AObjDesc(HSD_AObjDesc* p)
@@ -207,7 +207,6 @@ static void fill_HSD_AObjDesc(HSD_AObjDesc* p)
     int i0, i1, i2, j0, j1, j2, j3;
     p->flags = fv();
     p->end_frame = rg();
-    p->obj_id = fv();
 }
 static void hash_HSD_AObjDesc(const HSD_AObjDesc* p)
 {
@@ -216,7 +215,7 @@ static void hash_HSD_AObjDesc(const HSD_AObjDesc* p)
     HM((u32) p->flags);
     HM(B(p->end_frame));
     HM(PI((const void*) p->fobjdesc));
-    HM((u32) p->obj_id);
+    HM(PI((const void*) p->obj_id));
 }
 
 static void fill_HSD_ImageDesc(HSD_ImageDesc* p)

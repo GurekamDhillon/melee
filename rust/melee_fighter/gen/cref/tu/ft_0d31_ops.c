@@ -52,7 +52,7 @@ static void* pick_cb(int kind) { void* f = pick_fn(kind); return f ? f : (kind =
 HSD_GObj** HSD_GObjPLinkHead;   /* tentative: the stub header defines it only for TUs that read it */
 ftCommonData* p_ftCommonData;
 void* efSync_Spawn(s32 id, HSD_GObj* g, ...) { (void) g; T(2050); T((u32) id); return 0; }
-void efAsync_Spawn(HSD_GObj* g, void* q, u32 kind, u32 id, HSD_JObj* j, ...) { T(2051); T(PI(g)); T(PI(q)); T(kind); T(id); T(PI(j)); }
+void efAsync_Spawn(HSD_GObj* g, EF_QueuedEffect** q, u32 kind, u32 id, HSD_JObj* j, ...) { T(2051); T(PI(g)); T(PI(q)); T(kind); T(id); T(PI(j)); }
 
 static void world(void)
 {
@@ -69,8 +69,8 @@ static void world(void)
         FT[i].gobj = &GO[i];
         FT[i].ft_data = &FDATA[i];
         FT[i].grab_cb = cbev1; FT[i].grabbed_cb = cbev3;
-        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_id %= 4; FT[i].x618_player_id %= 4;
-        for (b = 0; b < 64; b++) { if (b < NP) fill_FighterBone(&PARTS[i][b]); else { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].flags_b1 = 1; } PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
+        FT[i].kind = (FighterKind) ((u32) FT[i].kind % 27u); FT[i].player_idx %= 4; FT[i].pad_port %= 4;
+        for (b = 0; b < 64; b++) { if (b < NP) fill_FighterBone(&PARTS[i][b]); else { zero(&PARTS[i][b], sizeof PARTS[i][b]); PARTS[i][b].x8.x0.flags_b1 = 1; } PARTS[i][b].joint = &JO[(u32) (i * 5 + b * 3) % NJ]; }
         FT[i].parts = PARTS[i];
         { int pk = i * 24; FDATA[i].x0 = (void*) PADB[pk++]; FDATA[i].ext_attr = (void*) PADB[pk++]; FDATA[i].x8 = (void*) PADB[pk++]; FDATA[i].xC = (void*) PADB[pk++]; FDATA[i].x10 = (void*) PADB[pk++]; FDATA[i].x14 = (void*) PADB[pk++]; FDATA[i].x18 = (void*) PADB[pk++]; FDATA[i].x1C = (void*) PADB[pk++]; FDATA[i].x20 = (void*) PADB[pk++]; FDATA[i].x24 = (void*) PADB[pk++]; FDATA[i].x28 = (void*) PADB[pk++]; FDATA[i].x2C = (void*) PADB[pk++]; FDATA[i].x30 = (void*) PADB[pk++]; FDATA[i].x34 = (void*) PADB[pk++]; FDATA[i].x38 = (void*) PADB[pk++]; FDATA[i].x3C = (void*) PADB[pk++]; FDATA[i].x40 = (void*) PADB[pk++]; FDATA[i].x44 = (void*) PADB[pk++]; FDATA[i].x48_items = (void*) PADB[pk++]; FDATA[i].x4C_sfx = (void*) PADB[pk++]; FDATA[i].x50 = (void*) PADB[pk++]; FDATA[i].x54 = (void*) PADB[pk++]; FDATA[i].x58 = (void*) PADB[pk++]; FDATA[i].x5C = (void*) PADB[pk++]; }
     }

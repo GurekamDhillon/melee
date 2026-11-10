@@ -121,15 +121,15 @@ pub unsafe extern "C" fn it_80288C88(gobj: *mut Item_GObj, pos: *mut Vec, vel: *
         spawn.vel = *vel;
         spawn.x0_parent_gobj = (*ip).owner;
         spawn.x4_parent_gobj2 = gobj;
-        spawn.x44_flag.anon_0.set_b0(1);
+        spawn.x44_flag.x0.set_b0(1);
         spawn.x40 = 0;
         item_gobj = ext::Item_80268B18(&mut spawn);
         if !item_gobj.is_null() {
             let ip = get_item(item_gobj);
-            (*ip).xDD0_flag.anon_0.set_b6(0);
+            (*ip).xDD0_flag.x0.set_b6(0);
             (*ip).xD40 = 0.0;
             ext::it_80279BBC(ip);
-            if (*ip).xDD0_flag.anon_0.b7() == 0 {
+            if (*ip).xDD0_flag.x0.b7() == 0 {
                 ext::it_802756E0(item_gobj);
             }
         }
@@ -254,7 +254,7 @@ pub unsafe extern "C" fn it_80289094(gobj: *mut Item_GObj) {
     ext::it_8027518C(gobj);
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
-    (*ip).xDCF_flag.anon_0.set_b2(1);
+    (*ip).xDCF_flag.x0.set_b2(1);
     (*ip).xDD4_itemVar.egg.x0 = 1;
     (*ip).xDD4_itemVar.egg.rand_max = 20;
     ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE as _);
@@ -280,7 +280,7 @@ pub unsafe extern "C" fn it_80289158(gobj: *mut Item_GObj) {
     ext::it_802756D0(gobj);
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
-    (*ip).xDCF_flag.anon_0.set_b2(1);
+    (*ip).xDCF_flag.x0.set_b2(1);
     (*ip).xDD4_itemVar.egg.x0 = 1;
     (*ip).xDD4_itemVar.egg.rand_max = 40;
     ext::it_8026B3A8(gobj);

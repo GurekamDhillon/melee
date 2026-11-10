@@ -181,7 +181,7 @@ pub fn ftCo_800C5284(g: G) {
     f.x2338.x = 0;
     f.x2338.y = 0;
     if f.x2330.y != 0 {
-        ext::pl_800403C0(f.player_id as i32, f.is_sub_fighter() as i32);
+        ext::pl_800403C0(f.player_idx as i32, f.is_sub_fighter() as i32);
     }
     ext::ft_800880AC(fp(g));
 }

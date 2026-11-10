@@ -51,7 +51,7 @@ pub mod ext {
     ext_fns! {
     fn Camera_800311CC(a0: f32) = |a0: f32| unsafe { crate::tu::camera::Camera_800311CC(a0) };
     fn Camera_800311DC(a0: f32) = |a0: f32| unsafe { crate::tu::camera::Camera_800311DC(a0) };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn Ground_801C10B8(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>| { unsafe { crate::tu::ground::Ground_801C10B8(a0 as _, a1 as _); } };
     fn Ground_801C3990(a0: f32) = |a0: f32| { unsafe { crate::tu::ground::Ground_801C3990(a0 as _); } };
     fn Ground_801C39C0() = || { unsafe { crate::tu::ground::Ground_801C39C0(); } };
@@ -72,7 +72,7 @@ pub mod ext {
     fn Stage_GetBlastZoneTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetBlastZoneTopOffset() as _ };
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grAnime_801C83D0(a0: *mut HSD_GObj, a1: i32, a2: i32) -> i32 = |a0: *mut HSD_GObj, a1: i32, a2: i32| unsafe { crate::tu::granime::grAnime_801C83D0(a0 as _, a1 as _, a2 as _) as _ };
-    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
+    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
     fn grDynamicAttr_801CA0F8(a0: i32, a1: *mut Vec, a2: i32, a3: f32, a4: i32) -> *mut grDynamicAttr_UnkStruct = |a0: i32, a1: *mut Vec, a2: i32, a3: f32, a4: i32| unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA0F8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _) as _ };
     fn grDynamicAttr_801CA1C0(a0: *mut grDynamicAttr_UnkStruct) = |a0: *mut grDynamicAttr_UnkStruct| { unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA1C0(a0 as _); } };
     fn grMaterial_801C8858(a0: *mut HSD_JObj, a1: u32) = |a0: *mut HSD_JObj, a1: u32| { unsafe { crate::tu::grmaterial::grMaterial_801C8858(a0 as _, a1 as _); } };
@@ -122,7 +122,7 @@ const fn row(
     callback3: HSD_GObjEvent,
     flags: u32,
 ) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, x10: StageCallbacks_x10 { flags: u32::to_be(flags) } }
 }
 
 /// `static StageCallbacks grFz_StageCallbacks[]`
@@ -908,7 +908,7 @@ pub unsafe extern "C" fn grFlatzone_80218260() {
     pub extern "C" fn grFlatzone_80217EE8(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grFlatzone_802182B4 (gr/grflatzone.c:768)
-    pub extern "C" fn grFlatzone_802182B4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grFlatzone_802182B4(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grFlatzone_802182BC (gr/grflatzone.c:773)
     pub extern "C" fn grFlatzone_802182BC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

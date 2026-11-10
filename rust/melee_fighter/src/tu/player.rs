@@ -262,8 +262,8 @@ pub fn Player_80031AD0(slot: i32) {
 
     first_struct.internal_id = internal_id as FighterKind;
     first_struct.slot = slot as u8;
-    first_struct.anon_6.set_b0(0);
-    first_struct.anon_6.set_has_transformation(0);
+    first_struct.x6.set_b0(0);
+    first_struct.x6.set_has_transformation(0);
     first_struct.x5 = -1;
 
     player.player_entity[0] = ext::Fighter_Create(&mut first_struct);
@@ -279,8 +279,8 @@ pub fn Player_80031AD0(slot: i32) {
 
         second_struct.internal_id = internal_id as FighterKind;
         second_struct.slot = slot as u8;
-        second_struct.anon_6.set_b0(1);
-        second_struct.anon_6.set_has_transformation(has_transformation as u8);
+        second_struct.x6.set_b0(1);
+        second_struct.x6.set_has_transformation(has_transformation as u8);
         second_struct.x5 = -1;
 
         player.player_entity[1] = ext::Fighter_Create(&mut second_struct);
@@ -691,12 +691,12 @@ pub fn Player_SetCostumeId(slot: i32, costume_id: i32) {
 
 pub fn Player_GetControllerIndex(slot: i32) -> u8 {
     melee_core::ct!("Player_GetControllerIndex");
-    sp(slot).controller_index as u8
+    sp(slot).sub_color as u8
 }
 
 pub fn Player_SetControllerIndex(slot: i32, controller_index: i8) {
     melee_core::ct!("Player_SetControllerIndex");
-    sp(slot).controller_index = controller_index;
+    sp(slot).sub_color = controller_index;
 }
 
 
@@ -708,7 +708,7 @@ pub fn Player_SetTeam(slot: i32, team: i8) {
 
 pub fn Player_SetPlayerId(slot: i32, player_id: i32) {
     melee_core::ct!("Player_SetPlayerId");
-    sp(slot).player_id = player_id as u8;
+    sp(slot).pad_port = player_id as u8;
 }
 
 pub fn Player_GetCpuLevel(slot: i32) -> i32 {
@@ -1372,9 +1372,9 @@ pub fn Player_InitOrResetPlayer(slot: i32) {
     player.transformed[1] = 1;
 
     player.unk45 = 0;
-    player.controller_index = 0;
+    player.sub_color = 0;
     player.team = 0;
-    player.player_id = 0;
+    player.pad_port = 0;
     player.cpu_level = 0;
 
     player.cpu_type = 4;
@@ -1515,15 +1515,15 @@ pub fn Player_80036F34(slot: i32, arg1: i32) {
     let player = sp(slot);
     some_struct.internal_id = map(player.ckind).internal_id as i32 as FighterKind;
     some_struct.slot = slot as u8;
-    some_struct.anon_c.set_has_transformation(0);
+    some_struct.xC.set_has_transformation(0);
     some_struct.unk8 = arg1;
-    some_struct.anon_c.set_b0(0);
+    some_struct.xC.set_b0(0);
 
     player.pkind = Gm_PKind_Demo;
     player.player_entity[0] = ext::ftDemo_CreateFighter(&mut some_struct);
     if map(player.ckind).extra_internal_id != -1 && map(player.ckind).has_transformation == 0 {
         some_struct.internal_id = map(player.ckind).extra_internal_id as i32 as FighterKind;
-        some_struct.anon_c.set_has_transformation(1);
+        some_struct.xC.set_has_transformation(1);
         player.player_entity[1] = ext::ftDemo_CreateFighter(&mut some_struct);
     }
 }
@@ -1534,15 +1534,15 @@ pub fn Player_80037054(slot: i32, arg1: i32) {
     let player = sp(slot);
     some_struct.internal_id = map(player.ckind).internal_id as i32 as FighterKind;
     some_struct.slot = slot as u8;
-    some_struct.anon_c.set_has_transformation(0);
+    some_struct.xC.set_has_transformation(0);
     some_struct.unk8 = arg1;
-    some_struct.anon_c.set_b0(1);
+    some_struct.xC.set_b0(1);
 
     player.pkind = Gm_PKind_Demo;
     player.player_entity[0] = ext::ftDemo_CreateFighter(&mut some_struct);
     if map(player.ckind).extra_internal_id != -1 && map(player.ckind).has_transformation == 0 {
         some_struct.internal_id = map(player.ckind).extra_internal_id as i32 as FighterKind;
-        some_struct.anon_c.set_has_transformation(1);
+        some_struct.xC.set_has_transformation(1);
         player.player_entity[1] = ext::ftDemo_CreateFighter(&mut some_struct);
     }
 }

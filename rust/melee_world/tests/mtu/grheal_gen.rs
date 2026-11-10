@@ -32,7 +32,7 @@ pub fn install() {
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1018); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grDisplay_801C5DB0 = Some(|a0, a1| { t(1019); t(pi(a0)); t(a1 as u32); });
         grZakoGenerator_801CAE04 = Some(|a0| { t(1020); t(pi(a0)); core::ptr::null_mut() });
-        it_8026BE84 = Some(|a0| { t(1021); t(pi(a0)); hm(pi((*a0).x0)); hm(pi((*a0).x4)); hm((*a0).x8_vec.x.to_bits()); hm((*a0).x8_vec.y.to_bits()); hm((*a0).x8_vec.z.to_bits()); hm((*a0).x14 as u32); hm((*a0).x18 as u32); hm((*a0).x1C.anon_0.b0() as u32); core::ptr::null_mut() });
+        it_8026BE84 = Some(|a0| { t(1021); t(pi(a0)); hm(pi((*a0).x0)); hm(pi((*a0).x4)); hm((*a0).x8_vec.x.to_bits()); hm((*a0).x8_vec.y.to_bits()); hm((*a0).x8_vec.z.to_bits()); hm((*a0).x14 as u32); hm((*a0).x18 as u32); hm((*a0).x1C.x0.b0() as u32); core::ptr::null_mut() });
         it_802F2094 = Some(|a0, a1, a2, a3| { t(1022); t(pi(a0)); t(pi(a1)); t(a2 as u32); t(a3 as u32); t((*a1).x.to_bits()); t((*a1).y.to_bits()); t((*a1).z.to_bits()); core::ptr::null_mut() });
         lb_8000B1CC = Some(|a0, a1, a2| { t(1023); t(pi(a0)); t(pi(a1)); t(pi(a2)); (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); });
         lb_800115F4 = Some(|| { t(1024); });

@@ -222,7 +222,7 @@ _ITEM_SETUP_C = r"""
     for (i = 0; i < 8; i++) JO[i].flags &= ~JOBJ_USE_QUATERNION;
     SP.kind = pick_kind(1);
     for (i = 0; i < 26; i++) ((s32*) &Item_804A0C64)[i] = (s32) (fv() & 7);
-    Item_804A0CCC.count = rnd(); Item_804A0CCC.x154.b0 = rnd() & 1; Item_804A0CCC.x154.b1 = rnd() & 1; Item_804A0CCC.x154.b2 = rnd() & 1; Item_804A0CCC.x154.b3 = rnd() & 1; Item_804A0CCC.x154.b4 = rnd() & 1; Item_804A0CCC.x154.b5 = rnd() & 1; Item_804A0CCC.x154.b6 = rnd() & 1; Item_804A0CCC.x154.b7 = rnd() & 1; for (i = 0; i < 0xB0; i++) ((u8*) &Item_804A0CCC)[i] = (u8) rnd();
+    Item_804A0CCC.count = rnd(); Item_804A0CCC.x154.x0.b0 = rnd() & 1; Item_804A0CCC.x154.x0.b1 = rnd() & 1; Item_804A0CCC.x154.x0.b2 = rnd() & 1; Item_804A0CCC.x154.x0.b3 = rnd() & 1; Item_804A0CCC.x154.x0.b4 = rnd() & 1; Item_804A0CCC.x154.x0.b5 = rnd() & 1; Item_804A0CCC.x154.x0.b6 = rnd() & 1; Item_804A0CCC.x154.x0.b7 = rnd() & 1; for (i = 0; i < 0xB0; i++) ((u8*) &Item_804A0CCC)[i] = (u8) rnd();
     Item_804A0E24.last_kind = (s32) rnd(); Item_804A0E24.previous_kind = (s32) rnd(); Item_804A0E24.rare_spawned = rnd() & 1;
 }
 """
@@ -312,8 +312,8 @@ STEMS["item"] = dict(
     rs_extra=_ITEM_R + "pub static mut DOBBUF: [[u64; 8]; 4] = [[0; 8]; 4];",
     pregs=(_ITEM_PREG_C, _ITEM_PREG_R),
     setup=(_ITEM_SETUP_C, _ITEM_SETUP_R),
-    hash=("HM(RH(&Item_804A0C64, sizeof Item_804A0C64)); HM((u32) Item_804A0CCC.count); HM((u32) Item_804A0CCC.x154.b0); HM((u32) Item_804A0CCC.x154.b1); HM((u32) Item_804A0CCC.x154.b2); HM((u32) Item_804A0CCC.x154.b3); HM((u32) Item_804A0CCC.x154.b4); HM((u32) Item_804A0CCC.x154.b5); HM((u32) Item_804A0CCC.x154.b6); HM((u32) Item_804A0CCC.x154.b7); HM(RH(Item_804A0CCC.ecb_offset_arr, sizeof Item_804A0CCC.ecb_offset_arr)); HM((u32) Item_804A0E24.last_kind); HM((u32) Item_804A0E24.previous_kind); HM((u32) Item_804A0E24.rare_spawned);",
-          "hm(rh(&m::Item_804A0C64)); hm(m::Item_804A0CCC.count as u32); hm(m::Item_804A0CCC.x154.anon_0.b0() as u32); hm(m::Item_804A0CCC.x154.anon_0.b1() as u32); hm(m::Item_804A0CCC.x154.anon_0.b2() as u32); hm(m::Item_804A0CCC.x154.anon_0.b3() as u32); hm(m::Item_804A0CCC.x154.anon_0.b4() as u32); hm(m::Item_804A0CCC.x154.anon_0.b5() as u32); hm(m::Item_804A0CCC.x154.anon_0.b6() as u32); hm(m::Item_804A0CCC.x154.anon_0.b7() as u32); hm(rh(&m::Item_804A0CCC.ecb_offset_arr)); hm(m::Item_804A0E24.last_kind as u32); hm(m::Item_804A0E24.previous_kind as u32); hm(m::Item_804A0E24.rare_spawned as u32);"),
+    hash=("HM(RH(&Item_804A0C64, sizeof Item_804A0C64)); HM((u32) Item_804A0CCC.count); HM((u32) Item_804A0CCC.x154.x0.b0); HM((u32) Item_804A0CCC.x154.x0.b1); HM((u32) Item_804A0CCC.x154.x0.b2); HM((u32) Item_804A0CCC.x154.x0.b3); HM((u32) Item_804A0CCC.x154.x0.b4); HM((u32) Item_804A0CCC.x154.x0.b5); HM((u32) Item_804A0CCC.x154.x0.b6); HM((u32) Item_804A0CCC.x154.x0.b7); HM(RH(Item_804A0CCC.ecb_offset_arr, sizeof Item_804A0CCC.ecb_offset_arr)); HM((u32) Item_804A0E24.last_kind); HM((u32) Item_804A0E24.previous_kind); HM((u32) Item_804A0E24.rare_spawned);",
+          "hm(rh(&m::Item_804A0C64)); hm(m::Item_804A0CCC.count as u32); hm(m::Item_804A0CCC.x154.x0.b0() as u32); hm(m::Item_804A0CCC.x154.x0.b1() as u32); hm(m::Item_804A0CCC.x154.x0.b2() as u32); hm(m::Item_804A0CCC.x154.x0.b3() as u32); hm(m::Item_804A0CCC.x154.x0.b4() as u32); hm(m::Item_804A0CCC.x154.x0.b5() as u32); hm(m::Item_804A0CCC.x154.x0.b6() as u32); hm(m::Item_804A0CCC.x154.x0.b7() as u32); hm(rh(&m::Item_804A0CCC.ecb_offset_arr)); hm(m::Item_804A0E24.last_kind as u32); hm(m::Item_804A0E24.previous_kind as u32); hm(m::Item_804A0E24.rare_spawned as u32);"),
     ov={"Item_80268E5C": {1: ("fv() & 3", "(fv() & 3) as _")},
         "Item_80268BE0": {1: ("((rnd() & 3) ? &AJ[rnd() % 4] : 0)", "if rnd() & 3 != 0 { &raw mut AJ[(rnd() % 4) as usize] } else { null_mut() }"),
                           2: ("((rnd() & 3) ? &MJ[rnd() % 4] : 0)", "if rnd() & 3 != 0 { &raw mut MJ[(rnd() % 4) as usize] } else { null_mut() }"),
@@ -408,7 +408,7 @@ def attrs_stem(words=16, ints=()):
         c_extra=f"static u32 SATTR[2][{words}];",
         rs_extra=f"static mut SATTR: [[u32; {words}]; 2] = [[0; {words}]; 2];",
         pregs=("preg(SATTR, sizeof SATTR);", "preg(&raw const SATTR, core::mem::size_of_val(&SATTR));"),
-        setup=(f"{{ int q, w; for (q = 0; q < 2; q++) {{ ART[q].x4_specialAttributes = SATTR[q]; for (w = 0; w < {words}; w++) {{ {c_fill} }} }} }}",
+        setup=(f"{{ int q, w; for (q = 0; q < 2; q++) {{ ART[q].x4_specialAttributes = (union ItemSpecialAttributes*) SATTR[q]; for (w = 0; w < {words}; w++) {{ {c_fill} }} }} }}",
                f"{{ for q in 0..2usize {{ ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut c_void; for w in 0..{words}usize {{ {r_fill} }} }} }}"),
         hash=(f"{{ int q, w; for (q = 0; q < 2; q++) for (w = 0; w < {words}; w++) HM(SATTR[q][w]); }}",
               f"{{ for q in 0..2usize {{ for w in 0..{words}usize {{ hm(SATTR[q][w]); }} }} }}"),

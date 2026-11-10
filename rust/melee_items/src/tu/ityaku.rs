@@ -58,7 +58,7 @@ pub static mut it_803F8C08: ItemAttr = ItemAttr {
     bf_0: [0x31, 0x08],
     x3: 0,
     x4_throw_speed_mul: 0.0,
-    x8: 0,
+    x8: 0.0,
     xC_spin_speed: 0.0,
     x10_fall_speed: 0.0,
     x14_fall_speed_max: 0.0,
@@ -127,7 +127,7 @@ pub unsafe extern "C" fn it_802E6AEC(
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = null_mut();
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.anon_0.set_b0(if arg5 != 0 { 1 } else { 0 });
+    spawn.x44_flag.x0.set_b0(if arg5 != 0 { 1 } else { 0 });
     spawn.x40 = 0;
     (**ext::it_804D6D38.offset((spawn.kind - It_Kind_Kuriboh) as isize)).x0_common_attr = &raw mut it_803F8C08;
 
@@ -136,10 +136,10 @@ pub unsafe extern "C" fn it_802E6AEC(
         let item = GET_ITEM(item_gobj);
         if !arg3.is_null() {
             (*item).xDD4_itemVar.yaku.x2 = 1;
-            (*item).xDD4_itemVar.yaku.anon_4.x4 = arg3;
+            (*item).xDD4_itemVar.yaku.x4_u.x4 = arg3;
         } else if !pos.is_null() {
             (*item).xDD4_itemVar.yaku.x2 = 2;
-            (*item).xDD4_itemVar.yaku.anon_4.x4_vec = *pos;
+            (*item).xDD4_itemVar.yaku.x4_u.x4_vec = *pos;
         }
 
         (*item).xDD4_itemVar.yaku.x0 = arg1 as i16;
@@ -167,12 +167,12 @@ pub unsafe extern "C" fn it_2E6A_UnkMotion19_Phys(item_gobj: *mut HSD_GObj) {
     let item = GET_ITEM(item_gobj);
     let item_jobj = (*item_gobj).hsd_obj as *mut HSD_JObj;
     if (*item).xDD4_itemVar.yaku.x2 == 1 {
-        ext::lb_8000B1CC((*item).xDD4_itemVar.yaku.anon_4.x4, null_mut(), &mut sp24);
+        ext::lb_8000B1CC((*item).xDD4_itemVar.yaku.x4_u.x4, null_mut(), &mut sp24);
         (*item).pos = sp24;
-        let jobj1 = (*item).xDD4_itemVar.yaku.anon_4.x4;
+        let jobj1 = (*item).xDD4_itemVar.yaku.x4_u.x4;
         HSD_JObjGetScale(jobj1, &mut sp24);
         HSD_JObjSetScale(item_jobj, &mut sp24);
-        let jobj2 = (*item).xDD4_itemVar.yaku.anon_4.x4;
+        let jobj2 = (*item).xDD4_itemVar.yaku.x4_u.x4;
         HSD_JObjGetRotation(jobj2, &mut sp14);
         HSD_JObjSetRotation(item_jobj, &mut sp14);
     } else if (*item).xDD4_itemVar.yaku.x2 != 2 {

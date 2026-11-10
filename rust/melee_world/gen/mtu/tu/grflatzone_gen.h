@@ -20,7 +20,7 @@ static void hash_CollData(const CollData* p);
 StageInfo stage_info;
 void Camera_800311CC(__typeof__(float) a0) { T(1000); T(B(a0)); }
 void Camera_800311DC(__typeof__(float) a0) { T(1001); T(B(a0)); }
-void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
+void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
 void Ground_801C10B8(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1) { T(1003); T(PI((const void*) a0)); T(FI((const void*) a1)); }
 void Ground_801C3990(__typeof__(float) a0) { T(1004); T(B(a0)); }
 void Ground_801C39C0(void) { T(1005); }
@@ -41,7 +41,7 @@ __typeof__(float) Stage_GetBlastZoneBottomOffset(void) { T(1019); return (__type
 __typeof__(float) Stage_GetBlastZoneTopOffset(void) { T(1020); return (__typeof__(float)) (rg()); }
 void grAnime_801C8138(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1021); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); }
 __typeof__(int) grAnime_801C83D0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1, __typeof__(int) a2) { T(1022); T(PI((const void*) a0)); T((u32) a1); T((u32) a2); return (__typeof__(int)) (fv()); }
-void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1023); T(PI((const void*) a0)); T((u32) a1); }
+void grDisplay_801C5DB0(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1023); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
 __typeof__(struct grDynamicAttr_UnkStruct *) grDynamicAttr_801CA0F8(__typeof__(int) a0, __typeof__(Vec *) a1, __typeof__(int) a2, __typeof__(float) a3, __typeof__(int) a4) { T(1024); T((u32) a0); T(PI((const void*) a1)); T((u32) a2); T(B(a3)); T((u32) a4); return (__typeof__(struct grDynamicAttr_UnkStruct *)) (((fv() & 1) ? &DYN[0] : 0)); }
 void grDynamicAttr_801CA1C0(__typeof__(struct grDynamicAttr_UnkStruct *) a0) { T(1025); T(PI((const void*) a0)); }
 void grMaterial_801C8858(__typeof__(struct HSD_JObj *) a0, __typeof__(unsigned int) a1) { T(1026); T(PI((const void*) a0)); T((u32) a1); }
@@ -470,7 +470,7 @@ static void hash_StageInfo(const StageInfo* p)
 static void fill_StageCallbacks(StageCallbacks* p)
 {
     int i0, i1, i2, j0, j1, j2, j3;
-    for (j0 = 0; j0 < 4; j0++) ((unsigned char*) &(*p))[32 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 4; i0++) ((unsigned char*) &p->x10)[i0] = (unsigned char) rnd();
 }
 static void hash_StageCallbacks(const StageCallbacks* p)
 {
@@ -480,7 +480,7 @@ static void hash_StageCallbacks(const StageCallbacks* p)
     HM(FI((const void*) p->callback1));
     HM(FI((const void*) p->gobj_proc));
     HM(FI((const void*) p->callback3));
-    for (j0 = 0; j0 < 4; j0++) HM(((const unsigned char*) &(*p))[32 + j0]);
+    for (i0 = 0; i0 < 4; i0++) HM(((const unsigned char*) &p->x10)[i0]);
 }
 
 static void fill_StageData(StageData* p)
@@ -718,7 +718,7 @@ static void fill_CollData(CollData* p)
     p->xE4_ecb.left.x = rg();
     p->xE4_ecb.left.y = rg();
     p->ecb_source.kind = fv();
-    for (j0 = 0; j0 < 56; j0++) ((unsigned char*) &p->ecb_source)[8 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 56; i0++) ((unsigned char*) &p->ecb_source.x4)[i0] = (unsigned char) rnd();
     p->ecb_source.x124 = rg();
     p->ecb_source.x128 = rg();
     p->ecb_source.x12C = rg();
@@ -830,7 +830,7 @@ static void hash_CollData(const CollData* p)
     HM(B(p->xE4_ecb.left.x));
     HM(B(p->xE4_ecb.left.y));
     HM((u32) p->ecb_source.kind);
-    for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->ecb_source)[8 + j0]);
+    for (i0 = 0; i0 < 56; i0++) HM(((const unsigned char*) &p->ecb_source.x4)[i0]);
     HM(B(p->ecb_source.x124));
     HM(B(p->ecb_source.x128));
     HM(B(p->ecb_source.x12C));

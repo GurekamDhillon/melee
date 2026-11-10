@@ -22,9 +22,9 @@ fn item_hooks_default_to_melee_items() {
         assert_eq!(h::it_is_heavy(gp), heavy != 0);
         assert_eq!(h::it_8026b6c8(gp), melee_items::itlib::it_8026b6c8(&it) as i32);
         h::it_8026bd0c(gp);
-        assert_eq!(it.xDCD_flag.anon_0.b2(), 1);
+        assert_eq!(it.xDCD_flag.x0.b2(), 1);
         h::it_8026bcf4(gp);
-        assert_eq!(it.xDCD_flag.anon_0.b2(), 0);
+        assert_eq!(it.xDCD_flag.x0.b2(), 0);
     }
     assert_eq!(h::it_8026b6c8(gp), 0);
 }

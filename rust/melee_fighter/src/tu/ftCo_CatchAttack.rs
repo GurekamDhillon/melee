@@ -40,10 +40,13 @@ pub mod ext {
 }
 
 /// `fn_800DA678` as the C `HSD_GObjEvent` stored in `accessory1_cb`.
+#[inline(never)] // compared by address in the tests: keep one copy
 pub unsafe extern "C" fn fn_800DA678_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA678_cb"); fn_800DA678(g) }
 /// `fn_800DA668` as the C `HSD_GObjEvent` stored in `take_dmg_cb`.
+#[inline(never)] // compared by address in the tests: keep one copy
 pub unsafe extern "C" fn fn_800DA668_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA668_cb"); fn_800DA668(g) }
 /// `fn_800DA618` as the C `HSD_GObjEvent` handed to `ft_800841B8`.
+#[inline(never)] // compared by address in the tests: keep one copy
 pub unsafe extern "C" fn fn_800DA618_cb(g: *mut HSD_GObj) { melee_core::ct!("fn_800DA618_cb"); fn_800DA618(g) }
 
 pub fn fn_800DA4FC(g: G) {

@@ -44,7 +44,7 @@ fn ifprize_matches_c() {
                     0 => {  let a0: i32 = ((0 + (rnd() % 71) as i32)) as i32; let a1: i32 = ((0 + (rnd() % 31) as i32)) as i32; let a2: *mut i16 = (if rnd() & 1 != 0 { &raw mut S16A[0] } else { null_mut() }) as *mut i16; let a3: *mut i16 = (if rnd() & 1 != 0 { &raw mut S16A[2] } else { null_mut() }) as *mut i16; m::un_802FE3F8(a0, a1, a2, a3); }
                     1 => {  let a0: i32 = ((0 + (rnd() % 71) as i32)) as i32; let a1: i32 = ((0 + (rnd() % 31) as i32)) as i32; let a2: *mut i16 = (if rnd() & 1 != 0 { &raw mut S16A[0] } else { null_mut() }) as *mut i16; let a3: *mut i16 = (if rnd() & 1 != 0 { &raw mut S16A[2] } else { null_mut() }) as *mut i16; m::un_802FE3F8_inner(a0, a1, a2, a3); }
                     2 => {  let a0: i32 = ((0 + (rnd() % 71) as i32)) as i32; let a1: i32 = ((0 + (rnd() % 31) as i32)) as i32; let a2: *mut i16 = (if rnd() & 1 != 0 { &raw mut S16A[0] } else { null_mut() }) as *mut i16; let a3: *mut i16 = (if rnd() & 1 != 0 { &raw mut S16A[2] } else { null_mut() }) as *mut i16; m::un_802FE3F8_noinline(a0, a1, a2, a3); }
-                    3 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::ifPrize_RenderGuarded(a0, a1); }
+                    3 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::ifPrize_RenderGuarded(a0, a1 as isize); }
                     4 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; m::fn_802FE470(a0); }
                     5 => {   m::un_802FE6A8(); }
                     6 => {   m::un_802FE8CC(); }

@@ -372,7 +372,7 @@ pub fn ftCo_8008DCE0(g: G, arg1: i32, facing_dir: f32) {
     let mut msid: i32;
     ext::Fighter_8006CDA4(f, f2i(f.dmg.x1838_percentTemp));
     f.dmg.x18d8.kb_applied1 = kb_applied;
-    ext::pl_80040270(f.player_id as i32, f.is_sub_fighter() as i32, kb_applied);
+    ext::pl_80040270(f.player_idx as i32, f.is_sub_fighter() as i32, kb_applied);
     let scaled_kb_154 = kb_applied * c.x154;
     unsafe { f.mv.co.damage.x0 = f2i(scaled_kb_154) as f32 };
     if unsafe { f.mv.co.damage.x0 } == 0.0 {
@@ -380,7 +380,7 @@ pub fn ftCo_8008DCE0(g: G, arg1: i32, facing_dir: f32) {
     }
     {
         let bonus = ext::Geno_TakeStunBonus(f);
-        ext::diag_geno_stun(f.player_id as i32, f2i(unsafe { f.mv.co.damage.x0 }), bonus);
+        ext::diag_geno_stun(f.player_idx as i32, f2i(unsafe { f.mv.co.damage.x0 }), bonus);
         unsafe { f.mv.co.damage.x0 += bonus as f32 };
     }
     {
@@ -562,7 +562,7 @@ pub fn ftCo_Damage_CheckAirMotion(f: &Fighter) -> bool {
 pub fn ftCo_Ucf084Sdi(f: &Fighter) -> bool {
     melee_core::ct!("ftCo_Ucf084Sdi");
     let c = cd();
-    let port = f.x618_player_id as i32;
+    let port = f.pad_port as i32;
     if ext::Replay_UcfVersion(port) != 84 {
         return false;
     }
@@ -596,7 +596,7 @@ pub fn ftCo_Damage_OnEveryHitlag(g: G) {
         f.cur_pos.y += sy;
         f.active_timer.lstick.x = 254;
         f.active_timer.lstick.y = 254;
-        ext::pl_800401F0(f.player_id as i32, f.is_sub_fighter() as i32, sx, sy);
+        ext::pl_800401F0(f.player_idx as i32, f.is_sub_fighter() as i32, sx, sy);
     }
 }
 
@@ -645,7 +645,7 @@ pub fn ftCo_Damage_OnExitHitlag(g: G) {
         }
         f.cur_pos.x += x;
         f.cur_pos.y += y;
-        ext::pl_800401F0(f.player_id as i32, f.is_sub_fighter() as i32, x, y);
+        ext::pl_800401F0(f.player_idx as i32, f.is_sub_fighter() as i32, x, y);
     }
     if unsafe { f.mv.co.damage.x4 } != 0 {
         unsafe { f.mv.co.damage.x4 = 0 };
@@ -791,7 +791,7 @@ fn inlineB2(g: G) {
 pub static mut WOBBLE: [[(u8, u16); 2]; 6] = [[(0, 0xFFFF); 2]; 6];
 
 fn wobble_slot(f: &Fighter) -> (usize, usize) {
-    ((f.x618_player_id as usize).min(5), (f.is_sub_fighter() != 0) as usize)
+    ((f.pad_port as usize).min(5), (f.is_sub_fighter() != 0) as usize)
 }
 
 /// `fn_800DB790` / `fn_800DBAE4` (capture start): the count starts again.
@@ -816,7 +816,7 @@ fn wobble_check(g: G) -> bool {
         return false;
     }
     let (sf, gf) = (fp(src), fp(grabber));
-    if sf.x618_player_id != gf.x618_player_id {
+    if sf.pad_port != gf.pad_port {
         return false;
     }
     let id = sf.x2074.x2088;
@@ -897,7 +897,7 @@ pub fn ftCo_8008EC90(g: G) {
         }
         if !ext::ftCo_800C44CC(g) && !ext::ftCo_800D2FA4(g) {
             if !fp(g).victim_gobj.is_null() {
-                if fp(g).anon_221b.x221B_b5() == 0 {
+                if fp(g).x221B.x221B_b5() == 0 {
                     let other_gobj = fp(g).victim_gobj;
                     let other_fp = fp(other_gobj);
                     if !ret0 && inlineB1(fp(g)) {
@@ -1049,7 +1049,7 @@ pub fn ftCo_Damage_Anim(g: G) {
     let f = fp(g);
     if !ext::ftAnim_IsFramesRemaining(g) && f.x221C_b6() == 0 {
         if f.ground_or_air == GA_Air {
-            if f.x2224_b2() != 0 {
+            if f.stamina_dead() != 0 {
                 ext::ftCo_80090780(g);
             } else if !inlineC0(g) {
                 ext::ftCo_Fall_Enter(g);
@@ -1141,7 +1141,7 @@ pub fn ftCo_Damage_Coll(g: G) {
     if f.ground_or_air == GA_Ground {
         ext::ft_800848DC(g, ftCo_8008FC94);
     } else if ext::ft_80081DD4(g) {
-        if f.x2224_b2() != 0 {
+        if f.stamina_dead() != 0 {
             ext::ftCo_80097D40(g);
         } else {
             let c = cd();
@@ -1259,7 +1259,7 @@ pub fn ftCo_DamageFly_Phys(g: G) {
         doFlyRoll(g);
     }
     let f = fp(g);
-    if unsafe { !f.x1064_thrownHitbox.anon_134.owner.is_null() } {
+    if unsafe { !f.x1064_thrownHitbox.x134.owner.is_null() } {
         let v = Vec3 { x: f.x8c_kb_vel.x, y: f.x8c_kb_vel.y, z: f.x8c_kb_vel.z };
         if sqrtf(sq_len3_mem(&v)) < cd().x1C8 {
             ext::ftColl_8007AFF8(g);
@@ -1328,7 +1328,7 @@ pub fn ftCo_DamageFlyRoll_Phys(g: G) {
         doFlyRoll(g);
     }
     let f = fp(g);
-    if unsafe { !f.x1064_thrownHitbox.anon_134.owner.is_null() } {
+    if unsafe { !f.x1064_thrownHitbox.x134.owner.is_null() } {
         let v = Vec3 { x: f.x8c_kb_vel.x, y: f.x8c_kb_vel.y, z: f.x8c_kb_vel.z };
         if sqrtf(sq_len3_mem(&v)) < cd().x1C8 {
             ext::ftColl_8007AFF8(g);

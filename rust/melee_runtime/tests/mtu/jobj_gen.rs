@@ -308,6 +308,7 @@ pub fn fill_HSD_AObj(p: &mut HSD_AObj) { unsafe {
     p.rewind_frame = rg();
     p.end_frame = rg();
     p.framerate = rg();
+    p.jobj = pick_HSD_JObj();
 } }
 pub fn hash_HSD_AObj(p: &HSD_AObj) { unsafe {
     if HDBG { println!("B HSD_AObj"); }
@@ -317,7 +318,7 @@ pub fn hash_HSD_AObj(p: &HSD_AObj) { unsafe {
     hm(p.end_frame.to_bits());
     hm(p.framerate.to_bits());
     hm(pi(p.fobj));
-    hm(pi(p.hsd_obj));
+    hm(pi(p.jobj));
 } }
 
 pub fn fill_HSD_SList(p: &mut HSD_SList) { unsafe {

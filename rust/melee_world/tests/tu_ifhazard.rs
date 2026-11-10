@@ -40,7 +40,7 @@ fn ifhazard_matches_c() {
                     2 => {   m::un_802FD668(); }
                     3 => {   m::un_802FD674(); }
                     4 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; m::fn_802FD680(a0); }
-                    5 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802FD6CC(a0, a1); }
+                    5 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: i32 = (fv()) as i32; m::fn_802FD6CC(a0, a1 as isize); }
                     6 => {   m::un_802FD704(); }
                     7 => {  let a0: *mut DynamicModelDesc = g::pick_DynamicModelDesc(0) as *mut DynamicModelDesc; let a1: i32 = (fv()) as i32; m::un_802FD708(a0, a1); }
                     8 => {  let a0: *mut DynamicModelDesc = g::pick_DynamicModelDesc(0) as *mut DynamicModelDesc; m::un_802FD8A0(a0); }

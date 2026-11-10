@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::{Once, RwLock};
 
 use melee_types::{
-    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_GObjEvent, HSD_Generator, HSD_JObj, HSD_PadStatus, HSD_psAppSRT, Item, StageCallbacks, StageCallbacks_anon_135,
+    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_GObjEvent, HSD_Generator, HSD_JObj, HSD_PadStatus, HSD_psAppSRT, Item, StageCallbacks, StageCallbacks_x10,
     StageData, StageInfo, Vec3, CollLine_Ceiling, CollLine_Floor, CollLine_LeftWall, CollLine_RightWall, HSD_PAD_A,
     JOBJ_HIDDEN, JOBJ_MTX_DIRTY, JOBJ_MTX_INDEP_SRT, JOBJ_USER_DEF_MTX, QuakeKind_Small, Gr_Kind_TPeach,
 };
@@ -79,28 +79,28 @@ fn init_tables() {
             callback1: Some(grTPeach_80222A6C),
             gobj_proc: Some(grTPeach_80222A74),
             callback3: Some(grTPeach_80222A78),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[1] = StageCallbacks {
             on_init: Some(stageGObj1_OnInit),
             callback1: Some(grTPeach_80222B5C),
             gobj_proc: Some(stageGObj1_GObjProc),
             callback3: Some(grTPeach_80222B84),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[2] = StageCallbacks {
             on_init: Some(stageGObj2_OnInit),
             callback1: Some(grTPeach_80222ACC),
             gobj_proc: Some(stageGObj2_GObjProc),
             callback3: Some(grTPeach_80222B08),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be(0xC0000000) },
+            x10: StageCallbacks_x10 { flags: u32::to_be(0xC0000000) },
         };
         t[3] = StageCallbacks {
             on_init: None,
             callback1: None,
             gobj_proc: None,
             callback3: None,
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         CALLBACKS.write(t);
         let mut sd: StageData = core::mem::zeroed();
@@ -233,7 +233,7 @@ pub unsafe extern "C" fn grTPeach_80222B84(gobj: *mut HSD_GObj) {
     pub extern "C" fn grTPeach_80222B5C(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grTPeach_80222B88 (gr/grtpeach.c:168)
-    pub extern "C" fn grTPeach_80222B88(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grTPeach_80222B88(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grTPeach_80222B90 (gr/grtpeach.c:173)
     pub extern "C" fn grTPeach_80222B90(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

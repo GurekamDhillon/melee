@@ -39,7 +39,7 @@ pub fn fighter_804d6520() -> &'static Fighter_804D6520_t {
 #[inline]
 pub fn script_value(fp: &Fighter, field: i32, base: f32) -> f32 {
     match unsafe { SCRIPT_MOD_VALUE } {
-        Some(f) => f(fp.player_id as i32, field, base),
+        Some(f) => f(fp.player_idx as i32, field, base),
         None => base,
     }
 }

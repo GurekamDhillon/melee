@@ -265,7 +265,7 @@ pub fn ftSamus_ClearThrowFlagsUnk(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftSamus_ClearThrowFlagsUnk");
     unsafe {
         let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).x2210.throw_flags = 0_u32;
         (*fp).accessory4_cb = Some(crate::chars::cb::ftsamusspecialn__ftSs_SpecialS_8012A074);
     }
 }

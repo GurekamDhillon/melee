@@ -87,9 +87,9 @@ pub fn ftPc_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*fp).set_can_walljump(1);
         crate::tu::ftpikachu::ftPk_Init_OnLoadForPichu(fp);
         let attrs = (*fp).dat_attrs as *const ftPichuAttributes;
-        ext::it_8026B3F8(*items.add(0), (*attrs).xDC as i32);
-        ext::it_8026B3F8(*items.add(1), (*attrs).x14 as i32);
-        ext::it_8026B3F8(*items.add(2), (*attrs).x18 as i32);
+        ext::it_8026B3F8((*items.add(0)).article as *mut ::core::ffi::c_void, (*attrs).xDC as i32);
+        ext::it_8026B3F8((*items.add(1)).article as *mut ::core::ffi::c_void, (*attrs).x14 as i32);
+        ext::it_8026B3F8((*items.add(2)).article as *mut ::core::ffi::c_void, (*attrs).x18 as i32);
     }
 }
 
@@ -98,7 +98,7 @@ pub fn ftPc_Init_OnDeath(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         st::ftParts_80074A4C(gobj, 0, 0);
-        match (*fp).x619_costume_id {
+        match (*fp).costume_id {
             0 => {
                 st::ftParts_80074A4C(gobj, 1, -1);
                 st::ftParts_80074A4C(gobj, 2, -1);

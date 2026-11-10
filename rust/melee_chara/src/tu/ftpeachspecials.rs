@@ -120,7 +120,7 @@ pub fn reset(gobj: G) {
         (*fp).self_vel.x = 0.0;
         (*fp).x6A4_transNOffset.x = 0.0;
         if ((*fp).active_sticky.lstick.x as i32) < (*da).x30 {
-            (*fp).x2070.anon_0.set_count_thrown_items(1);
+            (*fp).x2070.x0.set_count_thrown_items(1);
             (*fp).mv.pe.specials.x0 = 1;
         } else {
             (*fp).mv.pe.specials.x0 = 0;

@@ -77,7 +77,7 @@ pub fn on21EC(gobj: *mut HSD_GObj) {
         if melee_fighter::ftcommon::abs_c((*fp).input.lstick[0].x) >= cd.dash_smash_stick_threshold
             && ((*fp).active_sticky.lstick.x as f32) < (cd.dash_smash_window as f32 + cd.x44)
         {
-            (*fp).x2070.anon_0.set_count_thrown_items(1);
+            (*fp).x2070.x0.set_count_thrown_items(1);
             (*fp).u.lk.x4 = 1;
         } else {
             (*fp).u.lk.x4 = 0;
@@ -99,12 +99,12 @@ pub fn ftLk_SepcialS_Get2219b5(gobj: *mut HSD_GObj) -> bool {
 
 pub fn ftLk_SpecialS_Is2071b0_5to13(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftLk_SpecialS_Is2071b0_5to13");
-    unsafe { matches!((*fpp(gobj)).x2070.anon_0.x2071_b0_3(), 5..=13) }
+    unsafe { matches!((*fpp(gobj)).x2070.x0.x2071_b0_3(), 5..=13) }
 }
 
 pub fn ftLk_SpecialS_Is2071b0_1to13(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftLk_SpecialS_Is2071b0_1to13");
-    unsafe { matches!((*fpp(gobj)).x2070.anon_0.x2071_b0_3(), 1..=13) }
+    unsafe { matches!((*fpp(gobj)).x2070.x0.x2071_b0_3(), 1..=13) }
 }
 
 pub fn ftLk_SpecialS_RemoveBoomerang0(gobj: *mut HSD_GObj) -> bool {
@@ -210,7 +210,7 @@ pub fn ftLk_SpecialS_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftLk_SpecialS_Enter");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         (*fp).x21EC = Some(cb_on21EC);
         if (*fp).u.lk.used_boomerang != 0 {
@@ -227,7 +227,7 @@ pub fn ftLk_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftLk_SpecialAirS_Enter");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).anon_2210.throw_flags = 0;
+        (*fp).x2210.throw_flags = 0;
         (*fp).cmd_vars[0] = 0;
         (*fp).x21EC = Some(cb_on21EC);
         if (*fp).u.lk.used_boomerang != 0 {

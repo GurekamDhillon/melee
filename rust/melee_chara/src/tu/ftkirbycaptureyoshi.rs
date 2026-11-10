@@ -64,8 +64,8 @@ pub fn fn_8010A930(gobj: *mut HSD_GObj, attacker_gobj: *mut HSD_GObj) {
         ext::ftCo_ReleaseItemAndVictim(gobj);
         (*fp).x1A5C = attacker_gobj;
         (*fp).victim_gobj = attacker_gobj;
-        (*fp).anon_221b.set_x221B_b5(0);
-        (*fp).anon_221b.set_x221B_b7(0);
+        (*fp).x221B.set_x221B_b5(0);
+        (*fp).x221B.set_x221B_b7(0);
         (*fp).facing_dir = -(*attacker_fp).facing_dir;
         ext::ftCo_800DB368(attacker_fp, fp);
         st::Fighter_ChangeMotionState(gobj, 0x14B, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());

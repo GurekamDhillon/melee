@@ -89,7 +89,7 @@ unsafe fn itNesspkfirepillar_INLINE_SpawnItem_Init(spawnitem: *mut SpawnItem, of
     (*spawnitem).x3C_damage = 0;
     (*spawnitem).x0_parent_gobj = parent2_gobj;
     (*spawnitem).x4_parent_gobj2 = parent1_gobj;
-    (*spawnitem).x44_flag.anon_0.set_b0(1);
+    (*spawnitem).x44_flag.x0.set_b0(1);
     (*spawnitem).x40 = 0;
 }
 

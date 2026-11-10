@@ -200,7 +200,7 @@ pub unsafe extern "C" fn itFire_UnkMotion0_Phys(gobj: *mut Item_GObj) {
         ext::it_80273454(gobj);
         (*ip).x40_vel.y = (*a).x4;
         itFire_UnkMotion0_Phys_inline(gobj);
-        (*ip).xDD1_flag.anon_0.set_b1(1);
+        (*ip).xDD1_flag.x0.set_b1(1);
     }
 }
 

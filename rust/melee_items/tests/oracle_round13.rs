@@ -86,7 +86,7 @@ pub struct Ext {
     sa: [u32; 256],
     attr: ItemAttr,
     art: Article,
-    unk: itUnkAttributes,
+    unk: itUnkAttributes_legacy,
     common: ItemCommonData,
 }
 
@@ -99,7 +99,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
     let mut ext = Box::new(Ext {
         attr: ItemAttr::zeroed(),
         art: Article::zeroed(),
-        unk: itUnkAttributes::zeroed(),
+        unk: itUnkAttributes_legacy::zeroed(),
         common: ItemCommonData::zeroed(),
         sa: [0; 256],
     });
@@ -114,7 +114,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         let x = &mut *ext;
         x.attr = ItemAttr::zeroed();
         x.art = Article::zeroed();
-        x.unk = itUnkAttributes::zeroed();
+        x.unk = itUnkAttributes_legacy::zeroed();
         x.common = ItemCommonData::zeroed();
         x.attr.set_x0_is_heavy(g.r() as u8);
         x.attr.set_x0_78(g.r() as u8);
@@ -122,7 +122,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         x.attr.x1C_damage_mul = g.rf();
         x.unk.x0_float = g.rf();
         x.unk.x4_float = g.rf();
-        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes as *mut _;
+        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes_legacy as *mut _;
         x.art.x8_hurtbones = if g.r() & 1 != 0 { g.ga as *mut _ } else { null_mut() };
         x.common.xB8 = g.rf();
         x.common.xBC = g.rf();
@@ -371,7 +371,7 @@ fn r11_list(w: &mut World, ip: &mut Item, g: &mut Gen) -> *mut HSD_GObj {
         let li = &mut w.li[k];
         li.xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         li.ground_or_air = if g.r() & 3 != 0 { GA_Ground } else { GA_Air };
-        unsafe { li.xDD1_flag.anon_0.set_b0((g.r() & 3 == 0) as u8) };
+        unsafe { li.xDD1_flag.x0.set_b0((g.r() & 3 == 0) as u8) };
         w.la[k].set_x0_is_heavy((g.r() & 3 != 0) as u8);
         li.xCC_item_attr = &mut w.la[k];
         li.x70_nudge.x = r7_c(g);
@@ -397,7 +397,7 @@ fn r11_list(w: &mut World, ip: &mut Item, g: &mut Gen) -> *mut HSD_GObj {
             w.li[0].xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         }
         w.li[0].ground_or_air = GA_Ground;
-        unsafe { w.li[0].xDD1_flag.anon_0.set_b0(0) };
+        unsafe { w.li[0].xDD1_flag.x0.set_b0(0) };
         w.la[0].set_x0_is_heavy(1);
     }
     w.gl[0] = unsafe { core::ptr::read(&*w.g) };
@@ -422,7 +422,7 @@ fn r11_trk(w: &mut World, ip: &mut Item, g: &mut Gen) {
     let t = &mut *w.track;
     *t = Item_FtTrack::zeroed();
     t.count = ((g.r() >> 16) % 12) as usize;
-    unsafe { t.x154.anon_0.set_b0((g.r() & 3 == 0) as u8) };
+    unsafe { t.x154.x0.set_b0((g.r() & 3 == 0) as u8) };
     for k in 0..11 {
         r11_ecb(&mut t.ecb_offset_arr[k], g);
         t.ft_pos_arr[k].x = g.rm() / 4.0;
@@ -472,7 +472,7 @@ fn r12_list(g: &mut Gen) -> (L12, *mut HSD_GObj) {
     let gb = l.gl.as_mut_ptr();
     for k in 0..3 {
         let li = &mut l.li[k];
-        li.hold_kind = (3 + (g.r() >> 16) % 6) as i32;
+        li.hold_kind = (3 + (g.r() >> 16) % 6) as u32;
         li.grab_victim = if g.r() & 3 != 0 { null_mut() } else { gb };
         li.xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         li.owner = if g.r() & 1 != 0 { null_mut() } else { unsafe { gb.add(1) } };
@@ -536,7 +536,7 @@ fn r12_ini(e: HSD_GObjInteraction) -> u32 {
 fn r12_atk(ip: &Item) -> u32 {
     let mut h = hmix(hmix(0, ip.xD88_attackID as u32), ip.xD8C_attack_instance as u32);
     let w = unsafe { ip.xD90.x2070_int } as u32;
-    h = hmix(hmix(hmix(h, w), ip.xD94.x.to_bits()), ip.xD94.y.to_bits());
+    h = hmix(hmix(hmix(h, w), ip.xD94.x.cast_unsigned()), ip.xD94.y.cast_unsigned());
     h = hmix(hmix(hmix(h, ip.xD9C.x as u32), ip.xD9C.y as u32), ip.xDA4_word);
     hmix(h, ip.xDA8_short as u32)
 }
@@ -583,7 +583,7 @@ fn r13_ll(ip: &mut Item, g: &mut Gen, x: &mut Ext) -> Box<Vec> {
     v.x = g.rf();
     v.y = g.rf();
     v.z = g.rf();
-    unsafe { (*(x.sa.as_mut_ptr() as *mut itLikelikeAttributes)).x0.x0_f32 = &mut *v };
+    unsafe { (*(x.sa.as_mut_ptr() as *mut itLikelikeAttributes)).x0 = (&mut *v as *mut _ as *mut core::ffi::c_void) as *mut itSpecialAttrsHead };
     ip.facing_dir = r12_face(g);
     v
 }
@@ -610,7 +610,7 @@ cases! { hand_match_c, 29;
     3306 R13_FREEZE_CLEARLINKED |ip, g, ov, x| { let l = r13_link(ip, g); it_freeze_clear_linked_item(ip); r13_link_h(ip, &l) };
     3307 R13_FREEZE_L17_DESTROYED |ip, g, ov, x| { let l = r13_link(ip, g); it_freeze_logic17_destroyed(ip); r13_link_h(ip, &l) };
     3308 R13_80299FB4_GET |ip, g, ov, x| { let mut gg = HSD_GObj::zeroed(); let ipp: *mut Item = ip; gg.user_data = ipp as *mut _; (it_80299fb4_get(&mut gg) == ipp) as u32 };
-    3309 R13_HEART_L8_DESTROYED |ip, g, ov, x| { let mut gm: Box<UnkAllstarData> = Box::new(core::mem::zeroed()); r13_gm_fill(&mut gm, g); r4_rev(ip, 4); ip.xDD4_itemVar.heart.xDD8.anon_0.set_b0(((g.r() >> 16) & 1) as _); ip.xDD4_itemVar.heart.xDDC = ((g.r() >> 16) % 12) as i32; it_heart_logic8_destroyed(ip, &mut gm); r4_rev(ip, 4); r13_gm_h(&gm) };
+    3309 R13_HEART_L8_DESTROYED |ip, g, ov, x| { let mut gm: Box<UnkAllstarData> = Box::new(core::mem::zeroed()); r13_gm_fill(&mut gm, g); r4_rev(ip, 4); ip.xDD4_itemVar.heart.xDD8.x0.set_b0(((g.r() >> 16) & 1) as _); ip.xDD4_itemVar.heart.xDDC = ((g.r() >> 16) % 12) as i32; it_heart_logic8_destroyed(ip, &mut gm); r4_rev(ip, 4); r13_gm_h(&gm) };
     3310 R13_80293660 |ip, g, ov, x| { let idx = ((g.r() >> 16) % 6) as i32; let mut arts: [*mut Article; 40] = [null_mut(); 40]; let mut art = Article::zeroed(); let mut aj: Box<[HSD_AnimJoint; 8]> = Box::new(core::mem::zeroed()); let mut ka: [KinokoAnim; 8] = core::mem::zeroed(); for k in 0..8u32 { ka[k as usize].joint = &mut aj[((k * 5).wrapping_add(g.r()) % 8) as usize]; } art.x4_specialAttributes = ka.as_mut_ptr() as *mut _; arts[It_Kind_Kinoko as usize] = &mut art; it_80293660(arts.as_ptr(), idx).offset_from(aj.as_ptr()) as u32 };
     3311 R13_KYASARIN_GETCOLL |ip, g, ov, x| { let ipp = ip as *mut Item as *mut u8; (it_kyasarin_get_coll_data(ip) as *mut u8).offset_from(ipp) as u32 };
     3312 R13_KYASARIN_M9_COLL |ip, g, ov, x| { it_kyasarin_unk_motion9_coll(ip) as u32 };

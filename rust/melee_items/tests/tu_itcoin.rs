@@ -16,7 +16,7 @@ static mut SATTR: [[u32; 19]; 2] = [[0; 19]; 2];
 
 unsafe fn setup_stem() {
 
-{ for q in 0..2usize { ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut c_void; for w in 0..19usize { *(&raw mut SATTR[q] as *mut f32).add(w) = rw(); } } } { for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } }
+{ for q in 0..2usize { ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut _; for w in 0..19usize { *(&raw mut SATTR[q] as *mut f32).add(w) = rw(); } } } { for q in 0..8usize { JO[q].flags &= !(JOBJ_USE_QUATERNION as u32); } }
 }
 
 unsafe fn hash_stem() {

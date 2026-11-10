@@ -239,7 +239,7 @@ pub mod ext {
     fn it_8026BB88(a0: *mut HSD_GObj, a1: *mut Vec) => unsafe { crate::tu::it_26B1::it_8026BB88(a0, a1 as _) };
     fn it_8026BDB4(a0: *mut HSD_GObj) => unsafe { crate::tu::it_26B1::it_8026BDB4(a0) };
     fn it_8026E4D0(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E4D0(a0, a1) };
-    fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
+    fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
     fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32) => unsafe { crate::itlib3::it_80272860(&mut *((*a0).user_data as *mut Item), a1, a2) };
     fn it_80272980(a0: *mut HSD_GObj) => unsafe { crate::tu::it_2725::it_80272980(a0) };
     fn it_80272DE4(a0: *mut HSD_JObj, a1: f32) => unsafe { crate::tu::it_2725::it_80272DE4(a0, a1) };
@@ -375,7 +375,7 @@ pub mod ext {
         pub unsafe extern "C" fn it_2725_Logic38_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic38_Spawned(a0) }
         pub unsafe extern "C" fn it_2725_Logic42_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic42_Spawned(a0) }
         pub unsafe extern "C" fn it_2725_Logic43_Spawned(a0: *mut HSD_GObj) { super::it_2725_Logic43_Spawned(a0) }
-        pub unsafe extern "C" fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) { super::it_8026EECC(a0, a1) }
+        pub unsafe extern "C" fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) { super::it_8026EECC(a0, a1) }
         pub unsafe extern "C" fn it_802C8F4C(a0: *mut HSD_GObj) { super::it_802C8F4C(a0) }
         pub unsafe extern "C" fn it_802C8FC4(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::it_802C8FC4(a0, a1) }
         pub unsafe extern "C" fn it_802C9588(a0: *mut HSD_GObj) { super::it_802C9588(a0) }
@@ -955,7 +955,7 @@ pub unsafe extern "C" fn it_8027AB64(item_gobj: *mut HSD_GObj) -> bool {
         spawn.kind += It_PKind_Start;
         spawn.x0_parent_gobj = (*item2).owner;
         spawn.x4_parent_gobj2 = item_gobj;
-        spawn.x44_flag.anon_0.set_b0(1);
+        spawn.x44_flag.x0.set_b0(1);
         spawn.x40 = 0;
         if spawn.kind == It_PKind_Cerebi {
             ext::gm_80172C04();
@@ -1023,7 +1023,7 @@ pub unsafe extern "C" fn it_8027B070(item_gobj: *mut HSD_GObj, owner_gobj: *mut 
     (*item).xD90 = (*fighter).x2070;
     (*item).xD94 = (*fighter).x2074.x2074_vec;
     (*item).xD9C = (*fighter).x2074.x207C;
-    (*item).xDA4_word = (*fighter).x2074.anon_10.x2084;
+    (*item).xDA4_word = (*fighter).x2074.x10.x2084;
     (*item).xDA8_short = (*fighter).x2074.x2088;
 }
 
@@ -1051,7 +1051,7 @@ pub unsafe extern "C" fn it_8027B0C4(item_gobj: *mut HSD_GObj, spawn: *mut Spawn
         (*spawn_item).xD88_attackID = 1;
         (*spawn_item).xD8C_attack_instance = 0;
         (*spawn_item).xD90 = sp24;
-        ext::ft_80089768(&raw mut (*spawn_item).xD94);
+        ext::ft_80089768((&raw mut (*spawn_item).xD94) as *mut Vec2);
         (*spawn_item).xDA8_short = 0;
     }
 }
@@ -1070,10 +1070,10 @@ pub unsafe extern "C" fn it_8027B1F4(item_gobj: *mut HSD_GObj) {
         let temp_r3 = ext::ft_800898A8((*item).owner);
         (*item).xD94 = (*temp_r3).x2074_vec;
         (*item).xD9C = (*temp_r3).x207C;
-        (*item).xDA4_word = (*temp_r3).anon_10.x2084;
+        (*item).xDA4_word = (*temp_r3).x10.x2084;
         return;
     }
-    ext::ft_80089768(&raw mut (*item).xD94);
+    ext::ft_80089768((&raw mut (*item).xD94) as *mut Vec2);
 }
 
 /// `it_8027B288`: sets the item's attack data word `arg1`, refreshing the attack id when it changed.
@@ -1082,7 +1082,7 @@ pub unsafe extern "C" fn it_8027B288(item_gobj: *mut HSD_GObj, arg1: u32) {
     let item = item_of(item_gobj);
     let mut sp14: Struct2070 = core::mem::zeroed();
     sp14.x2070_int = arg1 as i32;
-    if sp14.anon_0.x2073 == 0 || sp14.anon_0.x2073 != (*item).xD90.anon_0.x2073 {
+    if sp14.x0.x2073 == 0 || sp14.x0.x2073 != (*item).xD90.x0.x2073 {
         (*item).xDA8_short = ext::plAttack_80037B08() as _;
     }
     (*item).xD90 = sp14;
@@ -1090,10 +1090,10 @@ pub unsafe extern "C" fn it_8027B288(item_gobj: *mut HSD_GObj, arg1: u32) {
         let temp_r3 = ext::ft_800898A8((*item).owner);
         (*item).xD94 = (*temp_r3).x2074_vec;
         (*item).xD9C = (*temp_r3).x207C;
-        (*item).xDA4_word = (*temp_r3).anon_10.x2084;
+        (*item).xDA4_word = (*temp_r3).x10.x2084;
         return;
     }
-    ext::ft_80089768(&raw mut (*item).xD94);
+    ext::ft_80089768((&raw mut (*item).xD94) as *mut Vec2);
 }
 
 /// `it_8027B330`: sets the item's attack id to `arg1` (a new attack instance unless it repeats).
@@ -1110,7 +1110,7 @@ pub unsafe extern "C" fn it_8027B330(item_gobj: *mut HSD_GObj, arg1: u32) {
 pub unsafe extern "C" fn it_8027B378(fighter_gobj: *mut HSD_GObj, item_gobj: *mut HSD_GObj, arg2: f32) {
     melee_core::ct!("it_8027B378");
     if ext::it_8026B6C8(item_gobj) != 0 {
-        let temp_r30 = (*ext::ft_80089884(fighter_gobj)).anon_0.x2073;
+        let temp_r30 = (*ext::ft_80089884(fighter_gobj)).x0.x2073;
         let temp_r31 = ext::ftLib_IsSubFighter(fighter_gobj);
         let temp_r3 = ext::ftLib_GetPlayerIndex(fighter_gobj) as u16;
         ext::pl_8003EB30(arg2, temp_r3 as i32, temp_r31, 6, 0, temp_r30 as i32);
@@ -1126,7 +1126,7 @@ pub unsafe extern "C" fn it_8027B408(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
             let owner = (*item1).owner;
             let temp_r31 = ext::ftLib_IsSubFighter(owner);
             let temp_r3 = ext::ftLib_GetPlayerIndex(owner) as u16;
-            ext::pl_8003EB30(arg8, temp_r3 as i32, temp_r31, 6, 0, (*item1).xD90.anon_0.x2073 as i32);
+            ext::pl_8003EB30(arg8, temp_r3 as i32, temp_r31, 6, 0, (*item1).xD90.x0.x2073 as i32);
         }
     }
 }
@@ -1136,7 +1136,7 @@ pub unsafe extern "C" fn it_8027B4A4(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
     melee_core::ct!("it_8027B4A4");
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let temp_r31 = ext::ft_800898A8(item_gobj1) as *mut c_void;
-        ext::pl_800384DC(item_gobj1, (*ext::ft_80089884(item_gobj1)).anon_0.x2073 as i32, temp_r31);
+        ext::pl_800384DC(item_gobj1, (*ext::ft_80089884(item_gobj1)).x0.x2073 as i32, temp_r31);
     }
 }
 
@@ -1146,7 +1146,7 @@ pub unsafe extern "C" fn it_8027B508(item_gobj1: *mut HSD_GObj, item_gobj2: *mut
     if ext::it_8026B6C8(item_gobj2) != 0 {
         let item1 = item_of(item_gobj1);
         if ext::ftLib_IsFighter((*item1).owner) != 0 {
-            ext::pl_800384DC((*item1).owner, (*item1).xD90.anon_0.x2073 as i32, &raw mut (*item1).xD94 as *mut c_void);
+            ext::pl_800384DC((*item1).owner, (*item1).xD90.x0.x2073 as i32, &raw mut (*item1).xD94 as *mut c_void);
         }
     }
 }
@@ -1175,7 +1175,7 @@ pub unsafe fn it_8027b070(ip: &mut Item, owner_gobj: *mut HSD_GObj) {
     ip.xD90 = fp.x2070;
     ip.xD94 = fp.x2074.x2074_vec;
     ip.xD9C = fp.x2074.x207C;
-    ip.xDA4_word = fp.x2074.anon_10.x2084;
+    ip.xDA4_word = fp.x2074.x10.x2084;
     ip.xDA8_short = fp.x2074.x2088;
 }
 

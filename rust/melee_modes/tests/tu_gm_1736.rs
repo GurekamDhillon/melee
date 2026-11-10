@@ -738,9 +738,9 @@ unsafe fn run_gm_80173DE4(seed: u64) -> [u64; 3] {
             AB_gm_80173DE4_0[e].player_standings[i2].pkind = rt::draw_range(&mut rt::ST, 0, 3) as _;
             AB_gm_80173DE4_0[e].player_standings[i2].ckind = rt::draw_int(&mut rt::ST) as _;
             AB_gm_80173DE4_0[e].player_standings[i2].ftkind = rt::draw_int(&mut rt::ST) as _;
-            AB_gm_80173DE4_0[e].player_standings[i2].anon_3.anon_0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
-            AB_gm_80173DE4_0[e].player_standings[i2].anon_3.anon_0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
-            AB_gm_80173DE4_0[e].player_standings[i2].anon_3.anon_0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
+            AB_gm_80173DE4_0[e].player_standings[i2].x3_u.x0.set_x3_b0((rt::draw_int(&mut rt::ST) & 0x3F) as _);
+            AB_gm_80173DE4_0[e].player_standings[i2].x3_u.x0.set_x3_b6((rt::draw_int(&mut rt::ST) & 0x1) as _);
+            AB_gm_80173DE4_0[e].player_standings[i2].x3_u.x0.set_x3_b7((rt::draw_int(&mut rt::ST) & 0x1) as _);
             AB_gm_80173DE4_0[e].player_standings[i2].x4 = rt::draw_int(&mut rt::ST) as _;
             AB_gm_80173DE4_0[e].player_standings[i2].is_big_loser = rt::draw_int(&mut rt::ST) as _;
             AB_gm_80173DE4_0[e].player_standings[i2].is_small_loser = rt::draw_int(&mut rt::ST) as _;
@@ -753,7 +753,7 @@ unsafe fn run_gm_80173DE4(seed: u64) -> [u64; 3] {
             for i3 in 0..4 {
                 AB_gm_80173DE4_0[e].player_standings[i2].kills[i3] = rt::draw_int(&mut rt::ST) as _;
             }
-            AB_gm_80173DE4_0[e].player_standings[i2].x18 = rt::draw_int(&mut rt::ST) as _;
+            AB_gm_80173DE4_0[e].player_standings[i2].kills[4] = rt::draw_int(&mut rt::ST) as _;
             AB_gm_80173DE4_0[e].player_standings[i2].x1C = rt::draw_int(&mut rt::ST) as _;
             AB_gm_80173DE4_0[e].player_standings[i2].x20 = rt::draw_int(&mut rt::ST) as _;
             AB_gm_80173DE4_0[e].player_standings[i2].x24 = rt::draw_int(&mut rt::ST) as _;
@@ -841,9 +841,9 @@ unsafe fn run_gm_80173DE4(seed: u64) -> [u64; 3] {
             rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].pkind as u64);
             rt::h_i(AB_gm_80173DE4_0[e].player_standings[i2].ckind as i64);
             rt::h_i(AB_gm_80173DE4_0[e].player_standings[i2].ftkind as i64);
-            rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].anon_3.anon_0.x3_b0() as u64);
-            rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].anon_3.anon_0.x3_b6() as u64);
-            rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].anon_3.anon_0.x3_b7() as u64);
+            rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].x3_u.x0.x3_b0() as u64);
+            rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].x3_u.x0.x3_b6() as u64);
+            rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].x3_u.x0.x3_b7() as u64);
             rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].x4 as u64);
             rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].is_big_loser as u64);
             rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].is_small_loser as u64);
@@ -856,7 +856,7 @@ unsafe fn run_gm_80173DE4(seed: u64) -> [u64; 3] {
             for i3 in 0..4 {
                 rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].kills[i3] as u64);
             }
-            rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].x18 as u64);
+            rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].kills[4] as u64);
             rt::h_i(AB_gm_80173DE4_0[e].player_standings[i2].x1C as i64);
             rt::h_u(AB_gm_80173DE4_0[e].player_standings[i2].x20 as u64);
             rt::h_i(AB_gm_80173DE4_0[e].player_standings[i2].x24 as i64);

@@ -188,7 +188,7 @@ pub fn ftCo_800D3158(g: G) -> bool {
     if f.cur_pos.y > ext::Stage_GetBlastZoneTopOffset()
         && (f.ground_or_air == GA_Ground || f.x2222_b3() != 0 || f.x8c_kb_vel.y > cd().x4F0)
     {
-        if ext::Player_GetMoreFlagsBit5(f.player_id as i32) != 0 {
+        if ext::Player_GetMoreFlagsBit5(f.player_idx as i32) != 0 {
             ftCo_800D3E40(g);
         } else {
             let r = h::hsd_randi(100) + 1;
@@ -218,10 +218,10 @@ pub fn ftCo_800D331C(g: G) {
     melee_core::ct!("ftCo_800D331C");
     let f = fp(g);
     if !f.victim_gobj.is_null() {
-        if f.anon_221b.x221B_b5() != 0 {
+        if f.x221B.x221B_b5() != 0 {
             let v = fp(f.victim_gobj);
             if v.is_sub_fighter() == 0 {
-                v.x2180 = f.player_id as i32;
+                v.x2180 = f.player_idx as i32;
             }
         } else if f.is_sub_fighter() == 0 {
             { let __a1 = (h::ftlib_issubfighter(f.victim_gobj)) as i32; let __a2 = (h::ftlib_getplayerindex(f.victim_gobj) as i32) as i32; ext::pl_8004065C(__a2, __a1) };
@@ -243,8 +243,8 @@ pub fn ftCo_800D331C(g: G) {
         h::item_8026a8ec(f.item_gobj);
         let f = fp(g);
         f.item_gobj = core::ptr::null_mut();
-        h::pl_8003ea08(f.player_id as i32, f.is_sub_fighter() as i32);
-        ext::pl_8003EA74((f.player_id as i32) as i32, (f.is_sub_fighter() as i32) as i32);
+        h::pl_8003ea08(f.player_idx as i32, f.is_sub_fighter() as i32);
+        ext::pl_8003EA74((f.player_idx as i32) as i32, (f.is_sub_fighter() as i32) as i32);
     }
     if !fp(g).x197C.is_null() {
         ext::ftCommon_8007F8E8(crate::mtu_ptr::ptr(&(g)));
@@ -266,7 +266,7 @@ pub fn ftCo_800D331C(g: G) {
     let f = fp(g);
     unsafe {
         f.mv.co.unk_800D331C.x6C = f.motion_id as i32;
-        f.mv.co.unk_800D331C.x70 = f.x2070.anon_0.x2073 as i32;
+        f.mv.co.unk_800D331C.x70 = f.x2070.x0.x2073 as i32;
     }
 }
 
@@ -274,7 +274,7 @@ pub fn ftCo_800D331C(g: G) {
 pub fn ftCo_800D34E0(g: G) {
     melee_core::ct!("ftCo_800D34E0");
     let f = fp(g);
-    let slot = f.player_id as i32;
+    let slot = f.player_idx as i32;
     let sub = f.is_sub_fighter() as i32;
     ext::Player_SetFallsByIndex((slot) as i32, (sub) as i32, (ext::Player_GetFallsByIndex((slot) as i32, (sub) as i32) + 1) as i32);
     ext::plStale_ResetStaleMoveTableForPlayer(slot);
@@ -314,7 +314,7 @@ pub fn ftCo_800D35FC(f: &mut Fighter) {
     let mut cur = h::plink_head(HSD_GOBJ_PLINK_FIGHTER);
     while !cur.is_null() {
         let c = unsafe { (*cur).user_data as *mut Fighter };
-        if c != me && unsafe { (*c).x221F_b3() } == 0 {
+        if c != me && unsafe { (*c).is_sleeping() } == 0 {
             ext::ftCommon_8007EBAC(crate::mtu_ptr::ptr(&(unsafe { &mut *c })), (6) as u32, (cd().x4FC) as u32);
         }
         cur = unsafe { (*cur).next };
@@ -329,7 +329,7 @@ fn dead_side(g: G, msid: i32, sfx: i32, vertical: bool, gfx_angle: f32, last: fn
     h_change_motion(g, msid, 0, 0.0, 1.0, 0.0);
     dead_flags(g);
     let f = fp(g);
-    ext::pl_8003DF44((f.player_id as i32) as i32, (f.is_sub_fighter() as i32) as i32);
+    ext::pl_8003DF44((f.player_idx as i32) as i32, (f.is_sub_fighter() as i32) as i32);
 
     let f = fp(g);
     let sfxs = unsafe { &*(*f.ft_data).x4C_sfx };
@@ -381,7 +381,7 @@ fn dead_flags(g: G) {
 /// The KO blast GFX in the player's colours (0x42C in some team modes, else 0x42B).
 fn spawn_ko_gfx(g: G, pos: &Vec3, angle: &f32) {
     let f = fp(g);
-    let off = ((ext::Player_GetUnk45((f.player_id as i32) as i32) as u32) << 2) as usize;
+    let off = ((ext::Player_GetUnk45((f.player_idx as i32) as i32) as u32) << 2) as usize;
     let (c1, c2) = unsafe {
         let b1 = ext::Fighter_804D650C.add(off);
         let b2 = ext::Fighter_804D6508.add(off);
@@ -390,7 +390,7 @@ fn spawn_ko_gfx(g: G, pos: &Vec3, angle: &f32) {
             ((*b2 as i32) << 16) | ((*b2.add(1) as i32) << 8) | *b2.add(2) as i32,
         )
     };
-    let kind = if ext::gm_801693BC(f.player_id as i32) { 0x42C } else { 0x42B };
+    let kind = if ext::gm_801693BC(f.player_idx as i32) { 0x42C } else { 0x42B };
     super::ft_0d4d::ext::efSync_Spawn(
         kind,
         g,
@@ -468,7 +468,7 @@ fn dead_up_star(g: G, msid: i32) {
     ext::ftCommon_8007EFC0(crate::mtu_ptr::ptr(&(f)), (1) as u32);
     let s = unsafe { (*(*f.ft_data).x4C_sfx).xC };
     ext::ft_800881D8(crate::mtu_ptr::ptr(&(f)), (s) as i32, (127) as u8, (64) as u8);
-    ext::pl_8003DF44((f.player_id as i32) as i32, (f.is_sub_fighter() as i32) as i32);
+    ext::pl_8003DF44((f.player_idx as i32) as i32, (f.is_sub_fighter() as i32) as i32);
 }
 
 pub fn ftCo_800D40B8(g: G) {
@@ -564,7 +564,7 @@ pub fn ftCo_800D4580(g: G, arg1: i32) {
     let f = fp(g);
     ext::ftCommon_8007EFC0(crate::mtu_ptr::ptr(&(f)), (1) as u32);
     h::ftco_800bffd0(f, 0x2B, 0);
-    ext::pl_8003DF44((f.player_id as i32) as i32, (f.is_sub_fighter() as i32) as i32);
+    ext::pl_8003DF44((f.player_idx as i32) as i32, (f.is_sub_fighter() as i32) as i32);
 }
 
 pub fn ftCo_800D4780(g: G) {

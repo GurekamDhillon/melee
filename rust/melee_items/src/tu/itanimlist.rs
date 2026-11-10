@@ -322,7 +322,7 @@ pub unsafe extern "C" fn it_802790C0(item_gobj: *mut Item_GObj, cmd: *mut Comman
         (*hit).x4 = x4;
         (*hit).state = HitCapsule_Enabled;
         (*item).xDC8_word.flags.set_x16(1);
-        (*item).anon_daa.xDAA_flag.anon_0.set_b2(0);
+        (*item).xDAA.xDAA_flag.x0.set_b2(0);
         ext::it_8026FCF8(item, hit);
     }
 
@@ -532,7 +532,7 @@ pub unsafe extern "C" fn it_802799E4(item_gobj: *mut Item_GObj) {
     let cmd = &raw mut (*item).x524_cmd;
 
     (*cmd).frame_count = (*item).x5CC_currentAnimFrame;
-    (*item).anon_dbc.xDBC_itcmd_var4_word = 0;
+    (*item).xDBC.xDBC_itcmd_var4_word = 0;
 
     if (*cmd).anon_8.u.is_null() {
         return;
@@ -617,7 +617,7 @@ pub unsafe extern "C" fn it_80279BE0(item_gobj: *mut Item_GObj) {
 /// `cmd.u` points into a command array (one past is formed, as in C).
 pub unsafe fn it_80279768_fp(ip: &mut Item, cmd: &mut CommandInfo) {
     melee_core::ct!("it_80279768_fp");
-    ip.anon_dbc.xDBC_itcmd_var4.flags.set_x0(1);
+    ip.xDBC.xDBC_itcmd_var4.flags.set_x0(1);
     cmd.anon_8.u = cmd.anon_8.u.add(1);
 }
 

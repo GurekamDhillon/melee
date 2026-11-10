@@ -17,8 +17,8 @@ pub fn install() {
         HSD_CObjLoadDesc = Some(|a0| { t(1004); t(pi(a0)); { let d = &*(a0 as *mut HSD_CameraDescPerspective); t(d.nnear.to_bits()); t(d.ffar.to_bits()); t(d.fov.to_bits()); t(d.aspect.to_bits()); t(d.roll.to_bits()); t(d.flags as u32); t(d.projection_type as u32); t(rh(&d.viewport)); t(rh(&d.scissor)); t(pi(d.up_vector)); t(pi(d.class_name)); t((*d.eyepos).pos.x.to_bits()); t((*d.eyepos).pos.y.to_bits()); t((*d.eyepos).pos.z.to_bits()); t((*d.interest).pos.x.to_bits()); t((*d.interest).pos.y.to_bits()); t((*d.interest).pos.z.to_bits()); t(pi((*d.eyepos).robjdesc)); t(pi((*d.eyepos).class_name)); } if fv() & 1 != 0 { &raw mut super::CO } else { core::ptr::null_mut() } });
         HSD_GObjFree = Some(|a0| { t(1005); t(pi(a0)); });
         HSD_GObjObject_80390A70 = Some(|a0, a1, a2| { t(1006); t(pi(a0)); t(a1 as u32); t(pi(a2)); });
-        HSD_GObj_803910D8 = Some(|a0, a1| { t(1007); t(pi(a0)); t(a1 as u32); });
-        HSD_GObj_LObjCallback = Some(|a0, a1| { t(1008); t(pi(a0)); t(a1 as u32); });
+        HSD_GObj_803910D8 = Some(|a0, a1| { t(1007); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
+        HSD_GObj_LObjCallback = Some(|a0, a1| { t(1008); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
         HSD_GObj_SetupProc = Some(|a0, a1, a2| { t(1009); t(pi(a0)); t(fi(a1)); t(a2 as u32); &raw mut super::PROC0 });
         HSD_LObjLoadDesc = Some(|a0| { t(1010); t(pi(a0)); { let mut d = a0; while !d.is_null() { t((*d).flags as u32); t((*d).attnflags as u32); t(rh(&(*d).color)); t(pi((*d).class_name)); if !(*d).position.is_null() { t((*(*d).position).pos.x.to_bits()); t((*(*d).position).pos.y.to_bits()); t((*(*d).position).pos.z.to_bits()); } else { t(0xAAAA); } t(pi((*d).interest)); if !(*d).u.point.is_null() { t((*(*d).u.point).ref_br.to_bits()); t((*(*d).u.point).ref_dist.to_bits()); t((*(*d).u.point).dist_func); } else { t(0xBBBB); } d = (*d).next; } } &raw mut super::LO });
         HSD_SisLib_803A5CC4 = Some(|a0| { t(1011); t(pi(a0)); });
@@ -38,9 +38,12 @@ pub fn install() {
 pub fn freg_all() {
     freg(m::ext::cb::HSD_GObj_803910D8 as *const () as usize);
     freg(m::ext::cb::HSD_GObj_LObjCallback as *const () as usize);
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
     freg(m::fn_802FF218 as *const () as usize);
-    freg(m::fn_802FF218_inline as *const () as usize);
     freg(m::fn_802FF360 as *const () as usize);
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
+    // removed: no longer an ext/function in the Rust port (static inline in the C, or renamed upstream)
     freg(m::un_802FF364 as *const () as usize);
     freg(m::un_802FF498 as *const () as usize);
     freg(m::un_802FF4FC as *const () as usize);
@@ -52,6 +55,7 @@ pub fn freg_all() {
 }
 
 pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
+    unsafe {
     p.classifier = fv() as _;
     p.p_link = fv() as _;
     p.gx_link = fv() as _;
@@ -60,9 +64,11 @@ pub fn fill_HSD_GObj(p: &mut HSD_GObj) {
     p.obj_kind = fv() as _;
     p.user_data_kind = fv() as _;
     p.gxlink_prios = fv64() as _;
+    }
 }
 pub fn hash_HSD_GObj(p: &HSD_GObj) {
-    unsafe { if HDBG { println!("B HSD_GObj"); } }
+    unsafe {
+    if HDBG { println!("B HSD_GObj"); }
     hm(p.classifier as u32);
     hm(p.p_link as u32);
     hm(p.gx_link as u32);
@@ -81,9 +87,11 @@ pub fn hash_HSD_GObj(p: &HSD_GObj) {
     hm(pi(p.user_data));
     hm(fi(p.user_data_remove_func));
     hm(pi(p.x34_unk));
+    }
 }
 
 pub fn fill_HSD_Text(p: &mut HSD_Text) {
+    unsafe {
     p.pos_x = rg();
     p.pos_y = rg();
     p.pos_z = rg();
@@ -117,8 +125,8 @@ pub fn fill_HSD_Text(p: &mut HSD_Text) {
     p.hidden = fv() as _;
     p.x4E = fv() as _;
     p.font_idx = fv() as _;
-    p.x6C = fv() as _;
-    p.x6E = fv() as _;
+    p.state_stack_used = fv() as _;
+    p.state_stack_capacity = fv() as _;
     p.current_width = rg();
     p.current_height = rg();
     p.x78.x = rg();
@@ -138,9 +146,11 @@ pub fn fill_HSD_Text(p: &mut HSD_Text) {
     p.kerning = fv() as _;
     p.alignment = fv() as _;
     p.x9F = fv() as _;
+    }
 }
 pub fn hash_HSD_Text(p: &HSD_Text) {
-    unsafe { if HDBG { println!("B HSD_Text"); } }
+    unsafe {
+    if HDBG { println!("B HSD_Text"); }
     hm(p.pos_x.to_bits());
     hm(p.pos_y.to_bits());
     hm(p.pos_z.to_bits());
@@ -180,9 +190,9 @@ pub fn hash_HSD_Text(p: &HSD_Text) {
     hm(pi(p.sis_buffer));
     hm(pi(p.x60));
     hm(pi(p.alloc_data));
-    hm(pi(p.string_buffer));
-    hm(p.x6C as u32);
-    hm(p.x6E as u32);
+    hm(pi(p.state_stack));
+    hm(p.state_stack_used as u32);
+    hm(p.state_stack_capacity as u32);
     hm(p.current_width.to_bits());
     hm(p.current_height.to_bits());
     hm(p.x78.x.to_bits());
@@ -202,4 +212,5 @@ pub fn hash_HSD_Text(p: &HSD_Text) {
     hm(p.kerning as u32);
     hm(p.alignment as u32);
     hm(p.x9F as u32);
+    }
 }

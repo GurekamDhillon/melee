@@ -16,7 +16,7 @@ static mut SATTR: [[u32; 13]; 2] = [[0; 13]; 2];
 
 unsafe fn setup_stem() {
     m::ext::it_804D6D28 = &raw mut ICD[0];
-{ for q in 0..2usize { ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut c_void; for w in 0..13usize { if w == 11 || w == 12 { *(&raw mut SATTR[q] as *mut i32).add(w) = (fv() % 6) as i32; } else { *(&raw mut SATTR[q] as *mut f32).add(w) = rw(); } } } } { for q in 0..4usize { let r = rnd(); IT[q].kind = It_Kind_IceClimber_Ice + (r & 1) as i32; *((&raw mut IT[q].xDD4_itemVar) as *mut *mut c_void) = if r & 6 == 0 { null_mut() } else { &raw mut GO[4 + ((r >> 8) % 3) as usize] as *mut c_void }; } }
+{ for q in 0..2usize { ART[q].x4_specialAttributes = (&raw mut SATTR[q]) as *mut _; for w in 0..13usize { if w == 11 || w == 12 { *(&raw mut SATTR[q] as *mut i32).add(w) = (fv() % 6) as i32; } else { *(&raw mut SATTR[q] as *mut f32).add(w) = rw(); } } } } { for q in 0..4usize { let r = rnd(); IT[q].kind = It_Kind_IceClimber_Ice + (r & 1) as i32; *((&raw mut IT[q].xDD4_itemVar) as *mut *mut c_void) = if r & 6 == 0 { null_mut() } else { &raw mut GO[4 + ((r >> 8) % 3) as usize] as *mut c_void }; } }
 }
 
 unsafe fn hash_stem() {

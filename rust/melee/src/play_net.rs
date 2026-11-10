@@ -990,6 +990,7 @@ pub fn scenario_of_scene(sc: &str) -> Result<melee_engine::scenario::Scenario, S
         time_limit: HostRules::from_scene(&p).and_then(|r| r.time_secs).map_or(p.minutes * 60, |s| s.max(1)),
         rule_stocks: p.stocks,
         friendly_fire: -1,
+        pause: -1,
         onep_mode: -1,
         onep_step: -1,
         onep_level: -1, game_mode: -1, entry_state: -1,

@@ -89,7 +89,7 @@ unsafe fn setup(prof: i32) {
     spec_fill(prof);
     for k in 0..3 {
         ART[k].xC_itemStates = &raw mut ISA[k]; IT[k].xD0_itemStateDesc = null_mut();
-        core::ptr::write_bytes(&raw mut IT[k].xDD4_itemVar.linkbomb.x0 as *mut u8, 0, core::mem::size_of_val(&IT[k].xDD4_itemVar.linkbomb.x0)); IT[k].xDD4_itemVar.linkbomb.x0.anon_0.set_b0((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.anon_0.set_b1((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.anon_0.set_b2((rnd() & 1) as u8);
+        core::ptr::write_bytes(&raw mut IT[k].xDD4_itemVar.linkbomb.x0 as *mut u8, 0, core::mem::size_of_val(&IT[k].xDD4_itemVar.linkbomb.x0)); IT[k].xDD4_itemVar.linkbomb.x0.x0.set_b0((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.x0.set_b1((rnd() & 1) as u8); IT[k].xDD4_itemVar.linkbomb.x0.x0.set_b2((rnd() & 1) as u8);
         IT[k].xDD4_itemVar.linkbomb.x4 = rw(); IT[k].xDD4_itemVar.linkbomb.x8 = rw(); IT[k].xDD4_itemVar.linkbomb.xC = rw();
         IT[k].xDD4_itemVar.linkbomb.x10 = if rnd() & 1 != 0 { &raw mut GO[(k + 1) % 3] } else { null_mut() };
         IT[k].xD44_lifeTimer = if rnd() % 3 == 0 { 0.0 } else { (rnd() % 80) as f32 - 5.0 };
@@ -103,8 +103,8 @@ unsafe fn hash_all() {
     for k in 0..3 {
         let lb = &mut IT[k].xDD4_itemVar.linkbomb;
         hm(pi(lb.x10));
-        hm(lb.x0.anon_0.b0() as u32); hm(lb.x0.anon_0.b1() as u32); hm(lb.x0.anon_0.b2() as u32); hm(lb.x0.anon_0.b3() as u32);
-        hm(lb.x0.anon_0.b4() as u32); hm(lb.x0.anon_0.b5() as u32); hm(lb.x0.anon_0.b6() as u32); hm(lb.x0.anon_0.b7() as u32);
+        hm(lb.x0.x0.b0() as u32); hm(lb.x0.x0.b1() as u32); hm(lb.x0.x0.b2() as u32); hm(lb.x0.x0.b3() as u32);
+        hm(lb.x0.x0.b4() as u32); hm(lb.x0.x0.b5() as u32); hm(lb.x0.x0.b6() as u32); hm(lb.x0.x0.b7() as u32);
         lb.x10 = null_mut(); core::ptr::write_bytes(&raw mut lb.x0 as *mut u8, 0, core::mem::size_of_val(&lb.x0));
     }
     for k in 0..3 {

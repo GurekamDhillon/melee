@@ -3,7 +3,6 @@
 #include <sysdolphin/baselib/aobj.h>
 #include <sysdolphin/baselib/archive.h>
 #include <sysdolphin/baselib/axdriver.h>
-#include <sysdolphin/baselib/axdriver.static.h>
 #include <sysdolphin/baselib/bytecode.h>
 #include <sysdolphin/baselib/card.h>
 #include <sysdolphin/baselib/class.h>
@@ -13,7 +12,6 @@
 #include <sysdolphin/baselib/debug.h>
 #include <sysdolphin/baselib/debugconsole_main.h>
 #include <sysdolphin/baselib/devcom.h>
-#include <sysdolphin/baselib/devcom.static.h>
 #include <sysdolphin/baselib/displayfunc.h>
 #include <sysdolphin/baselib/dobj.h>
 #include <sysdolphin/baselib/fobj.h>
@@ -49,7 +47,6 @@
 #include <sysdolphin/baselib/objalloc.h>
 #include <sysdolphin/baselib/object.h>
 #include <sysdolphin/baselib/particle.h>
-#include <sysdolphin/baselib/particle.static.h>
 #include <sysdolphin/baselib/perf.h>
 #include <sysdolphin/baselib/pobj.h>
 #include <sysdolphin/baselib/psappsrt.h>
@@ -62,13 +59,11 @@
 #include <sysdolphin/baselib/rumble.h>
 #include <sysdolphin/baselib/shadow.h>
 #include <sysdolphin/baselib/sislib.h>
-#include <sysdolphin/baselib/sislib.static.h>
 #include <sysdolphin/baselib/sislib_font.h>
 #include <sysdolphin/baselib/sobjlib.h>
 #include <sysdolphin/baselib/spline.h>
 #include <sysdolphin/baselib/state.h>
 #include <sysdolphin/baselib/synth.h>
-#include <sysdolphin/baselib/synth.static.h>
 #include <sysdolphin/baselib/tev.h>
 #include <sysdolphin/baselib/texp.h>
 #include <sysdolphin/baselib/texpdag.h>
@@ -607,6 +602,7 @@
 #include <melee/it/itdrop.h>
 #include <melee/it/iteffect.h>
 #include <melee/it/item.h>
+#include <melee/it/itemattrs.h>
 #include <melee/it/itgroundcoll.h>
 #include <melee/it/ithitbox.h>
 #include <melee/it/itmaplib.h>
@@ -801,24 +797,28 @@
 #include <melee/vi/vi1202.h>
 #include <melee/lb/lbanim.h>
 #include <melee/lb/lbcardnew.h>
-#include <melee/gm/gmresultplayer.static.h>
+#include <melee/gm/gmresultplayer.h>
 #include <melee/gm/gmfrontend_items.h>
-#include <melee/gm/gmtoulib.static.h>
+#include <melee/gm/gmtoulib.h>
 #include <melee/lb/lbmemory.h>
-#include <melee/lb/lbheap.static.h>
+#include <melee/lb/lbheap.h>
 #include <dolphin/thp/thp.h>
 #include <melee/mn/mnmain.h>
 #include <melee/mn/mncount.h>
-#include <melee/mn/mndatadel.static.h>
+#include <melee/mn/mndatadel.h>
 #include <melee/mn/mndiagram2.h>
-#include <melee/mn/mndiagram3.static.h>
+#include <melee/mn/mndiagram3.h>
 #include <melee/mn/mnevent.h>
 #include <melee/mn/mnmainrule.h>
 #include <melee/mn/inlines.h>
 #include <melee/mn/mnruleplus.h>
-#include <melee/mn/mnstagesel.static.h>
+#include <melee/mn/mnstagesel.h>
 #include <melee/sfx/crowdsfx.h>
-#line 29 "src/melee/mn/mngallery.c"
+#include <melee/mn/mncharsel.h>
+#include <dolphin/ax.h>
+#include <dolphin/axfx.h>
+#include "port_legacy.h"  /* records upstream dropped that the port still relies on */
+#line 30 "src/melee/mn/mngallery.c"
 struct mnGallery_804D6C88_userdata {
     u8 unk0;
     u8 unk1;
@@ -832,40 +832,27 @@ struct mnGallery_804D6C88_userdata {
     s32 frame;
     HSD_GObj* gobjs[2];
 };
-#line 46 "src/melee/mn/mngallery.c"
+#line 47 "src/melee/mn/mngallery.c"
 struct mnGallery_child_userdata {
     HSD_GObj* parent_gobj;
     s32 index;
 };
-#line 40 "src/melee/mn/mndiagram.c"
+#line 42 "src/melee/mn/mndiagram.c"
 typedef struct mnDiagram_Assets {
-    /* 0x00 */ u8 sorted_fighters[0x19];
+    /* 0x00 */ u8 sorted_fighters[SELKIND_COUNT];
     /* 0x19 */ u8 pad_19[3];
-    /* 0x1C */ u8 sorted_names[0x78];
-    /* 0x94 */ void* SubB1[4];
-    /* 0xA4 */ void* NmB[4];
-    /* 0xB4 */ void* FaceB[4];
-    /* 0xC4 */ void* CursorB1[4];
-    /* 0xD4 */ void* ConB1[4];
-    /* 0xE4 */ void* ConB2[4];
-    /* 0xF4 */ void* ConB3[4];
-    /* 0x104 */ void* CursorB3[5];
+    /* 0x1C */ u8 sorted_names[GM_NAMETAG_COUNT];
 } mnDiagram_Assets;
-#line 57 "src/melee/mn/mndiagram.c"
-typedef struct mnDiagram_CleanupData {
-    /* 0x00 */ char jobjs_reserved[0x38]; ///< JObj array (unused by cleanup)
-    /* 0x38 */ HSD_Text* text[6];         ///< Text objects to free
-} mnDiagram_CleanupData;
-#line 64 "src/melee/mn/mndiagram.c"
-typedef struct mnDiagram_AnimData {
-    /* 0x00 */ char header_reserved[0x0C]; ///< menu state (unused by anim)
-    /* 0x0C */ HSD_JObj* jobj;             ///< JObj for exit animation
-} mnDiagram_AnimData;
-#line 70 "src/melee/mn/mndiagram.c"
+#line 49 "src/melee/mn/mndiagram.c"
+typedef struct mnDiagram_PopupData {
+    /* 0x00 */ HSD_JObj* jobjs[14];
+    /* 0x38 */ HSD_Text* text[5];
+} mnDiagram_PopupData;
+#line 56 "src/melee/mn/mndiagram.c"
 typedef struct mnDiagram_PopupAnimTableHead {
     /* 0x00 */ Point3d points[3];
 } mnDiagram_PopupAnimTableHead;
-#line 114 "src/melee/mn/mndiagram.c"
+#line 124 "src/melee/mn/mndiagram.c"
 typedef struct mnDiagram_AnimTable {
     /* 0x00 */ Point3d points[3]; ///< mnDiagram_PopupTextOffsets
     /* 0x24 */ u8
@@ -874,25 +861,79 @@ typedef struct mnDiagram_AnimTable {
     /* 0x4C */ AnimLoopSettings exit_anim;   ///< mnDiagram_PopupExitAnim
     /* 0x58 */ AnimLoopSettings arrow_anim;  ///< mnDiagram_ArrowAnim
     /* 0x64 */ AnimLoopSettings cursor_anim; ///< mnDiagram_CursorAnim
-    /* 0x70 */ char user_data_error[0x18];   ///< "Can't get user_data.\n"
-    /* 0x88 */ char file_name[0xC];          ///< "mndiagram.c"
-    /* 0x94 */ char user_data_name[0x14];    ///< "user_data"
 } mnDiagram_AnimTable;
-#line 538 "src/melee/mn/mndiagram.c"
+#line 522 "src/melee/mn/mndiagram.c"
 typedef struct RankEntry {
     u8 selkind; ///< SelectableCharacterKind
     u32 value;
 } RankEntry;
-#line 1596 "src/melee/mn/mndiagram.c"
-typedef struct mnDiagram_PopupData {
-    /* 0x00 */ HSD_JObj* jobjs[14];
-    /* 0x38 */ HSD_Text* text[5];
-} mnDiagram_PopupData;
-#line 1602 "src/melee/mn/mndiagram.c"
-typedef struct mnDiagram_MainOverlay {
-    /* 0x00 */ HSD_JObj* jobjs[14];
-    /* 0x38 */ HSD_Text* text[6];
-} mnDiagram_MainOverlay;
+#line 25 "src/melee/mn/mndiagram3.c"
+typedef struct mnDiagram3_PosTable {
+    /* 0x00 */ Vec3 x0;  ///< title_pos (3.3,0.5,0)
+    /* 0x0C */ Vec3 xC;  ///< rank_name_pos (-2,0.57,0)
+    /* 0x18 */ Vec3 x18; ///< value_pos (8,0.57,0)
+} mnDiagram3_PosTable;
+#line 31 "src/melee/mn/mndiagram3.c"
+typedef struct mnDiagram3_StatTable {
+    /* 0x00 */ u16 label_ids[24];      ///< SIS string ids, 0x62..0x79
+    /* 0x30 */ u16 unit_glyph_ids[24]; ///< mnDiagram2 unit/icon column entries
+} mnDiagram3_StatTable;
+#line 36 "src/melee/mn/mndiagram3.c"
+typedef struct mnDiagram3_DataTable {
+    /* 0x00 */ AnimLoopSettings x0;
+    /* 0x0C */ AnimLoopSettings xC;
+    /* 0x18 */ mnDiagram3_PosTable positions;
+    /* 0x3C */ mnDiagram3_StatTable stats;
+} mnDiagram3_DataTable;
+#line 42 "src/melee/mn/mndatadel.c"
+enum WarnCommonJoints {
+    WARN_JOINT_ROOT,
+    WARN_JOINT_BACKGROUND,
+    WARN_JOINT_PANEL,             ///< main panel root
+    WARN_JOINT_PANEL_TOP,         ///< top position of the panel/text box
+    WARN_JOINT_PANEL_TEXT_BOTTOM, ///< bottom position of the text box
+    WARN_JOINT_PANEL_BOTTOM,      ///< bottom position of the panel
+    WARN_JOINT_CURSOR_YES,
+    WARN_JOINT_CURSOR_NO,
+    WARN_JOINT_EXCLAIM,
+    WARN_JOINT_EXCLAIM_MARK,
+    WARN_JOINT_EXCLAIM_ARROW,
+    WARN_JOINT_PROGRESS_BAR,
+    WARN_JOINT_PROGRESS_BAR_START,
+    WARN_JOINT_PROGRESS_BAR_END,
+};
+#line 59 "src/melee/mn/mndatadel.c"
+struct MnDataDelData {
+    AnimLoopSettings x0;
+    AnimLoopSettings xC;
+};
+#line 64 "src/melee/mn/mndatadel.c"
+struct MnDataDelGObjUserData {
+    /* +00 */ u8 x0;
+    /* +01 */ u8 x1;
+    /* +02 */ u8 x2;
+    /* +03 */ u8 x3[6];
+    /* +0C */ HSD_Text* xC;
+    /* +10 */ HSD_JObj* x10[8];
+};
+#line 60 "src/melee/gm/gmtoulib.c"
+struct lbl_803D9DAC_t {
+    Vec3 current;
+    Vec3 target;
+    Vec3 step;
+};
+#line 70 "src/melee/gm/gmtoulib.c"
+struct lbl_803D9DD0_t {
+    /* +00 */ HSD_CObj* cobj;
+    /* +04 */ char pad_B4[0xD0 - 0xB4];
+    /* +20 */ float xD0;
+};
+#line 157 "src/melee/mn/mnstagesel.c"
+struct StageSelUserData {
+    u16 x0;
+    u16 x2;
+    int x4;
+};
 // From src/sysdolphin/baselib/hsd_3915.c
 typedef void (*GlyphFn)(u8* dst, s32 flags, s32 unused1, s32 unused2,
                         const u8* src);
@@ -915,7 +956,7 @@ typedef struct {
 typedef struct _DispItem {
     /* 0x00 */ struct _DispItem* next;
     /* 0x04 */ s32 type;
-    /* 0x08 */ union {
+    /* 0x08 */ union _DispItem_content {
         char text[128];
         DispBar bars[1];
         u8 gradient[8];
@@ -927,14 +968,14 @@ typedef DispItem* (*DispCallback)(void*);
 typedef struct {
     /* 0x00 */ void* next;
     /* 0x04 */ s32 type;
-    /* 0x08 */ union {
+    /* 0x08 */ union PerfDispItem_content {
         u8 bytes[0x80];
         char text[0x80];
-        struct {
+        struct PerfDispItem_content_bars {
             s32 count;
             u32 color;
         } bars[16];
-        struct {
+        struct PerfDispItem_content_gradient {
             f32 pos;
             u32 color;
         } gradient[16];
@@ -1016,7 +1057,7 @@ typedef struct JpegEncodeTables {
     u8 ac_length_chroma[0xA2];
     u8 pad_44E[2];
 } JpegEncodeTables;
-#line 9 "src/sysdolphin/baselib/hsd_3B5C.c"
+#line 8 "src/sysdolphin/baselib/hsd_3B5C.c"
 typedef struct JpegWorkData {
     s32 luma[0x100];
     s32 cb[0x40];
@@ -1024,17 +1065,17 @@ typedef struct JpegWorkData {
     s32 coeff[0x40];
     s32 prev_dc[3];
 } JpegWorkData;
-#line 17 "src/sysdolphin/baselib/hsd_3B5C.c"
+#line 16 "src/sysdolphin/baselib/hsd_3B5C.c"
 typedef struct JpegState {
     jmp_buf jmp;
     JpegWorkData work;
 } JpegState;
-#line 22 "src/sysdolphin/baselib/hsd_3B5C.c"
+#line 21 "src/sysdolphin/baselib/hsd_3B5C.c"
 typedef struct JpegQuantTables {
     u8 luma[0x40];
     u8 chroma[0x40];
 } JpegQuantTables;
-#line 488 "src/sysdolphin/baselib/hsd_3B5C.c"
+#line 465 "src/sysdolphin/baselib/hsd_3B5C.c"
 typedef struct {
     u16* pixels;
 } JpegOutput;
@@ -1049,61 +1090,63 @@ typedef struct HSD_LeakChecker {
     u32 peak;     /* 0x18 */
     s32 x1C;      /* 0x1C */
 } HSD_LeakChecker;
-#line 21 "src/sysdolphin/baselib/psdisp.c"
+#line 22 "src/sysdolphin/baselib/psdisp.c"
 typedef struct {
     HSD_Particle* head;
     HSD_Particle* tail;
 } psdisp_ParticleSortBucket;
-#line 26 "src/sysdolphin/baselib/psdisp.c"
-typedef struct {
-    GXTlutFmt fmt;
-    u32 tlut_name;
-    u16 n_entries;
-} psdisp_Tlut;
-#line 32 "src/sysdolphin/baselib/psdisp.c"
+#line 27 "src/sysdolphin/baselib/psdisp.c"
 typedef struct {
     Mtx mtx;
 } psdisp_Mtx;
 /* TU-local records extracted by gen/local_records.py. */
-struct MemEntry {
-    struct MemEntry* x0_next;
-    void* x4_lo;
-    void* x8_hi;
-};
 struct LBMgr {
-    OSAlarm alarm; // 0x00
-    u8* src;       // 0x28
-    u8* dst;       // 0x2C
-    u32 size;      // 0x30
-    u32 offset;    // 0x34
-    uintptr_t cb_arg;    // 0x38
+    OSAlarm alarm;
+    const u8* src;
+    u8* dst;
+    u32 size;
+    u32 offset;
+    uintptr_t cb_arg;
     HSD_DevComCallback cb;
 };
 struct Allocator {
-    void* a_arenaLo;
-    void* a_arenaHi;
-    struct MemEntry x8_mem[0x83];
-    Handle* free_mem;
-    s32 x630_num_allocs;
-    s32 x634_max_num_allocs;
-    Handle x638_heap[6];
+    uintptr_t a_arenaLo;
+    uintptr_t a_arenaHi;
+    HSD_AllocEntry mem[0x83];
+    HSD_AllocEntry* free_mem;
+    s32 num_allocs;
+    s32 max_num_allocs;
+    Handle heap[6];
     Handle* free_heap;
-    Handle* x69C;
-    struct LBMgr x6A0_mgr;
-    u32 x6E0;
-    void* x6E4;
-    void (*x6E8)(u32);
-    u8 x6EC[0x6F0 - 0x6EC];
+    Handle* aram_heap;
+    struct LBMgr mgr;
+    u32 compact_arg;
+    uintptr_t compact_cursor;
+    void (*compact_cb)(u32);
+};
+struct Heap {
+    /* 10 */ s32 id;
+    /* 14 */ Handle* handle;
+    /// The heap's base *address*. `s32` would sign-extend when it is cast
+    /// back to a pointer; the same four bytes on GameCube.
+    /* 18 */ uintptr_t start;
+    /* 1C */ u32 size;
+    /* 20 */ s32 type;
+    /* 24 */ s32 transient;
+    /* 28 */ LbHeapStatus status;
+};
+struct lbHeap_HeapState {
+    /* 0x00 */ void* arena_lo;    /* inferred */
+    /* 0x04 */ void* arena_hi;    /* inferred */
+    /* 0x08 */ uintptr_t aram_lo; /* inferred */
+    /* 0x0C */ uintptr_t aram_hi; /* inferred */
+    /* 0x10 */ struct Heap heap_array[LBHEAP_HEAP_COUNT];
 };
 struct lbHeap_HeapDesc {
     u32 idx;
     u32 type;
     u32 prev_idx;
     u32 size;
-};
-struct lbHeap_HeapOffsetView {
-    u8 pad[0x10];
-    struct Heap heap;
 };
 typedef struct THPFrameBuffer {
     /* 0x00 */ u32 next_packed_size;
@@ -1184,10 +1227,10 @@ struct lbRefract_Data {
     f32* x4;
 };
 struct lbRefract_DataLayout {
-        Mtx texture_mtx;
-        f32 texture_offset[6];
-        HSD_ImageDesc imagedesc0;
-    };
+    Mtx texture_mtx;
+    f32 texture_offset[6];
+    HSD_ImageDesc imagedesc0;
+};
 /* Verbatim src/melee/lb/lbsnap.c:24. */
 struct Unk80433380_48 {
     int card_result;
@@ -1209,21 +1252,15 @@ struct Unk80433380_0 {
     char x38[4];
 };
 /* Verbatim src/melee/lb/lbsnap.c:45. */
-typedef union LbMcSnapMemSnapIconData {
-    u8* ptr;
-    int offset;
-    int size;
-} LbMcSnapMemSnapIconData;
-/* Verbatim src/melee/lb/lbsnap.c:51. */
 struct Unk80433380 {
     /* 0x00 */ struct Unk80433380_0* snap;
     /* 0x04 */ char filename[64];
-    /* 0x44 */ LbMcSnapMemSnapIconData* icon_data;
+    /* 0x44 */ u8** icon_data;
     /* 0x48 */ struct Unk80433380_48* slot;
     /* 0x4C */ int card_state[2];
     /* 0x54 */ int state_changed[3];
 };
-/* Verbatim src/melee/lb/lbsnap.c:62. */
+/* Verbatim src/melee/lb/lbsnap.c:56. */
 struct Unk803BACC8 {
     /* 0x00 */ u8 icon[0x14];
     /* 0x14 */ LbCardEntry entries[2];
@@ -1292,29 +1329,7 @@ struct BgFlashUserData {
     ColorOverlay x4;
 };
 typedef struct BgFlashUserData BgFlashUserData;
-/* Extracted from src/melee/mn/mncharsel.c:58; do not edit. */
-struct MnSelectChrModels {
-    /* 0x0 */ StaticModelDesc background;
-    /* 0x10 */ StaticModelDesc hand;
-    /* 0x20 */ StaticModelDesc token;
-    /* 0x30 */ StaticModelDesc menu;
-    /* 0x40 */ StaticModelDesc press_start;
-    /* 0x50 */ StaticModelDesc debug_camera;
-    /* 0x60 */ StaticModelDesc regend_menu;
-    /* 0x70 */ StaticModelDesc regend_options;
-    /* 0x80 */ StaticModelDesc door;
-};
-typedef struct MnSelectChrModels MnSelectChrModels;
-/* Extracted from src/melee/mn/mncharsel.c:70; do not edit. */
-struct MnSelectChrDataTable {
-    /* 0x00 */ HSD_CObjDesc* cam;
-    /* 0x04 */ HSD_LightDesc* light0;
-    /* 0x08 */ HSD_LightDesc* light1;
-    /* 0x0C */ HSD_FogDesc* fog;
-    /* 0x10 */ MnSelectChrModels models;
-};
-typedef struct MnSelectChrDataTable MnSelectChrDataTable;
-/* Extracted from src/melee/mn/mncharsel.c:198; do not edit. */
+/* Extracted from src/melee/mn/mncharsel.c:179; do not edit. */
 struct MexSelectChr {
     HSD_Joint* icon_joint;
     HSD_AnimJoint* icon_animjoint;
@@ -1323,7 +1338,7 @@ struct MexSelectChr {
     int csp_stride;
 };
 typedef struct MexSelectChr MexSelectChr;
-/* Extracted from src/melee/mn/mncharsel.c:837; do not edit. */
+/* Extracted from src/melee/mn/mncharsel.c:815; do not edit. */
 struct CSSCursorData {
     /* 0x00 */ HSD_GObj* gobj;
     /* 0x04 */ u8 x4;
@@ -1336,7 +1351,7 @@ struct CSSCursorData {
     /* 0x10 */ f32 x10;
 };
 typedef struct CSSCursorData CSSCursorData;
-/* Extracted from src/melee/mn/mncharsel.c:1844; do not edit. */
+/* Extracted from src/melee/mn/mncharsel.c:1819; do not edit. */
 struct CSSCharModel {
     /* 0x00 */ HSD_GObj* gobj;
     /* 0x04 */ u8 x4;
@@ -1365,14 +1380,9 @@ struct ModelNamesDesc {
     char* matanim_joint;
     char* shapeanim_joint;
 };
-/* Extracted verbatim from src/melee/ty/toy.c. */
-typedef union ToyPanelLabelData {
-    char bytes[1];
-    char* ptrs[1];
-} ToyPanelLabelData;
 /* Extracted verbatim from src/melee/ty/tyfigupon.c. */
 typedef union {
-    struct {
+    struct TyFiguponDigitInit_s {
         s32 x0, x4, x8, xC;
     } s;
     s32 digits[4];
@@ -1384,7 +1394,40 @@ typedef struct TySortElemInt {
 } TySortElemInt;
 #undef TY_SORT_KEY_COUNT
 
-/* Extracted from src/sysdolphin/baselib/synth.c:35. */
+#define USERVOL_NUM 2
+/* Extracted from src/sysdolphin/baselib/synth.c:19. */
+struct HSD_SynthSFXGroup {
+    int arsize;
+};
+/* Extracted from src/sysdolphin/baselib/synth.c:25. */
+struct HSD_SynthSFXNode {
+    /* 00 */ int x0;
+    /* 04 */ int sfx_id;
+    /* 08 */ u8 pad8;
+    /* 09 */ u8 flags;
+    /* 0A */ u8 voice_count;
+    /* 0B */ u8 xB;
+    /* 0C */ AXVPB* voice[2];
+    /* 14 */ float x14;
+    /* 18 */ float x18[2];
+    /* 20 */ struct HSD_SynthSFXNode* x20;
+    /* 24 */ u16 x24;
+    /* 26 */ u8 volume_update_pending;
+    /* 27 */ u8 x27;
+    /* 28 */ float unk28;
+    /* 2C */ struct HSD_SynthSFXNode_user_vol {
+        /* 2C */ float volume;
+        /* 30 */ int x4;
+        union HSD_SynthSFXNode_user_vol_x8 {
+            /* 34 */ u8 x8;
+            /* 34 */ float x8_float;
+        } x8_u;
+    } user_vol[USERVOL_NUM];
+    /* 44 */ float x44;
+    /* 48 */ float x48;
+    /* 4C */ float x4C;
+};
+/* Extracted from src/sysdolphin/baselib/synth.c:137. */
 struct SfxLoadStreamNode {
     /* 0x00 */ struct SfxLoadStreamNode* x0;
     /* 0x04 */ s32 x4;
@@ -1393,7 +1436,7 @@ struct SfxLoadStreamNode {
     /* 0x10 */ s32 x10;
     /* 0x14 */ s32 x14;
 };
-/* Extracted from src/sysdolphin/baselib/synth.c:570. */
+/* Extracted from src/sysdolphin/baselib/synth.c:672. */
 struct HSD_SynthVoiceEntry {
     void* next;
     int unk4; // sound ID
@@ -1403,6 +1446,26 @@ struct HSD_SynthVoiceEntry {
     AXPBADPCM x20;
     AXPBADPCMLOOP x48;
 };
+/* Extracted from src/sysdolphin/baselib/synth.c:55. */
+struct HSD_Synth_804C2A60_t {
+    /* 00 */ int entrynum;
+    /* 04 */ int bankID;
+    /* 08 */ void (*x8)(int, int);
+    /* 0C */ int xC;
+};
+/* Extracted from src/sysdolphin/baselib/synth.c:70. */
+struct voicelist_1784_t {
+    float x1784;
+    float x1788;
+    int x178C;
+};
+/* Extracted from src/sysdolphin/baselib/synth.c:82. */
+struct pstHakoHeader_t {
+    /* 00 */ s32 x0;
+    /* 04 */ s32 x4;
+    /* 08 */ s32 x8;
+    /* 0C */ char pad[0x14];
+};
 struct HSD_MaterialState {
     GXColor ambient;
     GXColor diffuse;
@@ -1410,12 +1473,6 @@ struct HSD_MaterialState {
     u8 alpha;
     f32 shininess;
 };
-/* Extracted from src/melee/gr/ground.c (Ground_801C34AC). */
-struct UnkStageDat_x0_entry {
-        void* joint;
-        s16* pairs;
-        s32 pair_count;
-    };
 typedef struct {
     Fighter* fighter;
     int target, attack, damage, pulses;

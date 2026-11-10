@@ -12,9 +12,9 @@ use crate::ft0892::{G, fp, reset_18d8, reset_2074, s2070_from_gc_int, snapshot_f
 /// `ft_800892D4`: clear every hit/attack record.
 pub fn ft_800892d4(f: &mut Fighter) {
     melee_core::ct!("ft_800892d4");
-    f.dmg.x18d4 = UnkPlBonusBits::zeroed();
+    f.dmg.x18d4 = Struct2070::zeroed();
     // x2070_int = *(s32*)&x18d4: a 4-byte copy (both are GC-ordered bytes)
-    f.x2070 = unsafe { core::mem::transmute::<UnkPlBonusBits, Struct2070>(f.dmg.x18d4) };
+    f.x2070 = unsafe { core::mem::transmute::<Struct2070, Struct2070>(f.dmg.x18d4) };
     reset_2074(f);
     reset_18d8(&mut f.dmg.x18d8);
     f.dmg.x18ec_instancehitby = 0;
@@ -50,11 +50,11 @@ pub fn ft_800895e0(f: &mut Fighter, arg: Struct2070) {
 /// (x10_b7..x10_b0 = x2084_b0..b7, x11_b7..x11_b3 = x2085_b0..b4); the only caller passes that.
 pub fn ft_80089768_fp(s: &mut Struct2074) {
     melee_core::ct!("ft_80089768_fp");
-    s.x2074_vec.x = f32::from_bits(0);
-    s.x2074_vec.y = f32::from_bits(0);
-    s.x207C.x = 0.0f32.to_bits() as i32;
+    s.x2074_vec.x = 0;
+    s.x2074_vec.y = 0;
+    s.x207C.x = 0.0;
     s.x207C.y = 6;
-    let b = unsafe { &mut s.anon_10.anon_0 };
+    let b = unsafe { &mut s.x10.x0 };
     b.set_x2084_b0(0);
     b.set_x2085_b3(0);
     b.set_x2084_b1(0);
@@ -85,7 +85,7 @@ pub fn ft_80089884_fp(g: G) -> *mut Struct2070 {
     &mut fp(g).x2070
 }
 
-pub fn ft_80089890_fp(g: G) -> *mut UnkPlBonusBits {
+pub fn ft_80089890_fp(g: G) -> *mut Struct2070 {
     melee_core::ct!("ft_80089890_fp");
     &mut fp(g).dmg.x18d4
 }

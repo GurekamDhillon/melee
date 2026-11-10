@@ -54,7 +54,7 @@ pub mod ext {
 
 #[inline(always)]
 fn tap_jump_ok(f: &Fighter) -> bool {
-    ext::FighterControls_TapJumpOff(f.player_id as i32) == 0
+    ext::FighterControls_TapJumpOff(f.player_idx as i32) == 0
 }
 
 /// static inline `ftCo_800D74A4_inline`.
@@ -89,7 +89,7 @@ pub fn ftCo_800D730C(g: G, arg1: bool) -> bool {
             if ext::ft_800D2D0C(g) {
                 let f = fp(g);
                 let x = f.input.lstick[0].x * unsafe { (*x2d0).x8 };
-                let y = ext::ScriptGame_ModJump(f.player_id as i32, 6, unsafe { (*x2d0).x14[0] });
+                let y = ext::ScriptGame_ModJump(f.player_idx as i32, 6, unsafe { (*x2d0).x14[0] });
                 let mut v = Vec3 { x, y, z: 0.0 };
                 ext::ft_800D2E7C(g, &mut v);
             } else {
@@ -170,7 +170,7 @@ pub fn ftCo_800D74A4(g: G) {
             msid2 = geno_msid;
         }
         let f = fp(g);
-        vy = ext::ScriptGame_ModJump(f.player_id as i32, 6, vy);
+        vy = ext::ScriptGame_ModJump(f.player_idx as i32, 6, vy);
         let v = Vec3 { x: vx, y: vy, z: 0.0 };
         ext::ftCo_800CBAC4(g, msid2, &v, false);
         let f = fp(g);

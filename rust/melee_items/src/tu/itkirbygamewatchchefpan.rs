@@ -123,7 +123,7 @@ pub unsafe extern "C" fn it_802C74D8(parent: *mut HSD_GObj, pos: *mut Vec3, part
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = parent;
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     let result = ext::Item_80268B18(&mut spawn);
     if !result.is_null() {

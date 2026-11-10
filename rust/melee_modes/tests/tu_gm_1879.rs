@@ -156,7 +156,7 @@ fn matches_c() {
             rseed(3000 + c as u32);
             arena_reset();
             seed(false);
-            t::fn_80187C9C(mkgobj(mkjobj() as *mut _), rnd() as i32);
+            t::fn_80187C9C(mkgobj(mkjobj() as *mut _), rnd() as isize);
             state();
         }
         for c in 0..600usize {

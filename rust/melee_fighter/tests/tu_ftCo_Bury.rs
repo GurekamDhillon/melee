@@ -120,10 +120,10 @@ fn ftCo_Bury_matches_c() {
             fr.bury_timer_1 = rnd() % 3; fr.bury_timer_2 = rnd() % 3; fr.bury_grkind = KINDS[(rnd() % 8) as usize] as _;
             fr.motion_id = if rnd() & 1 != 0 { ftCo_MS_BarrelWait as _ } else { (rnd() % 400) as _ };
             fr.x1A6A = (rnd() & 0xFFFF) as u16;
-            fr.set_x2224_b2((rnd() & 1) as u8); fr.set_x2227_b6((rnd() & 1) as u8); fr.set_is_sub_fighter((rnd() & 1) as u8);
+            fr.set_stamina_dead((rnd() & 1) as u8); fr.set_x2227_b6((rnd() & 1) as u8); fr.set_is_sub_fighter((rnd() & 1) as u8);
             fr.dmg.x1860_element = rnd() % 12; fr.ground_or_air = (rnd() & 1) as _;
             fr.dmg.x1830_percent = rw();
-            fr.player_id = (rnd() % 4) as u8;
+            fr.player_idx = (rnd() % 4) as u8;
             fr.coll_data.env_flags = if rnd() & 1 != 0 { 0 } else { (rnd() & 0x1FFFF) as i32 };
             fr.coll_data.floor.index = (rnd() % 8) as i32; fr.coll_data.ceiling.index = (rnd() % 8) as i32;
             fr.coll_data.right_facing_wall.index = (rnd() % 8) as i32; fr.coll_data.left_facing_wall.index = (rnd() % 8) as i32;

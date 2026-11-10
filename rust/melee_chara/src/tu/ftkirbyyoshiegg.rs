@@ -235,7 +235,7 @@ pub fn ftCo_KirbyYoshiEgg_Anim(gobj: *mut HSD_GObj) {
             let xbc = &mut (*fp).co_attrs.xBC as *mut ftCo_DatAttrs_xBC_t;
             ext::efAsync_Spawn(
                 gobj,
-                &mut (*fp2).x60C as *mut *mut core::ffi::c_void,
+                (&raw mut (*fp2).x60C) as *mut *mut core::ffi::c_void,
                 4,
                 0x4CF,
                 &[(*(*fp).parts).joint as *mut _, xbc as *mut _],

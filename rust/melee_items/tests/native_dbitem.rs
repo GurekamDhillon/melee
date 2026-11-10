@@ -14,7 +14,7 @@ fn db_80225dd8_matches_c() {
                     for start in [0u8, 0xFF, 0x5A, 0x03] {
                         db_ShowItemCollisionBubbles = bubbles;
                         let mut it: Box<Item> = Box::new(core::mem::zeroed());
-                        it.anon_daa.xDAA_byte = start;
+                        it.xDAA.xDAA_byte = start;
                         let mut ft: Box<Fighter> = Box::new(core::mem::zeroed());
                         ft.x21FC_flag.byte = flag;
                         let mut ig: HSD_GObj = core::mem::zeroed();
@@ -34,7 +34,7 @@ fn db_80225dd8_matches_c() {
                                 want |= (x & 3) as u8;
                             }
                         }
-                        assert_eq!(it.anon_daa.xDAA_byte, want);
+                        assert_eq!(it.xDAA.xDAA_byte, want);
                     }
                 }
             }
@@ -56,10 +56,10 @@ fn db_menu_accessors_and_80225d64() {
         assert_eq!(db_AreItemSpawnsEnabled(), -1);
         db_ShowItemCollisionBubbles = 2;
         let mut it: Box<Item> = Box::new(core::mem::zeroed());
-        it.anon_daa.xDAA_byte = 0x11;
+        it.xDAA.xDAA_byte = 0x11;
         let mut ig: HSD_GObj = core::mem::zeroed();
         ig.user_data = &mut *it as *mut Item as *mut _;
         db_80225D64(&mut ig, core::ptr::null_mut());
-        assert_eq!(it.anon_daa.xDAA_byte, 0x13);
+        assert_eq!(it.xDAA.xDAA_byte, 0x13);
     }
 }

@@ -65,7 +65,7 @@ int main(void)
             fp.dmg.x1930.x0.x = rf(); fp.dmg.x1930.xC.z = rf();
             fp.x2219_b1 = (rnd() % 4) == 0;
             fp.x2223_b4 = (rnd() % 4) == 0;
-            fp.player_id = (u8) (rnd() % 6);
+            fp.player_idx = (u8) (rnd() % 6);
             fp.dmg.x1950 = (rnd() % 8) == 0;
             n = (int) (rnd() % 5);
             for (i = 0; i < 4; i++) {

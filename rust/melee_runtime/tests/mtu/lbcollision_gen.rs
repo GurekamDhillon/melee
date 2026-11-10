@@ -133,7 +133,7 @@ pub fn fill_HitCapsule(p: &mut HitCapsule) { unsafe {
     for i0 in 0..12 {
     p.victims_2[i0].x4 = fv() as _;
     }
-    p.anon_134.set_hit_grabbed_victim_only(fv() as _);
+    p.x134.set_hit_grabbed_victim_only(fv() as _);
 } }
 pub fn hash_HitCapsule(p: &HitCapsule) { unsafe {
     if HDBG { println!("B HitCapsule"); }
@@ -202,7 +202,7 @@ pub fn hash_HitCapsule(p: &HitCapsule) { unsafe {
     hm(pi(p.victims_2[i0].victim));
     hm(p.victims_2[i0].x4 as u32);
     }
-    hm(p.anon_134.hit_grabbed_victim_only() as u32);
+    hm(p.x134.hit_grabbed_victim_only() as u32);
 } }
 
 pub fn fill_HitResult(p: &mut HitResult) { unsafe {

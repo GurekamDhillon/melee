@@ -226,7 +226,7 @@ unsafe fn fill_me(c: &mut Case, me: *mut MatchEnd) {
         (*ps).xE = c.rng.range(0, 9) as u16;
         (*ps).is_big_loser = pick(c, &[0u8, 0, 1, 2, 3]);
         (*ps).is_small_loser = pick(c, &[0u8, 0, 1, 2]);
-        c.bitfields::<MatchPlayerData>(ps, offset_of!(MatchPlayerData, anon_3), 3, 1);
+        c.bitfields::<MatchPlayerData>(ps, offset_of!(MatchPlayerData, x3_u), 3, 1);
     }
     for t in 0..5usize {
         (*me).team_standings[t].is_big_loser = pick(c, &[0u8, 0, 1, 2]);

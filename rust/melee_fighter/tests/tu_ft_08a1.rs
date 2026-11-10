@@ -70,7 +70,7 @@ fn ft_08a1_smoke() {
     unsafe { C5240 = true };
     m::ft_8008A348(gp, 0.0);
     assert_eq!(unsafe { LOG.clone() }, ["4ED8"]);
-    fp.set_x2224_b2(1);
+    fp.set_stamina_dead(1);
     setup();
     m::ft_8008A348(gp, 0.0);
     assert_eq!(unsafe { LOG.clone() }, ["DOWNSPOT"]);

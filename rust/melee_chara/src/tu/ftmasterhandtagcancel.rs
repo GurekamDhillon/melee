@@ -39,8 +39,8 @@ pub fn ftMh_MS_388_80155A58(gobj_1: *mut HSD_GObj, gobj_2: *mut HSD_GObj) {
         ext::ftCo_800DD168(gobj_1);
         (*ft_1).x1A5C = gobj_2;
         (*ft_1).victim_gobj = gobj_2;
-        (*ft_1).anon_221b.set_x221B_b5(0);
-        (*ft_1).anon_221b.set_x221B_b7(0);
+        (*ft_1).x221B.set_x221B_b5(0);
+        (*ft_1).x221B.set_x221B_b7(0);
         (*ft_1).facing_dir = (*ft_2).facing_dir;
         let t = ext::ftCo_800DA824(&mut *ft_2);
         ext::ftCommon_InitGrab(&mut *ft_1, 0, t);

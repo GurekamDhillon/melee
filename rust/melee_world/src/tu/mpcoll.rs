@@ -94,7 +94,7 @@ pub static mut mpColl_804D6490_max_x: f32 = 0.0;
 pub static mut mpColl_804D6494_line_id: i32 = 0;
 pub static mut mpColl_804D6498_flags: u32 = 0;
 pub static mut mpColl_IsEcbTiny: i32 = 0;
-pub static mut mpColl_804D64A0: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32> = None;
+pub static mut mpColl_804D64A0: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32> = None;
 pub static mut mpColl_804D64A4: *mut HSD_GObj = null_mut();
 pub static mut mpColl_804D64A8: Option<unsafe extern "C" fn()> = None;
 pub static mut mpColl_804D64AC: i32 = 0;
@@ -231,13 +231,13 @@ pub unsafe fn mpColl_SetECBSource_JObj(mut cd: *mut CollData, mut gobj: *mut HSD
     melee_core::ct!("mpColl_SetECBSource_JObj");
     (*cd).x0_gobj = gobj;
     (*cd).ecb_source.kind = (ECBSource_JObj as i32) as u32;
-    (*cd).ecb_source.anon_4.anon_0.x108_joint = arg1;
-    (*cd).ecb_source.anon_4.anon_0.x10C_joint[0 as usize] = arg2;
-    (*cd).ecb_source.anon_4.anon_0.x10C_joint[1 as usize] = arg3;
-    (*cd).ecb_source.anon_4.anon_0.x10C_joint[2 as usize] = arg4;
-    (*cd).ecb_source.anon_4.anon_0.x10C_joint[3 as usize] = arg5;
-    (*cd).ecb_source.anon_4.anon_0.x10C_joint[4 as usize] = arg6;
-    (*cd).ecb_source.anon_4.anon_0.x10C_joint[5 as usize] = arg7;
+    (*cd).ecb_source.x4.x0.x108_joint = arg1;
+    (*cd).ecb_source.x4.x0.x10C_joint[0 as usize] = arg2;
+    (*cd).ecb_source.x4.x0.x10C_joint[1 as usize] = arg3;
+    (*cd).ecb_source.x4.x0.x10C_joint[2 as usize] = arg4;
+    (*cd).ecb_source.x4.x0.x10C_joint[3 as usize] = arg5;
+    (*cd).ecb_source.x4.x0.x10C_joint[4 as usize] = arg6;
+    (*cd).ecb_source.x4.x0.x10C_joint[5 as usize] = arg7;
     (*cd).ecb_source.x124 = arg9;
     (*cd).ecb_source.x128 = 1e+01f32;
     (*cd).ecb_source.x12C = 1e+01f32;
@@ -265,11 +265,11 @@ pub unsafe fn mpColl_SetECBSource_Fixed(mut cd: *mut CollData, mut gobj: *mut HS
     melee_core::ct!("mpColl_SetECBSource_Fixed");
     (*cd).x0_gobj = gobj;
     (*cd).ecb_source.kind = (ECBSource_Fixed as i32) as u32;
-    (*cd).ecb_source.anon_4.anon_0_0.up = arg1;
-    (*cd).ecb_source.anon_4.anon_0_0.down = arg2;
-    (*cd).ecb_source.anon_4.anon_0_0.front = arg3;
-    (*cd).ecb_source.anon_4.anon_0_0.back = arg4;
-    (*cd).ecb_source.anon_4.anon_0_0.angle = 0.0f32;
+    (*cd).ecb_source.x4.x0_1.up = arg1;
+    (*cd).ecb_source.x4.x0_1.down = arg2;
+    (*cd).ecb_source.x4.x0_1.front = arg3;
+    (*cd).ecb_source.x4.x0_1.back = arg4;
+    (*cd).ecb_source.x4.x0_1.angle = 0.0f32;
     if (*cd).x34_flags.b0() != 0 {
         (*cd).ecb.top.x = 0.0f32;
         (*cd).ecb.top.y = 8.0f32;
@@ -362,30 +362,30 @@ pub unsafe fn mpColl_LoadECB_JObj(mut coll: *mut CollData, mut flags: u32) {
     {
         let mut temp_x: f32 = (*coll).cur_pos.x;
         let mut temp_y: f32 = (*coll).cur_pos.y;
-        ext::lb_8000B1CC((*coll).ecb_source.anon_4.anon_0.x10C_joint[0 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
+        ext::lb_8000B1CC((*coll).ecb_source.x4.x0.x10C_joint[0 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
         left_x = { right_x = vec.x - temp_x; right_x };
         bottom_y = { top_y = vec.y - temp_y; top_y };
-        ext::lb_8000B1CC((*coll).ecb_source.anon_4.anon_0.x10C_joint[1 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
+        ext::lb_8000B1CC((*coll).ecb_source.x4.x0.x10C_joint[1 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
         dx = vec.x - temp_x;
         dy = vec.y - temp_y;
         update_min_max(core::ptr::addr_of_mut!(left_x) as *mut f32, core::ptr::addr_of_mut!(right_x) as *mut f32, dx);
         update_min_max(core::ptr::addr_of_mut!(bottom_y) as *mut f32, core::ptr::addr_of_mut!(top_y) as *mut f32, dy);
-        ext::lb_8000B1CC((*coll).ecb_source.anon_4.anon_0.x10C_joint[2 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
+        ext::lb_8000B1CC((*coll).ecb_source.x4.x0.x10C_joint[2 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
         dx = vec.x - temp_x;
         dy = vec.y - temp_y;
         update_min_max(core::ptr::addr_of_mut!(left_x) as *mut f32, core::ptr::addr_of_mut!(right_x) as *mut f32, dx);
         update_min_max(core::ptr::addr_of_mut!(bottom_y) as *mut f32, core::ptr::addr_of_mut!(top_y) as *mut f32, dy);
-        ext::lb_8000B1CC((*coll).ecb_source.anon_4.anon_0.x10C_joint[3 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
+        ext::lb_8000B1CC((*coll).ecb_source.x4.x0.x10C_joint[3 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
         dx = vec.x - temp_x;
         dy = vec.y - temp_y;
         update_min_max(core::ptr::addr_of_mut!(left_x) as *mut f32, core::ptr::addr_of_mut!(right_x) as *mut f32, dx);
         update_min_max(core::ptr::addr_of_mut!(bottom_y) as *mut f32, core::ptr::addr_of_mut!(top_y) as *mut f32, dy);
-        ext::lb_8000B1CC((*coll).ecb_source.anon_4.anon_0.x10C_joint[4 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
+        ext::lb_8000B1CC((*coll).ecb_source.x4.x0.x10C_joint[4 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
         dx = vec.x - temp_x;
         dy = vec.y - temp_y;
         update_min_max(core::ptr::addr_of_mut!(left_x) as *mut f32, core::ptr::addr_of_mut!(right_x) as *mut f32, dx);
         update_min_max(core::ptr::addr_of_mut!(bottom_y) as *mut f32, core::ptr::addr_of_mut!(top_y) as *mut f32, dy);
-        ext::lb_8000B1CC((*coll).ecb_source.anon_4.anon_0.x10C_joint[5 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
+        ext::lb_8000B1CC((*coll).ecb_source.x4.x0.x10C_joint[5 as usize], null_mut(), core::ptr::addr_of_mut!(vec) as *mut Vec);
         dx = vec.x - temp_x;
         dy = vec.y - temp_y;
         update_min_max(core::ptr::addr_of_mut!(left_x) as *mut f32, core::ptr::addr_of_mut!(right_x) as *mut f32, dx);
@@ -498,7 +498,7 @@ pub unsafe fn mpColl_LoadECB_Fixed(mut coll: *mut CollData) {
     let mut rot_right_y: f32 = 0.0;
     let mut rot_left_y: f32 = 0.0;
     let mut rot_left_x: f32 = 0.0;
-    angle = (*coll).ecb_source.anon_4.anon_0_0.angle;
+    angle = (*coll).ecb_source.x4.x0_1.angle;
     if ((*coll).x130_flags & ((CollData_X130_Clear as i32) as u32)) != 0 {
         (*coll).ecb.top.x = 0.0f32;
         (*coll).ecb.top.y = 0.0f32;
@@ -511,14 +511,14 @@ pub unsafe fn mpColl_LoadECB_Fixed(mut coll: *mut CollData) {
         (*coll).x130_flags = (*coll).x130_flags & ((!(CollData_X130_Clear as i32)) as u32);
     }
     (*coll).xE4_ecb = (*coll).ecb;
-    bottom_y = -(*coll).ecb_source.anon_4.anon_0_0.down;
-    top_y = (*coll).ecb_source.anon_4.anon_0_0.up;
+    bottom_y = -(*coll).ecb_source.x4.x0_1.down;
+    top_y = (*coll).ecb_source.x4.x0_1.up;
     if ((*coll).facing_dir as i32) == 1 {
-        right_x = (*coll).ecb_source.anon_4.anon_0_0.front;
-        left_x = -(*coll).ecb_source.anon_4.anon_0_0.back;
+        right_x = (*coll).ecb_source.x4.x0_1.front;
+        left_x = -(*coll).ecb_source.x4.x0_1.back;
     } else {
-        right_x = (*coll).ecb_source.anon_4.anon_0_0.back;
-        left_x = -(*coll).ecb_source.anon_4.anon_0_0.front;
+        right_x = (*coll).ecb_source.x4.x0_1.back;
+        left_x = -(*coll).ecb_source.x4.x0_1.front;
     }
     if angle != 0.0f32 {
         sin = melee_runtime::gekko::sinf(angle);
@@ -848,7 +848,7 @@ pub unsafe fn mpColl_800436E4(mut coll: *mut CollData, mut arg1: f32) {
         } else if (var_f1 as f64) < (-6.283185307179586f64) {
             var_f1 = ((var_f1 as f64) + 6.283185307179586f64) as f32;
         }
-        (*coll).ecb_source.anon_4.anon_0_0.angle = var_f1;
+        (*coll).ecb_source.x4.x0_1.angle = var_f1;
     } else {
         ext::OSReport(&format!("not support rotate at JObj type coll\n"));
         'l23: while 1 != 0 {
@@ -1206,7 +1206,7 @@ pub unsafe fn mpColl_800443C4(mut cd: *mut CollData, mut p_ledge_id: *mut i32) -
 }
 
 /// `mpColl_80044628_Floor`
-pub unsafe fn mpColl_80044628_Floor(mut coll: *mut CollData, mut cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut gobj: *mut HSD_GObj, mut left_right: i32) -> i32 {
+pub unsafe fn mpColl_80044628_Floor(mut coll: *mut CollData, mut cb: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut gobj: *mut HSD_GObj, mut left_right: i32) -> i32 {
     melee_core::ct!("mpColl_80044628_Floor");
     let mut y: f32 = 0.0;
     let mut bottom: Vec3 = unsafe { core::mem::zeroed() };
@@ -1235,7 +1235,7 @@ pub unsafe fn mpColl_80044628_Floor(mut coll: *mut CollData, mut cb: Option<unsa
             if (floor_id != (-1_i32)) && (y > 0.0f32) {
                 (*coll).floor.index = floor_id;
                 if (!(((*coll).floor.flags & ((1 << 8) as u32)) != 0)) || ((*coll).floor.index != (*coll).floor_skip) {
-                    if (cb.is_none()) || super::mplib::cb_bool(cb.unwrap()(gobj, (*coll).floor.index)) {
+                    if (cb.is_none()) || super::mplib::cb_bool(cb.unwrap()(gobj, (*coll).floor.index as isize)) {
                         (*coll).env_flags = (*coll).env_flags | 32768;
                         return 1;
                     }
@@ -2294,7 +2294,7 @@ unsafe fn inline3(mut coll: *mut CollData, mut i: i32) -> i32 {
 }
 
 /// `inline1`
-unsafe fn inline1(mut coll: *mut CollData, mut i: i32, mut floor_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
+unsafe fn inline1(mut coll: *mut CollData, mut i: i32, mut floor_cb: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
     let mut result: i32 = 0;
     (*coll).prev_env_flags = (*coll).env_flags;
     (*coll).env_flags = 0;
@@ -2351,7 +2351,7 @@ pub unsafe fn mpColl_800475F4(mut coll: *mut CollData, mut arg1: *mut ftCollisio
 }
 
 /// `mpColl_800476B4`
-pub unsafe fn mpColl_800476B4(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
+pub unsafe fn mpColl_800476B4(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut gobj: *mut HSD_GObj) -> i32 {
     melee_core::ct!("mpColl_800476B4");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 6);
@@ -2383,7 +2383,7 @@ pub unsafe fn mpColl_80047A08(mut coll: *mut CollData, mut arg1: *mut ftCollisio
 }
 
 /// `mpColl_80047AC8`
-pub unsafe fn mpColl_80047AC8(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+pub unsafe fn mpColl_80047AC8(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
     melee_core::ct!("mpColl_80047AC8");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 6);
@@ -2391,7 +2391,7 @@ pub unsafe fn mpColl_80047AC8(mut coll: *mut CollData, mut arg1: Option<unsafe e
 }
 
 /// `mpColl_80047BF4`
-pub unsafe fn mpColl_80047BF4(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+pub unsafe fn mpColl_80047BF4(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
     melee_core::ct!("mpColl_80047BF4");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 10);
@@ -2399,7 +2399,7 @@ pub unsafe fn mpColl_80047BF4(mut coll: *mut CollData, mut arg1: Option<unsafe e
 }
 
 /// `mpColl_80047D20`
-pub unsafe fn mpColl_80047D20(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+pub unsafe fn mpColl_80047D20(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
     melee_core::ct!("mpColl_80047D20");
     mpCollPrev(coll);
     if (*coll).ecb_source.kind == ((ECBSource_JObj as i32) as u32) {
@@ -2412,7 +2412,7 @@ pub unsafe fn mpColl_80047D20(mut coll: *mut CollData, mut arg1: Option<unsafe e
 }
 
 /// `mpColl_80047E14`
-pub unsafe fn mpColl_80047E14(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+pub unsafe fn mpColl_80047E14(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
     melee_core::ct!("mpColl_80047E14");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 6);
@@ -2420,7 +2420,7 @@ pub unsafe fn mpColl_80047E14(mut coll: *mut CollData, mut arg1: Option<unsafe e
 }
 
 /// `mpColl_80047F40`
-pub unsafe fn mpColl_80047F40(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+pub unsafe fn mpColl_80047F40(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
     melee_core::ct!("mpColl_80047F40");
     mpCollPrev(coll);
     mpColl_LoadECB_inline(coll, 10);
@@ -2428,7 +2428,7 @@ pub unsafe fn mpColl_80047F40(mut coll: *mut CollData, mut arg1: Option<unsafe e
 }
 
 /// `mpColl_8004806C`
-pub unsafe fn mpColl_8004806C(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
+pub unsafe fn mpColl_8004806C(mut coll: *mut CollData, mut arg1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize) -> i32>, mut arg2: *mut HSD_GObj) -> i32 {
     melee_core::ct!("mpColl_8004806C");
     mpCollPrev(coll);
     if (*coll).ecb_source.kind == ((ECBSource_JObj as i32) as u32) {

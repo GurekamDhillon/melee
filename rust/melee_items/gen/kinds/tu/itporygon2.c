@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -87,13 +87,13 @@ int main(void)
             switch (op) {
             case 0: {  itPorygon2_Logic26_Spawned(&GO[0]); } break; /* itPorygon2_Logic26_Spawned */
             case 1: {  it_802D5B14(&GO[0]); } break; /* it_802D5B14 */
-            case 2: {  ret = (u32) itPorygon2_UnkMotion0_Anim(&GO[0]); } break; /* itPorygon2_UnkMotion0_Anim */
+            case 2: {  ret = (u32) ((itPorygon2_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itPorygon2_UnkMotion0_Anim */
             case 3: {  itPorygon2_UnkMotion0_Phys(&GO[0]); } break; /* itPorygon2_UnkMotion0_Phys */
-            case 4: {  ret = (u32) itPorygon2_UnkMotion0_Coll(&GO[0]); } break; /* itPorygon2_UnkMotion0_Coll */
+            case 4: {  ret = (u32) ((itPorygon2_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itPorygon2_UnkMotion0_Coll */
             case 5: {  it_802D5C00(&GO[0]); } break; /* it_802D5C00 */
-            case 6: {  ret = (u32) itPorygon2_UnkMotion1_Anim(&GO[0]); } break; /* itPorygon2_UnkMotion1_Anim */
+            case 6: {  ret = (u32) ((itPorygon2_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itPorygon2_UnkMotion1_Anim */
             case 7: {  itPorygon2_UnkMotion1_Phys(&GO[0]); } break; /* itPorygon2_UnkMotion1_Phys */
-            case 8: {  ret = (u32) itPorygon2_UnkMotion1_Coll(&GO[0]); } break; /* itPorygon2_UnkMotion1_Coll */
+            case 8: {  ret = (u32) ((itPorygon2_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itPorygon2_UnkMotion1_Coll */
             case 9: {  it_802D5CD8(&GO[0], &GO[1]); } break; /* it_802D5CD8 */
             case 10: { { int j; for (j = 0; j < 2; j++) { HM((u32) it_803F8250[j].anim_id); HM(FI((const void*) it_803F8250[j].animated)); HM(FI((const void*) it_803F8250[j].physics_updated)); HM(FI((const void*) it_803F8250[j].collided)); } } } break; /* state tables */
             }

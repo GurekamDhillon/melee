@@ -37,7 +37,7 @@ fn cd_rand() {
     let c = cd();
     c.xF4 = rw(); c.xF8 = rw(); c.x108 = if rnd() & 1 != 0 { 100000.0 } else { rw() };
     c.x110 = rw(); c.x114 = rw(); c.x118 = rw(); c.x11C = rw(); c.x120 = rw();
-    c.x6D4 = (rnd() % 300) as i32; c.x6D8[0] = (rnd() % 300) as i32;
+    c.x6D4 = (rnd() % 300) as i32; c.x6D8 = (rnd() % 300) as i32;
     c.x128 = rw(); c.x714 = rw(); c.x3CC = (rnd() % 10) as i32;
     c.x3D0 = rw(); c.x3D4 = rw(); c.x4C8 = (rnd() % 4) as i32; c.x4D0 = rw(); c.x4D4 = rw();
     c.x7A8 = rw(); c.unk_kb_angle_min = rnd() % 400; c.unk_kb_angle_max = rnd() % 400;
@@ -46,8 +46,8 @@ fn cd_rand() {
 
 fn fp_rand(f: &mut Fighter, g: *mut HSD_GObj) {
     f.gobj = g;
-    f.player_id = (rnd() % 4) as _;
-    f.set_x2225_b7((rnd() & 1) as _); f.set_x2224_b2((rnd() & 1) as _);
+    f.player_idx = (rnd() % 4) as _;
+    f.set_x2225_b7((rnd() & 1) as _); f.set_stamina_dead((rnd() & 1) as _);
     f.dmg.x1830_percent = rw(); f.dmg.x1838_percentTemp = rw();
     f.dmg.x182c_behavior = rw(); f.dmg.x1834 = rw();
     f.dmg.x183C_applied = (rnd() % 20) as i32;
@@ -60,7 +60,7 @@ fn fp_rand(f: &mut Fighter, g: *mut HSD_GObj) {
     f.x2090 = (rnd() % 4) as _; f.x2092 = (rnd() % 3) as _;
     f.ground_or_air = (rnd() & 1) as _;
     f.motion_id = if rnd() & 1 != 0 { ftCo_MS_DamageIce as _ } else { 0 };
-    f.anon_221b.set_x221B_b5((rnd() & 1) as _); f.set_x221C_b4((rnd() & 1) as _); f.set_x221C_b2((rnd() & 1) as _);
+    f.x221B.set_x221B_b5((rnd() & 1) as _); f.set_x221C_b4((rnd() & 1) as _); f.set_x221C_b2((rnd() & 1) as _);
     f.lightshield_amount = rw(); f.shield_unk0 = if rnd() & 1 != 0 { 0.0 } else { rw() };
     f.x19A4 = (rnd() % 20) as i32;
     f.x1988 = (rnd() % 4 == 0) as _; f.x198C = 0;
@@ -194,14 +194,14 @@ fn ftColl_matches_c() {
                             hurt[i].capsule.a_pos.x = rw(); hurt[i].capsule.a_pos.y = rw();
                             hurt[i].capsule.b_pos.x = rw(); hurt[i].capsule.b_pos.y = rw();
                             hurt[i].height = (rnd() % 3) as _;
-                            log[i].anon_10.hurt1 = &mut hurt[i] as *mut _;
+                            log[i].x10.hurt1 = &mut hurt[i] as *mut _;
                             if log[i].x0 == 1 {
-                                log[i].anon_c.hit0 = &mut (*fq).x914[i] as *mut _;
+                                log[i].xC.hit0 = &mut (*fq).x914[i] as *mut _;
                             } else {
                                 let ep = env[i].as_mut_ptr() as *mut i32; *ep = (rnd() % 100) as i32;
                                 *ep.add(2) = if rnd() & 1 != 0 { 0x16A } else { (rnd() % 360) as i32 };
                                 *ep.add(6) = (rnd() % 17) as i32;
-                                log[i].anon_c.unk_anim0 = ep as *mut _;
+                                log[i].xC.unk_anim0 = ep as *mut _;
                             }
                             log[i].pos.x = rw(); log[i].pos.y = rw();
                             log[i].x20 = rw();

@@ -49,17 +49,17 @@ pub fn ftCo_8009CA0C(g: G, vic: G) {
     let f = fp(g);
     f.x1A5C = vic;
     f.victim_gobj = vic;
-    f.anon_221b.set_x221B_b5(0);
+    f.x221B.set_x221B_b5(0);
     f.facing_dir = -unsafe { (*vf).facing_dir };
     if f.ground_or_air as i32 == GA_Air as i32 {
         ext::ftCo_800DB368(vf, f);
-        fp(g).anon_221b.set_x221B_b7(0);
+        fp(g).x221B.set_x221B_b7(0);
     } else {
-        f.anon_221b.set_x221B_b7(1);
+        f.x221B.set_x221B_b7(1);
     }
     let other = fp(g).victim_gobj;
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureCaptain as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, other);
-    if fp(g).anon_221b.x221B_b7() == 0 {
+    if fp(g).x221B.x221B_b7() == 0 {
         fp(g).accessory1_cb = ext::ftCo_800DB464_fn();
     }
     ext::ftCommon_8007E2F4(fp(g), 0x1FF);

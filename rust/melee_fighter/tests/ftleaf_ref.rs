@@ -45,7 +45,7 @@ const CMDF: [Cmd; 29] = [
 fn state(f: &Fighter) -> u32 {
     let mut hh: u32 = 0;
     let mut hm = |v: u32| hh = hh.wrapping_mul(31).wrapping_add(v);
-    let tf = unsafe { f.anon_2210.anon_0 };
+    let tf = unsafe { f.x2210.x0 };
     hm(tf.throw_flags_b0() as u32);
     hm(tf.throw_flags_b1() as u32);
     hm(tf.throw_flags_b2() as u32);
@@ -106,7 +106,7 @@ fn ftleaf_matches_c() {
             let gp: *mut HSD_GObj = &mut *go;
             f.gobj = gp;
             {
-                let tf = unsafe { &mut f.anon_2210.anon_0 };
+                let tf = unsafe { &mut f.x2210.x0 };
                 tf.set_throw_flags_b0((rg.rnd() & 1) as u8);
                 tf.set_throw_flags_b1((rg.rnd() & 1) as u8);
                 tf.set_throw_flags_b2((rg.rnd() & 1) as u8);
@@ -119,7 +119,7 @@ fn ftleaf_matches_c() {
                 f.x8B0[i].x10 = rg.rnd() as i8;
                 f.x8B0[i].x11 = rg.rnd() as i8;
             }
-            f.player_id = (rg.rnd() % 6) as u8;
+            f.player_idx = (rg.rnd() % 6) as u8;
             f.set_is_sub_fighter((rg.rnd() & 1) as u8);
             f.cur_pos.x = rg.rf();
             f.cur_pos.y = rg.rf();

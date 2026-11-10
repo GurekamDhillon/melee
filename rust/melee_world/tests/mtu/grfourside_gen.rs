@@ -3,7 +3,6 @@
 use crate::mtu_harness::*;
 use super::m;
 use melee_types::*;
-use super::m::{grFourside_YakumonoParam};
 use super::m::*;
 use core::ffi::c_void;
 
@@ -40,7 +39,7 @@ pub fn install() {
         grAnime_801C8138 = Some(|a0, a1, a2| { t(1026); t(pi(a0)); t(a1 as u32); t(a2 as u32); });
         grAnime_801C83D0 = Some(|a0, a1, a2| { t(1027); t(pi(a0)); t(a1 as u32); t(a2 as u32); fv() as _ });
         grAnime_801C84A4 = Some(|a0, a1, a2| { t(1028); t(pi(a0)); t(a1 as u32); t(a2 as u32); fv() as _ });
-        grDisplay_801C5DB0 = Some(|a0, a1| { t(1029); t(pi(a0)); t(a1 as u32); });
+        grDisplay_801C5DB0 = Some(|a0, a1| { t(1029); t(pi(a0)); t(a1 as u32); t(((a1 as u64) >> 32) as u32); });
         grZakoGenerator_801CAE04 = Some(|a0| { t(1030); t(pi(a0)); core::ptr::null_mut() });
         lb_8000B1CC = Some(|a0, a1, a2| { t(1031); t(pi(a0)); t(pi(a1)); t(pi(a2)); (*a2).x = rw(); (*a2).y = rw(); (*a2).z = rw(); });
         lb_800115F4 = Some(|| { t(1032); });
@@ -521,7 +520,7 @@ pub fn hash_StageInfo(p: &StageInfo) {
 
 pub fn fill_StageCallbacks(p: &mut StageCallbacks) {
     unsafe {
-    for j0 in 0..4 { unsafe { *(base(p) as *mut u8).add(32 + j0) = rnd() as u8; } }
+    for i0 in 0..4 { unsafe { *(&mut p.x10 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     }
 }
 pub fn hash_StageCallbacks(p: &StageCallbacks) {
@@ -531,7 +530,7 @@ pub fn hash_StageCallbacks(p: &StageCallbacks) {
     hm(fi(p.callback1));
     hm(fi(p.gobj_proc));
     hm(fi(p.callback3));
-    for j0 in 0..4 { unsafe { hm(*base(p).add(32 + j0) as u32); } }
+    for i0 in 0..4 { unsafe { hm(*(&p.x10 as *const _ as *const u8).add(i0) as u32); } }
     }
 }
 
@@ -814,7 +813,7 @@ pub fn fill_CollData(p: &mut CollData) {
     p.xE4_ecb.left.x = rg();
     p.xE4_ecb.left.y = rg();
     p.ecb_source.kind = fv() as _;
-    for j0 in 0..56 { unsafe { *(base(&p.ecb_source) as *mut u8).add(8 + j0) = rnd() as u8; } }
+    for i0 in 0..56 { unsafe { *(&mut p.ecb_source.x4 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     p.ecb_source.x124 = rg();
     p.ecb_source.x128 = rg();
     p.ecb_source.x12C = rg();
@@ -926,7 +925,7 @@ pub fn hash_CollData(p: &CollData) {
     hm(p.xE4_ecb.left.x.to_bits());
     hm(p.xE4_ecb.left.y.to_bits());
     hm(p.ecb_source.kind as u32);
-    for j0 in 0..56 { unsafe { hm(*base(&p.ecb_source).add(8 + j0) as u32); } }
+    for i0 in 0..56 { unsafe { hm(*(&p.ecb_source.x4 as *const _ as *const u8).add(i0) as u32); } }
     hm(p.ecb_source.x124.to_bits());
     hm(p.ecb_source.x128.to_bits());
     hm(p.ecb_source.x12C.to_bits());

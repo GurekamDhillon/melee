@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -87,23 +87,23 @@ int main(void)
             switch (op) {
             case 0: {  itMetalB_Logic32_Spawned(&GO[0]); } break; /* itMetalB_Logic32_Spawned */
             case 1: {  it_802953FC(&GO[0]); } break; /* it_802953FC */
-            case 2: {  ret = (u32) itMetalb_UnkMotion0_Anim(&GO[0]); } break; /* itMetalb_UnkMotion0_Anim */
+            case 2: {  ret = (u32) ((itMetalb_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itMetalb_UnkMotion0_Anim */
             case 3: {  itMetalb_UnkMotion0_Phys(&GO[0]); } break; /* itMetalb_UnkMotion0_Phys */
-            case 4: {  ret = (u32) itMetalb_UnkMotion0_Coll(&GO[0]); } break; /* itMetalb_UnkMotion0_Coll */
+            case 4: {  ret = (u32) ((itMetalb_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itMetalb_UnkMotion0_Coll */
             case 5: {  it_80295498(&GO[0]); } break; /* it_80295498 */
-            case 6: {  ret = (u32) itMetalb_UnkMotion3_Anim(&GO[0]); } break; /* itMetalb_UnkMotion3_Anim */
+            case 6: {  ret = (u32) ((itMetalb_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itMetalb_UnkMotion3_Anim */
             case 7: {  itMetalb_UnkMotion1_Phys(&GO[0]); } break; /* itMetalb_UnkMotion1_Phys */
-            case 8: {  ret = (u32) itMetalb_UnkMotion1_Coll(&GO[0]); } break; /* itMetalb_UnkMotion1_Coll */
+            case 8: {  ret = (u32) ((itMetalb_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itMetalb_UnkMotion1_Coll */
             case 9: {  itMetalB_Logic32_PickedUp(&GO[0]); } break; /* itMetalB_Logic32_PickedUp */
-            case 10: {  ret = (u32) itMetalb_UnkMotion2_Anim(&GO[0]); } break; /* itMetalb_UnkMotion2_Anim */
+            case 10: {  ret = (u32) ((itMetalb_UnkMotion2_Anim(&GO[0])) != 0); } break; /* itMetalb_UnkMotion2_Anim */
             case 11: {  itMetalB_Logic32_Dropped(&GO[0]); } break; /* itMetalB_Logic32_Dropped */
             case 12: {  itMetalb_UnkMotion3_Phys(&GO[0]); } break; /* itMetalb_UnkMotion3_Phys */
-            case 13: {  ret = (u32) itMetalb_UnkMotion3_Coll(&GO[0]); } break; /* itMetalb_UnkMotion3_Coll */
-            case 14: {  ret = (u32) itMetalB_Logic32_DmgReceived(&GO[0]); } break; /* itMetalB_Logic32_DmgReceived */
+            case 13: {  ret = (u32) ((itMetalb_UnkMotion3_Coll(&GO[0])) != 0); } break; /* itMetalb_UnkMotion3_Coll */
+            case 14: {  ret = (u32) ((itMetalB_Logic32_DmgReceived(&GO[0])) != 0); } break; /* itMetalB_Logic32_DmgReceived */
             case 15: {  itMetalB_Logic32_EnteredAir(&GO[0]); } break; /* itMetalB_Logic32_EnteredAir */
-            case 16: {  ret = (u32) itMetalb_UnkMotion4_Anim(&GO[0]); } break; /* itMetalb_UnkMotion4_Anim */
+            case 16: {  ret = (u32) ((itMetalb_UnkMotion4_Anim(&GO[0])) != 0); } break; /* itMetalb_UnkMotion4_Anim */
             case 17: {  itMetalb_UnkMotion4_Phys(&GO[0]); } break; /* itMetalb_UnkMotion4_Phys */
-            case 18: {  ret = (u32) itMetalb_UnkMotion4_Coll(&GO[0]); } break; /* itMetalb_UnkMotion4_Coll */
+            case 18: {  ret = (u32) ((itMetalb_UnkMotion4_Coll(&GO[0])) != 0); } break; /* itMetalb_UnkMotion4_Coll */
             case 19: {  itMetalB_Logic32_EvtUnk(&GO[0], &GO[1]); } break; /* itMetalB_Logic32_EvtUnk */
             case 20: { { int j; for (j = 0; j < 5; j++) { HM((u32) it_803F62C0[j].anim_id); HM(FI((const void*) it_803F62C0[j].animated)); HM(FI((const void*) it_803F62C0[j].physics_updated)); HM(FI((const void*) it_803F62C0[j].collided)); } } } break; /* state tables */
             }

@@ -53,7 +53,7 @@ fn smoke() {
     }
 
     // CheckIfUsed: this player used it AND the stage transmission is ready.
-    f.player_id = 2;
+    f.player_idx = 2;
     assert!(!t::ftFx_AppealS_CheckIfUsed(&mut *f));
     unsafe { USED[2] = true };
     assert!(!t::ftFx_AppealS_CheckIfUsed(&mut *f));
@@ -65,11 +65,11 @@ fn smoke() {
 
     // Enter: facing right (1.0 == facing) takes the R column, left the L column.
     f.facing_dir = 1.0;
-    f.anon_2210.throw_flags = 0xFF;
+    f.x2210.throw_flags = 0xFF;
     t::ftFx_AppealS_Enter(gp);
     assert_eq!(take(), format!("M{}", ftFx_MS_AppealSStartR));
     assert_eq!(unsafe { (f.mv.fx.AppealS.facingDir, f.mv.fx.AppealS.animCount) }, (0, 0));
-    assert_eq!(unsafe { f.anon_2210.throw_flags }, 0);
+    assert_eq!(unsafe { f.x2210.throw_flags }, 0);
     f.facing_dir = -1.0;
     t::ftFx_AppealS_Enter(gp);
     assert_eq!(take(), format!("M{}", ftFx_MS_AppealSStartL));
@@ -78,7 +78,7 @@ fn smoke() {
     // CheckInput: Fox or Falco, on Corneria, D-pad down not held, x682 == 1, nobody used it.
     f.kind = Ft_Kind_Fox;
     f.x682 = 1;
-    f.player_id = 1;
+    f.player_idx = 1;
     f.facing_dir = 1.0;
     assert!(t::ftFx_AppealS_CheckInput(gp));
     assert_eq!(take(), format!("M{},pl40120 1 0", ftFx_MS_AppealSStartR));
@@ -106,9 +106,9 @@ fn smoke() {
     // advances Start -> Taunt -> End -> Wait when each animation runs out.
     f.kind = Ft_Kind_Fox;
     f.mv.fx.AppealS = ftFoxAppealS { facingDir: 0, animCount: 0 };
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b3(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b3(1) };
     t::ftFx_AppealS_Anim(gp);
-    assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b3() }, 0);
+    assert_eq!(unsafe { f.x2210.x0.throw_flags_b3() }, 0);
     assert!(f.death1_cb.is_some());
     assert_eq!(take(), format!("fox_tx,M{}", ftFx_MS_AppealSR));
     t::ftFx_AppealS_Anim(gp);
@@ -118,7 +118,7 @@ fn smoke() {
     f.kind = Ft_Kind_Falco;
     f.death1_cb = None;
     f.mv.fx.AppealS = ftFoxAppealS { facingDir: 1, animCount: 0 };
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b3(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b3(1) };
     t::ftFx_AppealS_Anim(gp);
     assert_eq!(take(), format!("falco_tx,M{}", ftFx_MS_AppealSL));
     assert!(f.death1_cb.is_some());

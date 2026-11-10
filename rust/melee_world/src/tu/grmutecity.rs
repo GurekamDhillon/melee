@@ -49,7 +49,7 @@ pub mod ext {
     ext_fns! {
     fn Camera_GetTransformPosition(a0: *mut Vec) = |a0: *mut Vec| { unsafe { crate::tu::camera::Camera_GetTransformPosition(a0); } };
     fn Camera_RequestQuake(a0: u32, a1: *mut Vec) = |a0: u32, a1: *mut Vec| unsafe { crate::tu::camera::Camera_RequestQuake(a0 as _, a1 as _) };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn Ground_801C0498() -> f32 = || unsafe { crate::tu::ground::Ground_801C0498() as _ };
     fn Ground_801C13D0(a0: i32, a1: i32) -> *mut HSD_JObj = |a0: i32, a1: i32| unsafe { crate::tu::ground::Ground_801C13D0(a0 as _, a1 as _) as _ };
     fn Ground_801C3880(a0: f32) = |a0: f32| { unsafe { crate::tu::ground::Ground_801C3880(a0 as _); } };
@@ -105,7 +105,7 @@ pub mod ext {
     fn grAnime_801C7FF8(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32) = |a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32| { unsafe { crate::tu::granime::grAnime_801C7FF8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } };
     fn grAnime_801C8138(a0: *mut HSD_GObj, a1: i32, a2: i32) = |a0: *mut HSD_GObj, a1: i32, a2: i32| { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } };
     fn grDatFiles_801C6330(a0: i32) -> *mut UnkArchiveStruct = |a0: i32| unsafe { crate::tu::grdatfiles::grDatFiles_801C6330(a0 as _) as _ };
-    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
+    fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } };
     fn grFZeroCar_801CAFBC(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32, a3: i32) = |a0: *mut HSD_GObj, a1: *mut c_void, a2: i32, a3: i32| { unsafe { crate::tu::grfzerocar::grFZeroCar_801CAFBC(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn grLib_801C96E8(a0: *mut HSD_GObj) -> i32 = |a0: *mut HSD_GObj| unsafe { crate::tu::grlib::grLib_801C96E8(a0 as _) as _ };
     fn grLib_801C96F8(a0: i32, a1: i32, a2: *mut Vec) -> *mut HSD_Generator = |a0: i32, a1: i32, a2: *mut Vec| unsafe { crate::tu::grlib::grLib_801C96F8(a0 as _, a1 as _, a2 as _) as _ };
@@ -147,7 +147,7 @@ pub mod ext {
     pub mod cb {
         use super::*;
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { super::grDisplay_801C5DB0(a0, a1) }
+        pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
@@ -229,7 +229,7 @@ pub static mut grMc_803E30B0: [GrJoint; 3] = [
 ];
 
 const fn cb(on_init: HSD_GObjEvent, callback1: HSD_GObjPredicate, gobj_proc: HSD_GObjEvent, callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>, flags: u32) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, x10: StageCallbacks_x10 { flags: u32::to_be(flags) } }
 }
 
 /// `grMc_StageCallbacks`
@@ -1563,17 +1563,17 @@ pub unsafe extern "C" fn fn_801F2B58(user_data: *mut c_void, joint_id: i32, coll
     (*coll).x34_flags.set_b7(1);
 }
 
-pub unsafe extern "C" fn grMuteCity_801F2BBC(arg0: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn grMuteCity_801F2BBC(arg0: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("grMuteCity_801F2BBC");
     if grMc_804D69D4 == 1 {
         if arg0 == 0x31 {
-            return (*yakumono_param).x8;
+            return (*yakumono_param).x8 as *mut lbColl_80008D30_arg1;
         }
         if arg0 == 0x35 {
-            return (*yakumono_param).x8;
+            return (*yakumono_param).x8 as *mut lbColl_80008D30_arg1;
         }
         if ((arg0 - 0x32) as u32) <= 2 {
-            return (*yakumono_param).xC;
+            return (*yakumono_param).xC as *mut melee_types::lbColl_80008D30_arg1;
         }
     }
     null_mut()

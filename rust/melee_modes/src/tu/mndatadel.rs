@@ -10,7 +10,7 @@ use melee_core::fp::fmadds;
 pub mod ext { use super::*; crate::oext_fns! {
 fn __assert(a0: *const i8, a1: u32, a2: *const i8) -> ();
 fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
 fn lbAudioAx_800237A8(sfx_id: enum_t, sfx_vol: i32, sfx_pan: i32) -> i32 = crate::tu::adapt::lbAudioAx_800237A8__04460b;
 fn lbAudioAx_80027AB0(a0: i32) -> () = crate::tu::adapt::lbAudioAx_80027AB0__27430d;
 fn mn_80229624(a0: u32) -> u32 = crate::tu::adapt::mn_80229624__84b7ce;
@@ -533,7 +533,7 @@ pub unsafe extern "C" fn mnDataDel_8024EEC0() {
         wrn_modal,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, i32) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         6 as u8,
         0x80 as u32,
@@ -1172,7 +1172,7 @@ pub unsafe extern "C" fn mnDataDel_8024FE4C(mut arg0: u8) {
         gobj,
         Some(
             HSD_GObj_JObjCallback
-                as unsafe extern "C" fn(*mut HSD_GObj, i32) -> (),
+                as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
         ),
         4 as u8,
         0x80 as u32,

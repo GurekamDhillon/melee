@@ -121,10 +121,11 @@ CFGS = {
 
     "gm_16f1": dict(
         src="src/melee/gm/gm_16F1.c", module="gm_16f1", cases=100, cstr_nocls=True,
+        skip={"tryUnlock": "static inline helper of gm_80172898 (upstream), inlined in the port"},
         local_types=["lbl_803D5A4C_t", "lbl_803D5A4C_tbl", "lbl_803B7A60_t", "lbl_804D65A8_t", "lbl_8046DBC8_t",
                      "lbl_8046DBC8_x2", "lbl_804D65A0_t", "lbl_803B7AD0_t", "lbl_803D6300_t"],
         # PPC allocates bitfields MSB-first: the byte's bit 0 is x3_b7 (the native C allocates LSB-first)
-        patch=[("(x58[i].x3 & 1))", "(x58[i].x3_b7 & 1))"),
+        patch=[("(x58[i].x3_u.x3 & 1))", "(x58[i].x3_u.x0.x3_b7 & 1))"),
                ("int fn_8016F39C(HSD_Text** arg0, void* arg1,", "int fn_8016F39C_ptr(HSD_Text** arg0, MatchEnd* arg1,"),
                ("int fn_8016F548(void* arg0,", "int fn_8016F548_ptr(MatchEnd* arg0,"),
                ("int fn_8016F740(void* arg0,", "int fn_8016F740_ptr(MatchEnd* arg0,"),
@@ -164,7 +165,7 @@ CFGS = {
             "fn_8016F740_ptr": dict(args=["buf", "0..0x110", "0..255", "0..5"], cases=200),
             "fn_8016F870_ptr": dict(args=["buf", "0..0x110", "0..255", "0..5"], cases=200),
             "fn_8016F9A8_ptr": dict(args=["buf", "0..0x110", "0..255", "0..5"], cases=200),
-            "fn_8016FAD4": dict(args=["buf", "0..0x2A0", "0..255", "0..5"], cases=300),
+            "fn_8016FAD4": dict(args=["buf", "0..0x299", "0..255", "0..5"], cases=300),  # kind 0x29A is the terminator row: the C reads lbl_803D5648[-2]
             "fn_8016FFD4": dict(args=["buf", "0..255", "0..5"], cases=200),
             "fn_80170110_ptr": dict(args=["buf", "0..256", "0..255", "0..5"], cases=300),
             "fn_801701C0": dict(args=["buf", "0..5", "0xD0..0x102"], cases=1500),
@@ -320,7 +321,7 @@ def _gm_17c0():
         "fn_8017C1A4": S(args=["obj:gobArg"], cases=800),
         "fn_8017C71C": S(cases=100), "fn_8017C7A0": S(), "fn_8017C7EC": S(force={"gm_GetCurrentGameMode": "3|4|5"}),
         "gm_8017C838": S(cases=300),
-        "gm_8017C984": S(args=["obj:gmClassic_80470708"]),
+        "gm_8017C984": S(args=["obj:cssd"]),  # gmClassic_80470708 moved to gm_17DB.c upstream: a mock CSSData
         "gm_8017C9A8": S(args=["buf", "buf", "0..2"]),
         "gm_8017CA38": S(args=["buf", "buf", "buf", "0..30"], cases=300),
         "gm_8017CBAC": S(args=["buf", "buf", "20..24"], cases=300),
@@ -347,14 +348,15 @@ def _gm_17c0():
         local_types=["lbl_804706D8_t", "lbl_804706C0_t", "RegClearCharEntry", "boss_hook_t"],
         anon_vars={"boss_hook": "boss_hook_t"},
         extsize={"lbl_803D79F0": 24},
-        extra_objs={"fgt": "Fighter", "gobArg": "HSD_GObj"},
+        extra_objs={"fgt": "Fighter", "gobArg": "HSD_GObj", "cssd": "CSSData"},
         mockobj={"Player_GetEntity": "gobE", "GObj_Create": "gobC"},
         fixups=fixups,
         # the mocks must not scribble over the wired gobjs they are handed
         noout={"ftCo_800C8C84": True, "ft_80087C58": True, "ft_80087C64": True, "HSD_GObj_SetupProc": True},
         fnptr_nonnull=["Unk1PData.x48", "Unk1PData.x64", "Unk1PData.x68"],
         funcs=funcs,
-        mock={"gm_GetCurrentGameMode": "3|4|5|1", "Script_OnePScripted": "0|1", "Script_OnePComplete": "0|1",
+        mock={"fn_8017DD7C": "0..2",  # the player slot: +1 +3 enemies stays in players[6]
+              "gm_GetCurrentGameMode": "3|4|5|1", "Script_OnePScripted": "0|1", "Script_OnePComplete": "0|1",
               "Script_BossHookEnabled": "0|1", "Player_GetRemainingHP": "-1|0|1|50|100|150|200|300",
               "ftBossLib_8015C74C": "10|20|30", "ftBossLib_8015C7EC": "5|10", "ftBossLib_8015C88C": "5|10|15",
               "ftBossLib_8015C9CC": "10|20", "ftBossLib_IsMasterHandEntry": "0|1", "ftBossLib_8015C2A8": "0|1",

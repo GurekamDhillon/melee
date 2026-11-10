@@ -172,7 +172,7 @@ fn grhomerun_matches_c() {
                     51 => { let ja = fv() as i32; let jb = fv() as i32; let jk = fv() % 3; m::fn_8021E994(&raw mut GG[10] as *mut c_void, ja, &raw mut CD, jb, jk, 0.0); }
                     52 => { VW[0].x = rw(); if fv() & 1 != 0 { m::grHr_804D6AE0 = 100.0; } m::grHomeRun_8021EA30(&raw const VW[0].x); }
                     53 => {  m::grHomeRun_8021EAF8(); }
-                    54 => { let a = fv() as i32; m::fn_8021EB10(&raw mut TCG, a); }
+                    54 => { let a = fv() as i32; m::fn_8021EB10(&raw mut TCG, a as isize); }
                     55 => { let a = fv() as i32; ret = pi(m::grHomeRun_8021EC58(a)); }
                     56 => {  m::grHomeRun_8021ED74(); }
                     57 => {  m::grHomeRun_8021EDD4(); }

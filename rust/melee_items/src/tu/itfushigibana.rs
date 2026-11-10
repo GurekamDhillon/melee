@@ -99,7 +99,7 @@ pub unsafe fn itFushigibana_UnkMotion1_Anim_inline1(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
     (*item).entered_hitlag = Some(ext::cb::efLib_PauseAll);
     (*item).exited_hitlag = Some(ext::cb::efLib_ResumeAll);
-    (*item).xDD4_itemVar.fushigibana.x60.anon_0.set_b0(1);
+    (*item).xDD4_itemVar.fushigibana.x60.x0.set_b0(1);
 }
 
 /// `itFushigibana_UnkMotion1_Anim_inline2` (static): the lifetime countdown.
@@ -122,7 +122,7 @@ pub unsafe extern "C" fn itFushigibana_Logic29_Spawned(gobj: *mut Item_GObj) {
     ext::it_80279CDC(gobj, (*attrs).x0);
     ext::Item_8026AE84(item, 0x272f, 0x7f, 0x40);
     ext::it_80275158(gobj, (*attrs).x4);
-    (*item).xDD4_itemVar.fushigibana.x60.anon_0.set_b0(0);
+    (*item).xDD4_itemVar.fushigibana.x60.x0.set_b0(0);
     (*item).xDD4_itemVar.fushigibana.x64 = (*attrs).x8;
     it_802D70A4(gobj);
 }
@@ -131,7 +131,7 @@ pub unsafe extern "C" fn itFushigibana_Logic29_Spawned(gobj: *mut Item_GObj) {
 pub unsafe extern "C" fn it_802D705C(gobj: *mut Item_GObj) {
     melee_core::ct!("it_802D705C");
     let ip = item_of(gobj);
-    (*ip).xDCE_flag.anon_0.set_b7(0);
+    (*ip).xDCE_flag.x0.set_b7(0);
     ext::it_80273454(gobj);
     it_802D718C(gobj);
 }
@@ -169,7 +169,7 @@ pub unsafe extern "C" fn it_802D718C(gobj: *mut Item_GObj) {
     let item = item_of(gobj);
     ext::Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
     Item_SetEffectHitlagCallbacks(item);
-    (*item).xDD4_itemVar.fushigibana.x60.anon_0.set_b0(1);
+    (*item).xDD4_itemVar.fushigibana.x60.x0.set_b0(1);
 }
 
 /// `bool itFushigibana_UnkMotion1_Anim(Item_GObj*)`: emits the periodic effect, counts the lifetime down.

@@ -93,7 +93,7 @@ fn ftCo_JumpAerial_matches_c() {
             ys.x8 = rw();
             fr.dat_attrs = ys as *mut _ as *mut core::ffi::c_void;
             fr.x197C = if rnd() & 1 != 0 { x197c } else { core::ptr::null_mut() };
-            fr.player_id = (rnd() % 6) as u8;
+            fr.player_idx = (rnd() % 6) as u8;
             let kk = rnd() % 6;
             fr.kind = match kk {
                 0 => Ft_Kind_Ness,

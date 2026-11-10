@@ -141,7 +141,7 @@ pub unsafe extern "C" fn HSD_SisLib_Alloc(mut size: s32) -> *mut ::core::ffi::c_
         free_head = data_ptr.offset(size as isize) as *mut SisBlock;
         sb_write!(free_head, next, next_free);
         sb_write!(free_head, data, free_head.offset(1 as ::core::ffi::c_int as isize)
-            as *mut HSD_Text);
+            as *mut ::core::ffi::c_void);
         sb_write!(free_head, size, remaining_size as u32);
         sb_write!(best, size, size as u32);
     } else {
@@ -170,7 +170,7 @@ pub unsafe extern "C" fn HSD_SisLib_Free(mut ptr: *mut ::core::ffi::c_void) {
     alloc_cur = used_head;
     alloc_prev = ::core::ptr::null_mut::<SisBlock>();
     while !alloc_cur.is_null() {
-        if sb_read!(alloc_cur, data) == ptr as *mut HSD_Text {
+        if sb_read!(alloc_cur, data) == ptr as *mut ::core::ffi::c_void {
             break;
         }
         alloc_prev = alloc_cur;
@@ -195,7 +195,7 @@ pub unsafe extern "C" fn HSD_SisLib_Free(mut ptr: *mut ::core::ffi::c_void) {
         free_head = alloc_cur;
         sb_write!(alloc_cur, next, old_next);
         sb_write!(free_head, data, free_head.offset(1 as ::core::ffi::c_int as isize)
-            as *mut HSD_Text);
+            as *mut ::core::ffi::c_void);
         sb_write!(free_head, size, new_size);
         return;
     }
@@ -229,15 +229,15 @@ pub unsafe extern "C" fn HSD_SisLib_803A5A2C(mut ptr: *mut ::core::ffi::c_void) 
             } else {
                 HSD_SisLib_804D7978 = next_text;
             }
-            alloc = (*curr).alloc_data;
+            alloc = (*curr).alloc_data as *mut SisBlock;
             if !alloc.is_null() {
                 if !sb_read!(alloc, data).is_null() {
                     HSD_SisLib_Free(sb_read!(alloc, data) as *mut ::core::ffi::c_void);
                 }
                 HSD_SisLib_Free((*curr).alloc_data as *mut ::core::ffi::c_void);
             }
-            if !(*curr).string_buffer.is_null() {
-                HSD_SisLib_Free((*curr).string_buffer as *mut ::core::ffi::c_void);
+            if !(*curr).state_stack.is_null() {
+                HSD_SisLib_Free((*curr).state_stack as *mut ::core::ffi::c_void);
             }
             HSD_SisLib_Free(curr as *mut ::core::ffi::c_void);
             return;
@@ -332,9 +332,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A5ACC(
     (*text).x14.x = 0.0f32 as f32;
     (*text).font_size.y = 1.0f32 as f32;
     (*text).font_size.x = 1.0f32 as f32;
-    (*text).alloc_data = ::core::ptr::null_mut::<SisBlock>();
-    (*text).string_buffer = ::core::ptr::null_mut::<::core::ffi::c_char>();
-    (*text).sis_buffer = ::core::ptr::null_mut::<SIS>();
+    (*text).alloc_data = ::core::ptr::null_mut::<SisBuffer>();
+    (*text).state_stack = ::core::ptr::null_mut::<u8>();
+    (*text).sis_buffer = ::core::ptr::null_mut::<u8>();
     (*text).bg_color.a = 0 as u8;
     (*text).bg_color.b = 0 as u8;
     (*text).bg_color.g = 0 as u8;
@@ -352,8 +352,8 @@ pub unsafe extern "C" fn HSD_SisLib_803A5ACC(
     (*text).default_alignment = 0 as u8;
     (*text).default_fitting = 0 as u8;
     (*text).default_kerning = 0 as u8;
-    (*text).x6E = 0 as u16;
-    (*text).x6C = 0 as u16;
+    (*text).state_stack_capacity = 0 as u16;
+    (*text).state_stack_used = 0 as u16;
     (*text).x4E = 0 as u8;
     (*text).hidden = 0 as u8;
     (*text).x4C = 0 as u8;
@@ -454,7 +454,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A5E70() {
     used_head = ::core::ptr::null_mut::<SisBlock>();
     sb_write!(free_head, next, ::core::ptr::null_mut::<SisBlock>());
     sb_write!(free_head, data, free_head.offset(1 as ::core::ffi::c_int as isize)
-        as *mut HSD_Text);
+        as *mut ::core::ffi::c_void);
     sb_write!(free_head, size, (HSD_SisLib_804D7968 as usize)
         .wrapping_sub(::core::mem::size_of::<SisBlock>() as usize) as u32);
 }
@@ -504,7 +504,7 @@ pub unsafe extern "C" fn HSD_SisLib_803A6048(mut size: u32) {
     HSD_SisLib_804D796C = free_head;
     sb_write!(free_head, next, ::core::ptr::null_mut::<SisBlock>());
     sb_write!(free_head, data, free_head.offset(1 as ::core::ffi::c_int as isize)
-        as *mut HSD_Text);
+        as *mut ::core::ffi::c_void);
     sb_write!(free_head, size, (HSD_SisLib_804D7968 as usize)
         .wrapping_sub(::core::mem::size_of::<SisBlock>() as usize) as u32);
     HSD_SisLib_804D7978 = ::core::ptr::null_mut::<HSD_Text>();
@@ -529,7 +529,7 @@ pub unsafe extern "C" fn fn_803A60EC(mut gobj: *mut ::core::ffi::c_void) {
 }
 pub unsafe extern "C" fn sislib_WideCamera(
     mut gobj: *mut HSD_GObj,
-    mut pass: ::core::ffi::c_int,
+    mut pass: isize,
 ) {
     melee_core::ct!("sislib_WideCamera");
 
@@ -545,7 +545,7 @@ pub unsafe extern "C" fn sislib_WideCamera(
         left as f32,
         left as f32 + width as f32,
     );
-    HSD_GObj_803910D8(gobj, pass);
+    HSD_GObj_803910D8(gobj, pass as i32);
 }
 pub unsafe extern "C" fn HSD_SisLib_SetWideCanvas(
     mut font_idx: ::core::ffi::c_int,
@@ -565,7 +565,7 @@ pub unsafe extern "C" fn HSD_SisLib_SetWideCanvas(
             if !(*entry).x4.is_null() {
                 (*(*entry).x4).render_cb = Some(
                     sislib_WideCamera
-                        as unsafe extern "C" fn(*mut HSD_GObj, ::core::ffi::c_int) -> (),
+                        as unsafe extern "C" fn(*mut HSD_GObj, isize) -> (),
                 ) as GObj_RenderFunc;
             }
             return;
@@ -698,9 +698,9 @@ pub unsafe extern "C" fn HSD_SisLib_803A6368(mut text: *mut HSD_Text, mut sis_id
     let mut i: s32 = 0;
     sis_table = HSD_SisLib_804D1124[(*text).font_idx as usize] as *mut *mut SIS;
     if !sis_table.is_null() {
-        (*text).sis_buffer = *sis_table.offset(sis_idx as isize);
+        (*text).sis_buffer = *sis_table.offset(sis_idx as isize) as *mut u8;
     }
-    (*text).x60 = ::core::ptr::null_mut::<::core::ffi::c_void>();
+    (*text).x60 = ::core::ptr::null_mut::<u8>();
     (*text).current_height = 0.0f32 as f32;
     (*text).current_width = 0.0f32 as f32;
     (*text).active_color = (*text).text_color;
@@ -713,18 +713,18 @@ pub unsafe extern "C" fn HSD_SisLib_803A6368(mut text: *mut HSD_Text, mut sis_id
     (*text).alignment = (*text).default_alignment;
     (*text).kerning = (*text).default_kerning;
     (*text).fitting = (*text).default_fitting;
-    (*text).x6C = 0 as u16;
+    (*text).state_stack_used = 0 as u16;
     (*text).x98 = 0 as u32;
     (*text).x94 = 0 as u32;
     (*text).x4B = 0 as u8;
-    if !(*text).string_buffer.is_null() {
-        HSD_SisLib_Free((*text).string_buffer as *mut ::core::ffi::c_void);
+    if !(*text).state_stack.is_null() {
+        HSD_SisLib_Free((*text).state_stack as *mut ::core::ffi::c_void);
     }
-    (*text).string_buffer = HSD_SisLib_Alloc(0x10 as s32) as *mut ::core::ffi::c_char;
+    (*text).state_stack = HSD_SisLib_Alloc(0x10 as s32) as *mut u8;
     i = 0 as ::core::ffi::c_int as s32;
-    (*text).x6E = 0x10 as u16;
-    while i < (*text).x6E as ::core::ffi::c_int {
-        *(*text).string_buffer.offset(i as isize) = 0 as ::core::ffi::c_char;
+    (*text).state_stack_capacity = 0x10 as u16;
+    while i < (*text).state_stack_capacity as ::core::ffi::c_int {
+        *(*text).state_stack.offset(i as isize) = 0u8;
         i += 1 as ::core::ffi::c_int;
     }
 }

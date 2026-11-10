@@ -23,7 +23,7 @@ unsafe extern "C" fn callback(s:*mut HSD_SObj){t(2000);t(pi(s));(*s).x48=(*s).x4
 6=>{m::HSD_SObjLib_803A4A68(&raw mut S[ix]);},
 7=>{m::HSD_SObjLib_803A54EC(&raw mut G,ix as i32);},
 8=>{m::HSD_SObjLib_803A55DC(&raw mut G,ww,hh,pr as i32);},
-9=>{let c=m::discard_color(S[ix].anon_38.x38_color); ret=rh(&c);},
+9=>{let c=m::discard_color(S[ix].x38_u.x38_color); ret=rh(&c);},
 10=>{ret=pi(m::HSD_GObjGetHSDObj(&raw mut G));m::GXEnd();},
 _=>unreachable!(),}
  for i in 0..4 {g::hash_HSD_SObj(&S[i]);}g::hash_HSD_GObj(&G);for i in 0..2 {g::hash_HSD_ImageDesc(&IM[i]);}g::hash_HSD_Tlut(&TL);g::hash_HSD_ObjAllocData(&m::HSD_SObjLib_804D10E0);check.line(op,k,ret);

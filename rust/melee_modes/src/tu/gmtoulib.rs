@@ -130,7 +130,7 @@ pub mod hook {
             self.map_or(0, |f| f as usize as u64)
         }
         fn from_w(w: u64) -> Self {
-            if w == 0 { None } else { Some(unsafe { core::mem::transmute::<usize, unsafe extern "C" fn(*mut HSD_GObj, i32)>(w as usize) }) }
+            if w == 0 { None } else { Some(unsafe { core::mem::transmute::<usize, unsafe extern "C" fn(*mut HSD_GObj, isize)>(w as usize) }) }
         }
     }
 
@@ -171,10 +171,10 @@ pub mod ext {
     pub use melee_runtime::tu::controller::HSD_PadMasterStatus;
 
     crate::gmtou_ext! {
-        fn HSD_GObj_803910D8(gobj: *mut HSD_GObj, arg1: i32);
+        fn HSD_GObj_803910D8(gobj: *mut HSD_GObj, arg1: isize);
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32);
-        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: i32);
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize);
+        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: isize);
         fn fn_801640B0(item_mask: *mut u64);
         fn gm_80164430(arg0: u16) -> i32;
         fn gm_RumbleEnabledForPlayer(port: i32, nametag: i32) -> i32;
@@ -1326,7 +1326,7 @@ pub unsafe extern "C" fn fn_8018DF68(arg0: *mut BracketEntry, arg1: i32, arg2: i
     }
 }
 
-pub unsafe extern "C" fn fn_8018E46C(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn fn_8018E46C(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("fn_8018E46C");
     let data = (*gobj).user_data as *mut BracketEntry;
     (*data).x3 = (*data).x3;

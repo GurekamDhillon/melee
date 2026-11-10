@@ -60,8 +60,8 @@ pub mod ext {
     fn Camera_SetModeToStandard() = || unsafe { crate::tu::camera::Camera_SetModeToStandard() };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
     fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) = |a0: *mut HSD_AObj, a1: u32| { unsafe { melee_runtime::tu::aobj::HSD_AObjSetFlags(a0 as _, a1 as _); } };
     fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = |a0: *mut HSD_AObj, a1: f32| { unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } };
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = || unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() as _ };
@@ -167,7 +167,7 @@ pub mod ext {
     fn grDatFiles_801C6330(a0: i32) -> *mut UnkArchiveStruct = |a0: i32| unsafe { crate::tu::grdatfiles::grDatFiles_801C6330(a0 as _) as _ };
     fn grDatFiles_GetArchive() -> *mut UnkArchiveStruct = || unsafe { crate::tu::grdatfiles::grDatFiles_GetArchive() as _ };
     fn grDatFiles_StageSlotInstall(a0: *mut HSD_Archive) = |a0: *mut HSD_Archive| { unsafe { crate::tu::grdatfiles::grDatFiles_StageSlotInstall(a0 as _); } };
-    fn grDisplay_801C5F60(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { crate::tu::grdisplay::grDisplay_801C5F60(a0 as _, a1 as _); } };
+    fn grDisplay_801C5F60(a0: *mut HSD_GObj, a1: isize) = |a0: *mut HSD_GObj, a1: isize| { unsafe { crate::tu::grdisplay::grDisplay_801C5F60(a0 as _, a1 as _); } };
     fn grIzumi_801CD2D4() = || { unsafe { crate::tu::grizumi::grIzumi_801CD2D4(); } };
     fn grKongo_801D8270(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { crate::tu::grkongo::grKongo_801D8270(a0 as _); } };
     fn grKongo_801D828C(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { crate::tu::grkongo::grKongo_801D828C(a0 as _); } };
@@ -221,7 +221,7 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) { super::HSD_AObjSetFlags(a0, a1) }
         pub unsafe extern "C" fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) { super::HSD_AObjSetRate(a0, a1) }
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
-        pub unsafe extern "C" fn grDisplay_801C5F60(a0: *mut HSD_GObj, a1: i32) { super::grDisplay_801C5F60(a0, a1) }
+        pub unsafe extern "C" fn grDisplay_801C5F60(a0: *mut HSD_GObj, a1: isize) { super::grDisplay_801C5F60(a0, a1) }
         pub unsafe extern "C" fn mpJointListAdd(a0: i32) { super::mpJointListAdd(a0) }
         pub unsafe extern "C" fn mpLib_80057424(a0: i32) { super::mpLib_80057424(a0) }
         pub unsafe extern "C" fn mpLib_80057BC0(a0: i32) { super::mpLib_80057BC0(a0) }
@@ -484,9 +484,9 @@ pub unsafe extern "C" fn Ground_MexCallback4() -> i32 {
     melee_core::ct!("Ground_MexCallback4");
     (ext::Mex_GrCallback4() != 0) as i32
 }
-pub unsafe extern "C" fn Ground_MexOnTouchLine(index: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn Ground_MexOnTouchLine(index: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("Ground_MexOnTouchLine");
-    ext::Mex_GrOnTouchLine(index) as *mut DynamicsDesc
+    ext::Mex_GrOnTouchLine(index) as *mut lbColl_80008D30_arg1
 }
 pub unsafe extern "C" fn Ground_MexOnCheckShadowRender(pos: *mut Vec3, arg1: i32, jobj: *mut HSD_JObj) -> i32 {
     melee_core::ct!("Ground_MexOnCheckShadowRender");
@@ -916,7 +916,7 @@ pub unsafe extern "C" fn Ground_TTMod_InitLines(merged: *mut MapCollData, nplat:
     let olc = (*merged).line_count - nplat;
     for i in 0..nplat {
         let idx = (olc + i) as isize;
-        (*gline.offset(idx)).x0 = (*merged).lines.offset(idx);
+        (*gline.offset(idx)).inner = (*merged).lines.offset(idx);
         (*gline.offset(idx)).flags = (*(*merged).lines.offset(idx)).hi_flags as u32 | LINE_FLAG_ENABLED as u32;
     }
 }
@@ -944,17 +944,17 @@ pub unsafe extern "C" fn Ground_801C0800(pair: *mut StageIdPair) {
             let mut i = 0isize;
             while !(*stage_info.itemdata.offset(i)).is_null() {
                 let d = *stage_info.itemdata.offset(i);
-                ext::it_8026B40C((*d).unk4, (*d).unk0);
+                ext::it_8026B40C((*d).article_data, (*d).gr_itkind);
                 i += 1;
             }
         }
 
         if !stage_info.ald_yaku_all.is_null() {
             let mut i = 1isize;
-            while !(*stage_info.ald_yaku_all.offset(i)).is_null() {
+            while !(*stage_info.ald_yaku_all.offset(i)).script.is_null() {
                 let a = *ext::it_804D6D38.offset((It_PKind_Random - It_Kind_Kuriboh) as isize);
                 // the C indexes past the declared extent of x0_itemStateDesc (the table is as long as the item has states)
-                (*(*(*a).xC_itemStates).x0_itemStateDesc.as_mut_ptr().offset(i)).xC_script = *stage_info.ald_yaku_all.offset(i) as *mut c_void;
+                (*(*(*a).xC_itemStates).x0_itemStateDesc.as_mut_ptr().offset(i)).xC_script = (*stage_info.ald_yaku_all.offset(i)).script;
                 i += 1;
             }
         }
@@ -1278,10 +1278,10 @@ pub unsafe extern "C" fn Ground_801C13D0(arg0: i32, depth: i32) -> *mut HSD_JObj
     if !archive.is_null() && arg0 < (*(*archive).unk4).unkC {
         let joint;
         if depth == 0 {
-            joint = (*(*(*archive).unk4).unk8.offset(arg0 as isize)).unk0;
+            joint = (*(*(*archive).unk4).unk8.offset(arg0 as isize)).joint;
         } else {
             let mut tmp_depth = depth;
-            joint = Ground_801C126C((*(*(*archive).unk4).unk8.offset(arg0 as isize)).unk0, &mut tmp_depth);
+            joint = Ground_801C126C((*(*(*archive).unk4).unk8.offset(arg0 as isize)).joint, &mut tmp_depth);
         }
         result = ext::HSD_JObjLoadJoint(joint);
     }
@@ -1354,7 +1354,7 @@ pub unsafe extern "C" fn Ground_GetStageGObj(map_id: i32) -> *mut Ground_GObj {
     }
     if map_id < (*(*archive).unk4).unkC {
         archive = ext::grDatFiles_801C6330(map_id);
-        let temp_r24 = (*(*(*archive).unk4).unk8.offset(map_id as isize)).unk0;
+        let temp_r24 = (*(*(*archive).unk4).unk8.offset(map_id as isize)).joint;
         let temp_r23 = ext::HSD_JObjLoadJoint(temp_r24);
         Ground_801C34AC(map_id, temp_r23, temp_r24);
         if !(*stageinfo).param.is_null() {
@@ -1370,7 +1370,7 @@ pub unsafe extern "C" fn Ground_GetStageGObj(map_id: i32) -> *mut Ground_GObj {
         }
         let map_cb = Ground_MexStageCallbacks((*stageinfo).grkind as i32);
         if !map_cb.is_null()
-            && (*map_cb.offset(map_id as isize)).anon_10.anon_0.flags_b2() == 1
+            && (*map_cb.offset(map_id as isize)).x10.x0.flags_b2() == 1
             && !(*(*(*archive).unk4).unk8.offset(map_id as isize)).x10.is_null()
         {
             let temp_r23_2 = ext::GObj_Create(17, 19, 0);
@@ -1544,7 +1544,7 @@ pub unsafe extern "C" fn Ground_801C1E18() -> i32 {
     stage_info.unk8C.b2() as i32
 }
 
-pub unsafe extern "C" fn Ground_801C1E2C(gobj: *mut HSD_GObj, code: i32) {
+pub unsafe extern "C" fn Ground_801C1E2C(gobj: *mut HSD_GObj, code: isize) {
     melee_core::ct!("Ground_801C1E2C");
     if ext::Camera_80030A78() != 0 {
         return;
@@ -1583,7 +1583,7 @@ pub unsafe extern "C" fn foo() -> *mut HSD_FogDesc {
     let mut i = 0;
     while i < temp_r30 {
         let phi_r29 = temp_r29.offset(i as isize);
-        if (*phi_r29).anon_10.anon_0.flags_b1() == 1 {
+        if (*phi_r29).x10.x0.flags_b1() == 1 {
             if ext::grDatFiles_801C6330(i).is_null() {
                 i += 1;
                 continue;
@@ -2371,7 +2371,7 @@ pub unsafe extern "C" fn Ground_801C34AC(map_id: i32, root: *mut HSD_JObj, joint
         return;
     }
     let stage_dat = (*archive).unk4;
-    let entry_count = (*stage_dat).unk4;
+    let entry_count = (*stage_dat).count;
     if entry_count == 0 {
         return;
     }
@@ -2438,7 +2438,7 @@ pub unsafe extern "C" fn Ground_801C36F4(map_id: i32, root: *mut HSD_JObj, joint
         return;
     }
     let stage_dat = (*archive).unk4;
-    let entry_count = (*stage_dat).unk4;
+    let entry_count = (*stage_dat).count;
     if entry_count == 0 {
         return;
     }
@@ -2901,7 +2901,7 @@ pub static mut Ground_TTMod_BoxVtxDesc: [HSD_VtxDescList; 2] = unsafe {
             comp_type: GX_F32,
             frac: 0,
             stride: 12,
-            vertex: &raw mut Ground_TTMod_BoxVerts as *mut c_void,
+            vertex: &raw mut Ground_TTMod_BoxVerts as *mut u8,
         },
         HSD_VtxDescList {
             attr: GX_VA_NULL,
@@ -3056,7 +3056,7 @@ pub unsafe extern "C" fn Ground_801C42AC() {
         if !jobj.is_null() {
             sp8.x14 = 0x14;
             sp8.x4 = jobj;
-            sp8.x1C.anon_0.set_b0(1);
+            sp8.x1C.x0.set_b0(1);
             ext::it_8026BE84(&mut sp8);
         }
     }
@@ -3157,7 +3157,7 @@ pub unsafe extern "C" fn Ground_801C461C(gobj: *mut HSD_GObj) {
     Ground_801C445C((*gobj).hsd_obj as *mut HSD_LObj);
 }
 
-pub unsafe extern "C" fn Ground_801C4640(gobj: *mut HSD_GObj, _unused: i32) {
+pub unsafe extern "C" fn Ground_801C4640(gobj: *mut HSD_GObj, _unused: isize) {
     melee_core::ct!("Ground_801C4640");
     ext::HSD_LObj_803668EC((*gobj).hsd_obj as *mut HSD_LObj);
     ext::HSD_LObjSetupInit(ext::HSD_CObjGetCurrent());
@@ -3227,7 +3227,7 @@ pub unsafe extern "C" fn Ground_801C466C() {
     selected = null_mut();
     let mut found = false;
     while i < count {
-        if (*callbacks).anon_10.anon_0.flags_b0() == 1 {
+        if (*callbacks).x10.x0.flags_b0() == 1 {
             archive = ext::grDatFiles_801C6330(i);
             if archive.is_null() {
                 callbacks = callbacks.add(1);
@@ -3398,7 +3398,7 @@ pub unsafe extern "C" fn Ground_801C4A08(gobj: *mut HSD_GObj) {
         }
         let archive = ext::grDatFiles_801C6330((*gp).map_id as i32);
         if !archive.is_null() {
-            Ground_801C36F4((*gp).map_id as i32, jobj, (*(*(*archive).unk4).unk8.offset(map_id as isize)).unk0 as *mut c_void);
+            Ground_801C36F4((*gp).map_id as i32, jobj, (*(*(*archive).unk4).unk8.offset(map_id as isize)).joint as *mut c_void);
         }
     }
     ext::HSD_GObjFree(gobj);
@@ -3692,7 +3692,7 @@ pub unsafe extern "C" fn Ground_801C5694(gp: *mut Ground, i: i32, val: f32) {
     }
 }
 
-pub unsafe extern "C" fn Ground_801C5700(i: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn Ground_801C5700(i: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("Ground_801C5700");
     if let Some(f) = stage_info.on_touch_line {
         return f(i);
@@ -3802,12 +3802,12 @@ pub unsafe extern "C" fn Ground_801C5940() -> i32 {
     let vals_count = 32usize;
     let archive = ext::grDatFiles_GetArchive();
     let mut out_idx: usize = 0;
-    if (*(*archive).unk4).unk4 == 0 {
+    if (*(*archive).unk4).count == 0 {
         return -1;
     }
     let mut phi_r8 = (*(*archive).unk4).unk0 as *mut PairListEntry;
     let mut i = 0;
-    while i < (*(*archive).unk4).unk4 {
+    while i < (*(*archive).unk4).count {
         let max = (*phi_r8).unk8;
         let mut j = 0;
         while j < max {

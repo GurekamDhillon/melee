@@ -4,7 +4,7 @@ pub mod ext {
     use super::*;
     use core::ffi::c_void;
     macro_rules! ext_fns {
-        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)?;)*) => {
+        ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
             pub mod hook {
                 use super::*;
                 $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
@@ -12,7 +12,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
                 }
             } )*
         };
@@ -63,9 +63,9 @@ pub mod ext {
     fn PSVECAdd(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec);
     fn ftDrawCommon_80081168();
     fn ftDrawCommon_80081200();
-    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32;
-    fn ftLib_GetShadow(a0: *mut HSD_GObj) -> *mut LbShadow;
     fn ftLib_CastsShadow(a0: *mut HSD_GObj) -> i32;
+    fn ftLib_GetShadow(a0: *mut HSD_GObj) -> *mut LbShadow;
+    fn ftLib_IsFighter(a0: *mut HSD_GObj) -> i32;
     fn lbVector_CrossprodNormalized(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
     fn lbVector_Diff(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) -> *mut Vec;
     fn lbVector_Normalize(a0: *mut Vec) -> f32;

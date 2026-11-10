@@ -34,11 +34,11 @@ unsafe fn body() {
     fh::IT_GET_KIND = Some(|_| It_Kind_Link_Bomb as i32 + 1);
 
     // Enter without an item: start the bomb pull and arm the spawn callback.
-    f.anon_2210.throw_flags = 0xFFFF;
+    f.x2210.throw_flags = 0xFFFF;
     t::ftLk_SpecialLw_Enter(gp);
     t::ftLk_SpecialAirLw_Enter(gp);
     assert_eq!(take_log(), "ms 358 0,ms 359 0");
-    assert_eq!(f.anon_2210.throw_flags, 0);
+    assert_eq!(f.x2210.throw_flags, 0);
     assert!(f.accessory4_cb.is_some());
 
     // Enter holding an item: bomb kinds re-throw (msid 108 ground / 112 air), others do nothing;
@@ -79,10 +79,10 @@ unsafe fn body() {
     st::FTPARTS_80074A4C = Some(|_, m, v| log(format!("parts {m} {v}")));
     t::spawnBomb(gp);
     assert_eq!(take_log(), "");
-    f.anon_2210.anon_0.set_throw_flags_b0(1);
+    f.x2210.x0.set_throw_flags_b0(1);
     t::spawnBomb(gp);
     assert_eq!(take_log(), format!("joint {:x},bomb 1 2 5 9 -1,parts 2 1", 0x2000 + FtPart_LThumbNb as usize * 8));
-    assert_eq!(f.anon_2210.anon_0.throw_flags_b0(), 0);
+    assert_eq!(f.x2210.x0.throw_flags_b0(), 0);
     assert!(f.item_gobj.is_null());
 
     // Anim: ground waits, air falls, once the animation is over.

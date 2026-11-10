@@ -215,13 +215,13 @@ pub mod ext {
 
     /// `HSD_GObj_LObjCallback` / `HSD_GObj_803910D8` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): the
     /// GX-link render callbacks; address only.
-    pub unsafe extern "C" fn HSD_GObj_LObjCallback(_gobj: *mut HSD_GObj, _unused: i32) {
+    pub unsafe extern "C" fn HSD_GObj_LObjCallback(_gobj: *mut HSD_GObj, _unused: isize) {
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _unused as _); } return; };
     }
-    pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: i32) {
-        unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(_gobj, _code) }
+    pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: isize) {
+        unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(_gobj, _code as i32) }
     }
-    pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
+    pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: isize) {
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }

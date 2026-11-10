@@ -82,7 +82,7 @@ fn inline_a0(g: G) {
     ext::ftCo_Fall_Enter(g);
     ext::ftCo_800C544C(fp(g));
     let f = fp(g);
-    ext::pl_8003FDF4(f.player_id as i32, f.is_sub_fighter() as i32);
+    ext::pl_8003FDF4(f.player_idx as i32, f.is_sub_fighter() as i32);
 }
 
 pub fn ftCo_800C5DDC(g: G) -> bool {

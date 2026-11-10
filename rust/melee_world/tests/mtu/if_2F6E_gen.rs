@@ -221,7 +221,7 @@ pub fn fill_VsSceneController(p: &mut VsSceneController) {
     for i1 in 0..4 {
     p.state.x24C.player_standings[i0].kills[i1] = fv() as _;
     }
-    p.state.x24C.player_standings[i0].x18 = fv() as _;
+    p.state.x24C.player_standings[i0].kills[4] = fv() as _;
     p.state.x24C.player_standings[i0].x1C = fv() as _;
     p.state.x24C.player_standings[i0].x20 = fv() as _;
     p.state.x24C.player_standings[i0].x24 = fv() as _;
@@ -332,7 +332,7 @@ pub fn fill_VsSceneController(p: &mut VsSceneController) {
     p.start.x1C_pad[i0] = fv() as _;
     }
     p.start.x20 = fv64() as _;
-    p.start.x28 = fv() as _;
+    p.start.it_kind = fv() as _;
     p.start.x2C = rg();
     p.start.x30 = rg();
     p.start.game_speed = rg();
@@ -426,7 +426,7 @@ pub fn hash_VsSceneController(p: &VsSceneController) {
     for i1 in 0..4 {
     hm(p.state.x24C.player_standings[i0].kills[i1] as u32);
     }
-    hm(p.state.x24C.player_standings[i0].x18 as u32);
+    hm(p.state.x24C.player_standings[i0].kills[4] as u32);
     hm(p.state.x24C.player_standings[i0].x1C as u32);
     hm(p.state.x24C.player_standings[i0].x20 as u32);
     hm(p.state.x24C.player_standings[i0].x24 as u32);
@@ -537,7 +537,7 @@ pub fn hash_VsSceneController(p: &VsSceneController) {
     hm(p.start.x1C_pad[i0] as u32);
     }
     hm(p.start.x20 as u32); hm(((p.start.x20 as u64) >> 32) as u32);
-    hm(p.start.x28 as u32);
+    hm(p.start.it_kind as u32);
     hm(p.start.x2C.to_bits());
     hm(p.start.x30.to_bits());
     hm(p.start.game_speed.to_bits());

@@ -128,20 +128,20 @@ fn HSD_SisLib_GlyphWidth(text: &HSD_Text, scale_x: f32) -> f32 {
 /// Grow `text->string_buffer` by 0x10 if fewer than `need` bytes remain after `x6C` (the shared
 /// prologue of every `HSD_SisLib_803A7684` case).
 unsafe fn ensure_style_room(text: *mut HSD_Text, need: i32) {
-    let old_x6e = (*text).x6E as i32;
-    if old_x6e < (*text).x6C as i32 + need {
+    let old_x6e = (*text).state_stack_capacity as i32;
+    if old_x6e < (*text).state_stack_used as i32 + need {
         let new_x6e = old_x6e + 0x10;
-        let old_buf = (*text).string_buffer as *mut u8;
-        (*text).string_buffer = HSD_SisLib_Alloc(new_x6e) as *mut i8;
-        (*text).x6E = new_x6e as u16;
+        let old_buf = (*text).state_stack as *mut u8;
+        (*text).state_stack = HSD_SisLib_Alloc(new_x6e) as *mut u8;
+        (*text).state_stack_capacity = new_x6e as u16;
         let count = old_x6e as u32;
         let mut idx: i32 = 0;
         while (idx as u32) < count {
-            *(*text).string_buffer.offset(idx as isize) = *old_buf.offset(idx as isize) as i8;
+            *(*text).state_stack.offset(idx as isize) = *old_buf.offset(idx as isize);
             idx += 1;
         }
-        while idx < (*text).x6E as i32 {
-            *(*text).string_buffer.offset(idx as isize) = 0;
+        while idx < (*text).state_stack_capacity as i32 {
+            *(*text).state_stack.offset(idx as isize) = 0;
             idx += 1;
         }
         HSD_SisLib_Free(old_buf as *mut c_void);
@@ -151,8 +151,8 @@ unsafe fn ensure_style_room(text: *mut HSD_Text, need: i32) {
 /// `text->string_buffer[text->x6C++] = b`.
 #[inline]
 unsafe fn push_style_byte(text: *mut HSD_Text, b: u8) {
-    *(*text).string_buffer.offset((*text).x6C as isize) = b as i8;
-    (*text).x6C = (*text).x6C.wrapping_add(1);
+    *(*text).state_stack.offset((*text).state_stack_used as isize) = b as u8;
+    (*text).state_stack_used = (*text).state_stack_used.wrapping_add(1);
 }
 
 /// `HSD_SisLib_803A7684` (0x803A7684): push a style entry of type `flags & 0x7F` on the text's
@@ -212,10 +212,10 @@ pub unsafe fn HSD_SisLib_803A7F0C(text: *mut HSD_Text, flags: i32) -> i32 {
     melee_core::ct!("HSD_SisLib_803A7F0C");
     let flag_hi = flags & 0x80;
     let target_type = flags & 0x7F;
-    let mut pos: i32 = (*text).x6C as i32;
+    let mut pos: i32 = (*text).state_stack_used as i32;
     let mut result: i32 = 0;
     let mut remove_size: i32 = 0;
-    let buf = (*text).string_buffer as *mut u8;
+    let buf = (*text).state_stack as *mut u8;
     while pos >= 0 {
         let entry = *buf.offset(pos as isize) as i8;
         let entry_flags = (entry as i32) & 0x80;
@@ -279,15 +279,15 @@ pub unsafe fn HSD_SisLib_803A7F0C(text: *mut HSD_Text, flags: i32) -> i32 {
         pos -= 1;
     }
     if remove_size != 0 {
-        while pos + remove_size < (*text).x6C as i32 {
+        while pos + remove_size < (*text).state_stack_used as i32 {
             *buf.offset(pos as isize) = *buf.offset((pos + remove_size) as isize);
             pos += 1;
         }
-        while pos < (*text).x6C as i32 {
+        while pos < (*text).state_stack_used as i32 {
             *buf.offset(pos as isize) = 0;
             pos += 1;
         }
-        (*text).x6C = (*text).x6C.wrapping_sub(remove_size as u16);
+        (*text).state_stack_used = (*text).state_stack_used.wrapping_sub(remove_size as u16);
     }
     result
 }
@@ -314,7 +314,7 @@ pub unsafe fn HSD_SisLib_803A8134(mut cursor: *mut u8, text: *mut HSD_Text, out_
     let saved_spacing = (*text).x78.x;
     let mut kern_enabled: u16 = (*text).kerning as u16;
     let sis = HSD_SisLib_804D1124[(*text).font_idx as usize];
-    let saved_x6c = (*text).x6C;
+    let saved_x6c = (*text).state_stack_used;
     let mut glyph_tex: *const u8 = core::ptr::null();
     if !sis.is_null() {
         glyph_tex = (*sis).textures as *const u8;
@@ -399,10 +399,10 @@ pub unsafe fn HSD_SisLib_803A8134(mut cursor: *mut u8, text: *mut HSD_Text, out_
     (*text).x80.x = saved_scale_x;
     (*text).x80.y = saved_scale_y;
     (*text).x78.x = saved_spacing;
-    (*text).x6C = saved_x6c;
-    let mut clear_idx = (*text).x6C as i32;
-    while clear_idx < (*text).x6E as i32 {
-        *(*text).string_buffer.offset(clear_idx as isize) = 0;
+    (*text).state_stack_used = saved_x6c;
+    let mut clear_idx = (*text).state_stack_used as i32;
+    while clear_idx < (*text).state_stack_capacity as i32 {
+        *(*text).state_stack.offset(clear_idx as isize) = 0;
         clear_idx += 1;
     }
 }
@@ -576,12 +576,12 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
             let mut line_delay = (*text).x90;
             let mut char_delay = (*text).x92;
             let mut skip_count = (*text).x98;
-            let saved_x6c = (*text).x6C;
+            let saved_x6c = (*text).state_stack_used;
             'scan: loop {
-                if sis_cursor as *mut c_void == (*text).x60 && (*text).x4B != 0 {
+                if sis_cursor == (*text).x60 && (*text).x4B != 0 {
                     break 'scan;
                 }
-                if sis_cursor as *mut c_void == (*text).x60 && (*text).x94 != 0 {
+                if sis_cursor == (*text).x60 && (*text).x94 != 0 {
                     (*text).x94 -= 1;
                     break 'scan;
                 }
@@ -611,15 +611,15 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
                             (*text).x94 = 0;
                             (*text).x4B = 0;
                             let mut clear_idx: i32 = 0;
-                            while clear_idx < (*text).x6E as i32 {
-                                *(*text).string_buffer.offset(clear_idx as isize) = 0;
+                            while clear_idx < (*text).state_stack_capacity as i32 {
+                                *(*text).state_stack.offset(clear_idx as isize) = 0;
                                 clear_idx += 1;
                             }
-                            (*text).x6C = 0;
+                            (*text).state_stack_used = 0;
                         }
                         (*text).x98 = 0;
                         sis_cursor = sis_cursor.add(1);
-                        (*text).sis_buffer = sis_cursor as *mut SIS;
+                        (*text).sis_buffer = sis_cursor;
                         continue 'restart;
                     }
                     3 => {
@@ -634,7 +634,7 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
                         } else {
                             (*text).x98 = (*text).x98.wrapping_add(1);
                             (*text).x94 = char_delay as u32;
-                            (*text).x60 = sis_cursor.add(1) as *mut c_void;
+                            (*text).x60 = sis_cursor.add(1);
                         }
                     }
                     4 => {
@@ -643,7 +643,7 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
                         } else {
                             (*text).x98 = (*text).x98.wrapping_add(1);
                             (*text).x4B = 1;
-                            (*text).x60 = sis_cursor.add(1) as *mut c_void;
+                            (*text).x60 = sis_cursor.add(1);
                         }
                     }
                     5 => {
@@ -652,7 +652,7 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
                         } else {
                             (*text).x98 = (*text).x98.wrapping_add(1);
                             (*text).x94 = be16(sis_cursor.add(1)) as u32;
-                            (*text).x60 = sis_cursor.add(3) as *mut c_void;
+                            (*text).x60 = sis_cursor.add(3);
                         }
                         sis_cursor = sis_cursor.add(2);
                     }
@@ -761,7 +761,7 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
                         } else {
                             (*text).x98 = (*text).x98.wrapping_add(1);
                             (*text).x94 = line_delay as u32;
-                            (*text).x60 = sis_cursor.add(1) as *mut c_void;
+                            (*text).x60 = sis_cursor.add(1);
                         }
                     }
                     _ => {
@@ -888,7 +888,7 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
                                 } else {
                                     (*text).x98 = (*text).x98.wrapping_add(1);
                                     (*text).x94 = line_delay as u32;
-                                    (*text).x60 = sis_cursor.add(2) as *mut c_void;
+                                    (*text).x60 = sis_cursor.add(2);
                                 }
                                 sis_cursor = sis_cursor.add(1);
                             }
@@ -909,10 +909,10 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
             (*text).alignment = saved_alignment;
             (*text).kerning = saved_kerning;
             (*text).fitting = saved_fitting;
-            (*text).x6C = saved_x6c;
-            let mut clear_i = (*text).x6C as i32;
-            while clear_i < (*text).x6E as i32 {
-                *(*text).string_buffer.offset(clear_i as isize) = 0;
+            (*text).state_stack_used = saved_x6c;
+            let mut clear_i = (*text).state_stack_used as i32;
+            while clear_i < (*text).state_stack_capacity as i32 {
+                *(*text).state_stack.offset(clear_i as isize) = 0;
                 clear_i += 1;
             }
             break 'restart;

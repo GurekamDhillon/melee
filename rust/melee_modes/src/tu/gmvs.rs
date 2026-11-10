@@ -311,7 +311,7 @@ pub unsafe fn gm_8016AEA4() -> u64 {
 
 pub unsafe fn gm_8016AEB8() -> i32 {
     melee_core::ct!("gm_8016AEB8");
-    (*gm_GetStartMeleeRules()).x28
+    (*gm_GetStartMeleeRules()).it_kind
 }
 
 
@@ -1487,7 +1487,7 @@ pub unsafe fn fn_8016D8AC(arg0: i32, arg1: *mut PlayerInitData) {
         } else {
             ext::Player_SetPlayerCharacter(arg0, CKind_Zelda);
         }
-        (*tmp).state.fighters[a].anon_4.anon_0.set_x4_b4(1);
+        (*tmp).state.fighters[a].x4.x0.set_x4_b4(1);
     }
 
     (*tmp).state.fighters[a].spawn_point = (*arg1).spawn_pos;
@@ -1526,14 +1526,14 @@ pub unsafe fn fn_8016D8AC(arg0: i32, arg1: *mut PlayerInitData) {
         ext::Player_SetMoreFlagsBit1(arg0, 0);
     }
 
-    (*tmp).state.fighters[a].anon_4.anon_0.set_x4_b1((*arg1).xC_b3());
-    (*tmp).state.fighters[a].anon_4.anon_0.set_x4_b0((*arg1).vs_metal());
+    (*tmp).state.fighters[a].x4.x0.set_x4_b1((*arg1).xC_b3());
+    (*tmp).state.fighters[a].x4.x0.set_x4_b0((*arg1).vs_metal());
     if (*arg1).vs_metal() != 0 {
         ext::Player_SetFlagsBit5(arg0, 1);
     } else {
         ext::Player_SetFlagsBit5(arg0, 0);
     }
-    (*tmp).state.fighters[a].anon_4.anon_0.set_x4_b2((*arg1).vs_invisible());
+    (*tmp).state.fighters[a].x4.x0.set_x4_b2((*arg1).vs_invisible());
     if (*arg1).vs_invisible() != 0 {
         ext::Player_SetFlagsBit6(arg0, 1);
         ext::Player_SetFlagsBit7(arg0, 0);
@@ -1557,10 +1557,10 @@ pub unsafe fn fn_8016D8AC(arg0: i32, arg1: *mut PlayerInitData) {
     } else {
         ext::Player_SetMoreFlagsBit5(arg0, 0);
     }
-    (*tmp).state.fighters[a].anon_4.anon_0.set_x4_b3((*arg1).xD_b1());
+    (*tmp).state.fighters[a].x4.x0.set_x4_b3((*arg1).xD_b1());
     ext::Player_SetMoreFlagsBit6(arg0, (*arg1).xB);
     ext::Player_SetFacingDirection(arg0, (*arg1).spawn_dir as f32);
-    (*tmp).state.fighters[a].anon_4.anon_0.set_x4_b5((*arg1).xD_b0());
+    (*tmp).state.fighters[a].x4.x0.set_x4_b5((*arg1).xD_b0());
 }
 
 pub unsafe fn fn_8016DCC0(arg0: *mut StartMeleeData) {
@@ -1983,7 +1983,7 @@ pub unsafe fn fn_8016E2BC() {
         let d = ext::Player_GetPlayerSlotType(0);
         ext::Player_SetUnk45(0, ext::fn_80160840(ext::gm_80160854(a as u8, b as u8, single_is_teams as u8, d as u8) as u8) as i32);
         ext::Player_80031AD0(0);
-        if controller.state.fighters[0].anon_4.anon_0.x4_b4() != 0 {
+        if controller.state.fighters[0].x4.x0.x4_b4() != 0 {
             ext::lbAudioAx_800237A8(0x41F4E, 0x7F, 0x40);
         }
         ext::fn_80169C54(ext::Player_GetPlayerCharacter(0) as i8, ext::Player_GetCostumeId(0) as i8);
@@ -2075,7 +2075,7 @@ pub unsafe fn fn_8016E2BC() {
                 let d = ext::Player_GetPlayerSlotType(i);
                 ext::Player_SetUnk45(i, ext::fn_80160840(ext::gm_80160854(a as u8, b as u8, is_teams as u8, d as u8) as u8) as i32);
                 ext::Player_80031AD0(i);
-                if (*tmp).state.fighters[i as usize].anon_4.anon_0.x4_b4() != 0 {
+                if (*tmp).state.fighters[i as usize].x4.x0.x4_b4() != 0 {
                     ext::lbAudioAx_800237A8(0x41F4E, 0x7F, 0x40);
                 }
             }
@@ -2369,7 +2369,7 @@ pub unsafe fn gm_8016EDDC(arg0: i32, arg1: *mut PlayerInitData) -> bool {
         ext::Player_80032768(arg0, &mut sp18);
         setPlayerUnk45(arg0);
         ext::Player_80031AD0(arg0);
-        if controller.state.fighters[arg0 as usize].anon_4.anon_0.x4_b4() != 0 {
+        if controller.state.fighters[arg0 as usize].x4.x0.x4_b4() != 0 {
             ext::lbAudioAx_800237A8(0x41F4E, 0x7F, 0x40);
         }
         fn_8016E124();

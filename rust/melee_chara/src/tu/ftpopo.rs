@@ -121,9 +121,9 @@ pub fn ftPp_Init_OnLoad(gobj: G) {
 
         let da = (*fp).dat_attrs as *const ftIceClimberAttributes;
         (*fp).x40 = (*da).x0;
-        ext::it_8026B3F8(*item_list.add(0), It_Kind_IceClimber_Ice as i32);
-        ext::it_8026B3F8(*item_list.add(1), It_Kind_IceClimber_Blizzard as i32);
-        ext::it_8026B3F8(*item_list.add(2), It_Kind_IceClimber_GumStrings as i32);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, It_Kind_IceClimber_Ice as i32);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, It_Kind_IceClimber_Blizzard as i32);
+        ext::it_8026B3F8((*item_list.add(2)).article as *mut ::core::ffi::c_void, It_Kind_IceClimber_GumStrings as i32);
     }
 }
 

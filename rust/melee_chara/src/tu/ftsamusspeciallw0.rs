@@ -87,9 +87,9 @@ pub unsafe extern "C" fn ftSs_Init_80128944(mut gobj: *mut HSD_GObj, mut farg1: 
     let mut __: [u8; 8] = [0; 8];
     if !(ext::ftColl_8007B868(gobj) != 0) {
         's5: {
-            match (*fp).x2070.anon_0.x2071_b0_3() as i32 {
+            match (*fp).x2070.x0.x2071_b0_3() as i32 {
                 0 | 2 | 3 | 4 => {
-                    if (((*fp).x2070.anon_0.x2073 as i32) == 20) || (((*fp).x2070.anon_0.x2071_b5() as i32) == 0) {
+                    if (((*fp).x2070.x0.x2073 as i32) == 20) || (((*fp).x2070.x0.x2071_b5() as i32) == 0) {
                         if ((*fp).x5F4_arr[0 as usize].idx as i32) == 2 {
                             ftSs_Init_80128B1C(gobj, float_result, (*da).x0, 1.0f32);
                         } else {
@@ -371,7 +371,7 @@ pub unsafe extern "C" fn ftSs_SpecialLw_80129158(mut gobj: *mut HSD_GObj) -> i32
         's7: {
             match motion_state_index {
                 343 | 344 | 345 | 346 | 347 | 348 => {
-                    if (*fp).x2070.anon_0.x2071_b6() != 0 {
+                    if (*fp).x2070.x0.x2071_b6() != 0 {
                         return 1;
                     }
                     return 0;

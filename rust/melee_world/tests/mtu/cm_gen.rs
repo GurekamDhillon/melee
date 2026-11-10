@@ -434,9 +434,9 @@ pub fn fill_Camera(p: &mut Camera) {
     p.x350.y = rg();
     p.x350.z = rg();
     for i0 in 0..16 { unsafe { *(&mut p.x35C as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
-    p.x368.x = rg();
-    p.x368.y = rg();
-    p.x368.z = rg();
+    p.x368.vec.x = rg();
+    p.x368.vec.y = rg();
+    p.x368.vec.z = rg();
     p.x374 = rg();
     for i0 in 0..4 { unsafe { *(&mut p.x378 as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
     for i0 in 0..4 { unsafe { *(&mut p.x37C as *mut _ as *mut u8).add(i0) = rnd() as u8; } }
@@ -582,9 +582,9 @@ pub fn hash_Camera(p: &Camera) {
     hm(p.x350.y.to_bits());
     hm(p.x350.z.to_bits());
     for i0 in 0..16 { unsafe { hm(*(&p.x35C as *const _ as *const u8).add(i0) as u32); } }
-    hm(p.x368.x.to_bits());
-    hm(p.x368.y.to_bits());
-    hm(p.x368.z.to_bits());
+    hm(p.x368.vec.x.to_bits());
+    hm(p.x368.vec.y.to_bits());
+    hm(p.x368.vec.z.to_bits());
     hm(p.x374.to_bits());
     for i0 in 0..4 { unsafe { hm(*(&p.x378 as *const _ as *const u8).add(i0) as u32); } }
     for i0 in 0..4 { unsafe { hm(*(&p.x37C as *const _ as *const u8).add(i0) as u32); } }

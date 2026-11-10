@@ -67,9 +67,9 @@ pub mod ext {
         fn HSD_CObjLoadDesc(desc: *mut HSD_CObjDesc) -> *mut HSD_CObj = crate::tu::adapt::HSD_CObjLoadDesc__66a547;
         fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void) -> ();
         fn HSD_GObj_80390EB8(i: i32) -> u32 = crate::tu::adapt::HSD_GObj_80390EB8__5ed1a9;
-        fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) -> ();
-        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
-        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: i32) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
+        fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: isize) -> ();
+        fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) -> () = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, unused: isize) -> () = crate::tu::adapt::HSD_GObj_LObjCallback__aaa236;
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc;
         fn HSD_JObjAnimAll(a0: *mut HSD_JObj) -> ();
         fn HSD_JObjDispAll(jobj: *mut HSD_JObj, vmtx: *mut c_void, flags: u32, rendermode: u32) -> ();
@@ -720,9 +720,9 @@ pub unsafe fn fn_80174FD0(jobj: *mut HSD_JObj, arg1: i32) {
 }
 
 /// fn_80175038: render callback of the panel model.
-pub unsafe extern "C" fn fn_80175038(gobj: *mut HSD_GObj, flag: i32) {
+pub unsafe extern "C" fn fn_80175038(gobj: *mut HSD_GObj, flag: isize) {
     melee_core::ct!("fn_80175038");
-    ext::HSD_JObjDispAll(get_jobj(gobj), null_mut(), ext::HSD_GObj_80390EB8(flag), 0);
+    ext::HSD_JObjDispAll(get_jobj(gobj), null_mut(), ext::HSD_GObj_80390EB8(flag as i32), 0);
 }
 
 /// fn_8017507C: the player's row colour (team colour lightened, or white).
@@ -1455,7 +1455,7 @@ pub unsafe extern "C" fn gm_Scene_Results_OnEnter(arg0_: *mut c_void) {
     }
     fn_801771C0(d);
     if (*match_end).player_standings[(*d).x6 as usize].pkind == Gm_PKind_Human as u8 {
-        if !gm_WasMatchCanceled((*match_end).outcome) && (*match_end).player_standings[(*d).x6 as usize].anon_3.anon_0.x3_b6() != 0 {
+        if !gm_WasMatchCanceled((*match_end).outcome) && (*match_end).player_standings[(*d).x6 as usize].x3_u.x0.x3_b6() != 0 {
             ext::lb_80014574((*d).x6, 3, 0x20, 0);
         }
     }
@@ -1489,7 +1489,7 @@ pub unsafe extern "C" fn gm_Scene_Results_OnEnter(arg0_: *mut c_void) {
         let ps = addr_of_mut!((*match_end).player_standings[i]);
         if (*ps).pkind != Gm_PKind_NA as u8 {
             ext::fn_8017A9B4(i as i32);
-            (*d).player_data[i].fighter_gobj = ext::fn_8017A67C((*ps).ckind as CharacterKind, (*ps).anon_3.anon_0.x3_b0() as i32, i as i32);
+            (*d).player_data[i].fighter_gobj = ext::fn_8017A67C((*ps).ckind as CharacterKind, (*ps).x3_u.x0.x3_b0() as i32, i as i32);
             (*d).player_data[i].camera = ext::fn_8017A318(i as i32);
         }
     }

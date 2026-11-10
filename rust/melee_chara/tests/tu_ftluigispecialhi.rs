@@ -70,7 +70,7 @@ fn matches_c() {
         f.cmd_vars[0] = r.rnd() & 1;
         f.lstick_angle = r.rf();
         f.facing_dir = if r.rnd() & 1 != 0 { 1.0 } else { -1.0 };
-        unsafe { f.anon_2210.anon_0.set_throw_flags_b3((r.rnd() & 1) as u8) };
+        unsafe { f.x2210.x0.set_throw_flags_b3((r.rnd() & 1) as u8) };
         unsafe {
             ROT_N = 0;
             ROT = (-1, 0.0);
@@ -81,7 +81,7 @@ fn matches_c() {
                 "I {} {:08x} {} {:08x} {} {:08x} {}",
                 i,
                 f.lstick_angle.to_bits(),
-                f.anon_2210.anon_0.throw_flags_b3(),
+                f.x2210.x0.throw_flags_b3(),
                 f.facing_dir.to_bits(),
                 ROT_N,
                 ROT.1.to_bits(),

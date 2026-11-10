@@ -37,7 +37,7 @@ pub fn ftco_800c7590(g: G) {
     ext::ftCommon_8007E2FC(fp(g));
     let cd = crate::hooks::common_data();
     let f = fp(g);
-    let pid = f.player_id as i32;
+    let pid = f.player_idx as i32;
     let tmp1 = cd.x728 * (cd.x72C - (ext::Player_80033BB8(pid) + 1) as f32);
     let mut tmp2 = fmadds(cd.x720, cd.x724 - ext::Player_GetHandicap(pid) as f32, cd.x71C);
     tmp2 += tmp1;

@@ -125,11 +125,11 @@ fn ftcolanim_vs_c() {
             f.kind = (h.rnd() % KMAX as u32) as _;
             ms4[f.kind as usize] = unsafe { &raw mut VAN } as *mut _;
             f.gobj = &mut *go;
-            f.player_id = (h.rnd() % 6) as u8;
+            f.player_idx = (h.rnd() % 6) as u8;
             f.set_is_sub_fighter((h.rnd() & 1) as u8);
             f.set_x2222_b5((h.rnd() & 1) as u8);
             f.set_x2226_b4((h.rnd() & 1) as u8);
-            f.set_x2224_b2((h.rnd() & 1) as u8);
+            f.set_stamina_dead((h.rnd() & 1) as u8);
             f.set_x221D_b6((h.rnd() & 1) as _);
             f.set_x2221_b0((h.rnd() & 1) as u8);
             f.dmg.x18F0 = (h.rnd() % 2) as _;
@@ -167,7 +167,7 @@ fn ftcolanim_vs_c() {
             }
             h.h = 0x811C9DC5;
             h.hm(f.invisible() as u32); h.hm(f.x221E_b1() as u32); h.hm(f.x221E_b2() as u32);
-            h.hm(f.x2219_b1() as u32); h.hm(f.x221F_b3() as u32); h.hm(f.x221F_b1() as u32);
+            h.hm(f.x2219_b1() as u32); h.hm(f.is_sleeping() as u32); h.hm(f.x221F_b1() as u32);
             h.hm(f.x2221_b3() as u32); h.hm(cb.state as u32);
             h.hm(f2.x408.x0_timer as u32); h.hm(f2.x488.x0_timer as u32);
             let got = format!("{} {} {:08X} {:08X}", op, k, h.h, unsafe { TR });

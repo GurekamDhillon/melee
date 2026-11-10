@@ -110,10 +110,10 @@ pub mod ext {
                     None => { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
-    pub static mut H_Ground_801C3FA4: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) -> *mut melee_types::HSD_JObj> = None;
+    pub static mut H_Ground_801C3FA4: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) -> *mut melee_types::HSD_JObj> = None;
             pub unsafe extern "C" fn Ground_801C3FA4(a0: *mut melee_types::HSD_GObj, a1: i32) -> *mut melee_types::HSD_JObj {
                 match H_Ground_801C3FA4 {
-                    Some(f) => f(a0, a1),
+                    Some(f) => f(a0, a1 as isize),
                     None => { return unsafe { crate::tu::ground::Ground_801C3FA4(a0 as _, a1 as _) as _ }; },
                 }
             }
@@ -363,12 +363,12 @@ pub mod ext {
                     None => { return unsafe { crate::tu::ground::Ground_GetStageGObj(a0 as _) as _ }; },
                 }
             }
-    pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, u8, u32)> = None;
-    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
-    pub static mut H_grDisplay_801C5DB0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
-            pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: i32)  {
+    pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, u8, u32)> = None;
+    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
+    pub static mut H_grDisplay_801C5DB0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, isize) > = None;
+            pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: isize)  {
                 match H_grDisplay_801C5DB0 {
-                    Some(f) => f(a0, a1),
+                    Some(f) => f(a0, a1 as isize),
                     None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },
                 }
             }
@@ -647,7 +647,7 @@ const fn cb(
     callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>,
     flags: u32,
 ) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, x10: StageCallbacks_x10 { flags: u32::to_be(flags) } }
 }
 
 pub static mut grZe_callbacks: [StageCallbacks; 12] = [
@@ -1330,7 +1330,7 @@ pub unsafe extern "C" fn grZebes_801D9508(gobj: *mut Ground_GObj) {
     let gp = GET_GROUND(gobj);
     let map_a_gobj = ext::Ground_GetMapGObj(6);
     hsd_assert_here(909, !map_a_gobj.is_null(), c"map_a_gobj");
-    (*gp).u.zebes.x4 = p2u(ext::Ground_801C3FA4(map_a_gobj, 14));
+    (*gp).u.zebes.stored_jobj = ext::Ground_801C3FA4(map_a_gobj, 14);
     (*gp).u.zebes.x8 = 1;
     (*gp).u.zebes.xA = (ext::HSD_Randi(600) + 3000) as i16;
     (*gp).u.zebes.set_x0_b0(1);
@@ -1346,7 +1346,7 @@ pub unsafe extern "C" fn grZebes_801D95B8(gobj: *mut Ground_GObj) {
     melee_core::ct!("grZebes_801D95B8");
     let gp = GET_GROUND(gobj);
     let jobj = GET_JOBJ(gobj);
-    let stored_jobj: *mut HSD_JObj = u2p((*gp).u.zebes.x4);
+    let stored_jobj: *mut HSD_JObj = (*gp).u.zebes.stored_jobj;
 
     if !stored_jobj.is_null() {
         let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -1377,7 +1377,7 @@ pub unsafe extern "C" fn grZebes_801D9758(gobj: *mut Ground_GObj) {
     melee_core::ct!("grZebes_801D9758");
     let gp = GET_GROUND(gobj);
     ext::ftCo_800C07F8(gobj, 3, grZebes_801DCBFC as usize as *mut c_void);
-    (*gp).u.zebes.x4 = 1;
+    (*gp).u.zebes5.xC8 = 1;
 }
 
 pub unsafe extern "C" fn grZebes_801D9798(gobj: *mut HSD_GObj) {
@@ -1859,14 +1859,17 @@ pub unsafe extern "C" fn grZebes_801DA528(arg0: *mut HSD_GObj, arg1: *mut c_void
 
 pub unsafe extern "C" fn fn_801DA9D8(_arg0: *mut Item_GObj, gp: *mut Ground, pos: *mut Vec3, _fobj: *mut HSD_GObj, slope: f32) {
     melee_core::ct!("fn_801DA9D8");
-    (*gp).u.zebes.xC.z += slope;
-    (*gp).u.zebes.xC.y = (*pos).x;
+    // `((grZe_AcidState*) &gp->u.zebes5.xC8)`: the acid state view the C uses since upstream typed it
+    let st = core::ptr::addr_of_mut!((*gp).u.zebes5.xC8) as *mut grZe_AcidState;
+    (*st).x10_damage += slope;
+    (*st).x0C_velocity = (*pos).x;
 }
 
 pub unsafe extern "C" fn fn_801DA9F0(_arg0: *mut Item_GObj, gp: *mut Ground, pos: *mut Vec3, _fobj: *mut HSD_GObj, slope: f32) {
     melee_core::ct!("fn_801DA9F0");
-    (*gp).u.zebes.xC.y += slope;
-    (*gp).u.zebes.xC.x = (*pos).x;
+    let st = core::ptr::addr_of_mut!((*gp).u.zebes4.xC4) as *mut grZe_AcidState;
+    (*st).x10_damage += slope;
+    (*st).x0C_velocity = (*pos).x;
 }
 
 pub unsafe extern "C" fn grZebes_801DAA08() -> i32 {
@@ -1928,9 +1931,9 @@ pub unsafe extern "C" fn grZebes_801DAA08() -> i32 {
             {
                 // C: `dat = unk4->unk8` read as bytes at +0x6C / +0x70 / +0x74 = `unk8[2].unk4 / unk8 / unkC` (UnkStageDat_x8_t is 0x34 bytes)
                 let rec = (*(*ext::grDatFiles_801C6330(2)).unk4).unk8.add(2);
-                let sap = (*rec).unkC;
-                let ajp = (*rec).unk4;
-                let mjp = (*rec).unk8;
+                let sap = (*rec).shapeanims;
+                let ajp = (*rec).anims;
+                let mjp = (*rec).matanims;
                 let sa: *mut HSD_ShapeAnimJoint;
                 let ma: *mut HSD_MatAnimJoint;
                 let aj: *mut HSD_AnimJoint;
@@ -2835,7 +2838,7 @@ pub unsafe extern "C" fn grZebes_801DCBFC(_gobj: *mut Ground_GObj, fobj: *mut HS
     0
 }
 
-pub unsafe extern "C" fn grZebes_801DCCB8(_arg: i32) -> *mut DynamicsDesc {
+pub unsafe extern "C" fn grZebes_801DCCB8(_arg: i32) -> *mut melee_types::lbColl_80008D30_arg1 {
     melee_core::ct!("grZebes_801DCCB8");
     null_mut()
 }
@@ -2887,7 +2890,7 @@ pub fn grzebes_subtract(lhs: f32, rhs: f32) -> f32 {
     pub extern "C" fn grZebes_801D9F7C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
 
 /// grZebes_801DCCB8_fp (gr/grzebes.c:2460)
-    pub extern "C" fn grZebes_801DCCB8_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grZebes_801DCCB8_fp(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grZebes_801DCCC0_fp (gr/grzebes.c:2465)
     pub extern "C" fn grZebes_801DCCC0_fp(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

@@ -9,6 +9,9 @@ repo="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$repo/rust"
 export RUSTC_BOOTSTRAP=1
 export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-Zmerge-functions=disabled"
+# MSVC's linker folds identical COMDATs in a release link (/OPT:ICF is its default with /OPT:REF), which merges the
+# same twins after rustc: fnsym::require_unmerged fails in every harness on Windows. Keep them apart there too.
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) export RUSTFLAGS="$RUSTFLAGS -Clink-arg=/OPT:NOICF" ;; esac
 export CARGO_TARGET_DIR="${ORACLE_TARGET_DIR:-$repo/build/cargo-oracle}"
 # the disc tests (melee_core/test_support/disc.rs) fail without GW_ISO_VANILLA unless MELEE_SKIP_DISC_TESTS=1
 if [ -z "${GW_ISO_VANILLA:-}" ]; then

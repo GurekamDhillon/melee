@@ -94,7 +94,7 @@ fn ft_0c31_matches_c() {
                 let u4c = (rnd() % 5) as i8;
                 let bit4 = (rnd() & 1) as u8;
                 let f = f();
-                f.player_id = (rnd() % 3) as u8;
+                f.player_idx = (rnd() % 3) as u8;
                 f.cur_pos.x = rw(); f.cur_pos.y = rw(); f.cur_pos.z = rw();
                 f.facing_dir = rg(); f.x34_scale.y = rg(); f.x34_scale.x = rg(); f.x40 = rw();
                 f.co_attrs.trophy_scale = rw();
@@ -114,7 +114,7 @@ fn ft_0c31_matches_c() {
                 e.x2C.right.x = rw(); e.x2C.right.y = rw();
                 e.x2C.left.x = rw(); e.x2C.left.y = rw();
                 let f2 = f2();
-                f2.cur_pos.y = rw(); f2.mv.co.entry.x28 = rw(); f2.set_x221F_b3((rnd() & 1) as _);
+                f2.cur_pos.y = rw(); f2.mv.co.entry.x28 = rw(); f2.set_is_sleeping((rnd() & 1) as _);
                 let ent1 = if rnd() & 1 != 0 { GO2 } else { core::ptr::null_mut() };
                 for s in 0..6 {
                     PLAYER_SLOTS[s] = core::mem::zeroed();

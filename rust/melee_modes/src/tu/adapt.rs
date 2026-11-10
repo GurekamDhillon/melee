@@ -325,8 +325,8 @@ pub fn gm_801B06B0__7adbb8(a0: *mut CSSData, a1: i32, a2: i32, a3: i32, a4: i32,
 pub fn Ground_801C1DD4__f2fb49() -> i32 { melee_core::ct!("Ground_801C1DD4__f2fb49"); unsafe { melee_world::tu::ground::Ground_801C1DD4() } }
 pub fn HSD_AObjSetCurrentFrame__64f5bd(a0: *mut HSD_AObj, a1: f32) { melee_core::ct!("HSD_AObjSetCurrentFrame__64f5bd"); unsafe { melee_runtime::tu::aobj::HSD_AObjSetCurrentFrame(a0, a1) } }
 pub fn HSD_CObjLoadDesc__66a547(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj { melee_core::ct!("HSD_CObjLoadDesc__66a547"); unsafe { melee_runtime::tu::cobj::HSD_CObjLoadDesc(a0) } }
-pub fn HSD_GObj_JObjCallback__9cd907(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("HSD_GObj_JObjCallback__9cd907"); unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) } }
-pub fn HSD_GObj_LObjCallback__aaa236(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("HSD_GObj_LObjCallback__aaa236"); unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1) } }
+pub fn HSD_GObj_JObjCallback__9cd907(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("HSD_GObj_JObjCallback__9cd907"); unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) } }
+pub fn HSD_GObj_LObjCallback__aaa236(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("HSD_GObj_LObjCallback__aaa236"); unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(a0, a1 as i32) } }
 pub fn HSD_SisLib_803A62A0__58f49d(a0: i32, a1: *const i8, a2: *const i8) { melee_core::ct!("HSD_SisLib_803A62A0__58f49d"); unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A62A0(a0, a1 as _, a2 as _) } }
 pub fn HSD_SisLib_803A7548__d5953f(a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32) { melee_core::ct!("HSD_SisLib_803A7548__d5953f"); unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7548(a0, a1, a2, a3) } }
 pub fn Player_GetPlayerId__aaadbd(a0: i32) -> i32 { melee_core::ct!("Player_GetPlayerId__aaadbd"); unsafe { melee_fighter::tu::player::Player_GetPlayerId(a0) } }
@@ -365,7 +365,7 @@ pub fn HSD_ArchiveGetPublicAddress__1a942f(a0: *mut HSD_Archive, a1: *const i8) 
 pub fn HSD_CObjAddAnim__a45160(a0: *mut HSD_CObj, a1: *mut HSD_CameraAnim) { melee_core::ct!("HSD_CObjAddAnim__a45160"); unsafe { melee_runtime::tu::cobj::HSD_CObjAddAnim(a0, a1) } }
 pub fn HSD_CObjAnim__1b6417(a0: *mut HSD_CObj) { melee_core::ct!("HSD_CObjAnim__1b6417"); unsafe { melee_runtime::tu::cobj::HSD_CObjAnim(a0) } }
 pub fn HSD_CObjReqAnim__1aeeec(a0: *mut HSD_CObj, a1: f32) { melee_core::ct!("HSD_CObjReqAnim__1aeeec"); unsafe { melee_runtime::tu::cobj::HSD_CObjReqAnim(a0, a1) } }
-pub fn HSD_GObj_FogCallback__2aeaad(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("HSD_GObj_FogCallback__2aeaad"); unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0, a1) } }
+pub fn HSD_GObj_FogCallback__2aeaad(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("HSD_GObj_FogCallback__2aeaad"); unsafe { melee_runtime::tu::gobj::HSD_GObj_FogCallback(a0, a1 as i32) } }
 pub fn HSD_JObjAlloc__5ecba4() -> *mut HSD_JObj { melee_core::ct!("HSD_JObjAlloc__5ecba4"); unsafe { melee_runtime::tu::jobj::HSD_JObjAlloc() } }
 pub fn Toy_803048C0__c4f25d(a0: i32) -> i32 { melee_core::ct!("Toy_803048C0__c4f25d"); unsafe { melee_items::tu::toy::Toy_803048C0(a0) } }
 pub fn Toy_803060BC__946c5c(a0: i32, a1: i32) -> f32 { melee_core::ct!("Toy_803060BC__946c5c"); unsafe { melee_items::tu::toy::Toy_803060BC(a0, a1) } }
@@ -393,8 +393,8 @@ pub fn HSD_CObjSetCurrent__d18716(a0: *mut HSD_CObj) -> i32 { melee_core::ct!("H
 pub fn HSD_Free__3ee311(a0: *mut c_void) { melee_core::ct!("HSD_Free__3ee311"); unsafe { melee_runtime::tu::memory::HSD_Free(a0) } }
 pub fn HSD_ImageDescCopyFromEFB__a5dfa4(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: u8, a4: i32) { melee_core::ct!("HSD_ImageDescCopyFromEFB__a5dfa4"); unsafe { melee_runtime::tu::tobj::HSD_ImageDescCopyFromEFB(a0, a1, a2, a3, a4) } }
 pub fn HSD_SObjLib_803A4740__344956(a0: *mut HSD_SObj) { melee_core::ct!("HSD_SObjLib_803A4740__344956"); unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A4740(a0) } }
-pub fn HSD_SObjLib_803A49E0__00f645(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("HSD_SObjLib_803A49E0__00f645"); unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0, a1) } }
-pub fn HSD_SObjLib_803A54EC__11e875(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("HSD_SObjLib_803A54EC__11e875"); unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A54EC(a0, a1) } }
+pub fn HSD_SObjLib_803A49E0__00f645(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("HSD_SObjLib_803A49E0__00f645"); unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A49E0(a0, a1 as i32) } }
+pub fn HSD_SObjLib_803A54EC__11e875(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("HSD_SObjLib_803A54EC__11e875"); unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A54EC(a0, a1 as i32) } }
 pub fn HSD_SObjLib_803A55DC__ba9596(a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32) { melee_core::ct!("HSD_SObjLib_803A55DC__ba9596"); unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A55DC(a0, a1, a2, a3) } }
 pub fn Item_80266FA8__f7386b() { melee_core::ct!("Item_80266FA8__f7386b"); unsafe { melee_items::tu::item::Item_80266FA8() } }
 pub fn Item_80266FCC__dfa49f() { melee_core::ct!("Item_80266FCC__dfa49f"); unsafe { melee_items::tu::item::Item_80266FCC() } }
@@ -457,14 +457,14 @@ pub fn un_802FF1B4__2022ae() { melee_core::ct!("un_802FF1B4__2022ae"); unsafe { 
 pub fn gm_80168B34__ad8428(a0: CharacterKind, a1: i32, a2: i32) -> f32 { melee_core::ct!("gm_80168B34__ad8428"); unsafe { crate::tu::gm_1601::gm_80168B34(a0, a1, a2) } }
 pub fn fn_80168E54__246570(a0: i8, a1: i8, a2: u8, a3: u8) { melee_core::ct!("fn_80168E54__246570"); unsafe { crate::tu::gm_1601::fn_80168E54(a0, a1, a2, a3) } }
 pub fn fn_80179854__dccf02() { melee_core::ct!("fn_80179854__dccf02"); unsafe { crate::tu::gm_1798::fn_80179854() } }
-pub fn fn_80179D3C__70302b(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("fn_80179D3C__70302b"); unsafe { crate::tu::gm_1798::fn_80179D3C(a0, a1) } }
-pub fn fn_80179D60__4ab2eb(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("fn_80179D60__4ab2eb"); unsafe { crate::tu::gm_1798::fn_80179D60(a0, a1) } }
-pub fn fn_80179D84__7d94c0(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("fn_80179D84__7d94c0"); unsafe { crate::tu::gm_1798::fn_80179D84(a0, a1) } }
-pub fn fn_80179DA8__94304a(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("fn_80179DA8__94304a"); unsafe { crate::tu::gm_1798::fn_80179DA8(a0, a1) } }
-pub fn fn_80179DCC__bd00a6(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("fn_80179DCC__bd00a6"); unsafe { crate::tu::gm_1798::fn_80179DCC(a0, a1) } }
-pub fn fn_80179E34__ecefd5(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("fn_80179E34__ecefd5"); unsafe { crate::tu::gm_1798::fn_80179E34(a0, a1) } }
-pub fn fn_80179E9C__2d3024(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("fn_80179E9C__2d3024"); unsafe { crate::tu::gm_1798::fn_80179E9C(a0, a1) } }
-pub fn fn_80179F04__e82117(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("fn_80179F04__e82117"); unsafe { crate::tu::gm_1798::fn_80179F04(a0, a1) } }
+pub fn fn_80179D3C__70302b(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("fn_80179D3C__70302b"); unsafe { crate::tu::gm_1798::fn_80179D3C(a0, a1) } }
+pub fn fn_80179D60__4ab2eb(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("fn_80179D60__4ab2eb"); unsafe { crate::tu::gm_1798::fn_80179D60(a0, a1) } }
+pub fn fn_80179D84__7d94c0(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("fn_80179D84__7d94c0"); unsafe { crate::tu::gm_1798::fn_80179D84(a0, a1) } }
+pub fn fn_80179DA8__94304a(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("fn_80179DA8__94304a"); unsafe { crate::tu::gm_1798::fn_80179DA8(a0, a1) } }
+pub fn fn_80179DCC__bd00a6(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("fn_80179DCC__bd00a6"); unsafe { crate::tu::gm_1798::fn_80179DCC(a0, a1) } }
+pub fn fn_80179E34__ecefd5(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("fn_80179E34__ecefd5"); unsafe { crate::tu::gm_1798::fn_80179E34(a0, a1) } }
+pub fn fn_80179E9C__2d3024(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("fn_80179E9C__2d3024"); unsafe { crate::tu::gm_1798::fn_80179E9C(a0, a1) } }
+pub fn fn_80179F04__e82117(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("fn_80179F04__e82117"); unsafe { crate::tu::gm_1798::fn_80179F04(a0, a1) } }
 pub fn fn_80175DC8__182ff2(a0: *mut HSD_GObj) { melee_core::ct!("fn_80175DC8__182ff2"); unsafe { crate::tu::gmresult::fn_80175DC8(a0) } }
 pub fn HSD_AObjReqAnim__f16456(a0: *mut HSD_AObj, a1: f32) { melee_core::ct!("HSD_AObjReqAnim__f16456"); unsafe { melee_runtime::tu::aobj::HSD_AObjReqAnim(a0, a1) } }
 pub fn HSD_TObjReqAnim__41ec43(a0: *mut HSD_TObj, a1: f32) { melee_core::ct!("HSD_TObjReqAnim__41ec43"); unsafe { melee_runtime::tu::tobj::HSD_TObjReqAnim(a0, a1) } }
@@ -825,7 +825,7 @@ pub fn mnDiagram_CreateFighterIcon__dd1690(a0: i32, a1: i32) -> *mut HSD_JObj { 
 pub fn mnDiagram_Init__3b569c(a0: u8, a1: u8) { melee_core::ct!("mnDiagram_Init__3b569c"); unsafe { crate::tu::mndiagram::mnDiagram_Init(a0, a1) } }
 pub fn mnDiagram3_Init__319022(a0: *mut c_void) { melee_core::ct!("mnDiagram3_Init__319022"); unsafe { crate::tu::mndiagram3::mnDiagram3_Init(a0) } }
 pub fn GetNameText__db8135(a0: u8) -> *mut i8 { melee_core::ct!("GetNameText__db8135"); unsafe { (crate::tu::mnname::GetNameText(a0 as _)) as _ } }
-pub fn HSD_GObj_JObjCallback__b37ff8(a0: *mut HSD_GObj, a1: ::core::ffi::c_int) { melee_core::ct!("HSD_GObj_JObjCallback__b37ff8"); unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) } }
+pub fn HSD_GObj_JObjCallback__b37ff8(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("HSD_GObj_JObjCallback__b37ff8"); unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) } }
 pub fn lbAudioAx_80024030__52c54d(a0: ::core::ffi::c_int) { melee_core::ct!("lbAudioAx_80024030__52c54d"); if let Some(v) = crate::tu::ext_hook::audio_route("lbAudioAx_80024030", &[a0 as u64]) { return crate::tu::ext_hook::FromAudio::from_audio(v); } if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024030"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0) } }
 pub fn mn_8022ED6C__a278c3(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> ::core::ffi::c_float { melee_core::ct!("mn_8022ED6C__a278c3"); unsafe { crate::tu::mn_22EC::mn_8022ED6C(a0, a1) } }
 pub fn HSD_SisLib_803A6754__6086ec(a0: ::core::ffi::c_int, a1: ::core::ffi::c_int) -> *mut HSD_Text { melee_core::ct!("HSD_SisLib_803A6754__6086ec"); unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0, a1) } }
@@ -865,7 +865,7 @@ pub fn lbMthp_8001F410__492048(a0: *const i8, a1: *mut u32, a2: *mut c_void, a3:
 pub fn lbMthp_8001F578__cdae63() { melee_core::ct!("lbMthp_8001F578__cdae63"); unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F578() } }
 pub fn lbMthp_8001F604__d79d45() -> i32 { melee_core::ct!("lbMthp_8001F604__d79d45"); unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F604() } }
 pub fn lbMthp_8001F624__0c09ac(a0: *mut HSD_GObj, a1: i32, a2: i32) -> *mut HSD_SObj { melee_core::ct!("lbMthp_8001F624__0c09ac"); unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F624(a0, a1, a2) } }
-pub fn lbMthp_8001F67C__b1c012(a0: *mut HSD_GObj, a1: i32) { melee_core::ct!("lbMthp_8001F67C__b1c012"); unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F67C(a0, a1) } }
+pub fn lbMthp_8001F67C__b1c012(a0: *mut HSD_GObj, a1: isize) { melee_core::ct!("lbMthp_8001F67C__b1c012"); unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F67C(a0, a1 as i32) } }
 pub fn mn_8022BD6C__fc17af() { melee_core::ct!("mn_8022BD6C__fc17af"); unsafe { crate::tu::mnmain::mn_8022BD6C() } }
 pub fn mn_8022BD8C__db9576() { melee_core::ct!("mn_8022BD8C__db9576"); unsafe { crate::tu::mnmain::mn_8022BD8C() } }
 pub fn mn_80229B2C__cb2183() -> *mut HSD_GObj { melee_core::ct!("mn_80229B2C__cb2183"); unsafe { crate::tu::mnmain::mn_80229B2C() } }
@@ -913,7 +913,7 @@ pub fn gm_80190EA4__7bb941() { melee_core::ct!("gm_80190EA4__7bb941"); unsafe { 
 pub fn HSD_CObjGetCurrent__ad58db() -> * mut HSD_CObj { melee_core::ct!("HSD_CObjGetCurrent__ad58db"); unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() } }
 pub fn HSD_ObjFree__bf3ee9(a0: * mut HSD_ObjAllocData, a1: * mut :: core :: ffi :: c_void) { melee_core::ct!("HSD_ObjFree__bf3ee9"); unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(a0, a1) } }
 pub fn HSD_GObj_80390EB8__ae201c(a0: s32) -> :: core :: ffi :: c_uint { melee_core::ct!("HSD_GObj_80390EB8__ae201c"); unsafe { melee_runtime::tu::gobj::HSD_GObj_80390EB8(a0) } }
-pub fn HSD_GObj_JObjCallback__392d18(a0: * mut HSD_GObj, a1: :: core :: ffi :: c_int) { melee_core::ct!("HSD_GObj_JObjCallback__392d18"); unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) } }
+pub fn HSD_GObj_JObjCallback__392d18(a0: * mut HSD_GObj, a1: isize) { melee_core::ct!("HSD_GObj_JObjCallback__392d18"); unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1 as i32) } }
 pub fn ftKb_MexKirbyLike__c2b696(a0: :: core :: ffi :: c_int) -> :: core :: ffi :: c_int { melee_core::ct!("ftKb_MexKirbyLike__c2b696"); unsafe { melee_chara::tu::ftkirby::ftKb_MexKirbyLike(a0) } }
 pub fn it_8026B40C__05955e(a0: * mut Article, a1: s32) { melee_core::ct!("it_8026B40C__05955e"); unsafe { melee_items::tu::it_26B1::it_8026B40C(a0, a1) } }
 pub fn cosf__610bf5(a0: :: core :: ffi :: c_float) -> :: core :: ffi :: c_float { melee_core::ct!("cosf__610bf5"); unsafe { melee_runtime::gekko::cosf(a0) } }
@@ -1078,7 +1078,7 @@ pub fn ftCo_8009917C__02d948(a0: *mut Fighter_GObj) -> i32 { melee_core::ct!("ft
 pub fn ftCo_Fall_Enter__5f227e(a0: *mut Fighter_GObj) { melee_core::ct!("ftCo_Fall_Enter__5f227e"); unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(a0 as _) } }
 pub fn ftCo_Fall_IASA__163f16(a0: *mut Fighter_GObj) { melee_core::ct!("ftCo_Fall_IASA__163f16"); unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_IASA(a0 as _) } }
 pub fn ftCo_800968C8__1d49d6(a0: *mut Fighter_GObj) { melee_core::ct!("ftCo_800968C8__1d49d6"); unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_800968C8(a0 as _) } }
-pub fn ftCo_80096CC8__f60bbf(a0: *mut Fighter_GObj, a1: i32) -> i32 { melee_core::ct!("ftCo_80096CC8__f60bbf"); unsafe { (melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8(a0 as _, a1)) as _ } }
+pub fn ftCo_80096CC8__f60bbf(a0: *mut Fighter_GObj, a1: i32) -> i32 { melee_core::ct!("ftCo_80096CC8__f60bbf"); unsafe { (melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8(a0 as _, a1 as isize)) as _ } }
 pub fn ftCo_80096D28__30b1a1(a0: *mut Fighter_GObj) { melee_core::ct!("ftCo_80096D28__30b1a1"); unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096D28(a0 as _) } }
 pub fn ftCo_Landing_Enter_Basic__b5080f(a0: *mut Fighter_GObj) { melee_core::ct!("ftCo_Landing_Enter_Basic__b5080f"); unsafe { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Enter_Basic(a0 as _) } }
 pub fn ftCo_LandingFallSpecial_Enter_Basic__94c260(a0: *mut Fighter_GObj) { melee_core::ct!("ftCo_LandingFallSpecial_Enter_Basic__94c260"); unsafe { melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter_Basic(a0 as _) } }

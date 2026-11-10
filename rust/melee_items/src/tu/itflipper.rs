@@ -159,7 +159,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
     (*spawn).vel.z = 0.0;
     (*spawn).x0_parent_gobj = parent;
     (*spawn).x4_parent_gobj2 = (*spawn).x0_parent_gobj;
-    (*spawn).x44_flag.anon_0.set_b0(initial_collision as u8);
+    (*spawn).x44_flag.x0.set_b0(initial_collision as u8);
     (*spawn).x40 = 0;
 }
 
@@ -478,7 +478,7 @@ pub unsafe extern "C" fn itFlipper_Settle(gobj: *mut Item_GObj) {
     (*ip).xD5C = 0;
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = 0.0;
-    (*ip).xDD1_flag.anon_0.set_b1(1);
+    (*ip).xDD1_flag.x0.set_b1(1);
     (*ip).xDD4_itemVar.flipper.xDD8_isSettled = 1;
     ext::it_80275444(gobj);
     ext::it_802725D4(gobj);

@@ -77,6 +77,23 @@ pub unsafe fn find_by_id(id: i8) -> *mut DevText {
     null_mut()
 }
 
+/// `static inline DevText* alloc_text(void)` (upstream helper; `DevText_Create` keeps the inlined form): pop the pool head.
+#[inline(never)]
+pub unsafe fn alloc_text() -> *mut DevText {
+    let text = devtext_poolhead[0];
+    if !text.is_null() {
+        devtext_poolhead[0] = (*text).next;
+        return text;
+    }
+    null_mut()
+}
+
+/// `static inline void set_color(GXColor* dst, GXColor color)` (upstream helper).
+#[inline(never)]
+pub unsafe fn set_color(dst: *mut _GXColor, color: _GXColor) {
+    *dst = color;
+}
+
 /// `DevText* DevText_Create(char id, int x, int y, int w, int h, char* buf)`: takes a box off the
 /// free list (NULL when `id` is already listed); a failed allocation is the C `HSD_ASSERTREPORT`.
 pub unsafe extern "C" fn DevText_Create(id: i8, x: i32, y: i32, w: i32, h: i32, buf: *mut i8) -> *mut DevText {
@@ -119,7 +136,7 @@ pub unsafe extern "C" fn DevText_Create(id: i8, x: i32, y: i32, w: i32, h: i32, 
     t.set_current_color(0);
     t.prev = null_mut();
     t.next = null_mut();
-    t.buf = buf;
+    t.buf = buf as *mut DevTextGlyph;
     memzero(buf as *mut u8, h.wrapping_mul(w.wrapping_mul(2)));
     text
 }
@@ -128,7 +145,7 @@ pub unsafe extern "C" fn DevText_Create(id: i8, x: i32, y: i32, w: i32, h: i32, 
 pub unsafe extern "C" fn DevText_EraseFirstLine(text: *mut DevText) {
     melee_core::ct!("DevText_EraseFirstLine");
     let t = &*text;
-    let mut start_of_line = t.buf;
+    let mut start_of_line = t.buf as *mut u8;
     let line_length = t.w as i32 * 2;
     let mut line_number = 0;
     while line_number < t.h as i32 - 1 {
@@ -285,7 +302,7 @@ pub unsafe extern "C" fn DevText_Print(text: *mut DevText, str: *mut i8) {
             if *cur != b'\n' as i8 {
                 let t = &mut *text;
                 let index = t.cursor_x as i32 + t.cursor_y as i32 * t.w as i32;
-                let g = t.buf.offset(index as isize * 2) as *mut u8;
+                let g = (t.buf as *mut u8).offset(index as isize * 2);
                 *g = *cur as u8;
                 // DevTextGlyph.color is the top two bits of the second byte
                 *g.add(1) = (*g.add(1) & 0x3F) | (t.current_color() << 6);

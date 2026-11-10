@@ -373,7 +373,7 @@ pub mod ext {
     hook!(HSD_PADCOPYSTATUS_TRIGGER, hsd_pad_copy_status_trigger, (idx: usize) -> u32);
 
     /// `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): the GX link's render callback; address only.
-    pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
+    pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: isize) {
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
     /// `HSD_AObjStopAnim` (sysdolphin/baselib/aobj.c): passed as a callback address only.

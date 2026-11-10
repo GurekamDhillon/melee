@@ -841,13 +841,13 @@ pub unsafe fn fn_801855BC(arg8: f64) -> f64 {
     MSL_TrigF_80400774[0] as f64
 }
 
-pub unsafe extern "C" fn fn_8018564C(gobj: *mut HSD_GObj, _arg1: i32) {
+pub unsafe extern "C" fn fn_8018564C(gobj: *mut HSD_GObj, _arg1: isize) {
     melee_core::ct!("fn_8018564C");
     fn_80185408(0xFC8000, 0.0, 480.0, 200.0, 640.0);
     ext::HSD_SObjLib_803A54EC(gobj, 7);
 }
 
-pub unsafe extern "C" fn fn_8018569C(gobj: *mut HSD_GObj, _arg1: i32) {
+pub unsafe extern "C" fn fn_8018569C(gobj: *mut HSD_GObj, _arg1: isize) {
     melee_core::ct!("fn_8018569C");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         let mut i = 0i32;
@@ -866,7 +866,7 @@ pub unsafe extern "C" fn fn_8018569C(gobj: *mut HSD_GObj, _arg1: i32) {
     }
 }
 
-pub unsafe extern "C" fn fn_8018575C(gobj: *mut HSD_GObj, _arg1: i32) {
+pub unsafe extern "C" fn fn_8018575C(gobj: *mut HSD_GObj, _arg1: isize) {
     melee_core::ct!("fn_8018575C");
     if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
         ext::Camera_800313E0(gobj, 1);
@@ -976,7 +976,7 @@ pub unsafe fn fn_80185A0C() -> i32 {
     let cobj = ext::HSD_CObjLoadDesc((*(*lbl_804D6600).cameras).desc);
     ext::HSD_GObjObject_80390A70(gobj3, ext::HSD_GObj_CameraKind, cobj as *mut c_void);
     // `(GObj_RenderFunc) (Event) fn_801852FC`: called with a surplus argument
-    let render: unsafe extern "C" fn(*mut HSD_GObj, i32) = core::mem::transmute(fn_801852FC as unsafe extern "C" fn(*mut HSD_GObj));
+    let render: unsafe extern "C" fn(*mut HSD_GObj, isize) = core::mem::transmute(fn_801852FC as unsafe extern "C" fn(*mut HSD_GObj));
     ext::GObj_SetupGXLinkMax(gobj3, Some(render), 0);
     (*gobj3).gxlink_prios = 0x61;
     lbl_804D65F0 = gobj3;

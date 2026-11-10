@@ -68,7 +68,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -102,6 +102,8 @@ static void hash_world(int ft)
     for (i = 0; i < 16; i++) HM(PI(PLINK[i]));
 }
 
+static int CUR_OP = -1;
+enum { OP_itDosei_SetSpeed = 0, OP_HSD_JObjSetRotationZero = 1, OP_HSD_JObjSetRotationZeroWithMtxDirty = 2, OP_itDosei_FacingAngle = 3, OP_itDosei_Logic7_Spawned = 4, OP_itDosei_80281390 = 5, OP_itDosei_UnkMotion0_Anim = 6, OP_itDosei_UnkMotion0_Phys = 7, OP_itDosei_UnkMotion0_Coll = 8, OP_itDosei_80281734 = 9, OP_itDosei_802817A0 = 10, OP_itDosei_UnkMotion1_Anim = 11, OP_itDosei_UnkMotion1_Phys = 12, OP_itDosei_UnkMotion1_Coll = 13, OP_itDosei_80281C6C = 14, OP_itDosei_UnkMotion2_Anim = 15, OP_itDosei_UnkMotion2_Phys = 16, OP_itDosei_SetupWalk_FC = 17, OP_itDosei_UnkMotion2_Coll = 18, OP_itDosei_80282074 = 19, OP_itDosei_UnkMotion3_Anim = 20, OP_itDosei_UnkMotion3_Phys = 21, OP_itDosei_UnkMotion5_Coll = 22, OP_itDosei_Logic7_PickedUp = 23, OP_itDosei_UnkMotion4_Anim_inline = 24, OP_itDosei_UnkMotion4_GetAnimSpeed = 25, OP_itDosei_UnkMotion4_GetAttrs = 26, OP_itDosei_UnkMotion4_Anim = 27, OP_itDosei_UnkMotion4_Phys = 28, OP_itDosei_GetJObj = 29, OP_itDosei_Logic7_Dropped = 30, OP_itDosei_Logic7_Thrown = 31, OP_itDosei_UnkMotion5_Anim = 32, OP_itDosei_UnkMotion5_Phys = 33, OP_itDosei_Logic7_EnteredAir = 34, OP_itDosei_UnkMotion6_Anim = 35, OP_itDosei_UnkMotion6_Phys = 36, OP_itDosei_UnkMotion6_Coll = 37, OP_itDosei_80282BFC = 38, OP_itDosei_UnkMotion8_Anim = 39, OP_itDosei_UnkMotion8_Phys = 40, OP_itDosei_UnkMotion8_Coll = 41, OP_itDosei_80282CD4 = 42, OP_itDosei_UnkMotion7_Anim = 43, OP_itDosei_UnkMotion7_Phys = 44, OP_itDosei_UnkMotion7_Coll = 45, OP_itDosei_80282DE4 = 46, OP_itDosei_UnkMotion9_Anim = 47, OP_itDosei_UnkMotion9_Phys = 48, OP_itDosei_UnkMotion9_Coll = 49, OP_itDosei_UnkMotion10_Anim = 50, OP_itDosei_UnkMotion10_Phys = 51, OP_itDosei_UnkMotion10_Coll = 52, OP_itDosei_Logic7_DmgReceived = 53, OP_itDosei_UnkMotion11_Anim = 54, OP_itDosei_UnkMotion11_Phys = 55, OP_itDosei_UnkMotion11_Coll = 56, OP_itDosei_Logic7_DmgDealt = 57, OP_itDosei_Logic7_Reflected = 58, OP_itDosei_Logic7_Clanked = 59, OP_itDosei_Logic7_HitShield = 60, OP_itDosei_Logic7_ShieldBounced = 61, OP_itDosei_Logic7_EvtUnk = 62 };
 static u32 SATTR[2][6];
 
 static void setup_stem(void)
@@ -109,7 +111,7 @@ static void setup_stem(void)
     int i;
     (void) i;
     it_804D6D28 = &ICD[0];
-{ int q, w; for (q = 0; q < 2; q++) { ART[q].x4_specialAttributes = SATTR[q]; for (w = 0; w < 6; w++) { if (w == 1 || w == 3 || w == 4 || w == 5) ((int*) SATTR[q])[w] = (int) (fv() % 6); else ((float*) SATTR[q])[w] = rw(); } } } { int q; for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; } { int q; for (q = 0; q < 4; q++) { itDosei_ItemVars* v = &IT[q].xDD4_itemVar.dosei; v->xDD4 = (int) (fv() % 5); v->xDD8 = (int) (fv() % 4); v->xDDC = rw(); v->xDE0 = rw(); v->xDE4.x = rw(); v->xDE4.y = rw(); v->xDE4.z = rw(); v->xDF0 = (int) (fv() % 4); v->xDF4 = rw(); v->xDF8.x = rw(); v->xDF8.y = rw(); v->xDF8.z = rw(); } }
+{ int q, w; for (q = 0; q < 2; q++) { ART[q].x4_specialAttributes = (union ItemSpecialAttributes*) SATTR[q]; for (w = 0; w < 6; w++) { if (w == 1 || w == 3 || w == 4 || w == 5) ((int*) SATTR[q])[w] = (int) (fv() % 6); else ((float*) SATTR[q])[w] = rw(); } } } { int q; for (q = 0; q < 8; q++) JO[q].flags &= ~JOBJ_USE_QUATERNION; } { int q; for (q = 0; q < 4; q++) { itDosei_ItemVars* v = &IT[q].xDD4_itemVar.dosei; v->xDD4 = (int) (fv() % 5); v->xDD8 = (int) (fv() % 4); v->xDDC = rw(); v->xDE0 = rw(); v->xDE4.x = rw(); v->xDE4.y = rw(); v->xDE4.z = rw(); v->xDF0 = (int) (fv() % 4); v->xDF4 = rw(); v->xDF8.x = rw(); v->xDF8.y = rw(); v->xDF8.z = rw(); } }
 }
 
 static void hash_stem(void)
@@ -201,6 +203,7 @@ preg(SATTR, sizeof SATTR);
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
+            CUR_OP = op;
             setup_stem();
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             switch (op) {

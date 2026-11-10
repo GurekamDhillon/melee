@@ -47,7 +47,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -100,25 +100,25 @@ int main(void)
             case 2: {  itTomato_Logic9_Spawned(&GO[0]); } break; /* itTomato_Logic9_Spawned */
             case 3: {  itTomato_Logic9_Destroyed(&GO[0]); } break; /* itTomato_Logic9_Destroyed */
             case 4: {  it_80284358(&GO[0]); } break; /* it_80284358 */
-            case 5: {  ret = (u32) itTomato_UnkMotion0_Anim(&GO[0]); } break; /* itTomato_UnkMotion0_Anim */
+            case 5: {  ret = (u32) ((itTomato_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itTomato_UnkMotion0_Anim */
             case 6: {  itTomato_UnkMotion0_Phys(&GO[0]); } break; /* itTomato_UnkMotion0_Phys */
-            case 7: {  ret = (u32) itTomato_UnkMotion0_Coll(&GO[0]); } break; /* itTomato_UnkMotion0_Coll */
+            case 7: {  ret = (u32) ((itTomato_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itTomato_UnkMotion0_Coll */
             case 8: {  it_802843E4(&GO[0]); } break; /* it_802843E4 */
-            case 9: {  ret = (u32) itTomato_UnkMotion1_Anim(&GO[0]); } break; /* itTomato_UnkMotion1_Anim */
+            case 9: {  ret = (u32) ((itTomato_UnkMotion1_Anim(&GO[0])) != 0); } break; /* itTomato_UnkMotion1_Anim */
             case 10: {  itTomato_UnkMotion1_Phys(&GO[0]); } break; /* itTomato_UnkMotion1_Phys */
-            case 11: {  ret = (u32) itTomato_UnkMotion1_Coll(&GO[0]); } break; /* itTomato_UnkMotion1_Coll */
+            case 11: {  ret = (u32) ((itTomato_UnkMotion1_Coll(&GO[0])) != 0); } break; /* itTomato_UnkMotion1_Coll */
             case 12: {  it_80284458(&GO[0]); } break; /* it_80284458 */
-            case 13: {  ret = (u32) itTomato_UnkMotion4_Anim(&GO[0]); } break; /* itTomato_UnkMotion4_Anim */
+            case 13: {  ret = (u32) ((itTomato_UnkMotion4_Anim(&GO[0])) != 0); } break; /* itTomato_UnkMotion4_Anim */
             case 14: {  itTomato_UnkMotion4_Phys(&GO[0]); } break; /* itTomato_UnkMotion4_Phys */
-            case 15: {  ret = (u32) itTomato_UnkMotion4_Coll(&GO[0]); } break; /* itTomato_UnkMotion4_Coll */
+            case 15: {  ret = (u32) ((itTomato_UnkMotion4_Coll(&GO[0])) != 0); } break; /* itTomato_UnkMotion4_Coll */
             case 16: {  itTomato_Logic9_PickedUp(&GO[0]); } break; /* itTomato_Logic9_PickedUp */
-            case 17: {  ret = (u32) itTomato_UnkMotion3_Anim(&GO[0]); } break; /* itTomato_UnkMotion3_Anim */
+            case 17: {  ret = (u32) ((itTomato_UnkMotion3_Anim(&GO[0])) != 0); } break; /* itTomato_UnkMotion3_Anim */
             case 18: {  itTomato_UnkMotion3_Phys(&GO[0]); } break; /* itTomato_UnkMotion3_Phys */
             case 19: {  itTomato_Logic9_Dropped(&GO[0]); } break; /* itTomato_Logic9_Dropped */
             case 20: {  itTomato_Logic9_EnteredAir(&GO[0]); } break; /* itTomato_Logic9_EnteredAir */
-            case 21: {  ret = (u32) itTomato_UnkMotion5_Anim(&GO[0]); } break; /* itTomato_UnkMotion5_Anim */
+            case 21: {  ret = (u32) ((itTomato_UnkMotion5_Anim(&GO[0])) != 0); } break; /* itTomato_UnkMotion5_Anim */
             case 22: {  itTomato_UnkMotion5_Phys(&GO[0]); } break; /* itTomato_UnkMotion5_Phys */
-            case 23: {  ret = (u32) itTomato_UnkMotion5_Coll(&GO[0]); } break; /* itTomato_UnkMotion5_Coll */
+            case 23: {  ret = (u32) ((itTomato_UnkMotion5_Coll(&GO[0])) != 0); } break; /* itTomato_UnkMotion5_Coll */
             case 24: {  itTomato_Logic9_EvtUnk(&GO[0], &GO[1]); } break; /* itTomato_Logic9_EvtUnk */
             case 25: { { int j; for (j = 0; j < 6; j++) { HM((u32) it_803F5740[j].anim_id); HM(FI((const void*) it_803F5740[j].animated)); HM(FI((const void*) it_803F5740[j].physics_updated)); HM(FI((const void*) it_803F5740[j].collided)); } } } break; /* state tables */
             }

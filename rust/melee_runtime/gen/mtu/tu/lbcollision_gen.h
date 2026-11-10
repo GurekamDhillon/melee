@@ -121,7 +121,7 @@ static void fill_HitCapsule(HitCapsule* p)
     for (i0 = 0; i0 < 12; i0++) {
     p->victims_2[i0].x4 = fv();
     }
-    p->hit_grabbed_victim_only = fv();
+    p->x134.hit_grabbed_victim_only = fv();
 }
 static void hash_HitCapsule(const HitCapsule* p)
 {
@@ -192,7 +192,7 @@ static void hash_HitCapsule(const HitCapsule* p)
     HM(PI((const void*) p->victims_2[i0].victim));
     HM((u32) p->victims_2[i0].x4);
     }
-    HM((u32) p->hit_grabbed_victim_only);
+    HM((u32) p->x134.hit_grabbed_victim_only);
 }
 
 static void fill_HitResult(HitResult* p)

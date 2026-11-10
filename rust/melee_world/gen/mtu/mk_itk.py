@@ -142,10 +142,10 @@ class MyWalk(BaseWalk):
     def one(self, t, f, cexpr, rexpr, cf, ch, rf, rh, depth):
         if t.spelling == "UnkFlagStruct":
             for i in range(8):
-                cf.append(f"{cexpr}.b{i} = rnd() & 1;")
-                rf.append(f"{rexpr}.anon_0.set_b{i}((rnd() & 1) as u8);")
-                ch.append(f"HM((u32) {cexpr}.b{i});")
-                rh.append(f"hm({rexpr}.anon_0.b{i}() as u32);")
+                cf.append(f"{cexpr}.x0.b{i} = rnd() & 1;")
+                rf.append(f"{rexpr}.x0.set_b{i}((rnd() & 1) as u8);")
+                ch.append(f"HM((u32) {cexpr}.x0.b{i});")
+                rh.append(f"hm({rexpr}.x0.b{i}() as u32);")
             return
         return super().one(t, f, cexpr, rexpr, cf, ch, rf, rh, depth)
 
@@ -158,7 +158,7 @@ class MyWalk(BaseWalk):
                 if f.kind in (K.STRUCT_DECL, K.UNION_DECL) and f.is_anonymous_record_decl():
                     mem = [c for c in f.get_children() if c.kind == K.FIELD_DECL]
                     rmap = {"xDAA_flag": "anon_daa", "xDBC_itcmd_var4": "anon_dbc"}
-                    if mem and mem[0].spelling in rmap:
+                    if False and mem and mem[0].spelling in rmap:  # the unions are named members now (xDAA, xDBC): the generic walk covers them
                         m = mem[0]
                         self.one(m.type, m, f"p->{m.spelling}", f"p.{rmap[m.spelling]}.{m.spelling}", cf, ch, rf, rh, depth)
                         continue
@@ -290,7 +290,7 @@ def pre_args(params, rets=None):
     return cp, ca, rp, ra
 
 
-KINOKO_DECL_C = ("static KinokoAnim KANIM[8];\nextern Article* it_804D6D24[];\n")
+KINOKO_DECL_C = ("typedef struct KinokoAnim { HSD_AnimJoint* joint; } KinokoAnim;\nstatic KinokoAnim KANIM[8];\nextern Article* it_804D6D24[];\n")
 
 
 def c_driver(stem, cfg, tu, funcs):
@@ -300,7 +300,7 @@ def c_driver(stem, cfg, tu, funcs):
     d.append(f"/* TU: src/melee/it/kinds/{stem}.c (written by gen/mtu/mk_itk.py: do not edit) */")
     d.append("#include TU_SRC\n#include \"mtu_common.h\"")
     d.append("static int VIEWPUN;")
-    d.append(f"#define FLG(f) ((u32) ((f).b0 | (f).b1 << 1 | (f).b2 << 2 | (f).b3 << 3 | (f).b4 << 4 | (f).b5 << 5 | (f).b6 << 6 | (f).b7 << 7))")
+    d.append(f"#define FLG(f) ((u32) ((f).x0.b0 | (f).x0.b1 << 1 | (f).x0.b2 << 2 | (f).x0.b3 << 3 | (f).x0.b4 << 4 | (f).x0.b5 << 5 | (f).x0.b6 << 6 | (f).x0.b7 << 7))")
     d.append("static HSD_GObj G, REFG, OWNG, SG;")
     d.append(f"static {cty(tu,'Item')} ITEM, SITEM;")
     d.append("static HSD_JObj JT, JC, SJT, BONES[24];")
@@ -313,7 +313,7 @@ def c_driver(stem, cfg, tu, funcs):
     d.append(f"static {cty(tu,'ItemAttr')} IATTR, SIATTR;")
     d.append("static Vec3 VP;\nstatic float FP1;")
     if stem == "itkinoko":
-        d.append("static KinokoAnim KANIM[8];\nstatic Article* KART[0x9F];\nstatic HSD_AnimJoint AJ[8];")
+        d.append("typedef struct KinokoAnim { HSD_AnimJoint* joint; } KinokoAnim;\nstatic KinokoAnim KANIM[8];\nstatic Article* KART[0x9F];\nstatic HSD_AnimJoint AJ[8];")
     d.append(f"#include \"{stem}_gen.h\"")
     if stem == "itkinoko":
         # it_804D6D24 is the stub header's data definition (Article* [..]); point it at KART
@@ -336,20 +336,20 @@ def c_driver(stem, cfg, tu, funcs):
     d.append("    JT.child = (rnd() & 1) ? &JC : 0;")
     d.append("    ITEM.xC4_article_data = &ART; SITEM.xC4_article_data = &SART;")
     if atc:
-        d.append("    ART.x4_specialAttributes = &ATTR; SART.x4_specialAttributes = &SATTR;")
+        d.append("    ART.x4_specialAttributes = (union ItemSpecialAttributes*) &ATTR; SART.x4_specialAttributes = (union ItemSpecialAttributes*) &SATTR;")
     d.append("    ITEM.xCC_item_attr = &IATTR; SITEM.xCC_item_attr = &SIATTR;")
     d.append("    ITEM.xBBC_dynamicBoneTable = &DBT; SITEM.xBBC_dynamicBoneTable = &SDBT;")
     d.append("    for (i = 0; i < 100; i++) { DBT.bones[i] = &BONES[i % 24]; SDBT.bones[i] = &BONES[(i + 5) % 24]; }")
     d.append("    ITEM.owner = (rnd() & 1) ? &OWNG : 0; SITEM.owner = (rnd() & 1) ? &OWNG : 0;")
     if stem == "itkirbygamewatchchefpan":
-        d.append("    ART.x4_specialAttributes = ATTRP; SART.x4_specialAttributes = SATTRP;")
+        d.append("    ART.x4_specialAttributes = (union ItemSpecialAttributes*) ATTRP; SART.x4_specialAttributes = (union ItemSpecialAttributes*) SATTRP;")
         d.append("    SATTRP[0] = (rnd() & 1) ? (void*) &SATTRP[1] : 0; SATTRP[1] = 0;")
     if cfg.get("setup_c"):
         d.append(cfg["setup_c"])
     if stem == "itkinoko":
         d.append("    for (i = 0; i < 8; i++) { KANIM[i].joint = &AJ[i]; }")
-        d.append("    zero(KART, sizeof KART); KART[It_Kind_Kinoko] = &SART; SART.x4_specialAttributes = KANIM; it_804D6D24 = KART;")
-        d.append("    ART.x4_specialAttributes = &ATTR;")
+        d.append("    zero(KART, sizeof KART); KART[It_Kind_Kinoko] = &SART; SART.x4_specialAttributes = (union ItemSpecialAttributes*) KANIM; it_804D6D24 = KART;")
+        d.append("    ART.x4_specialAttributes = (union ItemSpecialAttributes*) &ATTR;")
     d.append("}\n")
     d.append("static void hash_all(void)\n{")
     d.append("    hash_Item(&ITEM); hash_Item(&SITEM); hash_HSD_JObj(&JT); hash_HSD_JObj(&JC); hash_HSD_JObj(&SJT);")

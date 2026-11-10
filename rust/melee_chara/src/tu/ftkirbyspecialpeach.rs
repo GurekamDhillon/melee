@@ -259,11 +259,11 @@ pub fn doPeAnim(gobj: G, cb: fn(G)) {
         if cmd_var1 == 1 {
             (*fp).cmd_vars[1] = 2;
             ext::ftColl_8007B1B8(gobj, &da.specialn_pe_absorbdesc as *const AbsorbDesc as *mut ShieldDesc, Some(cb_fn_8010CD88));
-            (*fp).anon_221b.set_x221B_b3(1);
+            (*fp).x221B.set_x221B_b3(1);
             (*fp).shield_unk0 = da.specialn_pe_unk3;
             (*fp).shield_unk1 = da.specialn_pe_unk3;
         } else if cmd_var1 == 0 {
-            (*fp).anon_221b.set_x221B_b0(0);
+            (*fp).x221B.set_x221B_b0(0);
         }
         if st::ftAnim_IsFramesRemaining(gobj) == 0 {
             cb(gobj);
@@ -335,7 +335,7 @@ unsafe fn rearm(gobj: G) {
     (*fp).post_hitlag_cb = Some(cb_ftKb_SpecialNPe_8010C47C);
     if (*fp).cmd_vars[1] == 2 {
         ext::ftColl_8007B1B8(gobj, &da.specialn_pe_absorbdesc as *const AbsorbDesc as *mut ShieldDesc, Some(cb_fn_8010CD88));
-        (*fp).anon_221b.set_x221B_b3(1);
+        (*fp).x221B.set_x221B_b3(1);
     }
 }
 

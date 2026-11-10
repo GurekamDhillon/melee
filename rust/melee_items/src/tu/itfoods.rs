@@ -148,7 +148,7 @@ pub unsafe extern "C" fn it_8028FAF4(arg0: *mut Item_GObj, arg1: *mut Vec) -> *m
     spawn.x3C_damage = 0;
     spawn.x0_parent_gobj = null_mut();
     spawn.x4_parent_gobj2 = null_mut();
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     let gobj = ext::Item_80268B18(&mut spawn);
     if !gobj.is_null() {
@@ -160,7 +160,7 @@ pub unsafe extern "C" fn it_8028FAF4(arg0: *mut Item_GObj, arg1: *mut Vec) -> *m
 pub unsafe extern "C" fn getRandMax(article: *mut Article) -> u32 {
     melee_core::ct!("getRandMax");
     let attr = (*article).x4_specialAttributes as *mut itFoodsAttributes;
-    (*attr).x0 as u32
+    (*attr).count as u32
 }
 
 /// `FOODS_JOINTS[i]`: the native joint of food variant `i`. The attribute block keeps the GameCube row layout

@@ -180,6 +180,12 @@ pub struct Replay {
     pub fs_has: Vec<bool>,
     pub ucf_dashback: [u32; 4],
     pub ucf_shield: [u32; 4],
+    /// The file's Gecko list carries a UCF 0.7x set although it is a Slippi 3.x file: no 1.0 cardinals (C2 8006B460),
+    /// UCF SDI, shield SDI, extended shield drop or DBOOC fix (some 3.17 tournament lists of 66/86 codes). Its UCF ports
+    /// then run as 0.73, not 0.84. Set by slpcheck from the Gecko list.
+    pub ucf_073_list: bool,
+    /// Only the 1.0 cardinals are off (UCF 0.84 otherwise); `SLPCHECK_UCF07=card`.
+    pub no_ucf_cardinals: bool,
     pub frozen_ps: bool,
     /// Game Start major scene 8: Slippi online, which forces the seed every frame.
     pub online: bool,
@@ -232,6 +238,8 @@ impl Replay {
             fs_has: Vec::new(),
             ucf_dashback: [0; 4],
             ucf_shield: [0; 4],
+            ucf_073_list: false,
+            no_ucf_cardinals: false,
             frozen_ps: false,
             online: false,
             post: None,

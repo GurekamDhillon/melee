@@ -15,9 +15,9 @@ mod gen_stubs {
     fn t_HSD_FogLoadDesc(a0: *mut HSD_FogDesc) -> *mut HSD_Fog { unsafe { out("HSD_FogLoadDesc"); trp(a0 as *const u8); out("\n"); az(core::mem::size_of::<HSD_Fog>()) as *mut HSD_Fog } }
     fn t_HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut core::ffi::c_void) { unsafe { out("HSD_GObjObject_80390A70"); trp(a0 as *const u8); tri(a1 as i64); trp(a2 as *const u8); out("\n"); (*a0).hsd_obj = a2;  } }
     fn t_HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) { unsafe { out("HSD_GObj_80390ED0"); trp(a0 as *const u8); tru(a1 as u64); out("\n");  } }
-    fn t_HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_FogCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
-    fn t_HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_JObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
-    fn t_HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: i32) { unsafe { out("HSD_GObj_LObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_FogCallback(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_FogCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_JObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
+    fn t_HSD_GObj_LObjCallback(a0: *mut HSD_GObj, a1: isize) { unsafe { out("HSD_GObj_LObjCallback"); trp(a0 as *const u8); tri(a1 as i64); out("\n");  } }
     fn t_HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc { unsafe { out("HSD_GObj_SetupProc"); trp(a0 as *const u8); trp(match a1 { Some(f) => f as usize as *const u8, None => core::ptr::null() }); tri(a2 as i64); out("\n"); az(core::mem::size_of::<HSD_GObjProc>()) as *mut HSD_GObjProc } }
     fn t_HSD_JObjAnimAll(a0: *mut HSD_JObj) { unsafe { out("HSD_JObjAnimAll"); trp(a0 as *const u8); out("\n");  } }
     fn t_HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj { unsafe { out("HSD_JObjLoadJoint"); trp(a0 as *const u8); out("\n"); (mkjobj()) as *mut HSD_JObj } }

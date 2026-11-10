@@ -86,7 +86,7 @@ pub unsafe extern "C" fn it_80294DC0(pos: *mut Vec3) -> *mut HSD_GObj {
     spawn.vel.x = 0.0;
     spawn.x0_parent_gobj = null_mut();
     spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
     let item_gobj = ext::Item_80268B5C(&mut spawn);
     if !item_gobj.is_null() {

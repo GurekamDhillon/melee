@@ -64,6 +64,14 @@ static void freg_world(void) { freg((const void*) cbev1); freg((const void*) cbe
 
 static void cb_rel(HSD_Class* c) { T(8203); T(PI(c)); }
 static void cb_dest(HSD_Class* c) { T(8204); T(PI(c)); }
+/* The real PSVECScale (pc/gameworld/mtx_pc.c), linked into the oracle instead of a traced stub: the port's shadow.rs
+ * calls mtx_pc::raw::PSVECScale directly (since d323c49bb), so neither side traces it and both compute it. */
+void PSVECScale(Vec* src, Vec* dst, f32 scale)
+{
+    dst->x = (src->x * scale);
+    dst->y = (src->y * scale);
+    dst->z = (src->z * scale);
+}
 
 #include "shadow_gen.h"
 

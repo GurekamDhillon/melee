@@ -414,7 +414,7 @@ pub unsafe extern "C" fn it_2725_Logic24_Spawned(gobj: *mut Item_GObj) {
     let attrs = attrs_of(ip);
 
     (*ip).facing_dir = 0.0;
-    (*ip).anon_dbc.xDBC_itcmd_var4.flags.set_x0(0);
+    (*ip).xDBC.xDBC_itcmd_var4.flags.set_x0(0);
 
     ext::it_80279CDC(gobj, (*attrs).x0);
     it_802D43EC(gobj);
@@ -739,7 +739,7 @@ pub unsafe extern "C" fn it_802D4C74(gobj: *mut Item_GObj) {
     spawn.kind = It_Kind_Hitodeman_Star;
     spawn.x0_parent_gobj = (*ip).owner;
     spawn.x4_parent_gobj2 = gobj;
-    spawn.x44_flag.anon_0.set_b0(0);
+    spawn.x44_flag.x0.set_b0(0);
     spawn.x40 = 0;
     let item_gobj = ext::Item_80268B18(&mut spawn);
     if !item_gobj.is_null() {

@@ -123,7 +123,7 @@ fn init_callbacks() {
     let mut fd: Box<ftData> = Box::new(unsafe { core::mem::zeroed() });
     let mut items: [*mut c_void; 4] = [10usize as *mut c_void, 20usize as *mut c_void, 30usize as *mut c_void, 40usize as *mut c_void];
     fd.ext_attr = &mut *ext_attr as *mut _ as *mut _;
-    fd.x48_items = items.as_mut_ptr();
+    fd.x48_items = (items.as_mut_ptr()) as *mut _;
     w.f.ft_data = &mut *fd;
     w.f.dat_attrs_backup = &mut *backup as *mut _ as *mut _;
     t::ftKb_Init_LoadSpecialAttrs(gp);
@@ -138,7 +138,7 @@ fn init_callbacks() {
 
     // OnDeath: hat cleared to Kirby, counters reset, then the kept hat (kind 1, Fox) is put back on.
     w.f.dat_attrs = w.da as *mut _ as *mut _;
-    w.f.x619_costume_id = 2;
+    w.f.costume_id = 2;
     unsafe {
         w.f.u.kb.hat.kind = Ft_Kind_Mario;
         w.f.u.kb.x60 = 9;
@@ -228,7 +228,7 @@ fn hat_load_and_unload() {
         t::ft_80459B88 = core::mem::zeroed();
     }
     let mut hat: Box<KirbyHatStruct> = Box::new(KirbyHatStruct::zeroed());
-    unsafe { t::ft_80459B88.hats[Ft_Kind_Fox as usize] = &mut *hat };
+    unsafe { t::ft_80459B88.anon_0.anon_0.hats[Ft_Kind_Fox as usize] = &mut *hat };
     // Simple hat (Fox row): load once, no second load while worn; unload frees the pool object.
     t::ftKb_SpecialN_800EFC58(gp);
     assert_eq!(take(), "alloc,setclass,loadjoint,clearclass,75650,7487C 0");
@@ -276,7 +276,7 @@ fn multipart_hat_instantiation() {
     install_common_hooks();
     let mut w = World::new();
     let gp = w.gp();
-    w.f.x619_costume_id = 1;
+    w.f.costume_id = 1;
     w.f.kind = 2;
     // Bones: 0 and 2 are model bones (flags_b1), 1 is not.
     let mut jobjs: std::vec::Vec<Box<HSD_JObj>> = (0..4).map(|_| Box::new(unsafe { core::mem::zeroed() })).collect();
@@ -284,8 +284,8 @@ fn multipart_hat_instantiation() {
         b.joint = &mut *jobjs[i];
     }
     unsafe {
-        w.parts[0].anon_8.anon_0.set_flags_b1(1);
-        w.parts[2].anon_8.anon_0.set_flags_b1(1);
+        w.parts[0].x8.x0.set_flags_b1(1);
+        w.parts[2].x8.x0.set_flags_b1(1);
     }
     // Hat joint tree: two joints; joint 0's DObjDesc loads one DObj, joint 1's loads two (the first with a MObj).
     let mut tree: std::vec::Vec<Box<HSD_Joint>> = (0..2).map(|_| Box::new(unsafe { core::mem::zeroed() })).collect();
@@ -335,7 +335,7 @@ fn multipart_hat_instantiation() {
         assert_eq!((data[0], data[1], data[2], data[3]), (&raw mut DOBJS[0], &raw mut DOBJS[1], &raw mut DOBJS[2], null_mut()));
     }
     assert_eq!((indices[0], indices[1], indices[2], indices[3]), (0, 0xEE, 1, 0xEE));
-    let flags: std::vec::Vec<u8> = (0..4).map(|i| unsafe { w.parts[i].anon_8.anon_0.flags_b6() }).collect();
+    let flags: std::vec::Vec<u8> = (0..4).map(|i| unsafe { w.parts[i].x8.x0.flags_b6() }).collect();
     assert_eq!(flags, [1, 0, 1, 0]);
 
     // Extra body parts (800EF040): mask 0b110 over a 3-entry part table -> entries 1 and 2.
@@ -372,7 +372,7 @@ fn multipart_hat_instantiation() {
         "removeall true,ce40 0,removeall true,ce40 2,free true,free true,800755E8 2,800755E8 0"
     );
     assert!(unsafe { w.f.u.kb.hat.x14.data }.is_null());
-    let flags: std::vec::Vec<u8> = (0..4).map(|i| unsafe { w.parts[i].anon_8.anon_0.flags_b6() }).collect();
+    let flags: std::vec::Vec<u8> = (0..4).map(|i| unsafe { w.parts[i].x8.x0.flags_b6() }).collect();
     assert_eq!(flags, [0, 0, 0, 0]);
 }
 
@@ -494,7 +494,7 @@ fn misc_hooks_and_flags() {
     for i in 0..5 {
         hat.hat_dynamics[i] = (100 + i) as *mut ftDynamics;
     }
-    unsafe { t::ft_80459B88.hats[0] = &mut *hat };
+    unsafe { t::ft_80459B88.anon_0.anon_0.hats[0] = &mut *hat };
     t::ftKb_SpecialN_800F16D0(gp, Ft_Kind_Fox as i32);
     assert_eq!(take(), format!("art 100 {},art 101 {}", It_Kind_Kirby_FoxLaser, It_Kind_Kirby_FoxBlaster));
     t::ftKb_SpecialN_800F16D0(gp, Ft_Kind_Luigi as i32); // hats[16] is empty
@@ -538,19 +538,19 @@ fn preload_and_reset() {
     // ftKb_Init_800EE528: every loaded slot and every archive row cleared.
     unsafe {
         t::ft_80459B88 = core::mem::zeroed();
-        t::ft_80459B88.x0 = 1usize as *mut Kirby_Unk;
+        t::ft_80459B88.anon_0.anon_0.hats_pad = 1usize as *mut KirbyHatStruct;
         for i in 0..125 {
-            t::ft_80459B88.hats[i] = (i + 1) as *mut KirbyHatStruct;
+            t::ft_80459B88.anon_0.anon_0.hats[i] = (i + 1) as *mut KirbyHatStruct;
         }
-        t::ft_80459B88.hats[126] = 9usize as *mut KirbyHatStruct;
+        t::ft_80459B88.anon_0.anon_0.hats[126] = 9usize as *mut KirbyHatStruct;
         t::ftKb_Init_803C9ED8[2].joint = 1usize as *mut HSD_Joint;
         t::ftKb_Init_803C9F98[5].matanim = 1usize as *mut HSD_MatAnimJoint;
     }
     t::ftKb_Init_800EE528();
     unsafe {
-        assert!(t::ft_80459B88.x0.is_null());
-        assert!(t::ft_80459B88.hats[..125].iter().all(|p| p.is_null()));
-        assert_eq!(t::ft_80459B88.hats[126] as usize, 9); // the C walks only Ft_Kind_Max s32 slots
+        assert!(t::ft_80459B88.anon_0.anon_0.hats_pad.is_null());
+        assert!(t::ft_80459B88.anon_0.anon_0.hats[..125].iter().all(|p| p.is_null()));
+        assert_eq!(t::ft_80459B88.anon_0.anon_0.hats[126] as usize, 9); // the C walks only Ft_Kind_Max s32 slots
         assert!(t::ftKb_Init_803C9ED8[2].joint.is_null() && t::ftKb_Init_803C9F98[5].matanim.is_null());
     }
 
@@ -602,18 +602,18 @@ fn small_helpers() {
 
     // Pichu hat's dynamics words (800EEB00 / 800EEB1C): NULL without a hat.
     unsafe { t::ft_80459B88 = core::mem::zeroed() };
-    let mut bones = [ArticleDynamicBones::zeroed()];
+    let mut bones = [BoneDynamicsTemplate::zeroed()];
     let mut dyn4 = Box::new(ftDynamics::zeroed());
-    dyn4.anon_0.ftDynamicBones = bones.as_mut_ptr();
+    dyn4.x0.ftDynamicBones = bones.as_mut_ptr();
     dyn4.x4 = 77;
     let mut hat: Box<KirbyHatStruct> = Box::new(KirbyHatStruct::zeroed());
     hat.hat_dynamics[4] = &mut *dyn4;
-    let mut out_bones: *mut ArticleDynamicBones = 1usize as *mut _;
+    let mut out_bones: *mut BoneDynamicsTemplate = 1usize as *mut _;
     let mut out_x4: i32 = 5;
     t::ftKb_Init_800EEB00(gp, &mut out_bones);
     t::ftKb_Init_800EEB1C(gp, &mut out_x4);
     assert!(out_bones.is_null() && out_x4 == 0);
-    unsafe { t::ft_80459B88.hats[Ft_Kind_Pichu as usize] = &mut *hat };
+    unsafe { t::ft_80459B88.anon_0.anon_0.hats[Ft_Kind_Pichu as usize] = &mut *hat };
     t::ftKb_Init_800EEB00(gp, &mut out_bones);
     t::ftKb_Init_800EEB1C(gp, &mut out_x4);
     assert_eq!((out_bones, out_x4), (bones.as_mut_ptr(), 77));
@@ -740,7 +740,7 @@ fn matanim_second_set_and_draw() {
     install_common_hooks();
     let mut w = World::new();
     let gp = w.gp();
-    w.f.x619_costume_id = 0;
+    w.f.costume_id = 0;
     w.f.kind = 1;
     unsafe {
         t::ext::HSD_DOBJADDANIMALL = Some(|d, m, a| log(format!("addanim {} {} {}", d as usize, m as usize, a.is_null())));
@@ -817,7 +817,7 @@ fn matanim_second_set_and_draw() {
     hat.hat_dynamics[3] = &mut lookup as *mut _ as *mut ftDynamics;
     hat.hat_dynamics[4] = colour_words.as_ptr() as *mut ftDynamics;
     hat.hat_dynamics[1] = null_mut();
-    unsafe { t::ft_80459B88.hats[Ft_Kind_Pichu as usize] = &mut *hat };
+    unsafe { t::ft_80459B88.anon_0.anon_0.hats[Ft_Kind_Pichu as usize] = &mut *hat };
     let mut p2j = [0u8; 4];
     let mut table = FighterPartsTable { joint_to_part: null_mut(), part_to_joint: p2j.as_mut_ptr(), parts_num: 4 };
     let mut ptabs: [*mut FighterPartsTable; 4] = [&mut table; 4];

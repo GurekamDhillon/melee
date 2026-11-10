@@ -2,7 +2,7 @@
 #include TU_SRC
 #include "mtu_common.h"
 static int VIEWPUN;
-#define FLG(f) ((u32) ((f).b0 | (f).b1 << 1 | (f).b2 << 2 | (f).b3 << 3 | (f).b4 << 4 | (f).b5 << 5 | (f).b6 << 6 | (f).b7 << 7))
+#define FLG(f) ((u32) ((f).x0.b0 | (f).x0.b1 << 1 | (f).x0.b2 << 2 | (f).x0.b3 << 3 | (f).x0.b4 << 4 | (f).x0.b5 << 5 | (f).x0.b6 << 6 | (f).x0.b7 << 7))
 static HSD_GObj G, REFG, OWNG, SG;
 static Item ITEM, SITEM;
 static HSD_JObj JT, JC, SJT, BONES[24];
@@ -12,6 +12,7 @@ static KinokoAttrs ATTR, SATTR;
 static ItemAttr IATTR, SIATTR;
 static Vec3 VP;
 static float FP1;
+typedef struct KinokoAnim { HSD_AnimJoint* joint; } KinokoAnim;
 static KinokoAnim KANIM[8];
 static Article* KART[0x9F];
 static HSD_AnimJoint AJ[8];
@@ -32,14 +33,14 @@ static void setup(void)
     G.user_data = &ITEM; G.hsd_obj = &JT; SG.user_data = &SITEM; SG.hsd_obj = &SJT;
     JT.child = (rnd() & 1) ? &JC : 0;
     ITEM.xC4_article_data = &ART; SITEM.xC4_article_data = &SART;
-    ART.x4_specialAttributes = &ATTR; SART.x4_specialAttributes = &SATTR;
+    ART.x4_specialAttributes = (union ItemSpecialAttributes*) &ATTR; SART.x4_specialAttributes = (union ItemSpecialAttributes*) &SATTR;
     ITEM.xCC_item_attr = &IATTR; SITEM.xCC_item_attr = &SIATTR;
     ITEM.xBBC_dynamicBoneTable = &DBT; SITEM.xBBC_dynamicBoneTable = &SDBT;
     for (i = 0; i < 100; i++) { DBT.bones[i] = &BONES[i % 24]; SDBT.bones[i] = &BONES[(i + 5) % 24]; }
     ITEM.owner = (rnd() & 1) ? &OWNG : 0; SITEM.owner = (rnd() & 1) ? &OWNG : 0;
     for (i = 0; i < 8; i++) { KANIM[i].joint = &AJ[i]; }
-    zero(KART, sizeof KART); KART[It_Kind_Kinoko] = &SART; SART.x4_specialAttributes = KANIM; it_804D6D24 = KART;
-    ART.x4_specialAttributes = &ATTR;
+    zero(KART, sizeof KART); KART[It_Kind_Kinoko] = &SART; SART.x4_specialAttributes = (union ItemSpecialAttributes*) KANIM; it_804D6D24 = KART;
+    ART.x4_specialAttributes = (union ItemSpecialAttributes*) &ATTR;
 }
 
 static void hash_all(void)

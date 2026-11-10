@@ -87,7 +87,7 @@ pub struct Ext {
     sa: [u32; 256],
     attr: ItemAttr,
     art: Article,
-    unk: itUnkAttributes,
+    unk: itUnkAttributes_legacy,
     common: ItemCommonData,
 }
 
@@ -100,7 +100,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
     let mut ext = Box::new(Ext {
         attr: ItemAttr::zeroed(),
         art: Article::zeroed(),
-        unk: itUnkAttributes::zeroed(),
+        unk: itUnkAttributes_legacy::zeroed(),
         common: ItemCommonData::zeroed(),
         sa: [0; 256],
     });
@@ -115,7 +115,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         let x = &mut *ext;
         x.attr = ItemAttr::zeroed();
         x.art = Article::zeroed();
-        x.unk = itUnkAttributes::zeroed();
+        x.unk = itUnkAttributes_legacy::zeroed();
         x.common = ItemCommonData::zeroed();
         x.attr.set_x0_is_heavy(g.r() as u8);
         x.attr.set_x0_78(g.r() as u8);
@@ -123,7 +123,7 @@ fn run(id: u32, name: &str, want: &[u32; 48], case: Case) {
         x.attr.x1C_damage_mul = g.rf();
         x.unk.x0_float = g.rf();
         x.unk.x4_float = g.rf();
-        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes as *mut _;
+        x.art.x4_specialAttributes = &mut x.unk as *mut itUnkAttributes_legacy as *mut _;
         x.art.x8_hurtbones = if g.r() & 1 != 0 { g.ga as *mut _ } else { null_mut() };
         x.common.xB8 = g.rf();
         x.common.xBC = g.rf();
@@ -372,7 +372,7 @@ fn r11_list(w: &mut World, ip: &mut Item, g: &mut Gen) -> *mut HSD_GObj {
         let li = &mut w.li[k];
         li.xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         li.ground_or_air = if g.r() & 3 != 0 { GA_Ground } else { GA_Air };
-        unsafe { li.xDD1_flag.anon_0.set_b0((g.r() & 3 == 0) as u8) };
+        unsafe { li.xDD1_flag.x0.set_b0((g.r() & 3 == 0) as u8) };
         w.la[k].set_x0_is_heavy((g.r() & 3 != 0) as u8);
         li.xCC_item_attr = &mut w.la[k];
         li.x70_nudge.x = r7_c(g);
@@ -398,7 +398,7 @@ fn r11_list(w: &mut World, ip: &mut Item, g: &mut Gen) -> *mut HSD_GObj {
             w.li[0].xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         }
         w.li[0].ground_or_air = GA_Ground;
-        unsafe { w.li[0].xDD1_flag.anon_0.set_b0(0) };
+        unsafe { w.li[0].xDD1_flag.x0.set_b0(0) };
         w.la[0].set_x0_is_heavy(1);
     }
     w.gl[0] = unsafe { core::ptr::read(&*w.g) };
@@ -423,7 +423,7 @@ fn r11_trk(w: &mut World, ip: &mut Item, g: &mut Gen) {
     let t = &mut *w.track;
     *t = Item_FtTrack::zeroed();
     t.count = ((g.r() >> 16) % 12) as usize;
-    unsafe { t.x154.anon_0.set_b0((g.r() & 3 == 0) as u8) };
+    unsafe { t.x154.x0.set_b0((g.r() & 3 == 0) as u8) };
     for k in 0..11 {
         r11_ecb(&mut t.ecb_offset_arr[k], g);
         t.ft_pos_arr[k].x = g.rm() / 4.0;
@@ -473,7 +473,7 @@ fn r12_list(g: &mut Gen) -> (L12, *mut HSD_GObj) {
     let gb = l.gl.as_mut_ptr();
     for k in 0..3 {
         let li = &mut l.li[k];
-        li.hold_kind = (3 + (g.r() >> 16) % 6) as i32;
+        li.hold_kind = (3 + (g.r() >> 16) % 6) as u32;
         li.grab_victim = if g.r() & 3 != 0 { null_mut() } else { gb };
         li.xDC8_word.flags.bf_0 = g.r().to_be_bytes();
         li.owner = if g.r() & 1 != 0 { null_mut() } else { unsafe { gb.add(1) } };
@@ -537,7 +537,7 @@ fn r12_ini(e: HSD_GObjInteraction) -> u32 {
 fn r12_atk(ip: &Item) -> u32 {
     let mut h = hmix(hmix(0, ip.xD88_attackID as u32), ip.xD8C_attack_instance as u32);
     let w = unsafe { ip.xD90.x2070_int } as u32;
-    h = hmix(hmix(hmix(h, w), ip.xD94.x.to_bits()), ip.xD94.y.to_bits());
+    h = hmix(hmix(hmix(h, w), ip.xD94.x.cast_unsigned()), ip.xD94.y.cast_unsigned());
     h = hmix(hmix(hmix(h, ip.xD9C.x as u32), ip.xD9C.y as u32), ip.xDA4_word);
     hmix(h, ip.xDA8_short as u32)
 }
@@ -584,7 +584,7 @@ fn r13_ll(ip: &mut Item, g: &mut Gen, x: &mut Ext) -> Box<Vec> {
     v.x = g.rf();
     v.y = g.rf();
     v.z = g.rf();
-    unsafe { (*(x.sa.as_mut_ptr() as *mut itLikelikeAttributes)).x0.x0_f32 = &mut *v };
+    unsafe { (*(x.sa.as_mut_ptr() as *mut itLikelikeAttributes)).x0 = (&mut *v as *mut _ as *mut core::ffi::c_void) as *mut itSpecialAttrsHead };
     ip.facing_dir = r12_face(g);
     v
 }
@@ -662,7 +662,7 @@ fn cmd_new(cu: &mut [CmdUnion; 2]) -> CommandInfo {
 cases! { hand_match_c, 28;
     3401 R14_80285314 |ip, g, ov, x| { let mut w = r11_jobjs(ip, g); r11_model(&mut w, ip, g, x); let r = it_80285314(&mut *w.g); r11_jidx(&w, r) };
     3402 R14_GET_BONE_BY_ID |ip, g, ov, x| { let mut w = r11_jobjs(ip, g); r11_model(&mut w, ip, g, x); let idx = ((g.r() >> 16) % 6) as i32; let r = get_bone_by_id(&mut *w.g, idx); r11_jidx(&w, r) };
-    3403 R14_80279768 |ip, g, ov, x| { let mut cu: [CmdUnion; 2] = core::mem::zeroed(); let mut cmd = cmd_new(&mut cu); ip.anon_dbc.xDBC_itcmd_var4.flags.set_x0((g.r() >> 16) & 1); ip.anon_dbc.xDBC_itcmd_var4.flags.set_x1((g.r() >> 16) & 1); it_80279768(ip, &mut cmd); let f = &ip.anon_dbc.xDBC_itcmd_var4.flags; hmix(hmix(f.x0(), f.x1()), cmd.anon_8.u.offset_from(cu.as_ptr()) as u32) };
+    3403 R14_80279768 |ip, g, ov, x| { let mut cu: [CmdUnion; 2] = core::mem::zeroed(); let mut cmd = cmd_new(&mut cu); ip.xDBC.xDBC_itcmd_var4.flags.set_x0((g.r() >> 16) & 1); ip.xDBC.xDBC_itcmd_var4.flags.set_x1((g.r() >> 16) & 1); it_80279768(ip, &mut cmd); let f = &ip.xDBC.xDBC_itcmd_var4.flags; hmix(hmix(f.x0(), f.x1()), cmd.anon_8.u.offset_from(cu.as_ptr()) as u32) };
     3404 R14_80279720 |ip, g, ov, x| { let mut cu: [CmdUnion; 2] = core::mem::zeroed(); let mut cmd = cmd_new(&mut cu); cu[0].set_throw_flags.set_opcode(g.r() & 63); cu[0].set_throw_flags.set_hit_idx(g.r() & 0x3FFFFFF); it_80279720(ip, &mut cmd); hmix(ip.xDB0_itcmd_var1, cmd.anon_8.u.offset_from(cu.as_ptr()) as u32) };
     3405 R14_80279744 |ip, g, ov, x| { let mut cu: [CmdUnion; 2] = core::mem::zeroed(); let mut cmd = cmd_new(&mut cu); cu[0].set_throw_flags.set_opcode(g.r() & 63); cu[0].set_throw_flags.set_hit_idx(g.r() & 0x3FFFFFF); it_80279744(ip, &mut cmd); hmix(ip.xDB4_itcmd_var2, cmd.anon_8.u.offset_from(cu.as_ptr()) as u32) };
     3406 R14_8028B08C |ip, g, ov, x| { let mut st: [ItemStateTable; 11] = core::mem::zeroed(); for k in 0..11 { st[k].anim_id = ((g.r() >> 16) % 8) as _; } let s = ((g.r() >> 16) % 11) as i32; it_8028b08c(&st, s) as u32 };
@@ -675,7 +675,7 @@ cases! { hand_match_c, 28;
     3413 R14_802B22B8_INLINE |ip, g, ov, x| { let mut l = r14_lists(); ip.xDD4_itemVar.pikachuthunder.x34 = if (g.r() >> 16) % 3 != 0 { lgp(&mut l, 0) } else { null_mut() }; l.lg[0].user_data = if (g.r() >> 16) & 3 != 0 { &mut l.li[0] as *mut Item as *mut _ } else { null_mut() }; l.li[0].xDD4_itemVar.pikachuthunder.x4 = g.r() as i32; it_802b22b8_inline(ip); ip.xDD4_itemVar.pikachuthunder.x34 = null_mut(); let p = l.li[0].xDD4_itemVar.pikachuthunder; hmix(hmix(hmix(hmix(0, p.x28.x.to_bits()), p.x28.y.to_bits()), p.x28.z.to_bits()), p.x4 as u32) };
     3414 R14_JOLTAIR_M0_ANIM_INLINE |ip, g, ov, x| { let mut l = r14_lists(); let mut gg = self_gobj(ip); let gp: *mut HSD_GObj = &mut *gg; ip.xDD4_itemVar.pikachujoltair.xDD8 = if (g.r() >> 16) % 3 != 0 { lgp(&mut l, 0) } else { null_mut() }; l.lg[0].user_data = if (g.r() >> 16) & 3 != 0 { &mut l.li[0] as *mut Item as *mut _ } else { null_mut() }; let s = (g.r() >> 16) % 3; l.li[0].xDD4_itemVar.pikachujoltground.xDDC = if s == 0 { gp } else if s == 1 { null_mut() } else { lgp(&mut l, 1) }; let r = it_pikachutjoltair_unk_motion0_anim_inline(gp, ip) as u32; ip.xDD4_itemVar.pikachujoltair.xDD8 = null_mut(); r };
     3415 R14_PIKATHUNDER_M2_SCALECALL |ip, g, ov, x| { r4_pre(ip, g, x); ip.x5D4_hitboxes[0].hit.state = if (g.r() >> 16) & 1 != 0 { HitCapsule_Disabled } else { 1 as _ }; ip.x5D4_hitboxes[0].hit.scale = g.rf(); ip.xDD4_itemVar.pikachuthunder.x10 = g.rm(); ip.xDD4_itemVar.pikachuthunder.xC = if (g.r() >> 16) & 3 != 0 { g.rm() } else { g.rf() }; it_pikachuthunder_unk_motion2_scale_call(ip); hmix(ip.x5D4_hitboxes[0].hit.scale.to_bits(), ip.x5D4_hitboxes[0].hit.state as u32) };
-    3416 R14_BOMBHEI_80280974_INLINE |ip, g, ov, x| { r4_pre(ip, g, x); { let f = &mut ip.xDCD_flag.anon_0; f.set_b5(0); f.set_b6(0); f.set_b7(0); } ip.xD5C = g.r(); fn_80280974_inline(ip); let f = ip.xDCD_flag.anon_0; hmix(hmix(hmix(r10_h(ip), f.b5() as u32), f.b6() as u32), f.b7() as u32) };
+    3416 R14_BOMBHEI_80280974_INLINE |ip, g, ov, x| { r4_pre(ip, g, x); { let f = &mut ip.xDCD_flag.x0; f.set_b5(0); f.set_b6(0); f.set_b7(0); } ip.xD5C = g.r(); fn_80280974_inline(ip); let f = ip.xDCD_flag.x0; hmix(hmix(hmix(r10_h(ip), f.b5() as u32), f.b6() as u32), f.b7() as u32) };
     3417 R14_8026C47C |ip, g, ov, x| { let (_l, head) = r14_plist(g); let mut a = it_8026C47C_arg0_t::zeroed(); { let w = core::slice::from_raw_parts_mut(&mut a as *mut _ as *mut u32, 8); for k in 0..8 { w[k] = g.r(); } } it_8026c47c(head, &mut a); let w = core::slice::from_raw_parts(&a as *const _ as *const u32, 8); let mut h = 0; for k in 0..8 { h = hmix(h, w[k]); } h };
     3418 R14_802D14D0 |ip, g, ov, x| { it_802d14d0(); 0 };
     3419 R14_802F1340 |ip, g, ov, x| { it_802f1340(); 0 };

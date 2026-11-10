@@ -97,7 +97,7 @@ pub fn ftGk_Init_OnLoad(gobj: *mut HSD_GObj) {
         let items = (*ftdata).x48_items;
 
         ext::ftKp_Init_OnLoadForGKoopa(fp);
-        ext::it_8026B3F8(*items.add(0), It_Kind_Koopa_Flame as i32);
+        ext::it_8026B3F8((*items.add(0)).article as *mut ::core::ffi::c_void, It_Kind_Koopa_Flame as i32);
 
         (*fp).set_x2226_b1(1);
         (*fp).set_x222A_b0(1);

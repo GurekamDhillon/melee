@@ -68,7 +68,7 @@ static void setup_world(void)
         IT[i].xBBC_dynamicBoneTable = &DBT[i];
         IT[i].xBC_itemStateContainer = &STT[0];
         IT[i].xD0_itemStateDesc = &SDS[i % 3];
-        IT[i].xBC0 = BOGUS;
+        IT[i].xBC0 = (EF_QueuedEffect*) BOGUS;
         IT[i].x378_itemColl.x0_gobj = &GO[i];
     }
     for (i = 0; i < 3; i++) FT[i].gobj = &GO[4 + i];
@@ -102,6 +102,8 @@ static void hash_world(int ft)
     for (i = 0; i < 16; i++) HM(PI(PLINK[i]));
 }
 
+static int CUR_OP = -1;
+enum { OP_it_8026D564 = 0, OP_it_8026D5CC = 1, OP_it_8026D604 = 2, OP_it_8026D62C = 3, OP_it_8026D6F4 = 4, OP_it_8026D78C = 5, OP_it_8026D82C = 6, OP_it_8026D8A4 = 7, OP_it_8026D938 = 8, OP_it_8026D9A0 = 9, OP_it_8026DA08 = 10, OP_it_8026DA70 = 11, OP_it_8026DAA8 = 12, OP_it_8026DB40 = 13, OP_it_8026DBC8 = 14, OP_it_8026DC24 = 15, OP_it_8026DD5C = 16, OP_it_8026DDFC = 17, OP_it_8026DE98 = 18, OP_it_8026DF34 = 19, OP_it_8026DFB0 = 20, OP_it_8026E058 = 21, OP_it_8026E0F4 = 22, OP_it_8026E_inline = 23, OP_it_8026E15C_inline1 = 24, OP_it_8026E15C_inline2 = 25, OP_it_8026E15C = 26, OP_land = 27, OP_it_8026E248 = 28, OP_it_8026E32C_inline = 29, OP_it_8026E32C = 30, OP_it_8026E414 = 31, OP_it_8026E4D0 = 32, OP_it_8026E5A0 = 33, OP_it_8026E664 = 34, OP_it_8026E71C = 35, OP_it_8026E7E0 = 36, OP_it_8026E8C4 = 37, OP_it_8026E9A4 = 38, OP_it_8026EA20 = 39, OP_it_8026EA9C = 40 };
 
 
 static void setup_stem(void)
@@ -129,7 +131,7 @@ int main(int argc, char** argv)
     freg_all();
     freg_world();
 
-    for (op = 0; op < 45; op++) {
+    for (op = 0; op < 41; op++) {
         int n = 0, ft = 0;
         if (only >= 0 && op != only) continue;
         switch (op) {
@@ -160,29 +162,26 @@ int main(int argc, char** argv)
         case 24: n = 300; ft = 0; break;  /* it_8026E15C_inline1 */
         case 25: n = 300; ft = 0; break;  /* it_8026E15C_inline2 */
         case 26: n = 300; ft = 0; break;  /* it_8026E15C */
-        case 27: n = 300; ft = 0; break;  /* it_8026E248_inline */
-        case 28: n = 300; ft = 0; break;  /* it_8026DE98_outline */
-        case 29: n = 300; ft = 0; break;  /* it_8026DE98_outline2 */
-        case 30: n = 300; ft = 0; break;  /* it_8026DE98_outline3 */
-        case 31: n = 300; ft = 0; break;  /* it_8026DE98_outline4 */
-        case 32: n = 300; ft = 0; break;  /* it_8026E248 */
-        case 33: n = 300; ft = 0; break;  /* it_8026E32C_inline */
-        case 34: n = 300; ft = 0; break;  /* it_8026E32C */
-        case 35: n = 300; ft = 0; break;  /* it_8026E414 */
-        case 36: n = 300; ft = 0; break;  /* it_8026E4D0 */
-        case 37: n = 300; ft = 0; break;  /* it_8026E5A0 */
-        case 38: n = 300; ft = 0; break;  /* it_8026E664 */
-        case 39: n = 300; ft = 0; break;  /* it_8026E71C */
-        case 40: n = 300; ft = 0; break;  /* it_8026E7E0 */
-        case 41: n = 300; ft = 0; break;  /* it_8026E8C4 */
-        case 42: n = 300; ft = 0; break;  /* it_8026E9A4 */
-        case 43: n = 300; ft = 0; break;  /* it_8026EA20 */
-        case 44: n = 300; ft = 0; break;  /* it_8026EA9C */
+        case 27: n = 300; ft = 0; break;  /* land */
+        case 28: n = 300; ft = 0; break;  /* it_8026E248 */
+        case 29: n = 300; ft = 0; break;  /* it_8026E32C_inline */
+        case 30: n = 300; ft = 0; break;  /* it_8026E32C */
+        case 31: n = 300; ft = 0; break;  /* it_8026E414 */
+        case 32: n = 300; ft = 0; break;  /* it_8026E4D0 */
+        case 33: n = 300; ft = 0; break;  /* it_8026E5A0 */
+        case 34: n = 300; ft = 0; break;  /* it_8026E664 */
+        case 35: n = 300; ft = 0; break;  /* it_8026E71C */
+        case 36: n = 300; ft = 0; break;  /* it_8026E7E0 */
+        case 37: n = 300; ft = 0; break;  /* it_8026E8C4 */
+        case 38: n = 300; ft = 0; break;  /* it_8026E9A4 */
+        case 39: n = 300; ft = 0; break;  /* it_8026EA20 */
+        case 40: n = 300; ft = 0; break;  /* it_8026EA9C */
         }
         for (k = 0; k < n; k++) {
             u32 ret = 0;
             tu_case(op, k);
             setup_world();
+            CUR_OP = op;
             setup_stem();
             if (getenv("MTU_PROG")) { printf("P %d %d%c", op, k, 10); fflush(0); }
             switch (op) {
@@ -213,24 +212,20 @@ int main(int argc, char** argv)
             case 24: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) it_8026E15C_inline1(a0);  } break;
             case 25: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) it_8026E15C_inline2(a0);  } break;
             case 26: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E15C(a0, a1);  } break;
-            case 27: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) it_8026E248_inline(a0);  } break;
-            case 28: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) it_8026DE98_outline(a0);  } break;
-            case 29: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) it_8026DE98_outline2(a0);  } break;
-            case 30: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) it_8026DE98_outline3(a0);  } break;
-            case 31: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) it_8026DE98_outline4(a0);  } break;
-            case 32: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E248(a0, a1);  } break;
-            case 33: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) it_8026E32C_inline(a0);  } break;
-            case 34: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); ret = (u32) it_8026E32C(a0, a1);  } break;
-            case 35: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E414(a0, a1);  } break;
-            case 36: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E4D0(a0, a1);  } break;
-            case 37: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E5A0(a0, a1);  } break;
-            case 38: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E664(a0, a1);  } break;
-            case 39: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E71C(a0, a1);  } break;
-            case 40: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E7E0(a0, a1);  } break;
-            case 41: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); HSD_GObjEvent a2 = (HSD_GObjEvent) pick_cb(1); it_8026E8C4(a0, a1, a2);  } break;
-            case 42: { HSD_GObj * a0 = &GO[rnd() % 4]; Vec3 * a1 = &VA[rnd() % 4]; Vec3 * a2 = &VA[rnd() % 4]; Vec3 * a3 = &VA[rnd() % 4]; ret = (u32) it_8026E9A4(a0, a1, a2, a3);  } break;
-            case 43: { HSD_GObj * a0 = &GO[rnd() % 4]; Vec3 * a1 = &VA[rnd() % 4]; Vec3 * a2 = &VA[rnd() % 4]; Vec3 * a3 = &VA[rnd() % 4]; int * a4 = IA; u32 * a5 = UA; ret = (u32) it_8026EA20(a0, a1, a2, a3, a4, a5);  } break;
-            case 44: { HSD_GObj * a0 = &GO[rnd() % 4]; Vec3 * a1 = &VA[rnd() % 4]; Vec3 * a2 = &VA[rnd() % 4]; Vec3 * a3 = &VA[rnd() % 4]; int * a4 = IA; u32 * a5 = UA; s32 a6 = fv(); ret = (u32) it_8026EA9C(a0, a1, a2, a3, a4, a5, a6);  } break;
+            case 27: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) land(a0);  } break;
+            case 28: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E248(a0, a1);  } break;
+            case 29: { Item_GObj * a0 = &GO[rnd() % 4]; ret = (u32) it_8026E32C_inline(a0);  } break;
+            case 30: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); ret = (u32) it_8026E32C(a0, a1);  } break;
+            case 31: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E414(a0, a1);  } break;
+            case 32: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E4D0(a0, a1);  } break;
+            case 33: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E5A0(a0, a1);  } break;
+            case 34: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E664(a0, a1);  } break;
+            case 35: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E71C(a0, a1);  } break;
+            case 36: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); it_8026E7E0(a0, a1);  } break;
+            case 37: { Item_GObj * a0 = &GO[rnd() % 4]; HSD_GObjEvent a1 = (HSD_GObjEvent) pick_cb(1); HSD_GObjEvent a2 = (HSD_GObjEvent) pick_cb(1); it_8026E8C4(a0, a1, a2);  } break;
+            case 38: { HSD_GObj * a0 = &GO[rnd() % 4]; Vec3 * a1 = &VA[rnd() % 4]; Vec3 * a2 = &VA[rnd() % 4]; Vec3 * a3 = &VA[rnd() % 4]; ret = (u32) it_8026E9A4(a0, a1, a2, a3);  } break;
+            case 39: { HSD_GObj * a0 = &GO[rnd() % 4]; Vec3 * a1 = &VA[rnd() % 4]; Vec3 * a2 = &VA[rnd() % 4]; Vec3 * a3 = &VA[rnd() % 4]; int * a4 = IA; u32 * a5 = UA; ret = (u32) it_8026EA20(a0, a1, a2, a3, a4, a5);  } break;
+            case 40: { HSD_GObj * a0 = &GO[rnd() % 4]; Vec3 * a1 = &VA[rnd() % 4]; Vec3 * a2 = &VA[rnd() % 4]; Vec3 * a3 = &VA[rnd() % 4]; int * a4 = IA; u32 * a5 = UA; s32 a6 = fv(); ret = (u32) it_8026EA9C(a0, a1, a2, a3, a4, a5, a6);  } break;
             }
             hash_world(ft);
             hash_stem();

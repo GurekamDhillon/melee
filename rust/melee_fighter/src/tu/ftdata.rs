@@ -563,7 +563,7 @@ pub fn GenoDefine_Load(kind: i32, base: i32) {
         let row_sz = core::mem::size_of::<Fighter_WaitAnimData>();
         let out = gd_data_copy(source as *const c_void, core::mem::size_of::<ftData>()) as *mut ftData;
         (*out).x0 = gd_data_copy((*source).x0 as *const c_void, core::mem::size_of::<ftCo_DatAttrs>()) as *mut ftCo_DatAttrs;
-        (*out).ext_attr = gd_data_copy((*source).ext_attr, GenoDefine_ExtAttrBytes(base));
+        (*out).ext_attr = gd_data_copy((*source).ext_attr as *const c_void, GenoDefine_ExtAttrBytes(base)) as *mut ftData_ExtAttr;
         let baseline = GenoDefine_RowBaseline[GenoDefine_TmplIndex(base)];
         assert!(!baseline.is_null(), "Geno native template preset baseline unavailable");
         (*out).xC = gd_data_copy(baseline as *const c_void, n * row_sz) as *mut Fighter_WaitAnimData;
@@ -697,7 +697,7 @@ unsafe fn GenoDefine_JointFields(kind: i32, out: *mut ftData, x8: *mut ftData_x8
     let pi = |w: i32, i: i32| ext::Geno_DefinePlanInt(kind, w, i);
     let o = &mut *out;
     let x34 = gd_data_copy(o.x34 as *const c_void, core::mem::size_of::<ftData_x34>()) as *mut ftData_x34;
-    let x38 = gd_data_copy(o.x38 as *const c_void, 2 * core::mem::size_of::<ftData_x38>()) as *mut ftData_x38;
+    let x38 = gd_data_copy(o.x38 as *const c_void, 2 * core::mem::size_of::<AbsorbDesc>()) as *mut AbsorbDesc;
     let x44 = gd_data_copy(o.x44 as *const c_void, core::mem::size_of::<ftData_x44_t>()) as *mut ftData_x44_t;
     let x54 = gd_data_copy(o.x54 as *const c_void, 5 * 4) as *mut i32;
     let x58 = gd_data_copy(o.x58 as *const c_void, core::mem::size_of::<ftData_x58_t>()) as *mut ftData_x58_t;
@@ -707,7 +707,7 @@ unsafe fn GenoDefine_JointFields(kind: i32, out: *mut ftData, x8: *mut ftData_x8
     }
     (*x34).x0 = pi(21, 0) as _;
     for i in 0..2 {
-        (*x38.add(i)).x0 = pi(22, i as i32);
+        (*x38.add(i)).x0_bone_id = pi(22, i as i32);
     }
     let x = &mut *x44;
     x.unk0 = pi(23, 0) as i16;
@@ -776,7 +776,7 @@ unsafe fn GenoDefine_BuildOwn(kind: i32, out: *mut ftData, n: usize) {
     let x8 = gd_data_copy(o.x8 as *const c_void, core::mem::size_of::<ftData_x8>()) as *mut ftData_x8;
     if ext::Geno_DefineTemplateSkeleton(kind) == 0 {
         (*x8).x0.model_num = 0;
-        (*x8).x0.vis_table = (&raw mut GenoDefine_VisTable) as *mut [*mut c_void; 4];
+        (*x8).x0.vis_table = (&raw mut GenoDefine_VisTable) as *mut [*mut FtPartsVisLookup; 4];
         (*x8).x8.x8 = 0;
         for i in 0..255 {
             GenoDefine_TobjTable[i] = &raw mut GenoDefine_TobjZero;
@@ -939,7 +939,7 @@ unsafe fn GenoDefine_BuildOwn(kind: i32, out: *mut ftData, n: usize) {
 unsafe fn GenoDefine_OwnTables(kind: i32, out: *mut ftData) {
     let o = &mut *out;
     if ext::Geno_DefineTemplateSkeleton(kind) == 0 {
-        GenoDefine_X20.x0 = (&raw mut GenoDefine_GuardTrees) as *mut *mut HSD_Joint;
+        GenoDefine_X20.x0 = (&raw mut GenoDefine_GuardTrees) as *mut HSD_Joint; // the pose-tree table read through `x0->child` (native word 2)
         GenoDefine_X20.x8 = if o.x20.is_null() { 0.0 } else { (*o.x20).x8 };
         o.x20 = &raw mut GenoDefine_X20;
     }
@@ -1002,7 +1002,7 @@ pub fn GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint {
     }
     // the guard walks it from FtPart_TransN, so it is the tree below the root joint
     unsafe {
-        (*(*CostumeListsForeachCharacter[fp.kind as usize].costume_list.add(fp.x619_costume_id as usize)).joint).child
+        (*(*CostumeListsForeachCharacter[fp.kind as usize].costume_list.add(fp.costume_id as usize)).joint).child
     }
 }
 
@@ -1602,7 +1602,7 @@ pub fn ftData_80085A14(kind: i32) {
                     if r0 > FT_ANIM_BUF_SIZE as u32 {
                         panic!("fighter figatree over! {r0:x}");
                     }
-                    row.x14 = base.wrapping_add(row.x4 as u32);
+                    row.x14 = base.wrapping_add(row.x4 as u32) as usize;
                 }
                 i += 1;
             }
@@ -1745,11 +1745,11 @@ pub fn ftData_ThrowBankDrop(b: &mut ThrowBank) {
             unsafe {
                 let a = (*f).x5A4 as usize;
                 if a >= lo && a < hi {
-                    (*f).x5A4 = core::ptr::null_mut();
+                    (*f).x5A4 = 0;
                 }
                 let a = (*f).x5A8 as usize;
                 if a >= lo && a < hi {
-                    (*f).x5A8 = core::ptr::null_mut();
+                    (*f).x5A8 = 0;
                 }
             }
         }
@@ -1868,7 +1868,7 @@ pub fn ftData_ThrownStandInLoad(kind: i32) {
         core::ptr::copy_nonoverlapping((*fd).xC, (*b).rows.as_mut_ptr(), n);
         for i in 0..n {
             let r = &mut (*b).rows[i];
-            r.x14 = if r.x8 != 0 { ext::gc_addr32((*b).buf.add(r.x4 as usize) as *const c_void) } else { 0 };
+            r.x14 = if r.x8 != 0 { ext::gc_addr32((*b).buf.add(r.x4 as usize) as *const c_void) as usize } else { 0 };
         }
         let t = throw();
         (*b).kind = kind;
@@ -1916,8 +1916,8 @@ pub fn ftData_80085B10(f: &mut Fighter) {
     let kind = f.kind as i32;
     f.x59C = ext::HSD_ObjAlloc_fighter_x59C();
     f.x5A0 = ext::HSD_ObjAlloc_fighter_x59C();
-    f.x5A4 = core::ptr::null_mut();
-    f.x5A8 = core::ptr::null_mut();
+    f.x5A4 = 0;
+    f.x5A8 = 0;
     f.x58C = unsafe { ftData_Table_Unk0[kind as usize].count } as u32;
     ftData_80085A14(kind);
     let as_ = ext::Geno_DefineThrownAs(kind);
@@ -1943,8 +1943,8 @@ pub fn ftData_80085B98(f: &mut Fighter, arg1: i32, arg2: i32) {
     }
     f.x59C = ext::HSD_ObjAlloc_fighter_x59C();
     f.x5A0 = ext::HSD_ObjAlloc_fighter_x59C();
-    f.x5A4 = core::ptr::null_mut();
-    f.x5A8 = core::ptr::null_mut();
+    f.x5A4 = 0;
+    f.x5A8 = 0;
     f.x58C = unsafe { ftData_UnkIntPairs[k].count } as u32;
     if arg2 as u32 >= f.x58C {
         // C: `int >= u32` compares as unsigned.
@@ -1959,7 +1959,7 @@ pub fn ftData_80085B98(f: &mut Fighter, arg1: i32, arg2: i32) {
                 if r0 > FT_ANIM_BUF_SIZE as u32 {
                     panic!("fighter figatree over! {r0:x}");
                 }
-                r3.x14 = r30.wrapping_add(r3.x4 as u32);
+                r3.x14 = r30.wrapping_add(r3.x4 as u32) as usize;
             }
             i += 1;
         }
@@ -1979,7 +1979,7 @@ fn load_figatree(f: *mut Fighter, src: *mut Fighter, msid: i32, key: *mut c_void
     unsafe {
         let r3 = ftData_80085FD4(&mut *src, msid);
         let x14 = (*r3).x14;
-        if x14 == ext::gc_addr32(key) {
+        if x14 == ext::gc_addr32(key) as usize {
             return None;
         }
         if x14 == 0 {
@@ -1991,7 +1991,7 @@ fn load_figatree(f: *mut Fighter, src: *mut Fighter, msid: i32, key: *mut c_void
         // C: when the other Ice Climber already holds this file, `memcpy` its figatree buffer and `lbArchiveRelocate` the copy. The native
         // buffer holds the decoded FigaTree objects (not a relocatable GC image), so the copy is parsed from the file again instead: the same
         // data, the same public address, a private decode (a pure memory optimisation in the C).
-        if false && !other.is_null() && (*r3).x14 == ext::gc_addr32((*other).x5A4) {
+        if false && !other.is_null() && (*r3).x14 == ext::gc_addr32((*other).x5A4 as *const c_void) as usize {
             core::ptr::copy_nonoverlapping((*other).x59C as *const u8, buf as *mut u8, size as usize);
             let off = (buf as isize).wrapping_sub((*other).x59C as isize);
             if ext::lbArchiveRelocate(&mut ar, (*buf).x0.as_mut_ptr(), size, off) == -1 {
@@ -2000,15 +2000,15 @@ fn load_figatree(f: *mut Fighter, src: *mut Fighter, msid: i32, key: *mut c_void
         } else {
             let a = (*r3).x14;
             if a < 0x8000_0000 {
-                ext::lbArq_80014BD0(a, buf, round_up_32b(size as u32), 0, 0);
+                ext::lbArq_80014BD0(a as u32, buf, round_up_32b(size as u32), 0, 0);
             } else {
-                core::ptr::copy_nonoverlapping(ext::gc_ptr(a) as *const u8, buf as *mut u8, size as usize);
+                core::ptr::copy_nonoverlapping(ext::gc_ptr(a as u32) as *const u8, buf as *mut u8, size as usize);
             }
             if ext::HSD_ArchiveParse(&mut ar, (*buf).x0.as_mut_ptr(), size) == -1 {
                 panic!("HSD_ArchiveParse error! {msid:x} (ftdata.c:{:#X})", lines.1);
             }
         }
-        Some((ext::HSD_ArchiveGetPublicAddress(&mut ar, (*r3).x0) as *mut FigaTree, (*r3).x14))
+        Some((ext::HSD_ArchiveGetPublicAddress(&mut ar, (*r3).x0) as *mut FigaTree, (*r3).x14 as u32))
     }
 }
 
@@ -2020,9 +2020,9 @@ pub fn ftData_80085CD8(f: *mut Fighter, arg1: *mut Fighter, msid: i32) {
         if !((msid as u32) < (*arg1).x58C) {
             return;
         }
-        if let Some((tree, x14)) = load_figatree(f, arg1, msid, (*f).x5A4, (*f).x59C, (0x9FA, 0xA0F)) {
+        if let Some((tree, x14)) = load_figatree(f, arg1, msid, (*f).x5A4 as *mut c_void, (*f).x59C, (0x9FA, 0xA0F)) {
             (*f).x590 = tree;
-            (*f).x5A4 = if x14 == 0 { core::ptr::null_mut() } else { ext::gc_ptr(x14) };
+            (*f).x5A4 = if x14 == 0 { 0 } else { ext::gc_ptr(x14) as usize };
         }
     }
 }
@@ -2034,9 +2034,9 @@ pub fn ftData_80085E50(f: *mut Fighter, msid: i32) -> *mut FigaTree {
         if !((msid as u32) < (*f).x58C) {
             return core::ptr::null_mut();
         }
-        if let Some((tree, x14)) = load_figatree(f, f, msid, (*f).x5A8, (*f).x5A0, (0xA30, 0xA45)) {
+        if let Some((tree, x14)) = load_figatree(f, f, msid, (*f).x5A8 as *mut c_void, (*f).x5A0, (0xA30, 0xA45)) {
             (*f).x598 = tree;
-            (*f).x5A8 = if x14 == 0 { core::ptr::null_mut() } else { ext::gc_ptr(x14) };
+            (*f).x5A8 = if x14 == 0 { 0 } else { ext::gc_ptr(x14) as usize };
         }
         (*f).x598
     }
@@ -2049,7 +2049,7 @@ pub fn ftData_80085FD4(f: &mut Fighter, msid: i32) -> *mut Fighter_WaitAnimData 
     melee_core::ct!("ftData_80085FD4");
     unsafe {
         if f.kind == Ft_Kind_Nana
-            && ext::Player_GetPlayerSlotType(f.player_id as i32) != Gm_PKind_Demo as i32
+            && ext::Player_GetPlayerSlotType(f.player_idx as i32) != Gm_PKind_Demo as i32
             && (*f.x24.offset(msid as isize)).x14 == 0
         {
             return (*gFtDataList[Ft_Kind_Popo as usize]).xC.offset(msid as isize);
@@ -2067,8 +2067,8 @@ pub fn ftData_80085FD4_x8(f: &mut Fighter, msid: i32) -> usize {
 /// `ftData_80086060`: Nana's Popo (outside demos), else NULL.
 pub fn ftData_80086060(f: &mut Fighter) -> *mut Fighter {
     melee_core::ct!("ftData_80086060");
-    if f.kind == Ft_Kind_Nana && ext::Player_GetPlayerSlotType(f.player_id as i32) != Gm_PKind_Demo as i32 {
-        let g = ext::Player_GetEntityAtIndex(f.player_id as i32, 0);
+    if f.kind == Ft_Kind_Nana && ext::Player_GetPlayerSlotType(f.player_idx as i32) != Gm_PKind_Demo as i32 {
+        let g = ext::Player_GetEntityAtIndex(f.player_idx as i32, 0);
         if !g.is_null() {
             return unsafe { (*g).user_data } as *mut Fighter;
         }

@@ -53,7 +53,7 @@ fn ifmagnify_matches_c() {
                     3 => {  let a0: *mut _GXColor = (&raw mut GCOL[0]) as *mut _GXColor; let a1: i32 = (rnd() % 6) as i32; m::ifMagnify_GetPlayerColor(a0, a1); }
                     4 => {  let a0: i32 = (rnd() % 6) as i32; ret = m::ifMagnify_802FB6E8(a0) as u32; }
                     5 => {  let a0: *mut ifMagnifyPlayer = (&raw mut m::ifMagnify_804A1DE0.player[0]) as *mut ifMagnifyPlayer; let a1: *mut Vec2 = (&raw mut VEC2A[0]) as *mut Vec2; let a2: *mut Vec2 = (&raw mut VEC2A[1]) as *mut Vec2; ret = pi(m::ifMagnify_802FB73C(a0, a1, a2)); }
-                    6 => { g::P_HSD_GObj[0].user_data = &raw mut m::ifMagnify_804A1DE0.player[(rnd() % 6) as usize] as *mut _; let a0: *mut HSD_GObj = (&raw mut g::P_HSD_GObj[0]) as *mut HSD_GObj; let a1: i32 = ((0 + (rnd() % 3) as i32)) as i32; m::ifMagnify_802FB8C0(a0, a1); }
+                    6 => { g::P_HSD_GObj[0].user_data = &raw mut m::ifMagnify_804A1DE0.player[(rnd() % 6) as usize] as *mut _; let a0: *mut HSD_GObj = (&raw mut g::P_HSD_GObj[0]) as *mut HSD_GObj; let a1: i32 = ((0 + (rnd() % 3) as i32)) as i32; m::ifMagnify_802FB8C0(a0, a1 as isize); }
                     7 => {  let a0: *mut _GXColor = (&raw mut GCOL[0]) as *mut _GXColor; let a1: *mut Vec = (&raw mut V3A) as *mut Vec; m::ifMagnify_GetCornerColors(a0, a1); }
                     8 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; m::ifMagnify_802FBBDC(a0); }
                     9 => {   m::ifMagnify_802FC3BC(); }

@@ -131,15 +131,15 @@ pub unsafe extern "C" fn it_8026ECE0(gobj: *mut HSD_GObj, arg1: u32) -> u32 {
     let ip = item(gobj);
     if (*ip).kind == It_Kind_Unk4 {
         let v = &raw mut (*ip).xDD4_itemVar.it_266F;
-        if (*ip).anon_daa.xDAA_flag.anon_0.b0() != 0
-            && ((*v).x18.anon_0.b0() != 0 || (*v).x18.anon_0.b1() != 0)
+        if (*ip).xDAA.xDAA_flag.x0.b0() != 0
+            && ((*v).x18.x0.b0() != 0 || (*v).x18.x0.b1() != 0)
             && ext::lbColl_8000A10C(&raw mut (*v).x1C, arg1, (*ip).scl) != 0
         {
             ret = 1;
         }
     } else {
-        if (*ip).anon_daa.xDAA_flag.anon_0.b6() != 0 {
-            if (*ip).anon_daa.xDAA_flag.anon_0.b2() != 0 {
+        if (*ip).xDAA.xDAA_flag.x0.b6() != 0 {
+            if (*ip).xDAA.xDAA_flag.x0.b2() != 0 {
                 let mut idx = 0usize;
                 while idx < 4 {
                     if ext::lbColl_80009F54(&raw mut (*ip).x5D4_hitboxes[idx].hit, arg1, (*ip).scl) != 0 {
@@ -148,7 +148,7 @@ pub unsafe extern "C" fn it_8026ECE0(gobj: *mut HSD_GObj, arg1: u32) -> u32 {
                     idx += 1;
                 }
             }
-            if (*ip).xDC8_word.flags.x13() == 0 && (*ip).anon_daa.xDAA_flag.anon_0.b1() != 0 {
+            if (*ip).xDC8_word.flags.x13() == 0 && (*ip).xDAA.xDAA_flag.x0.b1() != 0 {
                 if (*ip).xD0C == 0 {
                     let mut idx = 0usize;
                     while idx < (*ip).xAC8_hurtboxNum as usize {
@@ -168,14 +168,14 @@ pub unsafe extern "C" fn it_8026ECE0(gobj: *mut HSD_GObj, arg1: u32) -> u32 {
                 }
             }
         }
-        if (*ip).anon_daa.xDAA_flag.anon_0.b4() != 0
+        if (*ip).xDAA.xDAA_flag.x0.b4() != 0
             && (*ip).xDC8_word.flags.x15() != 0
             && ext::lbGx_8001E2F8((&raw mut (*ip).xBCC_unk) as *mut Quaternion, &raw mut (*ip).pos, &raw mut it_804D5168, arg1, (*ip).facing_dir) != 0
         {
             ret = 1;
         }
-        if (*ip).anon_daa.xDAA_flag.anon_0.b3() != 0
-            && (*ip).xDD0_flag.anon_0.b0() != 0
+        if (*ip).xDAA.xDAA_flag.x0.b3() != 0
+            && (*ip).xDD0_flag.x0.b0() != 0
             && ext::lb_800149E0((&raw mut (*ip).xB54) as *mut c_void, arg1) != 0
         {
             ret = 1;
@@ -192,11 +192,11 @@ unsafe fn vars(ip: *mut Item) -> *mut it_266F_ItemVars {
 pub unsafe extern "C" fn it_8026EECC_inline_1(gobj: *mut HSD_GObj, arg1: i32, pos: *mut Vec3) {
     melee_core::ct!("it_8026EECC_inline_1");
     let ip = item(gobj);
-    (*ip).xDCF_flag.anon_0.set_b4(1);
-    (*ip).xDCF_flag.anon_0.set_b5(0);
+    (*ip).xDCF_flag.x0.set_b4(1);
+    (*ip).xDCF_flag.x0.set_b5(0);
     it_8026EC54(gobj, (*vars(ip)).x0, (*vars(ip)).x4);
     it_8026EBC8(gobj, (*vars(ip)).x8, (*vars(ip)).xC);
-    it_8026EB18(gobj, arg1, if (*ip).xDCF_flag.anon_0.b7() != 0 { pos } else { null_mut() });
+    it_8026EB18(gobj, arg1, if (*ip).xDCF_flag.x0.b7() != 0 { pos } else { null_mut() });
     it_8026EBC8(gobj, (*vars(ip)).x0, (*vars(ip)).x4);
     it_8026EC54(gobj, (*vars(ip)).x8, (*vars(ip)).xC);
 }
@@ -204,19 +204,19 @@ pub unsafe extern "C" fn it_8026EECC_inline_1(gobj: *mut HSD_GObj, arg1: i32, po
 pub unsafe extern "C" fn it_8026EECC_inline_2(gobj: *mut HSD_GObj, arg1: i32, pos: *mut Vec3) {
     melee_core::ct!("it_8026EECC_inline_2");
     let ip = item(gobj);
-    (*ip).xDCF_flag.anon_0.set_b4(0);
-    (*ip).xDCF_flag.anon_0.set_b5(0);
-    it_8026EB18(gobj, arg1, if (*ip).xDCF_flag.anon_0.b7() != 0 { pos } else { null_mut() });
+    (*ip).xDCF_flag.x0.set_b4(0);
+    (*ip).xDCF_flag.x0.set_b5(0);
+    it_8026EB18(gobj, arg1, if (*ip).xDCF_flag.x0.b7() != 0 { pos } else { null_mut() });
 }
 
 pub unsafe extern "C" fn it_8026EECC_inline_3(gobj: *mut HSD_GObj, arg1: i32, pos: *mut Vec3) {
     melee_core::ct!("it_8026EECC_inline_3");
     let ip = item(gobj);
-    (*ip).xDCF_flag.anon_0.set_b4(1);
-    (*ip).xDCF_flag.anon_0.set_b5(1);
+    (*ip).xDCF_flag.x0.set_b4(1);
+    (*ip).xDCF_flag.x0.set_b5(1);
     it_8026EC54(gobj, (*vars(ip)).x0, (*vars(ip)).x4);
     it_8026EBC8(gobj, (*vars(ip)).x8, (*vars(ip)).xC);
-    it_8026EB18(gobj, arg1, if (*ip).xDCF_flag.anon_0.b7() != 0 { pos } else { null_mut() });
+    it_8026EB18(gobj, arg1, if (*ip).xDCF_flag.x0.b7() != 0 { pos } else { null_mut() });
     it_8026EBC8(gobj, (*vars(ip)).x0, (*vars(ip)).x4);
     it_8026EC54(gobj, (*vars(ip)).x8, (*vars(ip)).xC);
 }
@@ -224,10 +224,10 @@ pub unsafe extern "C" fn it_8026EECC_inline_3(gobj: *mut HSD_GObj, arg1: i32, po
 pub unsafe extern "C" fn it_8026EECC_inline_0(gobj: *mut HSD_GObj, pos: *mut Vec3) -> *mut Item {
     melee_core::ct!("it_8026EECC_inline_0");
     let ip = item(gobj);
-    (*ip).xDCF_flag.anon_0.set_b7(0);
+    (*ip).xDCF_flag.x0.set_b7(0);
     if !(*ip).owner.is_null() && ext::ftLib_IsFighter((*ip).owner) != 0 {
         if ext::ftLib_GetShakeOffset((*ip).owner, pos) != 0 {
-            (*ip).xDCF_flag.anon_0.set_b7(1);
+            (*ip).xDCF_flag.x0.set_b7(1);
         }
     } else {
         (*pos).z = 0.0;
@@ -242,14 +242,14 @@ pub unsafe extern "C" fn it_8026EECC_inline_sw(gobj: *mut HSD_GObj, arg1: i32, p
     let ip = item(gobj);
     match ext::Camera_80031060() {
         1 => {
-            if (*ip).xDCF_flag.anon_0.b3() != 0 {
+            if (*ip).xDCF_flag.x0.b3() != 0 {
                 it_8026EECC_inline_1(gobj, arg1, pos);
                 it_8026EECC_inline_2(gobj, arg1, pos);
                 it_8026EECC_inline_3(gobj, arg1, pos);
             }
         }
         0 => {
-            if (*ip).xDCF_flag.anon_0.b3() == 0 {
+            if (*ip).xDCF_flag.x0.b3() == 0 {
                 it_8026EECC_inline_2(gobj, arg1, pos);
             }
         }
@@ -257,21 +257,21 @@ pub unsafe extern "C" fn it_8026EECC_inline_sw(gobj: *mut HSD_GObj, arg1: i32, p
     }
 }
 
-pub unsafe extern "C" fn it_8026EECC(gobj: *mut HSD_GObj, arg1: i32) {
+pub unsafe extern "C" fn it_8026EECC(gobj: *mut HSD_GObj, arg1: isize) {
     melee_core::ct!("it_8026EECC");
     let ip = item(gobj);
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-    if (*ip).anon_daa.xDAA_flag.anon_0.b7() != 0 {
+    if (*ip).xDAA.xDAA_flag.x0.b7() != 0 {
         pos.z = 0.0;
         pos.y = 0.0;
         pos.x = 0.0;
         if (*ip).xDC8_word.flags.x13() != 0 {
             if (*ip).owner.is_null() || ext::ftLib_IsFighter((*ip).owner) == 0 || ext::ftLib_IsItemVisible((*ip).owner, gobj) != 0 {
                 it_8026EECC_inline_0(gobj, &raw mut pos);
-                it_8026EECC_inline_sw(gobj, arg1, &raw mut pos);
+                it_8026EECC_inline_sw(gobj, arg1 as i32, &raw mut pos);
             }
         } else {
-            it_8026EECC_inline_sw(gobj, arg1, &raw mut pos);
+            it_8026EECC_inline_sw(gobj, arg1 as i32, &raw mut pos);
         }
     }
     if it_8026ECE0(gobj, arg1 as u32) != 0 {

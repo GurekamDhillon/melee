@@ -72,10 +72,10 @@ fn smoke() {
     // Throw flag set and stick past x30: facing update + 90 degree turn toward facing.
     f.input.lstick[0].x = 0.95;
     f.facing_dir = 1.0;
-    unsafe { f.anon_2210.anon_0.set_throw_flags_b3(1) };
+    unsafe { f.x2210.x0.set_throw_flags_b3(1) };
     take();
     t::ftMs_SpecialHi_IASA(gp);
-    assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b3() }, 0);
+    assert_eq!(unsafe { f.x2210.x0.throw_flags_b3() }, 0);
     let l = take();
     assert_eq!(l.len(), 1);
     assert!(l[0].starts_with("roty 0 "));

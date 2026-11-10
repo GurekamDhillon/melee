@@ -70,9 +70,9 @@ void HSD_ViewingRectInit(__typeof__(struct HSD_ViewingRect *) a0, __typeof__(Vec
 void PSVECAdd(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1042); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); }
 void ftDrawCommon_80081168(void) { T(1043); }
 void ftDrawCommon_80081200(void) { T(1044); }
-__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1045); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
-__typeof__(struct LbShadow *) ftLib_GetShadow(__typeof__(struct HSD_GObj *) a0) { T(1046); T(PI((const void*) a0)); return (__typeof__(struct LbShadow *)) (((fv() & 7) ? pick_LbShadow() : 0)); }
-__typeof__(int) ftLib_CastsShadow(__typeof__(struct HSD_GObj *) a0) { T(1047); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(int) ftLib_CastsShadow(__typeof__(struct HSD_GObj *) a0) { T(1045); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
+__typeof__(struct LbShadow *) ftLib_GetShadow(__typeof__(struct HSD_GObj *) a0) { T(1046); T(PI((const void*) a0)); return (__typeof__(struct LbShadow *)) (0); }
+__typeof__(int) ftLib_IsFighter(__typeof__(struct HSD_GObj *) a0) { T(1047); T(PI((const void*) a0)); return (__typeof__(int)) (fv()); }
 __typeof__(Vec *) lbVector_CrossprodNormalized(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1048); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); return (__typeof__(Vec *)) (0); }
 __typeof__(Vec *) lbVector_Diff(__typeof__(Vec *) a0, __typeof__(Vec *) a1, __typeof__(Vec *) a2) { T(1049); T(PI((const void*) a0)); T(PI((const void*) a1)); T(PI((const void*) a2)); return (__typeof__(Vec *)) (0); }
 __typeof__(float) lbVector_Normalize(__typeof__(Vec *) a0) { T(1050); T(PI((const void*) a0)); return (__typeof__(float)) (rg()); }
@@ -233,7 +233,7 @@ static void hash_HSD_CObj(const HSD_CObj* p)
     for (i0 = 0; i0 < 12; i0++) HM(((const unsigned char*) &p->u)[i0]);
     HM(B(p->near));
     HM(B(p->far));
-    for (i0 = 0; i0 < 16; i0++) HM(((const unsigned char*) &p->projection_param)[i0]);
+    for (i0 = 0; i0 < 16; i0 += 8) { unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &p->projection_param) + i0); u32 t8 = PI((const void*) v8); if (t8 != 0xFFFFFFFFu) HM(t8); else { int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); } }
     HM((u32) p->projection_type);
     for (i0 = 0; i0 < 3; i0++) {
     for (i1 = 0; i1 < 4; i1++) {
@@ -296,7 +296,7 @@ static void hash_HSD_LObj(const HSD_LObj* p)
     HM((u32) p->hw_color.a);
     HM(PI((const void*) p->position));
     HM(PI((const void*) p->interest));
-    for (i0 = 0; i0 < 24; i0++) HM(((const unsigned char*) &p->u)[i0]);
+    for (i0 = 0; i0 < 24; i0 += 8) { unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &p->u) + i0); u32 t8 = PI((const void*) v8); if (t8 != 0xFFFFFFFFu) HM(t8); else { int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); } }
     HM(B(p->shininess));
     HM(B(p->lvec.x));
     HM(B(p->lvec.y));
@@ -318,7 +318,7 @@ static void fill_Fighter(Fighter* p)
     p->gobj = pick_HSD_GObj();
     p->kind = fv();
     p->x8_spawnNum = fv();
-    p->player_id = fv();
+    p->player_idx = fv();
     p->motion_id = fv();
     p->anim_id = fv();
     p->x18 = fv();
@@ -633,16 +633,18 @@ static void fill_Fighter(Fighter* p)
     p->x508.x7C_flag8 = fv();
     p->x588 = pick_HSD_LObj();
     p->x58C = fv();
-    p->x594_b0 = fv();
-    p->x594_b1_loop = fv();
-    p->x594_b2 = fv();
-    p->x594_b3 = fv();
-    p->x594_b4 = fv();
-    p->x594_b5 = fv();
-    p->x594_b6 = fv();
-    p->x594_b7 = fv();
-    p->x596_bits.x0 = fv();
-    p->x596_bits.x7 = fv();
+    p->x594.x0.x594_b0 = fv();
+    p->x594.x0.x594_b1_loop = fv();
+    p->x594.x0.x594_b2 = fv();
+    p->x594.x0.x594_b3 = fv();
+    p->x594.x0.x594_b4 = fv();
+    p->x594.x0.x594_b5 = fv();
+    p->x594.x0.x594_b6 = fv();
+    p->x594.x0.x594_b7 = fv();
+    p->x594.x0.x596_bits.x0 = fv();
+    p->x594.x0.x596_bits.x7 = fv();
+    p->x5A4 = fv();
+    p->x5A8 = fv();
     p->x5AC.model_num = fv();
     for (i0 = 0; i0 < 5; i0++) {
     p->x5AC.cleared[i0] = fv();
@@ -664,9 +666,9 @@ static void fill_Fighter(Fighter* p)
     p->x610_color_rgba[i0].b = fv();
     p->x610_color_rgba[i0].a = fv();
     }
-    p->x618_player_id = fv();
-    p->x619_costume_id = fv();
-    p->x61A_controller_index = fv();
+    p->pad_port = fv();
+    p->costume_id = fv();
+    p->sub_color = fv();
     p->team = fv();
     p->x61C = fv();
     p->x61D = fv();
@@ -818,7 +820,7 @@ static void fill_Fighter(Fighter* p)
     p->coll_data.xE4_ecb.left.x = rg();
     p->coll_data.xE4_ecb.left.y = rg();
     p->coll_data.ecb_source.kind = fv();
-    for (j0 = 0; j0 < 56; j0++) ((unsigned char*) &p->coll_data.ecb_source)[8 + j0] = (unsigned char) rnd();
+    for (i0 = 0; i0 < 56; i0++) ((unsigned char*) &p->coll_data.ecb_source.x4)[i0] = (unsigned char) rnd();
     p->coll_data.ecb_source.x124 = rg();
     p->coll_data.ecb_source.x128 = rg();
     p->coll_data.ecb_source.x12C = rg();
@@ -930,7 +932,7 @@ static void fill_Fighter(Fighter* p)
     for (i1 = 0; i1 < 12; i1++) {
     p->x914[i0].victims_2[i1].x4 = fv();
     }
-    p->x914[i0].hit_grabbed_victim_only = fv();
+    p->x914[i0].x134.hit_grabbed_victim_only = fv();
     }
     for (i0 = 0; i0 < 2; i0++) {
     p->xDF4[i0].state = fv();
@@ -996,7 +998,7 @@ static void fill_Fighter(Fighter* p)
     for (i1 = 0; i1 < 12; i1++) {
     p->xDF4[i0].victims_2[i1].x4 = fv();
     }
-    p->xDF4[i0].hit_grabbed_victim_only = fv();
+    p->xDF4[i0].x134.hit_grabbed_victim_only = fv();
     }
     p->x1064_thrownHitbox.state = fv();
     p->x1064_thrownHitbox.x4 = fv();
@@ -1061,7 +1063,7 @@ static void fill_Fighter(Fighter* p)
     for (i0 = 0; i0 < 12; i0++) {
     p->x1064_thrownHitbox.victims_2[i0].x4 = fv();
     }
-    p->x1064_thrownHitbox.hit_grabbed_victim_only = fv();
+    p->x1064_thrownHitbox.x134.hit_grabbed_victim_only = fv();
     p->x119C_teamUnk = fv();
     p->grabber_unk1 = fv();
     p->hurt_capsules_len = fv();
@@ -1149,7 +1151,7 @@ static void fill_Fighter(Fighter* p)
     p->dmg.x1880.z = rg();
     p->dmg.x188c = fv();
     p->dmg.x1890 = fv();
-    p->dmg.x1894 = fv();
+    p->dmg.x1894 = pick_HSD_GObj();
     p->dmg.x1898 = rg();
     p->dmg.x189C_unk_num_frames = rg();
     p->dmg.x18a0 = rg();
@@ -1165,17 +1167,21 @@ static void fill_Fighter(Fighter* p)
     p->dmg.x18C8 = fv();
     p->dmg.x18CC = fv();
     p->dmg.x18D0 = fv();
-    p->dmg.x18d4.x0 = fv();
-    p->dmg.x18d4.x1 = fv();
-    p->dmg.x18d4.x2_b0 = fv();
-    p->dmg.x18d4.x2_b1 = fv();
-    p->dmg.x18d4.x2_b2 = fv();
-    p->dmg.x18d4.x2_b3 = fv();
-    p->dmg.x18d4.x2_b4 = fv();
-    p->dmg.x18d4.x2_b5 = fv();
-    p->dmg.x18d4.x2_b6 = fv();
-    p->dmg.x18d4.x2_b7 = fv();
-    p->dmg.x18d4.x3 = fv();
+    p->dmg.x18d4.x0.x2070 = fv();
+    p->dmg.x18d4.x0.x2071_b0_3 = fv();
+    p->dmg.x18d4.x0.x2071_b4 = fv();
+    p->dmg.x18d4.x0.x2071_b5 = fv();
+    p->dmg.x18d4.x0.x2071_b6 = fv();
+    p->dmg.x18d4.x0.x2071_b7 = fv();
+    p->dmg.x18d4.x0.x2072_b0 = fv();
+    p->dmg.x18d4.x0.x2072_b1 = fv();
+    p->dmg.x18d4.x0.x2072_b2 = fv();
+    p->dmg.x18d4.x0.count_x1A4 = fv();
+    p->dmg.x18d4.x0.count_thrown_items = fv();
+    p->dmg.x18d4.x0.count_aerials = fv();
+    p->dmg.x18d4.x0.count_x1A0 = fv();
+    p->dmg.x18d4.x0.count_specials = fv();
+    p->dmg.x18d4.x0.x2073 = fv();
     p->dmg.x18d8.x0 = fv();
     p->dmg.x18d8.x4 = fv();
     p->dmg.x18d8.kb_applied1 = rg();
@@ -1324,7 +1330,6 @@ static void fill_Fighter(Fighter* p)
     p->cpu.x3C = rg();
     p->cpu.x40 = rg();
     p->cpu.x44 = pick_Fighter();
-    p->cpu.x50 = fv();
     p->cpu.x54.x = rg();
     p->cpu.x54.y = rg();
     p->cpu.x5C = rg();
@@ -1442,41 +1447,41 @@ static void fill_Fighter(Fighter* p)
     p->x2068_attackID = fv();
     p->x206C_attack_instance = fv();
     p->x206E = fv();
-    p->x2070.x2070 = fv();
-    p->x2070.x2071_b0_3 = fv();
-    p->x2070.x2071_b4 = fv();
-    p->x2070.x2071_b5 = fv();
-    p->x2070.x2071_b6 = fv();
-    p->x2070.x2071_b7 = fv();
-    p->x2070.x2072_b0 = fv();
-    p->x2070.x2072_b1 = fv();
-    p->x2070.x2072_b2 = fv();
-    p->x2070.count_x1A4 = fv();
-    p->x2070.count_thrown_items = fv();
-    p->x2070.count_aerials = fv();
-    p->x2070.count_x1A0 = fv();
-    p->x2070.count_specials = fv();
-    p->x2070.x2073 = fv();
-    p->x2074.x2074_vec.x = rg();
-    p->x2074.x2074_vec.y = rg();
-    p->x2074.x207C.x = fv();
+    p->x2070.x0.x2070 = fv();
+    p->x2070.x0.x2071_b0_3 = fv();
+    p->x2070.x0.x2071_b4 = fv();
+    p->x2070.x0.x2071_b5 = fv();
+    p->x2070.x0.x2071_b6 = fv();
+    p->x2070.x0.x2071_b7 = fv();
+    p->x2070.x0.x2072_b0 = fv();
+    p->x2070.x0.x2072_b1 = fv();
+    p->x2070.x0.x2072_b2 = fv();
+    p->x2070.x0.count_x1A4 = fv();
+    p->x2070.x0.count_thrown_items = fv();
+    p->x2070.x0.count_aerials = fv();
+    p->x2070.x0.count_x1A0 = fv();
+    p->x2070.x0.count_specials = fv();
+    p->x2070.x0.x2073 = fv();
+    p->x2074.x2074_vec.x = fv();
+    p->x2074.x2074_vec.y = fv();
+    p->x2074.x207C.x = rg();
     p->x2074.x207C.y = fv();
-    p->x2074.x2084_b0 = fv();
-    p->x2074.x2084_b1 = fv();
-    p->x2074.x2084_b2 = fv();
-    p->x2074.x2084_b3 = fv();
-    p->x2074.x2084_b4 = fv();
-    p->x2074.x2084_b5 = fv();
-    p->x2074.x2084_b6 = fv();
-    p->x2074.x2084_b7 = fv();
-    p->x2074.x2085_b0 = fv();
-    p->x2074.x2085_b1 = fv();
-    p->x2074.x2085_b2 = fv();
-    p->x2074.x2085_b3 = fv();
-    p->x2074.x2085_b4 = fv();
-    p->x2074.x2085_b5 = fv();
-    p->x2074.x2085_b6 = fv();
-    p->x2074.x2085_b7 = fv();
+    p->x2074.x10.x0.x2084_b0 = fv();
+    p->x2074.x10.x0.x2084_b1 = fv();
+    p->x2074.x10.x0.x2084_b2 = fv();
+    p->x2074.x10.x0.x2084_b3 = fv();
+    p->x2074.x10.x0.x2084_b4 = fv();
+    p->x2074.x10.x0.x2084_b5 = fv();
+    p->x2074.x10.x0.x2084_b6 = fv();
+    p->x2074.x10.x0.x2084_b7 = fv();
+    p->x2074.x10.x0.x2085_b0 = fv();
+    p->x2074.x10.x0.x2085_b1 = fv();
+    p->x2074.x10.x0.x2085_b2 = fv();
+    p->x2074.x10.x0.x2085_b3 = fv();
+    p->x2074.x10.x0.x2085_b4 = fv();
+    p->x2074.x10.x0.x2085_b5 = fv();
+    p->x2074.x10.x0.x2085_b6 = fv();
+    p->x2074.x10.x0.x2085_b7 = fv();
     p->x2074.x2088 = fv();
     p->x208C = fv();
     p->x2090 = fv();
@@ -1582,28 +1587,28 @@ static void fill_Fighter(Fighter* p)
     p->take_dmg_2_cb = (__typeof__(p->take_dmg_2_cb)) pick_fn(1);
     p->hurtbox_detect_cb = (__typeof__(p->hurtbox_detect_cb)) pick_fn(1);
     p->x21F8 = (__typeof__(p->x21F8)) pick_fn(1);
-    p->x21FC_flag.b0 = fv();
-    p->x21FC_flag.b1 = fv();
-    p->x21FC_flag.b2 = fv();
-    p->x21FC_flag.b3 = fv();
-    p->x21FC_flag.b4 = fv();
-    p->x21FC_flag.b5 = fv();
-    p->x21FC_flag.b6 = fv();
-    p->x21FC_flag.b7 = fv();
+    p->x21FC_flag.x0.b0 = fv();
+    p->x21FC_flag.x0.b1 = fv();
+    p->x21FC_flag.x0.b2 = fv();
+    p->x21FC_flag.x0.b3 = fv();
+    p->x21FC_flag.x0.b4 = fv();
+    p->x21FC_flag.x0.b5 = fv();
+    p->x21FC_flag.x0.b6 = fv();
+    p->x21FC_flag.x0.b7 = fv();
     for (i0 = 0; i0 < 3; i0++) {
     p->filler_x21FC[i0] = fv();
     }
     for (i0 = 0; i0 < 4; i0++) {
     p->cmd_vars[i0] = fv();
     }
-    p->throw_flags_b0 = fv();
-    p->throw_flags_b1 = fv();
-    p->throw_flags_b2 = fv();
-    p->throw_flags_b3 = fv();
-    p->throw_flags_b4 = fv();
-    p->throw_flags_b5 = fv();
-    p->throw_flags_b6 = fv();
-    p->throw_flags_b7 = fv();
+    p->x2210.x0.throw_flags_b0 = fv();
+    p->x2210.x0.throw_flags_b1 = fv();
+    p->x2210.x0.throw_flags_b2 = fv();
+    p->x2210.x0.throw_flags_b3 = fv();
+    p->x2210.x0.throw_flags_b4 = fv();
+    p->x2210.x0.throw_flags_b5 = fv();
+    p->x2210.x0.throw_flags_b6 = fv();
+    p->x2210.x0.throw_flags_b7 = fv();
     p->cmd_timer = rg();
     p->allow_interrupt = fv();
     p->x2218_b1 = fv();
@@ -1629,14 +1634,14 @@ static void fill_Fighter(Fighter* p)
     p->x221A_b5 = fv();
     p->x221A_b6 = fv();
     p->x221A_b7 = fv();
-    p->x221B_b0 = fv();
-    p->x221B_b1 = fv();
-    p->x221B_b2 = fv();
-    p->x221B_b3 = fv();
-    p->x221B_b4 = fv();
-    p->x221B_b5 = fv();
-    p->x221B_b6 = fv();
-    p->x221B_b7 = fv();
+    p->x221B.x221B_b0 = fv();
+    p->x221B.x221B_b1 = fv();
+    p->x221B.x221B_b2 = fv();
+    p->x221B.x221B_b3 = fv();
+    p->x221B.x221B_b4 = fv();
+    p->x221B.x221B_b5 = fv();
+    p->x221B.x221B_b6 = fv();
+    p->x221B.x221B_b7 = fv();
     p->x221C_b0 = fv();
     p->x221C_b1 = fv();
     p->x221C_b2 = fv();
@@ -1646,8 +1651,8 @@ static void fill_Fighter(Fighter* p)
     p->x221C_b6 = fv();
     p->x221C_u16_y = fv();
     p->x221D_b2 = fv();
-    p->x221D_b3 = fv();
-    p->x221D_b4 = fv();
+    p->has_prev_input = fv();
+    p->input_disabled = fv();
     p->x221D_b5 = fv();
     p->x221D_b6 = fv();
     p->x221D_b7 = fv();
@@ -1662,7 +1667,7 @@ static void fill_Fighter(Fighter* p)
     p->x221F_b0 = fv();
     p->x221F_b1 = fv();
     p->x221F_b2 = fv();
-    p->x221F_b3 = fv();
+    p->is_sleeping = fv();
     p->is_sub_fighter = fv();
     p->x221F_b5 = fv();
     p->x221F_b6 = fv();
@@ -1699,7 +1704,7 @@ static void fill_Fighter(Fighter* p)
     p->is_metal = fv();
     p->x2224_b0 = fv();
     p->x2224_b1 = fv();
-    p->x2224_b2 = fv();
+    p->stamina_dead = fv();
     p->x2224_b3 = fv();
     p->x2224_b4 = fv();
     p->x2224_b5 = fv();
@@ -1836,7 +1841,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->gobj));
     HM((u32) p->kind);
     HM((u32) p->x8_spawnNum);
-    HM((u32) p->player_id);
+    HM((u32) p->player_idx);
     HM((u32) p->motion_id);
     HM((u32) p->anim_id);
     HM((u32) p->x18);
@@ -2028,7 +2033,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->dynamics_num);
     HM(B(p->x3E4_fighterCmdScript.timer));
     HM(B(p->x3E4_fighterCmdScript.frame_count));
-    for (j0 = 0; j0 < 8; j0++) HM(((const unsigned char*) &p->x3E4_fighterCmdScript)[8 + j0]);
+    for (j0 = 0; j0 < 8; j0 += 8) { unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &p->x3E4_fighterCmdScript) + 8 + j0); u32 t8 = PI((const void*) v8); if (t8 != 0xFFFFFFFFu) HM(t8); else { int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); } }
     HM((u32) p->x3E4_fighterCmdScript.loop_count);
     for (i0 = 0; i0 < 3; i0++) {
     HM(PI((const void*) p->x3E4_fighterCmdScript.event_return[i0]));
@@ -2045,7 +2050,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x408.x1c);
     HM((u32) p->x408.x20);
     HM((u32) p->x408.x24);
-    for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->x408.x28_colanim)[i0]);
+    for (i0 = 0; i0 < 8; i0 += 8) { unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &p->x408.x28_colanim) + i0); u32 t8 = PI((const void*) v8); if (t8 != 0xFFFFFFFFu) HM(t8); else { int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); } }
     HM((u32) p->x408.x2C_hex.r);
     HM((u32) p->x408.x2C_hex.g);
     HM((u32) p->x408.x2C_hex.b);
@@ -2090,7 +2095,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x488.x1c);
     HM((u32) p->x488.x20);
     HM((u32) p->x488.x24);
-    for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->x488.x28_colanim)[i0]);
+    for (i0 = 0; i0 < 8; i0 += 8) { unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &p->x488.x28_colanim) + i0); u32 t8 = PI((const void*) v8); if (t8 != 0xFFFFFFFFu) HM(t8); else { int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); } }
     HM((u32) p->x488.x2C_hex.r);
     HM((u32) p->x488.x2C_hex.g);
     HM((u32) p->x488.x2C_hex.b);
@@ -2135,7 +2140,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x508.x1c);
     HM((u32) p->x508.x20);
     HM((u32) p->x508.x24);
-    for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->x508.x28_colanim)[i0]);
+    for (i0 = 0; i0 < 8; i0 += 8) { unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &p->x508.x28_colanim) + i0); u32 t8 = PI((const void*) v8); if (t8 != 0xFFFFFFFFu) HM(t8); else { int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); } }
     HM((u32) p->x508.x2C_hex.r);
     HM((u32) p->x508.x2C_hex.g);
     HM((u32) p->x508.x2C_hex.b);
@@ -2173,21 +2178,21 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->x588));
     HM((u32) p->x58C);
     HM(PI((const void*) p->x590));
-    HM((u32) p->x594_b0);
-    HM((u32) p->x594_b1_loop);
-    HM((u32) p->x594_b2);
-    HM((u32) p->x594_b3);
-    HM((u32) p->x594_b4);
-    HM((u32) p->x594_b5);
-    HM((u32) p->x594_b6);
-    HM((u32) p->x594_b7);
-    HM((u32) p->x596_bits.x0);
-    HM((u32) p->x596_bits.x7);
+    HM((u32) p->x594.x0.x594_b0);
+    HM((u32) p->x594.x0.x594_b1_loop);
+    HM((u32) p->x594.x0.x594_b2);
+    HM((u32) p->x594.x0.x594_b3);
+    HM((u32) p->x594.x0.x594_b4);
+    HM((u32) p->x594.x0.x594_b5);
+    HM((u32) p->x594.x0.x594_b6);
+    HM((u32) p->x594.x0.x594_b7);
+    HM((u32) p->x594.x0.x596_bits.x0);
+    HM((u32) p->x594.x0.x596_bits.x7);
     HM(PI((const void*) p->x598));
     HM(PI((const void*) p->x59C));
     HM(PI((const void*) p->x5A0));
-    HM(PI((const void*) p->x5A4));
-    HM(PI((const void*) p->x5A8));
+    HM((u32) p->x5A4);
+    HM((u32) p->x5A8);
     HM((u32) p->x5AC.model_num);
     for (i0 = 0; i0 < 5; i0++) {
     HM((u32) p->x5AC.cleared[i0]);
@@ -2214,9 +2219,9 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x610_color_rgba[i0].b);
     HM((u32) p->x610_color_rgba[i0].a);
     }
-    HM((u32) p->x618_player_id);
-    HM((u32) p->x619_costume_id);
-    HM((u32) p->x61A_controller_index);
+    HM((u32) p->pad_port);
+    HM((u32) p->costume_id);
+    HM((u32) p->sub_color);
     HM((u32) p->team);
     HM((u32) p->x61C);
     HM((u32) p->x61D);
@@ -2368,7 +2373,7 @@ static void hash_Fighter(const Fighter* p)
     HM(B(p->coll_data.xE4_ecb.left.x));
     HM(B(p->coll_data.xE4_ecb.left.y));
     HM((u32) p->coll_data.ecb_source.kind);
-    for (j0 = 0; j0 < 56; j0++) HM(((const unsigned char*) &p->coll_data.ecb_source)[8 + j0]);
+    for (i0 = 0; i0 < 56; i0 += 8) { unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &p->coll_data.ecb_source.x4) + i0); u32 t8 = PI((const void*) v8); if (t8 != 0xFFFFFFFFu) HM(t8); else { int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); } }
     HM(B(p->coll_data.ecb_source.x124));
     HM(B(p->coll_data.ecb_source.x128));
     HM(B(p->coll_data.ecb_source.x12C));
@@ -2482,7 +2487,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->x914[i0].victims_2[i1].victim));
     HM((u32) p->x914[i0].victims_2[i1].x4);
     }
-    HM((u32) p->x914[i0].hit_grabbed_victim_only);
+    HM((u32) p->x914[i0].x134.hit_grabbed_victim_only);
     }
     for (i0 = 0; i0 < 2; i0++) {
     HM((u32) p->xDF4[i0].state);
@@ -2550,7 +2555,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->xDF4[i0].victims_2[i1].victim));
     HM((u32) p->xDF4[i0].victims_2[i1].x4);
     }
-    HM((u32) p->xDF4[i0].hit_grabbed_victim_only);
+    HM((u32) p->xDF4[i0].x134.hit_grabbed_victim_only);
     }
     HM((u32) p->x1064_thrownHitbox.state);
     HM((u32) p->x1064_thrownHitbox.x4);
@@ -2617,7 +2622,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->x1064_thrownHitbox.victims_2[i0].victim));
     HM((u32) p->x1064_thrownHitbox.victims_2[i0].x4);
     }
-    HM((u32) p->x1064_thrownHitbox.hit_grabbed_victim_only);
+    HM((u32) p->x1064_thrownHitbox.x134.hit_grabbed_victim_only);
     HM((u32) p->x119C_teamUnk);
     HM((u32) p->grabber_unk1);
     HM((u32) p->hurt_capsules_len);
@@ -2706,7 +2711,7 @@ static void hash_Fighter(const Fighter* p)
     HM(B(p->dmg.x1880.z));
     HM((u32) p->dmg.x188c);
     HM((u32) p->dmg.x1890);
-    HM((u32) p->dmg.x1894);
+    HM(PI((const void*) p->dmg.x1894));
     HM(B(p->dmg.x1898));
     HM(B(p->dmg.x189C_unk_num_frames));
     HM(B(p->dmg.x18a0));
@@ -2722,17 +2727,21 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->dmg.x18C8);
     HM((u32) p->dmg.x18CC);
     HM((u32) p->dmg.x18D0);
-    HM((u32) p->dmg.x18d4.x0);
-    HM((u32) p->dmg.x18d4.x1);
-    HM((u32) p->dmg.x18d4.x2_b0);
-    HM((u32) p->dmg.x18d4.x2_b1);
-    HM((u32) p->dmg.x18d4.x2_b2);
-    HM((u32) p->dmg.x18d4.x2_b3);
-    HM((u32) p->dmg.x18d4.x2_b4);
-    HM((u32) p->dmg.x18d4.x2_b5);
-    HM((u32) p->dmg.x18d4.x2_b6);
-    HM((u32) p->dmg.x18d4.x2_b7);
-    HM((u32) p->dmg.x18d4.x3);
+    HM((u32) p->dmg.x18d4.x0.x2070);
+    HM((u32) p->dmg.x18d4.x0.x2071_b0_3);
+    HM((u32) p->dmg.x18d4.x0.x2071_b4);
+    HM((u32) p->dmg.x18d4.x0.x2071_b5);
+    HM((u32) p->dmg.x18d4.x0.x2071_b6);
+    HM((u32) p->dmg.x18d4.x0.x2071_b7);
+    HM((u32) p->dmg.x18d4.x0.x2072_b0);
+    HM((u32) p->dmg.x18d4.x0.x2072_b1);
+    HM((u32) p->dmg.x18d4.x0.x2072_b2);
+    HM((u32) p->dmg.x18d4.x0.count_x1A4);
+    HM((u32) p->dmg.x18d4.x0.count_thrown_items);
+    HM((u32) p->dmg.x18d4.x0.count_aerials);
+    HM((u32) p->dmg.x18d4.x0.count_x1A0);
+    HM((u32) p->dmg.x18d4.x0.count_specials);
+    HM((u32) p->dmg.x18d4.x0.x2073);
     HM((u32) p->dmg.x18d8.x0);
     HM((u32) p->dmg.x18d8.x4);
     HM(B(p->dmg.x18d8.kb_applied1));
@@ -2885,7 +2894,7 @@ static void hash_Fighter(const Fighter* p)
     HM(PI((const void*) p->cpu.x44));
     HM(PI((const void*) p->cpu.x48));
     HM(PI((const void*) p->cpu.x4C));
-    HM((u32) p->cpu.x50);
+    HM(PI((const void*) p->cpu.x50));
     HM(B(p->cpu.x54.x));
     HM(B(p->cpu.x54.y));
     HM(B(p->cpu.x5C));
@@ -3009,41 +3018,41 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x2068_attackID);
     HM((u32) p->x206C_attack_instance);
     HM((u32) p->x206E);
-    HM((u32) p->x2070.x2070);
-    HM((u32) p->x2070.x2071_b0_3);
-    HM((u32) p->x2070.x2071_b4);
-    HM((u32) p->x2070.x2071_b5);
-    HM((u32) p->x2070.x2071_b6);
-    HM((u32) p->x2070.x2071_b7);
-    HM((u32) p->x2070.x2072_b0);
-    HM((u32) p->x2070.x2072_b1);
-    HM((u32) p->x2070.x2072_b2);
-    HM((u32) p->x2070.count_x1A4);
-    HM((u32) p->x2070.count_thrown_items);
-    HM((u32) p->x2070.count_aerials);
-    HM((u32) p->x2070.count_x1A0);
-    HM((u32) p->x2070.count_specials);
-    HM((u32) p->x2070.x2073);
-    HM(B(p->x2074.x2074_vec.x));
-    HM(B(p->x2074.x2074_vec.y));
-    HM((u32) p->x2074.x207C.x);
+    HM((u32) p->x2070.x0.x2070);
+    HM((u32) p->x2070.x0.x2071_b0_3);
+    HM((u32) p->x2070.x0.x2071_b4);
+    HM((u32) p->x2070.x0.x2071_b5);
+    HM((u32) p->x2070.x0.x2071_b6);
+    HM((u32) p->x2070.x0.x2071_b7);
+    HM((u32) p->x2070.x0.x2072_b0);
+    HM((u32) p->x2070.x0.x2072_b1);
+    HM((u32) p->x2070.x0.x2072_b2);
+    HM((u32) p->x2070.x0.count_x1A4);
+    HM((u32) p->x2070.x0.count_thrown_items);
+    HM((u32) p->x2070.x0.count_aerials);
+    HM((u32) p->x2070.x0.count_x1A0);
+    HM((u32) p->x2070.x0.count_specials);
+    HM((u32) p->x2070.x0.x2073);
+    HM((u32) p->x2074.x2074_vec.x);
+    HM((u32) p->x2074.x2074_vec.y);
+    HM(B(p->x2074.x207C.x));
     HM((u32) p->x2074.x207C.y);
-    HM((u32) p->x2074.x2084_b0);
-    HM((u32) p->x2074.x2084_b1);
-    HM((u32) p->x2074.x2084_b2);
-    HM((u32) p->x2074.x2084_b3);
-    HM((u32) p->x2074.x2084_b4);
-    HM((u32) p->x2074.x2084_b5);
-    HM((u32) p->x2074.x2084_b6);
-    HM((u32) p->x2074.x2084_b7);
-    HM((u32) p->x2074.x2085_b0);
-    HM((u32) p->x2074.x2085_b1);
-    HM((u32) p->x2074.x2085_b2);
-    HM((u32) p->x2074.x2085_b3);
-    HM((u32) p->x2074.x2085_b4);
-    HM((u32) p->x2074.x2085_b5);
-    HM((u32) p->x2074.x2085_b6);
-    HM((u32) p->x2074.x2085_b7);
+    HM((u32) p->x2074.x10.x0.x2084_b0);
+    HM((u32) p->x2074.x10.x0.x2084_b1);
+    HM((u32) p->x2074.x10.x0.x2084_b2);
+    HM((u32) p->x2074.x10.x0.x2084_b3);
+    HM((u32) p->x2074.x10.x0.x2084_b4);
+    HM((u32) p->x2074.x10.x0.x2084_b5);
+    HM((u32) p->x2074.x10.x0.x2084_b6);
+    HM((u32) p->x2074.x10.x0.x2084_b7);
+    HM((u32) p->x2074.x10.x0.x2085_b0);
+    HM((u32) p->x2074.x10.x0.x2085_b1);
+    HM((u32) p->x2074.x10.x0.x2085_b2);
+    HM((u32) p->x2074.x10.x0.x2085_b3);
+    HM((u32) p->x2074.x10.x0.x2085_b4);
+    HM((u32) p->x2074.x10.x0.x2085_b5);
+    HM((u32) p->x2074.x10.x0.x2085_b6);
+    HM((u32) p->x2074.x10.x0.x2085_b7);
     HM((u32) p->x2074.x2088);
     HM((u32) p->x208C);
     HM((u32) p->x2090);
@@ -3149,28 +3158,28 @@ static void hash_Fighter(const Fighter* p)
     HM(FI((const void*) p->take_dmg_2_cb));
     HM(FI((const void*) p->hurtbox_detect_cb));
     HM(FI((const void*) p->x21F8));
-    HM((u32) p->x21FC_flag.b0);
-    HM((u32) p->x21FC_flag.b1);
-    HM((u32) p->x21FC_flag.b2);
-    HM((u32) p->x21FC_flag.b3);
-    HM((u32) p->x21FC_flag.b4);
-    HM((u32) p->x21FC_flag.b5);
-    HM((u32) p->x21FC_flag.b6);
-    HM((u32) p->x21FC_flag.b7);
+    HM((u32) p->x21FC_flag.x0.b0);
+    HM((u32) p->x21FC_flag.x0.b1);
+    HM((u32) p->x21FC_flag.x0.b2);
+    HM((u32) p->x21FC_flag.x0.b3);
+    HM((u32) p->x21FC_flag.x0.b4);
+    HM((u32) p->x21FC_flag.x0.b5);
+    HM((u32) p->x21FC_flag.x0.b6);
+    HM((u32) p->x21FC_flag.x0.b7);
     for (i0 = 0; i0 < 3; i0++) {
     HM((u32) p->filler_x21FC[i0]);
     }
     for (i0 = 0; i0 < 4; i0++) {
     HM((u32) p->cmd_vars[i0]);
     }
-    HM((u32) p->throw_flags_b0);
-    HM((u32) p->throw_flags_b1);
-    HM((u32) p->throw_flags_b2);
-    HM((u32) p->throw_flags_b3);
-    HM((u32) p->throw_flags_b4);
-    HM((u32) p->throw_flags_b5);
-    HM((u32) p->throw_flags_b6);
-    HM((u32) p->throw_flags_b7);
+    HM((u32) p->x2210.x0.throw_flags_b0);
+    HM((u32) p->x2210.x0.throw_flags_b1);
+    HM((u32) p->x2210.x0.throw_flags_b2);
+    HM((u32) p->x2210.x0.throw_flags_b3);
+    HM((u32) p->x2210.x0.throw_flags_b4);
+    HM((u32) p->x2210.x0.throw_flags_b5);
+    HM((u32) p->x2210.x0.throw_flags_b6);
+    HM((u32) p->x2210.x0.throw_flags_b7);
     HM(B(p->cmd_timer));
     HM((u32) p->allow_interrupt);
     HM((u32) p->x2218_b1);
@@ -3196,14 +3205,14 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x221A_b5);
     HM((u32) p->x221A_b6);
     HM((u32) p->x221A_b7);
-    HM((u32) p->x221B_b0);
-    HM((u32) p->x221B_b1);
-    HM((u32) p->x221B_b2);
-    HM((u32) p->x221B_b3);
-    HM((u32) p->x221B_b4);
-    HM((u32) p->x221B_b5);
-    HM((u32) p->x221B_b6);
-    HM((u32) p->x221B_b7);
+    HM((u32) p->x221B.x221B_b0);
+    HM((u32) p->x221B.x221B_b1);
+    HM((u32) p->x221B.x221B_b2);
+    HM((u32) p->x221B.x221B_b3);
+    HM((u32) p->x221B.x221B_b4);
+    HM((u32) p->x221B.x221B_b5);
+    HM((u32) p->x221B.x221B_b6);
+    HM((u32) p->x221B.x221B_b7);
     HM((u32) p->x221C_b0);
     HM((u32) p->x221C_b1);
     HM((u32) p->x221C_b2);
@@ -3213,8 +3222,8 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x221C_b6);
     HM((u32) p->x221C_u16_y);
     HM((u32) p->x221D_b2);
-    HM((u32) p->x221D_b3);
-    HM((u32) p->x221D_b4);
+    HM((u32) p->has_prev_input);
+    HM((u32) p->input_disabled);
     HM((u32) p->x221D_b5);
     HM((u32) p->x221D_b6);
     HM((u32) p->x221D_b7);
@@ -3229,7 +3238,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->x221F_b0);
     HM((u32) p->x221F_b1);
     HM((u32) p->x221F_b2);
-    HM((u32) p->x221F_b3);
+    HM((u32) p->is_sleeping);
     HM((u32) p->is_sub_fighter);
     HM((u32) p->x221F_b5);
     HM((u32) p->x221F_b6);
@@ -3266,7 +3275,7 @@ static void hash_Fighter(const Fighter* p)
     HM((u32) p->is_metal);
     HM((u32) p->x2224_b0);
     HM((u32) p->x2224_b1);
-    HM((u32) p->x2224_b2);
+    HM((u32) p->stamina_dead);
     HM((u32) p->x2224_b3);
     HM((u32) p->x2224_b4);
     HM((u32) p->x2224_b5);
@@ -3694,9 +3703,9 @@ static void freg_all(void)
 // stub PSVECAdd = 1042
 // stub ftDrawCommon_80081168 = 1043
 // stub ftDrawCommon_80081200 = 1044
-// stub ftLib_IsFighter = 1045
+// stub ftLib_CastsShadow = 1045
 // stub ftLib_GetShadow = 1046
-// stub ftLib_CastsShadow = 1047
+// stub ftLib_IsFighter = 1047
 // stub lbVector_CrossprodNormalized = 1048
 // stub lbVector_Diff = 1049
 // stub lbVector_Normalize = 1050

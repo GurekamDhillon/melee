@@ -216,18 +216,18 @@ unsafe fn world_reg() {
     oreg(addr_of!(t::grKg_804D6984.unk4), core::mem::size_of_val(&*addr_of!(t::grKg_804D6984.unk4)));
     oreg(addr_of!(t::ext::HSD_GObjPLinkHead), core::mem::size_of_val(&*addr_of!(t::ext::HSD_GObjPLinkHead)));
     oreg(addr_of!(PL), core::mem::size_of_val(&*addr_of!(PL)));
-    oreg(addr_of!(t::grKg_StageCallbacks[0].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[0].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[1].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[1].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[2].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[2].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[3].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[3].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[4].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[4].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[5].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[5].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[6].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[6].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[7].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[7].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[8].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[8].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[9].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[9].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[10].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[10].anon_10.flags)));
-    oreg(addr_of!(t::grKg_StageCallbacks[11].anon_10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[11].anon_10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[0].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[0].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[1].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[1].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[2].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[2].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[3].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[3].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[4].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[4].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[5].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[5].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[6].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[6].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[7].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[7].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[8].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[8].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[9].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[9].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[10].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[10].x10.flags)));
+    oreg(addr_of!(t::grKg_StageCallbacks[11].x10.flags), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[11].x10.flags)));
     oreg(addr_of!(OSCR), core::mem::size_of_val(&*addr_of!(OSCR)));
 }
 unsafe fn world_reg_fns() {
@@ -292,18 +292,18 @@ unsafe fn world_fill(fi: usize) {
     core::ptr::write_bytes(addr_of_mut!(t::grKg_804D6984.unk4) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_804D6984.unk4)));
     core::ptr::write_bytes(addr_of_mut!(t::ext::HSD_GObjPLinkHead) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::ext::HSD_GObjPLinkHead)));
     core::ptr::write_bytes(addr_of_mut!(PL) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(PL)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[0].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[0].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[1].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[1].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[2].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[2].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[3].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[3].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[4].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[4].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[5].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[5].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[6].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[6].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[7].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[7].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[8].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[8].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[9].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[9].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[10].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[10].anon_10.flags)));
-    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[11].anon_10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[11].anon_10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[0].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[0].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[1].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[1].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[2].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[2].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[3].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[3].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[4].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[4].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[5].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[5].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[6].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[6].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[7].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[7].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[8].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[8].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[9].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[9].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[10].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[10].x10.flags)));
+    core::ptr::write_bytes(addr_of_mut!(t::grKg_StageCallbacks[11].x10.flags) as *mut u8, 0, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[11].x10.flags)));
     OSCR = [[0; 64]; 4];
     for i in 0..NGO { ofill(addr_of_mut!(OGO[i]) as *mut u8, F_HSD_GObj);  }
     for i in 0..NGO {
@@ -485,7 +485,7 @@ unsafe fn install_hooks() {
         melee_world::tu::grkongo::ext::GROUND_801C247C = Some(|a0: s32, a1: s32| -> *mut HSD_Spline { lg_s("Ground_801C247C("); lg_int(a0 as u32); lg_int(a1 as u32); lg_s(")"); { let r = gen_rec_HSD_Spline() as *mut HSD_Spline; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grkongo::ext::GROUND_801C39C0 = Some(|| { lg_s("Ground_801C39C0("); lg_s(")"); lg_c(';'); });
         melee_world::tu::grkongo::ext::GROUND_801C3BB4 = Some(|| { lg_s("Ground_801C3BB4("); lg_s(")"); lg_c(';'); });
-        melee_world::tu::grkongo::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: i32| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
+        melee_world::tu::grkongo::ext::GROUND_801C3FA4 = Some(|a0: *mut HSD_GObj, a1: isize| -> *mut HSD_JObj { lg_s("Ground_801C3FA4("); lg_ptr(a0 as *const u8 as usize); lg_int(a1 as u32); lg_s(")"); { let r = (addr_of_mut!(OJO[(rnd() % NJO as u32) as usize]) as *mut _) as *mut HSD_JObj; lg_retp(r as usize); lg_c(';'); r } });
         melee_world::tu::grkongo::ext::GROUND_801C4A08 = Some(|a0: *mut HSD_GObj| { lg_s("Ground_801C4A08("); lg_ptr(a0 as *const u8 as usize); lg_s(")"); lg_c(';'); });
         melee_world::tu::grkongo::ext::GROUND_801C4B50 = Some(|a0: *mut HSD_Spline, a1: *mut Vec3, a2: *mut Vec3, a3: f32| { lg_s("Ground_801C4B50("); lg_ps(a0 as *const u8, core::mem::size_of::<HSD_Spline>(), D_HSD_Spline); lg_v3(a1 as *const _ as *const Vec3); lg_v3(a2 as *const _ as *const Vec3); lg_f(a3); lg_s(")"); lg_ov3(a1 as *mut _); lg_ov3(a2 as *mut _); lg_c(';'); });
         melee_world::tu::grkongo::ext::GROUND_801C4D70 = Some(|a0: *mut HSD_GObj, a1: *mut Vec3, a2: f32| -> i32 { lg_s("Ground_801C4D70("); lg_ptr(a0 as *const u8 as usize); lg_v3(a1 as *const _ as *const Vec3); lg_f(a2); lg_s(")"); { let r = gen_b() as i32; lg_retu(r as u32); lg_c(';'); r } });
@@ -606,18 +606,18 @@ unsafe fn world_hash(fi: usize) -> u64 {
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_804D6984.unk4) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_804D6984.unk4))), D_st6);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::ext::HSD_GObjPLinkHead) as *const u8, core::mem::size_of_val(&*addr_of!(t::ext::HSD_GObjPLinkHead))), D_st7);
     h = img_hash(h, core::slice::from_raw_parts(addr_of!(PL) as *const u8, core::mem::size_of_val(&*addr_of!(PL))), D_st8);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[0].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[0].anon_10.flags))), D_st9);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[1].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[1].anon_10.flags))), D_st10);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[2].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[2].anon_10.flags))), D_st11);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[3].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[3].anon_10.flags))), D_st12);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[4].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[4].anon_10.flags))), D_st13);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[5].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[5].anon_10.flags))), D_st14);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[6].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[6].anon_10.flags))), D_st15);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[7].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[7].anon_10.flags))), D_st16);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[8].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[8].anon_10.flags))), D_st17);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[9].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[9].anon_10.flags))), D_st18);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[10].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[10].anon_10.flags))), D_st19);
-    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[11].anon_10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[11].anon_10.flags))), D_st20);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[0].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[0].x10.flags))), D_st9);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[1].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[1].x10.flags))), D_st10);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[2].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[2].x10.flags))), D_st11);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[3].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[3].x10.flags))), D_st12);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[4].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[4].x10.flags))), D_st13);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[5].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[5].x10.flags))), D_st14);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[6].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[6].x10.flags))), D_st15);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[7].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[7].x10.flags))), D_st16);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[8].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[8].x10.flags))), D_st17);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[9].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[9].x10.flags))), D_st18);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[10].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[10].x10.flags))), D_st19);
+    h = img_hash(h, core::slice::from_raw_parts(addr_of!(t::grKg_StageCallbacks[11].x10.flags) as *const u8, core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[11].x10.flags))), D_st20);
     h = word_hash(h, core::slice::from_raw_parts(addr_of!(OSCR) as *const u8, core::mem::size_of_val(&*addr_of!(OSCR))));
     h
 }
@@ -628,7 +628,7 @@ fn state_matches_c() {
         let mut lines = want.lines();
         let verbose = std::env::var("ORACLE_VERBOSE").ok();
         let hdr: std::vec::Vec<usize> = lines.next().unwrap().split_whitespace().skip(1).map(|s| s.parse().unwrap()).collect();
-        let sizes: std::vec::Vec<usize> = std::vec![core::mem::size_of::<Ground>(), core::mem::size_of::<HSD_GObj>(), core::mem::size_of::<HSD_JObj>(), core::mem::size_of::<StageInfo>(), core::mem::size_of_val(&*addr_of!(t::yakumono_param)), core::mem::size_of_val(&*addr_of!(t::grKg_803E16E0)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks)), core::mem::size_of_val(&*addr_of!(t::grKg_StageData)), core::mem::size_of_val(&*addr_of!(t::grKg_803E188C)), core::mem::size_of_val(&*addr_of!(t::grKg_804D6984.unk0)), core::mem::size_of_val(&*addr_of!(t::grKg_804D6984.unk4)), core::mem::size_of_val(&*addr_of!(t::ext::HSD_GObjPLinkHead)), core::mem::size_of_val(&*addr_of!(PL)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[0].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[1].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[2].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[3].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[4].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[5].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[6].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[7].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[8].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[9].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[10].anon_10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[11].anon_10.flags))];
+        let sizes: std::vec::Vec<usize> = std::vec![core::mem::size_of::<Ground>(), core::mem::size_of::<HSD_GObj>(), core::mem::size_of::<HSD_JObj>(), core::mem::size_of::<StageInfo>(), core::mem::size_of_val(&*addr_of!(t::yakumono_param)), core::mem::size_of_val(&*addr_of!(t::grKg_803E16E0)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks)), core::mem::size_of_val(&*addr_of!(t::grKg_StageData)), core::mem::size_of_val(&*addr_of!(t::grKg_803E188C)), core::mem::size_of_val(&*addr_of!(t::grKg_804D6984.unk0)), core::mem::size_of_val(&*addr_of!(t::grKg_804D6984.unk4)), core::mem::size_of_val(&*addr_of!(t::ext::HSD_GObjPLinkHead)), core::mem::size_of_val(&*addr_of!(PL)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[0].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[1].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[2].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[3].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[4].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[5].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[6].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[7].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[8].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[9].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[10].x10.flags)), core::mem::size_of_val(&*addr_of!(t::grKg_StageCallbacks[11].x10.flags))];
         assert_eq!(hdr, sizes, "struct sizes (C native layout vs the Rust port)");
         install_hooks();
         world_reg();

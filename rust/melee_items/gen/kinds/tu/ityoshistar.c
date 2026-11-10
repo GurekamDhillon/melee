@@ -46,7 +46,7 @@ static void setup(int prof)
         IT[k].xC4_article_data = &ART[k];
         IT[k].xCC_item_attr = &ATTR[k];
         ART[k].x0_common_attr = &ATTR[k];
-        ART[k].x4_specialAttributes = SPEC[k];
+        ART[k].x4_specialAttributes = (union ItemSpecialAttributes*) SPEC[k];
         for (i = 0; i < 14; i++) DBT[k].bones[i] = &JO[6 + 14 * k + i];
     }
 
@@ -86,16 +86,16 @@ int main(void)
             setup(prof);
             switch (op) {
             case 0: { f32 v2 = (f32) (rw()); ret = PI(it_802B2FC8(&GO[0], &VA[0], v2)); } break; /* it_802B2FC8 */
-            case 1: {  ret = (u32) it_802B309C(&GO[0]); } break; /* it_802B309C */
-            case 2: {  ret = (u32) it_802B30C0(&GO[0]); } break; /* it_802B30C0 */
-            case 3: {  ret = (u32) it_802B30E4(&GO[0]); } break; /* it_802B30E4 */
-            case 4: {  ret = (u32) it_802B3108(&GO[0]); } break; /* it_802B3108 */
-            case 5: {  ret = (u32) it_802B312C(&GO[0]); } break; /* it_802B312C */
-            case 6: {  ret = (u32) it_802B314C(&GO[0]); } break; /* it_802B314C */
+            case 1: {  ret = (u32) ((it_802B309C(&GO[0])) != 0); } break; /* it_802B309C */
+            case 2: {  ret = (u32) ((it_802B30C0(&GO[0])) != 0); } break; /* it_802B30C0 */
+            case 3: {  ret = (u32) ((it_802B30E4(&GO[0])) != 0); } break; /* it_802B30E4 */
+            case 4: {  ret = (u32) ((it_802B3108(&GO[0])) != 0); } break; /* it_802B3108 */
+            case 5: {  ret = (u32) ((it_802B312C(&GO[0])) != 0); } break; /* it_802B312C */
+            case 6: {  ret = (u32) ((it_802B314C(&GO[0])) != 0); } break; /* it_802B314C */
             case 7: {  it_802B322C(&GO[0], &GO[1]); } break; /* it_802B322C */
-            case 8: {  ret = (u32) itYoshistar_UnkMotion0_Anim(&GO[0]); } break; /* itYoshistar_UnkMotion0_Anim */
+            case 8: {  ret = (u32) ((itYoshistar_UnkMotion0_Anim(&GO[0])) != 0); } break; /* itYoshistar_UnkMotion0_Anim */
             case 9: {  itYoshistar_UnkMotion0_Phys(&GO[0]); } break; /* itYoshistar_UnkMotion0_Phys */
-            case 10: {  ret = (u32) itYoshistar_UnkMotion0_Coll(&GO[0]); } break; /* itYoshistar_UnkMotion0_Coll */
+            case 10: {  ret = (u32) ((itYoshistar_UnkMotion0_Coll(&GO[0])) != 0); } break; /* itYoshistar_UnkMotion0_Coll */
             case 11: {  it_802B3348(&GO[0], &GO[1]); } break; /* it_802B3348 */
             case 12: { { int j; for (j = 0; j < 1; j++) { HM((u32) it_803F7158[j].anim_id); HM(FI((const void*) it_803F7158[j].animated)); HM(FI((const void*) it_803F7158[j].physics_updated)); HM(FI((const void*) it_803F7158[j].collided)); } } } break; /* state tables */
             }

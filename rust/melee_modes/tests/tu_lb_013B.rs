@@ -106,7 +106,7 @@ fn lb_013B_matches_c() {
                 g::fill_ColorOverlay(&mut CO);
                 for i in 0..8 {
                     g::fill_Fighter_804D653C_t(&mut RUM[i]);
-                    RUM[i].unk = (&raw mut W[i * 3]) as *mut core::ffi::c_void;
+                    RUM[i].unk = ((&raw mut W[i * 3]) as *mut core::ffi::c_void) as *mut _;
                 }
                 let w0 = (&raw mut W) as *mut ColorOverlay_x8_t;
                 match op {

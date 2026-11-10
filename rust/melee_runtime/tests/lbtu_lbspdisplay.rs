@@ -139,7 +139,7 @@ freg(evt as *const () as usize); freg(draw as *const () as usize);
                     15 => {   m::fn_800138AC(MEM.as_mut_ptr() as *mut core::ffi::c_void); } // fn_800138AC
                     16 => {  let v1: Option<unsafe extern "C" fn(*mut HSD_GObj)> = (if fv()&1 != 0 { Some(evt) } else { None }) as Option<unsafe extern "C" fn(*mut HSD_GObj)>; m::lb_800138CC(&raw mut GO[0], v1); } // lb_800138CC
                     17 => {  let v1: i8 = (fv() as i32) as i8; m::lb_800138D8(&raw mut GO[0], v1); } // lb_800138D8
-                    18 => {  let v1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)> = (if fv()&1 != 0 { Some(draw) } else { None }) as Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>; let v2: i32 = (fv() as i32) as i32; let v3: i8 = (fv() as i32) as i8; let v4: f32 = (rf()) as f32; let v5: f32 = (rf()) as f32; let v6: f32 = (rf()) as f32; let v7: f32 = (rf()) as f32; m::lb_800138EC(&raw mut IMG[0], v1, v2, v3, v4, v5, v6, v7); } // lb_800138EC
+                    18 => {  let v1: Option<unsafe extern "C" fn(*mut HSD_GObj, isize)> = (if fv()&1 != 0 { Some(draw) } else { None }) as Option<unsafe extern "C" fn(*mut HSD_GObj, isize)>; let v2: i32 = (fv() as i32) as i32; let v3: i8 = (fv() as i32) as i8; let v4: f32 = (rf()) as f32; let v5: f32 = (rf()) as f32; let v6: f32 = (rf()) as f32; let v7: f32 = (rf()) as f32; m::lb_800138EC(&raw mut IMG[0], v1, v2, v3, v4, v5, v6, v7); } // lb_800138EC
                     19 => {   ret = pi(m::lb_80013B14(&raw mut CD[0])); } // lb_80013B14
                     _ => unreachable!(),
                 }

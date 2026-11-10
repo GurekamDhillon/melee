@@ -28,11 +28,11 @@ fn smoke() {
         (2, ["part 0 0", "part 1 -1", "part 2 0", "part 3 -1"]),
         (3, ["part 0 0", "part 1 -1", "part 2 -1", "part 3 0"]),
     ] {
-        f.x619_costume_id = costume;
+        f.costume_id = costume;
         t::ftPc_Init_OnDeath(gp);
         assert_eq!(take(), want);
     }
-    f.x619_costume_id = 9;
+    f.costume_id = 9;
     t::ftPc_Init_OnDeath(gp);
     assert_eq!(take(), ["part 0 0"]);
 

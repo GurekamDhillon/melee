@@ -37,8 +37,8 @@ fn ftCo_CaptureYoshi_matches_c() {
                 0 => {
                     let fr = f();
                     fr.victim_gobj = core::ptr::null_mut();
-                    fr.anon_221b.set_x221B_b5(1);
-                    fr.anon_221b.set_x221B_b7((rnd() & 1) as u8);
+                    fr.x221B.set_x221B_b5(1);
+                    fr.x221B.set_x221B_b7((rnd() & 1) as u8);
                     m::ftCo_800BBB8C(g, go2());
                     0
                 }

@@ -71,7 +71,7 @@ pub mod ext {
     use crate::ext_fns;
     ext_fns! {
         fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj;
-        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
+        extern "C" fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: isize) = crate::tu::adapt::HSD_GObj_JObjCallback__9cd907;
         fn lb_8001204C(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, a2: *mut u16, a3: i32) -> i32 = crate::tu::adapt::lb_8001204C__f0bab9;
         fn mn_80229860(a0: i8) = crate::tu::adapt::mn_80229860__033db5;
         fn mn_8022ED6C(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32 = crate::tu::adapt::mn_8022ED6C__f73cae;
@@ -323,15 +323,15 @@ unsafe extern "C" fn mnRulePlus_SaveRules() {
         as *mut MenuRulesPlusData;
     (*gmMainLib_GetGameRules()).stock_time_limit = (*data)
         .rule_values
-        .anon_0
+        .x0
         .time_limit;
     (*gmMainLib_GetGameRules()).friendly_fire = (*data)
         .rule_values
-        .anon_0
+        .x0
         .friendly_fire;
-    (*gmMainLib_GetGameRules()).pause = (*data).rule_values.anon_0.pause;
-    (*gmMainLib_GetGameRules()).score_display = (*data).rule_values.anon_0.score;
-    (*gmMainLib_GetGameRules()).unk_xc = (*data).rule_values.anon_0.sd_penalty;
+    (*gmMainLib_GetGameRules()).pause = (*data).rule_values.x0.pause;
+    (*gmMainLib_GetGameRules()).score_display = (*data).rule_values.x0.score;
+    (*gmMainLib_GetGameRules()).unk_xc = (*data).rule_values.x0.sd_penalty;
 }
 unsafe extern "C" fn mnRulePlus_IsOptionVisible(mut sel: u8) -> i32 {
     if gm_GetCurrentGameMode() as i32
@@ -1114,20 +1114,20 @@ pub unsafe extern "C" fn fn_80232F44(mut gobj: *mut HSD_GObj) {
         data2 = (*gobj).user_data as *mut MenuRulesPlusData;
         (*gmMainLib_GetGameRules()).stock_time_limit = (*data2)
             .rule_values
-            .anon_0
+            .x0
             .time_limit;
         (*gmMainLib_GetGameRules()).friendly_fire = (*data2)
             .rule_values
-            .anon_0
+            .x0
             .friendly_fire;
-        (*gmMainLib_GetGameRules()).pause = (*data2).rule_values.anon_0.pause;
+        (*gmMainLib_GetGameRules()).pause = (*data2).rule_values.x0.pause;
         (*gmMainLib_GetGameRules()).score_display = (*data2)
             .rule_values
-            .anon_0
+            .x0
             .score;
         (*gmMainLib_GetGameRules()).unk_xc = (*data2)
             .rule_values
-            .anon_0
+            .x0
             .sd_penalty;
     }
 }
@@ -1234,15 +1234,15 @@ pub unsafe extern "C" fn mn_80233218(mut state: MenuState) -> *mut HSD_GObj {
     );
     (*user_data).menu_kind = mn_804A04F0.cur_menu;
     (*user_data).hovered_selection = mn_804A04F0.hovered_selection as u8;
-    (*user_data).rule_values.anon_0.time_limit = (*gmMainLib_GetGameRules())
+    (*user_data).rule_values.x0.time_limit = (*gmMainLib_GetGameRules())
         .stock_time_limit;
-    (*user_data).rule_values.anon_0.friendly_fire = (*gmMainLib_GetGameRules())
+    (*user_data).rule_values.x0.friendly_fire = (*gmMainLib_GetGameRules())
         .friendly_fire;
-    (*user_data).rule_values.anon_0.pause = (*gmMainLib_GetGameRules()).pause;
-    (*user_data).rule_values.anon_0.score = (*gmMainLib_GetGameRules())
+    (*user_data).rule_values.x0.pause = (*gmMainLib_GetGameRules()).pause;
+    (*user_data).rule_values.x0.score = (*gmMainLib_GetGameRules())
         .score_display;
     rules = gmMainLib_GetGameRules();
-    (*user_data).rule_values.anon_0.sd_penalty = (*rules).unk_xc;
+    (*user_data).rule_values.x0.sd_penalty = (*rules).unk_xc;
     (*user_data).state = state as u8 as MenuState8;
     (*user_data).description = null_mut();
     i = 0 as i32;
@@ -1432,7 +1432,7 @@ pub unsafe extern "C" fn mn_80233218(mut state: MenuState) -> *mut HSD_GObj {
                             index_ptr = index_ptr.offset(1);
                         }
                         mn_802324E4(
-                            (*user_data).rule_values.anon_0.time_limit,
+                            (*user_data).rule_values.x0.time_limit,
                             user_data,
                         );
                     }

@@ -2315,7 +2315,7 @@ pub unsafe fn gm_80166378(arg0_raw: *mut MatchEnd) {
             (*arg0).player_standings[iu].ckind = ext::Player_GetPlayerCharacter(i) as i8;
             (*arg0).player_standings[iu].ftkind = ext::Player_80036394(i) as i8;
             (*arg0).player_standings[iu].stocks = ext::Player_GetStocks(i) as i8;
-            (*arg0).player_standings[iu].anon_3.anon_0.set_x3_b0(ext::Player_GetCostumeId(i) as u8);
+            (*arg0).player_standings[iu].x3_u.x0.set_x3_b0(ext::Player_GetCostumeId(i) as u8);
             (*arg0).player_standings[iu].x4 = ext::Player_GetNametagSlotID(i);
             (*arg0).player_standings[iu].x1C = ext::Player_GetCoins(i);
             (*arg0).player_standings[iu].x28 = ext::Player_GetMatchFrameCount(i);
@@ -2326,8 +2326,8 @@ pub unsafe fn gm_80166378(arg0_raw: *mut MatchEnd) {
             (*arg0).player_standings[iu].x24 = ext::Player_GetFalls(i);
             (*arg0).player_standings[iu].team = ext::Player_GetTeam(i) as u8;
             (*arg0).player_standings[iu].percent = ext::Player_GetDamage(i) as u16;
-            (*arg0).player_standings[iu].anon_3.anon_0.set_x3_b6(ext::Player_800353BC(i) as u8);
-            (*arg0).player_standings[iu].anon_3.anon_0.set_x3_b7(ext::Player_GetMoreFlagsBit2(i) as u8);
+            (*arg0).player_standings[iu].x3_u.x0.set_x3_b6(ext::Player_800353BC(i) as u8);
+            (*arg0).player_standings[iu].x3_u.x0.set_x3_b7(ext::Player_GetMoreFlagsBit2(i) as u8);
             (*arg0).player_standings[iu].x9 = ext::Player_GetRemainingHP(i) as i8 as u8;
             let cnt = ext::Player_GetJoystickCountByIndex(i, 0) as u32;
             let a = 0.031f32;
@@ -2456,7 +2456,7 @@ pub unsafe fn gm_80166A98(
 
     // Apply player color to all 4 players?
     for i in 0..4usize {
-        me.player_standings[i].anon_3.anon_0.set_x3_b0(arg1);
+        me.player_standings[i].x3_u.x0.set_x3_b0(arg1);
     }
 
     me.player_standings[0].score = score0;
@@ -2770,7 +2770,7 @@ pub unsafe fn gm_SetupRulesDefaults(rules: *mut StartMeleeRules) {
     r.item_freq = 2;
 
     r.x20 = u64::MAX;
-    r.x28 = 0;
+    r.it_kind = 0;
 
     r.set_x3_1(1);
 
@@ -2864,6 +2864,16 @@ pub unsafe fn gm_80167BC8(vs_data: *mut VsModeData) {
                 v.start.players[i].defense_ratio = crate::gm::LBL_803B7930[((v.start.players[i].handicap as u8).wrapping_sub(1)) as usize][1];
             }
             _ => {}
+        }
+        // TARGET_PC: a launched scene's own ratios (a replay's Game Start records the console's PlayerInitData
+        // attack/defense ratios); -1 = the rules' handicap result above
+        let r = crate::tu::gmscenelaunch::ext::SceneLaunch_PlayerRatio(i as i32, 0);
+        if r >= 0.0 {
+            v.start.players[i].attack_ratio = r;
+        }
+        let r = crate::tu::gmscenelaunch::ext::SceneLaunch_PlayerRatio(i as i32, 1);
+        if r >= 0.0 {
+            v.start.players[i].defense_ratio = r;
         }
     }
 

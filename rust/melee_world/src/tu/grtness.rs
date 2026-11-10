@@ -19,7 +19,7 @@ use std::sync::atomic::{AtomicPtr, Ordering};
 use std::sync::{Once, RwLock};
 
 use melee_types::{
-    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_GObjEvent, HSD_Generator, HSD_JObj, HSD_PadStatus, HSD_psAppSRT, Item, StageCallbacks, StageCallbacks_anon_135,
+    DynamicsDesc, GrJoint, Ground, HSD_GObj, HSD_GObjEvent, HSD_Generator, HSD_JObj, HSD_PadStatus, HSD_psAppSRT, Item, StageCallbacks, StageCallbacks_x10,
     StageData, StageInfo, Vec3, CollLine_Ceiling, CollLine_Floor, CollLine_LeftWall, CollLine_RightWall, HSD_PAD_A,
     JOBJ_HIDDEN, JOBJ_MTX_DIRTY, JOBJ_MTX_INDEP_SRT, JOBJ_USER_DEF_MTX, QuakeKind_Small, Gr_Kind_TNess,
 };
@@ -79,21 +79,21 @@ fn init_tables() {
             callback1: Some(grTNess_80222788),
             gobj_proc: Some(grTNess_80222790),
             callback3: Some(grTNess_80222794),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[1] = StageCallbacks {
             on_init: Some(stageGObj1_OnInit),
             callback1: Some(grTNess_80222878),
             gobj_proc: Some(stageGObj1_GObjProc),
             callback3: Some(grTNess_802228A0),
-            anon_10: StageCallbacks_anon_135 { flags: 0x00000000 },
+            x10: StageCallbacks_x10 { flags: 0x00000000 },
         };
         t[2] = StageCallbacks {
             on_init: Some(stageGObj2_OnInit),
             callback1: Some(grTNess_802227E8),
             gobj_proc: Some(stageGObj2_GObjProc),
             callback3: Some(grTNess_80222824),
-            anon_10: StageCallbacks_anon_135 { flags: u32::to_be(0xC0000000) },
+            x10: StageCallbacks_x10 { flags: u32::to_be(0xC0000000) },
         };
         CALLBACKS.write(t);
         let mut sd: StageData = core::mem::zeroed();
@@ -214,7 +214,7 @@ pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
     pub extern "C" fn grTNess_802228A0(a0: *mut HSD_GObj) {  }
 
 /// grTNess_802228A4 (gr/grtness.c:172)
-    pub extern "C" fn grTNess_802228A4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+    pub extern "C" fn grTNess_802228A4(a0: i32) -> *mut melee_types::lbColl_80008D30_arg1 { core::ptr::null_mut() }
 
 /// grTNess_802228AC (gr/grtness.c:177)
     pub extern "C" fn grTNess_802228AC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

@@ -192,7 +192,7 @@ pub mod ext {
     fn it_8026E15C(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E15C(a0, a1) };
     fn it_8026E414(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E414(a0, a1) };
     fn it_8026E8C4(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: Option<unsafe extern "C" fn(*mut HSD_GObj)>) => unsafe { crate::tu::itgroundcoll::it_8026E8C4(a0, a1, a2) };
-    fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
+    fn it_8026EECC(a0: *mut HSD_GObj, a1: isize) => unsafe { crate::tu::itdraw::it_8026EECC(a0, a1) };
     fn it_8027163C(a0: *mut HSD_GObj) => unsafe { crate::tu::itcoll::it_8027163C(a0) };
     fn it_80272860(a0: *mut HSD_GObj, a1: f32, a2: f32) => unsafe { crate::itlib3::it_80272860(&mut *((*a0).user_data as *mut Item), a1, a2) };
     fn it_802756D0(a0: *mut HSD_GObj) => unsafe { crate::itlib::it_802756d0(&mut *((*a0).user_data as *mut Item)) };
@@ -271,7 +271,7 @@ pub unsafe extern "C" fn it_802F13B4(gobj: *mut HSD_GObj, arg1: i32) {
         ext::HSD_JObjSetFlagsAll((*jobj).next, JOBJ_HIDDEN);
         ext::HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN);
     }
-    ext::it_8026EECC(gobj, arg1);
+    ext::it_8026EECC(gobj, arg1 as isize);
 }
 
 /// `itCoin_Logic116_Spawned`: clear the coin's variables and go to motion 0.
@@ -565,7 +565,7 @@ pub unsafe extern "C" fn it_802F2094(arg0: *mut HSD_GObj, pos: *mut Vec3, arg2: 
     spawn.x3C_damage = 0;
     spawn.x0_parent_gobj = null_mut();
     spawn.x4_parent_gobj2 = null_mut();
-    spawn.x44_flag.anon_0.set_b0(1);
+    spawn.x44_flag.x0.set_b0(1);
     spawn.x40 = 0;
 
     let gobj = ext::Item_80268B18(&mut spawn);

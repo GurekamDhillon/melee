@@ -109,6 +109,7 @@ pub unsafe extern "C" fn gm_801B8C30(scene: *mut GameModeState) {
 }
 
 /// Player setup callback (`gm_ptr::fn_801B8C5C`, round 3), in the `extern "C"` form `gmVsMelee_EnterVs` takes.
+#[inline(never)] // compared by address: keep one copy
 pub unsafe extern "C" fn fn_801B8C5C(arg0: *mut PlayerInitData, unused: *mut PlayerInitData) {
     melee_core::ct!("fn_801B8C5C");
     crate::gm_ptr::fn_801B8C5C(&mut *arg0, unused);

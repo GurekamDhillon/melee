@@ -120,13 +120,13 @@ pub fn ftLk_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*ea).attackairlw_hit_anim_frame_end = ext::lbAnim_8001E8F8(ext::ftData_80085E50(fp, 72));
         ftLk_Init_OnLoadForCLink(fp);
         let da = (*fp).dat_attrs as *const ftLk_DatAttrs;
-        ext::it_8026B3F8(*item_list.add(0), (*da).x48);
-        ext::it_8026B3F8(*item_list.add(1), (*da).x2C);
-        ext::it_8026B3F8(*item_list.add(2), (*da).xBC);
-        ext::it_8026B3F8(*item_list.add(3), (*da).xC);
-        ext::it_8026B3F8(*item_list.add(4), (*da).x10);
+        ext::it_8026B3F8((*item_list.add(0)).article as *mut ::core::ffi::c_void, (*da).x48);
+        ext::it_8026B3F8((*item_list.add(1)).article as *mut ::core::ffi::c_void, (*da).x2C);
+        ext::it_8026B3F8((*item_list.add(2)).article as *mut ::core::ffi::c_void, (*da).xBC);
+        ext::it_8026B3F8((*item_list.add(3)).article as *mut ::core::ffi::c_void, (*da).xC);
+        ext::it_8026B3F8((*item_list.add(4)).article as *mut ::core::ffi::c_void, (*da).x10);
         let t = *fh::fighter_804d6540().add((*fp).kind as usize);
-        ext::ftParts_800753D4(fp, (*t).x0, *item_list.add(6));
+        ext::ftParts_800753D4(fp, (*t).x0, (*item_list.add(6)).joint as *mut ::core::ffi::c_void);
     }
 }
 

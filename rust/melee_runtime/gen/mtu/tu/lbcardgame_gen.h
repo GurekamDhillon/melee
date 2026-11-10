@@ -14,12 +14,12 @@ u8 HSD_GObj_JObjKind;
 u32 OS_BusClock;
 __typeof__(int) CARDProbe(__typeof__(long) a0) { T(1000); T((u32) a0); return (__typeof__(int)) (fv()); }
 __typeof__(struct HSD_GObj *) GObj_Create(__typeof__(unsigned short) a0, __typeof__(unsigned char) a1, __typeof__(unsigned char) a2) { T(1001); T((u32) a0); T((u32) a1); T((u32) a2); return (__typeof__(struct HSD_GObj *)) (pick_HSD_GObj()); }
-void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
-void GObj_SetupGXLinkMax(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, int)) a1, __typeof__(unsigned int) a2) { T(1003); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); }
+void GObj_SetupGXLink(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned char) a2, __typeof__(unsigned int) a3) { T(1002); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); T((u32) a3); }
+void GObj_SetupGXLinkMax(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *, long long)) a1, __typeof__(unsigned int) a2) { T(1003); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); }
 __typeof__(struct HSD_CObj *) HSD_CObjLoadDesc(__typeof__(union HSD_CObjDesc *) a0) { T(1004); T(PI((const void*) a0)); return (__typeof__(struct HSD_CObj *)) (0); }
 void HSD_GObjObject_80390A70(__typeof__(struct HSD_GObj *) a0, __typeof__(unsigned char) a1, __typeof__(void *) a2) { T(1005); T(PI((const void*) a0)); T((u32) a1); T(PI((const void*) a2)); }
-void HSD_GObj_803910D8(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1006); T(PI((const void*) a0)); T((u32) a1); }
-void HSD_GObj_JObjCallback(__typeof__(struct HSD_GObj *) a0, __typeof__(int) a1) { T(1007); T(PI((const void*) a0)); T((u32) a1); }
+void HSD_GObj_803910D8(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1006); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
+void HSD_GObj_JObjCallback(__typeof__(struct HSD_GObj *) a0, __typeof__(long long) a1) { T(1007); T(PI((const void*) a0)); T((u32) a1); T((u32) ((u64) a1 >> 32)); }
 __typeof__(struct HSD_GObjProc *) HSD_GObj_SetupProc(__typeof__(struct HSD_GObj *) a0, __typeof__(void (*)(struct HSD_GObj *)) a1, __typeof__(unsigned char) a2) { T(1008); T(PI((const void*) a0)); T(FI((const void*) a1)); T((u32) a2); return (__typeof__(struct HSD_GObjProc *)) (0); }
 void HSD_JObjAnimAll(__typeof__(struct HSD_JObj *) a0) { T(1009); T(PI((const void*) a0)); }
 __typeof__(struct HSD_JObj *) HSD_JObjLoadJoint(__typeof__(struct HSD_Joint *) a0) { T(1010); T(PI((const void*) a0)); return (__typeof__(struct HSD_JObj *)) (pick_HSD_JObj()); }
@@ -153,7 +153,7 @@ static void fill_HSD_JObj(HSD_JObj* p)
     p->mtx[i0][i1] = rg();
     }
     }
-    p->id = fv();
+    p->id = fv64();
 }
 static void hash_HSD_JObj(const HSD_JObj* p)
 {
@@ -166,7 +166,7 @@ static void hash_HSD_JObj(const HSD_JObj* p)
     HM(PI((const void*) p->parent));
     HM(PI((const void*) p->child));
     HM((u32) p->flags);
-    for (i0 = 0; i0 < 8; i0++) HM(((const unsigned char*) &p->u)[i0]);
+    for (i0 = 0; i0 < 8; i0 += 8) { unsigned long long v8 = *(const unsigned long long*) (((const unsigned char*) &p->u) + i0); u32 t8 = PI((const void*) v8); if (t8 != 0xFFFFFFFFu) HM(t8); else { int b8; for (b8 = 0; b8 < 8; b8++) HM((u32) ((v8 >> (8 * b8)) & 0xFF)); } }
     HM(B(p->rotate.x));
     HM(B(p->rotate.y));
     HM(B(p->rotate.z));
@@ -186,7 +186,7 @@ static void hash_HSD_JObj(const HSD_JObj* p)
     HM(PI((const void*) p->envelopemtx));
     HM(PI((const void*) p->aobj));
     HM(PI((const void*) p->robj));
-    HM((u32) p->id);
+    { u32 pk_ = PI((const void*) (unsigned long long) p->id); if (pk_ != 0xFFFFFFFFu) HM(pk_); else { HM((u32) p->id); HM((u32) ((unsigned long long) p->id >> 32)); } }
 }
 
 static void fillg_all(void)

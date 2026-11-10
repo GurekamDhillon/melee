@@ -99,7 +99,7 @@ unsafe fn fn_80037F00(attacker_fp: *mut Fighter, fp: *mut Fighter, ev: *mut ft_8
 
     fp.dmg.x18d8.set_x11_b0(arg3 as u8);
 
-    if ext::ifMagnify_802FB6E8(fp.player_id as u8) != 0 {
+    if ext::ifMagnify_802FB6E8(fp.player_idx as u8) != 0 {
         fp.dmg.x18d8.set_x11_b1(1);
     }
 
@@ -116,7 +116,7 @@ unsafe fn fn_80037F00(attacker_fp: *mut Fighter, fp: *mut Fighter, ev: *mut ft_8
 
     if !attacker_fp.is_null() {
         let gobj = (*attacker_fp).gobj;
-        if ext::ft_80089914(gobj, fp.dmg.x18d4.x3 as i32) && (fp.victim_gobj.is_null() || gobj != fp.victim_gobj) {
+        if ext::ft_80089914(gobj, fp.dmg.x18d4.x0.x2073 as i32) && (fp.victim_gobj.is_null() || gobj != fp.victim_gobj) {
             fp.dmg.x18d8.set_x11_b4(1);
         }
         // The C stores through `ev` unconditionally here; a null `ev` with an attacker is a
@@ -144,7 +144,7 @@ pub unsafe fn pl_80038144(
     let victim_fp = get_fighter(victim_gobj);
     let mut attacked_from_behind: i32 = 0;
     let ev = x18d4;
-    let ev_id = ev.anon_0.x2073;
+    let ev_id = ev.x0.x2073;
 
     if !attacker_fp.is_null() && ev_id != 0 {
         let facing_dir = (*victim_fp).facing_dir;
@@ -157,9 +157,9 @@ pub unsafe fn pl_80038144(
         }
 
         ext::pl_800410F4(
-            (*attacker_fp).player_id as i32,
+            (*attacker_fp).player_idx as i32,
             (*attacker_fp).is_sub_fighter() as i32,
-            (*victim_fp).player_id as i32,
+            (*victim_fp).player_idx as i32,
             (*victim_fp).is_sub_fighter() as i32,
             ev_id as i32,
         );
@@ -167,21 +167,21 @@ pub unsafe fn pl_80038144(
 
     if attack_instance == 0 || (*victim_fp).dmg.x18ec_instancehitby != attack_instance {
         // *(s32*) &victim_fp->dmg.x18d4 = ev.x2070_int: a 4-byte copy of the GC-ordered bytes.
-        (*victim_fp).dmg.x18d4 = core::mem::transmute::<Struct2070, UnkPlBonusBits>(ev);
+        (*victim_fp).dmg.x18d4 = core::mem::transmute::<Struct2070, Struct2070>(ev);
         (*victim_fp).dmg.x18ec_instancehitby = attack_instance;
 
-        if !attacker_fp.is_null() && (*victim_fp).dmg.x18d4.x3 != 0 {
+        if !attacker_fp.is_null() && (*victim_fp).dmg.x18d4.x0.x2073 != 0 {
             if ext::gm_8016B168() && ext::gm_8016B0D4() && (*attacker_fp).team == (*victim_fp).team {
-                ext::pl_80040D8C((*attacker_fp).player_id as i32, (*attacker_fp).is_sub_fighter() as i32);
+                ext::pl_80040D8C((*attacker_fp).player_idx as i32, (*attacker_fp).is_sub_fighter() as i32);
             }
 
             let attack_id = ev_id;
             let mut attack_id2 = attack_id;
             if attack_id2 < 0x64 {
-                let acp = crate::stale::action_stats((*attacker_fp).player_id as i32);
-                let ev_reload: Struct2070 = core::mem::transmute::<UnkPlBonusBits, Struct2070>((*victim_fp).dmg.x18d4);
+                let acp = crate::stale::action_stats((*attacker_fp).player_idx as i32);
+                let ev_reload: Struct2070 = core::mem::transmute::<Struct2070, Struct2070>((*victim_fp).dmg.x18d4);
                 let fp2 = get_fighter(attacker_gobj);
-                let acp2 = crate::stale::action_stats((*get_fighter(attacker_gobj)).player_id as i32);
+                let acp2 = crate::stale::action_stats((*get_fighter(attacker_gobj)).player_idx as i32);
                 let ev_hits = ev_reload;
                 crate::pltrick::pl_80037bc0(&mut acp2.hits, &ev_hits);
 
@@ -189,24 +189,24 @@ pub unsafe fn pl_80038144(
                     acp2.hits.x1A8 = acp2.hits.x1A8.wrapping_add(1);
                 }
 
-                attack_id2 = ev_reload.anon_0.x2073;
+                attack_id2 = ev_reload.x0.x2073;
                 if attack_id2 == 0x63 {
-                    ext::pl_8003FE40((*fp2).player_id as i32, (*fp2).is_sub_fighter() as i32);
+                    ext::pl_8003FE40((*fp2).player_idx as i32, (*fp2).is_sub_fighter() as i32);
                 }
 
                 // The C reads `ev_data->x10_b7` unconditionally here.
                 if (*ev_data).x10_b7() == 0
                     && acp2.attacks.by_attack_counts[attack_id2 as usize]
-                        > acp2.anon_358.x358_hits.by_attack_counts[attack_id2 as usize]
+                        > acp2.x358.x358_hits.by_attack_counts[attack_id2 as usize]
                 {
                     let ev_best = ev_reload;
-                    crate::pltrick::pl_80037bc0(&mut acp2.anon_358.x358_hits, &ev_best);
+                    crate::pltrick::pl_80037bc0(&mut acp2.x358.x358_hits, &ev_best);
 
                     if !ev_data.is_null() && (*ev_data).x10_b0() != 0 {
-                        acp2.anon_358.x358_hits.x1A8 = acp2.anon_358.x358_hits.x1A8.wrapping_add(1);
+                        acp2.x358.x358_hits.x1A8 = acp2.x358.x358_hits.x1A8.wrapping_add(1);
                     }
 
-                    ext::pl_8003DFF4((*fp2).player_id as i32, (*fp2).is_sub_fighter() as i32, attack_id2 as i32);
+                    ext::pl_8003DFF4((*fp2).player_idx as i32, (*fp2).is_sub_fighter() as i32, attack_id2 as i32);
                 }
 
                 if attacked_from_behind != 0 {
@@ -221,42 +221,42 @@ pub unsafe fn pl_80038144(
                     acp.x570 = acp.x570.wrapping_add(1);
                 }
 
-                let h_player = (*victim_fp).player_id as i32;
-                let x18d4_x3 = (*victim_fp).dmg.x18d4.x3 as i32;
+                let h_player = (*victim_fp).player_idx as i32;
+                let x18d4_x3 = (*victim_fp).dmg.x18d4.x0.x2073 as i32;
                 assert!((0..8).contains(&h_player), "pltrick.c:0x7E: 0 <= h_player && h_player < 8");
                 if x18d4_x3 < 0x64 {
                     acp.x504[x18d4_x3 as usize] |= (<i32 as melee_core::ppc::Ppc>::pshl(1i32, ((h_player as u8)) as i64)) as u8;
                 }
 
-                ext::pl_8003FE64((*attacker_fp).player_id as i32, (*attacker_fp).is_sub_fighter() as i32);
+                ext::pl_8003FE64((*attacker_fp).player_idx as i32, (*attacker_fp).is_sub_fighter() as i32);
                 ext::pl_8003ED0C(
-                    (*attacker_fp).player_id as i32,
+                    (*attacker_fp).player_idx as i32,
                     (*attacker_fp).is_sub_fighter() as i32,
-                    (*victim_fp).player_id as i32,
+                    (*victim_fp).player_idx as i32,
                     (*victim_fp).is_sub_fighter() as i32,
                     (*victim_fp).dmg.x1830_percent,
                 );
                 let xc = (*ev_data).xC;
                 ext::pl_8003EA40(
-                    (*attacker_fp).player_id as i32,
+                    (*attacker_fp).player_idx as i32,
                     (*attacker_fp).is_sub_fighter() as i32,
-                    (*victim_fp).player_id as i32,
+                    (*victim_fp).player_idx as i32,
                     (*victim_fp).is_sub_fighter() as i32,
                     xc,
                 );
                 ext::pl_800403FC(
-                    (*attacker_fp).player_id as i32,
+                    (*attacker_fp).player_idx as i32,
                     (*attacker_fp).is_sub_fighter() as i32,
-                    (*victim_fp).player_id as i32,
+                    (*victim_fp).player_idx as i32,
                     (*victim_fp).is_sub_fighter() as i32,
-                    (*victim_fp).dmg.x18d4.x3 as i32,
+                    (*victim_fp).dmg.x18d4.x0.x2073 as i32,
                 );
                 ext::pl_80040FBC(
-                    (*attacker_fp).player_id as i32,
+                    (*attacker_fp).player_idx as i32,
                     (*attacker_fp).is_sub_fighter() as i32,
-                    (*victim_fp).player_id as i32,
+                    (*victim_fp).player_idx as i32,
                     (*victim_fp).is_sub_fighter() as i32,
-                    (*victim_fp).dmg.x18d4.x3 as i32,
+                    (*victim_fp).dmg.x18d4.x0.x2073 as i32,
                 );
             }
         }
@@ -284,7 +284,7 @@ pub fn pl_80037b2c(s: &plActionStats, h_player: i32, idx: i32) -> i32 {
 /// The pointer leaves `st`'s own borrow there (the caller's plActionStats owns the memory).
 pub fn pl_80037bc0(st: &mut plAttackStats, ev: &Struct2070) {
     melee_core::ct!("pl_80037bc0");
-    let e = unsafe { &ev.anon_0 };
+    let e = unsafe { &ev.x0 };
     st.total = st.total.wrapping_add(1);
     let k = e.x2073 as usize;
     let c = unsafe { st.by_attack_counts.as_mut_ptr().add(k) };
@@ -310,8 +310,8 @@ pub fn pl_80037bc0(st: &mut plAttackStats, ev: &Struct2070) {
 pub fn pl_80037c60(g: G, prev: Struct2070) {
     melee_core::ct!("pl_80037c60");
     let f = fp(g);
-    let acp = action_stats(f.player_id as i32);
-    let e = unsafe { f.x2070.anon_0 };
+    let acp = action_stats(f.player_idx as i32);
+    let e = unsafe { f.x2070.x0 };
     if e.x2072_b2() != 0 {
         acp.set_x5BC_b0(1);
     }
@@ -325,7 +325,7 @@ pub fn pl_80037c60(g: G, prev: Struct2070) {
         acp.set_x5BC_b3(1);
     }
     let id = e.x2073;
-    if id != 0 && id != unsafe { prev.anon_0.x2073 } {
+    if id != 0 && id != unsafe { prev.x0.x2073 } {
         if id as i32 >= StatsAttack_Count as i32 {
             if f.is_sub_fighter() == 0 {
                 by_attack_hi_inc(acp, id);
@@ -342,14 +342,14 @@ pub fn pl_80037df4(g: G, ev: &Struct2070) {
     melee_core::ct!("pl_80037df4");
     let f = fp(g);
     let local = *ev;
-    pl_80037bc0(&mut action_stats(f.player_id as i32).attacks, &local);
+    pl_80037bc0(&mut action_stats(f.player_idx as i32).attacks, &local);
 }
 
 /// `pl_80037ECC`.
 pub fn pl_80037ecc(g: G) {
     melee_core::ct!("pl_80037ecc");
     let f = fp(g);
-    let a = &mut action_stats(f.player_id as i32).attacks;
+    let a = &mut action_stats(f.player_idx as i32).attacks;
     a.x1A8 = a.x1A8.wrapping_add(1);
 }
 
@@ -359,9 +359,9 @@ pub fn pl_80037ecc(g: G) {
 pub fn pl_800384dc(g: G, ev: Struct2070, ev_data: *mut ft_800898B4_t) {
     melee_core::ct!("pl_800384dc");
     let f = fp(g);
-    let id = unsafe { ev.anon_0.x2073 };
+    let id = unsafe { ev.x0.x2073 };
     if id != 0 && id < 0x64 {
-        let (pid, sub) = (f.player_id as i32, f.is_sub_fighter() as i32);
+        let (pid, sub) = (f.player_idx as i32, f.is_sub_fighter() as i32);
         let acp = action_stats(pid);
         pl_80037bc0(&mut acp.hits, &ev);
         if !ev_data.is_null() && unsafe { (*ev_data).x10_b0() } != 0 {
@@ -370,7 +370,7 @@ pub fn pl_800384dc(g: G, ev: Struct2070, ev_data: *mut ft_800898B4_t) {
         if id == 0x63 {
             h::pl_8003fe40(pid, sub);
         }
-        let best = unsafe { &mut acp.anon_358.x358_hits };
+        let best = unsafe { &mut acp.x358.x358_hits };
         if unsafe { (*ev_data).x10_b7() } == 0
             && acp.attacks.by_attack_counts[id as usize] > best.by_attack_counts[id as usize]
         {
@@ -381,7 +381,7 @@ pub fn pl_800384dc(g: G, ev: Struct2070, ev_data: *mut ft_800898B4_t) {
             h::pl_8003dff4(pid, sub, id as i32);
         }
     }
-    unsafe { f.x2074.anon_10.anon_0.set_x2084_b7(1) };
+    unsafe { f.x2074.x10.x0.set_x2084_b7(1) };
 }
 
 /// `pl_80038628_fp`.
@@ -431,7 +431,7 @@ pub fn pl_800386d8(arg0: &plActionStats, arg1: i32) -> u32 {
     melee_core::ct!("pl_800386d8");
     // The C indexes `by_attack_hi[arg1]` with ids past its 65 entries (plbonus.c reads 0x65..0x72: the bonus checks),
     // so it reads the plActionStats words that follow the union (x504.., x568..). Same address arithmetic here.
-    unsafe { core::ptr::addr_of!(arg0.anon_358.anon_0.by_attack_hi).cast::<u32>().add(arg1 as usize).read_unaligned() }
+    unsafe { core::ptr::addr_of!(arg0.x358.x0.by_attack_hi).cast::<u32>().add(arg1 as usize).read_unaligned() }
 }
 
 /// `pl_800386E8`.

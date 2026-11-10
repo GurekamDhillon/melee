@@ -52,8 +52,8 @@ fn itacc_matches_c() {
                 items[i].xDC8_word.flags.set_x13((r.u() & 1) as _);
                 items[i].xDC8_word.flags.set_xC((r.u() & 1) as _);
                 unsafe {
-                    items[i].xDCD_flag.anon_0.set_b7((r.u() & 1) as _);
-                    items[i].anon_daa.xDAA_flag.anon_0.set_b1((r.u() & 1) as _);
+                    items[i].xDCD_flag.x0.set_b7((r.u() & 1) as _);
+                    items[i].xDAA.xDAA_flag.x0.set_b1((r.u() & 1) as _);
                 }
                 for m in 0..2 {
                     items[i].xACC_itemHurtbox[m].set_skip_update_pos((r.u() & 1) as _);
@@ -118,8 +118,8 @@ fn itacc_matches_c() {
                 unsafe {
                     h.w(it.xDC8_word.flags.x13() as u32);
                     h.w(it.xDC8_word.flags.xC() as u32);
-                    h.w(it.xDCD_flag.anon_0.b7() as u32);
-                    h.w(it.anon_daa.xDAA_flag.anon_0.b1() as u32);
+                    h.w(it.xDCD_flag.x0.b7() as u32);
+                    h.w(it.xDAA.xDAA_flag.x0.b1() as u32);
                 }
                 h.w(it.xD0C as u32);
                 h.w(it.xAC8_hurtboxNum as u32);

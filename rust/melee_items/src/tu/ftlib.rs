@@ -38,7 +38,7 @@ pub unsafe fn ftLib_GetGroundAir(gobj: *mut HSD_GObj) -> i32 {
 
 pub unsafe fn ftLib_GetPlayerIndex(gobj: *mut HSD_GObj) -> u8 {
     melee_core::ct!("ftLib_GetPlayerIndex");
-    (*GET_FIGHTER(gobj)).player_id as u8
+    (*GET_FIGHTER(gobj)).player_idx as u8
 }
 
 pub unsafe fn ftLib_GetTeam(gobj: *mut HSD_GObj) -> i32 {

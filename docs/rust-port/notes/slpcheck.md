@@ -295,3 +295,21 @@ Open groups: Pichu (28 files; a fighter hit by Pichu is off by 0.0375 = 3 x 1/80
 percent 1.0 / hitlag 6 vs 0; independent of the pad feed); Link hookshot tether pull (AirCatchHit 361, 1-ULP); Great Bay
 Tingle RNG draw order on frame 4185 (console draws Tingle's Randi first); Ice Climbers (10, mostly action on stages 3/32);
 singles on Pokemon Stadium (frozen) and other stages. One pilot Mewtwo file is a corrupt record (bit flips), not a bug.
+
+## slpfuzz round 3 (2026-11-10, port/slpfuzz3): keep set 19 -> 33 of 109 frame-exact
+
+Fix (slpcheck only): records from Slippi versions before the raw C-stick bytes (0x41/0x42) left them 0, so the UCF
+0.84 cardinal snap never fired on the C-stick. A C-stick ASDI held on a cardinal then moved 2.9625 instead of 3.0;
+that is the Pichu group's 0.0375 = 3 x 1/80. A processed 0.9875 with 0 on the other axis is now taken as raw 80
+(`SLPCHECK_RAWC_OFF=1` keeps the old behaviour). Pichu goes from 0 to 14 of 28. No file that matched before diverges.
+
+Test glue: `#[inline(never)]` on callbacks compared by address (`geno_cb_nothing`, `t_cam`, `t_input`,
+`gm_Mode_Lab_OnLoad`, the `ft_8008A2BC` ext). tu_geno_game(_g) back the motion-state tables (pointers in Rust,
+arrays in the C) before the fuzz fill. tu_script_game_t skips `ScriptGame_AreaDrain`, where a fuzzed negative drain
+index is undefined in the C. tu_script_game_t still differs from the C data on ScriptGame_StageSlotProcEnd and
+ScriptParts_Draw/Forget/Tint (third hash, every case).
+
+Open: Pichu (14 files left); Ice Climbers (0/10); Link (2/12, hookshot 361 1-ULP); Great Bay fox file
+6ae56a1d4e8c2675493473ce now diverges at frame 1624 (Fox up-B hold, action 236, airborne: console x +0.958 on the
+third frame, engine stays put) before the Tingle RNG frame 4185. That looks like a collision or platform-carry change
+from the upstream sync merge (9f7cc5634), not the RNG order. Kirby and Mewtwo singles are still open.

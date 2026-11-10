@@ -311,14 +311,17 @@ pub unsafe fn percent(slot: i32, bench: i32, delta_milli: i32) -> i32 {
     if !(0..4).contains(&slot) || crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
         return -1;
     }
-    let add = |p: f32| (p + delta_milli as f32 / 1000.0).clamp(0.0, 999.0);
+    let add = |p: f32| {
+        let v = p + delta_milli as f32 / 1000.0;
+        if v < 0.0 { 0.0 } else if v > 999.0 { 999.0 } else { v }
+    };
     if bench != 0 && pl::tag_inplace() {
         if pl::TAG_SLOT[slot as usize] == 0 {
             return -1;
         }
         let v = add(pl::TAG_BENCH_PCT[slot as usize]);
         pl::TAG_BENCH_PCT[slot as usize] = v;
-        return (v * 1000.0) as i32;
+        return melee_core::ppc::fctiwz_f32(v * 1000.0);
     }
     let p = &*pl::Player_GetPtrForSlot(slot);
     let g = p.player_entity[p.transformed[(bench != 0) as usize] as usize];
@@ -329,5 +332,5 @@ pub unsafe fn percent(slot: i32, bench: i32, delta_milli: i32) -> i32 {
     let v = add(f.dmg.x1830_percent);
     f.dmg.x1830_percent = v;
     pl::Player_SetHPByIndex(slot, f.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(v));
-    (v * 1000.0) as i32
+    melee_core::ppc::fctiwz_f32(v * 1000.0)
 }

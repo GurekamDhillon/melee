@@ -14,6 +14,8 @@
 
 use gd_ui_enc::*;
 
+use envoy_data::*;
+
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
     core::arch::wasm32::unreachable()
@@ -79,9 +81,34 @@ fn label(n: u32, t: &str) {
     unsafe { gd_ui_node_label(n, t.as_ptr(), t.len() as u32) };
 }
 
-unsafe fn saved() -> Option<[i32; 16]> {
-    let mut r = [0i32; 16];
-    if gd_ui_envoy_saved(r.as_mut_ptr(), 16) == 16 { Some(r) } else { None }
+unsafe fn saved() -> Option<[i32; REC_WORDS]> {
+    let mut r = [0i32; REC_WORDS];
+    if gd_ui_envoy_saved(r.as_mut_ptr(), REC_WORDS as u32) == REC_WORDS as i32 { Some(r) } else { None }
+}
+
+/// The run record's words (envoy_sim): 32, the worn crests at 14..20 (index + 1), the pool digest at 20.
+const REC_WORDS: usize = 32;
+const REC_CRESTS: usize = 14;
+/// envoy_sim's view (160 words); the layout is documented at envoy_sim `publish`.
+const VW: usize = 160;
+const OFFER_STOCK: i32 = 1000;
+
+/// "FOX: Power, Keen" for one fighter's worn crests (`ids`: index + 1, 0 empty).
+fn crest_line(b: &mut Buf, who: &str, ids: &[i32]) {
+    b.s(who).s(": ");
+    let mut any = false;
+    for &c in ids {
+        if (1..=POOL_LEN as i32).contains(&c) {
+            if any {
+                b.s(", ");
+            }
+            b.s(POOL[c as usize - 1].name);
+            any = true;
+        }
+    }
+    if !any {
+        b.s("no crests");
+    }
 }
 
 /// (Re)build the camp's node tree for what is true now.
@@ -96,8 +123,8 @@ unsafe fn camp_build() {
     label(root, "ENVOY CAMP");
     gd_ui_node_rect(root, 220.0, 165.0, 200.0, 0.0);
     let list = gd_ui_node(root, NODE_LIST, 2);
-    let mut v = [0i32; 64];
-    let view = gd_ui_envoy(v.as_mut_ptr(), 64) == 0 && v[0] == 0x454E_5659;
+    let mut v = [0i32; VW];
+    let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[0] == 0x454E_5659;
     let ended = view && (v[1] == 2 || v[1] == 3);
     let has = saved().is_some();
     let no_brawl = gd_ui_envoy_state() & ST_NO_BRAWL != 0;
@@ -238,8 +265,8 @@ unsafe fn camp_draw(e: &mut Enc<16384>, vw: f32, vh: f32) {
     e.rect(0.0, 0.0, vw, vh, 0x0B0B_12FF);
     let cx = vw * 0.5;
     e.text_ex(cx, 90.0, ROLE_TITLE, WHITE, ALIGN_CENTER, 0.0, "ENVOY");
-    let mut v = [0i32; 64];
-    let view = gd_ui_envoy(v.as_mut_ptr(), 64) == 0 && v[0] == 0x454E_5659;
+    let mut v = [0i32; VW];
+    let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[0] == 0x454E_5659;
     let mut l1 = Buf::new();
     let mut l2 = Buf::new();
     let mut col = WHITE;
@@ -263,6 +290,29 @@ unsafe fn camp_draw(e: &mut Enc<16384>, vw: f32, vh: f32) {
     }
     e.text_ex(cx, 160.0, ROLE_VALUE, col, ALIGN_CENTER, 0.0, l1.str());
     e.text_ex(cx, 190.0, ROLE_LABEL, DIM, ALIGN_CENTER, vw - 80.0, l2.str());
+    // the pair's crests (the live run's, else the saved run's)
+    let crests = if c.after_fight && view && v[1] != 0 {
+        let mut w = [0i32; 8];
+        w[..6].copy_from_slice(&v[22..28]);
+        w[6] = v[6];
+        w[7] = v[7];
+        Some(w)
+    } else {
+        saved().map(|r| {
+            let mut w = [0i32; 8];
+            w[..6].copy_from_slice(&r[REC_CRESTS..REC_CRESTS + 6]);
+            w[6] = r[11];
+            w[7] = r[12];
+            w
+        })
+    };
+    if let Some(w) = crests {
+        for f in 0..2 {
+            let mut b = Buf::new();
+            crest_line(&mut b, ck_name(w[6 + f]), &w[f * 3..f * 3 + 3]);
+            e.text_ex(cx, 222.0 + f as f32 * 24.0, ROLE_LABEL, DIM, ALIGN_CENTER, vw - 80.0, b.str());
+        }
+    }
     if c.party {
         let (x, y, w) = (cx - 380.0, vh - 190.0, 760.0);
         e.slice(SLICE_FILL_R6, x, y, w, 120.0, PANEL);
@@ -300,16 +350,6 @@ const CK_NAMES: [&str; 26] = [
     "CAPTAIN FALCON", "DONKEY KONG", "FOX", "MR. GAME & WATCH", "KIRBY", "BOWSER", "LINK", "LUIGI", "MARIO", "MARTH",
     "MEWTWO", "NESS", "PEACH", "PIKACHU", "ICE CLIMBERS", "JIGGLYPUFF", "SAMUS", "YOSHI", "ZELDA", "SHEIK", "FALCO",
     "YOUNG LINK", "DR. MARIO", "ROY", "PICHU", "GANONDORF",
-];
-const UP_NAMES: [&str; 6] = ["POWER", "GUARD", "EXTRA STOCK", "HEAVY", "SWIFT", "SPRING"];
-const UP_STAT: [&str; 6] = ["Damage dealt", "Damage taken", "Stock pool", "Weight", "Run speed", "Jump height"];
-const UP_TEXT: [&str; 6] = [
-    "Both fighters hit harder.",
-    "Both fighters take less damage.",
-    "One more shared stock, now.",
-    "Both fighters are harder to launch.",
-    "Both fighters walk and dash faster.",
-    "Both fighters jump higher.",
 ];
 /// Gr_Kind -> stage name for the shift card.
 fn stage_name(k: i32) -> &'static str {
@@ -367,15 +407,6 @@ impl Buf {
             self.s(unsafe { core::str::from_utf8_unchecked(&c) });
         }
         self
-    }
-    /// x1000 as "x1.20"
-    fn x(&mut self, v: i32) -> &mut Self {
-        self.s("x").i(v / 1000).s(".");
-        let f = (v % 1000).abs() / 10;
-        if f < 10 {
-            self.s("0");
-        }
-        self.i(f)
     }
     fn str(&self) -> &str {
         unsafe { core::str::from_utf8_unchecked(&self.b[..self.n]) }
@@ -436,9 +467,9 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             e.submit();
             return;
         }
-        let mut v = [0i32; 64];
+        let mut v = [0i32; VW];
         // only an armed run has a HUD or a between-fights line: with the mods loaded and no run armed, VS is retail
-        if gd_ui_envoy(v.as_mut_ptr(), 64) != 0 || v[0] != 0x454E_5659 || st & ST_ARMED == 0 {
+        if gd_ui_envoy(v.as_mut_ptr(), VW as u32) != 0 || v[0] != 0x454E_5659 || st & ST_ARMED == 0 {
             return;
         }
         let mut t = [0i32; 10];
@@ -459,7 +490,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
             let mut hv = v;
             if petey {
-                hv[27] = -1; // no stage shifts in the Petey fight: no countdown
+                hv[76] = -1; // no stage shifts in the Petey fight: no countdown
             }
             hud(e, &hv, vw);
             if petey {
@@ -469,7 +500,11 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 reward(e, &v, vw, vh);
             } else if v[30] >= 0 && v[31] < 150 {
                 let mut s = Buf::new();
-                s.s("TOOK ").s(UP_NAMES[(v[30].clamp(0, 5)) as usize]);
+                if v[30] == OFFER_STOCK {
+                    s.s("TOOK +1 STOCK");
+                } else {
+                    s.s(wearer_name(&v, v[39])).s(" WEARS ").s(POOL[v[30].clamp(0, POOL_LEN as i32 - 1) as usize].name);
+                }
                 let a = 1.0 - ease((v[31] as f32 - 110.0) / 40.0);
                 e.slice(SLICE_FILL_R6, vw * 0.5 - 160.0, 96.0, 320.0, 44.0, alpha(PANEL, a));
                 e.text_ex(vw * 0.5, 104.0, ROLE_VALUE, alpha(GOOD, a), ALIGN_CENTER, 0.0, s.str());
@@ -486,7 +521,11 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
     }
 }
 
-unsafe fn hud(e: &mut Enc<16384>, v: &[i32; 64], _vw: f32) {
+fn wearer_name(v: &[i32; VW], w: i32) -> &'static str {
+    ck_name(if w == 1 { v[7] } else { v[6] })
+}
+
+unsafe fn hud(e: &mut Enc<16384>, v: &[i32; VW], _vw: f32) {
     let (fight, total, pool) = (v[2] + 1, v[3], v[4]);
     let x = 24.0;
     let y = 24.0;
@@ -515,9 +554,9 @@ unsafe fn hud(e: &mut Enc<16384>, v: &[i32; 64], _vw: f32) {
     let mut s = Buf::new();
     s.s(ck_name(v[6])).s(" + ").s(ck_name(v[7]));
     e.text(x + 14.0, y + 84.0, ROLE_LABEL, DIM, s.str());
-    if v[27] >= 0 {
+    if v[76] >= 0 {
         let mut s = Buf::new();
-        s.s("STAGE SHIFT IN ").i((v[27] + 59) / 60).s("s");
+        s.s("STAGE SHIFT IN ").i((v[76] + 59) / 60).s("s");
         e.text(x + 14.0, y + 106.0, ROLE_LABEL, DIM, s.str());
     }
 }
@@ -552,48 +591,59 @@ unsafe fn petey_bars(e: &mut Enc<16384>, p: &[i32; 12], vw: f32) {
     e.text_ex(x + w, y + 42.0, ROLE_LABEL, DIM, ALIGN_RIGHT, 0.0, "CAGE");
 }
 
-unsafe fn reward(e: &mut Enc<16384>, v: &[i32; 64], vw: f32, vh: f32) {
+/// The crest offer: three cards, each naming its wearer (redesign Q4); a `+1 stock` card when the pool is at 1.
+unsafe fn reward(e: &mut Enc<16384>, v: &[i32; VW], vw: f32, vh: f32) {
     e.rect(0.0, 0.0, vw, vh, 0x0000_00B0);
     let cx = vw * 0.5;
     let mut s = Buf::new();
-    s.s("FIGHT ").i(v[2]).s(" CLEARED  -  CHOOSE AN UPGRADE");
-    e.text_ex(cx, 200.0, ROLE_TITLE, WHITE, ALIGN_CENTER, vw - 40.0, s.str());
+    s.s("FIGHT ").i(v[2]).s(" CLEARED  -  CHOOSE A CREST");
+    e.text_ex(cx, 170.0, ROLE_TITLE, WHITE, ALIGN_CENTER, vw - 40.0, s.str());
     let secs = (v[12] + 59) / 60;
     let mut s = Buf::new();
     s.i(secs).s("s");
-    e.text_ex(cx, 240.0, ROLE_VALUE, if secs <= 5 { ACCENT } else { DIM }, ALIGN_CENTER, 0.0, s.str());
+    e.text_ex(cx, 210.0, ROLE_VALUE, if secs <= 5 { ACCENT } else { DIM }, ALIGN_CENTER, 0.0, s.str());
     let gap = 24.0;
     let w = ((vw - 60.0 - 2.0 * gap) / 3.0).min(340.0);
-    let h = 260.0;
+    let h = 300.0;
     let x0 = cx - (3.0 * w + 2.0 * gap) * 0.5;
-    let y = 290.0;
+    let y = 250.0;
     for i in 0..3 {
-        let id = v[13 + i].clamp(0, 5) as usize;
+        let id = v[13 + i];
         let x = x0 + i as f32 * (w + gap);
         let sel = v[11] == i as i32;
         e.slice(SLICE_FILL_R14, x, y, w, h, if sel { 0x1C1C_30F0 } else { 0x0E0E_18E8 });
         if sel {
             e.slice(SLICE_LINE_R14_3, x, y, w, h, ACCENT);
         }
-        e.text_ex(x + w * 0.5, y + 24.0, ROLE_TITLE, if sel { WHITE } else { DIM }, ALIGN_CENTER, w - 20.0, UP_NAMES[id]);
-        e.text_ex(x + w * 0.5, y + 90.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 20.0, UP_STAT[id]);
-        let (bf, af) = (v[16 + i], v[19 + i]);
-        let mut s = Buf::new();
-        if id == 2 {
-            s.i(bf).s("  ->  ").i(af);
+        let tx = x + w * 0.5;
+        if id == OFFER_STOCK {
+            e.text_ex(tx, y + 24.0, ROLE_TITLE, if sel { WHITE } else { DIM }, ALIGN_CENTER, w - 20.0, "+1 STOCK");
+            e.text_ex(tx, y + 90.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 20.0, "SHARED POOL");
+            let mut s = Buf::new();
+            s.i(v[19]).s("  ->  ").i(v[19] + 1);
+            e.text_ex(tx, y + 120.0, ROLE_VALUE, GOOD, ALIGN_CENTER, w - 20.0, s.str());
+            e.text_ex(tx, y + 180.0, ROLE_BODY, DIM, ALIGN_CENTER, w - 30.0, "One more shared stock, now.");
         } else {
-            s.x(bf).s("  ->  ").x(af);
+            let c = &POOL[id.clamp(0, POOL_LEN as i32 - 1) as usize];
+            e.text_ex(tx, y + 24.0, ROLE_TITLE, if sel { WHITE } else { DIM }, ALIGN_CENTER, w - 20.0, c.name);
+            e.text_ex(tx, y + 80.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 20.0, FAMILIES[c.family as usize]);
+            let mut s = Buf::new();
+            s.s("WORN BY ").s(wearer_name(v, v[16 + i]));
+            e.text_ex(tx, y + 110.0, ROLE_VALUE, GOOD, ALIGN_CENTER, w - 20.0, s.str());
+            e.text_ex(tx, y + 160.0, ROLE_BODY, WHITE, ALIGN_CENTER, w - 30.0, c.rule);
+            let word = if c.gives != W_NONE { c.gives } else { c.reads };
+            if word != W_NONE {
+                e.text_ex(tx, y + 228.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, GLOSSARY[word as usize]);
+            }
         }
-        e.text_ex(x + w * 0.5, y + 120.0, ROLE_VALUE, GOOD, ALIGN_CENTER, w - 20.0, s.str());
-        e.text_ex(x + w * 0.5, y + 180.0, ROLE_BODY, DIM, ALIGN_CENTER, w - 30.0, UP_TEXT[id]);
         if i == 0 {
-            e.text_ex(x + w * 0.5, y + h - 30.0, ROLE_LABEL, 0x6060_70FF, ALIGN_CENTER, 0.0, "(taken on timeout)");
+            e.text_ex(tx, y + h - 26.0, ROLE_LABEL, 0x6060_70FF, ALIGN_CENTER, 0.0, "(taken on timeout)");
         }
     }
-    e.text_ex(cx, y + h + 40.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, "LEFT / RIGHT choose     A take");
+    e.text_ex(cx, y + h + 36.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, "LEFT / RIGHT choose     A take");
 }
 
-unsafe fn between(e: &mut Enc<16384>, v: &[i32; 64], vw: f32, _vh: f32) {
+unsafe fn between(e: &mut Enc<16384>, v: &[i32; VW], vw: f32, _vh: f32) {
     let cx = vw * 0.5;
     let (w, h) = (720.0, 92.0);
     let y = 18.0;
@@ -613,7 +663,9 @@ unsafe fn between(e: &mut Enc<16384>, v: &[i32; 64], vw: f32, _vh: f32) {
         }
         1 => {
             l1.s("ENVOY  -  NEXT: FIGHT ").i(v[2] + 1).s("/").i(v[3]).s("   pool ").i(v[4]);
-            l2.s(ck_name(v[6])).s(" + ").s(ck_name(v[7])).s("   -  any stage, Start");
+            crest_line(&mut l2, ck_name(v[6]), &v[22..25]);
+            l2.s("   ");
+            crest_line(&mut l2, ck_name(v[7]), &v[25..28]);
         }
         _ => {
             l1.s("ENVOY RUN  -  pick your pair, any stage, Start");

@@ -1,0 +1,12 @@
+# The Envoy crest pool as data (full-game-plan.md 4.2): pool.toml -> build.rs (envoy_lint) -> pool_gen.rs, a no_std
+# library used by envoy_sim and envoy_ui. A helper library, not a mod: build_mods.sh skips it.
+#   cargo test --manifest-path rust/mods/envoy_data/Cargo.toml --target x86_64-pc-windows-msvc   (the lint tests)
+[package]
+name = "envoy_data"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+publish = false
+build = "build.rs"
+
+[workspace]

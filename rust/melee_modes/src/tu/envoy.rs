@@ -18,7 +18,7 @@ use melee_fighter::tu::player as pl;
 use melee_types::*;
 
 pub const PLAN_WORDS: usize = 32;
-pub const VIEW_WORDS: usize = 64;
+pub const VIEW_WORDS: usize = 160;
 
 // plan layout (i32 words)
 pub const P_ACTIVE: usize = 0;
@@ -70,10 +70,10 @@ pub static mut DOOR_OPEN: i32 = 0;
 pub static mut LAUNCH_VS: i32 = 0;
 
 /// The run record (envoy_sim publishes it in VIEW[REC_AT..]; the host keeps the last one on disk).
-pub const REC_WORDS: usize = 16;
+pub const REC_WORDS: usize = 32;
 pub const REC_AT: usize = 40;
 pub const REC_MAGIC: i32 = 0x454E_5652; // "ENVR"
-pub const REC_VERSION: i32 = 1;
+pub const REC_VERSION: i32 = 2; // 2: crests (milestone 1); a v1 record is dropped
 /// The record the host holds (loaded from disk, updated from the view); `SAVED_LEN` 0 = no run saved.
 pub static mut SAVED: [i32; REC_WORDS] = [0; REC_WORDS];
 pub static mut SAVED_LEN: i32 = 0;
@@ -260,11 +260,19 @@ pub const UP_WEIGHT: i32 = 3;
 pub const UP_SPEED: i32 = 4;
 pub const UP_JUMP: i32 = 5;
 
-/// A live upgrade on `slot` (both tag fighters). `v` is x1000 for ratios / multipliers, a count for stocks.
+/// `apply`'s fighter selector (`which | APPLY_MAIN`): the attribute multipliers touch only the main (entity 0) or the
+/// partner (entity 1) of the tag pair; without one, both. Ratios and stocks are per slot.
+pub const APPLY_MAIN: i32 = 0x100;
+pub const APPLY_PARTNER: i32 = 0x200;
+
+/// A live upgrade on `slot` (both tag fighters, or one with `APPLY_MAIN` / `APPLY_PARTNER`). `v` is x1000 for
+/// ratios / multipliers, a count for stocks.
 pub unsafe fn apply(slot: i32, which: i32, v: i32) -> i32 {
     if !(0..4).contains(&slot) || crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
         return -1;
     }
+    let sel = (which >> 8) & 3;
+    let which = which & 0xFF;
     let m = v as f32 / 1000.0;
     match which {
         UP_ATTACK => pl::Player_SetAttackRatio(slot, m),
@@ -274,8 +282,8 @@ pub unsafe fn apply(slot: i32, which: i32, v: i32) -> i32 {
             if !(0.25..=4.0).contains(&m) {
                 return -2;
             }
-            for f in fighters(slot) {
-                if f.is_null() {
+            for (i, f) in fighters(slot).into_iter().enumerate() {
+                if f.is_null() || (sel != 0 && sel != i as i32 + 1) {
                     continue;
                 }
                 let a = &mut (*f).co_attrs;
@@ -293,4 +301,33 @@ pub unsafe fn apply(slot: i32, which: i32, v: i32) -> i32 {
         _ => return -2,
     }
     0
+}
+
+/// Add `delta_milli` / 1000 percent to `slot`'s active fighter (`bench` 0) or its benched tag partner (`bench` 1),
+/// clamped to 0..=999 (a heal is a negative delta). Returns the new percent x1000, or -1 (no such fighter). The
+/// bench is the sleeping sub-fighter (its own percent, carried in by the swap), or in the in-place prototype the
+/// benched percent the swap restores.
+pub unsafe fn percent(slot: i32, bench: i32, delta_milli: i32) -> i32 {
+    if !(0..4).contains(&slot) || crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
+        return -1;
+    }
+    let add = |p: f32| (p + delta_milli as f32 / 1000.0).clamp(0.0, 999.0);
+    if bench != 0 && pl::tag_inplace() {
+        if pl::TAG_SLOT[slot as usize] == 0 {
+            return -1;
+        }
+        let v = add(pl::TAG_BENCH_PCT[slot as usize]);
+        pl::TAG_BENCH_PCT[slot as usize] = v;
+        return (v * 1000.0) as i32;
+    }
+    let p = &*pl::Player_GetPtrForSlot(slot);
+    let g = p.player_entity[p.transformed[(bench != 0) as usize] as usize];
+    if g.is_null() || (*g).user_data.is_null() {
+        return -1;
+    }
+    let f = &mut *((*g).user_data as *mut Fighter);
+    let v = add(f.dmg.x1830_percent);
+    f.dmg.x1830_percent = v;
+    pl::Player_SetHPByIndex(slot, f.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(v));
+    (v * 1000.0) as i32
 }

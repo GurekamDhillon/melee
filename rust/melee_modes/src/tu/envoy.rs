@@ -47,6 +47,13 @@ pub static mut ROSTER: [i32; 2] = [-1, -1];
 /// The run is armed: only then does `match_begin` rewrite a VS match (and the sim mod publish a plan). Set by the
 /// camp's Continue / New run, cleared by Abandon, by the end of the run and by entering the main menu.
 pub static mut ARMED: i32 = 0;
+
+/// Whether the run is armed: the camp's flag, or the headless audit knob `MELEE_ENVOY_ARM=1` (a scene / `--match` start has
+/// no menus to arm it from).
+pub fn armed() -> i32 {
+    static KNOB: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if unsafe { ARMED } != 0 || *KNOB.get_or_init(|| std::env::var_os("MELEE_ENVOY_ARM").is_some()) { 1 } else { 0 }
+}
 /// A rewritten fight has started since the run was armed: the camp replaces the VS CSS (the results land in it).
 pub static mut CAMP_DUE: i32 = 0;
 /// The 1-P menu's extra Envoy row exists (a presentation mod registered the camp scene with `gd_ui_envoy_door`).
@@ -140,7 +147,7 @@ fn ratio(v: i32) -> f32 {
 
 /// Rewrite the VS match about to start from the plan (no-op without one, outside VS, and for a replay).
 pub unsafe fn match_begin(d: *mut StartMeleeData) {
-    if PLAN[P_ACTIVE] == 0 || ARMED == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
+    if PLAN[P_ACTIVE] == 0 || armed() == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
         return;
     }
     let d = &mut *d;

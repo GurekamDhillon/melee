@@ -270,6 +270,16 @@ fn has_start_section(b: &[u8]) -> bool {
     false
 }
 
+/// A short UTF-8 name from mod memory (at most 64 bytes).
+fn mod_str(c: &Caller<'_, HostData>, ptr: u32, n: u32) -> Option<String> {
+    if n == 0 || n > 64 {
+        return None;
+    }
+    let m = mem_of(c)?;
+    let b = m.data(c).get(ptr as usize..ptr as usize + n as usize)?;
+    std::str::from_utf8(b).ok().map(str::to_string)
+}
+
 fn mem_of(caller: &Caller<'_, HostData>) -> Option<Memory> {
     caller.get_export("memory").and_then(Extern::into_memory)
 }
@@ -667,6 +677,19 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         n as i32
     });
     w!("gd_envoy_roster", |i: i32| -> i32 { if !(0..2).contains(&i) { return -1 } unsafe { melee_modes::tu::envoy::ROSTER[i as usize] } });
+    // Brawl audio from the player's own disc (melee_audio::brawl, docs/rust-port/notes/brawl-audio.md). Presentation
+    // only: the play calls always answer 0 (fire and forget, silent without the disc) so a mod's sim cannot branch on
+    // whether the disc is present; gd_brawl_present is for UI only.
+    w!("gd_brawl_present", || -> i32 { melee_audio::brawl::present() as i32 });
+    w!("gd_brawl_music", |c: Caller<'_, HostData>, ptr: u32, n: u32| -> i32 {
+        if let Some(name) = mod_str(&c, ptr, n) { melee_audio::brawl::play_music(&name); }
+        0
+    });
+    w!("gd_brawl_music_stop", |frames: i32| -> i32 { melee_audio::brawl::stop_music(frames.clamp(0, 600) as u32); 0 });
+    w!("gd_brawl_sfx", |c: Caller<'_, HostData>, ptr: u32, n: u32| -> i32 {
+        if let Some(name) = mod_str(&c, ptr, n) { melee_audio::brawl::play_sfx(&name); }
+        0
+    });
     w!("gd_envoy_apply", |slot: i32, which: i32, v: i32| -> i32 { unsafe { melee_modes::tu::envoy::apply(slot, which, v) } });
     // a crest's heal / Burning tick: percent delta (x1000) on the slot's active fighter (bench 0) or its benched partner
     w!("gd_envoy_percent", |slot: i32, bench: i32, delta: i32| -> i32 { unsafe { melee_modes::tu::envoy::percent(slot, bench, delta) } });

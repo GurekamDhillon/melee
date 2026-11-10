@@ -148,6 +148,8 @@ pub struct Input {
     pub physical_l: f32,
     pub physical_r: f32,
     pub physical_complete: bool,
+    /// The record carries the raw C-stick bytes (0x41/0x42); older files only have the processed floats.
+    pub raw_c: bool,
 }
 
 /// The console's post-frame state (parity checking, `MELEE_SLP_PARITY=1`).
@@ -410,6 +412,7 @@ pub fn parse_into(rp: &mut Replay, d: &[u8], want_post: bool) -> Result<(), Pars
                         r.raw[1] = if sz >= 0x40 { b[0x40] as i8 } else { 0 };
                         r.raw[2] = if sz >= 0x41 { b[0x41] as i8 } else { 0 };
                         r.raw[3] = if sz >= 0x42 { b[0x42] as i8 } else { 0 };
+                        r.raw_c = sz >= 0x42;
                         if sz >= 0x42 {
                             r.physical_buttons = ((b[0x31] as u16) << 8) | b[0x32] as u16;
                             r.physical_l = bef(&b[0x33..]);

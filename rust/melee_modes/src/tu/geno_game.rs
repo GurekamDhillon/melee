@@ -6766,6 +6766,7 @@ pub unsafe extern "C" fn geno_cb_anim_loop(mut gobj: *mut Fighter_GObj) {
     }
 }
 
+#[inline(never)] // compared by address (input_cb): keep one copy
 pub unsafe extern "C" fn geno_cb_nothing(mut gobj: *mut Fighter_GObj) { melee_core::ct!("geno_cb_nothing");}
 
 pub unsafe extern "C" fn geno_cb_phys_air(mut gobj: *mut Fighter_GObj) {

@@ -139,6 +139,7 @@ impl Audio {
     /// Once per video frame: the game's own per-frame audio (`lbAudioAx_80027DF8`), then the 5 ms
     /// frames the device is owed.
     pub fn tick(&mut self) {
+        crate::engine_audio::petey_music(); // the live path (the golden one runs it from dsp_frame)
         // an engine scene runs `lbAudioAx_80027DF8` itself (gmscene's loop); the stand-in scenes get it here
         if !crate::engine_audio::take_frame_ran() {
             sim::game_frame();

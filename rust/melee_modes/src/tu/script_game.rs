@@ -240,7 +240,7 @@ crate::ext_fns! {extern "C" fn Script_OnePSpawn(a0 : :: core :: ffi :: c_int, a1
 crate::ext_fns! {extern "C" fn Script_OnePOffline() -> :: core :: ffi :: c_int;}
 crate::ext_fns! {extern "C" fn Script_StageModelFor(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::ext_fns! {extern "C" fn Script_StageModelDraw(a0 : :: core :: ffi :: c_int, a1 : * mut [:: core :: ffi :: c_float ; 4], a2 : :: core :: ffi :: c_float, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float) -> ();}
-crate::ext_fns! {extern "C" fn ft_8008A2BC(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ft_8008A2BC__b456f9;}
+crate::ext_fns! {#[inline(never)] /* compared by address in the script bench: keep one copy */ extern "C" fn ft_8008A2BC(a0 : * mut Fighter_GObj) -> () = crate::tu::adapt::ft_8008A2BC__b456f9;}
 crate::ext_fns! {extern "C" fn ftColl_80076640(a0 : * mut Fighter, a1 : * mut :: core :: ffi :: c_float) -> :: core :: ffi :: c_int;}
 crate::ext_fns! {extern "C" fn ftColl_80079AB0(a0 : * mut Fighter, a1 : * mut HitCapsule, a2 : :: core :: ffi :: c_uint, a3 : :: core :: ffi :: c_float, a4 : :: core :: ffi :: c_float, a5 : :: core :: ffi :: c_float, a6 : :: core :: ffi :: c_float) -> :: core :: ffi :: c_float;}
 crate::ext_fns! {extern "C" fn ftColl_8007B760(a0 : * mut Fighter_GObj, a1 : :: core :: ffi :: c_int) -> ();}

@@ -260,11 +260,17 @@ fn cage_pct(i: usize) -> f32 {
     100.0 * unsafe { B.cage[i] }.max(0) as f32 / CAGE_HP as f32
 }
 
+/// Bumped by every [`tick`] of a live Petey match (presentation: the host plays Brawl's boss music while it moves).
+pub static HEARTBEAT: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+/// The Brawl stream sound Petey's fight plays (Brawl's own boss battle theme), by its name in the sound archive.
+pub const BOSS_MUSIC: &str = "snd_bgm_X18_BOSSBATTLE";
+
 /// Per logic frame, after the post chain (next to `tag_swap::tick`).
 pub unsafe fn tick() {
     if !active() {
         return;
     }
+    HEARTBEAT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     let carrier = fighter_of(B.carrier_slot, 0);
     if carrier.is_null() {
         return;

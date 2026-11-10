@@ -8,6 +8,12 @@ use melee_modes::tu::geno_game as m;
 use melee_modes::tu::ext_hook::EXT_HOOK;
 use melee_types as Q;
 use core::ffi::c_void;
+
+/// Tables the C side declares as arrays are pointers on the Rust side: back each with `n` zeroed entries before the fill.
+unsafe fn back_table<T>(p: *mut *mut T, n: usize) {
+    if (*p).is_null() { *p = std::alloc::alloc_zeroed(std::alloc::Layout::array::<T>(n).unwrap()) as *mut T; }
+}
+
 #[repr(C, align(16))]
 struct A16([u8; 64]);
 
@@ -35093,6 +35099,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::geno_test_target)) = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::HSD_GObjPLinkHead)) = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::HSD_GObj_CurrentInvokedProc)) = 0usize as _;
+    back_table(core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable), 400);
     for i0 in 0..400 {
         (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
         (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
@@ -35103,6 +35110,7 @@ unsafe fn fill_all() {
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftCa_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
+    back_table(core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList), 400);
     for i0 in 0..400 {
         (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
         (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
@@ -35113,6 +35121,7 @@ unsafe fn fill_all() {
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftData_MotionStateList)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
+    back_table(core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable), 400);
     for i0 in 0..400 {
         (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
         (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
@@ -35123,6 +35132,7 @@ unsafe fn fill_all() {
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFc_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
+    back_table(core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable), 400);
     for i0 in 0..400 {
         (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
         (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
@@ -35133,6 +35143,7 @@ unsafe fn fill_all() {
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftFx_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
+    back_table(core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable), 400);
     for i0 in 0..400 {
         (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
         (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
@@ -35143,6 +35154,7 @@ unsafe fn fill_all() {
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMr_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
+    back_table(core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable), 400);
     for i0 in 0..400 {
         (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
         (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
@@ -35154,6 +35166,7 @@ unsafe fn fill_all() {
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftMs_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
     (*core::ptr::addr_of_mut!(m::ext::ftPartsTable)) = 0usize as _;
+    back_table(core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable), 400);
     for i0 in 0..400 {
         (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
         (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
@@ -35164,6 +35177,7 @@ unsafe fn fill_all() {
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftPr_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
+    back_table(core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable), 400);
     for i0 in 0..400 {
         (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
         (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;
@@ -35174,6 +35188,7 @@ unsafe fn fill_all() {
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
         { let d = rt::next(&mut rt::ST); (*(*core::ptr::addr_of_mut!(m::ext::ftSk_Init_MotionStateTable)).add(i0 as usize)).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
     }
+    back_table(core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable), 400);
     for i0 in 0..400 {
         (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).anim_id = rt::draw_int(&mut rt::ST) as _;
         (*(*core::ptr::addr_of_mut!(m::ext::ftZd_Init_MotionStateTable)).add(i0 as usize)).x4_flags = rt::draw_int(&mut rt::ST) as _;

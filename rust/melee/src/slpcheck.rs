@@ -509,6 +509,12 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     // the replay's own widescreen camera code (if its Gecko list has one) changes the logic's off-screen test
     let ws = slp::widescreen_code(&file.gecko);
     melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
+    // Slippi's "Disable Wobbling" (C2 800DB880 / C2 800DBBD4, CaptureWait/CaptureDamage, with C2 8008F090): the 4th Ice Climbers
+    // hit on the grabbed fighter breaks the grab. slpfuzz5: every Ice Climbers file in the keep set carries it and diverged on the
+    // break (CaptureCut on the console, CaptureDamage in the engine). SLPCHECK_WOBBLE=off: leave it out.
+    if slp::gecko_has(&file.gecko, 0x800D_B880) && std::env::var("SLPCHECK_WOBBLE").as_deref() != Ok("off") {
+        melee_core::codes::enable(melee_core::codes::NO_WOBBLE);
+    }
     melee_core::codes::set_ps_camera_independent_monitor(slp::ps_camera_independent_monitor_code(&file.gecko));
     melee_core::codes::set_ps_preload_transformations(slp::ps_preload_transformations(&file));
     melee_core::codes::set_ps_freeze_at_entry(slp::ps_freeze_at_entry_code(&file.gecko));

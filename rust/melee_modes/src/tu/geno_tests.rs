@@ -4330,8 +4330,10 @@ pub unsafe extern "C" fn test_geno_v1_inert() -> i32 {
     return 0 as i32;
 }
 
+#[inline(never)] // compared by address: keep one copy
 pub unsafe extern "C" fn t_cam(mut gobj: *mut Fighter_GObj) { melee_core::ct!("t_cam");}
 
+#[inline(never)] // compared by address: keep one copy
 pub unsafe extern "C" fn t_input(mut gobj: *mut Fighter_GObj) { melee_core::ct!("t_input");}
 
 pub unsafe extern "C" fn t_v2_setup() -> *mut TestGenoState {

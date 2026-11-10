@@ -13,6 +13,7 @@
 //!   the 64 SFX nodes, fades, pan/ITD, the HPS music stream) and `axdriver.c` (the 96 scripted
 //!   virtual voices running `smash2.sem`), plus the `lbaudio_ax.c` entry points.
 //! - [`disc`]: the files those read from the user's disc (whole SSM/SEM files, ranged HPS reads).
+//! - [`brawl`]: Brawl music / sfx read at runtime from the player's own Brawl disc, added after the mix.
 //! - [`sim`]: the process-wide sound the ported game code's sfx hooks call, and the per-video-frame
 //!   output tick.
 //!
@@ -21,6 +22,7 @@
 
 pub mod adpcm;
 pub mod ax;
+pub mod brawl;
 pub mod disc;
 pub mod fx;
 pub mod layout;

@@ -295,3 +295,88 @@ Open groups: Pichu (28 files; a fighter hit by Pichu is off by 0.0375 = 3 x 1/80
 percent 1.0 / hitlag 6 vs 0; independent of the pad feed); Link hookshot tether pull (AirCatchHit 361, 1-ULP); Great Bay
 Tingle RNG draw order on frame 4185 (console draws Tingle's Randi first); Ice Climbers (10, mostly action on stages 3/32);
 singles on Pokemon Stadium (frozen) and other stages. One pilot Mewtwo file is a corrupt record (bit flips), not a bug.
+
+## slpfuzz round 3 (2026-11-10, port/slpfuzz3): keep set 19 -> 33 of 109 frame-exact
+
+Fix (slpcheck only): records from Slippi versions before the raw C-stick bytes (0x41/0x42) left them 0, so the UCF
+0.84 cardinal snap never fired on the C-stick. A C-stick ASDI held on a cardinal then moved 2.9625 instead of 3.0;
+that is the Pichu group's 0.0375 = 3 x 1/80. A processed 0.9875 with 0 on the other axis is now taken as raw 80
+(`SLPCHECK_RAWC_OFF=1` keeps the old behaviour). Pichu goes from 0 to 14 of 28. No file that matched before diverges.
+
+Test glue: `#[inline(never)]` on callbacks compared by address (`geno_cb_nothing`, `t_cam`, `t_input`,
+`gm_Mode_Lab_OnLoad`, the `ft_8008A2BC` ext). tu_geno_game(_g) back the motion-state tables (pointers in Rust,
+arrays in the C) before the fuzz fill. tu_script_game_t skips `ScriptGame_AreaDrain`, where a fuzzed negative drain
+index is undefined in the C. tu_script_game_t still differs from the C data on ScriptGame_StageSlotProcEnd and
+ScriptParts_Draw/Forget/Tint (third hash, every case).
+
+Open: Pichu (14 files left); Ice Climbers (0/10); Link (2/12, hookshot 361 1-ULP); Great Bay fox file
+6ae56a1d4e8c2675493473ce now diverges at frame 1624 (Fox up-B hold, action 236, airborne: console x +0.958 on the
+third frame, engine stays put) before the Tingle RNG frame 4185. That looks like a collision or platform-carry change
+from the upstream sync merge (9f7cc5634), not the RNG order. Kirby and Mewtwo singles are still open.
+
+## slpfuzz round 4 (2026-11-10, port/slpfuzz4): keep set 33 -> 35 of 109 frame-exact
+
+Bisect of the Great Bay fox file 6ae56a1d4e8c2675493473ce (fast profile): 7ec67b37e first divergence frame 6895;
+9f7cc5634 (mrg2, the upstream-sync merge), 2734199e4 and b45ebbb72 frame 1624. A regression of 9f7cc5634.
+
+Cause: the regenerated melee_types turned `itTincleAttributes.x0` (f32) and `itWhispyAppleAttributes.x0` ([u8; 4]) into
+`itSpecialAttrsHead*`. Item special attributes are a word-swapped block cast to the record, so with an 8-byte pointer every
+later field read one word early: Tingle spawned at (175, 0.8) instead of (39, 200) from frame -123 on, and its balloon wall
+(the line Fox's up-B hold was pushed by) was elsewhere. Fix (dat_custom `ptrtable_itemdata`): Tingle and both Whispy apples
+are decoded as their records, as the Kyasarin's already were. An audit of every struct where the regen changed a scalar
+field to a pointer (or back) found no other data-overlaid record that moved (`KinokoAttrs.x8` grew, but it is the last
+field and nothing reads it; the rest are runtime-only structs).
+
+Keep set (114 files, 5 refused) at dcbf9d605 against b45ebbb72: 33 -> 35 match, both Great Bay (the fox file is now
+frame-exact through its last frame, so the "Tingle RNG draw order at 4185" was this layout bug); the 3 other Great Bay
+files diverge 5000-7000 frames later; no file diverges earlier. Per-file baseline (id, character, status, stage, first
+frame/port/field; no names): `_build/slp-lunar/keep/baseline-dcbf9d605.csv`. Compare future runs against it file by file.
+
+| char | match | char | match | char | match | char | match |
+|---|---|---|---|---|---|---|---|
+| Bowser | 6/8 | DK | 2/2 | Falcon | 0/1 | Fox | 5/8 |
+| Ganon | 0/3 | G&W | 2/2 | ICs | 0/10 | Kirby | 1/6 |
+| Link | 2/12 | Mario | 3/4 | Marth | 0/6 | Mewtwo | 0/5 |
+| Ness | 0/5 | Peach | 0/1 | Pichu | 14/28 | Roy | 0/2 |
+| Samus | 0/1 | Sheik | 0/1 | Young Link | 0/3 | Zelda | 0/6 (5 refused) |
+
+## slpfuzz round 5 (2026-11-10, port/slpfuzz5): Disable Wobbling from the replay's own Gecko list
+
+Fix: every Ice Climbers file in the keep set carries Slippi's "Disable Wobbling" (C2 8008F090, 61 lines, in the
+capture-damage path of `ftCo_8008F...`; C2 800DB880 / 800DBBD4 reset the count in the two capture enters). slpcheck never
+armed `codes::NO_WOBBLE`, so the console broke a long grab (CatchCut 218 / CaptureCut 229) where the engine kept
+pummelling. slpcheck now turns the bit on when the list has C2 800DB880 (`codes::enable`, which does not mark the codes
+configured; `SLPCHECK_WOBBLE=off` leaves it out). The engine's count was also wrong; it is now ported from the code words:
+- counts only in 0xDF..0xE4 with a grabber (+0x1A58) that is an Ice Climber (`x2222_b5`, set by `ftPp_Init_OnLoad`);
+- a hit counts when its source (+0x1868) is the grabber itself (id = its +0x2088 attack instance) or an item owned by it
+  (class 6, id = item +0xDA8). Nana's hits do not count (the old port counted only hers);
+- the 4th new id breaks: `ftCo_800DA698(grabber, true)` (the victim goes CaptureCut, as the console's 229), then Nana
+  (`Player_GetEntityAtIndex(slot, 1)`, skipped when `x221F_b1`, `x2219_b5` or `x2071` high nibble 0xD) CatchCut when
+  grounded. An airborne Nana goes to CaptureJump with the code's own speeds: not ported (it logs).
+Keep set (109 files + 5 refused) 35 -> 45 frame-exact against `baseline-dcbf9d605.csv`: Ice Climbers 0 -> 7 of 10, Ganon 0 -> 2,
+Mewtwo 0 -> 1 (their opponents' Ice Climbers); no file that matched diverges. Replays unchanged (392/428, 125/125, 917/917).
+The Ice Climbers 3 left (one 3.19.1 event, 302 codes) are 1-ULP x/y (FMA class). Online play (`slippi_np`,
+which sets NO_WOBBLE) gets the corrected count too.
+
+Triage of the rest (no fix):
+- Pichu x/y off by 0.0375 (5 files): a C-stick flick to a cardinal with no raw C-stick bytes (Slippi before 0x41/0x42).
+  The console moved 0.9875 (raw 79, no UCF snap) where round 3's rule takes raw 80. Not decidable from the record: the
+  same processed input was raw >= 80 in the 15 files round 3 fixed.
+- Pichu hitlag 6/4 vs 0 (2 files, Yoshi's Story): the attacker gets hitlag from something no fighter recorded: a Shy Guy
+  (x = 118, offstage). Shy Guy placement differs; not followed further.
+- Pichu percent +-1 (3 files): offscreen 1%/interval damage timing (camera class).
+- Grab out of a roll / spot dodge / shield (3 files: 2 Pichu, 1 Kirby): on the first CapturePulledLw frame the console's
+  anim frame is the grab timer - 1 (88.4, 133.2, 170.336) and counts down; the engine has 1.0. Once the victim goes
+  CapturePulledHi (y +3.5). All three lists carry C2 800DA9DC (inside fn_800DA8E4: `stb 0,0x2350`, `sth -1,0x2352` on the
+  victim: an older wobble counter in the state vars), which the engine does not run; not proven to be the cause.
+- Kirby/Mewtwo: 3 of the 9 are records with a ~5000-frame hole (frames 3762..8738 etc. missing): not a bug.
+  Mewtwo 342 state frame 7.0 vs 7.0009766 still open.
+- Link (10 files): all AirCatchHit 361 or its exit, 1 ULP. The Dolphin oracle (6acd99d6, slippi 1378) shows the hookshot
+  links equal and only Link's cur_pos.y off by 1 ULP on the exit frame: FMA class (it_802A39FC / it_802A6474).
+- Great Bay (2 Roy, 1 Bowser): not resolved. The oracle on the Bowser file stops at slippi -123 (camera fields differ from
+  frame 0, the usual whole-replay window); a run with `--at` is next. The Roy file's Dolphin run produced nothing in 15
+  minutes. The Tingle RNG order: resolved in round 4 (it was the itTincleAttributes layout), the fox file stays frame-exact.
+- tu_script_game_t: the four functions still differ on the state hash only. Regenerating the oracle (`tuoracle.py
+  script_game_t --build`) no longer fits the committed harness (5000 lines differ: the generator follows the current
+  melee_types bitfield names, the committed harness the older ones; `numActiveParticles` is not in `script_game::ext`).
+  Left as is; the regen needs its own pass.

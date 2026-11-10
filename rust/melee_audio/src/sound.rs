@@ -344,7 +344,9 @@ impl Sound {
             self.trace_in_cb = false;
         }
         self.trace_sub += 1;
-        *self.ax.run_frame(&self.aram)
+        let mut out = *self.ax.run_frame(&self.aram);
+        crate::brawl::mix_into(&mut out); // adds nothing unless Brawl audio plays
+        out
     }
 
     /// How many SSM sounds are loaded (all banks).
@@ -1047,6 +1049,11 @@ impl Sound {
             if let Some(t) = self.trace.as_mut() {
                 t.push(format!("{sub} PSTART {path} {} {}", volume as i32, track));
             }
+        }
+        if crate::brawl::music_on() {
+            // Brawl music holds the music channel (presentation only; never set in replays or the gate)
+            self.stream_stop();
+            return true;
         }
         let opened = self.fs.as_mut().and_then(|fs| fs.open_stream(path));
         if self.stream_vid != -1 {

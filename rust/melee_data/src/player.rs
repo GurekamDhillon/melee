@@ -801,7 +801,7 @@ impl Player {
         if !self.active || !(0..=3).contains(&port) || self.r.ucf_dashback[port as usize] != 1 {
             return false;
         }
-        self.r.version[0] >= 3
+        self.r.version[0] >= 3 && !self.r.ucf_073_list && !self.r.no_ucf_cardinals
     }
 
     /// `gw_Replay_RawStick`
@@ -823,7 +823,7 @@ impl Player {
         if !self.active || !(0..=3).contains(&port) || self.r.ucf_dashback[port as usize] != 1 {
             return 0;
         }
-        if self.r.version[0] >= 3 {
+        if self.r.version[0] >= 3 && !self.r.ucf_073_list {
             return 84;
         }
         if self.env.no_ucf073 {

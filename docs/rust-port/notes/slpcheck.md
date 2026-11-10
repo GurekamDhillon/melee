@@ -246,3 +246,23 @@ What is left in this class (first divergence, from `SLPCHECK_DUMP`; counts on b3
   Fountain, Yoshi's, Final Destination, Dream Land. Not a contraction site in mpcoll/mplib/ftcoll/fighter (all tested). Next: dump the
   collision push and the ECB for one such frame.
 - action 38 vs 358, 41 vs 40, 29 vs 90 and one hitlag 5 vs 8: unchanged, not followed by a 1-ULP drift.
+
+## slpfuzz pilot (2026-11-09, port/slpfuzz): low-tier characters from Lunar Melee
+
+Corpus: `tools/rust-port/slp/lunar_fetch.py` (Lunar Melee public API: one search per character, then ONE bulk-download
+job by replay id; no single-file loop, 429/503 back-off). 351 tournament replays, ~30 each of Pichu, Kirby, Bowser,
+Mewtwo, Ness, Zelda, Game & Watch, Roy, Young Link, Link, Yoshi, DK (3.17.0 and 3.19.1). Files live only in the
+git-ignored workspace `_build/slp/<char>/<replay id>.slp`; `char_report.py` summarises `run_all.sh` output per character.
+
+Result at rust-port e0e53381c: 336 of 351 frame-exact. With this branch: 337 (95.2% of replay frames matched before the
+first divergence). Kirby, Ness, Roy, Yoshi, Young Link, Zelda: all frame-exact.
+
+Fix (slpcheck only): 13 files (two 3.17 events, Gecko lists of 66/86 codes) carry the UCF 0.7x set although they are
+3.x and their dashback word is 1: no 1.0 cardinals (C2 8006B460), UCF SDI, shield SDI, extended shield drop, DBOOC fix.
+The sim ran them as 0.84, so a 0.9875 dash was taken as 1.0 (+0.0175 x on the first dash frame). slpcheck now runs such
+files as UCF 0.73 (`Replay::ucf_073_list`, `slp::gecko_has`), and arms the DBOOC fix only when C2 800D65EC is listed.
+`SLPCHECK_UCF07=off|card` keeps the old behaviour / drops only the cardinals. On those 13: off 4 match, card 0, 0.73 5.
+
+Open: Bowser Koopa Klaw release x (2 files, 20-41 units on the frame 287 -> 282), Rainbow Cruise platform landing (GnW
+dair), Mewtwo action 342 state frame 7.0 vs 7.0009766, 0.7x-list damage exit on a fast stick (38/90 vs 29, 7 files:
+the sim's 0.73 is not exactly these lists), 1-ULP x (FMA class, 3 files).

@@ -421,6 +421,16 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     let seed = file.seed;
     // gw_Replay_ApplyMatch returns r.seed as the match's RNG seed: the Game Start block's Random Seed
     pl.r.seed = seed;
+    // A 3.x file whose Gecko list lacks UCF 0.84's 1.0 cardinals (C2 8006B460, Fighter_procInput+0x750) carries the
+    // 0.7x UCF set (also no SDI/shield SDI/extended shield drop/DBOOC codes): run its UCF ports as 0.73 (slpfuzz pilot:
+    // all 9 such files diverged on a 0.9875 stick dash taken as 1.0)
+    let no_card = !file.gecko.is_empty() && !slp::gecko_has(&file.gecko, 0x8006_B460);
+    // SLPCHECK_UCF07=card: only drop the 1.0 cardinals, keep the rest of 0.84; =off: ignore the list (old behaviour)
+    match std::env::var("SLPCHECK_UCF07").as_deref() {
+        Ok("off") => {}
+        Ok("card") => pl.r.no_ucf_cardinals = no_card,
+        _ => pl.r.ucf_073_list = no_card,
+    }
     // The engine's seam answers 0 for Replay_ApplyMatch (the RNG was zeroed at the match start); answer the file's seed.
     unsafe {
         SLP_SEED = seed;
@@ -448,7 +458,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         // (0.7875, -0.6125) on the first frame of a turn stays SquatWait on the console (Dolphin oracle and Post-Frame).
         // Not Slippi 1.x (2019): that era's UCF was 0.7x, before the 0.8 DBOOC fix; its replays (Gang-Steals 1.7.1) go
         // Squat -> SquatRv where the fix holds SquatWait (action 41 on the console, 40 with the fix).
-        let ucf = file.version[0] >= 2 && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype < 2 && file.dashback[i] == 1));
+        let ucf = file.version[0] >= 2 && (file.gecko.is_empty() || slp::gecko_has(&file.gecko, 0x800D_65EC)) && file.info.as_ref().is_some_and(|g| (0..4).any(|i| g.player(i).ptype < 2 && file.dashback[i] == 1));
         if ucf && std::env::var_os("MELEE_MEX").is_none() {
             std::env::set_var("MELEE_MEX", "ucf_dbooc_squatrv_fix");
         }

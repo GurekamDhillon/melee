@@ -2865,6 +2865,16 @@ pub unsafe fn gm_80167BC8(vs_data: *mut VsModeData) {
             }
             _ => {}
         }
+        // TARGET_PC: a launched scene's own ratios (a replay's Game Start records the console's PlayerInitData
+        // attack/defense ratios); -1 = the rules' handicap result above
+        let r = crate::tu::gmscenelaunch::ext::SceneLaunch_PlayerRatio(i as i32, 0);
+        if r >= 0.0 {
+            v.start.players[i].attack_ratio = r;
+        }
+        let r = crate::tu::gmscenelaunch::ext::SceneLaunch_PlayerRatio(i as i32, 1);
+        if r >= 0.0 {
+            v.start.players[i].defense_ratio = r;
+        }
     }
 
     v.start.rules.set_friendly_fire(((*rules).friendly_fire & 1) as u32);

@@ -19,7 +19,15 @@ pub struct Converted {
 /// Ports keep the file's player index (the engine's hash/fighter slot is the port). A CPU slot stays a CPU slot fed
 /// its recorded pre-frame inputs (`CPU_MODE`): the inputs are the AI's output, and the CPU think still draws the RNG.
 /// UCF toggle words are only recorded (see [`ucf_summary`]); the vanilla sim stays default.
+/// Per-port attack / defense ratios of the Game Start (`SceneLaunch_PlayerRatio`); -1 = unset.
+static mut SLP_RATIO: [[f32; 2]; 6] = [[-1.0; 2]; 6];
+
 pub fn convert(s: &Slp) -> Result<Converted, String> {
+    unsafe {
+        SLP_RATIO = [[-1.0; 2]; 6];
+        melee_modes::tu::gmscenelaunch::ext::hook::SceneLaunch_PlayerRatio =
+            Some(|i, w| if (0..6).contains(&i) && (0..2).contains(&w) { unsafe { SLP_RATIO[i as usize][w as usize] } } else { -1.0 });
+    }
     let cpu_mode = CPU_MODE.load(std::sync::atomic::Ordering::Relaxed);
     let info: &GameInfo = s.info.as_ref().ok_or("the replay has no Game Start block")?;
     let mut notes = Vec::new();
@@ -71,8 +79,10 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         } else {
             p.ckind as i32
         };
-        if p.offense != 1.0 || p.defense != 1.0 || p.scale != 1.0 {
-            notes.push(format!("p{} offense/defense/scale {}/{}/{} not applied", i + 1, p.offense, p.defense, p.scale));
+        // the console's attack / defense ratios (PlayerInitData +0x18/+0x1C) go in through SceneLaunch_PlayerRatio
+        unsafe { SLP_RATIO[i] = [p.offense, p.defense] };
+        if p.scale != 1.0 {
+            notes.push(format!("p{} model scale {} not applied", i + 1, p.scale));
         }
         if p.damage_start != 0 || p.damage_spawn != 0 {
             notes.push(format!("p{} start/spawn damage {}/{} not applied", i + 1, p.damage_start, p.damage_spawn));

@@ -706,8 +706,37 @@ impl GxShim {
     pub fn set_chan_ctrl(&mut self, chan: u32, enable: bool, amb: u32, mat: u32, lights: u32, diff: u32, attn: u32) {
         self.gx.set_chan_ctrl(chan, enable, amb, mat, lights, diff, attn);
     }
-    fwd!(set_chan_amb_color => set_chan_amb_color(id: u32, c: GxColor));
-    fwd!(set_chan_mat_color => set_chan_mat_color(id: u32, c: GxColor));
+    /// `GXSetChanAmbColor`.
+    pub fn set_chan_amb_color(&mut self, id: u32, c: GxColor) {
+        let c = self.sdk_chan_color(id, c, false);
+        self.gx.set_chan_amb_color(sdk_chan_pair(id), c);
+    }
+    /// `GXSetChanMatColor`.
+    pub fn set_chan_mat_color(&mut self, id: u32, c: GxColor) {
+        let c = self.sdk_chan_color(id, c, true);
+        self.gx.set_chan_mat_color(sdk_chan_pair(id), c);
+    }
+    /// The Dolphin SDK's merge for a channel colour: one XF register holds a channel pair's RGBA, and
+    /// `GX_COLORn` replaces only its RGB, `GX_ALPHAn` only its A (`GX_COLORnAn` all four). Aurora's
+    /// `GXSetChanAmbColor` / `GXSetChanMatColor` (and `Gx`, which matches it call for call) write the whole
+    /// register for any id, so HSD's separate COLOR0 and ALPHA0 channel setups clobber each other: the
+    /// COLOR0 ambient's alpha 255 became the ALPHA0 ambient and lit every alpha-lit material fully (a
+    /// fighter colour-overlay light, `ftMaterial_800BF534`'s `K * RASA` stage, at full strength: Ganondorf's
+    /// Warlock Punch turned the body purple, then green).
+    fn sdk_chan_color(&self, id: u32, c: GxColor, mat: bool) -> GxColor {
+        let ch = match id {
+            GX_COLOR0 | GX_ALPHA0 => 0,
+            GX_COLOR1 | GX_ALPHA1 => 1,
+            _ => return c,
+        };
+        let r = self.gx.chan_color_reg(ch, mat);
+        let old = GxColor { r: (r >> 24) as u8, g: (r >> 16) as u8, b: (r >> 8) as u8, a: r as u8 };
+        if id == GX_ALPHA0 || id == GX_ALPHA1 {
+            GxColor { a: c.a, ..old }
+        } else {
+            GxColor { a: old.a, ..c }
+        }
+    }
 
     // ---- TEV
 
@@ -938,5 +967,14 @@ mod tests {
         assert_eq!(s.get_projectionv(), [0.0, 1.5, -0.25, 2.0, 0.5, -1.01, -10.0]);
         s.set_viewport(0.0, 0.0, 640.0, 480.0, 0.0, 1.0);
         assert_eq!(s.get_viewportv(), [0.0, 0.0, 640.0, 480.0, 0.0, 1.0]);
+    }
+}
+
+/// The combined channel id a single-channel colour write becomes once [`GxShim`] has merged it.
+fn sdk_chan_pair(id: u32) -> u32 {
+    match id {
+        GX_COLOR0 | GX_ALPHA0 => GX_COLOR0A0,
+        GX_COLOR1 | GX_ALPHA1 => GX_COLOR1A1,
+        _ => id,
     }
 }

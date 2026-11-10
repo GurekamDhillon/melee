@@ -846,7 +846,7 @@ fn anim_frame(a: &crate::tu::petey_model::Anim, f: f32, hold: bool) -> f32 {
 }
 
 /// The owner's own extracted model (presentation only), posed by the animation the sim state picks.
-unsafe fn draw_model(m: &'static crate::tu::petey_model::Model, p: &Pose) {
+unsafe fn draw_model(m: &'static crate::tu::petey_model::Model, _p: &Pose) {
     use crate::tu::petey_model as pm;
     thread_local! {
         // one buffer per part, kept until the next draw: the GX bridge may read the vertex data after the call returns
@@ -857,51 +857,37 @@ unsafe fn draw_model(m: &'static crate::tu::petey_model::Model, p: &Pose) {
     if name == "Angry" && B.st == ST_IDLE && m.body.anim("Angry").map(|a| f >= a.frames).unwrap_or(true) {
         (name, f, hold) = ("Wait2", frame as f32, false); // the phase-2 roar played once
     }
-    let h = fmax(m.body.max[1] - m.body.min[1], 1.0);
+    // the model stands on its own origin (y 0 is the ground the feet touch in every clip)
+    let h = fmax(m.body.max[1], 1.0);
     let sc = (HEAD_Y + HEAD_R) / h;
-    let foot = m.body.min[1];
+    let zc = (m.body.min[2] + m.body.max[2]) * 0.5;
     let mut yaw = B.face * 0.35;
     if B.st == ST_ACTIVE && B.atk as usize == SPIN {
         yaw += B.t as f32 * 0.25; // the spin turns the whole body
     }
-    let pick = |r: &'static pm::Rig| -> (Option<&'static pm::Anim>, f32) {
-        let a = r.anim(name).or_else(|| r.anim("Wait1"));
-        let fr = a.map(|a| anim_frame(a, if r.anim(name).is_some() { f } else { frame as f32 }, hold)).unwrap_or(0.0);
-        (a, fr)
-    };
+    // one clip and one frame for the body and both arms: the arm models are authored in the body's space and
+    // their clips carry the body's attach bones (Attach01N / Attach02N) frame for frame, so drawn with the same
+    // origin, scale and frame they stay on the shoulders
+    let a = m.body.anim(name).or_else(|| m.body.anim("Wait1"));
+    let fr = a.map(|a| anim_frame(a, if m.body.anim(name).is_some() { f } else { frame as f32 }, hold)).unwrap_or(0.0);
+    let aname = if m.body.anim(name).is_some() { name } else { "Wait1" };
     SCRATCH.with(|s| {
         let mut bufs = s.borrow_mut();
         let [body_t, arm_t0, arm_t1] = &mut *bufs;
-        let tris = body_t;
-        let (a, fr) = pick(&m.body);
-        m.body.skin(a, fr, tris);
-        // the down animation carries its own fall: no extra sink with the real model
-        pm::draw_tris(tris, foot, [B.px, B.py, 0.0], sc, yaw, B.flash[0] > 0);
+        m.body.skin(a, fr, body_t);
+        // airborne in the sim (the belly flop): the clip's own lift is replaced by the sim height, so the lowest
+        // point sits on `B.py` (what the hit test uses); on the ground the model's y 0 is the stage
+        let mut ground = 0.0;
+        if B.py > 0.0 {
+            ground = body_t.iter().fold(f32::MAX, |m, (p, _)| fmin(m, p[1]));
+        }
+        let org = [ground, zc];
+        let at = [B.px, B.py, 0.0];
+        pm::draw_tris(body_t, org, at, sc, yaw, B.flash[0] > 0);
         for (i, (arm, tris)) in [(&m.arm_l, arm_t0), (&m.arm_r, arm_t1)].into_iter().enumerate() {
             let Some(r) = arm else { continue };
-            let (a, fr) = pick(r);
-            r.skin(a, fr, tris);
-            // the arms are authored around Petey's root; their animation moves the cage, then the whole arm is
-            // shifted so its centre sits on the sim's cage (what the hit test uses): the picture matches the hits
-            let (mn, mx) = extent_xy(tris);
-            let cx = (mn[0] + mx[0]) * 0.5;
-            let cy = (mn[1] + mx[1]) * 0.5;
-            let drawn = [B.px + cx * sc * libm_cos(yaw), B.py + (cy - foot) * sc];
-            let c = p.cage[i];
-            let at = [B.px + c[0] - drawn[0], B.py + c[1] - drawn[1], 0.0];
-            pm::draw_tris(tris, foot, at, sc, yaw, B.flash[1 + i] > 0);
+            r.skin(r.anim(aname), fr, tris);
+            pm::draw_tris(tris, org, at, sc, yaw, B.flash[1 + i] > 0);
         }
     });
-}
-
-fn extent_xy(t: &[([f32; 3], [u8; 4])]) -> ([f32; 2], [f32; 2]) {
-    let mut mn = [f32::MAX; 2];
-    let mut mx = [f32::MIN; 2];
-    for (p, _) in t {
-        for k in 0..2 {
-            mn[k] = fmin(mn[k], p[k]);
-            mx[k] = fmax(mx[k], p[k]);
-        }
-    }
-    (mn, mx)
 }

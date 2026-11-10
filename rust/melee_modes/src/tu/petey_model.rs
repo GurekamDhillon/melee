@@ -124,7 +124,7 @@ fn load() -> Result<Model, String> {
                 }
             }
         }
-        // extent from the first frame of the idle (bind pose without one): feet and scale stay put while animating
+        // extent from the first frame of the idle (bind pose without one): size and depth centre stay put while animating
         let mut tris = vec![];
         r.skin(r.anim("Wait1"), 0.0, &mut tris);
         (r.min, r.max) = extent(&tris);
@@ -575,13 +575,15 @@ fn chr0(d: &[u8], c: usize) -> Anim {
                                 [be16(d, o) as f32 / 32.0, base + step * be16(d, o + 2) as f32, be16(d, o + 4) as i16 as f32 / 256.0]
                             }
                             _ => {
-                                let o = k + 16 + 12 * i;
+                                // the float-key header is 8 bytes (count, pad, frame scale): no step / base
+                                let o = k + 8 + 12 * i;
                                 [bef(d, o), bef(d, o + 4), bef(d, o + 8)]
                             }
                         });
                     }
                     Track::Keys(keys)
                 }
+                // baked rotations: one angle per frame, a byte or a u16 over the full turn (no header)
                 4 | 5 => {
                     let (step, base) = (bef(d, k), bef(d, k + 4));
                     Track::Baked(
@@ -659,7 +661,7 @@ pub struct Rig {
     verts: Vec<(u16, [f32; 3], [f32; 3], [u8; 4])>,
     /// animations by suffix (the CHR0 name after the model name: `Wait1`, `BasketAttackL`, ...)
     pub anims: Vec<(String, Anim)>,
-    /// Extent in the first frame of `Wait1` (feet and scale stay fixed while animating).
+    /// Extent in the first frame of `Wait1` (size and depth centre stay fixed while animating; the ground is y 0).
     pub min: [f32; 3],
     pub max: [f32; 3],
 }
@@ -968,7 +970,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
 
 /// Extent of a posed triangle list; y from the 1st..99th percentile (a few far-off vertices must not set the feet
 /// or the scale).
-fn extent(tris: &[([f32; 3], [u8; 4])]) -> ([f32; 3], [f32; 3]) {
+pub fn extent(tris: &[([f32; 3], [u8; 4])]) -> ([f32; 3], [f32; 3]) {
     let mut mn = [f32::MAX; 3];
     let mut mx = [f32::MIN; 3];
     for (p, _) in tris {
@@ -990,7 +992,8 @@ fn extent(tris: &[([f32; 3], [u8; 4])]) -> ([f32; 3], [f32; 3]) {
 
 /// Draw a posed triangle list: model x scale, yawed, with model-space y `foot` at `at` (world). Opaque, vertex
 /// colours, back faces kept.
-pub unsafe fn draw_tris(tris: &[([f32; 3], [u8; 4])], foot: f32, at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
+/// `org`: the model-space ground height and depth centre that land on `at` (x stays: the model's x is its own).
+pub unsafe fn draw_tris(tris: &[([f32; 3], [u8; 4])], org: [f32; 2], at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
     use melee_runtime::tu::displayfunc_native::ext as gx;
     use melee_types::*;
     if tris.is_empty() {
@@ -1026,7 +1029,7 @@ pub unsafe fn draw_tris(tris: &[([f32; 3], [u8; 4])], foot: f32, at: [f32; 3], s
     for chunk in tris.chunks(3 * 20000) {
         gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
         for (p, col) in chunk {
-            let (x, y, z) = (p[0] * scale, (p[1] - foot) * scale, p[2] * scale);
+            let (x, y, z) = (p[0] * scale, (p[1] - org[0]) * scale, (p[2] - org[1]) * scale);
             gx::GXPosition3f32(at[0] + x * c + z * s, at[1] + y, at[2] - x * s + z * c);
             if flash {
                 gx::GXColor4u8(255, 255, 255, 255);
@@ -1036,4 +1039,36 @@ pub unsafe fn draw_tris(tris: &[([f32; 3], [u8; 4])], foot: f32, at: [f32; 3], s
         }
     }
     melee_runtime::tu::state_native::HSD_StateInvalidate(-1);
+}
+
+#[cfg(test)]
+mod tests {
+    /// With the owner's local data present (skipped otherwise): every clip decodes so that the arm models' attach
+    /// bones follow the body's frame for frame, and the feet stay on y 0 in every grounded clip.
+    #[test]
+    fn arms_follow_body_and_feet_on_ground() {
+        let Ok(m) = super::load() else { return };
+        let b = &m.body;
+        let bi = |r: &super::Rig, n: &str| r.bones.iter().position(|x| x.name.ends_with(n)).unwrap();
+        let mut t = vec![];
+        for (an, a) in &b.anims {
+            for f in 0..a.frames as i32 {
+                let w = b.pose_bones(Some(a), f as f32);
+                for (r, n) in [(m.arm_l.as_ref().unwrap(), "Attach01N"), (m.arm_r.as_ref().unwrap(), "Attach02N")] {
+                    let wa = r.pose_bones(r.anim(an), f as f32);
+                    let (x, y) = (w[bi(b, n)], wa[bi(r, n)]);
+                    for i in 0..3 {
+                        for j in 0..4 {
+                            assert!((x[i][j] - y[i][j]).abs() < 0.5, "{an} f{f} {n}: arm attach off the body");
+                        }
+                    }
+                }
+                if an != "JumpAttack" {
+                    b.skin(Some(a), f as f32, &mut t);
+                    let lo = super::extent(&t).0[1];
+                    assert!((-2.0..6.0).contains(&lo), "{an} f{f}: lowest point {lo}");
+                }
+            }
+        }
+    }
 }

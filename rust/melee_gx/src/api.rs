@@ -1377,6 +1377,11 @@ impl Gx {
         }
         self.sh.bp_sent = 0;
     }
+    /// The shadow of a channel pair's ambient (`mat` false) or material (`mat` true) colour register
+    /// (`__gx->ambColor[ch]` / `matColor[ch]`, RGBA packed R high), as the last write left it.
+    pub fn chan_color_reg(&self, ch: usize, mat: bool) -> u32 {
+        if mat { self.sh.mat_color[ch] } else { self.sh.amb_color[ch] }
+    }
     pub fn set_chan_amb_color(&mut self, id: u32, c: GxColor) {
         self.chan_color(id, c, false);
     }

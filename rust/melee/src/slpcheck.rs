@@ -129,6 +129,9 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
     // Game Bitfield 2 bit 0: StartMeleeRules.friendly_fire (Team Attack). Every 2019 Gang-Steals doubles file has it on;
     // left at the saved default (off) a teammate's hit never landed (201 of 203 teams files diverged at one).
     scn.friendly_fire = (info.bitfield2() & 1) as i32;
+    // Game Bitfield 3 bit 0x08: StartMeleeRules.disable_pausing (tournament rules: pause off). Left at the saved default
+    // (on), a player with no stocks pressing START (the team stock steal) paused the engine.
+    scn.pause = (info.bitfield3() & 0x08 == 0) as i32;
     scn.item_freq = if info.item_spawn() < 0 { -2 } else { info.item_spawn() as i32 };
     if info.item_spawn() >= 0 {
         notes.push(format!("items on (frequency {}), item mask {:02x?}: item spawns are not driven by the file", info.item_spawn(), info.item_bits()));
@@ -575,6 +578,27 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             }
             unsafe { CAP = [None; 4] };
             melee_core::fptrace::set_frame(fr); // the fptrace build's frame filter (notes/semantics.md)
+            // The game's own pad reads (HSD_PadCopyStatus: a team player out of stocks steals one with START, fn_8016B918)
+            // see the recorded controllers too: physical buttons, raw sticks and analog triggers of this frame's Pre-Frame.
+            // The fighters keep reading the replay through the Replay_* seams. SLPCHECK_NO_PADS=1: the old empty pads.
+            if std::env::var_os("SLPCHECK_NO_PADS").is_none() {
+                let mut pads = [melee_types::PADStatus::zeroed(); 4];
+                for (p, st) in pads.iter_mut().enumerate() {
+                    match pl.input(p as i32, false) {
+                        Some(i) if i.present => {
+                            st.button = if i.physical_complete { i.physical_buttons } else { (i.buttons & 0x1F7F) as u16 };
+                            st.stickX = i.raw[0];
+                            st.stickY = i.raw[1];
+                            st.substickX = i.raw[2];
+                            st.substickY = i.raw[3];
+                            st.triggerLeft = (i.physical_l * 255.0) as u8;
+                            st.triggerRight = (i.physical_r * 255.0) as u8;
+                        }
+                        _ => st.err = -1,
+                    }
+                }
+                e.set_pads(Some(pads));
+            }
             if !e.tick() {
                 break;
             }

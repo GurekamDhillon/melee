@@ -290,6 +290,8 @@ pub unsafe fn SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: i32) -> i3
         }
         if ext::SceneLaunch_RulePause() >= 0 {
             (*gr).pause = ext::SceneLaunch_RulePause() as u8;
+            // the match rules' copy (gm_1601: disable_pausing = !rules->pause), as for Team Attack below
+            (*vs).start.rules.set_disable_pausing((ext::SceneLaunch_RulePause() == 0) as u32);
         }
         // Team Attack: the match rules take GameRules.friendly_fire when the match starts (gm_1601's
         // `set_friendly_fire((*rules).friendly_fire & 1)`); a replay's Game Start carries the console's bit

@@ -844,6 +844,7 @@ impl Play {
             time_limit: if r.stock { r.stock_time_secs } else { r.time_secs },
             rule_stocks: if r.stock { r.stocks } else { -1 },
             friendly_fire: -1,
+        pause: -1,
             onep_mode: -1,
             onep_step: -1,
             onep_level: -1, game_mode: -1, entry_state: -1,

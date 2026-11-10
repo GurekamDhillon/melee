@@ -71,7 +71,7 @@ fn smoke() {
     unsafe { f.anon_2210.anon_0.set_throw_flags_b4(1) };
     t::ftKp_SpecialS_80132E30(gp);
     assert_eq!(f.facing_dir, -1.0);
-    assert_eq!(unsafe { f.mv.kp.unk1.xC }, 1);
+    assert_eq!(unsafe { f.mv.kp.specials.xC }, 1);
     assert_eq!(unsafe { f.anon_2210.anon_0.throw_flags_b4() }, 0);
     assert_eq!(f.cmd_vars[0], 0);
     assert_eq!(take(), "DE2A8,DE7C0 0 0");

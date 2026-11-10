@@ -170,7 +170,7 @@ pub fn ftKp_SpecialS_80132E30(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         if ftCheckThrowB4(&mut *fp) {
             (*fp).facing_dir = -(*fp).facing_dir;
-            (*fp).mv.kp.unk1.xC = 1;
+            (*fp).mv.kp.specials.xC = 1; // C `unk1.xC`: same word as specials.xC on the GC (unk1 has native-size pointers)
         }
         if (*fp).cmd_vars[0] == 0 {
             return;

@@ -66,8 +66,9 @@ pub fn sync() {
             drop_file();
         }
         let v = ev::VIEW;
-        // v[37]: the sim has taken the arm (its record is this run's, not the one before a New run)
-        if ev::ARMED == 0 || v[0] != 0x454E_5659 || v[37] != 1 {
+        // the V3 view (envoy_data view.rs: V_MAGIC "ENV3", V_STATE 1, V_ARMED 20): v[20] says the sim has taken the arm
+        // (its record is this run's, not the one before a New run)
+        if ev::ARMED == 0 || v[0] != 0x454E_5633 || v[20] != 1 {
             return;
         }
         match v[1] {

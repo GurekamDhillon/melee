@@ -41,6 +41,7 @@ extern "C" {
     fn gd_fighter_get_pos_x(h: u32) -> f32;
     fn gd_fighter_get_pos_y(h: u32) -> f32;
     fn gd_fighter_get_action_state(h: u32) -> i32;
+    fn gd_fighter_read(h: u32, out: *mut u32);
     fn gd_player_present(slot: i32) -> i32;
     fn gd_player_stocks(slot: i32) -> i32;
     fn gd_tag_partner(slot: i32) -> i32;
@@ -377,6 +378,16 @@ struct St {
     /// Test knobs (MELEE_ENVOY_TEST_DRIVES): slots opened for a test row, no shop.
     slots_bonus: i32,
     no_shop: i32,
+    /// Test knob (`finaleoff`): Grand Finale's write is computed and logged but not made (the A/B launch probe);
+    /// the victim of the last write (or would-be write) and its frame, to log the launch on the next frame.
+    finale_off: i32,
+    /// Test knob (`aslog`): log player 1's action-state changes; the frame an air dodge was last seen per player.
+    as_log: i32,
+    /// Test knob (`^N`): every fight starts with the Heat that gives Grand Finale +N/1000 (the A/B probe at a fixed Heat).
+    test_heat: i64,
+    escape_at: [i32; NP],
+    kb_watch: i32,
+    kb_watch_at: i32,
 }
 
 /// The 64-bit half of the state (Heat and charge in ticks, the purse, the pips): i64 words only.
@@ -684,8 +695,24 @@ unsafe fn test_drives() {
         for (f, side) in drv.split('/').take(2).enumerate() {
             for item in side.split(',') {
                 let item = item.trim();
+                if item == "aslog" {
+                    S.as_log = 1;
+                    continue;
+                }
+                if item == "finaleall" {
+                    S.finale_off |= 2;
+                    continue;
+                }
+                if item == "finaleoff" {
+                    S.finale_off |= 1;
+                    continue;
+                }
                 if item == "noshop" {
                     S.no_shop = 1;
+                    continue;
+                }
+                if let Some(c) = item.strip_prefix('^') {
+                    S.test_heat = c.parse::<i64>().unwrap_or(0).clamp(0, 500) * FINALE_TICKS;
                     continue;
                 }
                 if let Some(c) = item.strip_prefix('$') {
@@ -781,6 +808,11 @@ unsafe fn on_new_match(seq: i32) {
         S.rerolls = 0;
         S.slots_bonus = 0;
         S.no_shop = 0;
+        S.finale_off = 0;
+        S.as_log = 0;
+        S.test_heat = 0;
+        S.escape_at = [-99; NP];
+        S.kb_watch = -1;
         S.shared = (gd_envoy_shared_drives() != 0) as i32;
         S.pair = [[gd_envoy_roster(0), gd_envoy_roster(1)], [gd_envoy_roster(2), gd_envoy_roster(3)]];
         S.last_pick = [-1; NP];
@@ -811,7 +843,8 @@ unsafe fn on_new_match(seq: i32) {
     S.attrs_done = 0;
     let keys_short = (0..nh() as usize).any(|p| key_count(p) < keys_earned());
     S.shop_due = (SHOP_AT[S.fight.clamp(0, FIGHTS as i32 - 1) as usize] && S.no_shop == 0) as i32;
-    S.reward_due = if keys_short { RW_KEYS } else if S.fight > 0 { RW_DRIVES } else { 0 };
+    // V3 12.9: the drive pick first, then the keystone pick (after a boss); the run's first keystone opens fight 1
+    S.reward_due = if S.fight > 0 { RW_DRIVES } else if keys_short { RW_KEYS } else { 0 };
     S.outcome = 0;
     S.stage_clock = 0;
     S.stage_switches = 0;
@@ -833,7 +866,7 @@ unsafe fn on_new_match(seq: i32) {
     S.boss_hp_max = 0;
     HH.chg = [[0; SLOTS]; SETS];
     HH.fchg = [[0; 2]; 4];
-    HH.heat = [0; NP];
+    HH.heat = [S.test_heat; NP];
     S.target = [[-1; SLOTS]; SETS];
     S.last_fire_at = [-CHAIN_GAP; OWNERS];
     S.ch_on = [0; SETS];
@@ -1057,8 +1090,8 @@ unsafe fn done_pick(p: usize, id: i32, f: i32) {
 
 /// Every player has picked (or the timer ran out): the next screen (keystones -> drives -> the shop), or the fight.
 unsafe fn reward_close() {
-    if S.rw_active == RW_KEYS && S.fight > 0 {
-        open_reward(RW_DRIVES);
+    if S.rw_active == RW_DRIVES && (0..nh() as usize).any(|p| key_count(p) < keys_earned()) {
+        open_reward(RW_KEYS);
         return;
     }
     if S.rw_active != RW_SHOP && S.shop_due != 0 {
@@ -1460,7 +1493,9 @@ fn x100(v: f32) -> i32 {
 unsafe fn offstage(s: i32) -> bool {
     let Some(p) = pos(s) else { return false };
     let g = gd_stage_grkind();
-    let ledge = STAGES.iter().position(|&k| k == g).map_or(80.0, |i| LEDGE_X[i]);
+    // only the five stages of the rotation have a ledge table; any other stage never counts as offstage
+    let Some(i) = STAGES.iter().position(|&k| k == g) else { return false };
+    let ledge = LEDGE_X[i];
     p.x.abs() > ledge + 1.0 || p.y < -10.0
 }
 
@@ -2353,14 +2388,22 @@ extern "C" fn on_damage(h: u32, d: f32) {
             }
         }
         let player_a = (0..nh()).contains(&a);
+        if S.as_log != 0 && player_a {
+            log(b"envoy: hit, victim*1000 + attacker state ", v * 1000 + ast);
+        }
         if player_a && is_foe(v) && offstage(v) {
             tags |= T_OFFSTAGE;
         }
         // Grand Finale: a player's smash launches harder with Heat (+1% per 4.5 Heat, to +50%)
-        if player_a && tags & T_SMASH != 0 && is_foe(v) && has_key(a as usize, E_FINALE) {
+        // (test knob `finaleall`: every player hit counts as a smash, so the probe needs no scripted smash to land)
+        if player_a && (tags & T_SMASH != 0 || S.finale_off & 2 != 0) && is_foe(v) && has_key(a as usize, E_FINALE) {
             let bonus = (HH.heat[a as usize] / FINALE_TICKS).min(500) as i32;
             if bonus > 0 {
-                gd_envoy_kb_scale(v, 1000 + bonus);
+                if S.finale_off & 1 == 0 {
+                    gd_envoy_kb_scale(v, 1000 + bonus);
+                }
+                S.kb_watch = v;
+                S.kb_watch_at = S.play;
                 log(b"envoy: finale knockback x1000 ", 1000 + bonus);
             }
         }
@@ -2422,6 +2465,22 @@ unsafe fn records_drop() {
     S.rec_n = 0;
 }
 
+/// The launch after a Grand Finale hit (or the hit it would have scaled, `finaleoff`): the victim's knockback speed
+/// x100 on the next frame, logged (the A/B probe of the knockback write).
+unsafe fn finale_probe() {
+    if S.kb_watch < 0 || S.play <= S.kb_watch_at {
+        return;
+    }
+    let h = gd_fighter_from_slot(S.kb_watch);
+    if h != 0 {
+        let mut w = [0u32; 20];
+        gd_fighter_read(h, w.as_mut_ptr());
+        let (x, y) = (f32::from_bits(w[6]), f32::from_bits(w[7]));
+        log(if S.finale_off & 1 != 0 { b"envoy: finale probe (write off), kb speed^2 x10000 " } else { b"envoy: finale probe (write on), kb speed^2 x10000 " }, ((x * x + y * y) * 10000.0) as i32);
+    }
+    S.kb_watch = -1;
+}
+
 // ---- technique (V3 2.3): the L-cancel bit, wavedash and tech polled; marks count down
 
 unsafe fn tech_frame() {
@@ -2446,11 +2505,18 @@ unsafe fn tech_frame() {
                 heat_add_drives(p, WH_LCANCEL);
             }
         }
+        if st == AS_ESCAPE_AIR {
+            S.escape_at[p] = S.play;
+        }
+        if st != prev && S.as_log != 0 && p == 0 {
+            log(b"envoy: as ", prev * 1000 + st);
+        }
         if st != prev {
             if (AS_LANDING_AIR.0..=AS_LANDING_AIR.1).contains(&st) {
                 S.streak[p] = if ev_bits & 1 != 0 { (S.streak[p] + 1).min(3) } else { 0 };
             }
-            if st == AS_LANDING_SPECIAL && prev == AS_ESCAPE_AIR {
+            // a wavedash / waveland: LandingFallSpecial entered within a few frames of an air dodge
+            if st == AS_LANDING_SPECIAL && (prev == AS_ESCAPE_AIR || S.play - S.escape_at[p] <= 3) {
                 S.marks[p][1] = MARK_FRAMES[1];
                 ev(EV_SPARK, p as i32, MARK_WAVEDASH);
                 log(b"envoy: technique wavedash, player\0", p as i32);
@@ -3268,6 +3334,7 @@ extern "C" fn on_frame_end() {
                     stepped = true;
                     // V3 12.4: technique, the records, the stock edges and cash-outs, the boss, Burning, Volley,
                     // then time charge and the chains, then the states
+                    finale_probe();
                     tech_frame();
                     records_frame();
                     moments_frame();
@@ -3309,6 +3376,7 @@ pub extern "C" fn gd_mod_loaded() {
         S.last_wearer = [-1; NP];
         S.since_pick = 9999;
         S.last_stocks = -1;
+        S.escape_at = [-99; NP];
         S.boss_slot = -1;
         S.offers = [[0, 1, 2]; NP];
         S.shop_off = [[-1; 3]; NP];

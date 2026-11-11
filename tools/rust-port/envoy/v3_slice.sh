@@ -7,7 +7,7 @@
 #      3 states: Heat states up and down, a stock lost          4 tech: technique marks, offstage damage, +Heat drives
 #      5 volley: Volley on D-pad right (pad)                     6 shop: a full-row pick, a buy, a level, a reroll, a
 #                                                                  reorder, a full row replaced (pad, fight 2)
-#      7 finale: Grand Finale's knockback write                  8 coop: two meters, cash-outs, one purse
+#      7 finale: Grand Finale A/B launch ratio               8 coop: two meters, cash-outs, one purse
 #      9 petey: the Petey boss with breaks
 #   then V2's six (v2_drives.sh) on the new rules.
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/v3_slice.sh   (OUT=dir; DEPTHS; FRAMES; ONLY="chain cash ...")
@@ -75,9 +75,10 @@ for d in $depths; do
     check 3 states "$d" "$line" "$miss"
   fi
   if on tech; then
-    line=$(run tech "$d" "riposte,clean_landing,gatekeeper,feather_storm,noshop|twin_soul" MELEE_ENVOY_TEST_P1CPU=1)
+    line=$(run tech "$d" "riposte,clean_landing,perfect_form,metronome,ember,noshop|echo_oath" MELEE_ENVOY_START_FIGHT=1 MELEE_PAD_SCRIPT="$here/tech_pad.txt")
     miss=""
-    echo "     tech d$d: $(grep -c 'envoy: technique' "$(L tech "$d")") technique lines (CPU play; informational)"
+    for t in l-cancel wavedash; do seen tech "$d" "technique $t" || miss="$miss (no $t)"; done
+    echo "     tech d$d: $(grep -c 'technique l-cancel' "$(L tech "$d")") l-cancel, $(grep -c 'technique wavedash' "$(L tech "$d")") wavedash, $(grep -c 'technique tech' "$(L tech "$d")") tech (informational: the pad cannot get Falcon knocked down), $(grep -c 'heat add' "$(L tech "$d")") +Heat paid"
     check 4 tech "$d" "$line" "$miss"
   fi
   if on volley; then
@@ -94,9 +95,14 @@ for d in $depths; do
     echo "     shop d$d: $(grep -c 'shop reroll' "$(L shop "$d")") rerolls, $(grep -c 'shop reorder' "$(L shop "$d")") moves, $(grep -c 'drive replaced' "$(L shop "$d")") replaced, $(grep -c 'drive level up' "$(L shop "$d")") level-ups"
   fi
   if on finale; then
-    line=$(run finale "$d" "ember,nova,noshop|grand_finale" MELEE_ENVOY_TEST_P1CPU=1)
-    miss=""
-    echo "     finale d$d: $(grep -c 'finale knockback' "$(L finale "$d")") knockback writes (CPU play; informational)"
+    # A/B at one Heat (^300: +30%), every player hit treated as a smash (finaleall); the runs are identical up to the
+    # first hit, so its launch with the write on vs off is the measure: speed ratio ~1.30
+    line=$(run finale "$d" "ember,nova,noshop,^300,finaleall|grand_finale" MELEE_ENVOY_TEST_P1CPU=1)
+    run finaleoff "$d" "ember,nova,noshop,^300,finaleall,finaleoff|grand_finale" MELEE_ENVOY_TEST_P1CPU=1 >/dev/null
+    on_=$(grep -m1 -o 'finale probe (write on).* [0-9]*' "$(L finale "$d")" | grep -o '[0-9]*$'); off_=$(grep -m1 -o 'finale probe (write off).* [0-9]*' "$(L finaleoff "$d")" | grep -o '[0-9]*$')
+    ratio=$(python -c "import math;print(round(math.sqrt(${on_:-0}/max(1,${off_:-0})),3))")
+    miss=""; python -c "import sys;sys.exit(not 1.25<=$ratio<=1.35)" || miss="$miss (first-hit launch ratio $ratio, want ~1.30)"
+    echo "     finale d$d: $(grep -c 'finale knockback' "$(L finale "$d")") knockback writes; first hit launch speed on/off = $ratio"
     check 7 finale "$d" "$line" "$miss"
   fi
   if on coop; then

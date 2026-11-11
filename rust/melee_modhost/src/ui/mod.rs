@@ -1314,6 +1314,10 @@ impl PresHost {
                 sh.replace_when.iter().find(|r| r.0 == (major, minor) && (r.2 == REPLACE_WHEN_ENVOY && envoy)).map(|r| r.1)
             })
         };
+        if std::env::var_os("MELEE_UI_LOG").is_some() {
+            let (a, d) = unsafe { (melee_modes::tu::envoy::ARMED, melee_modes::tu::envoy::CAMP_DUE) };
+            eprintln!("gd_ui: retail scene ({major}, {minor}) -> custom {enter:?} (envoy armed {a} camp due {d}, stack {:?})", self.shared.borrow().stack);
+        }
         if let Some(s) = enter {
             self.shared.borrow_mut().pending = Some(s as i64);
         }

@@ -219,7 +219,8 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     let p1 = read_pad(0);
     let p2 = read_pad(1);
     let mut act = DO_NOTHING;
-    if t > 3 {
+    // after a fight the road holds 40 frames: an A mashed through the results must not skip it
+    if t > if after_fight { 40 } else { 3 } {
         if !after_fight && !no_brawl {
             // a port that mirrors port 1 (one controller read twice) must not join: P2's Start alone joins
             if p2.start && !p1.start && !u.p2 && gd_ui_pad_present(1) != 0 {

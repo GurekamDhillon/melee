@@ -59,15 +59,41 @@ radius 30 (read as the boss's camera framing; units Brawl).
 
 Size: the body is 102 units tall, 77 wide in its idle pose (Brawl units; ours are the same order).
 
-## Dolphin (observation)
+## Dolphin (observation, 2026-11-10, port/petey5)
 
-Not reached. There is no Brawl save, save state or input movie on this machine, and Petey is fought at the end of
-an Subspace Emissary stage that is only reachable by playing the earlier stages from a new file. Doing that without
-OS input means authoring a frame-exact input movie blind through the menus and two platforming stages; by the rules
-this is reported, not worked around. Every "observed" column below is therefore empty; what the user can supply to
-unlock it: a Dolphin save state at the start of the fight (or a Brawl save with the stage cleared), after which a
-.dtm from that state plus frame dumps measure everything listed.
+The user supplied a Dolphin save state taken at the start of the fight (git-ignored copy under `_build/petey-spec/states/`).
+Method: our own Dolphin instance (separate user dir, audio 0, emulation 0.5x, frame dump on), loaded with `-e <disc> -s
+<state>`, P1 Kirby idle (no device bound: no OS input). A read-only RAM logger (ReadProcessMemory on that Dolphin's MEM1;
+values only, no code) recorded every frame (7200 frames, none dropped, keyed on a 60 Hz counter): Petey's root x / y,
+his motion frame counter (frozen frames = hitlag), Kirby's position. Petey reads Normal: the dive's acceleration is
+exactly 0.015 + 0.003L at L = 2.5. The idle Kirby lost his last stock about 2740 frames in, ending the fight. Our build
+ran the same scenario: Kirby P1 idle, Envoy fight 5, `MELEE_PETEY_LOG=1`. Screenshots:
+`scratch/envoy-demo/screenshots/petey5/side_by_side.png` (top row Brawl, bottom row ours).
 
+Not observable with an idle player: cage HP per hit, phase changes, Angry, flinch (Damage), Down, death. Those need
+player attacks, i.e. an authored .dtm from the state. Not done this round.
+
+## Feel comparison (Brawl vs ours)
+
+| aspect | observed in Brawl | ours before (petey4) | ours now (petey5) |
+|---|---|---|---|
+| move order | Wait A -> basket -> Wait B -> menu (basket or jump); jump chain -> Wait A. Sequence seen: B, WB 5, B, WB 4, J, WA 112, B, WB 14, J, WA 89, B, WB 15, B, WB 12, J, WA 111, B, WB 2, B, WB 4, J, WA 119, B, WB 15, J | same rules | same (WA 88, B, WB 5, J, WA 85, B, WB 4, J ...) |
+| Wait A / Wait B | 89-119 f / 2-15 f | in range | in range |
+| basket | 160 f (+ hitlag), boxes hit at motion f 79-86 | 160 f | 160 f |
+| jump chain | JumpStart 19-20, hover 47 (= T 46.5 at L 2.5), JumpAttack 89-90, landing 70-71 | same | same |
+| jump height | root y peaks at +94.3 over the ground at JumpAttack frame ~54 | from the bones | from the bones (unchanged) |
+| dive speed | first step 0.2225, +0.0225 / f, max 1.475: the spec's kind 16 **without** the x0.75 | x0.75 (max 1.11) | no scale: identical |
+| dive distance | -68 -> +26.3 in the dive, landing slide (decay 0.0725 / f = 0.06 + 0.005L) to +42.06 | 72 + 11 | -68 -> +27.8, slide to +42.1 |
+| dive goal | stops exactly on +-68 when reached (0 -> -68, snaps, holds); unreachable goal (+68 from -68) has no effect | same | same |
+| turn / facing | never turns | same | same |
+| hitlag (Petey frozen) | basket 9 frozen frames (15 dmg), landing side 4 (13 dmg, x0.5) | none: Petey kept moving | carrier hitlag freezes Petey: basket 8-9, landing 3-4 (x0.5 applied to attacker and victim) |
+| hits per attack | one: a victim takes one basket or one landing hit | two (box A then B; landing centre then side) | one (an attack's boxes share victims) |
+| basket knockback | L cage: 146.8 deg (-x), R cage: 33.3 deg (+x), first-frame speed 3.41 on Kirby 0 -> 15% | wrong side for the L cage (Melee launches from the carrier's x) | L 147 deg (-x), R 33 deg (+x), speed 3.36 |
+| landing side knockback | 151.8 deg outward (left side), speed 3.64 (Kirby 15 -> 28%) / 4.14 (30 -> 43%) | 152 deg, 3.86 | same rule (angle mirrored per side) |
+| basket damage | **15** (Kirby 0 -> 15) | 16 (10 + 2.7 x 2.5) | 16 (see questions.md Q4) |
+| landing side damage | 13 (= 8 + 2L) | 13 | 13 |
+| camera | close stage camera: Petey fills about half the screen height and leaves the top of the frame in the jump | wide FD camera framing Petey with his range box | unchanged (Q6) |
+| cage HP / phase / Down / stun | not observed (idle player) | - | - |
 ## Derived from the animated bones (local probe, `petey::probe::petey_tracks_probe`)
 
 - Body hurtbox centre y: 60-65 in the waits, 43-70 in the baskets, up to 159 in JumpAttack, 28-64 landing.
@@ -94,27 +120,6 @@ be played with the same data presence it was recorded with.
 
 Camera: the carrier's camera subject is moved onto Petey every frame with the cameraRangeSet box (+-80 across,
 +40 / -40), so the stage camera frames P1 and Petey instead of the invisible carrier.
-
-## Feel comparison (Brawl vs ours)
-
-Brawl column = spec / data (no observation possible). "ours" = this build.
-
-| aspect | Brawl (spec / data) | ours | gap |
-|---|---|---|---|
-| movement speed / distance | still except the dive: 0.2 start, +(0.015+0.003L)/f, max 1.4+0.03L, x0.75 [spec M/L] | same; clamped to x +-55 (FD) | arena width: Brawl's arena is wider, the dive stops at our edge |
-| attack startup / active / recovery | basket: cage boxes f70-114 of 160; landing centre f2-4, sides f3-4 of 71; jump: 20 + T(60-5.4L) + 90 + 71 | same frames | none known |
-| turning / facing | never turns; cages fixed (L = Peach, model +x) | same | the model's on-screen orientation is as authored, unverified |
-| hitstop / knockback when he hits | per §8 (dmg 10+2.7L, 145 deg, KBG 44, BKB 105-2L; hitlag x1 / x0.5) | dmg / angle / KBG / BKB as §8; hitlag multipliers not applied (Melee default); angle relative to the swing direction [Q2] | hitlag multiplier, angle reference |
-| hitstop when a cage / body is hit | no knockback; a scripted flinch (30 f) from the waits only | same; the attacker gets Melee hitlag | Brawl's own hitlag formula not reproduced |
-| cage swing | baked animation, no physics | same (bones) | none |
-| camera | stage camera with the boss's range box and clip sphere | range box fed into Melee's camera | the clip sphere and the stage's scripted shots (events 5-9) not used |
-| idle between attacks | Wait A 100-150 (-9L/-12L), Wait B 2-20 | same | none |
-| difficulty | L from strength and the game's difficulty index | index 5 (fresh Normal) | Envoy has no SSE tier / continues |
-| size | model 102 tall, no placement scale | scale 1.0 | none |
-| end | stage cutscene (events 9 / 1000 / 1001) frees a princess | Down / dying, then the carrier's KO ends the fight; the broken cage's model hides | cutscene not reproduced |
-
-Measured in our build (MELEE_PETEY_LOG, idle P1, phase 0, L 1.7): Wait A 95-120 f, basket 159 f, Wait B 1-9 f,
-jump chain 19 + 51 + 89 + 70 f (T = 50.8 at L 1.7), the dive reaching the arena edge, matching the spec's numbers.
 
 ## Reader answers applied (2026-11-09, second pass)
 

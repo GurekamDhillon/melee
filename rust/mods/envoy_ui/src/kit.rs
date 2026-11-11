@@ -190,7 +190,7 @@ pub fn sticker(e: &mut E, id: usize, x: f32, y: f32, w: f32, h: f32, deg: f32, r
 pub const fn d(px: u32) -> i32 {
     ROLE_BODY | TEXT_DISPLAY | text_size(px)
 }
-pub const fn b(px: u32) -> i32 {
+pub const fn bs(px: u32) -> i32 {
     ROLE_BODY | TEXT_BODY | text_size(px)
 }
 
@@ -217,9 +217,9 @@ pub fn strip(e: &mut E, x: f32, max_w: f32, s: &str) {
     if s.is_empty() {
         return;
     }
-    let w = (tw(s, b(13)) + 22.0).min(max_w);
+    let w = (tw(s, bs(13)) + 22.0).min(max_w);
     sticker(e, S_FACE_WHITE, x, 403.0, w, 30.0, -0.6, WHITE, |e| {
-        e.text_ex(x + 11.0, 403.0 + 8.0, b(13), INK, ALIGN_LEFT, w - 22.0, s);
+        e.text_ex(x + 11.0, 403.0 + 8.0, bs(13), INK, ALIGN_LEFT, w - 22.0, s);
     });
 }
 
@@ -231,8 +231,8 @@ pub fn hints(e: &mut E, items: &[(&str, &str)]) {
         face(e, S_FACE_WHITE, x, 449.0, cw, 18.0, WHITE);
         e.text_ex(x + cw * 0.5, 449.0 + 3.0, d(11), INK, ALIGN_CENTER, 0.0, cap);
         x += cw + 6.0;
-        e.text_ex(x, 449.0 + 2.0, b(13), WHITE, ALIGN_LEFT, 0.0, words);
-        x += tw(words, b(13)) + 16.0;
+        e.text_ex(x, 449.0 + 2.0, bs(13), WHITE, ALIGN_LEFT, 0.0, words);
+        x += tw(words, bs(13)) + 16.0;
     }
 }
 

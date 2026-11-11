@@ -24,10 +24,21 @@ pub struct Rec {
     pub look: u8,
     pub sound: String,
     pub line: usize,
+    /// V3 (12.7): trigger | shaper | heat_add | gain_mul | heat_mul | neighbour | scaler | economy (ROLES).
+    pub role: u8,
+    /// V3: common | rare | epic (TIERS).
+    pub tier: u8,
+    /// V3: the chain coefficient x1000 (triggers).
+    pub coef: i32,
+    /// V3: the condition (WHENS).
+    pub when: u8,
+    /// V3: 1 = the fire launches (a timed drive only).
+    pub launch: u8,
 }
 
-/// The full pool (V2: 20 drives, 6 keystones): 3 drives per family and 2 givers per read word are required.
-pub const FULL_POOL: bool = true;
+/// The full pool rule (two givers per read word) is off for the V3 slice (12.6: the slice's lint asks for one);
+/// three drives per family still holds.
+pub const FULL_POOL: bool = false;
 
 fn find(t: &[&str], v: &str) -> Option<u8> {
     t.iter().position(|x| *x == v).map(|i| i as u8)
@@ -44,7 +55,8 @@ pub fn parse(src: &str) -> Result<Vec<Rec>, String> {
         }
         if line == "[[drive]]" || line == "[[keystone]]" {
             let kind = if line == "[[drive]]" { K_DRIVE } else { K_KEYSTONE };
-            out.push(Rec { line: ln, kind, ..Default::default() });
+            // a drive with no `charge` is not a trigger: it never fills (passive)
+            out.push(Rec { line: ln, kind, charge: C_PASSIVE, ..Default::default() });
             seen.clear();
             continue;
         }
@@ -76,6 +88,11 @@ pub fn parse(src: &str) -> Result<Vec<Rec>, String> {
             "reads" => r.reads = find(&WORDS[1..], &s()?).map(|w| w + 1).ok_or(format!("line {ln}: reads: not one of the four words"))?,
             "look" => r.look = find(&LOOKS, &s()?).map(|w| w + 1).ok_or(format!("line {ln}: look: not one of LOOKS"))?,
             "cooldown" => r.cooldown = i()?,
+            "kind" => r.role = find(&ROLES, &s()?).ok_or(format!("line {ln}: kind: not one of ROLES"))?,
+            "tier" => r.tier = find(&TIERS, &s()?).ok_or(format!("line {ln}: tier: common | rare | epic"))?,
+            "coef" => r.coef = i()?,
+            "when" => r.when = find(&WHENS[1..], &s()?).map(|w| w + 1).ok_or(format!("line {ln}: when: not one of WHENS"))?,
+            "launch" => r.launch = (v == "true") as u8,
             "need" => r.need = i()?,
             "number" => r.number = i()?,
             _ => return Err(format!("line {ln}: unknown field `{k}`")),
@@ -104,9 +121,18 @@ fn count_numbers(s: &str) -> usize {
 /// Estimated seconds between fires of a level-1 drive at a CPU-proxy pace (envoy-core-v2.md 3.3: the harness band):
 /// a hit landed a second, a hit taken every 3 s, a landing every 2 s, a jump every 1.5 s, a tag every 15 s.
 pub fn est_period_ms(r: &Rec) -> i32 {
+    // V3: damage sources at a CPU-proxy pace of 8% dealt a second (an aerial's share a third of it; damage taken 3%
+    // a second); `need` is percent x1000
+    let pct_ms = |pace_milli_per_s: i64| -> i32 { ((r.need as i64) * 1000 / pace_milli_per_s).min(i32::MAX as i64) as i32 };
+    match r.charge {
+        C_DEALT => return pct_ms(8000),
+        C_AERIAL_DEALT => return pct_ms(2700),
+        C_TAKEN => return pct_ms(3000),
+        C_CHILLED_DEALT | C_OFFSTAGE_DEALT | C_CASHOUT => return 0, // gated on a word or a position: no pace
+        _ => {}
+    }
     let per_event_ms = match r.charge {
         C_HIT => 1000,
-        C_TAKEN => 3000,
         C_LANDING => 2000,
         C_JUMP => 1500,
         C_TIME => return r.need,
@@ -158,11 +184,48 @@ pub fn lint(p: &[Rec]) -> Vec<String> {
             e.push(format!("{at}: no sound"));
         }
         if r.kind == K_DRIVE {
-            if r.effect >= E_KEYSTONE0 {
+            if is_key_effect(r.effect) {
                 e.push(format!("{at}: effect `{}` is a keystone rule", EFFECTS[r.effect as usize]));
             }
-            if r.need <= 0 {
+            let trig = r.role == R_TRIGGER;
+            let event = matches!(r.charge, C_TAG_IN | C_SHIFT | C_CASHOUT);
+            if trig && r.need <= 0 && !event {
                 e.push(format!("{at}: need must be > 0"));
+            }
+            if trig && (r.charge == C_PASSIVE || COUNT_SOURCES.contains(&r.charge)) {
+                e.push(format!("{at}: a trigger's charge `{}` counts hits, landings or jumps, or is none (V3: by damage)", CHARGES[r.charge as usize]));
+            }
+            if !trig && r.charge != C_PASSIVE {
+                e.push(format!("{at}: only a trigger has a charge source"));
+            }
+            if trig && !(0..=1000).contains(&r.coef) {
+                e.push(format!("{at}: a trigger's coef is 0-1000"));
+            }
+            if r.coef == 1000 && r.launch == 0 {
+                e.push(format!("{at}: coef 1000 only on a launching timed drive"));
+            }
+            if r.launch != 0 && r.charge != C_TIME {
+                e.push(format!("{at}: only a timed drive launches"));
+            }
+            if LAUNCHES.contains(&r.effect) && r.launch == 0 {
+                e.push(format!("{at}: effect `{}` launches: set launch = true", EFFECTS[r.effect as usize]));
+            }
+            if r.role == R_GAIN_MUL && r.tier == T_COMMON {
+                e.push(format!("{at}: a gain_mul drive is Rare or Epic"));
+            }
+            if r.role == R_HEAT_MUL && r.tier != T_EPIC {
+                e.push(format!("{at}: a heat_mul drive is Epic"));
+            }
+            if TECH_WHENS.contains(&r.when) && !p.iter().any(|q| q.kind == K_DRIVE && q.family == r.family && !TECH_WHENS.contains(&q.when) && q.key != r.key) {
+                e.push(format!("{at}: a technique drive needs a same-family drive with no technique condition"));
+            }
+            // 4.3: a fire returns less charge than it cost (damage-charged triggers): coef x damage / need
+            if trig && DAMAGE_SOURCES.contains(&r.charge) && r.charge != C_TAKEN && fire_damage_m(r) > 0 {
+                let lo = r.coef as i64 * fire_damage_m(r) as i64 / r.need.max(1) as i64; // x1000
+                let hi = lo * 2400 / 1000 * 2000 / 1000;
+                if lo > 100 || hi > 500 {
+                    e.push(format!("{at}: a fire returns {lo}/1000 (level 1 Cold) and {hi}/1000 (level 3 Blazing) of its need: over 100 / 500 (4.3)"));
+                }
             }
             if r.price != P_NONE {
                 e.push(format!("{at}: a drive has no price"));
@@ -179,11 +242,9 @@ pub fn lint(p: &[Rec]) -> Vec<String> {
             if r.cooldown < 0 {
                 e.push(format!("{at}: cooldown must be >= 0"));
             }
-            if r.charge == C_PASSIVE && r.effect != E_TAILWIND {
-                e.push(format!("{at}: only an always-on effect can be passive"));
-            }
+
         } else {
-            if r.effect < E_KEYSTONE0 {
+            if !is_key_effect(r.effect) {
                 e.push(format!("{at}: effect `{}` is a drive effect", EFFECTS[r.effect as usize]));
             }
             if r.price == P_NONE {
@@ -217,7 +278,7 @@ pub fn lint(p: &[Rec]) -> Vec<String> {
             e.push(format!("word {w}: {readers} record(s) read it but only {givers} give it (at least {need_givers})"));
         }
     }
-    let need_members = if FULL_POOL { 3 } else { 1 };
+    let need_members = 3;
     for (f, name) in FAMILIES.iter().enumerate() {
         let n = p.iter().filter(|r| r.kind == K_DRIVE && r.family == f as u8).count();
         if n < need_members {
@@ -231,6 +292,15 @@ pub fn lint(p: &[Rec]) -> Vec<String> {
 }
 
 /// FNV-1a over every field of every record, in pool order: the pool's identity (sim hash, run record, handshake).
+/// The damage (percent x1000) one level-1 Cold fire of a trigger deals to its target (0: no damage).
+pub fn fire_damage_m(r: &Rec) -> i32 {
+    match r.effect {
+        E_BURST | E_BOLT | E_CHILL | E_SHATTER | E_MARK | E_WILDFIRE | E_THORNS | E_NOVA | E_SHOCKWAVE | E_SPIRE => r.number,
+        E_FEATHERS => r.number * 3,
+        _ => 0,
+    }
+}
+
 pub fn digest(p: &[Rec]) -> u32 {
     let mut h: u32 = 0x811C_9DC5;
     let mut eat = |b: &[u8]| {
@@ -248,6 +318,11 @@ pub fn digest(p: &[Rec]) -> u32 {
         eat(&r.cooldown.to_le_bytes());
         eat(&r.need.to_le_bytes());
         eat(&r.number.to_le_bytes());
+        eat(&[r.role, r.tier, r.when, r.launch]);
+        eat(&r.coef.to_le_bytes());
+    }
+    for c in HEAT_CONSTS {
+        eat(&c.to_le_bytes());
     }
     h
 }
@@ -261,8 +336,8 @@ pub fn generate(p: &[Rec]) -> String {
     s.push_str("pub static POOL: [Drive; POOL_LEN] = [\n");
     for r in p {
         s.push_str(&format!(
-            "    Drive {{ kind: {}, key: {:?}, name: {:?}, rule: {:?}, family: {}, charge: {}, need: {}, effect: {}, number: {}, gives: {}, reads: {}, price: {}, cooldown: {}, look: {}, sound: {:?} }},\n",
-            r.kind, r.key, r.name, r.rule, r.family, r.charge, r.need, r.effect, r.number, r.gives, r.reads, r.price, r.cooldown, r.look, r.sound
+            "    Drive {{ kind: {}, key: {:?}, name: {:?}, rule: {:?}, family: {}, charge: {}, need: {}, effect: {}, number: {}, gives: {}, reads: {}, price: {}, cooldown: {}, look: {}, sound: {:?}, role: {}, tier: {}, coef: {}, when: {}, launch: {} }},\n",
+            r.kind, r.key, r.name, r.rule, r.family, r.charge, r.need, r.effect, r.number, r.gives, r.reads, r.price, r.cooldown, r.look, r.sound, r.role, r.tier, r.coef, r.when, r.launch
         ));
     }
     s.push_str("];\n");

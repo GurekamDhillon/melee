@@ -164,11 +164,11 @@ fn list_row(e: &mut E, i: usize, x: f32, y: f32, w: f32, h: f32, on: bool, t: i3
     sticker(e, if on { S_FACE_HOVER } else { S_FACE_WHITE }, x, y, w, h, deg, alpha(WHITE, a), |e| {
         if big {
             e.text_ex(x + 14.0, y + 6.0, d(23), INK, ALIGN_LEFT, w - 20.0, label);
-            e.text_ex(x + 14.0, y + 34.0, b(13), if on { INK } else { LILAC }, ALIGN_LEFT, w - 20.0, sub);
+            e.text_ex(x + 14.0, y + 34.0, bs(13), if on { INK } else { LILAC }, ALIGN_LEFT, w - 20.0, sub);
         } else {
             e.text_ex(x + 12.0, y + h * 0.5 - 8.0, d(15), INK, ALIGN_LEFT, 0.0, label);
             if !value.is_empty() {
-                e.text_ex(x + w - 12.0, y + h * 0.5 - 7.0, b(12), if on { INK } else { LILAC }, ALIGN_RIGHT, 0.0, value);
+                e.text_ex(x + w - 12.0, y + h * 0.5 - 7.0, bs(12), if on { INK } else { LILAC }, ALIGN_RIGHT, 0.0, value);
             }
         }
     });
@@ -190,7 +190,7 @@ fn fcard(e: &mut E, x: f32, y: f32, deg: f32, ck: i32, tag: i32, col: u32, ids: 
             }
         } else {
             e.text_ex(x + 36.0, y + 34.0, d(15), LILAC, ALIGN_CENTER, 0.0, "Pick");
-            e.text_ex(x + 36.0, y + 56.0, b(11), LILAC, ALIGN_CENTER, 66.0, "next screen");
+            e.text_ex(x + 36.0, y + 56.0, bs(11), LILAC, ALIGN_CENTER, 66.0, "next screen");
         }
         if tag > 0 {
             face(e, if tag == 1 { S_FACE_CORAL } else { S_FACE_LAGOON }, x - 6.0, y - 8.0, 26.0, 18.0, WHITE);
@@ -370,7 +370,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                 b.s("The run and its drives will be gone for good.");
                 b
             };
-            e.text_ex(x + 20.0, y + 52.0, b(14), LILAC, ALIGN_LEFT, 300.0, line.str());
+            e.text_ex(x + 20.0, y + 52.0, bs(14), LILAC, ALIGN_LEFT, 300.0, line.str());
             for k in 0..2 {
                 let bx = x + 20.0 + k as f32 * 156.0;
                 let on = UI.dcur == k;
@@ -413,7 +413,7 @@ unsafe fn status(e: &mut E, t: i32, has: bool, rec: Option<&[i32; REC_WORDS]>, p
             e.text_ex(x + 76.0, y + 14.0, d(17), LILAC, ALIGN_CENTER, 0.0, "Player 2");
             face(e, S_FACE_WHITE, x + 26.0, y + 44.0, 100.0, 22.0, WHITE);
             e.text_ex(x + 76.0, y + 47.0, d(13), INK, ALIGN_CENTER, 0.0, "Start: Join");
-            e.text_ex(x + 76.0, y + 72.0, b(11), LILAC, ALIGN_CENTER, 0.0, "on controller 2");
+            e.text_ex(x + 76.0, y + 72.0, bs(11), LILAC, ALIGN_CENTER, 0.0, "on controller 2");
         });
     }
     // run strip
@@ -439,7 +439,7 @@ unsafe fn status(e: &mut E, t: i32, has: bool, rec: Option<&[i32; REC_WORDS]>, p
         sticker(e, S_FACE_LILAC, x, y, 124.0, 52.0, -2.0, WHITE, |e| {
             spr_c(e, S_LOCK, x + 16.0, y + 15.0, 1.0, WHITE);
             e.text_ex(x + 28.0, y + 7.0, d(13), INK, ALIGN_LEFT, 0.0, "Set for this run");
-            e.text_ex(x + 12.0, y + 29.0, b(11), INK, ALIGN_LEFT, 0.0, "Short run, team attack off");
+            e.text_ex(x + 12.0, y + 29.0, bs(11), INK, ALIGN_LEFT, 0.0, "Short run, team attack off");
         });
     }
 }
@@ -473,7 +473,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             } else {
                 s.s("Fight ").i(next + 1).s(" took the last stock.");
             }
-            e.text_ex(x + 16.0, y + 76.0, b(14), INK, ALIGN_LEFT, 270.0, s.str());
+            e.text_ex(x + 16.0, y + 76.0, bs(14), INK, ALIGN_LEFT, 270.0, s.str());
             let mut s = Buf::new();
             s.s("Drives fired: ").i(v[V_FIRES]);
             e.text_ex(x + 16.0, y + 110.0, d(17), INK, ALIGN_LEFT, 0.0, s.str());
@@ -499,14 +499,14 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                 e.text_ex(x + 16.0, y + 6.0, d(28), INK, ALIGN_LEFT, 0.0, kname);
                 let mut s = Buf::new();
                 s.s("Fight ").i(next + 1).s(" of ").i(v[V_FIGHTS]);
-                e.text_ex(x + 16.0, y + 36.0, b(13), INK, ALIGN_LEFT, 0.0, s.str());
-                e.text_ex(x + 16.0, y + 70.0, b(14), INK, ALIGN_LEFT, 270.0, kline);
+                e.text_ex(x + 16.0, y + 36.0, bs(13), INK, ALIGN_LEFT, 0.0, s.str());
+                e.text_ex(x + 16.0, y + 70.0, bs(14), INK, ALIGN_LEFT, 270.0, kline);
                 e.rect(x + 16.0, y + 104.0, 268.0, 2.0, PALE);
                 e.text_ex(x + 16.0, y + 116.0, d(15), INK, ALIGN_LEFT, 0.0, "If you win");
-                e.text_ex(x + 16.0, y + 138.0, b(13), LILAC, ALIGN_LEFT, 270.0, ifwin);
+                e.text_ex(x + 16.0, y + 138.0, bs(13), LILAC, ALIGN_LEFT, 270.0, ifwin);
                 let mut s = Buf::new();
                 s.s("Pool: ").i(v[V_POOL]).s(" stocks.");
-                e.text_ex(x + 16.0, y + 176.0, b(13), LILAC, ALIGN_LEFT, 270.0, s.str());
+                e.text_ex(x + 16.0, y + 176.0, bs(13), LILAC, ALIGN_LEFT, 270.0, s.str());
             });
         }
     }

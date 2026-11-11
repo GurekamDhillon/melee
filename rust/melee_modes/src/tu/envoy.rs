@@ -18,7 +18,7 @@ use melee_fighter::tu::player as pl;
 use melee_types::*;
 
 pub const PLAN_WORDS: usize = 32;
-pub const VIEW_WORDS: usize = 512;
+pub const VIEW_WORDS: usize = 768;
 
 // plan layout (i32 words)
 pub const P_ACTIVE: usize = 0;
@@ -47,6 +47,46 @@ const GR_FD: i32 = 37;
 
 pub static mut PLAN: [i32; PLAN_WORDS] = [0; PLAN_WORDS];
 pub static mut VIEW: [i32; VIEW_WORDS] = [0; VIEW_WORDS];
+/// V3 (envoy-synergy-v3.md 12.5): per match slot, event bits the engine sets during the frame at the exact site
+/// (bit 0: the fighter L-cancelled an aerial landing), read and cleared by `gd_envoy_events`. Set only while a run
+/// is armed, so retail play never writes it.
+pub static mut EVENTS: [u32; 4] = [0; 4];
+pub const EVENT_LCANCEL: u32 = 1;
+
+/// The L-cancel site (`ftCo_LandingAir_EnterWithLag`, the branch where `x67F < xE4` sets the skill mode): installed
+/// in `melee_fighter::hooks::ENVOY_LCANCEL`. A sub-fighter (the second Ice Climber) is ignored.
+pub fn on_lcancel(f: &Fighter) {
+    if armed() == 0 || f.is_sub_fighter() != 0 {
+        return;
+    }
+    let s = f.player_idx as usize;
+    if s < 4 {
+        unsafe { EVENTS[s] |= EVENT_LCANCEL };
+    }
+}
+
+/// Read and clear `slot`'s event bits.
+pub unsafe fn events(slot: i32) -> u32 {
+    if !(0..4).contains(&slot) {
+        return 0;
+    }
+    let e = EVENTS[slot as usize];
+    EVENTS[slot as usize] = 0;
+    e
+}
+
+/// Grand Finale (V3 12.5): multiply the knockback of the hit `slot`'s fighter in play is taking now (called from the
+/// take-damage hook, where `kb_applied` is already set and `ftCo_Damage_CalcKnockback` reads it next).
+pub unsafe fn kb_scale(slot: i32, mul_milli: i32) -> i32 {
+    let f = active_fighter(slot);
+    if f.is_null() {
+        return -1;
+    }
+    let m = mul_milli.clamp(1000, 1500) as f32 / 1000.0;
+    (*f).dmg.kb_applied *= m;
+    0
+}
+
 /// Matches rewritten so far (the mod's "a new fight began" edge).
 pub static mut SEQ: i32 = 0;
 /// The pair the last rewrite used: main, partner (character kinds).
@@ -84,9 +124,9 @@ pub static mut COOP_JOIN: i32 = 0;
 
 /// The run record (envoy_sim publishes it in VIEW[REC_AT..]; the host keeps the last one on disk).
 pub const REC_WORDS: usize = 48;
-pub const REC_AT: usize = 448;
+pub const REC_AT: usize = 704;
 pub const REC_MAGIC: i32 = 0x454E_5652; // "ENVR"
-pub const REC_VERSION: i32 = 4; // 4: V2 (co-op, 20 drives, 6 keystones); an older record is dropped
+pub const REC_VERSION: i32 = 5; // 5: V3 (Heat, 5 ordered slots, coins, the active); an older record is dropped
 /// The record the host holds (loaded from disk, updated from the view); `SAVED_LEN` 0 = no run saved.
 pub static mut SAVED: [i32; REC_WORDS] = [0; REC_WORDS];
 pub static mut SAVED_LEN: i32 = 0;
@@ -182,6 +222,8 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     }
     let d = &mut *d;
     crate::tu::tag_swap::reset();
+    EVENTS = [0; 4];
+    melee_fighter::hooks::ENVOY_LCANCEL = Some(on_lcancel);
     let coop = PLAN[P_COOP] == 1;
     let css = |i: usize| -> i32 { let p = &d.players[i]; if p.slot_type != Gm_PKind_NA as u8 { p.ckind as i32 } else { -1 } };
     // solo: P1's pick is the main, P2's the partner; co-op: P1 + P3 are player 1's pair, P2 + P4 player 2's

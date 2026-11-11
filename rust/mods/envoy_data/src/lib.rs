@@ -6,6 +6,7 @@
 mod codes;
 pub use codes::*;
 pub mod view;
+pub mod heat;
 
 /// One drive (one rule, one charge source, one effect, one number) or one keystone (one rule, one price).
 #[derive(Clone, Copy)]
@@ -30,6 +31,16 @@ pub struct Drive {
     pub look: u8,
     /// The presentation's sound key (never read by the sim).
     pub sound: &'static str,
+    /// V3: ROLES index (trigger, shaper, heat_add, gain_mul, ...).
+    pub role: u8,
+    /// V3: TIERS index (common, rare, epic).
+    pub tier: u8,
+    /// V3: the chain coefficient x1000.
+    pub coef: i32,
+    /// V3: WHENS index (0 none).
+    pub when: u8,
+    /// V3: 1 = launches (timed only).
+    pub launch: u8,
 }
 
 include!(concat!(env!("OUT_DIR"), "/pool_gen.rs"));
@@ -53,7 +64,7 @@ mod tests {
     use super::*;
 
     fn rec(key: &str, fam: u8, rule: &str) -> spec::Rec {
-        spec::Rec { kind: K_DRIVE, key: key.into(), name: key.into(), rule: rule.into(), family: fam, charge: C_HIT, need: 4, number: 1, look: 1, sound: "s".into(), ..Default::default() }
+        spec::Rec { kind: K_DRIVE, key: key.into(), name: key.into(), rule: rule.into(), family: fam, charge: C_DEALT, need: 40000, number: 1, coef: 100, look: 1, sound: "s".into(), ..Default::default() }
     }
 
     #[test]
@@ -77,21 +88,25 @@ mod tests {
         assert_eq!(spec::lint(&p), Vec::<String>::new());
         assert_eq!(p.len(), POOL_LEN);
         assert_eq!(spec::digest(&p), POOL_DIGEST);
-        // V2: the full starter pool, 20 drives and 6 keystones (envoy-core-v2.md 4)
-        assert_eq!(POOL.iter().filter(|d| d.kind == K_DRIVE).count(), 20);
-        assert_eq!(POOL.iter().filter(|d| d.kind == K_KEYSTONE).count(), 6);
+        // V3: the slice's 16 drives and 3 keystones, plus V2's other ten drives and four keystones on damage
+        assert_eq!(POOL.iter().filter(|d| d.kind == K_DRIVE).count(), 26);
+        assert_eq!(POOL.iter().filter(|d| d.kind == K_KEYSTONE).count(), 7);
         for k in [
-            "ember", "nova", "bolt", "spire", "rush", "slipstream", "tailwind", "bulwark", "thorns", "leech", "comet", "updraft",
-            "feather_storm", "frost", "shatter", "hex", "wildfire", "relay", "echo", "surge", "plague_bearer", "echo_oath",
-            "overclock", "twin_soul", "winter_oath", "glass_core",
+            "ember", "bolt", "nova", "wildfire", "rush", "tailwind", "clean_landing", "perfect_form", "riposte", "insulate",
+            "feather_storm", "gatekeeper", "frost", "shatter", "echo", "metronome", "plague_bearer", "glass_core",
+            "grand_finale",
         ] {
             assert!(by_key(k).is_some(), "{k}");
         }
-        assert!(spec::FULL_POOL);
-        // only the timed drives launch (Q6)
+        // only the timed drives launch (Q6); no trigger counts hits (V3)
         for d in POOL.iter().filter(|d| LAUNCHES.contains(&d.effect)) {
-            assert!(matches!(d.charge, C_TIME | C_LANDING | C_HIT_100), "{} launches but counts hits", d.key);
+            assert!(d.charge == C_TIME && d.launch == 1, "{} launches but is not timed", d.key);
         }
+        for d in POOL.iter().filter(|d| d.kind == K_DRIVE) {
+            assert!(!COUNT_SOURCES.contains(&d.charge), "{} counts", d.key);
+        }
+        // the Inferno set needs three different RED drives
+        assert!(POOL.iter().filter(|d| d.kind == K_DRIVE && d.family == F_RED).count() >= 3);
         assert_eq!(scaled(6000, 1), 6000);
         assert_eq!(scaled(6000, 3), 14400);
     }
@@ -119,10 +134,17 @@ mod tests {
         assert!(spec::lint(&word).iter().any(|e| e.contains("word Chilled")));
         word[5].gives = W_CHILLED;
         word[5].rule = "gives Chilled".into();
-        assert!(spec::lint(&word).iter().any(|e| e.contains("word Chilled")), "one giver is not enough");
-        word[6].gives = W_CHILLED;
-        word[6].rule = "also gives Chilled".into();
-        assert_eq!(spec::lint(&word), Vec::<String>::new());
+        assert_eq!(spec::lint(&word), Vec::<String>::new(), "the slice asks for one giver");
+        let mut counts = base.clone();
+        counts[0].charge = C_HIT;
+        assert!(spec::lint(&counts).iter().any(|e| e.contains("counts hits")));
+        let mut loud = base.clone();
+        loud[0].number = 9000;
+        loud[0].coef = 600;
+        assert!(spec::lint(&loud).iter().any(|e| e.contains("4.3")));
+        let mut launch = base.clone();
+        launch[0].launch = 1;
+        assert!(spec::lint(&launch).iter().any(|e| e.contains("only a timed drive launches")));
         let mut said = base.clone();
         said[0].rule = "says Burning".into();
         assert!(spec::lint(&said).iter().any(|e| e.contains("neither gives nor reads")));

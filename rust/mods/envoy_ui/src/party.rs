@@ -15,7 +15,7 @@ pub const FAM_BADGE: [usize; 6] = [0, 3, 6, 1, 2, 5];
 pub fn badge_of(id: usize) -> usize {
     let d = &POOL[id];
     let f = FAM_BADGE.get(d.family as usize).copied().unwrap_or(5);
-    S_BADGE + f * 3
+    S_BADGE + f * 3 + (d.tier as usize).min(2)
 }
 
 /// The keystone emblem sprite for a pool index (by name; a generic one otherwise).
@@ -23,8 +23,9 @@ pub fn kem_of(id: usize) -> usize {
     match POOL[id].name {
         "Plague Bearer" => S_KEM,
         "Echo Oath" => S_KEM + 1,
-        "Overclock" => S_KEM + 2,
-        "Twin Soul" => S_KEM + 3,
+        "Grand Finale" => S_KEM + 2,
+        "Overclock" => S_KEM + 3,
+        "Twin Soul" => S_KEM + 1,
         "Winter Oath" => S_KEM + 4,
         "Glass Core" => S_KEM + 5,
         _ => S_KEM + 2,
@@ -44,7 +45,7 @@ pub fn kpill(e: &mut E, x: f32, y: f32, id: usize, deg: f32) {
 /// Stocks sticker: label and the pool's dots in an ink capsule (UI-SPEC 3.10).
 pub fn stocks(e: &mut E, x: f32, y: f32, w: f32, left: i32, total: i32, label: &str, deg: f32) {
     sticker(e, S_FACE_WHITE, x, y, w, 50.0, deg, WHITE, |e| {
-        e.text_ex(x + 10.0, y + 6.0, b(12), LILAC, ALIGN_LEFT, 0.0, label);
+        e.text_ex(x + 10.0, y + 6.0, bs(12), LILAC, ALIGN_LEFT, 0.0, label);
         let mut s = Buf::new();
         s.i(left.max(0)).s(" of ").i(total);
         e.text_ex(x + w - 10.0, y + 6.0, d(13), INK, ALIGN_RIGHT, 0.0, s.str());
@@ -212,14 +213,14 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             face(e, S_FACE_CREAM, x, y, w, h, WHITE);
             spr_c(e, S_NODISC, x + 30.0, y + 32.0, 1.4, WHITE);
             e.text_ex(x + 52.0, y + 18.0, d(19), INK, ALIGN_LEFT, w - 60.0, "Needs your Brawl disc");
-            e.text_ex(x + 14.0, y + 56.0, b(13), LILAC, ALIGN_LEFT, w - 28.0, "Envoy opens once the disc is added.");
+            e.text_ex(x + 14.0, y + 56.0, bs(13), LILAC, ALIGN_LEFT, w - 28.0, "Envoy opens once the disc is added.");
             for (i, s) in ["Open the launcher.", "Add your Brawl disc.", "Restart the game."].iter().enumerate() {
                 let yy = y + 84.0 + i as f32 * 28.0;
                 spr_c(e, S_DISC, x + 24.0, yy + 9.0, 20.0 / 32.0, INK);
                 let mut n = Buf::new();
                 n.i(i as i32 + 1);
                 e.text_ex(x + 24.0, yy + 2.0, d(13), WHITE, ALIGN_CENTER, 0.0, n.str());
-                e.text_ex(x + 42.0, yy + 1.0, b(14), INK, ALIGN_LEFT, 0.0, s);
+                e.text_ex(x + 42.0, yy + 1.0, bs(14), INK, ALIGN_LEFT, 0.0, s);
             }
         });
         bar.s("Envoy needs your Brawl disc. Add it in the launcher.");
@@ -235,7 +236,7 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             e.text_ex(x + 14.0, y + 6.0, d(23), INK, ALIGN_LEFT, 0.0, "Continue run");
             let mut s = Buf::new();
             s.s("Fight ").i(p.fight + 1).s(" of ").i(p.fights).s(". Saved after fight ").i(p.fight.max(1)).s(".");
-            e.text_ex(x + 14.0, y + 33.0, b(12), INK, ALIGN_LEFT, w - 28.0, s.str());
+            e.text_ex(x + 14.0, y + 33.0, bs(12), INK, ALIGN_LEFT, w - 28.0, s.str());
             let mut yy = y + 62.0;
             for q in 0..p.players {
                 for f in 0..sets {
@@ -252,7 +253,7 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             marks(e, px + 16.0, py + 50.0, p.fights.min(5), p.fight, 16.0, 5.5);
             let mut s = Buf::new();
             s.i(p.fight).s(" of ").i(p.fights);
-            e.text_ex(px + 48.0, py + 66.0, b(12), INK, ALIGN_CENTER, 0.0, s.str());
+            e.text_ex(px + 48.0, py + 66.0, bs(12), INK, ALIGN_CENTER, 0.0, s.str());
         });
         let sy = oy + 8.0 + h + 14.0;
         pop(e, 2, ox + 8.0, sy, 126.0, 50.0, -3.0, &|e| {
@@ -272,11 +273,11 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             e.rect(x + 1.5, y + 1.5, w - 3.0, 52.0, SUNNY);
             e.rect(x + 1.5, y + 53.5, w - 3.0, 2.5, INK);
             e.text_ex(x + 14.0, y + 6.0, d(23), INK, ALIGN_LEFT, 0.0, "Start a run");
-            e.text_ex(x + 14.0, y + 33.0, b(12), INK, ALIGN_LEFT, w - 28.0, "Five fights: duels, elites, a boss.");
+            e.text_ex(x + 14.0, y + 33.0, bs(12), INK, ALIGN_LEFT, w - 28.0, "Five fights: duels, elites, a boss.");
             for (i, s) in ["Pick two fighters at the camp.", "Player 2 joins at the camp."].iter().enumerate() {
                 let yy = y + 72.0 + i as f32 * 40.0;
                 spr_c(e, S_DOT_INK, x + 20.0, yy + 8.0, 1.0, WHITE);
-                e.text_ex(x + 34.0, yy, b(14), INK, ALIGN_LEFT, w - 44.0, s);
+                e.text_ex(x + 34.0, yy, bs(14), INK, ALIGN_LEFT, w - 44.0, s);
             }
         });
         let (px, py) = (ox + 245.0, oy + 0.0);
@@ -284,13 +285,13 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             face(e, S_FACE_SUNNY, px, py, 97.0, 96.0, WHITE);
             e.text_ex(px + 48.0, py + 8.0, d(13), INK, ALIGN_CENTER, 0.0, "Run");
             marks(e, px + 16.0, py + 50.0, 5, -1, 16.0, 5.5);
-            e.text_ex(px + 48.0, py + 66.0, b(12), INK, ALIGN_CENTER, 0.0, "5 stops");
+            e.text_ex(px + 48.0, py + 66.0, bs(12), INK, ALIGN_CENTER, 0.0, "5 stops");
         });
         let (nx, ny) = (ox + 176.0, oy + 160.0);
         pop(e, 2, nx, ny, 150.0, 70.0, -3.0, &|e| {
             face(e, S_FACE_WHITE, nx, ny, 150.0, 70.0, WHITE);
             e.text_ex(nx + 12.0, ny + 10.0, d(17), INK, ALIGN_LEFT, 0.0, "One stock pool");
-            e.text_ex(nx + 12.0, ny + 38.0, b(13), LILAC, ALIGN_LEFT, 0.0, "5 together, 4 solo");
+            e.text_ex(nx + 12.0, ny + 38.0, bs(13), LILAC, ALIGN_LEFT, 0.0, "5 together, 4 solo");
         });
         let (bx, by) = (ox + 60.0, oy + 210.0);
         let tb = t - 8;
@@ -300,7 +301,7 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
         bar.s("A co-op run for 1 or 2 players, five fights long.");
     }
     // the description bar's text (the retail bar stays; its own text is hidden on this row)
-    e.text_ex(320.0, 410.0, b(15), WHITE, ALIGN_CENTER, 360.0, bar.str());
+    e.text_ex(320.0, 410.0, bs(15), WHITE, ALIGN_CENTER, 360.0, bar.str());
     if st & 64 != 0 {
         // A without the disc: the message
         e.rect(0.0, 0.0, 640.0, 480.0, 0x1A10_4AA8);
@@ -308,7 +309,7 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             spr_c(e, S_NODISC, 186.0, 190.0, 1.6, WHITE);
             e.text_ex(214.0, 174.0, d(21), INK, ALIGN_LEFT, 0.0, "Needs your Brawl disc");
             for (i, s) in ["1  Open the launcher.", "2  Add your Brawl disc.", "3  Restart the game."].iter().enumerate() {
-                e.text_ex(214.0, 210.0 + i as f32 * 24.0, b(15), INK, ALIGN_LEFT, 0.0, s);
+                e.text_ex(214.0, 210.0 + i as f32 * 24.0, bs(15), INK, ALIGN_LEFT, 0.0, s);
             }
         });
     }

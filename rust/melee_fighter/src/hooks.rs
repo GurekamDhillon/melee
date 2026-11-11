@@ -82,6 +82,9 @@ pub fn common_data() -> &'static ftCommonData {
 // reached unset ("TODO(group): ..."), so a missing port is loud, never a silent wrong value.
 // Rumble (lb/HSD pad) is output only, never game state, so its default is a no-op.
 
+/// Envoy V3: an aerial landing was L-cancelled (`ftCo_LandingAir_EnterWithLag`, the `x67F < xE4` branch). Set by
+/// `melee_modes::tu::envoy`; None = nothing (vanilla).
+pub static mut ENVOY_LCANCEL: Option<fn(fp: &Fighter)> = None;
 /// `Geno_GroundEdge(fp, landing)` (pc/geno, TARGET_PC). Vanilla: returns at once (no Geno fighter).
 pub static mut GENO_GROUND_EDGE: Option<fn(fp: &mut Fighter, landing: i32)> = None;
 /// `pl_8003FC44(slot, is_sub)` override; unset = `crate::plbonus` port (round 4).

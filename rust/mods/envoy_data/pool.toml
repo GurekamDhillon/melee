@@ -1,277 +1,383 @@
-# The Envoy drive pool as data (envoy-core-v2.md 4): pool.toml -> build.rs (envoy_lint) -> pool_gen.rs, a no_std
-# library used by envoy_sim and envoy_ui. V2: the full starter pool, 20 drives and 6 keystones.
+# The Envoy drive pool as data: pool.toml -> build.rs (envoy_lint) -> pool_gen.rs, a no_std library used by
+# envoy_sim and envoy_ui. V3 (Heat, envoy-synergy-v3.md 12.6-12.7): the slice's 16 drives plus V2's other ten
+# re-derived on damage (26), and 7 keystones (the slice's three and V2's other four).
 #
-# A drive: one rule, one charge source, one effect, one number; it orbits its fighter and fires when its charge is
-# full. A second copy levels it up (1 -> 3; the number x1.0 / x1.6 / x2.4).
-#   family    RED | GREEN | BLUE | YELLOW | PURPLE | WHITE   (the model body; see src/codes.rs)
-#   charge    hit | taken | landing | jump | time | tag_in | aerial_hit | hit_100 | ko | shift | fire | passive
-#   need      how many of them (time: milliseconds)
-#   cooldown  milliseconds after a fire before it charges again (optional)
-#   effect    one of src/codes.rs EFFECTS (nova, shockwave and spire launch, through gd_envoy_blast)
-#   number    x1000: a percent (6000 = 6%) or a time (4000 = 4 s)
-#   gives / reads  0-1 word each from Burning, Chilled, Marked, Haste; the word is written in the rule
-#   look, sound    the presentation's effect shape (src/codes.rs LOOKS) and sound key; never read by the sim
-# A keystone: one rule and one price (one of the seven, or own); belongs to the player.
+# A drive: one rule and one number; it orbits its fighter in slot order (the first slot leads).
+#   kind      trigger | shaper | heat_add | gain_mul | heat_mul | neighbour (src/codes.rs ROLES)
+#   tier      common | rare | epic
+#   family    RED | GREEN | BLUE | YELLOW | PURPLE | WHITE
+#   charge    (triggers only) dealt | aerial_dealt | chilled_dealt | offstage_dealt | taken | time | tag_in | shift | cashout
+#   need      percent x1000 (40000 = every 40%), or milliseconds for `time`; none for tag_in / shift / cashout
+#   coef      x1000: how much of a fire's damage charges the drives to its right (4.1); 1000 only with launch
+#   launch    true: the fire is a blast that launches (a timed drive only)
+#   when      the condition of a heat_add / gain_mul drive, or a cashout trigger's filter (src/codes.rs WHENS)
+#   effect    one of src/codes.rs EFFECTS
+#   number    x1000: a percent, a time (ms), a Heat amount or a multiplier (gain_mul: 1500 = x1.5)
+#   gives / reads, look, sound   as V2
 #
-# Numbers: the first tune from tools/rust-port/envoy/sim.py (seeds x policies; docs/rust-port/notes/envoy-drives.md).
-
+# Numbers: the spec's first guesses (12.6), tuned toward loud where a drive read weak (docs/rust-port/notes/
+# envoy-v3-rules.md lists every change): fires +25-50%, coefficients lowered to keep the 4.3 bound.
 # ---- RED: damage
 [[drive]]
 key = "ember"
 name = "Ember"
 family = "RED"
-charge = "hit"
-need = 5
+tier = "common"
+kind = "trigger"
+charge = "dealt"
+need = 40000
 effect = "burst"
 number = 6000
+coef = 500
 gives = "Burning"
 look = "burst"
 sound = "fire_red"
-rule = "Every 5th hit: a fire burst, 6% and Burning."
-
-[[drive]]
-key = "nova"
-name = "Nova"
-family = "RED"
-charge = "time"
-need = 12000
-effect = "nova"
-number = 12000
-look = "ring"
-sound = "fire_red"
-rule = "Every 12 seconds: a blast around you, 12%."
-
+rule = "Every 40% dealt: a fire burst, 6% and Burning."
 [[drive]]
 key = "bolt"
 name = "Bolt"
 family = "RED"
-charge = "time"
-need = 8000
+tier = "common"
+kind = "trigger"
+charge = "dealt"
+need = 30000
 effect = "bolt"
-number = 8000
+number = 6000
+coef = 400
 look = "bolt"
 sound = "fire_bolt"
-rule = "Every 8 seconds: lightning strikes the nearest foe, 8%."
-
+rule = "Every 30% dealt: lightning strikes the nearest foe, 6%."
+[[drive]]
+key = "nova"
+name = "Nova"
+family = "RED"
+tier = "rare"
+kind = "trigger"
+charge = "time"
+need = 12000
+effect = "nova"
+number = 10000
+coef = 1000
+launch = true
+look = "ring"
+sound = "fire_red"
+rule = "Every 12 seconds: a blast around you, 10%. It launches."
+[[drive]]
+key = "wildfire"
+name = "Wildfire"
+family = "RED"
+tier = "rare"
+kind = "trigger"
+charge = "cashout"
+when = "burning_foe"
+effect = "wildfire"
+number = 12000
+coef = 500
+reads = "Burning"
+look = "burst"
+sound = "fire_red"
+rule = "A cash-out on a Burning foe: 12% to every other foe."
 [[drive]]
 key = "spire"
 name = "Spire"
 family = "RED"
-charge = "hit_100"
-need = 1
-cooldown = 6000
+tier = "rare"
+kind = "trigger"
+charge = "time"
+need = 10000
 effect = "spire"
-number = 15000
+number = 12000
+coef = 1000
+launch = true
 look = "beam"
 sound = "fire_spire"
-rule = "Hit a foe above 100%: a spire of light, 15%."
-
+rule = "Every 10 seconds: a spire of light under the nearest foe."
 # ---- GREEN: speed
 [[drive]]
 key = "rush"
 name = "Rush"
 family = "GREEN"
-charge = "hit"
-need = 6
+tier = "common"
+kind = "trigger"
+charge = "dealt"
+need = 40000
 effect = "haste"
-number = 4000
+number = 5000
+coef = 0
 gives = "Haste"
 look = "glow"
 sound = "fire_green"
-rule = "Every 6th hit: Haste for 4 seconds."
-
-[[drive]]
-key = "slipstream"
-name = "Slipstream"
-family = "GREEN"
-charge = "tag_in"
-need = 1
-effect = "haste"
-number = 6000
-gives = "Haste"
-look = "glow"
-sound = "fire_green"
-rule = "Tag in: Haste for 6 seconds."
-
+rule = "Every 40% dealt: Haste for 5 seconds."
 [[drive]]
 key = "tailwind"
 name = "Tailwind"
 family = "GREEN"
-charge = "passive"
-need = 1
-effect = "tailwind"
-number = 25000
+tier = "rare"
+kind = "gain_mul"
+when = "haste"
+effect = "gain"
+number = 1750
 reads = "Haste"
 look = "line"
 sound = "fire_green"
-rule = "In Haste, your hits deal 25% more."
-
+rule = "In Haste, Heat fills x1.75."
+[[drive]]
+key = "clean_landing"
+name = "Clean Landing"
+family = "GREEN"
+tier = "common"
+kind = "heat_add"
+when = "lcancel"
+effect = "heat"
+number = 10000
+look = "line"
+sound = "fire_green"
+rule = "An L-cancelled aerial that dealt damage: +10 Heat."
+[[drive]]
+key = "perfect_form"
+name = "Perfect Form"
+family = "GREEN"
+tier = "rare"
+kind = "gain_mul"
+when = "lcancel_streak"
+effect = "gain"
+number = 1750
+look = "glow"
+sound = "fire_green"
+rule = "While your last three aerial landings were L-cancelled: Heat fills x1.75."
+[[drive]]
+key = "slipstream"
+name = "Slipstream"
+family = "GREEN"
+tier = "common"
+kind = "trigger"
+charge = "tag_in"
+effect = "haste"
+number = 6000
+coef = 0
+gives = "Haste"
+look = "glow"
+sound = "fire_green"
+rule = "Tag in: Haste for 6 seconds."
 # ---- BLUE: defence
+[[drive]]
+key = "riposte"
+name = "Riposte"
+family = "BLUE"
+tier = "common"
+kind = "heat_add"
+when = "tech"
+effect = "heat"
+number = 15000
+look = "spikes"
+sound = "fire_blue"
+rule = "A tech: +15 Heat."
+[[drive]]
+key = "insulate"
+name = "Insulate"
+family = "BLUE"
+tier = "rare"
+kind = "shaper"
+effect = "insulate"
+number = 20000
+look = "orb"
+sound = "fire_blue"
+rule = "First 20% taken per fight, and after each cash-out: no Heat lost."
 [[drive]]
 key = "bulwark"
 name = "Bulwark"
 family = "BLUE"
+tier = "common"
+kind = "trigger"
 charge = "time"
 need = 15000
 effect = "shield"
 number = 1000
+coef = 0
 look = "orb"
 sound = "fire_blue"
 rule = "Every 15 seconds: an orb absorbs the next hit."
-
 [[drive]]
 key = "thorns"
 name = "Thorns"
 family = "BLUE"
+tier = "common"
+kind = "trigger"
 charge = "taken"
-need = 1
-cooldown = 2000
+need = 25000
 effect = "thorns"
-number = 5000
+number = 6000
+coef = 300
 gives = "Marked"
 look = "spikes"
 sound = "fire_blue"
-rule = "When hit: the attacker takes 5% and is Marked."
-
+rule = "Every 25% taken: the attacker takes 6% and is Marked."
 [[drive]]
 key = "leech"
 name = "Leech"
 family = "BLUE"
-charge = "hit"
-need = 6
+tier = "common"
+kind = "trigger"
+charge = "dealt"
+need = 60000
 effect = "heal"
-number = 5000
+number = 6000
+coef = 0
 look = "glow"
 sound = "fire_heal"
-rule = "Every 6th hit: heal 5%."
-
+rule = "Every 60% dealt: heal 6%."
 # ---- YELLOW: air
-[[drive]]
-key = "comet"
-name = "Comet"
-family = "YELLOW"
-charge = "landing"
-need = 3
-effect = "shockwave"
-number = 6000
-look = "wave"
-sound = "fire_yellow"
-rule = "Every 3rd landing: a shockwave, 6%."
-
-[[drive]]
-key = "updraft"
-name = "Updraft"
-family = "YELLOW"
-charge = "aerial_hit"
-need = 3
-effect = "airjump"
-number = 1000
-look = "ring"
-sound = "fire_air"
-rule = "Every 3rd aerial hit: gain an extra air jump."
-
 [[drive]]
 key = "feather_storm"
 name = "Feather Storm"
 family = "YELLOW"
-charge = "jump"
-need = 6
+tier = "common"
+kind = "trigger"
+charge = "aerial_dealt"
+need = 30000
 effect = "feathers"
-number = 9000
+number = 3000
+coef = 300
 look = "rain"
 sound = "fire_air"
-rule = "Every 6th jump: feathers rain on the nearest foe, 9%."
-
+rule = "Every 30% of aerial damage: three feathers, 3% each."
+[[drive]]
+key = "gatekeeper"
+name = "Gatekeeper"
+family = "YELLOW"
+tier = "rare"
+kind = "gain_mul"
+when = "offstage"
+effect = "gain"
+number = 2000
+look = "wave"
+sound = "fire_yellow"
+rule = "Damage to an offstage foe fills Heat x2."
+[[drive]]
+key = "comet"
+name = "Comet"
+family = "YELLOW"
+tier = "common"
+kind = "trigger"
+charge = "time"
+need = 9000
+effect = "shockwave"
+number = 7000
+coef = 1000
+launch = true
+look = "wave"
+sound = "fire_yellow"
+rule = "Every 9 seconds: a shockwave around you, 7%. It pops foes up."
+[[drive]]
+key = "updraft"
+name = "Updraft"
+family = "YELLOW"
+tier = "common"
+kind = "trigger"
+charge = "aerial_dealt"
+need = 35000
+effect = "airjump"
+number = 1000
+coef = 0
+look = "ring"
+sound = "fire_air"
+rule = "Every 35% of aerial damage: an extra air jump."
 # ---- PURPLE: status
 [[drive]]
 key = "frost"
 name = "Frost"
 family = "PURPLE"
-charge = "hit"
-need = 5
+tier = "common"
+kind = "trigger"
+charge = "dealt"
+need = 40000
 effect = "chill"
-number = 4000
+number = 3000
+coef = 300
 gives = "Chilled"
 look = "spikes"
 sound = "fire_purple"
-rule = "Every 5th hit: the foe is Chilled for 4 seconds."
-
+rule = "Every 40% dealt: 3% and the foe is Chilled."
 [[drive]]
 key = "shatter"
 name = "Shatter"
 family = "PURPLE"
-charge = "hit"
-need = 1
+tier = "common"
+kind = "trigger"
+charge = "chilled_dealt"
+need = 20000
 effect = "shatter"
-number = 10000
+number = 7000
+coef = 250
 reads = "Chilled"
 look = "spikes"
 sound = "fire_shatter"
-rule = "Hit a Chilled foe: ice shards, 10%, ending the Chill."
-
+rule = "Every 20% dealt to Chilled foes: ice shards, 7%, ending the Chill."
 [[drive]]
 key = "hex"
 name = "Hex"
 family = "PURPLE"
-charge = "hit"
-need = 6
+tier = "common"
+kind = "trigger"
+charge = "dealt"
+need = 50000
 effect = "mark"
-number = 5000
+number = 3000
+coef = 300
 gives = "Marked"
 look = "glow"
 sound = "fire_purple"
-rule = "Every 6th hit: the foe is Marked for 5 seconds."
-
-[[drive]]
-key = "wildfire"
-name = "Wildfire"
-family = "PURPLE"
-charge = "ko"
-need = 1
-effect = "wildfire"
-number = 15000
-reads = "Burning"
-look = "burst"
-sound = "fire_red"
-rule = "KO a Burning foe: an explosion, 15% to every foe."
-
+rule = "Every 50% dealt: 3% and the foe is Marked."
 # ---- WHITE: wild
-[[drive]]
-key = "relay"
-name = "Relay"
-family = "WHITE"
-charge = "tag_in"
-need = 1
-effect = "relay"
-number = 1000
-look = "ring"
-sound = "fire_white"
-rule = "Tag in: all of this fighter's drives fire at once."
-
 [[drive]]
 key = "echo"
 name = "Echo"
 family = "WHITE"
-charge = "fire"
-need = 3
-effect = "repeat"
+tier = "rare"
+kind = "neighbour"
+effect = "neighbour"
 number = 500
 look = "ring"
 sound = "fire_white"
-rule = "Every 3rd drive fire repeats at half strength."
-
+rule = "The drive to its right fires again at half strength."
+[[drive]]
+key = "metronome"
+name = "Metronome"
+family = "WHITE"
+tier = "common"
+kind = "heat_add"
+when = "new_move"
+effect = "heat"
+number = 6000
+look = "ring"
+sound = "fire_white"
+rule = "A move not among your last three deals damage: +6 Heat."
+[[drive]]
+key = "relay"
+name = "Relay"
+family = "WHITE"
+tier = "rare"
+kind = "trigger"
+charge = "tag_in"
+effect = "relay"
+number = 1000
+coef = 0
+look = "ring"
+sound = "fire_white"
+rule = "Tag in: all of this fighter's drives fire at once."
 [[drive]]
 key = "surge"
 name = "Surge"
 family = "WHITE"
+tier = "rare"
+kind = "trigger"
 charge = "shift"
-need = 1
 effect = "surge"
 number = 1000
+coef = 0
 look = "glow"
 sound = "fire_white"
 rule = "Stage shift: every drive is fully charged."
-
 # ---- keystones
 [[keystone]]
 key = "plague_bearer"
@@ -281,8 +387,23 @@ number = 3
 gives = "Burning"
 price = "Fragile"
 sound = "keystone"
-rule = "Every hit sets the foe Burning, stacking to 3."
-
+rule = "Every 8% dealt adds Burning, to 3 stacks; ticks charge drives."
+[[keystone]]
+key = "glass_core"
+name = "Glass Core"
+effect = "glass"
+number = 2000
+price = "own"
+sound = "keystone"
+rule = "Heat fills twice as fast; you take 60% more."
+[[keystone]]
+key = "grand_finale"
+name = "Grand Finale"
+effect = "finale"
+number = 500
+price = "Weak"
+sound = "keystone"
+rule = "Smash attacks launch harder with Heat; a smash KO pays half again."
 [[keystone]]
 key = "echo_oath"
 name = "Echo Oath"
@@ -291,7 +412,6 @@ number = 500
 price = "Weak"
 sound = "keystone"
 rule = "Every drive fire repeats once at half strength."
-
 [[keystone]]
 key = "overclock"
 name = "Overclock"
@@ -300,7 +420,6 @@ number = 2
 price = "Bleed"
 sound = "keystone"
 rule = "Drives charge twice as fast."
-
 [[keystone]]
 key = "twin_soul"
 name = "Twin Soul"
@@ -309,7 +428,6 @@ number = 1
 price = "Lock"
 sound = "keystone"
 rule = "The benched fighter's drives orbit and fire too."
-
 [[keystone]]
 key = "winter_oath"
 name = "Winter Oath"
@@ -319,12 +437,3 @@ gives = "Chilled"
 price = "Slow"
 sound = "keystone"
 rule = "Your hits leave the foe Chilled for 2 seconds."
-
-[[keystone]]
-key = "glass_core"
-name = "Glass Core"
-effect = "glass"
-number = 1600
-price = "own"
-sound = "keystone"
-rule = "You deal and take 60% more."

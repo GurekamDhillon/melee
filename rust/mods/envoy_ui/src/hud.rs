@@ -177,6 +177,23 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x0: f32, x1: f32) {
             spr_c(e, S_DISC, cx, cy, 15.0 / 32.0, alpha(PALE, 0.35));
         }
     }
+    // the active drive (Volley): a square badge after the row, its pips, D-pad right
+    if v[pbk + P_ACT_ID] > 0 {
+        let ax = x + 14.0 + SLOTS as f32 * 30.0 + 8.0;
+        let ay = y + 38.0;
+        let ready = v[pbk + P_ACT_READY] != 0;
+        if ready {
+            spr_rot(e, S_BURST_SUNNY, ax, ay, 0.62, (T as f32) * 0.5, WHITE);
+        }
+        face(e, S_FACE_INK, ax - 12.0, ay - 12.0, 24.0, 24.0, WHITE);
+        spr_c(e, S_BADGE + 3 + 1, ax, ay, 17.0 / 22.8, WHITE);
+        spr_c(e, if ready { S_DPAD_RIGHT_LIT } else { S_DPAD_RIGHT }, ax + 12.0, ay - 12.0, 0.75, WHITE);
+        let need = v[pbk + P_PIPS_NEED].clamp(1, 4);
+        for k in 0..need {
+            let px = ax - (need - 1) as f32 * 4.0 + k as f32 * 8.0;
+            spr_c(e, S_DISC, px, ay + 17.0, 6.0 / 32.0, if k < v[pbk + P_PIPS] { SUNNY } else { alpha(PALE, 0.5) });
+        }
+    }
     // Heat bar and the bench sticker
     let hy = y + 66.0;
     if let Some(h) = heat_of(v, p) {
@@ -248,7 +265,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     // fight label under the pool
     let mut s = Buf::new();
     s.s("Fight ").i(v[V_FIGHT] + 1).s(" of ").i(v[V_FIGHTS]);
-    e.text_ex(14.0 - ex, 44.0, b(12), WHITE, ALIGN_LEFT, 0.0, s.str());
+    e.text_ex(14.0 - ex, 44.0, bs(12), WHITE, ALIGN_LEFT, 0.0, s.str());
     // foes, top right: an elite or boss plate with its drives
     let kind = v[V_FIGHT_KIND];
     let mut fy = 12.0;
@@ -319,7 +336,7 @@ unsafe fn boss_bar(e: &mut E, p: &[i32; 12]) {
     text_edge(e, x + 2.0, y + 19.0, d(14), WHITE, ALIGN_LEFT, 1.5, name);
     let state = if p[6] == 7 { if p[8] == 2 { "Cage broken: partner free" } else { "Defeated" } } else if p[6] == 6 { "Stunned" } else if p[7] != 0 { "Phase 2" } else { "" };
     if !state.is_empty() {
-        text_edge(e, x + w, y + 19.0, b(13), SUNNY, ALIGN_RIGHT, 1.5, state);
+        text_edge(e, x + w, y + 19.0, bs(13), SUNNY, ALIGN_RIGHT, 1.5, state);
     }
     // the two cages
     let cw = w * 0.5 - 6.0;

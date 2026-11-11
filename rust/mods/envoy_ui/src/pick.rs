@@ -71,7 +71,7 @@ fn offer(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, h
             e.text_ex(cx, y + 74.0, d(19), alpha(INK, a), ALIGN_CENTER, w - 12.0, "+1 stock");
             let mut s = Buf::new();
             s.s("Pool ").i(v[V_POOL]).s(" to ").i(v[V_POOL] + 1);
-            e.text_ex(cx, y + 100.0, b(13), alpha(LILAC, a), ALIGN_CENTER, w - 12.0, s.str());
+            e.text_ex(cx, y + 100.0, bs(13), alpha(LILAC, a), ALIGN_CENTER, w - 12.0, s.str());
             return;
         }
         let dr = &POOL[id as usize];
@@ -83,8 +83,8 @@ fn offer(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, h
         }
         e.text_ex(cx, y + 64.0, d(17), alpha(INK, a), ALIGN_CENTER, w - 10.0, dr.name);
         let fam = if keystone { "Keystone" } else { crate::party::FAM_WORD[FAM_BADGE.get(dr.family as usize).copied().unwrap_or(5)] };
-        e.text_ex(cx, y + 86.0, b(11), alpha(LILAC, a), ALIGN_CENTER, 0.0, fam);
-        wrap(e, cx, y + 104.0, w - 16.0, b(12), 14.0, alpha(INK, a), ALIGN_CENTER, dr.rule, 5);
+        e.text_ex(cx, y + 86.0, bs(11), alpha(LILAC, a), ALIGN_CENTER, 0.0, fam);
+        wrap(e, cx, y + 104.0, w - 16.0, bs(12), 14.0, alpha(INK, a), ALIGN_CENTER, dr.rule, 5);
         if !keystone {
             let sets = if v[V_SHARED] != 0 { 1 } else { 2 };
             for f in 0..sets {
@@ -102,7 +102,7 @@ fn offer(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, h
                     s.s("level ").i(lv + 1);
                 }
                 let col = if !ok { DEEP } else if lv > 0 { CORAL } else { INK };
-                e.text_ex(cx, fy, b(11), alpha(col, a), ALIGN_CENTER, w - 10.0, s.str());
+                e.text_ex(cx, fy, bs(11), alpha(col, a), ALIGN_CENTER, w - 10.0, s.str());
                 if ok && lv > 0 && on {
                     burst(e, S_BURST_CORAL, x + w - 6.0, y + 6.0, 46.0, unsafe { T - OPEN_AT }, "Level up!", 9);
                 }
@@ -147,7 +147,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w0: f32, coop: bool)
                 let dr = &POOL[id as usize];
                 spr_c(e, kem_of(id as usize), cx, wy + 2.0, 62.0 / 34.0, alpha(WHITE, al));
                 wrap(e, cx, wy + 44.0, 150.0, d(24), 26.0, alpha(if on { INK } else { SUNNY }, al), ALIGN_CENTER, dr.name, 2);
-                wrap(e, cx, wy + 112.0, 128.0, b(15), 18.0, alpha(ink, al), ALIGN_CENTER, dr.rule, 5);
+                wrap(e, cx, wy + 112.0, 128.0, bs(15), 18.0, alpha(ink, al), ALIGN_CENTER, dr.rule, 5);
                 let mut s = Buf::new();
                 s.s("Price: ").s(PRICES[dr.price as usize]);
                 e.text_ex(cx, wy + 236.0, d(13), alpha(if on { DEEP } else { CORAL }, al), ALIGN_CENTER, 150.0, s.str());
@@ -194,6 +194,16 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w0: f32, coop: bool)
         fighter_sticker_w(e, fx, fy, fw, if f == 0 { -0.6 } else { 0.5 }, &party, p * 2 + f, f == 0 && coop, on);
         if on {
             spr(e, S_PTRDOWN + p, fx + fw * 0.5 - 13.0, fy - 26.0, 0.0, 0.0, WHITE);
+        }
+        // step 2: the row is full, the slot cursor walks it (the drive there is replaced)
+        if step == 2 && v[pbk + P_FCURSOR] == f as i32 && !done {
+            let k = v[pbk + P_SCURSOR].clamp(0, SLOTS as i32 - 1) as f32;
+            let stepw = if fw >= 140.0 { 26.0 } else { ((fw - 12.0) / SLOTS as f32).min(26.0) };
+            let cx = fx + if fw >= 140.0 { 17.0 } else { 6.0 + stepw * 0.5 } + k * stepw;
+            ring(e, cx, fy + 48.0, 13.0, 3.2, 1.0, SUNNY, SUNNY);
+            spr(e, S_PTRDOWN + p, cx - 13.0, fy + 8.0, 0.0, 0.0, WHITE);
+            face(e, S_FACE_CORAL, fx + fw - 64.0, fy - 12.0, 62.0, 18.0, WHITE);
+            e.text_ex(fx + fw - 33.0, fy - 10.0, d(11), WHITE, ALIGN_CENTER, 0.0, "Replace");
         }
     }
     if done {
@@ -247,7 +257,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
     text_edge(e, if coop { 320.0 } else { 16.0 }, 6.0, d(24), WHITE, if coop { ALIGN_CENTER } else { ALIGN_LEFT }, 2.2, title);
     if !coop {
         let sub = if keys { "One rule for the whole run." } else { "One of three, for one of your two fighters." };
-        e.text_ex(22.0, 36.0, b(13), WHITE, ALIGN_LEFT, 0.0, sub);
+        e.text_ex(22.0, 36.0, bs(13), WHITE, ALIGN_LEFT, 0.0, sub);
     }
     if v[V_TIMER] > 0 {
         let secs = (v[V_TIMER] + 59) / 60;
@@ -287,7 +297,12 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
         s.s("One stock back in the shared pool.");
     } else if (0..POOL_LEN as i32).contains(&id) {
         let dr = &POOL[id as usize];
-        if v[pbk + P_STEP] == 1 {
+        if v[pbk + P_STEP] == 2 {
+            let f = v[pbk + P_FCURSOR].clamp(0, 1) as usize;
+            let k = v[pbk + P_SCURSOR].clamp(0, SLOTS as i32 - 1) as usize;
+            let old = v[pbk + P_DRIVES + f * SLOTS + k];
+            s.s("Replace ").s(if old > 0 { POOL[old as usize - 1].name } else { "the empty slot" }).s(" with ").s(dr.name).s(" for good?");
+        } else if v[pbk + P_STEP] == 1 {
             let f = v[pbk + P_FCURSOR].clamp(0, 1);
             s.s("Who wears ").s(dr.name).s("? ").s(ck_name(if f == 0 { v[pbk + P_MAIN] } else { v[pbk + P_PARTNER] })).s(".");
         } else if dr.kind == K_KEYSTONE {
@@ -300,7 +315,10 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
         strip(e, 24.0, 590.0, s.str());
     }
     let step1 = (0..v[V_HUMANS].clamp(1, 2) as usize).any(|p| v[V_P0 + p * V_PW + P_STEP] == 1);
-    if step1 {
+    let step2 = (0..v[V_HUMANS].clamp(1, 2) as usize).any(|p| v[V_P0 + p * V_PW + P_STEP] == 2);
+    if step2 {
+        hints(e, &[("Left / Right", "Choose a slot"), ("A", "Replace"), ("B", "Back")]);
+    } else if step1 {
         hints(e, &[("Left / Right", "Choose a fighter"), ("A", "Take"), ("B", "Back")]);
     } else {
         hints(e, &[("Left / Right", "Choose"), ("A", "Take it")]);

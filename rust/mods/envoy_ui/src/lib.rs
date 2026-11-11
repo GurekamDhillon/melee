@@ -21,6 +21,7 @@ use gd_ui_enc::*;
 mod camp;
 mod hud;
 mod pick;
+mod shop;
 mod kit;
 mod party;
 
@@ -626,7 +627,9 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             e.space(SPACE_BAND, 1.0);
             hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
             e.space(SPACE_WINDOW, sc);
-            if v[V_RW] != 0 {
+            if v[V_RW] == RW_SHOP {
+                shop::draw(e, &v, ex, vw, vh, sc);
+            } else if v[V_RW] != 0 {
                 e.space(SPACE_BAND, 1.0);
                 pick::draw(e, &v, ex);
                 e.space(SPACE_WINDOW, sc);
@@ -692,7 +695,7 @@ unsafe fn hud(e: &mut kit::E, v: &[i32; VW], vw: f32) {
     let x = 24.0;
     let y = 24.0;
     let humans = v[V_HUMANS].clamp(1, 2) as usize;
-    let h = 70.0 + 46.0 * humans as f32 + if v[V_STAGE_IN] >= 0 { 22.0 } else { 0.0 };
+    let h = 70.0 + 88.0 * humans as f32 + if v[V_STAGE_IN] >= 0 { 22.0 } else { 0.0 };
     e.slice(SLICE_FILL_R6, x, y, 320.0, h, PANEL);
     let kind = v[V_FIGHT_KIND];
     let mut s = Buf::new();
@@ -729,7 +732,30 @@ unsafe fn hud(e: &mut kit::E, v: &[i32; VW], vw: f32) {
             s.s("TAG  READY (D-pad down)");
         }
         e.text(x + 14.0, yy + 20.0, ROLE_LABEL, if cd > 0 { DIM } else { GOOD }, s.str());
-        yy += 46.0;
+        // V3 Heat (a text stand-in for the new HUD): the meter, its state, the purse, Volley
+        let heat = v[b + P_HEAT];
+        let st = v[b + P_HEAT_STATE].clamp(0, 3) as usize;
+        const ST_NAME: [&str; 4] = ["COLD", "WARM", "HOT", "BLAZING"];
+        const ST_COL: [u32; 4] = [0x8CB4_FFFF, 0xFFD2_3CFF, 0xFF8C_2AFF, 0xFF3A_2AFF];
+        let cap = v[b + P_HEAT_CAP].max(1) as f32;
+        e.slice(SLICE_FILL_R4, x + 14.0, yy + 44.0, 292.0, 10.0, 0x2020_30FF);
+        e.slice(SLICE_FILL_R4, x + 14.0, yy + 44.0, (292.0 * heat as f32 / cap).clamp(2.0, 292.0), 10.0, ST_COL[st]);
+        for m in 0..3 {
+            e.slice(SLICE_FILL_R4, x + 14.0 + 292.0 * v[b + P_HEAT_MARKS + m] as f32 / cap, yy + 42.0, 2.0, 14.0, WHITE);
+        }
+        let mut s = Buf::new();
+        s.s("HEAT ").i(heat / 1000).s(" ").s(ST_NAME[st]).s("  x").i(v[b + P_HEAT_SCALE] / 1000).s(".").i(v[b + P_HEAT_SCALE] % 1000 / 10);
+        if v[b + P_GAIN_MUL] > 1000 {
+            s.s("  fill x").i(v[b + P_GAIN_MUL] / 1000).s(".").i(v[b + P_GAIN_MUL] % 1000 / 100);
+        }
+        e.text(x + 14.0, yy + 58.0, ROLE_LABEL, ST_COL[st], s.str());
+        let mut s = Buf::new();
+        s.s("COINS ").i(v[V_COINS]).s("  VOLLEY ").i(v[b + P_PIPS]).s("/").i(v[b + P_PIPS_NEED]);
+        if v[b + P_ACT_READY] != 0 {
+            s.s(" (D-pad right)");
+        }
+        e.text(x + 160.0, yy + 20.0, ROLE_LABEL, if v[b + P_ACT_READY] != 0 { GOOD } else { DIM }, s.str());
+        yy += 88.0;
     }
     if v[V_STAGE_IN] >= 0 {
         let mut s = Buf::new();
@@ -1271,12 +1297,109 @@ unsafe fn reward(e: &mut kit::E, v: &[i32; VW], vw: f32, vh: f32) {
             }
         }
     }
-    let hint = if (0..humans).any(|p| v[pb(p) + P_STEP] == 1) {
+    for p in 0..humans {
+        let b = pb(p);
+        if v[b + P_STEP] == 2 && v[b + P_RW_DONE] == 0 {
+            let f = v[b + P_FCURSOR].clamp(0, 1) as usize;
+            let mut s = Buf::new();
+            s.s("ROW FULL - REPLACE: ");
+            for k in 0..v[V_OPEN].clamp(0, SLOTS as i32) as usize {
+                let id = v[b + P_DRIVES + f * SLOTS + k];
+                let on = v[b + P_SCURSOR] == k as i32;
+                s.s(if on { "[" } else { " " }).s(if id > 0 { POOL[id as usize - 1].name } else { "-" }).s(if on { "]" } else { " " });
+            }
+            e.text_ex(cx, vh - 70.0 - p as f32 * 30.0, ROLE_VALUE, ACCENT, ALIGN_CENTER, vw - 40.0, s.str());
+        }
+    }
+    let hint = if (0..humans).any(|p| v[pb(p) + P_STEP] == 2) {
+        "REPLACE WHICH?   LEFT / RIGHT choose     A replace     B back"
+    } else if (0..humans).any(|p| v[pb(p) + P_STEP] == 1) {
         "WHO WEARS IT?   LEFT / RIGHT choose     A wear     B back"
     } else {
         "LEFT / RIGHT choose     A take"
     };
     e.text_ex(cx, vh - 30.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, hint);
+}
+
+/// V3's shop as plain text (a stand-in until the new UI lands): the rows, the cursor, the coins, the last result.
+pub(crate) unsafe fn shop_text(e: &mut kit::E, v: &[i32; VW], vw: f32, vh: f32) {
+    e.rect(0.0, 0.0, vw, vh, 0x0000_00C0);
+    let humans = v[V_HUMANS].clamp(1, 2) as usize;
+    let mut s = Buf::new();
+    s.s("SHOP   COINS ").i(v[V_COINS]).s("   ").i((v[V_TIMER] + 59) / 60).s("s");
+    e.text_ex(vw * 0.5, 60.0, ROLE_TITLE, WHITE, ALIGN_CENTER, 0.0, s.str());
+    for p in 0..humans {
+        let b = pb(p);
+        let x = if humans == 2 { 40.0 + p as f32 * vw * 0.5 } else { vw * 0.5 - 300.0 };
+        let mut y = 120.0;
+        let f = v[b + P_SHOP_FIGHTER].clamp(0, 1) as usize;
+        let mut s = Buf::new();
+        s.s(if p == 0 { "P1 " } else { "P2 " }).s("ROW OF ").s(fighter_name(v, p, f as i32)).s(":");
+        for k in 0..v[V_OPEN].clamp(0, SLOTS as i32) as usize {
+            let id = v[b + P_DRIVES + f * SLOTS + k];
+            let on = v[b + P_SHOP_STEP] >= 1 && v[b + P_SCURSOR] == k as i32;
+            s.s(if on { " [" } else { "  " }).s(if id > 0 { POOL[id as usize - 1].name } else { "-" });
+            if id > 0 {
+                s.s(" ").i(v[b + P_LEVELS + f * SLOTS + k]);
+            }
+            s.s(if on { "]" } else { "" });
+        }
+        e.text_ex(x, y, ROLE_LABEL, WHITE, ALIGN_LEFT, vw * 0.5 - 40.0, s.str());
+        y += 34.0;
+        if v[b + P_SHOP_DONE] != 0 {
+            e.text(x, y, ROLE_VALUE, DIM, "DONE");
+            continue;
+        }
+        for row in 0..SHOP_ROWS {
+            let mut s = Buf::new();
+            let on = v[b + P_SHOP_CURSOR] == row;
+            s.s(if on { "> " } else { "  " });
+            match row {
+                0..=2 => {
+                    let id = v[b + P_SHOP_OFFERS + row as usize];
+                    if id >= 0 {
+                        let d = &POOL[id as usize];
+                        s.s(d.name).s("  ").i(v[b + P_SHOP_PRICE + row as usize]).s("c  ").s(TIERS[d.tier.min(2) as usize]);
+                    } else {
+                        s.s("(sold)");
+                    }
+                }
+                SHOP_LEVEL => {
+                    s.s("Level a drive  60c / 120c");
+                }
+                SHOP_STOCK => {
+                    s.s("+1 stock  100c");
+                }
+                SHOP_REROLL => {
+                    s.s("Reroll  ").i(v[V_REROLL_COST]).s("c");
+                }
+                SHOP_REORDER => {
+                    s.s("Reorder the row (free)");
+                }
+                _ => {
+                    s.s("Leave");
+                }
+            }
+            e.text(x, y, ROLE_LABEL, if on { GOOD } else { WHITE }, s.str());
+            if on && (0..3).contains(&row) {
+                let id = v[b + P_SHOP_OFFERS + row as usize];
+                if id >= 0 {
+                    e.text_ex(x + 20.0, y + 20.0, ROLE_LABEL, DIM, ALIGN_LEFT, vw * 0.5 - 60.0, POOL[id as usize].rule);
+                    y += 20.0;
+                }
+            }
+            y += 26.0;
+        }
+        const MSG: [&str; 10] = ["", "BOUGHT", "NOT ENOUGH COINS", "LEVELLED UP", "STOCK RESTORED", "REROLLED", "MOVED", "ROW FULL: CHOOSE A SLOT TO REPLACE", "REPLACED", "CAN'T"];
+        e.text(x, y + 10.0, ROLE_VALUE, ACCENT, MSG[v[b + P_SHOP_MSG].clamp(0, 9) as usize]);
+    }
+    let hint = match v[pb(0) + P_SHOP_STEP] {
+        1 => "LEFT / RIGHT slot     A confirm     B back",
+        2 => "LEFT / RIGHT pick a drive     A lift     B back",
+        3 => "LEFT / RIGHT move it     A / B put it down",
+        _ => "UP / DOWN choose     A buy     X / Y switch fighter",
+    };
+    e.text_ex(vw * 0.5, vh - 30.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, hint);
 }
 
 unsafe fn between(e: &mut kit::E, v: &[i32; VW], vw: f32, _vh: f32) {

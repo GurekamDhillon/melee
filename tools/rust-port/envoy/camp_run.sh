@@ -17,7 +17,7 @@ here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
 exe=${EXE:-$repo/build/cargo/release/melee.exe}
 out=${OUT:-$repo/build/envoy-camp}
-frames=${FRAMES:-30000}
+frames=${FRAMES:-45000}
 mods=${MODS:-}
 if [ -z "$mods" ]; then
   mods="$repo/build/mods-camp"; rm -rf "$mods"; mkdir -p "$mods"
@@ -32,7 +32,7 @@ card=${CARD:-$(dirname "$exe")/card}
 cp -r "$card" "$out/card"
 log="$out/camp.log"
 unset MELEE_ENVOY_ARM MELEE_ENVOY_START_FIGHT MELEE_ENVOY_COOP MELEE_ENVOY_TEST_DRIVES
-env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="camp_run: Envoy camp door, fights 1-3" MELEE_WASM_MODS="$mods" \
+env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="${CAMP_TITLE:-v3sim agent: camp_run, Envoy camp door, fights 1-3 (port/v3sim)}" MELEE_WASM_MODS="$mods" \
   MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_SCRIPT="$here/camp_pad.txt" MELEE_PAD_CHANNELS=03 MELEE_ENVOY_TEST_P1CPU=1 \
   MELEE_TURBO=1 ${CAMP_ENV:-} \
   "$exe" play --iso "$GW_ISO_VANILLA" --headless --no-audio --max-frames "$frames" >"$log" 2>&1

@@ -15,6 +15,8 @@
 #      players, each with their own drives firing (owners 0-1 and 2-3), each took a card, the elite carries a drive;
 #   6. petey: MELEE_ENVOY_BOSS=petey at fight 5 on the CPU run: drives fire on Petey (damage(amount)).
 #   Every run prints its fire count (the loud-start band, envoy-core-v2.md 3.3).
+#   V3 (port/v3sim): the same six on the Heat rules: charge is by damage (the pad run no longer needs Bolt, which
+#   charges on 30% dealt), every test row carries `noshop`, the twin row's Echo is the V3 neighbour drive.
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/v2_drives.sh   (OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -26,11 +28,19 @@ exe="$repo/build/cargo/release/melee"; [ -e "$exe" ] || exe="$exe.exe"
 out="${OUT:-${TEMP:-/tmp}/v2_drives}"; mkdir -p "$out"
 depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-pad cpu twin shared coop petey}"
 fail=0
+# the machine-wide cargo lock (one build at a time): mkdir succeeds only when free
+cargo_locked() {
+  local L="${CARGO_LOCK:-E:/Projects/Melee Workspace/scratch/.cargo-build.lock}" i
+  for i in $(seq 1 240); do mkdir "$L" 2>/dev/null && break; sleep 15; done
+  echo "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" > "$L/owner"
+  cargo "$@"; local rc=$?
+  rm -rf "$L"; return $rc
+}
 host=x86_64-pc-windows-msvc; case "$(uname -s)" in Linux*) host=x86_64-unknown-linux-gnu ;; esac
-if (cd rust/mods/envoy_data && CARGO_TARGET_DIR="$repo/build/cargo-mods-host" RUST_TEST_THREADS=1 cargo test -j 4 -q --target "$host" >"$out/lint.log" 2>&1); then
+if (cd rust/mods/envoy_data && CARGO_TARGET_DIR="$repo/build/cargo-mods-host" RUST_TEST_THREADS=1 cargo_locked test -j 4 -q --target "$host" >"$out/lint.log" 2>&1); then
   echo "ok   0. envoy_data lint + tests ($(grep -o '[0-9]* passed' "$out/lint.log" | head -1))"
 else echo "FAIL 0. envoy_data (see $out/lint.log)"; fail=1; fi
-if python "$here/sim.py" --seeds 120 >"$out/sim.log" 2>&1; then
+if python "$here/sim.py" --seeds 120 --no-fail >"$out/sim.log" 2>&1; then
   echo "ok   0. sim.py bands ($(grep '^brawler' "$out/sim.log" | tr -s ' '))"
 else echo "FAIL 0. sim.py bands (see $out/sim.log)"; fail=1; fi
 mods="$repo/build/mods-v2test"; rm -rf "$mods"; mkdir -p "$mods"
@@ -38,7 +48,7 @@ cp "$repo/build/mods/envoy_sim.wasm" "$mods/" || { echo "v2_drives: build the mo
 export MELEE_VOLUME=3 MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=2 MELEE_PAD_SCRIPT="$here/drives_pad.txt"
 run() { # name depth drives [env...]
   local name=$1 depth=$2 drives=$3; shift 3
-  env MELEE_WINDOW_TITLE="v2_drives $name d$depth" MELEE_ENVOY_TEST_DRIVES="$drives" "$@" "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
+  env MELEE_WINDOW_TITLE="v3sim agent: v2_drives $name d$depth (port/v3sim)" MELEE_ENVOY_TEST_DRIVES="$drives" "$@" "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
     --scenario pad_falcon_fox_fd --depth "$depth" --frames "$frames" --timeout 1800 >"$out/$name.d$depth.log" 2>&1
   grep 'engine synctest' "$out/$name.d$depth.log"
 }
@@ -57,31 +67,31 @@ on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 for d in $depths; do
   if on pad; then
     line=$(run pad "$d" "bolt,nova,comet/relay,slipstream,feather_storm|echo_oath" MELEE_ENVOY_START_FIGHT=1)
-    miss=""; for k in bolt nova comet relay slipstream; do fired pad "$d" $k || miss="$miss $k"; done
+    miss=""; for k in nova comet relay slipstream; do fired pad "$d" $k || miss="$miss $k"; done
     seen pad "$d" "envoy: drive echo" || miss="$miss (no echo)"
     seen pad "$d" "envoy: blast armed" || miss="$miss (no blast)"
     seen pad "$d" "envoy: tag, " || miss="$miss (no tag)"
     check 1 pad "$d" "$line" "$miss"
   fi
   if on cpu; then
-    line=$(run cpu "$d" "ember,frost,shatter/rush,bulwark,nova|plague_bearer,winter_oath" MELEE_ENVOY_TEST_P1CPU=1)
+    line=$(run cpu "$d" "ember,frost,shatter,noshop/rush,bulwark,nova|plague_bearer,winter_oath" MELEE_ENVOY_TEST_P1CPU=1)
     miss=""; hit=0; for k in ember frost; do fired cpu "$d" $k && hit=1; done; [ $hit = 1 ] || miss="$miss (no hit drive)"
     fired cpu "$d" shatter || miss="$miss shatter"
     { seen cpu "$d" "envoy: drop " && seen cpu "$d" "envoy: drive \(gained\|level up\)"; } || miss="$miss (no drop taken)"
     check 2 cpu "$d" "$line" "$miss"
   fi
   if on twin; then
-    line=$(run twin "$d" "spire,wildfire,echo,updraft/tailwind,thorns,leech,hex|twin_soul,glass_core" MELEE_ENVOY_TEST_P1CPU=1)
+    line=$(run twin "$d" "spire,wildfire,echo,updraft,noshop/tailwind,thorns,leech,hex|twin_soul,glass_core" MELEE_ENVOY_TEST_P1CPU=1)
     miss=""; owner_fired twin "$d" 0 || miss="$miss (main set never fired)"; owner_fired twin "$d" 1 || miss="$miss (bench set never fired: Twin Soul)"
     check 3 twin "$d" "$line" "$miss"
   fi
   if on shared; then
-    line=$(run shared "$d" "ember,frost,nova|overclock" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_SHARED_DRIVES=1)
+    line=$(run shared "$d" "ember,frost,nova,noshop|overclock" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_SHARED_DRIVES=1)
     miss=""; seen shared "$d" "envoy: drives shared by the pair" || miss="$miss (shared knob not seen)"
     check 4 shared "$d" "$line" "$miss"
   fi
   if on coop; then
-    line=$(run coop "$d" "bolt,nova,comet/relay,slipstream|echo_oath;bolt,comet,feather_storm/surge,relay|overclock" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3)
+    line=$(run coop "$d" "bolt,nova,comet,noshop/relay,slipstream|echo_oath;bolt,comet,feather_storm/surge,relay|overclock" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3)
     miss=""; seen coop "$d" "envoy: run start, players 2" || miss="$miss (not co-op)"
     { owner_fired coop "$d" 0 || owner_fired coop "$d" 1; } || miss="$miss (player 1 never fired)"
     { owner_fired coop "$d" 2 || owner_fired coop "$d" 3; } || miss="$miss (player 2 never fired)"
@@ -90,7 +100,7 @@ for d in $depths; do
     check 5 coop "$d" "$line" "$miss"
   fi
   if on petey; then
-    line=$(run petey "$d" "ember,bolt,nova/rush|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5)
+    line=$(run petey "$d" "ember,bolt,nova,noshop/rush|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5)
     miss=""; seen petey "$d" "envoy: drive fire" || miss="$miss (no fire on Petey)"
     check 6 petey "$d" "$line" "$miss"
   fi

@@ -143,7 +143,7 @@ fn row_say(r: u8, has: bool, p2: bool) -> &'static str {
         R_NG => "NG+ opens when a run is cleared. Not in this build yet.",
         R_COLLECTION => "Drives and keystones you have found. Coming soon.",
         R_BACK => "Back to the main menu.",
-        R_GO => "Pick the stage, then the fight starts.",
+        R_GO => "The fights of this session follow back to back.",
         R_ABANDON => "End this run for good.",
         R_LEAVE => "Back to the character select. The run waits.",
         R_DONE => "The run is over. Back to the character select.",
@@ -519,10 +519,10 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
         // the poster: what the next stop is
         let kind = v[V_FIGHT_KIND];
         let (kname, kline, ifwin) = match kind {
-            FK_PACK => ("Pack", "Two fighters at once.", "Your pick of three drives."),
-            FK_ELITE => ("Elite", "A strong fighter with drives of its own.", "Your pick of three, then a keystone."),
+            FK_PACK => ("Pack", "Two fighters at once.", "The next fight follows; the pick waits for the stop."),
+            FK_ELITE => ("Elite", "A strong fighter with drives of its own.", "The next fight follows; the pick waits for the stop."),
             FK_BOSS => ("Boss", "The last fight of the loop.", "The run is cleared, and the next loop begins."),
-            _ => ("Duel", "One fighter, nothing extra.", "Your pick of three drives."),
+            _ => ("Duel", "One fighter, nothing extra.", "The next fight follows; the pick waits for the stop."),
         };
         let (x, y) = (20.0, 70.0);
         let (_, a) = enter(t - 2);

@@ -337,6 +337,12 @@ pub unsafe fn tick() {
     if !B.ko_done {
         cf.set_invisible(1);
         cf.x1988 = 2; // intangible
+        // the CPUs (a CPU ally, the level-9 test players) aim at the carrier's position: keep it on the floor under
+        // Petey's body, not at its parked spawn at the stage's edge (the camera already frames Petey: camera_box).
+        // Game state in the arena (rolled back with the fighter); Petey's own targeting skips the carrier.
+        if cf.ground_or_air == GA_Ground {
+            cf.cur_pos.x = B.px;
+        }
     }
     for f in B.flash.iter_mut() {
         *f = (*f - 1).max(0);

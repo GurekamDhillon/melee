@@ -254,7 +254,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=200)
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--v3", action="store_true", help="the V3 Heat model (sim_v3.py); the default for a V3 pool")
+    ap.add_argument("--no-fail", action="store_true", help="report only: exit 0 on a missed band")
     a = ap.parse_args()
+    if a.v3 or "kind = \"trigger\"" in open(POOL, encoding="utf-8").read():
+        sys.path.insert(0, HERE)
+        import sim_v3
+        sys.exit(sim_v3.main(a, POOL))
     recs = parse_pool(POOL)
     drives = [r for r in recs if r["kind"] == "drive"]
     keystones = [r for r in recs if r["kind"] == "keystone"]

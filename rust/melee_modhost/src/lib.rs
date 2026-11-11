@@ -688,6 +688,18 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         write_words(&mut c, out, &[canon(x).to_bits(), canon(y).to_bits(), h[0], h[1], h[2], h[3]]);
         s
     });
+    // V3 (envoy-synergy-v3.md 12.5): the engine's event bits (bit 0 L-cancel), read and cleared; the boss's damage
+    // per slot (x1000, running) with its HP and full HP (x1000); Grand Finale's knockback multiplier on the hit now
+    w!("gd_envoy_events", |slot: i32| -> u32 { unsafe { melee_modes::tu::envoy::events(slot) } });
+    w!("gd_envoy_boss_dmg", |mut c: Caller<'_, HostData>, out: u32| -> i32 {
+        let s = melee_modes::tu::petey::carrier();
+        let d = unsafe { melee_modes::tu::petey::DMG };
+        let v = melee_modes::tu::petey::view();
+        let (hp, max) = if v[0] != 0 { (v[1].max(0) as u32 * 1000, v[2].max(0) as u32 * 1000) } else { (0, 0) };
+        write_words(&mut c, out, &[d[0], d[1], d[2], d[3], hp, max]);
+        s
+    });
+    w!("gd_envoy_kb_scale", |slot: i32, mul: i32| -> i32 { unsafe { melee_modes::tu::envoy::kb_scale(slot, mul) } });
     w!("gd_envoy_seq", || -> i32 { unsafe { melee_modes::tu::envoy::SEQ } });
     // the door (envoy-redesign.md 1.3): whether the run is armed (the camp's Continue / New run); the sim publishes a
     // plan only while armed, so VS stays retail with the mods loaded

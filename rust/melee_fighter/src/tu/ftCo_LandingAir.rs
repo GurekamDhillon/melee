@@ -64,6 +64,9 @@ pub fn ftCo_LandingAir_EnterWithLag(g: G) {
         let cdat = crate::hooks::common_data();
         if msid != ftCo_MS_None as i32 && (f.x67F as i32) < cdat.xE4 {
             skill_mode = 1;
+            if let Some(h) = unsafe { crate::hooks::ENVOY_LCANCEL } {
+                h(f);
+            }
             let div_lag = lag / cdat.xE8;
             let mut int_lag = melee_core::ppc::fctiwz_f32(div_lag);
             if melee_core::ppc::fctiwz_f32(div_lag) == 0 {

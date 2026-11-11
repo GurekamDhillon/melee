@@ -188,6 +188,7 @@ pub unsafe fn arm(_humans: i32, carrier_slot: i32, seed: u32) {
     B = OFF;
     B.carrier_slot = carrier_slot;
     HITS = [0; 4];
+    DMG = [0; 4];
     B.rng = seed | 1;
     ARMED = true;
     LATCH = [[[0; 4]; 2]; 4];
@@ -199,6 +200,9 @@ pub unsafe fn arm(_humans: i32, carrier_slot: i32, seed: u32) {
 /// Hits each player slot landed on Petey or a cage (Envoy's drives charge on them: his hits never reach the
 /// take-damage hook, the carrier being intangible).
 pub static mut HITS: [u32; 4] = [0; 4];
+/// Envoy V3 (`gd_envoy_boss_dmg`): the damage each player slot dealt Petey or a cage, x1000, a running total that
+/// wraps (the same `dmg` the hit test charges the cages with).
+pub static mut DMG: [u32; 4] = [0; 4];
 
 /// The carrier's slot while a Petey fight runs (-1 otherwise): Envoy's drives treat it as the boss.
 pub fn carrier() -> i32 {
@@ -1046,6 +1050,7 @@ unsafe fn player_hits(carrier: i32) -> (bool, [bool; 2]) {
                     any = true;
                     cages |= cg;
                     HITS[s as usize] = HITS[s as usize].wrapping_add(1);
+                    DMG[s as usize] = DMG[s as usize].wrapping_add(fctiwz_f32(dmg * 1000.0).max(0) as u32);
                     // the attacker's side of a landed hit, as for hitting an item: hitlag next frame, the hit sound
                     let fp = &mut *f;
                     let d = round_i(dmg).max(1);

@@ -22,6 +22,7 @@ mod camp;
 mod hud;
 mod pick;
 mod shop;
+mod pause;
 mod kit;
 mod party;
 
@@ -57,6 +58,8 @@ extern "C" {
 }
 
 const SCENE_RETAIL: u32 = 0x8000_0000;
+/// Frames the road card has covered the self-confirming character select (0: off).
+static mut COVER: i32 = 0;
 const GM_VS: i32 = 2;
 const GS_CSS: i32 = 8;
 const ST_ARMED: i32 = 1;
@@ -587,7 +590,13 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                     let launch = if CAMP.after_fight { 0 } else { ARM_LAUNCH };
                     match op {
                         1 => { gd_ui_envoy_arm(ARM_NEW | launch); }
-                        2 => { gd_ui_envoy_arm(ARM_CONTINUE | launch); }
+                        2 => {
+                            gd_ui_envoy_arm(ARM_CONTINUE | launch);
+                            // fights 2+: the character select confirms itself; cover its few frames
+                            if CAMP.after_fight {
+                                COVER = 1;
+                            }
+                        }
                         3 => { gd_ui_envoy_arm(ARM_ABANDON); }
                         4 => { gd_ui_envoy_arm(4); }
                         _ => { gd_ui_envoy_arm(ARM_OFF); }
@@ -604,7 +613,33 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
         let mut v = [0i32; VW];
         // only an armed run has a HUD or a between-fights line: with the mods loaded and no run armed, VS is retail
         if gd_ui_envoy(v.as_mut_ptr(), VW as u32) != 0 || v[V_MAGIC] != VIEW_MAGIC || st & ST_ARMED == 0 {
+            COVER = 0;
             return;
+        }
+        // between the road and the next fight: the self-confirming character select and the loading screen stay
+        // under a road card (no flash of the retail select)
+        if COVER != 0 {
+            let r = gd_ui_retail_scene();
+            if (r >> 8) & 0xFF == GM_VS && r & 0xFF == GS_CSS && COVER < 600 {
+                COVER += 1;
+                let mut b = [0f32; 6];
+                gd_ui_band_rect(b.as_mut_ptr());
+                let sc = (b[5] / 720.0).max(0.25);
+                let e = &mut *core::ptr::addr_of_mut!(ENC);
+                e.clear();
+                e.space(SPACE_BAND, 1.0);
+                e.layer(LAYER_MODAL, 0);
+                let ex = 107.0;
+                kit::spr(e, kit::S_BG_ROAD, -ex, 0.0, 854.0, 480.0, kit::WHITE);
+                let mut t = Buf::new();
+                t.s("Fight ").i(v[V_FIGHT] + 1).s(" of ").i(v[V_FIGHTS].max(1));
+                kit::text_edge(e, 320.0, 200.0, kit::d(40), kit::WHITE, ALIGN_CENTER, 3.0, t.str());
+                kit::text_edge(e, 320.0, 254.0, kit::d(18), kit::SUNNY, ALIGN_CENTER, 2.0, "Get ready!");
+                e.space(SPACE_WINDOW, sc);
+                e.submit();
+                return;
+            }
+            COVER = 0;
         }
         let mut t = [0i32; 10];
         if gd_ui_transition(t.as_mut_ptr()) != 0 {

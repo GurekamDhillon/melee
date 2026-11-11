@@ -200,6 +200,10 @@ pub unsafe extern "C" fn gm_801A0FEC(slot: i32, flag: u8) {
     if ext::Ui_RetailHidden(AT_RE_PAUSE_PANEL) != 0 {
         flag = 0;
     }
+    // port: an Envoy run draws its own pause (envoy_ui): no retail panel
+    if crate::tu::envoy::ARMED != 0 && crate::tu::envoy::pause_ui_on() {
+        flag = 0;
+    }
     lbl_80479B10.slot = slot;
     ext::HSD_JObjReqAnimAll(lbl_80479B10.background, (slot.wrapping_add(1)) as f32);
     // flag is set by match rules

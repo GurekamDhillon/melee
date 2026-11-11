@@ -1138,6 +1138,11 @@ pub unsafe fn gm_DoUnpauseChecksAndRoutine(arg0: *mut VsSceneController, arg1: i
     }
 
     let mut i = gm_GetPlayerPressingUnpause();
+    // port: Envoy's pause chose Resume (a one-shot request from the UI)
+    if i == -1 && crate::tu::envoy::PAUSE_RESUME != 0 {
+        crate::tu::envoy::PAUSE_RESUME = 0;
+        i = (*arg0).state.pauser as i32;
+    }
     // the Atlas pause's Resume (a one-shot request), only when no port pressed START this frame
     if i == -1 {
         i = ext::Ui_TakeUnpause();
@@ -1281,6 +1286,12 @@ pub unsafe fn fn_8016CFE0() {
     ext::fn_8016758C();
     let mut goto51 = false;
     if ext::gm_GetDbPauseFlag(1) {
+        // port: Envoy's pause chose "Quit to camp": the match ends as no contest, as L+R+A+Start does
+        if crate::tu::envoy::PAUSE_QUIT != 0 && (*tmp).state.pause_timer == 0 {
+            crate::tu::envoy::PAUSE_QUIT = 0;
+            fn_8016CF4C((*tmp).state.pauser as i32, OUTCOME_NO_CONTEST);
+            return;
+        }
         let unpauser_slot = gm_GetPlayerPressingUnpause();
         let tmp_btns: i32 = if DbLevel >= DbLKind_DebugRom { PAD_TRIGGER_L | PAD_TRIGGER_R | PAD_BUTTON_A } else { PAD_TRIGGER_L | PAD_TRIGGER_R | PAD_BUTTON_A | PAD_BUTTON_START };
         let no_contest_buttons: i64 = tmp_btns as i64;

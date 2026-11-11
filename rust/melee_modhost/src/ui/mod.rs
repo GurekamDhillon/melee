@@ -705,6 +705,21 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if write_bytes(&mut c, out, &b[..n * 4]) { GD_OK } else { GD_EINVAL }
     });
     // read-only view of the Petey boss (melee_modes::tu::petey::view): n i32 words (notes/petey-boss.md)
+    // Envoy's pause: 1 resume, 2 quit the fight (no contest); only while a run is armed and the game is paused
+    f!("gd_ui_envoy_pause", |_c: Caller<'_, PresData>, op: i32| -> i32 {
+        use melee_modes::tu::envoy as ev;
+        unsafe {
+            if ev::ARMED == 0 || melee_modes::tu::gmscene::gm_GetDbPauseFlag(1) == 0 {
+                return GD_ESTATE;
+            }
+            match op {
+                1 => ev::PAUSE_RESUME = 1,
+                2 => ev::PAUSE_QUIT = 1,
+                _ => return GD_EINVAL,
+            }
+        }
+        GD_OK
+    });
     f!("gd_ui_fight_hud", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
         let v = unsafe { melee_modes::tu::envoy::hud_words() };
         let n = (n as usize).min(v.len());

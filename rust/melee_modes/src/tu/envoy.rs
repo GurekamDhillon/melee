@@ -162,6 +162,17 @@ pub static mut BACK_TO_CAMP: i32 = 0;
 /// (as Start would), 2 = confirmed, the stage select is skipped (gmvsmode `onExitCss`). `MELEE_ENVOY_SELECT=1`
 /// keeps both screens.
 pub static mut SKIP_SELECT: i32 = 0;
+/// Envoy's own pause (envoy_ui draws Resume / Read drives / Quit to camp over the frozen fight): the retail pause
+/// panel is not shown while a run is armed (gmpause), and the UI's choices arrive here (gd_ui_envoy_pause):
+/// `PAUSE_RESUME` unpauses as the pauser's Start would (gmvs `gm_DoUnpauseChecksAndRoutine`), `PAUSE_QUIT` ends the
+/// match as no contest, as L+R+A+Start does (gmvs `fn_8016CFE0`). `MELEE_ENVOY_RETAIL_PAUSE=1` keeps the retail
+/// panel (and the UI draws nothing).
+pub static mut PAUSE_RESUME: i32 = 0;
+pub static mut PAUSE_QUIT: i32 = 0;
+pub fn pause_ui_on() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    !*V.get_or_init(|| std::env::var("MELEE_ENVOY_RETAIL_PAUSE").is_ok_and(|v| v == "1"))
+}
 pub fn skip_select_on() -> bool {
     static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     !*V.get_or_init(|| std::env::var("MELEE_ENVOY_SELECT").is_ok_and(|v| v == "1"))
@@ -704,7 +715,8 @@ pub unsafe fn hud_words() -> [i32; 16] {
         o[s as usize * 3 + 1] = melee_fighter::player::get_damage(s);
         o[s as usize * 3 + 2] = melee_fighter::stale::stocks(s);
     }
-    // word 12: the retail pause is up (its overlay owns the top of the screen)
+    // word 12: the retail pause is up (its overlay owns the top of the screen); word 13: Envoy draws its own pause
     o[12] = (crate::tu::gmscene::gm_GetDbPauseFlag(1) != 0) as i32;
+    o[13] = (ARMED != 0 && pause_ui_on()) as i32;
     o
 }

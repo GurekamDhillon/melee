@@ -346,6 +346,10 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         boss_bar(e, pv);
     }
     moments(e, v, ex);
+    if FH[12] != 0 && FH[13] != 0 {
+        crate::pause::draw(e, v, ex);
+        return;
+    }
     if humans == 2 && crate::pad_present(1) == 0 {
         sticker(e, S_FACE_LAGOON, 180.0, 150.0, 280.0, 34.0, -1.0, WHITE, |e| {
             e.text_ex(320.0, 158.0, d(15), WHITE, ALIGN_CENTER, 0.0, "P2: connect a second controller");
@@ -432,43 +436,53 @@ pub unsafe fn picked(e: &mut E, v: &[i32; VW]) {
 unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
     let n = v[V_EV_N].max(0) as usize;
     let now = v[V_PLAY];
+    let humans = v[V_HUMANS].clamp(1, 2);
     for i in 0..EV.min(n) {
         let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
         let age = now - ev[0];
-        if !(0..40).contains(&age) {
+        if !(0..48).contains(&age) {
             continue;
         }
         let who = ev[2].clamp(0, 1) as usize;
-        let cx = if who == 0 { 80.0 - ex } else { 560.0 + ex };
+        // over the player's corner (bottom left, or bottom right for P2)
+        let cx = if who == 0 || humans < 2 { 110.0 } else { 626.0 - corner_w() + 96.0 };
         match ev[1] {
             EV_CASHOUT => {
-                burst(e, S_BURST_SUNNY, cx, 300.0, 84.0, age, "Cashed out!", 11);
-                for k in 0..3 {
-                    let t = ((age - k * 4) as f32 / 24.0).clamp(0.0, 1.0);
+                // the big one: rays, a large burst mid-screen, coins flying to the purse
+                let fade = 1.0 - (age as f32 / 48.0);
+                spr_rot(e, S_RAYS, 320.0, 190.0, 2.2 + age as f32 * 0.02, age as f32 * 1.5, alpha(SUNNY, 0.55 * fade));
+                burst(e, S_BURST_SUNNY, 320.0, 190.0, 150.0, age, "Cashed out!", 22);
+                for k in 0..6 {
+                    let t = ((age - k * 3) as f32 / 26.0).clamp(0.0, 1.0);
                     if t > 0.0 && t < 1.0 {
-                        let (x, y) = (cx + (60.0 - ex - cx) * t, 300.0 + (26.0 - 300.0) * t - 60.0 * sin(t * 3.14159));
-                        spr_c(e, S_COIN, x, y, 1.3, WHITE);
+                        let (sx, sy) = (320.0 + (k as f32 - 2.5) * 18.0, 200.0);
+                        let (x, y) = (sx + (140.0 - ex * 0.0 - sx) * t, sy + (26.0 - sy) * t - 50.0 * sin(t * 3.14159));
+                        spr_c(e, S_COIN, x, y, 1.5, WHITE);
                     }
                 }
             }
             EV_PAY | EV_COINS => {
                 let mut s = Buf::new();
                 s.s("+").i(ev[3]);
-                text_edge(e, 100.0 - ex, 40.0 - age as f32 * 0.4, d(16), SUNNY, ALIGN_LEFT, 1.6, s.str());
+                text_edge(e, 150.0, 40.0 - age as f32 * 0.4, d(18), SUNNY, ALIGN_LEFT, 1.8, s.str());
             }
             EV_SPARK => {
                 let word = match ev[3] { 1 => "L-cancel!", 2 => "Wavedash!", 3 => "Tech!", _ => "Offstage!" };
-                let px = f32::from_bits(v[V_P0 + who * V_PW + P_X] as u32);
-                let _ = px;
-                burst(e, if who == 0 { S_BURST_CORAL } else { S_BURST_LAGOON }, cx + 40.0, 250.0, 64.0, age, word, 10);
+                burst(e, if who == 0 { S_BURST_CORAL } else { S_BURST_LAGOON }, cx + 60.0, 330.0, 70.0, age, word, 11);
             }
             EV_STATE_UP => {
-                if ev[3] == 3 {
-                    burst(e, S_BURST_CORAL, cx + 20.0, 240.0, 80.0, age, "Blazing!", 13);
+                // a clear moment for every mark crossed: Warm, Hot, Blazing
+                let st = ev[3].clamp(1, 3) as usize;
+                let word = ["", "Warm!", "Hot!", "Blazing!"][st];
+                let size = [0.0, 70.0, 86.0, 104.0][st];
+                if st == 3 {
+                    spr_rot(e, S_RAYS, cx, 330.0, 1.4, age as f32 * 2.0, alpha(CORAL, 0.5 * (1.0 - age as f32 / 48.0)));
                 }
+                burst(e, if st == 1 { S_BURST_SUNNY } else { S_BURST_CORAL }, cx, 330.0, size, age, word, 12 + st as u32);
             }
             EV_BREAK => {
-                burst(e, S_BURST_CORAL, 400.0, 30.0, 80.0, age, "Break!", 14);
+                spr_rot(e, S_RAYS, 420.0, 70.0, 1.8, age as f32 * 2.0, alpha(WHITE, 0.4 * (1.0 - age as f32 / 48.0)));
+                burst(e, S_BURST_CORAL, 420.0, 70.0, 120.0, age, "Break!", 20);
             }
             _ => {}
         }

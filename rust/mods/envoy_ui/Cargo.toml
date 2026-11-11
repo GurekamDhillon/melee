@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 gd_ui_enc = { path = "../gd_ui_enc" }
+envoy_data = { path = "../envoy_data" }
 
 [profile.release]
 opt-level = "s"

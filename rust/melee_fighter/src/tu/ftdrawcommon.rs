@@ -123,6 +123,8 @@ fn opt(p: Option<*mut [f32; 4]>) -> *mut [f32; 4] {
 
 /// An extra world-space draw for one fighter's render pass (the Envoy boss placeholder, melee_modes::tu::petey).
 pub static mut BOSS_DRAW: Option<unsafe fn(G, i32)> = None;
+/// The Envoy drive models and effects in the world (melee_modes::tu::drive_draw; presentation only).
+pub static mut WORLD_DRAW: Option<unsafe fn(G, i32)> = None;
 
 /// `ftDrawCommon_800805C8`: debug overlays, then (bit 7) the model itself.
 pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
@@ -215,6 +217,10 @@ pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
         }
     }
     if let Some(d) = unsafe { BOSS_DRAW } {
+        unsafe { d(g, arg1) };
+        inv = true;
+    }
+    if let Some(d) = unsafe { WORLD_DRAW } {
         unsafe { d(g, arg1) };
         inv = true;
     }

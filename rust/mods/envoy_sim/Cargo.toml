@@ -10,6 +10,9 @@ publish = false
 [lib]
 crate-type = ["cdylib"]
 
+[dependencies]
+envoy_data = { path = "../envoy_data" }
+
 [profile.release]
 opt-level = "s"
 panic = "abort"

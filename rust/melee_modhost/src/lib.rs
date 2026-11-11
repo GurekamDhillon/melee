@@ -650,6 +650,21 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         static V: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
         *V.get_or_init(|| std::env::var("MELEE_ENVOY_START_FIGHT").ok().and_then(|v| v.parse::<i32>().ok()).map_or(0, |n| (n - 1).clamp(0, 4)))
     });
+    // test knob: MELEE_ENVOY_TEST_DRIVES="key[:level],key/key|keystone" (main / partner | keystones), fixed per process
+    w!("gd_envoy_test_drives", |mut c: Caller<'_, HostData>, out: u32, cap: u32| -> i32 {
+        static V: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+        let v = V.get_or_init(|| std::env::var("MELEE_ENVOY_TEST_DRIVES").unwrap_or_default());
+        let n = v.len().min(cap as usize);
+        let Some(m) = mem_of(&c) else { return -1 };
+        let Some(d) = m.data_mut(&mut c).get_mut(out as usize..out as usize + n) else { return -1 };
+        d.copy_from_slice(&v.as_bytes()[..n]);
+        n as i32
+    });
+    // MELEE_ENVOY_SHARED_DRIVES=1: one drive set for the pair (envoy-core-v2.md Q1's alternative), fixed per process
+    w!("gd_envoy_shared_drives", || -> i32 {
+        static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        *V.get_or_init(|| std::env::var("MELEE_ENVOY_SHARED_DRIVES").is_ok_and(|v| v == "1")) as i32
+    });
     w!("gd_envoy_seq", || -> i32 { unsafe { melee_modes::tu::envoy::SEQ } });
     // the door (envoy-redesign.md 1.3): whether the run is armed (the camp's Continue / New run); the sim publishes a
     // plan only while armed, so VS stays retail with the mods loaded
@@ -680,6 +695,8 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         0
     });
     w!("gd_envoy_apply", |slot: i32, which: i32, v: i32| -> i32 { unsafe { melee_modes::tu::envoy::apply(slot, which, v) } });
+    // a drive's burst, heal or Burning tick: percent delta (x1000) on the slot's active fighter (bench 0) or the bench
+    w!("gd_envoy_percent", |slot: i32, bench: i32, delta: i32| -> i32 { unsafe { melee_modes::tu::envoy::percent(slot, bench, delta) } });
     // the pad a port pressed this logic frame (HSD_PadMasterStatus.trigger: the synced sim input, valid while frozen)
     w!("gd_pad_pressed", |port: i32| -> u32 {
         if !(0..4).contains(&port) { return 0 }

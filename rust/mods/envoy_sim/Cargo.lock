@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
+name = "envoy_data"
+version = "0.1.0"
+
+[[package]]
 name = "envoy_sim"
 version = "0.1.0"
+dependencies = [
+ "envoy_data",
+]

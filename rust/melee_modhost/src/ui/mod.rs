@@ -116,6 +116,8 @@ pub struct Shared {
     pending: Option<i64>,
     /// Per module: loaded textures (handle h = index + 1) and the package dir.
     pub texs: Vec<Vec<AtlasRect>>,
+    /// gd_ui_model_tex: (module, model, handle) already rasterized.
+    pub model_texs: Vec<(usize, i32, u32)>,
     pub dirs: Vec<std::path::PathBuf>,
     pub features: Vec<u32>,
     /// Window size and the 4:3 band rect in window pixels (GAP-0: `gd_ui_band_rect`).
@@ -213,6 +215,7 @@ impl Shared {
             stack: Vec::new(),
             pending: None,
             texs: Vec::new(),
+            model_texs: Vec::new(),
             dirs: Vec::new(),
             features: Vec::new(),
             window: (1280, 720),
@@ -468,6 +471,52 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         sh.atlas.put(r, &px);
         sh.texs[module].push(r);
         sh.texs[module].len() as u32
+    });
+    // ---- Envoy drives (envoy-core-v2.md 3.1): presentation only, never read back by a sim
+    // a drive model in the world (melee_modes::tu::drive_draw): model id, centre, yaw, diameter, glow 0..1, alpha 0..1
+    f!("gd_ui_world_model", |c: Caller<'_, PresData>, model: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, glow: f32, alpha: f32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) || !(0..melee_modes::tu::drive_draw::MODEL_COUNT as i32).contains(&model) {
+            return GD_EINVAL;
+        }
+        if ![x, y, z, yaw, scale, glow, alpha].iter().all(|v| v.is_finite()) {
+            return GD_EINVAL;
+        }
+        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u8, at: [x, y, z], yaw, scale: scale.clamp(0.0, 200.0), glow: glow.clamp(0.0, 2.0), alpha: alpha.clamp(0.0, 1.0) };
+        if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
+    });
+    // an additive effect shape in the world: kind (drive_draw::FX_*), centre, three numbers, colour RGBA
+    f!("gd_ui_world_fx", |c: Caller<'_, PresData>, kind: i32, x: f32, y: f32, z: f32, a: f32, b: f32, cc: f32, rgba: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) || !(1..=6).contains(&kind) || ![x, y, z, a, b, cc].iter().all(|v| v.is_finite() && v.abs() < 1.0e5) {
+            return GD_EINVAL;
+        }
+        let i = melee_modes::tu::drive_draw::Inst::Fx { kind: kind as u8, at: [x, y, z], a, b, c: cc, rgba };
+        if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
+    });
+    // a drive model as a turning sprite sheet for 2D cards: a texture handle (SPRITE_FRAMES cells side by side), 0 if
+    // the atlas is full. Rasterized once per module and model.
+    f!("gd_ui_model_tex", |c: Caller<'_, PresData>, model: i32| -> u32 {
+        if !feat(&c, FEATURE_UI_DRAW) || !(0..melee_modes::tu::drive_draw::MODEL_COUNT as i32).contains(&model) {
+            return 0;
+        }
+        let module = c.data().module as usize;
+        let mut sh = c.data().ui().borrow_mut();
+        let sh = &mut *sh;
+        if let Some(&(_, _, h)) = sh.model_texs.iter().find(|t| t.0 == module && t.1 == model) {
+            return h;
+        }
+        let Some((w, h, px)) = melee_modes::tu::drive_draw::sprite_sheet(model as usize) else { return 0 };
+        let Some(r) = sh.atlas.alloc(w as u16, h as u16) else { return 0 };
+        sh.atlas.put(r, &px);
+        sh.texs[module].push(r);
+        let hd = sh.texs[module].len() as u32;
+        sh.model_texs.push((module, model, hd));
+        hd
+    });
+    // a Brawl sound effect from the player's own disc (melee_audio::brawl): fire and forget, presentation only
+    f!("gd_ui_brawl_sfx", |c: Caller<'_, PresData>, s: u32, len: u32| -> i32 {
+        let Some(name) = read_str(&c, s, len.min(64)) else { return GD_EINVAL };
+        melee_audio::brawl::play_sfx(&name);
+        GD_OK
     });
     // GAP-0: the band rect and the window size, for window-space layouts: out = f32 x, y, w, h, win_w, win_h
     f!("gd_ui_band_rect", |mut c: Caller<'_, PresData>, out: u32| -> i32 {
@@ -1373,6 +1422,7 @@ impl PresHost {
         }
         let pno = self.shared.borrow().present_no;
         let t1 = std::time::Instant::now();
+        melee_modes::tu::drive_draw::begin();
         self.shared.borrow_mut().submit_ns = 0;
         for i in 0..n {
             if let Some(f) = self.mods[i].frame {
@@ -1382,6 +1432,7 @@ impl PresHost {
                 self.drain_log(i);
             }
         }
+        melee_modes::tu::drive_draw::commit();
         let t2 = std::time::Instant::now();
         for e in &mut self.exts {
             e.after_logic(frame);

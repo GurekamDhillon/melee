@@ -351,6 +351,7 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     var px = to_px(p, win);
     var o: VsOut;
     o.pp = px;
+    var os = 1.0;
     if (u.tilt.x != 0.0 || u.tilt.y != 0.0) {
         // the menu camera (retail mn_8022BA1C's C-stick orbit): the batch as a plane seen from a turned eye, later
         // quads nearer (parallax: backdrop, stickers, their shadows, the cursor)
@@ -359,6 +360,7 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
         let ext = select(rect.zw * u.band.zw / vec2<f32>(640.0, 480.0), rect.zw, win);
         if (ext.x >= u.band.z * 0.98 && ext.y >= u.band.w * 0.98) {
             px = c + (px - c) * 1.4;
+            os = 1.4;
         }
         let z = (1.0 - f32(ii) / max(u.tilt2.x, 1.0)) * u.tilt.w;
         let q = vec3<f32>(px.x - c.x, c.y - px.y, z);
@@ -378,6 +380,11 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     let c = unpack4x8unorm(rgba);
     o.c = vec4<f32>(c.w, c.z, c.y, c.x);
     o.clip = vec4<f32>(to_px(clip.xy, win), to_px(clip.zw, win));
+    // an overscanned backdrop's clip grows with it (its untilted pp keeps the unscaled corners)
+    if (os != 1.0) {
+        let cc = u.band.xy + u.band.zw * 0.5;
+        o.clip = vec4<f32>(cc + (o.clip.xy - cc) * os, cc + (o.clip.zw - cc) * os);
+    }
     o.sdf = (flags >> 1u) & 1u;
     o.fx = fx;
     return o;

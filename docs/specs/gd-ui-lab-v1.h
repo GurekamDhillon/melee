@@ -126,6 +126,7 @@ void     gd_ui_hide(unsigned root);
 unsigned gd_ui_capture(unsigned port_mask, unsigned flags);
 void     gd_ui_release(unsigned token);
 int      gd_ui_pad(unsigned port, void* out16);                   /* GD_ESTATE while a host overlay (settings) holds the pads */
+int      gd_ui_pad_present(unsigned port);                       /* 1 a controller is plugged into the port, 0 none; no capture needed */
 int      gd_ui_inject(unsigned port, const void* pad12);
 int      gd_ui_keys(unsigned* out, unsigned max);
 unsigned gd_ui_scene_register(const char* name, unsigned len);

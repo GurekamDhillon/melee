@@ -216,6 +216,7 @@ struct St {
     tags: i32,
     last_stocks: i32,
     collect: i32,
+    won_pool: i32, // the pool when the last foe fell (the collect hold may outlive the players' stock reads)
     tag_cd: [i32; NP],
     active: [i32; NP],
     kind: [[i32; 2]; NP],
@@ -627,6 +628,7 @@ unsafe fn on_new_match(seq: i32) {
     S.tags = 0;
     S.last_stocks = -1;
     S.collect = 0;
+    S.won_pool = 0;
     S.tag_cd = [0; NP];
     S.active = [0; NP];
     S.kind = [[-1; 2]; NP];
@@ -1857,33 +1859,22 @@ unsafe fn outcome_frame() {
         S.last_stocks = key;
         log(b"envoy: stocks (pool*100 + foes)\0", key);
     }
-    if foes == 0 && me > 0 {
+    // the win latches when the last foe falls: the retail game end that follows tears the players down (their stock
+    // reads go to 0), which must not read as a loss
+    if S.collect == 0 && foes == 0 && me > 0 {
+        S.collect = 1;
+        S.won_pool = me;
+    }
+    if S.collect > 0 {
+        if me > 0 {
+            S.won_pool = me;
+        }
         // the collect hold: up to 10 s to walk over a drop still on the floor, then it is swept up
-        if drops_on_floor() && S.collect < COLLECT_HOLD {
+        if me > 0 && drops_on_floor() && S.collect < COLLECT_HOLD {
             S.collect += 1;
             return;
         }
-        for p in 0..nh() as usize {
-            for k in 0..DROPS {
-                if S.drop[p][k][0] == 1 {
-                    take_drop(p, k, G_SWEPT);
-                }
-            }
-        }
-        S.outcome = 1;
-        S.pool = me;
-        if sched().kind >= FK_ELITE && S.bosses < 2 && (S.fight as usize) < FIGHTS - 1 {
-            S.bosses += 1;
-            log(b"envoy: boss beaten, keystone due; bosses\0", S.bosses);
-        }
-        if S.fight as usize == FIGHTS - 1 {
-            S.state = RUN_CLEAR;
-            log(b"envoy: RUN CLEAR, pool left\0", me);
-        } else {
-            S.fight += 1;
-            log(b"envoy: fight won, next\0", S.fight + 1);
-        }
-        make_plan();
+        fight_won();
     } else if me <= 0 {
         S.outcome = 2;
         S.pool = 0;
@@ -1891,6 +1882,32 @@ unsafe fn outcome_frame() {
         log(b"envoy: RUN OVER at fight\0", S.fight + 1);
         make_plan();
     }
+}
+
+/// The fight is won (the last foe fell; `S.won_pool` is the pool left): sweep the drops, advance the run.
+unsafe fn fight_won() {
+    let me = S.won_pool.max(1);
+    for p in 0..nh() as usize {
+        for k in 0..DROPS {
+            if S.drop[p][k][0] == 1 {
+                take_drop(p, k, G_SWEPT);
+            }
+        }
+    }
+    S.outcome = 1;
+    S.pool = me;
+    if sched().kind >= FK_ELITE && S.bosses < 2 && (S.fight as usize) < FIGHTS - 1 {
+        S.bosses += 1;
+        log(b"envoy: boss beaten, keystone due; bosses ", S.bosses);
+    }
+    if S.fight as usize == FIGHTS - 1 {
+        S.state = RUN_CLEAR;
+        log(b"envoy: RUN CLEAR, pool left ", me);
+    } else {
+        S.fight += 1;
+        log(b"envoy: fight won, next ", S.fight + 1);
+    }
+    make_plan();
 }
 
 /// FNV-1a over the whole state and the pool digest: this frame's word for the compared netplay / synctest hash.
@@ -2088,6 +2105,10 @@ extern "C" fn on_frame_end() {
             }
         } else if !present {
             S.live = 0;
+            // the match ended inside the collect hold: the latched win stands
+            if S.state == RUN_LIVE && S.outcome == 0 && S.collect > 0 {
+                fight_won();
+            }
         }
         gd_hash_word(digest());
         publish();

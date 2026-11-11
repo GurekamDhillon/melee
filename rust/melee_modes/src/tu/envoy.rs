@@ -208,7 +208,7 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         if h == 1 {
             me.color = 0;
             me.sub_color = 0;
-            me.slot = 1;
+            me.slot = 2; // port 2 (1-based; getPort): never port 1, or player 2 would mirror player 1's controller
             me.spawn_pos = -1;
             me.handicap = 9;
         }

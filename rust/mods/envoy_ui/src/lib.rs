@@ -36,6 +36,7 @@ extern "C" {
     fn gd_ui_retail_scene() -> i32;
     fn gd_ui_envoy_door(scene: u32) -> i32;
     fn gd_ui_envoy_state() -> i32;
+    fn gd_ui_pad_present(port: u32) -> i32;
     fn gd_ui_envoy_saved(out: *mut i32, n: u32) -> i32;
     fn gd_ui_envoy_arm(op: i32) -> i32;
     fn gd_ui_node_free(n: u32);
@@ -243,8 +244,9 @@ pub extern "C" fn gd_ui_event(node: u32, ev: i32, _value: i32) {
             return;
         }
         if ev == EV_BACK && c.age >= 3 {
+            // after a fight B does nothing: a B mashed through the results must not drop the run (Leave is a row)
             if c.after_fight {
-                gd_ui_envoy_arm(ARM_OFF);
+                return;
             }
             return camp_close();
         }
@@ -635,6 +637,11 @@ unsafe fn picked_line(e: &mut Enc<16384>, v: &[i32; VW], vw: f32) {
 }
 
 unsafe fn hud(e: &mut Enc<16384>, v: &[i32; VW], vw: f32) {
+    // co-op with one controller: player 2 (port 2) stands idle; say why
+    if v[V_HUMANS] == 2 && gd_ui_pad_present(1) == 0 {
+        e.slice(SLICE_FILL_R6, vw * 0.5 - 220.0, 150.0, 440.0, 44.0, PANEL);
+        e.text_ex(vw * 0.5, 158.0, ROLE_VALUE, PLAYER_COL[1], ALIGN_CENTER, 0.0, "P2: CONNECT A SECOND CONTROLLER");
+    }
     let (fight, total, pool) = (v[V_FIGHT] + 1, v[V_FIGHTS], v[V_POOL]);
     let x = 24.0;
     let y = 24.0;

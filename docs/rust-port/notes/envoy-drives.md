@@ -108,6 +108,22 @@ the standard policy. The full build sits at the loud end on purpose; the owner's
 tag, the elite's drive), a CPU run (hit drives, Plague Bearer, Winter Oath, Shatter, a drop), Twin Soul (both sets
 fire), the shared knob, co-op (both players fire and pick) and the Petey boss.
 
+`tools/rust-port/envoy/camp_run.sh`: the whole flow from the camp door with no `MELEE_ENVOY_ARM` (title, 1-P,
+Envoy row, New run, the CSS, then Start / A through the results, the camp's Continue, the CSS and the cards, the
+player's fighters level-9 CPUs), asserting fights 1, 2 and 3 are rewritten Envoy matches, 1 and 2 won, no plain VS
+match and no disarm in between.
+
+## Fixed after the first playtest
+
+- **A won fight read as RUN OVER.** The collect hold (a drop still on the floor after the last KO) waited inside the
+  match, but the retail game end that follows the last KO tears the players down and their stock reads go to 0: the
+  sim saw "no stocks" and ended the run, the camp showed RUN OVER, and its Back row disarmed the run onto a plain VS
+  CSS. The win now latches when the last foe falls (pool kept from that moment) and stands if the match ends inside
+  the hold. After a fight the camp ignores B (a B mashed through the results no longer leaves the run).
+- **Co-op player 2 read player 1's controller.** `match_begin` set player 2's `slot` (the 1-based port, `getPort`)
+  to 1, port 1. It is 2 now; with one controller player 2 stands idle and the HUD says "P2: CONNECT A SECOND
+  CONTROLLER" (`gd_ui_pad_present`).
+
 ## Known limits
 
 - Hits on Petey charge drives but Marked does not apply to him (his damage is not the take-damage path); Chilled

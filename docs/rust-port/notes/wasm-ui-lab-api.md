@@ -214,6 +214,7 @@ the presentation linker.
 | `gd_ui_capture(port_mask: u32, flags: u32) -> u32 token` | flags: `EXCLUSIVE` (zero the captured ports for the game), `SHARED` (only observe), `KEYBOARD` (host keyboard, offline only), `INJECT` (needs `UI_SIM_INPUT`) |
 | `gd_ui_release(token)` | |
 | `gd_ui_pad(port, out_ptr) -> i32` | the captured `PADStatus` of this present (after the game's clamp) and its edge mask |
+| `gd_ui_pad_present(port) -> i32` | 1 when a controller is plugged into the port (its read is not PAD_ERR_NO_CONTROLLER), 0 when none; read-only, no capture |
 | `gd_ui_inject(port, pad_ptr) -> i32` | replaces that port's input for the next logic frame |
 
 Contract:

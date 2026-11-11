@@ -656,6 +656,14 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             cap.released = true;
         }
     });
+    // whether a controller is plugged into a port (its last read had no PAD_ERR_NO_CONTROLLER); read-only, no capture
+    // needed (the Envoy co-op HUD's "connect a second controller" note)
+    f!("gd_ui_pad_present", |c: Caller<'_, PresData>, port: u32| -> i32 {
+        if port > 3 {
+            return GD_EINVAL;
+        }
+        (c.data().ui().borrow().pads[port as usize].err != -1) as i32
+    });
     f!("gd_ui_pad", |mut c: Caller<'_, PresData>, port: u32, out: u32| -> i32 {
         if c.data().ui().borrow().native_modal {
             return GD_ESTATE;

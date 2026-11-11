@@ -7,6 +7,14 @@ use crate::pad::*;
 
 pub const GW_SCRIPT_MAX: usize = 8192;
 
+/// Set by the host's scene flow each tick: a live match (VS / sudden death) is on.
+pub static IN_MATCH: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn no_pause() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var("MELEE_PAD_NO_PAUSE").is_ok_and(|v| v == "1"))
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Segment {
     pub frames: i32,
@@ -158,6 +166,10 @@ impl PadScript {
             s.triggerLeft = g.tl;
             s.triggerRight = g.tr;
             s.button = g.buttons;
+            // MELEE_PAD_NO_PAUSE=1: a script that mashes Start through the menus does not pause a live match
+            if IN_MATCH.load(std::sync::atomic::Ordering::Relaxed) && no_pause() {
+                s.button &= !PAD_BUTTON_START;
+            }
             s.err = 0;
             driven |= 1 << ch;
         }

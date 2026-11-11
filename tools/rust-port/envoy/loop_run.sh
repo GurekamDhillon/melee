@@ -22,7 +22,7 @@ play() { # name save frames title
   rm -rf "$out/$1.card"; cp -r "$card" "$out/$1.card"; mkdir -p "$2"
   (cd "$out" && env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="v3g agent: loop_run $1 ($4)" MELEE_WASM_MODS="$mods" \
     MELEE_ENVOY_DIR="$2" MELEE_CARD_PATH="$out/$1.card" MELEE_PAD_SCRIPT="$here/camp_pad.txt" MELEE_PAD_CHANNELS=03 \
-    MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_TEST_DRIVES="$drives" MELEE_TURBO=1 \
+    MELEE_ENVOY_TEST_P1CPU=1 MELEE_PAD_NO_PAUSE=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_TEST_DRIVES="$drives" MELEE_TURBO=1 \
     MELEE_CRASH_STACK=200 MELEE_RECLAIM_LEAK=1 MELEE_HANG_DUMP=60 \
     timeout 5400 "$exe" play --iso "$GW_ISO_VANILLA" --headless --no-audio --max-frames "$3" >"$out/$1.log" 2>&1)
   echo "     $1: exit $?"

@@ -783,6 +783,7 @@ impl RetailPlay {
         }
         // a once-a-second heartbeat (tick, scene, draw commands of the last frame): a stall shows as a stopped tick,
         // a render-only fault as a running tick with no draws
+        melee_platform::script::IN_MATCH.store(matches!(self.cur.1, 2 | 3), std::sync::atomic::Ordering::Relaxed);
         if self.tick_no % 60 == 0 {
             log(&format!("heartbeat tick {} scene {} age {} draws {}", self.tick_no, scene_name(self.cur.1), self.age, self.frame.as_ref().map_or(0, |f| f.len())));
             if std::env::var_os("MELEE_RETAIL_DRAWDBG").is_some() {

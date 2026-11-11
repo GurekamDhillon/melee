@@ -346,12 +346,15 @@ fn install_fault_handler() {
         if !(*p).context.is_null() {
             let rsp = *((*p).context as *const u8).add(0x98).cast::<usize>();
             let mut n = 0;
-            for i in 0..512usize {
+            // MELEE_CRASH_STACK=N: list up to N return addresses (default 24), scanning deeper, to reach the caller
+            // of a deep recursion (a model load)
+            let want = std::env::var("MELEE_CRASH_STACK").ok().and_then(|v| v.parse::<usize>().ok()).unwrap_or(24).clamp(1, 1000);
+            for i in 0..(512usize).max(want * 16) {
                 let v = *(rsp as *const usize).add(i);
                 if v > base && v < base + 0x400_0000 {
                     fault.push_str(&format!("stack[{i:3}]:      melee.exe+0x{:X}\n", v - base));
                     n += 1;
-                    if n == 24 {
+                    if n == want {
                         break;
                     }
                 }

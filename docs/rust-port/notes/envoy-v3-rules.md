@@ -16,7 +16,7 @@ here, in the owner's pattern, are marked **[decided]**.
 | ordered slots | `open_slots` | built: 3, 4 after boss 1, 5 after boss 2, in order; full rows replace a chosen drive (pick screen step 2, shop step 1) |
 | Echo | the neighbour drive | built: the drive to its right fires again 6 frames later at x0.5 / x0.8 / x1.2 (not a link, never launches); Echo Oath (keystone) kept |
 | +Heat / xGain / shaper | `heat_add_drives`, `gain_now`, `take` | built: Clean Landing (L-cancel after an aerial that dealt damage), Riposte (tech), Metronome (a move not among the last three, once per move); Tailwind (Haste), Perfect Form (three L-cancelled aerial landings), Gatekeeper (offstage), Glass Core x2; capped x4; Insulate's allowance |
-| technique | engine `ENVOY_LCANCEL` hook, `tech_frame` | built: the L-cancel bit (`gd_envoy_events`), wavedash (LandingFallSpecial from EscapeAir), tech (Passive states), offstage damage (a ledge table for the five stages); each writes `EV_SPARK` |
+| technique | engine `ENVOY_LCANCEL` hook, `tech_frame` | built: the L-cancel bit (`gd_envoy_events`), wavedash (LandingFallSpecial within 3 frames of EscapeAir), tech (Passive states), offstage damage (a ledge table for the five stages; any other stage never counts as offstage: the engine exposes no stage-extent read to mods, only the stage kind); each writes `EV_SPARK` |
 | Volley | D-pad right, 3 pips | built: given at the run's start full; every trigger of the fighter in play fires left to right as one chain with no link limit |
 | Inferno | three different RED drives on one fighter | built: Burning stacks to 6, its ticks feed Heat at 0.5; and (loud) every RED fire adds a Burning stack and Ember splashes |
 | Grand Finale | `gd_envoy_kb_scale` | built: a smash attack's knockback x(1 + Heat/450), to x1.5; a smash KO pays x1.5 and keeps no Heat |
@@ -92,8 +92,8 @@ with and without Insulate, and through a cash-out.
 
 | fact (12.5) | status |
 |---|---|
-| the L-cancel test is `x67F < xE4` at `ftCo_LandingAir.rs` in `EnterWithLag` | read; the hook sits in that branch. Only that branch was found. Not yet seen firing in a synctest (no CPU L-cancels were logged in the runs; see the test table) |
-| a write to `kb_applied` in the take-damage post hook takes effect | not proven in play: the knockback write is logged ("finale knockback"), its effect on the launch was not measured |
+| the L-cancel test is `x67F < xE4` at `ftCo_LandingAir.rs` in `EnterWithLag` | read; the hook sits in that branch. Only that branch was found. seen firing on a scripted pad (tech_pad.txt: 90 L-cancels and 45 wavedashes at depth 4, +Heat paid) |
+| a write to `kb_applied` in the take-damage post hook takes effect | verified (A/B, v3_slice.sh 7): at one Heat (+30%) the first hit's launch speed with the write on / off is 1.30 (speed^2 35217 vs 20838), depths 4 and 7 |
 | `dmg` at the Petey hit test is what the cages lose | read only; the HP words are `petey::view()`'s |
 | the ledge x of the five stages | [K] from knowledge of the stages (BF 68.4, YS 56, DL 77.3, FoD 63.4, FD 85.6), not read from stage data |
 | `foe_m` tracks the percent the player sees | approximately: it sums the hook's damage, Marked's extra, fires, flares and Burning; heals on foes are not tracked |
@@ -104,8 +104,8 @@ with and without Insulate, and through a cash-out.
 - **Reorder on the pick screen** while placing a drive: the pick only chooses which drive a new one replaces; free
   reordering is in the shop (5.1 says the rest stop; the shop is the rest stop here).
 - **The map screen**: none (V2 has none); fights follow each other as in V2.
-- **Keystone pick order**: V2's (the keystone pick opens the fight, before the drive pick), not the spec's
-  (pick of three, then the keystone).
+- **Keystone pick order**: the spec's since 2026-11-11: after a boss the drive pick comes first, then the keystone
+  pick, then the shop (a run started with fewer keystones than due gets the keystone pick at fight 1).
 - **The taunt coin bonus** and the pact: not built.
 - **Volley "the fighter actionable"**: Volley fires on D-pad right whenever the player is alive with 3 pips.
 - **Player 2's pips and earned coins** in the record: kept (packed into words 44-45), unlike the spec's plan.
@@ -120,8 +120,10 @@ with and without Insulate, and through a cash-out.
   scripts take it around their cargo calls).
 - Checks: `bash tools/rust-port/envoy/v3_slice.sh` (lint + split test, sim.py, nine synctests at depths 4 and 7),
   `bash tools/rust-port/envoy/v2_drives.sh` (V2's six on the new rules), `python tools/rust-port/envoy/sim.py --v3`.
-- Test knobs: `MELEE_ENVOY_TEST_DRIVES` takes `$N` (coins) and `noshop` (no shop) besides drives and keystones; a row
-  of more than the open slots opens them for that run.
+- Test knobs: `MELEE_ENVOY_TEST_DRIVES` takes `$N` (coins), `noshop` (no shop), `^N` (every fight starts at the Heat
+  that gives Grand Finale +N/1000), `finaleall` (every player hit counts as a smash for Grand Finale), `finaleoff`
+  (the write logged, not made), `aslog` (player 1's action states and hits logged) besides drives and keystones; a
+  row of more than the open slots opens them for that run.
 - Play: `E:\Projects\Melee Workspace\scratch\envoy-demo\play-v3sim-solo.cmd` (old look, new rules).
 
 ## Results (2026-11-10, commit on port/v3sim)
@@ -136,9 +138,33 @@ with and without Insulate, and through a cash-out.
 | camp_run.sh (no MELEE_ENVOY_ARM, the camp door) | CAMP RUN OK: fights 1, 2, 3 rewritten and won, a shop after fight 1, keystones. A longer run (110000 frames) stops in fight 3's results only because camp_pad.txt runs out of presses; fights 4-5 were not reached headless |
 | sim.py --v3 (120 seeds, model) | pace met (reference 90 at the first KO, never Blazing by the 4th; two-for-one 75 = Warm; even trade 30), split identical, use 16/16, character spread 1.07 (<= 1.25); build spread 2.1-2.9 (band 2.5-6: aerial and tagger just under), heat spread 1.1-1.3 (band 1.5-2.5: missed; Heat drives are a small share once halving and the cap shape the meter), KO delay +16% (band < 15%). The bands are report-only in the scripts (`--no-fail`) until the owner's play sets the dial |
 
+### Follow-up round (2026-11-11)
+
+| check | result |
+|---|---|
+| full Short run from the camp (camp_run.sh, 216000 frames, CPU player) | fights 1-5 rewritten in order, picks, shops (fights 2, 4, 5), keystones after bosses 1-2; the CPU lost fight 5 (RUN OVER, then the camp over the CSS, disarmed). Loss also seen at fight 4 |
+| the win (camp run from fight 5, strong drives) | the boss fight cleared, RUN CLEAR, pool 3 left, disarmed |
+| saved run | **was broken in V3** (the host checked the V2 view words); fixed. Run 1 saved after fight 1; run 2's camp Continue: "armed, run continued at fight 2" |
+| synctests C1-C8, depths 4 and 7 | all 0 mismatches; tech 90/144 L-cancels, 45/72 wavedashes; tech marks seen in a camp run's fight, not on the pad (Falcon is never knocked down there) |
+| Grand Finale A/B | 1.30 launch speed ratio at +30% (required 1.25-1.35) |
+| Petey break | **not achieved**: the 3600-frame slice run ends at ~1850 frames with no break; 9000-frame runs (with and without a fixed Heat) stall in synctest after the first pick and time out (1200-1400 s), cause not found |
+
+### Heat spread: proposals (not applied; the owner's rules stay: half kept on a KO, no decay, 1 Heat per 1%)
+
+sim.py --v3 puts every build at 1.1-1.3x the reference's Heat (band 1.5-2.5). Damage is the same for every build, so
+damage-driven Heat cannot spread builds; only the build-specific terms can. Options, smallest first:
+1. **State-keyed +Heat**: Heat drives pay more in the state they are built for (e.g. Clean Landing x2 while Warm or
+   below, Gatekeeper x2 at Hot+), so a Heat build climbs out of the sawtooth sooner.
+2. **Bigger gain multipliers on Heat drives** (xGain 1.5 -> 2, cap x4 kept): moves only builds that take them.
+3. **A drive that keeps more on a KO** (e.g. a keystone or level-3 effect: keep 70% instead of 50%) - a build choice,
+   not a rule change for everyone.
+4. **State-keyed drives** (fire or charge only at a Heat state) make the Heat a build cares about visible as a spread
+   in outcomes even when the meters look alike.
+Each can be tried in sim_v3.py first; none needs an engine change.
+
 ### Known gaps for the playtest
 
 - Heat spread is structurally low: every build sits near the same sawtooth (half kept at each KO). If builds feel
   alike in Heat, the levers are the gain multipliers and +Heat sizes, or a smaller keep (e.g. keep 60% with Heat
   drives).
-- Fights 4-5 and the Petey breaks were exercised only by synctests starting there, not by a full headless run.
+- After the run ends the camp's Done leaves the player on the VS CSS (envoy_ui's flow); the main menu may suit better.

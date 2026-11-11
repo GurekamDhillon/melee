@@ -41,9 +41,12 @@ fn round_i(v: f32) -> i32 {
 /// Cage HP and max (§5, §6.1).
 pub const CAGE_HP: i32 = 999;
 /// Death threshold in cage-HP percent (param 3057).
+#[allow(dead_code)] // the fallback is petey_file::FALLBACK
 const DEATH_PCT: f32 = 10.0;
 /// Cage proc thresholds (§6.2).
+#[allow(dead_code)] // the fallback is petey_file::FALLBACK
 const PHASE1_PCT: f32 = 50.0;
+#[allow(dead_code)] // the fallback is petey_file::FALLBACK
 const PHASE2_PCT: f32 = 25.0;
 // Param 3056 (0.75) is not a speed scale (spec §2 / §7, Q5): it is the fallback bounce factor applied when a running
 // movement touches a wall or floor. Petey's dive and landing never bounce and he is never launched, so it is unused;
@@ -52,6 +55,7 @@ const PHASE2_PCT: f32 = 25.0;
 /// SSE tier or continues, so a fresh Normal game: 5.
 const DIFFICULTY: usize = 5;
 /// Strength by phase (param 24001 / 24002; phase 0 is the placement's 1).
+#[allow(dead_code)] // the fallback is petey_file::FALLBACK
 const STRENGTH: [usize; 3] = [1, 2, 3];
 /// L table, default mode (§3).
 const L_TABLE: [[f32; 15]; 5] = [
@@ -64,6 +68,7 @@ const L_TABLE: [[f32; 15]; 5] = [
 /// Petey's x range on FD (FD's edges; the jump goals are +-68, spec §7.2).
 const ARENA: f32 = 85.0;
 /// The jump's absolute world goal x (params 44006 / 44007).
+#[allow(dead_code)] // the fallback is petey_file::FALLBACK
 const JUMP_GOAL: f32 = 68.0;
 
 // motions (§1.2): index = the spec's motion number
@@ -145,6 +150,10 @@ pub struct Boss {
     pub flash: [i32; 3],
     /// last player slot targeted (repeat weighting)
     pub last_slot: i32,
+    /// the locked target slot (-1 none): rule 13 locks once per jump; landing and the menu clear it
+    pub locked: i32,
+    /// the last attack-menu pick (`menuPick`, for the 0.3 repeat cut; the file's init leaves it 0)
+    pub menu_pick: i32,
     /// absolute world goal x set by rule 13 (spec §7.2); `has_goal` false = unset
     pub has_goal: bool,
     pub goal_x: f32,
@@ -161,14 +170,14 @@ const OFF: Boss = Boss {
     st: ST_OFF, prev_st: ST_OFF, sf: 0, t_out: 0.0, mot: M_WAIT1 as i32, mf: 0, px: 0.0, vx: 0.0, cage: [CAGE_HP; 2],
     phase: 0, cage_ctr: 0, rule28: false, rule29: false, jump_count: 1, jumps_wanted: 1, side: 0, flinch_to: ST_MENU,
     aim: 1.0, cage_broken: false, cause: 0, freed: -1, ko_done: false, down_t: 0, rng: 1, carrier_slot: -1,
-    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, has_goal: false, goal_x: 0.0, cage_max: CAGE_HP, lag_prev: 0.0,
+    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, locked: -1, menu_pick: 0, has_goal: false, goal_x: 0.0, cage_max: CAGE_HP, lag_prev: 0.0,
     cam_on: false, cam: [0.0; 3],
 };
 
 /// Each cage's full HP this fight (CAGE_HP with no Envoy loop scaling).
 fn cage_max() -> i32 {
     let m = unsafe { B.cage_max };
-    if m > 0 { m } else { CAGE_HP }
+    if m > 0 { m } else { tun().cage_hp }
 }
 pub static mut B: Boss = OFF;
 /// The match about to start is a Petey fight (set by `envoy::match_begin`, consumed at the first tick).
@@ -212,6 +221,7 @@ pub unsafe fn arm(_humans: i32, carrier_slot: i32, seed: u32) {
     LATCH_IT = [(0, [0; 4]); 16];
     SLOT_INST = [0; 4];
     let _ = tracks(); // load (or miss) the local model before frame 0
+    crate::tu::petey_file::load(); // and his parameter file (helper thread, outside the arena)
 }
 
 /// Hits each player slot landed on Petey or a cage (Envoy's drives charge on them: his hits never reach the
@@ -260,6 +270,23 @@ fn rnd(n: u32) -> u32 {
 fn rnd01() -> f32 {
     rnd(1 << 16) as f32 / 65536.0
 }
+/// The decoded boss parameters (petey_file.rs), or the built-in values.
+fn tun() -> &'static crate::tu::petey_file::Tuning {
+    crate::tu::petey_file::get()
+}
+
+/// A weighted list's weights x1000 (base + slope L), with the 0.3 repeat cut on the previous pick `prev`
+/// (format spec 4.3: the conditions of 44008 / 44009). Exact to 1/1000.
+fn weights<const N: usize>(list: &[(i32, f32); N], prev: Option<i32>) -> [i32; N] {
+    let l = level();
+    let mut w = [0i32; N];
+    for i in 0..N {
+        let x = fctiwz_f32((list[i].0 as f32 + list[i].1 * l) * 1000.0);
+        w[i] = if prev == Some(i as i32) { x * tun().repeat_pm / 1000 } else { x };
+    }
+    w
+}
+
 /// Weighted pick (§4.7) over integer weights (<= 0 skipped).
 fn pick(w: &[i32]) -> usize {
     let sum: i32 = w.iter().map(|&x| x.max(0)).sum();
@@ -289,7 +316,7 @@ fn range(min: f32, min_s: f32, max: f32, max_s: f32) -> f32 {
 
 /// The difficulty scalar L for the current phase (§3).
 pub fn level() -> f32 {
-    let s = STRENGTH[unsafe { B.phase }.clamp(0, 2) as usize];
+    let s = tun().strength[unsafe { B.phase }.clamp(0, 2) as usize];
     L_TABLE[s - 1][DIFFICULTY]
 }
 
@@ -339,7 +366,11 @@ pub unsafe fn tick() {
         B.px = 0.0;
         // Envoy endless loops: the plan's cage HP x1000 (0 / no plan: retail's)
         let hp = crate::tu::envoy::PLAN[crate::tu::envoy::P_BOSS_HP];
-        B.cage_max = if hp > 0 { (CAGE_HP as i64 * hp.clamp(1000, 20_000) as i64 / 1000) as i32 } else { CAGE_HP };
+        let base = tun().cage_hp;
+        B.cage_max = if hp > 0 { (base as i64 * hp.clamp(1000, 20_000) as i64 / 1000) as i32 } else { base };
+        // the file's init: jumpCount 0, jumpsWanted 1, phase 0, side 0, menuPick 0 (format spec 3.2, corrects spec 6.1)
+        B.jump_count = 0;
+        B.jumps_wanted = 1;
         B.cage = [B.cage_max; 2];
         // §6.1 init: side 0, jumpCount 1, phase 0; the fight opens in Wait A
         enter(ST_WAIT_A);
@@ -515,8 +546,8 @@ unsafe fn cage_events(hit_any: bool, cage_hit: [bool; 2]) {
     // death (rule 5): a frame with a player hit and the lower cage at or under 10%
     if hit_any && !B.cage_broken {
         let (l, r) = (cage_pct(0), cage_pct(1));
-        if fmin(l, r) <= DEATH_PCT {
-            B.freed = if l <= r { 0 } else { 1 };
+        if fmin(l, r) <= tun().death_pct {
+            B.freed = if l < r { 0 } else { 1 }; // a tie counts as the right cage (the test is left < right)
             enter(ST_DYING);
             B.cause = 1;
             eprintln!("petey: dying (lower cage {} at {:.1}%)", B.freed, fmin(l, r));
@@ -533,10 +564,10 @@ unsafe fn cage_events(hit_any: bool, cage_hit: [bool; 2]) {
     }
     // 0x1400 / 0x1401: the phase-up rules
     let low = fmin(cage_pct(0), cage_pct(1));
-    if B.cage_ctr == 0 && low <= PHASE1_PCT {
+    if B.cage_ctr == 0 && low <= tun().phase1_pct {
         B.rule28 = true;
     }
-    if B.cage_ctr == 1 && low <= PHASE2_PCT {
+    if B.cage_ctr == 1 && low <= tun().phase2_pct {
         B.rule29 = true;
     }
 }
@@ -551,7 +582,39 @@ fn motion_end() -> bool {
 }
 
 /// The nearest present player's x (the "locked target" when one is needed), weighted per §4.1.
+#[allow(dead_code)]
 unsafe fn target_x() -> Option<f32> {
+    let s = draw_slot()?;
+    Some(slot_x(s))
+}
+
+/// The player's x in a slot.
+unsafe fn slot_x(s: i32) -> f32 {
+    let f = fighter_of(s, 0);
+    if f.is_null() { B.px } else { (*f).cur_pos.x }
+}
+
+/// The rule engine's target-slot draw (format spec 4.3 step 3): tuning weights, the last used slot cut by the
+/// tuning repeat factor (0.3), one draw. Weights x1000.
+unsafe fn draw_slot() -> Option<i32> {
+    let mut w = [0i32; 4];
+    for s in 0..4i32 {
+        if s == B.carrier_slot || fighter_of(s, 0).is_null() {
+            continue;
+        }
+        let x = tun().slot_w[s as usize] * 1000;
+        w[s as usize] = if B.last_slot == s { x * tun().slot_cut_pm / 1000 } else { x };
+    }
+    if w.iter().all(|&x| x <= 0) {
+        return None;
+    }
+    let s = pick(&w) as i32;
+    B.last_slot = s;
+    Some(s)
+}
+
+#[allow(dead_code)]
+unsafe fn target_x_old() -> Option<f32> {
     const W: [i32; 4] = [25, 10, 20, 8];
     let mut w = [0i32; 4];
     let mut xs = [0.0f32; 4];
@@ -575,6 +638,7 @@ unsafe fn target_x() -> Option<f32> {
 }
 
 /// Side 1 = the target's world x is less than the boss's (screen-left; spec §4.4 rule 13, reader 2).
+#[allow(dead_code)]
 unsafe fn target_side() -> i32 {
     match target_x() {
         Some(x) if x < B.px => 1,
@@ -612,10 +676,12 @@ unsafe fn rules() {
         }
     }
     // 200: rule 13 in JumpStart / JumpLoop: lock the target, set the absolute goal x (-68 on side 1, else +68)
-    if st == ST_JUMP_START || st == ST_JUMP_LOOP {
-        if let Some(x) = target_x() {
+    // Once per jump (format spec 4.4 rule 13): only while no target is locked; landing and the menu clear the lock.
+    if (st == ST_JUMP_START || st == ST_JUMP_LOOP) && B.locked < 0 {
+        if let Some(s) = draw_slot() {
+            B.locked = s;
             B.has_goal = true;
-            B.goal_x = if x < B.px { -JUMP_GOAL } else { JUMP_GOAL };
+            B.goal_x = if slot_x(s) < B.px { tun().goal[0] } else { tun().goal[1] };
         }
     }
     // 200: the status's own rules
@@ -625,7 +691,9 @@ unsafe fn rules() {
         ST_CHOOSE_BASKET => Some(basket_status()),                      // 21 / 24
         ST_MENU => {
             // 22: (20, 20, 60 + 2L)
-            let p = pick(&[20, 20, 60 + fctiwz_f32(2.0 * level())]);
+            // each entry cut to 0.3 when it repeats the last menu pick (format spec 4.4 rule 22)
+            let p = pick(&weights(&tun().menu, Some(B.menu_pick)));
+            B.menu_pick = p as i32;
             if p == 2 {
                 B.jump_count = 0;
                 B.jumps_wanted = if B.phase >= 1 { 2 } else { 1 };
@@ -637,7 +705,7 @@ unsafe fn rules() {
                 Some(if p == 0 { ST_BASKET_L } else { ST_BASKET_R })
             }
         }
-        ST_ANGRY if motion_end() => Some(if pick(&[20, 80]) == 0 { ST_CHOOSE_BASKET } else { ST_MENU }), // 23
+        ST_ANGRY if motion_end() => Some(if pick(&weights(&tun().after_angry, None)) == 0 { ST_CHOOSE_BASKET } else { ST_MENU }), // 23
         ST_JUMP_START if motion_end() => Some(ST_JUMP_LOOP),                                              // 18
         ST_JUMP_LOOP if B.sf as f32 >= B.t_out => Some(ST_JUMP_ATTACK),                                   // 25
         ST_JUMP_ATTACK if motion_end() => Some(ST_JUMP_LANDING),                                          // 26
@@ -659,14 +727,21 @@ unsafe fn basket_status() -> i32 {
     if B.phase >= 1 {
         aimed_basket()
     } else {
-        B.side = pick(&[50, 50]) as i32;
+        B.side = pick(&weights(&tun().side, Some(B.side))) as i32; // 21: with the repeat cut on `side`
         if B.side == 0 { ST_BASKET_L } else { ST_BASKET_R }
     }
 }
 
 /// Rule 24: side 1 -> right basket, else left (no target -> left).
 unsafe fn aimed_basket() -> i32 {
-    if target_side() == 1 { ST_BASKET_R } else { ST_BASKET_L }
+    // rule 24 locks the target it reads
+    match draw_slot() {
+        Some(s) => {
+            B.locked = s;
+            if slot_x(s) < B.px { ST_BASKET_R } else { ST_BASKET_L }
+        }
+        None => ST_BASKET_L,
+    }
 }
 
 unsafe fn set_motion(m: usize) {
@@ -676,7 +751,7 @@ unsafe fn set_motion(m: usize) {
 }
 
 unsafe fn pick_wait() {
-    set_motion(if pick(&[75, 25]) == 0 { M_WAIT1 } else { M_WAIT2 });
+    set_motion(if pick(&weights(&tun().wait_pick, None)) == 0 { M_WAIT1 } else { M_WAIT2 });
 }
 
 /// Enter a status (§4.3).
@@ -696,29 +771,33 @@ unsafe fn enter(st: i32) {
         }
         ST_WAIT_A => {
             pick_wait();
-            B.t_out = range(100.0, -9.0, 150.0, -12.0);
+            let [a, b, c, d] = tun().wait_a;
+            B.t_out = range(a, b, c, d);
         }
         ST_WAIT_B => {
             pick_wait();
-            B.t_out = range(2.0, -0.18, 20.0, -1.75);
+            let [a, b, c, d] = tun().wait_b;
+            B.t_out = range(a, b, c, d);
         }
         ST_ANGRY => set_motion(M_ANGRY),
         ST_JUMP_START => {
             set_motion(M_JUMP_START);
-            B.t_out = 60.0 - 5.4 * l;
+            B.t_out = tun().hover[0] + tun().hover[1] * l;
             B.jump_count += 1;
         }
         ST_JUMP_LOOP => set_motion(M_JUMP_LOOP),
         ST_JUMP_ATTACK => {
             set_motion(M_JUMP_ATTACK);
             // §7.2: the angle to the locked target, snapped to horizontal; the boss does not turn
-            B.aim = match target_x() {
-                Some(x) if x < B.px => -1.0,
-                _ => 1.0,
-            };
-            B.vx = 0.2 * B.aim;
+            // the locked target (rule 13's), no new draw
+            B.aim = if B.locked >= 0 && !fighter_of(B.locked, 0).is_null() && slot_x(B.locked) < B.px { -1.0 } else { 1.0 };
+            B.vx = tun().dive[0] * B.aim;
         }
-        ST_JUMP_LANDING => set_motion(M_JUMP_LANDING),
+        ST_JUMP_LANDING => {
+            B.locked = -1; // status 10: reset target
+            set_motion(M_JUMP_LANDING);
+        }
+        ST_MENU => B.locked = -1, // status 5: reset target
         ST_BASKET_L => {
             B.side = 0;
             set_motion(M_BASKET_L);
@@ -744,13 +823,14 @@ unsafe fn advance() {
     let l = level();
     // movement: kind 16 during the dive, kind 14 / 15 (decay toward 0) otherwise
     if B.st == ST_JUMP_ATTACK {
-        let acc = (0.015 + 0.003 * l);
-        let max = (1.4 + 0.03 * l);
+        let k = tun().dive;
+        let acc = k[1] + k[2] * l;
+        let max = k[3] + k[4] * l;
         B.vx = fclamp(B.vx + acc * B.aim, -max, max);
     } else {
-        let mut dec = 0.06;
+        let mut dec = tun().decay;
         if B.st == ST_JUMP_LANDING {
-            dec += 0.005 * l;
+            dec += tun().land_decay_l * l;
         }
         B.vx = if B.vx > 0.0 { fmax(B.vx - dec, 0.0) } else { fmin(B.vx + dec, 0.0) };
     }
@@ -1291,7 +1371,7 @@ unsafe fn item_hits(hs: &[Option<[f32; 5]>; 3], carrier: i32) -> (bool, u8) {
 /// screen right, cage max, state (7 = beaten), phase >= 1, cause, status, partner kind, real model drawn.
 pub fn view() -> [i32; 12] {
     let b = unsafe { B };
-    let line = fctiwz_f32(cage_max() as f32 * DEATH_PCT / 100.0);
+    let line = fctiwz_f32(cage_max() as f32 * tun().death_pct / 100.0);
     let low = b.cage[0].min(b.cage[1]).max(0);
     [
         (b.st != ST_OFF) as i32,

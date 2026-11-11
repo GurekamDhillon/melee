@@ -15,6 +15,7 @@ melee_world.workspace = true
 melee_fighter.workspace = true
 melee_chara.workspace = true
 melee_items.workspace = true
+brawl_boss = { path = "../brawl_boss" }
 
 [features]
 # links the C state oracle (oracle/tou/gen.py -> target/tou-oracle/tou_oracle.lib) into tests/tou

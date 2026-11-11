@@ -164,7 +164,13 @@ const FOE_POOL: [&str; 8] = ["ember", "nova", "bolt", "frost", "rush", "bulwark"
 
 const RUN_NONE: i32 = 0;
 const RUN_LIVE: i32 = 1;
+/// No longer set: a clear starts the next loop (endless NG+, envoy-v3-rules.md "Endless loops").
+#[allow(dead_code)]
 const RUN_CLEAR: i32 = 2;
+/// The stock pool's ceiling for the +1 a clear gives (the HUD's dot row holds it).
+const POOL_CAP: i32 = 8;
+/// The furthest loop the scaling counts (a guard; nobody gets there).
+const LOOP_TOP: i32 = 50;
 const RUN_OVER: i32 = 3;
 
 const NP: usize = 2;
@@ -233,6 +239,8 @@ struct St {
     /// Humans: 1 solo, 2 co-op.
     nh: i32,
     bosses: i32,
+    /// The loop (1 first; +1 per boss cleared: endless NG+). 0 reads as 1.
+    lp: i32,
     /// The pairs: [player][main, partner] (character kinds).
     pair: [[i32; 2]; NP],
     picks: i32,
@@ -449,7 +457,7 @@ unsafe fn record() -> [i32; REC_WORDS] {
     r[R_PICKS] = S.picks;
     for s in 0..SETS {
         for k in 0..SLOTS {
-            r[R_DRIVES + s * SLOTS + k] = S.drives[s][k] << 2 | S.levels[s][k];
+            r[R_DRIVES + s * SLOTS + k] = S.drives[s][k] << 4 | S.levels[s][k];
         }
     }
     r[R_POOL_DIGEST] = POOL_DIGEST as i32;
@@ -458,6 +466,7 @@ unsafe fn record() -> [i32; REC_WORDS] {
     r[R_ACTIVE] = S.act_id[0] | S.act_id[1] << 8;
     r[R_PIPS] = ((HH.pips[0] / PIP_UNIT) as i32).clamp(0, 255) | ((HH.pips[1] / PIP_UNIT) as i32).clamp(0, 255) << 8;
     r[R_EARNED] = ((HH.earned[0] / COIN_UNIT) as i32).clamp(0, 0xFFFF) | ((HH.earned[1] / COIN_UNIT) as i32).clamp(0, 0x7FFF) << 16;
+    r[R_LOOP] = lp();
     r[REC_WORDS - 1] = rec_digest(&r);
     r
 }
@@ -470,7 +479,7 @@ fn is_kind(id: i32, kind: u8) -> bool {
 unsafe fn take_arm() {
     let mut r = [0i32; REC_WORDS];
     let n = gd_envoy_record(r.as_mut_ptr(), REC_WORDS as u32);
-    let ok = n == REC_WORDS as i32 && r[0] == REC_MAGIC && r[1] == REC_VERSION && r[REC_WORDS - 1] == rec_digest(&r) && (0..FIGHTS as i32).contains(&r[R_FIGHT]);
+    let ok = n == REC_WORDS as i32 && r[0] == REC_MAGIC && (r[1] == REC_VERSION || r[1] == 5) && r[REC_WORDS - 1] == rec_digest(&r) && (0..FIGHTS as i32).contains(&r[R_FIGHT]);
     if ok && r[R_POOL_DIGEST] != POOL_DIGEST as i32 {
         log(b"envoy: saved run is from another drive pool, dropped\0", r[R_POOL_DIGEST]);
         S.state = RUN_NONE;
@@ -483,6 +492,7 @@ unsafe fn take_arm() {
         S.shared = (r[R_SHARED] != 0) as i32;
         S.nh = if r[R_COOP] != 0 { 2 } else { 1 };
         S.bosses = r[R_BOSSES].clamp(0, 2);
+        S.lp = r[R_LOOP].clamp(1, LOOP_TOP);
         for p in 0..NP {
             for k in 0..KEYSTONES {
                 let id = r[R_KEYS + p * KEYSTONES + k];
@@ -494,8 +504,8 @@ unsafe fn take_arm() {
         for s in 0..SETS {
             for k in 0..SLOTS {
                 let w = r[R_DRIVES + s * SLOTS + k];
-                let (id, lv) = (w >> 2, w & 3);
-                let ok = is_kind(id, K_DRIVE) && (1..=MAX_LEVEL).contains(&lv);
+                let (id, lv) = rec_drive(w, r[1]);
+                let ok = is_kind(id, K_DRIVE) && (1..=LEVEL_TOP).contains(&lv);
                 S.drives[s][k] = if ok { id } else { 0 };
                 S.levels[s][k] = if ok { lv } else { 0 };
             }
@@ -505,7 +515,7 @@ unsafe fn take_arm() {
         S.act_id = [r[R_ACTIVE] & 0xFF, r[R_ACTIVE] >> 8 & 0xFF];
         HH.pips = [(r[R_PIPS] & 0xFF) as i64 * PIP_UNIT, (r[R_PIPS] >> 8 & 0xFF) as i64 * PIP_UNIT];
         HH.earned = [(r[R_EARNED] & 0xFFFF) as i64 * COIN_UNIT, (r[R_EARNED] >> 16 & 0x7FFF) as i64 * COIN_UNIT];
-        log(b"envoy: armed, run continued at fight\0", S.fight + 1);
+        log(b"envoy: armed, run continued at loop*10 + fight\0", S.lp * 10 + S.fight + 1);
     } else {
         S.state = RUN_NONE;
         log(b"envoy: armed, new run\0", 0);
@@ -544,6 +554,56 @@ fn sched() -> &'static Fight {
     unsafe { &SCHEDULE[S.fight.clamp(0, FIGHTS as i32 - 1) as usize] }
 }
 
+// ---- endless loops (NG+; envoy-v3-rules.md "Endless loops"): everything scales from the one loop number
+
+/// The loop (1: the first time through the five fights).
+unsafe fn lp() -> i32 {
+    S.lp.clamp(1, LOOP_TOP)
+}
+
+/// Loops past the first (the scaling's step count).
+unsafe fn lx() -> i32 {
+    lp() - 1
+}
+
+/// The highest drive level reachable now: 3, one more per loop after the first.
+unsafe fn lvl_cap() -> i32 {
+    (MAX_LEVEL + lx()).min(LEVEL_TOP)
+}
+
+/// The fight's key for the seeded rolls: the fight in loop 1 (loop 1's rolls are unchanged), new ones after.
+unsafe fn fkey() -> u32 {
+    (S.fight + 8 * lx()) as u32
+}
+
+/// `base` raised by `per` thousandths per loop step `e`.
+fn per_loop(base: i32, per: i32, e: i32) -> i32 {
+    (base as i64 * (1000 + per as i64 * e as i64) / 1000) as i32
+}
+
+/// Foe damage dealt: +20% per loop. Foe damage taken: / (1 + 15% per loop). Shop prices: +25% per loop. The Petey
+/// cages' HP (so the HP between his four breaks): +25% per loop.
+const LOOP_FOE_ATK: i32 = 200;
+const LOOP_FOE_DEF: i32 = 150;
+const LOOP_PRICE: i32 = 250;
+const LOOP_BOSS_HP: i32 = 250;
+/// An ordinary fight's elite modifier (loop 3 on): the first CPU is an elite of this size.
+const LOOP_ELITE_SCALE: i32 = 1150;
+
+/// MELEE_ENVOY_TEST_DRIVES item `@N`: a new run starts in loop N (tests; fixed per process).
+unsafe fn test_loop() -> i32 {
+    let mut b = [0u8; 256];
+    let n = gd_envoy_test_drives(b.as_mut_ptr(), b.len() as u32);
+    if n <= 0 {
+        return 1;
+    }
+    let s = core::str::from_utf8(&b[..(n as usize).min(b.len())]).unwrap_or("");
+    s.split(|c| c == ',' || c == '/' || c == '|' || c == ';')
+        .find_map(|t| t.trim().strip_prefix('@').and_then(|x| x.parse::<i32>().ok()))
+        .unwrap_or(1)
+        .clamp(1, LOOP_TOP)
+}
+
 fn nh() -> i32 {
     unsafe { S.nh.clamp(1, 2) }
 }
@@ -552,7 +612,9 @@ fn nh() -> i32 {
 unsafe fn ncpu() -> i32 {
     let f = sched();
     let extra = (nh() == 2 && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32;
-    (f.ncpu + extra).min(4 - nh())
+    // loop 2 on: a solo pack fight has one more foe
+    let more = (nh() == 1 && f.kind == FK_PACK && lx() >= 1) as i32;
+    (f.ncpu + extra + more).min(4 - nh())
 }
 
 /// Is match slot `s` a foe (a CPU of this fight)?
@@ -591,7 +653,7 @@ unsafe fn slot_of(set: usize, id: usize) -> Option<usize> {
 unsafe fn can_take(p: usize, f: usize, id: usize) -> bool {
     let set = set_of(p, f);
     match slot_of(set, id) {
-        Some(k) => S.levels[set][k] < MAX_LEVEL,
+        Some(k) => S.levels[set][k] < lvl_cap(),
         None => S.drives[set][..open_slots()].contains(&0),
     }
 }
@@ -607,7 +669,7 @@ unsafe fn gain(p: usize, f: usize, id: usize, how: i32) -> i32 {
     let set = set_of(p, f);
     let lv = match slot_of(set, id) {
         Some(k) => {
-            if S.levels[set][k] >= MAX_LEVEL {
+            if S.levels[set][k] >= lvl_cap() {
                 return 0;
             }
             S.levels[set][k] += 1;
@@ -709,6 +771,9 @@ unsafe fn test_drives() {
                     S.finale_off |= 1;
                     continue;
                 }
+                if item.starts_with('@') {
+                    continue; // the start loop (test_loop)
+                }
                 if item == "noshop" {
                     S.no_shop = 1;
                     continue;
@@ -726,7 +791,7 @@ unsafe fn test_drives() {
                     continue;
                 }
                 let (key, lv) = item.split_once(':').unwrap_or((item, "1"));
-                let lv = lv.trim().parse::<i32>().unwrap_or(1).clamp(1, MAX_LEVEL);
+                let lv = lv.trim().parse::<i32>().unwrap_or(1).clamp(1, lvl_cap());
                 if let Some(id) = by_key(key.trim()).filter(|&i| POOL[i].kind == K_DRIVE) {
                     for _ in 0..lv {
                         gain(p, f, id, G_PICK);
@@ -762,7 +827,9 @@ unsafe fn make_plan() {
         (S.fight as usize, S.pool, S.seed as u32)
     };
     let f = &SCHEDULE[fight];
-    let n = (f.ncpu + (coop && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32).min(if coop { 2 } else { 3 });
+    let e = if fresh { test_loop() - 1 } else { lx() };
+    let more = (!coop && f.kind == FK_PACK && e >= 1) as i32;
+    let n = (f.ncpu + (coop && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32 + more).min(if coop { 2 } else { 3 });
     let p = &mut PLAN;
     *p = [0; 32];
     p[0] = 1;
@@ -775,18 +842,22 @@ unsafe fn make_plan() {
     p[7] = n;
     for i in 0..3 {
         let j = i.min(f.ncpu as usize - 1);
-        p[8 + i] = CPU_POOL[(mix(seed ^ ((fight as u32) << 8) ^ i as u32) % CPU_POOL.len() as u32) as usize];
-        p[11 + i] = f.level[j].max(1);
-        p[14 + i] = f.stocks[j].max(1) + (coop && f.kind >= FK_ELITE) as i32;
-        p[17 + i] = 1000;
-        p[20 + i] = 1000;
+        p[8 + i] = CPU_POOL[(mix(seed ^ ((fight as u32 + 8 * e as u32) << 8) ^ i as u32) % CPU_POOL.len() as u32) as usize];
+        // loop 2 on: every CPU at level 9; elites and bosses one more stock every second loop
+        p[11 + i] = if e >= 1 { 9 } else { f.level[j].max(1) };
+        p[14 + i] = f.stocks[j].max(1) + (coop && f.kind >= FK_ELITE) as i32 + (f.kind >= FK_ELITE) as i32 * (e / 2);
+        p[17 + i] = per_loop(1000, LOOP_FOE_ATK, e);
+        p[20 + i] = 1_000_000 / (1000 + LOOP_FOE_DEF * e);
         p[23 + i] = f.scale;
     }
-    if f.kind >= FK_ELITE {
-        // an elite or a boss: bigger, hits harder, takes less
-        p[17] = f.scale;
-        p[20] = 2000 - f.scale;
+    if f.kind >= FK_ELITE || e >= 2 {
+        // an elite or a boss (and loop 3 on, every fight's first foe): bigger, hits harder, takes less
+        let sc = if f.kind >= FK_ELITE { f.scale } else { LOOP_ELITE_SCALE };
+        p[17] = per_loop(sc, LOOP_FOE_ATK, e);
+        p[20] = (2000 - sc) * 1000 / (1000 + LOOP_FOE_DEF * e);
+        p[23] = sc;
     }
+    p[30] = per_loop(1000, LOOP_BOSS_HP, e); // the Petey cages' HP x1000 (melee_modes::tu::envoy P_BOSS_HP)
     if f.kind == FK_BOSS {
         p[8] = CK_GANONDORF;
         p[26] = 1; // the boss fight (the engine swaps in Petey when MELEE_ENVOY_BOSS=petey)
@@ -799,7 +870,8 @@ unsafe fn make_plan() {
 
 /// A rewritten match began (gd_envoy_seq moved).
 unsafe fn on_new_match(seq: i32) {
-    if S.state != RUN_LIVE {
+    let started = S.state != RUN_LIVE;
+    if started {
         S.runs = S.runs.wrapping_add(1);
         S.state = RUN_LIVE;
         S.seed = mix((S.runs as u32).wrapping_mul(0x9E37_79B9)) as i32;
@@ -807,6 +879,10 @@ unsafe fn on_new_match(seq: i32) {
         S.nh = if gd_envoy_coop() != 0 { 2 } else { 1 };
         S.pool = START_POOL[(S.nh == 2) as usize];
         S.bosses = 0;
+        S.lp = test_loop();
+        if S.lp > 1 {
+            S.bosses = 2; // a test run begun in a later loop: both bosses' slots and keystones
+        }
         S.drives = [[0; SLOTS]; SETS];
         S.levels = [[0; SLOTS]; SETS];
         S.keys = [[0; KEYSTONES]; NP];
@@ -835,7 +911,7 @@ unsafe fn on_new_match(seq: i32) {
             log(b"envoy: drives shared by the pair\0", 1);
         }
         test_drives();
-    } else if S.fight > 0 {
+    } else if S.fight > 0 || S.lp > 1 {
         // interest: +1 per 10 coins held, to +5
         let i = (coins() / 10).min(INTEREST_MAX);
         if i > 0 {
@@ -851,7 +927,7 @@ unsafe fn on_new_match(seq: i32) {
     let keys_short = (0..nh() as usize).any(|p| key_count(p) < keys_earned());
     S.shop_due = (SHOP_AT[S.fight.clamp(0, FIGHTS as i32 - 1) as usize] && S.no_shop == 0) as i32;
     // V3 12.9: the drive pick first, then the keystone pick (after a boss); the run's first keystone opens fight 1
-    S.reward_due = if S.fight > 0 { RW_DRIVES } else if keys_short { RW_KEYS } else { 0 };
+    S.reward_due = if S.fight > 0 || (S.lp > 1 && !started) { RW_DRIVES } else if keys_short { RW_KEYS } else { 0 };
     S.outcome = 0;
     S.stage_clock = 0;
     S.stage_switches = 0;
@@ -938,16 +1014,33 @@ unsafe fn on_new_match(seq: i32) {
 }
 
 /// Elites and bosses carry drives (envoy-core-v2.md Q7), rolled from the run seed: the first CPU only.
+/// Loops: from loop 2 an ordinary fight's first CPU carries one; from loop 3 it carries two and the others one;
+/// elites and bosses one more per loop (to 2); foe levels +1 per loop (to the level cap).
 unsafe fn foe_drives() {
     let f = sched();
-    if f.foe_drives <= 0 {
+    let e = lx();
+    let first = nh() as usize;
+    for s in first..(first + ncpu().max(0) as usize).min(4) {
+        let lead = s == first;
+        let want = if f.kind >= FK_ELITE {
+            if lead { f.foe_drives + e } else { 0 }
+        } else if e >= 2 {
+            if lead { 2 } else { 1 }
+        } else {
+            (e == 1 && lead) as i32
+        };
+        foe_roll(s, want.clamp(0, 2) as usize, (f.foe_level.max(1) + e).clamp(1, lvl_cap()), (s - first) as u32);
+    }
+}
+
+unsafe fn foe_roll(s: usize, want: usize, level: i32, k: u32) {
+    if want == 0 {
         return;
     }
-    let s = nh() as usize;
-    let mut h = mix(S.seed as u32 ^ 0xF0E5_0000 ^ (S.fight as u32) << 4);
+    let mut h = mix(S.seed as u32 ^ 0xF0E5_0000 ^ fkey() << 4 ^ k << 20);
     let mut n = 0;
     let mut tries = 0;
-    while n < f.foe_drives as usize && tries < 32 {
+    while n < want && tries < 32 {
         tries += 1;
         let key = FOE_POOL[(h % FOE_POOL.len() as u32) as usize];
         h = mix(h.wrapping_add(0x6D2B_79F5));
@@ -956,7 +1049,7 @@ unsafe fn foe_drives() {
             continue;
         }
         S.fdrives[s][n] = id as i32 + 1;
-        S.flevels[s][n] = f.foe_level.clamp(1, MAX_LEVEL);
+        S.flevels[s][n] = level;
         log_drive(b"foe carries", id, s as i32);
         n += 1;
     }
@@ -1000,7 +1093,7 @@ unsafe fn connects(c: i32, words: u32) -> bool {
 }
 
 unsafe fn roll_offers(p: usize) {
-    let mut h = mix(S.seed as u32 ^ 0xA5A5_0000 ^ (S.fight as u32) << 4 ^ (S.picks as u32) << 12 ^ (p as u32) << 24);
+    let mut h = mix(S.seed as u32 ^ 0xA5A5_0000 ^ fkey() << 4 ^ (S.picks as u32) << 12 ^ (p as u32) << 24);
     S.offers[p] = [OFFER_STOCK; 3];
     let mut n = 0;
     let keys = S.rw_active == RW_KEYS;
@@ -1235,11 +1328,11 @@ unsafe fn timeout_pick(p: usize) {
 // ---- the shop (V3 7.3, 12.9): a screen at the start of fights 2, 4 and 5
 
 unsafe fn price_of(id: i32) -> i32 {
-    if (0..POOL_LEN as i32).contains(&id) { PRICE_TIER[POOL[id as usize].tier.min(2) as usize] } else { 0 }
+    if (0..POOL_LEN as i32).contains(&id) { per_loop(PRICE_TIER[POOL[id as usize].tier.min(2) as usize], LOOP_PRICE, lx()) } else { 0 }
 }
 
 unsafe fn roll_shop(p: usize) {
-    let mut h = mix(S.seed as u32 ^ 0x5A0B_0000 ^ (S.fight as u32) << 4 ^ (S.rerolls as u32) << 12 ^ (p as u32) << 24);
+    let mut h = mix(S.seed as u32 ^ 0x5A0B_0000 ^ fkey() << 4 ^ (S.rerolls as u32) << 12 ^ (p as u32) << 24);
     S.shop_off[p] = [-1; 3];
     let mut n = 0;
     let mut tries = 0;
@@ -1266,7 +1359,7 @@ unsafe fn open_shop(p: usize) {
 }
 
 unsafe fn reroll_cost() -> i32 {
-    PRICE_REROLL + PRICE_REROLL * S.shop_rerolls
+    per_loop(PRICE_REROLL + PRICE_REROLL * S.shop_rerolls, LOOP_PRICE, lx())
 }
 
 unsafe fn spend(c: i32) -> bool {
@@ -1279,7 +1372,13 @@ unsafe fn spend(c: i32) -> bool {
 
 unsafe fn level_price(set: usize, k: usize) -> i32 {
     let lv = S.levels[set][k];
-    if S.drives[set][k] > 0 && (1..MAX_LEVEL).contains(&lv) { PRICE_LEVEL[lv as usize - 1] } else { 0 }
+    if S.drives[set][k] > 0 && (1..lvl_cap()).contains(&lv) {
+        // to 2, to 3, then +60 a level past 3; +25% per loop
+        let base = if lv <= 2 { PRICE_LEVEL[lv as usize - 1] } else { PRICE_LEVEL[1] + 60 * (lv - 2) };
+        per_loop(base, LOOP_PRICE, lx())
+    } else {
+        0
+    }
 }
 
 unsafe fn shop_frame() {
@@ -2790,7 +2889,7 @@ unsafe fn moments_frame() {
 /// owner's colour; only that player can take it (co-op Q8).
 unsafe fn roll_drop(p: usize) {
     let Some(slot) = S.drop[p].iter().position(|d| d[0] != 1) else { return };
-    let mut h = mix(S.seed as u32 ^ 0xD20F_0000 ^ (S.fight as u32) << 8 ^ (S.drops_made as u32) << 16 ^ p as u32);
+    let mut h = mix(S.seed as u32 ^ 0xD20F_0000 ^ fkey() << 8 ^ (S.drops_made as u32) << 16 ^ p as u32);
     let a = S.active[p] as usize;
     for pass in 0..2 {
         let f = if pass == 0 { a } else { 1 - a };
@@ -3080,7 +3179,13 @@ unsafe fn fight_won() {
         log(b"envoy: boss beaten, keystone due; bosses ", S.bosses);
     }
     if S.fight as usize == FIGHTS - 1 {
-        S.state = RUN_CLEAR;
+        // endless loops: the run goes on at fight 1 of the next loop with everything kept, one more stock in the pool
+        S.lp = (lp() + 1).min(LOOP_TOP);
+        S.fight = 0;
+        if S.pool < POOL_CAP {
+            S.pool += 1;
+        }
+        log(b"envoy: loop now\0", S.lp);
         log(b"envoy: RUN CLEAR, pool left ", me);
     } else {
         S.fight += 1;
@@ -3130,6 +3235,7 @@ unsafe fn publish() {
     v[V_STATE] = S.state;
     v[V_FIGHT] = S.fight;
     v[V_FIGHTS] = FIGHTS as i32;
+    v[V_LOOP] = lp();
     v[V_POOL] = if S.live != 0 { (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0) } else { S.pool };
     v[V_LIVE] = S.live;
     v[V_HUMANS] = nh();

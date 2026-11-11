@@ -45,6 +45,7 @@ extern "C" {
     fn gd_ui_envoy_state() -> i32;
     fn gd_ui_pad_present(port: u32) -> i32;
     fn gd_ui_envoy_saved(out: *mut i32, n: u32) -> i32;
+    fn gd_ui_envoy_best() -> i32;
     fn gd_ui_envoy_arm(op: i32) -> i32;
     fn gd_ui_node_free(n: u32);
     fn gd_ui_focus(n: u32) -> i32;
@@ -97,6 +98,11 @@ static mut CAMP: Camp = Camp { age: 0, scene: 0, open: false, cap: 0, root: 0, b
 
 fn label(n: u32, t: &str) {
     unsafe { gd_ui_node_label(n, t.as_ptr(), t.len() as u32) };
+}
+
+/// The best loop any run on this save reached (endless NG+; 0 / 1: none past the first).
+pub(crate) unsafe fn best_loop() -> i32 {
+    gd_ui_envoy_best()
 }
 
 unsafe fn saved() -> Option<[i32; REC_WORDS]> {
@@ -335,11 +341,19 @@ unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
         l2.s("won all ").i(v[V_FIGHTS]).s(" fights");
         col = GOOD;
     } else if c.after_fight && view && v[V_STATE] == 3 {
-        l1.s("RUN OVER at fight ").i(v[V_FIGHT] + 1).s("/").i(v[V_FIGHTS]);
+        l1.s("RUN OVER at ");
+        if v[V_LOOP] > 1 {
+            l1.s("loop ").i(v[V_LOOP]).s(", ");
+        }
+        l1.s("fight ").i(v[V_FIGHT] + 1).s("/").i(v[V_FIGHTS]);
         l2.s("The shared stock pool ran out");
         col = ACCENT;
     } else if c.after_fight && view && v[V_STATE] == 1 {
-        l1.s("Next: fight ").i(v[V_FIGHT] + 1).s("/").i(v[V_FIGHTS]).s("   pool ").i(v[V_POOL]);
+        l1.s("Next: ");
+        if v[V_LOOP] > 1 {
+            l1.s("loop ").i(v[V_LOOP]).s(" ");
+        }
+        l1.s("fight ").i(v[V_FIGHT] + 1).s("/").i(v[V_FIGHTS]).s("   pool ").i(v[V_POOL]);
         pair(&mut l2, v[pb(0) + P_MAIN], v[pb(0) + P_PARTNER]);
         if v[V_HUMANS] == 2 {
             l2.s("   &   ");
@@ -347,7 +361,11 @@ unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
         }
         l2.s("  -  Continue, any stage, Start");
     } else if let Some(r) = saved() {
-        l1.s("Saved run: fight ").i(r[R_FIGHT] + 1).s("/5   pool ").i(r[R_POOL]);
+        l1.s("Saved run: ");
+        if r[R_LOOP] > 1 {
+            l1.s("loop ").i(r[R_LOOP]).s(" ");
+        }
+        l1.s("fight ").i(r[R_FIGHT] + 1).s("/5   pool ").i(r[R_POOL]);
         if r[R_COOP] != 0 {
             l1.s("   CO-OP");
         }
@@ -382,8 +400,7 @@ unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
     } else if let Some(r) = saved() {
         for set in 0..4 {
             for k in 0..SLOTS {
-                ids[set][k] = r[R_DRIVES + set * SLOTS + k] >> 2;
-                lvs[set][k] = r[R_DRIVES + set * SLOTS + k] & 3;
+                (ids[set][k], lvs[set][k]) = rec_drive(r[R_DRIVES + set * SLOTS + k], r[1]);
             }
         }
         for p in 0..2 {

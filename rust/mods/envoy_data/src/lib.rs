@@ -50,9 +50,9 @@ pub fn by_key(key: &str) -> Option<usize> {
     POOL.iter().position(|c| c.key == key)
 }
 
-/// A drive's number at `level` (1-3).
+/// A drive's number at `level` (1-3; past 3 in later loops).
 pub fn scaled(number: i32, level: i32) -> i32 {
-    number * LEVEL_SCALE[(level.clamp(1, MAX_LEVEL) - 1) as usize] / 1000
+    number * level_scale(level) / 1000
 }
 
 #[cfg(test)]

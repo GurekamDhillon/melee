@@ -34,7 +34,7 @@ fn load() {
         ev::SAVED = r;
         ev::SAVED_LEN = ev::REC_WORDS as i32;
     }
-    eprintln!("envoy: saved run loaded (fight {}, pool {})", r[4] + 1, r[5]);
+    eprintln!("envoy: saved run loaded (loop {}, fight {}, pool {})", r[46].max(1), r[4] + 1, r[5]);
 }
 
 fn write(r: &[i32; ev::REC_WORDS]) {
@@ -49,6 +49,25 @@ fn write(r: &[i32; ev::REC_WORDS]) {
     }
 }
 
+/// Endless loops: the best loop reached on this save (`best.bin` beside the run, one LE word).
+fn load_best() {
+    if let Ok(b) = std::fs::read(path().with_file_name("best.bin")) {
+        if b.len() == 4 {
+            unsafe { ev::BEST_LOOP = i32::from_le_bytes(b[..4].try_into().unwrap()).clamp(0, 999) };
+        }
+    }
+}
+
+fn write_best(n: i32) {
+    let p = path().with_file_name("best.bin");
+    if let Some(d) = p.parent() {
+        let _ = std::fs::create_dir_all(d);
+    }
+    if std::fs::write(&p, n.to_le_bytes()).is_err() {
+        eprintln!("envoy: could not save the best loop");
+    }
+}
+
 fn drop_file() {
     let _ = std::fs::remove_file(path());
 }
@@ -59,6 +78,7 @@ pub fn sync() {
     static LOADED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
     if !LOADED.swap(true, std::sync::atomic::Ordering::Relaxed) {
         load();
+        load_best();
     }
     unsafe {
         if ev::SAVED_DROP != 0 {
@@ -70,6 +90,11 @@ pub fn sync() {
         // (its record is this run's, not the one before a New run)
         if ev::ARMED == 0 || v[0] != 0x454E_5633 || v[20] != 1 {
             return;
+        }
+        // V_LOOP (31): the loop the run is in; a live or ended run past the best raises it
+        if matches!(v[1], 1 | 3) && v[31] > ev::BEST_LOOP && v[31] <= 999 {
+            ev::BEST_LOOP = v[31];
+            write_best(v[31]);
         }
         match v[1] {
             // RUN_LIVE: the record words as published

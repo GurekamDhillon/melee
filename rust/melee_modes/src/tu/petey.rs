@@ -147,14 +147,22 @@ pub struct Boss {
     /// absolute world goal x set by rule 13 (spec §7.2); `has_goal` false = unset
     pub has_goal: bool,
     pub goal_x: f32,
+    /// Envoy endless loops: each cage's full HP this fight (CAGE_HP x the plan's P_BOSS_HP, set as the fight begins)
+    pub cage_max: i32,
 }
 
 const OFF: Boss = Boss {
     st: ST_OFF, prev_st: ST_OFF, sf: 0, t_out: 0.0, mot: M_WAIT1 as i32, mf: 0, px: 0.0, vx: 0.0, cage: [CAGE_HP; 2],
     phase: 0, cage_ctr: 0, rule28: false, rule29: false, jump_count: 1, jumps_wanted: 1, side: 0, flinch_to: ST_MENU,
     aim: 1.0, cage_broken: false, cause: 0, freed: -1, ko_done: false, down_t: 0, rng: 1, carrier_slot: -1,
-    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, has_goal: false, goal_x: 0.0,
+    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, has_goal: false, goal_x: 0.0, cage_max: CAGE_HP,
 };
+
+/// Each cage's full HP this fight (CAGE_HP with no Envoy loop scaling).
+fn cage_max() -> i32 {
+    let m = unsafe { B.cage_max };
+    if m > 0 { m } else { CAGE_HP }
+}
 pub static mut B: Boss = OFF;
 /// The match about to start is a Petey fight (set by `envoy::match_begin`, consumed at the first tick).
 pub static mut ARMED: bool = false;
@@ -289,7 +297,7 @@ unsafe fn fighter_of(slot: i32, i: usize) -> *mut Fighter {
 }
 
 fn cage_pct(i: usize) -> f32 {
-    100.0 * unsafe { B.cage[i] }.max(0) as f32 / CAGE_HP as f32
+    100.0 * unsafe { B.cage[i] }.max(0) as f32 / cage_max() as f32
 }
 
 /// Bumped by every [`tick`] of a live Petey match (presentation: the host plays Brawl's boss music while it moves).
@@ -315,10 +323,13 @@ pub unsafe fn tick() {
     if ARMED {
         ARMED = false;
         B.px = 0.0;
-        B.cage = [CAGE_HP; 2];
+        // Envoy endless loops: the plan's cage HP x1000 (0 / no plan: retail's)
+        let hp = crate::tu::envoy::PLAN[crate::tu::envoy::P_BOSS_HP];
+        B.cage_max = if hp > 0 { (CAGE_HP as i64 * hp.clamp(1000, 20_000) as i64 / 1000) as i32 } else { CAGE_HP };
+        B.cage = [B.cage_max; 2];
         // §6.1 init: side 0, jumpCount 1, phase 0; the fight opens in Wait A
         enter(ST_WAIT_A);
-        eprintln!("petey: fight begins, cages {} L {:.1}", CAGE_HP, level());
+        eprintln!("petey: fight begins, cages {} L {:.1}", B.cage_max, level());
         melee_world::tu::ifstatus::ifStatus_802F6788(B.carrier_slot as u8);
     }
     hide_marker(B.carrier_slot);
@@ -1129,15 +1140,15 @@ unsafe fn item_hits(hs: &[Option<[f32; 5]>; 3], carrier: i32) -> (bool, u8) {
 /// screen right, cage max, state (7 = beaten), phase >= 1, cause, status, partner kind, real model drawn.
 pub fn view() -> [i32; 12] {
     let b = unsafe { B };
-    let line = fctiwz_f32(CAGE_HP as f32 * DEATH_PCT / 100.0);
+    let line = fctiwz_f32(cage_max() as f32 * DEATH_PCT / 100.0);
     let low = b.cage[0].min(b.cage[1]).max(0);
     [
         (b.st != ST_OFF) as i32,
         (low - line).max(0),
-        CAGE_HP - line,
+        cage_max() - line,
         b.cage[1].max(0), // the right cage hangs at screen left (model -x)
         b.cage[0].max(0),
-        CAGE_HP,
+        cage_max(),
         if b.cause != 0 { 7 } else { 0 },
         (b.phase >= 1) as i32,
         b.cause,

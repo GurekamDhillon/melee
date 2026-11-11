@@ -205,6 +205,19 @@ pub const LOCK_TAG_COOLDOWN: i32 = 600;
 /// Level scale of a drive's number x1000: level 1, 2, 3.
 pub const LEVEL_SCALE: [i32; 3] = [1000, 1600, 2400];
 pub const MAX_LEVEL: i32 = 3;
+/// Endless loops (NG+): the level cap rises by one per loop after the first, to this.
+pub const LEVEL_TOP: i32 = 9;
+
+/// A drive's level scale x1000: the table to level 3, then the same pattern (+600, +800, +1000, +1200, ...).
+pub fn level_scale(level: i32) -> i32 {
+    let l = level.clamp(1, LEVEL_TOP);
+    if l <= MAX_LEVEL {
+        LEVEL_SCALE[(l - 1) as usize]
+    } else {
+        let k = l - MAX_LEVEL;
+        LEVEL_SCALE[2] + 800 * k + 100 * k * (k + 1)
+    }
+}
 /// The fire queue: at most one fire per fighter in this many frames; Relay's volley spacing.
 pub const FIRE_GAP: i32 = 20;
 pub const RELAY_GAP: i32 = 6;

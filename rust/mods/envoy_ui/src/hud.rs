@@ -122,6 +122,12 @@ fn hud_chip(e: &mut E, cx: f32, cy: f32, id: usize, lv: i32, charge: f32, fired:
             e.rect(px - 2.5, cy + 16.0, 5.0, 3.0, SUNNY);
         }
     }
+    if lv > MAX_LEVEL {
+        // past level 3 (endless loops): the extra levels as a number on the chip
+        let mut s = Buf::new();
+        s.s("+").i(lv - MAX_LEVEL);
+        e.text_ex(cx + 9.0, cy - 16.0, bs(10), SUNNY, ALIGN_LEFT, 0.0, s.str());
+    }
 }
 
 /// Frames since this set's drive in slot k last fired (from the fire log), or -1.
@@ -292,7 +298,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     }
     // fight label under the pool
     let mut s = Buf::new();
-    s.s("Fight ").i(v[V_FIGHT] + 1).s(" of ").i(v[V_FIGHTS]);
+    loop_fight(&mut s, v[V_LOOP], v[V_FIGHT], v[V_FIGHTS]);
     e.text_ex(14.0 - ex, 40.0, bs(12), WHITE, ALIGN_LEFT, 0.0, s.str());
     // foes, top right: an elite or boss plate with its drives
     let kind = v[V_FIGHT_KIND];

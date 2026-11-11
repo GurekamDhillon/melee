@@ -96,6 +96,12 @@ pub fn chip(e: &mut E, cx: f32, cy: f32, id: usize, lv: i32, size: f32) {
         let col = if (k as i32) < lv { INK } else { alpha(PALE, 0.6) };
         e.rect(px - 2.5, cy + size * 0.5 + 2.0, 5.0, 4.0, col);
     }
+    if lv > MAX_LEVEL {
+        // past level 3 (endless loops): the level as a number by the pips
+        let mut s = Buf::new();
+        s.s("+").i(lv - MAX_LEVEL);
+        e.text_ex(cx + 13.0, cy + size * 0.5 - 3.0, bs(10), CORAL, ALIGN_LEFT, 0.0, s.str());
+    }
 }
 
 // ------------------------------------------------------------------ the main menu's Envoy row (UI-SPEC 2.1)
@@ -108,6 +114,8 @@ pub struct Party {
     pub players: usize,
     pub fight: i32,
     pub fights: i32,
+    /// The loop (1 first; endless NG+ loops after a clear)
+    pub lp: i32,
     pub pool: i32,
     pub pairs: [i32; 4],
     pub ids: [[i32; SLOTS]; 4],
@@ -116,13 +124,20 @@ pub struct Party {
     pub shared: bool,
 }
 
+/// "Loop 3 - Fight 2 of 5" (loop 1: "Fight 2 of 5"); `fight` 0-based.
+pub fn loop_fight(b: &mut Buf, lp: i32, fight: i32, fights: i32) {
+    if lp > 1 {
+        b.s("Loop ").i(lp).s(" - ");
+    }
+    b.s("Fight ").i(fight + 1).s(" of ").i(fights);
+}
+
 pub fn party_from_record(r: &[i32]) -> Party {
-    let mut p = Party { have: true, players: if r[R_COOP] != 0 { 2 } else { 1 }, fight: r[R_FIGHT], fights: 5, pool: r[R_POOL], pairs: [-1; 4],
+    let mut p = Party { have: true, players: if r[R_COOP] != 0 { 2 } else { 1 }, fight: r[R_FIGHT], fights: 5, lp: r[R_LOOP].max(1), pool: r[R_POOL], pairs: [-1; 4],
         ids: [[0; SLOTS]; 4], lvs: [[0; SLOTS]; 4], keys: [[0; KEYSTONES]; 2], shared: r[R_SHARED] != 0 };
     for set in 0..4 {
         for k in 0..SLOTS {
-            p.ids[set][k] = r[R_DRIVES + set * SLOTS + k] >> 2;
-            p.lvs[set][k] = r[R_DRIVES + set * SLOTS + k] & 3;
+            (p.ids[set][k], p.lvs[set][k]) = rec_drive(r[R_DRIVES + set * SLOTS + k], r[1]);
         }
     }
     for q in 0..2 {
@@ -134,7 +149,7 @@ pub fn party_from_record(r: &[i32]) -> Party {
 
 pub fn party_from_view(v: &[i32; VW]) -> Party {
     let pb = |p: usize| V_P0 + p * V_PW;
-    let mut q = Party { have: true, players: v[V_HUMANS].clamp(1, 2) as usize, fight: v[V_FIGHT], fights: v[V_FIGHTS].max(1), pool: v[V_POOL],
+    let mut q = Party { have: true, players: v[V_HUMANS].clamp(1, 2) as usize, fight: v[V_FIGHT], fights: v[V_FIGHTS].max(1), lp: v[V_LOOP].max(1), pool: v[V_POOL],
         pairs: [-1; 4], ids: [[0; SLOTS]; 4], lvs: [[0; SLOTS]; 4], keys: [[0; KEYSTONES]; 2], shared: v[V_SHARED] != 0 };
     for set in 0..4 {
         let b = pb(set / 2) + (set % 2) * SLOTS;
@@ -243,7 +258,8 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             e.rect(x + 1.5, y + 53.5, w - 3.0, 2.5, INK);
             e.text_ex(x + 14.0, y + 6.0, d(23), INK, ALIGN_LEFT, 0.0, "Continue run");
             let mut s = Buf::new();
-            s.s("Fight ").i(p.fight + 1).s(" of ").i(p.fights).s(". Saved after fight ").i(p.fight.max(1)).s(".");
+            loop_fight(&mut s, p.lp, p.fight, p.fights);
+            s.s(". Saved after fight ").i(p.fight.max(1)).s(".");
             e.text_ex(x + 14.0, y + 33.0, bs(12), INK, ALIGN_LEFT, w - 28.0, s.str());
             let mut yy = y + 62.0;
             for q in 0..p.players {
@@ -262,6 +278,11 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             let mut s = Buf::new();
             s.i(p.fight).s(" of ").i(p.fights);
             e.text_ex(px + 48.0, py + 66.0, bs(12), INK, ALIGN_CENTER, 0.0, s.str());
+            if p.lp > 1 {
+                let mut s = Buf::new();
+                s.s("Loop ").i(p.lp);
+                e.text_ex(px + 48.0, py + 26.0, bs(12), CORAL, ALIGN_CENTER, 0.0, s.str());
+            }
         });
         let sy = oy + 8.0 + h + 14.0;
         pop(e, 2, ox + 8.0, sy, 126.0, 50.0, -3.0, &|e| {
@@ -273,7 +294,11 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             let ky = sy + 2.0 + i as f32 * 29.0;
             pop(e, 3 + i as i32, kx, ky, 120.0, 25.0, 0.0, &|e| kpill(e, kx, ky, ks[i], if i % 2 == 0 { -2.0 } else { 2.0 }));
         }
-        bar.s("Continue your run from fight ").i(p.fight + 1).s(".");
+        bar.s("Continue your run from ");
+        if p.lp > 1 {
+            bar.s("loop ").i(p.lp).s(", ");
+        }
+        bar.s("fight ").i(p.fight + 1).s(".");
     } else {
         let (x, y, w, h) = (ox + 2.0, oy + 8.0, 246.0, 164.0);
         pop(e, 0, x, y, w, h, -2.0, &|e| {

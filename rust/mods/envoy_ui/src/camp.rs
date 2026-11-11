@@ -317,7 +317,8 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         if r == R_BIG {
             let sub = if let Some(rc) = rec.as_ref() {
                 let mut b = Buf::new();
-                b.s("Fight ").i(rc[R_FIGHT] + 1).s(" of 5. ").i(rc[R_POOL]).s(" stocks left.");
+                loop_fight(&mut b, rc[R_LOOP], rc[R_FIGHT], 5);
+                b.s(". ").i(rc[R_POOL]).s(" stocks left.");
                 b
             } else {
                 let mut b = Buf::new();
@@ -363,7 +364,12 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
             e.text_ex(x + 20.0, y + 16.0, d(21), INK, ALIGN_LEFT, 0.0, title);
             let line = if let Some(rc) = rec.as_ref() {
                 let mut b = Buf::new();
-                b.s("Fight ").i(rc[R_FIGHT] + 1).s(" and its ").i(rc[R_POOL]).s(" stocks will be gone for good.");
+                if rc[R_LOOP] > 1 {
+                    b.s("Loop ").i(rc[R_LOOP]).s(", f");
+                } else {
+                    b.s("F");
+                }
+                b.s("ight ").i(rc[R_FIGHT] + 1).s(" and its ").i(rc[R_POOL]).s(" stocks will be gone for good.");
                 b
             } else {
                 let mut b = Buf::new();
@@ -423,7 +429,19 @@ unsafe fn status(e: &mut E, t: i32, has: bool, rec: Option<&[i32; REC_WORDS]>, p
         e.text_ex(x + 53.0, y - 10.0, d(11), WHITE, ALIGN_CENTER, 0.0, if has { "Saved run" } else { "A full run" });
         let done = party.as_ref().map_or(-1, |p| p.fight);
         marks(e, x + 30.0, y + 24.0, 5, done, 60.0, 7.0);
+        if let Some(lp) = party.as_ref().map(|p| p.lp).filter(|&l| l > 1) {
+            let mut s = Buf::new();
+            s.s("Loop ").i(lp);
+            e.text_ex(x + 300.0, y - 10.0, d(11), INK, ALIGN_RIGHT, 0.0, s.str());
+        }
     });
+    // the best loop reached on this save (endless NG+)
+    let best = crate::best_loop();
+    if best > 1 {
+        let mut s = Buf::new();
+        s.s("Best: loop ").i(best);
+        e.text_ex(x + 156.0, y + 52.0, d(13), WHITE, ALIGN_CENTER, 0.0, s.str());
+    }
     // stocks
     let pool = party.as_ref().map_or(if coop { 5 } else { 4 }, |p| p.pool);
     stocks(e, 294.0, 244.0, 128.0, pool, if coop { 5 } else { 4 }, if coop { "Team stocks" } else { "Solo stocks" }, 2.0);
@@ -450,6 +468,8 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
     let p = party_from_view(v);
     let next = v[V_FIGHT];
     let ended = v[V_STATE] == 2 || v[V_STATE] == 3;
+    // endless loops: the boss fell and the run goes on at fight 1 of the next loop (the clear moment)
+    let looped = v[V_STATE] == 1 && next == 0 && v[V_LOOP] > 1;
     let _ = rec;
     // run strip
     let (x, y) = (16.0, 8.0);
@@ -461,15 +481,19 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             spr(e, S_PTRDOWN, x + 34.0 + next as f32 * gap - 13.0, y + 34.0, 26.0, 18.0, WHITE);
         }
     });
-    if ended {
-        let won = v[V_STATE] == 2;
+    if ended || looped {
+        let won = v[V_STATE] == 2 || looped;
         let (x, y) = (20.0, 70.0);
         sticker(e, S_FACE_WHITE, x, y, 300.0, 200.0, -1.0, WHITE, |e| {
             e.rect(x + 1.5, y + 1.5, 297.0, 56.0, if won { SUNNY } else { CORAL });
             e.text_ex(x + 16.0, y + 12.0, d(28), INK, ALIGN_LEFT, 0.0, if won { "Run cleared!" } else { "The run ended" });
             let mut s = Buf::new();
-            if won {
+            if looped {
+                s.s("Loop ").i(v[V_LOOP]).s(" begins. Everything kept, the foes hit harder. ").i(v[V_POOL]).s(" stocks.");
+            } else if won {
                 s.s("All ").i(v[V_FIGHTS]).s(" fights, ").i(v[V_POOL]).s(" stocks to spare.");
+            } else if v[V_LOOP] > 1 {
+                s.s("Reached loop ").i(v[V_LOOP]).s(", fight ").i(next + 1).s(".");
             } else {
                 s.s("Fight ").i(next + 1).s(" took the last stock.");
             }
@@ -488,7 +512,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
         let (kname, kline, ifwin) = match kind {
             FK_PACK => ("Pack", "Two fighters at once.", "Your pick of three drives."),
             FK_ELITE => ("Elite", "A strong fighter with drives of its own.", "Your pick of three, then a keystone."),
-            FK_BOSS => ("Boss", "The last fight of the run.", "The run is cleared."),
+            FK_BOSS => ("Boss", "The last fight of the loop.", "The run is cleared, and the next loop begins."),
             _ => ("Duel", "One fighter, nothing extra.", "Your pick of three drives."),
         };
         let (x, y) = (20.0, 70.0);
@@ -498,7 +522,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                 e.rect(x + 1.5, y + 1.5, 297.0, 56.0, if kind == FK_BOSS { CORAL } else { SUNNY });
                 e.text_ex(x + 16.0, y + 6.0, d(28), INK, ALIGN_LEFT, 0.0, kname);
                 let mut s = Buf::new();
-                s.s("Fight ").i(next + 1).s(" of ").i(v[V_FIGHTS]);
+                loop_fight(&mut s, v[V_LOOP], next, v[V_FIGHTS]);
                 e.text_ex(x + 16.0, y + 36.0, bs(13), INK, ALIGN_LEFT, 0.0, s.str());
                 e.text_ex(x + 16.0, y + 70.0, bs(14), INK, ALIGN_LEFT, 270.0, kline);
                 e.rect(x + 16.0, y + 104.0, 268.0, 2.0, PALE);

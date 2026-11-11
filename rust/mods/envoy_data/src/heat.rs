@@ -62,7 +62,7 @@ pub fn gain_step(g: i32, mul_m: i32) -> i32 {
 
 /// A fire's damage (x1000): number x level scale x state scale, rounded down once each, clamped.
 pub fn fire_damage(number_m: i32, level: i32, state: usize, launch: bool) -> i32 {
-    let lv = LEVEL_SCALE[(level.clamp(1, MAX_LEVEL) - 1) as usize];
+    let lv = level_scale(level);
     let n = number_m as i64 * lv as i64 / 1000 * STATE_SCALE[state.min(3)] as i64 / 1000;
     (n as i32).min(if launch { LAUNCH_CAP } else { FIRE_CAP })
 }

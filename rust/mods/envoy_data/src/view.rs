@@ -38,7 +38,7 @@ pub const V_REROLL_COST: usize = 27; // the shop's reroll price now
 pub const V_CHAIN_N: usize = 28; // chain links fired this fight (all players)
 pub const V_HEAT_ON: usize = 29; // 1: the V3 rules (always 1 on this build)
 pub const V_SHOP_DUE: usize = 30; // 1: a shop opens after this fight's picks
-pub const V_SPARE31: usize = 31;
+pub const V_LOOP: usize = 31; // the loop (1 first time through; endless NG+ loops after a clear)
 
 pub const FK_DUEL: i32 = 0;
 pub const FK_PACK: i32 = 1;
@@ -210,7 +210,7 @@ pub const MARK_OFFSTAGE: i32 = 4;
 pub const V_REC: usize = 704;
 pub const REC_WORDS: usize = 48;
 pub const REC_MAGIC: i32 = 0x454E_5652;
-pub const REC_VERSION: i32 = 5;
+pub const REC_VERSION: i32 = 6; // 6: drive words (id + 1) << 4 | level, R_LOOP; 5 still read
 pub const R_SEED: usize = 2;
 pub const R_RUNS: usize = 3;
 pub const R_FIGHT: usize = 4;
@@ -221,13 +221,19 @@ pub const R_BOSSES: usize = 8;
 pub const R_KEYS: usize = 9; // [2 players][3]
 pub const R_PAIRS: usize = 15; // main, partner, main 2, partner 2
 pub const R_PICKS: usize = 19;
-pub const R_DRIVES: usize = 20; // [4 sets][5] in slot order: (id + 1) << 2 | level
+pub const R_DRIVES: usize = 20; // [4 sets][5] in slot order: (id + 1) << 4 | level (version 5: << 2)
 pub const R_POOL_DIGEST: usize = 40;
 pub const R_COINS: usize = 41; // whole coins (the purse's fraction is not kept)
 pub const R_REROLLS: usize = 42;
 pub const R_ACTIVE: usize = 43; // player 1's active id | player 2's << 8
 pub const R_PIPS: usize = 44; // player 1's whole pips | player 2's << 8
 pub const R_EARNED: usize = 45; // player 1's earned | player 2's << 16
+pub const R_LOOP: usize = 46; // the loop (0 in a version 5 record: loop 1)
+
+/// A record's drive word as (id + 1, level), by the record's version (`r[1]`).
+pub fn rec_drive(w: i32, version: i32) -> (i32, i32) {
+    if version <= 5 { (w >> 2, w & 3) } else { (w >> 4, w & 15) }
+}
 
 /// An offer that is not a drive: one more shared stock.
 pub const OFFER_STOCK: i32 = 1000;

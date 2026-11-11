@@ -855,6 +855,8 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         for (i, x) in rec.iter().take(n).enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
         if write_bytes(&mut c, out, &b[..n * 4]) { n as i32 } else { GD_EINVAL }
     });
+    // Envoy endless loops: the best loop any run on this save reached (0: none past loop 1 yet)
+    f!("gd_ui_envoy_best", |_c: Caller<'_, PresData>| -> i32 { unsafe { melee_modes::tu::envoy::BEST_LOOP } });
     // arm / disarm the run: op 0 disarm, 1 new run (forgets the saved run), 2 continue, 3 abandon (forget + disarm);
     // | 0x10: start the VS mode now (the camp on the main menu; the first CSS is the party pick, not the camp)
     f!("gd_ui_envoy_arm", |c: Caller<'_, PresData>, op: i32| -> i32 {

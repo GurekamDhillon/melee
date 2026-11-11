@@ -65,7 +65,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
         sticker(e, if on { S_FACE_HOVER } else if row == SHOP_LEAVE { S_FACE_LILAC } else { S_FACE_WHITE }, x, y, rw, 26.0, deg, alpha(WHITE, a), |e| {
             let mut tx = x + 10.0;
             if let Some(bd) = badge {
-                spr_c(e, bd, x + 16.0, y + 13.0, 18.0 / 22.8, alpha(WHITE, a));
+                spr_c(e, bd, x + 16.0, y + 13.0, 18.0 / 28.5, alpha(WHITE, a));
                 tx = x + 30.0;
             }
             e.text_ex(tx, y + 5.0, d(14), alpha(INK, a), ALIGN_LEFT, rw - 90.0, label.str());
@@ -105,8 +105,8 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
     if msg != 0 && !done {
         let good = matches!(msg, 1 | 3 | 4 | 5 | 6 | 8);
         let mw = tw(MSG[msg], d(14)) + 24.0;
-        sticker(e, if good { S_FACE_SUNNY } else { S_FACE_CORAL }, x0 + 10.0, fy + 92.0, mw, 26.0, -2.0, WHITE, |e| {
-            e.text_ex(x0 + 22.0, fy + 97.0, d(14), INK, ALIGN_LEFT, 0.0, MSG[msg]);
+        sticker(e, if good { S_FACE_SUNNY } else { S_FACE_CORAL }, x0 + 146.0, fy + 54.0, mw, 26.0, -2.0, WHITE, |e| {
+            e.text_ex(x0 + 158.0, fy + 59.0, d(14), INK, ALIGN_LEFT, 0.0, MSG[msg]);
         });
     }
     if done {
@@ -116,10 +116,10 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
     if (0..3).contains(&cur) && step == 0 && !done {
         let id = v[pbk + P_SHOP_OFFERS + cur as usize];
         if id >= 0 && w > 300.0 {
-            let (tx, ty) = (x0 + w + 6.0, 50.0);
+            let (tx, ty) = (x0 + w + 18.0, 56.0);
             let dr = &POOL[id as usize];
             sticker(e, S_FACE_WHITE, tx, ty, 260.0, 100.0, 1.0, WHITE, |e| {
-                spr_c(e, badge_of(id as usize), tx + 4.0, ty + 4.0, 52.0 / 22.8, WHITE);
+                spr_c(e, badge_of(id as usize), tx + 6.0, ty + 6.0, 44.0 / 28.5, WHITE);
                 e.text_ex(tx + 34.0, ty + 8.0, d(17), INK, ALIGN_LEFT, 0.0, dr.name);
                 let mut s = Buf::new();
                 s.s(["Common", "Rare", "Epic"][(dr.tier as usize).min(2)]).s(" ").s(FAM_WORD[FAM_BADGE.get(dr.family as usize).copied().unwrap_or(5)]);

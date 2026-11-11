@@ -82,7 +82,7 @@ pub fn marks(e: &mut E, x: f32, y: f32, n: i32, done: i32, gap: f32, r: f32) {
 
 /// A drive chip (badge + level pips) centred at (cx, cy), badge `size` px.
 pub fn chip(e: &mut E, cx: f32, cy: f32, id: usize, lv: i32, size: f32) {
-    spr_c(e, badge_of(id), cx, cy, size / 22.8, WHITE);
+    spr_c(e, badge_of(id), cx, cy, size / 28.5, WHITE);
     for k in 0..3 {
         let px = cx - 7.0 + k as f32 * 7.0;
         let col = if (k as i32) < lv { INK } else { alpha(PALE, 0.6) };

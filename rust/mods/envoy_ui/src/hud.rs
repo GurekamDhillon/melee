@@ -114,7 +114,7 @@ fn hud_chip(e: &mut E, cx: f32, cy: f32, id: usize, lv: i32, charge: f32, fired:
     spr_c(e, S_DISC, cx, cy, 26.8 / 32.0, INK);
     ring(e, cx, cy, 11.6, 3.2, charge, SUNNY, alpha(PALE, 0.55));
     let s = if fired >= 0 && fired < 6 { 1.25 - 0.25 * fired as f32 / 6.0 } else { 1.0 };
-    spr_c(e, badge_of(id), cx, cy, 19.0 / 22.8 * s, WHITE);
+    spr_c(e, badge_of(id), cx, cy, 19.0 / 28.5 * s, WHITE);
     for k in 0..3 {
         let px = cx - 8.0 + k as f32 * 8.0;
         e.rect(px - 3.5, cy + 15.0, 7.0, 5.0, INK);
@@ -186,7 +186,7 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x0: f32, x1: f32) {
             spr_rot(e, S_BURST_SUNNY, ax, ay, 0.62, (T as f32) * 0.5, WHITE);
         }
         face(e, S_FACE_INK, ax - 12.0, ay - 12.0, 24.0, 24.0, WHITE);
-        spr_c(e, S_BADGE + 3 + 1, ax, ay, 17.0 / 22.8, WHITE);
+        spr_c(e, S_BADGE + 3 + 1, ax, ay, 17.0 / 28.5, WHITE);
         spr_c(e, if ready { S_DPAD_RIGHT_LIT } else { S_DPAD_RIGHT }, ax + 12.0, ay - 12.0, 0.75, WHITE);
         let need = v[pbk + P_PIPS_NEED].clamp(1, 4);
         for k in 0..need {
@@ -289,7 +289,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
                         let cx = fx + 70.0 + k as f32 * 26.0;
                         spr_c(e, S_DISC, cx, fy + 19.0, 24.0 / 32.0, INK);
                         ring(e, cx, fy + 19.0, 10.0, 2.6, v[bb + S_CHARGE + k] as f32 / 1000.0, SUNNY, alpha(PALE, 0.4));
-                        spr_c(e, badge_of(id as usize - 1), cx, fy + 19.0, 16.0 / 22.8, WHITE);
+                        spr_c(e, badge_of(id as usize - 1), cx, fy + 19.0, 16.0 / 28.5, WHITE);
                     }
                 }
             }
@@ -312,6 +312,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     if let Some(pv) = petey {
         boss_bar(e, pv);
     }
+    moments(e, v, ex);
     if humans == 2 && crate::pad_present(1) == 0 {
         sticker(e, S_FACE_LAGOON, 180.0, 150.0, 280.0, 34.0, -1.0, WHITE, |e| {
             e.text_ex(320.0, 158.0, d(15), WHITE, ALIGN_CENTER, 0.0, "P2: connect a second controller");
@@ -389,6 +390,54 @@ pub unsafe fn picked(e: &mut E, v: &[i32; VW]) {
         if v[V_HUMANS] == 2 {
             face(e, if p == 0 { S_FACE_CORAL } else { S_FACE_LAGOON }, x - 10.0, y - 8.0, 26.0, 18.0, alpha(WHITE, a));
             e.text_ex(x + 3.0, y - 6.0, d(12), alpha(WHITE, a), ALIGN_CENTER, 0.0, if p == 0 { "P1" } else { "P2" });
+        }
+    }
+}
+
+/// The loud moments from the event ring: cash-out ("Cashed out!" burst and coins flying to the purse), a coin
+/// payout, a technique spark, a boss break. Each shows for 40 frames after its frame.
+unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
+    let n = v[V_EV_N].max(0) as usize;
+    let now = v[V_PLAY];
+    for i in 0..EV.min(n) {
+        let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
+        let age = now - ev[0];
+        if !(0..40).contains(&age) {
+            continue;
+        }
+        let who = ev[2].clamp(0, 1) as usize;
+        let cx = if who == 0 { 80.0 - ex } else { 560.0 + ex };
+        match ev[1] {
+            EV_CASHOUT => {
+                burst(e, S_BURST_SUNNY, cx, 300.0, 84.0, age, "Cashed out!", 11);
+                for k in 0..3 {
+                    let t = ((age - k * 4) as f32 / 24.0).clamp(0.0, 1.0);
+                    if t > 0.0 && t < 1.0 {
+                        let (x, y) = (cx + (60.0 - ex - cx) * t, 300.0 + (26.0 - 300.0) * t - 60.0 * sin(t * 3.14159));
+                        spr_c(e, S_COIN, x, y, 1.3, WHITE);
+                    }
+                }
+            }
+            EV_PAY | EV_COINS => {
+                let mut s = Buf::new();
+                s.s("+").i(ev[3]);
+                text_edge(e, 100.0 - ex, 40.0 - age as f32 * 0.4, d(16), SUNNY, ALIGN_LEFT, 1.6, s.str());
+            }
+            EV_SPARK => {
+                let word = match ev[3] { 1 => "L-cancel!", 2 => "Wavedash!", 3 => "Tech!", _ => "Offstage!" };
+                let px = f32::from_bits(v[V_P0 + who * V_PW + P_X] as u32);
+                let _ = px;
+                burst(e, if who == 0 { S_BURST_CORAL } else { S_BURST_LAGOON }, cx + 40.0, 250.0, 64.0, age, word, 10);
+            }
+            EV_STATE_UP => {
+                if ev[3] == 3 {
+                    burst(e, S_BURST_CORAL, cx + 20.0, 240.0, 80.0, age, "Blazing!", 13);
+                }
+            }
+            EV_BREAK => {
+                burst(e, S_BURST_CORAL, 400.0, 30.0, 80.0, age, "Break!", 14);
+            }
+            _ => {}
         }
     }
 }

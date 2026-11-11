@@ -79,12 +79,12 @@ fn offer(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, h
         if keystone {
             spr_c(e, kem_of(id as usize), cx, y + 34.0, 1.3, alpha(WHITE, a));
         } else {
-            spr_c(e, badge_of(id as usize), cx, y + 34.0, 46.0 / 22.8, alpha(WHITE, a));
+            spr_c(e, badge_of(id as usize), cx, y + 32.0, 38.0 / 28.5, alpha(WHITE, a));
         }
-        e.text_ex(cx, y + 64.0, d(17), alpha(INK, a), ALIGN_CENTER, w - 10.0, dr.name);
+        e.text_ex(cx, y + 66.0, d(17), alpha(INK, a), ALIGN_CENTER, w - 10.0, dr.name);
         let fam = if keystone { "Keystone" } else { crate::party::FAM_WORD[FAM_BADGE.get(dr.family as usize).copied().unwrap_or(5)] };
-        e.text_ex(cx, y + 86.0, bs(11), alpha(LILAC, a), ALIGN_CENTER, 0.0, fam);
-        wrap(e, cx, y + 104.0, w - 16.0, bs(12), 14.0, alpha(INK, a), ALIGN_CENTER, dr.rule, 5);
+        e.text_ex(cx, y + 88.0, bs(11), alpha(LILAC, a), ALIGN_CENTER, 0.0, fam);
+        wrap(e, cx, y + 106.0, w - 16.0, bs(12), 14.0, alpha(INK, a), ALIGN_CENTER, dr.rule, 5);
         if !keystone {
             let sets = if v[V_SHARED] != 0 { 1 } else { 2 };
             for f in 0..sets {

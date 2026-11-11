@@ -310,7 +310,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     }
     // the list
     let lx = 30.0;
-    let mut y = if after_fight { 300.0 } else { 58.0 };
+    let mut y = if after_fight { 288.0 } else { 58.0 };
     for (i, &r) in rs.iter().enumerate() {
         let on = i == u.cur && !u.dialog;
         let (label, value) = row_text(r, has, u.p2);
@@ -335,7 +335,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
             if on {
                 spr(e, S_PTR, 4.0, y + 2.0, 0.0, 0.0, WHITE);
             }
-            y += 36.0;
+            y += if after_fight { 34.0 } else { 36.0 };
         }
     }
     // strip and hints
@@ -494,7 +494,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
         let (x, y) = (20.0, 70.0);
         let (_, a) = enter(t - 2);
         if a > 0.0 {
-            sticker(e, S_FACE_WHITE, x, y, 300.0, 216.0, -1.0, alpha(WHITE, a), |e| {
+            sticker(e, S_FACE_WHITE, x, y, 300.0, 200.0, -1.0, alpha(WHITE, a), |e| {
                 e.rect(x + 1.5, y + 1.5, 297.0, 56.0, if kind == FK_BOSS { CORAL } else { SUNNY });
                 e.text_ex(x + 16.0, y + 6.0, d(28), INK, ALIGN_LEFT, 0.0, kname);
                 let mut s = Buf::new();
@@ -506,7 +506,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                 e.text_ex(x + 16.0, y + 138.0, bs(13), LILAC, ALIGN_LEFT, 270.0, ifwin);
                 let mut s = Buf::new();
                 s.s("Pool: ").i(v[V_POOL]).s(" stocks.");
-                e.text_ex(x + 16.0, y + 176.0, bs(13), LILAC, ALIGN_LEFT, 270.0, s.str());
+                e.text_ex(x + 16.0, y + 168.0, bs(13), LILAC, ALIGN_LEFT, 270.0, s.str());
             });
         }
     }

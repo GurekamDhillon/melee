@@ -546,8 +546,12 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                 if v[V_ROAD_N] > 0 {
                     let cur = v[V_ROAD_CUR];
                     let mut s = Buf::new();
-                    s.s(if cur == 0 { "Road: [Open] / Steep" } else { "Road: Open / [Steep]" });
-                    s.s(if cur == 0 { " - banks 3 picks" } else { " - foes +1 drive, banks 2 picks + a level-up" });
+                    s.s(match cur { 0 => "Road: [Open] / Steep / Shifting", 1 => "Road: Open / [Steep] / Shifting", _ => "Road: Open / Steep / [Shifting]" });
+                    s.s(match cur {
+                        0 => " - banks 3 picks",
+                        1 => " - foes +1 drive, banks 2 picks + a level-up",
+                        _ => " - stage shifts on KOs and every 60%, +5 coins a shift",
+                    });
                     e.text_ex(x + 16.0, y + 186.0, bs(12), INK, ALIGN_LEFT, 270.0, s.str());
                 }
             });

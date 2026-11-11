@@ -7,7 +7,8 @@
 //!   level-9 Ganondorf, or Petey with MELEE_ENVOY_BOSS=petey). Each player's pair (main + partner) shares one stock
 //!   pool: 4 solo, 5 in co-op (MELEE_ENVOY_COOP=1: a second human in slot 1 with its own pair).
 //! * tag: D-pad down (ground or air, actionable), 5 s cooldown (Lock: 10 s), 60-frame frozen cinematic.
-//! * stage switches: from fight 2 on, every 30 s of play, the next of BF / YS / DL / FoD / FD.
+//! * stage switches: events, the next of BF / YS / DL / FoD / FD: a boss or elite breaks (every road); on the
+//!   Shifting road also each foe KO and every 60% dealt, each switch paying coins. Never in the first 3 s or a pick.
 //! * V3 Heat (envoy-synergy-v3.md 3, 12): one meter per player, +1 per 1% dealt (never by hit count), -1 per 1%
 //!   taken, Cold / Warm / Hot / Blazing scale every fire x1 / x1.25 / x1.5 / x2; a KO cashes out (coins into the one
 //!   purse, pips for the active, a flare at the other foes) and keeps half; a lost stock halves it.
@@ -104,7 +105,13 @@ const TAG_BTN_Y: i32 = 0;
 const TAG_BTN_X: i32 = 1;
 const TAG_SKIP_AFTER: i32 = 6;
 const STAGE_LEN: i32 = 90;
-const STAGE_PERIOD: i32 = 1800;
+/// Stage switches (decide-6 A): no switch in a fight's first STAGE_GRACE live frames, none within STAGE_GAP of the
+/// last one (a request waits for both); the Shifting road's damage step (x1000, all players summed) and its pay.
+const STAGE_GRACE: i32 = 180;
+const STAGE_GAP: i32 = 240;
+const SHIFT_DAMAGE: i32 = 60_000;
+const SHIFT_COINS: i32 = 5;
+const SHIFT_CAP: i32 = 4;
 const REWARD_TIME: i32 = 1200;
 /// The shop's timer (it leaves on its own at 0).
 const SHOP_TIME: i32 = 1800;
@@ -467,6 +474,11 @@ struct St {
     escape_at: [i32; NP],
     kb_watch: i32,
     kb_watch_at: i32,
+    /// Stage switches: the pending request's reason (SH_*; 0 none), the Shifting road's damage toward the next
+    /// switch (x1000) and the switches it paid this fight.
+    stage_want: i32,
+    shift_dmg: i32,
+    shift_paid: i32,
 }
 
 /// The 64-bit half of the state (Heat and charge in ticks, the purse, the pips): i64 words only.
@@ -907,6 +919,11 @@ unsafe fn test_drives() {
                     S.test_protect = 1;
                     continue;
                 }
+                if item == "shift" {
+                    S.road_cur = 2; // the forked road: take the Shifting road (tests)
+                    S.road = ROAD_SHIFT;
+                    continue;
+                }
                 if item == "steep" {
                     S.road_cur = 1; // the forked road: take the Steep road (tests; a run begun past fight 1 is on it)
                     S.road = ROAD_STEEP;
@@ -1120,6 +1137,9 @@ unsafe fn on_new_match(seq: i32) {
     S.outcome = 0;
     S.stage_clock = 0;
     S.stage_switches = 0;
+    S.stage_want = 0;
+    S.shift_dmg = 0;
+    S.shift_paid = 0;
     S.tags = 0;
     S.last_stocks = -1;
     S.collect = 0;
@@ -2120,6 +2140,13 @@ unsafe fn deal(p: usize, v: i32, dmg: i32, coef: i32, tags: i32, astate: i32, cm
         return;
     }
     let vi = v as usize;
+    if shifting() && is_foe(v) {
+        S.shift_dmg = S.shift_dmg.saturating_add(dmg);
+        if S.shift_dmg >= SHIFT_DAMAGE {
+            S.shift_dmg -= SHIFT_DAMAGE;
+            stage_request(SH_DAMAGE);
+        }
+    }
     let no_line = v == S.boss_slot;
     let (g, _) = gain_now(p, tags);
     add_heat(p, heat::heat_gain(dmg, S.foe_m[vi], coef, g, no_line));
@@ -3144,6 +3171,13 @@ unsafe fn moments_frame() {
         if n < S.stocks_each[i] {
             if is_foe(s) && s != S.boss_slot {
                 foe_ko(s, n == 0);
+                // a stock-based boss or elite that can spare the stock breaks; on the Shifting road any foe KO
+                // switches the stage (never the fight's last: the win's collect owns that moment)
+                if sched().kind >= FK_ELITE && n > 0 {
+                    stage_request(SH_BREAK);
+                } else if shifting() && foes_left_after(s, n) > 0 {
+                    stage_request(SH_KO);
+                }
             } else if (0..nh()).contains(&s) {
                 // a lost stock halves Heat
                 HH.heat[i] /= 2;
@@ -3195,6 +3229,7 @@ unsafe fn moments_frame() {
             while S.boss_breaks < q {
                 S.boss_breaks += 1;
                 ev(EV_BREAK, b, S.boss_breaks);
+                // no switch: Petey's arena stays put (tag_swap::stage_begin refuses while the boss is active)
                 log(b"envoy: boss break\0", S.boss_breaks);
                 let i = b as usize;
                 let pay = if S.boss_breaks >= 4 { PAY_LAST } else { PAY_BREAK };
@@ -3436,15 +3471,35 @@ unsafe fn bank_pop() {
 
 /// Roads on offer at the road before fight `fight` (0-based): two before a loop's first session, else none.
 fn roads_offered_at(fight: i32) -> i32 {
-    if fight == 0 { 2 } else { 0 }
+    if fight == 0 { 3 } else { 0 }
 }
 
 fn road_kind(i: i32) -> i32 {
-    if i == 1 { ROAD_STEEP } else { ROAD_OPEN }
+    match i {
+        1 => ROAD_STEEP,
+        2 => ROAD_SHIFT,
+        _ => ROAD_OPEN,
+    }
 }
 
 fn road_twists(kind: i32) -> i32 {
-    if kind == ROAD_STEEP { TW_FOE_DRIVE } else { 0 }
+    match kind {
+        ROAD_STEEP => TW_FOE_DRIVE,
+        ROAD_SHIFT => TW_FAST_SHIFT,
+        _ => 0,
+    }
+}
+
+/// The Shifting road's session (fights 1-3): the stage switches on each foe KO and every SHIFT_DAMAGE dealt.
+unsafe fn shifting() -> bool {
+    road_twists(S.road) & TW_FAST_SHIFT != 0 && S.fight < 3
+}
+
+/// Ask for a stage switch (stage_frame fires it when the guards allow). A break outranks the Shifting road's reasons.
+unsafe fn stage_request(why: i32) {
+    if S.stage_want == 0 || why == SH_BREAK {
+        S.stage_want = why;
+    }
 }
 
 /// The token road `kind` banks for its session's fight `fight` (0-based); outside a forked session, a drive pick.
@@ -3736,12 +3791,28 @@ unsafe fn tag_frame() {
     }
 }
 
+/// Foe stocks left in play right after slot `s` went down to `n`.
+unsafe fn foes_left_after(s: i32, n: i32) -> i32 {
+    (0..4).filter(|&t| is_foe(t)).map(|t| if t == s { n.max(0) } else { gd_player_stocks(t).max(0) }).sum()
+}
+
+/// Stage switches are events (decide-6 A): a request (stage_request) fires here once the fight is in live play
+/// (no freeze: not a tag, a pick, the stop or another switch), past its first STAGE_GRACE frames and STAGE_GAP after
+/// the last switch. A request waits for those; the fight's end (the collect or an outcome) drops it.
+/// The hook for enemy waves: `stage_request(SH_WAVE)` when a wave's last foe falls and the next one arrives.
 unsafe fn stage_frame() {
-    if S.fight < 1 || gd_transition_phase() != 0 || S.boss_slot >= 0 {
+    if gd_transition_phase() != 0 {
         return;
     }
-    S.stage_clock += 1;
-    if S.stage_clock < STAGE_PERIOD {
+    S.stage_clock = S.stage_clock.saturating_add(1);
+    if S.stage_want == 0 {
+        return;
+    }
+    if S.outcome != 0 || S.collect != 0 {
+        S.stage_want = 0;
+        return;
+    }
+    if S.reward_due != 0 || S.rw_active != 0 || S.play < STAGE_GRACE || S.stage_switches > 0 && S.stage_clock < STAGE_GAP {
         return;
     }
     let cur = gd_stage_grkind();
@@ -3750,16 +3821,31 @@ unsafe fn stage_frame() {
         None => STAGES[0],
     };
     let rc = gd_stage_transition(next, STAGE_LEN);
-    if rc == 0 {
-        S.stage_clock = 0;
-        S.stage_switches += 1;
-        log(b"envoy: stage transition to\0", next);
+    if rc == -9 {
+        return; // busy: try again next frame
+    }
+    let why = S.stage_want;
+    S.stage_want = 0;
+    if rc != 0 {
+        log(b"envoy: stage transition refused ", rc);
+        return;
+    }
+    S.stage_clock = 0;
+    S.stage_switches += 1;
+    ev(EV_SHIFT, why, next);
+    log(b"envoy: stage transition, reason*100 + to ", why * 100 + next);
+    for p in 0..nh() as usize {
+        charge_event(p, C_SHIFT, -1, false);
+    }
+    // the Shifting road pays each switch (to SHIFT_CAP a fight), into the one purse
+    if shifting() && S.shift_paid < SHIFT_CAP {
+        S.shift_paid += 1;
+        HH.purse += SHIFT_COINS as i64 * COIN_UNIT;
         for p in 0..nh() as usize {
-            charge_event(p, C_SHIFT, -1, false);
+            HH.earned[p] += SHIFT_COINS as i64 * COIN_UNIT / nh() as i64;
+            ev(EV_COINS, p as i32, SHIFT_COINS);
         }
-    } else if rc != -9 {
-        S.stage_clock = 0;
-        log(b"envoy: stage transition refused\0", rc);
+        log(b"envoy: shifting road pays, coins ", SHIFT_COINS);
     }
 }
 
@@ -4062,7 +4148,16 @@ unsafe fn publish() {
         let b = V_ROAD0 + r as usize * V_ROADW;
         let kind = road_kind(r);
         v[b + RD_KIND] = kind;
-        v[b + RD_DANGER] = if kind == ROAD_STEEP { DANGER_STEEP } else { DANGER_CALM };
+        v[b + RD_DANGER] = match kind {
+            ROAD_STEEP => DANGER_STEEP,
+            ROAD_SHIFT => DANGER_ROUGH,
+            _ => DANGER_CALM,
+        };
+        if kind == ROAD_SHIFT {
+            v[b + RD_SHIFT_COINS] = SHIFT_COINS;
+            v[b + RD_SHIFT_CAP] = SHIFT_CAP;
+            v[b + RD_SHIFT_DMG] = SHIFT_DAMAGE / 1000;
+        }
         v[b + RD_NF] = 3;
         let tw = road_twists(kind);
         v[b + RD_TWISTS] = tw;
@@ -4113,7 +4208,7 @@ unsafe fn publish() {
     v[V_FROZEN] = frozen;
     v[V_PLAY] = S.play;
     v[V_DIGEST] = POOL_DIGEST as i32;
-    v[V_STAGE_IN] = if S.fight >= 1 && S.live != 0 && S.boss_slot < 0 { STAGE_PERIOD - S.stage_clock } else { -1 };
+    v[V_STAGE_IN] = -1;
     v[V_FIRES] = S.fires;
     v[V_FIGHT_KIND] = sched().kind;
     v[V_OPEN] = open_slots() as i32;

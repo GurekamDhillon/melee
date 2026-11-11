@@ -45,8 +45,10 @@ const DEATH_PCT: f32 = 10.0;
 /// Cage proc thresholds (§6.2).
 const PHASE1_PCT: f32 = 50.0;
 const PHASE2_PCT: f32 = 25.0;
-/// Kinetic scale passed into every movement start (param 3056) [spec: L].
-const KIN_SCALE: f32 = 0.75;
+/// Kinetic scale on the movement kinds. The spec reads param 3056 (0.75) as one [spec: L], but the real fight
+/// moves at the raw values: measured dive (L 2.5) 0.2225 first step, +0.0225 / f, max 1.475; landing decay 0.0725 / f
+/// (docs/rust-port/notes/petey-behavior.md, "Observed in Brawl"). So no scale.
+const KIN_SCALE: f32 = 1.0;
 /// The difficulty index the fight uses (0-14): clamp(3 tier + 2 - min(retries, 5)) in Brawl (spec §3); Envoy has no
 /// SSE tier or continues, so a fresh Normal game: 5.
 const DIFFICULTY: usize = 5;
@@ -147,13 +149,15 @@ pub struct Boss {
     /// absolute world goal x set by rule 13 (spec §7.2); `has_goal` false = unset
     pub has_goal: bool,
     pub goal_x: f32,
+    /// the carrier's hitlag last frame (a rise = one of Petey's boxes connected this frame)
+    pub lag_prev: f32,
 }
 
 const OFF: Boss = Boss {
     st: ST_OFF, prev_st: ST_OFF, sf: 0, t_out: 0.0, mot: M_WAIT1 as i32, mf: 0, px: 0.0, vx: 0.0, cage: [CAGE_HP; 2],
     phase: 0, cage_ctr: 0, rule28: false, rule29: false, jump_count: 1, jumps_wanted: 1, side: 0, flinch_to: ST_MENU,
     aim: 1.0, cage_broken: false, cause: 0, freed: -1, ko_done: false, down_t: 0, rng: 1, carrier_slot: -1,
-    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, has_goal: false, goal_x: 0.0,
+    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, has_goal: false, goal_x: 0.0, lag_prev: 0.0,
 };
 pub static mut B: Boss = OFF;
 /// The match about to start is a Petey fight (set by `envoy::match_begin`, consumed at the first tick).
@@ -164,6 +168,8 @@ static mut LATCH: [[[u8; 4]; 2]; 4] = [[[0; 4]; 2]; 4];
 /// group each slot belongs to.
 static mut SAVED: [HitCapsule; 4] = unsafe { core::mem::zeroed() };
 static mut SLOT_INST: [u32; 4] = [0; 4];
+/// Frames left of the knockback log after a hit (MELEE_PETEY_LOG only).
+static mut KB_LOG: i32 = 0;
 /// Item hitbox latches: (item gobj, per hitbox target bits).
 static mut LATCH_IT: [(usize, [u8; 4]); 16] = [(0, [0; 4]); 16];
 
@@ -303,8 +309,43 @@ pub unsafe fn tick() {
     if B.cause == 0 {
         cage_events(hit_any, cage_hit);
     }
-    rules();
-    advance();
+    // hitlag: when one of Petey's boxes connects the carrier (the attacker) gets Melee's hitlag; Petey's motion and
+    // movement freeze with it, as in Brawl (measured: basket 9 frozen frames, landing 4). The landing boxes carry a
+    // hitlag multiplier of 0.5 (spec §8), applied to the attacker and the victims on the frame the hit lands.
+    let lag = cf.dmg.x195c_hitlag_frames;
+    if lag > B.lag_prev && std::env::var_os("MELEE_PETEY_LOG").is_some() {
+        eprintln!("petey: f{} hit lands: motion {} frame {} attacker hitlag {}", B.last_frame, B.mot, B.mf, lag);
+    }
+    if lag > B.lag_prev && B.mot == M_JUMP_LANDING as i32 {
+        let full = lag;
+        cf.dmg.x195c_hitlag_frames = fctiwz_f32(full * 0.5) as f32;
+        for s in 0..4 {
+            if s == B.carrier_slot {
+                continue;
+            }
+            let v = fighter_of(s, 0);
+            if !v.is_null() && (*v).dmg.x195c_hitlag_frames == full {
+                (*v).dmg.x195c_hitlag_frames = fctiwz_f32(full * 0.5) as f32;
+            }
+        }
+    }
+    if std::env::var_os("MELEE_PETEY_LOG").is_some() && (B.lag_prev > 0.0 || KB_LOG > 0) {
+        // the victims' first frames of flight (launch angle / speed), for the Brawl comparison
+        KB_LOG = if B.lag_prev > 0.0 && cf.dmg.x195c_hitlag_frames <= 0.0 { 4 } else { KB_LOG - 1 };
+        if KB_LOG > 0 {
+            for s in 0..4 {
+                let v = fighter_of(s, 0);
+                if s != B.carrier_slot && !v.is_null() {
+                    eprintln!("petey: f{} victim {} pos {:.2} {:.2} pct {}", B.last_frame, s, (*v).cur_pos.x, (*v).cur_pos.y, (*v).dmg.x1830_percent);
+                }
+            }
+        }
+    }
+    B.lag_prev = cf.dmg.x195c_hitlag_frames;
+    if cf.dmg.x195c_hitlag_frames <= 0.0 || B.cause != 0 {
+        rules();
+        advance();
+    }
     hitboxes(cf);
     camera_box(cf);
     if B.cause != 0 {
@@ -812,6 +853,9 @@ struct HitDef {
     grp: u32,
     /// knockback facing
     face: f32,
+    /// the attack the box belongs to (0 body contact, 1 basket, 2 landing): one attack's boxes share their victims,
+    /// so a victim is hit once per attack (Brawl, measured: one basket / landing hit, never two)
+    atk: u8,
 }
 
 /// The boxes live this frame.
@@ -840,7 +884,7 @@ fn hit_list() -> ([HitDef; 4], usize) {
         let (x, y) = p[P_CONTACT];
         push(HitDef {
             x, y, r: 25.7 * MODEL_SCALE, dmg: 0, angle: 0, kbg: 100, wkb: if basket { 5 } else { 6 }, bkb: 0,
-            grp: grp(4, 4), face: if x >= b.px { 1.0 } else { -1.0 },
+            grp: grp(4, 4), face: if x >= b.px { 1.0 } else { -1.0 }, atk: 0,
         });
     }
     // basket cage boxes: frames 70-114 on the swinging cage
@@ -851,7 +895,7 @@ fn hit_list() -> ([HitDef; 4], usize) {
         let bkb = fctiwz_f32(105.0 - 2.0 * l).max(0) as u32;
         for (i, (pi, r)) in [(a, 8.0f32), (c, 10.0)].into_iter().enumerate() {
             let (x, y) = p[pi];
-            push(HitDef { x, y, r: r * MODEL_SCALE, dmg, angle: 145, kbg: 44, wkb: 0, bkb, grp: grp(i as u32, 60), face });
+            push(HitDef { x, y, r: r * MODEL_SCALE, dmg, angle: 145, kbg: 44, wkb: 0, bkb, grp: grp(i as u32, 60), face, atk: 1 });
         }
     }
     // landing: centre frames 2-4, sides 3-4
@@ -860,7 +904,7 @@ fn hit_list() -> ([HitDef; 4], usize) {
             let (x, y) = p[P_LAND_C];
             push(HitDef {
                 x, y, r: 28.0 * MODEL_SCALE, dmg: fctiwz_f32(12.0 + 3.0 * l) as u32, angle: 270,
-                kbg: fctiwz_f32(45.0 + l) as u32, wkb: 0, bkb: fctiwz_f32(146.0 - 1.5 * l) as u32, grp: grp(0, 120), face: b.aim,
+                kbg: fctiwz_f32(45.0 + l) as u32, wkb: 0, bkb: fctiwz_f32(146.0 - 1.5 * l) as u32, grp: grp(0, 120), face: b.aim, atk: 2,
             });
         }
         if (3..=4).contains(&f) {
@@ -868,7 +912,7 @@ fn hit_list() -> ([HitDef; 4], usize) {
                 let (x, y) = p[pi];
                 push(HitDef {
                     x, y, r: (30.0 + 0.5 * l) * MODEL_SCALE, dmg: fctiwz_f32(8.0 + 2.0 * l) as u32, angle: 30, kbg: 48, wkb: 0,
-                    bkb: fctiwz_f32(112.0 - 1.2 * l) as u32, grp: grp(1 + i as u32, 120), face: if i == 0 { -1.0 } else { 1.0 },
+                    bkb: fctiwz_f32(112.0 - 1.2 * l) as u32, grp: grp(1 + i as u32, 120), face: if i == 0 { -1.0 } else { 1.0 }, atk: 2,
                 });
             }
         }
@@ -934,6 +978,26 @@ unsafe fn hitboxes(cf: &mut Fighter) {
             (*cfp).set_x2219_b3(1);
             SLOT_INST[i] = d.grp;
         }
+        // knockback direction: Melee launches a fighter's victim relative to the attacker's (the invisible carrier's) x,
+        // Brawl in the box owner's facing (cage L +1, cage R -1; landing sides outward). Mirror the angle so the launch
+        // matches the facing for the player nearest the box (measured: basket L -> -x, basket R -> +x at 145).
+        if d.angle < 180 && d.angle != 90 {
+            let mut best: Option<f32> = None;
+            for s in 0..4 {
+                let v = fighter_of(s, 0);
+                if s != B.carrier_slot && !v.is_null() {
+                    let x = (*v).cur_pos.x;
+                    if best.map_or(true, |b| (x - d.x).abs() < (b - d.x).abs()) {
+                        best = Some(x);
+                    }
+                }
+            }
+            if let Some(vx) = best {
+                let away = if vx > (*cfp).cur_pos.x { 1.0f32 } else { -1.0 };
+                // launch x sign = away * sign(cos a): keep a when away == facing, else mirror it (180 - a)
+                h.kb_angle = if away == d.face { d.angle } else { 180 - d.angle };
+            }
+        }
         let m = &inv;
         h.b_offset = Vec3 {
             x: m[0][0] * d.x + m[0][1] * d.y + m[0][3],
@@ -944,6 +1008,26 @@ unsafe fn hitboxes(cf: &mut Fighter) {
         h.set_x43_b1(1);
         SAVED[i] = *h;
         cf.facing_dir = d.face;
+    }
+    // one attack's boxes share their victims
+    for i in 0..n {
+        for j in 0..n {
+            if i == j || list[i].atk == 0 || list[i].atk != list[j].atk {
+                continue;
+            }
+            for k in 0..cf.x914[i].victims_1.len() {
+                let v = cf.x914[i].victims_1[k];
+                if v.victim.is_null() || cf.x914[j].victims_1.iter().any(|w| w.victim == v.victim) {
+                    continue;
+                }
+                if let Some(e) = cf.x914[j].victims_1.iter_mut().find(|w| w.victim.is_null()) {
+                    *e = v;
+                }
+            }
+        }
+    }
+    for i in 0..n {
+        SAVED[i] = cf.x914[i];
     }
 }
 

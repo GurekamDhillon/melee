@@ -18,7 +18,9 @@ value times 1000 (Heat 40 = 40000, 6% = 6000). A word for a player who is not pr
 | 352-431 | match slots 0-3 (`V_S0 + s * V_SW`), 20 words each |
 | 432-528 | the fire log (12 x 8) and its count `V_LOG_N` (528) |
 | 536-600 | the event ring (16 x 4) |
-| 704-751 | the run record (48 words, version 7) |
+| 600-605 | the forked road and the bank: `V_ROAD_N`, `V_ROAD_CUR`, `V_ROAD_FLAG`, `V_ROAD_TAKEN`, `V_BANK_Q`, `V_BANK_KIND` |
+| 608-679 | the roads on offer (`V_ROAD0 + r * V_ROADW`, 3 x 24) |
+| 704-751 | the run record (48 words, version 8) |
 | 760-765 | sessions: `V_SESS_NEXT`, `V_BANK`, `V_BANK_N`, `V_BANK_I`, `V_SESS_KINDS`, `V_SESS_FIGHT` (envoy_data view.rs) |
 
 `V_MAGIC` = `0x454E5633` ("ENV3"). `VIEW_WORDS` = 768 (the host's `melee_modes::tu::envoy::VIEW_WORDS` matches).
@@ -158,3 +160,80 @@ in slot order; version 5: `<< 2`), `R_POOL_DIGEST` 40, `R_COINS` 41, `R_REROLLS`
 
 Endless loops also use run word 31 `V_LOOP` (the loop, 1 first) and player word 128 `P_SHOP_STOCK_PRICE` (the
 shop's restore-a-stock price, which rises per loop).
+
+## The forked road (600-679; port/v3g, 2026-11-11; envoy-macro-loop.md M1, first slice)
+
+At the road screen before a three-fight session (fight 1 of every loop) the run offers `V_ROAD_N` roads (2 now:
+Open, Steep; 0 = no fork, draw the single poster as before). The road screen draws one poster per road, left to
+right in index order.
+
+| word | meaning |
+|---|---|
+| `V_ROAD_N` 600 | roads on offer now (0 outside a fork) |
+| `V_ROAD_CUR` 601 | P1's cursor, 0-based. Left / right moves it (the sim reads the pad); A on the road screen ("Start the fight") takes that road |
+| `V_ROAD_FLAG` 602 | co-op: P2's flag, road index + 1 (0 none). P2's left / right moves it. A wish, it decides nothing |
+| `V_ROAD_TAKEN` 603 | the road kind of the session in play (or the last one taken); 0 = none, read as Open |
+| `V_BANK_Q` 604 | the bank as tokens: `RK_*` 4 bits each, the next to open lowest (`view::token(q, i)`); `V_BANK` is the count |
+| `V_BANK_KIND` 605 | at a stop, the token being opened now (`RK_PICK` "Reward i of n" cards; `RK_LEVEL` "Level up": the cards are drives you wear below the level cap and taking one raises it a level); 0 outside a stop |
+
+A road, `b = V_ROAD0 + r * V_ROADW` (`r` < `V_ROAD_N`):
+
+| word | meaning |
+|---|---|
+| `RD_KIND` +0 | `ROAD_OPEN` 1, `ROAD_STEEP` 2 (`ROAD_SWARM` 3 reserved). Names: "Open road", "Steep road" |
+| `RD_DANGER` +1 | the danger word: `DANGER_CALM` 0 "calm", `DANGER_ROUGH` 1 "rough", `DANGER_STEEP` 2 "steep" |
+| `RD_NF` +2 | fights in the session (3) |
+| `RD_FIGHTS` +3 | `RD_NF` x `RD_FW` (4) words: fight kind + 1 (`FK_*` + 1, as `V_SESS_KINDS`), the lead foe's character id (CK), the stage id, foes in the fight |
+| `RD_TWISTS` +15 | twist bits: `TW_FOE_DRIVE` "every foe carries one more drive" (the others reserved: `TW_MORE_FOES`, `TW_BIG_FOES`, `TW_FAST_SHIFT`) |
+| `RD_PRIZE` +16 | what the road banks, as tokens (`RK_*`, 4 bits each, in the order they open) |
+| `RD_PRIZE_N` +17 | tokens in `RD_PRIZE` (3) |
+| `RD_FOE_DRIVES` +18 | drives the lead foe of each fight carries on this road, 4 bits per fight |
+
+Open road: the fights as today, prize `RK_PICK` x3, no twist, calm. Steep road: the same fights with
+`TW_FOE_DRIVE`, prize `RK_PICK, RK_PICK, RK_LEVEL`, steep.
+
+Reward kinds (`RK_*`, envoy-macro-loop.md 2.2), all eight defined, two live: `RK_PICK` 1, `RK_FAMILY` 2, `RK_RARE` 3,
+`RK_LEVEL` 4, `RK_COINS` 5, `RK_STOCK` 6, `RK_ELITE_DRIVE` 7, `RK_KEYSTONE` 8. The bank holds up to `BANK_MAX` 7.
+
+The shop's level-up row sells one level per visit now: after one, that row reads as unavailable (`SM_CANT`).
+
+The record is version 8: `R_LOOP` = loop (8 bits) | stop done << 8 | road taken << 9 (3 bits) | bank tokens << 12
+(5 tokens). A version 7 record reads as the Open road with its bank count as picks.
+
+## Drive protection (player words 129-147; port/v3g, 2026-11-11)
+
+Nothing a player wears is replaced without a confirm; a drive can be pinned, scrapped and moved between the
+player's two fighters at the stop's reorder screen.
+
+| word | meaning |
+|---|---|
+| `P_PINS` 129 | pinned slots: fighter 0's five bits, fighter 1's `<< 8`. A pinned drive is never offered as the one to replace or scrap; it is kept in the run record |
+| `P_SCRAP_PRICE` 130-139 | `[fighter][slot]`: the coins scrapping that drive pays (a third of its shop value: tier price plus its level steps, / 3); 0 for an empty or pinned slot |
+| `P_CONFIRM` 140 | 1: a replacement waits for its confirm. Draw "Replace X with Y for good?" with Keep and Replace |
+| `P_CONFIRM_CUR` 141 | 0 Keep (the cursor starts here), 1 Replace. Left / right or up / down move it; B keeps |
+| `P_CONFIRM_OLD` 142 / `P_CONFIRM_NEW` 143 | the drive that would go and the one that would come in (id + 1). `P_CONFIRM_NEW` 0 = a scrap ("Scrap X for N coins?") |
+| `P_CONFIRM_AT` 144 | fighter * 8 + slot |
+| `P_REORDER_ROW` 145 | the reorder screen's cursor row (0 main, 1 partner): the screen shows both rows; up / down change row |
+| `P_REORDER_LIFT` 147 | 1: a drive is lifted: left / right move it in its row, up / down move it to the same slot of the other row (a swap when that slot is filled; refused when the other fighter already wears that drive) |
+| `P_DECLINE` 146 | coins "Leave it" (the pick screen's Skip row) pays for the offer now; 0 = Skip pays nothing. Uniques will use it |
+
+Reorder screen buttons (shop row `SHOP_REORDER`, the cursor on a drive): A lifts / drops, Y pins or unpins, X
+scraps (through the confirm). New shop messages: `SM_SCRAPPED` 10, `SM_PINNED` 11 (also "pinned: cannot be
+replaced"), `SM_KEPT` 12.
+
+Every path that can overwrite a worn drive goes through the confirm: a pick onto a full row (step 2 then the
+confirm), a shop purchase onto a full row, a banked extra pick. Drops and the end-of-fight fly-in only fill a free
+slot or level a duplicate; with no room they bank a pick.
+
+Record v8: a drive word's bit 12 is its pin (`view::rec_drive` masks it; `view::rec_pin`).
+
+## Drop gains for the HUD (port/v3g, 2026-11-11)
+
+- `P_GAIN` (71, 6 words: frame, id + 1, fighter, level, source, count) gains source `G_BANKED` 6: a drop with no
+  room (a full row, or its duplicate at the level cap) was banked as a pick. Its level word is 0. This is "Row full.
+  Frost is banked."
+- `P_GAIN_FROM` (148, 3 words) holds the drop behind the latest drop gain (worn, levelled, banked, or flown in): its
+  world x and y (x100), then the owner's slot. A drop's gain sources are 1 (walked over), 4 (fly-in) and 6
+  (banked). For gains of other sources these words are stale; ignore them.
+- During the end-of-fight fly-in (30 frames after the last KO) each drop's `P_DROPS` x / y moves toward its owner
+  every frame. The drop is taken on the last frame (source 4). The trail can be drawn from those positions.

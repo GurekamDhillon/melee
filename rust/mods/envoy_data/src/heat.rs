@@ -60,6 +60,13 @@ pub fn gain_step(g: i32, mul_m: i32) -> i32 {
     ((g as i64 * mul_m as i64 / 1000) as i32).min(GAIN_CAP)
 }
 
+/// A fire's damage before any cap (x1000): number x level scale x state scale, rounded down once each. The sim caps
+/// it on what lands (after the foe's toughness).
+pub fn fire_damage_raw(number_m: i32, level: i32, state: usize) -> i32 {
+    let lv = level_scale(level);
+    (number_m as i64 * lv as i64 / 1000 * STATE_SCALE[state.min(3)] as i64 / 1000).min(i32::MAX as i64) as i32
+}
+
 /// A fire's damage (x1000): number x level scale x state scale, rounded down once each, clamped.
 pub fn fire_damage(number_m: i32, level: i32, state: usize, launch: bool) -> i32 {
     let lv = level_scale(level);

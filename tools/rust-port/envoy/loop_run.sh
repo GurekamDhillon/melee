@@ -51,5 +51,14 @@ if [ "${SAVE_TEST:-0}" = 1 ]; then
   else bad "run c did not continue in loop 2"; fi
   grep -q "saved run loaded (loop 2" "$out/c.log" && ok "the host loaded the loop-2 record" || bad "the host did not load a loop-2 record"
 fi
+if [ "${ROAD_TEST:-0}" = 1 ]; then
+  # the forked road: a new run takes the Steep road (DRIVES has "steep"), stops inside its session, and the next
+  # boot continues on it
+  rm -rf "$out/r.save"
+  play r "$out/r.save" "${STOP_FRAMES:-6000}" "steep road, save mid-session"
+  grep -q "envoy: road taken.* 2" "$out/r.log" && ok "run r took the Steep road" || bad "run r did not take the Steep road"
+  play s "$out/r.save" 6000 "continue on the steep road"
+  grep -q "envoy: continued on road.* 2" "$out/s.log" && ok "run s continued on the Steep road" || bad "run s did not continue on the Steep road"
+fi
 [ $fail = 0 ] && echo "LOOP RUN OK" || echo "LOOP RUN FAILED (logs: $out)"
 exit $fail

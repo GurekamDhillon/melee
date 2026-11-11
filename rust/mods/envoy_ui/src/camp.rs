@@ -551,6 +551,14 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                 session_line(&mut s, v[V_SESS_KINDS]);
                 s.s(".");
                 e.text_ex(x + 16.0, y + 168.0, bs(13), LILAC, ALIGN_LEFT, 270.0, s.str());
+                // the forked road (port/v3g test line until the v3h posters land): left / right chooses
+                if v[V_ROAD_N] > 0 {
+                    let cur = v[V_ROAD_CUR];
+                    let mut s = Buf::new();
+                    s.s(if cur == 0 { "Road: [Open] / Steep" } else { "Road: Open / [Steep]" });
+                    s.s(if cur == 0 { " - banks 3 picks" } else { " - foes +1 drive, banks 2 picks + a level-up" });
+                    e.text_ex(x + 16.0, y + 186.0, bs(12), INK, ALIGN_LEFT, 270.0, s.str());
+                }
             });
         }
     }

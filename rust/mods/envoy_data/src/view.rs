@@ -82,7 +82,7 @@ pub const P_DROPS: usize = 58; // DROPS x (state, id + 1, x100, y100)
 pub const P_HASTE: usize = 66; // [2] frames left
 pub const P_SHIELD: usize = 68; // [2] orb armed
 pub const P_BANKED_JUMP: usize = 70;
-pub const P_GAIN: usize = 71; // 6: frame, id + 1, fighter, level, source, count
+pub const P_GAIN: usize = 71; // 6: frame, id + 1, fighter, level (0: banked), source (G: 1 drop, 2 pick, 3 keystone, 4 fly-in, 5 shop, 6 banked: no room), count
 // ---- V3: Heat (envoy-synergy-v3.md 12.8)
 pub const P_HEAT: usize = 80; // Heat x1000
 pub const P_HEAT_CAP: usize = 81; // Heat x1000 (225000)
@@ -117,6 +117,18 @@ pub const P_SHOP_DONE: usize = 121; // 1: left the shop
 pub const P_SHOP_MSG: usize = 122; // the last result: SM_* (for a one-line message)
 pub const P_SHOP_LEVEL_PRICE: usize = 123; // [SLOTS] the price to level the shop fighter's slot k (0: max level / empty)
 pub const P_SHOP_STOCK_PRICE: usize = 128; // the price to restore a stock (rises per loop)
+// ---- drive protection (port/v3g): nothing is replaced without a confirm; pin, scrap, move between the two fighters
+pub const P_PINS: usize = 129; // pinned slots: fighter 0's 5 bits | fighter 1's << 8 (a pinned drive cannot be replaced or scrapped)
+pub const P_SCRAP_PRICE: usize = 130; // [2 fighters][5 slots]: coins scrapping that worn drive pays (0: empty, pinned)
+pub const P_CONFIRM: usize = 140; // a replacement waiting for its confirm: 0 none, 1 "Replace X with Y for good?"
+pub const P_CONFIRM_CUR: usize = 141; // its cursor: 0 Keep (the start; B keeps), 1 Replace
+pub const P_CONFIRM_OLD: usize = 142; // the worn drive's id + 1 that would go
+pub const P_CONFIRM_NEW: usize = 143; // the drive's id + 1 that would come in
+pub const P_CONFIRM_AT: usize = 144; // fighter * 8 + slot of the replacement
+pub const P_REORDER_ROW: usize = 145; // the reorder screen's cursor row: the fighter (0 main, 1 partner); it spans both rows
+pub const P_DECLINE: usize = 146; // coins "Leave it" pays on the offer now (0: the offer cannot be declined for coins)
+pub const P_REORDER_LIFT: usize = 147; // 1: a drive is lifted (moves with left / right, up / down to the other row)
+pub const P_GAIN_FROM: usize = 148; // 3: the drop behind the last drop gain (worn, levelled, banked, flown in): x, y (x100, world), owner slot
 
 pub const DROPS: usize = 2;
 
@@ -139,6 +151,9 @@ pub const SM_MOVED: i32 = 6;
 pub const SM_FULL: i32 = 7; // no room: choose a slot to replace
 pub const SM_REPLACED: i32 = 8;
 pub const SM_CANT: i32 = 9;
+pub const SM_SCRAPPED: i32 = 10; // a drive scrapped for coins
+pub const SM_PINNED: i32 = 11; // pinned / unpinned (and: a pinned drive cannot be replaced or scrapped)
+pub const SM_KEPT: i32 = 12; // the confirm said Keep
 
 // ---- every match slot (0-3): statuses, foe drives
 pub const V_S0: usize = 352;
@@ -217,10 +232,60 @@ pub const V_SESS_KINDS: usize = 764; // the fights of the session from the next 
 pub const V_SESS_FIGHT: usize = 765; // the fight's place in its session, 1-based (1: the session's first)
 pub const V_STOP_DONE: usize = 766; // 1: the session ended and its stop ran in the match: no results, the road next
 
+// ---- the forked road (envoy-macro-loop.md M1, first slice): at the road before a three-fight session the run offers
+// V_ROAD_N roads; P1's cursor picks one (left / right), A on the road screen takes it; P2 may plant a flag (no effect).
+// Everything a poster shows is here, as data: more roads, twists and reward kinds need no new words.
+pub const V_ROAD_N: usize = 600; // roads on offer at this road screen (0: no fork; the one session as before)
+pub const V_ROAD_CUR: usize = 601; // P1's cursor, 0-based (the road that A takes)
+pub const V_ROAD_FLAG: usize = 602; // P2's flag: road index + 1 (0: none). A wish only
+pub const V_ROAD_TAKEN: usize = 603; // the road kind (ROAD_*) of the session in play or last chosen; 0 = none (open)
+pub const V_BANK_Q: usize = 604; // the bank: reward tokens (RK_*) 4 bits each, the next one lowest; V_BANK = count
+pub const V_BANK_KIND: usize = 605; // the token being opened at the stop now (RK_*; 0 outside a stop)
+pub const V_ROAD0: usize = 608; // road r's words: V_ROAD0 + r * V_ROADW + RD_*
+pub const V_ROADW: usize = 24;
+pub const ROADS_MAX: usize = 3; // 608..680
+pub const RD_KIND: usize = 0; // ROAD_*
+pub const RD_DANGER: usize = 1; // the one danger word: DANGER_*
+pub const RD_NF: usize = 2; // fights in the session (3)
+pub const RD_FIGHTS: usize = 3; // [RD_NF][RD_FW]: fight kind + 1 (FK_*), the lead foe's character id, stage id, foes
+pub const RD_FW: usize = 4;
+pub const RD_TWISTS: usize = 15; // twist bits (TW_*)
+pub const RD_PRIZE: usize = 16; // what it banks: tokens (RK_*) 4 bits each, the first lowest
+pub const RD_PRIZE_N: usize = 17; // tokens in RD_PRIZE
+pub const RD_FOE_DRIVES: usize = 18; // drives the lead foe of each fight carries, 4 bits per fight, the first lowest
+
+pub const ROAD_OPEN: i32 = 1; // the session as it is: banks three drive picks
+pub const ROAD_STEEP: i32 = 2; // the same fights, every foe one more drive: banks two picks and a level-up
+pub const ROAD_SWARM: i32 = 3; // reserved (waves, coins)
+pub const DANGER_CALM: i32 = 0;
+pub const DANGER_ROUGH: i32 = 1;
+pub const DANGER_STEEP: i32 = 2;
+/// Twists: the content pass's elite modifiers and M3's dares share this list. Only TW_FOE_DRIVE is live.
+pub const TW_FOE_DRIVE: i32 = 1 << 0; // every foe carries one more drive (to the 2 a foe can hold)
+pub const TW_MORE_FOES: i32 = 1 << 1; // reserved: one more foe in every fight
+pub const TW_BIG_FOES: i32 = 1 << 2; // reserved: foes are larger
+pub const TW_FAST_SHIFT: i32 = 1 << 3; // reserved: the stage shifts twice as often
+
+/// Reward kinds: what a bank token (and a road's prize) opens at the stop. Only RK_PICK and RK_LEVEL are live.
+pub const RK_PICK: i32 = 1; // one of three drives
+pub const RK_FAMILY: i32 = 2; // one of three, all from one family (reserved)
+pub const RK_RARE: i32 = 3; // one of three, Rare or better (reserved)
+pub const RK_LEVEL: i32 = 4; // raise one worn drive a level (the cards are the drives you wear below the cap)
+pub const RK_COINS: i32 = 5; // coins (reserved)
+pub const RK_STOCK: i32 = 6; // +1 stock to the pool (reserved)
+pub const RK_ELITE_DRIVE: i32 = 7; // one of the drives the elite carried (reserved)
+pub const RK_KEYSTONE: i32 = 8; // a keystone (bosses; today's RW_KEYS screen)
+pub const BANK_MAX: i32 = 7; // tokens the bank holds (5 survive a save mid-stop; a stop opens them all)
+
+/// The token `i` (0 first) of a packed token word (V_BANK_Q, RD_PRIZE).
+pub fn token(q: i32, i: i32) -> i32 {
+    if (0..8).contains(&i) { (q as u32 >> (4 * i as u32) & 15) as i32 } else { 0 }
+}
+
 pub const V_REC: usize = 704;
 pub const REC_WORDS: usize = 48;
 pub const REC_MAGIC: i32 = 0x454E_5652;
-pub const REC_VERSION: i32 = 7; // 7: R_LOOP carries the bank (<< 16); 6: drive words << 4, R_LOOP; 5 and 6 still read
+pub const REC_VERSION: i32 = 8; // 8: R_LOOP = loop | stop << 8 | road << 9 | bank tokens << 12; 7: the bank count << 16; 6: drive words << 4, R_LOOP; 5 and 6 still read
 pub const R_SEED: usize = 2;
 pub const R_RUNS: usize = 3;
 pub const R_FIGHT: usize = 4;
@@ -238,16 +303,21 @@ pub const R_REROLLS: usize = 42;
 pub const R_ACTIVE: usize = 43; // player 1's active id | player 2's << 8
 pub const R_PIPS: usize = 44; // player 1's whole pips | player 2's << 8
 pub const R_EARNED: usize = 45; // player 1's earned | player 2's << 16
-pub const R_LOOP: usize = 46; // the loop (low 16 bits; 0 in a version 5 record: loop 1) | banked picks << 16 (v7)
+pub const R_LOOP: usize = 46; // the loop (low 8 bits; 0 in a version 5 record: loop 1); v7: | bank count << 16 | stop << 24; v8: see REC_VERSION
 
 /// The loop in a record's R_LOOP word (1 at least).
 pub fn rec_loop(w: i32) -> i32 {
-    (w & 0xFFFF).max(1)
+    (w & 0xFF).max(1)
 }
 
 /// A record's drive word as (id + 1, level), by the record's version (`r[1]`).
 pub fn rec_drive(w: i32, version: i32) -> (i32, i32) {
-    if version <= 5 { (w >> 2, w & 3) } else { (w >> 4, w & 15) }
+    if version <= 5 { (w >> 2, w & 3) } else { (w >> 4 & 0xFF, w & 15) }
+}
+
+/// Whether a record's drive word is pinned (version 8: bit 12).
+pub fn rec_pin(w: i32, version: i32) -> bool {
+    version >= 8 && w >> 12 & 1 != 0
 }
 
 /// An offer that is not a drive: one more shared stock.

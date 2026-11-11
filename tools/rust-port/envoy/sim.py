@@ -256,7 +256,13 @@ def main():
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--v3", action="store_true", help="the V3 Heat model (sim_v3.py); the default for a V3 pool")
     ap.add_argument("--no-fail", action="store_true", help="report only: exit 0 on a missed band")
+    ap.add_argument("--loops", action="store_true", help="the endless-loops pacing model (sim_loops.py)")
+    ap.add_argument("--old", action="store_true", help="with --loops: also the as-built numbers")
     a = ap.parse_args()
+    if a.loops:
+        sys.path.insert(0, HERE)
+        import sim_loops
+        sys.exit(sim_loops.main(a, POOL))
     if a.v3 or "kind = \"trigger\"" in open(POOL, encoding="utf-8").read():
         sys.path.insert(0, HERE)
         import sim_v3

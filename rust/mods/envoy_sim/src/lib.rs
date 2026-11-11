@@ -216,6 +216,8 @@ const G_PICK: i32 = 2;
 const G_KEYSTONE: i32 = 3;
 const G_SWEPT: i32 = 4;
 const G_SHOP: i32 = 5;
+/// A drop with no room (a full row, or the top level): banked as a pick (view: P_GAIN level 0).
+const G_BANKED: i32 = 6;
 
 // a damage record's tags
 const T_AERIAL: i32 = 1;
@@ -257,6 +259,32 @@ struct St {
     /// session's first fight opens with no picks, no shop).
     stop: i32,
     stop_done: i32,
+    /// The bank as tokens (RK_*, 4 bits each, the next lowest); `bank` is their count.
+    bank_q: i32,
+    /// The forked road: the road kind of the session in play (0: none, read as Open), P1's cursor and P2's flag at the
+    /// road screen (index + 1; 0 none).
+    road: i32,
+    road_cur: i32,
+    road_flag: i32,
+    /// The fire being dealt now: its cap on what lands (x1000), set by fire().
+    fx_cap: i32,
+    /// The shop's level-up: one per visit, per player.
+    shop_lv_done: [i32; NP],
+    /// Drive protection: pinned slots per set (bits); a replacement or scrap waiting for its confirm (0 none, 1 open),
+    /// its cursor (0 Keep), where (fighter * 8 + slot), the incoming drive (id + 1; 0 = a scrap), its source (1 a pick,
+    /// 2 a shop row, 3 a scrap) and the shop row; coins a declined offer pays.
+    pins: [i32; SETS],
+    confirm: [i32; NP],
+    confirm_cur: [i32; NP],
+    confirm_at: [i32; NP],
+    confirm_new: [i32; NP],
+    confirm_src: [i32; NP],
+    confirm_row: [i32; NP],
+    decline: [i32; NP],
+    /// Test knob `protect`: the stop's shop pins, scraps, moves and tries a pinned replace on its own (synctests).
+    test_protect: i32,
+    /// The last gain that came from a drop: its world position (x100) and owner slot, for the UI's trail.
+    gain_from: [[i32; 3]; NP],
     /// Enemy waves (first step, test knob `~K`): the enemies' handles (0: none), their damage taken and hit counts as
     /// last read, spawned (1) for this match.
     en_h: [i32; EN_MAX],
@@ -480,7 +508,7 @@ unsafe fn record() -> [i32; REC_WORDS] {
     r[R_PICKS] = S.picks;
     for s in 0..SETS {
         for k in 0..SLOTS {
-            r[R_DRIVES + s * SLOTS + k] = S.drives[s][k] << 4 | S.levels[s][k];
+            r[R_DRIVES + s * SLOTS + k] = S.drives[s][k] << 4 | S.levels[s][k] | (S.pins[s] >> k & 1) << 12;
         }
     }
     r[R_POOL_DIGEST] = POOL_DIGEST as i32;
@@ -489,7 +517,8 @@ unsafe fn record() -> [i32; REC_WORDS] {
     r[R_ACTIVE] = S.act_id[0] | S.act_id[1] << 8;
     r[R_PIPS] = ((HH.pips[0] / PIP_UNIT) as i32).clamp(0, 255) | ((HH.pips[1] / PIP_UNIT) as i32).clamp(0, 255) << 8;
     r[R_EARNED] = ((HH.earned[0] / COIN_UNIT) as i32).clamp(0, 0xFFFF) | ((HH.earned[1] / COIN_UNIT) as i32).clamp(0, 0x7FFF) << 16;
-    r[R_LOOP] = lp() | S.bank.clamp(0, 0xFF) << 16 | ((S.stop_done != 0) as i32) << 24;
+    // v8: the loop | the stop done << 8 | the road << 9 | the first 5 bank tokens << 12
+    r[R_LOOP] = lp().clamp(1, 0xFF) | ((S.stop_done != 0) as i32) << 8 | S.road.clamp(0, 7) << 9 | (S.bank_q & 0xF_FFFF) << 12;
     r[REC_WORDS - 1] = rec_digest(&r);
     r
 }
@@ -516,8 +545,27 @@ unsafe fn take_arm() {
         S.nh = if r[R_COOP] != 0 { 2 } else { 1 };
         S.bosses = r[R_BOSSES].clamp(0, 2);
         S.lp = rec_loop(r[R_LOOP]).clamp(1, LOOP_TOP);
-        S.bank = if r[1] >= 7 { r[R_LOOP] >> 16 & 0xFF } else { 0 };
-        S.stop_done = if r[1] >= 7 { r[R_LOOP] >> 24 & 1 } else { 0 };
+        S.bank = 0;
+        S.bank_q = 0;
+        S.road = 0;
+        S.stop_done = 0;
+        if r[1] >= 8 {
+            S.stop_done = r[R_LOOP] >> 8 & 1;
+            S.road = r[R_LOOP] >> 9 & 7;
+            let q = r[R_LOOP] >> 12 & 0xF_FFFF;
+            for i in 0..5 {
+                let k = token(q, i);
+                if (RK_PICK..=RK_KEYSTONE).contains(&k) {
+                    bank_push(k);
+                }
+            }
+        } else if r[1] >= 7 {
+            // a version 7 record: its bank count as picks, the Open road
+            for _ in 0..(r[R_LOOP] >> 16 & 0xFF).min(BANK_MAX) {
+                bank_push(RK_PICK);
+            }
+            S.stop_done = r[R_LOOP] >> 24 & 1;
+        }
         for p in 0..NP {
             for k in 0..KEYSTONES {
                 let id = r[R_KEYS + p * KEYSTONES + k];
@@ -533,6 +581,11 @@ unsafe fn take_arm() {
                 let ok = is_kind(id, K_DRIVE) && (1..=LEVEL_TOP).contains(&lv);
                 S.drives[s][k] = if ok { id } else { 0 };
                 S.levels[s][k] = if ok { lv } else { 0 };
+                if ok && rec_pin(w, r[1]) {
+                    S.pins[s] |= 1 << k;
+                } else {
+                    S.pins[s] &= !(1 << k);
+                }
             }
         }
         HH.purse = r[R_COINS].max(0) as i64 * COIN_UNIT;
@@ -540,6 +593,7 @@ unsafe fn take_arm() {
         S.act_id = [r[R_ACTIVE] & 0xFF, r[R_ACTIVE] >> 8 & 0xFF];
         HH.pips = [(r[R_PIPS] & 0xFF) as i64 * PIP_UNIT, (r[R_PIPS] >> 8 & 0xFF) as i64 * PIP_UNIT];
         HH.earned = [(r[R_EARNED] & 0xFFFF) as i64 * COIN_UNIT, (r[R_EARNED] >> 16 & 0x7FFF) as i64 * COIN_UNIT];
+        log(b"envoy: continued on road ", S.road);
         log(b"envoy: armed, run continued at loop*10 + fight\0", S.lp * 10 + S.fight + 1);
     } else {
         S.state = RUN_NONE;
@@ -606,12 +660,25 @@ fn per_loop(base: i32, per: i32, e: i32) -> i32 {
     (base as i64 * (1000 + per as i64 * e as i64) / 1000) as i32
 }
 
-/// Foe damage dealt: +20% per loop. Foe damage taken: / (1 + 15% per loop). Shop prices: +25% per loop. The Petey
-/// cages' HP (so the HP between his four breaks): +25% per loop.
-const LOOP_FOE_ATK: i32 = 200;
-const LOOP_FOE_DEF: i32 = 150;
-const LOOP_PRICE: i32 = 250;
+/// The retune (envoy-content-pass.md 5.3): drive and reroll prices +10% per loop (level-ups: no loop markup; a stock
+/// 100 to loop 5, then +25 a loop). The Petey cages' HP (so the HP between his four breaks): +25% per loop.
+const LOOP_PRICE: i32 = 100;
 const LOOP_BOSS_HP: i32 = 250;
+/// Foe damage dealt x1000 after `e` loops cleared: +5% at loop 2, +10% a loop for loops 3-5, +15% a loop after.
+fn foe_atk(e: i32) -> i32 {
+    match e {
+        i32::MIN..=0 => 1000,
+        1 => 1050,
+        2..=4 => 1050 + 100 * (e - 1),
+        _ => 1350 + 150 * (e - 4),
+    }
+}
+
+/// Foe toughness x1000 (damage taken is divided by it): +10% a loop for loops 2-5, +15% a loop after.
+fn foe_tough(e: i32) -> i32 {
+    if e <= 4 { 1000 + 100 * e.max(0) } else { 1400 + 150 * (e - 4) }
+}
+
 /// An ordinary fight's elite modifier (loop 3 on): the first CPU is an elite of this size.
 const LOOP_ELITE_SCALE: i32 = 1150;
 
@@ -734,6 +801,7 @@ unsafe fn replace(p: usize, f: usize, k: usize, id: usize, how: i32) {
     S.drives[set][k] = id as i32 + 1;
     S.levels[set][k] = 1;
     HH.chg[set][k] = 0;
+    S.pins[set] &= !(1 << k);
     note_gain(p, f, id, 1, how);
 }
 
@@ -809,6 +877,15 @@ unsafe fn test_drives() {
                     S.no_shop = 1;
                     continue;
                 }
+                if item == "protect" {
+                    S.test_protect = 1;
+                    continue;
+                }
+                if item == "steep" {
+                    S.road_cur = 1; // the forked road: take the Steep road (tests; a run begun past fight 1 is on it)
+                    S.road = ROAD_STEEP;
+                    continue;
+                }
                 if item == "dropall" {
                     S.drop_all = 1;
                     continue;
@@ -880,17 +957,18 @@ unsafe fn make_plan() {
         let j = i.min(f.ncpu as usize - 1);
         p[8 + i] = CPU_POOL[(mix(seed ^ ((fight as u32 + 8 * e as u32) << 8) ^ i as u32) % CPU_POOL.len() as u32) as usize];
         // loop 2 on: every CPU at level 9; elites and bosses one more stock every second loop
-        p[11 + i] = if e >= 1 { 9 } else { f.level[j].max(1) };
+        // loop 2: loop 1's levels +3 (to 9); loop 3 on: 9
+        p[11 + i] = if e >= 2 { 9 } else if e == 1 { (f.level[j].max(1) + 3).min(9) } else { f.level[j].max(1) };
         p[14 + i] = f.stocks[j].max(1) + (coop && f.kind >= FK_ELITE) as i32 + (f.kind >= FK_ELITE) as i32 * (e / 2);
-        p[17 + i] = per_loop(1000, LOOP_FOE_ATK, e);
-        p[20 + i] = 1_000_000 / (1000 + LOOP_FOE_DEF * e);
+        p[17 + i] = foe_atk(e);
+        p[20 + i] = 1_000_000 / foe_tough(e);
         p[23 + i] = f.scale;
     }
     if f.kind >= FK_ELITE || e >= 2 {
         // an elite or a boss (and loop 3 on, every fight's first foe): bigger, hits harder, takes less
         let sc = if f.kind >= FK_ELITE { f.scale } else { LOOP_ELITE_SCALE };
-        p[17] = per_loop(sc, LOOP_FOE_ATK, e);
-        p[20] = (2000 - sc) * 1000 / (1000 + LOOP_FOE_DEF * e);
+        p[17] = (sc as i64 * foe_atk(e) as i64 / 1000) as i32;
+        p[20] = (2000 - sc) * 1000 / foe_tough(e);
         p[23] = sc;
     }
     p[30] = per_loop(1000, LOOP_BOSS_HP, e); // the Petey cages' HP x1000 (melee_modes::tu::envoy P_BOSS_HP)
@@ -926,7 +1004,11 @@ unsafe fn on_new_match(seq: i32) {
             S.bosses = 2; // a test run begun in a later loop: both bosses' slots and keystones
         }
         // a test run begun past fight 1 has the pick of the fight before it banked
-        S.bank = (S.fight > 0) as i32;
+        S.bank = 0;
+        S.bank_q = 0;
+        if S.fight > 0 {
+            bank_push(RK_PICK);
+        }
         S.bank_n = 0;
         S.bank_i = 0;
         S.drives = [[0; SLOTS]; SETS];
@@ -937,6 +1019,9 @@ unsafe fn on_new_match(seq: i32) {
         S.slots_bonus = 0;
         S.no_shop = 0;
         S.drop_all = 0;
+        S.test_protect = 0;
+        S.pins = [0; SETS];
+        S.confirm = [0; NP];
         S.finale_off = 0;
         S.as_log = 0;
         S.test_heat = 0;
@@ -967,6 +1052,15 @@ unsafe fn on_new_match(seq: i32) {
         }
     }
     S.seq = seq;
+    // the forked road: a three-fight session's first fight takes the road P1's cursor is on
+    if S.fight == 0 {
+        let n = roads_offered_at(0);
+        S.road = if n > 0 { road_kind(S.road_cur.clamp(0, n - 1)) } else { ROAD_OPEN };
+        S.road_flag = 0;
+        log(b"envoy: road taken ", S.road);
+    } else if SESSION_START[S.fight.clamp(0, FIGHTS as i32 - 1) as usize] {
+        S.road = ROAD_OPEN;
+    }
     S.live = 0;
     S.frames = 0;
     S.play = 0;
@@ -1096,13 +1190,13 @@ unsafe fn foe_drives() {
     let first = nh() as usize;
     for s in first..(first + ncpu().max(0) as usize).min(4) {
         let lead = s == first;
+        // ordinary fights from loop 2: the first foe carries one (the retune: no two-drive elite treatment);
+        // the Steep road: every foe one more
         let want = if f.kind >= FK_ELITE {
             if lead { f.foe_drives + e } else { 0 }
-        } else if e >= 2 {
-            if lead { 2 } else { 1 }
         } else {
-            (e == 1 && lead) as i32
-        };
+            (e >= 1 && lead) as i32
+        } + steep_twist() as i32;
         foe_roll(s, want.clamp(0, 2) as usize, (f.foe_level.max(1) + e).clamp(1, lvl_cap()), (s - first) as u32);
     }
 }
@@ -1168,6 +1262,29 @@ unsafe fn connects(c: i32, words: u32) -> bool {
 
 unsafe fn roll_offers(p: usize) {
     let mut h = mix(S.seed as u32 ^ 0xA5A5_0000 ^ fkey() << 4 ^ (S.picks as u32) << 12 ^ (p as u32) << 24);
+    if S.rw_active == RW_DRIVES && S.bank_n > 0 && bank_head() == RK_LEVEL {
+        // a level-up token: the cards are drives this player wears below the level cap (the fighter in play first);
+        // taking one raises it a level. None to raise: a drive pick instead
+        S.offers[p] = [OFFER_STOCK; 3];
+        let mut n = 0;
+        let a = S.active[p] as usize;
+        for f in [a, 1 - a] {
+            let set = set_of(p, f);
+            for k in 0..open_slots() {
+                let d = S.drives[set][k];
+                if n < 3 && d > 0 && S.levels[set][k] < lvl_cap() && !S.offers[p][..n].contains(&(d - 1)) {
+                    S.offers[p][n] = d - 1;
+                    n += 1;
+                }
+            }
+        }
+        if n > 0 {
+            for k in n..3 {
+                S.offers[p][k] = S.offers[p][0];
+            }
+            return;
+        }
+    }
     S.offers[p] = [OFFER_STOCK; 3];
     let mut n = 0;
     let keys = S.rw_active == RW_KEYS;
@@ -1207,6 +1324,9 @@ unsafe fn open_reward(kind: i32) {
         S.rw_done[p] = (p as i32 >= nh() || (kind == RW_KEYS && key_count(p) >= keys_earned())) as i32;
         S.cursor[p] = 0;
         S.step[p] = 0;
+        S.confirm[p] = 0;
+        // "Leave it" (Skip) pays this for the offer (the plumbing for Uniques; nothing for an ordinary pick yet)
+        S.decline[p] = 0;
         S.fcursor[p] = 0;
         S.scursor[p] = 0;
         if S.rw_done[p] == 0 {
@@ -1266,7 +1386,7 @@ unsafe fn done_pick(p: usize, id: i32, f: i32) {
 unsafe fn reward_close() {
     // sessions: the banked picks one after another ("Pick 1 of 3")
     if S.rw_active == RW_DRIVES && S.bank > 0 {
-        S.bank -= 1;
+        bank_pop();
         if S.bank > 0 {
             S.bank_i += 1;
             open_reward(RW_DRIVES);
@@ -1325,6 +1445,25 @@ unsafe fn reward_frame() {
 
 unsafe fn pick_frame(p: usize) {
     let pad = gd_pad_pressed(p as i32);
+    if S.confirm[p] != 0 {
+        let id = S.confirm_new[p] - 1;
+        match confirm_frame(p, pad) {
+            3 => {
+                let (f, k) = ((S.confirm_at[p] >> 3) as usize, (S.confirm_at[p] & 7) as usize);
+                replace(p, f, k, id as usize, G_PICK);
+                done_pick(p, id, f as i32);
+            }
+            2 => S.step[p] = 2,
+            _ => {
+                if S.timer <= 0 {
+                    S.confirm[p] = 0;
+                    log(b"envoy: pick skipped (confirm, time), player\0", p as i32);
+                    done_pick(p, -1, 0);
+                }
+            }
+        }
+        return;
+    }
     let left = pad & (DPAD_LEFT | STICK_LEFT) != 0;
     let right = pad & (DPAD_RIGHT | STICK_RIGHT) != 0;
     let id = S.offers[p][S.cursor[p].clamp(0, 2) as usize];
@@ -1350,6 +1489,10 @@ unsafe fn pick_frame(p: usize) {
             if S.cursor[p] == 3 {
                 if pad & BTN_A != 0 {
                     log(b"envoy: pick skipped, player ", p as i32);
+                    if S.decline[p] > 0 {
+                        HH.purse += S.decline[p] as i64 * COIN_UNIT;
+                        log(b"envoy: offer declined, coins ", S.decline[p]);
+                    }
                     done_pick(p, -1, 0);
                 } else if S.timer <= 0 {
                     timeout_pick(p);
@@ -1393,9 +1536,12 @@ unsafe fn pick_frame(p: usize) {
             if pad & BTN_B != 0 {
                 S.step[p] = 0;
             } else if pad & BTN_A != 0 {
+                // never silent: the replacement waits for its confirm (a pinned drive cannot be chosen)
                 let f = S.fcursor[p];
-                replace(p, f as usize, S.scursor[p].clamp(0, n - 1) as usize, id as usize, G_PICK);
-                done_pick(p, id, f);
+                let k = S.scursor[p].clamp(0, n - 1) as usize;
+                if !pinned(p, f as usize, k) {
+                    open_confirm(p, f as usize, k, id + 1, 1, -1);
+                }
             } else if S.timer <= 0 {
                 log(b"envoy: pick skipped (full row, time), player\0", p as i32);
                 done_pick(p, -1, 0);
@@ -1445,6 +1591,7 @@ unsafe fn open_shop(p: usize) {
     S.shop_msg[p] = SM_NONE;
     S.shop_pending[p] = -1;
     S.shop_rerolls = 0;
+    S.shop_lv_done[p] = 0;
     roll_shop(p);
 }
 
@@ -1452,9 +1599,9 @@ unsafe fn reroll_cost() -> i32 {
     per_loop(PRICE_REROLL + PRICE_REROLL * S.shop_rerolls, LOOP_PRICE, lx())
 }
 
-/// Restoring a stock: +25% per loop.
+/// Restoring a stock: the base price to loop 5, then +25 a loop.
 unsafe fn stock_price() -> i32 {
-    per_loop(PRICE_STOCK, LOOP_PRICE, lx())
+    PRICE_STOCK + 25 * (lp() - 5).max(0)
 }
 
 unsafe fn spend(c: i32) -> bool {
@@ -1469,8 +1616,8 @@ unsafe fn level_price(set: usize, k: usize) -> i32 {
     let lv = S.levels[set][k];
     if S.drives[set][k] > 0 && (1..lvl_cap()).contains(&lv) {
         // to 2, to 3, then +60 a level past 3; +25% per loop
-        let base = if lv <= 2 { PRICE_LEVEL[lv as usize - 1] } else { PRICE_LEVEL[1] + 60 * (lv - 2) };
-        per_loop(base, LOOP_PRICE, lx())
+        // the step only, no loop markup (the retune)
+        if lv <= 2 { PRICE_LEVEL[lv as usize - 1] } else { PRICE_LEVEL[1] + 60 * (lv - 2) }
     } else {
         0
     }
@@ -1493,6 +1640,50 @@ unsafe fn shop_frame() {
         let f = if S.shared != 0 { 0 } else { S.shop_fighter[p].clamp(0, 1) as usize };
         let set = set_of(p, f);
         let n = open_slots() as i32;
+        if S.test_protect != 0 && S.shop_step[p] == 0 && S.confirm[p] == 0 {
+            test_protect(p);
+        }
+        if S.confirm[p] != 0 {
+            let (cf, ck) = ((S.confirm_at[p] >> 3) as usize, (S.confirm_at[p] & 7) as usize);
+            let cset = set_of(p, cf);
+            match confirm_frame(p, pad) {
+                3 if S.confirm_src[p] == 3 => {
+                    let c = scrap_price(cset, ck);
+                    if c > 0 {
+                        HH.purse += c as i64 * COIN_UNIT;
+                        log_drive(b"scrapped", S.drives[cset][ck] as usize - 1, c);
+                        S.drives[cset][ck] = 0;
+                        S.levels[cset][ck] = 0;
+                        HH.chg[cset][ck] = 0;
+                        S.pins[cset] &= !(1 << ck);
+                        S.shop_msg[p] = SM_SCRAPPED;
+                    }
+                }
+                3 => {
+                    let row = S.confirm_row[p].clamp(0, 2) as usize;
+                    let id = S.shop_off[p][row];
+                    S.shop_msg[p] = if id >= 0 && id == S.confirm_new[p] - 1 && spend(price_of(id)) {
+                        replace(p, cf, ck, id as usize, G_SHOP);
+                        S.shop_off[p][row] = -1;
+                        SM_REPLACED
+                    } else {
+                        SM_POOR
+                    };
+                    S.shop_step[p] = 0;
+                }
+                2 => {
+                    S.shop_msg[p] = SM_KEPT;
+                    if S.confirm_src[p] == 2 {
+                        S.shop_step[p] = 0;
+                    }
+                }
+                _ => {}
+            }
+            if S.timer <= 0 {
+                S.confirm[p] = 0;
+            }
+            continue;
+        }
         match S.shop_step[p] {
             0 => {
                 if up {
@@ -1530,6 +1721,7 @@ unsafe fn shop_frame() {
                             SM_CANT
                         }
                     }
+                    SHOP_LEVEL if S.shop_lv_done[p] != 0 => SM_CANT,
                     SHOP_LEVEL => {
                         S.shop_step[p] = 1;
                         S.shop_pending[p] = SHOP_LEVEL;
@@ -1592,46 +1784,74 @@ unsafe fn shop_frame() {
                         } else if spend(c) {
                             S.levels[set][k] += 1;
                             note_gain(p, f, S.drives[set][k] as usize - 1, S.levels[set][k], G_SHOP);
+                            // one level-up a visit: back to the rows
+                            S.shop_lv_done[p] = 1;
+                            S.shop_step[p] = 0;
                             SM_LEVELED
                         } else {
                             SM_POOR
                         };
                     } else if (0..3).contains(&row) {
                         let id = S.shop_off[p][row as usize];
-                        S.shop_msg[p] = if id >= 0 && spend(price_of(id)) {
-                            replace(p, f, k, id as usize, G_SHOP);
-                            S.shop_off[p][row as usize] = -1;
-                            SM_REPLACED
+                        if id < 0 || coins() < price_of(id) {
+                            S.shop_msg[p] = SM_POOR;
+                        } else if pinned(p, f, k) {
+                            S.shop_msg[p] = SM_PINNED;
+                            continue;
                         } else {
-                            SM_POOR
-                        };
+                            // never silent: "Replace X with Y for good?" (the coins are taken on Replace)
+                            open_confirm(p, f, k, id + 1, 2, row);
+                            continue;
+                        }
                     }
                     S.shop_step[p] = 0;
                 }
             }
             2 => {
-                // reorder: pick the drive to move
+                // reorder: pick the drive to move; the screen spans both of the player's rows (up / down);
+                // Y pins / unpins, X scraps (through the confirm)
                 if left {
                     S.scursor[p] = (S.scursor[p] + n - 1) % n;
                 }
                 if right {
                     S.scursor[p] = (S.scursor[p] + 1) % n;
                 }
+                if (up || down) && two_rows(p) {
+                    S.shop_fighter[p] = 1 - S.shop_fighter[p].clamp(0, 1);
+                }
+                let k = S.scursor[p].clamp(0, n - 1) as usize;
                 if pad & BTN_B != 0 {
                     S.shop_step[p] = 0;
-                } else if pad & BTN_A != 0 && S.drives[set][S.scursor[p].clamp(0, n - 1) as usize] > 0 {
+                } else if pad & BTN_Y != 0 && S.drives[set][k] > 0 {
+                    S.pins[set] ^= 1 << k;
+                    S.shop_msg[p] = SM_PINNED;
+                    log(b"envoy: pin, set*10 + slot (+100 pinned)\0", set as i32 * 10 + k as i32 + 100 * (S.pins[set] >> k & 1));
+                } else if pad & BTN_X != 0 && S.drives[set][k] > 0 {
+                    if pinned(p, f, k) {
+                        S.shop_msg[p] = SM_PINNED;
+                    } else {
+                        open_confirm(p, f, k, 0, 3, -1);
+                    }
+                } else if pad & BTN_A != 0 && S.drives[set][k] > 0 {
                     S.shop_step[p] = 3;
                 }
             }
             _ => {
                 // reorder: move the lifted drive one slot at a time (a swap with its neighbour)
                 let k = S.scursor[p].clamp(0, n - 1) as usize;
+                if (up || down) && two_rows(p) {
+                    // to the same slot of the player's other fighter (a swap when it is filled)
+                    S.shop_msg[p] = if move_across(p, f, k) { SM_MOVED } else { SM_CANT };
+                    continue;
+                }
                 let to = if left && k > 0 { k - 1 } else if right && (k as i32) < n - 1 { k + 1 } else { k };
                 if to != k {
                     S.drives[set].swap(k, to);
                     S.levels[set].swap(k, to);
                     HH.chg[set].swap(k, to);
                     S.target[set].swap(k, to);
+                    let (bk, bt) = (S.pins[set] >> k & 1, S.pins[set] >> to & 1);
+                    S.pins[set] = S.pins[set] & !(1 << k | 1 << to) | bk << to | bt << k;
                     S.scursor[p] = to as i32;
                     S.shop_msg[p] = SM_MOVED;
                     log(b"envoy: shop reorder, set*10 + slot\0", set as i32 * 10 + to as i32);
@@ -2035,6 +2255,16 @@ unsafe fn hurt(s: i32, milli: i32) -> i32 {
     if milli <= 0 || !alive(s) {
         return 0;
     }
+    // a fire lands through the foe's toughness and is capped on what lands (the retune); a foe's fire on a player
+    // keeps the plain cap
+    let milli = match S.fx_mode {
+        FX_FIRE if s >= nh() => ((milli as i64 * foe_def(s) as i64 / 1000) as i32).min(S.fx_cap),
+        FX_FIRE | FX_FOE => milli.min(S.fx_cap),
+        _ => milli,
+    };
+    if milli <= 0 {
+        return 0;
+    }
     gd_envoy_percent(s, 0, milli);
     match S.fx_mode {
         FX_FIRE => {
@@ -2103,7 +2333,9 @@ unsafe fn fire(owner: usize, id: usize, level: i32, target: i32, frac: i32, flag
     let player = owner < SETS;
     let st = if player { state_of(owner / 2) } else { 0 };
     let inferno = player && c.family == F_RED && has_inferno(owner);
-    let n = (heat::fire_damage(c.number, level, st, c.launch != 0) as i64 * frac as i64 / 1000) as i32;
+    // the cap is on what lands (after the foe's toughness, in hurt), not on the number before it
+    let n = (heat::fire_damage_raw(c.number, level, st) as i64 * frac as i64 / 1000) as i32;
+    S.fx_cap = if c.launch != 0 { LAUNCH_CAP } else { FIRE_CAP };
     let me_slot = owner_slot(owner);
     let me = pos(me_slot).unwrap_or(P { x: 0.0, y: 0.0 });
     let mut at = me;
@@ -3019,13 +3251,200 @@ unsafe fn drop_frame() {
 
 unsafe fn take_drop(p: usize, k: usize, how: i32) {
     let id = S.drop[p][k][1] as usize - 1;
+    S.gain_from[p] = [S.drop[p][k][2], S.drop[p][k][3], p as i32];
     let a = S.active[p] as usize;
     let f = if can_take(p, a, id) { a } else { 1 - a };
     S.drop[p][k][0] = 2;
     if gain(p, f, id, how) == 0 {
         // sessions: no room (a full row, or the top level) banks it as one more pick at the stop
-        S.bank = (S.bank + 1).min(9);
+        bank_push(RK_PICK);
+        let n = S.gain[p][5] + 1;
+        S.gain[p] = [S.play, id as i32 + 1, f as i32, 0, G_BANKED, n];
         log_drive(b"drop banked (no room)", id, p as i32);
+    }
+}
+
+// ---- drive protection: a confirm before any replacement; pin, scrap, move between the player's two fighters
+
+unsafe fn pinned(p: usize, f: usize, k: usize) -> bool {
+    S.pins[set_of(p, f)] >> k & 1 != 0
+}
+
+/// The player has two rows (not shared drives, a partner in the party).
+unsafe fn two_rows(p: usize) -> bool {
+    S.shared == 0 && gd_tag_partner(p as i32) >= 0
+}
+
+/// Scrapping slot `k` of `set` pays a third of its shop value: the tier price plus its level steps (0: empty or
+/// pinned). Never more than buying it cost.
+unsafe fn scrap_price(set: usize, k: usize) -> i32 {
+    let d = S.drives[set][k];
+    if d <= 0 || S.pins[set] >> k & 1 != 0 {
+        return 0;
+    }
+    let lv = S.levels[set][k].max(1);
+    let mut v = PRICE_TIER[POOL[d as usize - 1].tier.min(2) as usize];
+    for l in 1..lv {
+        v += if l <= 2 { PRICE_LEVEL[l as usize - 1] } else { PRICE_LEVEL[1] + 60 * (l - 2) };
+    }
+    (v / 3).max(1)
+}
+
+unsafe fn open_confirm(p: usize, f: usize, k: usize, new_id1: i32, src: i32, row: i32) {
+    S.confirm[p] = 1;
+    S.confirm_cur[p] = 0; // Keep
+    S.confirm_at[p] = (f as i32) << 3 | k as i32;
+    S.confirm_new[p] = new_id1;
+    S.confirm_src[p] = src;
+    S.confirm_row[p] = row;
+}
+
+/// The confirm's input: 1 still open, 2 kept (B, or A on Keep), 3 accepted (A on Replace / Scrap).
+unsafe fn confirm_frame(p: usize, pad: u32) -> i32 {
+    if pad & (DPAD_LEFT | STICK_LEFT | DPAD_RIGHT | STICK_RIGHT | DPAD_UP | STICK_UP | DPAD_DOWN | STICK_DOWN) != 0 {
+        S.confirm_cur[p] = 1 - S.confirm_cur[p];
+    }
+    let r = if pad & BTN_B != 0 || (pad & BTN_A != 0 && S.confirm_cur[p] == 0) {
+        2
+    } else if pad & BTN_A != 0 {
+        3
+    } else {
+        return 1;
+    };
+    S.confirm[p] = 0;
+    log(if r == 3 { b"envoy: confirm, replaced (src)\0" } else { b"envoy: confirm, kept (src)\0" }, S.confirm_src[p]);
+    r
+}
+
+/// Move slot `k` of fighter `f` to the same slot of the player's other fighter (a swap when it is filled). Refused
+/// when either fighter would then wear the same drive twice.
+unsafe fn move_across(p: usize, f: usize, k: usize) -> bool {
+    let (a, o) = (set_of(p, f), set_of(p, 1 - f));
+    if a == o || k >= open_slots() {
+        return false;
+    }
+    let (da, dob) = (S.drives[a][k], S.drives[o][k]);
+    let dup = |s: usize, d: i32| d > 0 && (0..SLOTS).any(|j| j != k && S.drives[s][j] == d);
+    if da <= 0 || dup(o, da) || dup(a, dob) {
+        return false;
+    }
+    S.drives[a][k] = dob;
+    S.drives[o][k] = da;
+    let lv = S.levels[a][k];
+    S.levels[a][k] = S.levels[o][k];
+    S.levels[o][k] = lv;
+    let c = HH.chg[a][k];
+    HH.chg[a][k] = HH.chg[o][k];
+    HH.chg[o][k] = c;
+    let t = S.target[a][k];
+    S.target[a][k] = S.target[o][k];
+    S.target[o][k] = t;
+    let (pa, po) = (S.pins[a] >> k & 1, S.pins[o] >> k & 1);
+    S.pins[a] = S.pins[a] & !(1 << k) | po << k;
+    S.pins[o] = S.pins[o] & !(1 << k) | pa << k;
+    S.shop_fighter[p] = 1 - f as i32;
+    log(b"envoy: drive moved across, set*10 + slot\0", o as i32 * 10 + k as i32);
+    true
+}
+
+/// Test knob `protect` (synctests): at a shop, pin slot 0, try to scrap it (refused), scrap slot 1, move slot 2 to
+/// the partner, and send a pinned-slot replace through the confirm path (refused); once per shop visit.
+unsafe fn test_protect(p: usize) {
+    if S.shop_msg[p] != SM_NONE {
+        return;
+    }
+    let f = S.shop_fighter[p].clamp(0, 1) as usize;
+    let set = set_of(p, f);
+    if S.drives[set][0] > 0 {
+        S.pins[set] |= 1;
+        log(b"envoy: pin, set*10 + slot (+100 pinned)\0", set as i32 * 10 + 100);
+        log(b"envoy: test scrap pinned refused\0", (scrap_price(set, 0) == 0) as i32);
+    }
+    if S.drives[set][1] > 0 {
+        let c = scrap_price(set, 1);
+        HH.purse += c as i64 * COIN_UNIT;
+        log_drive(b"scrapped", S.drives[set][1] as usize - 1, c);
+        S.drives[set][1] = 0;
+        S.levels[set][1] = 0;
+        HH.chg[set][1] = 0;
+    }
+    if two_rows(p) && S.drives[set][2] > 0 {
+        let _ = move_across(p, f, 2);
+        S.shop_fighter[p] = f as i32;
+    }
+    log(b"envoy: test replace pinned refused\0", pinned(p, f, 0) as i32);
+    S.shop_msg[p] = SM_SCRAPPED;
+    S.test_protect = 0; // once a run
+}
+
+// ---- the forked road and the bank (envoy-macro-loop.md M1, first slice)
+
+/// Push a reward token on the bank (dropped past BANK_MAX).
+unsafe fn bank_push(k: i32) {
+    if S.bank < BANK_MAX && k > 0 {
+        S.bank_q |= (k & 15) << (4 * S.bank);
+        S.bank += 1;
+    }
+}
+
+/// The next token to open (RK_*; 0 when empty).
+unsafe fn bank_head() -> i32 {
+    if S.bank > 0 { S.bank_q & 15 } else { 0 }
+}
+
+unsafe fn bank_pop() {
+    if S.bank > 0 {
+        S.bank_q = (S.bank_q as u32 >> 4) as i32;
+        S.bank -= 1;
+    }
+}
+
+/// Roads on offer at the road before fight `fight` (0-based): two before a loop's first session, else none.
+fn roads_offered_at(fight: i32) -> i32 {
+    if fight == 0 { 2 } else { 0 }
+}
+
+fn road_kind(i: i32) -> i32 {
+    if i == 1 { ROAD_STEEP } else { ROAD_OPEN }
+}
+
+fn road_twists(kind: i32) -> i32 {
+    if kind == ROAD_STEEP { TW_FOE_DRIVE } else { 0 }
+}
+
+/// The token road `kind` banks for its session's fight `fight` (0-based); outside a forked session, a drive pick.
+fn road_prize_at(kind: i32, fight: i32) -> i32 {
+    if kind == ROAD_STEEP && fight == 2 { RK_LEVEL } else { RK_PICK }
+}
+
+/// Every foe carries one more drive: the Steep road's twist, in its session (fights 1-3).
+unsafe fn steep_twist() -> bool {
+    road_twists(S.road) & TW_FOE_DRIVE != 0 && S.fight < 3
+}
+
+/// A foe slot's toughness as the plan set it (damage taken x1000).
+unsafe fn foe_def(s: i32) -> i32 {
+    let i = (s - nh()).clamp(0, 2) as usize;
+    if PLAN[20 + i] > 0 { PLAN[20 + i] } else { 1000 }
+}
+
+/// The road screen (out of a match, a fork on offer): P1's left / right moves the cursor, P2's plants the flag.
+unsafe fn road_frame() {
+    let n = roads_offered_at(if S.state == RUN_LIVE { S.fight } else { gd_envoy_start_fight() });
+    if n == 0 {
+        return;
+    }
+    for p in 0..(1 + (gd_envoy_coop() != 0 || S.nh == 2) as i32) {
+        let pad = gd_pad_pressed(p);
+        let d = (pad & (DPAD_RIGHT | STICK_RIGHT) != 0) as i32 - (pad & (DPAD_LEFT | STICK_LEFT) != 0) as i32;
+        if d == 0 {
+            continue;
+        }
+        if p == 0 {
+            S.road_cur = (S.road_cur + d).clamp(0, n - 1);
+        } else {
+            S.road_flag = ((S.road_flag - 1).max(0) + d).clamp(0, n - 1) + 1;
+        }
     }
 }
 
@@ -3438,7 +3857,7 @@ unsafe fn fight_won() {
     }
     if S.fight as usize == FIGHTS - 1 {
         // endless loops: the run goes on at fight 1 of the next loop with everything kept, one more stock in the pool
-        S.bank = (S.bank + 1).min(9);
+        bank_push(RK_PICK);
         S.lp = (lp() + 1).min(LOOP_TOP);
         S.fight = 0;
         if S.pool < POOL_CAP {
@@ -3447,7 +3866,8 @@ unsafe fn fight_won() {
         log(b"envoy: loop now\0", S.lp);
         log(b"envoy: RUN CLEAR, pool left ", me);
     } else {
-        S.bank = (S.bank + 1).min(9);
+        // the road's prize for this fight of its session (the Open road and the elite session: a drive pick)
+        bank_push(road_prize_at(S.road, S.fight));
         S.fight += 1;
         log(b"envoy: fight won, next ", S.fight + 1);
     }
@@ -3504,6 +3924,58 @@ unsafe fn publish() {
     v[V_BANK] = S.bank;
     v[V_BANK_N] = if S.rw_active == RW_DRIVES { S.bank_n } else { 0 };
     v[V_BANK_I] = S.bank_i;
+    v[V_BANK_Q] = S.bank_q;
+    for p in 0..nh() as usize {
+        let b = V_P0 + p * V_PW;
+        v[b + P_PINS] = S.pins[set_of(p, 0)] | if S.shared == 0 { S.pins[set_of(p, 1)] << 8 } else { 0 };
+        for f in 0..2 {
+            for k in 0..SLOTS {
+                v[b + P_SCRAP_PRICE + f * SLOTS + k] = if f == 1 && S.shared != 0 { 0 } else { scrap_price(set_of(p, f), k) };
+            }
+        }
+        v[b + P_CONFIRM] = S.confirm[p];
+        v[b + P_CONFIRM_CUR] = S.confirm_cur[p];
+        let (cf, ck) = ((S.confirm_at[p] >> 3) as usize & 1, (S.confirm_at[p] & 7) as usize % SLOTS);
+        v[b + P_CONFIRM_OLD] = if S.confirm[p] != 0 { S.drives[set_of(p, cf)][ck] } else { 0 };
+        v[b + P_CONFIRM_NEW] = if S.confirm[p] != 0 { S.confirm_new[p] } else { 0 };
+        v[b + P_CONFIRM_AT] = S.confirm_at[p];
+        v[b + P_REORDER_ROW] = S.shop_fighter[p];
+        v[b + P_REORDER_LIFT] = (S.shop_step[p] == 3) as i32;
+        v[b + P_DECLINE] = S.decline[p];
+    }
+    v[V_BANK_KIND] = if S.rw_active == RW_DRIVES && S.bank_n > 0 { bank_head() } else { 0 };
+    let fork_at = if S.state == RUN_LIVE { S.fight } else { gd_envoy_start_fight() };
+    let nr = if S.arm_seen != 0 && S.live == 0 && S.state != RUN_OVER { roads_offered_at(fork_at) } else { 0 };
+    v[V_ROAD_N] = nr;
+    v[V_ROAD_CUR] = S.road_cur.clamp(0, (nr - 1).max(0));
+    v[V_ROAD_FLAG] = S.road_flag;
+    v[V_ROAD_TAKEN] = S.road;
+    for r in 0..nr.min(ROADS_MAX as i32) {
+        let b = V_ROAD0 + r as usize * V_ROADW;
+        let kind = road_kind(r);
+        v[b + RD_KIND] = kind;
+        v[b + RD_DANGER] = if kind == ROAD_STEEP { DANGER_STEEP } else { DANGER_CALM };
+        v[b + RD_NF] = 3;
+        let tw = road_twists(kind);
+        v[b + RD_TWISTS] = tw;
+        let mut prize = 0;
+        let mut fd = 0;
+        let e = lp() - 1;
+        for i in 0..3usize {
+            prize |= road_prize_at(kind, i as i32) << (4 * i);
+            let f = &SCHEDULE[i];
+            let fb = b + RD_FIGHTS + i * RD_FW;
+            v[fb] = f.kind + 1;
+            v[fb + 1] = CPU_POOL[(mix(S.seed as u32 ^ ((i as u32 + 8 * e as u32) << 8)) % CPU_POOL.len() as u32) as usize];
+            v[fb + 2] = STAGES[i];
+            v[fb + 3] = f.ncpu;
+            let base = if f.kind >= FK_ELITE { f.foe_drives + e } else { (e >= 1) as i32 };
+            fd |= (base + (tw & TW_FOE_DRIVE != 0) as i32).clamp(0, 2) << (4 * i);
+        }
+        v[b + RD_PRIZE] = prize;
+        v[b + RD_PRIZE_N] = 3;
+        v[b + RD_FOE_DRIVES] = fd;
+    }
     let mut kinds = 0;
     let mut k = fi;
     let mut sh = 0;
@@ -3620,6 +4092,7 @@ unsafe fn publish() {
         }
         v[b + P_BANKED_JUMP] = S.banked_jump[p];
         v[b + P_GAIN..b + P_GAIN + 6].copy_from_slice(&S.gain[p]);
+        v[b + P_GAIN_FROM..b + P_GAIN_FROM + 3].copy_from_slice(&S.gain_from[p]);
         // Heat
         v[b + P_HEAT] = heat::milli(HH.heat[p]);
         v[b + P_HEAT_CAP] = (HEAT_CAP * 1000) as i32;
@@ -3784,6 +4257,9 @@ extern "C" fn on_frame_end() {
             }
         } else if !present {
             S.live = 0;
+            if S.arm_seen != 0 && S.state != RUN_OVER {
+                road_frame();
+            }
             // the match ended inside the collect hold: the latched win stands
             if S.state == RUN_LIVE && S.outcome == 0 && S.collect > 0 {
                 fight_won();

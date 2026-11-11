@@ -199,7 +199,9 @@ pub unsafe extern "C" fn onExitCss(state: *mut GameModeState) {
         crate::tu::envoy::BYPASSED = false;
         let css = ext::gm_GetGameModeStateExitData(state) as *mut CSSData;
         if (*css).pending_scene_change as i32 != CSSPendingSceneChange_2 as i32 {
-            crate::tu::envoy::refill_css(css);
+            // the players only: the preload cache was written at the enter (or by the select itself); rewriting it
+            // after the loads were queued hangs the match load (lbDvd waits on a file never requested)
+            crate::tu::envoy::refill_css(css, false);
         }
     }
     ext::gmVsMelee_ExitCss(state, ext::gmVsMelee_GetVsData());

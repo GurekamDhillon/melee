@@ -316,12 +316,12 @@ pub unsafe fn bypass_css(css: *mut CSSData) -> bool {
     SKIP_SELECT = 1;
     SKIP_WAIT = 0;
     BYPASSED = true;
-    refill_css(css);
+    refill_css(css, true);
     false
 }
 
 /// The run's players and the matching preload cache into the CSS data (see `bypass_css`).
-pub unsafe fn refill_css(css: *mut CSSData) {
+pub unsafe fn refill_css(css: *mut CSSData, preload: bool) {
     let start = &mut (*css).vs.start;
     // the CSS normally leaves P1 human (the rewrite below fills every slot from the run's plan / the camp's picks)
     start.players[0].slot_type = Gm_PKind_Human as u8;
@@ -338,6 +338,9 @@ pub unsafe fn refill_css(css: *mut CSSData) {
     start.rules = rules;
     SEQ = seq;
     CAMP_DUE = due;
+    if !preload {
+        return;
+    }
     // what the CSS exit (fs_css_finish / fs_preload_players / fs_preload_stage) leaves for the loader
     let pc = crate::tu::adapt::lbDvd_GetPreloadCacheScene__1ed990();
     for i in 0..4usize {

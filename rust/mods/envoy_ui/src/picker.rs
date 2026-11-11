@@ -29,6 +29,9 @@ static mut LOCKG: [bool; MAXG] = [false; MAXG];
 static mut NAMES: [[u8; 24]; MAXG] = [[0; 24]; MAXG];
 static mut NAMEL: [usize; MAXG] = [0; MAXG];
 static mut TOP: usize = 0;
+static mut PTR_AT: [(f32, f32); 2] = [(0.0, 0.0); 2];
+/// Each cell's two letters (unique across the grid: the fallback when there is no icon).
+static mut ABBR: [[u8; 2]; MAXG] = [[b' '; 2]; MAXG];
 
 /// The last party (or the default): [P1 main, P1 partner, P2 main, P2 partner].
 pub static mut LAST: [i32; 4] = [2, 9, 20, 23];
@@ -54,12 +57,13 @@ pub fn short(k: i32) -> &'static str {
             return "Fighter";
         }
     }
+    // one style (title case), short enough for a 60-wide card
+    const SHORT: [&str; 26] = ["Falcon", "DK", "Fox", "G&W", "Kirby", "Bowser", "Link", "Luigi", "Mario", "Marth",
+        "Mewtwo", "Ness", "Peach", "Pikachu", "Ice Climbers", "Jiggly", "Samus", "Yoshi", "Zelda", "Sheik", "Falco",
+        "Y. Link", "Dr. Mario", "Roy", "Pichu", "Ganon"];
     match k {
         RANDOM => "Random",
-        3 => "G&W",
-        25 => "Ganon",
-        21 => "Y. Link",
-        15 => "Jiggly",
+        0..=25 => SHORT[k as usize],
         _ => ck_name(k),
     }
 }
@@ -74,7 +78,7 @@ unsafe fn cell_of(k: i32) -> usize {
 
 /// Two letters for a fighter with no art: the initials of the first two words, or the first two letters.
 fn abbr(s: &str, out: &mut [u8; 2]) -> usize {
-    let mut it = s.split(|c: char| c == ' ' || c == '.' || c == '-').filter(|w| !w.is_empty());
+    let mut it = s.split(|c: char| !c.is_ascii_alphanumeric()).filter(|w| !w.is_empty());
     let up = |x: &str, i: usize| x.as_bytes().get(i).copied().unwrap_or(b' ').to_ascii_uppercase();
     let Some(w0) = it.next() else { return 0 };
     out[0] = up(w0, 0);
@@ -117,6 +121,21 @@ unsafe fn fill_grid() {
     GRID[NG] = RANDOM;
     LOCKG[NG] = false;
     NG += 1;
+    // two letters each, unique: on a clash the second letter walks on through the name (Pichu PI, Pikachu PK)
+    for i in 0..NG {
+        let mut ab = [b' '; 2];
+        abbr(short(GRID[i]), &mut ab);
+        let name = short(GRID[i]).as_bytes();
+        let mut j = 1;
+        while (0..i).any(|q| ABBR[q] == ab) && j < name.len() {
+            let c = name[j].to_ascii_uppercase();
+            if c.is_ascii_alphabetic() {
+                ab[1] = c;
+            }
+            j += 1;
+        }
+        ABBR[i] = ab;
+    }
 }
 
 pub unsafe fn is_open() -> bool {
@@ -281,9 +300,7 @@ pub unsafe fn frame(e: &mut E) -> bool {
                 e.text_ex(cx + 30.0, cy + 54.0, d(11), alpha(INK, a), ALIGN_CENTER, 56.0, "Random");
             } else {
                 // no disc art yet: the lettered sticker (the old select's two-letter fallback)
-                let mut ab = [b' '; 2];
-                let n = abbr(short(k), &mut ab);
-                let t = core::str::from_utf8(&ab[..n]).unwrap_or("?");
+                let t = core::str::from_utf8(&ABBR[i]).unwrap_or("?");
                 text_edge(e, cx + 30.0, cy + 10.0, d(26), alpha(if lk { PALE } else if k >= 0x22 { LAGOON } else { CORAL }, a), ALIGN_CENTER, 1.4, t);
                 if lk {
                     spr_c(e, S_LOCK, cx + 46.0, cy + 12.0, 1.0, WHITE);
@@ -302,8 +319,14 @@ pub unsafe fn frame(e: &mut E) -> bool {
                 }
             }
             if hov[p] {
-                spr(e, S_PTR + p, cx + 36.0 + p as f32 * 8.0, cy + 50.0, 0.0, 0.0, WHITE);
+                // the pointer sits off the card's lower right corner (it never covers the name)
+                PTR_AT[p] = (cx + 62.0, cy + 68.0 - p as f32 * 16.0);
             }
+        }
+    }
+    for p in 0..players {
+        if STEP[p] < 2 {
+            spr_c(e, S_PTR + p, PTR_AT[p].0, PTR_AT[p].1, 0.62, WHITE);
         }
     }
     // trays

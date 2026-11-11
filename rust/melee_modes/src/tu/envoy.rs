@@ -117,6 +117,26 @@ pub fn DOOR_ON_now() -> bool {
 }
 /// The 1-P menu cursor is on the Envoy row (below the retail rows).
 pub static mut DOOR_HOVER: i32 = 0;
+/// Envoy Quick Tag: the tag button (the camp's switch, `gd_ui_envoy_set_tag_button`; MELEE_ENVOY_TAG_BUTTON=y|x|dpad
+/// sets the start value): Y (default), X, or D-pad down with the classic cinematic tag.
+pub const TAG_BTN_Y: i32 = 0;
+pub const TAG_BTN_X: i32 = 1;
+pub const TAG_BTN_CLASSIC: i32 = 2;
+pub static mut TAG_BUTTON: i32 = -1;
+
+pub fn tag_button() -> i32 {
+    unsafe {
+        if TAG_BUTTON < 0 {
+            TAG_BUTTON = match std::env::var("MELEE_ENVOY_TAG_BUTTON").as_deref() {
+                Ok("x") | Ok("X") => TAG_BTN_X,
+                Ok("dpad") | Ok("classic") => TAG_BTN_CLASSIC,
+                _ => TAG_BTN_Y,
+            };
+        }
+        TAG_BUTTON
+    }
+}
+
 /// The Envoy row (or the browser's Envoy mode) was chosen: the host opens the camp scene at the next present.
 pub static mut DOOR_OPEN: i32 = 0;
 /// The camp asked for the VS mode (its Continue / New run on the main menu): the menu scene starts it next frame.
@@ -264,6 +284,7 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     crate::tu::petey::disarm();
     // Envoy sessions: the match-end hold is the sim's, per match (gd_envoy_end_hold); never left on for a retail match
     crate::tu::gmvs::gmVs_SetEndHold(0);
+    melee_fighter::hooks::ENVOY_TAG_MASK = [0; 4];
     if PLAN[P_ACTIVE] == 0 || armed() == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
         return;
     }
@@ -319,6 +340,15 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
             me.spawn_pos = -1;
             me.handicap = 9;
         }
+    }
+    // Quick Tag: the tag button no longer jumps for the run's humans (the classic D-pad tag masks nothing)
+    let mask = match tag_button() {
+        TAG_BTN_Y => 0x0800,
+        TAG_BTN_X => 0x0400,
+        _ => 0,
+    };
+    for h in 0..humans {
+        melee_fighter::hooks::ENVOY_TAG_MASK[h] = mask;
     }
     // 0: an enemy-wave fight (no foe fighters; the sim spawns the enemies, the match end is held)
     let n = PLAN[P_NCPU].clamp(0, 4 - humans as i32) as usize;

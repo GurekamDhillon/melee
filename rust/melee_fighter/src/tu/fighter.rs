@@ -2103,6 +2103,14 @@ pub unsafe fn Fighter_procInput(g: G) {
         e::Replay_RecordInput(port, fol, fp.input.lstick[0].x, fp.input.lstick[0].y, fp.input.cstick[0].x, fp.input.cstick[0].y,
             fp.input.triggers[0], fp.input.held_buttons[0], fp.motion_id as i32, fp.cur_pos.x, fp.cur_pos.y, fp.facing_dir,
             fp.dmg.x1830_percent);
+        // Envoy Quick Tag: the tag button is not a jump for a human in an armed run (CPUs unaffected); every jump,
+        // short hop and jump-cancel reads these held / pressed words, so masking here covers them all
+        if !e::ftCo_IsCpuControlled(fp) {
+            let m = crate::hooks::ENVOY_TAG_MASK[(fp.player_idx as usize) & 3];
+            if m != 0 {
+                fp.input.held_buttons[0] &= !m;
+            }
+        }
         Fighter_procInput_Inner1(fp);
         if fp.pad_port == 0 && e::gm_IsCurrently1PMode_inline() != 0 {
             let mask = (HSD_PAD_L | HSD_PAD_R | HSD_PAD_START) as u32;

@@ -859,6 +859,13 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
     f!("gd_ui_envoy_best", |_c: Caller<'_, PresData>| -> i32 { unsafe { melee_modes::tu::envoy::BEST_LOOP } });
     // arm / disarm the run: op 0 disarm, 1 new run (forgets the saved run), 2 continue, 3 abandon (forget + disarm);
     // | 0x10: start the VS mode now (the camp on the main menu; the first CSS is the party pick, not the camp)
+    // the camp's tag-button row: 0 Y, 1 X, 2 D-pad down (classic); returns the value now
+    f!("gd_ui_envoy_set_tag_button", |_c: Caller<'_, PresData>, b: i32| -> i32 {
+        if (0..=2).contains(&b) {
+            unsafe { melee_modes::tu::envoy::TAG_BUTTON = b };
+        }
+        melee_modes::tu::envoy::tag_button()
+    });
     f!("gd_ui_envoy_arm", |c: Caller<'_, PresData>, op: i32| -> i32 {
         use melee_modes::tu::envoy as ev;
         let sh = c.data().ui().borrow();

@@ -146,6 +146,20 @@ for d in $depths; do
     check 14 roadstop "$d" "$line" "$miss"
     echo "     roadstop d$d: $(cnt roadstop "$d" 'foe carries') foe drives, $(cnt roadstop "$d" 'drive level up') level-ups, $(cnt roadstop "$d" 'moved across') moved, $(cnt roadstop "$d" 'envoy: scrapped') scrapped"
   fi
+  if on qtag; then
+    # Quick Tag: Y tags with no freeze; a jab then Y inside the 20-frame window is a tag-cancel and a Handoff
+    line=$(run qtag "$d" "ember,bolt,nova,noshop" MELEE_PAD_SCRIPT="$here/qtag_pad.txt" MELEE_ENVOY_START_FIGHT=1)
+    miss=""; seen qtag "$d" "quick tag" || miss="$miss (no quick tag)"
+    check 15 qtag "$d" "$line" "$miss"
+    echo "     qtag d$d: $(cnt qtag "$d" 'quick tag') tags, $(cnt qtag "$d" 'envoy: handoff') handoffs, $(cnt qtag "$d" 'tag refused') refused"
+  fi
+  if on qtagcoop; then
+    # Quick Tag in co-op: both players tag; no freeze (one player's tag never stops the other)
+    line=$(run qtagcoop "$d" "nova,ember,noshop,tagauto;bolt,ember" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3 MELEE_ENVOY_START_FIGHT=1)
+    miss=""; seen qtagcoop "$d" "quick tag, player.*count 1[0-9][0-9]" || miss="$miss (player 2 never tagged)"
+    check 16 qtagcoop "$d" "$line" "$miss"
+    echo "     qtagcoop d$d: $(cnt qtagcoop "$d" 'quick tag') tags, $(cnt qtagcoop "$d" 'envoy: handoff') handoffs"
+  fi
   if on waves; then
     # enemy waves (first step): three of script kind WAVE_KIND (0 Goomba, 2 ReDead, 4 Octorok) on FD, no foe fighters
     line=$(run waves "$d" "ember,bolt,nova,noshop,~${WAVE_KIND:-0}" MELEE_ENVOY_ENEMY_LOG=1)

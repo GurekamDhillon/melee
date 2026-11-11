@@ -128,6 +128,10 @@ pub const P_CONFIRM_AT: usize = 144; // fighter * 8 + slot of the replacement
 pub const P_REORDER_ROW: usize = 145; // the reorder screen's cursor row: the fighter (0 main, 1 partner); it spans both rows
 pub const P_DECLINE: usize = 146; // coins "Leave it" pays on the offer now (0: the offer cannot be declined for coins)
 pub const P_REORDER_LIFT: usize = 147; // 1: a drive is lifted (moves with left / right, up / down to the other row)
+pub const P_TAG_BUF: usize = 151; // Quick Tag: frames a tag press is still remembered (0: none waiting)
+pub const P_TAG_WINDOW: usize = 152; // frames left in the tag-cancel window after dealing damage (a tag now is a Handoff)
+pub const P_TAG_BUTTON: usize = 153; // the tag button: 0 Y, 1 X, 2 D-pad down (classic cinematic tag)
+pub const P_HANDOFF_ON: usize = 154; // 1: Handoff is on
 pub const P_GAIN_FROM: usize = 148; // 3: the drop behind the last drop gain (worn, levelled, banked, flown in): x, y (x100, world), owner slot
 
 pub const DROPS: usize = 2;
@@ -216,6 +220,8 @@ pub const EV_ACTIVE: i32 = 10; // who = player; amount = the active's id
 pub const EV_LOSS: i32 = 11; // who = player; amount = Heat lost x1000 this frame
 pub const EV_HALVED: i32 = 12; // who = player; amount = Heat x1000 after a lost stock halved it
 pub const EV_INFERNO: i32 = 13; // who = player * 2 + fighter; amount = 1: the set is complete (fight start / gained)
+pub const EV_TAG: i32 = 15; // who = player; amount = the fighter now in play (0 main, 1 partner): a Quick Tag
+pub const EV_HANDOFF: i32 = 16; // who = player; amount = the fired drive's id + 1 | 0x100 when Relay fired the row
 pub const EV_COINS: i32 = 14; // who = player; amount = coins from a flat award (a fight cleared, interest)
 pub const MARK_LCANCEL: i32 = 1;
 pub const MARK_WAVEDASH: i32 = 2;

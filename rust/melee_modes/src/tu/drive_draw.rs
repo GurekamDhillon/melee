@@ -386,6 +386,17 @@ unsafe fn emit(tris: &[Tri], mode: u32) {
 
 // ---- sprites for the 2D cards (CPU raster)
 
+/// The C comparisons (semantics lint M1: no IEEE min / max / clamp).
+fn fmin(a: f32, b: f32) -> f32 {
+    if a < b { a } else { b }
+}
+fn fmax(a: f32, b: f32) -> f32 {
+    if a > b { a } else { b }
+}
+fn clamp01(v: f32) -> f32 {
+    if v < 0.0 { 0.0 } else if v > 1.0 { 1.0 } else { v }
+}
+
 pub const SPRITE: usize = 64;
 pub const SPRITE_FRAMES: usize = 12;
 
@@ -407,8 +418,10 @@ pub fn sprite_sheet(model: usize) -> Option<(usize, usize, Vec<u8>)> {
             let v: Vec<[f32; 3]> = (0..3).map(|k| rot(m.pos[t + k])).collect();
             let sc: Vec<[f32; 3]> = v.iter().map(|p| [ox + half + p[0] * s, half - p[1] * s, p[2]]).collect();
             let col: Vec<[f32; 3]> = (0..3).map(|k| shade(m, t + k, &rot, 0.8)).collect();
-            let (x0, x1) = (sc.iter().map(|p| p[0]).fold(f32::MAX, f32::min).floor().max(ox) as usize, sc.iter().map(|p| p[0]).fold(f32::MIN, f32::max).ceil().min(ox + SPRITE as f32 - 1.0) as usize);
-            let (y0, y1) = (sc.iter().map(|p| p[1]).fold(f32::MAX, f32::min).floor().max(0.0) as usize, sc.iter().map(|p| p[1]).fold(f32::MIN, f32::max).ceil().min(h as f32 - 1.0) as usize);
+            let (x0, x1) = (sc.iter().map(|p| p[0]).fold(f32::MAX, fmin).floor(), sc.iter().map(|p| p[0]).fold(f32::MIN, fmax).ceil());
+            let (y0, y1) = (sc.iter().map(|p| p[1]).fold(f32::MAX, fmin).floor(), sc.iter().map(|p| p[1]).fold(f32::MIN, fmax).ceil());
+            let (x0, x1) = (fmax(x0, ox) as usize, fmin(x1, ox + SPRITE as f32 - 1.0) as usize);
+            let (y0, y1) = (fmax(y0, 0.0) as usize, fmin(y1, h as f32 - 1.0) as usize);
             let area = (sc[1][0] - sc[0][0]) * (sc[2][1] - sc[0][1]) - (sc[2][0] - sc[0][0]) * (sc[1][1] - sc[0][1]);
             if area.abs() < 1e-6 {
                 continue;
@@ -428,7 +441,7 @@ pub fn sprite_sheet(model: usize) -> Option<(usize, usize, Vec<u8>)> {
                     }
                     zb[o] = z;
                     for k in 0..3 {
-                        px[o * 4 + k] = ((w0 * col[0][k] + w1 * col[1][k] + w2 * col[2][k]).clamp(0.0, 1.0) * 255.0) as u8;
+                        px[o * 4 + k] = (clamp01(w0 * col[0][k] + w1 * col[1][k] + w2 * col[2][k]) * 255.0) as u8;
                     }
                     px[o * 4 + 3] = 255;
                 }

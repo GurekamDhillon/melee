@@ -22,16 +22,11 @@ exe="${EXE:-$repo/build/cargo/release/melee}"; [ -e "$exe" ] || exe="$exe.exe"
 out="${OUT:-${TEMP:-/tmp}/v3_slice}"; mkdir -p "$out"
 depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint sim chain cash states tech volley shop finale coop petey loop3 loopboss}"
 fail=0
-# the machine-wide cargo lock (one build at a time): mkdir succeeds only when free
+# the machine-wide build lock, through the shared script (never by hand); BUILDLOCK_HELD=1: the caller holds it
 cargo_locked() {
-  local L="${CARGO_LOCK:-E:/Projects/Melee Workspace/scratch/.cargo-build.lock}" i
   local me; me="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
-  for i in $(seq 1 240); do mkdir "$L" 2>/dev/null && break; sleep 15; done
-  # never run (or release) without holding it: a timed-out wait used to go ahead and then delete another owner's lock
-  [ "$i" -lt 240 ] || ! [ -d "$L" ] || { echo "cargo lock held by $(cat "$L/owner" 2>/dev/null); not building" >&2; return 1; }
-  echo "$me" > "$L/owner"
-  cargo "$@"; local rc=$?
-  grep -qx "$me" "$L/owner" 2>/dev/null && rm -rf "$L"; return $rc
+  if [ "${BUILDLOCK_HELD:-0}" = 1 ]; then cargo "$@"; return; fi
+  bash "${BUILDLOCK:-E:/Projects/Melee Workspace/scratch/buildlock.sh}" run "$me" cargo "$@"
 }
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 host=x86_64-pc-windows-msvc; case "$(uname -s)" in Linux*) host=x86_64-unknown-linux-gnu ;; esac
@@ -138,6 +133,18 @@ for d in $depths; do
     seen dropend "$d" "drop flies in" || miss="$miss (no fly-in)"
     check 13 dropend "$d" "$line" "$miss"
     echo "     dropend d$d: $(cnt dropend "$d" 'envoy: drop [a-z_]* -*[0-9]') drops, $(cnt dropend "$d" 'drop flies in') flown in, $(cnt dropend "$d" 'fight won') won"
+  fi
+  if on roadstop; then
+    # the forked road's Steep session (fight 3, its last): every foe one more drive; the stop opens a pick and the
+    # road's level-up token; drive protection at the shop (test knob protect: pin, a refused scrap and replace of
+    # the pinned drive, a scrap, a move to the partner)
+    line=$(run roadstop "$d" "ember:2,bolt,nova,*8000,steep,protect" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3)
+    miss=""; seen roadstop "$d" "foe carries" || miss="$miss (no foe drive)"
+    seen roadstop "$d" "the stop, picks banked" || miss="$miss (no stop)"
+    seen roadstop "$d" "envoy: scrapped" || miss="$miss (no scrap)"
+    seen roadstop "$d" "test replace pinned refused 1" || miss="$miss (pinned replace not refused)"
+    check 14 roadstop "$d" "$line" "$miss"
+    echo "     roadstop d$d: $(cnt roadstop "$d" 'foe carries') foe drives, $(cnt roadstop "$d" 'drive level up') level-ups, $(cnt roadstop "$d" 'moved across') moved, $(cnt roadstop "$d" 'envoy: scrapped') scrapped"
   fi
   if on waves; then
     # enemy waves (first step): three of script kind WAVE_KIND (0 Goomba, 2 ReDead, 4 Octorok) on FD, no foe fighters

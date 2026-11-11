@@ -377,7 +377,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
     if keys {
         tb.s("Choose a keystone");
     } else if v[V_BANK_N] > 1 {
-        tb.s("Reward ").i(v[V_BANK_I].max(1)).s(" of ").i(v[V_BANK_N]);
+        tb.s(if v[V_BANK_KIND] == RK_LEVEL { "Level-up: reward " } else { "Reward " }).i(v[V_BANK_I].max(1)).s(" of ").i(v[V_BANK_N]);
     } else {
         tb.s("Pick a drive");
     }

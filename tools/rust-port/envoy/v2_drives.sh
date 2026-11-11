@@ -28,16 +28,11 @@ exe="$repo/build/cargo/release/melee"; [ -e "$exe" ] || exe="$exe.exe"
 out="${OUT:-${TEMP:-/tmp}/v2_drives}"; mkdir -p "$out"
 depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-pad cpu twin shared coop petey}"
 fail=0
-# the machine-wide cargo lock (one build at a time): mkdir succeeds only when free
+# the machine-wide build lock, through the shared script (never by hand); BUILDLOCK_HELD=1: the caller holds it
 cargo_locked() {
-  local L="${CARGO_LOCK:-E:/Projects/Melee Workspace/scratch/.cargo-build.lock}" i
   local me; me="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
-  for i in $(seq 1 240); do mkdir "$L" 2>/dev/null && break; sleep 15; done
-  # never run (or release) without holding it: a timed-out wait used to go ahead and then delete another owner's lock
-  [ "$i" -lt 240 ] || ! [ -d "$L" ] || { echo "cargo lock held by $(cat "$L/owner" 2>/dev/null); not building" >&2; return 1; }
-  echo "$me" > "$L/owner"
-  cargo "$@"; local rc=$?
-  grep -qx "$me" "$L/owner" 2>/dev/null && rm -rf "$L"; return $rc
+  if [ "${BUILDLOCK_HELD:-0}" = 1 ]; then cargo "$@"; return; fi
+  bash "${BUILDLOCK:-E:/Projects/Melee Workspace/scratch/buildlock.sh}" run "$me" cargo "$@"
 }
 host=x86_64-pc-windows-msvc; case "$(uname -s)" in Linux*) host=x86_64-unknown-linux-gnu ;; esac
 if (cd rust/mods/envoy_data && CARGO_TARGET_DIR="$repo/build/cargo-mods-host" RUST_TEST_THREADS=1 cargo_locked test -j 4 -q --target "$host" >"$out/lint.log" 2>&1); then

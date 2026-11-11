@@ -267,7 +267,19 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
     // Heat bar and the bench sticker (shrunk)
     let hy = y + 74.0;
     if let Some(h) = heat_of(v, p) {
-        heat_bar(e, x + 18.0, hy, 132.0, &h, p);
+        // a tap with too little Heat shakes the bar (EV_HEAT_SHORT)
+        let sh = tag_age(v, p, EV_HEAT_SHORT);
+        let dx = if (0..12).contains(&sh) { 3.0 * sin(sh as f32 * 2.2) * (1.0 - sh as f32 / 12.0) } else { 0.0 };
+        heat_bar(e, x + 18.0 + dx, hy, 132.0, &h, p);
+        // the strike's cost: a notch with the Tag glyph
+        let cost = v[pbk + P_ASSIST_COST];
+        let cap = v[pbk + v3::P_HEAT_CAP].max(1);
+        if cost > 0 {
+            let mx = x + 18.0 + dx + 132.0 * ((cost * 1000) as f32 / cap as f32).clamp(0.0, 1.0);
+            e.rect(mx - 1.5, hy - 4.0, 3.0, 19.0, SUNNY);
+            face(e, S_FACE_INK, mx - 6.0, hy + 14.0, 12.0, 11.0, WHITE);
+            e.text_ex(mx, hy + 14.0, d(8), SUNNY, ALIGN_CENTER, 0.0, "T");
+        }
     }
     let bench = if act == 0 { v[pbk + P_PARTNER] } else { v[pbk + P_MAIN] };
     if v[pbk + P_PARTNER_KIND] >= 0 || (0..26).contains(&bench) {
@@ -281,6 +293,15 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
         if !ready {
             let f = 1.0 - (cd as f32 / mx as f32).clamp(0.0, 1.0);
             e.rect(bx + 2.0, by + 2.0, 80.0 * f, 16.0, alpha(WHITE, 0.9));
+        }
+        // holding Tag toward a swap fills the sticker (P_TAG_HOLD / P_TAG_HOLD_AT)
+        let hold = v[pbk + P_TAG_HOLD];
+        let at = v[pbk + P_TAG_HOLD_AT].max(1);
+        if hold > 0 {
+            e.rect(bx + 2.0, by + 2.0, 80.0 * (hold as f32 / at as f32).min(1.0), 16.0, alpha(SUNNY, 0.85));
+        }
+        if v[pbk + P_TAG_BUTTON] != 2 {
+            e.text_ex(bx + 42.0, by + 21.0, bs(9), WHITE, ALIGN_CENTER, 0.0, "Tap: Strike / Hold: Swap");
         }
         // the ring round the head: full when a tag is legal, the cooldown's fraction otherwise
         let frac = if ready { 1.0 } else { 1.0 - (cd as f32 / mx as f32).clamp(0.0, 1.0) };
@@ -557,7 +578,7 @@ unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
 }
 
 /// Frames since the newest event `kind` of player `p` in the event ring (-1: none).
-unsafe fn tag_age(v: &[i32; VW], p: usize, kind: i32) -> i32 {
+pub(crate) unsafe fn tag_age(v: &[i32; VW], p: usize, kind: i32) -> i32 {
     let n = v[V_EV_N].max(0) as usize;
     let mut best = -1;
     for i in 0..EV.min(n) {

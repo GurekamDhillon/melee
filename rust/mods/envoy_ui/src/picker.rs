@@ -51,6 +51,12 @@ pub fn short(k: i32) -> &'static str {
         if k >= 0x22 {
             if let Some(i) = (0..NG).find(|&i| GRID[i] == k) {
                 if let Ok(t) = core::str::from_utf8(&NAMES[i][..NAMEL[i]]) {
+                    // a long m-ex name keeps its first word on the 60-wide card ("Diddy Kong" -> "Diddy")
+                    if t.len() > 9 {
+                        if let Some(w) = t.split(' ').next().filter(|w| w.len() >= 3) {
+                            return w;
+                        }
+                    }
                     return t;
                 }
             }

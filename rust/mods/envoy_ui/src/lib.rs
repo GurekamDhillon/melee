@@ -1099,6 +1099,18 @@ unsafe fn world(v: &[i32; VW]) {
             fx(FX_RING, qx, qy + 16.0, 0.0, 3.0 + 0.4 * sin(T as f32 * 0.25), 1.0, 0.0, alpha(0xC864_FFFF, 0.8));
         }
     }
+    // Assist Strike: a pop outlined in the player's colour as the partner jumps in and as it leaves
+    for p in 0..humans {
+        for kind in [EV_ASSIST, EV_ASSIST_END] {
+            let a = hud::tag_age(v, p, kind);
+            if (0..8).contains(&a) {
+                if let Some((x, y)) = owner_pos(v, (p * 2) as i32) {
+                    let k = a as f32 / 8.0;
+                    fx(FX_RING, x, y + 8.0, 0.0, 8.0 + 12.0 * k, 2.4, 0.0, alpha(PLAYER_COL[p], 1.0 - k));
+                }
+            }
+        }
+    }
     // Quick Tag: a six-frame pop on the fighter coming in
     for p in 0..humans {
         if let Some(k) = hud::tag_pop(v, p) {

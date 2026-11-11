@@ -18,7 +18,8 @@ value times 1000 (Heat 40 = 40000, 6% = 6000). A word for a player who is not pr
 | 352-431 | match slots 0-3 (`V_S0 + s * V_SW`), 20 words each |
 | 432-528 | the fire log (12 x 8) and its count `V_LOG_N` (528) |
 | 536-600 | the event ring (16 x 4) |
-| 704-751 | the run record (48 words, version 5) |
+| 704-751 | the run record (48 words, version 7) |
+| 760-765 | sessions: `V_SESS_NEXT`, `V_BANK`, `V_BANK_N`, `V_BANK_I`, `V_SESS_KINDS`, `V_SESS_FIGHT` (envoy_data view.rs) |
 
 `V_MAGIC` = `0x454E5633` ("ENV3"). `VIEW_WORDS` = 768 (the host's `melee_modes::tu::envoy::VIEW_WORDS` matches).
 

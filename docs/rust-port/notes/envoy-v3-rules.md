@@ -79,6 +79,24 @@ processed at frame end in buffer order (12.4). The split test (`heat.rs`) proves
 records adding to N give bit-identical Heat, charge, tally, coins and pips, across the 150% line, for damage taken
 with and without Insulate, and through a cash-out.
 
+## Sessions (v3g, 2026-11-11)
+
+Fights are grouped into sessions played back to back: fights 1-3 are one session, 4-5 (elite, boss) the next, in
+every loop. Inside a session a won fight goes straight to the next: no results screen (gmvsmode `onExitVs` goes to
+the character select when `envoy::session_continue()`: view word 760 `V_SESS_NEXT`), the camp scene that replaces
+it shows the "Fight 2 - Pack" banner (stocks left, loop) for 40 frames and goes on (arm op 2: the selects confirm
+themselves), and the same banner shows over the next fight's first ~2 s. Percent resets per fight; the pool carries.
+
+Rewards are banked: each fight won banks one drive pick (`St::bank`); coins pay at once. In-fight drops are worn at
+once by the fighter in play (a duplicate levels up); with no room the drop banks one more pick. The stop opens the
+first fight of the next session: the banked picks one after another ("Pick 1 of 3"), a keystone if due, the shop
+(fights 4 and 1 of later loops). The road screen (after the results of a session's last fight) shows the next
+session ("Next: Elite, then Boss"). Quitting mid-session resumes at the start of that fight with the bank kept
+(record version 7: the bank is R_LOOP's high half; versions 5 and 6 still load).
+
+Not done this round: the camp's fighter picker (fight 1 still opens the character select and stage select); the
+stop's order is road first, then the picks at the next fight's start (not picks then road).
+
 ## Endless loops (NG+, 2026-11-11)
 
 Clearing the boss no longer ends the run. After the clear: the drive pick, the keystone pick if one is due, and the

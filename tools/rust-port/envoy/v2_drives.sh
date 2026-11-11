@@ -31,10 +31,13 @@ fail=0
 # the machine-wide cargo lock (one build at a time): mkdir succeeds only when free
 cargo_locked() {
   local L="${CARGO_LOCK:-E:/Projects/Melee Workspace/scratch/.cargo-build.lock}" i
+  local me; me="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
   for i in $(seq 1 240); do mkdir "$L" 2>/dev/null && break; sleep 15; done
-  echo "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" > "$L/owner"
+  # never run (or release) without holding it: a timed-out wait used to go ahead and then delete another owner's lock
+  [ "$i" -lt 240 ] || ! [ -d "$L" ] || { echo "cargo lock held by $(cat "$L/owner" 2>/dev/null); not building" >&2; return 1; }
+  echo "$me" > "$L/owner"
   cargo "$@"; local rc=$?
-  rm -rf "$L"; return $rc
+  grep -qx "$me" "$L/owner" 2>/dev/null && rm -rf "$L"; return $rc
 }
 host=x86_64-pc-windows-msvc; case "$(uname -s)" in Linux*) host=x86_64-unknown-linux-gnu ;; esac
 if (cd rust/mods/envoy_data && CARGO_TARGET_DIR="$repo/build/cargo-mods-host" RUST_TEST_THREADS=1 cargo_locked test -j 4 -q --target "$host" >"$out/lint.log" 2>&1); then

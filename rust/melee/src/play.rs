@@ -1324,6 +1324,7 @@ impl Game for Play {
             self.port[i].update(&st[i]);
         }
         self.tick_no += 1;
+        crate::hang::beat();
         self.age += 1;
         crate::prof::gate(true);
         self.tick_scene();

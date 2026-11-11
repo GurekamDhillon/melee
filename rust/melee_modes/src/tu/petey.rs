@@ -695,7 +695,14 @@ pub struct Tracks {
 
 pub fn tracks() -> Option<&'static Tracks> {
     static T: std::sync::OnceLock<Option<Tracks>> = std::sync::OnceLock::new();
-    T.get_or_init(|| {
+    // built on a helper thread, as the model is: the first call comes inside a game frame, where allocations land in
+    // the game arena that rollback snapshots rewrite (the tables were freed under the sim by the first load: arena
+    // misuse, desyncs and a stalled synctest with the owner's files present)
+    T.get_or_init(|| std::thread::spawn(build_tracks).join().ok().flatten()).as_ref()
+}
+
+fn build_tracks() -> Option<Tracks> {
+    {
         let m = crate::tu::petey_model::get()?;
         let (al, ar) = (m.arm_l.as_ref()?, m.arm_r.as_ref()?);
         let b28 = m.body.bone_by_index(28)?;
@@ -740,8 +747,7 @@ pub fn tracks() -> Option<&'static Tracks> {
         let zc = (m.body.min[2] + m.body.max[2]) * 0.5;
         eprintln!("petey: bone-following hurt / hit shapes from the local data");
         Some(Tracks { mots, zc })
-    })
-    .as_ref()
+    }
 }
 
 /// This frame's points in world x y.
@@ -1186,31 +1192,49 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
 /// statics, so a replay or rollback redraws the same picture).
 unsafe fn draw_model(m: &'static crate::tu::petey_model::Model) {
     use crate::tu::petey_model as pm;
-    thread_local! {
-        // one buffer per part, kept until the next draw: the GX bridge may read the vertex data after the call returns
-        static SCRATCH: core::cell::RefCell<[std::vec::Vec<([f32; 3], [u8; 4])>; 3]> = const { core::cell::RefCell::new([std::vec::Vec::new(), std::vec::Vec::new(), std::vec::Vec::new()]) };
+    // one buffer set per part, kept until the next draw (the GX bridge may read the vertex data after the call
+    // returns), made once on a helper thread: a draw inside the game scope must not allocate, or rollback rewrites
+    // the arena under the buffers (write-after-free, desyncs, a stalled synctest with the owner's files present)
+    static BUFS: std::sync::OnceLock<std::sync::Mutex<std::vec::Vec<pm::DrawBufs>>> = std::sync::OnceLock::new();
+    let bufs = BUFS.get_or_init(|| {
+        let v = std::thread::spawn(move || {
+            let mut v = std::vec::Vec::with_capacity(3);
+            v.push(m.body.draw_bufs());
+            for r in [&m.arm_l, &m.arm_r] {
+                if let Some(r) = r {
+                    v.push(r.draw_bufs());
+                }
+            }
+            std::sync::Mutex::new(v)
+        });
+        v.join().unwrap_or_else(|_| std::sync::Mutex::new(std::vec::Vec::new()))
+    });
+    let Ok(mut bufs) = bufs.lock() else { return };
+    if bufs.is_empty() {
+        return;
     }
     let name = MOTIONS[B.mot.clamp(0, 11) as usize];
     let fr = B.mf as f32;
     let zc = (m.body.min[2] + m.body.max[2]) * 0.5;
-    SCRATCH.with(|s| {
-        let mut bufs = s.borrow_mut();
-        let [body_t, arm_t0, arm_t1] = &mut *bufs;
-        let a = m.body.anim(name);
-        m.body.skin(a, fr, body_t);
-        // the clip's own root carries the jump height; y 0 is the stage
-        let org = [0.0, zc];
-        let at = [B.px, 0.0, 0.0];
-        pm::draw_tris(body_t, org, at, MODEL_SCALE, 0.0, B.flash[0] > 0);
-        for (i, (arm, tris)) in [(&m.arm_l, arm_t0), (&m.arm_r, arm_t1)].into_iter().enumerate() {
-            let Some(r) = arm else { continue };
-            if B.cage_broken && B.freed == i as i32 {
-                continue; // the broken cage hides its model (§6.2 proc 17)
-            }
-            r.skin(r.anim(name), fr, tris);
-            pm::draw_tris(tris, org, at, MODEL_SCALE, 0.0, B.flash[1 + i] > 0);
+    // the clip's own root carries the jump height; y 0 is the stage
+    let org = [0.0, zc];
+    let at = [B.px, 0.0, 0.0];
+    let a = m.body.anim(name);
+    m.body.skin_with(a, fr, &mut bufs[0]);
+    pm::draw_tris(&bufs[0].tris, org, at, MODEL_SCALE, 0.0, B.flash[0] > 0);
+    let mut k = 1;
+    for (i, arm) in [&m.arm_l, &m.arm_r].into_iter().enumerate() {
+        let Some(r) = arm else { continue };
+        let slot = k;
+        k += 1;
+        if B.cage_broken && B.freed == i as i32 {
+            continue; // the broken cage hides its model (§6.2 proc 17)
         }
-    });
+        if let Some(b) = bufs.get_mut(slot) {
+            r.skin_with(r.anim(name), fr, b);
+            pm::draw_tris(&b.tris, org, at, MODEL_SCALE, 0.0, B.flash[1 + i] > 0);
+        }
+    }
 }
 
 #[cfg(test)]

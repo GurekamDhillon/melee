@@ -374,6 +374,8 @@ pub struct Renderer {
     pub fx_intensity: f32,
     /// The presenter's true-widescreen x factor (interp::Widen; 1 = none): the fx world camera follows it.
     pub fx_widen: f32,
+    /// The menu camera's tilt (yaw, pitch radians) for the UI batch: [0, 0] (the default) draws it untransformed.
+    pub ui_tilt: [f32; 2],
 }
 
 /// The GPU texture an EFB copy writes (at the internal resolution: `dst_w * scale` x `dst_h * scale`).
@@ -1247,6 +1249,7 @@ impl Renderer {
             fx: None,
             fx_intensity: 1.0,
             fx_widen: 1.0,
+            ui_tilt: [0.0; 2],
         })
     }
 

@@ -48,3 +48,25 @@ fresnel exponent, tint scales the glass colour (`fx::glass_params`).
 `drop_model` / `drop_ghosts`. `kit::sticker` glows the hovered face; `kit::face_fx_next` + `pick::rarity_fx` give
 Epic / Unique offers their face effect; `lib.rs` calls them (three call sites and the orbiter / drop draws).
 envoy_sim is untouched.
+
+## Ink edge on drive bodies
+
+Material flag `MAT_OUTLINE` (0x40) on `gd_ui_world_model_ex`: the body is first drawn pushed out along its
+screen-space normals by 1.2 px at 640x480 (scaled with the internal resolution) in Party-pack INK, depth-writing,
+then the body over it at equal depth, so only the rim stays: a constant-width edge at any size (no shimmer at
+21-26 px). Tag bodies only (not tier rings or the ascended overlay, DRIVE-MODELS.md section 3); additive draws never
+get ink. The drive models' drawer (port/drvmodels) sets it; port/fx merges first.
+
+## Menu camera (C-stick tilt)
+
+Retail (`mn/mnmain.c` `mn_8022BA1C`): the first controller whose C-stick is outside the 0.4 dead zone orbits the
+menu camera about the interest point, up to 30 degrees per axis, linear past the dead zone, no smoothing. Ours
+(`melee/src/envoy_fx.rs` `MenuCam`, `ui.rs` vertex shader): the same range and dead zone from the larger deflection
+of any controller (the pads the UI host already copied for the present: display only), a spring-damper (zeta 0.42:
+lags, overshoots a little, wobbles back), the batch drawn as a plane seen from the turned eye with parallax by draw
+order (backdrop deepest, cursor nearest; hard shadows shift), a full-band backdrop overscanned so no black shows at
+full turn. At rest the transform is skipped: pixel-identical text. Intensity: Off none, Subtle half.
+Applies to custom UI scenes (the camp, the party picker) and an armed run's reward, shop and between-fights screens;
+not the fight HUD, not the settings overlay (its own batch); the main menu's Envoy stickers stay flat (retail turns
+its own 3D menu; matching its transform for our quads is left for later). The pad script takes optional C-stick
+columns: `<frames> <buttons> [sx sy [tl tr [cx cy]]]`.

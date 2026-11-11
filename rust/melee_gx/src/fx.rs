@@ -25,6 +25,13 @@ pub const MAT_UNLIT_ADD: u8 = 5;
 pub const MAT_COUNT: u8 = 6;
 /// Material flag: the host leaves a light trail behind this draw (orbiting drives).
 pub const MAT_TRAIL: u8 = 0x80;
+/// Material flag: a drive body with the Party-pack ink edge (~1.2 px at 640x480, a screen-space hull drawn under it).
+pub const MAT_OUTLINE: u8 = 0x40;
+/// The material id bits.
+pub const MAT_ID: u8 = 0x3F;
+/// The ink edge: colour (Party pack INK) and width in 640x480 pixels.
+pub const INK_RGB: [f32; 3] = [0x2A as f32 / 255.0, 0x1A as f32 / 255.0, 0x6E as f32 / 255.0];
+pub const INK_PX: f32 = 1.2;
 
 /// Post effects (`gd_fx_post`). Held ones (re-posted every present while they last): vignette, ember, heat-haze.
 pub const POST_VIGNETTE: u32 = 1;
@@ -105,7 +112,8 @@ pub struct FxFrame {
 
 /// The effects-intensity setting (`MELEE_FX` = off | subtle | full; default full offline, subtle in netplay).
 pub fn intensity_from_env(netplay: bool) -> f32 {
-    match std::env::var("MELEE_FX").ok().as_deref().map(str::trim).map(str::to_ascii_lowercase).as_deref() {
+    static V: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
+    match V.get_or_init(|| std::env::var("MELEE_FX").ok()).as_deref().map(str::trim).map(str::to_ascii_lowercase).as_deref() {
         Some("off") | Some("0") => 0.0,
         Some("subtle") | Some("1") => 0.5,
         Some("full") | Some("2") => 1.0,
@@ -369,6 +377,26 @@ fn vnoise(p: vec3f) -> f32 {
     o.e = vec4f(em * k * select(1.0, a, mat == 1u), 1.0);
     return o;
 }
+// the ink edge: the body pushed out along its screen-space normal by misc.zw (NDC), flat ink, no emissive
+@vertex fn vs_ink(@location(0) pos: vec3f, @location(1) nrm: vec3f, @location(2) base: vec3f, @location(3) glow: vec3f,
+                  @location(4) m0: vec4f, @location(5) m1: vec4f, @location(6) m2: vec4f,
+                  @location(7) par: vec4f, @location(8) col: vec4f, @location(9) misc: vec4f) -> @builtin(position) vec4f {
+    let h = vec4f(pos, 1.0);
+    let w = vec3f(dot(m0, h), dot(m1, h), dot(m2, h));
+    let nw = normalize(vec3f(dot(m0.xyz, nrm), dot(m1.xyz, nrm), dot(m2.xyz, nrm)));
+    let vp = view(w);
+    var c = proj(vp);
+    let nv = vec2f(dot(g.v0.xyz, nw), dot(g.v1.xyz, nw));
+    let d = select(vec2f(0.0), normalize(nv), dot(nv, nv) > 1e-8);
+    c = vec4f(c.xy + d * g.misc.zw * c.w, c.zw);
+    return c;
+}
+@fragment fn fs_ink() -> FO {
+    var o: FO;
+    o.c = vec4f(0.165, 0.102, 0.431, 1.0);
+    o.e = vec4f(0.0, 0.0, 0.0, 1.0);
+    return o;
+}
 struct TO { @builtin(position) pos: vec4f, @location(0) c: vec4f };
 @vertex fn vs_tri(@location(0) p: vec3f, @location(1) c: vec4f) -> TO {
     var o: TO;
@@ -459,7 +487,7 @@ fn vn(p: vec2<f32>) -> f32 {
     if (u.heat.z > 0.0) {
         let q = v.uv * vec2<f32>(14.0 * asp, 14.0);
         let n = vec2<f32>(vn(q + vec2<f32>(0.0, t * 1.4)) + 0.5 * vn(q * 2.1 + vec2<f32>(t * 0.7, 0.0)), vn(q * 1.3 + vec2<f32>(t * 0.5, t * 1.9)) + 0.5 * vn(q * 2.3 - vec2<f32>(0.0, t))) - 0.75;
-        uv = uv + n * 0.0045 * u.heat.z * edge;
+        uv = uv + n * 0.008 * u.heat.z * edge;
     }
     // rings: a displacement band travelling out from each centre
     var split = 0.0;
@@ -489,22 +517,26 @@ fn vn(p: vec2<f32>) -> f32 {
     // embers: specks rising in the edge band
     var sp = 0.0;
     if (u.heat.w > 0.0) {
-        let g = v.uv * vec2<f32>(26.0 * asp, 26.0) + vec2<f32>(0.0, t * 2.2);
+        // embers: glowing specks rising (and swaying) through the edge band; not a tint, so outside the tint cap
+        let g = v.uv * vec2<f32>(16.0 * asp, 16.0) + vec2<f32>(0.0, t * 1.6);
         let c = floor(g);
         let h = h2(c);
-        let jit = vec2<f32>(h2(c + 3.7), h2(c + 9.1)) * 0.6 + 0.2;
-        let dd = length(fract(g) - jit);
-        let fl = 0.6 + 0.4 * sin(t * 7.0 + h * 50.0);
-        sp = step(0.86, h) * (1.0 - smoothstep(0.04, 0.16, dd)) * fl * u.heat.w * edge;
+        let sway = sin(t * 2.0 + h * 30.0) * 0.18;
+        let jit = vec2<f32>(h2(c + 3.7) * 0.6 + 0.2 + sway, h2(c + 9.1) * 0.6 + 0.2);
+        let dv = (fract(g) - jit) * vec2<f32>(1.0, 0.55);
+        let dd = length(dv);
+        let fl = 0.65 + 0.35 * sin(t * 9.0 + h * 50.0);
+        sp = step(0.78, h) * (1.0 - smoothstep(0.03, 0.13, dd)) * fl * u.heat.w * edge;
     }
     let wf = u.flash.w * fm;
     let gl = length(glow);
-    let sum = wv + we + sp + wf + gl;
+    let sum = wv + we + wf + gl;
     let cap = 0.15 * u.m.y;
     let s = select(1.0, cap / sum, sum > cap);
     col = mix(col, u.tint.rgb, wv * s);
     col = mix(col, u.tint.rgb, we * s);
-    col = col + vec3<f32>(1.0, 0.62, 0.25) * sp * s * 2.0;
+    // embers paint over (not add to) the picture: orange on a bright stage too, a hot yellow core
+    col = mix(col, mix(vec3<f32>(1.0, 0.36, 0.05), vec3<f32>(1.0, 0.78, 0.3), sp * sp), min(sp * 1.4, 0.95));
     col = col + glow * s;
     col = mix(col, u.flash.rgb, wf * s);
     return vec4<f32>(col, 1.0);
@@ -654,7 +686,7 @@ impl FxGpu {
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Unorm8x4, offset: 12, shader_location: 1 },
         ];
         let add = wgpu::BlendState { color: wgpu::BlendComponent { src_factor: wgpu::BlendFactor::One, dst_factor: wgpu::BlendFactor::One, operation: wgpu::BlendOperation::Add }, alpha: wgpu::BlendComponent::REPLACE };
-        let mk = |label, tri: bool, blend: Option<wgpu::BlendState>, emis_blend: Option<wgpu::BlendState>, zwrite: bool| {
+        let mk = |label: &str, tri: bool, blend: Option<wgpu::BlendState>, emis_blend: Option<wgpu::BlendState>, zwrite: bool| {
             let bufs_mesh = [
                 wgpu::VertexBufferLayout { array_stride: VERT_BYTES, step_mode: wgpu::VertexStepMode::Vertex, attributes: &mesh_attrs },
                 wgpu::VertexBufferLayout { array_stride: INST_BYTES, step_mode: wgpu::VertexStepMode::Instance, attributes: &inst_attrs },
@@ -663,7 +695,7 @@ impl FxGpu {
             device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
                 label: Some(label),
                 layout: Some(&self.world_layout),
-                vertex: wgpu::VertexState { module: &self.world_module, entry_point: Some(if tri { "vs_tri" } else { "vs_mesh" }), compilation_options: Default::default(), buffers: if tri { &bufs_tri } else { &bufs_mesh } },
+                vertex: wgpu::VertexState { module: &self.world_module, entry_point: Some(if tri { "vs_tri" } else if label == "fx ink" { "vs_ink" } else { "vs_mesh" }), compilation_options: Default::default(), buffers: if tri { &bufs_tri } else { &bufs_mesh } },
                 primitive: wgpu::PrimitiveState::default(),
                 depth_stencil: Some(wgpu::DepthStencilState {
                     format: DEPTH_FORMAT,
@@ -676,7 +708,7 @@ impl FxGpu {
                 multisample: wgpu::MultisampleState { count: samples, ..Default::default() },
                 fragment: Some(wgpu::FragmentState {
                     module: &self.world_module,
-                    entry_point: Some(if tri { "fs_tri" } else { "fs_mesh" }),
+                    entry_point: Some(if tri { "fs_tri" } else if label == "fx ink" { "fs_ink" } else { "fs_mesh" }),
                     compilation_options: Default::default(),
                     targets: &[
                         Some(wgpu::ColorTargetState { format: COLOR_FORMAT, blend, write_mask: wgpu::ColorWrites::COLOR }),
@@ -692,6 +724,7 @@ impl FxGpu {
             mk("fx blend", false, Some(wgpu::BlendState::ALPHA_BLENDING), Some(add), false),
             mk("fx add", false, Some(add), Some(add), false),
             mk("fx tris", true, Some(add), Some(add), false),
+            mk("fx ink", false, None, None, true),
         ];
         self.world_samples = samples;
     }
@@ -1026,12 +1059,16 @@ impl Renderer {
         for r in proj_rows(&cam, widen) {
             put4(&mut gb, r);
         }
-        put4(&mut gb, [f.now(), f.intensity, 0.0, 0.0]);
+        // misc: time, intensity, the ink width in NDC units (x, y) at this target size
+        let (vw, vh) = if cam.vp[2] > 0.0 { (cam.vp[2] * w as f32 / 640.0, cam.vp[3] * h as f32 / 480.0) } else { (w as f32, h as f32) };
+        let ink_px = INK_PX * h as f32 / 480.0;
+        put4(&mut gb, [f.now(), f.intensity, 2.0 * ink_px / vw.max(1.0), 2.0 * ink_px / vh.max(1.0)]);
         let gl = glass_params();
         put4(&mut gb, [gl.0, gl.1, gl.2, 0.0]);
         self.queue.write_buffer(&f.globals, 0, &gb);
         // instances: per pipeline class (opaque, blend, add), then the trails as additive ghosts
         let mut lists: [Vec<(u32, u32, u32)>; 3] = [Vec::new(), Vec::new(), Vec::new()];
+        let mut ink: Vec<(u32, u32, u32)> = Vec::new();
         f.inst_scratch.clear();
         let mut ni = 0u32;
         let push = |b: &mut Vec<u8>, d: &WorldDraw, seed: f32| {
@@ -1040,17 +1077,20 @@ impl Renderer {
             }
             put4(b, d.p);
             put4(b, rgba_f(d.rgba));
-            put4(b, [(d.mat & 0x7F) as f32, d.alpha, seed, 0.0]);
+            put4(b, [(d.mat & MAT_ID) as f32, d.alpha, seed, 0.0]);
         };
         for (i, d) in f.frame.draws.iter().enumerate() {
             let Some(&(start, count)) = f.ranges.get(d.model as usize) else { continue };
             if count == 0 || ni as usize >= MAX_INST {
                 continue;
             }
-            let mat = d.mat & 0x7F;
+            let mat = d.mat & MAT_ID;
             let class = if mat == MAT_UNLIT_ADD { 2 } else if mat == MAT_GLASS || d.alpha < 0.99 { 1 } else { 0 };
             push(&mut f.inst_scratch, d, i as f32 * 1.7);
             lists[class].push((start, count, ni));
+            if d.mat & MAT_OUTLINE != 0 && class != 2 {
+                ink.push((start, count, ni));
+            }
             ni += 1;
         }
         let mut k = 0;
@@ -1131,6 +1171,13 @@ impl Renderer {
             pass.set_bind_group(0, &f.world_bg, &[]);
             pass.set_vertex_buffer(0, f.vbuf.slice(..));
             pass.set_vertex_buffer(1, f.inst.slice(..));
+            // ink edges first: each tagged body's screen-space hull, then the body over it at the same depth
+            if !ink.is_empty() {
+                pass.set_pipeline(&f.world_pipes[4]);
+                for &(start, count, i) in &ink {
+                    pass.draw(start..start + count, i..i + 1);
+                }
+            }
             for (class, list) in lists.iter().enumerate() {
                 if list.is_empty() {
                     continue;

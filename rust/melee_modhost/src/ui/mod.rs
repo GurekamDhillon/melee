@@ -488,7 +488,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
     });
     // envoy-fx.md: a drive model with a built-in material (melee_gx::fx::MAT_*: 0 body, 1 glass, 2 glow, 3 foil,
-    // 4 dissolve, 5 unlit additive; | 0x80 a light trail), its parameters p0..p3 (glow 0..2, charge 0..1, the wearer's
+    // 4 dissolve, 5 unlit additive; | 0x80 a light trail, | 0x40 the ink edge on a drive body), its parameters p0..p3 (glow 0..2, charge 0..1, the wearer's
     // Heat state 0..3, extra: foil rarity 1 Epic / 2 Unique, dissolve 0 whole .. 1 gone) and colour RGBA. Same cap as
     // gd_ui_world_model; host-clamped; presentation only.
     f!("gd_ui_world_model_ex", |c: Caller<'_, PresData>, model: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, alpha: f32, material: i32, p0: f32, p1: f32, p2: f32, p3: f32, rgba: u32| -> i32 {
@@ -496,7 +496,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             return GD_EINVAL;
         }
         let m = material as u32;
-        if m & !0xFF != 0 || (m & 0x7F) >= melee_gx::fx::MAT_COUNT as u32 || ![x, y, z, yaw, scale, alpha, p0, p1, p2, p3].iter().all(|v| v.is_finite()) {
+        if m & !0xFF != 0 || (m & melee_gx::fx::MAT_ID as u32) >= melee_gx::fx::MAT_COUNT as u32 || ![x, y, z, yaw, scale, alpha, p0, p1, p2, p3].iter().all(|v| v.is_finite()) {
             return GD_EINVAL;
         }
         let p = [p0.clamp(0.0, 2.0), p1.clamp(0.0, 1.0), p2.clamp(0.0, 3.0), p3.clamp(0.0, 2.0)];

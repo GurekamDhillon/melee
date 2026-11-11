@@ -312,7 +312,9 @@ pub struct UiGpu {
 }
 
 const UI_WGSL: &str = "
-struct U { tgt: vec4<f32>, band: vec4<f32> };
+struct U { tgt: vec4<f32>, band: vec4<f32>, tilt: vec4<f32>, tilt2: vec4<f32> };
+// tilt: the menu camera (yaw, pitch radians, focal length px, parallax depth px); tilt2.x: instances this present.
+// All zero at rest: the transform is skipped and every pixel is the untilted one.
 // tgt.z: render-clock seconds, tgt.w: effects intensity (0 off, 0.5 subtle, 1 full)
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var atlas: texture_2d<f32>;
@@ -325,12 +327,13 @@ struct VsOut {
     @location(2) clip: vec4<f32>,
     @location(3) @interpolate(flat) sdf: u32,
     @location(4) @interpolate(flat) fx: vec2<u32>,
+    @location(5) pp: vec2<f32>,
 };
 fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     if (win) { return p; }
     return u.band.xy + p * u.band.zw / vec2<f32>(640.0, 480.0);
 }
-@vertex fn vs_main(@builtin(vertex_index) vi: u32,
+@vertex fn vs_main(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32,
                    @location(0) rect: vec4<f32>, @location(1) uvr: vec4<f32>, @location(2) clip: vec4<f32>,
                    @location(3) rgba: u32, @location(4) shear: f32, @location(5) flags: u32,
                    @location(6) rp: vec3<f32>, @location(7) fx: vec2<u32>) -> VsOut {
@@ -345,8 +348,31 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
         let sn = sin(rp.x);
         p = rp.yz + vec2<f32>(d.x * cs - d.y * sn, d.x * sn + d.y * cs);
     }
-    let px = to_px(p, win);
+    var px = to_px(p, win);
     var o: VsOut;
+    o.pp = px;
+    if (u.tilt.x != 0.0 || u.tilt.y != 0.0) {
+        // the menu camera (retail mn_8022BA1C's C-stick orbit): the batch as a plane seen from a turned eye, later
+        // quads nearer (parallax: backdrop, stickers, their shadows, the cursor)
+        let c = u.band.xy + u.band.zw * 0.5;
+        // a backdrop (a quad covering the whole band) is overscanned so a full turn never shows the black past it
+        let ext = select(rect.zw * u.band.zw / vec2<f32>(640.0, 480.0), rect.zw, win);
+        if (ext.x >= u.band.z * 0.98 && ext.y >= u.band.w * 0.98) {
+            px = c + (px - c) * 1.4;
+        }
+        let z = (1.0 - f32(ii) / max(u.tilt2.x, 1.0)) * u.tilt.w;
+        let q = vec3<f32>(px.x - c.x, c.y - px.y, z);
+        let sa = sin(u.tilt.x);
+        let ca = cos(u.tilt.x);
+        let sb = sin(u.tilt.y);
+        let cb = cos(u.tilt.y);
+        let x1 = q.x * ca + q.z * sa;
+        let z1 = -q.x * sa + q.z * ca;
+        let y2 = q.y * cb + z1 * sb;
+        let z2 = -q.y * sb + z1 * cb;
+        let k = u.tilt.z / (u.tilt.z + z2);
+        px = vec2<f32>(c.x + x1 * k, c.y - y2 * k);
+    }
     o.pos = vec4<f32>(px.x / u.tgt.x * 2.0 - 1.0, 1.0 - px.y / u.tgt.y * 2.0, 0.0, 1.0);
     o.uv = mix(uvr.xy, uvr.zw, l);
     let c = unpack4x8unorm(rgba);
@@ -403,7 +429,9 @@ fn effect(v: VsOut, base: vec4<f32>) -> vec4<f32> {
     let d = textureSample(atlas, lin, v.uv).a;
     let fw = max(fwidth(d), 1.0e-4);
     let cov = clamp((d - 0.5) / fw + 0.5, 0.0, 1.0);
-    if (v.pos.x < v.clip.x || v.pos.y < v.clip.y || v.pos.x >= v.clip.z || v.pos.y >= v.clip.w) { discard; }
+    // clipping in the untilted plane (at rest: the fragment position, as before)
+    let cp = select(v.pos.xy, v.pp, u.tilt.x != 0.0 || u.tilt.y != 0.0);
+    if (cp.x < v.clip.x || cp.y < v.clip.y || cp.x >= v.clip.z || cp.y >= v.clip.w) { discard; }
     if (v.sdf != 0u) { return vec4<f32>(v.c.rgb, v.c.a * cov); }
     if (v.fx.x != 0u && u.tgt.w > 0.0) { return effect(v, n * v.c); }
     return n * v.c;
@@ -433,7 +461,7 @@ impl UiGpu {
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             view_formats: &[],
         });
-        let uniform = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui"), size: 32, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        let uniform = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui"), size: 64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui"), mag_filter: wgpu::FilterMode::Nearest, min_filter: wgpu::FilterMode::Nearest, ..Default::default() });
         let linear = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui sdf"), mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, ..Default::default() });
         let view = atlas.create_view(&Default::default());
@@ -555,8 +583,12 @@ impl Renderer {
         let pi = g.pipeline(device, format);
         // the effects' clock wraps every hour (f32 precision); intensity 0 turns every quad effect off
         let secs = (g.clock.elapsed().as_secs_f64() % 3600.0) as f32;
-        let u: [f32; 8] = [tw, th, secs, self.fx_intensity, band[0], band[1], band[2], band[3]];
-        let mut ub = [0u8; 32];
+        // the menu tilt (Renderer::ui_tilt): focal length ~ retail's menu camera (a 30-degree turn reads as a turn,
+        // not a smear), parallax depth 5% of the band height
+        let [ya, pa] = self.ui_tilt;
+        let tilt = if ya != 0.0 || pa != 0.0 { [ya, pa, band[3] * 1.9, band[3] * 0.05] } else { [0.0; 4] };
+        let u: [f32; 16] = [tw, th, secs, self.fx_intensity, band[0], band[1], band[2], band[3], tilt[0], tilt[1], tilt[2], tilt[3], g.count as f32, 0.0, 0.0, 0.0];
+        let mut ub = [0u8; 64];
         for (i, v) in u.iter().enumerate() {
             ub[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
         }

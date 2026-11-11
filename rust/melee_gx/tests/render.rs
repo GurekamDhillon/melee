@@ -288,7 +288,7 @@ fn fx_inputs(r: &mut Renderer, posts: &[melee_gx::fx::Post], draws: usize) {
     let cam = Camera { view: [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]], proj: [1.0, 2.0 / 640.0, -1.0, -2.0 / 480.0, 1.0, -0.001, -0.5], vp: [0.0, 0.0, 640.0, 480.0, 0.0, 1.0] };
     let mut f = FxFrame { intensity: 1.0, cam: Some(cam), ..Default::default() };
     for i in 0..draws {
-        f.draws.push(WorldDraw { model: 0, mat: [MAT_GLOW, MAT_FOIL, MAT_GLASS, MAT_DISSOLVE][i % 4] | MAT_TRAIL, at: [80.0 + i as f32 * 40.0, 400.0 - (i % 3) as f32 * 30.0, -50.0], yaw: i as f32, scale: 36.0, alpha: if i % 4 == 2 { 0.3 } else { 1.0 }, p: [1.0, 0.7, 2.0, if i % 4 == 3 { 0.3 } else { 1.0 }], rgba: 0xFF80_40FF });
+        f.draws.push(WorldDraw { model: 0, mat: [MAT_GLOW, MAT_FOIL, MAT_GLASS, MAT_DISSOLVE][i % 4] | MAT_TRAIL | MAT_OUTLINE, at: [80.0 + i as f32 * 40.0, 400.0 - (i % 3) as f32 * 30.0, -50.0], yaw: i as f32, scale: 36.0, alpha: if i % 4 == 2 { 0.3 } else { 1.0 }, p: [1.0, 0.7, 2.0, if i % 4 == 3 { 0.3 } else { 1.0 }], rgba: 0xFF80_40FF });
     }
     f.posts.extend_from_slice(posts);
     r.set_fx(&mut f);
@@ -335,6 +335,21 @@ fn fx_disarmed_is_the_plain_frame() {
     scene_frame(&mut r);
     assert!(r.read_color() == efb_plain, "disarmed: the EFB changed");
     assert!(r.read_composed_size(w, h, &[]) == plain, "disarmed: the window changed");
+    // the menu tilt: a UI batch at ui_tilt [0, 0] is the untilted one; tilted it moves; back at rest it is again
+    let mut atlas = melee_gx::ui::Atlas::new();
+    let wq = atlas.white.uv();
+    let mut ui = melee_gx::ui::UiFrame::default();
+    for i in 0..6 {
+        ui.quads.push(melee_gx::ui::UiQuad { rect: [40.0 + i as f32 * 90.0, 60.0 + i as f32 * 50.0, 80.0, 40.0], uv: wq, clip: melee_gx::ui::NO_CLIP, rgba: 0xFF40_80FF, ..Default::default() });
+    }
+    r.set_ui(Some(&ui), &mut atlas);
+    let flat = r.read_composed_size(w, h, &[]);
+    r.ui_tilt = [0.3, -0.2];
+    assert!(r.read_composed_size(w, h, &[]) != flat, "the tilt moved nothing");
+    r.ui_tilt = [0.0, 0.0];
+    assert!(r.read_composed_size(w, h, &[]) == flat, "at rest the UI is not the untilted one");
+    r.set_ui(None, &mut atlas);
+    assert!(r.read_composed_size(w, h, &[]) == plain, "no UI: the window changed");
     let dir = env!("CARGO_MANIFEST_DIR");
     let out = format!("{dir}/../target/gx-oracle");
     let _ = std::fs::create_dir_all(&out);

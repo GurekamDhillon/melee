@@ -50,7 +50,7 @@ impl EnvoyFx {
         drive_draw::world_frame(
             |model, at, yaw, scale, alpha, mat, p, rgba| {
                 // the old import's glass shell: the glass material at the material json's opacity
-                let (mat, alpha) = if model as usize == drive_draw::M_GLASS && mat & 0x7F == MAT_BODY { (MAT_GLASS | (mat & MAT_TRAIL), alpha.min(glass_a)) } else { (mat, alpha) };
+                let (mat, alpha) = if model as usize == drive_draw::M_GLASS && mat & melee_gx::fx::MAT_ID == MAT_BODY { (MAT_GLASS | (mat & MAT_TRAIL), alpha.min(glass_a)) } else { (mat, alpha) };
                 draws.push(WorldDraw { model, mat, at, yaw, scale, alpha, p, rgba });
             },
             &mut self.tris,
@@ -95,5 +95,79 @@ fn demo(posts: &mut Vec<melee_gx::fx::Post>, n: &mut u32) {
             }
             _ => {}
         }
+    }
+}
+
+/// The menu camera for the port's own menu screens (retail mn_8022BA1C: the first controller whose C-stick is out of
+/// the 0.4 dead zone turns the menu camera up to 30 degrees per axis, linear past the dead zone). Ours adds a
+/// spring-damper (it lags, overshoots a little and wobbles back to rest) and parallax in the UI shader. Display only:
+/// it reads the pads the UI host already copied for this present; nothing reaches the sim.
+#[derive(Default)]
+pub struct MenuCam {
+    ang: [f32; 2],
+    vel: [f32; 2],
+    last: Option<std::time::Instant>,
+}
+
+/// Whether one of our full-screen menus is up: a custom UI scene (the Envoy camp, the party picker), or an armed
+/// Envoy run's reward / shop screen or its between-fights screens. Never the fight HUD.
+pub fn our_menu_up(ui: &melee_modhost::ui::PresHost) -> bool {
+    if !ui.shared.borrow().stack.is_empty() {
+        return true;
+    }
+    let v = unsafe { &*core::ptr::addr_of!(melee_modes::tu::envoy::VIEW) };
+    const VIEW_MAGIC: i32 = 0x454E_5633;
+    melee_modes::tu::envoy::armed() != 0 && v[0] == VIEW_MAGIC && v[1] != 0 && (v[8] != 0 || v[5] == 0)
+}
+
+impl MenuCam {
+    /// This present's tilt (yaw, pitch radians) for `Renderer::ui_tilt`: exactly [0, 0] at rest or with no menu up.
+    pub fn update(&mut self, ui: Option<&melee_modhost::ui::PresHost>, intensity: f32) -> [f32; 2] {
+        let now = std::time::Instant::now();
+        let dt = self.last.replace(now).map_or(0.0, |l| (now - l).as_secs_f32()).min(0.05);
+        let up = intensity > 0.0 && ui.is_some_and(our_menu_up);
+        let mut target = [0.0f32; 2];
+        if up {
+            // the larger deflection of any controller, per axis (retail takes the first one out of the dead zone)
+            let pads = ui.unwrap().shared.borrow().pads;
+            let tilt = |raw: i8| {
+                let v = (raw as f32 / 80.0).clamp(-1.0, 1.0);
+                if v.abs() < 0.4 { 0.0 } else { 30f32.to_radians() * (v.abs() - 0.4) / 0.6 * v.signum() }
+            };
+            for p in pads.iter().filter(|p| p.err != -1) {
+                let (x, y) = (tilt(p.substickX), tilt(p.substickY));
+                if x.abs() > target[0].abs() {
+                    target[0] = x;
+                }
+                if y.abs() > target[1].abs() {
+                    target[1] = y;
+                }
+            }
+            // Subtle: half the turn
+            target = [target[0] * intensity, target[1] * intensity];
+        }
+        // spring-damper: stiff enough to follow in ~0.15 s, under-damped (zeta 0.42) for a small overshoot and wobble
+        const K: f32 = 260.0;
+        let c = 2.0 * K.sqrt() * 0.42;
+        let steps = (dt / 0.004).ceil().max(1.0) as u32;
+        let h = dt / steps as f32;
+        for _ in 0..steps {
+            for i in 0..2 {
+                let a = K * (target[i] - self.ang[i]) - c * self.vel[i];
+                self.vel[i] += a * h;
+                self.ang[i] += self.vel[i] * h;
+            }
+        }
+        // rest is exact: text pixel-crisp the moment it settles
+        for i in 0..2 {
+            if target[i] == 0.0 && self.ang[i].abs() < 2e-4 && self.vel[i].abs() < 2e-3 {
+                self.ang[i] = 0.0;
+                self.vel[i] = 0.0;
+            }
+        }
+        if !up && intensity <= 0.0 {
+            *self = MenuCam { last: Some(now), ..Default::default() };
+        }
+        self.ang
     }
 }

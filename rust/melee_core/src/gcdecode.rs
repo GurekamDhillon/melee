@@ -117,11 +117,14 @@ impl GcArena {
     /// Test knob support (`MELEE_RECLAIM_POISON`): fill every object with `byte` and leak it, so a later read through a
     /// stale pointer into this image finds the pattern (a pointer field reads as a non-canonical address and faults at
     /// once, naming the holder) instead of memory the allocator has handed to someone else.
-    pub fn poison_and_leak(mut self, byte: u8) {
+    pub fn poison_and_leak(mut self, byte: u8) -> Vec<(usize, usize, &'static str)> {
+        let mut v = Vec::with_capacity(self.owned.len());
         for o in self.owned.drain(..) {
             // SAFETY: `bytes` is the size of the block `ptr` owns (see `object` / the slice decoders).
             unsafe { core::ptr::write_bytes(o.ptr, byte, o.bytes) };
+            v.push((o.ptr as usize, o.bytes, o.ty));
         }
+        v
     }
 }
 

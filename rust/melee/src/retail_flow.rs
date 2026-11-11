@@ -794,6 +794,7 @@ impl RetailPlay {
             }
         }
         self.tick_no += 1;
+        crate::hang::beat();
         self.age += 1;
         let Some(e) = self.engine() else { return };
         let now = e.mode_scene();

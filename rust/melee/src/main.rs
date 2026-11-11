@@ -35,6 +35,7 @@ mod cosmetics_import;
 mod nucleus;
 mod settings_overlay;
 mod crash;
+mod hang;
 mod launcher_compat;
 mod display;
 mod prof;
@@ -492,6 +493,7 @@ fn main_inner() -> ExitCode {
     // The Melee Unlocked launcher's command line (launcher_compat.rs): its environment is set before the log redirect.
     let compat = launcher_compat::prepare(&args);
     crash::install();
+    hang::install();
     if let Some(notes) = yougame {
         eprintln!("yougame: stdio bridge on ({}){}", if melee_platform::yougame::embedded() { "player box" } else { "own window" },
             if notes.is_empty() { String::new() } else { format!(", {}", notes.join(", ")) });

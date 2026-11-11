@@ -296,18 +296,33 @@ fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
     // of freed, so a stale holder faults deterministically on its next read (the crash report names it)
     static POISON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     let poison = *POISON.get_or_init(|| std::env::var_os("MELEE_RECLAIM_POISON").is_some());
+    // MELEE_RECLAIM_LEAK=1 (mitigation): a dropped image is forgotten (never freed): the lists stay short, its memory
+    // stays as it was, so a stale holder reads and writes its own old object instead of someone else's block
+    static LEAK: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    let leak = *LEAK.get_or_init(|| std::env::var_os("MELEE_RECLAIM_LEAK").is_some());
     let (mut dropped, keep): (Vec<ArchiveImage>, Vec<ArchiveImage>) = std::mem::take(&mut h.retired).into_iter().partition(|im| hit(im));
     h.retired = keep;
-    let dead: Vec<usize> = h.archives.iter().filter(|(_, im)| hit(im)).map(|(&k, _)| k).collect();
+    let mut dead: Vec<usize> = h.archives.iter().filter(|(_, im)| hit(im)).map(|(&k, _)| k).collect();
+    // MELEE_RECLAIM_SORTED=1 (test knob): free in address order, not the map's per-process random order, so a failing
+    // free order can be replayed
+    static SORTED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if *SORTED.get_or_init(|| std::env::var_os("MELEE_RECLAIM_SORTED").is_some()) {
+        dead.sort_unstable();
+    }
     for k in &dead {
         if let Some(im) = h.archives.remove(k) {
             dropped.push(im);
         }
     }
     for mut im in dropped {
+        if leak && !poison {
+            core::mem::forget(im);
+            continue;
+        }
         if poison {
             if let Some(a) = im._arena.take() {
-                a.poison_and_leak(0xDD);
+                let v = a.poison_and_leak(0xDD);
+                unsafe { (*core::ptr::addr_of_mut!(POISONED)).extend(v) };
             }
         }
     }
@@ -377,3 +392,25 @@ pub fn untyped_public(archive: *mut HSD_Archive, name: &str) -> Option<(usize, u
     }
     Some((image.raw + HEADER_BYTES, image.dat.data.len() as u32, off))
 }
+
+/// The objects `MELEE_RECLAIM_POISON` filled with 0xDD: (address, bytes, type).
+static mut POISONED: Vec<(usize, usize, &'static str)> = Vec::new();
+
+/// `MELEE_RECLAIM_POISON`: report (once each) a poisoned object something wrote into after its image was dropped: the
+/// type and the first changed offset name the stale holder's target. Call once per frame; a no-op without the knob.
+pub fn check_poison(frame: u64) {
+    let v = unsafe { &mut *core::ptr::addr_of_mut!(POISONED) };
+    v.retain(|&(p, n, ty)| {
+        // SAFETY: the block was leaked (never freed), so it stays readable.
+        let b = unsafe { core::slice::from_raw_parts(p as *const u8, n) };
+        match b.iter().position(|&x| x != 0xDD) {
+            Some(o) => {
+                let w = &b[o..(o + 16).min(n)];
+                eprintln!("engine: POISON WRITTEN at frame {frame}: {ty} at {p:#x} (+{o:#x} of {n} bytes) now {w:02x?}");
+                false
+            }
+            None => true,
+        }
+    });
+}
+

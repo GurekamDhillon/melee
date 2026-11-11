@@ -25,6 +25,7 @@ mod shop;
 mod kit;
 mod party;
 mod picker;
+mod fx;
 
 use envoy_data::view::*;
 use envoy_data::*;
@@ -662,6 +663,8 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
         let in_match = v[V_LIVE] != 0;
         if in_match {
             world(&v);
+            fx::heat_screen(&v);
+            fx::moments(&v);
             sounds(&v);
             let mut pv = [0i32; 12];
             let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
@@ -1000,7 +1003,11 @@ unsafe fn orbiter(v: &[i32; VW], owner: i32, id: i32, lv: i32, charge: i32, (mut
         }
     }
     let yaw = T as f32 * 0.06 + id as f32;
-    model(d.family as i32, x, y, z, yaw, scale, glow * dim, 1.0);
+    // envoy-fx.md: the glow material (pulses with the charge, brighter with the wearer's Heat), a light trail; Epic
+    // foil, Unique (tier 3) holographic foil
+    let heat = if (0..OWNER_FOE).contains(&owner) { fx::heat_state(v, owner as usize / 2) as f32 } else { 0.0 };
+    let (mat, extra) = match d.tier { 2 => (fx::MAT_FOIL, 1.0), t if t >= 3 => (fx::MAT_FOIL, 2.0), _ => (fx::MAT_GLOW, 0.0) };
+    fx::model(d.family as i32, x, y, z, yaw, scale, 1.0, mat | fx::MAT_TRAIL, [glow * dim, ch.min(1.0), heat, extra], FAM_COL[d.family as usize]);
     if lv >= 2 {
         model(if lv >= 3 { M_RING3 } else { M_RING2 }, x, y, z, yaw, scale * 1.05, 0.8 * dim, 1.0);
     }
@@ -1121,6 +1128,7 @@ unsafe fn world(v: &[i32; VW]) {
         }
     }
     // the drops: the model in its glass shell with a beam in the owner's colour (co-op), else the family's
+    let mut drops_seen = [0u32; 2];
     for p in 0..humans {
         for k in 0..DROPS {
             let d = pb(p) + P_DROPS + k * 4;
@@ -1155,10 +1163,11 @@ unsafe fn world(v: &[i32; VW]) {
             if humans == 2 {
                 fx(FX_RING, x, y, 0.0, 8.5, 1.0, 0.0, alpha(PLAYER_COL[p], 0.8));
             }
-            model(fam as i32, x, y, 0.0, T as f32 * 0.05, 5.0, 1.0, 1.0);
-            model(M_GLASS, x, y, 0.0, T as f32 * 0.05, 7.5, 0.5, 0.3);
+            fx::drop_model(T, p, k, fam as i32, x, y);
+            drops_seen[p] |= 1 << k;
         }
     }
+    fx::drop_ghosts(T, drops_seen);
     // each fire's effect, by its drive's look, in its family colour
     for e in 0..LOG {
         let l = log_entry(v, e);

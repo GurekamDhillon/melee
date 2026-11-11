@@ -153,6 +153,9 @@ fn offer_row(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f3
     if lvl_up && !faded {
         spr_rot(e, S_RAYS, bx, by, if on { 1.2 } else { 0.8 }, unsafe { T } as f32 * 0.6, alpha(SUNNY, if on { 0.9 } else { 0.45 } * a));
     }
+    if !stock && !faded {
+        rarity_fx(POOL[id as usize].tier);
+    }
     sticker(e, if on { S_FACE_HOVER } else { S_FACE_WHITE }, x + 18.0, y, w - 18.0, h, deg, alpha(WHITE, a), |e| {
         let tx = x + 50.0;
         let tr = x + w - 10.0;
@@ -222,6 +225,15 @@ fn offer_row(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f3
     }
     if lvl_up && on {
         burst(e, S_BURST_CORAL, x + w - 14.0, y - 2.0, 54.0, unsafe { T - OPEN_AT }, "Level up!", 10);
+    }
+}
+
+/// envoy-fx.md: Epic offers shimmer (foil), Unique ones (tier 3) get the holographic face.
+fn rarity_fx(tier: u8) {
+    match tier {
+        2 => face_fx_next(FX_FOIL, 0xC9BF_F5FF),
+        t if t >= 3 => face_fx_next(FX_HOLO, 0xFFFF_FFFF),
+        _ => {}
     }
 }
 

@@ -1,5 +1,5 @@
 //! Port of the fixed-frame txt pad script (`gw_script_pad.c` part 1, `MELEE_PAD_SCRIPT=<file>.txt`):
-//! one segment per line, `<frames> <buttons_hex> [stickX stickY [trigL trigR]]`, `#` comments;
+//! one segment per line, `<frames> <buttons_hex> [stickX stickY [trigL trigR [cstickX cstickY]]]`, `#` comments;
 //! each PADRead consumes one frame, the last segment holds; broadcast to the channels
 //! `MELEE_PAD_CHANNELS` names (default "0"). Lua scripts, MELEE_PAD_LIVE, gd.input claims and
 //! the pad bot are not ported.
@@ -23,6 +23,9 @@ pub struct Segment {
     pub sy: i8,
     pub tl: u8,
     pub tr: u8,
+    /// The C-stick (port extension: absent = centred, as the C script).
+    pub cx: i8,
+    pub cy: i8,
 }
 
 #[derive(Clone, Debug)]
@@ -90,7 +93,7 @@ impl PadScript {
             let Some(frames) = toks.next().and_then(scan_int) else { continue };
             let Some(buttons) = toks.next().and_then(scan_hex) else { continue };
             // sscanf stops at the first failed conversion: later fields keep 0.
-            let mut rest = [0i64; 4];
+            let mut rest = [0i64; 6];
             for slot in rest.iter_mut() {
                 match toks.next().and_then(scan_int) {
                     Some(v) => *slot = v,
@@ -108,6 +111,8 @@ impl PadScript {
                 sy: rest[1] as i8,
                 tl: rest[2] as u8,
                 tr: rest[3] as u8,
+                cx: rest[4] as i8,
+                cy: rest[5] as i8,
             });
         }
         Self { segments, chan_mask, cursor: 0, left: 0 }
@@ -161,8 +166,8 @@ impl PadScript {
             }
             s.stickX = g.sx;
             s.stickY = g.sy;
-            s.substickX = 0;
-            s.substickY = 0;
+            s.substickX = g.cx;
+            s.substickY = g.cy;
             s.triggerLeft = g.tl;
             s.triggerRight = g.tr;
             s.button = g.buttons;

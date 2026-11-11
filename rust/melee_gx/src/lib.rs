@@ -21,6 +21,7 @@ pub mod consts;
 #[cfg(feature = "corev1")]
 pub mod corev1;
 pub mod draw;
+pub mod fx;
 pub mod interp;
 pub mod render;
 pub mod resources;

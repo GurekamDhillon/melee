@@ -178,10 +178,30 @@ pub fn face(e: &mut E, id: usize, x: f32, y: f32, w: f32, h: f32, rgba: u32) {
     }
 }
 
+/// Host effects (envoy-fx.md): the next sticker's face gets `FACE_FX` (foil / holo), the hovered face a glow.
+static mut FACE_FX: [u32; 2] = [0; 2];
+/// The next `sticker` face shimmers: FX_FOIL (Epic) or FX_HOLO (Unique), in `rgba`.
+pub fn face_fx_next(id: u32, rgba: u32) {
+    unsafe { FACE_FX = [id, rgba] };
+}
+
 /// A sticker rotated `deg` about its centre: the face, then whatever `inner` draws (in the same rotation).
 pub fn sticker(e: &mut E, id: usize, x: f32, y: f32, w: f32, h: f32, deg: f32, rgba: u32, inner: impl FnOnce(&mut E)) {
     rot(e, deg, x + w * 0.5, y + h * 0.5);
+    let fx = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(FACE_FX)) };
+    if id == S_FACE_HOVER {
+        // the cursor's soft halo behind the hovered sticker (the host's pre-blurred glow, breathing)
+        e.effect(FX_GLOW, alpha(SUNNY, (rgba & 0xFF) as f32 / 255.0 * 0.85));
+        e.slice(SLICE_GLOW_R6, x - 2.0, y - 2.0, w + 7.0, h + 7.0, WHITE);
+        e.effect(FX_NONE, 0);
+    }
+    if fx[0] != 0 {
+        e.effect(fx[0], fx[1]);
+    }
     face(e, id, x, y, w, h, rgba);
+    if fx[0] != 0 {
+        e.effect(FX_NONE, 0);
+    }
     inner(e);
     unrot(e);
 }

@@ -112,6 +112,10 @@ pub struct RetailPlay {
     /// gd-ui-v1 presentation mods (MELEE_WASM_MODS, modules importing gd_ui): harness-owned, never in the arena, so a
     /// savestate load or rollback never rewinds them. None with no UI mod: nothing runs and nothing is drawn.
     pub ui: Option<melee_modhost::ui::PresHost>,
+    /// The Envoy effects layer's per-present inputs (crate::envoy_fx).
+    envoy_fx: crate::envoy_fx::EnvoyFx,
+    /// The menu camera's C-stick tilt for our own menu screens (crate::envoy_fx::MenuCam).
+    menu_cam: crate::envoy_fx::MenuCam,
     /// gd-lab-v1: the lab match (the engine while a Lab mod runs a match), its overlay painter, the clock of the
     /// offline commands and this tick's commands.
     pub lab: Option<crate::lab::LabRun>,
@@ -159,6 +163,8 @@ impl RetailPlay {
             rec: None, feed: None, net: None, sync: None, hosted: false, hosted_g: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_audio_held: false, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
+            envoy_fx: Default::default(),
+            menu_cam: Default::default(),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
                 Err(e) => {
@@ -1279,6 +1285,9 @@ impl RetailPlay {
                 p.renderer.set_ui(Some(f), a);
             }
         }
+        // the Envoy effects layer (envoy-fx.md): nothing unless a run or a queued drive / post arms it
+        self.envoy_fx.present(&mut p.renderer, self.net.is_some());
+        p.renderer.ui_tilt = self.menu_cam.update(self.ui.as_ref(), melee_gx::fx::intensity_from_env(self.net.is_some()));
         p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, packed, a);
         // MELEE_PRESENT_DUMP="TICK,N": the window as shown for N consecutive presents from tick TICK, in-between
         // (interpolated) presents included: present_<tick>_<k>_<alpha>.png in the shot dir (interpolation evidence)

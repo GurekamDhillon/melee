@@ -40,8 +40,19 @@ pub struct UiQuad {
     /// Rotation in radians (clockwise on screen) about `piv` (same space as `rect`); 0 = none (envoy-v3-ui.md).
     pub rot: f32,
     pub piv: [f32; 2],
-    pub _pad: [u32; 2],
+    /// `[effect id, effect colour 0xRRGGBBAA]` ([`FX_NONE`] .. [`FX_GLOW`], envoy-fx.md); 0 draws exactly as before.
+    pub fx: [u32; 2],
 }
+
+/// UI quad effects (`gd_ui_node_effect`, the `OP_EFFECT` record): presentation only, timed by the render clock.
+pub const FX_NONE: u32 = 0;
+/// A foil sheen sweeping across the quad's texture (Epic stickers), tinted by the effect colour.
+pub const FX_FOIL: u32 = 1;
+/// A stronger holographic treatment: rainbow bands, a sweep and glints (Unique stickers).
+pub const FX_HOLO: u32 = 2;
+/// A soft pulsing glow: the quad's coverage in the effect colour, breathing (the hovered sticker's halo).
+pub const FX_GLOW: u32 = 3;
+pub const FX_COUNT: u32 = 4;
 
 /// No clipping.
 pub const NO_CLIP: [f32; 4] = [-1.0e9, -1.0e9, 1.0e9, 1.0e9];
@@ -296,10 +307,15 @@ pub struct UiGpu {
     /// UI draw calls issued (the budget: <= 2 per frame) and presents with UI, for the stats line.
     pub draw_calls: u64,
     pub frames: u64,
+    /// The render clock the effects animate on (never the tick count).
+    clock: std::time::Instant,
 }
 
 const UI_WGSL: &str = "
-struct U { tgt: vec4<f32>, band: vec4<f32> };
+struct U { tgt: vec4<f32>, band: vec4<f32>, tilt: vec4<f32>, tilt2: vec4<f32> };
+// tilt: the menu camera (yaw, pitch radians, focal length px, parallax depth px); tilt2.x: instances this present.
+// All zero at rest: the transform is skipped and every pixel is the untilted one.
+// tgt.z: render-clock seconds, tgt.w: effects intensity (0 off, 0.5 subtle, 1 full)
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var atlas: texture_2d<f32>;
 @group(0) @binding(2) var smp: sampler;
@@ -313,15 +329,17 @@ struct VsOut {
     @location(4) @interpolate(flat) uvc: vec4<f32>,
     @location(5) l: vec2<f32>,
     @location(6) @interpolate(flat) aa: vec2<f32>,
+    @location(7) @interpolate(flat) fx: vec2<u32>,
+    @location(8) pp: vec2<f32>,
 };
 fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     if (win) { return p; }
     return u.band.xy + p * u.band.zw / vec2<f32>(640.0, 480.0);
 }
-@vertex fn vs_main(@builtin(vertex_index) vi: u32,
+@vertex fn vs_main(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32,
                    @location(0) rect: vec4<f32>, @location(1) uvr: vec4<f32>, @location(2) clip: vec4<f32>,
                    @location(3) rgba: u32, @location(4) shear: f32, @location(5) flags: u32,
-                   @location(6) rp: vec3<f32>) -> VsOut {
+                   @location(6) rp: vec3<f32>, @location(7) fx: vec2<u32>) -> VsOut {
     var cx = array<f32, 6>(0.0, 1.0, 1.0, 0.0, 1.0, 0.0);
     var cy = array<f32, 6>(0.0, 0.0, 1.0, 0.0, 1.0, 1.0);
     let win = (flags & 1u) != 0u;
@@ -343,8 +361,33 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
         let sn = sin(rp.x);
         p = rp.yz + vec2<f32>(d.x * cs - d.y * sn, d.x * sn + d.y * cs);
     }
-    let px = to_px(p, win);
+    var px = to_px(p, win);
     var o: VsOut;
+    o.pp = px;
+    var os = 1.0;
+    if (u.tilt.x != 0.0 || u.tilt.y != 0.0) {
+        // the menu camera (retail mn_8022BA1C's C-stick orbit): the batch as a plane seen from a turned eye, later
+        // quads nearer (parallax: backdrop, stickers, their shadows, the cursor)
+        let c = u.band.xy + u.band.zw * 0.5;
+        // a backdrop (a quad covering the whole band) is overscanned so a full turn never shows the black past it
+        let ext = select(rect.zw * u.band.zw / vec2<f32>(640.0, 480.0), rect.zw, win);
+        if (ext.x >= u.band.z * 0.98 && ext.y >= u.band.w * 0.98) {
+            px = c + (px - c) * 1.4;
+            os = 1.4;
+        }
+        let z = (1.0 - f32(ii) / max(u.tilt2.x, 1.0)) * u.tilt.w;
+        let q = vec3<f32>(px.x - c.x, c.y - px.y, z);
+        let sa = sin(u.tilt.x);
+        let ca = cos(u.tilt.x);
+        let sb = sin(u.tilt.y);
+        let cb = cos(u.tilt.y);
+        let x1 = q.x * ca + q.z * sa;
+        let z1 = -q.x * sa + q.z * ca;
+        let y2 = q.y * cb + z1 * sb;
+        let z2 = -q.y * sb + z1 * cb;
+        let k = u.tilt.z / (u.tilt.z + z2);
+        px = vec2<f32>(c.x + x1 * k, c.y - y2 * k);
+    }
     o.pos = vec4<f32>(px.x / u.tgt.x * 2.0 - 1.0, 1.0 - px.y / u.tgt.y * 2.0, 0.0, 1.0);
     o.uv = mix(uvr.xy, uvr.zw, l);
     // bilinear never reads past the sub-rect's own texels (drive sprite-sheet cells abut with no gutter)
@@ -353,14 +396,62 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     let c = unpack4x8unorm(rgba);
     o.c = vec4<f32>(c.w, c.z, c.y, c.x);
     o.clip = vec4<f32>(to_px(clip.xy, win), to_px(clip.zw, win));
+    // an overscanned backdrop's clip grows with it (its untilted pp keeps the unscaled corners)
+    if (os != 1.0) {
+        let cc = u.band.xy + u.band.zw * 0.5;
+        o.clip = vec4<f32>(cc + (o.clip.xy - cc) * os, cc + (o.clip.zw - cc) * os);
+    }
     o.sdf = (flags >> 1u) & 1u;
     o.l = l;
     o.aa = aa;
+    o.fx = fx;
     return o;
 }
 fn edge(t: f32) -> f32 {
     let g = max(length(vec2<f32>(dpdx(t), dpdy(t))), 1.0e-6);
     return clamp(min(t, 1.0 - t) / g + 0.5, 0.0, 1.0);
+}
+fn hue(h: f32) -> vec3<f32> {
+    return clamp(abs(fract(vec3<f32>(h, h + 0.6667, h + 0.3333)) * 6.0 - 3.0) - 1.0, vec3<f32>(0.0), vec3<f32>(1.0));
+}
+fn hash2(p: vec2<f32>) -> f32 {
+    return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.547);
+}
+// effects 1..3 (ui.rs FX_*): in band units so a 9-slice face shimmers as one piece
+fn effect(v: VsOut, base: vec4<f32>) -> vec4<f32> {
+    let k = u.tgt.w;
+    let t = u.tgt.z;
+    let tint = unpack4x8unorm(v.fx.y);
+    let tc = vec3<f32>(tint.w, tint.z, tint.y);
+    let b = (v.pos.xy - u.band.xy) / max(u.band.zw, vec2<f32>(1.0)) * vec2<f32>(640.0, 480.0);
+    if (v.fx.x == 1u) {
+        // foil: a bright diagonal band every 2.6 s plus a slow hue drift, on the sticker's own pixels
+        let d = (b.x + b.y * 0.6) * 0.004 - t * 0.38;
+        let band = pow(max(0.0, 1.0 - abs(fract(d) - 0.5) * 7.0), 2.0);
+        // a tinted multiply (shows on the white faces) under a white sheen band
+        let shim = hue(d * 0.7 + b.y * 0.002) * 0.6 + tc * 0.4;
+        let rgb = base.rgb * mix(vec3<f32>(1.0), shim, 0.3 * k) + vec3<f32>(band * 0.35 * k);
+        return vec4<f32>(min(rgb, vec3<f32>(1.0)), base.a);
+    }
+    if (v.fx.x == 2u) {
+        // holo: rainbow bands across the face, a wider sweep and twinkling glints
+        let d = (b.x - b.y * 0.8) * 0.006 + t * 0.22;
+        let rb = hue(d);
+        let sw = pow(max(0.0, 1.0 - abs(fract((b.x + b.y) * 0.003 - t * 0.5) - 0.5) * 5.0), 2.0);
+        let cell = floor(b / 11.0);
+        let h = hash2(cell);
+        let q = abs(fract(b / 11.0) - 0.5) * 11.0;
+        let star = max(1.0 - (q.x * q.y * 1.4 + max(q.x, q.y) * 0.5), 0.0);
+        let tw = pow(max(0.0, sin(t * 3.0 + h * 40.0)), 8.0) * step(0.88, h) * star;
+        let rgb = mix(base.rgb, base.rgb * 0.55 + rb * 0.6 + tc * 0.1, 0.42 * k) + vec3<f32>(sw * 0.3 + tw * 0.8) * k;
+        return vec4<f32>(min(rgb, vec3<f32>(1.0)), base.a);
+    }
+    if (v.fx.x == 3u) {
+        // glow: the coverage in the effect colour, breathing (1.6 s); steady at subtle
+        let br = 0.78 + 0.22 * sin(t * 3.9) * step(0.75, k);
+        return vec4<f32>(tc, base.a * tint.x * br * min(1.0, k * 1.6));
+    }
+    return base;
 }
 @fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
     // the atlas is premultiplied on upload; linear filtering (the art is 2x and lands at 1.5x..3x per game pixel)
@@ -384,9 +475,19 @@ fn edge(t: f32) -> f32 {
     let ex = edge(v.l.x);
     let ey = edge(v.l.y);
     let ea = mix(1.0, ex, v.aa.x) * mix(1.0, ey, v.aa.y);
-    if (v.pos.x < v.clip.x || v.pos.y < v.clip.y || v.pos.x >= v.clip.z || v.pos.y >= v.clip.w) { discard; }
+    // clipping in the untilted plane (at rest: the fragment position, as before)
+    let cp = select(v.pos.xy, v.pp, u.tilt.x != 0.0 || u.tilt.y != 0.0);
+    if (cp.x < v.clip.x || cp.y < v.clip.y || cp.x >= v.clip.z || cp.y >= v.clip.w) { discard; }
     let c = vec4<f32>(v.c.rgb * v.c.a, v.c.a) * ea;
     if (v.sdf != 0u) { return c * cov; }
+    if (v.fx.x != 0u && u.tgt.w > 0.0) {
+        // effects work on straight alpha; the atlas and the blend are premultiplied (kitaa)
+        let b = n * c;
+        var un = vec4<f32>(0.0);
+        if (b.a > 0.0) { un = vec4<f32>(b.rgb / b.a, b.a); }
+        let e = effect(v, un);
+        return vec4<f32>(e.rgb * e.a, e.a);
+    }
     return n * c;
 }
 ";
@@ -397,7 +498,7 @@ impl UiGpu {
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("gd_ui"),
             entries: &[
-                wgpu::BindGroupLayoutEntry { binding: 0, visibility: wgpu::ShaderStages::VERTEX, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None },
+                wgpu::BindGroupLayoutEntry { binding: 0, visibility: wgpu::ShaderStages::VERTEX_FRAGMENT, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None },
                 wgpu::BindGroupLayoutEntry { binding: 1, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Float { filterable: true }, view_dimension: wgpu::TextureViewDimension::D2, multisampled: false }, count: None },
                 wgpu::BindGroupLayoutEntry { binding: 2, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering), count: None },
                 wgpu::BindGroupLayoutEntry { binding: 3, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering), count: None },
@@ -414,7 +515,7 @@ impl UiGpu {
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             view_formats: &[],
         });
-        let uniform = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui"), size: 32, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        let uniform = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui"), size: 64, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui"), mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, ..Default::default() });
         let linear = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui sdf"), mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, ..Default::default() });
         let view = atlas.create_view(&Default::default());
@@ -430,7 +531,7 @@ impl UiGpu {
         });
         let inst_cap = 4096 * std::mem::size_of::<UiQuad>() as u64;
         let inst = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui instances"), size: inst_cap, usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        UiGpu { pipes: Vec::new(), bgl, layout, module, atlas, uniform, bind, inst, inst_cap, count: 0, atlas_gen: 0, hide_gx: false, draw_calls: 0, frames: 0 }
+        UiGpu { pipes: Vec::new(), bgl, layout, module, atlas, uniform, bind, inst, inst_cap, count: 0, atlas_gen: 0, hide_gx: false, draw_calls: 0, frames: 0, clock: std::time::Instant::now() }
     }
 
     fn pipeline(&mut self, device: &wgpu::Device, format: wgpu::TextureFormat) -> usize {
@@ -446,6 +547,7 @@ impl UiGpu {
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32, offset: 52, shader_location: 4 },
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Uint32, offset: 56, shader_location: 5 },
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x3, offset: 60, shader_location: 6 },
+            wgpu::VertexAttribute { format: wgpu::VertexFormat::Uint32x2, offset: 72, shader_location: 7 },
         ];
         let p = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("gd_ui"),
@@ -543,8 +645,14 @@ impl Renderer {
             return;
         }
         let pi = g.pipeline(device, format);
-        let u: [f32; 8] = [tw, th, 0.0, 0.0, band[0], band[1], band[2], band[3]];
-        let mut ub = [0u8; 32];
+        // the effects' clock wraps every hour (f32 precision); intensity 0 turns every quad effect off
+        let secs = (g.clock.elapsed().as_secs_f64() % 3600.0) as f32;
+        // the menu tilt (Renderer::ui_tilt): focal length ~ retail's menu camera (a 30-degree turn reads as a turn,
+        // not a smear), parallax depth 5% of the band height
+        let [ya, pa] = self.ui_tilt;
+        let tilt = if ya != 0.0 || pa != 0.0 { [ya, pa, band[3] * 1.9, band[3] * 0.05] } else { [0.0; 4] };
+        let u: [f32; 16] = [tw, th, secs, self.fx_intensity, band[0], band[1], band[2], band[3], tilt[0], tilt[1], tilt[2], tilt[3], g.count as f32, 0.0, 0.0, 0.0];
+        let mut ub = [0u8; 64];
         for (i, v) in u.iter().enumerate() {
             ub[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());
         }

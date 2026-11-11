@@ -318,11 +318,11 @@ pub struct Renderer {
     pub samples: u32,
     /// The logical EFB size GX coordinates are in (the constructor's `width` x `height`: 640x480 for the game).
     base: (u32, u32),
-    color: wgpu::Texture,
-    depth: wgpu::Texture,
+    pub(crate) color: wgpu::Texture,
+    pub(crate) depth: wgpu::Texture,
     /// The multisampled colour target the EFB pass draws into when `samples > 1` (resolved into `color` at the end
     /// of every pass, so an EFB copy between passes reads the resolved image).
-    msaa: Option<wgpu::Texture>,
+    pub(crate) msaa: Option<wgpu::Texture>,
     bgl_storage: wgpu::BindGroupLayout,
     bgl_uniform: wgpu::BindGroupLayout,
     bgl_textures: wgpu::BindGroupLayout,
@@ -348,7 +348,7 @@ pub struct Renderer {
     empty_sampler: wgpu::Sampler,
     /// WGSL sources that failed to compile, with naga's message.
     pub shader_errors: Vec<String>,
-    blit: HashMap<wgpu::TextureFormat, (wgpu::RenderPipeline, wgpu::BindGroupLayout)>,
+    pub(crate) blit: HashMap<wgpu::TextureFormat, (wgpu::RenderPipeline, wgpu::BindGroupLayout)>,
     blit_sampler: Option<wgpu::Sampler>,
     /// The HUD overlay's flat-colour quad pipeline per target format (`overlay_to`).
     overlay_pipes: HashMap<wgpu::TextureFormat, wgpu::RenderPipeline>,
@@ -368,6 +368,14 @@ pub struct Renderer {
     zcopy_pipe: Option<(wgpu::RenderPipeline, wgpu::BindGroupLayout)>,
     /// The gd-ui-v1 batch (crate::ui): None until a UI mod hands over its first frame.
     pub(crate) ui: Option<crate::ui::UiGpu>,
+    /// The Envoy effects layer (crate::fx): None until a run arms it; disarmed, every pass is skipped.
+    pub(crate) fx: Option<Box<crate::fx::FxGpu>>,
+    /// Effects intensity (0 off, 0.5 subtle, 1 full): the UI quad effects and the fx layer.
+    pub fx_intensity: f32,
+    /// The presenter's true-widescreen x factor (interp::Widen; 1 = none): the fx world camera follows it.
+    pub fx_widen: f32,
+    /// The menu camera's tilt (yaw, pitch radians) for the UI batch: [0, 0] (the default) draws it untransformed.
+    pub ui_tilt: [f32; 2],
 }
 
 /// The GPU texture an EFB copy writes (at the internal resolution: `dst_w * scale` x `dst_h * scale`).
@@ -1238,6 +1246,10 @@ impl Renderer {
             copy_pipe: None,
             zcopy_pipe: None,
             ui: None,
+            fx: None,
+            fx_intensity: 1.0,
+            fx_widen: 1.0,
+            ui_tilt: [0.0; 2],
         })
     }
 
@@ -2059,6 +2071,9 @@ impl Renderer {
             start = end + 1;
         }
         self.queue.submit([enc.finish()]);
+        if self.fx.is_some() {
+            self.fx_world();
+        }
         self.dump_copies();
         if prof() {
             eprintln!("gxprof draw n={} uniforms={:?} pass={:?}", draws.len(), t1 - t0, t1.elapsed());
@@ -2147,8 +2162,14 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
                 ..Default::default()
             }));
         }
-        let (pipeline, bgl) = &self.blit[&format];
         let view = self.color.create_view(&Default::default());
+        let post = if self.fx.is_some() {
+            let smp = self.blit_sampler.clone().unwrap();
+            self.fx_post(format, &view, &smp)
+        } else {
+            None
+        };
+        let (pipeline, bgl) = &self.blit[&format];
         let bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("EFB blit"),
             layout: bgl,
@@ -2185,8 +2206,17 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
                 pass.set_viewport(vp[0], vp[1], w, h, 0.0, 1.0);
             }
             if !self.ui_hides_gx() {
-                pass.set_pipeline(pipeline);
-                pass.set_bind_group(0, &bg, &[]);
+                match post.as_ref().and_then(|(i, bg)| Some((self.fx_post_pipe(*i)?, bg))) {
+                    // the Envoy post effects, fused into the blit (crate::fx): only while one is active
+                    Some((pp, pbg)) => {
+                        pass.set_pipeline(pp);
+                        pass.set_bind_group(0, pbg, &[]);
+                    }
+                    None => {
+                        pass.set_pipeline(pipeline);
+                        pass.set_bind_group(0, &bg, &[]);
+                    }
+                }
                 pass.draw(0..3, 0..1);
             }
             if self.ui.is_some() {

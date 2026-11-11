@@ -118,6 +118,9 @@ int      gd_ui_node_range(unsigned n, int lo, int hi, int step);
 int      gd_ui_node_choices(unsigned n, const char* nul_separated, unsigned len);
 int      gd_ui_node_flags(unsigned n, unsigned flags);
 int      gd_ui_node_rect(unsigned root, float x, float y, float w, float h); /* placement of a root (band units) */
+/* host effects (docs/rust-port/notes/envoy-fx.md): a built-in effect for a node's quads; 0 none, 1 foil, 2 holo,
+   3 glow; rgba tints. Immediate drawing: the OP_EFFECT record (12: effect, rgba) for the records that follow. */
+int      gd_ui_node_effect(unsigned n, unsigned effect, unsigned rgba);
 void     gd_ui_node_free(unsigned n);
 int      gd_ui_focus(unsigned n);
 unsigned gd_ui_focused(void);
@@ -328,5 +331,18 @@ int gd_controls_count(unsigned port, unsigned field /* 0 layouts, 1 extras */);
 int gd_controls_name(unsigned port, unsigned field, unsigned index, char* out, unsigned cap); /* bytes, no NUL */
 int gd_controls_get(unsigned port);                       /* the saved choice, -1 with no fighter on the port */
 int gd_controls_set(unsigned port, unsigned choice);      /* queued for the host; GD_EINVAL for bit 1 / bits 6, 7, 16+ */
+
+/* ---- Envoy effects layer (docs/rust-port/notes/envoy-fx.md): presentation only, fixed built-in shaders by id.
+   gd_ui_world_model_ex: a drive model with a material: 0 body, 1 glass (fresnel rim), 2 glow (inner glow pulsing
+   with p1 = charge 0..1, brighter with p2 = the wearer's Heat 0..3), 3 foil (p3 1 Epic, 2 Unique), 4 dissolve
+   (p3 0 whole .. 1 gone), 5 unlit additive; | 0x80 a light trail. p0 = glow 0..2. Same 96-instance cap as
+   gd_ui_world_model. Emissive output blooms (the drives only).
+   gd_fx_post: a full-screen effect, at most 4 a present (GD_EFULL), host-clamped, never over the screen's centre:
+   held (post every present) 1 vignette, 2 ember tint, 3 heat-haze + embers; one-shots 4 flash (max 3 a second),
+   5 radial ring, 6 colour split, 7 shockwave; | 0x100 (x, y) is a world position, else 640x480 canvas units.
+   All of it follows the player's intensity (MELEE_FX = off | subtle | full). */
+int      gd_ui_world_model_ex(int model, float x, float y, float z, float yaw, float scale, float alpha, int material,
+                              float p0, float p1, float p2, float p3, unsigned rgba);
+int      gd_fx_post(unsigned effect, float strength, float x, float y, unsigned rgba);
 
 #endif

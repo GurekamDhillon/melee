@@ -60,6 +60,8 @@ pub struct Node {
     /// Placement asked by the mod (`gd_ui_node_rect`, roots only) and the cached layout rect.
     pub place: Option<[f32; 4]>,
     pub rect: [f32; 4],
+    /// `gd_ui_node_effect`: [effect id, colour] for this node's quads (its children inherit it)
+    pub fx: [u32; 2],
 }
 
 impl Node {
@@ -268,6 +270,15 @@ impl Tree {
         if n.flags & F_HIDDEN != 0 {
             return;
         }
+        let fxp;
+        let pen = if n.fx[0] != 0 {
+            let mut q = *pen;
+            q.fx = n.fx;
+            fxp = q;
+            &fxp
+        } else {
+            pen
+        };
         let [x, y, w, ht] = n.rect;
         let t = |k| token(th, k);
         let dim = if n.flags & F_DISABLED != 0 { 0xFFFF_FF60u32 } else { 0xFFFF_FFFF };

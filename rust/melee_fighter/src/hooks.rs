@@ -12,6 +12,9 @@ pub static mut SCRIPT_MOD_VALUE: Option<fn(player_id: i32, field: i32, base: f32
 /// The wasm mod host's `damage.fighter_take_damage` row: `(fp, damage, orig)`; the host runs the pre / replace / post
 /// chains and calls `orig` (the unmodified body) as they decide. None unless a loaded mod hooks the row (melee_modhost).
 pub static mut MOD_TAKE_DAMAGE: Option<fn(fp: &mut Fighter, d: f32, orig: &mut dyn FnMut() -> melee_core::modhook::Ret)> = None;
+/// Envoy Quick Tag: per player slot, the pad buttons taken from a human fighter's input (the tag button, Y or X,
+/// no longer jumps while a run is armed). 0 = retail. Set per match by melee_modes::tu::envoy.
+pub static mut ENVOY_TAG_MASK: [u32; 4] = [0; 4];
 /// `Geno_FallLimit(fp, terminal)` (ftCommon_Fall, TARGET_PC).
 pub static mut GENO_FALL_LIMIT: Option<fn(fp: &Fighter, terminal: f32) -> f32> = None;
 /// Override for `ft_PlaySFX(fp, id, volume, pan)`; unset = `crate::ft0877::play_sfx` (round 5).

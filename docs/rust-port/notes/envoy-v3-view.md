@@ -237,3 +237,23 @@ Record v8: a drive word's bit 12 is its pin (`view::rec_drive` masks it; `view::
   (banked). For gains of other sources these words are stale; ignore them.
 - During the end-of-fight fly-in (30 frames after the last KO) each drop's `P_DROPS` x / y moves toward its owner
   every frame. The drop is taken on the last frame (source 4). The trail can be drawn from those positions.
+
+## Quick Tag (port/v3g, 2026-11-11; envoy-tag-rethink.md direction 1 and Handoff)
+
+By default the tag is on Y. Y no longer jumps for the run's humans; CPUs are unaffected. The tag has no freeze and
+no cinematic. The camp's tag-button row calls `gd_ui_envoy_set_tag_button(b)`: 0 Y, 1 X, 2 D-pad down. Choice 2
+is the classic cinematic tag, kept for comparison. `MELEE_ENVOY_TAG_BUTTON=y|x|dpad` sets the value at start.
+
+| word | meaning |
+|---|---|
+| `P_TAG_CD` 4 / `P_TAG_MAX` 5 | cooldown frames left / the full cooldown (180; Lock 360; classic 300 / 600). The fraction is `1 - CD / MAX` |
+| `P_TAG_BUF` 151 | frames a tag press is still remembered (8 at the press; 0 = none waiting) |
+| `P_TAG_WINDOW` 152 | frames left in the 20-frame window after the player's fighter dealt damage. A tag now is a tag-cancel and a Handoff: turn the sticker sunny |
+| `P_TAG_BUTTON` 153 | the tag button in this match (0 Y, 1 X, 2 classic) |
+| `P_HANDOFF_ON` 154 | 1: Handoff is on (default; test knob `nohandoff` turns it off) |
+| event `EV_TAG` 15 | who = player; amount = the fighter now in play (0 main, 1 partner): flip the two heads, a 6-frame pop on the fighter |
+| event `EV_HANDOFF` 16 | who = player; amount = the fired drive's id + 1, `| 0x100` when Relay fired the whole row |
+
+The newcomer gets a 2-frame hitlag-style pause of its own; the foe and the other player run on. The transition
+record is not used (phase stays idle), so the cinematic does not draw. The sim reads the press from the pad, and
+the engine masks the button out of the fighter's input (`melee_fighter::hooks::ENVOY_TAG_MASK`).

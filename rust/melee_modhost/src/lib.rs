@@ -627,6 +627,13 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         if !(0..4).contains(&slot) { return -1 }
         unsafe { melee_modes::tu::tag_swap::begin_ex(slot, len, flags & 1 != 0) }
     });
+    // Envoy Quick Tag: a swap with no freeze (`any`: the window after dealing damage), the newcomer paused `pause`
+    // frames; the tag button (0 Y, 1 X, 2 D-pad down classic)
+    w!("gd_tag_quick", |slot: i32, any: i32, pause: i32| -> i32 {
+        if !(0..4).contains(&slot) { return -1 }
+        unsafe { melee_modes::tu::tag_swap::quick(slot, any != 0, pause) }
+    });
+    w!("gd_envoy_tag_button", || -> i32 { melee_modes::tu::envoy::tag_button() });
     w!("gd_stage_transition", |kind: i32, len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::stage_begin(kind, len) } });
     w!("gd_hold_begin", |len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::hold_begin(len) } });
     w!("gd_hold_release", || -> i32 { unsafe { melee_modes::tu::tag_swap::hold_release() } });

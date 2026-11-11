@@ -72,6 +72,54 @@ pub static mut STAGE_TO: i32 = -1;
 pub static mut STAGE_AT: u16 = 0;
 /// A queued release of a KIND_HOLD freeze.
 pub static mut PENDING_RELEASE: u8 = 0;
+/// Envoy Quick Tag: the queued swap is a quick one (no freeze), and the hitlag-style pause (frames) the newcomer
+/// gets after it.
+pub static mut PENDING_QUICK: u8 = 0;
+pub static mut QUICK_PAUSE: u8 = 0;
+
+/// Envoy Quick Tag (envoy-tag-rethink.md direction 1): queue a swap with no freeze. `any`: the 20-frame window after
+/// the player dealt damage (a tag-cancel on hit): any state but the refused ones. Refused always:
+/// - dead, on the respawn platform, entering (motion 0-13): the fighter is not in play;
+/// - hitstun and tumble launch (Damage*, DamageFly*, Screw; 75-91, 156-157): the player is being hit, the tag must
+///   not escape a combo;
+/// - knocked down and teching (183-199): the down / tech states own invulnerability and a getup the swap would cut;
+/// - its own hitlag (x2219_b5): the swap would cut the hitlag freeze; the press stays buffered;
+/// - grabbing (victim_gobj) or grabbed / thrown (x1A5C): both fighters are bound to each other's state;
+/// - holding an item (item_gobj): the item's owner would be the sleeping fighter;
+/// - on the ledge (Cliff*, 252-259): the swap's ground / air carry cannot place the newcomer on the ledge;
+/// - another swap or a freeze (a stage shift, a hold) running.
+/// Outside the window: today's list plus jump squat, landing and shield (the study's "free to act").
+pub unsafe fn quick(slot: i32, any: bool, pause: i32) -> i32 {
+    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 {
+        return TAG_BUSY;
+    }
+    if partner_kind(slot) < 0 {
+        return TAG_NO_PARTNER;
+    }
+    let f = fighter(entity(slot, 0));
+    if f.is_null() {
+        return TAG_NOT_GAMEPLAY;
+    }
+    let f = &*f;
+    let m = f.motion_id as i32;
+    let refused = m <= 13 || (75..=91).contains(&m) || (156..=157).contains(&m) || (183..=199).contains(&m)
+        || (252..=259).contains(&m) || f.x2219_b5() != 0 || !f.victim_gobj.is_null() || !f.x1A5C.is_null()
+        || !f.item_gobj.is_null();
+    if refused {
+        return TAG_NOT_ACTIONABLE;
+    }
+    if !any {
+        let calm = matches!(m as ftCommon_MotionState, ftCo_MS_KneeBend | ftCo_MS_Landing | ftCo_MS_GuardOn
+            | ftCo_MS_Guard | ftCo_MS_GuardOff | ftCo_MS_GuardSetOff);
+        if !calm && check_ex(slot, true) != 0 {
+            return TAG_NOT_ACTIONABLE;
+        }
+    }
+    PENDING_SWAP = slot as i8;
+    PENDING_QUICK = 1;
+    QUICK_PAUSE = pause.clamp(0, 30) as u8;
+    0
+}
 
 unsafe fn entity(slot: i32, i: i32) -> *mut HSD_GObj {
     let p = &*pl::Player_GetPtrForSlot(slot);
@@ -174,7 +222,20 @@ pub unsafe fn request_swap(skip: bool) -> i32 {
 /// Per logic frame, after the `frame.run_procs` post chain (outside `HSD_GObj_RunProcs`).
 pub unsafe fn tick() {
     LOGIC_FRAMES = LOGIC_FRAMES.wrapping_add(1);
-    if PENDING_SWAP >= 0 {
+    if PENDING_SWAP >= 0 && PENDING_QUICK != 0 {
+        // Envoy Quick Tag: no freeze; the newcomer gets a hitlag-style pause of its own (the foe runs on)
+        let slot = PENDING_SWAP as i32;
+        PENDING_SWAP = -1;
+        PENDING_QUICK = 0;
+        swap(slot);
+        let g = entity(slot, 0);
+        let f = fighter(g);
+        if QUICK_PAUSE > 0 && !f.is_null() {
+            (*f).dmg.x195c_hitlag_frames = QUICK_PAUSE as f32;
+            melee_fighter::tu::fighter::Fighter_UnkRecursiveFunc_8006D044(g);
+        }
+        TRANSITION.count = TRANSITION.count.wrapping_add(1);
+    } else if PENDING_SWAP >= 0 {
         let slot = PENDING_SWAP as i32;
         PENDING_SWAP = -1;
         swap(slot);
@@ -334,5 +395,6 @@ pub unsafe fn reset() {
     TRANSITION.slot = -1;
     PENDING_SWAP = -1;
     PENDING_RELEASE = 0;
+    PENDING_QUICK = 0;
     STAGE_TO = -1;
 }

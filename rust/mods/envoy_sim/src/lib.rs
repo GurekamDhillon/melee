@@ -47,6 +47,8 @@ extern "C" {
     fn gd_tag_partner(slot: i32) -> i32;
     fn gd_tag_begin_ex(slot: i32, len: i32, flags: i32) -> i32;
     fn gd_tag_swap(skip: i32) -> i32;
+    fn gd_tag_quick(slot: i32, any: i32, pause: i32) -> i32;
+    fn gd_envoy_tag_button() -> i32;
     fn gd_transition_phase() -> i32;
     fn gd_transition_kind() -> i32;
     fn gd_transition_frame() -> i32;
@@ -91,6 +93,15 @@ const FIGHTS: usize = 5;
 const START_POOL: [i32; 2] = [4, 5];
 const TAG_LEN: i32 = 60;
 const TAG_COOLDOWN: i32 = 300;
+/// Quick Tag (envoy-tag-rethink.md direction 1; the default): cooldown 3 s (Lock doubles it), a press remembered
+/// 8 frames, the tag-cancel window 20 frames after the player's fighter dealt damage, the newcomer's hitlag-style
+/// pause (frames; the outgoing fighter is gone at once and the foe runs on).
+const QT_COOLDOWN: i32 = 180;
+const QT_BUFFER: i32 = 8;
+const QT_WINDOW: i32 = 20;
+const QT_PAUSE: i32 = 2;
+const TAG_BTN_Y: i32 = 0;
+const TAG_BTN_X: i32 = 1;
 const TAG_SKIP_AFTER: i32 = 6;
 const STAGE_LEN: i32 = 90;
 const STAGE_PERIOD: i32 = 1800;
@@ -318,6 +329,13 @@ struct St {
     collect: i32,
     won_pool: i32,
     tag_cd: [i32; NP],
+    /// Quick Tag: frames a tag press is still remembered, frames left in the window after dealing damage, Handoff
+    /// off (test knob `nohandoff`), the tag button in use this match (0 Y, 1 X, 2 classic D-pad).
+    tag_buf: [i32; NP],
+    dmg_win: [i32; NP],
+    handoff_off: i32,
+    tag_auto: i32,
+    tag_btn: i32,
     active: [i32; NP],
     kind: [[i32; 2]; NP],
     tag_slot: i32,
@@ -877,6 +895,14 @@ unsafe fn test_drives() {
                     S.no_shop = 1;
                     continue;
                 }
+                if item == "tagauto" {
+                    S.tag_auto = 1;
+                    continue;
+                }
+                if item == "nohandoff" {
+                    S.handoff_off = 1;
+                    continue;
+                }
                 if item == "protect" {
                     S.test_protect = 1;
                     continue;
@@ -1020,6 +1046,8 @@ unsafe fn on_new_match(seq: i32) {
         S.no_shop = 0;
         S.drop_all = 0;
         S.test_protect = 0;
+        S.handoff_off = 0;
+        S.tag_auto = 0;
         S.pins = [0; SETS];
         S.confirm = [0; NP];
         S.finale_off = 0;
@@ -1097,6 +1125,9 @@ unsafe fn on_new_match(seq: i32) {
     S.collect = 0;
     S.won_pool = 0;
     S.tag_cd = [0; NP];
+    S.tag_buf = [0; NP];
+    S.dmg_win = [0; NP];
+    S.tag_btn = gd_envoy_tag_button().clamp(0, 2);
     S.active = [0; NP];
     S.kind = [[-1; 2]; NP];
     S.tag_slot = -1;
@@ -2102,6 +2133,10 @@ unsafe fn deal(p: usize, v: i32, dmg: i32, coef: i32, tags: i32, astate: i32, cm
         if fresh {
             heat_add_drives(p, WH_NEW_MOVE);
         }
+    }
+    // Quick Tag: the tag-cancel window opens on any damage the fighter itself deals (a move, a throw, a projectile)
+    if cm == CM_MOVE {
+        S.dmg_win[p] = QT_WINDOW;
     }
     if cm == CM_MOVE && tags & T_AERIAL != 0 {
         S.aerial_dealt[p] = 1;
@@ -3583,7 +3618,80 @@ unsafe fn track_active(p: usize) {
     }
 }
 
+/// The tag cooldown after a tag (Lock doubles it).
+unsafe fn tag_cooldown(p: usize) -> i32 {
+    let base = if S.tag_btn == 2 { TAG_COOLDOWN } else { QT_COOLDOWN };
+    if has_price(p, P_LOCK) { base * 2 } else { base }
+}
+
+/// Quick Tag: Y (or X) tags at once, no freeze; legal when free to act, or in any state but the refused ones for
+/// QT_WINDOW frames after the player dealt damage. A press waits QT_BUFFER frames for a legal frame.
+unsafe fn quick_tag_frame() {
+    let btn = if S.tag_btn == TAG_BTN_X { BTN_X } else { BTN_Y };
+    for p in 0..nh() as usize {
+        // test knob `tagauto`: each player presses Tag every 150 frames (player 2 offset by 40), for synctests
+        let auto = S.tag_auto != 0 && (S.play + 40 * p as i32) % 150 == 0;
+        if auto || gd_pad_pressed(p as i32) & btn != 0 {
+            S.tag_buf[p] = QT_BUFFER;
+        }
+        let win = S.dmg_win[p] > 0;
+        if S.dmg_win[p] > 0 {
+            S.dmg_win[p] -= 1;
+        }
+        if S.tag_cd[p] > 0 {
+            S.tag_cd[p] -= 1;
+        }
+        if S.tag_buf[p] <= 0 {
+            continue;
+        }
+        S.tag_buf[p] -= 1;
+        if S.tag_cd[p] > 0 || gd_tag_partner(p as i32) < 0 {
+            continue;
+        }
+        let rc = gd_tag_quick(p as i32, win as i32, QT_PAUSE);
+        if rc != 0 {
+            if S.tag_buf[p] == 0 {
+                let h = gd_fighter_from_slot(p as i32);
+                log(b"envoy: tag refused, rc*1000 - action state\0", rc * 1000 - if h != 0 { gd_fighter_get_action_state(h) } else { 0 });
+            }
+            continue;
+        }
+        S.tag_buf[p] = 0;
+        S.tag_cd[p] = tag_cooldown(p);
+        S.tags += 1;
+        log(b"envoy: quick tag, player*100 + count\0", p as i32 * 100 + S.tags);
+        on_tag(p);
+        ev(EV_TAG, p as i32, S.active[p]);
+        if win && S.handoff_off == 0 {
+            handoff(p);
+        }
+    }
+}
+
+/// Handoff: a tag inside the window after dealing damage fires the newcomer's first trigger at once (a normal fire at
+/// the player's Heat state, link 1 of a chain from it); with Relay in the row, the whole row (a volley). No Heat cost.
+unsafe fn handoff(p: usize) {
+    let set = in_set(p);
+    let n = open_slots();
+    let relay = (0..n).any(|k| S.drives[set][k] > 0 && POOL[S.drives[set][k] as usize - 1].effect == E_RELAY);
+    let Some(k) = (0..n).find(|&k| is_trigger(set, k) && POOL[S.drives[set][k] as usize - 1].effect != E_RELAY) else {
+        return;
+    };
+    if relay {
+        start_chain(set, 0, true);
+    } else {
+        HH.chg[set][k] = HH.chg[set][k].max(need(&POOL[S.drives[set][k] as usize - 1]));
+        start_chain(set, k, false);
+    }
+    ev(EV_HANDOFF, p as i32, S.drives[set][k] | (relay as i32) << 8);
+    log_drive(b"handoff", S.drives[set][k] as usize - 1, p as i32 * 10 + relay as i32);
+}
+
 unsafe fn tag_frame() {
+    if S.tag_btn != 2 {
+        quick_tag_frame();
+        return;
+    }
     let phase = gd_transition_phase();
     if phase == 1 {
         if gd_transition_kind() == KIND_TAG {
@@ -3620,7 +3728,7 @@ unsafe fn tag_frame() {
             log(b"envoy: tag refused, rc*1000 - action state\0", rc * 1000 - gd_fighter_get_action_state(h));
         }
         if rc == 0 {
-            S.tag_cd[p] = if has_price(p, P_LOCK) { LOCK_TAG_COOLDOWN } else { TAG_COOLDOWN };
+            S.tag_cd[p] = tag_cooldown(p);
             S.tags += 1;
             log(b"envoy: tag, player*100 + count\0", p as i32 * 100 + S.tags);
             return; // one transition at a time
@@ -4033,7 +4141,11 @@ unsafe fn publish() {
         }
         v[b + P_ACTIVE] = S.active[p];
         v[b + P_TAG_CD] = S.tag_cd[p];
-        v[b + P_TAG_MAX] = if has_price(p, P_LOCK) { LOCK_TAG_COOLDOWN } else { TAG_COOLDOWN };
+        v[b + P_TAG_MAX] = tag_cooldown(p);
+        v[b + P_TAG_BUF] = S.tag_buf[p];
+        v[b + P_TAG_WINDOW] = S.dmg_win[p];
+        v[b + P_TAG_BUTTON] = S.tag_btn;
+        v[b + P_HANDOFF_ON] = (S.handoff_off == 0) as i32;
         v[b + P_PARTNER_KIND] = gd_tag_partner(p as i32);
         if let Some(q) = pos(p as i32) {
             v[b + P_X] = fbits(q.x);

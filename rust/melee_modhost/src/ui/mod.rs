@@ -708,7 +708,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
     f!("gd_ui_fight_hud", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
         let v = unsafe { melee_modes::tu::envoy::hud_words() };
         let n = (n as usize).min(v.len());
-        let mut b = [0u8; 48];
+        let mut b = [0u8; 64];
         for (i, x) in v.iter().take(n).enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
         if write_bytes(&mut c, out, &b[..n * 4]) { GD_OK } else { GD_EINVAL }
     });

@@ -1,5 +1,38 @@
 # Envoy V3 UI: the Party pack look and the way in (port/v3ui, 2026-11-11)
 
+## Round 2 (v3b): what changed (this section wins over the tables below where they differ)
+
+- **Fight HUD as designed.** While a run is armed and a match is in gameplay, `envoy::hide_retail_hud` (from
+  `envoy::tick`) hides the retail damage plates, digits and stock icons (JObj hidden flags and the digits' hide bit;
+  no game state; outside gameplay it does nothing, because the plates are freed at match end). `MELEE_ENVOY_RETAIL_HUD=1`
+  keeps the retail HUD. Our corner is anchored at the bottom edge: tag, fighter, OUR big percent (outlined, shakes on a
+  hit, warms with damage) from the new read-only import `gd_ui_fight_hud` (per slot: present, percent, stocks), the
+  drive row, the active drive, the Heat bar and a shrunk bench sticker. White stock dots bottom centre. Foe plates top
+  right show the foe's percent and its drives; the boss bar top centre.
+- **Pick of three as R2 + D2.** A list of three rows per player (round family badge over a wide paper tag: name,
+  tier and family, "Every N% you deal: ..." from the rules' charge, what it does for each fighter), Skip as a fourth
+  row (drives), the two fighters, the strip; co-op split down the seam. Level-up: rays behind the badge and a
+  "Level up!" burst. The sim (`envoy_sim` `pick_frame`) takes up / down for the rows and Skip (cursor 3: A skips,
+  logged "pick skipped"); left / right still cycle the three offers. The keystone pick stays K1 wedges (solo).
+- **One family mapping** (`party::FAM_BADGE`, `fam_word`): RED Fire (tangerine flame), PURPLE Frost (sky blue
+  snowflake), YELLOW Sky (lime gust), GREEN Tempo (orchid bullseye), BLUE Guard (clay, a shield glyph baked by
+  `bake_stickers.py`), WHITE Utility (lilac-grey rings).
+- **Run end:** the road's ended card ("Run cleared!" / "The run ended") has "Back to camp": arm op 4 disarms and sets
+  `envoy::BACK_TO_CAMP`; the VS character select backs out as a held B does (mncharsel), and the main menu opens the
+  camp (mnmain). Never the character select.
+- **No selects between fights:** "Start the fight" on the road (fights 2+) sets `envoy::SKIP_SELECT`; the character
+  select confirms itself as soon as it is ready (as Start would) and `gmvsmode::onExitCss` goes to the loading screen,
+  skipping the stage select (the run's match rewrite sets party and stage). `MELEE_ENVOY_SELECT=1` keeps both.
+  Fight 1 still has the character select (the party is picked there).
+- **Camp:** rows that did nothing (Fighters, Run length, Team attack, NG+) are gone; Collection "soon" stays.
+- **Not done:** our pause screen (the retail pause runs).
+- **The first-match-load hang:** six runs title > Envoy > camp > fight 1 (3 windowed, 3 headless, no screenshots,
+  11.5-12 GB free) all passed on the final build; the stalls seen before came with screenshot capture near the
+  match load, and one with the machine starved of memory.
+- **Launchers:** `play-v3.cmd` / `play-v3-solo.cmd` run `melee-v3b.exe` + `mods-v3b`; `play-v3-safe.cmd` /
+  `play-v3-solo-safe.cmd` add `MELEE_NO_RECLAIM=1`; round 1 is `play-v3a*.cmd`.
+
+
 Built overnight from `menu/out_envoy/UI-SPEC.md` (the authority) and its reference screens, on the V3 rules of
 `port/v3sim` (merged at e77bbca20; `envoy-v3-view.md` is the data contract, `envoy-v3-rules.md` the rules).
 

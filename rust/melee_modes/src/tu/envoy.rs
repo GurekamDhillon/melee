@@ -691,8 +691,8 @@ pub unsafe fn hide_retail_hud() {
 
 /// Read-only words for the Envoy HUD (gd_ui_fight_hud): per match slot 0-3 [present, percent, stocks]. Outside a
 /// match all zero.
-pub unsafe fn hud_words() -> [i32; 12] {
-    let mut o = [0i32; 12];
+pub unsafe fn hud_words() -> [i32; 16] {
+    let mut o = [0i32; 16];
     if crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
         return o;
     }
@@ -704,5 +704,7 @@ pub unsafe fn hud_words() -> [i32; 12] {
         o[s as usize * 3 + 1] = melee_fighter::player::get_damage(s);
         o[s as usize * 3 + 2] = melee_fighter::stale::stocks(s);
     }
+    // word 12: the retail pause is up (its overlay owns the top of the screen)
+    o[12] = (crate::tu::gmscene::gm_GetDbPauseFlag(1) != 0) as i32;
     o
 }

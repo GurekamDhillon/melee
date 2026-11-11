@@ -142,7 +142,7 @@ fn fired_ago(v: &[i32; VW], owner: i32, id: i32) -> i32 {
 }
 
 /// The retail HUD's words (gd_ui_fight_hud): per match slot [present, percent, stocks].
-pub static mut FH: [i32; 12] = [0; 12];
+pub static mut FH: [i32; 16] = [0; 16];
 static mut PCT_PREV: [i32; 4] = [0; 4];
 static mut PCT_HIT: [i32; 4] = [-100; 4];
 
@@ -297,7 +297,9 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     // foes, top right: an elite or boss plate with its drives
     let kind = v[V_FIGHT_KIND];
     let mut fy = 12.0;
-    if petey.is_none() {
+    // the retail pause owns the top of the screen: no foe plates or boss bar under its words
+    let paused = FH[12] != 0;
+    if petey.is_none() && !paused {
         for sl in 0..4 {
             let bb = V_S0 + sl * V_SW;
             if v[bb + S_FOE] == 0 || v[bb + S_ALIVE] == 0 {
@@ -340,7 +342,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
             fy += h + 8.0;
         }
     }
-    if let Some(pv) = petey {
+    if let Some(pv) = petey.filter(|_| !paused) {
         boss_bar(e, pv);
     }
     moments(e, v, ex);

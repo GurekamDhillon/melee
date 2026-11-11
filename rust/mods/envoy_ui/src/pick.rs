@@ -292,7 +292,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w0: f32, coop: bool)
             spr(e, S_PTR + p, rx - 58.0, y + 20.0, 0.0, 0.0, WHITE);
         }
     }
-    if v[V_RW] == 1 {
+    if v[V_RW] == 1 && step == 0 {
         let on = cur4 == 3 && !done && step == 0;
         let (sx, sy) = (rx + 8.0, 282.0);
         sticker(e, if on { S_FACE_HOVER } else { S_FACE_WHITE }, sx, sy, 86.0, 24.0, if on { 0.0 } else { -1.0 }, WHITE, |e| {

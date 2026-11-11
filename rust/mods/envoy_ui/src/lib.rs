@@ -627,8 +627,8 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             // V3 HUD in band space (640 x 480; `ex` the extra width each side of the 4:3 band)
             let ex = if b[2] > 0.0 { b[0] / (b[2] / 640.0) } else { 0.0 };
             e.space(SPACE_BAND, 1.0);
-            if gd_ui_fight_hud(core::ptr::addr_of_mut!(hud::FH) as *mut i32, 12) != 0 {
-                hud::FH = [0; 12];
+            if gd_ui_fight_hud(core::ptr::addr_of_mut!(hud::FH) as *mut i32, 16) != 0 {
+                hud::FH = [0; 16];
             }
             hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
             e.space(SPACE_WINDOW, sc);

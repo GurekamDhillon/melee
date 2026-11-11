@@ -129,7 +129,7 @@ with and without Insulate, and through a cash-out.
 | check | result |
 |---|---|
 | gate (`gate.sh --skip-build`) | GATE OK |
-| replays vs V2's baseline | hero 392/428 (= baseline), local 125/125, own: see the final report |
+| replays vs V2 baseline | hero 392/428, local 125/125, own 917/917 (all = baseline) |
 | envoy_data lint + tests (incl. the split test, both directions, Insulate, through a cash-out) | 7 passed |
 | V3 synctests (v3_slice.sh), depths 4 and 7 | all nine 0 mismatches. Seen: chains to link 3, Echo repeats, cash-outs (5-16 a run) with flares, states up and down, Volley, the shop (buy onto a full row, level, reroll, reorder, full-row pick replace), co-op both firing. Not seen in CPU play (informational): a technique mark (the CPUs did not L-cancel, wavedash or tech in 3600 frames), Grand Finale's knockback write, a Petey break inside 1846 frames |
 | V2's six (v2_drives.sh) on the new rules, depths 4 and 7 | all 0 mismatches |

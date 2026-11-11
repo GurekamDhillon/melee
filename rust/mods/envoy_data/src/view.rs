@@ -20,7 +20,7 @@ pub const V_RW_TIME: usize = 10;
 pub const V_FROZEN: usize = 11;
 pub const V_PLAY: usize = 12;
 pub const V_DIGEST: usize = 13;
-pub const V_STAGE_IN: usize = 14;
+pub const V_STAGE_IN: usize = 14; // retired with the timed switch: always -1 (switches are events: EV_SHIFT)
 pub const V_FIRES: usize = 15;
 pub const V_FIGHT_KIND: usize = 16; // FK_*
 pub const V_OPEN: usize = 17; // drive slots open per fighter: 3, 4 after boss 1, 5 after boss 2
@@ -221,8 +221,14 @@ pub const EV_LOSS: i32 = 11; // who = player; amount = Heat lost x1000 this fram
 pub const EV_HALVED: i32 = 12; // who = player; amount = Heat x1000 after a lost stock halved it
 pub const EV_INFERNO: i32 = 13; // who = player * 2 + fighter; amount = 1: the set is complete (fight start / gained)
 pub const EV_TAG: i32 = 15; // who = player; amount = the fighter now in play (0 main, 1 partner): a Quick Tag
+pub const EV_SHIFT: i32 = 17; // a stage switch began; who = the reason (SH_*); amount = the destination ground kind
 pub const EV_HANDOFF: i32 = 16; // who = player; amount = the fired drive's id + 1 | 0x100 when Relay fired the row
 pub const EV_COINS: i32 = 14; // who = player; amount = coins from a flat award (a fight cleared, interest)
+/// Why the stage switched (EV_SHIFT's who).
+pub const SH_BREAK: i32 = 1; // an elite or a stock-based boss lost a stock it can spare (Petey's arena never switches)
+pub const SH_WAVE: i32 = 2; // a wave's last foe fell and the next wave arrives (reserved: waves)
+pub const SH_KO: i32 = 3; // the Shifting road: a foe was KO'd (not the fight's last)
+pub const SH_DAMAGE: i32 = 4; // retired (the damage trigger was cut after play); kept so the id is not reused
 pub const MARK_LCANCEL: i32 = 1;
 pub const MARK_WAVEDASH: i32 = 2;
 pub const MARK_TECH: i32 = 3;
@@ -259,18 +265,22 @@ pub const RD_TWISTS: usize = 15; // twist bits (TW_*)
 pub const RD_PRIZE: usize = 16; // what it banks: tokens (RK_*) 4 bits each, the first lowest
 pub const RD_PRIZE_N: usize = 17; // tokens in RD_PRIZE
 pub const RD_FOE_DRIVES: usize = 18; // drives the lead foe of each fight carries, 4 bits per fight, the first lowest
+pub const RD_SHIFT_COINS: usize = 19; // coins each stage switch pays on this road (0: none; the Shifting road)
+pub const RD_SHIFT_CAP: usize = 20; // switches paid per fight at most
+pub const RD_SHIFT_DMG: usize = 21; // retired: 0 (no damage trigger)
 
 pub const ROAD_OPEN: i32 = 1; // the session as it is: banks three drive picks
 pub const ROAD_STEEP: i32 = 2; // the same fights, every foe one more drive: banks two picks and a level-up
 pub const ROAD_SWARM: i32 = 3; // reserved (waves, coins)
+pub const ROAD_SHIFT: i32 = 4; // the same fights; the stage also switches on a foe KO (not the last), 2 a fight at most, 10 coins each
 pub const DANGER_CALM: i32 = 0;
 pub const DANGER_ROUGH: i32 = 1;
 pub const DANGER_STEEP: i32 = 2;
-/// Twists: the content pass's elite modifiers and M3's dares share this list. Only TW_FOE_DRIVE is live.
+/// Twists: the content pass's elite modifiers and M3's dares share this list. TW_FOE_DRIVE and TW_FAST_SHIFT are live.
 pub const TW_FOE_DRIVE: i32 = 1 << 0; // every foe carries one more drive (to the 2 a foe can hold)
 pub const TW_MORE_FOES: i32 = 1 << 1; // reserved: one more foe in every fight
 pub const TW_BIG_FOES: i32 = 1 << 2; // reserved: foes are larger
-pub const TW_FAST_SHIFT: i32 = 1 << 3; // reserved: the stage shifts twice as often
+pub const TW_FAST_SHIFT: i32 = 1 << 3; // the stage shifts on foe KOs (the Shifting road)
 
 /// Reward kinds: what a bank token (and a road's prize) opens at the stop. Only RK_PICK and RK_LEVEL are live.
 pub const RK_PICK: i32 = 1; // one of three drives

@@ -545,6 +545,9 @@ unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
                     burst(e, S_BURST_CORAL, cx + 20.0, 240.0, 80.0, age, "Blazing!", 13);
                 }
             }
+            EV_SHIFT => {
+                burst(e, S_BURST_LAGOON, 320.0, 70.0, 76.0, age, "Stage shift", 12);
+            }
             EV_BREAK => {
                 burst(e, S_BURST_CORAL, 400.0, 30.0, 80.0, age, "Break!", 14);
             }

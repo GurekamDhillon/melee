@@ -672,6 +672,7 @@ fn road_name(k: i32) -> &'static str {
     match k {
         ROAD_STEEP => "Steep road",
         ROAD_SWARM => "Swarm road",
+        ROAD_SHIFT => "Shifting road",
         _ => "Open road",
     }
 }
@@ -727,8 +728,15 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
             e.text_ex(x + 12.0, y + 58.0, d(14), INK, ALIGN_LEFT, pw - 24.0, s.str());
             // the twist
             let tws = v[b + RD_TWISTS];
-            let tline = if tws & TW_FOE_DRIVE != 0 { "Every foe carries one more drive." } else { "Nothing extra." };
-            e.text_ex(x + 12.0, y + 80.0, bs(12), INK, ALIGN_LEFT, pw - 24.0, tline);
+            let mut tl = Buf::new();
+            if kind == ROAD_SHIFT || tws & TW_FAST_SHIFT != 0 {
+                tl.s("The stage shifts on foe KOs, ").i(v[b + RD_SHIFT_CAP]).s(" a fight, +").i(v[b + RD_SHIFT_COINS]).s(" coins each.");
+            } else if tws & TW_FOE_DRIVE != 0 {
+                tl.s("Every foe carries one more drive.");
+            } else {
+                tl.s("Nothing extra.");
+            }
+            crate::pick::wrap(e, x + 12.0, y + 76.0, pw - 24.0, bs(12), 13.0, INK, ALIGN_LEFT, tl.str(), 2);
             e.rect(x + 12.0, y + 102.0, pw - 24.0, 2.0, PALE);
             e.text_ex(x + 12.0, y + 108.0, bs(11), LILAC, ALIGN_LEFT, 0.0, "Banks");
             tokens(e, x + 12.0, y + 124.0, pw - 24.0, v[b + RD_PRIZE], v[b + RD_PRIZE_N]);
@@ -748,7 +756,9 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
     let b = V_ROAD0 + cur * V_ROADW;
     let mut s = Buf::new();
     s.s("Take the ").s(road_name(v[b + RD_KIND])).s(": ");
-    if v[b + RD_TWISTS] & TW_FOE_DRIVE != 0 {
+    if v[b + RD_KIND] == ROAD_SHIFT || v[b + RD_TWISTS] & TW_FAST_SHIFT != 0 {
+        s.s("the stage shifts on foe KOs, +").i(v[b + RD_SHIFT_COINS]).s(" coins each. ");
+    } else if v[b + RD_TWISTS] & TW_FOE_DRIVE != 0 {
         s.s("every foe carries one more drive. ");
     } else {
         s.s("the fights as they are. ");

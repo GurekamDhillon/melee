@@ -1338,6 +1338,7 @@ name = "melee_modes"
 version = "0.1.0"
 dependencies = [
  "backtrace",
+ "brawl_boss",
  "melee_chara",
  "melee_core",
  "melee_fighter",

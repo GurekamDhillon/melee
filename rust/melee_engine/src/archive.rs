@@ -292,10 +292,24 @@ fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
     }
     crate::gxbridge::forget_range(raw, raw + len);
     let before = h.retired.len();
-    h.retired.retain(|im| !hit(im));
+    // MELEE_RECLAIM_POISON=1 (test knob): a dropped image's native objects are filled with 0xDD and leaked instead
+    // of freed, so a stale holder faults deterministically on its next read (the crash report names it)
+    static POISON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    let poison = *POISON.get_or_init(|| std::env::var_os("MELEE_RECLAIM_POISON").is_some());
+    let (mut dropped, keep): (Vec<ArchiveImage>, Vec<ArchiveImage>) = std::mem::take(&mut h.retired).into_iter().partition(|im| hit(im));
+    h.retired = keep;
     let dead: Vec<usize> = h.archives.iter().filter(|(_, im)| hit(im)).map(|(&k, _)| k).collect();
     for k in &dead {
-        h.archives.remove(k);
+        if let Some(im) = h.archives.remove(k) {
+            dropped.push(im);
+        }
+    }
+    for mut im in dropped {
+        if poison {
+            if let Some(a) = im._arena.take() {
+                a.poison_and_leak(0xDD);
+            }
+        }
     }
     if std::env::var_os("MELEE_RECLAIM_LOG").is_some() && (before != h.retired.len() || !dead.is_empty()) {
         eprintln!("engine: reclaimed {} archive image(s) under {raw:#x}+{len:#x}", before - h.retired.len() + dead.len());

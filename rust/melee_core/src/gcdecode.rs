@@ -114,6 +114,15 @@ impl GcArena {
     pub fn is_empty(&self) -> bool {
         self.owned.is_empty()
     }
+    /// Test knob support (`MELEE_RECLAIM_POISON`): fill every object with `byte` and leak it, so a later read through a
+    /// stale pointer into this image finds the pattern (a pointer field reads as a non-canonical address and faults at
+    /// once, naming the holder) instead of memory the allocator has handed to someone else.
+    pub fn poison_and_leak(mut self, byte: u8) {
+        for o in self.owned.drain(..) {
+            // SAFETY: `bytes` is the size of the block `ptr` owns (see `object` / the slice decoders).
+            unsafe { core::ptr::write_bytes(o.ptr, byte, o.bytes) };
+        }
+    }
 }
 
 impl Drop for GcArena {

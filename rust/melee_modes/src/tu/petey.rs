@@ -45,10 +45,9 @@ const DEATH_PCT: f32 = 10.0;
 /// Cage proc thresholds (§6.2).
 const PHASE1_PCT: f32 = 50.0;
 const PHASE2_PCT: f32 = 25.0;
-/// Kinetic scale on the movement kinds. The spec reads param 3056 (0.75) as one [spec: L], but the real fight
-/// moves at the raw values: measured dive (L 2.5) 0.2225 first step, +0.0225 / f, max 1.475; landing decay 0.0725 / f
-/// (docs/rust-port/notes/petey-behavior.md, "Observed in Brawl"). So no scale.
-const KIN_SCALE: f32 = 1.0;
+// Param 3056 (0.75) is not a speed scale (spec §2 / §7, Q5): it is the fallback bounce factor applied when a running
+// movement touches a wall or floor. Petey's dive and landing never bounce and he is never launched, so it is unused;
+// the movement kinds run at their raw values (measured dive at L 2.5: 0.2225 first step, +0.0225 / f, max 1.475).
 /// The difficulty index the fight uses (0-14): clamp(3 tier + 2 - min(retries, 5)) in Brawl (spec §3); Envoy has no
 /// SSE tier or continues, so a fresh Normal game: 5.
 const DIFFICULTY: usize = 5;
@@ -151,6 +150,9 @@ pub struct Boss {
     pub goal_x: f32,
     /// the carrier's hitlag last frame (a rise = one of Petey's boxes connected this frame)
     pub lag_prev: f32,
+    /// the adventure follow camera (spec §2.3 / §10, Q6): started, centre x / y and eye distance
+    pub cam_on: bool,
+    pub cam: [f32; 3],
 }
 
 const OFF: Boss = Boss {
@@ -158,6 +160,7 @@ const OFF: Boss = Boss {
     phase: 0, cage_ctr: 0, rule28: false, rule29: false, jump_count: 1, jumps_wanted: 1, side: 0, flinch_to: ST_MENU,
     aim: 1.0, cage_broken: false, cause: 0, freed: -1, ko_done: false, down_t: 0, rng: 1, carrier_slot: -1,
     last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, has_goal: false, goal_x: 0.0, lag_prev: 0.0,
+    cam_on: false, cam: [0.0; 3],
 };
 pub static mut B: Boss = OFF;
 /// The match about to start is a Petey fight (set by `envoy::match_begin`, consumed at the first tick).
@@ -248,6 +251,11 @@ fn range(min: f32, min_s: f32, max: f32, max_s: f32) -> f32 {
 pub fn level() -> f32 {
     let s = STRENGTH[unsafe { B.phase }.clamp(0, 2) as usize];
     L_TABLE[s - 1][DIFFICULTY]
+}
+
+/// The cages' L: the boss's L truncated to an integer (spec §3, Q4).
+pub fn cage_level() -> f32 {
+    fctiwz_f32(level()) as f32
 }
 
 unsafe fn fighter_of(slot: i32, i: usize) -> *mut Fighter {
@@ -347,7 +355,7 @@ pub unsafe fn tick() {
         advance();
     }
     hitboxes(cf);
-    camera_box(cf);
+    follow_camera();
     if B.cause != 0 {
         B.down_t += 1;
         if !B.ko_done && B.down_t >= 90 {
@@ -360,27 +368,77 @@ pub unsafe fn tick() {
     }
 }
 
-/// The stage camera frames Petey, not the invisible carrier (which stands off to the side): the carrier's camera
-/// subject is moved onto Petey's body every frame with the boss's framing box (cameraRangeSet, spec §2.3: top +40,
-/// bottom -40, +-80 across; Petey never turns, so the box is symmetric). Runs after the fighter procs wrote it and
-/// before the camera reads it; the subject lives in the game heap, so a rollback restores it like any fighter's.
-unsafe fn camera_box(cf: &mut Fighter) {
-    let cb = cf.x890_cameraBox;
-    if cb.is_null() || B.ko_done {
-        return;
+/// Brawl's stage camera for this fight (spec §2.3 / §10, Q6): the shared adventure follow camera. It follows the
+/// player only (Petey's range box and clip sphere never widen it), at a fixed eye distance of 260 that it approaches
+/// by 5% of the remaining gap per frame, tilted -1 degree (eye slightly above, looking down), and keeps the visible
+/// rectangle plus a 10-unit margin inside the camera limit box x -180..180, y -70..120. Brawl's FOV is unknown;
+/// Melee's own camera FOV, 30 degrees, gives 2 * 260 * tan 15 = 139.3 visible units of height, the reader's figure.
+/// The centre also eases in by the same 5%. Width uses the camera's authored aspect (not the window), so the logic
+/// is the same on every machine. Driven through Melee's scripted (boss intro) mode with fixed interest and eye, whose
+/// proc then copies our targets as they are. State is in `B` and `game_camera` (statics): rollback-safe.
+const CAM_DIST: f32 = 260.0;
+const CAM_RATE: f32 = 0.05;
+const CAM_TILT_DEG: f32 = -1.0;
+const CAM_FOV: f32 = 30.0;
+const CAM_LIMIT: [f32; 4] = [-180.0, 180.0, -70.0, 120.0];
+const CAM_MARGIN: f32 = 10.0;
+
+unsafe fn follow_camera() {
+    use melee_world::tu::camera as cm;
+    // the player: the first fighter that is not the carrier
+    let mut tgt = None;
+    for s in 0..4 {
+        if s == B.carrier_slot {
+            continue;
+        }
+        let f = fighter_of(s, 0);
+        if !f.is_null() && !(*f).x890_cameraBox.is_null() {
+            let p = (*(*f).x890_cameraBox).pos;
+            tgt = Some((p.x, p.y));
+            break;
+        }
     }
-    let p = points();
-    let cy = (p[P_BODY_A].1 + p[P_CAGE_L_A].1) * 0.5;
-    let cb = &mut *cb;
-    cb.pos.x = B.px;
-    cb.pos.y = cy;
-    cb.pos.z = 0.0;
-    cb.bone_pos = cb.pos;
-    cb.facing_dir = 1.0;
-    cb.target_ext.h.x = -80.0;
-    cb.target_ext.h.y = 80.0;
-    cb.target_ext.v.x = 40.0;
-    cb.target_ext.v.y = -40.0;
+    let gc = &mut *core::ptr::addr_of_mut!(cm::game_camera);
+    if !B.cam_on {
+        let (i, e) = (gc.transform.interest, gc.transform.position);
+        let (dx, dy, dz) = (e.x - i.x, e.y - i.y, e.z - i.z);
+        let d = melee_runtime::gekko::sqrtf(dx * dx + dy * dy + dz * dz);
+        B.cam = [i.x, i.y, if d > 1.0 { d } else { CAM_DIST }];
+        B.cam_on = true;
+    }
+    if gc.mode != CAMERA_BOSS_INTRO as u32 {
+        cm::Camera_8002FE38();
+    }
+    let (tx, ty) = tgt.unwrap_or((B.cam[0], B.cam[1]));
+    B.cam[2] += (CAM_DIST - B.cam[2]) * CAM_RATE;
+    B.cam[0] += (tx - B.cam[0]) * CAM_RATE;
+    B.cam[1] += (ty - B.cam[1]) * CAM_RATE;
+    let hh = B.cam[2] * melee_runtime::gekko::tanf(0.5 * CAM_FOV * 0.017453292);
+    let hw = hh * cm::cm_803BCB64.aspect;
+    let clamp = |v: f32, lo: f32, hi: f32| if lo > hi { 0.5 * (lo + hi) } else { fmin(fmax(v, lo), hi) };
+    B.cam[0] = clamp(B.cam[0], CAM_LIMIT[0] + CAM_MARGIN + hw, CAM_LIMIT[1] - CAM_MARGIN - hw);
+    B.cam[1] = clamp(B.cam[1], CAM_LIMIT[2] + CAM_MARGIN + hh, CAM_LIMIT[3] - CAM_MARGIN - hh);
+    let t = CAM_TILT_DEG * 0.017453292;
+    let (ts, tc) = (melee_runtime::gekko::sinf(t), melee_runtime::gekko::cosf(t));
+    let interest = Vec3 { x: B.cam[0], y: B.cam[1], z: 0.0 };
+    let eye = Vec3 { x: B.cam[0], y: B.cam[1] - B.cam[2] * ts, z: B.cam[2] * tc };
+    gc.set_x341_b1_b2(2);
+    gc.set_x341_b3_b4(1);
+    gc.set_x341_b5_b6(0);
+    gc.x344.vec = interest;
+    gc.x35C.vec = eye;
+    gc.x350 = interest;
+    gc.x368.vec = eye;
+    gc.x374 = CAM_FOV;
+    gc.transform.target_interest = interest;
+    gc.transform.interest = interest;
+    gc.transform.target_position = eye;
+    gc.transform.position = eye;
+    gc.transform.target_fov = CAM_FOV;
+    gc.transform.fov = CAM_FOV;
+    if B.last_frame % 120 == 0 && std::env::var_os("MELEE_PETEY_LOG").is_some() {
+        eprintln!("petey: f{} camera centre ({:.1}, {:.1}) dist {:.1} mode {} player {:?}", B.last_frame, B.cam[0], B.cam[1], B.cam[2], gc.mode, tgt);
+    }
 }
 
 /// Hide the carrier's "CP" pointer: its proc shows it again each frame, this runs after the procs, before the draw.
@@ -609,7 +667,7 @@ unsafe fn enter(st: i32) {
                 Some(x) if x < B.px => -1.0,
                 _ => 1.0,
             };
-            B.vx = 0.2 * KIN_SCALE * B.aim;
+            B.vx = 0.2 * B.aim;
         }
         ST_JUMP_LANDING => set_motion(M_JUMP_LANDING),
         ST_BASKET_L => {
@@ -637,13 +695,13 @@ unsafe fn advance() {
     let l = level();
     // movement: kind 16 during the dive, kind 14 / 15 (decay toward 0) otherwise
     if B.st == ST_JUMP_ATTACK {
-        let acc = (0.015 + 0.003 * l) * KIN_SCALE;
-        let max = (1.4 + 0.03 * l) * KIN_SCALE;
+        let acc = (0.015 + 0.003 * l);
+        let max = (1.4 + 0.03 * l);
         B.vx = fclamp(B.vx + acc * B.aim, -max, max);
     } else {
-        let mut dec = 0.06 * KIN_SCALE;
+        let mut dec = 0.06;
         if B.st == ST_JUMP_LANDING {
-            dec += 0.005 * l * KIN_SCALE;
+            dec += 0.005 * l;
         }
         B.vx = if B.vx > 0.0 { fmax(B.vx - dec, 0.0) } else { fmin(B.vx + dec, 0.0) };
     }
@@ -891,8 +949,11 @@ fn hit_list() -> ([HitDef; 4], usize) {
     if basket && (70..=114).contains(&f) {
         let (a, c) = if mot == M_BASKET_L { (P_HIT_L_A, P_HIT_L_B) } else { (P_HIT_R_A, P_HIT_R_B) };
         let face = if mot == M_BASKET_L { 1.0 } else { -1.0 }; // the cage's own facing (proc 15: left +1, right -1)
-        let dmg = fctiwz_f32(10.0 + 2.7 * l).max(0) as u32;
-        let bkb = fctiwz_f32(105.0 - 2.0 * l).max(0) as u32;
+        // the cage's own L: link 5112 hands it the boss's L read as an integer (truncated), spec §3 / §8 (Q4).
+        // Normal phases 0/1/2: boss L 2.5/3.3/4.1 -> cage L 2/3/4 -> 15/18/20 damage. Body and landing keep the float L.
+        let lc = cage_level();
+        let dmg = fctiwz_f32(10.0 + 2.7 * lc).max(0) as u32;
+        let bkb = fctiwz_f32(105.0 - 2.0 * lc).max(0) as u32;
         for (i, (pi, r)) in [(a, 8.0f32), (c, 10.0)].into_iter().enumerate() {
             let (x, y) = p[pi];
             push(HitDef { x, y, r: r * MODEL_SCALE, dmg, angle: 145, kbg: 44, wkb: 0, bkb, grp: grp(i as u32, 60), face, atk: 1 });

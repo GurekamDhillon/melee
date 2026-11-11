@@ -90,9 +90,9 @@ player attacks, i.e. an authored .dtm from the state. Not done this round.
 | hits per attack | one: a victim takes one basket or one landing hit | two (box A then B; landing centre then side) | one (an attack's boxes share victims) |
 | basket knockback | L cage: 146.8 deg (-x), R cage: 33.3 deg (+x), first-frame speed 3.41 on Kirby 0 -> 15% | wrong side for the L cage (Melee launches from the carrier's x) | L 147 deg (-x), R 33 deg (+x), speed 3.36 |
 | landing side knockback | 151.8 deg outward (left side), speed 3.64 (Kirby 15 -> 28%) / 4.14 (30 -> 43%) | 152 deg, 3.86 | same rule (angle mirrored per side) |
-| basket damage | **15** (Kirby 0 -> 15) | 16 (10 + 2.7 x 2.5) | 16 (see questions.md Q4) |
+| basket damage | **15** (Kirby 0 -> 15) | 16 (10 + 2.7 x 2.5) | 15 since port/petey6: the cage uses trunc(L) (Q4) |
 | landing side damage | 13 (= 8 + 2L) | 13 | 13 |
-| camera | close stage camera: Petey fills about half the screen height and leaves the top of the frame in the jump | wide FD camera framing Petey with his range box | unchanged (Q6) |
+| camera | close stage camera: Petey fills about half the screen height and leaves the top of the frame in the jump | wide FD camera framing Petey with his range box | port/petey6: player-only follow camera (Q6) |
 | cage HP / phase / Down / stun | not observed (idle player) | - | - |
 ## Derived from the animated bones (local probe, `petey::probe::petey_tracks_probe`)
 
@@ -112,14 +112,13 @@ player attacks, i.e. an authored .dtm from the state. Not done this round.
 Statuses 1-15, rules 0-30 (as a direct state machine with the same priorities), the L tables, wait / jump timeouts,
 weighted picks, cage HP 999, body damage forwarded to both cages, death on a hit with the lower cage <= 10%,
 cage break -> Down + partner freed, phase-up at 50% (Angry) and 25%, flinch from the waits, kinetic kinds 14/15/16
-(x0.75), dive aim snapped to +-x, every hitbox of §8 with its frames, bone, offset and level scaling, hurtboxes on
+(raw values; 0.75 is a bounce factor, Q5), dive aim snapped to +-x, every hitbox of §8 with its frames, bone, offset and level scaling, hurtboxes on
 the bones (UppermouthN r39; LIronNb / RIronNb capsules r11). Shapes follow the bones when the local model is present
 (tracks built at load, in memory only); otherwise a stand-in of the same sizes and frames. Approach chosen: generate
 locally at load, fall back to the stand-in (no disc-derived tables committed). The two can differ, so a replay must
 be played with the same data presence it was recorded with.
 
-Camera: the carrier's camera subject is moved onto Petey every frame with the cameraRangeSet box (+-80 across,
-+40 / -40), so the stage camera frames P1 and Petey instead of the invisible carrier.
+Camera (port/petey6, replaces the cameraRangeSet subject box): see "Reader answers Q4-Q6" below.
 
 ## Reader answers applied (2026-11-09, second pass)
 
@@ -136,3 +135,19 @@ Camera: the carrier's camera subject is moved onto Petey every frame with the ca
 
 Q1 model / hitbox scale and the difficulty index per SSE setting; Q2 the reference for the basket's 145 degrees and
 whether -90 is a straight-down launch; Q3 whether the +-68 lead offset affects the dive at all.
+
+## Reader answers Q4-Q6 applied (2026-11-10, port/petey6)
+
+- Q4, cage damage: the cages take the boss's L through link 5112 as an integer, so cage L = trunc(L): 2 / 3 / 4 on
+  Normal by phase, basket damage 15 / 18 / 20 and basket knockback growth 105 - 2 trunc(L). Body contact and landing
+  keep the float L (landing side 13 at L 2.5). Checked in our build: idle Kirby 0 -> 15 from the first basket (f183).
+- Q5, param 3056 (0.75): a fallback bounce factor on wall/floor contact, never a speed scale. Petey never bounces and
+  is never launched, so it is unused; the old KIN_SCALE constant is gone and the kinds run at their raw values.
+- Q6, camera: Brawl's adventure follow camera, player only (Petey's range box no longer feeds the camera). Fixed eye
+  distance 260 approached at 5% of the gap per frame (the centre eases at the same 5%), tilt -1 degree (eye above),
+  visible rectangle plus 10 units kept inside x -180..180, y -70..120. FOV 30 degrees, Melee's own default camera FOV:
+  2 x 260 x tan 15 = 139.3 visible units of height. The width for the clamp uses the camera's authored aspect
+  (1.2173), so the logic does not depend on the window; a 16:9 window shows a little more at the sides than Brawl's
+  clamp assumed. Driven through Melee's scripted (boss intro, mode 6) camera with fixed interest and eye; the state is
+  in `petey::B` and `game_camera` (statics, in the snapshot): synctest depth 4 over 3000 frames, 0 mismatches.
+  Comparison: `scratch/envoy-demo/screenshots/petey6/camera_compare.png` (top Brawl, bottom ours).

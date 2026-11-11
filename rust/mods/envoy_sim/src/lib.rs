@@ -2969,14 +2969,14 @@ unsafe fn fight_won() {
     S.pool = me;
     if sched().kind >= FK_ELITE && S.bosses < 2 && (S.fight as usize) < FIGHTS - 1 {
         S.bosses += 1;
-        log(b"envoy: boss beaten, keystone due; bosses ", S.bosses);
+        log(b"envoy: boss beaten, keystone due; bosses ", S.bosses);
     }
     if S.fight as usize == FIGHTS - 1 {
         S.state = RUN_CLEAR;
-        log(b"envoy: RUN CLEAR, pool left ", me);
+        log(b"envoy: RUN CLEAR, pool left ", me);
     } else {
         S.fight += 1;
-        log(b"envoy: fight won, next ", S.fight + 1);
+        log(b"envoy: fight won, next ", S.fight + 1);
     }
     make_plan();
 }

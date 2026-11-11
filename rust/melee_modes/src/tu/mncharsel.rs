@@ -2480,9 +2480,14 @@ pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
     }
 
     // port: Envoy's run ended and the road said "Back to camp": back out to the main menu (the held-B exit)
-    if crate::tu::envoy::BACK_TO_CAMP == 1 && mnCharSel_804D6CF6 == 0 {
-        crate::tu::envoy::BACK_TO_CAMP = 2;
-        mnCharSel_804D6CF6 = 2;
+    // (a few frames after the select came up: backing out on its first frames hangs the scene change)
+    if crate::tu::envoy::BACK_TO_CAMP >= 1 && crate::tu::envoy::BACK_TO_CAMP < 2 && mnCharSel_804D6CF6 == 0 {
+        crate::tu::envoy::BACK_WAIT += 1;
+        if crate::tu::envoy::BACK_WAIT > 30 {
+            crate::tu::envoy::BACK_WAIT = 0;
+            crate::tu::envoy::BACK_TO_CAMP = 2;
+            mnCharSel_804D6CF6 = 2;
+        }
     }
     if crate::tu::envoy::SKIP_SELECT == 1 && mnCharSel_804D6CF6 == 0 && mnCharSel_804D6CF7 != 0 {
         crate::tu::envoy::SKIP_SELECT = 2;

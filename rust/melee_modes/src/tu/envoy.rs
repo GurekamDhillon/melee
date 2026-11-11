@@ -157,6 +157,8 @@ pub static mut DOOR_NO_DISC: i32 = 0;
 /// The run ended and the player chose "Back to camp" on the road: 1 = the VS character select backs out to the main
 /// menu (as a held B does), 2 = the main menu opens the camp. Never leaves the player on the character select.
 pub static mut BACK_TO_CAMP: i32 = 0;
+/// Calls of the character select's cursor think since a BACK_TO_CAMP request (it backs out after 30).
+pub static mut BACK_WAIT: i32 = 0;
 /// Fights 2+: the road's "Start the fight" goes straight to the match with the party the run has and the stage the
 /// run chose (the match rewrite sets both): 1 = the VS character select confirms itself as soon as it is ready
 /// (as Start would), 2 = confirmed, the stage select is skipped (gmvsmode `onExitCss`). `MELEE_ENVOY_SELECT=1`

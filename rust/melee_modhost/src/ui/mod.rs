@@ -714,7 +714,13 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             }
             match op {
                 1 => ev::PAUSE_RESUME = 1,
-                2 => ev::PAUSE_QUIT = 1,
+                // quit to camp, the run kept: disarm first (the saved run stays at its last fight; the no-contest
+                // end is not the run's), then the character select backs out to the main menu and the camp opens
+                2 => {
+                    ev::ARMED = 0;
+                    ev::BACK_TO_CAMP = 1;
+                    ev::PAUSE_QUIT = 1;
+                }
                 _ => return GD_EINVAL,
             }
         }

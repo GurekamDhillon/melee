@@ -577,6 +577,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             let e = &mut *core::ptr::addr_of_mut!(ENC);
             e.clear();
             e.space(SPACE_WINDOW, sc);
+            pause::release();
             if CAMP.open {
                 CAMP.age += 1;
                 e.space(SPACE_BAND, 1.0);
@@ -614,6 +615,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
         // only an armed run has a HUD or a between-fights line: with the mods loaded and no run armed, VS is retail
         if gd_ui_envoy(v.as_mut_ptr(), VW as u32) != 0 || v[V_MAGIC] != VIEW_MAGIC || st & ST_ARMED == 0 {
             COVER = 0;
+            pause::release();
             return;
         }
         // between the road and the next fight: the self-confirming character select and the loading screen stay

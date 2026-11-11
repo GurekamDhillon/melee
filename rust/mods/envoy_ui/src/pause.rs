@@ -22,16 +22,26 @@ static mut CONFIRM: bool = false;
 static mut AGE: i32 = 0;
 static mut SEEN: i32 = -100;
 static mut T: i32 = 0;
+/// A shared (non-exclusive) capture of port 1 while the pause is up: the UI reads its pad, the game still sees Start.
+static mut CAP: u32 = 0;
+
+/// The pause is gone: give the pad back.
+pub unsafe fn release() {
+    SEL = 0;
+    READ = false;
+    CONFIRM = false;
+    AGE = 0;
+    if CAP != 0 {
+        gd_ui_release(CAP);
+        CAP = 0;
+    }
+}
 
 /// Draw the pause and take its input; called every present while the game is paused and Envoy owns the pause.
 pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
     T += 1;
-    // a new pause: start on Resume
-    if T - SEEN > 2 {
-        SEL = 0;
-        READ = false;
-        CONFIRM = false;
-        AGE = 0;
+    if CAP == 0 {
+        CAP = gd_ui_capture(1, 0);
     }
     SEEN = T;
     AGE += 1;

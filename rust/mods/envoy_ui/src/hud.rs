@@ -350,6 +350,7 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         crate::pause::draw(e, v, ex);
         return;
     }
+    crate::pause::release();
     if humans == 2 && crate::pad_present(1) == 0 {
         sticker(e, S_FACE_LAGOON, 180.0, 150.0, 280.0, 34.0, -1.0, WHITE, |e| {
             e.text_ex(320.0, 158.0, d(15), WHITE, ALIGN_CENTER, 0.0, "P2: connect a second controller");

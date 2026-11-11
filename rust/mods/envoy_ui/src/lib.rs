@@ -362,8 +362,8 @@ unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
         l2.s("  -  Continue, any stage, Start");
     } else if let Some(r) = saved() {
         l1.s("Saved run: ");
-        if r[R_LOOP] > 1 {
-            l1.s("loop ").i(r[R_LOOP]).s(" ");
+        if rec_loop(r[R_LOOP]) > 1 {
+            l1.s("loop ").i(rec_loop(r[R_LOOP])).s(" ");
         }
         l1.s("fight ").i(r[R_FIGHT] + 1).s("/5   pool ").i(r[R_POOL]);
         if r[R_COOP] != 0 {

@@ -128,7 +128,7 @@ pub static mut COOP_JOIN: i32 = 0;
 pub const REC_WORDS: usize = 48;
 pub const REC_AT: usize = 704;
 pub const REC_MAGIC: i32 = 0x454E_5652; // "ENVR"
-pub const REC_VERSION: i32 = 6; // 6: endless loops (R_LOOP, drive levels past 3); 5 (V3) still read; older dropped
+pub const REC_VERSION: i32 = 7; // 7: sessions (the bank in R_LOOP); 6: endless loops; 5 (V3) still read; older dropped
 /// The record the host holds (loaded from disk, updated from the view); `SAVED_LEN` 0 = no run saved.
 pub static mut SAVED: [i32; REC_WORDS] = [0; REC_WORDS];
 pub static mut SAVED_LEN: i32 = 0;
@@ -148,12 +148,18 @@ pub fn rec_digest(r: &[i32]) -> i32 {
 }
 
 pub fn rec_valid(r: &[i32]) -> bool {
-    r.len() >= REC_WORDS && r[0] == REC_MAGIC && (r[1] == REC_VERSION || r[1] == 5) && r[REC_WORDS - 1] == rec_digest(r)
+    r.len() >= REC_WORDS && r[0] == REC_MAGIC && (5..=REC_VERSION).contains(&r[1]) && r[REC_WORDS - 1] == rec_digest(r)
 }
 
 /// Envoy endless loops: the furthest loop any run on this save reached (host file `best.bin`, envoy_store; the camp
 /// shows it). Menu-time state, never read by the sim.
 pub static mut BEST_LOOP: i32 = 0;
+
+/// Sessions (v3g): the armed run's fight was won and the next fight is in the same session (envoy_data view.rs
+/// `V_SESS_NEXT` 760): the VS mode skips the results screen, straight back to the character select the camp replaces.
+pub unsafe fn session_continue() -> bool {
+    armed() != 0 && VIEW[0] == 0x454E_5633 && VIEW[1] == 1 && VIEW[760] == 1
+}
 
 /// The 1-P menu's input with the Envoy row (mnmain `mn_8022D7F4`, after the retail read): what the retail code must
 /// do. `at_last`: the retail cursor is on the last unlocked row.

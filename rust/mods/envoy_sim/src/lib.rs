@@ -158,7 +158,11 @@ const SCHEDULE: [Fight; FIGHTS] = [
     Fight { kind: FK_BOSS, ncpu: 1, level: [9, 0, 0], stocks: [3, 0, 0], foe_drives: 2, foe_level: 2, scale: 1250 },
 ];
 /// A shop opens at the start of these fights (after fights 1, 3 and 4; V3 12.9).
+#[allow(dead_code)]
 const SHOP_AT: [bool; FIGHTS] = [false, true, false, true, true];
+/// Sessions (v3g): the fights that open one. Fights 1-3 are one session, 4-5 (elite, boss) the next, in every loop;
+/// inside a session the next fight follows at once (no picks, no shop, no road), the picks are banked for the stop.
+const SESSION_START: [bool; FIGHTS] = [true, false, false, true, false];
 /// The drives a foe may carry: the ones that read as an attack on the players.
 const FOE_POOL: [&str; 8] = ["ember", "nova", "bolt", "frost", "rush", "bulwark", "hex", "comet"];
 
@@ -241,6 +245,10 @@ struct St {
     bosses: i32,
     /// The loop (1 first; +1 per boss cleared: endless NG+). 0 reads as 1.
     lp: i32,
+    /// Sessions: drive picks banked for the next stop; the picks in the stop now and the one being made (1-based).
+    bank: i32,
+    bank_n: i32,
+    bank_i: i32,
     /// The pairs: [player][main, partner] (character kinds).
     pair: [[i32; 2]; NP],
     picks: i32,
@@ -466,7 +474,7 @@ unsafe fn record() -> [i32; REC_WORDS] {
     r[R_ACTIVE] = S.act_id[0] | S.act_id[1] << 8;
     r[R_PIPS] = ((HH.pips[0] / PIP_UNIT) as i32).clamp(0, 255) | ((HH.pips[1] / PIP_UNIT) as i32).clamp(0, 255) << 8;
     r[R_EARNED] = ((HH.earned[0] / COIN_UNIT) as i32).clamp(0, 0xFFFF) | ((HH.earned[1] / COIN_UNIT) as i32).clamp(0, 0x7FFF) << 16;
-    r[R_LOOP] = lp();
+    r[R_LOOP] = lp() | S.bank.clamp(0, 0xFF) << 16;
     r[REC_WORDS - 1] = rec_digest(&r);
     r
 }
@@ -479,7 +487,7 @@ fn is_kind(id: i32, kind: u8) -> bool {
 unsafe fn take_arm() {
     let mut r = [0i32; REC_WORDS];
     let n = gd_envoy_record(r.as_mut_ptr(), REC_WORDS as u32);
-    let ok = n == REC_WORDS as i32 && r[0] == REC_MAGIC && (r[1] == REC_VERSION || r[1] == 5) && r[REC_WORDS - 1] == rec_digest(&r) && (0..FIGHTS as i32).contains(&r[R_FIGHT]);
+    let ok = n == REC_WORDS as i32 && r[0] == REC_MAGIC && (5..=REC_VERSION).contains(&r[1]) && r[REC_WORDS - 1] == rec_digest(&r) && (0..FIGHTS as i32).contains(&r[R_FIGHT]);
     if ok && r[R_POOL_DIGEST] != POOL_DIGEST as i32 {
         log(b"envoy: saved run is from another drive pool, dropped\0", r[R_POOL_DIGEST]);
         S.state = RUN_NONE;
@@ -492,7 +500,8 @@ unsafe fn take_arm() {
         S.shared = (r[R_SHARED] != 0) as i32;
         S.nh = if r[R_COOP] != 0 { 2 } else { 1 };
         S.bosses = r[R_BOSSES].clamp(0, 2);
-        S.lp = r[R_LOOP].clamp(1, LOOP_TOP);
+        S.lp = rec_loop(r[R_LOOP]).clamp(1, LOOP_TOP);
+        S.bank = if r[1] >= 7 { r[R_LOOP] >> 16 & 0xFF } else { 0 };
         for p in 0..NP {
             for k in 0..KEYSTONES {
                 let id = r[R_KEYS + p * KEYSTONES + k];
@@ -883,6 +892,10 @@ unsafe fn on_new_match(seq: i32) {
         if S.lp > 1 {
             S.bosses = 2; // a test run begun in a later loop: both bosses' slots and keystones
         }
+        // a test run begun past fight 1 has the pick of the fight before it banked
+        S.bank = (S.fight > 0) as i32;
+        S.bank_n = 0;
+        S.bank_i = 0;
         S.drives = [[0; SLOTS]; SETS];
         S.levels = [[0; SLOTS]; SETS];
         S.keys = [[0; KEYSTONES]; NP];
@@ -925,9 +938,20 @@ unsafe fn on_new_match(seq: i32) {
     S.play = 0;
     S.attrs_done = 0;
     let keys_short = (0..nh() as usize).any(|p| key_count(p) < keys_earned());
-    S.shop_due = (SHOP_AT[S.fight.clamp(0, FIGHTS as i32 - 1) as usize] && S.no_shop == 0) as i32;
+    // sessions: the stop (banked picks, a keystone if due, the shop) opens only a session's first fight
+    let sstart = SESSION_START[S.fight.clamp(0, FIGHTS as i32 - 1) as usize];
+    S.shop_due = (sstart && (S.fight > 0 || S.lp > 1) && S.no_shop == 0) as i32;
     // V3 12.9: the drive pick first, then the keystone pick (after a boss); the run's first keystone opens fight 1
-    S.reward_due = if S.fight > 0 || (S.lp > 1 && !started) { RW_DRIVES } else if keys_short { RW_KEYS } else { 0 };
+    S.reward_due = if sstart && S.bank > 0 {
+        RW_DRIVES
+    } else if sstart && keys_short {
+        RW_KEYS
+    } else {
+        0
+    };
+    let _ = started;
+    S.bank_n = if S.reward_due == RW_DRIVES { S.bank } else { 0 };
+    S.bank_i = (S.bank_n > 0) as i32;
     S.outcome = 0;
     S.stage_clock = 0;
     S.stage_switches = 0;
@@ -1190,6 +1214,15 @@ unsafe fn done_pick(p: usize, id: i32, f: i32) {
 
 /// Every player has picked (or the timer ran out): the next screen (keystones -> drives -> the shop), or the fight.
 unsafe fn reward_close() {
+    // sessions: the banked picks one after another ("Pick 1 of 3")
+    if S.rw_active == RW_DRIVES && S.bank > 0 {
+        S.bank -= 1;
+        if S.bank > 0 {
+            S.bank_i += 1;
+            open_reward(RW_DRIVES);
+            return;
+        }
+    }
     if S.rw_active == RW_DRIVES && (0..nh() as usize).any(|p| key_count(p) < keys_earned()) {
         open_reward(RW_KEYS);
         return;
@@ -2933,7 +2966,9 @@ unsafe fn take_drop(p: usize, k: usize, how: i32) {
     let f = if can_take(p, a, id) { a } else { 1 - a };
     S.drop[p][k][0] = 2;
     if gain(p, f, id, how) == 0 {
-        log_drive(b"drop lost (no room)", id, p as i32);
+        // sessions: no room (a full row, or the top level) banks it as one more pick at the stop
+        S.bank = (S.bank + 1).min(9);
+        log_drive(b"drop banked (no room)", id, p as i32);
     }
 }
 
@@ -3185,6 +3220,7 @@ unsafe fn fight_won() {
     }
     if S.fight as usize == FIGHTS - 1 {
         // endless loops: the run goes on at fight 1 of the next loop with everything kept, one more stock in the pool
+        S.bank = (S.bank + 1).min(9);
         S.lp = (lp() + 1).min(LOOP_TOP);
         S.fight = 0;
         if S.pool < POOL_CAP {
@@ -3193,6 +3229,7 @@ unsafe fn fight_won() {
         log(b"envoy: loop now\0", S.lp);
         log(b"envoy: RUN CLEAR, pool left ", me);
     } else {
+        S.bank = (S.bank + 1).min(9);
         S.fight += 1;
         log(b"envoy: fight won, next ", S.fight + 1);
     }
@@ -3241,6 +3278,31 @@ unsafe fn publish() {
     v[V_FIGHT] = S.fight;
     v[V_FIGHTS] = FIGHTS as i32;
     v[V_LOOP] = lp();
+    let fi = S.fight.clamp(0, FIGHTS as i32 - 1) as usize;
+    // the fight won (or every foe out and the drops being collected: the match may end before fight_won runs)
+    // and the next fight in the same session
+    let won_now = S.collect > 0 && S.outcome == 0 && fi + 1 < FIGHTS && !SESSION_START[fi + 1];
+    v[V_SESS_NEXT] = (S.state == RUN_LIVE && ((S.outcome == 1 && !SESSION_START[fi]) || won_now)) as i32;
+    v[V_BANK] = S.bank;
+    v[V_BANK_N] = if S.rw_active == RW_DRIVES { S.bank_n } else { 0 };
+    v[V_BANK_I] = S.bank_i;
+    let mut kinds = 0;
+    let mut k = fi;
+    let mut sh = 0;
+    loop {
+        kinds |= (SCHEDULE[k].kind + 1) << sh;
+        sh += 4;
+        k += 1;
+        if k >= FIGHTS || SESSION_START[k] {
+            break;
+        }
+    }
+    v[V_SESS_KINDS] = kinds;
+    let mut s0 = fi;
+    while !SESSION_START[s0] {
+        s0 -= 1;
+    }
+    v[V_SESS_FIGHT] = (fi - s0 + 1) as i32;
     v[V_POOL] = if S.live != 0 { (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0) } else { S.pool };
     v[V_LIVE] = S.live;
     v[V_HUMANS] = nh();
@@ -3472,7 +3534,7 @@ extern "C" fn on_frame_end() {
             if S.rw_active != 0 {
                 reward_frame();
             } else if S.reward_due != 0 && S.frames >= REWARD_DELAY && phase == 0 && S.outcome == 0 {
-                if gd_hold_begin(REWARD_TIME * 4 + SHOP_TIME + 120) == 0 {
+                if gd_hold_begin(REWARD_TIME * (S.bank.max(1) + 3) + SHOP_TIME + 120) == 0 {
                     let due = S.reward_due;
                     S.reward_due = 0;
                     open_reward(due);

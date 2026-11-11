@@ -372,9 +372,17 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
     if keys {
         spr_rot(e, S_RAYS, 320.0, 200.0, 2.6, T as f32 * 0.07, alpha(WHITE, 0.10));
     }
-    let title = if keys { "Choose a keystone" } else { "Pick a drive" };
+    // sessions: the banked picks one after another ("Pick 1 of 3")
+    let mut tb = Buf::new();
+    if keys {
+        tb.s("Choose a keystone");
+    } else if v[V_BANK_N] > 1 {
+        tb.s("Pick ").i(v[V_BANK_I].max(1)).s(" of ").i(v[V_BANK_N]);
+    } else {
+        tb.s("Pick a drive");
+    }
     let centre = coop || !keys;
-    text_edge(e, if centre { 320.0 } else { 16.0 }, 6.0, d(24), WHITE, if centre { ALIGN_CENTER } else { ALIGN_LEFT }, 2.2, title);
+    text_edge(e, if centre { 320.0 } else { 16.0 }, 6.0, d(24), WHITE, if centre { ALIGN_CENTER } else { ALIGN_LEFT }, 2.2, tb.str());
     if !coop && keys {
         let sub = if keys { "One rule for the whole run." } else { "One of three, for one of your two fighters." };
         e.text_ex(22.0, 36.0, bs(13), WHITE, ALIGN_LEFT, 0.0, sub);

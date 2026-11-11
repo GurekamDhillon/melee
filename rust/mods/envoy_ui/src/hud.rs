@@ -352,6 +352,12 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         boss_bar(e, pv);
     }
     moments(e, v, ex);
+    // sessions: the fight's banner over its first seconds ("Fight 2 - Pack", the loop and the stocks left)
+    let pl = v[V_PLAY];
+    if v[V_RW] == 0 && pl < 110 {
+        let a = if pl < 90 { 1.0 } else { (110 - pl) as f32 / 20.0 };
+        session_banner(e, v, a, 150.0);
+    }
     if humans == 2 && crate::pad_present(1) == 0 {
         sticker(e, S_FACE_LAGOON, 180.0, 150.0, 280.0, 34.0, -1.0, WHITE, |e| {
             e.text_ex(320.0, 158.0, d(15), WHITE, ALIGN_CENTER, 0.0, "P2: connect a second controller");

@@ -124,6 +124,50 @@ pub struct Party {
     pub shared: bool,
 }
 
+/// A fight kind's word (FK_*).
+pub fn kind_word(k: i32) -> &'static str {
+    match k {
+        FK_PACK => "Pack",
+        FK_ELITE => "Elite",
+        FK_BOSS => "Boss",
+        _ => "Duel",
+    }
+}
+
+/// "Elite, then Boss": the session's fights from the next one on (view `V_SESS_KINDS`).
+pub fn session_line(b: &mut Buf, kinds: i32) {
+    let mut k = kinds;
+    let mut first = true;
+    while k & 15 != 0 {
+        if !first {
+            b.s(", then ");
+        }
+        b.s(kind_word((k & 15) - 1));
+        first = false;
+        k >>= 4;
+    }
+}
+
+/// Sessions: the banner between fights of a session and over a fight's first seconds: "Fight 2 - Pack", then the
+/// loop and the stocks left. `a`: opacity; `y`: its top.
+pub fn session_banner(e: &mut E, v: &[i32; VW], a: f32, y: f32) {
+    if a <= 0.0 {
+        return;
+    }
+    let (x, w, h) = (170.0, 300.0, 86.0);
+    sticker(e, S_FACE_SUNNY, x, y, w, h, -1.0, alpha(WHITE, a), |e| {
+        let mut t = Buf::new();
+        t.s("Fight ").i(v[V_FIGHT] + 1).s(" - ").s(kind_word(v[V_FIGHT_KIND]));
+        e.text_ex(x + w * 0.5, y + 10.0, d(28), alpha(INK, a), ALIGN_CENTER, 0.0, t.str());
+        let mut s = Buf::new();
+        if v[V_LOOP] > 1 {
+            s.s("Loop ").i(v[V_LOOP]).s(" - ");
+        }
+        s.i(v[V_POOL]).s(if v[V_POOL] == 1 { " stock left" } else { " stocks left" });
+        e.text_ex(x + w * 0.5, y + 50.0, bs(14), alpha(INK, a), ALIGN_CENTER, 0.0, s.str());
+    });
+}
+
 /// "Loop 3 - Fight 2 of 5" (loop 1: "Fight 2 of 5"); `fight` 0-based.
 pub fn loop_fight(b: &mut Buf, lp: i32, fight: i32, fights: i32) {
     if lp > 1 {
@@ -133,7 +177,7 @@ pub fn loop_fight(b: &mut Buf, lp: i32, fight: i32, fights: i32) {
 }
 
 pub fn party_from_record(r: &[i32]) -> Party {
-    let mut p = Party { have: true, players: if r[R_COOP] != 0 { 2 } else { 1 }, fight: r[R_FIGHT], fights: 5, lp: r[R_LOOP].max(1), pool: r[R_POOL], pairs: [-1; 4],
+    let mut p = Party { have: true, players: if r[R_COOP] != 0 { 2 } else { 1 }, fight: r[R_FIGHT], fights: 5, lp: rec_loop(r[R_LOOP]).max(1), pool: r[R_POOL], pairs: [-1; 4],
         ids: [[0; SLOTS]; 4], lvs: [[0; SLOTS]; 4], keys: [[0; KEYSTONES]; 2], shared: r[R_SHARED] != 0 };
     for set in 0..4 {
         for k in 0..SLOTS {

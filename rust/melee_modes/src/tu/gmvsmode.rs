@@ -246,6 +246,11 @@ pub unsafe extern "C" fn onEnterVs(state: *mut GameModeState) {
 pub unsafe extern "C" fn onExitVs(state: *mut GameModeState) {
     melee_core::ct!("onExitVs");
     ext::gmVsMelee_ExitVs(state, gmVsMode_State_Results, gmVsMode_State_SuddenDeath);
+    // port: an Envoy session goes on (the fight won, the next in the same session): no results screen, straight to
+    // the character select (the camp replaces it and goes on at once; envoy_ui camp.rs)
+    if crate::tu::envoy::session_continue() {
+        ext::gm_SetNextGameModeStateId(gmVsMode_State_Css);
+    }
     let mei = ext::gm_GetGameModeStateExitData(state) as *mut MatchExitInfo;
     for i in 0..GM_MAX_PLAYERS as usize {
         if (*mei).match_end.player_standings[i].pkind as i32 != Gm_PKind_NA as i32 {

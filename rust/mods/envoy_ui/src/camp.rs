@@ -210,6 +210,15 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     u.age += 1;
     let t = u.age;
     let ended = view.is_some_and(|v| v[V_STATE] == 2 || v[V_STATE] == 3);
+    // sessions: the fight was won and the next is in the same session: no road, the banner, then on at once
+    if after_fight {
+        if let Some(v) = view.filter(|v| v[V_SESS_NEXT] == 1) {
+            e.layer(LAYER_MENU, 0);
+            e.rect(-107.0, 0.0, 854.0, 480.0, 0x1A10_4AFF);
+            session_banner(e, v, 1.0, 190.0);
+            return if t >= 40 { DO_ARM | (2 << 8) } else { DO_NOTHING };
+        }
+    }
     let has = rec.is_some();
     let rs = rows(after_fight, ended, has, no_brawl);
     if u.cur >= rs.len() {
@@ -317,7 +326,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         if r == R_BIG {
             let sub = if let Some(rc) = rec.as_ref() {
                 let mut b = Buf::new();
-                loop_fight(&mut b, rc[R_LOOP], rc[R_FIGHT], 5);
+                loop_fight(&mut b, rec_loop(rc[R_LOOP]), rc[R_FIGHT], 5);
                 b.s(". ").i(rc[R_POOL]).s(" stocks left.");
                 b
             } else {
@@ -364,8 +373,8 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
             e.text_ex(x + 20.0, y + 16.0, d(21), INK, ALIGN_LEFT, 0.0, title);
             let line = if let Some(rc) = rec.as_ref() {
                 let mut b = Buf::new();
-                if rc[R_LOOP] > 1 {
-                    b.s("Loop ").i(rc[R_LOOP]).s(", f");
+                if rec_loop(rc[R_LOOP]) > 1 {
+                    b.s("Loop ").i(rec_loop(rc[R_LOOP])).s(", f");
                 } else {
                     b.s("F");
                 }
@@ -529,7 +538,9 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                 e.text_ex(x + 16.0, y + 116.0, d(15), INK, ALIGN_LEFT, 0.0, "If you win");
                 e.text_ex(x + 16.0, y + 138.0, bs(13), LILAC, ALIGN_LEFT, 270.0, ifwin);
                 let mut s = Buf::new();
-                s.s("Pool: ").i(v[V_POOL]).s(" stocks.");
+                s.s("Pool: ").i(v[V_POOL]).s(" stocks. Next: ");
+                session_line(&mut s, v[V_SESS_KINDS]);
+                s.s(".");
                 e.text_ex(x + 16.0, y + 168.0, bs(13), LILAC, ALIGN_LEFT, 270.0, s.str());
             });
         }

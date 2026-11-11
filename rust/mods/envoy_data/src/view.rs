@@ -208,10 +208,18 @@ pub const MARK_TECH: i32 = 3;
 pub const MARK_OFFSTAGE: i32 = 4;
 
 // ---- the run record (melee_modes::tu::envoy REC_*): saved by the host, handed back at arm
+// ---- sessions (v3g; envoy-v3-rules.md "Sessions"): fights played back to back, picks banked for one stop
+pub const V_SESS_NEXT: usize = 760; // 1: the fight was won and the next one is in the same session (no stop)
+pub const V_BANK: usize = 761; // drive picks banked (taken at the next stop)
+pub const V_BANK_N: usize = 762; // picks in this stop (for "Pick i of n"; 0 outside a stop)
+pub const V_BANK_I: usize = 763; // the pick being made now, 1-based
+pub const V_SESS_KINDS: usize = 764; // the fights of the session from the next fight on: kind + 1 per 4 bits, low first
+pub const V_SESS_FIGHT: usize = 765; // the fight's place in its session, 1-based (1: the session's first)
+
 pub const V_REC: usize = 704;
 pub const REC_WORDS: usize = 48;
 pub const REC_MAGIC: i32 = 0x454E_5652;
-pub const REC_VERSION: i32 = 6; // 6: drive words (id + 1) << 4 | level, R_LOOP; 5 still read
+pub const REC_VERSION: i32 = 7; // 7: R_LOOP carries the bank (<< 16); 6: drive words << 4, R_LOOP; 5 and 6 still read
 pub const R_SEED: usize = 2;
 pub const R_RUNS: usize = 3;
 pub const R_FIGHT: usize = 4;
@@ -229,7 +237,12 @@ pub const R_REROLLS: usize = 42;
 pub const R_ACTIVE: usize = 43; // player 1's active id | player 2's << 8
 pub const R_PIPS: usize = 44; // player 1's whole pips | player 2's << 8
 pub const R_EARNED: usize = 45; // player 1's earned | player 2's << 16
-pub const R_LOOP: usize = 46; // the loop (0 in a version 5 record: loop 1)
+pub const R_LOOP: usize = 46; // the loop (low 16 bits; 0 in a version 5 record: loop 1) | banked picks << 16 (v7)
+
+/// The loop in a record's R_LOOP word (1 at least).
+pub fn rec_loop(w: i32) -> i32 {
+    (w & 0xFFFF).max(1)
+}
 
 /// A record's drive word as (id + 1, level), by the record's version (`r[1]`).
 pub fn rec_drive(w: i32, version: i32) -> (i32, i32) {

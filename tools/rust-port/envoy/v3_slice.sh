@@ -50,7 +50,7 @@ cp "$repo/build/mods/envoy_sim.wasm" "$mods/" || { echo "v3_slice: build the mod
 export MELEE_VOLUME=3 MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=2 MELEE_PAD_SCRIPT="$here/drives_pad.txt"
 run() { # name depth drives [env...]
   local name=$1 depth=$2 drives=$3; shift 3
-  env MELEE_WINDOW_TITLE="v3ng agent: v3_slice $name d$depth (port/v3ng)" MELEE_ENVOY_TEST_DRIVES="$drives" "$@" "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
+  env MELEE_WINDOW_TITLE="v3g agent: v3_slice $name d$depth (port/v3g)" MELEE_ENVOY_TEST_DRIVES="$drives" "$@" "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
     --scenario pad_falcon_fox_fd --depth "$depth" --frames "$frames" --timeout 1800 >"$out/$name.d$depth.log" 2>&1
   grep 'engine synctest' "$out/$name.d$depth.log"
 }
@@ -91,7 +91,7 @@ for d in $depths; do
     check 5 volley "$d" "$line" "$miss"
   fi
   if on shop; then
-    line=$(run shop "$d" "ember,bolt,frost,\$400|echo_oath" MELEE_PAD_SCRIPT="$here/shop_pad.txt")
+    line=$(run shop "$d" "ember,bolt,frost,\$400|echo_oath" MELEE_PAD_SCRIPT="$here/shop_pad.txt" MELEE_ENVOY_START_FIGHT=4)
     miss=""; seen shop "$d" "shop open" || miss="$miss (no shop)"
     seen shop "$d" "drive replaced" || miss="$miss (no replace)"
     { seen shop "$d" "shop bought" || seen shop "$d" "drive replaced"; } || miss="$miss (no buy)"

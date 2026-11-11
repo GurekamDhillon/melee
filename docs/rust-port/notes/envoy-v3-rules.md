@@ -123,3 +123,22 @@ with and without Insulate, and through a cash-out.
 - Test knobs: `MELEE_ENVOY_TEST_DRIVES` takes `$N` (coins) and `noshop` (no shop) besides drives and keystones; a row
   of more than the open slots opens them for that run.
 - Play: `E:\Projects\Melee Workspace\scratch\envoy-demo\play-v3sim-solo.cmd` (old look, new rules).
+
+## Results (2026-11-10, commit on port/v3sim)
+
+| check | result |
+|---|---|
+| gate (`gate.sh --skip-build`) | GATE OK |
+| replays vs V2's baseline | hero 392/428 (= baseline), local 125/125, own: see the final report |
+| envoy_data lint + tests (incl. the split test, both directions, Insulate, through a cash-out) | 7 passed |
+| V3 synctests (v3_slice.sh), depths 4 and 7 | all nine 0 mismatches. Seen: chains to link 3, Echo repeats, cash-outs (5-16 a run) with flares, states up and down, Volley, the shop (buy onto a full row, level, reroll, reorder, full-row pick replace), co-op both firing. Not seen in CPU play (informational): a technique mark (the CPUs did not L-cancel, wavedash or tech in 3600 frames), Grand Finale's knockback write, a Petey break inside 1846 frames |
+| V2's six (v2_drives.sh) on the new rules, depths 4 and 7 | all 0 mismatches |
+| camp_run.sh (no MELEE_ENVOY_ARM, the camp door) | CAMP RUN OK: fights 1, 2, 3 rewritten and won, a shop after fight 1, keystones. A longer run (110000 frames) stops in fight 3's results only because camp_pad.txt runs out of presses; fights 4-5 were not reached headless |
+| sim.py --v3 (120 seeds, model) | pace met (reference 90 at the first KO, never Blazing by the 4th; two-for-one 75 = Warm; even trade 30), split identical, use 16/16, character spread 1.07 (<= 1.25); build spread 2.1-2.9 (band 2.5-6: aerial and tagger just under), heat spread 1.1-1.3 (band 1.5-2.5: missed; Heat drives are a small share once halving and the cap shape the meter), KO delay +16% (band < 15%). The bands are report-only in the scripts (`--no-fail`) until the owner's play sets the dial |
+
+### Known gaps for the playtest
+
+- Heat spread is structurally low: every build sits near the same sawtooth (half kept at each KO). If builds feel
+  alike in Heat, the levers are the gain multipliers and +Heat sizes, or a smaller keep (e.g. keep 60% with Heat
+  drives).
+- Fights 4-5 and the Petey breaks were exercised only by synctests starting there, not by a full headless run.

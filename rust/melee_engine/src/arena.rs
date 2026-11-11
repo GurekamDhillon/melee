@@ -125,6 +125,11 @@ thread_local! {
     static GAME_THREAD: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
 }
 
+/// Test support: turn the calling thread's foreign mark on or off (the reclaim write trap's disc reads).
+pub fn set_foreign(on: bool) {
+    FOREIGN.with(|f| f.set(on));
+}
+
 /// Mark the calling thread as one whose allocations never go to the arena.
 pub fn mark_foreign_thread() {
     FOREIGN.with(|f| f.set(true));
@@ -344,6 +349,10 @@ pub unsafe fn free(p: *mut u8, l: Layout) {
     let (Some((c, _)), Some(ab)) = (class_of(l.size()), bucket(l.align())) else { return };
     let _g = Lock::take();
     LIVE[c] -= 1;
+    if quarantine_on() {
+        quarantine(p as usize, class_size(c));
+        return;
+    }
     if *((p as usize + 8) as *const u64) == FREE_MARK {
         report_misuse("a block that is already free was freed again (double free)", p as usize, l.size());
     }
@@ -555,4 +564,78 @@ mod tests {
             assert_eq!(misuse_count(), n0 + 2);
         }
     }
+}
+
+// ---- quarantine (`MELEE_ARENA_QUARANTINE=1`, test only): a freed block is filled with 0xEE and never handed out
+// again; its address, size and the return addresses of the free are kept, and [`quarantine_check`] (once a frame)
+// reports the first block something wrote into after its free, with the stack that freed it.
+const QN: usize = 1 << 20;
+const QS: usize = 10;
+static mut Q: [(usize, usize, [usize; QS]); QN] = [(0, 0, [0; QS]); QN];
+static mut QLEN: usize = 0;
+static mut QDONE: usize = 0;
+fn quarantine_on() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("MELEE_ARENA_QUARANTINE").is_some())
+}
+unsafe fn quarantine(p: usize, size: usize) {
+    core::ptr::write_bytes(p as *mut u8, 0xEE, size);
+    if QLEN < QN {
+        let mut st = [0usize; QS];
+        #[cfg(windows)]
+        {
+            extern "system" {
+                fn RtlCaptureStackBackTrace(skip: u32, n: u32, f: *mut *mut core::ffi::c_void, h: *mut u32) -> u16;
+            }
+            RtlCaptureStackBackTrace(2, QS as u32, st.as_mut_ptr().cast(), core::ptr::null_mut());
+        }
+        Q[QLEN] = (p, size, st);
+        QLEN += 1;
+    }
+}
+/// Report (to stderr, once) the first quarantined block written after its free: address, offset, bytes and the
+/// freeing stack as exe offsets. Returns true when one was found.
+pub fn quarantine_check(frame: u64) -> bool {
+    if !quarantine_on() {
+        return false;
+    }
+    let found = {
+        let _g = Lock::take();
+        let mut f = None;
+        unsafe {
+            for i in QDONE..QLEN {
+                let (p, n, st) = Q[i];
+                let b = core::slice::from_raw_parts(p as *const u8, n);
+                if let Some(o) = b.iter().position(|&x| x != 0xEE) {
+                    let mut w = [0u8; 16];
+                    let k = (n - o).min(16);
+                    w[..k].copy_from_slice(&b[o..o + k]);
+                    f = Some((p, n, o, w, st));
+                    QDONE = QLEN;
+                    break;
+                }
+            }
+        }
+        f
+    };
+    let Some((p, n, o, w, st)) = found else { return false };
+    unsafe {
+        let base = {
+            #[cfg(windows)]
+            {
+                extern "system" {
+                    fn GetModuleHandleW(n: *const u16) -> *mut core::ffi::c_void;
+                }
+                GetModuleHandleW(core::ptr::null()) as usize
+            }
+            #[cfg(not(windows))]
+            0usize
+        };
+        let mut s = String::new();
+        for a in st.iter().filter(|&&a| a > base && a < base + 0x400_0000) {
+            s.push_str(&format!(" melee.exe+{:#X}", a - base));
+        }
+        eprintln!("arena: QUARANTINE WRITTEN at frame {frame}: block {p:#x} ({n} bytes) +{o:#x} now {w:02x?}; freed at{s}");
+    }
+    true
 }

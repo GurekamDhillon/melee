@@ -226,6 +226,19 @@ fn read_at(f: Option<&mut std::fs::File>, off: u64, n: usize) -> Result<Vec<u8>,
         }
     }
     let f = f.ok_or_else(|| "no disc".to_string())?;
+    // the reclaim write trap protects arena pages, and the OS cannot read a file into a protected page: read into a
+    // system-heap buffer while it is on (test knob only)
+    static TRAP: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if *TRAP.get_or_init(|| std::env::var_os("MELEE_RECLAIM_TRAP").is_some()) {
+        crate::arena::set_foreign(true);
+        let r = read_at_inner(f, off, n);
+        crate::arena::set_foreign(false);
+        return r;
+    }
+    read_at_inner(f, off, n)
+}
+
+fn read_at_inner(f: &mut std::fs::File, off: u64, n: usize) -> Result<Vec<u8>, String> {
     // Not zeroed first: the read fills it (the zeroing was ~5% of the boot tick, first-touch page faults included).
     let mut v = Vec::with_capacity(n);
     if crate::cow::active() {

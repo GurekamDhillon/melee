@@ -15,6 +15,9 @@ pub static mut MOD_TAKE_DAMAGE: Option<fn(fp: &mut Fighter, d: f32, orig: &mut d
 /// Envoy Quick Tag: per player slot, the pad buttons taken from a human fighter's input (the tag button, Y or X,
 /// no longer jumps while a run is armed). 0 = retail. Set per match by melee_modes::tu::envoy.
 pub static mut ENVOY_TAG_MASK: [u32; 4] = [0; 4];
+/// Envoy Assist Strike: per player slot, 1 while the pair's partner (the sub-fighter) is out on a strike: its own
+/// input is zeroed so the player's pad never drives it (melee_modes::tu::tag_swap::assist). 0 = retail.
+pub static mut ENVOY_ASSIST: [u8; 4] = [0; 4];
 /// `Geno_FallLimit(fp, terminal)` (ftCommon_Fall, TARGET_PC).
 pub static mut GENO_FALL_LIMIT: Option<fn(fp: &Fighter, terminal: f32) -> f32> = None;
 /// Override for `ft_PlaySFX(fp, id, volume, pan)`; unset = `crate::ft0877::play_sfx` (round 5).

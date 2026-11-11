@@ -90,7 +90,7 @@ pub static mut QUICK_PAUSE: u8 = 0;
 /// - another swap or a freeze (a stage shift, a hold) running.
 /// Outside the window: today's list plus jump squat, landing and shield (the study's "free to act").
 pub unsafe fn quick(slot: i32, any: bool, pause: i32) -> i32 {
-    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 {
+    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 || assist_busy(slot) {
         return TAG_BUSY;
     }
     if partner_kind(slot) < 0 {
@@ -222,6 +222,7 @@ pub unsafe fn request_swap(skip: bool) -> i32 {
 /// Per logic frame, after the `frame.run_procs` post chain (outside `HSD_GObj_RunProcs`).
 pub unsafe fn tick() {
     LOGIC_FRAMES = LOGIC_FRAMES.wrapping_add(1);
+    assist_tick();
     if PENDING_SWAP >= 0 && PENDING_QUICK != 0 {
         // Envoy Quick Tag: no freeze; the newcomer gets a hitlag-style pause of its own (the foe runs on)
         let slot = PENDING_SWAP as i32;
@@ -397,4 +398,191 @@ pub unsafe fn reset() {
     PENDING_RELEASE = 0;
     PENDING_QUICK = 0;
     STAGE_TO = -1;
+    ASSIST = [Assist { queued: 0, running: 0, frames: 0 }; 4];
+    melee_fighter::hooks::ENVOY_ASSIST = [0; 4];
+}
+
+// ---- Envoy Assist Strike (envoy-tag-rethink.md direction 2): the partner jumps in beside the player, does one move
+// and goes back to sleep; the player keeps control. The partner is the pair's sleeping sub-fighter (the default tag
+// shape), woken WITHOUT the transform swap: `transformed` is untouched, so the player's entity stays the main one and
+// a KO of the partner could never cost a stock (ftCo_800D34E0 loses a stock only for `Player_GetEntity`). Guards: it
+// is intangible every frame, its own input is zeroed (melee_fighter `hooks::ENVOY_ASSIST`), and it is put back to
+// sleep at the move's end (interruptible or a neutral state), after ASSIST_MAX frames, near a blast zone (before the
+// death check can run), when the main is not in play, and at a new match. Everything is a static (snapshot state).
+
+/// Assist moves: ground forward / up / down smash, air forward / up / down air.
+pub const AS_FSMASH: i32 = 0;
+pub const AS_USMASH: i32 = 1;
+pub const AS_DSMASH: i32 = 2;
+pub const AS_FAIR: i32 = 3;
+pub const AS_UAIR: i32 = 4;
+pub const AS_DAIR: i32 = 5;
+/// Frames a strike lives at most; the margin inside a blast zone where the partner is put back to sleep.
+pub const ASSIST_MAX: u16 = 150;
+const ASSIST_MARGIN: f32 = 40.0;
+/// Units behind the player the partner appears (along the player's facing).
+const ASSIST_BEHIND: f32 = 6.0;
+pub const TAG_UNSUPPORTED: i32 = -18;
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct Assist {
+    /// Queued move + 1 (applied by `tick`), the running move + 1 (0: none), frames it has run.
+    pub queued: i8,
+    pub running: i8,
+    pub frames: u16,
+}
+pub static mut ASSIST: [Assist; 4] = [Assist { queued: 0, running: 0, frames: 0 }; 4];
+/// Strikes started this boot (presentation edge detect).
+pub static mut ASSIST_COUNT: u32 = 0;
+
+/// Ask for a strike by `slot`'s partner in direction `dir` (0 forward / none, 1 up, 2 down). The move follows the
+/// player: a smash if the player is on the ground, an aerial if not. Returns the move (AS_*) or a refusal: busy (a
+/// strike running or queued, a swap queued, a freeze), no partner, the in-place prototype, the player not in play.
+pub unsafe fn assist(slot: i32, dir: i32) -> i32 {
+    if !(0..4).contains(&slot) {
+        return TAG_NOT_GAMEPLAY;
+    }
+    let a = ASSIST[slot as usize];
+    if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 || a.queued != 0 || a.running != 0 {
+        return TAG_BUSY;
+    }
+    if pl::tag_inplace() {
+        return TAG_UNSUPPORTED;
+    }
+    if partner_kind(slot) < 0 {
+        return TAG_NO_PARTNER;
+    }
+    let f = fighter(entity(slot, 0));
+    let g = entity(slot, 1);
+    if f.is_null() || fighter(g).is_null() {
+        return TAG_NOT_GAMEPLAY;
+    }
+    let m = (*f).motion_id as i32;
+    if m <= 13 || (*fighter(g)).is_sleeping() == 0 {
+        return TAG_NOT_ACTIONABLE;
+    }
+    let mv = dir.clamp(0, 2) + if (*f).ground_or_air == GA_Ground { 0 } else { 3 };
+    ASSIST[slot as usize].queued = mv as i8 + 1;
+    mv
+}
+
+/// Frames the strike of `slot` has run + 1 (0: none running).
+pub unsafe fn assist_frames(slot: i32) -> i32 {
+    if !(0..4).contains(&slot) {
+        return 0;
+    }
+    let a = ASSIST[slot as usize];
+    if a.running != 0 { a.frames as i32 + 1 } else { 0 }
+}
+
+/// Whether `slot`'s partner is out on a strike (Quick Tag waits for it).
+pub unsafe fn assist_busy(slot: i32) -> bool {
+    (0..4).contains(&slot) && (ASSIST[slot as usize].running != 0 || ASSIST[slot as usize].queued != 0)
+}
+
+unsafe fn assist_sleep(slot: i32) {
+    let s = slot as usize;
+    let g = entity(slot, 1);
+    if !fighter(g).is_null() && (*fighter(g)).is_sleeping() == 0 {
+        melee_fighter::tu::ftcolanim::ftco_800bfd04(g);
+    }
+    ASSIST[s] = Assist { queued: 0, running: 0, frames: 0 };
+    melee_fighter::hooks::ENVOY_ASSIST[s] = 0;
+}
+
+/// Wake the partner beside the main and enter the move (between logic frames, as the swap).
+unsafe fn assist_start(slot: i32, mv: i32) {
+    use melee_fighter::tu as ft;
+    let s = slot as usize;
+    let main_g = entity(slot, 0);
+    let g = entity(slot, 1);
+    let (mf, pf) = (fighter(main_g), fighter(g));
+    if mf.is_null() || pf.is_null() || (*pf).is_sleeping() == 0 {
+        ASSIST[s].queued = 0;
+        return;
+    }
+    ft::fighter::Fighter_UnkInitReset_80067C98(&mut *pf);
+    ft::ftcommon::ftcommon_8007e2fc(&mut *pf);
+    {
+        let (m, p) = (&*mf, &mut *pf);
+        p.cur_pos = m.cur_pos;
+        p.cur_pos.x -= m.facing_dir * ASSIST_BEHIND;
+        p.prev_pos = p.cur_pos;
+        p.pos_delta = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+        p.facing_dir = m.facing_dir;
+        p.ground_or_air = m.ground_or_air;
+        p.x1968_jumpsUsed = m.x1968_jumpsUsed;
+    }
+    ft::ftchangeparam::ftco_800d105c(g);
+    ft::ftcamera::ftcamera_80076064(&mut *pf);
+    ft::ft_081b::ft_800849ec(&mut *mf, &mut *pf);
+    ft::ft_081b::ft_80081c88(g, (*pf).x34_scale.y);
+    if (*pf).ground_or_air == GA_Ground {
+        ft::ft_08a1::ft_8008A2BC(g);
+    } else {
+        ft::ftCo_Fall::ftCo_Fall_Enter(g);
+    }
+    melee_fighter::hooks::ENVOY_ASSIST[s] = 1;
+    let kind = (*pf).kind;
+    match mv {
+        AS_FSMASH => ft::ftCo_AttackS4::decideFighter(g, (*pf).facing_dir, 0.0),
+        AS_USMASH => {
+            if kind == Ft_Kind_Ness { ft::ftCo_AttackHi4::ext::ftNs_AttackHi4_Enter(g) } else { ft::ftCo_AttackHi4::doEnter(g) }
+        }
+        AS_DSMASH => {
+            if kind == Ft_Kind_Ness { ft::ftCo_AttackLw4::ext::ftNs_AttackLw4_Enter(g) } else { ft::ftCo_AttackLw4::doEnter(g) }
+        }
+        AS_UAIR => ft::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(g, ftCo_MS_AttackAirHi as i32),
+        AS_DAIR => ft::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(g, ftCo_MS_AttackAirLw as i32),
+        _ => ft::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(g, ftCo_MS_AttackAirF as i32),
+    }
+    ft::ftcoll::ftColl_8007B62C(g, 2);
+    ASSIST[s] = Assist { queued: 0, running: mv as i8 + 1, frames: 0 };
+    ASSIST_COUNT = ASSIST_COUNT.wrapping_add(1);
+    if std::env::var_os("MELEE_TAG_QUIET").is_none() {
+        eprintln!("assist: slot {slot} move {mv} kind {} at frame {}", kind as i32, LOGIC_FRAMES);
+    }
+}
+
+/// Per logic frame (from `tick`): start queued strikes, keep running ones intangible, end them.
+unsafe fn assist_tick() {
+    for slot in 0..4i32 {
+        let s = slot as usize;
+        let a = ASSIST[s];
+        if a.queued == 0 && a.running == 0 {
+            continue;
+        }
+        let mf = fighter(entity(slot, 0));
+        if mf.is_null() || (*mf).motion_id as i32 <= 13 {
+            assist_sleep(slot);
+            continue;
+        }
+        if a.queued != 0 {
+            assist_start(slot, a.queued as i32 - 1);
+            continue;
+        }
+        let g = entity(slot, 1);
+        let pf = fighter(g);
+        if pf.is_null() || (*pf).is_sleeping() != 0 {
+            assist_sleep(slot);
+            continue;
+        }
+        let p = &*pf;
+        let m = p.motion_id as i32;
+        let neutral = matches!(m as ftCommon_MotionState, ftCo_MS_Wait | ftCo_MS_Fall | ftCo_MS_FallF | ftCo_MS_FallB
+            | ftCo_MS_Landing | ftCo_MS_LandingFallSpecial | ftCo_MS_LandingAirN | ftCo_MS_LandingAirF
+            | ftCo_MS_LandingAirB | ftCo_MS_LandingAirHi | ftCo_MS_LandingAirLw);
+        let (x, y) = (p.cur_pos.x, p.cur_pos.y);
+        let near_edge = x < melee_world::tu_ext::Stage_GetBlastZoneLeftOffset() + ASSIST_MARGIN
+            || x > melee_world::tu_ext::Stage_GetBlastZoneRightOffset() - ASSIST_MARGIN
+            || y < melee_world::tu_ext::Stage_GetBlastZoneBottomOffset() + ASSIST_MARGIN
+            || y > melee_world::tu_ext::Stage_GetBlastZoneTopOffset() - ASSIST_MARGIN;
+        if (a.frames > 0 && (neutral || p.allow_interrupt() != 0)) || a.frames >= ASSIST_MAX || near_edge || m <= 13 {
+            assist_sleep(slot);
+            continue;
+        }
+        melee_fighter::tu::ftcoll::ftColl_8007B62C(g, 2);
+        ASSIST[s].frames = a.frames + 1;
+    }
 }

@@ -634,6 +634,10 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         unsafe { melee_modes::tu::tag_swap::quick(slot, any != 0, pause) }
     });
     w!("gd_envoy_tag_button", || -> i32 { melee_modes::tu::envoy::tag_button() });
+    // Envoy Assist Strike: the partner strikes beside the player (dir 0 forward, 1 up, 2 down; a smash on the
+    // ground, an aerial in the air): the move (0-5) or a refusal; the frames the running strike has run + 1 (0 none)
+    w!("gd_tag_assist", |slot: i32, dir: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::assist(slot, dir) } });
+    w!("gd_tag_assist_frames", |slot: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::assist_frames(slot) } });
     w!("gd_stage_transition", |kind: i32, len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::stage_begin(kind, len) } });
     w!("gd_hold_begin", |len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::hold_begin(len) } });
     w!("gd_hold_release", || -> i32 { unsafe { melee_modes::tu::tag_swap::hold_release() } });
@@ -768,6 +772,16 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_pad_pressed", |port: i32| -> u32 {
         if !(0..4).contains(&port) { return 0 }
         unsafe { melee_runtime::tu::controller::HSD_PadMasterStatus[port as usize].trigger }
+    });
+    // the buttons a port holds this logic frame, and its main stick (x | y << 8, signed bytes): synced sim input
+    w!("gd_pad_held", |port: i32| -> u32 {
+        if !(0..4).contains(&port) { return 0 }
+        unsafe { melee_runtime::tu::controller::HSD_PadMasterStatus[port as usize].button }
+    });
+    w!("gd_pad_stick", |port: i32| -> i32 {
+        if !(0..4).contains(&port) { return 0 }
+        let p = unsafe { &melee_runtime::tu::controller::HSD_PadMasterStatus[port as usize] };
+        (p.stickX as u8 as i32) | (p.stickY as u8 as i32) << 8
     });
     w!("gd_stage_kind", || -> i32 { unsafe { melee_world::tu::stage::selected_stage.stkind as i32 } });
     // in-match stage switching (melee_modes::tu::stage_hop): checked now, applied between logic frames

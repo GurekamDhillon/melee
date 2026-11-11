@@ -1,4 +1,4 @@
-# Envoy V1 drive test pad (tools/rust-port/envoy/v1_drives.sh): A takes the first drive card, A again picks its
+# Envoy drive test pad (tools/rust-port/envoy/v2_drives.sh): A takes the first drive card, A again picks its
 # fighter, then a loop: D-pad down (a tag when ready), X (a jump, so landings), A (jab). Generated: 150 idle, 3 A,
 # 12 idle, 3 A, 60 idle, then (2 down, 6 idle, 2 X, 30 idle, 2 A, 6 idle) x 80.
 150 0000 0 0

@@ -1,8 +1,12 @@
 //! envoy_ui: the Envoy run's presentation (gd-ui-v1), placeholder looks only: plain kit slices and text, no art.
 //! It reads the run view the sim mod publishes (`gd_ui_envoy`) and the transition record (`gd_ui_transition`), both
 //! read-only, and never writes the sim: the reward pick is made with the synced sim pad inside envoy_sim.
-//! * HUD in a fight: fight n/5, the stock pool, tag cooldown, the next stage shift.
-//! * reward screen (sim frozen): three cards with before -> after compare rows, the cursor and the 20 s timer.
+//! * HUD in a fight: fight n/5 and its kind, the stock pool, each player's pair and tag cooldown, the next stage
+//!   shift, and an elite's or boss's drives (named on its card).
+//! * the drives in the world (envoy-core-v2.md 3): each player's orbiters (Twin Soul's bench set too), the keystone
+//!   halo, orbs, statuses, foes' orbiters, the drops in the owner's colour, each fire's effect and its Brawl sound.
+//! * reward screen (sim frozen): three cards per player (co-op: both rows at once) with NEW / LEVEL rows per fighter,
+//!   the cursor and the 20 s timer.
 //! * tag cinematic (transition kind 1, the record's length) and the stage shift's wipe and flash (kind 2).
 //! * between fights: the run line; RUN CLEAR / RUN OVER.
 //! * the door (envoy-redesign.md 1.2-1.5): the 1-P menu's Envoy row (the host moves the cursor onto it, this mod draws
@@ -14,6 +18,7 @@
 
 use gd_ui_enc::*;
 
+use envoy_data::view::*;
 use envoy_data::*;
 
 #[panic_handler]
@@ -90,14 +95,8 @@ unsafe fn saved() -> Option<[i32; REC_WORDS]> {
     if gd_ui_envoy_saved(r.as_mut_ptr(), REC_WORDS as u32) == REC_WORDS as i32 { Some(r) } else { None }
 }
 
-/// The run record's words (envoy_sim): 32; keystones at 7..10 (id + 1), drives at 14..22 ((id + 1) * 4 + level).
-const REC_WORDS: usize = 32;
-const REC_KEYS: usize = 7;
-const REC_DRIVES: usize = 14;
-/// envoy_sim's view (256 words); the layout is documented at envoy_sim `publish`.
-const VW: usize = 256;
-const OFFER_STOCK: i32 = 1000;
-const SLOTS: usize = 4;
+/// envoy_sim's view (envoy_data::view, 512 words) and the run record inside it.
+const VW: usize = VIEW_WORDS;
 
 /// "FOX: Ember 2, Frost" for one fighter's drives (`ids`: id + 1, 0 empty; `lv`: levels).
 fn drive_line(b: &mut Buf, who: &str, ids: &[i32], lv: &[i32]) {
@@ -137,6 +136,15 @@ fn keys_line(b: &mut Buf, ids: &[i32]) {
     }
 }
 
+/// A player's block in the view.
+fn pb(p: usize) -> usize {
+    V_P0 + p * V_PW
+}
+/// A match slot's block in the view.
+fn sb(s: usize) -> usize {
+    V_S0 + s * V_SW
+}
+
 /// (Re)build the camp's node tree for what is true now.
 unsafe fn camp_build() {
     let c = &mut CAMP;
@@ -150,8 +158,8 @@ unsafe fn camp_build() {
     gd_ui_node_rect(root, 220.0, 165.0, 200.0, 0.0);
     let list = gd_ui_node(root, NODE_LIST, 2);
     let mut v = [0i32; VW];
-    let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[0] == 0x454E_5659;
-    let ended = view && (v[1] == 2 || v[1] == 3);
+    let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC;
+    let ended = view && (v[V_STATE] == 2 || v[V_STATE] == 3);
     let has = saved().is_some();
     let no_brawl = gd_ui_envoy_state() & ST_NO_BRAWL != 0;
     if no_brawl {
@@ -292,81 +300,113 @@ unsafe fn camp_draw(e: &mut Enc<16384>, vw: f32, vh: f32) {
     let cx = vw * 0.5;
     e.text_ex(cx, 90.0, ROLE_TITLE, WHITE, ALIGN_CENTER, 0.0, "ENVOY");
     let mut v = [0i32; VW];
-    let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[0] == 0x454E_5659;
+    let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC;
     let mut l1 = Buf::new();
     let mut l2 = Buf::new();
     let mut col = WHITE;
-    if c.after_fight && view && v[1] == 2 {
-        l1.s("RUN CLEAR  -  pool left ").i(v[4]);
-        l2.s(ck_name(v[6])).s(" + ").s(ck_name(v[7])).s(" won all ").i(v[3]).s(" fights");
+    let pair = |b: &mut Buf, m: i32, p: i32| {
+        b.s(ck_name(m)).s(" + ").s(ck_name(p));
+    };
+    if c.after_fight && view && v[V_STATE] == 2 {
+        l1.s("RUN CLEAR  -  pool left ").i(v[V_POOL]);
+        l2.s("won all ").i(v[V_FIGHTS]).s(" fights");
         col = GOOD;
-    } else if c.after_fight && view && v[1] == 3 {
-        l1.s("RUN OVER at fight ").i(v[2] + 1).s("/").i(v[3]);
+    } else if c.after_fight && view && v[V_STATE] == 3 {
+        l1.s("RUN OVER at fight ").i(v[V_FIGHT] + 1).s("/").i(v[V_FIGHTS]);
         l2.s("The shared stock pool ran out");
         col = ACCENT;
-    } else if c.after_fight && view && v[1] == 1 {
-        l1.s("Next: fight ").i(v[2] + 1).s("/").i(v[3]).s("   pool ").i(v[4]);
-        l2.s(ck_name(v[6])).s(" + ").s(ck_name(v[7])).s("  -  Continue, any stage, Start");
+    } else if c.after_fight && view && v[V_STATE] == 1 {
+        l1.s("Next: fight ").i(v[V_FIGHT] + 1).s("/").i(v[V_FIGHTS]).s("   pool ").i(v[V_POOL]);
+        pair(&mut l2, v[pb(0) + P_MAIN], v[pb(0) + P_PARTNER]);
+        if v[V_HUMANS] == 2 {
+            l2.s("   &   ");
+            pair(&mut l2, v[pb(1) + P_MAIN], v[pb(1) + P_PARTNER]);
+        }
+        l2.s("  -  Continue, any stage, Start");
     } else if let Some(r) = saved() {
-        l1.s("Saved run: fight ").i(r[4] + 1).s("/5   pool ").i(r[5]);
-        l2.s(ck_name(r[11])).s(" + ").s(ck_name(r[12]));
+        l1.s("Saved run: fight ").i(r[R_FIGHT] + 1).s("/5   pool ").i(r[R_POOL]);
+        if r[R_COOP] != 0 {
+            l1.s("   CO-OP");
+        }
+        pair(&mut l2, r[R_PAIRS], r[R_PAIRS + 1]);
+        if r[R_COOP] != 0 {
+            l2.s("   &   ");
+            pair(&mut l2, r[R_PAIRS + 2], r[R_PAIRS + 3]);
+        }
     } else {
         l1.s("No run saved");
         l2.s("New run: pick your pair on the character select, any stage, Start");
     }
     e.text_ex(cx, 160.0, ROLE_VALUE, col, ALIGN_CENTER, 0.0, l1.str());
     e.text_ex(cx, 190.0, ROLE_LABEL, DIM, ALIGN_CENTER, vw - 80.0, l2.str());
-    // the pair's drives (the live run's, else the saved run's): ids, levels, keystones, the pair, shared
-    let mut w = [0i32; 23];
-    let have = if c.after_fight && view && v[1] != 0 {
-        w[..8].copy_from_slice(&v[22..30]);
-        w[8..16].copy_from_slice(&v[77..85]);
-        w[16..19].copy_from_slice(&v[93..96]);
-        w[19] = v[6];
-        w[20] = v[7];
-        w[21] = v[18];
-        true
-    } else if let Some(r) = saved() {
-        for k in 0..8 {
-            w[k] = r[REC_DRIVES + k] >> 2;
-            w[8 + k] = r[REC_DRIVES + k] & 3;
+    // the pairs' drives (the live run's, else the saved run's): [player][fighter] ids and levels, keystones, pairs
+    let mut ids = [[0i32; SLOTS]; 4];
+    let mut lvs = [[0i32; SLOTS]; 4];
+    let mut keys = [[0i32; KEYSTONES]; 2];
+    let mut pairs = [-1i32; 4];
+    let (have, players, shared) = if c.after_fight && view && v[V_STATE] != 0 {
+        for set in 0..4 {
+            let b = pb(set / 2) + (set % 2) * SLOTS;
+            ids[set].copy_from_slice(&v[b + P_DRIVES..b + P_DRIVES + SLOTS]);
+            lvs[set].copy_from_slice(&v[b + P_LEVELS..b + P_LEVELS + SLOTS]);
         }
-        w[16..19].copy_from_slice(&r[REC_KEYS..REC_KEYS + 3]);
-        w[19] = r[11];
-        w[20] = r[12];
-        w[21] = r[6];
-        true
-    } else {
-        false
-    };
-    if have {
-        let sets = if w[21] != 0 { 1 } else { 2 };
-        for f in 0..sets {
-            let mut b = Buf::new();
-            drive_line(&mut b, if sets == 1 { "PAIR" } else { ck_name(w[19 + f]) }, &w[f * SLOTS..f * SLOTS + SLOTS], &w[8 + f * SLOTS..8 + f * SLOTS + SLOTS]);
-            let y = 222.0 + f as f32 * 48.0;
-            e.text_ex(cx, y, ROLE_LABEL, DIM, ALIGN_CENTER, vw - 80.0, b.str());
-            // the drives as their models, turning
-            let n = w[f * SLOTS..f * SLOTS + SLOTS].iter().filter(|&&d| d > 0).count() as f32;
-            let mut x = cx - n * 20.0;
+        for p in 0..2 {
+            keys[p].copy_from_slice(&v[pb(p) + P_KEYS..pb(p) + P_KEYS + KEYSTONES]);
+            pairs[p * 2] = v[pb(p) + P_MAIN];
+            pairs[p * 2 + 1] = v[pb(p) + P_PARTNER];
+        }
+        (true, v[V_HUMANS].clamp(1, 2) as usize, v[V_SHARED] != 0)
+    } else if let Some(r) = saved() {
+        for set in 0..4 {
             for k in 0..SLOTS {
-                let id = w[f * SLOTS + k];
-                if id > 0 {
-                    sprite(e, POOL[id as usize - 1].family as i32, x, y + 14.0, 32.0);
-                    x += 40.0;
-                }
+                ids[set][k] = r[R_DRIVES + set * SLOTS + k] >> 2;
+                lvs[set][k] = r[R_DRIVES + set * SLOTS + k] & 3;
             }
         }
-        let mut b = Buf::new();
-        keys_line(&mut b, &w[16..19]);
-        e.text_ex(cx, 330.0, ROLE_LABEL, DIM, ALIGN_CENTER, vw - 80.0, b.str());
+        for p in 0..2 {
+            keys[p].copy_from_slice(&r[R_KEYS + p * KEYSTONES..R_KEYS + (p + 1) * KEYSTONES]);
+        }
+        pairs.copy_from_slice(&r[R_PAIRS..R_PAIRS + 4]);
+        (true, if r[R_COOP] != 0 { 2 } else { 1 }, r[R_SHARED] != 0)
+    } else {
+        (false, 1, false)
+    };
+    if have {
+        let mut y = 222.0;
+        for p in 0..players {
+            let sets = if shared { 1 } else { 2 };
+            for f in 0..sets {
+                let set = p * 2 + f;
+                let mut b = Buf::new();
+                if players == 2 {
+                    b.s(if p == 0 { "P1 " } else { "P2 " });
+                }
+                drive_line(&mut b, if sets == 1 { "PAIR" } else { ck_name(pairs[set]) }, &ids[set], &lvs[set]);
+                e.text_ex(cx, y, ROLE_LABEL, if p == 0 { DIM } else { 0x8CB4_FFFF }, ALIGN_CENTER, vw - 80.0, b.str());
+                // the drives as their models, turning
+                let n = ids[set].iter().filter(|&&d| d > 0).count() as f32;
+                let mut x = cx - n * 16.0;
+                for k in 0..SLOTS {
+                    let id = ids[set][k];
+                    if id > 0 {
+                        sprite(e, POOL[id as usize - 1].family as i32, x, y + 14.0, 28.0);
+                        x += 32.0;
+                    }
+                }
+                y += if players == 2 { 40.0 } else { 48.0 };
+            }
+            let mut b = Buf::new();
+            keys_line(&mut b, &keys[p]);
+            e.text_ex(cx, y, ROLE_LABEL, DIM, ALIGN_CENTER, vw - 80.0, b.str());
+            y += 30.0;
+        }
     }
     if c.party {
         let (x, y, w) = (cx - 380.0, vh - 190.0, 760.0);
         e.slice(SLICE_FILL_R6, x, y, w, 120.0, PANEL);
         e.text_ex(cx, y + 14.0, ROLE_VALUE, WHITE, ALIGN_CENTER, 0.0, "PARTY");
         e.text_ex(cx, y + 46.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, "P1's pick on the character select is your main; the P2 slot (human or CPU, any character) is your partner.");
-        e.text_ex(cx, y + 72.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, "Zelda, Sheik and Ice Climbers cannot tag: they fall back to Fox / Marth. A saved run keeps its pair.");
+        e.text_ex(cx, y + 72.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, "Co-op (MELEE_ENVOY_COOP=1): P1 + P3 are player 1's pair, P2 + P4 player 2's. Zelda, Sheik and Ice Climbers fall back to Fox / Marth.");
     }
     e.text_ex(cx, vh - 40.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, "A: choose   B: back");
 }
@@ -517,7 +557,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
         }
         let mut v = [0i32; VW];
         // only an armed run has a HUD or a between-fights line: with the mods loaded and no run armed, VS is retail
-        if gd_ui_envoy(v.as_mut_ptr(), VW as u32) != 0 || v[0] != 0x454E_5659 || st & ST_ARMED == 0 {
+        if gd_ui_envoy(v.as_mut_ptr(), VW as u32) != 0 || v[V_MAGIC] != VIEW_MAGIC || st & ST_ARMED == 0 {
             return;
         }
         let mut t = [0i32; 10];
@@ -532,37 +572,20 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
         let e = &mut *core::ptr::addr_of_mut!(ENC);
         e.clear();
         e.layer(LAYER_OVERLAY, 12).space(SPACE_WINDOW, sc);
-        let in_match = v[5] != 0;
+        let in_match = v[V_LIVE] != 0;
         if in_match {
             world(&v);
             sounds(&v);
             let mut pv = [0i32; 12];
             let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
-            let mut hv = v;
-            if petey {
-                hv[76] = -1; // no stage shifts in the Petey fight: no countdown
-            }
-            hud(e, &hv, vw);
+            hud(e, &v, vw);
             if petey {
                 petey_bars(e, &pv, vw);
             }
-            if v[10] != 0 {
+            if v[V_RW] != 0 {
                 reward(e, &v, vw, vh);
-            } else if v[30] >= 0 && v[31] < 150 {
-                let mut s = Buf::new();
-                if v[30] == OFFER_STOCK {
-                    s.s("TOOK +1 STOCK");
-                } else {
-                    let d = &POOL[v[30].clamp(0, POOL_LEN as i32 - 1) as usize];
-                    if d.kind == K_KEYSTONE {
-                        s.s("KEYSTONE: ").s(d.name);
-                    } else {
-                        s.s(if v[18] != 0 { "PAIR" } else { wearer_name(&v, v[39]) }).s(" TAKES ").s(d.name);
-                    }
-                }
-                let a = 1.0 - ease((v[31] as f32 - 110.0) / 40.0);
-                e.slice(SLICE_FILL_R6, vw * 0.5 - 160.0, 96.0, 320.0, 44.0, alpha(PANEL, a));
-                e.text_ex(vw * 0.5, 104.0, ROLE_VALUE, alpha(GOOD, a), ALIGN_CENTER, 0.0, s.str());
+            } else if v[V_SINCE_PICK] < 150 {
+                picked_line(e, &v, vw);
             }
             if t[1] == 1 {
                 tag_cinematic(e, &t, vw, vh);
@@ -576,43 +599,104 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
     }
 }
 
-fn wearer_name(v: &[i32; VW], w: i32) -> &'static str {
-    ck_name(if w == 1 { v[7] } else { v[6] })
+/// The player colours: P1 red, P2 blue (co-op drops, orbit rings, HUD).
+const PLAYER_COL: [u32; 2] = [0xFF5A_5AFF, 0x5A9C_FFFF];
+
+fn fighter_name(v: &[i32; VW], p: usize, f: i32) -> &'static str {
+    ck_name(if f == 1 { v[pb(p) + P_PARTNER] } else { v[pb(p) + P_MAIN] })
 }
 
-unsafe fn hud(e: &mut Enc<16384>, v: &[i32; VW], _vw: f32) {
-    let (fight, total, pool) = (v[2] + 1, v[3], v[4]);
+/// "TAKES Ember" after a pick, a line per player.
+unsafe fn picked_line(e: &mut Enc<16384>, v: &[i32; VW], vw: f32) {
+    let a = 1.0 - ease((v[V_SINCE_PICK] as f32 - 110.0) / 40.0);
+    for p in 0..v[V_HUMANS].clamp(1, 2) as usize {
+        let id = v[pb(p) + P_LAST_PICK];
+        if id < 0 {
+            continue;
+        }
+        let mut s = Buf::new();
+        if v[V_HUMANS] == 2 {
+            s.s(if p == 0 { "P1  " } else { "P2  " });
+        }
+        if id == OFFER_STOCK {
+            s.s("TOOK +1 STOCK");
+        } else {
+            let d = &POOL[id.clamp(0, POOL_LEN as i32 - 1) as usize];
+            if d.kind == K_KEYSTONE {
+                s.s("KEYSTONE: ").s(d.name);
+            } else {
+                s.s(if v[V_SHARED] != 0 { "PAIR" } else { fighter_name(v, p, v[pb(p) + P_LAST_WEARER]) }).s(" TAKES ").s(d.name);
+            }
+        }
+        let y = 96.0 + p as f32 * 50.0;
+        e.slice(SLICE_FILL_R6, vw * 0.5 - 180.0, y, 360.0, 44.0, alpha(PANEL, a));
+        e.text_ex(vw * 0.5, y + 8.0, ROLE_VALUE, alpha(GOOD, a), ALIGN_CENTER, 0.0, s.str());
+    }
+}
+
+unsafe fn hud(e: &mut Enc<16384>, v: &[i32; VW], vw: f32) {
+    let (fight, total, pool) = (v[V_FIGHT] + 1, v[V_FIGHTS], v[V_POOL]);
     let x = 24.0;
     let y = 24.0;
-    e.slice(SLICE_FILL_R6, x, y, 300.0, 128.0, PANEL);
+    let humans = v[V_HUMANS].clamp(1, 2) as usize;
+    let h = 70.0 + 46.0 * humans as f32 + if v[V_STAGE_IN] >= 0 { 22.0 } else { 0.0 };
+    e.slice(SLICE_FILL_R6, x, y, 320.0, h, PANEL);
+    let kind = v[V_FIGHT_KIND];
     let mut s = Buf::new();
     s.s("ENVOY  FIGHT ").i(fight).s("/").i(total);
-    if v[29] != 0 {
-        s.s("  BOSS");
-    }
-    e.text(x + 14.0, y + 8.0, ROLE_LABEL, if v[29] != 0 { ACCENT } else { WHITE }, s.str());
+    s.s(match kind {
+        FK_ELITE => "  ELITE",
+        FK_BOSS => "  BOSS",
+        FK_PACK => "  PACK",
+        _ => "",
+    });
+    e.text(x + 14.0, y + 8.0, ROLE_LABEL, if kind >= FK_ELITE { ACCENT } else { WHITE }, s.str());
     let mut s = Buf::new();
     s.s("STOCK POOL ").i(pool);
     e.text(x + 14.0, y + 34.0, ROLE_LABEL, WHITE, s.str());
     for i in 0..pool.clamp(0, 12) {
-        e.slice(SLICE_FILL_R4, x + 170.0 + i as f32 * 14.0, y + 38.0, 10.0, 10.0, GOOD);
+        e.slice(SLICE_FILL_R4, x + 170.0 + i as f32 * 12.0, y + 38.0, 9.0, 9.0, GOOD);
     }
-    let mut s = Buf::new();
-    if v[34] < 0 {
-        s.s("TAG  -");
-    } else if v[8] > 0 {
-        s.s("TAG  ").i(v[8] / 60).s(".").i((v[8] % 60) / 6).s("s");
-    } else {
-        s.s("TAG  READY (D-pad down)");
-    }
-    e.text(x + 14.0, y + 60.0, ROLE_LABEL, if v[8] > 0 { DIM } else { GOOD }, s.str());
-    let mut s = Buf::new();
-    s.s(ck_name(v[6])).s(" + ").s(ck_name(v[7]));
-    e.text(x + 14.0, y + 84.0, ROLE_LABEL, DIM, s.str());
-    if v[76] >= 0 {
+    let mut yy = y + 60.0;
+    for p in 0..humans {
+        let b = pb(p);
         let mut s = Buf::new();
-        s.s("STAGE SHIFT IN ").i((v[76] + 59) / 60).s("s");
-        e.text(x + 14.0, y + 106.0, ROLE_LABEL, DIM, s.str());
+        if humans == 2 {
+            s.s(if p == 0 { "P1 " } else { "P2 " });
+        }
+        s.s(ck_name(v[b + P_MAIN])).s(" + ").s(ck_name(v[b + P_PARTNER]));
+        e.text(x + 14.0, yy, ROLE_LABEL, if humans == 2 { PLAYER_COL[p] } else { DIM }, s.str());
+        let mut s = Buf::new();
+        let cd = v[b + P_TAG_CD];
+        if v[b + P_PARTNER_KIND] < 0 {
+            s.s("TAG  -");
+        } else if cd > 0 {
+            s.s("TAG  ").i(cd / 60).s(".").i((cd % 60) / 6).s("s");
+        } else {
+            s.s("TAG  READY (D-pad down)");
+        }
+        e.text(x + 14.0, yy + 20.0, ROLE_LABEL, if cd > 0 { DIM } else { GOOD }, s.str());
+        yy += 46.0;
+    }
+    if v[V_STAGE_IN] >= 0 {
+        let mut s = Buf::new();
+        s.s("STAGE SHIFT IN ").i((v[V_STAGE_IN] + 59) / 60).s("s");
+        e.text(x + 14.0, yy, ROLE_LABEL, DIM, s.str());
+    }
+    // the elite's / boss's card: what it carries (Q7: named on the card)
+    for sl in 0..4 {
+        let b = sb(sl);
+        if v[b + S_FOE] == 0 || v[b + S_DRIVES] <= 0 {
+            continue;
+        }
+        let mut s = Buf::new();
+        s.s(if kind == FK_BOSS { "BOSS CARRIES  " } else { "ELITE CARRIES  " });
+        drive_line(&mut s, "", &v[b + S_DRIVES..b + S_DRIVES + 2], &v[b + S_LEVELS..b + S_LEVELS + 2]);
+        let w = 420.0;
+        let cx = vw - w - 24.0;
+        e.slice(SLICE_FILL_R6, cx, y, w, 40.0, PANEL);
+        e.text(cx + 14.0, y + 10.0, ROLE_LABEL, ACCENT, s.str());
+        break;
     }
 }
 
@@ -663,24 +747,25 @@ const FX_LINE: i32 = 6;
 const FIRE_LIFE: i32 = 30;
 const DART: i32 = 6;
 const BACK: i32 = 8;
-const LOG_W: usize = 8;
-const FL_ECHO: i32 = 1;
-const FL_LINK: i32 = 4;
 const TAU: f32 = 6.283_185_5;
 
 /// The sound for each presentation key (Brawl wave sounds from the player's own disc; silent without it).
-const SFX: [(&str, &str); 11] = [
+const SFX: [(&str, &str); 15] = [
     ("fire_red", "snd_se_common_fire_m"),
     ("fire_bolt", "snd_se_item_pasaran_spark"),
+    ("fire_spire", "snd_se_item_StarRod_l"),
     ("fire_green", "snd_se_common_dash_start"),
     ("fire_blue", "snd_se_common_JustShield"),
+    ("fire_heal", "snd_se_item_Heart_get"),
     ("fire_yellow", "snd_se_common_bomb_m"),
+    ("fire_air", "snd_se_common_jump_air"),
     ("fire_purple", "snd_se_item_Freezer_landing"),
     ("fire_shatter", "snd_se_item_Ice_Crash"),
     ("fire_white", "snd_se_item_StarRod_m"),
     ("pickup", "snd_se_item_Item_Get"),
     ("levelup", "snd_se_common_LifeUp"),
     ("keystone", "snd_se_item_Superstar_get"),
+    ("absorb", "snd_se_common_Guard_on"),
 ];
 
 fn sfx(key: &str) {
@@ -732,106 +817,179 @@ unsafe fn fx(kind: i32, x: f32, y: f32, z: f32, a: f32, b: f32, c: f32, rgba: u3
     gd_ui_world_fx(kind, x, y, z, a, b, c, rgba);
 }
 
-/// Where orbiter `k` of `n` sits now around (cx, cy).
-unsafe fn orbit_at(cx: f32, cy: f32, k: usize, n: usize) -> (f32, f32, f32) {
-    let a = T as f32 * 0.045 + k as f32 * TAU / n.max(1) as f32;
-    (cx + cos(a) * 8.5, cy + 10.0 + sin(a * 2.0) * 1.2, sin(a) * 8.5)
+/// Where orbiter `k` of `n` sits now around (cx, cy), on a ring of radius `r` (each player its own; Twin Soul's
+/// bench set a wider one).
+unsafe fn orbit_at(cx: f32, cy: f32, k: usize, n: usize, r: f32, phase: f32) -> (f32, f32, f32) {
+    let a = T as f32 * 0.045 + phase + k as f32 * TAU / n.max(1) as f32;
+    (cx + cos(a) * r, cy + 10.0 + sin(a * 2.0) * 1.2, sin(a) * r)
 }
 
-/// The drives in the world: the active fighter's orbiters (dart out on a fire), the keystone halo, the orb, the
-/// statuses on foes, the floor drop, and each fire's stand-in effect for its 30 frames.
+fn log_entry(v: &[i32; VW], e: usize) -> [i32; LOG_W] {
+    let mut o = [0; LOG_W];
+    o.copy_from_slice(&v[V_LOG + e * LOG_W..V_LOG + (e + 1) * LOG_W]);
+    o
+}
+
+/// The position a fire's owner draws from: a player's fighter in play, or a foe.
+fn owner_pos(v: &[i32; VW], owner: i32) -> Option<(f32, f32)> {
+    if (0..OWNER_FOE).contains(&owner) {
+        let b = pb(owner as usize / 2);
+        if v[b + P_HAVE_POS] != 0 { Some((fv(v, b + P_X), fv(v, b + P_Y))) } else { None }
+    } else if (OWNER_FOE..OWNER_FOE + 4).contains(&owner) {
+        let b = sb((owner - OWNER_FOE) as usize);
+        if v[b + S_ALIVE] != 0 { Some((fv(v, b + S_X), fv(v, b + S_Y))) } else { None }
+    } else {
+        None
+    }
+}
+
+/// One orbiting drive: darts to its latest fire's target, flashes, comes back dim; rings for its level.
+unsafe fn orbiter(v: &[i32; VW], owner: i32, id: i32, lv: i32, charge: i32, (mut x, mut y, mut z): (f32, f32, f32), cx: f32, cy: f32, scale: f32, dim: f32) {
+    let d = &POOL[id as usize - 1];
+    let play = v[V_PLAY];
+    let ch = charge as f32 / 1000.0;
+    let mut glow = 0.1 + 0.6 * ch;
+    if ch >= 1.0 || d.charge == C_PASSIVE {
+        glow = 1.0 + 0.4 * sin(T as f32 * 0.3);
+    }
+    for e in 0..LOG {
+        let l = log_entry(v, e);
+        let age = play - l[0];
+        if l[1] == id && l[2] == owner && l[7] & (FL_ECHO | FL_PASSIVE) == 0 && (0..DART + BACK).contains(&age) {
+            let (tx, ty) = if l[3] >= 0 { (l[4] as f32 / 100.0, l[5] as f32 / 100.0 + 8.0) } else { (cx, cy + 10.0) };
+            let t = if age < DART { ease(age as f32 / DART as f32) } else { 1.0 - ease((age - DART) as f32 / BACK as f32) };
+            x += (tx - x) * t;
+            y += (ty - y) * t;
+            z *= 1.0 - t;
+            glow = if age < DART + 2 { 1.6 } else { 0.1 };
+        }
+    }
+    let yaw = T as f32 * 0.06 + id as f32;
+    model(d.family as i32, x, y, z, yaw, scale, glow * dim, 1.0);
+    if lv >= 2 {
+        model(if lv >= 3 { M_RING3 } else { M_RING2 }, x, y, z, yaw, scale * 1.05, 0.8 * dim, 1.0);
+    }
+}
+
+/// The drives in the world: each player's orbiters (their live sets; Twin Soul's bench set on a wider ring), the
+/// keystone halo, orbs and Haste; foes' orbiters (elites and bosses) and every slot's statuses; each player's drops
+/// in the owner's colour; each fire's stand-in effect for its 30 frames.
 unsafe fn world(v: &[i32; VW]) {
     T = T.wrapping_add(1);
-    let play = v[73];
-    let set = if v[18] != 0 { 0 } else { v[38].clamp(0, 1) as usize };
-    let have_me = v[98] != 0;
-    let (mx, my) = (fv(v, 96), fv(v, 97));
-    let log = |e: usize| -> [i32; LOG_W] {
-        let mut o = [0; LOG_W];
-        o.copy_from_slice(&v[128 + e * LOG_W..128 + (e + 1) * LOG_W]);
-        o
-    };
-    if have_me {
-        let n = (0..SLOTS).filter(|&k| v[22 + set * SLOTS + k] > 0).count();
-        let mut i = 0;
-        for k in 0..SLOTS {
-            let id = v[22 + set * SLOTS + k];
-            if id <= 0 {
+    let play = v[V_PLAY];
+    let humans = v[V_HUMANS].clamp(1, 2) as usize;
+    for p in 0..humans {
+        let b = pb(p);
+        if v[b + P_HAVE_POS] == 0 {
+            continue;
+        }
+        let (mx, my) = (fv(v, b + P_X), fv(v, b + P_Y));
+        let act = v[b + P_ACTIVE].clamp(0, 1) as usize;
+        let shared = v[V_SHARED] != 0;
+        let live = v[b + P_LIVE_SETS];
+        for f in 0..2usize {
+            let set_f = if shared { 0 } else { f };
+            if shared && f == 1 {
                 continue;
             }
-            let d = &POOL[id as usize - 1];
-            let (mut x, mut y, mut z) = orbit_at(mx, my, i, n);
-            i += 1;
-            let ch = v[85 + set * SLOTS + k] as f32 / 1000.0;
-            let mut glow = 0.1 + 0.6 * ch;
-            if ch >= 1.0 {
-                glow = 1.0 + 0.4 * sin(T as f32 * 0.3);
+            if live >> f & 1 == 0 && !(shared && f == 0) {
+                continue;
             }
-            // the latest fire of this drive: dart to the target, flash, come back dim
-            for e in 0..8 {
-                let l = log(e);
-                let age = play - l[0];
-                if l[1] == id && l[2] == set as i32 && l[7] & FL_ECHO == 0 && (0..DART + BACK).contains(&age) {
-                    let (tx, ty) = if l[3] >= 0 { (l[4] as f32 / 100.0, l[5] as f32 / 100.0 + 8.0) } else { (mx, my + 10.0) };
-                    let t = if age < DART { ease(age as f32 / DART as f32) } else { 1.0 - ease((age - DART) as f32 / BACK as f32) };
-                    x += (tx - x) * t;
-                    y += (ty - y) * t;
-                    z *= 1.0 - t;
-                    glow = if age < DART + 2 { 1.6 } else { 0.1 };
+            let bench = !shared && f != act;
+            let r = 8.5 + p as f32 * 1.6 + if bench { 4.0 } else { 0.0 };
+            let ids = &v[b + P_DRIVES + set_f * SLOTS..b + P_DRIVES + set_f * SLOTS + SLOTS];
+            let n = ids.iter().filter(|&&d| d > 0).count();
+            let mut i = 0;
+            for k in 0..SLOTS {
+                let id = ids[k];
+                if id <= 0 {
+                    continue;
                 }
+                let at = orbit_at(mx, my, i, n, r, p as f32 * 0.9 + if bench { 0.4 } else { 0.0 });
+                i += 1;
+                let owner = (p * 2 + set_f) as i32;
+                orbiter(v, owner, id, v[b + P_LEVELS + set_f * SLOTS + k], v[b + P_CHARGE + set_f * SLOTS + k], at, mx, my, if bench { 2.8 } else { 3.6 }, if bench { 0.6 } else { 1.0 });
             }
-            let yaw = T as f32 * 0.06 + k as f32;
-            model(d.family as i32, x, y, z, yaw, 3.6, glow, 1.0);
-            let lv = v[77 + set * SLOTS + k];
-            if lv >= 2 {
-                model(if lv >= 3 { M_RING3 } else { M_RING2 }, x, y, z, yaw, 3.8, 0.8, 1.0);
+            // Bulwark's orb while armed; Haste: spikes at the feet
+            if v[b + P_SHIELD + set_f] != 0 {
+                model(M_GLASS, mx, my + 8.0, 0.0, T as f32 * 0.02, 17.0, 0.4, 0.3);
+                fx(FX_RING, mx, my + 8.0, 0.0, 9.0, 0.8, 0.0, alpha(FAM_COL[2], 0.6));
+            }
+            if v[b + P_HASTE + set_f] > 0 && !bench {
+                fx(FX_SPIKES, mx, my + 1.0, 0.0, 2.0, 7.0, T as f32 * 0.2, alpha(FAM_COL[1], 0.7));
             }
         }
         // the keystone halo: one crown per keystone, stacked over the head
-        for j in 0..3 {
-            if v[93 + j] > 0 {
+        for j in 0..KEYSTONES {
+            if v[b + P_KEYS + j] > 0 {
                 model(M_CROWN, mx, my + 21.0 + j as f32 * 2.0, 0.0, T as f32 * 0.03 + j as f32, 7.0 - j as f32, 0.9, 1.0);
             }
         }
-        // Bulwark's orb while armed
-        if v[114 + set] != 0 {
-            model(M_GLASS, mx, my + 8.0, 0.0, T as f32 * 0.02, 17.0, 0.4, 0.3);
-            fx(FX_RING, mx, my + 8.0, 0.0, 9.0, 0.8, 0.0, alpha(FAM_COL[2], 0.6));
-        }
-        // Haste: green spikes at the feet
-        if v[112 + v[38].clamp(0, 1) as usize] > 0 {
-            fx(FX_SPIKES, mx, my + 1.0, 0.0, 2.0, 7.0, T as f32 * 0.2, alpha(FAM_COL[1], 0.7));
+        // co-op: a thin ring in the player's colour under the fighter
+        if humans == 2 {
+            fx(FX_RING, mx, my + 0.5, 0.0, 6.0, 0.6, 0.0, alpha(PLAYER_COL[p], 0.5));
         }
     }
-    // foes: Burning (flickering spikes), Chilled (a cold ring)
-    for i in 0..3 {
-        if v[192 + i] == 0 {
+    // every slot: a foe's orbiters, statuses (Burning flickering spikes, Chilled a cold ring, Marked a violet ring)
+    for s in 0..4 {
+        let b = sb(s);
+        if v[b + S_ALIVE] == 0 {
             continue;
         }
-        let (qx, qy) = (fv(v, 99 + i * 2), fv(v, 100 + i * 2));
-        let st = v[106 + i];
+        let (qx, qy) = (fv(v, b + S_X), fv(v, b + S_Y));
+        let n = (0..2).filter(|&k| v[b + S_DRIVES + k] > 0).count();
+        let mut i = 0;
+        for k in 0..2 {
+            let id = v[b + S_DRIVES + k];
+            if id > 0 {
+                let at = orbit_at(qx, qy, i, n, 10.0, 1.7);
+                i += 1;
+                orbiter(v, OWNER_FOE + s as i32, id, v[b + S_LEVELS + k], v[b + S_CHARGE + k], at, qx, qy, 3.6, 0.9);
+            }
+        }
+        if v[b + S_SHIELD] != 0 {
+            model(M_GLASS, qx, qy + 8.0, 0.0, T as f32 * 0.02, 17.0, 0.4, 0.3);
+        }
+        if v[b + S_HASTE] > 0 {
+            fx(FX_SPIKES, qx, qy + 1.0, 0.0, 2.0, 7.0, T as f32 * 0.2, alpha(FAM_COL[1], 0.6));
+        }
+        let st = v[b + S_BURN];
         if st > 0 {
             fx(FX_SPIKES, qx, qy + 8.0, 0.0, 3.0, 6.0 + st as f32 * 2.5 + 1.5 * sin(T as f32 * 0.7), T as f32 * 0.1, alpha(0xFF7A_20FF, 0.55));
         }
-        if v[109 + i] > 0 {
+        if v[b + S_CHILL] > 0 {
             fx(FX_RING, qx, qy + 8.0, 0.0, 9.5, 1.2, 0.0, alpha(0x8CE6_FFFF, 0.7));
         }
+        if v[b + S_MARK] > 0 {
+            fx(FX_RING, qx, qy + 16.0, 0.0, 3.0 + 0.4 * sin(T as f32 * 0.25), 1.0, 0.0, alpha(0xC864_FFFF, 0.8));
+        }
     }
-    // the floor drop: the model in its glass shell with a beam
-    if v[116] == 1 && v[117] > 0 {
-        let fam = POOL[v[117] as usize - 1].family as usize;
-        let (x, y) = (v[118] as f32 / 100.0, v[119] as f32 / 100.0 + 6.0 + sin(T as f32 * 0.08));
-        fx(FX_BEAM, x, y - 6.0, 0.0, 70.0, 7.0, 0.0, alpha(FAM_COL[fam], 0.35));
-        model(fam as i32, x, y, 0.0, T as f32 * 0.05, 5.0, 1.0, 1.0);
-        model(M_GLASS, x, y, 0.0, T as f32 * 0.05, 7.5, 0.5, 0.3);
+    // the drops: the model in its glass shell with a beam in the owner's colour (co-op), else the family's
+    for p in 0..humans {
+        for k in 0..DROPS {
+            let d = pb(p) + P_DROPS + k * 4;
+            if v[d] != 1 || v[d + 1] <= 0 {
+                continue;
+            }
+            let fam = POOL[v[d + 1] as usize - 1].family as usize;
+            let (x, y) = (v[d + 2] as f32 / 100.0, v[d + 3] as f32 / 100.0 + 6.0 + sin(T as f32 * 0.08 + k as f32));
+            let beam = if humans == 2 { PLAYER_COL[p] } else { FAM_COL[fam] };
+            fx(FX_BEAM, x, y - 6.0, 0.0, 70.0, 7.0, 0.0, alpha(beam, 0.35));
+            if humans == 2 {
+                fx(FX_RING, x, y, 0.0, 8.5, 1.0, 0.0, alpha(PLAYER_COL[p], 0.8));
+            }
+            model(fam as i32, x, y, 0.0, T as f32 * 0.05, 5.0, 1.0, 1.0);
+            model(M_GLASS, x, y, 0.0, T as f32 * 0.05, 7.5, 0.5, 0.3);
+        }
     }
-    // each fire's effect
-    for e in 0..8 {
-        let l = log(e);
+    // each fire's effect, by its drive's look, in its family colour
+    for e in 0..LOG {
+        let l = log_entry(v, e);
         let age = play - l[0];
         if l[1] <= 0 || !(0..FIRE_LIFE).contains(&age) {
             continue;
         }
+        let Some((mx, my)) = owner_pos(v, l[2]) else { continue };
         let d = &POOL[l[1] as usize - 1];
         let p = age as f32 / FIRE_LIFE as f32;
         let k = (1.0 - p) * if l[7] & FL_ECHO != 0 { 0.5 } else { 1.0 };
@@ -839,15 +997,23 @@ unsafe fn world(v: &[i32; VW]) {
         let (tx, ty) = (l[4] as f32 / 100.0, l[5] as f32 / 100.0 + 8.0);
         let big = 1.0 + 0.35 * (l[6] - 1) as f32;
         match d.effect {
-            E_BURST => {
-                fx(FX_DISC, tx, ty, 0.0, 12.0 * big * ease(p * 3.0), 0.0, 0.0, alpha(0xFFB0_40FF, k));
+            E_BURST | E_WILDFIRE => {
+                let r = if d.effect == E_WILDFIRE { 20.0 } else { 12.0 };
+                fx(FX_DISC, tx, ty, 0.0, r * big * ease(p * 3.0), 0.0, 0.0, alpha(0xFFB0_40FF, k));
                 fx(FX_SPIKES, tx, ty, 0.0, 2.0, (6.0 + 16.0 * ease(p * 2.0)) * big, 0.3, col);
+                if d.effect == E_WILDFIRE && age < 12 {
+                    fx(FX_LINE, mx, my + 10.0, 0.0, tx, ty, 1.2, alpha(FAM_COL[0], 1.0 - age as f32 / 12.0));
+                }
             }
             E_NOVA => {
                 fx(FX_RING, mx, my + 8.0, 0.0, 4.0 + 34.0 * ease(p * 1.5), 3.0 * big, 0.0, col);
                 if age < 8 {
                     fx(FX_DISC, mx, my + 8.0, 0.0, 16.0, 0.0, 0.0, alpha(0xFFE0_C0FF, 1.0 - age as f32 / 8.0));
                 }
+            }
+            E_SPIRE => {
+                fx(FX_BEAM, tx, ty - 10.0, 0.0, 90.0 * ease(p * 3.0), 9.0 * big, 0.0, alpha(0xFFF0_D0FF, k));
+                fx(FX_SPIKES, tx, ty - 6.0, 0.0, 2.0, 10.0 * big, 0.0, col);
             }
             E_BOLT => {
                 if age < 14 {
@@ -856,42 +1022,56 @@ unsafe fn world(v: &[i32; VW]) {
                 }
                 fx(FX_SPIKES, tx, ty, 0.0, 1.0, 10.0 * big, T as f32 * 0.4, alpha(0xFFF6_A0FF, k));
             }
-            E_HASTE => fx(FX_RING, mx, my + 8.0, 0.0, 9.0 + 8.0 * p, 2.0, 0.0, col),
+            E_FEATHERS => {
+                for j in 0..5 {
+                    let ox = (j as f32 - 2.0) * 4.0;
+                    let fall = 40.0 * (1.0 - p) + j as f32 * 3.0;
+                    fx(FX_LINE, tx + ox, ty + fall + 6.0, 0.0, tx + ox + 1.5, ty + fall, 1.4, col);
+                }
+            }
+            E_HASTE | E_HEAL => fx(FX_RING, mx, my + 8.0, 0.0, 9.0 + 8.0 * p, 2.0, 0.0, col),
             E_SHIELD => fx(FX_RING, mx, my + 8.0, 0.0, 16.0 - 7.0 * ease(p * 2.0), 2.5, 0.0, col),
+            E_AIRJUMP => fx(FX_RING, mx, my + 2.0, 0.0, 4.0 + 10.0 * p, 1.6, 0.0, col),
             E_SHOCKWAVE => {
                 fx(FX_RING, mx, my + 1.0, 0.0, 4.0 + 30.0 * ease(p * 1.5), 3.0 * big, 0.0, col);
                 fx(FX_SPIKES, mx, my + 1.0, 0.0, 2.0, 8.0 + 10.0 * p, 0.0, col);
             }
             E_CHILL => fx(FX_SPIKES, tx, ty, 0.0, 3.0, (6.0 + 12.0 * ease(p * 2.0)) * big, 0.4, alpha(0x8CE6_FFFF, k)),
-            E_SHATTER => {
+            E_MARK => fx(FX_RING, tx, ty + 8.0, 0.0, 12.0 - 8.0 * ease(p * 2.0), 1.6, 0.0, alpha(0xC864_FFFF, k)),
+            E_SHATTER | E_THORNS => {
                 fx(FX_SPIKES, tx, ty, 0.0, 2.0, (8.0 + 18.0 * ease(p * 2.0)) * big, T as f32 * 0.05, alpha(0xE6FA_FFFF, k));
-                if l[7] & FL_LINK != 0 && age < 12 && have_me {
-                    // the link flash: a short line from the fighter's orbit to the shattered foe
-                    fx(FX_LINE, mx, my + 10.0, 0.0, tx, ty, 1.2, alpha(0xC864_FFFF, 1.0 - age as f32 / 12.0));
+                if l[7] & FL_LINK != 0 && age < 12 {
+                    // the link flash: a short line from the owner to the struck foe
+                    fx(FX_LINE, mx, my + 10.0, 0.0, tx, ty, 1.2, alpha(FAM_COL[d.family as usize], 1.0 - age as f32 / 12.0));
                 }
             }
-            E_RELAY => fx(FX_RING, mx, my + 8.0, 0.0, 6.0 + 26.0 * ease(p * 2.0), 2.0, 0.0, col),
+            E_TAILWIND => {
+                if age < 10 {
+                    fx(FX_LINE, mx, my + 10.0, 0.0, tx, ty, 0.8, alpha(FAM_COL[1], 1.0 - age as f32 / 10.0));
+                }
+            }
+            E_RELAY | E_REPEAT | E_SURGE => fx(FX_RING, mx, my + 8.0, 0.0, 6.0 + 26.0 * ease(p * 2.0), 2.0, 0.0, col),
             _ => {}
         }
     }
 }
 
-/// Sounds keyed on the fire log and the gain record: each (frame, drive, set) plays once, so a rollback that replays
-/// a fire does not play it twice.
+/// Sounds keyed on the fire log and the gain records: each (frame, drive, owner) plays once, so a rollback that
+/// replays a fire does not play it twice.
 static mut PLAYED: [i32; 32] = [-1; 32];
 static mut PLAYED_N: usize = 0;
-static mut GAIN_SEEN: i32 = -1;
+static mut GAIN_SEEN: [i32; 2] = [-1; 2];
 
 unsafe fn sounds(v: &[i32; VW]) {
-    let play = v[73];
+    let play = v[V_PLAY];
     let mut n = 0;
-    for e in 0..8 {
-        let l = &v[128 + e * LOG_W..128 + (e + 1) * LOG_W];
+    for e in 0..LOG {
+        let l = log_entry(v, e);
         let age = play - l[0];
-        if l[1] <= 0 || !(0..4).contains(&age) {
+        if l[1] <= 0 || !(0..4).contains(&age) || l[7] & FL_PASSIVE != 0 {
             continue;
         }
-        let key = l[0].wrapping_mul(64) ^ (l[1] * 2 + l[2]) ^ (l[7] << 20);
+        let key = l[0].wrapping_mul(64) ^ (l[1] * 8 + l[2]) ^ (l[7] << 20);
         if PLAYED.contains(&key) || n >= 2 {
             continue;
         }
@@ -900,165 +1080,201 @@ unsafe fn sounds(v: &[i32; VW]) {
         n += 1;
         sfx(POOL[l[1] as usize - 1].sound);
     }
-    // gains (a drop, a pick, a level-up, a keystone): keyed on (frame, id, count)
-    let gkey = v[120].wrapping_mul(64) ^ v[121] ^ (v[125] << 16);
-    if v[125] > 0 && gkey != GAIN_SEEN {
-        GAIN_SEEN = gkey;
-        sfx(if v[124] == 3 { "keystone" } else if v[123] > 1 { "levelup" } else { "pickup" });
+    // gains (a drop, a pick, a level-up, a keystone): keyed on each player's gain count
+    for p in 0..v[V_HUMANS].clamp(1, 2) as usize {
+        let g = pb(p) + P_GAIN;
+        let key = v[g + 5];
+        if key > 0 && key != GAIN_SEEN[p] {
+            GAIN_SEEN[p] = key;
+            sfx(if v[g + 4] == 3 { "keystone" } else if v[g + 3] > 1 { "levelup" } else { "pickup" });
+        }
     }
 }
 
-/// The level fighter `f` has of drive `id` (0: not worn).
-fn level_of(v: &[i32; VW], f: usize, id: i32) -> i32 {
-    let set = if v[18] != 0 { 0 } else { f };
-    (0..SLOTS).find(|&k| v[22 + set * SLOTS + k] == id + 1).map_or(0, |k| v[77 + set * SLOTS + k])
+/// The level fighter `f` of player `p` has of drive `id` (0: not worn).
+fn level_of(v: &[i32; VW], p: usize, f: usize, id: i32) -> i32 {
+    let set = if v[V_SHARED] != 0 { 0 } else { f };
+    let b = pb(p);
+    (0..SLOTS).find(|&k| v[b + P_DRIVES + set * SLOTS + k] == id + 1).map_or(0, |k| v[b + P_LEVELS + set * SLOTS + k])
 }
 
-/// The reward screen: three drive cards (each model turning, its rule, NEW or LEVEL n per fighter) then the fighter
-/// that wears it; or three keystone cards with their price; a `+1 stock` card when the pool is at 1.
+/// The reward screen: per player, three drive cards (each model turning, its rule, NEW or LEVEL n per fighter) then
+/// the fighter that wears it; or three keystone cards with their price; a `+1 stock` card when the pool is at 1. In
+/// co-op the two players pick at once: P1's row on top, P2's below, each with its own cursor.
 unsafe fn reward(e: &mut Enc<16384>, v: &[i32; VW], vw: f32, vh: f32) {
     T = T.wrapping_add(1);
     e.rect(0.0, 0.0, vw, vh, 0x0000_00B0);
     let cx = vw * 0.5;
-    let keys = v[10] == 2;
+    let keys = v[V_RW] == 2;
+    let humans = v[V_HUMANS].clamp(1, 2) as usize;
     let mut s = Buf::new();
     if keys {
         s.s("CHOOSE A KEYSTONE");
     } else {
-        s.s("FIGHT ").i(v[2]).s(" CLEARED  -  CHOOSE A DRIVE");
+        s.s("FIGHT ").i(v[V_FIGHT]).s(" CLEARED  -  CHOOSE A DRIVE");
     }
-    e.text_ex(cx, 120.0, ROLE_TITLE, WHITE, ALIGN_CENTER, vw - 40.0, s.str());
-    let secs = (v[12] + 59) / 60;
+    e.text_ex(cx, if humans == 2 { 40.0 } else { 120.0 }, ROLE_TITLE, WHITE, ALIGN_CENTER, vw - 40.0, s.str());
+    let secs = (v[V_TIMER] + 59) / 60;
     let mut s = Buf::new();
     s.i(secs).s("s");
-    e.text_ex(cx, 158.0, ROLE_VALUE, if secs <= 5 { ACCENT } else { DIM }, ALIGN_CENTER, 0.0, s.str());
+    e.text_ex(cx, if humans == 2 { 76.0 } else { 158.0 }, ROLE_VALUE, if secs <= 5 { ACCENT } else { DIM }, ALIGN_CENTER, 0.0, s.str());
     let gap = 24.0;
     let w = ((vw - 60.0 - 2.0 * gap) / 3.0).min(340.0);
-    let h = 380.0;
+    let h = if humans == 2 { 262.0 } else { 380.0 };
     let x0 = cx - (3.0 * w + 2.0 * gap) * 0.5;
-    let y = 190.0;
-    for i in 0..3 {
-        let id = v[13 + i];
-        let x = x0 + i as f32 * (w + gap);
-        let sel = v[11] == i as i32;
-        e.slice(SLICE_FILL_R14, x, y, w, h, if sel { 0x1C1C_30F0 } else { 0x0E0E_18E8 });
-        if sel {
-            e.slice(SLICE_LINE_R14_3, x, y, w, h, ACCENT);
+    for p in 0..humans {
+        let b = pb(p);
+        let y = if humans == 2 { 104.0 + p as f32 * (h + 40.0) } else { 190.0 };
+        let compact = humans == 2;
+        if humans == 2 {
+            let mut s = Buf::new();
+            s.s(if p == 0 { "P1  " } else { "P2  " }).s(ck_name(v[b + P_MAIN])).s(" + ").s(ck_name(v[b + P_PARTNER]));
+            if v[b + P_RW_DONE] != 0 {
+                s.s("  -  READY");
+            }
+            e.text(x0, y - 22.0, ROLE_LABEL, PLAYER_COL[p], s.str());
         }
-        let tx = x + w * 0.5;
-        if id == OFFER_STOCK || !(0..POOL_LEN as i32).contains(&id) {
-            e.text_ex(tx, y + 120.0, ROLE_TITLE, if sel { WHITE } else { DIM }, ALIGN_CENTER, w - 20.0, "+1 STOCK");
-            e.text_ex(tx, y + 170.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 20.0, "SHARED POOL");
-            let mut s = Buf::new();
-            s.i(v[19]).s("  ->  ").i(v[19] + 1);
-            e.text_ex(tx, y + 200.0, ROLE_VALUE, GOOD, ALIGN_CENTER, w - 20.0, s.str());
-            e.text_ex(tx, y + 250.0, ROLE_BODY, DIM, ALIGN_CENTER, w - 30.0, "One more shared stock, now.");
-            continue;
-        }
-        let d = &POOL[id as usize];
-        let m = if d.kind == K_KEYSTONE { M_CROWN } else { d.family as i32 };
-        sprite(e, m, tx - 48.0, y + 14.0, 96.0);
-        e.text_ex(tx, y + 120.0, ROLE_TITLE, if sel { WHITE } else { DIM }, ALIGN_CENTER, w - 20.0, d.name);
-        if d.kind == K_KEYSTONE {
-            e.text_ex(tx, y + 158.0, ROLE_LABEL, 0xFAC8_46FF, ALIGN_CENTER, w - 20.0, "KEYSTONE");
-            e.text_ex(tx, y + 190.0, ROLE_BODY, WHITE, ALIGN_CENTER, w - 30.0, d.rule);
-            let mut s = Buf::new();
-            s.s("PRICE: ").s(PRICES[d.price as usize]);
-            e.text_ex(tx, y + 262.0, ROLE_VALUE, ACCENT, ALIGN_CENTER, w - 20.0, s.str());
-            e.text_ex(tx, y + 292.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, PRICE_TEXT[d.price as usize]);
-        } else {
-            let mut s = Buf::new();
-            s.s(FAMILIES[d.family as usize]).s("  -  ").s(FAMILY_MEANING[d.family as usize]);
-            e.text_ex(tx, y + 158.0, ROLE_LABEL, FAM_COL[d.family as usize], ALIGN_CENTER, w - 20.0, s.str());
-            e.text_ex(tx, y + 190.0, ROLE_BODY, WHITE, ALIGN_CENTER, w - 30.0, d.rule);
-            // NEW / LEVEL n for each fighter (or the pair's one set)
-            let sets = if v[18] != 0 { 1 } else { 2 };
-            for f in 0..sets {
-                let lv = level_of(v, f, id);
-                let ok = v[127] >> (i * 2 + f) & 1 != 0;
+        let done = v[b + P_RW_DONE] != 0;
+        for i in 0..3 {
+            let id = v[b + P_OFFERS + i];
+            let x = x0 + i as f32 * (w + gap);
+            let sel = v[b + P_CURSOR] == i as i32 && !done;
+            e.slice(SLICE_FILL_R14, x, y, w, h, if sel { 0x1C1C_30F0 } else { 0x0E0E_18E8 });
+            if sel {
+                e.slice(SLICE_LINE_R14_3, x, y, w, h, if humans == 2 { PLAYER_COL[p] } else { ACCENT });
+            }
+            let tx = x + w * 0.5;
+            let (ty_name, ty_kind, ty_rule, ty_rows) = if compact { (78.0, 106.0, 132.0, 196.0) } else { (120.0, 158.0, 190.0, 262.0) };
+            if id == OFFER_STOCK || !(0..POOL_LEN as i32).contains(&id) {
+                e.text_ex(tx, y + ty_name, ROLE_TITLE, if sel { WHITE } else { DIM }, ALIGN_CENTER, w - 20.0, "+1 STOCK");
+                e.text_ex(tx, y + ty_kind, ROLE_LABEL, DIM, ALIGN_CENTER, w - 20.0, "SHARED POOL");
                 let mut s = Buf::new();
-                s.s(if sets == 1 { "PAIR" } else { ck_name(v[6 + f]) }).s(": ");
-                if !ok {
-                    s.s(if lv >= 3 { "MAX" } else { "FULL" });
-                } else if lv == 0 {
-                    s.s("NEW");
-                } else {
-                    s.s("LEVEL ").i(lv + 1);
+                s.i(v[V_POOL]).s("  ->  ").i(v[V_POOL] + 1);
+                e.text_ex(tx, y + ty_rule, ROLE_VALUE, GOOD, ALIGN_CENTER, w - 20.0, s.str());
+                continue;
+            }
+            let d = &POOL[id as usize];
+            let m = if d.kind == K_KEYSTONE { M_CROWN } else { d.family as i32 };
+            let ms = if compact { 64.0 } else { 96.0 };
+            sprite(e, m, tx - ms * 0.5, y + 10.0, ms);
+            e.text_ex(tx, y + ty_name, ROLE_TITLE, if sel { WHITE } else { DIM }, ALIGN_CENTER, w - 20.0, d.name);
+            if d.kind == K_KEYSTONE {
+                e.text_ex(tx, y + ty_kind, ROLE_LABEL, 0xFAC8_46FF, ALIGN_CENTER, w - 20.0, "KEYSTONE");
+                e.text_ex(tx, y + ty_rule, ROLE_BODY, WHITE, ALIGN_CENTER, w - 30.0, d.rule);
+                let mut s = Buf::new();
+                s.s("PRICE: ").s(PRICES[d.price as usize]);
+                e.text_ex(tx, y + ty_rows, ROLE_VALUE, ACCENT, ALIGN_CENTER, w - 20.0, s.str());
+                e.text_ex(tx, y + ty_rows + 30.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, PRICE_TEXT[d.price as usize]);
+            } else {
+                let mut s = Buf::new();
+                s.s(FAMILIES[d.family as usize]).s("  -  ").s(FAMILY_MEANING[d.family as usize]);
+                e.text_ex(tx, y + ty_kind, ROLE_LABEL, FAM_COL[d.family as usize], ALIGN_CENTER, w - 20.0, s.str());
+                e.text_ex(tx, y + ty_rule, ROLE_BODY, WHITE, ALIGN_CENTER, w - 30.0, d.rule);
+                // NEW / LEVEL n for each fighter (or the pair's one set)
+                let sets = if v[V_SHARED] != 0 { 1 } else { 2 };
+                for f in 0..sets {
+                    let lv = level_of(v, p, f, id);
+                    let ok = v[b + P_CAN_TAKE] >> (i * 2 + f) & 1 != 0;
+                    let mut s = Buf::new();
+                    s.s(if sets == 1 { "PAIR" } else { fighter_name(v, p, f as i32) }).s(": ");
+                    if !ok {
+                        s.s(if lv >= 3 { "MAX" } else { "FULL" });
+                    } else if lv == 0 {
+                        s.s("NEW");
+                    } else {
+                        s.s("LEVEL ").i(lv + 1);
+                    }
+                    e.text_ex(tx, y + ty_rows + f as f32 * 22.0, ROLE_LABEL, if ok { GOOD } else { DIM }, ALIGN_CENTER, w - 20.0, s.str());
                 }
-                e.text_ex(tx, y + 262.0 + f as f32 * 22.0, ROLE_LABEL, if ok { GOOD } else { DIM }, ALIGN_CENTER, w - 20.0, s.str());
+                let word = if d.gives != W_NONE { d.gives } else { d.reads };
+                if word != W_NONE && !compact {
+                    e.text_ex(tx, y + 318.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, GLOSSARY[word as usize]);
+                }
             }
-            let word = if d.gives != W_NONE { d.gives } else { d.reads };
-            if word != W_NONE {
-                e.text_ex(tx, y + 318.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, GLOSSARY[word as usize]);
+            if i == 0 && !compact {
+                e.text_ex(tx, y + h - 24.0, ROLE_LABEL, 0x6060_70FF, ALIGN_CENTER, 0.0, "(taken on timeout)");
             }
         }
-        if i == 0 {
-            e.text_ex(tx, y + h - 24.0, ROLE_LABEL, 0x6060_70FF, ALIGN_CENTER, 0.0, "(taken on timeout)");
+        if v[b + P_STEP] == 1 && !done {
+            // step 2: which fighter wears it
+            let i = v[b + P_CURSOR].clamp(0, 2) as usize;
+            let (bw, bh) = (300.0, 50.0);
+            let by = y + h - bh - 10.0;
+            e.rect(x0, by - 6.0, 3.0 * w + 2.0 * gap, bh + 12.0, 0x0000_00D0);
+            for f in 0..2 {
+                let bx = cx - bw - 12.0 + f as f32 * (bw + 24.0);
+                let ok = v[b + P_CAN_TAKE] >> (i * 2 + f) & 1 != 0;
+                let on = v[b + P_FCURSOR] == f as i32;
+                e.slice(SLICE_FILL_R6, bx, by, bw, bh, if on { 0x2A2A_44F0 } else { PANEL });
+                if on {
+                    e.slice(SLICE_LINE_R6, bx, by, bw, bh, if ok { GOOD } else { DIM });
+                }
+                let mut s = Buf::new();
+                s.s(fighter_name(v, p, f as i32));
+                if !ok {
+                    s.s(" (FULL)");
+                }
+                e.text_ex(bx + bw * 0.5, by + 14.0, ROLE_VALUE, if ok { WHITE } else { DIM }, ALIGN_CENTER, bw - 10.0, s.str());
+            }
         }
     }
-    if v[16] == 1 {
-        // step 2: which fighter wears it
-        let i = v[11].clamp(0, 2) as usize;
-        let (bw, bh) = (300.0, 54.0);
-        let by = y + h + 18.0;
-        e.rect(0.0, by - 8.0, vw, bh + 16.0, 0x0000_00C0);
-        for f in 0..2 {
-            let bx = cx - bw - 12.0 + f as f32 * (bw + 24.0);
-            let ok = v[127] >> (i * 2 + f) & 1 != 0;
-            let on = v[17] == f as i32;
-            e.slice(SLICE_FILL_R6, bx, by, bw, bh, if on { 0x2A2A_44F0 } else { PANEL });
-            if on {
-                e.slice(SLICE_LINE_R6, bx, by, bw, bh, if ok { GOOD } else { DIM });
-            }
-            let mut s = Buf::new();
-            s.s(ck_name(v[6 + f]));
-            if !ok {
-                s.s(" (FULL)");
-            }
-            e.text_ex(bx + bw * 0.5, by + 16.0, ROLE_VALUE, if ok { WHITE } else { DIM }, ALIGN_CENTER, bw - 10.0, s.str());
-        }
-        e.text_ex(cx, by + bh + 14.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, "WHO WEARS IT?   LEFT / RIGHT choose     A wear     B back");
+    let hint = if (0..humans).any(|p| v[pb(p) + P_STEP] == 1) {
+        "WHO WEARS IT?   LEFT / RIGHT choose     A wear     B back"
     } else {
-        e.text_ex(cx, y + h + 30.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, "LEFT / RIGHT choose     A take");
-    }
+        "LEFT / RIGHT choose     A take"
+    };
+    e.text_ex(cx, vh - 30.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, hint);
 }
 
 unsafe fn between(e: &mut Enc<16384>, v: &[i32; VW], vw: f32, _vh: f32) {
     let cx = vw * 0.5;
-    let (w, h) = (720.0, 92.0);
+    let humans = v[V_HUMANS].clamp(1, 2) as usize;
+    let (w, h) = (760.0, 62.0 + 34.0 * humans as f32);
     let y = 18.0;
     let mut l1 = Buf::new();
-    let mut l2 = Buf::new();
     let mut col = WHITE;
-    match v[1] {
+    match v[V_STATE] {
         2 => {
-            l1.s("ENVOY  -  RUN CLEAR!  pool left ").i(v[4]);
-            l2.s("The camp has the result");
+            l1.s("ENVOY  -  RUN CLEAR!  pool left ").i(v[V_POOL]);
             col = GOOD;
         }
         3 => {
-            l1.s("ENVOY  -  RUN OVER at fight ").i(v[2] + 1).s("/").i(v[3]);
-            l2.s("The camp has the result");
+            l1.s("ENVOY  -  RUN OVER at fight ").i(v[V_FIGHT] + 1).s("/").i(v[V_FIGHTS]);
             col = ACCENT;
         }
         1 => {
-            l1.s("ENVOY  -  NEXT: FIGHT ").i(v[2] + 1).s("/").i(v[3]).s("   pool ").i(v[4]);
-            if v[18] != 0 {
-                drive_line(&mut l2, "PAIR", &v[22..26], &v[77..81]);
-            } else {
-                drive_line(&mut l2, ck_name(v[6]), &v[22..26], &v[77..81]);
-                l2.s("   ");
-                drive_line(&mut l2, ck_name(v[7]), &v[26..30], &v[81..85]);
-            }
+            l1.s("ENVOY  -  NEXT: FIGHT ").i(v[V_FIGHT] + 1).s("/").i(v[V_FIGHTS]).s("   pool ").i(v[V_POOL]);
         }
         _ => {
             l1.s("ENVOY RUN  -  pick your pair, any stage, Start");
-            l2.s("P1's pick = your main, P2's slot (any) = your partner");
         }
     }
     e.slice(SLICE_FILL_R6, cx - w * 0.5, y, w, h, PANEL);
     e.text_ex(cx, y + 12.0, ROLE_VALUE, col, ALIGN_CENTER, w - 20.0, l1.str());
-    e.text_ex(cx, y + 54.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 20.0, l2.str());
+    for p in 0..humans {
+        let mut l2 = Buf::new();
+        let b = pb(p);
+        if v[V_STATE] == 1 {
+            if humans == 2 {
+                l2.s(if p == 0 { "P1  " } else { "P2  " });
+            }
+            if v[V_SHARED] != 0 {
+                drive_line(&mut l2, "PAIR", &v[b + P_DRIVES..b + P_DRIVES + 4], &v[b + P_LEVELS..b + P_LEVELS + 4]);
+            } else {
+                drive_line(&mut l2, ck_name(v[b + P_MAIN]), &v[b + P_DRIVES..b + P_DRIVES + 4], &v[b + P_LEVELS..b + P_LEVELS + 4]);
+                l2.s("   ");
+                drive_line(&mut l2, ck_name(v[b + P_PARTNER]), &v[b + P_DRIVES + 4..b + P_DRIVES + 8], &v[b + P_LEVELS + 4..b + P_LEVELS + 8]);
+            }
+        } else if v[V_STATE] == 0 {
+            l2.s("P1's pick = your main, P2's slot (any) = your partner");
+        } else {
+            l2.s("The camp has the result");
+        }
+        e.text_ex(cx, y + 48.0 + p as f32 * 30.0, ROLE_LABEL, if humans == 2 { PLAYER_COL[p] } else { DIM }, ALIGN_CENTER, w - 20.0, l2.str());
+        if v[V_STATE] != 1 {
+            break;
+        }
+    }
 }
 
 unsafe fn tag_cinematic(e: &mut Enc<16384>, t: &[i32; 10], vw: f32, vh: f32) {

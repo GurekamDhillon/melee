@@ -1,26 +1,32 @@
-//! envoy_sim: a single-player Envoy run (docs/rust-port/notes/envoy-1p.md, envoy-drives.md). The sim half: run state,
-//! the plan of the next fight, tags, mid-fight stage switches, drives and keystones (envoy-core-v2.md, milestone V1)
-//! and the run's end. Everything is this module's linear memory (rolled back with the game) or engine statics
-//! (melee_modes::tu::{envoy, tag_swap}); the presentation (envoy_ui) only reads the published view and the fire log.
+//! envoy_sim: an Envoy run (docs/rust-port/notes/envoy-1p.md, envoy-drives.md). The sim half: run state, the plan
+//! of the next fight, tags, mid-fight stage switches, drives and keystones (envoy-core-v2.md, milestone V2), local
+//! co-op and the run's end. Everything is this module's linear memory (rolled back with the game) or engine statics
+//! (melee_modes::tu::{envoy, tag_swap, petey}); the presentation (envoy_ui) only reads the published view.
 //!
-//! * run: 5 fights against CPUs that ramp up (level and count); fight 5 is the boss (a level-9 Ganondorf, or Petey
-//!   with MELEE_ENVOY_BOSS=petey). The pair (P1 = main, P2 = partner on the retail CSS) shares one stock pool.
-//! * tag: D-pad down (ground or air, actionable), 5 s cooldown, 60-frame frozen cinematic; each fighter keeps its %.
+//! * run: the Short run, 5 fights: a duel, an elite (act boss 1), a pack, an elite (act boss 2), the final boss (a
+//!   level-9 Ganondorf, or Petey with MELEE_ENVOY_BOSS=petey). Each player's pair (main + partner) shares one stock
+//!   pool: 4 solo, 5 in co-op (MELEE_ENVOY_COOP=1: a second human in slot 1 with its own pair).
+//! * tag: D-pad down (ground or air, actionable), 5 s cooldown (Lock: 10 s), 60-frame frozen cinematic.
 //! * stage switches: from fight 2 on, every 30 s of play, the next of BF / YS / DL / FoD / FD.
-//! * drives (envoy_data): each fighter wears up to 3 (`[2][4]` of id and level 1-3; a second copy levels it up). The
-//!   fighter in play charges its drives from hits landed and taken (the take-damage hook), landings (the Landing
-//!   enter rows), time and tag-in; a full drive fires on the next free frame, at most one fire per fighter every 20
-//!   frames (Relay's volley: 6 frames apart). A fire applies its effect (damage-only bursts, Burning, Chilled, Haste,
-//!   an absorbing orb) and appends to the 8-entry fire log the presentation draws and plays from.
-//! * keystones: one picked at the run's start (Plague Bearer, Echo Oath, Overclock), each with its price.
-//! * earning: the first KO in a fight drops a drive on a floor point (walk over it; still on the floor when the fight
-//!   is won, it is swept up), and fights 2-5 open with a pick of three drives and then the fighter that wears it.
-//! * MELEE_ENVOY_SHARED_DRIVES=1: one set shared by the pair (Q1's alternative), fixed per run.
+//! * drives (envoy_data, 20): each fighter wears up to 3, 4 after the first boss (`[2 players][2 fighters][4]` of id
+//!   and level 1-3; a second copy levels it up). The fighter in play charges its drives from hits landed (aerial
+//!   hits, hits on a foe at 100%+), hits taken, landings, jumps, time, tag-in, KOs, stage shifts and other fires; a
+//!   full drive fires on the next free frame, at most one fire per set every 20 frames (Relay's volley: 6 frames
+//!   apart). Nova, Comet and Spire launch through `gd_envoy_blast` (a hitbox on the engine's hit path); every other
+//!   effect is percent, a status (Burning, Chilled, Marked, Haste), an orb, a heal or an air jump. Fires go to the
+//!   12-entry fire log the presentation draws and plays from. Drive effects only ever reach the other side.
+//! * keystones (6): one each player at the run's start and after each of the first two bosses, each with its price.
+//! * foes: elites and bosses carry 1-2 drives that charge and fire at the players (Chilled and Marked act at half
+//!   strength on a boss).
+//! * earning: KOs drop drives on floor points, one per player in the owner's colour (an elite: two); fights 2-5
+//!   open with a pick of three drives for each player, then the fighter that wears it.
+//! * MELEE_ENVOY_SHARED_DRIVES=1: one set shared by each pair (Q1's alternative), fixed per run.
 //! * determinism: the whole state is one `#[repr(C)]` struct of i32 words; every frame an FNV-1a over all of it, the
 //!   plan and the pool digest goes into `gd_hash_word`, so a divergence in any charge shows on the frame it happens.
 #![no_std]
 #![allow(static_mut_refs)]
 
+use envoy_data::view::*;
 use envoy_data::*;
 
 #[panic_handler]
@@ -36,6 +42,8 @@ extern "C" {
     fn gd_fighter_kind(h: u32) -> i32;
     fn gd_fighter_get_pos_x(h: u32) -> f32;
     fn gd_fighter_get_pos_y(h: u32) -> f32;
+    fn gd_fighter_get_percent(h: u32) -> f32;
+    fn gd_fighter_get_action_state(h: u32) -> i32;
     fn gd_player_present(slot: i32) -> i32;
     fn gd_player_stocks(slot: i32) -> i32;
     fn gd_tag_partner(slot: i32) -> i32;
@@ -44,6 +52,7 @@ extern "C" {
     fn gd_transition_phase() -> i32;
     fn gd_transition_kind() -> i32;
     fn gd_transition_frame() -> i32;
+    fn gd_transition_slot() -> i32;
     fn gd_stage_grkind() -> i32;
     fn gd_stage_transition(grkind: i32, len: i32) -> i32;
     fn gd_hold_begin(len: i32) -> i32;
@@ -58,6 +67,14 @@ extern "C" {
     fn gd_envoy_percent(slot: i32, bench: i32, delta_milli: i32) -> i32;
     fn gd_envoy_test_drives(out: *mut u8, cap: u32) -> i32;
     fn gd_envoy_shared_drives() -> i32;
+    fn gd_envoy_coop() -> i32;
+    fn gd_envoy_speed(slot: i32, active: i32, bench: i32) -> i32;
+    fn gd_envoy_absorb(slot: i32) -> i32;
+    fn gd_envoy_attacker(slot: i32) -> i32;
+    fn gd_envoy_jumps(slot: i32) -> i32;
+    fn gd_envoy_air_jump(slot: i32) -> i32;
+    fn gd_envoy_blast(slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg: i32, bkb: i32) -> i32;
+    fn gd_envoy_boss(out: *mut u32) -> i32;
     fn gd_envoy_armed() -> i32;
     fn gd_envoy_record(out: *mut i32, cap: u32) -> i32;
     fn gd_hash_word(w: u32);
@@ -65,7 +82,7 @@ extern "C" {
 }
 
 const FIGHTS: usize = 5;
-const START_POOL: i32 = 4;
+const START_POOL: [i32; 2] = [4, 5];
 const TAG_LEN: i32 = 60;
 const TAG_COOLDOWN: i32 = 300;
 const TAG_SKIP_AFTER: i32 = 6;
@@ -74,6 +91,9 @@ const STAGE_PERIOD: i32 = 1800;
 const REWARD_TIME: i32 = 1200;
 /// Frames into a fight before its reward screen opens (after the fighters are placed).
 const REWARD_DELAY: i32 = 2;
+/// After the last KO, the fight waits up to this long while a drop is still on the floor (the collect hold), then
+/// the drops are swept up.
+const COLLECT_HOLD: i32 = 600;
 
 const DPAD_LEFT: u32 = 0x0001;
 const DPAD_RIGHT: u32 = 0x0002;
@@ -90,8 +110,6 @@ const KIND_HOLD: i32 = 3;
 const AP_ATTACK: i32 = 0;
 const AP_DEFENSE: i32 = 1;
 const AP_STOCKS: i32 = 2;
-const AP_SPEED: i32 = 4;
-const AP_FIGHTER: [i32; 2] = [0x100, 0x200];
 
 /// Gr_Kind: Battlefield, Yoshi's Story, Dream Land, Fountain of Dreams, Final Destination.
 const STAGES: [i32; 5] = [36, 10, 28, 12, 37];
@@ -99,52 +117,63 @@ const STAGES: [i32; 5] = [36, 10, 28, 12, 37];
 const CPU_POOL: [i32; 22] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 20, 21, 22, 23, 24];
 const CK_GANONDORF: i32 = 0x19;
 
+/// Action states: JumpF, JumpB, JumpAerialF, JumpAerialB (a jump); AttackAirN..AttackAirLw (an aerial).
+const AS_JUMP: (i32, i32) = (25, 28);
+const AS_AERIAL: (i32, i32) = (65, 69);
+/// Landing, LandingFallSpecial, LandingAirN..LandingAirLw (a landing; polled: the aerial landings have no hook row).
+const AS_LANDING: [(i32, i32); 2] = [(42, 43), (70, 74)];
+
 struct Fight {
+    kind: i32,
     ncpu: i32,
     level: [i32; 3],
     stocks: [i32; 3],
+    /// Drives the foe carries (elites and bosses) and their level.
+    foe_drives: i32,
+    foe_level: i32,
+    scale: i32,
 }
 const SCHEDULE: [Fight; FIGHTS] = [
-    Fight { ncpu: 1, level: [3, 0, 0], stocks: [1, 0, 0] },
-    Fight { ncpu: 1, level: [5, 0, 0], stocks: [2, 0, 0] },
-    Fight { ncpu: 2, level: [5, 6, 0], stocks: [1, 1, 0] },
-    Fight { ncpu: 3, level: [6, 7, 7], stocks: [1, 1, 1] },
-    Fight { ncpu: 1, level: [9, 0, 0], stocks: [3, 0, 0] },
+    Fight { kind: FK_DUEL, ncpu: 1, level: [3, 0, 0], stocks: [1, 0, 0], foe_drives: 0, foe_level: 0, scale: 1000 },
+    Fight { kind: FK_ELITE, ncpu: 1, level: [6, 0, 0], stocks: [2, 0, 0], foe_drives: 1, foe_level: 1, scale: 1150 },
+    Fight { kind: FK_PACK, ncpu: 2, level: [5, 6, 0], stocks: [1, 1, 0], foe_drives: 0, foe_level: 0, scale: 1000 },
+    Fight { kind: FK_ELITE, ncpu: 1, level: [8, 0, 0], stocks: [2, 0, 0], foe_drives: 2, foe_level: 2, scale: 1200 },
+    Fight { kind: FK_BOSS, ncpu: 1, level: [9, 0, 0], stocks: [3, 0, 0], foe_drives: 2, foe_level: 2, scale: 1250 },
 ];
+/// The drives a foe may carry: the ones that read as an attack on the players.
+const FOE_POOL: [&str; 8] = ["ember", "nova", "bolt", "frost", "rush", "bulwark", "hex", "comet"];
 
 const RUN_NONE: i32 = 0;
 const RUN_LIVE: i32 = 1;
 const RUN_CLEAR: i32 = 2;
 const RUN_OVER: i32 = 3;
 
-/// An offer that is not a drive: one more shared stock.
-const OFFER_STOCK: i32 = 1000;
 /// The reward screens: a pick of three drives, a keystone pick.
 const RW_DRIVES: i32 = 1;
 const RW_KEYSTONES: i32 = 2;
-/// Slot arrays hold 4 (act 2 in the full run); V1 opens 3 per fighter.
-const SLOTS: usize = 4;
-const OPEN_SLOTS: usize = 3;
-const KEYSTONES: usize = 3;
-const LOG: usize = 8;
-const LOG_W: usize = 8;
-const ECHOES: usize = 4;
-/// Echo Oath's repeat: frames after the fire.
+const NP: usize = 2;
+const SETS: usize = 4;
+const OWNERS: usize = 8;
+const PEND: usize = 8;
+/// Echo Oath's repeat: frames after the fire; Feather Storm's hits, frames apart.
 const ECHO_DELAY: i32 = 12;
+const FEATHER_GAP: i32 = 8;
 /// Effect reach in world units (fighters are about 10-15 tall).
+const BOLT_R: f32 = 90.0;
+const SPLASH_R: f32 = 26.0;
 const NOVA_R: f32 = 38.0;
 const SHOCK_R: f32 = 32.0;
-const SPLASH_R: f32 = 26.0;
-/// A floor drop is taken when the fighter in play stands this close (x, and y above the drop).
+/// Thorns' Marked (frames).
+const THORNS_MARK: i32 = 300;
+/// A floor drop is taken when its owner's fighter in play stands this close (x, and y above the drop).
 const PICK_DX: f32 = 11.0;
 const PICK_DY: f32 = 22.0;
 /// Floor points (x100) a drop lands on: the main floor of every stage in the rotation is at y 0.
 const DROP_X: [i32; 4] = [-3500, -1200, 1200, 3500];
 
-// fire log flags
-const FL_ECHO: i32 = 1;
-const FL_VOLLEY: i32 = 2;
-const FL_LINK: i32 = 4;
+// pending kinds
+const PK_ECHO: i32 = 1;
+const PK_PULSE: i32 = 2;
 // a gain's source
 const G_DROP: i32 = 1;
 const G_PICK: i32 = 2;
@@ -160,15 +189,18 @@ struct St {
     seed: i32,
     fight: i32,
     pool: i32,
-    main: i32,
-    partner: i32,
-    picks: i32,
     shared: i32,
-    /// Worn drives: pool index + 1 (0 empty) and level 1-3; [0] the main's set, [1] the partner's (shared: [0] only).
-    drives: [[i32; SLOTS]; 2],
-    levels: [[i32; SLOTS]; 2],
-    /// Keystones: pool index + 1 (0 empty), the player's.
-    keys: [i32; KEYSTONES],
+    /// Humans: 1 solo, 2 co-op.
+    nh: i32,
+    bosses: i32,
+    /// The pairs: [player][main, partner] (character kinds).
+    pair: [[i32; 2]; NP],
+    picks: i32,
+    /// Worn drives per set (player * 2 + fighter; shared: fighter 0 only): pool index + 1 (0 empty), level 1-3.
+    drives: [[i32; SLOTS]; SETS],
+    levels: [[i32; SLOTS]; SETS],
+    /// Keystones per player: pool index + 1 (0 empty).
+    keys: [[i32; KEYSTONES]; NP],
     arm_seen: i32,
     // ---- the fight
     seq: i32,
@@ -177,85 +209,85 @@ struct St {
     /// Unfrozen live frames (the clock every window and charge uses: freezes do not eat them).
     play: i32,
     attrs_done: i32,
-    /// The reward screen this fight opens with (0 none, RW_DRIVES, RW_KEYSTONES).
     reward_due: i32,
     outcome: i32, // 0 running, 1 won, 2 lost
-    tag_cd: i32,
     stage_clock: i32,
     stage_switches: i32,
     tags: i32,
     last_stocks: i32,
-    opened: i32,
-    /// The fighter in play: 0 main, 1 partner.
-    active: i32,
-    kind: [i32; 2],
+    collect: i32,
+    tag_cd: [i32; NP],
+    active: [i32; NP],
+    kind: [[i32; 2]; NP],
+    tag_slot: i32,
     prev_phase: i32,
     prev_kind: i32,
-    my_stocks: i32,
+    my_stocks: [i32; NP],
     foe_stocks: i32,
-    foe_each: [i32; 3],
-    // charges, per set and slot (time: frames; events: counts), and the foe the last charging hit struck
-    charge: [[i32; SLOTS]; 2],
-    target: [[i32; SLOTS]; 2],
-    last_fire_at: [i32; 2],
-    relay_mask: [i32; 2],
-    relay_next: [i32; 2],
-    /// Echo Oath's repeats: (frame, id + 1, set, level).
-    echo: [[i32; 4]; ECHOES],
-    /// Bulwark's orb armed (per set); Haste on the fighter (main, partner): until and applied.
-    shield: [i32; 2],
-    haste_until: [i32; 2],
-    haste_on: [i32; 2],
-    // foe statuses (slots 1-3)
-    burn_until: [i32; 3],
-    burn_next: [i32; 3],
-    burn_stacks: [i32; 3],
-    chill_until: [i32; 3],
-    chill_on: [i32; 3],
-    atk_set: i32,
-    def_set: i32,
+    stocks_each: [i32; 4],
+    prev_as: [i32; 4],
+    boss_slot: i32,
+    boss_hits: [i32; 4],
+    // charges per set and slot (time: frames; events: counts), the slot the last charging event struck, cooldowns
+    charge: [[i32; SLOTS]; SETS],
+    target: [[i32; SLOTS]; SETS],
+    cd_until: [[i32; SLOTS]; SETS],
+    /// Per owner (sets 0-3, foe slots 4-7): the last fire frame (the 20-frame rule).
+    last_fire_at: [i32; OWNERS],
+    relay_mask: [i32; SETS],
+    relay_next: [i32; SETS],
+    /// The last fire of each set (Echo repeats it): id + 1, level, target.
+    last_fired: [[i32; 3]; SETS],
+    /// Pending repeats and pulses: (frame, kind, id + 1, owner, level, frac, target, flags).
+    pend: [[i32; 8]; PEND],
+    /// Bulwark's orb per owner; Haste per owner (until); Updraft's banked jump per player.
+    shield: [i32; OWNERS],
+    haste_until: [i32; OWNERS],
+    banked_jump: [i32; NP],
+    // statuses per match slot
+    burn_until: [i32; 4],
+    burn_next: [i32; 4],
+    burn_stacks: [i32; 4],
+    chill_until: [i32; 4],
+    mark_until: [i32; 4],
+    /// Foe drives per match slot (elites and bosses): id + 1, level, charge, target.
+    fdrives: [[i32; 2]; 4],
+    flevels: [[i32; 2]; 4],
+    fcharge: [[i32; 2]; 4],
+    ftarget: [[i32; 2]; 4],
+    atk_set: [i32; NP],
+    def_set: [i32; NP],
     fires: i32,
     hits: i32,
     taken: i32,
     landings: i32,
-    // the floor drop: 0 none, 1 on the floor, 2 taken; drive id + 1; floor point x100
-    drop_state: i32,
-    drop_id: i32,
-    drop_x: i32,
-    drop_y: i32,
-    drops: i32,
-    /// The last gain (presentation keys its sound on `gain_n`): frame, id + 1, fighter, level, source.
-    gain: [i32; 5],
-    gain_n: i32,
-    /// The fire log ring: LOG entries of (frame, id + 1, set, target slot, x100, y100, level, flags).
+    jumps: i32,
+    blasts: i32,
+    // floor drops per player: (state 0 none / 1 on the floor / 2 taken, id + 1, x100, y100)
+    drop: [[[i32; 4]; DROPS]; NP],
+    drops_due: i32,
+    drops_made: i32,
+    /// The last gain per player (presentation keys its sound on the count): frame, id + 1, fighter, level, source, n.
+    gain: [[i32; 6]; NP],
+    /// The fire log ring.
     log: [[i32; LOG_W]; LOG],
     log_n: i32,
-    // ---- the reward screen
+    // ---- the reward screens (one per player, one shared timer)
     rw_active: i32,
-    offers: [i32; 3],
-    cursor: i32,
     timer: i32,
-    /// 0 choosing the card, 1 choosing the fighter.
-    step: i32,
-    fcursor: i32,
-    last_pick: i32,
-    last_wearer: i32,
+    rw_done: [i32; NP],
+    offers: [[i32; 3]; NP],
+    cursor: [i32; NP],
+    step: [i32; NP],
+    fcursor: [i32; NP],
+    last_pick: [i32; NP],
+    last_wearer: [i32; NP],
     since_pick: i32,
 }
 
 static mut S: St = unsafe { core::mem::zeroed() };
 static mut PLAN: [i32; 32] = [0; 32];
-const VIEW_WORDS: usize = 256;
 static mut VIEW: [i32; VIEW_WORDS] = [0; VIEW_WORDS];
-
-// the run record (melee_modes::tu::envoy REC_*): published in VIEW[REC_AT..], saved by the host, handed back at arm
-const REC_WORDS: usize = 32;
-const REC_AT: usize = 40;
-const REC_MAGIC: i32 = 0x454E_5652;
-const REC_VERSION: i32 = 3;
-const REC_KEYS: usize = 7;
-const REC_DRIVES: usize = 14;
-const REC_POOL: usize = 22;
 
 fn fnv(mut h: u32, b: &[u8]) -> u32 {
     for &x in b {
@@ -277,56 +309,67 @@ unsafe fn record() -> [i32; REC_WORDS] {
     let mut r = [0i32; REC_WORDS];
     r[0] = REC_MAGIC;
     r[1] = REC_VERSION;
-    r[2] = S.seed;
-    r[3] = S.runs;
-    r[4] = S.fight;
-    r[5] = S.pool;
-    r[6] = S.shared;
-    for k in 0..KEYSTONES {
-        r[REC_KEYS + k] = S.keys[k];
+    r[R_SEED] = S.seed;
+    r[R_RUNS] = S.runs;
+    r[R_FIGHT] = S.fight;
+    r[R_POOL] = S.pool;
+    r[R_SHARED] = S.shared;
+    r[R_COOP] = (S.nh == 2) as i32;
+    r[R_BOSSES] = S.bosses;
+    for p in 0..NP {
+        for k in 0..KEYSTONES {
+            r[R_KEYS + p * KEYSTONES + k] = S.keys[p][k];
+        }
+        r[R_PAIRS + p * 2] = S.pair[p][0];
+        r[R_PAIRS + p * 2 + 1] = S.pair[p][1];
     }
-    r[11] = S.main;
-    r[12] = S.partner;
-    r[13] = S.picks;
-    for f in 0..2 {
+    r[R_PICKS] = S.picks;
+    for s in 0..SETS {
         for k in 0..SLOTS {
-            r[REC_DRIVES + f * SLOTS + k] = S.drives[f][k] * 4 + S.levels[f][k];
+            r[R_DRIVES + s * SLOTS + k] = S.drives[s][k] << 2 | S.levels[s][k];
         }
     }
-    r[REC_POOL] = POOL_DIGEST as i32;
+    r[R_POOL_DIGEST] = POOL_DIGEST as i32;
     r[REC_WORDS - 1] = rec_digest(&r);
     r
+}
+
+fn is_kind(id: i32, kind: u8) -> bool {
+    (1..=POOL_LEN as i32).contains(&id) && POOL[id as usize - 1].kind == kind
 }
 
 /// The run on arm: the host's saved record (Continue) or a fresh one (New run: the host forgot the record).
 unsafe fn take_arm() {
     let mut r = [0i32; REC_WORDS];
     let n = gd_envoy_record(r.as_mut_ptr(), REC_WORDS as u32);
-    let ok = n == REC_WORDS as i32 && r[0] == REC_MAGIC && r[1] == REC_VERSION && r[REC_WORDS - 1] == rec_digest(&r) && (0..FIGHTS as i32).contains(&r[4]);
-    if ok && r[REC_POOL] != POOL_DIGEST as i32 {
-        log(b"envoy: saved run is from another drive pool, dropped\0", r[REC_POOL]);
+    let ok = n == REC_WORDS as i32 && r[0] == REC_MAGIC && r[1] == REC_VERSION && r[REC_WORDS - 1] == rec_digest(&r) && (0..FIGHTS as i32).contains(&r[R_FIGHT]);
+    if ok && r[R_POOL_DIGEST] != POOL_DIGEST as i32 {
+        log(b"envoy: saved run is from another drive pool, dropped\0", r[R_POOL_DIGEST]);
         S.state = RUN_NONE;
     } else if ok {
         S.state = RUN_LIVE;
-        S.seed = r[2];
-        S.runs = r[3];
-        S.fight = r[4];
-        S.pool = r[5].max(1);
-        S.shared = (r[6] != 0) as i32;
-        for k in 0..KEYSTONES {
-            let id = r[REC_KEYS + k];
-            S.keys[k] = if (1..=POOL_LEN as i32).contains(&id) && POOL[id as usize - 1].kind == K_KEYSTONE { id } else { 0 };
+        S.seed = r[R_SEED];
+        S.runs = r[R_RUNS];
+        S.fight = r[R_FIGHT];
+        S.pool = r[R_POOL].max(1);
+        S.shared = (r[R_SHARED] != 0) as i32;
+        S.nh = if r[R_COOP] != 0 { 2 } else { 1 };
+        S.bosses = r[R_BOSSES].clamp(0, 2);
+        for p in 0..NP {
+            for k in 0..KEYSTONES {
+                let id = r[R_KEYS + p * KEYSTONES + k];
+                S.keys[p][k] = if is_kind(id, K_KEYSTONE) { id } else { 0 };
+            }
+            S.pair[p] = [r[R_PAIRS + p * 2], r[R_PAIRS + p * 2 + 1]];
         }
-        S.main = r[11];
-        S.partner = r[12];
-        S.picks = r[13];
-        for f in 0..2 {
+        S.picks = r[R_PICKS];
+        for s in 0..SETS {
             for k in 0..SLOTS {
-                let w = r[REC_DRIVES + f * SLOTS + k];
+                let w = r[R_DRIVES + s * SLOTS + k];
                 let (id, lv) = (w >> 2, w & 3);
-                let ok = (1..=POOL_LEN as i32).contains(&id) && POOL[id as usize - 1].kind == K_DRIVE && (1..=MAX_LEVEL).contains(&lv);
-                S.drives[f][k] = if ok { id } else { 0 };
-                S.levels[f][k] = if ok { lv } else { 0 };
+                let ok = is_kind(id, K_DRIVE) && (1..=MAX_LEVEL).contains(&lv);
+                S.drives[s][k] = if ok { id } else { 0 };
+                S.levels[s][k] = if ok { lv } else { 0 };
             }
         }
         log(b"envoy: armed, run continued at fight\0", S.fight + 1);
@@ -336,7 +379,7 @@ unsafe fn take_arm() {
     }
     S.outcome = 0;
     S.rw_active = 0;
-    S.last_pick = -1;
+    S.last_pick = [-1; NP];
 }
 
 fn mix(mut x: u32) -> u32 {
@@ -364,33 +407,58 @@ fn log_drive(what: &[u8], id: usize, v: i32) {
     unsafe { gd_log(b.as_ptr(), v) }
 }
 
-fn ncpu() -> i32 {
-    unsafe { SCHEDULE[S.fight.clamp(0, FIGHTS as i32 - 1) as usize].ncpu }
+fn sched() -> &'static Fight {
+    unsafe { &SCHEDULE[S.fight.clamp(0, FIGHTS as i32 - 1) as usize] }
+}
+
+fn nh() -> i32 {
+    unsafe { S.nh.clamp(1, 2) }
+}
+
+/// CPUs this fight: the schedule's, one more in co-op for a duel or a pack (the CPUs have slots 2-3 then).
+unsafe fn ncpu() -> i32 {
+    let f = sched();
+    let extra = (nh() == 2 && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32;
+    (f.ncpu + extra).min(4 - nh())
+}
+
+/// Is match slot `s` a foe (a CPU of this fight)?
+unsafe fn is_foe(s: i32) -> bool {
+    s >= nh() && s < nh() + ncpu()
+}
+
+unsafe fn is_boss(s: i32) -> bool {
+    (is_foe(s) && (sched().kind == FK_BOSS || sched().kind == FK_ELITE)) || (s >= 0 && s == S.boss_slot)
 }
 
 // ---- drives: who wears what
 
-/// The drive set fighter `f` uses (the pair's one set when drives are shared).
-unsafe fn set_of(f: usize) -> usize {
-    if S.shared != 0 { 0 } else { f }
+/// The set fighter `f` of player `p` uses (the pair's one set when drives are shared).
+unsafe fn set_of(p: usize, f: usize) -> usize {
+    p * 2 + if S.shared != 0 { 0 } else { f }
+}
+
+/// Drive slots each fighter has open: 3, then 4 after the first boss (envoy-core-v2.md 2.3).
+unsafe fn open_slots() -> usize {
+    3 + (S.bosses >= 1) as usize
 }
 
 unsafe fn slot_of(set: usize, id: usize) -> Option<usize> {
     S.drives[set].iter().position(|&d| d == id as i32 + 1)
 }
 
-/// Whether fighter `f` can take drive `id`: a level-up below 3, or a free slot.
-unsafe fn can_take(f: usize, id: usize) -> bool {
-    let set = set_of(f);
+/// Whether fighter `f` of player `p` can take drive `id`: a level-up below 3, or a free slot.
+unsafe fn can_take(p: usize, f: usize, id: usize) -> bool {
+    let set = set_of(p, f);
     match slot_of(set, id) {
         Some(k) => S.levels[set][k] < MAX_LEVEL,
-        None => S.drives[set][..OPEN_SLOTS].contains(&0),
+        None => S.drives[set][..open_slots()].contains(&0),
     }
 }
 
-/// Fighter `f` gains drive `id`: a level-up, or a new drive in the first free slot. Returns the new level (0: no).
-unsafe fn gain(f: usize, id: usize, how: i32) -> i32 {
-    let set = set_of(f);
+/// Player `p`'s fighter `f` gains drive `id`: a level-up, or a new drive in the first free slot. The new level (0: no).
+unsafe fn gain(p: usize, f: usize, id: usize, how: i32) -> i32 {
+    let set = set_of(p, f);
     let lv = match slot_of(set, id) {
         Some(k) => {
             if S.levels[set][k] >= MAX_LEVEL {
@@ -400,36 +468,49 @@ unsafe fn gain(f: usize, id: usize, how: i32) -> i32 {
             S.levels[set][k]
         }
         None => {
-            let Some(k) = S.drives[set][..OPEN_SLOTS].iter().position(|&d| d == 0) else { return 0 };
+            let Some(k) = S.drives[set][..open_slots()].iter().position(|&d| d == 0) else { return 0 };
             S.drives[set][k] = id as i32 + 1;
             S.levels[set][k] = 1;
             S.charge[set][k] = 0;
             1
         }
     };
-    S.gain = [S.play, id as i32 + 1, f as i32, lv, how];
-    S.gain_n += 1;
-    log_drive(if lv > 1 { b"drive level up" } else { b"drive gained" }, id, f as i32 * 10 + lv);
+    let n = S.gain[p][5] + 1;
+    S.gain[p] = [S.play, id as i32 + 1, f as i32, lv, how, n];
+    log_drive(if lv > 1 { b"drive level up" } else { b"drive gained" }, id, p as i32 * 100 + f as i32 * 10 + lv);
     lv
 }
 
-unsafe fn has_key(effect: u8) -> bool {
-    S.keys.iter().any(|&k| k > 0 && POOL[k as usize - 1].effect == effect)
+unsafe fn has_key(p: usize, effect: u8) -> bool {
+    S.keys[p].iter().any(|&k| k > 0 && POOL[k as usize - 1].effect == effect)
 }
 
-unsafe fn take_keystone(id: usize) {
-    if let Some(k) = S.keys.iter().position(|&k| k == 0) {
-        S.keys[k] = id as i32 + 1;
-        S.gain = [S.play, id as i32 + 1, S.active, 1, G_KEYSTONE];
-        S.gain_n += 1;
-        log_drive(b"keystone taken", id, k as i32);
-        S.atk_set = -1;
-        S.def_set = -1;
+unsafe fn has_price(p: usize, price: u8) -> bool {
+    S.keys[p].iter().any(|&k| k > 0 && POOL[k as usize - 1].price == price)
+}
+
+unsafe fn key_count(p: usize) -> i32 {
+    S.keys[p].iter().filter(|&&k| k > 0).count() as i32
+}
+
+/// Keystones each player should have by now: one at the start, one after each of the first two bosses.
+unsafe fn keys_earned() -> i32 {
+    (1 + S.bosses).min(KEYSTONES as i32)
+}
+
+unsafe fn take_keystone(p: usize, id: usize) {
+    if let Some(k) = S.keys[p].iter().position(|&k| k == 0) {
+        S.keys[p][k] = id as i32 + 1;
+        let n = S.gain[p][5] + 1;
+        S.gain[p] = [S.play, id as i32 + 1, S.active[p], 1, G_KEYSTONE, n];
+        log_drive(b"keystone taken", id, p as i32 * 10 + k as i32);
+        S.atk_set[p] = -1;
+        S.def_set[p] = -1;
     }
 }
 
-/// MELEE_ENVOY_TEST_DRIVES="key[:level],key/key|keystone,keystone" (main / partner | keystones): worn from the run's
-/// start (tests, demos). A keystone given here skips the run-start keystone pick.
+/// MELEE_ENVOY_TEST_DRIVES="key[:level],key/key|keystone,keystone" (main / partner | keystones), and in co-op a
+/// second player's after `;`: worn from the run's start (tests, demos). Keystones given here skip the keystone pick.
 unsafe fn test_drives() {
     let mut b = [0u8; 256];
     let n = gd_envoy_test_drives(b.as_mut_ptr(), b.len() as u32);
@@ -437,24 +518,26 @@ unsafe fn test_drives() {
         return;
     }
     let s = core::str::from_utf8(&b[..(n as usize).min(b.len())]).unwrap_or("");
-    let (drv, ks) = s.split_once('|').unwrap_or((s, ""));
-    for (f, side) in drv.split('/').take(2).enumerate() {
-        for item in side.split(',') {
-            let (key, lv) = item.split_once(':').unwrap_or((item, "1"));
-            let lv = lv.trim().parse::<i32>().unwrap_or(1).clamp(1, MAX_LEVEL);
-            if let Some(id) = by_key(key.trim()).filter(|&i| POOL[i].kind == K_DRIVE) {
-                for _ in 0..lv {
-                    gain(f, id, G_PICK);
+    for (p, player) in s.split(';').take(NP).enumerate() {
+        let (drv, ks) = player.split_once('|').unwrap_or((player, ""));
+        for (f, side) in drv.split('/').take(2).enumerate() {
+            for item in side.split(',') {
+                let (key, lv) = item.split_once(':').unwrap_or((item, "1"));
+                let lv = lv.trim().parse::<i32>().unwrap_or(1).clamp(1, MAX_LEVEL);
+                if let Some(id) = by_key(key.trim()).filter(|&i| POOL[i].kind == K_DRIVE) {
+                    for _ in 0..lv {
+                        gain(p, f, id, G_PICK);
+                    }
                 }
             }
         }
-    }
-    for key in ks.split(',') {
-        if let Some(id) = by_key(key.trim()).filter(|&i| POOL[i].kind == K_KEYSTONE) {
-            take_keystone(id);
+        for key in ks.split(',') {
+            if let Some(id) = by_key(key.trim()).filter(|&i| POOL[i].kind == K_KEYSTONE) {
+                take_keystone(p, id);
+            }
         }
     }
-    S.gain_n = 0;
+    S.gain = [[0; 6]; NP];
 }
 
 /// The plan of the match the run wants next: the live run's current fight, or a new run's first.
@@ -465,37 +548,45 @@ unsafe fn make_plan() {
         return;
     }
     let fresh = S.state != RUN_LIVE;
+    let coop = if fresh { gd_envoy_coop() != 0 } else { S.nh == 2 };
     let (fight, pool, seed) = if fresh {
-        (gd_envoy_start_fight() as usize, START_POOL, mix((S.runs as u32).wrapping_add(1).wrapping_mul(0x9E37_79B9)))
+        (gd_envoy_start_fight() as usize, START_POOL[coop as usize], mix((S.runs as u32).wrapping_add(1).wrapping_mul(0x9E37_79B9)))
     } else {
         (S.fight as usize, S.pool, S.seed as u32)
     };
     let f = &SCHEDULE[fight];
+    let n = (f.ncpu + (coop && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32).min(if coop { 2 } else { 3 });
     let p = &mut PLAN;
     *p = [0; 32];
     p[0] = 1;
     p[1] = STAGES[fight];
-    p[2] = if fresh { -1 } else { S.main };
-    p[3] = if fresh { -1 } else { S.partner };
+    p[2] = if fresh { -1 } else { S.pair[0][0] };
+    p[3] = if fresh { -1 } else { S.pair[0][1] };
     p[4] = pool.max(1);
     p[5] = 1000; // the ratios are the keystones' (set every frame for the fighter in play)
     p[6] = 1000;
-    p[7] = f.ncpu;
+    p[7] = n;
     for i in 0..3 {
+        let j = i.min(f.ncpu as usize - 1);
         p[8 + i] = CPU_POOL[(mix(seed ^ ((fight as u32) << 8) ^ i as u32) % CPU_POOL.len() as u32) as usize];
-        p[11 + i] = f.level[i].max(1);
-        p[14 + i] = f.stocks[i].max(1);
+        p[11 + i] = f.level[j].max(1);
+        p[14 + i] = f.stocks[j].max(1) + (coop && f.kind >= FK_ELITE) as i32;
         p[17 + i] = 1000;
         p[20 + i] = 1000;
-        p[23 + i] = 1000;
+        p[23 + i] = f.scale;
     }
-    if fight == FIGHTS - 1 {
+    if f.kind >= FK_ELITE {
+        // an elite or a boss: bigger, hits harder, takes less
+        p[17] = f.scale;
+        p[20] = 2000 - f.scale;
+    }
+    if f.kind == FK_BOSS {
         p[8] = CK_GANONDORF;
-        p[17] = 1250;
-        p[20] = 750;
-        p[23] = 1250;
         p[26] = 1; // the boss fight (the engine swaps in Petey when MELEE_ENVOY_BOSS=petey)
     }
+    p[27] = coop as i32;
+    p[28] = if fresh || !coop { -1 } else { S.pair[1][0] };
+    p[29] = if fresh || !coop { -1 } else { S.pair[1][1] };
     gd_envoy_plan(p.as_ptr(), 32);
 }
 
@@ -506,17 +597,18 @@ unsafe fn on_new_match(seq: i32) {
         S.state = RUN_LIVE;
         S.seed = mix((S.runs as u32).wrapping_mul(0x9E37_79B9)) as i32;
         S.fight = gd_envoy_start_fight();
-        S.pool = START_POOL;
-        S.drives = [[0; SLOTS]; 2];
-        S.levels = [[0; SLOTS]; 2];
-        S.keys = [0; KEYSTONES];
+        S.nh = if gd_envoy_coop() != 0 { 2 } else { 1 };
+        S.pool = START_POOL[(S.nh == 2) as usize];
+        S.bosses = 0;
+        S.drives = [[0; SLOTS]; SETS];
+        S.levels = [[0; SLOTS]; SETS];
+        S.keys = [[0; KEYSTONES]; NP];
         S.picks = 0;
         S.shared = (gd_envoy_shared_drives() != 0) as i32;
-        S.main = gd_envoy_roster(0);
-        S.partner = gd_envoy_roster(1);
-        S.last_pick = -1;
+        S.pair = [[gd_envoy_roster(0), gd_envoy_roster(1)], [gd_envoy_roster(2), gd_envoy_roster(3)]];
+        S.last_pick = [-1; NP];
         S.attrs_done = 0;
-        log(b"envoy: run start, main\0", S.main);
+        log(b"envoy: run start, players\0", S.nh);
         if S.shared != 0 {
             log(b"envoy: drives shared by the pair\0", 1);
         }
@@ -527,55 +619,97 @@ unsafe fn on_new_match(seq: i32) {
     S.frames = 0;
     S.play = 0;
     S.attrs_done = 0;
-    S.reward_due = if S.keys[0] == 0 { RW_KEYSTONES } else if S.fight > 0 { RW_DRIVES } else { 0 };
+    let keys_short = (0..nh() as usize).any(|p| key_count(p) < keys_earned());
+    S.reward_due = if keys_short { RW_KEYSTONES } else if S.fight > 0 { RW_DRIVES } else { 0 };
     S.outcome = 0;
-    S.tag_cd = 0;
     S.stage_clock = 0;
     S.stage_switches = 0;
     S.tags = 0;
     S.last_stocks = -1;
-    S.opened = 0;
-    S.active = 0;
-    S.kind = [-1, -1];
+    S.collect = 0;
+    S.tag_cd = [0; NP];
+    S.active = [0; NP];
+    S.kind = [[-1; 2]; NP];
+    S.tag_slot = -1;
     S.prev_phase = 0;
     S.prev_kind = 0;
-    S.charge = [[0; SLOTS]; 2];
-    S.target = [[0; SLOTS]; 2];
-    S.last_fire_at = [-FIRE_GAP; 2];
-    S.relay_mask = [0; 2];
-    S.relay_next = [0; 2];
-    S.echo = [[0; 4]; ECHOES];
-    S.shield = [0; 2];
-    S.haste_until = [0; 2];
-    S.haste_on = [0; 2];
-    S.burn_until = [0; 3];
-    S.burn_next = [0; 3];
-    S.burn_stacks = [0; 3];
-    S.chill_until = [0; 3];
-    S.chill_on = [0; 3];
-    S.atk_set = -1;
-    S.def_set = -1;
-    S.drop_state = 0;
-    S.drop_id = 0;
-    S.drops = 0;
+    S.prev_as = [-1; 4];
+    S.boss_slot = -1;
+    S.boss_hits = [0; 4];
+    S.charge = [[0; SLOTS]; SETS];
+    S.target = [[0; SLOTS]; SETS];
+    S.cd_until = [[0; SLOTS]; SETS];
+    S.last_fire_at = [-FIRE_GAP; OWNERS];
+    S.relay_mask = [0; SETS];
+    S.relay_next = [0; SETS];
+    S.last_fired = [[0; 3]; SETS];
+    S.pend = [[0; 8]; PEND];
+    S.shield = [0; OWNERS];
+    S.haste_until = [0; OWNERS];
+    S.banked_jump = [0; NP];
+    S.burn_until = [0; 4];
+    S.burn_next = [0; 4];
+    S.burn_stacks = [0; 4];
+    S.chill_until = [0; 4];
+    S.mark_until = [0; 4];
+    S.fdrives = [[0; 2]; 4];
+    S.flevels = [[0; 2]; 4];
+    S.fcharge = [[0; 2]; 4];
+    S.ftarget = [[0; 2]; 4];
+    S.atk_set = [-1; NP];
+    S.def_set = [-1; NP];
+    S.drop = [[[0; 4]; DROPS]; NP];
+    let f = sched();
+    S.drops_due = match f.kind {
+        FK_ELITE | FK_BOSS => 2,
+        FK_PACK => (ncpu() / 2).max(1),
+        _ => 1,
+    };
+    S.drops_made = 0;
     S.rw_active = 0;
+    foe_drives();
     log(b"envoy: fight\0", S.fight + 1);
+}
+
+/// Elites and bosses carry drives (envoy-core-v2.md Q7), rolled from the run seed: the first CPU only.
+unsafe fn foe_drives() {
+    let f = sched();
+    if f.foe_drives <= 0 {
+        return;
+    }
+    let s = nh() as usize;
+    let mut h = mix(S.seed as u32 ^ 0xF0E5_0000 ^ (S.fight as u32) << 4);
+    let mut n = 0;
+    let mut tries = 0;
+    while n < f.foe_drives as usize && tries < 32 {
+        tries += 1;
+        let key = FOE_POOL[(h % FOE_POOL.len() as u32) as usize];
+        h = mix(h.wrapping_add(0x6D2B_79F5));
+        let Some(id) = by_key(key) else { continue };
+        if S.fdrives[s][..n].contains(&(id as i32 + 1)) {
+            continue;
+        }
+        S.fdrives[s][n] = id as i32 + 1;
+        S.flevels[s][n] = f.foe_level.clamp(1, MAX_LEVEL);
+        log_drive(b"foe carries", id, s as i32);
+        n += 1;
+    }
 }
 
 // ---- the reward screens
 
-/// Words the pair already gives or reads (bit per word), for the "one card connects" rule.
-unsafe fn pair_words() -> u32 {
+/// Words player `p`'s pair already gives or reads (bit per word), for the "one card connects" rule.
+unsafe fn pair_words(p: usize) -> u32 {
     let mut m = 0u32;
-    for f in 0..2 {
-        for &d in &S.drives[f] {
+    for set in [p * 2, p * 2 + 1] {
+        for &d in &S.drives[set] {
             if d > 0 {
                 let c = &POOL[d as usize - 1];
                 m |= (1 << c.gives) | (1 << c.reads);
             }
         }
     }
-    for &k in &S.keys {
+    for &k in &S.keys[p] {
         if k > 0 {
             let c = &POOL[k as usize - 1];
             m |= (1 << c.gives) | (1 << c.reads);
@@ -584,11 +718,13 @@ unsafe fn pair_words() -> u32 {
     m & !1
 }
 
-unsafe fn offer_ok(c: usize, keys: bool) -> bool {
+/// A card player `p` may be offered (2.2): a keystone not held; a drive either fighter can take (a full fighter is
+/// only offered copies of what it wears, which `can_take` allows; a level 3 drive is never offered).
+unsafe fn offer_ok(p: usize, c: usize, keys: bool) -> bool {
     if keys {
-        POOL[c].kind == K_KEYSTONE && !S.keys.contains(&(c as i32 + 1))
+        POOL[c].kind == K_KEYSTONE && !S.keys[p].contains(&(c as i32 + 1))
     } else {
-        POOL[c].kind == K_DRIVE && (can_take(0, c) || (S.shared == 0 && can_take(1, c)))
+        POOL[c].kind == K_DRIVE && (can_take(p, 0, c) || (S.shared == 0 && can_take(p, 1, c)))
     }
 }
 
@@ -596,9 +732,9 @@ unsafe fn connects(c: i32, words: u32) -> bool {
     c != OFFER_STOCK && words & ((1 << POOL[c as usize].gives) | (1 << POOL[c as usize].reads)) & !1 != 0
 }
 
-unsafe fn roll_offers() {
-    let mut h = mix(S.seed as u32 ^ 0xA5A5_0000 ^ (S.fight as u32) << 4 ^ S.picks as u32);
-    S.offers = [OFFER_STOCK; 3];
+unsafe fn roll_offers(p: usize) {
+    let mut h = mix(S.seed as u32 ^ 0xA5A5_0000 ^ (S.fight as u32) << 4 ^ (S.picks as u32) << 12 ^ (p as u32) << 24);
+    S.offers[p] = [OFFER_STOCK; 3];
     let mut n = 0;
     let keys = S.rw_active == RW_KEYSTONES;
     let mut tries = 0;
@@ -606,62 +742,81 @@ unsafe fn roll_offers() {
         tries += 1;
         let c = (h % POOL_LEN as u32) as usize;
         h = mix(h.wrapping_add(0x6D2B_79F5));
-        if !offer_ok(c, keys) || S.offers[..n].contains(&(c as i32)) {
+        if !offer_ok(p, c, keys) || S.offers[p][..n].contains(&(c as i32)) {
             continue;
         }
-        S.offers[n] = c as i32;
+        S.offers[p][n] = c as i32;
         n += 1;
     }
     if !keys {
         // at least one card connects to a word the pair already gives or reads (when one can)
-        let words = pair_words();
-        if words != 0 && n == 3 && !S.offers.iter().any(|&c| connects(c, words)) {
+        let words = pair_words(p);
+        if words != 0 && n == 3 && !S.offers[p].iter().any(|&c| connects(c, words)) {
             for k in 0..POOL_LEN {
                 let c = (k + (h as usize % POOL_LEN)) % POOL_LEN;
-                if offer_ok(c, false) && !S.offers.contains(&(c as i32)) && connects(c as i32, words) {
-                    S.offers[2] = c as i32;
+                if offer_ok(p, c, false) && !S.offers[p].contains(&(c as i32)) && connects(c as i32, words) {
+                    S.offers[p][2] = c as i32;
                     break;
                 }
             }
         }
         if gd_player_stocks(0) <= 1 {
-            S.offers[2] = OFFER_STOCK;
+            S.offers[p][2] = OFFER_STOCK;
         }
     }
+}
+
+unsafe fn open_reward(kind: i32) {
+    S.rw_active = kind;
+    S.timer = REWARD_TIME;
+    for p in 0..NP {
+        S.rw_done[p] = (p as i32 >= nh() || (kind == RW_KEYSTONES && key_count(p) >= keys_earned())) as i32;
+        S.cursor[p] = 0;
+        S.step[p] = 0;
+        S.fcursor[p] = 0;
+        if S.rw_done[p] == 0 {
+            roll_offers(p);
+        }
+    }
+    log(if kind == RW_KEYSTONES { b"envoy: keystone offer, fight\0" } else { b"envoy: drive offer, fight\0" }, S.fight + 1);
 }
 
 /// The default fighter for a drive card: the one in play when it can take it, else the other.
-unsafe fn default_fighter(id: i32) -> i32 {
+unsafe fn default_fighter(p: usize, id: i32) -> i32 {
     if id == OFFER_STOCK || S.shared != 0 || !(0..POOL_LEN as i32).contains(&id) {
         return 0;
     }
-    let a = S.active as usize;
-    if can_take(a, id as usize) { a as i32 } else { 1 - a as i32 }
+    let a = S.active[p] as usize;
+    if can_take(p, a, id as usize) { a as i32 } else { 1 - a as i32 }
 }
 
-unsafe fn finish_pick(id: i32, f: i32) {
+unsafe fn finish_pick(p: usize, id: i32, f: i32) {
     if id == OFFER_STOCK {
-        gd_envoy_apply(0, AP_STOCKS, gd_player_stocks(0) + 1);
-        log(b"envoy: took +1 stock\0", gd_player_stocks(0));
+        S.pool += 1;
+        for h in 0..nh() {
+            gd_envoy_apply(h, AP_STOCKS, gd_player_stocks(h) + 1);
+        }
+        log(b"envoy: took +1 stock, player\0", p as i32);
     } else if (0..POOL_LEN as i32).contains(&id) {
         if POOL[id as usize].kind == K_KEYSTONE {
-            take_keystone(id as usize);
+            take_keystone(p, id as usize);
         } else {
-            gain(f.clamp(0, 1) as usize, id as usize, G_PICK);
+            gain(p, f.clamp(0, 1) as usize, id as usize, G_PICK);
         }
     }
+    log(b"envoy: card taken, player\0", p as i32);
     S.picks += 1;
-    S.last_pick = id;
-    S.last_wearer = f;
+    S.last_pick[p] = id;
+    S.last_wearer[p] = f;
     S.since_pick = 0;
-    // a keystone pick at a later fight's start is followed by that fight's drive pick
+    S.rw_done[p] = 1;
+}
+
+/// Every player has picked (or the timer ran out): the next screen (a keystone pick at a later fight's start is
+/// followed by that fight's drive pick), or the fight.
+unsafe fn reward_close() {
     if S.rw_active == RW_KEYSTONES && S.fight > 0 {
-        S.rw_active = RW_DRIVES;
-        S.cursor = 0;
-        S.step = 0;
-        S.timer = REWARD_TIME;
-        roll_offers();
-        log(b"envoy: drive offer, fight\0", S.fight + 1);
+        open_reward(RW_DRIVES);
         return;
     }
     S.rw_active = 0;
@@ -669,43 +824,51 @@ unsafe fn finish_pick(id: i32, f: i32) {
 }
 
 unsafe fn reward_frame() {
-    let pad = gd_pad_pressed(0);
-    let left = pad & (DPAD_LEFT | STICK_LEFT) != 0;
-    let right = pad & (DPAD_RIGHT | STICK_RIGHT) != 0;
     S.timer -= 1;
-    if S.step == 0 {
-        if left {
-            S.cursor = (S.cursor + 2) % 3;
+    for p in 0..nh() as usize {
+        if S.rw_done[p] != 0 {
+            continue;
         }
-        if right {
-            S.cursor = (S.cursor + 1) % 3;
-        }
-        let id = S.offers[S.cursor.clamp(0, 2) as usize];
-        let one_fighter = id == OFFER_STOCK || S.rw_active == RW_KEYSTONES || S.shared != 0 || gd_tag_partner(0) < 0;
-        if pad & BTN_A != 0 {
-            if one_fighter {
-                finish_pick(id, default_fighter(id));
-            } else {
-                S.step = 1;
-                S.fcursor = default_fighter(id);
+        let pad = gd_pad_pressed(p as i32);
+        let left = pad & (DPAD_LEFT | STICK_LEFT) != 0;
+        let right = pad & (DPAD_RIGHT | STICK_RIGHT) != 0;
+        if S.step[p] == 0 {
+            if left {
+                S.cursor[p] = (S.cursor[p] + 2) % 3;
             }
-        } else if S.timer <= 0 {
-            let id = S.offers[0];
-            finish_pick(id, default_fighter(id));
+            if right {
+                S.cursor[p] = (S.cursor[p] + 1) % 3;
+            }
+            let id = S.offers[p][S.cursor[p].clamp(0, 2) as usize];
+            let one_fighter = id == OFFER_STOCK || S.rw_active == RW_KEYSTONES || S.shared != 0 || gd_tag_partner(p as i32) < 0;
+            if pad & BTN_A != 0 {
+                if one_fighter {
+                    finish_pick(p, id, default_fighter(p, id));
+                } else {
+                    S.step[p] = 1;
+                    S.fcursor[p] = default_fighter(p, id);
+                }
+            } else if S.timer <= 0 {
+                let id = S.offers[p][0];
+                finish_pick(p, id, default_fighter(p, id));
+            }
+            continue;
         }
-        return;
+        // step 1: which fighter wears it
+        let id = S.offers[p][S.cursor[p].clamp(0, 2) as usize];
+        if left || right {
+            S.fcursor[p] = 1 - S.fcursor[p];
+        }
+        if pad & BTN_B != 0 {
+            S.step[p] = 0;
+        } else if pad & BTN_A != 0 && can_take(p, S.fcursor[p] as usize, id as usize) {
+            finish_pick(p, id, S.fcursor[p]);
+        } else if S.timer <= 0 {
+            finish_pick(p, id, default_fighter(p, id));
+        }
     }
-    // step 1: which fighter wears it
-    let id = S.offers[S.cursor.clamp(0, 2) as usize];
-    if left || right {
-        S.fcursor = 1 - S.fcursor;
-    }
-    if pad & BTN_B != 0 {
-        S.step = 0;
-    } else if pad & BTN_A != 0 && can_take(S.fcursor as usize, id as usize) {
-        finish_pick(id, S.fcursor);
-    } else if S.timer <= 0 {
-        finish_pick(id, default_fighter(id));
+    if (0..nh() as usize).all(|p| S.rw_done[p] != 0) {
+        reward_close();
     }
 }
 
@@ -718,6 +881,14 @@ struct P {
 }
 
 unsafe fn pos(slot: i32) -> Option<P> {
+    if !(0..4).contains(&slot) {
+        return None;
+    }
+    if slot == S.boss_slot {
+        let mut w = [0u32; 6];
+        gd_envoy_boss(w.as_mut_ptr());
+        return Some(P { x: f32::from_bits(w[0]), y: f32::from_bits(w[1]) - 8.0 });
+    }
     let h = gd_fighter_from_slot(slot);
     if h == 0 {
         return None;
@@ -725,8 +896,8 @@ unsafe fn pos(slot: i32) -> Option<P> {
     Some(P { x: gd_fighter_get_pos_x(h), y: gd_fighter_get_pos_y(h) })
 }
 
-unsafe fn foe_alive(s: i32) -> bool {
-    gd_player_present(s) != 0 && gd_player_stocks(s) > 0
+unsafe fn alive(s: i32) -> bool {
+    (0..4).contains(&s) && gd_player_present(s) != 0 && gd_player_stocks(s) > 0
 }
 
 fn d2(a: P, b: P) -> f32 {
@@ -734,12 +905,22 @@ fn d2(a: P, b: P) -> f32 {
     dx * dx + dy * dy
 }
 
-/// The live foe slot nearest `at`, other than `skip` (0: none).
-unsafe fn nearest(at: P, skip: i32) -> i32 {
-    let mut best = 0;
-    let mut bd = f32::MAX;
-    for s in 1..=ncpu() {
-        if s == skip || !foe_alive(s) {
+/// The owner's match slot: a player's set -> the player's slot; a foe owner -> its slot.
+fn owner_slot(owner: usize) -> i32 {
+    if owner < SETS { (owner / 2) as i32 } else { owner as i32 - OWNER_FOE }
+}
+
+/// Is slot `s` on the other side from `owner` (players vs foes)? Drive effects only ever reach the other side.
+unsafe fn enemy_of(owner: usize, s: i32) -> bool {
+    alive(s) && if owner < SETS { is_foe(s) } else { (0..nh()).contains(&s) }
+}
+
+/// The live enemy slot of `owner` nearest `at` within `reach`, other than `skip` (-1: none).
+unsafe fn nearest(owner: usize, at: P, skip: i32, reach: f32) -> i32 {
+    let mut best = -1;
+    let mut bd = reach * reach;
+    for s in 0..4 {
+        if s == skip || !enemy_of(owner, s) {
             continue;
         }
         if let Some(p) = pos(s) {
@@ -757,78 +938,113 @@ fn x100(v: f32) -> i32 {
     (v * 100.0) as i32
 }
 
-// ---- statuses
+// ---- statuses (every match slot; on a boss, Chilled and Marked act at half strength)
+
+unsafe fn status_len(s: i32, frames: i32) -> i32 {
+    // Vulnerable (a price): statuses on that player last twice as long
+    if (0..nh()).contains(&s) && has_price(s as usize, P_VULNERABLE) { frames * 2 } else { frames }
+}
 
 unsafe fn burn(s: i32, stacks_to: i32, add: bool) {
-    if s < 1 {
+    if !(0..4).contains(&s) {
         return;
     }
-    let i = s as usize - 1;
+    let i = s as usize;
     if S.burn_until[i] <= S.play {
         S.burn_next[i] = S.play + BURN_TICK;
         S.burn_stacks[i] = 0;
     }
     S.burn_stacks[i] = if add { (S.burn_stacks[i] + 1).min(stacks_to) } else { S.burn_stacks[i].max(1) };
-    S.burn_until[i] = S.burn_until[i].max(S.play + BURN_FRAMES);
+    S.burn_until[i] = S.burn_until[i].max(S.play + status_len(s, BURN_FRAMES));
 }
 
 unsafe fn chill(s: i32, frames: i32) {
-    if s < 1 {
-        return;
+    if (0..4).contains(&s) {
+        S.chill_until[s as usize] = S.chill_until[s as usize].max(S.play + status_len(s, frames));
     }
-    let i = s as usize - 1;
-    if S.chill_on[i] == 0 {
-        gd_envoy_apply(s, AP_SPEED, CHILL_SPEED);
-        S.chill_on[i] = 1;
-    }
-    S.chill_until[i] = S.chill_until[i].max(S.play + frames);
 }
 
-unsafe fn unchill(i: usize) {
-    if S.chill_on[i] != 0 {
-        gd_envoy_apply(i as i32 + 1, AP_SPEED, 1_000_000 / CHILL_SPEED);
-        S.chill_on[i] = 0;
+unsafe fn mark(s: i32, frames: i32) {
+    if (0..4).contains(&s) {
+        S.mark_until[s as usize] = S.mark_until[s as usize].max(S.play + status_len(s, frames));
     }
-    S.chill_until[i] = 0;
 }
 
 unsafe fn chilled(s: i32) -> bool {
-    s >= 1 && S.chill_on[s as usize - 1] != 0
+    (0..4).contains(&s) && S.chill_until[s as usize] > S.play
 }
 
-unsafe fn haste(f: usize, frames: i32) {
-    if S.haste_on[f] == 0 {
-        gd_envoy_apply(0, AP_SPEED | AP_FIGHTER[f], HASTE_SPEED);
-        S.haste_on[f] = 1;
-    }
-    S.haste_until[f] = S.haste_until[f].max(S.play + frames);
+unsafe fn marked(s: i32) -> bool {
+    (0..4).contains(&s) && S.mark_until[s as usize] > S.play
 }
 
-unsafe fn unhaste(f: usize) {
-    if S.haste_on[f] != 0 {
-        gd_envoy_apply(0, AP_SPEED | AP_FIGHTER[f], 1_000_000 / HASTE_SPEED);
-        S.haste_on[f] = 0;
-    }
-    S.haste_until[f] = 0;
+unsafe fn burning(s: i32) -> bool {
+    (0..4).contains(&s) && S.burn_until[s as usize] > S.play && S.burn_stacks[s as usize] > 0
 }
 
+unsafe fn clear_status(s: usize) {
+    S.burn_until[s] = 0;
+    S.burn_stacks[s] = 0;
+    S.chill_until[s] = 0;
+    S.mark_until[s] = 0;
+}
+
+/// Haste on an owner (a player's set, or a foe slot + OWNER_FOE).
+unsafe fn hasted(owner: usize) -> bool {
+    S.haste_until[owner] > S.play
+}
+
+/// Percent on a slot (`milli` x1000; Petey's HP through `damage(amount)` in the engine).
 unsafe fn hurt(s: i32, milli: i32) {
-    if s >= 1 && milli > 0 && foe_alive(s) {
+    if milli > 0 && alive(s) {
         gd_envoy_percent(s, 0, milli);
     }
 }
 
 // ---- firing
 
-/// Fire drive `id` of `set` at `level` (`frac` x1000 of its number; `target`: the foe its charge last struck).
-unsafe fn fire(set: usize, id: usize, level: i32, target: i32, frac: i32, flags: i32) {
+/// The blast of a launching drive (Q6): radius, knockback angle, growth, base. False: no capsule free.
+unsafe fn launch(owner: usize, at: P, effect: u8, milli: i32, level: i32) -> bool {
+    let wide = if level >= MAX_LEVEL { 1.25 } else { 1.0 };
+    let (r, angle, kbg, bkb) = match effect {
+        E_NOVA => (16.0 * wide, 361, 70, 35),
+        E_SHOCKWAVE => (13.0 * wide, 80, 55, 30),
+        _ => (9.0 * wide, 90, 75, 40), // Spire: straight up
+    };
+    let rc = gd_envoy_blast(owner_slot(owner), at.x, at.y, r, (milli + 500) / 1000, angle, kbg, bkb);
+    if rc == 0 {
+        S.blasts += 1;
+        log(b"envoy: blast armed, owner*100 + effect\0", owner as i32 * 100 + effect as i32);
+    } else {
+        log(b"envoy: blast refused (damage only), rc\0", rc);
+    }
+    rc == 0
+}
+
+/// Every enemy of `owner` within `r` of `at` takes `milli` (a blast's fallback). The first one struck, or -1.
+unsafe fn hurt_around(owner: usize, at: P, r: f32, milli: i32) -> i32 {
+    let mut first = -1;
+    for s in 0..4 {
+        if enemy_of(owner, s) && pos(s).is_some_and(|p| d2(p, at) < r * r) {
+            hurt(s, milli);
+            if first < 0 {
+                first = s;
+            }
+        }
+    }
+    first
+}
+
+/// Fire drive `id` of `owner` at `level` (`frac` x1000 of its number; `target`: the slot its charge last struck).
+unsafe fn fire(owner: usize, id: usize, level: i32, target: i32, frac: i32, flags: i32) {
     let c = &POOL[id];
     let n = scaled(c.number, level) * frac / 1000;
-    let me = pos(0).unwrap_or(P { x: 0.0, y: 0.0 });
+    let me_slot = owner_slot(owner);
+    let me = pos(me_slot).unwrap_or(P { x: 0.0, y: 0.0 });
     let mut at = me;
-    let mut tgt = 0;
+    let mut tgt = -1;
     let mut fl = flags;
-    let near = |s: i32| if s >= 1 && foe_alive(s) { s } else { nearest(me, 0) };
+    let near = |s: i32| if enemy_of(owner, s) { s } else { nearest(owner, me, -1, 1.0e6) };
     match c.effect {
         E_BURST => {
             tgt = near(target);
@@ -838,8 +1054,8 @@ unsafe fn fire(set: usize, id: usize, level: i32, target: i32, frac: i32, flags:
             hurt(tgt, n);
             burn(tgt, BURN_STACKS, false);
             if level >= MAX_LEVEL {
-                for s in 1..=ncpu() {
-                    if s != tgt && foe_alive(s) && pos(s).is_some_and(|p| d2(p, at) < SPLASH_R * SPLASH_R) {
+                for s in 0..4 {
+                    if s != tgt && enemy_of(owner, s) && pos(s).is_some_and(|p| d2(p, at) < SPLASH_R * SPLASH_R) {
                         hurt(s, n);
                         burn(s, BURN_STACKS, false);
                     }
@@ -848,34 +1064,39 @@ unsafe fn fire(set: usize, id: usize, level: i32, target: i32, frac: i32, flags:
         }
         E_NOVA | E_SHOCKWAVE => {
             let r = if c.effect == E_NOVA { NOVA_R } else { SHOCK_R };
-            for s in 1..=ncpu() {
-                if foe_alive(s) && pos(s).is_some_and(|p| d2(p, me) < r * r) {
-                    hurt(s, n);
-                    if tgt == 0 {
-                        tgt = s;
-                    }
+            tgt = nearest(owner, me, -1, r);
+            let centre = if c.effect == E_NOVA { P { x: me.x, y: me.y + 8.0 } } else { P { x: me.x, y: me.y + 3.0 } };
+            if tgt >= 0 && launch(owner, centre, c.effect, n, level) {
+                fl |= FL_LAUNCH;
+            } else {
+                tgt = hurt_around(owner, me, r, n);
+            }
+        }
+        E_SPIRE => {
+            tgt = near(target);
+            if let Some(p) = pos(tgt) {
+                at = p;
+                if launch(owner, P { x: p.x, y: p.y + 6.0 }, E_SPIRE, n, level) {
+                    fl |= FL_LAUNCH;
+                } else {
+                    hurt(tgt, n);
                 }
             }
         }
         E_BOLT => {
-            tgt = nearest(me, 0);
+            tgt = nearest(owner, me, -1, BOLT_R * 4.0);
             if let Some(p) = pos(tgt) {
                 at = p;
             }
             hurt(tgt, n);
             if level >= MAX_LEVEL {
-                hurt(nearest(at, tgt), n);
+                hurt(nearest(owner, at, tgt, BOLT_R), n);
             }
         }
         E_HASTE => {
-            let f = if S.shared != 0 { S.active as usize } else { set };
-            haste(f, n * 60 / 1000);
-            tgt = -1;
+            S.haste_until[owner] = S.haste_until[owner].max(S.play + n * 60 / 1000);
         }
-        E_SHIELD => {
-            S.shield[set] = 1;
-            tgt = -1;
-        }
+        E_SHIELD => S.shield[owner] = 1,
         E_CHILL => {
             tgt = near(target);
             if let Some(p) = pos(tgt) {
@@ -889,39 +1110,120 @@ unsafe fn fire(set: usize, id: usize, level: i32, target: i32, frac: i32, flags:
                 at = p;
             }
             hurt(tgt, n);
-            if tgt >= 1 {
-                unchill(tgt as usize - 1);
+            if tgt >= 0 {
+                S.chill_until[tgt as usize] = 0;
             }
             fl |= FL_LINK;
         }
-        E_RELAY => {
-            // every other drive of this set fires, 6 frames apart (exempt from the 20-frame rule)
-            let mut m = 0;
-            for k in 0..SLOTS {
-                let d = S.drives[set][k];
-                if d > 0 && POOL[d as usize - 1].effect != E_RELAY {
-                    m |= 1 << k;
+        E_MARK => {
+            tgt = near(target);
+            if let Some(p) = pos(tgt) {
+                at = p;
+            }
+            mark(tgt, n * 60 / 1000);
+        }
+        E_THORNS => {
+            // the attacker that charged it (its last hit), else the nearest enemy
+            tgt = near(target);
+            if let Some(p) = pos(tgt) {
+                at = p;
+            }
+            hurt(tgt, n);
+            mark(tgt, THORNS_MARK);
+            fl |= FL_LINK;
+        }
+        E_HEAL => {
+            gd_envoy_percent(me_slot, 0, -n);
+        }
+        E_AIRJUMP => {
+            if owner < SETS && gd_envoy_air_jump(me_slot) != 0 {
+                S.banked_jump[owner / 2] = 1; // no jump used yet: kept for when one is
+            }
+        }
+        E_FEATHERS => {
+            tgt = nearest(owner, me, -1, BOLT_R * 4.0);
+            if let Some(p) = pos(tgt) {
+                at = p;
+            }
+            hurt(tgt, n / 3);
+            for k in 1..3 {
+                pend(PK_PULSE, S.play + k * FEATHER_GAP, id, owner, level, n / 3, tgt, 0);
+            }
+        }
+        E_WILDFIRE => {
+            for s in 0..4 {
+                if enemy_of(owner, s) {
+                    hurt(s, n);
+                    if tgt < 0 {
+                        tgt = s;
+                    }
                 }
             }
-            S.relay_mask[set] = m;
-            S.relay_next[set] = S.play + RELAY_GAP;
-            tgt = -1;
+            fl |= FL_LINK;
+        }
+        E_REPEAT => {
+            // Echo: the set's last fire again, at half strength
+            if owner < SETS && S.last_fired[owner][0] > 0 {
+                let l = S.last_fired[owner];
+                pend(PK_ECHO, S.play + 1, l[0] as usize - 1, owner, l[1], n.min(1000), l[2], FL_ECHO);
+            }
+        }
+        E_SURGE => {
+            if owner < SETS {
+                for k in 0..SLOTS {
+                    let d = S.drives[owner][k];
+                    if d > 0 && POOL[d as usize - 1].effect != E_SURGE && POOL[d as usize - 1].charge != C_PASSIVE {
+                        S.charge[owner][k] = need(&POOL[d as usize - 1]);
+                    }
+                }
+            }
+        }
+        E_RELAY => {
+            // every other drive of this set fires, 6 frames apart (exempt from the 20-frame rule)
+            if owner < SETS {
+                let mut m = 0;
+                for k in 0..SLOTS {
+                    let d = S.drives[owner][k];
+                    if d > 0 && !matches!(POOL[d as usize - 1].effect, E_RELAY | E_TAILWIND) {
+                        m |= 1 << k;
+                    }
+                }
+                S.relay_mask[owner] = m;
+                S.relay_next[owner] = S.play + RELAY_GAP;
+            }
+        }
+        E_TAILWIND => {
+            tgt = target;
+            if let Some(p) = pos(tgt) {
+                at = p;
+            }
         }
         _ => {}
     }
     S.fires += 1;
     let e = &mut S.log[S.log_n as usize % LOG];
-    *e = [S.play, id as i32 + 1, set as i32, tgt, x100(at.x), x100(at.y), level, fl];
+    *e = [S.play, id as i32 + 1, owner as i32, tgt, x100(at.x), x100(at.y), level, fl];
     S.log_n += 1;
-    log_drive(if fl & FL_ECHO != 0 { b"drive echo" } else { b"drive fire" }, id, set as i32 * 10 + level);
-    if has_key(E_ECHO) && fl & FL_ECHO == 0 && c.effect != E_RELAY {
-        if let Some(q) = S.echo.iter_mut().find(|q| q[1] == 0) {
-            *q = [S.play + ECHO_DELAY, id as i32 + 1, set as i32, level];
+    log_drive(if fl & FL_ECHO != 0 { b"drive echo" } else { b"drive fire" }, id, owner as i32 * 10 + level);
+    if owner < SETS && fl & (FL_ECHO | FL_PASSIVE) == 0 && c.effect != E_REPEAT {
+        S.last_fired[owner] = [id as i32 + 1, level, tgt];
+        let p = owner / 2;
+        if has_key(p, E_ECHO) && c.effect != E_RELAY {
+            let half = by_key("echo_oath").map_or(500, |i| POOL[i].number);
+            pend(PK_ECHO, S.play + ECHO_DELAY, id, owner, level, half, tgt, FL_ECHO);
         }
+        if has_price(p, P_BLEED) {
+            // Bleed: each fire costs the fighter in play 1%
+            gd_envoy_percent(p as i32, 0, 1000);
+        }
+        // Echo (the drive) counts this set's other fires
+        charge_set(owner, C_FIRE, -1);
     }
-    if has_key(E_OVERCLOCK) {
-        // Bleed: each fire costs the fighter in play 1%
-        gd_envoy_percent(0, 0, 1000);
+}
+
+unsafe fn pend(kind: i32, at: i32, id: usize, owner: usize, level: i32, frac: i32, target: i32, flags: i32) {
+    if let Some(q) = S.pend.iter_mut().find(|q| q[1] == 0) {
+        *q = [at, kind, id as i32 + 1, owner as i32, level, frac, target, flags];
     }
 }
 
@@ -930,66 +1232,145 @@ unsafe fn fire_slot(set: usize, k: usize, flags: i32) {
     if d <= 0 {
         return;
     }
+    let c = &POOL[d as usize - 1];
     S.charge[set][k] = 0;
+    if c.cooldown > 0 {
+        S.cd_until[set][k] = S.play + c.cooldown * 60 / 1000;
+    }
     fire(set, d as usize - 1, S.levels[set][k], S.target[set][k], 1000, flags);
 }
 
 /// What a full charge is, in the drive's own units (time: frames).
 fn need(c: &Drive) -> i32 {
-    if c.charge == C_TIME { c.need * 60 / 1000 } else { c.need }
+    if c.charge == C_TIME { c.need * 60 / 1000 } else { c.need.max(1) }
 }
 
-unsafe fn charge_mult() -> i32 {
-    if has_key(E_OVERCLOCK) { 2 } else { 1 }
+/// The sets of player `p` that charge and fire now (bit per fighter): the fighter in play's, and the bench's with
+/// Twin Soul.
+unsafe fn live_sets(p: usize) -> u32 {
+    if S.shared != 0 {
+        return 1;
+    }
+    let a = S.active[p] as u32 & 1;
+    if has_key(p, E_TWIN) { 3 } else { 1 << a }
 }
 
-/// Charge every drive of the fighter in play keyed on `src` (target: the foe slot the event struck).
-unsafe fn charge(src: u8, target: i32) {
-    let set = set_of(S.active as usize);
-    let m = charge_mult();
+/// Charge every drive of one set keyed on `src` (target: the slot the event struck).
+unsafe fn charge_set(set: usize, src: u8, target: i32) {
+    let m = if has_key(set / 2, E_OVERCLOCK) { 2 } else { 1 };
     for k in 0..SLOTS {
         let d = S.drives[set][k];
         if d <= 0 {
             continue;
         }
         let c = &POOL[d as usize - 1];
-        if c.charge != src || (c.reads == W_CHILLED && !chilled(target)) {
+        if c.charge != src || S.play < S.cd_until[set][k] {
+            continue;
+        }
+        if (c.reads == W_CHILLED && !chilled(target)) || (c.reads == W_BURNING && !burning(target)) {
             continue;
         }
         S.charge[set][k] = (S.charge[set][k] + m).min(need(c));
-        if target >= 1 {
+        if target >= 0 {
             S.target[set][k] = target;
         }
     }
 }
 
-/// Per unfrozen live frame: time charges, the fire queue, Relay's volley, the echoes.
-unsafe fn drives_frame() {
-    let set = set_of(S.active as usize);
-    charge(C_TIME, 0);
-    // the queue: one fire per fighter every FIRE_GAP frames, slot order
-    if S.play - S.last_fire_at[set] >= FIRE_GAP {
-        for k in 0..SLOTS {
-            let d = S.drives[set][k];
-            if d > 0 && S.charge[set][k] >= need(&POOL[d as usize - 1]) {
-                S.last_fire_at[set] = S.play;
-                fire_slot(set, k, 0);
-                break;
+/// Charge player `p`'s live sets on `src`.
+unsafe fn charge(p: usize, src: u8, target: i32) {
+    let live = live_sets(p);
+    for f in 0..2 {
+        if live >> f & 1 != 0 {
+            charge_set(set_of(p, f), src, target);
+        }
+    }
+}
+
+/// A foe's drives charge from its own hits, hits taken, landings and time.
+unsafe fn charge_foe(s: i32, src: u8, target: i32) {
+    if !(0..4).contains(&s) {
+        return;
+    }
+    let i = s as usize;
+    for k in 0..2 {
+        let d = S.fdrives[i][k];
+        if d > 0 && POOL[d as usize - 1].charge == src {
+            S.fcharge[i][k] = (S.fcharge[i][k] + 1).min(need(&POOL[d as usize - 1]));
+            if target >= 0 {
+                S.ftarget[i][k] = target;
             }
         }
     }
-    if S.relay_mask[set] != 0 && S.play >= S.relay_next[set] {
-        let k = S.relay_mask[set].trailing_zeros() as usize;
-        S.relay_mask[set] &= !(1 << k);
-        S.relay_next[set] = S.play + RELAY_GAP;
-        fire_slot(set, k, FL_VOLLEY);
+}
+
+/// Per unfrozen live frame: time charges, the fire queues (each set and each foe: one fire per 20 frames), Relay's
+/// volleys, the pending repeats and pulses, Updraft's banked jump.
+unsafe fn drives_frame() {
+    for p in 0..nh() as usize {
+        if !alive(p as i32) {
+            continue;
+        }
+        charge(p, C_TIME, -1);
+        let live = live_sets(p);
+        for f in 0..2 {
+            if live >> f & 1 == 0 || (S.shared != 0 && f == 1) {
+                continue;
+            }
+            let set = set_of(p, f);
+            if S.play - S.last_fire_at[set] >= FIRE_GAP {
+                for k in 0..SLOTS {
+                    let d = S.drives[set][k];
+                    if d > 0 && POOL[d as usize - 1].charge != C_PASSIVE && S.charge[set][k] >= need(&POOL[d as usize - 1]) {
+                        S.last_fire_at[set] = S.play;
+                        fire_slot(set, k, 0);
+                        break;
+                    }
+                }
+            }
+            if S.relay_mask[set] != 0 && S.play >= S.relay_next[set] {
+                let k = S.relay_mask[set].trailing_zeros() as usize;
+                S.relay_mask[set] &= !(1 << k);
+                S.relay_next[set] = S.play + RELAY_GAP;
+                fire_slot(set, k, FL_VOLLEY);
+            }
+        }
+        if S.banked_jump[p] != 0 {
+            let j = gd_envoy_jumps(p as i32);
+            if j >= 0 && (j & 0xFF) >= (j >> 8) && gd_envoy_air_jump(p as i32) == 0 {
+                S.banked_jump[p] = 0;
+            }
+        }
     }
-    for q in 0..ECHOES {
-        let e = S.echo[q];
-        if e[1] > 0 && S.play >= e[0] {
-            S.echo[q] = [0; 4];
-            let half = by_key("echo_oath").map_or(500, |i| POOL[i].number);
-            fire(e[2] as usize, e[1] as usize - 1, e[3], 0, half, FL_ECHO);
+    for s in 0..4 {
+        if !is_foe(s) || !alive(s) {
+            continue;
+        }
+        let i = s as usize;
+        charge_foe(s, C_TIME, -1);
+        let owner = OWNER_FOE as usize + i;
+        if S.play - S.last_fire_at[owner] >= FIRE_GAP {
+            for k in 0..2 {
+                let d = S.fdrives[i][k];
+                if d > 0 && S.fcharge[i][k] >= need(&POOL[d as usize - 1]) {
+                    S.last_fire_at[owner] = S.play;
+                    S.fcharge[i][k] = 0;
+                    fire(owner, d as usize - 1, S.flevels[i][k], S.ftarget[i][k], 1000, 0);
+                    break;
+                }
+            }
+        }
+    }
+    for q in 0..PEND {
+        let e = S.pend[q];
+        if e[1] == 0 || S.play < e[0] {
+            continue;
+        }
+        S.pend[q] = [0; 8];
+        if e[1] == PK_ECHO {
+            fire(e[3] as usize, e[2] as usize - 1, e[4], e[6], e[5], e[7]);
+        } else if enemy_of(e[3] as usize, e[6]) {
+            hurt(e[6], e[5]);
         }
     }
 }
@@ -1000,139 +1381,254 @@ unsafe fn in_play() -> bool {
     S.live != 0 && S.state == RUN_LIVE && S.rw_active == 0 && S.outcome == 0 && S.attrs_done != 0
 }
 
-/// damage.fighter_take_damage pre: Bulwark's orb absorbs the hit's damage on the fighter in play.
+/// The owner index of the fighter in play at `slot` (a player's set, or a foe).
+unsafe fn owner_at(slot: i32) -> usize {
+    if (0..nh()).contains(&slot) { set_of(slot as usize, S.active[slot as usize] as usize) } else { OWNER_FOE as usize + slot as usize }
+}
+
+/// damage.fighter_take_damage pre: Bulwark's orb absorbs a hit on the fighter that armed it: the percent is skipped
+/// and the knockback goes too (envoy-core-v2.md 2.4's "absorb the next hit"; V1 let the knockback through).
 extern "C" fn on_damage_pre(h: u32, d: f32) -> i32 {
     unsafe {
-        if !in_play() || d <= 0.0 || gd_fighter_slot(h) != 0 {
+        if !in_play() || d <= 0.0 {
             return 0;
         }
-        let set = set_of(S.active as usize);
-        if S.shield[set] != 0 {
-            S.shield[set] = 0;
-            log(b"envoy: orb absorbed a hit (x100)\0", x100(d));
+        let s = gd_fighter_slot(h);
+        if !(0..4).contains(&s) || s == S.boss_slot {
+            return 0;
+        }
+        let o = owner_at(s);
+        if S.shield[o] != 0 {
+            S.shield[o] = 0;
+            gd_envoy_absorb(s);
+            log(b"envoy: orb absorbed a hit (x100), slot\0", x100(d) * 10 + s);
             return 1; // GD_SKIP: no percent this hit
         }
     }
     0
 }
 
-/// damage.fighter_take_damage post: a hit landed on a foe or taken by the fighter in play.
+/// damage.fighter_take_damage post: a hit landed (charges the attacker's drives) and taken (the victim's).
 extern "C" fn on_damage(h: u32, d: f32) {
     unsafe {
         if !in_play() || d <= 0.0 {
             return;
         }
-        let s = gd_fighter_slot(h);
-        if s == 0 {
+        let v = gd_fighter_slot(h);
+        if !(0..4).contains(&v) {
+            return;
+        }
+        let human_v = v < nh();
+        let mut a = gd_envoy_attacker(v);
+        if a < 0 || a == v {
+            // no fighter source (a stage hazard): solo play has one player to credit
+            a = if !human_v && nh() == 1 { 0 } else { -1 };
+        }
+        // Marked: the hit deals more (half on a boss)
+        if marked(v) {
+            let more = if is_boss(v) { BOSS_MARK_MORE } else { MARK_MORE };
+            gd_envoy_percent(v, 0, (d * more as f32) as i32);
+        }
+        if human_v {
             S.taken += 1;
-            charge(C_TAKEN, 0);
-        } else if (1..=ncpu()).contains(&s) {
-            S.hits += 1;
-            if has_key(E_PLAGUE) {
-                burn(s, BURN_STACKS, true);
+            charge(v as usize, C_TAKEN, a);
+            if is_foe(a) {
+                charge_foe(a, C_HIT, v);
             }
-            charge(C_HIT, s);
+            return;
+        }
+        // a foe was hit
+        charge_foe(v, C_TAKEN, a);
+        if !(0..nh()).contains(&a) {
+            return;
+        }
+        let p = a as usize;
+        S.hits += 1;
+        if has_key(p, E_PLAGUE) {
+            let stacks = by_key("plague_bearer").map_or(BURN_STACKS, |i| POOL[i].number);
+            burn(v, stacks, true);
+        }
+        if has_key(p, E_WINTER) {
+            let ms = by_key("winter_oath").map_or(2000, |i| POOL[i].number);
+            chill(v, ms * 60 / 1000);
+        }
+        // Tailwind: in Haste, the hit deals more (a passive fire for the presentation, at most one per 20 frames)
+        let set = set_of(p, S.active[p] as usize);
+        if hasted(set) {
+            for k in 0..SLOTS {
+                let id = S.drives[set][k];
+                if id > 0 && POOL[id as usize - 1].effect == E_TAILWIND {
+                    let more = scaled(POOL[id as usize - 1].number, S.levels[set][k]);
+                    gd_envoy_percent(v, 0, (d * more as f32 / 100.0) as i32);
+                    if S.play - S.cd_until[set][k] >= FIRE_GAP {
+                        S.cd_until[set][k] = S.play;
+                        fire(set, id as usize - 1, S.levels[set][k], v, 1000, FL_PASSIVE);
+                    }
+                }
+            }
+        }
+        charge(p, C_HIT, v);
+        let ha = gd_fighter_from_slot(a);
+        if ha != 0 {
+            let st = gd_fighter_get_action_state(ha);
+            if (AS_AERIAL.0..=AS_AERIAL.1).contains(&st) {
+                charge(p, C_AERIAL_HIT, v);
+            }
+        }
+        let hv = gd_fighter_from_slot(v);
+        if hv != 0 && gd_fighter_get_percent(hv) >= 100.0 {
+            charge(p, C_HIT_100, v);
         }
     }
-}
-
-unsafe fn landed(h: u32) {
-    if in_play() && gd_fighter_slot(h) == 0 {
-        S.landings += 1;
-        charge(C_LANDING, 0);
-    }
-}
-
-extern "C" fn on_landing(h: u32, _msid: i32, _interrupt: i32, _flags: i32, _a: f32, _b: f32) -> i32 {
-    unsafe { landed(h) };
-    0
-}
-
-extern "C" fn on_landing_special(h: u32, _a: i32, _b: f32) -> i32 {
-    unsafe { landed(h) };
-    0
 }
 
 // ---- moments
 
-unsafe fn on_tag() {
-    let out = S.active as usize;
+unsafe fn on_tag(p: usize) {
+    let out = S.active[p] as usize;
     let inn = 1 - out;
-    S.active = inn as i32;
-    unhaste(out);
-    log(b"envoy: moment tag in, fighter\0", inn as i32);
-    charge(C_TAG_IN, 0);
+    S.active[p] = inn as i32;
+    log(b"envoy: moment tag in, player*10 + fighter\0", p as i32 * 10 + inn as i32);
+    charge(p, C_TAG_IN, -1);
 }
 
-/// Per unfrozen live frame: the opener, the stock edges, the drop, the statuses.
+/// Per unfrozen live frame: the stock edges (KOs dealt, stocks lost, the shared pool), jumps, Petey's hits, the
+/// drops, Burning.
 unsafe fn moments_frame() {
-    if S.opened == 0 {
-        S.opened = 1;
-        log(b"envoy: moment opener, fight\0", S.fight + 1);
-    }
-    let me = gd_player_stocks(0);
     let mut foes = 0;
-    for s in 1..=ncpu() {
-        let n = gd_player_stocks(s).max(0);
-        foes += n;
-        let i = s as usize - 1;
-        if n < S.foe_each[i] {
-            // a KO: statuses end (the respawn starts clean)
-            unchill(i);
-            S.burn_until[i] = 0;
-            S.burn_stacks[i] = 0;
+    for s in 0..4 {
+        let n = if (0..nh() + ncpu()).contains(&s) { gd_player_stocks(s).max(0) } else { 0 };
+        let i = s as usize;
+        if n < S.stocks_each[i] {
+            if is_foe(s) {
+                foe_ko(s);
+            }
+            clear_status(i);
         }
-        S.foe_each[i] = n;
+        if is_foe(s) {
+            foes += n;
+        }
+        S.stocks_each[i] = n;
     }
-    if me < S.my_stocks && me > 0 {
-        log(b"envoy: moment stock lost, pool\0", me);
-        unhaste(S.active as usize);
+    // the shared pool: a stock lost by one player is lost by both
+    let low = (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0);
+    for p in 0..nh() as usize {
+        let me = gd_player_stocks(p as i32);
+        if low < S.my_stocks[p] && low > 0 {
+            log(b"envoy: moment stock lost, player*100 + pool\0", p as i32 * 100 + low);
+        }
+        if me > low {
+            gd_envoy_apply(p as i32, AP_STOCKS, low);
+        }
+        S.my_stocks[p] = low;
     }
     if foes < S.foe_stocks {
         log(b"envoy: moment KO dealt, foes left\0", foes);
-        if S.drops == 0 && S.drop_state == 0 {
-            roll_drop();
+    }
+    S.foe_stocks = foes;
+    // jumps and landings: entering a jump or a landing state (polled: aerial jumps and landings have no hook row)
+    for s in 0..4 {
+        if !(0..nh()).contains(&s) && !is_foe(s) {
+            continue;
+        }
+        let h = gd_fighter_from_slot(s);
+        let st = if h != 0 { gd_fighter_get_action_state(h) } else { -1 };
+        let prev = S.prev_as[s as usize];
+        S.prev_as[s as usize] = st;
+        if st == prev {
+            continue;
+        }
+        let land = AS_LANDING.iter().any(|r| (r.0..=r.1).contains(&st));
+        if s < nh() {
+            if (AS_JUMP.0..=AS_JUMP.1).contains(&st) {
+                S.jumps += 1;
+                charge(s as usize, C_JUMP, -1);
+            }
+            if land {
+                S.landings += 1;
+                charge(s as usize, C_LANDING, -1);
+            }
+        } else if land {
+            charge_foe(s, C_LANDING, -1);
         }
     }
-    S.my_stocks = me;
-    S.foe_stocks = foes;
+    // Petey's hits (the carrier never takes the take-damage path): each counts as a hit landed
+    if S.boss_slot >= 0 {
+        let mut w = [0u32; 6];
+        gd_envoy_boss(w.as_mut_ptr());
+        for p in 0..nh() as usize {
+            let now = w[2 + p] as i32;
+            let mut n = now.wrapping_sub(S.boss_hits[p]).clamp(0, 4);
+            S.boss_hits[p] = now;
+            while n > 0 {
+                n -= 1;
+                S.hits += 1;
+                if has_key(p, E_PLAGUE) {
+                    burn(S.boss_slot, BURN_STACKS, true);
+                }
+                charge(p, C_HIT, S.boss_slot);
+            }
+        }
+    }
     drop_frame();
-    // Burning: 2% a second per stack; Chilled and Haste end
-    for i in 0..3 {
+    // Burning: 2% a second per stack
+    for i in 0..4 {
         if S.burn_stacks[i] > 0 && S.play >= S.burn_until[i] {
             S.burn_stacks[i] = 0;
         }
         if S.burn_stacks[i] > 0 && S.play >= S.burn_next[i] {
             S.burn_next[i] += BURN_TICK;
-            hurt(i as i32 + 1, BURN_TICK_PCT * S.burn_stacks[i]);
-        }
-        if S.chill_on[i] != 0 && S.play >= S.chill_until[i] {
-            unchill(i);
-        }
-    }
-    for f in 0..2 {
-        if S.haste_on[f] != 0 && S.play >= S.haste_until[f] {
-            unhaste(f);
+            if alive(i as i32) {
+                gd_envoy_percent(i as i32, 0, BURN_TICK_PCT * S.burn_stacks[i]);
+            }
         }
     }
 }
 
-/// The first KO's drop: a drive the fighter in play can take (else its partner), on a floor point.
-unsafe fn roll_drop() {
-    let mut h = mix(S.seed as u32 ^ 0xD20F_0000 ^ (S.fight as u32) << 8 ^ S.drops as u32);
-    let a = S.active as usize;
+/// A foe lost a stock: the KO charge of the player who dealt it (Wildfire reads a Burning foe), and drops.
+unsafe fn foe_ko(s: i32) {
+    let a = gd_envoy_attacker(s);
+    let p = if (0..nh()).contains(&a) { a } else if nh() == 1 { 0 } else { -1 };
+    if p >= 0 {
+        let was_burning = burning(s);
+        let live = live_sets(p as usize);
+        for f in 0..2 {
+            if live >> f & 1 == 0 {
+                continue;
+            }
+            let set = set_of(p as usize, f);
+            for k in 0..SLOTS {
+                let d = S.drives[set][k];
+                if d > 0 && POOL[d as usize - 1].charge == C_KO && (POOL[d as usize - 1].reads != W_BURNING || was_burning) {
+                    S.charge[set][k] = need(&POOL[d as usize - 1]);
+                    S.target[set][k] = s;
+                }
+            }
+        }
+    }
+    if S.drops_made < S.drops_due {
+        S.drops_made += 1;
+        for q in 0..nh() as usize {
+            roll_drop(q);
+        }
+    }
+}
+
+/// A KO's drop for player `p`: a drive its fighter in play can take (else its partner), on a floor point, in the
+/// owner's colour; only that player can take it (co-op Q8).
+unsafe fn roll_drop(p: usize) {
+    let Some(slot) = S.drop[p].iter().position(|d| d[0] != 1) else { return };
+    let mut h = mix(S.seed as u32 ^ 0xD20F_0000 ^ (S.fight as u32) << 8 ^ (S.drops_made as u32) << 16 ^ p as u32);
+    let a = S.active[p] as usize;
     for pass in 0..2 {
         let f = if pass == 0 { a } else { 1 - a };
         for _ in 0..64 {
             let c = (h % POOL_LEN as u32) as usize;
             h = mix(h.wrapping_add(0x6D2B_79F5));
-            if POOL[c].kind == K_DRIVE && can_take(f, c) {
-                S.drop_state = 1;
-                S.drop_id = c as i32 + 1;
-                S.drop_x = DROP_X[(h >> 5) as usize % DROP_X.len()];
-                S.drop_y = 0;
-                S.drops += 1;
-                log_drive(b"drop", c, S.drop_x / 100);
+            if POOL[c].kind == K_DRIVE && can_take(p, f, c) && !S.drop[p].iter().any(|d| d[0] == 1 && d[1] == c as i32 + 1) {
+                let x = DROP_X[(h >> 5) as usize % DROP_X.len()] + p as i32 * 600 + slot as i32 * 300;
+                S.drop[p][slot] = [1, c as i32 + 1, x, 0];
+                log_drive(b"drop", c, p as i32 * 1000 + x / 100);
                 return;
             }
         }
@@ -1140,77 +1636,136 @@ unsafe fn roll_drop() {
 }
 
 unsafe fn drop_frame() {
-    if S.drop_state != 1 {
-        return;
-    }
-    let Some(p) = pos(0) else { return };
-    let (dx, dy) = (p.x - S.drop_x as f32 / 100.0, p.y - S.drop_y as f32 / 100.0);
-    if dx.abs() < PICK_DX && dy > -6.0 && dy < PICK_DY {
-        take_drop(G_DROP);
-    }
-}
-
-unsafe fn take_drop(how: i32) {
-    let id = S.drop_id as usize - 1;
-    let a = S.active as usize;
-    let f = if can_take(a, id) { a } else { 1 - a };
-    S.drop_state = 2;
-    if gain(f, id, how) == 0 {
-        log_drive(b"drop lost (no room)", id, 0);
+    for p in 0..nh() as usize {
+        let Some(me) = pos(p as i32) else { continue };
+        for k in 0..DROPS {
+            let d = S.drop[p][k];
+            if d[0] != 1 {
+                continue;
+            }
+            let (dx, dy) = (me.x - d[2] as f32 / 100.0, me.y - d[3] as f32 / 100.0);
+            if dx.abs() < PICK_DX && dy > -6.0 && dy < PICK_DY {
+                take_drop(p, k, G_DROP);
+            }
+        }
     }
 }
 
-/// The ratios of the fighter in play: keystone prices (Fragile, Weak); written only when they change.
-unsafe fn ratios_frame() {
-    let mut atk = 1000;
-    let mut def = 1000;
-    for &k in &S.keys {
-        if k <= 0 {
+unsafe fn take_drop(p: usize, k: usize, how: i32) {
+    let id = S.drop[p][k][1] as usize - 1;
+    let a = S.active[p] as usize;
+    let f = if can_take(p, a, id) { a } else { 1 - a };
+    S.drop[p][k][0] = 2;
+    if gain(p, f, id, how) == 0 {
+        log_drive(b"drop lost (no room)", id, p as i32);
+    }
+}
+
+unsafe fn drops_on_floor() -> bool {
+    S.drop.iter().any(|q| q.iter().any(|d| d[0] == 1))
+}
+
+/// Per live frame: the ratios (keystone prices, Glass Core) and the speed of every fighter, written from a stored
+/// base by the engine (`gd_envoy_speed`): nothing drifts, and a swapped-in or respawned fighter gets its own at once.
+unsafe fn attrs_frame() {
+    for p in 0..nh() as usize {
+        let mut atk = 1000;
+        let mut def = 1000;
+        for &k in &S.keys[p] {
+            if k <= 0 {
+                continue;
+            }
+            let c = &POOL[k as usize - 1];
+            match c.price {
+                P_FRAGILE => def = def * 1250 / 1000,
+                P_WEAK => atk = atk * 800 / 1000,
+                _ => {}
+            }
+            if c.effect == E_GLASS {
+                atk = atk * c.number / 1000;
+                def = def * c.number / 1000;
+            }
+        }
+        if atk != S.atk_set[p] {
+            S.atk_set[p] = atk;
+            gd_envoy_apply(p as i32, AP_ATTACK, atk);
+        }
+        if def != S.def_set[p] {
+            S.def_set[p] = def;
+            gd_envoy_apply(p as i32, AP_DEFENSE, def);
+        }
+    }
+    for s in 0..4 {
+        if gd_player_present(s) == 0 || s == S.boss_slot {
             continue;
         }
-        match POOL[k as usize - 1].price {
-            P_FRAGILE => def = def * 1250 / 1000,
-            P_WEAK => atk = atk * 800 / 1000,
-            _ => {}
-        }
-    }
-    if atk != S.atk_set {
-        S.atk_set = atk;
-        gd_envoy_apply(0, AP_ATTACK, atk);
-    }
-    if def != S.def_set {
-        S.def_set = def;
-        gd_envoy_apply(0, AP_DEFENSE, def);
+        let (act, bench) = if s < nh() {
+            let p = s as usize;
+            let slow = if has_price(p, P_SLOW) { SLOW_SPEED } else { 1000 };
+            let a = S.active[p] as usize;
+            let mut act = slow;
+            if hasted(set_of(p, a)) {
+                act = act * HASTE_SPEED / 1000;
+            }
+            if chilled(s) {
+                act = act * CHILL_SPEED / 1000;
+            }
+            let bench = if hasted(set_of(p, 1 - a)) { slow * HASTE_SPEED / 1000 } else { slow };
+            (act, bench)
+        } else {
+            let mut act = 1000;
+            if hasted(OWNER_FOE as usize + s as usize) {
+                act = act * HASTE_SPEED / 1000;
+            }
+            if chilled(s) {
+                act = act * if is_boss(s) { BOSS_CHILL_SPEED } else { CHILL_SPEED } / 1000;
+            }
+            (act, 1000)
+        };
+        gd_envoy_speed(s, act, bench);
     }
 }
 
-/// The first live frame: the pair's kinds and the stock baselines.
+/// The first live frame: the pairs' kinds, the stock baselines, the boss carrier.
 unsafe fn fight_setup() {
     S.attrs_done = 1;
-    let h = gd_fighter_from_slot(0);
-    S.kind = [if h != 0 { gd_fighter_kind(h) } else { -1 }, gd_tag_partner(0)];
-    S.my_stocks = gd_player_stocks(0);
+    for p in 0..nh() as usize {
+        let h = gd_fighter_from_slot(p as i32);
+        S.kind[p] = [if h != 0 { gd_fighter_kind(h) } else { -1 }, gd_tag_partner(p as i32)];
+    }
+    let mut w = [0u32; 6];
+    S.boss_slot = gd_envoy_boss(w.as_mut_ptr());
+    for p in 0..4 {
+        S.boss_hits[p] = w[2 + p] as i32;
+    }
+    S.my_stocks = [0; NP];
+    for p in 0..nh() as usize {
+        S.my_stocks[p] = gd_player_stocks(p as i32);
+    }
     S.foe_stocks = 0;
-    for s in 1..=ncpu() {
-        S.foe_each[s as usize - 1] = gd_player_stocks(s).max(0);
-        S.foe_stocks += S.foe_each[s as usize - 1];
+    for s in 0..4 {
+        S.stocks_each[s as usize] = if (0..nh() + ncpu()).contains(&s) { gd_player_stocks(s).max(0) } else { 0 };
+        if is_foe(s) {
+            S.foe_stocks += S.stocks_each[s as usize];
+        }
     }
 }
 
-/// Which fighter is in: by kind when the pair differ (a respawn, a refused swap), else the tag count's parity.
-unsafe fn track_active() {
-    if S.kind[0] < 0 || S.kind[1] < 0 || S.kind[0] == S.kind[1] {
+/// Which fighter of player `p` is in: by kind when the pair differ (a respawn, a refused swap).
+unsafe fn track_active(p: usize) {
+    let k = S.kind[p];
+    if k[0] < 0 || k[1] < 0 || k[0] == k[1] {
         return;
     }
-    let h = gd_fighter_from_slot(0);
+    let h = gd_fighter_from_slot(p as i32);
     if h == 0 {
         return;
     }
-    let k = gd_fighter_kind(h);
-    if k == S.kind[0] {
-        S.active = 0;
-    } else if k == S.kind[1] {
-        S.active = 1;
+    let now = gd_fighter_kind(h);
+    if now == k[0] {
+        S.active[p] = 0;
+    } else if now == k[1] {
+        S.active[p] = 1;
     }
 }
 
@@ -1218,8 +1773,10 @@ unsafe fn tag_frame() {
     let phase = gd_transition_phase();
     if phase == 1 {
         if gd_transition_kind() == KIND_TAG {
+            let s = gd_transition_slot();
+            S.tag_slot = s;
             let f = gd_transition_frame();
-            if f >= TAG_SKIP_AFTER && gd_pad_pressed(0) & DPAD_DOWN != 0 {
+            if f >= TAG_SKIP_AFTER && gd_pad_pressed(s.clamp(0, 3)) & DPAD_DOWN != 0 {
                 gd_tag_swap(1);
             } else if f + 1 >= TAG_LEN {
                 gd_tag_swap(0);
@@ -1227,32 +1784,38 @@ unsafe fn tag_frame() {
         }
         return;
     }
-    if S.tag_cd > 0 {
-        S.tag_cd -= 1;
-        return;
-    }
-    if gd_tag_partner(0) < 0 {
-        return;
-    }
-    let h = gd_fighter_from_slot(0);
-    if h == 0 {
-        return;
-    }
-    let mut w = [0u32; 8];
-    gd_fighter_get_input(h, w.as_mut_ptr());
-    if w[6] & DPAD_DOWN == 0 {
-        return;
-    }
-    let rc = gd_tag_begin_ex(0, TAG_LEN, 1);
-    if rc == 0 {
-        S.tag_cd = TAG_COOLDOWN;
-        S.tags += 1;
-        log(b"envoy: tag\0", S.tags);
+    for p in 0..nh() as usize {
+        if S.tag_cd[p] > 0 {
+            S.tag_cd[p] -= 1;
+            continue;
+        }
+        if gd_tag_partner(p as i32) < 0 {
+            continue;
+        }
+        let h = gd_fighter_from_slot(p as i32);
+        if h == 0 {
+            continue;
+        }
+        let mut w = [0u32; 8];
+        gd_fighter_get_input(h, w.as_mut_ptr());
+        if w[6] & DPAD_DOWN == 0 {
+            continue;
+        }
+        let rc = gd_tag_begin_ex(p as i32, TAG_LEN, 1);
+        if rc != 0 {
+            log(b"envoy: tag refused, rc*1000 - action state\0", rc * 1000 - gd_fighter_get_action_state(h));
+        }
+        if rc == 0 {
+            S.tag_cd[p] = if has_price(p, P_LOCK) { LOCK_TAG_COOLDOWN } else { TAG_COOLDOWN };
+            S.tags += 1;
+            log(b"envoy: tag, player*100 + count\0", p as i32 * 100 + S.tags);
+            return; // one transition at a time
+        }
     }
 }
 
 unsafe fn stage_frame() {
-    if S.fight < 1 || gd_transition_phase() != 0 {
+    if S.fight < 1 || gd_transition_phase() != 0 || S.boss_slot >= 0 {
         return;
     }
     S.stage_clock += 1;
@@ -1269,6 +1832,9 @@ unsafe fn stage_frame() {
         S.stage_clock = 0;
         S.stage_switches += 1;
         log(b"envoy: stage transition to\0", next);
+        for p in 0..nh() as usize {
+            charge(p, C_SHIFT, -1);
+        }
     } else if rc != -9 {
         S.stage_clock = 0;
         log(b"envoy: stage transition refused\0", rc);
@@ -1279,10 +1845,12 @@ unsafe fn outcome_frame() {
     if S.outcome != 0 {
         return;
     }
-    let me = gd_player_stocks(0);
+    let me = (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0);
     let mut foes = 0;
-    for s in 1..=ncpu() {
-        foes += gd_player_stocks(s).max(0);
+    for s in 0..4 {
+        if is_foe(s) {
+            foes += gd_player_stocks(s).max(0);
+        }
     }
     let key = me * 100 + foes;
     if key != S.last_stocks {
@@ -1290,12 +1858,24 @@ unsafe fn outcome_frame() {
         log(b"envoy: stocks (pool*100 + foes)\0", key);
     }
     if foes == 0 && me > 0 {
-        if S.drop_state == 1 {
-            // the fight is over with the drop still on the floor: it is swept up, never lost
-            take_drop(G_SWEPT);
+        // the collect hold: up to 10 s to walk over a drop still on the floor, then it is swept up
+        if drops_on_floor() && S.collect < COLLECT_HOLD {
+            S.collect += 1;
+            return;
+        }
+        for p in 0..nh() as usize {
+            for k in 0..DROPS {
+                if S.drop[p][k][0] == 1 {
+                    take_drop(p, k, G_SWEPT);
+                }
+            }
         }
         S.outcome = 1;
         S.pool = me;
+        if sched().kind >= FK_ELITE && S.bosses < 2 && (S.fight as usize) < FIGHTS - 1 {
+            S.bosses += 1;
+            log(b"envoy: boss beaten, keystone due; bosses\0", S.bosses);
+        }
         if S.fight as usize == FIGHTS - 1 {
             S.state = RUN_CLEAR;
             log(b"envoy: RUN CLEAR, pool left\0", me);
@@ -1324,109 +1904,124 @@ fn fbits(v: f32) -> i32 {
     v.to_bits() as i32
 }
 
-// View layout (envoy_ui; docs/rust-port/notes/envoy-drives.md): 0 magic, 1 state, 2 fight, 3 fights, 4 pool, 5 live,
-// 6 main, 7 partner, 8 tag cd, 9 tag cd max, 10 reward screen (1 drives, 2 keystones), 11 cursor, 12 timer, 13-15
-// offers (pool index or OFFER_STOCK), 16 step (0 card, 1 fighter), 17 fighter cursor, 18 shared, 19 stocks now, 20
-// open slots, 22-29 drives (id + 1; main set 22-25, partner 26-29), 30 last pick, 31 frames since, 32 outcome, 33
-// offer time, 34 partner kind, 35 shifts, 36 seq, 37 armed, 38 fighter in play, 39 last pick's fighter, 40-71 the
-// record, 72 fires, 73 play frame, 74 frozen, 75 pool digest, 76 stage countdown, 77-84 levels, 85-92 charge
-// permille, 93-95 keystones (id + 1), 96-97 fighter in play x / y (f32 bits), 98 its present, 99-104 foes x / y (f32
-// bits), 105 cpus, 106-108 Burning stacks, 109-111 Chilled frames left, 112-113 Haste frames left (main, partner),
-// 114-115 orb armed (per set), 116 drop state, 117 drop id + 1, 118-119 drop x / y (x100), 120-124 the last gain
-// (frame, id + 1, fighter, level, source), 125 gains, 126 fire log count, 127 can-take bits (offer i, fighter f: bit
-// i * 2 + f), 128-191 the fire log (8 x frame, id + 1, set, target, x100, y100, level, flags), 192-194 foes alive.
+fn left(until: i32, now: i32) -> i32 {
+    (until - now).max(0)
+}
+
+/// The view (envoy_data::view): the run, each player, every match slot, the fire log, the record.
 unsafe fn publish() {
     let v = &mut VIEW;
     *v = [0; VIEW_WORDS];
-    v[0] = 0x454E_5659;
-    v[1] = S.state;
-    v[2] = S.fight;
-    v[3] = FIGHTS as i32;
-    v[4] = if S.live != 0 { gd_player_stocks(0) } else { S.pool };
-    v[5] = S.live;
-    v[6] = S.main;
-    v[7] = S.partner;
-    v[8] = S.tag_cd;
-    v[9] = TAG_COOLDOWN;
-    v[10] = S.rw_active;
-    v[11] = S.cursor;
-    v[12] = S.timer;
-    let mut bits = 0;
-    for i in 0..3 {
-        v[13 + i] = S.offers[i];
-        let id = S.offers[i];
-        if (0..POOL_LEN as i32).contains(&id) && POOL[id as usize].kind == K_DRIVE {
-            for f in 0..2 {
-                if can_take(f, id as usize) {
-                    bits |= 1 << (i * 2 + f);
+    v[V_MAGIC] = VIEW_MAGIC;
+    v[V_STATE] = S.state;
+    v[V_FIGHT] = S.fight;
+    v[V_FIGHTS] = FIGHTS as i32;
+    v[V_POOL] = if S.live != 0 { (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0) } else { S.pool };
+    v[V_LIVE] = S.live;
+    v[V_HUMANS] = nh();
+    v[V_SHARED] = S.shared;
+    v[V_RW] = S.rw_active;
+    v[V_TIMER] = S.timer;
+    v[V_RW_TIME] = REWARD_TIME;
+    v[V_FROZEN] = (gd_transition_phase() != 0 || S.rw_active != 0) as i32;
+    v[V_PLAY] = S.play;
+    v[V_DIGEST] = POOL_DIGEST as i32;
+    v[V_STAGE_IN] = if S.fight >= 1 && S.live != 0 && S.boss_slot < 0 { STAGE_PERIOD - S.stage_clock } else { -1 };
+    v[V_FIRES] = S.fires;
+    v[V_FIGHT_KIND] = sched().kind;
+    v[V_OPEN] = open_slots() as i32;
+    v[V_KEYS_EARNED] = keys_earned();
+    v[V_SEQ] = gd_envoy_seq();
+    v[V_ARMED] = S.arm_seen;
+    v[V_NCPU] = ncpu();
+    v[V_SINCE_PICK] = S.since_pick;
+    v[V_BOSSES] = S.bosses;
+    v[V_OUTCOME] = S.outcome;
+    for p in 0..NP {
+        let b = V_P0 + p * V_PW;
+        v[b + P_PRESENT] = (p < nh() as usize) as i32;
+        v[b + P_MAIN] = S.pair[p][0];
+        v[b + P_PARTNER] = S.pair[p][1];
+        if p >= nh() as usize {
+            continue;
+        }
+        v[b + P_ACTIVE] = S.active[p];
+        v[b + P_TAG_CD] = S.tag_cd[p];
+        v[b + P_TAG_MAX] = if has_price(p, P_LOCK) { LOCK_TAG_COOLDOWN } else { TAG_COOLDOWN };
+        v[b + P_PARTNER_KIND] = gd_tag_partner(p as i32);
+        if let Some(q) = pos(p as i32) {
+            v[b + P_X] = fbits(q.x);
+            v[b + P_Y] = fbits(q.y);
+            v[b + P_HAVE_POS] = alive(p as i32) as i32;
+        }
+        for k in 0..KEYSTONES {
+            v[b + P_KEYS + k] = S.keys[p][k];
+        }
+        v[b + P_LAST_PICK] = S.last_pick[p];
+        v[b + P_LAST_WEARER] = S.last_wearer[p];
+        for f in 0..2 {
+            let set = p * 2 + f;
+            for k in 0..SLOTS {
+                let d = S.drives[set][k];
+                v[b + P_DRIVES + f * SLOTS + k] = d;
+                v[b + P_LEVELS + f * SLOTS + k] = S.levels[set][k];
+                v[b + P_CHARGE + f * SLOTS + k] = if d > 0 { S.charge[set][k] * 1000 / need(&POOL[d as usize - 1]).max(1) } else { 0 };
+            }
+            v[b + P_HASTE + f] = left(S.haste_until[set], S.play);
+            v[b + P_SHIELD + f] = S.shield[set];
+        }
+        v[b + P_LIVE_SETS] = live_sets(p) as i32;
+        v[b + P_RW_DONE] = S.rw_done[p];
+        v[b + P_CURSOR] = S.cursor[p];
+        v[b + P_STEP] = S.step[p];
+        v[b + P_FCURSOR] = S.fcursor[p];
+        let mut bits = 0;
+        for i in 0..3 {
+            let id = S.offers[p][i];
+            v[b + P_OFFERS + i] = id;
+            if (0..POOL_LEN as i32).contains(&id) && POOL[id as usize].kind == K_DRIVE {
+                for f in 0..2 {
+                    if can_take(p, f, id as usize) {
+                        bits |= 1 << (i * 2 + f);
+                    }
                 }
             }
         }
-    }
-    v[127] = bits;
-    v[16] = S.step;
-    v[17] = S.fcursor;
-    v[18] = S.shared;
-    v[19] = gd_player_stocks(0);
-    v[20] = OPEN_SLOTS as i32;
-    for f in 0..2 {
-        for k in 0..SLOTS {
-            v[22 + f * SLOTS + k] = S.drives[f][k];
-            v[77 + f * SLOTS + k] = S.levels[f][k];
-            let d = S.drives[f][k];
-            v[85 + f * SLOTS + k] = if d > 0 { S.charge[f][k] * 1000 / need(&POOL[d as usize - 1]).max(1) } else { 0 };
+        v[b + P_CAN_TAKE] = bits;
+        for k in 0..DROPS {
+            v[b + P_DROPS + k * 4..b + P_DROPS + k * 4 + 4].copy_from_slice(&S.drop[p][k]);
         }
+        v[b + P_BANKED_JUMP] = S.banked_jump[p];
+        v[b + P_GAIN..b + P_GAIN + 6].copy_from_slice(&S.gain[p]);
     }
-    v[30] = S.last_pick;
-    v[31] = S.since_pick;
-    v[32] = S.outcome;
-    v[33] = REWARD_TIME;
-    v[34] = gd_tag_partner(0);
-    v[35] = S.stage_switches;
-    v[36] = gd_envoy_seq();
-    v[37] = S.arm_seen;
-    v[38] = S.active;
-    v[39] = S.last_wearer;
-    let r = record();
-    v[REC_AT..REC_AT + REC_WORDS].copy_from_slice(&r);
-    v[72] = S.fires;
-    v[73] = S.play;
-    v[74] = (gd_transition_phase() != 0 || S.rw_active != 0) as i32;
-    v[75] = POOL_DIGEST as i32;
-    v[76] = if S.fight >= 1 && S.live != 0 { STAGE_PERIOD - S.stage_clock } else { -1 };
-    for k in 0..KEYSTONES {
-        v[93 + k] = S.keys[k];
-    }
-    if let Some(p) = pos(0) {
-        v[96] = fbits(p.x);
-        v[97] = fbits(p.y);
-        v[98] = 1;
-    }
-    for s in 1..=3 {
-        let i = s as usize - 1;
-        if let Some(p) = pos(s) {
-            v[99 + i * 2] = fbits(p.x);
-            v[100 + i * 2] = fbits(p.y);
+    for s in 0..4 {
+        let b = V_S0 + s as usize * V_SW;
+        let i = s as usize;
+        v[b + S_ALIVE] = alive(s) as i32;
+        if let Some(q) = pos(s) {
+            v[b + S_X] = fbits(q.x);
+            v[b + S_Y] = fbits(q.y);
         }
-        v[106 + i] = if S.burn_until[i] > S.play { S.burn_stacks[i] } else { 0 };
-        v[109 + i] = if S.chill_on[i] != 0 { (S.chill_until[i] - S.play).max(0) } else { 0 };
-        v[192 + i] = (s <= ncpu() && foe_alive(s)) as i32;
+        v[b + S_BURN] = if burning(s) { S.burn_stacks[i] } else { 0 };
+        v[b + S_CHILL] = left(S.chill_until[i], S.play);
+        v[b + S_MARK] = left(S.mark_until[i], S.play);
+        v[b + S_FOE] = is_foe(s) as i32;
+        v[b + S_BOSS] = is_boss(s) as i32;
+        for k in 0..2 {
+            let d = S.fdrives[i][k];
+            v[b + S_DRIVES + k] = d;
+            v[b + S_LEVELS + k] = S.flevels[i][k];
+            v[b + S_CHARGE + k] = if d > 0 { S.fcharge[i][k] * 1000 / need(&POOL[d as usize - 1]).max(1) } else { 0 };
+        }
+        v[b + S_HASTE] = left(S.haste_until[OWNER_FOE as usize + i], S.play);
+        v[b + S_SHIELD] = S.shield[OWNER_FOE as usize + i];
     }
-    v[105] = ncpu();
-    for f in 0..2 {
-        v[112 + f] = if S.haste_on[f] != 0 { (S.haste_until[f] - S.play).max(0) } else { 0 };
-        v[114 + f] = S.shield[f];
-    }
-    v[116] = S.drop_state;
-    v[117] = S.drop_id;
-    v[118] = S.drop_x;
-    v[119] = S.drop_y;
-    v[120..125].copy_from_slice(&S.gain);
-    v[125] = S.gain_n;
-    v[126] = S.log_n;
     for e in 0..LOG {
-        v[128 + e * LOG_W..128 + (e + 1) * LOG_W].copy_from_slice(&S.log[e]);
+        v[V_LOG + e * LOG_W..V_LOG + (e + 1) * LOG_W].copy_from_slice(&S.log[e]);
     }
+    v[V_LOG_N] = S.log_n;
+    let r = record();
+    v[V_REC..V_REC + REC_WORDS].copy_from_slice(&r);
     gd_envoy_publish(v.as_ptr(), VIEW_WORDS as u32);
 }
 
@@ -1459,23 +2054,24 @@ extern "C" fn on_frame_end() {
             }
             let phase = gd_transition_phase();
             let kind = gd_transition_kind();
-            if S.prev_phase == 1 && phase == 0 && S.prev_kind == KIND_TAG {
-                on_tag();
+            if S.prev_phase == 1 && phase == 0 && S.prev_kind == KIND_TAG && (0..nh()).contains(&S.tag_slot) {
+                on_tag(S.tag_slot as usize);
             }
             S.prev_phase = phase;
             S.prev_kind = kind;
-            track_active();
+            for p in 0..nh() as usize {
+                track_active(p);
+            }
             if S.rw_active != 0 {
                 reward_frame();
             } else if S.reward_due != 0 && S.frames >= REWARD_DELAY && phase == 0 && S.outcome == 0 {
-                if gd_hold_begin(REWARD_TIME * 2 + 120) == 0 {
-                    S.rw_active = S.reward_due;
+                if gd_hold_begin(REWARD_TIME * 4 + 120) == 0 {
+                    let due = S.reward_due;
                     S.reward_due = 0;
-                    S.cursor = 0;
-                    S.step = 0;
-                    S.timer = REWARD_TIME;
-                    roll_offers();
-                    log(if S.rw_active == RW_KEYSTONES { b"envoy: keystone offer, fight\0" } else { b"envoy: drive offer, fight\0" }, S.fight + 1);
+                    open_reward(due);
+                    if (0..nh() as usize).all(|p| S.rw_done[p] != 0) {
+                        reward_close();
+                    }
                 }
             } else if phase == 0 || kind != KIND_HOLD {
                 tag_frame();
@@ -1488,7 +2084,7 @@ extern "C" fn on_frame_end() {
                 outcome_frame();
             }
             if S.outcome == 0 {
-                ratios_frame();
+                attrs_frame();
             }
         } else if !present {
             S.live = 0;
@@ -1502,14 +2098,15 @@ extern "C" fn on_frame_end() {
 pub extern "C" fn gd_mod_loaded() {
     unsafe {
         S.seed = 1;
-        S.pool = START_POOL;
-        S.main = -1;
-        S.partner = -1;
-        S.last_pick = -1;
-        S.last_wearer = -1;
+        S.nh = 1;
+        S.pool = START_POOL[0];
+        S.pair = [[-1; 2]; NP];
+        S.last_pick = [-1; NP];
+        S.last_wearer = [-1; NP];
         S.since_pick = 9999;
         S.last_stocks = -1;
-        S.offers = [0, 1, 2];
+        S.boss_slot = -1;
+        S.offers = [[0, 1, 2]; NP];
         S.arm_seen = (gd_envoy_armed() != 0) as i32;
         make_plan();
         publish();
@@ -1537,12 +2134,10 @@ const fn text<const N: usize>(s: &[u8]) -> [u8; N] {
 const ABI: u32 = 1 << 16;
 const PRE: u32 = 1;
 const POST: u32 = 2;
-static HOOKS: [HookDecl; 5] = [
+static HOOKS: [HookDecl; 3] = [
     HookDecl { address: 0x8039_0CFC, mode: POST, priority: 40, flags: 0, f: on_frame_end as *const () },
     HookDecl { address: 0x8006_CC7C, mode: PRE, priority: 40, flags: 0, f: on_damage_pre as *const () },
     HookDecl { address: 0x8006_CC7C, mode: POST, priority: 40, flags: 0, f: on_damage as *const () },
-    HookDecl { address: 0x800D_5AEC, mode: PRE, priority: 40, flags: 0, f: on_landing as *const () },
-    HookDecl { address: 0x800D_5CB0, mode: PRE, priority: 40, flags: 0, f: on_landing_special as *const () },
 ];
 
 #[no_mangle]
@@ -1550,7 +2145,7 @@ pub static gdmod_abi_version: u32 = ABI;
 
 #[no_mangle]
 pub static gd_mod_manifest: Manifest = Manifest {
-    magic: 0x444D_4447, struct_size: 124, abi_min: ABI, abi_max: ABI, hook_table_version: 1, mod_version: 0x0003_0000,
-    required_features: 0, optional_features: 1 << 3, state_bytes: 4096, hook_count: 5, hooks: HOOKS.as_ptr(),
+    magic: 0x444D_4447, struct_size: 124, abi_min: ABI, abi_max: ABI, hook_table_version: 1, mod_version: 0x0004_0000,
+    required_features: 0, optional_features: 1 << 3, state_bytes: 4096, hook_count: 3, hooks: HOOKS.as_ptr(),
     mod_id: text(b"gd.envoy_sim"), mod_name: text(b"Envoy run"),
 };

@@ -187,12 +187,40 @@ pub fn partner_caged() -> bool {
 pub unsafe fn arm(_humans: i32, carrier_slot: i32, seed: u32) {
     B = OFF;
     B.carrier_slot = carrier_slot;
+    HITS = [0; 4];
     B.rng = seed | 1;
     ARMED = true;
     LATCH = [[[0; 4]; 2]; 4];
     LATCH_IT = [(0, [0; 4]); 16];
     SLOT_INST = [0; 4];
     let _ = tracks(); // load (or miss) the local model before frame 0
+}
+
+/// Hits each player slot landed on Petey or a cage (Envoy's drives charge on them: his hits never reach the
+/// take-damage hook, the carrier being intangible).
+pub static mut HITS: [u32; 4] = [0; 4];
+
+/// The carrier's slot while a Petey fight runs (-1 otherwise): Envoy's drives treat it as the boss.
+pub fn carrier() -> i32 {
+    unsafe { if B.st != ST_OFF { B.carrier_slot } else { -1 } }
+}
+
+/// Petey's position for Envoy's drives (the body centre).
+pub fn pos() -> (f32, f32) {
+    unsafe { (B.px, 18.0) }
+}
+
+/// `damage(amount)` (envoy-core-v2.md 2.6): a drive's burst or Burning tick on the boss, whose HP is separate from
+/// percent. Body damage, as a player hit: both cages lose it, then the cage and death rules run as on a hit frame.
+pub unsafe fn damage(amount: f32) {
+    if B.st == ST_OFF || B.cause != 0 || B.ko_done || amount <= 0.0 {
+        return;
+    }
+    let d = round_i(amount).max(1);
+    B.cage[0] -= d;
+    B.cage[1] -= d;
+    B.flash[0] = 8;
+    cage_events(true, [false; 2]);
 }
 
 /// Not a Petey match: everything off.
@@ -1017,6 +1045,7 @@ unsafe fn player_hits(carrier: i32) -> (bool, [bool; 2]) {
                 if hit {
                     any = true;
                     cages |= cg;
+                    HITS[s as usize] = HITS[s as usize].wrapping_add(1);
                     // the attacker's side of a landed hit, as for hitting an item: hitlag next frame, the hit sound
                     let fp = &mut *f;
                     let d = round_i(dmg).max(1);

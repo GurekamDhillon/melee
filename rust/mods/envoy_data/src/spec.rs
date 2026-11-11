@@ -18,13 +18,16 @@ pub struct Rec {
     pub gives: u8,
     pub reads: u8,
     pub price: u8,
+    /// Milliseconds after a fire before it charges again (0 none).
+    pub cooldown: i32,
+    /// The effect shape (LOOKS index + 1; 0 none).
+    pub look: u8,
     pub sound: String,
     pub line: usize,
 }
 
-/// The V1 slice ships 9 drives and 3 keystones: the full-pool rules (3 per family, 2 givers per read word) are
-/// checked once the full pool lands (envoy-core-v2.md 4, V2).
-pub const FULL_POOL: bool = false;
+/// The full pool (V2: 20 drives, 6 keystones): 3 drives per family and 2 givers per read word are required.
+pub const FULL_POOL: bool = true;
 
 fn find(t: &[&str], v: &str) -> Option<u8> {
     t.iter().position(|x| *x == v).map(|i| i as u8)
@@ -71,6 +74,8 @@ pub fn parse(src: &str) -> Result<Vec<Rec>, String> {
             "price" => r.price = find(&PRICES[1..], &s()?).map(|w| w + 1).ok_or(format!("line {ln}: price: not one of the seven (or own)"))?,
             "gives" => r.gives = find(&WORDS[1..], &s()?).map(|w| w + 1).ok_or(format!("line {ln}: gives: not one of the four words"))?,
             "reads" => r.reads = find(&WORDS[1..], &s()?).map(|w| w + 1).ok_or(format!("line {ln}: reads: not one of the four words"))?,
+            "look" => r.look = find(&LOOKS, &s()?).map(|w| w + 1).ok_or(format!("line {ln}: look: not one of LOOKS"))?,
+            "cooldown" => r.cooldown = i()?,
             "need" => r.need = i()?,
             "number" => r.number = i()?,
             _ => return Err(format!("line {ln}: unknown field `{k}`")),
@@ -105,7 +110,11 @@ pub fn est_period_ms(r: &Rec) -> i32 {
         C_LANDING => 2000,
         C_JUMP => 1500,
         C_TIME => return r.need,
-        _ => 15000,
+        C_AERIAL_HIT => 2500,
+        C_HIT_100 => 6000,
+        C_FIRE => 3000,
+        C_TAG_IN => 15000,
+        _ => return 0, // KO, shift, passive: events, not a pace (exempt from the band)
     };
     // reading a word: only some hits qualify (about one in three)
     let k = if r.reads != W_NONE && r.charge == C_HIT { 3 } else { 1 };
@@ -159,8 +168,19 @@ pub fn lint(p: &[Rec]) -> Vec<String> {
                 e.push(format!("{at}: a drive has no price"));
             }
             let ms = est_period_ms(r);
-            if r.effect != E_RELAY && r.effect != E_SHATTER && !(PERIOD_BAND.0..=PERIOD_BAND.1).contains(&ms) {
+            let ms = if ms == 0 { 0 } else { ms.max(r.cooldown) };
+            // a drive gated on a word (Shatter, Wildfire) or an event (a KO, a shift, always on) has no pace of its own
+            if r.reads == W_NONE && ms != 0 && !(PERIOD_BAND.0..=PERIOD_BAND.1).contains(&ms) {
                 e.push(format!("{at}: estimated fire period {ms} ms is outside the band {:?}", PERIOD_BAND));
+            }
+            if r.look == 0 {
+                e.push(format!("{at}: no look"));
+            }
+            if r.cooldown < 0 {
+                e.push(format!("{at}: cooldown must be >= 0"));
+            }
+            if r.charge == C_PASSIVE && r.effect != E_TAILWIND {
+                e.push(format!("{at}: only an always-on effect can be passive"));
             }
         } else {
             if r.effect < E_KEYSTONE0 {
@@ -168,6 +188,9 @@ pub fn lint(p: &[Rec]) -> Vec<String> {
             }
             if r.price == P_NONE {
                 e.push(format!("{at}: a keystone needs exactly one price (or own)"));
+            }
+            if r.look != 0 || r.cooldown != 0 {
+                e.push(format!("{at}: a keystone has no look or cooldown (its look is the halo)"));
             }
         }
         for (what, w) in [("gives", r.gives), ("reads", r.reads)] {
@@ -221,7 +244,8 @@ pub fn digest(p: &[Rec]) -> u32 {
             eat(s.as_bytes());
             eat(&[0]);
         }
-        eat(&[r.kind, r.family, r.charge, r.effect, r.gives, r.reads, r.price]);
+        eat(&[r.kind, r.family, r.charge, r.effect, r.gives, r.reads, r.price, r.look]);
+        eat(&r.cooldown.to_le_bytes());
         eat(&r.need.to_le_bytes());
         eat(&r.number.to_le_bytes());
     }
@@ -237,8 +261,8 @@ pub fn generate(p: &[Rec]) -> String {
     s.push_str("pub static POOL: [Drive; POOL_LEN] = [\n");
     for r in p {
         s.push_str(&format!(
-            "    Drive {{ kind: {}, key: {:?}, name: {:?}, rule: {:?}, family: {}, charge: {}, need: {}, effect: {}, number: {}, gives: {}, reads: {}, price: {}, sound: {:?} }},\n",
-            r.kind, r.key, r.name, r.rule, r.family, r.charge, r.need, r.effect, r.number, r.gives, r.reads, r.price, r.sound
+            "    Drive {{ kind: {}, key: {:?}, name: {:?}, rule: {:?}, family: {}, charge: {}, need: {}, effect: {}, number: {}, gives: {}, reads: {}, price: {}, cooldown: {}, look: {}, sound: {:?} }},\n",
+            r.kind, r.key, r.name, r.rule, r.family, r.charge, r.need, r.effect, r.number, r.gives, r.reads, r.price, r.cooldown, r.look, r.sound
         ));
     }
     s.push_str("];\n");

@@ -304,14 +304,37 @@ fn fx_tris(kind: u8, at: [f32; 3], a: f32, b: f32, c: f32, rgba: u32, out: &mut 
     }
 }
 
-/// The fighter draw pass hook (`ftdrawcommon::WORLD_DRAW`): slot 0's fighter, pass 0 only, so the list draws once
-/// per render with that pass's camera.
+/// The fighter whose draw pass draws the list (`draw`): any drawn fighter can be it, so the drives stay drawn
+/// while slot 0's fighter is not (KO'd, between stocks) (V1 drew in slot 0's pass only).
+static mut DRAWER: usize = 0;
+/// Fighters seen in pass 0 since the drawer last drew: seeing one twice means a whole render went by without it.
+static mut SEEN: [usize; 8] = [0; 8];
+static mut SEEN_N: usize = 0;
+
+/// Whether this pass-0 call is the one that draws the list this render: the drawer's own, or (when the drawer was
+/// not drawn for a whole render) the first fighter seen twice, which becomes the drawer.
+unsafe fn is_drawer(g: usize) -> bool {
+    if g == DRAWER {
+        SEEN_N = 0;
+        return true;
+    }
+    if SEEN[..SEEN_N].contains(&g) || SEEN_N >= SEEN.len() {
+        DRAWER = g;
+        SEEN_N = 0;
+        return true;
+    }
+    SEEN[SEEN_N] = g;
+    SEEN_N += 1;
+    false
+}
+
+/// The fighter draw pass hook (`ftdrawcommon::WORLD_DRAW`): pass 0 of one fighter per render (`is_drawer`), so the
+/// list draws once per render with that pass's camera.
 pub unsafe fn draw(g: *mut melee_types::HSD_GObj, pass: i32) {
     if pass != 0 || g.is_null() || (*g).user_data.is_null() {
         return;
     }
-    let f = &*((*g).user_data as *const melee_types::Fighter);
-    if f.player_idx != 0 || f.is_sub_fighter() != 0 {
+    if !is_drawer(g as usize) {
         return;
     }
     let Ok(list) = SHOW.lock() else { return };

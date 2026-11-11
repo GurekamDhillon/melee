@@ -19,17 +19,32 @@ pub const F_WHITE: u8 = 5;
 pub const FAMILY_MEANING: [&str; 6] = ["damage", "speed", "defence", "air", "status", "wild"];
 
 /// What fills a drive's charge (one source per drive). `need` counts these, or milliseconds for `time`.
-pub const CHARGES: [&str; 6] = ["hit", "taken", "landing", "jump", "time", "tag_in"];
+pub const CHARGES: [&str; 12] = ["hit", "taken", "landing", "jump", "time", "tag_in", "aerial_hit", "hit_100", "ko", "shift", "fire", "passive"];
 pub const C_HIT: u8 = 0;
 pub const C_TAKEN: u8 = 1;
 pub const C_LANDING: u8 = 2;
 pub const C_JUMP: u8 = 3;
 pub const C_TIME: u8 = 4;
 pub const C_TAG_IN: u8 = 5;
+/// A hit landed with an aerial attack.
+pub const C_AERIAL_HIT: u8 = 6;
+/// A hit landed on a foe at 100% or more.
+pub const C_HIT_100: u8 = 7;
+/// A KO dealt (a foe lost a stock); with `reads`, only a foe carrying that word.
+pub const C_KO: u8 = 8;
+/// A stage shift.
+pub const C_SHIFT: u8 = 9;
+/// Another drive of the same set fired.
+pub const C_FIRE: u8 = 10;
+/// No charge: the rule is always on (it shows on the orbiter when it applies).
+pub const C_PASSIVE: u8 = 11;
 
 /// The sim's effects (envoy-core-v2.md 2.4). Drive effects first, then keystone rules.
-pub const EFFECTS: [&str; 12] =
-    ["burst", "nova", "bolt", "haste", "shield", "shockwave", "chill", "shatter", "relay", "plague", "echo", "overclock"];
+pub const EFFECTS: [&str; 25] = [
+    "burst", "nova", "bolt", "haste", "shield", "shockwave", "chill", "shatter", "relay", "spire", "thorns", "heal",
+    "airjump", "feathers", "mark", "wildfire", "repeat", "surge", "tailwind", "plague", "echo", "overclock", "twin",
+    "winter", "glass",
+];
 pub const E_BURST: u8 = 0;
 pub const E_NOVA: u8 = 1;
 pub const E_BOLT: u8 = 2;
@@ -39,11 +54,29 @@ pub const E_SHOCKWAVE: u8 = 5;
 pub const E_CHILL: u8 = 6;
 pub const E_SHATTER: u8 = 7;
 pub const E_RELAY: u8 = 8;
-pub const E_PLAGUE: u8 = 9;
-pub const E_ECHO: u8 = 10;
-pub const E_OVERCLOCK: u8 = 11;
+pub const E_SPIRE: u8 = 9;
+pub const E_THORNS: u8 = 10;
+pub const E_HEAL: u8 = 11;
+pub const E_AIRJUMP: u8 = 12;
+pub const E_FEATHERS: u8 = 13;
+pub const E_MARK: u8 = 14;
+pub const E_WILDFIRE: u8 = 15;
+pub const E_REPEAT: u8 = 16;
+pub const E_SURGE: u8 = 17;
+pub const E_TAILWIND: u8 = 18;
+pub const E_PLAGUE: u8 = 19;
+pub const E_ECHO: u8 = 20;
+pub const E_OVERCLOCK: u8 = 21;
+pub const E_TWIN: u8 = 22;
+pub const E_WINTER: u8 = 23;
+pub const E_GLASS: u8 = 24;
 /// The first keystone effect: effects below it are drive effects.
 pub const E_KEYSTONE0: u8 = E_PLAGUE;
+/// The effects that launch (Q6: only the drives you time yourself), through `gd_envoy_blast`.
+pub const LAUNCHES: [u8; 3] = [E_NOVA, E_SHOCKWAVE, E_SPIRE];
+
+/// The presentation's effect shapes (`look`): envoy_ui draws each fire with its drive's look in its family colour.
+pub const LOOKS: [&str; 10] = ["burst", "ring", "bolt", "spikes", "beam", "orb", "line", "rain", "wave", "glow"];
 
 /// The four words (index 0: none).
 pub const WORDS: [&str; 5] = ["", "Burning", "Chilled", "Marked", "Haste"];
@@ -90,9 +123,17 @@ pub const BURN_TICK_PCT: i32 = 2000;
 pub const BURN_TICK: i32 = 60;
 pub const BURN_FRAMES: i32 = 240;
 pub const BURN_STACKS: i32 = 3;
-/// Chilled / Haste: the walk and dash ratio x1000.
+/// Chilled / Haste: the walk and dash ratio x1000; Slow (a price): x0.85.
 pub const CHILL_SPEED: i32 = 700;
 pub const HASTE_SPEED: i32 = 1300;
+pub const SLOW_SPEED: i32 = 850;
+/// Marked: the hits it takes deal this much more (x1000).
+pub const MARK_MORE: i32 = 300;
+/// On a boss, Chilled and Marked act at half strength (envoy-core-v2.md 2.6): x0.85 speed, +15%.
+pub const BOSS_CHILL_SPEED: i32 = 850;
+pub const BOSS_MARK_MORE: i32 = 150;
+/// Lock (a price): the tag cooldown in frames.
+pub const LOCK_TAG_COOLDOWN: i32 = 600;
 /// Level scale of a drive's number x1000: level 1, 2, 3.
 pub const LEVEL_SCALE: [i32; 3] = [1000, 1600, 2400];
 pub const MAX_LEVEL: i32 = 3;

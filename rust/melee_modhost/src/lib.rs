@@ -665,6 +665,29 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
         *V.get_or_init(|| std::env::var("MELEE_ENVOY_SHARED_DRIVES").is_ok_and(|v| v == "1")) as i32
     });
+    // MELEE_ENVOY_COOP=1: local co-op (envoy-core-v2.md V2), fixed per process; the run reads it when it starts
+    w!("gd_envoy_coop", || -> i32 {
+        static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        *V.get_or_init(|| std::env::var("MELEE_ENVOY_COOP").is_ok_and(|v| v == "1")) as i32
+    });
+    // V2 drive effects (melee_modes::tu::envoy): speed from a stored base, the orb's absorb, hit attribution, air
+    // jumps, launching blasts on the engine's hit path; all game state, rolled back with the game
+    w!("gd_envoy_speed", |slot: i32, active: i32, bench: i32| -> i32 { unsafe { melee_modes::tu::envoy::speed(slot, active, bench) } });
+    w!("gd_envoy_absorb", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::absorb(slot) } });
+    w!("gd_envoy_attacker", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::attacker(slot) } });
+    w!("gd_envoy_jumps", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::jumps(slot) } });
+    w!("gd_envoy_air_jump", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::air_jump(slot) } });
+    w!("gd_envoy_blast", |slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg: i32, bkb: i32| -> i32 {
+        unsafe { melee_modes::tu::envoy::blast(slot, canon(x), canon(y), canon(r), dmg, angle, kbg, bkb) }
+    });
+    // the boss carrier slot of a Petey fight (-1 none) and Petey's body position (x, y as f32 bits in out[0..2]), the hits each slot landed on him (out[2..6])
+    w!("gd_envoy_boss", |mut c: Caller<'_, HostData>, out: u32| -> i32 {
+        let s = melee_modes::tu::petey::carrier();
+        let (x, y) = melee_modes::tu::petey::pos();
+        let h = unsafe { melee_modes::tu::petey::HITS };
+        write_words(&mut c, out, &[canon(x).to_bits(), canon(y).to_bits(), h[0], h[1], h[2], h[3]]);
+        s
+    });
     w!("gd_envoy_seq", || -> i32 { unsafe { melee_modes::tu::envoy::SEQ } });
     // the door (envoy-redesign.md 1.3): whether the run is armed (the camp's Continue / New run); the sim publishes a
     // plan only while armed, so VS stays retail with the mods loaded
@@ -680,7 +703,10 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         }
         n as i32
     });
-    w!("gd_envoy_roster", |i: i32| -> i32 { if !(0..2).contains(&i) { return -1 } unsafe { melee_modes::tu::envoy::ROSTER[i as usize] } });
+    // the pairs the last rewrite used: 0 / 1 player 1's main / partner, 2 / 3 player 2's (co-op; -1 solo)
+    w!("gd_envoy_roster", |i: i32| -> i32 {
+        match i { 0 | 1 => unsafe { melee_modes::tu::envoy::ROSTER[i as usize] }, 2 | 3 => unsafe { melee_modes::tu::envoy::ROSTER2[i as usize - 2] }, _ => -1 }
+    });
     // Brawl audio from the player's own disc (melee_audio::brawl, docs/rust-port/notes/brawl-audio.md). Presentation
     // only: the play calls always answer 0 (fire and forget, silent without the disc) so a mod's sim cannot branch on
     // whether the disc is present; gd_brawl_present is for UI only.
@@ -1155,6 +1181,7 @@ fn frame_hook(post: bool) {
             // a queued tag swap and the transition clock: between logic frames, outside the procs
             melee_modes::tu::tag_swap::tick();
             melee_modes::tu::petey::tick();
+            melee_modes::tu::envoy::tick();
         }
     }
 }

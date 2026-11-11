@@ -866,6 +866,66 @@ const M_GLASS: i32 = 6;
 const M_RING2: i32 = 7;
 const M_RING3: i32 = 8;
 const M_CROWN: i32 = 9;
+/// The Party pack set (DRIVE-MODELS.md, melee_modes::tu::drive_draw): the manifest make_drives.py writes, one key a
+/// line, model id = PARTY_FIRST + line. Tier rings and the ascended overlay share the bodies' frame.
+const PARTY_KEYS: &str = include_str!("../../../../pc/scripts/examples/envoy_drives/models/drive_party.txt");
+const PARTY_FIRST: i32 = 10;
+const M_RING_RARE: i32 = 10;
+const M_RING_EPIC: i32 = 11;
+const M_ASCENDED: i32 = 12;
+/// Rock: 12 degrees about the vertical axis, a 2.4 s period (144 presents), each slot a fifth of a period apart.
+const ROCK: f32 = 0.209_44;
+const ROCK_PERIOD: f32 = 144.0;
+/// Each pool record's model (0 = not looked up yet, -1 none: the family body).
+static mut MODEL_OF: [i32; POOL_LEN] = [0; POOL_LEN];
+
+/// The drive's own model by key, falling back to its family's legacy body.
+fn drive_model(id: i32) -> i32 {
+    let i = (id - 1).clamp(0, POOL_LEN as i32 - 1) as usize;
+    unsafe {
+        if MODEL_OF[i] == 0 {
+            MODEL_OF[i] = PARTY_KEYS.lines().position(|k| k == POOL[i].key).map_or(-1, |n| PARTY_FIRST + n as i32);
+        }
+        if MODEL_OF[i] > 0 { MODEL_OF[i] } else { POOL[i].family as i32 }
+    }
+}
+
+/// The facing yaw: 0 faces the camera; most drives rock, a few hold still or snap (the spec's orbit column, the
+/// cheap ones: Bolt snaps 8 degrees every 20 frames; Spire, Gatekeeper, Meteor, Leech, Affliction, Clean Landing
+/// face the camera without rocking).
+fn facing(id: i32, slot: usize) -> f32 {
+    let key = POOL[(id - 1).clamp(0, POOL_LEN as i32 - 1) as usize].key;
+    let t = unsafe { T } as f32;
+    match key {
+        "spire" | "gatekeeper" | "meteor" | "leech" | "affliction" | "clean_landing" => 0.0,
+        "bolt" => if (unsafe { T } / 20) % 2 == 0 { 0.1396 } else { -0.1396 },
+        _ => ROCK * sin(TAU * (t / ROCK_PERIOD + slot as f32 * 0.2)),
+    }
+}
+
+/// Level is size: x1.0, x1.15, x1.3 (levels past 3 keep the level-3 size).
+fn level_size(lv: i32) -> f32 {
+    match lv { i32::MIN..=1 => 1.0, 2 => 1.15, _ => 1.3 }
+}
+
+/// A drive's model with its treatments at one place: the tier ring under (Rare white, Epic foil with the spark), the
+/// body, the ascended halo and star over it (level 5 and up). All share the body's frame, yaw and scale.
+unsafe fn drive_at(id: i32, lv: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, glow: f32) {
+    let m = drive_model(id);
+    let s = scale * level_size(lv);
+    model(m, x, y, z, yaw, s, glow, 1.0);
+    if m >= PARTY_FIRST {
+        let tier = POOL[(id - 1).clamp(0, POOL_LEN as i32 - 1) as usize].tier;
+        if tier == 1 {
+            model(M_RING_RARE, x, y, z, yaw, s, 0.6, 1.0);
+        } else if tier >= 2 {
+            model(M_RING_EPIC, x, y, z, yaw + T as f32 * TAU / 180.0, s, 0.9, 1.0);
+        }
+        if lv >= 5 {
+            model(M_ASCENDED, x, y, z, yaw, s, 0.9, 1.0);
+        }
+    }
+}
 const FX_RING: i32 = 1;
 const FX_DISC: i32 = 2;
 const FX_SPIKES: i32 = 3;
@@ -977,7 +1037,7 @@ fn owner_pos(v: &[i32; VW], owner: i32) -> Option<(f32, f32)> {
 }
 
 /// One orbiting drive: darts to its latest fire's target, flashes, comes back dim; rings for its level.
-unsafe fn orbiter(v: &[i32; VW], owner: i32, id: i32, lv: i32, charge: i32, (mut x, mut y, mut z): (f32, f32, f32), cx: f32, cy: f32, scale: f32, dim: f32) {
+unsafe fn orbiter(v: &[i32; VW], owner: i32, id: i32, lv: i32, charge: i32, (mut x, mut y, mut z): (f32, f32, f32), cx: f32, cy: f32, scale: f32, dim: f32, slot: usize) {
     let d = &POOL[id as usize - 1];
     let play = v[V_PLAY];
     let ch = charge as f32 / 1000.0;
@@ -997,10 +1057,17 @@ unsafe fn orbiter(v: &[i32; VW], owner: i32, id: i32, lv: i32, charge: i32, (mut
             glow = if age < DART + 2 { 1.6 } else { 0.1 };
         }
     }
-    let yaw = T as f32 * 0.06 + id as f32;
-    model(d.family as i32, x, y, z, yaw, scale, glow * dim, 1.0);
-    if lv >= 2 {
-        model(if lv >= 3 { M_RING3 } else { M_RING2 }, x, y, z, yaw, scale * 1.05, 0.8 * dim, 1.0);
+    // faces the camera and rocks (DRIVE-MODELS.md 3: these are reliefs 0.4 deep, edge-on they vanish); level is
+    // size, tier under, ascension over
+    let _ = d;
+    if drive_model(id) >= PARTY_FIRST {
+        drive_at(id, lv, x, y, z, facing(id, slot), scale, glow * dim);
+    } else {
+        let yaw = T as f32 * 0.06 + id as f32;
+        model(d.family as i32, x, y, z, yaw, scale, glow * dim, 1.0);
+        if lv >= 2 {
+            model(if lv >= 3 { M_RING3 } else { M_RING2 }, x, y, z, yaw, scale * 1.05, 0.8 * dim, 1.0);
+        }
     }
 }
 
@@ -1041,7 +1108,7 @@ unsafe fn world(v: &[i32; VW]) {
                 let at = orbit_at(mx, my, i, n, r, p as f32 * 0.9 + if bench { 0.4 } else { 0.0 });
                 i += 1;
                 let owner = (p * 2 + set_f) as i32;
-                orbiter(v, owner, id, v[b + P_LEVELS + set_f * SLOTS + k], v[b + P_CHARGE + set_f * SLOTS + k], at, mx, my, if bench { 2.8 } else { 3.6 }, if bench { 0.6 } else { 1.0 });
+                orbiter(v, owner, id, v[b + P_LEVELS + set_f * SLOTS + k], v[b + P_CHARGE + set_f * SLOTS + k], at, mx, my, if bench { 2.8 } else { 3.6 }, if bench { 0.6 } else { 1.0 }, k);
             }
             // Bulwark's orb while armed; Haste: spikes at the feet
             if v[b + P_SHIELD + set_f] != 0 {
@@ -1077,7 +1144,7 @@ unsafe fn world(v: &[i32; VW]) {
             if id > 0 {
                 let at = orbit_at(qx, qy, i, n, 10.0, 1.7);
                 i += 1;
-                orbiter(v, OWNER_FOE + s as i32, id, v[b + S_LEVELS + k], v[b + S_CHARGE + k], at, qx, qy, 3.6, 0.9);
+                orbiter(v, OWNER_FOE + s as i32, id, v[b + S_LEVELS + k], v[b + S_CHARGE + k], at, qx, qy, 3.6, 0.9, k);
             }
         }
         if v[b + S_SHIELD] != 0 {
@@ -1141,8 +1208,15 @@ unsafe fn world(v: &[i32; VW]) {
             if humans == 2 {
                 fx(FX_RING, x, y, 0.0, 8.5, 1.0, 0.0, alpha(PLAYER_COL[p], 0.8));
             }
-            model(fam as i32, x, y, 0.0, T as f32 * 0.05, 5.0, 1.0, 1.0);
-            model(M_GLASS, x, y, 0.0, T as f32 * 0.05, 7.5, 0.5, 0.3);
+            // the drive's own model in the badge's place, rocking, tier ring showing; the glass shell only for a drive
+            // still drawn as a family body
+            let id = v[d + 1];
+            if drive_model(id) >= PARTY_FIRST {
+                drive_at(id, 1, x, y, 0.0, facing(id, k), 5.0, 1.0);
+            } else {
+                model(fam as i32, x, y, 0.0, T as f32 * 0.05, 5.0, 1.0, 1.0);
+                model(M_GLASS, x, y, 0.0, T as f32 * 0.05, 7.5, 0.5, 0.3);
+            }
         }
     }
     // each fire's effect, by its drive's look, in its family colour

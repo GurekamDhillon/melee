@@ -386,6 +386,161 @@ def main():
                else '{"builtin": "lit", "emission": 1.0}\n')
         (out / (name + ".material.json")).write_text(mat)
         print("%-18s %3d triangles %4d vertices  extent %.2f x %.2f x %.2f" % (name, len(idx)//3, len(verts), *ext))
+    write_party(out)
+
+
+# ------------------------------------------------------------------------------------------ the Party pack set (step 9)
+# One mesh per drive (46) and per Unique (16) from the shared part lists in drive_parts.py (the same lists draw the
+# sticker glyphs), the Rare / Epic tier rings and the ascended halo + star overlay (DRIVE-MODELS.md 2, 3).
+# Atlas decision: ONE taller atlas (128 x 256, rows 4 texels high) for the whole new set, not a separate Uniques atlas:
+# 12 family + 9 treatment + 32 Unique rows = 53 rows fit in one image, so the drawer keeps a single colour lookup for
+# the set (no per-model atlas switch) and the legacy 128 x 128 atlas stays byte-identical for the old six bodies.
+# No hull(): the ink outline is an effects-layer pass (port/fx: MAT_OUTLINE 0x40 on a drive body), not geometry.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import drive_parts as DP  # noqa: E402
+
+PW, PH, PRH = 128, 256, 4
+PARTY_ROWS = list(DP.ROWS)          # row order = atlas order
+assert len(PARTY_ROWS) * PRH <= PH, len(PARTY_ROWS)
+OVERLAYS = ["ring_rare2", "ring_epic", "ascended"]
+# body triangles per model, counted in DRIVE-MODELS.md 5 and 6 (the self-test holds the meshes to these)
+SPEC_TRIS = {'ember': 72, 'bolt': 16, 'nova': 76, 'wildfire': 108, 'spire': 20, 'kindle': 48, 'cinder_heart': 100,
+    'solar_flare': 72, 'frost': 80, 'shatter': 40, 'hex': 56, 'static': 72, 'affliction': 80, 'contagion': 116,
+    'steam': 88, 'feather_storm': 56, 'gatekeeper': 92, 'comet': 52, 'updraft': 48, 'skyhook': 76, 'meteor': 44,
+    'thunderhead': 112, 'rush': 120, 'tailwind': 104, 'clean_landing': 108, 'perfect_form': 140, 'slipstream': 80,
+    'slick': 108, 'jet_trail': 118, 'quicksilver': 140, 'riposte': 44, 'insulate': 108, 'bulwark': 48, 'thorns': 56,
+    'leech': 36, 'breaker': 32, 'last_stand': 72, 'colossus': 36, 'echo': 36, 'metronome': 36, 'relay': 168,
+    'surge': 24, 'crescendo': 48, 'snowball': 40, 'magpie': 88, 'mirror': 44, 'puppeteer': 120, 'ashbank': 196,
+    'changing_of_the_guard': 64, 'turnabout': 80, 'mockingbird': 136, 'hundred_year_seed': 56, 'lifeline_coin': 128,
+    'kiln': 80, 'absolution': 136, 'clockwork_heel': 184, 'hair_trigger': 72, 'shared_flame': 204, 'pied_piper': 92,
+    'fools_gold': 72, 'albatross': 72, 'ouroboros': 122,
+    'ring_rare2': 84, 'ring_epic': 112, 'ascended': 92}   # epic: the doc says 84 + a 16-triangle spark; the sheet's spark prism is 28
+
+
+def party_atlas():
+    """Base: the sheet's ramp (dark -> main, plus the glow tint t^2 * .18). Glow (what the drawer adds times its glow
+    parameter): hot rows t^1.2, treatment rows t^1.5, body rows a faint t^3 (the bevel rim)."""
+    base = bytearray(PW*PH*4); glow = bytearray(PW*PH*4)
+    for y in range(PH):
+        ri = y // PRH
+        name = PARTY_ROWS[ri] if ri < len(PARTY_ROWS) else None
+        for x in range(PW):
+            t = x / (PW-1)
+            o = (y*PW + x)*4
+            if name is None:
+                base[o:o+4] = bytes((0, 0, 0, 255)); glow[o:o+4] = bytes((0, 0, 0, 255)); continue
+            c = DP.ramp(name, t)
+            g = DP.ROWS[name][2]
+            if name.endswith("_hot"):
+                k = (t ** 1.2) * .8
+            elif name in ("white", "sun") or name.startswith("foil"):
+                k = (t ** 1.5) * .6
+            else:
+                k = (t ** 3) * .35
+            base[o:o+4] = bytes((int(c[0]), int(c[1]), int(c[2]), 255))
+            glow[o:o+4] = bytes((int(g[0]*k), int(g[1]*k), int(g[2]*k), 255))
+    return bytes(base), bytes(glow)
+
+
+def write_gxtex_wh(path, rgba, w, h):
+    image = bytearray()
+    for ty in range(0, h, 4):
+        for tx in range(0, w, 4):
+            ar, gb = bytearray(), bytearray()
+            for y in range(4):
+                for x in range(4):
+                    o = ((ty+y)*w + tx + x)*4
+                    ar += bytes((rgba[o+3], rgba[o])); gb += bytes((rgba[o+1], rgba[o+2]))
+            image += ar + gb
+    head = struct.pack(">4sIIIIIIIIII", b"GXTX", 1, 6, w, h, 0xFFFFFFFF, 0, len(image), 0, 64, 64 + len(image))
+    path.write_bytes(head + bytes(64 - len(head)) + bytes(image))
+
+
+def overlay_mesh(name):
+    if name == "ring_rare2":
+        return DP.tier_mesh(DP.Mesh(), 1)
+    if name == "ring_epic":
+        return DP.tier_mesh(DP.Mesh(), 2)
+    # ascended: the 12-segment flat gold ring and the two-sided ten-point star over the form (asc_mesh minus the body)
+    m = DP.Mesh()
+    m.ring_y(.52, .075, 12, "sun", 1.0, y=1.34)
+    st = [(0, 1), (.3, .32), (1.02, .3), (.46, -.16), (.64, -.88), (0, -.48), (-.64, -.88), (-.46, -.16), (-1.02, .3), (-.3, .32)]
+    s = DP.Mesh()
+    for i in range(10):
+        for zz in (.1, -.1):
+            s.tri(((0, 0, zz), (st[i][0]*.38, st[i][1]*.38, 0), (st[(i+1) % 10][0]*.38, st[(i+1) % 10][1]*.38, 0)), 1.0, "sun", (0, 0, 0))
+    return m.extend(s.scaled(1, (0, 1.46, 0)))
+
+
+def party_models():
+    """key -> drive_parts Mesh in the parts box (-1..1). Written scaled by HALF with NO recentring, so every body and
+    every overlay share one frame (the tier ring lies under the form at y -1.14, the halo over it at 1.34)."""
+    out = {d["key"]: DP.dmesh(d) for d in DP.DRIVES}
+    out.update({u["key"]: DP.umesh(u) for u in DP.UNIQUES})
+    out.update({k: overlay_mesh(k) for k in OVERLAYS})
+    return out
+
+
+def party_vertices(mesh):
+    verts, idx = [], []
+    for p0, p1, p2, t, rw in mesh.tris:
+        p0, p1, p2 = mul(p0, HALF), mul(p1, HALF), mul(p2, HALF)
+        cr = cross(sub(p1, p0), sub(p2, p0))
+        n = norm(cr) if dot(cr, cr) > 1e-12 else (0, 1, 0)
+        u = (3 + t*(PW-6)) / PW
+        v = (PARTY_ROWS.index(rw)*PRH + PRH/2) / PH
+        for p in (p0, p1, p2):
+            idx.append(len(verts))
+            verts.append((p[0], p[1], p[2], u, v, n[0], n[1], n[2]))
+    return verts, idx
+
+
+def party_order():
+    """Model order after the ten legacy models: the three overlays, the 46 drives, the 16 Uniques."""
+    return OVERLAYS + [d["key"] for d in DP.DRIVES] + [u["key"] for u in DP.UNIQUES]
+
+
+def self_test(models):
+    """Triangle counts against the spec, bounds, ramp range, atlas rows, outward winding; exits on any miss."""
+    bad = []
+    if set(SPEC_TRIS) != set(models):
+        bad.append("model set differs from the spec: %s" % sorted(set(SPEC_TRIS) ^ set(models)))
+    for k, m in models.items():
+        if SPEC_TRIS.get(k) != len(m.tris):
+            bad.append("%s: %d triangles, spec %s" % (k, len(m.tris), SPEC_TRIS.get(k)))
+        for p0, p1, p2, t, rw in m.tris:
+            if rw not in DP.ROWS:
+                bad.append("%s: row %s" % (k, rw)); break
+            if not all(abs(c) <= 1.9 for p in (p0, p1, p2) for c in p):
+                bad.append("%s: outside the 1.9 box" % k); break
+            if not 0 <= t <= 1.0001:
+                bad.append("%s: ramp %.2f" % (k, t)); break
+        if k != "ascended":   # the star is two-sided flat, zero volume
+            vol = sum(dot(p0, cross(p1, p2)) for p0, p1, p2, _, _ in m.tris) / 6
+            if vol <= 0:
+                bad.append("%s: inward winding (volume %.3f)" % (k, vol))
+    if bad:
+        raise SystemExit("self-test FAILED:\n  " + "\n  ".join(bad))
+    return sum(len(m.tris) for m in models.values())
+
+
+def write_party(out):
+    base, glow = party_atlas()
+    write_gxtex_wh(out / "drive_party_atlas.gxtex", base, PW, PH)
+    write_gxtex_wh(out / "drive_party_atlas.glow.gxtex", glow, PW, PH)
+    models = party_models()
+    total = self_test(models)
+    order = party_order()
+    for key in order:
+        verts, idx = party_vertices(models[key])
+        write_mesh(out / ("drive_%s.gxmesh" % key), verts, idx)
+        (out / ("drive_%s.coll.json" % key)).write_text('{"version":1,"atlas":"drive_party_atlas","alpha":0,"lines":[]}\n')
+        (out / ("drive_%s.material.json" % key)).write_text('{"builtin": "lit", "emission": 1.0}\n')
+    # the manifest the game is held to (drive_draw.rs's include list and envoy_ui's key lookup): one key per line,
+    # model id = 10 + line number
+    (out / "drive_party.txt").write_text("".join(k + "\n" for k in order))
+    print("party set: %d models (%d drives, %d Uniques, %d overlays), %d triangles, atlas %dx%d, %d rows; self-test ok"
+          % (len(order), len(DP.DRIVES), len(DP.UNIQUES), len(OVERLAYS), total, PW, PH, len(PARTY_ROWS)))
 
 
 if __name__ == "__main__":

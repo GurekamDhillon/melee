@@ -19,9 +19,32 @@ macro_rules! model {
     };
 }
 
-/// Model ids (gd_ui_world_model / gd_ui_model_tex): the six family bodies, the glass shell, the three ring overlays.
+/// Model ids (gd_ui_world_model / gd_ui_model_tex): 0-5 the six legacy family bodies, 6 the glass shell, 7-9 the
+/// legacy ring overlays; from [`PARTY_FIRST`] the Party pack set in `models/drive_party.txt` order (make_drives.py
+/// writes both): 10 the Rare tier ring, 11 the Epic ring with its spark, 12 the ascended halo and star, then one model
+/// per drive (46) and per Unique (16). The Party set shares one frame (no recentring: the tier ring under the form
+/// and the halo over it line up with any body drawn at the same place, yaw and scale) and the 128 x 256 Party atlas.
 pub const M_GLASS: usize = 6;
-pub const MODEL_COUNT: usize = 10;
+pub const PARTY_FIRST: usize = 10;
+pub const M_RING_RARE: usize = 10;
+pub const M_RING_EPIC: usize = 11;
+pub const M_ASCENDED: usize = 12;
+pub const PARTY_COUNT: usize = 65;
+pub const MODEL_COUNT: usize = PARTY_FIRST + PARTY_COUNT;
+/// The Party manifest (one key per line, model id = PARTY_FIRST + line): what UI mods look a drive's model up by.
+pub static PARTY_KEYS: &str = include_str!("../../../../pc/scripts/examples/envoy_drives/models/drive_party.txt");
+/// The ink outline (effects layer, port/fx `melee_gx::fx::MAT_OUTLINE`): drive BODIES only (not tier rings, the
+/// ascended overlay or the glass), in this colour. Defined here until port/fx lands, then use the fx constant.
+pub const MAT_OUTLINE: u8 = 0x40;
+pub const INK_RGBA: u32 = 0x2A1A_6EFF;
+/// Whether a model is a drive body the outline pass should edge (legacy family bodies and every Party drive/Unique).
+pub fn is_drive_body(model: usize) -> bool {
+    model < M_GLASS || (PARTY_FIRST + 3..MODEL_COUNT).contains(&model)
+}
+/// Uniques take a second, white edge outside the ink (DRIVE-MODELS.md 6: ink 0.09, white 0.16).
+pub fn is_unique(model: usize) -> bool {
+    (MODEL_COUNT - 16..MODEL_COUNT).contains(&model)
+}
 static MESH_FILES: [&[u8]; MODEL_COUNT] = [
     model!("drive_red"),
     model!("drive_green"),
@@ -33,9 +56,78 @@ static MESH_FILES: [&[u8]; MODEL_COUNT] = [
     model!("drive_ring_magic"),
     model!("drive_ring_rare"),
     model!("drive_ring_unique"),
+    model!("drive_ring_rare2"),
+    model!("drive_ring_epic"),
+    model!("drive_ascended"),
+    model!("drive_ember"),
+    model!("drive_bolt"),
+    model!("drive_nova"),
+    model!("drive_wildfire"),
+    model!("drive_spire"),
+    model!("drive_kindle"),
+    model!("drive_cinder_heart"),
+    model!("drive_solar_flare"),
+    model!("drive_frost"),
+    model!("drive_shatter"),
+    model!("drive_hex"),
+    model!("drive_static"),
+    model!("drive_affliction"),
+    model!("drive_contagion"),
+    model!("drive_steam"),
+    model!("drive_feather_storm"),
+    model!("drive_gatekeeper"),
+    model!("drive_comet"),
+    model!("drive_updraft"),
+    model!("drive_skyhook"),
+    model!("drive_meteor"),
+    model!("drive_thunderhead"),
+    model!("drive_rush"),
+    model!("drive_tailwind"),
+    model!("drive_clean_landing"),
+    model!("drive_perfect_form"),
+    model!("drive_slipstream"),
+    model!("drive_slick"),
+    model!("drive_jet_trail"),
+    model!("drive_quicksilver"),
+    model!("drive_riposte"),
+    model!("drive_insulate"),
+    model!("drive_bulwark"),
+    model!("drive_thorns"),
+    model!("drive_leech"),
+    model!("drive_breaker"),
+    model!("drive_last_stand"),
+    model!("drive_colossus"),
+    model!("drive_echo"),
+    model!("drive_metronome"),
+    model!("drive_relay"),
+    model!("drive_surge"),
+    model!("drive_crescendo"),
+    model!("drive_snowball"),
+    model!("drive_magpie"),
+    model!("drive_mirror"),
+    model!("drive_puppeteer"),
+    model!("drive_ashbank"),
+    model!("drive_changing_of_the_guard"),
+    model!("drive_turnabout"),
+    model!("drive_mockingbird"),
+    model!("drive_hundred_year_seed"),
+    model!("drive_lifeline_coin"),
+    model!("drive_kiln"),
+    model!("drive_absolution"),
+    model!("drive_clockwork_heel"),
+    model!("drive_hair_trigger"),
+    model!("drive_shared_flame"),
+    model!("drive_pied_piper"),
+    model!("drive_fools_gold"),
+    model!("drive_albatross"),
+    model!("drive_ouroboros"),
 ];
 static ATLAS: &[u8] = include_bytes!("../../../../pc/scripts/examples/envoy_drives/models/drive_atlas.gxtex");
 static GLOW: &[u8] = include_bytes!("../../../../pc/scripts/examples/envoy_drives/models/drive_atlas.glow.gxtex");
+static PARTY_ATLAS: &[u8] = include_bytes!("../../../../pc/scripts/examples/envoy_drives/models/drive_party_atlas.gxtex");
+static PARTY_GLOW: &[u8] = include_bytes!("../../../../pc/scripts/examples/envoy_drives/models/drive_party_atlas.glow.gxtex");
+/// The Party set's fixed frame: the parts box (-1..1) times HALF 2.2, so 4.4 world units is one model diameter.
+const PARTY_SPAN: f32 = 4.4;
 
 /// One decoded model: triangles (3 vertices each) in unit-diameter space, normals, base and glow colours.
 pub struct Baked {
@@ -90,6 +182,11 @@ fn sample(img: &(usize, usize, Vec<u8>), u: f32, v: f32) -> [f32; 3] {
 
 /// A GXMS v2 mesh, unrolled to triangles and normalised to a unit diameter around its centre.
 pub fn decode_mesh(d: &[u8], atlas: &(usize, usize, Vec<u8>), glow: &(usize, usize, Vec<u8>)) -> Option<Baked> {
+    decode_mesh_in(d, atlas, glow, None)
+}
+
+/// As [`decode_mesh`]; `fixed`: no recentring, divide by this span (the Party set's shared frame).
+pub fn decode_mesh_in(d: &[u8], atlas: &(usize, usize, Vec<u8>), glow: &(usize, usize, Vec<u8>), fixed: Option<f32>) -> Option<Baked> {
     if d.len() < 36 || &d[..4] != b"GXMS" || be32(d, 4) != 2 {
         return None;
     }
@@ -114,8 +211,13 @@ pub fn decode_mesh(d: &[u8], atlas: &(usize, usize, Vec<u8>), glow: &(usize, usi
             hi[k] = hi[k].max(v[k]);
         }
     }
-    let c = [(lo[0] + hi[0]) * 0.5, (lo[1] + hi[1]) * 0.5, (lo[2] + hi[2]) * 0.5];
-    let size = (0..3).map(|k| hi[k] - lo[k]).fold(0.0f32, f32::max).max(1e-3);
+    let (c, size) = match fixed {
+        Some(span) => ([0.0; 3], span),
+        None => (
+            [(lo[0] + hi[0]) * 0.5, (lo[1] + hi[1]) * 0.5, (lo[2] + hi[2]) * 0.5],
+            (0..3).map(|k| hi[k] - lo[k]).fold(0.0f32, f32::max).max(1e-3),
+        ),
+    };
     let mut b = Baked { pos: Vec::new(), nrm: Vec::new(), base: Vec::new(), glow: Vec::new() };
     for t in 0..ni {
         let i = u16::from_be_bytes([d[io + t * 2], d[io + t * 2 + 1]]) as usize;
@@ -137,10 +239,16 @@ pub fn models() -> &'static [Baked] {
     M.get_or_init(|| {
         let empty = (4usize, 4usize, vec![0u8; 64]);
         let atlas = decode_gxtx(ATLAS).unwrap_or_else(|| empty.clone());
-        let glow = decode_gxtx(GLOW).unwrap_or(empty);
+        let glow = decode_gxtx(GLOW).unwrap_or_else(|| empty.clone());
+        let patlas = decode_gxtx(PARTY_ATLAS).unwrap_or_else(|| empty.clone());
+        let pglow = decode_gxtx(PARTY_GLOW).unwrap_or(empty);
         MESH_FILES
             .iter()
-            .map(|d| decode_mesh(d, &atlas, &glow).unwrap_or(Baked { pos: Vec::new(), nrm: Vec::new(), base: Vec::new(), glow: Vec::new() }))
+            .enumerate()
+            .map(|(i, d)| {
+                let b = if i >= PARTY_FIRST { decode_mesh_in(d, &patlas, &pglow, Some(PARTY_SPAN)) } else { decode_mesh(d, &atlas, &glow) };
+                b.unwrap_or(Baked { pos: Vec::new(), nrm: Vec::new(), base: Vec::new(), glow: Vec::new() })
+            })
             .collect()
     })
 }
@@ -483,9 +591,25 @@ mod tests {
         let ms = models();
         assert_eq!(ms.len(), MODEL_COUNT);
         for (i, m) in ms.iter().enumerate() {
-            assert!(m.pos.len() >= 60 && m.pos.len() % 3 == 0, "model {i}: {} vertices", m.pos.len());
-            assert!(m.pos.iter().all(|p| p.iter().all(|v| v.abs() <= 0.51)));
+            assert!(m.pos.len() >= 48 && m.pos.len() % 3 == 0, "model {i}: {} vertices", m.pos.len());
+            // legacy: unit diameter; Party: the shared frame (the halo rides over the form, to 1.86 / 4.4 * 2.2)
+            let lim = if i >= PARTY_FIRST { 0.95 } else { 0.51 };
+            assert!(m.pos.iter().all(|p| p.iter().all(|v| v.abs() <= lim)), "model {i} out of bounds");
         }
+        // the include list and the generator's manifest agree (packaging count: 65 Party models)
+        assert_eq!(PARTY_KEYS.lines().count(), PARTY_COUNT);
+        assert_eq!(MESH_FILES.len(), MODEL_COUNT);
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../pc/scripts/examples/envoy_drives/models/");
+        for (k, key) in PARTY_KEYS.lines().enumerate() {
+            let disk = std::fs::read(format!("{dir}drive_{key}.gxmesh")).expect(key);
+            assert!(disk == MESH_FILES[PARTY_FIRST + k], "include list out of order at {key}");
+        }
+        assert_eq!(PARTY_KEYS.lines().nth(M_ASCENDED - PARTY_FIRST), Some("ascended"));
+        assert!(is_drive_body(PARTY_FIRST + 3) && !is_drive_body(M_RING_EPIC) && is_unique(MODEL_COUNT - 1));
+        // the ember is orange (the Fire row), not the legacy red
+        let e = &ms[PARTY_FIRST + 3];
+        let a = e.base.iter().fold([0.0f32; 3], |a, c| [a[0] + c[0], a[1] + c[1], a[2] + c[2]]);
+        assert!(a[0] > a[1] && a[1] > a[2], "ember {a:?}");
         // the red body is red, the blue body blue (the atlas rows land where make_drives.py put them)
         let avg = |m: &Baked| m.base.iter().fold([0.0f32; 3], |a, c| [a[0] + c[0], a[1] + c[1], a[2] + c[2]]);
         let (r, b) = (avg(&ms[0]), avg(&ms[2]));

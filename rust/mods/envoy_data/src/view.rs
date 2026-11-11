@@ -116,6 +116,7 @@ pub const P_SHOP_FIGHTER: usize = 120; // the fighter the shop acts on (0 main, 
 pub const P_SHOP_DONE: usize = 121; // 1: left the shop
 pub const P_SHOP_MSG: usize = 122; // the last result: SM_* (for a one-line message)
 pub const P_SHOP_LEVEL_PRICE: usize = 123; // [SLOTS] the price to level the shop fighter's slot k (0: max level / empty)
+pub const P_SHOP_STOCK_PRICE: usize = 128; // the price to restore a stock (rises per loop)
 
 pub const DROPS: usize = 2;
 

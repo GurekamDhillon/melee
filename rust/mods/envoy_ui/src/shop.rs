@@ -42,7 +42,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
             }
             SHOP_STOCK => {
                 label.s("Restore a stock");
-                price = 100;
+                price = v[pbk + P_SHOP_STOCK_PRICE];
             }
             SHOP_REROLL => {
                 label.s("Swap the drives on sale");

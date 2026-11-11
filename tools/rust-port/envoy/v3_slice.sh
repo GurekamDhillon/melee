@@ -8,7 +8,8 @@
 #      5 volley: Volley on D-pad right (pad)                     6 shop: a full-row pick, a buy, a level, a reroll, a
 #                                                                  reorder, a full row replaced (pad, fight 2)
 #      7 finale: Grand Finale A/B launch ratio               8 coop: two meters, cash-outs, one purse
-#      9 petey: the Petey boss with breaks
+#      9 petey: the Petey boss with breaks          10 loop3: a run begun in loop 3 (endless loops)
+#     11 loopboss: the boss falls in loop 2, the run goes on into loop 3
 #   then V2's six (v2_drives.sh) on the new rules.
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/v3_slice.sh   (OUT=dir; DEPTHS; FRAMES; ONLY="chain cash ...")
 set -u
@@ -19,7 +20,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 command -v python >/dev/null 2>&1 || python() { python3 "$@"; }
 exe="${EXE:-$repo/build/cargo/release/melee}"; [ -e "$exe" ] || exe="$exe.exe"
 out="${OUT:-${TEMP:-/tmp}/v3_slice}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint sim chain cash states tech volley shop finale coop petey}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint sim chain cash states tech volley shop finale coop petey loop3 loopboss}"
 fail=0
 # the machine-wide cargo lock (one build at a time): mkdir succeeds only when free
 cargo_locked() {
@@ -49,7 +50,7 @@ cp "$repo/build/mods/envoy_sim.wasm" "$mods/" || { echo "v3_slice: build the mod
 export MELEE_VOLUME=3 MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=2 MELEE_PAD_SCRIPT="$here/drives_pad.txt"
 run() { # name depth drives [env...]
   local name=$1 depth=$2 drives=$3; shift 3
-  env MELEE_WINDOW_TITLE="v3sim agent: v3_slice $name d$depth (port/v3sim)" MELEE_ENVOY_TEST_DRIVES="$drives" "$@" "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
+  env MELEE_WINDOW_TITLE="v3ng agent: v3_slice $name d$depth (port/v3ng)" MELEE_ENVOY_TEST_DRIVES="$drives" "$@" "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
     --scenario pad_falcon_fox_fd --depth "$depth" --frames "$frames" --timeout 1800 >"$out/$name.d$depth.log" 2>&1
   grep 'engine synctest' "$out/$name.d$depth.log"
 }
@@ -120,6 +121,19 @@ for d in $depths; do
     seen petey "$d" "RUN CLEAR" || miss="$miss (no RUN CLEAR)"; seen petey "$d" "cash-out, coins" || miss="$miss (no break cash-out)"
     check 9 petey "$d" "$line" "$miss"
     echo "     petey d$d: $(grep -c 'boss break' "$(L petey "$d")") breaks"
+  fi
+  if on loop3; then
+    # endless loops: a run begun in loop 3 (@3) at the pack fight: CPU level 9, 3 foes, the elite modifier, foe drives
+    line=$(run loop3 "$d" "ember:5,bolt:4,nova:3,noshop,@3|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3)
+    miss=""; seen loop3 "$d" "foe carries" || miss="$miss (no foe drives)"
+    check 10 loop3 "$d" "$line" "$miss"
+    echo "     loop3 d$d: $(grep -c 'foe carries' "$(L loop3 "$d")") foe drives, $(grep -c 'drive fire' "$(L loop3 "$d")") fires"
+  fi
+  if on loopboss; then
+    # endless loops: the boss falls in loop 2 and the run goes on into loop 3 (no RUN CLEAR state, the loop moves)
+    line=$(run loopboss "$d" "ember:4,bolt:4,nova:4,noshop,^400,*9000,@2/rush|plague_bearer,grand_finale" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5)
+    miss=""; seen loopboss "$d" "envoy: loop now" || miss="$miss (no loop step)"
+    check 11 loopboss "$d" "$line" "$miss"
   fi
 done
 rm -rf "$mods"

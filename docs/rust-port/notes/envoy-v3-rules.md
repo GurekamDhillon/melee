@@ -79,6 +79,38 @@ processed at frame end in buffer order (12.4). The split test (`heat.rs`) proves
 records adding to N give bit-identical Heat, charge, tally, coins and pips, across the 150% line, for damage taken
 with and without Insulate, and through a cash-out.
 
+## Endless loops (NG+, 2026-11-11)
+
+Clearing the boss no longer ends the run. After the clear: the drive pick, the keystone pick if one is due, and the
+road's "Run cleared! Loop N begins" moment; the run goes on at fight 1 of the next loop with drives, levels,
+keystones, coins and slots kept, and one more stock in the pool (to 8). A run ends only when the pool is empty or
+the player abandons it at the camp; there is no cap on loops (the scaling stops counting at loop 50).
+
+Everything scales from one integer loop number in the sim state (`St::lp`, in the snapshot and the record). With
+e = loop - 1 (loop 1: all terms 0, and the seeded rolls are loop 1's own, so loop 1 plays as before):
+
+| what | per loop |
+|---|---|
+| foe damage dealt (attack ratio) | +20% (x1000 + 200e) |
+| foe damage taken (defence ratio; stands in for weight / knockback resistance) | / (1 + 0.15e) |
+| CPU level | 9 from loop 2 |
+| elite / boss stocks | +1 every second loop |
+| pack fight, solo | +1 foe from loop 2 (3 CPUs) |
+| ordinary fights | loop 2: the first foe carries 1 drive; loop 3 on: the first foe is an elite (size 1.15, the elite damage terms) with 2 drives, the others carry 1 |
+| elite / boss drives | +1 per loop (to 2) |
+| foe drive level | +1 per loop (to the level cap) |
+| Petey's cage HP (and so the HP between his four breaks) | +25% (plan word 30, `P_BOSS_HP`) |
+| shop prices: drives, level-ups, rerolls, a stock | +25% |
+| drive level cap (players and foes) | 3 + e, to 9; strength 1000 / 1600 / 2400, then +1000, +1200, +1400 ... (`level_scale`) |
+
+Heat's cap and the fire caps are unchanged (no instant kills). Slots stay at 5. The shop restocks every loop (the
+same fights open it). Shown: the fight HUD and road ("Loop 3 - Fight 2 of 5"), the saved-run sticker and Continue
+card, the abandon dialog, RUN OVER ("Reached loop 4, fight 3"). The best loop a save reached is kept by the host in
+`best.bin` beside `run.bin` and shown at the camp ("Best: loop 4"). The camp's NG+ row stays hidden.
+
+Test knob: the `MELEE_ENVOY_TEST_DRIVES` item `@N` starts a new run in loop N (with both bosses' slots and keystones
+counted).
+
 ## Engine hooks (all inert unless a run is armed)
 
 | hook | where |

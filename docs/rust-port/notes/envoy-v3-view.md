@@ -148,8 +148,12 @@ none: draw the link flash from that entry's position to this one), the Heat stat
 | `EV_INFERNO` 13 | player * 2 + fighter | 1: the set is live |
 | `EV_COINS` 14 | player | coins from a flat award (fight clear, interest) |
 
-## The record (704; version 5)
+## The record (704; version 6)
 
-Saved by the host; `REC_AT` = 704 there. Words 0-19 as V2; `R_DRIVES` 20-39 (`[4 sets][5]`, `(id + 1) << 2 | level`
-in slot order), `R_POOL_DIGEST` 40, `R_COINS` 41, `R_REROLLS` 42, `R_ACTIVE` 43, `R_PIPS` 44, `R_EARNED` 45, 46
-spare, 47 digest. A version-4 record is dropped (a new run).
+Saved by the host; `REC_AT` = 704 there. Words 0-19 as V2; `R_DRIVES` 20-39 (`[4 sets][5]`, `(id + 1) << 4 | level`
+in slot order; version 5: `<< 2`), `R_POOL_DIGEST` 40, `R_COINS` 41, `R_REROLLS` 42, `R_ACTIVE` 43, `R_PIPS` 44,
+`R_EARNED` 45, `R_LOOP` 46 (the loop; 0 in a version-5 record reads as loop 1), 47 digest. Version 5 is still read
+(`view::rec_drive`); a version-4 record is dropped (a new run).
+
+Endless loops also use run word 31 `V_LOOP` (the loop, 1 first) and player word 128 `P_SHOP_STOCK_PRICE` (the
+shop's restore-a-stock price, which rises per loop).

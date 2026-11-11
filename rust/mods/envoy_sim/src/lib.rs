@@ -1362,6 +1362,11 @@ unsafe fn reroll_cost() -> i32 {
     per_loop(PRICE_REROLL + PRICE_REROLL * S.shop_rerolls, LOOP_PRICE, lx())
 }
 
+/// Restoring a stock: +25% per loop.
+unsafe fn stock_price() -> i32 {
+    per_loop(PRICE_STOCK, LOOP_PRICE, lx())
+}
+
 unsafe fn spend(c: i32) -> bool {
     if coins() < c {
         return false;
@@ -1442,7 +1447,7 @@ unsafe fn shop_frame() {
                         SM_NONE
                     }
                     SHOP_STOCK => {
-                        if spend(PRICE_STOCK) {
+                        if spend(stock_price()) {
                             S.pool += 1;
                             for h in 0..nh() {
                                 gd_envoy_apply(h, AP_STOCKS, gd_player_stocks(h) + 1);
@@ -3381,6 +3386,7 @@ unsafe fn publish() {
         v[b + P_SHOP_FIGHTER] = sf as i32;
         v[b + P_SHOP_DONE] = if S.rw_active == RW_SHOP { S.rw_done[p] } else { 0 };
         v[b + P_SHOP_MSG] = S.shop_msg[p];
+        v[b + P_SHOP_STOCK_PRICE] = stock_price();
         for k in 0..SLOTS {
             v[b + P_SHOP_LEVEL_PRICE + k] = if k < n_open { level_price(sset, k) } else { 0 };
         }

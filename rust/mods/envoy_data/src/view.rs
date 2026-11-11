@@ -132,6 +132,10 @@ pub const P_TAG_BUF: usize = 151; // Quick Tag: frames a tag press is still reme
 pub const P_TAG_WINDOW: usize = 152; // frames left in the tag-cancel window after dealing damage (a tag now is a Handoff)
 pub const P_TAG_BUTTON: usize = 153; // the tag button: 0 Y, 1 X, 2 D-pad down (classic cinematic tag)
 pub const P_HANDOFF_ON: usize = 154; // 1: Handoff is on
+pub const P_ASSIST: usize = 155; // Assist Strike: frames the partner's strike has run + 1 (0: no strike out)
+pub const P_TAG_HOLD: usize = 156; // frames the Tag button has been held toward a swap (0: not held; P_TAG_HOLD_AT swaps)
+pub const P_ASSIST_COST: usize = 157; // Heat a strike costs (the notch on the Heat bar), whole Heat
+pub const P_TAG_HOLD_AT: usize = 158; // the hold that swaps, in frames (a release before it is a tap: a strike)
 pub const P_GAIN_FROM: usize = 148; // 3: the drop behind the last drop gain (worn, levelled, banked, flown in): x, y (x100, world), owner slot
 
 pub const DROPS: usize = 2;
@@ -222,6 +226,9 @@ pub const EV_HALVED: i32 = 12; // who = player; amount = Heat x1000 after a lost
 pub const EV_INFERNO: i32 = 13; // who = player * 2 + fighter; amount = 1: the set is complete (fight start / gained)
 pub const EV_TAG: i32 = 15; // who = player; amount = the fighter now in play (0 main, 1 partner): a Quick Tag
 pub const EV_SHIFT: i32 = 17; // a stage switch began; who = the reason (SH_*); amount = the destination ground kind
+pub const EV_ASSIST: i32 = 18; // who = player; amount = the move (AS_*): the partner jumped in and strikes
+pub const EV_ASSIST_END: i32 = 19; // who = player; amount = frames the strike ran: the partner left
+pub const EV_HEAT_SHORT: i32 = 20; // who = player; amount = Heat x1000: a tap with under the strike's cost (shake the bar)
 pub const EV_HANDOFF: i32 = 16; // who = player; amount = the fired drive's id + 1 | 0x100 when Relay fired the row
 pub const EV_COINS: i32 = 14; // who = player; amount = coins from a flat award (a fight cleared, interest)
 /// Why the stage switched (EV_SHIFT's who).
@@ -229,6 +236,13 @@ pub const SH_BREAK: i32 = 1; // an elite or a stock-based boss lost a stock it c
 pub const SH_WAVE: i32 = 2; // a wave's last foe fell and the next wave arrives (reserved: waves)
 pub const SH_KO: i32 = 3; // the Shifting road: a foe was KO'd (not the fight's last)
 pub const SH_DAMAGE: i32 = 4; // retired (the damage trigger was cut after play); kept so the id is not reused
+/// Assist Strike moves (EV_ASSIST's amount): ground forward / up / down smash, air forward / up / down air.
+pub const AS_FSMASH: i32 = 0;
+pub const AS_USMASH: i32 = 1;
+pub const AS_DSMASH: i32 = 2;
+pub const AS_FAIR: i32 = 3;
+pub const AS_UAIR: i32 = 4;
+pub const AS_DAIR: i32 = 5;
 pub const MARK_LCANCEL: i32 = 1;
 pub const MARK_WAVEDASH: i32 = 2;
 pub const MARK_TECH: i32 = 3;

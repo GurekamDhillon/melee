@@ -49,6 +49,10 @@ extern "C" {
     fn gd_tag_begin_ex(slot: i32, len: i32, flags: i32) -> i32;
     fn gd_tag_swap(skip: i32) -> i32;
     fn gd_tag_quick(slot: i32, any: i32, pause: i32) -> i32;
+    fn gd_tag_assist(slot: i32, dir: i32) -> i32;
+    fn gd_tag_assist_frames(slot: i32) -> i32;
+    fn gd_pad_held(port: i32) -> u32;
+    fn gd_pad_stick(port: i32) -> i32;
     fn gd_envoy_tag_button() -> i32;
     fn gd_transition_phase() -> i32;
     fn gd_transition_kind() -> i32;
@@ -101,6 +105,12 @@ const QT_COOLDOWN: i32 = 180;
 const QT_BUFFER: i32 = 8;
 const QT_WINDOW: i32 = 20;
 const QT_PAUSE: i32 = 2;
+/// Tap vs hold (Assist Strike): Tag released before QT_HOLD frames is a tap (the partner strikes, ASSIST_COST Heat);
+/// held QT_HOLD frames is the swap (free, the cooldown). A press within the after-damage window keeps it (Handoff).
+const QT_HOLD: i32 = 15;
+const ASSIST_COST: i64 = 30;
+/// The stick (pad units, about +-80) past which a strike goes up or down instead of forward.
+const ASSIST_STICK: i32 = 40;
 const TAG_BTN_Y: i32 = 0;
 const TAG_BTN_X: i32 = 1;
 const TAG_SKIP_AFTER: i32 = 6;
@@ -483,6 +493,17 @@ struct St {
     shift_paid: i32,
     /// Test knob (`noshift`): no stage switch at all (the owner's A/B).
     stage_off: i32,
+    /// Tap vs hold: frames Tag has been held since its press (0 none), the after-damage window at the press, the
+    /// stick direction at the press (0 forward, 1 up, 2 down), a tap waiting to strike (frames left), the swap's
+    /// remembered window, the strike frames seen last frame (the end edge), the test hold for `tagauto`.
+    hold_t: [i32; NP],
+    hold_win: [i32; NP],
+    hold_dir: [i32; NP],
+    strike_buf: [i32; NP],
+    buf_win: [i32; NP],
+    assist_seen: [i32; NP],
+    auto_hold: [i32; NP],
+    strikes: i32,
 }
 
 /// The 64-bit half of the state (Heat and charge in ticks, the purse, the pips): i64 words only.
@@ -1149,6 +1170,12 @@ unsafe fn on_new_match(seq: i32) {
     S.shift_dmg = 0;
     S.shift_paid = 0;
     S.tags = 0;
+    S.strikes = 0;
+    S.hold_t = [0; NP];
+    S.strike_buf = [0; NP];
+    S.buf_win = [0; NP];
+    S.assist_seen = [0; NP];
+    S.auto_hold = [0; NP];
     S.last_stocks = -1;
     S.collect = 0;
     S.won_pool = 0;
@@ -3685,10 +3712,15 @@ unsafe fn tag_cooldown(p: usize) -> i32 {
 unsafe fn quick_tag_frame() {
     let btn = if S.tag_btn == TAG_BTN_X { BTN_X } else { BTN_Y };
     for p in 0..nh() as usize {
-        // test knob `tagauto`: each player presses Tag every 150 frames (player 2 offset by 40), for synctests
+        // test knob `tagauto`: each player presses Tag every 150 frames (player 2 offset by 40), for synctests;
+        // every other press is held to a swap, the rest are taps (strikes)
         let auto = S.tag_auto != 0 && (S.play + 40 * p as i32) % 150 == 0;
-        if auto || gd_pad_pressed(p as i32) & btn != 0 {
-            S.tag_buf[p] = QT_BUFFER;
+        if auto {
+            S.auto_hold[p] = if ((S.play + 40 * p as i32) / 150) % 2 == 1 { QT_HOLD + 2 } else { 1 };
+        }
+        let held = gd_pad_held(p as i32) & btn != 0 || S.auto_hold[p] > 1;
+        if S.auto_hold[p] > 0 {
+            S.auto_hold[p] -= 1;
         }
         let win = S.dmg_win[p] > 0;
         if S.dmg_win[p] > 0 {
@@ -3697,6 +3729,42 @@ unsafe fn quick_tag_frame() {
         if S.tag_cd[p] > 0 {
             S.tag_cd[p] -= 1;
         }
+        // the strike's end edge
+        let fr = gd_tag_assist_frames(p as i32);
+        if fr == 0 && S.assist_seen[p] > 0 {
+            ev(EV_ASSIST_END, p as i32, S.assist_seen[p]);
+        }
+        S.assist_seen[p] = fr;
+        // tap or hold: decided at the release or at QT_HOLD frames
+        if auto || gd_pad_pressed(p as i32) & btn != 0 {
+            S.hold_t[p] = 1;
+            S.hold_win[p] = win as i32;
+            let st = gd_pad_stick(p as i32);
+            let (x, y) = ((st & 0xFF) as u8 as i8 as i32, (st >> 8 & 0xFF) as u8 as i8 as i32);
+            S.hold_dir[p] = if y >= ASSIST_STICK && y >= x.abs() {
+                1
+            } else if y <= -ASSIST_STICK && -y >= x.abs() {
+                2
+            } else {
+                0
+            };
+        } else if S.hold_t[p] > 0 {
+            if held {
+                S.hold_t[p] += 1;
+                if S.hold_t[p] >= QT_HOLD {
+                    S.hold_t[p] = 0;
+                    S.tag_buf[p] = QT_BUFFER;
+                    S.buf_win[p] = S.hold_win[p];
+                }
+            } else {
+                S.hold_t[p] = 0;
+                S.strike_buf[p] = QT_BUFFER;
+            }
+        }
+        if S.strike_buf[p] > 0 {
+            S.strike_buf[p] -= 1;
+            assist_try(p);
+        }
         if S.tag_buf[p] <= 0 {
             continue;
         }
@@ -3704,6 +3772,7 @@ unsafe fn quick_tag_frame() {
         if S.tag_cd[p] > 0 || gd_tag_partner(p as i32) < 0 {
             continue;
         }
+        let win = win || S.buf_win[p] != 0;
         let rc = gd_tag_quick(p as i32, win as i32, QT_PAUSE);
         if rc != 0 {
             if S.tag_buf[p] == 0 {
@@ -3713,6 +3782,7 @@ unsafe fn quick_tag_frame() {
             continue;
         }
         S.tag_buf[p] = 0;
+        S.buf_win[p] = 0;
         S.tag_cd[p] = tag_cooldown(p);
         S.tags += 1;
         log(b"envoy: quick tag, player*100 + count\0", p as i32 * 100 + S.tags);
@@ -3722,6 +3792,33 @@ unsafe fn quick_tag_frame() {
             handoff(p);
         }
     }
+}
+
+/// Assist Strike (a tap of Tag): with ASSIST_COST Heat the partner jumps in and strikes (the move by the stick at the
+/// press); under it, nothing but the bar's shake. A refusal (a strike out, the player not actionable) stays buffered.
+unsafe fn assist_try(p: usize) {
+    if HH.heat[p] < ASSIST_COST * HEAT_TICK {
+        S.strike_buf[p] = 0;
+        ev(EV_HEAT_SHORT, p as i32, heat::milli(HH.heat[p]));
+        log(b"envoy: strike refused, heat x1000\0", heat::milli(HH.heat[p]));
+        return;
+    }
+    if gd_tag_partner(p as i32) < 0 {
+        S.strike_buf[p] = 0;
+        return;
+    }
+    let mv = gd_tag_assist(p as i32, S.hold_dir[p]);
+    if mv < 0 {
+        if S.strike_buf[p] == 0 {
+            log(b"envoy: strike refused, rc\0", mv);
+        }
+        return;
+    }
+    S.strike_buf[p] = 0;
+    HH.heat[p] -= ASSIST_COST * HEAT_TICK;
+    S.strikes += 1;
+    ev(EV_ASSIST, p as i32, mv);
+    log(b"envoy: assist strike, player*100 + move\0", p as i32 * 100 + mv);
 }
 
 /// Handoff: a tag inside the window after dealing damage fires the newcomer's first trigger at once (a normal fire at
@@ -4242,6 +4339,10 @@ unsafe fn publish() {
         v[b + P_TAG_MAX] = tag_cooldown(p);
         v[b + P_TAG_BUF] = S.tag_buf[p];
         v[b + P_TAG_WINDOW] = S.dmg_win[p];
+        v[b + P_ASSIST] = S.assist_seen[p];
+        v[b + P_TAG_HOLD] = S.hold_t[p];
+        v[b + P_ASSIST_COST] = ASSIST_COST as i32;
+        v[b + P_TAG_HOLD_AT] = QT_HOLD;
         v[b + P_TAG_BUTTON] = S.tag_btn;
         v[b + P_HANDOFF_ON] = (S.handoff_off == 0) as i32;
         v[b + P_PARTNER_KIND] = gd_tag_partner(p as i32);

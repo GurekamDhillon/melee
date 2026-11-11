@@ -2111,6 +2111,15 @@ pub unsafe fn Fighter_procInput(g: G) {
                 fp.input.held_buttons[0] &= !m;
             }
         }
+        // Envoy Assist Strike: the partner out on a strike reads no pad (no smash charge, no drift)
+        if fp.is_sub_fighter() != 0 && crate::hooks::ENVOY_ASSIST[(fp.player_idx as usize) & 3] != 0 {
+            fp.input.lstick[0].x = 0.0;
+            fp.input.lstick[0].y = 0.0;
+            fp.input.cstick[0].x = 0.0;
+            fp.input.cstick[0].y = 0.0;
+            fp.input.triggers[0] = 0.0;
+            fp.input.held_buttons[0] = 0;
+        }
         Fighter_procInput_Inner1(fp);
         if fp.pad_port == 0 && e::gm_IsCurrently1PMode_inline() != 0 {
             let mask = (HSD_PAD_L | HSD_PAD_R | HSD_PAD_START) as u32;

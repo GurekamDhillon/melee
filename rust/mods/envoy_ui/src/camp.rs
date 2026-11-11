@@ -550,7 +550,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                     s.s(match cur {
                         0 => " - banks 3 picks",
                         1 => " - foes +1 drive, banks 2 picks + a level-up",
-                        _ => " - stage shifts on KOs and every 60%, +5 coins a shift",
+                        _ => " - stage shifts on foe KOs (2 a fight), +10 coins a shift",
                     });
                     e.text_ex(x + 16.0, y + 186.0, bs(12), INK, ALIGN_LEFT, 270.0, s.str());
                 }

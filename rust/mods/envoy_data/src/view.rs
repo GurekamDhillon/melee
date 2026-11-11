@@ -228,7 +228,7 @@ pub const EV_COINS: i32 = 14; // who = player; amount = coins from a flat award 
 pub const SH_BREAK: i32 = 1; // an elite or a stock-based boss lost a stock it can spare (Petey's arena never switches)
 pub const SH_WAVE: i32 = 2; // a wave's last foe fell and the next wave arrives (reserved: waves)
 pub const SH_KO: i32 = 3; // the Shifting road: a foe was KO'd (not the fight's last)
-pub const SH_DAMAGE: i32 = 4; // the Shifting road: the players dealt another SHIFT_DAMAGE percent in total
+pub const SH_DAMAGE: i32 = 4; // retired (the damage trigger was cut after play); kept so the id is not reused
 pub const MARK_LCANCEL: i32 = 1;
 pub const MARK_WAVEDASH: i32 = 2;
 pub const MARK_TECH: i32 = 3;
@@ -267,12 +267,12 @@ pub const RD_PRIZE_N: usize = 17; // tokens in RD_PRIZE
 pub const RD_FOE_DRIVES: usize = 18; // drives the lead foe of each fight carries, 4 bits per fight, the first lowest
 pub const RD_SHIFT_COINS: usize = 19; // coins each stage switch pays on this road (0: none; the Shifting road)
 pub const RD_SHIFT_CAP: usize = 20; // switches paid per fight at most
-pub const RD_SHIFT_DMG: usize = 21; // total percent the players deal between two damage switches (0: none)
+pub const RD_SHIFT_DMG: usize = 21; // retired: 0 (no damage trigger)
 
 pub const ROAD_OPEN: i32 = 1; // the session as it is: banks three drive picks
 pub const ROAD_STEEP: i32 = 2; // the same fights, every foe one more drive: banks two picks and a level-up
 pub const ROAD_SWARM: i32 = 3; // reserved (waves, coins)
-pub const ROAD_SHIFT: i32 = 4; // the same fights; the stage switches on each foe KO and every 60% dealt; each switch pays coins
+pub const ROAD_SHIFT: i32 = 4; // the same fights; the stage also switches on a foe KO (not the last), 2 a fight at most, 10 coins each
 pub const DANGER_CALM: i32 = 0;
 pub const DANGER_ROUGH: i32 = 1;
 pub const DANGER_STEEP: i32 = 2;
@@ -280,7 +280,7 @@ pub const DANGER_STEEP: i32 = 2;
 pub const TW_FOE_DRIVE: i32 = 1 << 0; // every foe carries one more drive (to the 2 a foe can hold)
 pub const TW_MORE_FOES: i32 = 1 << 1; // reserved: one more foe in every fight
 pub const TW_BIG_FOES: i32 = 1 << 2; // reserved: foes are larger
-pub const TW_FAST_SHIFT: i32 = 1 << 3; // the stage shifts often (the Shifting road: on each foe KO and every 60% dealt)
+pub const TW_FAST_SHIFT: i32 = 1 << 3; // the stage shifts on foe KOs (the Shifting road)
 
 /// Reward kinds: what a bank token (and a road's prize) opens at the stop. Only RK_PICK and RK_LEVEL are live.
 pub const RK_PICK: i32 = 1; // one of three drives

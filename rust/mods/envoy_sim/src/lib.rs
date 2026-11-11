@@ -8,7 +8,7 @@
 //!   pool: 4 solo, 5 in co-op (MELEE_ENVOY_COOP=1: a second human in slot 1 with its own pair).
 //! * tag: D-pad down (ground or air, actionable), 5 s cooldown (Lock: 10 s), 60-frame frozen cinematic.
 //! * stage switches: events, the next of BF / YS / DL / FoD / FD: a boss or elite breaks (every road); on the
-//!   Shifting road also each foe KO and every 60% dealt, each switch paying coins. Never in the first 3 s or a pick.
+//!   Shifting road also a foe KO (not the last); 1 a fight (2 on the Shifting road), 20 s apart, never in the first 8 s.
 //! * V3 Heat (envoy-synergy-v3.md 3, 12): one meter per player, +1 per 1% dealt (never by hit count), -1 per 1%
 //!   taken, Cold / Warm / Hot / Blazing scale every fire x1 / x1.25 / x1.5 / x2; a KO cashes out (coins into the one
 //!   purse, pips for the active, a flare at the other foes) and keeps half; a lost stock halves it.
@@ -107,11 +107,13 @@ const TAG_SKIP_AFTER: i32 = 6;
 const STAGE_LEN: i32 = 90;
 /// Stage switches (decide-6 A): no switch in a fight's first STAGE_GRACE live frames, none within STAGE_GAP of the
 /// last one (a request waits for both); the Shifting road's damage step (x1000, all players summed) and its pay.
-const STAGE_GRACE: i32 = 180;
-const STAGE_GAP: i32 = 240;
-const SHIFT_DAMAGE: i32 = 60_000;
-const SHIFT_COINS: i32 = 5;
-const SHIFT_CAP: i32 = 4;
+/// (Retuned after play: "it swapped stages way too much".) At most STAGE_MAX switches a fight (SHIFT_CAP on the
+/// Shifting road); the Shifting road switches on foe KOs only (no damage trigger) and pays SHIFT_COINS a switch.
+const STAGE_GRACE: i32 = 480;
+const STAGE_GAP: i32 = 1200;
+const STAGE_MAX: i32 = 1;
+const SHIFT_COINS: i32 = 10;
+const SHIFT_CAP: i32 = 2;
 const REWARD_TIME: i32 = 1200;
 /// The shop's timer (it leaves on its own at 0).
 const SHOP_TIME: i32 = 1800;
@@ -479,6 +481,8 @@ struct St {
     stage_want: i32,
     shift_dmg: i32,
     shift_paid: i32,
+    /// Test knob (`noshift`): no stage switch at all (the owner's A/B).
+    stage_off: i32,
 }
 
 /// The 64-bit half of the state (Heat and charge in ticks, the purse, the pips): i64 words only.
@@ -917,6 +921,10 @@ unsafe fn test_drives() {
                 }
                 if item == "protect" {
                     S.test_protect = 1;
+                    continue;
+                }
+                if item == "noshift" {
+                    S.stage_off = 1;
                     continue;
                 }
                 if item == "shift" {
@@ -2140,13 +2148,6 @@ unsafe fn deal(p: usize, v: i32, dmg: i32, coef: i32, tags: i32, astate: i32, cm
         return;
     }
     let vi = v as usize;
-    if shifting() && is_foe(v) {
-        S.shift_dmg = S.shift_dmg.saturating_add(dmg);
-        if S.shift_dmg >= SHIFT_DAMAGE {
-            S.shift_dmg -= SHIFT_DAMAGE;
-            stage_request(SH_DAMAGE);
-        }
-    }
     let no_line = v == S.boss_slot;
     let (g, _) = gain_now(p, tags);
     add_heat(p, heat::heat_gain(dmg, S.foe_m[vi], coef, g, no_line));
@@ -3490,7 +3491,7 @@ fn road_twists(kind: i32) -> i32 {
     }
 }
 
-/// The Shifting road's session (fights 1-3): the stage switches on each foe KO and every SHIFT_DAMAGE dealt.
+/// The Shifting road's session (fights 1-3): the stage also switches on a foe KO (not the fight's last).
 unsafe fn shifting() -> bool {
     road_twists(S.road) & TW_FAST_SHIFT != 0 && S.fight < 3
 }
@@ -3808,7 +3809,8 @@ unsafe fn stage_frame() {
     if S.stage_want == 0 {
         return;
     }
-    if S.outcome != 0 || S.collect != 0 {
+    let cap = if shifting() { SHIFT_CAP } else { STAGE_MAX };
+    if S.outcome != 0 || S.collect != 0 || S.stage_off != 0 || S.stage_switches >= cap {
         S.stage_want = 0;
         return;
     }
@@ -4043,6 +4045,7 @@ unsafe fn fight_won() {
         ev(EV_COINS, p as i32, c);
     }
     log(b"envoy: fight cleared, coins\0", c);
+    log(b"envoy: fight length, live frames\0", S.play);
     S.outcome = 1;
     S.pool = me;
     if sched().kind >= FK_ELITE && S.bosses < 2 && (S.fight as usize) < FIGHTS - 1 {
@@ -4156,7 +4159,7 @@ unsafe fn publish() {
         if kind == ROAD_SHIFT {
             v[b + RD_SHIFT_COINS] = SHIFT_COINS;
             v[b + RD_SHIFT_CAP] = SHIFT_CAP;
-            v[b + RD_SHIFT_DMG] = SHIFT_DAMAGE / 1000;
+            v[b + RD_SHIFT_DMG] = 0;
         }
         v[b + RD_NF] = 3;
         let tw = road_twists(kind);

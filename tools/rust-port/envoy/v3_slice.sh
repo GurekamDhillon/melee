@@ -24,10 +24,13 @@ fail=0
 # the machine-wide cargo lock (one build at a time): mkdir succeeds only when free
 cargo_locked() {
   local L="${CARGO_LOCK:-E:/Projects/Melee Workspace/scratch/.cargo-build.lock}" i
+  local me; me="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
   for i in $(seq 1 240); do mkdir "$L" 2>/dev/null && break; sleep 15; done
-  echo "$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" > "$L/owner"
+  # never run (or release) without holding it: a timed-out wait used to go ahead and then delete another owner's lock
+  [ "$i" -lt 240 ] || ! [ -d "$L" ] || { echo "cargo lock held by $(cat "$L/owner" 2>/dev/null); not building" >&2; return 1; }
+  echo "$me" > "$L/owner"
   cargo "$@"; local rc=$?
-  rm -rf "$L"; return $rc
+  grep -qx "$me" "$L/owner" 2>/dev/null && rm -rf "$L"; return $rc
 }
 on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 host=x86_64-pc-windows-msvc; case "$(uname -s)" in Linux*) host=x86_64-unknown-linux-gnu ;; esac

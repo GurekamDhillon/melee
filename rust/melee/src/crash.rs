@@ -314,6 +314,10 @@ fn install_fault_handler() {
         fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
     }
     unsafe extern "system" fn filter(p: *mut ExceptionPointers) -> i32 {
+        // the report allocates (format!, the file). A fault inside the game arena's allocator leaves its spin lock
+        // held, and the report's first allocation then spun on it forever: the crash looked like a hang at a load.
+        // From here this thread allocates from the system heap only.
+        melee_engine::arena::mark_foreign_thread();
         let rec = &*(*p).record;
         let base = GetModuleHandleW(core::ptr::null()) as usize;
         let addr = rec.address as usize;

@@ -177,7 +177,7 @@ impl Engine {
     pub fn next_vs(&mut self, scn: crate::scenario::Scenario) -> Result<(), String> {
         self.leave_scene();
         let _scope = crate::arena::GameScope::enter();
-        unsafe { crate::archive::RECLAIM = true };
+        unsafe { crate::archive::RECLAIM = std::env::var_os("MELEE_NO_RECLAIM").is_none() };
         crate::scenario::install(scn);
         unsafe {
             let mode = gm_1A3F::runGameMode_load(melee_types::GM_VS as u8);
@@ -776,7 +776,7 @@ impl Engine {
         let card = unsafe { CARD_ON } && crate::card::install();
         Self::boot_host(disc, mem_size, pads)?;
         unsafe {
-            crate::archive::RECLAIM = true;
+            crate::archive::RECLAIM = std::env::var_os("MELEE_NO_RECLAIM").is_none();
             melee_modes::tu::ext_hook::AUDIO_LIB_OFF = true;
             // PcUnlockAll (pc/platform/gw_runtime.c gw_PcUnlockAll): MELEE_UNLOCK_ALL wins, else ON (the C default).
             melee_modes::tu::gmmain_lib::ext::PCUNLOCKALL = Some(pc_unlock_all);

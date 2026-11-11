@@ -12,7 +12,7 @@
 [workspace]
 resolver = "2"
 members = ["melee_core", "melee_fptrace", "melee_types", "melee_runtime", "melee_world", "melee_fighter",
-           "melee_chara", "melee_items", "melee_modes", "melee_platform", "melee_gx", "melee_audio", "melee_net", "melee_data", "melee_script", "melee_link", "melee_engine", "melee_modhost", "melee", "melee_corev1", "melee_relay",
+           "melee_chara", "melee_items", "melee_modes", "melee_platform", "melee_gx", "melee_audio", "melee_net", "melee_data", "melee_script", "melee_link", "melee_engine", "melee_modhost", "melee", "melee_corev1", "melee_relay", "brawl_boss",
            "../tools/mex-import"]
 
 [workspace.package]

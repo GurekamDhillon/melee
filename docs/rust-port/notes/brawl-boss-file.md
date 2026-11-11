@@ -159,3 +159,13 @@ procs (enter / monitor / broken) native in the article, and the phase-up / break
 10. Requirement 18's first argument (always 0) and 6901's two zero scalars: meanings.
 11. 6907 vs 6908: both read the target's x relative to the boss in the spec; what is the difference?
 12. Loop-flagged motions: do the timelines restart when the animation wraps?
+
+### Mismatches between the spec and the file (found by the disc tests)
+
+13. Format 3.12 puts a shake 1 at frame 0 on Wait1's game thread 2. In the file that shake is on **JumpAttack's** game
+    thread 2 (after its body-contact call), and Wait1 has no shake. Is the 3.12 line attached to the wrong motion?
+14. The effect ids written "0xB9:190-192" (baskets) and "0xB9:170-175" (landing) are the decimal values 12124190-...,
+    which are bank 0xB9 with indices **30-32** and **10-15**. Which index does the effect archive use?
+15. Section 3.11 says 64 distinct command ids. The table lists 63, and 63 occur in the file.
+16. Wait-until inside a loop: see question 1. The runner defaults to the absolute motion-frame reading because it is
+    the one that keeps the observed 70-114 basket hitbox window.

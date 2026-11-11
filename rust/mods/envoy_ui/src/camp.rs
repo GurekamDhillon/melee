@@ -487,7 +487,7 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
         let kind = v[V_FIGHT_KIND];
         let (kname, kline, ifwin) = match kind {
             FK_PACK => ("Pack", "Two fighters at once.", "Your pick of three drives."),
-            FK_ELITE => ("Elite", "A strong fighter with drives of its own.", "A keystone, then your pick of three."),
+            FK_ELITE => ("Elite", "A strong fighter with drives of its own.", "Your pick of three, then a keystone."),
             FK_BOSS => ("Boss", "The last fight of the run.", "The run is cleared."),
             _ => ("Duel", "One fighter, nothing extra.", "Your pick of three drives."),
         };

@@ -1232,7 +1232,7 @@ unsafe fn draw_model(m: &'static crate::tu::petey_model::Model) {
     let at = [B.px, 0.0, 0.0];
     let a = m.body.anim(name);
     m.body.skin_with(a, fr, &mut bufs[0]);
-    pm::draw_tris(&bufs[0].tris, org, at, MODEL_SCALE, 0.0, B.flash[0] > 0);
+    pm::draw_tris(&m.body, &bufs[0].tris, org, at, MODEL_SCALE, 0.0, B.flash[0] > 0);
     let mut k = 1;
     for (i, arm) in [&m.arm_l, &m.arm_r].into_iter().enumerate() {
         let Some(r) = arm else { continue };
@@ -1243,7 +1243,7 @@ unsafe fn draw_model(m: &'static crate::tu::petey_model::Model) {
         }
         if let Some(b) = bufs.get_mut(slot) {
             r.skin_with(r.anim(name), fr, b);
-            pm::draw_tris(&b.tris, org, at, MODEL_SCALE, 0.0, B.flash[1 + i] > 0);
+            pm::draw_tris(r, &b.tris, org, at, MODEL_SCALE, 0.0, B.flash[1 + i] > 0);
         }
     }
 }

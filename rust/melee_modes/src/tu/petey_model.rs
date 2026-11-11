@@ -160,11 +160,12 @@ fn load() -> Result<Model, String> {
     let raw = std::fs::read(&f).map_err(|e| format!("boss archive not readable ({})", e.kind()))?;
     let mut leaves = vec![];
     walk(&unwrap(raw), 0, &mut leaves);
-    let mut texs: Vec<(String, Tex)> = vec![];
+    let mut tex_at: Vec<(String, usize, usize)> = vec![]; // (name, leaf, offset)
+    let mut plt_at: Vec<(String, usize, usize)> = vec![];
     let mut mdls: Vec<(String, Vec<u8>, usize)> = vec![];
     let mut chrs: Vec<(String, Vec<u8>, usize)> = vec![];
     let par = leaves.iter().find_map(|b| params(b));
-    for b in &leaves {
+    for (li, b) in leaves.iter().enumerate() {
         if b.len() < 0x10 || &b[..4] != b"bres" {
             continue;
         }
@@ -172,10 +173,13 @@ fn load() -> Result<Model, String> {
         for (name, off) in entries {
             match b.get(off..off + 4) {
                 Some(b"TEX0") => {
-                    if !texs.iter().any(|(n, _)| *n == name) {
-                        if let Some(t) = tex0(b, off) {
-                            texs.push((name, t));
-                        }
+                    if !tex_at.iter().any(|(n, _, _)| *n == name) {
+                        tex_at.push((name, li, off));
+                    }
+                }
+                Some(b"PLT0") => {
+                    if !plt_at.iter().any(|(n, _, _)| *n == name) {
+                        plt_at.push((name, li, off));
                     }
                 }
                 Some(b"CHR0") => {
@@ -192,6 +196,14 @@ fn load() -> Result<Model, String> {
             }
         }
     }
+    // every texture once, shared by the parts that use it (the body atlases are on the cage models too)
+    let texs: Vec<(String, std::sync::Arc<Tex>)> = tex_at
+        .iter()
+        .filter_map(|(n, li, o)| {
+            let plt = plt_at.iter().find(|(pn, _, _)| pn == n).map(|(_, pl, po)| (leaves[*pl].as_slice(), *po));
+            tex0(&leaves[*li], *o, plt).map(|t| (n.clone(), std::sync::Arc::new(t)))
+        })
+        .collect();
     let rig = |want: &str| -> Option<Rig> {
         let (_, b, off) = mdls.iter().find(|(n, _, _)| n == want)?;
         let mut r = mdl0(b, *off, &texs)?;
@@ -351,20 +363,42 @@ fn brres_entries(d: &[u8]) -> Option<Vec<(String, usize)>> {
 
 // ---------------------------------------------------------------- textures
 
+/// One texture, kept in the GX layout the renderer samples (`fmt`, `levels` mip levels, padded to the size the GX
+/// layer may read for an 11-level object). Formats GX decodes itself (I4..RGBA8, CMPR) keep the file's own bytes,
+/// mips included; palette formats (CI4/CI8/CI14 + PLT0) are expanded here to RGBA8, one level.
+/// Made once on the loader's helper thread; the draw only points GX at it.
 pub struct Tex {
-    w: usize,
-    h: usize,
-    px: Vec<[u8; 4]>,
+    w: u16,
+    h: u16,
+    fmt: u32,
+    levels: u8,
+    data: Vec<u8>,
+    /// storage whose address names this texture's GX texture object
+    obj: Vec<u8>,
 }
 
-impl Tex {
-    fn sample(&self, u: f32, v: f32) -> [u8; 4] {
-        let fx = u - u.floor();
-        let fy = v - v.floor();
-        let x = ((fx * self.w as f32) as usize).min(self.w - 1);
-        let y = ((fy * self.h as f32) as usize).min(self.h - 1);
-        self.px[y * self.w + x]
+/// Block size of a GX texture format: (block width, block height, bytes per block).
+fn gx_block(fmt: u32) -> Option<(usize, usize, usize)> {
+    Some(match fmt {
+        0 | 8 => (8, 8, 32),
+        1 | 2 | 9 => (8, 4, 32),
+        3 | 4 | 5 | 10 => (4, 4, 32),
+        6 => (4, 4, 64),
+        14 => (8, 8, 32),
+        _ => return None,
+    })
+}
+
+/// Bytes of `levels` mip levels of a w x h texture.
+fn gx_size(w: usize, h: usize, fmt: u32, levels: usize) -> usize {
+    let Some((bw, bh, bb)) = gx_block(fmt) else { return 0 };
+    let (mut w, mut h, mut n) = (w, h, 0);
+    for _ in 0..levels {
+        n += w.div_ceil(bw) * h.div_ceil(bh) * bb;
+        w = (w / 2).max(1);
+        h = (h / 2).max(1);
     }
+    n
 }
 
 fn rgb565(c: u16) -> [u8; 4] {
@@ -374,98 +408,85 @@ fn rgb565(c: u16) -> [u8; 4] {
     [r << 3 | r >> 2, g << 2 | g >> 4, b << 3 | b >> 2, 255]
 }
 
-fn tex0(d: &[u8], o: usize) -> Option<Tex> {
+fn rgb5a3(c: u16) -> [u8; 4] {
+    if c & 0x8000 != 0 {
+        let f = |s: u16| ((s & 31) as u8) << 3 | ((s & 31) as u8) >> 2;
+        [f(c >> 10), f(c >> 5), f(c), 255]
+    } else {
+        let f = |s: u16| ((s & 15) as u8) * 17;
+        let a = ((c >> 12) & 7) as u8;
+        [f(c >> 8), f(c >> 4), f(c), a << 5 | a << 2 | a >> 1]
+    }
+}
+
+/// A TEX0 (and, for a palette format, its PLT0 at `plt`) as a GX texture.
+fn tex0(d: &[u8], o: usize, plt: Option<(&[u8], usize)>) -> Option<Tex> {
     let (w, h, fmt) = (be16(d, o + 0x1C) as usize, be16(d, o + 0x1E) as usize, be32(d, o + 0x20));
-    if w == 0 || h == 0 || w > 2048 || h > 2048 {
+    if w == 0 || h == 0 || w > 1024 || h > 1024 {
         return None;
     }
     let data = at(o, bei(d, o + 0x10));
-    let mut px = vec![[128u8, 128, 128, 255]; w * h];
-    let (bw, bh, bits) = match fmt {
-        0 => (8, 8, 4),  // I4
-        1 => (8, 4, 8),  // I8
-        2 => (8, 4, 8),  // IA4
-        3 => (4, 4, 16), // IA8
-        4 => (4, 4, 16), // RGB565
-        5 => (4, 4, 16), // RGB5A3
-        6 => (4, 4, 32), // RGBA8
-        14 => (8, 8, 4), // CMPR
-        _ => return None,
-    };
-    let bx = w.div_ceil(bw);
-    let by = h.div_ceil(bh);
-    let block_bytes = bw * bh * bits / 8;
-    let mut put = |x: usize, y: usize, c: [u8; 4]| {
-        if x < w && y < h {
-            px[y * w + x] = c;
+    let (bw, bh, bb) = gx_block(fmt)?;
+    let obj = vec![0u8; core::mem::size_of::<melee_types::_GXTexObj>().max(32)];
+    if !matches!(fmt, 8..=10) {
+        let levels = (be32(d, o + 0x24).clamp(1, 11)) as usize;
+        let mut v = d.get(data..data + gx_size(w, h, fmt, levels))?.to_vec();
+        v.resize(gx_size(w, h, fmt, 11) + 64, 0);
+        return Some(Tex { w: w as u16, h: h as u16, fmt, levels: levels as u8, data: v, obj });
+    }
+    // palette formats: index -> PLT0 colour, re-encoded as RGBA8 tiles
+    let (p, po) = plt?;
+    let (pfmt, pn) = (be32(p, po + 0x18), be16(p, po + 0x1C) as usize);
+    let pd = at(po, bei(p, po + 0x10));
+    let pal = |i: usize| -> [u8; 4] {
+        if i >= pn {
+            return [0; 4];
+        }
+        let c = be16(p, pd + 2 * i);
+        match pfmt {
+            0 => {
+                let (a, l) = ((c >> 8) as u8, c as u8);
+                [l, l, l, a]
+            }
+            1 => rgb565(c),
+            _ => rgb5a3(c),
         }
     };
+    let mut px = vec![[0u8; 4]; w * h];
+    let (bx, by) = (w.div_ceil(bw), h.div_ceil(bh));
     for ty in 0..by {
         for tx in 0..bx {
-            let b = data + (ty * bx + tx) * block_bytes;
-            d.get(b..b + block_bytes)?;
-            match fmt {
-                14 => {
-                    for s in 0..4 {
-                        let sb = b + s * 8;
-                        let (c0, c1) = (be16(d, sb), be16(d, sb + 2));
-                        let (a, bb) = (rgb565(c0), rgb565(c1));
-                        let mix = |p: u16, q: u16, x: &[u8; 4], y: &[u8; 4]| -> [u8; 4] {
-                            let m = |i: usize| ((x[i] as u16 * p + y[i] as u16 * q) / (p + q)) as u8;
-                            [m(0), m(1), m(2), 255]
-                        };
-                        let pal = if c0 > c1 {
-                            [a, bb, mix(2, 1, &a, &bb), mix(1, 2, &a, &bb)]
-                        } else {
-                            [a, bb, mix(1, 1, &a, &bb), [0, 0, 0, 0]]
-                        };
-                        let idx = be32(d, sb + 4);
-                        for k in 0..16 {
-                            let c = pal[((idx >> (30 - 2 * k)) & 3) as usize];
-                            put(tx * 8 + (s & 1) * 4 + k % 4, ty * 8 + (s >> 1) * 4 + k / 4, c);
-                        }
-                    }
-                }
-                6 => {
-                    for k in 0..16 {
-                        let ar = b + k * 2;
-                        let gb = b + 32 + k * 2;
-                        put(tx * 4 + k % 4, ty * 4 + k / 4, [d[ar + 1], d[gb], d[gb + 1], d[ar]]);
-                    }
-                }
-                4 | 5 => {
-                    for k in 0..16 {
-                        let c = be16(d, b + k * 2);
-                        let col = if fmt == 4 {
-                            rgb565(c)
-                        } else if c & 0x8000 != 0 {
-                            let f = |s: u16| ((s & 31) as u8) << 3 | ((s & 31) as u8) >> 2;
-                            [f(c >> 10), f(c >> 5), f(c), 255]
-                        } else {
-                            let f = |s: u16| ((s & 15) as u8) * 17;
-                            [f(c >> 8), f(c >> 4), f(c), ((c >> 12) & 7) as u8 * 36]
-                        };
-                        put(tx * 4 + k % 4, ty * 4 + k / 4, col);
-                    }
-                }
-                _ => {
-                    for k in 0..bw * bh {
-                        let (i, a) = match fmt {
-                            0 => {
-                                let v = (d[b + k / 2] >> if k % 2 == 0 { 4 } else { 0 }) & 15;
-                                (v * 17, 255)
-                            }
-                            1 => (d[b + k], 255),
-                            2 => ((d[b + k] & 15) * 17, (d[b + k] >> 4) * 17),
-                            _ => (d[b + k * 2 + 1], d[b + k * 2]),
-                        };
-                        put(tx * bw + k % bw, ty * bh + k / bw, [i, i, i, a]);
-                    }
+            let b = data + (ty * bx + tx) * bb;
+            d.get(b..b + bb)?;
+            for k in 0..bw * bh {
+                let i = match fmt {
+                    8 => ((d[b + k / 2] >> if k % 2 == 0 { 4 } else { 0 }) & 15) as usize,
+                    9 => d[b + k] as usize,
+                    _ => (be16(d, b + 2 * k) & 0x3FFF) as usize,
+                };
+                let (x, y) = (tx * bw + k % bw, ty * bh + k / bw);
+                if x < w && y < h {
+                    px[y * w + x] = pal(i);
                 }
             }
         }
     }
-    Some(Tex { w, h, px })
+    let mut v = vec![0u8; gx_size(w, h, 6, 11) + 64];
+    let bx = w.div_ceil(4);
+    for ty in 0..h.div_ceil(4) {
+        for tx in 0..bx {
+            let b = (ty * bx + tx) * 64;
+            for k in 0..16 {
+                let (x, y) = (tx * 4 + k % 4, ty * 4 + k / 4);
+                let c = if x < w && y < h { px[y * w + x] } else { [0; 4] };
+                v[b + 2 * k] = c[3];
+                v[b + 2 * k + 1] = c[0];
+                v[b + 32 + 2 * k] = c[1];
+                v[b + 32 + 2 * k + 1] = c[2];
+            }
+        }
+    }
+    Some(Tex { w: w as u16, h: h as u16, fmt: 6, levels: 1, data: v, obj })
 }
 
 // ---------------------------------------------------------------- MDL0 (v9) arrays
@@ -739,14 +760,34 @@ enum Src {
 pub struct DrawBufs {
     world: Vec<M34>,
     mats: Vec<M34>,
-    pub tris: Vec<([f32; 3], [u8; 4])>,
+    pub tris: Vec<Vert>,
+}
+
+/// A posed vertex: model-space position, lit colour (the rasterised colour TEV sees), texture coordinate.
+pub type Vert = ([f32; 3], [u8; 4], [f32; 2]);
+
+/// A run of triangles drawn with one material. Brawl material state honoured (what Petey and his cages use; a
+/// future boss extends this): texture 0 with its wrap modes, the alpha compare from the material's pixel display
+/// list (cutouts), the light channel's ambient colour. Every Petey material's TEV reduces to
+/// `2 x texture x rasterised colour` (stage 1 passes, stage 2 lerps to C2 by a zero konst), drawn that way.
+pub struct Batch {
+    /// one past the last vertex of the run (in `Rig::verts` and in a skinned triangle list alike)
+    end: u32,
+    tex: Option<std::sync::Arc<Tex>>,
+    wrap: [u32; 2],
+    /// GXSetAlphaCompare (comp0, ref0, op, comp1, ref1)
+    alpha: [u8; 5],
+    /// light channel 0 ambient (grey level) and whether the channel is lit
+    amb: f32,
+    lit: bool,
 }
 
 pub struct Rig {
     bones: Vec<Bone>,
     srcs: Vec<Src>,
-    /// (source, position, normal (zero: none), unlit colour)
-    verts: Vec<(u16, [f32; 3], [f32; 3], [u8; 4])>,
+    /// (source, position, normal (zero: none), vertex colour, texture coordinate)
+    verts: Vec<(u16, [f32; 3], [f32; 3], [u8; 4], [f32; 2])>,
+    batches: Vec<Batch>,
     /// animations by suffix (the CHR0 name after the model name: `Wait1`, `BasketAttackL`, ...)
     pub anims: Vec<(String, Anim)>,
     /// Extent in the first frame of `Wait1` (size and depth centre stay fixed while animating; the ground is y 0).
@@ -810,7 +851,7 @@ impl Rig {
     }
 
     /// Skin the triangle list for `frame` of `anim` into `out` (model space, lit colour).
-    pub fn skin(&self, anim: Option<&Anim>, frame: f32, out: &mut Vec<([f32; 3], [u8; 4])>) {
+    pub fn skin(&self, anim: Option<&Anim>, frame: f32, out: &mut Vec<Vert>) {
         let mut b = DrawBufs { world: Vec::new(), mats: Vec::new(), tris: core::mem::take(out) };
         self.skin_with(anim, frame, &mut b);
         *out = b.tris;
@@ -849,25 +890,63 @@ impl Rig {
             [l[0] / n, l[1] / n, l[2] / n]
         };
         out.clear();
-        out.reserve(self.verts.len());
-        for (si, p, n, c) in &self.verts {
+        let mut bi = 0;
+        for (vi, (si, p, n, c, uv)) in self.verts.iter().enumerate() {
+            while bi + 1 < self.batches.len() && vi as u32 >= self.batches[bi].end {
+                bi += 1;
+            }
             let m = &mats[*si as usize];
             let mut c = *c;
-            if *n != [0.0; 3] {
-                let n = xf(m, *n, 0.0);
-                let l = (n[0] * n[0] + n[1] * n[1] + n[2] * n[2]).sqrt().max(1e-6);
-                let dot = ((n[0] * light[0] + n[1] * light[1] + n[2] * light[2]) / l).max(0.0);
-                let s = 0.6 + 0.6 * dot;
-                for ck in c.iter_mut().take(3) {
-                    *ck = (*ck as f32 * s).min(255.0) as u8;
+            // light channel 0: vertex material colour x clamp(ambient + diffuse) (one fixed key light)
+            if let Some(bt) = self.batches.get(bi) {
+                if bt.lit {
+                    let mut s = bt.amb;
+                    if *n != [0.0; 3] {
+                        let n = xf(m, *n, 0.0);
+                        let l = (n[0] * n[0] + n[1] * n[1] + n[2] * n[2]).sqrt().max(1e-6);
+                        s += 0.5 * ((n[0] * light[0] + n[1] * light[1] + n[2] * light[2]) / l).max(0.0);
+                    }
+                    let s = s.min(1.0);
+                    for ck in c.iter_mut().take(3) {
+                        *ck = (*ck as f32 * s) as u8;
+                    }
                 }
             }
-            out.push((xf(m, *p, 1.0), c));
+            out.push((xf(m, *p, 1.0), c, *uv));
         }
     }
 }
 
-fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
+/// The material state Petey's materials use (see [`Batch`]), from a v9 MDL0 material header at `mo`.
+fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mut Batch) {
+    // texture 0 of the material's texture references (name, then wrap S / T)
+    if be32(d, mo + 0x2C) > 0 {
+        let e = at(mo, bei(d, mo + 0x30));
+        let name = cstr(d, at(e, bei(d, e)));
+        bt.tex = texs.iter().find(|(n, _)| *n == name).map(|(_, t)| t.clone());
+        bt.wrap = [be32(d, e + 0x18).min(2), be32(d, e + 0x1C).min(2)];
+    }
+    // the pixel display list: BP 0xF3 is the alpha compare (ref0 0-7, ref1 8-15, comp0 16-18, comp1 19-21, op 22-23)
+    let dl = at(mo, bei(d, mo + 0x38));
+    let end = mo + be32(d, mo) as usize;
+    let mut p = dl;
+    while p + 5 <= end && d.get(p) == Some(&0x61) {
+        let v = be32(d, p + 1);
+        if v >> 24 == 0xF3 {
+            bt.alpha = [((v >> 16) & 7) as u8, v as u8, ((v >> 22) & 3) as u8, ((v >> 19) & 7) as u8, (v >> 8) as u8];
+        }
+        p += 5;
+    }
+    // light channel 0 (flags, material colour, ambient colour, colour control): lit when the control enables it
+    if d[mo + 0x15] > 0 {
+        let lc = mo + 0x3EC;
+        let amb = &d[lc + 8..lc + 11];
+        bt.amb = (amb[0] as f32 + amb[1] as f32 + amb[2] as f32) / (3.0 * 255.0);
+        bt.lit = be32(d, lc + 12) & 2 != 0;
+    }
+}
+
+fn mdl0(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)]) -> Option<Rig> {
     if be32(d, m + 8) != 9 {
         return None; // only the v9 layout is read
     }
@@ -875,7 +954,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
         let s = bei(d, m + 0x10 + 4 * i);
         if s == 0 { vec![] } else { group(d, at(m, s)) }
     };
-    let (defs, verts, norms, cols, uvs, mats, objs, texlinks) = (sec(0), sec(2), sec(3), sec(4), sec(5), sec(6), sec(8), sec(9));
+    let (defs, verts, norms, cols, uvs, mats, objs) = (sec(0), sec(2), sec(3), sec(4), sec(5), sec(6), sec(8));
     // bones in file order (parents come first); node id -> matrix source
     let mut bones: Vec<Bone> = vec![];
     let mut offs: Vec<usize> = vec![];
@@ -924,14 +1003,6 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
         }
     }
     let src_of = |id: u32| node_src.iter().rev().find(|(i, _)| *i == id).map(|(_, s)| *s).unwrap_or(0);
-    // material header offset -> texture
-    let mut mat_tex: Vec<(usize, usize)> = vec![];
-    for (name, list) in &texlinks {
-        let Some(ti) = texs.iter().position(|(n, _)| n == name) else { continue };
-        for k in 0..be32(d, *list).min(256) as usize {
-            mat_tex.push((at(*list, bei(d, list + 4 + 8 * k)), ti)); // (material, ref) pairs, list-relative
-        }
-    }
     // object index -> material header offset, from DrawOpa / DrawXlu
     let mut obj_mat: Vec<(usize, usize)> = vec![];
     for (n, o) in &defs {
@@ -948,6 +1019,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
         }
     }
     let mut tris = vec![];
+    let mut batches: Vec<Batch> = vec![];
     for (oi, (_, o)) in objs.iter().enumerate() {
         let o = *o;
         let idx_of = |id: i16, set: &Vec<(String, usize)>| -> Option<usize> {
@@ -959,11 +1031,10 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
         let clr = idx_of(id(2), &cols);
         let uv = idx_of(id(4), &uvs).map(|a| arr(d, a));
         let Some(pos) = pos else { continue };
-        let tex = obj_mat
-            .iter()
-            .find(|(i, _)| *i == oi)
-            .and_then(|(_, mo)| mat_tex.iter().find(|(l, _)| *l == *mo))
-            .map(|(_, ti)| &texs[*ti].1);
+        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false };
+        if let Some((_, mo)) = obj_mat.iter().find(|(i, _)| *i == oi) {
+            material(d, *mo, texs, &mut bt);
+        }
         let (lo, hi) = (be32(d, o + 0xC), be32(d, o + 0x10));
         // per-vertex attribute byte sizes in display-list order
         let mut lay: Vec<(u8, usize)> = vec![]; // (attr: 0 skip, 1 pos, 2 nrm, 3 clr0, 4 tex0), size
@@ -1006,7 +1077,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
         let dl = at(o + 0x24, bei(d, o + 0x2C));
         let dl_end = dl + be32(d, o + 0x28) as usize;
         let mut p = dl;
-        let vert = |p: usize, slots: &[u32; 10]| -> (u16, [f32; 3], [f32; 3], [u8; 4]) {
+        let vert = |p: usize, slots: &[u32; 10]| -> (u16, [f32; 3], [f32; 3], [u8; 4], [f32; 2]) {
             let mut q = p;
             let (mut pi, mut ni, mut ci, mut ti) = (0, usize::MAX, usize::MAX, usize::MAX);
             let mtx_idx = if lo & 1 != 0 { d.get(q).copied().unwrap_or(0) as usize / 3 } else { 0 };
@@ -1022,27 +1093,20 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
                 }
                 q += s;
             }
-            let mut c = match (tex, &uv) {
-                (Some(t), Some(u)) if ti != usize::MAX => {
-                    let st = comp_read(d, u, ti, 2);
-                    t.sample(st[0], st[1])
-                }
-                _ => [200, 200, 200, 255],
+            let st = match &uv {
+                Some(u) if ti != usize::MAX => comp_read(d, u, ti, 2),
+                _ => [0.0; 3],
             };
-            if let Some(co) = clr {
-                if ci != usize::MAX {
-                    let vc = color_read(d, co, ci);
-                    for k in 0..3 {
-                        c[k] = ((c[k] as u16 * (vc[k] as u16 + 64)) / 255).min(255) as u8;
-                    }
-                }
-            }
-            c[3] = 255;
+            // the channel's material colour comes from the vertex (colour control 0x703); white without one
+            let c = match clr {
+                Some(co) if ci != usize::MAX => color_read(d, co, ci),
+                _ => [255; 4],
+            };
             let n = match &nrm {
                 Some(na) if ni != usize::MAX => comp_read(d, na, ni, 3),
                 _ => [0.0; 3],
             };
-            (si, comp_read(d, &pos, pi, 3), n, c)
+            (si, comp_read(d, &pos, pi, 3), n, c, [st[0], st[1]])
         };
         while p < dl_end {
             let op = d.get(p).copied().unwrap_or(0);
@@ -1087,26 +1151,28 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, Tex)]) -> Option<Rig> {
                 _ => break,
             }
         }
+        bt.end = tris.len() as u32;
+        batches.push(bt);
     }
     if tris.is_empty() {
         return None;
     }
-    Some(Rig { bones, srcs, verts: tris, anims: vec![], min: [0.0; 3], max: [0.0; 3] })
+    Some(Rig { bones, srcs, verts: tris, batches, anims: vec![], min: [0.0; 3], max: [0.0; 3] })
 }
 
 /// Extent of a posed triangle list; y from the 1st..99th percentile (a few far-off vertices must not set the feet
 /// or the scale).
-pub fn extent(tris: &[([f32; 3], [u8; 4])]) -> ([f32; 3], [f32; 3]) {
+pub fn extent(tris: &[Vert]) -> ([f32; 3], [f32; 3]) {
     let mut mn = [f32::MAX; 3];
     let mut mx = [f32::MIN; 3];
-    for (p, _) in tris {
+    for (p, _, _) in tris {
         for k in 0..3 {
             mn[k] = mn[k].min(p[k]);
             mx[k] = mx[k].max(p[k]);
         }
     }
     if !tris.is_empty() {
-        let mut ys: Vec<f32> = tris.iter().map(|(p, _)| p[1]).collect();
+        let mut ys: Vec<f32> = tris.iter().map(|(p, _, _)| p[1]).collect();
         ys.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
         mn[1] = ys[ys.len() / 100];
         mx[1] = ys[ys.len() - 1 - ys.len() / 100];
@@ -1116,11 +1182,16 @@ pub fn extent(tris: &[([f32; 3], [u8; 4])]) -> ([f32; 3], [f32; 3]) {
 
 // ---------------------------------------------------------------- draw
 
-/// Draw a posed triangle list: model x scale, yawed, with model-space y `foot` at `at` (world). Opaque, vertex
-/// colours, back faces kept.
+/// Draw a rig's posed triangle list (`tris` from [`Rig::skin_with`]): model x scale, yawed, with model-space y `foot`
+/// at `at` (world). One run per material (see [`Batch`]): texture 0 sampled per pixel, `2 x texture x vertex colour`,
+/// the material's alpha compare; opaque, back faces kept. `flash`: solid white.
 /// `org`: the model-space ground height and depth centre that land on `at` (x stays: the model's x is its own).
-pub unsafe fn draw_tris(tris: &[([f32; 3], [u8; 4])], org: [f32; 2], at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
+/// Allocates nothing of its own: the texture objects live in the model, made on the loader's helper thread.
+pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], scale: f32, yaw: f32, flash: bool) {
     use melee_runtime::tu::displayfunc_native::ext as gx;
+    use melee_runtime::tu::lbrefract::ext as gi;
+    use melee_runtime::tu::sobjlib::ext as gs;
+    use melee_runtime::tu::tobj::ext as gt;
     use melee_types::*;
     if tris.is_empty() {
         return;
@@ -1129,19 +1200,20 @@ pub unsafe fn draw_tris(tris: &[([f32; 3], [u8; 4])], org: [f32; 2], at: [f32; 3
     gx::GXSetColorUpdate(1);
     gx::GXSetAlphaUpdate(0);
     gx::GXSetBlendMode(GX_BM_NONE as _, GX_BL_ONE as _, GX_BL_ZERO as _, GX_LO_NOOP as _);
-    gx::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_AND as _, GX_ALWAYS as _, 0);
     gx::GXSetZMode(1, GX_LEQUAL as _, 1);
-    gx::GXSetZCompLoc(1);
-    gx::GXSetNumTexGens(0);
+    gx::GXSetZCompLoc(0);
+    gi::GXSetNumIndStages(0);
+    gi::GXSetTevDirect(GX_TEVSTAGE0 as _);
+    gs::GXSetTevSwapModeTable(GX_TEV_SWAP0 as _, GX_CH_RED as _, GX_CH_GREEN as _, GX_CH_BLUE as _, GX_CH_ALPHA as _);
+    gs::GXSetTevSwapMode(GX_TEVSTAGE0 as _, GX_TEV_SWAP0 as _, GX_TEV_SWAP0 as _);
     gx::GXSetNumTevStages(1);
-    gx::GXSetTevOrder(GX_TEVSTAGE0 as _, GX_TEXCOORD_NULL as _, GX_TEXMAP_NULL as _, GX_COLOR0A0 as _);
-    gx::GXSetTevOp(GX_TEVSTAGE0 as _, GX_PASSCLR as _);
     gx::GXSetNumChans(1);
     gx::GXSetChanCtrl(GX_COLOR0A0 as _, 0, GX_SRC_REG as _, GX_SRC_VTX as _, 0, GX_DF_NONE as _, GX_AF_NONE as _);
     gx::GXSetCullMode(GX_CULL_NONE as _);
     gx::GXClearVtxDesc();
     gx::GXSetVtxAttrFmt(GX_VTXFMT0 as _, GX_VA_POS as _, GX_POS_XYZ as _, GX_F32 as _, 0);
     gx::GXSetVtxAttrFmt(GX_VTXFMT0 as _, GX_VA_CLR0 as _, GX_CLR_RGBA as _, GX_RGBA8 as _, 0);
+    gx::GXSetVtxAttrFmt(GX_VTXFMT0 as _, GX_VA_TEX0 as _, GX_TEX_ST as _, GX_F32 as _, 0);
     gx::GXSetVtxDesc(GX_VA_POS as _, GX_DIRECT as _);
     gx::GXSetVtxDesc(GX_VA_CLR0 as _, GX_DIRECT as _);
     let cobj = melee_runtime::tu::cobj::HSD_CObjGetCurrent();
@@ -1151,19 +1223,56 @@ pub unsafe fn draw_tris(tris: &[([f32; 3], [u8; 4])], org: [f32; 2], at: [f32; 3
     melee_runtime::tu::pobj::native::mx::GXLoadPosMtxImm((&mut (*cobj).view_mtx) as *mut Mtx as _, 0);
     gx::GXSetCurrentMtx(0);
     let (s, c) = (yaw.sin(), yaw.cos());
-    // GX vertex counts are u16: send in chunks of whole triangles
-    for chunk in tris.chunks(3 * 20000) {
-        gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
-        for (p, col) in chunk {
-            let (x, y, z) = (p[0] * scale, (p[1] - org[0]) * scale, (p[2] - org[1]) * scale);
-            gx::GXPosition3f32(at[0] + x * c + z * s, at[1] + y, at[2] - x * s + z * c);
-            if flash {
-                gx::GXColor4u8(255, 255, 255, 255);
-            } else {
-                gx::GXColor4u8(col[0], col[1], col[2], col[3]);
+    let mut start = 0usize;
+    for bt in &rig.batches {
+        let end = (bt.end as usize).min(tris.len());
+        let run = &tris[start.min(end)..end];
+        start = end;
+        if run.is_empty() {
+            continue;
+        }
+        let textured = !flash && bt.tex.is_some();
+        if let (Some(t), false) = (&bt.tex, flash) {
+            let o = t.obj.as_ptr() as *mut _GXTexObj;
+            gs::GXInitTexObj(o, t.data.as_ptr() as *mut _, t.w, t.h, t.fmt, bt.wrap[0], bt.wrap[1], (t.levels > 1) as u8);
+            let min = if t.levels > 1 { GX_LIN_MIP_LIN } else { GX_LINEAR };
+            gt::GXInitTexObjLOD(o, min as _, GX_LINEAR as _, 0.0, (t.levels - 1) as f32, 0.0, 0, 0, GX_ANISO_1 as _);
+            gs::GXLoadTexObj(o, GX_TEXMAP0 as _);
+            gx::GXSetNumTexGens(1);
+            gs::GXSetTexCoordGen2(GX_TEXCOORD0 as _, GX_TG_MTX2x4 as _, GX_TG_TEX0 as _, GX_IDENTITY as _, 0, GX_PTIDENTITY as _);
+            gx::GXSetVtxDesc(GX_VA_TEX0 as _, GX_DIRECT as _);
+            gx::GXSetTevOrder(GX_TEVSTAGE0 as _, GX_TEXCOORD0 as _, GX_TEXMAP0 as _, GX_COLOR0A0 as _);
+            gs::GXSetTevColorIn(GX_TEVSTAGE0 as _, GX_CC_ZERO as _, GX_CC_TEXC as _, GX_CC_RASC as _, GX_CC_ZERO as _);
+            gs::GXSetTevColorOp(GX_TEVSTAGE0 as _, GX_TEV_ADD as _, GX_TB_ZERO as _, GX_CS_SCALE_2 as _, 1, GX_TEVPREV as _);
+            gs::GXSetTevAlphaIn(GX_TEVSTAGE0 as _, GX_CA_ZERO as _, GX_CA_TEXA as _, GX_CA_RASA as _, GX_CA_ZERO as _);
+            gs::GXSetTevAlphaOp(GX_TEVSTAGE0 as _, GX_TEV_ADD as _, GX_TB_ZERO as _, GX_CS_SCALE_1 as _, 1, GX_TEVPREV as _);
+            let a = bt.alpha;
+            gx::GXSetAlphaCompare(a[0] as _, a[1], a[2] as _, a[3] as _, a[4]);
+        } else {
+            gx::GXSetNumTexGens(0);
+            gx::GXSetVtxDesc(GX_VA_TEX0 as _, GX_NONE as _);
+            gx::GXSetTevOrder(GX_TEVSTAGE0 as _, GX_TEXCOORD_NULL as _, GX_TEXMAP_NULL as _, GX_COLOR0A0 as _);
+            gx::GXSetTevOp(GX_TEVSTAGE0 as _, GX_PASSCLR as _);
+            gx::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_AND as _, GX_ALWAYS as _, 0);
+        }
+        // GX vertex counts are u16: send in chunks of whole triangles
+        for chunk in run.chunks(3 * 20000) {
+            gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
+            for (p, col, uv) in chunk {
+                let (x, y, z) = (p[0] * scale, (p[1] - org[0]) * scale, (p[2] - org[1]) * scale);
+                gx::GXPosition3f32(at[0] + x * c + z * s, at[1] + y, at[2] - x * s + z * c);
+                if flash {
+                    gx::GXColor4u8(255, 255, 255, 255);
+                } else {
+                    gx::GXColor4u8(col[0], col[1], col[2], 255);
+                }
+                if textured {
+                    gs::GXTexCoord2f32(uv[0], uv[1]);
+                }
             }
         }
     }
+    gx::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_AND as _, GX_ALWAYS as _, 0);
     melee_runtime::tu::state_native::HSD_StateInvalidate(-1);
 }
 

@@ -51,6 +51,8 @@ impl EnvoyFx {
             |model, at, yaw, scale, alpha, mat, p, rgba| {
                 // the old import's glass shell: the glass material at the material json's opacity
                 let (mat, alpha) = if model as usize == drive_draw::M_GLASS && mat & melee_gx::fx::MAT_ID == MAT_BODY { (MAT_GLASS | (mat & MAT_TRAIL), alpha.min(glass_a)) } else { (mat, alpha) };
+                // the ink edge only on drive bodies (never tier rings, the ascended overlay or glass)
+                let mat = if mat & melee_gx::fx::MAT_OUTLINE != 0 && !drive_draw::is_drive_body(model as usize) { mat & !melee_gx::fx::MAT_OUTLINE } else { mat };
                 draws.push(WorldDraw { model, mat, at, yaw, scale, alpha, p, rgba });
             },
             &mut self.tris,

@@ -26,6 +26,8 @@ pub const MAT_GLOW: i32 = 2;
 pub const MAT_FOIL: i32 = 3;
 pub const MAT_DISSOLVE: i32 = 4;
 pub const MAT_TRAIL: i32 = 0x80;
+/// The ink edge (`melee_gx::fx::MAT_OUTLINE`): drive bodies only, never tier rings, the ascended overlay or glass.
+pub const MAT_OUTLINE: i32 = 0x40;
 
 const HEAT_RGBA: [u32; 4] = [0, 0xFFBE_2EFF, 0xFF8A_1FFF, 0xFF4A_1CFF];
 
@@ -106,6 +108,7 @@ pub fn moments(v: &[i32; VW]) {
 /// Drops: a fly-in dissolve when one appears, a pickup dissolve (a ghost where it was) when it goes.
 struct Drop {
     fam: i32,
+    yaw: f32,
     x: f32,
     y: f32,
     born: u32,
@@ -113,8 +116,9 @@ struct Drop {
 }
 static mut DROPS: [[Drop; 8]; 2] = unsafe { core::mem::zeroed() };
 
-/// Draw drop `k` of player `p` (family body in its glass shell) this present; call `drop_ghosts` once after.
-pub fn drop_model(t: u32, p: usize, k: usize, fam: i32, x: f32, y: f32) {
+/// Draw drop `k` of player `p` this present: model `m` (a family body, or a Party drive's own model) at `yaw`, in its
+/// glass shell when `glass`, outlined when `outline` (drive bodies); call `drop_ghosts` once after.
+pub fn drop_model(t: u32, p: usize, k: usize, fam: i32, x: f32, y: f32, yaw: f32, glass: bool, outline: bool) {
     let d = unsafe { &mut (*core::ptr::addr_of_mut!(DROPS))[p.min(1)][k.min(7)] };
     if d.born == 0 || d.gone != 0 || d.fam != fam {
         d.born = t.max(1);
@@ -123,9 +127,12 @@ pub fn drop_model(t: u32, p: usize, k: usize, fam: i32, x: f32, y: f32) {
     d.fam = fam;
     d.x = x;
     d.y = y;
+    d.yaw = yaw;
     let pr = 1.0 - (t.wrapping_sub(d.born) as f32 / 24.0).min(1.0);
-    model(fam, x, y, 0.0, t as f32 * 0.05, 5.0, 1.0, MAT_DISSOLVE, [1.0, 1.0, 0.0, pr], 0xFFE0_A0FF);
-    model(6, x, y, 0.0, t as f32 * 0.05, 7.5, 0.3, MAT_GLASS, [0.5, 0.0, 0.0, 0.0], 0xFFFF_FFFF);
+    model(fam, x, y, 0.0, yaw, 5.0, 1.0, MAT_DISSOLVE | if outline { MAT_OUTLINE } else { 0 }, [1.0, 1.0, 0.0, pr], 0xFFE0_A0FF);
+    if glass {
+        model(6, x, y, 0.0, yaw, 7.5, 0.3, MAT_GLASS, [0.5, 0.0, 0.0, 0.0], 0xFFFF_FFFF);
+    }
 }
 
 /// Mark drops not drawn this present (`seen[p]` bit k) as gone and draw their pickup dissolve for 20 frames.
@@ -145,7 +152,7 @@ pub fn drop_ghosts(t: u32, seen: [u32; 2]) {
                 d.gone = 0;
                 continue;
             }
-            model(d.fam, d.x, d.y + a * 6.0, 0.0, t as f32 * 0.05, 5.0 * (1.0 + a * 0.3), 1.0, MAT_DISSOLVE, [1.6, 1.0, 0.0, a], 0xFFF4_D0FF);
+            model(d.fam, d.x, d.y + a * 6.0, 0.0, d.yaw, 5.0 * (1.0 + a * 0.3), 1.0, MAT_DISSOLVE, [1.6, 1.0, 0.0, a], 0xFFF4_D0FF);
         }
     }
 }

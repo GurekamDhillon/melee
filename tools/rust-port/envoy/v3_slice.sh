@@ -111,8 +111,10 @@ for d in $depths; do
     check 8 coop "$d" "$line" "$miss"
   fi
   if on petey; then
-    line=$(run petey "$d" "ember,bolt,nova,noshop/rush|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5)
-    miss=""; seen petey "$d" "envoy: drive fire" || miss="$miss (no fire on Petey)"
+    # *6000: the CPU player hits x6 so the cages break inside the test (breaks, their cash-outs, RUN CLEAR)
+    line=$(run petey "$d" "ember:3,bolt:3,nova:3,noshop,^400,*6000/rush|plague_bearer,grand_finale" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5)
+    miss=""; seen petey "$d" "envoy: boss break 4" || miss="$miss (no 4th break)"
+    seen petey "$d" "RUN CLEAR" || miss="$miss (no RUN CLEAR)"; seen petey "$d" "cash-out, coins" || miss="$miss (no break cash-out)"
     check 9 petey "$d" "$line" "$miss"
     echo "     petey d$d: $(grep -c 'boss break' "$(L petey "$d")") breaks"
   fi

@@ -735,6 +735,13 @@ enum Src {
 }
 
 /// One body part ready to pose: bones, matrix sources and a triangle list in source space.
+/// Scratch for drawing a rig (see [`Rig::draw_bufs`]).
+pub struct DrawBufs {
+    world: Vec<M34>,
+    mats: Vec<M34>,
+    pub tris: Vec<([f32; 3], [u8; 4])>,
+}
+
 pub struct Rig {
     bones: Vec<Bone>,
     srcs: Vec<Src>,
@@ -772,6 +779,13 @@ impl Rig {
     /// Each bone's world matrix at `frame` of `anim` (bind pose where a bone has no channel).
     fn pose_bones(&self, anim: Option<&Anim>, frame: f32) -> Vec<M34> {
         let mut world: Vec<M34> = Vec::with_capacity(self.bones.len());
+        self.pose_bones_into(anim, frame, &mut world);
+        world
+    }
+
+    /// [`Self::pose_bones`] into a caller's buffer (no allocation once it holds `bones` matrices).
+    fn pose_bones_into(&self, anim: Option<&Anim>, frame: f32, world: &mut Vec<M34>) {
+        world.clear();
         for b in &self.bones {
             let mut s = b.srt;
             if let Some((_, v)) = anim.and_then(|a| a.tracks.iter().find(|(n, _)| *n == b.name)) {
@@ -787,13 +801,28 @@ impl Rig {
                 _ => local,
             });
         }
-        world
+    }
+
+    /// Buffers sized for [`Self::skin_with`]: (bone matrices, skin matrices, vertices). Make them off the game thread
+    /// (a helper thread) so that drawing never allocates inside the game scope, which rollback rewrites.
+    pub fn draw_bufs(&self) -> DrawBufs {
+        DrawBufs { world: Vec::with_capacity(self.bones.len()), mats: Vec::with_capacity(self.srcs.len()), tris: Vec::with_capacity(self.verts.len()) }
     }
 
     /// Skin the triangle list for `frame` of `anim` into `out` (model space, lit colour).
     pub fn skin(&self, anim: Option<&Anim>, frame: f32, out: &mut Vec<([f32; 3], [u8; 4])>) {
-        let world = self.pose_bones(anim, frame);
-        let mats: Vec<M34> = self
+        let mut b = DrawBufs { world: Vec::new(), mats: Vec::new(), tris: core::mem::take(out) };
+        self.skin_with(anim, frame, &mut b);
+        *out = b.tris;
+    }
+
+    /// [`Self::skin`] into `b.tris`, with no allocation when `b` came from [`Self::draw_bufs`].
+    pub fn skin_with(&self, anim: Option<&Anim>, frame: f32, b: &mut DrawBufs) {
+        let DrawBufs { world, mats, tris: out } = b;
+        self.pose_bones_into(anim, frame, world);
+        let world = &*world;
+        mats.clear();
+        mats.extend(self
             .srcs
             .iter()
             .map(|s| match s {
@@ -813,8 +842,7 @@ impl Rig {
                     }
                     acc
                 }
-            })
-            .collect();
+            }));
         let light = {
             let l = [0.35f32, 0.55, 0.75];
             let n = (l[0] * l[0] + l[1] * l[1] + l[2] * l[2]).sqrt();

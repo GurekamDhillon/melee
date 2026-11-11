@@ -385,6 +385,8 @@ struct St {
     as_log: i32,
     /// Test knob (`^N`): every fight starts with the Heat that gives Grand Finale +N/1000 (the A/B probe at a fixed Heat).
     test_heat: i64,
+    /// Test knob (`*N`): the player's attack ratio x1000 at match start (a boss break inside a headless test).
+    test_atk: i32,
     escape_at: [i32; NP],
     kb_watch: i32,
     kb_watch_at: i32,
@@ -711,6 +713,10 @@ unsafe fn test_drives() {
                     S.no_shop = 1;
                     continue;
                 }
+                if let Some(c) = item.strip_prefix('*') {
+                    S.test_atk = c.parse::<i32>().unwrap_or(0).clamp(0, 20_000);
+                    continue;
+                }
                 if let Some(c) = item.strip_prefix('^') {
                     S.test_heat = c.parse::<i64>().unwrap_or(0).clamp(0, 500) * FINALE_TICKS;
                     continue;
@@ -811,6 +817,7 @@ unsafe fn on_new_match(seq: i32) {
         S.finale_off = 0;
         S.as_log = 0;
         S.test_heat = 0;
+        S.test_atk = 0;
         S.escape_at = [-99; NP];
         S.kb_watch = -1;
         S.shared = (gd_envoy_shared_drives() != 0) as i32;
@@ -2654,6 +2661,21 @@ unsafe fn foe_ko(s: i32, last: bool) {
 /// Per unfrozen live frame: the stock edges (KOs dealt and cash-outs, stocks lost, the shared pool), the boss's
 /// damage and breaks, the drops, Burning, Volley.
 unsafe fn moments_frame() {
+    // the boss carrier can arm after the first live frame (fight_setup ran before Petey's fight began): pick it up
+    // here, with the damage baselines, or no break is ever counted and its KO reads as a plain foe KO
+    if S.boss_slot < 0 {
+        let mut w = [0u32; 6];
+        let b = gd_envoy_boss_dmg(w.as_mut_ptr());
+        if b >= 0 {
+            S.boss_slot = b;
+            for p in 0..4 {
+                S.boss_dmg[p] = w[p] as i32;
+            }
+            S.boss_hp = w[4] as i32;
+            S.boss_hp_max = w[5] as i32;
+            log(b"envoy: boss carrier, slot ", b);
+        }
+    }
     let mut foes = 0;
     for s in 0..4 {
         let n = if (0..nh() + ncpu()).contains(&s) { gd_player_stocks(s).max(0) } else { 0 };
@@ -2819,7 +2841,7 @@ unsafe fn drops_on_floor() -> bool {
 /// base by the engine (`gd_envoy_speed`): nothing drifts, and a swapped-in or respawned fighter gets its own at once.
 unsafe fn attrs_frame() {
     for p in 0..nh() as usize {
-        let mut atk = 1000;
+        let mut atk = if S.test_atk > 0 { S.test_atk } else { 1000 };
         let mut def = 1000;
         for &k in &S.keys[p] {
             if k <= 0 {

@@ -149,7 +149,7 @@ fn row_say(r: u8, has: bool, p2: bool) -> &'static str {
         R_BACK => "Back to the main menu.",
         R_GO => "The fights of this session follow back to back.",
         R_ABANDON => "End this run for good.",
-        R_LEAVE => "Back to the character select. The run waits.",
+        R_LEAVE => "Back to the main menu. The run waits at the camp.",
         R_DONE => "The run is over. Back to the character select.",
         _ => "",
     }
@@ -315,7 +315,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                         u.dialog = true;
                         u.dcur = 0;
                     }
-                    R_LEAVE => act = DO_CLOSE,
+                    R_LEAVE => act = DO_ARM | (4 << 8), // no character select to go back to: the main menu, the run kept
                     R_DONE => act = DO_ARM | (4 << 8),
                     _ => {
                         u.msg = row_say(r, has, u.p2);
@@ -512,6 +512,10 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             spr(e, S_PTRDOWN, x + 34.0 + next as f32 * gap - 13.0, y + 34.0, 26.0, 18.0, WHITE);
         }
     });
+    if v[V_ROAD_N] > 1 && !ended {
+        fork(e, t, v, looped);
+        return;
+    }
     if ended || looped {
         let won = v[V_STATE] == 2 || looped;
         let (x, y) = (20.0, 70.0);
@@ -537,9 +541,6 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             spr_rot(e, S_RAYS, 170.0, 160.0, 1.6, (t as f32) * 0.07, alpha(WHITE, 0.13));
             burst(e, S_BURST_CORAL, 300.0, 84.0, 80.0, t - 10, "Cleared", 14);
         }
-    } else if v[V_ROAD_N] > 1 {
-        fork(e, t, v);
-        return;
     } else {
         // the poster: what the next stop is
         let kind = v[V_FIGHT_KIND];
@@ -677,12 +678,15 @@ fn road_name(k: i32) -> &'static str {
 
 /// The forked road (step 8, M1): two or three posters side by side; P1's cursor (the sim's V_ROAD_CUR) is the one
 /// A takes, P2's lagoon flag is a wish. Everything on a poster is known.
-unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW]) {
+unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
     let n = v[V_ROAD_N].clamp(2, ROADS_MAX as i32) as usize;
     let cur = v[V_ROAD_CUR].clamp(0, n as i32 - 1) as usize;
     let pw = if n == 2 { 296.0 } else { 194.0 };
     let gap = (608.0 - pw * n as f32) / (n - 1) as f32;
     let mut title = Buf::new();
+    if looped {
+        title.s("Loop ").i(v[V_LOOP]).s(" begins. ");
+    }
     title.s("Choose the road. ");
     loop_fight(&mut title, v[V_LOOP], v[V_FIGHT], v[V_FIGHTS]);
     text_edge(e, 20.0, 60.0, d(16), WHITE, ALIGN_LEFT, 1.6, title.str());

@@ -188,7 +188,10 @@ pub unsafe extern "C" fn onEnterCss(state: *mut GameModeState) {
     melee_core::ct!("onEnterCss");
     ext::gmVsMelee_EnterCss(state, ext::gmVsMelee_GetVsData(), VS_MELEE);
     // port: Envoy owns its select (the camp's picker): the players are the run's, the select confirms at once
-    crate::tu::envoy::bypass_css(ext::gm_GetGameModeStateEnterData(state) as *mut CSSData);
+    if crate::tu::envoy::bypass_css(ext::gm_GetGameModeStateEnterData(state) as *mut CSSData) {
+        (*state).info.scene_kind = crate::tu::envoy::GS_ENVOY_SEL;
+        return;
+    }
     ext::gmFrontend_SelectScene(state, 0); // the port's own character select
 }
 

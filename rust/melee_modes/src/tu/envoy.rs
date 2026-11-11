@@ -310,14 +310,65 @@ pub static mut BYPASSED: bool = false;
 /// it has settled (mncharsel, `SKIP_SELECT` 1) under the camp's cover, takes no input, and the SSS is skipped.
 /// onExitCss calls `refill_css` before the VS copy so the select's own cursor picks never reach the match.
 pub unsafe fn bypass_css(css: *mut CSSData) -> bool {
+    SEL_CSS = css;
     if SKIP_SELECT != 1 && SKIP_SELECT != 3 {
+        // a fought run comes back to the CSS state: the camp's road is drawn over Envoy's select (the host's
+        // replace_when on GS_ENVOY_SEL), which holds until the road arms the next fight or the run leaves
+        if ARMED != 0 && CAMP_DUE != 0 && skip_select_on() {
+            SEL_HOLD = true;
+            BYPASSED = true;
+            return true;
+        }
         return false;
     }
-    SKIP_SELECT = 1;
+    SKIP_SELECT = 2;
     SKIP_WAIT = 0;
     BYPASSED = true;
     refill_css(css, true);
-    false
+    // what the retail select's exit leaves: confirmed (START), not backed out
+    (*css).pending_scene_change = 1;
+    true
+}
+
+/// The scene kind of Envoy's select (the CSS state's scene while `bypass_css` holds): no archive, no draw, two
+/// frames under the UI's cover, so no retail character select is ever shown or loaded (an m-ex disc's
+/// `mexSelectChr` included). Past the port's frontend kind (gmscdata GS_FRONTEND = GS_COUNT + 1).
+pub const GS_ENVOY_SEL: u8 = GS_COUNT as u8 + 2;
+static mut SEL_FRAMES: i32 = 0;
+/// Envoy's select holds for the camp (the road after a fight); `SEL_CSS` is the state's CSS data.
+pub static mut SEL_HOLD: bool = false;
+static mut SEL_CSS: *mut CSSData = core::ptr::null_mut();
+
+pub unsafe extern "C" fn envoy_sel_enter(_data: *mut core::ffi::c_void) {
+    SEL_FRAMES = 0;
+}
+
+pub unsafe extern "C" fn envoy_sel_frame() {
+    SEL_FRAMES += 1;
+    if SEL_HOLD {
+        let css = SEL_CSS;
+        if SKIP_SELECT == 1 {
+            // the road armed the next fight: the run's players, confirmed
+            SEL_HOLD = false;
+            SKIP_SELECT = 2;
+            refill_css(css, true);
+            (*css).pending_scene_change = 1;
+            SEL_FRAMES = 0;
+        } else if BACK_TO_CAMP == 1 || ARMED == 0 {
+            // the run is over or left: back out to the main menu (BACK_TO_CAMP opens the camp there)
+            SEL_HOLD = false;
+            if BACK_TO_CAMP == 1 {
+                BACK_TO_CAMP = 2;
+            }
+            BYPASSED = false;
+            (*css).pending_scene_change = 2;
+            crate::tu::adapt::gm_801A4B60__d469d9();
+        }
+        return;
+    }
+    if SEL_FRAMES == 2 {
+        crate::tu::adapt::gm_801A4B60__d469d9();
+    }
 }
 
 /// The run's players and the matching preload cache into the CSS data (see `bypass_css`).

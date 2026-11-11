@@ -213,7 +213,7 @@ pub mod ext {
 // @@ext-end
 
 /// `scenes`: sentinel-terminated by `GS_COUNT`.
-pub static mut scenes: [GameScene; 46] = unsafe {
+pub static mut scenes: [GameScene; 47] = unsafe {
     [
     GameScene { kind: GS_TITLE as u8, on_frame: Some(ext::gm_Scene_Title_OnFrame as unsafe extern "C" fn()), on_enter: Some(ext::gm_Scene_Title_OnEnter as unsafe extern "C" fn(*mut c_void)), on_exit: None, unused: null_mut() },
     GameScene { kind: GS_MENU as u8, on_frame: Some(ext::mnMain_Scene_OnFrame as unsafe extern "C" fn()), on_enter: Some(ext::mnMain_Scene_OnEnter as unsafe extern "C" fn(*mut c_void)), on_exit: None, unused: null_mut() },
@@ -260,6 +260,8 @@ pub static mut scenes: [GameScene; 46] = unsafe {
     GameScene { kind: GS_STAFFROLL as u8, on_frame: Some(super::gmstaffroll::gm_Scene_StaffRoll_OnFrame as unsafe extern "C" fn()), on_enter: Some(super::gmstaffroll::gm_Scene_StaffRoll_OnEnter as unsafe extern "C" fn(*mut c_void)), on_exit: Some(super::gmstaffroll::gm_Scene_StaffRoll_OnExit as unsafe extern "C" fn(*mut c_void)), unused: null_mut() },
     GameScene { kind: GS_CAMERA_VS as u8, on_frame: Some(ext::gm_Scene_CameraVs_OnFrame as unsafe extern "C" fn()), on_enter: Some(ext::gm_Scene_CameraVs_OnEnter as unsafe extern "C" fn(*mut c_void)), on_exit: Some(ext::gm_Scene_CameraVs_OnExit as unsafe extern "C" fn(*mut c_void)), unused: null_mut() },
     GameScene { kind: GS_FRONTEND as u8, on_frame: Some(ext::gm_Scene_Frontend_OnFrame as unsafe extern "C" fn()), on_enter: Some(ext::gm_Scene_Frontend_OnEnter as unsafe extern "C" fn(*mut c_void)), on_exit: Some(ext::gm_Scene_Frontend_OnExit as unsafe extern "C" fn(*mut c_void)), unused: null_mut() },
+    // port: Envoy's own select (envoy::bypass_css): no archive, no draw; it hands the run's fighters to the match
+    GameScene { kind: super::envoy::GS_ENVOY_SEL, on_frame: Some(super::envoy::envoy_sel_frame as unsafe extern "C" fn()), on_enter: Some(super::envoy::envoy_sel_enter as unsafe extern "C" fn(*mut c_void)), on_exit: None, unused: null_mut() },
     GameScene { kind: GS_COUNT as u8, on_frame: None, on_enter: None, on_exit: None, unused: null_mut() },
     ]
 };

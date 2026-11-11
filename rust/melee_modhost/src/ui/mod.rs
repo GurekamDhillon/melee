@@ -837,7 +837,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             }
             (ev::ARMED != 0) as i32 | (main as i32) << 1 | (hover as i32) << 2 | ((ev::SAVED_LEN > 0) as i32) << 3 | ((ev::CAMP_DUE != 0) as i32) << 4
                 | (!melee_modes::tu::petey_model::brawl_present() as i32) << 5 | ((hover && ev::DOOR_NO_DISC > 0) as i32) << 6
-                | (ev::BYPASSED as i32) << 7
+                | ((ev::BYPASSED && !ev::SEL_HOLD) as i32) << 7
         }
     });
     // Envoy V3: player 2 joined (1) or left (0) at the camp; a new run started after this is co-op. Offline only.

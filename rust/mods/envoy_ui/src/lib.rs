@@ -580,6 +580,8 @@ pub extern "C" fn gd_ui_init() -> i32 {
             gd_ui_envoy_door(sc);
             // the VS CSS is the camp while a run is armed and has fought (the results land there); retail otherwise
             gd_ui_scene_replace_when(GM_VS, GS_CSS, sc, 1);
+            // Envoy's own select scene (melee_modes envoy::GS_ENVOY_SEL, GS_COUNT + 2) holds the road the same way
+            gd_ui_scene_replace_when(GM_VS, 47, sc, 1);
         }
     }
     0

@@ -2,10 +2,12 @@
 //! `pc/scripts/examples/envoy_drives/tools/make_drives.py`, original geometry and colour ramps, no game data) drawn
 //! in the match, and the stand-in effects (rings, discs, spikes, bolts, beams) a fire leaves.
 //!
-//! Presentation only, read-only on the sim: a UI mod queues instances through `gd_ui_world_model` / `gd_ui_world_fx`
-//! during its present (melee_modhost::ui); [`commit`] publishes the present's list and the fighter draw pass of slot
-//! 0 ([`draw`], hooked as `ftdrawcommon::WORLD_DRAW`) draws the last committed list through GX with the current
-//! camera, depth-tested: models opaque and depth-writing, then glass and effects blended without depth writes.
+//! Presentation only, read-only on the sim: a UI mod queues instances through `gd_ui_world_model(_ex)` /
+//! `gd_ui_world_fx` during its present (melee_modhost::ui); [`commit`] publishes the present's list. The presenter
+//! draws it with the effects layer (melee_gx::fx, docs/rust-port/notes/envoy-fx.md: [`world_frame`]) after the GX
+//! frame, with the fight camera the fighter draw pass recorded ([`record_camera`], hooked as
+//! `ftdrawcommon::WORLD_DRAW`: it copies the camera into a static and issues no GX and allocates nothing, so the
+//! game-scope FIFO never carries a drive).
 //! [`sprite_sheet`] rasterizes a model on the CPU (turning, `SPRITE_FRAMES` yaw steps) for the 2D cards.
 //!
 //! The meshes are decoded once (GXMS v2: positions, UVs, normals), normalised to a unit diameter, and coloured per
@@ -170,8 +172,9 @@ fn rotator(yaw: f32, pitch: f32) -> impl Fn([f32; 3]) -> [f32; 3] {
 /// One queued world draw.
 #[derive(Clone, Copy, Debug)]
 pub enum Inst {
-    /// model id, centre, yaw, diameter (world units), glow 0..1, alpha 0..1
-    Model { model: u8, at: [f32; 3], yaw: f32, scale: f32, glow: f32, alpha: f32 },
+    /// model id, centre, yaw, diameter (world units), alpha 0..1, material (melee_gx::fx::MAT_*), its parameters
+    /// (glow, charge, Heat state, extra) and colour
+    Model { model: u8, at: [f32; 3], yaw: f32, scale: f32, alpha: f32, mat: u8, p: [f32; 4], rgba: u32 },
     /// an additive effect shape: kind, centre, three numbers, colour RGBA
     Fx { kind: u8, at: [f32; 3], a: f32, b: f32, c: f32, rgba: u32 },
 }
@@ -213,7 +216,7 @@ pub fn commit() {
     b.clear();
     if !s.is_empty() {
         // installed on the first present that queues anything: with no Envoy UI the fighter pass is untouched
-        unsafe { melee_fighter::tu::ftdrawcommon::WORLD_DRAW = Some(draw) };
+        unsafe { melee_fighter::tu::ftdrawcommon::WORLD_DRAW = Some(record_camera) };
     }
 }
 
@@ -222,24 +225,12 @@ pub fn shown() -> usize {
     SHOW.lock().map_or(0, |s| s.len())
 }
 
-type Tri = ([f32; 3], [u8; 4]);
-
-fn c8(c: [f32; 3], a: f32) -> [u8; 4] {
-    let q = |v: f32| (v.clamp(0.0, 1.0) * 255.0) as u8;
-    [q(c[0]), q(c[1]), q(c[2]), q(a)]
-}
+/// A coloured world triangle vertex (the fire shapes).
+pub type Tri = ([f32; 3], [u8; 4]);
 
 fn rgba_of(c: u32, k: f32) -> [u8; 4] {
     let a = ((c & 0xFF) as f32 * k.clamp(0.0, 1.0)) as u8;
     [(c >> 24) as u8, (c >> 16) as u8, (c >> 8) as u8, a]
-}
-
-fn model_tris(m: &Baked, at: [f32; 3], yaw: f32, scale: f32, glow: f32, alpha: f32, out: &mut Vec<Tri>) {
-    let rot = rotator(yaw, 0.35);
-    for i in 0..m.pos.len() {
-        let p = rot(m.pos[i]);
-        out.push(([at[0] + p[0] * scale, at[1] + p[1] * scale, at[2] + p[2] * scale], c8(shade(m, i, &rot, glow), alpha)));
-    }
 }
 
 fn quad(out: &mut Vec<Tri>, a: [f32; 3], b: [f32; 3], c: [f32; 3], d: [f32; 3], ca: [u8; 4], cb: [u8; 4]) {
@@ -328,83 +319,56 @@ unsafe fn is_drawer(g: usize) -> bool {
     false
 }
 
-/// The fighter draw pass hook (`ftdrawcommon::WORLD_DRAW`): pass 0 of one fighter per render (`is_drawer`), so the
-/// list draws once per render with that pass's camera.
-pub unsafe fn draw(g: *mut melee_types::HSD_GObj, pass: i32) {
+/// The camera the fighter pass last drew with (view rows, GX projection, viewport): written by [`record_camera`].
+static CAM: Mutex<Option<Camera>> = Mutex::new(None);
+
+/// The fight camera (melee_gx::fx::Camera's fields): view matrix rows, `GXGetProjectionv`, `GXGetViewportv`.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Camera {
+    pub view: [[f32; 4]; 3],
+    pub proj: [f32; 7],
+    pub vp: [f32; 6],
+}
+
+/// The fighter draw pass hook (`ftdrawcommon::WORLD_DRAW`): pass 0 of one fighter per render (`is_drawer`) copies the
+/// current camera into [`CAM`]. No GX commands, no allocation: the presenter draws the list ([`world_frame`]).
+pub unsafe fn record_camera(g: *mut melee_types::HSD_GObj, pass: i32) {
     if pass != 0 || g.is_null() || (*g).user_data.is_null() {
         return;
     }
     if !is_drawer(g as usize) {
         return;
     }
-    let Ok(list) = SHOW.lock() else { return };
-    if list.is_empty() {
-        return;
-    }
-    let ms = models();
-    let mut opaque: Vec<Tri> = Vec::new();
-    let mut glass: Vec<Tri> = Vec::new();
-    let mut add: Vec<Tri> = Vec::new();
-    for i in list.iter() {
-        match *i {
-            Inst::Model { model, at, yaw, scale, glow, alpha } => {
-                let Some(m) = ms.get(model as usize) else { continue };
-                let glassy = model as usize == M_GLASS || alpha < 0.99;
-                model_tris(m, at, yaw, scale, glow, if model as usize == M_GLASS { alpha.min(0.3) } else { alpha }, if glassy { &mut glass } else { &mut opaque });
-            }
-            Inst::Fx { kind, at, a, b, c, rgba } => fx_tris(kind, at, a, b, c, rgba, &mut add),
-        }
-    }
-    drop(list);
-    emit(&opaque, 0);
-    emit(&glass, 1);
-    emit(&add, 2);
-}
-
-/// GX: a triangle list with vertex colours, depth-tested; `mode` 0 opaque (writes depth), 1 alpha blend, 2 additive.
-unsafe fn emit(tris: &[Tri], mode: u32) {
-    use melee_runtime::tu::displayfunc_native::ext as gx;
-    use melee_types::*;
-    if tris.is_empty() {
-        return;
-    }
     let cobj = melee_runtime::tu::cobj::HSD_CObjGetCurrent();
     if cobj.is_null() {
         return;
     }
-    melee_runtime::tu::state_native::HSD_StateInvalidate(-1);
-    gx::GXSetColorUpdate(1);
-    gx::GXSetAlphaUpdate(0);
-    match mode {
-        0 => gx::GXSetBlendMode(GX_BM_NONE as _, GX_BL_ONE as _, GX_BL_ZERO as _, GX_LO_NOOP as _),
-        1 => gx::GXSetBlendMode(GX_BM_BLEND as _, GX_BL_SRCALPHA as _, GX_BL_INVSRCALPHA as _, GX_LO_NOOP as _),
-        _ => gx::GXSetBlendMode(GX_BM_BLEND as _, GX_BL_SRCALPHA as _, GX_BL_ONE as _, GX_LO_NOOP as _),
+    let mut proj = [0f32; 7];
+    let mut vp = [0f32; 6];
+    melee_runtime::tu::fog::ext::GXGetProjectionv(proj.as_mut_ptr());
+    melee_runtime::tu::fog::ext::GXGetViewportv(vp.as_mut_ptr());
+    let view = (*cobj).view_mtx;
+    if let Ok(mut c) = CAM.lock() {
+        *c = Some(Camera { view, proj, vp });
     }
-    gx::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_AND as _, GX_ALWAYS as _, 0);
-    gx::GXSetZMode(1, GX_LEQUAL as _, (mode == 0) as _);
-    gx::GXSetZCompLoc(1);
-    gx::GXSetNumTexGens(0);
-    gx::GXSetNumTevStages(1);
-    gx::GXSetTevOrder(GX_TEVSTAGE0 as _, GX_TEXCOORD_NULL as _, GX_TEXMAP_NULL as _, GX_COLOR0A0 as _);
-    gx::GXSetTevOp(GX_TEVSTAGE0 as _, GX_PASSCLR as _);
-    gx::GXSetNumChans(1);
-    gx::GXSetChanCtrl(GX_COLOR0A0 as _, 0, GX_SRC_REG as _, GX_SRC_VTX as _, 0, GX_DF_NONE as _, GX_AF_NONE as _);
-    gx::GXSetCullMode(GX_CULL_NONE as _);
-    gx::GXClearVtxDesc();
-    gx::GXSetVtxAttrFmt(GX_VTXFMT0 as _, GX_VA_POS as _, GX_POS_XYZ as _, GX_F32 as _, 0);
-    gx::GXSetVtxAttrFmt(GX_VTXFMT0 as _, GX_VA_CLR0 as _, GX_CLR_RGBA as _, GX_RGBA8 as _, 0);
-    gx::GXSetVtxDesc(GX_VA_POS as _, GX_DIRECT as _);
-    gx::GXSetVtxDesc(GX_VA_CLR0 as _, GX_DIRECT as _);
-    melee_runtime::tu::pobj::native::mx::GXLoadPosMtxImm((&mut (*cobj).view_mtx) as *mut Mtx as _, 0);
-    gx::GXSetCurrentMtx(0);
-    for chunk in tris.chunks(3 * 20000) {
-        gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, chunk.len() as _);
-        for (p, c) in chunk {
-            gx::GXPosition3f32(p[0], p[1], p[2]);
-            gx::GXColor4u8(c[0], c[1], c[2], c[3]);
+}
+
+/// The last recorded fight camera.
+pub fn camera() -> Option<Camera> {
+    CAM.lock().ok().and_then(|c| *c)
+}
+
+/// The shown list as the effects layer's inputs: each model draw (`f(model, at, yaw, scale, alpha, mat, p, rgba)`)
+/// and the fire shapes as additive triangles in `tris`. Presenter side only.
+pub fn world_frame(mut f: impl FnMut(u8, [f32; 3], f32, f32, f32, u8, [f32; 4], u32), tris: &mut Vec<Tri>) {
+    tris.clear();
+    let Ok(list) = SHOW.lock() else { return };
+    for i in list.iter() {
+        match *i {
+            Inst::Model { model, at, yaw, scale, alpha, mat, p, rgba } => f(model, at, yaw, scale, alpha, mat, p, rgba),
+            Inst::Fx { kind, at, a, b, c, rgba } => fx_tris(kind, at, a, b, c, rgba, tris),
         }
     }
-    melee_runtime::tu::state_native::HSD_StateInvalidate(-1);
 }
 
 // ---- sprites for the 2D cards (CPU raster)

@@ -484,8 +484,38 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if ![x, y, z, yaw, scale, glow, alpha].iter().all(|v| v.is_finite()) {
             return GD_EINVAL;
         }
-        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u8, at: [x, y, z], yaw, scale: scale.clamp(0.0, 200.0), glow: glow.clamp(0.0, 2.0), alpha: alpha.clamp(0.0, 1.0) };
+        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u8, at: [x, y, z], yaw, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: 0, p: [glow.clamp(0.0, 2.0), 0.0, 0.0, 0.0], rgba: 0xFFFF_FFFF };
         if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
+    });
+    // envoy-fx.md: a drive model with a built-in material (melee_gx::fx::MAT_*: 0 body, 1 glass, 2 glow, 3 foil,
+    // 4 dissolve, 5 unlit additive; | 0x80 a light trail), its parameters p0..p3 (glow 0..2, charge 0..1, the wearer's
+    // Heat state 0..3, extra: foil rarity 1 Epic / 2 Unique, dissolve 0 whole .. 1 gone) and colour RGBA. Same cap as
+    // gd_ui_world_model; host-clamped; presentation only.
+    f!("gd_ui_world_model_ex", |c: Caller<'_, PresData>, model: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, alpha: f32, material: i32, p0: f32, p1: f32, p2: f32, p3: f32, rgba: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) || !(0..melee_modes::tu::drive_draw::MODEL_COUNT as i32).contains(&model) {
+            return GD_EINVAL;
+        }
+        let m = material as u32;
+        if m & !0xFF != 0 || (m & 0x7F) >= melee_gx::fx::MAT_COUNT as u32 || ![x, y, z, yaw, scale, alpha, p0, p1, p2, p3].iter().all(|v| v.is_finite()) {
+            return GD_EINVAL;
+        }
+        let p = [p0.clamp(0.0, 2.0), p1.clamp(0.0, 1.0), p2.clamp(0.0, 3.0), p3.clamp(0.0, 2.0)];
+        let i = melee_modes::tu::drive_draw::Inst::Model { model: model as u8, at: [x, y, z], yaw, scale: scale.clamp(0.0, 200.0), alpha: alpha.clamp(0.0, 1.0), mat: m as u8, p, rgba };
+        if melee_modes::tu::drive_draw::push(i) { GD_OK } else { GD_EFULL }
+    });
+    // envoy-fx.md: a full-screen post effect this present (melee_gx::fx::POST_*: 1 vignette, 2 ember tint, 3 heat-haze
+    // with embers (held: re-post every present), 4 flash, 5 radial ring, 6 colour split, 7 shockwave (one-shots: post
+    // once); | 0x100: (x, y) is a world position, else 640x480 canvas units), strength 0..1, colour RGBA. At most 4 a
+    // present (GD_EFULL), clamped, never over the centre of the picture; flashes rate-capped; off at intensity Off.
+    f!("gd_fx_post", |c: Caller<'_, PresData>, effect: u32, strength: f32, x: f32, y: f32, rgba: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_DRAW) {
+            return GD_ECAP;
+        }
+        let kind = effect & 0xFF;
+        if !(1..melee_gx::fx::POST_COUNT).contains(&kind) || effect & !(0xFF | melee_gx::fx::POST_WORLD) != 0 || ![strength, x, y].iter().all(|v| v.is_finite()) {
+            return GD_EINVAL;
+        }
+        if melee_gx::fx::post(effect, strength, x, y, rgba) { GD_OK } else { GD_EFULL }
     });
     // an additive effect shape in the world: kind (drive_draw::FX_*), centre, three numbers, colour RGBA
     f!("gd_ui_world_fx", |c: Caller<'_, PresData>, kind: i32, x: f32, y: f32, z: f32, a: f32, b: f32, cc: f32, rgba: u32| -> i32 {
@@ -606,6 +636,16 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         }
         let m = c.data().module;
         match c.data().ui().borrow_mut().tree.get_mut(n, m) { Some(nd) => { nd.place = Some([x, y, w, h]); GD_OK } None => GD_EINVAL }
+    });
+    // envoy-fx.md: a built-in quad effect for a node's quads (melee_gx::ui::FX_*: 0 none, 1 foil, 2 holo, 3 glow),
+    // colour RGBA; presentation only. Immediate-mode drawing sets the same with the OP_EFFECT record.
+    f!("gd_ui_node_effect", |c: Caller<'_, PresData>, n: u32, effect: u32, rgba: u32| -> i32 {
+        menu!(c);
+        if effect >= melee_gx::ui::FX_COUNT {
+            return GD_EINVAL;
+        }
+        let m = c.data().module;
+        match c.data().ui().borrow_mut().tree.get_mut(n, m) { Some(x) => { x.fx = [effect, rgba]; GD_OK } None => GD_EINVAL }
     });
     f!("gd_ui_node_free", |c: Caller<'_, PresData>, n: u32| {
         let m = c.data().module;

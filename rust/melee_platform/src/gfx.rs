@@ -258,6 +258,8 @@ impl Presenter {
             self.interval_ms = if dt > 50.0 { dt.min(100.0) } else { self.interval_ms * 0.9 + dt * 0.1 };
         }
         let interpolate = self.solver.mode == melee_gx::interp::Mode::Interpolate;
+        // the fx layer's world camera follows the true-widescreen widening (melee_gx::fx)
+        self.renderer.fx_widen = self.widen().map_or(1.0, |w| w.factor);
         // Interpolating: a frame that arrives with a tick is adopted at the NEXT present, so the tick and the new
         // frame's prepare never land in one frame interval (the frame-time p99 was their sum). This present shows
         // the current frame itself (t = 1: never a step back toward the previous one).

@@ -16,6 +16,12 @@ pub const OP_SLICE: u16 = 9;
 pub const OP_SPACE: u16 = 10;
 /// Rotate the quads that follow by `a` radians (clockwise) about (x, y); `rot(0.0, ..)` ends it (host v3, envoy-v3-ui.md).
 pub const OP_ROT: u16 = 11;
+/// A built-in effect for the quads that follow (host fx, envoy-fx.md): `effect(0, 0)` ends it.
+pub const OP_EFFECT: u16 = 12;
+pub const FX_NONE: u32 = 0;
+pub const FX_FOIL: u32 = 1;
+pub const FX_HOLO: u32 = 2;
+pub const FX_GLOW: u32 = 3;
 
 pub const LAYER_SCENE: i32 = 0;
 pub const LAYER_HUD_UNDER: i32 = 1;
@@ -156,6 +162,14 @@ impl<const N: usize> Enc<N> {
             self.f(a);
             self.f(x);
             self.f(y);
+        }
+        self
+    }
+    /// Effect `id` (FX_*) in colour `rgba` for the records that follow (text is never affected).
+    pub fn effect(&mut self, id: u32, rgba: u32) -> &mut Self {
+        if self.head(OP_EFFECT, 2) {
+            self.put(id);
+            self.put(rgba);
         }
         self
     }

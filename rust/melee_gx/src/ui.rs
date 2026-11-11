@@ -40,8 +40,19 @@ pub struct UiQuad {
     /// Rotation in radians (clockwise on screen) about `piv` (same space as `rect`); 0 = none (envoy-v3-ui.md).
     pub rot: f32,
     pub piv: [f32; 2],
-    pub _pad: [u32; 2],
+    /// `[effect id, effect colour 0xRRGGBBAA]` ([`FX_NONE`] .. [`FX_GLOW`], envoy-fx.md); 0 draws exactly as before.
+    pub fx: [u32; 2],
 }
+
+/// UI quad effects (`gd_ui_node_effect`, the `OP_EFFECT` record): presentation only, timed by the render clock.
+pub const FX_NONE: u32 = 0;
+/// A foil sheen sweeping across the quad's texture (Epic stickers), tinted by the effect colour.
+pub const FX_FOIL: u32 = 1;
+/// A stronger holographic treatment: rainbow bands, a sweep and glints (Unique stickers).
+pub const FX_HOLO: u32 = 2;
+/// A soft pulsing glow: the quad's coverage in the effect colour, breathing (the hovered sticker's halo).
+pub const FX_GLOW: u32 = 3;
+pub const FX_COUNT: u32 = 4;
 
 /// No clipping.
 pub const NO_CLIP: [f32; 4] = [-1.0e9, -1.0e9, 1.0e9, 1.0e9];
@@ -296,10 +307,13 @@ pub struct UiGpu {
     /// UI draw calls issued (the budget: <= 2 per frame) and presents with UI, for the stats line.
     pub draw_calls: u64,
     pub frames: u64,
+    /// The render clock the effects animate on (never the tick count).
+    clock: std::time::Instant,
 }
 
 const UI_WGSL: &str = "
 struct U { tgt: vec4<f32>, band: vec4<f32> };
+// tgt.z: render-clock seconds, tgt.w: effects intensity (0 off, 0.5 subtle, 1 full)
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var atlas: texture_2d<f32>;
 @group(0) @binding(2) var smp: sampler;
@@ -310,6 +324,7 @@ struct VsOut {
     @location(1) c: vec4<f32>,
     @location(2) clip: vec4<f32>,
     @location(3) @interpolate(flat) sdf: u32,
+    @location(4) @interpolate(flat) fx: vec2<u32>,
 };
 fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     if (win) { return p; }
@@ -318,7 +333,7 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
 @vertex fn vs_main(@builtin(vertex_index) vi: u32,
                    @location(0) rect: vec4<f32>, @location(1) uvr: vec4<f32>, @location(2) clip: vec4<f32>,
                    @location(3) rgba: u32, @location(4) shear: f32, @location(5) flags: u32,
-                   @location(6) rp: vec3<f32>) -> VsOut {
+                   @location(6) rp: vec3<f32>, @location(7) fx: vec2<u32>) -> VsOut {
     var cx = array<f32, 6>(0.0, 1.0, 1.0, 0.0, 1.0, 0.0);
     var cy = array<f32, 6>(0.0, 0.0, 1.0, 0.0, 1.0, 1.0);
     let l = vec2<f32>(cx[vi], cy[vi]);
@@ -338,7 +353,50 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     o.c = vec4<f32>(c.w, c.z, c.y, c.x);
     o.clip = vec4<f32>(to_px(clip.xy, win), to_px(clip.zw, win));
     o.sdf = (flags >> 1u) & 1u;
+    o.fx = fx;
     return o;
+}
+fn hue(h: f32) -> vec3<f32> {
+    return clamp(abs(fract(vec3<f32>(h, h + 0.6667, h + 0.3333)) * 6.0 - 3.0) - 1.0, vec3<f32>(0.0), vec3<f32>(1.0));
+}
+fn hash2(p: vec2<f32>) -> f32 {
+    return fract(sin(dot(p, vec2<f32>(127.1, 311.7))) * 43758.547);
+}
+// effects 1..3 (ui.rs FX_*): in band units so a 9-slice face shimmers as one piece
+fn effect(v: VsOut, base: vec4<f32>) -> vec4<f32> {
+    let k = u.tgt.w;
+    let t = u.tgt.z;
+    let tint = unpack4x8unorm(v.fx.y);
+    let tc = vec3<f32>(tint.w, tint.z, tint.y);
+    let b = (v.pos.xy - u.band.xy) / max(u.band.zw, vec2<f32>(1.0)) * vec2<f32>(640.0, 480.0);
+    if (v.fx.x == 1u) {
+        // foil: a bright diagonal band every 2.6 s plus a slow hue drift, on the sticker's own pixels
+        let d = (b.x + b.y * 0.6) * 0.004 - t * 0.38;
+        let band = pow(max(0.0, 1.0 - abs(fract(d) - 0.5) * 7.0), 2.0);
+        // a tinted multiply (shows on the white faces) under a white sheen band
+        let shim = hue(d * 0.7 + b.y * 0.002) * 0.6 + tc * 0.4;
+        let rgb = base.rgb * mix(vec3<f32>(1.0), shim, 0.3 * k) + vec3<f32>(band * 0.35 * k);
+        return vec4<f32>(min(rgb, vec3<f32>(1.0)), base.a);
+    }
+    if (v.fx.x == 2u) {
+        // holo: rainbow bands across the face, a wider sweep and twinkling glints
+        let d = (b.x - b.y * 0.8) * 0.006 + t * 0.22;
+        let rb = hue(d);
+        let sw = pow(max(0.0, 1.0 - abs(fract((b.x + b.y) * 0.003 - t * 0.5) - 0.5) * 5.0), 2.0);
+        let cell = floor(b / 11.0);
+        let h = hash2(cell);
+        let q = abs(fract(b / 11.0) - 0.5) * 11.0;
+        let star = max(1.0 - (q.x * q.y * 1.4 + max(q.x, q.y) * 0.5), 0.0);
+        let tw = pow(max(0.0, sin(t * 3.0 + h * 40.0)), 8.0) * step(0.88, h) * star;
+        let rgb = mix(base.rgb, base.rgb * 0.55 + rb * 0.6 + tc * 0.1, 0.42 * k) + vec3<f32>(sw * 0.3 + tw * 0.8) * k;
+        return vec4<f32>(min(rgb, vec3<f32>(1.0)), base.a);
+    }
+    if (v.fx.x == 3u) {
+        // glow: the coverage in the effect colour, breathing (1.6 s); steady at subtle
+        let br = 0.78 + 0.22 * sin(t * 3.9) * step(0.75, k);
+        return vec4<f32>(tc, base.a * tint.x * br * min(1.0, k * 1.6));
+    }
+    return base;
 }
 @fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
     let n = textureSample(atlas, smp, v.uv);
@@ -347,6 +405,7 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     let cov = clamp((d - 0.5) / fw + 0.5, 0.0, 1.0);
     if (v.pos.x < v.clip.x || v.pos.y < v.clip.y || v.pos.x >= v.clip.z || v.pos.y >= v.clip.w) { discard; }
     if (v.sdf != 0u) { return vec4<f32>(v.c.rgb, v.c.a * cov); }
+    if (v.fx.x != 0u && u.tgt.w > 0.0) { return effect(v, n * v.c); }
     return n * v.c;
 }
 ";
@@ -357,7 +416,7 @@ impl UiGpu {
         let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("gd_ui"),
             entries: &[
-                wgpu::BindGroupLayoutEntry { binding: 0, visibility: wgpu::ShaderStages::VERTEX, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None },
+                wgpu::BindGroupLayoutEntry { binding: 0, visibility: wgpu::ShaderStages::VERTEX_FRAGMENT, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None },
                 wgpu::BindGroupLayoutEntry { binding: 1, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Float { filterable: true }, view_dimension: wgpu::TextureViewDimension::D2, multisampled: false }, count: None },
                 wgpu::BindGroupLayoutEntry { binding: 2, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering), count: None },
                 wgpu::BindGroupLayoutEntry { binding: 3, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering), count: None },
@@ -390,7 +449,7 @@ impl UiGpu {
         });
         let inst_cap = 4096 * std::mem::size_of::<UiQuad>() as u64;
         let inst = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui instances"), size: inst_cap, usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        UiGpu { pipes: Vec::new(), bgl, layout, module, atlas, uniform, bind, inst, inst_cap, count: 0, atlas_gen: 0, hide_gx: false, draw_calls: 0, frames: 0 }
+        UiGpu { pipes: Vec::new(), bgl, layout, module, atlas, uniform, bind, inst, inst_cap, count: 0, atlas_gen: 0, hide_gx: false, draw_calls: 0, frames: 0, clock: std::time::Instant::now() }
     }
 
     fn pipeline(&mut self, device: &wgpu::Device, format: wgpu::TextureFormat) -> usize {
@@ -406,6 +465,7 @@ impl UiGpu {
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32, offset: 52, shader_location: 4 },
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Uint32, offset: 56, shader_location: 5 },
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x3, offset: 60, shader_location: 6 },
+            wgpu::VertexAttribute { format: wgpu::VertexFormat::Uint32x2, offset: 72, shader_location: 7 },
         ];
         let p = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("gd_ui"),
@@ -493,7 +553,9 @@ impl Renderer {
             return;
         }
         let pi = g.pipeline(device, format);
-        let u: [f32; 8] = [tw, th, 0.0, 0.0, band[0], band[1], band[2], band[3]];
+        // the effects' clock wraps every hour (f32 precision); intensity 0 turns every quad effect off
+        let secs = (g.clock.elapsed().as_secs_f64() % 3600.0) as f32;
+        let u: [f32; 8] = [tw, th, secs, self.fx_intensity, band[0], band[1], band[2], band[3]];
         let mut ub = [0u8; 32];
         for (i, v) in u.iter().enumerate() {
             ub[i * 4..i * 4 + 4].copy_from_slice(&v.to_le_bytes());

@@ -21,6 +21,8 @@ pub const OP_SLICE: u16 = 9;
 pub const OP_SPACE: u16 = 10;
 /// envoy-v3-ui.md: rotate what follows by `a` radians about (x, y); 0 ends it. Payload a, x, y.
 pub const OP_ROT: u16 = 11;
+/// Effect for the quads that follow (envoy-fx.md): effect id (`melee_gx::ui::FX_*`), colour RGBA; `0, 0` ends it.
+pub const OP_EFFECT: u16 = 12;
 
 pub const LAYER_SCENE: i32 = 0;
 pub const LAYER_HUD_UNDER: i32 = 1;
@@ -104,13 +106,15 @@ pub struct Pen {
     /// OP_ROT: rotation (radians) about `piv` for the quads that follow
     pub rot: f32,
     pub piv: [f32; 2],
+    /// OP_EFFECT / a node's `gd_ui_node_effect`: [effect id, colour] for the quads that follow
+    pub fx: [u32; 2],
     clips: [[f32; 4]; CLIP_DEPTH],
     depth: usize,
 }
 
 impl Pen {
     pub fn new(module: u16) -> Pen {
-        Pen { module, layer: LAYER_HUD, z: 0, window: false, scale: 1.0, rot: 0.0, piv: [0.0; 2], clips: [NO_CLIP; CLIP_DEPTH], depth: 0 }
+        Pen { module, layer: LAYER_HUD, z: 0, window: false, scale: 1.0, rot: 0.0, piv: [0.0; 2], fx: [0; 2], clips: [NO_CLIP; CLIP_DEPTH], depth: 0 }
     }
     fn clip(&self) -> [f32; 4] {
         if self.depth == 0 { NO_CLIP } else { self.clips[self.depth - 1] }
@@ -173,7 +177,7 @@ impl Batch {
     fn push(&mut self, p: &Pen, rect: [f32; 4], uv: [f32; 4], rgba: u32, shear: f32) {
         self.open(p);
         let s = p.scale;
-        self.staging.push(UiQuad { rect: [rect[0] * s, rect[1] * s, rect[2] * s, rect[3] * s], uv, clip: p.clip(), rgba, shear, flags: p.flags() | self.extra_flags, rot: p.rot, piv: [p.piv[0] * s, p.piv[1] * s], _pad: [0; 2] });
+        self.staging.push(UiQuad { rect: [rect[0] * s, rect[1] * s, rect[2] * s, rect[3] * s], uv, clip: p.clip(), rgba, shear, flags: p.flags() | self.extra_flags, rot: p.rot, piv: [p.piv[0] * s, p.piv[1] * s], fx: if self.extra_flags & Q_SDF != 0 { [0; 2] } else { p.fx } });
         self.runs.last_mut().unwrap().len += 1;
     }
 
@@ -312,6 +316,13 @@ impl Batch {
                     }
                     pen.rot = f(p);
                     pen.piv = [f(p + 4), f(p + 8)];
+                }
+                OP_EFFECT => {
+                    need(2)?;
+                    if w(p) >= gu::FX_COUNT {
+                        return err(at, "effect id");
+                    }
+                    pen.fx = [w(p), w(p + 4)];
                 }
                 OP_RECT => {
                     need(6)?;

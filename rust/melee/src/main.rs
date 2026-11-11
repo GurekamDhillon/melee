@@ -51,6 +51,7 @@ mod play;
 #[cfg(feature = "corev1")]
 mod corev1;
 mod retail_flow;
+mod envoy_fx;
 mod audio;
 mod stage_anim;
 mod slpcheck;

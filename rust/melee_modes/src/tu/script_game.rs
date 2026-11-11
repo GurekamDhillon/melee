@@ -349,9 +349,9 @@ crate::ext_fns! {extern "C" fn Script_StageArchiveInput(a0 : :: core :: ffi :: c
 crate::ext_fns! {extern "C" fn Script_StageWanted() -> :: core :: ffi :: c_int;}
 crate::ext_fns! {extern "C" fn Script_StageTextByte(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}
 crate::ext_fns! {extern "C" fn Script_TargetBroken(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
-crate::ext_fns! {extern "C" fn Script_EnemyDefeated(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> ();}
-crate::ext_fns! {extern "C" fn Script_EnemyRemoved(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> ();}
-crate::ext_fns! {extern "C" fn Script_EnemyHit(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> ();}
+crate::ext_fns! {extern "C" fn Script_EnemyDefeated(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> () = crate::tu::envoy::enemy_defeated;}
+crate::ext_fns! {extern "C" fn Script_EnemyRemoved(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> () = crate::tu::envoy::enemy_removed;}
+crate::ext_fns! {extern "C" fn Script_EnemyHit(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> () = crate::tu::envoy::enemy_hit;}
 crate::ext_fns! {extern "C" fn ftCo_800DCE34(a0 : * mut Fighter_GObj, a1 : * mut Fighter_GObj) -> () = crate::tu::adapt::ftCo_800DCE34__658ea4;}
 crate::ext_fns! {extern "C" fn Geno_MotionRowIfAny(a0 : * mut Fighter, a1 : :: core :: ffi :: c_int) -> * mut MotionState = crate::tu::adapt::Geno_MotionRowIfAny__c473f8;}
 crate::ext_fns! {extern "C" fn Geno_DefineIsNone(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int;}

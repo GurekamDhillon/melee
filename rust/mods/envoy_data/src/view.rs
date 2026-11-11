@@ -215,6 +215,7 @@ pub const V_BANK_N: usize = 762; // picks in this stop (for "Pick i of n"; 0 out
 pub const V_BANK_I: usize = 763; // the pick being made now, 1-based
 pub const V_SESS_KINDS: usize = 764; // the fights of the session from the next fight on: kind + 1 per 4 bits, low first
 pub const V_SESS_FIGHT: usize = 765; // the fight's place in its session, 1-based (1: the session's first)
+pub const V_STOP_DONE: usize = 766; // 1: the session ended and its stop ran in the match: no results, the road next
 
 pub const V_REC: usize = 704;
 pub const REC_WORDS: usize = 48;

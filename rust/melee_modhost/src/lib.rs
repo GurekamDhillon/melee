@@ -702,6 +702,27 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     });
     w!("gd_envoy_kb_scale", |slot: i32, mul: i32| -> i32 { unsafe { melee_modes::tu::envoy::kb_scale(slot, mul) } });
     w!("gd_envoy_seq", || -> i32 { unsafe { melee_modes::tu::envoy::SEQ } });
+    // Envoy enemy waves (first step): spawn a script-layer enemy (which: script_game's kind list, 0 Goomba, 2 ReDead,
+    // 4 Octorok), read its registry fields (ScriptGame_EnemyI) and status (0 gone, 1 alive, 2 defeated). Gameplay only.
+    w!("gd_envoy_enemy_spawn", |which: i32, x: f32, y: f32, facing: i32, handle: i32| -> i32 {
+        unsafe {
+            if melee_modes::tu::envoy::armed() == 0 || melee_modes::tu::stage_hop::check(-1) == melee_modes::tu::stage_hop::HOP_NOT_GAMEPLAY { return -1 }
+            melee_modes::tu::script_game::ScriptGame_SpawnEnemy(which, canon(x).to_bits() as i32, canon(y).to_bits() as i32, facing, handle)
+        }
+    });
+    w!("gd_envoy_enemy_i", |handle: i32, field: i32| -> i32 { unsafe { melee_modes::tu::script_game::ScriptGame_EnemyI(handle, field) } });
+    w!("gd_envoy_enemy_status", |handle: i32| -> i32 { unsafe { melee_modes::tu::script_game::ScriptGame_EnemyStatus(handle) } });
+    // Envoy sessions: hold the retail match end (the stop runs after the win), and end the held match
+    w!("gd_envoy_end_hold", |on: i32| -> i32 { unsafe { if melee_modes::tu::envoy::armed() == 0 { return -1 } melee_modes::tu::gmvs::gmVs_SetEndHold(on) } 0 });
+    w!("gd_envoy_end_match", || -> i32 {
+        unsafe {
+            if melee_modes::tu::envoy::armed() == 0 { return -1 }
+            let held = melee_modes::tu::gmvs::gmVs_GetHeldOutcome();
+            melee_modes::tu::gmvs::gmVs_SetEndHold(0);
+            melee_modes::tu::gmvs::gmVs_EndMatch(if held != 0 { held } else { melee_types::OUTCOME_ELIMINATION as i32 });
+        }
+        0
+    });
     // the door (envoy-redesign.md 1.3): whether the run is armed (the camp's Continue / New run); the sim publishes a
     // plan only while armed, so VS stays retail with the mods loaded
     w!("gd_envoy_armed", || -> i32 { melee_modes::tu::envoy::armed() });

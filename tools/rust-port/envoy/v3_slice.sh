@@ -129,6 +129,24 @@ for d in $depths; do
     check 10 loop3 "$d" "$line" "$miss"
     echo "     loop3 d$d: $(grep -c 'foe carries' "$(L loop3 "$d")") foe drives, $(grep -c 'drive fire' "$(L loop3 "$d")") fires"
   fi
+  if on dropend; then
+    # nothing a fight dropped is lost: the pack fight (2 foes) won by the CPU pilot; drops still on the floor at the
+    # last KO fly to their owner (held match end), are worn or banked, then the match ends and the next fight runs
+    line=$(run dropend "$d" "ember,bolt,nova,noshop,dropall" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3)
+    miss=""; seen dropend "$d" "fight won" || miss="$miss (no win)"
+    seen dropend "$d" "RUN OVER" && miss="$miss (RUN OVER)"
+    seen dropend "$d" "drop flies in" || miss="$miss (no fly-in)"
+    check 13 dropend "$d" "$line" "$miss"
+    echo "     dropend d$d: $(cnt dropend "$d" 'envoy: drop [a-z_]* -*[0-9]') drops, $(cnt dropend "$d" 'drop flies in') flown in, $(cnt dropend "$d" 'fight won') won"
+  fi
+  if on waves; then
+    # enemy waves (first step): three of script kind WAVE_KIND (0 Goomba, 2 ReDead, 4 Octorok) on FD, no foe fighters
+    line=$(run waves "$d" "ember,bolt,nova,noshop,~${WAVE_KIND:-0}" MELEE_ENVOY_ENEMY_LOG=1)
+    miss=""; [ "$(cnt waves "$d" 'enemy spawned, handle (-1: refused) [0-9]')" -ge 3 ] || miss="$miss (not 3 spawned)"
+    seen waves "$d" "envoy: enemy hit" || miss="$miss (no enemy damage record)"
+    check 12 waves "$d" "$line" "$miss"
+    echo "     waves d$d: $(cnt waves "$d" 'envoy: enemy hit') hits recorded, $(cnt waves "$d" 'enemy gone') gone, $(cnt waves "$d" 'fight won') won"
+  fi
   if on loopboss; then
     # endless loops: the boss falls in loop 2 and the run goes on into loop 3 (no RUN CLEAR state, the loop moves)
     line=$(run loopboss "$d" "ember:4,bolt:4,nova:4,noshop,^400,*9000,@2/rush|plague_bearer,grand_finale" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5)

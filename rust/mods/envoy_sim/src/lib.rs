@@ -54,6 +54,11 @@ extern "C" {
     fn gd_stage_grkind() -> i32;
     fn gd_stage_transition(grkind: i32, len: i32) -> i32;
     fn gd_hold_begin(len: i32) -> i32;
+    fn gd_envoy_end_hold(on: i32) -> i32;
+    fn gd_envoy_end_match() -> i32;
+    fn gd_envoy_enemy_spawn(which: i32, x: f32, y: f32, facing: i32, handle: i32) -> i32;
+    fn gd_envoy_enemy_i(handle: i32, field: i32) -> i32;
+    fn gd_envoy_enemy_status(handle: i32) -> i32;
     fn gd_hold_release() -> i32;
     fn gd_pad_pressed(port: i32) -> u32;
     fn gd_envoy_plan(ptr: *const i32, n: u32) -> i32;
@@ -94,9 +99,8 @@ const REWARD_TIME: i32 = 1200;
 const SHOP_TIME: i32 = 1800;
 /// Frames into a fight before its reward screen opens (after the fighters are placed).
 const REWARD_DELAY: i32 = 2;
-/// After the last KO, the fight waits up to this long while a drop is still on the floor (the collect hold), then
-/// the drops are swept up.
-const COLLECT_HOLD: i32 = 600;
+/// After the last KO, every drop still on the floor flies to its owner over this many frames (then the match ends).
+const FLY_TIME: i32 = 30;
 
 const DPAD_LEFT: u32 = 0x0001;
 const DPAD_RIGHT: u32 = 0x0002;
@@ -196,8 +200,8 @@ const MARK_LEN: i32 = 300;
 /// Glass Core's price: damage taken x1.6.
 const GLASS_TAKE: i32 = 1600;
 /// A floor drop is taken when its owner's fighter in play stands this close (x, and y above the drop).
-const PICK_DX: f32 = 11.0;
-const PICK_DY: f32 = 22.0;
+const PICK_DX: f32 = 16.0;
+const PICK_DY: f32 = 28.0;
 /// Floor points (x100) a drop lands on: the main floor of every stage in the rotation is at y 0.
 const DROP_X: [i32; 4] = [-3500, -1200, 1200, 3500];
 /// An edgeguard KO: the foe took offstage damage this recently.
@@ -249,6 +253,16 @@ struct St {
     bank: i32,
     bank_n: i32,
     bank_i: i32,
+    /// The stop runs in this match (after the session's last fight, before the match ends); the stop was had (the next
+    /// session's first fight opens with no picks, no shop).
+    stop: i32,
+    stop_done: i32,
+    /// Enemy waves (first step, test knob `~K`): the enemies' handles (0: none), their damage taken and hit counts as
+    /// last read, spawned (1) for this match.
+    en_h: [i32; EN_MAX],
+    en_dmg: [i32; EN_MAX],
+    en_rcv: [i32; EN_MAX],
+    en_spawned: i32,
     /// The pairs: [player][main, partner] (character kinds).
     pair: [[i32; 2]; NP],
     picks: i32,
@@ -394,6 +408,7 @@ struct St {
     /// Test knobs (MELEE_ENVOY_TEST_DRIVES): slots opened for a test row, no shop.
     slots_bonus: i32,
     no_shop: i32,
+    drop_all: i32, // test: every KO drops (a fight ends with a drop on the floor)
     /// Test knob (`finaleoff`): Grand Finale's write is computed and logged but not made (the A/B launch probe);
     /// the victim of the last write (or would-be write) and its frame, to log the launch on the next frame.
     finale_off: i32,
@@ -474,7 +489,7 @@ unsafe fn record() -> [i32; REC_WORDS] {
     r[R_ACTIVE] = S.act_id[0] | S.act_id[1] << 8;
     r[R_PIPS] = ((HH.pips[0] / PIP_UNIT) as i32).clamp(0, 255) | ((HH.pips[1] / PIP_UNIT) as i32).clamp(0, 255) << 8;
     r[R_EARNED] = ((HH.earned[0] / COIN_UNIT) as i32).clamp(0, 0xFFFF) | ((HH.earned[1] / COIN_UNIT) as i32).clamp(0, 0x7FFF) << 16;
-    r[R_LOOP] = lp() | S.bank.clamp(0, 0xFF) << 16;
+    r[R_LOOP] = lp() | S.bank.clamp(0, 0xFF) << 16 | ((S.stop_done != 0) as i32) << 24;
     r[REC_WORDS - 1] = rec_digest(&r);
     r
 }
@@ -502,6 +517,7 @@ unsafe fn take_arm() {
         S.bosses = r[R_BOSSES].clamp(0, 2);
         S.lp = rec_loop(r[R_LOOP]).clamp(1, LOOP_TOP);
         S.bank = if r[1] >= 7 { r[R_LOOP] >> 16 & 0xFF } else { 0 };
+        S.stop_done = if r[1] >= 7 { r[R_LOOP] >> 24 & 1 } else { 0 };
         for p in 0..NP {
             for k in 0..KEYSTONES {
                 let id = r[R_KEYS + p * KEYSTONES + k];
@@ -620,6 +636,9 @@ fn nh() -> i32 {
 /// CPUs this fight: the schedule's, one more in co-op for a duel or a pack (the CPUs have slots 2-3 then).
 unsafe fn ncpu() -> i32 {
     let f = sched();
+    if test_waves() >= 0 {
+        return 0;
+    }
     let extra = (nh() == 2 && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32;
     // loop 2 on: a solo pack fight has one more foe
     let more = (nh() == 1 && f.kind == FK_PACK && lx() >= 1) as i32;
@@ -780,11 +799,18 @@ unsafe fn test_drives() {
                     S.finale_off |= 1;
                     continue;
                 }
+                if item.starts_with('~') {
+                    continue; // an enemy-wave test fight (test_waves)
+                }
                 if item.starts_with('@') {
                     continue; // the start loop (test_loop)
                 }
                 if item == "noshop" {
                     S.no_shop = 1;
+                    continue;
+                }
+                if item == "dropall" {
+                    S.drop_all = 1;
                     continue;
                 }
                 if let Some(c) = item.strip_prefix('*') {
@@ -837,6 +863,7 @@ unsafe fn make_plan() {
     };
     let f = &SCHEDULE[fight];
     let e = if fresh { test_loop() - 1 } else { lx() };
+    let waves = test_waves() >= 0;
     let more = (!coop && f.kind == FK_PACK && e >= 1) as i32;
     let n = (f.ncpu + (coop && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32 + more).min(if coop { 2 } else { 3 });
     let p = &mut PLAN;
@@ -867,6 +894,12 @@ unsafe fn make_plan() {
         p[23] = sc;
     }
     p[30] = per_loop(1000, LOOP_BOSS_HP, e); // the Petey cages' HP x1000 (melee_modes::tu::envoy P_BOSS_HP)
+    if waves {
+        // an enemy-wave test fight: no foe fighters, Final Destination
+        p[7] = 0;
+        p[1] = 37;
+        p[26] = 0;
+    }
     if f.kind == FK_BOSS {
         p[8] = CK_GANONDORF;
         p[26] = 1; // the boss fight (the engine swaps in Petey when MELEE_ENVOY_BOSS=petey)
@@ -903,6 +936,7 @@ unsafe fn on_new_match(seq: i32) {
         S.rerolls = 0;
         S.slots_bonus = 0;
         S.no_shop = 0;
+        S.drop_all = 0;
         S.finale_off = 0;
         S.as_log = 0;
         S.test_heat = 0;
@@ -940,6 +974,11 @@ unsafe fn on_new_match(seq: i32) {
     let keys_short = (0..nh() as usize).any(|p| key_count(p) < keys_earned());
     // sessions: the stop (banked picks, a keystone if due, the shop) opens only a session's first fight
     let sstart = SESSION_START[S.fight.clamp(0, FIGHTS as i32 - 1) as usize];
+    // the stop already ran at the end of the last session (in that match): no picks, no shop here
+    let stopped = S.stop_done != 0 && sstart;
+    S.stop_done = 0;
+    S.stop = 0;
+    let sstart = sstart && !stopped;
     S.shop_due = (sstart && (S.fight > 0 || S.lp > 1) && S.no_shop == 0) as i32;
     // V3 12.9: the drive pick first, then the keystone pick (after a boss); the run's first keystone opens fight 1
     S.reward_due = if sstart && S.bank > 0 {
@@ -952,6 +991,10 @@ unsafe fn on_new_match(seq: i32) {
     let _ = started;
     S.bank_n = if S.reward_due == RW_DRIVES { S.bank } else { 0 };
     S.bank_i = (S.bank_n > 0) as i32;
+    // the session's last fight holds the retail match end: the stop runs in it after the win (outcome_frame)
+    // every fight holds the retail match end: the drops fly in after the last KO, then the sim ends the match
+    // (a session's last fight runs its stop in the held match first)
+    gd_envoy_end_hold(1);
     S.outcome = 0;
     S.stage_clock = 0;
     S.stage_switches = 0;
@@ -1023,8 +1066,15 @@ unsafe fn on_new_match(seq: i32) {
         FK_ELITE | FK_BOSS => 2,
         FK_PACK => (ncpu() / 2).max(1),
         _ => 1,
-    };
+    } + S.drop_all * 8;
     S.drops_made = 0;
+    S.en_h = [0; EN_MAX];
+    S.en_dmg = [0; EN_MAX];
+    S.en_rcv = [0; EN_MAX];
+    S.en_spawned = 0;
+    if test_waves() >= 0 {
+        gd_envoy_end_hold(1);
+    }
     S.rw_active = 0;
     foe_drives();
     for p in 0..nh() as usize {
@@ -1234,6 +1284,13 @@ unsafe fn reward_close() {
     }
     S.rw_active = 0;
     gd_hold_release();
+    if S.stop != 0 {
+        // the stop is over: the held match ends, the road shows the next session
+        S.stop = 0;
+        S.bank_n = 0;
+        gd_envoy_end_match();
+        log(b"envoy: the stop is over, fight\0", S.fight + 1);
+    }
 }
 
 /// A drive card chosen for fighter `f`: take it, or (a full row) go to the slot step.
@@ -2972,6 +3029,32 @@ unsafe fn take_drop(p: usize, k: usize, how: i32) {
     }
 }
 
+/// One frame of the fly-in (S.collect 1..=FLY_TIME): each drop on the floor moves toward its owner's fighter, and
+/// is taken (worn, a level-up, or banked) on the last frame. A player not on the stage takes it at once.
+unsafe fn fly_frame() {
+    let left = (FLY_TIME - S.collect + 1).max(1);
+    for p in 0..nh() as usize {
+        for k in 0..DROPS {
+            if S.drop[p][k][0] != 1 {
+                continue;
+            }
+            let Some(me) = pos(p as i32) else {
+                take_drop(p, k, G_SWEPT);
+                continue;
+            };
+            if S.collect == 1 {
+                log_drive(b"drop flies in", S.drop[p][k][1] as usize - 1, p as i32);
+            }
+            let (tx, ty) = ((me.x * 100.0) as i32, (me.y * 100.0) as i32 + 800);
+            S.drop[p][k][2] += (tx - S.drop[p][k][2]) / left;
+            S.drop[p][k][3] += (ty - S.drop[p][k][3]) / left;
+            if left == 1 {
+                take_drop(p, k, G_SWEPT);
+            }
+        }
+    }
+}
+
 unsafe fn drops_on_floor() -> bool {
     S.drop.iter().any(|q| q.iter().any(|d| d[0] == 1))
 }
@@ -3164,6 +3247,10 @@ unsafe fn outcome_frame() {
             foes += gd_player_stocks(s).max(0);
         }
     }
+    if test_waves() >= 0 {
+        // an enemy-wave fight: the enemies left (all of them before they spawn)
+        foes = if S.en_spawned == 0 { EN_TEST as i32 } else { S.en_h.iter().filter(|&&h| h > 0).count() as i32 };
+    }
     let key = me * 100 + foes;
     if key != S.last_stocks {
         S.last_stocks = key;
@@ -3179,18 +3266,149 @@ unsafe fn outcome_frame() {
         if me > 0 {
             S.won_pool = me;
         }
-        // the collect hold: up to 10 s to walk over a drop still on the floor, then it is swept up
-        if me > 0 && drops_on_floor() && S.collect < COLLECT_HOLD {
+        // the fly-in: every drop still on the floor flies to its owner's fighter in play, then is worn (the
+        // match end is held for every fight: nothing a fight dropped is lost, nobody chases a drop)
+        if drops_on_floor() && S.collect <= FLY_TIME {
+            fly_frame();
             S.collect += 1;
             return;
         }
-        fight_won();
+        if S.outcome == 0 {
+            let last = session_last(S.fight);
+            fight_won();
+            if last && S.state == RUN_LIVE {
+                begin_stop();
+                if S.stop != 0 {
+                    return;
+                }
+            }
+            gd_envoy_end_match();
+        }
     } else if me <= 0 {
         S.outcome = 2;
         S.pool = 0;
         S.state = RUN_OVER;
         log(b"envoy: RUN OVER at fight\0", S.fight + 1);
         make_plan();
+    }
+}
+
+// ---- enemy waves (first step; test knob only, envoy-v3-rules.md "Enemy waves")
+
+const EN_MAX: usize = 6;
+const EN_TEST: usize = 3;
+/// Damage dealt to an enemy goes into Envoy's records against this match slot (empty in a wave fight).
+const EN_SLOT: i32 = 3;
+
+/// MELEE_ENVOY_TEST_DRIVES item `~K`: an enemy-wave test fight with three of script kind K (0 Goomba, 2 ReDead,
+/// 4 Octorok); -1 none. Fixed per process.
+unsafe fn test_waves() -> i32 {
+    static mut CACHE: i32 = -2;
+    if CACHE != -2 {
+        return CACHE;
+    }
+    CACHE = test_waves_read();
+    CACHE
+}
+
+unsafe fn test_waves_read() -> i32 {
+    let mut b = [0u8; 256];
+    let n = gd_envoy_test_drives(b.as_mut_ptr(), b.len() as u32);
+    if n <= 0 {
+        return -1;
+    }
+    let s = core::str::from_utf8(&b[..(n as usize).min(b.len())]).unwrap_or("");
+    s.split(|c| c == ',' || c == '/' || c == '|' || c == ';')
+        .find_map(|t| t.trim().strip_prefix('~').and_then(|x| x.parse::<i32>().ok()))
+        .unwrap_or(-1)
+        .clamp(-1, 6)
+}
+
+/// Per live frame of a wave fight: spawn the three once the fight is on, then read each enemy's damage taken (its
+/// last attacker gets the record: Heat, charge) and its death.
+unsafe fn waves_frame() {
+    let k = test_waves();
+    if k < 0 {
+        return;
+    }
+    if S.en_spawned == 0 {
+        if S.play < 30 {
+            return;
+        }
+        S.en_spawned = 1;
+        const XS: [f32; EN_TEST] = [-50.0, 0.0, 50.0];
+        for i in 0..EN_TEST {
+            let h = (S.seq & 0xFFFF) << 8 | (i as i32 + 1);
+            let r = gd_envoy_enemy_spawn(k, XS[i], 30.0, if i % 2 == 0 { 1 } else { -1 }, h);
+            S.en_h[i] = if r == h { h } else { 0 };
+            log(b"envoy: enemy spawned, handle (-1: refused)\0", r);
+        }
+        return;
+    }
+    for i in 0..EN_MAX {
+        let h = S.en_h[i];
+        if h <= 0 {
+            continue;
+        }
+        let st = gd_envoy_enemy_status(h);
+        // the damage first: a one-hit kill is read in the frame it is defeated (the registry keeps it until removed)
+        let rcv = gd_envoy_enemy_i(h, 6);
+        {
+            if rcv >= 0 && rcv != S.en_rcv[i] {
+                let dmg = gd_envoy_enemy_i(h, 2).max(0);
+                let d = (dmg - S.en_dmg[i]).max(0) * 1000;
+                let who = gd_envoy_enemy_i(h, 7) - 1;
+                S.en_rcv[i] = rcv;
+                S.en_dmg[i] = dmg;
+                if (0..nh()).contains(&who) && d > 0 {
+                    S.hits += 1;
+                    deal(who as usize, EN_SLOT, d, 1000, 0, -1, CM_MOVE, 0, 0);
+                    log(b"envoy: enemy hit, player*1000 + damage\0", who * 1000 + d / 1000);
+                }
+            }
+        }
+        if st != 1 {
+            log(b"envoy: enemy gone, status (2 defeated)\0", st);
+            S.en_h[i] = 0;
+        }
+    }
+}
+
+/// Whether fight `f` (0-based) ends its session (the next one opens a session, or the loop ends).
+fn session_last(f: i32) -> bool {
+    let n = f.clamp(0, FIGHTS as i32 - 1) as usize + 1;
+    n >= FIGHTS || SESSION_START[n]
+}
+
+/// The stop after a session (the match is held open past the win): the banked picks ("Reward 1 of N"), a keystone if
+/// due, the shop; then the match ends (reward_close) and the road shows the next session. `S.fight` is already the
+/// next session's first fight. If the freeze cannot start, the stop opens the next fight instead (the old way).
+unsafe fn begin_stop() {
+    let keys_short = (0..nh() as usize).any(|p| key_count(p) < keys_earned());
+    let due = if S.bank > 0 { RW_DRIVES } else if keys_short { RW_KEYS } else { 0 };
+    S.shop_due = (S.no_shop == 0) as i32;
+    S.stop_done = 1;
+    if due == 0 && S.shop_due == 0 {
+        return;
+    }
+    if gd_hold_begin(REWARD_TIME * (S.bank.max(1) + 3) + SHOP_TIME + 120) != 0 {
+        S.stop_done = 0;
+        S.shop_due = 0;
+        return;
+    }
+    S.stop = 1;
+    S.bank_n = if due == RW_DRIVES { S.bank } else { 0 };
+    S.bank_i = (S.bank_n > 0) as i32;
+    log(b"envoy: the stop, picks banked\0", S.bank);
+    let first = if due != 0 {
+        due
+    } else {
+        S.shop_due = 0;
+        RW_SHOP
+    };
+    open_reward(first);
+    if (0..nh() as usize).all(|p| S.rw_done[p] != 0) {
+        reward_close();
     }
 }
 
@@ -3303,6 +3521,7 @@ unsafe fn publish() {
         s0 -= 1;
     }
     v[V_SESS_FIGHT] = (fi - s0 + 1) as i32;
+    v[V_STOP_DONE] = (S.state == RUN_LIVE && S.outcome == 1 && S.stop_done != 0 && S.stop == 0) as i32;
     v[V_POOL] = if S.live != 0 { (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0) } else { S.pool };
     v[V_LIVE] = S.live;
     v[V_HUMANS] = nh();
@@ -3554,6 +3773,7 @@ extern "C" fn on_frame_end() {
                     tech_frame();
                     records_frame();
                     moments_frame();
+                    waves_frame();
                     drives_frame();
                     heat_events();
                 }

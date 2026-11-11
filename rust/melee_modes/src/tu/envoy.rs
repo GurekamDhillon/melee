@@ -157,8 +157,29 @@ pub static mut BEST_LOOP: i32 = 0;
 
 /// Sessions (v3g): the armed run's fight was won and the next fight is in the same session (envoy_data view.rs
 /// `V_SESS_NEXT` 760): the VS mode skips the results screen, straight back to the character select the camp replaces.
+
+
+/// Envoy enemy waves (first step): the script layer's enemy seams (script_game.rs `Script_EnemyHit` / `_Defeated` /
+/// `_Removed`, no-ops before). Logged only: envoy_sim polls the registry (`gd_envoy_enemy_i`), which is game state,
+/// so nothing here has to be rolled back.
+pub unsafe extern "C" fn enemy_hit(handle: i32, player: i32, dmg: i32) {
+    if std::env::var_os("MELEE_ENVOY_ENEMY_LOG").is_some() {
+        eprintln!("envoy: enemy {handle} hit by player {player} for {dmg}");
+    }
+}
+pub unsafe extern "C" fn enemy_defeated(kind: i32, handle: i32) {
+    if std::env::var_os("MELEE_ENVOY_ENEMY_LOG").is_some() {
+        eprintln!("envoy: enemy {handle} (kind {kind}) defeated");
+    }
+}
+pub unsafe extern "C" fn enemy_removed(kind: i32, handle: i32, reason: i32) {
+    if std::env::var_os("MELEE_ENVOY_ENEMY_LOG").is_some() {
+        eprintln!("envoy: enemy {handle} (kind {kind}) removed, reason {reason}");
+    }
+}
+
 pub unsafe fn session_continue() -> bool {
-    armed() != 0 && VIEW[0] == 0x454E_5633 && VIEW[1] == 1 && VIEW[760] == 1
+    armed() != 0 && VIEW[0] == 0x454E_5633 && VIEW[1] == 1 && (VIEW[760] == 1 || VIEW[766] == 1)
 }
 
 /// The 1-P menu's input with the Envoy row (mnmain `mn_8022D7F4`, after the retail read): what the retail code must
@@ -241,6 +262,8 @@ fn ratio(v: i32) -> f32 {
 /// Rewrite the VS match about to start from the plan (no-op without one, outside VS, and for a replay).
 pub unsafe fn match_begin(d: *mut StartMeleeData) {
     crate::tu::petey::disarm();
+    // Envoy sessions: the match-end hold is the sim's, per match (gd_envoy_end_hold); never left on for a retail match
+    crate::tu::gmvs::gmVs_SetEndHold(0);
     if PLAN[P_ACTIVE] == 0 || armed() == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
         return;
     }
@@ -297,7 +320,11 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
             me.handicap = 9;
         }
     }
-    let n = PLAN[P_NCPU].clamp(1, 4 - humans as i32) as usize;
+    // 0: an enemy-wave fight (no foe fighters; the sim spawns the enemies, the match end is held)
+    let n = PLAN[P_NCPU].clamp(0, 4 - humans as i32) as usize;
+    if n == 0 {
+        crate::tu::gmvs::gmVs_SetEndHold(1); // a wave fight: no foe to eliminate; the sim ends it (gd_envoy_end_match)
+    }
     for i in 0..(4 - humans) {
         let p = &mut d.players[humans + i];
         if i >= n {

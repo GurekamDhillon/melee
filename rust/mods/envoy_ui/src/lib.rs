@@ -66,6 +66,8 @@ const ST_1P: i32 = 2;
 const ST_HOVER: i32 = 4;
 /// The player's Brawl files are missing: Envoy is blocked (full-game plan Q3).
 const ST_NO_BRAWL: i32 = 32;
+/// Envoy's select is in the CSS state (the retail select confirms itself under the cover).
+const ST_BYPASS: i32 = 128;
 const ARM_OFF: i32 = 0;
 const ARM_NEW: i32 = 1;
 const ARM_CONTINUE: i32 = 2;
@@ -587,6 +589,17 @@ pub extern "C" fn gd_ui_init() -> i32 {
 pub extern "C" fn gd_ui_frame(_present: u32) {
     unsafe {
         let st = gd_ui_envoy_state();
+        // Envoy's select: the retail character select loads and confirms itself under this cover (a few frames)
+        if st & ST_BYPASS != 0 && !CAMP.open {
+            let e = &mut *core::ptr::addr_of_mut!(ENC);
+            e.clear();
+            e.space(SPACE_BAND, 1.0);
+            e.layer(LAYER_MENU, 0);
+            e.rect(-200.0, -20.0, 1040.0, 520.0, 0x1A10_4AFF);
+            kit::text_edge(e, 320.0, 210.0, kit::d(30), kit::SUNNY, ALIGN_CENTER, 2.2, "Get ready");
+            e.submit();
+            return;
+        }
         if CAMP.open || st & ST_1P != 0 {
             let mut b = [0f32; 6];
             gd_ui_band_rect(b.as_mut_ptr());
@@ -664,12 +677,18 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                 e.space(SPACE_BAND, 1.0);
                 pick::draw(e, &v, ex);
                 e.space(SPACE_WINDOW, sc);
+            }
+            if v[V_RW] != 0 {
+                e.space(SPACE_BAND, 1.0);
+                pick::confirm(e, &v);
+                e.space(SPACE_WINDOW, sc);
             } else if v[V_SINCE_PICK] < 150 {
                 e.space(SPACE_BAND, 1.0);
                 hud::picked(e, &v);
                 e.space(SPACE_WINDOW, sc);
             }
-            if t[1] == 1 {
+            // the cinematic only for the classic D-pad tag; Quick Tag (Y / X) pops in place (hud::tag_pop)
+            if t[1] == 1 && v[V_P0 + P_TAG_BUTTON] == 2 {
                 tag_cinematic(e, &t, vw, vh);
             } else if t[1] == 2 {
                 stage_shift(e, &t, vw, vh);
@@ -1076,6 +1095,15 @@ unsafe fn world(v: &[i32; VW]) {
         }
         if v[b + S_MARK] > 0 {
             fx(FX_RING, qx, qy + 16.0, 0.0, 3.0 + 0.4 * sin(T as f32 * 0.25), 1.0, 0.0, alpha(0xC864_FFFF, 0.8));
+        }
+    }
+    // Quick Tag: a six-frame pop on the fighter coming in
+    for p in 0..humans {
+        if let Some(k) = hud::tag_pop(v, p) {
+            if let Some((x, y)) = owner_pos(v, (p * 2) as i32) {
+                fx(FX_RING, x, y + 8.0, 0.0, 6.0 + 10.0 * k, 2.0, 0.0, alpha(0xFFD8_4AFF, 1.0 - k));
+                fx(FX_DISC, x, y + 8.0, 0.0, 9.0 * (1.0 - k), 0.0, 0.0, alpha(0xFFFF_FFFF, 0.6 * (1.0 - k)));
+            }
         }
     }
     // the drops: the model in its glass shell with a beam in the owner's colour (co-op), else the family's

@@ -274,14 +274,36 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
         let cd = v[pbk + P_TAG_CD];
         let mx = v[pbk + P_TAG_MAX].max(1);
         let ready = cd <= 0;
-        face(e, if ready { S_FACE_WHITE } else { S_FACE_FADED }, bx, by, 84.0, 20.0, WHITE);
+        // Quick Tag: sunny in the after-damage window (a tag now is a Handoff), white when legal, faded on cooldown
+        let window = v[pbk + P_TAG_WINDOW] > 0 && ready;
+        face(e, if window { S_FACE_SUNNY } else if ready { S_FACE_WHITE } else { S_FACE_FADED }, bx, by, 84.0, 20.0, WHITE);
         if !ready {
             let f = 1.0 - (cd as f32 / mx as f32).clamp(0.0, 1.0);
             e.rect(bx + 2.0, by + 2.0, 80.0 * f, 16.0, alpha(WHITE, 0.9));
         }
-        spr_c(e, S_HEAD, bx + 10.0, by + 10.0, 0.62, WHITE);
-        e.text_ex(bx + 19.0, by + 4.0, d(10), INK, ALIGN_LEFT, 50.0, ck_name(bench));
-        spr_c(e, S_DPAD_DOWN, bx + 75.0, by + 10.0, 0.72, WHITE);
+        // the ring round the head: full when a tag is legal, the cooldown's fraction otherwise
+        let frac = if ready { 1.0 } else { 1.0 - (cd as f32 / mx as f32).clamp(0.0, 1.0) };
+        ring(e, bx + 10.0, by + 10.0, 9.0, 2.0, frac, if window { CORAL } else if ready { SUNNY } else { PALE }, alpha(PALE, 0.4));
+        // the heads flip on a tag (EV_TAG): the bench head turns over for 8 frames
+        let flip = tag_age(v, p, EV_TAG);
+        let sx = if (0..8).contains(&flip) { (cos(flip as f32 * 0.3927)).abs().max(0.15) } else { 1.0 };
+        let hw = 22.0 * 0.62;
+        spr(e, S_HEAD, bx + 10.0 - hw * sx * 0.5, by + 10.0 - hw * 0.5, hw * sx, hw, WHITE);
+        e.text_ex(bx + 19.0, by + 4.0, d(10), INK, ALIGN_LEFT, 44.0, ck_name(bench));
+        match v[pbk + P_TAG_BUTTON] {
+            0 | 1 => {
+                face(e, S_FACE_INK, bx + 66.0, by + 2.0, 16.0, 16.0, WHITE);
+                e.text_ex(bx + 74.0, by + 3.0, d(10), WHITE, ALIGN_CENTER, 0.0, if v[pbk + P_TAG_BUTTON] == 0 { "Y" } else { "X" });
+            }
+            _ => spr_c(e, S_DPAD_DOWN, bx + 75.0, by + 10.0, 0.72, WHITE),
+        }
+        // a Handoff: "Handoff!" by the heads and the first chip of the row bursts
+        let ho = tag_age(v, p, EV_HANDOFF);
+        if (0..30).contains(&ho) {
+            burst(e, S_BURST_SUNNY, bx + 42.0, by - 16.0, 50.0, ho, "Handoff!", 10);
+            let rx = x + 104.0;
+            ring(e, rx, y + 36.0, 12.0 + ho as f32 * 0.6, 3.0, 1.0, alpha(CORAL, 1.0 - ho as f32 / 30.0), 0);
+        }
     }
 }
 
@@ -526,4 +548,26 @@ unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
             _ => {}
         }
     }
+}
+
+/// Frames since the newest event `kind` of player `p` in the event ring (-1: none).
+unsafe fn tag_age(v: &[i32; VW], p: usize, kind: i32) -> i32 {
+    let n = v[V_EV_N].max(0) as usize;
+    let mut best = -1;
+    for i in 0..EV.min(n) {
+        let ev = &v[V_EV + i * EV_W..V_EV + (i + 1) * EV_W];
+        if ev[1] == kind && ev[2] as usize == p {
+            let age = v[V_PLAY] - ev[0];
+            if age >= 0 && (best < 0 || age < best) {
+                best = age;
+            }
+        }
+    }
+    best
+}
+
+/// The six-frame pop on the fighter a Quick Tag brings in (world space, from lib's draw).
+pub unsafe fn tag_pop(v: &[i32; VW], p: usize) -> Option<f32> {
+    let a = tag_age(v, p, EV_TAG);
+    if (0..6).contains(&a) { Some(a as f32 / 6.0) } else { None }
 }

@@ -329,8 +329,13 @@ pub unsafe fn refill_css(css: *mut CSSData) {
         start.players[0].ckind = CK_FOX as i8;
     }
     // match_begin's bookkeeping (the match count, the camp-due mark) belongs to the real match start: kept as it was
+    // the rules too (teams, timer, stage) stay the select's until the match start rewrites them: gmVsMelee_EnterVs
+    // would otherwise see the run's teams before the engine's scene-launch hooks exist; only the stage is read here
     let (seq, due) = (SEQ, CAMP_DUE);
+    let rules = start.rules;
     match_begin(start);
+    let stage = start.rules.stkind;
+    start.rules = rules;
     SEQ = seq;
     CAMP_DUE = due;
     // what the CSS exit (fs_css_finish / fs_preload_players / fs_preload_stage) leaves for the loader
@@ -345,7 +350,7 @@ pub unsafe fn refill_css(css: *mut CSSData) {
             e.color = p.color as _;
         }
     }
-    (*pc).game_cache.stkind = start.rules.stkind as StKind;
+    (*pc).game_cache.stkind = stage as StKind;
     crate::tu::adapt::lbDvd_80018254__6be579();
 }
 

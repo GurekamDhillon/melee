@@ -458,3 +458,55 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
         hints(e, &[(if keys && !coop { "Left / Right" } else { "Up / Down" }, "Choose"), ("A", "Take it")]);
     }
 }
+
+/// The replace confirm (any screen that overwrites a slot: the pick, the shop, a level-up token): "Replace X with Y
+/// for good?", Keep first (B keeps). One card per player that has one waiting, over that player's side.
+pub unsafe fn confirm(e: &mut E, v: &[i32; VW]) {
+    let humans = v[V_HUMANS].clamp(1, 2) as usize;
+    for p in 0..humans {
+        let b = V_P0 + p * V_PW;
+        if v[b + P_CONFIRM] == 0 {
+            continue;
+        }
+        let old = v[b + P_CONFIRM_OLD];
+        let new = v[b + P_CONFIRM_NEW];
+        let name = |id: i32| if (1..=POOL_LEN as i32).contains(&id) { POOL[id as usize - 1].name } else { "?" };
+        let w = if humans == 2 { 290.0 } else { 380.0 };
+        let x = if humans == 2 { 18.0 + p as f32 * 314.0 } else { 130.0 };
+        let y = 150.0;
+        e.rect(-200.0, -20.0, 1040.0, 520.0, 0x0C06_2A90);
+        sticker(e, S_FACE_WHITE, x, y, w, 150.0, -0.5, WHITE, |e| {
+            let mut s = Buf::new();
+            let at = v[b + P_CONFIRM_AT];
+            if new == 0 {
+                let price = v[b + P_SCRAP_PRICE + ((at / 8).clamp(0, 1) * SLOTS as i32 + (at % 8).clamp(0, SLOTS as i32 - 1)) as usize];
+                s.s("Scrap ").s(name(old)).s(" for ").i(price).s(" coins?");
+            } else {
+                s.s("Replace ").s(name(old)).s(" with ").s(name(new)).s(" for good?");
+            }
+            wrap(e, x + 16.0, y + 14.0, w - 32.0, d(17), 22.0, INK, ALIGN_LEFT, s.str(), 2);
+            let mut s = Buf::new();
+            s.s(if at / 8 == 0 { "Main" } else { "Partner" }).s(", slot ").i(at % 8 + 1).s(". The old drive is gone.");
+            e.text_ex(x + 16.0, y + 64.0, bs(12), LILAC, ALIGN_LEFT, w - 32.0, s.str());
+            let cur = v[b + P_CONFIRM_CUR];
+            let words = if new == 0 { ["Keep", "Scrap"] } else { ["Keep", "Replace"] };
+            for (i, word) in words.iter().enumerate() {
+                let bx = x + 16.0 + i as f32 * 118.0;
+                let on = cur == i as i32;
+                face(e, if on { if i == 0 { S_FACE_SUNNY } else { S_FACE_CORAL } } else { S_FACE_CREAM }, bx, y + 96.0, 108.0, 34.0, WHITE);
+                e.text_ex(bx + 54.0, y + 103.0, d(15), if on && i == 1 { WHITE } else { INK }, ALIGN_CENTER, 0.0, word);
+                if on {
+                    spr(e, S_PTR + p, bx - 22.0, y + 100.0, 0.0, 0.0, WHITE);
+                }
+            }
+        });
+        if humans == 2 {
+            face(e, if p == 0 { S_FACE_CORAL } else { S_FACE_LAGOON }, x - 4.0, y - 10.0, 28.0, 18.0, WHITE);
+            e.text_ex(x + 10.0, y - 8.0, d(12), WHITE, ALIGN_CENTER, 0.0, if p == 0 { "P1" } else { "P2" });
+        }
+    }
+    let any = (0..humans).any(|p| v[V_P0 + p * V_PW + P_CONFIRM] != 0);
+    if any {
+        hints(e, &[("Stick", "Choose"), ("A", "Confirm"), ("B", "Keep")]);
+    }
+}

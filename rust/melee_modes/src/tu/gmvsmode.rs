@@ -209,11 +209,11 @@ pub unsafe extern "C" fn onExitCss(state: *mut GameModeState) {
         if gmVsMelee_CssData.pending_scene_change as i32 != CSSPendingSceneChange_2 as i32 {
             // the bypass showed the loading screen in the select's place: the stage's sounds (the SSS exit's job),
             // then straight to the match
-            let stk = (*ext::gmVsMelee_GetVsData()).start.rules.stkind as StKind;
+            let stk = (*crate::tu::adapt::lbDvd_GetPreloadCacheScene__1ed990()).game_cache.stkind;
             crate::tu::adapt::lbAudioAx_80026F2C__c80d0b(24);
             crate::tu::adapt::lbAudioAx_8002702C__208dc3(8, crate::tu::adapt::lbAudioAx_80026EBC__431bc0(stk));
             crate::tu::adapt::lbAudioAx_80027168__342616();
-            ext::gm_SetNextGameModeStateId(gmVsMode_State_Vs);
+            ext::gm_SetNextGameModeStateId(if RETAIL_NO_LOADING_SCREEN { gmVsMode_State_Vs } else { gmVsMode_State_Loading });
         }
     }
 }

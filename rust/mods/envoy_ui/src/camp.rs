@@ -27,6 +27,7 @@ pub const R_TEAM: u8 = 4;
 pub const R_NG: u8 = 5;
 pub const R_COLLECTION: u8 = 6;
 pub const R_BACK: u8 = 7;
+pub const R_TAGBTN: u8 = 8;
 // the road between fights
 pub const R_GO: u8 = 10;
 pub const R_ABANDON: u8 = 11;
@@ -107,9 +108,9 @@ pub fn rows(after_fight: bool, ended: bool, has: bool, no_brawl: bool) -> &'stat
     } else if after_fight {
         &[R_GO, R_ABANDON, R_LEAVE]
     } else if has {
-        &[R_BIG, R_NEW, R_FIGHTERS, R_COLLECTION, R_BACK]
+        &[R_BIG, R_NEW, R_FIGHTERS, R_TAGBTN, R_COLLECTION, R_BACK]
     } else {
-        &[R_BIG, R_FIGHTERS, R_COLLECTION, R_BACK]
+        &[R_BIG, R_FIGHTERS, R_TAGBTN, R_COLLECTION, R_BACK]
     }
 }
 
@@ -122,6 +123,7 @@ fn row_text(r: u8, has: bool, p2: bool) -> (&'static str, &'static str) {
         R_TEAM => ("Team attack", "Off"),
         R_NG => ("NG+ level", "0 only"),
         R_COLLECTION => ("Collection", "soon"),
+        R_TAGBTN => ("Tag button", unsafe { ["Y", "X", "D-pad (classic)"][TAG_BUTTON.clamp(0, 2) as usize] }),
         R_BACK => ("Back", ""),
         R_GO => ("On to the next fight", ""),
         R_ABANDON => ("Abandon run", ""),
@@ -143,6 +145,7 @@ fn row_say(r: u8, has: bool, p2: bool) -> &'static str {
         R_TEAM => "Your attacks never hit your partner in this build.",
         R_NG => "NG+ opens when a run is cleared. Not in this build yet.",
         R_COLLECTION => "Drives and keystones you have found. Coming soon.",
+        R_TAGBTN => "Y and X tag at once, no cutscene. The D-pad is the classic tag with its cutscene.",
         R_BACK => "Back to the main menu.",
         R_GO => "The fights of this session follow back to back.",
         R_ABANDON => "End this run for good.",
@@ -210,6 +213,9 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     let u = &mut UI;
     u.age += 1;
     let t = u.age;
+    if t == 1 {
+        TAG_BUTTON = gd_ui_envoy_set_tag_button(-1).clamp(0, 2);
+    }
     let ended = view.is_some_and(|v| v[V_STATE] == 2 || v[V_STATE] == 3);
     // sessions: the fight was won and the next is in the same session: no road, the banner, then on at once
     if after_fight {
@@ -298,6 +304,12 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                     }
                     R_BACK => act = DO_CLOSE,
                     R_FIGHTERS if !has => crate::picker::open(u.p2),
+                    R_TAGBTN => {
+                        TAG_BUTTON = (TAG_BUTTON + 1) % 3;
+                        gd_ui_envoy_set_tag_button(TAG_BUTTON);
+                        u.msg = row_say(r, has, u.p2);
+                        u.msg_at = t;
+                    }
                     R_GO => act = DO_ARM | (2 << 8),
                     R_ABANDON => {
                         u.dialog = true;
@@ -327,7 +339,8 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     }
     // the list
     let lx = 30.0;
-    let mut y = if after_fight { 288.0 } else { 58.0 };
+    let forked = view.is_some_and(|v| v[V_ROAD_N] > 1 && !ended);
+    let mut y = if after_fight { if forked { 324.0 } else { 288.0 } } else { 58.0 };
     for (i, &r) in rs.iter().enumerate() {
         let on = i == u.cur && !u.dialog;
         let (label, value) = row_text(r, has, u.p2);
@@ -524,6 +537,9 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
             spr_rot(e, S_RAYS, 170.0, 160.0, 1.6, (t as f32) * 0.07, alpha(WHITE, 0.13));
             burst(e, S_BURST_CORAL, 300.0, 84.0, 80.0, t - 10, "Cleared", 14);
         }
+    } else if v[V_ROAD_N] > 1 {
+        fork(e, t, v);
+        return;
     } else {
         // the poster: what the next stop is
         let kind = v[V_FIGHT_KIND];
@@ -551,14 +567,6 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                 session_line(&mut s, v[V_SESS_KINDS]);
                 s.s(".");
                 e.text_ex(x + 16.0, y + 168.0, bs(13), LILAC, ALIGN_LEFT, 270.0, s.str());
-                // the forked road (port/v3g test line until the v3h posters land): left / right chooses
-                if v[V_ROAD_N] > 0 {
-                    let cur = v[V_ROAD_CUR];
-                    let mut s = Buf::new();
-                    s.s(if cur == 0 { "Road: [Open] / Steep" } else { "Road: Open / [Steep]" });
-                    s.s(if cur == 0 { " - banks 3 picks" } else { " - foes +1 drive, banks 2 picks + a level-up" });
-                    e.text_ex(x + 16.0, y + 186.0, bs(12), INK, ALIGN_LEFT, 270.0, s.str());
-                }
             });
         }
     }
@@ -611,4 +619,163 @@ pub fn fighter_sticker(e: &mut E, x: f32, y: f32, deg: f32, p: &Party, set: usiz
 /// Player 2 has joined at the camp.
 pub unsafe fn p2_in() -> bool {
     UI.p2
+}
+
+/// A reward token (RK_*): its word and its face. Data-driven: a new kind is one row here.
+fn token_look(k: i32) -> (&'static str, usize) {
+    match k {
+        RK_PICK => ("Pick", S_FACE_WHITE),
+        RK_FAMILY => ("Family pick", S_FACE_LAGOON),
+        RK_RARE => ("Rare pick", S_FACE_LILAC),
+        RK_LEVEL => ("Level-up", S_FACE_SUNNY),
+        RK_COINS => ("Coins", S_FACE_SUNNY),
+        RK_STOCK => ("Stock", S_FACE_CORAL),
+        RK_ELITE_DRIVE => ("Elite's drive", S_FACE_CORAL),
+        RK_KEYSTONE => ("Keystone", S_FACE_INK),
+        _ => ("?", S_FACE_WHITE),
+    }
+}
+
+/// A row of tokens from a packed token word, from (x, y), wrapping at `w`. Returns the height used.
+pub fn tokens(e: &mut E, x: f32, y: f32, w: f32, q: i32, n: i32) -> f32 {
+    let (mut cx, mut cy) = (x, y);
+    for i in 0..n.clamp(0, 8) {
+        let k = token(q, i);
+        if k == 0 {
+            continue;
+        }
+        let (word, fc) = token_look(k);
+        let tw_ = tw(word, d(11)) + 14.0;
+        if cx + tw_ > x + w {
+            cx = x;
+            cy += 22.0;
+        }
+        face(e, fc, cx, cy, tw_, 19.0, WHITE);
+        let ink = if fc == S_FACE_INK || fc == S_FACE_CORAL || fc == S_FACE_LAGOON || fc == S_FACE_LILAC { WHITE } else { INK };
+        e.text_ex(cx + tw_ * 0.5, cy + 3.0, d(11), ink, ALIGN_CENTER, 0.0, word);
+        cx += tw_ + 5.0;
+    }
+    cy - y + 22.0
+}
+
+fn fight_word(fk: i32) -> &'static str {
+    match fk {
+        FK_PACK => "Pack",
+        FK_ELITE => "Elite",
+        FK_BOSS => "Boss",
+        _ => "Duel",
+    }
+}
+
+fn road_name(k: i32) -> &'static str {
+    match k {
+        ROAD_STEEP => "Steep road",
+        ROAD_SWARM => "Swarm road",
+        _ => "Open road",
+    }
+}
+
+/// The forked road (step 8, M1): two or three posters side by side; P1's cursor (the sim's V_ROAD_CUR) is the one
+/// A takes, P2's lagoon flag is a wish. Everything on a poster is known.
+unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW]) {
+    let n = v[V_ROAD_N].clamp(2, ROADS_MAX as i32) as usize;
+    let cur = v[V_ROAD_CUR].clamp(0, n as i32 - 1) as usize;
+    let pw = if n == 2 { 296.0 } else { 194.0 };
+    let gap = (608.0 - pw * n as f32) / (n - 1) as f32;
+    let mut title = Buf::new();
+    title.s("Choose the road. ");
+    loop_fight(&mut title, v[V_LOOP], v[V_FIGHT], v[V_FIGHTS]);
+    text_edge(e, 20.0, 60.0, d(16), WHITE, ALIGN_LEFT, 1.6, title.str());
+    for r in 0..n {
+        let b = V_ROAD0 + r * V_ROADW;
+        let on = r == cur;
+        let x = 16.0 + r as f32 * (pw + gap);
+        let y = if on { 84.0 } else { 90.0 };
+        let (_, a) = enter(t - 2 - r as i32 * 3);
+        if a <= 0.0 {
+            continue;
+        }
+        let deg = if on { 0.0 } else { [-1.0, 0.8, -0.6][r] };
+        let kind = v[b + RD_KIND];
+        let danger = v[b + RD_DANGER];
+        if on {
+            face(e, S_FACE_CORAL, x - 4.0, y - 4.0, pw + 8.0, 196.0 + 8.0, alpha(WHITE, a));
+        }
+        sticker(e, S_FACE_WHITE, x, y, pw, 196.0, deg, alpha(WHITE, a), |e| {
+            let head = if danger == DANGER_STEEP { CORAL } else if danger == DANGER_ROUGH { SUNNY } else { 0xBFEB_E3FF };
+            e.rect(x + 1.5, y + 1.5, pw - 3.0, 40.0, head);
+            e.text_ex(x + 12.0, y + 6.0, d(19), if danger == DANGER_STEEP { WHITE } else { INK }, ALIGN_LEFT, pw - 90.0, road_name(kind));
+            let dw = match danger { DANGER_STEEP => "steep", DANGER_ROUGH => "rough", _ => "calm" };
+            let ww = tw(dw, d(11)) + 14.0;
+            face(e, S_FACE_INK, x + pw - ww - 10.0, y + 11.0, ww, 19.0, WHITE);
+            e.text_ex(x + pw - ww * 0.5 - 10.0, y + 14.0, d(11), WHITE, ALIGN_CENTER, 0.0, dw);
+            // the fights
+            let nf = v[b + RD_NF].clamp(0, 3);
+            let mut s = Buf::new();
+            for f in 0..nf {
+                if f > 0 {
+                    s.s(", ");
+                }
+                s.s(fight_word(v[b + RD_FIGHTS + f as usize * RD_FW] - 1));
+            }
+            e.text_ex(x + 12.0, y + 50.0, bs(11), LILAC, ALIGN_LEFT, 0.0, "Fights");
+            e.text_ex(x + 12.0, y + 64.0, d(14), INK, ALIGN_LEFT, pw - 24.0, s.str());
+            // the twist
+            let tws = v[b + RD_TWISTS];
+            let tline = if tws & TW_FOE_DRIVE != 0 { "Every foe carries one more drive." } else { "Nothing extra." };
+            e.text_ex(x + 12.0, y + 90.0, bs(12), INK, ALIGN_LEFT, pw - 24.0, tline);
+            e.rect(x + 12.0, y + 116.0, pw - 24.0, 2.0, PALE);
+            e.text_ex(x + 12.0, y + 124.0, bs(11), LILAC, ALIGN_LEFT, 0.0, "Banks");
+            tokens(e, x + 12.0, y + 140.0, pw - 24.0, v[b + RD_PRIZE], v[b + RD_PRIZE_N]);
+        });
+        if on {
+            spr(e, S_PTRDOWN, x + pw * 0.5 - 13.0, y - 26.0, 26.0, 28.0, WHITE);
+        }
+        if v[V_ROAD_FLAG] == r as i32 + 1 {
+            // P2's wish: a small lagoon flag on the poster's corner
+            let (fx, fy) = (x + pw - 22.0, y - 14.0);
+            e.rect(fx, fy, 2.5, 26.0, INK);
+            face(e, S_FACE_LAGOON, fx + 2.0, fy, 24.0, 15.0, WHITE);
+            e.text_ex(fx + 14.0, fy + 1.0, d(10), WHITE, ALIGN_CENTER, 0.0, "P2");
+        }
+    }
+    // what A does
+    let b = V_ROAD0 + cur * V_ROADW;
+    let mut s = Buf::new();
+    s.s("Take the ").s(road_name(v[b + RD_KIND])).s(": ");
+    if v[b + RD_TWISTS] & TW_FOE_DRIVE != 0 {
+        s.s("every foe carries one more drive. ");
+    } else {
+        s.s("the fights as they are. ");
+    }
+    s.s("Banks ");
+    let (mut picks, mut lv, mut other) = (0, 0, 0);
+    for i in 0..v[b + RD_PRIZE_N].clamp(0, 8) {
+        match token(v[b + RD_PRIZE], i) {
+            RK_PICK => picks += 1,
+            RK_LEVEL => lv += 1,
+            0 => {}
+            _ => other += 1,
+        }
+    }
+    s.i(picks).s(if picks == 1 { " pick" } else { " picks" });
+    if lv > 0 {
+        s.s(" and ").s(if lv == 1 { "a level-up" } else { "level-ups" });
+    }
+    if other > 0 {
+        s.s(" and more");
+    }
+    s.s(".");
+    let w = (tw(s.str(), bs(12)) + 22.0).min(608.0);
+    sticker(e, S_FACE_SUNNY, 16.0, 292.0 - 6.0, w, 26.0, -0.4, WHITE, |e| {
+        e.text_ex(27.0, 292.0, bs(12), INK, ALIGN_LEFT, w - 22.0, s.str());
+    });
+}
+
+/// The tag button chosen at the camp (0 Y, 1 X, 2 D-pad classic); sent with gd_ui_envoy_set_tag_button.
+pub static mut TAG_BUTTON: i32 = 0;
+
+#[link(wasm_import_module = "gd_ui")]
+extern "C" {
+    fn gd_ui_envoy_set_tag_button(b: i32) -> i32;
 }

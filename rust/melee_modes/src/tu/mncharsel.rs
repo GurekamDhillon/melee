@@ -2484,7 +2484,15 @@ pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
         crate::tu::envoy::BACK_TO_CAMP = 2;
         mnCharSel_804D6CF6 = 2;
     }
-    if crate::tu::envoy::SKIP_SELECT == 1 && mnCharSel_804D6CF6 == 0 && mnCharSel_804D6CF7 != 0 {
+    // Envoy's own select ran (envoy::bypass_css): the players are set; confirm once the select has loaded, under the
+    // UI's cover, whatever the cursors hold (refill_css rewrites them at the exit)
+    if crate::tu::envoy::BYPASSED && crate::tu::envoy::SKIP_SELECT == 1 {
+        crate::tu::envoy::SKIP_WAIT += 1;
+    }
+    if crate::tu::envoy::SKIP_SELECT == 1
+        && mnCharSel_804D6CF6 == 0
+        && (mnCharSel_804D6CF7 != 0 || (crate::tu::envoy::BYPASSED && crate::tu::envoy::SKIP_WAIT > 6))
+    {
         crate::tu::envoy::SKIP_SELECT = 2;
         mnCharSel_804D6CF6 = 1;
         mnCharSel_804D6CF2 = 0xFF;

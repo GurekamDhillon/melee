@@ -8,6 +8,7 @@ use gd_ui_enc::*;
 
 /// V2 families (RED, GREEN, BLUE, YELLOW, PURPLE, WHITE) -> the spec's eight badge families (fire, bolt, frost, wind,
 /// tech, util, clay, rose).
+pub const FAM_WORD: [&str; 8] = ["Fire", "Lightning", "Frost", "Wind", "Technique", "Utility", "Clay", "Rose"];
 pub const FAM_BADGE: [usize; 6] = [0, 3, 6, 1, 2, 5];
 
 /// The badge sprite for a pool index.

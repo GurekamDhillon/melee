@@ -1,12 +1,14 @@
 #!/bin/bash
 # Envoy from the camp door, fights 1 -> 3 (the run must never fall out to plain VS between fights).
 #
-# Boots the game with no MELEE_ENVOY_ARM (the camp arms the run), walks 1-P > Envoy > New run with a pad script
+# Boots the game with no MELEE_ENVOY_ARM (the camp arms the run), walks title > main menu > the Envoy row (V3: the
+# main menu's sixth row, Down twice) > A > the camp's Start (Start run) with a pad script
 # (camp_pad.txt; MELEE_ENVOY_TEST_P1CPU makes the player's fighters level-9 CPUs so the fights are won headless),
 # and checks the log: every VS match is a rewritten Envoy match, fights 1, 2 and 3 are fought and won, the run is
 # never disarmed or over before fight 3.
 #
 #   EXE=build/cargo/release/melee.exe MODS=build/mods-camp OUT=... bash tools/rust-port/envoy/camp_run.sh
+# MAX_FIGHT (default 3): the fights that must be fought and won (the last one only fought).
 # CARD: a memory card folder with a save (copied). GW_ISO_VANILLA must be set (never printed). Needs envoy_sim.wasm
 # and envoy_ui.wasm (tools/rust-port/modhost/build_mods.sh) and the Brawl files (_build/brawl above the exe or the
 # working directory, or MELEE_BRAWL_LOCAL): without them the camp refuses to arm.
@@ -42,15 +44,20 @@ seq=$(grep -oE "scene vs \(|envoy: match [0-9]+ rewritten|envoy: fight won, next
   | sed -E 's/scene vs \(/VS/; s/envoy: match ([0-9]+) rewritten/R\1/; s/envoy: fight won, next ([0-9]+)/W\1/; s/envoy: disarmed/D/; s/envoy: RUN OVER/X/; s/envoy: armed/A/' | tr '\n' ' ')
 echo "     events: $seq"
 grep -q "envoy: armed" "$log" && ok "the camp armed the run (no MELEE_ENVOY_ARM)" || bad "the camp never armed the run"
-for n in 1 2 3; do
+last=${MAX_FIGHT:-3}
+for n in $(seq 1 "$last"); do
   grep -q "envoy: match $n rewritten" "$log" && ok "fight $n is an Envoy match" || bad "fight $n never started as an Envoy match"
 done
-grep -q "envoy: fight won, next 2" "$log" && ok "fight 1 won" || bad "fight 1 not won"
-grep -q "envoy: fight won, next 3" "$log" && ok "fight 2 won" || bad "fight 2 not won"
+for n in $(seq 2 "$last"); do
+  grep -q "envoy: fight won, next $n" "$log" && ok "fight $((n - 1)) won" || bad "fight $((n - 1)) not won"
+done
+# the picks between fights: a card was taken after every won fight
+picks=$(grep -c "envoy: card taken" "$log")
+[ "$picks" -ge $((last - 1)) ] && ok "$picks picks taken between fights" || bad "only $picks picks taken"
 # every VS match up to the third rewrite is a rewritten one (a plain VS match would be a VS with no R before it)
-prefix=${seq%%R3*}
+prefix=${seq%%R$last*}
 if [ "$prefix" != "$seq" ]; then
-  plain=$(echo "$prefix R3 VS" | grep -oE "R[0-9]+ VS|VS" | grep -c "^VS$")
+  plain=$(echo "$prefix R$last VS" | grep -oE "R[0-9]+ VS|VS" | grep -c "^VS$")
   [ "$plain" = 0 ] && ok "no plain VS match before fight 3" || bad "$plain plain VS match(es) before fight 3"
   case "$prefix" in *D*|*X*) bad "the run was disarmed or over before fight 3";; *) ok "armed throughout";; esac
 fi

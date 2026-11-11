@@ -221,7 +221,8 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     let mut act = DO_NOTHING;
     if t > 3 {
         if !after_fight && !no_brawl {
-            if p2.start && !u.p2 && gd_ui_pad_present(1) != 0 {
+            // a port that mirrors port 1 (one controller read twice) must not join: P2's Start alone joins
+            if p2.start && !p1.start && !u.p2 && gd_ui_pad_present(1) != 0 {
                 u.p2 = true;
                 u.p2_at = t;
                 gd_ui_envoy_coop(1);

@@ -19,6 +19,8 @@
 use gd_ui_enc::*;
 
 mod camp;
+mod hud;
+mod pick;
 mod kit;
 mod party;
 
@@ -533,6 +535,10 @@ fn ease(t: f32) -> f32 {
 fn ft_name(k: i32) -> &'static str {
     if (0..27).contains(&k) { FT_NAMES[k as usize] } else { "FIGHTER" }
 }
+pub(crate) fn pad_present(port: u32) -> i32 {
+    unsafe { gd_ui_pad_present(port) }
+}
+
 pub(crate) fn ck_name(k: i32) -> &'static str {
     if (0..26).contains(&k) { CK_NAMES[k as usize] } else { "?" }
 }
@@ -615,14 +621,19 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             sounds(&v);
             let mut pv = [0i32; 12];
             let petey = gd_ui_petey(pv.as_mut_ptr(), 12) == 0 && pv[0] != 0;
-            hud(e, &v, vw);
-            if petey {
-                petey_bars(e, &pv, vw);
-            }
+            // V3 HUD in band space (640 x 480; `ex` the extra width each side of the 4:3 band)
+            let ex = if b[2] > 0.0 { b[0] / (b[2] / 640.0) } else { 0.0 };
+            e.space(SPACE_BAND, 1.0);
+            hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
+            e.space(SPACE_WINDOW, sc);
             if v[V_RW] != 0 {
-                reward(e, &v, vw, vh);
+                e.space(SPACE_BAND, 1.0);
+                pick::draw(e, &v, ex);
+                e.space(SPACE_WINDOW, sc);
             } else if v[V_SINCE_PICK] < 150 {
-                picked_line(e, &v, vw);
+                e.space(SPACE_BAND, 1.0);
+                hud::picked(e, &v);
+                e.space(SPACE_WINDOW, sc);
             }
             if t[1] == 1 {
                 tag_cinematic(e, &t, vw, vh);

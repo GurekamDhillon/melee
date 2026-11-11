@@ -310,6 +310,9 @@ struct VsOut {
     @location(1) c: vec4<f32>,
     @location(2) clip: vec4<f32>,
     @location(3) @interpolate(flat) sdf: u32,
+    @location(4) @interpolate(flat) uvc: vec4<f32>,
+    @location(5) l: vec2<f32>,
+    @location(6) @interpolate(flat) aa: vec2<f32>,
 };
 fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     if (win) { return p; }
@@ -321,8 +324,18 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
                    @location(6) rp: vec3<f32>) -> VsOut {
     var cx = array<f32, 6>(0.0, 1.0, 1.0, 0.0, 1.0, 0.0);
     var cy = array<f32, 6>(0.0, 0.0, 1.0, 0.0, 1.0, 1.0);
-    let l = vec2<f32>(cx[vi], cy[vi]);
     let win = (flags & 1u) != 0u;
+    // edge AA (kitaa): a slanted edge (shear: the left and right sides; a rotation off the right angles: all four)
+    // gets an analytic coverage ramp, so the quad is grown one target pixel outward on those sides. Axis-aligned
+    // edges are left exact, so abutting pieces (9-slices, bars) never show seams.
+    var aa = vec2<f32>(0.0, 0.0);
+    if (shear != 0.0) { aa.x = 1.0; }
+    let q = abs(sin(2.0 * rp.x));
+    if (rp.x != 0.0 && q > 1.0e-3) { aa = vec2<f32>(1.0, 1.0); }
+    var s = 1.0;
+    if (!win) { s = u.band.w / 480.0; }
+    let e = aa / max(abs(rect.zw) * s, vec2<f32>(1.0e-3, 1.0e-3));
+    let l = vec2<f32>(cx[vi], cy[vi]) * (1.0 + 2.0 * e) - e;
     var p = rect.xy + vec2<f32>(l.x * rect.z + shear * (1.0 - l.y) * rect.w, l.y * rect.w);
     if (rp.x != 0.0) {
         let d = p - rp.yz;
@@ -334,20 +347,47 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     var o: VsOut;
     o.pos = vec4<f32>(px.x / u.tgt.x * 2.0 - 1.0, 1.0 - px.y / u.tgt.y * 2.0, 0.0, 1.0);
     o.uv = mix(uvr.xy, uvr.zw, l);
+    // bilinear never reads past the sub-rect's own texels (drive sprite-sheet cells abut with no gutter)
+    let h = 0.5 / 2048.0;
+    o.uvc = vec4<f32>(min(uvr.xy, uvr.zw) + h, max(uvr.xy, uvr.zw) - h);
     let c = unpack4x8unorm(rgba);
     o.c = vec4<f32>(c.w, c.z, c.y, c.x);
     o.clip = vec4<f32>(to_px(clip.xy, win), to_px(clip.zw, win));
     o.sdf = (flags >> 1u) & 1u;
+    o.l = l;
+    o.aa = aa;
     return o;
 }
+fn edge(t: f32) -> f32 {
+    let g = max(length(vec2<f32>(dpdx(t), dpdy(t))), 1.0e-6);
+    return clamp(min(t, 1.0 - t) / g + 0.5, 0.0, 1.0);
+}
 @fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
-    let n = textureSample(atlas, smp, v.uv);
+    // the atlas is premultiplied on upload; linear filtering (the art is 2x and lands at 1.5x..3x per game pixel)
+    // minified art (a 64-texel disc drawn as a 9 px pip) is box-filtered over the pixel's footprint: up to 4x4
+    // bilinear taps, so small sprites neither shimmer nor stair-step without a mip chain on the shared atlas
+    let du = dpdx(v.uv);
+    let dv = dpdy(v.uv);
+    let fp = max(abs(du) + abs(dv), vec2<f32>(0.0, 0.0)) * 2048.0;
+    let k = u32(clamp(ceil(max(fp.x, fp.y)), 1.0, 4.0));
+    var n = vec4<f32>(0.0);
+    for (var j = 0u; j < k; j++) {
+        for (var i = 0u; i < k; i++) {
+            let o = (vec2<f32>(f32(i), f32(j)) + 0.5) / f32(k) - 0.5;
+            n += textureSampleLevel(atlas, lin, clamp(v.uv + du * o.x + dv * o.y, v.uvc.xy, v.uvc.zw), 0.0);
+        }
+    }
+    n /= f32(k * k);
     let d = textureSample(atlas, lin, v.uv).a;
     let fw = max(fwidth(d), 1.0e-4);
     let cov = clamp((d - 0.5) / fw + 0.5, 0.0, 1.0);
+    let ex = edge(v.l.x);
+    let ey = edge(v.l.y);
+    let ea = mix(1.0, ex, v.aa.x) * mix(1.0, ey, v.aa.y);
     if (v.pos.x < v.clip.x || v.pos.y < v.clip.y || v.pos.x >= v.clip.z || v.pos.y >= v.clip.w) { discard; }
-    if (v.sdf != 0u) { return vec4<f32>(v.c.rgb, v.c.a * cov); }
-    return n * v.c;
+    let c = vec4<f32>(v.c.rgb * v.c.a, v.c.a) * ea;
+    if (v.sdf != 0u) { return c * cov; }
+    return n * c;
 }
 ";
 
@@ -375,7 +415,7 @@ impl UiGpu {
             view_formats: &[],
         });
         let uniform = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui"), size: 32, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui"), mag_filter: wgpu::FilterMode::Nearest, min_filter: wgpu::FilterMode::Nearest, ..Default::default() });
+        let sampler = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui"), mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, ..Default::default() });
         let linear = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui sdf"), mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, ..Default::default() });
         let view = atlas.create_view(&Default::default());
         let bind = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -423,7 +463,7 @@ impl UiGpu {
                 module: &self.module,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState { format, blend: Some(wgpu::BlendState::ALPHA_BLENDING), write_mask: wgpu::ColorWrites::COLOR })],
+                targets: &[Some(wgpu::ColorTargetState { format, blend: Some(wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING), write_mask: wgpu::ColorWrites::COLOR })],
             }),
             multiview: None,
             cache: None,
@@ -455,10 +495,20 @@ impl Renderer {
             let full = g.atlas_gen == 0;
             let rects: &[AtlasRect] = if full { &[AtlasRect { x: 0, y: 0, w: ATLAS as u16, h: ATLAS as u16 }] } else { &atlas.dirty };
             for r in rects {
+                // premultiplied copy: bilinear then blends a sprite's edge into its transparent gutter without the
+                // dark fringe straight alpha gives (the CPU page stays straight alpha)
+                let mut pm = Vec::with_capacity(r.w as usize * r.h as usize * 4);
+                for y in r.y as usize..r.y as usize + r.h as usize {
+                    let o = (y * ATLAS as usize + r.x as usize) * 4;
+                    for t in atlas.px[o..o + r.w as usize * 4].chunks_exact(4) {
+                        let m = |c: u8| ((c as u32 * t[3] as u32 + 127) / 255) as u8;
+                        pm.extend_from_slice(&[m(t[0]), m(t[1]), m(t[2]), t[3]]);
+                    }
+                }
                 self.queue.write_texture(
                     wgpu::TexelCopyTextureInfo { texture: &g.atlas, mip_level: 0, origin: wgpu::Origin3d { x: r.x as u32, y: r.y as u32, z: 0 }, aspect: wgpu::TextureAspect::All },
-                    &atlas.px[((r.y as usize * ATLAS as usize) + r.x as usize) * 4..],
-                    wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(ATLAS * 4), rows_per_image: Some(r.h as u32) },
+                    &pm,
+                    wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(r.w as u32 * 4), rows_per_image: Some(r.h as u32) },
                     wgpu::Extent3d { width: r.w as u32, height: r.h as u32, depth_or_array_layers: 1 },
                 );
             }

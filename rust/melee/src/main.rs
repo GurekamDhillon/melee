@@ -494,6 +494,7 @@ fn main_inner() -> ExitCode {
     let compat = launcher_compat::prepare(&args);
     crash::install();
     hang::install();
+    hang::install_trap();
     if let Some(notes) = yougame {
         eprintln!("yougame: stdio bridge on ({}){}", if melee_platform::yougame::embedded() { "player box" } else { "own window" },
             if notes.is_empty() { String::new() } else { format!(", {}", notes.join(", ")) });

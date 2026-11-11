@@ -322,6 +322,11 @@ fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
         if poison {
             if let Some(a) = im._arena.take() {
                 let v = a.poison_and_leak(0xDD);
+                if let Some(f) = unsafe { POISON_HOOK } {
+                    for &(p, n, _) in &v {
+                        f(p, n);
+                    }
+                }
                 unsafe { (*core::ptr::addr_of_mut!(POISONED)).extend(v) };
             }
         }
@@ -414,3 +419,5 @@ pub fn check_poison(frame: u64) {
     });
 }
 
+/// Called with each object `MELEE_RECLAIM_POISON` fills (address, bytes): the host's write trap (melee hang.rs).
+pub static mut POISON_HOOK: Option<fn(usize, usize)> = None;

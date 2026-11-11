@@ -13,6 +13,7 @@ static BEATS: AtomicU64 = AtomicU64::new(0);
 #[inline]
 pub fn beat() {
     let n = BEATS.fetch_add(1, Ordering::Relaxed);
+    melee_engine::arena::quarantine_check(n);
     static POISON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     if *POISON.get_or_init(|| std::env::var_os("MELEE_RECLAIM_POISON").is_some()) {
         melee_engine::archive::check_poison(n);
@@ -21,6 +22,8 @@ pub fn beat() {
 
 /// Start the watchdog when `MELEE_HANG_DUMP` is set to a number of seconds (>= 2).
 pub fn install() {
+    // initialise the quarantine knob outside the arena lock (its first read allocates)
+    melee_engine::arena::quarantine_check(0);
     let Some(secs) = std::env::var("MELEE_HANG_DUMP").ok().and_then(|v| v.trim().parse::<u64>().ok()) else { return };
     let secs = secs.max(2);
     #[cfg(windows)]
@@ -196,3 +199,130 @@ mod win {
     }
 }
 
+// ---- write trap (`MELEE_RECLAIM_TRAP=1` with `MELEE_RECLAIM_POISON=1`): the pages of every poisoned object are made
+// read-only; a write fault inside a poisoned object writes the writer's stack to crashlogs/trap-<pid>.log and ends
+// the process (exit 0x54); a write fault elsewhere on such a page is let through once (page made writable, one
+// single step, page protected again). Test-only: slow, and inert unless both knobs are set.
+#[cfg(windows)]
+mod trap {
+    use core::ffi::c_void;
+    const N: usize = 1 << 20;
+    static mut RANGES: [(usize, usize); N] = [(0, 0); N];
+    static mut NR: usize = 0;
+    static mut PENDING: usize = 0;
+    extern "system" {
+        fn VirtualProtect(a: *mut c_void, n: usize, prot: u32, old: *mut u32) -> i32;
+        fn AddVectoredExceptionHandler(first: u32, h: unsafe extern "system" fn(*mut Ptrs) -> i32) -> *mut c_void;
+        fn GetModuleHandleW(name: *const u16) -> *mut c_void;
+        fn ExitProcess(code: u32) -> !;
+    }
+    #[repr(C)]
+    struct Rec {
+        code: u32,
+        flags: u32,
+        rec: *mut Rec,
+        addr: *mut c_void,
+        nparams: u32,
+        info: [usize; 15],
+    }
+    #[repr(C)]
+    struct Ptrs {
+        rec: *mut Rec,
+        ctx: *mut u8,
+    }
+    const PAGE: usize = 4096;
+    fn protect(p: usize, ro: bool) {
+        let mut old = 0u32;
+        unsafe { VirtualProtect((p & !(PAGE - 1)) as *mut c_void, PAGE, if ro { 0x02 } else { 0x04 }, &mut old) };
+    }
+    pub fn add(p: usize, n: usize) {
+        unsafe {
+            if NR < N {
+                RANGES[NR] = (p, p + n);
+                NR += 1;
+            }
+            let mut a = p & !(PAGE - 1);
+            while a < p + n {
+                protect(a, true);
+                a += PAGE;
+            }
+        }
+    }
+    unsafe extern "system" fn handler(e: *mut Ptrs) -> i32 {
+        let r = &*(*e).rec;
+        let ctx = (*e).ctx;
+        // EFlags at 0x44, Rip at 0xF8, Rsp at 0x98 (x64 CONTEXT)
+        if r.code == 0x8000_0004 && PENDING != 0 {
+            // the single step after a let-through write: protect the page again
+            protect(PENDING, true);
+            PENDING = 0;
+            return -1; // EXCEPTION_CONTINUE_EXECUTION
+        }
+        if r.code != 0xC000_0005 || r.info[0] != 1 {
+            return 0; // not a write access violation: not ours
+        }
+        let a = r.info[1];
+        let mut hit = false;
+        for i in 0..NR {
+            let (lo, hi) = RANGES[i];
+            if a >= lo && a < hi {
+                hit = true;
+                break;
+            }
+        }
+        let page_ours = (0..NR).any(|i| { let (lo, hi) = RANGES[i]; (lo & !(PAGE - 1)) <= a && a < ((hi + PAGE - 1) & !(PAGE - 1)) });
+        if !page_ours {
+            return 0;
+        }
+        if !hit {
+            protect(a, false);
+            PENDING = a;
+            *(ctx.add(0x44) as *mut u32) |= 0x100; // trap flag: one instruction, then the single-step above
+            return -1;
+        }
+        // a write into a poisoned (reclaimed) object: the writer's stack, without allocating
+        let base = GetModuleHandleW(core::ptr::null()) as usize;
+        let rip = *(ctx.add(0xF8) as *const usize);
+        let rsp = *(ctx.add(0x98) as *const usize);
+        let mut buf = [0u8; 16384];
+        let mut n = 0;
+        let mut put = |s: &[u8]| { for &c in s { if n < buf.len() { buf[n] = c; n += 1; } } };
+        let hex = |v: usize| { let mut d = [0u8; 18]; d[0] = b'0'; d[1] = b'x'; for i in 0..16 { d[2 + i] = b"0123456789ABCDEF"[(v >> ((15 - i) * 4)) & 15]; } d };
+        put(b"==== reclaim write trap ====\nwrite to 0x"); put(&hex(a)[2..]); put(b"\nrip melee.exe+"); put(&hex(rip.wrapping_sub(base))); put(b"\n");
+        let mut k = 0;
+        for i in 0..4096usize {
+            let v = *(rsp as *const usize).add(i);
+            if v > base && v < base + 0x400_0000 {
+                put(b"stack melee.exe+"); put(&hex(v - base)); put(b"\n");
+                k += 1;
+                if k == 120 { break; }
+            }
+        }
+        let path = b"crashlogs\trap.log\0";
+        extern "system" {
+            fn CreateFileA(n: *const u8, a: u32, s: u32, sa: *mut c_void, d: u32, f: u32, t: *mut c_void) -> *mut c_void;
+            fn WriteFile(h: *mut c_void, b: *const u8, n: u32, w: *mut u32, o: *mut c_void) -> i32;
+            fn CloseHandle(h: *mut c_void) -> i32;
+        }
+        let h = CreateFileA(path.as_ptr(), 0x4000_0000, 0, core::ptr::null_mut(), 2, 0x80, core::ptr::null_mut());
+        let mut w = 0u32;
+        WriteFile(h, buf.as_ptr(), n as u32, &mut w, core::ptr::null_mut());
+        CloseHandle(h);
+        ExitProcess(0x54);
+    }
+    pub fn install() {
+        unsafe {
+            AddVectoredExceptionHandler(1, handler);
+            melee_engine::archive::POISON_HOOK = Some(add);
+        }
+    }
+}
+
+/// `MELEE_RECLAIM_TRAP=1` (with `MELEE_RECLAIM_POISON=1`): install the write trap.
+pub fn install_trap() {
+    #[cfg(windows)]
+    if std::env::var_os("MELEE_RECLAIM_TRAP").is_some() && std::env::var_os("MELEE_RECLAIM_POISON").is_some() {
+        let _ = std::fs::create_dir_all("crashlogs");
+        trap::install();
+    }
+}

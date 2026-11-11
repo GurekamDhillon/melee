@@ -341,6 +341,7 @@ static mut SEL_CSS: *mut CSSData = core::ptr::null_mut();
 
 pub unsafe extern "C" fn envoy_sel_enter(_data: *mut core::ffi::c_void) {
     SEL_FRAMES = 0;
+    eprintln!("envoy: select scene (hold {})", SEL_HOLD as i32);
 }
 
 pub unsafe extern "C" fn envoy_sel_frame() {

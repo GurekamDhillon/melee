@@ -190,6 +190,7 @@ pub unsafe extern "C" fn onEnterCss(state: *mut GameModeState) {
     // port: Envoy owns its select (the camp's picker): the players are the run's, the select confirms at once
     if crate::tu::envoy::bypass_css(ext::gm_GetGameModeStateEnterData(state) as *mut CSSData) {
         (*state).info.scene_kind = crate::tu::envoy::GS_ENVOY_SEL;
+        eprintln!("envoy: CSS state -> Envoy select (skip {})", crate::tu::envoy::SKIP_SELECT);
         return;
     }
     ext::gmFrontend_SelectScene(state, 0); // the port's own character select

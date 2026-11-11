@@ -340,7 +340,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
     // the list
     let lx = 30.0;
     let forked = view.is_some_and(|v| v[V_ROAD_N] > 1 && !ended);
-    let mut y = if after_fight { if forked { 324.0 } else { 288.0 } } else { 58.0 };
+    let mut y = if after_fight { if forked { 298.0 } else { 288.0 } } else { 58.0 };
     for (i, &r) in rs.iter().enumerate() {
         let on = i == u.cur && !u.dialog;
         let (label, value) = row_text(r, has, u.p2);
@@ -685,16 +685,17 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
     let gap = (608.0 - pw * n as f32) / (n - 1) as f32;
     let mut title = Buf::new();
     if looped {
-        title.s("Loop ").i(v[V_LOOP]).s(" begins. ");
+        title.s("Loop ").i(v[V_LOOP]).s(" begins. Choose the road.");
+    } else {
+        title.s("Choose the road. ");
+        loop_fight(&mut title, v[V_LOOP], v[V_FIGHT], v[V_FIGHTS]);
     }
-    title.s("Choose the road. ");
-    loop_fight(&mut title, v[V_LOOP], v[V_FIGHT], v[V_FIGHTS]);
-    text_edge(e, 20.0, 60.0, d(16), WHITE, ALIGN_LEFT, 1.6, title.str());
+    text_edge(e, 20.0, 64.0, d(16), WHITE, ALIGN_LEFT, 1.6, title.str());
     for r in 0..n {
         let b = V_ROAD0 + r * V_ROADW;
         let on = r == cur;
         let x = 16.0 + r as f32 * (pw + gap);
-        let y = if on { 84.0 } else { 90.0 };
+        let y = if on { 92.0 } else { 96.0 };
         let (_, a) = enter(t - 2 - r as i32 * 3);
         if a <= 0.0 {
             continue;
@@ -703,9 +704,9 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
         let kind = v[b + RD_KIND];
         let danger = v[b + RD_DANGER];
         if on {
-            face(e, S_FACE_CORAL, x - 4.0, y - 4.0, pw + 8.0, 196.0 + 8.0, alpha(WHITE, a));
+            face(e, S_FACE_CORAL, x - 4.0, y - 4.0, pw + 8.0, 168.0 + 8.0, alpha(WHITE, a));
         }
-        sticker(e, S_FACE_WHITE, x, y, pw, 196.0, deg, alpha(WHITE, a), |e| {
+        sticker(e, S_FACE_WHITE, x, y, pw, 168.0, deg, alpha(WHITE, a), |e| {
             let head = if danger == DANGER_STEEP { CORAL } else if danger == DANGER_ROUGH { SUNNY } else { 0xBFEB_E3FF };
             e.rect(x + 1.5, y + 1.5, pw - 3.0, 40.0, head);
             e.text_ex(x + 12.0, y + 6.0, d(19), if danger == DANGER_STEEP { WHITE } else { INK }, ALIGN_LEFT, pw - 90.0, road_name(kind));
@@ -722,18 +723,18 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
                 }
                 s.s(fight_word(v[b + RD_FIGHTS + f as usize * RD_FW] - 1));
             }
-            e.text_ex(x + 12.0, y + 50.0, bs(11), LILAC, ALIGN_LEFT, 0.0, "Fights");
-            e.text_ex(x + 12.0, y + 64.0, d(14), INK, ALIGN_LEFT, pw - 24.0, s.str());
+            e.text_ex(x + 12.0, y + 46.0, bs(11), LILAC, ALIGN_LEFT, 0.0, "Fights");
+            e.text_ex(x + 12.0, y + 58.0, d(14), INK, ALIGN_LEFT, pw - 24.0, s.str());
             // the twist
             let tws = v[b + RD_TWISTS];
             let tline = if tws & TW_FOE_DRIVE != 0 { "Every foe carries one more drive." } else { "Nothing extra." };
-            e.text_ex(x + 12.0, y + 90.0, bs(12), INK, ALIGN_LEFT, pw - 24.0, tline);
-            e.rect(x + 12.0, y + 116.0, pw - 24.0, 2.0, PALE);
-            e.text_ex(x + 12.0, y + 124.0, bs(11), LILAC, ALIGN_LEFT, 0.0, "Banks");
-            tokens(e, x + 12.0, y + 140.0, pw - 24.0, v[b + RD_PRIZE], v[b + RD_PRIZE_N]);
+            e.text_ex(x + 12.0, y + 80.0, bs(12), INK, ALIGN_LEFT, pw - 24.0, tline);
+            e.rect(x + 12.0, y + 102.0, pw - 24.0, 2.0, PALE);
+            e.text_ex(x + 12.0, y + 108.0, bs(11), LILAC, ALIGN_LEFT, 0.0, "Banks");
+            tokens(e, x + 12.0, y + 124.0, pw - 24.0, v[b + RD_PRIZE], v[b + RD_PRIZE_N]);
         });
         if on {
-            spr(e, S_PTRDOWN, x + pw * 0.5 - 13.0, y - 26.0, 26.0, 28.0, WHITE);
+            spr(e, S_PTR, x - 30.0, y + 70.0, 0.0, 0.0, WHITE);
         }
         if v[V_ROAD_FLAG] == r as i32 + 1 {
             // P2's wish: a small lagoon flag on the poster's corner
@@ -771,8 +772,8 @@ unsafe fn fork(e: &mut E, t: i32, v: &[i32; VW], looped: bool) {
     }
     s.s(".");
     let w = (tw(s.str(), bs(12)) + 22.0).min(608.0);
-    sticker(e, S_FACE_SUNNY, 16.0, 292.0 - 6.0, w, 26.0, -0.4, WHITE, |e| {
-        e.text_ex(27.0, 292.0, bs(12), INK, ALIGN_LEFT, w - 22.0, s.str());
+    sticker(e, S_FACE_SUNNY, 16.0, 270.0 - 6.0, w, 26.0, -0.4, WHITE, |e| {
+        e.text_ex(27.0, 270.0, bs(12), INK, ALIGN_LEFT, w - 22.0, s.str());
     });
 }
 

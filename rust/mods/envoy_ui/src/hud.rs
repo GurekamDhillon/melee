@@ -259,8 +259,9 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
         spr_c(e, if ready { S_DPAD_RIGHT_LIT } else { S_DPAD_RIGHT }, ax + 12.0, ay - 12.0, 0.75, WHITE);
         let need = v[pbk + v3::P_PIPS_NEED].clamp(1, 4);
         for k in 0..need {
-            let px = ax - (need - 1) as f32 * 4.0 + k as f32 * 8.0;
-            spr_c(e, S_DISC, px, ay + 17.0, 6.0 / 32.0, if k < v[pbk + v3::P_PIPS] { SUNNY } else { alpha(PALE, 0.5) });
+            // pips 11 game px (owner: the HUD read tiny; kitaa's measure: 1.25% of the height before)
+            let px = ax - (need - 1) as f32 * 6.5 + k as f32 * 13.0;
+            spr_c(e, S_DISC, px, ay + 20.0, 11.0 / 32.0, if k < v[pbk + v3::P_PIPS] { SUNNY } else { alpha(PALE, 0.5) });
         }
     }
     // Heat bar and the bench sticker (shrunk)
@@ -317,9 +318,9 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     T += 1;
     let humans = v[V_HUMANS].clamp(1, 2) as usize;
     e.layer(LAYER_HUD, 5);
-    corner(e, v, 0, 14.0);
+    corner(e, v, 0, 14.0 - ex); // the corners hug the screen edges on a wide window
     if humans == 2 {
-        corner(e, v, 1, 626.0 - corner_w());
+        corner(e, v, 1, 626.0 + ex - corner_w());
     }
     // top left: keystones (mini wedges, emblem only) and coins, then the shared stock pool
     let p = party_from_view(v);
@@ -333,30 +334,32 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     if v[v3::V_HEAT_ON] == 1 {
         let mut s = Buf::new();
         s.i(v[v3::V_COINS]);
-        let w = tw(s.str(), d(13)) + 28.0;
-        face(e, S_FACE_WHITE, x + 4.0, 16.0, w, 19.0, WHITE);
-        spr_c(e, S_COIN, x + 15.0, 25.5, 0.9, WHITE);
-        e.text_ex(x + 25.0, 18.0, d(13), INK, ALIGN_LEFT, 0.0, s.str());
+        // the coin 21 game px (was 14)
+        let w = tw(s.str(), d(15)) + 36.0;
+        face(e, S_FACE_WHITE, x + 4.0, 13.0, w, 25.0, WHITE);
+        spr_c(e, S_COIN, x + 17.0, 25.5, 1.3, WHITE);
+        e.text_ex(x + 30.0, 16.0, d(15), INK, ALIGN_LEFT, 0.0, s.str());
         x += w + 10.0;
     }
     // the pool: white dots bottom centre, the last one coral on a burst
     let pool = v[V_POOL].max(0);
     let total = if humans == 2 { 5 } else { 4 };
     let n = total.max(pool);
-    let px = 320.0 - (n - 1) as f32 * 8.0;
+    // stocks 21 game px (were 14)
+    let px = 320.0 - (n - 1) as f32 * 12.0;
     for i in 0..n {
-        let cx = px + i as f32 * 16.0;
-        let cy = 458.0;
+        let cx = px + i as f32 * 24.0;
+        let cy = 455.0;
         if i < pool {
             if pool == 1 {
                 let pulse = 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0);
-                spr_rot(e, S_BURST_SUNNY, cx, cy, 0.42 * pulse, 8.0, WHITE);
-                spr_c(e, S_STOCK_LAST, cx, cy, 0.8, WHITE);
+                spr_rot(e, S_BURST_SUNNY, cx, cy, 0.6 * pulse, 8.0, WHITE);
+                spr_c(e, S_STOCK_LAST, cx, cy, 1.17, WHITE);
             } else {
-                spr_c(e, S_STOCK, cx, cy, 0.8, WHITE);
+                spr_c(e, S_STOCK, cx, cy, 1.17, WHITE);
             }
         } else {
-            spr_c(e, S_STOCK_SPENT, cx, cy, 0.8, WHITE);
+            spr_c(e, S_STOCK_SPENT, cx, cy, 1.17, WHITE);
         }
     }
     // fight label under the pool

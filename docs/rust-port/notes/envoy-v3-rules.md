@@ -147,7 +147,9 @@ with and without Insulate, and through a cash-out.
 | saved run | **was broken in V3** (the host checked the V2 view words); fixed. Run 1 saved after fight 1; run 2's camp Continue: "armed, run continued at fight 2" |
 | synctests C1-C8, depths 4 and 7 | all 0 mismatches; tech 90/144 L-cancels, 45/72 wavedashes; tech marks seen in a camp run's fight, not on the pad (Falcon is never knocked down there) |
 | Grand Finale A/B | 1.30 launch speed ratio at +30% (required 1.25-1.35) |
-| Petey break | **not achieved**: the 3600-frame slice run ends at ~1850 frames with no break; 9000-frame runs (with and without a fixed Heat) stall in synctest after the first pick and time out (1200-1400 s), cause not found |
+| Petey stall (round 3) | a rollback-only bug: draw_model grew vertex buffers inside the game scope; with the Brawl files present a snapshot load rewrote the arena under them (ARENA MISUSE, 196 mismatches, a stalled synctest). Buffers now made once on a helper thread. Offline play was never affected |
+| Petey breaks (round 3) | **were never counted, in play too**: the carrier was looked up before Petey's fight began (boss_slot -1). Fixed; with `*6000` breaks 1-4 fire, cash out, RUN CLEAR; slice C9 requires them |
+| full win from fight 1 (round 3) | camp_run with `ember:3,nova:3,bolt:3,*4000\|grand_finale`: fights 1-5 won, RUN CLEAR. One earlier identical run crashed once in fight 2 (access violation in HSD_PObjLoadDesc / geno_pal_desc strcmp on a bad class_name, a JObj load mid-match); not reproduced |
 
 ### Heat spread: proposals (not applied; the owner's rules stay: half kept on a KO, no decay, 1 Heat per 1%)
 

@@ -187,18 +187,33 @@ pub unsafe extern "C" fn onEnterDebugVs(state: *mut GameModeState) {
 pub unsafe extern "C" fn onEnterCss(state: *mut GameModeState) {
     melee_core::ct!("onEnterCss");
     ext::gmVsMelee_EnterCss(state, ext::gmVsMelee_GetVsData(), VS_MELEE);
+    // port: Envoy owns its select (the camp's picker): the players are the run's, the select confirms at once
+    crate::tu::envoy::bypass_css(ext::gm_GetGameModeStateEnterData(state) as *mut CSSData);
     ext::gmFrontend_SelectScene(state, 0); // the port's own character select
 }
 
 /// 1B14DC
 pub unsafe extern "C" fn onExitCss(state: *mut GameModeState) {
     melee_core::ct!("onExitCss");
+    if crate::tu::envoy::BYPASSED || crate::tu::envoy::SKIP_SELECT == 2 {
+        crate::tu::envoy::BYPASSED = false;
+        let css = ext::gm_GetGameModeStateExitData(state) as *mut CSSData;
+        if (*css).pending_scene_change as i32 != CSSPendingSceneChange_2 as i32 {
+            crate::tu::envoy::refill_css(css);
+        }
+    }
     ext::gmVsMelee_ExitCss(state, ext::gmVsMelee_GetVsData());
     // port: Envoy fights 2+ skip the stage select (the run's match rewrite sets the stage)
     if crate::tu::envoy::SKIP_SELECT == 2 {
         crate::tu::envoy::SKIP_SELECT = 0;
         if gmVsMelee_CssData.pending_scene_change as i32 != CSSPendingSceneChange_2 as i32 {
-            ext::gm_SetNextGameModeStateId(if RETAIL_NO_LOADING_SCREEN { gmVsMode_State_Vs } else { gmVsMode_State_Loading });
+            // the bypass showed the loading screen in the select's place: the stage's sounds (the SSS exit's job),
+            // then straight to the match
+            let stk = (*ext::gmVsMelee_GetVsData()).start.rules.stkind as StKind;
+            crate::tu::adapt::lbAudioAx_80026F2C__c80d0b(24);
+            crate::tu::adapt::lbAudioAx_8002702C__208dc3(8, crate::tu::adapt::lbAudioAx_80026EBC__431bc0(stk));
+            crate::tu::adapt::lbAudioAx_80027168__342616();
+            ext::gm_SetNextGameModeStateId(gmVsMode_State_Vs);
         }
     }
 }

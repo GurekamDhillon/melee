@@ -903,9 +903,49 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             if launch {
                 ev::CAMP_DUE = 0;
                 ev::LAUNCH_VS = 1;
+                // the camp's picker set the party (or a saved run has its own): no character or stage select
+                if ev::skip_select_on() && matches!(op & 0xF, 1 | 2) && (ev::PICK[0] >= 0 || op & 0xF == 2) {
+                    ev::SKIP_SELECT = 3;
+                    ev::SKIP_WAIT = 0;
+                }
             }
         }
         GD_OK
+    });
+    // the camp's fighter picker: the party for a new run (melee_modes::tu::envoy::PICK; -1 none)
+    f!("gd_ui_envoy_party", |_c: Caller<'_, PresData>, m1: i32, p1: i32, m2: i32, p2: i32| -> i32 {
+        let ok = |k: i32| k == -1 || melee_modes::tu::envoy::taggable(k);
+        if !(ok(m1) && ok(p1) && ok(m2) && ok(p2)) {
+            return GD_EINVAL;
+        }
+        unsafe { melee_modes::tu::envoy::PICK = [m1, p1, m2, p2] };
+        GD_OK
+    });
+    // the picker's roster: every fighter the build can load as one half of a tag pair, retail (0-25) then m-ex
+    // added slots (CK_MEX0 +): one word each, ckind | state << 16 (state 1 offered, 2 locked). Unlocks: everything
+    // the build can load is offered for now (gm_IsCKindUnlocked is not applied; owner, Nov 11). Returns the count.
+    f!("gd_ui_envoy_roster", |mut c: Caller<'_, PresData>, out: u32, max: i32| -> i32 {
+        use melee_modes::tu::envoy as ev;
+        let mut b: Vec<u8> = Vec::new();
+        for k in (0..26).chain(ev::CK_MEX0..ev::CK_MEX0 + ev::MEX_SLOTS) {
+            if (b.len() / 4) as i32 >= max {
+                break;
+            }
+            if ev::taggable(k) {
+                b.extend_from_slice(&(k | 1 << 16).to_le_bytes());
+            }
+        }
+        if write_bytes(&mut c, out, &b) { (b.len() / 4) as i32 } else { GD_EINVAL }
+    });
+    // an m-ex fighter's name into `out` (at most `cap` bytes); returns the length, 0 for a retail fighter
+    f!("gd_ui_envoy_fighter_name", |mut c: Caller<'_, PresData>, ck: i32, out: u32, cap: i32| -> i32 {
+        let p = unsafe { melee_modes::tu::envoy::mex_name(ck) };
+        if p.is_null() {
+            return 0;
+        }
+        let n = unsafe { core::ffi::CStr::from_ptr(p as *const core::ffi::c_char) }.to_bytes();
+        let n = &n[..n.len().min(cap.max(0) as usize)];
+        if write_bytes(&mut c, out, n) { n.len() as i32 } else { GD_EINVAL }
     });
     f!("gd_ui_scene_goto", |c: Caller<'_, PresData>, to: u32| -> i32 {
         scene!(c);

@@ -65,6 +65,9 @@ pub static mut PREV_HEAT: [f32; 2] = [0.0; 2];
 pub static mut GAIN_AT: [i32; 2] = [-100; 2];
 pub static mut STATE_AT: [(usize, i32); 2] = [(0, -100); 2];
 static mut T: i32 = 0;
+/// The pickup line: each player's last seen gain count and the frame it changed.
+static mut PICKUP_KEY: [i32; 2] = [0; 2];
+static mut PICKUP_AT: [i32; 2] = [0; 2];
 
 /// The Heat bar: track (ink ring, white ring), fill in the state's colour, three marks, the flame at its foot.
 fn heat_bar(e: &mut E, x: f32, y: f32, w: f32, h: &Heat, p: usize) {
@@ -203,6 +206,44 @@ unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
         } else if (k as i32) < v[V_OPEN].max(3) {
             spr_c(e, S_DISC, cx, cy, 19.0 / 32.0, alpha(INK, 0.55));
             spr_c(e, S_DISC, cx, cy, 15.0 / 32.0, alpha(PALE, 0.35));
+        }
+    }
+    // a drop taken (worn, a level-up, banked): a ring on its chip and one line over the row, 90 frames
+    {
+        let g = pbk + P_GAIN;
+        let key = v[g + 5];
+        if key != PICKUP_KEY[p] {
+            let fresh = PICKUP_KEY[p] != 0 || T > 2;
+            PICKUP_KEY[p] = key;
+            let how = v[g + 4];
+            if fresh && key > 0 && (how == 1 || how == 4 || how == 6) {
+                PICKUP_AT[p] = T;
+            }
+        }
+        let age = T - PICKUP_AT[p];
+        let id = v[g + 1];
+        if PICKUP_AT[p] > 0 && (0..90).contains(&age) && (1..=POOL_LEN as i32).contains(&id) {
+            let name = POOL[id as usize - 1].name;
+            let how = v[g + 4];
+            let lv = v[g + 3];
+            let slot = ids.iter().position(|&d| d == id);
+            let mut b = Buf::new();
+            if how == 6 {
+                b.s("Row full. ").s(name).s(" is banked.");
+            } else if lv > 1 {
+                b.s(name).s(", level ").i(lv);
+            } else {
+                b.s(name).s(" on, slot ").i(slot.map_or(0, |k| k as i32 + 1));
+            }
+            let a = if age > 70 { (90 - age) as f32 / 20.0 } else { 1.0 };
+            let w = tw(b.str(), bs(12)) + 16.0;
+            face(e, S_FACE_SUNNY, rx - 8.0, cy - 40.0, w, 20.0, alpha(WHITE, a));
+            e.text_ex(rx, cy - 37.0, bs(12), alpha(INK, a), ALIGN_LEFT, 0.0, b.str());
+            if let Some(k) = slot.filter(|_| how != 6) {
+                let cx = rx + k as f32 * 29.0;
+                let r = 14.0 + 10.0 * ease((age as f32 / 18.0).min(1.0));
+                ring(e, cx, cy, r, 3.0, 1.0, alpha(SUNNY, a * (1.0 - (age as f32 / 90.0) * 0.6)), 0);
+            }
         }
     }
     // the active drive (Volley): a square badge after the row, its pips, D-pad right

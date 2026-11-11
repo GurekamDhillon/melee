@@ -107,9 +107,9 @@ pub fn rows(after_fight: bool, ended: bool, has: bool, no_brawl: bool) -> &'stat
     } else if after_fight {
         &[R_GO, R_ABANDON, R_LEAVE]
     } else if has {
-        &[R_BIG, R_NEW, R_COLLECTION, R_BACK]
+        &[R_BIG, R_NEW, R_FIGHTERS, R_COLLECTION, R_BACK]
     } else {
-        &[R_BIG, R_COLLECTION, R_BACK]
+        &[R_BIG, R_FIGHTERS, R_COLLECTION, R_BACK]
     }
 }
 
@@ -117,7 +117,7 @@ fn row_text(r: u8, has: bool, p2: bool) -> (&'static str, &'static str) {
     match r {
         R_BIG => (if has { "Continue run" } else { "Start run" }, ""),
         R_NEW => ("New run", ""),
-        R_FIGHTERS => ("Fighters", "2 each, next screen"),
+        R_FIGHTERS => ("Fighters", if has { "Set for this run" } else if p2 { "2 each" } else { "2" }),
         R_LENGTH => ("Run length", "Short, 5 fights"),
         R_TEAM => ("Team attack", "Off"),
         R_NG => ("NG+ level", "0 only"),
@@ -134,8 +134,9 @@ fn row_text(r: u8, has: bool, p2: bool) -> (&'static str, &'static str) {
 fn row_say(r: u8, has: bool, p2: bool) -> &'static str {
     match r {
         R_BIG if has => "Pick up the saved run with the saved party.",
-        R_BIG if p2 => "Player 2 is in: 5 stocks together. Pick two fighters each next.",
-        R_BIG => "Five fights: duels, elites, a boss. Pick your two fighters next.",
+        R_BIG if p2 => "Player 2 is in: 5 stocks together. Straight into fight 1.",
+        R_BIG => "Five fights: duels, elites, a boss. Straight into fight 1.",
+        R_FIGHTERS if has => "The party is set for this run. Start a new run to change it.",
         R_NEW => "Start over from fight 1. The saved run is lost.",
         R_FIGHTERS => "Bring two fighters each. You swap between your two mid-fight.",
         R_LENGTH => "This build has the short run: five fights.",
@@ -189,8 +190,8 @@ fn fcard(e: &mut E, x: f32, y: f32, deg: f32, ck: i32, tag: i32, col: u32, ids: 
                 }
             }
         } else {
-            e.text_ex(x + 36.0, y + 34.0, d(15), LILAC, ALIGN_CENTER, 0.0, "Pick");
-            e.text_ex(x + 36.0, y + 56.0, bs(11), LILAC, ALIGN_CENTER, 66.0, "next screen");
+            text_edge(e, x + 36.0, y + 14.0, d(30), SUNNY, ALIGN_CENTER, 1.4, "?");
+            e.text_ex(x + 36.0, y + 56.0, d(13), LILAC, ALIGN_CENTER, 66.0, "Random");
         }
         if tag > 0 {
             face(e, if tag == 1 { S_FACE_CORAL } else { S_FACE_LAGOON }, x - 6.0, y - 8.0, 26.0, 18.0, WHITE);
@@ -220,6 +221,12 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         }
     }
     let has = rec.is_some();
+    if crate::picker::is_open() {
+        if !crate::picker::frame(e) {
+            u.age = 1; // back on the camp: the closing press must not choose a row
+        }
+        return DO_NOTHING;
+    }
     let rs = rows(after_fight, ended, has, no_brawl);
     if u.cur >= rs.len() {
         u.cur = 0;
@@ -290,6 +297,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                         }
                     }
                     R_BACK => act = DO_CLOSE,
+                    R_FIGHTERS if !has => crate::picker::open(u.p2),
                     R_GO => act = DO_ARM | (2 << 8),
                     R_ABANDON => {
                         u.dialog = true;
@@ -407,14 +415,15 @@ unsafe fn status(e: &mut E, t: i32, has: bool, rec: Option<&[i32; REC_WORDS]>, p
     let party = rec.map(|r| party_from_record(r));
     let coop = party.as_ref().map_or(p2, |p| p.players == 2);
     // P1 fighters
-    let (ck0, ck1) = party.as_ref().map_or((-1, -1), |p| (p.pairs[0], p.pairs[1]));
+    let lp = crate::picker::LAST;
+    let (ck0, ck1) = party.as_ref().map_or((lp[0], lp[1]), |p| (p.pairs[0], p.pairs[1]));
     let z = [0i32; SLOTS];
     let (i0, l0, i1, l1) = party.as_ref().map_or((z, z, z, z), |p| (p.ids[0], p.lvs[0], p.ids[1], p.lvs[1]));
     fcard(e, 292.0, 54.0, -3.0, ck0, 1, CORAL, &i0, &l0);
     fcard(e, 368.0, 60.0, 2.0, ck1, 0, CORAL, &i1, &l1);
     spr_c(e, S_SWAP, 365.0, 103.0, 1.0, WHITE);
     if coop {
-        let (c2, c3) = party.as_ref().map_or((-1, -1), |p| (p.pairs[2], p.pairs[3]));
+        let (c2, c3) = party.as_ref().map_or((lp[2], lp[3]), |p| (p.pairs[2], p.pairs[3]));
         let (i2, l2, i3, l3) = party.as_ref().map_or((z, z, z, z), |p| (p.ids[2], p.lvs[2], p.ids[3], p.lvs[3]));
         fcard(e, 468.0, 58.0, -2.0, c2, 2, LAGOON, &i2, &l2);
         fcard(e, 544.0, 54.0, 3.0, c3, 0, LAGOON, &i3, &l3);
@@ -589,4 +598,9 @@ pub fn fighter_sticker(e: &mut E, x: f32, y: f32, deg: f32, p: &Party, set: usiz
             e.text_ex(x + 7.0, y - 7.0, d(12), WHITE, ALIGN_CENTER, 0.0, if pl == 0 { "P1" } else { "P2" });
         }
     });
+}
+
+/// Player 2 has joined at the camp.
+pub unsafe fn p2_in() -> bool {
+    UI.p2
 }

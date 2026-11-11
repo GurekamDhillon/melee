@@ -24,6 +24,7 @@ mod pick;
 mod shop;
 mod kit;
 mod party;
+mod picker;
 
 use envoy_data::view::*;
 use envoy_data::*;
@@ -291,6 +292,9 @@ pub extern "C" fn gd_ui_event(node: u32, ev: i32, _value: i32) {
                 camp_close();
             }
             B_NEW => {
+                if launch != 0 {
+                    picker::send(camp::p2_in());
+                }
                 gd_ui_envoy_arm(ARM_NEW | launch);
                 camp_close();
             }
@@ -603,7 +607,12 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                     let op = act >> 8;
                     let launch = if CAMP.after_fight { 0 } else { ARM_LAUNCH };
                     match op {
-                        1 => { gd_ui_envoy_arm(ARM_NEW | launch); }
+                        1 => {
+                            if launch != 0 {
+                                picker::send(camp::p2_in());
+                            }
+                            gd_ui_envoy_arm(ARM_NEW | launch);
+                        }
                         2 => { gd_ui_envoy_arm(ARM_CONTINUE | launch); }
                         3 => { gd_ui_envoy_arm(ARM_ABANDON); }
                         4 => { gd_ui_envoy_arm(4); }
@@ -914,6 +923,10 @@ fn cos(x: f32) -> f32 {
 unsafe fn model(m: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, glow: f32, a: f32) {
     gd_ui_world_model(m, x, y, z, yaw, scale, glow, a);
 }
+/// Each drop's last drawn place and its trail (the fly-in).
+static mut DROP_LAST: [[(f32, f32); DROPS]; 2] = [[(0.0, 0.0); DROPS]; 2];
+static mut DROP_TRAIL: [[[(f32, f32); 8]; DROPS]; 2] = [[[(0.0, 0.0); 8]; DROPS]; 2];
+
 unsafe fn fx(kind: i32, x: f32, y: f32, z: f32, a: f32, b: f32, c: f32, rgba: u32) {
     gd_ui_world_fx(kind, x, y, z, a, b, c, rgba);
 }
@@ -1070,10 +1083,31 @@ unsafe fn world(v: &[i32; VW]) {
         for k in 0..DROPS {
             let d = pb(p) + P_DROPS + k * 4;
             if v[d] != 1 || v[d + 1] <= 0 {
+                DROP_LAST[p][k] = (0.0, 0.0);
                 continue;
             }
             let fam = POOL[v[d + 1] as usize - 1].family as usize;
             let (x, y) = (v[d + 2] as f32 / 100.0, v[d + 3] as f32 / 100.0 + 6.0 + sin(T as f32 * 0.08 + k as f32));
+            // flying in (it moved since the last frame): a bright sunny trail back along its path, unmissable at
+            // the end-of-match zoom
+            let prev = DROP_LAST[p][k];
+            if prev.0 != 0.0 && ((prev.0 - x).abs() + (prev.1 - y).abs()) > 0.3 {
+                let tr = &mut DROP_TRAIL[p][k];
+                tr.rotate_right(1);
+                tr[0] = (x, y);
+                for j in 0..7 {
+                    let (ax, ay) = tr[j];
+                    let (bx, by) = tr[j + 1];
+                    if bx != 0.0 {
+                        fx(FX_LINE, ax, ay, 0.0, bx, by, 2.6 - j as f32 * 0.3, alpha(0xFFD8_4AFF, 1.0 - j as f32 / 8.0));
+                    }
+                }
+                fx(FX_DISC, x, y, 0.0, 9.0, 0.0, 0.0, alpha(0xFFF0_A0FF, 0.75));
+                fx(FX_RING, x, y, 0.0, 12.0 + 3.0 * sin(T as f32 * 0.5), 1.4, 0.0, alpha(0xFFD8_4AFF, 0.9));
+            } else if prev.0 == 0.0 {
+                DROP_TRAIL[p][k] = [(0.0, 0.0); 8];
+            }
+            DROP_LAST[p][k] = (x, y);
             let beam = if humans == 2 { PLAYER_COL[p] } else { FAM_COL[fam] };
             fx(FX_BEAM, x, y - 6.0, 0.0, 70.0, 7.0, 0.0, alpha(beam, 0.35));
             if humans == 2 {

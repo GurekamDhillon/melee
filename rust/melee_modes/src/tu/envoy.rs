@@ -195,6 +195,14 @@ pub static mut BACK_TO_CAMP: i32 = 0;
 /// (as Start would), 2 = confirmed, the stage select is skipped (gmvsmode `onExitCss`). `MELEE_ENVOY_SELECT=1`
 /// keeps both screens.
 pub static mut SKIP_SELECT: i32 = 0;
+/// The party chosen at the camp's fighter picker (gd_ui_envoy_party): player 1's main and partner, player 2's main
+/// and partner (character kinds; -1 none). Used for a new run's first fight in place of the character select's
+/// picks (a saved run's own party wins: PLAN). With it set, Start run goes from the camp straight to fight 1:
+/// `SKIP_SELECT` 3 = the character select confirms itself after it has settled (nothing is shown: the UI covers it)
+/// and the stage select is skipped.
+pub static mut PICK: [i32; 4] = [-1; 4];
+/// Calls of the character select's cursor think while `SKIP_SELECT` is 3 (it confirms after 30).
+pub static mut SKIP_WAIT: i32 = 0;
 pub fn skip_select_on() -> bool {
     static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     !*V.get_or_init(|| std::env::var("MELEE_ENVOY_SELECT").is_ok_and(|v| v == "1"))
@@ -252,7 +260,73 @@ const CK_MARTH: i32 = 0x09;
 
 /// A character that can be one half of a tag pair (a retail fighter that owns no sub-fighter).
 pub fn taggable(ck: i32) -> bool {
-    (0..=0x19).contains(&ck) && ck != CK_ICS && ck != CK_ZELDA && ck != CK_SHEIK
+    ((0..=0x19).contains(&ck) && ck != CK_ICS && ck != CK_ZELDA && ck != CK_SHEIK) || mex_loadable(ck)
+}
+
+/// The first m-ex added fighter's character kind (`CK_MEX0` in melee_engine mex_host) and the slot count.
+pub const CK_MEX0: i32 = 0x22;
+pub const MEX_SLOTS: i32 = 94;
+
+/// An m-ex added fighter the running build can load (the disc's MxDt.dat names it; false on a retail disc).
+pub fn mex_loadable(ck: i32) -> bool {
+    (CK_MEX0..CK_MEX0 + MEX_SLOTS).contains(&ck) && unsafe { crate::tu::gmresultplayer::ext::Mex_PortCKindToExt(ck) } > 25
+}
+
+/// An m-ex fighter's name (null on a retail fighter or without m-ex).
+pub unsafe fn mex_name(ck: i32) -> *const i8 {
+    if !mex_loadable(ck) {
+        return core::ptr::null();
+    }
+    crate::tu::gmresultplayer::ext::Mex_FighterName(crate::tu::gmresultplayer::ext::Mex_PortCKindToExt(ck))
+}
+
+/// The CSS state of this match is Envoy's (`bypass_css`): its exit refills the players before the VS copy.
+pub static mut BYPASSED: bool = false;
+
+/// Envoy owns the select (the camp's picker): gmvsmode's onEnterCss calls this after `gmVsMelee_EnterCss` for a
+/// launch or the road. The players come from the run (`match_begin`: the picks or the plan) and the preload cache is
+/// written the way the retail select's exit leaves it. The CSS scene itself still runs (the Rust port has no other
+/// scene to put in the state: the PC frontend's loading scene is not ported, `fl_open`), confirms itself as soon as
+/// it has settled (mncharsel, `SKIP_SELECT` 1) under the camp's cover, takes no input, and the SSS is skipped.
+/// onExitCss calls `refill_css` before the VS copy so the select's own cursor picks never reach the match.
+pub unsafe fn bypass_css(css: *mut CSSData) -> bool {
+    if SKIP_SELECT != 1 && SKIP_SELECT != 3 {
+        return false;
+    }
+    SKIP_SELECT = 1;
+    SKIP_WAIT = 0;
+    BYPASSED = true;
+    refill_css(css);
+    false
+}
+
+/// The run's players and the matching preload cache into the CSS data (see `bypass_css`).
+pub unsafe fn refill_css(css: *mut CSSData) {
+    let start = &mut (*css).vs.start;
+    // the CSS normally leaves P1 human (the rewrite below fills every slot from the run's plan / the camp's picks)
+    start.players[0].slot_type = Gm_PKind_Human as u8;
+    if start.players[0].ckind < 0 || start.players[0].ckind as i32 == ChKind_None as i32 {
+        start.players[0].ckind = CK_FOX as i8;
+    }
+    // match_begin's bookkeeping (the match count, the camp-due mark) belongs to the real match start: kept as it was
+    let (seq, due) = (SEQ, CAMP_DUE);
+    match_begin(start);
+    SEQ = seq;
+    CAMP_DUE = due;
+    // what the CSS exit (fs_css_finish / fs_preload_players / fs_preload_stage) leaves for the loader
+    let pc = crate::tu::adapt::lbDvd_GetPreloadCacheScene__1ed990();
+    for i in 0..4usize {
+        let p = &start.players[i];
+        let e = &mut (*pc).game_cache.entries[i];
+        if p.slot_type as i32 == Gm_PKind_NA as i32 {
+            e.char_id = ChKind_None as i32;
+        } else {
+            e.char_id = p.ckind as i32;
+            e.color = p.color as _;
+        }
+    }
+    (*pc).game_cache.stkind = start.rules.stkind as StKind;
+    crate::tu::adapt::lbDvd_80018254__6be579();
 }
 
 fn ratio(v: i32) -> f32 {
@@ -274,7 +348,17 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     let coop = PLAN[P_COOP] == 1;
     let css = |i: usize| -> i32 { let p = &d.players[i]; if p.slot_type != Gm_PKind_NA as u8 { p.ckind as i32 } else { -1 } };
     // solo: P1's pick is the main, P2's the partner; co-op: P1 + P3 are player 1's pair, P2 + P4 player 2's
-    let (css_main, css_partner) = (css(0), if coop { css(2) } else { css(1) });
+    let (mut css_main, mut css_partner) = (css(0), if coop { css(2) } else { css(1) });
+    // the camp's picker, when used (a saved run's party is PLAN's and wins in `pair`)
+    let (mut css_m2, mut css_p2) = (css(1), css(3));
+    if PICK[0] >= 0 {
+        css_main = PICK[0];
+        css_partner = PICK[1];
+        if PICK[2] >= 0 {
+            css_m2 = PICK[2];
+            css_p2 = PICK[3];
+        }
+    }
     let pair = |want_main: i32, want_partner: i32, cm: i32, cp: i32| -> (i32, i32) {
         let mut main = if want_main >= 0 { want_main } else { cm };
         if !taggable(main) {
@@ -292,7 +376,7 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     ROSTER2 = [-1, -1];
     let humans = if coop { 2 } else { 1 };
     if coop {
-        let (m2, p2) = pair(PLAN[P_MAIN2], PLAN[P_PARTNER2], css(1), css(3));
+        let (m2, p2) = pair(PLAN[P_MAIN2], PLAN[P_PARTNER2], css_m2, css_p2);
         ROSTER2 = [m2, p2];
         pl::TAG_PARTNER_CK[1] = p2 as i8;
     }
@@ -331,7 +415,7 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
             p.slot_type = Gm_PKind_NA as u8;
             continue;
         }
-        p.ckind = PLAN[P_CPU_CK + i].clamp(0, 0x19) as i8;
+        p.ckind = { let k = PLAN[P_CPU_CK + i]; if mex_loadable(k) { k } else { k.clamp(0, 0x19) } } as i8;
         p.slot_type = 1;
         p.cpu_kind = 4; // the VS AI (0 is the training dummy)
         p.cpu_level = PLAN[P_CPU_LV + i].clamp(1, 9) as u8;

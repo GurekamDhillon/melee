@@ -105,8 +105,8 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w: f32) {
     if msg != 0 && !done {
         let good = matches!(msg, 1 | 3 | 4 | 5 | 6 | 8);
         let mw = tw(MSG[msg], d(14)) + 24.0;
-        sticker(e, if good { S_FACE_SUNNY } else { S_FACE_CORAL }, x0 + 146.0, fy + 54.0, mw, 26.0, -2.0, WHITE, |e| {
-            e.text_ex(x0 + 158.0, fy + 59.0, d(14), INK, ALIGN_LEFT, 0.0, MSG[msg]);
+        sticker(e, if good { S_FACE_SUNNY } else { S_FACE_CORAL }, x0 + 246.0, fy + 22.0, mw, 26.0, -2.0, WHITE, |e| {
+            e.text_ex(x0 + 258.0, fy + 27.0, d(14), INK, ALIGN_LEFT, 0.0, MSG[msg]);
         });
     }
     if done {

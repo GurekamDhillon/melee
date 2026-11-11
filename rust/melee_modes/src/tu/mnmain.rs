@@ -4673,6 +4673,10 @@ pub unsafe extern "C" fn mnMain_Scene_OnFrame() {
     melee_core::ct!("mnMain_Scene_OnFrame");
     let mut data: *mut MenuExitData = ::core::ptr::null_mut::<MenuExitData>();
     // port: the Envoy camp started the run (melee_modes::tu::envoy::LAUNCH_VS): the menu's own VS pick
+    if crate::tu::envoy::BACK_TO_CAMP == 2 {
+        crate::tu::envoy::BACK_TO_CAMP = 0;
+        crate::tu::envoy::DOOR_OPEN = 1;
+    }
     if crate::tu::envoy::LAUNCH_VS != 0 {
         crate::tu::envoy::LAUNCH_VS = 0;
         crate::tu::envoy::DOOR_HOVER = 0;

@@ -154,6 +154,18 @@ pub fn rec_valid(r: &[i32]) -> bool {
 /// The main menu's Envoy row was chosen with the Brawl files missing: presents left of the "needs your Brawl disc"
 /// message the mod draws (the camp never loads).
 pub static mut DOOR_NO_DISC: i32 = 0;
+/// The run ended and the player chose "Back to camp" on the road: 1 = the VS character select backs out to the main
+/// menu (as a held B does), 2 = the main menu opens the camp. Never leaves the player on the character select.
+pub static mut BACK_TO_CAMP: i32 = 0;
+/// Fights 2+: the road's "Start the fight" goes straight to the match with the party the run has and the stage the
+/// run chose (the match rewrite sets both): 1 = the VS character select confirms itself as soon as it is ready
+/// (as Start would), 2 = confirmed, the stage select is skipped (gmvsmode `onExitCss`). `MELEE_ENVOY_SELECT=1`
+/// keeps both screens.
+pub static mut SKIP_SELECT: i32 = 0;
+pub fn skip_select_on() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    !*V.get_or_init(|| std::env::var("MELEE_ENVOY_SELECT").is_ok_and(|v| v == "1"))
+}
 /// A on the main menu's Envoy row (mnmain `mn_8022DB10`): open the camp, or refuse when the Brawl files are missing.
 pub unsafe fn door_main_open() -> bool {
     if !crate::tu::petey_model::brawl_present() {
@@ -614,6 +626,9 @@ unsafe fn d_team(slot: i32) -> i32 {
 /// Per logic frame (after the post chain, next to `petey::tick`): keep each blast on its capsule for its life (put
 /// back if the owner's own state change cleared it and its move left the slot free), then switch it off.
 pub unsafe fn tick() {
+    if ARMED != 0 && hud_off() {
+        hide_retail_hud();
+    }
     for b in BLASTS.iter_mut() {
         if b.left <= 0 {
             continue;
@@ -644,4 +659,50 @@ pub unsafe fn tick() {
             }
         }
     }
+}
+
+/// Envoy draws its own percent, stocks and timer (envoy_ui's HUD): while a run is armed the retail damage plates,
+/// their digits and stock icons are hidden (JObj flags only: no game state; with no run armed the HUD is retail).
+/// `MELEE_ENVOY_RETAIL_HUD=1` keeps the retail HUD.
+pub fn hud_off() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    !*V.get_or_init(|| std::env::var("MELEE_ENVOY_RETAIL_HUD").is_ok_and(|v| v == "1"))
+}
+pub unsafe fn hide_retail_hud() {
+    use melee_world::tu::ifstatus as ifs;
+    // only in a match (the plates are freed at its end and the pointers are not cleared everywhere)
+    if crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
+        return;
+    }
+    let h = ifs::ifStatus_GetHUDInfo();
+    if h.is_null() {
+        return;
+    }
+    for i in 0..6usize {
+        let p = &mut (*h).players[i];
+        p.flags.set_hide_all_digits(1);
+        for g in [p.HUD_parent_entity, p.next] {
+            if !g.is_null() && !(*g).hsd_obj.is_null() {
+                melee_runtime::tu::jobj_ptr::HSD_JObjSetFlagsAll((*g).hsd_obj as *mut HSD_JObj, JOBJ_HIDDEN as u32);
+            }
+        }
+    }
+}
+
+/// Read-only words for the Envoy HUD (gd_ui_fight_hud): per match slot 0-3 [present, percent, stocks]. Outside a
+/// match all zero.
+pub unsafe fn hud_words() -> [i32; 12] {
+    let mut o = [0i32; 12];
+    if crate::tu::stage_hop::check(-1) == crate::tu::stage_hop::HOP_NOT_GAMEPLAY {
+        return o;
+    }
+    for s in 0..4i32 {
+        if melee_fighter::player::get_entity(s).is_null() {
+            continue;
+        }
+        o[s as usize * 3] = 1;
+        o[s as usize * 3 + 1] = melee_fighter::player::get_damage(s);
+        o[s as usize * 3 + 2] = melee_fighter::stale::stocks(s);
+    }
+    o
 }

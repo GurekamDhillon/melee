@@ -1140,11 +1140,31 @@ unsafe fn pick_frame(p: usize) {
     let id = S.offers[p][S.cursor[p].clamp(0, 2) as usize];
     match S.step[p] {
         0 => {
+            // the UI's list (R2 + D2): up / down walk the three rows and Skip (cursor 3, drives only);
+            // left / right still cycle the three offers
+            let up = pad & (DPAD_UP | STICK_UP) != 0;
+            let down = pad & (DPAD_DOWN | STICK_DOWN) != 0;
+            let rows = if S.rw_active == RW_KEYS { 3 } else { 4 };
             if left {
-                S.cursor[p] = (S.cursor[p] + 2) % 3;
+                S.cursor[p] = (S.cursor[p].min(2) + 2) % 3;
             }
             if right {
-                S.cursor[p] = (S.cursor[p] + 1) % 3;
+                S.cursor[p] = (S.cursor[p].min(2) + 1) % 3;
+            }
+            if up {
+                S.cursor[p] = (S.cursor[p] + rows - 1) % rows;
+            }
+            if down {
+                S.cursor[p] = (S.cursor[p] + 1) % rows;
+            }
+            if S.cursor[p] == 3 {
+                if pad & BTN_A != 0 {
+                    log(b"envoy: pick skipped, player ", p as i32);
+                    done_pick(p, -1, 0);
+                } else if S.timer <= 0 {
+                    timeout_pick(p);
+                }
+                return;
             }
             let id = S.offers[p][S.cursor[p].clamp(0, 2) as usize];
             let one_fighter = id == OFFER_STOCK || S.rw_active == RW_KEYS || S.shared != 0 || gd_tag_partner(p as i32) < 0;

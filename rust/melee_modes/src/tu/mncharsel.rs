@@ -2479,6 +2479,16 @@ pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
         n_doors = mnCharSel_804D6CF5 as i32;
     }
 
+    // port: Envoy's run ended and the road said "Back to camp": back out to the main menu (the held-B exit)
+    if crate::tu::envoy::BACK_TO_CAMP == 1 && mnCharSel_804D6CF6 == 0 {
+        crate::tu::envoy::BACK_TO_CAMP = 2;
+        mnCharSel_804D6CF6 = 2;
+    }
+    if crate::tu::envoy::SKIP_SELECT == 1 && mnCharSel_804D6CF6 == 0 && mnCharSel_804D6CF7 != 0 {
+        crate::tu::envoy::SKIP_SELECT = 2;
+        mnCharSel_804D6CF6 = 1;
+        mnCharSel_804D6CF2 = 0xFF;
+    }
     'update_display: {
         if mnCharSel_804D6CF6 == 0 {
             (*cursor).x8 = 0;

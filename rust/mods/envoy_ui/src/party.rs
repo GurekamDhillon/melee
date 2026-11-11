@@ -8,8 +8,16 @@ use gd_ui_enc::*;
 
 /// V2 families (RED, GREEN, BLUE, YELLOW, PURPLE, WHITE) -> the spec's eight badge families (fire, bolt, frost, wind,
 /// tech, util, clay, rose).
-pub const FAM_WORD: [&str; 8] = ["Fire", "Lightning", "Frost", "Wind", "Technique", "Utility", "Clay", "Rose"];
-pub const FAM_BADGE: [usize; 6] = [0, 3, 6, 1, 2, 5];
+/// Words by badge row (the baked rows: fire, bolt (unused), frost, wind, tech, util, stone, rose).
+pub const FAM_WORD: [&str; 8] = ["Fire", "Spark", "Frost", "Sky", "Tempo", "Utility", "Guard", "Rose"];
+/// The rules' family (F_RED 0, F_GREEN 1, F_BLUE 2, F_YELLOW 3, F_PURPLE 4, F_WHITE 5) -> badge row. One mapping
+/// everywhere (sets are by family): RED Fire (tangerine flame), GREEN Tempo (orchid bullseye), BLUE Guard (clay
+/// shield), YELLOW Sky (lime gust), PURPLE Frost (sky-blue snowflake), WHITE Utility (lilac-grey rings).
+pub const FAM_BADGE: [usize; 6] = [0, 4, 6, 3, 2, 5];
+/// The family's word for a pool index.
+pub fn fam_word(id: usize) -> &'static str {
+    FAM_WORD[FAM_BADGE.get(POOL[id].family as usize).copied().unwrap_or(5)]
+}
 
 /// The badge sprite for a pool index.
 pub fn badge_of(id: usize) -> usize {

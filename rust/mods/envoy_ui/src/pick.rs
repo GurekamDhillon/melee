@@ -116,16 +116,121 @@ fn offer(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, h
     });
 }
 
+/// What fills a drive's charge, in words ("Every 35% you deal"), or "" when the rule says it.
+fn trigger(dr: &Drive, out: &mut Buf) {
+    let n = dr.need / 1000;
+    match dr.charge {
+        C_DEALT => { out.s("Every ").i(n).s("% you deal: "); }
+        C_AERIAL_DEALT => { out.s("Every ").i(n).s("% from aerials: "); }
+        C_CHILLED_DEALT => { out.s("Every ").i(n).s("% to Chilled foes: "); }
+        C_OFFSTAGE_DEALT => { out.s("Every ").i(n).s("% offstage: "); }
+        C_TIME => { out.s("Every ").i(n).s(" s: "); }
+        _ => {}
+    }
+}
+
+/// One offer as a D2 row: the round family badge over the tag's left edge, name, tier and family, the trigger and
+/// rule, and what it does for each fighter (new / level n / row full). Keystones: emblem and price.
+fn offer_row(e: &mut E, v: &[i32; VW], p: usize, i: usize, x: f32, y: f32, w: f32, on: bool, faded: bool, a0: f32) {
+    let pbk = V_P0 + p * V_PW;
+    let id = v[pbk + P_OFFERS + i];
+    let a = if faded { 0.34 } else { a0 };
+    let deg = if on { 0.0 } else { [-0.8, 0.6, -0.5][i] };
+    let x = if on { x + 6.0 } else { x };
+    let h = 70.0;
+    let (bx, by) = (x + 2.0, y + 32.0);
+    let stock = id == OFFER_STOCK || !(0..POOL_LEN as i32).contains(&id);
+    // level-up: rays behind the badge, loud
+    let mut lvl_up = false;
+    if !stock && POOL[id as usize].kind != K_KEYSTONE {
+        let sets = if v[V_SHARED] != 0 { 1 } else { 2 };
+        for f in 0..sets {
+            if level_of(v, p, f, id) > 0 && v[pbk + P_CAN_TAKE] >> (i * 2 + f) & 1 != 0 {
+                lvl_up = true;
+            }
+        }
+    }
+    if lvl_up && !faded {
+        spr_rot(e, S_RAYS, bx, by, if on { 1.2 } else { 0.8 }, unsafe { T } as f32 * 0.6, alpha(SUNNY, if on { 0.9 } else { 0.45 } * a));
+    }
+    sticker(e, if on { S_FACE_HOVER } else { S_FACE_WHITE }, x + 18.0, y, w - 18.0, h, deg, alpha(WHITE, a), |e| {
+        let tx = x + 50.0;
+        let tr = x + w - 10.0;
+        if stock {
+            e.text_ex(tx, y + 6.0, d(17), alpha(INK, a), ALIGN_LEFT, 0.0, "+1 stock");
+            let mut s = Buf::new();
+            s.s("One stock back in the shared pool: ").i(v[V_POOL]).s(" to ").i(v[V_POOL] + 1).s(".");
+            wrap(e, tx, y + 28.0, w - 64.0, bs(12), 14.0, alpha(INK, a), ALIGN_LEFT, s.str(), 2);
+            return;
+        }
+        let dr = &POOL[id as usize];
+        let keystone = dr.kind == K_KEYSTONE;
+        e.text_ex(tx, y + 5.0, d(17), alpha(INK, a), ALIGN_LEFT, w - 150.0, dr.name);
+        let mut s = Buf::new();
+        if keystone {
+            s.s("Keystone");
+        } else {
+            s.s(["Common", "Rare", "Epic"][(dr.tier as usize).min(2)]).s(" ").s(fam_word(id as usize));
+        }
+        e.text_ex(tr, y + 9.0, bs(11), alpha(LILAC, a), ALIGN_RIGHT, 0.0, s.str());
+        let mut r = Buf::new();
+        if !keystone && !dr.rule.starts_with("Every") {
+            trigger(dr, &mut r);
+        }
+        r.s(dr.rule);
+        wrap(e, tx, y + 26.0, w - 66.0, bs(12), 13.5, alpha(INK, a), ALIGN_LEFT, r.str(), 2);
+        let mut s = Buf::new();
+        let mut col = LILAC;
+        if keystone {
+            s.s("Price: ").s(PRICES[dr.price as usize]);
+            col = CORAL;
+        } else {
+            let sets = if v[V_SHARED] != 0 { 1 } else { 2 };
+            for f in 0..sets {
+                let lv = level_of(v, p, f, id);
+                let ok = v[pbk + P_CAN_TAKE] >> (i * 2 + f) & 1 != 0;
+                if f > 0 {
+                    s.s("   ");
+                }
+                s.s(if sets == 1 { "Pair" } else { ck_name(if f == 0 { v[pbk + P_MAIN] } else { v[pbk + P_PARTNER] }) }).s(": ");
+                if !ok {
+                    s.s(if lv >= 3 { "top level" } else { "row full" });
+                    col = DEEP;
+                } else if lv == 0 {
+                    s.s("new");
+                } else {
+                    s.s("level ").i(lv + 1);
+                    col = CORAL;
+                }
+            }
+        }
+        e.text_ex(tx, y + 50.0, bs(11), alpha(col, a), ALIGN_LEFT, w - 66.0, s.str());
+    });
+    // the badge over the tag's left edge, with its tier stars
+    spr_c(e, S_DISC, bx, by, 58.0 / 32.0, alpha(INK, a));
+    if stock {
+        spr_c(e, S_STOCK, bx, by, 2.2, alpha(WHITE, a));
+    } else if POOL[id as usize].kind == K_KEYSTONE {
+        spr_c(e, kem_of(id as usize), bx, by, 50.0 / 34.0, alpha(WHITE, a));
+    } else {
+        spr_c(e, badge_of(id as usize), bx, by, 52.0 / 28.5, alpha(WHITE, a));
+        let tier = POOL[id as usize].tier.min(2) as usize;
+        face(e, S_FACE_WHITE, bx - 22.0, by + 22.0, 44.0, 13.0, alpha(WHITE, a));
+        for k in 0..3 {
+            spr_c(e, if k <= tier { S_STAR_ON } else { S_STAR_OFF }, bx - 12.0 + k as f32 * 12.0, by + 28.5, 0.5, alpha(WHITE, a));
+        }
+    }
+    if lvl_up && on {
+        burst(e, S_BURST_CORAL, x + w - 14.0, y - 2.0, 54.0, unsafe { T - OPEN_AT }, "Level up!", 10);
+    }
+}
+
 /// One player's side: three cards, then (step 1) the fighters; `x0`, `w0` the side's box.
 unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w0: f32, coop: bool) {
     let pbk = V_P0 + p * V_PW;
     let done = v[pbk + P_RW_DONE] != 0;
     let step = v[pbk + P_STEP];
     let cur = v[pbk + P_CURSOR].clamp(0, 2) as usize;
-    let gap = if coop { 6.0 } else { 14.0 };
-    let cw = (w0 - 2.0 * gap) / 3.0;
-    let ch = if coop { 232.0 } else { 250.0 };
-    let y = 64.0;
     if v[V_RW] == 2 && !coop {
         // K1: three wedges
         for i in 0..3 {
@@ -170,17 +275,31 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w0: f32, coop: bool)
         }
         return;
     }
+    // R2 + D2: three rows (round badge, wide paper tag), Skip as a fourth row (drives)
+    let rx = x0 + 26.0;
+    let rw = w0 - 30.0;
+    let cur4 = v[pbk + P_CURSOR].clamp(0, 3) as usize;
     for i in 0..3 {
         let (_, a) = enter(T - OPEN_AT - i as i32 * 3);
         if a <= 0.0 {
             continue;
         }
-        let x = x0 + i as f32 * (cw + gap);
-        let on = i == cur && !done;
+        let y = 50.0 + i as f32 * 76.0;
+        let on = i == cur4 && !done;
         let faded = (step >= 1 || done) && i != cur;
-        offer(e, v, p, i, x, y, cw, ch, on, faded);
+        offer_row(e, v, p, i, rx, y, rw, on, faded, a);
         if on && step == 0 {
-            spr(e, S_PTRDOWN + p, x + cw * 0.5 - 13.0, y - 40.0, 0.0, 0.0, WHITE);
+            spr(e, S_PTR + p, rx - 58.0, y + 20.0, 0.0, 0.0, WHITE);
+        }
+    }
+    if v[V_RW] == 1 {
+        let on = cur4 == 3 && !done && step == 0;
+        let (sx, sy) = (rx + 8.0, 282.0);
+        sticker(e, if on { S_FACE_HOVER } else { S_FACE_WHITE }, sx, sy, 86.0, 24.0, if on { 0.0 } else { -1.0 }, WHITE, |e| {
+            e.text_ex(sx + 43.0, sy + 4.0, d(14), INK, ALIGN_CENTER, 0.0, "Skip");
+        });
+        if on {
+            spr(e, S_PTR + p, sx - 40.0, sy - 2.0, 0.0, 0.0, WHITE);
         }
     }
     // the fighters (step 1: who wears it)
@@ -189,7 +308,7 @@ unsafe fn side(e: &mut E, v: &[i32; VW], p: usize, x0: f32, w0: f32, coop: bool)
     let fw = if coop { (w0 - 8.0) / 2.0 } else { 140.0 };
     for f in 0..sets {
         let fx = if coop { x0 + f as f32 * (fw + 8.0) } else { x0 + w0 * 0.5 - 146.0 + f as f32 * 152.0 };
-        let fy = 316.0;
+        let fy = 318.0;
         let on = step == 1 && v[pbk + P_FCURSOR] == f as i32 && !done;
         fighter_sticker_w(e, fx, fy, fw, if f == 0 { -0.6 } else { 0.5 }, &party, p * 2 + f, f == 0 && coop, on);
         if on {
@@ -254,8 +373,9 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
         spr_rot(e, S_RAYS, 320.0, 200.0, 2.6, T as f32 * 0.07, alpha(WHITE, 0.10));
     }
     let title = if keys { "Choose a keystone" } else { "Pick a drive" };
-    text_edge(e, if coop { 320.0 } else { 16.0 }, 6.0, d(24), WHITE, if coop { ALIGN_CENTER } else { ALIGN_LEFT }, 2.2, title);
-    if !coop {
+    let centre = coop || !keys;
+    text_edge(e, if centre { 320.0 } else { 16.0 }, 6.0, d(24), WHITE, if centre { ALIGN_CENTER } else { ALIGN_LEFT }, 2.2, title);
+    if !coop && keys {
         let sub = if keys { "One rule for the whole run." } else { "One of three, for one of your two fighters." };
         e.text_ex(22.0, 36.0, bs(13), WHITE, ALIGN_LEFT, 0.0, sub);
     }
@@ -284,14 +404,20 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
             side(e, v, p, x0, 296.0, true);
         }
     } else {
-        side(e, v, 0, 40.0, 560.0, false);
+        if keys {
+            side(e, v, 0, 40.0, 560.0, false);
+        } else {
+            side(e, v, 0, 150.0, 350.0, false);
+        }
     }
     // strip and hints
     let pbk = V_P0;
     let cur = v[pbk + P_CURSOR].clamp(0, 2) as usize;
     let id = v[pbk + P_OFFERS + cur];
     let mut s = Buf::new();
-    if v[pbk + P_RW_DONE] != 0 {
+    if v[pbk + P_CURSOR] == 3 && v[pbk + P_RW_DONE] == 0 {
+        s.s("Skip: no drive this time.");
+    } else if v[pbk + P_RW_DONE] != 0 {
         if coop { s.s("Waiting for the other player.") } else { s.s("Taken.") };
     } else if id == OFFER_STOCK {
         s.s("One stock back in the shared pool.");
@@ -321,6 +447,6 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32) {
     } else if step1 {
         hints(e, &[("Left / Right", "Choose a fighter"), ("A", "Take"), ("B", "Back")]);
     } else {
-        hints(e, &[("Left / Right", "Choose"), ("A", "Take it")]);
+        hints(e, &[(if keys && !coop { "Left / Right" } else { "Up / Down" }, "Choose"), ("A", "Take it")]);
     }
 }

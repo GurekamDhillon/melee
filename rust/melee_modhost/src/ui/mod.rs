@@ -705,6 +705,13 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if write_bytes(&mut c, out, &b[..n * 4]) { GD_OK } else { GD_EINVAL }
     });
     // read-only view of the Petey boss (melee_modes::tu::petey::view): n i32 words (notes/petey-boss.md)
+    f!("gd_ui_fight_hud", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
+        let v = unsafe { melee_modes::tu::envoy::hud_words() };
+        let n = (n as usize).min(v.len());
+        let mut b = [0u8; 48];
+        for (i, x) in v.iter().take(n).enumerate() { b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes()); }
+        if write_bytes(&mut c, out, &b[..n * 4]) { GD_OK } else { GD_EINVAL }
+    });
     f!("gd_ui_petey", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
         let v = melee_modes::tu::petey::view();
         let n = (n as usize).min(v.len());
@@ -872,11 +879,22 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
                     ev::SAVED_DROP = 1;
                     ev::ARMED = 1;
                 }
-                2 => ev::ARMED = 1,
+                2 => {
+                    ev::ARMED = 1;
+                    // the road after a fight: on to the next fight without the character and stage selects
+                    if !launch && ev::skip_select_on() {
+                        ev::SKIP_SELECT = 1;
+                    }
+                }
                 3 => {
                     ev::SAVED_LEN = 0;
                     ev::SAVED_DROP = 1;
                     ev::ARMED = 0;
+                }
+                // the run is over: back to the camp (through the main menu), never the character select
+                4 => {
+                    ev::ARMED = 0;
+                    ev::BACK_TO_CAMP = 1;
                 }
                 _ => return GD_EINVAL,
             }

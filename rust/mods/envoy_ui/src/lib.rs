@@ -49,6 +49,7 @@ extern "C" {
     fn gd_ui_node_free(n: u32);
     fn gd_ui_focus(n: u32) -> i32;
     fn gd_ui_petey(out: *mut i32, n: u32) -> i32;
+    fn gd_ui_fight_hud(out: *mut i32, n: u32) -> i32;
     fn gd_ui_world_model(model: i32, x: f32, y: f32, z: f32, yaw: f32, scale: f32, glow: f32, alpha: f32) -> i32;
     fn gd_ui_world_fx(kind: i32, x: f32, y: f32, z: f32, a: f32, b: f32, c: f32, rgba: u32) -> i32;
     fn gd_ui_model_tex(model: i32) -> u32;
@@ -588,6 +589,7 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                         1 => { gd_ui_envoy_arm(ARM_NEW | launch); }
                         2 => { gd_ui_envoy_arm(ARM_CONTINUE | launch); }
                         3 => { gd_ui_envoy_arm(ARM_ABANDON); }
+                        4 => { gd_ui_envoy_arm(4); }
                         _ => { gd_ui_envoy_arm(ARM_OFF); }
                     }
                     camp_close();
@@ -625,6 +627,9 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             // V3 HUD in band space (640 x 480; `ex` the extra width each side of the 4:3 band)
             let ex = if b[2] > 0.0 { b[0] / (b[2] / 640.0) } else { 0.0 };
             e.space(SPACE_BAND, 1.0);
+            if gd_ui_fight_hud(core::ptr::addr_of_mut!(hud::FH) as *mut i32, 12) != 0 {
+                hud::FH = [0; 12];
+            }
             hud::draw(e, &v, ex, if petey { Some(&pv) } else { None });
             e.space(SPACE_WINDOW, sc);
             if v[V_RW] == RW_SHOP {

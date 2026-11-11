@@ -24,6 +24,12 @@ import build_step4 as s4  # noqa: E402
 import build_step5 as s5  # noqa: E402
 import build_final as bf  # noqa: E402
 
+# V3 family ruling (coordinator, 2026-11-11): BLUE is Guard, drawn in the spare clay colour with a shield glyph
+# (the "stone" badge row); the others keep their design glyphs (RED fire, PURPLE frost, YELLOW Sky = wind's gust,
+# GREEN Tempo = technique's bullseye, WHITE utility).
+_glyph = s4.glyph
+s4.glyph = lambda f: s4._solid("M0,-9.5L8,-6.2V0.4C8,4.9 4.6,8 0,10C-4.6,8 -8,4.9 -8,0.4V-6.2Z") if f == "stone" else _glyph(f)
+
 SUN, INK, WHITE, CORAL, LAGOON = s2.SUN, s2.INK, s2.WHITE, s2.CORAL, s2.LAGOON
 svg = s2.svg
 REPO = Path(__file__).resolve().parents[3]

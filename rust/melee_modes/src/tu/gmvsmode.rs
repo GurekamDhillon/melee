@@ -194,6 +194,13 @@ pub unsafe extern "C" fn onEnterCss(state: *mut GameModeState) {
 pub unsafe extern "C" fn onExitCss(state: *mut GameModeState) {
     melee_core::ct!("onExitCss");
     ext::gmVsMelee_ExitCss(state, ext::gmVsMelee_GetVsData());
+    // port: Envoy fights 2+ skip the stage select (the run's match rewrite sets the stage)
+    if crate::tu::envoy::SKIP_SELECT == 2 {
+        crate::tu::envoy::SKIP_SELECT = 0;
+        if gmVsMelee_CssData.pending_scene_change as i32 != CSSPendingSceneChange_2 as i32 {
+            ext::gm_SetNextGameModeStateId(if RETAIL_NO_LOADING_SCREEN { gmVsMode_State_Vs } else { gmVsMode_State_Loading });
+        }
+    }
 }
 
 /// 1B1514

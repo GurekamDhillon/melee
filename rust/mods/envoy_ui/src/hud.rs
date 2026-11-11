@@ -141,80 +141,106 @@ fn fired_ago(v: &[i32; VW], owner: i32, id: i32) -> i32 {
     best
 }
 
-/// A player's corner. `right`: anchored to the right edge (player 2).
-unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x0: f32, x1: f32) {
+/// The retail HUD's words (gd_ui_fight_hud): per match slot [present, percent, stocks].
+pub static mut FH: [i32; 12] = [0; 12];
+static mut PCT_PREV: [i32; 4] = [0; 4];
+static mut PCT_HIT: [i32; 4] = [-100; 4];
+
+/// A big percent with an ink edge, shaking for a moment after a hit; colour warms with damage.
+unsafe fn big_pct(e: &mut E, x: f32, y: f32, slot: usize, size: u32, align: i32) {
+    let pc = FH[slot * 3 + 1].clamp(0, 999);
+    if pc > PCT_PREV[slot] {
+        PCT_HIT[slot] = T;
+    }
+    PCT_PREV[slot] = pc;
+    let ago = T - PCT_HIT[slot];
+    let (dx, dy) = if ago < 8 { (((ago * 7) % 5 - 2) as f32 * 1.2, ((ago * 3) % 3 - 1) as f32 * 1.2) } else { (0.0, 0.0) };
+    let col = if pc >= 150 { DEEP } else if pc >= 100 { CORAL } else if pc >= 60 { SUNNY } else { WHITE };
+    let mut s = Buf::new();
+    s.i(pc);
+    let w = tw(s.str(), d(size));
+    let x = if align == ALIGN_RIGHT { x - w - size as f32 * 0.45 } else { x };
+    text_edge(e, x + dx, y + dy, d(size), col, ALIGN_LEFT, (size as f32 / 14.0).max(1.6), s.str());
+    text_edge(e, x + w + 2.0 + dx, y + dy + size as f32 * 0.42, d(size / 2), col, ALIGN_LEFT, 1.4, "%");
+}
+
+/// A player's corner (H2), anchored to the bottom edge: tag and fighter, OUR big percent, the drive row, the active
+/// drive, the Heat bar and the bench sticker. `x`: the left edge.
+unsafe fn corner(e: &mut E, v: &[i32; VW], p: usize, x: f32) {
     let pbk = V_P0 + p * V_PW;
     let act = v[pbk + P_ACTIVE].clamp(0, 1) as usize;
     let set = if v[V_SHARED] != 0 { 0 } else { act };
     let ids = &v[pbk + P_DRIVES + set * SLOTS..pbk + P_DRIVES + (set + 1) * SLOTS];
-    let n = ids.iter().filter(|&&d| (1..=POOL_LEN as i32).contains(&d)).count().max(1);
-    let wrow = 30.0 * SLOTS as f32;
-    let width = 160.0f32.max(wrow + 10.0).max(230.0);
-    let x = if p == 0 { x0 } else { x1 - width };
-    let y = 268.0;
-    let _ = n;
+    let y = 372.0;
     // tag and name
     let col = if p == 0 { S_FACE_CORAL } else { S_FACE_LAGOON };
-    face(e, col, x, y, 26.0, 18.0, WHITE);
+    face(e, col, x, y, 26.0, 17.0, WHITE);
     e.text_ex(x + 13.0, y + 2.0, d(12), WHITE, ALIGN_CENTER, 0.0, if p == 0 { "P1" } else { "P2" });
     let fk = if act == 0 { v[pbk + P_MAIN] } else { v[pbk + P_PARTNER] };
     let name = ck_name(fk);
     let nw = tw(name, d(12)) + 14.0;
-    face(e, S_FACE_WHITE, x + 30.0, y, nw, 18.0, WHITE);
+    face(e, S_FACE_WHITE, x + 30.0, y, nw, 17.0, WHITE);
     e.text_ex(x + 37.0, y + 2.0, d(12), INK, ALIGN_LEFT, 0.0, name);
+    // the big percent (the player's match slot is its port)
+    big_pct(e, x, y + 18.0, p.min(3), 40, ALIGN_LEFT);
     // the drive row
+    let rx = x + 104.0;
+    let cy = y + 36.0;
     for k in 0..SLOTS {
-        let cx = x + 14.0 + k as f32 * 30.0;
-        let cy = y + 38.0;
+        let cx = rx + k as f32 * 29.0;
         let id = ids[k];
         if (1..=POOL_LEN as i32).contains(&id) {
             let lv = v[pbk + P_LEVELS + set * SLOTS + k];
             let ch = v[pbk + P_CHARGE + set * SLOTS + k] as f32 / 1000.0;
             let fired = fired_ago(v, (p * 2 + set) as i32, id);
             hud_chip(e, cx, cy, id as usize - 1, lv, ch, fired);
-        } else {
+        } else if (k as i32) < v[V_OPEN].max(3) {
             spr_c(e, S_DISC, cx, cy, 19.0 / 32.0, alpha(INK, 0.55));
             spr_c(e, S_DISC, cx, cy, 15.0 / 32.0, alpha(PALE, 0.35));
         }
     }
     // the active drive (Volley): a square badge after the row, its pips, D-pad right
-    if v[pbk + P_ACT_ID] > 0 {
-        let ax = x + 14.0 + SLOTS as f32 * 30.0 + 8.0;
-        let ay = y + 38.0;
-        let ready = v[pbk + P_ACT_READY] != 0;
+    if v[pbk + v3::P_ACT_ID] > 0 {
+        let ax = rx + SLOTS as f32 * 29.0 + 4.0;
+        let ay = cy;
+        let ready = v[pbk + v3::P_ACT_READY] != 0;
         if ready {
             spr_rot(e, S_BURST_SUNNY, ax, ay, 0.62, (T as f32) * 0.5, WHITE);
         }
         face(e, S_FACE_INK, ax - 12.0, ay - 12.0, 24.0, 24.0, WHITE);
         spr_c(e, S_BADGE + 3 + 1, ax, ay, 17.0 / 28.5, WHITE);
         spr_c(e, if ready { S_DPAD_RIGHT_LIT } else { S_DPAD_RIGHT }, ax + 12.0, ay - 12.0, 0.75, WHITE);
-        let need = v[pbk + P_PIPS_NEED].clamp(1, 4);
+        let need = v[pbk + v3::P_PIPS_NEED].clamp(1, 4);
         for k in 0..need {
             let px = ax - (need - 1) as f32 * 4.0 + k as f32 * 8.0;
-            spr_c(e, S_DISC, px, ay + 17.0, 6.0 / 32.0, if k < v[pbk + P_PIPS] { SUNNY } else { alpha(PALE, 0.5) });
+            spr_c(e, S_DISC, px, ay + 17.0, 6.0 / 32.0, if k < v[pbk + v3::P_PIPS] { SUNNY } else { alpha(PALE, 0.5) });
         }
     }
-    // Heat bar and the bench sticker
-    let hy = y + 66.0;
+    // Heat bar and the bench sticker (shrunk)
+    let hy = y + 74.0;
     if let Some(h) = heat_of(v, p) {
-        heat_bar(e, x + 14.0, hy, 122.0 * (h.cap / 150.0).min(1.7), &h, p);
+        heat_bar(e, x + 18.0, hy, 132.0, &h, p);
     }
     let bench = if act == 0 { v[pbk + P_PARTNER] } else { v[pbk + P_MAIN] };
     if v[pbk + P_PARTNER_KIND] >= 0 || (0..26).contains(&bench) {
-        let (bx, by) = (x + 30.0 + nw + 8.0, y - 2.0);
+        let (bx, by) = (x + 162.0, hy - 5.0);
         let cd = v[pbk + P_TAG_CD];
         let mx = v[pbk + P_TAG_MAX].max(1);
         let ready = cd <= 0;
-        face(e, if ready { S_FACE_WHITE } else { S_FACE_FADED }, bx, by, 92.0, 22.0, WHITE);
+        face(e, if ready { S_FACE_WHITE } else { S_FACE_FADED }, bx, by, 84.0, 20.0, WHITE);
         if !ready {
             let f = 1.0 - (cd as f32 / mx as f32).clamp(0.0, 1.0);
-            e.rect(bx + 2.0, by + 2.0, 88.0 * f, 18.0, alpha(WHITE, 0.9));
+            e.rect(bx + 2.0, by + 2.0, 80.0 * f, 16.0, alpha(WHITE, 0.9));
         }
-        spr_c(e, S_HEAD, bx + 11.0, by + 11.0, 0.7, WHITE);
-        let s = ck_name(bench);
-        e.text_ex(bx + 21.0, by + 4.0, d(11), INK, ALIGN_LEFT, 56.0, s);
-        spr_c(e, S_DPAD_DOWN, bx + 83.0, by + 11.0, 0.8, WHITE);
+        spr_c(e, S_HEAD, bx + 10.0, by + 10.0, 0.62, WHITE);
+        e.text_ex(bx + 19.0, by + 4.0, d(10), INK, ALIGN_LEFT, 50.0, ck_name(bench));
+        spr_c(e, S_DPAD_DOWN, bx + 75.0, by + 10.0, 0.72, WHITE);
     }
+}
+
+/// The corner's width (for anchoring player 2 to the right edge).
+fn corner_w() -> f32 {
+    104.0 + 29.0 * SLOTS as f32 + 20.0
 }
 
 /// The whole HUD.
@@ -222,9 +248,9 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     T += 1;
     let humans = v[V_HUMANS].clamp(1, 2) as usize;
     e.layer(LAYER_HUD, 5);
-    corner(e, v, 0, 14.0 - ex, 0.0);
+    corner(e, v, 0, 14.0);
     if humans == 2 {
-        corner(e, v, 1, 0.0, 626.0 + ex);
+        corner(e, v, 1, 626.0 - corner_w());
     }
     // top left: keystones (mini wedges, emblem only) and coins, then the shared stock pool
     let p = party_from_view(v);
@@ -244,28 +270,30 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
         e.text_ex(x + 25.0, 18.0, d(13), INK, ALIGN_LEFT, 0.0, s.str());
         x += w + 10.0;
     }
-    // the pool: white dots, the last one coral on a burst
+    // the pool: white dots bottom centre, the last one coral on a burst
     let pool = v[V_POOL].max(0);
     let total = if humans == 2 { 5 } else { 4 };
-    let px = x + 10.0;
-    for i in 0..total.max(pool) {
-        let cx = px + i as f32 * 18.0;
+    let n = total.max(pool);
+    let px = 320.0 - (n - 1) as f32 * 8.0;
+    for i in 0..n {
+        let cx = px + i as f32 * 16.0;
+        let cy = 458.0;
         if i < pool {
             if pool == 1 {
                 let pulse = 1.0 + 0.15 * (sin(T as f32 * 0.105)).max(0.0);
-                spr_rot(e, S_BURST_SUNNY, cx, 26.0, 0.42 * pulse, 8.0, WHITE);
-                spr_c(e, S_STOCK_LAST, cx, 26.0, 0.85, WHITE);
+                spr_rot(e, S_BURST_SUNNY, cx, cy, 0.42 * pulse, 8.0, WHITE);
+                spr_c(e, S_STOCK_LAST, cx, cy, 0.8, WHITE);
             } else {
-                spr_c(e, S_STOCK, cx, 26.0, 0.85, WHITE);
+                spr_c(e, S_STOCK, cx, cy, 0.8, WHITE);
             }
         } else {
-            spr_c(e, S_STOCK_SPENT, cx, 26.0, 0.85, WHITE);
+            spr_c(e, S_STOCK_SPENT, cx, cy, 0.8, WHITE);
         }
     }
     // fight label under the pool
     let mut s = Buf::new();
     s.s("Fight ").i(v[V_FIGHT] + 1).s(" of ").i(v[V_FIGHTS]);
-    e.text_ex(14.0 - ex, 44.0, bs(12), WHITE, ALIGN_LEFT, 0.0, s.str());
+    e.text_ex(14.0 - ex, 40.0, bs(12), WHITE, ALIGN_LEFT, 0.0, s.str());
     // foes, top right: an elite or boss plate with its drives
     let kind = v[V_FIGHT_KIND];
     let mut fy = 12.0;
@@ -276,20 +304,23 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
                 continue;
             }
             let big = v[bb + S_DRIVES] > 0;
-            let w = if big { 150.0 } else { 90.0 };
-            let h = if big { 38.0 } else { 28.0 };
+            let w = if big { 170.0 } else { 120.0 };
+            let h = if big { 46.0 } else { 40.0 };
             let fx = 624.0 + ex - w;
             face(e, S_FACE_INK, fx, fy, w, h, WHITE);
             let label = if kind == FK_BOSS { "Boss" } else if big { "Elite" } else { "Foe" };
-            e.text_ex(fx + 10.0, fy + 4.0, d(13), if big { SUNNY } else { WHITE }, ALIGN_LEFT, 0.0, label);
+            e.text_ex(fx + 10.0, fy + 3.0, d(11), if big { SUNNY } else { WHITE }, ALIGN_LEFT, 0.0, label);
+            if FH[sl * 3] != 0 {
+                big_pct(e, fx + 10.0, fy + 13.0, sl, 24, ALIGN_LEFT);
+            }
             if big {
                 for k in 0..2 {
                     let id = v[bb + S_DRIVES + k];
                     if (1..=POOL_LEN as i32).contains(&id) {
-                        let cx = fx + 70.0 + k as f32 * 26.0;
-                        spr_c(e, S_DISC, cx, fy + 19.0, 24.0 / 32.0, INK);
-                        ring(e, cx, fy + 19.0, 10.0, 2.6, v[bb + S_CHARGE + k] as f32 / 1000.0, SUNNY, alpha(PALE, 0.4));
-                        spr_c(e, badge_of(id as usize - 1), cx, fy + 19.0, 16.0 / 28.5, WHITE);
+                        let cx = fx + 98.0 + k as f32 * 28.0;
+                        spr_c(e, S_DISC, cx, fy + 23.0, 24.0 / 32.0, INK);
+                        ring(e, cx, fy + 23.0, 10.0, 2.6, v[bb + S_CHARGE + k] as f32 / 1000.0, SUNNY, alpha(PALE, 0.4));
+                        spr_c(e, badge_of(id as usize - 1), cx, fy + 23.0, 16.0 / 28.5, WHITE);
                     }
                 }
             }

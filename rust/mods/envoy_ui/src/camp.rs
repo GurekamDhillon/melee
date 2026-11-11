@@ -107,9 +107,9 @@ pub fn rows(after_fight: bool, ended: bool, has: bool, no_brawl: bool) -> &'stat
     } else if after_fight {
         &[R_GO, R_ABANDON, R_LEAVE]
     } else if has {
-        &[R_BIG, R_NEW, R_FIGHTERS, R_LENGTH, R_TEAM, R_NG, R_COLLECTION, R_BACK]
+        &[R_BIG, R_NEW, R_COLLECTION, R_BACK]
     } else {
-        &[R_BIG, R_FIGHTERS, R_LENGTH, R_TEAM, R_NG, R_COLLECTION, R_BACK]
+        &[R_BIG, R_COLLECTION, R_BACK]
     }
 }
 
@@ -126,7 +126,7 @@ fn row_text(r: u8, has: bool, p2: bool) -> (&'static str, &'static str) {
         R_GO => ("On to the next fight", ""),
         R_ABANDON => ("Abandon run", ""),
         R_LEAVE => ("Leave (the run is kept)", ""),
-        R_DONE => ("Back to the camp", if p2 { "" } else { "" }),
+        R_DONE => ("Back to camp", if p2 { "" } else { "" }),
         _ => ("", ""),
     }
 }
@@ -287,7 +287,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                         u.dcur = 0;
                     }
                     R_LEAVE => act = DO_CLOSE,
-                    R_DONE => act = DO_ARM | (0 << 8),
+                    R_DONE => act = DO_ARM | (4 << 8),
                     _ => {
                         u.msg = row_say(r, has, u.p2);
                         u.msg_at = t;

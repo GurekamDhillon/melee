@@ -1,5 +1,23 @@
 # Envoy V3 UI: the Party pack look and the way in (port/v3ui, 2026-11-11)
 
+## State at hand-back (2026-11-11 morning): the default is v3d
+
+- `play-v3.cmd` / `play-v3-solo.cmd` run `melee-v3d.exe` + `mods-v3d` with `MELEE_RECLAIM_LEAK=1`
+  (the rules agent's mitigation for the archive-reclaim arena crash), `MELEE_CRASH_STACK=200`, `MELEE_HANG_DUMP=20`.
+  v3d = v3c + pub/port/v3sim 2276436f0. Checks on v3d: scripted 5-fight Petey run CAMP RUN OK (breaks 1-4, RUN CLEAR,
+  back to camp); 20 short title -> fight 1 runs, 0 crashes, 0 watchdog exits; gate OK; replays hero 392/428,
+  local 125/125, own 917/917 (baseline). v3c: v2_drives OK, v3_slice OK (0 mismatches).
+- Older builds keep their launchers: `play-v3c*`, `play-v3b*`, `play-v3a*`.
+- **v3e (branch `port/v3ui-polish`, not shipped):** our pause (Resume / Read drives / Quit to camp, the party,
+  keystones, the D-pad card; engine: `envoy::PAUSE_RESUME` / `PAUSE_QUIT`, `gd_ui_envoy_pause`, the retail panel hidden
+  while a run is armed), louder moments (Warm / Hot / Blazing at the corner, a big cash-out with rays and coins to the
+  purse, a big Break), and a "Fight n, Get ready!" card over the self-confirming character select. Seen working: the
+  pause draws, its input works through a shared pad capture, the moments read well. Not passed: "Quit to camp" first
+  ended the run (the no contest counted as a loss); the fix (disarm first, keep the save, back out to the camp) then
+  hung once in the character select's back-out (watchdog dump), and the delayed back-out after that was never run (the
+  run was stopped for low memory). Finish it, run the 5-fight Petey run with pause use and a quit, 20 short runs,
+  gate and replays, before it replaces v3d.
+
 ## Round 2 (v3b): what changed (this section wins over the tables below where they differ)
 
 - **Fight HUD as designed.** While a run is armed and a match is in gameplay, `envoy::hide_retail_hud` (from

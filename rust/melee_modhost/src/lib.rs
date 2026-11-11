@@ -668,7 +668,8 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     // MELEE_ENVOY_COOP=1: local co-op (envoy-core-v2.md V2), fixed per process; the run reads it when it starts
     w!("gd_envoy_coop", || -> i32 {
         static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-        *V.get_or_init(|| std::env::var("MELEE_ENVOY_COOP").is_ok_and(|v| v == "1")) as i32
+        // V3: or player 2 joined at the camp (melee_modes::tu::envoy::COOP_JOIN, set by envoy_ui before arming)
+        (*V.get_or_init(|| std::env::var("MELEE_ENVOY_COOP").is_ok_and(|v| v == "1")) || unsafe { melee_modes::tu::envoy::COOP_JOIN } != 0) as i32
     });
     // V2 drive effects (melee_modes::tu::envoy): speed from a stored base, the orb's absorb, hit attribution, air
     // jumps, launching blasts on the engine's hit path; all game state, rolled back with the game

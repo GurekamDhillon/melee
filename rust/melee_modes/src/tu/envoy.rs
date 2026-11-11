@@ -69,12 +69,18 @@ pub fn armed() -> i32 {
 pub static mut CAMP_DUE: i32 = 0;
 /// The 1-P menu's extra Envoy row exists (a presentation mod registered the camp scene with `gd_ui_envoy_door`).
 pub static mut DOOR_ON: i32 = 0;
+#[allow(non_snake_case)]
+pub fn DOOR_ON_now() -> bool {
+    unsafe { DOOR_ON != 0 }
+}
 /// The 1-P menu cursor is on the Envoy row (below the retail rows).
 pub static mut DOOR_HOVER: i32 = 0;
 /// The Envoy row (or the browser's Envoy mode) was chosen: the host opens the camp scene at the next present.
 pub static mut DOOR_OPEN: i32 = 0;
 /// The camp asked for the VS mode (its Continue / New run on the main menu): the menu scene starts it next frame.
 pub static mut LAUNCH_VS: i32 = 0;
+/// Envoy V3: player 2 joined at the camp (envoy_ui, `gd_ui_envoy_coop`): a new run starts in co-op (`gd_envoy_coop`).
+pub static mut COOP_JOIN: i32 = 0;
 
 /// The run record (envoy_sim publishes it in VIEW[REC_AT..]; the host keeps the last one on disk).
 pub const REC_WORDS: usize = 48;
@@ -105,6 +111,18 @@ pub fn rec_valid(r: &[i32]) -> bool {
 
 /// The 1-P menu's input with the Envoy row (mnmain `mn_8022D7F4`, after the retail read): what the retail code must
 /// do. `at_last`: the retail cursor is on the last unlocked row.
+/// The main menu's Envoy row was chosen with the Brawl files missing: presents left of the "needs your Brawl disc"
+/// message the mod draws (the camp never loads).
+pub static mut DOOR_NO_DISC: i32 = 0;
+/// A on the main menu's Envoy row (mnmain `mn_8022DB10`): open the camp, or refuse when the Brawl files are missing.
+pub unsafe fn door_main_open() -> bool {
+    if !crate::tu::petey_model::brawl_present() {
+        DOOR_NO_DISC = 240;
+        return false;
+    }
+    DOOR_OPEN = 1;
+    true
+}
 pub const DOOR_RETAIL: i32 = 0;
 pub const DOOR_EAT: i32 = 1;
 pub const DOOR_MOVE: i32 = 2;

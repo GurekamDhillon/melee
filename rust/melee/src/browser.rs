@@ -220,7 +220,8 @@ impl RetailPlay {
         push(&mut v, "workbench", "Geno", "Workbench", "Geno's workbench match (GM_LAB with two level-9 CPUs) for watching a define.", Launch::Scene("mode=workbench;p1=kirby/cpu9;p2=fox/cpu9;stage=fd"));
         // the Envoy camp: available while the Envoy presentation mod has registered its door (envoy_ui + envoy_sim loaded)
         let envoy = if unsafe { melee_modes::tu::envoy::DOOR_ON } != 0 { Launch::Envoy } else { Launch::Unavailable("Needs the Envoy mods (envoy_sim, envoy_ui).") };
-        push(&mut v, "envoy", "Solo", "Envoy", "A run of five fights with a tag partner and a shared stock pool. Continue, start or abandon a run in the camp.", envoy);
+        // the Envoy camp opens from the main menu's Envoy row only (envoy-v3-ui.md)
+    let _ = envoy;
         if let Some(ms) = self.browser.modset.as_ref() {
             for m in &ms.mods {
                 let k = m.kind_str().to_ascii_lowercase();

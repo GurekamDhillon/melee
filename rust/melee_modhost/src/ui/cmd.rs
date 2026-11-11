@@ -19,6 +19,8 @@ pub const OP_UNCLIP: u16 = 7;
 pub const OP_VECTOR: u16 = 8;
 pub const OP_SLICE: u16 = 9;
 pub const OP_SPACE: u16 = 10;
+/// envoy-v3-ui.md: rotate what follows by `a` radians about (x, y); 0 ends it. Payload a, x, y.
+pub const OP_ROT: u16 = 11;
 
 pub const LAYER_SCENE: i32 = 0;
 pub const LAYER_HUD_UNDER: i32 = 1;
@@ -44,6 +46,9 @@ pub const ROLE_LABEL: i32 = 0;
 pub const TEXT_REGULAR: i32 = 1 << 8;
 pub const TEXT_BOLD: i32 = 2 << 8;
 pub const TEXT_MONO: i32 = 1 << 10;
+/// Envoy V3 faces: bit 11 Bricolage Grotesque ExtraBold, bit 12 Source Sans 3 Bold (they win over weight / mono).
+pub const TEXT_DISPLAY: i32 = 1 << 11;
+pub const TEXT_BODY: i32 = 1 << 12;
 
 /// The resolved style of a `role` word. v1.0 roles (0..5) resolve as before; out-of-range roles clamp.
 pub fn style(role: i32) -> TextStyle {
@@ -60,6 +65,13 @@ pub fn style(role: i32) -> TextStyle {
     }
     let mut st = TextStyle::new(size, bold, role & TEXT_MONO != 0);
     st.upper = r == ROLE_LABEL;
+    if role & TEXT_DISPLAY != 0 {
+        st.face = gu_font::FACE_DISPLAY;
+        st.upper = false;
+    } else if role & TEXT_BODY != 0 {
+        st.face = gu_font::FACE_BODY;
+        st.upper = false;
+    }
     st
 }
 
@@ -89,13 +101,16 @@ pub struct Pen {
     pub z: i32,
     pub window: bool,
     pub scale: f32,
+    /// OP_ROT: rotation (radians) about `piv` for the quads that follow
+    pub rot: f32,
+    pub piv: [f32; 2],
     clips: [[f32; 4]; CLIP_DEPTH],
     depth: usize,
 }
 
 impl Pen {
     pub fn new(module: u16) -> Pen {
-        Pen { module, layer: LAYER_HUD, z: 0, window: false, scale: 1.0, clips: [NO_CLIP; CLIP_DEPTH], depth: 0 }
+        Pen { module, layer: LAYER_HUD, z: 0, window: false, scale: 1.0, rot: 0.0, piv: [0.0; 2], clips: [NO_CLIP; CLIP_DEPTH], depth: 0 }
     }
     fn clip(&self) -> [f32; 4] {
         if self.depth == 0 { NO_CLIP } else { self.clips[self.depth - 1] }
@@ -158,7 +173,7 @@ impl Batch {
     fn push(&mut self, p: &Pen, rect: [f32; 4], uv: [f32; 4], rgba: u32, shear: f32) {
         self.open(p);
         let s = p.scale;
-        self.staging.push(UiQuad { rect: [rect[0] * s, rect[1] * s, rect[2] * s, rect[3] * s], uv, clip: p.clip(), rgba, shear, flags: p.flags() | self.extra_flags, _pad: 0 });
+        self.staging.push(UiQuad { rect: [rect[0] * s, rect[1] * s, rect[2] * s, rect[3] * s], uv, clip: p.clip(), rgba, shear, flags: p.flags() | self.extra_flags, rot: p.rot, piv: [p.piv[0] * s, p.piv[1] * s], _pad: [0; 2] });
         self.runs.last_mut().unwrap().len += 1;
     }
 
@@ -290,6 +305,14 @@ impl Batch {
                     pen.window = sp == SPACE_WINDOW;
                     pen.scale = sc;
                 }
+                OP_ROT => {
+                    need(3)?;
+                    if !fs(3) {
+                        return err(at, "rot: non-finite");
+                    }
+                    pen.rot = f(p);
+                    pen.piv = [f(p + 4), f(p + 8)];
+                }
                 OP_RECT => {
                     need(6)?;
                     if !fs(4) || !f32_ok(f(p + 20)) {
@@ -320,7 +343,7 @@ impl Batch {
                     }
                     let role = w(p + 8) as i32;
                     // v1.1: the role in bits 0-7, style bits 8-10 and the size in 16-23 (GD_UI_TEXT_*); nothing else
-                    if !(0..ROLES.len() as i32).contains(&(role & 0xFF)) || role as u32 & !0x00FF_07FF != 0 || (role >> 8) & 3 == 3 {
+                    if !(0..ROLES.len() as i32).contains(&(role & 0xFF)) || role as u32 & !0x00FF_1FFF != 0 || (role >> 8) & 3 == 3 {
                         return err(at, "text: role");
                     }
                     let Ok(s) = core::str::from_utf8(&buf[p + 28..p + 28 + len]) else { return err(at, "text: not UTF-8") };

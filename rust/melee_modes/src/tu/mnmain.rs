@@ -1891,6 +1891,9 @@ pub unsafe extern "C" fn mn_80229A04(
     mut selection: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
     melee_core::ct!("mn_80229A04");
+    if envoy_main6(kind as ::core::ffi::c_int) && (0..6).contains(&selection) {
+        return ENVOY_SLOT[selection as usize];
+    }
     let mut i: ::core::ffi::c_int = 0;
     let mut count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     i = 0 as ::core::ffi::c_int;
@@ -1937,7 +1940,7 @@ pub unsafe extern "C" fn mn_80229A7C(
         (*data).description = text;
         (*text).font_size.x = 0.0521f32 as f32_0;
         (*text).font_size.y = 0.0521f32 as f32_0;
-        HSD_SisLib_803A6368(text, *sis_idx.offset(selection as isize) as s32);
+        HSD_SisLib_803A6368(text, *sis_idx.offset(envoy_anim_sel(menu_kind as ::core::ffi::c_int, selection) as isize) as s32);
     }
 }
 #[inline]
@@ -2430,8 +2433,7 @@ pub unsafe extern "C" fn mn_8022A5D0(
     var_r4 = &raw mut mn_803EAE68 as *mut u16_0;
     sp68 = mn_803B84F4;
     data = (*gp).user_data as *mut MainMenuData;
-    option_count = mn_803EB6B0[(*data).menu_kind as usize].selection_count
-        as ::core::ffi::c_int;
+    option_count = sel_count((*data).menu_kind as ::core::ffi::c_int);
     i = 0 as ::core::ffi::c_int;
     while i < option_count {
         temp_r3 = (*data).tree[*var_r4.offset(i as isize) as usize] as *mut HSD_JObj;
@@ -2606,7 +2608,7 @@ pub unsafe extern "C" fn mn_8022ADD8(
                 {
                     anim_loop = &raw mut mn_803EB480;
                 } else {
-                    anim_loop = anim_loop2.offset((*data).hovered_selection as isize)
+                    anim_loop = anim_loop2.offset(envoy_anim_sel((*data).menu_kind as ::core::ffi::c_int, (*data).hovered_selection as ::core::ffi::c_int) as isize)
                         as *mut AnimLoopSettings;
                 }
                 cur_frame = mn_8022F298(jobj as *mut HSD_JObj);
@@ -2617,6 +2619,14 @@ pub unsafe extern "C" fn mn_8022ADD8(
                     HSD_JObjReqAnimAll(jobj, GetAnimStartFrame(anim_loop));
                 }
                 mn_8022ED6C(jobj as *mut HSD_JObj, anim_loop);
+                if envoy_main6((*data).menu_kind as ::core::ffi::c_int) {
+                    // port: Envoy hovered: the retail right-hand panel is hidden (the mod draws its stickers there)
+                    if (*data).hovered_selection as ::core::ffi::c_int == ENVOY_SEL {
+                        HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32_0);
+                    } else {
+                        HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN as u32_0);
+                    }
+                }
             }
         }
         _ => {}
@@ -2767,8 +2777,7 @@ pub unsafe extern "C" fn fn_8022AFEC(mut gp: *mut HSD_GObj) {
             selection_changed = true_0 as bool_0;
         }
         data2 = HSD_GObjGetUserData(gp) as *mut MainMenuData;
-        option_count = (mn_803EB6B0[(*data2).menu_kind as usize].selection_count
-            as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as u8_0;
+        option_count = sel_count((*data2).menu_kind as ::core::ffi::c_int) as u8_0;
         let mut i: ::core::ffi::c_int = 0;
         i = 0 as ::core::ffi::c_int;
         while i < option_count as ::core::ffi::c_int {
@@ -2833,6 +2842,10 @@ pub unsafe extern "C" fn fn_8022AFEC(mut gp: *mut HSD_GObj) {
                 );
             }
             (*(*final_data).description).hidden = 0 as u8_0;
+            // port: the Envoy row's description is the mod's own
+            if envoy_main6((*final_data).menu_kind as ::core::ffi::c_int) && hovered_selection as ::core::ffi::c_int == ENVOY_SEL {
+                (*(*final_data).description).hidden = 1 as u8_0;
+            }
         }
         1 | 3 | 5 | _ => {}
     }
@@ -2842,6 +2855,39 @@ pub unsafe extern "C" fn fn_8022AFEC(mut gp: *mut HSD_GObj) {
     if selection_changed as u8_0 as ::core::ffi::c_int != false_0 {
         (*data).hovered_selection = mn_804A04F0.hovered_selection as MenuKind8;
     }
+}
+/// port: the main menu's sixth row, Envoy (envoy-v3-ui.md). Selection 5 is virtual, shown in slot 2 (between Vs.
+/// Mode and Trophies); the retail rows 2-4 move down one slot. Only while an Envoy mod registered its door
+/// (`envoy::DOOR_ON`); otherwise every helper returns the retail value.
+#[inline]
+pub unsafe fn envoy_main6(kind: ::core::ffi::c_int) -> bool {
+    crate::tu::envoy::DOOR_ON != 0 && kind == MENU_KIND_MAIN as ::core::ffi::c_int
+}
+pub const ENVOY_SEL: ::core::ffi::c_int = 5;
+/// The Envoy row's plate keeps the disc's plate and loses its label (the mod draws ours on it): the cursor model's
+/// label joints, hidden on that one instance. `MELEE_ENVOY_HIDEJ` (comma list of joint indices) overrides, for checks.
+unsafe fn envoy_hide_label(cursor: *mut HSD_JObj) {
+    let list = std::env::var("MELEE_ENVOY_HIDEJ").unwrap_or_else(|_| String::from(ENVOY_LABEL_JOINTS));
+    for t in list.split(',') {
+        let Ok(idx) = t.trim().parse::<usize>() else { continue };
+        let mut j: *mut HSD_JObj = ::core::ptr::null_mut();
+        lb_80011E24(cursor, &raw mut j, &[idx, (-(1 as ::core::ffi::c_int)) as usize]);
+        if !j.is_null() {
+            HSD_JObjSetFlagsAll(j, JOBJ_HIDDEN as u32_0);
+        }
+    }
+}
+const ENVOY_LABEL_JOINTS: &str = "";
+const ENVOY_SLOT: [::core::ffi::c_int; 6] = [0, 1, 3, 4, 5, 2];
+const ENVOY_ORDER: [::core::ffi::c_int; 6] = [0, 1, 5, 2, 3, 4];
+#[inline]
+unsafe fn sel_count(kind: ::core::ffi::c_int) -> ::core::ffi::c_int {
+    if envoy_main6(kind) { 6 } else { mn_803EB6B0[kind as usize].selection_count as ::core::ffi::c_int & 0xff }
+}
+/// The anim-loop / description index for a selection: Envoy borrows Vs. Mode's (its panel is hidden).
+#[inline]
+unsafe fn envoy_anim_sel(kind: ::core::ffi::c_int, sel: ::core::ffi::c_int) -> ::core::ffi::c_int {
+    if envoy_main6(kind) && sel == ENVOY_SEL { 1 } else { sel }
 }
 #[inline]
 pub unsafe extern "C" fn GetSelectionFrameOffset(
@@ -2853,6 +2899,9 @@ pub unsafe extern "C" fn GetSelectionFrameOffset(
 #[inline]
 pub unsafe extern "C" fn CountUnlockedSelections(mut kind: MenuKind) -> u8_0 {
     melee_core::ct!("CountUnlockedSelections");
+    if envoy_main6(kind as ::core::ffi::c_int) {
+        return 6;
+    }
     let mut i: ::core::ffi::c_int = 0;
     let mut count: u8_0 = 0 as u8_0;
     i = 0 as ::core::ffi::c_int;
@@ -2899,8 +2948,7 @@ pub unsafe extern "C" fn mn_8022B3A0(mut state: u8_0) -> *mut HSD_GObj {
         .offset(::core::mem::size_of::<AnimLoopSettings>() as usize as isize)
         as *mut AnimLoopSettings)
         .offset(-(1 as ::core::ffi::c_int as isize));
-    option_count = (mn_803EB6B0[cur_menu as usize].selection_count as ::core::ffi::c_int
-        & 0xff as ::core::ffi::c_int) as u8_0;
+    option_count = sel_count(cur_menu as ::core::ffi::c_int) as u8_0;
     hovered_selection = mn_804A04F0.hovered_selection as u8_0;
     unlocked_count = CountUnlockedSelections(cur_menu as MenuKind) as u32_0;
     gobj = GObj_Create(6 as u16_0, 7 as u8_0, 0x80 as u8_0);
@@ -3077,6 +3125,9 @@ pub unsafe extern "C" fn mn_8022B3A0(mut state: u8_0) -> *mut HSD_GObj {
                     JOBJ_HIDDEN as u32_0,
                 );
             }
+            if envoy_main6(cur_menu as ::core::ffi::c_int) && i == ENVOY_SEL {
+                envoy_hide_label(cursor_jobj);
+            }
             HSD_JObjAddChild(option_jobjs[unlocked_index as usize], cursor_jobj);
         }
         i += 1;
@@ -3097,7 +3148,7 @@ pub unsafe extern "C" fn mn_8022B3A0(mut state: u8_0) -> *mut HSD_GObj {
     {
         hover_anim = &raw mut mn_803EB480;
     } else {
-        hover_anim = anim_loop.offset((*user_data).hovered_selection as isize)
+        hover_anim = anim_loop.offset(envoy_anim_sel((*user_data).menu_kind as ::core::ffi::c_int, (*user_data).hovered_selection as ::core::ffi::c_int) as isize)
             as *mut AnimLoopSettings;
     }
     HSD_JObjReqAnimAll(hover_jobj, (*hover_anim).start_frame);
@@ -3356,10 +3407,13 @@ pub unsafe extern "C" fn mn_8022BFBC(mut arg0: ::core::ffi::c_int) -> *mut GXCol
         2 => return &raw mut mn_804D4B58,
         3 => return &raw mut mn_804D4B5C,
         4 => return &raw mut mn_804D4B60,
+        // port: the Envoy row's light (envoy_main6), Party pack sunny
+        5 => return &raw mut ENVOY_LIGHT,
         _ => {}
     }
     panic!("Reached end of non-void function without returning");
 }
+pub static mut ENVOY_LIGHT: GXColor = _GXColor { r: 0xff as u8_0, g: 0xd8 as u8_0, b: 0x4a as u8_0, a: 0xff as u8_0 };
 pub unsafe extern "C" fn mn_8022C010(
     mut menu_kind: ::core::ffi::c_int,
     mut selection: ::core::ffi::c_int,
@@ -4394,37 +4448,6 @@ pub unsafe extern "C" fn mn_8022D7F4(mut gp: *mut HSD_GObj) {
         .selection_count as ::core::ffi::c_int & 0xff as ::core::ffi::c_int;
     buttons = mn_80229624(4 as u32_0);
     mn_804A04F0.buttons = buttons as u64_0;
-    // port: the Envoy row below the retail 1-P rows (envoy-redesign.md 1.2; inert unless an Envoy presentation mod
-    // registered its camp, melee_modes::tu::envoy::DOOR_ON)
-    if crate::tu::envoy::DOOR_ON != 0 {
-        let mut at_last = true;
-        let mut j = mn_804A04F0.hovered_selection as s32 + 1;
-        while j < selection_count {
-            if mn_80229938(MENU_KIND_1P, j) != 0 {
-                at_last = false;
-            }
-            j += 1;
-        }
-        let has = |b: _MenuInput| buttons & b as u32_0 != 0;
-        match crate::tu::envoy::door_1p(has(MenuInput_Confirm), has(MenuInput_Back), has(MenuInput_Up), has(MenuInput_Down), at_last) {
-            crate::tu::envoy::DOOR_EAT => return,
-            crate::tu::envoy::DOOR_MOVE => {
-                sfxMove();
-                return;
-            }
-            crate::tu::envoy::DOOR_TO_TOP => {
-                sfxMove();
-                mn_804A04F0.hovered_selection = SEL_1P_REG as u16_0;
-                return;
-            }
-            crate::tu::envoy::DOOR_OPENED => {
-                sfxForward();
-                mn_804D6BC8.cooldown = 5 as u16_0;
-                return;
-            }
-            _ => {}
-        }
-    }
     if buttons & MenuInput_Confirm as ::core::ffi::c_int as u32_0 != 0 {
         mn_804A04F0.entering_menu = 1 as u8_0;
         gm_801677E8(mn_8022C7CC_inline() as s8);
@@ -4559,6 +4582,29 @@ pub unsafe extern "C" fn mn_8022DB10(mut gp: *mut HSD_GObj) {
         .selection_count as ::core::ffi::c_int & 0xff as ::core::ffi::c_int;
     buttons = mn_80229624(4 as u32_0);
     (*mf).buttons = buttons as u64_0;
+    // port: the Envoy row (envoy_main6): the display order 1-P, Vs., Envoy, Trophies, Options, Data
+    if envoy_main6(MENU_KIND_MAIN as ::core::ffi::c_int) && buttons & MenuInput_Back as ::core::ffi::c_int as u32_0 == 0 {
+        let pos = ENVOY_ORDER.iter().position(|&x| x == (*mf).hovered_selection as ::core::ffi::c_int).unwrap_or(0);
+        if buttons & MenuInput_Confirm as ::core::ffi::c_int as u32_0 != 0 {
+            if (*mf).hovered_selection as ::core::ffi::c_int == ENVOY_SEL {
+                mn_804D6BC8.cooldown = 5 as u16_0;
+                if crate::tu::envoy::door_main_open() {
+                    sfxForward();
+                } else {
+                    sfxBack();
+                }
+                return;
+            }
+        } else if buttons & MenuInput_Up as ::core::ffi::c_int as u32_0 != 0 {
+            sfxMove();
+            (*mf).hovered_selection = ENVOY_ORDER[(pos + 5) % 6] as u16_0;
+            return;
+        } else if buttons & MenuInput_Down as ::core::ffi::c_int as u32_0 != 0 {
+            sfxMove();
+            (*mf).hovered_selection = ENVOY_ORDER[(pos + 1) % 6] as u16_0;
+            return;
+        }
+    }
     if buttons & MenuInput_Confirm as ::core::ffi::c_int as u32_0 != 0 {
         mn_804D6BC8.cooldown = 5 as u16_0;
         (*mf).entering_menu = 1 as u8_0;

@@ -18,6 +18,10 @@
 
 use gd_ui_enc::*;
 
+mod camp;
+mod kit;
+mod party;
+
 use envoy_data::view::*;
 use envoy_data::*;
 
@@ -97,7 +101,7 @@ unsafe fn saved() -> Option<[i32; REC_WORDS]> {
 }
 
 /// envoy_sim's view (envoy_data::view, 512 words) and the run record inside it.
-const VW: usize = VIEW_WORDS;
+pub(crate) const VW: usize = VIEW_WORDS;
 
 /// "FOX: Ember 2, Frost" for one fighter's drives (`ids`: id + 1, 0 empty; `lv`: levels).
 fn drive_line(b: &mut Buf, who: &str, ids: &[i32], lv: &[i32]) {
@@ -212,7 +216,15 @@ pub extern "C" fn gd_ui_scene_enter(scene: u32) {
         c.party = false;
         c.after_fight = gd_ui_retail_scene() >> 8 == GM_VS;
         c.cap = gd_ui_capture(0xF, CAP_EXCLUSIVE);
-        camp_build();
+        let u = &mut *core::ptr::addr_of_mut!(camp::UI);
+        u.age = 0;
+        u.cur = 0;
+        u.dialog = false;
+        u.msg = "";
+        if !c.after_fight {
+            u.p2 = false;
+            camp::coop(0);
+        }
     }
 }
 
@@ -240,6 +252,11 @@ pub extern "C" fn gd_ui_scene_leave(scene: u32) {
 pub extern "C" fn gd_ui_event(node: u32, ev: i32, _value: i32) {
     unsafe {
         let c = &mut CAMP;
+        // V3: the camp reads the pads itself (camp.rs); no host nodes
+        if c.open || !c.open {
+            let _ = (node, ev);
+            return;
+        }
         if !c.open {
             return;
         }
@@ -295,7 +312,7 @@ pub extern "C" fn gd_ui_event(node: u32, ev: i32, _value: i32) {
 }
 
 /// The camp's backdrop and text (the buttons are host nodes).
-unsafe fn camp_draw(e: &mut Enc<16384>, vw: f32, vh: f32) {
+unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
     let c = &CAMP;
     e.layer(LAYER_SCENE, 0);
     e.rect(0.0, 0.0, vw, vh, 0x0B0B_12FF);
@@ -414,7 +431,7 @@ unsafe fn camp_draw(e: &mut Enc<16384>, vw: f32, vh: f32) {
 }
 
 /// The 1-P menu's Envoy row (the cursor itself is the host's: melee_modes::tu::envoy::DOOR_HOVER).
-unsafe fn door_draw(e: &mut Enc<16384>, st: i32, vw: f32, vh: f32) {
+unsafe fn door_draw(e: &mut kit::E, st: i32, vw: f32, vh: f32) {
     let hover = st & ST_HOVER != 0;
     let (x, y, w, h) = (vw * 0.5 - 330.0, vh - 128.0, 300.0, 44.0);
     e.layer(LAYER_OVERLAY, 10);
@@ -426,7 +443,7 @@ unsafe fn door_draw(e: &mut Enc<16384>, st: i32, vw: f32, vh: f32) {
     e.text_ex(x + w - 14.0, y + 14.0, ROLE_LABEL, if hover { WHITE } else { DIM }, ALIGN_RIGHT, 0.0, if hover { "A: open the camp" } else { "below Training" });
 }
 
-static mut ENC: Enc<16384> = Enc::new();
+static mut ENC: kit::E = Enc::new();
 
 const REVEAL: i32 = 18;
 /// FighterKind order (the transition record's from / to).
@@ -459,15 +476,15 @@ const ACCENT: u32 = 0xE8_3A3A_FF;
 const GOOD: u32 = 0x5AD0_7AFF;
 const PANEL: u32 = 0x0A0A_14D8;
 
-struct Buf {
+pub(crate) struct Buf {
     b: [u8; 160],
     n: usize,
 }
 impl Buf {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Buf { b: [0; 160], n: 0 }
     }
-    fn s(&mut self, s: &str) -> &mut Self {
+    pub(crate) fn s(&mut self, s: &str) -> &mut Self {
         for &c in s.as_bytes() {
             if self.n < self.b.len() {
                 self.b[self.n] = c;
@@ -476,7 +493,7 @@ impl Buf {
         }
         self
     }
-    fn i(&mut self, v: i32) -> &mut Self {
+    pub(crate) fn i(&mut self, v: i32) -> &mut Self {
         if v < 0 {
             self.s("-");
         }
@@ -498,7 +515,7 @@ impl Buf {
         }
         self
     }
-    fn str(&self) -> &str {
+    pub(crate) fn str(&self) -> &str {
         unsafe { core::str::from_utf8_unchecked(&self.b[..self.n]) }
     }
 }
@@ -516,7 +533,7 @@ fn ease(t: f32) -> f32 {
 fn ft_name(k: i32) -> &'static str {
     if (0..27).contains(&k) { FT_NAMES[k as usize] } else { "FIGHTER" }
 }
-fn ck_name(k: i32) -> &'static str {
+pub(crate) fn ck_name(k: i32) -> &'static str {
     if (0..26).contains(&k) { CK_NAMES[k as usize] } else { "?" }
 }
 
@@ -524,6 +541,7 @@ fn ck_name(k: i32) -> &'static str {
 pub extern "C" fn gd_ui_init() -> i32 {
     unsafe {
         gd_ui_theme(0);
+        kit::load();
         let n = b"envoy.camp";
         let sc = gd_ui_scene_register(n.as_ptr(), n.len() as u32);
         CAMP.scene = sc;
@@ -550,9 +568,26 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             e.space(SPACE_WINDOW, sc);
             if CAMP.open {
                 CAMP.age += 1;
-                camp_draw(e, vw, 720.0);
+                e.space(SPACE_BAND, 1.0);
+                let mut v = [0i32; VW];
+                let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC && v[V_STATE] != 0;
+                let act = camp::frame(e, CAMP.after_fight, if view { Some(&v) } else { None }, saved(), st & ST_NO_BRAWL != 0);
+                if act == camp::DO_CLOSE {
+                    camp_close();
+                } else if act & 0xFF == camp::DO_ARM {
+                    let op = act >> 8;
+                    let launch = if CAMP.after_fight { 0 } else { ARM_LAUNCH };
+                    match op {
+                        1 => { gd_ui_envoy_arm(ARM_NEW | launch); }
+                        2 => { gd_ui_envoy_arm(ARM_CONTINUE | launch); }
+                        3 => { gd_ui_envoy_arm(ARM_ABANDON); }
+                        _ => { gd_ui_envoy_arm(ARM_OFF); }
+                    }
+                    camp_close();
+                }
             } else {
-                door_draw(e, st, vw, 720.0);
+                e.space(SPACE_BAND, 1.0);
+                party::menu(e, st, saved());
             }
             e.submit();
             return;
@@ -609,7 +644,7 @@ fn fighter_name(v: &[i32; VW], p: usize, f: i32) -> &'static str {
 }
 
 /// "TAKES Ember" after a pick, a line per player.
-unsafe fn picked_line(e: &mut Enc<16384>, v: &[i32; VW], vw: f32) {
+unsafe fn picked_line(e: &mut kit::E, v: &[i32; VW], vw: f32) {
     let a = 1.0 - ease((v[V_SINCE_PICK] as f32 - 110.0) / 40.0);
     for p in 0..v[V_HUMANS].clamp(1, 2) as usize {
         let id = v[pb(p) + P_LAST_PICK];
@@ -636,7 +671,7 @@ unsafe fn picked_line(e: &mut Enc<16384>, v: &[i32; VW], vw: f32) {
     }
 }
 
-unsafe fn hud(e: &mut Enc<16384>, v: &[i32; VW], vw: f32) {
+unsafe fn hud(e: &mut kit::E, v: &[i32; VW], vw: f32) {
     // co-op with one controller: player 2 (port 2) stands idle; say why
     if v[V_HUMANS] == 2 && gd_ui_pad_present(1) == 0 {
         e.slice(SLICE_FILL_R6, vw * 0.5 - 220.0, 150.0, 440.0, 44.0, PANEL);
@@ -708,7 +743,7 @@ unsafe fn hud(e: &mut Enc<16384>, v: &[i32; VW], vw: f32) {
 }
 
 /// Petey's HP bar (top centre) and the two cage bars under it.
-unsafe fn petey_bars(e: &mut Enc<16384>, p: &[i32; 12], vw: f32) {
+unsafe fn petey_bars(e: &mut kit::E, p: &[i32; 12], vw: f32) {
     let w = 420.0;
     let x = vw * 0.5 - w * 0.5;
     let y = 24.0;
@@ -724,7 +759,7 @@ unsafe fn petey_bars(e: &mut Enc<16384>, p: &[i32; 12], vw: f32) {
         s.s("  STUNNED");
     }
     e.text(x, y, ROLE_LABEL, if p[7] != 0 { ACCENT } else { WHITE }, s.str());
-    let bar = |e: &mut Enc<16384>, bx: f32, by: f32, bw: f32, v: i32, m: i32, c: u32| {
+    let bar = |e: &mut kit::E, bx: f32, by: f32, bw: f32, v: i32, m: i32, c: u32| {
         e.rect(bx, by, bw, 12.0, 0x2020_30FF);
         let f = (v as f32 / m.max(1) as f32).clamp(0.0, 1.0);
         e.rect(bx, by, bw * f, 12.0, c);
@@ -786,7 +821,7 @@ static mut T: u32 = 0;
 static mut TEXS: [u32; 10] = [0; 10];
 
 /// A drive model's turning sprite at top-left (x, y), `size` square.
-unsafe fn sprite(e: &mut Enc<16384>, model: i32, x: f32, y: f32, size: f32) {
+unsafe fn sprite(e: &mut kit::E, model: i32, x: f32, y: f32, size: f32) {
     let m = model.clamp(0, 9) as usize;
     if TEXS[m] == 0 {
         TEXS[m] = gd_ui_model_tex(m as i32);
@@ -1108,7 +1143,7 @@ fn level_of(v: &[i32; VW], p: usize, f: usize, id: i32) -> i32 {
 /// The reward screen: per player, three drive cards (each model turning, its rule, NEW or LEVEL n per fighter) then
 /// the fighter that wears it; or three keystone cards with their price; a `+1 stock` card when the pool is at 1. In
 /// co-op the two players pick at once: P1's row on top, P2's below, each with its own cursor.
-unsafe fn reward(e: &mut Enc<16384>, v: &[i32; VW], vw: f32, vh: f32) {
+unsafe fn reward(e: &mut kit::E, v: &[i32; VW], vw: f32, vh: f32) {
     T = T.wrapping_add(1);
     e.rect(0.0, 0.0, vw, vh, 0x0000_00B0);
     let cx = vw * 0.5;
@@ -1233,7 +1268,7 @@ unsafe fn reward(e: &mut Enc<16384>, v: &[i32; VW], vw: f32, vh: f32) {
     e.text_ex(cx, vh - 30.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, hint);
 }
 
-unsafe fn between(e: &mut Enc<16384>, v: &[i32; VW], vw: f32, _vh: f32) {
+unsafe fn between(e: &mut kit::E, v: &[i32; VW], vw: f32, _vh: f32) {
     let cx = vw * 0.5;
     let humans = v[V_HUMANS].clamp(1, 2) as usize;
     let (w, h) = (760.0, 62.0 + 34.0 * humans as f32);
@@ -1284,7 +1319,7 @@ unsafe fn between(e: &mut Enc<16384>, v: &[i32; VW], vw: f32, _vh: f32) {
     }
 }
 
-unsafe fn tag_cinematic(e: &mut Enc<16384>, t: &[i32; 10], vw: f32, vh: f32) {
+unsafe fn tag_cinematic(e: &mut kit::E, t: &[i32; 10], vw: f32, vh: f32) {
     let (phase, slot, frame, len, since, from, to, skipped) = (t[0], t[2], t[3] as f32, t[4].max(2) as f32, t[5], t[7], t[8], t[9] != 0);
     let frozen = phase == 1;
     if !frozen && since >= REVEAL {
@@ -1332,7 +1367,7 @@ unsafe fn tag_cinematic(e: &mut Enc<16384>, t: &[i32; 10], vw: f32, vh: f32) {
 
 /// The stage shift: a wipe closes over the first half, a white flash at the switch (the midpoint), the wipe opens
 /// over the second half; the destination's name rides the cover.
-unsafe fn stage_shift(e: &mut Enc<16384>, t: &[i32; 10], vw: f32, vh: f32) {
+unsafe fn stage_shift(e: &mut kit::E, t: &[i32; 10], vw: f32, vh: f32) {
     let (phase, frame, len, since, to) = (t[0], t[3] as f32, t[4].max(2) as f32, t[5], t[8]);
     if phase != 1 {
         if since < 10 {

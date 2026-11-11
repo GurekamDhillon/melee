@@ -15,14 +15,14 @@
 use crate::render::Renderer;
 
 /// Atlas page size (texels, square, RGBA8).
-pub const ATLAS: u32 = 1024;
+pub const ATLAS: u32 = 2048;
 
 /// Instance flag: the quad (and its clip rect) is in window pixels, not band units.
 pub const Q_WINDOW: u32 = 1;
 /// Instance flag: the quad samples a signed-distance glyph tile (linear filtering, alpha = coverage of d > 0.5).
 pub const Q_SDF: u32 = 2;
 
-/// One UI instance: 64 bytes, uploaded as-is (`#[repr(C)]`, little-endian like the GPU).
+/// One UI instance: 80 bytes, uploaded as-is (`#[repr(C)]`, little-endian like the GPU).
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct UiQuad {
@@ -37,7 +37,10 @@ pub struct UiQuad {
     /// x offset of the top edge per unit of height (a parallelogram: the kit's sheared bars).
     pub shear: f32,
     pub flags: u32,
-    pub _pad: u32,
+    /// Rotation in radians (clockwise on screen) about `piv` (same space as `rect`); 0 = none (envoy-v3-ui.md).
+    pub rot: f32,
+    pub piv: [f32; 2],
+    pub _pad: [u32; 2],
 }
 
 /// No clipping.
@@ -314,12 +317,19 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
 }
 @vertex fn vs_main(@builtin(vertex_index) vi: u32,
                    @location(0) rect: vec4<f32>, @location(1) uvr: vec4<f32>, @location(2) clip: vec4<f32>,
-                   @location(3) rgba: u32, @location(4) shear: f32, @location(5) flags: u32) -> VsOut {
+                   @location(3) rgba: u32, @location(4) shear: f32, @location(5) flags: u32,
+                   @location(6) rp: vec3<f32>) -> VsOut {
     var cx = array<f32, 6>(0.0, 1.0, 1.0, 0.0, 1.0, 0.0);
     var cy = array<f32, 6>(0.0, 0.0, 1.0, 0.0, 1.0, 1.0);
     let l = vec2<f32>(cx[vi], cy[vi]);
     let win = (flags & 1u) != 0u;
-    let p = rect.xy + vec2<f32>(l.x * rect.z + shear * (1.0 - l.y) * rect.w, l.y * rect.w);
+    var p = rect.xy + vec2<f32>(l.x * rect.z + shear * (1.0 - l.y) * rect.w, l.y * rect.w);
+    if (rp.x != 0.0) {
+        let d = p - rp.yz;
+        let cs = cos(rp.x);
+        let sn = sin(rp.x);
+        p = rp.yz + vec2<f32>(d.x * cs - d.y * sn, d.x * sn + d.y * cs);
+    }
     let px = to_px(p, win);
     var o: VsOut;
     o.pos = vec4<f32>(px.x / u.tgt.x * 2.0 - 1.0, 1.0 - px.y / u.tgt.y * 2.0, 0.0, 1.0);
@@ -395,6 +405,7 @@ impl UiGpu {
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Uint32, offset: 48, shader_location: 3 },
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32, offset: 52, shader_location: 4 },
             wgpu::VertexAttribute { format: wgpu::VertexFormat::Uint32, offset: 56, shader_location: 5 },
+            wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x3, offset: 60, shader_location: 6 },
         ];
         let p = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("gd_ui"),
@@ -494,7 +505,7 @@ impl Renderer {
         pass.set_viewport(0.0, 0.0, tw, th, 0.0, 1.0);
         pass.set_pipeline(&g.pipes[pi].1);
         pass.set_bind_group(0, &g.bind, &[]);
-        pass.set_vertex_buffer(0, g.inst.slice(..g.count as u64 * 64));
+        pass.set_vertex_buffer(0, g.inst.slice(..g.count as u64 * std::mem::size_of::<UiQuad>() as u64));
         pass.draw(0..6, 0..g.count);
     }
 
@@ -509,7 +520,7 @@ mod tests {
     use super::*;
     #[test]
     fn quad_is_64_bytes() {
-        assert_eq!(std::mem::size_of::<UiQuad>(), 64);
+        assert_eq!(std::mem::size_of::<UiQuad>(), 80);
     }
     #[test]
     fn atlas_builtins_fit() {

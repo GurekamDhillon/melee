@@ -17,13 +17,19 @@ pub const FACE_SANS: usize = 0;
 pub const FACE_SANS_BOLD: usize = 1;
 pub const FACE_MONO: usize = 2;
 pub const FACE_MONO_BOLD: usize = 3;
-pub const N_FACES: usize = 4;
+/// Envoy V3 (envoy-v3-ui.md): Bricolage Grotesque ExtraBold (names, numbers, headlines) and Source Sans 3 Bold
+/// (sentences), both SIL OFL 1.1, selected by the style bits `TEXT_DISPLAY` / `TEXT_BODY`.
+pub const FACE_DISPLAY: usize = 4;
+pub const FACE_BODY: usize = 5;
+pub const N_FACES: usize = 6;
 
 static FONT_FILES: [&[u8]; N_FACES] = [
     include_bytes!("../assets/fonts/Inter-Regular.ttf"),
     include_bytes!("../assets/fonts/Inter-Bold.ttf"),
     include_bytes!("../assets/fonts/JetBrainsMono-Regular.ttf"),
     include_bytes!("../assets/fonts/JetBrainsMono-Bold.ttf"),
+    include_bytes!("../assets/fonts/BricolageGrotesque-ExtraBold.ttf"),
+    include_bytes!("../assets/fonts/SourceSans3-Bold.otf"),
 ];
 
 /// SDF tile resolution: texels per em, and the distance spread (texels each side of the edge).
@@ -247,7 +253,9 @@ pub fn build_faces(atlas: &mut Atlas) -> [Face; N_FACES] {
     let mono_b = build_face(atlas, FACE_MONO_BOLD, Some(&mono), &mut s);
     let sans = build_face(atlas, FACE_SANS, Some(&mono), &mut s);
     let sans_b = build_face(atlas, FACE_SANS_BOLD, Some(&mono_b), &mut s);
-    [sans, sans_b, mono, mono_b]
+    let disp = build_face(atlas, FACE_DISPLAY, Some(&sans_b), &mut s);
+    let body = build_face(atlas, FACE_BODY, Some(&sans_b), &mut s);
+    [sans, sans_b, mono, mono_b, disp, body]
 }
 
 /// Line placement: baseline offset from the line top for a line box of `size` (cap height centred).

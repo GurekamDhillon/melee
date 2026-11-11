@@ -14,6 +14,8 @@ pub const OP_CLIP: u16 = 6;
 pub const OP_UNCLIP: u16 = 7;
 pub const OP_SLICE: u16 = 9;
 pub const OP_SPACE: u16 = 10;
+/// Rotate the quads that follow by `a` radians (clockwise) about (x, y); `rot(0.0, ..)` ends it (host v3, envoy-v3-ui.md).
+pub const OP_ROT: u16 = 11;
 
 pub const LAYER_SCENE: i32 = 0;
 pub const LAYER_HUD_UNDER: i32 = 1;
@@ -37,6 +39,9 @@ pub const ROLE_TOAST: i32 = 5;
 pub const TEXT_REGULAR: i32 = 1 << 8;
 pub const TEXT_BOLD: i32 = 2 << 8;
 pub const TEXT_MONO: i32 = 1 << 10;
+/// Host v3 faces (envoy-v3-ui.md): Bricolage Grotesque ExtraBold / Source Sans 3 Bold.
+pub const TEXT_DISPLAY: i32 = 1 << 11;
+pub const TEXT_BODY: i32 = 1 << 12;
 pub const fn text_size(px: u32) -> i32 {
     ((px & 0xFF) << 16) as i32
 }
@@ -143,6 +148,14 @@ impl<const N: usize> Enc<N> {
         if self.head(OP_SPACE, 2) {
             self.put(space as u32);
             self.f(scale);
+        }
+        self
+    }
+    pub fn rot(&mut self, a: f32, x: f32, y: f32) -> &mut Self {
+        if self.head(OP_ROT, 3) {
+            self.f(a);
+            self.f(x);
+            self.f(y);
         }
         self
     }

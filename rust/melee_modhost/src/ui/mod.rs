@@ -467,7 +467,10 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             sh.log.push(format!("gd_ui_tex_load {p}: not a readable RGBA/RGB png"));
             return 0;
         };
-        let Some(r) = sh.atlas.alloc(w as u16, h as u16) else { return 0 };
+        let Some(r) = sh.atlas.alloc(w as u16, h as u16) else {
+            sh.log.push(format!("gd_ui_tex_load {p}: the UI atlas is full"));
+            return 0;
+        };
         sh.atlas.put(r, &px);
         sh.texs[module].push(r);
         sh.texs[module].len() as u32
@@ -808,19 +811,34 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         unsafe { melee_modes::tu::envoy::DOOR_ON = 1 };
         GD_OK
     });
-    // bits: 1 armed, 2 the 1-P menu is up with no custom scene on it (the Envoy row is drawn), 4 its cursor is on the
-    // Envoy row, 8 a run record is saved, 16 a fight was played since arming, 32 the player's Brawl files are missing (Envoy is
-    // blocked: the camp asks for the Brawl disc image)
+    // bits: 1 armed, 2 the main menu is up with no custom scene on it (its Envoy row is shown, envoy-v3-ui.md), 4 its
+    // cursor is on the Envoy row, 8 a run record is saved, 16 a fight was played since arming, 32 the player's Brawl
+    // files are missing (Envoy is blocked), 64 the Envoy row was chosen without them (show the message)
     f!("gd_ui_envoy_state", |c: Caller<'_, PresData>| -> i32 {
         use melee_modes::tu::envoy as ev;
         let sh = c.data().ui().borrow();
-        let on_1p = sh.retail == (melee_types::GM_MENU as i32, 1)
+        let main = sh.retail == (melee_types::GM_MENU as i32, 1)
             && sh.stack.is_empty()
-            && unsafe { melee_modes::tu::mnmain::mn_804A04F0.cur_menu } as i32 == melee_types::MENU_KIND_1P as i32;
+            && ev::DOOR_ON_now()
+            && unsafe { melee_modes::tu::mnmain::mn_804A04F0.cur_menu } as i32 == melee_types::MENU_KIND_MAIN as i32;
+        let hover = main && unsafe { melee_modes::tu::mnmain::mn_804A04F0.hovered_selection } as i32 == melee_modes::tu::mnmain::ENVOY_SEL;
         unsafe {
-            (ev::ARMED != 0) as i32 | (on_1p as i32) << 1 | ((on_1p && ev::DOOR_HOVER != 0) as i32) << 2 | ((ev::SAVED_LEN > 0) as i32) << 3 | ((ev::CAMP_DUE != 0) as i32) << 4
-                | (!melee_modes::tu::petey_model::brawl_present() as i32) << 5
+            if !hover {
+                ev::DOOR_NO_DISC = 0;
+            } else if ev::DOOR_NO_DISC > 0 {
+                ev::DOOR_NO_DISC -= 1;
+            }
+            (ev::ARMED != 0) as i32 | (main as i32) << 1 | (hover as i32) << 2 | ((ev::SAVED_LEN > 0) as i32) << 3 | ((ev::CAMP_DUE != 0) as i32) << 4
+                | (!melee_modes::tu::petey_model::brawl_present() as i32) << 5 | ((hover && ev::DOOR_NO_DISC > 0) as i32) << 6
         }
+    });
+    // Envoy V3: player 2 joined (1) or left (0) at the camp; a new run started after this is co-op. Offline only.
+    f!("gd_ui_envoy_coop", |c: Caller<'_, PresData>, on: i32| -> i32 {
+        if c.data().ui().borrow().session != Session::Offline {
+            return GD_EOFFLINE;
+        }
+        unsafe { melee_modes::tu::envoy::COOP_JOIN = (on != 0) as i32 };
+        GD_OK
     });
     // the saved run record (melee_modes::tu::envoy::SAVED): the words written, 0 = none
     f!("gd_ui_envoy_saved", |mut c: Caller<'_, PresData>, out: u32, n: u32| -> i32 {
@@ -1019,7 +1037,7 @@ fn decode_png(path: &std::path::Path) -> Option<(u32, u32, Vec<u8>)> {
     let mut buf = vec![0; r.output_buffer_size()?];
     let info = r.next_frame(&mut buf).ok()?;
     let (w, h) = (info.width, info.height);
-    if w > 512 || h > 512 || info.bit_depth != png::BitDepth::Eight {
+    if w > 1024 || h > 1024 || info.bit_depth != png::BitDepth::Eight {
         return None;
     }
     let px = match info.color_type {

@@ -860,6 +860,7 @@ pub fn init(iso: Option<String>) {
     let _s = crate::arena::SysScope::enter();
     let _ = crate::archive::reclaim_flags(); // before any decode (see there)
     crate::arena::start_prefault();
+    let _ = crate::archive::decode_prof_on(); // its first read allocates: never on the asset path (a decode)
     if !recheap::init() {
         return;
     }

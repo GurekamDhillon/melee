@@ -500,7 +500,7 @@ pub fn reclaim_flags() -> (bool, bool, bool) {
 
 /// `MELEE_DECODE_PROF=1`: one line per archive decode with its phase times (diagnostics; it drains the fill queue per
 /// root, so the allocation ORDER differs from a normal run: never for digests or proofs).
-fn decode_prof_on() -> bool {
+pub(crate) fn decode_prof_on() -> bool {
     static P: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *P.get_or_init(|| std::env::var_os("MELEE_DECODE_PROF").is_some())
 }

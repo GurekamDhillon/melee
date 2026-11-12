@@ -37,3 +37,23 @@ See the commit log of this branch and the section below (filled by each run).
   title parse 26 ms (50 ms frame). The gate's mods dir lacks the envoy_ui PNGs (warnings only).
 - Lock rules from the coordinator: at most 10 minutes per hold; one scenario per hold; 4-min gaps (20 after an
   overrun); quiet passes at most hourly and announced. Gate now has GATE_TIMEOUT (540 s) and envoy 9000 ticks.
+
+## In-match slowdown (found 2026-11-11 22:30): GX data cache thrash, NOT MELEE_RECLAIM_LEAK
+- A/B (build/ab/noleak, build/ab/leak; vanilla 4-CPU BF, retail_full, MELEE_SAMPLE): both runs: ticks avg 1.2 ms to
+  tick ~1815, then 20 ms (1800-2000) and 37-38 ms (2000-2700). LEAK makes no difference.
+- Sampler (PDB beside the exe): 78% inclusive in display: HSD_JObjDispAll -> PObjDispSimplePrimitive ->
+  `gxbridge::GXSetArray` -> `data_at_ex` (74%), plus 11% NtFreeVirtualMemory.
+- Mechanism (melee_engine/src/gxbridge.rs): `GXSetArray` calls `data_at(base, usize::MAX)`, so `extent` returns the
+  REST OF THE CONTAINING BLOCK (to the end of the archive raw image / host range) and each distinct array pointer gets
+  its own copy of up to several MB, cached by (ptr, len). The cache is capped at 48 MB (`DATA_CAP`) and on overflow it
+  is CLEARED ENTIRELY. Once the scene's arrays need more than 48 MB of such copies (here at tick ~1815, a new
+  model's arrays come on screen), every frame clears and re-copies: MBs of memcpy + big Arc alloc/free per
+  GXSetArray, inside the tick (display runs in the logic step), ~35 ms per tick.
+- Grows with: the number of distinct vertex arrays on screen x their offset from the end of their file (fighters,
+  stage, items, effects); not with match length as such. A 4-player match crosses it; Envoy (tag pair + up to 3 foes
+  + stage shifts) very likely does too.
+- Fix proposal (render-only, the sim does not read these copies; NHV1 unaffected): cache ONE copy per containing block
+  (key = block base/len, invalidated by forget_range as now) and hand the renderer (block Arc, offset) instead of a
+  per-pointer copy; plus LRU eviction instead of clear-all. Needs `melee_gx` set_array to take an offset. Check: are
+  the copies allocated in the game arena (alloc_fresh shows in the profile)? if so they also sit inside snapshots;
+  the fix should mark them system-heap.

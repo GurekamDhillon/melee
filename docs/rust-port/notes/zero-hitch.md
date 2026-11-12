@@ -151,3 +151,62 @@ Open:
 - Stage hints: worker plans need the coming stage's grkind (stkind -> grkind at the SSS hint).
 - Title (first frame 68-77) and CSS (MnSlChr 3.7 MB) have no lead: the title loads at boot; CSS plans could be
   hinted at the main menu.
+
+## Asset service slice 2 (2026-11-12, port/zerolag-assets1; light-slot runs, single runs, not a quiet pass)
+Design as built: the recording heap logs every alloc/free/realloc in order; a plan is applied by REPLAYING those calls
+in the game arena (temporaries included). No plan ready -> the file decodes in place on the asset path (recycled
+blocks and in-place realloc tails zeroed there only) and is queued so a later load replays. A plan whose live blocks
+the result does not reach is dropped; its file length is then never prepared again (6d16e9315).
+
+### Proof (measured)
+- Arena digest as proof (`MELEE_ASSET_DIGEST=1` + `MELEE_ASSET_DIGEST_DUMP=<dir>`, compare with
+  `tools/rust-port/perf/asset_digest_diff.py A B`; build/dg_fod.sh, build/dg_menu.sh). Each live block of a load is
+  dumped as classified 8-byte words: own block (number, offset), file image offset, exe offset, arena offset, file
+  image or arena minus block start, host pointer (Rust heap/stack: value not compared). Equal bytes always compare equal.
+  The per-run values were host pointers and a byte-sliding classifier, plus reclaim freeing in HashMap random order
+  (now always address order).
+  - FoD --match: off vs off2 293/293 loads identical; on vs off 293/293 (7 replays).
+  - Menu flow (retail_full): off vs off2 218/219, on vs off 218/219 (13 replays). The one word left is in a 42 KB file
+    (under the 64 KB threshold, so it is always decoded directly, never replayed): a dat_custom particle bank slot whose
+    (target - block) lands outside the image, the arena and committed memory. It is a per-run value, also off vs off2.
+- Replay bugs found by the digest and fixed (626b1879e): (1) dat_custom particle texture banks store (file image
+  address - block start); a replay copied the worker's value, so the game's bank pointed into nothing (texture data
+  read from a wrong address; NHV1 cannot see it). These words are now registered while recording and rewritten at
+  apply (`Tgt::RawRel`). (2) `sparse_on()`'s first env read allocated in the arena inside the first apply. (3) reclaim
+  flags read at boot.
+- Gate (goldens vs C references: pad_falcon_fox_fd, pad_marth_sheik_bf, cpu_fox_falco_dl, cpu_peach_samus_ys_items all
+  frames; synctest depth 4 0 MISMATCHES; audio hash = C; snapguard depth-7 synctest clean, save 0.235 / load 0.385 /
+  total 5.113 ms vs baseline 0.271 / 0.432 / 5.302): all ok on 8572ecac0. Hero replay Game_20251031T213013:
+  SLPCHECK match (12844 fighter-frames). NHV1 service on = off: menu flow 3847 ticks, armed Envoy fight 7000 ticks
+  (both on 8572ecac0 and again on 6d16e9315).
+
+### Hints
+Boot hints take effect for the title (GmTtAll hit), the menus (MnMaAll 2.1 MB apply 4.2 ms), CSS (MnSlChr 3.7 MB apply
+3.9 ms), EfCoData (1.2 ms), and the fighter files hinted at CSS (0.3-1.5 ms). They do NOT take effect for ItCo (2.9 MB)
+or the stage (1.6 MB): their plans are dropped because 1-3 live blocks are reachable only from dat_custom's
+thread-local side lists, not from the decode result (see "Remaining"). The stage-kind hint reads the right grkind, but
+the stage plan is dropped for the same reason. With --match (FoD, Envoy) there is no lead: the boot hints are still
+queued at the match-setup frame.
+
+### Table (frame ms, worst frame of that scene; one run each)
+| scene | pre-service (slice 1) | service on, with lead | service off (= no lead) |
+| title / first frame | 68-77 | 52.1 | 50.9 |
+| CSS enter | 23.8 | 18.7 | <= 19.8 (below the listed offenders) |
+| VS scene change | 78.9 (named baseline 49) | 43.0 | 46.2 |
+| match setup (menu flow) | 45.8 | 34.1 | 34.3 |
+| FoD --match first frame | ~70 | (no lead) 72.6 | 67.8-71.5 (slice-2 agent) |
+| Envoy armed fight first frame | 86 | (no lead) 90.3 | 80.0 |
+Before 6d16e9315 the VS scene change with the service on was 80.7 ms. The worker was re-preparing the dropped ItCo
+plan (a ~30 ms decode) at the same time. That cause is inferred from the fix, not profiled.
+Verdict: with no lead, every scene's worst frame is at or below pre-service, except possibly the Envoy first frame with
+the service on (90.3 vs 86, one run; the off run is 80.0). That needs repeated quiet runs. No scene is under 16.7 ms
+yet; CSS enter (18.7) is closest.
+
+### Remaining offenders (named causes)
+- ItCo 2.9 MB in-place decode 20-22 ms + stage 1.6 MB 11 ms: plans dropped (blocks held by dat_custom's thread-local
+  side lists, e.g. 16/24-byte list headers). Fix: make those lists decode results (or effects) so the plan reaches them.
+- Fighter create 14-35 ms for the first fighter (common fighter data, PlCo): task 4 of slice 2. Not started.
+- Title on_enter "engine step (unsplit)" ~25 ms (not a file cost): needs spans.
+- --match has no lead by construction (Envoy/FoD first frame 80-90 ms): needs the next fight's files hinted at the
+  shop/pick stop.
+- Not merge-ready: the zero-lag requirement is not met in any scene; the byte-identity proofs above all pass.

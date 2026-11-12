@@ -544,7 +544,7 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
                             // the header (0x28 bytes, `x28_entries` is a zero-length array) plus ALL `count` entries. It was
                             // `count - 1`: the last entry (16 bytes) was written past the block, its `x4_sfx` (0x113) into the
                             // first word of whatever block followed in the arena's size class (asset service slice 4)
-                            let words = (core::mem::size_of::<itWstarAttributes>() + count as usize * core::mem::size_of::<itWstarAttrEntry>()) / 8;
+                            let words = wstar_words(count as usize);
                             let buf: &mut [u64] = Box::leak(std::vec![0u64; words].into_boxed_slice());
                             let rec = buf.as_mut_ptr() as *mut itWstarAttributes;
                             unsafe {
@@ -1600,4 +1600,24 @@ fn ef_behavior(d: &mut GcDecoder<'_>, off: u32) -> *mut c_void {
     let buf = native_buf(core::mem::size_of::<Native>()) as *mut Native;
     unsafe { buf.write(Native { mdl_num: mn, mdl_type: mt, ptcl_num: pn, ptcl_type: pt }) };
     buf as *mut c_void
+}
+
+/// 8-byte words of a native `itWstarAttributes` with `count` entries (the header, then every entry).
+fn wstar_words(count: usize) -> usize {
+    (core::mem::size_of::<melee_types::itWstarAttributes>() + count * core::mem::size_of::<melee_types::itWstarAttrEntry>()).div_ceil(8)
+}
+
+#[cfg(test)]
+mod wstar_tests {
+    use melee_types::{itWstarAttrEntry, itWstarAttributes};
+    /// Regression (ItCo stray write, 0x113): the rebuilt Warp Star block holds all `count` entries; it held count - 1
+    /// and the last entry was written 16 bytes past the block into the next arena block.
+    #[test]
+    fn wstar_block_holds_every_entry() {
+        for count in 1..=7usize {
+            let bytes = super::wstar_words(count) * 8;
+            let end_of_last = core::mem::offset_of!(itWstarAttributes, x28_entries) + count * core::mem::size_of::<itWstarAttrEntry>();
+            assert!(bytes >= end_of_last, "count {count}: block {bytes} bytes, entries end at {end_of_last}");
+        }
+    }
 }

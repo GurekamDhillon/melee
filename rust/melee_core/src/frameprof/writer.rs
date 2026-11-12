@@ -317,7 +317,7 @@ pub(super) fn run(s: &'static State, stem: String) {
         }
         let frames: Vec<Frame> = spare_f.drain(..).collect();
         for f in &frames {
-            frame(s, &mut agg, f, &names, csv.as_mut(), jsonl.as_mut());
+            write_frame(s, &mut agg, f, &names, csv.as_mut(), jsonl.as_mut());
         }
         let keep_from = agg.last_t.saturating_sub(5_000_000);
         agg.pending.retain(|e| e.t_us >= keep_from);
@@ -357,7 +357,7 @@ fn events_in(agg: &Agg, a: u64, b: u64) -> Vec<(Kind, String, u32, u64)> {
     agg.pending.iter().filter(|e| e.t_us > a && e.t_us <= b).map(|e| (Kind::from_u8(e.kind), e.text.as_str().to_string(), e.dur_us, e.val)).collect()
 }
 
-fn frame(s: &State, agg: &mut Agg, f: &Frame, names: &[String], csv: Option<&mut std::io::BufWriter<std::fs::File>>, jsonl: Option<&mut std::io::BufWriter<std::fs::File>>) {
+fn write_frame(s: &State, agg: &mut Agg, f: &Frame, names: &[String], csv: Option<&mut std::io::BufWriter<std::fs::File>>, jsonl: Option<&mut std::io::BufWriter<std::fs::File>>) {
     let prev_t = agg.last_t;
     agg.last_t = f.t_us;
     let scene = agg.scene_name(f.scene);

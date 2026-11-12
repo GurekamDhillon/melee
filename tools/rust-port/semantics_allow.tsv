@@ -15,3 +15,4 @@ M1	rust/melee_runtime/src/tu/axdriver.rs	audio: MSL powf shim for voice pitch; t
 M1	rust/melee_runtime/src/bytecode.rs	robj bytecode op 0x13 logf: MSL logf not ported; the C build calls the host logf too (open, notes/semantics.md)
 *	rust/melee_modes/src/tu/petey_model.rs	host: presentation-only model loader / draw of the owner's local Brawl files (never feeds the sim)
 *	rust/melee_modes/src/tu/drive_draw.rs	host: presentation-only Envoy drive models and effects in the world (render; never feeds the sim)
+*	rust/melee_core/src/frameprof/*	host-side diagnostics: timing and report formatting, never read by the simulation

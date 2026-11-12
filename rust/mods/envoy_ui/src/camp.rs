@@ -137,11 +137,11 @@ fn row_say(r: u8, has: bool, p2: bool) -> &'static str {
     match r {
         R_BIG if has => "Pick up the saved run with the saved party.",
         R_BIG if p2 => "Player 2 is in: 5 stocks together. Straight into fight 1.",
-        R_BIG => "Five fights: duels, elites, a boss. Straight into fight 1.",
+        R_BIG => "Three rooms and a boss. Straight into room 1.",
         R_FIGHTERS if has => "The party is set for this run. Start a new run to change it.",
         R_NEW => "Start over from fight 1. The saved run is lost.",
         R_FIGHTERS => "Bring two fighters each. You swap between your two mid-fight.",
-        R_LENGTH => "This build has the short run: five fights.",
+        R_LENGTH => "A session is three rooms and a boss.",
         R_TEAM => "Your attacks never hit your partner in this build.",
         R_NG => "NG+ opens when a run is cleared. Not in this build yet.",
         R_COLLECTION => "Drives and keystones you have found. Coming soon.",
@@ -347,7 +347,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         if r == R_BIG {
             let sub = if let Some(rc) = rec.as_ref() {
                 let mut b = Buf::new();
-                loop_fight(&mut b, rec_loop(rc[R_LOOP]), rc[R_FIGHT], 5);
+                loop_fight(&mut b, rec_loop(rc[R_LOOP]), rc[R_FIGHT], 4);
                 b.s(". ").i(rc[R_POOL]).s(" stocks left.");
                 b
             } else {

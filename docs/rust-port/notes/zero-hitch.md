@@ -119,3 +119,35 @@ pair + 2 CPUs, wave respawn, stage switch 10 -> 28). Every offender is a load or
   allocates straight from the arena (uncommitted-at-measurement change, in cd7c09828+); needs re-measuring.
 - Open: lead time. In --match the preload registrations happen in the match-setup frame itself (no lead); the
   retail_full route (CSS/SSS before the match) still has to be measured. Rematches/second matches hit the cache.
+
+### Slice 1 results (2026-11-12 ~09:00, port/zerolag-assets1; light-slot runs, not a quiet pass)
+Byte identity:
+- Plan selftest (`MELEE_ASSET_SELFTEST=1`; every load is prepared again on another thread at the load and the digests are compared):
+  FoD 10/10 SAME; menu flow 34/35 until the stage fix below. The causes of the differences were all
+  uninitialised bytes (Root::Raw(u32) payload, DatSymbol padding, Effect variant tails) and one game-state read in the
+  decode: dat_custom's yakumono params read `stage_info.grkind`. That value is now a plan input: a plan fits only the
+  stage it was decoded for.
+- Whole-run NHV1 (MELEE_HASH_LOG), service on vs off: menu flow (retail_full, 3847 match ticks) EQUAL; Envoy armed
+  fight (7000 ticks) EQUAL. Before the grkind fix, the menu flow diverged at tick 746 and crashed in Corneria's
+  material anim (rc 139): the selftest found it (stage plan block 144 vs 152 bytes).
+- Gate goldens (4 scenarios), synctest depth 4 (0 mismatches), snapguard (depth-7 synctest, 0 mismatches): see the
+  commit message of the run below.
+Numbers (frame ms; vanilla, service off = every load prepared on the spot -> same arena as on):
+| scene | pre-service (baseline) | service off | service on |
+| VS scene change (fighter files) | 78.9 (s5 off) / 49 named baseline | 96.2 | 33.0 |
+| match setup (menu flow) | 45.8-49 | 49.2 | 46.1 (stage plan not ready: grkind unknown at hint, prepared on the spot 18 ms) |
+| CSS enter | 20-23.8 | 23.8 | 23.0 |
+| FoD --match first frame (worst case, no lead) | 67-70 | 107.3 | 81.2 |
+Apply cost (measured): ItCo 2.9 MB -> 42.9 MB of blocks, 57.7k blocks: 15 ms first, 7.5-8.6 ms after batching
+(one arena lock), sparse copy into known-zero bump memory and fixups (0.5 ms). Fighter files 0.2-1 ms, stage 1.6 MB 3.5-4.4 ms.
+Open:
+- On the spot (no lead) is SLOWER than the old decode: ItCo prepare 33 ms + apply 8 ms vs the old 19 ms parse. The
+  owner's rule says the worst case must not be slower than today. Falling back to the old decode when a plan is not
+  ready would make the arena layout depend on worker timing (the plan apply and the old decode allocate differently),
+  so the old decode is not an option for a single load. Ways out: make the old decode go away, i.e. make prepare
+  on the spot as cheap as the old decode (the recording heap's first touch of fresh pages and the reachability scan
+  over 43 MB are the measured extras), or shrink ItCo's decoded image (40 MB of it is the decoder's whole-data shared
+  tables).
+- Stage hints: worker plans need the coming stage's grkind (stkind -> grkind at the SSS hint).
+- Title (first frame 68-77) and CSS (MnSlChr 3.7 MB) have no lead: the title loads at boot; CSS plans could be
+  hinted at the main menu.

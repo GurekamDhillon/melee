@@ -260,10 +260,32 @@ static mut FRESH: bool = false;
 
 #[cfg(any(windows, unix))]
 unsafe fn alloc_inner(l: Layout) -> *mut u8 {
+    let _g = Lock::take();
+    alloc_locked(l)
+}
+
+/// The asset service's apply: `ls` (size, align) served in order under one lock, each exactly as [`alloc`] would
+/// (same blocks, same free-list and bump effects), addresses pushed to `out` (bit 0 set: the block is known zero, see the push). False at the first one the arena does
+/// not take (`out` then holds the ones before it).
+#[cfg(any(windows, unix))]
+pub unsafe fn alloc_many(ls: &[(usize, usize, usize)], out: &mut Vec<usize>) -> bool {
+    let _g = Lock::take();
+    for &(_, size, align) in ls {
+        let p = alloc_locked(Layout::from_size_align_unchecked(size, align));
+        if p.is_null() {
+            return false;
+        }
+        // bit 0: fresh bump memory never handed out and never snapshotted (still the OS's zero pages)
+        out.push(p as usize | (FRESH && !SNAPSHOTTED.load(Relaxed)) as usize);
+    }
+    true
+}
+
+#[cfg(any(windows, unix))]
+unsafe fn alloc_locked(l: Layout) -> *mut u8 {
     FRESH = false;
     let Some(ab) = bucket(l.align()) else { return core::ptr::null_mut() };
     let Some((c, size)) = class_of(l.size()) else { return core::ptr::null_mut() };
-    let _g = Lock::take();
     if BASE == 0 {
         let p = sys::reserve(CAP);
         if p.is_null() {

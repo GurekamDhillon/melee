@@ -1,6 +1,6 @@
 //! The asset service's recording heap (notes/asset-service-design.md, "decode plan").
 //!
-//! While a thread records ([`begin`] .. [`end`]), the process allocator (the binary's `#[global_allocator]`) serves
+//! While a thread records ([`begin_recording`] .. [`end_recording`]), the process allocator (the binary's `#[global_allocator]`) serves
 //! that thread's allocations from one *slot* of a reserved address range instead of the game arena or the system heap:
 //! a bump allocator that never reuses memory, so every block starts zeroed and the bytes a decode leaves are a pure
 //! function of its input. A free only marks the block dead. The asset service then copies the blocks that are
@@ -18,7 +18,7 @@ use core::sync::atomic::{AtomicPtr, AtomicU64, Ordering::*};
 /// Bytes per slot (reserved; committed on demand).
 pub const SLOT: usize = 1 << 30;
 /// Slots in the range (one per prepared file kept; at most 64, the mask width).
-pub const NSLOT: usize = 48;
+pub const NSLOT: usize = 64;
 /// The slot's tail holds the block records (not recorded allocations).
 const META: usize = 64 << 20;
 const STEP: usize = 1 << 20;
@@ -26,7 +26,12 @@ const STEP: usize = 1 << 20;
 struct State {
     base: usize,
     used: AtomicU64,
+    /// Per slot: bytes from its start that the last user committed (and wrote). A released slot keeps its pages
+    /// (a fresh page costs a fault per 4 KB on first touch, which made a prepare ~1.8x the old decode); the next
+    /// taker zeroes this much instead, and pages past [`KEEP_COMMITTED`] are given back.
+    dirty: [core::sync::atomic::AtomicUsize; NSLOT],
 }
+const KEEP_COMMITTED: usize = 256 << 20;
 static STATE: AtomicPtr<State> = AtomicPtr::new(core::ptr::null_mut());
 
 /// One recorded allocation.
@@ -105,7 +110,7 @@ pub fn init() -> bool {
     }
     let base = (base + SLOT - 1) & !(SLOT - 1);
     let st = unsafe { std::alloc::GlobalAlloc::alloc(&std::alloc::System, Layout::new::<State>()) } as *mut State;
-    unsafe { st.write(State { base, used: AtomicU64::new(0) }) };
+    unsafe { st.write(State { base, used: AtomicU64::new(0), dirty: [const { core::sync::atomic::AtomicUsize::new(0) }; NSLOT] }) };
     STATE.store(st, Release);
     true
 }
@@ -136,11 +141,15 @@ pub fn take_slot() -> Option<usize> {
     let s = state()?;
     loop {
         let m = s.used.load(Acquire);
-        let free = (!m).trailing_zeros() as usize;
+        let free = if m == u64::MAX { 64 } else { (!m).trailing_zeros() as usize };
         if free >= NSLOT {
             return None;
         }
         if s.used.compare_exchange(m, m | (1 << free), AcqRel, Acquire).is_ok() {
+            let d = s.dirty[free].swap(0, AcqRel);
+            if d > 0 {
+                unsafe { core::ptr::write_bytes((s.base + free * SLOT) as *mut u8, 0, d) };
+            }
             return Some(free);
         }
     }
@@ -149,8 +158,19 @@ pub fn take_slot() -> Option<usize> {
 /// Give a slot back: its pages are dropped (they read zero when committed again).
 pub fn release_slot(slot: usize) {
     let Some(s) = state() else { return };
-    unsafe { sys::decommit(s.base + slot * SLOT, SLOT) };
+    let d = s.dirty[slot].load(Acquire);
+    if d > KEEP_COMMITTED {
+        unsafe { sys::decommit(s.base + slot * SLOT + KEEP_COMMITTED, SLOT - META - KEEP_COMMITTED) };
+        s.dirty[slot].store(KEEP_COMMITTED, Release);
+    }
     s.used.fetch_and(!(1u64 << slot), AcqRel);
+}
+
+/// Note how far slot `slot` was written (its taker zeroes that much on reuse).
+pub fn note_dirty(slot: usize, upto: usize) {
+    if let Some(s) = state() {
+        s.dirty[slot].fetch_max(upto, AcqRel);
+    }
 }
 
 /// Start of slot `slot`.
@@ -191,13 +211,17 @@ impl Rec {
 /// Make `r` this thread's recording.
 ///
 /// # Safety
-/// `r` stays alive and in place until [`end`].
-pub unsafe fn begin(r: *mut Rec) {
+/// `r` stays alive and in place until [`end_recording`].
+pub unsafe fn begin_recording(r: *mut Rec) {
     CUR.with(|c| c.set(r));
 }
 
-pub fn end() {
-    CUR.with(|c| c.set(core::ptr::null_mut()));
+pub fn end_recording() {
+    let r = CUR.with(|c| c.replace(core::ptr::null_mut()));
+    if !r.is_null() {
+        let r = unsafe { &*r };
+        note_dirty(r.slot, r.committed - r.lo);
+    }
 }
 
 /// Serve `l` from this thread's recording (null when the slot is full).

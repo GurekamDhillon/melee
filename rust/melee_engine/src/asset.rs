@@ -50,6 +50,8 @@ pub struct Plan {
     resolved: Option<i32>,
     blocks: Vec<(usize, usize, usize)>,
     fixes: Vec<Fix>,
+    /// For blocks of at least [`SPARSE_MIN`] bytes: (block, offset, length) of their non-zero 4 KB runs, in order.
+    sparse: Vec<(u32, u32, u32)>,
     out: u32,
     /// Live blocks the result does not reach (a lazily built global?): the slot is never given back.
     escaped: usize,
@@ -154,7 +156,7 @@ impl Plan {
 struct RecGuard;
 impl Drop for RecGuard {
     fn drop(&mut self) {
-        recheap::end();
+        recheap::end_recording();
     }
 }
 
@@ -176,7 +178,7 @@ pub fn prepare(file: &[u8], loading: i32) -> Option<Plan> {
     let outp;
     let resolved;
     {
-        unsafe { recheap::begin(&mut *rec) };
+        unsafe { recheap::begin_recording(&mut *rec) };
         let _g = RecGuard;
         let probe = Box::new(0u64);
         let ok = recheap::in_range(&*probe as *const u64 as *const u8);
@@ -261,6 +263,7 @@ pub fn prepare(file: &[u8], loading: i32) -> Option<Plan> {
         len,
         loading_in: loading,
         resolved,
+        sparse: sparse_runs(&blocks),
         blocks,
         fixes,
         out: remap[root],
@@ -271,27 +274,68 @@ pub fn prepare(file: &[u8], loading: i32) -> Option<Plan> {
     })
 }
 
+const SPARSE_MIN: usize = 64 << 10;
+
+fn sparse_runs(blocks: &[(usize, usize, usize)]) -> Vec<(u32, u32, u32)> {
+    let mut v = Vec::new();
+    for (k, &(at, size, _)) in blocks.iter().enumerate() {
+        if size < SPARSE_MIN {
+            continue;
+        }
+        let b = unsafe { core::slice::from_raw_parts(at as *const u8, size) };
+        let mut off = 0;
+        while off < size {
+            let end = (off + 4096).min(size);
+            if b[off..end].iter().any(|&x| x != 0) {
+                match v.last_mut() {
+                    Some((kk, o, n)) if *kk == k as u32 && (*o + *n) as usize == off => *n += (end - off) as u32,
+                    _ => v.push((k as u32, off as u32, (end - off) as u32)),
+                }
+            }
+            off = end;
+        }
+    }
+    v
+}
+
 /// Replay `p` into the game arena (game thread, inside the game scope): the `Decoded` for the file at `src`.
 ///
 /// # Safety
 /// `src` holds the same bytes the plan was prepared from (not yet relocated).
 pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
+    let t0 = std::time::Instant::now();
     let mut newp: Vec<usize> = {
         let _s = crate::arena::SysScope::enter();
         Vec::with_capacity(p.blocks.len())
     };
-    for &(at, size, align) in &p.blocks {
-        let l = Layout::from_size_align_unchecked(size, align);
-        // straight to the arena when the game scope is on (what the process allocator would do, minus its per-call
-        // diagnostics hooks); the process allocator otherwise
-        let mut q = if crate::arena::active() { crate::arena::alloc(l) } else { core::ptr::null_mut() };
-        if q.is_null() {
-            q = std::alloc::alloc(l);
+    // every block under one arena lock (same sequence as one alloc per block), then the copies
+    if !(crate::arena::active() && crate::arena::alloc_many(&p.blocks, &mut newp)) {
+        for &(_, size, align) in &p.blocks[newp.len()..] {
+            let q = std::alloc::alloc(Layout::from_size_align_unchecked(size, align));
+            assert!(!q.is_null(), "asset: apply out of memory ({size} bytes)");
+            newp.push(q as usize);
         }
-        assert!(!q.is_null(), "asset: apply out of memory ({size} bytes)");
-        core::ptr::copy_nonoverlapping(at as *const u8, q, size);
-        newp.push(q as usize);
     }
+    let mut sp = 0;
+    for (k, &(at, size, _)) in p.blocks.iter().enumerate() {
+        let zero_dst = newp[k] & 1 != 0;
+        newp[k] &= !1;
+        if zero_dst && size >= SPARSE_MIN {
+            // a known-zero destination needs only the source's non-zero pages (the decoder's whole-data shared
+            // tables are mostly zero: copying them all faulted in ~40 MB for ItCo)
+            while sp < p.sparse.len() && p.sparse[sp].0 < k as u32 {
+                sp += 1;
+            }
+            while sp < p.sparse.len() && p.sparse[sp].0 == k as u32 {
+                let (_, off, n) = p.sparse[sp];
+                core::ptr::copy_nonoverlapping((at + off as usize) as *const u8, (newp[k] + off as usize) as *mut u8, n as usize);
+                sp += 1;
+            }
+        } else {
+            core::ptr::copy_nonoverlapping(at as *const u8, newp[k] as *mut u8, size);
+        }
+    }
+    let ta = std::time::Instant::now();
     for f in &p.fixes {
         let v = match f.tgt {
             Tgt::Blk(k, d) => newp[k as usize] + d as usize,
@@ -300,12 +344,18 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
         };
         ((newp[f.blk as usize] + f.off as usize) as *mut usize).write_unaligned(v);
     }
+    APPLY_SPLIT.with(|c| c.set(((ta - t0).as_secs_f64() * 1e3, ta.elapsed().as_secs_f64() * 1e3)));
     let out = Box::from_raw(newp[p.out as usize] as *mut Decoded);
     {
         let _s = crate::arena::SysScope::enter();
         drop(newp);
     }
     out
+}
+
+thread_local! {
+    /// The last apply's (alloc + copy ms, fixups ms), for the log.
+    static APPLY_SPLIT: core::cell::Cell<(f64, f64)> = const { core::cell::Cell::new((0.0, 0.0)) };
 }
 
 // ---- the service: cache, worker, hints ----
@@ -325,6 +375,8 @@ struct Entry {
     plan: Option<Arc<Plan>>,
     /// Queued or being prepared.
     pending: bool,
+    /// The worker has taken it (a load waits only for a started one; a queued one is prepared on the spot instead).
+    started: bool,
     used: u64,
 }
 #[derive(Default)]
@@ -394,6 +446,11 @@ fn worker_main() {
             let mut g = s.m.lock().unwrap();
             loop {
                 if let Some(j) = g.jobs.pop_front() {
+                    if let Some(e) = g.entries.iter_mut().find(|e| e.pending && e.entry == j.entry) {
+                        e.started = true;
+                    } else {
+                        continue; // dropped meanwhile (its load came first)
+                    }
                     break j;
                 }
                 g = s.cv.wait(g).unwrap();
@@ -441,6 +498,11 @@ pub fn hint_entry(entry: i32, heap: i32) {
     if g.entries.iter().any(|e| e.entry == entry) {
         return;
     }
+    // a hint outranks a cached plan nobody asked for lately: make room (least recently used first)
+    while g.entries.len() >= KEEP || g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum::<usize>() + 8 * len > KEEP_BYTES {
+        let Some(old) = (0..g.entries.len()).filter(|&i| g.entries[i].plan.is_some()).min_by_key(|&i| g.entries[i].used) else { break };
+        g.entries.remove(old);
+    }
     let held: usize = g.entries.iter().filter_map(|e| e.plan.as_ref()).map(|p| p.bytes).sum();
     let busy = g.entries.len();
     if (largest != 0 && largest < len) || busy >= KEEP || held + 8 * len > KEEP_BYTES {
@@ -451,7 +513,10 @@ pub fn hint_entry(entry: i32, heap: i32) {
         return;
     }
     g.stats.hints += 1;
-    g.entries.push(Entry { entry, len, plan: None, pending: true, used: 0 });
+    // a hinted plan counts as just used: the eviction must not take the files the game is about to load first
+    g.clock += 1;
+    let now = g.clock;
+    g.entries.push(Entry { entry, len, plan: None, pending: true, started: false, used: now });
     g.jobs.push_back(Job { entry, src: Src::Disc(off, len), loading: -1 });
     drop(g);
     if log_on() {
@@ -483,7 +548,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
                 break hit;
             }
             // a hinted file of this length still being prepared: wait for it (a readiness miss, counted)
-            if g.entries.iter().any(|e| e.pending && e.len == len) {
+            if g.entries.iter().any(|e| e.pending && e.started && e.len == len) {
                 waited = true;
                 g = s.cv.wait(g).unwrap();
                 continue;
@@ -542,7 +607,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
     if let Some(e) = g.entries.iter_mut().find(|e| e.plan.as_ref().is_some_and(|p| Arc::ptr_eq(p, &plan))) {
         e.used = now;
     } else {
-        g.entries.push(Entry { entry: -1, len, plan: Some(plan.clone()), pending: false, used: now });
+        g.entries.push(Entry { entry: -1, len, plan: Some(plan.clone()), pending: false, started: false, used: now });
     }
     // keep the cache in budget (least recently used first; pending entries stay)
     loop {
@@ -557,10 +622,13 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
     if log_on() {
         let st = &g.stats;
         eprintln!(
-            "asset: load {} KB {how}: wait/prepare {:.2} ms, apply {:.2} ms ({} blocks, {} fixups, {} dead refs; prepared in {:.2} ms) [hints {} ahead {} hits {} waits {} inline {}]",
+            "asset: load {} KB {how}: wait/prepare {:.2} ms, apply {:.2} ms [alloc+copy {:.2} fixups {:.2}; {} KB of blocks] ({} blocks, {} fixups, {} dead refs; prepared in {:.2} ms) [hints {} ahead {} hits {} waits {} inline {}]",
             len >> 10,
             (t1 - t0).as_secs_f64() * 1e3,
             t1.elapsed().as_secs_f64() * 1e3,
+            APPLY_SPLIT.with(|c| c.get().0),
+            APPLY_SPLIT.with(|c| c.get().1),
+            (plan.bytes - plan.len) >> 10,
             plan.blocks.len(),
             plan.fixes.len(),
             plan.dead_refs,

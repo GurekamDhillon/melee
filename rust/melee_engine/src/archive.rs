@@ -79,6 +79,10 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
     let r = host_parse_timed(archive, src, file_size);
     PARSE_NS.fetch_add(t0.elapsed().as_nanos() as u64, core::sync::atomic::Ordering::Relaxed);
     PARSE_N.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+    if melee_core::frameprof::on() {
+        melee_core::frameprof::add(melee_core::frameprof::C::Parses, 1);
+        melee_core::frameprof::add(melee_core::frameprof::C::ParseNs, t0.elapsed().as_nanos() as u64);
+    }
     r
 }
 

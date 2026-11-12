@@ -351,6 +351,8 @@ struct App<G: Game> {
     stale: u64,
     /// YouGame bridge: the Tab press was taken as Shift+Tab, so its release is ours too.
     yg_tab: bool,
+    /// The profiler's last display line (frameprof::info only when it changes).
+    profile_line: String,
 }
 
 /// The `q` quantile of `v` (sorted in place).
@@ -466,6 +468,9 @@ impl<G: Game> App<G> {
             }
             let el = t.elapsed();
             self.tick_time += el;
+            if melee_core::frameprof::on() {
+                melee_core::frameprof::tick_done(el.as_nanos() as u64);
+            }
             if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
                 use std::io::Write;
                 let _ = writeln!(f, "T,{},{:.3},{:.3}", self.clock.ticks, (t - t0).as_secs_f64() * 1e3, el.as_secs_f64() * 1e3);
@@ -510,6 +515,9 @@ impl<G: Game> App<G> {
             self.interp = want;
             self.game.set_interp(want);
         }
+        if melee_core::frameprof::on() {
+            self.profile_pacing(fps);
+        }
         if self.show_fps {
             plog!("gw: fps: render {fps:.1} sim {tps:.1} tps (interp {}; sim {:.0} ms, render {:.0} ms of {:.0})", if self.interp { "on" } else { "off" }, sim_ms, ren_ms, dt * 1e3);
             let extra = self.game.status_line().map_or(String::new(), |x| format!(" - {x}"));
@@ -517,6 +525,28 @@ impl<G: Game> App<G> {
                 plog!("gw: status:{extra}");
             }
             w.set_title(&format!("{} - {fps:.0} fps / {tps:.1} tps{extra}", self.cfg.title));
+        }
+    }
+
+    /// The profiler's expected present interval (the cap, else the refresh with vsync, else the measured rate) and
+    /// the display facts for its report.
+    fn profile_pacing(&mut self, fps: f64) {
+        let exp = match self.cap_period() {
+            Some(p) => p.as_secs_f64() * 1e6,
+            None if self.vsync && self.refresh_hz >= 1.0 => 1e6 / self.refresh_hz,
+            None => 1e6 / fps.max(1.0),
+        };
+        melee_core::frameprof::set_pacing(exp as u64, self.interp);
+        let line = format!(
+            "{:.0} Hz refresh, vsync {}, fps cap {}, VRR {}, interpolation {} ({}), window {}x{}, fullscreen {:?}, expected frame interval {:.2} ms",
+            self.refresh_hz, if self.vsync { "on" } else { "off" }, if self.fps_cap > 0.0 { format!("{:.0}", self.fps_cap) } else { "none".into() },
+            match self.vrr { Some(true) => "detected", Some(false) => "no", None => "probing" }, if self.interp { "on" } else { "off" },
+            match self.interp_env { None => "auto", Some(true) => "forced on", Some(false) => "forced off" },
+            self.window.as_ref().map_or(0, |w| w.inner_size().width), self.window.as_ref().map_or(0, |w| w.inner_size().height), self.fullscreen, exp / 1e3
+        );
+        if line != self.profile_line {
+            melee_core::frameprof::info("pacing", &line);
+            self.profile_line = line;
         }
     }
 
@@ -638,8 +668,18 @@ impl<G: Game> ApplicationHandler for App<G> {
     fn window_event(&mut self, el: &ActiveEventLoop, _id: WindowId, ev: WindowEvent) {
         match ev {
             WindowEvent::CloseRequested => el.exit(),
-            WindowEvent::Resized(sz) => self.game.resized(sz.width, sz.height),
+            WindowEvent::Resized(sz) => {
+                if melee_core::frameprof::on() {
+                    profile_window(melee_core::frameprof::Text::new().s("resize ").n(sz.width as i64).s("x").n(sz.height as i64));
+                }
+                self.game.resized(sz.width, sz.height)
+            }
+            WindowEvent::Occluded(o) if melee_core::frameprof::on() => profile_window(melee_core::frameprof::Text::new().s(if o { "window hidden (occluded)" } else { "window visible again" })),
+            WindowEvent::Moved(_) if melee_core::frameprof::on() => profile_window(melee_core::frameprof::Text::new().s("window moved")),
             WindowEvent::Focused(f) => {
+                if melee_core::frameprof::on() {
+                    profile_window(melee_core::frameprof::Text::new().s(if f { "focus gained" } else { "focus lost" }));
+                }
                 if f {
                     self.focus_lost_at = None;
                     self.pads.focused = true;
@@ -676,6 +716,9 @@ impl<G: Game> ApplicationHandler for App<G> {
                                 w.set_fullscreen(winit_fullscreen(w, next));
                                 self.fullscreen = next;
                                 plog!("gw: video: Alt+Enter -> fullscreen {next:?}");
+                                if melee_core::frameprof::on() {
+                                    profile_window(melee_core::frameprof::Text::new().s("Alt+Enter: fullscreen switch"));
+                                }
                             }
                         }
                         return;
@@ -750,6 +793,9 @@ impl<G: Game> ApplicationHandler for App<G> {
                         }
                         self.last_frame = Some(now);
                     }
+                    if melee_core::frameprof::on() {
+                        melee_core::frameprof::end_frame();
+                    }
                     self.frames += 1;
                     self.fps_frames += 1;
                     self.fps_tick(&w);
@@ -790,7 +836,7 @@ impl<G: Game> ApplicationHandler for App<G> {
                 self.window.as_ref().unwrap().request_redraw();
             } else {
                 let tick_due = self.last.map_or(target, |l| l + self.clock.until_next());
-                sleep_until(target.min(tick_due));
+                melee_core::frameprof::time(melee_core::frameprof::C::SleepNs, || sleep_until(target.min(tick_due)));
             }
             el.set_control_flow(ControlFlow::Poll);
             return;
@@ -806,6 +852,12 @@ impl<G: Game> ApplicationHandler for App<G> {
             el.set_control_flow(ControlFlow::WaitUntil(Instant::now() + self.clock.until_next()));
         }
     }
+}
+
+/// A window event for the profiler.
+fn profile_window(t: melee_core::frameprof::Text) {
+    melee_core::frameprof::add(melee_core::frameprof::C::WindowEvents, 1);
+    melee_core::frameprof::event(melee_core::frameprof::Kind::Window, t, 0, 0);
 }
 
 /// The YouGame player box (YOUGAME_EMBED=1): the class and caption the app's launcher finds the window by, no frame,
@@ -894,6 +946,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         vrr_votes: (None, 0),
         stale: 0,
         yg_tab: false,
+        profile_line: String::new(),
     };
     if let Some(f) = app.trace.as_mut() {
         use std::io::Write;
@@ -905,6 +958,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         app.game.set_interp(true);
     }
     el.run_app(&mut app)?;
+    melee_core::frameprof::finish();
     if let Some(f) = app.trace.as_mut() {
         use std::io::Write;
         let _ = f.flush();

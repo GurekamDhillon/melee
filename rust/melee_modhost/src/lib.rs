@@ -205,6 +205,8 @@ pub struct LoadedMod {
     pub disabled: bool,
     pub features: u32,
     hooks: Vec<Hook>,
+    /// The frame profiler's slot for this mod's time (melee_core::frameprof).
+    prof: u8,
 }
 
 #[derive(Clone, Copy)]
@@ -972,7 +974,8 @@ impl Host {
             }
             hooks.push(Hook { addr, mode, priority: prio, index: i as u32, func });
         }
-        self.mods.push(LoadedMod { id, name, version, digest: fnv64(bytes), disabled: false, features, hooks });
+        let prof = if melee_core::frameprof::on() { melee_core::frameprof::mod_slot(&id) } else { 0 };
+        self.mods.push(LoadedMod { id, name, version, digest: fnv64(bytes), disabled: false, features, hooks, prof });
         self.store.data_mut().features.push(features);
         self.rebuild();
         // an optional `gd_mod_loaded() -> ()` export runs once now (setup a mod wants before the first match, e.g.
@@ -1046,7 +1049,11 @@ unsafe fn call_hook(host: *mut Host, e: Entry, args: &[Val], nres: usize) -> Opt
     c.data_mut().cur_module = e.module;
     c.set_fuel(HOOK_FUEL).ok()?;
     let mut out = [Val::I32(0)];
+    let prof = melee_core::frameprof::on().then(std::time::Instant::now);
     let r = e.func.call(&mut c, args, &mut out[..nres]);
+    if let Some(t) = prof {
+        melee_core::frameprof::mod_ns((&(*host).mods)[e.module].prof, t.elapsed().as_nanos() as u64);
+    }
     let mut c = ctx(host);
     c.data_mut().cur_module = prev;
     let id = (&(*host).mods)[e.module].id.clone();

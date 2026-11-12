@@ -100,7 +100,18 @@ pub fn host_dev_com_request(file: i32, src: usize, dst: usize, size: usize, ty: 
     }
     let flen = h.disc.entry_len(file).unwrap_or_else(|| panic!("host_dev_com_request: entry {file} is not a file")) as usize;
     let want = size.min(flen.saturating_sub(src));
+    let prof = melee_core::frameprof::on().then(std::time::Instant::now);
     let bytes = h.disc.read_entry(file, src as u32, want).unwrap_or_else(|e| panic!("host_dev_com_request: {e}"));
+    if let Some(t) = prof {
+        use melee_core::frameprof as fp;
+        let ns = t.elapsed().as_nanos() as u64;
+        fp::add(fp::C::Files, 1);
+        fp::add(fp::C::FileBytes, bytes.len() as u64);
+        fp::add(fp::C::FileNs, ns);
+        let n = h.disc.entry_name(file);
+        let t = fp::Text::new().s("load ").b(if n.is_empty() { b"(mod file)" } else { n }).s(" ").n((bytes.len() / 1024) as i64).s(" KB");
+        fp::event(fp::Kind::File, t, (ns / 1000) as u32, bytes.len() as u64);
+    }
     // lbFile picks the type by `dst >= 0x80000000` (a GC main-RAM address). A native pointer never is, so a
     // destination inside the host's RAM block is main RAM whatever the type says; anything else is an ARAM offset.
     let in_ram = dst >= h.os.mem.base as usize && dst < h.os.mem.end_ptr() as usize;

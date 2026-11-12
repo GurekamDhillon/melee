@@ -307,6 +307,8 @@ pub struct PresMod {
     event: Option<TypedFunc<(u32, i32, i32), ()>>,
     enter: Option<TypedFunc<u32, ()>>,
     leave: Option<TypedFunc<u32, ()>>,
+    /// The frame profiler's slot for this mod's time (melee_core::frameprof).
+    prof: u8,
 }
 
 /// Timing of the presents (ns), a fixed ring: p50 / p99 for the stats line and the bench.
@@ -1319,6 +1321,7 @@ impl PresHost {
             sh.dirs.push(pkg_dir);
             sh.features.push(features);
         }
+        let prof = if melee_core::frameprof::on() { melee_core::frameprof::mod_slot(&id) } else { 0 };
         let pm = PresMod {
             id,
             name,
@@ -1329,6 +1332,7 @@ impl PresHost {
             event: inst.get_typed_func(&store, "gd_ui_event").ok(),
             enter: inst.get_typed_func(&store, "gd_ui_scene_enter").ok(),
             leave: inst.get_typed_func(&store, "gd_ui_scene_leave").ok(),
+            prof,
             store,
         };
         let init: Option<TypedFunc<(), i32>> = inst.get_typed_func(&pm.store, "gd_ui_init").ok();
@@ -1351,7 +1355,12 @@ impl PresHost {
             return None;
         }
         let _ = m.store.set_fuel(UI_FUEL);
-        match f(&mut m.store) {
+        let prof = melee_core::frameprof::on().then(std::time::Instant::now);
+        let r = f(&mut m.store);
+        if let Some(t) = prof {
+            melee_core::frameprof::mod_ns(m.prof, t.elapsed().as_nanos() as u64);
+        }
+        match r {
             Ok(r) => Some(r),
             Err(e) => {
                 eprintln!("modhost: ui: {}: trapped ({e}); its presentation instance is disabled, captures released, scenes popped", m.id);

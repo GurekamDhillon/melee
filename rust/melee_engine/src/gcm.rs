@@ -106,6 +106,15 @@ impl Gcm {
         &names[no..no + end]
     }
 
+    /// The game's own name of disc entry `e` (the file name in the disc's table, no folder), for diagnostics; an
+    /// entry past the table (an overlay file) or a folder reads as empty.
+    pub fn entry_name(&self, e: i32) -> &[u8] {
+        match usize::try_from(e) {
+            Ok(i) if i >= 1 && i < self.count() && !self.is_dir(i) => self.name(i),
+            _ => b"",
+        }
+    }
+
     fn is_dir(&self, i: usize) -> bool {
         self.fst[i * 12] != 0
     }

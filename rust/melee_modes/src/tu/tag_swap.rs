@@ -90,6 +90,7 @@ pub static mut QUICK_PAUSE: u8 = 0;
 /// - another swap or a freeze (a stage shift, a hold) running.
 /// Outside the window: today's list plus jump squat, landing and shield (the study's "free to act").
 pub unsafe fn quick(slot: i32, any: bool, pause: i32) -> i32 {
+    melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("quick tag asked, slot ").n(slot as i64));
     if TRANSITION.phase != PHASE_IDLE || PENDING_SWAP >= 0 || PENDING_RELEASE != 0 || assist_busy(slot) {
         return TAG_BUSY;
     }
@@ -198,6 +199,7 @@ pub unsafe fn begin_ex(slot: i32, len: i32, air: bool) -> i32 {
 /// The kind-neutral freeze (also meant for the stage switch, port/stagesw: kind 2, from / to = ground kinds, its
 /// change applied at the release): freeze the procs from the next logic frame on and fill the record.
 pub unsafe fn freeze_begin(kind: u8, slot: i32, len: i32, from: i32, to: i32) {
+    melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("freeze kind ").n(kind as i64).s(" slot ").n(slot as i64).s(" len ").n(len as i64));
     TRANSITION.phase = PHASE_FREEZE;
     TRANSITION.kind = kind;
     TRANSITION.slot = slot as i8;
@@ -211,6 +213,7 @@ pub unsafe fn freeze_begin(kind: u8, slot: i32, len: i32, from: i32, to: i32) {
 
 /// Queue the swap + release (`skip` != 0: the player skipped the cinematic). Applied by `apply_pending`.
 pub unsafe fn request_swap(skip: bool) -> i32 {
+    melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("tag swap"));
     if TRANSITION.phase != PHASE_FREEZE {
         return TAG_BUSY;
     }
@@ -482,6 +485,7 @@ pub unsafe fn assist_busy(slot: i32) -> bool {
 }
 
 unsafe fn assist_sleep(slot: i32) {
+    let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Fighter, || melee_core::frameprof::Text::new().s("Assist Strike: partner sleeps, slot ").n(slot as i64));
     let s = slot as usize;
     let g = entity(slot, 1);
     if !fighter(g).is_null() && (*fighter(g)).is_sleeping() == 0 {
@@ -493,6 +497,7 @@ unsafe fn assist_sleep(slot: i32) {
 
 /// Wake the partner beside the main and enter the move (between logic frames, as the swap).
 unsafe fn assist_start(slot: i32, mv: i32) {
+    let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Fighter, || melee_core::frameprof::Text::new().s("Assist Strike: partner wakes, slot ").n(slot as i64).s(" move ").n(mv as i64));
     use melee_fighter::tu as ft;
     let s = slot as usize;
     let main_g = entity(slot, 0);

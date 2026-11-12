@@ -39,6 +39,7 @@ mod hang;
 mod launcher_compat;
 mod display;
 mod prof;
+mod profile;
 mod heapprof;
 mod disc;
 mod cfg;
@@ -279,6 +280,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
             big_alloc_trace(l.size());
             let p = melee_engine::arena::alloc(l);
             if !p.is_null() {
+                if melee_core::frameprof::on() {
+                    melee_core::frameprof::alloc(l.size(), true);
+                }
                 return p;
             }
             melee_engine::arena::note_miss(l);
@@ -288,6 +292,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
             return guard::alloc(l.size(), l.align());
         }
         sys_add(l.size() as isize);
+        if melee_core::frameprof::on() {
+            melee_core::frameprof::alloc(l.size(), false);
+        }
         std::alloc::System.alloc(l)
     }
     unsafe fn dealloc(&self, p: *mut u8, l: std::alloc::Layout) {
@@ -449,6 +456,7 @@ fn arena_misuse(what: &str, p: usize, n: usize) {
 }
 fn main() -> ExitCode {
     let code = main_inner();
+    melee_core::frameprof::finish(); // the profiler's last report (a no-op unless MELEE_PROFILE started it)
     // YouGame: the last saves go up before the process (and with it the bridge) ends.
     melee_platform::yougame_saves::finish(std::time::Duration::from_secs(3));
     code

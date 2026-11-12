@@ -187,6 +187,10 @@ impl Presenter {
         surface.configure(&renderer.device, &config);
         let ai = renderer.adapter.get_info();
         crate::plog!("gw: video: present mode {:?}, frame latency {}, {:?} on {}", config.present_mode, config.desired_maximum_frame_latency, ai.backend, ai.name);
+        if melee_core::frameprof::on() {
+            melee_core::frameprof::info("gpu", &format!("{} ({:?}, driver {})", ai.name, ai.backend, ai.driver_info));
+            melee_core::frameprof::info("swapchain", &format!("present mode {:?}, frame latency {}, {}x{}, render scale {}, MSAA {}x", config.present_mode, config.desired_maximum_frame_latency, config.width, config.height, renderer.scale, renderer.samples));
+        }
         Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, pending_fx: None, pending_cut: false, arrive_gap: 1, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None, shot: false, last: [0; 3], last_fresh: false, adopt_us: 0, drop_us: 0, offthread_drop: None, dropper: None, modes: caps.present_modes.clone(), last_present: None, interval_ms: 16.7, split: std::env::var("MELEE_PRESENT_SPLIT").map_or(true, |v| !matches!(v.trim(), "0" | "off" | "false" | "no")), deferred: 0, fresh: 0, undrawn: false })
     }
 
@@ -250,6 +254,9 @@ impl Presenter {
         self.renderer.pin(&cur.draws);
         self.last[0] = t0.elapsed().as_micros() as u32;
         self.times[0].push(self.last[0]);
+        if melee_core::frameprof::on() {
+            melee_core::frameprof::add(melee_core::frameprof::C::PrepareNs, t0.elapsed().as_nanos() as u64);
+        }
         self.prepared = true;
     }
 
@@ -382,6 +389,9 @@ impl Presenter {
                     let te = std::time::Instant::now();
                     self.solver.evaluate(prev, cur, t.unwrap());
                     self.interp_us[0].push(te.elapsed().as_micros() as u32);
+                    if melee_core::frameprof::on() {
+                        melee_core::frameprof::add(melee_core::frameprof::C::InterpNs, te.elapsed().as_nanos() as u64);
+                    }
                 }
                 // the fx world layer follows the same phase and the same camera
                 self.renderer.fx_phase = if moving {
@@ -404,6 +414,9 @@ impl Presenter {
             self.interp_total.add(&s);
             self.last[1] = t0.elapsed().as_micros() as u32;
             self.times[1].push(self.last[1]);
+            if melee_core::frameprof::on() {
+                melee_core::frameprof::add(melee_core::frameprof::C::DrawNs, t0.elapsed().as_nanos() as u64);
+            }
         }
         self.last_fresh = fresh;
         let t0 = std::time::Instant::now();
@@ -478,6 +491,7 @@ impl Presenter {
     }
 
     fn swap_present(&mut self) {
+        let prof = melee_core::frameprof::on().then(std::time::Instant::now);
         let tex = match self.surface.get_current_texture() {
             Ok(t) => t,
             Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
@@ -495,12 +509,22 @@ impl Presenter {
                 return;
             }
         };
+        let acquired = prof.map(|t| {
+            melee_core::frameprof::add(melee_core::frameprof::C::AcquireNs, t.elapsed().as_nanos() as u64);
+            std::time::Instant::now()
+        });
         let view = tex.texture.create_view(&Default::default());
         self.renderer.blit_to(&view, self.config.format, self.config.width, self.config.height);
-        let hud = self.hud.as_ref().map_or(Vec::new(), |l| crate::overlay::layout(l, self.config.width, self.config.height));
+        let mut hud = self.hud.as_ref().map_or(Vec::new(), |l| crate::overlay::layout(l, self.config.width, self.config.height));
+        if melee_core::frameprof::overlay_on() {
+            crate::overlay::profile_readout(&mut hud, self.config.width, self.config.height);
+        }
         self.renderer.overlay_to(&view, self.config.format, self.config.width, self.config.height, &hud);
         tex.present();
         self.presented += 1;
+        if let Some(t) = acquired {
+            melee_core::frameprof::add(melee_core::frameprof::C::PresentNs, t.elapsed().as_nanos() as u64);
+        }
     }
 
     /// DXGI's frame statistics of the swapchain (D3D12 backend only): frames shown (PresentCount), refreshes

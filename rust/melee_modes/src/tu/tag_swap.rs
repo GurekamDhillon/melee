@@ -481,6 +481,16 @@ pub unsafe fn assist_busy(slot: i32) -> bool {
     (0..4).contains(&slot) && (ASSIST[slot as usize].running != 0 || ASSIST[slot as usize].queued != 0)
 }
 
+/// End every Assist Strike running or queued (an Envoy stage switch: the partner goes back to the bench rather than
+/// being placed on the new stage mid-move).
+pub unsafe fn assist_end_all() {
+    for slot in 0..4 {
+        if assist_busy(slot) {
+            assist_sleep(slot);
+        }
+    }
+}
+
 unsafe fn assist_sleep(slot: i32) {
     let s = slot as usize;
     let g = entity(slot, 1);

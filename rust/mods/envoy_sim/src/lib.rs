@@ -127,6 +127,12 @@ const STAGE_GAP: i32 = 1200;
 const STAGE_MAX: i32 = 1;
 const SHIFT_COINS: i32 = 10;
 const SHIFT_CAP: i32 = 2;
+/// The torture knob's switch spacing (live frames); the window after a switch in which a fighter entering a KO, or
+/// a stock lost, is reported as caused by it ("envoy: KO right after a stage switch"); the frame after a switch at
+/// which every fighter's place is logged (it has landed by then).
+const TORTURE_GAP: i32 = 240;
+const SWITCH_KO_WINDOW: i32 = 120;
+const SWITCH_CHECK: i32 = 45;
 const REWARD_TIME: i32 = 1200;
 /// The shop's timer (it leaves on its own at 0).
 const SHOP_TIME: i32 = 1800;
@@ -514,6 +520,14 @@ struct St {
     auto_hold: [i32; NP],
     strikes: i32,
     test_buy: i32,
+    /// Test knob `torture`: a stage switch every TORTURE_GAP live frames through every stage pair, no caps (the
+    /// switch-safety check, tools/rust-port/envoy/switch_torture.sh).
+    test_torture: i32,
+    /// Each slot's motion at the last switch (+1; 0: not in play) and whether a KO after it was reported.
+    sw_as: [i32; 4],
+    sw_ko: [i32; 4],
+    /// Whether the slot was hit or grabbed since the last switch.
+    sw_hit: [i32; 4],
 }
 
 /// The 64-bit half of the state (Heat and charge in ticks, the purse, the pips): i64 words only.
@@ -963,6 +977,10 @@ unsafe fn test_drives() {
                 }
                 if item == "protect" {
                     S.test_protect = 1;
+                    continue;
+                }
+                if item == "torture" {
+                    S.test_torture = 1;
                     continue;
                 }
                 if item == "buystock" {
@@ -3264,6 +3282,9 @@ unsafe fn moments_frame() {
         let n = if (0..nh() + ncpu()).contains(&s) { gd_player_stocks(s).max(0) } else { 0 };
         let i = s as usize;
         if n < S.stocks_each[i] {
+            if S.stage_switches > 0 && S.stage_clock < SWITCH_KO_WINDOW && S.sw_hit[i] == 0 {
+                log(b"envoy: stock lost soon after a stage switch (see the KO lines), slot*10000 + frames since\0", s * 10000 + S.stage_clock);
+            }
             if is_foe(s) && s != S.boss_slot {
                 foe_ko(s, n == 0);
                 // rooms: a foe out of stocks while the room has another wave is parked for it (stocks set back now,
@@ -3985,22 +4006,31 @@ unsafe fn stage_frame() {
         return;
     }
     S.stage_clock = S.stage_clock.saturating_add(1);
+    if S.stage_switches > 0 && S.stage_clock <= SWITCH_KO_WINDOW {
+        switch_watch();
+    }
+    if S.test_torture != 0 && S.stage_want == 0 && S.play >= TORTURE_GAP && S.stage_clock >= TORTURE_GAP {
+        S.stage_want = SH_WAVE;
+    }
     if S.stage_want == 0 {
         return;
     }
-    let cap = if shifting() { SHIFT_CAP } else { STAGE_MAX };
+    let cap = if S.test_torture != 0 { i32::MAX } else if shifting() { SHIFT_CAP } else { STAGE_MAX };
     if S.outcome != 0 || S.collect != 0 || S.stage_off != 0 || S.stage_switches >= cap {
         S.stage_want = 0;
         return;
     }
-    if S.reward_due != 0 || S.rw_active != 0 || S.play < STAGE_GRACE || S.stage_want != SH_WAVE && S.stage_switches > 0 && S.stage_clock < STAGE_GAP {
+    if S.reward_due != 0 || S.rw_active != 0 || S.test_torture == 0 && S.play < STAGE_GRACE || S.stage_want != SH_WAVE && S.stage_switches > 0 && S.stage_clock < STAGE_GAP {
         return;
     }
     let cur = gd_stage_grkind();
+    // the torture knob walks every ordered stage pair (a step of 1, 2, 3, 4 along the list, five switches each)
+    let step = if S.test_torture != 0 { 1 + (S.stage_switches / STAGES.len() as i32) as usize % (STAGES.len() - 1) } else { 1 };
     let next = match STAGES.iter().position(|&k| k == cur) {
-        Some(i) => STAGES[(i + 1) % STAGES.len()],
+        Some(i) => STAGES[(i + step) % STAGES.len()],
         None => STAGES[0],
     };
+    switch_snapshot(b"torture at switch\0");
     let rc = gd_stage_transition(next, STAGE_LEN);
     if rc == -9 {
         return; // busy: try again next frame
@@ -4027,6 +4057,68 @@ unsafe fn stage_frame() {
             ev(EV_COINS, p as i32, SHIFT_COINS);
         }
         log(b"envoy: shifting road pays, coins ", SHIFT_COINS);
+    }
+}
+
+/// `envoy: <what> s<slot> <field>` (value: as given): the switch-safety check's per-fighter lines.
+fn log_slot(what: &[u8], slot: i32, field: &[u8], v: i32) {
+    let mut b = [0u8; 80];
+    let mut n = 0;
+    let digit = [b's', b'0' + slot as u8, b' '];
+    for &x in b"envoy: ".iter().chain(what.iter().filter(|&&c| c != 0)).chain(b" ".iter()).chain(digit.iter()).chain(field.iter()) {
+        if n < b.len() - 1 {
+            b[n] = x;
+            n += 1;
+        }
+    }
+    unsafe { gd_log(b.as_ptr(), v) }
+}
+
+/// Every fighter in play: motion, x and y (x10). At a switch it also records the motions for switch_watch.
+unsafe fn switch_snapshot(what: &[u8]) {
+    let at_switch = what.starts_with(b"torture at");
+    for s in 0..4 {
+        let h = if gd_player_present(s) != 0 { gd_fighter_from_slot(s) } else { 0 };
+        if at_switch {
+            S.sw_as[s as usize] = if h != 0 { gd_fighter_get_action_state(h) + 1 } else { 0 };
+            S.sw_ko[s as usize] = 0;
+            S.sw_hit[s as usize] = 0;
+        }
+        if h == 0 || S.test_torture == 0 {
+            continue;
+        }
+        log_slot(what, s, b"motion", gd_fighter_get_action_state(h));
+        log_slot(what, s, b"x10", (gd_fighter_get_pos_x(h) * 10.0) as i32);
+        log_slot(what, s, b"y10", (gd_fighter_get_pos_y(h) * 10.0) as i32);
+    }
+}
+
+/// The frames after a switch: a fighter that was not already in a KO at the switch entering one (motion 0-10) is a
+/// KO the switch caused; the torture knob also logs everyone's place at SWITCH_CHECK.
+unsafe fn switch_watch() {
+    for s in 0..4 {
+        let i = s as usize;
+        let h = if gd_player_present(s) != 0 { gd_fighter_from_slot(s) } else { 0 };
+        if h == 0 || S.sw_ko[i] != 0 {
+            continue;
+        }
+        let m = gd_fighter_get_action_state(h);
+        let was = S.sw_as[i] - 1;
+        // hitstun, tumble, grabbed / thrown: a KO after that is the fight's, not the switch's
+        if (75..=91).contains(&m) || (156..=157).contains(&m) || (223..=251).contains(&m) {
+            S.sw_hit[i] = 1;
+        }
+        if (0..=10).contains(&m) && was > 13 {
+            S.sw_ko[i] = 1;
+            if S.sw_hit[i] != 0 {
+                log(b"envoy: combat KO after a stage switch (hit first), slot*10000 + frames since\0", s * 10000 + S.stage_clock);
+            } else {
+                log(b"envoy: KO right after a stage switch, slot*10000 + frames since\0", s * 10000 + S.stage_clock);
+            }
+        }
+    }
+    if S.stage_clock == SWITCH_CHECK {
+        switch_snapshot(b"torture after switch\0");
     }
 }
 

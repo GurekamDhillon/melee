@@ -1,0 +1,21 @@
+# options_rumble_on: boot -> title -> main menu -> Down x3 (Options) -> A -> A (Rumble) -> A (switch P1 rumble on,
+# which queues mnVibration_804D4FF0) -> idle. Regression for the rumble-list byte-order hang (port/rumblehang).
+300 0000 0 0
+3 1000 0 0
+200 0000 0 0
+3 1000 0 0
+60 0000 0 0
+3 0004 0 0
+20 0000 0 0
+3 0004 0 0
+20 0000 0 0
+3 0004 0 0
+60 0000 0 0
+3 0100 0 0
+80 0000 0 0
+3 0100 0 0
+80 0000 0 0
+3 0100 0 0
+60 0000 0 0
+3 0100 0 0
+200 0000 0 0

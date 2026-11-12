@@ -112,13 +112,13 @@ pub fn armed() -> i32 {
 }
 /// A rewritten fight has started since the run was armed: the camp replaces the VS CSS (the results land in it).
 pub static mut CAMP_DUE: i32 = 0;
-/// The 1-P menu's extra Envoy row exists (a presentation mod registered the camp scene with `gd_ui_envoy_door`).
+/// The main menu's extra Envoy row exists (a presentation mod registered the camp scene with `gd_ui_envoy_door`).
 pub static mut DOOR_ON: i32 = 0;
 #[allow(non_snake_case)]
 pub fn DOOR_ON_now() -> bool {
     unsafe { DOOR_ON != 0 }
 }
-/// The 1-P menu cursor is on the Envoy row (below the retail rows).
+/// The main menu cursor is on the Envoy row (below the retail rows).
 pub static mut DOOR_HOVER: i32 = 0;
 /// Envoy Quick Tag: the tag button (the camp's switch, `gd_ui_envoy_set_tag_button`; MELEE_ENVOY_TAG_BUTTON=y|x|dpad
 /// sets the start value): Y (default), X, or D-pad down with the classic cinematic tag.
@@ -205,7 +205,7 @@ pub unsafe fn session_continue() -> bool {
     armed() != 0 && VIEW[0] == 0x454E_5633 && VIEW[1] == 1 && (VIEW[760] == 1 || VIEW[766] == 1)
 }
 
-/// The 1-P menu's input with the Envoy row (mnmain `mn_8022D7F4`, after the retail read): what the retail code must
+/// The main menu's input with the Envoy row (mnmain `mn_8022D7F4`, after the retail read): what the retail code must
 /// do. `at_last`: the retail cursor is on the last unlocked row.
 /// The main menu's Envoy row was chosen with the Brawl files missing: presents left of the "needs your Brawl disc"
 /// message the mod draws (the camp never loads).

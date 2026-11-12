@@ -229,7 +229,10 @@ static mut mnVibration_PortPanelJointIds: [u16; 4] = [
     0x14 as i32 as u16,
     0x13 as i32 as u16,
 ];
-pub static mut mnVibration_804D4FF0: i32 = 0x20010000;
+/// The rumble command list `s32 0x20010000` of the C file (rumble 1 frame, then end). `RumbleCommand` is read in
+/// GameCube byte order, so the list is stored as its big-endian bytes; a host-endian i32 reads as op 0 first
+/// (loop to head) and HSD_PadRumbleInterpret1 spins forever when rumble is switched on in Options.
+pub static mut mnVibration_804D4FF0: [u8; 4] = 0x20010000u32.to_be_bytes();
 pub static mut mnVibration_804D4FF4: [c_char; 7] = unsafe {
     core::mem::transmute::<[u8; 7], [c_char; 7]>(*b"jobj.h\0")
 };

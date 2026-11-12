@@ -1128,6 +1128,7 @@ pub fn fighter_proc_fns() -> [(usize, &'static str); 15] {
 
 /// `Fighter_Create`: allocate, load and register a fighter GObj with its 15 procs.
 pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
+    let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Fighter, || melee_core::frameprof::Text::new().s("fighter create kind ").n(input.internal_id as i64).s(" slot ").n(input.slot as i64));
     melee_core::ct!("Fighter_Create");
     ext::Geno_AnimBankBeforeSpawn();
     let g = ext::GObj_Create(HSD_GOBJ_CLASS_FIGHTER as u16, 8, 0);

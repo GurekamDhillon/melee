@@ -689,14 +689,23 @@ impl RetailPlay {
             }
             u.input(&mut four, &pres_frame);
         }
+        if melee_core::frameprof::on() {
+            melee_core::frameprof::test_tick(self.tick_no as u64);
+        }
         let t_step = std::time::Instant::now();
         let entered = self.step(four);
+        if melee_core::frameprof::on() {
+            self.profile_test_stage();
+        }
         self.session_exit();
         if let Some(pr) = self.practice.as_mut() {
             let _h = SysHeap::enter();
             pr.observe();
         }
         let t_step = t_step.elapsed();
+        if melee_core::frameprof::on() {
+            melee_core::frameprof::add(melee_core::frameprof::C::EngineNs, t_step.as_nanos() as u64);
+        }
         if self.quit {
             self.on_quit();
             return;
@@ -713,10 +722,14 @@ impl RetailPlay {
             let _s = self.rollback_mode.then(melee_engine::arena::GameScope::enter);
             let t = std::time::Instant::now();
             au.tick();
+            if melee_core::frameprof::on() {
+                melee_core::frameprof::set_audio_underruns(au.underruns() as u64);
+            }
             if std::env::var_os("MELEE_BOOT_TIMES").is_some() && (t_step + t.elapsed()).as_millis() >= 20 {
                 log(&format!("slow tick {}: step {:.1} ms, audio {:.1} ms", self.tick_no, t_step.as_secs_f64() * 1e3, t.elapsed().as_secs_f64() * 1e3));
             }
         }
+        let _cap = melee_core::frameprof::on().then(std::time::Instant::now);
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             // a frame no present showed (several ticks ran first): its EFB copies still have to happen
             if let (Some(old), Some(p)) = (self.frame.take(), self.presenter.as_mut()) {
@@ -737,6 +750,9 @@ impl RetailPlay {
             }
             // the view the frame was drawn for (its cameras' projection and the target shape must agree)
             self.frame_aspect = melee_engine::view::aspect();
+        }
+        if let Some(t) = _cap {
+            melee_core::frameprof::add(melee_core::frameprof::C::CaptureNs, t.elapsed().as_nanos() as u64);
         }
         // gd-ui-v1 present (A3 order: events, gd_ui_frame, node trees), after the logic frame
         match (self.ui.as_mut(), self.settings.as_mut()) {
@@ -799,6 +815,13 @@ impl RetailPlay {
         self.age += 1;
         let Some(e) = self.engine() else { return };
         let now = e.mode_scene();
+        if melee_core::frameprof::on() {
+            use melee_core::frameprof as fp;
+            if entered || now != self.cur {
+                fp::event(fp::Kind::Scene, fp::Text::new().s("scene ").s(scene_name(now.1)).s(" (mode ").n(now.0 as i64).s(")"), 0, (now.0 as u64) << 8 | now.1 as u64);
+            }
+            fp::set_scene(now.0, now.1, self.tick_no as u64);
+        }
         if now.1 == 1 && std::env::var_os("MELEE_MENU_LOG").is_some() {
             // the main menu's cursor (mn_804A04F0): which list and entry a scripted run is on
             let m = unsafe { (melee_modes::tu::mnmain::mn_804A04F0.cur_menu, melee_modes::tu::mnmain::mn_804A04F0.hovered_selection) };
@@ -1209,6 +1232,21 @@ impl RetailPlay {
 }
 
 impl RetailPlay {
+    /// Profiler test knob `MELEE_PROFILE_TEST_STAGE=<tick>:<ground kind>`: switch the stage once at that tick (in a
+    /// match), between logic frames as the mod host does. It changes the game (a test of the report only).
+    fn profile_test_stage(&mut self) {
+        static AT: std::sync::OnceLock<Option<(u64, i32)>> = std::sync::OnceLock::new();
+        let Some((at, kind)) = *AT.get_or_init(|| {
+            let v = std::env::var("MELEE_PROFILE_TEST_STAGE").ok()?;
+            let (a, b) = v.split_once(':')?;
+            Some((a.trim().parse().ok()?, b.trim().parse().ok()?))
+        }) else { return };
+        if self.tick_no + 1 == at {
+            let rc = unsafe { melee_modes::tu::stage_hop::switch_to(kind) };
+            log(&format!("profile test: stage switch to ground kind {kind} at tick {at}: rc {rc}"));
+        }
+    }
+
     fn present_inner(&mut self, window: &Arc<Window>, alpha: f64) {
         if self.presenter.is_none() {
             match Presenter::new(window.clone()) {
@@ -1273,6 +1311,9 @@ impl RetailPlay {
             let t = std::time::Instant::now();
             u.with_frame(|f, a| p.renderer.set_ui(Some(f), a));
             u.stages[5].push(t.elapsed().as_nanos().min(u32::MAX as u128) as u32);
+            if melee_core::frameprof::on() {
+                melee_core::frameprof::add(melee_core::frameprof::C::UiNs, t.elapsed().as_nanos() as u64);
+            }
         } else if let Some(o) = self.settings.as_mut() {
             // the overlay alone: its own batch (nothing at all while it stays closed; one empty frame after it closes)
             if let Some((f, a)) = o.own_frame() {

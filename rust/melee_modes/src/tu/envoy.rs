@@ -281,6 +281,7 @@ fn ratio(v: i32) -> f32 {
 
 /// Rewrite the VS match about to start from the plan (no-op without one, outside VS, and for a replay).
 pub unsafe fn match_begin(d: *mut StartMeleeData) {
+    melee_core::frameprof::note(melee_core::frameprof::Kind::Envoy, || melee_core::frameprof::Text::new().s("match setup"));
     crate::tu::petey::disarm();
     // Envoy sessions: the match-end hold is the sim's, per match (gd_envoy_end_hold); never left on for a retail match
     crate::tu::gmvs::gmVs_SetEndHold(0);

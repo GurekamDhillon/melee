@@ -1522,9 +1522,12 @@ pub fn play(args: &[String]) -> ExitCode {
 {}", crate::display::HELP);
         return ExitCode::SUCCESS;
     }
-    if let Err(e) = crate::display::setup(args) {
-        eprintln!("play: {e}");
-        return ExitCode::from(2);
+    match crate::display::setup(args) {
+        Ok(d) => crate::profile::start(&d, args),
+        Err(e) => {
+            eprintln!("play: {e}");
+            return ExitCode::from(2);
+        }
     }
     let Some(iso) = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok()) else {
         eprintln!("{USAGE}");

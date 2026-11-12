@@ -844,6 +844,7 @@ impl PipeFactory {
         if let Some(p) = self.pipelines.lock().unwrap().get(&key) {
             return Ok(p.clone());
         }
+        let prof = melee_core::frameprof::on().then(std::time::Instant::now);
         let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
         let wgsl = adapt_wgsl(&src);
         let (pipeline, errs) = guarded(|| {
@@ -913,6 +914,10 @@ impl PipeFactory {
             return Err(format!("{e}\n--- WGSL ---\n{wgsl}"));
         }
         self.pipelines.lock().unwrap().insert(key, pipeline.clone());
+        if let Some(t) = prof {
+            melee_core::frameprof::add(melee_core::frameprof::C::Pipes, 1);
+            melee_core::frameprof::add(melee_core::frameprof::C::PipeNs, t.elapsed().as_nanos() as u64);
+        }
         Ok(pipeline)
     }
 }
@@ -1450,6 +1455,7 @@ impl Renderer {
         if w == 0 || h == 0 {
             return None;
         }
+        let prof = melee_core::frameprof::on().then(std::time::Instant::now);
         // a registered override (cosmetics: a skin's portrait / stock icon) is uploaded instead, at its own size
         let ovr = if crate::tex_override::active() {
             let tl = if pal { tlut_data.as_deref().map(|t| &t[..(d.tluts[o.tlut as usize].num_entries as usize * 2).min(t.len())]) } else { None };
@@ -1521,6 +1527,12 @@ impl Renderer {
             mh = (mh >> 1).max(1);
         }
         self.tex_bytes += bytes;
+        if let Some(t) = prof {
+            use melee_core::frameprof as fp;
+            fp::add(fp::C::Textures, 1);
+            fp::add(fp::C::TexBytes, bytes);
+            fp::add(fp::C::TexNs, t.elapsed().as_nanos() as u64);
+        }
         self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), bytes, used: std::cell::Cell::new(self.prepared) });
         Some(view)
     }

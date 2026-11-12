@@ -10264,6 +10264,7 @@ pub unsafe extern "C" fn ScriptGame_SpawnEnemy(
     mut facing: ::core::ffi::c_int,
     mut handle: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
+    let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Fighter, || melee_core::frameprof::Text::new().s("wave spawn: enemy ").n(which as i64));
     melee_core::ct!("ScriptGame_SpawnEnemy");
     let mut u: Anon_anon_102 = unsafe { core::mem::zeroed::<Anon_anon_102>() };
     let mut pos: Vec = unsafe { core::mem::zeroed::<Vec>() };

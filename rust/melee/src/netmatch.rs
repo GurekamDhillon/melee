@@ -294,6 +294,8 @@ pub mod engine_game {
             eprintln!("melee: synctest timed out after {limit} s");
             std::process::abort();
         });
+        // MELEE_PROFILE=1: the frame profiler's game-side points run here too (the bit-identity check of the profiler)
+        crate::profile::start(&crate::display::current(), args);
         let scenario = arg("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
         let golden = match arg("--golden").map(|p| super::golden_hashes(&p)).transpose() {
             Ok(g) => g,

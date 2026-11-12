@@ -124,6 +124,7 @@ unsafe fn prepare(src: *mut MapCollData) -> *mut MapCollData {
 /// `HSD_GObj_RunProcs`): the mod host applies it after the `frame.run_procs` post chain.
 /// Returns 0 on success; on a refusal nothing has changed.
 pub unsafe fn switch_to(kind: i32) -> i32 {
+    let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Stage, || melee_core::frameprof::Text::new().s("stage switch to ground kind ").n(kind as i64));
     let rc = check(kind);
     if rc != 0 {
         return rc;

@@ -317,3 +317,32 @@ differs, the same as off vs off2 (the ItCo word is gone). NHV1 on = off: menu fl
 Gate: 4 goldens, synctest d4 0 mismatches, audio = C, snapguard 0.208 / 0.35 / 4.73 under baseline: GATE OK.
 Synctest d7: 1638 hash checks, 0 mismatches. Hero replay Game_20251031T213013: SLPCHECK match (12844).
 Verdict: correctness proofs all pass; zero-lag NOT met (title, VS scene change, no-lead fight starts).
+
+## Asset service slice 5 (2026-11-12, port/zerolag-assets1): the COST of decode and apply
+Profiled with new env-gated diagnostics (`MELEE_DECODE_PROF=1`, archive.rs; game-thread decodes only for the loop /
+alloc timers; it drains the fill queue per root, so never use it for digests): per decode the phases (parse: data copy,
+relocs, symbols, reloc set; bounds; decoder setup; roots; finish/drop; article fixes), the time and count of zeroed
+allocations, the element loops of big arrays per type, top types by bytes, and the process page-fault delta. The apply
+log line (`MELEE_ASSET_LOG`) now also prints page faults.
+
+### Breakdown (menu flow, service off = decode in place, before the fixes)
+| file | total | where |
+| ItCo 2903 KB | 20.6-22.6 ms | parse 1.6 (copy 1.0, reloc set 0.4), bounds 0.9, roots (itPublicData) 17.4; 58k blocks / 36 MB (VtxDescList 22 MB, TlutDesc 6 MB); allocations 2.2 ms; TlutDesc shared loop 9.1 ms (276k elems), VtxDescList shared 3.7 ms (178k); 6.6k page faults |
+| stage (Corneria) 1610 KB | 6.9-8.2 | map_head 5.9; TlutDesc 2.7, VtxDescList 1.4, AnimJoint 0.7; 2.9k faults |
+| Kirby copy hat 103 KB | 6.1-6.7 | 15 MB of blocks from a 103 KB file: `Vec` arrays 1.0M elements 6.0 ms; 3.1k faults |
+| ftDataMario 190 KB | 5.6-6.0 | `Vec` arrays 824k elements 4.7 ms; 2.8k faults |
+| MnSlChr 3722 KB | 2.4 | data copy 1.2, roots 0.7 |
+| menu panels 2104 / 1284 KB | 2.8 / 1.8 | VtxDescList shared, copy |
+Apply (service on): ItCo 8.5 ms with 9.0k page faults (events 5.1 of which temporaries 3.4, live writes 3.4).
+Not the cost: allocation calls (2.2 ms of ItCo), hash maps / memo, endian conversion, reachability, article fixes
+(0.06), parse (<= 1.6). The cost is (1) the element loops of the overlapping shared-array windows: each window rescanned
+every "done" flag of elements other windows had decoded, and (2) first-touch page faults: in `melee play` the arena trims
+(decommits) big freed blocks, so every reuse refaults (ItCo with MELEE_ARENA_NO_TRIM: 16.8 vs 20.8 ms).
+
+### Changes (13596b880)
+- gcdecode `shared_array_slack`: a run of already-decoded elements is skipped 8 flags at a time. Same elements, same
+  order, same writes. TlutDesc loop 9.1 -> 3.9 ms, VtxDescList 3.7 -> 2.3; ItCo in place 22.6 -> 17.3 ms; Kirby hat 6.3 -> 3.7.
+- arena pre-faulter (`arena::start_prefault`, started by asset init; `MELEE_ARENA_PREFAULT=off`): a below-normal thread
+  keeps 96 MB past the bump pointer committed (under the arena lock, as alloc would) and resident by READING one byte per
+  page. No writes, so bytes / blocks / write-watch state are unchanged. Gain is small (ItCo apply 8.5 -> 6.4 in one
+  run, decode ~2 ms): most faults are on trimmed (decommitted) recycled blocks, which it cannot pre-touch.

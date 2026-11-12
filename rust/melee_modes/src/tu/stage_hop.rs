@@ -230,6 +230,9 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
     sg::script_retail_loading = 0;
     sg::script_retail_capture = 0;
     sg::script_retail_carry();
+    if crate::tu::envoy::armed() != 0 && !old_switch() {
+        safe_place();
+    }
     sg::script_retail_items(0);
     sg::script_switch.epoch += 1;
     melee_core::heaptrace::mark("stage switch");
@@ -238,6 +241,117 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
             sg::script_retail_owned.count, sg::lbHeap_Free(0));
     }
     0
+}
+
+/// Frames a fighter cannot be hit after an Envoy stage switch places it.
+pub const SAFE_INTANGIBLE: i32 = 60;
+/// How far above its spawn point a placed fighter starts (it lands within a few frames).
+const SAFE_LIFT: f32 = 4.0;
+/// Sideways step between fighters that would share a spawn point (a stage with fewer points than fighters).
+const SAFE_STEP: f32 = 14.0;
+
+/// Test knob `MELEE_ENVOY_SWITCH_OLD=1`: Envoy switches keep the plain retail carry (the before half of the
+/// stage-switch torture check). Fixed for the process: deterministic.
+fn old_switch() -> bool {
+    static OLD: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *OLD.get_or_init(|| std::env::var("MELEE_ENVOY_SWITCH_OLD").map(|v| v == "1").unwrap_or(false))
+}
+
+/// A point to drop a fighter onto the new stage: finite, inside the blast box with room, and with a floor under it
+/// within the carry's floor search.
+unsafe fn safe_point(x: f32, y: f32) -> bool {
+    let bz = &sg::stage_info.blast_zone;
+    let cam = &sg::stage_info.cam_info;
+    if !x.is_finite() || !y.is_finite() || x < bz.left + cam.cam_x_offset + 20.0 || x > bz.right + cam.cam_x_offset - 20.0
+        || y < bz.bottom + cam.cam_y_offset + 20.0 || y > bz.top + cam.cam_y_offset - 40.0
+    {
+        return false;
+    }
+    let (mut p, mut n): (Vec, Vec) = (core::mem::zeroed(), core::mem::zeroed());
+    let (mut line, mut flags) = (-1, 0u32);
+    crate::tu::script_game::script_retail_carry_floor(x, y, &mut p, &mut line, &mut flags, &mut n) != 0 && p.y <= y + 0.5
+}
+
+/// Envoy stage switches, after `script_retail_carry` (which keeps every fighter's old world position and momentum
+/// and only clamps it into the new blast box: a fighter offstage or high up was put on the blast line with its
+/// knockback and died a frame later; one with no floor under its old x fell through). Every fighter in play goes to
+/// its own slot's spawn point on the new stage, falling from just above it, with every velocity and knockback
+/// cleared, out of whatever it was doing (hitstun, a ledge, a recovery, a grab: both sides are cut first) and
+/// intangible for SAFE_INTANGIBLE frames. Left alone: a sleeping fighter (a parked wave foe, a benched partner, a
+/// KO'd player between stocks), a KO in progress (motion 0-10: it runs to its rebirth as usual, never resurrected
+/// or counted twice) and the respawn platform (11-13: its physics steers to the new stage's own rebirth point every
+/// frame). An Assist Strike in flight ends (the partner goes back to the bench). Statics and heaps only:
+/// deterministic under rollback.
+unsafe fn safe_place() {
+    if sg::HSD_GObjPLinkHead.is_null() {
+        return;
+    }
+    crate::tu::tag_swap::assist_end_all();
+    let in_play = |fp: *mut Fighter| -> bool { !fp.is_null() && (*fp).is_sleeping() == 0 && (*fp).motion_id > 13 };
+    // pass 1: cut every grab (grabber and victim are bound to each other's state)
+    let mut g = *sg::HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
+    while !g.is_null() {
+        let fp = sg::HSD_GObjGetUserData(g) as *mut Fighter;
+        if in_play(fp) && !(*fp).victim_gobj.is_null() {
+            melee_fighter::tu::ftCo_CaptureCut::ftCo_800DC920(g as _, (*fp).victim_gobj as _);
+        }
+        g = (*g).next as *mut HSD_GObj;
+    }
+    // pass 2: place
+    let mut used: [(f32, f32); 8] = [(0.0, 0.0); 8];
+    let mut nused = 0usize;
+    let mut g = *sg::HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
+    while !g.is_null() {
+        let next = (*g).next as *mut HSD_GObj;
+        let fp = sg::HSD_GObjGetUserData(g) as *mut Fighter;
+        if in_play(fp) {
+            let sub = (*fp).is_sub_fighter() != 0;
+            let mut at: Vec = core::mem::zeroed();
+            if sg::Ground_801C2D24((*fp).player_idx as _, &mut at) == 0 || !safe_point(at.x, at.y + SAFE_LIFT) {
+                // no usable point of its own: player 1's (every audited stage has one)
+                sg::Ground_801C2D24(0, &mut at);
+                if !safe_point(at.x, at.y + SAFE_LIFT) {
+                    at = Vec { x: 0.0, y: 10.0, z: 0.0 };
+                }
+            }
+            // a sub-fighter (Nana) drops beside its main as usual; others never share a point
+            if !sub {
+                let base = at.x;
+                let mut k = 1;
+                while k < 8 && used[..nused].iter().any(|&(ux, uy)| (ux - at.x).abs() < 6.0 && (uy - at.y).abs() < 6.0) {
+                    let x = base + SAFE_STEP * (if k % 2 == 1 { (k + 1) / 2 } else { -(k / 2) }) as f32;
+                    if safe_point(x, at.y + SAFE_LIFT) {
+                        at.x = x;
+                    }
+                    k += 1;
+                }
+                if nused < used.len() {
+                    used[nused] = (at.x, at.y);
+                    nused += 1;
+                }
+            }
+            let before = (*fp).cur_pos;
+            let motion = (*fp).motion_id;
+            (*fp).cur_pos = Vec { x: at.x, y: at.y + SAFE_LIFT, z: 0.0 };
+            sg::ftCo_Fall_Enter(g as *mut Fighter_GObj);
+            (*fp).self_vel = core::mem::zeroed();
+            (*fp).x8c_kb_vel = core::mem::zeroed();
+            (*fp).x98_atk_shield_kb = core::mem::zeroed();
+            (*fp).gr_vel = 0.0;
+            let cpu = (*fp).cpu;
+            sg::script_switch_contacts(fp);
+            (*fp).cpu = cpu;
+            sg::ftCamera_80076064(fp);
+            melee_fighter::tu::ftcoll::ftColl_8007B760(g as _, SAFE_INTANGIBLE);
+            if std::env::var_os("MELEE_STAGE_HOP_QUIET").is_none() {
+                eprintln!(
+                    "stage switch: safe place player {} sub {} motion {} from ({:.1},{:.1}) to ({:.1},{:.1})",
+                    (*fp).player_idx, sub as i32, motion, before.x, before.y, (*fp).cur_pos.x, (*fp).cur_pos.y
+                );
+            }
+        }
+        g = next;
+    }
 }
 
 /// `ftCommon_UnlockECB` for the switch's contact reset (script_switch_contacts): the fighter crate's port.

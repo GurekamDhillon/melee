@@ -346,3 +346,47 @@ every "done" flag of elements other windows had decoded, and (2) first-touch pag
   keeps 96 MB past the bump pointer committed (under the arena lock, as alloc would) and resident by READING one byte per
   page. No writes, so bytes / blocks / write-watch state are unchanged. Gain is small (ItCo apply 8.5 -> 6.4 in one
   run, decode ~2 ms): most faults are on trimmed (decommitted) recycled blocks, which it cannot pre-touch.
+- 44242f989: asset init reads `MELEE_DECODE_PROF` once, outside the asset path (the first read allocated inside the
+  first decode: 2 extra recorded calls in load 0 of an off run; found by the digest proof).
+
+### Table (interval / tick ms, worst of first 4 frames, WORST of 3 runs; build 44242f989; light-slot runs, heavy lock
+FREE before and after the batch, not otherwise verified quiet)
+| scene | slice 4 on | slice 4 off | slice 5 on | slice 5 off |
+| title / first frame | 62.0 / 46.9 | 53.9 / 39.4 | 59.2 / 44.6 | 41.1 / 29.4 |
+| CSS enter | 15.6 / 14.7 | 13.2 / 12.4 | 12.1 / 11.4 | 12.2 / 11.5 |
+| VS scene change | 29.0 / 27.9 | 39.1 / 37.7 | 25.5 / 24.2 | 33.5 / 32.1 |
+| match setup | 17.0 / 15.6 | 17.3 / 15.4 | 13.3 / 11.9 | 15.7 / 14.3 |
+| FoD `--match` (no lead) | 56.6 / 55.5 | 56.7 / 50.4 | 51.5 / 44.8 | 43.8 / 37.7 |
+| Envoy `--match` (no lead) | 105.5 / 101.8 | 96.7 / 93.1 | 69.7 / 65.1 | 65.0 / 63.8 |
+Under 16.7: CSS enter and match setup (on and off, all 3 runs). Not under:
+- title: on 57-59, off 40-41. The service makes the title WORSE by ~17 ms: the boot hints are prepared on the worker
+  during the title's first frame (contention with the game thread's demo preload). Remaining off cost: ~10 ms of in-place
+  decodes of the demo files + ~17 ms of the demo preload outside the decodes (reads + preload bookkeeping, not split).
+- VS scene change: ItCo apply 6-8 ms (most of it page faults on trimmed, recycled arena blocks) + the fighter files.
+- no-lead fight starts: FoD 44-52, Envoy 62-70: ItCo decode in place (~17 ms) + stage + fighters in one frame. The
+  service is still slower on than off (FoD +8, Envoy +5): not profiled further (the worker's boot/kept-copy prepares).
+
+### Proof (44242f989; gate / d7 / hero replay / NHV1 Envoy on 13596b880, which differs only in when an env flag is read)
+Digest FoD on = off 293/293, off = off2 293/293. Menu flow on vs off: only the known per-run word (load 35), the same as
+off vs off2. Digest off vs the profiling build before the decode change (allocation sequence of 8686ed93b): 293 loads,
+the only differing words are exe-image offsets (class 3, the code moved) and the 2-call artifact of that build's load 0.
+NHV1 on = off: menu flow 3847 EQUAL, FoD 1500 EQUAL, Envoy fight 7000 EQUAL. Gate: 4 goldens, synctest d4 0 mismatches,
+audio = C, snapguard 0.234 / 0.385 / 5.1 under baseline: GATE OK. Synctest d7: 1638 checks, 0 mismatches. Hero replay
+Game_20251031T213013: SLPCHECK match (12844).
+
+### Verdict and next approach
+Correctness proofs pass; the changes help every path (off mode too). Zero-lag NOT met: title, VS scene change, no-lead
+fight starts. Merge: the decode change and the pre-faulter are safe and help the owner's build (they also speed up the
+service-off path); the asset service itself still makes the title worse and the no-lead starts worse, so merging with
+the service ON by default is not justified yet.
+Honest view: cheaper decode/apply alone will not close the gap. ItCo alone is ~17 ms in place and 6-8 ms applied, and
+a scene change loads several files in one frame. What would close it:
+1. Stop the arena trimming big blocks that are reused every match (the decommit/refault per reuse is most of the apply
+   time): keep a per-size-class pool of trimmed blocks resident, zeroed off the game thread. Needs care: alloc_zeroed's
+   "recycled trimmed block reads zero" rule and the memory ceiling the trim exists for.
+2. Keep ItCo's decoded result across matches (identical bytes every match) instead of re-decoding/replaying it: an
+   allocation-order change, so it needs the goldens/synctests/digest-off-before proof route.
+3. Title: do not prepare boot hints while the game thread is inside the title's first frame (gate the worker on
+   GAME_DECODE_AT quiet time, as kept-copy prepares already are), and split the ~17 ms of demo preload outside decodes.
+4. Remove the garbage decoding at its source (decoding 1M `Vec` records from a 103 KB Kirby hat file, 711k vertex-list
+   records per VS load): output-visible today, so this is a behaviour change to prove unobservable.

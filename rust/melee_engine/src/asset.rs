@@ -872,6 +872,7 @@ pub fn init(iso: Option<String>) {
         worker,
     }));
     SVC.store(s, core::sync::atomic::Ordering::Release);
+    game_io(); // boot hints wait for the first load burst (the title's first frame) to end
     if worker {
         std::thread::Builder::new().name("asset-worker".into()).spawn(worker_main).expect("asset worker");
     }
@@ -882,6 +883,15 @@ pub fn init(iso: Option<String>) {
 /// never competes with the decodes of the same load burst (Envoy's no-lead fight start decodes ~10 files in a frame).
 static GAME_DECODE_AT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
 const BYTES_QUIET_MS: u64 = 150;
+/// A disc hint (a coming load, or a boot file) waits until the game thread has neither decoded nor read a file for
+/// this long: it must never compete with a load burst in progress (the title's first frame reads the demo match's
+/// files; a no-lead fight start decodes ~10 files in a frame). The service is started with the clock stamped, so boot
+/// hints also wait for the first burst to end.
+const DISC_QUIET_MS: u64 = 40;
+/// The game thread read a disc file (`host_dev_com_request`): a load burst is in progress.
+pub fn game_io() {
+    GAME_DECODE_AT.store(now_ms(), core::sync::atomic::Ordering::Relaxed);
+}
 fn now_ms() -> u64 {
     static T0: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
     T0.get_or_init(std::time::Instant::now).elapsed().as_millis() as u64 + 1
@@ -896,10 +906,14 @@ fn worker_main() {
             let mut g = s.m.lock().unwrap();
             loop {
                 // disc hints first (a load is coming); a kept-copy job only once the game's decodes went quiet
-                let quiet = now_ms().saturating_sub(GAME_DECODE_AT.load(core::sync::atomic::Ordering::Relaxed)) >= BYTES_QUIET_MS;
-                let pick = g.jobs.iter().position(|j| matches!(j.src, Src::Disc(..))).or(if quiet { (!g.jobs.is_empty()).then_some(0) } else { None });
+                let since = now_ms().saturating_sub(GAME_DECODE_AT.load(core::sync::atomic::Ordering::Relaxed));
+                let pick = if since < DISC_QUIET_MS {
+                    None
+                } else {
+                    g.jobs.iter().position(|j| matches!(j.src, Src::Disc(..))).or(if since >= BYTES_QUIET_MS { (!g.jobs.is_empty()).then_some(0) } else { None })
+                };
                 if pick.is_none() && !g.jobs.is_empty() {
-                    g = s.cv.wait_timeout(g, std::time::Duration::from_millis(BYTES_QUIET_MS / 3)).unwrap().0;
+                    g = s.cv.wait_timeout(g, std::time::Duration::from_millis(DISC_QUIET_MS / 2)).unwrap().0;
                     continue;
                 }
                 if let Some(j) = pick.and_then(|i| g.jobs.remove(i)) {

@@ -2179,7 +2179,9 @@ pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
     let r30 = addr_of_mut!(controller);
 
     (*r30).state.unk_34 = get_unk_float();
-    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: items init")); ext::Item_80266F70(); ext::Item_80266FCC(); ext::it_8026D018(); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: items: ItCo load")); ext::Item_80266F70(); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: items: pools init")); ext::Item_80266FCC(); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: items: spawner setup")); ext::it_8026D018(); }
     { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: audio banks")); ext::lbAudioAx_8002785C(); }
     { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: stage init 2")); ext::Stage_8022524C(); }
     ext::Camera_80030730(ext::Ground_801C20D0());

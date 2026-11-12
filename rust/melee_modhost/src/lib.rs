@@ -653,6 +653,11 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
         let Some(m) = mem_of(&c) else { return -1 };
         let Some(b) = m.data(&c).get(ptr as usize..ptr as usize + n * 4) else { return -1 };
         unsafe { for i in 0..n { melee_modes::tu::envoy::PLAN[i] = i32::from_le_bytes(b[i * 4..i * 4 + 4].try_into().unwrap()); } }
+        unsafe {
+            if let Some(h) = melee_modes::tu::envoy::PLAN_HINT {
+                h(&*core::ptr::addr_of!(melee_modes::tu::envoy::PLAN));
+            }
+        }
         0
     });
     w!("gd_envoy_publish", |c: Caller<'_, HostData>, ptr: u32, n: u32| -> i32 {

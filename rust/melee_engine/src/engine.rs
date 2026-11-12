@@ -194,6 +194,7 @@ impl Engine {
 
     fn boot_host(mut disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
         crate::crash::install();
+        crate::hwwatch::install();
         // The SIS text renderer's default glyph atlas (`HSD_SisLib_FontAtlas`, main.dol 0x8040CD40, 287 glyphs of 0x200
         // bytes): dynamic text (the Pokemon Stadium screen's names and time, ...) draws its glyphs from it. Render data
         // only; a disc without it leaves the pointer null (those glyphs then draw untextured).

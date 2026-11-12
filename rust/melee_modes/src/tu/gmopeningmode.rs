@@ -583,7 +583,11 @@ pub unsafe extern "C" fn gm_PreloadTitleDemo() {
         i += 1;
     }
     (*var_r31).stkind = gm_801BF694() as _;
-    ext::lbDvd_80018254();
+    {
+        let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("title demo: preload scene (lbDvd_80018254)"));
+        ext::lbDvd_80018254();
+    }
+    let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("title demo: audio banks"));
 
     let mut temp_ret: u64 = 4;
     let mut j = 0;

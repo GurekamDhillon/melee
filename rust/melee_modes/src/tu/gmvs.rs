@@ -2169,26 +2169,24 @@ pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
     fn_8016DCC0(arg0);
     ext::lbRefract_800222A4();
     ext::lb_8000FCDC();
-    ext::efLib_Init();
-    ext::efAsync_LoadSync(0);
-    ext::efAsync_LoadSync(0x1F);
-    ext::Player_80036DD8();
-    ext::ftCo_800C06C0();
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: effects init")); ext::efLib_Init(); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: common effects load")); ext::efAsync_LoadSync(0); ext::efAsync_LoadSync(0x1F); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: player + fighter common")); ext::Player_80036DD8(); ext::ftCo_800C06C0(); }
     ext::mpColl_80041C78();
-    ext::Ground_801C0378(0x40);
-    ext::Stage_802251E8((*arg0).rules.stkind as StKind, null_mut());
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: ground pools")); ext::Ground_801C0378(0x40); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: stage load")); ext::Stage_802251E8((*arg0).rules.stkind as StKind, null_mut()); }
 
     let r30 = addr_of_mut!(controller);
 
     (*r30).state.unk_34 = get_unk_float();
-    ext::Item_80266F70();
-    ext::Item_80266FCC();
-    ext::it_8026D018();
-    ext::lbAudioAx_8002785C();
-    ext::Stage_8022524C();
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: items: ItCo load")); ext::Item_80266F70(); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: items: pools init")); ext::Item_80266FCC(); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: items: spawner setup")); ext::it_8026D018(); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: audio banks")); ext::lbAudioAx_8002785C(); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: stage init 2")); ext::Stage_8022524C(); }
     ext::Camera_80030730(ext::Ground_801C20D0());
-    fn_8016E2BC();
-    ext::Stage_80225298();
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: players create (fighters)")); fn_8016E2BC(); }
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: stage init 3")); ext::Stage_80225298(); }
     ext::Ground_EnableMatchCamera();
     ext::Camera_8002F3AC();
     ext::fn_801A1134();
@@ -2197,7 +2195,7 @@ pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
         f(0);
         ext::Camera_8002F3AC();
     }
-    ext::ifAll_802F390C();
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("match setup: hud init")); ext::ifAll_802F390C(); }
     ext::lbBgFlash_Init(0xFF);
     if let Some(f) = (*arg0).rules.on_match_start {
         f();

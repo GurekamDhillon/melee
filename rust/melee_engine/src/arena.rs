@@ -88,6 +88,12 @@ pub fn trim() -> bool {
     unsafe { TRIM }
 }
 
+/// Whether freeing a block of `size` bytes drops its contents (trim mode decommits its pages past the first 16 bytes):
+/// writing such a block's last contents just before its free is wasted work.
+pub fn free_drops_contents(size: usize) -> bool {
+    (unsafe { TRIM }) && class_of(size).is_some_and(|(_, cs)| cs >= TRIM_MIN)
+}
+
 /// Decommit the whole pages inside `[a, b)` (their contents are dropped; the range stays reserved).
 #[cfg(windows)]
 unsafe fn decommit(a: usize, b: usize) {
@@ -128,6 +134,20 @@ thread_local! {
 /// Mark the calling thread as one whose allocations never go to the arena.
 pub fn mark_foreign_thread() {
     FOREIGN.with(|f| f.set(true));
+}
+
+/// While it lives, this thread's allocations go to the system heap even inside a [`GameScope`] (the asset service's
+/// own bookkeeping on the game thread: never game state).
+pub struct SysScope(bool);
+impl SysScope {
+    pub fn enter() -> SysScope {
+        SysScope(FOREIGN.with(|f| f.replace(true)))
+    }
+}
+impl Drop for SysScope {
+    fn drop(&mut self) {
+        FOREIGN.with(|f| f.set(self.0));
+    }
 }
 
 /// True while the engine code runs (allocations go to the arena), on the game thread.
@@ -211,7 +231,57 @@ fn class_of(size: usize) -> Option<(usize, usize)> {
 /// Serve `l` from the arena; null when the arena does not take it (alignment above 16, huge, no address space).
 #[cfg(any(windows, unix))]
 pub unsafe fn alloc(l: Layout) -> *mut u8 {
+    if ZERO_ALL.with(|z| z.get()) {
+        return alloc_zeroed(l);
+    }
     alloc_fresh(l).0
+}
+
+thread_local! {
+    /// The asset path (asset.rs: a decode in place, or a plan's replay): every block it takes is zeroed, recycled ones
+    /// included, so bytes the decode leaves unwritten are 0 whichever way the load ran (not the previous occupant's).
+    static ZERO_ALL: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
+    /// `MELEE_ASSET_DIGEST`: (address, size) of every block the asset path took (system heap; diagnostics).
+    static ASSET_BLOCKS: core::cell::RefCell<Option<Vec<(usize, usize)>>> = const { core::cell::RefCell::new(None) };
+}
+
+/// Turn the asset path's zeroing on/off for this thread (see `ZERO_ALL`); `log`: also list its blocks.
+pub fn set_asset_path(on: bool, log: bool) {
+    ZERO_ALL.with(|z| z.set(on));
+    if on && log {
+        let _s = SysScope::enter();
+        ASSET_BLOCKS.with_borrow_mut(|v| *v = Some(Vec::new()));
+    }
+}
+
+/// Whether this thread is on the asset path (see `ZERO_ALL`).
+#[inline]
+pub fn asset_path_on() -> bool {
+    ZERO_ALL.with(|z| z.get())
+}
+
+/// The blocks listed since [`set_asset_path`]`(true, true)`.
+pub fn take_asset_blocks() -> Vec<(usize, usize)> {
+    ASSET_BLOCKS.with_borrow_mut(|v| v.take()).unwrap_or_default()
+}
+
+fn note_asset_block(p: *mut u8, n: usize) {
+    if p.is_null() {
+        return;
+    }
+    ASSET_BLOCKS.with_borrow_mut(|v| {
+        if let Some(v) = v.as_mut() {
+            let _s = SysScope::enter();
+            v.push((p as usize, n));
+        }
+    });
+}
+
+/// `MELEE_DECODE_PROF` (archive.rs): time the asset path's allocations on the decoding thread (diagnostics).
+pub static PROF_ALLOC: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+thread_local! {
+    /// (ns in `alloc_zeroed`, calls, bytes) since the last take.
+    pub static PROF_NS: core::cell::Cell<(u64, u64, u64)> = const { core::cell::Cell::new((0, 0, 0)) };
 }
 
 /// Set once the arena was ever snapshotted (a load may then have left bytes past the bump pointer).
@@ -227,9 +297,34 @@ pub fn note_snapshot() {
 /// the pages that are touched (the archive decoder's shared tables, `gcdecode::shared_array`).
 #[cfg(any(windows, unix))]
 pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
+    if PROF_ALLOC.load(Relaxed) {
+        PROF_ALLOC.store(false, Relaxed);
+        let t = std::time::Instant::now();
+        let p = alloc_zeroed(l);
+        let ns = t.elapsed().as_nanos() as u64;
+        PROF_ALLOC.store(true, Relaxed);
+        PROF_NS.with(|c| { let (a, n, b) = c.get(); c.set((a + ns, n + 1, b + l.size() as u64)) });
+        return p;
+    }
     let (p, fresh) = alloc_fresh(l);
+    if ZERO_ALL.with(|z| z.get()) {
+        note_asset_block(p, l.size());
+    }
     if !p.is_null() && !(fresh && !SNAPSHOTTED.load(Relaxed)) {
-        core::ptr::write_bytes(p, 0, l.size());
+        let n = l.size();
+        if !fresh && TRIM && class_of(n).is_some_and(|(_, cs)| cs >= TRIM_MIN) {
+            // a recycled trimmed block: `free` decommitted its whole pages past the first 16 bytes, and the allocation
+            // recommitted them, so they read back zero already. Zero only the bytes no decommit covered (up to the
+            // first page boundary past +16, and the partial last page): writing the whole block (the decoder's 40 MB
+            // shared tables) touched every page again for nothing
+            let (a, e) = (p as usize, p as usize + n);
+            let head_end = ((a + 16 + 0xFFF) & !0xFFF).min(e);
+            core::ptr::write_bytes(p, 0, head_end - a);
+            let tail = (e & !0xFFF).max(head_end);
+            core::ptr::write_bytes(tail as *mut u8, 0, e - tail);
+        } else {
+            core::ptr::write_bytes(p, 0, n);
+        }
     }
     p
 }
@@ -246,10 +341,32 @@ static mut FRESH: bool = false;
 
 #[cfg(any(windows, unix))]
 unsafe fn alloc_inner(l: Layout) -> *mut u8 {
+    let _g = Lock::take();
+    alloc_locked(l)
+}
+
+/// The asset service's apply: `ls` (size, align) served in order under one lock, each exactly as [`alloc`] would
+/// (same blocks, same free-list and bump effects), addresses pushed to `out` (bit 0 set: the block is known zero, see the push). False at the first one the arena does
+/// not take (`out` then holds the ones before it).
+#[cfg(any(windows, unix))]
+pub unsafe fn alloc_many(ls: &[(usize, usize, usize)], out: &mut Vec<usize>) -> bool {
+    let _g = Lock::take();
+    for &(_, size, align) in ls {
+        let p = alloc_locked(Layout::from_size_align_unchecked(size, align));
+        if p.is_null() {
+            return false;
+        }
+        // bit 0: fresh bump memory never handed out and never snapshotted (still the OS's zero pages)
+        out.push(p as usize | (FRESH && !SNAPSHOTTED.load(Relaxed)) as usize);
+    }
+    true
+}
+
+#[cfg(any(windows, unix))]
+unsafe fn alloc_locked(l: Layout) -> *mut u8 {
     FRESH = false;
     let Some(ab) = bucket(l.align()) else { return core::ptr::null_mut() };
     let Some((c, size)) = class_of(l.size()) else { return core::ptr::null_mut() };
-    let _g = Lock::take();
     if BASE == 0 {
         let p = sys::reserve(CAP);
         if p.is_null() {
@@ -268,7 +385,7 @@ unsafe fn alloc_inner(l: Layout) -> *mut u8 {
         }
         *((head + 8) as *mut u64) = 0;
         FREE[ab][c] = *(head as *const usize);
-        if TRIM && size >= TRIM_MIN && !recommit(head, head + size) {
+        if TRIM && size >= TRIM_MIN && !keep::take(head, size) && !recommit(head, head + size) {
             return core::ptr::null_mut();
         }
         return head as *mut u8;
@@ -280,7 +397,7 @@ unsafe fn alloc_inner(l: Layout) -> *mut u8 {
             if h2 != 0 {
                 FREE[ab][c2] = *(h2 as *const usize);
                 *((h2 + 8) as *mut u64) = 0;
-                if !recommit(h2, h2 + size) {
+                if !keep::take(h2, class_size(c2)) && !recommit(h2, h2 + size) {
                     return core::ptr::null_mut();
                 }
                 decommit(h2 + size, h2 + class_size(c2));
@@ -341,6 +458,9 @@ unsafe fn report_misuse(what: &str, p: usize, n: usize) {
 
 /// Return an arena block (the caller checked [`contains`]).
 pub unsafe fn free(p: *mut u8, l: Layout) {
+    if ZERO_ALL.with(|z| z.get()) {
+        note_asset_block(p, l.size() | 1 << 63);
+    }
     let (Some((c, _)), Some(ab)) = (class_of(l.size()), bucket(l.align())) else { return };
     let _g = Lock::take();
     LIVE[c] -= 1;
@@ -353,7 +473,7 @@ pub unsafe fn free(p: *mut u8, l: Layout) {
     #[cfg(any(windows, unix))]
     if TRIM {
         let size = class_size(c);
-        if size >= TRIM_MIN {
+        if size >= TRIM_MIN && !keep::put(p as usize, size) {
             decommit(p as usize + 16, p as usize + size);
         }
     }
@@ -555,4 +675,168 @@ mod tests {
             assert_eq!(misuse_count(), n0 + 2);
         }
     }
+}
+
+/// Bytes past the bump pointer the pre-faulter keeps resident.
+#[cfg(windows)]
+const PREFAULT_AHEAD: usize = 96 << 20;
+
+/// Start the pre-faulter (boot, once; `MELEE_ARENA_PREFAULT=off` keeps it off): a thread that keeps the pages just past
+/// the bump pointer committed and resident by READING one byte of each. A fresh page's first touch is a demand-zero
+/// fault (~1 us each: thousands per big archive decode or plan apply, most of their time); after the read the page is
+/// already backed by a zeroed physical page, so the game thread's first write does not fault. Nothing is written: the
+/// arena's bytes, blocks and write-watch state are exactly as without it (commits ahead are what `alloc_locked` would do
+/// at its next step, made earlier, under the same lock).
+#[cfg(windows)]
+pub fn start_prefault() {
+    {
+        let _s = SysScope::enter();
+        keep::init();
+    }
+    if std::env::var("MELEE_ARENA_PREFAULT").is_ok_and(|v| v == "off") {
+        return;
+    }
+    static STARTED: AtomicBool = AtomicBool::new(false);
+    if STARTED.swap(true, Relaxed) {
+        return;
+    }
+    let _s = SysScope::enter();
+    let _ = std::thread::Builder::new().name("arena-prefault".into()).spawn(|| {
+        mark_foreign_thread();
+        extern "system" {
+            fn GetCurrentThread() -> *mut core::ffi::c_void;
+            fn SetThreadPriority(h: *mut core::ffi::c_void, p: i32) -> i32;
+        }
+        unsafe { SetThreadPriority(GetCurrentThread(), -1) }; // below normal: never ahead of the game thread
+        let mut touched = 0usize;
+        loop {
+            let (bump, committed) = unsafe { (core::ptr::read_volatile(&raw const BUMP), core::ptr::read_volatile(&raw const COMMITTED)) };
+            if bump == 0 {
+                std::thread::sleep(std::time::Duration::from_millis(5));
+                continue;
+            }
+            let want = bump + PREFAULT_AHEAD;
+            if committed < want {
+                let _g = Lock::take();
+                unsafe {
+                    while COMMITTED < want && COMMITTED + COMMIT_STEP <= BASE + CAP - 0x10000 {
+                        if !sys::commit(COMMITTED, COMMIT_STEP) {
+                            break;
+                        }
+                        COMMITTED += COMMIT_STEP;
+                    }
+                }
+            }
+            let committed = unsafe { core::ptr::read_volatile(&raw const COMMITTED) };
+            let mut p = (touched.max(bump) + 0xFFF) & !0xFFF;
+            let end = want.min(committed);
+            let mut n = 0;
+            while p < end {
+                unsafe { core::ptr::read_volatile(p as *const u8) };
+                p += 0x1000;
+                n += 1;
+                if n % 256 == 0 {
+                    std::thread::yield_now();
+                }
+            }
+            touched = touched.max(end);
+            keep::zero_some();
+            std::thread::sleep(std::time::Duration::from_millis(2));
+        }
+    });
+}
+#[cfg(not(windows))]
+pub fn start_prefault() {}
+
+/// Trim mode keeps big freed blocks RESIDENT instead of decommitting them (`MELEE_ARENA_KEEP=off` restores the
+/// decommit; `MELEE_ARENA_KEEP=<MB>` sets the cap, default 256). A decommit made the block's whole pages past +16 read
+/// zero at its next allocation, at the price of a demand-zero page fault per page on reuse (most of ItCo's apply time
+/// every match). Here the same pages are zeroed instead: by the pre-faulter thread in 64 KB steps under the arena lock,
+/// or, for what it has not reached yet, by the allocating thread when the block is handed out. Exactly the bytes a
+/// decommit would drop are zeroed (whole pages inside `[p + 16, p + size)`); the bytes outside them keep their stale
+/// contents exactly as before. All state changes happen under the arena lock, so a block is never written by the
+/// zeroer once handed out. Over the cap (or the table full) a block is decommitted as before.
+#[cfg(any(windows, unix))]
+mod keep {
+    use super::*;
+    const N: usize = 512;
+    const STEP: usize = 64 << 10;
+    /// (block, class size, zeroed-up-to address; 0 = empty slot)
+    static mut KEPT: [(usize, usize, usize); N] = [(0, 0, 0); N];
+    static mut BYTES: usize = 0;
+    /// 0: not read yet (off), 1: off, else the cap in bytes
+    static mut CAP_BYTES: usize = 0;
+
+    fn range(p: usize, size: usize) -> (usize, usize) {
+        ((p + 16 + 0xFFF) & !0xFFF, (p + size) & !0xFFF)
+    }
+    /// Read the cap (boot, from `start_prefault`, outside the lock: an env read allocates). Until then, off.
+    pub fn init() {
+        let c = match std::env::var("MELEE_ARENA_KEEP") {
+            Ok(v) if v == "off" => 1,
+            Ok(v) => v.parse::<usize>().map_or(256 << 20, |mb| (mb << 20).max(2)),
+            Err(_) => 256 << 20,
+        };
+        unsafe { CAP_BYTES = c };
+    }
+    unsafe fn cap() -> usize {
+        CAP_BYTES
+    }
+    /// Under the lock, from `free`: keep `p` resident (true) or let the caller decommit it (false).
+    pub unsafe fn put(p: usize, size: usize) -> bool {
+        let c = cap();
+        if c <= 1 || BYTES + size > c {
+            return false;
+        }
+        let kept = &mut *core::ptr::addr_of_mut!(KEPT);
+        let Some(slot) = kept.iter_mut().find(|e| e.0 == 0) else { return false };
+        let (a, _) = range(p, size);
+        *slot = (p, size, a);
+        BYTES += size;
+        true
+    }
+    /// Under the lock, from the allocation of free block `p` (its class size `size`): true when it was kept, its
+    /// decommit range now zero (the pages stayed committed: no recommit needed).
+    pub unsafe fn take(p: usize, size: usize) -> bool {
+        if BYTES == 0 {
+            return false;
+        }
+        let kept = &mut *core::ptr::addr_of_mut!(KEPT);
+        let Some(e) = kept.iter_mut().find(|e| e.0 == p) else { return false };
+        let (_, b) = range(p, size);
+        if e.2 < b {
+            core::ptr::write_bytes(e.2 as *mut u8, 0, b - e.2);
+        }
+        BYTES -= e.1;
+        *e = (0, 0, 0);
+        true
+    }
+    /// The zeroer (pre-faulter thread): zero kept blocks' ranges, one STEP per lock hold.
+    pub fn zero_some() {
+        let mut budget = 256usize; // at most 16 MB per call, yielding between steps
+        while budget > 0 {
+            budget -= 1;
+            let _g = Lock::take();
+            unsafe {
+                if BYTES == 0 {
+                    return;
+                }
+                let kept = &mut *core::ptr::addr_of_mut!(KEPT);
+                let Some(e) = kept.iter_mut().find(|e| e.0 != 0 && e.2 < range(e.0, e.1).1) else { return };
+                let b = range(e.0, e.1).1;
+                let n = (b - e.2).min(STEP);
+                core::ptr::write_bytes(e.2 as *mut u8, 0, n);
+                e.2 += n;
+            }
+            drop(_g);
+            std::thread::yield_now();
+        }
+    }
+}
+#[cfg(not(any(windows, unix)))]
+mod keep {
+    pub unsafe fn put(_: usize, _: usize) -> bool { false }
+    pub unsafe fn take(_: usize, _: usize) -> bool { false }
+    pub fn zero_some() {}
+    pub fn init() {}
 }

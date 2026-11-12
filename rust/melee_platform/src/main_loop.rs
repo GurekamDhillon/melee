@@ -21,6 +21,8 @@ const NS: u64 = 1_000_000_000;
 pub const MAX_CATCH_UP: u32 = 5;
 /// A tick at least this long is a load (see `run_due_ticks`): the time it took is not caught up.
 pub const LOAD_TICK: Duration = Duration::from_millis(50);
+/// A paced loop runs a tick due within this much at once instead of sleeping up to it (see `about_to_wait`).
+const EARLY_TICK: Duration = Duration::from_micros(1500);
 
 /// What the platform drives.
 pub trait Game {
@@ -343,6 +345,8 @@ struct App<G: Game> {
     /// the present call happens to run).
     next_present: Option<Instant>,
     present_at: Option<Instant>,
+    /// Paced: present before running the due tick (its slot was due within half a period after the tick).
+    present_first: bool,
     /// VRR detection: the probe's end, the last statistics sample, verdicts in a row.
     vrr_probe_until: Option<Instant>,
     vrr_last: Option<(u64, u64, f64)>,
@@ -445,6 +449,12 @@ impl<G: Game> App<G> {
     }
 
     fn run_due_ticks(&mut self) {
+        self.run_due_ticks_at(Instant::now());
+    }
+
+    /// [`Self::run_due_ticks`] with the clock read as `now` (a tick due within [`EARLY_TICK`] runs at once, on the
+    /// same 60 Hz grid: the clock counts it as run at its due time).
+    fn run_due_ticks_at(&mut self, now: Instant) {
         if self.game.present_now() {
             // A present is owed first (a screenshot of the tick that asked for it): the redraw that follows a tick
             // loop calls here again, and a tick that had come due meanwhile would make the shot the NEXT frame's,
@@ -452,8 +462,7 @@ impl<G: Game> App<G> {
             // stays in the clock; the ticks run right after the present.
             return;
         }
-        let now = Instant::now();
-        let dt = self.last.map(|l| now - l).unwrap_or_default();
+        let dt = self.last.map(|l| now.saturating_duration_since(l)).unwrap_or_default();
         self.last = Some(now);
         for _ in 0..self.clock.advance(dt) {
             let t = Instant::now();
@@ -764,7 +773,9 @@ impl<G: Game> ApplicationHandler for App<G> {
                     // A tick that came due since the present was scheduled runs first: the in-between pose of the
                     // older pair would be stale (shown after the frame it leads to exists).
                     let before = self.clock.ticks;
-                    self.run_due_ticks();
+                    if !core::mem::take(&mut self.present_first) {
+                        self.run_due_ticks();
+                    }
                     if self.clock.ticks != before {
                         self.stale += 1;
                     }
@@ -818,7 +829,9 @@ impl<G: Game> ApplicationHandler for App<G> {
                 yougame_box(w, crate::yougame::take_box_commands());
             }
         }
-        self.run_due_ticks();
+        if !self.present_first {
+            self.run_due_ticks();
+        }
         if self.quit {
             el.exit();
             return;
@@ -836,7 +849,25 @@ impl<G: Game> ApplicationHandler for App<G> {
                 self.window.as_ref().unwrap().request_redraw();
             } else {
                 let tick_due = self.last.map_or(target, |l| l + self.clock.until_next());
-                melee_core::frameprof::time(melee_core::frameprof::C::SleepNs, || sleep_until(target.min(tick_due)));
+                if tick_due < target && target - tick_due < period / 2 && !self.game.present_now() {
+                    // the next slot comes soon after the next tick: present at the tick's time, then run it. A long
+                    // tick (a scene load) then starts right after a present instead of mid-slot, so the present after
+                    // it is one tick's length later instead of the slot phase plus the tick. Pacing only.
+                    melee_core::frameprof::time(melee_core::frameprof::C::SleepNs, || sleep_until(tick_due));
+                    self.next_present = Some(Instant::now());
+                    self.present_first = true;
+                } else if tick_due < target && tick_due <= now + EARLY_TICK && !self.present_first && !self.game.present_now() {
+                    // the next tick comes before the next present slot and is nearly due: run it now instead of
+                    // sleeping up to it (a long tick, a scene load, then still lands in this present slot instead of
+                    // pushing the present past it by the sleep). Pacing only: the clock counts it at its due time.
+                    self.run_due_ticks_at(tick_due);
+                    if self.quit {
+                        el.exit();
+                        return;
+                    }
+                } else {
+                    melee_core::frameprof::time(melee_core::frameprof::C::SleepNs, || sleep_until(target.min(tick_due)));
+                }
             }
             el.set_control_flow(ControlFlow::Poll);
             return;
@@ -941,6 +972,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         refresh_hz: 0.0,
         next_present: None,
         present_at: None,
+        present_first: false,
         vrr_probe_until: None,
         vrr_last: None,
         vrr_votes: (None, 0),

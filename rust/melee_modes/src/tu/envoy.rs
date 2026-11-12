@@ -56,6 +56,9 @@ pub const P_WAVE_LV: usize = 41;
 const GR_FD: i32 = 37;
 
 pub static mut PLAN: [i32; PLAN_WORDS] = [0; PLAN_WORDS];
+/// The engine's asset hint for a newly published plan (the coming fight's stage and fighters): set at install. Never
+/// sim-visible (a worker prepares the files; the load itself is the same with or without it).
+pub static mut PLAN_HINT: Option<fn(&[i32; PLAN_WORDS])> = None;
 pub static mut VIEW: [i32; VIEW_WORDS] = [0; VIEW_WORDS];
 /// V3 (envoy-synergy-v3.md 12.5): per match slot, event bits the engine sets during the frame at the exact site
 /// (bit 0: the fighter L-cancelled an aerial landing), read and cleared by `gd_envoy_events`. Set only while a run

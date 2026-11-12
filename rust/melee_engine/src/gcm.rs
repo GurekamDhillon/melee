@@ -14,6 +14,8 @@ pub struct Gcm {
     replaced: std::cell::RefCell<std::collections::HashMap<i32, std::sync::Arc<[u8]>>>,
     /// Paths only the mods have (a new fighter's PlBm.dat): an entry number past the FST each, by lowercased path.
     added: std::cell::RefCell<std::collections::HashMap<String, i32>>,
+    /// The image's path (the asset service opens its own handle on it; None: no file, or core v1's host reader).
+    pub path: Option<String>,
 }
 
 
@@ -28,12 +30,12 @@ impl Gcm {
             // core v1: the host owns the disc; every read goes through its disc_read (the path is not opened)
             let h = read_at(None, 0x424, 8)?;
             let fst = read_at(None, be32(&h, 0) as u64, be32(&h, 4) as usize)?;
-            return Ok(Self { f: None, fst, overlay: None, replaced: Default::default(), added: Default::default() });
+            return Ok(Self { f: None, fst, overlay: None, replaced: Default::default(), added: Default::default(), path: None });
         }
         let mut f = std::fs::File::open(path).map_err(|e| format!("{path}: {e}"))?;
         let h = read_at(Some(&mut f), 0x424, 8)?;
         let fst = read_at(Some(&mut f), be32(&h, 0) as u64, be32(&h, 4) as usize)?;
-        Ok(Self { f: Some(f), fst, overlay: None, replaced: Default::default(), added: Default::default() })
+        Ok(Self { f: Some(f), fst, overlay: None, replaced: Default::default(), added: Default::default(), path: Some(path.to_string()) })
     }
 
     /// A disc with only the root directory: for headless runs that load no files.
@@ -41,7 +43,7 @@ impl Gcm {
         let mut fst = vec![0u8; 12];
         fst[0] = 1;
         fst[11] = 1;
-        Self { f: None, fst, overlay: None, replaced: Default::default(), added: Default::default() }
+        Self { f: None, fst, overlay: None, replaced: Default::default(), added: Default::default(), path: None }
     }
 
     /// Mount `f` over the disc: every file it answers replaces the disc's file of that path (same entry number).
@@ -212,6 +214,22 @@ impl Gcm {
         let i = usize::try_from(e).ok().filter(|&i| i >= 1 && i < self.count() && !self.is_dir(i)).ok_or_else(|| format!("{want}: not on the disc"))?;
         let (start, n) = (be32(&self.fst, i * 12 + 4) as u64, be32(&self.fst, i * 12 + 8) as usize);
         read_at(self.f.as_mut(), start, n)
+    }
+
+    /// Where disc entry `entry` lies in the image: (byte offset, length), or None when it is not a plain disc file or
+    /// an overlay (mods) is mounted (slice 1 does not ask it). Pure: it
+    /// asks the overlay nothing and caches nothing (the asset service's hints must not change game state).
+    /// The disc entry of `path` on the disc itself (no overlay asked; -1: not there).
+    pub fn disc_entry(&self, path: &str) -> i32 {
+        self.entry_for_path_disc(path)
+    }
+
+    pub fn plain_location(&self, entry: i32) -> Option<(u64, usize)> {
+        let i = usize::try_from(entry).ok().filter(|&i| i >= 1 && i < self.count() && !self.is_dir(i))?;
+        if self.overlay.is_some() {
+            return None;
+        }
+        Some((be32(&self.fst, i * 12 + 4) as u64, be32(&self.fst, i * 12 + 8) as usize))
     }
 
     /// The whole file `want` (a path, or a bare name anywhere on the disc).

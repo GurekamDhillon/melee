@@ -351,8 +351,11 @@ const ARAM_SIZE: u32 = 32 << 20;
 unsafe fn ar_addr(addr: u32, len: usize) -> *mut u8 {
     if addr < ARAM_SIZE {
         let aram = &mut crate::host::Host::get().aram;
-        if aram.len() < ARAM_SIZE as usize {
-            aram.resize(ARAM_SIZE as usize, 0);
+        // grown to what the transfer touches (as dvd.rs grows it), not to all 32 MB at once: the first figatree read of
+        // a fighter create zero-filled ~30 MB in its frame (zero-hitch); bytes past the old end are zero either way
+        let end = (addr as usize + len).min(ARAM_SIZE as usize);
+        if aram.len() < end {
+            aram.resize(end, 0);
         }
         return aram.as_mut_ptr().add(addr as usize);
     }

@@ -437,26 +437,35 @@ pub unsafe extern "C" fn gmTitle_801A1D38(src: *const c_char, dst: *mut c_char) 
 
 pub unsafe extern "C" fn gm_Scene_Title_OnEnter(_unused: *mut c_void) {
     melee_core::ct!("gm_Scene_Title_OnEnter");
-    ext::lbAudioAx_800236DC();
+    // zero-hitch: named phases of the title's enter frame (frameprof spans; no behaviour change)
+    macro_rules! ph {
+        ($name:literal, $e:expr) => {{
+            let _p = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s(concat!("title enter: ", $name)));
+            $e
+        }};
+    }
+    ph!("audio stop", ext::lbAudioAx_800236DC());
     countdown_timer = 20;
     frame_count = 0;
 
-    let _archive = gmTitle_801A1AC0();
+    let _archive = ph!("archive (GmTtAll)", gmTitle_801A1AC0());
 
-    ext::lbAudioAx_80026F2C((1 << 1) | (1 << 4));
-    ext::lbAudioAx_8002702C(2, 4);
-    ext::lbAudioAx_80027168();
+    ph!("audio setup", {
+        ext::lbAudioAx_80026F2C((1 << 1) | (1 << 4));
+        ext::lbAudioAx_8002702C(2, 4);
+        ext::lbAudioAx_80027168();
+    });
 
-    gmTitle_801A1A3C();
-    gmTitle_801A19AC();
-    gmTitle_801A1944();
-    gmTitle_801A185C();
-    gmTitle_801A165C();
+    ph!("801A1A3C", gmTitle_801A1A3C());
+    ph!("801A19AC", gmTitle_801A19AC());
+    ph!("801A1944", gmTitle_801A1944());
+    ph!("801A185C", gmTitle_801A185C());
+    ph!("801A165C", gmTitle_801A165C());
 
-    ext::lbAudioAx_80027648();
-    ext::gm_PreloadTitleDemo();
+    ph!("audio 80027648", ext::lbAudioAx_80027648());
+    ph!("preload title demo", ext::gm_PreloadTitleDemo());
 
-    fn_801A1498_inline();
+    ph!("801A1498", fn_801A1498_inline());
 
     // Debug shows the build timestamp on the title screen
     if ext::DbLevel >= DbLKind_NoDebugRom {

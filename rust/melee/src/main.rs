@@ -276,6 +276,9 @@ fn big_alloc_trace(n: usize) {
 }
 unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
     unsafe fn alloc(&self, l: std::alloc::Layout) -> *mut u8 {
+        if melee_engine::recheap::active() {
+            return melee_engine::recheap::alloc(l);
+        }
         if melee_engine::arena::active() {
             big_alloc_trace(l.size());
             let p = melee_engine::arena::alloc(l);
@@ -301,6 +304,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         if melee_engine::arena::contains(p) {
             return melee_engine::arena::free(p, l);
         }
+        if melee_engine::recheap::in_range(p) {
+            return melee_engine::recheap::free(p);
+        }
         if rollback_pinned() {
             return; // a snapshot may still point at this system block (see `rollback_pinned`)
         }
@@ -315,6 +321,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         std::alloc::System.dealloc(p, l)
     }
     unsafe fn alloc_zeroed(&self, l: std::alloc::Layout) -> *mut u8 {
+        if melee_engine::recheap::active() {
+            return melee_engine::recheap::alloc(l); // never-reused pages: already zero
+        }
         if melee_engine::arena::active() {
             let p = melee_engine::arena::alloc_zeroed(l);
             if !p.is_null() {
@@ -329,8 +338,22 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         std::alloc::System.alloc_zeroed(l)
     }
     unsafe fn realloc(&self, p: *mut u8, l: std::alloc::Layout, n: usize) -> *mut u8 {
+        if melee_engine::recheap::active() && melee_engine::recheap::in_range(p) {
+            return melee_engine::recheap::realloc(p, l, n);
+        }
+        if melee_engine::recheap::in_range(p) || melee_engine::recheap::active() {
+            let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));
+            if !q.is_null() {
+                core::ptr::copy_nonoverlapping(p, q, l.size().min(n));
+                self.dealloc(p, l);
+            }
+            return q;
+        }
         if melee_engine::arena::contains(p) {
             if melee_engine::arena::same_class(l.size(), n) {
+                if n > l.size() && melee_engine::arena::asset_path_on() {
+                    core::ptr::write_bytes(p.add(l.size()), 0, n - l.size()); // the asset path's zeroing (arena.rs)
+                }
                 return p;
             }
             let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));

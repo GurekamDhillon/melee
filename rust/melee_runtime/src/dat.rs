@@ -33,6 +33,9 @@ pub const HEADER_SIZE: u32 = 0x20;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DatSymbol {
     pub offset: u32,
+    /// Always 0: fills the 4 bytes after `offset` so the record has no padding (the asset service's decode plans
+    /// compare and copy symbols byte for byte).
+    pub _pad: u32,
     pub name: String,
 }
 
@@ -84,6 +87,11 @@ fn be32(b: &[u8], at: usize) -> u32 {
     u32::from_be_bytes(b[at..at + 4].try_into().unwrap())
 }
 
+thread_local! {
+    /// The last [`DatArchive::parse`] on this thread: (data copy, relocations read + checked, symbols, relocation set) ms.
+    pub static PARSE_SPLIT: core::cell::Cell<(f64, f64, f64, f64)> = const { core::cell::Cell::new((0.0, 0.0, 0.0, 0.0)) };
+}
+
 impl DatArchive {
     /// `HSD_ArchiveParse`, minus the in-place relocation (validated instead).
     pub fn parse(file: &[u8]) -> Result<Self, DatError> {
@@ -110,7 +118,9 @@ impl DatArchive {
         }
         let (data_end, reloc_end, pub_end, ext_end) =
             (data_end as usize, reloc_end as usize, pub_end as usize, ext_end as usize);
+        let t0 = std::time::Instant::now();
         let data = file[HEADER_SIZE as usize..data_end].to_vec();
+        let t1 = std::time::Instant::now();
         let relocs: Vec<u32> = (0..h.nb_reloc as usize).map(|i| be32(file, data_end + 4 * i)).collect();
         for &r in &relocs {
             if r as u64 + 4 > data.len() as u64 {
@@ -130,13 +140,17 @@ impl DatArchive {
                     let s = be32(file, tab + 8 * i + 4) as usize;
                     let rest = symbols.get(s..).ok_or(DatError::BadSymbol { index: i })?;
                     let end = rest.iter().position(|&c| c == 0).ok_or(DatError::BadSymbol { index: i })?;
-                    Ok(DatSymbol { offset, name: String::from_utf8_lossy(&rest[..end]).into_owned() })
+                    Ok(DatSymbol { offset, _pad: 0, name: String::from_utf8_lossy(&rest[..end]).into_owned() })
                 })
                 .collect()
         };
+        let t2 = std::time::Instant::now();
         let publics = sym(reloc_end, h.nb_public)?;
         let externs = sym(pub_end, h.nb_extern)?;
+        let t3 = std::time::Instant::now();
         let reloc_set = relocs.iter().copied().collect();
+        let ms = |a: std::time::Instant, b: std::time::Instant| (b - a).as_secs_f64() * 1e3;
+        PARSE_SPLIT.with(|c| c.set((ms(t0, t1), ms(t1, t2), ms(t2, t3), t3.elapsed().as_secs_f64() * 1e3)));
         Ok(Self { header: h, data, relocs, reloc_set, publics, externs })
     }
 

@@ -108,6 +108,10 @@ impl GcArena {
         v
     }
     /// Number of separate allocations (objects, arrays, strings).
+    /// The element type of the allocation at `p` (diagnostics).
+    pub fn type_at(&self, p: usize) -> Option<&'static str> {
+        self.owned.iter().find(|o| o.ptr as usize == p).map(|o| o.ty)
+    }
     pub fn len(&self) -> usize {
         self.owned.len()
     }
@@ -490,6 +494,11 @@ impl<'a> GcDecoder<'a> {
         let (ty, at) = self.cur;
         let ty = ty.rsplit("::").next().unwrap_or(ty);
         self.issues.push(format!("{s} (in {ty} @ {at:#x})"));
+        let h = ISSUE_HOOK.load(core::sync::atomic::Ordering::Relaxed);
+        if h != 0 {
+            let last = self.issues.last().unwrap();
+            unsafe { core::mem::transmute::<usize, fn(*const u8, usize)>(h)(last.as_ptr(), last.len()) };
+        }
     }
 
     fn bytes<const N: usize>(&mut self, at: u32) -> [u8; N] {
@@ -610,15 +619,30 @@ impl<'a> GcDecoder<'a> {
             return None;
         }
         let phase = target % stride;
-        for i in first..first + n {
-            // SAFETY: i < len (checked above); `done` points into the entry's boxed flags.
+        let tprof = PROF.load(core::sync::atomic::Ordering::Relaxed).then(std::time::Instant::now);
+        let mut decoded = 0usize;
+        let end = first + n;
+        let mut i = first;
+        while i < end {
+            // SAFETY: i < end <= len (checked above); `done` points into the entry's boxed flags.
             if unsafe { *done.add(i) } {
+                // a run of decoded elements is skipped 8 flags at a time (overlapping windows rescanned millions of
+                // flags, most of a big file's decode). The same elements are decoded, in the same order.
+                i += 1;
+                while i + 8 <= end && unsafe { (done.add(i) as *const u64).read_unaligned() } == 0x0101_0101_0101_0101 {
+                    i += 8;
+                }
                 continue;
             }
             unsafe { *done.add(i) = true };
+            decoded += 1;
             let v = T::gc_decode(self, phase + i as u32 * stride);
             // SAFETY: i < len, the shared allocation holds len initialised T.
             unsafe { *base.add(i) = v };
+            i += 1;
+        }
+        if let Some(t0) = tprof {
+            prof_note(core::any::type_name::<T>(), "shared", decoded, t0);
         }
         // SAFETY: first + n <= len.
         Some(unsafe { base.add(first) })
@@ -626,9 +650,13 @@ impl<'a> GcDecoder<'a> {
 
     /// `n` consecutive `T`s at `target` (GC stride `T::GC_BYTES`) as one native array.
     pub fn array<T: GcDecode>(&mut self, target: u32, n: usize) -> *mut T {
+        let tprof = (n >= 64 && PROF.load(core::sync::atomic::Ordering::Relaxed)).then(std::time::Instant::now);
         let v: Vec<T> = (0..n).map(|i| T::gc_decode(self, target + i as u32 * T::GC_BYTES)).collect();
         let p = Box::into_raw(v.into_boxed_slice()) as *mut T as *mut u8;
         self.arena.owned.push(Owned { ptr: p, len: n, free: free_slice::<T>, ty: core::any::type_name::<T>(), bytes: core::mem::size_of::<T>() * n });
+        if let Some(t0) = tprof {
+            prof_note(core::any::type_name::<T>(), "array", n, t0);
+        }
         p as *mut T
     }
 
@@ -715,6 +743,13 @@ impl<'a> GcDecoder<'a> {
         }
     }
 
+    /// Diagnostics (`MELEE_DECODE_PROF`): (allocations owned, their bytes, shared arrays, their bytes, memo entries).
+    pub fn prof_summary(&self) -> (usize, usize, usize, usize, usize) {
+        let bytes = self.arena.owned.iter().map(|o| o.bytes).sum();
+        let sb = self.shared.values().map(|v| v.1.len()).sum::<usize>();
+        (self.arena.owned.len(), bytes, self.shared.len(), sb, self.memo.len() + self.arr_memo.len())
+    }
+
     /// Finish decoding: the arena owning every object, and the issues found.
     pub fn finish(mut self) -> (GcArena, Vec<String>) {
         self.run();
@@ -725,6 +760,31 @@ impl<'a> GcDecoder<'a> {
         }
         (arena, core::mem::take(&mut self.issues))
     }
+}
+
+/// Diagnostics (`MELEE_DECODE_PROF`): time and count the element loops of big arrays per type (nested decodes count
+/// in both their own and the enclosing loop).
+pub static PROF: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+thread_local! {
+    /// (type, how) -> (elements, ns), reset by [`prof_take`]. Kept in a fixed array: no allocation on the decode path.
+    static PROF_TAB: core::cell::RefCell<[(&'static str, &'static str, usize, u64); 32]> = const { core::cell::RefCell::new([("", "", 0, 0); 32]) };
+}
+fn prof_note(ty: &'static str, how: &'static str, n: usize, t0: std::time::Instant) {
+    let ns = t0.elapsed().as_nanos() as u64;
+    PROF_TAB.with_borrow_mut(|t| {
+        for e in t.iter_mut() {
+            if e.0.is_empty() || (core::ptr::eq(e.0, ty) && core::ptr::eq(e.1, how)) {
+                *e = (ty, how, e.2 + n, e.3 + ns);
+                return;
+            }
+        }
+    });
+}
+/// The table since the last take, largest time first.
+pub fn prof_take() -> Vec<(&'static str, &'static str, usize, u64)> {
+    let mut v: Vec<_> = PROF_TAB.with_borrow_mut(|t| core::mem::replace(t, [("", "", 0, 0); 32])).into_iter().filter(|e| !e.0.is_empty()).collect();
+    v.sort_by(|a, b| b.3.cmp(&a.3));
+    v
 }
 
 /// Memo key for C strings (distinct from any decoded `u8`/`i8` object at the same offset).
@@ -887,3 +947,6 @@ mod tests {
         assert_eq!(d.finish().1.len(), 1);
     }
 }
+
+/// Debug: called with each kept issue string's bytes (`melee_engine::hwwatch`), 0 = none.
+pub static ISSUE_HOOK: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);

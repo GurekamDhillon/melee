@@ -303,6 +303,9 @@ pub static mut TAG_PARTNER_CK: [i8; 4] = [-1; 4];
 /// (-1 none). Preloaded with the match's files (Player_80031CB0) so the respawn never reads the disc mid-match. Set by
 /// melee_modes::tu::envoy at match begin; -1 for every retail match.
 pub static mut ENVOY_WAVE_CK: [i8; 4] = [-1; 4];
+/// The heap-1 gap a wave respawn needs for a new character's animation bank (the largest PlxxAJ.dat is under
+/// 0x280000; Marth's is 0x1EEEC0) plus room for the fighter's other allocations.
+const ENVOY_WAVE_BANK_ROOM: u32 = 0x30_0000;
 
 /// Envoy rooms: replace `slot`'s (asleep, between a KO and its rebirth) main fighter with a new fighter of character
 /// `ck`, created as the slot's main entity the way `Player_80031AD0` does, then free the old one. Refused (false) for a
@@ -316,6 +319,15 @@ pub fn envoy_wave_respawn(slot: i32, ck: CharacterKind) -> bool {
     let free_idx = 1 - out_idx;
     let old = player.player_entity[out_idx];
     if old.is_null() || !player.player_entity[free_idx].is_null() || !ext::ftLib_IsSleeping(old) {
+        return false;
+    }
+    // the new character's animation bank loads into heap 1 at its Fighter_Create (it is not preloaded, and the old
+    // fighter's bank stays); with many fighters in the match the heap can be too full, and the allocation asserts
+    // (loop 3's three-foe pack). Refuse unless the bank is resident or the heap's largest gap takes the biggest bank.
+    let k = map(ck).internal_id as usize;
+    if unsafe { crate::tu::ftdata::ftData_Table_Unk0[k].data.is_null() }
+        && melee_runtime::tu::lbheap::lbHeap_LargestFree(1) < ENVOY_WAVE_BANK_ROOM
+    {
         return false;
     }
     // the in-place tag's shape (tag_inplace_spawn + the retail transform swap, which carry every field the rebirth

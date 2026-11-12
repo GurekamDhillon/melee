@@ -181,6 +181,26 @@ pub unsafe fn lbMemory_80014F7C(h: *mut Handle) -> u32 {
     sum
 }
 
+/// TARGET_PC: the largest free gap of a heap (what one allocation can get).
+///
+/// # Safety
+/// `h` is a heap handle of this allocator.
+pub unsafe fn lbMemory_LargestFree(h: *mut Handle) -> u32 {
+    let mut largest: u32 = 0;
+    let mut it = head_of(h);
+    let mut from = (*h).lo;
+    loop {
+        let to = if !(*it).next.is_null() { (*(*it).next).addr } else { (*h).hi };
+        largest = largest.max(u32_of(to).wrapping_sub(u32_of(from)));
+        if (*it).next.is_null() {
+            break;
+        }
+        it = (*it).next;
+        from = ptr_of(u32_of((*it).addr).wrapping_add((*it).size as u32));
+    }
+    largest
+}
+
 /// `lbMemory_80014FC8`: best-fit allocation of `size` bytes (rounded up to 32) from heap `arg0`; returns the
 /// block entry (its `addr` is the block).
 ///

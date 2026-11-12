@@ -57,3 +57,17 @@ See the commit log of this branch and the section below (filled by each run).
   per-pointer copy; plus LRU eviction instead of clear-all. Needs `melee_gx` set_array to take an offset. Check: are
   the copies allocated in the game arena (alloc_fresh shows in the profile)? if so they also sit inside snapshots;
   the fix should mark them system-heap.
+
+## GX cache fix (2026-11-11/12): branch port/zerolag-gxfix2 (on port/v3x), also merged into port/zerolag
+- Fix: one copy per archive image / host range for vertex arrays, renderer gets (block, offset) (LOAD_ARRAYBASE gains
+  an offset word; GX state, ArraySnap, pack, interp, core v1 honour it); LRU eviction in both caches; forget_range
+  drops overlapping block copies. Copies stay in the game arena (shim handles are arena state; see report).
+- Proof: NHV1 + offscreen PNGs identical on pad_falcon_fox_fd / cpu_fox_falco_dl (frames 300/900/1500); hero replay
+  Game_20251031T213013 frame-exact; melee_gx tests incl. fx_disarmed_is_the_plain_frame; snapguard save/load
+  unchanged (0.25/0.40 ms). Vanilla 4-CPU BF match ticks p50 1.21 / p99 1.66 (before avg 37 ms after tick 1815).
+  Envoy armed fight (tag pair + 2 CPUs, wave respawn, stage switch 10 -> 28), 7000 ticks: 0 frames over budget after
+  the first; cache 9.6 MB, 0 evictions.
+- Scripts (build/): ab_inner.sh (one run), envoy_fight.sh (armed Envoy fight via --match), vs4_run.sh (4 CPUs to
+  results), verify_inner.sh (render-only proof), ticks.py (p50/p99/max per scene).
+- camp_pad.txt no longer reaches Envoy on v3x (new native menu row): the gate's envoy scenario needs a new pad
+  script or the armed --match form; dd5825a68 + camp_pad hangs at tick 1173 in HSD_PadRumbleInterpret1 (not in v3x).

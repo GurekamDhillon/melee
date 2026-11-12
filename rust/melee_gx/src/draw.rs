@@ -12,6 +12,8 @@ use crate::state::*;
 #[derive(Clone, Debug)]
 pub struct ArraySnap {
     pub data: GxData,
+    /// The array's first byte inside `data`; `needed` counts from here.
+    pub offset: u32,
     pub needed: u32,
 }
 
@@ -218,7 +220,7 @@ pub fn build_draw(
             return None;
         };
         assert!(needed <= a.size, "indexed attr {i} references {needed} bytes, array is {} bytes", a.size);
-        arrays[(i - GX_VA_POS) as usize] = Some(ArraySnap { data, needed });
+        arrays[(i - GX_VA_POS) as usize] = Some(ArraySnap { data, offset: a.offset, needed });
     }
     let config = shader::populate_pipeline_config(st, prim, fmt);
     let (config, info) = match st.last_config.as_ref() {

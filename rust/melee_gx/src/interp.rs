@@ -351,6 +351,7 @@ fn ndc_box(d: &DrawCmd, p: &[[f32; 4]; 4]) -> Option<[f32; 4]> {
             if o + ncomp * csize > a.needed as usize {
                 return None;
             }
+            let o = o + a.offset as usize;
             a.data.get(o..o + ncomp * csize)?
         };
         let comp = |i: usize| -> f32 {

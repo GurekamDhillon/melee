@@ -909,6 +909,11 @@ impl Gx {
 
     /// `GXSetArray(attr, data, size, stride, le)`.
     pub fn set_array(&mut self, attr: u32, data: Option<&GxData>, size: u32, stride: u8, le: bool) {
+        self.set_array_at(attr, data, 0, size, stride, le)
+    }
+
+    /// `GXSetArray` of an array that starts `offset` bytes into `data` (a shared copy of the block holding it).
+    pub fn set_array_at(&mut self, attr: u32, data: Option<&GxData>, offset: u32, size: u32, stride: u8, le: bool) {
         let cp_attr = if attr == GX_VA_NBT { GX_VA_NRM } else { attr };
         let idx = cp_attr - GX_VA_POS;
         assert!(idx & !0xF == 0);
@@ -917,6 +922,7 @@ impl Gx {
         self.w64(h);
         self.w32(size);
         self.w8(le as u8);
+        self.w32(offset);
         self.write_cp_reg(CP_REG_ARRAYSTRIDE_ID | idx as u8, stride as u32);
     }
 

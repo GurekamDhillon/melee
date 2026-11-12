@@ -820,7 +820,8 @@ impl RetailPlay {
         // a render-only fault as a running tick with no draws
         melee_platform::script::IN_MATCH.store(matches!(self.cur.1, 2 | 3), std::sync::atomic::Ordering::Relaxed);
         if self.tick_no % 60 == 0 {
-            log(&format!("heartbeat tick {} scene {} age {} draws {}", self.tick_no, scene_name(self.cur.1), self.age, self.frame.as_ref().map_or(0, |f| f.len())));
+            let (dn, db, bn, bb, ev, cp) = melee_engine::gxbridge::data_cache_detail();
+            log(&format!("heartbeat tick {} scene {} age {} draws {} gxcache ptr {}/{} KB blocks {}/{} KB evicted {} copied {} MB", self.tick_no, scene_name(self.cur.1), self.age, self.frame.as_ref().map_or(0, |f| f.len()), dn, db >> 10, bn, bb >> 10, ev, cp >> 20));
             if std::env::var_os("MELEE_RETAIL_DRAWDBG").is_some() {
                 if let Some(f) = self.frame.as_ref() {
                     for (i, d) in f.iter().take(6).enumerate() {

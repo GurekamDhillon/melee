@@ -23,14 +23,44 @@ struct Objs {
     tex: HashMap<usize, TexObj>,
     tlut: HashMap<usize, TlutObj>,
     light: HashMap<usize, GxLightObj>,
-    data: HashMap<(usize, usize), GxData>,
+    /// Copies of game memory by (address, length), with the use stamp of their last lookup.
+    data: HashMap<(usize, usize), (GxData, u64)>,
     /// Bytes held by `data`.
     data_bytes: usize,
+    /// One copy per archive image / host range a vertex array lives in, keyed by the block's (base, length); arrays
+    /// are handed to the renderer as (block copy, offset). Before, every array got its own copy of the rest of its
+    /// file, which overflowed the cap in busy scenes and re-copied megabytes on every GXSetArray (~35 ms a tick).
+    blocks: HashMap<(usize, usize), (GxData, u64)>,
+    blocks_bytes: usize,
+    /// Lookup counter (the LRU clock).
+    clock: u64,
+    /// Diagnostics: entries evicted, bytes copied.
+    evictions: u64,
+    copied: u64,
 }
 
-/// `data` is emptied when it would hold more than this (its keys are guest addresses that later loads reuse; the copies
-/// are re-made on the next draw).
+/// `data` and `blocks` each evict their least recently used entries when they would hold more than this (keys are
+/// guest addresses that later loads reuse; evicted copies are re-made on the next draw).
 const DATA_CAP: usize = 48 << 20;
+const BLOCK_CAP: usize = 192 << 20;
+
+/// Drop least recently used entries of `m` until `*bytes + add <= cap` (keeps at least the newest quarter of the cap).
+fn evict_lru<K: Copy + Eq + std::hash::Hash>(m: &mut HashMap<K, (GxData, u64)>, bytes: &mut usize, add: usize, cap: usize, evictions: &mut u64) {
+    if *bytes + add <= cap {
+        return;
+    }
+    let mut v: Vec<(u64, K, usize)> = m.iter().map(|(k, (d, t))| (*t, *k, d.len())).collect();
+    v.sort_unstable_by_key(|x| x.0);
+    let target = cap - cap / 4;
+    for (_, k, n) in v {
+        if *bytes + add <= target {
+            break;
+        }
+        m.remove(&k);
+        *bytes -= n;
+        *evictions += 1;
+    }
+}
 
 static mut SHIM: Option<GxShim> = None;
 static mut OBJS: Option<Objs> = None;
@@ -101,7 +131,10 @@ pub fn forget_range(lo: usize, hi: usize) {
     unsafe {
         if let Some(o) = OBJS.as_mut() {
             o.data.retain(|&(p, _), _| p < lo || p >= hi);
-            o.data_bytes = o.data.values().map(|d| d.len()).sum();
+            o.data_bytes = o.data.values().map(|d| d.0.len()).sum();
+            // a block copy overlapping the range is stale too
+            o.blocks.retain(|&(b, n), _| b + n <= lo || b >= hi);
+            o.blocks_bytes = o.blocks.values().map(|d| d.0.len()).sum();
         }
     }
 }
@@ -109,7 +142,13 @@ pub fn forget_range(lo: usize, hi: usize) {
 /// Diagnostics: (entries, bytes) of the copied game-memory cache.
 pub fn data_cache_stats() -> (usize, usize) {
     let o = objs();
-    (o.data.len(), o.data.values().map(|d| d.len()).sum())
+    (o.data.len() + o.blocks.len(), o.data_bytes + o.blocks_bytes)
+}
+
+/// Diagnostics: (per-pointer copies, their bytes, block copies, their bytes, evictions, bytes copied so far).
+pub fn data_cache_detail() -> (usize, usize, usize, usize, u64, u64) {
+    let o = objs();
+    (o.data.len(), o.data_bytes, o.blocks.len(), o.blocks_bytes, o.evictions, o.copied)
 }
 
 /// The bytes at `p` as the shared data the shim hands to the renderer (cached by address and length).
@@ -137,17 +176,53 @@ unsafe fn data_at_ex(p: *const c_void, want: usize, trust: bool) -> Option<GxDat
     }
     let key = (p as usize, n);
     let o = objs();
-    if let Some(d) = o.data.get(&key) {
+    o.clock += 1;
+    let now = o.clock;
+    if let Some((d, t)) = o.data.get_mut(&key) {
+        *t = now;
         return Some(d.clone());
     }
     let d: GxData = core::slice::from_raw_parts(p as *const u8, n).into();
-    if o.data_bytes + n > DATA_CAP {
-        o.data.clear();
-        o.data_bytes = 0;
-    }
+    evict_lru(&mut o.data, &mut o.data_bytes, n, DATA_CAP, &mut o.evictions);
     o.data_bytes += n;
-    o.data.insert(key, d.clone());
+    o.copied += n as u64;
+    o.data.insert(key, (d.clone(), now));
     Some(d)
+}
+
+/// The archive image or host range holding `p`: `(base, len)` (heap memory: None, it is copied per pointer).
+unsafe fn block_of(p: usize) -> Option<(usize, usize)> {
+    for &(b, n) in HOST_RANGES.lock().unwrap().iter() {
+        if p >= b && p < b + n {
+            return Some((b, n));
+        }
+    }
+    let h = crate::host::Host::get();
+    for im in h.archives.values().chain(h.retired.iter()) {
+        if p >= im.raw && p < im.raw + im.raw_len {
+            return Some((im.raw, im.raw_len));
+        }
+    }
+    None
+}
+
+/// The shared copy of the block holding `p` and `p`'s offset in it.
+unsafe fn block_data_at(p: usize) -> Option<(GxData, u32)> {
+    let (b, n) = block_of(p)?;
+    let off = u32::try_from(p - b).ok()?;
+    let o = objs();
+    o.clock += 1;
+    let now = o.clock;
+    if let Some((d, t)) = o.blocks.get_mut(&(b, n)) {
+        *t = now;
+        return Some((d.clone(), off));
+    }
+    let d: GxData = core::slice::from_raw_parts(b as *const u8, n).into();
+    evict_lru(&mut o.blocks, &mut o.blocks_bytes, n, BLOCK_CAP, &mut o.evictions);
+    o.blocks_bytes += n;
+    o.copied += n as u64;
+    o.blocks.insert((b, n), (d.clone(), now));
+    Some((d, off))
 }
 
 unsafe fn mtx34<'a>(p: *mut c_void) -> &'a [[f32; 4]; 3] {
@@ -168,6 +243,11 @@ pub fn GXInvalidateVtxCache() { shim().invalidate_vtx_cache() }
 pub fn GXSetVtxDesc(attr: u32, ty: u32) { shim().set_vtx_desc(attr, ty) }
 pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u8) { shim().set_vtx_attr_fmt(fmt, attr, cnt, ty, frac) }
 pub unsafe fn GXSetArray(attr: u32, base: *mut c_void, stride: u8) {
+    if !base.is_null() {
+        if let Some((d, off)) = block_data_at(base as usize) {
+            return shim().set_array_at(attr, Some(&d), off, stride);
+        }
+    }
     let mut d = data_at(base, usize::MAX);
     if d.is_none() && !base.is_null() {
         // An array in native static memory (psdisp's HSD_PSDisp_8040C340 texcoord table): neither archive nor

@@ -272,13 +272,16 @@ pub struct Light {
 #[derive(Clone, Debug)]
 pub struct AttrArray {
     pub data: Option<GxData>,
+    /// Where the array starts inside `data` (a shared copy of the whole block holding it).
+    pub offset: u32,
+    /// Bytes from `offset` the array may use.
     pub size: u32,
     pub stride: u8,
     pub le: bool,
 }
 impl Default for AttrArray {
     fn default() -> Self {
-        Self { data: None, size: 0, stride: 0, le: true }
+        Self { data: None, offset: 0, size: 0, stride: 0, le: true }
     }
 }
 
@@ -725,11 +728,12 @@ impl GxState {
                     let len = (addr_len >> 12) as u32 + 1;
                     let dst = (addr_len & 0x0FFF) as u32;
                     let array = &self.arrays[array_type];
-                    let off = src_idx as usize * array.stride as usize;
+                    let rel = src_idx as usize * array.stride as usize;
+                    let off = array.offset as usize + rel;
                     let size = len as usize * 4;
                     let le = array.le;
                     match &array.data {
-                        Some(d) if off + size <= d.len() && off as u64 + size as u64 <= array.size as u64 => {
+                        Some(d) if off + size <= d.len() && rel as u64 + size as u64 <= array.size as u64 => {
                             let src = d[off..off + size].to_vec();
                             self.copy_xf_data(dst, &src, len, le);
                         }
@@ -814,8 +818,10 @@ impl GxState {
                 let handle = r.u64();
                 let size = r.u32();
                 let le = r.u8() == 1;
+                let offset = r.u32();
                 let a = &mut self.arrays[attr];
                 a.data = res.get(handle);
+                a.offset = offset;
                 a.size = size;
                 a.le = le;
             }

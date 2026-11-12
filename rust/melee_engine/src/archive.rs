@@ -107,7 +107,17 @@ pub struct Decoded {
 /// `src` points at `file_size` readable bytes.
 pub unsafe fn decode(src: *mut u8, file_size: usize) -> Decoded {
     let file = core::slice::from_raw_parts(src, file_size);
+    let prof = decode_prof_on();
+    if prof {
+        crate::arena::PROF_NS.with(|c| c.set((0, 0, 0)));
+        let main = std::thread::current().name() == Some("main");
+        crate::arena::PROF_ALLOC.store(main, core::sync::atomic::Ordering::Relaxed);
+        melee_core::gcdecode::PROF.store(main, core::sync::atomic::Ordering::Relaxed);
+    }
+    let pf0 = if prof { page_faults() } else { 0 };
+    let tp0 = std::time::Instant::now();
     let dat = DatArchive::parse(file).unwrap_or_else(|e| panic!("host_parse: {e}"));
+    let tp1 = std::time::Instant::now();
     let h = dat.header;
     let mut offset = HEADER_BYTES as u32;
     if h.data_size != 0 {
@@ -140,8 +150,14 @@ pub unsafe fn decode(src: *mut u8, file_size: usize) -> Decoded {
         v.dedup();
         crate::dat_custom::Bounds(v, src as usize + HEADER_BYTES)
     };
+    let tp2 = std::time::Instant::now();
+    let mut tp3 = tp2;
+    let mut tp4 = tp2;
+    let mut psum = (0, 0, 0, 0, 0);
+    let mut per_root: Vec<(f64, &str)> = Vec::new();
     let (arena, issues) = {
         let mut d = dat.decoder();
+        tp3 = std::time::Instant::now();
         d.set_bounds(bounds.0.clone());
         d.set_raw_base(src as usize + HEADER_BYTES);
         d.set_roots(dat.publics.iter().map(|q| q.offset).collect());
@@ -152,16 +168,61 @@ pub unsafe fn decode(src: *mut u8, file_size: usize) -> Decoded {
                     // an array root runs to the next public, or the end of the data section
                     let next = dat.publics.iter().map(|q| q.offset).filter(|&o| o > p.offset).min();
                     let extent = next.unwrap_or(dat.data.len() as u32) - p.offset;
+                    let tr = std::time::Instant::now();
                     let r = dat_types::decode_root(&mut d, ty, p.offset, extent, &bounds, &p.name);
+                    if prof {
+                        d.run(); // (finish runs the same queue; draining it here only moves the fills into this root's time)
+                        per_root.push((tr.elapsed().as_secs_f64() * 1e3, p.name.as_str()));
+                    }
                     roots.push((p.name.clone(), Root::Native(r)));
                 }
                 None => {}
             }
         }
+        if prof {
+            d.run();
+            tp4 = std::time::Instant::now();
+            psum = d.prof_summary();
+        }
         d.finish()
     };
+    let tp5 = std::time::Instant::now();
     crate::dat_custom::fix_articles();
     crate::dat_custom::fix_dynamics();
+    if prof {
+        let ms = |a: std::time::Instant, b: std::time::Instant| (b - a).as_secs_f64() * 1e3;
+        let tp6 = std::time::Instant::now();
+        per_root.sort_by(|a, b| b.0.total_cmp(&a.0));
+        let top: Vec<String> = per_root.iter().take(4).map(|(t, n)| format!("{n} {t:.2}")).collect();
+        let ps = melee_runtime::dat::PARSE_SPLIT.with(|c| c.get());
+        crate::arena::PROF_ALLOC.store(false, core::sync::atomic::Ordering::Relaxed);
+        let al = crate::arena::PROF_NS.with(|c| c.get());
+        let types: Vec<String> = arena.bytes_by_type().iter().take(5).map(|(t, n, b)| format!("{} x{n} {}KB", t.rsplit("::").next().unwrap_or(t), b >> 10)).collect();
+        melee_core::gcdecode::PROF.store(false, core::sync::atomic::Ordering::Relaxed);
+        let loops: Vec<String> = melee_core::gcdecode::prof_take().iter().take(6).map(|(t, h, n, ns)| format!("{} {h} {n} el {:.2} ms", t.rsplit("::").next().unwrap_or(t), *ns as f64 / 1e6)).collect();
+        eprintln!("decode prof loops: {} [page faults {}]", loops.join(", "), page_faults().wrapping_sub(pf0));
+        eprintln!("decode prof alloc: {:.2} ms in {} zeroed allocs ({} KB); top types: {}", al.0 as f64 / 1e6, al.1, al.2 >> 10, types.join(", "));
+        eprintln!(
+            "decode prof [{}]: {} KB ({} relocs): total {:.2} ms = parse {:.2} [copy {:.2} relocs {:.2} syms {:.2} set {:.2}] bounds {:.2} decoder-new {:.2} roots {:.2} finish/drop {:.2} fix {:.2}; {} blocks {} KB, {} shared arrays {} KB-elems, {} memo; top roots: {}",
+            std::thread::current().name().unwrap_or("?"),
+            file_size >> 10,
+            h.nb_reloc,
+            ms(tp0, tp6),
+            ms(tp0, tp1),
+            ps.0, ps.1, ps.2, ps.3,
+            ms(tp1, tp2),
+            ms(tp2, tp3),
+            ms(tp3, tp4),
+            ms(tp4, tp5),
+            ms(tp5, tp6),
+            psum.0,
+            psum.1 >> 10,
+            psum.2,
+            psum.3 >> 10,
+            psum.4,
+            top.join(", ")
+        );
+    }
     crate::hwwatch::flush("decode end");
     crate::hwwatch::check_issues(&issues);
     Decoded { dat, roots, arena, issues, reloc, public, externs, effects: Vec::new() }
@@ -435,4 +496,29 @@ pub fn reclaim_flags() -> (bool, bool, bool) {
         let on = |k: &str| std::env::var_os(k).is_some();
         (on("MELEE_RECLAIM_POISON"), on("MELEE_RECLAIM_LEAK"), on("MELEE_RECLAIM_SORTED"))
     })
+}
+
+/// `MELEE_DECODE_PROF=1`: one line per archive decode with its phase times (diagnostics; it drains the fill queue per
+/// root, so the allocation ORDER differs from a normal run: never for digests or proofs).
+fn decode_prof_on() -> bool {
+    static P: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *P.get_or_init(|| std::env::var_os("MELEE_DECODE_PROF").is_some())
+}
+
+/// The process's page-fault count (diagnostics; 0 off Windows).
+pub fn page_faults() -> u32 {
+    #[cfg(windows)]
+    {
+        #[repr(C)]
+        struct Counters { cb: u32, page_faults: u32, rest: [usize; 9] }
+        extern "system" {
+            fn GetCurrentProcess() -> *mut core::ffi::c_void;
+            fn K32GetProcessMemoryInfo(p: *mut core::ffi::c_void, c: *mut Counters, cb: u32) -> i32;
+        }
+        let mut c = Counters { cb: core::mem::size_of::<Counters>() as u32, page_faults: 0, rest: [0; 9] };
+        if unsafe { K32GetProcessMemoryInfo(GetCurrentProcess(), &mut c, c.cb) } != 0 {
+            return c.page_faults;
+        }
+    }
+    0
 }

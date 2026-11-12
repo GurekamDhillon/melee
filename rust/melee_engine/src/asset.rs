@@ -859,6 +859,7 @@ pub fn init(iso: Option<String>) {
     }
     let _s = crate::arena::SysScope::enter();
     let _ = crate::archive::reclaim_flags(); // before any decode (see there)
+    crate::arena::start_prefault();
     if !recheap::init() {
         return;
     }
@@ -1228,6 +1229,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         drop(other);
     }
     let t1 = std::time::Instant::now();
+    let pf0 = if log_on() { archive::page_faults() } else { 0 };
     let out = {
         drop(_sys);
         let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || {
@@ -1253,10 +1255,11 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         let st = &g.stats;
         let (rep, livew, temp) = APPLY_SPLIT.with(|c| c.get());
         eprintln!(
-            "asset: load {} KB {how}: wait {:.2} ms, apply {:.2} ms [events {:.2} (temporaries {:.2}) live writes {:.2}; {} events, {} KB of blocks] ({} blocks, {} fixups, {} dead refs; prepared in {:.2} ms = decode {:.2} scan {:.2} build {:.2}) [hints {} ahead {} hits {} waits {} in place {}]",
+            "asset: load {} KB {how}: wait {:.2} ms, apply {:.2} ms ({} page faults) [events {:.2} (temporaries {:.2}) live writes {:.2}; {} events, {} KB of blocks] ({} blocks, {} fixups, {} dead refs; prepared in {:.2} ms = decode {:.2} scan {:.2} build {:.2}) [hints {} ahead {} hits {} waits {} in place {}]",
             len >> 10,
             (t1 - t0).as_secs_f64() * 1e3,
             t1.elapsed().as_secs_f64() * 1e3,
+            archive::page_faults().wrapping_sub(pf0),
             rep,
             temp,
             livew,

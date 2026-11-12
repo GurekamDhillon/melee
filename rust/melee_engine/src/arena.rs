@@ -277,6 +277,13 @@ fn note_asset_block(p: *mut u8, n: usize) {
     });
 }
 
+/// `MELEE_DECODE_PROF` (archive.rs): time the asset path's allocations on the decoding thread (diagnostics).
+pub static PROF_ALLOC: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+thread_local! {
+    /// (ns in `alloc_zeroed`, calls, bytes) since the last take.
+    pub static PROF_NS: core::cell::Cell<(u64, u64, u64)> = const { core::cell::Cell::new((0, 0, 0)) };
+}
+
 /// Set once the arena was ever snapshotted (a load may then have left bytes past the bump pointer).
 static SNAPSHOTTED: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
 
@@ -290,6 +297,15 @@ pub fn note_snapshot() {
 /// the pages that are touched (the archive decoder's shared tables, `gcdecode::shared_array`).
 #[cfg(any(windows, unix))]
 pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
+    if PROF_ALLOC.load(Relaxed) {
+        PROF_ALLOC.store(false, Relaxed);
+        let t = std::time::Instant::now();
+        let p = alloc_zeroed(l);
+        let ns = t.elapsed().as_nanos() as u64;
+        PROF_ALLOC.store(true, Relaxed);
+        PROF_NS.with(|c| { let (a, n, b) = c.get(); c.set((a + ns, n + 1, b + l.size() as u64)) });
+        return p;
+    }
     let (p, fresh) = alloc_fresh(l);
     if ZERO_ALL.with(|z| z.get()) {
         note_asset_block(p, l.size());
@@ -660,3 +676,69 @@ mod tests {
         }
     }
 }
+
+/// Bytes past the bump pointer the pre-faulter keeps resident.
+#[cfg(windows)]
+const PREFAULT_AHEAD: usize = 96 << 20;
+
+/// Start the pre-faulter (boot, once; `MELEE_ARENA_PREFAULT=off` keeps it off): a thread that keeps the pages just past
+/// the bump pointer committed and resident by READING one byte of each. A fresh page's first touch is a demand-zero
+/// fault (~1 us each: thousands per big archive decode or plan apply, most of their time); after the read the page is
+/// already backed by a zeroed physical page, so the game thread's first write does not fault. Nothing is written: the
+/// arena's bytes, blocks and write-watch state are exactly as without it (commits ahead are what `alloc_locked` would do
+/// at its next step, made earlier, under the same lock).
+#[cfg(windows)]
+pub fn start_prefault() {
+    if std::env::var("MELEE_ARENA_PREFAULT").is_ok_and(|v| v == "off") {
+        return;
+    }
+    static STARTED: AtomicBool = AtomicBool::new(false);
+    if STARTED.swap(true, Relaxed) {
+        return;
+    }
+    let _s = SysScope::enter();
+    let _ = std::thread::Builder::new().name("arena-prefault".into()).spawn(|| {
+        mark_foreign_thread();
+        extern "system" {
+            fn GetCurrentThread() -> *mut core::ffi::c_void;
+            fn SetThreadPriority(h: *mut core::ffi::c_void, p: i32) -> i32;
+        }
+        unsafe { SetThreadPriority(GetCurrentThread(), -1) }; // below normal: never ahead of the game thread
+        let mut touched = 0usize;
+        loop {
+            let (bump, committed) = unsafe { (core::ptr::read_volatile(&raw const BUMP), core::ptr::read_volatile(&raw const COMMITTED)) };
+            if bump == 0 {
+                std::thread::sleep(std::time::Duration::from_millis(5));
+                continue;
+            }
+            let want = bump + PREFAULT_AHEAD;
+            if committed < want {
+                let _g = Lock::take();
+                unsafe {
+                    while COMMITTED < want && COMMITTED + COMMIT_STEP <= BASE + CAP - 0x10000 {
+                        if !sys::commit(COMMITTED, COMMIT_STEP) {
+                            break;
+                        }
+                        COMMITTED += COMMIT_STEP;
+                    }
+                }
+            }
+            let committed = unsafe { core::ptr::read_volatile(&raw const COMMITTED) };
+            let mut p = (touched.max(bump) + 0xFFF) & !0xFFF;
+            let end = want.min(committed);
+            let mut n = 0;
+            while p < end {
+                unsafe { core::ptr::read_volatile(p as *const u8) };
+                p += 0x1000;
+                n += 1;
+                if n % 256 == 0 {
+                    std::thread::yield_now();
+                }
+            }
+            touched = touched.max(end);
+            std::thread::sleep(std::time::Duration::from_millis(2));
+        }
+    });
+}
+#[cfg(not(windows))]
+pub fn start_prefault() {}

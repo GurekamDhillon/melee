@@ -276,3 +276,44 @@ the menu-flow digest has the one unexplained ItCo word. The branch does clearly 
 38.6 -> 25.6, match setup 16.6 -> 14.9 vs service off; vs slice 1: 78.9 -> 25.6 and 45.8 -> 14.9).
 Next: trace the 0x113 write (hardware watch on that string); reuse decoded commons (ItCo, EfCoData) across matches;
 prefetch the title-demo files at boot; no worker prepare of a file the game is decoding in place right now.
+
+## Asset service slice 4 (2026-11-12, port/zerolag-assets1; light-slot runs, not a quiet pass)
+Changes (04f4a5529 .. e915a717f):
+- ROOT CAUSE of the ItCo 0x113 word and the 8-byte write past a 136-byte block, one bug: dat_custom `rtable_articles`,
+  the Warp Star attribute rebuild (since 8d104891c, Nov 2) allocated the header + `count - 1` entries. The last 16-byte
+  `itWstarAttrEntry` was written past the block, and its `x4_sfx` (0x113) landed in the first word of the next block in
+  the arena's size class (in the menu flow, a decoder issue string). Found with `MELEE_HWWATCH_ISSUE=1` (new: hardware
+  write watch on issue strings, `MELEE_HWWATCH_NTH` arms one). Fixed: 84e682052. Also on its own branch for the owner's
+  build: `port/itco-overrun` (e126a38a8 + fix + regression test `wstar_block_holds_every_entry`, gate OK).
+  It is very likely the "u32 0x113 stored at match 1's load" of 9cdb42af8 (the MELEE_RECLAIM_LEAK mitigation): same value,
+  same load. Not proven: 10 + 3 armed-Envoy fight-start runs with MELEE_RECLAIM_LEAK unset gave 0 crashes / 0 poison
+  reports BEFORE the fix as well. Keep the mitigation.
+- A queued (not started) hint of a file the game decodes in place is dropped; kept-copy (`Src::Bytes`) prepares wait
+  until the game's decodes were quiet for 150 ms; disc hints go first.
+- Plans with >= 100k fixups (ItCo) write live blocks on 4 threads (ItCo apply 11.2 -> 8.8 ms).
+- Boot hints: MnExtAll (CSS: 1.3 MB decoded in place, 2.9 ms) and Kirby's copy-hat files (title demo with Kirby: ~22 ms of
+  in-place decodes in the first frame).
+- Pacing (main_loop.rs, presentation only): a tick due in the last half of a present slot is preceded by the present, and
+  a tick due within 1.5 ms runs at once instead of sleeping to it (the clock counts it at its due time). A long tick no
+  longer adds the slot phase to the presented interval (CSS 18.0/11.8 -> 12.6/11.8).
+Not done: reusing applied commons across matches (would change allocation order); title disc reads / random demo files
+(the remaining title cost is reading the randomly picked demo match's ~77 files in the first frame).
+
+### Table (interval / tick ms, worst of first 4 frames, WORST of 3 runs; build e915a717f)
+| scene | slice 3 on | slice 3 off | slice 4 on | slice 4 off |
+| title / first frame | 55.1 / 43.1 | 50.9 / 37.2 | 62.0 / 46.9 | 53.9 / 39.4 |
+| CSS enter | 17.3 / 13.8 | 18.5 / 12.6 | 15.6 / 14.7 | 13.2 / 12.4 |
+| VS scene change | 25.6 / 24.4 | 38.6 / 37.1 | 29.0 / 27.9 (2 of 3: 23.7-24.3) | 39.1 / 37.7 |
+| match setup | 14.9 / 12.8 | 16.6 / 15.3 | 17.0 / 15.6 (2 of 3: 11.6-12.5) | 17.3 / 15.4 |
+| FoD `--match` (no lead) | 56.0 | 54.8 | 56.6 / 55.5 | 56.7 / 50.4 |
+| Envoy `--match` (no lead) | 110.5 | 94.1 | 105.5 / 101.8 | 96.7 / 93.1 |
+Under 16.7: CSS enter (on and off). Match setup is under in 2 of 3 runs only. Not under: title, VS scene change and the
+no-lead fight starts. Envoy no-lead is still slower with the service on (100-105 vs 88-97). The queued-hint drop did not
+fix that.
+
+### Proof (e915a717f)
+Digest FoD on = off 293/293, off = off2 293/293. Menu flow on vs off: only the known per-run 42 KB word (load 35)
+differs, the same as off vs off2 (the ItCo word is gone). NHV1 on = off: menu flow 3847 EQUAL, Envoy fight 7000 EQUAL.
+Gate: 4 goldens, synctest d4 0 mismatches, audio = C, snapguard 0.208 / 0.35 / 4.73 under baseline: GATE OK.
+Synctest d7: 1638 hash checks, 0 mismatches. Hero replay Game_20251031T213013: SLPCHECK match (12844).
+Verdict: correctness proofs all pass; zero-lag NOT met (title, VS scene change, no-lead fight starts).

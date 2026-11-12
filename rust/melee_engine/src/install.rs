@@ -129,6 +129,7 @@ pub fn install() {
 
         tu_archive::host_parse = Some(archive::host_parse);
         melee_runtime::tu::lbdvd::ASSET_HINT = Some(crate::asset::hint_entry);
+        melee_modes::tu::envoy::PLAN_HINT = Some(crate::asset::hint_envoy_plan);
         tu_archive::host_public = Some(|a, s| archive::host_public_address(a, s as *const _));
         tu_archive::host_locate_extern = Some(|a, s, p| archive::host_locate_extern(a, s as *const _, p));
     }

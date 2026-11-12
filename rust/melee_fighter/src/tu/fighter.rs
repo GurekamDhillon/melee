@@ -1130,6 +1130,13 @@ pub fn fighter_proc_fns() -> [(usize, &'static str); 15] {
 pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     let _prof = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Fighter, || melee_core::frameprof::Text::new().s("fighter create kind ").n(input.internal_id as i64).s(" slot ").n(input.slot as i64));
     melee_core::ct!("Fighter_Create");
+    // zero-hitch: named phases of the create (frameprof spans only)
+    macro_rules! ph {
+        ($name:literal, $e:expr) => {{
+            let _p = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s(concat!("ft create: ", $name)));
+            $e
+        }};
+    }
     ext::Geno_AnimBankBeforeSpawn();
     let g = ext::GObj_Create(HSD_GOBJ_CLASS_FIGHTER as u16, 8, 0);
     ext::GObj_SetupGXLink(g, Some(crate::tu::ftdrawcommon::ftDrawCommon_80080E18), 5, 0);
@@ -1137,26 +1144,28 @@ pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     core::ptr::write_bytes(fp, 0, 1); // TARGET_PC: Slippi's Init Player Data zeroes the block
     (*fp).dat_attrs_backup = ext::HSD_ObjAlloc(&mut fighter_dat_attrs_alloc_data) as _;
     ext::GObj_InitUserData(g, 4, Some(Fighter_Unload_8006DABC), fp as *mut core::ffi::c_void);
-    ext::ftData_8008572C(input.internal_id as i32);
-    Fighter_UnkInitLoad_80068914(g, input);
+    ph!("data 8008572C", ext::ftData_8008572C(input.internal_id as i32));
+    ph!("init load 80068914", Fighter_UnkInitLoad_80068914(g, input));
     let fp = &mut *fp;
-    ext::efAsync_LoadSync(ext::ftData_UnkBytePerCharacter(fp.kind as i32));
-    ext::ftData_80085820(fp.kind as i32, fp.costume_id);
-    Fighter_UnkUpdateCostumeJoint_800686E4(g);
-    ext::ftData_80085B10(fp);
-    ext::ftParts_80074E58(fp);
-    ext::ftParts_SetupParts(g);
-    ext::ftAnim_80070308(g);
-    ext::ftCo_800C884C(g);
-    Fighter_80068E64(g);
-    ext::ftParts_800749CC(g);
-    ext::ftAnim_8007077C(g);
-    ext::ftCo_8009CF84(fp);
-    ext::ftAnim_8006FE48(g);
+    ph!("effects LoadSync", ext::efAsync_LoadSync(ext::ftData_UnkBytePerCharacter(fp.kind as i32)));
+    ph!("costume 80085820", ext::ftData_80085820(fp.kind as i32, fp.costume_id));
+    ph!("costume joint", Fighter_UnkUpdateCostumeJoint_800686E4(g));
+    ph!("data 80085B10", ext::ftData_80085B10(fp));
+    ph!("parts", {
+        ext::ftParts_80074E58(fp);
+        ext::ftParts_SetupParts(g);
+    });
+    ph!("anim 80070308", ext::ftAnim_80070308(g));
+    ph!("co 800C884C", ext::ftCo_800C884C(g));
+    ph!("80068E64", Fighter_80068E64(g));
+    ph!("parts 800749CC", ext::ftParts_800749CC(g));
+    ph!("anim 8007077C", ext::ftAnim_8007077C(g));
+    ph!("co 8009CF84", ext::ftCo_8009CF84(fp));
+    ph!("anim 8006FE48", ext::ftAnim_8006FE48(g));
     Fighter_UnkUpdateVecFromBones_8006876C(fp);
     ext::ftCo_8009F578(fp);
-    ext::Mex_OnLoadDispatch(fp.kind as i32, g, van(&crate::tu::ftdata::ftData_OnLoad, fp.kind as i32));
-    Fighter_Create_Inline2(g);
+    ph!("OnLoad", ext::Mex_OnLoadDispatch(fp.kind as i32, g, van(&crate::tu::ftdata::ftData_OnLoad, fp.kind as i32)));
+    ph!("inline2", Fighter_Create_Inline2(g));
     ext::ftColl_8007B320(g);
     fp.x890_cameraBox = ext::Camera_80029020() as _;
     ext::lbShadow_8000ED54(&mut fp.x20A4 as *mut _ as *mut _, jobj_of(g));
@@ -1168,7 +1177,8 @@ pub unsafe fn Fighter_Create(input: &plAllocInfo) -> G {
     for (f, p) in procs {
         ext::HSD_GObj_SetupProc(g, f, p);
     }
-    Fighter_Spawn(g);
+    ph!("spawn", Fighter_Spawn(g));
+    let _p = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("ft create: first motion"));
     if fp.kind == Ft_Kind_MasterH {
         ext::ftMh_MS_341_8014FE10(g);
     } else if fp.kind == Ft_Kind_CrezyH {

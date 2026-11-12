@@ -504,6 +504,7 @@ struct St {
     assist_seen: [i32; NP],
     auto_hold: [i32; NP],
     strikes: i32,
+    test_buy: i32,
 }
 
 /// The 64-bit half of the state (Heat and charge in ticks, the purse, the pips): i64 words only.
@@ -942,6 +943,10 @@ unsafe fn test_drives() {
                 }
                 if item == "protect" {
                     S.test_protect = 1;
+                    continue;
+                }
+                if item == "buystock" {
+                    S.test_buy = 1;
                     continue;
                 }
                 if item == "noshift" {
@@ -1403,7 +1408,30 @@ unsafe fn roll_offers(p: usize) {
     }
 }
 
+/// The shop's extra stock: coins for one more stock in the shared pool (and on the players in the held match).
+unsafe fn buy_stock() -> bool {
+    if !spend(stock_price()) {
+        return false;
+    }
+    S.pool += 1;
+    for h in 0..nh() {
+        gd_envoy_apply(h, AP_STOCKS, gd_player_stocks(h) + 1);
+    }
+    log(b"envoy: shop stock, pool\0", S.pool);
+    // the next match takes its stocks from the plan, which fight_won already sent: send it again with this stock
+    make_plan();
+    log(b"envoy: shop stock, plan stocks now\0", PLAN[4]);
+    true
+}
+
 unsafe fn open_reward(kind: i32) {
+    // test knob `buystock`: the shop buys the extra stock at once when it opens (coins given if short)
+    if kind == RW_SHOP && S.test_buy != 0 {
+        if HH.purse < stock_price() as i64 * COIN_UNIT {
+            HH.purse = stock_price() as i64 * COIN_UNIT;
+        }
+        buy_stock();
+    }
     S.rw_active = kind;
     S.timer = if kind == RW_SHOP { SHOP_TIME } else { REWARD_TIME };
     for p in 0..NP {
@@ -1449,6 +1477,7 @@ unsafe fn finish_pick(p: usize, id: i32, f: i32) {
             gd_envoy_apply(h, AP_STOCKS, gd_player_stocks(h) + 1);
         }
         log(b"envoy: took +1 stock, player\0", p as i32);
+        make_plan(); // the next match takes its stocks from the plan
     } else if (0..POOL_LEN as i32).contains(&id) {
         if POOL[id as usize].kind == K_KEYSTONE {
             take_keystone(p, id as usize);
@@ -1494,6 +1523,7 @@ unsafe fn reward_close() {
         // the stop is over: the held match ends, the road shows the next session
         S.stop = 0;
         S.bank_n = 0;
+        make_plan(); // the stop may have changed the pool (a bought or picked stock): the next match reads the plan
         gd_envoy_end_match();
         log(b"envoy: the stop is over, fight\0", S.fight + 1);
     }
@@ -1815,12 +1845,7 @@ unsafe fn shop_frame() {
                         SM_NONE
                     }
                     SHOP_STOCK => {
-                        if spend(stock_price()) {
-                            S.pool += 1;
-                            for h in 0..nh() {
-                                gd_envoy_apply(h, AP_STOCKS, gd_player_stocks(h) + 1);
-                            }
-                            log(b"envoy: shop stock, pool\0", S.pool);
+                        if buy_stock() {
                             SM_STOCK
                         } else {
                             SM_POOR

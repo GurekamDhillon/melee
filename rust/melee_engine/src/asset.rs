@@ -426,6 +426,8 @@ const SPARSE_MIN: usize = 64 << 10;
 /// Live bytes from which [`apply`] splits its block writes over [`PAR_THREADS`] threads.
 const PAR_MIN: usize = 8 << 20;
 const PAR_THREADS: usize = 4;
+/// ... or fixups from which it does.
+const PAR_MIN_FIXES: usize = 100_000;
 
 /// `MELEE_ASSET_SPARSE=off`: always copy whole blocks (diagnostics).
 fn sparse_on() -> bool {
@@ -566,7 +568,8 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
     // big plans: split over a few threads (plain copies and fixups into blocks that are all allocated by now; the
     // bytes are the same whoever writes them). The spawns allocate: kept off the arena.
     let live_bytes: usize = p.live_bytes;
-    let nt = if live_bytes >= PAR_MIN { PAR_THREADS } else { 1 };
+    // (many small blocks count too: ItCo's 58k blocks / 351k fixups are ~3 MB but 5 ms of single-threaded writes)
+    let nt = if live_bytes >= PAR_MIN || p.fixes.len() >= PAR_MIN_FIXES { PAR_THREADS } else { 1 };
     if nt == 1 {
         for k in 0..p.blocks.len() {
             if p.live(k) {
@@ -872,6 +875,16 @@ pub fn init(iso: Option<String>) {
     }
 }
 
+/// When the game thread last decoded a file in place (ms since the service clock's start): a kept-copy prepare
+/// ([`Src::Bytes`], for the NEXT load of a file) waits until the game has been quiet for [`BYTES_QUIET_MS`], so it
+/// never competes with the decodes of the same load burst (Envoy's no-lead fight start decodes ~10 files in a frame).
+static GAME_DECODE_AT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
+const BYTES_QUIET_MS: u64 = 150;
+fn now_ms() -> u64 {
+    static T0: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
+    T0.get_or_init(std::time::Instant::now).elapsed().as_millis() as u64 + 1
+}
+
 fn worker_main() {
     crate::arena::mark_foreign_thread();
     let s = svc().unwrap();
@@ -880,7 +893,14 @@ fn worker_main() {
         let job = {
             let mut g = s.m.lock().unwrap();
             loop {
-                if let Some(j) = g.jobs.pop_front() {
+                // disc hints first (a load is coming); a kept-copy job only once the game's decodes went quiet
+                let quiet = now_ms().saturating_sub(GAME_DECODE_AT.load(core::sync::atomic::Ordering::Relaxed)) >= BYTES_QUIET_MS;
+                let pick = g.jobs.iter().position(|j| matches!(j.src, Src::Disc(..))).or(if quiet { (!g.jobs.is_empty()).then_some(0) } else { None });
+                if pick.is_none() && !g.jobs.is_empty() {
+                    g = s.cv.wait_timeout(g, std::time::Duration::from_millis(BYTES_QUIET_MS / 3)).unwrap().0;
+                    continue;
+                }
+                if let Some(j) = pick.and_then(|i| g.jobs.remove(i)) {
                     if let Some(e) = g.entries.iter_mut().find(|e| e.pending && e.entry == j.entry) {
                         e.started = true;
                     } else {
@@ -1069,7 +1089,15 @@ pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
 /// Files every session loads early, hinted at boot so the worker starts on them at once: the title's, the menus' and
 /// character select's archives, then the match commons (in the order the game needs them). Either language's name.
 const BOOT_FILES: &[&str] = &[
-    "GmTtAll.usd", "GmTtAll.dat", "MnMaAll.usd", "MnMaAll.dat", "MnSlChr.usd", "MnSlChr.dat", "MnSlMap.usd", "MnSlMap.dat",
+    "GmTtAll.usd", "GmTtAll.dat",
+    // Kirby's copy hats: every match (the title demo's too) with Kirby decodes the whole set at its load (~22 ms in
+    // place at the title's first frame when the demo picked Kirby); small, so prepared early (files < MIN_BYTES skip)
+    "PlKbCpDk.dat", "PlKbNrCpDk.dat", "PlKbCpFx.dat", "PlKbCpGw.dat", "PlKbNrCpGw.dat", "PlKbCpMs.dat", "PlKbCpMt.dat",
+    "PlKbNrCpMt.dat", "PlKbCpNs.dat", "PlKbCpPk.dat", "PlKbCpPp.dat", "PlKbCpPr.dat", "PlKbNrCpPr.dat", "PlKbCpYs.dat",
+    "PlKbCpSk.dat", "PlKbCpFc.dat", "PlKbNrCpFc.dat", "PlKbCpFe.dat", "PlKbCpPc.dat", "PlKbCpLg.dat", "PlKbCpCl.dat",
+    "PlKbCpMr.dat", "PlKbCpZd.dat", "PlKbCpGn.dat", "PlKbCpCa.dat", "PlKbCpKp.dat", "PlKbCpLk.dat", "PlKbCpDr.dat",
+    "PlKbCpPe.dat", "PlKbCpSs.dat",
+    "MnMaAll.usd", "MnMaAll.dat", "MnSlChr.usd", "MnSlChr.dat", "MnExtAll.usd", "MnExtAll.dat", "MnSlMap.usd", "MnSlMap.dat",
     "EfCoData.dat", "ItCo.usd", "ItCo.dat", "IfAll.usd", "IfAll.dat", "PlCo.dat",
 ];
 
@@ -1130,7 +1158,14 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         }
     };
     let Some(plan) = found else {
-        // no plan: decode in place, on the asset path (the sequence a plan replays)
+        // no plan: decode in place, on the asset path (the sequence a plan replays). A hint of this file still queued
+        // (not started) is dropped first: the worker would otherwise prepare the same file now, competing with this
+        // decode and the frame's next ones for nothing (the Bytes job below keeps a plan for the next load)
+        if len >= MIN_BYTES {
+            let mut g = s.m.lock().unwrap();
+            g.entries.retain(|e| !(e.pending && !e.started && e.len == len));
+        }
+        GAME_DECODE_AT.store(now_ms(), core::sync::atomic::Ordering::Relaxed);
         drop(_sys);
         let t = std::time::Instant::now();
         let out = {
@@ -1148,6 +1183,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
             b
         };
         let ms = t.elapsed().as_secs_f64() * 1e3;
+        GAME_DECODE_AT.store(now_ms(), core::sync::atomic::Ordering::Relaxed);
         if len >= MIN_BYTES {
             // keep a plan of it for the next load of the same bytes (the worker prepares it from a copy)
             let _sys = crate::arena::SysScope::enter();

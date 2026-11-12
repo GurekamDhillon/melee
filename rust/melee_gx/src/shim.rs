@@ -585,8 +585,12 @@ impl GxShim {
     /// array's byte length; the C passes "base to end of MEM1", here the buffer's own length.
     /// The data is big-endian file data (le = false).
     pub fn set_array(&mut self, attr: u32, data: Option<&GxData>, stride: u8) {
-        let size = data.map_or(u32::MAX, |d| d.len().min(u32::MAX as usize) as u32);
-        self.gx.set_array(attr, data, size, stride, false);
+        self.set_array_at(attr, data, 0, stride)
+    }
+    /// [`Self::set_array`] for an array `offset` bytes into `data` (one shared copy per archive image).
+    pub fn set_array_at(&mut self, attr: u32, data: Option<&GxData>, offset: u32, stride: u8) {
+        let size = data.map_or(u32::MAX, |d| d.len().saturating_sub(offset as usize).min(u32::MAX as usize) as u32);
+        self.gx.set_array_at(attr, data, offset, size, stride, false);
     }
 
     // ---- transform

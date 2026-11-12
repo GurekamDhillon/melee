@@ -542,8 +542,8 @@ pub fn pack(draws: &[DrawCmd]) -> Packed {
     // Draws share array snapshots (a model's vertex arrays): upload each one once per frame.
     // Keyed by the snapshot's allocation; the upload covers the most any draw this frame needs.
     for a in draws.iter().flat_map(|d| d.arrays.iter().flatten()) {
-        let n = (a.needed as usize).min(a.data.len());
-        let e = arr_max.entry(a.data.as_ptr() as usize).or_insert(0);
+        let n = (a.needed as usize).min(a.data.len().saturating_sub(a.offset as usize));
+        let e = arr_max.entry(a.data.as_ptr() as usize + a.offset as usize).or_insert(0);
         *e = (*e).max(n);
     }
     let mut prev_d: Option<&DrawCmd> = None;
@@ -586,7 +586,7 @@ pub fn pack(draws: &[DrawCmd]) -> Packed {
         pk.vbuf.resize(pk.vbuf.len().next_multiple_of(4), 0);
         for (i, a) in d.arrays.iter().enumerate() {
             if let Some(a) = a {
-                let k = a.data.as_ptr() as usize;
+                let k = a.data.as_ptr() as usize + a.offset as usize;
                 if let Some(&o) = arr_off.get(&k) {
                     imm[4 + i] = o;
                     continue;
@@ -594,7 +594,7 @@ pub fn pack(draws: &[DrawCmd]) -> Packed {
                 let n = arr_max[&k];
                 imm[4 + i] = pk.abuf.len() as u32;
                 arr_off.insert(k, pk.abuf.len() as u32);
-                pk.abuf.extend_from_slice(&a.data[..n]);
+                pk.abuf.extend_from_slice(&a.data[a.offset as usize..a.offset as usize + n]);
                 pk.abuf.resize(pk.abuf.len().next_multiple_of(4) + 4, 0);
             }
         }
@@ -716,7 +716,7 @@ fn can_merge(p: &DrawCmd, d: &DrawCmd) -> bool {
     }
     let same_arr = p.arrays.iter().zip(d.arrays.iter()).all(|(a, b)| match (a, b) {
         (None, None) => true,
-        (Some(a), Some(b)) => a.data.as_ptr() == b.data.as_ptr(),
+        (Some(a), Some(b)) => a.data.as_ptr() == b.data.as_ptr() && a.offset == b.offset,
         _ => false,
     });
     if !same_arr {

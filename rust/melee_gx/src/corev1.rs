@@ -83,6 +83,8 @@ pub struct Transcoder {
     cp: GxState,
     /// What is bound, re-sent after an arena reset: array data per CP slot, texture data per map.
     arrays: [Option<GxData>; 16],
+    /// Where each bound array starts inside its data (LOAD_ARRAYBASE's offset word).
+    array_off: [u32; 16],
     textures: [Option<(GxData, u64)>; 8],
     pending_tlut1: Option<u32>,
     started: bool,
@@ -126,6 +128,7 @@ impl Transcoder {
             copy_top: mem_len.saturating_sub(COPY_POOL),
             cp,
             arrays: Default::default(),
+            array_off: [0; 16],
             textures: Default::default(),
             pending_tlut1: None,
             started: false,
@@ -217,7 +220,7 @@ impl Transcoder {
             // the shown frames resume: the arrays and textures bound meanwhile get their real addresses
             for i in 0..16 {
                 if let Some(d) = self.arrays[i].clone() {
-                    let p = self.stage(&d);
+                    let p = self.stage(&d) + self.array_off[i];
                     self.cpw(0xA0 | i as u8, p);
                 }
             }
@@ -275,7 +278,7 @@ impl Transcoder {
         }
         for i in 0..16 {
             if let Some(d) = self.arrays[i].clone() {
-                let p = self.stage(&d);
+                let p = self.stage(&d) + self.array_off[i];
                 self.cpw(0xA0 | i as u8, p);
             }
         }
@@ -445,13 +448,15 @@ impl Transcoder {
                 // LOAD_ARRAYBASE | n: handle u64, size u32, le u8 (our encoder writes big-endian arrays only)
                 let idx = (s & 0xF) as usize;
                 let d = res.get(be64(p));
-                let phys = d.as_ref().map(|d| self.stage(d)).unwrap_or(0);
+                let off = be32(p + 13);
+                let phys = d.as_ref().map(|d| self.stage(d) + off).unwrap_or(0);
                 let d = d.filter(|_| !ROLLBACK.load(std::sync::atomic::Ordering::Relaxed));
                 if let Some(old) = std::mem::replace(&mut self.arrays[idx], d) {
                     self.graveyard.push(old);
                 }
+                self.array_off[idx] = off;
                 self.cpw(0xA0 | idx as u8, phys);
-                p + 13
+                p + 17
             }
             0x0030 => {
                 // LOAD_TEXOBJ: id u8, handle u64, w, h, fmt, tlut u32, mips u8, obj id, version u32, guest u64

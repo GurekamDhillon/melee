@@ -37,7 +37,7 @@ run() {  # name, frames, env..., -- , args...
   local d="$out/$name"; rm -rf "$d"; mkdir -p "$d/bin" "$d/save"
   cp "$exe" "$d/bin/melee.exe"; cp -r "$card" "$d/card"
   local m="$d/mods"; mkdir -p "$m"
-  [ -n "${NEED_MODS:-}" ] && cp "$mods_src/envoy_sim.wasm" "$mods_src/envoy_ui.wasm" "$m/"
+  [ -n "${NEED_MODS:-}" ] && cp "$mods_src/envoy_sim.wasm" "$mods_src/envoy_ui.wasm" "$m/" && cp -r "$repo/rust/mods/envoy_ui/art" "$m/envoy_ui"
   echo "-- $name (${frames} ticks, real time)"
   ( cd "$d/bin" && env MELEE_VOLUME=3 MELEE_PROFILE=1 MELEE_FULLSCREEN=off MELEE_RECLAIM_LEAK=1 \
       MELEE_WINDOW_TITLE="zerolag agent: gate $name ($build)" MELEE_CARD_PATH="$d/card" MELEE_ENVOY_DIR="$d/save" \

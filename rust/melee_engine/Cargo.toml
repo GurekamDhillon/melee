@@ -8,6 +8,7 @@ publish.workspace = true
 # Consolidation plan 1.1: the host side the C gets from the OS and the dolphin SDK (heap arenas, DVD, archive
 # images). Game logic stays in the leaf crates' tu/ modules; this crate holds seams only.
 [dependencies]
+backtrace = "0.3"
 melee_core.workspace = true
 melee_types.workspace = true
 melee_runtime.workspace = true

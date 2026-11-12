@@ -494,6 +494,11 @@ impl<'a> GcDecoder<'a> {
         let (ty, at) = self.cur;
         let ty = ty.rsplit("::").next().unwrap_or(ty);
         self.issues.push(format!("{s} (in {ty} @ {at:#x})"));
+        let h = ISSUE_HOOK.load(core::sync::atomic::Ordering::Relaxed);
+        if h != 0 {
+            let last = self.issues.last().unwrap();
+            unsafe { core::mem::transmute::<usize, fn(*const u8, usize)>(h)(last.as_ptr(), last.len()) };
+        }
     }
 
     fn bytes<const N: usize>(&mut self, at: u32) -> [u8; N] {
@@ -891,3 +896,6 @@ mod tests {
         assert_eq!(d.finish().1.len(), 1);
     }
 }
+
+/// Debug: called with each kept issue string's bytes (`melee_engine::hwwatch`), 0 = none.
+pub static ISSUE_HOOK: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);

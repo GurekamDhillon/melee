@@ -22,6 +22,7 @@ pub mod card_host;
 pub mod cdata;
 pub mod cow;
 pub mod pagewatch;
+pub mod hwwatch;
 pub mod crash;
 pub mod dat_custom;
 pub mod dat_types;

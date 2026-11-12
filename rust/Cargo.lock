@@ -1251,6 +1251,7 @@ dependencies = [
 name = "melee_engine"
 version = "0.1.0"
 dependencies = [
+ "backtrace",
  "libc",
  "melee_audio",
  "melee_chara",

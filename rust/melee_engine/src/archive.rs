@@ -162,6 +162,8 @@ pub unsafe fn decode(src: *mut u8, file_size: usize) -> Decoded {
     };
     crate::dat_custom::fix_articles();
     crate::dat_custom::fix_dynamics();
+    crate::hwwatch::flush("decode end");
+    crate::hwwatch::check_issues(&issues);
     Decoded { dat, roots, arena, issues, reloc, public, externs, effects: Vec::new() }
 }
 

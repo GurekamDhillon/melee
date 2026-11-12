@@ -34,6 +34,14 @@ pub struct Presenter {
     blended: bool,
     /// A new frame waiting for the next present (see `present_frames`).
     pending: Option<melee_gx::interp::Frame>,
+    /// The fx world list that arrived with `pending` (melee_gx::fx::FxSnap): adopted with it.
+    pending_fx: Option<Box<melee_gx::fx::FxSnap>>,
+    /// Whether `pending` is more than one tick after the frame before it (see `arrive_gap`).
+    pending_cut: bool,
+    /// Set by the caller before a present that hands over a frame: ticks since the frame it handed over before (1
+    /// normally; more after a stall, when ticks ran in a burst and only the newest frame was kept). A pair more than
+    /// one tick apart is not blended.
+    pub arrive_gap: u32,
     solver: melee_gx::interp::Solver,
     true_wide: bool,
     /// Per-present µs of prepare / draw / swap (fresh frames only for prepare), for the MELEE_SHOW_FPS exit line.
@@ -179,7 +187,7 @@ impl Presenter {
         surface.configure(&renderer.device, &config);
         let ai = renderer.adapter.get_info();
         crate::plog!("gw: video: present mode {:?}, frame latency {}, {:?} on {}", config.present_mode, config.desired_maximum_frame_latency, ai.backend, ai.name);
-        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None, shot: false, last: [0; 3], last_fresh: false, adopt_us: 0, drop_us: 0, offthread_drop: None, dropper: None, modes: caps.present_modes.clone(), last_present: None, interval_ms: 16.7, split: std::env::var("MELEE_PRESENT_SPLIT").map_or(true, |v| !matches!(v.trim(), "0" | "off" | "false" | "no")), deferred: 0, fresh: 0, undrawn: false })
+        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, pending_fx: None, pending_cut: false, arrive_gap: 1, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None, shot: false, last: [0; 3], last_fresh: false, adopt_us: 0, drop_us: 0, offthread_drop: None, dropper: None, modes: caps.present_modes.clone(), last_present: None, interval_ms: 16.7, split: std::env::var("MELEE_PRESENT_SPLIT").map_or(true, |v| !matches!(v.trim(), "0" | "off" | "false" | "no")), deferred: 0, fresh: 0, undrawn: false })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -264,6 +272,9 @@ impl Presenter {
         // frame's prepare never land in one frame interval (the frame-time p99 was their sum). This present shows
         // the current frame itself (t = 1: never a step back toward the previous one).
         let mut frame = frame.map(|d| melee_gx::interp::Frame { draws: d, pose, packed });
+        // the fx world list handed over this present is of the tick that arrived with `frame`: it travels with it
+        let mut frame_fx = if frame.is_some() { self.renderer.fx_snapshot() } else { None };
+        let mut frame_cut = frame.is_some() && self.arrive_gap > 1;
         let mut skipped = None;
         if let Some(ph) = self.force_phase {
             alpha = Some(ph);
@@ -273,20 +284,32 @@ impl Presenter {
             if let Some(f) = frame.take() {
                 // two ticks without a present: the older one is skipped, but its EFB copies (GXCopyTex, e.g. the results
                 // cards' portraits, copied once) still run, as every frame's do in the C build
+                let mut late_skipped = false;
                 if let Some(mut late) = self.pending.replace(f) {
                     let pk = late.packed.take();
                     self.render_copies(state, &late.draws, pk);
                     self.retire(Some(late));
+                    late_skipped = true;
                 }
+                self.pending_fx = frame_fx.take();
+                // a skipped (late) frame in between makes the pair non-consecutive too
+                self.pending_cut = std::mem::take(&mut frame_cut) || late_skipped;
                 alpha = Some(1.0);
             } else if let Some(f) = self.pending.take() {
                 frame = Some(f);
+                frame_fx = self.pending_fx.take();
+                frame_cut = std::mem::take(&mut self.pending_cut);
             }
         } else if let Some(p) = self.pending.take() {
             if frame.is_none() {
                 frame = Some(p);
+                frame_fx = self.pending_fx.take();
+                frame_cut = std::mem::take(&mut self.pending_cut);
             } else {
                 skipped = Some(p);
+                self.pending_fx = None;
+                self.pending_cut = false;
+                frame_cut = true;
             }
         }
         let fresh = frame.is_some();
@@ -309,6 +332,7 @@ impl Presenter {
         let defer = fresh && self.split && interpolate && alpha.is_some() && self.force_phase.is_none() && !shot && self.cur.is_some() && self.interval_ms < SPLIT_BELOW_MS;
         if let Some(f) = frame {
             let ta = std::time::Instant::now();
+            self.renderer.fx_adopt(frame_fx.take());
             let old = std::mem::replace(&mut self.prev, self.cur.replace(f));
             self.retire(old);
             self.drop_us = ta.elapsed().as_micros() as u32;
@@ -316,6 +340,9 @@ impl Presenter {
             let widen = self.widen().is_some();
             let (solver, prev, cur) = (&mut self.solver, self.prev.as_ref(), self.cur.as_ref().unwrap());
             solver.plan(prev, cur, widen);
+            if frame_cut {
+                solver.mark_cut();
+            }
             self.adopt_us = ta.elapsed().as_micros() as u32;
             self.fresh += 1;
         }
@@ -356,6 +383,12 @@ impl Presenter {
                     self.solver.evaluate(prev, cur, t.unwrap());
                     self.interp_us[0].push(te.elapsed().as_micros() as u32);
                 }
+                // the fx world layer follows the same phase and the same camera
+                self.renderer.fx_phase = if moving {
+                    t.map(|t| melee_gx::fx::FxPhase { t, extrapolate: !interpolate, view: self.solver.primary_view() })
+                } else {
+                    None
+                };
                 let solver = &mut self.solver;
                 let mut f = |i: usize, out: &mut [u8]| solver.patch(cur, i, out, widen, moving);
                 self.renderer.draw_prepared(state, &cur.draws, Some(&mut f));
@@ -363,6 +396,7 @@ impl Presenter {
                     self.interp_us[1].push(self.renderer.last_fill_us);
                 }
             } else {
+                self.renderer.fx_phase = None;
                 self.renderer.draw_prepared(state, &cur.draws, None);
             }
             self.blended = moving;

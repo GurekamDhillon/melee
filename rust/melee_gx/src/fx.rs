@@ -110,6 +110,26 @@ pub struct FxFrame {
     pub posts: Vec<Post>,
 }
 
+/// One tick's world list, kept with the GX frame it arrived with (the presenter adopts both together, so the
+/// drives are posed at the same tick, and the same in-between phase, as the scene under them).
+pub struct FxSnap {
+    draws: Vec<WorldDraw>,
+    tris: Vec<TriVert>,
+    cam: Option<Camera>,
+}
+
+/// An in-between present: phase `t` (interpolate: 0 = the previous tick, 1 = the adopted one; extrapolate: past
+/// the adopted one) and the scene camera's view at that phase (the interpolator's; None: the tick's own).
+#[derive(Clone, Copy, Debug)]
+pub struct FxPhase {
+    pub t: f32,
+    pub extrapolate: bool,
+    pub view: Option<[[f32; 4]; 3]>,
+}
+
+/// A drive moving further than this between ticks teleported (a respawn, a tag): it snaps, never lerps.
+const FX_MAX_STEP: f32 = 30.0;
+
 /// The effects-intensity setting (`MELEE_FX` = off | subtle | full; default full offline, subtle in netplay).
 pub fn intensity_from_env(netplay: bool) -> f32 {
     static V: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
@@ -238,6 +258,9 @@ pub(crate) struct FxGpu {
     inst_scratch: Vec<u8>,
     tri_scratch: Vec<u8>,
     trails: Vec<([[f32; 3]; TRAIL_LEN], usize, f32)>,
+    /// The previous and the adopted tick's world lists (see `FxSnap`), and the posed list drawn this present.
+    snap: [Option<Box<FxSnap>>; 2],
+    eff: Vec<WorldDraw>,
     pub times: FxTimes,
 }
 
@@ -664,6 +687,8 @@ impl FxGpu {
             inst_scratch: Vec::with_capacity(INST_BYTES as usize * MAX_INST),
             tri_scratch: Vec::with_capacity(TRI_BYTES as usize * 4096),
             trails: Vec::with_capacity(TRAILS),
+            snap: [None, None],
+            eff: Vec::with_capacity(128),
             times: FxTimes::default(),
         };
         g.world_pipelines(device, samples);
@@ -927,6 +952,21 @@ impl Renderer {
             f.held = [Held::default(); MAX_POST];
             f.shots = [Shot::default(); MAX_POST];
             f.trails.clear();
+            f.snap = [None, None];
+        }
+    }
+
+    /// The world list just handed over by `set_fx`, for the presenter to keep with the GX frame of the same tick.
+    pub fn fx_snapshot(&self) -> Option<Box<FxSnap>> {
+        let f = self.fx.as_ref().filter(|f| f.armed)?;
+        Some(Box::new(FxSnap { draws: f.frame.draws.clone(), tris: f.frame.tris.clone(), cam: f.frame.cam }))
+    }
+
+    /// The presenter adopted a GX frame: its world list (None: none was kept, draw the latest) becomes current.
+    pub fn fx_adopt(&mut self, s: Option<Box<FxSnap>>) {
+        if let Some(f) = self.fx.as_mut().filter(|f| f.armed) {
+            f.snap[0] = f.snap[1].take();
+            f.snap[1] = s;
         }
     }
 
@@ -1043,9 +1083,57 @@ impl Renderer {
     pub(crate) fn fx_world(&mut self) {
         let (w, h, samples) = (self.width, self.height, self.samples);
         let widen = self.fx_widen;
+        let phase = self.fx_phase;
         let Some(f) = self.fx.as_mut().filter(|f| f.armed) else { return };
-        let Some(cam) = f.frame.cam.filter(|_| !f.frame.draws.is_empty() || !f.frame.tris.is_empty()) else {
+        // the list drawn: the adopted tick's, posed at this present's phase (the scene under it is); none kept (no
+        // interpolating presenter): the latest
+        let mut eff = std::mem::take(&mut f.eff);
+        eff.clear();
+        let cam = match f.snap[1].as_deref() {
+            Some(s) => {
+                eff.extend_from_slice(&s.draws);
+                if let (Some(ph), Some(p)) = (phase, f.snap[0].as_deref()) {
+                    // pair by list position and model; a teleport (a respawn, a tag) snaps
+                    if p.draws.len() == s.draws.len() {
+                        let k = if ph.extrapolate { ph.t } else { ph.t - 1.0 };
+                        for (d, q) in eff.iter_mut().zip(&p.draws) {
+                            let dl = [d.at[0] - q.at[0], d.at[1] - q.at[1], d.at[2] - q.at[2]];
+                            if d.model != q.model || dl.iter().any(|x| x.abs() > FX_MAX_STEP) {
+                                continue;
+                            }
+                            for j in 0..3 {
+                                d.at[j] += dl[j] * k;
+                            }
+                            let mut dy = d.yaw - q.yaw;
+                            dy = (dy + std::f32::consts::PI).rem_euclid(std::f32::consts::TAU) - std::f32::consts::PI;
+                            d.yaw += dy * k;
+                        }
+                    }
+                }
+                s.cam
+            }
+            None => {
+                eff.extend_from_slice(&f.frame.draws);
+                f.frame.cam
+            }
+        };
+        let cam = cam.map(|mut c| {
+            if let Some(v) = phase.and_then(|p| p.view) {
+                c.view = v;
+            }
+            c
+        });
+        let tris = std::mem::take(match f.snap[1].as_mut() {
+            Some(s) => &mut s.tris,
+            None => &mut f.frame.tris,
+        });
+        let Some(cam) = cam.filter(|_| !eff.is_empty() || !tris.is_empty()) else {
             f.bloom_live = false;
+            f.eff = eff;
+            match f.snap[1].as_mut() {
+                Some(s) => s.tris = tris,
+                None => f.frame.tris = tris,
+            }
             return;
         };
         let t0 = std::time::Instant::now();
@@ -1079,7 +1167,7 @@ impl Renderer {
             put4(b, rgba_f(d.rgba));
             put4(b, [(d.mat & MAT_ID) as f32, d.alpha, seed, 0.0]);
         };
-        for (i, d) in f.frame.draws.iter().enumerate() {
+        for (i, d) in eff.iter().enumerate() {
             let Some(&(start, count)) = f.ranges.get(d.model as usize) else { continue };
             if count == 0 || ni as usize >= MAX_INST {
                 continue;
@@ -1094,7 +1182,7 @@ impl Renderer {
             ni += 1;
         }
         let mut k = 0;
-        for d in f.frame.draws.iter() {
+        for d in eff.iter() {
             if d.mat & MAT_TRAIL == 0 || k >= f.trails.len() {
                 continue;
             }
@@ -1118,8 +1206,8 @@ impl Renderer {
             self.queue.write_buffer(&f.inst, 0, &f.inst_scratch);
         }
         f.tri_scratch.clear();
-        let nt = f.frame.tris.len().min(MAX_TRI_VERTS) / 3 * 3;
-        for (p, c) in &f.frame.tris[..nt] {
+        let nt = tris.len().min(MAX_TRI_VERTS) / 3 * 3;
+        for (p, c) in &tris[..nt] {
             for x in p {
                 f.tri_scratch.extend_from_slice(&x.to_le_bytes());
             }
@@ -1127,6 +1215,11 @@ impl Renderer {
         }
         if !f.tri_scratch.is_empty() {
             self.queue.write_buffer(&f.tri, 0, &f.tri_scratch);
+        }
+        f.eff = eff;
+        match f.snap[1].as_mut() {
+            Some(s) => s.tris = tris,
+            None => f.frame.tris = tris,
         }
         let tg = f.emis.as_ref().unwrap();
         let color_view = self.color.create_view(&Default::default());

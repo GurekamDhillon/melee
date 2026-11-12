@@ -543,6 +543,23 @@ impl Solver {
         self.cut
     }
 
+    /// Present the newest frame as is until the next pair: the two frames are not consecutive ticks (ticks ran in a
+    /// burst after a stall, so the older one is several ticks back and a blend would smear across them).
+    pub fn mark_cut(&mut self) {
+        if !self.cut {
+            self.cut = true;
+            self.stats.cuts += 1;
+        }
+    }
+
+    /// The main (fight) camera's view at the last evaluated phase; None when it is held, still or the pair is a cut.
+    pub fn primary_view(&self) -> Option<Mtx34> {
+        if self.cut {
+            return None;
+        }
+        self.views.get(self.primary as usize).copied().flatten()
+    }
+
     /// Evaluate cameras, joints and slots at phase `t` (0..1 between the two ticks; extrapolate: past the newest).
     pub fn evaluate(&mut self, prev: Option<&Frame>, cur: &Frame, t: f32) {
         self.views.clear();

@@ -385,9 +385,16 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     }
     // fight label under the pool
     let mut s = Buf::new();
-    loop_fight(&mut s, v[V_LOOP], v[V_FIGHT], v[V_FIGHTS]);
-    // rooms (V_WAVE / V_WAVES): a plain "Wave 1 of 2" after the fight when the room has more than one wave
-    if v[V_WAVES] > 1 {
+    // rooms (V_ROOM / V_ROOMS): "Room 1 of 3", "Boss" in the boss fight; then "Wave 1 of 2" when the room has waves
+    if v[V_LOOP] > 1 {
+        s.s("Loop ").i(v[V_LOOP]).s(" - ");
+    }
+    if v[V_ROOM] == 0 {
+        s.s("Boss");
+    } else {
+        s.s("Room ").i(v[V_ROOM]).s(" of ").i(v[V_ROOMS]);
+    }
+    if v[V_WAVES] > 1 && v[V_ROOM] != 0 {
         s.s(" - Wave ").i(v[V_WAVE].clamp(1, v[V_WAVES])).s(" of ").i(v[V_WAVES]);
     }
     e.text_ex(14.0 - ex, 40.0, bs(12), WHITE, ALIGN_LEFT, 0.0, s.str());
@@ -572,6 +579,11 @@ unsafe fn moments(e: &mut E, v: &[i32; VW], ex: f32) {
             }
             EV_SHIFT => {
                 burst(e, S_BURST_LAGOON, 320.0, 70.0, 76.0, age, "Stage shift", 12);
+            }
+            EV_WAVE => {
+                let mut s = Buf::new();
+                s.s("Wave ").i(ev[2]);
+                burst(e, S_BURST_SUNNY, 320.0, 70.0, 76.0, age, s.str(), 12);
             }
             EV_BREAK => {
                 burst(e, S_BURST_CORAL, 400.0, 30.0, 80.0, age, "Break!", 14);

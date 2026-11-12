@@ -177,7 +177,7 @@ pub fn loop_fight(b: &mut Buf, lp: i32, fight: i32, fights: i32) {
 }
 
 pub fn party_from_record(r: &[i32]) -> Party {
-    let mut p = Party { have: true, players: if r[R_COOP] != 0 { 2 } else { 1 }, fight: r[R_FIGHT], fights: 5, lp: rec_loop(r[R_LOOP]).max(1), pool: r[R_POOL], pairs: [-1; 4],
+    let mut p = Party { have: true, players: if r[R_COOP] != 0 { 2 } else { 1 }, fight: r[R_FIGHT], fights: 4, lp: rec_loop(r[R_LOOP]).max(1), pool: r[R_POOL], pairs: [-1; 4],
         ids: [[0; SLOTS]; 4], lvs: [[0; SLOTS]; 4], keys: [[0; KEYSTONES]; 2], shared: r[R_SHARED] != 0 };
     for set in 0..4 {
         for k in 0..SLOTS {
@@ -355,7 +355,7 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
             e.rect(x + 1.5, y + 1.5, w - 3.0, 52.0, SUNNY);
             e.rect(x + 1.5, y + 53.5, w - 3.0, 2.5, INK);
             e.text_ex(x + 14.0, y + 6.0, d(23), INK, ALIGN_LEFT, 0.0, "Start a run");
-            e.text_ex(x + 14.0, y + 33.0, bs(12), INK, ALIGN_LEFT, w - 28.0, "Five fights: duels, elites, a boss.");
+            e.text_ex(x + 14.0, y + 33.0, bs(12), INK, ALIGN_LEFT, w - 28.0, "Three rooms of waves, then a boss.");
             for (i, s) in ["Pick two fighters at the camp.", "Player 2 joins at the camp."].iter().enumerate() {
                 let yy = y + 72.0 + i as f32 * 40.0;
                 spr_c(e, S_DOT_INK, x + 20.0, yy + 8.0, 1.0, WHITE);
@@ -366,8 +366,8 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
         pop(e, 1, px, py, 97.0, 96.0, 3.0, &|e| {
             face(e, S_FACE_SUNNY, px, py, 97.0, 96.0, WHITE);
             e.text_ex(px + 48.0, py + 8.0, d(13), INK, ALIGN_CENTER, 0.0, "Run");
-            marks(e, px + 16.0, py + 50.0, 5, -1, 16.0, 5.5);
-            e.text_ex(px + 48.0, py + 66.0, bs(12), INK, ALIGN_CENTER, 0.0, "5 stops");
+            marks(e, px + 24.0, py + 50.0, 4, -1, 16.0, 5.5);
+            e.text_ex(px + 48.0, py + 66.0, bs(12), INK, ALIGN_CENTER, 0.0, "4 stops");
         });
         let (nx, ny) = (ox + 176.0, oy + 160.0);
         pop(e, 2, nx, ny, 150.0, 70.0, -3.0, &|e| {
@@ -380,7 +380,7 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
         if tb > 0 {
             burst(e, S_BURST_CORAL, bx, by, 70.0, tb, "New!", 15);
         }
-        bar.s("A co-op run for 1 or 2 players, five fights long.");
+        bar.s("A co-op run for 1 or 2 players: rooms of waves and a boss.");
     }
     // the description bar's line is the host's own SIS line now (mnmain mn_80229A7C)
     let _ = bar.str();

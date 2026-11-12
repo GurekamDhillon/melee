@@ -210,3 +210,69 @@ yet; CSS enter (18.7) is closest.
 - --match has no lead by construction (Envoy/FoD first frame 80-90 ms): needs the next fight's files hinted at the
   shop/pick stop.
 - Not merge-ready: the zero-lag requirement is not met in any scene; the byte-identity proofs above all pass.
+
+## Asset service slice 3 (2026-11-12, port/zerolag-assets1; light-slot runs, not a quiet pass)
+Changes (3bffb7b8d .. 39dd4e9bf):
+- ItCo and stage plans replay. The "live blocks the result does not reach" were leaks of the decode itself (an
+  article's dynamics / hurt-bone list or special attributes written twice: the first block loses its only pointer).
+  When dat_custom's side lists are all empty again after the decode nothing outside holds them, and the replay
+  reproduces them (every call is replayed, every live block written), so the plan is kept.
+- `prepare` says why it gave no plan (NoSlot / NotRouted / Unsafe); only Unsafe/NotRouted mark a length unplannable.
+  A no-slot failure is retried at the next hint or load (seen on the menu flow: 9 such retries).
+- Envoy: `gd_envoy_plan` calls `asset::hint_envoy_plan` (stage file for the plan's grkind, data / costume / animation
+  bank of main, partner, co-op pair, CPUs and next-wave characters; pure name-table reads, once per distinct plan).
+  With `--match` the plan is published in the fight-start frame: no lead (FoD and Envoy `--match` stay no-lead).
+- Arena: a recycled block of a trimmed class (trim mode, >= 64 KB) is not re-zeroed (its pages were decommitted at the
+  free and read back zero); the replay skips writing a dropped temporary's decommitted pages; plans with >= 8 MB of
+  live blocks write them on 4 threads (allocation order unchanged, same bytes).
+- ARAM (seams.rs `ar_addr`) grows to what a transfer touches instead of zero-filling 32 MB at the first ARAM read:
+  that read was the first fighter create's first figatree (`ft create: inline2` 13-14 ms -> < 1 ms).
+- Spans: `title enter: *`, `title demo: *`, `ft create: *`, `figatree: disc read / parse`.
+- Debug: `MELEE_ASSET_POISON=1` (freed recorded blocks poisoned, 16-byte gaps checked: writes after free / past a
+  block's end in a recorded decode). Found one: an 8-byte write one past a 136-byte block in ItCo (in the arena it
+  lands in the 144-byte class slack, harmless; not yet traced).
+
+Named causes found:
+- Title first frame ~52 ms: `title demo: preload scene (lbDvd_80018254)` 32 ms. The port completes DVD reads at once,
+  so the preload queue's completion callback (lbDvd_80017E64 -> 80017CC4 -> next file) reads the whole demo match's
+  file set in that one frame. Fix options (not done): prefetch those bytes on the worker at boot (the demo pick is game
+  state), or make preload reads complete over frames (sim-visible: needs its own proof).
+- VS scene change ~25 ms: ItCo apply 9.8 ms (58k blocks, 351k fixups; replaying temporaries 3.7 ms) + fighter files.
+  ItCo is decoded again for every match; reusing the decoded commons across matches is the next lever.
+- CSS enter: frame 14.5-18.5 with tick 12-14 ms: the long intervals are pacing sleep after a 13 ms tick.
+- FoD / Envoy `--match` first frame: no lead by construction (ItCo in place 21 ms, fighter files, scene preload 11 ms).
+
+### Table (frame interval / tick ms, worst of the first 4 frames of the scene, WORST of 3 runs; build 39dd4e9bf, no digest)
+| scene | pre-service (slice 1) | slice 2 (on) | slice 3 service on | slice 3 service off |
+| title / first frame | 68-77 | 52.1 | 55.1 / 43.1 | 50.9 / 37.2 |
+| CSS enter | 23.8 | 18.7 | 17.3 / 13.8 | 18.5 / 12.6 |
+| VS scene change | 78.9 | 43.0 | 25.6 / 24.4 | 38.6 / 37.1 |
+| match setup (menu flow) | 45.8 | 34.1 | 14.9 / 12.8 | 16.6 / 15.3 |
+| FoD `--match` first frame (no lead) | ~70 | 72.6 | 56.0 / 54.8 | 54.8 / 52.5 |
+| Envoy armed `--match` first frame (no lead) | 86 | 90.3 | 110.5 / 106.6 (93-110) | 94.1 / 90.7 (87-94) |
+Under 16.7 now: match setup (menu flow, service on: all 3 runs; off: tick 15.3 but one interval 16.6); CSS enter by
+tick (12-14 ms) but not by presented interval (pacing sleep after the tick, 14.5-18.5). Not under: title (title-demo
+preload chain, 32 ms), VS scene change (ItCo apply ~10 ms + fighter files), and the `--match` entries (no lead; in
+Envoy the service is WORSE than off: the worker prepares the same files at the same time as the in-place decode,
+contention; a no-lead load should not queue a worker prepare while the game decodes the same file).
+
+### Proof (39dd4e9bf)
+- Digest FoD `--match`: on vs off 293/293 identical, off vs off2 293/293 (ItCo and the stage now replay here).
+- Digest menu flow: off vs off2 218/219 (the known 42 KB word); on vs off 217/219: the same 42 KB word plus ONE word in
+  ItCo (load 65, live block 97, 130 bytes = a decoder issue string "non-zero word ..."): in the in-place decode of the
+  off runs its first 4 bytes are 0x00000113 (deterministic, off = off2), in the replay they are the text. A probe
+  showed the bytes are already written when `archive::decode` returns; MELEE_ASSET_POISON shows no write after free
+  and no write past a block end in the recorded decode except the 136-byte one above. So something in the in-place
+  decode on the game thread writes a u32 into memory the arena has handed to that string; not found yet. It was
+  invisible before (ItCo never replayed in the menu flow). The text is never read by the game; the stray write is the
+  concern.
+- NHV1 on = off: menu flow 3847 ticks EQUAL, armed Envoy fight 7000 ticks EQUAL.
+- Gate: 4 goldens vs C all frames, synctest d4 0 mismatches, audio hash = C, snapguard (d7) save 0.206 / load 0.348 /
+  total 4.72 ms vs baseline 0.271 / 0.432 / 5.302: GATE OK. Hero replay Game_20251031T213013: SLPCHECK match (12844).
+
+### Verdict
+Not merge-ready: title (~52), VS scene change (~25) and the `--match` fight starts (55-110) still miss 16.7 ms, and
+the menu-flow digest has the one unexplained ItCo word. The branch does clearly help the retail path (VS scene change
+38.6 -> 25.6, match setup 16.6 -> 14.9 vs service off; vs slice 1: 78.9 -> 25.6 and 45.8 -> 14.9).
+Next: trace the 0x113 write (hardware watch on that string); reuse decoded commons (ItCo, EfCoData) across matches;
+prefetch the title-demo files at boot; no worker prepare of a file the game is decoding in place right now.

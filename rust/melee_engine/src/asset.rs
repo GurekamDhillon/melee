@@ -193,18 +193,29 @@ impl Drop for RecGuard {
     }
 }
 
-/// Record a decode of `file` (any thread). None: the recording heap is not available (no slot, or the process
-/// allocator does not route to it).
-pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
+/// Why [`prepare`] gave no plan.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NoPlan {
+    /// Transient: no recording slot free (or its memory could not be committed). Worth retrying later.
+    NoSlot,
+    /// The recording heap does not route this thread's allocations (never changes in a run).
+    NotRouted,
+    /// The decode cannot be replayed (an image-relative word outside the image, or a block held from outside the
+    /// decode result). Retrying gives the same answer: the file is not prepared again.
+    Unsafe,
+}
+
+/// Record a decode of `file` (any thread).
+pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Result<Plan, NoPlan> {
     let t0 = std::time::Instant::now();
     let _sys = crate::arena::SysScope::enter();
-    let slot = recheap::take_slot()?;
+    let slot = recheap::take_slot().ok_or(NoPlan::NoSlot)?;
     let lo = recheap::slot_base(slot);
     let raw = lo + 0x1000;
     let len = file.len();
     if !recheap::commit(raw, len) {
         recheap::release_slot(slot);
-        return None;
+        return Err(NoPlan::NoSlot);
     }
     unsafe { core::ptr::copy_nonoverlapping(file.as_ptr(), raw as *mut u8, len) };
     let mut rec = Box::new(Rec::new(slot, raw + len + 0x1000));
@@ -221,7 +232,7 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
         if !ok {
             drop(_g);
             recheap::release_slot(slot);
-            return None;
+            return Err(NoPlan::NotRouted);
         }
         crate::dat_custom::begin_prepare(loading, grkind);
         let _ = crate::dat_custom::take_image_relative();
@@ -253,9 +264,9 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
     // image-relative words (differences, invisible to the scan below), by (block, offset)
     let mut rel: Vec<(u32, u32, u32)> = Vec::new();
     for (wa, ta) in crate::dat_custom::take_image_relative() {
-        let Some(j) = rec.find(wa) else { return None };
+        let Some(j) = rec.find(wa) else { return Err(NoPlan::Unsafe) };
         if ta < raw || ta > raw + len {
-            return None;
+            return Err(NoPlan::Unsafe);
         }
         rel.push((j as u32, (wa - bl[j].at) as u32, (ta - raw) as u32));
     }
@@ -349,6 +360,11 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
         }
     }
     let escaped = bl.iter().enumerate().filter(|(i, b)| b.live == 1 && !seen[*i]).count();
+    // with dat_custom's side lists all empty again nothing outside the result holds a block of this decode: an
+    // unreached live block is then a leak of the decode itself (an article's dynamics/hurt-bone list or special
+    // attributes written twice: the first block loses its only pointer). The in-place decode leaks it the same way and
+    // the replay reproduces it (every recorded call is replayed and every live block written), so the plan is usable.
+    let held_outside = escaped > 0 && !crate::dat_custom::side_lists_empty();
     let blocks: Vec<(usize, usize, usize)> = bl.iter().map(|b| (b.at, b.size, b.align)).collect();
     let bytes = len + blocks.iter().map(|b| b.1).sum::<usize>();
     let events: Vec<u64> = rec.events().to_vec();
@@ -359,7 +375,10 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
             realloc_target[n] = true;
         }
     }
-    if escaped > 0 {
+    if escaped > 0 && log_on() {
+        eprintln!("asset: {escaped} live block(s) leaked by the decode (no outside holder): kept in the plan");
+    }
+    if held_outside {
         // the slot is kept (something outside the result may still point into it)
         let what: Vec<String> = bl
             .iter()
@@ -368,10 +387,10 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
             .take(4)
             .map(|(i, b)| format!("#{i}/{} size {} align {} words {:x?}", bl.len(), b.size, b.align, unsafe { core::slice::from_raw_parts(b.at as *const u64, (b.size / 8).min(4)) }))
             .collect();
-        eprintln!("asset: {escaped} live block(s) the decode result does not reach: plan dropped (the load decodes in place): {}", what.join("; "));
-        return None;
+        eprintln!("asset: {escaped} live block(s) the decode result does not reach and a side list is not empty: plan dropped (the load decodes in place): {}", what.join("; "));
+        return Err(NoPlan::Unsafe);
     }
-    Some(Plan {
+    Ok(Plan {
         slot,
         raw,
         len,
@@ -800,13 +819,20 @@ fn worker_main() {
             }),
         };
         let bytes = bytes.filter(|b| b.len() >= 0x20 && u32::from_be_bytes([b[0], b[1], b[2], b[3]]) as usize == b.len());
-        let plan = bytes.and_then(|b| std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).ok().flatten());
+        let res = match bytes {
+            None => Err(NoPlan::NoSlot), // the read failed: not the file's fault
+            Some(b) => std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).unwrap_or(Err(NoPlan::Unsafe)),
+        };
+        let (plan, why) = match res { Ok(p) => (Some(p), None), Err(e) => (None, Some(e)) };
         let mut g = s.m.lock().unwrap();
-        if plan.is_none() {
+        if matches!(why, Some(NoPlan::Unsafe | NoPlan::NotRouted)) {
             let n = g.entries.iter().find(|e| e.entry == job.entry).map_or(0, |e| e.len);
             if n != 0 && !g.unplannable.contains(&n) {
                 g.unplannable.push(n);
             }
+        }
+        if why.is_some() && log_on() {
+            eprintln!("asset: entry {:#x}: no plan ({why:?}){}", job.entry, if why == Some(NoPlan::NoSlot) { ": may be hinted again" } else { "" });
         }
         if let Some(e) = g.entries.iter_mut().find(|e| e.pending && e.entry == job.entry) {
             e.pending = false;
@@ -825,6 +851,10 @@ fn worker_main() {
 /// `heap`: the lbHeap the game will read it into. Refused at once (counted, logged) when that heap cannot take the
 /// file now, or when the service's own budget (slots, kept bytes) is spent.
 pub fn hint_entry(entry: i32, heap: i32) {
+    hint_entry_gr(entry, heap, None)
+}
+
+fn hint_entry_gr(entry: i32, heap: i32, gr: Option<i32>) {
     let Some(s) = svc() else { return };
     if !s.worker {
         return;
@@ -858,12 +888,99 @@ pub fn hint_entry(entry: i32, heap: i32) {
     g.clock += 1;
     let now = g.clock;
     g.entries.push(Entry { entry, len, plan: None, pending: true, started: false, used: now });
-    g.jobs.push_back(Job { entry, src: Src::Disc(off, len), loading: -1, grkind: hint_grkind() });
+    g.jobs.push_back(Job { entry, src: Src::Disc(off, len), loading: -1, grkind: gr.unwrap_or_else(hint_grkind) });
     drop(g);
     if log_on() {
         eprintln!("asset: hint entry {entry:#x} ({} KB)", len >> 10);
     }
     s.cv.notify_all();
+}
+
+/// A disc entry for a game file name (`PlFx.dat`; a name without an extension tries the locale's `.usd`, then `.dat`).
+/// Pure: unlike `lbFileGetFullName` it writes no game static.
+fn entry_of(name: *const i8) -> i32 {
+    if name.is_null() {
+        return -1;
+    }
+    let Some(h) = crate::host::Host::try_get() else { return -1 };
+    let n = unsafe { core::ffi::CStr::from_ptr(name) }.to_string_lossy();
+    if n.contains('.') {
+        return h.disc.disc_entry(&n);
+    }
+    for ext in [".usd", ".dat"] {
+        let e = h.disc.disc_entry(&format!("{n}{ext}"));
+        if e > 0 {
+            return e;
+        }
+    }
+    -1
+}
+
+/// Hints for a fight decided ahead (Envoy: the sim publishes the coming room's plan at the camp / stop screens): the
+/// stage file (prepared for that stage's grkind) and every fighter's data, costume (color 0, the one Envoy fights
+/// use unless the CSS pick says otherwise) and animation bank. Reads only immutable name tables.
+pub fn hint_envoy_plan(plan: &[i32; melee_modes::tu::envoy::PLAN_WORDS]) {
+    use melee_modes::tu::envoy as ev;
+    if plan[ev::P_ACTIVE] == 0 || svc().is_none_or(|s| !s.worker) {
+        return;
+    }
+    // once per distinct plan (the sim may publish the same plan every frame)
+    static LAST: Mutex<Vec<i32>> = Mutex::new(Vec::new());
+    {
+        let _s = crate::arena::SysScope::enter();
+        let mut l = LAST.lock().unwrap();
+        if l.as_slice() == &plan[..] {
+            return;
+        }
+        *l = plan.to_vec();
+    }
+    let mut cks: Vec<i32> = Vec::new();
+    let _s = crate::arena::SysScope::enter();
+    cks.extend([plan[ev::P_MAIN], plan[ev::P_PARTNER], plan[ev::P_MAIN2], plan[ev::P_PARTNER2]]);
+    let ncpu = plan[ev::P_NCPU].clamp(0, 3) as usize;
+    cks.extend(&plan[ev::P_CPU_CK..ev::P_CPU_CK + ncpu]);
+    cks.extend(&plan[ev::P_WAVE_CK..ev::P_WAVE_CK + 3]);
+    let gr = plan[ev::P_STAGE];
+    unsafe {
+        let sd = &*core::ptr::addr_of!(melee_world::tu::ground::stage_datas);
+        if gr > 0 && (gr as usize) < sd.len() && !sd[gr as usize].is_null() {
+            let e = entry_of((*sd[gr as usize]).data1 as *const i8);
+            if e > 0 {
+                hint_entry_gr(e, -1, Some(gr));
+            }
+        }
+        let mapping = &*core::ptr::addr_of!(melee_world::pl::ftMapping_list);
+        let names = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C1F40);
+        let costumes = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C2360);
+        let banks = &*core::ptr::addr_of!(melee_fighter::tu::ftdata::ftData_803C23E4);
+        let mut done: Vec<i32> = Vec::new();
+        for ck in cks {
+            if ck < 0 || ck as usize >= mapping.len() {
+                continue;
+            }
+            let m = &mapping[ck as usize];
+            for k in [m.internal_id as i32, m.extra_internal_id as i32] {
+                if k < 0 || k as usize >= names.len() || done.contains(&k) {
+                    continue;
+                }
+                done.push(k);
+                let k = k as usize;
+                let mut files = vec![names[k].a as *const i8, banks[k] as *const i8];
+                if !costumes[k].is_null() {
+                    files.push((*costumes[k]).dat_filename as *const i8);
+                }
+                for f in files {
+                    let e = entry_of(f);
+                    if e > 0 {
+                        hint_entry_gr(e, -1, None);
+                    }
+                }
+            }
+        }
+    }
+    if log_on() {
+        eprintln!("asset: envoy plan hinted (stage {gr})");
+    }
 }
 
 /// Files every session loads early, hinted at boot so the worker starts on them at once: the title's, the menus' and
@@ -975,7 +1092,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         let copy: Vec<u8> = file.to_vec();
         let other = std::thread::spawn(move || {
             crate::arena::mark_foreign_thread();
-            prepare(&copy, loading, grkind)
+            prepare(&copy, loading, grkind).ok()
         })
         .join()
         .ok()

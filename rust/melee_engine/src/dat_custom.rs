@@ -1668,6 +1668,23 @@ pub fn begin_prepare(loading: i32, grkind: i32) {
     BANKS.with_borrow_mut(|m| *m = None);
 }
 
+/// Whether every side list a decode fills is empty again (the decode's `fix_articles`/`fix_dynamics` take them). The
+/// asset service uses it to know no block of a recorded decode is held from outside the decode result: a live block
+/// the result does not reach is then a plain leak of the decode (an article field written twice), which a replay
+/// reproduces exactly (it replays every allocation, live or not).
+pub fn side_lists_empty() -> bool {
+    ARTICLE_TABLES.with_borrow(|x| x.is_empty())
+        && ARTICLE_STATES.with_borrow(|x| x.is_empty())
+        && ARTICLE_DYNAMICS.with_borrow(|x| x.is_empty())
+        && ARTICLE_HURTBONES.with_borrow(|x| x.is_empty())
+        && ARTICLE_JOINT_ROWS.with_borrow(|x| x.is_empty())
+        && ARTICLE_TYPED.with_borrow(|x| x.is_empty())
+        && HEIHO_HEALTH.with_borrow(|x| x.is_empty())
+        && DYNAMICS_FIX.with_borrow(|x| x.is_empty())
+        && BANKS.with_borrow(|m| m.is_none())
+        && PREP_EFFECTS.with_borrow(|v| v.is_none())
+}
+
 /// End it (still inside the recording: the memo and the lists it drops were recorded): (kept effects, resolved kind,
 /// whether the decode read `stage_info.grkind`).
 pub fn end_prepare() -> (Vec<Effect>, Option<i32>, bool) {

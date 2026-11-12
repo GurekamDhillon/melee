@@ -221,7 +221,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             }
             // a stage whose record packs s16 / u8 fields (`crate::yakumono_layouts`, generated from the stage TUs' structs): swap
             // each field by its own width instead of the whole word (a word swap exchanges the two halves of an s16 pair)
-            let kind = unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind } as i32;
+            let kind = prep_grkind();
             if kind == melee_types::Gr_Kind_KinokoRoute as i32 {
                 // grNKr_YakumonoParam { int x0; grZakoGenerator_SpawnDesc x4; }: grZakoGenerator_801CA8B4 reads x4 as an array
                 // to the record end (see the descriptor tail below), so every word from 4 on is a (u16, u8, u8) descriptor
@@ -1615,8 +1615,18 @@ thread_local! {
     static PREP_EFFECTS: core::cell::RefCell<Option<Vec<Effect>>> = const { core::cell::RefCell::new(None) };
     /// The `FTDATA_LOADING_KIND` a prepared decode runs with (the requester's value, not the game's static).
     static PREP_LOADING: core::cell::Cell<Option<i32>> = const { core::cell::Cell::new(None) };
+    static PREP_GRKIND: core::cell::Cell<Option<i32>> = const { core::cell::Cell::new(None) };
+    static PREP_GRKIND_USED: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
     /// The fighter kind `ftdata` resolved in this decode.
     static PREP_RESOLVED: core::cell::Cell<Option<i32>> = const { core::cell::Cell::new(None) };
+}
+
+/// `stage_info.grkind` as a decode sees it: the requester's value inside a prepare (recorded as a plan input), the
+/// game's otherwise.
+fn prep_grkind() -> i32 {
+    let k = PREP_GRKIND.with(|c| c.get()).unwrap_or_else(|| unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind } as i32);
+    PREP_GRKIND_USED.with(|c| c.set(true));
+    k
 }
 
 fn effect(e: Effect) {
@@ -1646,17 +1656,21 @@ pub fn apply_effects(v: Vec<Effect>) {
 }
 
 /// Start a prepared decode on this thread: effects are kept, `ftdata` sees `loading`, the bank memo starts empty.
-pub fn begin_prepare(loading: i32) {
+pub fn begin_prepare(loading: i32, grkind: i32) {
+    PREP_GRKIND.with(|c| c.set(Some(grkind)));
+    PREP_GRKIND_USED.with(|c| c.set(false));
     PREP_EFFECTS.with_borrow_mut(|v| *v = Some(Vec::new()));
     PREP_LOADING.with(|c| c.set(Some(loading)));
     PREP_RESOLVED.with(|c| c.set(None));
     BANKS.with_borrow_mut(|m| *m = None);
 }
 
-/// End it (still inside the recording: the memo and the lists it drops were recorded): (kept effects, resolved kind).
-pub fn end_prepare() -> (Vec<Effect>, Option<i32>) {
+/// End it (still inside the recording: the memo and the lists it drops were recorded): (kept effects, resolved kind,
+/// whether the decode read `stage_info.grkind`).
+pub fn end_prepare() -> (Vec<Effect>, Option<i32>, bool) {
+    PREP_GRKIND.with(|c| c.set(None));
     BANKS.with_borrow_mut(|m| *m = None);
     PREP_LOADING.with(|c| c.set(None));
     let v = PREP_EFFECTS.with_borrow_mut(|v| v.take()).unwrap_or_default();
-    (v, PREP_RESOLVED.with(|c| c.take()))
+    (v, PREP_RESOLVED.with(|c| c.take()), PREP_GRKIND_USED.with(|c| c.replace(false)))
 }

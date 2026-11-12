@@ -71,7 +71,29 @@ mod sys {
         VirtualAlloc(core::ptr::null_mut(), n, 0x2000, 0x04) as usize
     }
     pub unsafe fn reserve_at(at: usize, n: usize) -> usize {
-        VirtualAlloc(at as *mut _, n, 0x2000, 0x04) as usize
+        VirtualAlloc(at as *mut _, n, 0x2000 | 0x200000, 0x04) as usize
+    }
+    extern "system" {
+        fn GetWriteWatch(flags: u32, base: *mut core::ffi::c_void, size: usize, addrs: *mut *mut core::ffi::c_void, count: *mut usize, gran: *mut u32) -> u32;
+    }
+    /// Pages of `[a, a + n)` written since the last reset (and reset them): page addresses, ascending. None: unknown.
+    pub unsafe fn written(a: usize, n: usize) -> Option<Vec<usize>> {
+        let mut out = Vec::new();
+        let mut buf = vec![core::ptr::null_mut::<core::ffi::c_void>(); 1 << 16];
+        let mut at = a;
+        while at < a + n {
+            let mut count = buf.len();
+            let mut gran = 0u32;
+            if GetWriteWatch(1, at as *mut _, a + n - at, buf.as_mut_ptr(), &mut count, &mut gran) != 0 {
+                return None;
+            }
+            out.extend(buf[..count].iter().map(|&p| p as usize));
+            if count < buf.len() {
+                break;
+            }
+            at = out.last().unwrap() + 4096;
+        }
+        Some(out)
     }
     pub unsafe fn commit(at: usize, n: usize) -> bool {
         !VirtualAlloc(at as *mut _, n, 0x1000, 0x04).is_null()
@@ -88,6 +110,9 @@ mod sys {
     pub unsafe fn reserve_at(_at: usize, _n: usize) -> usize {
         0
     }
+    pub unsafe fn written(_a: usize, _n: usize) -> Option<Vec<usize>> {
+        None
+    }
     pub unsafe fn commit(_at: usize, _n: usize) -> bool {
         false
     }
@@ -101,9 +126,10 @@ pub fn init() -> bool {
     }
     // a fixed, odd-looking base first: the plan builder takes any word inside the range for a pointer, so the range
     // should be one that plain data (big-endian words, floats, text) is unlikely to spell
+    // (with write watch: the plan builder reads only the pages a decode wrote; see [`written_pages`])
     let mut base = unsafe { sys::reserve_at(0x5C7A_0000_0000, SLOT * NSLOT + SLOT) };
     if base == 0 {
-        base = unsafe { sys::reserve(SLOT * NSLOT + SLOT) };
+        base = unsafe { sys::reserve_at(0, SLOT * NSLOT + SLOT) };
     }
     if base == 0 {
         return false;
@@ -150,6 +176,8 @@ pub fn take_slot() -> Option<usize> {
             if d > 0 {
                 unsafe { core::ptr::write_bytes((s.base + free * SLOT) as *mut u8, 0, d) };
             }
+            // the zeroing (and the last user's writes) are not this user's writes
+            let _ = unsafe { sys::written(s.base + free * SLOT, SLOT - META) };
             return Some(free);
         }
     }
@@ -278,4 +306,10 @@ pub unsafe fn free(p: *mut u8) {
             (*r.meta.add(i)).live = 0;
         }
     }
+}
+
+/// The pages of `[a, a + n)` (inside a slot) written since the slot was taken, ascending; None: not known (treat all
+/// as written).
+pub fn written_pages(a: usize, n: usize) -> Option<Vec<usize>> {
+    unsafe { sys::written(a & !0xFFF, ((a + n + 0xFFF) & !0xFFF) - (a & !0xFFF)) }
 }

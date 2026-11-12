@@ -48,6 +48,8 @@ pub struct Plan {
     /// `FTDATA_LOADING_KIND` it ran with, and the fighter kind `ftdata` resolved (None: no fighter data inside).
     loading_in: i32,
     resolved: Option<i32>,
+    /// The `stage_info.grkind` the decode read (None: it did not read it). A plan fits only that stage.
+    grkind: Option<i32>,
     blocks: Vec<(usize, usize, usize)>,
     fixes: Vec<Fix>,
     /// For blocks of at least [`SPARSE_MIN`] bytes: (block, offset, length) of their non-zero 4 KB runs, in order.
@@ -73,7 +75,10 @@ impl Plan {
     fn file(&self) -> &[u8] {
         unsafe { core::slice::from_raw_parts(self.raw as *const u8, self.len) }
     }
-    fn fits(&self, loading: i32) -> bool {
+    fn fits(&self, loading: i32, grkind: i32) -> bool {
+        if self.grkind.is_some_and(|g| g != grkind) {
+            return false;
+        }
         match self.resolved {
             None => true,
             Some(k) => self.loading_in == loading || (self.loading_in == -1 && loading == k),
@@ -162,7 +167,7 @@ impl Drop for RecGuard {
 
 /// Record a decode of `file` (any thread). None: the recording heap is not available (no slot, or the process
 /// allocator does not route to it).
-pub fn prepare(file: &[u8], loading: i32) -> Option<Plan> {
+pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
     let t0 = std::time::Instant::now();
     let _sys = crate::arena::SysScope::enter();
     let slot = recheap::take_slot()?;
@@ -177,6 +182,7 @@ pub fn prepare(file: &[u8], loading: i32) -> Option<Plan> {
     let mut rec = Box::new(Rec::new(slot, raw + len + 0x1000));
     let outp;
     let resolved;
+    let grkind_used;
     {
         unsafe { recheap::begin_recording(&mut *rec) };
         let _g = RecGuard;
@@ -188,11 +194,12 @@ pub fn prepare(file: &[u8], loading: i32) -> Option<Plan> {
             recheap::release_slot(slot);
             return None;
         }
-        crate::dat_custom::begin_prepare(loading);
+        crate::dat_custom::begin_prepare(loading, grkind);
         let mut d = unsafe { archive::decode(raw as *mut u8, len) };
-        let (eff, r) = crate::dat_custom::end_prepare();
+        let (eff, r, g) = crate::dat_custom::end_prepare();
         d.effects = eff;
         resolved = r;
+        grkind_used = g;
         outp = Box::into_raw(Box::new(d)) as usize;
     }
     // reachability from the result, and the fixups
@@ -202,11 +209,29 @@ pub fn prepare(file: &[u8], loading: i32) -> Option<Plan> {
     let mut stack = vec![root];
     seen[root] = true;
     let mut raw_fix: Vec<(usize, usize, Tgt)> = Vec::new(); // (block, off, target with ORIGINAL block numbers)
+    // pages the decode never wrote are still zero: neither scanned nor copied (the shared tables are mostly untouched)
+    let pg0 = rec.data_lo & !0xFFF;
+    let wrote: Option<Vec<bool>> = recheap::written_pages(rec.data_lo, rec.bump - rec.data_lo).map(|v| {
+        let mut m = vec![false; (rec.bump - pg0) / 4096 + 1];
+        for p in v {
+            if p >= pg0 && (p - pg0) / 4096 < m.len() {
+                m[(p - pg0) / 4096] = true;
+            }
+        }
+        m
+    });
+    let page_written = |a: usize| wrote.as_ref().map_or(true, |m| m.get((a - pg0) / 4096).copied().unwrap_or(true));
     let mut dead_refs = 0;
     while let Some(i) = stack.pop() {
         let b = bl[i];
         let mut off = 0;
         while off + 8 <= b.size {
+            if (b.at + off) & 0xFFF < 8 || off == 0 {
+                if !page_written(b.at + off) {
+                    off = (((b.at + off) | 0xFFF) + 1 - b.at + 7) & !7; // the next page
+                    continue;
+                }
+            }
             let w = unsafe { ((b.at + off) as *const usize).read_unaligned() };
             if w >= raw && w <= raw + len {
                 raw_fix.push((i, off, Tgt::Raw((w - raw) as u32)));
@@ -263,7 +288,8 @@ pub fn prepare(file: &[u8], loading: i32) -> Option<Plan> {
         len,
         loading_in: loading,
         resolved,
-        sparse: sparse_runs(&blocks),
+        grkind: grkind_used.then_some(grkind),
+        sparse: sparse_runs(&blocks, &page_written),
         blocks,
         fixes,
         out: remap[root],
@@ -276,7 +302,13 @@ pub fn prepare(file: &[u8], loading: i32) -> Option<Plan> {
 
 const SPARSE_MIN: usize = 64 << 10;
 
-fn sparse_runs(blocks: &[(usize, usize, usize)]) -> Vec<(u32, u32, u32)> {
+/// `MELEE_ASSET_SPARSE=off`: always copy whole blocks (diagnostics).
+fn sparse_on() -> bool {
+    static S: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *S.get_or_init(|| std::env::var("MELEE_ASSET_SPARSE").map_or(true, |v| v != "off"))
+}
+
+fn sparse_runs(blocks: &[(usize, usize, usize)], page_written: &dyn Fn(usize) -> bool) -> Vec<(u32, u32, u32)> {
     let mut v = Vec::new();
     for (k, &(at, size, _)) in blocks.iter().enumerate() {
         if size < SPARSE_MIN {
@@ -286,7 +318,8 @@ fn sparse_runs(blocks: &[(usize, usize, usize)]) -> Vec<(u32, u32, u32)> {
         let mut off = 0;
         while off < size {
             let end = (off + 4096).min(size);
-            if b[off..end].iter().any(|&x| x != 0) {
+            let touched = page_written(at + off) || page_written(at + end - 1);
+            if touched && b[off..end].iter().any(|&x| x != 0) {
                 match v.last_mut() {
                     Some((kk, o, n)) if *kk == k as u32 && (*o + *n) as usize == off => *n += (end - off) as u32,
                     _ => v.push((k as u32, off as u32, (end - off) as u32)),
@@ -320,7 +353,7 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
     for (k, &(at, size, _)) in p.blocks.iter().enumerate() {
         let zero_dst = newp[k] & 1 != 0;
         newp[k] &= !1;
-        if zero_dst && size >= SPARSE_MIN {
+        if zero_dst && size >= SPARSE_MIN && sparse_on() {
             // a known-zero destination needs only the source's non-zero pages (the decoder's whole-data shared
             // tables are mostly zero: copying them all faulted in ~40 MB for ItCo)
             while sp < p.sparse.len() && p.sparse[sp].0 < k as u32 {
@@ -367,6 +400,8 @@ struct Job {
     entry: i32,
     src: Src,
     loading: i32,
+    /// The game's `stage_info.grkind` at the hint (a stage file decoded for another stage is not used).
+    grkind: i32,
 }
 struct Entry {
     /// Disc entry it was hinted for (-1: prepared on the spot).
@@ -465,7 +500,7 @@ fn worker_main() {
             Some(v)
         });
         let bytes = bytes.filter(|b| b.len() >= 0x20 && u32::from_be_bytes([b[0], b[1], b[2], b[3]]) as usize == b.len());
-        let plan = bytes.and_then(|b| std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading))).ok().flatten());
+        let plan = bytes.and_then(|b| std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).ok().flatten());
         let mut g = s.m.lock().unwrap();
         if let Some(e) = g.entries.iter_mut().find(|e| e.pending && e.entry == job.entry) {
             e.pending = false;
@@ -517,7 +552,7 @@ pub fn hint_entry(entry: i32, heap: i32) {
     g.clock += 1;
     let now = g.clock;
     g.entries.push(Entry { entry, len, plan: None, pending: true, started: false, used: now });
-    g.jobs.push_back(Job { entry, src: Src::Disc(off, len), loading: -1 });
+    g.jobs.push_back(Job { entry, src: Src::Disc(off, len), loading: -1, grkind: unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind as i32 } });
     drop(g);
     if log_on() {
         eprintln!("asset: hint entry {entry:#x} ({} KB)", len >> 10);
@@ -536,6 +571,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         return None;
     }
     let loading = melee_fighter::tu::ftdata::FTDATA_LOADING_KIND;
+    let grkind = (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind as i32;
     let file = core::slice::from_raw_parts(src as *const u8, len);
     let t0 = std::time::Instant::now();
     let _sys = crate::arena::SysScope::enter();
@@ -543,7 +579,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
     let found: Option<Arc<Plan>> = {
         let mut g = s.m.lock().unwrap();
         loop {
-            let hit = g.entries.iter().filter_map(|e| e.plan.as_ref()).find(|p| p.len == len && p.fits(loading) && p.file() == file).cloned();
+            let hit = g.entries.iter().filter_map(|e| e.plan.as_ref()).find(|p| p.len == len && p.fits(loading, grkind) && p.file() == file).cloned();
             if hit.is_some() {
                 break hit;
             }
@@ -559,7 +595,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
     let (plan, how) = match found {
         Some(p) => (p, if waited { "wait" } else { "hit" }),
         None => {
-            let p = Arc::new(prepare(file, loading)?);
+            let p = Arc::new(prepare(file, loading, grkind)?);
             (p, "inline")
         }
     };
@@ -568,7 +604,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         let copy: Vec<u8> = file.to_vec();
         let other = std::thread::spawn(move || {
             crate::arena::mark_foreign_thread();
-            prepare(&copy, loading)
+            prepare(&copy, loading, grkind)
         })
         .join()
         .ok()

@@ -481,7 +481,7 @@ pub unsafe fn wave_start() -> i32 {
 
 /// Slots parked and asleep, as bits (the sim waits for all of them before the next wave).
 pub unsafe fn wave_pending() -> i32 {
-    (0..4).filter(|&s| WAVE_PENDING[s] != 0).fold(0, |m, s| m | 1 << s)
+    (0..4i32).filter(|&s| WAVE_PENDING[s as usize] != 0).fold(0i32, |m, s| m | 1i32.wrapping_shl(s as u32))
 }
 
 pub const UP_ATTACK: i32 = 0;

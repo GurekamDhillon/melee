@@ -2036,10 +2036,12 @@ fn load_figatree(f: *mut Fighter, src: *mut Fighter, msid: i32, key: *mut c_void
         } else {
             let a = (*r3).x14;
             if a < 0x8000_0000 {
+                let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("figatree: disc read"));
                 ext::lbArq_80014BD0(a as u32, buf, round_up_32b(size as u32), 0, 0);
             } else {
                 core::ptr::copy_nonoverlapping(ext::gc_ptr(a as u32) as *const u8, buf as *mut u8, size as usize);
             }
+            let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("figatree: parse ").n(size as i64).s(" B"));
             if ext::HSD_ArchiveParse(&mut ar, (*buf).x0.as_mut_ptr(), size) == -1 {
                 panic!("HSD_ArchiveParse error! {msid:x} (ftdata.c:{:#X})", lines.1);
             }

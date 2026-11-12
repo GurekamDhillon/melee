@@ -88,6 +88,12 @@ pub fn trim() -> bool {
     unsafe { TRIM }
 }
 
+/// Whether freeing a block of `size` bytes drops its contents (trim mode decommits its pages past the first 16 bytes):
+/// writing such a block's last contents just before its free is wasted work.
+pub fn free_drops_contents(size: usize) -> bool {
+    (unsafe { TRIM }) && class_of(size).is_some_and(|(_, cs)| cs >= TRIM_MIN)
+}
+
 /// Decommit the whole pages inside `[a, b)` (their contents are dropped; the range stays reserved).
 #[cfg(windows)]
 unsafe fn decommit(a: usize, b: usize) {
@@ -289,7 +295,20 @@ pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
         note_asset_block(p, l.size());
     }
     if !p.is_null() && !(fresh && !SNAPSHOTTED.load(Relaxed)) {
-        core::ptr::write_bytes(p, 0, l.size());
+        let n = l.size();
+        if !fresh && TRIM && class_of(n).is_some_and(|(_, cs)| cs >= TRIM_MIN) {
+            // a recycled trimmed block: `free` decommitted its whole pages past the first 16 bytes, and the allocation
+            // recommitted them, so they read back zero already. Zero only the bytes no decommit covered (up to the
+            // first page boundary past +16, and the partial last page): writing the whole block (the decoder's 40 MB
+            // shared tables) touched every page again for nothing
+            let (a, e) = (p as usize, p as usize + n);
+            let head_end = ((a + 16 + 0xFFF) & !0xFFF).min(e);
+            core::ptr::write_bytes(p, 0, head_end - a);
+            let tail = (e & !0xFFF).max(head_end);
+            core::ptr::write_bytes(tail as *mut u8, 0, e - tail);
+        } else {
+            core::ptr::write_bytes(p, 0, n);
+        }
     }
     p
 }

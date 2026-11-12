@@ -71,6 +71,8 @@ pub struct Plan {
     /// Pointer words to dead blocks (written as null).
     pub dead_refs: usize,
     pub bytes: usize,
+    /// Bytes of the live blocks (what [`apply`] writes at the end).
+    live_bytes: usize,
     pub prep_ms: f64,
     /// (copy-in + decode, reachability scan, plan build incl. sparse runs) ms.
     pub prep_split: [f64; 3],
@@ -414,12 +416,16 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Result<Plan, NoPlan> {
         escaped: 0,
         dead_refs,
         bytes,
+        live_bytes: bl.iter().filter(|b| b.live == 1).map(|b| b.size).sum(),
         prep_ms: t0.elapsed().as_secs_f64() * 1e3,
         prep_split: [(t_dec - t0).as_secs_f64() * 1e3, (t_scan - t_dec).as_secs_f64() * 1e3, t_scan.elapsed().as_secs_f64() * 1e3],
     })
 }
 
 const SPARSE_MIN: usize = 64 << 10;
+/// Live bytes from which [`apply`] splits its block writes over [`PAR_THREADS`] threads.
+const PAR_MIN: usize = 8 << 20;
+const PAR_THREADS: usize = 4;
 
 /// `MELEE_ASSET_SPARSE=off`: always copy whole blocks (diagnostics).
 fn sparse_on() -> bool {
@@ -471,7 +477,9 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
     };
     // block k's last contents at its address (a fresh replay block is zero: the asset path zeroes what it takes, so
     // only the non-zero pages are copied, except into a realloc's block, which holds the old bytes)
+    let srcu = src as usize; // (a usize: the closure is shared with the copy threads below)
     let write = |k: usize, addr: &Vec<usize>| {
+        let src = srcu;
         let (at, size, _) = p.blocks[k];
         let dst = addr[k];
         if size >= SPARSE_MIN && !p.realloc_target[k] && sparse_on() {
@@ -506,7 +514,40 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
             }
             recheap::ev::FREE => {
                 let t = std::time::Instant::now();
-                write(a, &addr);
+                // a temporary's last contents, unless the free drops them anyway (a trimmed big block: its pages are
+                // decommitted, as after the in-place decode's free)
+                if !crate::arena::free_drops_contents(p.blocks[a].1) {
+                    write(a, &addr);
+                } else {
+                    // only the bytes the decommit keeps: up to the first page boundary past +16, and the last
+                    // partial page
+                    let (at, size, _) = p.blocks[a];
+                    let dst = addr[a];
+                    let head = ((dst + 16 + 0xFFF) & !0xFFF).min(dst + size) - dst;
+                    let tail = (((dst + size) & !0xFFF).max(dst + head)) - dst;
+                    for (lo, hi) in [(0, head), (tail, size)] {
+                        if hi > lo {
+                            core::ptr::copy_nonoverlapping((at + lo) as *const u8, (dst + lo) as *mut u8, hi - lo);
+                        }
+                    }
+                    for f in &p.fixes[p.fix_at[a] as usize..p.fix_at[a + 1] as usize] {
+                        let o = f.off as usize;
+                        let v = match f.tgt {
+                            Tgt::Blk(j, d) => addr[j as usize] + d as usize,
+                            Tgt::Raw(d) => src as usize + d as usize,
+                            Tgt::Null => 0,
+                            Tgt::RawRel(d) => (src as usize + d as usize).wrapping_sub(dst),
+                        }
+                        .to_le_bytes();
+                        // the bytes of the word inside the kept ranges (a word may straddle a range's edge)
+                        for (k, &byte) in v.iter().enumerate() {
+                            let b = o + k;
+                            if b < head || (b >= tail && b < size) {
+                                ((dst + b) as *mut u8).write(byte);
+                            }
+                        }
+                    }
+                }
                 std::alloc::dealloc(addr[a] as *mut u8, lay(a));
                 t_temp += t.elapsed().as_secs_f64();
             }
@@ -522,11 +563,48 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
     }
     let ta = std::time::Instant::now();
     // the live blocks' last contents (in index order: pointers only name blocks that exist by now)
-    for (k, b) in p.blocks.iter().enumerate() {
-        let _ = b;
-        if p.live(k) {
-            write(k, &addr);
+    // big plans: split over a few threads (plain copies and fixups into blocks that are all allocated by now; the
+    // bytes are the same whoever writes them). The spawns allocate: kept off the arena.
+    let live_bytes: usize = p.live_bytes;
+    let nt = if live_bytes >= PAR_MIN { PAR_THREADS } else { 1 };
+    if nt == 1 {
+        for k in 0..p.blocks.len() {
+            if p.live(k) {
+                write(k, &addr);
+            }
         }
+    } else {
+        let _s = crate::arena::SysScope::enter();
+        let per = live_bytes / nt + 1;
+        let mut cuts = vec![0usize];
+        let mut acc = 0;
+        for (k, b) in p.blocks.iter().enumerate() {
+            if p.live(k) {
+                acc += b.1 + 64;
+                if acc >= per * cuts.len() && cuts.len() < nt {
+                    cuts.push(k + 1);
+                }
+            }
+        }
+        cuts.push(p.blocks.len());
+        let (w, a) = (&write, &addr);
+        std::thread::scope(|sc| {
+            for c in cuts.windows(2).skip(1) {
+                let (lo, hi) = (c[0], c[1]);
+                sc.spawn(move || {
+                    for k in lo..hi {
+                        if p.live(k) {
+                            w(k, a);
+                        }
+                    }
+                });
+            }
+            for k in cuts[0]..cuts[1] {
+                if p.live(k) {
+                    w(k, a);
+                }
+            }
+        });
     }
     for &(o, w, t) in &p.raw_patch {
         let (off, n) = ((o & 0x0FFF_FFFF) as usize, (o >> 28) as usize);

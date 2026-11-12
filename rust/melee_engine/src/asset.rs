@@ -642,6 +642,8 @@ fn end_asset_path(len: usize, how: &str) {
                 (4, (w - arena0) as u64)
             } else if w >> 47 != 0 && a.wrapping_add(w) >= src && a.wrapping_add(w) <= src + len {
                 (6, (a.wrapping_add(w) - src) as u64) // file image address - this block's start (dat_custom banks)
+            } else if w >> 47 != 0 && crate::arena::contains(a.wrapping_add(w) as *const u8) {
+                (6, 1 << 40 | (a.wrapping_add(w) - arena0) as u64) // another image in the arena - this block's start
             } else if w >= 0x1_0000 && committed(w) {
                 (5, 0)
             } else if w >> 47 != 0 && ((t >= img.0 && t < img.1) || (t >= 0x1_0000 && committed(t))) {

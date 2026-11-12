@@ -459,6 +459,22 @@ pub fn lbHeap_LargestFree(heap: i32) -> u32 {
     }
 }
 
+/// TARGET_PC: whether `ptr` lies in lbMemory heap `heap` (false for an OS heap or a heap without a handle).
+pub fn lbHeap_Contains(heap: i32, ptr: *mut c_void) -> bool {
+    unsafe {
+        if heap < 0 || heap as usize >= LBHEAP_HEAP_COUNT || ptr.is_null() {
+            return false;
+        }
+        let p = heap_ptr(heap as usize);
+        if (*p).status != LbHeapStatus_Create || (*p).r#type == 0 || (*p).handle.is_null() || (*p).handle == minus1() {
+            return false;
+        }
+        let h = (*p).handle;
+        let (lo, hi) = ((*h).lo as usize, (*h).hi as usize);
+        (lo..hi).contains(&(ptr as usize))
+    }
+}
+
 /// `lbHeap_StageSlotTryAlloc` (lbheap_stage_slots.inc): a non-asserting allocation from the main heap.
 pub unsafe fn lbHeap_StageSlotTryAlloc(size: u32) -> *mut c_void {
     melee_core::ct!("lbHeap_StageSlotTryAlloc");

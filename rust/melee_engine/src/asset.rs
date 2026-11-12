@@ -623,7 +623,7 @@ fn end_asset_path(len: usize, how: &str) {
     let arena0 = crate::arena::used_range().0;
     // per live block: its size, then each 8-byte word as (class, value): 0 raw, 1 this load's block (number,
     // offset), 2 file image offset, 3 exe image offset, 4 other arena object offset, 5 host pointer (Rust heap,
-    // stack: per run, never game data, so its value is not compared), 6 self-relative host offset; the tail raw
+    // stack: per run, never game data, so its value is not compared; 1: self-relative), 6 file image - block start; the tail raw
     for &(a, n, _) in &live {
         let b = unsafe { core::slice::from_raw_parts(a as *const u8, n) };
         mix(n as u64);
@@ -640,10 +640,12 @@ fn end_asset_path(len: usize, how: &str) {
                 (3, (w - img.0) as u64)
             } else if crate::arena::contains(w as *const u8) {
                 (4, (w - arena0) as u64)
+            } else if w >> 47 != 0 && a.wrapping_add(w) >= src && a.wrapping_add(w) <= src + len {
+                (6, (a.wrapping_add(w) - src) as u64) // file image address - this block's start (dat_custom banks)
             } else if w >= 0x1_0000 && committed(w) {
                 (5, 0)
             } else if w >> 47 != 0 && ((t >= img.0 && t < img.1) || (t >= 0x1_0000 && committed(t))) {
-                (6, 0)
+                (5, 1)
             } else {
                 (0, w as u64)
             };

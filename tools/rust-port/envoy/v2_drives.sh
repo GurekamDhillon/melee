@@ -11,8 +11,10 @@
 #   3. twin: the CPU run with Twin Soul + Glass Core and Spire, Wildfire, Echo, Updraft / Tailwind, Thorns, Leech, Hex:
 #      both sets of the pair fired (Twin Soul);
 #   4. shared: MELEE_ENVOY_SHARED_DRIVES=1 on the CPU run: the run logs the shared set;
-#   5. coop: MELEE_ENVOY_COOP=1 with both pads on the pad script (MELEE_PAD_CHANNELS=3) in fight 2 (an elite): two
-#      players, each with their own drives firing (owners 0-1 and 2-3), each took a card, the elite carries a drive;
+#   5. coop: MELEE_ENVOY_COOP=1, both players level-9 CPUs (MELEE_ENVOY_TEST_P1CPU) in fight 3 (the pack that ends
+#      the first session, so the stop opens): two players, each with their own drives firing (owners 0-1 and 2-3),
+#      each took a card at the stop (picks are banked to the stop since sessions; fight 2 has none). Foe drives are
+#      checked by v3_slice (loop3, roadstop). The row runs at least 6000 frames (the pack takes about 5000);
 #   6. petey: MELEE_ENVOY_BOSS=petey at fight 5 on the CPU run: drives fire on Petey (damage(amount)).
 #   Every run prints its fire count (the loud-start band, envoy-core-v2.md 3.3).
 #   V3 (port/v3sim): the same six on the Heat rules: charge is by damage (the pad run no longer needs Bolt, which
@@ -89,12 +91,11 @@ for d in $depths; do
     check 4 shared "$d" "$line" "$miss"
   fi
   if on coop; then
-    line=$(run coop "$d" "bolt,nova,comet,noshop/relay,slipstream|echo_oath;bolt,comet,feather_storm/surge,relay|overclock" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3)
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run coop "$d" "bolt,nova,comet,noshop/relay,slipstream|echo_oath;bolt,comet,feather_storm/surge,relay|overclock" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3)
     miss=""; seen coop "$d" "envoy: run start, players 2" || miss="$miss (not co-op)"
     { owner_fired coop "$d" 0 || owner_fired coop "$d" 1; } || miss="$miss (player 1 never fired)"
     { owner_fired coop "$d" 2 || owner_fired coop "$d" 3; } || miss="$miss (player 2 never fired)"
     { seen coop "$d" "envoy: card taken, player 0" && seen coop "$d" "envoy: card taken, player 1"; } || miss="$miss (both players did not take a card)"
-    seen coop "$d" "envoy: foe carries" || miss="$miss (the elite carries nothing)"
     check 5 coop "$d" "$line" "$miss"
   fi
   if on petey; then

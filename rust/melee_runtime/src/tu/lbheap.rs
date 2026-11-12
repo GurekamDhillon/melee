@@ -444,6 +444,21 @@ pub fn lbHeap_Free(heap: i32) -> u32 {
     }
 }
 
+/// TARGET_PC: the largest single allocation heap `heap` can take now (0 out of range, destroyed, without a handle,
+/// or an OS heap).
+pub fn lbHeap_LargestFree(heap: i32) -> u32 {
+    unsafe {
+        if heap < 0 || heap as usize >= LBHEAP_HEAP_COUNT {
+            return 0;
+        }
+        let p = heap_ptr(heap as usize);
+        if (*p).status != LbHeapStatus_Create || (*p).r#type == 0 || (*p).handle.is_null() || (*p).handle == minus1() {
+            return 0;
+        }
+        super::lbmemory::lbMemory_LargestFree((*p).handle)
+    }
+}
+
 /// `lbHeap_StageSlotTryAlloc` (lbheap_stage_slots.inc): a non-asserting allocation from the main heap.
 pub unsafe fn lbHeap_StageSlotTryAlloc(size: u32) -> *mut c_void {
     melee_core::ct!("lbHeap_StageSlotTryAlloc");

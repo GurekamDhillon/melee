@@ -1,7 +1,7 @@
 use super::writer::{classify, Parts};
 use super::*;
 
-fn frame() -> Frame {
+fn test_frame() -> Frame {
     Frame { t_us: 1_000_000, interval_us: 120_000, scene: 0x0203, tick: 100, c: [0; NC], mods: [0; MAX_MODS], interp: true, expected_us: 4167 }
 }
 
@@ -15,7 +15,7 @@ fn text_builds_without_allocating_and_sanitizes() {
 
 #[test]
 fn classify_picks_the_largest_part_and_its_reason() {
-    let f = frame();
+    let f = test_frame();
     // a long tick that was mostly file loading
     let p = Parts { interval: 120_000.0, expected: 4167.0, tick: 110_000.0, tick_max: 110_000.0, ticks: 1, files: 60_000.0, parse: 20_000.0, ..Default::default() };
     let ev = vec![(Kind::File, "file GrNBa.dat 1200 KB".to_string(), 60_000, 1)];
@@ -24,7 +24,7 @@ fn classify_picks_the_largest_part_and_its_reason() {
     let ev2 = vec![ev[0].clone(), (Kind::Stage, "stage switch to kind 3".to_string(), 0, 3)];
     assert_eq!(classify(&p, &ev2, &f, &[], None).0, "stage switch");
     // new pipelines in a slow prepare
-    let mut f2 = frame();
+    let mut f2 = test_frame();
     f2.c[C::Pipes as usize] = 7;
     let p2 = Parts { interval: 40_000.0, expected: 4167.0, prepare: 30_000.0, pipes: 25_000.0, ..Default::default() };
     assert_eq!(classify(&p2, &[], &f2, &[], None).0, "new shaders");
@@ -36,7 +36,7 @@ fn classify_picks_the_largest_part_and_its_reason() {
     assert_eq!(c, "machine busy");
     assert!(d.contains("rustc.exe x3"), "{d}");
     // a mod that took most of the tick
-    let mut f4 = frame();
+    let mut f4 = test_frame();
     f4.mods[1] = 50_000_000;
     let p4 = Parts { interval: 70_000.0, expected: 4167.0, tick: 60_000.0, tick_max: 60_000.0, ticks: 1, mods: 50_000.0, ..Default::default() };
     assert_eq!(classify(&p4, &[], &f4, &["envoy_ui".into(), "envoy_sim".into()], None).0, "mod envoy_sim");

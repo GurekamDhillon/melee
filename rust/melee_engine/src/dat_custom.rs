@@ -541,7 +541,10 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
                         let count = d.u32_at(sa + 0x24);
                         if (1..=7).contains(&count) && (0..count).all(|k| d.is_reloc(sa + 0x28 + 8 * k)) {
                             use melee_types::{itWstarAttrEntry, itWstarAttributes};
-                            let words = core::mem::size_of::<itWstarAttributes>() / 8 + (count as usize - 1) * core::mem::size_of::<itWstarAttrEntry>() / 8;
+                            // the header (0x28 bytes, `x28_entries` is a zero-length array) plus ALL `count` entries. It was
+                            // `count - 1`: the last entry (16 bytes) was written past the block, its `x4_sfx` (0x113) into the
+                            // first word of whatever block followed in the arena's size class (asset service slice 4)
+                            let words = (core::mem::size_of::<itWstarAttributes>() + count as usize * core::mem::size_of::<itWstarAttrEntry>()) / 8;
                             let buf: &mut [u64] = Box::leak(std::vec![0u64; words].into_boxed_slice());
                             let rec = buf.as_mut_ptr() as *mut itWstarAttributes;
                             unsafe {

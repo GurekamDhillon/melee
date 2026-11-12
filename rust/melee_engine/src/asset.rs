@@ -52,6 +52,15 @@ pub struct Plan {
     grkind: Option<i32>,
     blocks: Vec<(usize, usize, usize)>,
     fixes: Vec<Fix>,
+    /// `fixes[fix_at[k]..fix_at[k + 1]]` are block k's.
+    fix_at: Vec<u32>,
+    /// The recorded allocator calls, in order (recheap::ev).
+    events: Vec<u64>,
+    /// Blocks a REALLOC made (their start holds the old block's bytes after the replay's realloc: copied whole).
+    realloc_target: Vec<bool>,
+    live_mask: Vec<bool>,
+    /// (file offset | byte count << 28, word, pointer target) the decode wrote into the file image.
+    raw_patch: Vec<(u32, u64, Option<Tgt>)>,
     /// For blocks of at least [`SPARSE_MIN`] bytes: (block, offset, length) of their non-zero 4 KB runs, in order.
     sparse: Vec<(u32, u32, u32)>,
     out: u32,
@@ -61,6 +70,8 @@ pub struct Plan {
     pub dead_refs: usize,
     pub bytes: usize,
     pub prep_ms: f64,
+    /// (copy-in + decode, reachability scan, plan build incl. sparse runs) ms.
+    pub prep_split: [f64; 3],
 }
 
 impl Drop for Plan {
@@ -72,6 +83,9 @@ impl Drop for Plan {
 }
 
 impl Plan {
+    fn live(&self, k: usize) -> bool {
+        self.live_mask[k]
+    }
     fn file(&self) -> &[u8] {
         unsafe { core::slice::from_raw_parts(self.raw as *const u8, self.len) }
     }
@@ -129,6 +143,17 @@ impl Plan {
             h ^= x;
             h = h.wrapping_mul(0x0100_0000_01b3);
         };
+        for &e in &self.events {
+            mix(e);
+        }
+        for &(o, w, t) in &self.raw_patch {
+            mix(o as u64);
+            match t {
+                Some(Tgt::Blk(j, d)) => { mix(1); mix(j as u64); mix(d as u64) }
+                Some(Tgt::Raw(d)) => { mix(2); mix(d as u64) }
+                _ => mix(w),
+            }
+        }
         let mut fx = std::collections::HashMap::new();
         for f in &self.fixes {
             fx.insert((f.blk, f.off), f.tgt);
@@ -189,6 +214,7 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
         let probe = Box::new(0u64);
         let ok = recheap::in_range(&*probe as *const u64 as *const u8);
         drop(probe);
+        rec.clear_events();
         if !ok {
             drop(_g);
             recheap::release_slot(slot);
@@ -202,13 +228,10 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
         grkind_used = g;
         outp = Box::into_raw(Box::new(d)) as usize;
     }
-    // reachability from the result, and the fixups
+    // the fixups of every block (live or freed: a replay writes each one's last contents), then reachability
+    let t_dec = std::time::Instant::now();
     let bl = rec.blocks();
     let root = rec.find(outp).filter(|&i| bl[i].at == outp).expect("asset: the result is not a recorded block");
-    let mut seen = vec![false; bl.len()];
-    let mut stack = vec![root];
-    seen[root] = true;
-    let mut raw_fix: Vec<(usize, usize, Tgt)> = Vec::new(); // (block, off, target with ORIGINAL block numbers)
     // pages the decode never wrote are still zero: neither scanned nor copied (the shared tables are mostly untouched)
     let pg0 = rec.data_lo & !0xFFF;
     let wrote: Option<Vec<bool>> = recheap::written_pages(rec.data_lo, rec.bump - rec.data_lo).map(|v| {
@@ -221,9 +244,11 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
         m
     });
     let page_written = |a: usize| wrote.as_ref().map_or(true, |m| m.get((a - pg0) / 4096).copied().unwrap_or(true));
+    let mut fixes: Vec<Fix> = Vec::new();
+    let mut fix_at: Vec<u32> = Vec::with_capacity(bl.len() + 1);
     let mut dead_refs = 0;
-    while let Some(i) = stack.pop() {
-        let b = bl[i];
+    for (i, b) in bl.iter().enumerate() {
+        fix_at.push(fixes.len() as u32);
         let mut off = 0;
         while off + 8 <= b.size {
             if (b.at + off) & 0xFFF < 8 || off == 0 {
@@ -233,54 +258,101 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
                 }
             }
             let w = unsafe { ((b.at + off) as *const usize).read_unaligned() };
-            if w >= raw && w <= raw + len {
-                raw_fix.push((i, off, Tgt::Raw((w - raw) as u32)));
+            let tgt = if w >= raw && w <= raw + len {
+                Some(Tgt::Raw((w - raw) as u32))
             } else if w >= rec.data_lo && w <= rec.bump {
                 match rec.find(w) {
-                    Some(j) if bl[j].live == 1 => {
-                        raw_fix.push((i, off, Tgt::Blk(j as u32, (w - bl[j].at) as u32)));
-                        if !seen[j] {
-                            seen[j] = true;
-                            stack.push(j);
-                        }
-                    }
-                    _ => {
-                        raw_fix.push((i, off, Tgt::Null));
+                    Some(j) => Some(Tgt::Blk(j as u32, (w - bl[j].at) as u32)),
+                    None => {
                         dead_refs += 1;
+                        Some(Tgt::Null)
                     }
                 }
             } else if w >= rec.lo && w < rec.lo + recheap::SLOT {
-                // a stale word that points into this slot but at nothing (uninitialised padding holding a
-                // recording address): written as null so the plan does not depend on which slot it was made in
-                raw_fix.push((i, off, Tgt::Null));
+                Some(Tgt::Null) // a stale recording address outside every block
+            } else {
+                None
+            };
+            if let Some(tgt) = tgt {
+                fixes.push(Fix { blk: i as u32, off: off as u32, tgt });
             }
             off += 8;
         }
     }
-    let mut remap = vec![u32::MAX; bl.len()];
-    let mut blocks = Vec::new();
-    let mut bytes = len;
-    for (i, b) in bl.iter().enumerate() {
-        if seen[i] {
-            remap[i] = blocks.len() as u32;
-            blocks.push((b.at, b.size, b.align));
-            bytes += b.size;
+    fix_at.push(fixes.len() as u32);
+    // words the decode wrote into the file image itself (native pointers some tables keep there): kept as patches the
+    // apply writes into the game's copy, and the image put back as read (the plan is matched by these bytes)
+    let mut raw_patch: Vec<(u32, u64, Option<Tgt>)> = Vec::new();
+    {
+        let img = unsafe { core::slice::from_raw_parts_mut(raw as *mut u8, len) };
+        let mut off = 0;
+        while off < len {
+            let end = (off + 8).min(len);
+            if img[off..end] != file[off..end] {
+                let mut w = [0u8; 8];
+                w[..end - off].copy_from_slice(&img[off..end]);
+                let v = u64::from_le_bytes(w) as usize;
+                let tgt = if end - off < 8 {
+                    None
+                } else if v >= rec.data_lo && v <= rec.bump {
+                    rec.find(v).map(|j| Tgt::Blk(j as u32, (v - bl[j].at) as u32))
+                } else if v >= raw && v <= raw + len {
+                    Some(Tgt::Raw((v - raw) as u32))
+                } else {
+                    None
+                };
+                raw_patch.push((off as u32 | ((end - off) as u32) << 28, u64::from_le_bytes(w), tgt));
+                img[off..end].copy_from_slice(&file[off..end]);
+            }
+            off = end;
+        }
+    }
+    let t_scan = std::time::Instant::now();
+    // a live block the result does not reach was allocated for something else (a lazily built global): a replay would
+    // allocate it but the in-place decode on the game thread would not; the plan is not usable
+    let mut seen = vec![false; bl.len()];
+    let mut stack = vec![root];
+    seen[root] = true;
+    for &(_, _, t) in &raw_patch {
+        if let Some(Tgt::Blk(j, _)) = t {
+            if !seen[j as usize] {
+                seen[j as usize] = true;
+                stack.push(j as usize);
+            }
+        }
+    }
+    while let Some(i) = stack.pop() {
+        for f in &fixes[fix_at[i] as usize..fix_at[i + 1] as usize] {
+            if let Tgt::Blk(j, _) = f.tgt {
+                if bl[j as usize].live == 1 && !seen[j as usize] {
+                    seen[j as usize] = true;
+                    stack.push(j as usize);
+                }
+            }
         }
     }
     let escaped = bl.iter().enumerate().filter(|(i, b)| b.live == 1 && !seen[*i]).count();
-    let fixes = raw_fix
-        .into_iter()
-        .map(|(i, off, t)| Fix {
-            blk: remap[i],
-            off: off as u32,
-            tgt: match t {
-                Tgt::Blk(j, d) => Tgt::Blk(remap[j as usize], d),
-                t => t,
-            },
-        })
-        .collect();
+    let blocks: Vec<(usize, usize, usize)> = bl.iter().map(|b| (b.at, b.size, b.align)).collect();
+    let bytes = len + blocks.iter().map(|b| b.1).sum::<usize>();
+    let events: Vec<u64> = rec.events().to_vec();
+    let mut realloc_target = vec![false; bl.len()];
+    for &e in &events {
+        let (k, _, n) = recheap::ev::unpack(e);
+        if k == recheap::ev::REALLOC {
+            realloc_target[n] = true;
+        }
+    }
     if escaped > 0 {
-        eprintln!("asset: {escaped} live block(s) the decode result does not reach (slot {slot} kept)");
+        // the slot is kept (something outside the result may still point into it)
+        let what: Vec<String> = bl
+            .iter()
+            .enumerate()
+            .filter(|(i, b)| b.live == 1 && !seen[*i])
+            .take(4)
+            .map(|(i, b)| format!("#{i}/{} size {} align {} words {:x?}", bl.len(), b.size, b.align, unsafe { core::slice::from_raw_parts(b.at as *const u64, (b.size / 8).min(4)) }))
+            .collect();
+        eprintln!("asset: {escaped} live block(s) the decode result does not reach: plan dropped (the load decodes in place): {}", what.join("; "));
+        return None;
     }
     Some(Plan {
         slot,
@@ -292,11 +364,17 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
         sparse: sparse_runs(&blocks, &page_written),
         blocks,
         fixes,
-        out: remap[root],
-        escaped,
+        fix_at,
+        events,
+        realloc_target,
+        live_mask: bl.iter().map(|b| b.live == 1).collect(),
+        raw_patch,
+        out: root as u32,
+        escaped: 0,
         dead_refs,
         bytes,
         prep_ms: t0.elapsed().as_secs_f64() * 1e3,
+        prep_split: [(t_dec - t0).as_secs_f64() * 1e3, (t_scan - t_dec).as_secs_f64() * 1e3, t_scan.elapsed().as_secs_f64() * 1e3],
     })
 }
 
@@ -337,64 +415,200 @@ fn sparse_runs(blocks: &[(usize, usize, usize)], page_written: &dyn Fn(usize) ->
 /// `src` holds the same bytes the plan was prepared from (not yet relocated).
 pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
     let t0 = std::time::Instant::now();
-    let mut newp: Vec<usize> = {
+    let (mut addr, sparse_at): (Vec<usize>, Vec<u32>) = {
         let _s = crate::arena::SysScope::enter();
-        Vec::with_capacity(p.blocks.len())
-    };
-    // every block under one arena lock (same sequence as one alloc per block), then the copies
-    if !(crate::arena::active() && crate::arena::alloc_many(&p.blocks, &mut newp)) {
-        for &(_, size, align) in &p.blocks[newp.len()..] {
-            let q = std::alloc::alloc(Layout::from_size_align_unchecked(size, align));
-            assert!(!q.is_null(), "asset: apply out of memory ({size} bytes)");
-            newp.push(q as usize);
-        }
-    }
-    let mut sp = 0;
-    for (k, &(at, size, _)) in p.blocks.iter().enumerate() {
-        let zero_dst = newp[k] & 1 != 0;
-        newp[k] &= !1;
-        if zero_dst && size >= SPARSE_MIN && sparse_on() {
-            // a known-zero destination needs only the source's non-zero pages (the decoder's whole-data shared
-            // tables are mostly zero: copying them all faulted in ~40 MB for ItCo)
-            while sp < p.sparse.len() && p.sparse[sp].0 < k as u32 {
-                sp += 1;
+        let mut sa = vec![0u32; p.blocks.len() + 1];
+        let mut j = 0;
+        for (k, slot) in sa.iter_mut().enumerate() {
+            while j < p.sparse.len() && (p.sparse[j].0 as usize) < k {
+                j += 1;
             }
-            while sp < p.sparse.len() && p.sparse[sp].0 == k as u32 {
-                let (_, off, n) = p.sparse[sp];
-                core::ptr::copy_nonoverlapping((at + off as usize) as *const u8, (newp[k] + off as usize) as *mut u8, n as usize);
-                sp += 1;
+            *slot = j as u32;
+        }
+        (vec![0usize; p.blocks.len()], sa)
+    };
+    // block k's last contents at its address (a fresh replay block is zero: the asset path zeroes what it takes, so
+    // only the non-zero pages are copied, except into a realloc's block, which holds the old bytes)
+    let write = |k: usize, addr: &Vec<usize>| {
+        let (at, size, _) = p.blocks[k];
+        let dst = addr[k];
+        if size >= SPARSE_MIN && !p.realloc_target[k] && sparse_on() {
+            for &(_, off, n) in &p.sparse[sparse_at[k] as usize..sparse_at[k + 1] as usize] {
+                core::ptr::copy_nonoverlapping((at + off as usize) as *const u8, (dst + off as usize) as *mut u8, n as usize);
             }
         } else {
-            core::ptr::copy_nonoverlapping(at as *const u8, newp[k] as *mut u8, size);
+            core::ptr::copy_nonoverlapping(at as *const u8, dst as *mut u8, size);
+        }
+        for f in &p.fixes[p.fix_at[k] as usize..p.fix_at[k + 1] as usize] {
+            let v = match f.tgt {
+                Tgt::Blk(j, d) => addr[j as usize] + d as usize,
+                Tgt::Raw(d) => src as usize + d as usize,
+                Tgt::Null => 0,
+            };
+            ((dst + f.off as usize) as *mut usize).write_unaligned(v);
+        }
+    };
+    let lay = |k: usize| Layout::from_size_align_unchecked(p.blocks[k].1, p.blocks[k].2);
+    // the recorded calls, in order, through the process allocator (the arena decides exactly as it did for the
+    // in-place decode: same blocks, same free lists)
+    crate::arena::set_asset_path(true, digest_on());
+    let mut t_temp = 0.0f64;
+    for &e in &p.events {
+        let (kind, a, b) = recheap::ev::unpack(e);
+        match kind {
+            recheap::ev::ALLOC => {
+                let q = std::alloc::alloc(lay(a));
+                assert!(!q.is_null(), "asset: replay out of memory");
+                addr[a] = q as usize;
+            }
+            recheap::ev::FREE => {
+                let t = std::time::Instant::now();
+                write(a, &addr);
+                std::alloc::dealloc(addr[a] as *mut u8, lay(a));
+                t_temp += t.elapsed().as_secs_f64();
+            }
+            _ => {
+                let t = std::time::Instant::now();
+                write(a, &addr);
+                let q = std::alloc::realloc(addr[a] as *mut u8, lay(a), p.blocks[b].1);
+                assert!(!q.is_null(), "asset: replay out of memory");
+                addr[b] = q as usize;
+                t_temp += t.elapsed().as_secs_f64();
+            }
         }
     }
     let ta = std::time::Instant::now();
-    for f in &p.fixes {
-        let v = match f.tgt {
-            Tgt::Blk(k, d) => newp[k as usize] + d as usize,
-            Tgt::Raw(d) => src as usize + d as usize,
-            Tgt::Null => 0,
-        };
-        ((newp[f.blk as usize] + f.off as usize) as *mut usize).write_unaligned(v);
+    // the live blocks' last contents (in index order: pointers only name blocks that exist by now)
+    for (k, b) in p.blocks.iter().enumerate() {
+        let _ = b;
+        if p.live(k) {
+            write(k, &addr);
+        }
     }
-    APPLY_SPLIT.with(|c| c.set(((ta - t0).as_secs_f64() * 1e3, ta.elapsed().as_secs_f64() * 1e3)));
-    let out = Box::from_raw(newp[p.out as usize] as *mut Decoded);
+    for &(o, w, t) in &p.raw_patch {
+        let (off, n) = ((o & 0x0FFF_FFFF) as usize, (o >> 28) as usize);
+        let v = match t {
+            Some(Tgt::Blk(j, d)) => (addr[j as usize] + d as usize) as u64,
+            Some(Tgt::Raw(d)) => (src as usize + d as usize) as u64,
+            _ => w,
+        };
+        core::ptr::copy_nonoverlapping(v.to_le_bytes().as_ptr(), src.add(off), n);
+    }
+    APPLY_SPLIT.with(|c| c.set(((ta - t0).as_secs_f64() * 1e3, ta.elapsed().as_secs_f64() * 1e3, t_temp * 1e3)));
+    let out = Box::from_raw(addr[p.out as usize] as *mut Decoded);
     {
         let _s = crate::arena::SysScope::enter();
-        drop(newp);
+        addr = Vec::new();
+        drop(addr);
     }
     out
 }
 
+/// `MELEE_ASSET_DIGEST=1`: log a digest of every block a load took (address, size, bytes) to compare runs.
+fn digest_on() -> bool {
+    static D: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *D.get_or_init(|| std::env::var_os("MELEE_ASSET_DIGEST").is_some())
+}
+
+/// The digest of the asset path's blocks since [`crate::arena::set_asset_path`] (and turn the path off).
+/// The executable's mapped range (Windows; empty elsewhere).
+fn exe_image() -> (usize, usize) {
+    #[cfg(windows)]
+    unsafe {
+        extern "system" {
+            fn GetModuleHandleW(name: *const u16) -> *const u8;
+        }
+        let b = GetModuleHandleW(core::ptr::null());
+        if b.is_null() {
+            return (0, 0);
+        }
+        let pe = b.add((b.add(0x3C) as *const u32).read_unaligned() as usize);
+        let size = (pe.add(0x18 + 56) as *const u32).read_unaligned() as usize; // OptionalHeader.SizeOfImage
+        (b as usize, b as usize + size)
+    }
+    #[cfg(not(windows))]
+    (0, 0)
+}
+
 thread_local! {
-    /// The last apply's (alloc + copy ms, fixups ms), for the log.
-    static APPLY_SPLIT: core::cell::Cell<(f64, f64)> = const { core::cell::Cell::new((0.0, 0.0)) };
+    /// The file image of the load being digested.
+    static SRC_FOR_DIGEST: core::cell::Cell<usize> = const { core::cell::Cell::new(0) };
+}
+
+fn end_asset_path(len: usize, how: &str) {
+    crate::arena::set_asset_path(false, false);
+    if !digest_on() {
+        return;
+    }
+    // the calls (allocations and frees, by size, in order), then the contents of the blocks still live, with every
+    // word that points into one of this load's blocks written as (block number, offset) and into the file image as
+    // its offset: comparable across processes (the arena's addresses differ from run to run; the bytes must not)
+    let v = crate::arena::take_asset_blocks();
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    let mut mix = |x: u64| h = (h ^ x).wrapping_mul(0x0100_0000_01b3);
+    let mut live: Vec<(usize, usize, usize)> = Vec::new(); // (addr, size, number)
+    for (k, &(a, n)) in v.iter().enumerate() {
+        let freed = n >> 63 != 0;
+        mix(freed as u64);
+        mix((n & !(1 << 63)) as u64);
+        if freed {
+            live.retain(|b| b.0 != a);
+        } else {
+            live.push((a, n, k));
+        }
+    }
+    let mut by_addr = live.clone();
+    by_addr.sort_unstable();
+    let src = SRC_FOR_DIGEST.with(|c| c.get());
+    let img = exe_image();
+    let arena0 = crate::arena::used_range().0;
+    for &(a, n, _) in &live {
+        let b = unsafe { core::slice::from_raw_parts(a as *const u8, n) };
+        let mut off = 0;
+        while off < n {
+            if off + 8 <= n {
+                let w = u64::from_le_bytes(b[off..off + 8].try_into().unwrap()) as usize;
+                let i = by_addr.partition_point(|x| x.0 <= w);
+                if i > 0 && w <= by_addr[i - 1].0 + by_addr[i - 1].1 {
+                    mix(1 << 62 | by_addr[i - 1].2 as u64);
+                    mix((w - by_addr[i - 1].0) as u64);
+                    off += 8;
+                    continue;
+                }
+                if w >= src && w <= src + len {
+                    mix(2 << 62 | (w - src) as u64);
+                    off += 8;
+                    continue;
+                }
+                if crate::arena::contains(w as *const u8) {
+                    mix(4 << 60 | (w - arena0) as u64); // another arena object (the arena's base differs per run)
+                    off += 8;
+                    continue;
+                }
+                if w >= img.0 && w < img.1 {
+                    mix(3 << 62 | (w - img.0) as u64); // code / static data (the image is relocated per run)
+                    off += 8;
+                    continue;
+                }
+            }
+            mix(b[off] as u64);
+            off += 1;
+        }
+    }
+    eprintln!("asset digest: {len} bytes {how}: {} calls {h:016x}", v.len());
+}
+
+thread_local! {
+    /// The last apply's (event replay ms, live-block writes ms, of the replay: temporaries' writes + frees ms).
+    static APPLY_SPLIT: core::cell::Cell<(f64, f64, f64)> = const { core::cell::Cell::new((0.0, 0.0, 0.0)) };
 }
 
 // ---- the service: cache, worker, hints ----
 
 enum Src {
     Disc(u64, usize),
+    /// A copy of a file the game decoded in place (kept for its next load).
+    Bytes(Vec<u8>),
 }
 struct Job {
     entry: i32,
@@ -491,14 +705,16 @@ fn worker_main() {
                 g = s.cv.wait(g).unwrap();
             }
         };
-        let Src::Disc(off, len) = job.src;
-        let bytes = f.as_mut().and_then(|f| {
+        let bytes = match job.src {
+            Src::Bytes(b) => Some(b),
+            Src::Disc(off, len) => f.as_mut().and_then(|f| {
             use std::io::{Read, Seek, SeekFrom};
             let mut v = vec![0u8; len];
             f.seek(SeekFrom::Start(off)).ok()?;
             f.read_exact(&mut v).ok()?;
             Some(v)
-        });
+            }),
+        };
         let bytes = bytes.filter(|b| b.len() >= 0x20 && u32::from_be_bytes([b[0], b[1], b[2], b[3]]) as usize == b.len());
         let plan = bytes.and_then(|b| std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).ok().flatten());
         let mut g = s.m.lock().unwrap();
@@ -552,12 +768,44 @@ pub fn hint_entry(entry: i32, heap: i32) {
     g.clock += 1;
     let now = g.clock;
     g.entries.push(Entry { entry, len, plan: None, pending: true, started: false, used: now });
-    g.jobs.push_back(Job { entry, src: Src::Disc(off, len), loading: -1, grkind: unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind as i32 } });
+    g.jobs.push_back(Job { entry, src: Src::Disc(off, len), loading: -1, grkind: hint_grkind() });
     drop(g);
     if log_on() {
         eprintln!("asset: hint entry {entry:#x} ({} KB)", len >> 10);
     }
     s.cv.notify_all();
+}
+
+/// Files every session loads early, hinted at boot so the worker starts on them at once: the title's, the menus' and
+/// character select's archives, then the match commons (in the order the game needs them). Either language's name.
+const BOOT_FILES: &[&str] = &[
+    "GmTtAll.usd", "GmTtAll.dat", "MnMaAll.usd", "MnMaAll.dat", "MnSlChr.usd", "MnSlChr.dat", "MnSlMap.usd", "MnSlMap.dat",
+    "EfCoData.dat", "ItCo.usd", "ItCo.dat", "IfAll.usd", "IfAll.dat", "PlCo.dat",
+];
+
+/// Boot hints ([`BOOT_FILES`]); the heap test is skipped (the game's heaps are not set up yet; the service never
+/// allocates them anyway).
+pub fn boot_hints() {
+    let Some(h) = crate::host::Host::try_get() else { return };
+    for f in BOOT_FILES {
+        let e = h.disc.disc_entry(f);
+        if e > 0 {
+            hint_entry(e, -1);
+        }
+    }
+}
+
+/// The `stage_info.grkind` a hinted file will be loaded under: the coming scene's stage when the preload cache names
+/// one (the stage-select choice: its file is hinted from there), else the current one.
+fn hint_grkind() -> i32 {
+    unsafe {
+        let st = (*core::ptr::addr_of!(melee_runtime::tu::lbdvd::preloadCache)).new_scene.game_cache.stkind as usize;
+        let map = &*core::ptr::addr_of!(melee_world::tu::stage::stage_id_map);
+        if st != 0x148 && st < map.len() {
+            return map[st].grkind as i32;
+        }
+        (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind as i32
+    }
 }
 
 /// The load seam (`archive::host_parse`): the decode of the file at `src`, applied from a plan. None: use the old
@@ -567,23 +815,22 @@ pub fn hint_entry(entry: i32, heap: i32) {
 /// `src` holds `len` bytes of an archive whose header was checked.
 pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
     let s = svc()?;
-    if len < MIN_BYTES {
-        return None;
-    }
     let loading = melee_fighter::tu::ftdata::FTDATA_LOADING_KIND;
     let grkind = (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind as i32;
     let file = core::slice::from_raw_parts(src as *const u8, len);
     let t0 = std::time::Instant::now();
     let _sys = crate::arena::SysScope::enter();
     let mut waited = false;
-    let found: Option<Arc<Plan>> = {
+    let found: Option<Arc<Plan>> = if len < MIN_BYTES {
+        None
+    } else {
         let mut g = s.m.lock().unwrap();
         loop {
             let hit = g.entries.iter().filter_map(|e| e.plan.as_ref()).find(|p| p.len == len && p.fits(loading, grkind) && p.file() == file).cloned();
             if hit.is_some() {
                 break hit;
             }
-            // a hinted file of this length still being prepared: wait for it (a readiness miss, counted)
+            // a hinted file of this length being prepared right now: wait for it (a readiness miss, counted)
             if g.entries.iter().any(|e| e.pending && e.started && e.len == len) {
                 waited = true;
                 g = s.cv.wait(g).unwrap();
@@ -592,13 +839,47 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
             break None;
         }
     };
-    let (plan, how) = match found {
-        Some(p) => (p, if waited { "wait" } else { "hit" }),
-        None => {
-            let p = Arc::new(prepare(file, loading, grkind)?);
-            (p, "inline")
+    let Some(plan) = found else {
+        // no plan: decode in place, on the asset path (the sequence a plan replays)
+        drop(_sys);
+        let t = std::time::Instant::now();
+        let out = {
+            let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || {
+                melee_core::frameprof::Text::new().s("asset decode in place ").n((len >> 10) as i64).s(" KB")
+            });
+            SRC_FOR_DIGEST.with(|c| c.set(src as usize));
+            crate::arena::set_asset_path(true, digest_on());
+            crate::dat_custom::begin_prepare(loading, grkind);
+            let mut d = archive::decode(src, len);
+            let (eff, _, _) = crate::dat_custom::end_prepare();
+            d.effects = eff;
+            let b = Box::new(d);
+            end_asset_path(len, "direct");
+            b
+        };
+        let ms = t.elapsed().as_secs_f64() * 1e3;
+        if len >= MIN_BYTES {
+            // keep a plan of it for the next load of the same bytes (the worker prepares it from a copy)
+            let _sys = crate::arena::SysScope::enter();
+            let mut g = s.m.lock().unwrap();
+            g.stats.inline += 1;
+            if s.worker && !g.entries.iter().any(|e| e.pending && e.len == len) {
+                g.clock += 1;
+                let now = g.clock;
+                let id = -2 - now as i32;
+                g.entries.push(Entry { entry: id, len, plan: None, pending: true, started: false, used: now });
+
+                g.jobs.push_back(Job { entry: id, src: Src::Bytes(file.to_vec()), loading, grkind });
+                drop(g);
+                s.cv.notify_all();
+            }
+            if log_on() {
+                eprintln!("asset: load {} KB in place: {ms:.2} ms (no plan ready)", len >> 10);
+            }
         }
+        return Some(out);
     };
+    let how = if waited { "wait" } else { "hit" };
     if std::env::var_os("MELEE_ASSET_SELFTEST").is_some() {
         // byte-identity check: the same file prepared on another (foreign) thread must give the same plan
         let copy: Vec<u8> = file.to_vec();
@@ -626,49 +907,42 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
         let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || {
             melee_core::frameprof::Text::new().s("asset apply ").s(how).s(" ").n((len >> 10) as i64).s(" KB")
         });
-        apply(&plan, src)
+        SRC_FOR_DIGEST.with(|c| c.set(src as usize));
+        let o = apply(&plan, src);
+        end_asset_path(len, "replay");
+        o
     };
     let _sys = crate::arena::SysScope::enter();
     let mut g = s.m.lock().unwrap();
     g.clock += 1;
     let now = g.clock;
-    match how {
-        "hit" => g.stats.hits += 1,
-        "wait" => {
-            g.stats.hits += 1;
-            g.stats.waits += 1
-        }
-        _ => g.stats.inline += 1,
+    g.stats.hits += 1;
+    if waited {
+        g.stats.waits += 1;
     }
     if let Some(e) = g.entries.iter_mut().find(|e| e.plan.as_ref().is_some_and(|p| Arc::ptr_eq(p, &plan))) {
         e.used = now;
-    } else {
-        g.entries.push(Entry { entry: -1, len, plan: Some(plan.clone()), pending: false, started: false, used: now });
-    }
-    // keep the cache in budget (least recently used first; pending entries stay)
-    loop {
-        let kept: Vec<usize> = (0..g.entries.len()).filter(|&i| g.entries[i].plan.is_some()).collect();
-        let bytes: usize = kept.iter().map(|&i| g.entries[i].plan.as_ref().unwrap().bytes).sum();
-        if kept.len() <= KEEP && bytes <= KEEP_BYTES {
-            break;
-        }
-        let old = *kept.iter().min_by_key(|&&i| g.entries[i].used).unwrap();
-        g.entries.remove(old);
     }
     if log_on() {
         let st = &g.stats;
+        let (rep, livew, temp) = APPLY_SPLIT.with(|c| c.get());
         eprintln!(
-            "asset: load {} KB {how}: wait/prepare {:.2} ms, apply {:.2} ms [alloc+copy {:.2} fixups {:.2}; {} KB of blocks] ({} blocks, {} fixups, {} dead refs; prepared in {:.2} ms) [hints {} ahead {} hits {} waits {} inline {}]",
+            "asset: load {} KB {how}: wait {:.2} ms, apply {:.2} ms [events {:.2} (temporaries {:.2}) live writes {:.2}; {} events, {} KB of blocks] ({} blocks, {} fixups, {} dead refs; prepared in {:.2} ms = decode {:.2} scan {:.2} build {:.2}) [hints {} ahead {} hits {} waits {} in place {}]",
             len >> 10,
             (t1 - t0).as_secs_f64() * 1e3,
             t1.elapsed().as_secs_f64() * 1e3,
-            APPLY_SPLIT.with(|c| c.get().0),
-            APPLY_SPLIT.with(|c| c.get().1),
+            rep,
+            temp,
+            livew,
+            plan.events.len(),
             (plan.bytes - plan.len) >> 10,
             plan.blocks.len(),
             plan.fixes.len(),
             plan.dead_refs,
             plan.prep_ms,
+            plan.prep_split[0],
+            plan.prep_split[1],
+            plan.prep_split[2],
             st.hints,
             st.prepared_ahead,
             st.hits,

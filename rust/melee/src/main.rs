@@ -338,6 +338,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         std::alloc::System.alloc_zeroed(l)
     }
     unsafe fn realloc(&self, p: *mut u8, l: std::alloc::Layout, n: usize) -> *mut u8 {
+        if melee_engine::recheap::active() && melee_engine::recheap::in_range(p) {
+            return melee_engine::recheap::realloc(p, l, n);
+        }
         if melee_engine::recheap::in_range(p) || melee_engine::recheap::active() {
             let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));
             if !q.is_null() {
@@ -348,6 +351,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         }
         if melee_engine::arena::contains(p) {
             if melee_engine::arena::same_class(l.size(), n) {
+                if n > l.size() && melee_engine::arena::asset_path_on() {
+                    core::ptr::write_bytes(p.add(l.size()), 0, n - l.size()); // the asset path's zeroing (arena.rs)
+                }
                 return p;
             }
             let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));

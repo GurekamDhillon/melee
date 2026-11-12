@@ -55,6 +55,23 @@ pub struct Rec {
     meta: *mut Blk,
     pub n: usize,
     meta_committed: usize,
+    /// The allocation events in order ([`Ev`]), in the slot's last [`META`] / 2 bytes.
+    ev: *mut u64,
+    pub nev: usize,
+    ev_committed: usize,
+}
+
+/// One recorded allocator call: `kind << 62 | a << 31 | b` (block indices).
+pub mod ev {
+    pub const ALLOC: u64 = 0;
+    pub const FREE: u64 = 1;
+    pub const REALLOC: u64 = 2;
+    pub fn pack(kind: u64, a: usize, b: usize) -> u64 {
+        kind << 62 | (a as u64) << 31 | b as u64
+    }
+    pub fn unpack(e: u64) -> (u64, usize, usize) {
+        (e >> 62, ((e >> 31) & 0x7FFF_FFFF) as usize, (e & 0x7FFF_FFFF) as usize)
+    }
 }
 
 thread_local! {
@@ -218,9 +235,32 @@ impl Rec {
     pub fn new(slot: usize, data_lo: usize) -> Rec {
         let lo = slot_base(slot);
         let data_lo = (data_lo + 0xFFF) & !0xFFF;
-        Rec { slot, lo, data_lo, bump: data_lo, committed: data_lo, meta: (lo + SLOT - META) as *mut Blk, n: 0, meta_committed: lo + SLOT - META }
+        let ev = lo + SLOT - META / 2;
+        Rec { slot, lo, data_lo, bump: data_lo, committed: data_lo, meta: (lo + SLOT - META) as *mut Blk, n: 0, meta_committed: lo + SLOT - META, ev: ev as *mut u64, nev: 0, ev_committed: ev }
     }
     /// The block records, in allocation (= address) order.
+    pub fn events(&self) -> &[u64] {
+        unsafe { core::slice::from_raw_parts(self.ev, self.nev) }
+    }
+    /// Forget the events so far (the probe allocation before a decode).
+    pub fn clear_events(&mut self) {
+        self.nev = 0;
+    }
+    unsafe fn push_ev(&mut self, e: u64) -> bool {
+        let end = self.ev as usize + (self.nev + 1) * 8;
+        if end > self.lo + SLOT {
+            return false;
+        }
+        if end > self.ev_committed {
+            if !sys::commit(self.ev_committed, STEP) {
+                return false;
+            }
+            self.ev_committed += STEP;
+        }
+        self.ev.add(self.nev).write(e);
+        self.nev += 1;
+        true
+    }
     pub fn blocks(&self) -> &[Blk] {
         unsafe { core::slice::from_raw_parts(self.meta, self.n) }
     }
@@ -257,6 +297,37 @@ pub fn end_recording() {
 /// # Safety
 /// Called by the process allocator while [`active`].
 pub unsafe fn alloc(l: Layout) -> *mut u8 {
+    let p = alloc_block(l);
+    if !p.is_null() {
+        let r = &mut *CUR.with(|c| c.get());
+        if !r.push_ev(ev::pack(ev::ALLOC, r.n - 1, 0)) {
+            return core::ptr::null_mut();
+        }
+    }
+    p
+}
+
+/// A recorded `realloc` of the block at `p` (`old` bytes) to `n` bytes: always a new block (memory is never reused),
+/// recorded as one REALLOC event so a replay makes the same `realloc` call (which the arena may do in place).
+///
+/// # Safety
+/// `p` is a live block of this thread's recording.
+pub unsafe fn realloc(p: *mut u8, old: Layout, n: usize) -> *mut u8 {
+    let r = &mut *CUR.with(|c| c.get());
+    let Some(i) = r.find(p as usize).filter(|&i| r.blocks()[i].at == p as usize) else { return core::ptr::null_mut() };
+    let q = alloc_block(Layout::from_size_align_unchecked(n, old.align()));
+    if q.is_null() {
+        return q;
+    }
+    core::ptr::copy_nonoverlapping(p, q, old.size().min(n));
+    (*r.meta.add(i)).live = 0;
+    if !r.push_ev(ev::pack(ev::REALLOC, i, r.n - 1)) {
+        return core::ptr::null_mut();
+    }
+    q
+}
+
+unsafe fn alloc_block(l: Layout) -> *mut u8 {
     let r = &mut *CUR.with(|c| c.get());
     let al = l.align().max(16);
     let p = (r.bump + al - 1) & !(al - 1);
@@ -274,7 +345,7 @@ pub unsafe fn alloc(l: Layout) -> *mut u8 {
     }
     let mend = r.meta as usize + (r.n + 1) * core::mem::size_of::<Blk>();
     if mend > r.meta_committed {
-        if mend > r.lo + SLOT {
+        if mend > r.lo + SLOT - META / 2 {
             return core::ptr::null_mut();
         }
         if !sys::commit(r.meta_committed, STEP) {
@@ -302,8 +373,9 @@ pub unsafe fn free(p: *mut u8) {
         return;
     }
     if let Some(i) = r.find(p as usize) {
-        if r.blocks()[i].at == p as usize {
+        if r.blocks()[i].at == p as usize && (*r.meta.add(i)).live == 1 {
             (*r.meta.add(i)).live = 0;
+            r.push_ev(ev::pack(ev::FREE, i, 0));
         }
     }
 }

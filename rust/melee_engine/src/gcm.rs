@@ -219,6 +219,11 @@ impl Gcm {
     /// Where disc entry `entry` lies in the image: (byte offset, length), or None when it is not a plain disc file or
     /// an overlay (mods) is mounted (slice 1 does not ask it). Pure: it
     /// asks the overlay nothing and caches nothing (the asset service's hints must not change game state).
+    /// The disc entry of `path` on the disc itself (no overlay asked; -1: not there).
+    pub fn disc_entry(&self, path: &str) -> i32 {
+        self.entry_for_path_disc(path)
+    }
+
     pub fn plain_location(&self, entry: i32) -> Option<(u64, usize)> {
         let i = usize::try_from(entry).ok().filter(|&i| i >= 1 && i < self.count() && !self.is_dir(i))?;
         if self.overlay.is_some() {

@@ -225,7 +225,50 @@ fn class_of(size: usize) -> Option<(usize, usize)> {
 /// Serve `l` from the arena; null when the arena does not take it (alignment above 16, huge, no address space).
 #[cfg(any(windows, unix))]
 pub unsafe fn alloc(l: Layout) -> *mut u8 {
+    if ZERO_ALL.with(|z| z.get()) {
+        return alloc_zeroed(l);
+    }
     alloc_fresh(l).0
+}
+
+thread_local! {
+    /// The asset path (asset.rs: a decode in place, or a plan's replay): every block it takes is zeroed, recycled ones
+    /// included, so bytes the decode leaves unwritten are 0 whichever way the load ran (not the previous occupant's).
+    static ZERO_ALL: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
+    /// `MELEE_ASSET_DIGEST`: (address, size) of every block the asset path took (system heap; diagnostics).
+    static ASSET_BLOCKS: core::cell::RefCell<Option<Vec<(usize, usize)>>> = const { core::cell::RefCell::new(None) };
+}
+
+/// Turn the asset path's zeroing on/off for this thread (see `ZERO_ALL`); `log`: also list its blocks.
+pub fn set_asset_path(on: bool, log: bool) {
+    ZERO_ALL.with(|z| z.set(on));
+    if on && log {
+        let _s = SysScope::enter();
+        ASSET_BLOCKS.with_borrow_mut(|v| *v = Some(Vec::new()));
+    }
+}
+
+/// Whether this thread is on the asset path (see `ZERO_ALL`).
+#[inline]
+pub fn asset_path_on() -> bool {
+    ZERO_ALL.with(|z| z.get())
+}
+
+/// The blocks listed since [`set_asset_path`]`(true, true)`.
+pub fn take_asset_blocks() -> Vec<(usize, usize)> {
+    ASSET_BLOCKS.with_borrow_mut(|v| v.take()).unwrap_or_default()
+}
+
+fn note_asset_block(p: *mut u8, n: usize) {
+    if p.is_null() {
+        return;
+    }
+    ASSET_BLOCKS.with_borrow_mut(|v| {
+        if let Some(v) = v.as_mut() {
+            let _s = SysScope::enter();
+            v.push((p as usize, n));
+        }
+    });
 }
 
 /// Set once the arena was ever snapshotted (a load may then have left bytes past the bump pointer).
@@ -242,6 +285,9 @@ pub fn note_snapshot() {
 #[cfg(any(windows, unix))]
 pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
     let (p, fresh) = alloc_fresh(l);
+    if ZERO_ALL.with(|z| z.get()) {
+        note_asset_block(p, l.size());
+    }
     if !p.is_null() && !(fresh && !SNAPSHOTTED.load(Relaxed)) {
         core::ptr::write_bytes(p, 0, l.size());
     }
@@ -377,6 +423,9 @@ unsafe fn report_misuse(what: &str, p: usize, n: usize) {
 
 /// Return an arena block (the caller checked [`contains`]).
 pub unsafe fn free(p: *mut u8, l: Layout) {
+    if ZERO_ALL.with(|z| z.get()) {
+        note_asset_block(p, l.size() | 1 << 63);
+    }
     let (Some((c, _)), Some(ab)) = (class_of(l.size()), bucket(l.align())) else { return };
     let _g = Lock::take();
     LIVE[c] -= 1;

@@ -28,6 +28,7 @@ impl Host {
         crate::asset::init(disc.path.clone());
         unsafe {
             HOST = Some(Host { os, disc, aram: Vec::new(), archives: HashMap::new(), retired: Vec::new(), loaded: Vec::new() });
+            crate::asset::boot_hints();
             Ok(HOST.as_mut().unwrap())
         }
     }

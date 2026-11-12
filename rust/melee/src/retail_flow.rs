@@ -70,6 +70,8 @@ pub struct RetailPlay {
     frame_aspect: f32,
     headless: bool,
     tick_no: u64,
+    /// The tick whose frame was last handed to the presenter (its `arrive_gap`).
+    handed_tick: u64,
     age: u32,
     menu_at: Option<(u8, u16)>,
     /// (mode, scene kind) of the current scene
@@ -156,7 +158,7 @@ pub struct RetailPlay {
 impl RetailPlay {
     pub fn new(iso: String, mods_dir: Option<String>, presets: Presets, headless: bool, shot_dir: Option<PathBuf>, shot_ages: Vec<u32>, quit_after: Option<u32>, max_frames: Option<u64>) -> RetailPlay {
         RetailPlay {
-            iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, age: 0, menu_at: None, cur: (0xFF, 0xFF), scene_no: 0,
+            iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, handed_tick: 0, age: 0, menu_at: None, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
@@ -620,6 +622,17 @@ impl RetailPlay {
 
     fn tick_once(&mut self, pads: &mut PadSystem) {
         let _sampled = crate::prof::Gate::enter();
+        // test aid: MELEE_TEST_STALL="TICK,MS[,EVERY]" sleeps MS before tick TICK (and every EVERY ticks after), the
+        // late tick a loaded machine makes (the interpolator's burst handling; wall time only, the sim never sees it)
+        if let Ok(v) = std::env::var("MELEE_TEST_STALL") {
+            let n: Vec<u64> = v.split(',').filter_map(|x| x.trim().parse().ok()).collect();
+            if let [t, ms, ref rest @ ..] = n[..] {
+                let every = rest.first().copied().unwrap_or(0);
+                if self.tick_no == t || (every > 0 && self.tick_no > t && (self.tick_no - t) % every == 0) {
+                    std::thread::sleep(std::time::Duration::from_millis(ms));
+                }
+            }
+        }
         if self.quit {
             return;
         }
@@ -1259,6 +1272,14 @@ impl RetailPlay {
             });
         }
         let p = self.presenter.as_mut().unwrap();
+        if frame.is_some() {
+            // ticks since the last handed frame: more than one after a stall (a burst kept only the newest frame)
+            p.arrive_gap = self.tick_no.saturating_sub(self.handed_tick).clamp(1, u32::MAX as u64) as u32;
+            if std::env::var("MELEE_INTERP_GAP_CUT").is_ok_and(|v| v == "0") {
+                p.arrive_gap = 1; // the old behaviour, for comparison
+            }
+            self.handed_tick = self.tick_no;
+        }
         for (k, v) in self.video.drain(..) {
             match k.as_str() {
                 "vsync" => p.set_vsync(v == "1"),

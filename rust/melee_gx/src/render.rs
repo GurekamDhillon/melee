@@ -376,6 +376,8 @@ pub struct Renderer {
     pub fx_widen: f32,
     /// The menu camera's tilt (yaw, pitch radians) for the UI batch: [0, 0] (the default) draws it untransformed.
     pub ui_tilt: [f32; 2],
+    /// The interpolated present's phase for the fx world layer (None: draw the adopted tick as is).
+    pub fx_phase: Option<crate::fx::FxPhase>,
 }
 
 /// The GPU texture an EFB copy writes (at the internal resolution: `dst_w * scale` x `dst_h * scale`).
@@ -1250,6 +1252,7 @@ impl Renderer {
             fx_intensity: 1.0,
             fx_widen: 1.0,
             ui_tilt: [0.0; 2],
+            fx_phase: None,
         })
     }
 

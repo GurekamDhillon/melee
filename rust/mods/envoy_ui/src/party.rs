@@ -243,14 +243,19 @@ fn fighter_line(e: &mut E, x: f32, y: f32, p: &Party, set: usize, first: bool) {
 }
 
 /// The main menu's Envoy row and, while it is hovered, the loose stickers in the right-hand space.
+/// The fallback Envoy row's pill (no native plate): below Data, on the 640x480 menu.
+const FB_X: f32 = 66.0;
+const FB_Y: f32 = 365.0;
 pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
     let hover = st & 4 != 0;
     let miss = st & 32 != 0;
-    // the label on its plate (the disc's sixth plate, slot 2: centre about (168, 216) on the real menu). The plate
-    // keeps its own label art underneath, so ours sits on a pill in the plate's colour that covers it.
+    // the row itself (plate, "Envoy" label, description line) is the host's, native (mnmain envoy_text_make); on a
+    // menu model without the sixth plate anchor (state bit 8 clear) the row is plateless below Data and this draws it
     e.layer(LAYER_OVERLAY, 10);
-    e.rect(66.0, 201.0, 214.0, 30.0, if hover { 0xFFC8_1CFF } else { 0x1A12_2CFF });
-    spr(e, S_LABEL + if miss { 2 } else if hover { 1 } else { 0 }, 104.0, 197.0, 222.0, 38.0, WHITE);
+    if st & 256 == 0 {
+        e.rect(FB_X, FB_Y, 214.0, 30.0, if hover { 0xFFC8_1CFF } else { 0x1A12_2CFF });
+        spr(e, S_LABEL + if miss { 2 } else if hover { 1 } else { 0 }, FB_X + 38.0, FB_Y - 4.0, 222.0, 38.0, WHITE);
+    }
     if !hover {
         MENU_AGE = 0;
         return;
@@ -377,8 +382,8 @@ pub unsafe fn menu(e: &mut E, st: i32, rec: Option<[i32; REC_WORDS]>) {
         }
         bar.s("A co-op run for 1 or 2 players, five fights long.");
     }
-    // the description bar's text (the retail bar stays; its own text is hidden on this row)
-    e.text_ex(320.0, 410.0, bs(15), WHITE, ALIGN_CENTER, 360.0, bar.str());
+    // the description bar's line is the host's own SIS line now (mnmain mn_80229A7C)
+    let _ = bar.str();
     if st & 64 != 0 {
         // A without the disc: the message
         e.rect(0.0, 0.0, 640.0, 480.0, 0x1A10_4AA8);

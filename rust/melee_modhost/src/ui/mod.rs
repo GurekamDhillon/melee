@@ -108,7 +108,7 @@ pub struct Shared {
     pub replace: Vec<((i32, i32), u32)>,
     /// `gd_ui_scene_replace_when` rows: (retail scene, custom scene, condition); entered only while the condition holds.
     pub replace_when: Vec<((i32, i32), u32, u32)>,
-    /// The Envoy camp scene (`gd_ui_envoy_door`): opened by the 1-P menu's Envoy row and the browser's Envoy mode.
+    /// The Envoy camp scene (`gd_ui_envoy_door`): opened by the main menu's Envoy row and the browser's Envoy mode.
     pub door: u32,
     /// Custom scenes on top of the retail flow, innermost last.
     pub stack: Vec<u32>,
@@ -806,7 +806,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         GD_OK
     });
     // ---- the Envoy door (envoy-redesign.md 1.2-1.3; melee_modes::tu::envoy). Offline only.
-    // register the camp scene: the 1-P menu grows its Envoy row, and the row / the browser's Envoy mode open the scene
+    // register the camp scene: the main menu grows its Envoy row, and the row / the browser's Envoy mode open the scene
     f!("gd_ui_envoy_door", |c: Caller<'_, PresData>, scene: u32| -> i32 {
         scene!(c);
         let m = c.data().module;
@@ -838,6 +838,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
             (ev::ARMED != 0) as i32 | (main as i32) << 1 | (hover as i32) << 2 | ((ev::SAVED_LEN > 0) as i32) << 3 | ((ev::CAMP_DUE != 0) as i32) << 4
                 | (!melee_modes::tu::petey_model::brawl_present() as i32) << 5 | ((hover && ev::DOOR_NO_DISC > 0) as i32) << 6
                 | ((ev::BYPASSED && !ev::SEL_HOLD) as i32) << 7
+                | ((main && melee_modes::tu::mnmain::ENVOY_ROW_OK != 0) as i32) << 8
         }
     });
     // Envoy V3: player 2 joined (1) or left (0) at the camp; a new run started after this is co-op. Offline only.
@@ -1433,7 +1434,7 @@ impl PresHost {
     }
 
     fn scene_switch(&mut self) {
-        // the Envoy door: the 1-P menu's row or the browser chose Envoy (melee_modes::tu::envoy::DOOR_OPEN)
+        // the Envoy door: the main menu's row or the browser chose Envoy (melee_modes::tu::envoy::DOOR_OPEN)
         unsafe {
             if melee_modes::tu::envoy::DOOR_OPEN != 0 {
                 melee_modes::tu::envoy::DOOR_OPEN = 0;

@@ -9,8 +9,8 @@
 //!   the cursor and the 20 s timer.
 //! * tag cinematic (transition kind 1, the record's length) and the stage shift's wipe and flash (kind 2).
 //! * between fights: the run line; RUN CLEAR / RUN OVER.
-//! * the door (envoy-redesign.md 1.2-1.5): the 1-P menu's Envoy row (the host moves the cursor onto it, this mod draws
-//!   it), and the Envoy camp scene (kit nodes): Continue / New run / Party / Abandon / Back on the main menu, and after
+//! * the door (envoy-redesign.md 1.2-1.5): the main menu's Envoy row (the host draws it natively; this mod adds its hover
+//!   stickers), and the Envoy camp scene (kit nodes): Continue / New run / Party / Abandon / Back on the main menu, and after
 //!   a fight (the camp replaces the VS CSS while the run is armed) the run's line with Continue / Party / Abandon /
 //!   Leave, or RUN CLEAR / RUN OVER. Placeholder look only: kit panels and text.
 #![no_std]
@@ -63,7 +63,6 @@ const GM_VS: i32 = 2;
 const GS_CSS: i32 = 8;
 const ST_ARMED: i32 = 1;
 const ST_1P: i32 = 2;
-const ST_HOVER: i32 = 4;
 /// The player's Brawl files are missing: Envoy is blocked (full-game plan Q3).
 const ST_NO_BRAWL: i32 = 32;
 /// Envoy's select is in the CSS state (the retail select confirms itself under the cover).
@@ -455,19 +454,6 @@ unsafe fn camp_draw(e: &mut kit::E, vw: f32, vh: f32) {
         e.text_ex(cx, y + 72.0, ROLE_LABEL, DIM, ALIGN_CENTER, w - 30.0, "Co-op (MELEE_ENVOY_COOP=1): P1 + P3 are player 1's pair, P2 + P4 player 2's. Zelda, Sheik and Ice Climbers fall back to Fox / Marth.");
     }
     e.text_ex(cx, vh - 40.0, ROLE_LABEL, DIM, ALIGN_CENTER, 0.0, "A: choose   B: back");
-}
-
-/// The 1-P menu's Envoy row (the cursor itself is the host's: melee_modes::tu::envoy::DOOR_HOVER).
-unsafe fn door_draw(e: &mut kit::E, st: i32, vw: f32, vh: f32) {
-    let hover = st & ST_HOVER != 0;
-    let (x, y, w, h) = (vw * 0.5 - 330.0, vh - 128.0, 300.0, 44.0);
-    e.layer(LAYER_OVERLAY, 10);
-    e.slice(SLICE_FILL_R6, x, y, w, h, if hover { 0xC83A_3AF0 } else { PANEL });
-    if hover {
-        e.slice(SLICE_LINE_R6, x, y, w, h, WHITE);
-    }
-    e.text_ex(x + 18.0, y + 11.0, ROLE_VALUE, WHITE, ALIGN_LEFT, 0.0, "ENVOY");
-    e.text_ex(x + w - 14.0, y + 14.0, ROLE_LABEL, if hover { WHITE } else { DIM }, ALIGN_RIGHT, 0.0, if hover { "A: open the camp" } else { "below Training" });
 }
 
 static mut ENC: kit::E = Enc::new();

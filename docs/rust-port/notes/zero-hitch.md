@@ -71,3 +71,25 @@ See the commit log of this branch and the section below (filled by each run).
   results), verify_inner.sh (render-only proof), ticks.py (p50/p99/max per scene).
 - camp_pad.txt no longer reaches Envoy on v3x (new native menu row): the gate's envoy scenario needs a new pad
   script or the armed --match form; dd5825a68 + camp_pad hangs at tick 1173 in HSD_PadRumbleInterpret1 (not in v3x).
+
+## Named baseline (2026-11-12 ~01:40, port/zerolag 9ffcb603a = a07f7a03b + GX fix + spans; light-slot runs, not a quiet pass)
+Scripts: build/vs_run.sh (retail_full, 5000 ticks), ab_inner --match fod, build/envoy_fight.sh (armed Envoy fight, tag
+pair + 2 CPUs, wave respawn, stage switch 10 -> 28). Every offender is a load or a scene transition; nothing in fights.
+- vanilla_bf: 3 + first frame.
+  - first frame / title on_enter 76 ms (parse 45 of 72 files: PlKb*/EfKb*, GmTtAll; scene on_enter kind 0 = 57 ms).
+  - CSS enter 20 ms (MnSlChr.usd 3.7 MB parse 14).
+  - VS scene change (fighter files PlFc/PlFcNr/PlFcAJ 1.5 MB, EfFxData) 49 ms: parse 41, "scene on_enter kind 32" 40.
+  - match setup 37 ms: stage load 11, fighter create 15 (kind 0), parse 13.
+  - match ticks p50 1.18 / p99 1.68 (GX fix in).
+- vanilla_fod (--match, first frame is the match setup): 67 ms (parse 33, items init 18, fighter create 16,
+  scene preload 10); one 21 ms pacing frame at tick 6 (draw 6 + texture upload 2: first draws).
+- envoy_fight: 0 over budget after the first frame; first frame 86 ms (parse 43, items init 21, fighter create 29
+  incl. Falcon 19, scene preload 10). In-fight: stage switch 7.7 ms, wave-respawn fighter create 1.4 ms. p99 1.90.
+- Treatments: title/CSS/menu archives and the fighter sets chosen at CSS -> parse ahead on the worker (decode plan)
+  with the apply at the scene's first tick; commons (EfCoData, ItCo, LbRb, PlKb*/EfKb*) -> already-loaded reuse
+  across scenes; "items init" 18-21 ms -> split (next step: spans inside it) then parse-ahead of ItCo; fighter create
+  15-20 ms for the first fighter (common fighter data) -> parse-ahead + reuse; GPU first-draw costs -> prewarm.
+  Envoy lead times: next fight's setup is known at the shop/pick stop (seconds ahead); stage shift and wave spawn
+  are already under 8 ms but get N = 60 ticks of prefetch so they stay flat with heavier stages/characters.
+- Not covered: camp_pad Envoy route (hangs at tick 1173 with Envoy mods loaded, any exe; rumblehang agent has it),
+  borderless (owner), m-ex boot, 1P modes.

@@ -432,8 +432,10 @@ pub unsafe fn gm_801A4014_enter(mode: *mut GameMode) -> SceneRun {
 
     // TARGET_PC: scene trace.
     ext::SceneReport_State(0, (*mode).kind as i32, (*state).id as i32, (*state).info.scene_kind as i32);
-    preloadState(state);
+    let kind_dbg = (*state).info.scene_kind;
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("scene preload kind ").n(kind_dbg as i64)); preloadState(state); }
     if let Some(f) = (*state).on_enter {
+        let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("mode state on_enter kind ").n(kind_dbg as i64));
         f(state);
     }
     let info: *mut GameSceneInfo = &mut (*state).info;
@@ -447,11 +449,12 @@ pub unsafe fn gm_801A4014_enter(mode: *mut GameMode) -> SceneRun {
         }
     }
     ext::Ui_ScenePolicyMask(kind as i32, ext::Fad_ToyWindowKnown(kind));
-    ext::gm_801A4BD4();
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("scene common setup kind ").n(kind_dbg as i64)); ext::gm_801A4BD4(); }
     ext::gm_801A4B88(info);
     // TARGET_PC: clear the previous match's fighter-control mapping.
     ext::FighterControls_MatchClear();
     if let Some(f) = (*scene).on_enter {
+        let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("scene on_enter kind ").n(kind_dbg as i64));
         f((*info).enter_data);
     }
     // TARGET_PC: an OVERLAY scene (or the toy probe) gets a per-frame wrapper.
@@ -469,6 +472,8 @@ pub unsafe fn gm_801A4014_leave(run: SceneRun) {
     ext::SceneReport_State(1, (*mode).kind as i32, (*state).id as i32, (*info).scene_kind as i32);
     if !ext::gmMainLib_8046B0F0_resetting() {
         if let Some(f) = (*scene).on_exit {
+            let kind_dbg = (*info).scene_kind;
+            let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("scene on_exit kind ").n(kind_dbg as i64));
             f((*info).exit_data);
         }
     }

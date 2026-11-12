@@ -202,7 +202,7 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
         sg::HSD_ArchiveLocateExtern(archive, sg::HSD_ArchiveGetExtern(archive, i), core::ptr::null_mut());
         i += 1;
     }
-    let map = prepare(sg::HSD_ArchiveGetPublicAddress(archive, c"coll_data".as_ptr()) as *mut MapCollData);
+    let map = { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("stage switch: collision prepare")); prepare(sg::HSD_ArchiveGetPublicAddress(archive, c"coll_data".as_ptr()) as *mut MapCollData) };
     if map.is_null() {
         free_both(work, archive);
         return HOP_HEAP;
@@ -212,7 +212,7 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
     sg::ScriptGame_StageIsolationClear(0);
     sg::script_switch_detach();
     sg::script_retail_items(1);
-    sg::script_retail_destroy();
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("stage switch: destroy outgoing")); sg::script_retail_destroy(); }
     sg::script_retail.working = work;
     sg::script_retail.working_bytes = bytes;
     sg::script_retail.archive = archive;
@@ -224,12 +224,12 @@ pub unsafe fn switch_to(kind: i32) -> i32 {
     pair.stkind = sg::Stage_StageSlotSelect(kind) as StKind;
     sg::Camera_800311DC(0.1);
     sg::Camera_800311CC(16384.0);
-    sg::Ground_StageSlotRetailInstall(&mut pair, archive);
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("stage switch: install (ground init)")); sg::Ground_StageSlotRetailInstall(&mut pair, archive); }
     sg::Camera_80030730(sg::Ground_801C20D0());
     sg::Ground_EnableMatchCamera();
     sg::script_retail_loading = 0;
     sg::script_retail_capture = 0;
-    sg::script_retail_carry();
+    { let _zh = melee_core::frameprof::Span::new(melee_core::frameprof::Kind::Note, || melee_core::frameprof::Text::new().s("stage switch: carry")); sg::script_retail_carry(); }
     sg::script_retail_items(0);
     sg::script_switch.epoch += 1;
     melee_core::heaptrace::mark("stage switch");

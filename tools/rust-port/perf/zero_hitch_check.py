@@ -68,9 +68,11 @@ def main():
         cause = max(parts, key=parts.get)
         ctx = sorted({e["kind"] + ": " + e.get("text", "")[:60] for e in ev if e["kind"] in ("scene", "stage", "envoy", "window")})
         files = [e.get("text", "") for e in ev if e["kind"] == "file"]
+        # timed phases (spans of kind note/fighter/stage/envoy with ms >= 0.5): the named split of the engine step
+        phases = [f'{e.get("text", "")[:48]} {e.get("ms", 0):.1f}' for e in ev if e["kind"] in ("note", "fighter", "stage", "envoy") and e.get("ms", 0) >= 0.5]
         startup = i == 0
         offenders.append(dict(t=t0 / 1000, iv=iv, tk=tk, scene=r.get("scene", ""), tick=r.get("tick", ""), cause=("startup: " if startup else "") + cause,
-                              parts=parts, ctx=ctx, files=files, startup=startup))
+                              parts=parts, ctx=ctx, files=files, phases=phases, startup=startup))
     real = [o for o in offenders if strict_start or not o["startup"]]
     print(f"== {label}: {len(rows)} frames, budget {budget} ms: {len(real)} over budget"
           + (f" (+{len(offenders) - len(real)} startup)" if len(offenders) != len(real) else "")
@@ -84,6 +86,7 @@ def main():
             fl = (f"; files: {', '.join(o['files'][:4])}" + (f" +{len(o['files']) - 4}" if len(o['files']) > 4 else "")) if o["files"] else ""
             print(f"    {o['t']:7.2f}s tick {o['tick']:>6} {o['scene']:<22} frame {o['iv']:6.1f} tick {o['tk']:6.1f} | {top}{fl}"
                   + (f" | {'; '.join(o['ctx'])}" if o["ctx"] else ""))
+            if o["phases"]: print(f"        phases ms: {'; '.join(o['phases'])}")
     busy = [m for m in machine if float(m.get("cpu_pct", 0) or 0) > 85]
     if busy: print(f"  NOTE: machine over 85% CPU in {len(busy)} samples: the run was not quiet, re-run")
     return 1 if real else 0

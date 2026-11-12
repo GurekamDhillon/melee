@@ -386,6 +386,10 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, petey: Option<&[i32; 12]>)
     // fight label under the pool
     let mut s = Buf::new();
     loop_fight(&mut s, v[V_LOOP], v[V_FIGHT], v[V_FIGHTS]);
+    // rooms (V_WAVE / V_WAVES): a plain "Wave 1 of 2" after the fight when the room has more than one wave
+    if v[V_WAVES] > 1 {
+        s.s(" - Wave ").i(v[V_WAVE].clamp(1, v[V_WAVES])).s(" of ").i(v[V_WAVES]);
+    }
     e.text_ex(14.0 - ex, 40.0, bs(12), WHITE, ALIGN_LEFT, 0.0, s.str());
     // foes, top right: an elite or boss plate with its drives
     let kind = v[V_FIGHT_KIND];

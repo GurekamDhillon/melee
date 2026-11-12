@@ -1892,7 +1892,7 @@ pub unsafe extern "C" fn mn_80229A04(
 ) -> ::core::ffi::c_int {
     melee_core::ct!("mn_80229A04");
     if envoy_main6(kind as ::core::ffi::c_int) && (0..6).contains(&selection) {
-        return ENVOY_SLOT[selection as usize];
+        return envoy_slot(selection);
     }
     let mut i: ::core::ffi::c_int = 0;
     let mut count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -1941,7 +1941,47 @@ pub unsafe extern "C" fn mn_80229A7C(
         (*text).font_size.x = 0.0521f32 as f32_0;
         (*text).font_size.y = 0.0521f32 as f32_0;
         HSD_SisLib_803A6368(text, *sis_idx.offset(envoy_anim_sel(menu_kind as ::core::ffi::c_int, selection) as isize) as s32);
+        if envoy_main6(menu_kind as ::core::ffi::c_int) && selection == ENVOY_SEL {
+            // port: the Envoy row's own line, in the disc's font: retail's text and line header, our glyphs
+            (*text).sis_buffer = envoy_desc_sis((*text).sis_buffer);
+        }
     }
+}
+/// The Envoy row's description as SIS data: the header of the retail line it replaces (colour, scale; read from the
+/// disc's data at run time, up to its first kerned run 0x18), then our glyphs (codes from the game's encoder, the
+/// disc font's table), spaces 0x1A, and the retail tail (0x19 end of run, 0x0F, 0x0D, end).
+unsafe fn envoy_desc_sis(retail: *mut u8) -> *mut u8 {
+    static mut BUF: [u8; 256] = [0; 256];
+    let buf = &raw mut BUF as *mut u8;
+    let mut n = 0usize;
+    let mut put = |b: u8| { if n < 255 { *buf.add(n) = b; n += 1; } };
+    let mut h = 0usize;
+    while h < 32 && *retail.add(h) != 0x18 {
+        put(*retail.add(h));
+        h += 1;
+    }
+    put(0x18);
+    for &c in b"A co-op run of fights, picks and a boss." {
+        if c == b' ' {
+            put(0x1A);
+            continue;
+        }
+        let src = [c, 0u8];
+        let mut out = [0u8; 16];
+        let k = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A67EC(out.as_mut_ptr(), src.as_ptr()) as usize;
+        let mut i = 0;
+        while i < k {
+            match out[i] {
+                0xA => i += 5,
+                0xB => i += 1,
+                g => { put(g); put(out[i + 1]); i += 2; }
+            }
+        }
+    }
+    for b in [0x19u8, 0x0F, 0x0D, 0x00] {
+        put(b);
+    }
+    buf
 }
 #[inline]
 pub unsafe extern "C" fn mn_80229A7C_dontinline(
@@ -2271,6 +2311,10 @@ pub unsafe extern "C" fn mn_80229F60(
     mut selection: MainMenuSelection,
 ) {
     melee_core::ct!("mn_80229F60");
+    // port: the fallback Envoy row (envoy_main6 without the sixth anchor) has no plate
+    if root.is_null() {
+        return;
+    }
     let mut temp_f31: ::core::ffi::c_float = 0.;
     let mut data: *mut MainMenuData = ::core::ptr::null_mut::<MainMenuData>();
     let mut flow: *mut MenuFlow = ::core::ptr::null_mut::<MenuFlow>();
@@ -2359,6 +2403,10 @@ pub unsafe extern "C" fn mn_8022A440(
     mut selection: MainMenuSelection,
 ) {
     melee_core::ct!("mn_8022A440");
+    // port: the fallback Envoy row (envoy_main6 without the sixth anchor) has no plate
+    if root.is_null() {
+        return;
+    }
     let mut sp24: [*mut HSD_JObj; 7] = [::core::ptr::null_mut::<HSD_JObj>(); 7];
     let mut r29: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut flow: *mut MenuFlow = ::core::ptr::null_mut::<MenuFlow>();
@@ -2451,6 +2499,11 @@ pub unsafe extern "C" fn mn_8022A5D0(
             != 0 as ::core::ffi::c_int
         {
             var_r24 = mn_80229A04(mn_804A04F0.cur_menu as MenuKind, var_r26);
+            // port: the fallback Envoy row has no plate
+            if spA0[var_r24 as usize].is_null() {
+                var_r26 += 1;
+                continue;
+            }
             lb_8001204C(
                 spA0[var_r24 as usize],
                 &raw mut sp84 as *mut *mut HSD_JObj,
@@ -2832,6 +2885,9 @@ pub unsafe extern "C" fn fn_8022AFEC(mut gp: *mut HSD_GObj) {
                 HSD_SisLib_803A5CC4((*final_data).description);
                 (*final_data).description = ::core::ptr::null_mut::<HSD_Text>();
             }
+            if ENVOY_OWNER == final_data {
+                envoy_text_free();
+            }
         }
         0 => {
             if state as s32 != false_0 {
@@ -2842,10 +2898,6 @@ pub unsafe extern "C" fn fn_8022AFEC(mut gp: *mut HSD_GObj) {
                 );
             }
             (*(*final_data).description).hidden = 0 as u8_0;
-            // port: the Envoy row's description is the mod's own
-            if envoy_main6((*final_data).menu_kind as ::core::ffi::c_int) && hovered_selection as ::core::ffi::c_int == ENVOY_SEL {
-                (*(*final_data).description).hidden = 1 as u8_0;
-            }
         }
         1 | 3 | 5 | _ => {}
     }
@@ -2855,6 +2907,9 @@ pub unsafe extern "C" fn fn_8022AFEC(mut gp: *mut HSD_GObj) {
     if selection_changed as u8_0 as ::core::ffi::c_int != false_0 {
         (*data).hovered_selection = mn_804A04F0.hovered_selection as MenuKind8;
     }
+    if !ENVOY_OWNER.is_null() && ENVOY_OWNER == data {
+        envoy_text_place();
+    }
 }
 /// port: the main menu's sixth row, Envoy (envoy-v3-ui.md). Selection 5 is virtual, shown in slot 2 (between Vs.
 /// Mode and Trophies); the retail rows 2-4 move down one slot. Only while an Envoy mod registered its door
@@ -2863,11 +2918,115 @@ pub unsafe extern "C" fn fn_8022AFEC(mut gp: *mut HSD_GObj) {
 pub unsafe fn envoy_main6(kind: ::core::ffi::c_int) -> bool {
     crate::tu::envoy::DOOR_ON != 0 && kind == MENU_KIND_MAIN as ::core::ffi::c_int
 }
+/// The menu model has the sixth plate anchor (`tree[mn_803EAE68[5]]`), checked when the menu is built: the Envoy row
+/// is native (its own plate in slot 2, the SIS label). Without it (a modded menu) the five retail rows keep their
+/// slots, Envoy is a plateless sixth selection below Data and the envoy_ui mod draws its overlay (state bit 8).
+/// `MELEE_ENVOY_NATIVE_ROW=0` forces the fallback, for checks.
+pub static mut ENVOY_ROW_OK: i32 = 1;
+#[inline]
+unsafe fn envoy_slot(sel: ::core::ffi::c_int) -> ::core::ffi::c_int {
+    if ENVOY_ROW_OK != 0 { ENVOY_SLOT[sel as usize] } else { sel }
+}
+#[inline]
+unsafe fn envoy_order() -> &'static [::core::ffi::c_int; 6] {
+    if ENVOY_ROW_OK != 0 { &ENVOY_ORDER } else { &[0, 1, 2, 3, 4, 5] }
+}
+/// The Envoy row's label: an SIS text in the disc's font on the menu's text canvas, placed each frame on the row's
+/// face joint, part 0 (so it follows the plate's slide and the C-stick tilt). Owned by the main menu's user data `ENVOY_OWNER`.
+static mut ENVOY_TEXT: *mut HSD_Text = ::core::ptr::null_mut();
+static mut ENVOY_LABEL_J: *mut HSD_JObj = ::core::ptr::null_mut();
+static mut ENVOY_OWNER: *mut MainMenuData = ::core::ptr::null_mut();
+/// The menu camera's eye (mn_8022BA1C, with the C-stick tilt): the label is drawn on the plate's line of sight.
+static mut ENVOY_EYE: Option<Vec3> = None;
+const ENVOY_BOX_W: f32 = 400.0;
+const ENVOY_FONT: f32 = 0.056;
+/// Offsets from the plate face's point on the z 17 plane to the text box (menu world units), tuned on screenshots; `MELEE_ENVOY_LABEL`
+/// = "dx,dy,dz,font" overrides, for checks.
+const ENVOY_DX: f32 = 10.8;
+const ENVOY_DY: f32 = -0.8;
+const ENVOY_DZ: f32 = 0.0;
+unsafe fn envoy_text_free() {
+    if !ENVOY_TEXT.is_null() {
+        HSD_SisLib_803A5CC4(ENVOY_TEXT);
+    }
+    ENVOY_TEXT = ::core::ptr::null_mut();
+    ENVOY_LABEL_J = ::core::ptr::null_mut();
+    ENVOY_OWNER = ::core::ptr::null_mut();
+}
+unsafe fn envoy_text_make(data: *mut MainMenuData, label: *mut HSD_JObj) {
+    envoy_text_free();
+    // a text with its own SIS buffer (803A5ACC's has none to append to)
+    let t = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(0, mn_804D6BB4 as i32);
+    if t.is_null() {
+        return;
+    }
+    (*t).pos_z = 17.0;
+    (*t).box_size_x = ENVOY_BOX_W;
+    (*t).box_size_y = 80.0;
+    (*t).font_size.x = ENVOY_FONT;
+    (*t).font_size.y = ENVOY_FONT;
+    (*t).default_alignment = 1;
+    (*t).default_kerning = 1;
+    (*t).text_color = _GXColor { r: 0xff, g: 0xff, b: 0xff, a: 0xff };
+    melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(t, 0.0, 0.0, Some("Envoy"));
+    ENVOY_TEXT = t;
+    ENVOY_LABEL_J = label;
+    ENVOY_OWNER = data;
+    // placed from the next think on (setting up the plate's matrices before it is attached would freeze them)
+    (*t).hidden = 1;
+}
+fn envoy_tune(i: usize, d: f32) -> f32 {
+    static V: std::sync::OnceLock<std::vec::Vec<f32>> = std::sync::OnceLock::new();
+    V.get_or_init(|| std::env::var("MELEE_ENVOY_LABEL").map(|s| s.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default())
+        .get(i).copied().unwrap_or(d)
+}
+unsafe fn envoy_text_place() {
+    let t = ENVOY_TEXT;
+    if t.is_null() || ENVOY_LABEL_J.is_null() {
+        return;
+    }
+    // the plate face's world position (per frame, from the menu's think: the plate is attached by then)
+    let mut p = Vec3 { x: 0., y: 0., z: 0. };
+    lb_8000B1CC(ENVOY_LABEL_J, ::core::ptr::null_mut(), &raw mut p);
+    (*t).hidden = 0;
+    // the retail labels' colours: gold at rest, ink on the hovered (yellow) plate
+    let hov = mn_804A04F0.hovered_selection as ::core::ffi::c_int == ENVOY_SEL;
+    let c = if hov { _GXColor { r: 0x10, g: 0x10, b: 0x10, a: 0xff } } else { _GXColor { r: 0xf0, g: 0xc0, b: 0x50, a: 0xff } };
+    melee_runtime::tu::hsd_3A64::HSD_SisLib_803A74F0(t, 0, &c);
+    // the plate's own depth hides a text drawn there: pull the point toward the eye along its line of sight to the
+    // description's depth plane (z 17), so it stays on the plate under any tilt
+    let Some(e) = ENVOY_EYE else { return };
+    let zt = 17.0 + envoy_tune(2, ENVOY_DZ);
+    let k = if (p.z - e.z).abs() > 1e-3 { (zt - e.z) / (p.z - e.z) } else { 1.0 };
+    let q = Vec3 { x: e.x + (p.x - e.x) * k, y: e.y + (p.y - e.y) * k, z: zt };
+    let fs = envoy_tune(3, ENVOY_FONT);
+    (*t).font_size.x = fs;
+    (*t).font_size.y = fs;
+    (*t).pos_x = q.x - 0.5 * ENVOY_BOX_W * fs + envoy_tune(0, ENVOY_DX);
+    (*t).pos_y = -q.y + envoy_tune(1, ENVOY_DY);
+    (*t).pos_z = q.z;
+}
+/// Test knob for the C-stick tilt (`MELEE_MENU_CSTICK=x,y`, -1..1), only with the Envoy row: pad scripts carry no C-stick.
+fn envoy_cstick() -> Option<(f32, f32)> {
+    static V: std::sync::OnceLock<Option<(f32, f32)>> = std::sync::OnceLock::new();
+    *V.get_or_init(|| {
+        let s = std::env::var("MELEE_MENU_CSTICK").ok()?;
+        let mut it = s.split(',').map(|x| x.trim().parse::<f32>().ok());
+        Some((it.next()??, it.next()??))
+    })
+}
 pub const ENVOY_SEL: ::core::ffi::c_int = 5;
-/// The Envoy row's plate keeps the disc's plate and loses its label (the mod draws ours on it): the cursor model's
-/// label joints, hidden on that one instance. `MELEE_ENVOY_HIDEJ` (comma list of joint indices) overrides, for checks.
-unsafe fn envoy_hide_label(cursor: *mut HSD_JObj) {
-    let list = std::env::var("MELEE_ENVOY_HIDEJ").unwrap_or_else(|_| String::from(ENVOY_LABEL_JOINTS));
+/// The Envoy row's plate keeps the disc's plate and loses its label (an SIS "Envoy" is drawn on it: envoy_text_make):
+/// the cursor model's label part, hidden on that one instance. `MELEE_ENVOY_HIDEJ` (comma list of joint indices)
+/// overrides, for checks.
+unsafe fn envoy_hide_label(cursor: *mut HSD_JObj, label: *mut HSD_JObj) {
+    let Ok(list) = std::env::var("MELEE_ENVOY_HIDEJ") else {
+        // the plate's part 1 (mn_803EAE7C) is the label strip (its frame is start + 2 * selection: none for 5)
+        if !label.is_null() {
+            HSD_JObjSetFlagsAll(label, JOBJ_HIDDEN as u32_0);
+        }
+        return;
+    };
     for t in list.split(',') {
         let Ok(idx) = t.trim().parse::<usize>() else { continue };
         let mut j: *mut HSD_JObj = ::core::ptr::null_mut();
@@ -2877,7 +3036,6 @@ unsafe fn envoy_hide_label(cursor: *mut HSD_JObj) {
         }
     }
 }
-const ENVOY_LABEL_JOINTS: &str = "";
 const ENVOY_SLOT: [::core::ffi::c_int; 6] = [0, 1, 3, 4, 5, 2];
 const ENVOY_ORDER: [::core::ffi::c_int; 6] = [0, 1, 5, 2, 3, 4];
 #[inline]
@@ -2899,7 +3057,7 @@ pub unsafe extern "C" fn GetSelectionFrameOffset(
 #[inline]
 pub unsafe extern "C" fn CountUnlockedSelections(mut kind: MenuKind) -> u8_0 {
     melee_core::ct!("CountUnlockedSelections");
-    if envoy_main6(kind as ::core::ffi::c_int) {
+    if envoy_main6(kind as ::core::ffi::c_int) && ENVOY_ROW_OK != 0 {
         return 6;
     }
     let mut i: ::core::ffi::c_int = 0;
@@ -3010,6 +3168,12 @@ pub unsafe extern "C" fn mn_8022B3A0(mut state: u8_0) -> *mut HSD_GObj {
                 as *mut *mut HSD_JObj, &[(idx) as usize, (-(1 as ::core::ffi::c_int)) as usize]);
         idx += 1;
     }
+    // port: the Envoy row needs the model's sixth plate anchor (envoy_main6)
+    if crate::tu::envoy::DOOR_ON != 0 {
+        ENVOY_ROW_OK = (!(*user_data).tree[mn_803EAE68[5] as usize].is_null()
+            && std::env::var("MELEE_ENVOY_NATIVE_ROW").map_or(true, |v| v.trim() != "0")) as i32;
+        unlocked_count = CountUnlockedSelections(cur_menu as MenuKind) as u32_0;
+    }
     if (*user_data).state as ::core::ffi::c_int != MENU_STATE_IDLE as ::core::ffi::c_int
     {
         match (*user_data).state as ::core::ffi::c_int {
@@ -3038,8 +3202,10 @@ pub unsafe extern "C" fn mn_8022B3A0(mut state: u8_0) -> *mut HSD_GObj {
     i = 0 as ::core::ffi::c_int;
     while i < option_count as ::core::ffi::c_int {
         model = &raw mut MenMainCursor_Top;
+        // port: the fallback Envoy row (no sixth anchor) has no plate
         if mn_80229938(mn_804A04F0.cur_menu as MenuKind, i as s32)
             != 0 as ::core::ffi::c_int
+            && !option_jobjs[mn_80229A04(mn_804A04F0.cur_menu as MenuKind, i) as usize].is_null()
         {
             menu_kind = mn_804A04F0.cur_menu as MenuKind;
             unlocked_index = mn_80229A04(menu_kind, i) as u8_0;
@@ -3125,8 +3291,9 @@ pub unsafe extern "C" fn mn_8022B3A0(mut state: u8_0) -> *mut HSD_GObj {
                     JOBJ_HIDDEN as u32_0,
                 );
             }
-            if envoy_main6(cur_menu as ::core::ffi::c_int) && i == ENVOY_SEL {
-                envoy_hide_label(cursor_jobj);
+            if envoy_main6(cur_menu as ::core::ffi::c_int) && i == ENVOY_SEL && ENVOY_ROW_OK != 0 {
+                envoy_hide_label(cursor_jobj, cursor_parts[1]);
+                envoy_text_make(user_data, cursor_parts[0]);
             }
             HSD_JObjAddChild(option_jobjs[unlocked_index as usize], cursor_jobj);
         }
@@ -3193,6 +3360,12 @@ pub unsafe extern "C" fn mn_8022BA1C(mut gp: *mut HSD_GObj) {
         }
         i += 1;
     }
+    if crate::tu::envoy::DOOR_ON != 0 {
+        if let Some((cx, cy)) = envoy_cstick() {
+            x = cx;
+            y = cy;
+        }
+    }
     if -0.4f32 < x && x < 0.4f32 && -0.4f32 < y && y < 0.4f32 {
         var_f30 = 0.0f32;
         var_f31 = 0.0f32;
@@ -3239,6 +3412,9 @@ pub unsafe extern "C" fn mn_8022BA1C(mut gp: *mut HSD_GObj) {
     PSVECScale(&raw mut sp48, &raw mut sp48, HSD_CObjGetEyeDistance(cobj));
     PSVECSubtract(&raw mut sp18, &raw mut sp48, &raw mut sp24);
     HSD_CObjSetEyePosition(cobj, &raw mut sp24);
+    if crate::tu::envoy::DOOR_ON != 0 {
+        ENVOY_EYE = Some(sp24);
+    }
 }
 pub unsafe extern "C" fn fn_8022BCD4(
     mut gobj: *mut HSD_GObj,
@@ -4584,7 +4760,8 @@ pub unsafe extern "C" fn mn_8022DB10(mut gp: *mut HSD_GObj) {
     (*mf).buttons = buttons as u64_0;
     // port: the Envoy row (envoy_main6): the display order 1-P, Vs., Envoy, Trophies, Options, Data
     if envoy_main6(MENU_KIND_MAIN as ::core::ffi::c_int) && buttons & MenuInput_Back as ::core::ffi::c_int as u32_0 == 0 {
-        let pos = ENVOY_ORDER.iter().position(|&x| x == (*mf).hovered_selection as ::core::ffi::c_int).unwrap_or(0);
+        let order = envoy_order();
+        let pos = order.iter().position(|&x| x == (*mf).hovered_selection as ::core::ffi::c_int).unwrap_or(0);
         if buttons & MenuInput_Confirm as ::core::ffi::c_int as u32_0 != 0 {
             if (*mf).hovered_selection as ::core::ffi::c_int == ENVOY_SEL {
                 mn_804D6BC8.cooldown = 5 as u16_0;
@@ -4597,11 +4774,11 @@ pub unsafe extern "C" fn mn_8022DB10(mut gp: *mut HSD_GObj) {
             }
         } else if buttons & MenuInput_Up as ::core::ffi::c_int as u32_0 != 0 {
             sfxMove();
-            (*mf).hovered_selection = ENVOY_ORDER[(pos + 5) % 6] as u16_0;
+            (*mf).hovered_selection = order[(pos + 5) % 6] as u16_0;
             return;
         } else if buttons & MenuInput_Down as ::core::ffi::c_int as u32_0 != 0 {
             sfxMove();
-            (*mf).hovered_selection = ENVOY_ORDER[(pos + 1) % 6] as u16_0;
+            (*mf).hovered_selection = order[(pos + 1) % 6] as u16_0;
             return;
         }
     }
@@ -5046,6 +5223,12 @@ pub unsafe extern "C" fn mn_8022EAE0(mut gobj: *mut HSD_GObj) {
 }
 pub unsafe extern "C" fn mn_8022EB04(mut user_data: *mut ::core::ffi::c_void) {
     melee_core::ct!("mn_8022EB04");
+    // port: the Envoy label dies with the scene's texts (freed in-scene at the menu's exit: fn_8022AFEC)
+    if user_data as *mut MainMenuData == ENVOY_OWNER {
+        ENVOY_TEXT = ::core::ptr::null_mut();
+        ENVOY_LABEL_J = ::core::ptr::null_mut();
+        ENVOY_OWNER = ::core::ptr::null_mut();
+    }
     HSD_Free(user_data);
 }
 pub unsafe extern "C" fn mn_GetDigitAt(mut arg0: s32, mut arg1: s32) -> s32 {

@@ -97,7 +97,7 @@ extern "C" {
     fn gd_log(msg: *const u8, value: i32);
 }
 
-const FIGHTS: usize = 5;
+const FIGHTS: usize = 4;
 const START_POOL: [i32; 2] = [4, 5];
 const TAG_LEN: i32 = 60;
 const TAG_COOLDOWN: i32 = 300;
@@ -127,6 +127,12 @@ const STAGE_GAP: i32 = 1200;
 const STAGE_MAX: i32 = 1;
 const SHIFT_COINS: i32 = 10;
 const SHIFT_CAP: i32 = 2;
+/// The torture knob's switch spacing (live frames); the window after a switch in which a fighter entering a KO, or
+/// a stock lost, is reported as caused by it ("envoy: KO right after a stage switch"); the frame after a switch at
+/// which every fighter's place is logged (it has landed by then).
+const TORTURE_GAP: i32 = 240;
+const SWITCH_KO_WINDOW: i32 = 120;
+const SWITCH_CHECK: i32 = 45;
 const REWARD_TIME: i32 = 1200;
 /// The shop's timer (it leaves on its own at 0).
 const SHOP_TIME: i32 = 1800;
@@ -187,19 +193,28 @@ struct Fight {
     foe_level: i32,
     scale: i32,
 }
+/// Rooms (slice B): a session is three rooms and the boss: rooms 1-2, the stop, room 3, the boss. Room 1 is one short
+/// wave; the others two (room_waves), the elite arriving in room 3's second wave (its first is a plain foe, ELITE_W1).
 const SCHEDULE: [Fight; FIGHTS] = [
     Fight { kind: FK_DUEL, ncpu: 1, level: [3, 0, 0], stocks: [1, 0, 0], foe_drives: 0, foe_level: 0, scale: 1000 },
-    Fight { kind: FK_ELITE, ncpu: 1, level: [6, 0, 0], stocks: [2, 0, 0], foe_drives: 1, foe_level: 1, scale: 1150 },
     Fight { kind: FK_PACK, ncpu: 2, level: [5, 6, 0], stocks: [1, 1, 0], foe_drives: 0, foe_level: 0, scale: 1000 },
     Fight { kind: FK_ELITE, ncpu: 1, level: [8, 0, 0], stocks: [2, 0, 0], foe_drives: 2, foe_level: 2, scale: 1200 },
     Fight { kind: FK_BOSS, ncpu: 1, level: [9, 0, 0], stocks: [3, 0, 0], foe_drives: 2, foe_level: 2, scale: 1250 },
 ];
+/// An elite room's first wave: a plain foe at this level with one stock (the elite comes in the second wave).
+const ELITE_W1_LEVEL: i32 = 6;
+/// Coins for each wave cleared before a room's last (the room's own clear pays COINS_CLEAR once).
+const COINS_WAVE: i32 = 5;
+/// The elite's stocks when it arrives in an elite room's second wave (the room ran 150-190 s at 2; target 90-120).
+const ELITE_W2_STOCKS: i32 = 1;
+/// The most waves a room can have (loops add one each).
+const WAVES_MAX: i32 = 4;
 /// A shop opens at the start of these fights (after fights 1, 3 and 4; V3 12.9).
 #[allow(dead_code)]
-const SHOP_AT: [bool; FIGHTS] = [false, true, false, true, true];
-/// Sessions (v3g): the fights that open one. Fights 1-3 are one session, 4-5 (elite, boss) the next, in every loop;
+const SHOP_AT: [bool; FIGHTS] = [false, false, true, false];
+/// Sessions (v3g): the fights that open one. Rooms 1-2 are one session, room 3 and the boss the next, in every loop;
 /// inside a session the next fight follows at once (no picks, no shop, no road), the picks are banked for the stop.
-const SESSION_START: [bool; FIGHTS] = [true, false, false, true, false];
+const SESSION_START: [bool; FIGHTS] = [true, false, true, false];
 /// The drives a foe may carry: the ones that read as an attack on the players.
 const FOE_POOL: [&str; 8] = ["ember", "nova", "bolt", "frost", "rush", "bulwark", "hex", "comet"];
 
@@ -502,6 +517,8 @@ struct St {
     waves: i32,
     park: i32,
     wave2: i32,
+    /// The wave in play is cleared (paid; the next one not yet in).
+    wave_clr: i32,
     /// Tap vs hold: frames Tag has been held since its press (0 none), the after-damage window at the press, the
     /// stick direction at the press (0 forward, 1 up, 2 down), a tap waiting to strike (frames left), the swap's
     /// remembered window, the strike frames seen last frame (the end edge), the test hold for `tagauto`.
@@ -514,6 +531,14 @@ struct St {
     auto_hold: [i32; NP],
     strikes: i32,
     test_buy: i32,
+    /// Test knob `torture`: a stage switch every TORTURE_GAP live frames through every stage pair, no caps (the
+    /// switch-safety check, tools/rust-port/envoy/switch_torture.sh).
+    test_torture: i32,
+    /// Each slot's motion at the last switch (+1; 0: not in play) and whether a KO after it was reported.
+    sw_as: [i32; 4],
+    sw_ko: [i32; 4],
+    /// Whether the slot was hit or grabbed since the last switch.
+    sw_hit: [i32; 4],
 }
 
 /// The 64-bit half of the state (Heat and charge in ticks, the purse, the pips): i64 words only.
@@ -529,7 +554,7 @@ struct H {
 
 static mut S: St = unsafe { core::mem::zeroed() };
 static mut HH: H = unsafe { core::mem::zeroed() };
-static mut PLAN: [i32; 40] = [0; 40];
+static mut PLAN: [i32; 44] = [0; 44];
 static mut VIEW: [i32; VIEW_WORDS] = [0; VIEW_WORDS];
 
 fn fnv(mut h: u32, b: &[u8]) -> u32 {
@@ -772,6 +797,20 @@ unsafe fn test_loop() -> i32 {
         .clamp(1, LOOP_TOP)
 }
 
+/// MELEE_ENVOY_TEST_DRIVES item `#N`: a new run's seed as if N more runs came before (tests: seed sweeps).
+unsafe fn test_seed() -> i32 {
+    let mut b = [0u8; 256];
+    let n = gd_envoy_test_drives(b.as_mut_ptr(), b.len() as u32);
+    if n <= 0 {
+        return 0;
+    }
+    let s = core::str::from_utf8(&b[..(n as usize).min(b.len())]).unwrap_or("");
+    s.split(|c| c == ',' || c == '/' || c == '|' || c == ';')
+        .find_map(|t| t.trim().strip_prefix('#').and_then(|x| x.parse::<i32>().ok()))
+        .unwrap_or(0)
+        .clamp(0, 1_000_000)
+}
+
 fn nh() -> i32 {
     unsafe { S.nh.clamp(1, 2) }
 }
@@ -946,6 +985,9 @@ unsafe fn test_drives() {
                 if item.starts_with('~') {
                     continue; // an enemy-wave test fight (test_waves)
                 }
+                if item.starts_with('#') {
+                    continue; // the seed offset (test_seed)
+                }
                 if item.starts_with('@') {
                     continue; // the start loop (test_loop)
                 }
@@ -963,6 +1005,10 @@ unsafe fn test_drives() {
                 }
                 if item == "protect" {
                     S.test_protect = 1;
+                    continue;
+                }
+                if item == "torture" {
+                    S.test_torture = 1;
                     continue;
                 }
                 if item == "buystock" {
@@ -1028,14 +1074,14 @@ unsafe fn test_drives() {
 /// The plan of the match the run wants next: the live run's current fight, or a new run's first.
 unsafe fn make_plan() {
     if S.arm_seen == 0 {
-        PLAN = [0; 40];
-        gd_envoy_plan(PLAN.as_ptr(), 40);
+        PLAN = [0; 44];
+        gd_envoy_plan(PLAN.as_ptr(), 44);
         return;
     }
     let fresh = S.state != RUN_LIVE;
     let coop = if fresh { gd_envoy_coop() != 0 } else { S.nh == 2 };
     let (fight, pool, seed) = if fresh {
-        (gd_envoy_start_fight() as usize, START_POOL[coop as usize], mix((S.runs as u32).wrapping_add(1).wrapping_mul(0x9E37_79B9)))
+        ((gd_envoy_start_fight() as usize).min(FIGHTS - 1), START_POOL[coop as usize], mix((S.runs as u32).wrapping_add(1).wrapping_add(test_seed() as u32).wrapping_mul(0x9E37_79B9)))
     } else {
         (S.fight as usize, S.pool, S.seed as u32)
     };
@@ -1045,7 +1091,7 @@ unsafe fn make_plan() {
     let more = (!coop && f.kind == FK_PACK && e >= 1) as i32;
     let n = (f.ncpu + (coop && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32 + more).min(if coop { 2 } else { 3 });
     let p = &mut PLAN;
-    *p = [0; 40];
+    *p = [0; 44];
     p[0] = 1;
     p[1] = STAGES[fight];
     p[2] = if fresh { -1 } else { S.pair[0][0] };
@@ -1074,7 +1120,19 @@ unsafe fn make_plan() {
     }
     p[30] = per_loop(1000, LOOP_BOSS_HP, e); // the Petey cages' HP x1000 (melee_modes::tu::envoy P_BOSS_HP)
     // rooms: each foe row's next-wave character (another pick from the pool) and stocks; -1 for a one-wave fight
-    let nw = room_waves(fight, f.kind);
+    let nw = room_waves(fight, f.kind, e);
+    if f.kind == FK_ELITE && nw >= 2 {
+        // the elite arrives in the second wave: the first is a plain foe; the elite's numbers ride in 38-41
+        p[38] = p[17];
+        p[39] = p[20];
+        p[40] = p[23];
+        p[41] = p[11];
+        p[11] = if e >= 2 { 9 } else { (ELITE_W1_LEVEL + 3 * e).min(9) };
+        p[14] = 1;
+        p[17] = foe_atk(e);
+        p[20] = 1_000_000 / foe_tough(e);
+        p[23] = if e >= 2 { LOOP_ELITE_SCALE } else { 1000 };
+    }
     for i in 0..3 {
         if nw >= 2 && f.kind != FK_BOSS {
             let mut ck = CPU_POOL[(mix(seed ^ ((fight as u32 + 8 * e as u32) << 8) ^ (i as u32 + 0x40)) % CPU_POOL.len() as u32) as usize];
@@ -1082,7 +1140,8 @@ unsafe fn make_plan() {
                 ck = CPU_POOL[(CPU_POOL.iter().position(|&c| c == ck).unwrap_or(0) + 7) % CPU_POOL.len()];
             }
             p[32 + i] = ck;
-            p[35 + i] = p[14 + i];
+            // the elite's stocks for an elite room's second wave, else the row's own
+            p[35 + i] = if f.kind == FK_ELITE && i == 0 { ELITE_W2_STOCKS + (coop as i32) + e / 2 } else { p[14 + i] };
         } else {
             p[32 + i] = -1;
             p[35 + i] = 0;
@@ -1101,7 +1160,7 @@ unsafe fn make_plan() {
     p[27] = coop as i32;
     p[28] = if fresh || !coop { -1 } else { S.pair[1][0] };
     p[29] = if fresh || !coop { -1 } else { S.pair[1][1] };
-    gd_envoy_plan(p.as_ptr(), 40);
+    gd_envoy_plan(p.as_ptr(), 44);
 }
 
 /// A rewritten match began (gd_envoy_seq moved).
@@ -1110,8 +1169,8 @@ unsafe fn on_new_match(seq: i32) {
     if started {
         S.runs = S.runs.wrapping_add(1);
         S.state = RUN_LIVE;
-        S.seed = mix((S.runs as u32).wrapping_mul(0x9E37_79B9)) as i32;
-        S.fight = gd_envoy_start_fight();
+        S.seed = mix((S.runs as u32).wrapping_add(test_seed() as u32).wrapping_mul(0x9E37_79B9)) as i32;
+        S.fight = gd_envoy_start_fight().clamp(0, FIGHTS as i32 - 1);
         S.nh = if gd_envoy_coop() != 0 { 2 } else { 1 };
         S.pool = START_POOL[(S.nh == 2) as usize];
         S.bosses = 0;
@@ -1212,8 +1271,9 @@ unsafe fn on_new_match(seq: i32) {
     S.stage_switches = 0;
     S.stage_want = 0;
     S.wave = 1;
-    S.waves = room_waves(S.fight as usize, sched().kind);
+    S.waves = room_waves(S.fight as usize, sched().kind, lx());
     S.park = 0;
+    S.wave_clr = 0;
     S.shift_dmg = 0;
     S.shift_paid = 0;
     S.tags = 0;
@@ -1325,7 +1385,9 @@ unsafe fn foe_drives() {
         let lead = s == first;
         // ordinary fights from loop 2: the first foe carries one (the retune: no two-drive elite treatment);
         // the Steep road: every foe one more
-        let want = if f.kind >= FK_ELITE {
+        let want = if f.kind == FK_ELITE && S.waves >= 2 {
+            (e >= 1 && lead) as i32
+        } else if f.kind >= FK_ELITE {
             if lead { f.foe_drives + e } else { 0 }
         } else {
             (e >= 1 && lead) as i32
@@ -3264,6 +3326,9 @@ unsafe fn moments_frame() {
         let n = if (0..nh() + ncpu()).contains(&s) { gd_player_stocks(s).max(0) } else { 0 };
         let i = s as usize;
         if n < S.stocks_each[i] {
+            if S.stage_switches > 0 && S.stage_clock < SWITCH_KO_WINDOW && S.sw_hit[i] == 0 {
+                log(b"envoy: stock lost soon after a stage switch (see the KO lines), slot*10000 + frames since\0", s * 10000 + S.stage_clock);
+            }
             if is_foe(s) && s != S.boss_slot {
                 foe_ko(s, n == 0);
                 // rooms: a foe out of stocks while the room has another wave is parked for it (stocks set back now,
@@ -3285,12 +3350,10 @@ unsafe fn moments_frame() {
                 // switches the stage (never the fight's last: the win's collect owns that moment)
                 if sched().kind >= FK_ELITE && n > 0 {
                     stage_request(SH_BREAK);
-                } else if shifting() && foes_left_after(s, n) > 0 {
-                    stage_request(SH_KO);
                 }
             } else if (0..nh()).contains(&s) {
-                // a lost stock halves Heat
-                HH.heat[i] /= 2;
+                // a lost stock costs a quarter of Heat (rooms; was half)
+                HH.heat[i] -= HH.heat[i] / 4;
                 S.stock_lost = 1;
                 ev(EV_HALVED, s, heat::milli(HH.heat[i]));
                 S.foe_m[i] = 0;
@@ -3602,7 +3665,7 @@ fn road_twists(kind: i32) -> i32 {
 
 /// The Shifting road's session (fights 1-3): the stage also switches on a foe KO (not the fight's last).
 unsafe fn shifting() -> bool {
-    road_twists(S.road) & TW_FAST_SHIFT != 0 && S.fight < 3
+    road_twists(S.road) & TW_FAST_SHIFT != 0 && S.fight < 2
 }
 
 /// Ask for a stage switch (stage_frame fires it when the guards allow). A break outranks the Shifting road's reasons.
@@ -3614,12 +3677,12 @@ unsafe fn stage_request(why: i32) {
 
 /// The token road `kind` banks for its session's fight `fight` (0-based); outside a forked session, a drive pick.
 fn road_prize_at(kind: i32, fight: i32) -> i32 {
-    if kind == ROAD_STEEP && fight == 2 { RK_LEVEL } else { RK_PICK }
+    if kind == ROAD_STEEP && fight == 1 { RK_LEVEL } else { RK_PICK }
 }
 
 /// Every foe carries one more drive: the Steep road's twist, in its session (fights 1-3).
 unsafe fn steep_twist() -> bool {
-    road_twists(S.road) & TW_FOE_DRIVE != 0 && S.fight < 3
+    road_twists(S.road) & TW_FOE_DRIVE != 0 && S.fight < 2
 }
 
 /// A foe slot's toughness as the plan set it (damage taken x1000).
@@ -3972,6 +4035,7 @@ unsafe fn tag_frame() {
 }
 
 /// Foe stocks left in play right after slot `s` went down to `n`.
+#[allow(dead_code)]
 unsafe fn foes_left_after(s: i32, n: i32) -> i32 {
     (0..4).filter(|&t| is_foe(t)).map(|t| if t == s { n.max(0) } else { gd_player_stocks(t).max(0) }).sum()
 }
@@ -3985,22 +4049,31 @@ unsafe fn stage_frame() {
         return;
     }
     S.stage_clock = S.stage_clock.saturating_add(1);
+    if S.stage_switches > 0 && S.stage_clock <= SWITCH_KO_WINDOW {
+        switch_watch();
+    }
+    if S.test_torture != 0 && S.stage_want == 0 && S.play >= TORTURE_GAP && S.stage_clock >= TORTURE_GAP {
+        S.stage_want = SH_WAVE;
+    }
     if S.stage_want == 0 {
         return;
     }
-    let cap = if shifting() { SHIFT_CAP } else { STAGE_MAX };
+    let cap = if S.test_torture != 0 { i32::MAX } else if shifting() && S.stage_want == SH_WAVE { WAVES_MAX } else { STAGE_MAX };
     if S.outcome != 0 || S.collect != 0 || S.stage_off != 0 || S.stage_switches >= cap {
         S.stage_want = 0;
         return;
     }
-    if S.reward_due != 0 || S.rw_active != 0 || S.play < STAGE_GRACE || S.stage_want != SH_WAVE && S.stage_switches > 0 && S.stage_clock < STAGE_GAP {
+    if S.reward_due != 0 || S.rw_active != 0 || S.test_torture == 0 && S.play < STAGE_GRACE || S.stage_want != SH_WAVE && S.stage_switches > 0 && S.stage_clock < STAGE_GAP {
         return;
     }
     let cur = gd_stage_grkind();
+    // the torture knob walks every ordered stage pair (a step of 1, 2, 3, 4 along the list, five switches each)
+    let step = if S.test_torture != 0 { 1 + (S.stage_switches / STAGES.len() as i32) as usize % (STAGES.len() - 1) } else { 1 };
     let next = match STAGES.iter().position(|&k| k == cur) {
-        Some(i) => STAGES[(i + 1) % STAGES.len()],
+        Some(i) => STAGES[(i + step) % STAGES.len()],
         None => STAGES[0],
     };
+    switch_snapshot(b"torture at switch\0");
     let rc = gd_stage_transition(next, STAGE_LEN);
     if rc == -9 {
         return; // busy: try again next frame
@@ -4027,6 +4100,68 @@ unsafe fn stage_frame() {
             ev(EV_COINS, p as i32, SHIFT_COINS);
         }
         log(b"envoy: shifting road pays, coins ", SHIFT_COINS);
+    }
+}
+
+/// `envoy: <what> s<slot> <field>` (value: as given): the switch-safety check's per-fighter lines.
+fn log_slot(what: &[u8], slot: i32, field: &[u8], v: i32) {
+    let mut b = [0u8; 80];
+    let mut n = 0;
+    let digit = [b's', b'0' + slot as u8, b' '];
+    for &x in b"envoy: ".iter().chain(what.iter().filter(|&&c| c != 0)).chain(b" ".iter()).chain(digit.iter()).chain(field.iter()) {
+        if n < b.len() - 1 {
+            b[n] = x;
+            n += 1;
+        }
+    }
+    unsafe { gd_log(b.as_ptr(), v) }
+}
+
+/// Every fighter in play: motion, x and y (x10). At a switch it also records the motions for switch_watch.
+unsafe fn switch_snapshot(what: &[u8]) {
+    let at_switch = what.starts_with(b"torture at");
+    for s in 0..4 {
+        let h = if gd_player_present(s) != 0 { gd_fighter_from_slot(s) } else { 0 };
+        if at_switch {
+            S.sw_as[s as usize] = if h != 0 { gd_fighter_get_action_state(h) + 1 } else { 0 };
+            S.sw_ko[s as usize] = 0;
+            S.sw_hit[s as usize] = 0;
+        }
+        if h == 0 || S.test_torture == 0 {
+            continue;
+        }
+        log_slot(what, s, b"motion", gd_fighter_get_action_state(h));
+        log_slot(what, s, b"x10", (gd_fighter_get_pos_x(h) * 10.0) as i32);
+        log_slot(what, s, b"y10", (gd_fighter_get_pos_y(h) * 10.0) as i32);
+    }
+}
+
+/// The frames after a switch: a fighter that was not already in a KO at the switch entering one (motion 0-10) is a
+/// KO the switch caused; the torture knob also logs everyone's place at SWITCH_CHECK.
+unsafe fn switch_watch() {
+    for s in 0..4 {
+        let i = s as usize;
+        let h = if gd_player_present(s) != 0 { gd_fighter_from_slot(s) } else { 0 };
+        if h == 0 || S.sw_ko[i] != 0 {
+            continue;
+        }
+        let m = gd_fighter_get_action_state(h);
+        let was = S.sw_as[i] - 1;
+        // hitstun, tumble, grabbed / thrown: a KO after that is the fight's, not the switch's
+        if (75..=91).contains(&m) || (156..=157).contains(&m) || (223..=251).contains(&m) {
+            S.sw_hit[i] = 1;
+        }
+        if (0..=10).contains(&m) && was > 13 {
+            S.sw_ko[i] = 1;
+            if S.sw_hit[i] != 0 {
+                log(b"envoy: combat KO after a stage switch (hit first), slot*10000 + frames since\0", s * 10000 + S.stage_clock);
+            } else {
+                log(b"envoy: KO right after a stage switch, slot*10000 + frames since\0", s * 10000 + S.stage_clock);
+            }
+        }
+    }
+    if S.stage_clock == SWITCH_CHECK {
+        switch_snapshot(b"torture after switch\0");
     }
 }
 
@@ -4120,15 +4255,15 @@ unsafe fn test_waves_read() -> i32 {
 
 /// Per live frame of a wave fight: spawn the three once the fight is on, then read each enemy's damage taken (its
 /// last attacker gets the record: Heat, charge) and its death.
-/// Waves in room `fight` (kind `kind`): two for the pack (and, with the test knob `wave2`, every fight but the boss).
-unsafe fn room_waves(fight: usize, kind: i32) -> i32 {
-    let _ = fight;
+/// Waves in room `fight` (kind `kind`) in loop index `e` (0 the first loop): the boss one; room 1 one short wave
+/// (two with the test knob `wave2`); the others two; every loop past the first adds one (to WAVES_MAX).
+unsafe fn room_waves(fight: usize, kind: i32, e: i32) -> i32 {
     if kind == FK_BOSS {
         1
-    } else if kind == FK_PACK || S.wave2 != 0 || test_flag("wave2") {
-        2
+    } else if fight == 0 && S.wave2 == 0 && !test_flag("wave2") {
+        1 + e.clamp(0, 1)
     } else {
-        1
+        (2 + e.max(0)).min(WAVES_MAX)
     }
 }
 
@@ -4139,14 +4274,36 @@ unsafe fn room_frame() {
         return;
     }
     let alive = (0..4).any(|s| is_foe(s) && S.park & (1 << s) == 0 && gd_player_stocks(s) > 0);
-    if alive || gd_envoy_wave_pending() & S.park != S.park {
+    if alive {
+        return;
+    }
+    if S.wave_clr == 0 {
+        // the wave is cleared (its last KO cashed out like any KO): coins, and one more drop for each player
+        S.wave_clr = 1;
+        HH.purse += COINS_WAVE as i64 * COIN_UNIT;
+        for p in 0..nh() as usize {
+            HH.earned[p] += COINS_WAVE as i64 * COIN_UNIT / nh() as i64;
+            ev(EV_COINS, p as i32, COINS_WAVE);
+            roll_drop(p);
+        }
+        log(b"envoy: wave cleared, coins\0", COINS_WAVE);
+    }
+    if gd_envoy_wave_pending() & S.park != S.park {
         return;
     }
     let n = gd_envoy_wave_start();
     S.park = 0;
+    S.wave_clr = 0;
     S.wave += 1;
     ev(EV_WAVE, S.wave, S.waves);
     log(b"envoy: wave starts, wave*100 + foes back\0", S.wave * 100 + n);
+    let f = sched();
+    if f.kind == FK_ELITE && S.wave == 2 {
+        // the elite's drives arrive with it
+        let first = nh() as usize;
+        foe_roll(first, (f.foe_drives + lx()).clamp(0, 2) as usize, (f.foe_level.max(1) + lx()).clamp(1, lvl_cap()), 8);
+        log(b"envoy: the elite arrives, slot\0", first as i32);
+    }
     stage_request(SH_WAVE);
 }
 
@@ -4423,6 +4580,8 @@ unsafe fn publish() {
     v[V_STAGE_IN] = -1;
     v[V_WAVE] = S.wave.max(1);
     v[V_WAVES] = S.waves.max(1);
+    v[V_ROOM] = if sched().kind == FK_BOSS { 0 } else { S.fight.clamp(0, FIGHTS as i32 - 1) + 1 };
+    v[V_ROOMS] = FIGHTS as i32 - 1;
     v[V_FIRES] = S.fires;
     v[V_FIGHT_KIND] = sched().kind;
     v[V_OPEN] = open_slots() as i32;

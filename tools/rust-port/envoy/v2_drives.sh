@@ -91,7 +91,7 @@ for d in $depths; do
     check 4 shared "$d" "$line" "$miss"
   fi
   if on coop; then
-    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run coop "$d" "bolt,nova,comet,noshop/relay,slipstream|echo_oath;bolt,comet,feather_storm/surge,relay|overclock" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3)
+    line=$(frames=$(( frames < 6000 ? 6000 : frames )) run coop "$d" "bolt,nova,comet,noshop/relay,slipstream|echo_oath;bolt,comet,feather_storm/surge,relay|overclock" MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
     miss=""; seen coop "$d" "envoy: run start, players 2" || miss="$miss (not co-op)"
     { owner_fired coop "$d" 0 || owner_fired coop "$d" 1; } || miss="$miss (player 1 never fired)"
     { owner_fired coop "$d" 2 || owner_fired coop "$d" 3; } || miss="$miss (player 2 never fired)"
@@ -99,7 +99,7 @@ for d in $depths; do
     check 5 coop "$d" "$line" "$miss"
   fi
   if on petey; then
-    line=$(run petey "$d" "ember,bolt,nova,noshop/rush|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5)
+    line=$(run petey "$d" "ember,bolt,nova,noshop/rush|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=4)
     miss=""; seen petey "$d" "envoy: drive fire" || miss="$miss (no fire on Petey)"
     check 6 petey "$d" "$line" "$miss"
   fi

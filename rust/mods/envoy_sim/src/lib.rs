@@ -51,6 +51,9 @@ extern "C" {
     fn gd_tag_quick(slot: i32, any: i32, pause: i32) -> i32;
     fn gd_tag_assist(slot: i32, dir: i32) -> i32;
     fn gd_tag_assist_frames(slot: i32) -> i32;
+    fn gd_envoy_wave_park(slot: i32) -> i32;
+    fn gd_envoy_wave_pending() -> i32;
+    fn gd_envoy_wave_start() -> i32;
     fn gd_pad_held(port: i32) -> u32;
     fn gd_pad_stick(port: i32) -> i32;
     fn gd_envoy_tag_button() -> i32;
@@ -493,6 +496,12 @@ struct St {
     shift_paid: i32,
     /// Test knob (`noshift`): no stage switch at all (the owner's A/B).
     stage_off: i32,
+    /// Rooms: the wave in play (1-based), the room's waves, the foe slots parked for the next wave (bits), test knob
+    /// `wave2` (every fight but the boss gets two waves).
+    wave: i32,
+    waves: i32,
+    park: i32,
+    wave2: i32,
     /// Tap vs hold: frames Tag has been held since its press (0 none), the after-damage window at the press, the
     /// stick direction at the press (0 forward, 1 up, 2 down), a tap waiting to strike (frames left), the swap's
     /// remembered window, the strike frames seen last frame (the end edge), the test hold for `tagauto`.
@@ -520,7 +529,7 @@ struct H {
 
 static mut S: St = unsafe { core::mem::zeroed() };
 static mut HH: H = unsafe { core::mem::zeroed() };
-static mut PLAN: [i32; 32] = [0; 32];
+static mut PLAN: [i32; 40] = [0; 40];
 static mut VIEW: [i32; VIEW_WORDS] = [0; VIEW_WORDS];
 
 fn fnv(mut h: u32, b: &[u8]) -> u32 {
@@ -738,6 +747,17 @@ fn foe_tough(e: i32) -> i32 {
 /// An ordinary fight's elite modifier (loop 3 on): the first CPU is an elite of this size.
 const LOOP_ELITE_SCALE: i32 = 1150;
 
+/// A MELEE_ENVOY_TEST_DRIVES item given by name (read from the string, so a fresh run's first plan sees it too).
+unsafe fn test_flag(name: &str) -> bool {
+    let mut b = [0u8; 256];
+    let n = gd_envoy_test_drives(b.as_mut_ptr(), b.len() as u32);
+    if n <= 0 {
+        return false;
+    }
+    let s = core::str::from_utf8(&b[..(n as usize).min(b.len())]).unwrap_or("");
+    s.split(|c| c == ',' || c == '/' || c == '|' || c == ';').any(|t| t.trim() == name)
+}
+
 /// MELEE_ENVOY_TEST_DRIVES item `@N`: a new run starts in loop N (tests; fixed per process).
 unsafe fn test_loop() -> i32 {
     let mut b = [0u8; 256];
@@ -949,6 +969,10 @@ unsafe fn test_drives() {
                     S.test_buy = 1;
                     continue;
                 }
+                if item == "wave2" {
+                    S.wave2 = 1;
+                    continue;
+                }
                 if item == "noshift" {
                     S.stage_off = 1;
                     continue;
@@ -1004,8 +1028,8 @@ unsafe fn test_drives() {
 /// The plan of the match the run wants next: the live run's current fight, or a new run's first.
 unsafe fn make_plan() {
     if S.arm_seen == 0 {
-        PLAN = [0; 32];
-        gd_envoy_plan(PLAN.as_ptr(), 32);
+        PLAN = [0; 40];
+        gd_envoy_plan(PLAN.as_ptr(), 40);
         return;
     }
     let fresh = S.state != RUN_LIVE;
@@ -1021,7 +1045,7 @@ unsafe fn make_plan() {
     let more = (!coop && f.kind == FK_PACK && e >= 1) as i32;
     let n = (f.ncpu + (coop && (f.kind == FK_DUEL || f.kind == FK_PACK)) as i32 + more).min(if coop { 2 } else { 3 });
     let p = &mut PLAN;
-    *p = [0; 32];
+    *p = [0; 40];
     p[0] = 1;
     p[1] = STAGES[fight];
     p[2] = if fresh { -1 } else { S.pair[0][0] };
@@ -1049,6 +1073,21 @@ unsafe fn make_plan() {
         p[23] = sc;
     }
     p[30] = per_loop(1000, LOOP_BOSS_HP, e); // the Petey cages' HP x1000 (melee_modes::tu::envoy P_BOSS_HP)
+    // rooms: each foe row's next-wave character (another pick from the pool) and stocks; -1 for a one-wave fight
+    let nw = room_waves(fight, f.kind);
+    for i in 0..3 {
+        if nw >= 2 && f.kind != FK_BOSS {
+            let mut ck = CPU_POOL[(mix(seed ^ ((fight as u32 + 8 * e as u32) << 8) ^ (i as u32 + 0x40)) % CPU_POOL.len() as u32) as usize];
+            if ck == p[8 + i] {
+                ck = CPU_POOL[(CPU_POOL.iter().position(|&c| c == ck).unwrap_or(0) + 7) % CPU_POOL.len()];
+            }
+            p[32 + i] = ck;
+            p[35 + i] = p[14 + i];
+        } else {
+            p[32 + i] = -1;
+            p[35 + i] = 0;
+        }
+    }
     if waves {
         // an enemy-wave test fight: no foe fighters, Final Destination
         p[7] = 0;
@@ -1062,7 +1101,7 @@ unsafe fn make_plan() {
     p[27] = coop as i32;
     p[28] = if fresh || !coop { -1 } else { S.pair[1][0] };
     p[29] = if fresh || !coop { -1 } else { S.pair[1][1] };
-    gd_envoy_plan(p.as_ptr(), 32);
+    gd_envoy_plan(p.as_ptr(), 40);
 }
 
 /// A rewritten match began (gd_envoy_seq moved).
@@ -1172,6 +1211,9 @@ unsafe fn on_new_match(seq: i32) {
     S.stage_clock = 0;
     S.stage_switches = 0;
     S.stage_want = 0;
+    S.wave = 1;
+    S.waves = room_waves(S.fight as usize, sched().kind);
+    S.park = 0;
     S.shift_dmg = 0;
     S.shift_paid = 0;
     S.tags = 0;
@@ -3224,6 +3266,21 @@ unsafe fn moments_frame() {
         if n < S.stocks_each[i] {
             if is_foe(s) && s != S.boss_slot {
                 foe_ko(s, n == 0);
+                // rooms: a foe out of stocks while the room has another wave is parked for it (stocks set back now,
+                // before its KO countdown ends and the retail "player out" path could run)
+                if n == 0 && S.wave < S.waves && PLAN[35 + (s - nh()).clamp(0, 2) as usize] > 0 {
+                    let back = PLAN[35 + (s - nh()).clamp(0, 2) as usize];
+                    gd_envoy_apply(s, AP_STOCKS, back);
+                    gd_envoy_wave_park(s);
+                    S.park |= 1 << s;
+                    S.stocks_each[i] = back;
+                    log(b"envoy: foe parked for the next wave, slot\0", s);
+                    if is_foe(s) {
+                        foes += back;
+                    }
+                    clear_status(i);
+                    continue;
+                }
                 // a stock-based boss or elite that can spare the stock breaks; on the Shifting road any foe KO
                 // switches the stage (never the fight's last: the win's collect owns that moment)
                 if sched().kind >= FK_ELITE && n > 0 {
@@ -3936,7 +3993,7 @@ unsafe fn stage_frame() {
         S.stage_want = 0;
         return;
     }
-    if S.reward_due != 0 || S.rw_active != 0 || S.play < STAGE_GRACE || S.stage_switches > 0 && S.stage_clock < STAGE_GAP {
+    if S.reward_due != 0 || S.rw_active != 0 || S.play < STAGE_GRACE || S.stage_want != SH_WAVE && S.stage_switches > 0 && S.stage_clock < STAGE_GAP {
         return;
     }
     let cur = gd_stage_grkind();
@@ -4063,6 +4120,36 @@ unsafe fn test_waves_read() -> i32 {
 
 /// Per live frame of a wave fight: spawn the three once the fight is on, then read each enemy's damage taken (its
 /// last attacker gets the record: Heat, charge) and its death.
+/// Waves in room `fight` (kind `kind`): two for the pack (and, with the test knob `wave2`, every fight but the boss).
+unsafe fn room_waves(fight: usize, kind: i32) -> i32 {
+    let _ = fight;
+    if kind == FK_BOSS {
+        1
+    } else if kind == FK_PACK || S.wave2 != 0 || test_flag("wave2") {
+        2
+    } else {
+        1
+    }
+}
+
+/// Rooms: when every foe of the wave has fallen (all parked) and each parked foe's KO countdown has ended, the next
+/// wave comes back on the same slots as new characters (EV_WAVE; a stage switch request, SH_WAVE).
+unsafe fn room_frame() {
+    if S.park == 0 {
+        return;
+    }
+    let alive = (0..4).any(|s| is_foe(s) && S.park & (1 << s) == 0 && gd_player_stocks(s) > 0);
+    if alive || gd_envoy_wave_pending() & S.park != S.park {
+        return;
+    }
+    let n = gd_envoy_wave_start();
+    S.park = 0;
+    S.wave += 1;
+    ev(EV_WAVE, S.wave, S.waves);
+    log(b"envoy: wave starts, wave*100 + foes back\0", S.wave * 100 + n);
+    stage_request(SH_WAVE);
+}
+
 unsafe fn waves_frame() {
     let k = test_waves();
     if k < 0 {
@@ -4334,6 +4421,8 @@ unsafe fn publish() {
     v[V_PLAY] = S.play;
     v[V_DIGEST] = POOL_DIGEST as i32;
     v[V_STAGE_IN] = -1;
+    v[V_WAVE] = S.wave.max(1);
+    v[V_WAVES] = S.waves.max(1);
     v[V_FIRES] = S.fires;
     v[V_FIGHT_KIND] = sched().kind;
     v[V_OPEN] = open_slots() as i32;
@@ -4582,6 +4671,7 @@ extern "C" fn on_frame_end() {
                     tech_frame();
                     records_frame();
                     moments_frame();
+                    room_frame();
                     waves_frame();
                     drives_frame();
                     heat_events();

@@ -639,6 +639,10 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     // Envoy Assist Strike: the partner strikes beside the player (dir 0 forward, 1 up, 2 down; a smash on the
     // ground, an aerial in the air): the move (0-5) or a refusal; the frames the running strike has run + 1 (0 none)
     w!("gd_tag_assist", |slot: i32, dir: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::assist(slot, dir) } });
+    // Envoy rooms: park a foe slot for the next wave; the parked-and-asleep slots (bits); start the next wave
+    w!("gd_envoy_wave_park", |slot: i32| -> i32 { unsafe { melee_modes::tu::envoy::wave_park(slot) } });
+    w!("gd_envoy_wave_pending", || -> i32 { unsafe { melee_modes::tu::envoy::wave_pending() } });
+    w!("gd_envoy_wave_start", || -> i32 { unsafe { melee_modes::tu::envoy::wave_start() } });
     w!("gd_tag_assist_frames", |slot: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::assist_frames(slot) } });
     w!("gd_stage_transition", |kind: i32, len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::stage_begin(kind, len) } });
     w!("gd_hold_begin", |len: i32| -> i32 { unsafe { melee_modes::tu::tag_swap::hold_begin(len) } });

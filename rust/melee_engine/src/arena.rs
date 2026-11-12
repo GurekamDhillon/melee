@@ -130,6 +130,20 @@ pub fn mark_foreign_thread() {
     FOREIGN.with(|f| f.set(true));
 }
 
+/// While it lives, this thread's allocations go to the system heap even inside a [`GameScope`] (the asset service's
+/// own bookkeeping on the game thread: never game state).
+pub struct SysScope(bool);
+impl SysScope {
+    pub fn enter() -> SysScope {
+        SysScope(FOREIGN.with(|f| f.replace(true)))
+    }
+}
+impl Drop for SysScope {
+    fn drop(&mut self) {
+        FOREIGN.with(|f| f.set(self.0));
+    }
+}
+
 /// True while the engine code runs (allocations go to the arena), on the game thread.
 #[inline]
 pub fn active() -> bool {

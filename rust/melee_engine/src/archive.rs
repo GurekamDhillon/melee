@@ -23,7 +23,7 @@ use std::collections::HashMap;
 const HEADER_BYTES: usize = 0x20;
 
 #[derive(Clone, Copy)]
-enum Root {
+pub(crate) enum Root {
     Native(*mut c_void),
     Raw(u32),
 }
@@ -86,6 +86,84 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
     r
 }
 
+/// What a decode of one file produces (asset.rs moves it whole: built on any thread in the recording heap, copied
+/// into the game arena at the apply). A pure function of the file bytes (and `FTDATA_LOADING_KIND`).
+pub struct Decoded {
+    pub dat: DatArchive,
+    pub(crate) roots: Vec<(String, Root)>,
+    pub(crate) arena: GcArena,
+    pub issues: Vec<String>,
+    pub(crate) reloc: Vec<HSD_ArchiveRelocationInfo>,
+    pub(crate) public: Vec<HSD_ArchivePublicInfo>,
+    pub(crate) externs: Vec<HSD_ArchiveExternInfo>,
+    pub(crate) effects: Vec<crate::dat_custom::Effect>,
+}
+
+/// Parse and decode the (not yet relocated) file image at `src`, whose header was checked; the decoded roots point
+/// into it. Touches no game state: dat_custom keeps its writes as effects while a prepare is on, else does them.
+///
+/// # Safety
+/// `src` points at `file_size` readable bytes.
+pub unsafe fn decode(src: *mut u8, file_size: usize) -> Decoded {
+    let file = core::slice::from_raw_parts(src, file_size);
+    let dat = DatArchive::parse(file).unwrap_or_else(|e| panic!("host_parse: {e}"));
+    let h = dat.header;
+    let mut offset = HEADER_BYTES as u32;
+    if h.data_size != 0 {
+        offset = h.data_size + HEADER_BYTES as u32;
+    }
+    let reloc: Vec<HSD_ArchiveRelocationInfo> = dat.relocs.iter().map(|&o| HSD_ArchiveRelocationInfo { offset: o }).collect();
+    let tab = |first: usize, n: u32| -> Vec<(u32, u32)> {
+        (0..n as usize).map(|i| (be32(file, first + 8 * i), be32(file, first + 8 * i + 4))).collect()
+    };
+    let pub_at = offset as usize + 4 * h.nb_reloc as usize;
+    let ext_at = pub_at + 8 * h.nb_public as usize;
+    let public: Vec<HSD_ArchivePublicInfo> =
+        tab(pub_at, h.nb_public).into_iter().map(|(o, s)| HSD_ArchivePublicInfo { offset: o, symbol: s }).collect();
+    let externs: Vec<HSD_ArchiveExternInfo> =
+        tab(ext_at, h.nb_extern).into_iter().map(|(o, s)| HSD_ArchiveExternInfo { offset: o, symbol: s }).collect();
+    let mut roots = Vec::new();
+    let bounds = {
+        let data = &dat.data;
+        let mut v: Vec<u32> = dat.publics.iter().map(|q| q.offset).collect();
+        v.push(data.len() as u32);
+        for &r in &dat.relocs {
+            if let Some(w) = data.get(r as usize..r as usize + 4) {
+                let t = u32::from_be_bytes(w.try_into().unwrap());
+                if (t as usize) < data.len() {
+                    v.push(t);
+                }
+            }
+        }
+        v.sort_unstable();
+        v.dedup();
+        crate::dat_custom::Bounds(v, src as usize + HEADER_BYTES)
+    };
+    let (arena, issues) = {
+        let mut d = dat.decoder();
+        d.set_bounds(bounds.0.clone());
+        d.set_raw_base(src as usize + HEADER_BYTES);
+        d.set_roots(dat.publics.iter().map(|q| q.offset).collect());
+        for p in &dat.publics {
+            match dat_types::type_of(&p.name) {
+                Some(RootType::Raw) => roots.push((p.name.clone(), Root::Raw(p.offset))),
+                Some(ty) => {
+                    // an array root runs to the next public, or the end of the data section
+                    let next = dat.publics.iter().map(|q| q.offset).filter(|&o| o > p.offset).min();
+                    let extent = next.unwrap_or(dat.data.len() as u32) - p.offset;
+                    let r = dat_types::decode_root(&mut d, ty, p.offset, extent, &bounds, &p.name);
+                    roots.push((p.name.clone(), Root::Native(r)));
+                }
+                None => {}
+            }
+        }
+        d.finish()
+    };
+    crate::dat_custom::fix_articles();
+    crate::dat_custom::fix_dynamics();
+    Decoded { dat, roots, arena, issues, reloc, public, externs, effects: Vec::new() }
+}
+
 unsafe fn host_parse_timed(archive: *mut HSD_Archive, src: *mut u8, file_size: usize) -> i32 {
     if archive.is_null() {
         return -1;
@@ -103,12 +181,20 @@ unsafe fn host_parse_timed(archive: *mut HSD_Archive, src: *mut u8, file_size: u
         );
         return -1;
     }
-    crate::dat_custom::forget_banks(src as usize + HEADER_BYTES);
     let live0 = crate::arena::live_bytes();
-    // Parse (and validate) the untouched file first; the relocation below rewrites it.
-    let tp0 = std::time::Instant::now();
-    let dat = DatArchive::parse(file).unwrap_or_else(|e| panic!("host_parse: {e}"));
-    let tp1 = std::time::Instant::now();
+    // the decode: a prepared plan applied (asset.rs; prepared on the spot when nothing was prepared ahead), or done in
+    // place when the recording heap is not available (tests with their own allocator)
+    let dec: Box<Decoded> = match crate::asset::load(src, file_size) {
+        Some(d) => d,
+        None => {
+            crate::dat_custom::forget_banks(src as usize + HEADER_BYTES);
+            let mut d = decode(src, file_size);
+            d.effects = Vec::new();
+            Box::new(d)
+        }
+    };
+    let Decoded { dat, roots, arena, issues, reloc, public, externs, effects } = *dec;
+    crate::dat_custom::apply_effects(effects);
     let h = dat.header;
 
     core::ptr::write_bytes(archive as *mut u8, 0, core::mem::size_of::<HSD_Archive>());
@@ -122,30 +208,19 @@ unsafe fn host_parse_timed(archive: *mut HSD_Archive, src: *mut u8, file_size: u
         version: h.version,
         pad: [be32(file, 0x18), be32(file, 0x1C)],
     };
-
     let mut offset = HEADER_BYTES as u32;
     if h.data_size != 0 {
         (*archive).data = src.add(HEADER_BYTES);
         offset = h.data_size + HEADER_BYTES as u32;
     }
-    let reloc: Vec<HSD_ArchiveRelocationInfo> = dat.relocs.iter().map(|&o| HSD_ArchiveRelocationInfo { offset: o }).collect();
-    let tab = |first: usize, n: u32| -> Vec<(u32, u32)> {
-        (0..n as usize).map(|i| (be32(file, first + 8 * i), be32(file, first + 8 * i + 4))).collect()
-    };
-    let pub_at = offset as usize + 4 * h.nb_reloc as usize;
-    let ext_at = pub_at + 8 * h.nb_public as usize;
-    let sym_at = ext_at + 8 * h.nb_extern as usize;
-    let public: Vec<HSD_ArchivePublicInfo> =
-        tab(pub_at, h.nb_public).into_iter().map(|(o, s)| HSD_ArchivePublicInfo { offset: o, symbol: s }).collect();
-    let externs: Vec<HSD_ArchiveExternInfo> =
-        tab(ext_at, h.nb_extern).into_iter().map(|(o, s)| HSD_ArchiveExternInfo { offset: o, symbol: s }).collect();
+    let sym_at = offset as usize + 4 * h.nb_reloc as usize + 8 * h.nb_public as usize + 8 * h.nb_extern as usize;
     let mut image = ArchiveImage {
         raw: src as usize,
         raw_len: file_size,
         dat,
-        roots: HashMap::new(),
-        _arena: None,
-        issues: Vec::new(),
+        roots: roots.into_iter().collect(),
+        _arena: Some(arena),
+        issues,
         _reloc: reloc,
         _public: public,
         _extern: externs,
@@ -164,72 +239,14 @@ unsafe fn host_parse_timed(archive: *mut HSD_Archive, src: *mut u8, file_size: u
         (*archive).symbols = src.add(sym_at) as *mut i8;
     }
     (*archive).top_ptr = src as *mut c_void;
-
     if std::env::var_os("MELEE_DAT_LIST").is_some() {
         let names: Vec<&str> = image.dat.publics.iter().map(|p| p.name.as_str()).collect();
         eprintln!("dat publics: {}", names.join(" "));
     }
-    // Native image: decode every public the table knows, in one shared graph.
-    {
-        let mut roots = HashMap::new();
-        let bounds = {
-            let data = &image.dat.data;
-            let mut v: Vec<u32> = image.dat.publics.iter().map(|q| q.offset).collect();
-            v.push(data.len() as u32);
-            for &r in &image.dat.relocs {
-                if let Some(w) = data.get(r as usize..r as usize + 4) {
-                    let t = u32::from_be_bytes(w.try_into().unwrap());
-                    if (t as usize) < data.len() {
-                        v.push(t);
-                    }
-                }
-            }
-            v.sort_unstable();
-            v.dedup();
-            crate::dat_custom::Bounds(v, src as usize + HEADER_BYTES)
-        };
-        let tb = std::time::Instant::now();
-        let mut d = image.dat.decoder();
-        d.set_bounds(bounds.0.clone());
-        d.set_raw_base(src as usize + HEADER_BYTES);
-        d.set_roots(image.dat.publics.iter().map(|q| q.offset).collect());
-        for p in &image.dat.publics {
-            match dat_types::type_of(&p.name) {
-                Some(RootType::Raw) => {
-                    roots.insert(p.name.clone(), Root::Raw(p.offset));
-                }
-                Some(ty) => {
-                    // an array root runs to the next public, or the end of the data section
-                    let next = image.dat.publics.iter().map(|q| q.offset).filter(|&o| o > p.offset).min();
-                    let extent = next.unwrap_or(image.dat.data.len() as u32) - p.offset;
-                    let r = dat_types::decode_root(&mut d, ty, p.offset, extent, &bounds, &p.name);
-                    roots.insert(p.name.clone(), Root::Native(r));
-                }
-                None => {}
-            }
+    if std::env::var_os("MELEE_DAT_ISSUES").is_some() {
+        for i in image.issues.iter().take(40) {
+            eprintln!("dat issue ({} public(s), {} bytes): {i}", image.dat.publics.len(), image.dat.data.len());
         }
-        let l1 = crate::arena::live_bytes();
-        let tr = std::time::Instant::now();
-        let (arena, issues) = d.finish();
-        let tf = std::time::Instant::now();
-        let l2 = crate::arena::live_bytes();
-        crate::dat_custom::fix_articles();
-        let l3 = crate::arena::live_bytes();
-        crate::dat_custom::fix_dynamics();
-        let l4 = crate::arena::live_bytes();
-        if std::env::var_os("MELEE_ARCHIVE_LOG").is_some() {
-            let ms = |a: std::time::Instant, b: std::time::Instant| (b - a).as_secs_f64() * 1e3;
-            eprintln!("engine:   phases ms: parse {:.2} setup {:.2} roots {:.2} finish {:.2} fixups {:.2}", ms(tp0, tp1), ms(tp1, tb), ms(tb, tr), ms(tr, tf), tf.elapsed().as_secs_f64() * 1e3);
-            eprintln!("engine:   phases KB: roots {} finish {} articles {} dynamics {}", (l1 - live0) >> 10, (l2 as isize - l1 as isize) >> 10, (l3 as isize - l2 as isize) >> 10, (l4 as isize - l3 as isize) >> 10);
-        }
-        image.roots = roots;
-        image._arena = Some(arena);
-        if std::env::var_os("MELEE_DAT_ISSUES").is_some() {
-            for i in issues.iter().take(40) {
-                eprintln!("dat issue ({} public(s), {} bytes): {i}", image.dat.publics.len(), image.dat.data.len());
-            }
-        }
-        image.issues = issues;
     }
 
     // Raw image: `Locate`, in big-endian words.
@@ -246,15 +263,6 @@ unsafe fn host_parse_timed(archive: *mut HSD_Archive, src: *mut u8, file_size: u
     if std::env::var_os("MELEE_ARCHIVE_LOG").is_some() {
         let name = image.dat.publics.iter().map(|p| p.name.as_str()).take(3).collect::<Vec<_>>().join(",");
         eprintln!("engine: parsed {name} raw {} KB, data copy {} KB, arena cost {} KB", file_size >> 10, image.dat.data.len() >> 10, image.cost >> 10);
-        if image.cost > 8 << 20 {
-            if let Some(a) = &image._arena {
-                let all = a.bytes_by_type();
-                eprintln!("engine:   decoded total {} KB in {} allocations", all.iter().map(|x| x.2).sum::<usize>() >> 10, all.iter().map(|x| x.1).sum::<usize>());
-                for (t, n, b) in all.into_iter().take(8) {
-                    eprintln!("engine:   {t}: {n} allocations, {} KB", b >> 10);
-                }
-            }
-        }
     }
     if unsafe { RECLAIM } {
         reclaim_overlapping(archive as usize, src as usize, file_size);

@@ -25,6 +25,7 @@ impl Host {
     /// Install a fresh host (replacing any earlier one) and return it.
     pub fn boot(disc: Gcm, mem_size: usize) -> Result<&'static mut Host, String> {
         let os = Os::new(mem_size)?;
+        crate::asset::init(disc.path.clone());
         unsafe {
             HOST = Some(Host { os, disc, aram: Vec::new(), archives: HashMap::new(), retired: Vec::new(), loaded: Vec::new() });
             Ok(HOST.as_mut().unwrap())
@@ -32,6 +33,9 @@ impl Host {
     }
     pub fn get() -> &'static mut Host {
         unsafe { HOST.as_mut().expect("melee_engine::Host::boot has not run") }
+    }
+    pub fn try_get() -> Option<&'static mut Host> {
+        unsafe { HOST.as_mut() }
     }
     pub fn is_booted() -> bool {
         unsafe { HOST.is_some() }

@@ -81,7 +81,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                             // Shy Guy: `attr[0]` is a relocated pointer to its health `s32` (`it_802D8EC8` reads `**attr`)
                             if let Some(sa) = d.target(ta + 4) {
                                 if let Some(pt) = d.target(sa) {
-                                    unsafe { (*core::ptr::addr_of_mut!(HEIHO_HEALTH)).push((art, b.1, pt)) };
+                                    unsafe { HEIHO_HEALTH.with_borrow_mut(|x| x.push((art, b.1, pt))) };
                                 }
                             }
                         }
@@ -93,7 +93,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                             // word-swapped block and every `attr->xN` read natively would land one word late (the walk speed read the next field)
                             if let Some(sa) = d.target(ta + 4) {
                                 let typed = d.object::<melee_types::itKyasarinAttributes>(sa) as *mut c_void;
-                                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                                unsafe { ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, typed))) };
                             }
                         }
                         if d.u32_at(rec) == melee_types::It_Kind_Kyasarin_Egg as u32 {
@@ -101,7 +101,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                             // word-swapped `ap->x4` (the roll speed, it_802EFB0C) read the bounce `x8` natively (stage_20_mushroomkingdom2 1430)
                             if let Some(sa) = d.target(ta + 4) {
                                 let typed = d.object::<melee_types::itKyasarinEggAttributes>(sa) as *mut c_void;
-                                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                                unsafe { ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, typed))) };
                             }
                         }
                         let k = d.u32_at(rec);
@@ -119,7 +119,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                                 } else {
                                     d.object::<melee_types::itWhispyAppleAttributes>(sa) as *mut c_void
                                 };
-                                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                                unsafe { ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, typed))) };
                             }
                         }
                         if d.u32_at(rec) == melee_types::It_Kind_Arwing_Laser as u32 {
@@ -133,7 +133,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                                     x8: f32::from_bits(d.u32_at(sa + 8)),
                                 };
                                 let typed = Box::leak(Box::new(rec)) as *mut _ as *mut c_void;
-                                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                                unsafe { ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, typed))) };
                             }
                         }
                         arts.push(art);
@@ -144,7 +144,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             if !arts.is_empty() {
                 let cnt = arts.len();
                 let tbl = Box::leak(arts.into_boxed_slice()).as_mut_ptr();
-                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((tbl as usize, cnt, b.1, b.0.clone())) };
+                unsafe { ARTICLE_TABLES.with_borrow_mut(|x| x.push((tbl as usize, cnt, b.1, b.0.clone()))) };
             }
             ptrtable::<melee_types::GroundItemData>(d, b, off)
         }
@@ -453,37 +453,37 @@ fn rtable<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut
 /// Article tables whose `x4_specialAttributes` blocks still point into the big-endian image: (table, entries, image
 /// base, boundaries). Filled while decoding (an object's fields exist only after the decoder ran), applied by
 /// [`fix_articles`] right after `finish()`.
-static mut ARTICLE_TABLES: Vec<(usize, usize, usize, Vec<u32>)> = Vec::new();
+thread_local! { static ARTICLE_TABLES: core::cell::RefCell<Vec<(usize, usize, usize, Vec<u32>)>> = const { core::cell::RefCell::new(Vec::new()) }; }
 
 /// Articles whose `xC_itemStates` runs past the 8 entries of `ItemStateArray`: (table, entry, state array of the full
 /// extent). The C indexes the array by item state (`Ground_801C0800` sets the Random item's `ald_yaku_all` scripts
 /// for every state), so the native copy must hold them all.
-static mut ARTICLE_STATES: Vec<(*mut melee_types::Article, *mut melee_types::ItemStateDesc, usize)> = Vec::new();
+thread_local! { static ARTICLE_STATES: core::cell::RefCell<Vec<(*mut melee_types::Article, *mut melee_types::ItemStateDesc, usize)>> = const { core::cell::RefCell::new(Vec::new()) }; }
 
 /// Articles with an `x14_dynamics` block: (article, image base, data offset of the block). The header types it `ItemDynamics
 /// {count, descs}` but the C (`it_8027163C`) reads `ItCollDynamics {pad[8], count, descs}`: rebuilt from the image by [`fix_articles`].
-static mut ARTICLE_DYNAMICS: Vec<(*mut melee_types::Article, usize, u32)> = Vec::new();
+thread_local! { static ARTICLE_DYNAMICS: core::cell::RefCell<Vec<(*mut melee_types::Article, usize, u32)>> = const { core::cell::RefCell::new(Vec::new()) }; }
 
 /// Articles with an `x8_hurtbones` list `{count, descs}`: the decoder gives `descs` room for one `ItHurtBoneDesc`, the C
 /// indexes it up to `count` (Klap Klap has 2). Rebuilt from the image by [`fix_articles`]: (article, image base, data offset).
-static mut ARTICLE_HURTBONES: Vec<(*mut melee_types::Article, usize, u32)> = Vec::new();
+thread_local! { static ARTICLE_HURTBONES: core::cell::RefCell<Vec<(*mut melee_types::Article, usize, u32)>> = const { core::cell::RefCell::new(Vec::new()) }; }
 
 /// Queue the full-extent state array of the article at data offset `ta` when its states run past 8 entries.
 fn note_article_states(d: &mut GcDecoder<'_>, b: &Bounds, ta: u32) {
     if let Some(hb) = d.target(ta + 0x8) {
         let art = d.object::<melee_types::Article>(ta);
-        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_HURTBONES)).push((art, b.1, hb)) };
+        unsafe { ARTICLE_HURTBONES.with_borrow_mut(|x| x.push((art, b.1, hb))) };
     }
     if let Some(dy) = d.target(ta + 0x14) {
         let art = d.object::<melee_types::Article>(ta);
-        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_DYNAMICS)).push((art, b.1, dy)) };
+        unsafe { ARTICLE_DYNAMICS.with_borrow_mut(|x| x.push((art, b.1, dy))) };
     }
     let Some(ts) = d.target(ta + 0xC) else { return };
     let cnt = (b.extent(ts) / 0x10) as usize;
     if cnt >= 8 && cnt <= 32 {
         let art = d.object::<melee_types::Article>(ta);
         let arr = d.ptr_array::<melee_types::ItemStateDesc>(ta + 0xC, cnt);
-        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_STATES)).push((art, arr, cnt)) };
+        unsafe { ARTICLE_STATES.with_borrow_mut(|x| x.push((art, arr, cnt))) };
     }
 }
 
@@ -493,7 +493,7 @@ fn note_article_states(d: &mut GcDecoder<'_>, b: &Bounds, ta: u32) {
 /// itfoods.rs keeps the row view with the joint index in x4).
 #[derive(Clone, Copy)] #[allow(non_snake_case, dead_code)]
 struct FoodsRow { count: i32, x4: *mut HSD_Joint, x8: i32, xC: i32 }
-static mut ARTICLE_JOINT_ROWS: Vec<(usize, Vec<FoodsRow>)> = Vec::new();
+thread_local! { static ARTICLE_JOINT_ROWS: core::cell::RefCell<Vec<(usize, Vec<FoodsRow>)>> = const { core::cell::RefCell::new(Vec::new()) }; }
 
 /// `ItemKind` of Foods (the index of its article in the common-item table).
 const KIND_FOODS: u32 = 18;
@@ -507,7 +507,7 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
     let tbl = rtable::<melee_types::Article>(d, b, at);
     if let Some(t) = d.target(at) {
         let n = (b.extent(t) / 4).max(1) as usize;
-        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((tbl as usize, n, b.1, b.0.clone())) };
+        unsafe { ARTICLE_TABLES.with_borrow_mut(|x| x.push((tbl as usize, n, b.1, b.0.clone()))) };
         for i in 0..n as u32 {
             if let Some(ta) = d.target(t + 4 * i) {
                 note_article_states(d, b, ta);
@@ -518,7 +518,7 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
                         let words = (b.extent(sa) / 4) as u32;
                         for k in 0..words.min(32) {
                             if d.target(sa + 4 * k).is_some() {
-                                unsafe { melee_items::tu::itkinoko::KINOKO_JOINTS[k as usize] = d.ptr::<melee_types::HSD_AnimJoint>(sa + 4 * k) };
+                                { let j = d.ptr::<melee_types::HSD_AnimJoint>(sa + 4 * k); effect(Effect::Kinoko(k as usize, j)); }
                             }
                         }
                     }
@@ -529,7 +529,7 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
                     if b.extent(sa) >= 0x8C && (9..35u32).all(|w| d.is_reloc(sa + 4 * w)) {
                         let art = d.object::<melee_types::Article>(ta);
                         let typed = d.object::<melee_types::itUnknownAttributes>(sa) as *mut c_void;
-                        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                        unsafe { ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, typed))) };
                     }
                 }
                 if i == KIND_WSTAR && n > KIND_WSTAR as usize {
@@ -555,7 +555,7 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
                                 }
                             }
                             let art = d.object::<melee_types::Article>(ta);
-                            unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, rec as *mut c_void)) };
+                            unsafe { ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, rec as *mut c_void))) };
                         }
                     }
                 }
@@ -570,7 +570,7 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
                                 xC: d.u32_at(sa + 0x10 * r + 12) as i32,
                             })
                             .collect();
-                        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_JOINT_ROWS)).push((b.1 + sa as usize, js)) };
+                        unsafe { ARTICLE_JOINT_ROWS.with_borrow_mut(|x| x.push((b.1 + sa as usize, js))) };
                     }
                 }
             }
@@ -652,19 +652,19 @@ pub unsafe fn fix_custom_article(a: *mut melee_types::Article, base: usize, ta: 
 /// swapped; articles sharing a block share the copy.
 pub fn fix_articles() {
     use std::collections::HashMap;
-    let typed = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_TYPED)) };
+    let typed = unsafe { ARTICLE_TYPED.with_borrow_mut(core::mem::take) };
     for (a, t) in typed {
         unsafe { (*a).x4_specialAttributes = t as *mut melee_types::ItemSpecialAttributes };
     }
-    let dyns = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_DYNAMICS)) };
+    let dyns = unsafe { ARTICLE_DYNAMICS.with_borrow_mut(core::mem::take) };
     for (a, base, off) in dyns {
         unsafe { fix_article_dynamics(a, base, off) };
     }
-    let hurts = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_HURTBONES)) };
+    let hurts = unsafe { ARTICLE_HURTBONES.with_borrow_mut(core::mem::take) };
     for (a, base, off) in hurts {
         unsafe { fix_article_hurtbones(a, base, off) };
     }
-    let states = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_STATES)) };
+    let states = unsafe { ARTICLE_STATES.with_borrow_mut(core::mem::take) };
     for (a, arr, cnt) in states {
         // the C writes one or two entries past the extent of some arrays (`Ground_801C0800`: the Random item's
         // `ald_yaku_all` scripts, into the bytes that follow in the file); the native copy keeps room for that
@@ -675,8 +675,8 @@ pub fn fix_articles() {
             (*a).xC_itemStates = buf as *mut melee_types::ItemStateArray;
         }
     }
-    let joint_rows = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_JOINT_ROWS)) };
-    let tables = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_TABLES)) };
+    let joint_rows = unsafe { ARTICLE_JOINT_ROWS.with_borrow_mut(core::mem::take) };
+    let tables = unsafe { ARTICLE_TABLES.with_borrow_mut(core::mem::take) };
     for (tbl, n, base, bounds) in tables {
         let b = Bounds(bounds, base);
         let end = base + b.0.last().copied().unwrap_or(0) as usize;
@@ -709,7 +709,7 @@ pub fn fix_articles() {
                     // Foods rows: the joint pointer of variant r lives in `FOODS_JOINTS[r]` (see itfoods.rs); the row keeps its index
                     if let Some((_, rows)) = joint_rows.iter().find(|(a, _)| *a == raw) {
                         for (r, row) in rows.iter().enumerate().take(32) {
-                            melee_items::tu::itfoods::FOODS_JOINTS[r] = row.x4;
+                            effect(Effect::Foods(r, row.x4));
                             if r * 0x10 + 8 <= len {
                                 core::ptr::write_unaligned(out.add(r * 0x10 + 4) as *mut u32, r as u32);
                             }
@@ -721,7 +721,7 @@ pub fn fix_articles() {
             }
         }
     }
-    let heiho = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(HEIHO_HEALTH)) };
+    let heiho = unsafe { HEIHO_HEALTH.with_borrow_mut(core::mem::take) };
     for (a, base, pt) in heiho {
         unsafe {
             let health = u32::from_be_bytes(*((base + pt as usize) as *const [u8; 4]));
@@ -761,7 +761,7 @@ fn coin_attrs(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) {
     }
     let art = d.object::<melee_types::Article>(ta);
     let typed = d.object::<melee_types::it_2E5A_Attrs>(sa) as *mut c_void;
-    unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+    unsafe { ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, typed))) };
 }
 
 /// The enemies' ("zako") articles, of the Adventure stages (stage `itemdata`) and of the character-item table (ItCo.dat:
@@ -811,7 +811,7 @@ fn zako_attrs(d: &mut GcDecoder<'_>, b: &Bounds, kind: u32, ta: u32) {
         return;
     };
     let art = d.object::<melee_types::Article>(ta);
-    unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+    unsafe { ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, typed))) };
 }
 
 /// [`zako_attrs`] for the character-item table's enemies (`It_Kind_Kuriboh` .. `It_Kind_Ottosea`, entries 0..3).
@@ -854,7 +854,7 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
     use melee_core::gc::GcLayout;
     use melee_fighter::tu::ftdata as fd;
     use melee_types::{ftData, Fighter_WaitAnimData};
-    let loading = unsafe { fd::FTDATA_LOADING_KIND };
+    let loading = PREP_LOADING.with(|c| c.get()).unwrap_or(unsafe { fd::FTDATA_LOADING_KIND });
     let kind = if loading >= 0 { loading as usize } else { unsafe {
         (0..fd::ftData_803C1F40.len())
             .find(|&k| {
@@ -863,6 +863,7 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
             })
             .unwrap_or_else(|| panic!("dat_custom: `{sym}` is not a fighter data symbol of ftData_803C1F40"))
     } };
+    PREP_RESOLVED.with(|c| c.set(Some(kind as i32)));
     let (n, m) = unsafe { (fd::ftData_Table_Unk0[kind].count as usize, fd::ftData_UnkIntPairs[kind].count as usize) };
     let at = |f: &str| off + ftData::gc_field(f).expect("ftData field").offset;
     if kind >= melee_types::Ft_Kind_Mex0 as usize {
@@ -982,7 +983,7 @@ fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_vo
     if !tbl.is_empty() {
         let cnt = tbl.len();
         let t = Box::leak(tbl.into_boxed_slice()).as_mut_ptr();
-        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((t as usize, cnt, b.1, b.0.clone())) };
+        unsafe { ARTICLE_TABLES.with_borrow_mut(|x| x.push((t as usize, cnt, b.1, b.0.clone()))) };
     }
     typed_article_attrs_of(d, b, &lower, &tas);
     if lower == "gamewatch" {
@@ -1058,7 +1059,7 @@ fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_vo
 /// Fighter-owned articles whose special attributes hold `HSD_Joint*` fields (the grapple beam, the hookshot, the boomerang,
 /// the arrow, the chain, the yo-yo, the Ice Climbers' string): the 32-bit pointer slots of the raw block do not fit the native
 /// struct, so the block is decoded as its record and swapped in by [`fix_articles`]: (article, decoded attributes).
-static mut ARTICLE_TYPED: Vec<(*mut melee_types::Article, *mut c_void)> = Vec::new();
+thread_local! { static ARTICLE_TYPED: core::cell::RefCell<Vec<(*mut melee_types::Article, *mut c_void)>> = const { core::cell::RefCell::new(Vec::new()) }; }
 
 /// Decode the fighter's `x48_items` articles whose attribute block is one of the pointer-bearing records of that fighter.
 fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32) {
@@ -1115,7 +1116,7 @@ fn typed_article_attrs_of(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, tas: &[u
         if let Some((_, _, f)) = pick {
             let art = d.object::<Article>(ta);
             let typed = f(d, sa);
-            unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+            unsafe { ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, typed))) };
         }
     }
 }
@@ -1151,16 +1152,16 @@ fn gw_article_attr(d: &mut GcDecoder<'_>, b: &Bounds, ta: u32) {
             (out.add(4 + 4 * k as usize) as *mut u32).write_unaligned(d.u32_at(sa + 4 * k));
         }
         let art = d.object::<Article>(ta);
-        (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, out as *mut c_void));
+        ARTICLE_TYPED.with_borrow_mut(|x| x.push((art, out as *mut c_void)));
     }
 }
 
 /// Shy Guy articles: (article, image base, data offset of the health `s32` that `attr[0]` points at). [`fix_articles`] stores the value
 /// itself in the native word 0 of the swapped attribute copy (the native pointer would not fit the 4-byte slot).
-static mut HEIHO_HEALTH: Vec<(*mut melee_types::Article, usize, u32)> = Vec::new();
+thread_local! { static HEIHO_HEALTH: core::cell::RefCell<Vec<(*mut melee_types::Article, usize, u32)>> = const { core::cell::RefCell::new(Vec::new()) }; }
 
 /// Dynamics blocks to rebuild after the decoder ran: (the `ftDynamics` object, per bone the native word block).
-static mut DYNAMICS_FIX: Vec<(usize, Vec<(usize, Vec<u32>)>)> = Vec::new();
+thread_local! { static DYNAMICS_FIX: core::cell::RefCell<Vec<(usize, Vec<(usize, Vec<u32>)>)>> = const { core::cell::RefCell::new(Vec::new()) }; }
 
 /// `ftData.x2C` (`ftDynamics`): each bone's `dyn_desc.data` points at `count` records of `lb_00F9_UnkDesc1Inner` (15 `f32`,
 /// 0x3C bytes each) that `lb_80011710` reads as an array. The generic decode kept the first `PolymorphicDesc` worth of
@@ -1187,7 +1188,7 @@ fn note_dynamics_at(d: &mut GcDecoder<'_>, obj: usize, at_x2c: u32) {
         }
         bones.push((i, (0..count * REC).map(|k| d.u32_at(td + 4 * k as u32)).collect::<Vec<_>>()));
     }
-    unsafe { (*core::ptr::addr_of_mut!(DYNAMICS_FIX)).push((obj, bones)) };
+    unsafe { DYNAMICS_FIX.with_borrow_mut(|x| x.push((obj, bones))) };
 }
 
 /// A stage's `dynamicsdata_*` public (`DynamicsTemplate`, read by `grLib_801C9B20` -> `lb_8000FD48` / `lb_80011710`):
@@ -1210,7 +1211,7 @@ fn dyn_template(d: &mut GcDecoder<'_>, off: u32) -> *mut c_void {
 /// Applies [`note_dynamics`] (run by `archive.rs` right after `GcDecoder::finish`).
 pub fn fix_dynamics() {
     use melee_types::{DynamicsData, ftDynamics};
-    let todo = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(DYNAMICS_FIX)) };
+    let todo = unsafe { DYNAMICS_FIX.with_borrow_mut(core::mem::take) };
     for (obj, bones) in todo {
         let tbl = unsafe { (*(obj as *mut ftDynamics)).x0.ftDynamicBones };
         if tbl.is_null() {
@@ -1239,16 +1240,15 @@ pub fn fix_dynamics() {
 
 use std::collections::HashMap;
 
-static mut BANKS: Option<HashMap<(usize, u32), usize>> = None;
+thread_local! { static BANKS: core::cell::RefCell<Option<HashMap<(usize, u32), usize>>> = const { core::cell::RefCell::new(None) }; }
 
 #[allow(static_mut_refs)]
 fn memo(key: (usize, u32), make: impl FnOnce() -> *mut c_void) -> *mut c_void {
-    let m = unsafe { BANKS.get_or_insert_with(HashMap::new) };
-    if let Some(&p) = m.get(&key) {
+    if let Some(p) = BANKS.with_borrow_mut(|m| m.get_or_insert_with(HashMap::new).get(&key).copied()) {
         return p as *mut c_void;
     }
     let p = make();
-    unsafe { BANKS.as_mut().unwrap().insert(key, p as usize) };
+    BANKS.with_borrow_mut(|m| m.as_mut().unwrap().insert(key, p as usize));
     p
 }
 
@@ -1258,9 +1258,7 @@ fn memo(key: (usize, u32), make: impl FnOnce() -> *mut c_void) -> *mut c_void {
 /// freshly read file.
 #[allow(static_mut_refs)]
 pub fn forget_banks(base: usize) {
-    if let Some(m) = unsafe { BANKS.as_mut() } {
-        m.retain(|k, _| k.0 != base);
-    }
+    BANKS.with_borrow_mut(|m| if let Some(m) = m.as_mut() { m.retain(|k, _| k.0 != base) });
 }
 
 /// A zeroed 8-aligned native buffer of `n` bytes that lives for the rest of the process.
@@ -1578,7 +1576,7 @@ fn mex_motion_rows(d: &mut GcDecoder<'_>, rec: u32, main_at: u32, demo_at: u32, 
     let main = walk(d, main_at, n, true);
     let demo = walk(d, demo_at, m, false);
     eprintln!("mexdata: kind {kind}: motion rows on the raw image: {} main, {} demo (of {n} / {m})", main.len(), demo.len());
-    unsafe { melee_fighter::tu::ftdata::MEX_MOTION_ROWS.insert(kind, (main, demo)) };
+    effect(Effect::MexRows(kind, main, demo));
 }
 
 /// m-ex `effBehaviorTable` (an effect bank's behaviour per model / generator; efasync.c EfMexBehavior):
@@ -1597,4 +1595,65 @@ fn ef_behavior(d: &mut GcDecoder<'_>, off: u32) -> *mut c_void {
     let buf = native_buf(core::mem::size_of::<Native>()) as *mut Native;
     unsafe { buf.write(Native { mdl_num: mn, mdl_type: mt, ptcl_num: pn, ptcl_type: pt }) };
     buf as *mut c_void
+}
+
+
+// ---- asset service (asset.rs): what a decode does outside its own objects ----
+
+/// A write a decode makes to game statics. Outside a prepared decode it is done at once (the old behaviour); inside
+/// one ([`begin_prepare`]) it is kept and done by the apply on the game thread ([`apply_effects`]).
+pub enum Effect {
+    Kinoko(usize, *mut melee_types::HSD_AnimJoint),
+    Foods(usize, *mut HSD_Joint),
+    MexRows(usize, Vec<u8>, Vec<u8>),
+}
+
+thread_local! {
+    static PREP_EFFECTS: core::cell::RefCell<Option<Vec<Effect>>> = const { core::cell::RefCell::new(None) };
+    /// The `FTDATA_LOADING_KIND` a prepared decode runs with (the requester's value, not the game's static).
+    static PREP_LOADING: core::cell::Cell<Option<i32>> = const { core::cell::Cell::new(None) };
+    /// The fighter kind `ftdata` resolved in this decode.
+    static PREP_RESOLVED: core::cell::Cell<Option<i32>> = const { core::cell::Cell::new(None) };
+}
+
+fn effect(e: Effect) {
+    let e = PREP_EFFECTS.with_borrow_mut(|v| match v.as_mut() {
+        Some(v) => {
+            v.push(e);
+            None
+        }
+        None => Some(e),
+    });
+    if let Some(e) = e {
+        apply_effects(vec![e]);
+    }
+}
+
+/// Do the kept writes (game thread, at the apply).
+pub fn apply_effects(v: Vec<Effect>) {
+    for e in v {
+        match e {
+            Effect::Kinoko(k, j) => unsafe { melee_items::tu::itkinoko::KINOKO_JOINTS[k] = j },
+            Effect::Foods(r, j) => unsafe { melee_items::tu::itfoods::FOODS_JOINTS[r] = j },
+            Effect::MexRows(kind, a, b) => unsafe {
+                (*core::ptr::addr_of_mut!(melee_fighter::tu::ftdata::MEX_MOTION_ROWS)).insert(kind, (a, b));
+            },
+        }
+    }
+}
+
+/// Start a prepared decode on this thread: effects are kept, `ftdata` sees `loading`, the bank memo starts empty.
+pub fn begin_prepare(loading: i32) {
+    PREP_EFFECTS.with_borrow_mut(|v| *v = Some(Vec::new()));
+    PREP_LOADING.with(|c| c.set(Some(loading)));
+    PREP_RESOLVED.with(|c| c.set(None));
+    BANKS.with_borrow_mut(|m| *m = None);
+}
+
+/// End it (still inside the recording: the memo and the lists it drops were recorded): (kept effects, resolved kind).
+pub fn end_prepare() -> (Vec<Effect>, Option<i32>) {
+    BANKS.with_borrow_mut(|m| *m = None);
+    PREP_LOADING.with(|c| c.set(None));
+    let v = PREP_EFFECTS.with_borrow_mut(|v| v.take()).unwrap_or_default();
+    (v, PREP_RESOLVED.with(|c| c.take()))
 }

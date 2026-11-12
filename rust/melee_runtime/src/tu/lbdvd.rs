@@ -321,6 +321,9 @@ pub unsafe extern "C" fn lbDvd_80017700(arg0: i32) {
     }
 }
 
+/// The engine's asset service: told every disc entry the preload cache registers (a hint, never sim-visible).
+pub static mut ASSET_HINT: Option<fn(i32, i32)> = None;
+
 pub unsafe extern "C" fn lbDvd_80017740(
     ty: i32,
     entry_num: i32,
@@ -333,6 +336,9 @@ pub unsafe extern "C" fn lbDvd_80017740(
     effect_index: i32,
 ) -> *mut c_void {
     melee_core::ct!("lbDvd_80017740");
+    if let Some(h) = ASSET_HINT {
+        h(entry_num, heap);
+    }
     let mut free_index: i32 = -1;
 
     for i in 0..ENTRIES {

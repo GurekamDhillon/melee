@@ -108,6 +108,10 @@ impl GcArena {
         v
     }
     /// Number of separate allocations (objects, arrays, strings).
+    /// The element type of the allocation at `p` (diagnostics).
+    pub fn type_at(&self, p: usize) -> Option<&'static str> {
+        self.owned.iter().find(|o| o.ptr as usize == p).map(|o| o.ty)
+    }
     pub fn len(&self) -> usize {
         self.owned.len()
     }

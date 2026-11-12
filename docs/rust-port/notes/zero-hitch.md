@@ -23,3 +23,17 @@ an old frame.
 
 ## Baseline and work queue
 See the commit log of this branch and the section below (filled by each run).
+
+## Run 1 (2026-11-11 21:27, commit fd1b40750 + spans, gate with MELEE_RECLAIM_LEAK=1) — build/zerohitch/base
+- vanilla_bf: 727 over budget. 722 of them: from tick 1815 of the first match EVERY tick costs 30-40 ms (catch-up,
+  300+ ms frames) to the end (tick 9000; the match never reached results). Ticks before were 1-2 ms; arena allocs per
+  tick unchanged (~1400-1800), no files/parses at the onset. Not the retired-list walk (LEAK keeps the lists short).
+  Under investigation (A/B LEAK on/off with MELEE_SAMPLE). Other offenders: match load 50 ms (file+parse 16, fighter
+  create 16, unsplit 17), fighter files load at scene change 51 ms (parse 40), menu 21 ms, CSS 22 ms + two 40 ms
+  draw-only frames, first frame 84 ms.
+- vanilla_fod: 11 over budget: 4 from a window resize/focus loss (88 ms unaccounted: someone else's window event,
+  ~tick 559/673), 5 short engine-step frames right after them, 2 pacing; first frame 72 ms (parse 34, fighter 18).
+- envoy: stopped early by the coordinator (only ~18 s, boot/title/menu): menu GPU pipelines 75 ms (163 ms frame),
+  title parse 26 ms (50 ms frame). The gate's mods dir lacks the envoy_ui PNGs (warnings only).
+- Lock rules from the coordinator: at most 10 minutes per hold; one scenario per hold; 4-min gaps (20 after an
+  overrun); quiet passes at most hourly and announced. Gate now has GATE_TIMEOUT (540 s) and envoy 9000 ticks.

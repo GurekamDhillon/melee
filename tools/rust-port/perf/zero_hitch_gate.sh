@@ -11,6 +11,8 @@
 # INTERP=off, FPS=60 apply to every scenario of the run (e.g. INTERP=off bash ... envoy).
 # The gate does NOT take buildlock/runlight itself: wrap it (heavy lock AND the light slot, machine quiet):
 #   buildlock.sh run port/zerolag runlight.sh zerolag bash tools/rust-port/perf/zero_hitch_gate.sh
+# Each scenario is killed after GATE_TIMEOUT seconds (default 540) so a slow run cannot hold the locks; run the
+# scenarios as separate short holds (one scenario per lock hold) on a shared machine.
 # GW_ISO_VANILLA must be set (never printed). CARD: a memory card folder with a save (default: the exe's card/).
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
@@ -40,7 +42,7 @@ run() {  # name, frames, env..., -- , args...
   ( cd "$d/bin" && env MELEE_VOLUME=3 MELEE_PROFILE=1 MELEE_FULLSCREEN=off MELEE_RECLAIM_LEAK=1 \
       MELEE_WINDOW_TITLE="zerolag agent: gate $name ($build)" MELEE_CARD_PATH="$d/card" MELEE_ENVOY_DIR="$d/save" \
       MELEE_WASM_MODS="$m" ${INTERP:+MELEE_INTERP=$INTERP} ${FPS:+MELEE_FPS_CAP=$FPS} "${envs[@]}" \
-      ./melee.exe play --iso "$GW_ISO_VANILLA" --max-frames "$frames" "$@" >"$d/run.log" 2>&1 )
+      timeout "${GATE_TIMEOUT:-540}" ./melee.exe play --iso "$GW_ISO_VANILLA" --max-frames "$frames" "$@" >"$d/run.log" 2>&1 )
   local p; p=$(ls -t "$d/bin/profiles/"profile-*.csv 2>/dev/null | head -1)
   [ -n "$p" ] || { echo "FAIL $name: no profile written (see $d/run.log)"; fail=1; return; }
   python "$here/zero_hitch_check.py" "$p" --label "$name" || fail=1
@@ -50,7 +52,7 @@ for s in "${scen[@]}"; do
   case "$s" in
     vanilla_bf)  NEED_MODS= run vanilla_bf 9000 MELEE_PAD_SCRIPT="$repo/tools/rust-port/play/retail_full.txt" -- --skip-intro --time-secs 30;;
     vanilla_fod) NEED_MODS= run vanilla_fod 3000 -- --match "fox/cpu9,falco/cpu9,FOUNTAIN OF DREAMS" --time-secs 30 --quit-at-results;;
-    envoy)       NEED_MODS=1 run envoy 30000 MELEE_PAD_SCRIPT="$repo/tools/rust-port/envoy/camp_pad.txt" MELEE_PAD_CHANNELS=03 \
+    envoy)       NEED_MODS=1 run envoy ${ENVOY_TICKS:-9000} MELEE_PAD_SCRIPT="$repo/tools/rust-port/envoy/camp_pad.txt" MELEE_PAD_CHANNELS=03 \
                    MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey "MELEE_ENVOY_TEST_DRIVES=ember,bolt,tagauto,wave2,shift,dropall/ember,bolt" --;;
     *) echo "gate: unknown scenario $s"; fail=1;;
   esac

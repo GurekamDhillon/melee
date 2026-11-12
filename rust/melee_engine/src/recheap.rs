@@ -138,6 +138,7 @@ mod sys {
 
 /// Reserve the range (once, at boot, before any snapshot). False: not supported here (the service stays off).
 pub fn init() -> bool {
+    POISON_ON.store(std::env::var_os("MELEE_ASSET_POISON").is_some(), core::sync::atomic::Ordering::Relaxed);
     if !STATE.load(Acquire).is_null() {
         return true;
     }
@@ -322,6 +323,7 @@ pub unsafe fn realloc(p: *mut u8, old: Layout, n: usize) -> *mut u8 {
     }
     core::ptr::copy_nonoverlapping(p, q, old.size().min(n));
     (*r.meta.add(i)).live = 0;
+    poison(p, old.size());
     if !r.push_ev(ev::pack(ev::REALLOC, i, r.n - 1)) {
         return core::ptr::null_mut();
     }
@@ -376,6 +378,7 @@ pub unsafe fn free(p: *mut u8) {
     if let Some(i) = r.find(p as usize) {
         if r.blocks()[i].at == p as usize && (*r.meta.add(i)).live == 1 {
             (*r.meta.add(i)).live = 0;
+            poison(p, r.blocks()[i].size);
             r.push_ev(ev::pack(ev::FREE, i, 0));
         }
     }
@@ -405,4 +408,55 @@ pub fn paused<R>(f: impl FnOnce() -> R) -> R {
     let o = f();
     CUR.with(|c| c.set(r));
     o
+}
+
+/// `MELEE_ASSET_POISON=1` (debug): freed recorded blocks are filled with [`POISON`]; [`poisoned_writes`] then finds
+/// writes made into a block after its free (a use after free in the decode: in the game arena such a write lands in
+/// whatever block took the address since).
+pub const POISON: u8 = 0xDB;
+static POISON_ON: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+/// Read once by [`init`] (never from inside the allocator: an env read allocates).
+pub fn poison_on() -> bool {
+    POISON_ON.load(core::sync::atomic::Ordering::Relaxed)
+}
+unsafe fn poison(p: *mut u8, n: usize) {
+    if poison_on() {
+        core::ptr::write_bytes(p, POISON, n);
+    }
+}
+/// (block, offset, 8 bytes there) of every dead block word that is no longer all poison (debug, see [`poison_on`]).
+pub fn poisoned_writes(r: &Rec) -> Vec<(usize, usize, usize, [u8; 8])> {
+    let mut v = Vec::new();
+    // writes past a block's end land in the 16-byte gap after it (never handed out: still zero); in the game arena the
+    // same write lands in the next block of the size class
+    let bl = r.blocks();
+    for (i, b) in bl.iter().enumerate() {
+        let end = b.at + b.size.max(1);
+        let lim = bl.get(i + 1).map_or(end + 16, |n| n.at).min(end + 16);
+        let g = unsafe { core::slice::from_raw_parts(end as *const u8, lim.saturating_sub(end)) };
+        if let Some(k) = g.iter().position(|&c| c != 0) {
+            let mut x = [0u8; 8];
+            for (j, c) in g.iter().skip(k).take(8).enumerate() { x[j] = *c; }
+            v.push((i, b.size, b.size + k + (1 << 40), x)); // offset past the end (flag bit 40)
+        }
+    }
+    for (i, b) in r.blocks().iter().enumerate() {
+        if b.live == 1 {
+            continue;
+        }
+        let m = unsafe { core::slice::from_raw_parts(b.at as *const u8, b.size) };
+        let mut off = 0;
+        while off < b.size {
+            if m[off] != POISON {
+                let w = off & !7;
+                let mut x = [0u8; 8];
+                for k in 0..8 { if w + k < b.size { x[k] = m[w + k]; } }
+                v.push((i, b.size, w, x));
+                off = w + 8;
+                continue;
+            }
+            off += 1;
+        }
+    }
+    v
 }

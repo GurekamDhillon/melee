@@ -1660,12 +1660,40 @@ pub fn apply_effects(v: Vec<Effect>) {
 
 /// Start a prepared decode on this thread: effects are kept, `ftdata` sees `loading`, the bank memo starts empty.
 pub fn begin_prepare(loading: i32, grkind: i32) {
+    // entries left by a decode that never reached `fix_articles` / `fix_dynamics` name objects of an earlier file
+    // (long freed by now): this decode's fix-up would write through them into whatever took their memory
+    let stale = [
+        ("tables", ARTICLE_TABLES.with_borrow(|x| x.len())),
+        ("states", ARTICLE_STATES.with_borrow(|x| x.len())),
+        ("dynamics", ARTICLE_DYNAMICS.with_borrow(|x| x.len())),
+        ("hurtbones", ARTICLE_HURTBONES.with_borrow(|x| x.len())),
+        ("joint rows", ARTICLE_JOINT_ROWS.with_borrow(|x| x.len())),
+        ("typed", ARTICLE_TYPED.with_borrow(|x| x.len())),
+        ("heiho", HEIHO_HEALTH.with_borrow(|x| x.len())),
+        ("dynamics fix", DYNAMICS_FIX.with_borrow(|x| x.len())),
+    ];
+    if stale.iter().any(|x| x.1 > 0) {
+        eprintln!("dat_custom: stale side-list entries at a decode start (dropped): {:?}", stale.iter().filter(|x| x.1 > 0).collect::<Vec<_>>());
+        clear_side_lists();
+    }
     PREP_GRKIND.with(|c| c.set(Some(grkind)));
     PREP_GRKIND_USED.with(|c| c.set(false));
     PREP_EFFECTS.with_borrow_mut(|v| *v = Some(Vec::new()));
     PREP_LOADING.with(|c| c.set(Some(loading)));
     PREP_RESOLVED.with(|c| c.set(None));
     BANKS.with_borrow_mut(|m| *m = None);
+}
+
+/// Empty every side list (their entries point at objects of a decode that is over).
+fn clear_side_lists() {
+    drop(ARTICLE_TABLES.with_borrow_mut(core::mem::take));
+    drop(ARTICLE_STATES.with_borrow_mut(core::mem::take));
+    drop(ARTICLE_DYNAMICS.with_borrow_mut(core::mem::take));
+    drop(ARTICLE_HURTBONES.with_borrow_mut(core::mem::take));
+    drop(ARTICLE_JOINT_ROWS.with_borrow_mut(core::mem::take));
+    drop(ARTICLE_TYPED.with_borrow_mut(core::mem::take));
+    drop(HEIHO_HEALTH.with_borrow_mut(core::mem::take));
+    drop(DYNAMICS_FIX.with_borrow_mut(core::mem::take));
 }
 
 /// Whether every side list a decode fills is empty again (the decode's `fix_articles`/`fix_dynamics` take them). The

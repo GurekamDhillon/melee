@@ -245,6 +245,11 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Result<Plan, NoPlan> {
     }
     // the fixups of every block (live or freed: a replay writes each one's last contents), then reachability
     let t_dec = std::time::Instant::now();
+    if recheap::poison_on() {
+        let w = recheap::poisoned_writes(&rec);
+        eprintln!("asset poison: {len} bytes: {} word(s) written after their block's free{}", w.len(),
+            w.iter().take(8).map(|(i, n, o, x)| format!("; block #{i} size {n} +{o:#x} {x:02x?}")).collect::<String>());
+    }
     let bl = rec.blocks();
     let root = rec.find(outp).filter(|&i| bl[i].at == outp).expect("asset: the result is not a recorded block");
     // pages the decode never wrote are still zero: neither scanned nor copied (the shared tables are mostly untouched)

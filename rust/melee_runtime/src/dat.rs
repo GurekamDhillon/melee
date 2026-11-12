@@ -33,6 +33,9 @@ pub const HEADER_SIZE: u32 = 0x20;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DatSymbol {
     pub offset: u32,
+    /// Always 0: fills the 4 bytes after `offset` so the record has no padding (the asset service's decode plans
+    /// compare and copy symbols byte for byte).
+    pub _pad: u32,
     pub name: String,
 }
 
@@ -130,7 +133,7 @@ impl DatArchive {
                     let s = be32(file, tab + 8 * i + 4) as usize;
                     let rest = symbols.get(s..).ok_or(DatError::BadSymbol { index: i })?;
                     let end = rest.iter().position(|&c| c == 0).ok_or(DatError::BadSymbol { index: i })?;
-                    Ok(DatSymbol { offset, name: String::from_utf8_lossy(&rest[..end]).into_owned() })
+                    Ok(DatSymbol { offset, _pad: 0, name: String::from_utf8_lossy(&rest[..end]).into_owned() })
                 })
                 .collect()
         };

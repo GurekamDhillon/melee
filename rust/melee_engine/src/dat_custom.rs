@@ -1576,7 +1576,7 @@ fn mex_motion_rows(d: &mut GcDecoder<'_>, rec: u32, main_at: u32, demo_at: u32, 
     let main = walk(d, main_at, n, true);
     let demo = walk(d, demo_at, m, false);
     eprintln!("mexdata: kind {kind}: motion rows on the raw image: {} main, {} demo (of {n} / {m})", main.len(), demo.len());
-    effect(Effect::MexRows(kind, main, demo));
+    effect(Effect::MexRows(kind, Box::new((main, demo))));
 }
 
 /// m-ex `effBehaviorTable` (an effect bank's behaviour per model / generator; efasync.c EfMexBehavior):
@@ -1602,10 +1602,13 @@ fn ef_behavior(d: &mut GcDecoder<'_>, off: u32) -> *mut c_void {
 
 /// A write a decode makes to game statics. Outside a prepared decode it is done at once (the old behaviour); inside
 /// one ([`begin_prepare`]) it is kept and done by the apply on the game thread ([`apply_effects`]).
+/// Every variant fills both payload words and the tag is a full word: no padding or unused bytes (the asset
+/// service's plans are compared and copied byte for byte).
+#[repr(u64)]
 pub enum Effect {
     Kinoko(usize, *mut melee_types::HSD_AnimJoint),
     Foods(usize, *mut HSD_Joint),
-    MexRows(usize, Vec<u8>, Vec<u8>),
+    MexRows(usize, Box<(Vec<u8>, Vec<u8>)>),
 }
 
 thread_local! {
@@ -1635,8 +1638,8 @@ pub fn apply_effects(v: Vec<Effect>) {
         match e {
             Effect::Kinoko(k, j) => unsafe { melee_items::tu::itkinoko::KINOKO_JOINTS[k] = j },
             Effect::Foods(r, j) => unsafe { melee_items::tu::itfoods::FOODS_JOINTS[r] = j },
-            Effect::MexRows(kind, a, b) => unsafe {
-                (*core::ptr::addr_of_mut!(melee_fighter::tu::ftdata::MEX_MOTION_ROWS)).insert(kind, (a, b));
+            Effect::MexRows(kind, ab) => unsafe {
+                (*core::ptr::addr_of_mut!(melee_fighter::tu::ftdata::MEX_MOTION_ROWS)).insert(kind, *ab);
             },
         }
     }

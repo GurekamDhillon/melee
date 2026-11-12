@@ -93,3 +93,29 @@ pair + 2 CPUs, wave respawn, stage switch 10 -> 28). Every offender is a load or
   are already under 8 ms but get N = 60 ticks of prefetch so they stay flat with heavier stages/characters.
 - Not covered: camp_pad Envoy route (hangs at tick 1173 with Envoy mods loaded, any exe; rumblehang agent has it),
   borderless (owner), m-ex boot, 1P modes.
+
+## Asset service slice 1 (2026-11-12, branch port/zerolag-assets1)
+- Step 1 (measured, FoD --match, da49ada82): "items init" 19.1 ms is all `match setup: items: ItCo load` (ItCo.usd 2.9 MB
+  read+parse); `items: pools init` and `items: spawner setup` are ~0 ms. Nothing else to remove; ItCo goes through the
+  asset service.
+- Step 2 design as built (cd7c09828, 5f1bbfd6b): recording heap (`recheap.rs`, a reserved range at 0x5C7A_0000_0000,
+  1 GB slots, bump, never reused, frees mark dead) + `asset.rs`: `prepare` runs `archive::decode` on a copy of the file
+  inside a slot (any thread), keeps the blocks reachable from the `Decoded` result in allocation order plus fixups
+  (block->block, block->raw image, stale in-slot words -> null); `apply` allocates the same blocks in the same order
+  from the game arena, copies, patches. EVERY load >= 64 KB goes prepare(ahead or now)+apply, so service on/off is the
+  same arena sequence by construction; < 64 KB keeps the in-place decode in both modes. Plans are cached by content
+  (length + memcmp + FTDATA_LOADING_KIND compatibility): a reloaded file is an apply only. dat_custom's side lists are
+  thread-local and its static writes (KINOKO_JOINTS, FOODS_JOINTS, MEX_MOTION_ROWS) are effects replayed at apply.
+  Hints: every preload-cache registration (`lbDvd_80017740`) -> worker reads the disc entry with its own handle
+  (no hints while a mods overlay is mounted). Refusal at hint time: target lbHeap's largest free block < file, or the
+  service budget (42 plans / 1.5 GB) spent. Note: the service never allocates game heap; the game still reads the file
+  into its heap at the load as before, so the refusal only stops wasted prefetch.
+- Byte-identity selftest (`MELEE_ASSET_SELFTEST=1`: each load is also prepared on a fresh foreign thread and the
+  plans compared by digest): first run 5/10 FoD files SAME, 5 DIFFERENT by 2-176 bytes, all the upper 4 bytes of
+  8-byte slots after a u32 = uninitialised `Root::Raw(u32)` payloads. Fixed in 5f1bbfd6b (repr(u64), usize payload);
+  NOT yet rebuilt/re-run (owner started playing; build stopped).
+- Measured with the selftest on (times inflated by it): FoD apply ms: ItCo 2.9 MB 15.2 (57,708 blocks, 152k fixups),
+  stage 1.1 MB 3.4, EfCoData 1.3 MB 0.8, fighters 0.2-0.7. ItCo's apply is itself near the budget: apply now
+  allocates straight from the arena (uncommitted-at-measurement change, in cd7c09828+); needs re-measuring.
+- Open: lead time. In --match the preload registrations happen in the match-setup frame itself (no lead); the
+  retail_full route (CSS/SSS before the match) still has to be measured. Rematches/second matches hit the cache.

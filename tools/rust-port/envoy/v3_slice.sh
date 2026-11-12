@@ -64,7 +64,7 @@ for d in $depths; do
     check 1 chain "$d" "$line" "$miss"
   fi
   if on cash; then
-    line=$(run cash "$d" "ember,bolt,nova,noshop|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3)
+    line=$(run cash "$d" "ember,bolt,nova,noshop|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
     miss=""; seen cash "$d" "cash-out, heat" || miss="$miss (no cash-out)"; seen cash "$d" "envoy: flare" || miss="$miss (no flare)"
     check 2 cash "$d" "$line" "$miss"
   fi
@@ -86,7 +86,7 @@ for d in $depths; do
     check 5 volley "$d" "$line" "$miss"
   fi
   if on shop; then
-    line=$(run shop "$d" "ember,bolt,frost,\$400|echo_oath" MELEE_PAD_SCRIPT="$here/shop_pad.txt" MELEE_ENVOY_START_FIGHT=4)
+    line=$(run shop "$d" "ember,bolt,frost,\$400|echo_oath" MELEE_PAD_SCRIPT="$here/shop_pad.txt" MELEE_ENVOY_START_FIGHT=3)
     miss=""; seen shop "$d" "shop open" || miss="$miss (no shop)"
     seen shop "$d" "drive replaced" || miss="$miss (no replace)"
     { seen shop "$d" "shop bought" || seen shop "$d" "drive replaced"; } || miss="$miss (no buy)"
@@ -111,7 +111,7 @@ for d in $depths; do
   fi
   if on petey; then
     # *6000: the CPU player hits x6 so the cages break inside the test (breaks, their cash-outs, RUN CLEAR)
-    line=$(run petey "$d" "ember:3,bolt:3,nova:3,noshop,^400,*6000/rush|plague_bearer,grand_finale" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5)
+    line=$(run petey "$d" "ember:3,bolt:3,nova:3,noshop,^400,*6000/rush|plague_bearer,grand_finale" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=4)
     miss=""; seen petey "$d" "envoy: boss break 4" || miss="$miss (no 4th break)"
     seen petey "$d" "RUN CLEAR" || miss="$miss (no RUN CLEAR)"; seen petey "$d" "cash-out, coins" || miss="$miss (no break cash-out)"
     check 9 petey "$d" "$line" "$miss"
@@ -119,7 +119,7 @@ for d in $depths; do
   fi
   if on loop3; then
     # endless loops: a run begun in loop 3 (@3) at the pack fight: CPU level 9, 3 foes, the elite modifier, foe drives
-    line=$(run loop3 "$d" "ember:5,bolt:4,nova:3,noshop,@3|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3)
+    line=$(run loop3 "$d" "ember:5,bolt:4,nova:3,noshop,@3|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
     miss=""; seen loop3 "$d" "foe carries" || miss="$miss (no foe drives)"
     check 10 loop3 "$d" "$line" "$miss"
     echo "     loop3 d$d: $(grep -c 'foe carries' "$(L loop3 "$d")") foe drives, $(grep -c 'drive fire' "$(L loop3 "$d")") fires"
@@ -127,7 +127,7 @@ for d in $depths; do
   if on dropend; then
     # nothing a fight dropped is lost: the pack fight (2 foes) won by the CPU pilot; drops still on the floor at the
     # last KO fly to their owner (held match end), are worn or banked, then the match ends and the next fight runs
-    line=$(run dropend "$d" "ember,bolt,nova,noshop,dropall" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3)
+    line=$(run dropend "$d" "ember,bolt,nova,noshop,dropall" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
     miss=""; seen dropend "$d" "fight won" || miss="$miss (no win)"
     seen dropend "$d" "RUN OVER" && miss="$miss (RUN OVER)"
     seen dropend "$d" "drop flies in" || miss="$miss (no fly-in)"
@@ -138,7 +138,7 @@ for d in $depths; do
     # the forked road's Steep session (fight 3, its last): every foe one more drive; the stop opens a pick and the
     # road's level-up token; drive protection at the shop (test knob protect: pin, a refused scrap and replace of
     # the pinned drive, a scrap, a move to the partner)
-    line=$(run roadstop "$d" "ember:2,bolt,nova,*8000,steep,protect" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3)
+    line=$(run roadstop "$d" "ember:2,bolt,nova,*8000,steep,protect" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=2)
     miss=""; seen roadstop "$d" "foe carries" || miss="$miss (no foe drive)"
     seen roadstop "$d" "the stop, picks banked" || miss="$miss (no stop)"
     seen roadstop "$d" "envoy: scrapped" || miss="$miss (no scrap)"
@@ -170,7 +170,7 @@ for d in $depths; do
   fi
   if on loopboss; then
     # endless loops: the boss falls in loop 2 and the run goes on into loop 3 (no RUN CLEAR state, the loop moves)
-    line=$(run loopboss "$d" "ember:4,bolt:4,nova:4,noshop,^400,*9000,@2/rush|plague_bearer,grand_finale" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5)
+    line=$(run loopboss "$d" "ember:4,bolt:4,nova:4,noshop,^400,*9000,@2/rush|plague_bearer,grand_finale" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=4)
     miss=""; seen loopboss "$d" "envoy: loop now" || miss="$miss (no loop step)"
     check 11 loopboss "$d" "$line" "$miss"
   fi

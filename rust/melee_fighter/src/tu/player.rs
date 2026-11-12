@@ -306,6 +306,14 @@ pub static mut ENVOY_WAVE_CK: [i8; 4] = [-1; 4];
 /// The heap-1 gap a wave respawn needs for a new character's animation bank (the largest PlxxAJ.dat is under
 /// 0x280000; Marth's is 0x1EEEC0) plus room for the fighter's other allocations.
 const ENVOY_WAVE_BANK_ROOM: u32 = 0x30_0000;
+/// Test knob MELEE_ENVOY_WAVE_OLD=1: the first respawn rules (no bank given back, one pass, the same next character
+/// every wave), for before/after counts. Fixed per process.
+pub fn envoy_wave_old_way() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var_os("MELEE_ENVOY_WAVE_OLD").is_some())
+}
+/// Beyond the bank file's own size: the fighter's other heap-1 allocations and the 32-byte rounding.
+const ENVOY_WAVE_MARGIN: u32 = 0x4_0000;
 
 /// Envoy rooms: replace `slot`'s (asleep, between a KO and its rebirth) main fighter with a new fighter of character
 /// `ck`, created as the slot's main entity the way `Player_80031AD0` does, then free the old one. Refused (false) for a
@@ -313,31 +321,49 @@ const ENVOY_WAVE_BANK_ROOM: u32 = 0x30_0000;
 pub fn envoy_wave_respawn(slot: i32, ck: CharacterKind) -> bool {
     let player = sp(slot);
     if map(ck).internal_id == -1 || map(ck).extra_internal_id != -1 || map(player.ckind).extra_internal_id != -1 {
+        eprintln!("envoy: wave swap slot {slot}: no (a sub-fighter character, {} -> {})", player.ckind as i32, ck as i32);
         return false;
     }
     let out_idx = player.transformed[0] as usize;
     let free_idx = 1 - out_idx;
     let old = player.player_entity[out_idx];
     if old.is_null() || !player.player_entity[free_idx].is_null() || !ext::ftLib_IsSleeping(old) {
+        eprintln!("envoy: wave swap slot {slot}: no (fighter null {} / partner slot taken {} / awake)", old.is_null(), !player.player_entity[free_idx].is_null());
         return false;
     }
-    // the new character's animation bank loads into heap 1 at its Fighter_Create (it is not preloaded, and the old
-    // fighter's bank stays); with many fighters in the match the heap can be too full, and the allocation asserts
-    // (loop 3's three-foe pack). Refuse unless the bank is resident or the heap's largest gap takes the biggest bank.
+    // the new character's animation bank loads into heap 1 at its Fighter_Create (it is not preloaded); with many
+    // fighters in the match the heap can be too full and the allocation asserts (loop 3's three-foe pack). Other
+    // fighters' banks are not touched; the old character's bank is given back after the swap (envoy_bank_release),
+    // so the next wave has its room. Refuse unless the bank is resident or the heap's largest gap takes the biggest.
     let k = map(ck).internal_id as usize;
-    if unsafe { crate::tu::ftdata::ftData_Table_Unk0[k].data.is_null() }
-        && melee_runtime::tu::lbheap::lbHeap_LargestFree(1) < ENVOY_WAVE_BANK_ROOM
-    {
-        return false;
+    let old_kind = map(player.ckind).internal_id as i32;
+    let room = melee_runtime::tu::lbheap::lbHeap_LargestFree(1);
+    if unsafe { crate::tu::ftdata::ftData_Table_Unk0[k].data.is_null() } {
+        let bytes = crate::tu::ftdata::envoy_bank_bytes(k as i32) as u32;
+        let need = if bytes == 0 { ENVOY_WAVE_BANK_ROOM } else { bytes + ENVOY_WAVE_MARGIN };
+        if room < need {
+            eprintln!("envoy: wave swap slot {slot}: no (heap 1 gap 0x{room:X} < 0x{need:X})");
+            return false;
+        }
     }
     // the in-place tag's shape (tag_inplace_spawn + the retail transform swap, which carry every field the rebirth
-    // and the rest of the match expect), then the old fighter is freed
+    // and the rest of the match expect), then the old fighter is freed, then its character's bank if unused
     let g = tag_inplace_spawn(slot, free_idx, ck);
     if g.is_null() {
         return false;
     }
     crate::tu::ftcommon::ftcommon_8007efc8(old, |g| crate::tu::ft_08a1::ft_8008A2BC(g));
     tag_inplace_free(slot, out_idx);
+    if old_kind != k as i32 && !envoy_wave_old_way() && crate::tu::ftdata::envoy_bank_release(old_kind, old) {
+        eprintln!(
+            "envoy: wave respawn slot {slot}: bank of kind {old_kind} released, heap 1 largest gap 0x{room:X} -> 0x{:X}",
+            melee_runtime::tu::lbheap::lbHeap_LargestFree(1)
+        );
+    }
+    // the next wave brings back the character that fell before this one (never the one that just fell)
+    if !envoy_wave_old_way() {
+        unsafe { ENVOY_WAVE_CK[slot as usize] = player.ckind as i8 };
+    }
     player.ckind = ck;
     // a fighter created mid-match starts with its input off (retail enables every entity at GO)
     Player_80031848(slot);

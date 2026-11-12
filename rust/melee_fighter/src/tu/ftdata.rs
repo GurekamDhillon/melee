@@ -1573,6 +1573,42 @@ pub fn ftData_800859A8(f: *mut Fighter) {
     unsafe { ft_8045993C[r6 as usize].set_x6_b0(0) };
 }
 
+/// TARGET_PC, Envoy rooms: give back kind `kind`'s animation bank (heap 1) when no fighter of that kind is left (`gone`, a fighter being freed, does not count), so a
+/// wave's new character fits. Only a bank this file loaded into heap 1 (not one served from the preload cache); the
+/// rows are bound again by the next `ftData_80085A14`. True when freed. Statics and heaps are in the rollback
+/// snapshot, so a resimulation sees the same frees.
+pub fn envoy_bank_release(kind: i32, gone: G) -> bool {
+    let k = kind as usize;
+    unsafe {
+        let data = ftData_Table_Unk0[k].data;
+        if data.is_null() || !melee_runtime::tu::lbheap::lbHeap_Contains(1, data) {
+            return false;
+        }
+        let mut g = ext::plink_fighter_head();
+        while !g.is_null() {
+            let cur = (*g).user_data as *mut Fighter;
+            if g != gone && !cur.is_null() && (*cur).kind as i32 == kind {
+                return false;
+            }
+            g = (*g).next;
+        }
+        melee_runtime::tu::lbheap::lbHeap_80015CA8(1, data);
+        ftData_Table_Unk0[k].data = core::ptr::null_mut();
+    }
+    true
+}
+
+/// TARGET_PC, Envoy rooms: the size of kind `kind`'s animation bank file (0 unknown).
+pub fn envoy_bank_bytes(kind: i32) -> usize {
+    let k = kind as usize;
+    unsafe {
+        if k >= KMAX || ftData_803C23E4[k].is_null() {
+            return 0;
+        }
+        melee_runtime::tu::lbfile::lbFileGetSize(ftData_803C23E4[k])
+    }
+}
+
 /// `ftData_80085A14`: load a kind's animation bank and bind its motion rows.
 pub fn ftData_80085A14(kind: i32) {
     melee_core::ct!("ftData_80085A14");

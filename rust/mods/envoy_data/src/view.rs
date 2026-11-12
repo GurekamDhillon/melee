@@ -316,6 +316,8 @@ pub fn token(q: i32, i: i32) -> i32 {
 // ---- rooms (waves of foes in one match)
 pub const V_WAVE: usize = 680; // the wave in play, 1-based ("Wave 1 of 2")
 pub const V_WAVES: usize = 681; // waves in this room (1: a plain fight)
+pub const V_ROOM: usize = 682; // the room in play, 1-based ("Room 1 of 3"); 0 in the boss fight
+pub const V_ROOMS: usize = 683; // rooms before the boss (3)
 pub const V_REC: usize = 704;
 pub const REC_WORDS: usize = 48;
 pub const REC_MAGIC: i32 = 0x454E_5652;

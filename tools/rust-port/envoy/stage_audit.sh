@@ -3,7 +3,7 @@
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/stage_audit.sh GRKIND [EXE] [FRAMES]
 # GRKIND is the ground kind of the stage under test (Kongo Jungle 64 = 30, Yoshi's Island 64 = 29, Pokemon Stadium = 16).
 # Builds a private envoy_sim (STAGES = BF, X, BF, X, BF; a shift every 600 frames instead of 1800), then runs the headless
-# golden twice with the Envoy test knobs (MELEE_ENVOY_ARM, _TEST_P1CPU, _START_FIGHT=4) and MELEE_STAGE_HOP_EXTRA=GRKIND:
+# golden twice with the Envoy test knobs (MELEE_ENVOY_ARM, _TEST_P1CPU, _START_FIGHT=3) and MELEE_STAGE_HOP_EXTRA=GRKIND:
 #   * the two per-frame hash CSVs must be identical (determinism);
 #   * each stage shift must freeze the hash for 90 frames (the wipe: switch at the midpoint);
 #   * "heap0 free" after every shift is printed (the leak per shift).
@@ -21,7 +21,7 @@ sed -i "s/^const STAGES: \[i32; 5\] = .*/const STAGES: [i32; 5] = [36, $kind, 36
 cp "$out/target/wasm32-unknown-unknown/release/envoy_sim.wasm" "$out/mods/"
 printf 'envoy_audit\tvs\t%s\tidle_x\tmode=vs;at=match;p1=ck:2/human;p2=ck:9/human;p3=ck:20/cpu9;p4=none;stage=bf;match=time;minutes=0;items=off\n' "$frames" >"$out/scen.tsv"
 export MELEE_VOLUME=3 MELEE_WASM_MODS="$out/mods" MELEE_ENGINE_PRE_DRAWS=0 MELEE_SCENARIO_TSV="$out/scen.tsv"
-export MELEE_ENVOY_ARM=1 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=4 MELEE_STAGE_HOP_EXTRA="$kind"
+export MELEE_ENVOY_ARM=1 MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_START_FIGHT=3 MELEE_STAGE_HOP_EXTRA="$kind"
 for r in 1 2; do
   MELEE_WINDOW_TITLE="stage audit $kind run$r" "$exe" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario envoy_audit --frames "$frames" --out "$out/r$r.csv" >"$out/r$r.log" 2>&1
 done

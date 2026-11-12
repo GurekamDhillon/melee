@@ -33,6 +33,8 @@ enum Tgt {
     Blk(u32, u32),
     Raw(u32),
     Null,
+    /// (image + offset) - the start of the block holding the word (`dat_custom` effect texture banks).
+    RawRel(u32),
 }
 struct Fix {
     blk: u32,
@@ -170,6 +172,7 @@ impl Plan {
                             Tgt::Blk(j, d) => { mix(1); mix(j as u64); mix(d as u64) }
                             Tgt::Raw(d) => { mix(2); mix(d as u64) }
                             Tgt::Null => mix(3),
+                            Tgt::RawRel(d) => { mix(4); mix(d as u64) }
                         }
                         off += 8;
                         continue;
@@ -221,6 +224,7 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
             return None;
         }
         crate::dat_custom::begin_prepare(loading, grkind);
+        let _ = crate::dat_custom::take_image_relative();
         let mut d = unsafe { archive::decode(raw as *mut u8, len) };
         let (eff, r, g) = crate::dat_custom::end_prepare();
         d.effects = eff;
@@ -246,6 +250,16 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
     let page_written = |a: usize| wrote.as_ref().map_or(true, |m| m.get((a - pg0) / 4096).copied().unwrap_or(true));
     let mut fixes: Vec<Fix> = Vec::new();
     let mut fix_at: Vec<u32> = Vec::with_capacity(bl.len() + 1);
+    // image-relative words (differences, invisible to the scan below), by (block, offset)
+    let mut rel: Vec<(u32, u32, u32)> = Vec::new();
+    for (wa, ta) in crate::dat_custom::take_image_relative() {
+        let Some(j) = rec.find(wa) else { return None };
+        if ta < raw || ta > raw + len {
+            return None;
+        }
+        rel.push((j as u32, (wa - bl[j].at) as u32, (ta - raw) as u32));
+    }
+    rel.sort_unstable();
     let mut dead_refs = 0;
     for (i, b) in bl.iter().enumerate() {
         fix_at.push(fixes.len() as u32);
@@ -258,7 +272,10 @@ pub fn prepare(file: &[u8], loading: i32, grkind: i32) -> Option<Plan> {
                 }
             }
             let w = unsafe { ((b.at + off) as *const usize).read_unaligned() };
-            let tgt = if w >= raw && w <= raw + len {
+            let r = rel.binary_search_by(|x| (x.0, x.1).cmp(&(i as u32, off as u32)));
+            let tgt = if let Ok(r) = r {
+                Some(Tgt::RawRel(rel[r].2))
+            } else if w >= raw && w <= raw + len {
                 Some(Tgt::Raw((w - raw) as u32))
             } else if w >= rec.data_lo && w <= rec.bump {
                 match rec.find(w) {
@@ -417,6 +434,7 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
     let t0 = std::time::Instant::now();
     let (mut addr, sparse_at): (Vec<usize>, Vec<u32>) = {
         let _s = crate::arena::SysScope::enter();
+        let _ = sparse_on(); // a first read allocates: never on the asset path
         let mut sa = vec![0u32; p.blocks.len() + 1];
         let mut j = 0;
         for (k, slot) in sa.iter_mut().enumerate() {
@@ -444,6 +462,7 @@ pub unsafe fn apply(p: &Plan, src: *mut u8) -> Box<Decoded> {
                 Tgt::Blk(j, d) => addr[j as usize] + d as usize,
                 Tgt::Raw(d) => src as usize + d as usize,
                 Tgt::Null => 0,
+                Tgt::RawRel(d) => (src as usize + d as usize).wrapping_sub(dst),
             };
             ((dst + f.off as usize) as *mut usize).write_unaligned(v);
         }
@@ -530,6 +549,36 @@ fn exe_image() -> (usize, usize) {
     (0, 0)
 }
 
+/// Is `p` in committed host memory (digest only).
+fn committed(p: usize) -> bool {
+    #[cfg(windows)]
+    unsafe {
+        #[repr(C)]
+        struct Mbi {
+            base: usize,
+            alloc_base: usize,
+            alloc_protect: u32,
+            region_size: usize,
+            state: u32,
+            protect: u32,
+            ty: u32,
+        }
+        extern "system" {
+            fn VirtualQuery(p: *const u8, m: *mut Mbi, n: usize) -> usize;
+        }
+        if p >= 0x8000_0000_0000 {
+            return false;
+        }
+        let mut m: Mbi = core::mem::zeroed();
+        VirtualQuery(p as *const u8, &mut m, core::mem::size_of::<Mbi>()) != 0 && m.state == 0x1000
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = p;
+        false
+    }
+}
+
 thread_local! {
     /// The file image of the load being digested.
     static SRC_FOR_DIGEST: core::cell::Cell<usize> = const { core::cell::Cell::new(0) };
@@ -545,8 +594,18 @@ fn end_asset_path(len: usize, how: &str) {
     // its offset: comparable across processes (the arena's addresses differ from run to run; the bytes must not)
     let v = crate::arena::take_asset_blocks();
     let mut h: u64 = 0xcbf2_9ce4_8422_2325;
-    let mut mix = |x: u64| h = (h ^ x).wrapping_mul(0x0100_0000_01b3);
+    // MELEE_ASSET_DIGEST_DUMP=<dir>: also write each load's normalised token stream (u64 LE) for word-level diffs
+    let dump = std::env::var_os("MELEE_ASSET_DIGEST_DUMP");
+    let mut toks: Vec<u64> = Vec::new();
+    let mut raw: Vec<u64> = Vec::new();
+    let mut mix = |x: u64| {
+        h = (h ^ x).wrapping_mul(0x0100_0000_01b3);
+        if dump.is_some() {
+            toks.push(x);
+        }
+    };
     let mut live: Vec<(usize, usize, usize)> = Vec::new(); // (addr, size, number)
+    mix(v.len() as u64);
     for (k, &(a, n)) in v.iter().enumerate() {
         let freed = n >> 63 != 0;
         mix(freed as u64);
@@ -562,38 +621,55 @@ fn end_asset_path(len: usize, how: &str) {
     let src = SRC_FOR_DIGEST.with(|c| c.get());
     let img = exe_image();
     let arena0 = crate::arena::used_range().0;
+    // per live block: its size, then each 8-byte word as (class, value): 0 raw, 1 this load's block (number,
+    // offset), 2 file image offset, 3 exe image offset, 4 other arena object offset, 5 host pointer (Rust heap,
+    // stack: per run, never game data, so its value is not compared), 6 self-relative host offset; the tail raw
     for &(a, n, _) in &live {
         let b = unsafe { core::slice::from_raw_parts(a as *const u8, n) };
+        mix(n as u64);
         let mut off = 0;
-        while off < n {
-            if off + 8 <= n {
-                let w = u64::from_le_bytes(b[off..off + 8].try_into().unwrap()) as usize;
-                let i = by_addr.partition_point(|x| x.0 <= w);
-                if i > 0 && w <= by_addr[i - 1].0 + by_addr[i - 1].1 {
-                    mix(1 << 62 | by_addr[i - 1].2 as u64);
-                    mix((w - by_addr[i - 1].0) as u64);
-                    off += 8;
-                    continue;
-                }
-                if w >= src && w <= src + len {
-                    mix(2 << 62 | (w - src) as u64);
-                    off += 8;
-                    continue;
-                }
-                if crate::arena::contains(w as *const u8) {
-                    mix(4 << 60 | (w - arena0) as u64); // another arena object (the arena's base differs per run)
-                    off += 8;
-                    continue;
-                }
-                if w >= img.0 && w < img.1 {
-                    mix(3 << 62 | (w - img.0) as u64); // code / static data (the image is relocated per run)
-                    off += 8;
-                    continue;
-                }
+        while off + 8 <= n {
+            let w = u64::from_le_bytes(b[off..off + 8].try_into().unwrap()) as usize;
+            let i = by_addr.partition_point(|x| x.0 <= w);
+            let t = (a + off).wrapping_add(w);
+            let (c, x) = if i > 0 && w <= by_addr[i - 1].0 + by_addr[i - 1].1 {
+                (1, (by_addr[i - 1].2 as u64) << 32 | (w - by_addr[i - 1].0) as u64)
+            } else if w >= src && w <= src + len {
+                (2, (w - src) as u64)
+            } else if w >= img.0 && w < img.1 {
+                (3, (w - img.0) as u64)
+            } else if crate::arena::contains(w as *const u8) {
+                (4, (w - arena0) as u64)
+            } else if w >= 0x1_0000 && committed(w) {
+                (5, 0)
+            } else if w >> 47 != 0 && ((t >= img.0 && t < img.1) || (t >= 0x1_0000 && committed(t))) {
+                (6, 0)
+            } else {
+                (0, w as u64)
+            };
+            mix(c);
+            mix(x);
+            if c >= 3 {
+                raw.push(w as u64); // dump only: a data word that merely looks like a host pointer in one run
             }
-            mix(b[off] as u64);
-            off += 1;
+            off += 8;
         }
+        for &y in &b[off..] {
+            mix(7);
+            mix(y as u64);
+        }
+    }
+    drop(mix);
+    if let Some(d) = &dump {
+        static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let k = N.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let mut bytes = Vec::with_capacity(toks.len() * 8);
+        for t in &toks {
+            bytes.extend_from_slice(&t.to_le_bytes());
+        }
+        let _ = std::fs::write(std::path::Path::new(d).join(format!("{k:04}_{len}.bin")), bytes);
+        let r: Vec<u8> = raw.iter().flat_map(|x| x.to_le_bytes()).collect();
+        let _ = std::fs::write(std::path::Path::new(d).join(format!("{k:04}_{len}.raw")), r);
     }
     eprintln!("asset digest: {len} bytes {how}: {} calls {h:016x}", v.len());
 }
@@ -670,6 +746,7 @@ pub fn init(iso: Option<String>) {
         return;
     }
     let _s = crate::arena::SysScope::enter();
+    let _ = crate::archive::reclaim_flags(); // before any decode (see there)
     if !recheap::init() {
         return;
     }

@@ -1390,6 +1390,9 @@ pub fn ptcl_tex(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
                     // `psInitDataBankLocate` adds the image base: store (raw image address - base)
                     let v: isize = if t == 0 { 0 } else { (b.raw_addr(off + t) as usize).wrapping_sub(base) as isize };
                     (img.add(cur + 24 + 8 * k) as *mut isize).write(v);
+                    if t != 0 {
+                        note_image_relative(img.add(cur + 24 + 8 * k) as usize, b.raw_addr(off + t) as usize);
+                    }
                 }
             }
             cur += sizes[i];
@@ -1673,4 +1676,23 @@ pub fn end_prepare() -> (Vec<Effect>, Option<i32>, bool) {
     PREP_LOADING.with(|c| c.set(None));
     let v = PREP_EFFECTS.with_borrow_mut(|v| v.take()).unwrap_or_default();
     (v, PREP_RESOLVED.with(|c| c.take()), PREP_GRKIND_USED.with(|c| c.replace(false)))
+}
+
+thread_local! {
+    /// Words a recorded decode wrote as (file image address - their block's start): (word address, image address).
+    static IMAGE_RELATIVE: core::cell::RefCell<Vec<(usize, usize)>> = const { core::cell::RefCell::new(Vec::new()) };
+}
+
+/// A word holding (an image address - the start of the block it is in). A plan's replay rewrites it for the game's
+/// own image and block (no pointer scan can see it: it is a difference). Only noted while recording (the list itself
+/// is kept off the recording).
+fn note_image_relative(word: usize, target: usize) {
+    if crate::recheap::active() {
+        crate::recheap::paused(|| IMAGE_RELATIVE.with_borrow_mut(|v| v.push((word, target))));
+    }
+}
+
+/// The image-relative words noted since the last call.
+pub fn take_image_relative() -> Vec<(usize, usize)> {
+    IMAGE_RELATIVE.with_borrow_mut(core::mem::take)
 }

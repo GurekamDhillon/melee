@@ -297,6 +297,7 @@ pub fn end_recording() {
 /// # Safety
 /// Called by the process allocator while [`active`].
 pub unsafe fn alloc(l: Layout) -> *mut u8 {
+    trap(l.size());
     let p = alloc_block(l);
     if !p.is_null() {
         let r = &mut *CUR.with(|c| c.get());
@@ -384,4 +385,24 @@ pub unsafe fn free(p: *mut u8) {
 /// as written).
 pub fn written_pages(a: usize, n: usize) -> Option<Vec<usize>> {
     unsafe { sys::written(a & !0xFFF, ((a + n + 0xFFF) & !0xFFF) - (a & !0xFFF)) }
+}
+
+/// `MELEE_ASSET_TRAP=<size>` (debug): print a backtrace for every recorded allocation of exactly that size.
+fn trap(n: usize) {
+    static T: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+    let r = CUR.with(|c| c.replace(core::ptr::null_mut()));
+    let t = *T.get_or_init(|| std::env::var("MELEE_ASSET_TRAP").ok().and_then(|v| v.parse().ok()).unwrap_or(0));
+    if t != 0 && n == t {
+        eprintln!("asset trap: recorded alloc of {n}:
+{}", std::backtrace::Backtrace::force_capture());
+    }
+    CUR.with(|c| c.set(r));
+}
+
+/// Run `f` with this thread's recording paused (its allocations go wherever they would outside one).
+pub fn paused<R>(f: impl FnOnce() -> R) -> R {
+    let r = CUR.with(|c| c.replace(core::ptr::null_mut()));
+    let o = f();
+    CUR.with(|c| c.set(r));
+    o
 }

@@ -307,21 +307,16 @@ fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
     let before = h.retired.len();
     // MELEE_RECLAIM_POISON=1 (test knob): a dropped image's native objects are filled with 0xDD and leaked instead
     // of freed, so a stale holder faults deterministically on its next read (the crash report names it)
-    static POISON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    let poison = *POISON.get_or_init(|| std::env::var_os("MELEE_RECLAIM_POISON").is_some());
+    let poison = reclaim_flags().0;
     // MELEE_RECLAIM_LEAK=1 (mitigation): a dropped image is forgotten (never freed): the lists stay short, its memory
     // stays as it was, so a stale holder reads and writes its own old object instead of someone else's block
-    static LEAK: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    let leak = *LEAK.get_or_init(|| std::env::var_os("MELEE_RECLAIM_LEAK").is_some());
+    let leak = reclaim_flags().1;
     let (mut dropped, keep): (Vec<ArchiveImage>, Vec<ArchiveImage>) = std::mem::take(&mut h.retired).into_iter().partition(|im| hit(im));
     h.retired = keep;
     let mut dead: Vec<usize> = h.archives.iter().filter(|(_, im)| hit(im)).map(|(&k, _)| k).collect();
-    // MELEE_RECLAIM_SORTED=1 (test knob): free in address order, not the map's per-process random order, so a failing
-    // free order can be replayed
-    static SORTED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-    if *SORTED.get_or_init(|| std::env::var_os("MELEE_RECLAIM_SORTED").is_some()) {
-        dead.sort_unstable();
-    }
+    // free in address order, never the map's per-process random order: the arena's free lists (and so every later
+    // block's address, and an asset plan's replay of a decode that reclaims) must not depend on the hasher's seed
+    dead.sort_unstable();
     for k in &dead {
         if let Some(im) = h.archives.remove(k) {
             dropped.push(im);
@@ -427,3 +422,15 @@ pub fn check_poison(frame: u64) {
     });
 }
 
+
+/// The reclaim test knobs (poison, leak, sorted: now always on), read once. [`crate::asset::init`] reads them at boot: a first read
+/// inside a decode would put its temporary allocation into whichever decode came first (a recorded plan or the
+/// arena), so a replay and a direct decode would differ by it.
+pub fn reclaim_flags() -> (bool, bool, bool) {
+    static F: std::sync::OnceLock<(bool, bool, bool)> = std::sync::OnceLock::new();
+    *F.get_or_init(|| {
+        let _s = crate::arena::SysScope::enter();
+        let on = |k: &str| std::env::var_os(k).is_some();
+        (on("MELEE_RECLAIM_POISON"), on("MELEE_RECLAIM_LEAK"), on("MELEE_RECLAIM_SORTED"))
+    })
+}

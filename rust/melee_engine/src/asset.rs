@@ -724,6 +724,9 @@ struct Inner {
     jobs: VecDeque<Job>,
     clock: u64,
     stats: Stats,
+    /// File lengths whose prepare gave no plan (the decode leaves blocks the result does not reach): never prepared
+    /// again (each retry is a whole decode on the worker, ItCo's ~30 ms, competing with the game for nothing).
+    unplannable: Vec<usize>,
 }
 struct Svc {
     m: Mutex<Inner>,
@@ -756,7 +759,7 @@ pub fn init(iso: Option<String>) {
     }
     let worker = std::env::var("MELEE_ASSETS").map_or(true, |v| v != "off") && iso.is_some();
     let s = Box::leak(Box::new(Svc {
-        m: Mutex::new(Inner { entries: Vec::new(), jobs: VecDeque::new(), clock: 0, stats: Stats::default() }),
+        m: Mutex::new(Inner { entries: Vec::new(), jobs: VecDeque::new(), clock: 0, stats: Stats::default(), unplannable: Vec::new() }),
         cv: Condvar::new(),
         iso,
         worker,
@@ -799,6 +802,12 @@ fn worker_main() {
         let bytes = bytes.filter(|b| b.len() >= 0x20 && u32::from_be_bytes([b[0], b[1], b[2], b[3]]) as usize == b.len());
         let plan = bytes.and_then(|b| std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| prepare(&b, job.loading, job.grkind))).ok().flatten());
         let mut g = s.m.lock().unwrap();
+        if plan.is_none() {
+            let n = g.entries.iter().find(|e| e.entry == job.entry).map_or(0, |e| e.len);
+            if n != 0 && !g.unplannable.contains(&n) {
+                g.unplannable.push(n);
+            }
+        }
         if let Some(e) = g.entries.iter_mut().find(|e| e.pending && e.entry == job.entry) {
             e.pending = false;
             e.plan = plan.map(Arc::new);
@@ -827,7 +836,7 @@ pub fn hint_entry(entry: i32, heap: i32) {
     let largest = melee_runtime::tu::lbheap::lbHeap_LargestFree(heap) as usize;
     let _sys = crate::arena::SysScope::enter();
     let mut g = s.m.lock().unwrap();
-    if g.entries.iter().any(|e| e.entry == entry) {
+    if g.entries.iter().any(|e| e.entry == entry) || g.unplannable.contains(&len) {
         return;
     }
     // a hint outranks a cached plan nobody asked for lately: make room (least recently used first)
@@ -944,7 +953,7 @@ pub unsafe fn load(src: *mut u8, len: usize) -> Option<Box<Decoded>> {
             let _sys = crate::arena::SysScope::enter();
             let mut g = s.m.lock().unwrap();
             g.stats.inline += 1;
-            if s.worker && !g.entries.iter().any(|e| e.pending && e.len == len) {
+            if s.worker && !g.entries.iter().any(|e| e.pending && e.len == len) && !g.unplannable.contains(&len) {
                 g.clock += 1;
                 let now = g.clock;
                 let id = -2 - now as i32;

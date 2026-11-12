@@ -229,6 +229,7 @@ pub const EV_SHIFT: i32 = 17; // a stage switch began; who = the reason (SH_*); 
 pub const EV_ASSIST: i32 = 18; // who = player; amount = the move (AS_*): the partner jumped in and strikes
 pub const EV_ASSIST_END: i32 = 19; // who = player; amount = frames the strike ran: the partner left
 pub const EV_HEAT_SHORT: i32 = 20; // who = player; amount = Heat x1000: a tap with under the strike's cost (shake the bar)
+pub const EV_WAVE: i32 = 21; // who = the wave now starting (2..); amount = the room's waves: the next wave arrives
 pub const EV_HANDOFF: i32 = 16; // who = player; amount = the fired drive's id + 1 | 0x100 when Relay fired the row
 pub const EV_COINS: i32 = 14; // who = player; amount = coins from a flat award (a fight cleared, interest)
 /// Why the stage switched (EV_SHIFT's who).
@@ -312,6 +313,9 @@ pub fn token(q: i32, i: i32) -> i32 {
     if (0..8).contains(&i) { (q as u32 >> (4 * i as u32) & 15) as i32 } else { 0 }
 }
 
+// ---- rooms (waves of foes in one match)
+pub const V_WAVE: usize = 680; // the wave in play, 1-based ("Wave 1 of 2")
+pub const V_WAVES: usize = 681; // waves in this room (1: a plain fight)
 pub const V_REC: usize = 704;
 pub const REC_WORDS: usize = 48;
 pub const REC_MAGIC: i32 = 0x454E_5652;

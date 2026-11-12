@@ -299,6 +299,38 @@ pub fn Player_80031AD0(slot: i32) {
 
 /// TARGET_PC: the tag partner character kind per port (-1 none), set at engine boot from `MELEE_TAG_PARTNER`.
 pub static mut TAG_PARTNER_CK: [i8; 4] = [-1; 4];
+/// TARGET_PC, Envoy rooms (waves of fighter foes): per slot, the character the slot comes back as in the next wave
+/// (-1 none). Preloaded with the match's files (Player_80031CB0) so the respawn never reads the disc mid-match. Set by
+/// melee_modes::tu::envoy at match begin; -1 for every retail match.
+pub static mut ENVOY_WAVE_CK: [i8; 4] = [-1; 4];
+
+/// Envoy rooms: replace `slot`'s (asleep, between a KO and its rebirth) main fighter with a new fighter of character
+/// `ck`, created as the slot's main entity the way `Player_80031AD0` does, then free the old one. Refused (false) for a
+/// slot or character with a sub-fighter (Ice Climbers, Zelda / Sheik, a tag pair), or a fighter that is awake.
+pub fn envoy_wave_respawn(slot: i32, ck: CharacterKind) -> bool {
+    let player = sp(slot);
+    if map(ck).internal_id == -1 || map(ck).extra_internal_id != -1 || map(player.ckind).extra_internal_id != -1 {
+        return false;
+    }
+    let out_idx = player.transformed[0] as usize;
+    let free_idx = 1 - out_idx;
+    let old = player.player_entity[out_idx];
+    if old.is_null() || !player.player_entity[free_idx].is_null() || !ext::ftLib_IsSleeping(old) {
+        return false;
+    }
+    // the in-place tag's shape (tag_inplace_spawn + the retail transform swap, which carry every field the rebirth
+    // and the rest of the match expect), then the old fighter is freed
+    let g = tag_inplace_spawn(slot, free_idx, ck);
+    if g.is_null() {
+        return false;
+    }
+    crate::tu::ftcommon::ftcommon_8007efc8(old, |g| crate::tu::ft_08a1::ft_8008A2BC(g));
+    tag_inplace_free(slot, out_idx);
+    player.ckind = ck;
+    // a fighter created mid-match starts with its input off (retail enables every entity at GO)
+    Player_80031848(slot);
+    true
+}
 /// TARGET_PC: whether a slot's sub-fighter this match is a tag partner (not a retail Zelda / Sheik or Nana).
 pub static mut TAG_SLOT: [u8; 4] = [0; 4];
 
@@ -395,6 +427,12 @@ pub fn Player_80031CB0(kind: CharacterKind, color: u8) {
     }
     // TARGET_PC, the in-place tag prototype: preload every configured partner with the match's files, so the swap's
     // Fighter_Create never reads the disc mid-match (the partner kinds are fixed for the match)
+    // TARGET_PC, Envoy rooms: the next waves' characters (none outside a run)
+    for wk in unsafe { ENVOY_WAVE_CK } {
+        if wk >= 0 && wk as i32 != kind as i32 && map(wk as CharacterKind).internal_id != -1 {
+            ext::ftData_800855C8(map(wk as CharacterKind).internal_id as i32 as FighterKind, color);
+        }
+    }
     if tag_inplace() {
         for pk in unsafe { TAG_PARTNER_CK } {
             if pk >= 0 && pk as i32 != kind as i32 && map(pk as CharacterKind).internal_id != -1 {

@@ -17,7 +17,7 @@
 use melee_fighter::tu::player as pl;
 use melee_types::*;
 
-pub const PLAN_WORDS: usize = 32;
+pub const PLAN_WORDS: usize = 40;
 pub const VIEW_WORDS: usize = 768;
 
 // plan layout (i32 words)
@@ -44,6 +44,9 @@ pub const P_MAIN2: usize = 28;
 pub const P_PARTNER2: usize = 29;
 /// Envoy endless loops: the Petey cages' HP x1000 (0: retail's; envoy_sim raises it 25% a loop).
 pub const P_BOSS_HP: usize = 30;
+/// Envoy rooms: per CPU row, the character it comes back as in the next wave (-1: no next wave) and that wave's stocks.
+pub const P_WAVE_CK: usize = 32;
+pub const P_WAVE_STOCKS: usize = 35;
 /// Final Destination (Gr_Kind): the Petey arena for now (an original stage is later work).
 const GR_FD: i32 = 37;
 
@@ -285,6 +288,9 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     // Envoy sessions: the match-end hold is the sim's, per match (gd_envoy_end_hold); never left on for a retail match
     crate::tu::gmvs::gmVs_SetEndHold(0);
     melee_fighter::hooks::ENVOY_TAG_MASK = [0; 4];
+    pl::ENVOY_WAVE_CK = [-1; 4];
+    WAVE_PARK = [0; 4];
+    WAVE_PENDING = [0; 4];
     if PLAN[P_ACTIVE] == 0 || armed() == 0 || d.is_null() || crate::tu::gm_1A3F::gm_GetCurrentGameMode() as u32 != GM_VS as u32 {
         return;
     }
@@ -375,6 +381,10 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
         p.attack_ratio = ratio(PLAN[P_CPU_ATK + i]);
         p.defense_ratio = ratio(PLAN[P_CPU_DEF + i]);
         p.model_scale = ratio(PLAN[P_CPU_SCALE + i]);
+        let wk = PLAN[P_WAVE_CK + i];
+        if (0..=0x19).contains(&wk) && wk != CK_ICS && wk != CK_ZELDA && wk != CK_SHEIK {
+            pl::ENVOY_WAVE_CK[humans + i] = wk as i8;
+        }
     }
     // 4-player rows past the first four are never used by VS
     let r = &mut d.rules;
@@ -420,6 +430,58 @@ unsafe fn fighters(slot: i32) -> [*mut Fighter; 2] {
     let p = &*pl::Player_GetPtrForSlot(slot);
     let f = |g: *mut HSD_GObj| if g.is_null() { core::ptr::null_mut() } else { (*g).user_data as *mut Fighter };
     [f(p.player_entity[0]), f(p.player_entity[1])]
+}
+
+// ---- Envoy rooms (waves of fighter foes). A foe slot that loses its last stock while its room has another wave is
+// parked by the sim (`wave_park`: its stocks are already set back): at the end of its KO countdown it stays asleep
+// instead of the rebirth (gm_80167320, the retail "player out" path never runs since it has stocks). When the wave's
+// last foe falls the sim starts the next wave (`wave_start`): each parked slot is replaced by its next character
+// (melee_fighter `envoy_wave_respawn`, preloaded at match begin) and reborn on its platform. Plain statics.
+pub static mut WAVE_PARK: [u8; 4] = [0; 4];
+/// Parked and asleep (the KO countdown has ended): waiting for `wave_start`.
+pub static mut WAVE_PENDING: [u8; 4] = [0; 4];
+
+/// The sim parks `slot` (0 ok, -1 not in a run / not a slot).
+pub unsafe fn wave_park(slot: i32) -> i32 {
+    if armed() == 0 || !(0..4).contains(&slot) {
+        return -1;
+    }
+    WAVE_PARK[slot as usize] = 1;
+    0
+}
+
+/// gm_80167320's rebirth branch: a parked slot is not reborn now (true: skip the rebirth).
+pub unsafe fn wave_hold_rebirth(slot: i32) -> bool {
+    if !(0..4).contains(&slot) || WAVE_PARK[slot as usize] == 0 {
+        return false;
+    }
+    WAVE_PENDING[slot as usize] = 1;
+    true
+}
+
+/// Start the next wave: every parked slot whose countdown ended comes back as its next character (or as itself if
+/// the swap is refused) and is reborn. Returns how many came back; a slot still in its countdown stays parked.
+pub unsafe fn wave_start() -> i32 {
+    let mut n = 0;
+    for s in 0..4 {
+        if WAVE_PARK[s] == 0 || WAVE_PENDING[s] == 0 {
+            continue;
+        }
+        WAVE_PARK[s] = 0;
+        WAVE_PENDING[s] = 0;
+        let ck = pl::ENVOY_WAVE_CK[s];
+        if ck >= 0 && !pl::envoy_wave_respawn(s as i32, ck as CharacterKind) {
+            eprintln!("envoy: wave respawn of slot {s} as {ck} refused; it comes back as itself");
+        }
+        crate::tu::gm_1601::fn_8016719C(s as i32, 0);
+        n += 1;
+    }
+    n
+}
+
+/// Slots parked and asleep, as bits (the sim waits for all of them before the next wave).
+pub unsafe fn wave_pending() -> i32 {
+    (0..4).filter(|&s| WAVE_PENDING[s] != 0).fold(0, |m, s| m | 1 << s)
 }
 
 pub const UP_ATTACK: i32 = 0;

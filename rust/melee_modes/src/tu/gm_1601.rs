@@ -2599,6 +2599,8 @@ pub unsafe fn gm_80167320(slot: i32, arg1: bool) {
             let a = ext::Player_GetPlayerCharacter(slot) as i8;
             let b = ext::Player_GetCostumeId(slot) as i8;
             ext::gm_8016AC44(a, b);
+        } else if !arg1 && crate::tu::envoy::wave_hold_rebirth(slot) {
+            // TARGET_PC, Envoy rooms: a parked foe waits asleep for its next wave (never set outside a run)
         } else if ext::Stage_80224DC8(ext::gm_GetStKind() as i32) {
             fn_8016719C(slot, arg1 as i32);
         } else {

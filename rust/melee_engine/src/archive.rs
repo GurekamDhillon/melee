@@ -23,9 +23,10 @@ use std::collections::HashMap;
 const HEADER_BYTES: usize = 0x20;
 
 #[derive(Clone, Copy)]
+#[repr(u64)] // a full-word tag: no padding bytes
 pub(crate) enum Root {
     Native(*mut c_void),
-    Raw(u32),
+    Raw(usize), // a full word: a u32 payload would leave 4 uninitialised bytes in every root (the plan must be byte-exact)
 }
 
 /// What the host keeps per parsed archive.
@@ -146,7 +147,7 @@ pub unsafe fn decode(src: *mut u8, file_size: usize) -> Decoded {
         d.set_roots(dat.publics.iter().map(|q| q.offset).collect());
         for p in &dat.publics {
             match dat_types::type_of(&p.name) {
-                Some(RootType::Raw) => roots.push((p.name.clone(), Root::Raw(p.offset))),
+                Some(RootType::Raw) => roots.push((p.name.clone(), Root::Raw(p.offset as usize))),
                 Some(ty) => {
                     // an array root runs to the next public, or the end of the data section
                     let next = dat.publics.iter().map(|q| q.offset).filter(|&o| o > p.offset).min();

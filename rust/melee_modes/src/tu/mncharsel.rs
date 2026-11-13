@@ -4373,6 +4373,28 @@ unsafe fn mnCharSel_MexSetup() {
             }
             r += 1;
         }
+        // The cursor's puck (what the hit test reads) stops just above the m-ex grid's top row
+        // (Akaneia: puck y 18.66 at the clamp, top bounds 18.56), so the top row could not be hovered
+        // or picked. Open the grid's top edge upwards, as the retail rows' bounds are.
+        {
+            let mut top = f32::MIN;
+            i = 0;
+            while i < n {
+                if mnCharSel_IconUnavail[i as usize] == 0 && (*icon_at(i as usize)).bound_u > top {
+                    top = (*icon_at(i as usize)).bound_u;
+                }
+                i += 1;
+            }
+            i = 0;
+            while i < n {
+                let ic = icon_at(i as usize);
+                if (*ic).bound_u > top - 1.0f32 {
+                    // small, so a restored puck (bound_u - 3) still lands on the icon
+                    (*ic).bound_u += 2.0f32;
+                }
+                i += 1;
+            }
+        }
     }
 
     // Portraits and emblems (VS doors): as m-ex's "Replace CSS VS Emblem" does, give each door's

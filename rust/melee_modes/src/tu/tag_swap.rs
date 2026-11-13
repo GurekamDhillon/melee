@@ -385,8 +385,9 @@ unsafe fn swap_inplace(slot: i32) {
     // wall-clock diagnostics stay local (never in a static the snapshot would compare)
     let us = [(t1 - t0).as_micros(), (t3 - t2).as_micros()];
     if std::env::var_os("MELEE_TAG_QUIET").is_none() {
-        eprintln!("tag: slot {slot} {} -> {} at frame {} (in place: spawn {} us, despawn {} us)", TRANSITION.from_kind,
-            TRANSITION.to_kind, LOGIC_FRAMES, us[0], us[1]);
+        eprintln!("tag: slot {slot} {} -> {} at frame {} (in place: spawn {} us, despawn {} us, heap0 free {}, heap1 free {})",
+            TRANSITION.from_kind, TRANSITION.to_kind, LOGIC_FRAMES, us[0], us[1], melee_runtime::tu::lbheap::lbHeap_Free(0),
+            melee_runtime::tu::lbheap::lbHeap_Free(1));
     }
 }
 

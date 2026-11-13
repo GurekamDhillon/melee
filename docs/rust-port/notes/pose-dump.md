@@ -1,4 +1,4 @@
-# Pose dump (`melee pose-dump`), schema `pose-dump/1`
+# Pose dump (`melee pose-dump`), schema `pose-dump/2`
 
 A headless dump of a fighter's animation clips as per-frame joint poses, for animation tooling and as a future
 training-data format. Code: `rust/melee/src/pose_dump.rs`. Cross-check: `tools/rust-port/posedump/check_pose.py`.
@@ -45,7 +45,7 @@ What the engine adds that is NOT part of the clip (a consumer removes it):
 ```
 
 ### index.json (hand-written JSON, numbers in f32 shortest-round-trip form, non-finite as null)
-- `schema`: `"pose-dump/1"`. Any change to a field's meaning or the binary layout bumps it.
+- `schema`: `"pose-dump/2"`. Any change to a field's meaning or the binary layout bumps it.
 - `fighter`, `char_kind` (CharacterKind), `fighter_kind` (FighterKind), `evaluator`: `"engine-lab-preview"`,
   `facing`: 1, `wait_row_flags`: Wait's flag word, `rows`: number of motion rows, `joint_count`.
 - `joints[]`: `index`, `name`, `parent` (index, -1 for the root), `flags` (the live JObj flags), `anim_applied`
@@ -53,9 +53,12 @@ What the engine adds that is NOT part of the clip (a consumer removes it):
   `FighterPartsTable.joint_to_part` value), `rest`: the costume `HSD_Joint` `flags`, `scale`, `rotation` (Euler
   radians), `translation`, `inverse_bind` (the 3x4 `mtx`, row-major, or null). Joint order is the depth-first order of
   `Fighter.parts` (child before sibling).
-- Joint naming rule: `name` is the `Fighter_Part` name (`TopN`, `TransN`, `XRotN`, `YRotN`, `HipN`, `WaistN`, ...,
-  `ThrowN`, `TransN2`; part ids 0..52, the `FtPart_*` order in melee_types) when `joint_to_part[i]` is in 0..52 AND
-  `part_to_joint[that part] == i`; otherwise `JOBJ_<i>` with i the decimal joint index. Exported files use the same names.
+- Joint naming rule: `name` is the common part table's name for part p (`TopN`, `TransN`, `XRotN`, `YRotN`, `HipN`,
+  `WaistN`, ..., `WaistB` (16), ..., `LHaveN` (31), ..., `RHaveN` (49), ..., `ThrowN`, `ExtraN`; part ids 0..53,
+  `PART_NAMES` in pose_dump.rs) when p = `joint_to_part[i]` is in 0..53 (and below the table's `parts_num`) AND
+  `part_to_joint[p] == i`; otherwise `JOBJ_<i>` with i the decimal joint index. Exported files use the same names.
+  The decomp's `Fighter_Part` enum (`FtPart_*` in melee_types) has the right numeric ids but shifted NAMES from 16 on (it
+  lacks WaistB, LHaveN, RHaveN and has LHandNb, RHandNb, TransN2): do not name joints from it.
 - `clips[]`, one per motion row (the `ftData` animation table, `Fighter.x24`):
   `row`, `symbol` (FigaTree public name or null), `aj_offset`, `aj_size` (the row's place in Pl??AJ.dat), `flags`
   (`x10_animCurrFlags` as the big-endian word's value), `loop` (bit 30), `anim_vel` (bit 31, root motion),
@@ -95,8 +98,8 @@ value.
 - Joint 0 (TopN): position, facing turn (+pi/2 about Y) and model scale (Falcon 0.97).
 - Joints with `anim_applied: false` (FighterBone flags b0 / b5, so `ftAnim_8006E7B8` skips `HSD_JObjAnim` on them):
   Marth has 12 (cape bones 45-58, driven by dynamics). The clips do carry tracks for them; the game ignores them.
-- A per-joint scale on one thumb joint, from engine code rather than the clip: Falcon RThumbNb (57) about 1.031,
-  Marth LThumbNb (40) about 0.87.
+- A per-joint scale on one item-hold joint, from engine code rather than the clip: Falcon RHaveN (57) about 1.031,
+  Marth LHaveN (40) about 0.87.
 - Extraction never happens in the preview path for these two (Wait's flag word is 2, so bit 31 is clear).
 
 ### Track types and FObj streams (for readers of `tracks`)
@@ -118,5 +121,9 @@ frames per fighter: Falcon raw max 8.1e-6, world max 2.9e-4; Marth raw max 1.8e-
 against f64.
 
 ## Stability
-`pose-dump/1` is frozen: new information goes into new JSON keys (readers ignore unknown keys). A change to the .pose
-layout or to the meaning of a field bumps the schema to `pose-dump/2` and the .pose version.
+History: `pose-dump/1` (2026-11-12) named joints from the decomp `Fighter_Part` enum, wrong from part 16 on.
+`pose-dump/2` (2026-11-13) changes only joint names (the 54-part common table, `ExtraN` for part 53); the .pose binary is
+unchanged and keeps version 1.
+
+`pose-dump/2` is frozen: new information goes into new JSON keys (readers ignore unknown keys). A change to the .pose
+layout or to the meaning of a field bumps the schema to `pose-dump/3` (and the .pose version when the binary changes).

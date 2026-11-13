@@ -1,5 +1,5 @@
 //! `melee pose-dump --fighter NAME (--row N | --symbol S | --all) --out DIR [--iso ISO] [--raw] [--mods DIR [--enable a,b]]`: headless dump of a
-//! fighter's animation clips as per-frame joint poses (format: docs/rust-port/notes/pose-dump.md, schema `pose-dump/1`).
+//! fighter's animation clips as per-frame joint poses (format: docs/rust-port/notes/pose-dump.md, schema `pose-dump/2`).
 //!
 //! The reference evaluator is the booted engine's own path: a VS match on Final Destination is booted with idle pads,
 //! and each clip is played through the Lab preview hook (`ScriptGame_LabSetPreviewRow` + `Fighter_ChangeMotionState`
@@ -18,17 +18,20 @@ use std::fmt::Write as _;
 use std::io::Write as _;
 use std::process::ExitCode;
 
-pub const SCHEMA: &str = "pose-dump/1";
+pub const SCHEMA: &str = "pose-dump/2";
 const MAGIC: &[u8; 4] = b"MPD1";
 const VERSION: u32 = 1;
 /// u32 track mask + raw SRT 9 + engine SRT 9 + world 12
 const WORDS_PER_JOINT: u32 = 31;
-const PART_NAMES: [&str; 53] = [
+/// The common fighter part table, part id -> joint name (54 parts). NOT the decomp `Fighter_Part` enum's names: that
+/// enum lacks WaistB (16), LHaveN (31) and RHaveN (49) and so is shifted from 16 on (the numeric ids gameplay uses are
+/// right; only its names are off). Rest-pose geometry on Falcon and Marth confirms this table.
+const PART_NAMES: [&str; 54] = [
     "TopN", "TransN", "XRotN", "YRotN", "HipN", "WaistN", "LLegJA", "LLegJ", "LKneeJ", "LFootJA", "LFootJ", "RLegJA",
-    "RLegJ", "RKneeJ", "RFootJA", "RFootJ", "BustN", "LShoulderN", "LShoulderJA", "LShoulderJ", "LArmJ", "LHandN",
-    "L1stNa", "L1stNb", "L2ndNa", "L2ndNb", "L3rdNa", "L3rdNb", "L4thNa", "L4thNb", "LThumbNa", "LThumbNb", "LHandNb",
-    "NeckN", "HeadN", "RShoulderN", "RShoulderJA", "RShoulderJ", "RArmJ", "RHandN", "R1stNa", "R1stNb", "R2ndNa",
-    "R2ndNb", "R3rdNa", "R3rdNb", "R4thNa", "R4thNb", "RThumbNa", "RThumbNb", "RHandNb", "ThrowN", "TransN2",
+    "RLegJ", "RKneeJ", "RFootJA", "RFootJ", "WaistB", "BustN", "LShoulderN", "LShoulderJA", "LShoulderJ", "LArmJ",
+    "LHandN", "L1stNa", "L1stNb", "L2ndNa", "L2ndNb", "L3rdNa", "L3rdNb", "L4thNa", "L4thNb", "LHaveN", "LThumbNa",
+    "LThumbNb", "NeckN", "HeadN", "RShoulderN", "RShoulderJA", "RShoulderJ", "RArmJ", "RHandN", "R1stNa", "R1stNb",
+    "R2ndNa", "R2ndNb", "R3rdNa", "R3rdNb", "R4thNa", "R4thNb", "RHaveN", "RThumbNa", "RThumbNb", "ThrowN", "ExtraN",
 ];
 /// Two-letter file codes (Pl<code>AJ.dat / Pl<code>Nr.dat), by the scenario's character names; only for `--raw`.
 const CODES: [(&str, &str); 26] = [
@@ -252,7 +255,7 @@ unsafe fn run(e: &mut melee_engine::Engine, fighter: &str, ckind: i32, dir: &std
         parent[i] = sg::ScriptGame_JointParent(0, i as i32);
         jflags[i] = if j.is_null() { 0 } else { (*j).flags };
         let p = *(*pt).joint_to_part.add(i) as i32;
-        let unique = (p as usize) < PART_NAMES.len() && *(*pt).part_to_joint.add(p as usize) as usize == i;
+        let unique = (p as usize) < PART_NAMES.len() && p < (*pt).parts_num as i32 && *(*pt).part_to_joint.add(p as usize) as usize == i;
         part[i] = p;
         name[i] = if unique { PART_NAMES[p as usize].to_string() } else { format!("JOBJ_{i}") };
     }
@@ -474,6 +477,19 @@ mod tests {
 
     /// A synthetic stream (no disc data): LIN x2 (header 0x12: op 2, count 2) with u16 values at shift 12,
     /// value 0x3000 = 3.0, wait 5, value 0x1000 = 1.0, last wait 0.
+    #[test]
+    fn part_names_table() {
+        assert_eq!(PART_NAMES.len(), 54);
+        let mut u: Vec<&str> = PART_NAMES.to_vec();
+        u.sort();
+        u.dedup();
+        assert_eq!(u.len(), 54, "names are unique");
+        for (i, n) in [(0, "TopN"), (1, "TransN"), (15, "RFootJ"), (16, "WaistB"), (17, "BustN"), (22, "LHandN"), (31, "LHaveN"), (33, "LThumbNb"),
+            (35, "HeadN"), (40, "RHandN"), (49, "RHaveN"), (51, "RThumbNb"), (52, "ThrowN"), (53, "ExtraN")] {
+            assert_eq!(PART_NAMES[i], n, "part {i}");
+        }
+    }
+
     #[test]
     fn decode_keys_little_endian_u16() {
         let s = [0x12u8, 0x00, 0x30, 0x05, 0x00, 0x10, 0x00];

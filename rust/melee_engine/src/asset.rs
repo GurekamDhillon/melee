@@ -13,6 +13,7 @@
 //! Files under [`MIN_BYTES`] (the per-action animation archives, small menus) keep the old in-place decode in both
 //! modes: a plan buys nothing there.
 //!
+//! `MELEE_ASSET_SERVICE=off` disables the service (the in-place decode of platforms without the recording heap).
 //! `MELEE_ASSETS=off` turns the worker and the hints off (every load is prepared on the spot: the byte-identity test's
 //! reference mode); `MELEE_ASSET_LOG=1` logs hints, hits and misses.
 
@@ -861,7 +862,9 @@ pub fn init(iso: Option<String>) {
     let _ = crate::archive::reclaim_flags(); // before any decode (see there)
     crate::arena::start_prefault();
     let _ = crate::archive::decode_prof_on(); // its first read allocates: never on the asset path (a decode)
-    if !recheap::init() {
+    // MELEE_ASSET_SERVICE=off: no service, every load is the old in-place decode (what a platform without the recording
+    // heap runs, e.g. Linux): lets that path be tested on Windows
+    if std::env::var("MELEE_ASSET_SERVICE").is_ok_and(|v| v == "off") || !recheap::init() {
         return;
     }
     let worker = std::env::var("MELEE_ASSETS").is_ok_and(|v| v == "on") && iso.is_some(); // merge build: off unless MELEE_ASSETS=on

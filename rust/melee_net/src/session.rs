@@ -66,6 +66,8 @@ pub trait RbGame {
     /// One logic frame: simulates `frame() + 1` with the session's inputs. `resim` is
     /// `gw_Snap_SessionResim` (side effects such as sound must be gated while it is set).
     fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], resim: bool);
+    /// Diagnostics (MELEE_SYNCTEST_DIFF): print where `a` and `b` differ.
+    fn diff_snaps(&self, _a: &Self::Snapshot, _b: &Self::Snapshot) {}
     /// The game could not complete its last frame (native port only: a code path that is not ported
     /// yet was reached, typically on a mispredicted input). The frame counter did not move and the
     /// state is half-stepped, so the session must not snapshot or hash it; it waits for the
@@ -1290,6 +1292,12 @@ impl<G: RbGame> SyncTest<G> {
                 let (full2, cur2) = (g.state_hash(), g.game_hash());
                 self.checked += 1;
                 if full1 != full2 || cur1 != cur2 {
+                    if self.mismatches.is_empty() && std::env::var_os("MELEE_SYNCTEST_DIFF").is_some() {
+                        if let Some(a) = self.snaps.get(fr).and_then(|e| e.1.clone()) {
+                            eprintln!("synctest diff at frame {fr} (first pass vs resim):");
+                            g.diff_snaps(&a, &g.save());
+                        }
+                    }
                     self.mismatches.push((fr, full1, full2, cur1, cur2));
                 }
             }

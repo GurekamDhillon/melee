@@ -3835,6 +3835,7 @@ unsafe fn road_frame() {
         }
         if p == 0 {
             S.road_cur = (S.road_cur + d).clamp(0, n - 1);
+            log(b"envoy: road cursor ", S.road_cur);
         } else {
             S.road_flag = ((S.road_flag - 1).max(0) + d).clamp(0, n - 1) + 1;
         }

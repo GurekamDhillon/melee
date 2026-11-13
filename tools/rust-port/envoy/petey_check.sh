@@ -9,7 +9,7 @@
 #   idle   no hits for 2600 frames: the attack loop (Wait A -> basket -> Wait B -> menu), wait lengths inside the
 #          parameter ranges at L 2.5, the baskets' shake at motion frame 70 and voice at 17, the jump chain's sounds
 #          and shakes, the landing's large shake at frame 2
-#   hits   a cage hit in a wait (flinch), body hits to 50% (Angry, L 3.3), to 25% (L 4.1), then under 10% (death:
+#   hits   a cage hit in a wait (no flinch), body hits to 50% (Angry when the wait ends, L 3.3), to 25% (L 4.1), then under 10% (death:
 #          the lower cage's princess freed, Down with its sounds and shakes, the carrier KO DOWN_END frames later)
 #   break  one cage taken to 0 in a single hit: Down by the cage-break path, that side freed
 #   sync   synctest depth 4 over 3000 frames with the `hits` schedule: 0 mismatches
@@ -85,7 +85,13 @@ PY
       ;;
     hits)
       play hits 2600 MELEE_PETEY_TEST_HITS="$HITS"
-      order hits "cage hit in a wait -> DamageLeft (status 13) with its sound, then back to the attack" 'test hit l 16' 'status [23] -> 13 ' 'sound 9594 \(motion 3 frame 0\)' 'status 13 -> [45] '
+      python - "$(L hits)" <<'PY' || fail=1
+import re, sys
+t = open(sys.argv[1], errors='replace').read()
+fl = re.findall(r'status \d+ -> 1[34] ', t)
+print(('FAIL' if fl else 'ok  '), 'hits: no flinch (DamageLeft/Right) on a cage hit in a wait (observed Brawl: 0 of 5)', fl[:2])
+sys.exit(1 if fl else 0)
+PY
       order hits "50% -> phase 1 (L 3.3) -> Angry with roar and shakes" 'test hit b 66' 'phase 1 \(L 3.3\)' 'status [23] -> 6 ' 'shake 1 \(motion 0 frame 4\)' 'sound 9592 \(motion 0 frame 9\)' 'status 6 -> [45] '
       order hits "25% -> phase 2 (L 4.1), no status change" 'test hit b 39' 'phase 2 \(L 4.1\)'
       order hits "under 10% + a hit -> dying, lower (left) cage freed, Down, KO" 'test hit b 22' 'sound 8837' 'status 15 -> 1 ' 'dying \(lower cage 0' 'sound 9612 \(motion 5 frame 0\)' 'shake 2 \(motion 5 frame 1\)' 'sound 9596 \(motion 5 frame 152\)' 'defeated \(cause 1, freed side 0\)'

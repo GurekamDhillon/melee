@@ -750,14 +750,9 @@ unsafe fn cage_events(hit_any: bool, cage_hit: [bool; 2]) {
             return;
         }
     }
-    // event 1: a damaged cage makes the boss flinch, only from the waits
-    for c in 0..2 {
-        if cage_hit[c] && (B.st == ST_WAIT_A || B.st == ST_WAIT_B) && !B.cage_broken {
-            B.flinch_to = if B.st == ST_WAIT_A { ST_CHOOSE_BASKET } else { ST_MENU };
-            enter(if c == 0 { ST_DAMAGE_L } else { ST_DAMAGE_R });
-            break;
-        }
-    }
+    // event 1 (the spec's 30-frame flinch on a cage hit in a wait) is not taken: in the observed Brawl fight none of
+    // five cage hits during a wait made him flinch; the wait carried on (obs2-summary, owner decision Nov 13).
+    let _ = cage_hit;
     // 0x1400 / 0x1401: the phase-up rules
     let low = fmin(cage_pct(0), cage_pct(1));
     if B.cage_ctr == 0 && low <= tun().phase1_pct {
@@ -855,8 +850,10 @@ unsafe fn rules() {
         enter(ST_DOWN);
         return;
     }
+    // the phase-up roar waits for the current wait to end (observed: it began when the wait ran out, ~65 frames
+    // after the 50% hit, rather than interrupting it)
     if st == ST_WAIT_A || st == ST_WAIT_B {
-        if B.rule28 && B.phase == 0 {
+        if B.rule28 && B.phase == 0 && B.sf as f32 >= B.t_out {
             B.rule28 = false;
             B.phase = 1;
             B.cage_ctr = 1;

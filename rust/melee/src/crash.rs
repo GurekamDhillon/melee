@@ -405,10 +405,11 @@ mod raw {
 mod raw {
     extern "C" {
         fn mkdir(path: *const u8, mode: u32) -> i32;
-        fn open(path: *const u8, flags: i32, mode: u32) -> i32;
+        fn open(path: *const i8, flags: i32, ...) -> i32;
         fn write(fd: i32, b: *const u8, n: usize) -> isize;
         fn fsync(fd: i32) -> i32;
-        fn close(fd: i32) -> i32;
+        #[link_name = "close"]
+        fn sys_close(fd: i32) -> i32;
         fn getpid() -> i32;
         fn _exit(code: i32) -> !;
     }
@@ -425,7 +426,7 @@ mod raw {
         let flags = 0x1 | 0x200 | 0x400;
         #[cfg(not(target_os = "macos"))]
         let flags = 0o1 | 0o100 | 0o1000;
-        let f = open(p.b.as_ptr(), flags, 0o644);
+        let f = open(p.b.as_ptr() as *const i8, flags, 0o644u32);
         PATH_SET.store(true, core::sync::atomic::Ordering::SeqCst);
         if f < 0 {
             return;
@@ -451,7 +452,7 @@ mod raw {
     pub fn close() {
         let f = FILE.swap(-1, core::sync::atomic::Ordering::SeqCst);
         if f >= 0 {
-            unsafe { close(f) };
+            unsafe { sys_close(f) };
         }
     }
     pub fn path() -> Option<&'static str> {

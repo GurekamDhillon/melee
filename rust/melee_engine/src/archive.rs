@@ -262,8 +262,13 @@ unsafe fn host_parse_timed(archive: *mut HSD_Archive, src: *mut u8, file_size: u
     let dec: Box<Decoded> = match crate::asset::load(src, file_size) {
         Some(d) => d,
         None => {
-            crate::dat_custom::forget_banks(src as usize + HEADER_BYTES);
+            // the particle-bank memo lives for this one decode only (as on the asset path: begin_prepare /
+            // end_prepare). Kept across frames, its table (a game-arena block) was rewound by a snapshot load while
+            // the thread-local map kept pointing at it: lookups after a rollback probed a stale or rewritten table
+            // (an endless probe after a stage switch) and skipped building banks the resimulation must build.
+            crate::dat_custom::reset_banks();
             let mut d = decode(src, file_size);
+            crate::dat_custom::reset_banks();
             d.effects = Vec::new();
             Box::new(d)
         }

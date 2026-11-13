@@ -535,9 +535,24 @@ pub unsafe fn tick() {
         // §6.1 init: side 0, jumpCount 1, phase 0; the fight opens in Wait A
         enter(ST_WAIT_A);
         eprintln!("petey: fight begins, cages {} difficulty {} L {:.1}", B.cage_max, B.diff, level());
+        match crate::tu::petey_model::get().and_then(|m| m.arena_blast) {
+            Some(z) => eprintln!("petey: arena blast zones {:.0} {:.0} {:.0} {:.0}, knockback x{}", z[0], z[1], z[2], z[3], kb_scale_pm()),
+            None => eprintln!("petey: no arena blast zones (stage's own), knockback x{}", kb_scale_pm()),
+        }
         melee_world::tu::ifstatus::ifStatus_802F6788(B.carrier_slot as u8);
     }
     hide_marker(B.carrier_slot);
+    // the arena's own blast zones, read from the player's Brawl files at run time (the boss archive's stage position
+    // model): the fight runs on Final Destination, whose closer zones turned Brawl's launch speeds into one-shots.
+    // Applied every frame of the fight (idempotent, rollback-safe); the next stage load restores FD's. Without the
+    // files FD's zones stay and the knockback falls back to x0.8 (kb_scale_pm).
+    if let Some(z) = crate::tu::petey_model::get().and_then(|m| m.arena_blast) {
+        let bz = &mut *core::ptr::addr_of_mut!(crate::tu::script_game::stage_info.blast_zone);
+        bz.left = z[0];
+        bz.right = z[1];
+        bz.top = z[2];
+        bz.bottom = z[3];
+    }
     let cf = &mut *carrier;
     if !B.ko_done {
         cf.set_invisible(1);
@@ -605,7 +620,7 @@ pub unsafe fn tick() {
     }
     if std::env::var_os("MELEE_PETEY_LOG").is_some() && (B.lag_prev > 0.0 || KB_LOG > 0) {
         // the victims' first frames of flight (launch angle / speed), for the Brawl comparison
-        KB_LOG = if B.lag_prev > 0.0 && cf.dmg.x195c_hitlag_frames <= 0.0 { 4 } else { KB_LOG - 1 };
+        KB_LOG = if B.lag_prev > 0.0 && cf.dmg.x195c_hitlag_frames <= 0.0 { 150 } else { KB_LOG - 1 };
         if KB_LOG > 0 {
             for s in 0..4 {
                 let v = fighter_of(s, 0);
@@ -1252,7 +1267,18 @@ fn libm_sin(a: f32) -> f32 {
 // ---------------------------------------------------------------- hitboxes (§8)
 
 /// Petey's knockback scale for Melee fighters, per mille (growth and base; see `hitboxes`).
-pub const KB_SCALE_PM: u32 = 800;
+pub const KB_SCALE_PM_DEFAULT: u32 = 1000;
+/// Without the arena's blast zones (no local Brawl files): FD's closer zones, so Brawl's knockback x0.8 (the largest
+/// 0.05 step at which no Petey attack KOs a light or fast fighter from 0-100% in an FD launch model).
+pub const KB_SCALE_PM_NO_ARENA: u32 = 800;
+
+/// The knockback scale knob (`MELEE_PETEY_KB_PM`, per mille, 500..1500; fixed for the process). 1000 = Brawl's.
+fn kb_scale_pm() -> u32 {
+    static V: std::sync::OnceLock<u32> = std::sync::OnceLock::new();
+    *V.get_or_init(|| {
+        std::env::var("MELEE_PETEY_KB_PM").ok().and_then(|v| v.trim().parse::<u32>().ok()).map(|v| v.clamp(500, 1500)).unwrap_or_else(|| if crate::tu::petey_model::get().is_some_and(|m| m.arena_blast.is_some()) { KB_SCALE_PM_DEFAULT } else { KB_SCALE_PM_NO_ARENA })
+    })
+}
 
 #[derive(Clone, Copy, Default)]
 struct HitDef {
@@ -1385,14 +1411,11 @@ unsafe fn hitboxes(cf: &mut Fighter) {
             h.damage = d.dmg as f32;
             h.unk_count = d.dmg;
             h.kb_angle = d.angle;
-            // Melee conversion (owner feedback: "one-shot"): Brawl's launch speeds are reproduced exactly (measured
-            // basket 3.41 in Brawl vs 3.36 here), but a Melee stage's blast zones sit much closer to Petey's +-68
-            // landing spots than his Brawl arena's, so the same speed KOs light fighters at ~50%. Rule: growth and
-            // base knockback x0.8 (knockback x0.8, travel x0.64), the largest 0.05 step at which no Petey attack KOs
-            // a light or fast-falling fighter from 0-100% in the FD launch model. Set knockback (contact) unchanged.
-            h.x24 = d.kbg * KB_SCALE_PM / 1000;
+            // knockback scale knob (MELEE_PETEY_KB_PM, default 1000 = Brawl's): the one-shots came from FD's close blast
+            // zones, now replaced by the Brawl arena's (read at run time), so Brawl's growth and base apply unchanged.
+            h.x24 = d.kbg * kb_scale_pm() / 1000;
             h.x28 = d.wkb;
-            h.x2C = d.bkb * KB_SCALE_PM / 1000;
+            h.x2C = d.bkb * kb_scale_pm() / 1000;
             h.element = 0;
             h.x34 = 0;
             h.sfx_severity = 1;

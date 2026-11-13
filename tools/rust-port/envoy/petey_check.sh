@@ -85,6 +85,21 @@ if not wb or min(wb) < 1 or max(wb) > 18: bad = 1
 print(('FAIL' if bad else 'ok  '), 'idle: Wait A frames', sorted(set(wa)), 'in 77..122; Wait B frames', sorted(set(wb)), 'in 1..18')
 sys.exit(bad)
 PY
+      python - "$(L idle)" <<'PY' || fail=1
+import re, sys
+# no KO under 100%: the victim's position stays within the blast zones the log reports
+t = open(sys.argv[1], errors='replace').read()
+z = re.search(r'petey: arena blast zones (-?\d+) (-?\d+) (-?\d+) (-?\d+), knockback x(\d+)', t)
+if not z:
+    print('FAIL idle: no arena blast zones in the log (needs the local Brawl files)'); sys.exit(1)
+zl, zr, zt, zb = (float(z.group(i)) for i in range(1, 5))
+v = [(float(a), float(b), float(c)) for a, b, c in re.findall(r'petey: f\d+ victim 0 pos (-?[\d.]+) (-?[\d.]+) pct ([\d.]+)', t)]
+lo = [p for p in v if p[2] < 100]
+out = [p for p in lo if p[0] < zl or p[0] > zr or p[1] > zt or p[1] < zb]
+far = max((abs(p[0]) for p in lo), default=0); high = max((p[1] for p in lo), default=0)
+print(('FAIL' if out or not lo else 'ok  '), 'idle: knockback x%s, launches under 100%% stay inside the arena blast zones: %d samples, max |x| %.0f, max y %.0f' % (z.group(5), len(lo), far, high))
+sys.exit(1 if out or not lo else 0)
+PY
       ;;
     hits)
       play hits 2600 MELEE_PETEY_TEST_HITS="$HITS"

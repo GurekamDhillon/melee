@@ -158,7 +158,8 @@ Petey's boxes keep Brawl's damage, angles and knockback formula inputs, and the 
 much closer to his +-68 landing spots than his Brawl arena's. Brawl and Melee use the same knockback formula
 and the same 0.03 / 0.051 speed constants, so nothing was double-scaled. The fresh run's fight 5 is difficulty 5
 (Normal, L 2.5), and Envoy adds no damage or knockback multiplier to enemy hits.
-**Rule:** growth and base knockback of every Petey box x0.8 (`KB_SCALE_PM`), so knockback x0.8 and travel
-x0.64; set (weight-based) knockback unchanged. It is the largest 0.05 step at which, in a launch model on FD
-(Melee gravity and fall speed, grounded spikes bounce at 0.8, launched from x 68, no DI), no Petey attack KOs
-Mario, Kirby or Fox from 0, 50 or 100%. Unscaled, the landing side box KOed Kirby and Fox at 50%.
+**Superseded the same day:** the fight ran on Final Destination, whose blast zones are much closer than those of
+Brawl's Petey arena. The arena's blast zones are now read at run time from the player's Brawl files (the boss
+archive's stage position model, bones Dead0N / Dead1N; values not recorded here) and applied every frame of the
+fight, and Brawl's knockback is used unchanged. `MELEE_PETEY_KB_PM` (per mille) is the knob; without the Brawl
+files the zones stay FD's and the scale falls back to 800. Not matched: FD's floor is narrower than the arena's.

@@ -1490,6 +1490,7 @@ impl PresHost {
                 let mut sh = self.shared.borrow_mut();
                 if sh.door != 0 && sh.pending.is_none() && !sh.stack.contains(&sh.door) {
                     sh.pending = Some(sh.door as i64);
+                    eprintln!("envoy: camp opened");
                 }
             }
         }
@@ -1503,6 +1504,9 @@ impl PresHost {
             }
         };
         for s in leave {
+            if s == self.shared.borrow().door {
+                eprintln!("envoy: camp closed");
+            }
             let m = self.shared.borrow().scenes[s as usize - 1].module as usize;
             self.shared.borrow_mut().stack.pop();
             if let Some(f) = self.mods[m].leave {

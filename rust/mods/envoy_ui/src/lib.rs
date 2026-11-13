@@ -96,8 +96,11 @@ struct Camp {
     after_fight: bool,
     /// Presents since the camp opened: the press that opened it must not also choose a row.
     age: u32,
+    /// The camp is closing back to the main menu: the capture is held until every button is up, so the press that
+    /// closed it (B, or A on Back / Leave) never reaches the retail menu as a fresh press (B there goes to the title).
+    closing: bool,
 }
-static mut CAMP: Camp = Camp { age: 0, scene: 0, open: false, cap: 0, root: 0, btn: [0; NB], confirm: false, party: false, after_fight: false };
+static mut CAMP: Camp = Camp { closing: false, age: 0, scene: 0, open: false, cap: 0, root: 0, btn: [0; NB], confirm: false, party: false, after_fight: false };
 
 fn label(n: u32, t: &str) {
     unsafe { gd_ui_node_label(n, t.as_ptr(), t.len() as u32) };
@@ -224,6 +227,7 @@ pub extern "C" fn gd_ui_scene_enter(scene: u32) {
             return;
         }
         c.open = true;
+        c.closing = false;
         c.age = 0;
         c.confirm = false;
         c.party = false;
@@ -597,14 +601,19 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
             let e = &mut *core::ptr::addr_of_mut!(ENC);
             e.clear();
             e.space(SPACE_WINDOW, sc);
-            if CAMP.open {
+            if CAMP.open && CAMP.closing {
+                if !camp::any_held(0) && !camp::any_held(1) {
+                    CAMP.closing = false;
+                    camp_close();
+                }
+            } else if CAMP.open {
                 CAMP.age += 1;
                 e.space(SPACE_BAND, 1.0);
                 let mut v = [0i32; VW];
                 let view = gd_ui_envoy(v.as_mut_ptr(), VW as u32) == 0 && v[V_MAGIC] == VIEW_MAGIC && v[V_STATE] != 0;
                 let act = camp::frame(e, CAMP.after_fight, if view { Some(&v) } else { None }, saved(), st & ST_NO_BRAWL != 0);
                 if act == camp::DO_CLOSE {
-                    camp_close();
+                    CAMP.closing = true;
                 } else if act & 0xFF == camp::DO_ARM {
                     let op = act >> 8;
                     let launch = if CAMP.after_fight { 0 } else { ARM_LAUNCH };
@@ -617,10 +626,18 @@ pub extern "C" fn gd_ui_frame(_present: u32) {
                         }
                         2 => { gd_ui_envoy_arm(ARM_CONTINUE | launch); }
                         3 => { gd_ui_envoy_arm(ARM_ABANDON); }
-                        4 => { gd_ui_envoy_arm(4); }
+                        4 => {
+                            gd_ui_envoy_arm(4);
+                            if !CAMP.after_fight {
+                                // Leave (the run kept): back to the main menu, the A press held back from it too
+                                CAMP.closing = true;
+                            }
+                        }
                         _ => { gd_ui_envoy_arm(ARM_OFF); }
                     }
-                    camp_close();
+                    if !CAMP.closing {
+                        camp_close();
+                    }
                 }
             } else {
                 e.space(SPACE_BAND, 1.0);

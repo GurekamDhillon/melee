@@ -65,6 +65,15 @@ pub struct Pad {
     pub start: bool,
 }
 
+/// Any button or trigger held on `port` (a pad that cannot be read counts as nothing held).
+pub unsafe fn any_held(port: usize) -> bool {
+    let mut o = [0u8; 16];
+    if gd_ui_pad(port as u32, o.as_mut_ptr()) != 0 {
+        return false;
+    }
+    u16::from_le_bytes([o[0], o[1]]) & 0x1F7F != 0
+}
+
 pub unsafe fn read_pad(port: usize) -> Pad {
     let mut o = [0u8; 16];
     if gd_ui_pad(port as u32, o.as_mut_ptr()) != 0 {

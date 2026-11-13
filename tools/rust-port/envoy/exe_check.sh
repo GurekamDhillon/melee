@@ -13,3 +13,18 @@ exe_banner() {
   local id; id=$(grep -a -o 'melee \[[A-Za-z0-9_./-]* [0-9a-f]\{7,12\}' "$exe" 2>/dev/null | head -1 | cut -c8-)
   echo "$1: exe $exe (build ${id:-unknown})"
 }
+# pad_for_disc FILE OUTDIR [SKIP]: echo the pad script to use. With ACE=1 (an m-ex disc such as ACE, which boots
+# straight to the title: no memcard / opening scenes, the main menu about 200 frames sooner), a copy without the
+# script's second Start (lines 3-4: the "200 idle, Start" that the vanilla boot needs) is written; a script that has
+# no boot presses (SKIP=n: its first idle shortened by n frames instead).
+pad_for_disc() {
+  local f=$1 o=$2 skip=${3:-}
+  if [ "${ACE:-0}" != 1 ]; then echo "$f"; return; fi
+  local c="$o/$(basename "$f" .txt)_ace.txt"
+  if [ -n "$skip" ]; then
+    awk -v s="$skip" 'BEGIN{d=0} /^#/||NF==0{print;next} d==0{$1=$1-s; d=1} {print}' "$f" > "$c"
+  else
+    awk 'BEGIN{n=0} /^#/||NF==0{print;next} {n++; if(n==3||n==4) next; print}' "$f" > "$c"
+  fi
+  echo "$c"
+}

@@ -567,6 +567,7 @@ fn install_fault_handler() {
     extern "system" {
         fn SetUnhandledExceptionFilter(f: Option<unsafe extern "system" fn(*mut ExceptionPointers) -> i32>) -> *mut core::ffi::c_void;
         fn RtlCaptureStackBackTrace(skip: u32, count: u32, frames: *mut *mut core::ffi::c_void, hash: *mut u32) -> u16;
+        fn GetCurrentThreadStackLimits(low: *mut usize, high: *mut usize);
     }
     unsafe extern "system" fn filter(p: *mut ExceptionPointers) -> i32 {
         use core::fmt::Write as _;
@@ -609,7 +610,12 @@ fn install_fault_handler() {
             // MELEE_CRASH_STACK=N: list up to N return addresses (default 24), scanning deeper, to reach the caller
             // of a deep recursion (a model load)
             let want = CRASH_STACK.load(std::sync::atomic::Ordering::Relaxed);
-            for i in 0..(512usize).max(want * 16) {
+            // never past the top of this thread's stack: a shallow stack (crash-test) ends within the scan, and the
+            // read past it faulted again inside the filter, so no report was written at all
+            let (mut lo, mut hi) = (0usize, 0usize);
+            GetCurrentThreadStackLimits(&mut lo, &mut hi);
+            let words = if rsp >= lo && rsp < hi { (hi - rsp) / 8 } else { 0 };
+            for i in 0..(512usize).max(want * 16).min(words) {
                 let v = *(rsp as *const usize).add(i);
                 if v > base && v < base + 0x400_0000 {
                     let _ = writeln!(fault, "stack[{i:3}]:      melee.exe+0x{:X}", v - base);
@@ -759,3 +765,4 @@ pub fn crash_test(kind: &str) -> ! {
         _ => std::process::abort(),
     }
 }
+

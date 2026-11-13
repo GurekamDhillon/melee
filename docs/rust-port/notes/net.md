@@ -524,3 +524,19 @@ An earlier run without the tag landing (14637 frames, 2380 rollbacks, 8 switch e
 With the in-place tag prototype (`TAG_INPLACE=1`, notes/envoy-tag-swap.md): 7503 frames, 0 differing, 1210 rollbacks.
 So R1 holds for CPUs + stage shifts + a tag; not yet covered: an Envoy-armed run (the reward hold, the boss) over two
 peers, which needs the `envoy=` handshake token (milestone 6).
+
+## Particle-bank memo outliving a decode (port/desync1, 2026-11-13)
+- Symptom (Linux soak, envoy `switch_torture.sh` fight 3, `v3_slice` loop3): synctest full-hash mismatches with the
+  curated hash equal (744 at depth 4 from frame 3088, right after a stage switch), values varying run to run; and
+  under load an endless busy-spin after a stage switch (perf: `dat_custom::ptcl_cmd` -> `memo` -> hashbrown probe).
+- Cause: `dat_custom::BANKS` (the particle cmd/tex bank memo) is a thread-local whose HashMap table is a game-arena
+  block. On the in-place decode path (`archive::host_parse` when the asset service is absent: every non-Windows
+  build, since the recording heap is Windows-only) it lived across frames, trimmed per file by `forget_banks`. A
+  snapshot load rewinds the arena but not the thread-local, so after a rollback the map pointed at a rewound table:
+  lookups hit entries from the discarded timeline (the resimulated stage load skipped building banks the first pass
+  built: different heap layout, the full-hash mismatch) or probed a table whose control bytes had been overwritten
+  (the endless probe). Windows normal runs use the asset service, whose `begin_prepare`/`end_prepare` already reset
+  the memo per decode, so they were unaffected.
+- Fix: the memo lives for one decode on every path (`dat_custom::reset_banks` before and after the in-place decode).
+  `MELEE_ASSET_SERVICE=off` runs the in-place path on Windows (repro: 744 mismatches before, 0 after at depths 4/7).
+- `MELEE_SYNCTEST_DIFF=1` prints the page diff (first pass vs resimulation) at the first synctest mismatch.

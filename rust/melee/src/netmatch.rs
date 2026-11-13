@@ -202,6 +202,9 @@ pub mod engine_game {
             self.e.frames = s.frames;
             self.e.ended = s.ended;
         }
+        fn diff_snaps(&self, a: &EngSnap, b: &EngSnap) {
+            self.with_base(|bs| for l in bs.diff(&a.mem, &b.mem, 60) { eprintln!("  {l}"); });
+        }
         fn state_hash(&self) -> u32 {
             timed(2, || self.with_base(|b| b.page_hash()))
         }

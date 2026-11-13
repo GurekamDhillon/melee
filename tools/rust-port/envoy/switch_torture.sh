@@ -12,6 +12,7 @@
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/switch_torture.sh
 #   OUT=dir; FRAMES (default 14400); FIGHTS (start fights, default "1 2 3c 5"; a trailing c = co-op);
 #   OLD=1 runs the pre-fix placement (MELEE_ENVOY_SWITCH_OLD=1), which must FAIL;
+#   RUN_TIMEOUT=secs per fight (default FRAMES/6+120): the game's own watchdog, plus an outer kill 30 s later.
 #   DEPTH=4 / 7 runs it as a synctest (0 mismatches required; log lines then repeat once per rollback pass).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -21,7 +22,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 command -v python >/dev/null 2>&1 || python() { python3 "$@"; }
 exe="${EXE:-$repo/build/cargo/release/melee}"; [ -e "$exe" ] || exe="$exe.exe"
 out="${OUT:-${TEMP:-/tmp}/switch_torture}"; mkdir -p "$out"
-frames="${FRAMES:-14400}"; fights="${FIGHTS:-1 2 3c 5}"; old="${OLD:-0}"; depth="${DEPTH:-0}"
+frames="${FRAMES:-14400}"; tmo="${RUN_TIMEOUT:-$((frames / 6 + 120))}"; fights="${FIGHTS:-1 2 3c 5}"; old="${OLD:-0}"; depth="${DEPTH:-0}"
 mods="$repo/build/mods-torture"; rm -rf "$mods"; mkdir -p "$mods"
 cp "$repo/build/mods/envoy_sim.wasm" "$mods/" || { echo "switch_torture: build the mods first"; exit 2; }
 fail=0
@@ -32,8 +33,9 @@ for f in $fights; do
   env "${coop[@]}" MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_TEST_P1CPU=1 \
     MELEE_ENVOY_START_FIGHT="$f" MELEE_ENVOY_TEST_DRIVES="torture" MELEE_ENVOY_SWITCH_OLD="$old" \
     MELEE_PAD_SCRIPT="$here/drives_pad.txt" MELEE_WINDOW_TITLE="switch torture $tag d$depth (${BRANCH_TAG:-envoy})" \
-    "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" --scenario pad_falcon_fox_fd --depth "$depth" --frames "$frames" \
-    --timeout 3000 >"$out/$tag.log" 2>&1
+    timeout -k 15 $((tmo + 30)) "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" --scenario pad_falcon_fox_fd \
+    --depth "$depth" --frames "$frames" --timeout "$tmo" >"$out/$tag.log" 2>&1
+  rc=$?; if [ $rc = 124 ] || [ $rc = 137 ]; then echo "melee: switch_torture killed the run after $((tmo + 30)) s (hung)" >>"$out/$tag.log"; fi
   python - "$out/$tag.log" "$tag" <<'PY' || fail=1
 import re, sys, collections
 log, tag = sys.argv[1], sys.argv[2]

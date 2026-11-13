@@ -173,3 +173,12 @@ won and the synctest has 0 mismatches. Results are appended below, dated.
 - switch_torture (FRAMES 14400, depth 0, RUN_TIMEOUT 6000): PASS on f1, f2, f3c, f5; 0 switch KOs, 0 misplaced, 0 mismatches.
 - zero_hitch_gate: NOT RUN: it refuses unless no other melee/cargo process runs, which the shared machine never was.
 - Open: Goombas render about Falcon's height (scale vs Brawl unverified); no Bill explosion effect.
+
+## Root motion (2026-11-13, owner: "root bone movement issues")
+Brawl clips carry the body's travel on TransN (Goomba Walk 4.7 / Run 14, Giant Goomba Walk 8 / Run 26.4, Primid Walk 20 /
+Run 35 / Push 12 / StepJump 11.5 units). Brawl's code consumes it as movement; our sim moves the enemy itself, so the
+drawn body slid off its collision position and snapped back on every loop. Fix in the shared Brawl loader
+(`petey_model::load_rigs` -> `Rig::strip_root_motion`, the halberd / Ultimate ports' 'strip' rule): x and z of TopN /
+TransN hold their frame-0 value; y kept; RotN sway kept. Presentation only: the check counts are unchanged. Proof:
+`scratch/envoy-subspace1/shots/rootmotion-<kind>.png` (top: model, bottom: the collision capsules, same frames).
+Petey's own `load` is not stripped (his hit / land points are read from the posed bones).

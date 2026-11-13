@@ -104,7 +104,7 @@ pub fn request(kind: usize) {
             });
             // told by the game thread (`get`): printing from here raced the snapshot's rewrite of std's statics
             *st.msg[kind].lock().unwrap_or_else(|e| e.into_inner()) = match &r {
-                Ok(m) => format!("subspace: {} model loaded ({} animations)", src.model, m.rig.anims.len()),
+                Ok(m) => format!("subspace: {} model loaded ({} animations){}", src.model, m.rig.anims.len(), m.rig.motion_log),
                 Err(e) => format!("subspace: no {} model ({e}); placeholder look", src.model),
             };
             let _ = st.slots[kind].set(r.ok());

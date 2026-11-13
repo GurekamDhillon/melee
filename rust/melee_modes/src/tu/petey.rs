@@ -223,9 +223,11 @@ pub fn active() -> bool {
     unsafe { B.st != ST_OFF || ARMED }
 }
 
-/// The partner is in a cage: no tags.
+/// The partner used to sit "in a cage" for the whole boss fight (no tags until a cage broke). The owner wants to
+/// switch characters against Petey like in every other fight, so the partner is never caged now; kept as the one
+/// switch point (tag_swap::partner_kind) should a caged-partner rule come back.
 pub fn partner_caged() -> bool {
-    unsafe { active() && B.cause == 0 }
+    false
 }
 
 /// Called by `envoy::match_begin` for the boss fight. The player count does not scale anything (Brawl has no such

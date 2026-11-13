@@ -23,7 +23,7 @@ becomes Petey on Final Destination; without the variable the level-9 Ganondorf s
 | switch-on | `envoy::match_begin`: plan word 26 (`P_BOSS`, set by envoy_sim on fight 5) and the env var; arena FD |
 | carrier | the fight's one CPU (slot 1): `cpu_kind` 0, invisible, intangible; Petey's attacks are its capsule slots (engine hit path); on a win it takes the bottom-blast KO so Envoy's win check runs |
 | per frame | `petey::tick` after `tag_swap::tick` (modhost post chain); skips frames where the match frame does not move |
-| partner in a cage | `tag_swap::partner_kind` is -1 while caged (no tags); stage shifts refused during the fight |
+| partner in a cage | dropped in candidate8 (owner: switching characters must work against Petey): `petey::partner_caged()` is always false, so tags work in the boss fight; stage shifts are still refused during the fight |
 | HUD | `gd_ui_petey` (read-only, 12 words) -> envoy_ui: HP bar, two cage bars, phase 2 / stun / result |
 | draw | `ftdrawcommon::BOSS_DRAW`, called in the carrier's render pass: body capsule, head, cage bars, the partner |
 

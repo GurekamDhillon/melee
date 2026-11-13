@@ -16,7 +16,8 @@
 #      the first session, so the stop opens): two players, each with their own drives firing (owners 0-1 and 2-3),
 #      each took a card at the stop (picks are banked to the stop since sessions; fight 2 has none). Foe drives are
 #      checked by v3_slice (loop3, roadstop). The row runs at least 9000 frames (the pack took about 5300 frames; 7300 since wave two brings new faces);
-#   6. petey: MELEE_ENVOY_BOSS=petey at fight 5 on the CPU run: drives fire on Petey (damage(amount)).
+#   6. petey: MELEE_ENVOY_BOSS=petey at fight 5 on the CPU run: drives fire on Petey (damage(amount)) and the player
+#      tags (tagauto): switching characters works in the boss fight.
 #   Every run prints its fire count (the loud-start band, envoy-core-v2.md 3.3).
 #   V3 (port/v3sim): the same six on the Heat rules: charge is by damage (the pad run no longer needs Bolt, which
 #   charges on 30% dealt), every test row carries `noshop`, the twin row's Echo is the V3 neighbour drive.
@@ -101,8 +102,9 @@ for d in $depths; do
     check 5 coop "$d" "$line" "$miss"
   fi
   if on petey; then
-    line=$(run petey "$d" "ember,bolt,nova,noshop/rush|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=4)
+    line=$(run petey "$d" "ember,bolt,nova,tagauto,noshop/rush|plague_bearer" MELEE_ENVOY_TEST_P1CPU=1 MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=4)
     miss=""; seen petey "$d" "envoy: drive fire" || miss="$miss (no fire on Petey)"
+    seen petey "$d" "envoy: quick tag" || miss="$miss (no tag in the boss fight)"
     check 6 petey "$d" "$line" "$miss"
   fi
 done

@@ -55,4 +55,34 @@ small (46 points, 36 planes + 6 / 6). The vertical shaft sections (e.g. 060004) 
 
 ## Missing
 
-RESULTS_PLACEHOLDER
+* Doors are linked by hand (`LINKS`); Brawl's own step/jump tables are not read. 080103 has a linked and an
+  unlinked door at the same spot on the slab; the linked one wins.
+* Look: some corridor geometry draws as stretched streaks (left edge of the corridor); the hut floor draws
+  untextured (flat beige); map geometry in front of the play plane can cover fighters, and right after a door the
+  camera takes a moment to catch up (on the ACE run the first frames back in the corridor show a wall).
+  The background is FD's. No moving map parts, no Brawl lighting/fog, no map animations.
+* Tap jump also fires on the door tilt (the fighter hops as the door opens).
+* Enemies are Envoy's Goomba, not Brawl's (the Subspace enemy lane is not merged); only the first four spawns.
+* Performance (owner's rule: no game-caused frame over 16 ms): NOT met. Profile of the door run (MELEE_PROFILE=1,
+  vanilla, 1815 frames): 9 frames over 16.7 ms, worst 64.1 ms at tick 8 (42.8 ms GPU pipeline creation for the
+  map's materials), 31.7 ms at the first entry into the hut (16.7 ms GPU pipelines: the hut's materials compile on
+  first draw), and 25-39 ms around the return through the third door. The machine was busy (other agents' runs,
+  CPU over 85% in 2 samples), so the door-time numbers are pessimistic, but the pipeline frames are real. Fix:
+  create every section's pipelines at map load (before the match), not on first draw.
+
+## Results (2026-11-13, after rebase onto port/desync1 70a0841ff)
+
+* Door chain, vanilla and ACE discs, same pad script: exit door on the floor -> slab door, slab door -> hut, hut
+  door -> slab. All three transitions fire and both fighters arrive together.
+* Gate: goldens, synctest (0 mismatches), audio, baselines, semantics lint (0), snapguard all ok; the one failure
+  is `lint: new R2 rust/melee/src/netmatch.rs`, which comes from the base (70a0841ff); this branch does not touch
+  that file.
+
+## What a second map costs
+
+1. Pick the archive(s); add one `SECS` line each (file, world offset, model name) and one `LINKS` line per door.
+2. Check the collision imports (moving or bone-bound collision objects need the moving-part work that is missing).
+3. Fix whatever material/texture the model reader does not handle yet for that map (the hut floor shows gaps).
+4. Pre-create its pipelines (nothing once the load-time pipeline fix exists).
+5. A pad-script door test and a profile run. About half a day for a static map; moving platforms, ladders, water
+   or autoscroll sections need new code each.

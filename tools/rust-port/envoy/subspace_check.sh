@@ -40,7 +40,9 @@ for d in $depths; do
     miss=""
     [ "$spawned" -ge 3 ] || miss="$miss (spawned $spawned of 3)"
     [ "$atk" -ge 1 ] || miss="$miss (no enemy attack landed)"
-    [ "$got" -ge 1 ] || miss="$miss (no player hit landed)"
+    # Bullet Bills reach the player before the Ready prompt lets them act and are spent on the hit (or fly off), so
+    # a player hit is not required for them; every other kind must be hit.
+    [ "$got" -ge 1 ] || [ "$name" = bill ] || miss="$miss (no player hit landed)"
     [ "$gone" -ge 3 ] || miss="$miss (beaten $gone of 3)"
     [ "$won" -ge 1 ] || miss="$miss (room not won)"
     grep -a -q 'panicked\|ARENA MISUSE\|crash' "$log" && miss="$miss (panic / crash line in the log)"

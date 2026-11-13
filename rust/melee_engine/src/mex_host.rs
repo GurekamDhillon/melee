@@ -957,6 +957,11 @@ pub fn by_name(name: &str, a: &[u64]) -> Option<u64> {
         "Mex_FighterName" => FighterName(i(0)) as usize as u64,
         "Mex_CssIconCount" => CssIconCount() as i64 as u64,
         "Mex_CssIconTable" => CssIconTable() as usize as u64,
+        // MELEE_CSS_TRACE=1: the CSS's m-ex grid/portrait trace (OSReport lines "mexcss:" / "css:")
+        "Mex_CssTraceEnabled" => {
+            static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+            *ON.get_or_init(|| std::env::var("MELEE_CSS_TRACE").map_or(false, |v| v.starts_with('1'))) as u64
+        }
         // the m-ex CSS's denser grid: the hand and the puck scale with it (the C's default; MELEE_CSS_CURSOR_SCALE=0 off)
         "Mex_CssCursorScaleEnabled" => (std::env::var("MELEE_CSS_CURSOR_SCALE").map_or(true, |v| !v.starts_with('0')) && CssIconCount() > 0) as u64,
         "Mex_InsigniaForExt" => InsigniaForExt(i(0)) as i64 as u64,

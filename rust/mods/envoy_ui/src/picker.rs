@@ -22,7 +22,7 @@ extern "C" {
 static mut ICON: [u32; 0x200] = [u32::MAX; 0x200];
 
 /// Fighter `k`'s icon texture handle (0 when the host or the disc has none).
-unsafe fn icon(k: i32) -> u32 {
+pub(crate) unsafe fn icon(k: i32) -> u32 {
     if !(0..0x200).contains(&k) {
         return 0;
     }
@@ -31,6 +31,21 @@ unsafe fn icon(k: i32) -> u32 {
         ICON[i] = gd_ui_fighter_tex(k, 0);
     }
     ICON[i]
+}
+
+/// Each fighter's large portrait (gd_ui_fighter_tex which 1), same caching as ICON.
+static mut PORTRAIT: [u32; 0x200] = [u32::MAX; 0x200];
+
+/// Fighter `k`'s portrait texture handle (0 when there is none).
+pub(crate) unsafe fn portrait(k: i32) -> u32 {
+    if !(0..0x200).contains(&k) {
+        return 0;
+    }
+    let i = k as usize;
+    if PORTRAIT[i] == u32::MAX {
+        PORTRAIT[i] = gd_ui_fighter_tex(k, 1);
+    }
+    PORTRAIT[i]
 }
 
 pub const RANDOM: i32 = 99;
@@ -377,6 +392,15 @@ pub unsafe fn frame(e: &mut E) -> bool {
                     spr_c(e, S_HEAD, sx + 18.0, y + 52.0, 0.95, WHITE);
                 }
                 e.text_ex(sx + 32.0, y + 45.0, d(13), INK, ALIGN_LEFT, 66.0, if shown >= 0 { short(shown) } else { "?" });
+            }
+            if !COOP {
+                // the large portrait of the fighter being chosen (or the main once both are seated)
+                let k = if STEP[p] < 2 { GRID[CUR[p]] } else { SEAT[p][0] };
+                let h = if k >= 0 && k != RANDOM && !locked(k) { portrait(k) } else { 0 };
+                if h != 0 {
+                    face(e, S_FACE_CREAM, x + w - 76.0, y + 4.0, 66.0, 84.0, WHITE);
+                    e.tex(h, x + w - 73.0, y + 6.0, 60.0, 80.0, [0.0, 0.0, 1.0, 1.0], WHITE);
+                }
             }
             let (dx, dy) = (x + 222.0, y + 28.0);
             let ready = STEP[p] == 3;

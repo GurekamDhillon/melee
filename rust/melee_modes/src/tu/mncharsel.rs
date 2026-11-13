@@ -2758,6 +2758,17 @@ pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
                                             i += 1;
                                         }
 
+                                        if trace_on() && (trigger & PAD_A != 0 || (!found && ext::Mex_CssTraceEnabled() == 1)) {
+                                            static mut DUMPED: bool = false;
+                                            eprintln!("mexcss: A={} at ({:.2}, {:.2}) door {} hit {} icon {} of {}", trigger & PAD_A != 0, (*m2).x8, (*m2).xC, door_i, found, i, MNCS_NUM());
+                                            if !DUMPED {
+                                                DUMPED = true;
+                                                for k in 0..MNCS_NUM() {
+                                                    let ic = icon_at(k as usize);
+                                                    eprintln!("mexcss: icon {} ck {} state {} l {:.2} r {:.2} u {:.2} d {:.2}", k, (*ic).char_kind, (*ic).state, (*ic).bound_l, (*ic).bound_r, (*ic).bound_u, (*ic).bound_d);
+                                                }
+                                            }
+                                        }
                                         if !found {
                                             mnCharSel_8025D5AC(door_i, 0, 1);
                                             {

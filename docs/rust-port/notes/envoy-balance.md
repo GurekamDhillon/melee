@@ -151,6 +151,7 @@ level x100 + capsule x10 + capsules landed, `kblog blast raw` = before the cap, 
 knockback won the frame) and the rest. Percent fires log `kblog fire <drive>`, Mark `kblog mark extra`, Burning
 `kblog burn tick`. A KO adds `kblog KO last blast`. Each hit also logs the knockback that won the frame.
 The test knob `blastover` arms every foe blast at 30%, to show the engine's cap holding it.
+`tools/rust-port/envoy/kblog_summary.py a.log` prints the per-source table and the KO split from a run's log.
 
 **Measured** (the laptop's setup, 300000 frames from loop 3, Petey as the boss, two seeds; seed 1 is `#1`):
 

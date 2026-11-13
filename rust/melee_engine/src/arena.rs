@@ -677,6 +677,49 @@ mod tests {
     }
 }
 
+/// The background thread (pre-faulter / kept-block zeroer) against the snapshot. Its state lives in this module's
+/// statics (`LOCK`, `COMMITTED`, the kept table), which a snapshot copies and a load writes back like every other
+/// static. A save taken while the background thread held the arena lock recorded `LOCK = true`; loading it put the
+/// lock back as held with no holder, and the game thread's next allocation spun on it forever (the fight-3 synctest
+/// stall). A load while it held the lock also released it under it. So snapshot work runs under [`BgPause`]: it raises
+/// `BG_PAUSE` and waits until the background thread is outside its critical part (`BG_BUSY` false, the lock not held
+/// by it). Every save is then taken with `BG_PAUSE` true and `BG_BUSY` false, which is what a load writes back; the
+/// pause's drop clears `BG_PAUSE` afterwards.
+static BG_PAUSE: AtomicBool = AtomicBool::new(false);
+static BG_BUSY: AtomicBool = AtomicBool::new(false);
+
+fn bg_begin() -> bool {
+    BG_BUSY.store(true, SeqCst);
+    if BG_PAUSE.load(SeqCst) {
+        BG_BUSY.store(false, SeqCst);
+        return false;
+    }
+    true
+}
+fn bg_end() {
+    BG_BUSY.store(false, SeqCst);
+}
+fn bg_paused() -> bool {
+    BG_PAUSE.load(Relaxed)
+}
+
+/// Held around snapshot capture / save / load / hash (see [`BG_PAUSE`]). Not nested.
+pub struct BgPause(());
+impl BgPause {
+    pub fn enter() -> BgPause {
+        BG_PAUSE.store(true, SeqCst);
+        while BG_BUSY.load(SeqCst) {
+            std::thread::yield_now();
+        }
+        BgPause(())
+    }
+}
+impl Drop for BgPause {
+    fn drop(&mut self) {
+        BG_PAUSE.store(false, SeqCst);
+    }
+}
+
 /// Bytes past the bump pointer the pre-faulter keeps resident.
 #[cfg(windows)]
 const PREFAULT_AHEAD: usize = 96 << 20;
@@ -710,8 +753,13 @@ pub fn start_prefault() {
         unsafe { SetThreadPriority(GetCurrentThread(), -1) }; // below normal: never ahead of the game thread
         let mut touched = 0usize;
         loop {
+            if !bg_begin() {
+                std::thread::sleep(std::time::Duration::from_millis(1));
+                continue;
+            }
             let (bump, committed) = unsafe { (core::ptr::read_volatile(&raw const BUMP), core::ptr::read_volatile(&raw const COMMITTED)) };
             if bump == 0 {
+                bg_end();
                 std::thread::sleep(std::time::Duration::from_millis(5));
                 continue;
             }
@@ -731,7 +779,7 @@ pub fn start_prefault() {
             let mut p = (touched.max(bump) + 0xFFF) & !0xFFF;
             let end = want.min(committed);
             let mut n = 0;
-            while p < end {
+            while p < end && !bg_paused() {
                 unsafe { core::ptr::read_volatile(p as *const u8) };
                 p += 0x1000;
                 n += 1;
@@ -739,8 +787,9 @@ pub fn start_prefault() {
                     std::thread::yield_now();
                 }
             }
-            touched = touched.max(end);
+            touched = touched.max(p.min(end));
             keep::zero_some();
+            bg_end();
             std::thread::sleep(std::time::Duration::from_millis(2));
         }
     });
@@ -814,7 +863,7 @@ mod keep {
     /// The zeroer (pre-faulter thread): zero kept blocks' ranges, one STEP per lock hold.
     pub fn zero_some() {
         let mut budget = 256usize; // at most 16 MB per call, yielding between steps
-        while budget > 0 {
+        while budget > 0 && !bg_paused() {
             budget -= 1;
             let _g = Lock::take();
             unsafe {

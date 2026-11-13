@@ -252,6 +252,8 @@ pub mod engine_game {
                 crate::slp_export::begin_tick(&p);
             }
             timed(4, || self.e.tick());
+            // the hang watchdog's frame counter (synctest / rollback runs never reach the play loops' beat)
+            crate::hang::pulse();
             if slp {
                 crate::slp_export::end_tick(!self.e.ended);
             }

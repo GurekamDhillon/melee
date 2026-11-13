@@ -443,6 +443,7 @@ fn union(a: &[u32], b: impl Iterator<Item = u32>) -> Vec<u32> {
 impl Base {
     /// Capture the current state as the base (the system heap holds the copy).
     pub fn capture() -> Base {
+        let _bg = crate::arena::BgPause::enter();
         crate::arena::note_snapshot();
         let ranges = ranges();
         // the copies are taken last, once every write is tracked (a write between a copy and the start of tracking
@@ -638,6 +639,7 @@ impl Base {
     /// state was last saved as or loaded from, while it is alive). When `prev` is that snapshot only the pages written
     /// since are read; otherwise every dirty page is compared. Returns the bytes newly copied.
     pub fn save_after(&self, prev: Option<&Snapshot>) -> (SnapRef, usize) {
+        let _bg = crate::arena::BgPause::enter();
         let mut fresh = 0usize;
         self.refresh();
         let auto = if prev.is_none() && !self.no_inc { self.last_snap.borrow().upgrade() } else { None };
@@ -747,6 +749,7 @@ impl Base {
     }
 
     fn load_with(&self, s: &Snapshot, inc: bool) {
+        let _bg = crate::arena::BgPause::enter();
         // core v1: the transcoder lets go of the game buffers it holds first (the load rewinds their refcounts)
         #[cfg(feature = "corev1")]
         melee_gx::corev1::snapshot_loaded();

@@ -390,3 +390,55 @@ a scene change loads several files in one frame. What would close it:
    GAME_DECODE_AT quiet time, as kept-copy prepares already are), and split the ~17 ms of demo preload outside decodes.
 4. Remove the garbage decoding at its source (decoding 1M `Vec` records from a 103 KB Kirby hat file, 711k vertex-list
    records per VS load): output-visible today, so this is a behaviour change to prove unobservable.
+
+## Asset service slice 6 (2026-11-12, port/zerolag-assets1 83086f7f7; merge candidate port/zerolag-merge1)
+Changes:
+- The asset worker waits for game I/O quiet: `host_dev_com_request` stamps `asset::game_io()`. A disc hint starts only
+  after 40 ms without a game read or decode, and a kept-copy prepare only after 150 ms. The clock is stamped at service
+  start, so boot hints never run inside the title's first frame or a no-lead fight start.
+- Trim mode keeps big freed blocks resident (`arena::keep`, `MELEE_ARENA_KEEP=off|<MB>`, default cap 256 MB, table of
+  512). Before, these blocks were decommitted. Now exactly the bytes a decommit would drop (whole pages inside
+  `[p+16, p+size)`) are zeroed: by the pre-faulter thread in 64 KB steps under the arena lock, or by the allocating
+  thread for what that thread has not reached yet. A kept block needs no recommit.
+  - ItCo apply: 6-8 -> 4.4 ms (page faults 9.0k -> 2.1k).
+  - ItCo in place: ~17 -> 9-13 ms.
+- Title: the ~17 ms outside the decodes is about 10 ms of reads of the demo match's ~70 files plus about 7 ms of
+  in-place decodes, all in one frame. Not split into named spans further. Not fixed (the demo pick is random; it would
+  need read-ahead of the candidates).
+- Task 4, keeping ItCo's decode result across matches: NOT done. It changes the allocation order, so the digest proof
+  does not apply. It needs a golden/synctest/NHV1 proof route, and the cross-match `dat_custom` side effects and reclaim
+  order must be shown unobservable first.
+- Task 5, the garbage Vec records: NOT done. Source: `HSD_Spline.cv` (arrays.tsv `numcv.max(1)*3+4`). Kirby hat and
+  fighter files hold joints flagged `JOBJ_SPLINE`, and the spline record's `numcv` reads ~27-31k. Each such spline
+  decodes 80-95k Vec records past the data (zeros). Found with a temporary backtrace in `GcDecoder::array`, since
+  removed. Trimming it changes block sizes, so it needs NHV1/golden proof that the game never reads those cv entries.
+
+### Table (presented interval / tick ms, worst of first 4 frames; 3 runs, worst listed; light-slot runs)
+| scene | s5 on | s5 off | s6 on | s6 off |
+| title | 59.2/44.6 | 41.1/29.4 | 58.0/46.0 (others 41.4, 38.3) | 40.1/27.7 |
+| CSS enter | 12.1 | 12.2 | 11.6/10.5 | 9.3/8.3 |
+| VS scene change | 25.5/24.2 | 33.5/32.1 | 22.6/21.3 (others 17.5, 17.8) | 24.1/23.0 |
+| match setup | 13.3 | 15.7 | 12.1/11.2 | 11.0/9.8 |
+| FoD no lead | 51.5 | 43.8 | 47.7/41.6 | 42.7/38.4 |
+| Envoy no lead | 69.7 | 65.0 | 60.0/59.1 | 57.7/53.9 (run 3 produced no profile) |
+Merge (port/zerolag-merge1, worker off) vs base 677359edb, worst of 3:
+| scene | base | merge |
+| title | 56.0/44.0 | 40.9/26.9 |
+| CSS enter | 19.1/13.5 | 9.5/8.6 |
+| VS scene change | 44.3/42.5 | 24.9/23.5 |
+| match setup | 35.8/33.9 | 11.5/10.7 |
+| FoD no lead | 67.8/66.5 | 43.5/38.9 |
+| Envoy no lead | 88.9/87.8 | 57.0/55.8 |
+Under 16.7: CSS enter and match setup (both branches, all modes). Not under: title (~36-41; one 58 outlier with the
+service on), VS scene change (on: 17.5-22.6; off: ~24), and the no-lead fight starts (FoD 38-48, Envoy 54-60).
+
+### Proof
+Asset branch:
+- Digests: FoD on = off and off = off2 (293/293). Menu flow: only the known per-run word at load 35.
+- `MELEE_ARENA_KEEP=off` vs on: FoD 293/293 equal; menu flow only that same known word; menu NHV1 equal.
+- NHV1 on = off: menu flow 3847 EQUAL, Envoy 7000 EQUAL.
+- Gate OK (snapguard 0.23 / 0.373 / 4.996). Synctest d7 1638 checks, 0 mismatches. Hero replay SLPCHECK match (12844).
+Merge branch:
+- Gate OK (goldens, synctest d4 0 mismatches, audio = C, snapguard 0.255 / 0.413 / 5.639).
+- Synctest d7 0 mismatches. Hero replay SLPCHECK match.
+- The integrator still has to run the three replay sets on port/zerolag-merge1 before packaging.

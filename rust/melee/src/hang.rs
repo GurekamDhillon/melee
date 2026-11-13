@@ -19,6 +19,13 @@ pub fn beat() {
     }
 }
 
+/// Progress without a play-loop frame (the rollback / synctest engine's ticks, netmatch.rs): moves the counter only.
+/// The counter is a static, so a snapshot load can put it back; the watchdog only needs it to change.
+#[inline]
+pub fn pulse() {
+    BEATS.fetch_add(1, Ordering::Relaxed);
+}
+
 /// Start the watchdog when `MELEE_HANG_DUMP` is set to a number of seconds (>= 2).
 pub fn install() {
     let Some(secs) = std::env::var("MELEE_HANG_DUMP").ok().and_then(|v| v.trim().parse::<u64>().ok()) else { return };

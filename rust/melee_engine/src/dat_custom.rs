@@ -66,6 +66,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
         "ftdata" => ftdata(d, b, off, sym),
         "kirbyhat" => kirbyhat(d, b, off, sym),
         "stcicns" => stc_icns(d, off),
+        "mexselchr" => mex_select_chr(d, off),
         "efbhv" => ef_behavior(d, off),
         "dyntemplate" => dyn_template(d, off),
         "ptrtable_itemdata" => {
@@ -1532,6 +1533,24 @@ fn stc_icns(d: &mut GcDecoder<'_>, off: u32) -> *mut c_void {
     let m = d.ptr::<melee_types::HSD_MatAnimJoint>(off + 4) as *mut c_void;
     let buf = native_buf(core::mem::size_of::<Native>()) as *mut Native;
     unsafe { buf.write(Native { reserved: (w >> 16) as u16, stride: w as u16, matanim: m }) };
+    buf as *mut c_void
+}
+
+/// m-ex `mexSelectChr` (an m-ex disc's MnSlChr.dat; mncharsel.c MexSelectChr): the CSS icon model, its two
+/// animations, the portrait material animation and the portrait frame stride:
+/// `{HSD_Joint*; HSD_AnimJoint*; HSD_MatAnimJoint*; HSD_MatAnim*; int}` (0x14 bytes on the disc).
+fn mex_select_chr(d: &mut GcDecoder<'_>, off: u32) -> *mut c_void {
+    #[repr(C)]
+    struct Native { icon_joint: *mut c_void, icon_animjoint: *mut c_void, icon_matanim: *mut c_void, csp_matanim: *mut c_void, csp_stride: i32 }
+    let v = Native {
+        icon_joint: d.ptr::<melee_types::HSD_Joint>(off) as *mut c_void,
+        icon_animjoint: d.ptr::<melee_types::HSD_AnimJoint>(off + 4) as *mut c_void,
+        icon_matanim: d.ptr::<melee_types::HSD_MatAnimJoint>(off + 8) as *mut c_void,
+        csp_matanim: d.ptr::<melee_types::HSD_MatAnim>(off + 0xC) as *mut c_void,
+        csp_stride: d.u32_at(off + 0x10) as i32,
+    };
+    let buf = native_buf(core::mem::size_of::<Native>()) as *mut Native;
+    unsafe { buf.write(v) };
     buf as *mut c_void
 }
 

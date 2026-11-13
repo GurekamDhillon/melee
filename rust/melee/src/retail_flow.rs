@@ -557,6 +557,14 @@ impl RetailPlay {
             s.apply_frame = self.lab_clock + 1;
             v
         };
+        if !online {
+            // per-clip animation overrides: hot reload when a file changes (offline LAB only; anim_hot.rs)
+            let replay_or_net = self.net.is_some() || self.feed.is_some() || self.spec_client.is_some() || self.ctl.is_some() || self.sync.is_some() || self.hosted_g.is_some();
+            let ctx = crate::anim_hot::Ctx { offline_lab: self.lab_launch, replay_or_net };
+            if let Some(m) = crate::anim_hot::poll(ctx, self.lab_clock) {
+                log(&m);
+            }
+        }
         let lab = self.lab.as_mut().unwrap();
         {
             // who issued what this frame (gd_lab_applied: the other player's toasts); offline every command is ours

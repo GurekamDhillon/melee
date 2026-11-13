@@ -27,6 +27,7 @@ use melee_types::neutral_hash::nh_game;
 use std::io::Write;
 use std::process::ExitCode;
 
+mod anim_hot;
 mod controls_store;
 mod firstrun;
 mod geno_suite;

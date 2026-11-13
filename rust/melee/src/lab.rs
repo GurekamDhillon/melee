@@ -1626,6 +1626,18 @@ impl LabRun {
         if !*ON.get_or_init(|| std::env::var_os("MELEE_LAB_TRACE").is_some()) {
             return;
         }
+        // MELEE_LAB_TRACE_JOINT=j: also P1's animation frame and joint j's world position (the anim hot-reload check)
+        static JOINT: std::sync::OnceLock<Option<i32>> = std::sync::OnceLock::new();
+        if let Some(j) = *JOINT.get_or_init(|| std::env::var("MELEE_LAB_TRACE_JOINT").ok().and_then(|v| v.parse().ok())) {
+            if let Some(fp) = unsafe { fighter(0) } {
+                use melee_modes::tu::script_game as sg;
+                let p = unsafe {
+                    sg::ScriptGame_JointsSetup(0);
+                    [sg::ScriptGame_JointMtx(0, j, 3), sg::ScriptGame_JointMtx(0, j, 7), sg::ScriptGame_JointMtx(0, j, 11)]
+                };
+                eprintln!("labjoint c={clock} motion={} anim_id={} frame={:.1} j{j}=({:.3},{:.3},{:.3})", fp.motion_id, fp.anim_id, fp.cur_anim_frame, p[0], p[1], p[2]);
+            }
+        }
         for port in 0..4 {
             if let Some(fp) = unsafe { fighter(port as i32) } {
                 let p = self.last_pads[port];

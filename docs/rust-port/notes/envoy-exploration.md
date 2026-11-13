@@ -82,6 +82,21 @@ small (46 points, 36 planes + 6 / 6). The vertical shaft sections (e.g. 060004) 
   `tu` file) made the lint treat `frame` as a C name with a canonical body here, so netmatch's `fn frame` became a
   duplicate. Renamed to `explore::room_tick`; lint OK.
 
+## Fixes after the owner's first play (2026-11-13 pm)
+
+* Crash (access violation reading a sign-extended guest address) in a plain VS match with CPU fighters: the room
+  spawned Envoy's Goombas outside an Envoy run, where their article data is not loaded; a CPU's item check
+  (`ftcpuattack::ftCo_800B5AB0`, via `Fighter_procCpu`) dereferenced the item's attribute pointer. Enemies now
+  spawn only inside an Envoy run (`envoy::armed()`). Reproduced with two CPUs before, 1500 frames clean after
+  (vanilla) and 1200 (ACE).
+* The big black polygon was material `m_kage` (a shadow decal) drawn opaque; the far-left streaks were the light
+  shafts (`light1-3`, `mflash`). `petey_model` now reads the material's BP 0x41 blend mode and draws blending
+  materials blended without depth writes. Also fixes the hut (no more flat beige floor).
+* Door transitions hold black for 40 frames after the party moves, until Melee's easing camera reaches the new
+  section (before, the first frames showed the outside of the hut).
+* Crash names: the candidate keeps `sym-stage1\melee.map` + `melee.pdb`; `sym-stage1\symbolize.py` names the
+  `melee.exe+0x...` lines of a crash log.
+
 ## What a second map costs
 
 1. Pick the archive(s); add one `SECS` line each (file, world offset, model name) and one `LINKS` line per door.

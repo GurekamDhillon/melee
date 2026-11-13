@@ -512,6 +512,7 @@ fn main_inner() -> ExitCode {
         eprintln!("yougame: saves: cloud {} down {:?} up {:?} same {}", r.cloud, r.downloaded, r.uploaded, r.same);
     }
     sys_live(); // the counter's cell exists before any snapshot base is captured
+    melee_modes::tu::explore::install(); // Envoy exploration rooms: hooks only with MELEE_ENVOY_EXPLORE=1
     controls_store::install(); // fighter-controls preferences: fighter_controls.cfg (YOUGAME_DATA or beside settings.cfg)
     #[cfg(windows)]
     melee_engine::arena::set_misuse_hook(arena_misuse);

@@ -125,6 +125,8 @@ fn opt(p: Option<*mut [f32; 4]>) -> *mut [f32; 4] {
 pub static mut BOSS_DRAW: Option<unsafe fn(G, i32)> = None;
 /// The Envoy drive models and effects in the world (melee_modes::tu::drive_draw; presentation only).
 pub static mut WORLD_DRAW: Option<unsafe fn(G, i32)> = None;
+/// The Envoy exploration room's map models (melee_modes::tu::explore; presentation only).
+pub static mut MAP_DRAW: Option<unsafe fn(G, i32)> = None;
 
 /// `ftDrawCommon_800805C8`: debug overlays, then (bit 7) the model itself.
 pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
@@ -221,6 +223,10 @@ pub fn ftDrawCommon_800805C8(g: G, arg1: i32, arg2: bool) {
         inv = true;
     }
     if let Some(d) = unsafe { WORLD_DRAW } {
+        unsafe { d(g, arg1) };
+        inv = true;
+    }
+    if let Some(d) = unsafe { MAP_DRAW } {
         unsafe { d(g, arg1) };
         inv = true;
     }

@@ -40,6 +40,7 @@ pub mod petey_file;
 pub mod petey_model;
 pub mod subspace;
 pub mod subspace_model;
+pub mod explore;
 pub mod drive_draw;
 // Per-TU native ports of the game's gm/mn/lb/if translation units (one module per `.c` file,
 // `pub mod <tu_stem>;`). Each module's `ext` lists the callees of unported TUs as settable

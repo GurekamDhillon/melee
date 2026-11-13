@@ -599,7 +599,11 @@ pub unsafe fn match_begin(d: *mut StartMeleeData) {
     r.time_limit = 0;
     r.item_freq = -1;
     let petey = PLAN[P_BOSS] == 1 && crate::tu::petey::selected();
-    let stage = if petey { GR_FD } else { PLAN[P_STAGE] };
+    // the exploration room (explore.rs, MELEE_ENVOY_EXPLORE=1, off by default): every non-boss fight is played in the
+    // Brawl map section, carried by Final Destination
+    let explore = !petey && crate::tu::explore::enabled() && crate::tu::explore::map().is_some();
+    crate::tu::explore::WANT = explore;
+    let stage = if petey || explore { GR_FD } else { PLAN[P_STAGE] };
     if stage > 0 && crate::tu::stage_hop::supported(stage) {
         r.stkind = melee_world::tu::stage::Stage_StageSlotSelect(stage) as u16;
     }

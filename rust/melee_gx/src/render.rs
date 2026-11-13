@@ -927,6 +927,11 @@ impl PipeFactory {
         if let Some(t) = prof {
             melee_core::frameprof::add(melee_core::frameprof::C::Pipes, 1);
             melee_core::frameprof::add(melee_core::frameprof::C::PipeNs, t.elapsed().as_nanos() as u64);
+            static LOG: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+            if *LOG.get_or_init(|| std::env::var_os("MELEE_PIPE_LOG").is_some()) {
+                let n = self.pipelines.lock().unwrap().len();
+                eprintln!("gx: pipeline {n} created in {:.1} ms (tev stages {}, stride {})", t.elapsed().as_secs_f64() * 1e3, pc.shader.tev_stage_count, pc.shader.vtx_stride);
+            }
         }
         Ok(pipeline)
     }

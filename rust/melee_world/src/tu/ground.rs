@@ -343,6 +343,9 @@ unsafe fn stage_info_xA0() -> *mut i32 {
 
 /// `StageInfo stage_info` (49E6C8)
 pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+/// Envoy exploration rooms (melee_modes::tu::explore): at each stage load, a replacement collision (null: the
+/// stage's own). Unset unless `MELEE_ENVOY_EXPLORE=1`.
+pub static mut EXPLORE_COLL: Option<unsafe fn() -> *mut MapCollData> = None;
 
 /// `Ground_StageData` (3DFEA8)
 pub static mut Ground_StageData: StageData = StageData {
@@ -981,6 +984,12 @@ pub unsafe extern "C" fn Ground_801C0800(pair: *mut StageIdPair) {
         if ext::ScriptGame_StageSlotRetailLoading() != 0 {
             ext::ScriptGame_StageSlotRetailCollision();
         } else {
+            if let Some(f) = EXPLORE_COLL {
+                let c = f();
+                if !c.is_null() {
+                    coll = c;
+                }
+            }
             coll = ext::ScriptGame_StagePrepare(coll);
             ext::mpLibLoad(coll);
             if !merged.is_null() {

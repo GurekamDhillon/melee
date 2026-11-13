@@ -814,6 +814,8 @@ pub struct Batch {
     /// light channel 0 ambient (grey level) and whether the channel is lit
     amb: f32,
     lit: bool,
+    /// BP 0x41 blend (src factor, dst factor) when the material blends (shadow decals, light shafts); None: opaque
+    blend: Option<(u8, u8)>,
 }
 
 pub struct Rig {
@@ -954,6 +956,12 @@ impl Rig {
 /// The material state Petey's materials use (see [`Batch`]), from a v9 MDL0 material header at `mo`.
 fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mut Batch) {
     // texture 0 of the material's texture references (name, then wrap S / T)
+    if std::env::var_os("MELEE_MDL_LOG").is_some() {
+        let n = be32(d, mo + 0x2C) as usize;
+        let e0 = at(mo, bei(d, mo + 0x30));
+        let names: Vec<String> = (0..n.min(8)).map(|k| cstr(d, at(e0 + 0x34 * k, bei(d, e0 + 0x34 * k)))).collect();
+        eprintln!("mdl0: material {} texrefs {:?} found {:?}", cstr(d, at(mo, bei(d, mo + 8))), names, names.iter().map(|nm| texs.iter().any(|(t, _)| t == nm)).collect::<Vec<_>>());
+    }
     if be32(d, mo + 0x2C) > 0 {
         let e = at(mo, bei(d, mo + 0x30));
         let name = cstr(d, at(e, bei(d, e)));
@@ -966,6 +974,9 @@ fn material(d: &[u8], mo: usize, texs: &[(String, std::sync::Arc<Tex>)], bt: &mu
     let mut p = dl;
     while p + 5 <= end && d.get(p) == Some(&0x61) {
         let v = be32(d, p + 1);
+        if v >> 24 == 0x41 && v & 1 != 0 && v & 0x800 == 0 {
+            bt.blend = Some((((v >> 8) & 7) as u8, ((v >> 5) & 7) as u8));
+        }
         if v >> 24 == 0xF3 {
             bt.alpha = [((v >> 16) & 7) as u8, v as u8, ((v >> 22) & 3) as u8, ((v >> 19) & 7) as u8, (v >> 8) as u8];
         }
@@ -1065,7 +1076,7 @@ fn mdl0(d: &[u8], m: usize, texs: &[(String, std::sync::Arc<Tex>)]) -> Option<Ri
         let clr = idx_of(id(2), &cols);
         let uv = idx_of(id(4), &uvs).map(|a| arr(d, a));
         let Some(pos) = pos else { continue };
-        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false };
+        let mut bt = Batch { end: 0, tex: None, wrap: [1, 1], alpha: [7, 0, 0, 7, 0], amb: 1.0, lit: false, blend: None };
         if let Some((_, mo)) = obj_mat.iter().find(|(i, _)| *i == oi) {
             material(d, *mo, texs, &mut bt);
         }
@@ -1266,6 +1277,17 @@ pub unsafe fn draw_tris(rig: &Rig, tris: &[Vert], org: [f32; 2], at: [f32; 3], s
             continue;
         }
         let textured = !flash && bt.tex.is_some();
+        // blending materials (Brawl stage shadows, light shafts) blend and keep the depth buffer as it is
+        match bt.blend {
+            Some((sf, df)) if !flash => {
+                gx::GXSetBlendMode(GX_BM_BLEND as _, sf as _, df as _, GX_LO_NOOP as _);
+                gx::GXSetZMode(1, GX_LEQUAL as _, 0);
+            }
+            _ => {
+                gx::GXSetBlendMode(GX_BM_NONE as _, GX_BL_ONE as _, GX_BL_ZERO as _, GX_LO_NOOP as _);
+                gx::GXSetZMode(1, GX_LEQUAL as _, 1);
+            }
+        }
         if let (Some(t), false) = (&bt.tex, flash) {
             let o = t.obj.as_ptr() as *mut _GXTexObj;
             gs::GXInitTexObj(o, t.data.as_ptr() as *mut _, t.w, t.h, t.fmt, bt.wrap[0], bt.wrap[1], (t.levels > 1) as u8);
@@ -1369,4 +1391,103 @@ mod probe {
             }
         }
     }
+}
+
+// ---------------------------------------------------------------- shared with other Brawl importers (explore.rs)
+
+/// Every leaf file of the adventure stage archive `name` (`stage/adventure/<name>`), from the owner's local files.
+/// `None` without them. Nothing is written anywhere and the path is never printed.
+pub fn pac_leaves(name: &str) -> Option<Vec<Vec<u8>>> {
+    let root = local_root()?;
+    let raw = std::fs::read(root.join("disc").join("files").join("stage").join("adventure").join(name)).ok()?;
+    let mut leaves = vec![];
+    walk(&unwrap(raw), 0, &mut leaves);
+    Some(leaves)
+}
+
+/// The MDL0s named in `want` from `leaves` (textures resolved across every BRRES of the archive), each posed once in
+/// its bind pose: (name, rig, triangle list in model space). For static scenery (stage maps, doors).
+pub fn static_models(leaves: &[Vec<u8>], want: &[&str]) -> Vec<(String, Rig, Vec<Vert>)> {
+    let mut tex_at: Vec<(String, usize, usize)> = vec![];
+    let mut plt_at: Vec<(String, usize, usize)> = vec![];
+    let mut mdls: Vec<(String, usize, usize)> = vec![];
+    for (li, b) in leaves.iter().enumerate() {
+        if b.len() < 0x10 || &b[..4] != b"bres" {
+            continue;
+        }
+        let Some(entries) = brres_entries(b) else { continue };
+        for (name, off) in entries {
+            let list = match b.get(off..off + 4) {
+                Some(b"TEX0") => &mut tex_at,
+                Some(b"PLT0") => &mut plt_at,
+                Some(b"MDL0") if want.contains(&name.as_str()) => &mut mdls,
+                _ => continue,
+            };
+            if !list.iter().any(|(n, _, _)| *n == name) {
+                list.push((name, li, off));
+            }
+        }
+    }
+    let texs: Vec<(String, std::sync::Arc<Tex>)> = tex_at
+        .iter()
+        .filter_map(|(n, li, o)| {
+            let plt = plt_at.iter().find(|(pn, _, _)| pn == n).map(|(_, pl, po)| (leaves[*pl].as_slice(), *po));
+            tex0(&leaves[*li], *o, plt).map(|t| (n.clone(), std::sync::Arc::new(t)))
+        })
+        .collect();
+    let mut out = vec![];
+    for w in want {
+        let Some((_, li, off)) = mdls.iter().find(|(n, _, _)| n == w) else { continue };
+        let Some(mut r) = mdl0(&leaves[*li], *off, &texs) else { continue };
+        let mut tris = vec![];
+        r.skin(None, 0.0, &mut tris);
+        (r.min, r.max) = extent(&tris);
+        out.push((w.to_string(), r, tris));
+    }
+    out
+}
+
+/// A black veil over the whole view with alpha `a` (door transitions). Drawn in view space just past the near plane.
+pub unsafe fn draw_fade(a: u8) {
+    use melee_runtime::tu::displayfunc_native::ext as gx;
+    use melee_runtime::tu::lbrefract::ext as gi;
+    use melee_runtime::tu::sobjlib::ext as gs;
+    use melee_types::*;
+    if a == 0 {
+        return;
+    }
+    melee_runtime::tu::state_native::HSD_StateInvalidate(-1);
+    gx::GXSetColorUpdate(1);
+    gx::GXSetAlphaUpdate(0);
+    gx::GXSetBlendMode(GX_BM_BLEND as _, GX_BL_SRCALPHA as _, GX_BL_INVSRCALPHA as _, GX_LO_NOOP as _);
+    gx::GXSetZMode(0, GX_ALWAYS as _, 0);
+    gi::GXSetNumIndStages(0);
+    gi::GXSetTevDirect(GX_TEVSTAGE0 as _);
+    gs::GXSetTevSwapModeTable(GX_TEV_SWAP0 as _, GX_CH_RED as _, GX_CH_GREEN as _, GX_CH_BLUE as _, GX_CH_ALPHA as _);
+    gs::GXSetTevSwapMode(GX_TEVSTAGE0 as _, GX_TEV_SWAP0 as _, GX_TEV_SWAP0 as _);
+    gx::GXSetNumTevStages(1);
+    gx::GXSetNumTexGens(0);
+    gx::GXSetNumChans(1);
+    gx::GXSetChanCtrl(GX_COLOR0A0 as _, 0, GX_SRC_REG as _, GX_SRC_VTX as _, 0, GX_DF_NONE as _, GX_AF_NONE as _);
+    gx::GXSetCullMode(GX_CULL_NONE as _);
+    gx::GXSetTevOrder(GX_TEVSTAGE0 as _, GX_TEXCOORD_NULL as _, GX_TEXMAP_NULL as _, GX_COLOR0A0 as _);
+    gx::GXSetTevOp(GX_TEVSTAGE0 as _, GX_PASSCLR as _);
+    gx::GXSetAlphaCompare(GX_ALWAYS as _, 0, GX_AOP_AND as _, GX_ALWAYS as _, 0);
+    gx::GXClearVtxDesc();
+    gx::GXSetVtxAttrFmt(GX_VTXFMT0 as _, GX_VA_POS as _, GX_POS_XYZ as _, GX_F32 as _, 0);
+    gx::GXSetVtxAttrFmt(GX_VTXFMT0 as _, GX_VA_CLR0 as _, GX_CLR_RGBA as _, GX_RGBA8 as _, 0);
+    gx::GXSetVtxDesc(GX_VA_POS as _, GX_DIRECT as _);
+    gx::GXSetVtxDesc(GX_VA_CLR0 as _, GX_DIRECT as _);
+    let mut id: Mtx = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]];
+    melee_runtime::tu::pobj::native::mx::GXLoadPosMtxImm((&mut id) as *mut Mtx as _, 0);
+    gx::GXSetCurrentMtx(0);
+    let (z, e) = (-10.0f32, 1000.0f32);
+    gx::GXBegin(GX_TRIANGLES as _, GX_VTXFMT0 as _, 6);
+    for (x, y) in [(-e, -e), (e, -e), (e, e), (-e, -e), (e, e), (-e, e)] {
+        gx::GXPosition3f32(x, y, z);
+        gx::GXColor4u8(0, 0, 0, a);
+    }
+    gx::GXSetZMode(1, GX_LEQUAL as _, 1);
+    gx::GXSetBlendMode(GX_BM_NONE as _, GX_BL_ONE as _, GX_BL_ZERO as _, GX_LO_NOOP as _);
+    melee_runtime::tu::state_native::HSD_StateInvalidate(-1);
 }

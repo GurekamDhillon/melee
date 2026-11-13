@@ -225,9 +225,17 @@ pub unsafe extern "C" fn grDisplay_801C5DB0_surface_impl(gobj: *mut HSD_GObj, co
     }
 }
 
+/// Envoy exploration rooms (melee_modes::tu::explore): true while the stage's own model is replaced. Presentation only.
+pub static mut HIDE_GROUND: Option<fn() -> bool> = None;
+
 /// 1C5DB0 (`TARGET_PC` wrapper): the stage render callback.
 pub unsafe extern "C" fn grDisplay_801C5DB0(gobj: *mut HSD_GObj, code: isize) {
     melee_core::ct!("grDisplay_801C5DB0");
+    if let Some(h) = HIDE_GROUND {
+        if h() {
+            return;
+        }
+    }
     ext::SurfaceBegin(7);
     grDisplay_801C5DB0_surface_impl(gobj, code as i32);
     ext::SurfaceEnd();

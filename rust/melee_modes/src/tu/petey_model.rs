@@ -225,6 +225,68 @@ fn load() -> Result<Model, String> {
     Ok(Model { body, arm_l: rig("WpnBosspackunArmL"), arm_r: rig("WpnBosspackunArmR"), params: par })
 }
 
+/// The generic form of [`load`] (Subspace enemies, `subspace_model.rs`): the MDL0s named in `wants` from one local
+/// archive `rel` (path parts under `disc/files`), each as a rig with the CHR0s named `<anim prefix><Suffix>` kept by
+/// suffix and its extent taken in the first frame of `idle` (the bind pose without it). `wants` = (model name,
+/// animation prefix). Call it on a helper thread, as `get` does: the rigs must live on the system heap.
+pub fn load_rigs(rel: &[&str], wants: &[(&str, &str, &str)]) -> Result<Vec<Option<Rig>>, String> {
+    let root = local_root().ok_or("no local Brawl folder")?;
+    let mut f = root.join("disc").join("files");
+    for p in rel {
+        f = f.join(p);
+    }
+    let raw = std::fs::read(&f).map_err(|e| format!("archive not readable ({})", e.kind()))?;
+    let mut leaves = vec![];
+    walk(&unwrap(raw), 0, &mut leaves);
+    let mut tex_at: Vec<(String, usize, usize)> = vec![];
+    let mut plt_at: Vec<(String, usize, usize)> = vec![];
+    let mut mdls: Vec<(String, usize, usize)> = vec![];
+    let mut chrs: Vec<(String, usize, usize)> = vec![];
+    for (li, b) in leaves.iter().enumerate() {
+        if b.len() < 0x10 || &b[..4] != b"bres" {
+            continue;
+        }
+        let Some(entries) = brres_entries(b) else { continue };
+        for (name, off) in entries {
+            let list = match b.get(off..off + 4) {
+                Some(b"TEX0") => &mut tex_at,
+                Some(b"PLT0") => &mut plt_at,
+                Some(b"CHR0") => &mut chrs,
+                Some(b"MDL0") => &mut mdls,
+                _ => continue,
+            };
+            if !list.iter().any(|(n, _, _)| *n == name) {
+                list.push((name, li, off));
+            }
+        }
+    }
+    let texs: Vec<(String, std::sync::Arc<Tex>)> = tex_at
+        .iter()
+        .filter_map(|(n, li, o)| {
+            let plt = plt_at.iter().find(|(pn, _, _)| pn == n).map(|(_, pl, po)| (leaves[*pl].as_slice(), *po));
+            tex0(&leaves[*li], *o, plt).map(|t| (n.clone(), std::sync::Arc::new(t)))
+        })
+        .collect();
+    Ok(wants
+        .iter()
+        .map(|(want, prefix, idle)| {
+            let (_, li, off) = mdls.iter().find(|(n, _, _)| n == want)?;
+            let mut r = mdl0(&leaves[*li], *off, &texs)?;
+            for (n, cl, co) in &chrs {
+                if let Some(suf) = n.strip_prefix(prefix) {
+                    if !suf.is_empty() {
+                        r.anims.push((suf.to_string(), chr0(&leaves[*cl], *co)));
+                    }
+                }
+            }
+            let mut tris = vec![];
+            r.skin(r.anim(idle), 0.0, &mut tris);
+            (r.min, r.max) = extent(&tris);
+            Some(r)
+        })
+        .collect())
+}
+
 // ---------------------------------------------------------------- containers
 
 fn be16(d: &[u8], o: usize) -> u16 {

@@ -4250,7 +4250,7 @@ unsafe fn test_waves_read() -> i32 {
     s.split(|c| c == ',' || c == '/' || c == '|' || c == ';')
         .find_map(|t| t.trim().strip_prefix('~').and_then(|x| x.parse::<i32>().ok()))
         .unwrap_or(-1)
-        .clamp(-1, 6)
+        .clamp(-1, 1023) // 100 and up: a Subspace enemy (kind + 32 x tier)
 }
 
 /// Per live frame of a wave fight: spawn the three once the fight is on, then read each enemy's damage taken (its

@@ -11,8 +11,9 @@
 //! * the fighter's PlXx.dat data section as HSD_ArchiveParse leaves it (big-endian, relocated) at `DAT_BASE` (+ per
 //!   fighter); the guest's `fp->ft_data` reads that ftData (its attributes and article tables are the mod's own
 //!   layouts, which only the guest reads);
-//! * `fp->dat_attrs_backup`, the 0x424-byte buffer of the game heap, as raw guest bytes: the mod's onLoad copies its
-//!   private attributes there and points `fp->dat_attrs` at it, as m-ex does;
+//! * `fp->dat_attrs_backup`, the 0x424-byte buffer of the game heap, as guest bytes kept as native 32-bit words: the
+//!   mod's onLoad copies its private attributes there and points `fp->dat_attrs` at it, as m-ex does, and the clone
+//!   base's native specials read them as native floats;
 //! * r13 / r2 small data: the DOL's .sdata / .sdata2 around the two bases (the float constants the code loads).
 //!
 //! Rollback: every byte the guest can write lives in the game heap, in a native game object, or in this module's
@@ -1050,7 +1051,9 @@ unsafe fn bind_fighter(s: &mut State, g: G) -> Option<u32> {
         let ab = (*fp).dat_attrs_backup as usize;
         if ab != 0 && !s.attrs.iter().any(|a| a.0 == ab) {
             let base = ATTRS_BASE + s.attrs.len() as u32 * 0x1000;
-            s.space.add_raw(base, ab as *mut u8, ATTRS_SIZE);
+            // as native words: the native code reads the same attributes as f32 (PlDl's Luigi-base SpecialS read the
+            // big-endian copy its onLoad memcpy'd in, and the ECB went NaN); the guest still sees big-endian bytes
+            s.space.add_words(base, ab as *mut u8, ATTRS_SIZE);
             s.attrs.push((ab, base));
         }
         let _ = FT_DAT_ATTRS_BACKUP;

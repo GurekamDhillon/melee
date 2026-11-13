@@ -51,3 +51,7 @@ Open: FD on the ACE disc draws magenta edges in `view-golden` (a texture the ren
   guest run that still leaves its fighter's kind outside the tables gets the kind back (`guard_kind`, logged once).
 - Sweep: `MELEE_SCENE="mode=vs;at=match;p1=mexext:N/cpu9;p2=fox/cpu9;stage=fd"` for every N; `MELEE_MEX_CALLS=1` lists a
   blob's vanilla calls, `MELEE_MEX_DIS=1` disassembles it.
+- `fp->dat_attrs_backup` is mapped as `Backing::Words` (guest byte `o` = native byte `o ^ 3`): an onLoad memcpys its
+  big-endian attributes there, and the clone base's native specials read them as f32. As plain bytes, PlDl's
+  Luigi-base SpecialSStart read byte-swapped floats and its ECB went NaN (`mpCollInterpolateECB` assert); the assert's
+  report now also names the fighter kind, motion, anim and frame.

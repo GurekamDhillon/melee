@@ -178,6 +178,10 @@ pub enum Backing {
     /// Plain guest bytes (big-endian values) the host owns at `ptr` (a buffer of the game heap the
     /// guest keeps its own data in, e.g. Fighter.dat_attrs_backup, so a rollback restores it).
     Raw { ptr: *mut u8 },
+    /// As `Raw`, but the host keeps the bytes as native (little-endian) 32-bit words: guest byte `o` is native byte
+    /// `o ^ 3`. A buffer both the guest and native code read as words of attributes (Fighter.dat_attrs_backup: an
+    /// m-ex onLoad copies its attributes in big-endian, and the clone base's native specials read them as f32).
+    Words { ptr: *mut u8 },
 }
 
 pub struct Region {
@@ -275,6 +279,14 @@ impl GuestSpace {
     /// `ptr..ptr+len` must stay valid and writable for as long as the space is used.
     pub unsafe fn add_raw(&mut self, base: u32, ptr: *mut u8, len: u32) {
         self.regions.push(Region { base, size: len, backing: Backing::Raw { ptr } });
+    }
+
+    /// As [`add_raw`](Self::add_raw), the bytes kept as native 32-bit words (`Backing::Words`).
+    ///
+    /// # Safety
+    /// As `add_raw`; `len` a multiple of 4.
+    pub unsafe fn add_words(&mut self, base: u32, ptr: *mut u8, len: u32) {
+        self.regions.push(Region { base, size: len, backing: Backing::Words { ptr } });
     }
 
     /// Drop every region registered for the native object at `ptr` (it is about to be freed).
@@ -397,7 +409,7 @@ impl GuestSpace {
                 Backing::Bytes(b) if p >= b.as_ptr() as usize && p < b.as_ptr() as usize + b.len() => {
                     return Ok(r.base + (p - b.as_ptr() as usize) as u32);
                 }
-                Backing::Raw { ptr } if p >= *ptr as usize && p < *ptr as usize + r.size as usize => {
+                Backing::Raw { ptr } | Backing::Words { ptr } if p >= *ptr as usize && p < *ptr as usize + r.size as usize => {
                     return Ok(r.base + (p - *ptr as usize) as u32);
                 }
                 _ => {}
@@ -424,7 +436,7 @@ impl GuestSpace {
         // heap buffer; regions never resize).
         self.regions.iter().find(|r| h >= r.base && h < r.base + r.size).and_then(|r| match &r.backing {
             Backing::Bytes(b) => Some(b.as_ptr() as usize + (h - r.base) as usize),
-            Backing::Raw { ptr } => Some(*ptr as usize + (h - r.base) as usize),
+            Backing::Raw { ptr } | Backing::Words { ptr } => Some(*ptr as usize + (h - r.base) as usize),
             _ => None,
         })
     }
@@ -437,6 +449,8 @@ impl GuestSpace {
             Backing::Bytes(b) => Ok(b[o as usize..(o + n) as usize].iter().fold(0u64, |v, &x| v << 8 | x as u64)),
             // SAFETY: add_raw's contract.
             Backing::Raw { ptr } => Ok((0..n).fold(0u64, |v, k| v << 8 | unsafe { *ptr.add((o + k) as usize) } as u64)),
+            // SAFETY: add_words' contract.
+            Backing::Words { ptr } => Ok((0..n).fold(0u64, |v, k| v << 8 | unsafe { *ptr.add(((o + k) ^ 3) as usize) } as u64)),
             Backing::Native { rec, ptr, shadow } => {
                 let (rec, ptr) = (*rec, *ptr);
                 if let Some(t) = &mut self.trace {
@@ -478,7 +492,7 @@ impl GuestSpace {
             return false;
         }
         match self.find(h, 1) {
-            Ok(i) => matches!(self.regions[i].backing, Backing::Bytes(_) | Backing::Raw { .. }),
+            Ok(i) => matches!(self.regions[i].backing, Backing::Bytes(_) | Backing::Raw { .. } | Backing::Words { .. }),
             Err(_) => false,
         }
     }
@@ -521,6 +535,13 @@ impl GuestSpace {
             Backing::Bytes(b) => {
                 for k in 0..n {
                     b[(o + k) as usize] = (v >> (8 * (n - 1 - k))) as u8;
+                }
+                return Ok(());
+            }
+            Backing::Words { ptr } => {
+                for k in 0..n {
+                    // SAFETY: add_words' contract.
+                    unsafe { *ptr.add(((o + k) ^ 3) as usize) = (v >> (8 * (n - 1 - k))) as u8 };
                 }
                 return Ok(());
             }

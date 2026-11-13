@@ -14,6 +14,9 @@
 #   break  one cage taken to 0 by a hit on that cage: the same-frame death check (rules 6/7) fires first, so it is a
 #          death (status 15) with that side freed and no cage-break Down (sora_enemy handler, code-spec.md 3)
 #   bodybreak  both cages taken to 0 by a body hit (no cage hit flag): the cage-break path, Down by rule 10
+#   lasers Fox's neutral B only (a scripted laser every 10 frames): each laser takes one part once (its damage off that
+#          cage, or off both through the body), and Petey survives at least LASER_MIN frames (owner, Nov 13: "obliterated
+#          petey in like 4 seconds with fox laser")
 #   sync   synctest depth 4 over 3000 frames with the `hits` schedule: 0 mismatches
 # The disc comes from GW_ISO_VANILLA / GW_ISO_ACE (never printed). Takes no lock itself: wrap it
 # (`runlight.sh <who> bash ...` per row; `sync` is a heavier run).
@@ -28,11 +31,12 @@ player=${PLAYER:-kirby}
 case "$disc" in ace) iso=${GW_ISO_ACE:-} ;; *) iso=${GW_ISO_VANILLA:-} ;; esac
 [ -n "$iso" ] || { echo "petey_check: the $disc disc variable is not set"; exit 2; }
 [ -f "$mods/envoy_sim.wasm" ] || { echo "petey_check: no envoy_sim.wasm in MODS"; exit 2; }
-rows=("$@"); [ ${#rows[@]} -gt 0 ] || rows=(idle hits break bodybreak sync)
+rows=("$@"); [ ${#rows[@]} -gt 0 ] || rows=(idle hits break bodybreak lasers sync)
 mkdir -p "$out"
 pad="$out/idle_pad.txt"; echo "99999 0000 0 0" > "$pad"
 HITS="50:l:16,400:b:66,900:b:39,1500:b:22"  # cages 157: L 141, 75 (<=50%), 36 (<=25%), 14 (<10%)
 BREAK="300:r:200"
+LASER_MIN=${LASER_MIN:-480}  # 8 s: a laser chips (3 per laser at ~6 lasers a second -> a cage to 10% in ~8 s)
 BODYBREAK="300:b:200"
 fail=0
 base_env() {
@@ -130,6 +134,35 @@ PY
     bodybreak)
       play bodybreak 1200 MELEE_PETEY_TEST_HITS="$BODYBREAK"
       order bodybreak "a body hit to 0 -> broken, Down by rule 10" 'test hit b 200' 'cage 0 broken' 'status [0-9]+ -> 1 ' 'defeated \(cause 2, freed side 0\)'
+      ;;
+    lasers)
+      lp="$out/laser_pad.txt"
+      { echo "150 0000 0 0"; for i in $(seq 1 600); do echo "2 0200 0 0"; echo "8 0000 0 0"; done; } > "$lp"
+      mkdir -p "$out/save-lasers"
+      exe_banner "petey_check lasers ($disc, fox)"
+      ( cd "$out" && base_env lasers MELEE_PAD_SCRIPT="$lp" timeout 600 "$exe" play --iso "$iso" --match "fox,luigi/cpu9,32" --headless \
+          --max-frames 3000 > "$out/lasers.$disc.log" 2>&1 )
+      python - "$(L lasers)" "$LASER_MIN" <<'PY' || fail=1
+import re, sys
+t = open(sys.argv[1], errors='replace').read()
+# each laser: exactly one part, its damage once (the CPU ally's own hits fall between the lines, so per line)
+hits = re.findall(r'petey: f(\d+) item hit ([\d.]+) on (\w+) cages (-?\d+) (-?\d+) -> (-?\d+) (-?\d+) \(([\d.]+)% ([\d.]+)%\)', t)
+bad = 0
+for f, d, part, l0, r0, l, r, pl, pr in hits:
+    d = round(float(d))  # the game rounds half to even (2.5 -> 2)
+    dl, dr = int(l0) - int(l), int(r0) - int(r)
+    want = [(d, d)] if part == 'body' else [(d, 0), (0, d)]
+    # and the percent the death check reads is of the fight's live cage max (157), not the file's 999
+    pct_ok = abs(float(pl) - 100.0 * max(int(l), 0) / 157) < 0.2 and abs(float(pr) - 100.0 * max(int(r), 0) / 157) < 0.2
+    if (dl, dr) not in want or not pct_ok:
+        bad += 1
+die = re.search(r'petey: f(\d+) status \d+ -> 15 ', t)
+dief = int(die.group(1)) if die else None
+ok_t = dief is None or dief >= int(sys.argv[2])
+print(('ok  ' if hits and not bad else 'FAIL'), 'lasers: %d laser hits, %d not one part / one damage / percent of 157' % (len(hits), bad))
+print(('ok  ' if ok_t else 'FAIL'), 'lasers: Petey dies at frame %s (want >= %s, or alive)' % (dief, sys.argv[2]))
+sys.exit(0 if hits and not bad and ok_t else 1)
+PY
       ;;
     sync)
       exe_banner "petey_check sync ($disc, $player)"

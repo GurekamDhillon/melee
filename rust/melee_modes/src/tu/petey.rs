@@ -1497,10 +1497,20 @@ fn seg_dist(p: (f32, f32), q: (f32, f32), a: (f32, f32), b: (f32, f32)) -> f32 {
 /// One live hitbox against the body and both cages (bits in `latch`, once per hitbox lifetime). Body damage is
 /// forwarded to both cages (§5); a cage hit damages that cage. Returns (hit anything, cage bits hit).
 unsafe fn hit_test(hs: &[Option<[f32; 5]>; 3], a: (f32, f32), b: (f32, f32), r: f32, dmg: f32, latch: &mut u8) -> (bool, u8) {
+    hit_test_n(hs, a, b, r, dmg, latch, false)
+}
+
+/// `single`: stop at the first part hit, cages before the body (a projectile is spent on one part).
+unsafe fn hit_test_n(hs: &[Option<[f32; 5]>; 3], a: (f32, f32), b: (f32, f32), r: f32, dmg: f32, latch: &mut u8, single: bool) -> (bool, u8) {
     let mut any = false;
     let mut cages = 0u8;
     let d = round_i(dmg);
-    for (k, h) in hs.iter().enumerate() {
+    let order: [usize; 3] = if single { [1, 2, 0] } else { [0, 1, 2] };
+    for k in order {
+        if single && any {
+            break;
+        }
+        let h = &hs[k];
         let bit = 1u8.pshl(k as i64);
         let Some(c) = h else { continue };
         if *latch & bit != 0 {
@@ -1592,24 +1602,30 @@ unsafe fn item_hits(hs: &[Option<[f32; 5]>; 3], carrier: i32) -> (bool, u8) {
             }
         }
         let key = it.entity as usize;
+        // a projectile hits Petey once in its life, on the first of his parts it touches (Brawl: a laser or a thrown
+        // item is spent on the boss). The latch lives as long as the item (a laser's hitbox re-arms every frame, which
+        // re-hit him each frame and hit the body and both cages in turn: ~10 cage HP per 3% laser, owner Nov 13).
         let mut lat = LATCH_IT.iter().find(|(k, _)| *k == key).map(|(_, l)| *l).unwrap_or([0; 4]);
-        let mut live = false;
         for i in 0..4 {
             let h: *mut HitCapsule = core::ptr::addr_of_mut!(it.x5D4_hitboxes[i].hit);
-            if (*h).state == HitCapsule_Disabled {
-                lat[i] = 0;
+            if (*h).state == HitCapsule_Disabled || lat[0] == 0xFF {
                 continue;
             }
-            live = true;
             let (a, b) = (((*h).x58.x, (*h).x58.y), ((*h).x4C.x, (*h).x4C.y));
-            let (hit, cg) = hit_test(hs, a, b, (*h).scale, (*h).damage, &mut lat[i]);
+            let mut one = 0u8;
+            let before = B.cage;
+            let (hit, cg) = hit_test_n(hs, a, b, (*h).scale, (*h).damage, &mut one, true);
             if hit {
                 any = true;
                 cages |= cg;
+                lat = [0xFF; 4];
                 melee_runtime::tu::lbcollision::lbColl_80005BB0(h, 0x7E);
+                if log_on() {
+                    eprintln!("petey: f{} item hit {:.1} on {} cages {} {} -> {} {} ({:.1}% {:.1}%)", B.last_frame, (*h).damage, if cg == 0 { "body" } else { "cage" }, before[0], before[1], B.cage[0], B.cage[1], cage_pct(0), cage_pct(1));
+                }
             }
         }
-        if live && n < next.len() {
+        if n < next.len() {
             next[n] = (key, lat);
             n += 1;
         }

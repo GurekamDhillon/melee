@@ -165,3 +165,11 @@ won and the synctest has 0 mismatches. Results are appended below, dated.
 | `rust/melee_modes/src/tu/envoy.rs` | `subspace::begin_match` at the top of `match_begin`, `subspace::sub_tick` at the top of `tick`, the test knob `MELEE_ENVOY_TEST_MAIN` |
 | `rust/melee_modhost/src/lib.rs` | the three `gd_envoy_enemy_*` imports route Subspace handles / `which >= 100` to `subspace.rs`; `which == 99` clears them |
 | `rust/mods/envoy_sim/src/lib.rs` | the `~N` test knob accepts 100 and up; room wiring (section 5); `fight_won` clears the enemies |
+
+## Results, 2026-11-13 (build 0a54ed155 = ec85d5fc1 + port/desync1 70a0841ff; API wrapper bfcf53565 is additive)
+- subspace_check (vanilla, depth 4): goomba, primid, bill, giant ok, 0 mismatches. Bill needs no player hit (it is spent
+  on its own hit before the Ready prompt lets the player act).
+- gate.sh --skip-build: GATE OK (golden, synctest, audio, baselines, lint, snapguard).
+- switch_torture (FRAMES 14400, depth 0, RUN_TIMEOUT 6000): PASS on f1, f2, f3c, f5; 0 switch KOs, 0 misplaced, 0 mismatches.
+- zero_hitch_gate: NOT RUN: it refuses unless no other melee/cargo process runs, which the shared machine never was.
+- Open: Goombas render about Falcon's height (scale vs Brawl unverified); no Bill explosion effect.

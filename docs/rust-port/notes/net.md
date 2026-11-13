@@ -524,3 +524,29 @@ An earlier run without the tag landing (14637 frames, 2380 rollbacks, 8 switch e
 With the in-place tag prototype (`TAG_INPLACE=1`, notes/envoy-tag-swap.md): 7503 frames, 0 differing, 1210 rollbacks.
 So R1 holds for CPUs + stage shifts + a tag; not yet covered: an Envoy-armed run (the reward hold, the boss) over two
 peers, which needs the `envoy=` handshake token (milestone 6).
+
+## Mod content identity (port/netid, 2026-11-13)
+The handshake's "global data" word (`play_net::mods_identity`) used to fold each mod's file paths and sizes
+(`ModSet::fingerprint`): two installs with a same-size edit to an animation, script or data file matched and desynced.
+It now hashes contents (`rust/melee_data/src/netid.rs`):
+- **What**: every regular file under each mounted mod's folder (the folder holding `mod.json`: `files/`, `geno.json`,
+  `anim_overrides`, `script_overrides`, wasm, anything a future loader reads). No hand-kept list; dot-files and
+  dot-folders are skipped. Wasm code mods (`MELEE_WASM_MODS`), Geno salts and gameplay codes enter as before.
+- **Order and normalisation**: relative path with `/`, ASCII-lowercased, sorted bytewise; mod ids sorted lowercased. The
+  directory listing order, the OS separator and timestamps never enter. Text files (`.lua .json .md .txt .wgsl .csv .cfg
+  .toml .xml .glsl .yml .yaml .ini`, as `fingerprint_size`) hash with CR LF folded to LF (a lone CR is kept); binary
+  files hash exact bytes. Two names differing only in case both count. Hash: FNV-1a 64 (the handshake's own; no crate).
+- **Cache**: `<mods>/.netid-cache`, path + size + mtime (ns) -> hash. It can go stale only if a file is rewritten with
+  the same size and its mtime restored to the nanosecond, so **netplay connect never trusts it** (`Mode::Force`
+  re-reads every byte and refreshes the cache). Spectator identities use the cache (`Mode::Cached`). The log says
+  `netid: N mod(s), F file(s), R read, C from cache, T ms (Force|Cached)` and one `netid file <mod>/<path> <hash>`
+  line per file, so two players can diff their logs to find the file.
+- **Refusal text**: the description lists `id#hhhhhhhh` per mod (low 32 bits of the mod's digest). The guest compares
+  the host's list with its own (`melee_net::mods_diff`): `different global game data: mod X differs (host 1a2b3c4d, you
+  5e6f7a8b); only the host has Y; only you have Z; host has: ...; you have: ...`. The wire is unchanged (the host's
+  refusal still carries only its own list), so the host side does not learn which mod the guest has.
+- **Hot reload**: connect computes the identity, then `netid::freeze()`; the lock lives in the `NetDriver` and thaws
+  when it is dropped. Every hot reloader must check `netid::frozen()` and refuse with `netid::FROZEN_MSG`
+  (`geno_host::Reload` does). A file changed on disk mid-session is therefore not read until the session ends; it
+  enters the next connect's forced hash.
+- **No mods**: the word stays 0 / "no mods", so vanilla peers and existing replays are unchanged.

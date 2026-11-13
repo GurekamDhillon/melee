@@ -396,6 +396,11 @@ pub fn TestReloadLayout(text: *const i8) -> i32 {
 /// registry. Answers <0 when it is refused (`msg` says why; the current data is kept), 0 when the layout changed (a
 /// restart is needed; the new data is installed) and 1 when the profiles can be re-applied in place.
 pub fn Reload(msg: &mut String) -> i32 {
+    if melee_data::netid::frozen() {
+        // a netplay session agreed on these files' bytes: re-reading them mid-session would desync
+        *msg = melee_data::netid::FROZEN_MSG.into();
+        return -1;
+    }
     let cur = reg();
     let refuse = "native definitions require a process restart; current data kept";
     if !cur.definitions.rows.is_empty() {

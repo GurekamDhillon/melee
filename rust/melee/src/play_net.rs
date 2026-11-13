@@ -667,6 +667,43 @@ pub fn dirty_suffix() -> &'static str {
 /// The mounted mod set (`--mods DIR [--enable ..]`, else settings / MELEE_MODS_DIR) as the handshake's digest and
 /// description: 0 / "no mods" for vanilla.
 pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
+    mods_identity_mode(args, melee_data::netid::Mode::Cached)
+}
+
+/// The content identity of every mounted mod's folder (melee_data::netid): every file's bytes, not their sizes.
+/// `Force` re-reads every byte (netplay connect); `Cached` trusts `<mods>/.netid-cache` (path + size + mtime).
+pub fn mods_content(m: &crate::mods::Mods, mode: melee_data::netid::Mode) -> Result<Vec<melee_data::netid::ModId>, String> {
+    use melee_data::netid;
+    let t0 = Instant::now();
+    let mut cache = netid::Cache::load(&m.dir);
+    let mut out = Vec::new();
+    for &i in &m.set.order {
+        let md = &m.set.mods[i];
+        let root = if md.payload_is_mod_dir { md.payload.clone() } else { md.payload.parent().map(|p| p.to_path_buf()).unwrap_or_default() };
+        let id = md.id_str();
+        out.push(netid::hash_mod(&id, &root, &mut cache, mode).map_err(|e| format!("netplay: cannot read mod {id} to hash it: {e}"))?);
+    }
+    cache.save();
+    let n: usize = out.iter().map(|x| x.files.len()).sum();
+    log(&format!("netid: {} mod(s), {n} file(s), {} read, {} from cache, {:.1} ms ({mode:?})", out.len(), cache.hashed, cache.hits, t0.elapsed().as_secs_f64() * 1e3));
+    for x in &out {
+        for f in &x.files {
+            log(&format!("netid file {}/{} {:016x}", x.id, f.rel, f.hash));
+        }
+    }
+    Ok(out)
+}
+
+/// Thaws the netplay content lock when the session's scope ends (normal end, error or unwind).
+struct NetidThaw;
+impl Drop for NetidThaw {
+    fn drop(&mut self) {
+        melee_data::netid::thaw();
+    }
+}
+
+/// `mods_identity` with an explicit cache mode; netplay connect passes `Force`.
+pub fn mods_identity_mode(args: &[String], mode: melee_data::netid::Mode) -> Result<(u64, String), String> {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let m = match get("--mods") {
         Some(dir) => {
@@ -690,14 +727,18 @@ pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
         });
     };
     let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
-    let fp = m.set.fingerprint();
+    // content, not path + size (the old m.set.fingerprint()): every byte of every file each mod folder contributes
+    let content = mods_content(&m, mode)?;
+    let fp = melee_data::netid::set_digest(&content);
+    let mut shorts: Vec<String> = content.iter().map(|c| c.short()).collect();
+    shorts.sort_by_key(|s| s.to_ascii_lowercase());
     let w = wasm.map(|w| format!("|wasm {w}")).unwrap_or_default();
     // Geno: each overlaid fighter's profile salt and each define's content id (gw_mexid.c), so two installs whose
     // geno.json differ in content (not only in the files' sizes) do not match
     let geno = melee_engine::geno_host::netplay_identity(&m.dir, &ids);
     let g = if geno != 0 { format!("|geno {geno:016x}") } else { String::new() };
     let h = melee_net::hash64(format!("{}|{fp:016x}{w}{g}", ids.join(",")).as_bytes(), 0);
-    Ok((h, format!("mods {} ({fp:016x}){}{}", ids.join(", "), w.replace("|wasm ", "; code mods "), g.replace("|geno ", "; geno "))))
+    Ok((h, format!("mods {} ({fp:016x}){}{}", shorts.join(", "), w.replace("|wasm ", "; code mods "), g.replace("|geno ", "; geno "))))
 }
 
 /// The gameplay codes (melee_core::codes) enter the same handshake word: both peers must run the same codes, and the
@@ -1016,6 +1057,8 @@ pub enum NetPhase {
 }
 
 pub struct NetDriver {
+    /// holds the netplay content lock (melee_data::netid::freeze) for as long as this session exists
+    _frozen: NetidThaw,
     pub host: bool,
     pub sess: Rc<RefCell<Sess>>,
     pub log: Rc<RefCell<NetLog>>,
@@ -1230,7 +1273,11 @@ impl NetDriver {
         } else {
             log(&format!("netplay: joining match code {} from UDP port {port}", code.clone().unwrap_or_default()));
         }
-        let (mods_hash, mods_desc) = with_codes(mods_identity(args)?);
+        // connect: every byte re-read (the cache is never trusted here), then the files are locked: no hot reload may
+        // change what was hashed until this session ends (`_frozen` lives in the NetDriver: dropping the session, or an error return here, thaws)
+        let (mods_hash, mods_desc) = with_codes(mods_identity_mode(args, melee_data::netid::Mode::Force)?);
+        melee_data::netid::freeze();
+        let _frozen = NetidThaw;
         let env = PlayEnv { mods_hash, mods_desc: mods_desc.clone() };
         log(&format!("netplay {tag}: build {:015x}{}, {mods_desc}", build_hash(), dirty_suffix()));
         let mut rp = RoomParams {
@@ -1294,6 +1341,7 @@ impl NetDriver {
             log(&format!("netplay {tag}: online lab (LabNetplay): the match runs in lockstep, lab commands v{} ride the input stream", melee_modhost::lab::LAB_CMD_VERSION));
         }
         Ok(NetDriver {
+            _frozen,
             host,
             sess,
             log: nlog,

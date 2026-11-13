@@ -9,6 +9,7 @@ pub mod crashlog;
 pub mod cfmt;
 pub mod gdlp;
 pub mod modreg;
+pub mod netid;
 pub mod player;
 pub mod replay;
 pub mod slippi_pad;

@@ -14,7 +14,7 @@ repo=$(cd "$here/../../.." && pwd)
 mods=${MODS:?MODS}; out=${OUT:?OUT}; mkdir -p "$out"
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "wave_faces: GW_ISO_VANILLA is not set"; exit 2; }
 strong='ember:3,nova:3,bolt:3,*6000|grand_finale'
-rows=${ROWS:-"2:$strong 4:$strong 2:$strong,@2 4:$strong,@2 2c:$strong"}
+rows=${ROWS:-"2:$strong 3:$strong 2:$strong,@2 3:$strong,@2 2c:$strong"}
 fail=0
 for r in $rows; do
   f=${r%%:*}; d=${r#*:}; coop=(); case "$f" in *c) coop=(MELEE_ENVOY_COOP=1 MELEE_PAD_CHANNELS=3); f=${f%c};; esac

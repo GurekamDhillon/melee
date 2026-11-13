@@ -1135,9 +1135,18 @@ unsafe fn make_plan() {
     }
     for i in 0..3 {
         if nw >= 2 && f.kind != FK_BOSS {
-            let mut ck = CPU_POOL[(mix(seed ^ ((fight as u32 + 8 * e as u32) << 8) ^ (i as u32 + 0x40)) % CPU_POOL.len() as u32) as usize];
-            if ck == p[8 + i] {
-                ck = CPU_POOL[(CPU_POOL.iter().position(|&c| c == ck).unwrap_or(0) + 7) % CPU_POOL.len()];
+            // a new face: never one of this room's first-wave characters (any row) nor another row's second-wave one
+            // (it used to avoid only its own row's, so wave two often brought back a face from wave one)
+            let rows = (p[7].clamp(0, 3) as usize).max(i + 1);
+            let used = |c: i32, p: &[i32; 44]| (0..rows).any(|r| p[8 + r] == c) || (0..i).any(|r| p[32 + r] == c);
+            let start = (mix(seed ^ ((fight as u32 + 8 * e as u32) << 8) ^ (i as u32 + 0x40)) % CPU_POOL.len() as u32) as usize;
+            let mut ck = CPU_POOL[start];
+            for k in 0..CPU_POOL.len() {
+                let c = CPU_POOL[(start + k * 7) % CPU_POOL.len()];
+                if !used(c, p) {
+                    ck = c;
+                    break;
+                }
             }
             p[32 + i] = ck;
             // the elite's stocks for an elite room's second wave, else the row's own
@@ -1146,6 +1155,12 @@ unsafe fn make_plan() {
             p[32 + i] = -1;
             p[35 + i] = 0;
         }
+    }
+    if nw >= 2 && f.kind != FK_BOSS {
+        // the room's faces for the checks (wave_faces.sh): per row (ckind + 1), 0 for a row not in play, two digits each
+        let face = |w: usize| (0..3).fold(0, |a, r| a * 100 + if (r as i32) < p[7] { p[w + r] + 1 } else { 0 });
+        log(b"envoy: room faces, wave 1 ", face(8));
+        log(b"envoy: room faces, wave 2 ", face(32));
     }
     if waves {
         // an enemy-wave test fight: no foe fighters, Final Destination

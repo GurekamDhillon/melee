@@ -8,6 +8,7 @@
 # never disarmed or over before fight 3.
 #
 #   EXE=build/cargo/release/melee.exe MODS=build/mods-camp OUT=... bash tools/rust-port/envoy/camp_run.sh
+# PAD: the pad script (default camp_pad.txt; camp_pad_ace.txt with GW_ISO_VANILLA pointed at the ACE disc).
 # MAX_FIGHT (default 3): the fights that must be fought and won (the last one only fought).
 # CARD: a memory card folder with a save (copied). GW_ISO_VANILLA must be set (never printed). Needs envoy_sim.wasm
 # and envoy_ui.wasm (tools/rust-port/modhost/build_mods.sh) and the Brawl files (_build/brawl above the exe or the
@@ -33,7 +34,7 @@ cp -r "$card" "$out/card"
 log="$out/camp.log"
 unset MELEE_ENVOY_ARM MELEE_ENVOY_START_FIGHT MELEE_ENVOY_COOP MELEE_ENVOY_TEST_DRIVES
 env MELEE_VOLUME=3 MELEE_WINDOW_TITLE="${CAMP_TITLE:-v3sim agent: camp_run, Envoy camp door, fights 1-3 (port/v3sim)}" MELEE_WASM_MODS="$mods" \
-  MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_SCRIPT="$here/camp_pad.txt" MELEE_PAD_CHANNELS=03 MELEE_ENVOY_TEST_P1CPU=1 \
+  MELEE_ENVOY_DIR="$out/save" MELEE_CARD_PATH="$out/card" MELEE_PAD_SCRIPT="${PAD:-$here/camp_pad.txt}" MELEE_PAD_CHANNELS=03 MELEE_ENVOY_TEST_P1CPU=1 \
   MELEE_TURBO=1 ${CAMP_ENV:-} \
   "$exe" play --iso "$GW_ISO_VANILLA" --headless --no-audio --max-frames "$frames" >"$log" 2>&1
 fail=0

@@ -466,7 +466,8 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let mut sh = c.data().ui().borrow_mut();
         let path = sh.dirs[module].join(&p);
         let Some((w, h, px)) = decode_png(&path) else {
-            sh.log.push(format!("gd_ui_tex_load {p}: not a readable RGBA/RGB png"));
+            let looked = sh.dirs[module].display().to_string();
+            sh.log.push(format!("gd_ui_tex_load {p}: not a readable RGBA/RGB png (looked in {looked})"));
             return 0;
         };
         let Some(r) = sh.atlas.alloc(w as u16, h as u16) else {

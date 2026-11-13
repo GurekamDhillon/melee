@@ -1334,9 +1334,23 @@ pub fn dispatch_for_test(addr: u32, args: &[Arg], orig: &mut dyn FnMut() -> Ret)
 }
 
 /// `MELEE_WASM_MODS`: the mods directory, None when unset / empty / `0` (off by default).
+/// A relative dir is made absolute against the working directory, else (when it is not there) against the exe's
+/// folder, so a game started from another folder still finds its mods and their art.
 pub fn dir_from_env() -> Option<std::path::PathBuf> {
     let v = std::env::var("MELEE_WASM_MODS").ok()?;
-    (!v.is_empty() && v != "0").then(|| v.into())
+    if v.is_empty() || v == "0" {
+        return None;
+    }
+    let p = std::path::PathBuf::from(v);
+    if p.is_absolute() {
+        return Some(p);
+    }
+    let from_exe = std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join(&p)));
+    Some(match (std::path::absolute(&p).ok(), from_exe) {
+        (Some(a), _) if a.is_dir() => a,
+        (_, Some(e)) if e.is_dir() => e,
+        (a, _) => a.unwrap_or(p),
+    })
 }
 
 /// Load every `*.wasm` of `dir` and install the hook pointers the loaded set needs. Call on the game thread inside the

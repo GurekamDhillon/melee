@@ -22,6 +22,8 @@ mods=${MODS:-}
 if [ -z "$mods" ]; then
   mods="$repo/build/mods-camp"; rm -rf "$mods"; mkdir -p "$mods"
   cp "$repo/build/mods/envoy_sim.wasm" "$repo/build/mods/envoy_ui.wasm" "$mods/" || { echo "camp_run: build the mods first"; exit 2; }
+  # the UI's art: <mods>/envoy_ui/ (the host looks for a mod's textures in <mods>/<mod name>/)
+  cp -r "$repo/rust/mods/envoy_ui/art" "$mods/envoy_ui"
 fi
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "camp_run: GW_ISO_VANILLA is not set"; exit 2; }
 rm -rf "$out"; mkdir -p "$out/save"

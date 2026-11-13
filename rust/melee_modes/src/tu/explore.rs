@@ -508,6 +508,18 @@ unsafe fn each_fighter(mut f: impl FnMut(*mut HSD_GObj, *mut Fighter)) {
 
 /// Move one fighter to a door (on its floor, falling the last few units, as the stage switch places fighters).
 unsafe fn place(g: *mut HSD_GObj, fp: *mut Fighter, x: f32, y: f32) {
+    // still in the match entry (Petey's arena places the party on its first frame): Entry squashes the root joint
+    // to the stand's height (x6C4 in Y) and only EntryStart grows it back; leaving the entry here would keep the
+    // fighter flat for the whole match. Give the root its saved scale back first.
+    let ms = (*fp).motion_id;
+    if ms >= melee_types::ftCo_MS_Entry as i32 && ms <= melee_types::ftCo_MS_EntryEnd as i32 {
+        let j = (*g).hsd_obj as *mut melee_types::HSD_JObj;
+        if !j.is_null() {
+            let s = (*fp).mv.co.entry.x8;
+            crate::mn_inl::HSD_JObjSetScaleX(j as _, s.x);
+            crate::mn_inl::HSD_JObjSetScaleY(j as _, s.y);
+        }
+    }
     (*fp).cur_pos = melee_types::Vec { x, y: y + 3.0, z: 0.0 };
     (*fp).prev_pos = (*fp).cur_pos;
     sg::ftCo_Fall_Enter(g as *mut Fighter_GObj);
@@ -707,3 +719,4 @@ fn fmin(a: f32, b: f32) -> f32 {
 fn fmax(a: f32, b: f32) -> f32 {
     if b > a { b } else { a }
 }
+

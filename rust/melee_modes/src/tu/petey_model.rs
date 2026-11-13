@@ -21,6 +21,8 @@ pub struct Model {
     pub arm_r: Option<Rig>,
     /// The boss's enemy param file (hurtbox sets, camera range), when found.
     pub params: Option<Params>,
+    /// The arena's blast zones (left, right, top, bottom) from its stage position model's Dead0N / Dead1N bones.
+    pub arena_blast: Option<[f32; 4]>,
 }
 
 /// One hurtbox record (BrawlBox "HurtBox" layout): offset and stretch in the bone's space, radius, flag word whose
@@ -222,7 +224,39 @@ fn load() -> Result<Model, String> {
         Some(r)
     };
     let body = rig("EnmBosspackun").ok_or("body model not found")?;
-    Ok(Model { body, arm_l: rig("WpnBosspackunArmL"), arm_r: rig("WpnBosspackunArmR"), params: par })
+    let arena_blast = leaves.iter().find_map(|b| arena_blast(b));
+    Ok(Model { body, arm_l: rig("WpnBosspackunArmL"), arm_r: rig("WpnBosspackunArmR"), params: par, arena_blast })
+}
+
+/// A bone's bind translation by name in an MDL0 inside `d`: the bone record whose name offset (+8, relative to the
+/// record) points at the name; translation at +0x38.
+fn bone_trans(d: &[u8], name: &[u8]) -> Option<[f32; 2]> {
+    let mut want = name.to_vec();
+    want.push(0);
+    let locs: Vec<usize> = d.windows(want.len()).enumerate().filter(|(_, w)| *w == want.as_slice()).map(|(i, _)| i).collect();
+    if locs.is_empty() {
+        return None;
+    }
+    (0..d.len().saturating_sub(0x48)).step_by(4).find_map(|s| {
+        let no = bei(d, s + 8);
+        let t = s as i64 + no;
+        if no != 0 && t >= 0 && locs.contains(&(t as usize)) && bef(d, s + 0x20) == 1.0 {
+            Some([bef(d, s + 0x38), bef(d, s + 0x3C)])
+        } else {
+            None
+        }
+    })
+}
+
+/// The stage's blast zones from Dead0N (left, top) and Dead1N (right, bottom), if this leaf holds them.
+fn arena_blast(d: &[u8]) -> Option<[f32; 4]> {
+    if d.len() < 0x10 || &d[..4] != b"bres" {
+        return None;
+    }
+    let a = bone_trans(d, b"Dead0N")?;
+    let b = bone_trans(d, b"Dead1N")?;
+    let z = [a[0].min(b[0]), a[0].max(b[0]), a[1].max(b[1]), a[1].min(b[1])];
+    (z[0] < -50.0 && z[1] > 50.0 && z[2] > 50.0 && z[3] < -50.0).then_some(z)
 }
 
 // ---------------------------------------------------------------- containers

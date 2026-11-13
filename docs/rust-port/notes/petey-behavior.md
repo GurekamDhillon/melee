@@ -151,3 +151,15 @@ whether -90 is a straight-down launch; Q3 whether the +-68 lead offset affects t
   clamp assumed. Driven through Melee's scripted (boss intro, mode 6) camera with fixed interest and eye; the state is
   in `petey::B` and `game_camera` (statics, in the snapshot): synctest depth 4 over 3000 frames, 0 mismatches.
   Comparison: `scratch/envoy-demo/screenshots/petey6/camera_compare.png` (top Brawl, bottom ours).
+
+## Knockback conversion for Melee fighters (Nov 13, owner: "a large tendency to get one shot")
+Petey's boxes keep Brawl's damage, angles and knockback formula inputs, and the launch speeds matched Brawl
+(basket 3.41 measured in Brawl, 3.36 here). The one-shots come from the arena: a Melee stage's blast zones are
+much closer to his +-68 landing spots than his Brawl arena's. Brawl and Melee use the same knockback formula
+and the same 0.03 / 0.051 speed constants, so nothing was double-scaled. The fresh run's fight 5 is difficulty 5
+(Normal, L 2.5), and Envoy adds no damage or knockback multiplier to enemy hits.
+**Superseded the same day:** the fight ran on Final Destination, whose blast zones are much closer than those of
+Brawl's Petey arena. The arena's blast zones are now read at run time from the player's Brawl files (the boss
+archive's stage position model, bones Dead0N / Dead1N; values not recorded here) and applied every frame of the
+fight, and Brawl's knockback is used unchanged. `MELEE_PETEY_KB_PM` (per mille) is the knob; without the Brawl
+files the zones stay FD's and the scale falls back to 800. Not matched: FD's floor is narrower than the arena's.

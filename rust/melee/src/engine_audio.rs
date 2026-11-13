@@ -33,6 +33,20 @@ pub fn petey_music() {
     static IDLE: AtomicU32 = AtomicU32::new(u32::MAX);
     let hb = melee_modes::tu::petey::HEARTBEAT.load(Ordering::Relaxed);
     let idle = IDLE.load(Ordering::Relaxed);
+    // Petey's own sounds (the Brawl sound ids of his motion timelines), queued by the sim, played here once each
+    let mut ids = [0u16; 8];
+    let n = melee_modes::tu::petey::sfx_drain(&mut ids);
+    for &id in &ids[..n] {
+        let mut b = *b"#00000";
+        let mut v = id;
+        for k in (1..6).rev() {
+            b[k] = b'0' + (v % 10) as u8;
+            v /= 10;
+        }
+        if let Ok(name) = core::str::from_utf8(&b) {
+            melee_audio::brawl::play_sfx(name);
+        }
+    }
     if hb != SEEN.swap(hb, Ordering::Relaxed) {
         if idle == u32::MAX {
             if melee_audio::brawl::play_music(melee_modes::tu::petey::BOSS_MUSIC) {

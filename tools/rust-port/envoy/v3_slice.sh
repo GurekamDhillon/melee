@@ -18,7 +18,7 @@ ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env"; set +a; fi
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "v3_slice: GW_ISO_VANILLA not set"; exit 2; }
 command -v python >/dev/null 2>&1 || python() { python3 "$@"; }
-exe="${EXE:-$repo/build/cargo/release/melee}"; [ -e "$exe" ] || exe="$exe.exe"
+. "$here/exe_check.sh"; exe_pick v3_slice   # EXE=path overrides the default build/cargo/release/melee
 out="${OUT:-${TEMP:-/tmp}/v3_slice}"; mkdir -p "$out"
 depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint sim chain cash states tech volley shop finale coop petey loop3 loopboss}"
 fail=0
@@ -45,6 +45,7 @@ cp "$repo/build/mods/envoy_sim.wasm" "$mods/" || { echo "v3_slice: build the mod
 export MELEE_VOLUME=3 MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=2 MELEE_PAD_SCRIPT="$here/drives_pad.txt"
 run() { # name depth drives [env...]
   local name=$1 depth=$2 drives=$3; shift 3
+  exe_banner "v3_slice $name d$depth" >&2
   env MELEE_WINDOW_TITLE="v3g agent: v3_slice $name d$depth (port/v3g)" MELEE_ENVOY_TEST_DRIVES="$drives" "$@" "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
     --scenario pad_falcon_fox_fd --depth "$depth" --frames "$frames" --timeout 1800 >"$out/$name.d$depth.log" 2>&1
   grep 'engine synctest' "$out/$name.d$depth.log"
@@ -54,7 +55,7 @@ seen() { grep -q "$3" "$(L "$1" "$2")"; }
 cnt() { grep -c "$3" "$(L "$1" "$2")"; }
 check() { # n name depth line missing
   case "$4" in *" 0 MISMATCHES"*) [ -z "$5" ] && echo "ok   C$1. $2 d$3: ${4#melee: }; $(cnt "$2" "$3" 'drive fire') fires, $(cnt "$2" "$3" 'chain link') links, $(cnt "$2" "$3" 'cash-out, heat') cash-outs" \
-    || { echo "FAIL C$1. $2 d$3: missing:$5 (see $(L "$2" "$3"))"; fail=1; } ;; *) echo "FAIL C$1. $2 d$3: ${4:-no result} (see $(L "$2" "$3"))"; fail=1 ;; esac
+    || { echo "FAIL C$1. $2 d$3: missing:$5 (see $(L "$2" "$3"))"; fail=1; } ;; *) echo "FAIL C$1. $2 d$3: ${4:-NO RESULT LINE (the run never finished)} (see $(L "$2" "$3"))"; fail=1 ;; esac
 }
 for d in $depths; do
   if on chain; then

@@ -8,7 +8,7 @@
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "m0_hashword: GW_ISO_VANILLA not set"; exit 2; }
-exe="$repo/build/cargo/release/melee"; [ -e "$exe" ] || exe="$exe.exe"
+. "$here/exe_check.sh"; exe_pick m0_hashword; exe_banner m0_hashword   # EXE=path overrides the default build/cargo/release/melee
 mods="$repo/build/mods-hashword"; bash rust/mods/hashword_probe/build.sh "$mods" >/dev/null || exit 1
 qmods=$(printf %q "$mods") # play_pair reads NP_*_ENV as shell words: the path may hold spaces
 export NP_SCRATCH="${NP_SCRATCH:-${TEMP:-/tmp}/np}" MELEE_VOLUME=3; mkdir -p "$NP_SCRATCH"

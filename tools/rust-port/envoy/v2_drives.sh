@@ -19,17 +19,18 @@
 #   Every run prints its fire count (the loud-start band, envoy-core-v2.md 3.3).
 #   V3 (port/v3sim): the same six on the Heat rules: charge is by damage (the pad run no longer needs Bolt, which
 #   charges on 30% dealt), every test row carries `noshop`, the twin row's Echo is the V3 neighbour drive.
-#   GW_ISO_VANILLA=... bash tools/rust-port/envoy/v2_drives.sh   (OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
+#   GW_ISO_VANILLA=... bash tools/rust-port/envoy/v2_drives.sh   (EXE=path to the build under test; ONLY="lint sim pad cpu twin shared coop petey" selects rows; OUT=dir for the logs; DEPTHS="4 7"; FRAMES=3600)
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env"; set +a; fi
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "v2_drives: GW_ISO_VANILLA not set"; exit 2; }
 command -v python >/dev/null 2>&1 || python() { python3 "$@"; }
-exe="$repo/build/cargo/release/melee"; [ -e "$exe" ] || exe="$exe.exe"
+. "$here/exe_check.sh"; exe_pick v2_drives   # EXE=path overrides the default build/cargo/release/melee
 out="${OUT:-${TEMP:-/tmp}/v2_drives}"; mkdir -p "$out"
-depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-pad cpu twin shared coop petey}"
+depths="${DEPTHS:-4 7}"; frames="${FRAMES:-3600}"; only="${ONLY:-lint sim pad cpu twin shared coop petey}"
 fail=0
+on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 # the machine-wide build lock, through the shared script (never by hand); BUILDLOCK_HELD=1: the caller holds it
 cargo_locked() {
   local me; me="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
@@ -37,10 +38,10 @@ cargo_locked() {
   bash "${BUILDLOCK:-E:/Projects/Melee Workspace/scratch/buildlock.sh}" run "$me" cargo "$@"
 }
 host=x86_64-pc-windows-msvc; case "$(uname -s)" in Linux*) host=x86_64-unknown-linux-gnu ;; esac
-if (cd rust/mods/envoy_data && CARGO_TARGET_DIR="$repo/build/cargo-mods-host" RUST_TEST_THREADS=1 cargo_locked test -j 4 -q --target "$host" >"$out/lint.log" 2>&1); then
+if ! on lint; then :; elif (cd rust/mods/envoy_data && CARGO_TARGET_DIR="$repo/build/cargo-mods-host" RUST_TEST_THREADS=1 cargo_locked test -j 4 -q --target "$host" >"$out/lint.log" 2>&1); then
   echo "ok   0. envoy_data lint + tests ($(grep -o '[0-9]* passed' "$out/lint.log" | head -1))"
 else echo "FAIL 0. envoy_data (see $out/lint.log)"; fail=1; fi
-if python "$here/sim.py" --seeds 120 --no-fail >"$out/sim.log" 2>&1; then
+if ! on sim; then :; elif python "$here/sim.py" --seeds 120 --no-fail >"$out/sim.log" 2>&1; then
   echo "ok   0. sim.py bands ($(grep '^brawler' "$out/sim.log" | tr -s ' '))"
 else echo "FAIL 0. sim.py bands (see $out/sim.log)"; fail=1; fi
 mods="$repo/build/mods-v2test"; rm -rf "$mods"; mkdir -p "$mods"
@@ -48,6 +49,7 @@ cp "$repo/build/mods/envoy_sim.wasm" "$mods/" || { echo "v2_drives: build the mo
 export MELEE_VOLUME=3 MELEE_WASM_MODS="$mods" MELEE_ENVOY_ARM=1 MELEE_ENVOY_START_FIGHT=2 MELEE_PAD_SCRIPT="$here/drives_pad.txt"
 run() { # name depth drives [env...]
   local name=$1 depth=$2 drives=$3; shift 3
+  exe_banner "v2_drives $name d$depth" >&2
   env MELEE_WINDOW_TITLE="v3sim agent: v2_drives $name d$depth (port/v3sim)" MELEE_ENVOY_TEST_DRIVES="$drives" "$@" "$exe" synctest --engine tu --iso "$GW_ISO_VANILLA" \
     --scenario pad_falcon_fox_fd --depth "$depth" --frames "$frames" --timeout 1800 >"$out/$name.d$depth.log" 2>&1
   grep 'engine synctest' "$out/$name.d$depth.log"
@@ -59,11 +61,10 @@ rate() { echo "$(grep -c "envoy: drive \(fire\|echo\)" "$(L "$1" "$2")") fire li
 list() { grep -o 'drive fire [a-z_]*' "$(L "$1" "$2")" | sort -u | cut -c12- | tr '\n' ' '; }
 check() { # n name depth line missing
   case "$4" in *" 0 MISMATCHES"*) [ -z "$5" ] && echo "ok   $1. $2 d$3: ${4#melee: }; $(rate "$2" "$3"); fired: $(list "$2" "$3")" \
-    || { echo "FAIL $1. $2 d$3: missing:$5 (see $(L "$2" "$3"))"; fail=1; } ;; *) echo "FAIL $1. $2 d$3: ${4:-no result} (see $(L "$2" "$3"))"; fail=1 ;; esac
+    || { echo "FAIL $1. $2 d$3: missing:$5 (see $(L "$2" "$3"))"; fail=1; } ;; *) echo "FAIL $1. $2 d$3: ${4:-NO RESULT LINE (the run never finished)} (see $(L "$2" "$3"))"; fail=1 ;; esac
 }
 # a fire's log value is owner * 10 + level: owner 0-1 player 1's sets, 2-3 player 2's, 5-7 a foe
 owner_fired() { grep -Eq "envoy: drive fire [a-z_]+ $3[1-3]$" "$(L "$1" "$2")" || { [ "$3" = 0 ] && grep -Eq "envoy: drive fire [a-z_]+ [1-3]$" "$(L "$1" "$2")"; }; }
-on() { case " $only " in *" $1 "*) return 0 ;; esac; return 1; }
 for d in $depths; do
   if on pad; then
     line=$(run pad "$d" "bolt,nova,comet/relay,slipstream,feather_storm|echo_oath" MELEE_ENVOY_START_FIGHT=1)

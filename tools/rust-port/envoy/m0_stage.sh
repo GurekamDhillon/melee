@@ -9,7 +9,7 @@
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "m0_stage: GW_ISO_VANILLA not set"; exit 2; }
-exe="$repo/build/cargo/release/melee"; [ -e "$exe" ] || exe="$exe.exe"
+. "$here/exe_check.sh"; exe_pick m0_stage; exe_banner m0_stage   # EXE=path overrides the default build/cargo/release/melee
 d="$(mktemp -d)"; bash rust/mods/stage_switch/c/build.sh "$d" >/dev/null || exit 1
 export MELEE_WASM_MODS="$d" MELEE_ENGINE_PRE_DRAWS=0 MELEE_VOLUME=3
 fail=0

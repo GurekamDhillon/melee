@@ -1609,6 +1609,14 @@ pub fn envoy_bank_bytes(kind: i32) -> usize {
     }
 }
 
+/// TARGET_PC: the C's "fighter figatree over!" panic as a message: the row stays unbound (x14 = 0, no animation).
+fn figatree_over(kind: i32, row: i32, size: u32) {
+    eprintln!(
+        "fighter figatree over: kind {kind} row {row} clip is {size} bytes (0x{size:X}), over the animation buffer of {} bytes (0x{:X}); the row plays no animation",
+        FT_ANIM_BUF_SIZE, FT_ANIM_BUF_SIZE
+    );
+}
+
 /// `ftData_80085A14`: load a kind's animation bank and bind its motion rows.
 pub fn ftData_80085A14(kind: i32) {
     melee_core::ct!("ftData_80085A14");
@@ -1636,9 +1644,12 @@ pub fn ftData_80085A14(kind: i32) {
                 let r0 = row.x8 as u32;
                 if r0 != 0 {
                     if r0 > FT_ANIM_BUF_SIZE as u32 {
-                        panic!("fighter figatree over! {r0:x}");
+                        // C: OSPanic "fighter figatree over!". TARGET_PC: retail banks never hit this; a modded bank's
+                        // oversized clip is left unbound (no animation, as a row without one) with a clear message
+                        figatree_over(kind, i as i32, r0);
+                    } else {
+                        row.x14 = base.wrapping_add(row.x4 as u32) as usize;
                     }
-                    row.x14 = base.wrapping_add(row.x4 as u32) as usize;
                 }
                 i += 1;
             }
@@ -1993,9 +2004,10 @@ pub fn ftData_80085B98(f: &mut Fighter, arg1: i32, arg2: i32) {
             let r0 = r3.x8 as u32;
             if r0 != 0 {
                 if r0 > FT_ANIM_BUF_SIZE as u32 {
-                    panic!("fighter figatree over! {r0:x}");
+                    figatree_over(f.kind as i32, i, r0); // C: OSPanic (see ftData_80085A14)
+                } else {
+                    r3.x14 = r30.wrapping_add(r3.x4 as u32) as usize;
                 }
-                r3.x14 = r30.wrapping_add(r3.x4 as u32) as usize;
             }
             i += 1;
         }

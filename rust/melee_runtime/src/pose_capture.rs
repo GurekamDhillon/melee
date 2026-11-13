@@ -394,6 +394,30 @@ unsafe fn sample_joint(j: *mut HSD_JObj, cur: &[f32; 9]) -> (u16, Option<Box<[[f
     (m, (m != 0).then_some(out))
 }
 
+/// `melee pose-dump`: each channel's value as the joint's own track put it this tick, before anything else wrote the
+/// joint (root-motion extraction, dynamics, per-joint scale): fobj.c's rules on a private copy at phase 0. Order: rotation
+/// XYZ, translation XYZ, scale XYZ; None where no track drives the channel (or a path drives the translation).
+pub unsafe fn track_values(j: *mut HSD_JObj) -> [Option<f32>; 9] {
+    let mut out = [None; 9];
+    let a = (*j).aobj;
+    if a.is_null() || (*a).flags & crate::aobj::AOBJ_NO_ANIM != 0 {
+        return out;
+    }
+    let mut f = (*a).fobj;
+    let mut n = 0;
+    while !f.is_null() && n < 64 {
+        n += 1;
+        let ty = (*f).obj_type as usize;
+        let c = match ty { 1..=3 => Some(ty - 1), 5..=10 => Some(ty - 2), _ => None };
+        if let Some(c) = c {
+            let mut z = core::ptr::read(f);
+            out[c] = eval(&mut z, 0.0);
+        }
+        f = (*f).next;
+    }
+    out
+}
+
 // fobj.c's keyframe interpreter over a private copy (the game's FObj is never touched)
 const OP_CON: u8 = 1;
 const OP_LIN: u8 = 2;

@@ -83,6 +83,7 @@ mod pads;
 mod practice;
 mod lab;
 mod lab_check;
+mod pose_dump;
 mod cov1p;
 mod envoy_store;
 
@@ -618,6 +619,7 @@ fn main_inner() -> ExitCode {
             play::play(&a)
         }
         Some("dat-dump") => retail::dat_dump(&args),
+        Some("pose-dump") => pose_dump::pose_dump(&args),
         Some(x) => {
             eprintln!("melee: unknown command {x:?} (selftest | hashlog | golden | diff | view-golden)");
             ExitCode::from(2)

@@ -50,6 +50,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "effBehaviorTable" { return Some(RootType::Custom("efbhv")); }
     if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
     if name == "MnSelectChrDataTable" { return Some(rt("MnSelectChrDataTable")); }
+    if name == "mexSelectChr" { return Some(RootType::Custom("mexselchr")); }
     if name == "MnSelectStageDataTable" { return Some(rt("MnSelectStageDataTable")); }
     if name == "pnlsce" { return Some(rt("SceneDesc")); }
     if name == "flmsce" { return Some(rt("SceneDesc")); }

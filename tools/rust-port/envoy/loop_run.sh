@@ -11,7 +11,8 @@ here=$(cd "$(dirname "$0")" && pwd)
 repo=$(cd "$here/../../.." && pwd)
 exe=${EXE:-$repo/build/cargo/release/melee.exe}
 out=${OUT:?OUT}
-mods=${MODS:?MODS}
+mods=${MODS:?MODS}; mods=$(cd "$mods" && pwd)  # absolute: the runs below cd into OUT
+[ -d "$mods/envoy_ui" ] || echo "loop_run: warning: no envoy_ui/ art folder in MODS (the UI draws without its textures)"
 card=${CARD:?CARD}
 frames=${FRAMES:-900000}
 drives=${DRIVES:-ember:3,nova:3,bolt:3,*4000|grand_finale}

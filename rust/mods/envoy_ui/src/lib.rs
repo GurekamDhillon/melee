@@ -26,6 +26,7 @@ mod kit;
 mod party;
 mod picker;
 mod fx;
+mod help;
 
 use envoy_data::view::*;
 use envoy_data::*;

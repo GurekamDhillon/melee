@@ -131,7 +131,7 @@ fn row_text(r: u8, has: bool, p2: bool) -> (&'static str, &'static str) {
         R_LENGTH => ("Run length", "Short, 5 fights"),
         R_TEAM => ("Team attack", "Off"),
         R_NG => ("NG+ level", "0 only"),
-        R_COLLECTION => ("Collection", "soon"),
+        R_COLLECTION => ("How to play", ""),
         R_TAGBTN => ("Tag button", unsafe { ["Y", "X", "D-pad (classic)"][TAG_BUTTON.clamp(0, 2) as usize] }),
         R_BACK => ("Back", ""),
         R_GO => ("On to the next fight", ""),
@@ -153,13 +153,13 @@ fn row_say(r: u8, has: bool, p2: bool) -> &'static str {
         R_LENGTH => "A session is three rooms and a boss.",
         R_TEAM => "Your attacks never hit your partner in this build.",
         R_NG => "NG+ opens when a run is cleared. Not in this build yet.",
-        R_COLLECTION => "Drives and keystones you have found. Coming soon.",
+        R_COLLECTION => "The goal, your pair, Heat, drives and the buttons, on one card.",
         R_TAGBTN => "Y and X tag at once, no cutscene. The D-pad is the classic tag with its cutscene.",
         R_BACK => "Back to the main menu.",
         R_GO => "The fights of this session follow back to back.",
         R_ABANDON => "End this run for good.",
         R_LEAVE => "Back to the main menu. The run waits at the camp.",
-        R_DONE => "The run is over. Back to the character select.",
+        R_DONE => "The run is over. Back to the camp.",
         _ => "",
     }
 }
@@ -248,6 +248,14 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
         }
         return DO_NOTHING;
     }
+    // the How to play card (help.rs) over the camp: it closes on A, B or Start
+    if crate::help::is_open() {
+        let pad = read_pad(0);
+        if !crate::help::frame(e, &pad, TAG_BUTTON) {
+            u.age = 1; // back on the camp: the closing press must not choose a row
+        }
+        return DO_NOTHING;
+    }
     let rs = rows(after_fight, ended, has, no_brawl);
     if u.cur >= rs.len() {
         u.cur = 0;
@@ -319,6 +327,7 @@ pub unsafe fn frame(e: &mut E, after_fight: bool, view: Option<&[i32; VW]>, rec:
                     }
                     R_BACK => act = DO_CLOSE,
                     R_FIGHTERS if !has => crate::picker::open(u.p2),
+                    R_COLLECTION => crate::help::open(),
                     R_TAGBTN => {
                         TAG_BUTTON = (TAG_BUTTON + 1) % 3;
                         gd_ui_envoy_set_tag_button(TAG_BUTTON);
@@ -574,6 +583,8 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
                 let mut s = Buf::new();
                 loop_fight(&mut s, v[V_LOOP], next, v[V_FIGHTS]);
                 e.text_ex(x + 16.0, y + 36.0, bs(13), INK, ALIGN_LEFT, 0.0, s.str());
+                // the fight was left from the pause (V_OUTCOME 3): the run is kept, the fight starts over
+                let kline = if v[V_OUTCOME] == 3 { "You left this fight. It starts over." } else { kline };
                 e.text_ex(x + 16.0, y + 70.0, bs(14), INK, ALIGN_LEFT, 270.0, kline);
                 e.rect(x + 16.0, y + 104.0, 268.0, 2.0, PALE);
                 e.text_ex(x + 16.0, y + 116.0, d(15), INK, ALIGN_LEFT, 0.0, "If you win");

@@ -353,6 +353,8 @@ struct App<G: Game> {
     vrr_votes: (Option<bool>, u32),
     /// Presents dropped because a tick came due first (their in-between pose was already stale).
     stale: u64,
+    /// Once-per-tick mode: the sim tick the last present showed (no redraw until a newer one exists).
+    presented_tick: u64,
     /// YouGame bridge: the Tab press was taken as Shift+Tab, so its release is ours too.
     yg_tab: bool,
     /// The profiler's last display line (frameprof::info only when it changes).
@@ -519,7 +521,8 @@ impl<G: Game> App<G> {
         self.fps_frames = 0;
         self.fps_ticks0 = self.clock.ticks;
         let (sim_ms, ren_ms) = (std::mem::take(&mut self.tick_time).as_secs_f64() * 1e3, std::mem::take(&mut self.present_time).as_secs_f64() * 1e3);
-        let want = self.interp_env.unwrap_or(fps > 65.0);
+        // interpolation is off unless forced on (MELEE_INTERP=1): one rendered frame per sim tick
+        let want = self.interp_env.unwrap_or(false);
         if want != self.interp {
             self.interp = want;
             self.game.set_interp(want);
@@ -787,6 +790,7 @@ impl<G: Game> ApplicationHandler for App<G> {
                     let at = self.present_at.take().unwrap_or_else(Instant::now);
                     let extra = self.last.map(|l| at.saturating_duration_since(l)).unwrap_or_default();
                     let t = Instant::now();
+                    self.presented_tick = self.clock.ticks;
                     self.game.present(&w, self.clock.alpha_after(extra));
                     if !self.game.should_quit() {
                         crate::yougame::presented();
@@ -873,7 +877,9 @@ impl<G: Game> ApplicationHandler for App<G> {
             return;
         }
         if let Some(w) = self.window.as_ref() {
-            w.request_redraw();
+            if self.decoupled || self.clock.ticks != self.presented_tick || self.game.present_now() {
+                w.request_redraw();
+            }
         }
         if self.decoupled {
             // Render as fast as presentation allows (vsync on: blocks in present at the refresh
@@ -942,7 +948,10 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         focus_released: false,
         quit: false,
         // MELEE_RENDER_DECOUPLED=0 restores the old once-per-tick redraw.
-        decoupled: env_bool("MELEE_RENDER_DECOUPLED").unwrap_or(true),
+        // Default: one present per sim tick (no interpolation). MELEE_INTERP=1 (or MELEE_RENDER_DECOUPLED=1)
+        // brings back rendering at the display rate.
+        decoupled: env_bool("MELEE_RENDER_DECOUPLED").unwrap_or(env_bool("MELEE_INTERP") == Some(true)),
+        presented_tick: u64::MAX,
         interp_env: env_bool("MELEE_INTERP"),
         interp: false,
         show_fps: env_bool("MELEE_SHOW_FPS").unwrap_or(false),

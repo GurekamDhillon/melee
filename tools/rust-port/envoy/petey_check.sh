@@ -3,7 +3,7 @@
 # script is idle and the player hits come from MELEE_PETEY_TEST_HITS, so every row is the same run on every machine.
 #
 #   EXE=<melee exe> MODS=<dir with envoy_sim.wasm> [OUT=dir] [DISC=vanilla|ace] [PLAYER=kirby] \
-#     bash tools/rust-port/envoy/petey_check.sh [idle hits break sync ...]
+#     bash tools/rust-port/envoy/petey_check.sh [idle hits break bodybreak sync ...]
 #
 # Rows:
 #   idle   no hits for 2600 frames: the attack loop (Wait A -> basket -> Wait B -> menu), wait lengths inside the
@@ -11,7 +11,9 @@
 #          and shakes, the landing's large shake at frame 2
 #   hits   a cage hit in a wait (no flinch), body hits to 50% (Angry when the wait ends, L 3.3), to 25% (L 4.1), then under 10% (death:
 #          the lower cage's princess freed, Down with its sounds and shakes, the carrier KO DOWN_END frames later)
-#   break  one cage taken to 0 in a single hit: Down by the cage-break path, that side freed
+#   break  one cage taken to 0 by a hit on that cage: the same-frame death check (rules 6/7) fires first, so it is a
+#          death (status 15) with that side freed and no cage-break Down (sora_enemy handler, code-spec.md 3)
+#   bodybreak  both cages taken to 0 by a body hit (no cage hit flag): the cage-break path, Down by rule 10
 #   sync   synctest depth 4 over 3000 frames with the `hits` schedule: 0 mismatches
 # The disc comes from GW_ISO_VANILLA / GW_ISO_ACE (never printed). Takes no lock itself: wrap it
 # (`runlight.sh <who> bash ...` per row; `sync` is a heavier run).
@@ -26,11 +28,12 @@ player=${PLAYER:-kirby}
 case "$disc" in ace) iso=${GW_ISO_ACE:-} ;; *) iso=${GW_ISO_VANILLA:-} ;; esac
 [ -n "$iso" ] || { echo "petey_check: the $disc disc variable is not set"; exit 2; }
 [ -f "$mods/envoy_sim.wasm" ] || { echo "petey_check: no envoy_sim.wasm in MODS"; exit 2; }
-rows=("$@"); [ ${#rows[@]} -gt 0 ] || rows=(idle hits break sync)
+rows=("$@"); [ ${#rows[@]} -gt 0 ] || rows=(idle hits break bodybreak sync)
 mkdir -p "$out"
 pad="$out/idle_pad.txt"; echo "99999 0000 0 0" > "$pad"
 HITS="50:l:16,400:b:66,900:b:39,1500:b:22"  # cages 157: L 141, 75 (<=50%), 36 (<=25%), 14 (<10%)
 BREAK="300:r:200"
+BODYBREAK="300:b:200"
 fail=0
 base_env() {
   env MELEE_VOLUME=3 MELEE_FULLSCREEN=off MELEE_WASM_MODS="$mods" MELEE_ENVOY_BOSS=petey MELEE_ENVOY_START_FIGHT=5 \
@@ -106,7 +109,12 @@ PY
       ;;
     break)
       play break 1200 MELEE_PETEY_TEST_HITS="$BREAK"
-      order break "a cage at 0 -> broken, that side (right) freed, Down by rule 10" 'test hit r 200' 'cage 1 broken' 'status [0-9]+ -> 1 ' 'defeated \(cause 2, freed side 1\)'
+      order break "a cage hit to 0 -> same-frame death check, right freed, no break" 'test hit r 200' 'status [0-9]+ -> 15 ' 'status 15 -> 1 ' 'dying \(cage 1 hit to 0.0%, same-frame check\)' 'defeated \(cause 1, freed side 1\)'
+      if grep -q 'cage 1 broken' "$(L break)"; then echo "FAIL break: the cage-break path ran after the death check"; fail=1; else echo "ok   break: no cage-break path"; fi
+      ;;
+    bodybreak)
+      play bodybreak 1200 MELEE_PETEY_TEST_HITS="$BODYBREAK"
+      order bodybreak "a body hit to 0 -> broken, Down by rule 10" 'test hit b 200' 'cage 0 broken' 'status [0-9]+ -> 1 ' 'defeated \(cause 2, freed side 0\)'
       ;;
     sync)
       exe_banner "petey_check sync ($disc, $player)"

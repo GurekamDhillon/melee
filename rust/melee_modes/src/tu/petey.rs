@@ -676,6 +676,11 @@ unsafe fn follow_camera() {
     if gc.mode != CAMERA_BOSS_INTRO as u32 {
         cm::Camera_8002FE38();
     }
+    // MELEE_PETEY_CAM=boss (captures only): frame Petey instead of the player, so a recording keeps him in view
+    static BOSS_CAM: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if *BOSS_CAM.get_or_init(|| std::env::var("MELEE_PETEY_CAM").map(|v| v == "boss").unwrap_or(false)) {
+        tgt = Some((B.px, 45.0));
+    }
     let (tx, ty) = tgt.unwrap_or((B.cam[0], B.cam[1]));
     B.cam[2] += (CAM_DIST - B.cam[2]) * CAM_RATE;
     B.cam[0] += (tx - B.cam[0]) * CAM_RATE;
@@ -731,6 +736,21 @@ unsafe fn hide_marker(slot: i32) {
 
 /// §6.2 / §6.3 / §5: cage procs, the boss's reaction and the death check, in that order on the hit frame.
 unsafe fn cage_events(hit_any: bool, cage_hit: [bool; 2]) {
+    // the boss's cage-event handler: a cage hit this frame (event 1, or 0x13FF when the hit took it to 0) first runs a
+    // one-off death check for that cage (rules 6/7, priority -198/-197) before anything else. When it fires the boss
+    // dies with that side freed and the break path (stage notify, Down) is skipped, so a cage knocked straight to 0
+    // by a hit is a death, not a Down.
+    if !B.cage_broken {
+        for c in 0..2 {
+            if cage_hit[c] && cage_pct(c) <= tun().death_pct {
+                B.freed = c as i32;
+                B.cause = 1;
+                enter(ST_DYING);
+                eprintln!("petey: dying (cage {} hit to {:.1}%, same-frame check)", c, cage_pct(c));
+                return;
+            }
+        }
+    }
     // a cage reaching 0: broken (0x13FF), the princess on that side is freed, boss to Down
     for c in 0..2 {
         if B.cage[c] <= 0 && !B.cage_broken {

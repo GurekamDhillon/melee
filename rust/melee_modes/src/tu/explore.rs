@@ -453,7 +453,9 @@ pub unsafe fn frame() {
         }
         let p = (*fp).cur_pos;
         for (di, d) in m.doors.iter().enumerate() {
-            if d.sec as i32 == SEC && (p.x - d.x).abs() <= 15.0 && p.y >= d.y - 55.0 && p.y <= d.y + 20.0 {
+            // overlapping doors (080103 has a linked and an unlinked door at one spot): the linked one wins
+            let near = d.sec as i32 == SEC && (p.x - d.x).abs() <= 15.0 && p.y >= d.y - 55.0 && p.y <= d.y + 20.0;
+            if near && (want < 0 || d.to >= 0) {
                 want = di as i32;
             }
         }

@@ -40,6 +40,10 @@ fn round_i(v: f32) -> i32 {
 
 /// Cage HP and max (§5, §6.1).
 pub const CAGE_HP: i32 = 999;
+/// Each cage's HP as the running fight has it: 157, not the file's 999 (observed in the original at the owner's save
+/// state, Midair Stadium: both cages read 157.0 at the fight's start and fall 1:1 with the player's damage; the
+/// file's spawn value is scaled down by the game before the fight. _build/petey-spec/runs/obs2-summary.md).
+pub const CAGE_HP_LIVE: i32 = 157;
 /// Death threshold in cage-HP percent (param 3057).
 #[allow(dead_code)] // the fallback is petey_file::FALLBACK
 const DEATH_PCT: f32 = 10.0;
@@ -54,6 +58,13 @@ const PHASE2_PCT: f32 = 25.0;
 /// The difficulty index the fight uses (0-14): clamp(3 tier + 2 - min(retries, 5)) in Brawl (spec §3); Envoy has no
 /// SSE tier or continues, so a fresh Normal game: 5.
 const DIFFICULTY: usize = 5;
+/// Envoy's difficulty hook: one Brawl difficulty tier (3 index steps: Normal 5, Hard 8, Very Hard 11, Intense 14) per
+/// endless loop. `MELEE_PETEY_DIFFICULTY=<0-14>` pins the index for every fight (tests, tuning).
+const DIFFICULTY_PER_LOOP: i32 = 3;
+/// The plan's cage-HP word grows by this much per loop (envoy_sim `LOOP_BOSS_HP`): the loop number is read back from it.
+const PLAN_HP_PER_LOOP: i32 = 250;
+/// Frames of Down after which the fight ends (the Down timeline's stage notification 7; 8 follows at 420).
+const DOWN_END: i32 = 180;
 /// Strength by phase (param 24001 / 24002; phase 0 is the placement's 1).
 #[allow(dead_code)] // the fallback is petey_file::FALLBACK
 const STRENGTH: [usize; 3] = [1, 2, 3];
@@ -164,20 +175,29 @@ pub struct Boss {
     /// the adventure follow camera (spec §2.3 / §10, Q6): started, centre x / y and eye distance
     pub cam_on: bool,
     pub cam: [f32; 3],
+    /// the difficulty index (0-14) this fight uses for the L table
+    pub diff: i32,
+    /// the last motion frame whose timeline events (shakes, sounds) have fired (-1 = none yet)
+    pub tl_mf: i32,
+    /// sound events for the presentation side: a running count and the last eight Brawl sound ids
+    pub snd_seq: u32,
+    pub snd: [u16; 8],
+    /// frames ticked since the fight began (the test hits key on it)
+    pub age: u32,
 }
 
 const OFF: Boss = Boss {
-    st: ST_OFF, prev_st: ST_OFF, sf: 0, t_out: 0.0, mot: M_WAIT1 as i32, mf: 0, px: 0.0, vx: 0.0, cage: [CAGE_HP; 2],
+    st: ST_OFF, prev_st: ST_OFF, sf: 0, t_out: 0.0, mot: M_WAIT1 as i32, mf: 0, px: 0.0, vx: 0.0, cage: [CAGE_HP_LIVE; 2],
     phase: 0, cage_ctr: 0, rule28: false, rule29: false, jump_count: 1, jumps_wanted: 1, side: 0, flinch_to: ST_MENU,
     aim: 1.0, cage_broken: false, cause: 0, freed: -1, ko_done: false, down_t: 0, rng: 1, carrier_slot: -1,
-    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, locked: -1, menu_pick: 0, has_goal: false, goal_x: 0.0, cage_max: CAGE_HP, lag_prev: 0.0,
-    cam_on: false, cam: [0.0; 3],
+    last_frame: u32::MAX, inst: 1, flash: [0; 3], last_slot: -1, locked: -1, menu_pick: 0, has_goal: false, goal_x: 0.0, cage_max: CAGE_HP_LIVE, lag_prev: 0.0,
+    cam_on: false, cam: [0.0; 3], diff: DIFFICULTY as i32, tl_mf: -1, snd_seq: 0, snd: [0; 8], age: 0,
 };
 
 /// Each cage's full HP this fight (CAGE_HP with no Envoy loop scaling).
 fn cage_max() -> i32 {
     let m = unsafe { B.cage_max };
-    if m > 0 { m } else { tun().cage_hp }
+    if m > 0 { m } else { CAGE_HP_LIVE }
 }
 pub static mut B: Boss = OFF;
 /// The match about to start is a Petey fight (set by `envoy::match_begin`, consumed at the first tick).
@@ -317,7 +337,144 @@ fn range(min: f32, min_s: f32, max: f32, max_s: f32) -> f32 {
 /// The difficulty scalar L for the current phase (§3).
 pub fn level() -> f32 {
     let s = tun().strength[unsafe { B.phase }.clamp(0, 2) as usize];
-    L_TABLE[s - 1][DIFFICULTY]
+    L_TABLE[s - 1][unsafe { B.diff }.clamp(0, 14) as usize]
+}
+
+/// The pinned difficulty index (`MELEE_PETEY_DIFFICULTY`), read once per process.
+fn difficulty_pin() -> Option<i32> {
+    static V: std::sync::OnceLock<Option<i32>> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var("MELEE_PETEY_DIFFICULTY").ok().and_then(|v| v.trim().parse::<i32>().ok()).map(|v| v.clamp(0, 14)))
+}
+
+/// `MELEE_PETEY_LOG` (fixed for the process).
+fn log_on() -> bool {
+    static V: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var_os("MELEE_PETEY_LOG").is_some())
+}
+
+/// Test knob (scripted checks; fixed for the process, so a run stays deterministic):
+/// `MELEE_PETEY_TEST_HITS="<fight frame>:<b|l|r>:<damage>,..."` lands a player hit of that damage on the body (b), the
+/// left cage (l) or the right cage (r) at that frame of the fight, as a fighter's hitbox would.
+fn test_hits() -> &'static [(u32, u8, i32); 32] {
+    static V: std::sync::OnceLock<[(u32, u8, i32); 32]> = std::sync::OnceLock::new();
+    V.get_or_init(|| {
+        let mut out = [(u32::MAX, 0u8, 0i32); 32];
+        if let Ok(v) = std::env::var("MELEE_PETEY_TEST_HITS") {
+            for (i, item) in v.split(',').take(32).enumerate() {
+                let mut it = item.trim().split(':');
+                let f = it.next().and_then(|x| x.parse::<u32>().ok());
+                let t = it.next().and_then(|x| x.bytes().next());
+                let d = it.next().and_then(|x| x.parse::<i32>().ok());
+                if let (Some(f), Some(t), Some(d)) = (f, t, d) {
+                    out[i] = (f, t, d);
+                }
+            }
+        }
+        out
+    })
+}
+
+/// A sound event for the presentation side (a Brawl sound id; `sfx_drain` hands them to the audio host).
+unsafe fn push_snd(id: u16, f: i32) {
+    if log_on() {
+        eprintln!("petey: f{} sound {} (motion {} frame {})", B.last_frame, id, B.mot, f);
+    }
+    B.snd[(B.snd_seq & 7) as usize] = id;
+    B.snd_seq = B.snd_seq.wrapping_add(1);
+}
+
+/// Presentation only: the Brawl sound ids queued since the last call (at most eight; a rollback or a new fight that
+/// moves the count backwards plays nothing). Never feeds the sim.
+pub fn sfx_drain(out: &mut [u16; 8]) -> usize {
+    use std::sync::atomic::{AtomicU32, Ordering};
+    static SEEN: AtomicU32 = AtomicU32::new(0);
+    let (seq, ring) = unsafe { (B.snd_seq, B.snd) };
+    let seen = SEEN.swap(seq, Ordering::Relaxed);
+    if seq <= seen {
+        return 0;
+    }
+    let n = (seq - seen).min(8);
+    for i in 0..n {
+        out[i as usize] = ring[((seq - n + i) & 7) as usize];
+    }
+    n as usize
+}
+
+/// Screen shake of a motion frame (the game timelines' 1A00: 0 small, 1 medium, 2 large; "wait until" read as the
+/// absolute motion frame, so the baskets' twenty shakes all fall on frame 70 and JumpLoop's on 0 and 10).
+fn shake_at(mot: usize, f: i32) -> Option<u32> {
+    match mot {
+        M_ANGRY if f >= 4 && f <= 60 && (f - 4) % 8 == 0 => Some(1),
+        M_BASKET_L | M_BASKET_R if f == 70 => Some(0),
+        M_JUMP_ATTACK if f == 0 => Some(1),
+        M_JUMP_ATTACK if f >= 4 && f <= 64 && (f - 4) % 5 == 0 => Some(0),
+        M_JUMP_ATTACK if f >= 69 && f <= 89 && (f - 69) % 5 == 0 => Some(1),
+        M_JUMP_LANDING if f == 2 => Some(2),
+        M_JUMP_LANDING if f == 5 => Some(1),
+        M_JUMP_LOOP if f == 0 || f == 10 => Some(0),
+        M_DOWN if f == 0 || f == 1 => Some(2),
+        M_DOWN if f == 20 => Some(1),
+        M_DOWN if f == 60 => Some(0),
+        _ => None,
+    }
+}
+
+/// The sound timelines (0A00 / 0A02): (motion, frame, Brawl sound id). The variant-only voices (param 24000 == 2)
+/// are not in the stock fight.
+const SOUNDS: [(usize, i32, u16); 25] = [
+    (M_ANGRY, 9, 9592),
+    (M_BASKET_L, 17, 9593),
+    (M_BASKET_R, 17, 9593),
+    (M_DAMAGE_L, 0, 9594),
+    (M_DAMAGE_R, 0, 9595),
+    (M_DOWN, 0, 9612),
+    (M_DOWN, 1, 9608),
+    (M_DOWN, 11, 9609),
+    (M_DOWN, 20, 9609),
+    (M_DOWN, 30, 9609),
+    (M_DOWN, 31, 9610),
+    (M_DOWN, 38, 9609),
+    (M_DOWN, 50, 9609),
+    (M_DOWN, 60, 9609),
+    (M_DOWN, 68, 9609),
+    (M_DOWN, 78, 9611),
+    (M_DOWN, 85, 9609),
+    (M_DOWN, 98, 9609),
+    (M_DOWN, 152, 9596),
+    (M_JUMP_ATTACK, 0, 9597),
+    (M_JUMP_LANDING, 0, 9598),
+    (M_JUMP_LOOP, 0, 9602),
+    (M_JUMP_START, 14, 9601),
+    (M_WAIT2, 20, 9599),
+    (M_WAIT2, 96, 9600),
+];
+
+/// Fire the timeline events of the motion frames passed since the last call (frame 0 included on a motion's first
+/// tick). A looping motion's wrap does not restart its timelines; a motion change does.
+unsafe fn timeline() {
+    if B.st == ST_OFF {
+        return;
+    }
+    let mot = B.mot.clamp(0, 11) as usize;
+    let mut f = B.tl_mf + 1;
+    while f <= B.mf {
+        if let Some(k) = shake_at(mot, f) {
+            let kind = [QuakeKind_Small, QuakeKind_Medium, QuakeKind_Large][k as usize];
+            if log_on() {
+                eprintln!("petey: f{} shake {} (motion {} frame {})", B.last_frame, k, mot, f);
+            }
+            melee_world::tu::camera::Camera_RequestQuake(kind, core::ptr::null_mut());
+        }
+        for &(m, sf, id) in SOUNDS.iter() {
+            if m == mot && sf == f {
+                push_snd(id, f);
+            }
+        }
+        f += 1;
+    }
+    if B.mf > B.tl_mf {
+        B.tl_mf = B.mf;
+    }
 }
 
 /// The cages' L: the boss's L truncated to an integer (spec §3, Q4).
@@ -366,15 +523,18 @@ pub unsafe fn tick() {
         B.px = 0.0;
         // Envoy endless loops: the plan's cage HP x1000 (0 / no plan: retail's)
         let hp = crate::tu::envoy::PLAN[crate::tu::envoy::P_BOSS_HP];
-        let base = tun().cage_hp;
+        let base = CAGE_HP_LIVE; // the file's tun().cage_hp (999) is the unscaled spawn value
         B.cage_max = if hp > 0 { (base as i64 * hp.clamp(1000, 20_000) as i64 / 1000) as i32 } else { base };
+        // the difficulty index: Normal, one Brawl tier up per Envoy loop (read back from the plan's HP word), or pinned
+        let loops = if hp > 1000 { (hp.clamp(1000, 20_000) - 1000) / PLAN_HP_PER_LOOP } else { 0 };
+        B.diff = difficulty_pin().unwrap_or((DIFFICULTY as i32 + DIFFICULTY_PER_LOOP * loops).clamp(0, 14));
         // the file's init: jumpCount 0, jumpsWanted 1, phase 0, side 0, menuPick 0 (format spec 3.2, corrects spec 6.1)
         B.jump_count = 0;
         B.jumps_wanted = 1;
         B.cage = [B.cage_max; 2];
         // §6.1 init: side 0, jumpCount 1, phase 0; the fight opens in Wait A
         enter(ST_WAIT_A);
-        eprintln!("petey: fight begins, cages {} L {:.1}", B.cage_max, level());
+        eprintln!("petey: fight begins, cages {} difficulty {} L {:.1}", B.cage_max, B.diff, level());
         melee_world::tu::ifstatus::ifStatus_802F6788(B.carrier_slot as u8);
     }
     hide_marker(B.carrier_slot);
@@ -393,7 +553,30 @@ pub unsafe fn tick() {
         *f = (*f - 1).max(0);
     }
     // hits on Petey this frame (body damage forwards to both cages; a cage hit to that cage)
-    let (hit_any, cage_hit) = if B.cause == 0 { player_hits(B.carrier_slot) } else { (false, [false; 2]) };
+    let (mut hit_any, mut cage_hit) = if B.cause == 0 { player_hits(B.carrier_slot) } else { (false, [false; 2]) };
+    B.age = B.age.wrapping_add(1);
+    if B.cause == 0 {
+        for &(f, t, d) in test_hits().iter() {
+            if f == B.age {
+                hit_any = true;
+                match t {
+                    b'l' => {
+                        B.cage[0] -= d;
+                        cage_hit[0] = true;
+                    }
+                    b'r' => {
+                        B.cage[1] -= d;
+                        cage_hit[1] = true;
+                    }
+                    _ => {
+                        B.cage[0] -= d;
+                        B.cage[1] -= d;
+                    }
+                }
+                eprintln!("petey: f{} test hit {} {} -> cages {} {}", B.last_frame, t as char, d, B.cage[0], B.cage[1]);
+            }
+        }
+    }
     if B.cause == 0 {
         cage_events(hit_any, cage_hit);
     }
@@ -403,6 +586,9 @@ pub unsafe fn tick() {
     let lag = cf.dmg.x195c_hitlag_frames;
     if lag > B.lag_prev && std::env::var_os("MELEE_PETEY_LOG").is_some() {
         eprintln!("petey: f{} hit lands: motion {} frame {} attacker hitlag {}", B.last_frame, B.mot, B.mf, lag);
+    }
+    if lag > B.lag_prev {
+        push_snd(311, B.mf); // the boxes' hit sound (flag field a29)
     }
     if lag > B.lag_prev && B.mot == M_JUMP_LANDING as i32 {
         let full = lag;
@@ -433,17 +619,18 @@ pub unsafe fn tick() {
     if cf.dmg.x195c_hitlag_frames <= 0.0 || B.cause != 0 {
         rules();
         advance();
+        timeline();
     }
     hitboxes(cf);
     follow_camera();
     if B.cause != 0 {
         B.down_t += 1;
-        if !B.ko_done && B.down_t >= 90 {
+        if !B.ko_done && B.down_t >= DOWN_END {
             B.ko_done = true;
             disable_all(cf);
             cf.x1988 = 0;
             melee_fighter::tu::ft_0d31::ftCo_800D3BC8(cf.gobj);
-            eprintln!("petey: defeated (cause {}, freed side {}), carrier KO", B.cause, B.freed);
+            eprintln!("petey: f{} defeated (cause {}, freed side {}), carrier KO", B.last_frame, B.cause, B.freed);
         }
     }
 }
@@ -516,6 +703,15 @@ unsafe fn follow_camera() {
     gc.transform.position = eye;
     gc.transform.target_fov = CAM_FOV;
     gc.transform.fov = CAM_FOV;
+    // the scripted mode's proc does not run the quakes: step them here (the quake gobjs write the offset, this turns
+    // it into the render translation and counts the kinds down)
+    let mut qb = CameraBounds::zeroed();
+    qb.z_pos = B.cam[2];
+    cm::Camera_UpdateQuakes(&mut qb);
+    cm::Camera_ApplyQuake(&mut qb, core::ptr::addr_of_mut!(gc.transform) as *mut CameraTransformState);
+    if log_on() && (gc.translation.x != 0.0 || gc.translation.y != 0.0) {
+        eprintln!("petey: f{} quake offset {:.3} {:.3}", B.last_frame, gc.translation.x, gc.translation.y);
+    }
     if B.last_frame % 120 == 0 && std::env::var_os("MELEE_PETEY_LOG").is_some() {
         eprintln!("petey: f{} camera centre ({:.1}, {:.1}) dist {:.1} mode {} player {:?}", B.last_frame, B.cam[0], B.cam[1], B.cam[2], gc.mode, tgt);
     }
@@ -548,8 +744,8 @@ unsafe fn cage_events(hit_any: bool, cage_hit: [bool; 2]) {
         let (l, r) = (cage_pct(0), cage_pct(1));
         if fmin(l, r) <= tun().death_pct {
             B.freed = if l < r { 0 } else { 1 }; // a tie counts as the right cage (the test is left < right)
-            enter(ST_DYING);
             B.cause = 1;
+            enter(ST_DYING);
             eprintln!("petey: dying (lower cage {} at {:.1}%)", B.freed, fmin(l, r));
             return;
         }
@@ -688,7 +884,7 @@ unsafe fn rules() {
     let to = match st {
         ST_WAIT_A if B.sf as f32 >= B.t_out => Some(ST_CHOOSE_BASKET), // 16
         ST_WAIT_B if B.sf as f32 >= B.t_out => Some(ST_MENU),          // 17
-        ST_CHOOSE_BASKET => Some(basket_status()),                      // 21 / 24
+        ST_CHOOSE_BASKET => basket_status(),                            // 21 / 24
         ST_MENU => {
             // 22: (20, 20, 60 + 2L)
             // each entry cut to 0.3 when it repeats the last menu pick (format spec 4.4 rule 22)
@@ -699,7 +895,8 @@ unsafe fn rules() {
                 B.jumps_wanted = if B.phase >= 1 { 2 } else { 1 };
                 Some(ST_JUMP_START)
             } else if B.phase >= 1 {
-                Some(aimed_basket())
+                // the menu only enables rule 24 (a basket once a player is present)
+                aimed_basket()
             } else {
                 B.side = p as i32;
                 Some(if p == 0 { ST_BASKET_L } else { ST_BASKET_R })
@@ -723,30 +920,27 @@ unsafe fn rules() {
 }
 
 /// Status 4: phase 0 random side (rule 21), else aimed (rule 24).
-unsafe fn basket_status() -> i32 {
+unsafe fn basket_status() -> Option<i32> {
     if B.phase >= 1 {
         aimed_basket()
     } else {
         B.side = pick(&weights(&tun().side, Some(B.side))) as i32; // 21: with the repeat cut on `side`
-        if B.side == 0 { ST_BASKET_L } else { ST_BASKET_R }
+        Some(if B.side == 0 { ST_BASKET_L } else { ST_BASKET_R })
     }
 }
 
-/// Rule 24: side 1 -> right basket, else left (no target -> left).
-unsafe fn aimed_basket() -> i32 {
+/// Rule 24: side 1 -> right basket, else left. With no valid target the rule does not fire (format spec 4.4).
+unsafe fn aimed_basket() -> Option<i32> {
     // rule 24 locks the target it reads
-    match draw_slot() {
-        Some(s) => {
-            B.locked = s;
-            if slot_x(s) < B.px { ST_BASKET_R } else { ST_BASKET_L }
-        }
-        None => ST_BASKET_L,
-    }
+    let s = draw_slot()?;
+    B.locked = s;
+    Some(if slot_x(s) < B.px { ST_BASKET_R } else { ST_BASKET_L })
 }
 
 unsafe fn set_motion(m: usize) {
     B.mot = m as i32;
     B.mf = 0;
+    B.tl_mf = -1;
     B.inst = B.inst.wrapping_add(1);
 }
 
@@ -790,7 +984,10 @@ unsafe fn enter(st: i32) {
             set_motion(M_JUMP_ATTACK);
             // §7.2: the angle to the locked target, snapped to horizontal; the boss does not turn
             // the locked target (rule 13's), no new draw
-            B.aim = if B.locked >= 0 && !fighter_of(B.locked, 0).is_null() && slot_x(B.locked) < B.px { -1.0 } else { 1.0 };
+            // (with no valid locked target the aim angle keeps its last value)
+            if B.locked >= 0 && !fighter_of(B.locked, 0).is_null() {
+                B.aim = if slot_x(B.locked) < B.px { -1.0 } else { 1.0 };
+            }
             B.vx = tun().dive[0] * B.aim;
         }
         ST_JUMP_LANDING => {
@@ -809,7 +1006,12 @@ unsafe fn enter(st: i32) {
         ST_DAMAGE_L => set_motion(M_DAMAGE_L),
         ST_DAMAGE_R => set_motion(M_DAMAGE_R),
         ST_DYING => {
+            // status 15: the defeat sound and stage event 1000 / 1001 for the lower cage. The stage's answer is not
+            // in the boss file: here it frees that princess (her cage breaks) and the boss collapses (Down).
             B.vx = 0.0;
+            push_snd(8837, B.mf);
+            B.cage_broken = true;
+            enter(ST_DOWN);
         }
         _ => {} // 4, 5 keep the motion
     }
@@ -1070,9 +1272,10 @@ fn hit_list() -> ([HitDef; 4], usize) {
     };
     let grp = |id: u32, rehit: i32| b.inst.wrapping_mul(16).wrapping_add(id).wrapping_add(f.pdiv(rehit.max(1)) as u32 * 0x1000_0000);
     let mot = b.mot as usize;
-    // body contact (id 4): every motion except Down and the landing; in the baskets until frame 68
+    // body contact (id 4): armed at frame 0 of every motion except Down and the landing; the baskets clear it at
+    // frame 69 and JumpAttack at frame 4 (the leap and the dive carry no contact box: the file's game thread 0)
     let basket = mot == M_BASKET_L || mot == M_BASKET_R;
-    let contact = mot != M_DOWN && mot != M_JUMP_LANDING && (!basket || f < 69);
+    let contact = mot != M_DOWN && mot != M_JUMP_LANDING && (!basket || f < 69) && (mot != M_JUMP_ATTACK || f < 4);
     if contact {
         let (x, y) = p[P_CONTACT];
         push(HitDef {
@@ -1089,9 +1292,11 @@ fn hit_list() -> ([HitDef; 4], usize) {
         let lc = cage_level();
         let dmg = fctiwz_f32(10.0 + 2.7 * lc).max(0) as u32;
         let bkb = fctiwz_f32(105.0 - 2.0 * lc).max(0) as u32;
-        for (i, (pi, r)) in [(a, 8.0f32), (c, 10.0)].into_iter().enumerate() {
+        // one hit group for the attack's boxes: the engine shares their victims, so two boxes that overlap a victim on
+        // the same frame hit once (they did twice: 30 instead of 15 on a victim inside both at frame 70)
+        for (pi, r) in [(a, 8.0f32), (c, 10.0)].into_iter() {
             let (x, y) = p[pi];
-            push(HitDef { x, y, r: r * MODEL_SCALE, dmg, angle: 145, kbg: 44, wkb: 0, bkb, grp: grp(i as u32, 60), face, atk: 1 });
+            push(HitDef { x, y, r: r * MODEL_SCALE, dmg, angle: 145, kbg: 44, wkb: 0, bkb, grp: grp(0, 60), face, atk: 1 });
         }
     }
     // landing: centre frames 2-4, sides 3-4
@@ -1108,7 +1313,7 @@ fn hit_list() -> ([HitDef; 4], usize) {
                 let (x, y) = p[pi];
                 push(HitDef {
                     x, y, r: (30.0 + 0.5 * l) * MODEL_SCALE, dmg: fctiwz_f32(8.0 + 2.0 * l) as u32, angle: 30, kbg: 48, wkb: 0,
-                    bkb: fctiwz_f32(112.0 - 1.2 * l) as u32, grp: grp(1 + i as u32, 120), face: if i == 0 { -1.0 } else { 1.0 }, atk: 2,
+                    bkb: fctiwz_f32(112.0 - 1.2 * l) as u32, grp: grp(0, 120), face: if i == 0 { -1.0 } else { 1.0 }, atk: 2,
                 });
             }
         }

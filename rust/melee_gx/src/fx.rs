@@ -25,13 +25,14 @@ pub const MAT_UNLIT_ADD: u8 = 5;
 pub const MAT_COUNT: u8 = 6;
 /// Material flag: the host leaves a light trail behind this draw (orbiting drives).
 pub const MAT_TRAIL: u8 = 0x80;
-/// Material flag: a drive body with the Party-pack ink edge (~1.2 px at 640x480, a screen-space hull drawn under it).
+/// Material flag: a drive body with the Party-pack ink edge (~0.7 px at 640x480, a screen-space hull drawn under it).
 pub const MAT_OUTLINE: u8 = 0x40;
 /// The material id bits.
 pub const MAT_ID: u8 = 0x3F;
 /// The ink edge: colour (Party pack INK) and width in 640x480 pixels.
 pub const INK_RGB: [f32; 3] = [0x2A as f32 / 255.0, 0x1A as f32 / 255.0, 0x6E as f32 / 255.0];
-pub const INK_PX: f32 = 1.2;
+/// 0.7 since envoy-fix1 (1.2 read as heavy and fringed: 2.7 px of flat ink at 1080p); about 1 px at 720p, 1.6 at 1080p.
+pub const INK_PX: f32 = 0.7;
 
 /// Post effects (`gd_fx_post`). Held ones (re-posted every present while they last): vignette, ember, heat-haze.
 pub const POST_VIGNETTE: u32 = 1;

@@ -27,6 +27,7 @@ use melee_types::neutral_hash::nh_game;
 use std::io::Write;
 use std::process::ExitCode;
 
+mod anim_hot;
 mod controls_store;
 mod firstrun;
 mod geno_suite;
@@ -83,6 +84,7 @@ mod pads;
 mod practice;
 mod lab;
 mod lab_check;
+mod pose_dump;
 mod cov1p;
 mod envoy_store;
 
@@ -635,6 +637,7 @@ fn main_inner() -> ExitCode {
             play::play(&a)
         }
         Some("dat-dump") => retail::dat_dump(&args),
+        Some("pose-dump") => pose_dump::pose_dump(&args),
         Some(x) => {
             eprintln!("melee: unknown command {x:?} (selftest | hashlog | golden | diff | view-golden)");
             ExitCode::from(2)
@@ -818,9 +821,18 @@ fn engine_gdmods_overlay(args: &[String]) -> Result<Option<melee_engine::gcm::Ov
         }
         None => mods::Mods::from_env()?,
     };
-    let Some(m) = mods else { return Ok(None) };
+    let Some(m) = mods else {
+        melee_fighter::anim_override::install(Vec::new());
+        return Ok(None);
+    };
     let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
     eprintln!("melee: mods mounted: {} ({} files)", ids.join(", "), m.files());
+    // per-clip animation overrides (notes/anim-overrides.md): validated now, a bad file stops the boot with its name
+    let anims = m.anim_overrides()?;
+    if !anims.is_empty() {
+        eprintln!("melee: anim overrides: {}", anims.iter().map(|e| e.label.as_str()).collect::<Vec<_>>().join(", "));
+    }
+    melee_fighter::anim_override::install(anims);
     // Geno reads each mounted mod's geno.json (geno_registry.c gn_reg: the active mods in id order)
     melee_engine::geno_host::set_boot_mods(&m.dir, &ids);
     // the skin registry reads every mounted mod of kind "skin" (gw_skins_boot.inc gw_Skins_Build: gw_Mods_ActiveAt order)

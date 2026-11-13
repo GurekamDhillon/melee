@@ -1609,6 +1609,14 @@ pub fn envoy_bank_bytes(kind: i32) -> usize {
     }
 }
 
+/// TARGET_PC: the C's "fighter figatree over!" panic as a message: the row stays unbound (x14 = 0, no animation).
+fn figatree_over(kind: i32, row: i32, size: u32) {
+    eprintln!(
+        "fighter figatree over: kind {kind} row {row} clip is {size} bytes (0x{size:X}), over the animation buffer of {} bytes (0x{:X}); the row plays no animation",
+        FT_ANIM_BUF_SIZE, FT_ANIM_BUF_SIZE
+    );
+}
+
 /// `ftData_80085A14`: load a kind's animation bank and bind its motion rows.
 pub fn ftData_80085A14(kind: i32) {
     melee_core::ct!("ftData_80085A14");
@@ -1636,9 +1644,12 @@ pub fn ftData_80085A14(kind: i32) {
                 let r0 = row.x8 as u32;
                 if r0 != 0 {
                     if r0 > FT_ANIM_BUF_SIZE as u32 {
-                        panic!("fighter figatree over! {r0:x}");
+                        // C: OSPanic "fighter figatree over!". TARGET_PC: retail banks never hit this; a modded bank's
+                        // oversized clip is left unbound (no animation, as a row without one) with a clear message
+                        figatree_over(kind, i as i32, r0);
+                    } else {
+                        row.x14 = base.wrapping_add(row.x4 as u32) as usize;
                     }
-                    row.x14 = base.wrapping_add(row.x4 as u32) as usize;
                 }
                 i += 1;
             }
@@ -1993,9 +2004,10 @@ pub fn ftData_80085B98(f: &mut Fighter, arg1: i32, arg2: i32) {
             let r0 = r3.x8 as u32;
             if r0 != 0 {
                 if r0 > FT_ANIM_BUF_SIZE as u32 {
-                    panic!("fighter figatree over! {r0:x}");
+                    figatree_over(f.kind as i32, i, r0); // C: OSPanic (see ftData_80085A14)
+                } else {
+                    r3.x14 = r30.wrapping_add(r3.x4 as u32) as usize;
                 }
-                r3.x14 = r30.wrapping_add(r3.x4 as u32) as usize;
             }
             i += 1;
         }
@@ -2014,6 +2026,13 @@ fn load_figatree(f: *mut Fighter, src: *mut Fighter, msid: i32, key: *mut c_void
                  lines: (u32, u32)) -> Option<(*mut FigaTree, u32)> {
     unsafe {
         let r3 = ftData_80085FD4(&mut *src, msid);
+        // TARGET_PC (anim_override.rs): a mod's per-clip override replaces the bank slice. Without one installed this is
+        // a single test of a static and the code below runs as before.
+        if crate::anim_override::active() {
+            if let Some(e) = override_for(src, r3) {
+                return Some(load_override(buf, e));
+            }
+        }
         let x14 = (*r3).x14;
         if x14 == ext::gc_addr32(key) as usize {
             return None;
@@ -2048,6 +2067,59 @@ fn load_figatree(f: *mut Fighter, src: *mut Fighter, msid: i32, key: *mut c_void
         }
         Some((ext::HSD_ArchiveGetPublicAddress(&mut ar, (*r3).x0) as *mut FigaTree, (*r3).x14 as u32))
     }
+}
+
+/// TARGET_PC: the key `load_figatree` hands back for an override clip. Real keys are bank addresses (32-byte aligned
+/// archive starts) or 0, so this odd value never matches one: the next load of any row reloads, and a row without
+/// animation after an override still clears the tree as it does after a bank clip.
+pub const ANIM_OVERRIDE_KEY: u32 = 0xFFFF_FFFF;
+
+/// TARGET_PC: the override for motion row `r3` as `src` reads it (anim_override.rs rules): the row's owner kind is the
+/// table it lies in (`src`'s own, or Popo's for Nana borrowing it); rows of another table (demo / result) match by symbol.
+unsafe fn override_for(src: *mut Fighter, r3: *mut Fighter_WaitAnimData) -> Option<&'static crate::anim_override::Entry> {
+    let sym = if (*r3).x0.is_null() { None } else { Some(core::ffi::CStr::from_ptr((*r3).x0).to_bytes()) };
+    let in_table = |base: *mut Fighter_WaitAnimData, n: usize| -> Option<i32> {
+        if base.is_null() {
+            return None;
+        }
+        // a scan, not pointer arithmetic: rows are few and only modded runs get here
+        (0..n).position(|i| base.add(i) == r3).map(|i| i as i32)
+    };
+    let kind = (*src).kind as i32;
+    let own = in_table((*src).x24, (*src).x58C as usize);
+    let mut hit = crate::anim_override::find(kind, own, sym);
+    if hit.is_none() && kind == Ft_Kind_Nana as i32 {
+        // Nana outside demos plays Popo's rows (ftData_80085FD4): Popo's entries follow her there
+        let p = Ft_Kind_Popo as usize;
+        let fd = gFtDataList[p];
+        if !fd.is_null() {
+            if let Some(i) = in_table((*fd).xC, ftData_Table_Unk0[p].count as usize) {
+                hit = crate::anim_override::find(p as i32, Some(i), sym);
+            }
+        }
+    }
+    hit
+}
+
+/// TARGET_PC: bind an override clip: its archive bytes into the fighter's animation buffer, parsed like a bank clip.
+/// The file was validated at load (size within the buffer, archive structure, the public symbol), so a parse failure
+/// here gives no animation (as a row without one) and a log line, never a panic.
+unsafe fn load_override(buf: *mut Fighter_x59C_t, e: &crate::anim_override::Entry) -> (*mut FigaTree, u32) {
+    let n = e.bytes.len();
+    // the buffers' real size: FT_ANIM_BUF_SIZE in matches, 0xB000 in the demo / result scenes (ftdemo_obj_alloc_init)
+    let cap = (*core::ptr::addr_of!(crate::tu::fighter::fighter_x59C_alloc_data)).size as usize;
+    if n > cap.min(FT_ANIM_BUF_SIZE as usize) {
+        eprintln!("anim override {}: {n} bytes is over this scene's animation buffer ({cap} bytes) - not bound here", e.label);
+        return (core::ptr::null_mut(), 0);
+    }
+    core::ptr::copy_nonoverlapping(e.bytes.as_ptr(), buf as *mut u8, n);
+    let mut ar: HSD_Archive = core::mem::zeroed();
+    if ext::HSD_ArchiveParse(&mut ar, buf as *mut u8, n as i32) == -1 {
+        eprintln!("anim override {}: the archive does not parse - not bound", e.label);
+        return (core::ptr::null_mut(), 0);
+    }
+    let tree = ext::HSD_ArchiveGetPublicAddress(&mut ar, e.public.as_ptr() as *mut c_char) as *mut FigaTree;
+    (tree, ANIM_OVERRIDE_KEY)
 }
 
 /// `ftData_80085CD8`: load motion `msid` (read from `arg1`'s table) as `fp`'s main figatree.

@@ -309,6 +309,28 @@ pub struct Mod {
     pub nfiles: i32,
     pub engine_miss: Bytes,
     pub skin_mask: u32,
+    /// TARGET_PC (Rust only, notes/anim-overrides.md): the `anim_overrides` entries of mod.json, in file order.
+    pub anim_overrides: Vec<AnimOverrideDecl>,
+    /// Problems in the `anim_overrides` list (a bad entry is reported, never silently dropped).
+    pub anim_override_errors: Vec<String>,
+}
+
+/// Which clip an `anim_overrides` entry replaces.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum AnimClip {
+    /// Every motion row that plays the FigaTree with this public symbol name.
+    Symbol(String),
+    /// Exactly one motion row (the fighter's animation table index).
+    Row(i32),
+}
+
+/// One `anim_overrides` entry of a mod.json: `{"fighter": "marth", "clip": "<symbol>" | {"row": N}, "file": "anim/x.dat"}`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AnimOverrideDecl {
+    pub fighter: String,
+    pub clip: AnimClip,
+    /// Relative to the mod's folder (the one holding mod.json).
+    pub file: String,
 }
 
 impl Mod {
@@ -367,6 +389,89 @@ impl Mod {
         }
     }
 
+    /// TARGET_PC: the `anim_overrides` array at `p` (its `[`); answers the position after its `]` (or where it stopped).
+    /// Every entry needs `fighter` (string), `clip` (string, or an object with an integer `row`) and `file` (string);
+    /// an entry missing one is recorded in `anim_override_errors`.
+    fn parse_anim_overrides(&mut self, t: &Txt, mut p: usize) -> usize {
+        p = t.skip_ws(p + 1);
+        let mut n = 0;
+        while t.at(p) != 0 && t.at(p) != b']' {
+            if t.at(p) != b'{' {
+                self.anim_override_errors.push(format!("anim_overrides[{n}]: not an object"));
+                p = t.skip_value(p);
+            } else {
+                p = t.skip_ws(p + 1);
+                let (mut fighter, mut clip, mut file, mut bad) = (None, None, None, None::<String>);
+                while t.at(p) != 0 && t.at(p) != b'}' {
+                    let Some((k, np)) = t.string(p, 32) else {
+                        bad = Some("syntax error".into());
+                        break;
+                    };
+                    p = t.skip_ws(np);
+                    if t.at(p) != b':' {
+                        bad = Some("syntax error".into());
+                        break;
+                    }
+                    p = t.skip_ws(p + 1);
+                    match (k.as_slice(), t.at(p)) {
+                        (b"fighter", b'"') | (b"file", b'"') | (b"clip", b'"') => {
+                            let Some((v, np)) = t.string(p, 256) else {
+                                bad = Some("syntax error".into());
+                                break;
+                            };
+                            p = np;
+                            let v = lossy(&v);
+                            match k.as_slice() {
+                                b"fighter" => fighter = Some(v),
+                                b"file" => file = Some(v),
+                                _ => clip = Some(AnimClip::Symbol(v)),
+                            }
+                        }
+                        (b"clip", b'{') => {
+                            let end = t.skip_value(p);
+                            let body = &t.0[p..end.min(t.0.len())];
+                            let txt = lossy(body);
+                            match txt.find("\"row\"").and_then(|i| txt[i + 5..].trim_start().strip_prefix(':')).map(|r| r.trim_start()) {
+                                Some(r) if r.starts_with(|c: char| c.is_ascii_digit()) => {
+                                    clip = Some(AnimClip::Row(r.chars().take_while(|c| c.is_ascii_digit()).collect::<String>().parse().unwrap_or(-1)))
+                                }
+                                _ => bad = Some("clip object needs {\"row\": N}".into()),
+                            }
+                            p = end;
+                        }
+                        _ => p = t.skip_value(p),
+                    }
+                    p = t.skip_ws(p);
+                    if t.at(p) == b',' {
+                        p = t.skip_ws(p + 1);
+                    }
+                }
+                if t.at(p) == b'}' {
+                    p += 1;
+                } else if bad.is_none() {
+                    bad = Some("syntax error".into());
+                }
+                match (bad, fighter, clip, file) {
+                    (None, Some(fighter), Some(clip), Some(file)) => self.anim_overrides.push(AnimOverrideDecl { fighter, clip, file }),
+                    (Some(why), ..) => self.anim_override_errors.push(format!("anim_overrides[{n}]: {why}")),
+                    _ => self.anim_override_errors.push(format!("anim_overrides[{n}]: needs \"fighter\", \"clip\" and \"file\"")),
+                }
+                if t.at(p) == 0 {
+                    return p;
+                }
+            }
+            n += 1;
+            p = t.skip_ws(p);
+            if t.at(p) == b',' {
+                p = t.skip_ws(p + 1);
+            }
+        }
+        if t.at(p) == b']' {
+            p += 1;
+        }
+        p
+    }
+
     /// `mod_parse_json`: false on a syntax error (fields read before it are kept).
     fn parse_json(&mut self, text: &[u8], log: &mut Vec<String>) -> bool {
         let t = Txt(text);
@@ -389,6 +494,8 @@ impl Mod {
                 let Some((val, np)) = t.string(p, TEXT_MAX) else { return false };
                 p = np;
                 self.set_field(&key, &val, log);
+            } else if t.at(p) == b'[' && key == b"anim_overrides" {
+                p = self.parse_anim_overrides(&t, p);
             } else if t.at(p) == b'[' {
                 p = t.skip_ws(p + 1);
                 while t.at(p) != 0 && t.at(p) != b']' {
@@ -1208,6 +1315,21 @@ impl Overlay {
         for f in &o.files {
             set.note_file(f.mod_index, f.disc.as_bytes(), fingerprint_size(&f.host, f.size));
         }
+        // TARGET_PC: a mod's animation overrides are part of its identity (netplay, spectate): each entry as a pseudo path
+        // naming the fighter, the clip and the file, with the file's size, like a mounted file. Mods without the key add nothing.
+        for k in 0..set.order.len() {
+            let idx = set.order[k];
+            let decls = set.mods[idx].anim_overrides.clone();
+            let moddir = set.dir.join(set.mods[idx].id_str());
+            for d in &decls {
+                let clip = match &d.clip {
+                    AnimClip::Symbol(s) => s.clone(),
+                    AnimClip::Row(r) => format!("row{r}"),
+                };
+                let size = std::fs::metadata(moddir.join(&d.file)).map_or(0, |m| m.len() as u32);
+                set.note_file(idx, format!("anim_override:{}/{}={}", d.fighter.to_ascii_lowercase(), clip, d.file).as_bytes(), size);
+            }
+        }
         o
     }
 
@@ -1266,5 +1388,47 @@ impl Overlay {
     /// `gw_mod_by_path`
     pub fn lookup(&self, path: &str) -> Option<&OverlayFile> {
         self.by_path(path).map(|i| &self.files[i])
+    }
+}
+
+#[cfg(test)]
+mod anim_override_tests {
+    use super::*;
+
+    #[test]
+    fn parses_anim_overrides() {
+        let mut m = Mod::default();
+        let mut log = Vec::new();
+        let j = br#"{"name":"x","anim_overrides":[
+            {"fighter":"marth","clip":"PlyMars5K_Share_ACTION_AttackS4_figatree","file":"anim/fsmash.dat"},
+            {"fighter":"marth","clip":{"row": 55},"file":"anim/ftilt.dat"},
+            {"fighter":"marth","file":"anim/x.dat"},
+            7
+        ],"version":"1"}"#;
+        assert!(m.parse_json(j, &mut log));
+        assert_eq!(m.version, b"1");
+        assert_eq!(m.anim_overrides.len(), 2);
+        assert_eq!(m.anim_overrides[0].clip, AnimClip::Symbol("PlyMars5K_Share_ACTION_AttackS4_figatree".into()));
+        assert_eq!(m.anim_overrides[1], AnimOverrideDecl { fighter: "marth".into(), clip: AnimClip::Row(55), file: "anim/ftilt.dat".into() });
+        assert_eq!(m.anim_override_errors.len(), 2, "{:?}", m.anim_override_errors);
+        assert!(m.anim_override_errors[0].starts_with("anim_overrides[2]: needs"));
+        assert!(m.anim_override_errors[1].starts_with("anim_overrides[3]: not an object"));
+    }
+
+    #[test]
+    fn overrides_enter_the_fingerprint() {
+        let d = std::env::temp_dir().join(format!("modreg-anim-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&d);
+        std::fs::create_dir_all(d.join("a/anim")).unwrap();
+        std::fs::write(d.join("a/anim/c.dat"), b"0123").unwrap();
+        std::fs::write(d.join("a/mod.json"), br#"{"kind":"misc"}"#).unwrap();
+        let mut s = ModSet::load_with(&d, false, None);
+        Overlay::mount(&mut s);
+        let plain = s.fingerprint();
+        std::fs::write(d.join("a/mod.json"), br#"{"kind":"misc","anim_overrides":[{"fighter":"marth","clip":{"row":1},"file":"anim/c.dat"}]}"#).unwrap();
+        let mut s = ModSet::load_with(&d, false, None);
+        Overlay::mount(&mut s);
+        assert_ne!(s.fingerprint(), plain);
+        let _ = std::fs::remove_dir_all(&d);
     }
 }

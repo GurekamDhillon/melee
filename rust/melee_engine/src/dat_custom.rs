@@ -1255,13 +1255,11 @@ fn memo(key: (usize, u32), make: impl FnOnce() -> *mut c_void) -> *mut c_void {
     p
 }
 
-/// A new file image parsed at raw data address `base` (`host_parse`): the banks built from an earlier file at that address
-/// are not this file's (a later scene loads another file, or the same one again, into the same heap block). Their memo
-/// entries go, so the next lookup builds and `psInitDataBankLocate` relocates a fresh bank, as the C relocates the
-/// freshly read file.
-#[allow(static_mut_refs)]
-pub fn forget_banks(base: usize) {
-    BANKS.with_borrow_mut(|m| if let Some(m) = m.as_mut() { m.retain(|k, _| k.0 != base) });
+/// Empty the particle-bank memo (the in-place decode in `host_parse`, before and after it). The memo only dedups the
+/// banks one file's decode reaches more than once: it never outlives that decode, so no snapshot load (which rewinds
+/// the game arena the map's table lives in, but not this thread-local) can fall between its use and its drop.
+pub fn reset_banks() {
+    BANKS.with_borrow_mut(|m| *m = None);
 }
 
 /// A zeroed 8-aligned native buffer of `n` bytes that lives for the rest of the process.

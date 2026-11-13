@@ -504,6 +504,34 @@ pub unsafe fn sub_spawn(which: i32, x: f32, y: f32, facing: i32, handle: i32) ->
     handle
 }
 
+/// Handles `spawn` hands out start here, clear of the sim's own small handles.
+pub const ROOM_HANDLE_BASE: i32 = 1 << 20;
+
+/// The kind number for a name ("goomba", "primid", "bill" / "bullet_bill", "giant" / "giant_goomba"), or None.
+pub fn kind_by_name(name: &str) -> Option<usize> {
+    match name.to_ascii_lowercase().as_str() {
+        "goomba" => Some(K_GOOMBA),
+        "primid" => Some(K_PRIMID),
+        "bill" | "bullet_bill" | "bulletbill" => Some(K_BILL),
+        "giant" | "giant_goomba" | "giantgoomba" => Some(K_GIANT),
+        _ => None,
+    }
+}
+
+/// The room-side spawn (the Subspace map lane): `kind` (K_*), `tier` (Envoy loops cleared, 0..), world (x, y),
+/// facing +1 / -1. Picks its own handle (>= ROOM_HANDLE_BASE) and returns it, or -1 when the pool is full.
+/// Read it back with `sub_status` / `sub_enemy_i`; `clear_all` removes everything at the room's end.
+pub unsafe fn spawn(kind: usize, tier: i32, x: f32, y: f32, facing: i32) -> i32 {
+    if kind >= KINDS {
+        return -1;
+    }
+    let mut h = ROOM_HANDLE_BASE;
+    while E.iter().any(|e| e.kind != -1 && e.handle == h) {
+        h += 1;
+    }
+    sub_spawn(SPAWN_BASE + kind as i32 + 32 * tier.clamp(0, 15), x, y, facing, h)
+}
+
 fn by_handle(handle: i32) -> Option<&'static Enemy> {
     unsafe { E.iter().find(|e| e.kind != -1 && e.handle == handle && handle > 0) }
 }

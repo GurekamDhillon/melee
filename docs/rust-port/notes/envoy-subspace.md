@@ -55,6 +55,7 @@ the same tool and are the next step (section 7).
 | the pool, behaviour, hit tests, placeholder draw | `rust/melee_modes/src/tu/subspace.rs` (statics: snapshot / rollback covered; own LCG) |
 | the look (async load, never blocks, never feeds the sim) | `rust/melee_modes/src/tu/subspace_model.rs` on `petey_model::load_rigs` / `Rig` / `draw_tris` |
 | spawn / read API for the sim mod | `gd_envoy_enemy_spawn(which, x, y, facing, handle)` with `which = 100 + kind + 32 x tier`; `gd_envoy_enemy_i`, `gd_envoy_enemy_status` answer for these handles too |
+| room spawn (simplest; the map lane) | `subspace::spawn(K_GOOMBA, tier, x, y, facing) -> handle or -1` (handle picked for you, >= `ROOM_HANDLE_BASE`); `kind_by_name("primid")` for data-driven rooms; then `sub_status` / `clear_all` as below |
 | spawn API for engine code (a room, a map spawn point) | `melee_modes::tu::subspace::sub_spawn(100 + kind + 32 * tier, x, y, facing, handle) -> handle or -1`; `sub_status(handle)` 1 alive / 2 beaten; `sub_enemy_i(handle, 2 / 6 / 7 / 8 / 9)` damage taken / hits / last attacker slot + 1 / x / y; `alive()`; `clear_all()`; `preload(kind mask)` |
 | per frame | `subspace::sub_tick` from `envoy::tick` (after the post chain); returns at once when the pool is empty |
 | draw | `ftdrawcommon::BOSS_DRAW = sub_draw`, set by the first spawn of a match (Petey fights never spawn these) |

@@ -38,6 +38,7 @@ pub mod ftcommon3;
 pub mod ftaction;
 pub mod fighter;
 pub mod ftanim;
+pub mod script_override;
 pub mod anim_override;
 pub mod ftcoll;
 pub mod ft084e;

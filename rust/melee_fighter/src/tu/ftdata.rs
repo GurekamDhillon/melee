@@ -2077,6 +2077,12 @@ pub const ANIM_OVERRIDE_KEY: u32 = 0xFFFF_FFFF;
 /// TARGET_PC: the override for motion row `r3` as `src` reads it (anim_override.rs rules): the row's owner kind is the
 /// table it lies in (`src`'s own, or Popo's for Nana borrowing it); rows of another table (demo / result) match by symbol.
 unsafe fn override_for(src: *mut Fighter, r3: *mut Fighter_WaitAnimData) -> Option<&'static crate::anim_override::Entry> {
+    match_row(src, r3, crate::anim_override::find)
+}
+
+/// TARGET_PC: the row-matching rule shared by the clip and script overrides: `find(owner kind, row in the owner's
+/// table, FigaTree symbol)`; Nana's borrowed Popo rows are tried as Popo's when her own kind has no entry.
+pub unsafe fn match_row<T>(src: *mut Fighter, r3: *mut Fighter_WaitAnimData, find: impl Fn(i32, Option<i32>, Option<&[u8]>) -> Option<T>) -> Option<T> {
     let sym = if (*r3).x0.is_null() { None } else { Some(core::ffi::CStr::from_ptr((*r3).x0).to_bytes()) };
     let in_table = |base: *mut Fighter_WaitAnimData, n: usize| -> Option<i32> {
         if base.is_null() {
@@ -2087,18 +2093,30 @@ unsafe fn override_for(src: *mut Fighter, r3: *mut Fighter_WaitAnimData) -> Opti
     };
     let kind = (*src).kind as i32;
     let own = in_table((*src).x24, (*src).x58C as usize);
-    let mut hit = crate::anim_override::find(kind, own, sym);
+    let mut hit = find(kind, own, sym);
     if hit.is_none() && kind == Ft_Kind_Nana as i32 {
         // Nana outside demos plays Popo's rows (ftData_80085FD4): Popo's entries follow her there
         let p = Ft_Kind_Popo as usize;
         let fd = gFtDataList[p];
         if !fd.is_null() {
             if let Some(i) = in_table((*fd).xC, ftData_Table_Unk0[p].count as usize) {
-                hit = crate::anim_override::find(p as i32, Some(i), sym);
+                hit = find(p as i32, Some(i), sym);
             }
         }
     }
     hit
+}
+
+/// TARGET_PC (script_override.rs): the action script to bind for motion row `wait` of `src`'s table: a mod's
+/// replacement when one is installed for that row, else the row's own `xC`. Without overrides: one static test.
+#[inline]
+pub unsafe fn row_script(src: *mut Fighter, wait: *mut Fighter_WaitAnimData) -> *mut CmdUnion {
+    if crate::script_override::active() {
+        if let Some(e) = match_row(src, wait, crate::script_override::find) {
+            return e.ptr();
+        }
+    }
+    (*wait).xC as *mut CmdUnion
 }
 
 /// TARGET_PC: bind an override clip: its archive bytes into the fighter's animation buffer, parsed like a bank clip.

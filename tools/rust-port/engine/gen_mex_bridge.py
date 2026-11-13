@@ -177,9 +177,15 @@ def main():
                 # the port's (Dedede's inhale passes its own to ftCommon_8007E2D0; read as a word it was None)
                 if ni > 7: ok = False; break
                 args.append(f'core::mem::transmute(c.func2({ni}))'); ni += 1
-            elif base in ('HSD_GObjEvent', 'HSD_GObjFunc', 'GObj_RenderFunc', 'LineCb') or re.fullmatch(r'Option<\s*unsafe\s+extern\s+(?:"C"\s*)?fn\s*\(\s*(\*mut\s+(\w+::)*HSD_GObj|G)\s*\)\s*>', ty):
-                # a gobj callback: a guest code address as its trampoline, a vanilla one as the port (a render or line callback
-                # too: the trampoline passes the gobj, the guest sees 0 in r4)
+            elif base == 'LineCb' or re.fullmatch(r'Option<\s*unsafe\s+extern\s+(?:"C"\s*)?fn\s*\(\s*(\*mut\s+(\w+::)*HSD_GObj|G)\s*,\s*isize\s*\)\s*->\s*bool\s*>', ty):
+                # a floor-line filter (ft_800831CC's first callback): guest code as its line trampoline (line id in r4),
+                # a retail one as the port's filter. Read as a gobj callback the retail ftCo_80096CC8 resolved to None
+                # and the adapter panicked ("adapt: null line callback", ACE m-ex fighters' guest Coll code)
+                if ni > 7: ok = False; break
+                args.append(f'c.line({ni})'); ni += 1
+            elif base in ('HSD_GObjEvent', 'HSD_GObjFunc', 'GObj_RenderFunc') or re.fullmatch(r'Option<\s*unsafe\s+extern\s+(?:"C"\s*)?fn\s*\(\s*(\*mut\s+(\w+::)*HSD_GObj|G)\s*\)\s*>', ty):
+                # a gobj callback: a guest code address as its trampoline, a vanilla one as the port (a render callback
+                # too: the trampoline passes the gobj)
                 if ni > 7: ok = False; break
                 args.append(f'core::mem::transmute(c.func({ni}))'); ni += 1
             elif re.fullmatch(r'[A-Z]\w*', base) and not SKIP_TYPES.search(ty):

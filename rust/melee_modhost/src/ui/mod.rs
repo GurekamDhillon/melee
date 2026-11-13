@@ -12,6 +12,7 @@
 //! * With no UI mod nothing here is created ([`PresHost::from_env`] returns None).
 
 pub mod cmd;
+pub mod fighter_art;
 pub mod nodes;
 pub mod theme;
 
@@ -118,6 +119,8 @@ pub struct Shared {
     pub texs: Vec<Vec<AtlasRect>>,
     /// gd_ui_model_tex: (module, model, handle) already rasterized.
     pub model_texs: Vec<(usize, i32, u32)>,
+    /// gd_ui_fighter_tex handles already made: (module, ck * 2 + which, handle)
+    pub fighter_texs: Vec<(usize, i32, u32)>,
     pub dirs: Vec<std::path::PathBuf>,
     pub features: Vec<u32>,
     /// Window size and the 4:3 band rect in window pixels (GAP-0: `gd_ui_band_rect`).
@@ -216,6 +219,7 @@ impl Shared {
             pending: None,
             texs: Vec::new(),
             model_texs: Vec::new(),
+            fighter_texs: Vec::new(),
             dirs: Vec::new(),
             features: Vec::new(),
             window: (1280, 720),
@@ -545,6 +549,30 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         sh.texs[module].push(r);
         let hd = sh.texs[module].len() as u32;
         sh.model_texs.push((module, model, hd));
+        hd
+    });
+    // a fighter's character-select art from the player's own disc (fighter_art): `which` 0 the grid icon, 1 the
+    // portrait (costume 0). A texture handle, or 0 when the disc has none (draw a placeholder). Made once per module.
+    f!("gd_ui_fighter_tex", |c: Caller<'_, PresData>, ck: i32, which: i32| -> u32 {
+        if !feat(&c, FEATURE_UI_DRAW) || !(0..=1).contains(&which) || !(0..0x200).contains(&ck) {
+            return 0;
+        }
+        let module = c.data().module as usize;
+        let key = ck * 2 + which;
+        let mut sh = c.data().ui().borrow_mut();
+        let sh = &mut *sh;
+        if let Some(&(_, _, h)) = sh.fighter_texs.iter().find(|t| t.0 == module && t.1 == key) {
+            return h;
+        }
+        let hd = match fighter_art::get(ck, which).and_then(|p| sh.atlas.alloc(p.w as u16, p.h as u16).map(|r| (r, p))) {
+            Some((r, p)) => {
+                sh.atlas.put(r, &p.rgba);
+                sh.texs[module].push(r);
+                sh.texs[module].len() as u32
+            }
+            None => 0,
+        };
+        sh.fighter_texs.push((module, key, hd));
         hd
     });
     // a Brawl sound effect from the player's own disc (melee_audio::brawl): fire and forget, presentation only

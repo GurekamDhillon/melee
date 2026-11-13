@@ -12,6 +12,7 @@ pub mod script_host;
 pub mod snap_host;
 pub mod uigen;
 pub mod mex_host;
+pub mod fighter_art;
 pub mod mexid;
 pub mod mex_guest;
 pub mod mex_bridge;

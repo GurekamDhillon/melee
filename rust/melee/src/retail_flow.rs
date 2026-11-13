@@ -269,6 +269,11 @@ impl RetailPlay {
             crate::engine_audio_gen::install_menus();
         }
         self.apply_rules();
+        // the character-select art for the presentation mods (the Envoy picker): decoded from the player's own MnSlChr
+        // into host memory, outside the game arena, never read by the sim
+        if self.ui.is_some() && !melee_engine::arena::active() {
+            melee_engine::fighter_art::build_into_ui();
+        }
         // GX decode on its own thread, as play.rs does for its engine match (port/memfix): the windowed retail flow
         // never snapshots the arena (play turns trim on), so the thread's frames may hold its blocks. Without this the
         // FIFO decode and draw packing ran inside every tick (Temple 4P: tick p50 5.7 ms instead of ~2).

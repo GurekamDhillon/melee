@@ -98,12 +98,12 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "cut3BgScene" { return Some(rt("SceneDesc")); }
     if name == "ScGamRegStaffrollNames_scene_modelset" { return Some(RootType::Custom("ptrtable_dynmodel")); }
     if name == "Stc_icns" { return Some(RootType::Custom("stcicns")); }
+    if name == "mexSelectChr" { return Some(rt("MexSelectChr")); }
+    if name == "mexMapData" { return Some(RootType::Raw); }
     if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
     if name.starts_with("ftDataKirbyCopy") { return Some(RootType::Custom("kirbyhat")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
-    // `DynamicsTemplate { lb_00F9_UnkDesc1Inner* params; u32 count; Vec3 pos; }` (grcastle.c, lb_80011710): the params are
-    // `count` 15-float records, not a `DynamicsData` (whose generic decode keeps the union as raw big-endian bytes)
     if name.starts_with("dynamicsdata_") { return Some(RootType::Custom("dyntemplate")); }
     if name.starts_with("mnName") { return Some(RootType::Custom("rawptrs")); }
     if name.starts_with("ftDemo") { return Some(RootType::Raw); }
@@ -132,7 +132,6 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
         RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds, sym, ),
         RootType::Record(n) => match n {
             "DynamicModelDesc" => d.object::<DynamicModelDesc>(off) as *mut c_void,
-            "DynamicsDesc" => d.object::<DynamicsDesc>(off) as *mut c_void,
             "FigaTree" => d.object::<FigaTree>(off) as *mut c_void,
             "Fighter_804D653C_t" => d.object::<Fighter_804D653C_t>(off) as *mut c_void,
             "GroundParam" => d.object::<GroundParam>(off) as *mut c_void,
@@ -145,6 +144,7 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             "HSD_SObjDesc" => d.object::<HSD_SObjDesc>(off) as *mut c_void,
             "HSD_ShapeAnimJoint" => d.object::<HSD_ShapeAnimJoint>(off) as *mut c_void,
             "MapCollData" => d.object::<MapCollData>(off) as *mut c_void,
+            "MexSelectChr" => d.object::<MexSelectChr>(off) as *mut c_void,
             "MnSelectChrDataTable" => d.object::<MnSelectChrDataTable>(off) as *mut c_void,
             "MnSelectStageDataTable" => d.object::<MnSelectStageDataTable>(off) as *mut c_void,
             "SceneCameraDesc" => d.object::<SceneCameraDesc>(off) as *mut c_void,

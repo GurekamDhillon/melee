@@ -2758,6 +2758,17 @@ pub unsafe extern "C" fn mnCharSel_CursorThink(gobj: *mut HSD_GObj) {
                                             i += 1;
                                         }
 
+                                        if trace_on() && (trigger & PAD_A != 0 || (!found && ext::Mex_CssTraceEnabled() == 1)) {
+                                            static mut DUMPED: bool = false;
+                                            eprintln!("mexcss: A={} at ({:.2}, {:.2}) door {} hit {} icon {} of {}", trigger & PAD_A != 0, (*m2).x8, (*m2).xC, door_i, found, i, MNCS_NUM());
+                                            if !DUMPED {
+                                                DUMPED = true;
+                                                for k in 0..MNCS_NUM() {
+                                                    let ic = icon_at(k as usize);
+                                                    eprintln!("mexcss: icon {} ck {} state {} l {:.2} r {:.2} u {:.2} d {:.2}", k, (*ic).char_kind, (*ic).state, (*ic).bound_l, (*ic).bound_r, (*ic).bound_u, (*ic).bound_d);
+                                                }
+                                            }
+                                        }
                                         if !found {
                                             mnCharSel_8025D5AC(door_i, 0, 1);
                                             {
@@ -4362,6 +4373,28 @@ unsafe fn mnCharSel_MexSetup() {
             }
             r += 1;
         }
+        // The cursor's puck (what the hit test reads) stops just above the m-ex grid's top row
+        // (Akaneia: puck y 18.66 at the clamp, top bounds 18.56), so the top row could not be hovered
+        // or picked. Open the grid's top edge upwards, as the retail rows' bounds are.
+        {
+            let mut top = f32::MIN;
+            i = 0;
+            while i < n {
+                if mnCharSel_IconUnavail[i as usize] == 0 && (*icon_at(i as usize)).bound_u > top {
+                    top = (*icon_at(i as usize)).bound_u;
+                }
+                i += 1;
+            }
+            i = 0;
+            while i < n {
+                let ic = icon_at(i as usize);
+                if (*ic).bound_u > top - 1.0f32 {
+                    // small, so a restored puck (bound_u - 3) still lands on the icon
+                    (*ic).bound_u += 2.0f32;
+                }
+                i += 1;
+            }
+        }
     }
 
     // Portraits and emblems (VS doors): as m-ex's "Replace CSS VS Emblem" does, give each door's
@@ -5964,6 +5997,15 @@ pub unsafe fn mnCharSel_PcArtOpen(archive: *mut HSD_Archive) -> i32 {
         mnCharSel_PcMex = null_mut();
     }
     mnCharSel_PcCount
+}
+
+/// The retail roster's art rows as authored (`icons_init`, not the live table): (CharacterKind, HUD index, icon joint)
+/// per selectable icon, and the first door's portrait joint. For the presentation layer's art reader
+/// (melee_engine::fighter_art); reads no game state.
+pub fn retail_art_rows() -> (Vec<(u8, u8, u8)>, u8) {
+    let t = icons_init();
+    let rows = t[..SELKIND_COUNT as usize].iter().map(|r| (r.char_kind, r.ft_hudindex, r.joint_id_vs)).collect();
+    (rows, door_row([0x2E, 0x33, 0x38, 0x85, 0x29, 0xA6, 0x3D, 0x41, 0x40], [0.0; 4]).costume_joint)
 }
 
 /// A texture object's current image and palette (an animated palette is tluttbl[tlut_no]).

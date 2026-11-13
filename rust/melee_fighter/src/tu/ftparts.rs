@@ -341,9 +341,18 @@ pub unsafe fn ftParts_800750C8(fp: *mut Fighter, arg1: u32, arg2: bool) {
     melee_core::ct!("ftParts_800750C8");
     let kind = (*fp).kind as usize;
     let vis: *mut FtPartsVis = &mut (*fp).x5AC;
+    // a kind past the table (an m-ex guest left fp->kind spoofed: MexCPU_ProcSpoof swaps it around the CPU calls) has
+    // no model event; logged once instead of indexing past the table
     let ev = |model: u32| {
-        if let Some(f) = crate::tu::ftdata::ftData_UnkIntBoolFunc0.model_events[kind] {
-            f(fp, model as i32, arg2 as i32);
+        match crate::tu::ftdata::ftData_UnkIntBoolFunc0.model_events.get(kind) {
+            Some(Some(f)) => f(fp, model as i32, arg2 as i32),
+            Some(None) => {}
+            None => {
+                static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+                if !SEEN.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                    eprintln!("ftParts_800750C8: fighter kind {kind:#x} past the model-event table (fp {fp:p}): event skipped");
+                }
+            }
         }
     };
     if arg1 == 2 {

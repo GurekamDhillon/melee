@@ -64,6 +64,8 @@ pub struct Mex {
     /// `gw_Mex_FtDemoStrings` as native records, by internal id.
     demo: Vec<*mut melee_types::Fighter_DemoStrings>,
     kirby_costumes: Vec<*mut c_void>,
+    /// `gw_Mex_CssIconTable` as native records (mexData.menu.css +0xDC, 0x1C a row; `char_kind` is the m-ex EXTERNAL id).
+    css: *mut melee_types::CSSIcon,
     /// stage table state (gr_tables)
     gr_int: i32,
     gr_ext: i32,
@@ -179,7 +181,7 @@ pub fn load() -> bool {
         let w = u32::from_be_bytes(img[off..off + 4].try_into().unwrap()).wrapping_add(base);
         img[off..off + 4].copy_from_slice(&w.to_be_bytes());
     }
-    let mut mx = Mex { base, size: data_size as u32, root: base + sym, slots: Vec::new(), demo: Vec::new(), kirby_costumes: Vec::new(), gr_int: 0, gr_ext: 0, gr_map: 0, gr_desc: 0 };
+    let mut mx = Mex { base, size: data_size as u32, root: base + sym, slots: Vec::new(), demo: Vec::new(), kirby_costumes: Vec::new(), css: core::ptr::null_mut(), gr_int: 0, gr_ext: 0, gr_map: 0, gr_desc: 0 };
     let fighter = mx.r32(mx.root + OFF_FIGHTER);
     let item = mx.r32(mx.root + OFF_ITEM);
     if !mx.inr(fighter, 0x50) || !mx.inr(item, 0x18) {
@@ -237,8 +239,43 @@ pub fn load() -> bool {
         });
     }
     gr_tables(&mut mx);
+    css_table(&mut mx);
     unsafe { MEX = Some(mx) };
     true
+}
+
+/// The character select's icon rows as native records: the C hands the game the guest rows themselves (the same
+/// layout as the port's `CSSIcon`); here the big-endian words are read once. One spare row past the end.
+fn css_table(mx: &mut Mex) {
+    let n = mx.css_icons() as u32;
+    let menu = mx.r32(mx.root + 0x04);
+    let css = if mx.inr(menu, 8) { mx.r32(menu + 0x04) } else { 0 };
+    let tbl = css.wrapping_add(0xDC);
+    if n == 0 || css == 0 || !mx.inr(tbl, n * 0x1C) {
+        return;
+    }
+    let f = |a: u32| f32::from_bits(mx.r32(a));
+    let mut v: Vec<melee_types::CSSIcon> = (0..n)
+        .map(|i| {
+            let r = tbl + i * 0x1C;
+            let b = |o: u32| mx.r8(r + o).unwrap_or(0);
+            melee_types::CSSIcon {
+                ft_hudindex: b(0),
+                char_kind: b(1),
+                state: b(2),
+                anim_timer: b(3),
+                joint_id_vs: b(4),
+                joint_id_1p: b(5),
+                sfx: mx.r32(r + 0x08) as i32,
+                bound_l: f(r + 0x0C),
+                bound_r: f(r + 0x10),
+                bound_u: f(r + 0x14),
+                bound_d: f(r + 0x18),
+            }
+        })
+        .collect();
+    v.push(melee_types::CSSIcon::zeroed());
+    mx.css = Box::leak(v.into_boxed_slice()).as_mut_ptr();
 }
 
 fn gr_tables(mx: &mut Mex) {
@@ -325,6 +362,14 @@ pub fn ExtToPortCKind(ext: i32) -> i32 {
     let k = InternalForExt(ext);
     let s = if k >= 0 { slot_of_internal(k) } else { -1 };
     if s >= 0 { CK_MEX0 + s } else { -1 }
+}
+/// `gw_Mex_CssIconCount`: the character select's icon rows (0 without mexData).
+pub fn CssIconCount() -> i32 {
+    m().map_or(0, |m| if m.css.is_null() { 0 } else { m.css_icons() })
+}
+/// `gw_Mex_CssIconTable`: `CssIconCount()` native `CSSIcon` rows whose `char_kind` is the m-ex external id.
+pub fn CssIconTable() -> *mut c_void {
+    m().map_or(core::ptr::null_mut(), |m| m.css as *mut c_void)
 }
 pub fn FighterName(ext: i32) -> *const c_char {
     match m() {
@@ -910,6 +955,15 @@ pub fn by_name(name: &str, a: &[u64]) -> Option<u64> {
         "Mex_PortCKindToExt" => PortCKindToExt(i(0)) as i64 as u64,
         "Mex_ExtToPortCKind" => ExtToPortCKind(i(0)) as i64 as u64,
         "Mex_FighterName" => FighterName(i(0)) as usize as u64,
+        "Mex_CssIconCount" => CssIconCount() as i64 as u64,
+        "Mex_CssIconTable" => CssIconTable() as usize as u64,
+        // MELEE_CSS_TRACE=1: the CSS's m-ex grid/portrait trace (OSReport lines "mexcss:" / "css:")
+        "Mex_CssTraceEnabled" => {
+            static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+            *ON.get_or_init(|| std::env::var("MELEE_CSS_TRACE").map_or(false, |v| v.starts_with('1'))) as u64
+        }
+        // the m-ex CSS's denser grid: the hand and the puck scale with it (the C's default; MELEE_CSS_CURSOR_SCALE=0 off)
+        "Mex_CssCursorScaleEnabled" => (std::env::var("MELEE_CSS_CURSOR_SCALE").map_or(true, |v| !v.starts_with('0')) && CssIconCount() > 0) as u64,
         "Mex_InsigniaForExt" => InsigniaForExt(i(0)) as i64 as u64,
         "Mex_GrFile" => GrFile(i(0)) as usize as u64,
         "Mex_GrKindForExt" => GrKindForExt(i(0)) as i64 as u64,

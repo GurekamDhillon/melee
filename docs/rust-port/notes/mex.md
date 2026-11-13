@@ -35,3 +35,23 @@ identical). `run_rust.sh` reads the scenario's `iso` (`COV_ISO` -> `GW_ISO_<NAME
 | `mex_goku_cpu` (goku-xv2, vanilla disc, a base "none" Geno define) | PASS 3601 (port/genonone) |
 
 Open: FD on the ACE disc draws magenta edges in `view-golden` (a texture the renderer does not decode; render only).
+
+## Guest-code bridge notes (ACE crash fixes, Nov 13)
+
+- Floor-line filters (`ft_800831CC`'s first callback, `LineCb`): `Call::line` resolves guest code to a line trampoline
+  (gobj in r3, line id in r4) and a retail address to the port's filter (`ftCo_80096CC8`, `fn_800DD6E4`). 0 stays NULL,
+  which the C treats as "every line lands" (`mpColl_80044628_Floor`); `adapt::line_tramp` does the same instead of
+  panicking. Read as a gobj callback before, the retail `ftCo_80096CC8` (Diddy's SpecialAirHiDamage_Coll, PlTd) and a
+  NULL filter (Wario, Meta Knight, Knuckles' side-B air, Chun-Li, PlNm) both ended the game ("adapt: null line callback").
+- `ft_800831CC` hands the guest the bool the console leaves in r3 (Knuckles' side-B air Coll tests it).
+- An ftFunction with codeSize 0 (older MexTK; 11 ACE slots: PlWr, PlDa, PlLc2, PlRc, PlSm, PlSd, PlFy, PlMk, PlSc, PlLb, PlMM) gets the same
+  recovered bound items already had; the empty blob panicked in `build_move_table` as the fighter loaded.
+- A fighter GObj passed where a callee takes `Fighter*` resolves to its fighter (Knuckles' side-B air Phys passes the
+  gobj to `ftCommon_CalcSelfAccel_Deaccel`; the native callee wrote self_vel past the native GObj onto fp->kind). A
+  guest run that still leaves its fighter's kind outside the tables gets the kind back (`guard_kind`, logged once).
+- Sweep: `MELEE_SCENE="mode=vs;at=match;p1=mexext:N/cpu9;p2=fox/cpu9;stage=fd"` for every N; `MELEE_MEX_CALLS=1` lists a
+  blob's vanilla calls, `MELEE_MEX_DIS=1` disassembles it.
+- `fp->dat_attrs_backup` is mapped as `Backing::Words` (guest byte `o` = native byte `o ^ 3`): an onLoad memcpys its
+  big-endian attributes there, and the clone base's native specials read them as f32. As plain bytes, PlDl's
+  Luigi-base SpecialSStart read byte-swapped floats and its ECB went NaN (`mpCollInterpolateECB` assert); the assert's
+  report now also names the fighter kind, motion, anim and frame.

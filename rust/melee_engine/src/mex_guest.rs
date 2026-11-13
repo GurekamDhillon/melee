@@ -11,8 +11,9 @@
 //! * the fighter's PlXx.dat data section as HSD_ArchiveParse leaves it (big-endian, relocated) at `DAT_BASE` (+ per
 //!   fighter); the guest's `fp->ft_data` reads that ftData (its attributes and article tables are the mod's own
 //!   layouts, which only the guest reads);
-//! * `fp->dat_attrs_backup`, the 0x424-byte buffer of the game heap, as raw guest bytes: the mod's onLoad copies its
-//!   private attributes there and points `fp->dat_attrs` at it, as m-ex does;
+//! * `fp->dat_attrs_backup`, the 0x424-byte buffer of the game heap, as guest bytes kept as native 32-bit words: the
+//!   mod's onLoad copies its private attributes there and points `fp->dat_attrs` at it, as m-ex does, and the clone
+//!   base's native specials read them as native floats;
 //! * r13 / r2 small data: the DOL's .sdata / .sdata2 around the two bases (the float constants the code loads).
 //!
 //! Rollback: every byte the guest can write lives in the game heap, in a native game object, or in this module's
@@ -392,6 +393,84 @@ fn fn_native2(a: u32) -> Option<unsafe extern "C" fn(G, G)> {
     Some(POOL2[i])
 }
 
+/// A floor-line filter (`bool (*)(Fighter_GObj*, int line_id)`, the first callback of `ft_800831CC` and its family).
+pub type LineFn = unsafe extern "C" fn(G, isize) -> bool;
+
+/// Guest code behind the line-filter trampolines (`LPOOL`), by slot.
+static mut LPOOL_SLOTS: Vec<(i32, u32)> = Vec::new();
+
+/// A guest line filter: r3 = the gobj, r4 = the line id, its r3 the answer. A run that cannot bind the fighter or faults
+/// accepts the line (what a NULL filter does), so the fighter still lands.
+unsafe extern "C" fn lpool_tramp<const I: usize>(g: G, line: isize) -> bool {
+    let Some(&(kind, addr)) = (&*core::ptr::addr_of!(LPOOL_SLOTS)).get(I) else { return true };
+    let s = st();
+    let Some(gh) = bind_fighter(s, g) else { return true };
+    sync_globals(s);
+    let mut cpu = Cpu::default();
+    cpu.gpr[1] = STACK_BASE + STACK_SIZE - 0x100 - s.depth * 0x2000;
+    cpu.gpr[2] = R2;
+    cpu.gpr[13] = R13;
+    cpu.gpr[3] = gh;
+    cpu.gpr[4] = line as i32 as u32;
+    cpu.lr = 0;
+    cpu.pc = addr;
+    let (r, faulted) = run_cpu(kind, 2003, cpu);
+    faulted || r.gpr[3] != 0
+}
+
+const fn lpool() -> [LineFn; 16] {
+    let mut t: [LineFn; 16] = [lpool_tramp::<0>; 16];
+    macro_rules! set { ($($e:literal)*) => { $( t[$e] = lpool_tramp::<$e>; )* } }
+    set!(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15);
+    t
+}
+static LPOOL: [LineFn; 16] = lpool();
+
+/// The retail floor-line filters (every one the vanilla code passes to the `ft_800831CC` family), by name.
+fn vanilla_line_fn(name: &str) -> Option<LineFn> {
+    Some(match name {
+        "ftCo_80096CC8" => melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8 as LineFn,
+        "fn_800DD6E4" => melee_fighter::tu::ftCo_Throw::fn_800DD6E4_cb as LineFn,
+        _ => return None,
+    })
+}
+
+/// A floor-line filter the guest passes: guest code as its line trampoline, a retail address as the port's filter.
+/// None for 0, and for an address neither resolves (logged once per address); the callee then treats it as NULL
+/// (every line lands), which keeps the fighter playable where the console would have run the filter.
+fn line_native(a: u32) -> Option<LineFn> {
+    if a == 0 {
+        return None;
+    }
+    if let Some(kind) = kind_of_code(a) {
+        let slots = unsafe { &mut *core::ptr::addr_of_mut!(LPOOL_SLOTS) };
+        let i = match slots.iter().position(|&(k, x)| k == kind && x == a) {
+            Some(i) => i,
+            None if slots.len() < LPOOL.len() => {
+                slots.push((kind, a));
+                slots.len() - 1
+            }
+            None => {
+                eprintln!("mexguest: line-filter trampoline pool full: guest {a:08X} treated as NULL");
+                return None;
+            }
+        };
+        return Some(LPOOL[i]);
+    }
+    let name = mex_import::layout::vanilla_name(a);
+    if let Some(f) = name.and_then(vanilla_line_fn) {
+        return Some(f);
+    }
+    static SEEN: std::sync::Mutex<Vec<u32>> = std::sync::Mutex::new(Vec::new());
+    if let Ok(mut seen) = SEEN.lock() {
+        if !seen.contains(&a) {
+            seen.push(a);
+            eprintln!("mexguest: line filter {a:08X} ({}) unresolved: treated as NULL (every floor line lands)", name.unwrap_or("?"));
+        }
+    }
+    None
+}
+
 /// A guest code address as a native callback: its pool trampoline (made on first use).
 fn fn_native(a: u32) -> Option<usize> {
     let Some(kind) = kind_of_code(a) else {
@@ -515,6 +594,12 @@ pub fn install(kind: i32, file: &str, symbol: &str) {
         eprintln!("mexguest: kind {kind}: {file} has no ftFunction");
         return;
     };
+    // ACE's Wario, Daisy, Lucas 2, Raichu, ... carry codeSize 0: an empty blob made MoveLogic index past it (a panic
+    // as the fighter loaded)
+    if !recover_code_size(&mut ar, off) {
+        eprintln!("mexguest: kind {kind}: {file}: ftFunction codeSize 0 not recoverable: the clone base runs");
+        return;
+    }
     let code_base = s.code_next;
     let blob = match mex_import::mexfn::parse_at_base(&ar, off, Owner::Fighter, format!("{file}:ftFunction"), code_base) {
         Ok(b) => b,
@@ -594,6 +679,46 @@ pub fn install(kind: i32, file: &str, symbol: &str) {
     s.kinds.insert(kind, f);
 }
 
+/// A MEXFunction header at `hdr` whose codeSize word is 0 (a MexTK older than the field, gw_ftfunction_code_bound):
+/// the code ends at the next structure the archive names and covers the last word its instruction relocs touch; the
+/// recovered size is written into the header. False when it is 0 and cannot be recovered (true when it is set).
+fn recover_code_size(ar: &mut mex_import::hsd::Archive, hdr: u32) -> bool {
+    let r = |o: u32| ar.u32(hdr + o);
+    let (code_off, irt_off, irt_n, frt_off, frt_n, code_size, dbg_n, dbg_off) =
+        (r(0), r(4), r(8), r(0xC), r(0x10), r(0x14), r(0x18), r(0x1C));
+    if code_size != 0 {
+        return true;
+    }
+    let mut best = ar.data.len() as u32;
+    let mut cands = vec![hdr];
+    if irt_n != 0 {
+        cands.push(irt_off);
+    }
+    if frt_n != 0 {
+        cands.push(frt_off);
+    }
+    if dbg_n != 0 {
+        cands.push(dbg_off);
+    }
+    cands.extend(ar.publics.iter().chain(ar.externs.iter()).map(|x| x.1));
+    for &o in &ar.relocs {
+        cands.push(o);
+        cands.push(ar.u32(o));
+    }
+    for v in cands {
+        if v > code_off && v < best {
+            best = v;
+        }
+    }
+    let need = (0..irt_n).map(|i| (ar.u32(irt_off + i * 8) & 0xFF_FFFF) + 4).max().unwrap_or(0);
+    if best <= code_off || best - code_off < need || need == 0 {
+        return false;
+    }
+    let at = (hdr + 0x14) as usize;
+    ar.data[at..at + 4].copy_from_slice(&(best - code_off).to_be_bytes());
+    true
+}
+
 /// gw_mex_load_items_for (fighter half): every article of the file's `itFunction` (`{count, article[count]}`, each an
 /// ordinary MEXFunction) relocated into its own code region; its function relocs `{slot, code offset}` fill the words
 /// of item.Custom[global - 237], a 0x3C-byte ItemLogicTable (slot 0 the state table, which lives in the code).
@@ -609,40 +734,9 @@ fn load_items(kind: i32, file: &str, ar: &mut mex_import::hsd::Archive) {
         if art == 0 || !ar.reloc_set.contains(&(top + 4 + 4 * n)) {
             continue;
         }
-        let r = |o: u32| ar.u32(art + o);
-        let (code_off, irt_off, irt_n, frt_off, frt_n, code_size, dbg_n, dbg_off) =
-            (r(0), r(4), r(8), r(0xC), r(0x10), r(0x14), r(0x18), r(0x1C));
-        if code_size == 0 {
-            // a MexTK older than the codeSize field (gw_ftfunction_code_bound): the code ends at the next structure
-            // the archive names, and covers the last word its instruction relocs touch
-            let mut best = ar.data.len() as u32;
-            let mut cands = vec![art];
-            if irt_n != 0 {
-                cands.push(irt_off);
-            }
-            if frt_n != 0 {
-                cands.push(frt_off);
-            }
-            if dbg_n != 0 {
-                cands.push(dbg_off);
-            }
-            cands.extend(ar.publics.iter().chain(ar.externs.iter()).map(|x| x.1));
-            for &o in &ar.relocs {
-                cands.push(o);
-                cands.push(ar.u32(o));
-            }
-            for v in cands {
-                if v > code_off && v < best {
-                    best = v;
-                }
-            }
-            let need = (0..irt_n).map(|i| (ar.u32(irt_off + i * 8) & 0xFF_FFFF) + 4).max().unwrap_or(0);
-            if best <= code_off || best - code_off < need || need == 0 {
-                eprintln!("mexguest: kind {kind}: itFunction[{n}] codeSize 0 not recoverable");
-                continue;
-            }
-            let at = (art + 0x14) as usize;
-            ar.data[at..at + 4].copy_from_slice(&(best - code_off).to_be_bytes());
+        if !recover_code_size(ar, art) {
+            eprintln!("mexguest: kind {kind}: itFunction[{n}] codeSize 0 not recoverable");
+            continue;
         }
         let s = st();
         let base = s.code_next;
@@ -820,8 +914,10 @@ fn build_move_table(f: &mut Fighter_, table: u32) {
     let end = f.blob.symbols.iter().find(|s| s.0 == rel && s.1 > rel).map(|s| s.1).unwrap_or_else(|| {
         f.blob.overrides.iter().filter(|o| o.0 & 0x8000_0000 == 0 && o.1 > rel).map(|o| o.1).min().unwrap_or(f.blob.code.len() as u32)
     });
-    let n = ((end - rel) / 0x20) as usize;
-    let rd = |o: u32| u32::from_be_bytes(f.blob.code[o as usize..o as usize + 4].try_into().unwrap());
+    // rows past the blob's code (a short or empty blob) are not read: the motions they would cover keep the clone base's
+    let end = end.min(f.blob.code.len() as u32);
+    let n = (end.saturating_sub(rel) / 0x20) as usize;
+    let rd = |o: u32| f.blob.code.get(o as usize..o as usize + 4).map_or(0, |b| u32::from_be_bytes(b.try_into().unwrap()));
     let s = st();
     for i in 0..n {
         let r = rel + i as u32 * 0x20;
@@ -955,7 +1051,9 @@ unsafe fn bind_fighter(s: &mut State, g: G) -> Option<u32> {
         let ab = (*fp).dat_attrs_backup as usize;
         if ab != 0 && !s.attrs.iter().any(|a| a.0 == ab) {
             let base = ATTRS_BASE + s.attrs.len() as u32 * 0x1000;
-            s.space.add_raw(base, ab as *mut u8, ATTRS_SIZE);
+            // as native words: the native code reads the same attributes as f32 (PlDl's Luigi-base SpecialS read the
+            // big-endian copy its onLoad memcpy'd in, and the ECB went NaN); the guest still sees big-endian bytes
+            s.space.add_words(base, ab as *mut u8, ATTRS_SIZE);
             s.attrs.push((ab, base));
         }
         let _ = FT_DAT_ATTRS_BACKUP;
@@ -1050,8 +1148,36 @@ unsafe fn run_at_f(kind: i32, a: u32, slot: u32, g: G) -> (u32, bool) {
     cpu.gpr[3] = gh;
     cpu.lr = 0;
     cpu.pc = a;
+    let before = fighter_kind(g);
     let (r, faulted) = run_cpu(kind, slot, cpu);
+    guard_kind(g, before, kind, slot, a);
     (r.gpr[3], faulted)
+}
+
+/// The fighter kind of `g` when it is a fighter gobj.
+unsafe fn fighter_kind(g: G) -> Option<i32> {
+    if g.is_null() || (*g).classifier as i32 != melee_types::HSD_GOBJ_CLASS_FIGHTER || (*g).user_data.is_null() {
+        return None;
+    }
+    Some(core::mem::transmute_copy::<_, i32>(&(*((*g).user_data as *mut Fighter)).kind))
+}
+
+/// A guest run that leaves its fighter's kind outside every table (MexCPU_ProcSpoof swaps fp->kind around the CPU
+/// calls and restores it; a run cut short leaves the spoof, and a kind past the tables ends the game in the next
+/// lookup): the kind it had before the run, logged once per slot.
+unsafe fn guard_kind(g: G, before: Option<i32>, kind: i32, slot: u32, a: u32) {
+    let (Some(b), Some(now)) = (before, fighter_kind(g)) else { return };
+    if now == b || (0..0x7F).contains(&now) {
+        return;
+    }
+    (*((*g).user_data as *mut Fighter)).kind = core::mem::transmute_copy(&b);
+    static SEEN: std::sync::Mutex<Vec<u32>> = std::sync::Mutex::new(Vec::new());
+    if let Ok(mut seen) = SEEN.lock() {
+        if !seen.contains(&slot) {
+            seen.push(slot);
+            eprintln!("mexguest: kind {kind} slot {slot} ({a:08X}) left fighter kind {now:#x}: restored to {b}");
+        }
+    }
 }
 
 unsafe fn run_cpu(kind: i32, slot: u32, cpu: Cpu) -> (Cpu, bool) {
@@ -1663,6 +1789,26 @@ impl Call<'_> {
         if h == 0 {
             return core::ptr::null_mut();
         }
+        // a fighter's GObj where the callee takes its Fighter* (ACE's Knuckles passes the gobj to
+        // ftCommon_CalcSelfAccel_Deaccel in its side-B air Phys): the gobj's fighter. Handed over as is, the native
+        // callee wrote Fighter fields past the end of the native GObj (self_vel landed on fp->kind)
+        if rec == Some("Fighter") {
+            let gobj = self.mem.regions.iter().find_map(|r| match r.backing {
+                mex_import::remap::Backing::Native { rec: "HSD_GObj", ptr, .. } if r.base == h => Some(ptr as G),
+                _ => None,
+            });
+            if let Some(g) = gobj {
+                unsafe {
+                    if (*g).classifier as i32 == melee_types::HSD_GOBJ_CLASS_FIGHTER && !(*g).user_data.is_null() {
+                        static SEEN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+                        if !SEEN.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                            eprintln!("mexguest: a fighter GObj passed where a Fighter* is taken: its fighter used (logged once)");
+                        }
+                        return (*g).user_data as *mut c_void;
+                    }
+                }
+            }
+        }
         // inside a registered native object: the field / element that starts there (fp->coll_data, &fp->cur_pos)
         if let Some(nat) = self.mem.interior(h) {
             return nat as *mut c_void;
@@ -1703,6 +1849,11 @@ impl Call<'_> {
             self.bad = true;
         }
         f
+    }
+    /// A floor-line filter argument (`LineCb`): guest code as its line trampoline (gobj in r3, line id in r4), a
+    /// retail address as the port's filter, None for 0 or an unresolved one (the callee treats None as NULL).
+    pub fn line(&mut self, i: usize) -> Option<LineFn> {
+        line_native(self.cpu.gpr[3 + i])
     }
     /// A gobj callback argument: guest code as its pool trampoline, a vanilla address as the port's function.
     pub fn func(&mut self, i: usize) -> Option<unsafe extern "C" fn(G)> {

@@ -661,6 +661,10 @@ pub unsafe fn mpCollInterpolateECB(mut coll: *mut CollData, mut time: f32) {
         ext::OSReport(&format!("mpcoll:   pos({:.6},{:.6}) ecb T({:.6},{:.6}) B({:.6},{:.6}) L({:.6},{:.6}) R({:.6},{:.6})\n", (*coll).cur_pos.x as f64, (*coll).cur_pos.y as f64, (*coll).ecb.top.x as f64, (*coll).ecb.top.y as f64, (*coll).ecb.bottom.x as f64, (*coll).ecb.bottom.y as f64, (*coll).ecb.left.x as f64, (*coll).ecb.left.y as f64, (*coll).ecb.right.x as f64, (*coll).ecb.right.y as f64));
         ext::OSReport(&format!("mpcoll:   desired T({:.6},{:.6}) B({:.6},{:.6}) L({:.6},{:.6}) R({:.6},{:.6})\n", (*coll).desired_ecb.top.x as f64, (*coll).desired_ecb.top.y as f64, (*coll).desired_ecb.bottom.x as f64, (*coll).desired_ecb.bottom.y as f64, (*coll).desired_ecb.left.x as f64, (*coll).desired_ecb.left.y as f64, (*coll).desired_ecb.right.x as f64, (*coll).desired_ecb.right.y as f64));
         ext::OSReport(&format!("mpcoll:   prev    T({:.6},{:.6}) B({:.6},{:.6}) L({:.6},{:.6}) R({:.6},{:.6})\n", (*coll).prev_ecb.top.x as f64, (*coll).prev_ecb.top.y as f64, (*coll).prev_ecb.bottom.x as f64, (*coll).prev_ecb.bottom.y as f64, (*coll).prev_ecb.left.x as f64, (*coll).prev_ecb.left.y as f64, (*coll).prev_ecb.right.x as f64, (*coll).prev_ecb.right.y as f64));
+        if !(*coll).x0_gobj.is_null() && (*(*coll).x0_gobj).classifier as i32 == 4 && !(*(*coll).x0_gobj).user_data.is_null() {
+            let fp = (*(*coll).x0_gobj).user_data as *const melee_types::Fighter;
+            ext::OSReport(&format!("mpcoll:   fighter kind {} motion {} anim {} frame {} rate {} ecb_source {}\n", (*fp).kind, (*fp).motion_id, (*fp).anim_id, (*fp).cur_anim_frame, (*fp).frame_speed_mul, (*coll).ecb_source.kind));
+        }
         if 0 != 0 { (); } else { ext::OSReport(&format!("error\n")); panic!("mpCollInterpolateECB: assertion failed"); }
     }
 }

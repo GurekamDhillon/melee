@@ -39,7 +39,7 @@ sym	effBehaviorTable	custom:efbhv	src/melee/ef/efasync.c efAsync_MexNoteArchive 
 prefix	eff	custom:efdat	src/melee/ef/efasync.c effDataTable_name: every eff*DataTable of the EfXxData.dat files
 sym	ALDYakuAll	custom:rawptrs	src/melee/gr/grdatfiles.c:73 ald_yaku_all (UNK_T**: item scripts, raw)
 suffix	_image_desc	HSD_ImageDesc	gr/grizumi.c:758, grpstadium.c:261 HSD_ImageDesc* (mirror / BG image desc, zeroed and refilled by the stage)
-prefix	dynamicsdata_	DynamicsDesc	gr/grcastle.c:428 (flag3/4/6), gr/grrcruise.c:326 (shipflag): DynamicsDesc* for grLib_801C9B20
+prefix	dynamicsdata_	custom:dyntemplate	gr/grcastle.c:428 (flag3/4/6), gr/grrcruise.c:326 (shipflag), lb_80011710: DynamicsTemplate { lb_00F9_UnkDesc1Inner* params; u32 count; Vec3 pos; }: the params are `count` 15-float records, not a DynamicsData (dat_types.rs carried this by hand; the row now says it)
 suffix	_camera	HSD_CObjDesc	gmtitle.c:247 / mnmain.c:2876 HSD_CObjDesc* (every Sc*_cam_int1_camera of the menu scene files)
 suffix	_scene_lights	custom:ptrtable_lightlist	mnmain.c:65 LightList** MenMain_lights (Sc*_scene_lights)
 suffix	_fog	HSD_FogDesc	mnmain.c:64 HSD_FogDesc* MenMain_fog (Sc*_fog)
@@ -96,3 +96,5 @@ sym	cut3BgScene	SceneDesc	gm/gmregtyfall.c:385 (loaded, no pointer kept)
 sym	ScGamRegStaffrollNames_scene_modelset	custom:ptrtable_dynmodel	gm/gmstaffroll.c:84 DynamicModelDesc** gm_804D6844 (GmStRoll.dat, indexed 0..9)
 prefix	gmKumiteSystemTable	custom:kumitetable	gm/gm_181A.c:459 RegClearSpawnEntry* lbl_80472ED8.x6A4..x6B8 (GmKumite.dat Multi-Man spawn tables; copy_spawn_table reads them natively)
 sym	Stc_icns	custom:stcicns	gm/gm_1601.c:4191 MexStcIcns* (m-ex IfAll stock-icon atlas: u16 reserved, u16 stride, HSD_MatAnimJoint*)
+sym	mexSelectChr	MexSelectChr	mn/mncharsel.c mnCharSel_MexSetup / mnCharSel_PcArtOpen: MexSelectChr* (m-ex CSS: icon model, icon anims, CSP material animation, CSP stride)
+sym	mexMapData	raw	mn/mnstagesel.c mnStageSel_MexSetup: MexMapData* (m-ex SSS; the m-ex stage tables are not ported: Mex_SssIconCount is 0, so the block is never followed and the retail select runs)

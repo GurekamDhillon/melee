@@ -193,7 +193,12 @@ fn fcard(e: &mut E, x: f32, y: f32, deg: f32, ck: i32, tag: i32, col: u32, ids: 
     let known = ck >= 0 && ck != crate::picker::RANDOM;
     sticker(e, if known { S_FACE_WHITE } else { S_FACE_CREAM }, x, y, 72.0, 94.0, deg, WHITE, |e| {
         if known {
-            spr_c(e, S_HEAD, x + 36.0, y + 26.0, 1.6, WHITE);
+            let h = unsafe { crate::picker::icon(ck) };
+            if h != 0 {
+                e.tex(h, x + 14.0, y + 6.0, 44.0, 39.0, [0.0, 0.0, 1.0, 1.0], WHITE);
+            } else {
+                spr_c(e, S_HEAD, x + 36.0, y + 26.0, 1.6, WHITE);
+            }
             e.text_ex(x + 36.0, y + 46.0, d(13), INK, ALIGN_CENTER, 66.0, if (0..26).contains(&ck) { ck_name(ck) } else { crate::picker::short(ck) });
             let mut n = 0;
             for k in 0..ids.len() {
@@ -608,8 +613,13 @@ unsafe fn road(e: &mut E, t: i32, view: Option<&[i32; VW]>, rec: Option<&[i32; R
 /// A fighter sticker (UI-SPEC 3.5): 140 x 80, head, name, chips.
 pub fn fighter_sticker(e: &mut E, x: f32, y: f32, deg: f32, p: &Party, set: usize, first: bool, rgba: u32) {
     sticker(e, S_FACE_WHITE, x, y, 140.0, 80.0, deg, rgba, |e| {
-        spr_c(e, S_HEAD, x + 16.0, y + 14.0, 1.0, WHITE);
-        e.text_ex(x + 33.0, y + 6.0, d(15), INK, ALIGN_LEFT, 104.0, ck_name(p.pairs[set]));
+        let h = unsafe { crate::picker::icon(p.pairs[set]) };
+        if h != 0 {
+            e.tex(h, x + 3.0, y + 4.0, 27.0, 24.0, [0.0, 0.0, 1.0, 1.0], WHITE);
+        } else {
+            spr_c(e, S_HEAD, x + 16.0, y + 14.0, 1.0, WHITE);
+        }
+        e.text_ex(x + 33.0, y + 6.0, d(15), INK, ALIGN_LEFT, 104.0, crate::picker::short(p.pairs[set]));
         for k in 0..SLOTS {
             let cx = x + 17.0 + k as f32 * 26.0;
             let id = p.ids[set][k];

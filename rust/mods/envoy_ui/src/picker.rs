@@ -14,6 +14,38 @@ extern "C" {
     fn gd_ui_envoy_party(m1: i32, p1: i32, m2: i32, p2: i32) -> i32;
     fn gd_ui_envoy_roster(out: *mut i32, max: i32) -> i32;
     fn gd_ui_envoy_fighter_name(ck: i32, out: *mut u8, cap: i32) -> i32;
+    fn gd_ui_fighter_tex(ck: i32, which: i32) -> u32;
+}
+
+/// Each fighter's character-select icon from the player's disc (gd_ui_fighter_tex; 0 none: the lettered sticker),
+/// asked once per kind. u32::MAX: not asked yet.
+static mut ICON: [u32; 0x200] = [u32::MAX; 0x200];
+
+/// Fighter `k`'s icon texture handle (0 when the host or the disc has none).
+pub(crate) unsafe fn icon(k: i32) -> u32 {
+    if !(0..0x200).contains(&k) {
+        return 0;
+    }
+    let i = k as usize;
+    if ICON[i] == u32::MAX {
+        ICON[i] = gd_ui_fighter_tex(k, 0);
+    }
+    ICON[i]
+}
+
+/// Each fighter's large portrait (gd_ui_fighter_tex which 1), same caching as ICON.
+static mut PORTRAIT: [u32; 0x200] = [u32::MAX; 0x200];
+
+/// Fighter `k`'s portrait texture handle (0 when there is none).
+pub(crate) unsafe fn portrait(k: i32) -> u32 {
+    if !(0..0x200).contains(&k) {
+        return 0;
+    }
+    let i = k as usize;
+    if PORTRAIT[i] == u32::MAX {
+        PORTRAIT[i] = gd_ui_fighter_tex(k, 1);
+    }
+    PORTRAIT[i]
 }
 
 pub const RANDOM: i32 = 99;
@@ -316,9 +348,15 @@ pub unsafe fn frame(e: &mut E) -> bool {
                 text_edge(e, cx + 30.0, cy + 8.0, d(34), SUNNY, ALIGN_CENTER, 1.4, "?");
                 e.text_ex(cx + 30.0, cy + 54.0, d(11), alpha(INK, a), ALIGN_CENTER, 56.0, "Random");
             } else {
-                // no disc art yet: the lettered sticker (the old select's two-letter fallback)
-                let t = core::str::from_utf8(&ABBR[i]).unwrap_or("?");
-                text_edge(e, cx + 30.0, cy + 10.0, d(26), alpha(if lk { PALE } else if k >= 0x22 { LAGOON } else { CORAL }, a), ALIGN_CENTER, 1.4, t);
+                let h = icon(k);
+                if h != 0 {
+                    // the disc's own select icon (faded when locked)
+                    e.tex(h, cx + 5.0, cy + 5.0, 50.0, 44.0, [0.0, 0.0, 1.0, 1.0], alpha(if lk { 0x8080_80FF } else { WHITE }, a * if lk { 0.6 } else { 1.0 }));
+                } else {
+                    // no disc art: the lettered sticker (the old select's two-letter fallback)
+                    let t = core::str::from_utf8(&ABBR[i]).unwrap_or("?");
+                    text_edge(e, cx + 30.0, cy + 10.0, d(26), alpha(if lk { PALE } else if k >= 0x22 { LAGOON } else { CORAL }, a), ALIGN_CENTER, 1.4, t);
+                }
                 if lk {
                     spr_c(e, S_LOCK, cx + 46.0, cy + 12.0, 1.0, WHITE);
                 }
@@ -358,8 +396,22 @@ pub unsafe fn frame(e: &mut E) -> bool {
                 let shown = if choosing { GRID[CUR[p]] } else { SEAT[p][s] };
                 face(e, if choosing { S_FACE_SUNNY } else { S_FACE_CREAM }, sx, y + 9.0, 100.0, 72.0, WHITE);
                 e.text_ex(sx + 8.0, y + 13.0, bs(11), LILAC, ALIGN_LEFT, 0.0, if s == 0 { "Main" } else { "Partner" });
-                spr_c(e, S_HEAD, sx + 18.0, y + 52.0, 0.95, WHITE);
+                let h = if shown >= 0 && shown != RANDOM { icon(shown) } else { 0 };
+                if h != 0 {
+                    e.tex(h, sx + 4.0, y + 37.0, 28.0, 25.0, [0.0, 0.0, 1.0, 1.0], WHITE);
+                } else {
+                    spr_c(e, S_HEAD, sx + 18.0, y + 52.0, 0.95, WHITE);
+                }
                 e.text_ex(sx + 32.0, y + 45.0, d(13), INK, ALIGN_LEFT, 66.0, if shown >= 0 { short(shown) } else { "?" });
+            }
+            if !COOP {
+                // the large portrait of the fighter being chosen (or the main once both are seated)
+                let k = if STEP[p] < 2 { GRID[CUR[p]] } else { SEAT[p][0] };
+                let h = if k >= 0 && k != RANDOM && !locked(k) { portrait(k) } else { 0 };
+                if h != 0 {
+                    face(e, S_FACE_CREAM, x + w - 76.0, y + 4.0, 66.0, 84.0, WHITE);
+                    e.tex(h, x + w - 73.0, y + 6.0, 60.0, 80.0, [0.0, 0.0, 1.0, 1.0], WHITE);
+                }
             }
             let (dx, dy) = (x + 222.0, y + 28.0);
             let ready = STEP[p] == 3;

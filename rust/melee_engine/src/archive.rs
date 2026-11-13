@@ -100,6 +100,17 @@ pub struct Decoded {
     pub(crate) effects: Vec<crate::dat_custom::Effect>,
 }
 
+impl Decoded {
+    /// A typed public's decoded native object (None: not a public, or raw / untyped). For host-side readers that
+    /// walk descriptors without installing the archive (fighter_art).
+    pub fn native_root(&self, name: &str) -> Option<*mut c_void> {
+        match self.roots.iter().find(|r| r.0 == name)?.1 {
+            Root::Native(p) => Some(p),
+            Root::Raw(_) => None,
+        }
+    }
+}
+
 /// Parse and decode the (not yet relocated) file image at `src`, whose header was checked; the decoded roots point
 /// into it. Touches no game state: dat_custom keeps its writes as effects while a prepare is on, else does them.
 ///
@@ -410,7 +421,7 @@ pub fn stats() -> (usize, usize, usize, usize) {
 }
 
 /// `host_public_address`: the native root of public `symbols` (null when the archive has no such
-/// public). Stops, naming the symbol, when the archive has it but `dat_symbols.tsv` has no type for it.
+/// public, or one `dat_symbols.tsv` has no type for: logged once, read as absent).
 /// None: `archive` was not parsed by this host.
 ///
 /// # Safety
@@ -423,10 +434,20 @@ pub unsafe fn host_public_address(archive: *mut HSD_Archive, symbols: *const c_c
     }
     match image.native_root(&want) {
         Some(p) => Some(p),
-        None => panic!(
-            "melee_engine: archive symbol `{want}` has no type in tools/rust-port/engine/dat_symbols.tsv \
-             (add the C type its call site casts it to, then run gen_dat_types.py)"
-        ),
+        // an untyped public reads as absent (every caller handles null) instead of aborting: this runs inside
+        // no-unwind game code, where a panic is a hard abort. Said once per symbol.
+        None => {
+            static SAID: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+            let mut said = SAID.lock().unwrap_or_else(|e| e.into_inner());
+            if !said.iter().any(|s| *s == want) {
+                eprintln!(
+                    "melee_engine: archive symbol `{want}` has no type in tools/rust-port/engine/dat_symbols.tsv \
+                     (add the C type its call site casts it to, then run gen_dat_types.py); treated as absent"
+                );
+                said.push(want.to_string());
+            }
+            Some(core::ptr::null_mut())
+        }
     }
 }
 

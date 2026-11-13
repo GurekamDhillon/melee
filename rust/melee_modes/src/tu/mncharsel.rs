@@ -5966,6 +5966,15 @@ pub unsafe fn mnCharSel_PcArtOpen(archive: *mut HSD_Archive) -> i32 {
     mnCharSel_PcCount
 }
 
+/// The retail roster's art rows as authored (`icons_init`, not the live table): (CharacterKind, HUD index, icon joint)
+/// per selectable icon, and the first door's portrait joint. For the presentation layer's art reader
+/// (melee_engine::fighter_art); reads no game state.
+pub fn retail_art_rows() -> (Vec<(u8, u8, u8)>, u8) {
+    let t = icons_init();
+    let rows = t[..SELKIND_COUNT as usize].iter().map(|r| (r.char_kind, r.ft_hudindex, r.joint_id_vs)).collect();
+    (rows, door_row([0x2E, 0x33, 0x38, 0x85, 0x29, 0xA6, 0x3D, 0x41, 0x40], [0.0; 4]).costume_joint)
+}
+
 /// A texture object's current image and palette (an animated palette is tluttbl[tlut_no]).
 unsafe fn mnCharSel_PcImage(t: *mut HSD_TObj, img: *mut *mut HSD_ImageDesc, tlut: *mut *mut HSD_Tlut) {
     *img = if !t.is_null() { (*t).imagedesc } else { null_mut() };

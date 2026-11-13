@@ -61,28 +61,31 @@ small (46 points, 36 planes + 6 / 6). The vertical shaft sections (e.g. 060004) 
   untextured (flat beige); map geometry in front of the play plane can cover fighters, and right after a door the
   camera takes a moment to catch up (on the ACE run the first frames back in the corridor show a wall).
   The background is FD's. No moving map parts, no Brawl lighting/fog, no map animations.
-* Tap jump also fires on the door tilt (the fighter hops as the door opens).
 * Enemies are Envoy's Goomba, not Brawl's (the Subspace enemy lane is not merged); only the first four spawns.
-* Performance (owner's rule: no game-caused frame over 16 ms): NOT met. Profile of the door run (MELEE_PROFILE=1,
-  vanilla, 1815 frames): 9 frames over 16.7 ms, worst 64.1 ms at tick 8 (42.8 ms GPU pipeline creation for the
-  map's materials), 31.7 ms at the first entry into the hut (16.7 ms GPU pipelines: the hut's materials compile on
-  first draw), and 25-39 ms around the return through the third door. The machine was busy (other agents' runs,
-  CPU over 85% in 2 samples), so the door-time numbers are pessimistic, but the pipeline frames are real. Fix:
-  create every section's pipelines at map load (before the match), not on first draw.
+* Performance (owner's rule: no game-caused frame over 16 ms): NOT met, but the over-budget frames are not the
+  room's. Door run vs the same pad script on plain FD (explore off), MELEE_PROFILE=1, vanilla, busy machine:
+  room on: worst 72-78 ms, p99 10.7-11.4 ms, 7-11 frames over 16.7; room off: worst 58.6 ms, p99 10.4 ms,
+  4 over. The big frames are first-use GPU pipeline compiles (tick 8: 41 ms off / 47 ms on; ticks 11-12 and
+  66-67 in both). `MELEE_PIPE_LOG=1` (added in `melee_gx`, logs each new pipeline) shows the room's own draws
+  (`petey_model::draw_tris`: one fixed GX state for every map and door model) cost only the first-frame pipelines;
+  every section is drawn every frame from tick 1. At the hut entry 11 new pipelines (1-3 TEV stages, varied vertex
+  layouts: Melee-side draws, not the map) cost 20-25 ms. So "prewarm the sections' pipelines" has nothing left
+  to warm; the fix is renderer-wide: a persistent pipeline recipe list prewarmed at boot (Hero's `recipes.bin`
+  pattern) or async compile with a fallback pipeline. Not done on this branch.
 
 ## Results (2026-11-13, after rebase onto port/desync1 70a0841ff)
 
 * Door chain, vanilla and ACE discs, same pad script: exit door on the floor -> slab door, slab door -> hut, hut
   door -> slab. All three transitions fire and both fighters arrive together.
-* Gate: goldens, synctest (0 mismatches), audio, baselines, semantics lint (0), snapguard all ok; the one failure
-  is `lint: new R2 rust/melee/src/netmatch.rs`, which comes from the base (70a0841ff); this branch does not touch
-  that file.
+* Door tilt no longer hops: a fighter in jump squat while a door fades in is put back to wait.
+* The `lint: new R2 rust/melee/src/netmatch.rs frame` failure was this branch's: `explore::frame` (a pub fn in a
+  `tu` file) made the lint treat `frame` as a C name with a canonical body here, so netmatch's `fn frame` became a
+  duplicate. Renamed to `explore::room_tick`; lint OK.
 
 ## What a second map costs
 
 1. Pick the archive(s); add one `SECS` line each (file, world offset, model name) and one `LINKS` line per door.
 2. Check the collision imports (moving or bone-bound collision objects need the moving-part work that is missing).
 3. Fix whatever material/texture the model reader does not handle yet for that map (the hut floor shows gaps).
-4. Pre-create its pipelines (nothing once the load-time pipeline fix exists).
-5. A pad-script door test and a profile run. About half a day for a static map; moving platforms, ladders, water
+4. A pad-script door test and a profile run. About half a day for a static map; moving platforms, ladders, water
    or autoscroll sections need new code each.

@@ -392,7 +392,7 @@ unsafe fn place(g: *mut HSD_GObj, fp: *mut Fighter, x: f32, y: f32) {
 }
 
 /// `grlast::EXPLORE_FRAME`: once per logic frame of the room (Final Destination's stage proc).
-pub unsafe fn frame() {
+pub unsafe fn room_tick() {
     if !ACTIVE {
         return;
     }
@@ -420,6 +420,14 @@ pub unsafe fn frame() {
     }
     if FADE > 0 {
         FADE += 1;
+        // the up tilt that opened the door is also a tap jump: a fighter still in jump squat on the way in stands
+        if FADE < FADE_LEN / 2 {
+            each_fighter(|g, fp| {
+                if (*fp).motion_id == ftCo_MS_KneeBend as i32 && (*fp).ground_or_air as i32 == GA_Ground as i32 {
+                    melee_fighter::tu::ft_08a1::ft_8008A2BC(g as _);
+                }
+            });
+        }
         if FADE == FADE_LEN / 2 && DEST >= 0 {
             let d = m.doors[DEST as usize];
             let mut k = 0;
@@ -443,7 +451,8 @@ pub unsafe fn frame() {
     // up to ~50 above their floor, so the area reaches 55 below the door)
     let mut want = -1;
     let mut idx = 0usize;
-    each_fighter(|_, fp| {
+    let mut opener: *mut HSD_GObj = core::ptr::null_mut();
+    each_fighter(|g, fp| {
         let up = (*fp).input.lstick[0].y > 0.7;
         let fresh = up && !UP_PREV[idx.min(5)];
         UP_PREV[idx.min(5)] = up;
@@ -457,6 +466,7 @@ pub unsafe fn frame() {
             let near = d.sec as i32 == SEC && (p.x - d.x).abs() <= 15.0 && p.y >= d.y - 55.0 && p.y <= d.y + 20.0;
             if near && (want < 0 || d.to >= 0) {
                 want = di as i32;
+                opener = g;
             }
         }
     });
@@ -470,6 +480,10 @@ pub unsafe fn frame() {
         };
         if DEST >= 0 {
             FADE = 1;
+            // the same up tilt started a tap jump (jump squat): the door takes it, so the opener stands instead
+            if !opener.is_null() {
+                melee_fighter::tu::ft_08a1::ft_8008A2BC(opener as _);
+            }
             eprintln!("explore: door {want} opened (type {}) at room frame {}", d.kind, CLOCK);
         }
     }
@@ -521,7 +535,7 @@ pub fn install() {
     }
     unsafe {
         melee_world::tu::ground::EXPLORE_COLL = Some(coll_override);
-        melee_world::tu::grlast::EXPLORE_FRAME = Some(frame);
+        melee_world::tu::grlast::EXPLORE_FRAME = Some(room_tick);
         melee_world::tu::grdisplay::HIDE_GROUND = Some(hide_ground);
         melee_fighter::tu::ftdrawcommon::MAP_DRAW = Some(draw);
     }

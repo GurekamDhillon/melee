@@ -17,7 +17,10 @@ fn ev_tramp(g: G) {
     unsafe {
         match EV_SLOT {
             Some(f) => f(g),
-            None => panic!("adapt: null HSD_GObjEvent callback"),
+            // an unset callback (an m-ex guest passed one the bridge could not resolve): skipped, logged once.
+            // The console would branch to 0; skipping keeps the fighter running (the next frame's state code
+            // still runs) instead of ending the game.
+            None => warn_once(&EV_WARNED, "adapt: null HSD_GObjEvent callback skipped"),
         }
     }
 }
@@ -30,13 +33,22 @@ fn with_ev<R>(cb: HSD_GObjEvent, f: impl FnOnce(fn(G)) -> R) -> R {
     }
 }
 
+static EV_WARNED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+fn warn_once(w: &std::sync::atomic::AtomicBool, msg: &str) {
+    if !w.swap(true, std::sync::atomic::Ordering::Relaxed) {
+        eprintln!("{msg}");
+    }
+}
+
 type LineCb = Option<unsafe extern "C" fn(G, isize) -> bool>;
 static mut LINE_SLOT: LineCb = None;
 fn line_tramp(g: G, i: isize) -> bool {
     unsafe {
         match LINE_SLOT {
             Some(f) => f(g, i),
-            None => panic!("adapt: null line callback"),
+            // NULL floor-line filter: every line lands (mpColl_80044628_Floor's `cb == NULL ||` test). An m-ex
+            // guest's unresolved filter arrives as None too (mex_guest::line_native logs it).
+            None => true,
         }
     }
 }
@@ -55,11 +67,13 @@ pub fn ft_800841B8(g: G, cb: HSD_GObjEvent) {
 pub fn ft_80083A48(g: G, cb: HSD_GObjEvent) {
     with_ev(cb, |c| melee_fighter::tu::ft_081b::ft_80083a48(g, c))
 }
-pub fn ft_800831CC(g: G, line_cb: LineCb, cb: HSD_GObjEvent) {
+/// Returns what the console leaves in r3 (see `ft_081b::ret::ft_800831cc`); the m-ex bridge hands it to the guest.
+pub fn ft_800831CC(g: G, line_cb: LineCb, cb: HSD_GObjEvent) -> bool {
     unsafe {
         let prev = core::mem::replace(&mut LINE_SLOT, line_cb);
-        with_ev(cb, |c| melee_fighter::tu::ft_081b::ft_800831cc(g, line_tramp, c));
+        let r = with_ev(cb, |c| melee_fighter::tu::ft_081b::ret::ft_800831cc(g, line_tramp, c));
         LINE_SLOT = prev;
+        r
     }
 }
 pub fn ftCommon_8007EFC8(g: G, cb: HSD_GObjEvent) {

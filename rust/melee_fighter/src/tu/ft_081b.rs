@@ -552,9 +552,19 @@ fn or_wall_cliff(g: G, hit: bool, cb: Ev) -> bool {
 
 /// `ft_800831CC`.
 pub fn ft_800831cc(g: G, arg1: CollCb, cb: Ev) {
-    melee_core::ct!("ft_800831cc");
-    let h = ft_80083090_inline(g, arg1);
-    or_wall_cliff(g, h, cb);
+    let _ = ret::ft_800831cc(g, arg1, cb);
+}
+
+/// `ft_800831CC` with the r3 the console leaves.
+pub mod ret {
+    use super::*;
+    /// `ft_800831CC`: true when the floor callback ran or a wall jump / cliff catch took over. The C is void, but m-ex
+    /// fighter code (MexTK headers) tests the result (ACE Knuckles' side-B air Coll: `cmpwi r3,0`).
+    pub fn ft_800831cc(g: G, arg1: CollCb, cb: Ev) -> bool {
+        melee_core::ct!("ft_800831cc");
+        let h = ft_80083090_inline(g, arg1);
+        or_wall_cliff(g, h, cb)
+    }
 }
 
 /// `ft_80083318`.

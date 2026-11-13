@@ -109,7 +109,39 @@ Numbers marked [D] were read from the enemy's parameter file on the owner's disc
 
 ## 5. Where they appear in a run
 
-See section 6 of this note once the sim wiring is in ("Rooms").
+`rust/mods/envoy_sim/src/lib.rs` `ROOM_ENEMIES` / `room_enemies_frame`: beside the room's foe fighters, not needed
+for the win (the fighters still decide it); each wave brings its own set once the last set is gone; all are removed
+when the room is won (`gd_envoy_enemy_spawn(99, ..)`). Seeded from the fight key and the wave.
+
+| fight | kinds (picked per enemy) | count in loop 1 |
+|---|---|---|
+| 1 duel | Goomba | 2 |
+| 2 pack | Goomba, Primid | 2 |
+| 3 elite | Primid, Bullet Bill, Goomba; loop 2 on, the last one is a Giant Goomba | 3 |
+| 4 boss (Petey) | none | 0 |
+
+Every loop past the first adds one enemy (to 6) and raises the tier by one (Brawl's L: 2.5, 4.0, 5.5, 7.0, 9.0).
+Test flag `noenemies` (in `MELEE_ENVOY_TEST_DRIVES`) turns them off.
+
+### Calling it from a map room (the stage lane)
+
+From engine code (Rust, game thread, inside a match):
+
+```rust
+use melee_modes::tu::subspace as ss;
+ss::preload(1 << 1);                                   // optional: start loading the Primid's look early
+let h = ss::sub_spawn(ss::SPAWN_BASE + kind + 32 * tier, x, y, facing, handle); // handle > 0, yours; -1 = refused
+ss::sub_status(h);      // 1 alive, 2 beaten, 0 unknown
+ss::alive();            // live enemies
+ss::clear_all();        // the room is done
+```
+
+`kind`: 0 Goomba, 1 Primid, 2 Bullet Bill, 3 Giant Goomba; `tier` 0-4; `(x, y)` a spawn point in world units
+(ground enemies drop from it; a Bullet Bill enters from the side it faces away from); `facing` +1 right / -1 left.
+Up to `ss::MAX` at once (a beaten record is reused). The pool resets at every match start. Everything is
+deterministic sim state (rollback safe); the look loads by itself. From a wasm mod the same goes through
+`gd_envoy_enemy_spawn(100 + kind + 32 * tier, x, y, facing, handle)` (99 clears all), `gd_envoy_enemy_status`,
+`gd_envoy_enemy_i`.
 
 ## 6. Checks
 
@@ -130,5 +162,5 @@ won and the synctest has 0 mismatches. Results are appended below, dated.
 | `rust/melee_modes/src/tu/petey_model.rs` | added `pub fn load_rigs` (the generic form of `load`; `load` itself and everything Petey uses are unchanged) |
 | `rust/melee_modes/src/tu/mod.rs` | two `pub mod` lines |
 | `rust/melee_modes/src/tu/envoy.rs` | `subspace::begin_match` at the top of `match_begin`, `subspace::sub_tick` at the top of `tick`, the test knob `MELEE_ENVOY_TEST_MAIN` |
-| `rust/melee_modhost/src/lib.rs` | the three `gd_envoy_enemy_*` imports route Subspace handles / `which >= 100` to `subspace.rs` |
-| `rust/mods/envoy_sim/src/lib.rs` | the `~N` test knob accepts 100 and up; room wiring (section 5) |
+| `rust/melee_modhost/src/lib.rs` | the three `gd_envoy_enemy_*` imports route Subspace handles / `which >= 100` to `subspace.rs`; `which == 99` clears them |
+| `rust/mods/envoy_sim/src/lib.rs` | the `~N` test knob accepts 100 and up; room wiring (section 5); `fight_won` clears the enemies |

@@ -127,7 +127,7 @@ fn load() -> Result<Map, String> {
         let mut e = [f32::MAX, f32::MIN, f32::MIN, f32::MAX];
         for i in 0..np {
             let p = [bef(c, po + 8 * i) + s.off[0], bef(c, po + 8 * i + 4) + s.off[1]];
-            e = [e[0].min(p[0]), e[1].max(p[0]), e[2].max(p[1]), e[3].min(p[1])];
+            e = [fmin(e[0], p[0]), fmax(e[1], p[0]), fmax(e[2], p[1]), fmin(e[3], p[1])];
             verts.push(p);
         }
         ext.push(e);
@@ -204,7 +204,12 @@ fn load() -> Result<Map, String> {
             let l = &raw[i];
             let drop = l.mat_flags & 0x01 != 0;
             let ledge = l.mat_flags & 0x60 != 0;
-            let kind = 1u16 << group(l.kind).unwrap_or(0);
+            let kind: u16 = match group(l.kind).unwrap_or(0) {
+                0 => 1,
+                1 => 2,
+                2 => 4,
+                _ => 8,
+            };
             let terrain: u16 = match l.mat {
                 3 => 2,  // grass (the jungle's ground)
                 1 | 2 => 4, // wood
@@ -222,7 +227,7 @@ fn load() -> Result<Map, String> {
             m
         })
         .collect();
-    let bounds = verts.iter().fold([f32::MAX, f32::MAX, f32::MIN, f32::MIN], |b, p| [b[0].min(p[0]), b[1].min(p[1]), b[2].max(p[0]), b[3].max(p[1])]);
+    let bounds = verts.iter().fold([f32::MAX, f32::MAX, f32::MIN, f32::MIN], |b, p| [fmin(b[0], p[0]), fmin(b[1], p[1]), fmax(b[2], p[0]), fmax(b[3], p[1])]);
     Ok(Map {
         verts: verts.iter().map(|p| Vec2 { x: p[0], y: p[1] }).collect(),
         lines,
@@ -258,6 +263,11 @@ pub fn map() -> Option<&'static Map> {
                 m.models.iter().map(|(_, t, _)| t.len() / 3).sum::<usize>(), t.elapsed().as_millis()
             ),
             Err(e) => eprintln!("explore: no map ({e}); Final Destination as usual"),
+        }
+        if let Ok(m) = &r {
+            for (i, d) in m.doors.iter().enumerate() {
+                eprintln!("explore: door {i} section {} at ({:.0},{:.0}) type {} to {}", d.sec, d.x, d.y, d.kind, d.to);
+            }
         }
         r.ok()
     })
@@ -495,8 +505,10 @@ pub unsafe fn draw(g: *mut HSD_GObj, pass: i32) {
         }
     }
     if FADE > 0 {
-        let a = 1.0 - ((FADE - FADE_LEN / 2) as f32).abs() / (FADE_LEN / 2) as f32;
-        pm::draw_fade((a.clamp(0.0, 1.0) * 255.0) as u8);
+        let h = (FADE_LEN / 2) as i32;
+        let d = (FADE as i32 - h).abs();
+        let a = if d >= h { 0 } else { (h - d) * 255 / h };
+        pm::draw_fade(a as u8);
     }
 }
 
@@ -513,4 +525,12 @@ pub fn install() {
     }
     // load now, before the first match (the loader is a helper thread; the first stage load must not wait on it)
     let _ = map();
+}
+
+fn fmin(a: f32, b: f32) -> f32 {
+    if b < a { b } else { a }
+}
+
+fn fmax(a: f32, b: f32) -> f32 {
+    if b > a { b } else { a }
 }

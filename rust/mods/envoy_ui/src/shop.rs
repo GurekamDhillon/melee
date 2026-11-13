@@ -184,7 +184,9 @@ pub unsafe fn draw(e: &mut E, v: &[i32; VW], ex: f32, _vw: f32, _vh: f32, sc: f3
         3 => "Put it down",
         _ => "Buy",
     };
-    hints(e, &[("Up / Down", "Choose"), ("A", a), ("B", "Back"), ("X / Y", "Switch fighter")]);
+    if !crate::pick::confirm_up(v) {
+        hints(e, &[("Up / Down", "Choose"), ("A", a), ("B", "Back"), ("X / Y", "Switch fighter")]);
+    }
     let _ = ck_name;
     e.space(SPACE_WINDOW, sc);
 }

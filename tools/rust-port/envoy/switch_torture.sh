@@ -12,7 +12,7 @@
 #   GW_ISO_VANILLA=... bash tools/rust-port/envoy/switch_torture.sh
 #   OUT=dir; FRAMES (default 14400); FIGHTS (start fights, default "1 2 3c 5"; a trailing c = co-op);
 #   OLD=1 runs the pre-fix placement (MELEE_ENVOY_SWITCH_OLD=1), which must FAIL;
-#   RUN_TIMEOUT=secs per fight (default FRAMES/6+120): the game's own watchdog, plus an outer kill 30 s later.
+#   RUN_TIMEOUT=secs per fight (default FRAMES/2+600; a depth-7 14400-frame run under load takes 70-85 min): the game's own watchdog, plus an outer kill 30 s later.
 #   DEPTH=4 / 7 runs it as a synctest (0 mismatches required; log lines then repeat once per rollback pass).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../.." && pwd)"; cd "$repo"
@@ -22,7 +22,7 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 command -v python >/dev/null 2>&1 || python() { python3 "$@"; }
 exe="${EXE:-$repo/build/cargo/release/melee}"; [ -e "$exe" ] || exe="$exe.exe"
 out="${OUT:-${TEMP:-/tmp}/switch_torture}"; mkdir -p "$out"
-frames="${FRAMES:-14400}"; tmo="${RUN_TIMEOUT:-$((frames / 6 + 120))}"; fights="${FIGHTS:-1 2 3c 5}"; old="${OLD:-0}"; depth="${DEPTH:-0}"
+frames="${FRAMES:-14400}"; tmo="${RUN_TIMEOUT:-$((frames / 2 + 600))}"; fights="${FIGHTS:-1 2 3c 5}"; old="${OLD:-0}"; depth="${DEPTH:-0}"
 mods="$repo/build/mods-torture"; rm -rf "$mods"; mkdir -p "$mods"
 cp "$repo/build/mods/envoy_sim.wasm" "$mods/" || { echo "switch_torture: build the mods first"; exit 2; }
 fail=0

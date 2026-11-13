@@ -1,0 +1,27 @@
+# Envoy co-op picker check (coop_picker.sh), port 1: boot -> title -> main menu -> Envoy row -> A (camp); wait while
+# P2 joins; Down (Fighters), A (the picker, co-op); A main, A partner, A Done (Ready); wait for P2; Start (start
+# the run); then Start / A presses through the first fight's way in.
+300 0000 0 0
+3 1000 0 0
+200 0000 0 0
+3 1000 0 0
+60 0000 0 0
+3 0004 0 0
+20 0000 0 0
+3 0004 0 0
+60 0000 0 0
+3 0100 0 0
+120 0000 0 0
+3 0004 0 0
+30 0000 0 0
+3 0100 0 0
+60 0000 0 0
+3 0100 0 0
+30 0000 0 0
+3 0100 0 0
+30 0000 0 0
+3 0100 0 0
+200 0000 0 0
+3 1000 0 0
+600 0000 0 0
+3 0100 0 0

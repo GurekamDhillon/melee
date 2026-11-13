@@ -48,7 +48,8 @@ static mut SAY: [&str; 2] = [""; 2];
 
 pub fn short(k: i32) -> &'static str {
     unsafe {
-        if k >= 0x22 {
+        // Random (99) is not an m-ex slot: it took the m-ex branch and drew an empty name in the seat
+        if k >= 0x22 && k != RANDOM {
             if let Some(i) = (0..NG).find(|&i| GRID[i] == k) {
                 if let Ok(t) = core::str::from_utf8(&NAMES[i][..NAMEL[i]]) {
                     // a long m-ex name keeps its first word on the 60-wide card ("Diddy Kong" -> "Diddy")

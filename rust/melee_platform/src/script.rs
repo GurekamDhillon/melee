@@ -120,12 +120,22 @@ impl PadScript {
 
     /// From `MELEE_PAD_SCRIPT` (a `.txt`) and `MELEE_PAD_CHANNELS`. None if unset, `.lua`, or unreadable.
     pub fn from_env() -> Option<Self> {
-        let path = std::env::var("MELEE_PAD_SCRIPT").ok().filter(|p| !p.is_empty())?;
+        Self::from_env_named("MELEE_PAD_SCRIPT", "MELEE_PAD_CHANNELS", 1)
+    }
+
+    /// A second script for other ports (test runs that need two players doing different things, e.g. the Envoy
+    /// co-op join and picker): `MELEE_PAD_SCRIPT2` on `MELEE_PAD_CHANNELS2` (default port 2). Applied after the first.
+    pub fn from_env_second() -> Option<Self> {
+        Self::from_env_named("MELEE_PAD_SCRIPT2", "MELEE_PAD_CHANNELS2", 2)
+    }
+
+    fn from_env_named(var: &str, chvar: &str, default_mask: u32) -> Option<Self> {
+        let path = std::env::var(var).ok().filter(|p| !p.is_empty())?;
         if path.to_ascii_lowercase().ends_with(".lua") {
             crate::plog!("gw: pad script: .lua scripts are not supported by the Rust platform yet ({path})");
             return None;
         }
-        let mask = std::env::var("MELEE_PAD_CHANNELS").ok().filter(|s| !s.is_empty()).map(|s| Self::parse_channels(&s)).unwrap_or(1);
+        let mask = std::env::var(chvar).ok().filter(|s| !s.is_empty()).map(|s| Self::parse_channels(&s)).unwrap_or(default_mask);
         match std::fs::read_to_string(&path) {
             Ok(t) => {
                 let s = Self::parse(&t, mask);

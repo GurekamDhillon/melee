@@ -1,0 +1,13 @@
+# Envoy co-op picker check (coop_picker.sh), port 2 (MELEE_PAD_SCRIPT2): Start at the camp (joins), then in the
+# picker: A main, Right then A (the partner: the Random cell on the retail roster), A Done (Ready).
+715 0000 0 0
+3 1000 0 0
+182 0000 0 0
+3 0100 0 0
+30 0000 0 0
+3 0002 0 0
+20 0000 0 0
+3 0100 0 0
+30 0000 0 0
+3 0100 0 0
+60 0000 0 0

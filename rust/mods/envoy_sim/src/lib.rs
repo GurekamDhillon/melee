@@ -75,6 +75,8 @@ extern "C" {
     fn gd_envoy_publish(ptr: *const i32, n: u32) -> i32;
     fn gd_envoy_seq() -> i32;
     fn gd_envoy_start_fight() -> i32;
+    fn gd_envoy_salt() -> i32;
+    fn gd_envoy_quit() -> i32;
     fn gd_envoy_roster(i: i32) -> i32;
     fn gd_envoy_apply(slot: i32, which: i32, v: i32) -> i32;
     fn gd_envoy_percent(slot: i32, bench: i32, delta_milli: i32) -> i32;
@@ -228,6 +230,8 @@ const POOL_CAP: i32 = 8;
 /// The furthest loop the scaling counts (a guard; nobody gets there).
 const LOOP_TOP: i32 = 50;
 const RUN_OVER: i32 = 3;
+/// `S.outcome`: 0 the fight is on, 1 won, 2 lost (the run is over), 3 left from the pause (the run is kept).
+const OUT_LEFT: i32 = 3;
 
 const NP: usize = 2;
 const SETS: usize = 4;
@@ -811,6 +815,13 @@ unsafe fn test_seed() -> i32 {
         .clamp(0, 1_000_000)
 }
 
+/// The seed of run number `runs` (1 the first of this save): the old fixed sequence when the host's salt is 0 (tests,
+/// scripted runs, `MELEE_ENVOY_ARM`), else salted by the camp's New run (`gd_envoy_salt`: fixed from the arm on, so
+/// the plan made before the match and the run's start agree; the seed is sim state from then on).
+unsafe fn run_seed(runs: i32) -> u32 {
+    mix((runs as u32).wrapping_add(test_seed() as u32).wrapping_add((gd_envoy_salt() as u32).wrapping_mul(0x85EB_CA6B)).wrapping_mul(0x9E37_79B9))
+}
+
 fn nh() -> i32 {
     unsafe { S.nh.clamp(1, 2) }
 }
@@ -1081,7 +1092,7 @@ unsafe fn make_plan() {
     let fresh = S.state != RUN_LIVE;
     let coop = if fresh { gd_envoy_coop() != 0 } else { S.nh == 2 };
     let (fight, pool, seed) = if fresh {
-        ((gd_envoy_start_fight() as usize).min(FIGHTS - 1), START_POOL[coop as usize], mix((S.runs as u32).wrapping_add(1).wrapping_add(test_seed() as u32).wrapping_mul(0x9E37_79B9)))
+        ((gd_envoy_start_fight() as usize).min(FIGHTS - 1), START_POOL[coop as usize], run_seed(S.runs.wrapping_add(1)))
     } else {
         (S.fight as usize, S.pool, S.seed as u32)
     };
@@ -1169,7 +1180,7 @@ unsafe fn on_new_match(seq: i32) {
     if started {
         S.runs = S.runs.wrapping_add(1);
         S.state = RUN_LIVE;
-        S.seed = mix((S.runs as u32).wrapping_add(test_seed() as u32).wrapping_mul(0x9E37_79B9)) as i32;
+        S.seed = run_seed(S.runs) as i32;
         S.fight = gd_envoy_start_fight().clamp(0, FIGHTS as i32 - 1);
         S.nh = if gd_envoy_coop() != 0 { 2 } else { 1 };
         S.pool = START_POOL[(S.nh == 2) as usize];
@@ -4167,6 +4178,14 @@ unsafe fn switch_watch() {
 
 unsafe fn outcome_frame() {
     if S.outcome != 0 {
+        return;
+    }
+    // the fight was left from the pause (the retail No Contest): not a loss. The run stays live at this fight, which
+    // starts over with the pool it began with (the same as closing the game mid-fight and continuing)
+    if S.collect == 0 && gd_envoy_quit() != 0 {
+        S.outcome = OUT_LEFT;
+        log(b"envoy: fight left from the pause, run kept at fight ", S.fight + 1);
+        make_plan();
         return;
     }
     let me = (0..nh()).map(|p| gd_player_stocks(p)).min().unwrap_or(0);

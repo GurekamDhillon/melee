@@ -931,6 +931,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
                     ev::SAVED_LEN = 0;
                     ev::SAVED_DROP = 1;
                     ev::ARMED = 1;
+                    ev::new_run_salt();
                 }
                 2 => {
                     ev::ARMED = 1;

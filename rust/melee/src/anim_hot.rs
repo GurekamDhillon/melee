@@ -71,6 +71,9 @@ pub fn reload_now(ctx: Ctx) -> Result<String, String> {
     if !ctx.offline_lab || ctx.replay_or_net {
         return Err("anim reload refused: only in the offline LAB (not online, in replays, spectating or synctest)".into());
     }
+    if melee_data::netid::frozen() {
+        return Err(format!("anim reload refused: {}", melee_data::netid::FROZEN_MSG));
+    }
     if !ao::active() {
         return Err("anim reload: no animation overrides are mounted".into());
     }

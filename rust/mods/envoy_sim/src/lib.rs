@@ -87,6 +87,8 @@ extern "C" {
     fn gd_envoy_jumps(slot: i32) -> i32;
     fn gd_envoy_air_jump(slot: i32) -> i32;
     fn gd_envoy_blast(slot: i32, x: f32, y: f32, r: f32, dmg: i32, angle: i32, kbg: i32, bkb: i32) -> i32;
+    fn gd_envoy_blast_cap(slot: i32, cap_milli: i32, tag: i32) -> i32;
+    fn gd_envoy_landed(slot: i32, out: *mut i32) -> i32;
     fn gd_envoy_boss(out: *mut u32) -> i32;
     fn gd_envoy_boss_dmg(out: *mut u32) -> i32;
     fn gd_envoy_events(slot: i32) -> u32;
@@ -792,6 +794,16 @@ unsafe fn old_scale() -> bool {
     OLD_SCALE == 1
 }
 
+/// Test knob `blastover`: a foe's blast is armed at 30% whatever the rules say, so a run shows the engine's cap
+/// holding it to FOE_FIRE_CAP on what lands (`kblog blast raw` against the record's `dmg`). Fixed per process.
+static mut BLAST_OVER: i32 = -1;
+unsafe fn blast_over() -> bool {
+    if BLAST_OVER < 0 {
+        BLAST_OVER = test_flag("blastover") as i32;
+    }
+    BLAST_OVER == 1
+}
+
 /// A foe's attack ratio x1000: the size bonus (`sc` - 1000) plus the loop bonus, capped (rule 1).
 unsafe fn foe_atk_with(sc: i32, e: i32) -> i32 {
     if old_scale() {
@@ -800,14 +812,24 @@ unsafe fn foe_atk_with(sc: i32, e: i32) -> i32 {
     (1000 + (sc - 1000).max(0) / 2 + (foe_atk(e) - 1000)).min(FOE_ATK_CAP)
 }
 
-/// Test knob `kblog`: every hit a player takes from a foe logs its damage, the player's percent and the launch speed
-/// on the next frame; every player stock lost logs the percent it was lost at. Not sim state (logs only).
+/// Test knob `kblog`: everything a foe does to a player's percent, as it was applied. Not sim state (logs only).
+/// * a hit (the take-damage hook): `kblog hit` lines, one record per source. `dmg` is the percent the fighter gained
+///   (read before and after the hit lands, so after every multiplier and cap). A frame's hits arrive summed, so a
+///   frame in which a foe's drive blast landed is split in two records: the blast's part (the engine reports it per
+///   capsule: `gd_envoy_landed`), flagged `blast` and followed by `kblog blast <drive>` (owner slot * 1000 + level *
+///   100 + capsule * 10 + capsules landed), `kblog blast raw` (before the cap) and `kblog blast launches` (1: the
+///   blast's knockback won the frame), and the rest (ordinary moves). The record of the hit that launches comes last.
+/// * a foe's percent fire (`kblog fire <drive>`), a foe's Mark extra (`kblog mark extra`) and a Burning tick
+///   (`kblog burn tick`): percent only, no knockback.
+/// * every player stock lost (`kblog KO`): the percent it was lost at, the last hit record and whether it was a blast.
 static mut KB_LOG: i32 = -1;
-static mut KB_W: [[i32; 4]; 2] = [[-1; 4]; 2];
+/// The hit waiting for its launch speed: play frame, percent gained, attacker slot, then `gd_envoy_landed`'s words.
+static mut KB_W: [[i32; 12]; 2] = [[-1; 12]; 2];
+static mut KB_PRE: [i32; 2] = [-1; 2];
 static mut KB_PCT: [i32; 2] = [0; 2];
-static mut KB_LAST: [[i32; 3]; 2] = [[0; 3]; 2];
-static mut FOE_BLAST_AT: i32 = -100;
-static mut FOE_BLAST_SLOT: i32 = -1;
+static mut KB_LAST: [[i32; 4]; 2] = [[0; 4]; 2];
+/// The drive (id + 1) and level of the foe fire running now (`fire`), for `kblog fire`.
+static mut KB_FIRE: [i32; 2] = [0; 2];
 
 /// Foe slot `s`'s attack ratio x1000 as the plan gave it (an elite room's second wave: the elite's).
 unsafe fn foe_atk_now(s: i32) -> i32 {
@@ -819,6 +841,30 @@ unsafe fn kb_log() -> bool {
         KB_LOG = test_flag("kblog") as i32;
     }
     KB_LOG == 1
+}
+/// A fighter's percent x1000 by handle (-1: none).
+unsafe fn kb_percent(h: u32) -> i32 {
+    if h == 0 {
+        return -1;
+    }
+    let mut w = [0u32; 20];
+    gd_fighter_read(h, w.as_mut_ptr());
+    (f32::from_bits(w[10]) * 1000.0 + 0.5) as i32
+}
+unsafe fn kb_kind(s: i32) -> i32 {
+    let h = if s >= 0 { gd_fighter_from_slot(s) } else { 0 };
+    if h != 0 { gd_fighter_kind(h) } else { -1 }
+}
+/// One `kblog hit` record: fight*10 + loop | dmg x1000 | percent after x1000 | speed^2 x10000 | blast*100 + attacker
+/// kind | the knockback that won the frame x1000.
+unsafe fn kb_rec(p: usize, dmg: i32, pct: i32, sp: i32, blast: i32, a: i32, kb: i32) {
+    log(b"envoy: kblog hit fight*10+loop\0", S.fight * 10 + lp());
+    log(b"envoy: kblog hit dmg\0", dmg);
+    log(b"envoy: kblog hit pct\0", pct);
+    log(b"envoy: kblog hit speed\0", sp);
+    log(b"envoy: kblog hit blast*100+ck\0", blast * 100 + kb_kind(a));
+    log(b"envoy: kblog hit kb\0", kb);
+    KB_LAST[p] = [dmg, pct, sp, blast];
 }
 unsafe fn kb_frame() {
     if !kb_log() {
@@ -836,17 +882,26 @@ unsafe fn kb_frame() {
         if wt[0] >= 0 && S.play > wt[0] {
             let (x, y) = (f32::from_bits(w[6]), f32::from_bits(w[7]));
             let sp = ((x * x + y * y) * 10000.0) as i32; // speed^2 x10000 (no_std: no sqrt)
-            let a = wt[2];
-            let ha = if a >= 0 { gd_fighter_from_slot(a) } else { 0 };
-            let ck = if ha != 0 { gd_fighter_kind(ha) } else { -1 };
-            // one line: fight*10 + loop | dmg x1000 | percent after x1000 | speed x1000 | blast*100 + attacker kind
-            log(b"envoy: kblog hit fight*10+loop\0", S.fight * 10 + lp());
-            log(b"envoy: kblog hit dmg\0", wt[1]);
-            log(b"envoy: kblog hit pct\0", pct);
-            log(b"envoy: kblog hit speed\0", sp);
-            log(b"envoy: kblog hit blast*100+ck\0", wt[3] * 100 + ck);
-            KB_LAST[p] = [wt[1], pct, sp];
-            KB_W[p] = [-1; 4];
+            // wt[3..12]: capsules landed, landed x1000, before the cap, owner slot, capsule, tag, group, launches, kb
+            let (dmg, a, kb) = (wt[1], wt[2], wt[11]);
+            let part = if wt[3] > 0 && is_foe(wt[6]) { wt[4].min(dmg) } else { 0 };
+            let rest = dmg - part;
+            if part > 0 && rest > 0 && wt[10] != 0 {
+                kb_rec(p, rest, pct, sp, 0, a, kb); // the blast launches: its record comes last
+            }
+            if part > 0 {
+                kb_rec(p, part, pct, sp, 1, wt[6], kb);
+                let id = (wt[8] & 0xFF) as usize;
+                if id >= 1 && id <= POOL.len() {
+                    log_drive(b"kblog blast", id - 1, wt[6] * 1000 + (wt[8] >> 8 & 0xF) * 100 + wt[7].clamp(0, 9) * 10 + wt[3].min(9));
+                }
+                log(b"envoy: kblog blast raw\0", wt[5]);
+                log(b"envoy: kblog blast launches\0", wt[10]);
+            }
+            if rest > 0 && (part == 0 || wt[10] == 0) {
+                kb_rec(p, rest, pct, sp, 0, a, kb);
+            }
+            KB_W[p] = [-1; 12];
         }
         if pct > 0 {
             KB_PCT[p] = pct;
@@ -859,8 +914,9 @@ unsafe fn kb_ko(p: usize) {
         log(b"envoy: kblog KO pct\0", KB_PCT[p]);
         log(b"envoy: kblog KO last dmg\0", KB_LAST[p][0]);
         log(b"envoy: kblog KO last speed\0", KB_LAST[p][2]);
+        log(b"envoy: kblog KO last blast\0", KB_LAST[p][3]);
         KB_PCT[p] = 0;
-        KB_LAST[p] = [0; 3];
+        KB_LAST[p] = [0; 4];
     }
 }
 
@@ -2585,13 +2641,18 @@ unsafe fn hurt(s: i32, milli: i32) -> i32 {
     // keeps the plain cap
     let milli = match S.fx_mode {
         FX_FIRE if s >= nh() => ((milli as i64 * foe_def(s) as i64 / 1000) as i32).min(S.fx_cap),
-        FX_FIRE | FX_FOE => milli.min(S.fx_cap),
+        FX_FIRE => milli.min(S.fx_cap),
+        // rule 2 at the point the percent is applied, whoever set the fire context (a fire, a queued piece of one)
+        FX_FOE => milli.min(if old_scale() { S.fx_cap } else { S.fx_cap.min(FOE_FIRE_CAP) }),
         _ => milli,
     };
     if milli <= 0 {
         return 0;
     }
     gd_envoy_percent(s, 0, milli);
+    if S.fx_mode == FX_FOE && kb_log() && (0..nh()).contains(&s) && KB_FIRE[0] > 0 {
+        log_drive(b"kblog fire", KB_FIRE[0] as usize - 1, milli);
+    }
     match S.fx_mode {
         FX_FIRE => {
             let set = S.fx_set as usize;
@@ -2619,7 +2680,7 @@ unsafe fn hurt(s: i32, milli: i32) -> i32 {
 
 /// The blast of a launching drive (Q6): radius, knockback angle, growth, base, all bigger with Heat. False: no
 /// capsule free.
-unsafe fn launch(owner: usize, at: P, effect: u8, milli: i32, level: i32, state: usize) -> bool {
+unsafe fn launch(owner: usize, id: usize, at: P, effect: u8, milli: i32, level: i32, state: usize) -> bool {
     let wide = (if level >= MAX_LEVEL { 1.25 } else { 1.0 }) * (1.0 + 0.2 * state as f32);
     let kb = state as i32 * 6;
     let (r, angle, kbg, bkb) = match effect {
@@ -2627,19 +2688,22 @@ unsafe fn launch(owner: usize, at: P, effect: u8, milli: i32, level: i32, state:
         E_SHOCKWAVE => (13.0 * wide, 80, 55 + kb, 30 + kb),
         _ => (9.0 * wide, 90, 75 + kb, 40 + kb), // Spire: straight up
     };
-    // rule 2 on what lands: the engine scales a blast by its owner's attack ratio, so a foe's blast is armed at
-    // cap / ratio (rounded down) and lands at most FOE_FIRE_CAP
+    // rule 2: a foe's blast is armed at cap / its attack ratio, rounded down. The engine scales a hit's knockback
+    // (not its damage) by the attacker's attack ratio, so this keeps a stronger foe's blast from launching much
+    // harder; what lands is capped by the engine itself, below
     let pct = if owner >= SETS && !old_scale() {
         let atk = foe_atk_now(owner as i32 - OWNER_FOE).max(1000) as i64;
-        (milli.min(FOE_FIRE_CAP) as i64 * 1000 / atk / 1000) as i32
+        if blast_over() { 30 } else { (milli.min(FOE_FIRE_CAP) as i64 * 1000 / atk / 1000) as i32 }
     } else {
         (milli + 500) / 1000
     };
     let rc = gd_envoy_blast(owner_slot(owner), at.x, at.y, r, pct, angle, kbg, bkb);
     if rc == 0 {
         if owner >= SETS {
-            FOE_BLAST_AT = S.play;
-            FOE_BLAST_SLOT = owner as i32 - OWNER_FOE;
+            // rule 2 on what lands: the engine caps this capsule's damage on each victim at the last point before
+            // it is applied (after staling, the victim's own multipliers and anything added later), and tags it
+            // for the logs
+            gd_envoy_blast_cap(owner_slot(owner), if old_scale() { 0 } else { FOE_FIRE_CAP }, (id as i32 + 1) | (level.clamp(0, 15) << 8));
         }
         S.blasts += 1;
         log(b"envoy: blast armed, owner*100 + effect\0", owner as i32 * 100 + effect as i32);
@@ -2691,6 +2755,7 @@ unsafe fn fire(owner: usize, id: usize, level: i32, target: i32, frac: i32, flag
     S.fx_coef = coef;
     S.fx_dealt = 0;
     S.fx_first = -1;
+    KB_FIRE = if player { [0, 0] } else { [id as i32 + 1, level] };
     let stacks = if inferno { INFERNO_STACKS } else { BURN_STACKS };
     let near = |s: i32| if enemy_of(owner, s) { s } else { nearest(owner, me, -1, 1.0e6) };
     let mut tgt = -1;
@@ -2718,7 +2783,7 @@ unsafe fn fire(owner: usize, id: usize, level: i32, target: i32, frac: i32, flag
             tgt = nearest(owner, me, -1, r);
             let centre = if c.effect == E_NOVA { P { x: me.x, y: me.y + 8.0 } } else { P { x: me.x, y: me.y + 3.0 } };
             // the blast's damage goes through the take-damage hook (a move record at x1)
-            if tgt >= 0 && launch(owner, centre, c.effect, n, level, st) {
+            if tgt >= 0 && launch(owner, id, centre, c.effect, n, level, st) {
                 fl |= FL_LAUNCH;
             } else {
                 tgt = hurt_around(owner, me, r, n, -1);
@@ -2728,7 +2793,7 @@ unsafe fn fire(owner: usize, id: usize, level: i32, target: i32, frac: i32, flag
             tgt = near(target);
             if let Some(p) = pos(tgt) {
                 at = p;
-                if launch(owner, P { x: p.x, y: p.y + 6.0 }, E_SPIRE, n, level, st) {
+                if launch(owner, id, P { x: p.x, y: p.y + 6.0 }, E_SPIRE, n, level, st) {
                     fl |= FL_LAUNCH;
                 } else {
                     hurt(tgt, n);
@@ -2879,6 +2944,7 @@ unsafe fn fire(owner: usize, id: usize, level: i32, target: i32, frac: i32, flag
     }
     S.fx_mode = FX_FLARE;
     S.fx_set = -1;
+    KB_FIRE = [0, 0];
     S.fires += 1;
     let li = S.log_n as usize % LOG;
     let dealt = if fl & FL_LAUNCH != 0 { n } else { S.fx_dealt };
@@ -3134,6 +3200,9 @@ extern "C" fn on_damage_pre(h: u32, d: f32) -> i32 {
         if !(0..4).contains(&s) || s == S.boss_slot {
             return 0;
         }
+        if kb_log() && (0..nh()).contains(&s) {
+            KB_PRE[s as usize] = kb_percent(h);
+        }
         let o = owner_at(s);
         if S.shield[o] != 0 {
             S.shield[o] = 0;
@@ -3205,14 +3274,32 @@ extern "C" fn on_damage(h: u32, d: f32) {
                 log(b"envoy: finale knockback x1000 ", 1000 + bonus);
             }
         }
-        if kb_log() && (0..nh()).contains(&v) && is_foe(a) {
-            KB_W[v as usize] = [S.play, dmg, a, (S.play - FOE_BLAST_AT <= 4 && a == FOE_BLAST_SLOT) as i32];
+        // what foe drive blasts put into this hit (the engine's per-capsule record of the frame, after its cap)
+        let human_v = (0..nh()).contains(&v);
+        let mut land = [0i32; 9];
+        let foe_blast = if human_v && gd_envoy_landed(v, land.as_mut_ptr()) > 0 && is_foe(land[3]) { land[1].min(dmg) } else { 0 };
+        if kb_log() && human_v && (is_foe(a) || foe_blast > 0) {
+            // the percent the fighter gained: read before (the pre hook) and after the hit was applied
+            let (pre, post) = (KB_PRE[v as usize], kb_percent(h));
+            let got = if pre >= 0 && post >= pre { post - pre } else { dmg };
+            KB_W[v as usize] = [S.play, got, a, land[0], land[1], land[2], land[3], land[4], land[5], land[6], land[7], land[8]];
+        }
+        if human_v {
+            KB_PRE[v as usize] = -1;
         }
         push_rec(a, v, dmg, tags, ast);
         // Marked: the hit deals more (half on a boss): word damage for the attacker
         if marked(v) {
             let more = if is_boss(v) { BOSS_MARK_MORE } else { MARK_MORE };
-            let extra = (dmg as i64 * more as i64 / 1000) as i32;
+            let mut extra = (dmg as i64 * more as i64 / 1000) as i32;
+            if human_v && !old_scale() {
+                // rule 2: a foe's Mark on a player is a foe drive's damage too: with the blast part of this hit it
+                // adds at most FOE_FIRE_CAP
+                extra = extra.min((FOE_FIRE_CAP - foe_blast).max(0));
+                if kb_log() && extra > 0 {
+                    log(b"envoy: kblog mark extra\0", extra);
+                }
+            }
             if extra > 0 {
                 gd_envoy_percent(v, 0, extra);
                 push_rec(a, v, extra, T_WORD, -1);
@@ -3557,6 +3644,9 @@ unsafe fn moments_frame() {
             if alive(s) {
                 let d = BURN_TICK_PCT * S.burn_stacks[i];
                 gd_envoy_percent(s, 0, d);
+                if kb_log() && (0..nh()).contains(&s) {
+                    log(b"envoy: kblog burn tick\0", d);
+                }
                 let p = S.burn_owner[i];
                 if (0..nh()).contains(&p) && is_foe(s) {
                     let pu = p as usize;

@@ -807,6 +807,13 @@ static mut KB_W: [[i32; 4]; 2] = [[-1; 4]; 2];
 static mut KB_PCT: [i32; 2] = [0; 2];
 static mut KB_LAST: [[i32; 3]; 2] = [[0; 3]; 2];
 static mut FOE_BLAST_AT: i32 = -100;
+static mut FOE_BLAST_SLOT: i32 = -1;
+
+/// Foe slot `s`'s attack ratio x1000 as the plan gave it (an elite room's second wave: the elite's).
+unsafe fn foe_atk_now(s: i32) -> i32 {
+    let row = (s - nh()).clamp(0, 2) as usize;
+    if row == 0 && S.wave >= 2 && PLAN[38] > 0 { PLAN[38] } else { PLAN[17 + row] }
+}
 unsafe fn kb_log() -> bool {
     if KB_LOG < 0 {
         KB_LOG = test_flag("kblog") as i32;
@@ -2620,10 +2627,19 @@ unsafe fn launch(owner: usize, at: P, effect: u8, milli: i32, level: i32, state:
         E_SHOCKWAVE => (13.0 * wide, 80, 55 + kb, 30 + kb),
         _ => (9.0 * wide, 90, 75 + kb, 40 + kb), // Spire: straight up
     };
-    let rc = gd_envoy_blast(owner_slot(owner), at.x, at.y, r, (milli + 500) / 1000, angle, kbg, bkb);
+    // rule 2 on what lands: the engine scales a blast by its owner's attack ratio, so a foe's blast is armed at
+    // cap / ratio (rounded down) and lands at most FOE_FIRE_CAP
+    let pct = if owner >= SETS && !old_scale() {
+        let atk = foe_atk_now(owner as i32 - OWNER_FOE).max(1000) as i64;
+        (milli.min(FOE_FIRE_CAP) as i64 * 1000 / atk / 1000) as i32
+    } else {
+        (milli + 500) / 1000
+    };
+    let rc = gd_envoy_blast(owner_slot(owner), at.x, at.y, r, pct, angle, kbg, bkb);
     if rc == 0 {
         if owner >= SETS {
             FOE_BLAST_AT = S.play;
+            FOE_BLAST_SLOT = owner as i32 - OWNER_FOE;
         }
         S.blasts += 1;
         log(b"envoy: blast armed, owner*100 + effect\0", owner as i32 * 100 + effect as i32);
@@ -3190,7 +3206,7 @@ extern "C" fn on_damage(h: u32, d: f32) {
             }
         }
         if kb_log() && (0..nh()).contains(&v) && is_foe(a) {
-            KB_W[v as usize] = [S.play, dmg, a, (S.play - FOE_BLAST_AT <= 4) as i32];
+            KB_W[v as usize] = [S.play, dmg, a, (S.play - FOE_BLAST_AT <= 4 && a == FOE_BLAST_SLOT) as i32];
         }
         push_rec(a, v, dmg, tags, ast);
         // Marked: the hit deals more (half on a boss): word damage for the attacker

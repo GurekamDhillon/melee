@@ -38,7 +38,10 @@ if [ "${RUN_A:-1}" = 1 ]; then
   echo "     a: $(grep -c 'envoy: fight won' "$out/a.log") fights won, loops: $(grep -o 'envoy: loop now [0-9]*' "$out/a.log" | tr '\n' ' ')"
   grep -q "envoy: loop now 2" "$out/a.log" && ok "the boss fell and the run went on into loop 2" || bad "no loop 2"
   grep -q "envoy: loop now 3" "$out/a.log" && ok "loop 3 reached" || bad "no loop 3"
-  grep -q "envoy: RUN OVER" "$out/a.log" && ok "the run ended in RUN OVER ($(grep -o 'RUN OVER at fight [0-9]*' "$out/a.log" | head -1))" || bad "no RUN OVER inside FRAMES"
+  # since the balance pass (envoy-balance.md) the strong CPU pilot can go on for many loops: a RUN OVER is reported,
+  # not required; the furthest loop reached is the measure
+  if grep -q "envoy: RUN OVER" "$out/a.log"; then ok "the run ended in RUN OVER ($(grep -o 'RUN OVER at fight [0-9]*' "$out/a.log" | head -1))"
+  else echo "     a: no RUN OVER inside FRAMES (allowed): reached loop $(grep -o 'envoy: loop now [0-9]*' "$out/a.log" | tail -1 | grep -o '[0-9]*$')"; fi
   [ -f "$out/a.save/best.bin" ] && ok "best loop saved: $(od -An -i "$out/a.save/best.bin" | tr -d ' ')" || bad "no best.bin"
   grep -q "crash\|panicked" "$out/a.log" && bad "a crash or panic in run a"
   # room lengths per loop (report only: the CPU pilot with the strong row is not a human; the owner's target is 1-2 min)
@@ -50,10 +53,13 @@ if [ "${SAVE_TEST:-0}" = 1 ]; then
   grep -q "envoy: loop now 2" "$out/b.log" && ok "run b reached loop 2" || bad "run b never reached loop 2 (raise STOP_FRAMES)"
   [ -f "$out/b.save/run.bin" ] && ok "run b left a saved run" || bad "run b left no saved run"
   play c "$out/b.save" 20000 "continue in loop 2"
-  if grep -q "envoy: armed, run continued at loop\*10 + fight.* 2[0-9]" "$out/c.log"; then
-    ok "run c continued in loop 2 ($(grep -o 'run continued at loop\*10 + fight.*' "$out/c.log" | head -1))"
-  else bad "run c did not continue in loop 2"; fi
-  grep -q "saved run loaded (loop 2" "$out/c.log" && ok "the host loaded the loop-2 record" || bad "the host did not load a loop-2 record"
+  # run b may reach any loop >= 2 by STOP_FRAMES (the balance pass made the pilot faster): run c must continue in
+  # the loop run b saved, which is 2 or later
+  saved=$(grep -o 'envoy: loop now [0-9]*' "$out/b.log" | tail -1 | grep -o '[0-9]*$')
+  if grep -Eq "envoy: armed, run continued at loop\*10 \+ fight.* ${saved:-x}[0-9]$" "$out/c.log"; then
+    ok "run c continued in loop $saved ($(grep -o 'run continued at loop\*10 + fight.*' "$out/c.log" | head -1))"
+  else bad "run c did not continue in loop ${saved:-?} (run b's last loop)"; fi
+  grep -q "saved run loaded (loop ${saved:-x}," "$out/c.log" && ok "the host loaded the loop-$saved record" || bad "the host did not load a loop-${saved:-?} record"
 fi
 if [ "${ROAD_TEST:-0}" = 1 ]; then
   # the forked road: a new run takes the Steep road (DRIVES has "steep"), stops inside its session, and the next

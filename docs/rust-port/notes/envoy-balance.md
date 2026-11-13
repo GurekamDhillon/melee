@@ -78,6 +78,34 @@ about 91% at FD's centre). Loop 2 still takes more stocks than loop 1 (more wave
 intended per-loop rise. The headless runs are too short to show the loop-3+ blasts the model flags (3% / 0%).
 `kblog` on a loop-3 run is the follow-up check.
 
+## Round 2 (laptop feedback on 342340622)
+
+- **The 12% cap leaked on blasts.** The engine scales a blast hitbox by its owner's attack ratio after the sim armed
+  it, so a capped 12% Nova landed up to 18%. Besides that, the `kblog` blast flag (any foe hit within 4 frames of
+  any foe blast) also marked ordinary moves, which were the laptop's 24-30% "blast" hits. Fixed: a foe blast is
+  armed at cap / attack ratio, rounded down, so what lands is at most 12%. The flag now needs the hit to come from
+  the slot that fired the blast.
+- **Re-measured** (kblog, level-9 CPU Falcon, two seeds each, 10800 frames):
+
+| fight | KOs, percent at KO | KO hits | foe blasts landed (max) |
+|---|---|---|---|
+| loop 3 elite room | 72, 76, 101, 112, 133, 133, 162, 177% | 2.1-28.4% | 9% |
+| loop 3 boss | 95, 102, 109, 112, 122, 145, 147, 164% | 12.6-28.7% | 9% |
+| loop 5 elite room | 74, 91, 98, 120, 158, 167, 203% | 1-16.8% | 9% |
+| loop 5 boss | 77, 83, 88, 103, 103, 114, 125, 126% | 14-18.1% | none |
+
+  Across 44 blast hits, none landed more than 9%. The remaining hits above 20% are CPU smashes at the capped attack
+  ratio (x1.25-x1.5: for example a 19% smash landing 26.6%), so later loops do KO earlier (72-77% at the lowest),
+  and that is the intended per-loop rise.
+- **A level-9 CPU with the strong row clears to loop 11. Is it too easy? No change, by decision.** That row is
+  `ember:3,nova:3,bolt:3,*4000`: `*4000` is a test knob that multiplies the pilot's damage by 4, so the run measures
+  stability, not difficulty. Without it, the measured runs above still lose 6-8 stocks per fight from loop 2 on. If
+  the owner finds later loops too easy, the lever is the uncapped foe toughness (`foe_tough`) or +1 foe a loop, not
+  knockback.
+- `loop_run.sh`: run a passes on reaching loop 3, and a RUN OVER is reported but no longer required. Run c must
+  continue in the loop run b last reached, whichever loop that is. The host's "saved run loaded" line masks the loop
+  word to its low byte (it printed 520 = 0x208, which is loop 8 plus the stop-done bit).
+
 ## Checks
 
 See the branch's commit message for results: v2_drives d4/d7, loop_run, switch_torture (RUN_TIMEOUT 6000), gate.sh.

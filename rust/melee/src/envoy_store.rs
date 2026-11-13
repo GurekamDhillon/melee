@@ -34,7 +34,7 @@ fn load() {
         ev::SAVED = r;
         ev::SAVED_LEN = ev::REC_WORDS as i32;
     }
-    eprintln!("envoy: saved run loaded (loop {}, fight {}, pool {})", r[46] & 0xFFFF, r[4] + 1, r[5]);
+    eprintln!("envoy: saved run loaded (loop {}, fight {}, pool {})", r[46] & 0xFF, r[4] + 1, r[5]);
 }
 
 fn write(r: &[i32; ev::REC_WORDS]) {

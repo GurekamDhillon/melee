@@ -772,6 +772,91 @@ fn foe_tough(e: i32) -> i32 {
 /// An ordinary fight's elite modifier (loop 3 on): the first CPU is an elite of this size.
 const LOOP_ELITE_SCALE: i32 = 1150;
 
+// ---- balance pass 1 (docs/rust-port/notes/envoy-balance.md): four rules against one-shots
+/// Rule 1: a foe's damage bonuses add, never multiply: half the elite / boss size bonus (the size already reaches
+/// further) plus the loop bonus, the sum capped.
+const FOE_ATK_CAP: i32 = 1500;
+/// Rule 2: a foe's drive fires at most at level 3's strength and lands at most this much (x1000), blasts included.
+const FOE_FIRE_CAP: i32 = 12_000;
+/// Rule 3: a room has at most this many waves (was WAVES_MAX).
+const WAVES_CAP: i32 = 3;
+/// Rule 4: clearing a wave (not the room's last) heals every player's fighter in play this much (x1000).
+const WAVE_HEAL: i32 = 25_000;
+
+/// Test knob `oldscale`: the pre-balance numbers (measurement A/B only). Fixed per process.
+static mut OLD_SCALE: i32 = -1;
+unsafe fn old_scale() -> bool {
+    if OLD_SCALE < 0 {
+        OLD_SCALE = test_flag("oldscale") as i32;
+    }
+    OLD_SCALE == 1
+}
+
+/// A foe's attack ratio x1000: the size bonus (`sc` - 1000) plus the loop bonus, capped (rule 1).
+unsafe fn foe_atk_with(sc: i32, e: i32) -> i32 {
+    if old_scale() {
+        return (sc as i64 * foe_atk(e) as i64 / 1000) as i32;
+    }
+    (1000 + (sc - 1000).max(0) / 2 + (foe_atk(e) - 1000)).min(FOE_ATK_CAP)
+}
+
+/// Test knob `kblog`: every hit a player takes from a foe logs its damage, the player's percent and the launch speed
+/// on the next frame; every player stock lost logs the percent it was lost at. Not sim state (logs only).
+static mut KB_LOG: i32 = -1;
+static mut KB_W: [[i32; 4]; 2] = [[-1; 4]; 2];
+static mut KB_PCT: [i32; 2] = [0; 2];
+static mut KB_LAST: [[i32; 3]; 2] = [[0; 3]; 2];
+static mut FOE_BLAST_AT: i32 = -100;
+unsafe fn kb_log() -> bool {
+    if KB_LOG < 0 {
+        KB_LOG = test_flag("kblog") as i32;
+    }
+    KB_LOG == 1
+}
+unsafe fn kb_frame() {
+    if !kb_log() {
+        return;
+    }
+    for p in 0..nh() as usize {
+        let h = gd_fighter_from_slot(p as i32);
+        if h == 0 {
+            continue;
+        }
+        let mut w = [0u32; 20];
+        gd_fighter_read(h, w.as_mut_ptr());
+        let pct = (f32::from_bits(w[10]) * 1000.0) as i32;
+        let wt = KB_W[p];
+        if wt[0] >= 0 && S.play > wt[0] {
+            let (x, y) = (f32::from_bits(w[6]), f32::from_bits(w[7]));
+            let sp = ((x * x + y * y) * 10000.0) as i32; // speed^2 x10000 (no_std: no sqrt)
+            let a = wt[2];
+            let ha = if a >= 0 { gd_fighter_from_slot(a) } else { 0 };
+            let ck = if ha != 0 { gd_fighter_kind(ha) } else { -1 };
+            // one line: fight*10 + loop | dmg x1000 | percent after x1000 | speed x1000 | blast*100 + attacker kind
+            log(b"envoy: kblog hit fight*10+loop\0", S.fight * 10 + lp());
+            log(b"envoy: kblog hit dmg\0", wt[1]);
+            log(b"envoy: kblog hit pct\0", pct);
+            log(b"envoy: kblog hit speed\0", sp);
+            log(b"envoy: kblog hit blast*100+ck\0", wt[3] * 100 + ck);
+            KB_LAST[p] = [wt[1], pct, sp];
+            KB_W[p] = [-1; 4];
+        }
+        if pct > 0 {
+            KB_PCT[p] = pct;
+        }
+    }
+}
+unsafe fn kb_ko(p: usize) {
+    if kb_log() && p < 2 {
+        log(b"envoy: kblog KO fight*10+loop\0", S.fight * 10 + lp());
+        log(b"envoy: kblog KO pct\0", KB_PCT[p]);
+        log(b"envoy: kblog KO last dmg\0", KB_LAST[p][0]);
+        log(b"envoy: kblog KO last speed\0", KB_LAST[p][2]);
+        KB_PCT[p] = 0;
+        KB_LAST[p] = [0; 3];
+    }
+}
+
 /// A MELEE_ENVOY_TEST_DRIVES item given by name (read from the string, so a fresh run's first plan sees it too).
 unsafe fn test_flag(name: &str) -> bool {
     let mut b = [0u8; 256];
@@ -1107,14 +1192,14 @@ unsafe fn make_plan() {
         // loop 2: loop 1's levels +3 (to 9); loop 3 on: 9
         p[11 + i] = if e >= 2 { 9 } else if e == 1 { (f.level[j].max(1) + 3).min(9) } else { f.level[j].max(1) };
         p[14 + i] = f.stocks[j].max(1) + (coop && f.kind >= FK_ELITE) as i32 + (f.kind >= FK_ELITE) as i32 * (e / 2);
-        p[17 + i] = foe_atk(e);
+        p[17 + i] = foe_atk_with(1000, e);
         p[20 + i] = 1_000_000 / foe_tough(e);
         p[23 + i] = f.scale;
     }
     if f.kind >= FK_ELITE || e >= 2 {
         // an elite or a boss (and loop 3 on, every fight's first foe): bigger, hits harder, takes less
         let sc = if f.kind >= FK_ELITE { f.scale } else { LOOP_ELITE_SCALE };
-        p[17] = (sc as i64 * foe_atk(e) as i64 / 1000) as i32;
+        p[17] = foe_atk_with(sc, e);
         p[20] = (2000 - sc) * 1000 / foe_tough(e);
         p[23] = sc;
     }
@@ -1129,7 +1214,7 @@ unsafe fn make_plan() {
         p[41] = p[11];
         p[11] = if e >= 2 { 9 } else { (ELITE_W1_LEVEL + 3 * e).min(9) };
         p[14] = 1;
-        p[17] = foe_atk(e);
+        p[17] = foe_atk_with(if e >= 2 { LOOP_ELITE_SCALE } else { 1000 }, e);
         p[20] = 1_000_000 / foe_tough(e);
         p[23] = if e >= 2 { LOOP_ELITE_SCALE } else { 1000 };
     }
@@ -2537,6 +2622,9 @@ unsafe fn launch(owner: usize, at: P, effect: u8, milli: i32, level: i32, state:
     };
     let rc = gd_envoy_blast(owner_slot(owner), at.x, at.y, r, (milli + 500) / 1000, angle, kbg, bkb);
     if rc == 0 {
+        if owner >= SETS {
+            FOE_BLAST_AT = S.play;
+        }
         S.blasts += 1;
         log(b"envoy: blast armed, owner*100 + effect\0", owner as i32 * 100 + effect as i32);
     } else {
@@ -2568,8 +2656,15 @@ unsafe fn fire(owner: usize, id: usize, level: i32, target: i32, frac: i32, flag
     let st = if player { state_of(owner / 2) } else { 0 };
     let inferno = player && c.family == F_RED && has_inferno(owner);
     // the cap is on what lands (after the foe's toughness, in hurt), not on the number before it
-    let n = (heat::fire_damage_raw(c.number, level, st) as i64 * frac as i64 / 1000) as i32;
+    let foe_new = !player && !old_scale();
+    let lv = if foe_new { level.min(MAX_LEVEL) } else { level };
+    let mut n = (heat::fire_damage_raw(c.number, lv, st) as i64 * frac as i64 / 1000) as i32;
     S.fx_cap = if c.launch != 0 { LAUNCH_CAP } else { FIRE_CAP };
+    if foe_new {
+        // rule 2: a foe's fire, blasts too (whose damage the engine then scales by the foe's attack ratio)
+        n = n.min(FOE_FIRE_CAP);
+        S.fx_cap = FOE_FIRE_CAP;
+    }
     let me_slot = owner_slot(owner);
     let me = pos(me_slot).unwrap_or(P { x: 0.0, y: 0.0 });
     let mut at = me;
@@ -3094,6 +3189,9 @@ extern "C" fn on_damage(h: u32, d: f32) {
                 log(b"envoy: finale knockback x1000 ", 1000 + bonus);
             }
         }
+        if kb_log() && (0..nh()).contains(&v) && is_foe(a) {
+            KB_W[v as usize] = [S.play, dmg, a, (S.play - FOE_BLAST_AT <= 4) as i32];
+        }
         push_rec(a, v, dmg, tags, ast);
         // Marked: the hit deals more (half on a boss): word damage for the attacker
         if marked(v) {
@@ -3367,6 +3465,7 @@ unsafe fn moments_frame() {
                     stage_request(SH_BREAK);
                 }
             } else if (0..nh()).contains(&s) {
+                kb_ko(i);
                 // a lost stock costs a quarter of Heat (rooms; was half)
                 HH.heat[i] -= HH.heat[i] / 4;
                 S.stock_lost = 1;
@@ -4278,7 +4377,7 @@ unsafe fn room_waves(fight: usize, kind: i32, e: i32) -> i32 {
     } else if fight == 0 && S.wave2 == 0 && !test_flag("wave2") {
         1 + e.clamp(0, 1)
     } else {
-        (2 + e.max(0)).min(WAVES_MAX)
+        (2 + e.max(0)).min(if old_scale() { WAVES_MAX } else { WAVES_CAP })
     }
 }
 
@@ -4300,6 +4399,19 @@ unsafe fn room_frame() {
             HH.earned[p] += COINS_WAVE as i64 * COIN_UNIT / nh() as i64;
             ev(EV_COINS, p as i32, COINS_WAVE);
             roll_drop(p);
+            if !old_scale() {
+                // rule 4: a cleared wave heals (never below 0%)
+                let h = gd_fighter_from_slot(p as i32);
+                if h != 0 {
+                    let mut w = [0u32; 20];
+                    gd_fighter_read(h, w.as_mut_ptr());
+                    let heal = WAVE_HEAL.min(((f32::from_bits(w[10]) * 1000.0) as i32).max(0));
+                    if heal > 0 {
+                        gd_envoy_percent(p as i32, 0, -heal);
+                        log(b"envoy: wave heal x1000\0", heal);
+                    }
+                }
+            }
         }
         log(b"envoy: wave cleared, coins\0", COINS_WAVE);
     }
@@ -4845,6 +4957,7 @@ extern "C" fn on_frame_end() {
                     // V3 12.4: technique, the records, the stock edges and cash-outs, the boss, Burning, Volley,
                     // then time charge and the chains, then the states
                     finale_probe();
+                    kb_frame();
                     tech_frame();
                     records_frame();
                     moments_frame();

@@ -84,6 +84,7 @@ mod practice;
 mod lab;
 mod lab_check;
 mod pose_dump;
+mod script_events;
 mod cov1p;
 mod envoy_store;
 
@@ -620,6 +621,7 @@ fn main_inner() -> ExitCode {
         }
         Some("dat-dump") => retail::dat_dump(&args),
         Some("pose-dump") => pose_dump::pose_dump(&args),
+        Some("script-events") => script_events::script_events(&args),
         Some(x) => {
             eprintln!("melee: unknown command {x:?} (selftest | hashlog | golden | diff | view-golden)");
             ExitCode::from(2)
@@ -805,6 +807,7 @@ fn engine_gdmods_overlay(args: &[String]) -> Result<Option<melee_engine::gcm::Ov
     };
     let Some(m) = mods else {
         melee_fighter::anim_override::install(Vec::new());
+        melee_fighter::script_override::install(Vec::new());
         return Ok(None);
     };
     let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
@@ -815,6 +818,12 @@ fn engine_gdmods_overlay(args: &[String]) -> Result<Option<melee_engine::gcm::Ov
         eprintln!("melee: anim overrides: {}", anims.iter().map(|e| e.label.as_str()).collect::<Vec<_>>().join(", "));
     }
     melee_fighter::anim_override::install(anims);
+    // per-move script overrides (same notes): replacement action scripts, validated now
+    let scripts = m.script_overrides()?;
+    if !scripts.is_empty() {
+        eprintln!("melee: script overrides: {}", scripts.iter().map(|e| e.label.as_str()).collect::<Vec<_>>().join(", "));
+    }
+    melee_fighter::script_override::install(scripts);
     // Geno reads each mounted mod's geno.json (geno_registry.c gn_reg: the active mods in id order)
     melee_engine::geno_host::set_boot_mods(&m.dir, &ids);
     // the skin registry reads every mounted mod of kind "skin" (gw_skins_boot.inc gw_Skins_Build: gw_Mods_ActiveAt order)

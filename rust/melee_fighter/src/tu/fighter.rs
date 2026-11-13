@@ -1479,7 +1479,9 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
             } else {
                 e::ftData_80085CD8(fp, fp, fp.anim_id);
             }
-            fp.x3E4_fighterCmdScript.anon_8.u = (*wait).xC as _;
+            // TARGET_PC: a mod's script override for this row (script_override.rs); else (*wait).xC as before
+            let script_src: *mut Fighter = if lab_pose_row >= 0 && arg3.is_null() { &mut *fp } else { tbl };
+            fp.x3E4_fighterCmdScript.anon_8.u = crate::tu::ftdata::row_script(script_src, wait) as _;
             fp.x3E4_fighterCmdScript.loop_count = 0;
             let row0 = (*bytes)[0];
             if anim_start != 0.0 {

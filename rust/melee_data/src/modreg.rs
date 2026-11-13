@@ -313,6 +313,11 @@ pub struct Mod {
     pub anim_overrides: Vec<AnimOverrideDecl>,
     /// Problems in the `anim_overrides` list (a bad entry is reported, never silently dropped).
     pub anim_override_errors: Vec<String>,
+    /// TARGET_PC (Rust only, notes/anim-overrides.md): the `script_overrides` entries of mod.json (same shape as
+    /// `anim_overrides`; `file` holds the replacement action script), in file order.
+    pub script_overrides: Vec<AnimOverrideDecl>,
+    /// Problems in the `script_overrides` list.
+    pub script_override_errors: Vec<String>,
 }
 
 /// Which clip an `anim_overrides` entry replaces.
@@ -392,12 +397,27 @@ impl Mod {
     /// TARGET_PC: the `anim_overrides` array at `p` (its `[`); answers the position after its `]` (or where it stopped).
     /// Every entry needs `fighter` (string), `clip` (string, or an object with an integer `row`) and `file` (string);
     /// an entry missing one is recorded in `anim_override_errors`.
-    fn parse_anim_overrides(&mut self, t: &Txt, mut p: usize) -> usize {
+    fn parse_anim_overrides(&mut self, t: &Txt, p: usize) -> usize {
+        let (mut d, mut e) = (core::mem::take(&mut self.anim_overrides), core::mem::take(&mut self.anim_override_errors));
+        let p = Self::parse_override_list(t, p, "anim_overrides", &mut d, &mut e);
+        (self.anim_overrides, self.anim_override_errors) = (d, e);
+        p
+    }
+
+    /// TARGET_PC: the `script_overrides` array (same entry shape as `anim_overrides`).
+    fn parse_script_overrides(&mut self, t: &Txt, p: usize) -> usize {
+        let (mut d, mut e) = (core::mem::take(&mut self.script_overrides), core::mem::take(&mut self.script_override_errors));
+        let p = Self::parse_override_list(t, p, "script_overrides", &mut d, &mut e);
+        (self.script_overrides, self.script_override_errors) = (d, e);
+        p
+    }
+
+    fn parse_override_list(t: &Txt, mut p: usize, list: &str, decls: &mut Vec<AnimOverrideDecl>, errors: &mut Vec<String>) -> usize {
         p = t.skip_ws(p + 1);
         let mut n = 0;
         while t.at(p) != 0 && t.at(p) != b']' {
             if t.at(p) != b'{' {
-                self.anim_override_errors.push(format!("anim_overrides[{n}]: not an object"));
+                errors.push(format!("{list}[{n}]: not an object"));
                 p = t.skip_value(p);
             } else {
                 p = t.skip_ws(p + 1);
@@ -452,9 +472,9 @@ impl Mod {
                     bad = Some("syntax error".into());
                 }
                 match (bad, fighter, clip, file) {
-                    (None, Some(fighter), Some(clip), Some(file)) => self.anim_overrides.push(AnimOverrideDecl { fighter, clip, file }),
-                    (Some(why), ..) => self.anim_override_errors.push(format!("anim_overrides[{n}]: {why}")),
-                    _ => self.anim_override_errors.push(format!("anim_overrides[{n}]: needs \"fighter\", \"clip\" and \"file\"")),
+                    (None, Some(fighter), Some(clip), Some(file)) => decls.push(AnimOverrideDecl { fighter, clip, file }),
+                    (Some(why), ..) => errors.push(format!("{list}[{n}]: {why}")),
+                    _ => errors.push(format!("{list}[{n}]: needs \"fighter\", \"clip\" and \"file\"")),
                 }
                 if t.at(p) == 0 {
                     return p;
@@ -496,6 +516,8 @@ impl Mod {
                 self.set_field(&key, &val, log);
             } else if t.at(p) == b'[' && key == b"anim_overrides" {
                 p = self.parse_anim_overrides(&t, p);
+            } else if t.at(p) == b'[' && key == b"script_overrides" {
+                p = self.parse_script_overrides(&t, p);
             } else if t.at(p) == b'[' {
                 p = t.skip_ws(p + 1);
                 while t.at(p) != 0 && t.at(p) != b']' {
@@ -1329,6 +1351,15 @@ impl Overlay {
                 let size = std::fs::metadata(moddir.join(&d.file)).map_or(0, |m| m.len() as u32);
                 set.note_file(idx, format!("anim_override:{}/{}={}", d.fighter.to_ascii_lowercase(), clip, d.file).as_bytes(), size);
             }
+            let decls = set.mods[idx].script_overrides.clone();
+            for d in &decls {
+                let clip = match &d.clip {
+                    AnimClip::Symbol(s) => s.clone(),
+                    AnimClip::Row(r) => format!("row{r}"),
+                };
+                let size = std::fs::metadata(moddir.join(&d.file)).map_or(0, |m| m.len() as u32);
+                set.note_file(idx, format!("script_override:{}/{}={}", d.fighter.to_ascii_lowercase(), clip, d.file).as_bytes(), size);
+            }
         }
         o
     }
@@ -1430,5 +1461,23 @@ mod anim_override_tests {
         Overlay::mount(&mut s);
         assert_ne!(s.fingerprint(), plain);
         let _ = std::fs::remove_dir_all(&d);
+    }
+
+    #[test]
+    fn parses_script_overrides() {
+        let mut m = Mod::default();
+        let mut log = Vec::new();
+        let j = br#"{"anim_overrides":[{"fighter":"marth","clip":{"row":55},"file":"a.dat"}],"script_overrides":[
+            {"fighter":"marth","clip":{"row":55},"file":"scripts/ftilt.words"},
+            {"fighter":"marth","clip":"PlyMars5K_Share_ACTION_AttackS4_figatree","file":"s.bin"},
+            {"fighter":"marth","clip":{"rows":1},"file":"x"}
+        ]}"#;
+        assert!(m.parse_json(j, &mut log));
+        assert_eq!(m.anim_overrides.len(), 1);
+        assert_eq!(m.script_overrides.len(), 2);
+        assert_eq!(m.script_overrides[0], AnimOverrideDecl { fighter: "marth".into(), clip: AnimClip::Row(55), file: "scripts/ftilt.words".into() });
+        assert_eq!(m.script_override_errors.len(), 1, "{:?}", m.script_override_errors);
+        assert!(m.script_override_errors[0].starts_with("script_overrides[2]:"), "{:?}", m.script_override_errors);
+        assert!(m.anim_override_errors.is_empty());
     }
 }

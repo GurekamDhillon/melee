@@ -104,6 +104,35 @@ impl Mods {
         }
         Ok(out)
     }
+
+    /// TARGET_PC (notes/anim-overrides.md): every mounted mod's `script_overrides` (replacement action scripts), in mount
+    /// order (a later mod wins), each file read and validated now; an error names the mod and file.
+    pub fn script_overrides(&self) -> Result<Vec<melee_fighter::script_override::Entry>, String> {
+        use melee_data::modreg::AnimClip;
+        use melee_fighter::{anim_override as ao, script_override as so};
+        let mut out = Vec::new();
+        for &i in &self.set.order {
+            let m = &self.set.mods[i];
+            let id = m.id_str();
+            if let Some(e) = m.script_override_errors.first() {
+                return Err(format!("mod {id}: mod.json {e}"));
+            }
+            for d in &m.script_overrides {
+                let kind = ao::kind_by_name(&d.fighter).ok_or_else(|| format!("mod {id}: script_overrides: unknown fighter \"{}\" ({})", d.fighter, d.file))?;
+                let clip = match &d.clip {
+                    AnimClip::Symbol(s) => ao::Clip::Symbol(s.as_bytes().to_vec()),
+                    AnimClip::Row(r) if *r >= 0 => ao::Clip::Row(*r),
+                    AnimClip::Row(r) => return Err(format!("mod {id}: script_overrides: bad row {r} ({})", d.file)),
+                };
+                let rel = std::path::Path::new(&d.file);
+                if rel.is_absolute() || rel.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
+                    return Err(format!("mod {id}: script_overrides: \"{}\" must be a path inside the mod folder", d.file));
+                }
+                out.push(so::load(kind, clip, self.dir.join(&id).join(rel), format!("{id}/{}", d.file))?);
+            }
+        }
+        Ok(out)
+    }
 }
 
 #[cfg(test)]

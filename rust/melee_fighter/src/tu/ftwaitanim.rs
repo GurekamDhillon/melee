@@ -41,7 +41,9 @@ fn set_wait_anim(gobj: *mut HSD_GObj, anim_id: i32) {
     ext::ftData_80085CD8(f, f, anim_id);
     f.anim_id = anim_id;
     ext::ftCo_8009E7B4(f, blend);
-    f.x3E4_fighterCmdScript.anon_8.u = anim.xC;
+    // TARGET_PC: a mod's script override for this row (script_override.rs)
+    let script = unsafe { crate::tu::ftdata::row_script(&mut *f, anim as *const Fighter_WaitAnimData as *mut Fighter_WaitAnimData) };
+    f.x3E4_fighterCmdScript.anon_8.u = script as _;
     f.x3E4_fighterCmdScript.loop_count = 0;
     if !f.x590.is_null() {
         // `fp->x594_s32 = ...`: a whole s32 over the bitfield word, GC byte order.

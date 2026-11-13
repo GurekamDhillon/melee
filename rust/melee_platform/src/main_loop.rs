@@ -885,8 +885,16 @@ impl<G: Game> ApplicationHandler for App<G> {
             // Render as fast as presentation allows (vsync on: blocks in present at the refresh
             // rate; off: uncapped). The fixed-step clock still runs exactly 60 ticks a second.
             el.set_control_flow(ControlFlow::Poll);
+        } else if self.clock.ticks != self.presented_tick || self.game.present_now() {
+            // a new tick is waiting for its present: draw it now
+            el.set_control_flow(ControlFlow::Poll);
         } else {
-            el.set_control_flow(ControlFlow::WaitUntil(Instant::now() + self.clock.until_next()));
+            // Once per tick: sleep precisely to the next tick. The event loop's own timed wait (WaitUntil) wakes on
+            // the OS timer's coarse grid and woke up to ~15 ms late (frames of 20-30 ms in a 60 Hz present stream).
+            // Window events that arrive meanwhile are handled right after (the pads are read per tick anyway).
+            let due = self.last.map_or_else(Instant::now, |l| l + self.clock.until_next());
+            melee_core::frameprof::time(melee_core::frameprof::C::SleepNs, || sleep_until(due));
+            el.set_control_flow(ControlFlow::Poll);
         }
     }
 }

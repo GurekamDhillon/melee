@@ -329,6 +329,18 @@ pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
     p
 }
 
+/// Crash-handler test only (`melee crash-test arena-fault`): point every free-list head at an unmapped address, so the
+/// next arena allocation that pops one faults inside `alloc_locked`, the way a corrupt arena does.
+#[cfg(any(windows, unix))]
+pub unsafe fn debug_corrupt_free_lists() {
+    let _g = Lock::take();
+    for a in 0..NALIGN {
+        for c in 0..NCLASS {
+            FREE[a][c] = 0x10;
+        }
+    }
+}
+
 /// (block, whether it came from the bump pointer).
 #[cfg(any(windows, unix))]
 unsafe fn alloc_fresh(l: Layout) -> (*mut u8, bool) {

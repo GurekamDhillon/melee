@@ -276,6 +276,9 @@ fn big_alloc_trace(n: usize) {
 }
 unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
     unsafe fn alloc(&self, l: std::alloc::Layout) -> *mut u8 {
+        if crash::system_only() {
+            return std::alloc::System.alloc(l);
+        }
         if melee_engine::recheap::active() {
             return melee_engine::recheap::alloc(l);
         }
@@ -301,6 +304,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         std::alloc::System.alloc(l)
     }
     unsafe fn dealloc(&self, p: *mut u8, l: std::alloc::Layout) {
+        if crash::system_only() {
+            return; // the fault handler leaks: the block may be the arena's, a guard block's or the recheap's
+        }
         if melee_engine::arena::contains(p) {
             return melee_engine::arena::free(p, l);
         }
@@ -321,6 +327,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         std::alloc::System.dealloc(p, l)
     }
     unsafe fn alloc_zeroed(&self, l: std::alloc::Layout) -> *mut u8 {
+        if crash::system_only() {
+            return std::alloc::System.alloc_zeroed(l);
+        }
         if melee_engine::recheap::active() {
             return melee_engine::recheap::alloc(l); // never-reused pages: already zero
         }
@@ -338,6 +347,14 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         std::alloc::System.alloc_zeroed(l)
     }
     unsafe fn realloc(&self, p: *mut u8, l: std::alloc::Layout, n: usize) -> *mut u8 {
+        if crash::system_only() {
+            // a fresh system block, the old one (wherever it lives) leaked
+            let q = std::alloc::System.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));
+            if !q.is_null() {
+                core::ptr::copy_nonoverlapping(p, q, l.size().min(n));
+            }
+            return q;
+        }
         if melee_engine::recheap::active() && melee_engine::recheap::in_range(p) {
             return melee_engine::recheap::realloc(p, l, n);
         }

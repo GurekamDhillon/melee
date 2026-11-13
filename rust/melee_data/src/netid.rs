@@ -138,7 +138,7 @@ impl Cache {
         }
     }
 
-    fn hash(&mut self, path: &Path, rel: &str, mode: Mode) -> std::io::Result<u64> {
+    fn file_hash(&mut self, path: &Path, rel: &str, mode: Mode) -> std::io::Result<u64> {
         let md = std::fs::metadata(path)?;
         let mtime_ns = md.modified().ok().and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok()).map(|d| d.as_nanos()).unwrap_or(0);
         let key = path.to_string_lossy().into_owned();
@@ -214,7 +214,7 @@ pub fn hash_mod(id: &str, root: &Path, cache: &mut Cache, mode: Mode) -> std::io
     let mut h = fnv(FNV_OFFSET, id.to_ascii_lowercase().as_bytes());
     h = fnv(h, &[0]);
     for (k, r, p) in keyed {
-        let fh = cache.hash(&p, &r, mode)?;
+        let fh = cache.file_hash(&p, &r, mode)?;
         h = fnv(h, k.as_bytes());
         h = fnv(h, &[0]);
         h = fnv(h, &fh.to_le_bytes());
@@ -378,6 +378,24 @@ mod tests {
         // and the forced pass refreshed the entry
         assert_eq!(forced, hash_mod("m", &m, &mut c, Mode::Cached).unwrap());
         let _ = std::fs::remove_dir_all(&d);
+    }
+
+    /// `NETID_BENCH_DIR=<mods folder> cargo test -p melee_data --lib netid::tests::bench -- --ignored --nocapture`:
+    /// every sub-folder as a mod, a forced pass, then a cached pass from the saved cache (start-up cost).
+    #[test]
+    #[ignore]
+    fn bench() {
+        let dir = PathBuf::from(std::env::var("NETID_BENCH_DIR").unwrap());
+        let _ = std::fs::remove_file(dir.join(CACHE_NAME));
+        let mods: Vec<PathBuf> = std::fs::read_dir(&dir).unwrap().filter_map(|e| e.ok().map(|e| e.path())).filter(|p| p.is_dir()).collect();
+        for mode in [Mode::Force, Mode::Cached] {
+            let mut c = Cache::load(&dir);
+            let t = std::time::Instant::now();
+            let ids: Vec<ModId> = mods.iter().map(|p| hash_mod(&p.file_name().unwrap().to_string_lossy(), p, &mut c, mode).unwrap()).collect();
+            let ms = t.elapsed().as_secs_f64() * 1e3;
+            c.save();
+            println!("netid bench {mode:?}: {} mods, {} files read, {} cached, {ms:.1} ms, set {:016x}", ids.len(), c.hashed, c.hits, set_digest(&ids));
+        }
     }
 
     #[test]
